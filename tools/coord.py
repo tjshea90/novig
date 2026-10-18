@@ -390,7 +390,7 @@ def release():
 
 # Tj, 2026-10-18: "Any time you are referred to by that id, add the name mirage so I know which email account you are". The tag stays the key (rotation, secrets, routines match it);
 # this only adds the account's name wherever a person reads it. Add an account here, never rename a tag.
-ACCOUNT_NAMES = {"acct-5d1e2d": "mirage"}
+ACCOUNT_NAMES = {"acct-5d1e2d": "mirage", "acct-7542bf": "tj outlook"}
 
 
 def named(label):
