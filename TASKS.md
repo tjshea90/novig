@@ -5832,3 +5832,8 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] TCL122-12 (done: engine trader kinds leak, SX freshness, BoltOdds connection budget, messages test fixed; research/review/*-2026-10-18*.md) find and implement other fixes/improvements for the engine and the app.
 - [x] TCL122-13 (done: floor 3914 passed via ship.sh; screenshots 9a/9b/4t/4u looked at; BoltOddsLiveTest flaked once under load, passes alone) run the full tests protocol (`.claude/skills/test-protocols`) when all is done.
 - [x] TCL122-14 (done: https://github.com/tjshea90/novig/releases/tag/v1.0.0, code 340) release the app as version 1.0 (versionName 1.0.0), one release for all of the above.
+
+## Chat 2026-10-18 evening (acct-5d1e2d (mirage), chat mode)
+- [x] CH1 (t1792366110766) Live tab status line said "game reader starting" forever: with live on GitHub it now shows the engine's live note (LiveBidSettings.kt). Compiles; ships with the next release.
+- [ ] CH2 (t1792366110766) "consider if the live betting and bidding settings are too stringent, not many fills": engine shows 4 offers in 31,854 judgments; tail bets need the model 90% sure. Needs live results before loosening (class B).
+- [ ] CH3 (t1792366331684) "why are kalshi and polymarket on standby? ... I want polymarket, kalshi, and sx bet included in vigilant scans to help find positive ev bets and calculate fair odds. if there are matching problems, see if they can be accurately mapped to the other betting markets" -> check ApiChain standby, status.scanNote/ranking.

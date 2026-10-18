@@ -1,21 +1,23 @@
-# CHECKPOINT 3690 — read me first, then TASKS.md
+# CHECKPOINT 3691 — read me first, then TASKS.md
 
-**Written:** 2026-10-18T23:04:19Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-7f278c49-1o357z` · **builds on:** `9fc79c1f9` (this checkpoint is the commit after it)
+**Written:** 2026-10-18T23:36:09Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-qlj3pq` · **builds on:** `39a4bf934` (this checkpoint is the commit after it)
 
 ## Just done
-TCL122 v1.0 complete: released v1.0.0 (340), engine restarted and verified (liveStats, socketStates, Novig accepted), Tj told in app chat, handoff posted
+CH1 live status line shows engine note; CH2/CH3 written
 
 ## Do this next
-next session: watch the engine's trade passes for totals/team totals orders (tradepass journals) and the Live board on Tj's phone; open items TCL116-TCL120 in TASKS.md
+answer CH3: why Kalshi/Polymarket standby (ApiChain), then CH2 live fills evidence
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  28536d5d0 ckpt 3690: TCL122 v1.0 complete: released v1.0.0 (340), engine restarted and verified 
   7c08b817b ckpt 3689: v1.0.0 gated+pushed (3914 green), release.yml triggered, engine restarted o
   a03ebb01a ckpt 3688: pre-release: v1.0.0: Live board with GitHub/Phone switch, slate P/L, Engine
   7d7c1eb08 ckpt 3687: full tests: floor 3918 passed; fixed slate chip names clashing with Tracker
@@ -25,7 +27,6 @@ next session: watch the engine's trade passes for totals/team totals orders (tra
   e8159d38e ckpt 3683: TCL122-4 engine half: liveOnGitHub/phoneSockets/phoneLive predicates; forCl
   fc623715e ckpt 3682: TCL122-6 SlateProfit model (slate days, fixed start) + new profit card (Tod
   049c471bf ckpt 3681: TCL122-8 meter bars (no M3 stop dot, spent=full red), TCL122-3 CloudLink.re
-  4940b3a8f ckpt 3680: TCL122-0 toolbox audit written; took lease by Tj's force; merged mirage's T
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the
