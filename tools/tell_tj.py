@@ -7,6 +7,7 @@
   python3 tools/tell_tj.py chat-ack <message id> [<id> ...]     (a thumbs-up under Tj's message: this session has read it; chat_watch.sh does it by itself)
   python3 tools/tell_tj.py chat-file <path on the branch> <out dir>   (download an attachment Tj added, from the chat-files branch: paths are printed by chat_watch.sh)
   python3 tools/tell_tj.py chat-keep <message id>               (flag the message's attachments important: the hourly cleanup deletes the rest after 24 h)
+  python3 tools/tell_tj.py relay "<Tj's typed message>"          (capture_inbox.sh does this by itself when a message is typed in a session that does not hold the lease)
   python3 tools/tell_tj.py selftest
 
 Each call adds ONE small file (messages/ or overrides/) to the `cloud-config` branch with a plain (non-force) push, so two writers never overwrite each other. The phone reads the folders every minute
@@ -104,6 +105,18 @@ def chat_reply(reply_to, text, who=None, **kw):
     return ident
 
 
+def chat_relay(text, who=None, **kw):
+    """Tj typed a request in a session that does not hold the lease (Tj, 2026-10-18): put it into the chat as his message, so the session that holds the lease (its chat_watch.sh prints it as CHAT <id>)
+    or, if none is watching, chat-wake.yml (wakes the on-duty account) reads it and starts at once. Marked with the relaying account so nobody mistakes it for the app."""
+    if SECRET.search(text):
+        raise SystemExit("refused: the text looks like a key or token (the repo is public)")
+    at = int(time.time() * 1000)
+    ident = "r%d-%s" % (at // 1000, secrets.token_hex(2))
+    m = {"id": ident, "at": at, "from": "tj", "relayed": True, "text": "[typed to %s, relayed to whoever holds the lease] %s" % (who or me().replace("claude:", ""), text)}
+    put("chat/" + fname(at, ident), json.dumps(m), **kw)
+    return ident
+
+
 def chat_ack(ids, who=None, **kw):
     """A read receipt for each of Tj's messages in `ids` (the app shows a thumbs-up under it). Idempotent per (message, account): a message already acknowledged by this account is skipped."""
     me_ = who or me()
@@ -184,6 +197,8 @@ def main(argv):
         print("sent", say(pos[0], pos[1] if len(pos) > 1 else "", opts["--kind"], opts["--priority"], opts["--action"])); return 0
     if argv[0] == "chat-reply" and len(argv) >= 3:
         print("sent", chat_reply(argv[1], " ".join(argv[2:]))); return 0
+    if argv[0] == "relay" and len(argv) >= 2:
+        print("relayed", chat_relay(" ".join(argv[1:]))); return 0
     if argv[0] == "chat-ack" and len(argv) >= 2:
         print("acked", chat_ack(argv[1:])); return 0
     if argv[0] == "chat-file" and len(argv) >= 3:

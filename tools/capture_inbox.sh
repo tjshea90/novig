@@ -97,6 +97,16 @@ if [ -z "$CHAT_STAND" ] && [ -f tools/coord.py ] && [ -z "${COORD_OFF:-}" ] && [
   fi
 fi
 
+# RELAY (Tj, 2026-10-18: "no matter which Claude account I am talking to, if I ask for modifications, the message is automatically relayed to the Claude account holding the lease and it should read
+# the prompt and begin the answer as soon as possible"). A message typed here while this session does NOT hold the lease (the chat belongs to another account, or another live session holds
+# the repo) goes into the app chat as Tj's message: the lease holder's chat_watch.sh prints it within seconds, and chat-wake.yml wakes the on-duty account if nobody is watching. Never blocks the prompt.
+if [ -z "${COORD_OFF:-}" ] && [ "${COORD_KIND:-interactive}" = "interactive" ] && [ -f tools/tell_tj.py ] && { [ -n "$CHAT_STAND" ] || [ "${COORD_RC:-0}" -eq 3 ]; }; then
+  RELAY_ID="$(timeout 40 python3 -I tools/tell_tj.py relay "$PROMPT" 2>/dev/null | awk '/^relayed/{print $2}')"
+  if [ -n "$RELAY_ID" ]; then
+    printf '%s\n' "RELAYED: this message was passed on to the account that holds the lease (chat id $RELAY_ID); it reads it within seconds and answers in the app chat. Tell Tj that, and do not act on the request yourself unless he says 'force'."
+  fi
+fi
+
 {
   echo ""
   echo "## $(date -u +%Y-%m-%dT%H:%M:%SZ)"
