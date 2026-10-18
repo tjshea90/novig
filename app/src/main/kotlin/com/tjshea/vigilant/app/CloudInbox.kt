@@ -33,7 +33,9 @@ data class InboxState(
     /** Where each new chat begins (Tj, 2026-10-16: clear chats or open new chats): the thread is split at these times; earlier chats stay readable until cleared. */
     val chatBreaks: List<Long> = emptyList(),
 ) {
-    val unread: Int get() = messages.count { it.id !in readIds.toSet() }
+    /** The messages worth listing (no bets or bids, no quiet info): what the screen, the unread count and the notifications use. */
+    val shown: List<CloudMessages.Message> get() = messages.filter(CloudMessages::worthShowing)
+    val unread: Int get() = shown.count { it.id !in readIds.toSet() }
 }
 
 /**
@@ -86,7 +88,7 @@ class CloudInbox(private val c: AppContainer, private val client: CloudClient) {
         val merged = CloudMessages.newestFirst((s.messages + got).distinctBy { it.id }).take(MAX_KEPT)
         val firstRun = s.notifiedUpToMs < 0
         val upTo = maxOf(s.notifiedUpToMs, got.maxOfOrNull { it.at } ?: 0L)
-        if (!firstRun) got.filter { it.priority >= 1 && it.at > s.notifiedUpToMs }.takeLast(3).forEach { notify(it) }
+        if (!firstRun) got.filter { CloudMessages.worthShowing(it) && it.priority >= 1 && it.at > s.notifiedUpToMs }.takeLast(3).forEach { notify(it) }
         s = s.copy(messages = merged, seenNames = (s.seenNames + doneNames).takeLast(MAX_NAMES), notifiedUpToMs = upTo)
         save(s)
         return got.size

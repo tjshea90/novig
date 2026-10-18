@@ -32,7 +32,7 @@ import com.tjshea.vigilant.data.cloud.DashboardModel
 fun MessagesPage(inbox: InboxState, onMarkRead: () -> Unit, onOpen: (String) -> Unit, modifier: Modifier = Modifier, onDismiss: (String) -> Unit = {}, onClearAll: () -> Unit = {}) {
     val now = rememberNow(30_000)
     Column(modifier.testTag("messages"), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        if (inbox.messages.isEmpty()) {
+        if (inbox.shown.isEmpty()) {
             Text("Nothing yet. Recommendations (which API to refill or buy), bets the engine placed and settings Claude changed show up here.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -40,7 +40,7 @@ fun MessagesPage(inbox: InboxState, onMarkRead: () -> Unit, onOpen: (String) -> 
                 OutlinedButton(onClick = onClearAll, modifier = Modifier.weight(1f).testTag("messagesClearAll")) { Text("Clear all") }
             }
             val read = inbox.readIds.toSet()
-            inbox.messages.forEach { m ->
+            inbox.shown.forEach { m ->
                 val unread = m.id !in read
                 Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().testTag("message-${m.id}")) {
                     Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
