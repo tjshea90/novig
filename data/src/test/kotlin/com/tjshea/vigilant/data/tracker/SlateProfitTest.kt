@@ -43,7 +43,7 @@ class SlateProfitTest {
         assertEquals(20.0, book.balance, 1e-9)
         assertEquals(-10.0 / 30.0, book.pct!!, 1e-9)
         // Staking more on day 2 did not move the start.
-        val more = SlateProfit.book(bets + bet("e", et(2026, 10, 18, 15), 500.0, BetStatus.PUSHED), et(2026, 10, 19, 9))
+        val more = SlateProfit.book(bets + bet("e", et(2026, 10, 18, 15), 500.0, BetStatus.PUSH), et(2026, 10, 19, 9))
         assertEquals(30.0, more.start, 1e-9)
     }
 
