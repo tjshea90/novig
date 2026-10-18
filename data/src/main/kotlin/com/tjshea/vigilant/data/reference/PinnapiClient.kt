@@ -109,6 +109,8 @@ class PinnapiClient(
         var problem: String? = null
         for (host in listOfNotNull(first()) + hosts) {
             if (!host.enabled() || host.pool.keyCount() == 0) continue
+            // A board with props comes from a host that sends them (PinnWire) while one is usable; pinnapi, ahead of it for game lines (Tj, 2026-10-18), would answer without props.
+            if (props && !host.props && (listOfNotNull(first()) + hosts).any { it !== host && it.props && it.enabled() && it.pool.keyCount() > 0 }) continue
             val events = try {
                 fetch(host, sport, props && host.props)
             } catch (e: AllKeysExhaustedException) {
