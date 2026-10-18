@@ -19,7 +19,7 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.tjshea.vigilant.app.ui.LocalClock
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import com.tjshea.vigilant.data.cloud.CloudStatus
-import com.tjshea.vigilant.data.cloud.CloudTradeMode
+import com.tjshea.vigilant.data.scanner.CloudTradeMode
 import com.tjshea.vigilant.data.cloud.LiveStats
 import com.tjshea.vigilant.data.cloud.LiveTrend
 import com.tjshea.vigilant.data.cloud.SocketState

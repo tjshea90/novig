@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.cloud
 
+import com.tjshea.vigilant.data.scanner.CloudTradeMode
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.TailLiveSettings
 import org.junit.Assert.assertEquals

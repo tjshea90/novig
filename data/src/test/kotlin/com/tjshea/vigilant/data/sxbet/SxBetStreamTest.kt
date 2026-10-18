@@ -98,6 +98,11 @@ class SxBetStreamTest {
         val b = s.books.getValue("0xA")
         assertEquals(0.52, b.one!!.prob, 1e-9)
         assertEquals(0.49, b.two!!.prob, 1e-9)
+        // TCL122-5: while the socket stays live, a market with no push since is still true NOW (the scan must not call it old); a book laid before this subscription keeps its own age.
+        val later = b.atMs + 600_000L
+        assertEquals(later, s.currentAt(b, later).atMs)
+        val old = b.copy(atMs = 1L)
+        assertEquals(1L, s.currentAt(old, later).atMs)
         assertNotNull(SxBetConvert.pair(b))
         assertNull(s.books["0xZ"])
         s.close()
