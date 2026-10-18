@@ -601,3 +601,8 @@ sometimes the api usage meters are glitchy, like showing it is spent but it has 
 13) run full tests protocol when all changes are done.
 14) release the new Android app as version 1.0. this is a large update.
 ```
+
+## 2026-10-18T22:08:38Z
+```
+Tell the other Claude accounts to stand down and force do this request
+```
