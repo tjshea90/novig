@@ -600,12 +600,14 @@ class AppContainer(val app: Application) {
     val novigCloses = com.tjshea.vigilant.data.tracker.NovigTradeCloses(http, json)
     /** Tj's ParlayAPI keys, one pool (and one meter) for its scans and its closing lines. */
     /** Checks each API's keys and reads the usage prompts the APIs offer into the meter (Settings › APIs, Settings › API usage). */
-    val apiProbe by lazy { com.tjshea.vigilant.data.keys.ApiProbe(http, usage, parlayAccount) }
+    val apiProbe by lazy { com.tjshea.vigilant.data.keys.ApiProbe(http, usage, parlayAccount, pinnWireAccount) }
 
     private val parlayPool = KeyPool(QuotaPolicy.PARLAY, { keyStore.current(ApiProvider.PARLAY) }, usage)
 
     /** Each ParlayAPI key's own account (credits left, plan, reset), read for free so the meter is exact (Tj, 2026-09-30). */
     val parlayAccount = com.tjshea.vigilant.data.reference.ParlayAccount(http, { keyStore.current(ApiProvider.PARLAY) }, usage, json)
+    /** PinnWire's own usage per key (its free /v1/me read), so a key is spent only when PinnWire says so (Tj, 2026-10-18, TCL119). */
+    val pinnWireAccount = com.tjshea.vigilant.data.reference.PinnWireAccount(http, { keyStore.current(ApiProvider.PINNWIRE) }, usage, json)
     /** PropLine's plan per key (quota headers): the paid key is found and goes first (Tj, 2026-10-16, TCL56). */
     val propLineAccount = com.tjshea.vigilant.data.reference.PropLineAccount(http, { keyStore.current(ApiProvider.PROPLINE) }, usage)
 

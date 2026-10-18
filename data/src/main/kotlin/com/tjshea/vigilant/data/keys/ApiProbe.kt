@@ -28,6 +28,7 @@ class ApiProbe(
     private val http: OkHttpClient,
     private val meter: UsageMeter,
     private val parlayAccount: ParlayAccount?,
+    private val pinnWireAccount: com.tjshea.vigilant.data.reference.PinnWireAccount? = null,
     private val clock: () -> Long = System::currentTimeMillis,
     private val hosts: Hosts = Hosts(),
 ) {
@@ -236,7 +237,12 @@ class ApiProbe(
             when {
                 r.code == 401 || r.code == 403 -> { meter.recordBalance(policy, key, null, inactive = true); false to refused(r.code) }
                 r.code == 429 -> { meter.recordDepleted(policy, key, "today's requests are used up", null); true to "Accepted, but today's requests are used up." }
-                r.isSuccessful -> { meter.recordCall(policy, key, 1); true to "Active and accepted · this test used 1 request. It sends no usage figure, so the meter shows the app's own count of 100 a day." }
+                r.isSuccessful -> {
+                    meter.recordCall(policy, key, 1)
+                    val acct = if (wire) pinnWireAccount?.readOne(key) else null
+                    val says = acct?.let { c -> c.remaining?.let { "PinnWire says $it requests left today" + (c.limit?.let { l -> " of $l" } ?: "") } ?: ("its account read held " + (c.figures.entries.take(8).joinToString(", ") { (k, v) -> "$k=${v.toLong()}" }.ifBlank { "no numbers" }) + ", no daily figure I could use") }
+                    true to ("Active and accepted · this test used 1 request. " + (says?.plus(".") ?: "It sends no usage figure, so the meter shows the app's own count of 100 a day."))
+                }
                 else -> false to "Answered HTTP ${r.code}."
             }
         }

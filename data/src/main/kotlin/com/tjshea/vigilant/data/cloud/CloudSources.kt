@@ -154,6 +154,12 @@ class CloudSources(
     fun propLineHasRoom(now: Long): Boolean = propLine.roomForEv(now)
     suspend fun refreshPropLineAccounts(force: Boolean = false): Int = if (has(CloudKeys.PROPLINE)) propLineAccount.refresh(force, minAgeMs = 50 * 60_000L) else 0
 
+    /** PinnWire's own account read per key (free, TCL119): a key is spent only when PinnWire says so. Asked only while PinnWire is on ([sources] sets the flag; off = never called). */
+    private val pinnWireAccount = com.tjshea.vigilant.data.reference.PinnWireAccount(http, { keys(CloudKeys.PINNWIRE) }, usage, json)
+    @Volatile private var pinnWireWanted = false
+    suspend fun refreshPinnWireAccounts(force: Boolean = false): Int = if (pinnWireWanted && has(CloudKeys.PINNWIRE)) pinnWireAccount.refresh(force, minAgeMs = 10 * 60_000L) else 0
+    fun pinnWirePlans(): String = keys(CloudKeys.PINNWIRE).mapIndexedNotNull { i, k -> pinnWireAccount.last[k]?.let { c -> "#${i + 1} ${if (c.valid == false) "refused" else "left ${c.remaining ?: "unknown"}/${c.limit ?: "?"}"}" } }.joinToString(", ").ifBlank { "none read" }
+
     private fun has(name: String) = keys(name).isNotEmpty()
 
     fun sgoActive(s: ScanSettings) = s.sgoPro && has(CloudKeys.SGO) && !sgoClient.down()
@@ -190,6 +196,7 @@ class CloudSources(
         // Switched off (or its socket switch off) the sockets are closed: nothing is held open or sent to BoltOdds.
         if (!boltActive(s) || !s.gates.boltSocket) boltFeed.close()
         sxSocketWanted = s.gates.useSxBet && s.gates.sxSocket
+        pinnWireWanted = s.usePinnacle && s.gates.usePinnwire
         if (!sxSocketWanted) sxbet.stream?.close()
         kalshiSocketWanted = s.useKalshi && s.gates.kalshiSocket && kalshiSigner != null
         if (!kalshiSocketWanted) kalshiStream.close()
