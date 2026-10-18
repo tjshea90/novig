@@ -1,12 +1,12 @@
 {
  "v": 1,
- "holder": "56f5bf",
- "label": "acct-5d1e2d",
- "kind": "chat",
- "task": "chat: diagnose sockets not live",
- "since": 1792358695,
- "sinceIso": "2026-10-18T21:24:55Z",
- "hb": 1792361197,
- "hbIso": "2026-10-18T22:06:37Z",
+ "holder": "a3eb92",
+ "label": "acct-7542bf",
+ "kind": "interactive",
+ "task": "Tj FORCE: v1.0 big update (messages, live monitor, live dashboard GitHub/phone, P/L slate graph, engine tab, usage meters, settings audit, API audits, tuning, full tests, release 1.0)",
+ "since": 1792361336,
+ "sinceIso": "2026-10-18T22:08:56Z",
+ "hb": 1792361336,
+ "hbIso": "2026-10-18T22:08:56Z",
  "leaseS": 1200
 }
