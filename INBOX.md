@@ -392,3 +392,8 @@ Force
 ```
 force. Bring this checkout up to date and prove you can use the new tools. Run: git fetch origin main && git merge origin/main (resolve any conflict by keeping both sides, then run bash tools/test_coord.sh). Then run: python3 tools/engine_set.py --show vigGuards.bidDeployKelly (it should print 20). Then read research/review/CHANGES.md (last entry) and CLAUDE.md's section "Any Claude session may change any setting or switch except STOP ALL". Reply with what happened. Do not press or change STOP ALL, and do not touch the dead-man rules.
 ```
+
+## 2026-10-18T07:41:27Z
+```
+force. Bring this checkout up to date and prove you can use the new tools. Run: git fetch origin main && git merge origin/main (resolve any conflict by keeping both sides, then run bash tools/test_coord.sh). Then run: python3 tools/engine_set.py --show vigGuards.bidDeployKelly (it should print 20). Then read research/review/CHANGES.md (last entry) and CLAUDE.md's section "Any Claude session may change any setting or switch except STOP ALL". Reply with what happened. Do not press or change STOP ALL, and do not touch the dead-man rules.
+```
