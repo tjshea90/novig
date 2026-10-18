@@ -323,6 +323,13 @@ to start worrying about only after it happens on this project too:
 
 **Standing instruction from Tj (2026-10-18, verbatim):** "Any time you are ever mentioned anywhere in this repo or project as your id number, add the name tj outlook." Same mechanism as mirage: write **acct-7542bf (tj outlook)** wherever a person reads it; the tag stays the key. `coord.py` `ACCOUNT_NAMES` and `tell_tj.py` carry both names.
 
+## Any Claude session may change any setting or switch except STOP ALL (Tj, 2026-10-18, TCL113, permanent)
+
+**Standing instruction from Tj (2026-10-18, verbatim):** "I want any Claude session to be able to change and toggle on and off any setting and any switch anywhere in the app and on GitHub except the stop all master switch" and "Do all the changes necessary so that Claude accounts have full access to the GitHub engine and vigilant app except the stop all button". Also: "I need Claude to have full permission to start up the GitHub engine when scheduled, even if the toggles in my app are off".
+- **How:** `python3 tools/engine_set.py path=value ... [--on|--off] --why "..."` writes `cloud-config/settings.json` (a plain push, one commit) marked `device: claude:<account>`: engine hours, engine trading off/paper/live, money limits and caps, Kelly, bid and bet rules, API and socket switches, Run/Stop, the cloud scan switch. The engine reads it at once; the phone adopts it next time it looks (`CloudClaudeConfig`, `CloudLink.adoptClaudeConfig`) and publishes its own copy, so both show the same. `--on` starts the engine at its schedule even when the app's toggles are off. Workflows, secrets' use and the repo are changed by the sessions as before. Tests: `CloudClaudeConfigTest`.
+- **STOP ALL (`killed`) is Tj's alone:** a session never presses, releases or edits it (the tool refuses; the phone keeps its own value whatever a session writes), and no session ever starts the engine over it. The dead-man switch and Novig's location/device stand-downs stay protected, and keys are never read, printed or committed.
+- Log every change in `research/review/CHANGES.md` with a revert rule. A change made on GitHub reaches an app that is closed the next time it opens.
+
 ## Work without the lease, and requests are relayed to the lease holder (Tj, 2026-10-18, permanent)
 
 **Standing instruction from Tj (2026-10-18, verbatim, shortened):** "Any claude session may alter anything even if it doesn't hold the lease, as long as it will not break anything" and "no matter which Claude account I am talking to, if I ask for modifications, the message is automatically relayed to the Claude account holding the lease and it should read the prompt and begin the answer as soon as possible".
