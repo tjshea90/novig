@@ -1,0 +1,39 @@
+name: Sportmicro probe (Tj, 2026-10-18, TCL118b)
+
+# Free, no Claude usage. Tests whether Sportmicro's live score socket beats ESPN for the live lane.
+# Needs the repo secret SPORTMICRO_API_KEY (Tj's free Sportmicro key; never put it in a chat or a file).
+# Run it during live NBA/NHL/NFL games: Actions > Sportmicro probe > Run workflow. Results: Release `sportmicro-probe` (REPORT.txt, frames, ESPN changes). Read-only; places no orders.
+on:
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: "how long to listen (seconds)"
+        default: "900"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sportmicro-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - run: pip install websockets==13.1
+      - run: python3 -I tools/sportmicro_probe.py selftest
+      - name: Probe
+        env:
+          SPORTMICRO_API_KEY: ${{ secrets.SPORTMICRO_API_KEY }}
+        run: python3 tools/sportmicro_probe.py out/sportmicro "${{ github.event.inputs.seconds || '900' }}"
+      - name: Publish (keyless)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view sportmicro-probe >/dev/null 2>&1 || gh release create sportmicro-probe --title "Sportmicro probe (keyless)" --notes "Written by .github/workflows/sportmicro-probe.yml. Replaced each run."
+          gh release upload sportmicro-probe out/sportmicro/* --clobber
