@@ -64,12 +64,6 @@ fun LiveScreen(
     val shown by rememberUpdatedState(onShown)
     // The status lines under the switches ([UiState.tailTrade], [UiState.labStatus]) are asked for every second or two while this tab shows.
     LaunchedEffect(Unit) { while (true) { shown(); kotlinx.coroutines.delay(1_500) } }
-    val clock = rememberNow(1_000)
-    val tick = maxOf(now, clock)
-    val board = remember(s, state.cloudUi.status, state.cloudUi.trades, light, state.bets, tick / 1_000L) {
-        if (s.liveOnGitHub) LiveBoard.github(s, state.cloudUi.status, light.githubTrend, LiveBoard.githubToday(state.cloudUi.trades, tick), tick)
-        else LiveBoard.phone(s, light.phoneStats, light.status.running, light.phoneSockets, light.phoneTrend, phoneToday(state, tick), tick)
-    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -84,13 +78,13 @@ fun LiveScreen(
             verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
         ) {
             WhereSwitch(s, onUpdate)
-            LiveBoardCard(board, tick)
+            LiveBoardHost(state, light, now)
             LiveMasterRow(s, onUpdate)
 
             SectionTitle("Controls")
             LiveNote(if (s.liveOnGitHub) "Changes reach GitHub within seconds (they ride the settings it reads every 3 s)." else "Changes apply on this phone at once.")
             TailLiveBlock(state, onUpdate)
-            if (!s.liveOnGitHub) LightStatus(s, light, tick)
+            if (!s.liveOnGitHub) LightStatus(s, light, now)
 
             SectionTitle("Sockets")
             LiveNote(if (s.liveOnGitHub) "On GitHub: the runner holds BoltOdds, Kalshi and SX Bet; this phone keeps only Novig's feed for the bids." else "On this phone: it holds the sockets; the runner reads those feeds by request for its pregame scan.")
@@ -117,6 +111,19 @@ fun LiveScreen(
         }
         }
     }
+}
+
+/** The board with its own one-second clock, so only the board redraws every second, not the switches under it (compose-performance: read a fast-changing value as low as it is needed). */
+@Composable
+private fun LiveBoardHost(state: UiState, light: MainViewModel.LightUi, now: Long) {
+    val s = state.settings
+    val clock = rememberNow(1_000)
+    val tick = maxOf(now, clock)
+    val board = remember(s, state.cloudUi.status, state.cloudUi.trades, light, state.bets, tick / 1_000L) {
+        if (s.liveOnGitHub) LiveBoard.github(s, state.cloudUi.status, light.githubTrend, LiveBoard.githubToday(state.cloudUi.trades, tick), tick)
+        else LiveBoard.phone(s, light.phoneStats, light.status.running, light.phoneSockets, light.phoneTrend, phoneToday(state, tick), tick)
+    }
+    LiveBoardCard(board, tick)
 }
 
 /** Today's live bets on this phone (the Live light / tail lane's own, Eastern day). */
