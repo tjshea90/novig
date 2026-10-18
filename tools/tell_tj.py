@@ -32,7 +32,8 @@ def me():
     try:
         out = subprocess.run(["python3", os.path.join(os.path.dirname(__file__), "coord.py"), "whoami"], capture_output=True, text=True, timeout=20).stdout
         m = re.search(r"acct-[0-9a-f]{6}", out)
-        return "claude:" + (m.group(0) if m else "session")
+        n = {"acct-5d1e2d": "mirage"}.get(m.group(0)) if m else None  # Tj, 2026-10-18: name the account beside its id
+        return "claude:" + (m.group(0) if m else "session") + (" (%s)" % n if n else "")
     except Exception:
         return "claude:session"
 

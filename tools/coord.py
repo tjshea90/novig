@@ -193,6 +193,8 @@ def describe(lease, t):
     who = lease.get("holder") or "?"
     if lease.get("label") and "/" not in str(who):
         who = "%s/%s" % (lease["label"], who)
+    lab = str(lease.get("label") or str(who).split("/")[0])
+    who = str(who).replace(lab, named(lab), 1) if lab in ACCOUNT_NAMES else who
     return "%s (%s, last heartbeat %d min ago, working on: %s)" % (who, lease.get("kind", "?"), age, (lease.get("task") or "-")[:80])
 
 
