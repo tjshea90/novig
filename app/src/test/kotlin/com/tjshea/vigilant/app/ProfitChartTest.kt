@@ -103,60 +103,41 @@ class ProfitChartTest {
         assertTrue(month.size in 2..20)
     }
 
-    // ---- the card -----------------------------------------------------------------------------------------------------------
+    // ---- the card (Tj, 2026-10-18, TCL122-6: slates, one fixed start) -----------------------------------------------------------
 
     @Test
-    fun `the chips set the window and the numbers are what happened inside it`() {
+    fun `today is the newest slate, and the chips switch to the slates day by day`() {
         show()
-        compose.onNodeWithTag("profitRange-ALL").assertIsSelected()
-        // All time: 10 bets, 5 won and 5 lost: profit 0.
-        compose.onAllNodesWithText("Profit in view").assertCountEquals(1)
-        compose.onNodeWithText("+\$1.00").assertDoesNotExist()
-        compose.onNodeWithTag("profitRange-WEEK").performClick()
-        compose.onNodeWithTag("profitRange-WEEK").assertIsSelected()
-        // The last 7 days hold the bets from 0..6 days ago: 7 bets, 4 won (+4) and 3 lost (-3) = +$1.00.
-        compose.onNodeWithText("+\$1.00").assertExists()
-        compose.onNodeWithTag("profitRange-TODAY").performClick()
-        compose.onNodeWithTag("profitRange-YESTERDAY").assertExists()
-        compose.onNodeWithTag("profitRange-THIS_WEEK").assertExists()
-        compose.onNodeWithTag("profitRange-TWO_DAYS").assertExists()
-        compose.onNodeWithTag("profitRange-THREE_DAYS").assertExists()
-        compose.onNodeWithTag("profitRange-MONTH").assertExists()
-    }
-
-    @Test
-    fun `pinching in narrows the window and dragging moves it`() {
-        show()
-        fun window(): String = compose.onNodeWithTag("profitCanvas").fetchSemanticsNode().config.getOrNull(SemanticsProperties.ContentDescription)!!.first()
-        val before = window()
+        compose.onNodeWithTag("profitRange-TODAY").assertIsSelected()
+        // The newest slate: one bet won at cost 0.5 on a $1 stake.
+        compose.onNodeWithTag("profitSlateLine").assertExists()
+        compose.onNodeWithText("This slate").assertExists()
+        compose.onNodeWithTag("profitCanvas").assertExists()
         compose.onRoot().captureRoboImage("screenshots/4t_profit_chart.png")
-        compose.onNodeWithTag("profitCanvas").performTouchInput { pinch(Offset(centerX - 40f, centerY), Offset(centerX - 200f, centerY), Offset(centerX + 40f, centerY), Offset(centerX + 200f, centerY)) }
-        compose.waitForIdle()
-        val zoomed = window()
-        assertFalse("pinch changed the window: $before -> $zoomed", before == zoomed)
-        compose.onNodeWithTag("profitCanvas").performTouchInput { swipeRight() }
-        compose.waitForIdle()
-        assertFalse("a drag moved it: $zoomed -> ${window()}", zoomed == window())
-        // Double-tap goes back to the range.
-        compose.onNodeWithTag("profitCanvas").performTouchInput { doubleClick() }
-        compose.waitForIdle()
-        assertEquals(before, window())
+        compose.onNodeWithTag("profitRange-YESTERDAY").performClick()
+        compose.onNodeWithTag("profitRange-YESTERDAY").assertIsSelected()
+        compose.onNodeWithText("-\$1.00").assertExists()
+        // The last 7 slates hold the bets from 0..6 days ago: 4 won (+4) and 3 lost (-3) = +$1.00, a bar each and a row each.
+        compose.onNodeWithTag("profitRange-WEEK").performClick()
+        compose.onNodeWithTag("profitBars").assertExists()
+        compose.onAllNodesWithText("+\$1.00").fetchSemanticsNodes().isNotEmpty().let { assertTrue(it) }
+        compose.onRoot().captureRoboImage("screenshots/4u_profit_chart_days.png")
+        compose.onNodeWithTag("profitRange-MONTH").assertExists()
+        compose.onNodeWithTag("profitRange-ALL").assertExists()
     }
 
     @Test
-    fun `full screen opens and closes, and it is the same graph`() {
+    fun `the balance runs from the first day's stakes`() {
         show()
-        compose.onNodeWithTag("profitFullScreen").performClick()
-        compose.onNodeWithTag("profitChartFull").assertIsDisplayed()
-        compose.onRoot().captureRoboImage("screenshots/4u_profit_chart_full.png")
-        compose.onNodeWithTag("profitChartClose").performClick()
-        compose.onNodeWithTag("profitChartFull").assertDoesNotExist()
+        // Start $1.00 (the first day's one $1 bet), 5 won and 5 lost: balance $1.00.
+        compose.onNodeWithTag("profitBalance").assertTextEquals("Balance \$1.00")
+        compose.onNodeWithText("Started at \$1.00", substring = true).assertExists()
     }
 
     @Test
-    fun `with fewer than two settled bets it says so instead of drawing nothing`() {
-        show(bets.take(1))
-        compose.onNodeWithTag("profitChartReadout").assertExists()
+    fun `with no bets it says so`() {
+        show(emptyList())
+        compose.onNodeWithText("No bets yet.").assertExists()
         compose.onNodeWithTag("profitCanvas").assertDoesNotExist()
     }
 }
