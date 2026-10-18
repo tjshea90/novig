@@ -1,6 +1,7 @@
 package com.tjshea.vigilant.app
 
 import com.tjshea.vigilant.data.cloud.CloudClient
+import com.tjshea.vigilant.data.cloud.CloudClaudeConfig
 import com.tjshea.vigilant.data.cloud.CloudConfig
 import com.tjshea.vigilant.data.cloud.CloudKeys
 import com.tjshea.vigilant.data.cloud.CloudLatest
