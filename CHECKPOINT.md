@@ -1,21 +1,23 @@
-# CHECKPOINT 3692 — read me first, then TASKS.md
+# CHECKPOINT 3693 — read me first, then TASKS.md
 
-**Written:** 2026-10-18T23:36:57Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-qlj3pq` · **builds on:** `8f0df5f46` (this checkpoint is the commit after it)
+**Written:** 2026-10-18T23:53:26Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-qlj3pq` · **builds on:** `9e7146256` (this checkpoint is the commit after it)
 
 ## Just done
-answered CH1-CH3; standby label not found in code, asked Tj for screenshot
+CH3 fixed: Kalshi/Polymarket show active
 
 ## Do this next
-CH3: verify Kalshi/Polymarket/SX win books in fair line (freshestWins/SOURCE_ORDER); CH2 needs live results; CH1 ships with next release
+ship CH1+CH3 with next release batch
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  d770f6d7b ckpt 3692: answered CH1-CH3; standby label not found in code, asked Tj for screenshot
   8f0df5f46 ckpt 3691: CH1 live status line shows engine note; CH2/CH3 written
   28536d5d0 ckpt 3690: TCL122 v1.0 complete: released v1.0.0 (340), engine restarted and verified 
   7c08b817b ckpt 3689: v1.0.0 gated+pushed (3914 green), release.yml triggered, engine restarted o
@@ -25,5 +27,7 @@ CH3: verify Kalshi/Polymarket/SX win books in fair line (freshestWins/SOURCE_ORD
   1ba41163e ckpt 3685: TCL122-5 SX socket freshness fix + API audit doc; TCL122-9 settings regroup
   7f8a89ad4 ckpt 3684: TCL122-4 phone half written: LiveBoard model, LightUi phone sockets/stats/t
   e8159d38e ckpt 3683: TCL122-4 engine half: liveOnGitHub/phoneSockets/phoneLive predicates; forCl
-  fc623715e ckpt 3682: TCL122-6 SlateProfit model (slate days, fixed start) + new profit card (Tod
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
