@@ -524,3 +524,8 @@ Questions:
 2) is the sx bet socket working? Is it providing odds being used in vigilant? Is it providing live scores and odds for the live betting features? How good is it?
 3) is the sportmicro api working? The socket?
 ```
+
+## 2026-10-18T19:29:55Z
+```
+Change coord.py
+```
