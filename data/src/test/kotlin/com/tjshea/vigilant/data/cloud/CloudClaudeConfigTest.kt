@@ -32,7 +32,7 @@ class CloudClaudeConfigTest {
         val next = CloudClaudeConfig.adopt(CloudConfig(on = true, device = "claude:x", settings = off), off)!!
         assertFalse(next.pausedByHand)
         assertTrue(next.gates.cloudScan)
-        val stillKilled = CloudClaudeConfig.adopt(CloudConfig(on = true, device = "claude:x", settings = off), off.copy(killed = true))!!
-        assertTrue("STOP ALL still wins over a wanted-on engine", stillKilled.killed && stillKilled.pausedByHand)
+        val killed = off.copy(killed = true)
+        assertNull("STOP ALL still wins over a wanted-on engine: nothing is un-paused", CloudClaudeConfig.adopt(CloudConfig(on = true, device = "claude:x", settings = off), killed))
     }
 }
