@@ -149,6 +149,9 @@ fun TrackerScreen(
     onShareBets: (com.tjshea.vigilant.app.BetShare.Range) -> Unit = {},
     shareBusy: Boolean = false,
     archiveNote: String? = null,
+    /** Pull to refresh (TCL122-3): grades and syncs every bet now and reads the engine's orders; [refreshing] holds the arrow until that is done. */
+    onRefresh: () -> Unit = {},
+    refreshing: Boolean = false,
 ) {
     val now = rememberNow(60_000)
     var view by rememberSaveable { mutableStateOf(initialView) }
@@ -249,8 +252,9 @@ fun TrackerScreen(
             )
         },
     ) { padding ->
+        VigilantPullToRefresh(busy = refreshing, onRefresh = onRefresh, modifier = Modifier.padding(padding).fillMaxSize()) {
         LazyColumn(
-            Modifier.padding(padding).fillMaxSize(),
+            Modifier.fillMaxSize().testTag("trackerList"),
             state = listState,
             contentPadding = PaddingValues(12.dp, 0.dp, 12.dp, 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -450,6 +454,7 @@ fun TrackerScreen(
                     }
                 }
             }
+        }
         }
     }
 

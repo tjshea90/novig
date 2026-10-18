@@ -821,6 +821,8 @@ private fun VigilantRoot(
                     onNovigOnly = { on -> vm.updateSettings { it.copy(trackerNovigOnly = on) }; if (on) vm.refreshNovigOnly() },
                     onHideLocked = { on -> vm.updateSettings { it.copy(trackerHideLocked = on) } },
                     onCheckNovig = { vm.refreshNovigOnly(force = true) },
+                    onRefresh = vm::refreshTracker,
+                    refreshing = state.settling || state.cloudUi.refreshing,
                     actions = com.tjshea.vigilant.app.ui.BetActions(
                         onReplace = onReplaceBet,
                         onReread = vm::rereadBooks,
