@@ -448,3 +448,8 @@ The GitHub engine shows 0 resting bids.
 1) I'm still getting notifications that my bids are getting filled
 2) why are there 0 resting bids
 ```
+
+## 2026-10-18T16:42:38Z
+```
+Why isn't sx bet socket here?
+```
