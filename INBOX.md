@@ -373,3 +373,8 @@ Do the data analysis and sx live feed
 ```
 If a novig address is refused, all scanning across all apis should immediately be stopped completely. They should only scan fully when a GitHub runner address is accepted by novig 
 ```
+
+## 2026-10-18T15:33:19Z
+```
+Figure out sx team names and full mapping. Research the full sx bet docs for both the api and public channels. Search the Internet for it too.
+```
