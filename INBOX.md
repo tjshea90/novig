@@ -478,3 +478,8 @@ Yes, test both now
 ```
 Build the sportmicro test 
 ```
+
+## 2026-10-18T18:53:00Z
+```
+This says novig didn't answer but in parenthesis it is parlayapi not answering. Is it restarting novig erroneously?
+```
