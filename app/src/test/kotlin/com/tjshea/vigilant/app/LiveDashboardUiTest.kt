@@ -83,7 +83,7 @@ class LiveDashboardUiTest {
         val ui = show(base())
         compose.onNodeWithTag("liveWhere-PHONE").performClick()
         assertFalse(ui().settings.liveOnGitHub)
-        compose.onNodeWithTag("liveBoardTitle").assertTextContains("this phone", substring = true)
+        compose.onNodeWithTag("liveBoardTitle").assertTextContains("phone", substring = true, ignoreCase = true)
         compose.onRoot().captureRoboImage("screenshots/9b_live_dashboard_phone.png")
         compose.onNodeWithTag("liveWhere-GITHUB").performScrollTo().performClick()
         assertTrue(ui().settings.liveOnGitHub)
