@@ -95,7 +95,7 @@ class SxBetClient(
         return if (league.tennis) out.filter { (it.leagueLabel ?: "").startsWith(league.novigName, true) } else out
     }
 
-    /** Top of book for [hashes] from the taker's side, 100 per call, a few calls at once. */
+    /** Top of book (converted to the taker's asks, [SxBetConvert.takerBook]) for [hashes], 100 per call, a few calls at once. */
     suspend fun books(hashes: List<String>): Map<String, SxBetConvert.Book> {
         val gate = Semaphore(3)
         val parts = coroutineScope {
@@ -103,9 +103,8 @@ class SxBetClient(
                 async {
                     gate.withPermit {
                         val url = "$baseUrl/orders-v3/odds/best".toHttpUrl().newBuilder()
-                            .addQueryParameter("marketHashes", chunk.joinToString(","))
-                            .addQueryParameter("showTakerPerspective", "true").build()
-                        SxBetConvert.parseBest(get(url.toString(), withKey = true), json)
+                            .addQueryParameter("marketHashes", chunk.joinToString(",")).build()
+                        SxBetConvert.parseBest(get(url.toString(), withKey = true), json, clock())
                     }
                 }
             }.awaitAll()

@@ -14,9 +14,10 @@ import java.math.BigDecimal
 /**
  * SX Bet (SXBET_API.md): a peer-to-peer exchange whose books are the sharp-ish price of a real market. Pure parsing and building, no I/O.
  *
- * Odds are implied probabilities scaled by 10^20, as strings. A maker resting at `p` offers the taker `1 - p` on the other side; the book is read with
- * `showTakerPerspective=true`, so outcome one's level is what a taker pays to BUY outcome one (its ask) and outcome two's is the ask for outcome two. An exchange
- * with an uncrossed book has `ask1 + ask2 >= 1`; a pair that sums below 1 means the frame was the makers' (a crossed read) and the market is dropped, never priced.
+ * Odds are implied probabilities scaled by 10^20, as strings, in the MAKER's frame on every route and channel Vigilant reads (the docs' own rule: a maker resting at `p` offers the taker
+ * `1 - p` on the other side, `takerOdds = 1 - p`). So the maker level on outcome two is what a taker pays to BUY outcome one, and the maker level on outcome one is the ask for outcome two:
+ * [takerBook] does that conversion once, for REST and the socket alike (the `showTakerPerspective` flag is not used, so no unverified server behaviour is relied on). An exchange with an
+ * uncrossed book has `ask1 + ask2 >= 1`; a pair that sums below 1 (a crossed read, or a frame mix-up) is dropped by [pair], never priced.
  */
 object SxBetConvert {
     const val BOOK_KEY = "sxbet"
@@ -56,7 +57,8 @@ object SxBetConvert {
     /** One top-of-book level: the implied probability a taker pays and the taker stake that clears it, in dollars. */
     data class Level(val prob: Double, val sizeUsdc: Double)
 
-    data class Book(val marketHash: String, val one: Level?, val two: Level?)
+    /** A market's top of book as a TAKER sees it: [one] is the ask for outcome one, [two] for outcome two; [atMs] is when it was read or pushed (0 = unknown). */
+    data class Book(val marketHash: String, val one: Level?, val two: Level?, val atMs: Long = 0L)
 
     fun toProb(raw: String?): Double? = raw?.toBigDecimalOrNull()?.divide(SCALE)?.toDouble()
 
@@ -75,17 +77,27 @@ object SxBetConvert {
     }
 
     /** `GET /orders-v3/odds/best` (or one `best_odds_v3:global` publication, wrapped by the caller) -> rows. */
-    fun parseBest(body: String, json: Json): List<Book> {
+    fun parseBest(body: String, json: Json, atMs: Long = 0L): List<Book> {
         val root = json.parseToJsonElement(body).jsonObject
         if ((root["status"] as? JsonPrimitive)?.contentOrNull != "success") return emptyList()
         val rows = root["data"]?.jsonObject?.get("bestOdds")?.jsonArray ?: return emptyList()
-        return rows.mapNotNull { bookOf(it) }
+        return rows.mapNotNull { bookOf(it, atMs) }
     }
 
-    fun bookOf(e: kotlinx.serialization.json.JsonElement): Book? {
+    /** One best-odds row (REST `bestOdds[]` element or a `best_odds_v3:global` publication, both in the maker frame) as a taker's [Book]. */
+    fun bookOf(e: kotlinx.serialization.json.JsonElement, atMs: Long = 0L): Book? {
         val o = e as? JsonObject ?: return null
         val h = (o["marketHash"] as? JsonPrimitive)?.contentOrNull ?: return null
-        return Book(h, level(o["outcomeOne"]), level(o["outcomeTwo"]))
+        return takerBook(h, level(o["outcomeOne"]), level(o["outcomeTwo"]), atMs)
+    }
+
+    /**
+     * Maker levels to taker asks: the maker on outcome two (probability p2, stake S2) is what a taker on outcome one bets against, at `1 - p2`; the taker's stake that clears it is
+     * `S2 * (1 - p2) / p2` (the maker risks S2 to collect S2 / p2 in all).
+     */
+    fun takerBook(hash: String, makerOne: Level?, makerTwo: Level?, atMs: Long = 0L): Book {
+        fun ask(m: Level?): Level? = m?.takeIf { it.prob > 0.0 && it.prob < 1.0 }?.let { Level(1.0 - it.prob, it.sizeUsdc * (1.0 - it.prob) / it.prob) }
+        return Book(hash, ask(makerTwo), ask(makerOne), atMs)
     }
 
     /** Which market types make up a league's lines: the team sports play to a finish with overtime, the rest are one-on-one. */
@@ -115,7 +127,7 @@ object SxBetConvert {
                         val s1 = sideOf(m.outcomeOneName, away, home) ?: return@mapNotNull null
                         val s2 = sideOf(m.outcomeTwoName, away, home) ?: return@mapNotNull null
                         if (s1 == s2) return@mapNotNull null
-                        RefBookMarket(BOOK_KEY, "SX Bet", LineKind.MONEYLINE, listOf(RefQuote(s1, d1, null), RefQuote(s2, d2, null)), now)
+                        RefBookMarket(BOOK_KEY, "SX Bet", LineKind.MONEYLINE, listOf(RefQuote(s1, d1, null), RefQuote(s2, d2, null)), b.atMs.takeIf { it > 0 } ?: now)
                     }
                     in spr -> {
                         val line = m.line ?: return@mapNotNull null
@@ -124,7 +136,7 @@ object SxBetConvert {
                         val s1 = sideOf(m.outcomeOneName, away, home) ?: return@mapNotNull null
                         val s2 = sideOf(m.outcomeTwoName, away, home) ?: return@mapNotNull null
                         if (s1 == s2) return@mapNotNull null
-                        RefBookMarket(BOOK_KEY, "SX Bet", LineKind.SPREAD, listOf(RefQuote(s1, d1, line), RefQuote(s2, d2, -line)), now)
+                        RefBookMarket(BOOK_KEY, "SX Bet", LineKind.SPREAD, listOf(RefQuote(s1, d1, line), RefQuote(s2, d2, -line)), b.atMs.takeIf { it > 0 } ?: now)
                     }
                     in tot -> {
                         val line = m.line ?: return@mapNotNull null
@@ -132,7 +144,7 @@ object SxBetConvert {
                         val over1 = m.outcomeOneName.startsWith("Over", true)
                         val over2 = m.outcomeTwoName.startsWith("Over", true)
                         if (over1 == over2) return@mapNotNull null
-                        RefBookMarket(BOOK_KEY, "SX Bet", LineKind.TOTAL, listOf(RefQuote(if (over1) Side.OVER else Side.UNDER, d1, line), RefQuote(if (over1) Side.UNDER else Side.OVER, d2, line)), now)
+                        RefBookMarket(BOOK_KEY, "SX Bet", LineKind.TOTAL, listOf(RefQuote(if (over1) Side.OVER else Side.UNDER, d1, line), RefQuote(if (over1) Side.UNDER else Side.OVER, d2, line)), b.atMs.takeIf { it > 0 } ?: now)
                     }
                     else -> null
                 }
