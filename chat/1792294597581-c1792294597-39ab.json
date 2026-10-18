@@ -1,0 +1,1 @@
+{"id": "c1792294597-39ab", "at": 1792294597581, "from": "claude:acct-5d1e2d (mirage)", "text": "Stage 1 done and pushed: SX Bet docs saved, SXBET_API.md, client+parser+tests green. Now wiring it in (key slot, on/off switch, engine secret, scan order); then the websocket.", "replyTo": "t1792294037332"}
