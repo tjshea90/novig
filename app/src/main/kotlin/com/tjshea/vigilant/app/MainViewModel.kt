@@ -2301,6 +2301,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             )
             add("Pinnodds: " + if (c.pinnRunner.running) "live engine running" else "live engine not running")
             val eng = _state.value.cloudUi.status
+            if (st.cloudDrives && eng != null && eng.sockets.isNotEmpty()) eng.sockets.forEach { add(it) }
             if (st.engineLive && eng != null && eng.liveNote.isNotBlank()) add("GitHub engine's live lane: ${eng.liveNote}" + (eng.liveStopped.takeIf { it.isNotBlank() }?.let { " (stopped: $it)" } ?: ""))
         }
     }.getOrDefault(emptyList())

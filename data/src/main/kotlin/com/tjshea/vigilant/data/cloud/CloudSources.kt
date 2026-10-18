@@ -118,6 +118,17 @@ class CloudSources(
         http, json, altBaseUrl = KalshiClient.ALT_URL, usage = usage,
         signer = { kalshiSigner }, stream = kalshiStream, socketOn = { kalshiSocketWanted },
     )
+    /** The engine's sockets in words, one line each (the Live dashboard on the phone shows them while the engine is the scan). */
+    fun socketLines(s: ScanSettings, now: Long = System.currentTimeMillis()): List<String> {
+        fun ago(ms: Long) = if (ms <= 0L) "never" else "${((now - ms) / 1000L).coerceAtLeast(0)} s ago"
+        return buildList {
+            add("Engine BoltOdds: socket ${if (s.gates.boltSocket) "ON" else "OFF"} · lines ${if (boltFeed.lines.live) "live" else "not live"} · props ${if (boltFeed.props.live) "live" else "not live"}")
+            add("Engine Kalshi: " + (if (kalshiSigner == null) "no key on GitHub (public reads)" else "socket ${if (kalshiSocketWanted) "ON" else "OFF"} · ${if (kalshiStream.live) "live" else "not live"} · ${kalshiStream.subscribedCount} of ${kalshiStream.wantedCount} markets"))
+            val sx = sxbet.stream
+            add("Engine SX Bet: " + (if (!s.gates.useSxBet) "API off" else if (sx == null) "socket ${if (sxSocketWanted) "ON" else "OFF"} · no connection yet (opens with the first live game or scan)" else "socket ${if (sxSocketWanted) "ON" else "OFF"} · ${sx.health()} · last push ${ago(sx.lastMessageMs)} · ${sx.fixtureStatus.values.count { it == 2 }} games in play"))
+        }
+    }
+
     /** One line for the engine's start-up log and status: whether Kalshi's key reached the engine and whether its socket is wanted. */
     fun kalshiNote(): String = if (kalshiSigner == null) "Kalshi: public reads (no key on GitHub)" else "Kalshi: signed key present, socket ${if (kalshiSocketWanted) "on" else "off"}"
     private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keys(CloudKeys.ODDS_API) }, usage), json)

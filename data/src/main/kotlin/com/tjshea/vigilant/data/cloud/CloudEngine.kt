@@ -75,6 +75,8 @@ class CloudEngine(
     private val novigAddress: () -> String = { "" },
     /** The tunnel address of the live status server, or blank ([CloudLive]); read each time a status is built. */
     private val liveUrl: () -> String = { "" },
+    /** One line per socket the engine holds, for the status file. */
+    private val socketLines: () -> List<String> = { emptyList() },
     /** Ends the job early when Novig refuses this runner's address, so the workflow draws another ([AddressWatch]); null = never. */
     private val addressWatch: AddressWatch? = null,
     /** True while Novig refuses this machine's address: nothing is scanned, bid, traded or asked of any API (Tj, 2026-10-18, TCL116) until the job ends and a new runner is drawn. */
@@ -543,6 +545,7 @@ class CloudEngine(
             deskActive = !idle && deskStatus?.active == true, deskNote = deskStatus?.note.orEmpty().take(500), deskResting = deskStatus?.resting ?: 0, deskRestingDollars = deskStatus?.restingDollars ?: 0.0,
             deskAtMs = deskStatus?.atMs ?: 0L, deskStopped = deskStatus?.stopped.orEmpty().take(200),
             liveActive = !idle && liveStatus?.active == true, liveNote = liveStatus?.note.orEmpty().take(400), liveStopped = liveStatus?.stopped.orEmpty().take(200), liveAtMs = liveStatus?.atMs ?: 0L,
+            sockets = runCatching { socketLines() }.getOrDefault(emptyList()),
             resting = governor.resting(clock()).map { r -> "${ApiToggles.name(r.id)} until ${java.time.Instant.ofEpochMilli(r.untilMs).atZone(java.time.ZoneOffset.UTC).toLocalTime().withSecond(0).withNano(0)} UTC: ${r.reason}" },
         )
     }

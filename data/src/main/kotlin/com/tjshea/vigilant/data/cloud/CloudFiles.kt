@@ -173,6 +173,8 @@ data class CloudStatus(
     val liveNote: String = "",
     val liveStopped: String = "",
     val liveAtMs: Long = 0L,
+    /** The engine's own sockets in words (Tj, 2026-10-18, TCL121/chat: "diagnose the sockets that are not live"): the phone's dashboard shows these, not its own idle ones, while the engine is the scan. */
+    val sockets: List<String> = emptyList(),
 ) {
     /** The engine's live lane is running now and its heartbeat is recent: the phone's own live tail lane stands down. */
     fun liveLive(now: Long): Boolean = liveActive && heartbeatMs > 0 && now - heartbeatMs < DESK_STALE_MS

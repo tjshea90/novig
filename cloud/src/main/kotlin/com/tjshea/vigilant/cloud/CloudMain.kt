@@ -352,6 +352,7 @@ fun main(args: Array<String>) = runBlocking {
         prepare = { s -> latestSettings.set(s); novigKeyed?.configure(s) },
         novigRoute = { novigKeyed?.route(System.currentTimeMillis()) ?: CloudNovig.PUBLIC_ONLY },
         liveUrl = { liveUrlRef.get() },
+        socketLines = { sources.socketLines(latestSettings.get() ?: com.tjshea.vigilant.data.scanner.ScanSettings()) },
         novigAddress = { novigKeyed?.addressWords(System.currentTimeMillis(), addressWatch?.count ?: 0) ?: "not tested (no Novig key on GitHub: public routes only)" },
         addressWatch = addressWatch,
         addressBlocked = { novigKeyed?.addressRefused(System.currentTimeMillis()) == true },
