@@ -101,11 +101,12 @@ import kotlin.math.roundToInt
  * settings"): what Vigilant does with a bet it found comes first (the Auto-bet and Bids tabs open from here too), then how it finds them, then the screen, then the data and help.
  */
 enum class SettingsGroup(val title: String, val about: String) {
-    BET("Betting & alerts", "What happens when a +EV bet is found: alerts, auto-bet, bids, your Novig account and limits"),
-    FIND("Finding bets", "What Vigilant and CrazyNinjaOdds scan, how fair odds are worked out, and what the lists show"),
-    LIVE("Live games & research", "The live engines (Pinnodds against Novig, live bids) and the recorders that place nothing"),
+    // Regrouped for v1.0 (Tj, 2026-10-18, TCL122-9: "only settings should be in settings. organize the settings"): the engine and money first, then what is scanned, then live, then the phone itself.
+    BET("Engine & money", "The GitHub engine, your Novig account, bet and bid rules, limits and alerts"),
+    FIND("Odds & scanning", "What is scanned, how fair odds are worked out, what the lists show, and every API"),
+    LIVE("Live", "The live taker and live bids (live games and where live runs are on the Live tab)"),
     SCREEN("On screen", "The floating widget"),
-    DATA("Data & help", "Diagnostics and the version"),
+    DATA("Data & help", "Research recorders, diagnostics and the version"),
 }
 
 /**
@@ -135,7 +136,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     MESSAGES("Messages from Claude", "Alerts, API problems and recommendations from Claude and the engine (bets and bids are on the Engine tab)", SettingsGroup.FIND),
 
     /** The scan on GitHub's computers, the token, and the permanent saving of bets, bids and history to GitHub (Tj, 2026-10-14). */
-    CLOUD("Cloud scan", "Run the scans on GitHub's computers: the phone only sets the settings and shows the list; bets, bids and history are saved to GitHub", SettingsGroup.FIND),
+    CLOUD("GitHub engine (cloud scan)", "The engine on GitHub's computers: on/off, its hours, engine trading, keys sent to GitHub, and saving history", SettingsGroup.BET),
 
     /** Pause, which scanner, which games, the background scan. */
     SCANNING("Scanning", "What Vigilant reads, which games, and checking in the background", SettingsGroup.FIND),
@@ -187,13 +188,13 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     USAGE("Usage details & keys backup", "Credits left on each feed, the day-by-day chart, and a backup of your keys", SettingsGroup.FIND),
 
     /** Pinnacle's live price on the Pinnodds WebSocket against Novig's lagging quote: the key, the switches and the limits (Tj, 2026-10-08). */
-    PINNODDS("Pinnodds live (needs its socket)", "Pinnacle's live price against Novig: key, paper or real bets, limits; only if you have a Pinnodds socket", SettingsGroup.LIVE),
+    PINNODDS("Live taker", "Live bets against a live fair (BoltOdds' average, SX Bet's mid, or a Pinnodds socket): the feed, paper or real, limits", SettingsGroup.LIVE),
 
     /** Post-only bids on Novig's live lines, priced under Pinnacle's live fair: paper, then real money, with presets and every number as a chip or a box (Tj, 2026-10-10). */
     LIVEBIDS("Live bids", "Bids on live games, kept fresh and pulled fast: presets, stake and every safeguard", SettingsGroup.LIVE),
 
     /** Research mode: one switch for every recorder that places nothing, the paper lab, and the one file to send Claude (Tj, 2026-10-09). */
-    RESEARCH("Research mode", "One switch for every recorder that places nothing, and the file to send Claude", SettingsGroup.LIVE),
+    RESEARCH("Research mode", "One switch for every recorder that places nothing, and the file to send Claude", SettingsGroup.DATA),
 
     /** The floating widget and the picture-in-picture window. */
     WIDGET("Widget & mini window", "The small window that floats over other apps", SettingsGroup.SCREEN),
@@ -526,19 +527,16 @@ private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> U
         SectionTitle(g.title, Modifier.testTag("settingsGroup-${g.name}"))
         if (autoBet) {
             SettingsRow(
-                title = "Auto-bet & presets",
-                summary = "The phone's own auto-bet (with the engine live, GitHub places the bets) · ${SettingsSummary.autoBet(s)}",
+                title = "Auto-bet rules",
+                summary = "Which bets are taken and how much (the GitHub engine bets under these rules) · ${SettingsSummary.autoBet(s)}",
                 tag = "settingsRow-AUTOBET",
                 onClick = onOpenAutoBet!!,
             )
         }
-        if (g == SettingsGroup.FIND && onOpenCno != null) {
-            SettingsRow(title = "CrazyNinjaOdds list (phone)", summary = "The phone's own CNO scanner view, no longer in the tab bar", tag = "settingsRow-CNOTAB", onClick = onOpenCno)
-        }
         if (bids) {
             SettingsRow(
-                title = "Bids (make orders)",
-                summary = "Its own tab · ${com.tjshea.vigilant.data.novig.trading.maker.BidMode.of(s).label} · ${MakerRulesText.summary(s)}",
+                title = "Bid rules",
+                summary = "Which bids go up and how big (on the Bids tab) · ${com.tjshea.vigilant.data.novig.trading.maker.BidMode.of(s).label} · ${MakerRulesText.summary(s)}",
                 tag = "settingsRow-BIDS",
                 onClick = onOpenBids!!,
             )
@@ -619,22 +617,20 @@ private fun ColumnScope.ScanningPage(s: ScanSettings, onUpdate: SettingsUpdate) 
         )
         Shadowed.startsWithinCut(s)?.let { Warn(it, "startsWithinCut") }
     }
-    // Live games (moved from the Feed's "Scan size (advanced)" in v0.89.35: which games are scanned is a Scanning choice).
-    SwitchRow(
-        "Include live games",
-        if (AppBook.isNovig) "Off by default: reference odds lag in-game, and Novig charges its taker fee once a game is live. " + LiveScanText.SWITCH_SUB
-        else "Off by default: in-game odds move faster than the feeds re-read them, so live edges are rarely real.",
-        s.includeLive,
-        enabled = !s.liveOnly,
-    ) { v -> onUpdate { it.copy(includeLive = v) } }
-    if (AppBook.isNovig) SwitchRow(
-        "Live games only mode",
-        "Only Pinnodds and Novig run and only live bets are listed. Every other API, CNO, bids and the auto-bet switch off; switching this off turns them back on and Include live games off.",
-        s.liveOnly, tag = "liveModeSwitch",
-    ) { v -> onUpdate { com.tjshea.vigilant.app.LiveOnly.set(it, v) } }
+    // Include live games and Live games only mode live on the Live tab now (TCL122-9: one home for each switch; the Live tab is the live control board).
+    Hint("Live games (in the feed, and where live runs: GitHub or this phone) are set on the Live tab.")
 
     // ---- Background scan (Vigilant for Novig) ------------------------------
-    if (AppBook.isNovig) BackgroundScanSection(s, onUpdate)
+    // The phone's own background scan only runs when the GitHub engine is not the scan (TCL122-9: a setting that does nothing now is hidden behind one line, not shown as if it mattered).
+    if (AppBook.isNovig) {
+        if (s.cloudDrives) {
+            var open by rememberSaveable { mutableStateOf(false) }
+            SectionTitle("This phone's own scan")
+            Hint("The GitHub engine is the scan now (Settings › Cloud scan), so this phone does not scan in the background. These settings matter only when the cloud scan is off.")
+            TextButton(onClick = { open = !open }, modifier = Modifier.testTag("phoneScanToggle")) { Text(if (open) "Hide the phone's scan settings" else "Show the phone's scan settings") }
+            if (open) BackgroundScanSection(s, onUpdate)
+        } else BackgroundScanSection(s, onUpdate)
+    }
 }
 
 /** Alerts: the push alerts' edge, the sharp books' say over them, and Android's permission for them. */
@@ -1332,19 +1328,6 @@ private fun ColumnScope.BettingTab(
         modifier = Modifier.fillMaxWidth(),
     )
     Hint("Your bankroll: the money you set aside for betting. Kelly stakes are a share of it.")
-    var deposited by remember(s.gates.moneyDeposited) { mutableStateOf(if (s.gates.moneyDeposited > 0) String.format(Locale.US, "%.0f", s.gates.moneyDeposited) else "") }
-    OutlinedTextField(
-        value = deposited,
-        onValueChange = { t ->
-            deposited = t.filter { it.isDigit() || it == '.' }.take(9)
-            onUpdate { it.copy(gates = it.gates.copy(moneyDeposited = deposited.toDoubleOrNull() ?: 0.0)) }
-        },
-        label = { Text("Money I have put in, all time $ (optional)") },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        modifier = Modifier.fillMaxWidth().testTag("moneyDepositedField"),
-    )
-    Hint("Total you have actually deposited, not counting winnings you bet again. The Tracker's Profit % of money put in divides by this. Leave it empty and the Tracker works it out from your bets: the least money that could have placed them all with winnings re-bet.")
     Text("Kelly fraction for suggested stakes", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.KELLY_CHOICES, s.kellyMultiplier, Format::kellyLabel) { v -> onUpdate { it.copy(kellyMultiplier = v) } }
     TypedNumberField(NumberSpecs.KELLY, NumberSpecs.KELLY.show(s.kellyMultiplier), "kellyField") { v -> onUpdate { it.copy(kellyMultiplier = v) } }
