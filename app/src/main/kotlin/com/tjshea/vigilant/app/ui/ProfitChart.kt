@@ -48,7 +48,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.tjshea.vigilant.data.tracker.ProfitSeries
 import com.tjshea.vigilant.data.tracker.SlateProfit
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import java.text.SimpleDateFormat
