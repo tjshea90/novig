@@ -113,6 +113,8 @@ class CloudLiveLane(
     private val tc: NovigTradingClient?,
     private val port: CloudOrderPort?,
     private val dir: File,
+    /** The one tracker of the engine's live fills, shared with [CloudPinnLane] (two copies of one file would go stale). */
+    private val tracker: BetTracker = BetTracker(File(dir.also { it.mkdirs() }, "live-tracker.json")),
     private val confirm: (ScanSettings) -> LiveConfirm? = { null },
     /** A fill as a ledger entry, the markets the engine's auto-bet holds, and a line for Tj. */
     private val onEntry: suspend (TradeEntry) -> Unit = {},
@@ -124,7 +126,6 @@ class CloudLiveLane(
     @Volatile private var settings: ScanSettings = ScanSettings()
     @Volatile private var haltedWhy: String? = null
     @Volatile private var up = false
-    private val tracker = BetTracker(File(dir.also { it.mkdirs() }, "live-tracker.json"))
     private val orders = tc?.let { TradingLiveOrders(it) }
     private val tailJournal = DayJournal(File(dir, "tail"), "tail-live", LiveRecord.serializer()) { it.atMs }
 
@@ -132,7 +133,7 @@ class CloudLiveLane(
         val s = settings
         val t = s.tailLive
         return LiveTradeRules(
-            enabled = s.engineLive, bet = realOrders(s),
+            enabled = s.engineLive && t.on, bet = realOrders(s),
             stake = if (s.apiMaxStake > 0.0) minOf(t.stake, s.apiMaxStake) else t.stake,
             maxPerGame = t.maxGame, maxPerDay = t.maxDay, haltLoss = t.haltLoss, halted = haltedWhy ?: t.halted,
         )
@@ -222,8 +223,8 @@ class CloudLiveLane(
 
     override suspend fun pass(s: ScanSettings, now: Long): LiveLaneStatus? {
         settings = s
-        if (!s.engineLive) {
-            if (up) stop("the engine's live lane is switched off on the phone")
+        if (!s.engineLive || !s.tailLive.on) {
+            if (up) stop("the engine's live tail lane is switched off on the phone")
             return null
         }
         up = true
@@ -253,7 +254,7 @@ class CloudLiveLane(
         const val LIGHT_BID_MARGIN = 0.07
         val LEAGUES = setOf("NFL", "NCAAF", "NBA", "WNBA", "NCAAB", "NHL", "MLB")
 
-        fun bidsOn(s: ScanSettings) = s.engineLive && s.tailLive.light && s.tailLive.bids
+        fun bidsOn(s: ScanSettings) = s.engineLive && s.tailLive.on && s.tailLive.light && s.tailLive.bids
         fun realOrders(s: ScanSettings) = s.tailLive.bet && s.gates.cloudTrading == CloudTradeMode.LIVE
 
         /** A live fill as the engine's ledger entry (id = the tracker's bet id, so a grown fill updates the entry; the grader settles it like any bet). */
