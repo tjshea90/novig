@@ -142,7 +142,7 @@ class SettingsPagesTest {
     fun `each scanner hides the pages it doesn't use, and a page that goes away falls back to the list`() {
         val base = SampleScan.state()
         assertEquals(
-            listOf(SettingsPage.ALERTS, SettingsPage.BETTING, SettingsPage.SAFEGUARDS, SettingsPage.CLOUD, SettingsPage.SCANNING, SettingsPage.CNO, SettingsPage.APIS, SettingsPage.SGO, SettingsPage.BOLTODDS, SettingsPage.KALSHI, SettingsPage.ODDSPAPI, SettingsPage.UNABATED, SettingsPage.ODDSPAPI_FREE, SettingsPage.PINNACLE, SettingsPage.PROPLINE, SettingsPage.PARLAY, SettingsPage.ODDS_API, SettingsPage.USAGE, SettingsPage.PINNODDS, SettingsPage.LIVEBIDS, SettingsPage.RESEARCH, SettingsPage.WIDGET, SettingsPage.HELP),
+            listOf(SettingsPage.ALERTS, SettingsPage.BETTING, SettingsPage.SAFEGUARDS, SettingsPage.CLOUD, SettingsPage.SCANNING, SettingsPage.CNO, SettingsPage.APIS, SettingsPage.SGO, SettingsPage.BOLTODDS, SettingsPage.KALSHI, SettingsPage.SXBET, SettingsPage.ODDSPAPI, SettingsPage.UNABATED, SettingsPage.ODDSPAPI_FREE, SettingsPage.PINNACLE, SettingsPage.PROPLINE, SettingsPage.PARLAY, SettingsPage.ODDS_API, SettingsPage.USAGE, SettingsPage.PINNODDS, SettingsPage.LIVEBIDS, SettingsPage.RESEARCH, SettingsPage.WIDGET, SettingsPage.HELP),
             SettingsPage.shown(base.settings.copy(scanner = ScannerMode.CNO)),
         )
         val moved = setOf(SettingsPage.DASHBOARD, SettingsPage.CHAT, SettingsPage.MESSAGES)   // central tabs now, not Settings pages
