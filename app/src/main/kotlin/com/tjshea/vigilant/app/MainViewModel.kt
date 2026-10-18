@@ -2270,16 +2270,40 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** What the Bids tab shows of Live light: the lane's status and its desk's bids, looked at every 1.5 s but only while that tab is collecting (nothing runs behind a closed tab). */
-    data class LightUi(val status: com.tjshea.vigilant.data.novig.lab.LiveLightStatus = com.tjshea.vigilant.data.novig.lab.LiveLightStatus(), val bids: List<com.tjshea.vigilant.data.livebid.LiveBid> = emptyList())
+    data class LightUi(val status: com.tjshea.vigilant.data.novig.lab.LiveLightStatus = com.tjshea.vigilant.data.novig.lab.LiveLightStatus(), val bids: List<com.tjshea.vigilant.data.livebid.LiveBid> = emptyList(), val dash: List<String> = emptyList())
 
     val lightUi: StateFlow<LightUi> by lazy {
         kotlinx.coroutines.flow.flow {
             while (true) {
-                emit(LightUi(c.liveLight.status.value, c.lightBidDesk.bidsNow()))
+                emit(LightUi(c.liveLight.status.value, c.lightBidDesk.bidsNow(), liveDashboard(System.currentTimeMillis())))
                 kotlinx.coroutines.delay(1_500L)
             }
         }.distinctUntilChanged().stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(3_000L), LightUi())
     }
+
+    /**
+     * The Live tab's dashboard (Tj, 2026-10-18, TCL121: "I need to always know what is going on in real time with the live betting and sockets"): one line per socket with whether it is live and how long ago it last
+     * spoke, SX Bet's in full, and what the live lane is judging. Read every 1.5 s with [lightUi], only while the tab is showing.
+     */
+    private fun liveDashboard(now: Long): List<String> = runCatching {
+        val st = _state.value.settings
+        val g = st.gates
+        fun ago(ms: Long) = if (ms <= 0L) "never" else "${((now - ms) / 1000L).coerceAtLeast(0)} s ago"
+        buildList {
+            add("Novig: socket ${if (g.novigSocket) "ON" else "OFF"} · " + (c.novig.stream?.let { "feed built" } ?: "no feed (off, or no read key)"))
+            add("BoltOdds: socket ${if (g.boltSocket) "ON" else "OFF"} · lines ${if (c.boltFeed.lines.live) "live" else "not live"} · props ${if (c.boltFeed.props.live) "live" else "not live"}")
+            add("Kalshi: socket ${if (g.kalshiSocket) "ON" else "OFF"} · ${if (c.kalshiStream.live) "live" else "not live"} · ${c.kalshiStream.subscribedCount} of ${c.kalshiStream.wantedCount} markets")
+            val sx = c.sxBetClient.stream
+            add(
+                if (!g.useSxBet) "SX Bet: API off"
+                else if (sx == null) "SX Bet: socket ${if (g.sxSocket) "ON" else "OFF"} · no connection (no key, or the socket is off)"
+                else "SX Bet: socket ${if (g.sxSocket) "ON" else "OFF"} · ${sx.health()} · last push ${ago(sx.lastMessageMs)} · ${sx.fixtureStatus.values.count { it == 2 }} games in play",
+            )
+            add("Pinnodds: " + if (c.pinnRunner.running) "live engine running" else "live engine not running")
+            val eng = _state.value.cloudUi.status
+            if (st.engineLive && eng != null && eng.liveNote.isNotBlank()) add("GitHub engine's live lane: ${eng.liveNote}" + (eng.liveStopped.takeIf { it.isNotBlank() }?.let { " (stopped: $it)" } ?: ""))
+        }
+    }.getOrDefault(emptyList())
 
     /** The live bid desk's status for Settings › Live bids (the page asks every second or two while it is open). */
     fun refreshLiveBid() {

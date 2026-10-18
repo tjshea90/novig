@@ -68,6 +68,13 @@ fun LiveScreen(
             LiveMasterRow(s, onUpdate)
             val on = LiveMaster.isOn(s)
 
+            SectionTitle("Live dashboard")
+            Card(Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("liveDashboard"), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))) {
+                Column(Modifier.padding(12.dp)) {
+                    if (light.dash.isEmpty()) Text("Reading the sockets...", style = MaterialTheme.typography.bodySmall)
+                    light.dash.forEach { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 2.dp)) }
+                }
+            }
             SectionTitle("What is running")
             LiveNote(summary(state, light, s, on))
 
