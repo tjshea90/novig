@@ -853,6 +853,7 @@ private fun VigilantRoot(
                         state = state, light = light, now = now, onUpdate = vm::updateSettings, onShown = vm::refreshLiveBid,
                         onOpenPinnodds = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.PINNODDS.name; tabName = Tab.SETTINGS.name },
                         onOpenLiveBids = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.LIVEBIDS.name; tabName = Tab.SETTINGS.name },
+                        onRefresh = vm::refreshCloud,
                     )
                 }
                 Tab.BIDS -> {
