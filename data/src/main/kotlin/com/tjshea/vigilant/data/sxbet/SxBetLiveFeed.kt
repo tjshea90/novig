@@ -197,7 +197,7 @@ class SxBetLiveFeed(
         val flagged = liveIds(now)
         if (!stream.live) return "SX Bet's socket is not live (${stream.health()})"
         if (flagged.isEmpty()) return "SX Bet flags no game as in play right now (${stream.scores.size} scores and ${stream.fixtureStatus.size} fixture statuses heard)"
-        val known = flagged.count { it in events }
+        val known = flagged.count { events.containsKey(it) }
         return "SX Bet flags ${flagged.size} games in play; $known are in Vigilant's leagues with their markets read; $inPlay have a trusted exchange price right now"
     }
 
