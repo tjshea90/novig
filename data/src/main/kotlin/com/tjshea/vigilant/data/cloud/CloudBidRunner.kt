@@ -238,8 +238,8 @@ data class DeskFile(
         fun parse(text: String): DeskFile? = runCatching { json.decodeFromString(serializer(), text) }.getOrNull()
         fun text(f: DeskFile): String = json.encodeToString(serializer(), f)
 
-        /** What stays in the file: active bids, ended ones for [KEEP_ENDED_MS], filled ones for a week ([com.tjshea.vigilant.data.novig.trading.maker.MakerStore.KEEP_FILLED_MS]). */
-        const val KEEP_ENDED_MS = 3 * 3_600_000L
+        /** What stays in the file: active bids, ended ones for [KEEP_ENDED_MS] (15 min: a 3 h window held ~12,000 cancelled and expired bids, a 12.5 MB file the phone could not load, so the Engine tab showed 0 resting bids on 2026-10-18), filled ones for a week ([com.tjshea.vigilant.data.novig.trading.maker.MakerStore.KEEP_FILLED_MS]). */
+        const val KEEP_ENDED_MS = 15 * 60_000L
 
         fun trim(bids: List<MakerBid>, now: Long): List<MakerBid> = bids.filter { b ->
             !b.status.ended || (if (b.filled > 0) true else (b.endedAtMs ?: b.postedAtMs) >= now - KEEP_ENDED_MS)
