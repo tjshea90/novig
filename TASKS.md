@@ -5770,7 +5770,10 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] TCL110 (Tj, 2026-10-18): any session may alter anything without the lease if it breaks nothing (push.sh pushes the branch, moves main only for safe paths; test_coord.sh) AND a message typed to a non-holder is relayed into the app chat for the lease holder (capture_inbox.sh -> tell_tj.py relay; tell_tj selftest). Not yet watched live: confirm the holder prints `CHAT r...` after a real relay.
 
 ## TCL111 (Tj, chat t1792294037332, 2026-10-18): SX Bet integration
-- [ ] TCL111a Review docs.sx.bet (developers + api-reference, public REST/WebSocket channels: live scores, odds, line moves, props) into SXBET_API.md
-- [ ] TCL111b Build client/feed in data/ (REST + socket, follow rate limits), as a sharp fair-odds source (ApiChain, CloudSources, ApiEntry + switch + socket switch, tests)
+- [x] TCL111a Review docs.sx.bet (developers + api-reference, public REST/WebSocket channels: live scores, odds, line moves, props) into SXBET_API.md
+- [x] TCL111b (REST part: SxBetClient/SxBetConvert/SxBetTest, ApiProvider.SXBET, gates.useSxBet, ApiToggles, CloudSources+SXBET_API_KEY secret, Settings page, sharp default, SOURCE_ORDER; full floor green) Build client/feed in data/ (REST + socket, follow rate limits), as a sharp fair-odds source (ApiChain, CloudSources, ApiEntry + switch + socket switch, tests)
 - [ ] TCL111c Engine (CloudSources) + phone parity; live lane use if the data allows
 - [ ] TCL111d Tell Tj what he must do (keys? none if public)
+- [ ] TCL111e Centrifugo WebSocket (best_odds_v3:global + orderbook + fixtures:live_scores + main_line:global) in data/ (OkHttp, JSON protocol), app socket switch (ApiEntry.hasSocket), engine
+- [ ] TCL111f Live lane: SX live scores + books as live fair; Test key button saving a real sample (verify the showTakerPerspective frame; NOT YET RUN WITH A KEY)
+- [ ] TCL111g Tj: create read-only key, paste in Settings > SX Bet, Send my API keys to GitHub
