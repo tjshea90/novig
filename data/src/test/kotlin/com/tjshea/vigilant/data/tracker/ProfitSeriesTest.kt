@@ -63,16 +63,16 @@ class ProfitSeriesTest {
 
     @Test
     fun `a slate runs from its first game to the last result, past midnight, and the next morning is a new slate`() {
-        // Oct 7: games 7am..11pm (the last one is final after midnight); Oct 8 starts at 8am (9 h after the last start): a new slate.
+        // Oct 7: games 7am..8pm (the last is final around midnight); Oct 8 starts at 8am (12 h after the last start): a new slate.
         val bets = listOf(
-            bet("a", at(2026, 10, 7, 7), BetStatus.WON, 10.0), bet("b", at(2026, 10, 7, 13), BetStatus.LOST, 10.0), bet("c", at(2026, 10, 7, 23), BetStatus.WON, 10.0),
+            bet("a", at(2026, 10, 7, 7), BetStatus.WON, 10.0), bet("b", at(2026, 10, 7, 13), BetStatus.LOST, 10.0), bet("c", at(2026, 10, 7, 20), BetStatus.WON, 10.0),
             bet("d", at(2026, 10, 8, 8), BetStatus.LOST, 10.0),
         )
         val sl = ProfitSeries.slates(ProfitSeries.points(bets))
         assertEquals(2, sl.size)
         assertEquals(3, sl[0].bets)
         assertEquals(at(2026, 10, 7, 7), sl[0].startMs)
-        assertEquals(at(2026, 10, 7, 23) + ProfitSeries.GAME_MS, sl[0].endMs)
+        assertEquals(at(2026, 10, 7, 20) + ProfitSeries.GAME_MS, sl[0].endMs)
         assertEquals(30.0, sl[0].staked, 1e-9)
     }
 

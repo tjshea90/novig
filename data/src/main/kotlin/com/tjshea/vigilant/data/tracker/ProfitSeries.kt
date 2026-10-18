@@ -135,7 +135,7 @@ object ProfitSeries {
     const val DAY_MS = 24L * 3_600_000L
 
     /** More than this between two game starts ends a slate (a late game ends well inside it; the next morning's first game starts after it). */
-    const val SLATE_GAP_MS = 7L * 3_600_000L
+    const val SLATE_GAP_MS = 8L * 3_600_000L
 
     /** A game is final about this long after it starts (the slate's end). */
     const val GAME_MS = 4L * 3_600_000L
