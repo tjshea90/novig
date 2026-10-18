@@ -440,3 +440,11 @@ force. Bring this checkout up to date and prove you can use the new tools. Run: 
 ```
 For pinnwire, make sure the API usage for each spent key is truly ran out instead of guessing by the apps own request count
 ```
+
+## 2026-10-18T16:20:09Z
+```
+The GitHub engine shows 0 resting bids.
+
+1) I'm still getting notifications that my bids are getting filled
+2) why are there 0 resting bids
+```
