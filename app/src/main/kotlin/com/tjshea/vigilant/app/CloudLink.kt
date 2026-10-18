@@ -322,6 +322,7 @@ class CloudLink(private val c: AppContainer) {
             runCatching { inbox.load() }
             while (isActive) {
                 if (hasToken()) {
+                    runCatching { adoptClaudeConfig() }
                     runCatching { inbox.pollOverrides() }
                     runCatching { inbox.pollMessages() }
                 }
@@ -524,6 +525,21 @@ class CloudLink(private val c: AppContainer) {
     private val pushMutex = kotlinx.coroutines.sync.Mutex()
 
     private suspend fun pushSettings(s: ScanSettings, force: Boolean = false) = pushMutex.withLock { pushLocked(s, force) }
+
+    /**
+     * A Claude session changed the engine's settings (Tj, 2026-10-18, TCL113): `settings.json` on `cloud-config` carries device "claude:...". The phone takes them over (its own STOP ALL stays), then its normal
+     * push publishes them as its own, which clears the mark. Returns true when it adopted something.
+     */
+    suspend fun adoptClaudeConfig(): Boolean = pushMutex.withLock {
+        if (!hasToken()) return@withLock false
+        val remote = client.readFile(CloudClient.CONFIG_BRANCH, "settings.json")?.let { CloudConfig.parse(it) } ?: return@withLock false
+        val local = c.settingsStore.flow.value ?: return@withLock false
+        val next = CloudClaudeConfig.adopt(remote, local) ?: return@withLock false
+        runCatching { c.settingsStore.update { next } }.onFailure { return@withLock false }
+        c.eventLog.info("CLOUD", "settings changed from GitHub by ${remote.device}")
+        lastPushedKey = null
+        true
+    }
 
     private suspend fun pushLocked(s: ScanSettings, force: Boolean) {
         if (!hasToken()) return
