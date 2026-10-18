@@ -144,8 +144,15 @@ class SxBetLiveFeed(
         }
     }
 
+    /** A game's markets known to the feed (what [discover] does after its REST read); also how the tests give it a game. */
+    internal fun adopt(info: SxLiveBuild.EventInfo) {
+        stream.watch(info.markets.map { it.marketHash })
+        info.markets.forEach { eventOf[it.marketHash] = info.eventId }
+        events[info.eventId] = info
+    }
+
     @Synchronized
-    private fun update(ids: Set<String>?) {
+    internal fun update(ids: Set<String>?) {
         val now = clock()
         val r = rules()
         val look = LinkedHashSet<String>().apply { if (ids == null) { addAll(events.keys); addAll(games.keys.map { it.removePrefix("sx:") }) } else addAll(ids) }
@@ -170,7 +177,7 @@ class SxBetLiveFeed(
             for (line in g.lines) {
                 open += line.key
                 val said = state.lines[line.key]
-                val p = line.fair.getValue(if (line.type == PinnLineType.TOTAL) PinnSide.OVER else PinnSide.HOME.takeIf { line.fair.containsKey(it) } ?: PinnSide.AWAY)
+                val p = line.fair.getValue(if (line.type == PinnLineType.TOTAL) PinnSide.OVER else PinnSide.HOME)
                 if (said == null || abs(said.fair - p) >= MIN_STEP || said.points != line.points) {
                     val v = ++version
                     state.lines[line.key] = Said(p, line.points, v)
