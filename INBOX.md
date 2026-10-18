@@ -281,3 +281,8 @@ Force it if you can do so without breaking anything
 ```
 Add a new rule to this repo for every Claude session. Any claude session may alter anything even if it doesn't hold the lease, as long as it will not break anything
 ```
+
+## 2026-10-18T03:14:34Z
+```
+Force it and add the new rule , then add a method where no matter which Claude account I am talking to, if I ask for modifications, the message is automatically relayed to the Claude account holding the lease and it should read the prompt and begin the answer as soon as possible
+```
