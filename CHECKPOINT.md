@@ -1,23 +1,22 @@
-# CHECKPOINT 3660 — read me first, then TASKS.md
+# CHECKPOINT 3661 — read me first, then TASKS.md
 
-**Written:** 2026-10-18T18:58:19Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-28648a70-j699u7` · **builds on:** `62f5c7129` (this checkpoint is the commit after it)
+**Written:** 2026-10-18T19:00:52Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-28648a70-j699u7` · **builds on:** `d8809f5bb` (this checkpoint is the commit after it)
 
 ## Just done
-audited all restart/alert paths: only NovigErrorWatch mixed APIs (fixed); rule written in ENGINE_ADMIN.md
+pre-ship: v0.117.3: the engine's Novig outage alert and retry wait now count only Novig's own server errors (another API's 502, e.g. ParlayAPI, no longer shows 'Novig is failing' or slows the scan loop)
 
 ## Do this next
-read Sportmicro probe report; release the Novig-watch fix with next batch
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M research/coordination/ENGINE_ADMIN.md
-     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  1c07c27c7 ckpt 3660: audited all restart/alert paths: only NovigErrorWatch mixed APIs (fixed); r
   5640a3e51 ckpt 3659: NovigErrorWatch: only Novig-lines count (ParlayAPI 502 no longer raises the
   c17c06549 ckpt 3658: built Sportmicro probe: tools/sportmicro_probe.py + sportmicro-probe.yml (n
   df851d160 ckpt 3657: tested Flashscore scraper and Sportmicro from docs (no key/egress here); Fl
@@ -27,8 +26,7 @@ read Sportmicro probe report; release the Novig-watch fix with next batch
   892bb2881 ckpt 3653: Live tab Sockets list gets an SX Bet row (gates.sxSocket)
   d4b6f019d ckpt 3652: pre-release: v0.117.2: PinnWire keys are spent only on PinnWire's own word 
   d88a82190 ckpt 3651: ApiProbe: PinnWire 429 reads window (minute vs day) + retry_after_ms instea
-  6479b16c7 ckpt 3650: pre-release: v0.117.2: PinnWire keys are spent only on PinnWire's own word 
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
