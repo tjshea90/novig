@@ -78,15 +78,15 @@ class ProfitSeriesTest {
 
     @Test
     fun `the start number is the first slate's stake and never moves, and each day is measured against the day before`() {
-        fun b(id: String, t: Long, st: BetStatus, stake: Double, profit: Double) = bet(id, t, st, stake).copy(profit = profit)
+        // bet() prices at 50 cents: a win pays the stake, a loss costs it.
         val bets = listOf(
-            b("a", at(2026, 10, 7, 12), BetStatus.WON, 50.0, 25.0), b("b", at(2026, 10, 7, 14), BetStatus.LOST, 50.0, -50.0),   // day 1: staked 100, profit -25
-            b("c", at(2026, 10, 8, 12), BetStatus.WON, 500.0, 50.0),                                                          // day 2: staked 500 (staking more is not depositing more)
+            bet("a", at(2026, 10, 7, 12), BetStatus.WON, 50.0), bet("b", at(2026, 10, 7, 14), BetStatus.LOST, 75.0),   // day 1: staked 125, profit -25
+            bet("c", at(2026, 10, 8, 12), BetStatus.WON, 30.0),                                                       // day 2: profit +30
         )
         val sl = ProfitSeries.slates(ProfitSeries.points(bets))
-        assertEquals(100.0, ProfitSeries.startingBalance(sl)!!, 1e-9)
-        assertEquals(-0.25, ProfitSeries.dayChange(sl, 0)!!, 1e-9)            // -25 on 100
-        assertEquals(50.0 / 75.0, ProfitSeries.dayChange(sl, 1)!!, 1e-9)      // +50 on 100 - 25 = 75, not on the 500 staked
+        assertEquals(125.0, ProfitSeries.startingBalance(sl)!!, 1e-9)
+        assertEquals(-25.0 / 125.0, ProfitSeries.dayChange(sl, 0)!!, 1e-9)
+        assertEquals(30.0 / 100.0, ProfitSeries.dayChange(sl, 1)!!, 1e-9)   // on 125 - 25 = 100, whatever was staked on day 2
     }
 
     @Test
