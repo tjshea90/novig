@@ -28,9 +28,9 @@ class ApiProbe(
     private val http: OkHttpClient,
     private val meter: UsageMeter,
     private val parlayAccount: ParlayAccount?,
-    private val pinnWireAccount: com.tjshea.vigilant.data.reference.PinnWireAccount? = null,
     private val clock: () -> Long = System::currentTimeMillis,
     private val hosts: Hosts = Hosts(),
+    private val pinnWireAccount: com.tjshea.vigilant.data.reference.PinnWireAccount? = null,
 ) {
     /** Where each API lives (overridden by tests). */
     data class Hosts(
