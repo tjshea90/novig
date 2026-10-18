@@ -1,23 +1,23 @@
-# CHECKPOINT 3657 — read me first, then TASKS.md
+# CHECKPOINT 3658 — read me first, then TASKS.md
 
-**Written:** 2026-10-18T18:14:09Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-28648a70-j699u7` · **builds on:** `0e96b664c` (this checkpoint is the commit after it)
+**Written:** 2026-10-18T18:51:45Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-28648a70-j699u7` · **builds on:** `cd476764b` (this checkpoint is the commit after it)
 
 ## Just done
-tested Flashscore scraper and Sportmicro from docs (no key/egress here); Flashscore dropped, Sportmicro needs Tj's free key
+built Sportmicro probe: tools/sportmicro_probe.py + sportmicro-probe.yml (no-key run reports cleanly)
 
 ## Do this next
-if Tj makes a Sportmicro key: add ApiEntry + Test button, 1-game latency listen vs ESPN
+Tj adds SPORTMICRO_API_KEY secret; run workflow in live games; read Release sportmicro-probe
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
      M TASKS.md
-     M research/api_sites_review_2026-10-18.md
 
 ## Last ten checkpoints
 ```
+  df851d160 ckpt 3657: tested Flashscore scraper and Sportmicro from docs (no key/egress here); Fl
   da772ea50 ckpt 3656: reviewed 9 sports-data sites; findings in research/api_sites_review_2026-10
   7d016453e ckpt 3655: ANALYST 2026-10-18: WATCH only, analysis skipped by gate; recorded v0.117.2
   ba3df931c ckpt 3654: pre-release: v0.117.2: PinnWire keys are spent only on PinnWire's own word 
@@ -27,8 +27,7 @@ if Tj makes a Sportmicro key: add ApiEntry + Test button, 1-game latency listen 
   6479b16c7 ckpt 3650: pre-release: v0.117.2: PinnWire keys are spent only on PinnWire's own word 
   c86d28c7b ckpt 3649: TCL119 PinnWireAccount + ownCountIsGuess (PinnWireTruthTest), TCL120 desk t
   a95cb6071 ckpt 3648: TCL120: desk.json kept ~12,000 cancelled/expired bids (12.5 MB) so the phon
-  60ee93c65 ckpt 3647: pre-release: v0.117.2: SX Bet live feed (exchange mid with live scores) as 
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
