@@ -5931,3 +5931,7 @@ The ideas list (chat c1792372015, 2026-10-19): 1) score-event buying, 2) a lower
 Found: run 39274341409 (healthy, heartbeat fresh at 16:11) was CANCELLED at 16:50:12 and run 39288861126 dispatched at 16:50:05, the cancel-then-dispatch pattern of the watchdog's "restart"; the new engine answered from 16:52:41. GitHub Actions was degraded (incident from 15:49Z). The watchdog's `show()` read status.json with `git fetch ... && git show FETCH_HEAD:...` and never checked the fetch: a failed fetch leaves FETCH_HEAD on another branch, status reads as nothing, and `decide()` calls a heartbeat of "none" in an old run dead -> restart.
 - [x] CH24a an unreadable branch is not a dead engine: `show()` raises `Unreadable` on a failed fetch and `check()` then changes nothing (selftest with a failing fetch: no POST). tools/engine_watchdog.py.
 - [ ] CH24b put the fix on main, start a keeper on the new code; answer Tj.
+
+## SC1: does the Vigilant scanner rescan too often? (Tj, 2026-10-19, verbatim: "The vigilant scanner seems to rescan very often. Consider if this is necessary or not")
+- [ ] SC1a find every rescan trigger (phone auto-scan interval, Feed 15 s recheck, cloud 3 s config read / refreshAtMs cancels, settings-change restarts, hot refresh) and judge each against cost and freshness; fix what is waste.
+## Mirage work taken over (Tj, 2026-10-19): CH24a done by mirage and verified by tj Gmail (selftests ok); CH23 (APIs lights) was only written down, no code: left for mirage.
