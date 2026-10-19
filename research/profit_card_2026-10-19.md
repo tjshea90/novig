@@ -31,14 +31,18 @@ deposit.
 - **An open bet is money at stake, never a loss**: it counts on its game's day once it settles. Open bets on later games get their own line ("Also N open bets on later games").
 - **One set of period chips**: the Tracker's Today / 7 days / 30 days / All drive the card AND every Stats card, all by game day (`inPeriod` -> `SlateProfit.inLastDays`). A bet on a game after today is
   in All only.
-- **All-time profit (headline)** = the Vigilant wallet now (cash + what its open bets cost) minus the money put in, net of money taken out (`WalletProfit`, read by `WalletMoney` in the app: balance,
-  positions, two ledger reads; at most every 5 min while the Stats are on screen, at once on pull to refresh and after a transfer; kept across restarts). Fees and maker credits are in it. With no
-  wallet reading (betting not set up, Novig refusing, no transfer on record) it is the settled bets' total, and the card says which.
+- **All-time profit (headline)** = the Vigilant wallet now (cash + what its open bets cost) minus the money put in, net of every dollar taken back out (`WalletProfit`, read by `WalletMoney` in the
+  app: balance, positions, and the ledger's money-moving rows; at most every 5 min while the Stats are on screen, at once on pull to refresh and after a transfer; kept across restarts). Fees and maker
+  credits are in it. With no wallet reading (betting not set up, Novig refusing, no money moved on record) it is the settled bets' total, and the card says which.
+- **Withdrawals (Tj, 16:13Z: "Make sure the wallet figure also takes out withdrawals because sometimes I moved money back and forth"):** the 2026-10-12 `TransactionKind` list has more money-moving
+  kinds than the two transfers: TRANSFER_IN, TRANSFER_OUT, DEPOSIT, WITHDRAWAL, CREDIT, CREDIT_RECLAIM, FORWARDING (`NovigTradingClient.MONEY_MOVES`). Every one is read, all time, and each row counts
+  by its sign ("Signed. A negative amount debits the wallet."): money moved out and back in nets to what stayed, and moving money out leaves the profit where it was (`WalletProfitTest`). FILL, FEE,
+  MAKER_CREDIT, SETTLEMENT and ADJUSTMENT are betting, so they are the profit. A promotional credit counts as money put in, not as profit from bets. Diagnostics shows each kind's net and count.
 - **Charts**: Today is a running step line from the first game, with the day named on both times ("Fri 11:20 PM" to "Sat 2:20 AM", or "now"); results at one moment are one step. A longer period is
   a running-total line over a bar per day, then the days one by one.
 - Diagnostics carries an "All-time profit (wallet)" line with the sum's parts.
 
 Tests: `SlateProfitTest`, `WalletProfitTest`, `ProfitChartTest`, `StickyHeadersTest`.
 
-Not verified on the real API: the ledger's transfer rows (documented, not yet seen from this container). If the card says "Novig's ledger shows no transfer", the rows are not where the docs put them:
-read Diagnostics' line and fix `WalletProfit`/`WalletMoney`.
+Not verified on the real API: the ledger's money-moving rows and their signs (documented, not yet seen from this container). If the card says "Novig's ledger shows no money moved", or Diagnostics'
+line shows a TRANSFER_OUT or WITHDRAWAL with a + sign, the rows are not what the docs say: fix `WalletProfit.of`.
