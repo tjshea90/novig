@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "a98873253c54344ff2ceb9a8d5c85baa7abf9547",
+ "head": "26888632ea982d6c54546babd45724ec4105e721",
  "since": 1792393152,
- "beat": 1792396051,
- "beatIso": "2026-10-19T07:47:31Z",
- "done": "CR5 app chat written: data CloudChat v2 (model/thread/presence) + ChatSync (send queue with retries, attachments first, head poll + changed day folders, seat) + CloudClient headSha/listEntries/readText/createFile, tests CloudChatTest+ChatSyncTest (31/32 then fixed); app ChatPage rebuilt (reverse LazyColumn, delivery marks, retry/delete, quotes, links, typing, presence, menu), ChatAlerts, CloudLink loops, VM, badge CH16; chat_wake wakes for seen-unanswered; legacy replies mirrored",
- "next": "wait for :app ClaudeScreenUiTest + data tests (atest.log); fix; full bash tools/test.sh; docs CR7; ship CR8"
+ "beat": 1792396178,
+ "beatIso": "2026-10-19T07:49:38Z",
+ "done": "CR5 code done + reviewed; landing gate fixed (marks the tree taken BEFORE a run, filtered runs mark nothing); grep -q/pipefail SIGPIPE race fixed (test_coord 1-in-3 red, push.sh marker guard, resume.sh, ship.sh); docs CR7 (CLAUDE.md, CHAT.md, CHAT_REBUILD \u00a74); TASKS CR4/CR7/CH16/CH18 ticked; version 1.0.5 code 345",
+ "next": "full suite running (scratchpad full.log); when green: bash ship.sh, release.yml, record-release, chat.py say with the link, board note, unclaim CR"
 }
