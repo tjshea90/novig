@@ -274,18 +274,28 @@ open class NovigTradingClient(
     }
 
     /**
-     * Ledger rows of [kind] (every kind when null) for [subaccountKeyId] whose event was scheduled in ([startsAfterMs], [startsBeforeMs]) (both
-     * exclusive; the docs filter these by the event's scheduled start), paged until [maxRows].
+     * Ledger rows of [kind] (every kind when null) for [subaccountKeyId] in ([startsAfterMs], [startsBeforeMs]) (both exclusive; the 2026-10-12 docs call them bounds on the row's time, older pages
+     * on the event's scheduled start), paged until [maxRows].
      */
-    open suspend fun ledger(subaccountKeyId: String, kind: String?, startsAfterMs: Long, startsBeforeMs: Long, maxRows: Int = 1_000): List<LedgerRow> {
+    open suspend fun ledger(subaccountKeyId: String, kind: String?, startsAfterMs: Long, startsBeforeMs: Long, maxRows: Int = 1_000): List<LedgerRow> =
+        ledgerRows(subaccountKeyId, kind, startsAfterMs, startsBeforeMs, maxRows)
+
+    /**
+     * Every applied transfer into and out of [subaccountKeyId], all time (`TRANSFER_IN`, `TRANSFER_OUT`: "we write one only when money moves ... and applied transfers"). Read with no time bounds
+     * (both are optional), so a filter by event start, which a transfer has none of, can't leave them out. The Tracker's all-time figure subtracts them (PL, 2026-10-19).
+     */
+    open suspend fun transfers(subaccountKeyId: String): List<LedgerRow> =
+        ledgerRows(subaccountKeyId, "TRANSFER_IN", null, null, 1_000) + ledgerRows(subaccountKeyId, "TRANSFER_OUT", null, null, 1_000)
+
+    private suspend fun ledgerRows(subaccountKeyId: String, kind: String?, startsAfterMs: Long?, startsBeforeMs: Long?, maxRows: Int): List<LedgerRow> {
         val out = ArrayList<LedgerRow>()
         var cursor: String? = null
         do {
             val query = buildString {
                 kind?.let { append("kind=").append(it).append('&') }
                 append("limit=").append(minOf(500, maxRows))
-                append("&startsAfter=").append(startsAfterMs)
-                append("&startsBefore=").append(startsBeforeMs)
+                startsAfterMs?.let { append("&startsAfter=").append(it) }
+                startsBeforeMs?.let { append("&startsBefore=").append(it) }
                 cursor?.let { append("&after=").append(percent(it)) }
             }
             val page = json.decodeFromString(TransactionPageDto.serializer(), signer.call("GET", "/v3/account/subaccounts/$subaccountKeyId/transactions", query))

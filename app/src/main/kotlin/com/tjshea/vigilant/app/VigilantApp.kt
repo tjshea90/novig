@@ -419,8 +419,7 @@ class AppContainer(val app: Application) {
                 val gate = com.tjshea.vigilant.data.novig.BetPriority::yieldToBet
                 gate(); val cash = t.balance(address).also { wallet.record(it) }
                 gate(); val held = t.positions()
-                val until = System.currentTimeMillis() + 86_400_000L
-                gate(); val rows = t.ledger(address, com.tjshea.vigilant.data.tracker.WalletProfit.IN, 0L, until) + t.ledger(address, com.tjshea.vigilant.data.tracker.WalletProfit.OUT, 0L, until)
+                gate(); val rows = t.transfers(address)
                 com.tjshea.vigilant.data.tracker.WalletProfit.of(cash, held, rows, System.currentTimeMillis())
             }
         },
