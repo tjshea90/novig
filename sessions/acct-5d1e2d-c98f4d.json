@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "6fe62af1b3b124d9a5e9e28c90c640bc27b93efd",
+ "head": "18072eab0c77c86e8b00e64fae2884e7f5c49930",
  "since": 1792393152,
- "beat": 1792426190,
- "beatIso": "2026-10-19T16:09:50Z",
- "done": "PL app: WalletMoney reader + VM/Activity wiring, Tracker periods by game day, profit card rewrite (all-time wallet headline, Today line with day names, running total + day bars), Diagnostics line; ProfitChartTest 11 pass; research/profit_card_2026-10-19.md, CLAUDE.md P/L rule",
- "next": "PL4: bump v1.0.6 code 346, full tools/test.sh, ship.sh, release.yml, record-release, tell Tj"
+ "beat": 1792426366,
+ "beatIso": "2026-10-19T16:12:46Z",
+ "done": "EA fix: both keepers (15:29Z, 15:39Z) died at start on 'import engine_watchdog' under python -I (script folder not on the path); engine_alarm.py now puts its folder on sys.path, selftest imports the watchdog; keep() runs under -I locally",
+ "next": "after the full test run lands main: dispatch engine-alarm.yml, read its log for 'keeper: up'; then ship v1.0.6 (PL4)"
 }
