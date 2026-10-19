@@ -666,3 +666,9 @@ The mirage Claude account started and almost completed other work on this app an
 ```
 This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
 ```
+
+## 2026-10-19T18:52:09Z
+```
+Can I safely delete old releases. What if I delete all branches except main
+Is there a quick command I can send you or to GitHub to delete all the unnecessary branches at one time
+```
