@@ -193,8 +193,23 @@ class CloudSources(
     fun opActive(s: ScanSettings) = s.oddsPapi && has(CloudKeys.ODDSPAPI) && !opClient.down()
     fun boltActive(s: ScanSettings) = s.gates.useBoltOdds && has(CloudKeys.BOLT)
     /** BoltOdds' soft-book average as Live light's second opinion on a moneyline (the phone's `confirm`); null while BoltOdds or its socket is off. */
-    fun liveConfirm(s: ScanSettings): com.tjshea.vigilant.data.novig.lab.LiveConfirm? =
-        if (boltActive(s) && s.gates.boltSocket) com.tjshea.vigilant.data.novig.lab.BoltLiveConfirm(boltFeed.lines.board) else null
+    fun liveConfirm(s: ScanSettings): com.tjshea.vigilant.data.novig.lab.LiveConfirm? {
+        val bolt = if (boltActive(s) && s.gates.boltSocket) com.tjshea.vigilant.data.novig.lab.BoltLiveConfirm(boltFeed.lines.board) else null
+        // SX Bet's exchange mid agrees or not (CH5c): a feed of its own that only reads, never sends frames anywhere.
+        val sx = if (s.gates.useSxBet && s.gates.sxSocket) sxConfirmFeed()?.let { f -> com.tjshea.vigilant.data.novig.lab.SxLiveConfirm { now -> f.liveGames(now) } } else null
+        val all = listOfNotNull(sx, bolt)
+        return if (all.isEmpty()) null else com.tjshea.vigilant.data.novig.lab.FirstLiveConfirm(all)
+    }
+
+    @Volatile private var sxConfirm: com.tjshea.vigilant.data.sxbet.SxBetLiveFeed? = null
+    private fun sxConfirmFeed(): com.tjshea.vigilant.data.sxbet.SxBetLiveFeed? {
+        sxConfirm?.let { return it }
+        synchronized(this) {
+            sxConfirm?.let { return it }
+            val st = sxbet.stream ?: return null
+            return com.tjshea.vigilant.data.sxbet.SxBetLiveFeed(st, sxbet, ensureOpen = { sxSocketWanted = true; st.open() }, sink = { _, _ -> }, scope = confirmScope).also { it.start(); sxConfirm = it }
+        }
+    }
 
     /** The BoltOdds soft-book average as a live price feed for [com.tjshea.vigilant.data.pinnodds.PinnLiveRunner] (the phone's `BoltLiveFeed`, same arguments); the engine has no Pinnodds. */
     fun boltLiveFeed(settings: () -> ScanSettings, sink: (String, Long) -> Unit, scope: kotlinx.coroutines.CoroutineScope, rules: () -> com.tjshea.vigilant.data.boltodds.BoltLiveConsensus.Rules): com.tjshea.vigilant.data.boltodds.BoltLiveFeed =

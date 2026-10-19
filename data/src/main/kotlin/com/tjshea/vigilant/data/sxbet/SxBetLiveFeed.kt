@@ -151,6 +151,13 @@ class SxBetLiveFeed(
         events[info.eventId] = info
     }
 
+    /** The games SX has in play right now, built with every guard of [SxLiveBuild.game] (taker pair, no price older than the last score, quiet-book rule). */
+    @Synchronized
+    fun liveGames(now: Long = clock()): List<SxLiveBuild.Game> {
+        val r = rules()
+        return events.values.mapNotNull { info -> SxLiveBuild.game(info, { h -> stream.books[h] }, stream.scores[info.eventId], stream.fixtureStatus[info.eventId], stream.lastMessageMs, now, r) }
+    }
+
     @Synchronized
     internal fun update(ids: Set<String>?) {
         val now = clock()
