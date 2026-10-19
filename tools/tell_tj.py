@@ -135,6 +135,16 @@ def chat_reply(reply_to, text, who=None, **kw):
             raise SystemExit("not sent: message %s is over 30 min old, so a reply would look stale to Tj" % reply_to)
     except ValueError:
         pass
+    # Tj, 2026-10-19: two sessions answered one message (near-identical replies). One reply per message: refuse if a Claude reply to it already exists (FORCE_OLD_REPLY=1 overrides; a follow-up uses a new id).
+    if not os.environ.get("FORCE_OLD_REPLY") and kw.get("cwd") is None:
+        git("fetch", "-q", "origin", BRANCH, check=False)
+        for n in git("ls-tree", "--name-only", "FETCH_HEAD", "chat/", check=False).stdout.split():
+            try:
+                o = json.loads(git("show", "FETCH_HEAD:" + n, check=False).stdout)
+            except Exception:
+                continue
+            if o.get("replyTo") == reply_to and o.get("from") != "tj" and not o.get("ack"):
+                raise SystemExit("not sent: message %s was already answered (%s); one reply per message" % (reply_to, o.get("id")))
     ident = "c%d-%s" % (at // 1000, secrets.token_hex(2))
     m = {"id": ident, "at": at, "from": who or me(), "text": text, "replyTo": reply_to}
     put("chat/" + fname(at, ident), json.dumps(m), **kw)
