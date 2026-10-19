@@ -1,13 +1,13 @@
-# CHECKPOINT 3711 — read me first, then TASKS.md
+# CHECKPOINT 3712 — read me first, then TASKS.md
 
-**Written:** 2026-10-19T03:00:48Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-gntx94` · **builds on:** `ed8c7d614` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T03:01:29Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-gntx94` · **builds on:** `a538777e4` (this checkpoint is the commit after it)
 
 ## Just done
-answered old chat msgs; CH10 queued
+CH11-13 queued, replies sent
 
 ## Do this next
-CH9 then CH10
+CH9 then CH6/CH10/CH12
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ CH9 then CH10
 
 ## Last ten checkpoints
 ```
+  a538777e4 ckpt 3711: answered old chat msgs; CH10 queued
   ed8c7d614 ckpt 3710: CH9 SX audit: names match; props not on SX; next check ML mainLine skip + s
   ed0c1aa71 ckpt 3709: CH8 sx/polymarket thin coverage answered
   6f707829e ckpt 3708: chat session end: v1.0.2 released
@@ -26,5 +27,4 @@ CH9 then CH10
   2d8c39779 ckpt 3704: CH6a sticky Odds API key done+tested; CH7 queued
   907c49c37 ckpt 3703: v1.0.1 released; replied CH6 odds api keys
   a0c4b916a ckpt 3702: pre-release: v1.0.1: live status line shows engine note, Kalshi/Polymarket 
-  be166db8d ckpt 3701: pre-ship: v1.0.1: live status line shows engine note, Kalshi/Polymarket sho
 ```
