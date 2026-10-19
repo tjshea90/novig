@@ -2518,6 +2518,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         settleBets(force = true, announce = true)
         runCatching { api.sync() }
         refreshWallet(maxAgeMs = 0L)
+        refreshWalletMoney(maxAgeMs = 0L)
         refreshCloud()
     }
     /** Pull to refresh on the PropLine +EV screen (TCL89): the engine runs its PropLine sweep now, nothing else. */
