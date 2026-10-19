@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "0dd792",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-k63ta8",
+ "head": "65d1d1f290f8223c32d7d8e794fa218b93cbabd1",
+ "since": 1792430567,
+ "beat": 1792430567,
+ "beatIso": "2026-10-19T17:22:47Z",
+ "done": "ENGINEER 10-19 routine: WATCH only, engine healthy, no change",
+ "next": "mirage continues EA10/EA4; analyst reads next digest"
+}
