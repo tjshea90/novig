@@ -444,7 +444,7 @@ class LiveBidWhyTest {
 
     @Test fun `with games matched it says what the judge said no to, and points at tennis when that is why`() {
         val d = turning.copy(skips = mapOf("tennis is off" to 900, "Pinnacle limit too low" to 40))
-        val t = run(live, d)!!
+        val t = run(live, d, s = on.copy(liveBidQuality = on.liveBidQuality.copy(tennis = false)))!!
         assertTrue(t, t.contains("15 live games matched") && t.contains("tennis is off ×900"))
         assertTrue(t, t.contains("Tennis switch"))
     }
