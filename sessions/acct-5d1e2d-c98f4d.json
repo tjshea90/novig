@@ -8,8 +8,8 @@
  "branch": "ccr-2df6ce48-pkrh5v",
  "head": "34c5c57aa0a271ae716c9ae17d2252fcfa5fa779",
  "since": 1792393152,
- "beat": 1792394243,
- "beatIso": "2026-10-19T07:17:23Z",
+ "beat": 1792394472,
+ "beatIso": "2026-10-19T07:21:12Z",
  "done": "CR tools live on main (504eafa56); chat + chat-seat branches created by chat.py init (chat-wake.yml deployed on chat); ROUTINE_PROMPT.txt updated; board note posted; CR claimed; chat watcher running and holding the seat",
  "next": "CR5 app chat client: data Chat2 model (store JSON of tools/chat.py) + ChatClient (outbox/retry, attachment-first, per-day poll with ETag, seat) + rebuilt ChatPage; then CR8 ship"
 }
