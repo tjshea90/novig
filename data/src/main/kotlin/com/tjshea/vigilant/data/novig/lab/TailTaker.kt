@@ -133,7 +133,7 @@ class TailTaker(
         val start = clock()
         if (r.halted != null || start - haltedAtMs < LiveTradeLimits.HALT_GRACE_MS) return skip("halted")
         if (r.bet && start < standDownUntil) return skip("stood down")
-        if (c.rule != CONSERVATIVE && c.rule != LiveLightScan.RULE && c.rule != LiveLightCurve.RULE) return skip("not the conservative rules")
+        if (c.rule != CONSERVATIVE && c.rule != LiveLightScan.RULE && c.rule != LiveLightCurve.RULE && c.rule != LiveLightScan.MID) return skip("not the conservative rules")
         // A curve bet is an alternate line out of line with its neighbours, not a decided game: a lower fair is believed, and only for a bigger edge.
         val curve = c.rule == LiveLightCurve.RULE
         val minFair = if (curve) TailTradeLimits.MIN_FAIR_CURVE else if (c.rule == LiveLightScan.RULE) TailTradeLimits.MIN_FAIR_LIGHT else TailTradeLimits.MIN_FAIR
