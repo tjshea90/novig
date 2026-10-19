@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-413cf302-mvy06f",
- "head": "ea8cd737f9f943d20dd9ac92c5451070efdb91d6",
+ "head": "9eada62c3122d91b35ac0aa6bab5ee360be638fc",
  "since": 1792435352,
- "beat": 1792436113,
- "beatIso": "2026-10-19T18:55:13Z",
- "done": "added delete-old-releases.yml (APK releases only, keep newest 3 + v0.17.0, dry_run input)",
- "next": "after :data:test passes main gets both workflows; dispatch delete-stale-branches then delete-old-releases (dry_run first)"
+ "beat": 1792436213,
+ "beatIso": "2026-10-19T18:56:53Z",
+ "done": "handoff to mirage written (TASKS.md HANDOFF TO MIRAGE + board note); CH24b ticked as done by tj Gmail",
+ "next": "wait for :data:test, land main, run delete-stale-branches then delete-old-releases (dry_run first)"
 }
