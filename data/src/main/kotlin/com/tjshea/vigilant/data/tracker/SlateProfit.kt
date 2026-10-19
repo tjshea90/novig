@@ -37,10 +37,14 @@ object SlateProfit {
         val lost: Int,
         /** The balance this slate started from (the fixed start plus every earlier slate's profit) and where it ended. */
         val startBalance: Double,
+        /** Money staked on this slate's SETTLED bets (Tj, 2026-10-19: profit is winnings minus amount staked, and the percentage is over the amount staked). */
+        val settledStaked: Double = 0.0,
     ) {
+        /** Total paid back on the settled bets (stake plus profit). */
+        val returned: Double get() = settledStaked + profit
         val endBalance: Double get() = startBalance + profit
         /** The slate's profit over the balance it started from; null when that balance is not positive. */
-        val changePct: Double? get() = if (startBalance > 0.0) profit / startBalance else null
+        val changePct: Double? get() = if (settledStaked > 0.0) profit / settledStaked else null
         val finished: Boolean get() = open == 0
     }
 
@@ -52,7 +56,10 @@ object SlateProfit {
         val balance: Double get() = start + days.sumOf { it.profit }
         val profit: Double get() = days.sumOf { it.profit }
         /** Profit over the fixed start; null with no start. */
-        val pct: Double? get() = if (start > 0.0) profit / start else null
+        val pct: Double? get() = if (settledStaked > 0.0) profit / settledStaked else null
+        /** Money staked on every settled bet, all time, and what those bets paid back. */
+        val settledStaked: Double get() = days.sumOf { it.settledStaked }
+        val returned: Double get() = settledStaked + profit
     }
 
     /** One result on a slate's curve: [cum] is the slate's profit so far, as of this result. */
@@ -87,7 +94,7 @@ object SlateProfit {
             val end = if (open > 0) maxOf(now, first) else settled.maxOf(::resultMs)
             val d = Day(
                 date, first, end, profit, list.sumOf { it.stake }, settled.size, open,
-                settled.count { it.status == BetStatus.WON }, settled.count { it.status == BetStatus.LOST }, balance,
+                settled.count { it.status == BetStatus.WON }, settled.count { it.status == BetStatus.LOST }, balance, settled.sumOf { it.stake },
             )
             balance += profit
             d
