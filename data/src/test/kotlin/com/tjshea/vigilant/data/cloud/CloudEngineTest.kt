@@ -63,10 +63,10 @@ class CloudEngineTest {
 
     private val on = CloudConfig(rev = 1, on = true, settings = ScanSettings(leagues = setOf("NBA"), includeLive = true, scanner = ScannerMode.BOTH, gates = com.tjshea.vigilant.data.scanner.ApiGates().copy(cloudHours = false)), passGapSeconds = 5)
 
-    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, addressWatch: AddressWatch? = null, addressBlocked: () -> Boolean = { false }, clock: () -> Long = System::currentTimeMillis, walletProbe: (suspend (ScanSettings) -> Double?)? = null, walletEveryMs: Long = CloudEngine.WALLET_EVERY_MS, walletRetryMs: Long = CloudEngine.WALLET_RETRY_MS, trade: (suspend (List<com.tjshea.vigilant.data.scanner.Opportunity>, ScanSettings, Long) -> CloudEngine.TradeStatus?)? = null, governor: ApiGovernor = ApiGovernor(), overrideSink: suspend (CloudOverrides.Request) -> Unit = {}, messageSink: suspend (CloudMessages.Message) -> Unit = {}) = CloudEngine(
+    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, fetchSettleMs: Long = 0, addressWatch: AddressWatch? = null, addressBlocked: () -> Boolean = { false }, clock: () -> Long = System::currentTimeMillis, walletProbe: (suspend (ScanSettings) -> Double?)? = null, walletEveryMs: Long = CloudEngine.WALLET_EVERY_MS, walletRetryMs: Long = CloudEngine.WALLET_RETRY_MS, trade: (suspend (List<com.tjshea.vigilant.data.scanner.Opportunity>, ScanSettings, Long) -> CloudEngine.TradeStatus?)? = null, governor: ApiGovernor = ApiGovernor(), overrideSink: suspend (CloudOverrides.Request) -> Unit = {}, messageSink: suspend (CloudMessages.Message) -> Unit = {}) = CloudEngine(
         scanner = scanner, sources = { emptyList() }, config = { cfg() },
         publish = { f, s -> published += f to s; null },
-        pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = idleExitMs, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, fetchSettleMs = 0, restartEveryMs = restartEveryMs,
+        pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = idleExitMs, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, fetchSettleMs = fetchSettleMs, restartEveryMs = restartEveryMs,
         addressWatch = addressWatch, addressBlocked = addressBlocked, clock = clock, walletProbe = walletProbe, walletEveryMs = walletEveryMs, walletRetryMs = walletRetryMs, trade = trade, governor = governor, overrideSink = overrideSink, messageSink = messageSink,
     )
 
@@ -239,6 +239,23 @@ class CloudEngineTest {
         assertEquals(CloudEngine.End.IDLE, end)
         assertEquals(0, scanner.calls.get())
         assertTrue(published.all { it.first == null && it.second.idle })
+    }
+
+    @Test
+    fun `settings edited several times in a row cut the scan short once, after they settle`() = runBlocking {
+        var cfg = on
+        val scanner = FakeScanner { _, partial, n ->
+            if (n == 1) { partial(result("a")); delay(5_000); report(result("a")) } else report(result("c"))
+        }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val e = engine(scanner, { cfg }, published, fetchSettleMs = 200)
+        launch(kotlinx.coroutines.Dispatchers.Default) {
+            delay(60); cfg = on.copy(rev = 2, settings = on.settings.copy(leagues = setOf("NBA")))
+            delay(100); cfg = on.copy(rev = 3, settings = on.settings.copy(leagues = setOf("NBA", "NHL")))
+        }
+        e.run(untilMs = System.currentTimeMillis() + 900)
+        assertTrue("scanned again once settled", scanner.calls.get() >= 2)
+        assertTrue("no scan ran on the half-edited settings", scanner.settingsSeen.drop(1).all { it.leagues == setOf("NBA", "NHL") })
     }
 
     @Test
