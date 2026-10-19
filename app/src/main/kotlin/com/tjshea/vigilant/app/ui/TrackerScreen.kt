@@ -99,13 +99,19 @@ enum class TrackerView(val label: String) { STATS("Stats"), BETS("Bets") }
  * How far back the stats look, by the day of each bet's GAME (Tj, 2026-10-19, PL: Today is today's games; [SlateProfit.slateOf], Eastern, 5 am to 5 am): [days] game days up to today. A bet on a game after
  * today is in All only (its money is at stake, not won or lost yet).
  */
-enum class TrackerPeriod(val label: String, val days: Int) { ALL("All", Int.MAX_VALUE), DAYS_30("30 days", 30), DAYS_7("7 days", 7), TODAY("Today", 1) }
+enum class TrackerPeriod(val label: String, val days: Int) { ALL("All", Int.MAX_VALUE), DAYS_30("30 days", 30), DAYS_7("7 days", 7), TODAY("Today", 1), YESTERDAY("Yesterday", 1), DAY("Pick day", 1) }
 
 enum class BetFilter(val label: String) { OPEN("Open"), SETTLED("Settled"), ALL("All") }
 
 /** [bets] whose game day is in [period] up to [nowMs]'s ("Today": today's games, whenever the bet was placed). */
-fun inPeriod(bets: List<TrackedBet>, period: TrackerPeriod, nowMs: Long): List<TrackedBet> =
-    if (period == TrackerPeriod.ALL) bets else bets.filter { SlateProfit.inLastDays(it, nowMs, period.days) }
+fun inPeriod(bets: List<TrackedBet>, period: TrackerPeriod, nowMs: Long, pickedDay: java.time.LocalDate? = null): List<TrackedBet> = when (period) {
+    TrackerPeriod.ALL -> bets
+    TrackerPeriod.YESTERDAY, TrackerPeriod.DAY -> {
+        val d = SlateProfit.periodDay(period, nowMs, pickedDay)
+        bets.filter { SlateProfit.slateOf(it) == d }
+    }
+    else -> bets.filter { SlateProfit.inLastDays(it, nowMs, period.days) }
+}
 
 /** What each bet's buttons do (the Tracker's own state is in [UiState]; these are the ViewModel's and the Activity's). */
 data class BetActions(
