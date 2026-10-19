@@ -369,6 +369,17 @@ class LiveLightRunner(
         }
         val curve = LiveLightCurve.scan(points, game.ev.league, st, sides.associate { it.outcomeId to it.fair })
         val found = LiveLightScan.scan(points, game.ev.league, st, marginOf, rules) + curve + TailScan.scan(points, st, marginOf, tailRules).map { it.copy(rule = TailTaker.CONSERVATIVE) }
+        // Shadow tier (CH2/CH5b, Tj 2026-10-18): sides the model calls 75-89% sure that would be +EV are only journaled, never offered, so their hit rate can be measured before minFair is lowered.
+        for (c in LiveLightScan.scan(points, game.ev.league, st, marginOf, shadowRules)) {
+            if (c.fair >= rules.minFair) continue
+            val prev = shadowed[c.outcomeId]
+            if (prev != null && now - prev < SHADOW_MS) continue
+            shadowed[c.outcomeId] = now
+            jlog("shadow") {
+                put("eventId", eventId); put("event", game.ev.description); put("league", game.ev.league); put("outcomeId", c.outcomeId); put("selection", c.label); put("side", c.side)
+                put("threshold", c.threshold); put("ask", c.ask); put("fair", c.fair); put("edge", c.edge); put("score", "${feed.game.awayScore}-${feed.game.homeScore}"); put("clockSec", feed.game.clockSec); put("period", feed.game.period)
+            }
+        }
         upd { it.copy(scans = it.scans + 1, lastScanMs = now, lastScanTookMs = (clock() - triggeredAtMs).coerceAtLeast(0)) }
         // An outcome the score calls decided is judged by the more cautious of the score models; a curve bet is only for an outcome they do not call.
         for (c in found.groupBy { it.outcomeId }.values.map { g -> g.filter { it.rule != LiveLightCurve.RULE }.minByOrNull { it.fair } ?: g.first() }.sortedByDescending { it.edge }) {
