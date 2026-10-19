@@ -101,12 +101,27 @@ def chat_reply(reply_to, text, who=None, **kw):
     at = int(time.time() * 1000)
     # Tj, 2026-10-19: a late answer to an old message lands at the bottom of the thread and reads as a stale post. A reply to a message over 30 minutes old is refused (a new message of its own is fine: say it fresh).
     try:
-        if not kw.pop("late_ok", False) and at - int(str(reply_to)[1:]) > 30 * 60 * 1000:
+        if not kw.get("late_ok") and at - int(str(reply_to)[1:]) > 30 * 60 * 1000:
             raise SystemExit("refused: that message is over 30 minutes old; a reply now would read as a stale post. Do not answer it (write it into TASKS.md).")
     except ValueError:
         pass
+    # Tj, 2026-10-19: two live sessions answered the same message (identical replies, twice). One answer per message: refused when anyone has already replied to it.
+    if not kw.get("late_ok"):
+        try:
+            git("fetch", "-q", "origin", BRANCH, cwd=kw.get("cwd"), check=False)
+            for n in git("ls-tree", "--name-only", "FETCH_HEAD", "chat/", cwd=kw.get("cwd"), check=False).stdout.split()[-60:]:
+                if str(reply_to) in n:
+                    continue
+                o = json.loads(git("show", "FETCH_HEAD:" + n, cwd=kw.get("cwd"), check=False).stdout or "{}")
+                if o.get("replyTo") == reply_to and str(o.get("from", "")).startswith("claude:") and o.get("from") != "claude:github":
+                    raise SystemExit("refused: message %s already has an answer (%s). One answer per message; add to TASKS.md instead." % (reply_to, o.get("id")))
+        except SystemExit:
+            raise
+        except Exception:
+            pass
     ident = "c%d-%s" % (at // 1000, secrets.token_hex(2))
     m = {"id": ident, "at": at, "from": who or me(), "text": text, "replyTo": reply_to}
+    kw.pop("late_ok", None)
     put("chat/" + fname(at, ident), json.dumps(m), **kw)
     return ident
 
