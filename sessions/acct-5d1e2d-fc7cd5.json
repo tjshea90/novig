@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hffyfe",
- "head": "835c1573a2a41b86ae9d89ff04efc30b3261124d",
+ "head": "dc08c3daeec0242d9344f04f37a1eb2893fd9c7e",
  "since": 1792444860,
- "beat": 1792448020,
- "beatIso": "2026-10-19T22:13:40Z",
- "done": "pre-ship: v1.0.9: Tracker Yesterday + pick-a-day calendar with chart; engine bets and bids refuse a fair resting on a few small books with identical odds; bids slider 80",
- "next": "ship.sh gates and releases this"
+ "beat": 1792448200,
+ "beatIso": "2026-10-19T22:16:40Z",
+ "done": "pre-release: v1.0.9: Tracker Yesterday + pick-a-day calendar with chart; engine bets and bids refuse a fair resting on a few small books with identical odds; bids slider 80 (versionCode 349, v1.0.9)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.9), then run: bash tools/record-release.sh v1.0.9 349 \"v1.0.9: Tracker Yesterday + pick-a-day calendar with chart; engine bets and bids refuse a fair resting on a few small books with identical odds; bids slider 80\""
 }
