@@ -379,7 +379,7 @@ class LiveLightRunner(
             shadowed[c.outcomeId] = now
             jlog("shadow") {
                 put("eventId", eventId); put("event", game.ev.description); put("league", game.ev.league); put("outcomeId", c.outcomeId); put("selection", c.label); put("side", c.side)
-                put("threshold", c.threshold); put("ask", c.ask); put("fair", c.fair); put("edge", c.edge); put("score", "${feed.game.awayScore}-${feed.game.homeScore}"); put("clockSec", feed.game.clockSec); put("period", feed.game.period)
+                put("strike", c.strike); put("ask", c.ask); put("fair", c.fair); put("edge", c.edge); put("score", "${feed.game.awayScore}-${feed.game.homeScore}"); put("clockSec", feed.game.clockSec); put("period", feed.game.period)
             }
         }
         upd { it.copy(scans = it.scans + 1, lastScanMs = now, lastScanTookMs = (clock() - triggeredAtMs).coerceAtLeast(0)) }
