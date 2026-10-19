@@ -66,7 +66,7 @@ class CloudEngineTest {
     private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, addressWatch: AddressWatch? = null, addressBlocked: () -> Boolean = { false }, clock: () -> Long = System::currentTimeMillis, walletProbe: (suspend (ScanSettings) -> Double?)? = null, walletEveryMs: Long = CloudEngine.WALLET_EVERY_MS, walletRetryMs: Long = CloudEngine.WALLET_RETRY_MS, trade: (suspend (List<com.tjshea.vigilant.data.scanner.Opportunity>, ScanSettings, Long) -> CloudEngine.TradeStatus?)? = null, governor: ApiGovernor = ApiGovernor(), overrideSink: suspend (CloudOverrides.Request) -> Unit = {}, messageSink: suspend (CloudMessages.Message) -> Unit = {}) = CloudEngine(
         scanner = scanner, sources = { emptyList() }, config = { cfg() },
         publish = { f, s -> published += f to s; null },
-        pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = idleExitMs, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, restartEveryMs = restartEveryMs,
+        pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = idleExitMs, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, fetchSettleMs = 0, restartEveryMs = restartEveryMs,
         addressWatch = addressWatch, addressBlocked = addressBlocked, clock = clock, walletProbe = walletProbe, walletEveryMs = walletEveryMs, walletRetryMs = walletRetryMs, trade = trade, governor = governor, overrideSink = overrideSink, messageSink = messageSink,
     )
 
@@ -364,7 +364,7 @@ class CloudEngineTest {
     private fun bidEngine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, log: BidLog, lines: Int = 2) = CloudEngine(
         scanner = scanner, sources = { emptyList() }, config = { cfg() },
         publish = { f, s -> published += f to s; null },
-        pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = 600_000L, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, restartEveryMs = 30_000L,
+        pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = 600_000L, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, fetchSettleMs = 0, restartEveryMs = 30_000L,
         bidLines = { _, s, _ -> log.made += s; (1..lines).map { bidLine("b$it") } },
         publishBids = { log.published += it },
         bidsEveryMs = 0L,
@@ -438,7 +438,7 @@ class CloudEngineTest {
         val e = CloudEngine(
             scanner = scanner, sources = { emptyList() }, config = { bidsOn },
             publish = { f, s -> published += f to s; null },
-            pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = 600_000L, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20,
+            pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = 600_000L, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, fetchSettleMs = 0,
             bidLines = { _, _, _ -> throw IllegalStateException("boom") }, publishBids = {}, bidsEveryMs = 0L,
         )
         e.run(untilMs = System.currentTimeMillis() + 150)
@@ -461,7 +461,7 @@ class CloudEngineTest {
         val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
         val e = CloudEngine(
             scanner = scanner, sources = { emptyList() }, config = { on }, publish = { f, s -> published += f to s; null },
-            pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = 600_000L, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20,
+            pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = 600_000L, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, fetchSettleMs = 0,
             prepare = { prepared += it }, novigRoute = { "Novig read-only key active: 14 reads a second, websocket on" },
         )
         e.run(untilMs = System.currentTimeMillis() + 120)
@@ -477,7 +477,7 @@ class CloudEngineTest {
         val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
         val e = CloudEngine(
             scanner = scanner, sources = { emptyList() }, config = { on }, publish = { f, s -> published += f to s; null },
-            pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = 600_000L, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20,
+            pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = 600_000L, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, fetchSettleMs = 0,
             prepare = { throw IllegalStateException("socket") }, novigRoute = { throw IllegalStateException("route") },
         )
         e.run(untilMs = System.currentTimeMillis() + 120)

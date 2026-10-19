@@ -58,6 +58,8 @@ class CloudEngine(
     private val refreshMinAgeMs: Long = 8_000L,
     /** At most one restart for changed settings in this long. */
     private val restartEveryMs: Long = 30_000L,
+    /** A change to what is READ restarts the scan only once the settings have stayed the same this long (Tj edits several switches in a row: 2026-10-19 three edits in 6 min cut three scans short at 2-4 min of a 10 min scan, so none finished). */
+    private val fetchSettleMs: Long = 20_000L,
     private val sourceNames: (ScanSettings) -> List<String> = { s -> sources(s).map { it.id } },
     /**
      * The bid desk's candidate lines of a priced board under the phone's mirrored settings ([com.tjshea.vigilant.data.novig.trading.maker.BidCandidates.from]); null = this engine makes none. Only called
@@ -363,6 +365,8 @@ class CloudEngine(
         val scanSettings = governor.apply(forCloud(cfg0.settings), clock())
         runCatching { prepare(scanSettings) }.onFailure { log("could not prepare the scan's connections: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
         val fetchKey = CloudScanKey.fetchKey(cfg0.settings)
+        var fetchChangeRev = 0L
+        var fetchChangeSince = 0L
         val scanKey = CloudScanKey.scanKey(cfg0.settings)
         var filterSettings = scanSettings
         pricedRev = cfg0.rev
@@ -446,6 +450,8 @@ class CloudEngine(
                 newer?.let { manualCfg = it }
                 // Nothing to decide unless the phone wrote something new (a revision, a switch-off, a refresh): the settings are compared only then.
                 if (newer != null && (newer.rev != cfg.rev || !newer.on || newer.refreshAtMs > handledRefresh)) {
+                    val fetchChanged = CloudScanKey.fetchKey(newer.settings) != fetchKey
+                    if (fetchChanged && newer.rev != fetchChangeRev) { fetchChangeRev = newer.rev; fetchChangeSince = now }
                     when {
                         !newer.on -> { restartReason = "switched off"; job.cancel(CancellationException(restartReason)); break }
                         // A refresh asked for after this scan began wants a scan that began after it (the scan just begun already is one).
@@ -453,7 +459,9 @@ class CloudEngine(
                         newer.refreshAtMs > handledRefresh -> { handledRefresh = newer.refreshAtMs; scanForRefresh = newer.refreshAtMs }
                         // Settings that change what is READ (a league, a feed, days ahead...) start the scan again, at most once in restartEveryMs; the rest (the minimum edge, odds limits, order, every
                         // phone-only setting) only change how the finished list is filtered.
-                        CloudScanKey.fetchKey(newer.settings) != fetchKey && now - lastRestartAt >= restartEveryMs -> { restartReason = "settings changed"; job.cancel(CancellationException(restartReason)); break }
+                        fetchChanged && now - fetchChangeSince >= fetchSettleMs && now - lastRestartAt >= restartEveryMs -> { restartReason = "settings changed"; job.cancel(CancellationException(restartReason)); break }
+                        // Still being edited, or too soon after the last restart: wait. It is never absorbed into the running scan's revision (that would lose it).
+                        fetchChanged -> {}
                         else -> if (newer.rev != cfg.rev) {
                             cfg = cfg.copy(rev = newer.rev)
                             filterSettings = CloudScanKey.withFilters(scanSettings, newer.settings)
