@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-nfy0aq",
- "head": "f76ccb6cc28f75933457f594b95bfbf7c5a28fc7",
+ "head": "fc1ec1ee5321a0ff7e2cd1788398275caf0f7d6d",
  "since": 1792440839,
- "beat": 1792442311,
- "beatIso": "2026-10-19T20:38:31Z",
- "done": "pre-ship: v1.0.8: Engine > APIs lights (green/amber/grey, tap for the error), Test now and Try again per API; cross-exchange hedge paper journal (Novig + Kalshi/SX)",
- "next": "ship.sh gates and releases this"
+ "beat": 1792442507,
+ "beatIso": "2026-10-19T20:41:47Z",
+ "done": "pre-release: v1.0.8: Engine > APIs lights (green/amber/grey, tap for the error), Test now and Try again per API; cross-exchange hedge paper journal (Novig + Kalshi/SX) (versionCode 348, v1.0.8)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.8), then run: bash tools/record-release.sh v1.0.8 348 \"v1.0.8: Engine > APIs lights (green/amber/grey, tap for the error), Test now and Try again per API; cross-exchange hedge paper journal (Novig + Kalshi/SX)\""
 }
