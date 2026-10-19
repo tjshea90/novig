@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "5407f7a7df636ad10a6c39a067a222744b01ec4d",
+ "head": "2ede70f12b5737644913847ec0fd51a87af1c6de",
  "since": 1792393152,
- "beat": 1792423235,
- "beatIso": "2026-10-19T15:20:35Z",
- "done": "EA: engine-alarm.yml + tools/engine_alarm.py (free runner waits to 08:00 ET then dispatches cloud-scan; armed at the engine's WINDOW/IDLE end, by the gate when hours are closed, by the watchdog), watchdog starts a missing engine inside hours; v1.0.5 released + recorded + announced; CR closed",
- "next": "after main has these: dispatch engine-alarm.yml once now (arms tomorrow 08:00); tomorrow check the 08:00 start (cloud-scan runs ~12:00Z) and tell Tj"
+ "beat": 1792423326,
+ "beatIso": "2026-10-19T15:22:06Z",
+ "done": "EA1-EA3 done: alarm on main and armed (run 39277095427), watchdog starts a missing engine, docs; Tj told; board note",
+ "next": "EA4: the scheduled check-in at 2026-10-20 12:10Z verifies the 08:00 ET start; otherwise continue TASKS.md"
 }
