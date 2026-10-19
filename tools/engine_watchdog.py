@@ -193,7 +193,16 @@ def selftest():
     calls = []
     real_git, real_api = globals()["git"], globals()["api"]
     try:
-        globals()["git"] = lambda *a: types.SimpleNamespace(returncode=128 if a and a[0] == "fetch" else 0, stdout="", stderr="fatal: unable to access")
+        def fake_git(*a):
+            # cloud-feed cannot be fetched; the settings (switch on) and the STOP flag (absent) can: without the fetch check the status would read as nothing and the engine be replaced.
+            if a[0] == "fetch":
+                return types.SimpleNamespace(returncode=128 if "cloud-feed" in a[-1] else 0, stdout="", stderr="fatal: unable to access")
+            if a[-1].endswith(":settings.json"):
+                return types.SimpleNamespace(returncode=0, stdout='{"on": true, "rev": 1}', stderr="")
+            if a[-1].endswith(":deadman/STOP.json"):
+                return types.SimpleNamespace(returncode=128, stdout="", stderr="no such path")
+            return types.SimpleNamespace(returncode=0, stdout="", stderr="")
+        globals()["git"] = fake_git
 
         def fake_api(method, path, body=None):
             calls.append((method, path))
