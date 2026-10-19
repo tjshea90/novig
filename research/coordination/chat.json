@@ -1,0 +1,9 @@
+{
+  "account": "acct-5d1e2d",
+  "name": "mirage",
+  "fire": "5D1E2D",
+  "why": "Tj, 2026-10-19: 'Assign just one account to the chat which never changes. That account will always watch and answer the chat. The other Claude accounts will not see the chat at all.' Change this file only on his word.",
+  "legacySince": "2026-10-19T07:00:00Z",
+  "legacyUntil": "2026-10-26T07:00:00Z",
+  "legacyWhy": "Until Tj's phone has the app with the new chat, tools/chat.py also answers new messages from the old app (chat/ on cloud-config, written after legacySince) in the old format, so nothing is missed during the switch."
+}

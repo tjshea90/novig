@@ -34,6 +34,7 @@ jobs:
       # The app chat's safety net (CR, Tj 2026-10-19): a message of Tj's that nobody showed or answered, while no session holds the chat seat, wakes the chat account
       # even if GitHub dropped the push event that normally does it (tools/chat_wake.py; one fire per 3 minutes, backs off when the account does not come).
       - name: Chat sweep
+        if: always()
         env:
           CLAUDE_FIRE_5D1E2D_URL: ${{ secrets.CLAUDE_FIRE_5D1E2D_URL }}
           CLAUDE_FIRE_5D1E2D_TOKEN: ${{ secrets.CLAUDE_FIRE_5D1E2D_TOKEN }}
