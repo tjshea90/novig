@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "d7ff490bb10ca9b6a886915589d55fd03f1d2b08",
+ "head": "1b1ac7101b9a9e9394c13585d4f8d7827966f653",
  "since": 1792393152,
- "beat": 1792426898,
- "beatIso": "2026-10-19T16:21:38Z",
- "done": "PL: NovigTradingClient.transfers() reads TRANSFER_IN/OUT with no time bounds (a filter by event start can't drop them); WalletMoney uses it; ApiBettingTest covers it; v1.0.6 code 346",
- "next": "full tools/test.sh (running), then ship.sh, release.yml, record-release, dispatch the fixed keeper, tell Tj"
+ "beat": 1792426960,
+ "beatIso": "2026-10-19T16:22:40Z",
+ "done": "PL5: the wallet figure reads every money-moving ledger kind (transfers, deposits, withdrawals, credits, forwarding) by its sign, so money moved back and forth nets out; card says put in minus taken out; 82 tests pass",
+ "next": "re-run ship.sh for v1.0.6 (PL + PL5), check keeper run 39284378407 is alive, release, tell Tj"
 }
