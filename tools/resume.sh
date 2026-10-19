@@ -176,10 +176,10 @@ PYLAB
       echo "  CLOUD phone-data (bets/bids/study, git fetch origin phone-data; files phone/bets, phone/study) and cloud-feed (status.json) exist; rules: CLAUDE.md 'Cloud scan'"
     fi
 
-    # COORD (Tj, 2026-10-15): three Claude accounts share this repo and only ONE works at a time. The lease and the notes between accounts live on the claude-coord branch
-    # (tools/coord.py, research/coordination/PROTOCOL.md). A few short lines; any failure is silent so the briefing never breaks.
+    # COORD (CR, Tj 2026-10-19): three Claude accounts work on this repo AT ONCE, with no lease: this session checks in, and the briefing lists who else is working,
+    # what is claimed and any branch with work not yet on main (tools/coord.py, research/coordination/PROTOCOL.md). Any failure is silent so the briefing never breaks.
     if [ -f tools/coord.py ] && [ -z "${COORD_OFF:-}" ]; then
-      timeout 45 python3 -I tools/coord.py status --acquire 2>/dev/null | head -8
+      timeout 60 python3 -I tools/coord.py status --acquire 2>/dev/null | head -9
     fi
 
     # DEADMAN (TCL50): the dead-man switch's state, one line, only when something is wrong.
@@ -191,9 +191,25 @@ try:
  elif s.get("phase")=="asked": print("  DEAD  check-in sent to Tj, waiting for any message (24 h grace)")
 except Exception: pass'
     fi
-    # CHAT (TCL29): Tj chats from the phone app; the repo is the channel. One line so every session starts the zero-token watcher.
-    echo "  CHAT  Tj chats in the app: start Monitor(persistent) 'bash tools/chat_watch.sh'; answer: python3 tools/tell_tj.py chat-reply <id> \"...\""
-    [ -f research/coordination/away.json ] && echo "  AWAY  $(tr -d '\n ' < research/coordination/away.json) (research/coordination/away.json: those slots are covered at once)"
+    # CHAT (CR, Tj 2026-10-19: "Assign just one account to the chat which never changes ... The other Claude accounts will not see the chat at all"): only the chat
+    # account (research/coordination/chat.json) is told about it; every other account's briefing says nothing.
+    CHAT_LINE="$(timeout 20 python3 -I - <<'PYC' 2>/dev/null
+import json, sys
+sys.path.insert(0, "tools")
+try:
+    import coord
+    me = coord.identity()["label"]
+    cfg = json.load(open("research/coordination/chat.json"))
+    if me == cfg.get("account"):
+        print("  CHAT  this is the chat account (%s): start Monitor(persistent) 'python3 -I -u tools/chat.py watch' and answer what it prints; rules: research/coordination/CHAT.md" % cfg.get("name"))
+except Exception:
+    pass
+PYC
+)"
+    [ -n "$CHAT_LINE" ] && echo "$CHAT_LINE"
+    if [ -f research/coordination/away.json ] && [ "$(tr -d '\n {}' < research/coordination/away.json)" != "" ]; then
+      echo "  AWAY  $(tr -d '\n ' < research/coordination/away.json) (research/coordination/away.json: those slots are covered at once)"
+    fi
 
     # WAS THE LAST SESSION CUT OFF MID-CHANGE?
     # This is the question CHECKPOINT.md cannot answer about itself. The
