@@ -1488,9 +1488,22 @@ class AppContainer(val app: Application) {
             bidRules = { com.tjshea.vigilant.data.novig.lab.LiveLightBidRules(margin = LIGHT_BID_MARGIN) },
             confirm = {
                 val s = settingsStore.flow.value
-                if (s != null && boltActive(s) && s.gates.boltSocket) com.tjshea.vigilant.data.novig.lab.BoltLiveConfirm(boltFeed.lines.board) else null
+                val bolt = if (s != null && boltActive(s) && s.gates.boltSocket) com.tjshea.vigilant.data.novig.lab.BoltLiveConfirm(boltFeed.lines.board) else null
+                val sx = if (s != null && s.gates.useSxBet && s.gates.sxSocket) sxConfirmFeed()?.let { f -> com.tjshea.vigilant.data.novig.lab.SxLiveConfirm { now -> f.liveGames(now) } } else null
+                listOfNotNull(sx, bolt).let { if (it.isEmpty()) null else com.tjshea.vigilant.data.novig.lab.FirstLiveConfirm(it) }
             },
         )
+    }
+
+    /** SX Bet's live prices read only, as Live light's second opinion (CH5c); one feed of its own, frames go nowhere. */
+    @Volatile private var sxConfirm: com.tjshea.vigilant.data.sxbet.SxBetLiveFeed? = null
+    private fun sxConfirmFeed(): com.tjshea.vigilant.data.sxbet.SxBetLiveFeed? {
+        sxConfirm?.let { return it }
+        synchronized(this) {
+            sxConfirm?.let { return it }
+            val st = sxBetClient.stream ?: return null
+            return com.tjshea.vigilant.data.sxbet.SxBetLiveFeed(st, sxBetClient, ensureOpen = { sxSocketOn = true; st.open() }, sink = { _, _ -> }, scope = appScope).also { it.start(); sxConfirm = it }
+        }
     }
 
     @Volatile private var tailSawHalt = false

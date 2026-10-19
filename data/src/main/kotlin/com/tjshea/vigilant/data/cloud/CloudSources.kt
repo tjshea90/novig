@@ -207,7 +207,7 @@ class CloudSources(
         synchronized(this) {
             sxConfirm?.let { return it }
             val st = sxbet.stream ?: return null
-            return com.tjshea.vigilant.data.sxbet.SxBetLiveFeed(st, sxbet, ensureOpen = { sxSocketWanted = true; st.open() }, sink = { _, _ -> }, scope = confirmScope).also { it.start(); sxConfirm = it }
+            return com.tjshea.vigilant.data.sxbet.SxBetLiveFeed(st, sxbet, ensureOpen = { sxSocketWanted = true; st.open() }, sink = { _, _ -> }, scope = scope).also { it.start(); sxConfirm = it }
         }
     }
 
