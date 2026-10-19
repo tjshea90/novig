@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "c170545eee7bc4a6f3697688ccde3f7bdc7690f2",
+ "head": "6fe62af1b3b124d9a5e9e28c90c640bc27b93efd",
  "since": 1792393152,
- "beat": 1792426077,
- "beatIso": "2026-10-19T16:07:57Z",
- "done": "PL data: SlateProfit by game day (5 am-5 am ET, today = today's games, later() for open stakes on later games, merged curve steps); WalletProfit (cash + open positions - transfers); SlateProfitTest 7 + WalletProfitTest 3 pass",
- "next": "PL app: WalletMoney reader (balance + positions + ledger TRANSFER_IN/OUT, persisted), container + VM + MainActivity wiring, TrackerPeriod by game day, ProfitChart.kt rewrite, ProfitChartTest"
+ "beat": 1792426190,
+ "beatIso": "2026-10-19T16:09:50Z",
+ "done": "PL app: WalletMoney reader + VM/Activity wiring, Tracker periods by game day, profit card rewrite (all-time wallet headline, Today line with day names, running total + day bars), Diagnostics line; ProfitChartTest 11 pass; research/profit_card_2026-10-19.md, CLAUDE.md P/L rule",
+ "next": "PL4: bump v1.0.6 code 346, full tools/test.sh, ship.sh, release.yml, record-release, tell Tj"
 }
