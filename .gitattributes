@@ -1,0 +1,9 @@
+# How the three accounts' branches merge without a fight (CR, Tj 2026-10-19). tools/push.sh merges main into a session's branch by itself (a clean merge only):
+# these append-mostly logs keep BOTH sides' new lines instead of conflicting, and CHECKPOINT.md (rewritten whole by every ckpt.sh) keeps the branch's own copy
+# (the "ours" driver is set by push.sh: git config merge.ours.driver true). Everything else merges normally; a real conflict is never committed.
+INBOX.md merge=union
+TASKS.md merge=union
+BUILDLOG.md merge=union
+research/lab/NOTES.md merge=union
+research/review/CHANGES.md merge=union
+CHECKPOINT.md merge=ours
