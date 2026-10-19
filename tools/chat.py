@@ -748,6 +748,30 @@ def deploy_workflow(g=None):
     return "deployed"
 
 
+def post_system(text, who="claude:github", cwd=None, g=None, at=None):
+    """A message from GitHub's side (the dead-man check-in): no seat, no chat account needed. Into the new store, and the old app's while the switch lasts."""
+    check_words(text)
+    at = at or now_ms()
+    g = g or Git(home=os.path.join(os.environ.get("RUNNER_TEMP") or os.path.join(os.path.expanduser("~"), ".vigilant-chat"), "system"), source=cwd or REPO)
+    cid = "c%d-%s" % (at, secrets.token_hex(2))
+    m = {"v": 2, "id": cid, "at": at, "from": "claude", "account": "github", "name": who.replace("claude:", ""), "replyTo": [], "kind": "system", "text": str(text).strip()}
+    with lock(g):
+        g.add_files(CHAT, {"msgs/%s/%s.json" % (day_of(at), cid): json.dumps(m, ensure_ascii=False)}, "chat: system " + cid)
+        if legacy_window(load_cfg(), at) is not None:
+            lid = "c%d-%s" % (at // 1000, secrets.token_hex(2))
+            g.add_files(LEGACY, {"chat/" + legacy_name(at, lid): json.dumps({"id": lid, "at": at, "from": who, "text": str(text).strip(), "replyTo": None})}, "chat (old app): system")
+    return cid
+
+
+def last_tj_at(g=None, cwd=None):
+    """When Tj last wrote in the new chat (ms; 0 = never in the last two weeks). The dead-man switch counts it as presence."""
+    g = g or Git(home=os.path.join(os.environ.get("RUNNER_TEMP") or os.path.join(os.path.expanduser("~"), ".vigilant-chat"), "system"), source=cwd or REPO)
+    if not g.fetch(CHAT):
+        return 0
+    msgs, _ = Store(g).load()
+    return max([int(m.get("at", 0)) for m in msgs if is_tj(m)] or [0])
+
+
 # ---- the daemon -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def say_line(*parts):

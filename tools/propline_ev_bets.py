@@ -197,9 +197,8 @@ def notify(rows, summary, state_path):
     body = summary.split("\n\n", 1)[0] + "\n" + "\n".join(summary.split("\n")[3:12]) + "\nFull tables: Release propline-ev-bets (evbets.md, evbets.csv.gz). Verdict rule: |z| >= 2."
     sys.path.insert(0, HERE)
     import tell_tj
+    # Messages only (CR, Tj 2026-10-19: the chat is a conversation; GitHub's reports are not posted into it any more)
     tell_tj.say(title, body[:1800], kind="info", priority=1, who="claude:github")
-    at = int(__import__("time").time() * 1000)
-    tell_tj.put("chat/%013d-w%d.json" % (at, at), json.dumps({"id": "r%d" % at, "at": at, "from": "claude:github", "text": title + ". " + "The 12-line table is in Messages; full file in the propline-ev-bets Release.", "replyTo": None, "ack": None, "files": []}))
     sent["sent"] = sorted(set(sent["sent"]) | set(due))
     json.dump(sent, open(state_path, "w"))
     print("reported at", top)

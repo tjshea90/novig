@@ -6,7 +6,7 @@
   python3 tools/deadman.py status
   python3 tools/deadman.py selftest
 
-Presence = a message FROM TJ: a chat message in the app (chat/ on cloud-config, "from":"tj") or an entry in INBOX.md (capture_inbox.sh writes only his typed words,
+Presence = a message FROM TJ: a chat message in the app (the new chat on the `chat` branch since 2026-10-19, CR, and the old app's chat/ on cloud-config) or an entry in INBOX.md (capture_inbox.sh writes only his typed words,
 never a routine's stored prompt). The app merely syncing, phone-data pushes, bot commits and Claude's own messages are NOT presence.
   ok      -> 72 h without presence: send the check-in (a priority-1 phone message + a chat message), phase `asked`.
   asked   -> any message from Tj: back to ok. 24 h with none: STOP.
@@ -50,10 +50,23 @@ def step(now, presence, st):
     return st, acts
 
 
+REF = "refs/vigilant/deadman-" + tell_tj.BRANCH   # never FETCH_HEAD: another fetch in the same checkout at the same moment would swap it (CR, 2026-10-19)
+
+
+def fetch_config(cwd=None):
+    tell_tj.git("fetch", "-q", "origin", "+refs/heads/%s:%s" % (tell_tj.BRANCH, REF), cwd=cwd, check=False)
+
+
 def last_chat_from_tj(cwd=None):
-    tell_tj.git("fetch", "-q", "origin", tell_tj.BRANCH, cwd=cwd, check=False)
-    names = tell_tj.git("ls-tree", "-r", "--name-only", "FETCH_HEAD", cwd=cwd, check=False).stdout.split()
+    """Tj's newest app-chat message: the new chat (tools/chat.py, branch `chat`) or the old app's chat/ on cloud-config, whichever is later."""
     best = 0
+    try:
+        import chat
+        best = chat.last_tj_at(cwd=cwd)
+    except Exception:
+        pass
+    fetch_config(cwd)
+    names = tell_tj.git("ls-tree", "-r", "--name-only", REF, cwd=cwd, check=False).stdout.split()
     for f in names:
         if not f.startswith("chat/") or "-ack-" in f:
             continue
@@ -78,8 +91,8 @@ def presence(cwd=None):
 
 
 def read_json(path, cwd=None):
-    tell_tj.git("fetch", "-q", "origin", tell_tj.BRANCH, cwd=cwd, check=False)
-    r = tell_tj.git("show", "FETCH_HEAD:" + path, cwd=cwd, check=False)
+    fetch_config(cwd)
+    r = tell_tj.git("show", REF + ":" + path, cwd=cwd, check=False)
     try:
         return json.loads(r.stdout) if r.returncode == 0 else None
     except ValueError:

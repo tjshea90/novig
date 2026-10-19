@@ -95,8 +95,11 @@ def set_api(reason, pairs, who=None, **kw):
 
 
 def chat_reply(reply_to, text, who=None, **kw):
-    """Kept for old instructions: the app chat is tools/chat.py now."""
+    """Kept for old callers: the app chat is tools/chat.py now. reply_to None = a message from GitHub's side (the dead-man check-in): chat.post_system."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import chat
+    if reply_to is None:
+        return chat.post_system(text, who=who or "claude:github", cwd=kw.get("cwd"))
     return chat.cmd_reply([reply_to], text)
 
 
