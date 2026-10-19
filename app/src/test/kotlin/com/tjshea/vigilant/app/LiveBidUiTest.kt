@@ -337,13 +337,13 @@ class LiveBidUiTest {
         compose.onNodeWithTag("liveBidSliderLabel").performScrollTo().assertTextContains("Careful", substring = true)
         tap("liveBidTennis")
         assertEquals(25, ui().settings.liveBidQuality.level)
-        assertEquals(true, ui().settings.liveBidQuality.tennis)
+        assertEquals(false, ui().settings.liveBidQuality.tennis)
         tap("liveBidMargin-0")
         assertEquals(-1, ui().settings.liveBidQuality.level)
         compose.onNodeWithText("Custom rules", substring = true).performScrollTo().assertIsDisplayed()
         tap("liveBidStop-90")
         assertEquals(90, ui().settings.liveBidQuality.level)
-        assertEquals(true, ui().settings.liveBidQuality.tennis)
+        assertEquals(false, ui().settings.liveBidQuality.tennis)
     }
 
     @Test
@@ -363,7 +363,7 @@ class LiveBidUiTest {
         val ui = show(state())
         tap("liveBidNeverLead"); assertTrue(ui().settings.liveBidQuality.neverLead)
         tap("liveBidBothSides"); assertTrue(ui().settings.liveBidQuality.bothSides)
-        tap("liveBidTennis"); assertTrue(ui().settings.liveBidQuality.tennis)
+        tap("liveBidTennis"); assertFalse(ui().settings.liveBidQuality.tennis)
         tap("liveBidMoneyline"); assertFalse(ui().settings.liveBidQuality.moneyline)
         tap("liveBidPullScore"); assertFalse(ui().settings.liveBidQuality.pullOnScore)
         tap("liveBidOverlap"); assertFalse(ui().settings.liveBidQuality.overlapRepost)
