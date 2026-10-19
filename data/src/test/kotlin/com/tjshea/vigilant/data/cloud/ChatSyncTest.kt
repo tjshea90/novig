@@ -320,7 +320,7 @@ class ChatSyncTest {
     }
 
     @Test
-    fun `no token: nothing is sent, the message waits for Retry, and nothing is read`() = runBlocking {
+    fun `no token - nothing is sent, the message waits for Retry, and nothing is read`() = runBlocking {
         val c = sync(token = null)
         c.load()
         c.send("hi")
