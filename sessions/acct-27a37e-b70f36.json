@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-413cf302-mvy06f",
- "head": "887e7666ad746832d761ca99bd765874a9e79763",
+ "head": "cbe3b04eb127882dfdf1d94207c03f252cb9a53e",
  "since": 1792435352,
- "beat": 1792439042,
- "beatIso": "2026-10-19T19:44:02Z",
+ "beat": 1792439463,
+ "beatIso": "2026-10-19T19:51:03Z",
  "done": "pre-release: v1.0.7: the engine waits 20 s for your settings edits to settle before restarting a scan (SC1: three edits in 6 min cut three scans short); cleanup of old releases/branches (versionCode 347, v1.0.7)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.7), then run: bash tools/record-release.sh v1.0.7 347 \"v1.0.7: the engine waits 20 s for your settings edits to settle before restarting a scan (SC1: three edits in 6 min cut three scans short); cleanup of old releases/branches\""
 }

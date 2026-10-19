@@ -7,5 +7,5 @@
  "nonce": "b70f36",
  "note": "v1.0.7: the engine waits 20 s for your settings edits to settle before restarting a scan (SC1: three edits in 6 min cut three scans short); cleanup of old releases/branches",
  "since": 1792438698,
- "beat": 1792439042
+ "beat": 1792439463
 }
