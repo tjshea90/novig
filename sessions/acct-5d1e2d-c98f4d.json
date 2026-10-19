@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "5c2be71e9c861bcfd4f5cbb99a07cb2a8e81adea",
+ "head": "c84f6e79a419e9c58a10daee508a6b0af65f0132",
  "since": 1792393152,
- "beat": 1792425424,
- "beatIso": "2026-10-19T15:57:04Z",
+ "beat": 1792425619,
+ "beatIso": "2026-10-19T16:00:19Z",
  "done": "PL data: SlateProfit by game day (5 am-5 am ET, today = today's games, later() for open stakes on later games, merged curve steps); WalletProfit (cash + open positions - transfers); SlateProfitTest 7 + WalletProfitTest 3 pass",
  "next": "PL app: WalletMoney reader (balance + positions + ledger TRANSFER_IN/OUT, persisted), container + VM + MainActivity wiring, TrackerPeriod by game day, ProfitChart.kt rewrite, ProfitChartTest"
 }
