@@ -8,8 +8,8 @@
  "branch": "ccr-2df6ce48-pkrh5v",
  "head": "c34750c5ccb83bb45e2b471efeec7201c92ac894",
  "since": 1792393152,
- "beat": 1792427716,
- "beatIso": "2026-10-19T16:35:16Z",
+ "beat": 1792428116,
+ "beatIso": "2026-10-19T16:41:56Z",
  "done": "pre-release: v1.0.6: the Tracker's profit card rebuilt (PL): Today is today's games, $0.00 until a result; open bets are money at stake, never a loss; all-time profit = the Vigilant wallet (cash + open bets) minus the money put in, net of every withdrawal (Novig's ledger, every money-moving kind); the Tracker's period chips count by game day; charts name the day, running total + a bar a day (versionCode 346, v1.0.6)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.6), then run: bash tools/record-release.sh v1.0.6 346 \"v1.0.6: the Tracker's profit card rebuilt (PL): Today is today's games, $0.00 until a result; open bets are money at stake, never a loss; all-time profit = the Vigilant wallet (cash + open bets) minus the money put in, net of every withdrawal (Novig's ledger, every money-moving kind); the Tracker's period chips count by game day; charts name the day, running total + a bar a day\""
 }
