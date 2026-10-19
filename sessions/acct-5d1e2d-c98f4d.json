@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "72f41d006e86a93ba637661b8e8b70f3b24537c6",
+ "head": "70e7a9f403c1d81841ed68fb0d3c4985be7a9d2e",
  "since": 1792393152,
- "beat": 1792423564,
- "beatIso": "2026-10-19T15:26:04Z",
- "done": "EA1-EA3 done: alarm on main and armed (run 39277095427), watchdog starts a missing engine, docs; Tj told; board note",
- "next": "EA4: the scheduled check-in at 2026-10-20 12:10Z verifies the 08:00 ET start; otherwise continue TASKS.md"
+ "beat": 1792423751,
+ "beatIso": "2026-10-19T15:29:11Z",
+ "done": "EA5-EA7: keeper (engine-alarm.yml: always running, 2-min checks in hours, sleeps to 08:00 ET, hands over every 340 min), gate+end step+watchdog ensure a keeper, shared switch/hours rule (4,000 cases = old gate), retried hand-over; dry runs on real state OK",
+ "next": "dispatch the keeper, read its first log lines; EA4/EA8: verify the 2026-10-20 08:00 start (check-in 12:10Z)"
 }
