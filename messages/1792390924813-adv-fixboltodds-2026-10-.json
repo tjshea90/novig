@@ -1,0 +1,1 @@
+{"id":"adv-fix:boltodds-2026-10-19","at":1792390924813,"from":"engine","kind":"recommendation","title":"BoltOdds refused a key","body":"The provider rejected the key (wrong, expired or cancelled). Replace it in Settings › APIs, or the engine goes without BoltOdds.","priority":1,"action":"APIS"}
