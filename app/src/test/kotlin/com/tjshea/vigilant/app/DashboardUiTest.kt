@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -72,7 +73,12 @@ class DashboardUiTest {
         compose.onNodeWithText("working").assertExists()
         compose.onNodeWithTag("dashboardApi-boltodds").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("failing").assertExists()
+        // A problem's words stay behind a tap (CH23): the card says so, and the tap shows the error and the Test now / Try again buttons.
+        compose.onNodeWithText("Tap for the error").assertExists()
+        compose.onNodeWithTag("dashboardApi-boltodds").performClick()
         compose.onNodeWithText("lines socket is not connected", substring = true).assertExists()
+        compose.onNodeWithTag("apiTestNow-boltodds").assertExists()
+        compose.onNodeWithTag("apiRetry-boltodds").assertExists()
         compose.onNodeWithTag("dashboardOpenGitHub").performScrollTo().assertIsDisplayed()
     }
 
