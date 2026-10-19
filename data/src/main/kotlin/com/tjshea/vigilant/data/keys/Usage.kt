@@ -552,7 +552,11 @@ class KeyPool(
     val policy: QuotaPolicy,
     private val keys: () -> List<String>,
     private val meter: UsageMeter,
+    /** Tj, 2026-10-19 (The Odds API): stay on the key that last answered until it is spent or refused, then go to the next in his order. */
+    private val sticky: Boolean = false,
 ) {
+    @Volatile private var lastGood: String? = null
+
     /** How many keys Tj has for this provider right now. */
     fun keyCount(): Int = keys().size
 
