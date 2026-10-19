@@ -2,6 +2,7 @@
 """Engine watchdog (TCL53; Tj 2026-10-16: "if this ever happens again, try to diagnose and fix it so it can auto resume").
 
   python3 tools/engine_watchdog.py check     (the 5-minute workflow, no Claude usage; GitHub runs it only a few times a day, so it is a backup, not the clock: engine-alarm.yml is)
+  python3 tools/engine_watchdog.py dry       (decide and print with today's real state, change nothing)
   python3 tools/engine_watchdog.py selftest
 
 The engine job can hang (run 61, 2026-10-16: it logged "ending" and then sat in the Engine step, so the hand-over never started a replacement and the 15-minute schedule's gate saw an engine
@@ -25,18 +26,18 @@ STALL_MS = 10 * 60 * 1000
 MAX_SWAPS = 6                           # swaps in the window before the watchdog waits (each new run re-reads the fair-odds feeds: it costs API requests)
 
 
-def decide(now, runs, heartbeat_ms, idle, switch_on, stopped, route="", status_run=None, recent_runs=(), progress_changed_ms=0, scanning=False, hours_open=True, alarm_waiting=True):
-    """Pure. runs: list of {id, status, created_ms, started_ms}. -> (action, run id to cancel or None, reason). Actions: none, cancel, restart, start (dispatch an engine), alarm (arm the 08:00 alarm)."""
+def decide(now, runs, heartbeat_ms, idle, switch_on, stopped, route="", status_run=None, recent_runs=(), progress_changed_ms=0, scanning=False, hours_open=True):
+    """Pure. runs: list of {id, status, created_ms, started_ms}. -> (action, run id to cancel or None, reason). Actions: none, cancel, restart, start (dispatch an engine)."""
     if stopped:
         return "none", None, "dead-man STOP is set"
     live = [r for r in runs if r["status"] == "in_progress"]
     queued = [r for r in runs if r["status"] in ("queued", "pending", "waiting")]
     if not live:
-        # No engine: GitHub's 15-minute timer comes only a few times a day (EA, 2026-10-19), so the watchdog starts one inside the hours and keeps the alarm armed outside them.
+        # No engine: GitHub's 15-minute timer comes only a few times a day (EA, 2026-10-19), so a missing engine is started here (the keeper runs this every 2 minutes).
         if queued or any(now - r["created_ms"] < RECENT_MS for r in recent_runs):
             return "none", None, "no engine running, but one was started in the last 10 minutes or is queued"
         if not hours_open:
-            return ("none", None, "outside the engine's hours; the alarm waits for 08:00 ET") if alarm_waiting else ("alarm", None, "outside the engine's hours and no alarm waits for 08:00 ET")
+            return "none", None, "outside the engine's hours (the keeper starts it at 08:00 ET)"
         if not switch_on:
             return "none", None, "the phone's switch is off"
         return "start", None, "no engine run inside the engine's hours"
@@ -95,7 +96,8 @@ def show(branch, path):
     return r.stdout if r.returncode == 0 else None
 
 
-def check():
+def check(keeper=False, dry=False):
+    """One look. keeper: called by the keeper itself (no keeper to start). dry: decide and print, change nothing."""
     now = int(time.time() * 1000)
     runs = []
     for st in ("in_progress", "queued"):
@@ -112,23 +114,22 @@ def check():
     stopped = show("cloud-config", "deadman/STOP.json") is not None
     recent = [{"id": r["id"], "created_ms": _ts(r["created_at"])} for r in api("GET", "actions/workflows/%s/runs?per_page=20" % WF).get("workflow_runs", [])]
     import engine_alarm
-    hours_open = engine_alarm.in_hours(now, cfg)
-    # GitHub is asked whether an alarm waits only when it matters: outside the hours with no engine run.
-    alarm_waiting = True if (hours_open or runs) else bool(engine_alarm.runs(engine_alarm.ALARM_WF))
-    action, rid, why = decide(now, runs, stat.get("heartbeatMs"), bool(stat.get("idle")), bool(cfg.get("on")), stopped, stat.get("novigRoute") or "", stat.get("runId"), recent,
-                              int(stat.get("progressChangedAtMs") or 0), bool(stat.get("scanning")), hours_open, alarm_waiting)
-    print("watchdog:", action, why)
-    if action == "start":
-        api("POST", "actions/workflows/%s/dispatches" % WF, {"ref": "main"})
+    # The switch and the hours exactly as cloud-scan.yml's gate reads them (one rule: tools/engine_alarm.py).
+    action, rid, why = decide(now, runs, stat.get("heartbeatMs"), bool(stat.get("idle")), engine_alarm.switch_on(cfg, now), stopped, stat.get("novigRoute") or "", stat.get("runId"), recent,
+                              int(stat.get("progressChangedAtMs") or 0), bool(stat.get("scanning")), engine_alarm.in_hours(now, cfg))
+    print("watchdog:", action, why, flush=True)
+    if dry:
         return 0
-    if action == "alarm":
-        engine_alarm.dispatch(engine_alarm.ALARM_WF)
+    if not keeper:
+        engine_alarm.ensure()   # the keeper must always be there (the watchdog's own timer is one of GitHub's unreliable ones)
+    if action == "start":
+        engine_alarm.dispatch(WF)
         return 0
     if action in ("cancel", "restart"):
         api("POST", "actions/runs/%d/cancel" % rid)
         if action == "restart":
             time.sleep(8)
-            api("POST", "actions/workflows/%s/dispatches" % WF, {"ref": "main"})
+            engine_alarm.dispatch(WF)
         try:
             import tell_tj
             tell_tj.say("The engine was stuck: restarted", "GitHub engine run %d had gone quiet (%s). It was cancelled and a fresh run started by the watchdog; nothing for you to do." % (rid, why), kind="alert", priority=0, who="claude:watchdog")
@@ -156,10 +157,8 @@ def selftest():
     assert decide(now, [], now - 99 * M, recent_runs=[{"id": 9, "created_ms": now - 3 * M}], **ok)[0] == "none"          # one was just dispatched
     assert decide(now, [run(9, "queued", 1)], now - 99 * M, **ok)[0] == "none"                                         # one is queued
     assert decide(now, [], now - 99 * M, switch_on=False, stopped=False, idle=False)[0] == "none"                      # the phone switched it off
-    assert decide(now, [], now - 99 * M, hours_open=False, alarm_waiting=False, **ok)[0] == "alarm"
-    assert decide(now, [], now - 99 * M, hours_open=False, alarm_waiting=True, **ok)[0] == "none"
-    assert decide(now, [], now - 99 * M, switch_on=False, stopped=False, idle=False, hours_open=False, alarm_waiting=False)[0] == "alarm"   # the 08:00 resume after an off
-    assert decide(now, [], now - 99 * M, switch_on=True, stopped=True, idle=False, hours_open=False, alarm_waiting=False)[0] == "none"     # dead-man STOP
+    assert decide(now, [], now - 99 * M, hours_open=False, **ok)[0] == "none"                                         # outside the hours: the keeper's 08:00
+    assert decide(now, [], now - 99 * M, switch_on=True, stopped=True, idle=False)[0] == "none"                         # dead-man STOP
     refused = "public routes: the read key was refused (Novig places this network's internet address outside the states it serves (RESTRICTED_NETWORK_REGION))"
     fresh = now - 10_000
     a = decide(now, [run(7, "in_progress", 6)], fresh, route=refused, status_run=7, **ok); assert a[:2] == ("restart", 7), a        # refused 6 minutes: swap
@@ -180,4 +179,4 @@ def selftest():
 
 if __name__ == "__main__":
     c = sys.argv[1] if len(sys.argv) > 1 else "check"
-    sys.exit(selftest() if c == "selftest" else check())
+    sys.exit(selftest() if c == "selftest" else check(dry=(c == "dry")))
