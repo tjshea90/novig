@@ -124,7 +124,7 @@ class TailTakerTest {
         assertNull("edge under 5%", r.taker.attempt(offer(cand(rule = LiveLightScan.MID, fair = 0.85, ask = 0.80, edge = 0.04, outcome = "m2"))))
         assertNotNull(r.taker.attempt(offer(cand(rule = LiveLightScan.MID, fair = 0.85, ask = 0.72, edge = 0.10, outcome = "m3"))))
         val order = r.orders.placed.single()
-        assertTrue("a tenth-dollar stake, not the setting: $order", order.qty * order.price <= 0.10 + 1e-9)
+        assertTrue("a tenth-dollar stake, not the setting: $order", order.qty * order.price * com.tjshea.vigilant.engine.EvMath.CONTRACT_PAYOUT_DOLLARS <= 0.10 + 1e-9)
     }
 
     @Test
