@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "2f061a003f75d53b0150509b2e2500dab083430b",
+ "head": "55b14242672599bcd23eefc3edfa93993af891c4",
  "since": 1792393152,
- "beat": 1792424543,
- "beatIso": "2026-10-19T15:42:23Z",
- "done": "EA: keeper steps aside for a newer keeper, one log line per state, full-loop test with a fake clock",
- "next": "dispatch the keeper again (new code); then PL: the profit card"
+ "beat": 1792424591,
+ "beatIso": "2026-10-19T15:43:11Z",
+ "done": "PL: SlateProfit reworked (today/day/days/lastDays by calendar day, merged curve steps, Day.openStaked); ProfitChart.kt still calls the removed current/previous",
+ "next": "PL: WalletProfit (cash + open positions - transfers in/out from Novig ledger), AppContainer reader, VM state, ProfitChart.kt rewrite following TrackerPeriod, tests, v1.0.6 code 346, ship"
 }
