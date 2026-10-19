@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/c98f4d",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "c98f4d",
+ "note": "v1.0.5: the chat with Claude rebuilt from scratch (one account answers, messages say Sending/Sent/Seen/Answered, retry, attachments kept, quotes, online/waking line); the Claude tab's red number counts only chat replies; live-bid tests follow the tennis-on default",
+ "since": 1792396460,
+ "beat": 1792396460
+}

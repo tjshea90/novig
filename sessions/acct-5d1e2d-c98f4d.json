@@ -8,8 +8,8 @@
  "branch": "ccr-2df6ce48-pkrh5v",
  "head": "49186427049938cb116d2697a90bb6408136be74",
  "since": 1792393152,
- "beat": 1792396443,
- "beatIso": "2026-10-19T07:54:03Z",
+ "beat": 1792396460,
+ "beatIso": "2026-10-19T07:54:20Z",
  "done": "CR5 code done + reviewed; landing gate fixed (marks the tree taken BEFORE a run, filtered runs mark nothing); grep -q/pipefail SIGPIPE race fixed (test_coord 1-in-3 red, push.sh marker guard, resume.sh, ship.sh); docs CR7 (CLAUDE.md, CHAT.md, CHAT_REBUILD \u00a74); TASKS CR4/CR7/CH16/CH18 ticked; version 1.0.5 code 345",
  "next": "full suite running (scratchpad full.log); when green: bash ship.sh, release.yml, record-release, chat.py say with the link, board note, unclaim CR"
 }
