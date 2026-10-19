@@ -37,6 +37,7 @@ OUTSIDE_NAP_MS = 10 * 60 * 1000         # outside the hours: re-read the setting
 STALL_MS = 10 * 60 * 1000
 ADDRESS_CODES = ("RESTRICTED_NETWORK_REGION", "ANONYMIZED_NETWORK")
 TRIES = 4
+NEWER_EVERY = 5                         # loops between two looks for a newer keeper (~10 minutes)
 ENGINE_WF = "cloud-scan.yml"
 ALARM_WF = "engine-alarm.yml"
 
@@ -212,9 +213,21 @@ def keep(clock=lambda: int(time.time() * 1000), sleep=time.sleep):
     """The keeper's loop. Every failure to read GitHub only waits for the next look."""
     import engine_watchdog
     started = clock()
-    print("keeper: up at %s" % datetime.datetime.now(ET).strftime("%a %H:%M:%S %Z"), flush=True)
+    me = int(os.environ.get("GITHUB_RUN_ID", "0") or 0)
+    print("keeper: up at %s (run %s)" % (datetime.datetime.now(ET).strftime("%a %H:%M:%S %Z"), me or "local"), flush=True)
     last = ""
+    loops = 0
     while True:
+        # One keeper at a time, whatever GitHub's concurrency group does (2026-10-19: a newer keeper did not cancel the older one): every 10 minutes, a keeper that sees a newer one steps aside.
+        if me and loops % NEWER_EVERY == 0:
+            try:
+                newer = [r for r in runs(ALARM_WF) if int(r.get("id", 0)) > me]
+            except Exception:  # noqa: BLE001
+                newer = []
+            if newer:
+                print("keeper: a newer keeper (run %s) is %s: this one stops" % (newer[0].get("id"), newer[0].get("status")), flush=True)
+                return 0
+        loops += 1
         now = clock()
         try:
             stop = stopped()
