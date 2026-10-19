@@ -399,11 +399,13 @@ fun TrackerScreen(
             }
             when (view) {
                 TrackerView.STATS -> {
+                    // The profit card first, whatever the period holds: its all-time figure is the wallet's, and a Today with no game graded yet is a real $0.00 day (Tj, 2026-10-19, PL).
+                    if (kindBets.isNotEmpty() || walletMoney.money != null) item(key = "profit") { ProfitChartCard(kindBets, period, walletMoney) }
                     if (periodBets.isEmpty()) {
                         item(key = "empty") { EmptyState(TrackerText.emptyStats(made, period == TrackerPeriod.ALL, bets.isEmpty()), if (made == MadeFilter.BIDS) BIDS_HINT else EMPTY_HINT) }
                     } else {
-                        if (periodBets.isNotEmpty()) item(key = "stats") {
-                            StatsCards(periodBets, kindBets, breakdownBy, onBreakdown = { breakdownBy = it }, allBets = bets, moneyDeposited = state.settings.gates.moneyDeposited) {
+                        item(key = "stats") {
+                            StatsCards(periodBets, breakdownBy, onBreakdown = { breakdownBy = it }) {
                                 ClosingLineCard(kindBets, now, clvPeriod, { clvPeriod = it }, clvHideOutliers, { clvHideOutliers = it })
                             }
                         }
@@ -579,13 +581,8 @@ internal fun Caption(text: String) {
 @Composable
 private fun StatsCards(
     bets: List<TrackedBet>,
-    /** Every bet the profit graph may show (bets or bids as chosen), not only the top period's. */
-    chartBets: List<TrackedBet>,
     by: TrackerBreakdown.By,
     onBreakdown: (TrackerBreakdown.By) -> Unit,
-    /** Every bet and bid ever made (the money is one pot, whatever the period or kind shown), and the deposit figure Tj gave (0 = work it out). */
-    allBets: List<TrackedBet> = chartBets,
-    moneyDeposited: Double = 0.0,
     /** The closing-line card's own filters, and every bet (it runs over all time, whatever the period at the top). */
     clv: @Composable () -> Unit = {},
 ) {
@@ -595,10 +592,8 @@ private fun StatsCards(
         if (stats.outliers > 0) {
             Caption(TrackerText.outlierNote(stats.outliers))
         }
-        // One profit card (Tj, 2026-10-18, TCL122-6): the balance from ONE fixed start (the first day's stakes), each slate of games against the balance before it. It replaced the "Your money" card, whose
-        // deposit base disagreed with that start.
-        ProfitChartCard(chartBets)
-        Caption("Profit counts every settled bet, outliers and locks too (it ends at the bankroll's real result); the edge numbers below leave the outliers out. A day here is a slate of games: it starts with that day's first game and ends with its last result, often after midnight.")
+        // The profit card is its own item above these (ProfitChartCard): its days count every settled bet, outliers and locks too; the edge numbers below leave the outliers out.
+        Caption("These numbers count the bets whose games are in the period above; the edge numbers leave the outliers out.")
         clv()
         StatsCard {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
