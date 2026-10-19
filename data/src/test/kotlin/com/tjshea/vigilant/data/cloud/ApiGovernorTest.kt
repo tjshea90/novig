@@ -26,7 +26,7 @@ class ApiGovernorTest {
     }
 
     @Test
-    fun `try again forgives only the one api: its rest and strikes go, others keep theirs`() {
+    fun `try again forgives the one api, its rest and strikes go`() {
         val g = ApiGovernor()
         repeat(3) { g.observe(silent, settings, it.toLong()) }
         assertEquals(listOf("parlay"), g.resting(3).map { it.id })
