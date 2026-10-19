@@ -314,6 +314,37 @@ def selftest():
     assert step(noon, noon, {"on": True, "manualStopUntilMs": noon + 3_600_000}, {})[0] == "sleep"    # a manual Stop: nothing is started
     assert step(noon, noon, {"on": False, "rev": noon - 60_000}, {})[0] == "sleep"                     # switched off this morning: nothing to keep
     assert step(noon, noon, {"on": True, "settings": {"killed": True}}, {})[0] == "check"              # on + killed: the gate runs it and the engine stands down itself
+    # the whole loop, with a fake clock and GitHub: a healthy engine is left alone, a silent one gets the watchdog's look, a newer keeper makes it stop, and it hands over at 340 min
+    g = globals()
+    saved = {k: g[k] for k in ("stopped", "read_json", "runs", "dispatch")}
+    import types
+    calls = {"check": 0, "dispatch": []}
+    clock = [ms(2026, 10, 19, 12, 0)]
+    beat = {"heartbeatMs": clock[0]}
+    newer = []
+    fake_wd = types.SimpleNamespace(check=lambda keeper=False, dry=False: calls.__setitem__("check", calls["check"] + 1))
+    try:
+        g["stopped"] = lambda: False
+        g["read_json"] = lambda ref, path: {"on": True} if path == "settings.json" else dict(beat)
+        g["runs"] = lambda wf, statuses=("in_progress", "queued"): list(newer)
+        g["dispatch"] = lambda wf: calls["dispatch"].append(wf) or True
+        sys.modules["engine_watchdog"] = fake_wd
+        os.environ["GITHUB_RUN_ID"] = "100"
+        def sleep(sec):
+            clock[0] += int(sec * 1000)
+            if clock[0] > ms(2026, 10, 19, 12, 30):
+                beat["heartbeatMs"] = ms(2026, 10, 19, 12, 30)   # the engine went quiet at 12:30
+        assert keep(clock=lambda: clock[0], sleep=sleep) == 0
+        assert calls["dispatch"] == [ALARM_WF], calls          # handed over once, after 340 minutes
+        assert calls["check"] > 0                              # the silent engine got the watchdog's look
+        assert clock[0] - ms(2026, 10, 19, 12, 0) >= MAX_WAIT_MS
+        calls["dispatch"].clear(); clock[0] = ms(2026, 10, 19, 12, 0); beat["heartbeatMs"] = clock[0]
+        newer.append({"id": 200, "status": "in_progress"})
+        assert keep(clock=lambda: clock[0], sleep=sleep) == 0 and calls["dispatch"] == []      # a newer keeper: this one stops at once
+    finally:
+        g.update(saved)
+        sys.modules.pop("engine_watchdog", None)
+        os.environ.pop("GITHUB_RUN_ID", None)
     print("engine_alarm selftest ok")
     return 0
 
