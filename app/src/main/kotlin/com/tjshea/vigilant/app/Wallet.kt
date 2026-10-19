@@ -118,7 +118,7 @@ class WalletMoney(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            _note.value = "Couldn't read the wallet just now: ${(e as? com.tjshea.vigilant.data.novig.NovigApiException)?.advice ?: e.message ?: e.javaClass.simpleName}"
+            _note.value = "Couldn't read the wallet just now: ${(e as? com.tjshea.vigilant.data.novig.signing.NovigApiException)?.advice ?: e.message ?: e.javaClass.simpleName}"
         }
         _flow.value
     }
