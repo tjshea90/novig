@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.tjshea.vigilant.data.cloud.CloudChat
 
 /**
  * The two sections that used to sit inside Settings and are now central (Tj, 2026-10-16: "move major features out of the settings and into their own sections that are now central to the app, such as the
@@ -72,27 +71,36 @@ fun ResetEngineButton(onReset: () -> Unit) {
 @Composable
 fun ClaudeScreen(
     state: com.tjshea.vigilant.app.UiState,
-    onSend: suspend (String, List<Pair<String, ByteArray>>) -> String?,
+    onSend: suspend (String, List<android.net.Uri>) -> String?,
     onChatOpen: (Boolean) -> Unit,
     onNewChat: () -> Unit,
-    onClearChat: (Long, Long) -> Unit,
+    onClearChat: () -> Unit,
     onMarkRead: () -> Unit,
     onDismissMessage: (String) -> Unit,
     onClearMessages: () -> Unit,
     onOpenPage: (String) -> Unit,
     /** Pull to refresh on the messages (TCL122-3): read them from GitHub now. */
     onRefresh: () -> Unit = {},
+    onChatRead: () -> Unit = {},
+    onRetry: (String) -> Unit = {},
+    onDiscard: (String) -> Unit = {},
+    onLoadEarlier: () -> Unit = {},
+    chatFile: (String, Int, String) -> java.io.File? = { _, _, _ -> null },
 ) {
     var section by rememberSaveable { mutableStateOf("chat") }
     val unread = state.claudeInbox.unread
+    val chatUnread = androidx.compose.runtime.remember(state.chat) { state.chat.unread }
     Scaffold(topBar = { TopAppBar(title = { Text("Claude", fontWeight = FontWeight.Bold) }) }) { padding ->
         Column(Modifier.padding(padding).fillMaxSize().imePadding().padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().testTag("claudeSections")) {
-                SegmentedButton(selected = section == "chat", onClick = { section = "chat" }, shape = SegmentedButtonDefaults.itemShape(0, 2)) { Text("Chat") }
+                SegmentedButton(selected = section == "chat", onClick = { section = "chat" }, shape = SegmentedButtonDefaults.itemShape(0, 2)) { Text(if (chatUnread > 0 && section != "chat") "Chat ($chatUnread)" else "Chat") }
                 SegmentedButton(selected = section == "messages", onClick = { section = "messages" }, shape = SegmentedButtonDefaults.itemShape(1, 2)) { Text(if (unread > 0) "Messages ($unread)" else "Messages") }
             }
             // The chat lays itself out (thread above, input pinned below, both inside the room the keyboard leaves); only the messages list scrolls here.
-            if (section == "chat") ChatPage(state.claudeInbox.chat, state.chatWho, onSend, onChatOpen, Modifier.weight(1f).fillMaxWidth(), breaks = state.claudeInbox.chatBreaks, onNewChat = onNewChat, onClearChat = onClearChat)
+            if (section == "chat") ChatPage(
+                state.chat, state.chatSeat, state.chatProblem, state.claudeInbox.chat, onSend, onChatOpen, Modifier.weight(1f).fillMaxWidth(),
+                onRead = onChatRead, onRetry = onRetry, onDiscard = onDiscard, onNewChat = onNewChat, onClear = onClearChat, onLoadEarlier = onLoadEarlier, localFile = chatFile,
+            )
             else VigilantPullToRefresh(busy = state.cloudUi.refreshing, onRefresh = onRefresh, modifier = Modifier.weight(1f).fillMaxWidth()) {
                 Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                     MessagesPage(state.claudeInbox, onMarkRead = onMarkRead, onOpen = onOpenPage, onDismiss = onDismissMessage, onClearAll = onClearMessages)

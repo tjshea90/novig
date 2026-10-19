@@ -277,7 +277,7 @@ object SettingsSummary {
                 s.liveBidReal -> "On: real money, ${com.tjshea.vigilant.app.LiveBidText.preset(s)}"
                 else -> "On: paper only (nothing is sent), ${com.tjshea.vigilant.app.LiveBidText.preset(s)}"
             }
-            SettingsPage.CHAT -> state.chatWho.ifBlank { "Open it to see who is answering" }.take(70)
+            SettingsPage.CHAT -> state.chat.unread.let { if (it > 0) "$it new from Claude" else "In the Claude tab: one Claude account (mirage) answers" }
             SettingsPage.MESSAGES -> state.claudeInbox.unread.let { if (it > 0) "$it unread" else "No new messages" }
             SettingsPage.DASHBOARD -> {
                 val h = com.tjshea.vigilant.data.cloud.DashboardModel.headline(state.cloudUi.status, System.currentTimeMillis(), state.settings.cloudHours)
