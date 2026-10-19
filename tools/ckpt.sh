@@ -70,7 +70,9 @@ for T in tools/test_*.js tools/test_*.sh tools/test_*.py; do
     *.py) RUNNER="python3" ;;
     *)    RUNNER="node" ;;
   esac
-  if "$RUNNER" "$T" >/dev/null 2>&1; then PASS=$((PASS+1)); else FAIL=$((FAIL+1)); REDS="$REDS $(basename "$T")"; fi
+  # A red one keeps its output (/tmp/vigilant-ckpt-<name>.log) so it can be traced, not only counted.
+  LOG="/tmp/vigilant-ckpt-$(basename "$T").log"
+  if "$RUNNER" "$T" >"$LOG" 2>&1; then PASS=$((PASS+1)); rm -f "$LOG"; else FAIL=$((FAIL+1)); REDS="$REDS $(basename "$T")"; echo "  red: $T (output: $LOG)"; fi
 done
 
 # Green fast checks let this exact tools/ and .github/ content land on main (tools/landing.py; CR, Tj 2026-10-19).
