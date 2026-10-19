@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hffyfe",
- "head": "9d5a7e018131392728c5d76f7a5572df1d9f0659",
+ "head": "835c1573a2a41b86ae9d89ff04efc30b3261124d",
  "since": 1792444860,
- "beat": 1792447849,
- "beatIso": "2026-10-19T22:10:49Z",
- "done": "CH27 tracker Yesterday + day picker built",
- "next": "ship v1.0.9 (CH25+CH27)"
+ "beat": 1792448015,
+ "beatIso": "2026-10-19T22:13:35Z",
+ "done": "pre-ship: v1.0.9: Tracker Yesterday + pick-a-day calendar with chart; engine bets and bids refuse a fair resting on a few small books with identical odds; bids slider 80",
+ "next": "ship.sh gates and releases this"
 }
