@@ -132,7 +132,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** The GitHub engine at a glance (Tj, 2026-10-15): state, odds age, wallet, which APIs work, usage meters and trends, synced from the engine. */
     DASHBOARD("Engine dashboard", "The GitHub engine at a glance: is it running, which APIs work, what each has left, graphs of the last scans", SettingsGroup.FIND),
 
-    /** Chat with whichever Claude session is working, through the repo (TCL29, Tj 2026-10-15). */
+    /** The app chat with Claude (TCL29, rebuilt CR 2026-10-19: one account answers, `chat` branch). */
     CHAT("Chat with Claude", "Talk to Claude in the Claude tab: one account (mirage) answers, and your message wakes it when it is away", SettingsGroup.FIND),
 
     /** Everything Claude or the engine wants Tj to know: recommendations, bets placed, settings changed from GitHub (TCL28). */
