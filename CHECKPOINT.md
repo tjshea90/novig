@@ -1,22 +1,23 @@
-# CHECKPOINT 3697 — read me first, then TASKS.md
+# CHECKPOINT 3698 — read me first, then TASKS.md
 
-**Written:** 2026-10-19T01:26:27Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-tsjsms` · **builds on:** `b4253271b` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T01:27:39Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-tsjsms` · **builds on:** `b7aad9f6d` (this checkpoint is the commit after it)
 
 ## Just done
-CH5b shadow tier journaled
+live stakes 0.10
 
 ## Do this next
-CH5a score-event trigger, CH5c second sharp agree, CH5d live bid pull; then ship
+CH5a/c/d
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  b7aad9f6d ckpt 3697: CH5b shadow tier journaled
   54c7125e2 ckpt 3696: answered SGO Pinnacle freshness
   17e961870 ckpt 3695: CH4 live ideas replied, CH1 explained
   965ba9cde ckpt 3694: CH2 diagnosed, replied
@@ -26,8 +27,4 @@ CH5a score-event trigger, CH5c second sharp agree, CH5d live bid pull; then ship
   28536d5d0 ckpt 3690: TCL122 v1.0 complete: released v1.0.0 (340), engine restarted and verified 
   7c08b817b ckpt 3689: v1.0.0 gated+pushed (3914 green), release.yml triggered, engine restarted o
   a03ebb01a ckpt 3688: pre-release: v1.0.0: Live board with GitHub/Phone switch, slate P/L, Engine
-  7d7c1eb08 ckpt 3687: full tests: floor 3918 passed; fixed slate chip names clashing with Tracker
 ```
-
-(4 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
