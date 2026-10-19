@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "8e2363d3de6ca31ca94d257796da5b3e6fe51181",
+ "head": "346639a1e597c11d01816ce1cdcad260fdea0ad2",
  "since": 1792393152,
- "beat": 1792427430,
- "beatIso": "2026-10-19T16:30:30Z",
- "done": "PL: Tracker tests follow the new card (all-time headline by tag, clv card scrolled to, Today = today's games in ClosingLineAppTest); 188 pass; NovigStreamTest timed out once under full-suite load, passes alone",
- "next": "re-run ship.sh for v1.0.6; if NovigStreamTest flakes again make its wait robust; then release.yml, record-release, tell Tj"
+ "beat": 1792427636,
+ "beatIso": "2026-10-19T16:33:56Z",
+ "done": "EA8a/EA9 written up (keeper import crash, CI flood: ci.yml main-only, data-branch copies deleted, GitHub Actions incident since 15:49Z); CHANGES.md lines",
+ "next": "wait for ship.sh (v1.0.6); release.yml may wait on GitHub's incident; then record-release, tell Tj; EA10: confirm keeper 39284378407 runs"
 }
