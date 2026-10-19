@@ -8,8 +8,8 @@
  "branch": "ccr-2df6ce48-pkrh5v",
  "head": "8e2363d3de6ca31ca94d257796da5b3e6fe51181",
  "since": 1792393152,
- "beat": 1792427422,
- "beatIso": "2026-10-19T16:30:22Z",
+ "beat": 1792427430,
+ "beatIso": "2026-10-19T16:30:30Z",
  "done": "PL: Tracker tests follow the new card (all-time headline by tag, clv card scrolled to, Today = today's games in ClosingLineAppTest); 188 pass; NovigStreamTest timed out once under full-suite load, passes alone",
  "next": "re-run ship.sh for v1.0.6; if NovigStreamTest flakes again make its wait robust; then release.yml, record-release, tell Tj"
 }
