@@ -32,7 +32,7 @@ while true; do
     last="$head"
     if git fetch -q origin cloud-config 2>/dev/null; then
       python3 -I - <<'PY'
-import json, subprocess
+import json, subprocess, time
 def sh(*a):
     return subprocess.run(a, capture_output=True, text=True).stdout
 names = [n for n in sh("git", "ls-tree", "--name-only", "FETCH_HEAD", "chat/").split() if n.endswith(".json")]
@@ -50,8 +50,17 @@ try:
 except Exception:
     printed = set()
 fresh_ack = []
+now_ms = time.time() * 1000
+def stale(m):
+    # Tj, 2026-10-19: a woken session was answering OLD messages again (state is in /tmp, a fresh container re-printed every unanswered one). Such a message is already in TASKS.md
+    # or was shown by an earlier watcher (its ack is in the repo). Show only: unseen messages under 24 h old, or seen-but-unanswered ones under 30 min old (a session cut off mid-answer).
+    try:
+        age = (now_ms - int(str(m.get("id", ""))[1:])) / 1000
+    except Exception:
+        return False
+    return age > 86400 or (m.get("id") in acked and age > 1800)
 for m in msgs:
-    if m.get("from") == "tj" and not m.get("ack") and m.get("id") not in answered and m.get("id") not in printed:
+    if m.get("from") == "tj" and not m.get("ack") and m.get("id") not in answered and m.get("id") not in printed and not stale(m):
         files = m.get("files") or []
         print("CHAT %s %s%s" % (m["id"], " ".join(str(m.get("text", "")).split())[:1500], ("  [ATTACHMENTS: %s]" % ", ".join(files)) if files else ""), flush=True)
         printed.add(m["id"])
