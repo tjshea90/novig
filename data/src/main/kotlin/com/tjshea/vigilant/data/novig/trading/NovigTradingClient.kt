@@ -281,11 +281,18 @@ open class NovigTradingClient(
         ledgerRows(subaccountKeyId, kind, startsAfterMs, startsBeforeMs, maxRows)
 
     /**
-     * Every applied transfer into and out of [subaccountKeyId], all time (`TRANSFER_IN`, `TRANSFER_OUT`: "we write one only when money moves ... and applied transfers"). Read with no time bounds
-     * (both are optional), so a filter by event start, which a transfer has none of, can't leave them out. The Tracker's all-time figure subtracts them (PL, 2026-10-19).
+     * Every row of [subaccountKeyId]'s ledger that moved money in or out rather than won or lost it ([MONEY_MOVES]: transfers to and from the cash wallet, deposits, withdrawals, credits, forwarding), all
+     * time. Read with no time bounds (both are optional), so a filter by event start, which these rows have none of, can't leave them out. The Tracker's all-time figure takes them out of the wallet
+     * (PL, Tj 2026-10-19: "also takes out withdrawals because sometimes I moved money back and forth"). The transfers must be read; a kind this ledger refuses (400/404/422) reads as none.
      */
-    open suspend fun transfers(subaccountKeyId: String): List<LedgerRow> =
-        ledgerRows(subaccountKeyId, "TRANSFER_IN", null, null, 1_000) + ledgerRows(subaccountKeyId, "TRANSFER_OUT", null, null, 1_000)
+    open suspend fun moneyMoves(subaccountKeyId: String): List<LedgerRow> = MONEY_MOVES.flatMap { kind ->
+        try {
+            ledgerRows(subaccountKeyId, kind, null, null, 1_000)
+        } catch (e: com.tjshea.vigilant.data.novig.signing.NovigApiException) {
+            if (kind in TRANSFERS || e.status !in setOf(400, 404, 422)) throw e
+            emptyList()
+        }
+    }
 
     private suspend fun ledgerRows(subaccountKeyId: String, kind: String?, startsAfterMs: Long?, startsBeforeMs: Long?, maxRows: Int): List<LedgerRow> {
         val out = ArrayList<LedgerRow>()
@@ -316,6 +323,10 @@ open class NovigTradingClient(
 
         /** The most orders one listing reads. */
         const val MAX_ORDER_ROWS = 2_000
+
+        /** The ledger kinds that move money into or out of a wallet instead of winning or losing it (the 2026-10-12 `TransactionKind` list; FILL, FEE, MAKER_CREDIT, SETTLEMENT and ADJUSTMENT are betting). */
+        val MONEY_MOVES = listOf("TRANSFER_IN", "TRANSFER_OUT", "DEPOSIT", "WITHDRAWAL", "CREDIT", "CREDIT_RECLAIM", "FORWARDING")
+        private val TRANSFERS = setOf("TRANSFER_IN", "TRANSFER_OUT")
 
         /** A grid price as Novig writes it: three decimals ("0.455", "0.050"). */
         fun priceText(price: Double): String = BigDecimal.valueOf(price).setScale(3, java.math.RoundingMode.HALF_UP).toPlainString()
