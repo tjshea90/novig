@@ -5,7 +5,7 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "c98f4d",
- "note": "chat rebuild + no-lease coordination (app side next)",
+ "note": "chat rebuild: releasing v1.0.5",
  "since": 1792393815,
- "beat": 1792396511
+ "beat": 1792422468
 }
