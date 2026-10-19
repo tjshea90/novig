@@ -1,13 +1,13 @@
-# CHECKPOINT 3707 — read me first, then TASKS.md
+# CHECKPOINT 3708 — read me first, then TASKS.md
 
-**Written:** 2026-10-19T02:07:34Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-iewdzy` · **builds on:** `74c2f4c03` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T02:14:31Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-iewdzy` · **builds on:** `2eb813a3b` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v1.0.2: The Odds API stays on one key until it is spent, then the next (versionCode 342, v1.0.2)
+chat session end: v1.0.2 released
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.2), then run: bash tools/record-release.sh v1.0.2 342 "v1.0.2: The Odds API stays on one key until it is spent, then the next"
+CH6 trace odds api key e4d5 anomaly; CH2/CH3/CH4/CH5 per TASKS
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  34a8ad963 ckpt 3707: pre-release: v1.0.2: The Odds API stays on one key until it is spent, then 
   74c2f4c03 ckpt 3706: pre-ship: v1.0.2: The Odds API stays on one key until it is spent, then the
   1a1b2064c ckpt 3705: CH7 answered
   2d8c39779 ckpt 3704: CH6a sticky Odds API key done+tested; CH7 queued
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   6aa0659ef ckpt 3700: chat session end
   e4e5d6106 ckpt 3699: experimental curve 0.10, originals restored
   4db331911 ckpt 3698: live stakes 0.10
-  b7aad9f6d ckpt 3697: CH5b shadow tier journaled
 ```
