@@ -5861,7 +5861,6 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] CH16 (t1792379676035) live middle tier 80-89% sure, 5% edge, $0.10 real: shipped v1.0.3 (TailTakerTest). Remaining: CH5a score-event trigger, CH5c, CH5d, CH14.
 - [ ] CH16 (t1792381937478, NOT NOW, next release) "only have the red number icon on top of the Claude mail tab for new Claude CHAT responses and as soon as I view the messages the red number goes away. right now it is counting Claude messages in the separate message tab. don't count those" (badge = unread chat replies only; clear on viewing chat; Messages tab items not counted).
 - [x] CH17 (chat_watch.sh skips stale/acked unanswered messages) (t1792388996189) "every time I turn the chat back on and wake up a Claude account, I get messages from Claude that are about old issues. figure this out and fix it"
-<<<<<<< HEAD
 - [ ] CH18 (t1792389345363) "this chat feature is malfunctioning terribly. it either posts stale messages or doesn't respond to my messages and it just woke up another Claude account when I was already talking to one. do a major rehaul of this chat function. it needs to function like a normal chat messenger". Step 1 DONE: session heartbeat presence/<acct>.json (chat_watch.sh every 90 s) and chat_wake.py wakes nobody while one is fresh, waits 3 min before the next account, workflow timeout 15 min. Step 2 [ ]: app side messenger feel (delivery state sent/seen/replying, no stale Claude posts, unread badge CH16, typing indicator from presence).
 - [x] CH19 (t1792372703471) SGO Pinnacle freshness: answered in chat; dedicated pinnapi/Pinnacle feed (p90 <1 s) stays first, SGO (p90 3-6 min, 1.3 pts off Pinnacle) is the paid backup via ApiChain; no change.
 - [ ] CH18b DONE tools side: replies to messages over 30 min old refused, watcher shows only <30 min (t1792389723793). App messenger UI still open.
@@ -5869,9 +5868,10 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [ ] CH21 (t1792388456849) stats section: total profit = total paid out minus total staked, all time and per slate (1000 staked, 1020 paid = +20; 200 staked today, 175 won = -25). Missed earlier, Tj: "you never did this request".
 - [x] CH20 tennis live bids default ON (LiveBidRules.tennis=true; live bets lane has no tennis gate), 100 live tests green; ship with next release.
 - [x] CH18c one-answer-per-message guard in tell_tj chat-reply (two sessions answered twice).
-=======
 - [x] CH18 (t1792389179916) chat: never repeat old messages, no "(old message)" notes, respond to current ones: watcher window now 3 h, `tell_tj.py chat-clean` removed the notes, no stand-in replies to old messages any more.
 - [ ] CH19 (t1792336877448) "you can always use the-odds api as much as needed ... keep track of the other apis, use the best ones and tell me which ones to renew or add to. I added pinnwire keys so you can turn that on" -> PinnWire switched on via engine_set; The Odds API no budget cap: check QuotaPolicy.
 - [ ] CH20 (t1792389212664) "I want the live betting and bidding features to include tennis" -> check live lane/ApiChain tennis support, add.
 - [ ] CH21 (t1792372703471) "how fresh is sgo pro Pinnacle odds? if decent, use sgo for Pinnacle because it is a paid api" (not answered in chat: replayed late, stale-reply guard refused) -> measure SGO Pinnacle age from status.scanNote/ranking, prefer it if fresh.
->>>>>>> 03da9ea8c02a7821013489e72f9a56cf38062fbf
+- [x] CH20 tennis ON in live bidding: LiveBidQuality.tennis default true + engine_set liveBidQuality.tennis=true (LiveBid tests green). Live bets lane already priced tennis. Judge by CLV (first 37 orders: 33 tennis, 0 filled).
+- [x] CH22 (Tj, t~1792388xxx lost, "stats section: total staked vs total winnings all time and per day, +20 on 1000/1020") SlateProfit: % = profit / settled staked; Tracker shows staked, paid back, profit (SlateProfitTest, ProfitChartTest green).
+- [x] CH23 chat: second session answered the same message twice -> tell_tj chat-reply refuses a second Claude reply to one message.

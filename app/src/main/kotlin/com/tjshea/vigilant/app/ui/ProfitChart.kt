@@ -145,7 +145,7 @@ private fun ProfitCardBody(bets: List<TrackedBet>, book: SlateProfit.Book, now: 
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
         Column(Modifier.weight(1f)) {
             Text("Profit and loss", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            Text("Balance ${Format.money(book.balance)}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.testTag("profitBalance"))
+            Text("Staked ${Format.money(book.settledStaked)}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.testTag("profitBalance"))
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(Format.signedMoney(book.profit), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = moneyColor(book.profit))
@@ -154,7 +154,7 @@ private fun ProfitCardBody(bets: List<TrackedBet>, book: SlateProfit.Book, now: 
     }
     Text(
         if (book.days.isEmpty()) "No bets yet."
-        else "Started at ${Format.money(book.start)}: the money staked on the first day logged (${dayName(book.days.first().date)}). It never changes, so staking more never looks like a deposit.",
+        else "All time: ${Format.money(book.settledStaked)} staked on settled bets, ${Format.money(book.returned)} paid back = ${Format.signedMoney(book.profit)}. The % is profit over the amount staked.",
         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -188,11 +188,11 @@ private fun SlateView(bets: List<TrackedBet>, day: SlateProfit.Day, now: Long) {
     )
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         LabeledValue("Slate profit", Format.signedMoney(day.profit), valueColor = moneyColor(day.profit), modifier = Modifier.weight(1.2f).testTag("profitInView"))
-        LabeledValue("vs the day before", day.changePct?.let { pctText(it) } ?: "—", valueColor = moneyColor(day.profit), modifier = Modifier.weight(1.2f))
+        LabeledValue("Return on staked", day.changePct?.let { pctText(it) } ?: "—", valueColor = moneyColor(day.profit), modifier = Modifier.weight(1.2f))
         LabeledValue("Record", "${day.won}-${day.lost}", modifier = Modifier.weight(0.8f))
     }
     Text(
-        "Started the slate at ${Format.money(day.startBalance)}, " + (if (day.finished) "ended at " else "now at ") + "${Format.money(day.endBalance)}. ${day.settled} settled on ${Format.money(day.staked)} staked.",
+        "${day.settled} settled: ${Format.money(day.settledStaked)} staked, ${Format.money(day.returned)} paid back = ${Format.signedMoney(day.profit)}.",
         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitChartReadout"),
     )
     if (points.isEmpty()) {
@@ -209,15 +209,15 @@ private fun SlateView(bets: List<TrackedBet>, day: SlateProfit.Day, now: Long) {
 private fun DaysView(days: List<SlateProfit.Day>) {
     if (days.isEmpty()) return
     val profit = days.sumOf { it.profit }
-    val from = days.first().startBalance
+    val staked = days.sumOf { it.settledStaked }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         LabeledValue("${days.size} slate${if (days.size == 1) "" else "s"}", Format.signedMoney(profit), valueColor = moneyColor(profit), modifier = Modifier.weight(1.2f).testTag("profitInView"))
-        LabeledValue("vs the start of it", if (from > 0) pctText(profit / from) else "—", valueColor = moneyColor(profit), modifier = Modifier.weight(1.2f))
+        LabeledValue("Return on staked", if (staked > 0) pctText(profit / staked) else "—", valueColor = moneyColor(profit), modifier = Modifier.weight(1.2f))
         LabeledValue("Up / down days", "${days.count { it.profit > 0.005 }} / ${days.count { it.profit < -0.005 }}", modifier = Modifier.weight(1f))
     }
-    Text("From ${Format.money(from)} to ${Format.money(days.last().endBalance)}. Each bar is one slate of games (first game to last result).", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitChartReadout"))
+    Text("${Format.money(staked)} staked, ${Format.money(staked + profit)} paid back. Each bar is one slate of games (first game to last result).", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitChartReadout"))
     var selected by remember(days) { mutableStateOf<SlateProfit.Day?>(null) }
-    selected?.let { d -> Text("${dayName(d.date)}: ${Format.signedMoney(d.profit)} (${d.changePct?.let { pctText(it) } ?: "—"}) · balance ${Format.money(d.endBalance)} · ${d.won}-${d.lost}" + if (d.open > 0) " · ${d.open} open" else "", style = MaterialTheme.typography.labelSmall) }
+    selected?.let { d -> Text("${dayName(d.date)}: ${Format.signedMoney(d.profit)} (${d.changePct?.let { pctText(it) } ?: "—"}) · staked ${Format.money(d.settledStaked)} · ${d.won}-${d.lost}" + if (d.open > 0) " · ${d.open} open" else "", style = MaterialTheme.typography.labelSmall) }
     DayBars(days, selected, { selected = it }, Modifier.fillMaxWidth().height(180.dp))
     Text("Day by day", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
     days.asReversed().take(MAX_LIST_DAYS).forEach { d ->
@@ -225,7 +225,7 @@ private fun DaysView(days: List<SlateProfit.Day>) {
             Text(dayName(d.date), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
             Text(Format.signedMoney(d.profit), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = moneyColor(d.profit), modifier = Modifier.padding(end = 8.dp))
             Text(d.changePct?.let { pctText(it) } ?: "—", style = MaterialTheme.typography.labelSmall, color = moneyColor(d.profit), modifier = Modifier.padding(end = 8.dp))
-            Text(Format.money(d.endBalance), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(Format.money(d.settledStaked) + " staked", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
     if (days.size > MAX_LIST_DAYS) Text("…and ${days.size - MAX_LIST_DAYS} earlier slates.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

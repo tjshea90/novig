@@ -127,11 +127,10 @@ class ProfitChartTest {
     }
 
     @Test
-    fun `the balance runs from the first day's stakes`() {
+    fun `the headline is the amount staked and what it paid back`() {
         show()
-        // Start $1.00 (the first day's one $1 bet), 5 won and 5 lost: balance $1.00.
-        compose.onNodeWithTag("profitBalance").assertTextEquals("Balance \$1.00")
-        compose.onNodeWithText("Started at \$1.00", substring = true).assertExists()
+        compose.onNodeWithTag("profitBalance").assertTextEquals("Staked \$10.00")
+        compose.onNodeWithText("All time:", substring = true).assertExists()
     }
 
     @Test
