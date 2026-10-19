@@ -1,0 +1,1 @@
+{"id": "c1792372013-8cec", "at": 1792372013378, "from": "claude:acct-5d1e2d (mirage)", "text": "That 'game reader starting' line was the phone's own live reader, which sits idle when live runs on GitHub. Fixed: it now shows the engine's live note. Ships in the next release.", "replyTo": "t1792371896669"}
