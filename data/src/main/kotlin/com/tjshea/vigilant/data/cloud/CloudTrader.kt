@@ -306,6 +306,7 @@ class CloudTrader(
         unavailable(o, now)?.let { return it }
         if (!rules.byStars && TrapGuard.tooEarly(o.event.startsTs, now, s.trapEarlyHours, null, false) != null) return TrapGuard.earlyReason(s.trapEarlyHours)
         profileBlock(o, s, now)?.let { return it }
+        com.tjshea.vigilant.engine.ThinFair.reason(o.fair)?.let { return it }
         val a: Agreement.Count = o.agreement
         AutoBet.judgeVigilant(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection), a.twoSided, a.agreeing, AutoBet.isOverProp(o.marketLabel, o.selection))?.let { return it }
         val stars = ProfitProfile.adjustedStars(s.gates.profitProven, o.rating?.stars, o.league.novigName, BetKind.of(o.marketLabel, o.selection).label, o.selection, o.evPercent, o.event.startsTs, now)

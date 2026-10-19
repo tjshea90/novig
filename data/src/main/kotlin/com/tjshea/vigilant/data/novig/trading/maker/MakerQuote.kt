@@ -312,6 +312,8 @@ data class MakerLine(
     val books: Int,
     /** Their names as the fair line gives them ("Kalshi", "FanDuel"): what low-usage bids check against the books Tj picked ([MakerRules.lowUsageBooks]). Empty = not known. */
     val fairBooks: List<String> = emptyList(),
+    /** Why the fair rests on too few small books with the same odds to bid on ([com.tjshea.vigilant.engine.ThinFair]); null = fine or not known. */
+    val thinFair: String? = null,
     /** Each book's own fair for this side, devigged worst case (one per book): what "books agree" counts. Empty = not known. */
     val bookFairs: List<Double> = emptyList(),
     /** The same for the sharp books in the fair (Pinnacle, Circa, the exchanges Settings calls sharp). */
@@ -421,7 +423,7 @@ object MakerLines {
         market = o.market, outcomeId = o.outcome.outcomeId, startsTs = minOf(o.event.startsTs, o.market.startsTs), league = o.league.displayName,
         eventName = o.event.description, marketLabel = o.marketLabel, selection = o.selection, kind = kindOf(o), fair = o.fairProbability,
         fairAsOfMs = o.fairAsOfMs, fairNewestMs = o.fair?.usedUpdates?.first, fairOld = o.fairIsOld(now), books = o.fair?.booksUsed?.size ?: 0,
-        fairBooks = o.fair?.booksUsed.orEmpty(), offer = o.quote?.price,
+        fairBooks = o.fair?.booksUsed.orEmpty(), thinFair = com.tjshea.vigilant.engine.ThinFair.reason(o.fair), offer = o.quote?.price,
         bestBid = o.bestBid, live = o.isLive, source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT,
         basis = FairBasis.of(o), bookAtMs = o.bookFetchedAtMs, bidLevels = o.bidLevels, unavailable = unavailable,
     )
@@ -695,6 +697,7 @@ object MakerQuote {
         if (rules.lowUsageBooks.isNotEmpty() && (line.fairBooks.size < LowUsage.MIN_BOOKS || line.fairBooks.any { it !in rules.lowUsageBooks })) {
             return skip(LowUsage.NOT_PRICED)
         }
+        line.thinFair?.let { return skip(it.replaceFirstChar { c -> c.uppercase() }) }
         val fair = line.fair ?: return skip("No fair price")
         if (fair <= 0.0 || fair >= 1.0) return skip("No fair price")
         if (line.fairOld) return skip("The fair price is too old to bid on")
