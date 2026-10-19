@@ -96,6 +96,8 @@ def step(now_ms, started_ms, cfg, status, stopped=False):
     if left <= 0:
         return "handover", 0, "340 minutes on this runner: hand over to a new keeper"
     if in_hours(now_ms, cfg):
+        if not switch_on(cfg, now_ms):
+            return "sleep", min(CHECK_MS, left), "the phone's switch is off (or STOP ALL): nothing to keep"
         ok, why = healthy(status, now_ms)
         return ("sleep" if ok else "check"), min(CHECK_MS, left), why
     wait = min(next_open(now_ms) + LATE_MS - now_ms, OUTSIDE_NAP_MS, left)
@@ -293,6 +295,8 @@ def selftest():
     assert step(noon, noon - MAX_WAIT_MS + 30_000, on, {"heartbeatMs": noon})[1] == 30_000           # never sleeps past its hand-over
     assert step(noon, noon, on, {}, stopped=True)[0] == "stop"
     assert step(noon, noon, {"on": True, "manualStopUntilMs": noon + 3_600_000}, {})[0] == "sleep"    # a manual Stop: nothing is started
+    assert step(noon, noon, {"on": False, "rev": noon - 60_000}, {})[0] == "sleep"                     # switched off this morning: nothing to keep
+    assert step(noon, noon, {"on": True, "settings": {"killed": True}}, {})[0] == "check"              # on + killed: the gate runs it and the engine stands down itself
     print("engine_alarm selftest ok")
     return 0
 

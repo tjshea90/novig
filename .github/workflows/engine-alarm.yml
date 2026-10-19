@@ -13,7 +13,7 @@ on:
     - cron: "17 10 * * *"
 
 permissions:
-  contents: read
+  contents: write
   actions: write
 
 concurrency:
@@ -28,11 +28,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-          sparse-checkout: tools
+          sparse-checkout: |
+            tools
+            research/coordination
       - name: Keep the engine running 08:00-01:00 ET
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           python3 -I tools/engine_alarm.py selftest
           python3 -I tools/engine_watchdog.py selftest
           python3 -I -u tools/engine_alarm.py keep
