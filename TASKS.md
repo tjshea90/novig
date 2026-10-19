@@ -5897,4 +5897,9 @@ Found (research/engine_start_2026-10-19.md): it started 11:04 ET, dispatched by 
 - [x] EA2 (engine_watchdog.decide start/alarm; python3 -I tools/engine_watchdog.py selftest) the watchdog starts a missing engine inside the hours (it said "the 15-minute schedule starts one" and did nothing).
 - [x] EA3 (selftests green; CLAUDE.md "GitHub's timers are not a clock here", ENGINE_ADMIN.md; Tj told in the session 2026-10-19 15:22Z; first alarm armed by hand, run 39277095427) tests (selftests), docs (CLAUDE.md cloud-scan limits, ENGINE_ADMIN.md), tell Tj.
 - [ ] EA4 verify the 2026-10-20 08:00 ET start came from the alarm (a scheduled check-in in this session fires 12:10Z, trig_015GLkZkxU4xF5ENg2G8TLus); if not, fix from the alarm's and the gate's logs.
+Tj, 2026-10-19 15:25Z, verbatim: "I need the engine to automatically run from 8 am Eastern to 1am Eastern every day. The system must work"
+- [ ] EA5 the alarm becomes a KEEPER that is always there: a free runner, renewed by itself every ~5h40m, checks the engine every 2 minutes inside 08:00-01:00 ET (cheap reads; the watchdog's decide() when something looks off: starts a missing engine, replaces a hung or refused one) and sleeps to 08:00 outside; the gate, the engine's end step and the watchdog each start a keeper when none runs (two chains, each renewing the other; no cron needed).
+- [ ] EA6 one switch/hours rule for the gate and the keeper (tools/engine_alarm.py switch|hours, the gate calls it): no drift.
+- [ ] EA7 the engine's hand-over retries its dispatch; an engine that crashed (END unknown) inside the hours is restarted by the keeper.
+- [ ] EA8 tests + a live dry run of the keeper against today's real state; tell Tj.
 
