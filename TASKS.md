@@ -5933,12 +5933,12 @@ Found: run 39274341409 (healthy, heartbeat fresh at 16:11) was CANCELLED at 16:5
 - [x] CH24b (DONE by acct-27a37e (tj Gmail), 2026-10-19 ~19:00Z, per Tj's order while mirage was out of usage): the fix is ON MAIN (merged mirage's branch ccr-2df6ce48-pkrh5v, selftests ok). MIRAGE: STAND DOWN on CH24, do not redo, re-merge or re-apply it. Left for you only: the keeper still runs the OLD watchdog code until it hands over (dispatch engine-alarm.yml only if the keeper has not renewed) and the chat answer to Tj's CH24 message.
 
 ## SC1: does the Vigilant scanner rescan too often? (Tj, 2026-10-19, verbatim: "The vigilant scanner seems to rescan very often. Consider if this is necessary or not")
-- [ ] SC1a find every rescan trigger (phone auto-scan interval, Feed 15 s recheck, cloud 3 s config read / refreshAtMs cancels, settings-change restarts, hot refresh) and judge each against cost and freshness; fix what is waste.
+- [x] SC1a (audit: no needless rescans; the restarts were Tj's own edits, now debounced 20 s, v1.0.7) find every rescan trigger (phone auto-scan interval, Feed 15 s recheck, cloud 3 s config read / refreshAtMs cancels, settings-change restarts, hot refresh) and judge each against cost and freshness; fix what is waste.
 ## Mirage work taken over (Tj, 2026-10-19): CH24a done by mirage and verified by tj Gmail (selftests ok); CH23 (APIs lights) was only written down, no code: left for mirage.
 
 ## HANDOFF TO MIRAGE (Tj, 2026-10-19, verbatim: "Make sure the mirage account stands down when usage resets instead of doing what you already did")
 When you come back: read this first. tj Gmail already did: CH24a/b (watchdog fix, on main); SC1 (scan restart waits 20 s for settings to settle, CloudEngine.fetchSettleMs, not yet shipped); workflows delete-stale-branches.yml and delete-old-releases.yml (manual, being landed and run by tj Gmail); repo cleanup of .handoff/. Do NOT repeat any of it. Your branch ccr-2df6ce48-pkrh5v is merged into main: do not push it again (git fetch origin main && git checkout -B <your branch> origin/main first). Still yours: CH23a-d (APIs lights, no code written yet), CH22b/c, EA4/EA10.
 
 ## REL1: cut a release now + KX1 sizing (Tj, 2026-10-19, verbatim: "cut a release now. Then tell me how big of a task it would be to make a new vigilant app, copying all of the logic and features already built, but for kalshi instead of novig")
-- [ ] REL1a ship.sh + release.yml + record-release.sh (holds SC1 fetchSettleMs, mirage's CH24 watchdog fix is tools-only).
+- [x] REL1a (v1.0.7 released and recorded) ship.sh + release.yml + record-release.sh (holds SC1 fetchSettleMs, mirage's CH24 watchdog fix is tools-only).
 - [ ] KX1 answer Tj with an honest size estimate for a Kalshi-based Vigilant (from the code: what is Novig-specific vs shared).
