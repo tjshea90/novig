@@ -1,12 +1,12 @@
 {
  "v": 1,
- "holder": "56f5bf",
+ "holder": "c98f4d",
  "label": "acct-5d1e2d",
- "kind": "chat",
- "task": "tennis live",
- "since": 1792389819,
- "sinceIso": "2026-10-19T06:03:39Z",
- "hb": 1792390567,
- "hbIso": "2026-10-19T06:16:07Z",
+ "kind": "interactive",
+ "task": "",
+ "since": 1792390831,
+ "sinceIso": "2026-10-19T06:20:31Z",
+ "hb": 1792390831,
+ "hbIso": "2026-10-19T06:20:31Z",
  "leaseS": 1200
 }
