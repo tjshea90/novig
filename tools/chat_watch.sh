@@ -9,6 +9,7 @@ cd "$(dirname "$0")/.." || exit 1
 every="${CHAT_WATCH_EVERY:-6}"
 last=""
 lastrot=0
+lastbeat=0
 rotfile=/tmp/chat_watch_rotstate
 while true; do
   # Who answers the chat now (Tj, 2026-10-16: the account scheduled at that time; a session hands the chat over when another account's slot is about to start). Every 2 minutes, no model tokens;
@@ -26,6 +27,11 @@ while true; do
         *) [ "$prev" = "STANDDOWN" ] && echo "$line (the chat is yours again)" ;;
       esac
     fi
+  fi
+  # Heartbeat (Tj, 2026-10-19, chat rehaul): tells chat-wake.yml a live session is here, so it wakes nobody else while Tj is talking to this one. Every 90 s, in the background.
+  if [ $((nowt - lastbeat)) -ge 90 ]; then
+    lastbeat=$nowt
+    ( timeout 60 python3 -I tools/tell_tj.py presence >/dev/null 2>&1 & )
   fi
   head=$(git ls-remote origin refs/heads/cloud-config 2>/dev/null | cut -f1)
   if [ -n "$head" ] && [ "$head" != "$last" ]; then
@@ -53,12 +59,20 @@ fresh_ack = []
 now_ms = time.time() * 1000
 def stale(m):
     # Tj, 2026-10-19: a woken session was answering OLD messages again (state is in /tmp, a fresh container re-printed every unanswered one). Such a message is already in TASKS.md
+<<<<<<< HEAD
+    # or was shown by an earlier watcher (its ack is in the repo). Show only messages under 30 min old (Tj, 2026-10-19: a 4 h old one was answered and read as a stale post); older ones go to TASKS.md, never into the chat.
+=======
     # or was shown by an earlier watcher (its ack is in the repo). Show only: unseen messages under 15 min old, or seen-but-unanswered ones under 30 min old (a session cut off mid-answer).
+>>>>>>> 03da9ea8c02a7821013489e72f9a56cf38062fbf
     try:
         age = (now_ms - int(str(m.get("id", ""))[1:])) / 1000
     except Exception:
         return False
+<<<<<<< HEAD
+    return age > 1800
+=======
     return age > 900  # Tj, 2026-10-19 (again): only a message from the last 15 minutes is ever shown; older ones are Tj's already-handled history
+>>>>>>> 03da9ea8c02a7821013489e72f9a56cf38062fbf
 for m in msgs:
     if m.get("from") == "tj" and not m.get("ack") and m.get("id") not in answered and m.get("id") not in printed and not stale(m):
         files = m.get("files") or []

@@ -12,7 +12,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 BRANCH = "cloud-config"
 WAIT_S = 40            # a live watcher acks within ~6 s; this is generous
-ACK_WAIT_S = 60       # after waking an account: no ack/reply within this long and the next account on the duty order is woken too (TCL86b, Tj 2026-10-17)
+PRESENCE_S = 4 * 60    # a chat_watch.sh heartbeat (presence/*.json, every ~90 s) this fresh = a live session is talking to Tj: wake nobody (Tj, 2026-10-19: a second account was woken mid-chat)
+ACK_WAIT_S = 180       # after waking an account: no ack/reply within this long and the next account on the duty order is woken too (TCL86b, Tj 2026-10-17)
 RECENT_S = 15 * 60     # only messages this young are woken for
 DEBOUNCE_S = 10 * 60   # one wake per ten minutes: the woken session reads every message
 FIRE_HEADERS = {"anthropic-beta": "experimental-cc-routine-2026-04-01", "anthropic-version": "2023-06-01", "Content-Type": "application/json"}
@@ -32,6 +33,21 @@ def unanswered(msgs, now_ms):
             continue
         out.append(m)
     return sorted(out, key=lambda m: m["at"])
+
+
+def live_presence(pres, now_ms, since_ms=0):
+    """True when any session's heartbeat is fresh (and, with since_ms, newer than that instant). Pure; pres = list of dicts."""
+    return any(now_ms - p.get("at", 0) < PRESENCE_S * 1000 and p.get("at", 0) >= since_ms for p in pres)
+
+
+def load_presence():
+    out = []
+    for n in git("ls-tree", "--name-only", "FETCH_HEAD", "presence/", check=False).split():
+        try:
+            out.append(json.loads(git("show", "FETCH_HEAD:" + n)))
+        except Exception:
+            pass
+    return out
 
 
 def recent_wake(msgs, now_ms):
@@ -135,6 +151,8 @@ def run():
     todo = unanswered(msgs, now_ms)
     if not todo:
         print("a live session picked it up"); return 0
+    if live_presence(load_presence(), now_ms):
+        print("a live session is in the chat (heartbeat): waking nobody"); return 0
     if recent_wake(msgs, now_ms):
         print("already woken in the last 10 minutes"); return 0
     # Down the duty order, one account at a time: the account whose slot is current first; one that does not ack or reply within ACK_WAIT_S has the next one woken as well (TCL86b).
@@ -150,7 +168,7 @@ def run():
             continue
         time.sleep(ACK_WAIT_S)
         msgs = load()
-        if not still_open(msgs, ids):
+        if not still_open(msgs, ids) or live_presence(load_presence(), int(time.time() * 1000), at):
             print("acct-%s answered" % tag); return 0
         print("acct-%s did not answer within %d s: trying the next account" % (tag, ACK_WAIT_S))
     return 0
@@ -186,6 +204,7 @@ def selftest():
     assert ok and "acct-bbbbbb" in text and calls == ["https://y/fire"], text
     text, ok = wake([], t, roster, {}, {}, post)
     assert not ok and "no wake link" in text
+    assert live_presence([{"at": now - 60_000}], now) and not live_presence([{"at": now - PRESENCE_S * 1000 - 1}], now) and not live_presence([{"at": now - 1000}], now, now)
     print("chat_wake selftest ok"); return 0
 
 
