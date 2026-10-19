@@ -5850,7 +5850,7 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 
 - [ ] CH10 (t1792260735198) PropLine feature: judge from propline-ev-bets results; keep only proven (Unders/Vigilant-agreed) or remove sweep to save requests; log in CHANGES.md.
 
-- [ ] CH11 (t1792274217965) RESEARCH ONLY: Kalshi+Novig dual bets/bids and cross-platform arbitrage frequency -> research/ note.
+- [x] CH11 (DROPPED by Tj) (t1792274217965) RESEARCH ONLY: Kalshi+Novig dual bets/bids and cross-platform arbitrage frequency -> research/ note.
 - [ ] CH12 (t1792274322683) 12 s errors on manual bets: trace BetPriority/RateGate.
 - [ ] CH13 (t1792375273415) Odds API: use for Pinnacle first when fresh.
 
