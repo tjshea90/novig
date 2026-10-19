@@ -647,3 +647,8 @@ This is broken. It is illogical. Today's slate has 0 settled bets and should sho
 
 I don't know how to fix this. Think of the most logical way to make a chart which shows daily profit/loss and total all time profit/loss that is logical and shows an accurate number so I know if I'm making or losing money on my bets. I'd like the total all time profit loss to show the difference between my cash balance now from the initial slate of bets logged on day 1 (assume the total stake of all bets on day 1 was my total deposit into the account)
 ```
+
+## 2026-10-19T16:16:21Z
+```
+Make sure the wallet figure also takes out withdrawals because sometimes I moved money back and forth
+```
