@@ -53,12 +53,12 @@ fresh_ack = []
 now_ms = time.time() * 1000
 def stale(m):
     # Tj, 2026-10-19: a woken session was answering OLD messages again (state is in /tmp, a fresh container re-printed every unanswered one). Such a message is already in TASKS.md
-    # or was shown by an earlier watcher (its ack is in the repo). Show only: unseen messages under 24 h old, or seen-but-unanswered ones under 30 min old (a session cut off mid-answer).
+    # or was shown by an earlier watcher (its ack is in the repo). Show only: unseen messages under 3 h old, or seen-but-unanswered ones under 30 min old (a session cut off mid-answer).
     try:
         age = (now_ms - int(str(m.get("id", ""))[1:])) / 1000
     except Exception:
         return False
-    return age > 86400 or (m.get("id") in acked and age > 1800)
+    return age > 10800 or (m.get("id") in acked and age > 1800)
 for m in msgs:
     if m.get("from") == "tj" and not m.get("ack") and m.get("id") not in answered and m.get("id") not in printed and not stale(m):
         files = m.get("files") or []

@@ -62,6 +62,36 @@ def put(path, text, remote="origin", cwd=None, tries=5):
     raise RuntimeError("could not push %s after %d tries" % (path, tries))
 
 
+def drop_old_notes(cwd=None, tries=5):
+    """Remove Claude's own '(old message...' stand-in replies from chat/ (Tj, 2026-10-19: he does not want them shown). Returns how many files went."""
+    for i in range(tries):
+        git("fetch", "-q", "origin", BRANCH, cwd=cwd, check=False)
+        names = [n for n in git("ls-tree", "--name-only", "FETCH_HEAD", "chat/", cwd=cwd).stdout.split() if n.endswith(".json")]
+        gone = []
+        for n in names:
+            try:
+                m = json.loads(git("show", "FETCH_HEAD:" + n, cwd=cwd).stdout)
+            except Exception:
+                continue
+            if m.get("from") != "tj" and str(m.get("text", "")).startswith("(old message"):
+                gone.append(n)
+        if not gone:
+            return 0
+        with tempfile.TemporaryDirectory() as d:
+            env = dict(os.environ, GIT_INDEX_FILE=os.path.join(d, "idx"))
+            git("read-tree", "FETCH_HEAD", env=env, cwd=cwd)
+            for n in gone:
+                git("update-index", "--force-remove", n, env=env, cwd=cwd)
+            tree = git("write-tree", env=env, cwd=cwd).stdout.strip()
+            parent = git("rev-parse", "FETCH_HEAD", cwd=cwd).stdout.strip()
+            cenv = dict(os.environ, GIT_AUTHOR_NAME="Claude", GIT_AUTHOR_EMAIL="noreply@anthropic.com", GIT_COMMITTER_NAME="Claude", GIT_COMMITTER_EMAIL="noreply@anthropic.com")
+            commit = git("commit-tree", tree, "-m", "tell_tj: drop old-message notes", "-p", parent, env=cenv, cwd=cwd).stdout.strip()
+        if git("push", "-q", "origin", "%s:refs/heads/%s" % (commit, BRANCH), cwd=cwd, check=False).returncode == 0:
+            return len(gone)
+        time.sleep(1 + i)
+    raise RuntimeError("could not drop notes")
+
+
 def fname(at, ident):
     return "%013d-%s.json" % (at, re.sub(r"[^A-Za-z0-9-]", "", ident)[:24])
 
@@ -205,6 +235,8 @@ def main(argv):
         print("relayed", chat_relay(" ".join(argv[1:]))); return 0
     if argv[0] == "chat-ack" and len(argv) >= 2:
         print("acked", chat_ack(argv[1:])); return 0
+    if argv[0] == "chat-clean":
+        print("removed", drop_old_notes()); return 0
     if argv[0] == "chat-file" and len(argv) >= 3:
         print(chat_file(argv[1], argv[2])); return 0
     if argv[0] == "chat-keep" and len(argv) >= 2:
