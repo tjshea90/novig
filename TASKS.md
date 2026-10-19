@@ -5889,3 +5889,11 @@ Owner: acct-5d1e2d (mirage), session ccr-2df6ce48-pkrh5v. Other sessions: do NOT
 - [x] CR6b (found while building CR5) the landing gate marked "tested" from the files at the END of a run (an edit made during a run counted as tested) and from runs filtered to a few tests: tools/test.sh, ckpt.sh and ship.sh now take the tree before the checks and mark that (landing.py tree / mark --tree), filtered runs mark nothing (python3 -I tools/landing.py selftest). test_coord.sh's 1-in-3 red was `cmd | grep -q` under pipefail (SIGPIPE): fixed there and in push.sh's conflict-marker guard, resume.sh, ship.sh (bash tools/test_coord.sh 48/48 twice).
 - [x] CR9 (found at the CR8 gate) CI on main was red since CH20 (tennis live default on, 06:10Z): LiveBidUiTest x2 and LiveBidWhyTest still assumed tennis off; updated to the new default (the Tennis switch flips it, the slider keeps the choice, the hint shows when it is off). Test: bash tools/test.sh (app).
 - [ ] CR8 Full test gate, release, tell Tj what changed and what (if anything) he must do.
+
+## EA: the engine must start at 08:00 ET even when GitHub drops its schedule (Tj, 2026-10-19 15:14Z)
+Tj, verbatim: "Figure out when the GitHub engine started today. Did it start at 8am as scheduled? If not, when did it start and why?"
+Found (research/engine_start_2026-10-19.md): it started 11:04 ET, dispatched by the phone 9 s after Tj opened the app (11:01:54 ET settings push, 11:02:03 dispatch). GitHub fired cloud-scan.yml's */15 cron only 6-8 times a day Oct 16-19 (today 00:06Z, 04:46Z, 10:38Z) and the */5 watchdog once all morning (14:32Z), which by design does not start a missing engine. No GitHub incident: best-effort scheduling.
+- [ ] EA1 engine-alarm.yml: a free runner waits until 08:00 America/New_York (re-dispatching itself once overnight: a job may run at most 6 h) and then dispatches cloud-scan.yml (its gate still decides: hours, manual stop, kill switch, on); dispatched by the engine when its hours close and by the watchdog when no alarm or engine is running; the cron stays as a backstop.
+- [ ] EA2 the watchdog starts a missing engine inside the hours (it said "the 15-minute schedule starts one" and did nothing).
+- [ ] EA3 tests (selftests), docs (CLAUDE.md cloud-scan limits, ENGINE_ADMIN.md), tell Tj.
+
