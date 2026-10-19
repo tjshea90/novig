@@ -1,6 +1,5 @@
 # chat-wake.yml - lives on the `cloud-config` branch (a push workflow runs from the pushed branch's own files), source copy: tools/chat-wake/ on main.
 # When Tj's app chat writes a file under chat/, wait 40 s; if no live Claude session has acked or answered it, wake the on-duty account's routine (API trigger) and say so in the chat.
-# An account that does not ack within 60 s has the next one on the duty order woken too (TCL86b), so the job may run about 3 minutes.
 # Free (public repo), zero Claude usage while nobody writes. TCL70, Tj 2026-10-17. Logic and tests: tools/chat_wake.py on main.
 name: Chat wake
 on:
@@ -15,7 +14,7 @@ permissions:
 jobs:
   wake:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
