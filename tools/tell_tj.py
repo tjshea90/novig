@@ -129,6 +129,12 @@ def chat_reply(reply_to, text, who=None, **kw):
     if SECRET.search(text):
         raise SystemExit("refused: the text looks like a key or token (the repo is public)")
     at = int(time.time() * 1000)
+    # Tj, 2026-10-19: a reply to an old message shows up in the chat as a stale message. Refuse unless the message is under 30 min old (or FORCE_OLD_REPLY=1).
+    try:
+        if at - int(str(reply_to)[1:]) > 1800000 and not os.environ.get("FORCE_OLD_REPLY"):
+            raise SystemExit("not sent: message %s is over 30 min old, so a reply would look stale to Tj" % reply_to)
+    except ValueError:
+        pass
     ident = "c%d-%s" % (at // 1000, secrets.token_hex(2))
     m = {"id": ident, "at": at, "from": who or me(), "text": text, "replyTo": reply_to}
     put("chat/" + fname(at, ident), json.dumps(m), **kw)
