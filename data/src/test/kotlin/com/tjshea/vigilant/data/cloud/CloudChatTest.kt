@@ -49,7 +49,8 @@ class CloudChatTest {
         val id = CloudChat.newId(now, java.util.Random(7))
         assertTrue(id, Regex("""^t\d{13}-[0-9a-f]{4}$""").matches(id))
         assertEquals("2026-10-19", CloudChat.dayOf(1_792_400_000_000L))
-        assertEquals("file", CloudChat.safeName("///"))
+        assertEquals("___", CloudChat.safeName("///"))
+        assertEquals("file", CloudChat.safeName(""))
         assertEquals("r_sum_.pdf", CloudChat.safeName("résumé.pdf").takeLast(10))
     }
 
