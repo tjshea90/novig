@@ -5945,3 +5945,4 @@ When you come back: read this first. tj Gmail already did: CH24a/b (watchdog fix
 - [x] CH24 (t1792444816117-e0b0) Tj: slightly lower EV on bids, post as many as possible: bidLevel 68->80 done (CHANGES.md).
 - [x] CH25 (built, tests green) (t1792446562982-91ba) Tj: guard so engine auto-bet/bid never rests on a fair from only a few SMALL books with identical odds (same-source double count); favor large brands with similar-not-identical odds; exclude outlier/stale books from ANY fair calc in app+engine.
 - [x] CH26 (t1792446818266-a4e8) Tj: daily automatic analysis + tuning with full approval: already scheduled by the rotation routines (ROUTINE.md); confirmed in chat.
+- [ ] CH27 (t1792447685019-4a8f) Tracker: Yesterday section with slate P/L + chart, plus a dropdown to pick any calendar day and see that day's P/L + chart (screenshot in chat files).
