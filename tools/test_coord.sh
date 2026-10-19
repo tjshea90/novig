@@ -77,7 +77,7 @@ git init -q -b work "$T/repo"; git -C "$T/repo" remote add origin "$T/origin.git
 git -C "$T/repo" fetch -q origin main 2>/dev/null; git -C "$T/repo" reset -q --hard FETCH_HEAD 2>/dev/null || true
 cp "$D/tools/push.sh" "$D/tools/coord.py" "$D/tools/landing.py" "$T/repo/tools/" 2>/dev/null; mkdir -p "$T/repo/research"; echo note > "$T/repo/research/n.md"
 git -C "$T/repo" -c user.name=t -c user.email=t@t add -A; git -C "$T/repo" -c user.name=t -c user.email=t@t commit -q -m "docs and tools"
-PUSH_B() { (cd "$T/repo" && COORD_HOME="$T/b" COORD_LABEL=acctB COORD_RENEW_S=0 PUSH_SYNC_NOW=1 bash tools/push.sh >/dev/null 2>&1); }
+PUSH_B() { (cd "$T/repo" && COORD_HOME="$T/b" COORD_LABEL=acctB COORD_RENEW_S=0 PUSH_SYNC_NOW=1 bash -x tools/push.sh >"$T/push.log" 2>&1); }
 A acquire --kind interactive >/dev/null 2>&1
 PUSH_B; expect "push.sh pushes while another session works" 0 $?
 git -C "$T/origin.git" rev-parse -q --verify refs/heads/work >/dev/null && ok "the session branch is on the remote" || bad "branch not pushed"
@@ -96,7 +96,7 @@ git -C "$T/other" add -A; git -C "$T/other" -c user.name=t -c user.email=t@t com
 echo more > "$T/repo/research/m.md"; git -C "$T/repo" -c user.name=t -c user.email=t@t add -A; git -C "$T/repo" -c user.name=t -c user.email=t@t commit -q -m "more docs"
 PUSH_B; expect "push.sh copes when main moved" 0 $?
 [ -f "$T/repo/OTHER.md" ] && ok "the other session's work was merged into the branch" || bad "main's new work did not reach the branch"
-git -C "$T/origin.git" log --oneline refs/heads/main | grep -q "more docs" && ok "and the branch landed on main after the merge" || bad "main did not get the branch after the merge"
+git -C "$T/origin.git" log --oneline refs/heads/main | grep -q "more docs" && ok "and the branch landed on main after the merge" || { bad "main did not get the branch after the merge"; tail -25 "$T/push.log" | sed 's/^/        /'; }
 # a conflicting change on main is never merged blind: the branch stays as it was, nothing is committed with conflict markers
 git -C "$T/other" pull -q --no-rebase origin main >/dev/null 2>&1; mkdir -p "$T/other/research"; echo "main side" > "$T/other/research/n.md"
 git -C "$T/other" add -A; git -C "$T/other" -c user.name=t -c user.email=t@t commit -q -m "main edit"; git -C "$T/other" push -q origin HEAD:refs/heads/main 2>/dev/null
