@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-nfy0aq",
- "head": "e88981a1017e51ec03c231bd3b61548860d42147",
+ "head": "e5ccbab78e9ca0523b88d68a010dcef356a0cd52",
  "since": 1792440839,
- "beat": 1792441712,
- "beatIso": "2026-10-19T20:28:32Z",
- "done": "CH23a + Test now built on Engine>APIs cards (compiles, not shipped)",
- "next": "CH23b Try again (CloudConfig retry field + ApiGovernor.retry), CH23d tests, CH22b cross-exchange paper detection, then ship"
+ "beat": 1792441853,
+ "beatIso": "2026-10-19T20:30:53Z",
+ "done": "CH23b Try again + CH22b cross-exchange paper journal built, tests green",
+ "next": "ship v1.0.8 via ship.sh, release.yml, record-release.sh; tell Tj"
 }
