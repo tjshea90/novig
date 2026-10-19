@@ -125,6 +125,8 @@ class CloudLink(private val c: AppContainer) {
     @Volatile private var refreshRequestedAt = 0L
     /** Pull to refresh on the PropLine +EV screen (TCL89): the phone's clock when it asked for a PropLine-only sweep. */
     @Volatile private var propLineRequestedAt = 0L
+    @Volatile private var retryApiId = ""
+    @Volatile private var retryApiAt = 0L
     private var feedFetchedFor = 0L
     private var bidsFetchedFor = 0L
     private var evFetchedFor = 0L
@@ -431,6 +433,15 @@ class CloudLink(private val c: AppContainer) {
      * Pull to refresh / the Scan button in cloud mode (Tj, 2026-10-14): tells the engine to scan now, in the settings file it reads every 3 s (settings and the request travel together, so the scan it starts
      * is under exactly what the phone shows). The engine acknowledges in its heartbeat and reports progress; [CloudText] says it in words. If no engine is running one is started. Null = sent, else why not.
      */
+    /** Try again beside one API (CH23): the engine forgives that API alone (no scan cancelled, nothing else touched). Null = sent. */
+    suspend fun requestApiRetry(policyId: String): String? {
+        if (!hasToken()) { _ui.update { it.copy(note = "Save a GitHub token first (Settings › Cloud scan).") }; return "no token" }
+        retryApiId = policyId
+        retryApiAt = maxOf(System.currentTimeMillis(), retryApiAt + 1)
+        c.settingsStore.flow.value?.let { pushSettings(it, force = true) }
+        return null
+    }
+
     suspend fun requestPropLineSweep(): String? {
         if (!hasToken()) { _ui.update { it.copy(note = "Save a GitHub token first (Settings › Cloud scan).") }; return "no token" }
         val now = System.currentTimeMillis()
@@ -603,11 +614,11 @@ class CloudLink(private val c: AppContainer) {
         runCatching { wantedFile.writeText(if (wanted) "1" else "0") }
         // Not wanted and nothing owed: the engine is left alone (no request is made for a phone that never used the cloud scan).
         if (!wanted && !offPending.exists()) return
-        val key = (if (wanted) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode() + "r$refreshRequestedAt" + "m$manualRunUntil,$manualStopUntil" + "x$resetRequestedAt" + "p$propLineRequestedAt"
+        val key = (if (wanted) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode() + "r$refreshRequestedAt" + "m$manualRunUntil,$manualStopUntil" + "x$resetRequestedAt" + "p$propLineRequestedAt" + "y$retryApiAt"
         if (key == lastPushedKey && !force) return
         val rev = maxOf(System.currentTimeMillis(), lastRev + 1)
         loadManual()
-        val why = client.writeConfig(CloudConfig(rev = rev, on = wanted, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt, manualRunUntilMs = manualRunUntil, manualStopUntilMs = manualStopUntil, resetAtMs = resetRequestedAt, propLineRefreshAtMs = propLineRequestedAt))
+        val why = client.writeConfig(CloudConfig(rev = rev, on = wanted, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt, manualRunUntilMs = manualRunUntil, manualStopUntilMs = manualStopUntil, resetAtMs = resetRequestedAt, propLineRefreshAtMs = propLineRequestedAt, retryApi = retryApiId, retryApiAtMs = retryApiAt))
         if (why == null) {
             if (wanted) runCatching { sendKeys(auto = true) }
             lastPushedKey = key; lastRev = rev

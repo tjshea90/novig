@@ -51,6 +51,12 @@ data class CloudConfig(
     val resetAtMs: Long = 0L,
     /** Pull to refresh on the PropLine +EV screen (Tj, 2026-10-17, TCL89): the phone's clock when it asked; a value newer than the one the engine last served runs the PropLine sweep now (only that). */
     val propLineRefreshAtMs: Long = 0L,
+    /**
+     * Try again on one API (Tj, 2026-10-19, CH23): the phone's clock and the API's quota-policy id. A value newer than the engine last served un-rests that API in [ApiGovernor] (its strikes cleared)
+     * so the next scan asks it again; nothing else is touched and no scan is cancelled.
+     */
+    val retryApi: String = "",
+    val retryApiAtMs: Long = 0L,
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }

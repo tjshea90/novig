@@ -50,14 +50,14 @@ private const val DASHBOARD_URL = "https://github.com/tjshea90/novig/blob/cloud-
  * [DashboardContent] takes plain values and no app objects, so it renders from sample data.
  */
 @Composable
-fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Modifier = Modifier, section: EngineSection? = null, onTestApi: (String) -> Unit = {}) {
+fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Modifier = Modifier, section: EngineSection? = null, onTestApi: (String) -> Unit = {}, onRetryApi: (String) -> Unit = {}) {
     val now = rememberNow(1_000)
     val meters = remember(state.usage, state.cloudUsage, state.settings.sgoPro, state.settings.oddsPapi, state.settings.unabated, state.settings.gates.useBoltOdds, state.settings.oddsPapiFree, now / 30_000L) {
         meterViews(state, now)
     }
     val u = state.cloudUi
     val board = remember(u.trades, u.desk, u.status, now / 15_000L) { EngineBoard.of(u.trades, u.desk, u.status, now) }
-    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, liveDirectAtMs = u.liveDirectAtMs, hoursOn = state.settings.cloudHours, section = section, refreshedAtMs = u.refreshedAtMs, refreshNote = u.refreshNote, testing = state.apiBusy, checks = state.apiChecks, onTestApi = onTestApi)
+    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, liveDirectAtMs = u.liveDirectAtMs, hoursOn = state.settings.cloudHours, section = section, refreshedAtMs = u.refreshedAtMs, refreshNote = u.refreshNote, testing = state.apiBusy, checks = state.apiChecks, onTestApi = onTestApi, onRetryApi = onRetryApi)
 }
 
 /**
@@ -90,6 +90,7 @@ fun DashboardContent(
     testing: Set<String> = emptySet(),
     checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>> = emptyMap(),
     onTestApi: (String) -> Unit = {},
+    onRetryApi: (String) -> Unit = {},
 ) {
     val uri = LocalUriHandler.current
     fun show(x: EngineSection) = section == null || section == x
@@ -100,7 +101,7 @@ fun DashboardContent(
         if (show(EngineSection.MONEY)) {
             if (board != null) EngineMoneyCard(board, status, now) else if (section != null) Text("The engine's bets and bids appear here once it has placed any.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        if (show(EngineSection.APIS)) ApisSection(status, meters, now, testing, checks, onTestApi)
+        if (show(EngineSection.APIS)) ApisSection(status, meters, now, testing, checks, onTestApi, onRetryApi)
         if (show(EngineSection.TRENDS)) TrendsSection(history)
         if (show(EngineSection.OVERVIEW)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -147,7 +148,7 @@ private fun OverviewSection(status: CloudStatus?, now: Long, hoursOn: Boolean, l
 
 /** APIs: the engine's API manager (which feed does what) and every API's health and usage meter. */
 @Composable
-private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: Long, testing: Set<String>, checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>>, onTestApi: (String) -> Unit) {
+private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: Long, testing: Set<String>, checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>>, onTestApi: (String) -> Unit, onRetryApi: (String) -> Unit) {
     val running = DashboardModel.running(status, now)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         status?.apiCards?.takeIf { it.isNotEmpty() }?.let { cs ->
@@ -171,7 +172,7 @@ private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: L
             meters.filter { it.keys.isNotEmpty() || !it.policy.keyed || health.containsKey(it.policy.id) }.sortedBy { severity(health[it.policy.id]) }
         }
         if (cards.isEmpty()) Text("No API has answered yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        cards.forEach { v -> ApiCard(v, health[v.policy.id], DashboardModel.apiDetail(status, v.policy.id), now, checks, testing, onTestApi) }
+        cards.forEach { v -> ApiCard(v, health[v.policy.id], DashboardModel.apiDetail(status, v.policy.id), now, checks, testing, onTestApi, onRetryApi) }
         if (health.isEmpty() && status != null) {
             Text("Which APIs worked on the last scan appears after the engine's next scan (it has to finish one on the new version).", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -323,7 +324,7 @@ private fun SectionHeader(text: String) {
 
 /** One API: health chip, name, what the last scan got from it, and its usage meter (the same ledger as Settings › APIs, with the engine's calls in it). */
 @Composable
-private fun ApiCard(v: ProviderView, health: CloudDashboard.Health?, detail: String, now: Long, checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>> = emptyMap(), testing: Set<String> = emptySet(), onTestApi: (String) -> Unit = {}) {
+private fun ApiCard(v: ProviderView, health: CloudDashboard.Health?, detail: String, now: Long, checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>> = emptyMap(), testing: Set<String> = emptySet(), onTestApi: (String) -> Unit = {}, onRetryApi: (String) -> Unit = {}) {
     var open by androidx.compose.runtime.saveable.rememberSaveable(v.policy.id) { androidx.compose.runtime.mutableStateOf(false) }
     val entry = remember(v.policy.id) { com.tjshea.vigilant.app.ApiEntry.entries.firstOrNull { it.policy?.id == v.policy.id } }
     val tone = when (health) {
@@ -348,6 +349,8 @@ private fun ApiCard(v: ProviderView, health: CloudDashboard.Health?, detail: Str
                 val last = checks[entry.name]
                 last?.forEach { ch -> Text((if (ch.ok) "✓ " else "✗ ") + ch.masked + ": " + ch.message, style = MaterialTheme.typography.labelSmall, color = if (ch.ok) Edge.colors.positive else Edge.colors.negative) }
                 OutlinedButton(onClick = { onTestApi(v.policy.id) }, enabled = entry.name !in testing, modifier = Modifier.testTag("apiTestNow-${v.policy.id}")) { Text(if (entry.name in testing) "Testing…" else "Test now") }
+                OutlinedButton(onClick = { onRetryApi(v.policy.id) }, modifier = Modifier.testTag("apiRetry-${v.policy.id}")) { Text("Try again") }
+                Text("Try again asks the engine to use this API on its next scan; nothing else is disturbed.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             val allowance = v.totalAllowance
             val left = v.totalLeft

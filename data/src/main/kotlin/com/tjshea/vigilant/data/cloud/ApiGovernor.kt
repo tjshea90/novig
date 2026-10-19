@@ -33,6 +33,15 @@ class ApiGovernor(private val restMs: List<Long> = REST_MS) {
     /** The settings the engine scans under: [s] with every resting API off. */
     fun apply(s: ScanSettings, now: Long): ScanSettings = ApiToggles.rest(s, resting(now).map { it.id })
 
+    /** Try again (Tj, CH23): forgives [policyId]'s rests, strikes and silence so the next scan asks it; true when it was resting or struck. Nothing else changes. */
+    fun retry(policyId: String): Boolean {
+        val id = ApiToggles.idOfPolicy(policyId) ?: policyId
+        val was = rests.remove(id) != null
+        val hadStrikes = strikes.remove(id) != null
+        streak.remove(id)
+        return was || hadStrikes
+    }
+
     /** Carries the APIs the engine asked the phone to turn off from the previous job (so a handover does not forget it asked). */
     fun seedOff(ids: Collection<String>, now: Long) { ids.forEach { offAsked.putIfAbsent(it, now) } }
     fun askedOff(): Set<String> = offAsked.keys.toSet()

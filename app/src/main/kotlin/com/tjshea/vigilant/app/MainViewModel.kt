@@ -2522,6 +2522,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         refreshCloud()
     }
     /** Pull to refresh on the PropLine +EV screen (TCL89): the engine runs its PropLine sweep now, nothing else. */
+    fun retryApi(policyId: String) { viewModelScope.launch(Dispatchers.IO) { c.cloud.requestApiRetry(policyId) } }
     fun refreshPropLine() { viewModelScope.launch(Dispatchers.IO) { c.cloud.requestPropLineSweep() } }
     fun resetEngine() { viewModelScope.launch(Dispatchers.IO) { c.cloud.resetEngine() } }
     fun stopCloudUntilNextOpening() { viewModelScope.launch(Dispatchers.IO) { c.cloud.stopUntilNextOpening() } }

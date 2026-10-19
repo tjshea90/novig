@@ -781,7 +781,7 @@ private fun VigilantRoot(
         val modifier = Modifier.padding(bottom = padding.calculateBottomPadding()).consumeWindowInsets(androidx.compose.foundation.layout.PaddingValues(bottom = padding.calculateBottomPadding())).fillMaxSize()
         androidx.compose.foundation.layout.Box(modifier) {
             when (tab) {
-                Tab.ENGINE -> com.tjshea.vigilant.app.ui.EngineScreen(state, onOpenCloudSettings = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.CLOUD.name; tabName = Tab.SETTINGS.name }, onRefresh = { vm.refreshEngine() }, onReset = { vm.resetEngine() }, onTestApi = { id -> ApiEntry.entries.firstOrNull { it.policy?.id == id }?.let { vm.testApi(it) } })
+                Tab.ENGINE -> com.tjshea.vigilant.app.ui.EngineScreen(state, onOpenCloudSettings = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.CLOUD.name; tabName = Tab.SETTINGS.name }, onRefresh = { vm.refreshEngine() }, onReset = { vm.resetEngine() }, onTestApi = { id -> ApiEntry.entries.firstOrNull { it.policy?.id == id }?.let { vm.testApi(it) } }, onRetryApi = { id -> vm.retryApi(id) })
                 Tab.CLAUDE -> com.tjshea.vigilant.app.ui.ClaudeScreen(
                     state, onSend = vm::sendChat, onChatOpen = vm::setChatOpen, onChatRead = vm::markChatRead, onRetry = vm::retryChat, onDiscard = vm::discardChat,
                     onNewChat = vm::newChat, onClearChat = vm::clearChat, onLoadEarlier = vm::loadEarlierChat, chatFile = { id, n, name -> vm.chatFile(id, n, name) }, onMarkRead = vm::markClaudeRead,

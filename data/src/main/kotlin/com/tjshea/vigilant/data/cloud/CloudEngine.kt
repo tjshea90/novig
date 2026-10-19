@@ -204,6 +204,8 @@ class CloudEngine(
 
     /** The newest config the run loop read: the manual Run / Stop fields the other loops (the desk) also honour ([CloudManual]). */
     @Volatile private var manualCfg: CloudConfig? = null
+    /** The newest [CloudConfig.retryApiAtMs] served (a job treats what it finds at its first read as new once: forgiving an API is harmless). */
+    @Volatile private var retrySeenMs = 0L
     /** The newest PropLine refresh the phone asked for (pull to refresh on the PropLine +EV screen), from the config read every few seconds. */
     val propLineRefreshAtMs: Long get() = manualCfg?.propLineRefreshAtMs ?: 0L
     private fun manualOpen(s: ScanSettings) = CloudManual.open(s.cloudHours, manualCfg, clock())
@@ -448,6 +450,10 @@ class CloudEngine(
                 val newer = runCatching { readConfig() }.getOrNull()
                 // What the phone asks for out of band (a PropLine sweep, a manual Run or Stop) is seen at once, not only between scans (2026-10-17: a pull to refresh sat unanswered through a whole scan).
                 newer?.let { manualCfg = it }
+                newer?.takeIf { it.retryApiAtMs > retrySeenMs }?.let { r ->
+                    retrySeenMs = r.retryApiAtMs
+                    if (r.retryApi.isNotBlank()) log("Try again: ${ApiToggles.name(ApiToggles.idOfPolicy(r.retryApi) ?: r.retryApi)} " + (if (governor.retry(r.retryApi)) "forgiven, the next scan asks it" else "was not resting"))
+                }
                 // Nothing to decide unless the phone wrote something new (a revision, a switch-off, a refresh): the settings are compared only then.
                 if (newer != null && (newer.rev != cfg.rev || !newer.on || newer.refreshAtMs > handledRefresh)) {
                     val fetchChanged = CloudScanKey.fetchKey(newer.settings) != fetchKey
