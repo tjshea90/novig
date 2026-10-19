@@ -5942,3 +5942,4 @@ When you come back: read this first. tj Gmail already did: CH24a/b (watchdog fix
 ## REL1: cut a release now + KX1 sizing (Tj, 2026-10-19, verbatim: "cut a release now. Then tell me how big of a task it would be to make a new vigilant app, copying all of the logic and features already built, but for kalshi instead of novig")
 - [x] REL1a (v1.0.7 released and recorded) ship.sh + release.yml + record-release.sh (holds SC1 fetchSettleMs, mirage's CH24 watchdog fix is tools-only).
 - [ ] KX1 answer Tj with an honest size estimate for a Kalshi-based Vigilant (from the code: what is Novig-specific vs shared).
+- [x] CH24 (t1792444816117-e0b0) Tj: slightly lower EV on bids, post as many as possible: bidLevel 68->80 done (CHANGES.md).
