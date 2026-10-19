@@ -103,11 +103,17 @@ enum class TrackerPeriod(val label: String, val days: Int) { ALL("All", Int.MAX_
 
 enum class BetFilter(val label: String) { OPEN("Open"), SETTLED("Settled"), ALL("All") }
 
+/** The one game day a Yesterday or Pick-day period shows (a Pick day with nothing picked is today). */
+fun periodDay(period: TrackerPeriod, nowMs: Long, pickedDay: java.time.LocalDate?): java.time.LocalDate = when (period) {
+    TrackerPeriod.YESTERDAY -> SlateProfit.today(nowMs).minusDays(1)
+    else -> pickedDay ?: SlateProfit.today(nowMs)
+}
+
 /** [bets] whose game day is in [period] up to [nowMs]'s ("Today": today's games, whenever the bet was placed). */
 fun inPeriod(bets: List<TrackedBet>, period: TrackerPeriod, nowMs: Long, pickedDay: java.time.LocalDate? = null): List<TrackedBet> = when (period) {
     TrackerPeriod.ALL -> bets
     TrackerPeriod.YESTERDAY, TrackerPeriod.DAY -> {
-        val d = SlateProfit.periodDay(period, nowMs, pickedDay)
+        val d = periodDay(period, nowMs, pickedDay)
         bets.filter { SlateProfit.slateOf(it) == d }
     }
     else -> bets.filter { SlateProfit.inLastDays(it, nowMs, period.days) }
@@ -161,6 +167,30 @@ fun TrackerScreen(
     val now = rememberNow(60_000)
     var view by rememberSaveable { mutableStateOf(initialView) }
     var period by rememberSaveable { mutableStateOf(TrackerPeriod.ALL) }
+    var pickedEpochDay by rememberSaveable { mutableStateOf<Long?>(null) }
+    var pickingDay by remember { mutableStateOf(false) }
+    val pickedDay = pickedEpochDay?.let { java.time.LocalDate.ofEpochDay(it) }
+    if (pickingDay) {
+        val st = androidx.compose.material3.rememberDatePickerState(
+            initialSelectedDateMillis = periodDay(TrackerPeriod.DAY, now, pickedDay).atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli(),
+            selectableDates = object : androidx.compose.material3.SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis <= java.time.LocalDate.now(SlateProfit.ET).plusDays(1).atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+            },
+        )
+        androidx.compose.material3.DatePickerDialog(
+            onDismissRequest = { pickingDay = false },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    st.selectedDateMillis?.let { ms ->
+                        pickedEpochDay = java.time.Instant.ofEpochMilli(ms).atZone(java.time.ZoneOffset.UTC).toLocalDate().toEpochDay()
+                        period = TrackerPeriod.DAY
+                    }
+                    pickingDay = false
+                }) { Text("Show this day") }
+            },
+            dismissButton = { androidx.compose.material3.TextButton(onClick = { pickingDay = false }) { Text("Cancel") } },
+        ) { androidx.compose.material3.DatePicker(state = st) }
+    }
     var filter by rememberSaveable { mutableStateOf(BetFilter.OPEN) }
     // How the bets are ordered and which scanner's are listed (Tj, 2026-09-29): kept through rotation and the app being recreated.
     var sort by rememberSaveable { mutableStateOf(BetSort.DEFAULT) }
@@ -208,7 +238,7 @@ fun TrackerScreen(
     val shown = remember(scoped, filter, minute, sort, sortReversed) {
         TrackerSort.sorted(filtered(scoped, filter), sort, sortReversed) { ordered(it, filter, now) }
     }
-    val periodBets = remember(kindBets, period, minute) { inPeriod(kindBets, period, now) }
+    val periodBets = remember(kindBets, period, minute, pickedEpochDay) { inPeriod(kindBets, period, now, pickedDay) }
     // The "Check odds now" counter: open bets re-read since the last check began (0 again at each new one), live as batches are saved; a game
     // that starts drops out within the minute.
     val checkStart = state.checkStartedAtMs
@@ -344,9 +374,18 @@ fun TrackerScreen(
                     if (checkStats != null) CheckOddsCounter(checkStats)
                     when (view) {
                         TrackerView.STATS -> Column(Modifier.padding(vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 TrackerPeriod.entries.forEach { p ->
-                                    FilterChip(selected = period == p, onClick = { period = p }, label = { Text(p.label) }, modifier = Modifier.testTag("periodChip-${p.name}"))
+                                    if (p == TrackerPeriod.DAY) {
+                                        // A calendar for any one game day (Tj, 2026-10-19: "a drop down box that lets me pick a day on the calendar").
+                                        FilterChip(
+                                            selected = period == p, onClick = { pickingDay = true },
+                                            label = { Text(if (period == p) ProfitText.dayName(periodDay(p, now, pickedDay)) else p.label + " ▾") },
+                                            modifier = Modifier.testTag("periodChip-${p.name}"),
+                                        )
+                                    } else {
+                                        FilterChip(selected = period == p, onClick = { period = p }, label = { Text(p.label) }, modifier = Modifier.testTag("periodChip-${p.name}"))
+                                    }
                                 }
                             }
                             // Bets, bids or both for every number below (Tj, 2026-10-07); the Bets tab has the same chip.
@@ -412,7 +451,7 @@ fun TrackerScreen(
             when (view) {
                 TrackerView.STATS -> {
                     // The profit card first, whatever the period holds: its all-time figure is the wallet's, and a Today with no game graded yet is a real $0.00 day (Tj, 2026-10-19, PL).
-                    if (kindBets.isNotEmpty() || walletMoney.money != null) item(key = "profit") { ProfitChartCard(kindBets, period, walletMoney) }
+                    if (kindBets.isNotEmpty() || walletMoney.money != null) item(key = "profit") { ProfitChartCard(kindBets, period, walletMoney, day = periodDay(period, now, pickedDay)) }
                     if (periodBets.isEmpty()) {
                         item(key = "empty") { EmptyState(TrackerText.emptyStats(made, period == TrackerPeriod.ALL, bets.isEmpty()), if (made == MadeFilter.BIDS) BIDS_HINT else EMPTY_HINT) }
                     } else {

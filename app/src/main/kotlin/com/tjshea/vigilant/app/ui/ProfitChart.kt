@@ -136,9 +136,9 @@ object ProfitText {
     }
 
     /** Today's games in one line of numbers: $0.00 and why before a result, what is open after. */
-    fun today(day: SlateProfit.Day): String = when {
-        day.empty -> "No bets on today's games yet: \$0.00."
-        day.settled == 0 -> "No results yet: \$0.00 until the first of today's games is graded. ${Format.money(day.openStaked)} is at stake on ${bets(day.open)}, not counted until they settle."
+    fun today(day: SlateProfit.Day, isToday: Boolean = true): String = when {
+        day.empty -> if (isToday) "No bets on today's games yet: \$0.00." else "No bets on this day's games: \$0.00."
+        day.settled == 0 -> "No results yet: \$0.00 until the first of ${if (isToday) "today's" else "this day's"} games is graded. ${Format.money(day.openStaked)} is at stake on ${bets(day.open)}, not counted until they settle."
         else -> "${day.settled} settled: ${Format.money(day.settledStaked)} staked, ${Format.money(day.returned)} paid back = ${pl(day.profit)}." +
             if (day.open > 0) " ${day.open} still open (${Format.money(day.openStaked)} at stake, not counted yet)." else ""
     }
@@ -166,6 +166,8 @@ object ProfitText {
 
     fun periodLabel(period: TrackerPeriod, first: LocalDate?): String = when (period) {
         TrackerPeriod.TODAY -> "Today"
+        TrackerPeriod.YESTERDAY -> "Yesterday"
+        TrackerPeriod.DAY -> "One day"
         TrackerPeriod.DAYS_7 -> "Last 7 days"
         TrackerPeriod.DAYS_30 -> "Last 30 days"
         TrackerPeriod.ALL -> first?.let { "Since ${it.format(DateTimeFormatter.ofPattern("MMM d", Locale.US))}" } ?: "All time"
@@ -182,7 +184,7 @@ object ProfitText {
  *  - a bet that has not settled is money at stake, never a loss: it is counted on its game's day once it settles.
  */
 @Composable
-fun ProfitChartCard(bets: List<TrackedBet>, period: TrackerPeriod, wallet: WalletMoneyUi = WalletMoneyUi(), modifier: Modifier = Modifier) {
+fun ProfitChartCard(bets: List<TrackedBet>, period: TrackerPeriod, wallet: WalletMoneyUi = WalletMoneyUi(), modifier: Modifier = Modifier, day: LocalDate? = null) {
     val now = rememberNow(60_000)
     val book = remember(bets, now / 60_000L) { SlateProfit.book(bets, now) }
     Card(modifier.fillMaxWidth().testTag("profitChart"), shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
@@ -190,7 +192,9 @@ fun ProfitChartCard(bets: List<TrackedBet>, period: TrackerPeriod, wallet: Walle
             AllTime(book, wallet, now)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             when (period) {
-                TrackerPeriod.TODAY -> TodayView(bets, book, now)
+                TrackerPeriod.TODAY -> TodayView(bets, book, now, SlateProfit.today(now), "Today")
+                TrackerPeriod.YESTERDAY -> TodayView(bets, book, now, SlateProfit.today(now).minusDays(1), "Yesterday")
+                TrackerPeriod.DAY -> (day ?: SlateProfit.today(now)).let { TodayView(bets, book, now, it, if (it == SlateProfit.today(now)) "Today" else ProfitText.dayName(it)) }
                 else -> DaysView(SlateProfit.lastDays(book, now, period.days), ProfitText.periodLabel(period, book.days.firstOrNull()?.date))
             }
             SlateProfit.later(book, now)?.let { Text(ProfitText.later(it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitLater")) }
@@ -226,24 +230,26 @@ private fun AllTime(book: SlateProfit.Book, wallet: WalletMoneyUi, now: Long) {
 
 /** Today's games: their numbers, and their running profit from the first game to the last result (or now). */
 @Composable
-private fun TodayView(bets: List<TrackedBet>, book: SlateProfit.Book, now: Long) {
-    val day = SlateProfit.day(book, SlateProfit.today(now))
+private fun TodayView(bets: List<TrackedBet>, book: SlateProfit.Book, now: Long, date: LocalDate, title: String) {
+    val day = SlateProfit.day(book, date)
+    val isToday = date == SlateProfit.today(now)
     val points = remember(bets, day.date, now / 60_000L) { SlateProfit.curve(bets, day.date) }
     Text(ProfitText.todayLine(day, now), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitDayLine"))
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        LabeledValue("Today", ProfitText.pl(day.profit), valueColor = moneyColor(day.profit), modifier = Modifier.weight(1.2f).testTag("profitInView"))
+        LabeledValue(title, ProfitText.pl(day.profit), valueColor = moneyColor(day.profit), modifier = Modifier.weight(1.2f).testTag("profitInView"))
         LabeledValue("Return on staked", day.changePct?.let(ProfitText::pct) ?: "—", valueColor = moneyColor(day.profit), modifier = Modifier.weight(1.2f))
         LabeledValue("Record", "${day.won}-${day.lost}", modifier = Modifier.weight(0.8f))
     }
-    Text(ProfitText.today(day), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitChartReadout"))
+    Text(ProfitText.today(day, isToday), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitChartReadout"))
     if (points.isEmpty()) return
     var selected by remember(day.date) { mutableStateOf<SlateProfit.Point?>(null) }
     selected?.let { p ->
-        Text("${ProfitText.dayTime(p.tMs)} · ${p.label} ${ProfitText.pl(p.profit)} on ${Format.money(p.stake)} · today so far ${ProfitText.pl(p.cum)}", style = MaterialTheme.typography.labelSmall)
+        Text("${ProfitText.dayTime(p.tMs)} · ${p.label} ${ProfitText.pl(p.profit)} on ${Format.money(p.stake)} · $title so far ${ProfitText.pl(p.cum)}", style = MaterialTheme.typography.labelSmall)
     }
     val start = minOf(day.firstStartMs, points.first().tMs)
-    val end = if (day.finished) maxOf(day.endMs, points.last().tMs) else maxOf(now, points.last().tMs)
-    DayLine(points, start, end, endsNow = !day.finished, selected = selected, onTap = { selected = it }, modifier = Modifier.fillMaxWidth().height(200.dp))
+    val live = isToday && !day.finished
+    val end = if (!live) maxOf(day.endMs, points.last().tMs) else maxOf(now, points.last().tMs)
+    DayLine(points, start, end, endsNow = live, selected = selected, onTap = { selected = it }, modifier = Modifier.fillMaxWidth().height(200.dp))
 }
 
 /** Several days: the running total, a bar per day, then the days one by one. */
@@ -301,7 +307,7 @@ private fun DayLine(points: List<SlateProfit.Point>, startMs: Long, endMs: Long,
     val a = ProfitText.dayTime(startMs)
     val b = if (endsNow) "now" else ProfitText.dayTime(endMs)
     Box(
-        modifier.testTag("profitCanvas").semantics { contentDescription = "Today's profit, from $a to $b" }
+        modifier.testTag("profitCanvas").semantics { contentDescription = "Profit of the day, from $a to $b" }
             .pointerInput(points, startMs, span) {
                 detectTapGestures { pos ->
                     val t = startMs + (pos.x / size.width) * span
