@@ -26,7 +26,7 @@ jobs:
         run: |
           set -eu
           gh api --paginate "repos/$REPO/releases?per_page=100" --jq '.[] | select(.draft==false) | .tag_name' \
-            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -t. -k1.2,1n -k2,2n -k3,3n -r > apk-tags.txt
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V -r > apk-tags.txt
           echo "APK releases found: $(wc -l < apk-tags.txt)"
           n=0; del=0
           while read -r t; do
