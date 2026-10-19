@@ -111,6 +111,11 @@ class CloudLink(private val c: AppContainer) {
     private val client = CloudClient(c.http, { token() })
     /** Claude's messages to Tj and the settings requests from the GitHub side (TCL28). */
     val inbox = CloudInbox(c, client)
+    /** The app chat with Claude (CR, Tj 2026-10-19): the `chat` branch, a send queue that survives restarts, the phone's copy of the thread. */
+    val chat = com.tjshea.vigilant.data.cloud.ChatSync(
+        client, JsonFileStore(File(c.app.filesDir, "chat_v2.json"), com.tjshea.vigilant.data.cloud.ChatState.serializer(), { com.tjshea.vigilant.data.cloud.ChatState() }, c.json),
+        File(c.app.filesDir, "chat_files"),
+    )
     private val uploaded = JsonFileStore(File(c.app.filesDir, "cloud_uploaded.json"), kotlinx.serialization.builtins.MapSerializer(kotlinx.serialization.serializer<String>(), kotlinx.serialization.serializer<String>()), { emptyMap() }, c.json)
     private var lastPushedKey: String? = null
     private var lastRev = 0L
@@ -328,15 +333,19 @@ class CloudLink(private val c: AppContainer) {
                 nap(if (c.onScreen) INBOX_POLL_MS else INBOX_BACKGROUND_MS)
             }
         }
-        // 5. the chat with Claude (TCL29): the thread every 8 s while the chat screen is open, every minute otherwise; the lease line with it.
+        // 5. the app chat (CR, Tj 2026-10-19: "work like a real chat"): the sender sends what Tj wrote and tries again until GitHub has it; the reader looks at the chat branch's head (a free 304
+        //    while nothing changed) every few seconds while the chat is open or an answer is awaited, reads only what changed, and announces each of Claude's replies once.
         scope.launch(Dispatchers.IO) {
-            while (isActive) {
-                if (hasToken()) {
-                    runCatching { inbox.pollChat() }
-                    if (inbox.chatOpen) runCatching { inbox.pollWho() }
+            runCatching { chat.load() }
+            launch {
+                while (isActive) {
+                    val next = runCatching { chat.sendPending() }.getOrNull()
+                    chat.napSender(next ?: CHAT_SEND_IDLE_MS)
                 }
-                // woken by syncNow() when the app comes back to the front (a phone switched off and on stalls a plain delay; Tj, 2026-10-16: the chat showed old messages until he scrolled)
-                nap(if (inbox.chatOpen) CHAT_OPEN_POLL_MS else INBOX_POLL_MS)
+            }
+            while (isActive) {
+                runCatching { chat.poll() }.getOrNull()?.announce?.forEach { ChatAlerts.notify(c.app, it) }
+                chat.napReader(chat.pace(c.onScreen))
             }
         }
         // 3. a key added or changed in the phone's key store goes to GitHub's secrets by itself (Tj, 2026-10-15: "If I add api keys inside my phone vigilant app, will it automatically upload them to GitHub ... If it doesn't already do this, make it do so"):
@@ -415,7 +424,7 @@ class CloudLink(private val c: AppContainer) {
      * Opening the app syncs everything at once (Tj, 2026-10-16: "when I open the android app, I want it to automatically sync to whatever GitHub is currently doing including all the status and bets"): the engine's
      * heartbeat and list, its bets and its bids, the messages and the usage are read now instead of at their next turn. Unchanged files answer 304 and cost nothing.
      */
-    fun syncNow() { wake.tryEmit(Unit) }
+    fun syncNow() { wake.tryEmit(Unit); chat.poke() }
 
     /**
      * Pull to refresh / the Scan button in cloud mode (Tj, 2026-10-14): tells the engine to scan now, in the settings file it reads every 3 s (settings and the request travel together, so the scan it starts
@@ -508,7 +517,7 @@ class CloudLink(private val c: AppContainer) {
             runCatching { got(client.fetchTrades(null))?.let { t -> _ui.update { it.copy(trades = t, tradesReadAtMs = System.currentTimeMillis()) } } }
             runCatching { got(client.fetchDesk(null))?.let { d -> _ui.update { it.copy(desk = d, deskReadAtMs = System.currentTimeMillis()) } } }
             runCatching { got(client.fetchUsage(null))?.let { u -> c.cloudUsage.value = u } }
-            runCatching { inbox.pollMessages(); inbox.pollChat(); asked += 2; ok += 2 }
+            runCatching { inbox.pollMessages(); chat.poll(); asked += 2; ok += 2 }
             if (s != null) runCatching { publishUi(s) }
             val now = System.currentTimeMillis()
             _ui.update { it.copy(refreshing = false, refreshedAtMs = now, refreshNote = if (ok == asked) "Everything read just now" else "$ok of $asked reads answered" + (latest.why?.let { w -> ": $w" } ?: "")) }
@@ -839,7 +848,8 @@ class CloudLink(private val c: AppContainer) {
         const val POLL_MS = 2_000L   // on screen (Tj, 2026-10-17: "real time or at most every couple seconds"); a 304 costs nothing against GitHub's limit
         // Freshness on screen (Tj, 2026-10-18, TCL122-2: "all stats and numbers and meters should be as fresh as possible"): unchanged files answer 304, which GitHub does not count against the token's limit.
         const val INBOX_POLL_MS = 30_000L
-        const val CHAT_OPEN_POLL_MS = 8_000L
+        /** The chat's sender looks again this often when nothing waits (a message wakes it at once). */
+        const val CHAT_SEND_IDLE_MS = 10 * 60_000L
         const val INBOX_BACKGROUND_MS = 5 * 60_000L
         /** How often the engine's usage file is asked for (a 304 costs nothing against GitHub's limit). */
         const val USAGE_POLL_MS = 10_000L
