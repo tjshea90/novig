@@ -5943,3 +5943,4 @@ When you come back: read this first. tj Gmail already did: CH24a/b (watchdog fix
 - [x] REL1a (v1.0.7 released and recorded) ship.sh + release.yml + record-release.sh (holds SC1 fetchSettleMs, mirage's CH24 watchdog fix is tools-only).
 - [ ] KX1 answer Tj with an honest size estimate for a Kalshi-based Vigilant (from the code: what is Novig-specific vs shared).
 - [x] CH24 (t1792444816117-e0b0) Tj: slightly lower EV on bids, post as many as possible: bidLevel 68->80 done (CHANGES.md).
+- [ ] CH25 (t1792446562982-91ba) Tj: guard so engine auto-bet/bid never rests on a fair from only a few SMALL books with identical odds (same-source double count); favor large brands with similar-not-identical odds; exclude outlier/stale books from ANY fair calc in app+engine.
