@@ -80,12 +80,13 @@ def record(g, at, ids, result):
 
 
 def pending_for(g, cfg, store_kind, at):
-    """Tj's messages in the given store with no receipt and no answer."""
+    """Tj's messages in the given store with no answer (new store: seen or not)."""
     out = []
     if store_kind in ("new", "both"):
         if g.fetch(chat.CHAT):
-            msgs, seen = chat.Store(g).load(at=at, days=2)
-            out += [m for m in chat.unanswered(msgs) if m["id"] not in seen]
+            msgs, _ = chat.Store(g).load(at=at, days=2)
+            # Seen or not: decide() never fires while a seat is live, so a receipt with no answer and no live seat means the session that saw it was cut off before it answered.
+            out += chat.unanswered(msgs)
     if store_kind in ("old", "both"):
         since = chat.legacy_window(cfg, at)
         if since is not None and g.fetch(chat.LEGACY):
