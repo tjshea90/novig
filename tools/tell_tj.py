@@ -129,28 +129,6 @@ def chat_reply(reply_to, text, who=None, **kw):
     if SECRET.search(text):
         raise SystemExit("refused: the text looks like a key or token (the repo is public)")
     at = int(time.time() * 1000)
-<<<<<<< HEAD
-    # Tj, 2026-10-19: a late answer to an old message lands at the bottom of the thread and reads as a stale post. A reply to a message over 30 minutes old is refused (a new message of its own is fine: say it fresh).
-    try:
-        if not kw.get("late_ok") and at - int(str(reply_to)[1:]) > 30 * 60 * 1000:
-            raise SystemExit("refused: that message is over 30 minutes old; a reply now would read as a stale post. Do not answer it (write it into TASKS.md).")
-    except ValueError:
-        pass
-    # Tj, 2026-10-19: two live sessions answered the same message (identical replies, twice). One answer per message: refused when anyone has already replied to it.
-    if not kw.get("late_ok"):
-        try:
-            git("fetch", "-q", "origin", BRANCH, cwd=kw.get("cwd"), check=False)
-            for n in git("ls-tree", "--name-only", "FETCH_HEAD", "chat/", cwd=kw.get("cwd"), check=False).stdout.split()[-60:]:
-                if str(reply_to) in n:
-                    continue
-                o = json.loads(git("show", "FETCH_HEAD:" + n, cwd=kw.get("cwd"), check=False).stdout or "{}")
-                if o.get("replyTo") == reply_to and str(o.get("from", "")).startswith("claude:") and o.get("from") != "claude:github":
-                    raise SystemExit("refused: message %s already has an answer (%s). One answer per message; add to TASKS.md instead." % (reply_to, o.get("id")))
-        except SystemExit:
-            raise
-        except Exception:
-            pass
-=======
     # Tj, 2026-10-19: a reply to an old message shows up in the chat as a stale message. Refuse unless the message is under 30 min old (or FORCE_OLD_REPLY=1).
     try:
         if 1e12 < int(str(reply_to)[1:]) < at - 1800000 and not os.environ.get("FORCE_OLD_REPLY"):
@@ -167,10 +145,8 @@ def chat_reply(reply_to, text, who=None, **kw):
                 continue
             if o.get("replyTo") == reply_to and o.get("from") != "tj" and not o.get("ack"):
                 raise SystemExit("not sent: message %s was already answered (%s); one reply per message" % (reply_to, o.get("id")))
->>>>>>> 03da9ea8c02a7821013489e72f9a56cf38062fbf
     ident = "c%d-%s" % (at // 1000, secrets.token_hex(2))
     m = {"id": ident, "at": at, "from": who or me(), "text": text, "replyTo": reply_to}
-    kw.pop("late_ok", None)
     put("chat/" + fname(at, ident), json.dumps(m), **kw)
     return ident
 
