@@ -36,12 +36,12 @@ class WalletProfitTest {
 
     @Test
     fun `money moved out and back in again nets out, whatever kind of row moved it`() {
-        // $100 in, $40 out, $40 back in, $10 withdrawn, a $5 promotional credit later reclaimed: $95 stayed in.
+        // $100 in, $40 out, $40 back in, $10 withdrawn, a $5 promotional credit later reclaimed: $90 stayed in.
         val moves = listOf(
             row("a", "TRANSFER_IN", 100.0), row("b", "TRANSFER_OUT", -40.0), row("c", "TRANSFER_IN", 40.0), row("d", "WITHDRAWAL", -10.0),
             row("e", "CREDIT", 5.0), row("f", "CREDIT_RECLAIM", -5.0),
         )
-        // The wallet holds $90 cash and $15 on an open bet: $10 up on the $95 that stayed in.
+        // The wallet holds $90 cash and $15 on an open bet: $15 up on the $90 that stayed in.
         val m = WalletProfit.of(90.0, listOf(NovigPosition("m", "o", 3_000, 15.0)), moves, 0L)!!
         assertEquals(145.0, m.putIn, 1e-9)
         assertEquals(55.0, m.takenOut, 1e-9)
