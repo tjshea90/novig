@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "31fb14790ce314cdd421c64250d72e1f87d04379",
+ "head": "108d9f54e1e012c8cc3d406ee2f8f3af134ad111",
  "since": 1792393152,
- "beat": 1792395520,
- "beatIso": "2026-10-19T07:38:40Z",
- "done": "CR tools live on main (504eafa56); chat + chat-seat branches created by chat.py init (chat-wake.yml deployed on chat); ROUTINE_PROMPT.txt updated; board note posted; CR claimed; chat watcher running and holding the seat",
- "next": "CR5 app chat client: data Chat2 model (store JSON of tools/chat.py) + ChatClient (outbox/retry, attachment-first, per-day poll with ETag, seat) + rebuilt ChatPage; then CR8 ship"
+ "beat": 1792395681,
+ "beatIso": "2026-10-19T07:41:21Z",
+ "done": "CR5 app chat written: data CloudChat v2 (model/thread/presence) + ChatSync (send queue with retries, attachments first, head poll + changed day folders, seat) + CloudClient headSha/listEntries/readText/createFile, tests CloudChatTest+ChatSyncTest (31/32 then fixed); app ChatPage rebuilt (reverse LazyColumn, delivery marks, retry/delete, quotes, links, typing, presence, menu), ChatAlerts, CloudLink loops, VM, badge CH16; chat_wake wakes for seen-unanswered; legacy replies mirrored",
+ "next": "wait for :app ClaudeScreenUiTest + data tests (atest.log); fix; full bash tools/test.sh; docs CR7; ship CR8"
 }
