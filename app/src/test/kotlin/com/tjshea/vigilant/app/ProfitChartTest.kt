@@ -6,6 +6,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -55,6 +56,9 @@ class ProfitChartTest {
 
     // One settled bet a day for ten days (Friday the 25th back to the 16th), each +$1 or -$1 (cost 0.5), the 25th's won.
     private val tenDays = (0 until 10).map { d -> bet("b$d", now - d * day - 2 * 3_600_000L, if (d % 2 == 0) BetStatus.WON else BetStatus.LOST) }
+
+    /** [text] inside the period's headline value (a label and a value, not one merged node). */
+    private fun inView(text: String) = compose.onNode(hasText(text, substring = true) and hasAnyAncestor(hasTestTag("profitInView")))
 
     private fun show(list: List<TrackedBet>, period: TrackerPeriod, wallet: WalletMoneyUi = WalletMoneyUi()) {
         compose.setContent {
@@ -118,7 +122,7 @@ class ProfitChartTest {
         val bets = tenDays.drop(1).take(3) + bet("t", now + 3_600_000L, BetStatus.PENDING, stake = 15.0) + bet("w", now + 5 * day, BetStatus.PENDING, stake = 25.0)
         show(bets, TrackerPeriod.TODAY)
         compose.onNodeWithTag("profitDayLine").assertTextContains("Fri Sep 25 games", substring = true)
-        compose.onNodeWithTag("profitInView").assertTextContains("\$0.00", substring = true)
+        inView("\$0.00").assertExists()
         compose.onNodeWithTag("profitChartReadout").assertTextContains("No results yet: \$0.00", substring = true)
         compose.onNodeWithTag("profitChartReadout").assertTextContains("\$15.00 is at stake on 1 open bet", substring = true)
         compose.onNodeWithTag("profitLater").assertTextContains("1 open bet on later games (\$25.00", substring = true)
@@ -131,7 +135,7 @@ class ProfitChartTest {
     @Test
     fun `today with results runs a line from the first game, with the day on its times`() {
         show(tenDays, TrackerPeriod.TODAY)
-        compose.onNodeWithTag("profitInView").assertTextContains("+\$1.00", substring = true)
+        inView("+\$1.00").assertExists()
         compose.onNodeWithTag("profitCanvas").assertExists()
         compose.onNodeWithTag("profitDayLine").assertTextContains("last result Fri", substring = true)
         compose.onRoot().captureRoboImage("screenshots/4t_profit_chart.png")
@@ -151,8 +155,8 @@ class ProfitChartTest {
     fun `seven days are a running total, a bar a day and the days one by one`() {
         show(tenDays, TrackerPeriod.DAYS_7)
         // Fri 25th back to Sat 19th: won, lost, won, lost, won, lost, won = +$1.00.
-        compose.onNodeWithTag("profitInView").assertTextContains("Last 7 days", substring = true)
-        compose.onNodeWithTag("profitInView").assertTextContains("+\$1.00", substring = true)
+        inView("Last 7 days").assertExists()
+        inView("+\$1.00").assertExists()
         compose.onNodeWithTag("profitRunning").assertExists()
         compose.onNodeWithTag("profitBars").assertExists()
         compose.onNodeWithTag("profitDay-2026-09-25").assertExists()
@@ -163,8 +167,8 @@ class ProfitChartTest {
     @Test
     fun `All runs from the first day with a bet`() {
         show(tenDays, TrackerPeriod.ALL)
-        compose.onNodeWithTag("profitInView").assertTextContains("Since Sep 16", substring = true)
-        compose.onNodeWithTag("profitInView").assertTextContains("\$0.00", substring = true)
+        inView("Since Sep 16").assertExists()
+        inView("\$0.00").assertExists()
         compose.onNodeWithTag("profitDay-2026-09-16").assertExists()
     }
 
@@ -189,7 +193,7 @@ class ProfitChartTest {
                 VigilantTheme(darkTheme = true) { Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { TrackerScreen(state, { _, _ -> }, {}, initialView = TrackerView.STATS) } }
             }
         }
-        compose.onNode(hasText("Today") and hasTestTag("periodChip-TODAY")).performClick()
+        compose.onNodeWithTag("periodChip-TODAY").performClick()
         compose.onNodeWithTag("profitChart").assertExists()
         compose.onNodeWithText("No bets in this period").assertExists()
     }
