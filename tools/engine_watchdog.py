@@ -80,7 +80,7 @@ def api(method, path, body=None):
     repo = os.environ.get("GITHUB_REPOSITORY", "tjshea90/novig")
     req = urllib.request.Request("https://api.github.com/repos/%s/%s" % (repo, path), method=method,
                                  data=json.dumps(body).encode() if body is not None else None,
-                                 headers={"Authorization": "Bearer " + tok, "Accept": "application/vnd.github+json"})
+                                 headers=dict({"Accept": "application/vnd.github+json"}, **({"Authorization": "Bearer " + tok} if tok else {})))
     with urllib.request.urlopen(req, timeout=30) as r:
         t = r.read()
         return json.loads(t) if t else {}

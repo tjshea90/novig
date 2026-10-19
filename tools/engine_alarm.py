@@ -121,8 +121,10 @@ def plan(now_ms, stopped=False):
 def api(method, path, body=None):
     tok = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     repo = os.environ.get("GITHUB_REPOSITORY", "tjshea90/novig")
-    req = urllib.request.Request("https://api.github.com/repos/%s/%s" % (repo, path), method=method, data=json.dumps(body).encode() if body is not None else None,
-                                 headers={"Authorization": "Bearer " + (tok or ""), "Accept": "application/vnd.github+json"})
+    h = {"Accept": "application/vnd.github+json"}
+    if tok:
+        h["Authorization"] = "Bearer " + tok   # no token (a local dry run): anonymous reads of the public repo
+    req = urllib.request.Request("https://api.github.com/repos/%s/%s" % (repo, path), method=method, data=json.dumps(body).encode() if body is not None else None, headers=h)
     with urllib.request.urlopen(req, timeout=30) as r:
         t = r.read()
         return json.loads(t) if t else {}
@@ -136,7 +138,9 @@ def read(ref, path):
     tok = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     repo = os.environ.get("GITHUB_REPOSITORY", "tjshea90/novig")
     key = ref + ":" + path
-    h = {"Authorization": "Bearer " + (tok or ""), "Accept": "application/vnd.github.raw+json"}
+    h = {"Accept": "application/vnd.github.raw+json"}
+    if tok:
+        h["Authorization"] = "Bearer " + tok
     if key in _etags:
         h["If-None-Match"] = _etags[key][0]
     req = urllib.request.Request("https://api.github.com/repos/%s/contents/%s?ref=%s" % (repo, path, ref), headers=h)
