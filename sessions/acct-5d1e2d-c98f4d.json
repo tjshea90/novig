@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "8c4b243a444c3b4e7089ebe024fa55b712bfa4c9",
+ "head": "d7ff490bb10ca9b6a886915589d55fd03f1d2b08",
  "since": 1792393152,
- "beat": 1792426716,
- "beatIso": "2026-10-19T16:18:36Z",
+ "beat": 1792426898,
+ "beatIso": "2026-10-19T16:21:38Z",
  "done": "PL: NovigTradingClient.transfers() reads TRANSFER_IN/OUT with no time bounds (a filter by event start can't drop them); WalletMoney uses it; ApiBettingTest covers it; v1.0.6 code 346",
  "next": "full tools/test.sh (running), then ship.sh, release.yml, record-release, dispatch the fixed keeper, tell Tj"
 }
