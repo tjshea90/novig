@@ -409,6 +409,25 @@ class AppContainer(val app: Application) {
         prefs = app.getSharedPreferences(WalletBalance.PREFS, android.content.Context.MODE_PRIVATE),
     )
 
+    /** The Tracker's all-time money figure (Tj, 2026-10-19, PL): the wallet now (cash + open bets at cost) minus what was put in, from Novig's own ledger. */
+    val walletMoney = WalletMoney(
+        read = {
+            val t = trading
+            val address = subaccountKeyId
+            check(t != null && address != null) { "betting through the API is not set up" }
+            withContext(Dispatchers.IO) {
+                val gate = com.tjshea.vigilant.data.novig.BetPriority::yieldToBet
+                gate(); val cash = t.balance(address).also { wallet.record(it) }
+                gate(); val held = t.positions()
+                val until = System.currentTimeMillis() + 86_400_000L
+                gate(); val rows = t.ledger(address, com.tjshea.vigilant.data.tracker.WalletProfit.IN, 0L, until) + t.ledger(address, com.tjshea.vigilant.data.tracker.WalletProfit.OUT, 0L, until)
+                com.tjshea.vigilant.data.tracker.WalletProfit.of(cash, held, rows, System.currentTimeMillis())
+            }
+        },
+        setUp = { trading != null && subaccountKeyId != null },
+        prefs = app.getSharedPreferences(WalletMoney.PREFS, android.content.Context.MODE_PRIVATE),
+    )
+
     /**
      * One order at a time across the whole app (Tj, 2026-10-01): the Bet sheet's placer and the auto-bet's share it ([ApiBetPlacer]), so the
      * same bet can never be placed by both at once.
