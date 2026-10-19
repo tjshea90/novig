@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "18072eab0c77c86e8b00e64fae2884e7f5c49930",
+ "head": "cce5b175640c99087415dd42bd8f7ec7e90892c5",
  "since": 1792393152,
- "beat": 1792426366,
- "beatIso": "2026-10-19T16:12:46Z",
- "done": "EA fix: both keepers (15:29Z, 15:39Z) died at start on 'import engine_watchdog' under python -I (script folder not on the path); engine_alarm.py now puts its folder on sys.path, selftest imports the watchdog; keep() runs under -I locally",
- "next": "after the full test run lands main: dispatch engine-alarm.yml, read its log for 'keeper: up'; then ship v1.0.6 (PL4)"
+ "beat": 1792426517,
+ "beatIso": "2026-10-19T16:15:17Z",
+ "done": "PL: NovigTradingClient.transfers() reads TRANSFER_IN/OUT with no time bounds (a filter by event start can't drop them); WalletMoney uses it; ApiBettingTest covers it; v1.0.6 code 346",
+ "next": "full tools/test.sh (running), then ship.sh, release.yml, record-release, dispatch the fixed keeper, tell Tj"
 }
