@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "a891557235bdaa1cf79d96375129b4629a92bb22",
+ "head": "504eafa56f464414cd19f4c9dcd889544ac114ec",
  "since": 1792393152,
- "beat": 1792393541,
- "beatIso": "2026-10-19T07:05:41Z",
- "done": "",
- "next": ""
+ "beat": 1792393737,
+ "beatIso": "2026-10-19T07:08:57Z",
+ "done": "CR3+CR6: new chat tools (chat.py, chat_wake.py v2) and coordination without the lease (coord.py v2, push.sh landing gate, landing.py); docs PROTOCOL/ONE_TEAM/CHAT.md/CLAUDE.md",
+ "next": "land on main; chat.py init (chat + chat-seat branches); update this account's routine prompt; then CR5 app chat client + screen"
 }
