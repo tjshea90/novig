@@ -5,13 +5,17 @@ name: CI
 # this workflow stays the authority on what's actually green.) This builds the debug variant only — no release, no tag, no GitHub Release.
 # For an actual signed, installable release, see release.yml (BRIEF.md's "Releasing" section).
 
+# Pushes to main only (EA9, 2026-10-19): CI ran on EVERY push to every branch, the sessions' autosave branches (a push per edit) and the phone's
+# data branches too, and on 2026-10-19 26 runs sat queued ahead of the engine keeper (engine-alarm.yml) while the runners built the same code again
+# and again. A session branch is tested by tools/test.sh before it lands (tools/landing.py), so main's CI is the check here; a branch can still be
+# built on demand (workflow_dispatch) or through a pull request.
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
-# The autosave hook pushes after every edit, so a newer push supersedes an older run: cancel it
-# instead of queueing dozens of identical builds.
+# A newer push to main supersedes an older run: cancel it instead of queueing identical builds.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
