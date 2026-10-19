@@ -56,14 +56,17 @@ else
   ARGS=(--configure-on-demand "${KEPT[@]}")
 fi
 
+# What this run tests is the code as it is NOW: an edit made while Gradle runs is not covered by the mark below.
+SNAP="$( [ -f tools/landing.py ] && python3 -I tools/landing.py tree 2>/dev/null || true)"
 START=$(date +%s)
 ./gradlew "${ARGS[@]}" --continue --console=plain > "$LOG" 2>&1
 RC=$?
 SECS=$(( $(date +%s) - START ))
 
 python3 tools/gradle_summary.py "$LOG" "$RC" "$SECS"
-# A green run lets these modules' code land on main (tools/landing.py; CR, Tj 2026-10-19: "don't ... break anything"). Only what was compiled and tested here counts.
-if [ "$RC" -eq 0 ] && [ -f tools/landing.py ]; then
+# A green run lets these modules' code land on main (tools/landing.py; CR, Tj 2026-10-19: "don't ... break anything"). Only what was compiled and tested here counts:
+# a run filtered to some tests (--tests) proves nothing about the rest of a module, and the mark is for the tree taken before the run.
+if [ "$RC" -eq 0 ] && [ -f tools/landing.py ] && [ "$HAS_FILTER" = 0 ] && [ -n "$SNAP" ]; then
   MODS=""
   for a in "${ARGS[@]}"; do
     case "$a" in
@@ -71,7 +74,7 @@ if [ "$RC" -eq 0 ] && [ -f tools/landing.py ]; then
       :*:*) m="${a#:}"; m="${m%%:*}"; [ "$MODS" != "all" ] && MODS="$MODS $m" ;;
     esac
   done
-  if [ -n "$MODS" ] && python3 -I tools/landing.py mark code $MODS >/dev/null 2>&1; then
+  if [ -n "$MODS" ] && python3 -I tools/landing.py mark code $MODS --tree "$SNAP" >/dev/null 2>&1; then
     echo "  land  main may take: ${MODS# }"
     [ -d .git ] && [ -z "$(git status --porcelain --untracked-files=no 2>/dev/null)" ] && PUSH_SYNC_NOW=1 bash tools/push.sh >/dev/null 2>&1
   fi

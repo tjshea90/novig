@@ -9,8 +9,10 @@ fast-forwards it) only when everything they change has been checked:
 The branch itself is always pushed, so nothing waits in the container; only main waits. Marks live in .git/vigilant-landing.json (never committed).
 
   python3 -I tools/landing.py decide            LAND (exit 0) or WAIT <what to run> (exit 1), for the commits origin/main lacks
-  python3 -I tools/landing.py mark tools        the fast checks just passed (ckpt.sh)
-  python3 -I tools/landing.py mark code <module ...> | mark code all     tools/test.sh just passed for these modules (test.sh)
+  python3 -I tools/landing.py tree              the tree the working directory holds now (take it BEFORE the checks run)
+  python3 -I tools/landing.py mark tools [--tree T]     the fast checks just passed (ckpt.sh), on tree T (default: the working directory now)
+  python3 -I tools/landing.py mark code <module ...> | mark code all [--tree T]     tools/test.sh just passed for these modules (test.sh)
+A mark is for the content the checks READ: an edit made while they ran is not covered (tools/test.sh and ckpt.sh take the tree first and mark that).
   python3 -I tools/landing.py selftest
 """
 import hashlib
@@ -91,8 +93,8 @@ def save_marks(m, cwd=None):
     os.replace(p + ".tmp", p)
 
 
-def mark(kind, modules=(), cwd=None):
-    fp = fingerprints(worktree_tree(cwd), cwd)
+def mark(kind, modules=(), cwd=None, tree=None):
+    fp = fingerprints(tree or worktree_tree(cwd), cwd)
     m = load_marks(cwd)
     if kind == "tools":
         m["tools"] = fp["tools"]
@@ -161,6 +163,14 @@ def selftest():
         mark("code", ["data"], cwd=d)
         g("add", "-A"); g("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "edit 2")
         assert decide(cwd=d) == (True, ""), decide(cwd=d)
+        # a mark is for the tree the checks read: an edit made while they ran is not covered
+        snap = worktree_tree(cwd=d)
+        open(os.path.join(d, "data", "X.kt"), "w").write("fun x() = 4")
+        mark("code", ["data"], cwd=d, tree=snap)
+        g("add", "-A"); g("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "edit 3")
+        assert not decide(cwd=d)[0]
+        mark("code", ["data"], cwd=d)
+        assert decide(cwd=d) == (True, ""), decide(cwd=d)
         # a build file counts for every module present
         open(os.path.join(d, "build.gradle.kts"), "w").write("//")
         g("add", "-A"); g("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "build")
@@ -178,11 +188,22 @@ def main(argv):
         ok, why = decide()
         print("LAND" if ok else "WAIT " + why)
         return 0 if ok else 1
+    tree = None
+    if "--tree" in argv:
+        i = argv.index("--tree")
+        tree = argv[i + 1] if i + 1 < len(argv) else None
+        argv = argv[:i] + argv[i + 2:]
+        if not tree:
+            print("--tree needs a tree id (python3 -I tools/landing.py tree)")
+            return 2
+    if argv[:1] == ["tree"]:
+        print(worktree_tree())
+        return 0
     if argv[:2] == ["mark", "tools"]:
-        mark("tools")
+        mark("tools", tree=tree)
         return 0
     if argv[:2] == ["mark", "code"]:
-        mark("code", argv[2:])
+        mark("code", argv[2:], tree=tree)
         return 0
     print(__doc__)
     return 2

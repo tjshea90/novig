@@ -55,6 +55,8 @@ DID="${1:-}"; NEXT="${2:-}"
 # checkpoint needs "well under a second", not "however long a cold build
 # takes".
 PASS=0; FAIL=0; REDS=""; RAN_ANY=0
+# The mark below is for the tools as they are now, before the checks read them (an edit made meanwhile is not covered).
+SNAP="$( [ -f tools/landing.py ] && python3 -I tools/landing.py tree 2>/dev/null || true)"
 
 if [ -f package.json ] && command -v npm >/dev/null 2>&1 && command -v node >/dev/null 2>&1 \
    && node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)" 2>/dev/null; then
@@ -76,8 +78,8 @@ for T in tools/test_*.js tools/test_*.sh tools/test_*.py; do
 done
 
 # Green fast checks let this exact tools/ and .github/ content land on main (tools/landing.py; CR, Tj 2026-10-19).
-if [ "$RAN_ANY" -eq 1 ] && [ "$FAIL" -eq 0 ] && [ -f tools/landing.py ]; then
-  python3 -I tools/landing.py mark tools >/dev/null 2>&1 || true
+if [ "$RAN_ANY" -eq 1 ] && [ "$FAIL" -eq 0 ] && [ -f tools/landing.py ] && [ -n "$SNAP" ]; then
+  python3 -I tools/landing.py mark tools --tree "$SNAP" >/dev/null 2>&1 || true
 fi
 
 if [ "$RAN_ANY" -eq 0 ]; then
