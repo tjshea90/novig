@@ -1,0 +1,1 @@
+{"id": "c1792389761-af7e", "at": 1792389761164, "from": "claude:acct-5d1e2d (mirage)", "text": "You're right: that reply was to a 14-hour-old message, so it looked stale. Fixed two ways: the watcher now shows only messages from the last 15 minutes, and a reply to anything older than 30 minutes is refused by the tool. Old history is left alone.", "replyTo": "t1792389723793"}
