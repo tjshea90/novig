@@ -159,7 +159,6 @@ def act(action, st, now, cwd=None):
         for w in workflows():
             if os.path.basename(w["path"]) in names:
                 api("PUT", "actions/workflows/%d/enable" % w["id"])
-        tell_tj.git("fetch", "-q", "origin", tell_tj.BRANCH, cwd=cwd, check=False)
         # STOP.json is removed by pushing a tree without it
         remove("deadman/STOP.json", cwd)
         tell_tj.say("Welcome back: everything is switched on again", "Back on: " + (", ".join(sorted(names)) or "nothing was disabled") + ". The engine's switch stays OFF until you turn it on in Settings > Cloud scan; trading switches are unchanged.", kind="info", priority=1, who="claude:deadman", cwd=cwd)
@@ -169,8 +168,8 @@ def act(action, st, now, cwd=None):
 def remove(path, cwd=None):
     import tempfile
     for i in range(5):
-        tell_tj.git("fetch", "-q", "origin", tell_tj.BRANCH, cwd=cwd)
-        parent = tell_tj.git("rev-parse", "FETCH_HEAD", cwd=cwd).stdout.strip()
+        fetch_config(cwd)
+        parent = tell_tj.git("rev-parse", REF, cwd=cwd).stdout.strip()
         with tempfile.TemporaryDirectory() as d:
             env = dict(os.environ, GIT_INDEX_FILE=os.path.join(d, "idx"))
             tell_tj.git("read-tree", parent, env=env, cwd=cwd)
