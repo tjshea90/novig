@@ -67,44 +67,14 @@ case "$PROMPT" in
   "You are a Vigilant rotation worker"*) exit 0 ;;
 esac
 
-# ONE ACCOUNT, THREE ACCOUNTS (Tj, 2026-10-15: "chat with any of the Claude accounts ... make changes from any account ... as though all three accounts are one account"):
-# a message from Tj means a person is here, in whichever account he opened. Take the repo's lease for this session NOW, before anything is pushed: from a routine (it stops at its next push and
-# parks its work on a routine-wip branch), from a stale holder, or from nobody. Another LIVE interactive session (Tj chatting in a second account) is not taken from: Claude is told to say so.
-# Never blocks the prompt; any failure is silent (losing a message is worse than two sessions meeting).
-# a message from Tj lifts the dead-man switch's STOP before anything else (TCL50)
+# A message from Tj lifts the dead-man switch's STOP before anything else (TCL50, unchanged).
 [ -f tools/deadman.py ] && [ "${COORD_KIND:-interactive}" = "interactive" ] && timeout 40 python3 -I tools/deadman.py resume 2>&1 | head -2
-# Chat owner (Tj, 2026-10-16): while ANOTHER account's slot owns the chat and it is running, a message typed here does not take the lease (the routine there is serving Tj); the session is told, and
-# Tj's word "force" (this message containing it) still takes it.
-CHAT_STAND=""
-if [ -f tools/rotation.py ] && [ -z "${COORD_OFF:-}" ] && [ "${COORD_KIND:-interactive}" = "interactive" ]; then
-  CHAT_LINE="$(timeout 60 python3 -I tools/rotation.py chat 2>/dev/null | head -1)"
-  case "$CHAT_LINE" in
-    "CHATSTATE STANDDOWN"*)
-      if printf '%s' "$PROMPT" | grep -qi "force"; then :; else
-        CHAT_STAND="$CHAT_LINE"
-        printf '%s\n' "CHAT OWNER: $CHAT_LINE. Tell Tj plainly that this account is not scheduled right now and the chat belongs to that account; do NOT work, edit, push or take the lease. He can say 'force' to take it back."
-      fi ;;
-  esac
-fi
-if [ -z "$CHAT_STAND" ] && [ -f tools/coord.py ] && [ -z "${COORD_OFF:-}" ] && [ "${COORD_KIND:-interactive}" = "interactive" ]; then
-  COORD_OUT="$(timeout 40 python3 -I tools/coord.py acquire --kind interactive 2>&1)"; COORD_RC=$?
-  if [ "$COORD_RC" -eq 3 ]; then
-    printf '%s\n' "COORD: ANOTHER LIVE CLAUDE SESSION HOLDS THIS REPO (see below). Do not edit, push or ship. Tell Tj plainly which session it is and ask whether to take over; only on his word run: bash tools/coord.py acquire --force"
-    printf '%s\n' "$COORD_OUT" | head -3
-  elif printf '%s' "$COORD_OUT" | grep -qi "took over\|TAKEN BY FORCE"; then
-    printf '%s\n' "COORD: $(printf '%s' "$COORD_OUT" | head -1 | sed 's/^COORD  //')"
-    printf '%s\n' "COORD: a paused routine is not lost: a rotation-paused note is on the board, the routine parks its work and waits for the lease, and resumes by itself when you have been idle 20 minutes (or the next run covers it). You need do nothing."
-  fi
-fi
 
-# RELAY (Tj, 2026-10-18: "no matter which Claude account I am talking to, if I ask for modifications, the message is automatically relayed to the Claude account holding the lease and it should read
-# the prompt and begin the answer as soon as possible"). A message typed here while this session does NOT hold the lease (the chat belongs to another account, or another live session holds
-# the repo) goes into the app chat as Tj's message: the lease holder's chat_watch.sh prints it within seconds, and chat-wake.yml wakes the on-duty account if nobody is watching. Never blocks the prompt.
-if [ -z "${COORD_OFF:-}" ] && [ "${COORD_KIND:-interactive}" = "interactive" ] && [ -f tools/tell_tj.py ] && { [ -n "$CHAT_STAND" ] || [ "${COORD_RC:-0}" -eq 3 ]; }; then
-  RELAY_ID="$(timeout 40 python3 -I tools/tell_tj.py relay "$PROMPT" 2>/dev/null | awk '/^relayed/{print $2}')"
-  if [ -n "$RELAY_ID" ]; then
-    printf '%s\n' "RELAYED: this message was passed on to the account that holds the lease (chat id $RELAY_ID); it reads it within seconds and answers in the app chat. Tell Tj that, and do not act on the request yourself unless he says 'force'."
-  fi
+# NO LEASE, NO RELAY, NO CHAT STAND-DOWN (CR, Tj 2026-10-19: "Get rid of the lease system ... I should never see a lease error again. Any claude account can make
+# changes to this repo, as long as they coordinate"). A message typed here is this session's to answer and do, whichever account it is; nothing is passed on to
+# another account and nothing tells Tj another session "holds" the repo. The session's heartbeat on claude-coord (who is working) is renewed quietly.
+if [ -f tools/coord.py ] && [ -z "${COORD_OFF:-}" ] && [ "${COORD_KIND:-interactive}" = "interactive" ]; then
+  timeout 40 python3 -I tools/coord.py check >/dev/null 2>&1 || true
 fi
 
 {
