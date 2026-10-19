@@ -138,7 +138,7 @@ class TailTaker(
         val curve = c.rule == LiveLightCurve.RULE
         val minFair = if (curve) TailTradeLimits.MIN_FAIR_CURVE else if (c.rule == LiveLightScan.MID) TailTradeLimits.MIN_FAIR_MID else if (c.rule == LiveLightScan.RULE) TailTradeLimits.MIN_FAIR_LIGHT else TailTradeLimits.MIN_FAIR
         if (c.fair < minFair) return skip("fair under ${(minFair * 100).toInt()}%")
-        val floor = maxOf(minEdge(), if (curve) TailTradeLimits.MIN_EDGE_CURVE else 0.0)
+        val floor = maxOf(minEdge(), if (curve) TailTradeLimits.MIN_EDGE_CURVE else if (c.rule == LiveLightScan.MID) TailTradeLimits.MIN_EDGE_MID else 0.0)
         if (c.edge < floor) return skip("edge under your minimum")
         if (c.edge > (if (o.confirm != null) TailTradeLimits.MAX_EDGE_CONFIRMED else TailTradeLimits.MAX_EDGE)) return skip("edge too large to be real")
         if (r.bet) gate()?.let { return skip(it) }
