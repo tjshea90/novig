@@ -5865,3 +5865,6 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] CH19 (t1792372703471) SGO Pinnacle freshness: answered in chat; dedicated pinnapi/Pinnacle feed (p90 <1 s) stays first, SGO (p90 3-6 min, 1.3 pts off Pinnacle) is the paid backup via ApiChain; no change.
 - [ ] CH18b DONE tools side: replies to messages over 30 min old refused, watcher shows only <30 min (t1792389723793). App messenger UI still open.
 - [ ] CH20 (t1792389783772) "put tennis in the live betting and bidding. do it now. build it"
+- [ ] CH21 (t1792388456849) stats section: total profit = total paid out minus total staked, all time and per slate (1000 staked, 1020 paid = +20; 200 staked today, 175 won = -25). Missed earlier, Tj: "you never did this request".
+- [x] CH20 tennis live bids default ON (LiveBidRules.tennis=true; live bets lane has no tennis gate), 100 live tests green; ship with next release.
+- [x] CH18c one-answer-per-message guard in tell_tj chat-reply (two sessions answered twice).
