@@ -5,15 +5,14 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Profit and loss by SLATE, not by calendar day (Tj, 2026-10-18, TCL122-6: "each day does not start at 12am, it should start with that day's first games and end with the results of those games ... the
- * today graph should only show profit and loss for the game slate for that day ... the profit/loss should be calculated from a single start number and that number never changes. that number is the total
- * money staked on all bets for the first day logged. each subsequent day shows how much was made or lost compared to the balance from the day before").
+ * Profit and loss by game day (Tj, 2026-10-18, TCL122-6: "each day does not start at 12am, it should start with that day's first games and end with the results of those games"; and 2026-10-19, PL:
+ * "Today's slate has 0 settled bets and should show 0 profit or loss because it is only around 11am ... make a chart which shows daily profit/loss and total all time profit/loss that is logical").
  *
- *  - A bet belongs to the slate of its GAME's date in Eastern time (a 10 pm game is that day's slate even though it ends after midnight).
- *  - A slate begins at its first game's start and ends at its last result; the "current" slate is the newest one whose first game has started (before the next day's first game, today is still last
- *    night's slate).
- *  - [Book.start] is the money staked on every bet of the first slate logged: fixed, it never moves with later stakes (staking more is not depositing more).
- *  - Each slate's [Day.startBalance] is the start plus every earlier slate's profit; its change is its own profit, and [Day.changePct] is that over the balance it started from.
+ *  - A bet belongs to the day of its GAME in Eastern time (a 10 pm game is that day's, even though it ends after midnight; a bet placed today on Saturday's game is Saturday's).
+ *  - A day's profit is its SETTLED bets' winnings minus their stakes; a bet not settled yet is neither profit nor loss, only money at stake ([Day.openStaked]).
+ *  - "Today" is today's date in Eastern time, whether or not its first game has started: before the first result it is $0 (2026-10-19: it used to show the newest slate that had begun, which at
+ *    11 am was the day before).
+ *  - The all-time money figure is the wallet's ([WalletProfit]: cash plus open bets minus what was put in); this book's own total is the settled bets' (what the tracker saw), shown beside it.
  *
  * Pure: the same bets give the same book, for tests.
  */
@@ -43,9 +42,11 @@ object SlateProfit {
         /** Total paid back on the settled bets (stake plus profit). */
         val returned: Double get() = settledStaked + profit
         val endBalance: Double get() = startBalance + profit
-        /** The slate's profit over the balance it started from; null when that balance is not positive. */
+        /** The day's profit over the money staked on its settled bets; null before any settled. */
         val changePct: Double? get() = if (settledStaked > 0.0) profit / settledStaked else null
         val finished: Boolean get() = open == 0
+        /** Money on this day's bets that have not settled yet: at stake, not lost. */
+        val openStaked: Double get() = (staked - settledStaked).coerceAtLeast(0.0)
     }
 
     data class Book(
@@ -102,32 +103,41 @@ object SlateProfit {
         return Book(start, days)
     }
 
-    /** The current slate: the newest whose first game has started by [now] (or the newest of all when none has). */
-    fun current(book: Book, now: Long): Day? = book.days.lastOrNull { it.firstStartMs <= now } ?: book.days.lastOrNull()
+    /** Today's date in Eastern time: the day "Today" shows, started or not. */
+    fun today(now: Long): LocalDate = Instant.ofEpochMilli(now).atZone(ET).toLocalDate()
 
-    /** The slate before [day], or null. */
-    fun previous(book: Book, day: Day?): Day? {
-        if (day == null) return null
-        val i = book.days.indexOfFirst { it.date == day.date }
-        return if (i > 0) book.days[i - 1] else null
+    /** The day [date] of [book], or an empty one (no bets that day: $0, nothing open). */
+    fun day(book: Book, date: LocalDate): Day = book.days.firstOrNull { it.date == date } ?: Day(date, 0L, 0L, 0.0, 0.0, 0, 0, 0, 0, book.balance, 0.0)
+
+    /** Every calendar day from [from] to [to], the empty ones included (a day with no result is a $0 day, not a missing one). */
+    fun days(book: Book, from: LocalDate, to: LocalDate): List<Day> {
+        if (to.isBefore(from)) return emptyList()
+        val out = ArrayList<Day>()
+        var d = from
+        while (!d.isAfter(to)) { out += day(book, d); d = d.plusDays(1) }
+        return out
     }
 
-    /** The last [n] slates up to and including the current one. */
+    /** The last [n] calendar days up to and including today. */
     fun lastDays(book: Book, now: Long, n: Int): List<Day> {
-        val cur = current(book, now) ?: return emptyList()
-        val i = book.days.indexOfFirst { it.date == cur.date }
-        return book.days.subList((i - n + 1).coerceAtLeast(0), i + 1)
+        val t = today(now)
+        val first = book.days.firstOrNull()?.date ?: t
+        val from = if (n == Int.MAX_VALUE) minOf(first, t) else t.minusDays((n - 1).toLong())
+        return days(book, from, t)
     }
 
-    /** The running profit of one slate, result by result in the order they came in. */
+    /**
+     * The running profit of one day, result by result. Results that count at the same moment (late grades all placed at their game's start plus three hours) are ONE step: the line never
+     * spikes through the order they happened to be listed in.
+     */
     fun curve(all: List<TrackedBet>, date: LocalDate): List<Point> {
         var cum = 0.0
         return all.filter { counts(it) && it.status != BetStatus.PENDING && slateOf(it) == date }
-            .sortedBy(::resultMs)
-            .map { b ->
-                val p = b.profit ?: 0.0
+            .groupBy(::resultMs).toSortedMap()
+            .map { (t, group) ->
+                val p = group.sumOf { it.profit ?: 0.0 }
                 cum += p
-                Point(resultMs(b), cum, p, b.stake, b.selection)
+                Point(t, cum, p, group.sumOf { it.stake }, if (group.size == 1) group.single().selection else "${group.size} results")
             }
     }
 }
