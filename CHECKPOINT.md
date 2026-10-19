@@ -1,13 +1,13 @@
-# CHECKPOINT 3774 — read me first, then TASKS.md
+# CHECKPOINT 3775 — read me first, then TASKS.md
 
-**Written:** 2026-10-19T22:16:40Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-hffyfe` · **builds on:** `835c1573a` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T22:23:47Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-hffyfe` · **builds on:** `e32ddd122` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v1.0.9: Tracker Yesterday + pick-a-day calendar with chart; engine bets and bids refuse a fair resting on a few small books with identical odds; bids slider 80 (versionCode 349, v1.0.9)
+v1.0.9 released (CH24 CH25 CH26 CH27); chat quiet
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.9), then run: bash tools/record-release.sh v1.0.9 349 "v1.0.9: Tracker Yesterday + pick-a-day calendar with chart; engine bets and bids refuse a fair resting on a few small books with identical odds; bids slider 80"
+chat wake will restart the watcher; open: CH22b display, CH22c, EA4/EA10
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  dc08c3dae ckpt 3774: pre-release: v1.0.9: Tracker Yesterday + pick-a-day calendar with chart; en
   835c1573a ckpt 3773: pre-ship: v1.0.9: Tracker Yesterday + pick-a-day calendar with chart; engin
   9d5a7e018 ckpt 3772: CH27 tracker Yesterday + day picker built
   c982bb3f1 ckpt 3771: CH25 ThinFair guard built, full suite green
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   f76ccb6cc ckpt 3767: pre-ship: v1.0.8: Engine > APIs lights (green/amber/grey, tap for the error
   e5ccbab78 ckpt 3766: CH23b Try again + CH22b cross-exchange paper journal built, tests green
   805ba145e ckpt 3765: CH23a + Test now built on Engine>APIs cards (compiles, not shipped)
-  fae17eb08 ckpt 3764: v1.0.7 released + recorded (SC1 settle fix); cleanup done
 ```
