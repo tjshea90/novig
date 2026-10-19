@@ -91,6 +91,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getStringExtra(ChatAlerts.EXTRA_OPEN) == ChatAlerts.OPEN_CHAT) vm.requestOpenChat()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Auto-bet and background auto-scan are switched off by the app only after a phone restart, saved before anything reads the settings
         // (Tj, 2026-10-02 16:05Z: "I want the app never to turn off auto bet unless I turn it off"): [LaunchReset], [LaunchGate].
@@ -99,6 +105,7 @@ class MainActivity : ComponentActivity() {
         app.container.eventLog.info("APP", "screen opened" + (switchedOff?.let { " (first since the phone restarted): $it" } ?: " (auto-bet and auto-scan kept as they were)"))
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        if (intent?.getStringExtra(ChatAlerts.EXTRA_OPEN) == ChatAlerts.OPEN_CHAT) vm.requestOpenChat()
         switchedOff?.let { android.widget.Toast.makeText(this, it, android.widget.Toast.LENGTH_LONG).show() }
 
         // The diagnostics file's share sheet (Tj, 2026-10-02): handed over by the view model whenever the file is ready, started from here (a visible screen).
@@ -652,7 +659,8 @@ private fun TabIconWithCount(t: Tab, state: UiState) {
             val now = com.tjshea.vigilant.app.ui.rememberNow(15_000)
             androidx.compose.runtime.remember(state.feed, state.settings, now) { state.feedAt(now).size }
         }
-        Tab.CLAUDE -> state.claudeInbox.unread
+        // Only Claude's new chat replies (Tj, CH16: "only have the red number ... for new Claude CHAT responses ... don't count" the Messages); it goes when the chat is looked at.
+        Tab.CLAUDE -> androidx.compose.runtime.remember(state.chat) { state.chat.unread }
         Tab.CNO -> {
             val now = com.tjshea.vigilant.app.ui.rememberNow(15_000)
             // Placed and removed bets aren't counted (nor, with "only bets the books agree on", the rest): the tab doesn't list them.
@@ -709,6 +717,9 @@ private fun VigilantRoot(
     var settingsPage by rememberSaveable { mutableStateOf<String?>(null) }
     // Until Tj picks a tab: CNO only opens on CNO's list, otherwise on the +EV feed.
     val tab = allTabs.firstOrNull { it.name == tabName } ?: Tab.ENGINE
+    // A tapped chat notification opens the Claude tab (its chat section is the one it opens on).
+    val openChatAt by vm.openChat.collectAsState()
+    LaunchedEffect(openChatAt) { if (openChatAt > 0L) { tabName = Tab.CLAUDE.name; vm.openChatHandled() } }
     // The tab a Bet sheet's "Add money" left, for "Back to the bet" (Tj, 2026-09-29).
     var betTab by rememberSaveable { mutableStateOf<String?>(null) }
     var detail by remember { mutableStateOf<Opportunity?>(null) }
@@ -770,7 +781,8 @@ private fun VigilantRoot(
             when (tab) {
                 Tab.ENGINE -> com.tjshea.vigilant.app.ui.EngineScreen(state, onOpenCloudSettings = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.CLOUD.name; tabName = Tab.SETTINGS.name }, onRefresh = { vm.refreshEngine() }, onReset = { vm.resetEngine() })
                 Tab.CLAUDE -> com.tjshea.vigilant.app.ui.ClaudeScreen(
-                    state, onSend = vm::sendChat, onChatOpen = vm::setChatOpen, onNewChat = vm::newChat, onClearChat = vm::clearChat, onMarkRead = vm::markClaudeRead,
+                    state, onSend = vm::sendChat, onChatOpen = vm::setChatOpen, onChatRead = vm::markChatRead, onRetry = vm::retryChat, onDiscard = vm::discardChat,
+                    onNewChat = vm::newChat, onClearChat = vm::clearChat, onLoadEarlier = vm::loadEarlierChat, chatFile = { id, n, name -> vm.chatFile(id, n, name) }, onMarkRead = vm::markClaudeRead,
                     onDismissMessage = vm::dismissClaudeMessage, onClearMessages = vm::clearClaudeMessages,
                     onOpenPage = { p -> settingsPage = p; tabName = Tab.SETTINGS.name },
                     onRefresh = vm::refreshCloud,
