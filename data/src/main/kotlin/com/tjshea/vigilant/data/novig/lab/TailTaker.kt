@@ -174,7 +174,7 @@ class TailTaker(
         val payout = EvMath.CONTRACT_PAYOUT_DOLLARS
         val perContract = (limit + Fees.takerFee(limit.coerceIn(0.001, 0.999), o.fee, true)) * payout
         // Experimental rules (the curve) trade a tenth-dollar stake (Tj, 2026-10-19) until proven; the original rules keep the setting.
-        val experimental = o.candidate.rule == LiveLightCurve.RULE
+        val experimental = o.candidate.rule == LiveLightCurve.RULE || o.candidate.rule == LiveLightScan.MID
         val stake = if (experimental) TailTradeLimits.EXPERIMENTAL_STAKE else r.stake.coerceIn(LiveTradeLimits.MIN_STAKE, LiveTradeLimits.MAX_STAKE)
         val today = history.filter { it.atMs >= dayStart(now) && it.mode == "BET" }
         val dayLeft = if (r.maxPerDay > 0) r.maxPerDay - today.sumOf { it.paid + it.feePaid } else Double.MAX_VALUE
