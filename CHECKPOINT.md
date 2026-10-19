@@ -1,22 +1,22 @@
-# CHECKPOINT 3754 — read me first, then TASKS.md
+# CHECKPOINT 3755 — read me first, then TASKS.md
 
-**Written:** 2026-10-19T16:33:55Z · **tests:** all 6 fast checks green
-**Branch:** `ccr-2df6ce48-pkrh5v` · **builds on:** `d9bc0d740` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T16:35:16Z · **tests:** all 6 fast checks green
+**Branch:** `ccr-2df6ce48-pkrh5v` · **builds on:** `346639a1e` (this checkpoint is the commit after it)
 
 ## Just done
-EA8a/EA9 written up (keeper import crash, CI flood: ci.yml main-only, data-branch copies deleted, GitHub Actions incident since 15:49Z); CHANGES.md lines
+pre-release: v1.0.6: the Tracker's profit card rebuilt (PL): Today is today's games, $0.00 until a result; open bets are money at stake, never a loss; all-time profit = the Vigilant wallet (cash + open bets) minus the money put in, net of every withdrawal (Novig's ledger, every money-moving kind); the Tracker's period chips count by game day; charts name the day, running total + a bar a day (versionCode 346, v1.0.6)
 
 ## Do this next
-wait for ship.sh (v1.0.6); release.yml may wait on GitHub's incident; then record-release, tell Tj; EA10: confirm keeper 39284378407 runs
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.6), then run: bash tools/record-release.sh v1.0.6 346 "v1.0.6: the Tracker's profit card rebuilt (PL): Today is today's games, $0.00 until a result; open bets are money at stake, never a loss; all-time profit = the Vigilant wallet (cash + open bets) minus the money put in, net of every withdrawal (Novig's ledger, every money-moving kind); the Tracker's period chips count by game day; charts name the day, running total + a bar a day"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  346639a1e ckpt 3754: EA8a/EA9 written up (keeper import crash, CI flood: ci.yml main-only, data-
   8e2363d3d ckpt 3753: PL: Tracker tests follow the new card (all-time headline by tag, clv card s
   1b1ac7101 ckpt 3752: PL5: the wallet figure reads every money-moving ledger kind (transfers, dep
   cce5b1756 ckpt 3751: PL: NovigTradingClient.transfers() reads TRANSFER_IN/OUT with no time bound
@@ -26,8 +26,4 @@ wait for ship.sh (v1.0.6); release.yml may wait on GitHub's incident; then recor
   55b142426 ckpt 3747: PL: SlateProfit reworked (today/day/days/lastDays by calendar day, merged c
   2ae72ef29 ckpt 3746: EA: keeper steps aside for a newer keeper, one log line per state, full-loo
   70e7a9f40 ckpt 3745: EA5-EA7: keeper (engine-alarm.yml: always running, 2-min checks in hours, s
-  2ede70f12 ckpt 3744: EA1-EA3 done: alarm on main and armed (run 39277095427), watchdog starts a 
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
