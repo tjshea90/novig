@@ -40,6 +40,9 @@ object Diagnostics {
         /** When this version was installed (PackageInfo.lastUpdateTime): a crash or exit before it happened on an older version. Null = not known. */
         val installedAtMs: Long? = null,
         val autoScan: AutoScanner.Status = AutoScanner.Status(),
+        /** The Tracker's all-time money figure (PL, 2026-10-19: the wallet now minus what was put in) and, when there is none, why. */
+        val walletMoney: com.tjshea.vigilant.data.tracker.WalletProfit.Money? = null,
+        val walletMoneyNote: String? = null,
         /** What the auto-bet did last (Tj, 2026-10-01). */
         val autoBet: AutoBettor.Status = AutoBettor.Status(),
         /** Make orders (RESEARCH.md §70): every bid on record and the last pass. */
@@ -499,6 +502,10 @@ object Diagnostics {
         MoneyIn.compute(bets, s.settings.gates.moneyDeposited.takeIf { it > 0 }).let { m ->
             o.appendLine(String.format(Locale.US, "Money put in %.2f (%s) · profit %+.2f = %s of the money put in · %.2f staked in all, each deposited dollar bet %s times", m.deposited, if (m.estimated) "worked out from the bets: the least money that could have placed them all with winnings re-bet" else "given in Settings", m.profit, m.percent?.let { String.format(Locale.US, "%+.1f%%", it * 100) } ?: "n/a", m.turnover, m.turns?.let { String.format(Locale.US, "%.1f", it) } ?: "n/a"))
         }
+        // The Tracker's all-time figure (PL, 2026-10-19): what the wallet holds now, open bets at cost, minus the money put in by Novig's own transfer record.
+        x.walletMoney?.let { m ->
+            o.appendLine(String.format(Locale.US, "All-time profit (wallet): cash %.2f + open bets %.2f (%d markets) - put in %.2f (%.2f in, %.2f out, %d transfers) = %+.2f, read %d min ago", m.cash, m.openCost, m.openBets, m.netIn, m.putIn, m.takenOut, m.transfers, m.profit, (now - m.atMs) / 60_000L))
+        } ?: x.walletMoneyNote?.let { o.appendLine("All-time profit (wallet): no figure: $it") }
         // What the Tracker's Profit shows (every settled bet, the same with its "Novig only" filter on or off): the line above leaves the outliers out.
         if (stats.outliers > 0) o.appendLine("Every settled bet, outliers too (the Tracker's Profit): profit ${String.format(Locale.US, "%+.2f", stats.profitAll)} on ${String.format(Locale.US, "%.2f", stats.stakedAll)} staked" + (stats.roiAll?.let { String.format(Locale.US, " (%+.1f%%)", it * 100) } ?: "") + " · ${stats.outliers} outlier bet${if (stats.outliers == 1) "" else "s"} (over ±${(BetTracker.OUTLIER_EV * 100).toInt()}% EV when bet)")
         stats.luck?.let { o.appendLine(String.format(Locale.US, "Expected %+.2f vs actual %+.2f over %d settled bets with an EV: %+.1f standard deviations", stats.expectedProfit, stats.profitWithEv, stats.settledWithEv, it)) }

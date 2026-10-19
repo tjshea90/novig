@@ -2919,6 +2919,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             installedAtMs = info?.lastUpdateTime?.takeIf { it > 0 },
             device = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})",
             autoScan = c.autoScan.status.value,
+            walletMoney = c.walletMoney.flow.value,
+            walletMoneyNote = c.walletMoney.note.value,
             autoBet = c.autoBet.status.value,
             makerBids = g.makerBids,
             maker = c.maker.status.value,
