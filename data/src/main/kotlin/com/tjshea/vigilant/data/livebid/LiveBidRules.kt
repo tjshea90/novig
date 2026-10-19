@@ -37,8 +37,8 @@ data class LiveBidQuality(
     val moneyline: Boolean = true,
     val spread: Boolean = true,
     val total: Boolean = true,
-    /** Tennis moves on every point and its feed carries no clock; off by default (Tj's 37 real live orders were 33 tennis, 0 filled). */
-    val tennis: Boolean = false,
+    /** Tennis moves on every point and its feed carries no clock. On by default since Tj's word of 2026-10-19 ("put tennis in the live betting and bidding"; it was off after 37 real live orders, 33 tennis, 0 filled), so watch fills and cancels. */
+    val tennis: Boolean = true,
     /** Only these leagues (Novig's names, "NCAAF", "NBA"); empty = every league Pinnacle and Novig both carry. */
     val onlyLeagues: Set<String> = emptySet(),
     // ---- how fresh the fair must be -------------------------------------------------------------------------------------------------------------------------------------------
