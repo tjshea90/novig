@@ -2060,7 +2060,7 @@ class AppContainer(val app: Application) {
 
     /** How the Kalshi 3-requests-a-second test has gone this session (Diagnostics). */
     fun kalshiPaceNote(): String = kalshi.paceNote() + "\n" + kalshi.report().joinToString("\n") { "  $it" }
-    private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keyStore.current(ApiProvider.THE_ODDS_API) }, usage), json)
+    private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keyStore.current(ApiProvider.THE_ODDS_API) }, usage, sticky = true), json)
 
     /** ParlayAPI's degraded-mode check (free): books it says aren't keeping up don't price from it. */
     private val parlayQuality = com.tjshea.vigilant.data.reference.ParlaySourceQuality(http, json)

@@ -591,8 +591,8 @@ class KeyPool(
                     o.sortedBy { k -> ks?.get(k)?.let { u -> if (pace.isFree(u)) 1 else 0 } ?: 1 }
                 }
             }
-            val open = lastGood.takeIf { sticky && it in open }?.let { g -> listOf(g) + (open - g) } ?: open
-            val key = meter.pick(policy, open, cost, held)
+            val ordered = lastGood.takeIf { sticky && it in open }?.let { g -> listOf(g) + (open - g) } ?: open
+            val key = meter.pick(policy, ordered, cost, held)
                 ?: if (held !== UsageMeter.NO_FLOOR && open.isNotEmpty() && meter.pick(policy, open, cost) != null) {
                     throw CreditsHeldBackException(heldBackMessage(all, open, cost, reserve, pace))
                 } else {

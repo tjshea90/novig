@@ -143,7 +143,7 @@ class CloudSources(
 
     /** One line for the engine's start-up log and status: whether Kalshi's key reached the engine and whether its socket is wanted. */
     fun kalshiNote(): String = if (kalshiSigner == null) "Kalshi: public reads (no key on GitHub)" else "Kalshi: signed key present, socket ${if (kalshiSocketWanted) "on" else "off"}"
-    private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keys(CloudKeys.ODDS_API) }, usage), json)
+    private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keys(CloudKeys.ODDS_API) }, usage, sticky = true), json)
     private val bookProps = OddsApiPropsSource(oddsApi)
     private val parlayPool = KeyPool(QuotaPolicy.PARLAY, { keys(CloudKeys.PARLAY) }, usage)
     /** ParlayAPI's own account read per key (free): plan and credits into the meter, so an upgraded key is found and goes first ([KeyPool]). The engine asks hourly ([refreshParlayAccounts]). */
