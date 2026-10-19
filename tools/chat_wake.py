@@ -144,7 +144,7 @@ def selftest():
     assert decide(tj, stale, at)[0] == "fire"
     just = dict(stale, wake={"fires": [at - 60000]})
     assert decide(tj, just, at)[0] == "none" and "woken" in decide(tj, just, at)[1]
-    three = dict(stale, wake={"fires": [at - 50 * 60000, at - 40 * 60000, at - 30 * 60000]})
+    three = {"seat": {"holder": "acct-a/n", "beat": at - 65 * 60000, "since": at - 70 * 60000}, "wake": {"fires": [at - 50 * 60000, at - 40 * 60000, at - 30 * 60000]}}
     assert decide(tj, three, at)[0] == "none" and "out of usage" in decide(tj, three, at)[1]
     # fires that DID bring a session (it took the seat after them) do not count towards the back-off
     took = {"seat": {"holder": "acct-a/n", "beat": at - (chat.STALE_S + 10) * 1000, "since": at - 25 * 60000}, "wake": three["wake"]}
