@@ -7,6 +7,8 @@ T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
 FAILS=0; N=0
 ok()  { N=$((N+1)); echo "  ok    $1"; }
 bad() { N=$((N+1)); FAILS=$((FAILS+1)); echo "  FAIL  $1"; }
+# grep that reads to the end: under pipefail, `cmd | grep -q` fails at random when grep exits early and cmd dies of SIGPIPE (the 1-in-3 red of 2026-10-19).
+has() { grep "$@" >/dev/null; }
 expect() { # expect "name" wanted_rc actual_rc
   if [ "$3" -eq "$2" ]; then ok "$1"; else bad "$1 (wanted exit $2, got $3)"; fi; }
 
@@ -24,7 +26,7 @@ git -C "$T/origin.git" rev-parse -q --verify refs/heads/claude-coord >/dev/null 
 B acquire --kind routine --task "rotation" >/dev/null 2>&1; expect "B checks in too (nobody holds the repo any more)" 0 $?
 A check >/dev/null 2>&1; expect "A's push check says go" 0 $?
 B check >/dev/null 2>&1; expect "B's push check says go" 0 $?
-A sessions 2>/dev/null | grep -q "acctB" && ok "A sees B working" || bad "A does not see B"
+A sessions 2>/dev/null | has "acctB" && ok "A sees B working" || bad "A does not see B"
 OUT="$(A status 2>/dev/null)"
 case "$OUT" in *"WORKING acctB"*) ok "the briefing lists the other live session";; *) bad "no WORKING line: $OUT";; esac
 case "$OUT" in *"HOLDS THIS REPO"*|*"lease is"*|*"Do not edit"*) bad "the briefing still talks of a lease: $OUT";; *) ok "the briefing has no lease text";; esac
@@ -33,8 +35,8 @@ A claim CR --note "chat rebuild" >/dev/null 2>&1; expect "A claims CR" 0 $?
 B claim cr >/dev/null 2>&1; expect "B cannot claim CR while A is on it (ids are case-blind)" 3 $?
 A claim CR >/dev/null 2>&1; expect "claiming your own item again is fine" 0 $?
 B claim CH21 >/dev/null 2>&1; expect "B claims another item" 0 $?
-A claims 2>/dev/null | grep -q "CH21" && ok "claims are listed" || bad "CH21 not listed"
-(B status 2>/dev/null | grep -q "CLAIMS.*CR") && ok "the briefing lists claims" || bad "no CLAIMS line"
+A claims 2>/dev/null | has "CH21" && ok "claims are listed" || bad "CH21 not listed"
+(B status 2>/dev/null | has "CLAIMS.*CR") && ok "the briefing lists claims" || bad "no CLAIMS line"
 # 3. a lapsed claim (its session went quiet) is taken over
 python3 - "$T" <<'PY'
 import json,subprocess,sys,time,glob,os
@@ -55,10 +57,10 @@ A unclaim RELEASE >/dev/null 2>&1
 B claim RELEASE --wait 0.05 >/dev/null 2>&1; expect "B gets RELEASE once A gave it back" 0 $?
 # 5. check out: the session file and its claims go
 B release >/dev/null 2>&1; expect "B checks out" 0 $?
-A claims 2>/dev/null | grep -q "CH21" && bad "B's claims survived its check-out" || ok "B's claims went with it"
+A claims 2>/dev/null | has "CH21" && bad "B's claims survived its check-out" || ok "B's claims went with it"
 # 6. notes pass between sessions
 A post "hello from A" "line of body" >/dev/null 2>&1; expect "A posts a note" 0 $?
-B board 8 2>/dev/null | grep -q "hello from A" && ok "B reads A's note" || bad "B did not see the note"
+B board 8 2>/dev/null | has "hello from A" && ok "B reads A's note" || bad "B did not see the note"
 # 7. EVERY failure lets work through
 git init -q "$T/lonely"; git -C "$T/lonely" remote add origin "$T/does-not-exist.git"
 COORD_REPO="$T/lonely" COORD_HOME="$T/c" COORD_LABEL=acctC python3 -I "$D/tools/coord.py" check >/dev/null 2>&1; expect "an unreachable remote does not hold a push back" 0 $?
@@ -82,21 +84,21 @@ A acquire --kind interactive >/dev/null 2>&1
 PUSH_B; expect "push.sh pushes while another session works" 0 $?
 git -C "$T/origin.git" rev-parse -q --verify refs/heads/work >/dev/null && ok "the session branch is on the remote" || bad "branch not pushed"
 # tools/ changed without the fast checks: main waits; once ckpt.sh's marker says the checks passed on exactly these tools, main moves
-git -C "$T/origin.git" log --oneline refs/heads/main | grep -q "docs and tools" && bad "main moved to unverified tools" || ok "main waits for tools nobody checked"
+git -C "$T/origin.git" log --oneline refs/heads/main | has "docs and tools" && bad "main moved to unverified tools" || ok "main waits for tools nobody checked"
 (cd "$T/repo" && python3 -I tools/landing.py mark tools >/dev/null 2>&1); PUSH_B
-git -C "$T/origin.git" log --oneline refs/heads/main | grep -q "docs and tools" && ok "main moves once the tools are checked" || bad "main did not move after the mark"
+git -C "$T/origin.git" log --oneline refs/heads/main | has "docs and tools" && ok "main moves once the tools are checked" || bad "main did not move after the mark"
 # code (data/) waits for tools/test.sh's mark; docs alone go straight through
 mkdir -p "$T/repo/data"; echo 'fun x() = 1' > "$T/repo/data/X.kt"; git -C "$T/repo" -c user.name=t -c user.email=t@t add -A; git -C "$T/repo" -c user.name=t -c user.email=t@t commit -q -m "code"
-PUSH_B; git -C "$T/origin.git" log --oneline refs/heads/main | grep -q " code" && bad "untested code reached main" || ok "untested code stays on the branch"
+PUSH_B; git -C "$T/origin.git" log --oneline refs/heads/main | has " code" && bad "untested code reached main" || ok "untested code stays on the branch"
 (cd "$T/repo" && python3 -I tools/landing.py mark code data >/dev/null 2>&1); PUSH_B
-git -C "$T/origin.git" log --oneline refs/heads/main | grep -q " code" && ok "tested code reaches main" || bad "tested code did not reach main"
+git -C "$T/origin.git" log --oneline refs/heads/main | has " code" && ok "tested code reaches main" || bad "tested code did not reach main"
 # main moved under the branch (another session landed a note): the branch takes main in by itself (a clean merge) and lands again
 git clone -q "$T/origin.git" "$T/other" 2>/dev/null; git -C "$T/other" checkout -q main; echo other > "$T/other/OTHER.md"
 git -C "$T/other" add -A; git -C "$T/other" -c user.name=t -c user.email=t@t commit -q -m "other session"; git -C "$T/other" push -q origin HEAD:refs/heads/main
 echo more > "$T/repo/research/m.md"; git -C "$T/repo" -c user.name=t -c user.email=t@t add -A; git -C "$T/repo" -c user.name=t -c user.email=t@t commit -q -m "more docs"
 PUSH_B; expect "push.sh copes when main moved" 0 $?
 [ -f "$T/repo/OTHER.md" ] && ok "the other session's work was merged into the branch" || bad "main's new work did not reach the branch"
-git -C "$T/origin.git" log --oneline refs/heads/main | grep -q "more docs" && ok "and the branch landed on main after the merge" || { bad "main did not get the branch after the merge"; tail -25 "$T/push.log" | sed 's/^/        /'; }
+git -C "$T/origin.git" log --oneline refs/heads/main | has "more docs" && ok "and the branch landed on main after the merge" || { bad "main did not get the branch after the merge"; tail -25 "$T/push.log" | sed 's/^/        /'; }
 # a conflicting change on main is never merged blind: the branch stays as it was, nothing is committed with conflict markers
 git -C "$T/other" pull -q --no-rebase origin main >/dev/null 2>&1; mkdir -p "$T/other/research"; echo "main side" > "$T/other/research/n.md"
 git -C "$T/other" add -A; git -C "$T/other" -c user.name=t -c user.email=t@t commit -q -m "main edit"; git -C "$T/other" push -q origin HEAD:refs/heads/main 2>/dev/null
@@ -107,7 +109,7 @@ grep -rq '^<<<<<<<' "$T/repo/research" && bad "conflict markers were left in the
 
 # 10. rotation: duties, ET slot times across daylight saving, missed-slot detection; the chat no longer rotates
 python3 -I "$D/tools/rotation.py" selftest >/dev/null 2>&1; expect "rotation selftest (duties, DST, missed slots)" 0 $?
-python3 -I "$D/tools/rotation.py" chat --tag acct-7542bf 2>/dev/null | grep -q "never stands down" && ok "no account stands down for the chat" || bad "rotation chat still rotates"
+python3 -I "$D/tools/rotation.py" chat --tag acct-7542bf 2>/dev/null | has "never stands down" && ok "no account stands down for the chat" || bad "rotation chat still rotates"
 
 # 11. the UserPromptSubmit hook: a routine's own prompt is never logged; no lease, no relay, no chat stand-down text any more
 H="$(mktemp -d)"; cp -r "$D/tools" "$H/tools"; git -C "$H" init -q 2>/dev/null; : > "$H/INBOX.md"

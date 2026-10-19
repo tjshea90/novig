@@ -54,7 +54,7 @@ if [ -f tools/coord.py ] && [ -z "${COORD_OFF:-}" ]; then
 fi
 # main first: the versionCode check below must see every release another session already recorded (a clean merge only; push.sh says so on a conflict).
 PUSH_SYNC_NOW=1 bash tools/push.sh >/dev/null 2>&1 || true
-if [ -f .git/MERGE_HEAD ] || git diff --name-only --diff-filter=U 2>/dev/null | grep -q .; then
+if [ -f .git/MERGE_HEAD ] || git diff --name-only --diff-filter=U 2>/dev/null | grep . >/dev/null; then
   echo "  FAIL  a merge is unfinished: finish it first."
   exit 1
 fi

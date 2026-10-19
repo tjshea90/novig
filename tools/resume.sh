@@ -172,7 +172,7 @@ PYLAB
     fi
 
     # CLOUD (Tj, 2026-10-14): the phone saves every bet/bid/study day to the phone-data branch, the GitHub engine publishes to cloud-feed. One line, read-only, never fails the briefing.
-    if timeout 8 git ls-remote --heads origin phone-data cloud-feed 2>/dev/null | grep -q .; then
+    if timeout 8 git ls-remote --heads origin phone-data cloud-feed 2>/dev/null | grep . >/dev/null; then
       echo "  CLOUD phone-data (bets/bids/study, git fetch origin phone-data; files phone/bets, phone/study) and cloud-feed (status.json) exist; rules: CLAUDE.md 'Cloud scan'"
     fi
 

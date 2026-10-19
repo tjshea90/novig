@@ -111,7 +111,8 @@ fi
 M=refs/remotes/origin/main
 if git merge-base --is-ancestor "$M" HEAD 2>/dev/null && [ "$(git rev-parse HEAD)" != "$(git rev-parse $M)" ]; then
   # Nothing with conflict markers ever lands (a merge someone finished by hand too early).
-  if git diff "$M"...HEAD 2>/dev/null | grep -qE '^\+(<<<<<<< |>>>>>>> )'; then
+  # grep reads to the end (no -q): under pipefail an early exit would SIGPIPE git and hide the markers.
+  if git diff "$M"...HEAD 2>/dev/null | grep -E '^\+(<<<<<<< |>>>>>>> )' >/dev/null; then
     note "main NOT moved: conflict markers (<<<<<<< / >>>>>>>) are committed on $BR. Remove them, then bash tools/ckpt.sh."
     exit 0
   fi
