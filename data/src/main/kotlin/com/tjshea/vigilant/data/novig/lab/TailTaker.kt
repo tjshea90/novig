@@ -64,6 +64,10 @@ object TailTradeLimits {
     /** The fewest contracts worth an order. */
     const val MIN_CONTRACTS = 20L
 
+    /** Experimental rules (the curve) stake this much, at least this many contracts, until their live results prove them (Tj, 2026-10-19). */
+    const val EXPERIMENTAL_STAKE = 0.10
+    const val EXPERIMENTAL_MIN_CONTRACTS = 8L
+
     /** The default smallest edge, after Novig's fee and the model's own safety margins (3% is the lab's floor; real money asks for more). */
     const val DEFAULT_MIN_EDGE = 0.05
 }
@@ -165,12 +169,14 @@ class TailTaker(
     private fun size(o: TailOffer, limit: Double, r: LiveTradeRules, now: Long): Long? {
         val payout = EvMath.CONTRACT_PAYOUT_DOLLARS
         val perContract = (limit + Fees.takerFee(limit.coerceIn(0.001, 0.999), o.fee, true)) * payout
-        val stake = r.stake.coerceIn(LiveTradeLimits.MIN_STAKE, LiveTradeLimits.MAX_STAKE)
+        // Experimental rules (the curve) trade a tenth-dollar stake (Tj, 2026-10-19) until proven; the original rules keep the setting.
+        val experimental = o.candidate.rule == LiveLightCurve.RULE
+        val stake = if (experimental) TailTradeLimits.EXPERIMENTAL_STAKE else r.stake.coerceIn(LiveTradeLimits.MIN_STAKE, LiveTradeLimits.MAX_STAKE)
         val today = history.filter { it.atMs >= dayStart(now) && it.mode == "BET" }
         val dayLeft = if (r.maxPerDay > 0) r.maxPerDay - today.sumOf { it.paid + it.feePaid } else Double.MAX_VALUE
         val gameLeft = if (r.maxPerGame > 0) r.maxPerGame - today.filter { it.eventId == o.candidate.eventId }.sumOf { it.paid + it.feePaid } else Double.MAX_VALUE
         val q = minOf(o.candidate.contracts, Math.floor(stake / perContract).toLong(), Math.floor(minOf(dayLeft, gameLeft) / perContract).toLong())
-        return q.takeIf { it >= TailTradeLimits.MIN_CONTRACTS }
+        return q.takeIf { it >= (if (experimental) TailTradeLimits.EXPERIMENTAL_MIN_CONTRACTS else TailTradeLimits.MIN_CONTRACTS) }
     }
 
     private fun base(o: TailOffer, mode: String, outcome: String, limit: Double, qty: Long, id: String, message: String, filled: Long = 0, paid: Double = 0.0, feePaid: Double = 0.0, endMs: Long = 0): LiveRecord {
