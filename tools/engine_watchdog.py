@@ -190,8 +190,13 @@ def selftest():
     assert decide(now, [run(7, "in_progress", 3)], fresh, progress_changed_ms=now - 11 * M, **st)[0] == "none"          # a young run
     # A branch that cannot be fetched is not a dead engine: check() changes nothing (2026-10-19, GitHub degraded: a failed fetch read as "no heartbeat" and a healthy engine was replaced).
     import types
+    import engine_alarm
     calls = []
-    real_git, real_api = globals()["git"], globals()["api"]
+    real_git, real_api, real_dispatch, real_sleep, real_tell = globals()["git"], globals()["api"], engine_alarm.dispatch, time.sleep, sys.modules.get("tell_tj")
+    # Hermetic even if this check regresses: no real dispatch, sleep or message to Tj from a selftest (the keeper's workflow runs it with a real token).
+    engine_alarm.dispatch = lambda wf: calls.append(("DISPATCH", wf)) or True
+    time.sleep = lambda sec: None
+    sys.modules["tell_tj"] = types.SimpleNamespace(say=lambda *a, **k: calls.append(("SAY", a[0] if a else "")))
     try:
         def fake_git(*a):
             # cloud-feed cannot be fetched; the settings (switch on) and the STOP flag (absent) can: without the fetch check the status would read as nothing and the engine be replaced.
@@ -213,9 +218,14 @@ def selftest():
         import contextlib, io
         with contextlib.redirect_stdout(io.StringIO()):
             assert check(keeper=True) == 0
-        assert not [c for c in calls if c[0] == "POST"], calls
+        assert not [c for c in calls if c[0] in ("POST", "DISPATCH", "SAY")], calls
     finally:
         globals()["git"], globals()["api"] = real_git, real_api
+        engine_alarm.dispatch, time.sleep = real_dispatch, real_sleep
+        if real_tell is None:
+            sys.modules.pop("tell_tj", None)
+        else:
+            sys.modules["tell_tj"] = real_tell
     print("engine_watchdog selftest ok")
     return 0
 
