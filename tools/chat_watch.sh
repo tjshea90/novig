@@ -9,6 +9,7 @@ cd "$(dirname "$0")/.." || exit 1
 every="${CHAT_WATCH_EVERY:-6}"
 last=""
 lastrot=0
+lastbeat=0
 rotfile=/tmp/chat_watch_rotstate
 while true; do
   # Who answers the chat now (Tj, 2026-10-16: the account scheduled at that time; a session hands the chat over when another account's slot is about to start). Every 2 minutes, no model tokens;
@@ -26,6 +27,11 @@ while true; do
         *) [ "$prev" = "STANDDOWN" ] && echo "$line (the chat is yours again)" ;;
       esac
     fi
+  fi
+  # Heartbeat (Tj, 2026-10-19, chat rehaul): tells chat-wake.yml a live session is here, so it wakes nobody else while Tj is talking to this one. Every 90 s, in the background.
+  if [ $((nowt - lastbeat)) -ge 90 ]; then
+    lastbeat=$nowt
+    ( timeout 60 python3 -I tools/tell_tj.py presence >/dev/null 2>&1 & )
   fi
   head=$(git ls-remote origin refs/heads/cloud-config 2>/dev/null | cut -f1)
   if [ -n "$head" ] && [ "$head" != "$last" ]; then

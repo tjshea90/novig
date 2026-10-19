@@ -187,6 +187,15 @@ def selftest():
     print("selftest ok")
 
 
+def presence(who=None, **kw):
+    """Heartbeat of a live chat session (Tj, 2026-10-19, chat rehaul): presence/<account>.json on cloud-config, rewritten by chat_watch.sh every ~90 s. chat_wake.py wakes nobody while one is fresh."""
+    me_ = who or me()
+    tag = re.sub(r"[^A-Za-z0-9-]", "", me_.replace("claude:", "").split(" ")[0]) or "session"
+    at = int(time.time() * 1000)
+    put("presence/%s.json" % tag, json.dumps({"at": at, "who": me_}), **kw)
+    return tag
+
+
 def main(argv):
     if not argv or argv[0] in ("-h", "--help"):
         print(__doc__); return 0
@@ -203,6 +212,8 @@ def main(argv):
         print("sent", chat_reply(argv[1], " ".join(argv[2:]))); return 0
     if argv[0] == "relay" and len(argv) >= 2:
         print("relayed", chat_relay(" ".join(argv[1:]))); return 0
+    if argv[0] == "presence":
+        print("presence", presence()); return 0
     if argv[0] == "chat-ack" and len(argv) >= 2:
         print("acked", chat_ack(argv[1:])); return 0
     if argv[0] == "chat-file" and len(argv) >= 3:
