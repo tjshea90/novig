@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-nfy0aq",
  "head": "e5ccbab78e9ca0523b88d68a010dcef356a0cd52",
  "since": 1792440839,
- "beat": 1792441862,
- "beatIso": "2026-10-19T20:31:02Z",
+ "beat": 1792442085,
+ "beatIso": "2026-10-19T20:34:45Z",
  "done": "CH23b Try again + CH22b cross-exchange paper journal built, tests green",
  "next": "ship v1.0.8 via ship.sh, release.yml, record-release.sh; tell Tj"
 }
