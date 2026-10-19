@@ -20,78 +20,107 @@
 #
 # So the rule here: when the count cannot be determined, PUSH. A wasted push
 # costs a second; a skipped one can cost the whole session.
+#
+# THREE ACCOUNTS, NO LEASE (CR, Tj 2026-10-19: "Any claude account can make changes to this repo, as long as they coordinate with each other and don't double work or
+# break anything ... not get jumbled up with different branches"). Nothing here holds a push back any more. Instead, after the session's own branch is pushed:
+#   * main moves to the branch only as a FAST-FORWARD and only when tools/landing.py says everything the branch changes was checked (docs always; tools after the fast
+#     checks; app/engine code after tools/test.sh), so main is never broken;
+#   * when main has moved on (another session landed), main is merged into the branch by itself, but only a CLEAN merge on a clean tree; a conflict is aborted at once
+#     (never committed with markers) and the session is told which files to merge by hand;
+#   * a branch that is merely behind main is fast-forwarded to it, so a session never works on old code for long.
+# What the session should know (main waits for a check, a conflict) is left in .git/vigilant-push-note; autosave.sh shows it once.
 set -uo pipefail
 D="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$D" || exit 0
 [ -d .git ] || exit 0
 
 BR="$(git branch --show-current 2>/dev/null || true)"
 [ -z "$BR" ] && exit 0   # detached HEAD — no branch to push to
+NOTE_FILE=".git/vigilant-push-note"
+note() { printf '%s\n' "$1" > "$NOTE_FILE" 2>/dev/null; echo "PUSH  $1" >&2; }
+
+# The session's heartbeat on claude-coord (who is working, on which branch). Never a reason not to push.
+if [ -z "${COORD_OFF:-}" ] && [ -f tools/coord.py ]; then
+  timeout 40 python3 -I tools/coord.py check >/dev/null 2>&1 || true
+fi
 
 UP="$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null || true)"
 [ -z "$UP" ] && UP="origin/$BR"
-
 if git rev-parse --verify -q "$UP" >/dev/null 2>&1; then
   AHEAD="$(git rev-list --count "$UP"..HEAD 2>/dev/null || echo 1)"
 else
   AHEAD=1
 fi
-[ "${AHEAD:-1}" -eq 0 ] && exit 0
 
-# ONE CLAUDE SESSION AT A TIME (Tj, 2026-10-15: three Claude accounts share this repo). tools/coord.py keeps a lease on the claude-coord branch; while ANOTHER live session
-# holds it the push is held back (the commit stays local and is pushed on a later call), so two sessions never write main together. Exit status 3 from coord means "held back";
-# anything else (no network, no branch, an error in the tool) lets the push through: losing work is worse than a meeting of two sessions. COORD_OFF=1 switches it off.
-if [ -z "${COORD_OFF:-}" ] && [ -f tools/coord.py ]; then
-  timeout 40 python3 -I tools/coord.py check >&2
-  # Tj, 2026-10-18: "any Claude session may alter anything even if it doesn't hold the lease, as long as it will not break anything". So a held-back push no longer stops: the session's OWN
-  # branch is always pushed (a plain push, nothing is overwritten), and main is fast-forwarded only when what it adds is safe without the lease (docs, tools, research, notes; see
-  # research/coordination/PROTOCOL.md "Work without the lease"). Code, workflows and release files wait for the lease unless NOLEASE_VERIFIED=1 (the full test gate passed).
-  if [ $? -eq 3 ]; then
-    NOLEASE=1
-    echo "COORD  another session holds the lease: pushing this branch only; main moves only for safe paths." >&2
+clean_tree() { [ -z "$(git status --porcelain --untracked-files=no 2>/dev/null)" ] && [ ! -f .git/MERGE_HEAD ]; }
+
+# Bring origin/main into this branch when that is safe (a fast-forward, or a clean merge on a clean tree). Echoes what happened.
+take_main() {
+  git config merge.ours.driver true >/dev/null 2>&1   # CHECKPOINT.md keeps the session's own (.gitattributes)
+  local M=refs/remotes/origin/main
+  git rev-parse -q --verify "$M" >/dev/null 2>&1 || return 0
+  [ "$(git rev-parse HEAD)" = "$(git rev-parse $M)" ] && return 0
+  git merge-base --is-ancestor "$M" HEAD 2>/dev/null && return 0          # main is behind: nothing to take
+  clean_tree || { note "main has new work, but this tree has uncommitted changes: it is merged at the next checkpoint"; return 0; }
+  if git merge-base --is-ancestor HEAD "$M" 2>/dev/null; then
+    timeout 30 git merge -q --ff-only "$M" >/dev/null 2>&1 && echo "fast-forwarded to main"
+    return 0
   fi
-fi
+  if timeout 60 git -c user.name=Claude -c user.email=noreply@anthropic.com merge -q --no-edit -m "merge main into $BR (push.sh, CR)" "$M" >/dev/null 2>&1; then
+    echo "merged main"
+    return 0
+  fi
+  local FILES; FILES="$(git diff --name-only --diff-filter=U 2>/dev/null | head -8 | tr '\n' ' ')"
+  git merge --abort >/dev/null 2>&1 || git reset -q --merge >/dev/null 2>&1
+  note "MAIN CONFLICTS WITH THIS BRANCH in: ${FILES:-?}. Your work is safe on $BR (pushed) but cannot land until you merge: git merge origin/main, fix those files, commit (bash tools/ckpt.sh)."
+  return 0
+}
 
-# Explicit destination: works whether or not tracking is configured.
-# `timeout` bounds this well under the caller's hook budget — a hung
-# connection should fail fast and cleanly (commit stays local, retried on the
-# next tool call) rather than silently eating the whole hook slot with no
-# result either way.
-if timeout 45 git push -q origin "HEAD:refs/heads/$BR" >/dev/null 2>&1; then
-  # Self-heal, so the cheap check above starts working and this stops paying
-  # for a network round trip on every tool call. The root cause seen on the
-  # sibling projects this system was ported from: an EMPTY
-  # remote.origin.fetch. `git clone --depth 1` of a repo with no commits
-  # leaves no refspec, so `git fetch origin` only ever writes FETCH_HEAD and
-  # refs/remotes/origin/* is never populated. A normal clone has this set
-  # already, so this is a no-op almost everywhere.
+if [ "${AHEAD:-1}" -ne 0 ]; then
+  # Explicit destination: works whether or not tracking is configured. `timeout` bounds this well under the caller's hook budget.
+  if ! timeout 45 git push -q origin "HEAD:refs/heads/$BR" >/dev/null 2>&1; then
+    # A checkout ON main (a routine) is refused when another session landed first: take main in (clean only) and try once more.
+    if [ "$BR" = "main" ] && timeout 20 git fetch -q origin "+refs/heads/main:refs/remotes/origin/main" >/dev/null 2>&1; then
+      take_main >/dev/null
+      timeout 45 git push -q origin "HEAD:refs/heads/$BR" >/dev/null 2>&1 || exit 1
+    else
+      exit 1
+    fi
+  fi
+  # Self-heal, so the cheap check above starts working and this stops paying for a network round trip on every tool call (an EMPTY remote.origin.fetch after a
+  # shallow clone means refs/remotes/origin/* is never populated).
   git config --get-all remote.origin.fetch >/dev/null 2>&1 || \
     git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' 2>/dev/null || true
   timeout 10 git fetch -q origin "$BR:refs/remotes/origin/$BR" >/dev/null 2>&1 || true
   git branch --set-upstream-to="origin/$BR" "$BR" >/dev/null 2>&1 || true
+fi
+[ "$BR" = "main" ] && exit 0
 
-  # KEEP main CURRENT, BEST-EFFORT. Claude Code on the web can assign a
-  # different local branch name to every session — see CLAUDE.md's
-  # "Branches" section for why that matters here. A session that only pushes
-  # its own branch leaves the DEFAULT branch stale, and a future session (or
-  # a different account working the same repo) that just opens the repo,
-  # rather than rediscovering a specific branch name, lands on that stale
-  # default and sees none of this work.
-  #
-  # Plain (non-force) push, so this can only FAST-FORWARD main. If main ever
-  # diverges (something else was pushed there independently), git refuses
-  # and this fails silently — never overwrite unrelated work to keep a
-  # convenience in sync.
-  if [ "$BR" != "main" ]; then
-    SKIP_MAIN=0
-    if [ -n "${NOLEASE:-}" ] && [ -z "${NOLEASE_VERIFIED:-}" ]; then
-      timeout 10 git fetch -q origin main >/dev/null 2>&1 || true
-      if git diff --name-only origin/main...HEAD 2>/dev/null | grep -Eq '^(\.github/|app/|data/|engine/|cloud/|lab/|mgm/|build\.gradle|settings\.gradle|gradle|ship\.sh|tools/(push|autosave|ckpt|resume|capture_inbox)\.sh)'; then
-        SKIP_MAIN=1
-        echo "COORD  main NOT moved: this change touches code/workflows/release files and needs the lease (or NOLEASE_VERIFIED=1 after the test gate). It is safe on the branch." >&2
-      fi
-    fi
-    [ "$SKIP_MAIN" -eq 0 ] && timeout 10 git push -q origin "HEAD:refs/heads/main" >/dev/null 2>&1 || true
-  fi
+# KEEP THIS BRANCH AND main IN STEP. At most every 30 s from the hooks (PUSH_SYNC_NOW=1 from ckpt.sh forces it): one fetch of main.
+STAMP=".git/vigilant-main-sync"
+NOWS="$(date +%s)"
+LAST="$(cat "$STAMP" 2>/dev/null || echo 0)"
+if [ -z "${PUSH_SYNC_NOW:-}" ] && [ $((NOWS - ${LAST:-0})) -lt 30 ] && [ "${AHEAD:-1}" -eq 0 ]; then
   exit 0
 fi
-exit 1
+echo "$NOWS" > "$STAMP" 2>/dev/null
+timeout 20 git fetch -q origin "+refs/heads/main:refs/remotes/origin/main" >/dev/null 2>&1 || exit 0
+WHAT="$(take_main)"
+if [ -n "$WHAT" ]; then
+  timeout 45 git push -q origin "HEAD:refs/heads/$BR" >/dev/null 2>&1 || true
+fi
+M=refs/remotes/origin/main
+if git merge-base --is-ancestor "$M" HEAD 2>/dev/null && [ "$(git rev-parse HEAD)" != "$(git rev-parse $M)" ]; then
+  # Nothing with conflict markers ever lands (a merge someone finished by hand too early).
+  if git diff "$M"...HEAD 2>/dev/null | grep -qE '^\+(<<<<<<< |>>>>>>> )'; then
+    note "main NOT moved: conflict markers (<<<<<<< / >>>>>>>) are committed on $BR. Remove them, then bash tools/ckpt.sh."
+    exit 0
+  fi
+  if VERDICT="$(python3 -I tools/landing.py decide 2>/dev/null)"; then
+    if timeout 30 git push -q origin "HEAD:refs/heads/main" >/dev/null 2>&1; then
+      rm -f "$NOTE_FILE" 2>/dev/null
+    fi
+  else
+    note "main waits for this branch's checks (your work is safe on $BR): run ${VERDICT#WAIT }"
+  fi
+fi
+exit 0
