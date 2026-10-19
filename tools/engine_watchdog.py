@@ -90,9 +90,17 @@ def git(*a):
     return subprocess.run(["git", *a], capture_output=True, text=True)
 
 
+class Unreadable(Exception):
+    """A branch could not be fetched: what it holds is not known (never the same as "not there")."""
+
+
 def show(branch, path):
-    git("fetch", "-q", "--depth=1", "origin", branch)
-    r = git("show", "FETCH_HEAD:" + path)
+    """A file on a branch, None when the branch has no such file. Raises Unreadable when the branch could not be fetched: on 2026-10-19 (GitHub degraded) a failed fetch left
+    FETCH_HEAD on another branch, the status read as "no heartbeat", and a healthy engine was cancelled and started again."""
+    f = git("fetch", "-q", "--depth=1", "origin", "+refs/heads/%s:refs/remotes/origin/%s" % (branch, branch))
+    if f.returncode != 0:
+        raise Unreadable("%s: %s" % (branch, (f.stderr or "").strip()[:160]))
+    r = git("show", "refs/remotes/origin/%s:%s" % (branch, path))
     return r.stdout if r.returncode == 0 else None
 
 
@@ -103,15 +111,22 @@ def check(keeper=False, dry=False):
     for st in ("in_progress", "queued"):
         for r in api("GET", "actions/workflows/%s/runs?status=%s&per_page=10" % (WF, st)).get("workflow_runs", []):
             runs.append({"id": r["id"], "status": r["status"], "created_ms": _ts(r["created_at"]), "started_ms": _ts(r.get("run_started_at") or r["created_at"])})
+    # What cannot be read is not known: no engine is started, cancelled or replaced on a guess (the next look reads again).
     try:
-        stat = json.loads(show("cloud-feed", "status.json") or "{}")
+        stat_raw = show("cloud-feed", "status.json")
+        cfg_raw = show("cloud-config", "settings.json")
+        stopped = show("cloud-config", "deadman/STOP.json") is not None
+    except Unreadable as e:
+        print("watchdog: none: GitHub could not be read (%s); nothing is changed until it can" % e, flush=True)
+        return 0
+    try:
+        stat = json.loads(stat_raw or "{}")
     except ValueError:
         stat = {}
     try:
-        cfg = json.loads(show("cloud-config", "settings.json") or "{}")
+        cfg = json.loads(cfg_raw or "{}")
     except ValueError:
         cfg = {}
-    stopped = show("cloud-config", "deadman/STOP.json") is not None
     recent = [{"id": r["id"], "created_ms": _ts(r["created_at"])} for r in api("GET", "actions/workflows/%s/runs?per_page=20" % WF).get("workflow_runs", [])]
     import engine_alarm
     # The switch and the hours exactly as cloud-scan.yml's gate reads them (one rule: tools/engine_alarm.py).
