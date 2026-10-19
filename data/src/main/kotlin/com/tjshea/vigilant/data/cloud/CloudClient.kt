@@ -195,6 +195,104 @@ class CloudClient(
         }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
     }
 
+    /** The commit [branch] points at; [Poll.NotModified] when [etag] is still current (free). The app chat looks here first and reads nothing else while it is unchanged ([ChatSync]). */
+    suspend fun headSha(branch: String, etag: String?): Poll<String> = withContext(Dispatchers.IO) {
+        if (!hasToken()) return@withContext Poll.Failed("no GitHub token saved")
+        val b = req("git/ref/heads/${encodePath(branch)}")
+        if (etag != null) b.header("If-None-Match", etag)
+        runCatching {
+            http.newCall(b.build()).execute().use { r ->
+                note(r)
+                val text = r.body?.string().orEmpty()
+                when {
+                    r.code == 304 -> Poll.NotModified
+                    r.isSuccessful -> runCatching { Json.parseToJsonElement(text).jsonObject["object"]?.jsonObject?.get("sha")?.jsonPrimitive?.contentOrNull }.getOrNull()
+                        ?.let { Poll.Fresh(it, r.header("ETag")) } ?: Poll.Failed("the $branch branch could not be read")
+                    r.code == 404 -> Poll.Failed("the $branch branch is not on GitHub (or the token cannot see the repository)")
+                    else -> Poll.Failed(why(r.code, text), retryAfter(r))
+                }
+            }
+        }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
+    }
+
+    /** One entry of a folder: its git sha changes whenever anything under it changes. */
+    data class Entry(val name: String, val sha: String, val type: String, val size: Long)
+
+    /** The entries of [dir] at [ref] (a branch or a commit sha, so a listing and the reads after it see one state). A folder that does not exist is an empty list. */
+    suspend fun listEntries(ref: String, dir: String): Poll<List<Entry>> = withContext(Dispatchers.IO) {
+        if (!hasToken()) return@withContext Poll.Failed("no GitHub token saved")
+        runCatching {
+            http.newCall(req("contents/${encodePath(dir)}?ref=${encodePath(ref)}").build()).execute().use { r ->
+                note(r)
+                val text = r.body?.string().orEmpty()
+                when {
+                    r.code == 404 -> Poll.Fresh(emptyList(), null)
+                    r.isSuccessful -> Poll.Fresh((Json.parseToJsonElement(text) as? kotlinx.serialization.json.JsonArray).orEmpty().mapNotNull { e ->
+                        val o = e as? JsonObject ?: return@mapNotNull null
+                        fun s(k: String) = o[k]?.jsonPrimitive?.contentOrNull
+                        Entry(s("name") ?: return@mapNotNull null, s("sha").orEmpty(), s("type").orEmpty(), s("size")?.toLongOrNull() ?: 0L)
+                    }, r.header("ETag"))
+                    else -> Poll.Failed(why(r.code, text), retryAfter(r))
+                }
+            }
+        }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
+    }
+
+    /** One file's text from [ref]; [Poll.NotModified] when [etag] is still current (free); a file that is not there is Fresh(null). */
+    suspend fun readText(ref: String, path: String, etag: String?): Poll<String?> = withContext(Dispatchers.IO) {
+        if (!hasToken()) return@withContext Poll.Failed("no GitHub token saved")
+        val b = req("contents/${encodePath(path)}?ref=${encodePath(ref)}").header("Accept", RAW)
+        if (etag != null) b.header("If-None-Match", etag)
+        runCatching {
+            http.newCall(b.build()).execute().use { r ->
+                note(r)
+                when {
+                    r.code == 304 -> Poll.NotModified
+                    r.code == 404 -> Poll.Fresh(null, null)
+                    r.isSuccessful -> Poll.Fresh(r.body?.string().orEmpty(), r.header("ETag"))
+                    else -> Poll.Failed(why(r.code, r.body?.string()), retryAfter(r))
+                }
+            }
+        }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
+    }
+
+    sealed interface Create {
+        data object Created : Create
+        /** It was already there: an earlier try whose answer was lost got through. */
+        data object Exists : Create
+        /** [retry] false = it cannot work until something changes (the token): do not try again by itself. */
+        data class Failed(val why: String, val retry: Boolean, val retryAfterMs: Long? = null) : Create
+    }
+
+    /**
+     * Creates [path] on [branch] as one commit. Never replaces a file and never creates the branch (the app chat's `chat` branch is made by tools/chat.py init, never from main), so the
+     * same message sent twice is one file: a try whose answer was lost is found on the next one ([Create.Exists]).
+     */
+    suspend fun createFile(branch: String, path: String, bytes: ByteArray, message: String): Create = withContext(Dispatchers.IO) {
+        if (!hasToken()) return@withContext Create.Failed("no GitHub token saved", retry = false)
+        runCatching {
+            val body = buildJsonObject { put("message", message); put("branch", branch); put("content", Base64.getEncoder().encodeToString(bytes)) }
+            http.newCall(req("contents/${encodePath(path)}").put(body.toString().toRequestBody(JSON)).build()).execute().use { r ->
+                note(r)
+                val text = r.body?.string()
+                when {
+                    r.isSuccessful -> Create.Created
+                    // 422 = a file is already there ("sha" wasn't supplied): ours, from a try whose answer was lost. Looked up to be sure.
+                    r.code == 422 -> when (existingSha(branch, path)) {
+                        is Existing.Found -> Create.Exists
+                        Existing.NoBranch -> Create.Failed("the $branch branch is not on GitHub", retry = true, retryAfterMs = 60_000L)
+                        else -> Create.Failed(why(r.code, text), retry = true, retryAfterMs = 30_000L)
+                    }
+                    r.code == 409 -> Create.Failed("GitHub was busy saving another file", retry = true, retryAfterMs = 1_000L)
+                    r.code == 401 -> Create.Failed(why(r.code, text), retry = false)
+                    r.code == 403 && !text.orEmpty().contains("rate limit", true) -> Create.Failed("GitHub refused: the token lacks Contents: read and write", retry = false)
+                    r.code == 404 -> Create.Failed(if (branchExists(branch)) why(r.code, text) else "the $branch branch is not on GitHub", retry = true, retryAfterMs = 60_000L)
+                    else -> Create.Failed(why(r.code, text), retry = true, retryAfterMs = retryAfter(r))
+                }
+            }
+        }.getOrElse { Create.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: ""), retry = true) }
+    }
+
     /** One file's text from [branch], or null when it cannot be read. */
     suspend fun readFile(branch: String, path: String): String? = withContext(Dispatchers.IO) {
         if (!hasToken()) return@withContext null
