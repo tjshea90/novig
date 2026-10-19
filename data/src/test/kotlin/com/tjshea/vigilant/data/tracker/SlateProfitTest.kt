@@ -35,13 +35,14 @@ class SlateProfitTest {
         assertEquals(30.0, d17.startBalance, 1e-9)
         assertEquals(40.0, d17.endBalance, 1e-9)
         assertEquals(10.0 / 30.0, d17.changePct!!, 1e-9)
-        // The second day: -$20 on a $40 start = -50%; the void counts nowhere (not even in the stakes).
+        // The second day: -$20 on $20 staked = -100% (the % is over the amount staked, Tj 2026-10-19); the void counts nowhere (not even in the stakes).
         assertEquals(-20.0, d18.profit, 1e-9)
         assertEquals(40.0, d18.startBalance, 1e-9)
-        assertEquals(-0.5, d18.changePct!!, 1e-9)
+        assertEquals(-1.0, d18.changePct!!, 1e-9)
         assertEquals(20.0, d18.staked, 1e-9)
         assertEquals(20.0, book.balance, 1e-9)
-        assertEquals(-10.0 / 30.0, book.pct!!, 1e-9)
+        assertEquals(-10.0 / 50.0, book.pct!!, 1e-9)
+        assertEquals(40.0, book.returned, 1e-9)
         // Staking more on day 2 did not move the start.
         val more = SlateProfit.book(bets + bet("e", et(2026, 10, 18, 15), 500.0, BetStatus.PUSH), et(2026, 10, 19, 9))
         assertEquals(30.0, more.start, 1e-9)
