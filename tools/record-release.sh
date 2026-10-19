@@ -64,8 +64,10 @@ release exists. See the run and its APK under Releases.
 
 Co-Authored-By: Claude <noreply@anthropic.com>" >/dev/null 2>&1
 
-if bash tools/push.sh; then
+if PUSH_SYNC_NOW=1 bash tools/push.sh; then
   echo "  OK    recorded v$VNAME (code $VCODE) in BUILDLOG.md and pushed"
+  # the release is done: the RELEASE claim ship.sh took goes back (CR, 2026-10-19)
+  [ -f tools/coord.py ] && python3 -I tools/coord.py unclaim RELEASE >/dev/null 2>&1
 else
   echo "  WARN  recorded locally but COULD NOT PUSH. Retry: git push origin HEAD"
   exit 1

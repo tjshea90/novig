@@ -41,6 +41,24 @@ fi
 
 echo "== ship gates =="
 
+# ONE RELEASE AT A TIME (CR, Tj 2026-10-19: three accounts, no lease). The RELEASE claim on claude-coord is taken here (waiting up to 20 min while another session
+# cuts one) and given back by tools/record-release.sh, so two sessions never build the same versionCode. A failed gate gives it back at once.
+SHIP_OK=0
+if [ -f tools/coord.py ] && [ -z "${COORD_OFF:-}" ]; then
+  python3 -I tools/coord.py claim RELEASE --note "$NOTE" --wait 20
+  if [ $? -eq 3 ]; then
+    echo "  FAIL  another session is cutting a release right now (bash tools/coord.sh claims); try again once it is recorded."
+    exit 1
+  fi
+  trap '[ "$SHIP_OK" = 1 ] || python3 -I tools/coord.py unclaim RELEASE >/dev/null 2>&1' EXIT
+fi
+# main first: the versionCode check below must see every release another session already recorded (a clean merge only; push.sh says so on a conflict).
+PUSH_SYNC_NOW=1 bash tools/push.sh >/dev/null 2>&1 || true
+if [ -f .git/MERGE_HEAD ] || git diff --name-only --diff-filter=U 2>/dev/null | grep -q .; then
+  echo "  FAIL  a merge is unfinished: finish it first."
+  exit 1
+fi
+
 # ---- whatever fast checks exist, same discovery ckpt.sh uses -----------------
 PASS=0; FAIL=0; REDS=""; RAN_ANY=0
 if [ -f package.json ] && command -v npm >/dev/null 2>&1 && command -v node >/dev/null 2>&1 \
@@ -60,6 +78,7 @@ if [ "$RAN_ANY" -gt 0 ]; then
     exit 1
   fi
   echo "  OK    all $PASS fast checks green"
+  python3 -I tools/landing.py mark tools >/dev/null 2>&1 || true
 else
   echo "  note  no fast checks exist yet"
 fi
@@ -103,7 +122,8 @@ fi
 echo "  OK    versionCode $VERSION_CODE > highest shipped ($HIGHEST_SHIPPED); versionName $VERSION_NAME"
 
 # ---- push (never a tag — the release workflow creates it server-side) ---------
-if bash tools/push.sh; then
+# The gates above marked everything checked (tools/landing.py), so this push lands the branch on main, where release.yml builds.
+if PUSH_SYNC_NOW=1 bash tools/push.sh; then
   echo "  OK    pushed to GitHub"
 else
   echo "  FAIL  push failed — see tools/push.sh output above"
@@ -114,6 +134,11 @@ bash tools/ckpt.sh "pre-release: $NOTE (versionCode $VERSION_CODE, v$VERSION_NAM
   "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v$VERSION_NAME), then run: bash tools/record-release.sh v$VERSION_NAME $VERSION_CODE \"$NOTE\"" \
   >/dev/null 2>&1
 
+if git fetch -q origin main 2>/dev/null && [ "$(git rev-parse HEAD)" != "$(git rev-parse FETCH_HEAD)" ] && ! git merge-base --is-ancestor HEAD FETCH_HEAD; then
+  echo "  FAIL  main did not take this branch ($(cat .git/vigilant-push-note 2>/dev/null)): release.yml would build without it."
+  exit 1
+fi
+SHIP_OK=1
 echo ""
 echo "  ==    gated and pushed. Next: trigger release.yml, confirm green, then"
 echo "        tools/record-release.sh v$VERSION_NAME $VERSION_CODE \"$NOTE\""
