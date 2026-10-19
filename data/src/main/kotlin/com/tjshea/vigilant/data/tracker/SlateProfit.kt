@@ -141,9 +141,9 @@ object SlateProfit {
     /** The open bets on games after today: money at stake that no day up to today shows. */
     fun later(book: Book, now: Long): Day? {
         val t = today(now)
-        val ahead = book.days.filter { it.date.isAfter(t) }
+        val ahead = book.days.filter { it.date.isAfter(t) && it.open > 0 }
         if (ahead.isEmpty()) return null
-        return Day(ahead.last().date, ahead.first().firstStartMs, ahead.last().endMs, 0.0, ahead.sumOf { it.staked }, 0, ahead.sumOf { it.open }, 0, 0)
+        return Day(ahead.last().date, ahead.first().firstStartMs, ahead.last().endMs, 0.0, ahead.sumOf { it.openStaked }, 0, ahead.sumOf { it.open }, 0, 0)
     }
 
     /**
