@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-413cf302-mvy06f",
- "head": "6d3dbbdb459007f9938f2c89d9c336c814756bfd",
+ "head": "74f7f5c20596476d3e4d5f1c9c8eaf2ac4a2eff8",
  "since": 1792435352,
- "beat": 1792435907,
- "beatIso": "2026-10-19T18:51:47Z",
- "done": "merged mirage's CH24a (watchdog unreadable-branch fix) into my branch, selftests ok; SC1 scanner rescan audit started",
- "next": "land on main, restart keeper, then SC1a audit"
+ "beat": 1792436026,
+ "beatIso": "2026-10-19T18:53:46Z",
+ "done": "added delete-stale-branches.yml (manual one-shot, 71 listed session branches)",
+ "next": "land on main, dispatch the workflow, check result; then finish SC1 settle-debounce test run"
 }
