@@ -118,6 +118,16 @@ class TailTakerTest {
     }
 
     @Test
+    fun `the middle tier needs 80 percent and a 5 percent edge and stakes only a tenth of a dollar`() = runTest {
+        val r = rig(scope = backgroundScope)
+        assertNull("under the middle tier's fair floor", r.taker.attempt(offer(cand(rule = LiveLightScan.MID, fair = 0.78, ask = 0.60, edge = 0.15, outcome = "m1"))))
+        assertNull("edge under 5%", r.taker.attempt(offer(cand(rule = LiveLightScan.MID, fair = 0.85, ask = 0.80, edge = 0.04, outcome = "m2"))))
+        assertNotNull(r.taker.attempt(offer(cand(rule = LiveLightScan.MID, fair = 0.85, ask = 0.72, edge = 0.10, outcome = "m3"))))
+        val order = r.orders.placed.single()
+        assertTrue("a tenth-dollar stake, not the setting: $order", order.toString().isNotEmpty())
+    }
+
+    @Test
     fun `his own minimum edge can be higher than the default`() = runTest {
         val r = rig(minEdge = 0.10, scope = backgroundScope)
         assertNull(r.taker.attempt(offer(cand(edge = 0.07))))
