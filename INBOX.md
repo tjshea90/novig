@@ -611,3 +611,12 @@ Tell the other Claude accounts to stand down and force do this request
 ```
 I don't understand the issues. Just fix it logically and make sure nothing breaks and no damage is done. 
 ```
+
+## 2026-10-19T06:20:33Z
+```
+The chat with Claude feature inside vigilant app is broken and extremely glitchy. It misses some of my messages or ignores them, it sends me stale messages, sometimes it sends me back to back messages that are almost identical, sometimes it doesn't get my attachments. It must be totally rebuilt, probably from scratch. 
+
+The chat should do this: 
+
+It was too hard to have three different Claude accounts answer the chat. Assign just one account to the chat which never changes. That account will always watch and answer the chat. The other Claude accounts will not see the chat at all. Get rid of the lease system or significantly overhaul it. I should never see a lease error again. Any claude account can make changes to this repo, as long as they coordinate with each other and don't double work or break anything. Figure out how to make the chat function stable and work like a real chat without the problems I mentioned. Figure out a smart way to have the three Claude accounts coordinate and not get jumbled up with different branches and cause problems
+```
