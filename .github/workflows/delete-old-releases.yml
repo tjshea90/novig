@@ -1,0 +1,37 @@
+name: delete-old-releases
+# Manual, one-shot (Tj, 2026-10-19: "delete all old and unnecessary releases in one command"). Deletes OLD APK releases only: tags vX.Y.Z, keeping the newest `keep` (default 3, so the
+# app's updater and a rollback still have builds) and v0.17.0 (Vigilant MGM's last APK, frozen). The git tags are kept. NEVER touches the data releases (cloud-archive-*, lab-archive-*,
+# propline-*, engine-grades, engine-dataset, sportmicro-probe ...): the name test below only matches vMAJOR.MINOR.PATCH. dry_run=true lists what it would delete.
+on:
+  workflow_dispatch:
+    inputs:
+      keep:
+        description: "Newest APK releases to keep"
+        default: "3"
+      dry_run:
+        description: "true = only list"
+        default: "false"
+permissions:
+  contents: write
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old APK releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          KEEP: ${{ inputs.keep }}
+          DRY: ${{ inputs.dry_run }}
+        run: |
+          set -eu
+          gh api --paginate "repos/$REPO/releases?per_page=100" --jq '.[] | select(.draft==false) | .tag_name' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -t. -k1.2,1n -k2,2n -k3,3n -r > apk-tags.txt
+          echo "APK releases found: $(wc -l < apk-tags.txt)"
+          n=0; del=0
+          while read -r t; do
+            n=$((n+1))
+            if [ "$n" -le "$KEEP" ] || [ "$t" = "v0.17.0" ]; then echo "keep $t"; continue; fi
+            if [ "$DRY" = "true" ]; then echo "would delete $t"; else gh release delete "$t" --repo "$REPO" --yes && echo "deleted $t" && del=$((del+1)); fi
+          done < apk-tags.txt
+          echo "deleted=$del"
