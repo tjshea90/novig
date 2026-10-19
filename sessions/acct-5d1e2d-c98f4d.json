@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "2e8188cbc55a9a36ffad5002c63632058b801975",
+ "head": "a98873253c54344ff2ceb9a8d5c85baa7abf9547",
  "since": 1792393152,
- "beat": 1792395867,
- "beatIso": "2026-10-19T07:44:27Z",
+ "beat": 1792396051,
+ "beatIso": "2026-10-19T07:47:31Z",
  "done": "CR5 app chat written: data CloudChat v2 (model/thread/presence) + ChatSync (send queue with retries, attachments first, head poll + changed day folders, seat) + CloudClient headSha/listEntries/readText/createFile, tests CloudChatTest+ChatSyncTest (31/32 then fixed); app ChatPage rebuilt (reverse LazyColumn, delivery marks, retry/delete, quotes, links, typing, presence, menu), ChatAlerts, CloudLink loops, VM, badge CH16; chat_wake wakes for seen-unanswered; legacy replies mirrored",
  "next": "wait for :app ClaudeScreenUiTest + data tests (atest.log); fix; full bash tools/test.sh; docs CR7; ship CR8"
 }
