@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 /** The home: what the GitHub engine is doing, live from GitHub (state, readings, APIs, bets, bids, trends). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EngineScreen(state: com.tjshea.vigilant.app.UiState, onOpenCloudSettings: () -> Unit, onRefresh: () -> Unit = {}, onReset: () -> Unit = {}) {
+fun EngineScreen(state: com.tjshea.vigilant.app.UiState, onOpenCloudSettings: () -> Unit, onRefresh: () -> Unit = {}, onReset: () -> Unit = {}, onTestApi: (String) -> Unit = {}) {
     var section by rememberSaveable { mutableStateOf(EngineSection.OVERVIEW) }
     Scaffold(topBar = { TopAppBar(title = { Text("Engine", fontWeight = FontWeight.Bold) }) }) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
@@ -48,7 +48,7 @@ fun EngineScreen(state: com.tjshea.vigilant.app.UiState, onOpenCloudSettings: ()
                 // Each view keeps its own scroll, so switching views opens at the top.
                 val scroll = androidx.compose.runtime.key(section) { rememberScrollState() }
                 Column(Modifier.fillMaxSize().verticalScroll(scroll).padding(horizontal = 16.dp, vertical = 8.dp).testTag("engineScreen")) {
-                    DashboardPage(state, onOpenCloudSettings, section = section)
+                    DashboardPage(state, onOpenCloudSettings, section = section, onTestApi = onTestApi)
                     if (section == EngineSection.OVERVIEW) ResetEngineButton(onReset)
                 }
             }

@@ -48,14 +48,14 @@ private const val DASHBOARD_URL = "https://github.com/tjshea90/novig/blob/cloud-
  * [DashboardContent] takes plain values and no app objects, so it renders from sample data.
  */
 @Composable
-fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Modifier = Modifier, section: EngineSection? = null) {
+fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Modifier = Modifier, section: EngineSection? = null, onTestApi: (String) -> Unit = {}) {
     val now = rememberNow(1_000)
     val meters = remember(state.usage, state.cloudUsage, state.settings.sgoPro, state.settings.oddsPapi, state.settings.unabated, state.settings.gates.useBoltOdds, state.settings.oddsPapiFree, now / 30_000L) {
         meterViews(state, now)
     }
     val u = state.cloudUi
     val board = remember(u.trades, u.desk, u.status, now / 15_000L) { EngineBoard.of(u.trades, u.desk, u.status, now) }
-    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, liveDirectAtMs = u.liveDirectAtMs, hoursOn = state.settings.cloudHours, section = section, refreshedAtMs = u.refreshedAtMs, refreshNote = u.refreshNote)
+    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, liveDirectAtMs = u.liveDirectAtMs, hoursOn = state.settings.cloudHours, section = section, refreshedAtMs = u.refreshedAtMs, refreshNote = u.refreshNote, testing = state.apiBusy, checks = state.apiChecks, onTestApi = onTestApi)
 }
 
 /**
@@ -84,6 +84,10 @@ fun DashboardContent(
     /** When the last pull to refresh read everything (0 = never) and what it said. */
     refreshedAtMs: Long = 0L,
     refreshNote: String = "",
+    /** ApiEntry names being tested now, the last Test now answers by name, and the Test now tap (by policy id). */
+    testing: Set<String> = emptySet(),
+    checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>> = emptyMap(),
+    onTestApi: (String) -> Unit = {},
 ) {
     val uri = LocalUriHandler.current
     fun show(x: EngineSection) = section == null || section == x
@@ -94,7 +98,7 @@ fun DashboardContent(
         if (show(EngineSection.MONEY)) {
             if (board != null) EngineMoneyCard(board, status, now) else if (section != null) Text("The engine's bets and bids appear here once it has placed any.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        if (show(EngineSection.APIS)) ApisSection(status, meters, now)
+        if (show(EngineSection.APIS)) ApisSection(status, meters, now, testing, checks, onTestApi)
         if (show(EngineSection.TRENDS)) TrendsSection(history)
         if (show(EngineSection.OVERVIEW)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -141,7 +145,7 @@ private fun OverviewSection(status: CloudStatus?, now: Long, hoursOn: Boolean, l
 
 /** APIs: the engine's API manager (which feed does what) and every API's health and usage meter. */
 @Composable
-private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: Long) {
+private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: Long, testing: Set<String>, checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>>, onTestApi: (String) -> Unit) {
     val running = DashboardModel.running(status, now)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         status?.apiCards?.takeIf { it.isNotEmpty() }?.let { cs ->
@@ -165,7 +169,7 @@ private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: L
             meters.filter { it.keys.isNotEmpty() || !it.policy.keyed || health.containsKey(it.policy.id) }.sortedBy { severity(health[it.policy.id]) }
         }
         if (cards.isEmpty()) Text("No API has answered yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        cards.forEach { v -> ApiCard(v, health[v.policy.id], DashboardModel.apiDetail(status, v.policy.id), now) }
+        cards.forEach { v -> ApiCard(v, health[v.policy.id], DashboardModel.apiDetail(status, v.policy.id), now, checks, testing, onTestApi) }
         if (health.isEmpty() && status != null) {
             Text("Which APIs worked on the last scan appears after the engine's next scan (it has to finish one on the new version).", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -317,7 +321,9 @@ private fun SectionHeader(text: String) {
 
 /** One API: health chip, name, what the last scan got from it, and its usage meter (the same ledger as Settings › APIs, with the engine's calls in it). */
 @Composable
-private fun ApiCard(v: ProviderView, health: CloudDashboard.Health?, detail: String, now: Long) {
+private fun ApiCard(v: ProviderView, health: CloudDashboard.Health?, detail: String, now: Long, checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>> = emptyMap(), testing: Set<String> = emptySet(), onTestApi: (String) -> Unit = {}) {
+    var open by androidx.compose.runtime.saveable.rememberSaveable(v.policy.id) { androidx.compose.runtime.mutableStateOf(false) }
+    val entry = remember(v.policy.id) { com.tjshea.vigilant.app.ApiEntry.entries.firstOrNull { it.policy?.id == v.policy.id } }
     val tone = when (health) {
         CloudDashboard.Health.WORKING -> Tone.GOOD
         CloudDashboard.Health.FAILING -> Tone.BAD
@@ -325,14 +331,22 @@ private fun ApiCard(v: ProviderView, health: CloudDashboard.Health?, detail: Str
         else -> Tone.NEUTRAL
     }
     val c = toneColor(tone)
-    Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().testTag("dashboardApi-${v.policy.id}")) {
+    // The light (Tj, 2026-10-19, CH23): neon green = answering well now, amber = a problem (tap the card for the words), grey = off or not judged.
+    val light = when (tone) { Tone.GOOD -> Color(0xFF39FF14); Tone.WARN, Tone.BAD -> Color(0xFFFFB300); Tone.NEUTRAL -> Color(0xFF6B7280) }
+    Surface(onClick = { open = !open }, color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().testTag("dashboardApi-${v.policy.id}")) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Box(Modifier.size(10.dp).background(c, CircleShape))
+                Box(Modifier.size(14.dp).background(light, CircleShape).testTag("apiLight-${v.policy.id}"))
                 Text(v.policy.displayName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(health?.label?.substringAfter(' ') ?: if (v.policy.keyed && v.keys.isEmpty()) "no key" else "—", style = MaterialTheme.typography.labelMedium, color = c)
             }
-            if (detail.isNotBlank()) Text(detail, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (detail.isNotBlank() && (open || tone != Tone.WARN && tone != Tone.BAD)) Text(detail, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            else if (detail.isNotBlank()) Text("Tap for the error", style = MaterialTheme.typography.labelSmall, color = light)
+            if (open && entry != null) {
+                val last = checks[entry.name]
+                last?.forEach { ch -> Text((if (ch.ok) "✓ " else "✗ ") + ch.masked + ": " + ch.message, style = MaterialTheme.typography.labelSmall, color = if (ch.ok) Edge.colors.positive else Edge.colors.negative) }
+                OutlinedButton(onClick = { onTestApi(v.policy.id) }, enabled = entry.name !in testing, modifier = Modifier.testTag("apiTestNow-${v.policy.id}")) { Text(if (entry.name in testing) "Testing…" else "Test now") }
+            }
             val allowance = v.totalAllowance
             val left = v.totalLeft
             if (v.spent) {
