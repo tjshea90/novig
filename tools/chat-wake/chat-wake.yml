@@ -1,10 +1,11 @@
-# chat-wake.yml - lives on the `cloud-config` branch (a push workflow runs from the pushed branch's own files), source copy: tools/chat-wake/ on main.
-# When Tj's app chat writes a file under chat/, wait 40 s; if no live Claude session has acked or answered it, wake the on-duty account's routine (API trigger) and say so in the chat.
-# Free (public repo), zero Claude usage while nobody writes. TCL70, Tj 2026-10-17. Logic and tests: tools/chat_wake.py on main.
+# chat-wake.yml - lives on the `chat` branch (a push workflow runs from the pushed branch's own files); this is its source copy on main (tools/chat-wake/), put there by
+# `python3 -I tools/chat.py deploy-workflow`. A copy also sits on `cloud-config` for the old app until Tj's phone has the new one; it runs the same script from main.
+# When a message lands (msgs/**), wait 25 s; if no Claude session showed it (receipt) and nobody holds the chat seat, wake ONLY the chat account (research/coordination/chat.json).
+# Free (public repo), zero Claude usage while nobody writes. Logic and tests: tools/chat_wake.py on main (CR, Tj 2026-10-19).
 name: Chat wake
 on:
   push:
-    paths: ['chat/**']
+    paths: ['msgs/**', 'chat/**']
   workflow_dispatch:
 concurrency:
   group: chat-wake
@@ -14,22 +15,16 @@ permissions:
 jobs:
   wake:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 1
-      - name: Wake the on-duty Claude if nobody answers
+      - name: Wake the chat account if nobody is answering
         env:
-          CLAUDE_FIRE_7542BF_URL: ${{ secrets.CLAUDE_FIRE_7542BF_URL }}
-          CLAUDE_FIRE_7542BF_TOKEN: ${{ secrets.CLAUDE_FIRE_7542BF_TOKEN }}
-          CLAUDE_FIRE_27A37E_URL: ${{ secrets.CLAUDE_FIRE_27A37E_URL }}
-          CLAUDE_FIRE_27A37E_TOKEN: ${{ secrets.CLAUDE_FIRE_27A37E_TOKEN }}
           CLAUDE_FIRE_5D1E2D_URL: ${{ secrets.CLAUDE_FIRE_5D1E2D_URL }}
           CLAUDE_FIRE_5D1E2D_TOKEN: ${{ secrets.CLAUDE_FIRE_5D1E2D_TOKEN }}
         run: |
-          [ "${{ github.event_name }}" = workflow_dispatch ] && export WAKE_TEST=1
-          git config user.name "Claude"; git config user.email "noreply@anthropic.com"
-          git fetch -q origin claude-coord:refs/remotes/origin/claude-coord || true
+          git config --global user.name "Claude"; git config --global user.email "noreply@anthropic.com"
           python3 -I tools/chat_wake.py run
