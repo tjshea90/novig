@@ -1,13 +1,13 @@
-# CHECKPOINT 3720 — read me first, then TASKS.md
+# CHECKPOINT 3721 — read me first, then TASKS.md
 
-**Written:** 2026-10-19T03:48:54Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-gntx94` · **builds on:** `4b1177512` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T03:52:49Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-0if0t9` · **builds on:** `2d89dab99` (this checkpoint is the commit after it)
 
 ## Just done
-v1.0.3 released
+CH16 badge note queued
 
 ## Do this next
-CH5a/c/d, CH14
+CH5a/c/d, CH14, CH16 next release
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ CH5a/c/d, CH14
 
 ## Last ten checkpoints
 ```
+  2d89dab99 ckpt 3720: v1.0.3 released
   804f7f1f8 ckpt 3719: pre-release: v1.0.3: Live light middle tier (model 80-89% sure, 5% edge, re
   47ec8bfb6 ckpt 3718: pre-ship: v1.0.3: Live light middle tier (model 80-89% sure, 5% edge, real 
   1f2323142 ckpt 3717: CH10 resolved, CH12 needs diagnostics file, CH13=CH7 done
@@ -26,5 +27,4 @@ CH5a/c/d, CH14
   9b5aaa91c ckpt 3713: CH14 queued
   229cb7142 ckpt 3712: CH11-13 queued, replies sent
   a538777e4 ckpt 3711: answered old chat msgs; CH10 queued
-  ed8c7d614 ckpt 3710: CH9 SX audit: names match; props not on SX; next check ML mainLine skip + s
 ```

@@ -5859,3 +5859,4 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] CH15 (t1792379314789) no soccer usage: verified none (leagues list has no soccer; feeds follow picked leagues).
 
 - [x] CH16 (t1792379676035) live middle tier 80-89% sure, 5% edge, $0.10 real: shipped v1.0.3 (TailTakerTest). Remaining: CH5a score-event trigger, CH5c, CH5d, CH14.
+- [ ] CH16 (t1792381937478, NOT NOW, next release) "only have the red number icon on top of the Claude mail tab for new Claude CHAT responses and as soon as I view the messages the red number goes away. right now it is counting Claude messages in the separate message tab. don't count those" (badge = unread chat replies only; clear on viewing chat; Messages tab items not counted).
