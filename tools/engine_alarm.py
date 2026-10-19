@@ -19,6 +19,7 @@ step and the watchdog each start a keeper when none runs, and the keeper starts 
 import datetime
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -239,8 +240,9 @@ def keep(clock=lambda: int(time.time() * 1000), sleep=time.sleep):
             continue
         action, wait, why = step(now, started, cfg, status, stop)
         line = "%s: %s" % (action, why)
-        if action != "sleep" or line.split(" (")[0] != last.split(" (")[0]:
-            print("keeper %s %s" % (datetime.datetime.now(ET).strftime("%H:%M:%S"), line), flush=True)
+        # One line when the state changes ("check: no heartbeat for 4 min" and "... 6 min" are one state), not one every 2 minutes.
+        if re.sub(r"\d+", "#", line) != re.sub(r"\d+", "#", last):
+            print("keeper %s %s" % (datetime.datetime.fromtimestamp(now / 1000, ET).strftime("%a %H:%M:%S"), line), flush=True)
         last = line
         if action == "stop":
             return 0
@@ -334,13 +336,17 @@ def selftest():
             clock[0] += int(sec * 1000)
             if clock[0] > ms(2026, 10, 19, 12, 30):
                 beat["heartbeatMs"] = ms(2026, 10, 19, 12, 30)   # the engine went quiet at 12:30
-        assert keep(clock=lambda: clock[0], sleep=sleep) == 0
+        import contextlib, io
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            assert keep(clock=lambda: clock[0], sleep=sleep) == 0
+        assert out.getvalue().count("check: no heartbeat") <= 3, out.getvalue()   # one line per state, not one per look
         assert calls["dispatch"] == [ALARM_WF], calls          # handed over once, after 340 minutes
         assert calls["check"] > 0                              # the silent engine got the watchdog's look
         assert clock[0] - ms(2026, 10, 19, 12, 0) >= MAX_WAIT_MS
         calls["dispatch"].clear(); clock[0] = ms(2026, 10, 19, 12, 0); beat["heartbeatMs"] = clock[0]
         newer.append({"id": 200, "status": "in_progress"})
-        assert keep(clock=lambda: clock[0], sleep=sleep) == 0 and calls["dispatch"] == []      # a newer keeper: this one stops at once
+        with contextlib.redirect_stdout(io.StringIO()):
+            assert keep(clock=lambda: clock[0], sleep=sleep) == 0 and calls["dispatch"] == []      # a newer keeper: this one stops at once
     finally:
         g.update(saved)
         sys.modules.pop("engine_watchdog", None)
