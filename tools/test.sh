@@ -62,4 +62,15 @@ RC=$?
 SECS=$(( $(date +%s) - START ))
 
 python3 tools/gradle_summary.py "$LOG" "$RC" "$SECS"
+# A green run lets these modules' code land on main (tools/landing.py; CR, Tj 2026-10-19: "don't ... break anything"). Only what was compiled and tested here counts.
+if [ "$RC" -eq 0 ] && [ -f tools/landing.py ]; then
+  MODS=""
+  for a in "${ARGS[@]}"; do
+    case "$a" in
+      test|build|check) MODS="all" ;;
+      :*:*) m="${a#:}"; m="${m%%:*}"; [ "$MODS" != "all" ] && MODS="$MODS $m" ;;
+    esac
+  done
+  [ -n "$MODS" ] && python3 -I tools/landing.py mark code $MODS >/dev/null 2>&1 && echo "  land  main may take: ${MODS# }"
+fi
 exit "$RC"

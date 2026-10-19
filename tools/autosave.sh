@@ -55,7 +55,31 @@ say() {
 # unambiguously dead, not just slow, so it's safe to clear.
 find .git -name '*.lock' -mmin +2 -delete 2>/dev/null || true
 
+# AN UNFINISHED MERGE IS NEVER COMMITTED (CR, Tj 2026-10-19). On 10-19 a merge with conflict markers inside tools/chat_watch.sh was autosaved and reached main, and every
+# chat watcher started from it was broken. While a merge has unresolved files, or a change adds <<<<<<< / >>>>>>> lines, nothing is committed (the files are safe on
+# disk) and the session is told once what to finish. research/uploads/ (files Tj sent) is exempt: they are his data, not code.
+UNMERGED="$(git diff --name-only --diff-filter=U 2>/dev/null | head -6 | tr '\n' ' ')"
+if [ -n "$UNMERGED" ]; then
+  KEY="unmerged:$UNMERGED"
+  if [ "$(cat .git/vigilant-autosave-held 2>/dev/null)" != "$KEY" ]; then
+    echo "$KEY" > .git/vigilant-autosave-held
+    say "AUTOSAVE PAUSED in $(basename "$D"): a merge is unfinished (conflicts in: $UNMERGED). Fix those files, then git add them and git commit (or git merge --abort). Nothing is lost; autosave resumes once the merge is finished."
+  fi
+  exit 0
+fi
 git add -A >/dev/null 2>&1
+MARKED="$(git diff --cached -U0 -- . ':(exclude)research/uploads' 2>/dev/null | grep -E '^\+(<<<<<<< |>>>>>>> )' -B0 | head -1)"
+if [ -n "$MARKED" ]; then
+  FILES="$(git diff --cached --name-only -G '^(<<<<<<< |>>>>>>> )' -- . ':(exclude)research/uploads' 2>/dev/null | head -6 | tr '\n' ' ')"
+  git reset -q >/dev/null 2>&1
+  KEY="markers:$FILES"
+  if [ "$(cat .git/vigilant-autosave-held 2>/dev/null)" != "$KEY" ]; then
+    echo "$KEY" > .git/vigilant-autosave-held
+    say "AUTOSAVE PAUSED in $(basename "$D"): conflict markers (<<<<<<< / >>>>>>>) are in: $FILES. Resolve them; autosave resumes by itself once they are gone."
+  fi
+  exit 0
+fi
+rm -f .git/vigilant-autosave-held 2>/dev/null
 
 if ! git diff --cached --quiet 2>/dev/null; then
   if bash tools/secretscan.sh >.git/autosave-scan.log 2>&1; then
@@ -78,7 +102,14 @@ fi
 # "optimising" it — the obvious version of this check fails silently on a
 # checkout with no remote-tracking ref, which is the one failure this whole
 # file exists to stop.
-if ! bash tools/push.sh >/dev/null 2>&1; then
+PUSH_OK=1
+bash tools/push.sh >/dev/null 2>&1 || PUSH_OK=0
+# What push.sh wants the session to know (main waits for a check, main conflicts with this branch): shown once per distinct note.
+if [ -f .git/vigilant-push-note ] && ! cmp -s .git/vigilant-push-note .git/vigilant-push-note.shown 2>/dev/null; then
+  cp .git/vigilant-push-note .git/vigilant-push-note.shown 2>/dev/null
+  say "$(cat .git/vigilant-push-note)"
+fi
+if [ "$PUSH_OK" -eq 0 ]; then
   # A FAILED PUSH MUST NEVER BE SILENT.
   # Committing locally and failing to push looks identical to working: the
   # tree is clean, CHECKPOINT.md updates, every status line says saved. But

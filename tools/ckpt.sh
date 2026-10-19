@@ -73,6 +73,11 @@ for T in tools/test_*.js tools/test_*.sh tools/test_*.py; do
   if "$RUNNER" "$T" >/dev/null 2>&1; then PASS=$((PASS+1)); else FAIL=$((FAIL+1)); REDS="$REDS $(basename "$T")"; fi
 done
 
+# Green fast checks let this exact tools/ and .github/ content land on main (tools/landing.py; CR, Tj 2026-10-19).
+if [ "$RAN_ANY" -eq 1 ] && [ "$FAIL" -eq 0 ] && [ -f tools/landing.py ]; then
+  python3 -I tools/landing.py mark tools >/dev/null 2>&1 || true
+fi
+
 if [ "$RAN_ANY" -eq 0 ]; then
   TESTS="no test suite configured yet"
 elif [ "$FAIL" -eq 0 ]; then
@@ -195,8 +200,11 @@ fi
 # fail the checkpoint (the commit is made either way, and autosave.sh
 # retries the push after the next edit). push.sh also fast-forwards `main`
 # to match, regardless of which branch this session is on.
-if bash tools/push.sh; then
+# The session's own line on claude-coord carries the same words, so the other accounts' briefings say what this session did and does next (CR, 2026-10-19).
+[ -f tools/coord.py ] && [ -z "${COORD_OFF:-}" ] && timeout 40 python3 -I tools/coord.py renew --done "$DID" --next "${NEXT:-see TASKS.md}" >/dev/null 2>&1
+if PUSH_SYNC_NOW=1 bash tools/push.sh; then
   echo "  pushed to GitHub — a new session resumes from here"
+  [ -f .git/vigilant-push-note ] && echo "  NOTE  $(cat .git/vigilant-push-note)"
 else
   echo "  WARN  COULD NOT PUSH. This checkpoint exists only in this container,"
   echo "        and containers do not survive the session. Retry by hand:"
