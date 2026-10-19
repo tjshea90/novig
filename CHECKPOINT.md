@@ -1,13 +1,13 @@
-# CHECKPOINT 3735 — read me first, then TASKS.md
+# CHECKPOINT 3736 — read me first, then TASKS.md
 
-**Written:** 2026-10-19T06:25:23Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-2df6ce48-pkrh5v` · **builds on:** `1e84aecc2` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T06:40:37Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-2df6ce48-pkrh5v` · **builds on:** `e41f465fa` (this checkpoint is the commit after it)
 
 ## Just done
-CR written into TASKS.md (Tj: chat rebuild, one chat account, no lease)
+CR1+CR2: diagnosis and design written (research/coordination/CHAT_REBUILD_2026-10-19.md)
 
 ## Do this next
-CR1 diagnose chat symptoms; post board note so other sessions keep off the chat/coord tools
+CR3 tools/chat.py (watch/reply/say/status/seat) + selftest; then coord.py v2
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ CR1 diagnose chat symptoms; post board note so other sessions keep off the chat/
 
 ## Last ten checkpoints
 ```
+  8606d13d1 ckpt 3735: CR written into TASKS.md (Tj: chat rebuild, one chat account, no lease)
   6679d493a ckpt 3734: merged with session B; tennis+P/L on staked ready
   1ee438c0a ckpt 3730: tennis live ON, P/L on staked, chat one-reply guard
   1f9d326b9 ckpt 3733: fix merged conflict in tell_tj
@@ -26,7 +27,6 @@ CR1 diagnose chat symptoms; post board note so other sessions keep off the chat/
   c010057a5 ckpt 3730: CH18b stale-reply guard
   4bc23a1ca ckpt 3729: CH19 answered
   55c39c7e9 ckpt 3728: CH18 chat presence heartbeat + wake fix
-  b0b14ad71 ckpt 3728: CH18 chat cleanup, PinnWire on, CH19/20 queued
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the
