@@ -343,3 +343,4 @@ day that changes.
 | v1.0.2 | code 342 | 2026-10-19T02:13Z | v1.0.2: The Odds API stays on one key until it is spent, then the next
 | v1.0.3 | code 343 | 2026-10-19T03:48Z | v1.0.3: Live light middle tier (model 80-89% sure, 5% edge, real money at 10-cent stakes)
 | v1.0.4 | code 344 | 2026-10-19T04:12Z | v1.0.4: live second opinion from SX Bet's exchange (CH5c), score-event paper record (CH5a)
+| v1.0.5 | code 345 | 2026-10-19T15:15Z | v1.0.5: the chat with Claude rebuilt from scratch (one account answers, messages say Sending/Sent/Seen/Answered, retry, attachments kept, quotes, online/waking line); the Claude tab's red number counts only chat replies; live-bid tests follow the tennis-on default
