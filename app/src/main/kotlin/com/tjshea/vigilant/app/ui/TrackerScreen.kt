@@ -57,6 +57,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -147,6 +148,9 @@ fun TrackerScreen(
     /** Pull to refresh (TCL122-3): grades and syncs every bet now and reads the engine's orders; [refreshing] holds the arrow until that is done. */
     onRefresh: () -> Unit = {},
     refreshing: Boolean = false,
+    /** The wallet's all-time figure for the profit card, and a read of it (cached for minutes) asked each minute the Stats are on screen (PL). */
+    walletMoney: WalletMoneyUi = WalletMoneyUi(),
+    onWalletMoney: () -> Unit = {},
 ) {
     val now = rememberNow(60_000)
     var view by rememberSaveable { mutableStateOf(initialView) }
@@ -172,6 +176,8 @@ fun TrackerScreen(
     var editPrice by remember { mutableStateOf<TrackedBet?>(null) }
     // Results of finished games from their final scores, each time the tab is opened (no network when nothing is due).
     LaunchedEffect(Unit) { onShown() }
+    val wantMoney by rememberUpdatedState(onWalletMoney)
+    LaunchedEffect(view, now / 60_000L) { if (view == TrackerView.STATS) wantMoney() }
 
     // "Novig only": every open bet's EV and every closing line from Novig's own prices ([NovigNow.view]); the rest of the screen is unchanged.
     val novigOnly = state.settings.trackerNovigOnly
