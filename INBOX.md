@@ -677,3 +677,8 @@ Is there a quick command I can send you or to GitHub to delete all the unnecessa
 ```
 do the workflow
 ```
+
+## 2026-10-19T18:54:22Z
+```
+Can you also delete all old and unnecessary releases in one command
+```
