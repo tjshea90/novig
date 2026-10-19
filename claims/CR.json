@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "CR",
+ "holder": "acct-5d1e2d/c98f4d",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "c98f4d",
+ "note": "chat rebuild + no-lease coordination (app side next)",
+ "since": 1792393815,
+ "beat": 1792393815
+}
