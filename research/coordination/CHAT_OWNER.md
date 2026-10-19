@@ -1,3 +1,5 @@
+> **SUPERSEDED 2026-10-19 (CR).** Tj: "Assign just one account to the chat which never changes ... Get rid of the lease system". The chat now belongs to acct-5d1e2d (mirage) alone, one session at a time, on its own `chat` branch: read `CHAT.md` (rules) and `CHAT_REBUILD_2026-10-19.md` (why). Nothing below is in force; it is kept as history.
+
 # Who answers Tj's chat: the account scheduled at that time (Tj, 2026-10-16, permanent, all three accounts)
 
 Tj (chat t1792177184373): "if another Claude session is scheduled to start, this Claude account hands over the chat to that other account and this account stands down until it is scheduled to start again ... make this a rule for every claude account. I should chat with the account scheduled at that time, and if it is almost time for a new account to start, the current claude account hands over the chat"

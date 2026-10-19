@@ -1,3 +1,5 @@
+> **SUPERSEDED 2026-10-19 (CR).** Tj: "Assign just one account to the chat which never changes ... Get rid of the lease system". The chat now belongs to acct-5d1e2d (mirage) alone, one session at a time, on its own `chat` branch: read `CHAT.md` (rules) and `CHAT_REBUILD_2026-10-19.md` (why). Nothing below is in force; it is kept as history.
+
 # Chat wake: Tj's messages are seen within seconds, with no polling and no wasted usage (TCL70, Tj 2026-10-17, permanent)
 
 **Why:** 2026-10-16 19:14 ET to 22:50 ET nobody answered the app chat: the 19:20 account's routine never ran, a stale interactive lease blocked a new session, and nothing woke anyone. Tj (chat t1792206180417): "my messages are seen within 30 seconds and responded to ... without usage being wasted ... maybe GitHub has a feature for this".
