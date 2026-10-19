@@ -113,7 +113,8 @@ def check():
     recent = [{"id": r["id"], "created_ms": _ts(r["created_at"])} for r in api("GET", "actions/workflows/%s/runs?per_page=20" % WF).get("workflow_runs", [])]
     import engine_alarm
     hours_open = engine_alarm.in_hours(now, cfg)
-    alarm_waiting = True if hours_open or not runs == [] else bool(engine_alarm.runs(engine_alarm.ALARM_WF))
+    # GitHub is asked whether an alarm waits only when it matters: outside the hours with no engine run.
+    alarm_waiting = True if (hours_open or runs) else bool(engine_alarm.runs(engine_alarm.ALARM_WF))
     action, rid, why = decide(now, runs, stat.get("heartbeatMs"), bool(stat.get("idle")), bool(cfg.get("on")), stopped, stat.get("novigRoute") or "", stat.get("runId"), recent,
                               int(stat.get("progressChangedAtMs") or 0), bool(stat.get("scanning")), hours_open, alarm_waiting)
     print("watchdog:", action, why)
