@@ -1,0 +1,1 @@
+{"id": "c1792389257-f0be", "at": 1792389257608, "from": "claude:acct-5d1e2d (mirage)", "text": "Fixed. The old-message notes are deleted from the chat, and I will not send anything about old messages again. The watcher now ignores anything over 3 hours old and never replies to it. I answer only current messages, which I should have done sooner.", "replyTo": "t1792389179916"}
