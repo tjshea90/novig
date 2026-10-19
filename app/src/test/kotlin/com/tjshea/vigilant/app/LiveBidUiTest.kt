@@ -335,15 +335,17 @@ class LiveBidUiTest {
         assertEquals(25, ui().settings.liveBidQuality.level)
         assertEquals(com.tjshea.vigilant.data.livebid.LiveBidSlider.margin(25), ui().settings.liveBidQuality.margin, 1e-9)
         compose.onNodeWithTag("liveBidSliderLabel").performScrollTo().assertTextContains("Careful", substring = true)
+        // Tennis is on by default since CH20 (Tj, 2026-10-19: "put tennis in the live betting and bidding"): the switch flips it, and the slider keeps the choice.
+        val tennis = ui().settings.liveBidQuality.tennis
         tap("liveBidTennis")
         assertEquals(25, ui().settings.liveBidQuality.level)
-        assertEquals(true, ui().settings.liveBidQuality.tennis)
+        assertEquals(!tennis, ui().settings.liveBidQuality.tennis)
         tap("liveBidMargin-0")
         assertEquals(-1, ui().settings.liveBidQuality.level)
         compose.onNodeWithText("Custom rules", substring = true).performScrollTo().assertIsDisplayed()
         tap("liveBidStop-90")
         assertEquals(90, ui().settings.liveBidQuality.level)
-        assertEquals(true, ui().settings.liveBidQuality.tennis)
+        assertEquals(!tennis, ui().settings.liveBidQuality.tennis)
     }
 
     @Test
@@ -363,7 +365,8 @@ class LiveBidUiTest {
         val ui = show(state())
         tap("liveBidNeverLead"); assertTrue(ui().settings.liveBidQuality.neverLead)
         tap("liveBidBothSides"); assertTrue(ui().settings.liveBidQuality.bothSides)
-        tap("liveBidTennis"); assertTrue(ui().settings.liveBidQuality.tennis)
+        assertTrue("tennis is on by default (CH20)", ui().settings.liveBidQuality.tennis)
+        tap("liveBidTennis"); assertFalse(ui().settings.liveBidQuality.tennis)
         tap("liveBidMoneyline"); assertFalse(ui().settings.liveBidQuality.moneyline)
         tap("liveBidPullScore"); assertFalse(ui().settings.liveBidQuality.pullOnScore)
         tap("liveBidOverlap"); assertFalse(ui().settings.liveBidQuality.overlapRepost)
@@ -444,7 +447,8 @@ class LiveBidWhyTest {
 
     @Test fun `with games matched it says what the judge said no to, and points at tennis when that is why`() {
         val d = turning.copy(skips = mapOf("tennis is off" to 900, "Pinnacle limit too low" to 40))
-        val t = run(live, d)!!
+        // Tennis is on by default since CH20: this is a phone where Tj switched it off.
+        val t = run(live, d, s = on.copy(liveBidQuality = on.liveBidQuality.copy(tennis = false)))!!
         assertTrue(t, t.contains("15 live games matched") && t.contains("tennis is off ×900"))
         assertTrue(t, t.contains("Tennis switch"))
     }
