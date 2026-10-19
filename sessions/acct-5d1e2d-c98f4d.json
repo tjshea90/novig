@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "899fce0a2bc3d3542ce6624fdef4f3fed3ff9a9f",
+ "head": "f0c34da405dfe88a81c5d2fad8dfc69f872d0075",
  "since": 1792393152,
- "beat": 1792393990,
- "beatIso": "2026-10-19T07:13:10Z",
- "done": "CR3+CR6: new chat tools (chat.py, chat_wake.py v2) and coordination without the lease (coord.py v2, push.sh landing gate, landing.py); docs PROTOCOL/ONE_TEAM/CHAT.md/CLAUDE.md",
- "next": "land on main; chat.py init (chat + chat-seat branches); update this account's routine prompt; then CR5 app chat client + screen"
+ "beat": 1792394056,
+ "beatIso": "2026-10-19T07:14:16Z",
+ "done": "CR tools live on main (504eafa56); chat + chat-seat branches created by chat.py init (chat-wake.yml deployed on chat); ROUTINE_PROMPT.txt updated; board note posted; CR claimed; chat watcher running and holding the seat",
+ "next": "CR5 app chat client: data Chat2 model (store JSON of tools/chat.py) + ChatClient (outbox/retry, attachment-first, per-day poll with ETag, seat) + rebuilt ChatPage; then CR8 ship"
 }
