@@ -5853,3 +5853,5 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [ ] CH11 (t1792274217965) RESEARCH ONLY: Kalshi+Novig dual bets/bids and cross-platform arbitrage frequency -> research/ note.
 - [ ] CH12 (t1792274322683) 12 s errors on manual bets: trace BetPriority/RateGate.
 - [ ] CH13 (t1792375273415) Odds API: use for Pinnacle first when fresh.
+
+- [ ] CH14 (t1792168111699) confirm 2nd BoltOdds key works; verify all sockets used.
