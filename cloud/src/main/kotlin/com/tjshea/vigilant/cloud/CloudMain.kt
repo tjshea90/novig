@@ -80,6 +80,8 @@ fun main(args: Array<String>) = runBlocking {
     // The volume journal (Tj, 2026-10-15: balance the best +EV bets with a decent number of fills): every trading pass's counts and why bets were held back, so a session can tune volume against edge with data.
     val passJournal = DayJournal(File(out, "cloud"), "tradepass", com.tjshea.vigilant.data.cloud.CloudTrader.PassRow.serializer()) { it.atMs }
     // SX Bet live research (Tj, 2026-10-18, TCL111f1): every live-score push and a capped sample of odds pushes, raw, to sxlive-<day>.jsonl (archived with the other journals), so the live feed is built on real frames.
+    // Cross-exchange hedges seen on each finished scan, paper only (CH22b): crossx-<day>.jsonl, archived with the other journals.
+    val crossJournal = DayJournal(File(out, "cloud"), "crossx", com.tjshea.vigilant.data.cloud.CrossExchange.Row.serializer()) { it.atMs }
     val sxLive = DayJournal(File(out, "cloud"), "sxlive", com.tjshea.vigilant.data.sxbet.SxLiveRow.serializer()) { it.atMs }
     val sxOddsSeen = java.util.concurrent.atomic.AtomicInteger()
     sources.sxStream?.tap = { channel, data, at ->
@@ -364,7 +366,7 @@ fun main(args: Array<String>) = runBlocking {
         publishBids = { publisher.stageBids(it) },
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },
         // Every priced line within 2 points of break-even is logged, shown or not, with why it was not shown (Tj, 2026-10-16, TCL33).
-        onResult = { result, s -> latestPriced.set((result.opportunities + result.games.flatMap { it.outcomes }).filter { it.quote != null }.distinctBy { it.key }); outcomeIndex.set(HashMap<String, CloudTrader.OutcomeInfo>(result.opportunities.size * 2).also { m -> for (o in result.opportunities) m[o.outcome.outcomeId] = CloudTrader.OutcomeInfo(o.market.eventId, o.eventName, o.event.startsTs, o.marketLabel, o.selection) }); latestUnpriced.set(result.opportunities.filter { it.quote == null && it.ladder.isNotEmpty() && !it.event.isLive }.distinctBy { it.key }); study.observeVigilant(result, s.copy(scanStudy = true), wideFloor = WIDE_FLOOR); study.flush() },
+        onResult = { result, s -> runCatching { com.tjshea.vigilant.data.cloud.CrossExchange.find(result.opportunities + result.games.flatMap { it.outcomes }, System.currentTimeMillis()).forEach { crossJournal.append(it) } }; latestPriced.set((result.opportunities + result.games.flatMap { it.outcomes }).filter { it.quote != null }.distinctBy { it.key }); outcomeIndex.set(HashMap<String, CloudTrader.OutcomeInfo>(result.opportunities.size * 2).also { m -> for (o in result.opportunities) m[o.outcome.outcomeId] = CloudTrader.OutcomeInfo(o.market.eventId, o.eventName, o.event.startsTs, o.marketLabel, o.selection) }); latestUnpriced.set(result.opportunities.filter { it.quote == null && it.ladder.isNotEmpty() && !it.event.isLive }.distinctBy { it.key }); study.observeVigilant(result, s.copy(scanStudy = true), wideFloor = WIDE_FLOOR); study.flush() },
         trade = { rows, s, now ->
             val mode = s.gates.cloudTrading
             if (mode == CloudTradeMode.OFF) null else {
