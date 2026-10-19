@@ -52,6 +52,10 @@ object TailTradeLimits {
     /** Live light's score model calls a side decided at this chance (the tail rules keep [MIN_FAIR]). */
     const val MIN_FAIR_LIGHT = 0.90
 
+    /** The middle tier of Live light (80-90% sure) trades a tenth-dollar stake and needs [MIN_EDGE_MID] after the fee (Tj, 2026-10-19). */
+    const val MIN_FAIR_MID = 0.80
+    const val MIN_EDGE_MID = 0.05
+
     /** An edge this large is the model or the game state being wrong, not a gift: refused, unless a second live source agrees ([MAX_EDGE_CONFIRMED]). */
     const val MAX_EDGE = 0.30
 
