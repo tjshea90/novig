@@ -601,6 +601,7 @@ class KeyPool(
             when (val r = action(key)) {
                 is KeyAttemptResult.Success -> {
                     meter.recordCall(policy, key, r.cost ?: cost, r.remaining, r.used, r.resetAtMs)
+                    lastGood = key
                     return r.value
                 }
                 is KeyAttemptResult.RateLimited -> {
