@@ -1,13 +1,13 @@
-# CHECKPOINT 3716 — read me first, then TASKS.md
+# CHECKPOINT 3717 — read me first, then TASKS.md
 
-**Written:** 2026-10-19T03:09:29Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-gntx94` · **builds on:** `feb6fa2ee` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T03:11:28Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-gntx94` · **builds on:** `878fd09dd` (this checkpoint is the commit after it)
 
 ## Just done
-CH15 no soccer verified; CH9 soccer dropped
+CH10 resolved, CH12 needs diagnostics file, CH13=CH7 done
 
 ## Do this next
-CH9 (non-soccer), CH13, CH12, CH11, CH10
+CH5a/c/d paper-only live items
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ CH9 (non-soccer), CH13, CH12, CH11, CH10
 
 ## Last ten checkpoints
 ```
+  129a870c4 ckpt 3716: CH15 no soccer verified; CH9 soccer dropped
   feb6fa2ee ckpt 3715: chat session end: replies sent, work queued
   7b6619bca ckpt 3714: CH6 traced: no extra key usage
   9b5aaa91c ckpt 3713: CH14 queued
@@ -26,5 +27,7 @@ CH9 (non-soccer), CH13, CH12, CH11, CH10
   ed0c1aa71 ckpt 3709: CH8 sx/polymarket thin coverage answered
   6f707829e ckpt 3708: chat session end: v1.0.2 released
   34a8ad963 ckpt 3707: pre-release: v1.0.2: The Odds API stays on one key until it is spent, then 
-  74c2f4c03 ckpt 3706: pre-ship: v1.0.2: The Odds API stays on one key until it is spent, then the
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
