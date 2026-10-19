@@ -35,6 +35,9 @@ data class LiveLightRules(
 object LiveLightScan {
     const val RULE = "light"
 
+    /** The middle tier (Tj, 2026-10-19: "tweak the minimum percentages for more fills ... real money just at 10 cent stakes"): sides the model calls [TailTradeLimits.MIN_FAIR_MID] to 90% sure. */
+    const val MID = "light-mid"
+
     /** A league's usual full-game total (points, goals, runs): only ever used as a wide bound on what is still to come. */
     fun priorTotal(league: String): Double? = when (league) {
         "NFL" -> 45.0
