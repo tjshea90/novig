@@ -1872,6 +1872,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) { runCatching { c.wallet.fresh(maxAgeMs) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
     }
 
+    /** The Tracker's all-time money figure and why there is none (PL). */
+    val walletMoney get() = c.walletMoney.flow
+    val walletMoneyNote get() = c.walletMoney.note
+
+    fun refreshWalletMoney(maxAgeMs: Long = WalletMoney.FRESH_MS) {
+        viewModelScope.launch(Dispatchers.IO) { runCatching { c.walletMoney.refresh(maxAgeMs) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
+    }
+
     /** The bids the latest scan's lines would get, posting nothing (the tab opening). */
     fun makerPreview() {
         viewModelScope.launch(Dispatchers.IO) {
