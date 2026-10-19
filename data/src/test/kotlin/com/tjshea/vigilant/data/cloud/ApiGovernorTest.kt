@@ -26,6 +26,17 @@ class ApiGovernorTest {
     }
 
     @Test
+    fun `try again forgives only the one api: its rest and strikes go, others keep theirs`() {
+        val g = ApiGovernor()
+        repeat(3) { g.observe(silent, settings, it.toLong()) }
+        assertEquals(listOf("parlay"), g.resting(3).map { it.id })
+        assertTrue(g.retry(ApiToggles.policy("parlay")!!.id))
+        assertTrue(g.resting(3).isEmpty())
+        assertEquals("a second tap finds nothing to forgive", false, g.retry(ApiToggles.policy("parlay")!!.id))
+        assertEquals("the next three silent scans start from the first rest", 1, (g.observe(silent, settings, 10).let { repeat(2) { g.observe(silent, settings, 11L + it) }; g.observe(silent, settings, 20).single() } as ApiGovernor.Event.Rested).strikes)
+    }
+
+    @Test
     fun `the rest ends and the api is asked again, a good answer clears its record`() {
         val g = ApiGovernor()
         repeat(3) { g.observe(silent, settings, it.toLong()) }
