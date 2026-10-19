@@ -682,3 +682,8 @@ do the workflow
 ```
 Can you also delete all old and unnecessary releases in one command
 ```
+
+## 2026-10-19T18:56:05Z
+```
+Make sure the mirage account stands down when usage resets instead of doing what you already did
+```
