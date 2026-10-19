@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# test_coord.sh - proves tools/coord.py and the push.sh guard against a local bare repository standing in for GitHub. Two sessions (A, B) share it.
-#   bash tools/test_coord.sh        prints one line per check and "PASS n checks" or the failing check; exit 1 on a failure.
+# test_coord.sh - proves tools/coord.py (no lease: sessions, claims, the board, CR 2026-10-19) and tools/push.sh against a local bare repository standing in for GitHub.
+# Two sessions (A, B) share it.   bash tools/test_coord.sh   -> one line per check and "PASS n checks"; exit 1 on a failure.
 set -uo pipefail
 D="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
@@ -15,94 +15,108 @@ git init -q "$T/work"; git -C "$T/work" remote add origin "$T/origin.git"
 git -C "$T/work" -c user.name=t -c user.email=t@t commit -q --allow-empty -m init
 git -C "$T/work" push -q origin HEAD:refs/heads/main 2>/dev/null
 
-A() { COORD_REPO="$T/work" COORD_HOME="$T/a" COORD_LABEL=acctA COORD_CACHE_S=0 COORD_RENEW_S=0 python3 -I "$D/tools/coord.py" "$@"; }
-B() { COORD_REPO="$T/work" COORD_HOME="$T/b" COORD_LABEL=acctB COORD_CACHE_S=0 COORD_RENEW_S=0 python3 -I "$D/tools/coord.py" "$@"; }
+A() { COORD_REPO="$T/work" COORD_HOME="$T/a" COORD_LABEL=acctA COORD_RENEW_S=0 COORD_WAIT_POLL_S=1 python3 -I "$D/tools/coord.py" "$@"; }
+B() { COORD_REPO="$T/work" COORD_HOME="$T/b" COORD_LABEL=acctB COORD_RENEW_S=0 COORD_WAIT_POLL_S=1 python3 -I "$D/tools/coord.py" "$@"; }
 
-# 1. the first session takes the lease (and creates the branch)
-A acquire --kind interactive --task "test" >/dev/null 2>&1; expect "A takes a free lease" 0 $?
+# 1. no lease: both sessions check in, neither is refused, and each sees the other
+A acquire --kind interactive --task "chat rebuild" >/dev/null 2>&1; expect "A checks in" 0 $?
 git -C "$T/origin.git" rev-parse -q --verify refs/heads/claude-coord >/dev/null && ok "the claude-coord branch exists on the remote" || bad "no claude-coord branch"
-# 1b. a session that changes its label keeps its lease (found in live use: a renamed session was held back as "another session")
-COORD_REPO="$T/work" COORD_HOME="$T/a" COORD_LABEL=acctA-renamed COORD_CACHE_S=0 COORD_RENEW_S=0 python3 -I "$D/tools/coord.py" check >/dev/null 2>&1; expect "a renamed session is still itself" 0 $?
-# 2. a second session is turned away, and its push guard says no
-B acquire >/dev/null 2>&1; expect "B is refused while A holds the lease" 3 $?
-B check >/dev/null 2>&1; expect "B's push check says held back" 3 $?
+B acquire --kind routine --task "rotation" >/dev/null 2>&1; expect "B checks in too (nobody holds the repo any more)" 0 $?
 A check >/dev/null 2>&1; expect "A's push check says go" 0 $?
-A renew >/dev/null 2>&1; expect "A can renew" 0 $?
-# 3. two racing takes: only one wins (release first so both see a free lease)
-A release >/dev/null 2>&1
-( A acquire >/dev/null 2>&1; echo $? > "$T/rcA" ) & ( B acquire >/dev/null 2>&1; echo $? > "$T/rcB" ) & wait
-RA=$(cat "$T/rcA"); RB=$(cat "$T/rcB")
-if { [ "$RA" -eq 0 ] && [ "$RB" -eq 3 ]; } || { [ "$RA" -eq 3 ] && [ "$RB" -eq 0 ]; }; then ok "a race for a free lease has exactly one winner (A=$RA B=$RB)"; else bad "race result A=$RA B=$RB"; fi
-# make A the holder again for the next checks
-if [ "$RB" -eq 0 ]; then B release >/dev/null 2>&1; fi
-A acquire >/dev/null 2>&1
-# 4. a stale lease is taken over, and the board says so
-sleep 1
-COORD_LEASE_S=0 B acquire >/dev/null 2>&1; rc=$?
-# the lease file records leaseS as written by A (1200), so it is not stale yet: B must still be refused
-expect "a lease younger than its own lease time is not taken" 3 $rc
+B check >/dev/null 2>&1; expect "B's push check says go" 0 $?
+A sessions 2>/dev/null | grep -q "acctB" && ok "A sees B working" || bad "A does not see B"
+OUT="$(A status 2>/dev/null)"
+case "$OUT" in *"WORKING acctB"*) ok "the briefing lists the other live session";; *) bad "no WORKING line: $OUT";; esac
+case "$OUT" in *"HOLDS THIS REPO"*|*"lease is"*|*"Do not edit"*) bad "the briefing still talks of a lease: $OUT";; *) ok "the briefing has no lease text";; esac
+# 2. claims: one job, one session
+A claim CR --note "chat rebuild" >/dev/null 2>&1; expect "A claims CR" 0 $?
+B claim cr >/dev/null 2>&1; expect "B cannot claim CR while A is on it (ids are case-blind)" 3 $?
+A claim CR >/dev/null 2>&1; expect "claiming your own item again is fine" 0 $?
+B claim CH21 >/dev/null 2>&1; expect "B claims another item" 0 $?
+A claims 2>/dev/null | grep -q "CH21" && ok "claims are listed" || bad "CH21 not listed"
+(B status 2>/dev/null | grep -q "CLAIMS.*CR") && ok "the briefing lists claims" || bad "no CLAIMS line"
+# 3. a lapsed claim (its session went quiet) is taken over
 python3 - "$T" <<'PY'
-import json,subprocess,sys,os,time
+import json,subprocess,sys,time,glob,os
 T=sys.argv[1]
-# age the heartbeat on the remote by hand: clone, edit, push
 subprocess.run(["git","clone","-q","--branch","claude-coord",T+"/origin.git",T+"/edit"],check=True)
-p=T+"/edit/lease.json"; d=json.load(open(p)); d["hb"]=int(time.time())-3600; d["leaseS"]=60; json.dump(d,open(p,"w"))
+for p in glob.glob(T+"/edit/claims/CR.json")+glob.glob(T+"/edit/sessions/acctA-*.json"):
+    d=json.load(open(p)); d["beat"]=int(time.time())-7200; json.dump(d,open(p,"w"))
 subprocess.run(["git","-C",T+"/edit","-c","user.name=t","-c","user.email=t@t","commit","-qam","age"],check=True)
 subprocess.run(["git","-C",T+"/edit","push","-q","origin","HEAD:refs/heads/claude-coord"],check=True)
 PY
-B acquire >/dev/null 2>&1; expect "B takes over a stale lease" 0 $?
-B board 5 2>/dev/null | grep -q "stale lease" && ok "the takeover is on the board" || bad "no takeover note on the board"
-A check >/dev/null 2>&1; expect "A (stale, now beaten) is held back" 3 $?
-# 5. interactive beats routine, routine never beats interactive
-B release >/dev/null 2>&1
-A acquire --kind routine --task "review" >/dev/null 2>&1; expect "A (routine) takes a free lease" 0 $?
-B acquire --kind interactive >/dev/null 2>&1; expect "an interactive session takes over from a routine" 0 $?
-A acquire --kind routine >/dev/null 2>&1; expect "a routine cannot take it back from an interactive session" 3 $?
-# 6. --force is Tj's word and is logged
-A acquire --kind interactive --force >/dev/null 2>&1; expect "--force takes it" 0 $?
-A board 10 2>/dev/null | grep -qi "force" && ok "the forced take is on the board" || bad "no force note"
-# 7. notes pass between sessions
+B claim CR >/dev/null 2>&1; expect "B takes over A's lapsed claim" 0 $?
+B unclaim CR >/dev/null 2>&1; expect "B gives it back" 0 $?
+A claim CR >/dev/null 2>&1; expect "A can take it again" 0 $?
+# 4. RELEASE: one release at a time; --wait gives up after its time, then works once it is free
+A claim RELEASE --note "v1.0.6" >/dev/null 2>&1; expect "A claims RELEASE" 0 $?
+B claim RELEASE --wait 0.05 >/dev/null 2>&1; expect "B waits for RELEASE and gives up after its time" 3 $?
+A unclaim RELEASE >/dev/null 2>&1
+B claim RELEASE --wait 0.05 >/dev/null 2>&1; expect "B gets RELEASE once A gave it back" 0 $?
+# 5. check out: the session file and its claims go
+B release >/dev/null 2>&1; expect "B checks out" 0 $?
+A claims 2>/dev/null | grep -q "CH21" && bad "B's claims survived its check-out" || ok "B's claims went with it"
+# 6. notes pass between sessions
 A post "hello from A" "line of body" >/dev/null 2>&1; expect "A posts a note" 0 $?
 B board 8 2>/dev/null | grep -q "hello from A" && ok "B reads A's note" || bad "B did not see the note"
-OUT="$(B status 2>/dev/null)"; case "$OUT" in *"ANOTHER CLAUDE SESSION"*) ok "status tells B who holds the repo";; *) bad "status text: $OUT";; esac
-# 8. EVERY failure lets work through: an unreachable remote
+# 7. EVERY failure lets work through
 git init -q "$T/lonely"; git -C "$T/lonely" remote add origin "$T/does-not-exist.git"
 COORD_REPO="$T/lonely" COORD_HOME="$T/c" COORD_LABEL=acctC python3 -I "$D/tools/coord.py" check >/dev/null 2>&1; expect "an unreachable remote does not hold a push back" 0 $?
 COORD_OFF=1 B check >/dev/null 2>&1; expect "COORD_OFF lets everything through" 0 $?
+A wait-free >/dev/null 2>&1; expect "wait-free (old routine prompts) returns at once" 0 $?
+# 8. the dead-man STOP still stops every session (deadman/STOP.json on cloud-config)
+git clone -q "$T/origin.git" "$T/cc" 2>/dev/null; git -C "$T/cc" checkout -q --orphan cloud-config; mkdir -p "$T/cc/deadman"; echo '{"at":1}' > "$T/cc/deadman/STOP.json"
+git -C "$T/cc" add -A; git -C "$T/cc" -c user.name=t -c user.email=t@t commit -q -m stop; git -C "$T/cc" push -q origin HEAD:refs/heads/cloud-config
+A acquire >/dev/null 2>&1; expect "the dead-man STOP refuses a check-in (exit 5)" 5 $?
+git -C "$T/cc" rm -q -r deadman; git -C "$T/cc" -c user.name=t -c user.email=t@t commit -q -m resume; git -C "$T/cc" push -q origin HEAD:refs/heads/cloud-config
+A acquire >/dev/null 2>&1; expect "after STOP is lifted the check-in works again" 0 $?
 
-# 9. push.sh: held back while another session holds the lease, goes through when it is free
-mkdir -p "$T/repo/tools"; cp "$D/tools/push.sh" "$D/tools/coord.py" "$T/repo/tools/"
-git init -q -b main "$T/repo"; git -C "$T/repo" remote add origin "$T/origin.git"
-git -C "$T/repo" -c user.name=t -c user.email=t@t add -A; git -C "$T/repo" -c user.name=t -c user.email=t@t commit -q -m one
-git -C "$T/repo" fetch -q origin main 2>/dev/null; git -C "$T/repo" reset -q --soft origin/main 2>/dev/null || true
-git -C "$T/repo" -c user.name=t -c user.email=t@t commit -q --allow-empty -m two
-PUSH_B() { (cd "$T/repo" && COORD_HOME="$T/b" COORD_LABEL=acctB COORD_CACHE_S=0 COORD_RENEW_S=0 bash tools/push.sh >/dev/null 2>&1); }
-A acquire --kind interactive --force >/dev/null 2>&1
-PUSH_B; expect "push.sh still pushes the branch (exit 0) while A holds the lease: work without the lease (Tj, 2026-10-18)" 0 $?
-A release >/dev/null 2>&1
-PUSH_B; expect "push.sh pushes once the lease is free" 0 $?
-git -C "$T/origin.git" log --oneline refs/heads/main 2>/dev/null | head -1 | grep -q "two" && ok "the held-back commit reached the remote afterwards" || bad "commit two is not on the remote"
+# 9. push.sh: never held back; the branch is pushed and main moves to it when that is a fast-forward of safe paths
+mkdir -p "$T/repo/tools"; cp "$D/tools/push.sh" "$D/tools/coord.py" "$D/tools/landing.py" "$T/repo/tools/"
+git init -q -b work "$T/repo"; git -C "$T/repo" remote add origin "$T/origin.git"
+git -C "$T/repo" fetch -q origin main 2>/dev/null; git -C "$T/repo" reset -q --hard FETCH_HEAD 2>/dev/null || true
+cp "$D/tools/push.sh" "$D/tools/coord.py" "$D/tools/landing.py" "$T/repo/tools/" 2>/dev/null; mkdir -p "$T/repo/research"; echo note > "$T/repo/research/n.md"
+git -C "$T/repo" -c user.name=t -c user.email=t@t add -A; git -C "$T/repo" -c user.name=t -c user.email=t@t commit -q -m "docs and tools"
+PUSH_B() { (cd "$T/repo" && COORD_HOME="$T/b" COORD_LABEL=acctB COORD_RENEW_S=0 bash tools/push.sh >/dev/null 2>&1); }
+A acquire --kind interactive >/dev/null 2>&1
+PUSH_B; expect "push.sh pushes while another session works" 0 $?
+git -C "$T/origin.git" rev-parse -q --verify refs/heads/work >/dev/null && ok "the session branch is on the remote" || bad "branch not pushed"
+# tools/ changed without the fast checks: main waits; once ckpt.sh's marker says the checks passed on exactly these tools, main moves
+git -C "$T/origin.git" log --oneline refs/heads/main | grep -q "docs and tools" && bad "main moved to unverified tools" || ok "main waits for tools nobody checked"
+(cd "$T/repo" && python3 -I tools/landing.py mark tools >/dev/null 2>&1); PUSH_B
+git -C "$T/origin.git" log --oneline refs/heads/main | grep -q "docs and tools" && ok "main moves once the tools are checked" || bad "main did not move after the mark"
+# code (data/) waits for tools/test.sh's mark; docs alone go straight through
+mkdir -p "$T/repo/data"; echo 'fun x() = 1' > "$T/repo/data/X.kt"; git -C "$T/repo" -c user.name=t -c user.email=t@t add -A; git -C "$T/repo" -c user.name=t -c user.email=t@t commit -q -m "code"
+PUSH_B; git -C "$T/origin.git" log --oneline refs/heads/main | grep -q " code" && bad "untested code reached main" || ok "untested code stays on the branch"
+(cd "$T/repo" && python3 -I tools/landing.py mark code data >/dev/null 2>&1); PUSH_B
+git -C "$T/origin.git" log --oneline refs/heads/main | grep -q " code" && ok "tested code reaches main" || bad "tested code did not reach main"
+# main moved under the branch (another session landed a note): the branch takes main in by itself (a clean merge) and lands again
+git clone -q "$T/origin.git" "$T/other" 2>/dev/null; git -C "$T/other" checkout -q main; echo other > "$T/other/OTHER.md"
+git -C "$T/other" add -A; git -C "$T/other" -c user.name=t -c user.email=t@t commit -q -m "other session"; git -C "$T/other" push -q origin HEAD:refs/heads/main
+echo more > "$T/repo/research/m.md"; git -C "$T/repo" -c user.name=t -c user.email=t@t add -A; git -C "$T/repo" -c user.name=t -c user.email=t@t commit -q -m "more docs"
+PUSH_B; expect "push.sh copes when main moved" 0 $?
+[ -f "$T/repo/OTHER.md" ] && ok "the other session's work was merged into the branch" || bad "main's new work did not reach the branch"
+git -C "$T/origin.git" log --oneline refs/heads/main | grep -q "more docs" && ok "and the branch landed on main after the merge" || bad "main did not get the branch after the merge"
+# a conflicting change on main is never merged blind: the branch stays as it was, nothing is committed with conflict markers
+echo "main side" > "$T/other/research/n.md" 2>/dev/null || { mkdir -p "$T/other/research"; echo "main side" > "$T/other/research/n.md"; }
+git -C "$T/other" pull -q origin main 2>/dev/null; echo "main side" > "$T/other/research/n.md"; git -C "$T/other" add -A; git -C "$T/other" -c user.name=t -c user.email=t@t commit -q -m "main edit"; git -C "$T/other" push -q origin HEAD:refs/heads/main
+echo "branch side" > "$T/repo/research/n.md"; git -C "$T/repo" -c user.name=t -c user.email=t@t commit -qam "branch edit"
+PUSH_B
+grep -rq '^<<<<<<<' "$T/repo/research" && bad "conflict markers were left in the tree" || ok "a conflicting merge is aborted, never committed"
+[ "$(cat "$T/repo/research/n.md")" = "branch side" ] && ok "the session's own change is untouched" || bad "the session's file changed"
 
-# 10. rotation: duties, ET slot times across daylight saving, missed-slot detection
+# 10. rotation: duties, ET slot times across daylight saving, missed-slot detection; the chat no longer rotates
 python3 -I "$D/tools/rotation.py" selftest >/dev/null 2>&1; expect "rotation selftest (duties, DST, missed slots)" 0 $?
+python3 -I "$D/tools/rotation.py" chat --tag acct-7542bf 2>/dev/null | grep -q "never stands down" && ok "no account stands down for the chat" || bad "rotation chat still rotates"
 
-# 11a. wait-free: exits 0 at once when the lease is free; times out (exit 1) while a live session holds it; an interactive takeover of a routine leaves a rotation-paused note
-B release >/dev/null 2>&1; A release >/dev/null 2>&1
-(COORD_WAIT_POLL_S=1 A wait-free --max-min 0.05 >/dev/null 2>&1); expect "wait-free returns 0 when the lease is free" 0 $?
-A acquire --kind routine --task "ENGINEER" >/dev/null 2>&1
-(COORD_WAIT_POLL_S=1 B wait-free --max-min 0.05 >/dev/null 2>&1); expect "wait-free times out (1) while a routine holds the lease" 1 $?
-B acquire --kind interactive >/dev/null 2>&1
-B board 20 2>/dev/null | grep -q "rotation-paused label=acctA" && ok "taking a routine's lease posts rotation-paused for it" || bad "no rotation-paused note after the takeover"
-B release >/dev/null 2>&1
-
-# 11. the UserPromptSubmit hook: a scheduled routine's own prompt is never logged as Tj's words and never makes its session interactive; a human message does reach the lease step
+# 11. the UserPromptSubmit hook: a routine's own prompt is never logged; no lease, no relay, no chat stand-down text any more
 H="$(mktemp -d)"; cp -r "$D/tools" "$H/tools"; git -C "$H" init -q 2>/dev/null; : > "$H/INBOX.md"
 echo '{"prompt":"You are a Vigilant rotation worker for github.com/tjshea90/novig"}' | (cd "$H" && COORD_OFF=1 bash tools/capture_inbox.sh >/dev/null 2>&1); expect "capture_inbox ignores a routine's stored prompt" 0 $?
 [ ! -s "$H/INBOX.md" ] && ok "the routine prompt was not written to INBOX.md" || bad "the routine prompt reached INBOX.md"
-grep -q 'coord.py acquire --kind interactive' "$D/tools/capture_inbox.sh" && ok "a human message takes the lease (hook calls acquire --kind interactive)" || bad "capture_inbox does not take the lease"
+grep -q 'tell_tj.py relay\|HOLDS THIS REPO\|CHAT OWNER' "$D/tools/capture_inbox.sh" && bad "capture_inbox still relays or talks of a lease" || ok "capture_inbox has no relay and no lease"
 rm -rf "$H"
 
-# a dormant account's routine stops (away.json in the future) and a past entry does nothing
+# 12. a dormant account's routine stops (away.json in the future) and a past entry does nothing
 DORM="$(mktemp -d)"; mkdir -p "$DORM/tools" "$DORM/research/coordination"; cp tools/coord.py tools/rotation.py "$DORM/tools/"
 echo '{"acct-dorm": "2099-01-01T00:00:00Z", "acct-old": "2000-01-01T00:00:00Z"}' > "$DORM/research/coordination/away.json"
 (cd "$DORM" && COORD_HOME="$DORM/home" COORD_KIND=routine COORD_LABEL=acct-dorm python3 -I tools/coord.py acquire --kind routine --task t >/dev/null 2>&1); expect "a routine of a dormant account refuses to start" 5 $?
