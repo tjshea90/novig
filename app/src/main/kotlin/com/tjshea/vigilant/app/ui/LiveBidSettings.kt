@@ -155,7 +155,6 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
 <<<<<<< HEAD
     LbSwitch("Tennis", "Moves on every point and its feed has no clock. On by default.", q.tennis, "liveBidTennis") { v -> setKeep { it.copy(tennis = v) } }
 =======
-    LbSwitch("Tennis", "Moves on every point and its feed has no clock. On since 2026-10-19.", q.tennis, "liveBidTennis") { v -> setKeep { it.copy(tennis = v) } }
 >>>>>>> 03da9ea8c02a7821013489e72f9a56cf38062fbf
     LbTitle("Leagues")
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
