@@ -27,6 +27,9 @@ import urllib.error
 import urllib.request
 from zoneinfo import ZoneInfo
 
+# The watchdog's decision is next door (tools/engine_watchdog.py), and -I leaves this script's own folder off the path: the first two keepers (2026-10-19 15:29Z and 15:39Z) died on that import.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 ET = ZoneInfo("America/New_York")
 OPEN = datetime.time(8, 0)
 CLOSE = datetime.time(1, 0)
@@ -257,6 +260,8 @@ def keep(clock=lambda: int(time.time() * 1000), sleep=time.sleep):
 
 
 def selftest():
+    # keep() imports the watchdog: under -I (as the workflow runs this) that only works with the path set above.
+    import engine_watchdog  # noqa: F401
     def ms(y, mo, d, h, mi, tz=ET):
         return int(datetime.datetime(y, mo, d, h, mi, tzinfo=tz).timestamp() * 1000)
     utc = datetime.timezone.utc
