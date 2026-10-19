@@ -1,11 +1,12 @@
-name: Engine alarm (08:00 ET start, Tj 2026-10-19)
+name: Engine keeper (08:00-01:00 ET every day, Tj 2026-10-19)
 
-# Tj, 2026-10-19: "Did it start at 8am as scheduled? If not, when did it start and why?" It did not: it started at 11:04 ET when his phone asked. GitHub ran cloud-scan.yml's 15-minute
-# timer only 3 to 8 times a day (research/engine_start_2026-10-19.md), and nothing else started the morning engine. A dispatched run is delivered; a timer tick is best effort.
-# So this job waits on a free runner until the next 08:00 America/New_York and dispatches cloud-scan.yml, whose gate still decides (the phone's switch, the hours, a manual stop, the kill
-# switch). A job may run 6 h, so a longer wait hands over to a new alarm (tools/engine_alarm.py). Armed by the engine when its hours close or the phone switches it off, by cloud-scan's gate
-# whenever it finds the hours closed, and by the watchdog when none waits. One alarm at a time: a newer one replaces the waiting one. It starts nothing while the dead-man STOP is set, and the
-# dead-man disables it like every other workflow. The timer below is only a backstop.
+# Tj, 2026-10-19: "I need the engine to automatically run from 8 am Eastern to 1am Eastern every day. The system must work". GitHub ran this repo's timers only 3 to 8 times a day
+# (research/engine_start_2026-10-19.md: the engine started at 11:04 ET that day, when the phone asked), so nothing here waits for one. This job is the KEEPER, always running on a free runner:
+# inside the hours it looks at the engine's heartbeat every 2 minutes and, when something is off, runs the watchdog's decision (start a missing engine, replace a hung or refused one); outside
+# them it sleeps until 08:00 ET and its first look starts the engine. After 340 minutes it hands over to a new keeper. cloud-scan.yml's gate and end step and the watchdog start a keeper whenever
+# none runs, and the keeper starts the engine: two chains, each renewing the other. The gate still decides whether an engine runs (the phone's switch, the hours, a manual Stop, STOP ALL), with the
+# same rule (tools/engine_alarm.py). One keeper at a time: a newer one replaces the running one. It starts nothing while the dead-man STOP is set, and the dead-man disables it like every
+# other workflow. The timer below is only a backstop.
 on:
   workflow_dispatch:
   schedule:
@@ -28,9 +29,10 @@ jobs:
         with:
           fetch-depth: 1
           sparse-checkout: tools
-      - name: Wait for 08:00 ET, then start the engine
+      - name: Keep the engine running 08:00-01:00 ET
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 -I tools/engine_alarm.py selftest
-          python3 -I -u tools/engine_alarm.py run
+          python3 -I tools/engine_watchdog.py selftest
+          python3 -I -u tools/engine_alarm.py keep

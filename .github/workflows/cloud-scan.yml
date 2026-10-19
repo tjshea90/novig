@@ -39,23 +39,16 @@ jobs:
         id: gate
         run: |
           RUN=false
-          if git fetch -q --depth=1 origin cloud-config 2>/dev/null; then
-            # An engine Tj switched off resumes by itself at the next scheduled opening (08:00 America/New_York after the moment he wrote the off), unless the kill switch is on or the token was removed (TCL81, Tj 2026-10-17).
-            ON=$(git show FETCH_HEAD:settings.json 2>/dev/null | python3 -c "
-          import json, sys, time, datetime
-          from zoneinfo import ZoneInfo
-          c = json.load(sys.stdin)
-          on = bool(c.get('on', False))
-          if not on and c.get('rev', 0) > 0 and c.get('device') != 'token removed' and not c.get('settings', {}).get('killed', False):
-              t = datetime.datetime.fromtimestamp(c['rev'] / 1000, ZoneInfo('America/New_York'))
-              day = t.date() + datetime.timedelta(days=1) if t.time() >= datetime.time(8, 0) else t.date()
-              at = datetime.datetime(day.year, day.month, day.day, 8, 0, tzinfo=ZoneInfo('America/New_York')).timestamp()
-              if time.time() >= at: on = True
-          print(str(on).lower())
-          " 2>/dev/null || echo false)
+          # The phone's switch and the engine's hours are read by ONE rule, shared with the keeper (tools/engine_alarm.py `switch` / `hours`; EA, Tj 2026-10-19): an engine Tj switched off resumes
+          # by itself at the next 08:00 America/New_York after he wrote the off, unless STOP ALL is on or the token was removed (TCL81, 2026-10-17); the hours are 08:00 to 01:00 ET (Tj, 2026-10-15/16)
+          # unless the phone turned the window off (gates.cloudHours), a manual Run opens them, or a manual Stop holds them until the next opening (TCL74, 2026-10-17).
+          CFG="$RUNNER_TEMP/settings.json"
+          if git fetch -q --depth=1 origin cloud-config 2>/dev/null && git show FETCH_HEAD:settings.json > "$CFG" 2>/dev/null; then
+            ON=$(python3 -I tools/engine_alarm.py switch "$CFG" 2>/dev/null || echo false)
             echo "phone switch: on=$ON"
             [ "$ON" = "true" ] && RUN=true
           else
+            echo '{}' > "$CFG"
             echo "no cloud-config branch yet: the phone has never switched the cloud scan on"
           fi
           if [ "${{ github.event_name }}" = "schedule" ] && [ "$RUN" = "true" ]; then
@@ -63,41 +56,16 @@ jobs:
             echo "other engines running: $OTHERS"
             [ "$OTHERS" != "0" ] && RUN=false
           fi
-          # A manual start (the phone's Start button, a hand-over, Claude) always runs: the engine itself idles out if the switch is off.
+          # A manual start (the phone's Start button, a hand-over, the keeper, Claude) always runs: the engine itself idles out if the switch is off.
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then RUN=true; fi
-          # The engine's hours (Tj, 2026-10-15): 08:00 inclusive to 01:00 exclusive the next morning (Tj, 2026-10-16), America/New_York, for the schedule AND for dispatches (a hand-over at 21:59 must not start an engine).
-          # The phone's switch settings.gates.cloudHours (default true) turns the window off. Same rule as data/.../cloud/EngineHours.kt.
+          # The hours hold for the schedule AND for dispatches (a hand-over at 00:59 must not start an engine that runs on).
           if [ "$RUN" = "true" ]; then
-            HOURS=$(python3 - <<'PY'
-          import json, subprocess, datetime
-          from zoneinfo import ZoneInfo
-          use = True
-          try:
-              txt = subprocess.run(["git", "show", "FETCH_HEAD:settings.json"], capture_output=True, text=True).stdout
-              use = bool(json.loads(txt).get("settings", {}).get("gates", {}).get("cloudHours", True))
-          except Exception:
-              pass
-          # Run / Stop by hand from the phone (TCL74, Tj 2026-10-17): manualRunUntilMs opens the window outside its hours, manualStopUntilMs keeps the engine off until the next scheduled opening. Both lapse by themselves.
-          import time
-          run_until = stop_until = 0
-          try:
-              c = json.loads(txt)
-              run_until, stop_until = int(c.get("manualRunUntilMs", 0)), int(c.get("manualStopUntilMs", 0))
-          except Exception:
-              pass
-          now_ms = int(time.time() * 1000)
-          now = datetime.datetime.now(ZoneInfo("America/New_York")).time()
-          if now_ms < stop_until:
-              print("closed")
-          else:
-              print("open" if (not use) or now_ms < run_until or (now >= datetime.time(8, 0) or now < datetime.time(1, 0)) else "closed")
-          PY
-            )
+            HOURS=$(python3 -I tools/engine_alarm.py hours "$CFG" 2>/dev/null || echo open)
             echo "engine hours: $HOURS"
             [ "$HOURS" = "closed" ] && RUN=false
-            # Closed: the alarm waits for the next opening, since GitHub's timer cannot be trusted to come at 08:00 (EA, Tj 2026-10-19: research/engine_start_2026-10-19.md).
-            if [ "$HOURS" = "closed" ]; then gh workflow run engine-alarm.yml --ref main >/dev/null 2>&1 && echo "engine alarm armed for the next 08:00 ET" || echo "could not arm the engine alarm"; fi
           fi
+          # The keeper (engine-alarm.yml) must always be there: it starts the engine at 08:00 ET and restarts a missing one, since GitHub's timer cannot be trusted (EA, research/engine_start_2026-10-19.md).
+          python3 -I tools/engine_alarm.py ensure || echo "could not check the engine keeper"
           echo "run=$RUN" >> "$GITHUB_OUTPUT"
 
   engine:
@@ -194,6 +162,9 @@ jobs:
           echo "engine ended: $END"
           # TIME_UP: this job's time is over. ADDRESS: Novig refused this runner's internet address (data-center addresses are fine to Novig, one in a restricted state or on a list is not): draw another runner
           # (no limit and no cooldown since 2026-10-18, TCL115: every refused runner is replaced at once until one is accepted: cloud/ AddressWatch). Not IDLE: the phone switched the engine off.
-          if [ "$END" = "TIME_UP" ] || [ "$END" = "ADDRESS" ] || [ "$END" = "STALL" ] || [ "$END" = "RESET" ]; then gh workflow run cloud-scan.yml --ref main; fi
-          # WINDOW: the hours closed; IDLE: the phone switched it off. The next opening is started by the alarm, not by GitHub's timer (EA, Tj 2026-10-19).
-          if [ "$END" = "WINDOW" ] || [ "$END" = "IDLE" ]; then gh workflow run engine-alarm.yml --ref main || echo "could not arm the engine alarm"; fi
+          # The dispatch is tried again (a lost one would leave the hours without an engine until the keeper's next look, 2 minutes later).
+          if [ "$END" = "TIME_UP" ] || [ "$END" = "ADDRESS" ] || [ "$END" = "STALL" ] || [ "$END" = "RESET" ]; then
+            for i in 1 2 3 4; do gh workflow run cloud-scan.yml --ref main && break; echo "hand-over dispatch failed, try $i"; sleep $((i * 10)); done
+          fi
+          # Whatever the reason (WINDOW: the hours closed; IDLE: the phone switched it off; anything else: a crash), the keeper must be there to start the next engine (EA, Tj 2026-10-19).
+          python3 -I tools/engine_alarm.py ensure || echo "could not check the engine keeper"
