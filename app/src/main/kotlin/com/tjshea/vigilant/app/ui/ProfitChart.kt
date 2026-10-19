@@ -112,7 +112,7 @@ object ProfitText {
     /** A profit, with no sign at zero ("$0.00", never "+$0.00"). */
     fun pl(x: Double): String = if (abs(x) < 0.005) "$0.00" else Format.signedMoney(x)
 
-    fun pct(x: Double): String = (if (x >= 0) "+" else "") + String.format(Locale.US, "%.1f%%", x * 100)
+    fun pct(x: Double): String = if (abs(x) < 0.0005) "0.0%" else (if (x > 0) "+" else "") + String.format(Locale.US, "%.1f%%", x * 100)
 
     /** "Mon 1:05 PM", Eastern: a time on the chart always says its day (a slate's last result is often after midnight). */
     fun dayTime(ms: Long): String = Instant.ofEpochMilli(ms).atZone(SlateProfit.ET).format(dayTimeFmt)
