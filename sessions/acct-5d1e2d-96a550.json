@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-nfy0aq",
  "head": "f76ccb6cc28f75933457f594b95bfbf7c5a28fc7",
  "since": 1792440839,
- "beat": 1792442306,
- "beatIso": "2026-10-19T20:38:26Z",
+ "beat": 1792442311,
+ "beatIso": "2026-10-19T20:38:31Z",
  "done": "pre-ship: v1.0.8: Engine > APIs lights (green/amber/grey, tap for the error), Test now and Try again per API; cross-exchange hedge paper journal (Novig + Kalshi/SX)",
  "next": "ship.sh gates and releases this"
 }
