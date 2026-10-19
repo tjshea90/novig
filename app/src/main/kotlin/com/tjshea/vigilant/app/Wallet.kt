@@ -74,6 +74,79 @@ class WalletBalance(
 }
 
 /**
+ * The Tracker's all-time money figure (Tj, 2026-10-19, PL; [com.tjshea.vigilant.data.tracker.WalletProfit]): the wallet's cash, what its open bets cost, and what was put in and taken out (Novig's ledger), read
+ * together. Read while the Tracker's Stats are on screen at most every [FRESH_MS] (a balance, the positions and two short ledger reads, about 14 `history` tokens), at once on pull to refresh and after a
+ * transfer, never while a bet is being placed ([com.tjshea.vigilant.data.novig.BetPriority]). The last figure is kept across restarts, so the card has a number the moment it opens.
+ */
+class WalletMoney(
+    /** One reading: the figure, or null when Novig's ledger has no transfer (what was put in is not known). Throws when Novig can't be read. */
+    private val read: suspend () -> com.tjshea.vigilant.data.tracker.WalletProfit.Money?,
+    private val setUp: () -> Boolean,
+    private val prefs: SharedPreferences?,
+    private val clock: () -> Long = System::currentTimeMillis,
+) {
+    private val _flow = kotlinx.coroutines.flow.MutableStateFlow(load())
+    val flow: kotlinx.coroutines.flow.StateFlow<com.tjshea.vigilant.data.tracker.WalletProfit.Money?> = _flow
+
+    /** Why the latest reading gave no figure, in words; null after a good one. */
+    private val _note = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    val note: kotlinx.coroutines.flow.StateFlow<String?> = _note
+
+    private val lock = kotlinx.coroutines.sync.Mutex()
+    @Volatile private var triedAtMs = 0L
+
+    val isSetUp: Boolean get() = setUp()
+
+    /** The figure no older than [maxAgeMs]: the last one when it's that young, else read now (the last one stands if Novig doesn't answer; a failed read is not tried again for [RETRY_MS]). */
+    suspend fun refresh(maxAgeMs: Long = FRESH_MS): com.tjshea.vigilant.data.tracker.WalletProfit.Money? = lock.withLockKeep {
+        val last = _flow.value
+        if (!setUp()) { _note.value = "Betting through the API is not set up on this phone, so the wallet can't be read."; return@withLockKeep last }
+        val now = clock()
+        if (last != null && now - last.atMs < maxAgeMs) return@withLockKeep last
+        if (maxAgeMs > 0L && now - triedAtMs < RETRY_MS) return@withLockKeep last
+        triedAtMs = now
+        try {
+            val m = read()
+            if (m == null) {
+                _note.value = "Novig's ledger shows no transfer into the Vigilant wallet, so what was put in is not known."
+            } else {
+                _note.value = null
+                _flow.value = m
+                save(m)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            _note.value = "Couldn't read the wallet just now: ${(e as? com.tjshea.vigilant.data.novig.NovigApiException)?.advice ?: e.message ?: e.javaClass.simpleName}"
+        }
+        _flow.value
+    }
+
+    private suspend inline fun <T> kotlinx.coroutines.sync.Mutex.withLockKeep(block: () -> T): T {
+        lock()
+        try { return block() } finally { unlock() }
+    }
+
+    private fun save(m: com.tjshea.vigilant.data.tracker.WalletProfit.Money) {
+        prefs?.edit()?.putString(KEY, listOf(m.cash, m.openCost, m.openBets, m.putIn, m.takenOut, m.transfers, m.atMs).joinToString("|"))?.apply()
+    }
+
+    private fun load(): com.tjshea.vigilant.data.tracker.WalletProfit.Money? {
+        val f = prefs?.getString(KEY, null)?.split('|')?.takeIf { it.size == 7 } ?: return null
+        return runCatching {
+            com.tjshea.vigilant.data.tracker.WalletProfit.Money(f[0].toDouble(), f[1].toDouble(), f[2].toInt(), f[3].toDouble(), f[4].toDouble(), f[5].toInt(), f[6].toLong())
+        }.getOrNull()
+    }
+
+    companion object {
+        const val FRESH_MS = 5L * 60_000L
+        const val RETRY_MS = 60_000L
+        const val PREFS = "wallet_money"
+        private const val KEY = "money"
+    }
+}
+
+/**
  * Which notifications may be posted (Tj, 2026-10-09: "an option to turn all notifications off except notifications of actual money bet or bids filled"). [quiet] follows
  * `ScanSettings.quietNotifications` ([AppContainer.syncSgo]); a notification about money (a bet placed, a bid filled, the sample test) passes [allow] with `money = true`.
  */
