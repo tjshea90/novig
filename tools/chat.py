@@ -237,7 +237,7 @@ class Git:
         if not entries:
             return EMPTY_TREE
         text = "".join("%s %s %s\t%s\0" % (m, t, s, n) for n, (m, t, s) in sorted(entries.items()))
-        return self.g("mktree", "-z", inp=text).strip()
+        return self.g("mktree", "-z", "--missing", inp=text).strip()
 
     def put_path(self, tree, parts, blob_sha):
         entries = self.tree_entries(tree) if tree else {}
