@@ -652,6 +652,14 @@ def cmd_reply(ids, text, done=False, again=False, g=None, at=None):
                     did = "c%d-%s" % (at // 1000, secrets.token_hex(2))
                     files["chat/" + legacy_name(at + 1, did)] = json.dumps({"id": did, "at": at + 1, "from": who, "text": "\U0001F44D", "replyTo": i})
             g.add_files(LEGACY, files, "chat (old app): reply")
+            if not done:
+                # Also in the new store, quoting Tj's old-app words: the new app shows the answer even when the phone was updated before it came.
+                quote = " / ".join(str(m.get("text", "")).strip() for m in lmsgs if is_tj(m) and m.get("id") in leg_ids)[:300]
+                mid = "c%d-%s" % (at + 2, secrets.token_hex(2))
+                g.add_files(CHAT, {"msgs/%s/%s.json" % (day_of(at + 2), mid): json.dumps({
+                    "v": 2, "id": mid, "at": at + 2, "from": "claude", "account": label, "name": account_name(label, cfg), "holder": holder, "replyTo": [], "kind": "reply",
+                    "quote": quote, "oldApp": True, "text": str(text).strip()}, ensure_ascii=False)}, "chat: reply to the old app " + mid)
+                sent.append(mid)
     return sent
 
 
