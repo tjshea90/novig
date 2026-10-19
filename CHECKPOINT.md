@@ -1,13 +1,13 @@
-# CHECKPOINT 3748 — read me first, then TASKS.md
+# CHECKPOINT 3749 — read me first, then TASKS.md
 
-**Written:** 2026-10-19T15:54:03Z · **tests:** all 6 fast checks green
-**Branch:** `ccr-2df6ce48-pkrh5v` · **builds on:** `524ea1f5f` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T16:09:49Z · **tests:** all 6 fast checks green
+**Branch:** `ccr-2df6ce48-pkrh5v` · **builds on:** `973680864` (this checkpoint is the commit after it)
 
 ## Just done
-PL data: SlateProfit by game day (5 am-5 am ET, today = today's games, later() for open stakes on later games, merged curve steps); WalletProfit (cash + open positions - transfers); SlateProfitTest 7 + WalletProfitTest 3 pass
+PL app: WalletMoney reader + VM/Activity wiring, Tracker periods by game day, profit card rewrite (all-time wallet headline, Today line with day names, running total + day bars), Diagnostics line; ProfitChartTest 11 pass; research/profit_card_2026-10-19.md, CLAUDE.md P/L rule
 
 ## Do this next
-PL app: WalletMoney reader (balance + positions + ledger TRANSFER_IN/OUT, persisted), container + VM + MainActivity wiring, TrackerPeriod by game day, ProfitChart.kt rewrite, ProfitChartTest
+PL4: bump v1.0.6 code 346, full tools/test.sh, ship.sh, release.yml, record-release, tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ PL app: WalletMoney reader (balance + positions + ledger TRANSFER_IN/OUT, persis
 
 ## Last ten checkpoints
 ```
+  494dc6f90 ckpt 3748: PL data: SlateProfit by game day (5 am-5 am ET, today = today's games, late
   55b142426 ckpt 3747: PL: SlateProfit reworked (today/day/days/lastDays by calendar day, merged c
   2ae72ef29 ckpt 3746: EA: keeper steps aside for a newer keeper, one log line per state, full-loo
   70e7a9f40 ckpt 3745: EA5-EA7: keeper (engine-alarm.yml: always running, 2-min checks in hours, s
@@ -25,8 +26,7 @@ PL app: WalletMoney reader (balance + positions + ledger TRANSFER_IN/OUT, persis
   7e3f1784e ckpt 3741: pre-release: v1.0.5: the chat with Claude rebuilt from scratch (one account
   26888632e ckpt 3740: CR5 code done + reviewed; landing gate fixed (marks the tree taken BEFORE a
   108d9f54e ckpt 3739: CR5 app chat written: data CloudChat v2 (model/thread/presence) + ChatSync 
-  f0c34da40 ckpt 3738: CR tools live on main (504eafa56); chat + chat-seat branches created by cha
 ```
 
-(6 automatic checkpoint(s) since the last deliberate one — the
+(23 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
