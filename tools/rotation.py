@@ -363,14 +363,15 @@ def chat_state(now, roster, notes, away, me):
 
 
 def chat(tag):
-    now = datetime.datetime.now(datetime.timezone.utc)
-    away = {}
+    """The chat no longer rotates (CR, Tj 2026-10-19: "Assign just one account to the chat which never changes"): ONE account answers it, named in
+    research/coordination/chat.json, and nobody stands down for it. chat_state() above is the old rotating rule, kept only for its selftest."""
     try:
-        away = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "research", "coordination", "away.json")))
+        cfg = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "research", "coordination", "chat.json")))
     except Exception:
-        pass
-    st = chat_state(now, read_roster(), board_notes(), away, tag)
-    print("CHATSTATE %s %s" % (st["state"], st["detail"]))
+        cfg = {"account": "acct-5d1e2d", "name": "mirage"}
+    mine = (tag or "") == cfg.get("account")
+    print("CHATSTATE FIXED the app chat belongs to %s (%s) for good (research/coordination/chat.json); %s" % (
+        cfg.get("account"), cfg.get("name"), "that is this account: run python3 -I -u tools/chat.py watch under Monitor" if mine else "this account never answers it and never stands down for it"))
     return 0
 
 
