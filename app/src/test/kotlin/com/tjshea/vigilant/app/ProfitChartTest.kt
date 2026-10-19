@@ -206,4 +206,18 @@ class ProfitChartTest {
         compose.onNodeWithTag("profitChart").assertExists()
         compose.onNodeWithText("No bets in this period").assertExists()
     }
+
+    @Test
+    fun `Yesterday and a picked day each hold only that day's games`() {
+        val yesterdayDay = com.tjshea.vigilant.data.tracker.SlateProfit.today(now).minusDays(1)
+        val yBet = bet("y", now - day, BetStatus.WON)
+        val tBet = bet("t", now + 3_600_000L, BetStatus.PENDING)
+        val old = bet("o", now - 3 * day, BetStatus.WON)
+        val all = listOf(yBet, tBet, old)
+        assertEquals(listOf("y"), inPeriod(all, TrackerPeriod.YESTERDAY, now).map { it.id })
+        assertEquals(listOf("o"), inPeriod(all, TrackerPeriod.DAY, now, com.tjshea.vigilant.data.tracker.SlateProfit.slateOf(old)).map { it.id })
+        assertEquals(yesterdayDay, com.tjshea.vigilant.app.ui.periodDay(TrackerPeriod.YESTERDAY, now, null))
+        show(all, TrackerPeriod.YESTERDAY)
+        compose.onNodeWithTag("profitChart").assertExists()
+    }
 }
