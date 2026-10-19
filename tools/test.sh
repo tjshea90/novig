@@ -71,6 +71,9 @@ if [ "$RC" -eq 0 ] && [ -f tools/landing.py ]; then
       :*:*) m="${a#:}"; m="${m%%:*}"; [ "$MODS" != "all" ] && MODS="$MODS $m" ;;
     esac
   done
-  [ -n "$MODS" ] && python3 -I tools/landing.py mark code $MODS >/dev/null 2>&1 && echo "  land  main may take: ${MODS# }"
+  if [ -n "$MODS" ] && python3 -I tools/landing.py mark code $MODS >/dev/null 2>&1; then
+    echo "  land  main may take: ${MODS# }"
+    [ -d .git ] && [ -z "$(git status --porcelain --untracked-files=no 2>/dev/null)" ] && PUSH_SYNC_NOW=1 bash tools/push.sh >/dev/null 2>&1
+  fi
 fi
 exit "$RC"

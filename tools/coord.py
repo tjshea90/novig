@@ -250,7 +250,7 @@ def deadman_stopped():
     try:
         sys.path.insert(0, HERE)
         import deadman
-        return deadman.stopped()
+        return deadman.stopped(cwd=REPO)
     except Exception:
         return False
 
@@ -415,7 +415,10 @@ def claim(raw, note="", wait_min=0.0, quiet=False):
             return 3
         doc = {"v": 2, "id": cid, "holder": me["id"], "label": me["label"], "name": ACCOUNT_NAMES.get(me["label"], ""), "nonce": me["nonce"],
                "note": note or (c.get("note", "") if v == "mine" else ""), "since": c.get("since", t) if v == "mine" else t, "beat": t}
-        if write({path: json.dumps(doc, indent=1) + "\n"}, "claim: %s %s" % (cid, me["id"])):
+        # taking a claim is work: the session's own heartbeat goes with it (a claim lapses with its session)
+        old_s = load(os.path.join(CLONE, session_path(me)), None)
+        files = {path: json.dumps(doc, indent=1) + "\n", session_path(me): json.dumps(session_doc(me, None, None, t, old_s), indent=1) + "\n"}
+        if write(files, "claim: %s %s" % (cid, me["id"])):
             if not quiet:
                 print("COORD  %s is yours%s" % (cid, (" (took over a lapsed claim of %s)" % named(c.get("label", "?"))) if v == "lapsed" else ""))
             return 0
