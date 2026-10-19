@@ -117,6 +117,9 @@ class LiveLightRunner(
     private val signal = Channel<Unit>(Channel.CONFLATED)
     private val offered = HashMap<String, Pair<Long, Double>>()
     private val shadowed = HashMap<String, Long>()
+    /** When each game's score last changed (not just its clock): the score-event paper record (Tj, 2026-10-19, CH5a) measures how long Novig's price stays wrong after a score. */
+    private val scoreAt = ConcurrentHashMap<String, Long>()
+    private val scoreLogged = HashMap<String, Long>()
     private val shadowRules = rules.copy(minFair = SHADOW_MIN_FAIR, name = "light-shadow")
     @Volatile private var view: PushedBooks? = null
     private var jobs: List<Job> = emptyList()
@@ -229,6 +232,8 @@ class LiveLightRunner(
     }
 
     @Volatile private var recatalog = false
+    /** A score just changed: the next look is taken at once, without the debounce. */
+    @Volatile private var scoreHot = false
     private var allMarkets: List<NovigMarket> = emptyList()
     private var marketsAtMs = 0L
     private var knownEvents: Set<String> = emptySet()
@@ -313,6 +318,7 @@ class LiveLightRunner(
                     } ?: continue
                 val before = feeds[game.ev.eventId]?.game
                 if (before == null) recatalog = true
+                if (before != null && (before.homeScore != e.homeScore || before.awayScore != e.awayScore)) { scoreAt[game.ev.eventId] = now; scoreHot = true }
                 feeds[game.ev.eventId] = Feed(e, now)
                 if (before == null || before.homeScore != e.homeScore || before.awayScore != e.awayScore || before.period != e.period || before.clockSec != e.clockSec) {
                     dirty += game.ev.eventId
@@ -329,7 +335,8 @@ class LiveLightRunner(
         while (scope.isActive) {
             signal.receive()
             val first = clock()
-            delay(debounceMs)   // a burst of pushes is one look
+            if (!scoreHot) delay(debounceMs)   // a burst of pushes is one look; a score change is looked at at once
+            scoreHot = false
             val ids = dirty.toList().also { dirty.removeAll(it.toSet()) }
             for (id in ids) scanGame(id, first)
         }
@@ -383,6 +390,18 @@ class LiveLightRunner(
             jlog("shadow") {
                 put("eventId", eventId); put("event", game.ev.description); put("league", game.ev.league); put("outcomeId", c.outcomeId); put("selection", c.label); put("side", c.side)
                 put("strike", c.strike); put("ask", c.ask); put("fair", c.fair); put("edge", c.edge); put("score", "${feed.game.awayScore}-${feed.game.homeScore}"); put("clockSec", feed.game.clockSec); put("period", feed.game.period)
+            }
+        }
+        // Score-event record (paper, CH5a): for [SCORE_WINDOW_MS] after a score change, every side the shadow rules would back is journaled with the time since the score, so the lag of Novig's price can be measured before it is traded.
+        val sinceScore = scoreAt[eventId]?.let { now - it }
+        if (sinceScore != null && sinceScore <= SCORE_WINDOW_MS) {
+            for (c in shadowFound) {
+                if (now - (scoreLogged[c.outcomeId] ?: 0L) < SCORE_LOG_MS) continue
+                scoreLogged[c.outcomeId] = now
+                jlog("score-event") {
+                    put("eventId", eventId); put("event", game.ev.description); put("league", game.ev.league); put("outcomeId", c.outcomeId); put("selection", c.label); put("side", c.side)
+                    put("ask", c.ask); put("fair", c.fair); put("edge", c.edge); put("sinceScoreMs", sinceScore); put("score", "${feed.game.awayScore}-${feed.game.homeScore}"); put("clockSec", feed.game.clockSec); put("period", feed.game.period)
+                }
             }
         }
         upd { it.copy(scans = it.scans + 1, lastScanMs = now, lastScanTookMs = (clock() - triggeredAtMs).coerceAtLeast(0)) }
@@ -483,6 +502,9 @@ class LiveLightRunner(
         /** The same outcome is handed to the taker again only after this long, or at a better price. */
         const val REOFFER_MS = 1_500L
         const val SHADOW_MS = 30_000L
+        /** The score-event record runs this long after a change of score, one line per outcome every [SCORE_LOG_MS]. */
+        const val SCORE_WINDOW_MS = 30_000L
+        const val SCORE_LOG_MS = 2_000L
         const val SHADOW_MIN_FAIR = 0.75
 
         /** Pushes heard within this long = the lane is carrying the load. */
