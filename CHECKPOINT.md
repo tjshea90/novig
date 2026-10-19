@@ -1,13 +1,13 @@
-# CHECKPOINT 3761 — read me first, then TASKS.md
+# CHECKPOINT 3762 — read me first, then TASKS.md
 
-**Written:** 2026-10-19T18:56:52Z · **tests:** all 6 fast checks green
-**Branch:** `ccr-413cf302-mvy06f` · **builds on:** `70511e314` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T19:38:11Z · **tests:** all 6 fast checks green
+**Branch:** `ccr-413cf302-mvy06f` · **builds on:** `137f86611` (this checkpoint is the commit after it)
 
 ## Just done
-handoff to mirage written (TASKS.md HANDOFF TO MIRAGE + board note); CH24b ticked as done by tj Gmail
+pre-ship: v1.0.7: the engine waits 20 s for your settings edits to settle before restarting a scan (SC1: three edits in 6 min cut three scans short); cleanup of old releases/branches
 
 ## Do this next
-wait for :data:test, land main, run delete-stale-branches then delete-old-releases (dry_run first)
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ wait for :data:test, land main, run delete-stale-branches then delete-old-releas
 
 ## Last ten checkpoints
 ```
+  9eada62c3 ckpt 3761: handoff to mirage written (TASKS.md HANDOFF TO MIRAGE + board note); CH24b 
   ea8cd737f ckpt 3760: added delete-old-releases.yml (APK releases only, keep newest 3 + v0.17.0, 
   74f7f5c20 ckpt 3759: added delete-stale-branches.yml (manual one-shot, 71 listed session branche
   a1a0f2073 ckpt 3758: merged mirage's CH24a (watchdog unreadable-branch fix) into my branch, self
@@ -25,8 +26,7 @@ wait for :data:test, land main, run delete-stale-branches then delete-old-releas
   346639a1e ckpt 3754: EA8a/EA9 written up (keeper import crash, CI flood: ci.yml main-only, data-
   8e2363d3d ckpt 3753: PL: Tracker tests follow the new card (all-time headline by tag, clv card s
   1b1ac7101 ckpt 3752: PL5: the wallet figure reads every money-moving ledger kind (transfers, dep
-  cce5b1756 ckpt 3751: PL: NovigTradingClient.transfers() reads TRANSFER_IN/OUT with no time bound
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
