@@ -445,6 +445,8 @@ class ApiBettingController(
                 it.copy(betting = it.betting.copy(busy = false, message = out.message.takeIf { out.applied }, error = out.message.takeUnless { out.applied }, balance = out.balance ?: it.betting.balance))
             }
             if (!out.applied) refreshBalance(quiet = true)
+            // Money in or out changes what was put in: the Tracker's all-time figure is read again (PL).
+            else scope.launch { runCatching { c.walletMoney.refresh(maxAgeMs = 0L) } }
             return out.applied
         } catch (e: CancellationException) {
             throw e
