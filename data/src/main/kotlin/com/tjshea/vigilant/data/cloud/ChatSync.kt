@@ -34,7 +34,8 @@ data class ChatState(
     val headSha: String = "",
     /** Claude's messages up to this time are read (the Claude tab's red number counts the rest). */
     val readUpTo: Long = 0L,
-    /** Claude's messages already announced by a notification (one each, never again). */
+    /** Claude's messages already announced by a notification (one each, never again): the newest time announced, and the ids near it (the two clocks may disagree a little). */
+    val notifiedUpTo: Long = 0L,
     val notified: List<String> = emptyList(),
     /** The first full read is done: what was there before is not announced. */
     val primed: Boolean = false,
@@ -158,36 +159,38 @@ class ChatSync(
     }
 
     /**
-     * Sends what is due, oldest first: a message waiting for its next try holds the later ones back (so Claude reads them in order), a stopped one does not. Returns when the next try is due
-     * (0 = nothing waits).
+     * Sends what is due, oldest first: a message waiting for its next try holds the later ones back (so Claude reads them in order) until it has failed 3 times; a stopped one does not.
+     * Returns how long until the next try, or null when nothing waits.
      */
-    suspend fun sendPending(): Long = sendLock.withLock {
+    suspend fun sendPending(): Long? = sendLock.withLock {
         for (o0 in state.value.outbox) {
             val o = state.value.outbox.firstOrNull { it.id == o0.id } ?: continue
             if (o.stuck) continue
-            if (o.nextTryAt > clock()) break
-            if (!sendOne(o)) break
+            if (o.nextTryAt > clock()) { if (o.tries >= OVERTAKE_AFTER) continue else break }
+            if (!sendOne(o) && o.tries + 1 < OVERTAKE_AFTER) break
         }
-        state.value.outbox.filter { !it.stuck }.minOfOrNull { it.nextTryAt } ?: 0L
+        val next = state.value.outbox.filter { !it.stuck }.minOfOrNull { it.nextTryAt } ?: return@withLock null
+        (next - clock()).coerceAtLeast(250L)
     }
 
-    /** One message: its attachments, then itself. True = it is on GitHub (or stopped and out of the way); false = it waits for its next try. */
+    /** One message: its attachments, then itself. True = it is on GitHub (or stopped, or deleted, and out of the way); false = it waits for its next try. */
     private suspend fun sendOne(o: CloudChat.Outgoing): Boolean {
-        var cur = o
         for (i in o.files.indices) {
-            if (i in cur.uploaded) continue
+            if (i in o.uploaded) continue
+            if (state.value.outbox.none { it.id == o.id }) return true   // deleted meanwhile
             val f = o.files[i]
             val bytes = withContext(Dispatchers.IO) { runCatching { File(f.path).readBytes() }.getOrNull() }
             if (bytes == null) { failed(o.id, CloudClient.Create.Failed("${f.name} is no longer on the phone: delete this message and send it again", retry = false)); return true }
             when (val r = client.createFile(CloudChat.BRANCH, CloudChat.filePath(o.id, i + 1, f.name), bytes, "chat: attachment ${i + 1} of ${o.id}")) {
-                CloudClient.Create.Created, CloudClient.Create.Exists -> cur = update { s -> s.copy(outbox = s.outbox.map { if (it.id == o.id) it.copy(uploaded = (it.uploaded + i).distinct()) else it }) }
-                    .outbox.firstOrNull { it.id == o.id } ?: return true
+                CloudClient.Create.Created, CloudClient.Create.Exists ->
+                    update { s -> s.copy(outbox = s.outbox.map { if (it.id == o.id) it.copy(uploaded = (it.uploaded + i).distinct()) else it }) }
                 is CloudClient.Create.Failed -> { failed(o.id, r); return !r.retry }
             }
         }
+        if (state.value.outbox.none { it.id == o.id }) return true
         return when (val r = client.createFile(CloudChat.BRANCH, CloudChat.msgPath(o.id, o.at), CloudChat.encode(o).toByteArray(Charsets.UTF_8), "chat: Tj ${o.id}")) {
             CloudClient.Create.Created, CloudClient.Create.Exists -> {
-                update { s -> s.copy(outbox = s.outbox.filterNot { it.id == o.id }, msgs = (s.msgs.filterNot { it.id == o.id } + CloudChat.sent(o))) }
+                update { s -> s.copy(outbox = s.outbox.filterNot { it.id == o.id }, msgs = s.msgs.filterNot { it.id == o.id } + CloudChat.sent(o)) }
                 readWake.tryEmit(Unit)   // the receipt and the answer come next
                 true
             }
@@ -226,35 +229,38 @@ class ChatSync(
             is CloudClient.Poll.Failed -> { _problem.value = p.why; return@withLock Read(0, emptyList()) }
             is CloudClient.Poll.Fresh -> p
         }
-        if (head.value == state.value.headSha && state.value.primed) { headEtag = head.etag; _problem.value = null; return@withLock Read(0, emptyList()) }
-        val got = readAt(head.value)
-        if (got == null) return@withLock Read(0, emptyList())   // something failed: the next look reads again (no ETag kept)
+        val n = if (head.value == state.value.headSha && state.value.primed) 0
+            else readAt(head.value) ?: return@withLock Read(0, emptyList())   // a read failed: no ETag kept, so the next look reads again
         headEtag = head.etag
         _problem.value = null
-        val s = state.value
-        val claude = got.filter { !it.fromTj && !it.isDone }
-        val announce = if (!s.primed || open) emptyList() else claude.filter { it.id !in s.notified }
+        var announce = emptyList<CloudChat.Msg>()
+        val open = open
         update { st ->
+            val told = st.notified.toHashSet()
+            val news = st.msgs.filter { !it.fromTj && !it.isDone && it.id !in told && it.at > st.notifiedUpTo - SKEW_MS }
+            announce = if (st.primed && !open) news.sortedBy { it.at } else emptyList()
             st.copy(
                 primed = true, headSha = head.value,
-                notified = (st.notified + claude.map { it.id }).distinct().takeLast(MAX_NOTIFIED),
+                notifiedUpTo = maxOf(st.notifiedUpTo, news.maxOfOrNull { it.at } ?: 0L),
+                notified = (st.notified + news.map { it.id }).takeLast(MAX_NOTIFIED),
                 readUpTo = if (open || !st.primed) maxOf(st.readUpTo, CloudChat.newestFromClaude(st.msgs)) else st.readUpTo,
             )
         }
-        Read(got.size, announce)
+        Read(n, announce)
     }
 
-    /** Reads the changed day folders at [head]; the new messages, or null when a read failed (what was read is kept). */
-    private suspend fun readAt(head: String): List<CloudChat.Msg>? {
+    /** Reads the changed day folders at [head]: how many new messages, or null when a read failed (what was read is kept, the rest is read next time). */
+    private suspend fun readAt(head: String): Int? {
         val days = when (val p = client.listEntries(head, CloudChat.MSGS)) {
             is CloudClient.Poll.Fresh -> p.value.filter { it.type == "dir" && DAY.matches(it.name) }.sortedBy { it.name }
             is CloudClient.Poll.Failed -> { _problem.value = p.why; return null }
-            CloudClient.Poll.NotModified -> return emptyList()
+            CloudClient.Poll.NotModified -> return 0
         }
         val s0 = state.value
         val from = s0.fromDay.ifBlank { days.takeLast(INITIAL_DAYS).firstOrNull()?.name ?: CloudChat.dayOf(clock()) }
-        update { it.copy(fromDay = from, oldestDay = days.firstOrNull()?.name.orEmpty()) }
-        val got = ArrayList<CloudChat.Msg>()
+        val oldest = days.firstOrNull()?.name.orEmpty()
+        if (from != s0.fromDay || oldest != s0.oldestDay) update { it.copy(fromDay = from, oldestDay = oldest) }
+        var count = 0
         var complete = true
         for (d in days) {
             if (d.name < from || state.value.days[d.name] == d.sha) continue
@@ -274,22 +280,12 @@ class ChatSync(
                 if (text == null) { dayDone = false; continue }
                 CloudChat.decode(text)?.let { fresh += it }
             }
-            if (!dayDone) { complete = false; _problem.value = "some messages could not be read; trying again" }
-            update { st ->
-                st.copy(
-                    msgs = (st.msgs + fresh).distinctBy { it.id },
-                    seen = (st.seen + seen).distinct(),
-                    days = if (dayDone) st.days + (d.name to d.sha) else st.days,
-                )
-            }
-            got += fresh
+            if (!dayDone) { complete = false; _problem.value = "some messages could not be read yet; trying again" }
+            update { st -> st.copy(msgs = (st.msgs + fresh).distinctBy { it.id }, seen = (st.seen + seen).distinct(), days = if (dayDone) st.days + (d.name to d.sha) else st.days) }
+            count += fresh.size
         }
-        return if (complete) got else null.also { if (got.isNotEmpty()) pendingAnnounce += got }
-            ?: run { null }
+        return if (complete) count else null
     }
-
-    /** Messages read in a pass that did not finish: announced with the next one that does. */
-    private val pendingAnnounce = ArrayList<CloudChat.Msg>()
 
     private suspend fun readSeat() {
         when (val p = client.readText(CloudChat.SEAT_BRANCH, CloudChat.SEAT_FILE, seatEtag)) {
@@ -317,7 +313,11 @@ class ChatSync(
     /** How long the reader may rest: a few seconds while the chat is open or an answer is awaited, longer otherwise. Every look is a free 304 while nothing changed. */
     fun pace(onScreen: Boolean, now: Long = clock()): Long {
         val s = state.value
-        val awaited = s.outbox.isNotEmpty() || s.msgs.any { it.fromTj && now - it.at < AWAIT_MS && s.msgs.none { c -> !c.fromTj && it.id in c.replyTo } }
+        val recent = s.msgs.filter { it.fromTj && now - it.at < AWAIT_MS }
+        val awaited = s.outbox.isNotEmpty() || (recent.isNotEmpty() && run {
+            val answered = s.msgs.flatMapTo(HashSet()) { if (it.fromTj) emptyList() else it.replyTo }
+            recent.any { it.id !in answered }
+        })
         return when {
             open -> OPEN_MS
             awaited -> if (onScreen) AWAIT_ON_SCREEN_MS else AWAIT_OFF_SCREEN_MS
@@ -378,6 +378,10 @@ class ChatSync(
         const val KEEP_DAYS = 60L
         const val KEEP_FILES_DAYS = 30L
         const val MAX_NOTIFIED = 500
+        /** How far the two clocks (the phone's, the session's) may disagree for a notification. */
+        const val SKEW_MS = 30 * 60_000L
+        /** A message that failed this many times lets the later ones go ahead. */
+        const val OVERTAKE_AFTER = 3
         const val MAX_PAUSE_MS = 60_000L
         const val OPEN_MS = 3_000L
         const val AWAIT_MS = 2 * 3_600_000L
