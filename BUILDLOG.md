@@ -341,3 +341,4 @@ day that changes.
 | v1.0.0 | code 340 | 2026-10-18T23:03Z | v1.0.0: Live board with GitHub/Phone switch, slate P/L, Engine tab views, true refresh, fixed meters, settings cleanup, engine auto-bets totals and team totals, SX socket freshness
 | v1.0.1 | code 341 | 2026-10-19T01:55Z | v1.0.1: live status line shows engine note, Kalshi/Polymarket show active, shadow tier journal, experimental live curve at 10 cents
 | v1.0.2 | code 342 | 2026-10-19T02:13Z | v1.0.2: The Odds API stays on one key until it is spent, then the next
+| v1.0.3 | code 343 | 2026-10-19T03:48Z | v1.0.3: Live light middle tier (model 80-89% sure, 5% edge, real money at 10-cent stakes)
