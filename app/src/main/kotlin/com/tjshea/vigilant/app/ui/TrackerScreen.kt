@@ -78,6 +78,7 @@ import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.tracker.BetSettler
 import com.tjshea.vigilant.data.tracker.BetFilterSpec
 import com.tjshea.vigilant.data.tracker.BetStatus
+import com.tjshea.vigilant.data.tracker.SlateProfit
 import com.tjshea.vigilant.data.tracker.LiveBets
 import com.tjshea.vigilant.data.tracker.CheckOddsStats
 import androidx.compose.material3.Switch
@@ -89,8 +90,6 @@ import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import com.tjshea.vigilant.data.tracker.TrackerBreakdown
 import com.tjshea.vigilant.engine.Odds
-import java.time.Instant
-import java.time.ZoneId
 
 /** The Tracker's two halves (Tj, 2026-09-27: "make a stats section"). */
 enum class TrackerView(val label: String) { STATS("Stats"), BETS("Bets") }
