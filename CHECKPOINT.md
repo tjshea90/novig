@@ -1,22 +1,23 @@
-# CHECKPOINT 3728 — read me first, then TASKS.md
+# CHECKPOINT 3729 — read me first, then TASKS.md
 
-**Written:** 2026-10-19T05:54:45Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-wb4vfj` · **builds on:** `439a5663f` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T06:03:07Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-wb4vfj` · **builds on:** `71eeb58ca` (this checkpoint is the commit after it)
 
 ## Just done
-CH18 chat cleanup, PinnWire on, CH19/20 queued
+chat: 15 min window, old-reply guard
 
 ## Do this next
-CH20 tennis live, CH19 Odds API quota, CH8/9
+CH20 tennis, CH19
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M tools/tell_tj.py
 
 ## Last ten checkpoints
 ```
+  b0b14ad71 ckpt 3728: CH18 chat cleanup, PinnWire on, CH19/20 queued
   3047006b0 ckpt 3727: CH17 chat_watch stale-message fix
   2c27f2dbe ckpt 3726: v1.0.4 shipped CH5a/c
   1695b116c ckpt 3725: pre-release: v1.0.4: live second opinion from SX Bet's exchange (CH5c), sco
@@ -26,7 +27,6 @@ CH20 tennis live, CH19 Odds API quota, CH8/9
   9586e389a ckpt 3721: CH16 badge note queued
   2d89dab99 ckpt 3720: v1.0.3 released
   804f7f1f8 ckpt 3719: pre-release: v1.0.3: Live light middle tier (model 80-89% sure, 5% edge, re
-  47ec8bfb6 ckpt 3718: pre-ship: v1.0.3: Live light middle tier (model 80-89% sure, 5% edge, real 
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the

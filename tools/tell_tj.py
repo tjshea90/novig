@@ -131,7 +131,7 @@ def chat_reply(reply_to, text, who=None, **kw):
     at = int(time.time() * 1000)
     # Tj, 2026-10-19: a reply to an old message shows up in the chat as a stale message. Refuse unless the message is under 30 min old (or FORCE_OLD_REPLY=1).
     try:
-        if at - int(str(reply_to)[1:]) > 1800000 and not os.environ.get("FORCE_OLD_REPLY"):
+        if 1e12 < int(str(reply_to)[1:]) < at - 1800000 and not os.environ.get("FORCE_OLD_REPLY"):
             raise SystemExit("not sent: message %s is over 30 min old, so a reply would look stale to Tj" % reply_to)
     except ValueError:
         pass
