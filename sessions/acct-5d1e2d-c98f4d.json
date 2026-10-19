@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "295e51b635c06934febcb46ec8ec59785014fb02",
+ "head": "5407f7a7df636ad10a6c39a067a222744b01ec4d",
  "since": 1792393152,
- "beat": 1792423024,
- "beatIso": "2026-10-19T15:17:04Z",
- "done": "pre-release: v1.0.5: the chat with Claude rebuilt from scratch (one account answers, messages say Sending/Sent/Seen/Answered, retry, attachments kept, quotes, online/waking line); the Claude tab's red number counts only chat replies; live-bid tests follow the tennis-on default (versionCode 345, v1.0.5)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.5), then run: bash tools/record-release.sh v1.0.5 345 \"v1.0.5: the chat with Claude rebuilt from scratch (one account answers, messages say Sending/Sent/Seen/Answered, retry, attachments kept, quotes, online/waking line); the Claude tab's red number counts only chat replies; live-bid tests follow the tennis-on default\""
+ "beat": 1792423235,
+ "beatIso": "2026-10-19T15:20:35Z",
+ "done": "EA: engine-alarm.yml + tools/engine_alarm.py (free runner waits to 08:00 ET then dispatches cloud-scan; armed at the engine's WINDOW/IDLE end, by the gate when hours are closed, by the watchdog), watchdog starts a missing engine inside hours; v1.0.5 released + recorded + announced; CR closed",
+ "next": "after main has these: dispatch engine-alarm.yml once now (arms tomorrow 08:00); tomorrow check the 08:00 start (cloud-scan runs ~12:00Z) and tell Tj"
 }
