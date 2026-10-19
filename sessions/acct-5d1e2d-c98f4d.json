@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "49186427049938cb116d2697a90bb6408136be74",
+ "head": "7e3f1784ebf64d6f3e57879280158010aff419c2",
  "since": 1792393152,
- "beat": 1792396460,
- "beatIso": "2026-10-19T07:54:20Z",
- "done": "CR5 code done + reviewed; landing gate fixed (marks the tree taken BEFORE a run, filtered runs mark nothing); grep -q/pipefail SIGPIPE race fixed (test_coord 1-in-3 red, push.sh marker guard, resume.sh, ship.sh); docs CR7 (CLAUDE.md, CHAT.md, CHAT_REBUILD \u00a74); TASKS CR4/CR7/CH16/CH18 ticked; version 1.0.5 code 345",
- "next": "full suite running (scratchpad full.log); when green: bash ship.sh, release.yml, record-release, chat.py say with the link, board note, unclaim CR"
+ "beat": 1792396511,
+ "beatIso": "2026-10-19T07:55:11Z",
+ "done": "pre-release: v1.0.5: the chat with Claude rebuilt from scratch (one account answers, messages say Sending/Sent/Seen/Answered, retry, attachments kept, quotes, online/waking line); the Claude tab's red number counts only chat replies; live-bid tests follow the tennis-on default (versionCode 345, v1.0.5)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.5), then run: bash tools/record-release.sh v1.0.5 345 \"v1.0.5: the chat with Claude rebuilt from scratch (one account answers, messages say Sending/Sent/Seen/Answered, retry, attachments kept, quotes, online/waking line); the Claude tab's red number counts only chat replies; live-bid tests follow the tennis-on default\""
 }
