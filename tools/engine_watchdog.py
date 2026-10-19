@@ -188,6 +188,25 @@ def selftest():
     assert decide(now, [run(7, "in_progress", 20)], fresh, progress_changed_ms=now - 4 * M, **st)[0] == "none"         # moving
     assert decide(now, [run(7, "in_progress", 20)], fresh, progress_changed_ms=0, **st)[0] == "none"                    # an older engine: no field
     assert decide(now, [run(7, "in_progress", 3)], fresh, progress_changed_ms=now - 11 * M, **st)[0] == "none"          # a young run
+    # A branch that cannot be fetched is not a dead engine: check() changes nothing (2026-10-19, GitHub degraded: a failed fetch read as "no heartbeat" and a healthy engine was replaced).
+    import types
+    calls = []
+    real_git, real_api = globals()["git"], globals()["api"]
+    try:
+        globals()["git"] = lambda *a: types.SimpleNamespace(returncode=128 if a and a[0] == "fetch" else 0, stdout="", stderr="fatal: unable to access")
+
+        def fake_api(method, path, body=None):
+            calls.append((method, path))
+            if method == "GET" and "status=in_progress" in path:
+                return {"workflow_runs": [{"id": 7, "status": "in_progress", "created_at": "2026-10-19T15:02:03Z", "run_started_at": "2026-10-19T15:02:03Z"}]}
+            return {"workflow_runs": []}
+        globals()["api"] = fake_api
+        import contextlib, io
+        with contextlib.redirect_stdout(io.StringIO()):
+            assert check(keeper=True) == 0
+        assert not [c for c in calls if c[0] == "POST"], calls
+    finally:
+        globals()["git"], globals()["api"] = real_git, real_api
     print("engine_watchdog selftest ok")
     return 0
 
