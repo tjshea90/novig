@@ -116,6 +116,8 @@ class LiveLightRunner(
     private val dirty = ConcurrentHashMap.newKeySet<String>()
     private val signal = Channel<Unit>(Channel.CONFLATED)
     private val offered = HashMap<String, Pair<Long, Double>>()
+    private val shadowed = HashMap<String, Long>()
+    private val shadowRules = rules.copy(minFair = SHADOW_MIN_FAIR, name = "light-shadow")
     @Volatile private var view: PushedBooks? = null
     private var jobs: List<Job> = emptyList()
     @Volatile private var pushSinceMs = 0L
@@ -477,6 +479,8 @@ class LiveLightRunner(
 
         /** The same outcome is handed to the taker again only after this long, or at a better price. */
         const val REOFFER_MS = 1_500L
+        const val SHADOW_MS = 30_000L
+        const val SHADOW_MIN_FAIR = 0.75
 
         /** Pushes heard within this long = the lane is carrying the load. */
         const val CARRY_MS = 60_000L
