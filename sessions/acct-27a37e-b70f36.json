@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-413cf302-mvy06f",
- "head": "74f7f5c20596476d3e4d5f1c9c8eaf2ac4a2eff8",
+ "head": "ea8cd737f9f943d20dd9ac92c5451070efdb91d6",
  "since": 1792435352,
- "beat": 1792436026,
- "beatIso": "2026-10-19T18:53:46Z",
- "done": "added delete-stale-branches.yml (manual one-shot, 71 listed session branches)",
- "next": "land on main, dispatch the workflow, check result; then finish SC1 settle-debounce test run"
+ "beat": 1792436113,
+ "beatIso": "2026-10-19T18:55:13Z",
+ "done": "added delete-old-releases.yml (APK releases only, keep newest 3 + v0.17.0, dry_run input)",
+ "next": "after :data:test passes main gets both workflows; dispatch delete-stale-branches then delete-old-releases (dry_run first)"
 }
