@@ -6,6 +6,7 @@ import androidx.core.app.NotificationCompat
 import com.tjshea.vigilant.app.ui.Format
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.updateAndGet
+import kotlinx.coroutines.sync.withLock
 
 /**
  * The Vigilant wallet's balance as every notification shows it (Tj, 2026-10-02 21:51Z: "always include my vigilant wallet current balance in all vigilant
@@ -98,12 +99,12 @@ class WalletMoney(
     val isSetUp: Boolean get() = setUp()
 
     /** The figure no older than [maxAgeMs]: the last one when it's that young, else read now (the last one stands if Novig doesn't answer; a failed read is not tried again for [RETRY_MS]). */
-    suspend fun refresh(maxAgeMs: Long = FRESH_MS): com.tjshea.vigilant.data.tracker.WalletProfit.Money? = lock.withLockKeep {
+    suspend fun refresh(maxAgeMs: Long = FRESH_MS): com.tjshea.vigilant.data.tracker.WalletProfit.Money? = lock.withLock {
         val last = _flow.value
-        if (!setUp()) { _note.value = "Betting through the API is not set up on this phone, so the wallet can't be read."; return@withLockKeep last }
+        if (!setUp()) { _note.value = "Betting through the API is not set up on this phone, so the wallet can't be read."; return@withLock last }
         val now = clock()
-        if (last != null && now - last.atMs < maxAgeMs) return@withLockKeep last
-        if (maxAgeMs > 0L && now - triedAtMs < RETRY_MS) return@withLockKeep last
+        if (last != null && now - last.atMs < maxAgeMs) return@withLock last
+        if (maxAgeMs > 0L && now - triedAtMs < RETRY_MS) return@withLock last
         triedAtMs = now
         try {
             val m = read()
@@ -120,11 +121,6 @@ class WalletMoney(
             _note.value = "Couldn't read the wallet just now: ${(e as? com.tjshea.vigilant.data.novig.NovigApiException)?.advice ?: e.message ?: e.javaClass.simpleName}"
         }
         _flow.value
-    }
-
-    private suspend inline fun <T> kotlinx.coroutines.sync.Mutex.withLockKeep(block: () -> T): T {
-        lock()
-        try { return block() } finally { unlock() }
     }
 
     private fun save(m: com.tjshea.vigilant.data.tracker.WalletProfit.Money) {
