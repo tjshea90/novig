@@ -137,7 +137,7 @@ class ProfitChartTest {
         show(tenDays, TrackerPeriod.TODAY)
         inView("+\$1.00").assertExists()
         compose.onNodeWithTag("profitCanvas").assertExists()
-        compose.onNodeWithTag("profitDayLine").assertTextContains("last result Fri", substring = true)
+        compose.onNodeWithTag("profitDayLine").assertTextContains("Fri Sep 25 games · last result Sat 2:20 AM")
         compose.onRoot().captureRoboImage("screenshots/4t_profit_chart.png")
     }
 
