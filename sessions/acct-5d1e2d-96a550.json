@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-nfy0aq",
- "head": "a0e6fce49a0f5b3ac59c550805c99707037eafa3",
+ "head": "f76ccb6cc28f75933457f594b95bfbf7c5a28fc7",
  "since": 1792440839,
- "beat": 1792442271,
- "beatIso": "2026-10-19T20:37:51Z",
- "done": "CH23b Try again + CH22b cross-exchange paper journal built, tests green",
- "next": "ship v1.0.8 via ship.sh, release.yml, record-release.sh; tell Tj"
+ "beat": 1792442306,
+ "beatIso": "2026-10-19T20:38:26Z",
+ "done": "pre-ship: v1.0.8: Engine > APIs lights (green/amber/grey, tap for the error), Test now and Try again per API; cross-exchange hedge paper journal (Novig + Kalshi/SX)",
+ "next": "ship.sh gates and releases this"
 }
