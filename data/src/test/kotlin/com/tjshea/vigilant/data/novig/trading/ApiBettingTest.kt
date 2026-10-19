@@ -697,7 +697,12 @@ class ApiBettingTest {
                     path.startsWith("/v3/portfolio/positions") -> MockResponse().setBody("""[{"marketId":"mkt","outcomeId":"A","qty":400,"cost":"1.85000"}]""")
                     path.startsWith("/v3/account/subaccounts/sub/transactions") && path.contains("kind=TRANSFER_IN") ->
                         MockResponse().setBody("""{"items":[{"transactionId":"t2","kind":"TRANSFER_IN","amount":"230.00000","ref":"tr1","ts":3}],"next":null}""")
-                    path.startsWith("/v3/account/subaccounts/sub/transactions") && path.contains("kind=TRANSFER_OUT") -> MockResponse().setBody("""{"items":[],"next":null}""")
+                    path.startsWith("/v3/account/subaccounts/sub/transactions") && path.contains("kind=TRANSFER_OUT") ->
+                        MockResponse().setBody("""{"items":[{"transactionId":"t3","kind":"TRANSFER_OUT","amount":"-20.00000","ref":"tr2","ts":4}],"next":null}""")
+                    // A kind this ledger does not take is refused: it reads as none, never as a failed figure.
+                    path.startsWith("/v3/account/subaccounts/sub/transactions") && path.contains("kind=FORWARDING") ->
+                        MockResponse().setResponseCode(400).setBody("""{"code":"BAD_REQUEST","message":"kind"}""")
+                    path.startsWith("/v3/account/subaccounts/sub/transactions") && !path.contains("kind=SETTLEMENT") -> MockResponse().setBody("""{"items":[],"next":null}""")
                     path.startsWith("/v3/account/subaccounts/sub/transactions") ->
                         MockResponse().setBody("""{"items":[{"transactionId":"t1","kind":"SETTLEMENT","amount":"4.00000","ref":"mkt","ts":5}],"next":null}""")
                     path.startsWith("/v3/account/subaccounts/sub/balance") -> MockResponse().setBody("""{"keyId":"sub","balance":"12.50000"}""")
@@ -710,11 +715,11 @@ class ApiBettingTest {
         assertEquals(LedgerRow("t1", "SETTLEMENT", 4.0, "mkt", 5), c.ledger("sub", "SETTLEMENT", 1, 2).single())
         assertEquals(12.5, c.balance("sub"), 1e-9)
         assertTrue(requests.any { it.path!!.contains("kind=SETTLEMENT") && it.path!!.contains("startsAfter=1") && it.path!!.contains("startsBefore=2") })
-        // Transfers (the Tracker's all-time figure, PL): both kinds, all time, with no time bounds at all.
-        assertEquals(listOf(LedgerRow("t2", "TRANSFER_IN", 230.0, "tr1", 3)), c.transfers("sub"))
-        val transferReads = requests.filter { it.path!!.contains("kind=TRANSFER_") }
-        assertEquals(2, transferReads.size)
-        assertTrue(transferReads.none { it.path!!.contains("startsAfter") || it.path!!.contains("startsBefore") })
+        // Money moved in and out (the Tracker's all-time figure, PL): every money-moving kind, all time, with no time bounds at all; withdrawals come back negative.
+        assertEquals(listOf(LedgerRow("t2", "TRANSFER_IN", 230.0, "tr1", 3), LedgerRow("t3", "TRANSFER_OUT", -20.0, "tr2", 4)), c.moneyMoves("sub"))
+        val moveReads = requests.filter { r -> NovigTradingClient.MONEY_MOVES.any { r.path!!.contains("kind=$it&") } }
+        assertEquals(NovigTradingClient.MONEY_MOVES.size, moveReads.size)
+        assertTrue(moveReads.none { it.path!!.contains("startsAfter") || it.path!!.contains("startsBefore") })
         assertEquals("0.455", NovigTradingClient.priceText(0.455))
         assertEquals("0.050", NovigTradingClient.priceText(0.05))
     }
