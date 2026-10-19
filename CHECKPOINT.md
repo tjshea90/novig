@@ -1,13 +1,13 @@
-# CHECKPOINT 3694 — read me first, then TASKS.md
+# CHECKPOINT 3695 — read me first, then TASKS.md
 
-**Written:** 2026-10-18T23:58:44Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-qlj3pq` · **builds on:** `f4d642b2c` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T01:07:15Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-tsjsms` · **builds on:** `965ba9cde` (this checkpoint is the commit after it)
 
 ## Just done
-CH2 diagnosed, replied
+CH4 live ideas replied, CH1 explained
 
 ## Do this next
-CH2: add paper tier 0.75-0.89 in LiveLightScan/CloudLiveLane, then tune minFair from results
+CH2 paper tier 0.75-0.89 in LiveLightScan/CloudLiveLane
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ CH2: add paper tier 0.75-0.89 in LiveLightScan/CloudLiveLane, then tune minFair 
 
 ## Last ten checkpoints
 ```
+  965ba9cde ckpt 3694: CH2 diagnosed, replied
   f4d642b2c ckpt 3693: CH3 fixed: Kalshi/Polymarket show active
   d770f6d7b ckpt 3692: answered CH1-CH3; standby label not found in code, asked Tj for screenshot
   8f0df5f46 ckpt 3691: CH1 live status line shows engine note; CH2/CH3 written
@@ -26,5 +27,4 @@ CH2: add paper tier 0.75-0.89 in LiveLightScan/CloudLiveLane, then tune minFair 
   7d7c1eb08 ckpt 3687: full tests: floor 3918 passed; fixed slate chip names clashing with Tracker
   74efbf781 ckpt 3686: TCL122-9 done (settings tests green 208/208); CLAUDE.md v1.0 rules; TASKS t
   1ba41163e ckpt 3685: TCL122-5 SX socket freshness fix + API audit doc; TCL122-9 settings regroup
-  7f8a89ad4 ckpt 3684: TCL122-4 phone half written: LiveBoard model, LightUi phone sockets/stats/t
 ```
