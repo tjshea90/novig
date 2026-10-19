@@ -375,7 +375,7 @@ class LiveLightRunner(
         val mid = shadowFound.filter { it.fair >= TailTradeLimits.MIN_FAIR_MID && it.fair < rules.minFair }.map { it.copy(rule = LiveLightScan.MID) }
         val found = LiveLightScan.scan(points, game.ev.league, st, marginOf, rules) + mid + curve + TailScan.scan(points, st, marginOf, tailRules).map { it.copy(rule = TailTaker.CONSERVATIVE) }
         // Shadow tier (CH2/CH5b, Tj 2026-10-18): sides the model calls 75-89% sure that would be +EV are only journaled, never offered, so their hit rate can be measured before minFair is lowered.
-        for (c in LiveLightScan.scan(points, game.ev.league, st, marginOf, shadowRules)) {
+        for (c in shadowFound) {
             if (c.fair >= rules.minFair) continue
             val prev = shadowed[c.outcomeId]
             if (prev != null && now - prev < SHADOW_MS) continue
