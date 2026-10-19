@@ -95,21 +95,17 @@ import java.time.ZoneId
 /** The Tracker's two halves (Tj, 2026-09-27: "make a stats section"). */
 enum class TrackerView(val label: String) { STATS("Stats"), BETS("Bets") }
 
-/** How far back the stats look, by when each bet was placed. */
-enum class TrackerPeriod(val label: String) { ALL("All"), DAYS_30("30 days"), DAYS_7("7 days"), TODAY("Today") }
+/**
+ * How far back the stats look, by the day of each bet's GAME (Tj, 2026-10-19, PL: Today is today's games; [SlateProfit.slateOf], Eastern, 5 am to 5 am): [days] game days up to today. A bet on a game after
+ * today is in All only (its money is at stake, not won or lost yet).
+ */
+enum class TrackerPeriod(val label: String, val days: Int) { ALL("All", Int.MAX_VALUE), DAYS_30("30 days", 30), DAYS_7("7 days", 7), TODAY("Today", 1) }
 
 enum class BetFilter(val label: String) { OPEN("Open"), SETTLED("Settled"), ALL("All") }
 
-/** [bets] placed within [period] of [nowMs] ("Today": since local midnight). */
-fun inPeriod(bets: List<TrackedBet>, period: TrackerPeriod, nowMs: Long, zone: ZoneId = ZoneId.systemDefault()): List<TrackedBet> {
-    val from = when (period) {
-        TrackerPeriod.ALL -> return bets
-        TrackerPeriod.DAYS_30 -> nowMs - 30L * 86_400_000L
-        TrackerPeriod.DAYS_7 -> nowMs - 7L * 86_400_000L
-        TrackerPeriod.TODAY -> Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate().atStartOfDay(zone).toInstant().toEpochMilli()
-    }
-    return bets.filter { it.createdAtMs >= from }
-}
+/** [bets] whose game day is in [period] up to [nowMs]'s ("Today": today's games, whenever the bet was placed). */
+fun inPeriod(bets: List<TrackedBet>, period: TrackerPeriod, nowMs: Long): List<TrackedBet> =
+    if (period == TrackerPeriod.ALL) bets else bets.filter { SlateProfit.inLastDays(it, nowMs, period.days) }
 
 /** What each bet's buttons do (the Tracker's own state is in [UiState]; these are the ViewModel's and the Activity's). */
 data class BetActions(
