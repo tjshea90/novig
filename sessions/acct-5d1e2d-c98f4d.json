@@ -8,8 +8,8 @@
  "branch": "ccr-2df6ce48-pkrh5v",
  "head": "63afd4bbc91c90ed2e3da18cadc4d74dd8ce8f37",
  "since": 1792393152,
- "beat": 1792426984,
- "beatIso": "2026-10-19T16:23:04Z",
+ "beat": 1792427250,
+ "beatIso": "2026-10-19T16:27:30Z",
  "done": "PL5: the wallet figure reads every money-moving ledger kind (transfers, deposits, withdrawals, credits, forwarding) by its sign, so money moved back and forth nets out; card says put in minus taken out; 82 tests pass",
  "next": "re-run ship.sh for v1.0.6 (PL + PL5), check keeper run 39284378407 is alive, release, tell Tj"
 }
