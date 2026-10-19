@@ -5857,3 +5857,5 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [ ] CH14 (t1792168111699) confirm 2nd BoltOdds key works; verify all sockets used.
 
 - [x] CH15 (t1792379314789) no soccer usage: verified none (leagues list has no soccer; feeds follow picked leagues).
+
+- [x] CH16 (t1792379676035) live middle tier 80-89% sure, 5% edge, $0.10 real: shipped v1.0.3 (TailTakerTest). Remaining: CH5a score-event trigger, CH5c, CH5d, CH14.
