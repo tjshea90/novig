@@ -172,7 +172,7 @@ def selftest():
         assert m["title"] == "Refill SGO" and m["priority"] == 1 and m["action"] == "APIS" and m["id"] == a, m
         o = json.loads(git("show", "%s:%s" % (BRANCH, [f for f in files if f.startswith("overrides/")][0]), cwd=bare).stdout)
         assert o["apis"] == {"parlay": False, "sgo": True} and o["id"] == b, o
-        c = chat_reply("t1", "hello Tj", who="claude:test", cwd=work)
+        c = chat_reply("t1", "hello Tj", who="claude:test", cwd=work, late_ok=True)
         cf = [f for f in git("ls-tree", "-r", "--name-only", BRANCH, cwd=bare).stdout.split() if f.startswith("chat/")]
         assert len(cf) == 1 and json.loads(git("show", "%s:%s" % (BRANCH, cf[0]), cwd=bare).stdout)["replyTo"] == "t1"
         r = chat_relay("please change X", who="acct-aaaaaa", cwd=work)
