@@ -1,0 +1,30 @@
+name: delete-stale-branches
+# One-shot, manual (Tj, 2026-10-19: "do the workflow"). Deletes only the branches listed in research/stale_branches_2026-10-19.txt, and only names that look like
+# session branches (ccr-*, claude/*, zz-*): never main, the data branches (cloud-*, phone-data, chat*, claude-coord, lab-*, research-data, review-digest, engine-results), nor a branch pushed to in the last 2 days.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Delete listed branches
+        run: |
+          set -u
+          ok=0; skip=0; fail=0
+          while read -r b; do
+            case "$b" in ''|'#'*) continue;; esac
+            case "$b" in ccr-*|claude/*|zz-*) ;; *) echo "skip (not a session branch): $b"; skip=$((skip+1)); continue;; esac
+            ts=$(git ls-remote --heads origin "$b" | wc -l)
+            [ "$ts" -eq 0 ] && { echo "gone already: $b"; continue; }
+            git fetch -q --depth=1 origin "+refs/heads/$b:refs/remotes/origin/$b" || { echo "cannot read $b"; fail=$((fail+1)); continue; }
+            age=$(git log -1 --format=%ct "refs/remotes/origin/$b")
+            if [ $(( $(date +%s) - age )) -lt 172800 ]; then echo "skip (pushed in the last 2 days): $b"; skip=$((skip+1)); continue; fi
+            if git push -q origin --delete "$b"; then echo "deleted $b"; ok=$((ok+1)); else echo "FAILED $b"; fail=$((fail+1)); fi
+          done < research/stale_branches_2026-10-19.txt
+          echo "deleted=$ok skipped=$skip failed=$fail"
