@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "55b14242672599bcd23eefc3edfa93993af891c4",
+ "head": "c18ee5efd1e25a9576283cba47f6e9c34ac56bf2",
  "since": 1792393152,
- "beat": 1792424818,
- "beatIso": "2026-10-19T15:46:58Z",
+ "beat": 1792424999,
+ "beatIso": "2026-10-19T15:49:59Z",
  "done": "PL: SlateProfit reworked (today/day/days/lastDays by calendar day, merged curve steps, Day.openStaked); ProfitChart.kt still calls the removed current/previous",
  "next": "PL: WalletProfit (cash + open positions - transfers in/out from Novig ledger), AppContainer reader, VM state, ProfitChart.kt rewrite following TrackerPeriod, tests, v1.0.6 code 346, ship"
 }
