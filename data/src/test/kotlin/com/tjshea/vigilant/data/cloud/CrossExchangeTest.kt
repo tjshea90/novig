@@ -5,7 +5,7 @@ import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.NovigOutcome
 import com.tjshea.vigilant.data.reference.Side
 import com.tjshea.vigilant.data.scanner.LineKey
-import com.tjshea.vigilant.data.scanner.LineKind
+import com.tjshea.vigilant.data.reference.LineKind
 import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.OutcomeTarget
@@ -30,7 +30,7 @@ class CrossExchangeTest {
         val fair = FairLine(listOf(0.5, 0.5), FairSource.SHARP, FairSource.SHARP, DevigMethod.POWER, listOf(BookFair(bp, listOf(0.5, 0.5), 0.0, true)), listOf(exBook), emptyList())
         fun o(i: Int, ask: Double, side: Side) = Opportunity(
             league = Leagues.byNovigName("MLB")!!, event = event, market = market, outcome = market.outcomes[i], marketLabel = "Moneyline", kind = LineKind.MONEYLINE,
-            selection = market.outcomes[i].description, fair = fair, fairProbability = 0.5, quote = EvQuote(0.5, ask, 0.0), ladder = emptyList(), depth = null, suggestedStake = null,
+            selection = market.outcomes[i].name, fair = fair, fairProbability = 0.5, quote = EvQuote(0.5, ask, 0.0), ladder = emptyList(), depth = null, suggestedStake = null,
             novigWidth = null, bookFetchedAtMs = start, fairUpdatedMs = start, refEvent = null, lineKey = LineKey("r1", LineKind.MONEYLINE, null), target = OutcomeTarget.Is(side), fairAsOfMs = start,
         )
         return listOf(o(0, homeAsk, Side.HOME), o(1, awayAsk, Side.AWAY))
