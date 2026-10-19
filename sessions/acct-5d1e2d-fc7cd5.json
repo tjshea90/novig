@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hffyfe",
- "head": "c982bb3f12561c3def43066f1d42d0c1784886b7",
+ "head": "9d5a7e018131392728c5d76f7a5572df1d9f0659",
  "since": 1792444860,
- "beat": 1792447721,
- "beatIso": "2026-10-19T22:08:41Z",
- "done": "CH25 ThinFair guard built, full suite green",
- "next": "CH27 tracker yesterday + day picker"
+ "beat": 1792447849,
+ "beatIso": "2026-10-19T22:10:49Z",
+ "done": "CH27 tracker Yesterday + day picker built",
+ "next": "ship v1.0.9 (CH25+CH27)"
 }
