@@ -19,7 +19,7 @@ object TailOffers {
         val marketLabel = if (total) "Total" else if (c.strike == 0.0) "Moneyline" else "Spread"
         val selection = "${c.label} ${c.side.lowercase()}"
         val american = Odds.probabilityToAmerican(c.ask.coerceIn(0.001, 0.999))
-        val light = c.rule == LiveLightScan.RULE || c.rule == LiveLightCurve.RULE
+        val light = c.rule == LiveLightScan.RULE || c.rule == LiveLightCurve.RULE || c.rule == LiveLightScan.MID
         val curve = c.rule == LiveLightCurve.RULE
         val target = BetTarget(
             market = market, outcomeId = c.outcomeId, league = ev.league, eventName = ev.description, startsTs = ev.startsTs, marketLabel = marketLabel, selection = selection,
