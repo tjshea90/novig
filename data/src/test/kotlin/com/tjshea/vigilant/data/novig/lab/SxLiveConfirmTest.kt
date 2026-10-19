@@ -4,9 +4,9 @@ import com.tjshea.vigilant.data.novig.NovigEvent
 import com.tjshea.vigilant.data.pinnodds.PinnLineType
 import com.tjshea.vigilant.data.pinnodds.PinnSide
 import com.tjshea.vigilant.data.sxbet.SxLiveBuild
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
+import org.junit.Test
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 
 class SxLiveConfirmTest {
     private val event = NovigEvent("ev", "Basketball", "NBA", NovigEvent.STATUS_LIVE, "Miami Heat @ Boston Celtics", 0L)
