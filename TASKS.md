@@ -5938,3 +5938,7 @@ Found: run 39274341409 (healthy, heartbeat fresh at 16:11) was CANCELLED at 16:5
 
 ## HANDOFF TO MIRAGE (Tj, 2026-10-19, verbatim: "Make sure the mirage account stands down when usage resets instead of doing what you already did")
 When you come back: read this first. tj Gmail already did: CH24a/b (watchdog fix, on main); SC1 (scan restart waits 20 s for settings to settle, CloudEngine.fetchSettleMs, not yet shipped); workflows delete-stale-branches.yml and delete-old-releases.yml (manual, being landed and run by tj Gmail); repo cleanup of .handoff/. Do NOT repeat any of it. Your branch ccr-2df6ce48-pkrh5v is merged into main: do not push it again (git fetch origin main && git checkout -B <your branch> origin/main first). Still yours: CH23a-d (APIs lights, no code written yet), CH22b/c, EA4/EA10.
+
+## REL1: cut a release now + KX1 sizing (Tj, 2026-10-19, verbatim: "cut a release now. Then tell me how big of a task it would be to make a new vigilant app, copying all of the logic and features already built, but for kalshi instead of novig")
+- [ ] REL1a ship.sh + release.yml + record-release.sh (holds SC1 fetchSettleMs, mirage's CH24 watchdog fix is tools-only).
+- [ ] KX1 answer Tj with an honest size estimate for a Kalshi-based Vigilant (from the code: what is Novig-specific vs shared).
