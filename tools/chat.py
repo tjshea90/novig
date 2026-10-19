@@ -177,9 +177,12 @@ class Git:
             heads[ref.replace("refs/heads/", "")] = sha
         return heads
 
-    def fetch(self, branch, filt=FILTER):
-        """Fetch a branch into refs/vigilant/<branch>. Returns its sha, or None when the branch does not exist."""
-        r = subprocess.run(["git", "--git-dir", self.dir, "-c", "protocol.version=2", "fetch", "-q", "--no-tags", "--filter=" + filt, "origin",
+    def fetch(self, branch, filt=None):
+        """Fetch a branch into refs/vigilant/<branch>. Returns its sha, or None when the branch does not exist. The old store (cloud-config, a copy of the whole repo) comes
+        without blobs and history (its trees only, so a push needs nothing lazily fetched); the chat branch with its small blobs (big attachments arrive when opened)."""
+        filt = filt or ("blob:none" if branch == LEGACY else FILTER)
+        extra = ["--depth=1"] if branch == LEGACY else []
+        r = subprocess.run(["git", "--git-dir", self.dir, "-c", "protocol.version=2", "fetch", "-q", "--no-tags", "--filter=" + filt] + extra + ["origin",
                             "+refs/heads/%s:refs/vigilant/%s" % (branch, branch)], capture_output=True, text=True, timeout=120)
         if r.returncode:
             if "couldn't find remote ref" in r.stderr or "could not find remote ref" in r.stderr:
@@ -262,7 +265,7 @@ class Git:
         """One commit adding/replacing `files` (path -> bytes|str) on `branch`, pushed without force; a lost race re-fetches and tries again. Returns the commit sha."""
         last = ""
         for i in range(tries):
-            head = self.fetch(branch, filt="tree:0" if branch == LEGACY else FILTER)
+            head = self.fetch(branch)
             tree = self.subtree(head, "") if head else None
             for path, data in files.items():
                 tree = self.put_path(tree, [p for p in path.split("/") if p], self.hash_blob(data))
@@ -446,7 +449,7 @@ def download(g, store, m, out_dir=None):
 # ---- the seat ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def read_seat(g, fetch=True):
-    head = g.fetch(SEAT, filt="blob:none") if fetch else g.ref(SEAT)
+    head = g.fetch(SEAT) if fetch else g.ref(SEAT)
     if not head:
         return {"v": 2}, None
     e = g.listdir(head, "").get("seat.json")
@@ -604,7 +607,7 @@ def cmd_reply(ids, text, done=False, again=False, g=None, at=None):
         unknown = [i for i in ids if i not in by_id and i not in leg_ids]
         lmsgs = []
         if leg_ids:
-            g.fetch(LEGACY, filt="tree:0")
+            g.fetch(LEGACY)
             since = legacy_window(cfg, at)
             lmsgs, _ = legacy_load(g, since or 0) if since is not None else ([], False)
             known = {m["id"] for m in lmsgs if is_tj(m)}
@@ -649,7 +652,6 @@ def cmd_reply(ids, text, done=False, again=False, g=None, at=None):
                     did = "c%d-%s" % (at // 1000, secrets.token_hex(2))
                     files["chat/" + legacy_name(at + 1, did)] = json.dumps({"id": did, "at": at + 1, "from": who, "text": "\U0001F44D", "replyTo": i})
             g.add_files(LEGACY, files, "chat (old app): reply")
-        set_state(g, holder, "idle", "", quiet=True)
     return sent
 
 
@@ -822,9 +824,10 @@ class Daemon:
         heads = self.g.ls_remote(*branches)
         if not force and all(heads.get(b) == self.last_heads.get(b) for b in branches):
             return []
-        for b in branches:
-            if heads.get(b) and heads.get(b) != self.last_heads.get(b):
-                self.g.fetch(b, filt="tree:0" if b == LEGACY else FILTER)
+        with lock(self.g):
+            for b in branches:
+                if heads.get(b) and heads.get(b) != self.last_heads.get(b):
+                    self.g.fetch(b)
         self.last_heads = heads
         todo, _ = self.pending(at)
         fresh = [m for m in todo if m["id"] not in self.shown]
@@ -832,8 +835,9 @@ class Daemon:
             return []
         # Messages sent together are shown together: wait a moment for the rest, then look once more.
         time.sleep(COALESCE_S)
-        for b in branches:
-            self.g.fetch(b, filt="tree:0" if b == LEGACY else FILTER)
+        with lock(self.g):
+            for b in branches:
+                self.g.fetch(b)
         self.last_heads = self.g.ls_remote(*branches)
         at = self.clock()
         todo, seen = self.pending(at)
@@ -905,7 +909,7 @@ def cmd_pending():
     g = Git()
     g.fetch(CHAT)
     if legacy_window(cfg) is not None:
-        g.fetch(LEGACY, filt="tree:0")
+        g.fetch(LEGACY)
     d = Daemon(g, label, holder, cfg, out=lambda *a: None)
     todo, _ = d.pending(now_ms())
     for line in batch_lines(todo, now_ms()) or ["CHAT nothing unanswered"]:
@@ -920,7 +924,7 @@ def cmd_file(mid, out_dir=None):
     msgs, _ = store.load()
     m = next((x for x in msgs if x["id"] == mid), None)
     if not m and LEGACY_ID.match(mid):
-        g.fetch(LEGACY, filt="tree:0")
+        g.fetch(LEGACY)
         lm, _ = legacy_load(g, 0)
         m = next((x for x in lm if x.get("id") == mid), None)
     if not m:
@@ -946,7 +950,7 @@ def selftest():
         cfg = {"account": "acct-aaaaaa", "name": "testname", "fire": "AAAAAA"}
 
         def git_for(name):
-            return Git(home=os.path.join(d, name), url=origin, source=d)
+            return Git(home=os.path.join(d, name), url="file://" + origin, source=d)
         os.environ["CHAT_ME"] = "acct-aaaaaa/n1"
         global load_cfg
         real_cfg = load_cfg
@@ -975,7 +979,7 @@ def selftest():
             b = tj("and a screenshot", t0 - 4000, [("shot.png", b"\x89PNG" + os.urandom(300 * 1024))])
             lines = []
             dm = Daemon(g1, "acct-aaaaaa", "acct-aaaaaa/n1", cfg, out=lines.append)
-            dm.step()
+            dm.seat_step()
             assert dm.holding and any("answers the app chat now" in l for l in lines), lines
             ids = dm.scan(force=True)
             assert ids == [a, b], ids
@@ -1039,7 +1043,7 @@ def selftest():
             l3 = []
             later = now_ms() + (STALE_S + 5) * 1000
             d3 = Daemon(g3, "acct-aaaaaa", "acct-aaaaaa/n3", cfg, out=l3.append, clock=lambda: later)
-            d3.step()
+            d3.seat_step()
             assert d3.holding and any("the last holder stopped" in l for l in l3), l3
             assert d3.scan(force=True) == [e], l3
             # the first daemon notices it lost the seat and stops answering
@@ -1061,6 +1065,30 @@ def selftest():
             old = [{"id": "t1", "from": "tj", "at": 10}, {"id": "t2", "from": "tj", "at": 20}, {"id": "c", "from": "claude", "replyTo": ["t1"], "at": 30}]
             assert [m["id"] for m in unanswered(old)] == ["t2"]
             assert "sent 2.0 h ago" in batch_lines([{"id": "t9", "at": 0, "text": "x"}], 7200 * 1000)[1]
+            # the old app (chat/ on cloud-config) is answered in its own format during the switch, and only while no old-style watcher is alive
+            os.environ["CHAT_ME"] = "acct-aaaaaa/n3"
+            t1 = now_ms()
+            cfg.update(legacySince=datetime.datetime.fromtimestamp((t1 - 60000) / 1000, datetime.timezone.utc).isoformat(),
+                       legacyUntil=datetime.datetime.fromtimestamp((t1 + 86400000) / 1000, datetime.timezone.utc).isoformat())
+            lid = "t%d" % t1
+            phone.add_files(LEGACY, {"chat/%013d-%s.json" % (t1, lid): json.dumps({"id": lid, "at": t1, "from": "tj", "text": "old app here"}),
+                                     "chat/%013d-r%d-ab.json" % (t1 - 120000, t1): json.dumps({"id": "r%d-ab" % t1, "at": t1 - 120000, "from": "tj", "relayed": True, "text": "[typed to x] y"})}, "old")
+            l4 = []
+            d3.out = l4.append
+            d3.clock = now_ms
+            d3.last_beat = 0
+            d3.seat_step()
+            assert d3.scan(force=True) == [lid], l4
+            assert any("[old app]" in l for l in l4), l4
+            cmd_reply([lid], "Answered in the old app.", g=g3)
+            g3.fetch(LEGACY)
+            old_msgs, _ = legacy_load(g3, 0)
+            assert legacy_pending(old_msgs, iso_ms(cfg["legacySince"])) == [] and any(m.get("ack") == lid for m in old_msgs), old_msgs
+            # a fresh old-style heartbeat (an old watcher is still running) keeps the bridge out of the old app
+            lid2 = "t%d" % (t1 + 5)
+            phone.add_files(LEGACY, {"chat/%013d-%s.json" % (t1 + 5, lid2): json.dumps({"id": lid2, "at": t1 + 5, "from": "tj", "text": "second"}),
+                                     "presence/acct-aaaaaa.json": json.dumps({"at": now_ms(), "who": "old"})}, "old 2")
+            assert d3.scan(force=True) == [], l4
         finally:
             load_cfg = real_cfg
             os.environ.pop("CHAT_ME", None)
