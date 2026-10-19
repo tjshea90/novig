@@ -5846,7 +5846,7 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 
 - [ ] CH8 (t1792378441989) "I don't see any sx bet or polymarket odds inside the vigilant EV scanner. why now": scan shows sxbet 8, polymarket 7, kalshi 7 events matched of 6000+ lines; audit raw vs matched counts, fix mapping, show feed per bet (with CH3).
 
-- [ ] CH9 SX/Polymarket mapping (t1792378640968): audit done, names match, props are the gap; check SX moneyline mainLine=false skip, add soccer totals 2/Asian handicap 3/1X2 1, per-bet feed chips. Data: /tmp only, see chat 2026-10-19.
+- [ ] CH9 (NO SOCCER, Tj 2026-10-19: never read soccer) SX/Polymarket mapping (t1792378640968): audit done, names match, props are the gap; check SX moneyline mainLine=false skip, add soccer totals 2/Asian handicap 3/1X2 1, per-bet feed chips. Data: /tmp only, see chat 2026-10-19.
 
 - [ ] CH10 (t1792260735198) PropLine feature: judge from propline-ev-bets results; keep only proven (Unders/Vigilant-agreed) or remove sweep to save requests; log in CHANGES.md.
 
@@ -5855,3 +5855,5 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [ ] CH13 (t1792375273415) Odds API: use for Pinnacle first when fresh.
 
 - [ ] CH14 (t1792168111699) confirm 2nd BoltOdds key works; verify all sockets used.
+
+- [x] CH15 (t1792379314789) no soccer usage: verified none (leagues list has no soccer; feeds follow picked leagues).
