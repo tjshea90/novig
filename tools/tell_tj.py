@@ -62,6 +62,36 @@ def put(path, text, remote="origin", cwd=None, tries=5):
     raise RuntimeError("could not push %s after %d tries" % (path, tries))
 
 
+def drop_old_notes(cwd=None, tries=5):
+    """Remove Claude's own '(old message...' stand-in replies from chat/ (Tj, 2026-10-19: he does not want them shown). Returns how many files went."""
+    for i in range(tries):
+        git("fetch", "-q", "origin", BRANCH, cwd=cwd, check=False)
+        names = [n for n in git("ls-tree", "--name-only", "FETCH_HEAD", "chat/", cwd=cwd).stdout.split() if n.endswith(".json")]
+        gone = []
+        for n in names:
+            try:
+                m = json.loads(git("show", "FETCH_HEAD:" + n, cwd=cwd).stdout)
+            except Exception:
+                continue
+            if m.get("from") != "tj" and str(m.get("text", "")).startswith("(old message"):
+                gone.append(n)
+        if not gone:
+            return 0
+        with tempfile.TemporaryDirectory() as d:
+            env = dict(os.environ, GIT_INDEX_FILE=os.path.join(d, "idx"))
+            git("read-tree", "FETCH_HEAD", env=env, cwd=cwd)
+            for n in gone:
+                git("update-index", "--force-remove", n, env=env, cwd=cwd)
+            tree = git("write-tree", env=env, cwd=cwd).stdout.strip()
+            parent = git("rev-parse", "FETCH_HEAD", cwd=cwd).stdout.strip()
+            cenv = dict(os.environ, GIT_AUTHOR_NAME="Claude", GIT_AUTHOR_EMAIL="noreply@anthropic.com", GIT_COMMITTER_NAME="Claude", GIT_COMMITTER_EMAIL="noreply@anthropic.com")
+            commit = git("commit-tree", tree, "-m", "tell_tj: drop old-message notes", "-p", parent, env=cenv, cwd=cwd).stdout.strip()
+        if git("push", "-q", "origin", "%s:refs/heads/%s" % (commit, BRANCH), cwd=cwd, check=False).returncode == 0:
+            return len(gone)
+        time.sleep(1 + i)
+    raise RuntimeError("could not drop notes")
+
+
 def fname(at, ident):
     return "%013d-%s.json" % (at, re.sub(r"[^A-Za-z0-9-]", "", ident)[:24])
 
@@ -99,6 +129,7 @@ def chat_reply(reply_to, text, who=None, **kw):
     if SECRET.search(text):
         raise SystemExit("refused: the text looks like a key or token (the repo is public)")
     at = int(time.time() * 1000)
+<<<<<<< HEAD
     # Tj, 2026-10-19: a late answer to an old message lands at the bottom of the thread and reads as a stale post. A reply to a message over 30 minutes old is refused (a new message of its own is fine: say it fresh).
     try:
         if not kw.get("late_ok") and at - int(str(reply_to)[1:]) > 30 * 60 * 1000:
@@ -119,6 +150,24 @@ def chat_reply(reply_to, text, who=None, **kw):
             raise
         except Exception:
             pass
+=======
+    # Tj, 2026-10-19: a reply to an old message shows up in the chat as a stale message. Refuse unless the message is under 30 min old (or FORCE_OLD_REPLY=1).
+    try:
+        if 1e12 < int(str(reply_to)[1:]) < at - 1800000 and not os.environ.get("FORCE_OLD_REPLY"):
+            raise SystemExit("not sent: message %s is over 30 min old, so a reply would look stale to Tj" % reply_to)
+    except ValueError:
+        pass
+    # Tj, 2026-10-19: two sessions answered one message (near-identical replies). One reply per message: refuse if a Claude reply to it already exists (FORCE_OLD_REPLY=1 overrides; a follow-up uses a new id).
+    if not os.environ.get("FORCE_OLD_REPLY") and kw.get("cwd") is None:
+        git("fetch", "-q", "origin", BRANCH, check=False)
+        for n in git("ls-tree", "--name-only", "FETCH_HEAD", "chat/", check=False).stdout.split():
+            try:
+                o = json.loads(git("show", "FETCH_HEAD:" + n, check=False).stdout)
+            except Exception:
+                continue
+            if o.get("replyTo") == reply_to and o.get("from") != "tj" and not o.get("ack"):
+                raise SystemExit("not sent: message %s was already answered (%s); one reply per message" % (reply_to, o.get("id")))
+>>>>>>> 03da9ea8c02a7821013489e72f9a56cf38062fbf
     ident = "c%d-%s" % (at // 1000, secrets.token_hex(2))
     m = {"id": ident, "at": at, "from": who or me(), "text": text, "replyTo": reply_to}
     kw.pop("late_ok", None)
@@ -237,6 +286,8 @@ def main(argv):
         print("presence", presence()); return 0
     if argv[0] == "chat-ack" and len(argv) >= 2:
         print("acked", chat_ack(argv[1:])); return 0
+    if argv[0] == "chat-clean":
+        print("removed", drop_old_notes()); return 0
     if argv[0] == "chat-file" and len(argv) >= 3:
         print(chat_file(argv[1], argv[2])); return 0
     if argv[0] == "chat-keep" and len(argv) >= 2:
