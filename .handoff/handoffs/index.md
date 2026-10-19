@@ -1,2 +1,0 @@
-2026-10-13T20:39:06.759Z | vigilant, boltodds, reconnect, usage meter, v0.96.3 | Goal: every API in Vigilant (Android, repo tjshea90/novig) retries/reconnects itself on next scan. Intent: Tj's BoltOdds | 2026-10-13/handoff-2026-10-13T20-39-06-759Z.md
-2026-10-14T22:40:15.106Z | cloud scan, github actions, vigilant, cloud-feed, phone-data, v0.100.0 | Goal: Vigilant (Android, tjshea90/novig) scans run on GitHub Actions runner; phone only sets settings + reads +EV list; | 2026-10-14/handoff-2026-10-14T22-40-15-106Z.md
