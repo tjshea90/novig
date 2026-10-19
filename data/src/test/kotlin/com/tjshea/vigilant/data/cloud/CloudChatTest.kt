@@ -24,7 +24,7 @@ class CloudChatTest {
         // a single id instead of a list, attachments as paths, a reply to the old app's message with its quote
         val one = CloudChat.decode("""{"id":"c1","at":5,"from":"claude","text":"x","replyTo":"t9","files":["files/t9/1-a.png"],"quote":"old words"}""")!!
         assertEquals(listOf("t9"), one.replyTo)
-        assertEquals("a.png".let { "1-$it" }, one.files.single().name)
+        assertEquals("1-a.png", one.files.single().name)
         assertEquals("old words", one.quote)
         assertNull(CloudChat.decode("""{"id":"","at":1,"from":"tj"}"""))
         assertNull(CloudChat.decode("""{"id":"x","from":"tj"}"""))
@@ -124,7 +124,7 @@ class CloudChatTest {
         assertEquals(CloudChat.Tone.UNKNOWN, CloudChat.presence(null, asked, now).tone)
         assertEquals(CloudChat.Presence(CloudChat.Tone.ONLINE, "online"), CloudChat.presence(live, asked, now))
         assertTrue("seen and not answered = replying", CloudChat.presence(live, seen, now).replying)
-        assertEquals("working: building", CloudChat.presence(live.copy(state = "working", note = "building"), emptySet<CloudChat.Row>().toList(), now).line)
+        assertEquals("working: building", CloudChat.presence(live.copy(state = "working", note = "building"), emptyList(), now).line)
         val gone = live.copy(beat = now - 10 * 60_000)
         assertEquals(CloudChat.Tone.OFFLINE, CloudChat.presence(gone, emptyList(), now).tone)
         assertTrue(CloudChat.presence(gone, emptyList(), now).line.contains("your next message wakes it"))
@@ -133,7 +133,7 @@ class CloudChatTest {
         assertTrue(CloudChat.presence(woken, asked, now).line.startsWith("waking up"))
         val broken = gone.copy(wakeAt = now - 20_000, wakeResult = "failed: the wake link is not saved")
         assertEquals(CloudChat.Tone.PROBLEM, CloudChat.presence(broken, asked, now).tone)
-        val tired = gone.copy(wakeAt = now - 60_000, wakeResult = "fired x", fires = listOf(now - 50 * 60_000, now - 40 * 60_000, now - 60_000))
+        val tired = gone.copy(since = now - 2 * 3_600_000L, wakeAt = now - 60_000, wakeResult = "fired x", fires = listOf(now - 50 * 60_000, now - 40 * 60_000, now - 60_000))
         val longAgo = CloudChat.thread(listOf(tj("t1", now - 55 * 60_000)), emptySet())
         assertEquals(CloudChat.Tone.PROBLEM, CloudChat.presence(tired, longAgo, now).tone)
         assertTrue(CloudChat.presence(tired, longAgo, now).line.contains("out of usage"))

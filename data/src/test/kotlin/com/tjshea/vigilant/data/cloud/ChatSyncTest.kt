@@ -216,7 +216,11 @@ class ChatSyncTest {
         val c = sync()
         c.load()
         assertNotNull(c.send("my key ghp_FAKEaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
-        val big = object : java.io.InputStream() { var n = 0L; override fun read(): Int = if (n++ <= CloudChat.MAX_FILE_BYTES) 0 else -1 }
+        val big = object : java.io.InputStream() {
+            var left = CloudChat.MAX_FILE_BYTES + 10
+            override fun read(): Int = if (left-- > 0) 0 else -1
+            override fun read(b: ByteArray, off: Int, len: Int): Int { if (left <= 0) return -1; val n = minOf(len.toLong(), left).toInt(); left -= n; return n }
+        }
         assertNotNull(c.send("big", listOf(ChatSync.Pick("huge.bin", null) { big })))
         assertNotNull(c.send("unreadable", listOf(ChatSync.Pick("gone.png", null) { null })))
         assertTrue(c.state.value.outbox.isEmpty())
