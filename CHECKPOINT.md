@@ -1,23 +1,22 @@
-# CHECKPOINT 3752 — read me first, then TASKS.md
+# CHECKPOINT 3753 — read me first, then TASKS.md
 
-**Written:** 2026-10-19T16:22:39Z · **tests:** all 6 fast checks green
-**Branch:** `ccr-2df6ce48-pkrh5v` · **builds on:** `d7ff490bb` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T16:30:22Z · **tests:** all 6 fast checks green
+**Branch:** `ccr-2df6ce48-pkrh5v` · **builds on:** `c80cb92ee` (this checkpoint is the commit after it)
 
 ## Just done
-PL5: the wallet figure reads every money-moving ledger kind (transfers, deposits, withdrawals, credits, forwarding) by its sign, so money moved back and forth nets out; card says put in minus taken out; 82 tests pass
+PL: Tracker tests follow the new card (all-time headline by tag, clv card scrolled to, Today = today's games in ClosingLineAppTest); 188 pass; NovigStreamTest timed out once under full-suite load, passes alone
 
 ## Do this next
-re-run ship.sh for v1.0.6 (PL + PL5), check keeper run 39284378407 is alive, release, tell Tj
+re-run ship.sh for v1.0.6; if NovigStreamTest flakes again make its wait robust; then release.yml, record-release, tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M research/profit_card_2026-10-19.md
 
 ## Last ten checkpoints
 ```
+  1b1ac7101 ckpt 3752: PL5: the wallet figure reads every money-moving ledger kind (transfers, dep
   cce5b1756 ckpt 3751: PL: NovigTradingClient.transfers() reads TRANSFER_IN/OUT with no time bound
   18072eab0 ckpt 3750: EA fix: both keepers (15:29Z, 15:39Z) died at start on 'import engine_watch
   6fe62af1b ckpt 3749: PL app: WalletMoney reader + VM/Activity wiring, Tracker periods by game da
@@ -27,8 +26,7 @@ re-run ship.sh for v1.0.6 (PL + PL5), check keeper run 39284378407 is alive, rel
   70e7a9f40 ckpt 3745: EA5-EA7: keeper (engine-alarm.yml: always running, 2-min checks in hours, s
   2ede70f12 ckpt 3744: EA1-EA3 done: alarm on main and armed (run 39277095427), watchdog starts a 
   5407f7a7d ckpt 3743: EA: engine-alarm.yml + tools/engine_alarm.py (free runner waits to 08:00 ET
-  e1941aeae ckpt 3742: ANALYST 2026-10-19 skipped (no new data)
 ```
 
-(8 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
