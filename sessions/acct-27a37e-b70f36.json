@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-413cf302-mvy06f",
- "head": "9eada62c3122d91b35ac0aa6bab5ee360be638fc",
+ "head": "6e1d357227dab33c66433a75272380240588ed13",
  "since": 1792435352,
- "beat": 1792438627,
- "beatIso": "2026-10-19T19:37:07Z",
- "done": "handoff to mirage written (TASKS.md HANDOFF TO MIRAGE + board note); CH24b ticked as done by tj Gmail",
- "next": "wait for :data:test, land main, run delete-stale-branches then delete-old-releases (dry_run first)"
+ "beat": 1792438691,
+ "beatIso": "2026-10-19T19:38:11Z",
+ "done": "pre-ship: v1.0.7: the engine waits 20 s for your settings edits to settle before restarting a scan (SC1: three edits in 6 min cut three scans short); cleanup of old releases/branches",
+ "next": "ship.sh gates and releases this"
 }
