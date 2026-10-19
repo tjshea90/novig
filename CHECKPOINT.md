@@ -1,13 +1,13 @@
-# CHECKPOINT 3747 — read me first, then TASKS.md
+# CHECKPOINT 3748 — read me first, then TASKS.md
 
-**Written:** 2026-10-19T15:43:10Z · **tests:** all 6 fast checks green
-**Branch:** `ccr-2df6ce48-pkrh5v` · **builds on:** `2f061a003` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T15:54:03Z · **tests:** all 6 fast checks green
+**Branch:** `ccr-2df6ce48-pkrh5v` · **builds on:** `524ea1f5f` (this checkpoint is the commit after it)
 
 ## Just done
-PL: SlateProfit reworked (today/day/days/lastDays by calendar day, merged curve steps, Day.openStaked); ProfitChart.kt still calls the removed current/previous
+PL data: SlateProfit by game day (5 am-5 am ET, today = today's games, later() for open stakes on later games, merged curve steps); WalletProfit (cash + open positions - transfers); SlateProfitTest 7 + WalletProfitTest 3 pass
 
 ## Do this next
-PL: WalletProfit (cash + open positions - transfers in/out from Novig ledger), AppContainer reader, VM state, ProfitChart.kt rewrite following TrackerPeriod, tests, v1.0.6 code 346, ship
+PL app: WalletMoney reader (balance + positions + ledger TRANSFER_IN/OUT, persisted), container + VM + MainActivity wiring, TrackerPeriod by game day, ProfitChart.kt rewrite, ProfitChartTest
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ PL: WalletProfit (cash + open positions - transfers in/out from Novig ledger), A
 
 ## Last ten checkpoints
 ```
+  55b142426 ckpt 3747: PL: SlateProfit reworked (today/day/days/lastDays by calendar day, merged c
   2ae72ef29 ckpt 3746: EA: keeper steps aside for a newer keeper, one log line per state, full-loo
   70e7a9f40 ckpt 3745: EA5-EA7: keeper (engine-alarm.yml: always running, 2-min checks in hours, s
   2ede70f12 ckpt 3744: EA1-EA3 done: alarm on main and armed (run 39277095427), watchdog starts a 
@@ -25,8 +26,7 @@ PL: WalletProfit (cash + open positions - transfers in/out from Novig ledger), A
   26888632e ckpt 3740: CR5 code done + reviewed; landing gate fixed (marks the tree taken BEFORE a
   108d9f54e ckpt 3739: CR5 app chat written: data CloudChat v2 (model/thread/presence) + ChatSync 
   f0c34da40 ckpt 3738: CR tools live on main (504eafa56); chat + chat-seat branches created by cha
-  504eafa56 ckpt 3737: CR3+CR6: new chat tools (chat.py, chat_wake.py v2) and coordination without
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(6 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
