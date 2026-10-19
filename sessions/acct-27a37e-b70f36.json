@@ -8,8 +8,8 @@
  "branch": "ccr-413cf302-mvy06f",
  "head": "6e1d357227dab33c66433a75272380240588ed13",
  "since": 1792435352,
- "beat": 1792438691,
- "beatIso": "2026-10-19T19:38:11Z",
+ "beat": 1792438698,
+ "beatIso": "2026-10-19T19:38:18Z",
  "done": "pre-ship: v1.0.7: the engine waits 20 s for your settings edits to settle before restarting a scan (SC1: three edits in 6 min cut three scans short); cleanup of old releases/branches",
  "next": "ship.sh gates and releases this"
 }
