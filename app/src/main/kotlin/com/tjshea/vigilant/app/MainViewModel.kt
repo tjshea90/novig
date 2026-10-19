@@ -257,7 +257,10 @@ data class UiState(
     /** The dashboard's graph points (one per scan the GitHub engine finished). */
     val cloudHistory: List<com.tjshea.vigilant.data.cloud.DashboardModel.Point> = emptyList(),
     val claudeInbox: InboxState = InboxState(),
-    val chatWho: String = "",
+    /** The app chat (CR, Tj 2026-10-19): the phone's copy of the thread and its send queue, who is there (null = not read yet), and why the last read failed. */
+    val chat: com.tjshea.vigilant.data.cloud.ChatState = com.tjshea.vigilant.data.cloud.ChatState(),
+    val chatSeat: com.tjshea.vigilant.data.cloud.CloudChat.Seat? = null,
+    val chatProblem: String? = null,
     val kalshiKeyOk: Boolean? = null,
     val kalshiKeyBusy: Boolean = false,
     /** BoltOdds Pro: the Test key's answer, whether it passed, and that a test is running (it listens on a socket for about 15 s). */
@@ -552,7 +555,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // Cloud scan: the link's state (token, engine line, list age, last save) for Settings.
         viewModelScope.launch { c.cloud.ui.collect { u -> _state.update { it.copy(cloudUi = u) } } }
         viewModelScope.launch { c.cloud.history.collect { h -> _state.update { it.copy(cloudHistory = h) } } }
-        viewModelScope.launch { c.cloud.inbox.who.collect { w -> _state.update { it.copy(chatWho = w) } } }
+        viewModelScope.launch { c.cloud.chat.state.collect { ch -> _state.update { it.copy(chat = ch) } } }
+        viewModelScope.launch { c.cloud.chat.seat.collect { st -> _state.update { it.copy(chatSeat = st) } } }
+        viewModelScope.launch { c.cloud.chat.problem.collect { p -> _state.update { it.copy(chatProblem = p) } } }
         viewModelScope.launch { c.cloud.inbox.state.collect { i -> _state.update { it.copy(claudeInbox = i) } } }
     }
 
@@ -1027,17 +1032,36 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * One scan: Novig's board and prices plus fair odds from every enabled source. It runs in the
-     * app's runner under a foreground service, so it keeps going if Tj switches apps.
-     */
-    fun setChatOpen(open: Boolean) { c.cloud.inbox.chatOpen = open }
+    /** The chat screen is on screen (or not): it is then read every few seconds, with who is there, and what Claude says is read at once (the red number goes). */
+    fun setChatOpen(open: Boolean) {
+        c.cloud.chat.open = open
+        if (open) { ChatAlerts.clear(c.app); markChatRead() }
+    }
 
-    /** Sends a chat message to whichever Claude session is active; returns why not, or null. */
-    suspend fun sendChat(text: String, attachments: List<Pair<String, ByteArray>> = emptyList()): String? = withContext(Dispatchers.IO) { c.cloud.inbox.sendChat(text, attachments = attachments) }
+    fun markChatRead() { viewModelScope.launch(Dispatchers.IO) { c.cloud.chat.markRead() } }
 
-    fun newChat() { viewModelScope.launch(Dispatchers.IO) { c.cloud.inbox.newChat() } }
-    fun clearChat(from: Long, to: Long) { viewModelScope.launch(Dispatchers.IO) { c.cloud.inbox.clearChat(from, to) } }
+    /** Puts Tj's message on the send queue (it shows at once; the queue keeps trying until GitHub has it); returns why not, or null. [files] are what the picker gave. */
+    suspend fun sendChat(text: String, files: List<android.net.Uri> = emptyList()): String? = withContext(Dispatchers.IO) {
+        val cr = c.app.contentResolver
+        val picks = files.map { u ->
+            val name = runCatching { cr.query(u, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { q -> if (q.moveToFirst()) q.getString(0) else null } }.getOrNull()
+                ?: u.lastPathSegment?.substringAfterLast('/') ?: "file"
+            com.tjshea.vigilant.data.cloud.ChatSync.Pick(name, runCatching { cr.getType(u) }.getOrNull()) { runCatching { cr.openInputStream(u) }.getOrNull() }
+        }
+        c.cloud.chat.send(text, picks)
+    }
+
+    fun retryChat(id: String) { viewModelScope.launch(Dispatchers.IO) { c.cloud.chat.retry(id) } }
+    fun discardChat(id: String) { viewModelScope.launch(Dispatchers.IO) { c.cloud.chat.discard(id) } }
+    fun newChat() { viewModelScope.launch(Dispatchers.IO) { c.cloud.chat.newChat() } }
+    fun clearChat() { viewModelScope.launch(Dispatchers.IO) { c.cloud.chat.clear() } }
+    fun loadEarlierChat() { viewModelScope.launch(Dispatchers.IO) { c.cloud.chat.loadEarlier() } }
+
+    /** A chat notification was tapped: the Claude tab opens on the chat. */
+    private val _openChat = MutableStateFlow(0L)
+    val openChat: StateFlow<Long> = _openChat.asStateFlow()
+    fun requestOpenChat() { _openChat.value = System.currentTimeMillis() }
+    fun openChatHandled() { _openChat.value = 0L }
 
     /** The trash can on one message, and Clear all (Tj, 2026-10-16). */
     fun dismissClaudeMessage(id: String) { viewModelScope.launch(Dispatchers.IO) { c.cloud.inbox.dismissMessage(id) } }
@@ -1045,6 +1069,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun markClaudeRead() { viewModelScope.launch(Dispatchers.IO) { c.cloud.inbox.markAllRead() } }
 
+    /**
+     * One scan: Novig's board and prices plus fair odds from every enabled source. It runs in the
+     * app's runner under a foreground service, so it keeps going if Tj switches apps.
+     */
     fun scan(resume: Boolean = false) {
         val current = _state.value
         // A pull to refresh while paused resumes the scanner, then scans ([resumeThen]).
