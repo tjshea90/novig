@@ -26,7 +26,11 @@ Figure out how to make the chat function stable and work like a real chat". Why 
 
 ## When nobody is watching
 
-`chat-wake.yml` (on the `chat` branch) runs on every message: 25 s later, if no session has shown it and no session holds the seat, it fires the chat account's routine (`CLAUDE_FIRE_5D1E2D_*`), once per 3 minutes, backing off to one an hour after 3 fires that brought nobody (the account may be out of usage). A sweep every 5 minutes (engine-watchdog) catches a dropped push event. The wake is shown in the app's header, never as a chat message. A woken session follows the steps above.
+`chat-wake.yml` (on the `chat` branch) runs on every message: 25 s later, if a message of Tj's has no answer and no session holds the seat (seen or not: a seen message with no answer and no seat means the session that saw it was cut off), it fires the chat account's routine (`CLAUDE_FIRE_5D1E2D_*`), once per 3 minutes, backing off to one an hour after 3 fires that brought nobody (the account may be out of usage). A sweep every 5 minutes (engine-watchdog) catches a dropped push event. The wake is shown in the app's header, never as a chat message. A woken session follows the steps above.
+
+## The app (v1.0.5)
+
+The phone keeps its copy of the thread and a send queue (`chat_v2.json`, `ChatSync`): Tj's message shows the moment he taps Send and says where it is: **Sending**, **Not sent yet, trying again** (a lost connection; it goes by itself), **Not sent** with Retry / Delete (the token was refused or is missing), **✓ Sent** (on GitHub), **✓✓ Seen** (this watcher printed it), **✓✓ Answered**; a `done` is a 👍 on his bubble. A reply that answers a message which is not right above it quotes it. The header says online / replying / working: <note> / waking up / offline (your message wakes it) / could not be woken / not answering 3 wakes (out of usage?), from `seat.json`. The red number on the Claude tab counts only chat replies (Tj, CH16) and goes when the chat is looked at; each reply is one notification that opens the chat. Links in a reply are tappable: put release links in as plain URLs.
 
 ## The store
 

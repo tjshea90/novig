@@ -46,3 +46,16 @@ Tj (06:20Z, typed to acct-5d1e2d (mirage)): the app chat "misses some of my mess
 - **Claims, to avoid double work:** `bash tools/coord.sh claim CR` before starting a TASKS.md item; a live claim by another session answers "taken by X, pick another item". Claims expire 30 min after their session's last heartbeat. `ship.sh` claims `RELEASE` itself and waits while another release is being cut, so two sessions never produce one versionCode.
 - **Branches stay in step with main:** every push lands on main when it is a fast-forward and safe; when main moved, `ckpt.sh` merges main into the session's branch (only a clean merge; on a conflict it stops and names the files) and lands it. `merge=union` for INBOX.md, TASKS.md and BUILDLOG.md, `merge=ours` for CHECKPOINT.md, so the usual appends never conflict.
 - **Nothing broken reaches main:** autosave never commits a half-finished merge or a file with conflict markers; code (`app/`, `data/`, `engine/`, `cloud/`, `lab/`, gradle files) moves to main only when `tools/test.sh` passed on exactly that code (it records what it tested), tools and workflows when the fast checks passed; the branch is always pushed, so nothing is lost while it waits.
+
+## 4. What was built (CR3-CR6, 2026-10-19)
+
+- **Tools** (CR3): `tools/chat.py` (watch / reply / done / say / status / seat / pending / file / init), `tools/chat_wake.py` v2, `chat-wake.yml` on `chat`, the 5-minute sweep in `engine-watchdog.yml`. Wake rule refined after review: a message counts as waiting when it has no answer, seen or not (a seen-but-unanswered message with a stale seat = the session was cut off before it answered). A reply to an old-app message is mirrored into the new store with `quote` = Tj's old words.
+- **App** (CR5, v1.0.5): `CloudChat.kt` (model + thread + presence, pure), `ChatSync.kt` (send queue + reader), `CloudClient.headSha / listEntries / readText / createFile` (create never replaces and never creates the branch: `chat` is made by `chat.py init`, never from main), `ChatScreen.kt` (reverse list anchored at the newest message, so the keyboard never pushes it away; delivery marks; Retry / Delete; quotes; tappable links; "Claude is replying"; New chat / Clear chat / the old app's chat in the menu), `ChatAlerts.kt` (one notification per reply, a tap opens the chat). How each symptom of §1 is closed:
+
+| Symptom (§1) | Closed by |
+| :- | :- |
+| missed or ignored messages | the watcher shows every message without an answer, whatever its age, once per seat, and the wake fires for any unanswered one while nobody holds the seat; the phone never drops a message it could not send (it stays in the queue, visibly) |
+| stale messages | no relays, no posts from GitHub into the chat; replies refused for unknown ids or from a second session; the phone reads each file once, by day folder, so nothing old "arrives" again |
+| near-identical back-to-back messages | one answering session (the seat); `chat.py` refuses a 90%-same text within an hour; one reply can answer several messages |
+| lost attachments | uploaded before the message, never deleted (no 24 h cleanup), kept on the phone too (thumbnails), downloaded by the watcher with the path printed; a failed upload holds the message back instead of sending it without the file |
+
