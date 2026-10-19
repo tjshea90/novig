@@ -23,7 +23,7 @@ object ThinFair {
 
     fun reason(fair: FairLine?): String? {
         fair ?: return null
-        if (fair.sharpBooksUsed.isNotEmpty()) return null
+        if (fair.sharpBooksUsed.isNotEmpty() || fair.perBook.any { it.isSharp }) return null
         val used = fair.perBook.filter { it.book.bookTitle in fair.booksUsed }
         val companies = used.groupBy { BookCompany.of(it.book.bookKey) }
         if (companies.size > SMALL_COMPANIES) return null
