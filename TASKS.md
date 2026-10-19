@@ -5847,3 +5847,5 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [ ] CH8 (t1792378441989) "I don't see any sx bet or polymarket odds inside the vigilant EV scanner. why now": scan shows sxbet 8, polymarket 7, kalshi 7 events matched of 6000+ lines; audit raw vs matched counts, fix mapping, show feed per bet (with CH3).
 
 - [ ] CH9 SX/Polymarket mapping (t1792378640968): audit done, names match, props are the gap; check SX moneyline mainLine=false skip, add soccer totals 2/Asian handicap 3/1X2 1, per-bet feed chips. Data: /tmp only, see chat 2026-10-19.
+
+- [ ] CH10 (t1792260735198) PropLine feature: judge from propline-ev-bets results; keep only proven (Unders/Vigilant-agreed) or remove sweep to save requests; log in CHANGES.md.
