@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "477b9b26bf209fc4ec2cff376099d4145e1e3758",
+ "head": "7d7ad083c142eedcfe29d924aff4eeee69e4682e",
  "since": 1792393152,
- "beat": 1792422637,
- "beatIso": "2026-10-19T15:10:37Z",
+ "beat": 1792422838,
+ "beatIso": "2026-10-19T15:13:58Z",
  "done": "pre-release: v1.0.5: the chat with Claude rebuilt from scratch (one account answers, messages say Sending/Sent/Seen/Answered, retry, attachments kept, quotes, online/waking line); the Claude tab's red number counts only chat replies; live-bid tests follow the tennis-on default (versionCode 345, v1.0.5)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.5), then run: bash tools/record-release.sh v1.0.5 345 \"v1.0.5: the chat with Claude rebuilt from scratch (one account answers, messages say Sending/Sent/Seen/Answered, retry, attachments kept, quotes, online/waking line); the Claude tab's red number counts only chat replies; live-bid tests follow the tennis-on default\""
 }
