@@ -95,6 +95,8 @@ jobs:
             )
             echo "engine hours: $HOURS"
             [ "$HOURS" = "closed" ] && RUN=false
+            # Closed: the alarm waits for the next opening, since GitHub's timer cannot be trusted to come at 08:00 (EA, Tj 2026-10-19: research/engine_start_2026-10-19.md).
+            if [ "$HOURS" = "closed" ]; then gh workflow run engine-alarm.yml --ref main >/dev/null 2>&1 && echo "engine alarm armed for the next 08:00 ET" || echo "could not arm the engine alarm"; fi
           fi
           echo "run=$RUN" >> "$GITHUB_OUTPUT"
 
@@ -193,3 +195,5 @@ jobs:
           # TIME_UP: this job's time is over. ADDRESS: Novig refused this runner's internet address (data-center addresses are fine to Novig, one in a restricted state or on a list is not): draw another runner
           # (no limit and no cooldown since 2026-10-18, TCL115: every refused runner is replaced at once until one is accepted: cloud/ AddressWatch). Not IDLE: the phone switched the engine off.
           if [ "$END" = "TIME_UP" ] || [ "$END" = "ADDRESS" ] || [ "$END" = "STALL" ] || [ "$END" = "RESET" ]; then gh workflow run cloud-scan.yml --ref main; fi
+          # WINDOW: the hours closed; IDLE: the phone switched it off. The next opening is started by the alarm, not by GitHub's timer (EA, Tj 2026-10-19).
+          if [ "$END" = "WINDOW" ] || [ "$END" = "IDLE" ]; then gh workflow run engine-alarm.yml --ref main || echo "could not arm the engine alarm"; fi

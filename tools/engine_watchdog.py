@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Engine watchdog (TCL53; Tj 2026-10-16: "if this ever happens again, try to diagnose and fix it so it can auto resume").
 
-  python3 tools/engine_watchdog.py check     (the 10-minute workflow, no Claude usage)
+  python3 tools/engine_watchdog.py check     (the 5-minute workflow, no Claude usage; GitHub runs it only a few times a day, so it is a backup, not the clock: engine-alarm.yml is)
   python3 tools/engine_watchdog.py selftest
 
 The engine job can hang (run 61, 2026-10-16: it logged "ending" and then sat in the Engine step, so the hand-over never started a replacement and the 15-minute schedule's gate saw an engine
@@ -25,16 +25,23 @@ STALL_MS = 10 * 60 * 1000
 MAX_SWAPS = 6                           # swaps in the window before the watchdog waits (each new run re-reads the fair-odds feeds: it costs API requests)
 
 
-def decide(now, runs, heartbeat_ms, idle, switch_on, stopped, route="", status_run=None, recent_runs=(), progress_changed_ms=0, scanning=False):
-    """Pure. runs: list of {id, status, created_ms, started_ms}. -> (action, run id to cancel or None, reason)."""
+def decide(now, runs, heartbeat_ms, idle, switch_on, stopped, route="", status_run=None, recent_runs=(), progress_changed_ms=0, scanning=False, hours_open=True, alarm_waiting=True):
+    """Pure. runs: list of {id, status, created_ms, started_ms}. -> (action, run id to cancel or None, reason). Actions: none, cancel, restart, start (dispatch an engine), alarm (arm the 08:00 alarm)."""
     if stopped:
         return "none", None, "dead-man STOP is set"
-    if not switch_on:
-        return "none", None, "the phone's switch is off"
     live = [r for r in runs if r["status"] == "in_progress"]
     queued = [r for r in runs if r["status"] in ("queued", "pending", "waiting")]
     if not live:
-        return "none", None, "no engine run in progress (the 15-minute schedule starts one)"
+        # No engine: GitHub's 15-minute timer comes only a few times a day (EA, 2026-10-19), so the watchdog starts one inside the hours and keeps the alarm armed outside them.
+        if queued or any(now - r["created_ms"] < RECENT_MS for r in recent_runs):
+            return "none", None, "no engine running, but one was started in the last 10 minutes or is queued"
+        if not hours_open:
+            return ("none", None, "outside the engine's hours; the alarm waits for 08:00 ET") if alarm_waiting else ("alarm", None, "outside the engine's hours and no alarm waits for 08:00 ET")
+        if not switch_on:
+            return "none", None, "the phone's switch is off"
+        return "start", None, "no engine run inside the engine's hours"
+    if not switch_on:
+        return "none", None, "the phone's switch is off"
     cur = max(live, key=lambda r: r["started_ms"])
     if idle:
         return "none", None, "the engine is idle on purpose"
@@ -104,8 +111,18 @@ def check():
         cfg = {}
     stopped = show("cloud-config", "deadman/STOP.json") is not None
     recent = [{"id": r["id"], "created_ms": _ts(r["created_at"])} for r in api("GET", "actions/workflows/%s/runs?per_page=20" % WF).get("workflow_runs", [])]
-    action, rid, why = decide(now, runs, stat.get("heartbeatMs"), bool(stat.get("idle")), bool(cfg.get("on")), stopped, stat.get("novigRoute") or "", stat.get("runId"), recent, int(stat.get("progressChangedAtMs") or 0), bool(stat.get("scanning")))
+    import engine_alarm
+    hours_open = engine_alarm.in_hours(now, cfg)
+    alarm_waiting = True if hours_open or not runs == [] else bool(engine_alarm.runs(engine_alarm.ALARM_WF))
+    action, rid, why = decide(now, runs, stat.get("heartbeatMs"), bool(stat.get("idle")), bool(cfg.get("on")), stopped, stat.get("novigRoute") or "", stat.get("runId"), recent,
+                              int(stat.get("progressChangedAtMs") or 0), bool(stat.get("scanning")), hours_open, alarm_waiting)
     print("watchdog:", action, why)
+    if action == "start":
+        api("POST", "actions/workflows/%s/dispatches" % WF, {"ref": "main"})
+        return 0
+    if action == "alarm":
+        engine_alarm.dispatch(engine_alarm.ALARM_WF)
+        return 0
     if action in ("cancel", "restart"):
         api("POST", "actions/runs/%d/cancel" % rid)
         if action == "restart":
@@ -133,7 +150,15 @@ def selftest():
     assert decide(now, [run(1, "in_progress", 60)], now - 15 * M, switch_on=False, stopped=False, idle=False)[0] == "none"
     assert decide(now, [run(1, "in_progress", 60)], now - 15 * M, switch_on=True, stopped=True, idle=False)[0] == "none"
     assert decide(now, [run(1, "in_progress", 60)], now - 15 * M, switch_on=True, stopped=False, idle=True)[0] == "none"
-    assert decide(now, [], now - 99 * M, **ok)[0] == "none"
+    # no engine at all (EA, 2026-10-19: GitHub's timer came 3-8 times a day): start one inside the hours, arm the 08:00 alarm outside them
+    assert decide(now, [], now - 99 * M, **ok)[0] == "start"
+    assert decide(now, [], now - 99 * M, recent_runs=[{"id": 9, "created_ms": now - 3 * M}], **ok)[0] == "none"          # one was just dispatched
+    assert decide(now, [run(9, "queued", 1)], now - 99 * M, **ok)[0] == "none"                                         # one is queued
+    assert decide(now, [], now - 99 * M, switch_on=False, stopped=False, idle=False)[0] == "none"                      # the phone switched it off
+    assert decide(now, [], now - 99 * M, hours_open=False, alarm_waiting=False, **ok)[0] == "alarm"
+    assert decide(now, [], now - 99 * M, hours_open=False, alarm_waiting=True, **ok)[0] == "none"
+    assert decide(now, [], now - 99 * M, switch_on=False, stopped=False, idle=False, hours_open=False, alarm_waiting=False)[0] == "alarm"   # the 08:00 resume after an off
+    assert decide(now, [], now - 99 * M, switch_on=True, stopped=True, idle=False, hours_open=False, alarm_waiting=False)[0] == "none"     # dead-man STOP
     refused = "public routes: the read key was refused (Novig places this network's internet address outside the states it serves (RESTRICTED_NETWORK_REGION))"
     fresh = now - 10_000
     a = decide(now, [run(7, "in_progress", 6)], fresh, route=refused, status_run=7, **ok); assert a[:2] == ("restart", 7), a        # refused 6 minutes: swap
