@@ -30,7 +30,7 @@ class WalletProfitTest {
     }
 
     @Test
-    fun `an open bet is at stake, not lost: placing one leaves the profit where it was`() {
+    fun `an open bet is at stake, not lost, so placing one leaves the profit where it was`() {
         val deposit = listOf(row("t1", "TRANSFER_IN", 100.0))
         val before = WalletProfit.of(100.0, emptyList(), deposit, 0L)!!
         val after = WalletProfit.of(75.0, listOf(NovigPosition("m", "o", 5_000, 25.0)), deposit, 0L)!!
