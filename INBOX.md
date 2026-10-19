@@ -694,3 +694,8 @@ cut a release now.
 
 Then tell me how big of a task it would be to make a new vigilant app, copying all of the logic and features already built, but for kalshi instead of novig 
 ```
+
+## 2026-10-19T19:38:41Z
+```
+I sent these to the mirage account but then that account ran out of usage. Is it done yet?
+```
