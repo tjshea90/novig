@@ -31,8 +31,8 @@ def parse(text):
 
 def check():
     import tell_tj
-    tell_tj.git("fetch", "-q", "origin", tell_tj.BRANCH, check=False)
-    have = tell_tj.git("ls-tree", "-r", "--name-only", "FETCH_HEAD", check=False).stdout.split()
+    tell_tj.git("fetch", "-q", "origin", "+refs/heads/%s:refs/vigilant/rotwatch-%s" % (tell_tj.BRANCH, tell_tj.BRANCH), check=False)
+    have = tell_tj.git("ls-tree", "-r", "--name-only", "refs/vigilant/rotwatch-" + tell_tj.BRANCH, check=False).stdout.split()
     if "deadman/STOP.json" in have:
         print("rotation_watch: dead-man STOP is set; silent")
         return 0

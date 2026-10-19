@@ -42,8 +42,9 @@ def set_path(tree, path, v):
 def main(argv):
     why = argv[argv.index("--why") + 1] if "--why" in argv else "engine_set"
     rest = [a for i, a in enumerate(argv) if a not in ("--why", "--on", "--off", "--show") and not (i and argv[i - 1] == "--why")]
-    git("fetch", "-q", "origin", BRANCH)
-    parent = git("rev-parse", "FETCH_HEAD").stdout.strip()
+    # never FETCH_HEAD: another fetch in this checkout at the same moment would swap it and settings would be written from the wrong branch (CR, 2026-10-19)
+    git("fetch", "-q", "origin", "+refs/heads/%s:refs/vigilant/engine-set-%s" % (BRANCH, BRANCH))
+    parent = git("rev-parse", "refs/vigilant/engine-set-" + BRANCH).stdout.strip()
     cfg = json.loads(git("show", parent + ":settings.json").stdout)
     if "--show" in argv:
         for a in rest:
