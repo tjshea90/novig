@@ -185,8 +185,9 @@ class ClosingLineAppTest {
             }
         }
         compose.onNodeWithTag("clvCard").assertExists()
-        pinned("Today").performClick() // the pinned period: no bets placed today
-        compose.onNodeWithTag("clvCard").assertDoesNotExist()
+        // Today is today's GAMES (PL, 2026-10-19): these started two hours ago, so the card is there, and it still counts every bet, not only the period's.
+        pinned("Today").performClick()
+        compose.onNodeWithContentDescription("Beat the close 75% (3 of 4) · avg vs close +4.0% · avg EV at bet +3.0%").assertExists()
         pinned("All").performClick()
         compose.onNodeWithContentDescription("Beat the close 75% (3 of 4) · avg vs close +4.0% · avg EV at bet +3.0%").assertExists()
     }

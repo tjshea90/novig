@@ -1569,7 +1569,8 @@ class ScreenshotTest {
         // b1 won, b2 lost, b6 won (settled from the final score): 2-1, and profit is +$34.52 − $18 + $1.
         compose.onNodeWithText("66.7%").assertExists()
         assertTrue(compose.onAllNodesWithText("2-1").fetchSemanticsNodes().isNotEmpty())   // the stats card, and the profit card's slate record when the bets are one slate
-        compose.onNodeWithText("+$17.52").assertExists()
+        // All time from the settled bets (no wallet reading in the sample): the profit card's headline; with All picked its period total says the same.
+        compose.onNodeWithTag("profitAllTime").assertTextEquals("+$17.52")
         // The split by scanner, league, market, edge and price is one card now (TASKS.md T6).
         compose.onNodeWithText("Where it's working").assertExists()
         compose.onNodeWithText("Are the edges real?").assertExists()
@@ -1600,7 +1601,7 @@ class ScreenshotTest {
         assertTrue(compose.onAllNodesWithText("2-1").fetchSemanticsNodes().isNotEmpty())   // the stats card, and the profit card's slate record when the bets are one slate
         val withOutlier = com.tjshea.vigilant.data.tracker.BetTracker.stats(s.bets, SampleScan.NOW)
         assertTrue(withOutlier.profitAll > withOutlier.profit + 1.0)
-        compose.onNodeWithText(com.tjshea.vigilant.app.ui.Format.signedMoney(withOutlier.profitAll)).assertExists()
+        compose.onNodeWithTag("profitAllTime").assertTextEquals(com.tjshea.vigilant.app.ui.Format.signedMoney(withOutlier.profitAll))
         compose.onAllNodesWithText(com.tjshea.vigilant.app.ui.Format.signedMoney(withOutlier.profit)).assertCountEquals(0)
         compose.onNodeWithText("1 outlier bet (over ±6% EV when bet)", substring = true).assertExists()
         compose.onNodeWithText("Profit counts it: it's real money", substring = true).assertExists()
@@ -1623,7 +1624,8 @@ class ScreenshotTest {
 
     @Test fun trackerSaysCloseForEverySportNotJustFootball() {
         screen { TrackerScreen(SampleScan.state(), { _, _ -> }, { }) }
-        // The closing line is read before any game's start, whatever the sport (ClosingLine).
+        // The closing line is read before any game's start, whatever the sport (ClosingLine). The card sits in the stats item, below the profit card's own item: scroll the list to it first.
+        compose.onNodeWithTag("trackerList").performScrollToKey("stats")
         compose.onNodeWithText("devigged fair line read in the last 15 minutes before the start", substring = true).performScrollTo().assertExists()
     }
 
