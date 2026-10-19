@@ -5903,3 +5903,9 @@ Tj, 2026-10-19 15:25Z, verbatim: "I need the engine to automatically run from 8 
 - [x] EA7 (cloud-scan.yml end step: 4 tries, then ensure the keeper whatever the end) the engine's hand-over retries its dispatch; an engine that crashed (END unknown) inside the hours is restarted by the keeper.
 - [ ] EA8 tests + a live dry run of the keeper against today's real state; tell Tj.
 
+## PL: a profit chart that is logical and accurate (Tj, 2026-10-19 15:30Z, with a screenshot of Tracker > Stats > Today)
+Tj, verbatim: "This is broken. It is illogical. Today's slate has 0 settled bets and should show 0 profit or loss because it is only around 11am Eastern time. The times shown in the chart seem strange too. I thought of a possible problem with the tracker logic. It may be counting lost money based on bets I made today but the games don't actually start until days from now, so it is counted as lost profit at the end of the day since there is no result for the game but there is a stake on it. I don't know how to fix this. Think of the most logical way to make a chart which shows daily profit/loss and total all time profit/loss that is logical and shows an accurate number so I know if I'm making or losing money on my bets. I'd like the total all time profit loss to show the difference between my cash balance now from the initial slate of bets logged on day 1 (assume the total stake of all bets on day 1 was my total deposit into the account)"
+- [ ] PL1 find exactly why "This slate" showed Sun Oct 18 (with times 9:30 AM to 2:22 AM) at 11 am Mon, and whether unsettled stakes count as losses anywhere.
+- [ ] PL2 design: today = today's games (0 until a result), open stakes never counted as profit or loss, all time = account value now (cash + open stakes + resting bids) minus day 1's total stakes; a chart by day that reads at a glance.
+- [ ] PL3 build + tests; ship.
+
