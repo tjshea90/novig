@@ -43,8 +43,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.environ.get("CHAT_REPO") or os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 
-CHAT = "chat"
-SEAT = "chat-seat"
+CHAT = os.environ.get("CHAT_BRANCH", "chat")
+SEAT = os.environ.get("CHAT_SEAT_BRANCH", "chat-seat")
 LEGACY = "cloud-config"
 LEGACY_FILES = "chat-files"
 BEAT_S = int(os.environ.get("CHAT_BEAT_S", 45))
