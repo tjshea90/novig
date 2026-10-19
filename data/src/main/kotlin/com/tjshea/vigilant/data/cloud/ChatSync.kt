@@ -151,6 +151,13 @@ class ChatSync(
         sendWake.tryEmit(Unit)
     }
 
+    /** A new token was saved: every message that stopped tries again now. */
+    suspend fun retryStopped() {
+        if (state.value.outbox.none { it.stuck }) return
+        update { s -> s.copy(outbox = s.outbox.map { if (it.stuck) it.copy(stuck = false, nextTryAt = 0L) else it }) }
+        sendWake.tryEmit(Unit)
+    }
+
     /** Tap Delete on a message that is not on GitHub yet: it leaves this phone. A message GitHub has stays (Claude may already be reading it). */
     suspend fun discard(id: String) {
         val gone = state.value.outbox.firstOrNull { it.id == id } ?: return

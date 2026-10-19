@@ -143,6 +143,7 @@ class CloudLink(private val c: AppContainer) {
         store.update { CloudToken(sealed, t.takeLast(4)) }
         tokenPlain = t
         _ui.update { it.copy(hasToken = true, tokenTail = t.takeLast(4)) }
+        runCatching { chat.retryStopped() }   // chat messages that stopped for want of a token go now
         return test()
     }
 

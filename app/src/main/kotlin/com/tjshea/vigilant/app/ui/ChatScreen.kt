@@ -164,7 +164,13 @@ fun ChatPage(
                 }
             }
         }
-        problem?.let { Text("Can't reach GitHub right now: $it. Your messages wait on this phone and go by themselves.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("chatProblem")) }
+        problem?.let { p ->
+            Text(
+                if (p.startsWith("no GitHub token")) "No GitHub token is saved (Settings › Cloud scan): the chat cannot reach GitHub until one is."
+                else "Can't reach GitHub right now ($p). Your messages wait on this phone and go by themselves.",
+                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("chatProblem"),
+            )
+        }
         Box(Modifier.weight(1f).fillMaxWidth()) {
             LazyColumn(state = list, reverseLayout = true, verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth().testTag("chatList")) {
                 if (items.isEmpty()) item(key = "empty") {
