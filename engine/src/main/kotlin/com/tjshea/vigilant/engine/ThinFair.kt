@@ -5,8 +5,8 @@ import kotlin.math.abs
 /**
  * A fair price that rests on only a few small books is not trusted for an order (Tj, 2026-10-19, chat t1792446562982-91ba): two or three small books with the same odds
  * often take one upstream feed, so they are one opinion counted twice. With a sharp book in the line, or with two or more large brands (and more than three companies
- * in all), the fair is as it was. Otherwise, when at most [SMALL_COMPANIES] companies stand behind it and they are all small, or their odds are identical, there is no order.
- * Large brands whose odds are close but not identical pass. Pure; the bet and bid deciders ask it, the feed's own list is unchanged.
+ * in all), the fair is as it was. Otherwise, when at most [SMALL_COMPANIES] companies stand behind it and they are all small, or one is large and they all show identical odds, there is no order.
+ * Two large brands pass even when their odds match. Pure; the bet and bid deciders ask it, the feed's own list is unchanged.
  */
 object ThinFair {
     /** Most companies a fair may rest on and still be called thin. */
@@ -28,7 +28,7 @@ object ThinFair {
         val companies = used.groupBy { BookCompany.of(it.book.bookKey) }
         if (companies.size > SMALL_COMPANIES) return null
         val large = companies.keys.count { it in BIG }
-        if (large >= 2 && !identical(used)) return null
+        if (large >= 2) return null
         val n = companies.size
         val names = used.joinToString(", ") { it.book.bookTitle }
         return when {
