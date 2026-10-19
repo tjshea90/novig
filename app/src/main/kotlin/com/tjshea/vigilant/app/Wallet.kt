@@ -109,7 +109,7 @@ class WalletMoney(
         try {
             val m = read()
             if (m == null) {
-                _note.value = "Novig's ledger shows no transfer into the Vigilant wallet, so what was put in is not known."
+                _note.value = "Novig's ledger shows no money moved into the Vigilant wallet, so what was put in is not known."
             } else {
                 _note.value = null
                 _flow.value = m
@@ -124,13 +124,13 @@ class WalletMoney(
     }
 
     private fun save(m: com.tjshea.vigilant.data.tracker.WalletProfit.Money) {
-        prefs?.edit()?.putString(KEY, listOf(m.cash, m.openCost, m.openBets, m.putIn, m.takenOut, m.transfers, m.atMs).joinToString("|"))?.apply()
+        prefs?.edit()?.putString(KEY, listOf(m.cash, m.openCost, m.openBets, m.putIn, m.takenOut, m.transfers, m.atMs, m.detail.replace('|', '/')).joinToString("|"))?.apply()
     }
 
     private fun load(): com.tjshea.vigilant.data.tracker.WalletProfit.Money? {
-        val f = prefs?.getString(KEY, null)?.split('|')?.takeIf { it.size == 7 } ?: return null
+        val f = prefs?.getString(KEY, null)?.split('|')?.takeIf { it.size >= 7 } ?: return null
         return runCatching {
-            com.tjshea.vigilant.data.tracker.WalletProfit.Money(f[0].toDouble(), f[1].toDouble(), f[2].toInt(), f[3].toDouble(), f[4].toDouble(), f[5].toInt(), f[6].toLong())
+            com.tjshea.vigilant.data.tracker.WalletProfit.Money(f[0].toDouble(), f[1].toDouble(), f[2].toInt(), f[3].toDouble(), f[4].toDouble(), f[5].toInt(), f[6].toLong(), f.getOrNull(7).orEmpty())
         }.getOrNull()
     }
 

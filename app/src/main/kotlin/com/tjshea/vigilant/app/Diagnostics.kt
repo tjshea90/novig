@@ -504,7 +504,7 @@ object Diagnostics {
         }
         // The Tracker's all-time figure (PL, 2026-10-19): what the wallet holds now, open bets at cost, minus the money put in by Novig's own transfer record.
         x.walletMoney?.let { m ->
-            o.appendLine(String.format(Locale.US, "All-time profit (wallet): cash %.2f + open bets %.2f (%d markets) - put in %.2f (%.2f in, %.2f out, %d transfers) = %+.2f, read %d min ago", m.cash, m.openCost, m.openBets, m.netIn, m.putIn, m.takenOut, m.transfers, m.profit, (now - m.atMs) / 60_000L))
+            o.appendLine(String.format(Locale.US, "All-time profit (wallet): cash %.2f + open bets %.2f (%d markets) - put in %.2f (%.2f in, %.2f out, %d ledger rows: %s) = %+.2f, read %d min ago", m.cash, m.openCost, m.openBets, m.netIn, m.putIn, m.takenOut, m.transfers, m.detail.ifEmpty { "-" }, m.profit, (now - m.atMs) / 60_000L))
         } ?: x.walletMoneyNote?.let { o.appendLine("All-time profit (wallet): no figure: $it") }
         // What the Tracker's Profit shows (every settled bet, the same with its "Novig only" filter on or off): the line above leaves the outliers out.
         if (stats.outliers > 0) o.appendLine("Every settled bet, outliers too (the Tracker's Profit): profit ${String.format(Locale.US, "%+.2f", stats.profitAll)} on ${String.format(Locale.US, "%.2f", stats.stakedAll)} staked" + (stats.roiAll?.let { String.format(Locale.US, " (%+.1f%%)", it * 100) } ?: "") + " · ${stats.outliers} outlier bet${if (stats.outliers == 1) "" else "s"} (over ±${(BetTracker.OUTLIER_EV * 100).toInt()}% EV when bet)")

@@ -125,9 +125,10 @@ object ProfitText {
     fun allTimeHow(book: SlateProfit.Book, w: WalletMoneyUi, now: Long): String {
         val m = w.money
         if (m != null) {
-            val moves = if (m.takenOut > 0.005) " (${Format.money(m.putIn)} in, ${Format.money(m.takenOut)} out)" else ""
-            return "Vigilant wallet ${Format.money(m.value)}: ${Format.money(m.cash)} cash + ${Format.money(m.openCost)} in ${bets(m.openBets)}, minus the ${Format.money(m.netIn)} put in$moves " +
-                "(Novig's record of your transfers). Open bets count at what they cost until they settle. Read ${Format.age(m.atMs, now)}."
+            // Money moved out and back in again nets out (Tj, 2026-10-19: "also takes out withdrawals because sometimes I moved money back and forth").
+            val moves = if (m.takenOut > 0.005) "${Format.money(m.putIn)} put in minus ${Format.money(m.takenOut)} taken out" else "nothing taken out"
+            return "Vigilant wallet ${Format.money(m.value)}: ${Format.money(m.cash)} cash + ${Format.money(m.openCost)} in ${bets(m.openBets)}, minus the ${Format.money(m.netIn)} you put in ($moves, " +
+                "from Novig's record of money moved in and out). Open bets count at what they cost until they settle. Read ${Format.age(m.atMs, now)}."
         }
         val why = w.note?.let { " $it" } ?: ""
         return if (book.settled == 0) "No settled bets yet.$why"
