@@ -1,13 +1,13 @@
-# CHECKPOINT 3713 — read me first, then TASKS.md
+# CHECKPOINT 3714 — read me first, then TASKS.md
 
-**Written:** 2026-10-19T03:02:06Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-gntx94` · **builds on:** `229cb7142` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T03:07:23Z · **tests:** 1 RED: test_coord.sh (4 green)
+**Branch:** `claude/optimistic-curie-gntx94` · **builds on:** `9b5aaa91c` (this checkpoint is the commit after it)
 
 ## Just done
-CH14 queued
+CH6 traced: no extra key usage
 
 ## Do this next
-CH9 then CH6
+CH9 SX soccer totals, then CH13/CH12/CH11
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ CH9 then CH6
 
 ## Last ten checkpoints
 ```
+  9b5aaa91c ckpt 3713: CH14 queued
   229cb7142 ckpt 3712: CH11-13 queued, replies sent
   a538777e4 ckpt 3711: answered old chat msgs; CH10 queued
   ed8c7d614 ckpt 3710: CH9 SX audit: names match; props not on SX; next check ML mainLine skip + s
@@ -26,5 +27,4 @@ CH9 then CH6
   74c2f4c03 ckpt 3706: pre-ship: v1.0.2: The Odds API stays on one key until it is spent, then the
   1a1b2064c ckpt 3705: CH7 answered
   2d8c39779 ckpt 3704: CH6a sticky Odds API key done+tested; CH7 queued
-  907c49c37 ckpt 3703: v1.0.1 released; replied CH6 odds api keys
 ```
