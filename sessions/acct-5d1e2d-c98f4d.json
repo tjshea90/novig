@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-2df6ce48-pkrh5v",
- "head": "9d36049e43c1eed7254e74a3b76004d2c945725e",
+ "head": "2ae72ef296329a5c484e7501fd58cf87574a7b8e",
  "since": 1792393152,
- "beat": 1792424155,
- "beatIso": "2026-10-19T15:35:55Z",
- "done": "EA5-EA7: keeper (engine-alarm.yml: always running, 2-min checks in hours, sleeps to 08:00 ET, hands over every 340 min), gate+end step+watchdog ensure a keeper, shared switch/hours rule (4,000 cases = old gate), retried hand-over; dry runs on real state OK",
- "next": "dispatch the keeper, read its first log lines; EA4/EA8: verify the 2026-10-20 08:00 start (check-in 12:10Z)"
+ "beat": 1792424365,
+ "beatIso": "2026-10-19T15:39:25Z",
+ "done": "EA: keeper steps aside for a newer keeper, one log line per state, full-loop test with a fake clock",
+ "next": "dispatch the keeper again (new code); then PL: the profit card"
 }
