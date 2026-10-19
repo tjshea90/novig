@@ -340,7 +340,7 @@ fun TrackerScreen(
                         TrackerView.STATS -> Column(Modifier.padding(vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 TrackerPeriod.entries.forEach { p ->
-                                    FilterChip(selected = period == p, onClick = { period = p }, label = { Text(p.label) })
+                                    FilterChip(selected = period == p, onClick = { period = p }, label = { Text(p.label) }, modifier = Modifier.testTag("periodChip-${p.name}"))
                                 }
                             }
                             // Bets, bids or both for every number below (Tj, 2026-10-07); the Bets tab has the same chip.
