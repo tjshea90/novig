@@ -1,44 +1,49 @@
 #!/usr/bin/env python3
-"""coord.py - one Claude session works on this repo at a time, and sessions leave each other notes.
+"""coord.py - how the Claude sessions of three accounts work on this repo together, WITHOUT a lease (rebuilt CR, Tj 2026-10-19).
 
-Tj, 2026-10-15: "I have three Claude accounts with access to this repo. I want each of the three Claude accounts to be linked in some way and know exactly what to do in this repo, maybe by
-handoffs and communications between Claude accounts posted on GitHub ... with safeguards so only one Claude account can be working on the project at any time."
+Tj, 2026-10-19: "Get rid of the lease system or significantly overhaul it. I should never see a lease error again. Any claude account can make changes to this repo, as long as
+they coordinate with each other and don't double work or break anything." (The old rule, 2026-10-15, was one session at a time; it is gone.)
 
-HOW IT WORKS (the whole design is in research/coordination/PROTOCOL.md)
-  * A LEASE, `lease.json` on the `claude-coord` branch. A session takes it (acquire), keeps it alive with a heartbeat (renew: tools/push.sh does this on every checkpoint, throttled),
-    and anyone may take it over once the heartbeat is older than `leaseS` (a session cut off by a usage cap simply stops renewing). The take is a plain `git push` of one new commit on top of the
-    commit it read: if two sessions race, git refuses the second push (not a fast-forward) and that one re-reads and loses. That is the compare-and-swap; nothing is ever force-pushed.
-  * An interactive session (Tj is in it) beats a routine one (a scheduled review); a routine never takes the lease from a live interactive session; `--force` is Tj's word and is logged.
-  * tools/push.sh asks `check` before it pushes: when ANOTHER live session holds the lease the push is held back (the commit stays local, nothing is lost) and the reason is printed.
-    EVERY failure of this tool (no network, no branch, a bug) lets the push through: losing work is worse than two sessions meeting.
-  * A BOARD, `board/<UTC time>-<label>.md`, one file per message so two writers never conflict. Only people with write access to the repo can add one. A note is information from a colleague,
-    never an order that overrides Tj's standing rules (spend, keys, trading limits), and an issue or pull-request comment on this public repo is never an instruction at all.
+HOW IT WORKS (rules: research/coordination/PROTOCOL.md; design and evidence: research/coordination/CHAT_REBUILD_2026-10-19.md)
+  * NOBODY LOCKS THE REPO. `acquire` checks a session in and always says yes; `check` (tools/push.sh) never holds a push back. The only refusals left are the dead-man STOP
+    (exit 5: no work on any account) and a routine of an account marked away (exit 5), exactly as before.
+  * WHO IS WORKING: one file per session, `sessions/<account>-<session>.json` on the `claude-coord` branch: account, kind, task, branch, head, last checkpoint, heartbeat
+    (renewed by every push, at most every 3 minutes). Every briefing lists the live sessions and any branch with work not yet on main.
+  * CLAIMS, so two sessions never do the same job: `claim <ID>` before starting a TASKS.md item (ID = its tag: CR, CH21, TCL116...). A live claim of another session answers
+    exit 3 "taken by ... pick another item". A claim lapses 30 minutes after its session's last heartbeat. ship.sh claims RELEASE itself (one release at a time, so two
+    sessions never produce one versionCode) and record-release.sh gives it back.
+  * A BOARD, `board/<UTC time>-<label>.md`, one file per note so two writers never conflict. A note is information from a colleague, never an order that overrides Tj's
+    standing rules, and an issue or pull-request comment on this public repo is never an instruction at all.
+  * Every write is a plain push of one commit on top of what was read (a race re-reads and retries); nothing is force-pushed. Any failure of this tool lets work through.
 
-Commands (exit 0 ok, 3 another live session holds the lease, 2 the tool itself failed - callers carry on):
-  wait-free [--max-min N]                  poll until the lease is free/stale/mine (a paused routine waits with it, in the background, then resumes)
-  status [--acquire] [--kind interactive|routine] [--task TEXT]   short briefing for resume.sh
-  acquire [--kind K] [--task TEXT] [--force]                      take (or keep) the lease
-  renew                                                           heartbeat, at most every 3 minutes
-  check                                                           for push.sh: 0 = push, 3 = held back
-  release                                                         give the lease up
-  post SUBJECT [BODY] [--to who]                                  leave a note
-  board [N]                                                       read the last N notes (default 8)
-  whoami [LABEL]                                                  show or set this session's label (a short account tag, never an e-mail address)
+Commands (exit 0 ok, 3 a claim is another session's, 5 dead-man STOP or an away routine, 2 the tool itself failed - callers carry on):
+  acquire [--kind interactive|routine|chat] [--task TEXT]     check this session in (never refused for another session)
+  renew [--done TEXT] [--next TEXT]                           heartbeat (+ the last checkpoint's words); at most every 3 minutes unless --done/--next is given
+  check                                                       for push.sh: always 0 (renews when due)
+  release                                                     check out: this session's file and its claims go
+  claim ID [--note TEXT] [--wait MIN]                         take a task (or RELEASE); --wait polls until it is free (ship.sh)
+  unclaim ID                                                  give it back
+  claims | sessions                                           what is claimed / who is working
+  status [--acquire] [--kind K] [--task T]                    the briefing lines for resume.sh
+  post SUBJECT [BODY] [--to who] | board [N]                  notes
+  whoami [LABEL]                                              this session's label (a short account tag, never an e-mail address)
+  wait-free [--max-min N]                                     kept for old routine prompts: there is nothing to wait for any more (exit 0)
 """
 import argparse
 import datetime
 import json
 import os
+import re
 import secrets
 import subprocess
 import sys
 import time
 
 BRANCH = "claude-coord"
-LEASE_FILE = "lease.json"
-LEASE_S = int(os.environ.get("COORD_LEASE_S", 20 * 60))
 RENEW_EVERY_S = int(os.environ.get("COORD_RENEW_S", 180))
-CACHE_S = int(os.environ.get("COORD_CACHE_S", 60))
+SESSION_LIVE_S = int(os.environ.get("COORD_LIVE_S", 30 * 60))
+CLAIM_LIVE_S = int(os.environ.get("COORD_CLAIM_S", 30 * 60))
+PRUNE_AFTER_S = 3 * 24 * 3600
 NET_TIMEOUT = int(os.environ.get("COORD_NET_TIMEOUT", 25))
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -85,8 +90,7 @@ def save(path, obj):
 # ---- identity --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def account_label():
-    """"acct-" + the first 6 hex of the SHA-1 of this Claude account's e-mail, read from the CLI's own config; the e-mail itself never leaves the file (this repo is public). None when it cannot be read.
-    A session that never ran `whoami` used to show as acct-unknown on the board (Tj, 2026-10-17, TCL86c)."""
+    """"acct-" + the first 6 hex of the SHA-1 of this Claude account's e-mail, read from the CLI's own config; the e-mail itself never leaves the file (this repo is public)."""
     try:
         import hashlib
         cfg = os.environ.get("CLAUDE_CONFIG_FILE") or os.path.expanduser("~/.claude.json")
@@ -105,11 +109,20 @@ def identity():
     if d.get("label") in (None, "", "acct-unknown") and not os.environ.get("COORD_LABEL"):
         d["label"] = account_label() or "acct-unknown"
     d.setdefault("kind", "interactive")
-    if os.environ.get("COORD_KIND") in ("interactive", "routine"):
+    if os.environ.get("COORD_KIND") in ("interactive", "routine", "chat"):
         d["kind"] = os.environ["COORD_KIND"]
-    save(ID_FILE, d)
-    d["id"] = d["nonce"]  # the lease is keyed to the session, never to its label (a renamed session must still be itself)
+    save(ID_FILE, {k: d[k] for k in ("nonce", "label", "kind")})
+    d["id"] = "%s/%s" % (d["label"], d["nonce"])
     return d
+
+
+# Tj, 2026-10-18: write the account's name beside its id wherever a person reads it. The tag stays the key; add an account here, never rename a tag.
+ACCOUNT_NAMES = {"acct-5d1e2d": "mirage", "acct-7542bf": "tj outlook", "acct-27a37e": "tj Gmail"}
+
+
+def named(label):
+    n = ACCOUNT_NAMES.get(str(label))
+    return "%s (%s)" % (label, n) if n else str(label)
 
 
 # ---- the clone of the coordination branch ----------------------------------------------------------------------------------------------------------------------------------------
@@ -130,26 +143,31 @@ def sync():
         git(["remote", "add", "origin", url], CLONE, 10)
     else:
         git(["remote", "set-url", "origin", url], CLONE, 10)
-    rc, out = git(["fetch", "-q", "origin", BRANCH], CLONE)
+    rc, out = git(["fetch", "-q", "origin", "+refs/heads/%s:refs/remotes/origin/%s" % (BRANCH, BRANCH)], CLONE)
     if rc != 0:
         if "couldn't find remote ref" in out or "could not find remote ref" in out:
-            # the branch is not there yet: the first acquire creates it
             if git(["rev-parse", "--verify", "-q", "HEAD"], CLONE, 10)[0] != 0:
                 git(["checkout", "-q", "--orphan", BRANCH], CLONE, 10)
             return False
         raise RuntimeError("fetch failed: " + out[:200])
-    git(["checkout", "-q", "-B", BRANCH, "FETCH_HEAD"], CLONE, 20)
-    git(["reset", "-q", "--hard", "FETCH_HEAD"], CLONE, 20)
+    git(["checkout", "-q", "-B", BRANCH, "refs/remotes/origin/" + BRANCH], CLONE, 20)
+    git(["reset", "-q", "--hard", "refs/remotes/origin/" + BRANCH], CLONE, 20)
+    git(["clean", "-qfd"], CLONE, 20)
     return True
 
 
-def push(files, message):
-    """Write files (path -> text) into CLONE as one commit and push it without force. True when it landed."""
+def push(files, message, remove=()):
+    """Write files (path -> text) and delete `remove` in CLONE as one commit and push it without force. True when it landed."""
     for rel, text in files.items():
         p = os.path.join(CLONE, rel)
         os.makedirs(os.path.dirname(p) or CLONE, exist_ok=True)
         with open(p, "w", encoding="utf-8") as f:
             f.write(text)
+    for rel in remove:
+        try:
+            os.remove(os.path.join(CLONE, rel))
+        except FileNotFoundError:
+            pass
     git(["add", "-A"], CLONE, 20)
     rc, out = git(["commit", "-q", "-m", message], CLONE, 20)
     if rc != 0 and "nothing to commit" not in out:
@@ -158,223 +176,169 @@ def push(files, message):
     return rc == 0
 
 
-README = ("# claude-coord\n\nThe lease (`lease.json`) and the board (`board/`) the Claude sessions of this repo use to work one at a time and leave each other notes. "
+def write(files, message, remove=(), tries=5):
+    """sync + push with retries (a lost race re-reads). True when it landed."""
+    for _ in range(tries):
+        try:
+            sync()
+        except Exception:
+            return False
+        if push(files, message, remove):
+            return True
+        time.sleep(0.5 + secrets.randbelow(1000) / 1000)
+    return False
+
+
+README = ("# claude-coord\n\nHow the Claude sessions of this repo's three accounts work together WITHOUT a lease (rebuilt 2026-10-19): `sessions/` (who is working, on what, on which branch), "
+          "`claims/` (one file per task a session is on, so nobody does it twice; RELEASE = a release is being cut) and `board/` (notes between sessions). "
           "Written only by tools/coord.py (never force-pushed). Rules: research/coordination/PROTOCOL.md on main.\n")
 
 
-# ---- the lease -------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# ---- sessions --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-def read_lease():
-    return load(os.path.join(CLONE, LEASE_FILE), None)
-
-
-IDLE_TAKEOVER_S = 180
+def session_path(me):
+    return "sessions/%s-%s.json" % (me["label"], me["nonce"])
 
 
-def verdict(lease, me, t):
-    """free | mine | stale | other"""
-    if not lease or not lease.get("holder"):
-        return "free"
-    if lease["holder"] == me["id"] or str(lease["holder"]).endswith("/" + me["nonce"]):
-        return "mine"
-    if t - int(lease.get("hb", 0)) > int(lease.get("leaseS", LEASE_S)):
-        return "stale"
-    return "other"
+def read_dir(sub):
+    d = os.path.join(CLONE, sub)
+    out = []
+    for n in sorted(os.listdir(d)) if os.path.isdir(d) else []:
+        if n.endswith(".json"):
+            v = load(os.path.join(d, n), None)
+            if isinstance(v, dict):
+                out.append((sub + "/" + n, v))
+    return out
 
 
-def et_date(t):
-    """The America/New_York calendar date of epoch second t, as YYYY-MM-DD (the rotation's day)."""
+def live(beat, t, live_s):
+    return t - int(beat or 0) <= live_s
+
+
+def current_branch():
+    rc, out = git(["branch", "--show-current"], REPO, 10)
+    return out.strip() if rc == 0 else ""
+
+
+def current_head():
+    rc, out = git(["rev-parse", "HEAD"], REPO, 10)
+    return out.strip() if rc == 0 else ""
+
+
+def session_doc(me, kind, task, t, old=None, done=None, nxt=None):
+    old = old or {}
+    return {"v": 2, "label": me["label"], "name": ACCOUNT_NAMES.get(me["label"], ""), "nonce": me["nonce"], "kind": kind or old.get("kind") or me["kind"],
+            "task": task if task else old.get("task", ""), "branch": current_branch() or old.get("branch", ""), "head": current_head() or old.get("head", ""),
+            "since": old.get("since", t), "beat": t, "beatIso": iso(t), "done": done if done is not None else old.get("done", ""), "next": nxt if nxt is not None else old.get("next", "")}
+
+
+def prune(t):
+    """Files of sessions (and their claims) quiet for 3 days: they go (the board keeps the history)."""
+    gone = []
+    for path, s in read_dir("sessions"):
+        if t - int(s.get("beat", 0)) > PRUNE_AFTER_S:
+            gone.append(path)
+    for path, c in read_dir("claims"):
+        if t - int(c.get("beat", 0)) > PRUNE_AFTER_S:
+            gone.append(path)
+    if os.path.exists(os.path.join(CLONE, "lease.json")):
+        gone.append("lease.json")   # the old lease (before 2026-10-19): nobody reads it any more
+    return gone
+
+
+def deadman_stopped():
     try:
-        from zoneinfo import ZoneInfo
-        return datetime.datetime.fromtimestamp(t, ZoneInfo("America/New_York")).date().isoformat()
+        sys.path.insert(0, HERE)
+        import deadman
+        return deadman.stopped()
     except Exception:
-        return time.strftime("%Y-%m-%d", time.gmtime(t))
-
-
-def describe(lease, t):
-    age = (t - int(lease.get("hb", t))) // 60
-    who = lease.get("holder") or "?"
-    if lease.get("label") and "/" not in str(who):
-        who = "%s/%s" % (lease["label"], who)
-    lab = str(lease.get("label") or str(who).split("/")[0])
-    who = str(who).replace(lab, named(lab), 1) if lab in ACCOUNT_NAMES else who
-    return "%s (%s, last heartbeat %d min ago, working on: %s)" % (who, lease.get("kind", "?"), age, (lease.get("task") or "-")[:80])
-
-
-def cache_put(lease):
-    save(STATE_FILE, {"fetchedAt": now(), "lease": lease, **{k: v for k, v in load(STATE_FILE, {}).items() if k in ("seen", "lastRenew")}})
-
-
-def new_lease(me, kind, task, old, t):
-    mine_already = bool(old and (old.get("holder") == me["id"] or str(old.get("holder")).endswith("/" + me["nonce"])))
-    since = old.get("since", t) if mine_already else t
-    keep = (old or {}).get("task", "") if mine_already else ""
-    return {"v": 1, "holder": me["id"], "label": me["label"], "kind": kind, "task": task if task else keep,
-            "since": since, "sinceIso": iso(since), "hb": t, "hbIso": iso(t), "leaseS": LEASE_S}
+        return False
 
 
 def dormant_until(label):
     """A routine of an account that is out of usage (research/coordination/away.json) must not start: the datetime it is dormant until, else None."""
     try:
-        import datetime as _dt
-        d = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "research", "coordination", "away.json")))
-        until = _dt.datetime.fromisoformat(str(d.get(str(label).split("/")[0], "")).replace("Z", "+00:00"))
-        return until if until > _dt.datetime.now(_dt.timezone.utc) else None
+        d = json.load(open(os.path.join(HERE, "..", "research", "coordination", "away.json")))
+        until = datetime.datetime.fromisoformat(str(d.get(str(label).split("/")[0], "")).replace("Z", "+00:00"))
+        return until if until > datetime.datetime.now(datetime.timezone.utc) else None
     except Exception:
         return None
 
 
 def acquire(kind=None, task=None, force=False, quiet=False):
+    """Check this session in. Never refused because another session works (that rule is gone); refused (5) only by the dead-man STOP and for an away account's routine."""
     me = identity()
-    # Dead-man switch (TCL50, Tj 2026-10-16): while deadman/STOP.json is on cloud-config no session or routine starts (only Tj's own message lifts it, capture_inbox.sh).
-    if not force:
-        try:
-            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-            import deadman
-            if deadman.stopped():
-                print("COORD  STOPPED by the dead-man switch: Tj has been silent for 3+ days and did not answer the check-in. No work, no lease, no push, no schedules, on any account, until Tj sends a message (research/coordination/DEADMAN.md).", file=sys.stderr)
-                return 5
-        except Exception:
-            pass
+    if not force and deadman_stopped():
+        print("COORD  STOPPED by the dead-man switch: Tj has been silent for 3+ days and did not answer the check-in. No work, no push, no schedules, on any account, "
+              "until Tj sends a message (research/coordination/DEADMAN.md).", file=sys.stderr)
+        return 5
     kind = kind or me["kind"]
     if kind == "routine" and not force:
         u = dormant_until(me["label"])
         if u is None:
             try:
-                sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+                sys.path.insert(0, HERE)
                 import rotation
                 hit = rotation.slot_dormant(rotation.read_roster())
                 u = hit[1] if hit else None
             except Exception:
                 u = None
         if u is not None:
-            print("COORD  DORMANT: this account (%s) is out of usage until %s (research/coordination/away.json). A routine does nothing: no lease, no push." % (me["label"], u.isoformat()), file=sys.stderr)
+            print("COORD  DORMANT: this account (%s) is out of usage until %s (research/coordination/away.json). A routine does nothing." % (named(me["label"]), u.isoformat()), file=sys.stderr)
             return 5
     if kind != me["kind"]:
         me["kind"] = kind
         save(ID_FILE, {k: me[k] for k in ("nonce", "label", "kind")})
-    for _ in range(4):
-        try:
-            sync()
-        except Exception as e:
-            if not quiet:
-                print("COORD  could not reach the coordination branch (%s): carrying on without it." % e, file=sys.stderr)
-            return 2
-        t = now()
-        lease = read_lease()
-        v = verdict(lease, me, t)
-        note = None
-        if v == "other":
-            if force:
-                note = "TAKEN BY FORCE (Tj's word) from " + describe(lease, t)
-            elif kind == "interactive" and lease.get("kind") == "routine":
-                note = "interactive session took over from the routine " + describe(lease, t)
-            elif kind == "chat" and lease.get("kind") != "chat":
-                # Tj's app-chat message is his word (Tj, 2026-10-17, TCL86a: "the chat should always take commands, I don't care which claude account responds"): a chat session takes the lease from a
-                # routine or an interactive session and says so on the board. Two chat sessions do not displace each other: the first one serves Tj.
-                note = "CHAT session took the lease on Tj's message from " + describe(lease, t)
-            elif kind in ("interactive", "chat") and lease.get("kind") in ("interactive", "chat") and t - int(lease.get("hb", t)) > IDLE_TAKEOVER_S:
-                # Tj, 2026-10-18 ("I need to be able to chat with any Claude account and get stuff done without lease problems"): Tj's own message takes the lease from an
-                # interactive or chat session that has not heartbeat for 3 minutes (idle, not working), logged on the board. A session busy within 3 minutes still serves him first.
-                note = "idle session (no heartbeat for over %d s) replaced by Tj's message: %s" % (IDLE_TAKEOVER_S, describe(lease, t))
-            else:
-                if not quiet:
-                    print("COORD  another Claude session holds this repo: %s. Do not work on it; your commits stay local until the lease is free or stale (%d min). "
-                          "Tj can override with: bash tools/coord.py acquire --force" % (describe(lease, t), LEASE_S // 60), file=sys.stderr)
-                cache_put(lease)
-                if kind == "routine":
-                    # A routine that yields to a live session still leaves a trace (Tj, 2026-10-16: the 13:20 account's routine did start and stood down, but left no note, so it looked like a
-                    # no-show): rotation.py counts a stand-down as a run that did what it should.
-                    try:
-                        post("rotation-standdown", "%s ran its routine and stood down: %s holds the lease." % (me["label"], describe(lease, t)))
-                    except Exception:
-                        pass
-                return 3
-        elif v == "stale":
-            note = "took over a stale lease from " + describe(lease, t)
-        mine = new_lease(me, kind, task, lease, t)
-        files = {LEASE_FILE: json.dumps(mine, indent=1) + "\n"}
-        if not os.path.exists(os.path.join(CLONE, "README.md")):
-            files["README.md"] = README
-        if note:
-            files["board/%s-%s-lease.md" % (time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(t)), me["label"])] = board_text(me, "all", "lease: " + note[:60], note)
-        if v == "other" and lease.get("kind") == "routine" and kind in ("interactive", "chat"):
-            # Tj arrived while a scheduled routine was working (Tj, 2026-10-15: "if any session is paused or stopped because I messaged Claude on another account, make sure it can be resumed
-            # automatically"): a machine-readable "paused" note, so the routine (which waits cheaply for the lease, ROUTINE.md) and the next run (rotation.py missed -> PAUSED) can resume it.
-            rl = lease.get("label") or "acct-unknown"
-            files["board/%s-%s-paused.md" % (time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(t)), me["label"])] = board_text(
-                me, "all", "rotation-paused label=%s date=%s" % (rl, et_date(t)),
-                "Tj arrived (%s), so the routine of %s (working on: %s) must stop pushing. Its work is parked on its routine-wip-<date> branch. It waits for the lease to be free and resumes by itself; if it was cut off, the next routine run covers it (rotation.py missed: PAUSED)." % (me["label"], rl, (lease.get("task") or "-")[:80]))
-        if push(files, "lease: %s %s" % (me["id"], kind)):
-            cache_put(mine)
-            save(STATE_FILE, {**load(STATE_FILE, {}), "lastRenew": t})
-            if not quiet:
-                print("COORD  lease is yours (%s/%s, %s)%s" % (named(me["label"]), me["nonce"], kind, ("; " + note) if note else ""))
-            return 0
-        # lost the race: read again and decide again
-    return 2
+    t = now()
+    try:
+        sync()
+    except Exception as e:
+        if not quiet:
+            print("COORD  could not reach the coordination branch (%s): carrying on without it." % str(e)[:100], file=sys.stderr)
+        return 2
+    old = load(os.path.join(CLONE, session_path(me)), None)
+    files = {session_path(me): json.dumps(session_doc(me, kind, task, t, old), indent=1) + "\n"}
+    if not os.path.exists(os.path.join(CLONE, "README.md")) or "WITHOUT a lease" not in open(os.path.join(CLONE, "README.md"), encoding="utf-8").read():
+        files["README.md"] = README
+    if not write(files, "session: %s %s" % (me["id"], kind), remove=prune(t)):
+        return 2
+    save(STATE_FILE, {**load(STATE_FILE, {}), "lastRenew": t})
+    if not quiet:
+        others = [s for _, s in read_dir("sessions") if (s.get("label"), s.get("nonce")) != (me["label"], me["nonce"]) and live(s.get("beat"), t, SESSION_LIVE_S)]
+        print("COORD  working as %s/%s (%s)%s. No lease: work freely; claim the item you start: bash tools/coord.sh claim <ID>." % (
+            named(me["label"]), me["nonce"], kind, ("; also working now: " + "; ".join(describe(s, t) for s in others)) if others else ""))
+    return 0
 
 
-def maintain(me, lease, t):
-    """The lease has just been read. Mine: heartbeat when due. Free or stale: take it. Another live session's: say so. Returns 0 or 3 (or 2 when a push failed)."""
-    v = verdict(lease, me, t)
-    if v == "other":
-        cache_put(lease)
-        return 3
-    if v in ("free", "stale"):
-        return acquire(me["kind"], None, quiet=True)
-    cache_put(lease)
-    if t - int(load(STATE_FILE, {}).get("lastRenew", 0)) < RENEW_EVERY_S:
-        return 0
-    mine = dict(lease)
-    mine["hb"] = t
-    mine["hbIso"] = iso(t)
-    if push({LEASE_FILE: json.dumps(mine, indent=1) + "\n"}, "heartbeat: " + me["id"]):
-        cache_put(mine)
-        save(STATE_FILE, {**load(STATE_FILE, {}), "lastRenew": t})
-        return 0
-    return 2
-
-
-def renew(force=False):
+def renew(force=False, done=None, nxt=None):
     me = identity()
     t = now()
-    if not force and t - int(load(STATE_FILE, {}).get("lastRenew", 0)) < RENEW_EVERY_S:
+    if not force and done is None and nxt is None and t - int(load(STATE_FILE, {}).get("lastRenew", 0)) < RENEW_EVERY_S:
         return 0
     try:
         sync()
     except Exception:
         return 2
-    lease = read_lease()
-    rc = maintain(me, lease, t)
-    if rc == 3:
-        print("COORD  LEASE LOST: %s now holds this repo. Stop editing and ask Tj; your commits stay local." % describe(lease, t), file=sys.stderr)
-    return rc
+    old = load(os.path.join(CLONE, session_path(me)), None)
+    files = {session_path(me): json.dumps(session_doc(me, None, None, t, old, done, nxt), indent=1) + "\n"}
+    for path, c in read_dir("claims"):
+        if c.get("holder") == me["id"]:
+            c["beat"] = t
+            files[path] = json.dumps(c, indent=1) + "\n"
+    if not write(files, "heartbeat: " + me["id"]):
+        return 2
+    save(STATE_FILE, {**load(STATE_FILE, {}), "lastRenew": t})
+    return 0
 
 
 def check():
-    """For tools/push.sh. 0 = go ahead (also on any failure of this tool), 3 = another live session holds the lease."""
+    """For tools/push.sh: ALWAYS 0 (a push is never held back any more); it renews this session's heartbeat when one is due."""
     if os.environ.get("COORD_OFF"):
         return 0
-    me = identity()
-    st = load(STATE_FILE, {})
-    t = now()
-    cached = st.get("lease")
-    if cached is not None and t - int(st.get("fetchedAt", 0)) < CACHE_S:
-        # at most one look at GitHub a minute: the cache is a fresh copy of the lease
-        if verdict(cached, me, t) == "other":
-            print("COORD  push held back: %s holds this repo. Commits stay local; see tools/coord.py." % describe(cached, t), file=sys.stderr)
-            return 3
-        return 0
     try:
-        sync()
+        renew()
     except Exception:
-        return 0
-    lease = read_lease()
-    rc = maintain(me, lease, t)
-    if rc == 3:
-        print("COORD  push held back: %s holds this repo. Commits stay local; see tools/coord.py." % describe(lease, t), file=sys.stderr)
-        return 3
+        pass
     return 0
 
 
@@ -384,30 +348,108 @@ def release():
         sync()
     except Exception:
         return 2
-    lease = read_lease()
-    if lease and verdict(lease, me, now()) == "mine":
+    gone = [session_path(me)] + [p for p, c in read_dir("claims") if c.get("holder") == me["id"]]
+    ok = write({}, "check out: " + me["id"], remove=gone)
+    print("COORD  checked out (claims given back)" if ok else "COORD  could not check out (the files lapse by themselves)")
+    return 0 if ok else 2
+
+
+def describe(s, t):
+    age = max(0, (t - int(s.get("beat", t))) // 60)
+    where = (" on branch %s" % s["branch"]) if s.get("branch") and s.get("branch") != "main" else ""
+    return "%s/%s %s on '%s'%s (%s)" % (named(s.get("label", "?")), s.get("nonce", "?"), s.get("kind", "?"), (s.get("task") or "-")[:60], where,
+                                         "just now" if age < 2 else "%d min ago" % age)
+
+
+# ---- claims ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+def claim_id(raw):
+    c = re.sub(r"[^A-Za-z0-9_.-]", "", str(raw))[:40]
+    if not c:
+        raise ValueError("a claim needs an id (the TASKS.md tag, e.g. CR or CH21)")
+    return c.upper()
+
+
+def claim_verdict(c, me_id, sessions, t):
+    """free | mine | lapsed | other. A claim lives while its own beat is fresh AND (when its session file exists) the session beats."""
+    if not c or not c.get("holder"):
+        return "free"
+    if c["holder"] == me_id:
+        return "mine"
+    if not live(c.get("beat"), t, CLAIM_LIVE_S):
+        return "lapsed"
+    s = sessions.get(c["holder"])
+    if s is not None and not live(s.get("beat"), t, SESSION_LIVE_S):
+        return "lapsed"
+    return "other"
+
+
+def sessions_by_id():
+    return {"%s/%s" % (s.get("label"), s.get("nonce")): s for _, s in read_dir("sessions")}
+
+
+def claim(raw, note="", wait_min=0.0, quiet=False):
+    me = identity()
+    cid = claim_id(raw)
+    end = time.time() + max(0.0, float(wait_min)) * 60
+    said = False
+    while True:
         t = now()
-        ok = push({LEASE_FILE: json.dumps({"v": 1, "holder": None, "hb": t, "hbIso": iso(t), "leaseS": LEASE_S}, indent=1) + "\n"}, "release: " + me["id"])
-        cache_put({"holder": None})
-        print("COORD  lease released" if ok else "COORD  could not release (it expires by itself)")
-        return 0 if ok else 2
-    print("COORD  lease was not yours")
-    return 0
+        try:
+            sync()
+        except Exception as e:
+            print("COORD  could not reach the coordination branch (%s): carrying on without the claim." % str(e)[:80], file=sys.stderr)
+            return 2
+        path = "claims/%s.json" % cid
+        c = load(os.path.join(CLONE, path), None)
+        v = claim_verdict(c, me["id"], sessions_by_id(), t)
+        if v == "other":
+            if time.time() < end:
+                if not said and not quiet:
+                    print("COORD  %s is %s's (%s): waiting up to %g min for it" % (cid, named(c.get("label", "?")), (c.get("note") or "-")[:60], float(wait_min)), file=sys.stderr)
+                    said = True
+                time.sleep(int(os.environ.get("COORD_WAIT_POLL_S", 30)))
+                continue
+            print("COORD  %s is taken by %s/%s (%s, %d min ago): pick another item, or talk to that session on the board (bash tools/coord.sh post)." % (
+                cid, named(c.get("label", "?")), c.get("nonce", "?"), (c.get("note") or "-")[:60], (t - int(c.get("beat", t))) // 60), file=sys.stderr)
+            return 3
+        doc = {"v": 2, "id": cid, "holder": me["id"], "label": me["label"], "name": ACCOUNT_NAMES.get(me["label"], ""), "nonce": me["nonce"],
+               "note": note or (c.get("note", "") if v == "mine" else ""), "since": c.get("since", t) if v == "mine" else t, "beat": t}
+        if write({path: json.dumps(doc, indent=1) + "\n"}, "claim: %s %s" % (cid, me["id"])):
+            if not quiet:
+                print("COORD  %s is yours%s" % (cid, (" (took over a lapsed claim of %s)" % named(c.get("label", "?"))) if v == "lapsed" else ""))
+            return 0
+        return 2
 
 
-# Tj, 2026-10-18: "Any time you are referred to by that id, add the name mirage so I know which email account you are". The tag stays the key (rotation, secrets, routines match it);
-# this only adds the account's name wherever a person reads it. Add an account here, never rename a tag.
-ACCOUNT_NAMES = {"acct-5d1e2d": "mirage", "acct-7542bf": "tj outlook", "acct-27a37e": "tj Gmail"}
+def unclaim(raw):
+    me = identity()
+    cid = claim_id(raw)
+    try:
+        sync()
+    except Exception:
+        return 2
+    path = "claims/%s.json" % cid
+    c = load(os.path.join(CLONE, path), None)
+    if not c or c.get("holder") != me["id"]:
+        print("COORD  %s was not yours (nothing to give back)" % cid)
+        return 0
+    ok = write({}, "unclaim: %s %s" % (cid, me["id"]), remove=[path])
+    print("COORD  %s given back" % cid if ok else "COORD  could not give %s back (it lapses by itself)" % cid)
+    return 0 if ok else 2
 
 
-def named(label):
-    n = ACCOUNT_NAMES.get(str(label))
-    return "%s (%s)" % (label, n) if n else str(label)
+def list_claims(t=None):
+    t = t or now()
+    ss = sessions_by_id()
+    return [c for _, c in read_dir("claims") if claim_verdict(c, "", ss, t) == "other"]
+
 
 # ---- the board -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def board_text(me, to, subject, body):
-    return ("name: %s\n" % ACCOUNT_NAMES[me["label"]] if me["label"] in ACCOUNT_NAMES else "") + "from: %s/%s\nto: %s\nat: %s\nsubject: %s\n\n%s\n" % (me["label"], me["nonce"], to, iso(now()), subject.replace("\n", " ")[:120], body)
+    return ("name: %s\n" % ACCOUNT_NAMES[me["label"]] if me["label"] in ACCOUNT_NAMES else "") + "from: %s/%s\nto: %s\nat: %s\nsubject: %s\n\n%s\n" % (
+        me["label"], me["nonce"], to, iso(now()), subject.replace("\n", " ")[:120], body)
 
 
 def post(subject, body="", to="all"):
@@ -452,33 +494,59 @@ def board(n=8):
     return 0
 
 
+# ---- the briefing ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+def unlanded(sessions, t, me):
+    """Branches of recent sessions (3 days) whose recorded head is not on origin/main: work a cut-off session left. Needs the commits: fetched on demand (best effort)."""
+    out = []
+    git(["fetch", "-q", "origin", "+refs/heads/main:refs/remotes/origin/main"], REPO, 30)
+    for s in sorted(sessions, key=lambda s: -int(s.get("beat", 0))):
+        br, head = s.get("branch") or "", s.get("head") or ""
+        if not br or br == "main" or not head or t - int(s.get("beat", 0)) > PRUNE_AFTER_S:
+            continue
+        if (s.get("label"), s.get("nonce")) == (me["label"], me["nonce"]):
+            continue
+        if git(["cat-file", "-e", head + "^{commit}"], REPO, 10)[0] != 0:
+            git(["fetch", "-q", "origin", "+refs/heads/%s:refs/remotes/origin/%s" % (br, br)], REPO, 30)
+        if git(["cat-file", "-e", head + "^{commit}"], REPO, 10)[0] != 0:
+            continue
+        if git(["merge-base", "--is-ancestor", head, "refs/remotes/origin/main"], REPO, 15)[0] == 0:
+            continue
+        rc, n = git(["rev-list", "--count", "refs/remotes/origin/main.." + head], REPO, 15)
+        out.append((s, n.strip() if rc == 0 else "?"))
+        if len(out) >= 3:
+            break
+    return out
+
+
 def status(do_acquire, kind, task):
     me = identity()
-    try:
-        sync()
-    except Exception as e:
-        print("  COORD could not reach the coordination branch (%s): no lease checking this session" % str(e)[:80])
-        return 2
-    t = now()
-    lease = read_lease()
-    v = verdict(lease, me, t)
-    if do_acquire and v in ("free", "stale"):
+    if do_acquire:
         rc = acquire(kind, task, quiet=True)
-        lease = read_lease()
-        v = verdict(lease, me, t) if rc == 0 else v
-    elif do_acquire and v == "other" and (kind or me["kind"]) == "interactive" and lease.get("kind") == "routine":
-        pass  # Tj is here: the first command of a real session takes the lease from a routine; resume.sh only reports
-    if v == "mine":
-        print("  COORD you hold the lease (%s/%s, %s)" % (named(me["label"]), me["nonce"], me["kind"]))
-    elif v == "free":
-        print("  COORD nobody holds the lease; take it before editing: bash tools/coord.py acquire")
-    elif v == "stale":
-        print("  COORD the lease is stale (%s): take it over: bash tools/coord.py acquire" % describe(lease, t))
+        if rc == 5:
+            print("  !!    STOP: the dead-man switch or an away routine: do no work (see above)")
+            return 5
     else:
-        print("  COORD ANOTHER CLAUDE SESSION HOLDS THIS REPO: %s" % describe(lease, t))
-        print("        Do not edit or push. Read, answer Tj, or wait (the lease expires %d min after its last heartbeat)." % (LEASE_S // 60))
-        print("        Tj can override: bash tools/coord.py acquire --force")
-    cache_put(lease or {})
+        try:
+            sync()
+        except Exception as e:
+            print("  COORD could not reach the coordination branch (%s)" % str(e)[:80])
+            return 2
+    t = now()
+    print("  COORD you are %s/%s (%s). No lease: any session may work; claim what you start (bash tools/coord.sh claim <ID>), see research/coordination/PROTOCOL.md" % (
+        named(me["label"]), me["nonce"], me["kind"]))
+    ss = [s for _, s in read_dir("sessions")]
+    for s in [s for s in ss if (s.get("label"), s.get("nonce")) != (me["label"], me["nonce"]) and live(s.get("beat"), t, SESSION_LIVE_S)][:4]:
+        print("  WORKING %s" % describe(s, t))
+    cl = list_claims(t)
+    if cl:
+        print("  CLAIMS " + ", ".join("%s (%s, %s)" % (c.get("id"), named(c.get("label", "?")), (c.get("note") or "")[:30]) for c in cl[:8]))
+    try:
+        for s, n in unlanded(ss, t, me):
+            print("  UNLANDED %s commit(s) on branch %s from %s, last seen %s; last step: %s; next: %s. To carry it on: git merge origin/%s" % (
+                n, s.get("branch"), named(s.get("label", "?")), iso(int(s.get("beat", 0)))[5:16].replace("T", " "), (s.get("done") or "-")[:70], (s.get("next") or "-")[:70], s.get("branch")))
+    except Exception:
+        pass
     seen = int(load(STATE_FILE, {}).get("seen", 0))
     new = [(n, m, b) for n, m, b in notes() if n > "%s" % time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(seen)) and m.get("from", "").split("/")[-1] != me["nonce"]]
     for n, m, b in new[-3:]:
@@ -486,28 +554,7 @@ def status(do_acquire, kind, task):
     if len(new) > 3:
         print("  NOTE  ... %d more: bash tools/coord.py board" % (len(new) - 3))
     save(STATE_FILE, {**load(STATE_FILE, {}), "seen": t})
-    return 0 if v != "other" else 3
-
-
-def wait_free(max_min):
-    """Poll (cheaply, no model tokens: run it as a background command) until the lease is free, stale or already mine; exit 0 then, 1 on timeout. A paused routine uses it to resume by itself."""
-    me = identity()
-    end = time.time() + max(0.02, float(max_min)) * 60
-    while True:
-        try:
-            sync()
-            t = now()
-            lease = read_lease()
-            v = verdict(lease, me, t)
-            if v in ("free", "stale", "mine"):
-                print("COORD  the lease is free (%s): you may take it with: bash tools/coord.sh acquire" % v)
-                return 0
-        except Exception:
-            pass
-        if time.time() >= end:
-            print("COORD  still held after %g min: leave the work parked; the next routine run covers it (rotation.py missed)" % float(max_min))
-            return 1
-        time.sleep(int(os.environ.get("COORD_WAIT_POLL_S", 30)))
+    return 0
 
 
 def main(argv):
@@ -515,11 +562,14 @@ def main(argv):
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("status"); s.add_argument("--acquire", action="store_true"); s.add_argument("--kind", choices=["interactive", "routine", "chat"]); s.add_argument("--task")
     a = sub.add_parser("acquire"); a.add_argument("--kind", choices=["interactive", "routine", "chat"]); a.add_argument("--task"); a.add_argument("--force", action="store_true")
-    sub.add_parser("renew"); sub.add_parser("check"); sub.add_parser("release")
+    r = sub.add_parser("renew"); r.add_argument("--done"); r.add_argument("--next")
+    sub.add_parser("check"); sub.add_parser("release"); sub.add_parser("claims"); sub.add_parser("sessions")
+    c = sub.add_parser("claim"); c.add_argument("id"); c.add_argument("--note", default=""); c.add_argument("--wait", type=float, default=0.0)
+    u = sub.add_parser("unclaim"); u.add_argument("id")
     p = sub.add_parser("post"); p.add_argument("subject"); p.add_argument("body", nargs="?", default=""); p.add_argument("--to", default="all")
     b = sub.add_parser("board"); b.add_argument("n", nargs="?", type=int, default=8)
     w = sub.add_parser("whoami"); w.add_argument("label", nargs="?")
-    wf = sub.add_parser("wait-free"); wf.add_argument("--max-min", type=float, default=120)
+    wf = sub.add_parser("wait-free"); wf.add_argument("--max-min", type=float, default=0)
     args = ap.parse_args(argv)
     try:
         if args.cmd == "status":
@@ -527,27 +577,46 @@ def main(argv):
         if args.cmd == "acquire":
             return acquire(args.kind, args.task, args.force)
         if args.cmd == "renew":
-            return renew(force=True)
+            return renew(force=True, done=args.done, nxt=args.next)
         if args.cmd == "check":
             return check()
         if args.cmd == "release":
             return release()
+        if args.cmd == "claim":
+            return claim(args.id, args.note, args.wait)
+        if args.cmd == "unclaim":
+            return unclaim(args.id)
+        if args.cmd == "claims":
+            sync()
+            for x in list_claims():
+                print("%s  %s/%s  %s" % (x.get("id"), named(x.get("label", "?")), x.get("nonce"), x.get("note", "")))
+            return 0
+        if args.cmd == "sessions":
+            sync()
+            t = now()
+            for _, x in read_dir("sessions"):
+                print(("live  " if live(x.get("beat"), t, SESSION_LIVE_S) else "quiet ") + describe(x, t))
+            return 0
         if args.cmd == "post":
             return post(args.subject, args.body, args.to)
         if args.cmd == "board":
             return board(args.n)
         if args.cmd == "wait-free":
-            return wait_free(args.max_min)
+            print("COORD  there is no lease any more (2026-10-19): nothing to wait for; check in with: bash tools/coord.sh acquire")
+            return 0
         if args.cmd == "whoami":
             if args.label:
                 d = identity()
-                d["label"] = "".join(c for c in args.label if c.isalnum() or c in "-_")[:24] or "acct-unknown"
+                d["label"] = "".join(ch for ch in args.label if ch.isalnum() or ch in "-_")[:24] or "acct-unknown"
                 save(ID_FILE, {k: d[k] for k in ("nonce", "label", "kind")})
             me = identity()
             print("%s/%s" % (me["label"], me["nonce"]), me["kind"], ("(%s)" % ACCOUNT_NAMES[me["label"]]) if me["label"] in ACCOUNT_NAMES else "")
             return 0
     except SystemExit:
         raise
+    except ValueError as e:
+        print("COORD  " + str(e), file=sys.stderr)
+        return 2
     except Exception as e:  # the tool must never be the reason a save fails
         print("COORD  tool error (%s): carrying on without it." % e, file=sys.stderr)
         return 2
