@@ -234,16 +234,16 @@ class ChatSync(
         headEtag = head.etag
         _problem.value = null
         var announce = emptyList<CloudChat.Msg>()
-        val open = open
+        val isOpen = open
         update { st ->
             val told = st.notified.toHashSet()
             val news = st.msgs.filter { !it.fromTj && !it.isDone && it.id !in told && it.at > st.notifiedUpTo - SKEW_MS }
-            announce = if (st.primed && !open) news.sortedBy { it.at } else emptyList()
+            announce = if (st.primed && !isOpen) news.sortedBy { it.at } else emptyList()
             st.copy(
                 primed = true, headSha = head.value,
                 notifiedUpTo = maxOf(st.notifiedUpTo, news.maxOfOrNull { it.at } ?: 0L),
                 notified = (st.notified + news.map { it.id }).takeLast(MAX_NOTIFIED),
-                readUpTo = if (open || !st.primed) maxOf(st.readUpTo, CloudChat.newestFromClaude(st.msgs)) else st.readUpTo,
+                readUpTo = if (isOpen || !st.primed) maxOf(st.readUpTo, CloudChat.newestFromClaude(st.msgs)) else st.readUpTo,
             )
         }
         Read(n, announce)
