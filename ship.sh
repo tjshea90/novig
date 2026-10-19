@@ -61,6 +61,8 @@ fi
 
 # ---- whatever fast checks exist, same discovery ckpt.sh uses -----------------
 PASS=0; FAIL=0; REDS=""; RAN_ANY=0
+# The tools mark is for the tools as they are before the checks read them (tools/landing.py).
+SNAP="$(python3 -I tools/landing.py tree 2>/dev/null || true)"
 if [ -f package.json ] && command -v npm >/dev/null 2>&1 && command -v node >/dev/null 2>&1 \
    && node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)" 2>/dev/null; then
   RAN_ANY=1
@@ -78,7 +80,7 @@ if [ "$RAN_ANY" -gt 0 ]; then
     exit 1
   fi
   echo "  OK    all $PASS fast checks green"
-  python3 -I tools/landing.py mark tools >/dev/null 2>&1 || true
+  [ -n "$SNAP" ] && python3 -I tools/landing.py mark tools --tree "$SNAP" >/dev/null 2>&1 || true
 else
   echo "  note  no fast checks exist yet"
 fi
