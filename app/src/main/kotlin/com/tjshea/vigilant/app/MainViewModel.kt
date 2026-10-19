@@ -1057,6 +1057,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun clearChat() { viewModelScope.launch(Dispatchers.IO) { c.cloud.chat.clear() } }
     fun loadEarlierChat() { viewModelScope.launch(Dispatchers.IO) { c.cloud.chat.loadEarlier() } }
 
+    /** The phone's own copy of attachment [n] of Tj's message [id] (a thumbnail in the thread), or null. */
+    fun chatFile(id: String, n: Int, name: String): java.io.File? = c.cloud.chat.localFile(id, n, name)
+
     /** A chat notification was tapped: the Claude tab opens on the chat. */
     private val _openChat = MutableStateFlow(0L)
     val openChat: StateFlow<Long> = _openChat.asStateFlow()
