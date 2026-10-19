@@ -90,9 +90,17 @@ def git(*a):
     return subprocess.run(["git", *a], capture_output=True, text=True)
 
 
+class Unreadable(Exception):
+    """A branch could not be fetched: what it holds is not known (never the same as "not there")."""
+
+
 def show(branch, path):
-    git("fetch", "-q", "--depth=1", "origin", branch)
-    r = git("show", "FETCH_HEAD:" + path)
+    """A file on a branch, None when the branch has no such file. Raises Unreadable when the branch could not be fetched: on 2026-10-19 (GitHub degraded) a failed fetch left
+    FETCH_HEAD on another branch, the status read as "no heartbeat", and a healthy engine was cancelled and started again."""
+    f = git("fetch", "-q", "--depth=1", "origin", "+refs/heads/%s:refs/remotes/origin/%s" % (branch, branch))
+    if f.returncode != 0:
+        raise Unreadable("%s: %s" % (branch, (f.stderr or "").strip()[:160]))
+    r = git("show", "refs/remotes/origin/%s:%s" % (branch, path))
     return r.stdout if r.returncode == 0 else None
 
 
@@ -103,15 +111,22 @@ def check(keeper=False, dry=False):
     for st in ("in_progress", "queued"):
         for r in api("GET", "actions/workflows/%s/runs?status=%s&per_page=10" % (WF, st)).get("workflow_runs", []):
             runs.append({"id": r["id"], "status": r["status"], "created_ms": _ts(r["created_at"]), "started_ms": _ts(r.get("run_started_at") or r["created_at"])})
+    # What cannot be read is not known: no engine is started, cancelled or replaced on a guess (the next look reads again).
     try:
-        stat = json.loads(show("cloud-feed", "status.json") or "{}")
+        stat_raw = show("cloud-feed", "status.json")
+        cfg_raw = show("cloud-config", "settings.json")
+        stopped = show("cloud-config", "deadman/STOP.json") is not None
+    except Unreadable as e:
+        print("watchdog: none: GitHub could not be read (%s); nothing is changed until it can" % e, flush=True)
+        return 0
+    try:
+        stat = json.loads(stat_raw or "{}")
     except ValueError:
         stat = {}
     try:
-        cfg = json.loads(show("cloud-config", "settings.json") or "{}")
+        cfg = json.loads(cfg_raw or "{}")
     except ValueError:
         cfg = {}
-    stopped = show("cloud-config", "deadman/STOP.json") is not None
     recent = [{"id": r["id"], "created_ms": _ts(r["created_at"])} for r in api("GET", "actions/workflows/%s/runs?per_page=20" % WF).get("workflow_runs", [])]
     import engine_alarm
     # The switch and the hours exactly as cloud-scan.yml's gate reads them (one rule: tools/engine_alarm.py).
@@ -173,6 +188,44 @@ def selftest():
     assert decide(now, [run(7, "in_progress", 20)], fresh, progress_changed_ms=now - 4 * M, **st)[0] == "none"         # moving
     assert decide(now, [run(7, "in_progress", 20)], fresh, progress_changed_ms=0, **st)[0] == "none"                    # an older engine: no field
     assert decide(now, [run(7, "in_progress", 3)], fresh, progress_changed_ms=now - 11 * M, **st)[0] == "none"          # a young run
+    # A branch that cannot be fetched is not a dead engine: check() changes nothing (2026-10-19, GitHub degraded: a failed fetch read as "no heartbeat" and a healthy engine was replaced).
+    import types
+    import engine_alarm
+    calls = []
+    real_git, real_api, real_dispatch, real_sleep, real_tell = globals()["git"], globals()["api"], engine_alarm.dispatch, time.sleep, sys.modules.get("tell_tj")
+    # Hermetic even if this check regresses: no real dispatch, sleep or message to Tj from a selftest (the keeper's workflow runs it with a real token).
+    engine_alarm.dispatch = lambda wf: calls.append(("DISPATCH", wf)) or True
+    time.sleep = lambda sec: None
+    sys.modules["tell_tj"] = types.SimpleNamespace(say=lambda *a, **k: calls.append(("SAY", a[0] if a else "")))
+    try:
+        def fake_git(*a):
+            # cloud-feed cannot be fetched; the settings (switch on) and the STOP flag (absent) can: without the fetch check the status would read as nothing and the engine be replaced.
+            if a[0] == "fetch":
+                return types.SimpleNamespace(returncode=128 if "cloud-feed" in a[-1] else 0, stdout="", stderr="fatal: unable to access")
+            if a[-1].endswith(":settings.json"):
+                return types.SimpleNamespace(returncode=0, stdout='{"on": true, "rev": 1}', stderr="")
+            if a[-1].endswith(":deadman/STOP.json"):
+                return types.SimpleNamespace(returncode=128, stdout="", stderr="no such path")
+            return types.SimpleNamespace(returncode=0, stdout="", stderr="")
+        globals()["git"] = fake_git
+
+        def fake_api(method, path, body=None):
+            calls.append((method, path))
+            if method == "GET" and "status=in_progress" in path:
+                return {"workflow_runs": [{"id": 7, "status": "in_progress", "created_at": "2026-10-19T15:02:03Z", "run_started_at": "2026-10-19T15:02:03Z"}]}
+            return {"workflow_runs": []}
+        globals()["api"] = fake_api
+        import contextlib, io
+        with contextlib.redirect_stdout(io.StringIO()):
+            assert check(keeper=True) == 0
+        assert not [c for c in calls if c[0] in ("POST", "DISPATCH", "SAY")], calls
+    finally:
+        globals()["git"], globals()["api"] = real_git, real_api
+        engine_alarm.dispatch, time.sleep = real_dispatch, real_sleep
+        if real_tell is None:
+            sys.modules.pop("tell_tj", None)
+        else:
+            sys.modules["tell_tj"] = real_tell
     print("engine_watchdog selftest ok")
     return 0
 
