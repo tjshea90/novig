@@ -2,11 +2,11 @@
  "v": 1,
  "holder": "56f5bf",
  "label": "acct-5d1e2d",
- "kind": "chat",
+ "kind": "interactive",
  "task": "chat: build remaining",
  "since": 1792379427,
  "sinceIso": "2026-10-19T03:10:27Z",
- "hb": 1792380003,
- "hbIso": "2026-10-19T03:20:03Z",
+ "hb": 1792380197,
+ "hbIso": "2026-10-19T03:23:17Z",
  "leaseS": 1200
 }
