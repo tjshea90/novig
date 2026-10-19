@@ -687,3 +687,10 @@ Can you also delete all old and unnecessary releases in one command
 ```
 Make sure the mirage account stands down when usage resets instead of doing what you already did
 ```
+
+## 2026-10-19T19:37:27Z
+```
+cut a release now.
+
+Then tell me how big of a task it would be to make a new vigilant app, copying all of the logic and features already built, but for kalshi instead of novig 
+```
