@@ -1,22 +1,22 @@
-# CHECKPOINT 3701 — read me first, then TASKS.md
+# CHECKPOINT 3702 — read me first, then TASKS.md
 
-**Written:** 2026-10-19T01:47:33Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-iewdzy` · **builds on:** `6aa0659ef` (this checkpoint is the commit after it)
+**Written:** 2026-10-19T01:50:33Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-iewdzy` · **builds on:** `be166db8d` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v1.0.1: live status line shows engine note, Kalshi/Polymarket show active, shadow tier journal, experimental live curve at 10 cents
+pre-release: v1.0.1: live status line shows engine note, Kalshi/Polymarket show active, shadow tier journal, experimental live curve at 10 cents (versionCode 341, v1.0.1)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.1), then run: bash tools/record-release.sh v1.0.1 341 "v1.0.1: live status line shows engine note, Kalshi/Polymarket show active, shadow tier journal, experimental live curve at 10 cents"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  be166db8d ckpt 3701: pre-ship: v1.0.1: live status line shows engine note, Kalshi/Polymarket sho
   6aa0659ef ckpt 3700: chat session end
   e4e5d6106 ckpt 3699: experimental curve 0.10, originals restored
   4db331911 ckpt 3698: live stakes 0.10
@@ -26,5 +26,4 @@ ship.sh gates and releases this
   965ba9cde ckpt 3694: CH2 diagnosed, replied
   f4d642b2c ckpt 3693: CH3 fixed: Kalshi/Polymarket show active
   d770f6d7b ckpt 3692: answered CH1-CH3; standby label not found in code, asked Tj for screenshot
-  8f0df5f46 ckpt 3691: CH1 live status line shows engine note; CH2/CH3 written
 ```
