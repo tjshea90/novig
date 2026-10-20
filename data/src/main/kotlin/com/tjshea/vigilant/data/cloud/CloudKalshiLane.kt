@@ -114,7 +114,7 @@ class CloudKalshiLane(
         if (ec == null || ec.mode == KalshiAutoMode.OFF) {
             if (bidsUp) { bidRunner.stop("the engine's Kalshi switch is off"); bidsUp = false }
             if (last.mode != KalshiAutoMode.OFF || last.note.isEmpty()) {
-                last = KalshiEngineStatus(atMs = now, mode = KalshiAutoMode.OFF, rev = ec?.rev ?: 0L, note = "off (the phone's Kalshi tab › GitHub engine)")
+                last = KalshiEngineStatus(atMs = now, mode = KalshiAutoMode.OFF, rev = ec?.rev ?: 0L, note = "off (the phone's Kalshi tab › Setup › GitHub engine)", keyOnGitHub = hasKey())
                 publishStatus()
             }
             return
@@ -173,7 +173,7 @@ class CloudKalshiLane(
                 KalshiEngineRow(o.selection, o.event.description, o.league.displayName, o.marketLabel, o.event.startsTs, q.evPercent, q.price, o.fairProbability ?: 0.0, o.rating?.stars)
             },
             arbs = arbs.take(MAX_ARBS).map { a -> KalshiEngineArb(a.novig.selection, a.kalshi.selection, a.event.description, a.event.league, a.profitPerDollar, a.maxPayout, a.safe) },
-            cash = cash, autoNote = autoNote, bidNote = bidNote, betsPlaced = placed, betsPaper = paper,
+            cash = cash, autoNote = autoNote, bidNote = bidNote, betsPlaced = placed, betsPaper = paper, keyOnGitHub = hasKey(),
         )
         publishStatus()
         // The carry-over for the next job: the bets and bids, the same way the desk's files ride.

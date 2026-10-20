@@ -280,6 +280,7 @@ internal fun SetupPage(hub: KalshiHub, ui: KalshiUi, onOpenKeySettings: () -> Un
             OutlinedButton(onClick = onOpenKeySettings) { Text(if (ui.hasKey) "Key & socket settings" else "Add the Kalshi key") }
             OutlinedButton(onClick = hub::refreshBalance, enabled = ui.hasKey) { Text("Check key") }
         }
+        EngineCard(hub, ui)
         SwitchLine("Place orders on Kalshi", "Off: the app only reads. On: the Bet button and the auto-bet (when set to real money) can spend your Kalshi cash.", c.tradingEnabled, "kalshiTrading") { v -> hub.update { it.copy(tradingEnabled = v) } }
         SwitchLine("Scan by itself while the app is open", "Every ${c.autoScanSeconds} seconds.", c.autoScan, "kalshiAutoScan") { v -> hub.update { it.copy(autoScan = v) } }
         Chips("Scan every", listOf(30, 60, 90, 180, 300), c.autoScanSeconds, { "${it}s" }) { v -> hub.update { it.copy(autoScanSeconds = v) } }
@@ -292,5 +293,46 @@ internal fun SetupPage(hub: KalshiHub, ui: KalshiUi, onOpenKeySettings: () -> Un
         Chips("Smallest edge listed", listOf(0.005, 0.01, 0.02, 0.03), c.scan.minEvPercent, { Format.percent(it, 1) }) { v -> hub.update { it.copy(scan = it.scan.copy(minEvPercent = v)) } }
         Chips("Bet amount to start the sheet with", listOf(2.0, 5.0, 10.0, 25.0), c.scan.slipCustomStake, { Format.money(it) }) { v -> hub.update { it.copy(scan = it.scan.copy(slipCustomStake = v)) } }
         Text(" ", Modifier.padding(bottom = 24.dp))
+    }
+}
+
+
+// ---- The GitHub engine's Kalshi lane --------------------------------------------------------------------------
+
+@Composable
+private fun EngineCard(hub: KalshiHub, ui: KalshiUi) {
+    val c = ui.config
+    var confirmLive by remember { mutableStateOf(false) }
+    SectionTitle("GitHub engine")
+    Text(
+        "The GitHub engine can run Kalshi for you while the phone is off: it prices Kalshi from the boards its Novig scan already read (no second call to the same API), runs the auto-bet and bids below under these settings, " +
+            "and lists the sure profits. Paper records what it would bet and orders nothing; Real orders with your Kalshi key, which the app sends to GitHub with your other keys (Settings › Cloud scan › Send my API keys to GitHub).",
+        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Chips("Engine", KalshiAutoMode.entries.toList(), c.engineMode, { when (it) { KalshiAutoMode.OFF -> "Off"; KalshiAutoMode.PAPER -> "Paper"; KalshiAutoMode.LIVE -> "Real money" } }) { m ->
+        if (m == KalshiAutoMode.LIVE) confirmLive = true else hub.setEngineMode(m)
+    }
+    ui.engineNote?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+    val e = ui.engine
+    if (c.engineMode != KalshiAutoMode.OFF) {
+        if (e == null) Text("Waiting for the engine's first Kalshi pass (it runs after each of its Novig scans).", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp))
+        else {
+            Text(
+                "Engine: ${e.mode.name.lowercase()} · ${e.note}" + (e.cash?.let { " · cash ${Format.money(it)}" } ?: "") + if (!e.keyOnGitHub && e.mode == KalshiAutoMode.LIVE) " · NO KEY ON GITHUB: it is only papering" else "",
+                style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp).testTag("kalshiEngineNote"),
+            )
+            if (e.autoNote.isNotEmpty()) Text("Auto-bet: ${e.autoNote}", style = MaterialTheme.typography.labelSmall)
+            if (e.bidNote.isNotEmpty()) Text("Bids: ${e.bidNote}", style = MaterialTheme.typography.labelSmall)
+            e.arbs.take(3).forEach { a -> Text("Sure profit ${Format.percent(a.profit, 2)}: ${a.selectionNovig} at Novig + ${a.selectionKalshi} at Kalshi (${a.event})", style = MaterialTheme.typography.labelSmall) }
+        }
+    }
+    if (confirmLive) {
+        AlertDialog(
+            onDismissRequest = { confirmLive = false },
+            title = { Text("Let the GitHub engine bet on Kalshi?") },
+            text = { Text("With this on, the engine places real orders on your Kalshi account (the auto-bet when its mode is Real money, and bids when they are on) using the key you sent to GitHub, within the limits in the Auto and Bids pages. It runs 08:00 to 01:00 Eastern and stops when you switch it off here or press STOP ALL.") },
+            confirmButton = { TextButton(onClick = { hub.setEngineMode(KalshiAutoMode.LIVE); confirmLive = false }) { Text("Real money") } },
+            dismissButton = { TextButton(onClick = { confirmLive = false }) { Text("Cancel") } },
+        )
     }
 }

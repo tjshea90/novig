@@ -69,6 +69,8 @@ data class KalshiEngineStatus(
     val stopped: String = "",
     val betsPlaced: Int = 0,
     val betsPaper: Int = 0,
+    /** The Kalshi key reached the engine (the two secrets): without it LIVE is paper. */
+    val keyOnGitHub: Boolean = false,
 ) {
     companion object {
         const val FILE = "kalshi-status.json"
