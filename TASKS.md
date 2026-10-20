@@ -6058,3 +6058,4 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [ ] CH47e arb leads: /v1/sports/{sp}/arbitrage (side_a/side_b bookmaker,odds) + /v1/inplay/arbs (over/under) filtered to novig+kalshi legs, shown as leads on the Kalshi arb page, re-priced by KalshiArb before any order
 - [ ] CH47f tennis live (Tj 23:47: live auto bets+bids on tennis): record PBP tennis frames when live (no match live at 23:49 UTC), then a tennis live model, PAPER first
 - [ ] CH47g judge /consensus and /line-movement from real samples (add to tools/parlay.py probe), use if they beat our own
+- [x] CH47d engine: ParlayAPI PBP SSE (ParlayPbp/ParlayPbpStream, CloudSources.altScore first, ESPN fallback+clock; pbp-lead journal) ; pool uses biggest paid plan first (KeyPool) v1.0.25. PHONE wiring (VigilantApp altScore) still open
