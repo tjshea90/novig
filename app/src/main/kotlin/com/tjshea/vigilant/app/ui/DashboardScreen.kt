@@ -332,8 +332,9 @@ private fun ApiCard(v: ProviderView, health: CloudDashboard.Health?, detail: Str
     val entry = remember(v.policy.id) { com.tjshea.vigilant.app.ApiEntry.entries.firstOrNull { it.policy?.id == v.policy.id } }
     // Some keys refused (Tj, 2026-10-20: "why does this still show working" with 3 of 6 pinnapi keys on 403): working on the others is amber, never green.
     val refusedKeys = maxOf(v.keys.count { it.state == com.tjshea.vigilant.data.keys.KeyState.REFUSED }, (checks[entry?.name]?.count { !it.ok } ?: 0))
+    val allRefused = v.keys.isNotEmpty() && refusedKeys >= v.keys.size
     val tone = when (health) {
-        CloudDashboard.Health.WORKING -> if (refusedKeys > 0) Tone.WARN else Tone.GOOD
+        CloudDashboard.Health.WORKING -> if (allRefused) Tone.BAD else if (refusedKeys > 0) Tone.WARN else Tone.GOOD
         CloudDashboard.Health.FAILING -> Tone.BAD
         CloudDashboard.Health.SILENT, CloudDashboard.Health.HELD_BACK -> Tone.WARN
         else -> Tone.NEUTRAL
@@ -346,7 +347,7 @@ private fun ApiCard(v: ProviderView, health: CloudDashboard.Health?, detail: Str
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(Modifier.size(14.dp).background(light, CircleShape).testTag("apiLight-${v.policy.id}"))
                 Text(v.policy.displayName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text((health?.label?.substringAfter(' ')?.let { if (refusedKeys > 0 && health == CloudDashboard.Health.WORKING) "working · $refusedKeys key${if (refusedKeys > 1) "s" else ""} refused" else it }) ?: if (v.policy.keyed && v.keys.isEmpty()) "no key" else "—", style = MaterialTheme.typography.labelMedium, color = c)
+                Text((health?.label?.substringAfter(' ')?.let { if (allRefused && health == CloudDashboard.Health.WORKING) "every key refused" else if (refusedKeys > 0 && health == CloudDashboard.Health.WORKING) "working · $refusedKeys key${if (refusedKeys > 1) "s" else ""} refused" else it }) ?: if (v.policy.keyed && v.keys.isEmpty()) "no key" else "—", style = MaterialTheme.typography.labelMedium, color = c)
             }
             if (detail.isNotBlank() && (open || tone != Tone.WARN && tone != Tone.BAD)) Text(detail, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             else if (detail.isNotBlank()) Text("Tap for the error", style = MaterialTheme.typography.labelSmall, color = light)
