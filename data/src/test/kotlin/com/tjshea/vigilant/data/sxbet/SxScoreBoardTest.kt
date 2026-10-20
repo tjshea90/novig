@@ -1,6 +1,6 @@
 package com.tjshea.vigilant.data.sxbet
 
-import com.tjshea.vigilant.data.reference.Leagues
+import com.tjshea.vigilant.data.scanner.Leagues
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
