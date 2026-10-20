@@ -59,7 +59,7 @@ class KalshiAutoBettorTest {
 
     private val settings = ScanSettings(
         leagues = setOf("NFL"), fairSource = FairSource.SHARP, devigMethod = DevigMethod.MULTIPLICATIVE, sharpBooks = setOf("pinnacle", "circa"), minBooks = 1,
-        usePolymarket = false, useKalshi = false, useOddsApi = false, sgoPro = false,
+        usePolymarket = false, useKalshi = false, useOddsApi = false, sgoPro = false, oddsPapi = true,
         autoBet = true, autoBetMinEv = 0.02, autoBetBooks = 2, autoBetTwoSided = 2, autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 10.0, autoBetMaxStake = 10.0,
         trapEarlyHours = 0, trapFirstListed = false, sharpAutoBet = SharpMode.OFF, apiMaxPerDay = 100.0, apiMaxPerGame = 0.0,
     )
