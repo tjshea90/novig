@@ -45,7 +45,7 @@ data class ArbOpportunity(
     /** Whether the two venues are certain to settle this line the same way (game lines); props and others can differ in the rules, said on the card. */
     val safe: Boolean,
     /** The Novig row this was found from, for the bet sheet's pieces (the market, outcome ids, the event). */
-    val novigRow: Opportunity,
+    val novigRow: Opportunity? = null,
 ) {
     /** What $1 of payout costs across both legs, fees included. */
     val cost: Double get() = novig.cost + kalshi.cost

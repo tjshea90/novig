@@ -3,7 +3,6 @@ package com.tjshea.vigilant.data.kalshitrade
 import com.tjshea.vigilant.data.novig.NovigEvent
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.reference.LineKind
-import com.tjshea.vigilant.data.scanner.Opportunity
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -16,14 +15,9 @@ class ArbExecutorTest {
         val m = NovigMarket("m", "e", "MONEY", "OPEN", "d", 0L, KalshiFees.TAKER, emptyList())
         return ArbOpportunity(
             ev, m, "Moneyline", ArbLeg("Novig", "A", novigCost, 0.0, payout, 0L), ArbLeg("Kalshi", "B", kalshiPrice, KalshiFees.takerPerContract(kalshiPrice), payout, 0L),
-            "o", "T", "yes", LineKind.MONEYLINE, true, dummyRow(),
+            "o", "T", "yes", LineKind.MONEYLINE, true,
         )
     }
-
-    @Suppress("CAST_NEVER_SUCCEEDS")
-    private fun dummyRow(): Opportunity = unsafeNull()
-
-    private fun <T> unsafeNull(): T = @Suppress("UNCHECKED_CAST") (null as T)
 
     private val settings = ArbSettings(minProfit = 0.005)
 
