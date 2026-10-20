@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-el5i79",
- "head": "9f4871d149e8fc13baef4d8904fdc3df85fc89a5",
+ "head": "4ee0f3deae7de7994889a6324453697ca245e209",
  "since": 1792452137,
- "beat": 1792455331,
- "beatIso": "2026-10-20T00:15:31Z",
- "done": "CH31 written",
- "next": "CH31a first"
+ "beat": 1792455359,
+ "beatIso": "2026-10-20T00:15:59Z",
+ "done": "CH31 claimed and written; bet-sheet fix CH28a built; chat watcher running",
+ "next": "CH31a: read LiveBoard.kt, CloudLiveLane.kt, LiveSniper.kt, TailTaker.kt to find where the paper records are kept; then add Live-board cards; CH31c needs the BoltOdds /livescores and SX /live-scores shapes"
 }
