@@ -287,7 +287,7 @@ class LiveLightRunnerTest {
 
     @Test
     fun `ParlayAPI's stream score is used when it is ahead of ESPN's scoreboard, ESPN keeps the clock, and the lead is journaled when ESPN catches up`() = runBlocking {
-        var board = scoreboard(100, 100)   // a tie on ESPN's scoreboard: nothing to offer
+        var board = scoreboard(70, 70)   // a tie on ESPN's scoreboard: nothing to offer
         val log = ArrayList<String>()
         val view = View(mapOf("m1" to book(bostonBid = 200, miamiBid = 200)))
         val offers = ArrayList<TailOffer>()
