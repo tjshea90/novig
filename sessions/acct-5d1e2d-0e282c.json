@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "a762dc2126aeb2f4237cebe6edc22d0dd7d2c068",
+ "head": "b566abc9d08e577e1dcc629913706df941e7433c",
  "since": 1792528851,
- "beat": 1792533658,
- "beatIso": "2026-10-20T22:00:58Z",
- "done": "v1.0.22 released (CH44)",
- "next": "CH44 follow-up: Kalshi auto-bet trap guard review (6h), arb from engine list"
+ "beat": 1792533809,
+ "beatIso": "2026-10-20T22:03:29Z",
+ "done": "CH45 logged, asked Tj version/details",
+ "next": "await Tj reply; fix KalshiAsNovig floor / toggle lag"
 }
