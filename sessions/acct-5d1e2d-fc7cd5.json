@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-qatu8l",
- "head": "296845d3f3590c1b0674ca9c68f5bccaa62468d7",
+ "head": "b99daaaedacb78c799321038cf24ac55bfd2590d",
  "since": 1792452137,
- "beat": 1792474134,
- "beatIso": "2026-10-20T05:28:54Z",
- "done": "AS1-AS3 built+tested (apiHealth by own keys, Recovered message)",
- "next": "ship release, tell Tj"
+ "beat": 1792474217,
+ "beatIso": "2026-10-20T05:30:17Z",
+ "done": "CH32a-e built (chat draft, Kalshi label, slip closes, notifications, min contract)",
+ "next": "full tests then ship.sh + release"
 }
