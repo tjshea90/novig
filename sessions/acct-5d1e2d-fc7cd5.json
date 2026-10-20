@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-el5i79",
- "head": "e842c0d4c8a25c8067230ba486172551d0b340fb",
+ "head": "82a78c9106bdb3c104d2542d54723f55c9964104",
  "since": 1792452137,
- "beat": 1792460210,
- "beatIso": "2026-10-20T01:36:50Z",
+ "beat": 1792460394,
+ "beatIso": "2026-10-20T01:39:54Z",
  "done": "CH31a paper book + grader + Live-board lines built, PaperBookTest green",
  "next": "CH31b real/paper stakes for paper tiers (TailLiveSettings + TailTaker), then CH31c score feeds, ship v1.0.11"
 }
