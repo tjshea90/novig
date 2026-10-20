@@ -44,6 +44,8 @@ data class LiveLightStatus(
     val problem: String? = null,
     /** One line per watched game (its name, the score and time left, the closest call and why it was not bet): what the Bids tab and Diagnostics show so a quiet lane can be read. */
     val gameLines: Map<String, String> = emptyMap(),
+    /** How each tier of paper bets has done (CH31). */
+    val paper: List<PaperTierStats> = emptyList(),
 )
 
 /**
@@ -77,6 +79,8 @@ class LiveLightRunner(
      * every bid wanted or pulled, and the reason a side was passed over when it changes. The phone saves the file to GitHub with the bet history.
      */
     private val journal: (String) -> Unit = {},
+    /** The live research records' paper bets (CH31): the shadow tier and the score-event record are kept here, graded when their games end, and their results go out in [LiveLightStatus.paper]. */
+    private val paper: PaperBook? = null,
 ) {
     private val lastScanLogged = HashMap<String, Long>()
     private val lastBidSkip = HashMap<String, String>()
@@ -140,7 +144,47 @@ class LiveLightRunner(
             scope.launch { guarded("score") { stateLoop() } },
             scope.launch { guarded("scan") { scanLoop() } },
             scope.launch { guarded("beat") { heartbeat() } },
+            scope.launch { guarded("paper") { paperLoop() } },
         )
+    }
+
+    private fun paperAdd(tier: String, c: TailCandidate, game: Game, feed: Feed) {
+        val book = paper ?: return
+        val line = game.lines.firstOrNull { it.marketId == c.marketId } ?: return
+        if (c.ask <= 0.0 || c.ask >= 1.0) return
+        book.add(PaperRecord(
+            key = "$tier|${c.outcomeId}", tier = tier, eventId = game.ev.eventId, event = game.ev.description, league = game.ev.league, home = feed.game.home, away = feed.game.away,
+            kind = line.kind.name, ref = line.ref, threshold = line.threshold, side = c.side, selection = c.label, ask = c.ask,
+            fee = com.tjshea.vigilant.engine.Fees.takerFee(c.ask, line.fee, true), fair = c.fair, atMs = clock(),
+        ))
+    }
+
+    private suspend fun paperLoop() {
+        val book = paper ?: return
+        while (scope.isActive) {
+            runCatching { gradePaper(book) }
+            book.flush()
+            upd { it.copy(paper = book.stats()) }
+            delay(PAPER_GRADE_MS)
+        }
+    }
+
+    /** Settles the open paper bets whose games ESPN now lists as over (the day of the bet and the day before: a game that ran past midnight is still its start day's). A bet nothing matches in 3 days is a push. */
+    internal suspend fun gradePaper(book: PaperBook) {
+        val now = clock()
+        val et = java.time.ZoneId.of("America/New_York")
+        fun day(ms: Long) = java.time.Instant.ofEpochMilli(ms).atZone(et).toLocalDate()
+        val fmt = java.time.format.DateTimeFormatter.BASIC_ISO_DATE
+        for ((league, rs) in book.open().filter { now - it.atMs > PAPER_MIN_AGE_MS }.groupBy { it.league }) {
+            val path = LabClock.ESPN_PATHS[league] ?: continue
+            val days = rs.flatMap { listOf(day(it.atMs), day(it.atMs).minusDays(1)) }.toSet()
+            val boards = days.flatMap { d -> LabClock.scoreboardUrls(league, path, "dates=${d.format(fmt)}").mapNotNull { u -> fetch(u)?.let { LabClock.parseEspn(it.body) } }.flatten() }.filter { it.done }
+            for (r in rs) {
+                val g = boards.firstOrNull { TeamMatcher.similarity(it.home, r.home) >= 0.5 && TeamMatcher.similarity(it.away, r.away) >= 0.5 }
+                val res = g?.let { PaperGrade.result(r, it) }
+                if (res != null) book.settle(r.key, res) else if (now - r.atMs > PAPER_VOID_MS) book.settle(r.key, "PUSH")
+            }
+        }
     }
 
     /** A bid nobody vouched for within seconds is pulled by the desk: while bids are on every game is judged again each [HEARTBEAT_MS], push or no push. */
@@ -387,6 +431,7 @@ class LiveLightRunner(
             val prev = shadowed[c.outcomeId]
             if (prev != null && now - prev < SHADOW_MS) continue
             shadowed[c.outcomeId] = now
+            paperAdd(PaperBook.SHADOW, c, game, feed)
             jlog("shadow") {
                 put("eventId", eventId); put("event", game.ev.description); put("league", game.ev.league); put("outcomeId", c.outcomeId); put("selection", c.label); put("side", c.side)
                 put("strike", c.strike); put("ask", c.ask); put("fair", c.fair); put("edge", c.edge); put("score", "${feed.game.awayScore}-${feed.game.homeScore}"); put("clockSec", feed.game.clockSec); put("period", feed.game.period)
@@ -398,6 +443,7 @@ class LiveLightRunner(
             for (c in shadowFound) {
                 if (now - (scoreLogged[c.outcomeId] ?: 0L) < SCORE_LOG_MS) continue
                 scoreLogged[c.outcomeId] = now
+                paperAdd(PaperBook.SCORE_EVENT, c, game, feed)
                 jlog("score-event") {
                     put("eventId", eventId); put("event", game.ev.description); put("league", game.ev.league); put("outcomeId", c.outcomeId); put("selection", c.label); put("side", c.side)
                     put("ask", c.ask); put("fair", c.fair); put("edge", c.edge); put("sinceScoreMs", sinceScore); put("score", "${feed.game.awayScore}-${feed.game.homeScore}"); put("clockSec", feed.game.clockSec); put("period", feed.game.period)
@@ -489,6 +535,10 @@ class LiveLightRunner(
 
         /** Markets the lane may hold on the feed: a bbo market costs 8 of the key's 512 stream tokens, and the scan and the bids share them. */
         const val MAX_MARKETS = 48
+        const val PAPER_GRADE_MS = 300_000L
+        const val PAPER_MIN_AGE_MS = 1_200_000L
+        const val PAPER_VOID_MS = 3 * 86_400_000L
+
         /** A game's scan summary goes to the journal at most this often. */
         const val JOURNAL_SCAN_MS = 20_000L
         const val CATALOG_MS = 30_000L
