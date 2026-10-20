@@ -6017,3 +6017,8 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [x] CH37b Kalshi slip shows the other books' odds table (FairOddsTable extracted from OpportunityDetail, used by KalshiBetSheet)
 - [x] CH37c Novig / Kalshi cards tinted (green / violet) when both are listed (venueTint)
 - [x] CH37d built; shipping as v1.0.16
+
+## CH38 (Tj chat 14:48 UTC, 2026-10-20)
+- [ ] CH38a find out why no Kalshi bids are resting (KalshiBidRunner: scan.maker off? tradingEnabled? key?) and fix/report
+- [ ] CH38b Engine tab: Kalshi stats (bets, bids, money) kept separate from Novig, both in one dashboard
+- [ ] CH38c answer: do Bids-tab settings in the app mirror to the GitHub engine's bid settings (CloudScanKey / cloud-config)? (screenshot t1792507705581-7402 attached, no words)
