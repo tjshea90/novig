@@ -136,6 +136,49 @@ class KalshiBetPlacer(
     suspend fun place(target: BetTarget, stake: Double, confirmedLimit: Double, allowRepeat: Boolean = false): PlaceResult =
         placeLocked(target, stake, confirmedLimit, allowRepeat, null, null)
 
+    /**
+     * Exactly [contracts] whole contracts at [maxPrice] or better (the second leg of an arbitrage, KV5b: the size is the first leg's fill, the price ceiling is the break-even that
+     * keeps the pair profitable). The tops are read just now and the ask must be at or under [maxPrice]; the order is an IOC at the ask; the fills are logged like any bet. The fair on
+     * [target] is the break-even probability the caller derived, so the bet's recorded edge is the arbitrage's own.
+     */
+    suspend fun placeExact(target: BetTarget, contracts: Long, maxPrice: Double): PlaceResult {
+        lock.lock()
+        try {
+            if (contracts < 1L) return PlaceResult.Refused("Nothing to buy: under one contract.")
+            val ref = KalshiBook.refs(target.market)[target.outcomeId] ?: return PlaceResult.Refused("This isn't a Kalshi market the app can order on (its ticker is missing).")
+            val tops = try {
+                trading.tops(KalshiBook.tickers(target.market))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                return PlaceResult.Refused("Kalshi's price couldn't be read just now: ${e.message ?: e.javaClass.simpleName}.")
+            }
+            val top = tops[ref.ticker]
+            if (top == null || !top.tradable) return PlaceResult.Refused("Kalshi has closed this market.")
+            val ask = top.priceFor(ref.side) ?: return PlaceResult.Refused("Nobody is selling this side on Kalshi right now.")
+            if (ask > maxPrice + 1e-9) return PlaceResult.Refused("Kalshi's price moved: ${percentText(ask)} now, more than the ${percentText(maxPrice)} that keeps the pair profitable.")
+            val size = top.sizeFor(ref.side) ?: 0.0
+            val take = minOf(contracts.toDouble(), size).toLong()
+            if (take < 1L) return PlaceResult.Refused("Kalshi has under one contract at that price.")
+            val clientId = KalshiTradingClient.newClientId()
+            val placed = try {
+                trading.buy(ref.ticker, ref.side, ask, take, clientId, KalshiTradingClient.IOC)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: KalshiApiException) {
+                if (e.status == 0 || e.status >= 500) {
+                    val found = withContext(NonCancellable) { findByClientId(clientId, ref.ticker) }
+                        ?: return PlaceResult.Unconfirmed("Kalshi didn't answer, and its orders don't show this one (${e.message}). Nothing is assumed: check Kalshi's portfolio.")
+                    return withContext(NonCancellable) { finish(target, found.orderId, take, ref, clientId) }
+                }
+                return if (e.status == 400 || e.status == 409 || e.status == 422) PlaceResult.Refused(advice(e)) else PlaceResult.Failed(advice(e))
+            }
+            return withContext(NonCancellable) { finish(target, placed.orderId, take, ref, clientId, placed) }
+        } finally {
+            lock.unlock()
+        }
+    }
+
     /** An auto-bet: nobody confirms, so [expectedPrice] (the price it was judged at) must match the ask now and [limits] are the auto-bet's. */
     suspend fun placeAuto(target: BetTarget, stake: Double, limits: BetLimits, expectedPrice: Double): PlaceResult =
         placeLocked(target, stake, 1.0, false, limits, expectedPrice)
