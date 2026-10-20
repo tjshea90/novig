@@ -2104,6 +2104,12 @@ class AppContainer(val app: Application) {
         signer = { kalshiSigner() }, stream = kalshiStream, socketOn = { settingsStore.flow.value?.let { it.useKalshi && it.gates.kalshiSocket && it.phoneSockets } ?: false },
     )
 
+    /** Kalshi as a place to bet (the venue read, KV): the same client and rate gates as the fair-line source above. Nothing in the Novig scan uses it. */
+    internal fun kalshiVenueSource(): ReferenceSource = com.tjshea.vigilant.data.kalshitrade.KalshiVenueSource(kalshi)
+
+    /** The Kalshi side of the app (KV, Tj 2026-10-20): its scan, orders, tracker and the Novig x Kalshi arbitrage. Built on first use; nothing in the Novig code reads it. */
+    val kalshiHub: com.tjshea.vigilant.app.kalshi.KalshiHub by lazy { com.tjshea.vigilant.app.kalshi.KalshiHub(this) }
+
     /** How the Kalshi 3-requests-a-second test has gone this session (Diagnostics). */
     fun kalshiPaceNote(): String = kalshi.paceNote() + "\n" + kalshi.report().joinToString("\n") { "  $it" }
     private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keyStore.current(ApiProvider.THE_ODDS_API) }, usage, sticky = true), json)
