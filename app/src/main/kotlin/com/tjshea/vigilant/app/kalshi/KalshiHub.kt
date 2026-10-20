@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.app.kalshi
 
+import com.tjshea.vigilant.app.MISS_RESTORE_MS
 import com.tjshea.vigilant.app.AppContainer
 import com.tjshea.vigilant.app.ApiBetTargets
 import com.tjshea.vigilant.data.book.BookRef
