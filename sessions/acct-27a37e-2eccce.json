@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/kalshi-vigilant-integration-v5u4ho",
- "head": "ea4ae6d69dd15b171dc925f40e9e5a17168ea3cd",
+ "head": "43f18fd32637467d785f27c53285ac2d2600a838",
  "since": 1792468198,
- "beat": 1792471058,
- "beatIso": "2026-10-20T04:37:38Z",
- "done": "KV9 engine lane: CloudKalshiLane + models + CloudMain wiring (additive) + tests",
- "next": "phone side of the lane (kalshi.json write, status read, GitHub engine card), then full test + ship"
+ "beat": 1792471162,
+ "beatIso": "2026-10-20T04:39:22Z",
+ "done": "KV9 phone side: GitHub engine card, kalshi.json push, status poll; lane honors STOP ALL and the orders switch",
+ "next": "full test then ship"
 }
