@@ -5980,3 +5980,11 @@ DESIGN (research/kalshi_vigilant_2026-10-20.md): additive only. New package data
 - [ ] KV5b data: ArbExecutor (Novig leg first via ApiBetPlacer, Kalshi second sized to the Novig fill; fair=1-other leg cost so each placer enforces profit; unhedged => notify + retry at break-even) + paper mode; app button + optional auto-arb (default off)
 - [ ] KV4b Kalshi bids: Kalshi book -> NovigBook(bidsByOutcome) so MakerQuote runs unchanged; PO GTC orders on 1c grid; maker fee 0.0175 on series that charge; desk with own client prefix
 - [ ] KV6b app: KalshiConfig store (ScanSettings copy + trading/arb/venue toggles), VenueMode (Novig on/off, Kalshi on/off, both), KalshiHub (ScanRunner(KalshiScanner), KalshiTradingClient from container signer, tracker file kalshi_bets.json), tab, bet sheet, arb screen
+
+## AS: API status tab lights lie; tell Tj when an API recovers (Tj, app chat 2026-10-20, t1792470821290-3a72)
+Tj: pinnapi keys are all refused (403) yet its card is green "working"; PinnWire (good Pinnacle source) is grey; BoltOdds was down earlier then came back: "if ever an API doesn't respond at first but then it is fixed, send me a status update telling me the API is now working".
+Cause found (read-only, 2026-10-20): both Pinnacle hosts report under ONE feed id `pinnacle` (Scanner.SOURCE_ORDER, CloudDashboard.providerOf), so the pinnapi card inherits the scan-level health and PinnWire's card has no feed at all (grey). Card light = DashboardScreen.ApiCard tone from DashboardModel.apiHealth.
+- [ ] AS1 engine: the `pinnacle` FeedLine says which host answered (PinnWire / pinnapi counts) so each card is judged on its own host; a provider whose every key was refused (ApiProbe / KeyState) is never green.
+- [ ] AS2 app: ApiCard light: a Test-now result with all keys refused = red/amber, not green; PinnWire lit when it answered.
+- [ ] AS3 engine: ApiGovernor/ApiAdvisor posts a Messages note "X is working again" when an API that failed/was silent answers again (CloudMessages, tell_tj.py say); once per recovery. Test.
+(Another session, acct-27a37e, is editing the app: wait for its Kalshi work to land, then claim AS.)
