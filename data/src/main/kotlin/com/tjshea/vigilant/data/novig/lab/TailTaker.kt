@@ -155,7 +155,7 @@ class TailTaker(
         if (start - (lastTry[c.outcomeId] ?: 0L) < TailTradeLimits.COOLDOWN_MS) return skip("cooldown")
         if ((blacklist[c.marketId] ?: 0L) > start) return skip("market refused lately")
         if (r.bet) {
-            val bought = synchronized(history) { history.filter { it.atMs >= dayStart(start) && it.mode == "BET" && it.filled > 0 && it.eventId == c.eventId } }
+            val bought = history.filter { it.atMs >= dayStart(start) && it.mode == "BET" && it.filled > 0 && it.eventId == c.eventId }
             if (bought.size >= TailTradeLimits.MAX_BUYS_PER_GAME) return skip("enough buys on this game")
             val paidBefore = bought.filter { it.outcomeId == c.outcomeId }.minOfOrNull { it.paid / (it.filled * EvMath.CONTRACT_PAYOUT_DOLLARS) }
             if (paidBefore != null && c.ask < paidBefore - TailTradeLimits.NO_AVERAGING_DOWN) return skip("price falling")
