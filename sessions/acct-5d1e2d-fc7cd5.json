@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-qatu8l",
- "head": "b99daaaedacb78c799321038cf24ac55bfd2590d",
+ "head": "5609379b2a4b05104de9c86e96d8c85aa2f8e125",
  "since": 1792452137,
- "beat": 1792474456,
- "beatIso": "2026-10-20T05:34:16Z",
- "done": "CH32a-e built (chat draft, Kalshi label, slip closes, notifications, min contract)",
- "next": "full tests then ship.sh + release"
+ "beat": 1792474518,
+ "beatIso": "2026-10-20T05:35:18Z",
+ "done": "v1.0.13 prepared",
+ "next": "ship + release"
 }
