@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-4dhnse",
  "head": "5eb5ea12a613045322ce3dae9961146378708229",
  "since": 1792528851,
- "beat": 1792529197,
- "beatIso": "2026-10-20T20:46:37Z",
+ "beat": 1792529203,
+ "beatIso": "2026-10-20T20:46:43Z",
  "done": "pre-ship: v1.0.20: live bids on obvious +EV totals/spreads (middle tier 65-85% sure, bid 15% under fair)",
  "next": "ship.sh gates and releases this"
 }
