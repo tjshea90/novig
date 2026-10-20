@@ -109,10 +109,8 @@ class KalshiBetPlacer(
                 negativeEv = ev <= 0.0,
             )
         }
-        val note = plan.note?.takeIf { count * 100 == plan.contracts } ?: listOfNotNull(
-            plan.note,
-            if (count * 100 != plan.contracts) "Kalshi sells whole $1 contracts: this bets ${count} of them (${money(cost)}).",
-        ).joinToString(" ").ifEmpty { null }
+        val rounded = if (count * 100 != plan.contracts) "Kalshi sells whole \$1 contracts: this bets $count of them (${money(cost)})." else null
+        val note = listOfNotNull(plan.note, rounded).joinToString(" ").ifEmpty { null }
         return PlanResult.Ready(
             plan.copy(
                 contracts = count * 100, expectedCost = cost, averagePrice = price, payout = count.toDouble(), evPercent = ev,
