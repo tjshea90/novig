@@ -103,8 +103,11 @@ fun FeedScreen(
     parlay: ParlayPickActions? = null,
     /** Pull to refresh: a scan that also resumes a paused scanner (Tj, 2026-10-02). */
     onPull: () -> Unit = onScan,
+    /** Kalshi beside Novig in this one list (Tj, 2026-10-20, CH33): null = Novig only, as ever. */
+    kalshi: KalshiFeedPart? = null,
 ) {
     var selected by remember { mutableStateOf<Opportunity?>(null) }
+    var kalshiSelected by remember { mutableStateOf<Opportunity?>(null) }
     var showOld by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     // The ParlayAPI pick whose sheet is open (its key: a recheck re-prices it while it's open; TASKS.md P4).
     var parlaySelected by remember { mutableStateOf<String?>(null) }
@@ -220,6 +223,7 @@ fun FeedScreen(
                 stickyHeader(key = "leagues") {
                     StickyBar {
                         LeagueChips(Leagues.ALL, state.settings.leagues, onToggleLeague, Modifier.padding(vertical = 4.dp))
+                        if (kalshi != null) VenueChipsRow(kalshi, Modifier.padding(horizontal = 12.dp))
                         // Tj, 2026-09-27: "only show games that start within the next 24 hours or 12 hours or 48 hours".
                         if (AppBook.isNovig && state.result != null && state.settings.leagues.isNotEmpty()) {
                             Box(Modifier.padding(horizontal = 12.dp)) { StartsWithinRow(state.settings.startsWithinHours, onStartsWithin) }
@@ -229,6 +233,7 @@ fun FeedScreen(
                 // Only EVs whose other books' prices are still current (RESEARCH.md §24).
                 val shown = state.feedAt(now).let { all -> if (state.settings.includeLive && liveOnly) all.filter { it.isLive || it.liveAges != null } else all }
                     .let { viewFilter.apply(it) }
+                    .let { if (kalshi != null && !kalshi.novigOn) emptyList() else it }
                 if (state.settings.killed) item(key = "paused") { KilledBanner(Modifier.padding(horizontal = 12.dp)) } else if (state.settings.paused) item(key = "paused") { PausedBanner({ onPause(false) }, Modifier.padding(horizontal = 12.dp)) }
                 if (AppBook.isNovig) item(key = "liveMode") {
                     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -335,11 +340,15 @@ fun FeedScreen(
                         )
                     }
                 }
-                items(shown, key = { it.key }) { o ->
-                    OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), onHide = { hide(o) }, injury = state.injuries[o.key], move = state.lineMoves[o.key]) { selected = o }
+                // One list, best first, when Kalshi is on beside Novig (CH33); Novig's own order is kept when it is alone.
+                val kalshiRows = if (kalshi != null && kalshi.kalshiOn) kalshi.rows else emptyList()
+                val merged = if (kalshiRows.isEmpty()) shown.map { it to false } else (shown.map { it to false } + kalshiRows.map { it to true }).sortedByDescending { it.first.evPercent ?: 0.0 }
+                items(merged, key = { (o, k) -> (if (k) "kalshi/" else "") + o.key }) { (o, isKalshi) ->
+                    if (isKalshi) OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), venue = "Kalshi") { kalshiSelected = o }
+                    else OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), onHide = { hide(o) }, injury = state.injuries[o.key], move = state.lineMoves[o.key], venue = if (kalshi != null && kalshi.kalshiOn) "Novig" else null) { selected = o }
                 }
                 // Old bets (Tj, 2026-10-17): the Novig price or the other books' prices behind them are past the app's own old limits, so they are not in the list above; one tap shows them, marked OLD.
-                val oldBets = state.feedOldAt(now).let { viewFilter.apply(it) }
+                val oldBets = state.feedOldAt(now).let { viewFilter.apply(it) }.let { if (kalshi != null && !kalshi.novigOn) emptyList() else it }
                 if (oldBets.isNotEmpty()) {
                     item(key = "oldToggle") {
                         TextButton(onClick = { showOld = !showOld }, modifier = Modifier.padding(horizontal = 12.dp).testTag("oldBetsToggle")) {
@@ -371,6 +380,8 @@ fun FeedScreen(
             }
         }
     }
+
+    kalshiSelected?.let { o -> kalshi?.sheet?.invoke(o) { kalshiSelected = null } }
 
     selected?.let { o ->
         // Show the freshest copy of the selected line: a scan may have re-priced it since the tap.
@@ -892,4 +903,28 @@ private fun FreshnessLine(chip: com.tjshea.vigilant.data.cloud.CloudFreshness.Ch
         }
         if (open) Text(chip.detail, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("cloudFreshnessDetail"))
     }
+}
+
+/** What the +EV tab needs to list Kalshi's bets beside Novig's (CH33): the rows, the two venue switches, and the Kalshi bet sheet. */
+class KalshiFeedPart(
+    val rows: List<Opportunity>,
+    val novigOn: Boolean,
+    val kalshiOn: Boolean,
+    val scanning: Boolean,
+    val note: String?,
+    val onNovig: (Boolean) -> Unit,
+    val onKalshi: (Boolean) -> Unit,
+    val onMore: () -> Unit,
+    val sheet: @Composable (Opportunity, () -> Unit) -> Unit,
+)
+
+/** The Novig / Kalshi toggles above the list: either or both. */
+@Composable
+private fun VenueChipsRow(k: KalshiFeedPart, modifier: Modifier = Modifier) {
+    androidx.compose.foundation.layout.FlowRow(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+        FilterChip(selected = k.novigOn, onClick = { k.onNovig(!k.novigOn) }, label = { Text("Novig", maxLines = 1) }, modifier = Modifier.testTag("venueChipNovig"))
+        FilterChip(selected = k.kalshiOn, onClick = { k.onKalshi(!k.kalshiOn) }, label = { Text(if (k.kalshiOn && k.scanning) "Kalshi (scanning)" else "Kalshi", maxLines = 1) }, modifier = Modifier.testTag("venueChipKalshi"))
+        if (k.kalshiOn) TextButton(onClick = k.onMore, modifier = Modifier.testTag("kalshiMore")) { Text("Kalshi arb, bids, auto, setup", maxLines = 1) }
+    }
+    if (k.kalshiOn && k.note != null) Text(k.note, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
