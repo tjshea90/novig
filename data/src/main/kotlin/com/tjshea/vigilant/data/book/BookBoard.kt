@@ -116,7 +116,7 @@ class BookBoard private constructor(
                 )
                 books[marketId] = NovigBook(
                     marketId, 0, emptyMap(), fetchedAtMs,
-                    posted = outcomes.associate { (o, q, _) -> o.outcomeId to listOf(TakeLevel(1.0 / q.decimalOdds, q.size?.toLong()?.coerceAtLeast(0L) ?: DEPTH)) },
+                    posted = outcomes.associate { (o, q, _) -> o.outcomeId to listOf(TakeLevel(1.0 / q.decimalOdds, q.size?.let { (it * CONTRACTS_PER_DOLLAR_CONTRACT).toLong() }?.coerceAtLeast(0L) ?: DEPTH)) },
                 )
                 line.lastUpdateMs?.let { seen[marketId] = it }
                 any = true
@@ -135,6 +135,9 @@ class BookBoard private constructor(
          * capped by it (the screens don't show depth for a sportsbook).
          */
         const val DEPTH = 1_000_000_000L
+
+        /** The shared maths counts contracts of 1c payout (Novig's); a venue that sells $1 contracts (Kalshi) lists each as 100 of them. */
+        const val CONTRACTS_PER_DOLLAR_CONTRACT = 100.0
 
         /** Games with no fair price shown on the Games tab (moneyline only), soonest first. */
         const val NO_FAIR_GAME_CAP = 20
