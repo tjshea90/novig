@@ -136,7 +136,8 @@ fun ChatPage(
     LaunchedEffect(newestKey) { if (list.firstVisibleItemIndex <= 2) list.animateScrollToItem(0) }
 
     val ctx = LocalContext.current
-    var text by rememberSaveable { mutableStateOf("") }
+    // The draft lives outside the screen: a tab switch drops the composition and rememberSaveable with it (Tj, 2026-10-20: "what I was already typing" was deleted).
+    var text by ChatDraft.text
     var picked by rememberSaveable { mutableStateOf(listOf<String>()) }
     val pickedNames = remember(picked) { picked.map { displayName(ctx, android.net.Uri.parse(it)) } }
     var error by remember { mutableStateOf<String?>(null) }
