@@ -5954,3 +5954,4 @@ When you come back: read this first. tj Gmail already did: CH24a/b (watchdog fix
 ## CH29: live scores from the sockets, not only ESPN (Tj, app chat t1792454980009-4b9c, 2026-10-20 00:09Z, verbatim: "if there is no ESPN live score like the game in the screenshot, don't I have other sockets that have live scores, or other online sources for low latency scores? can't the novig odds be compared to the live odds from other sockets?")
 - [ ] CH29a read BoltOdds' /livescores subscription (accepted on Tj's key, never read) and SX Bet's public /live-scores as score sources behind ESPN for the live model (MLB with no ESPN game, etc.); verify shapes from the Test sample first.
 - [ ] CH29b show on the Live board which games are priced by consensus of live sockets (BoltLiveConsensus, Kalshi, SX) vs by score model.
+- [ ] CH30 (Tj chat t1792455036923-287d) show the live paper records (#1 score-event, #2 lower tier, cross-exchange) as cards on the Live board.
