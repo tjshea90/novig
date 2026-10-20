@@ -9,7 +9,7 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
  * A fair-odds source for the Kalshi scan that first looks at what the Novig scan already holds (KV, Tj 2026-10-20: "adopt as many features as possible ... so that there is no double
  * work"). The same API is not asked twice for the same league within [maxAgeMs]: [borrow] returns the Novig scan's board for the source and league, and [sameRequest] says whether the
  * Kalshi scan would have asked for the same thing (the same books and market families); otherwise, or when nothing fresh is held, the source is asked for itself. Props sources (which read
- * per game for a catalog) are never borrowed.
+ * per game for a catalog) are borrowed only when [borrowProps] (the engine, where a second per-game read would spend credits).
  */
 class BorrowedSource(
     private val inner: ReferenceSource,
@@ -17,9 +17,19 @@ class BorrowedSource(
     private val sameRequest: (ScanSettings) -> Boolean,
     private val clock: () -> Long = System::currentTimeMillis,
     private val maxAgeMs: Long = 120_000L,
+    /** Also borrow a props source's board (it covers the Novig scan's games, which are nearly Kalshi's): saves the per-game calls. */
+    private val borrowProps: Boolean = false,
 ) : ReferenceSource by inner {
+    override suspend fun odds(league: League, settings: ScanSettings, context: com.tjshea.vigilant.data.reference.ScanContext): RefSnapshot {
+        if (borrowProps && sameRequest(settings)) {
+            val held = borrow(inner.id, league.novigName)
+            if (held != null && clock() - held.fetchedAtMs in 0..maxAgeMs) return held
+        }
+        return inner.odds(league, settings, context)
+    }
+
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
-        if (!inner.needsCatalog && !inner.propsOnly && sameRequest(settings)) {
+        if ((borrowProps || (!inner.needsCatalog && !inner.propsOnly)) && sameRequest(settings)) {
             val held = borrow(inner.id, league.novigName)
             if (held != null && clock() - held.fetchedAtMs in 0..maxAgeMs) return held
         }
