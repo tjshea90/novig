@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-s1h6ch",
- "head": "4f29dd6c4ab50aa4335457bae65fe14de41d97bf",
+ "head": "2c134360680490108fee33b1c501c9751eb0995d",
  "since": 1792524186,
- "beat": 1792526256,
- "beatIso": "2026-10-20T19:57:36Z",
- "done": "pre-release: v1.0.19: refused-key API light, Kalshi Check key feedback, bids may reach 200-400% of wallet (versionCode 359, v1.0.19)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.19), then run: bash tools/record-release.sh v1.0.19 359 \"v1.0.19: refused-key API light, Kalshi Check key feedback, bids may reach 200-400% of wallet\""
+ "beat": 1792526303,
+ "beatIso": "2026-10-20T19:58:23Z",
+ "done": "v1.0.19 released (CH40,41)",
+ "next": "CH42 live totals bids research; CH33b Kalshi in +EV"
 }
