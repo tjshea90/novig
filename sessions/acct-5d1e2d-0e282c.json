@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "0677af5e5953d992de6f577110953520a15e6272",
+ "head": "2dc31786a408c1a7ba3f860b4e19836c5bf51b88",
  "since": 1792539161,
- "beat": 1792540545,
- "beatIso": "2026-10-20T23:55:45Z",
- "done": "CH47: Parlay pool uses biggest paid plan first (test), meter loaded before ordering",
- "next": "CH47d PBP SSE feed + altScore wiring"
+ "beat": 1792540596,
+ "beatIso": "2026-10-20T23:56:36Z",
+ "done": "pre-ship: v1.0.25: ParlayAPI live play-by-play stream as the engine's score source, Pro key first (CH47)",
+ "next": "ship.sh gates and releases this"
 }
