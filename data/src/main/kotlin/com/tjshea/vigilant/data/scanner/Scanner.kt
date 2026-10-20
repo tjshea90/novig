@@ -137,6 +137,12 @@ class Scanner(
 
     private data class Cached(val snapshot: RefSnapshot, val requestKey: String)
 
+    /**
+     * A fair-odds board this scan holds for [sourceId] and [leagueName] (read-only, as read): the Kalshi side of the app (KV) borrows boards the Novig scan already paid for
+     * instead of asking the same API again. Nothing here changes what the Novig scan does.
+     */
+    fun heldSnapshot(sourceId: String, leagueName: String): RefSnapshot? = synchronized(references) { references["$sourceId|$leagueName"]?.snapshot }
+
     private val mutex = Mutex()
     private var catalog: Catalog? = null
 
