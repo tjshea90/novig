@@ -579,6 +579,7 @@ class AppContainer(val app: Application) {
         orderSocket?.let { sock -> sock.enabled = s.gates.novigSocketOrders; if (s.gates.novigSocketOrders) sock.warm() }
         // Switched off (or its key gone, or Live games only mode asleep): the sockets are closed at once, not left to idle out.
         // With the engine scanning and live on GitHub the phone holds none of these (TCL122-4, [ScanSettings.phoneSockets]): the runner has them.
+        boltFeed.held = s.phoneSockets
         if (!boltActive(s) || !s.gates.boltSocket || !s.phoneSockets) boltFeed.close()
         if (!s.useKalshi || !s.gates.kalshiSocket || !s.phoneSockets) kalshiStream.close()
         if (!s.phoneSockets) { sxSocketOn = false; sxBetClient.stream?.close() }

@@ -153,6 +153,12 @@ class BoltOddsStream(
 
     fun use() { lastUsedMs = clock() }
 
+    /**
+     * Whether this process may hold the socket at all (Tj, 2026-10-20, CH34: BoltOdds refused connections as "too many": the plan allows 3 and the runner holds 2, so a phone socket on top is refused).
+     * The phone sets it false while the GitHub engine holds the sockets ([ScanSettings.phoneSockets]); then no path (a scan, the streaming engine, the live tennis lane) can open one.
+     */
+    @Volatile var allowed: () -> Boolean = { true }
+
     val live: Boolean get() = state == State.LIVE
 
     /** What the REST snapshot reads while the socket switch is off (Settings › APIs › BoltOdds › Socket): the filters [BoltOddsFeed.arrange] worked out, and when they were last read. */
@@ -222,13 +228,14 @@ class BoltOddsStream(
     }
 
     private fun ensureRunning() {
+        if (!allowed()) return
         synchronized(this) { if (loop?.isActive != true) loop = scope.launch { run() } }
     }
 
     private suspend fun run() {
         var backoff = backoffMinMs
         while (currentCoroutineContext().isActive) {
-            if (clock() - lastUsedMs > idleCloseMs) break
+            if (clock() - lastUsedMs > idleCloseMs || !allowed()) break
             val key = client.nextKey()
             if (key == null) {
                 down("no usable key (every saved key is refused or resting)" + (lastRefusal?.let { ": $it" } ?: ""))

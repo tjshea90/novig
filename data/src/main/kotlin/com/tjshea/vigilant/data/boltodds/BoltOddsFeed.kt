@@ -30,6 +30,12 @@ class BoltOddsFeed(
     val lines = BoltOddsStream("lines", socketHttp, client, BoltBoard(clock) { it != LineKind.PLAYER_PROP }, scope, wsUrl, clock)
     val props = BoltOddsStream("props", socketHttp, client, BoltBoard(clock) { it == LineKind.PLAYER_PROP }, scope, wsUrl, clock)
 
+    /** False on the phone while the GitHub engine holds BoltOdds' sockets (CH34): both streams refuse to connect, and reads use the REST snapshot. */
+    @Volatile var held: Boolean = true
+        set(v) { field = v; if (!v) close() }
+
+    init { lines.allowed = { held }; props.allowed = { held } }
+
     private class Kept<T>(val atMs: Long, val value: T)
     private val metaLock = Mutex()
     private var infoKept: Kept<BoltInfo>? = null
@@ -107,7 +113,7 @@ class BoltOddsFeed(
         val lineMarkets = names(false)
         val lineFilters = BoltFilters(sports = sports, sportsbooks = books, markets = lineMarkets)
         // Socket switch (Settings › APIs › BoltOdds): on = the sockets below; off = no socket at all, the REST snapshot of the same filters read by [events].
-        if (!settings.gates.boltSocket) {
+        if (!settings.gates.boltSocket || !held) {
             lines.close(); props.close()
             lines.restFilters = lineFilters
             out += lines
@@ -135,7 +141,7 @@ class BoltOddsFeed(
         val streams = arrange(settings)
         val stream = if (props) this.props else lines
         if (stream !in streams) return emptyList()
-        val socketOn = settings.gates.boltSocket
+        val socketOn = settings.gates.boltSocket && held
         if (socketOn) {
             stream.use()
             val ready = stream.awaitReady(READY_WAIT_MS)
