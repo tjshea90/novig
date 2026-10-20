@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/kalshi-vigilant-integration-v5u4ho",
- "head": "a59675195f555619fba2cb5855ff159ef49043bf",
+ "head": "d18e71c324dcf8747d9bb7e8a54ed96f7cc07847",
  "since": 1792468198,
- "beat": 1792470361,
- "beatIso": "2026-10-20T04:26:01Z",
- "done": "KV6/7: Kalshi tab (EV, arb, bets, auto, setup), venue switches, bet sheet; compiles",
- "next": "run full tests (bash tools/test.sh) then fix; then bids KV4b, engine KV9, docs KV10"
+ "beat": 1792470476,
+ "beatIso": "2026-10-20T04:27:56Z",
+ "done": "KV4: KalshiAsNovig adapter + KalshiBidRunner on the unchanged MakerDesk; tests green",
+ "next": "hub: bids wiring + Bids page; then full test gate, engine lane KV9, docs KV10"
 }
