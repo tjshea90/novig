@@ -1,13 +1,13 @@
-# CHECKPOINT 3796 — read me first, then TASKS.md
+# CHECKPOINT 3797 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T04:11:03Z · **tests:** all 6 fast checks green
-**Branch:** `claude/kalshi-vigilant-integration-v5u4ho` · **builds on:** `da567b189` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T04:36:09Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-hpqztq` · **builds on:** `644aca4c4` (this checkpoint is the commit after it)
 
 ## Just done
-KV3b: KalshiAutoBettor (rules reuse, paper mode) + tests green
+AS tasks written: API status lights lie (pinnacle feed id shared by PinnWire/pinnapi)
 
 ## Do this next
-app layer: VenueMode + KalshiHub + Kalshi tab
+wait for acct-27a37e Kalshi to land, claim AS, do AS1-AS3
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ app layer: VenueMode + KalshiHub + Kalshi tab
 
 ## Last ten checkpoints
 ```
+  707c22718 ckpt 3796: KV3b: KalshiAutoBettor (rules reuse, paper mode) + tests green
   ed4eb9c91 ckpt 3795: KV5 finder done (KalshiArb + Planner.planOne alias) tests green
   49d87ec9a ckpt 3794: KV3 core: KalshiBook, KalshiBetPlacer (whole contracts, rounded fee, IOC, l
   edfc06832 ckpt 3793: KV1 tests green (8). ApiBetPlanner reuse plan for Kalshi placer
@@ -25,8 +26,7 @@ app layer: VenueMode + KalshiHub + Kalshi tab
   42a9720a9 ckpt 3789: v1.0.11 released (CH31a/b/c-SX); Tj told
   48d2cc1c2 ckpt 3788: pre-release: Live paper records on the Live tab (graded: wins, return after
   29cf81e8d ckpt 3787: pre-ship: Live paper records on the Live tab (graded: wins, return after fe
-  225880a5d ckpt 3786: CH31a/b built: paper book, grader, Live-board lines, real/paper stakes (typ
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
