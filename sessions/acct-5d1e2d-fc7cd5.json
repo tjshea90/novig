@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-rlkku2",
- "head": "dea7514f732a35b10a2e54b4c805d26eacf44fc8",
+ "head": "1850b61ca8e25fb008cae21862c8c5390550532b",
  "since": 1792452137,
- "beat": 1792478400,
- "beatIso": "2026-10-20T06:40:00Z",
- "done": "CH33 merged +EV tab, CH34 bolt phone-socket guard, CH35 sheet height",
- "next": "ship v1.0.14 via ship.sh, release.yml, record-release, tell Tj"
+ "beat": 1792478439,
+ "beatIso": "2026-10-20T06:40:39Z",
+ "done": "pre-ship: v1.0.14: one +EV tab with Novig/Kalshi toggles and labelled rows (Kalshi tab out of the bar), bet slips open tall and scroll, phone never opens BoltOdds sockets while GitHub holds them",
+ "next": "ship.sh gates and releases this"
 }
