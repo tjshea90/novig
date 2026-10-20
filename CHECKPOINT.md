@@ -1,13 +1,13 @@
-# CHECKPOINT 3780 — read me first, then TASKS.md
+# CHECKPOINT 3781 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T00:15:59Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-el5i79` · **builds on:** `9f4871d14` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T00:47:55Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-el5i79` · **builds on:** `cff41cdcd` (this checkpoint is the commit after it)
 
 ## Just done
-CH31 claimed and written; bet-sheet fix CH28a built; chat watcher running
+Told Tj nothing is building yet; CH31 claimed, read LiveBoard.kt
 
 ## Do this next
-CH31a: read LiveBoard.kt, CloudLiveLane.kt, LiveSniper.kt, TailTaker.kt to find where the paper records are kept; then add Live-board cards; CH31c needs the BoltOdds /livescores and SX /live-scores shapes
+CH31a: find where the #1/#2 paper records are journaled (grep 'paper' in LiveSniper/TailTaker/LiveLightRunner), add a PaperRecordsCard to LiveBoard + UI; CH31c needs the BoltOdds /livescores and SX /live-scores shapes (Test sample); ship with CH28a
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ CH31a: read LiveBoard.kt, CloudLiveLane.kt, LiveSniper.kt, TailTaker.kt to find 
 
 ## Last ten checkpoints
 ```
+  4ee0f3dea ckpt 3780: CH31 claimed and written; bet-sheet fix CH28a built; chat watcher running
   9f4871d14 ckpt 3779: CH31 written
   d791b9483 ckpt 3778: CH29 written
   950c6b7c3 ckpt 3777: CH28a bet sheet re-expands on content growth (compiles)
@@ -25,5 +26,7 @@ CH31a: read LiveBoard.kt, CloudLiveLane.kt, LiveSniper.kt, TailTaker.kt to find 
   835c1573a ckpt 3773: pre-ship: v1.0.9: Tracker Yesterday + pick-a-day calendar with chart; engin
   9d5a7e018 ckpt 3772: CH27 tracker Yesterday + day picker built
   c982bb3f1 ckpt 3771: CH25 ThinFair guard built, full suite green
-  4c46fe7cd ckpt 3770: CH24 bidLevel 80
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
