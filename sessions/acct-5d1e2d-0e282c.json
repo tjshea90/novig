@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "f53bf4b6da2b2084f507d2b09ce34888dfc7e77f",
+ "head": "4b234de1dd2875d9982a9e2f6ffb94a40daca041",
  "since": 1792528851,
- "beat": 1792534890,
- "beatIso": "2026-10-20T22:21:30Z",
- "done": "pre-ship: v1.0.23: Kalshi rows follow the books-agree view filter; Kalshi bids may be 1 contract above Kelly (CH45)",
- "next": "ship.sh gates and releases this"
+ "beat": 1792534926,
+ "beatIso": "2026-10-20T22:22:06Z",
+ "done": "pre-release: v1.0.23: Kalshi rows follow the books-agree view filter; Kalshi bids may be 1 contract above Kelly (CH45) (versionCode 363, v1.0.23)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.23), then run: bash tools/record-release.sh v1.0.23 363 \"v1.0.23: Kalshi rows follow the books-agree view filter; Kalshi bids may be 1 contract above Kelly (CH45)\""
 }
