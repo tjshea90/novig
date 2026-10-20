@@ -24,4 +24,10 @@ data class TailLiveSettings(
     val bids: Boolean = false,
     /** Run the live tail lane on the GitHub engine (Tj, 2026-10-17, TCL109) whenever the engine drives and trades (paper or live); the phone's own copy then stands down. Off = the phone runs it. */
     val engine: Boolean = true,
+    /** The live paper records can bet real money (Tj, 2026-10-20, CH31): the lower tier (the model 75-89% sure) and the score-event buys (the same sides in the minutes after a score). Off = paper only. */
+    val shadowReal: Boolean = false,
+    val scoreReal: Boolean = false,
+    /** What each of those bets stakes: [paperStake] dollars typed in, or, when [paperKelly] is above 0, that fraction of the Kelly stake for its edge on the wallet. */
+    val paperStake: Double = 0.10,
+    val paperKelly: Double = 0.0,
 )

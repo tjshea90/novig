@@ -102,6 +102,8 @@ class TailTaker(
     private val pause: suspend (Long) -> Unit = { delay(it) },
     private val newClientId: () -> String = { NovigTradingClient.newClientId() },
     private val lock: Mutex? = null,
+    /** The lower tier's and the score-event buys' stake setting (CH31). */
+    private val paperStake: () -> PaperStake = { PaperStake() },
 ) {
     private val _status = MutableStateFlow(LiveTradeStatus())
     val status: StateFlow<LiveTradeStatus> = _status.asStateFlow()
@@ -121,6 +123,8 @@ class TailTaker(
         scope.launch { attempt(o)?.let(onRecord) }
     }
 
+    private fun paperTier(rule: String) = rule == LiveLightScan.SHADOW_REAL || rule == LiveLightScan.SCORE_REAL
+
     private fun skip(why: String): LiveRecord? {
         _status.value = _status.value.let { it.copy(skipped = it.skipped + (why to (it.skipped[why] ?: 0) + 1)) }
         return null
@@ -133,12 +137,12 @@ class TailTaker(
         val start = clock()
         if (r.halted != null || start - haltedAtMs < LiveTradeLimits.HALT_GRACE_MS) return skip("halted")
         if (r.bet && start < standDownUntil) return skip("stood down")
-        if (c.rule != CONSERVATIVE && c.rule != LiveLightScan.RULE && c.rule != LiveLightCurve.RULE && c.rule != LiveLightScan.MID) return skip("not the conservative rules")
+        if (c.rule != CONSERVATIVE && c.rule != LiveLightScan.RULE && c.rule != LiveLightCurve.RULE && c.rule != LiveLightScan.MID && !paperTier(c.rule)) return skip("not the conservative rules")
         // A curve bet is an alternate line out of line with its neighbours, not a decided game: a lower fair is believed, and only for a bigger edge.
         val curve = c.rule == LiveLightCurve.RULE
-        val minFair = if (curve) TailTradeLimits.MIN_FAIR_CURVE else if (c.rule == LiveLightScan.MID) TailTradeLimits.MIN_FAIR_MID else if (c.rule == LiveLightScan.RULE) TailTradeLimits.MIN_FAIR_LIGHT else TailTradeLimits.MIN_FAIR
+        val minFair = if (curve) TailTradeLimits.MIN_FAIR_CURVE else if (paperTier(c.rule)) LiveLightRunner.SHADOW_MIN_FAIR else if (c.rule == LiveLightScan.MID) TailTradeLimits.MIN_FAIR_MID else if (c.rule == LiveLightScan.RULE) TailTradeLimits.MIN_FAIR_LIGHT else TailTradeLimits.MIN_FAIR
         if (c.fair < minFair) return skip("fair under ${(minFair * 100).toInt()}%")
-        val floor = maxOf(minEdge(), if (curve) TailTradeLimits.MIN_EDGE_CURVE else if (c.rule == LiveLightScan.MID) TailTradeLimits.MIN_EDGE_MID else 0.0)
+        val floor = maxOf(minEdge(), if (curve) TailTradeLimits.MIN_EDGE_CURVE else if (c.rule == LiveLightScan.MID || paperTier(c.rule)) TailTradeLimits.MIN_EDGE_MID else 0.0)
         if (c.edge < floor) return skip("edge under your minimum")
         if (c.edge > (if (o.confirm != null) TailTradeLimits.MAX_EDGE_CONFIRMED else TailTradeLimits.MAX_EDGE)) return skip("edge too large to be real")
         if (r.bet) gate()?.let { return skip(it) }
@@ -174,8 +178,8 @@ class TailTaker(
         val payout = EvMath.CONTRACT_PAYOUT_DOLLARS
         val perContract = (limit + Fees.takerFee(limit.coerceIn(0.001, 0.999), o.fee, true)) * payout
         // Experimental rules (the curve) trade a tenth-dollar stake (Tj, 2026-10-19) until proven; the original rules keep the setting.
-        val experimental = o.candidate.rule == LiveLightCurve.RULE || o.candidate.rule == LiveLightScan.MID
-        val stake = if (experimental) TailTradeLimits.EXPERIMENTAL_STAKE else r.stake.coerceIn(LiveTradeLimits.MIN_STAKE, LiveTradeLimits.MAX_STAKE)
+        val experimental = o.candidate.rule == LiveLightCurve.RULE || o.candidate.rule == LiveLightScan.MID || paperTier(o.candidate.rule)
+        val stake = if (paperTier(o.candidate.rule)) (paperStake().stakeFor(o.candidate.fair, limit + Fees.takerFee(limit.coerceIn(0.001, 0.999), o.fee, true)) ?: return null).coerceIn(PaperStake.MIN, PaperStake.MAX) else if (experimental) TailTradeLimits.EXPERIMENTAL_STAKE else r.stake.coerceIn(LiveTradeLimits.MIN_STAKE, LiveTradeLimits.MAX_STAKE)
         val today = history.filter { it.atMs >= dayStart(now) && it.mode == "BET" }
         val dayLeft = if (r.maxPerDay > 0) r.maxPerDay - today.sumOf { it.paid + it.feePaid } else Double.MAX_VALUE
         val gameLeft = if (r.maxPerGame > 0) r.maxPerGame - today.filter { it.eventId == o.candidate.eventId }.sumOf { it.paid + it.feePaid } else Double.MAX_VALUE

@@ -81,6 +81,8 @@ class LiveLightRunner(
     private val journal: (String) -> Unit = {},
     /** The live research records' paper bets (CH31): the shadow tier and the score-event record are kept here, graded when their games end, and their results go out in [LiveLightStatus.paper]. */
     private val paper: PaperBook? = null,
+    /** Whether the paper tiers bet real money, and the stake (CH31); the taker still needs the lane's own real-money switch. */
+    private val paperReal: () -> PaperStake = { PaperStake() },
 ) {
     private val lastScanLogged = HashMap<String, Long>()
     private val lastBidSkip = HashMap<String, String>()
@@ -423,8 +425,13 @@ class LiveLightRunner(
         val curve = LiveLightCurve.scan(points, game.ev.league, st, sides.associate { it.outcomeId to it.fair })
         // Middle tier (Tj, 2026-10-19): sides the model calls 80-89% sure trade for real at a tenth-dollar stake; 75-79% stays journal-only.
         val shadowFound = LiveLightScan.scan(points, game.ev.league, st, marginOf, shadowRules)
+        val sinceScore = scoreAt[eventId]?.let { now - it }
+        val pr = paperReal()
+        val inScoreWindow = sinceScore != null && sinceScore <= SCORE_WINDOW_MS
+        val realTier = shadowFound.filter { it.fair < rules.minFair && (pr.shadowReal || (pr.scoreReal && inScoreWindow)) }.map { it.copy(rule = if (pr.shadowReal) LiveLightScan.SHADOW_REAL else LiveLightScan.SCORE_REAL) }
+        val realIds = realTier.map { it.outcomeId }.toSet()
         val mid = shadowFound.filter { it.fair >= TailTradeLimits.MIN_FAIR_MID && it.fair < rules.minFair }.map { it.copy(rule = LiveLightScan.MID) }
-        val found = LiveLightScan.scan(points, game.ev.league, st, marginOf, rules) + mid + curve + TailScan.scan(points, st, marginOf, tailRules).map { it.copy(rule = TailTaker.CONSERVATIVE) }
+        val found = LiveLightScan.scan(points, game.ev.league, st, marginOf, rules) + mid.filter { it.outcomeId !in realIds } + realTier + curve + TailScan.scan(points, st, marginOf, tailRules).map { it.copy(rule = TailTaker.CONSERVATIVE) }
         // Shadow tier (CH2/CH5b, Tj 2026-10-18): sides the model calls 75-89% sure that would be +EV are only journaled, never offered, so their hit rate can be measured before minFair is lowered.
         for (c in shadowFound) {
             if (c.fair >= rules.minFair) continue
@@ -438,7 +445,6 @@ class LiveLightRunner(
             }
         }
         // Score-event record (paper, CH5a): for [SCORE_WINDOW_MS] after a score change, every side the shadow rules would back is journaled with the time since the score, so the lag of Novig's price can be measured before it is traded.
-        val sinceScore = scoreAt[eventId]?.let { now - it }
         if (sinceScore != null && sinceScore <= SCORE_WINDOW_MS) {
             for (c in shadowFound) {
                 if (now - (scoreLogged[c.outcomeId] ?: 0L) < SCORE_LOG_MS) continue

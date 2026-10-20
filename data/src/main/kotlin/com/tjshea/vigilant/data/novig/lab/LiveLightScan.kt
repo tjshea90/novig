@@ -38,6 +38,10 @@ object LiveLightScan {
     /** The middle tier (Tj, 2026-10-19: "tweak the minimum percentages for more fills ... real money just at 10 cent stakes"): sides the model calls [TailTradeLimits.MIN_FAIR_MID] to 90% sure. */
     const val MID = "light-mid"
 
+    /** The paper tiers bought for real (CH31): the lower tier, and the score-event buys. */
+    const val SHADOW_REAL = "light-shadow-real"
+    const val SCORE_REAL = "light-score-real"
+
     /** A league's usual full-game total (points, goals, runs): only ever used as a wide bound on what is still to come. */
     fun priorTotal(league: String): Double? = when (league) {
         "NFL" -> 45.0

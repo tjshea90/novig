@@ -41,6 +41,20 @@ data class PaperTierStats(val tier: String, val open: Int, val wins: Int, val lo
     val total: Int get() = open + wins + losses + pushes
 }
 
+/** Whether the paper tiers bet real money and with what stake (the settings, the wallet read now). [kelly] above 0 sizes a bet as that fraction of Kelly on [bankroll]; otherwise [dollars]. */
+data class PaperStake(val shadowReal: Boolean = false, val scoreReal: Boolean = false, val dollars: Double = 0.10, val kelly: Double = 0.0, val bankroll: Double? = null) {
+    /** The dollars to stake on a side whose chance is [fair] when one contract costs [cost] (price and fee) and pays 1; null when Kelly finds no edge. */
+    fun stakeFor(fair: Double, cost: Double): Double? {
+        if (kelly <= 0.0 || bankroll == null || bankroll <= 0.0) return dollars
+        val b = 1.0 / cost - 1.0
+        if (b <= 0.0) return null
+        val f = (fair * (b + 1.0) - 1.0) / b
+        return if (f <= 0.0) null else kelly * f * bankroll
+    }
+
+    companion object { const val MIN = 0.10; const val MAX = 25.0 }
+}
+
 object PaperGrade {
     /** WIN, LOSS or PUSH for [r] once [g] is final; null while the game is not over or its teams cannot be matched. */
     fun result(r: PaperRecord, g: EspnGame): String? {
