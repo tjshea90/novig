@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -68,7 +69,7 @@ fun KalshiBetSheet(hub: KalshiHub, ui: KalshiUi, o: Opportunity, now: Long, onDi
         plan = hub.plan(o, stake)
     }
     ModalBottomSheet(onDismissRequest = { if (!busy) onDismiss() }, sheetState = sheet) {
-        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).navigationBarsPadding()) {
+        Column(Modifier.fillMaxWidth().then(if (outcome == null) Modifier.fillMaxHeight(0.92f) else Modifier).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).navigationBarsPadding()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(o.selection, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)

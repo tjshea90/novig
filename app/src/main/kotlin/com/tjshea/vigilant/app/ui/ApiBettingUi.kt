@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -452,7 +453,9 @@ fun ApiBetSheet(
         if (contentHeight > 0 && state.currentValue != SheetValue.Hidden) runCatching { state.expand() }
     }
     ModalBottomSheet(onDismissRequest = { if (!sheet.placing || sheet.sent) onDismiss() }, sheetState = state) {
-        Box(Modifier.onSizeChanged { contentHeight = it.height }) {
+        // A fixed tall sheet while the bet is being set up (Tj, 2026-10-20, CH35: "the bet slips still don't open all the way"): a sheet that is only as tall as its content
+        // stayed where it first measured when the price re-read made the content longer, leaving the Place bet button under the navigation bar. The content scrolls inside it.
+        Box(Modifier.onSizeChanged { contentHeight = it.height }.then(if (sheet.result == null) Modifier.fillMaxHeight(0.92f) else Modifier)) {
             ApiBetSheetContent(sheet, onStake, onConfirm, onRefresh, onRepeat, onDismiss, onAddMoney, onTypeStake, onFundWallet, keySaved)
         }
     }
