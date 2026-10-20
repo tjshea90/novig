@@ -6019,6 +6019,6 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [x] CH37d built; shipping as v1.0.16
 
 ## CH38 (Tj chat 14:48 UTC, 2026-10-20)
-- [ ] CH38a find out why no Kalshi bids are resting (KalshiBidRunner: scan.maker off? tradingEnabled? key?) and fix/report
-- [ ] CH38b Engine tab: Kalshi stats (bets, bids, money) kept separate from Novig, both in one dashboard
-- [ ] CH38c answer: do Bids-tab settings in the app mirror to the GitHub engine's bid settings (CloudScanKey / cloud-config)? (screenshot t1792507705581-7402 attached, no words)
+- [x] CH38a cause: Kalshi bids need scan.maker AND tradingEnabled, both OFF by default (money switches); Engine Kalshi card now says which is off (KalshiMoney.bidLine)
+- [x] CH38b Kalshi money card on Engine > Money (KalshiMoney, KalshiMoneyTest)
+- [x] CH38c yes: bid settings are class BIDS in CloudScanKey and mirror to the engine
