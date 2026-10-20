@@ -45,6 +45,7 @@ class CloudMessagesOverridesTest {
         org.junit.Assert.assertFalse(CloudMessages.worthShowing(m("bet", 1)))
         org.junit.Assert.assertFalse(CloudMessages.worthShowing(m("info")))
         org.junit.Assert.assertTrue(CloudMessages.worthShowing(m("info", 1)))
+        org.junit.Assert.assertFalse(CloudMessages.worthShowing(m("research", 1)))
         org.junit.Assert.assertTrue(CloudMessages.worthShowing(m("alert")))
         org.junit.Assert.assertTrue(CloudMessages.worthShowing(m("recommendation")))
     }
