@@ -120,7 +120,14 @@ class CloudKalshiLane(
             return
         }
         val cfg = ec.config
-        val live = ec.mode == KalshiAutoMode.LIVE && hasKey()
+        // STOP ALL is Tj's alone and stops this lane too: every bid comes down and nothing is bet.
+        if (phone.killed) {
+            if (bidsUp) { bidRunner.stop("STOP ALL"); bidsUp = false }
+            last = KalshiEngineStatus(atMs = now, mode = ec.mode, rev = ec.rev, note = "stopped by STOP ALL", stopped = "STOP ALL", keyOnGitHub = hasKey())
+            publishStatus()
+            return
+        }
+        val live = ec.mode == KalshiAutoMode.LIVE && hasKey() && cfg.tradingEnabled
         val s = com.tjshea.vigilant.data.cloud.CloudEngine.forCloud(KalshiMirror.fairOdds(cfg.forScan(), phone))
         val t0 = clock()
         val srcs = sources(s).map { src -> BorrowedSource(src, novigHeld, { true }, clock, borrowProps = true) } + venue
