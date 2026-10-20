@@ -242,12 +242,23 @@ class KalshiHub(private val c: AppContainer) {
                 scanning = run.scanning,
                 progress = run.progress?.let { p -> if (p.total > 0) "${p.step} ${p.done}/${p.total}" else p.step },
                 result = result,
-                feed = result?.feed(cfg.scan)?.let { f -> f.filter { o -> !o.isLive } }.orEmpty(),
+                feed = feedOf(result, cfg.scan, it.bets),
                 scannedAtMs = result?.computedAtMs,
                 errors = run.report?.errors.orEmpty(),
             )
         }
     }
+
+    /** Keys of bets whose slip closed a moment ago and whose order has not been recorded (or has missed): off the list at the tap, back after [MISS_RESTORE_MS] if nothing went through (Tj, 2026-10-20, as the Novig lists do). */
+    private val provisional = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    /** The Kalshi list: the scan's +EV rows, minus the ones already bet (the record's own keys, so a rescan or a restart never brings one back) or just sent. */
+    private fun feedOf(result: ScanResult?, scan: com.tjshea.vigilant.data.scanner.ScanSettings, bets: List<TrackedBet>): List<Opportunity> {
+        val bet = bets.mapNotNullTo(HashSet()) { it.placedKey }
+        return result?.feed(scan)?.filter { o -> !o.isLive && o.key !in bet && o.key !in provisional }.orEmpty()
+    }
+
+    private fun refeed() = _ui.update { it.copy(feed = feedOf(it.result, cfg().scan, it.bets)) }
 
     private suspend fun afterScan(result: ScanResult) {
         refreshArbs()
@@ -349,14 +360,19 @@ class KalshiHub(private val c: AppContainer) {
 
     /** Places the bet in the app's own scope so the Bet sheet can close at the tap (Tj, 2026-10-20, CH32c); the result is a notification ([place]). */
     fun placeAsync(o: Opportunity, stake: Double, confirmedLimit: Double) {
-        c.appScope.launch { runCatching { place(o, stake, confirmedLimit) }.onFailure { if (it is CancellationException) throw it; KalshiNotes.failed(c.app, "Kalshi bet failed: ${o.selection}", it.message ?: it.javaClass.simpleName) } }
+        provisional += o.key
+        refeed()
+        c.appScope.launch {
+            // Whatever the order did, the key stays off for MISS_RESTORE_MS; after that only a recorded bet keeps it off.
+            launch { kotlinx.coroutines.delay(MISS_RESTORE_MS); provisional -= o.key; refeed() }
+            runCatching { place(o, stake, confirmedLimit) }.onFailure { if (it is CancellationException) throw it; KalshiNotes.failed(c.app, "Kalshi bet failed: ${o.selection}", it.message ?: it.javaClass.simpleName) } }
     }
 
     suspend fun refreshBets() {
         runCatching { settler.run() }
         val bets = tracker.all()
         val paper = paperTracker.all()
-        _ui.update { it.copy(bets = bets, paperBets = paper) }
+        _ui.update { it.copy(bets = bets, paperBets = paper, feed = feedOf(it.result, cfg().scan, bets)) }
     }
 
     fun refreshBalance() {
