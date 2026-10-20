@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-el5i79",
- "head": "f29798332a030d1002b1a246da4a38d0376853a4",
+ "head": "d96c529ff02147c2854e506e1805a05494d1e4e4",
  "since": 1792452137,
- "beat": 1792454573,
- "beatIso": "2026-10-20T00:02:53Z",
+ "beat": 1792454838,
+ "beatIso": "2026-10-20T00:07:18Z",
  "done": "WATCH 2026-10-19: engine healthy, no change",
  "next": "chat wake restarts watcher; EA4/EA10 open"
 }
