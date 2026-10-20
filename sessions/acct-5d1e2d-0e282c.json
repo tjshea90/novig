@@ -6,10 +6,10 @@
  "kind": "routine",
  "task": "rotation",
  "branch": "claude/optimistic-curie-bdsiln",
- "head": "379bfc7c1451067c5a1b9307eccfe710d633b3ce",
+ "head": "d958767df0ad05fc2f86925d7cea3fc1dddaa583",
  "since": 1792528851,
- "beat": 1792538453,
- "beatIso": "2026-10-20T23:20:53Z",
- "done": "CH46 closed by Tj",
- "next": "idle: watch chat; open: Kalshi toggle lag (CH45a) if Tj reports"
+ "beat": 1792538517,
+ "beatIso": "2026-10-20T23:21:57Z",
+ "done": "ANALYST 2026-10-20: no rule change",
+ "next": "idle; next slot normal"
 }
