@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "0e282c",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/optimistic-curie-bdsiln",
  "head": "379bfc7c1451067c5a1b9307eccfe710d633b3ce",
  "since": 1792528851,
- "beat": 1792538440,
- "beatIso": "2026-10-20T23:20:40Z",
+ "beat": 1792538453,
+ "beatIso": "2026-10-20T23:20:53Z",
  "done": "CH46 closed by Tj",
  "next": "idle: watch chat; open: Kalshi toggle lag (CH45a) if Tj reports"
 }
