@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/kalshi-vigilant-integration-v5u4ho",
- "head": "390e15c1d71dc2bf3a8b487ac99af52b5a58210d",
+ "head": "2852455ed50db6fd750e8c7b0d9f5cb860794d34",
  "since": 1792468198,
- "beat": 1792469807,
- "beatIso": "2026-10-20T04:16:47Z",
- "done": "KV8 settler + tests",
- "next": "KalshiHub"
+ "beat": 1792469974,
+ "beatIso": "2026-10-20T04:19:34Z",
+ "done": "KV6 KalshiHub (scan, bets, arb, venues) compiles",
+ "next": "UI: Tab.KALSHI + screens"
 }
