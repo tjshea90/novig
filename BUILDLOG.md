@@ -361,3 +361,4 @@ day that changes.
 | v1.0.20 | code 360 | 2026-10-20T20:57Z | v1.0.20: live bids on obvious +EV totals/spreads (middle tier 65-85% sure, bid 15% under fair)
 | v1.0.21 | code 361 | 2026-10-20T21:40Z | v1.0.21: live tail lane caps buys per game, no averaging down (CH43)
 | v1.0.22 | code 362 | 2026-10-20T21:46Z | v1.0.22: Kalshi slip hides the bet, bids round to 1 contract, Kalshi list from GitHub (CH44)
+| v1.0.23 | code 363 | 2026-10-20T22:29Z | v1.0.23: Kalshi rows follow the books-agree view filter; Kalshi bids may be 1 contract above Kelly (CH45)
