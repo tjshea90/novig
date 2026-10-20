@@ -485,12 +485,17 @@ class KalshiClient(
          * contracts behind it (a quarter of tight college alt lines, seen live 2026-09-25) says
          * nothing about the fair price. Missing size fields are given the benefit of the doubt.
          */
-        private fun tradable(m: MarketDto): Boolean {
+        private fun tradable(m: MarketDto, venue: Boolean = false): Boolean {
             if (m.status != null && m.status != "active" && m.status != "open") return false
             val bid = m.yes_bid_size_fp?.toDoubleOrNull()
             val ask = m.yes_ask_size_fp?.toDoubleOrNull()
-            return (bid == null || bid >= MIN_TOP_SIZE) && (ask == null || ask >= MIN_TOP_SIZE)
+            // The venue read (Kalshi as a place to bet, not as a fair line): any real size is a price one can take.
+            val min = if (venue) MIN_VENUE_SIZE else MIN_TOP_SIZE
+            return (bid == null || bid >= min) && (ask == null || ask >= min)
         }
+
+        /** The venue read keeps a market with at least one contract on each side of the top of the book. */
+        const val MIN_VENUE_SIZE = 1.0
 
         /** Contracts ($1 payout each) needed on each side of the best quote. */
         const val MIN_TOP_SIZE = 100.0
@@ -499,12 +504,14 @@ class KalshiClient(
          * One [RefEvent] per game, merging its game, spread and total events (they share an event
          * code). Home and away follow Kalshi's "away vs home" titles.
          */
-        fun parse(events: List<EventDto>, league: League, maxSpread: Double, now: Long): List<RefEvent> {
+        fun parse(events: List<EventDto>, league: League, maxSpread: Double, now: Long, venue: Boolean = false): List<RefEvent> {
             val byGame = events.groupBy { it.event_ticker.substringAfter('-', "") }.filterKeys { it.isNotEmpty() }
-            return byGame.mapNotNull { (code, group) -> game(code, group, league, maxSpread, now) }
+            // The venue read lists every market that can be bought, however wide its spread: the price is what the buyer pays.
+            val spread = if (venue) 1.0 else maxSpread
+            return byGame.mapNotNull { (code, group) -> game(code, group, league, spread, now, venue) }
         }
 
-        private fun game(code: String, group: List<EventDto>, league: League, maxSpread: Double, now: Long): RefEvent? {
+        private fun game(code: String, group: List<EventDto>, league: League, maxSpread: Double, now: Long, venue: Boolean = false): RefEvent? {
             val parsed = parseCode(group.first().event_ticker) ?: return null
             val gameEvent = group.firstOrNull { familyOf(it.series_ticker ?: it.event_ticker.substringBefore('-')) == MarketFamily.MONEYLINE }
             // Team codes, away first: the game markets' ticker suffixes in the order the event
@@ -537,6 +544,11 @@ class KalshiClient(
             val away = name(awayCode, 0) ?: return null
             val home = name(homeCode, 1) ?: return null
 
+            // The venue read names each price's market and side (what an order is placed on) and the size at that price.
+            fun rq(side: Side, decimal: Double, point: Double?, m: MarketDto, yes: Boolean): RefQuote =
+                if (!venue) RefQuote(side, decimal, point)
+                else RefQuote(side, decimal, point, "${m.ticker}|${if (yes) "yes" else "no"}", (if (yes) m.yes_ask_size_fp else m.yes_bid_size_fp)?.toDoubleOrNull())
+
             fun sideOfCode(c: String): Side? = when {
                 c.equals(awayCode, true) -> Side.AWAY
                 c.equals(homeCode, true) -> Side.HOME
@@ -547,19 +559,19 @@ class KalshiClient(
             // Moneyline: both teams' "wins" markets. Buying each team costs its own ask, so the
             // two asks form a two-way price with the spread as vig.
             if (gameEvent != null) {
-                val a = marketFor(awayCode)?.takeIf(::tradable)
-                val h = marketFor(homeCode)?.takeIf(::tradable)
+                val a = marketFor(awayCode)?.takeIf { tradable(it, venue) }
+                val h = marketFor(homeCode)?.takeIf { tradable(it, venue) }
                 val quotes = when {
                     a != null && h != null -> {
                         val qa = ExchangeQuote.toDecimal(price(a.yes_bid_dollars), price(a.yes_ask_dollars), maxSpread)
                         val qh = ExchangeQuote.toDecimal(price(h.yes_bid_dollars), price(h.yes_ask_dollars), maxSpread)
-                        if (qa != null && qh != null) listOf(RefQuote(Side.AWAY, qa.first, null), RefQuote(Side.HOME, qh.first, null)) else null
+                        if (qa != null && qh != null) listOf(rq(Side.AWAY, qa.first, null, a, true), rq(Side.HOME, qh.first, null, h, true)) else null
                     }
                     else -> (a ?: h)?.let { m ->
                         val q = ExchangeQuote.toDecimal(price(m.yes_bid_dollars), price(m.yes_ask_dollars), maxSpread) ?: return@let null
                         val yesSide = if (m === a) Side.AWAY else Side.HOME
                         val noSide = if (yesSide == Side.AWAY) Side.HOME else Side.AWAY
-                        listOf(RefQuote(yesSide, q.first, null), RefQuote(noSide, q.second, null))
+                        listOf(rq(yesSide, q.first, null, m, true), rq(noSide, q.second, null, m, false))
                     }
                 }
                 if (quotes != null) markets += RefBookMarket(BOOK_KEY, "Kalshi", LineKind.MONEYLINE, quotes, now)
@@ -577,12 +589,12 @@ class KalshiClient(
                 }
                 val stat = PropStats.KALSHI_SERIES[series]
                 for (m in e.markets) {
-                    if (!tradable(m)) continue
+                    if (!tradable(m, venue)) continue
                     val strike = if (firstInning) 0.5 else m.floor_strike ?: continue
                     // "Over X" loses at exactly X, unlike a sportsbook push, so only half points.
                     if (!PolymarketClient.isHalfPoint(strike)) continue
                     val (yes, no) = ExchangeQuote.toDecimal(price(m.yes_bid_dollars), price(m.yes_ask_dollars), maxSpread) ?: continue
-                    val overUnder = listOf(RefQuote(Side.OVER, yes, strike), RefQuote(Side.UNDER, no, strike))
+                    val overUnder = listOf(rq(Side.OVER, yes, strike, m, true), rq(Side.UNDER, no, strike, m, false))
                     val teamCode = m.ticker.substringAfterLast('-').trimEnd { it.isDigit() }
                     markets += when {
                         // "Bryce Young: 150+ passing yards": Yes = over 149.5.
@@ -600,7 +612,7 @@ class KalshiClient(
                             // "CAR wins by over 2.5": Yes = that team -2.5, No = the other +2.5.
                             val favorite = sideOfCode(teamCode) ?: continue
                             val dog = if (favorite == Side.AWAY) Side.HOME else Side.AWAY
-                            RefBookMarket(BOOK_KEY, "Kalshi", LineKind.SPREAD, listOf(RefQuote(favorite, yes, -strike), RefQuote(dog, no, strike)), now, period)
+                            RefBookMarket(BOOK_KEY, "Kalshi", LineKind.SPREAD, listOf(rq(favorite, yes, -strike, m, true), rq(dog, no, strike, m, false)), now, period)
                         }
                         else -> RefBookMarket(BOOK_KEY, "Kalshi", LineKind.TOTAL, overUnder, now, period)
                     }

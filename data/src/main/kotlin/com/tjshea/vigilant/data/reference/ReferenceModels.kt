@@ -19,7 +19,14 @@ enum class LineKind { MONEYLINE, SPREAD, TOTAL, TEAM_TOTAL, PLAYER_PROP }
  * [bookOutcomeId]: the book's own id for this selection, when the feed was asked for it (PropLine's
  * `includeBookIds`, only for the book Vigilant MGM prices): what its bet-slip link is built from.
  */
-data class RefQuote(val side: Side, val decimalOdds: Double, val point: Double?, val bookOutcomeId: String? = null)
+data class RefQuote(
+    val side: Side,
+    val decimalOdds: Double,
+    val point: Double?,
+    val bookOutcomeId: String? = null,
+    /** Contracts available at this price, when the venue publishes it (Kalshi's venue read; null everywhere else). */
+    val size: Double? = null,
+)
 
 /** One book's quote for one market of one event. */
 data class RefBookMarket(
