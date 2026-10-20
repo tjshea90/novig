@@ -5991,8 +5991,8 @@ Done 2026-10-20 (mirage): DashboardModel.apiHealth(st, meters) judges pinnapi/pi
 - [ ] KV11 follow-ups (after the first real Kalshi order): verify fee vs KalshiFees, tick sizes/price_ranges for bids, V2 vs legacy route; Kalshi orderbook read for bid competition (bestBid/bidLevels); engine-side arbitrage orders (needs both venues' accounts on the runner); engine_set.py support for kalshi.json; Kalshi tab in the floating widget/alerts
 
 ## CH32: four app fixes (Tj, app chat 2026-10-20, t1792473953952-0f0a) — one release with AS
-- [ ] CH32a chat draft survives switching tabs/apps (keep the typed text in the ViewModel / rememberSaveable + persisted).
-- [ ] CH32b Kalshi +EV bet slips say "Kalshi", not "Novig".
-- [ ] CH32c Kalshi bet slip closes right after Bet is pressed, like the Novig scanner.
-- [ ] CH32d Kalshi notifications: bet placed, bid filled, bet failed/timed out (like Novig's).
-- [ ] CH32e Kalshi slip starts at max(one contract cost, auto-entry stake) (Tj t1792474142690-802d)
+- [x] CH32a chat draft survives switching tabs/apps (keep the typed text in the ViewModel / rememberSaveable + persisted).
+- [x] CH32b Kalshi +EV bet slips say "Kalshi", not "Novig".
+- [x] CH32c Kalshi bet slip closes right after Bet is pressed, like the Novig scanner.
+- [x] CH32d Kalshi notifications: bet placed, bid filled, bet failed/timed out (like Novig's).
+- [x] CH32e Kalshi slip starts at max(one contract cost, auto-entry stake) (Tj t1792474142690-802d)
