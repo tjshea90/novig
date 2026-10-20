@@ -1,5 +1,7 @@
 package com.tjshea.vigilant.data.cloud
 
+import com.tjshea.vigilant.data.keys.KeyState
+import com.tjshea.vigilant.data.keys.ProviderView
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
