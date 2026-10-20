@@ -158,6 +158,18 @@ class SxBetLiveFeed(
         return events.values.mapNotNull { info -> SxLiveBuild.game(info, { h -> stream.books[h] }, stream.scores[info.eventId], stream.fixtureStatus[info.eventId], stream.lastMessageMs, now, r) }
     }
 
+    /** SX's score for the game Novig calls [home] vs [away] in [league] (CH31), with when SX last said it; null when SX has no live score for it. */
+    @Synchronized
+    fun scoreFor(league: String, home: String, away: String): com.tjshea.vigilant.data.novig.lab.AltScore? {
+        for (info in events.values) {
+            if (info.league.novigName != league) continue
+            val s = stream.scores[info.eventId] ?: continue
+            val g = SxScoreBoard.forMatch(info, s, home, away) ?: continue
+            return com.tjshea.vigilant.data.novig.lab.AltScore(g, s.atMs, "SX Bet")
+        }
+        return null
+    }
+
     @Synchronized
     internal fun update(ids: Set<String>?) {
         val now = clock()

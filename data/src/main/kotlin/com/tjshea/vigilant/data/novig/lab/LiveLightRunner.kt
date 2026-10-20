@@ -83,6 +83,8 @@ class LiveLightRunner(
     private val paper: PaperBook? = null,
     /** Whether the paper tiers bet real money, and the stake (CH31); the taker still needs the lane's own real-money switch. */
     private val paperReal: () -> PaperStake = { PaperStake() },
+    /** A live score from another source (SX Bet's socket) for a game ESPN's scoreboard does not list as live (CH31): league, Novig's home and away names. */
+    private val altScore: (league: String, home: String, away: String) -> AltScore? = { _, _, _ -> null },
 ) {
     private val lastScanLogged = HashMap<String, Long>()
     private val lastBidSkip = HashMap<String, String>()
@@ -95,7 +97,10 @@ class LiveLightRunner(
         val marketIds: List<String> = markets.map { it.marketId }
     }
 
-    private class Feed(val game: EspnGame, val atMs: Long)
+    private class Feed(val game: EspnGame, val atMs: Long, val source: String = "ESPN") {
+        /** The clock is trusted: ESPN's, or a baseball score (no clock). Another source's clocked score is for paper records only until its clock is verified. */
+        fun trustedFor(league: String) = source == "ESPN" || league == "MLB"
+    }
 
     private val _status = MutableStateFlow(LiveLightStatus())
     val status: StateFlow<LiveLightStatus> = _status.asStateFlow()
@@ -353,19 +358,20 @@ class LiveLightRunner(
         for (league in g.values.map { it.ev.league }.toSet()) {
             val path = LabClock.ESPN_PATHS[league] ?: continue
             val read = LabClock.scoreboardUrls(league, path).mapNotNull { u -> fetch(u)?.let { LabClock.parseEspn(it.body) } }
-            if (read.isEmpty()) continue   // no board answered at all (an empty board is an answer: its games get "no score")
+            val espnDown = read.isEmpty()   // no board answered at all (an empty board is an answer: its games get "no score")
             val boards = read.flatten()
             for (game in g.values.filter { it.ev.league == league }) {
                 val m = game.ev.matchup ?: continue
-                val e = boards.filter { it.live }.firstOrNull { TeamMatcher.similarity(it.home, m.home) >= 0.5 && TeamMatcher.similarity(it.away, m.away) >= 0.5 }
-                    ?: run {
-                        if (!feeds.containsKey(game.ev.eventId)) setLine(game.ev.eventId, "${game.ev.description}: no score (ESPN's ${league} scoreboard has no live game with these teams)")
-                        null
-                    } ?: continue
+                val espn = boards.filter { it.live }.firstOrNull { TeamMatcher.similarity(it.home, m.home) >= 0.5 && TeamMatcher.similarity(it.away, m.away) >= 0.5 }
+                val alt = if (espn == null) runCatching { altScore(league, m.home, m.away) }.getOrNull()?.takeIf { it.game.live && now - it.atMs <= STATE_MAX_AGE_MS } else null
+                val e = espn ?: alt?.game ?: run {
+                    if (!espnDown && !feeds.containsKey(game.ev.eventId)) setLine(game.ev.eventId, "${game.ev.description}: no score (ESPN's ${league} scoreboard has no live game with these teams, and no other source has one)")
+                    null
+                } ?: continue
                 val before = feeds[game.ev.eventId]?.game
                 if (before == null) recatalog = true
                 if (before != null && (before.homeScore != e.homeScore || before.awayScore != e.awayScore)) { scoreAt[game.ev.eventId] = now; scoreHot = true }
-                feeds[game.ev.eventId] = Feed(e, now)
+                feeds[game.ev.eventId] = if (espn != null) Feed(e, now) else Feed(e, alt!!.atMs, alt.source)
                 if (before == null || before.homeScore != e.homeScore || before.awayScore != e.awayScore || before.period != e.period || before.clockSec != e.clockSec) {
                     dirty += game.ev.eventId
                     signal.trySend(Unit)
@@ -405,9 +411,9 @@ class LiveLightRunner(
         if (points.isEmpty()) return skip("markets closed")
         val marginOf = { ref: String -> feed.game.marginOf(ref) }
         val sides = LiveLightScan.sides(points, game.ev.league, st, marginOf, rules)
-        manageBids(game, sides, feed.game, now)
+        manageBids(game, if (feed.trustedFor(game.ev.league)) sides else emptyList(), feed.game, now)
         val scoreText = "${feed.game.away} ${feed.game.awayScore} @ ${feed.game.home} ${feed.game.homeScore} · ${"%.0f".format(java.util.Locale.US, frac * 100)}% left · ${points.size} of ${game.lines.size} lines priced"
-        setLine(eventId, "$scoreText · closest: ${if (sides.isEmpty()) "the model cannot judge this game yet" else closestCall(sides)}")
+        setLine(eventId, "$scoreText${if (feed.source != "ESPN") " · score from ${feed.source}" else ""} · closest: ${if (sides.isEmpty()) "the model cannot judge this game yet" else closestCall(sides)}")
         if (now - (lastScanLogged[eventId] ?: 0L) >= JOURNAL_SCAN_MS) {
             lastScanLogged[eventId] = now
             jlog("scan") {
@@ -487,7 +493,7 @@ class LiveLightRunner(
                 put("eventId", eventId); put("event", game.ev.description); put("rule", c.rule); put("outcomeId", c.outcomeId); put("selection", offer.target.selection)
                 put("ask", c.ask); put("fair", cand.fair); put("edge", cand.edge); put("confirm", second); put("state", offer.state); put("score", "${feed.game.awayScore}-${feed.game.homeScore}"); put("clockSec", feed.game.clockSec); put("period", feed.game.period)
             }
-            runCatching { onOffer(offer) }
+            if (feed.trustedFor(game.ev.league)) runCatching { onOffer(offer) } else jlog("offer-held") { put("eventId", eventId); put("selection", offer.target.selection); put("why", "score from ${feed.source}: its clock is not verified, paper only") }
         }
     }
 

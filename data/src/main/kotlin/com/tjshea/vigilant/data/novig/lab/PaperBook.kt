@@ -55,6 +55,9 @@ data class PaperStake(val shadowReal: Boolean = false, val scoreReal: Boolean = 
     companion object { const val MIN = 0.10; const val MAX = 25.0 }
 }
 
+/** A live score from a source other than ESPN (SX Bet's), with when its source last said it. */
+data class AltScore(val game: EspnGame, val atMs: Long, val source: String)
+
 object PaperGrade {
     /** WIN, LOSS or PUSH for [r] once [g] is final; null while the game is not over or its teams cannot be matched. */
     fun result(r: PaperRecord, g: EspnGame): String? {
