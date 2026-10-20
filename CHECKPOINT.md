@@ -1,13 +1,13 @@
-# CHECKPOINT 3844 — read me first, then TASKS.md
+# CHECKPOINT 3845 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T21:39:47Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-8xou8q` · **builds on:** `1904542fa` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T21:47:05Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-8xou8q` · **builds on:** `bc045ea6d` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v1.0.22: Kalshi slip hides the bet, Kalshi bids round to 1 contract, Kalshi list scanned on GitHub (CH44) (versionCode 362, v1.0.22)
+v1.0.22 released (CH44)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.22), then run: bash tools/record-release.sh v1.0.22 362 "v1.0.22: Kalshi slip hides the bet, Kalshi bids round to 1 contract, Kalshi list scanned on GitHub (CH44)"
+CH44 follow-up: Kalshi auto-bet trap guard review (6h), arb from engine list
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  a05886dbd ckpt 3844: pre-release: v1.0.22: Kalshi slip hides the bet, Kalshi bids round to 1 con
   1904542fa ckpt 3843: pre-ship: v1.0.22: Kalshi slip hides the bet, Kalshi bids round to 1 contra
   ba23decc7 ckpt 3842: v1.0.21 shipped (CH43); release triggered
   ec34c5c2b ckpt 3841: pre-release: v1.0.21: live tail lane caps buys per game and never averages 
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   9305b7a25 ckpt 3837: pre-release: v1.0.20: live bids on obvious +EV totals/spreads (middle tier 
   5eb5ea12a ckpt 3836: pre-ship: v1.0.20: live bids on obvious +EV totals/spreads (middle tier 65-
   2c1343606 ckpt 3835: v1.0.19 released (CH40,41)
-  747a781ba ckpt 3834: pre-release: v1.0.19: refused-key API light, Kalshi Check key feedback, bid
 ```
