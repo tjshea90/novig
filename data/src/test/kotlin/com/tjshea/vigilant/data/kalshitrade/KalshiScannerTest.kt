@@ -69,7 +69,7 @@ class KalshiScannerTest {
         assertEquals(0.07 * 0.4 * 0.6, rav.quote!!.fee, 1e-9)
         assertEquals(0.40, rav.quote!!.price, 1e-12)
         assertEquals("KXNFLGAME-26OCT25BALDAL-BAL|yes", rav.outcome.bookRef!!.outcomeId)
-        assertEquals(250L, rav.quote!!.availableContracts)
+        assertEquals(250L, rav.ladder.first().contracts)
         assertTrue(rav.evPercent!! > 0.0)
         assertTrue(result.opportunities.single { it.selection == "Dallas Cowboys" }.evPercent!! < 0.0)
     }
