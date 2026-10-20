@@ -1,21 +1,23 @@
-# CHECKPOINT 3835 — read me first, then TASKS.md
+# CHECKPOINT 3836 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T19:58:23Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-s1h6ch` · **builds on:** `4f29dd6c4` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T20:46:37Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-4dhnse` · **builds on:** `dd65d3c4b` (this checkpoint is the commit after it)
 
 ## Just done
-v1.0.19 released (CH40,41)
+pre-ship: v1.0.20: live bids on obvious +EV totals/spreads (middle tier 65-85% sure, bid 15% under fair)
 
 ## Do this next
-CH42 live totals bids research; CH33b Kalshi in +EV
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  2c1343606 ckpt 3835: v1.0.19 released (CH40,41)
   747a781ba ckpt 3834: pre-release: v1.0.19: refused-key API light, Kalshi Check key feedback, bid
   21abaa9af ckpt 3833: pre-ship: v1.0.19: refused-key API light, Kalshi Check key feedback, bids m
   8cc77c975 ckpt 3832: pre-ship: CH40-41: refused-key API light, Kalshi Check key feedback, bids m
@@ -25,5 +27,7 @@ CH42 live totals bids research; CH33b Kalshi in +EV
   b2f6d849b ckpt 3828: pre-release: v1.0.18: Kalshi bids say in words why they are not posting (no
   861b1a5bb ckpt 3827: pre-ship: v1.0.18: Kalshi bids say in words why they are not posting (no ke
   fdfd8f61e ckpt 3826: pre-release: v1.0.17: Engine tab Money view shows Kalshi stats (bets, bids,
-  4ae216182 ckpt 3825: pre-ship: v1.0.17: Engine tab Money view shows Kalshi stats (bets, bids, wa
 ```
+
+(3 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
