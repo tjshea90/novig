@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-8xou8q",
- "head": "ec34c5c2b17a7cc8b00f19b96ffdb28b7e2b4c3a",
+ "head": "ba23decc7627dd4e0ff94b9ae1b5831895aa2909",
  "since": 1792528851,
- "beat": 1792531936,
- "beatIso": "2026-10-20T21:32:16Z",
- "done": "pre-release: v1.0.21: live tail lane caps buys per game and never averages down (CH43) (versionCode 361, v1.0.21)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.21), then run: bash tools/record-release.sh v1.0.21 361 \"v1.0.21: live tail lane caps buys per game and never averages down (CH43)\""
+ "beat": 1792531970,
+ "beatIso": "2026-10-20T21:32:50Z",
+ "done": "v1.0.21 shipped (CH43); release triggered",
+ "next": "CH44a-e Kalshi: bids <1 contract, slip Bet button, +EV rows, scan on GitHub"
 }
