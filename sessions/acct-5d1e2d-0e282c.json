@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-o9ngjz",
  "head": "5c5c38b0ae355831cfb50c56bd5a3f0c629a96ea",
  "since": 1792528851,
- "beat": 1792534339,
- "beatIso": "2026-10-20T22:12:19Z",
+ "beat": 1792534346,
+ "beatIso": "2026-10-20T22:12:26Z",
  "done": "pre-ship: v1.0.23: Kalshi rows follow the books-agree view filter; Kalshi bids may be 1 contract above Kelly (CH45)",
  "next": "ship.sh gates and releases this"
 }
