@@ -85,20 +85,24 @@ class CloudKalshiLane(
      * list is never delayed.
      */
     fun onNovigScan(novig: ScanResult, phone: ScanSettings) {
-        if (!lock.tryLock()) return
-        scope.launch {
-            try {
-                pass(novig, phone)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                log("kalshi lane failed: ${e.javaClass.simpleName}: ${e.message?.take(160)}")
-                last = last.copy(atMs = clock(), note = "the Kalshi pass failed: ${e.message?.take(120) ?: e.javaClass.simpleName}")
-                publishStatus()
-            } finally {
-                lock.unlock()
-            }
+        scope.launch { runOnce(novig, phone) }
+    }
+
+    /** One Kalshi pass now, unless one is running (false then). The engine calls it through [onNovigScan]; the tests call it directly. */
+    suspend fun runOnce(novig: ScanResult, phone: ScanSettings): Boolean {
+        if (!lock.tryLock()) return false
+        try {
+            pass(novig, phone)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            log("kalshi lane failed: ${e.javaClass.simpleName}: ${e.message?.take(160)}")
+            last = last.copy(atMs = clock(), note = "the Kalshi pass failed: ${e.message?.take(120) ?: e.javaClass.simpleName}")
+            publishStatus()
+        } finally {
+            lock.unlock()
         }
+        return true
     }
 
     private fun publishStatus() = runCatching { publish(KalshiEngineStatus.FILE, KalshiEngineStatus.text(last)) }
