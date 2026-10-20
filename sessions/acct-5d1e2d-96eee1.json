@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-s1h6ch",
- "head": "89fb0aff55ff265d64dcd4dcd518233925ff19db",
+ "head": "68b44bfb94f552ee41abee97bf913dc8e028db2c",
  "since": 1792524186,
- "beat": 1792524604,
- "beatIso": "2026-10-20T19:30:04Z",
- "done": "",
- "next": ""
+ "beat": 1792524664,
+ "beatIso": "2026-10-20T19:31:04Z",
+ "done": "CH40a/b done, tests pass; ship next",
+ "next": "ship.sh release for CH40, then CH33b Kalshi in +EV"
 }
