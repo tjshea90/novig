@@ -353,3 +353,4 @@ day that changes.
 | v1.0.12 | code 352 | 2026-10-20T04:56Z | v1.0.12: Kalshi beside Novig: a Kalshi tab with its own +EV list, bets, auto-bet, bids, sure-profit arbitrage between the two venues, venue switches (Novig / Kalshi / both), and a GitHub engine Kalshi lane (off by default)
 | v1.0.13 | code 353 | 2026-10-20T05:44Z | v1.0.13: API status lights fixed, 'X is working again' message, chat draft kept, Kalshi slip fixes + notifications
 | v1.0.14 | code 354 | 2026-10-20T06:50Z | v1.0.14: one +EV tab with Novig/Kalshi toggles and labelled rows (Kalshi tab out of the bar), bet slips open tall and scroll, phone never opens BoltOdds sockets while GitHub holds them
+| v1.0.15 | code 355 | 2026-10-20T07:09Z | v1.0.15: Research page in the Claude tab (daily analysis summary)
