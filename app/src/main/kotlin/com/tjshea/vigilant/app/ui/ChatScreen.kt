@@ -78,6 +78,9 @@ import java.util.Locale
  * with Retry); the newest stays at the bottom, also when the keyboard opens; a reply quotes the message it answers when that is not right above it; the line at the top says whether Claude is there.
  * Only one Claude account (acct-5d1e2d, mirage) answers. This draws state and calls back; the send queue and the reading are [com.tjshea.vigilant.data.cloud.ChatSync]'s.
  */
+/** The unsent chat text, kept while the app runs so leaving the tab (or the app) and coming back finds it. */
+private object ChatDraft { val text = androidx.compose.runtime.mutableStateOf("") }
+
 @Composable
 fun ChatPage(
     chat: ChatState,

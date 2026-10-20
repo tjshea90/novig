@@ -6,7 +6,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.tjshea.vigilant.R
 import com.tjshea.vigilant.app.ScanService
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import java.util.Locale
