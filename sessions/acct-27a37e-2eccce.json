@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/kalshi-vigilant-integration-v5u4ho",
- "head": "49d87ec9a6e2f6fc8654e45f943fdd447afe0e75",
+ "head": "ed4eb9c9183a6720346909fba452a98e4842a41c",
  "since": 1792468198,
- "beat": 1792469108,
- "beatIso": "2026-10-20T04:05:08Z",
- "done": "KV3 core: KalshiBook, KalshiBetPlacer (whole contracts, rounded fee, IOC, lost-answer lookup) + tests green; KALSHI_API.md TRADING section",
- "next": "KV3b KalshiAutoBet rules; KV5 arbitrage; then app: KalshiHub + tab"
+ "beat": 1792469308,
+ "beatIso": "2026-10-20T04:08:28Z",
+ "done": "KV5 finder done (KalshiArb + Planner.planOne alias) tests green",
+ "next": "KV3b KalshiAutoBet then app layer (KalshiHub, VenueMode, tab)"
 }
