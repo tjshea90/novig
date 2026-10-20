@@ -1596,6 +1596,8 @@ data class ScanGuards(
      */
     val bidDeploy: Boolean = true,
     val bidDeployPct: Int = 90,
+    /** Most the bids resting may be worth, as a percent of the wallet (Tj, 2026-10-20, CH41: "4 times the money in the wallet"): 100 = the wallet (as before), 200 / 300 / 400, or a typed percent. Novig holds no cash behind a resting bid. */
+    val bidWalletPct: Int = 100,
     val bidDeployKelly: Int = 25,
     /**
      * The most Vigilant's BIDS put on one game, dollars and bids (Tj, 2026-10-14: "I only want so many bids/money on each game. Make it diversify bids among many games and bid types"). 0 = no limit.

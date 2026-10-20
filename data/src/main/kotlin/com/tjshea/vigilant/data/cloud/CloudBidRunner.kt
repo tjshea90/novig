@@ -102,7 +102,7 @@ class CloudBidRunner(
             halted.isNotEmpty() -> halted
             else -> null
         }
-        val wallet = port.cash()?.let { c -> if (s.liveBid) c * (1.0 - s.liveBidLimits.pregameLeavesShare.coerceIn(0.0, 0.95)) else c }
+        val wallet = port.cash()?.let { c -> if (s.liveBid) c * (1.0 - s.liveBidLimits.pregameLeavesShare.coerceIn(0.0, 0.95)) else c }?.let { it * s.vigGuards.bidWalletPct.coerceIn(100, 2000) / 100.0 }
         val cloud = lane.current?.takeIf { now - it.atMs <= MAX_LIST_AGE_MS }
         val mine = desk.bids().filter { it.active || (it.filled > 0 && it.fairAtFill == null) }.mapTo(HashSet()) { it.outcomeId }
         var placed = 0; var cancelled = 0; var fills = ArrayList<TrackedBet>()

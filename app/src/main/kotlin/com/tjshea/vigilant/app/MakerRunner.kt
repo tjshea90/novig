@@ -239,7 +239,7 @@ class MakerRunner(
      * the bids up add up to more than the reading ([overWallet]), whatever auto-make is set to. Null when nothing needed doing or betting isn't set up.
      */
     /** The wallet as the pregame desk may use it: less the share it leaves for the live engines while live bids are on (RESEARCH.md §125; Tj, 2026-10-10: the pregame bids held the whole wallet). */
-    private fun forBids(wallet: Double, s: ScanSettings): Double = if (s.liveBid) wallet * (1.0 - s.liveBidLimits.pregameLeavesShare.coerceIn(0.0, 0.95)) else wallet
+    private fun forBids(wallet: Double, s: ScanSettings): Double = (if (s.liveBid) wallet * (1.0 - s.liveBidLimits.pregameLeavesShare.coerceIn(0.0, 0.95)) else wallet) * s.vigGuards.bidWalletPct.coerceIn(100, 2000) / 100.0
 
     suspend fun fitToWallet(why: String): MakerDesk.Report? = passes.withLock {
         val desk = desk() ?: return@withLock null

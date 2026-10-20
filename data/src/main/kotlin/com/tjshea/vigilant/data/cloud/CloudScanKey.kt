@@ -39,7 +39,7 @@ object CloudScanKey {
         "makerObscureFill", "makerObscureMargin", "makerObscureSharpMinEv", "makerObscureAgreePoints", "makerObscureMinBooks", "makerObscureStake", "makerBothSides", "makerMinBooks", "makerLongRun",
         "lowUsagePace", "lowUsageMargin", "sharpVetoMinEv", "trapEarlyHours", "trapBidHours", "trapNovigMove", "trapFirstListed", "apiMaxPerGame", "apiMaxStake",
         "gates.profitProven", "gates.repeatGuard", "gates.repeatMaxBets", "gates.repeatMaxDollars", "gates.repeatHedge", "gates.repeatMaxLines",
-        "vigGuards.bidLevel", "vigGuards.bidMany", "vigGuards.bidDeploy", "vigGuards.bidDeployPct", "vigGuards.bidDeployKelly", "vigGuards.bidPerGameDollars", "vigGuards.bidPerGameBids",
+        "vigGuards.bidLevel", "vigGuards.bidMany", "vigGuards.bidDeploy", "vigGuards.bidDeployPct", "vigGuards.bidWalletPct", "vigGuards.bidDeployKelly", "vigGuards.bidPerGameDollars", "vigGuards.bidPerGameBids",
         "vigGuards.bidWhileScanning", "vigGuards.bidFarLane", "vigGuards.bidVolume", "guards.bidGuard", "guards.bidGuardMinutes",
     )
 
