@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-yis368",
- "head": "4ae216182023fae929f5ef93439eb81e7d1a055a",
+ "head": "fdfd8f61e7741f9b7bd1c25048ee101f48c5d57b",
  "since": 1792452137,
- "beat": 1792508386,
- "beatIso": "2026-10-20T14:59:46Z",
- "done": "pre-ship: v1.0.17: Engine tab Money view shows Kalshi stats (bets, bids, wallet) apart from Novig, and says why Kalshi bids are not resting",
- "next": "ship.sh gates and releases this"
+ "beat": 1792508419,
+ "beatIso": "2026-10-20T15:00:19Z",
+ "done": "pre-release: v1.0.17: Engine tab Money view shows Kalshi stats (bets, bids, wallet) apart from Novig, and says why Kalshi bids are not resting (versionCode 357, v1.0.17)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.17), then run: bash tools/record-release.sh v1.0.17 357 \"v1.0.17: Engine tab Money view shows Kalshi stats (bets, bids, wallet) apart from Novig, and says why Kalshi bids are not resting\""
 }
