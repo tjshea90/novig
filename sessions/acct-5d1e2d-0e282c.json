@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-4dhnse",
- "head": "9305b7a25a9607b7363ddbb7f1cb9e2c724511fd",
+ "head": "f2276d57f382aee660ea2b41cd7d93673c424901",
  "since": 1792528851,
- "beat": 1792529860,
- "beatIso": "2026-10-20T20:57:40Z",
- "done": "pre-release: v1.0.20: live bids on obvious +EV totals/spreads (middle tier 65-85% sure, bid 15% under fair) (versionCode 360, v1.0.20)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.20), then run: bash tools/record-release.sh v1.0.20 360 \"v1.0.20: live bids on obvious +EV totals/spreads (middle tier 65-85% sure, bid 15% under fair)\""
+ "beat": 1792530690,
+ "beatIso": "2026-10-20T21:11:30Z",
+ "done": "v1.0.20 released (CH42 live bids mid tier)",
+ "next": "CH42 follow-up: read Diagnostics LIVE LIGHT bid wants once a game is live; CH33b Kalshi in +EV"
 }
