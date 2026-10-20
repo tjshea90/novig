@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "d958767df0ad05fc2f86925d7cea3fc1dddaa583",
+ "head": "36558cfbcefb54ab5e7e29e788c33cc4f96a9d1a",
  "since": 1792539161,
- "beat": 1792539846,
- "beatIso": "2026-10-20T23:44:06Z",
- "done": "",
- "next": ""
+ "beat": 1792540014,
+ "beatIso": "2026-10-20T23:46:54Z",
+ "done": "CH47: tools/parlay.py + parlay.yml (plans, probe)",
+ "next": "dispatch parlay.yml task plans then probe; read samples; build arb leads + PBP score source"
 }
