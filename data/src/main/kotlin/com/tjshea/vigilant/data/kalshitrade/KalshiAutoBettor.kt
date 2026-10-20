@@ -60,8 +60,8 @@ class KalshiAutoBettor(
     private val paperTracker: BetTracker?,
     private val wallet: suspend () -> Double?,
     private val clock: () -> Long = System::currentTimeMillis,
-    /** The injury tag of a bet's player (a prop), by [Opportunity.key], or null. */
-    private val injuryOf: (Opportunity) -> String? = { null },
+    /** The injury report of a bet's player (a prop), or null. */
+    private val injuryOf: (Opportunity) -> com.tjshea.vigilant.data.reference.Injury? = { null },
     /** When a bet was first listed, by key, for the trap guard's second rule. */
     private val firstListed: (Opportunity) -> Long? = { null },
     /** The bet as decided ([AtBet]), kept on the bet once it fills. */
