@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-rlkku2",
  "head": "b8170c54dbdd3484219c7e7cbbad4be226e93de7",
  "since": 1792452137,
- "beat": 1792479508,
- "beatIso": "2026-10-20T06:58:28Z",
+ "beat": 1792479728,
+ "beatIso": "2026-10-20T07:02:08Z",
  "done": "pre-ship: v1.0.15: Research page in the Claude tab (daily analysis summary)",
  "next": "ship.sh gates and releases this"
 }
