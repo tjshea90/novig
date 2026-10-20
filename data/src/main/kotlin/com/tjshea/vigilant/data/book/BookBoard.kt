@@ -40,6 +40,8 @@ class BookBoard private constructor(
     val games: List<Game>,
     /** When the scan that built this board fetched it: every line's "price read at". */
     val fetchedAtMs: Long,
+    /** What taking a price on this board costs: none for a sportsbook, Kalshi's schedule for Kalshi. */
+    val fee: MarketFee = NO_FEE,
 ) {
     class Game(
         val league: League,
@@ -105,7 +107,7 @@ class BookBoard private constructor(
                     status = "OPEN",
                     description = description(game, line, type),
                     startsTs = game.event.startsTs,
-                    fee = NO_FEE,
+                    fee = fee,
                     outcomes = outcomes.map { it.first },
                 )
                 planned += PlannedMarket(
@@ -114,7 +116,7 @@ class BookBoard private constructor(
                 )
                 books[marketId] = NovigBook(
                     marketId, 0, emptyMap(), fetchedAtMs,
-                    posted = outcomes.associate { (o, q, _) -> o.outcomeId to listOf(TakeLevel(1.0 / q.decimalOdds, DEPTH)) },
+                    posted = outcomes.associate { (o, q, _) -> o.outcomeId to listOf(TakeLevel(1.0 / q.decimalOdds, q.size?.toLong()?.coerceAtLeast(0L) ?: DEPTH)) },
                 )
                 line.lastUpdateMs?.let { seen[marketId] = it }
                 any = true
@@ -142,7 +144,7 @@ class BookBoard private constructor(
          * matchup: a later feed adds only games and lines the earlier ones didn't have. [fetchedAtMs]:
          * when this scan read them.
          */
-        fun build(book: Sportsbook, snapshots: List<RefSnapshot>, fetchedAtMs: Long, now: Long): BookBoard {
+        fun build(book: Sportsbook, snapshots: List<RefSnapshot>, fetchedAtMs: Long, now: Long, fee: MarketFee = NO_FEE): BookBoard {
             class Building(val league: League, val event: NovigEvent, val home: String, val away: String) {
                 val lines = LinkedHashMap<String, RefBookMarket>()
             }
@@ -181,7 +183,7 @@ class BookBoard private constructor(
                     }
                 }
             }
-            return BookBoard(book, games.values.map { Game(it.league, it.event, it.home, it.away, it.lines) }, fetchedAtMs)
+            return BookBoard(book, games.values.map { Game(it.league, it.event, it.home, it.away, it.lines) }, fetchedAtMs, fee)
         }
 
         /**

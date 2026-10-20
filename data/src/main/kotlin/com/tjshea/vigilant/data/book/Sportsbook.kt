@@ -24,7 +24,13 @@ enum class Sportsbook(
     val exchange: Boolean,
 ) {
     NOVIG("novig", "Novig", "novig", "17", "NV", exchange = true),
-    BETMGM("betmgm", "BetMGM", "betmgm", "4", "MGM", exchange = false);
+    BETMGM("betmgm", "BetMGM", "betmgm", "4", "MGM", exchange = false),
+
+    /**
+     * Kalshi as a second place to bet beside Novig (KV, Tj 2026-10-20). Never a build's own book (`BuildConfig.BOOK` stays novig/betmgm): only the Kalshi scanner
+     * ([com.tjshea.vigilant.data.kalshitrade.KalshiScanner]) uses it to name the venue in a [BookBoard].
+     */
+    KALSHI("kalshi", "Kalshi", "kalshi", "", "", exchange = true);
 
     companion object {
         /** The book for a build's id; Novig for anything unknown (the original app). */
