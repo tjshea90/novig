@@ -29,13 +29,17 @@ data class LiveLightBidRules(
     val minPrice: Double = 0.30,
     val maxPrice: Double = 0.95,
     val keepEv: Double = 0.03,
+    /** The middle tier (Tj, 2026-10-20, CH42: bids on obvious +EV totals): a side the model rates at least [midFair] but under [minFair] is bid [midMargin] under its fair, a wider cushion for a less certain call. */
+    val midFair: Double = 0.65,
+    val midMargin: Double = 0.15,
 )
 
 object LiveLightBids {
     /** Post a bid at the price that keeps [LiveLightBidRules.margin] under [sf]'s fair, or say why not (fixed words, counted). */
     fun judge(sf: LiveLightScan.SideFair, rules: LiveLightBidRules): LiveBidVerdict {
-        if (sf.fair < rules.minFair) return LiveBidVerdict.Skip("not decided enough to bid")
-        val price = PriceGrid.floor(sf.fair / (1.0 + rules.margin)) ?: return LiveBidVerdict.Skip("price outside the window")
+        if (sf.fair < rules.midFair) return LiveBidVerdict.Skip("not decided enough to bid")
+        val margin = if (sf.fair >= rules.minFair) rules.margin else maxOf(rules.margin, rules.midMargin)
+        val price = PriceGrid.floor(sf.fair / (1.0 + margin)) ?: return LiveBidVerdict.Skip("price outside the window")
         if (price < rules.minPrice - 1e-9 || price > rules.maxPrice + 1e-9) return LiveBidVerdict.Skip("price outside the window")
         // Post-only: a bid at or over what Novig offers would take and is refused whole.
         if (!sf.ask.isNaN() && price >= sf.ask - com.tjshea.vigilant.data.novig.trading.maker.MakerQuote.step(price) + 1e-9) return LiveBidVerdict.Skip("Novig already offers it near that price (a bet, not a bid)")
