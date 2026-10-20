@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-s1h6ch",
- "head": "8cc77c975e0c0be43fc57c50a4e1a8681a68e67e",
+ "head": "21abaa9af5fecff1f3899970247a5cb2f0f1c11f",
  "since": 1792524186,
- "beat": 1792525566,
- "beatIso": "2026-10-20T19:46:06Z",
- "done": "pre-ship: CH40-41: refused-key API light, Kalshi Check key feedback, bids may reach 200-400% of wallet (typed too)",
+ "beat": 1792525608,
+ "beatIso": "2026-10-20T19:46:48Z",
+ "done": "pre-ship: v1.0.19: refused-key API light, Kalshi Check key feedback, bids may reach 200-400% of wallet",
  "next": "ship.sh gates and releases this"
 }
