@@ -6053,3 +6053,8 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [ ] CH47a read parlay-api.com docs fully (save to research/parlayapi_pro_2026-10-20/), compare with PARLAY_API.md
 - [ ] CH47b find which key is Pro (engine usage.json limit/plan), what Pro adds: speed, limits, SSE/WebSocket live feed, scores
 - [ ] CH47c build: engine + app use Pro features (paid-first key, live feed, live scores source); tests; ship
+- [x] CH47a docs saved research/parlayapi_pro_2026-10-20/docs.txt; Pro key = engine key #2 (100k credits; tools/parlay.py + parlay.yml plans/probe; samples in Release parlay-samples)
+- [ ] CH47d PBP SSE live score source (data/parlay): real frame: matches[{match_id=ESPN id, primary_source espn_nba, team_or_player_a/b, score_a/b, state{clock,period,description}, in_play, last_event_age_seconds}]; altScore for LiveLightRunner, trusted when primary_source espn_*; paper-compare vs ESPN
+- [ ] CH47e arb leads: /v1/sports/{sp}/arbitrage (side_a/side_b bookmaker,odds) + /v1/inplay/arbs (over/under) filtered to novig+kalshi legs, shown as leads on the Kalshi arb page, re-priced by KalshiArb before any order
+- [ ] CH47f tennis live (Tj 23:47: live auto bets+bids on tennis): record PBP tennis frames when live (no match live at 23:49 UTC), then a tennis live model, PAPER first
+- [ ] CH47g judge /consensus and /line-movement from real samples (add to tools/parlay.py probe), use if they beat our own
