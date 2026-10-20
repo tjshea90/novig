@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-ohsc4m",
  "head": "464bc2bb5a8ee359163f84dd5281c454b881cd0b",
  "since": 1792452137,
- "beat": 1792518128,
- "beatIso": "2026-10-20T17:42:08Z",
+ "beat": 1792519951,
+ "beatIso": "2026-10-20T18:12:31Z",
  "done": "CHAT wake: v1.0.16-1.0.18 shipped (CH37-39 Kalshi slip/colours/Engine card/bid reason)",
  "next": "Wait for Tj's reading of the Kalshi bid status line, then fix the cause (CH39)"
 }
