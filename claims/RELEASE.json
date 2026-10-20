@@ -7,5 +7,5 @@
  "nonce": "fc7cd5",
  "note": "v1.0.13: API status lights fixed (pinnapi refused = red, PinnWire lit), 'X is working again' message, chat draft kept across tabs, Kalshi slips say Kalshi + close at tap + minimum contract, Kalshi notifications",
  "since": 1792474524,
- "beat": 1792474792
+ "beat": 1792475061
 }
