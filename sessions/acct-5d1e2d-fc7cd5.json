@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-el5i79",
- "head": "950c6b7c3daa41f8020a70be42fa2850a6aafa8c",
+ "head": "d791b9483805ab6c63ae5bfdc6b671d84b674529",
  "since": 1792452137,
- "beat": 1792454875,
- "beatIso": "2026-10-20T00:07:55Z",
- "done": "CH28a bet sheet re-expands on content growth (compiles)",
- "next": "ship with next release; chat quiet"
+ "beat": 1792455022,
+ "beatIso": "2026-10-20T00:10:22Z",
+ "done": "CH29 written",
+ "next": "CH29a"
 }
