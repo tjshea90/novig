@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/fc7cd5",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "fc7cd5",
+ "note": "bet slip opens to full height as its content grows (CH28a)",
+ "since": 1792457334,
+ "beat": 1792457334
+}

@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-el5i79",
  "head": "882d4504b7b40fb6175027eeee462d8f6a35dc50",
  "since": 1792452137,
- "beat": 1792457275,
- "beatIso": "2026-10-20T00:47:55Z",
+ "beat": 1792457334,
+ "beatIso": "2026-10-20T00:48:54Z",
  "done": "Told Tj nothing is building yet; CH31 claimed, read LiveBoard.kt",
  "next": "CH31a: find where the #1/#2 paper records are journaled (grep 'paper' in LiveSniper/TailTaker/LiveLightRunner), add a PaperRecordsCard to LiveBoard + UI; CH31c needs the BoltOdds /livescores and SX /live-scores shapes (Test sample); ship with CH28a"
 }
