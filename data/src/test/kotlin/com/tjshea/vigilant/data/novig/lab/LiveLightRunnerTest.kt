@@ -69,10 +69,10 @@ class LiveLightRunnerTest {
         override fun held(outcomeId: String) = heldPrice?.takeIf { outcomeId == "m1-b" }?.let { com.tjshea.vigilant.data.livebid.LiveBidHeld(it, 0L, null) }
     }
 
-    private fun runner(view: View, offers: MutableList<TailOffer>, board: String?, confirm: LiveConfirm? = null, clock: () -> Long = { now }, desk: Desk? = null, journal: (String) -> Unit = {}, fetcher: (suspend (String) -> Fetched?)? = null) =
+    private fun runner(view: View, offers: MutableList<TailOffer>, board: String?, confirm: LiveConfirm? = null, clock: () -> Long = { now }, desk: Desk? = null, journal: (String) -> Unit = {}, fetcher: (suspend (String) -> Fetched?)? = null, alt: ((String, String, String) -> AltScore?)? = null) =
         LiveLightRunner(
             scope = TestScope(), source = Src(event, listOf(market)), newView = { _: BookListener -> view },
-            fetch = fetcher ?: { board?.let { Fetched(it, 5L) } }, onOffer = { offers += it }, confirm = { confirm }, leagues = { setOf("NBA") }, clock = clock, bids = { desk }, publishMs = 0L, journal = journal,
+            fetch = fetcher ?: { board?.let { Fetched(it, 5L) } }, onOffer = { offers += it }, confirm = { confirm }, leagues = { setOf("NBA") }, clock = clock, bids = { desk }, publishMs = 0L, journal = journal, altScore = alt ?: { _, _, _ -> null },
         ).also { it.bind() }
 
     private suspend fun LiveLightRunner.look() { readCatalog(); readScores(); scanGame("ev") }
@@ -283,5 +283,20 @@ class LiveLightRunnerTest {
         assertEquals(0, offersWith(win(0.40)))   // the model backs Boston at ~0.9+, ESPN says 40%
         assertEquals(1, offersWith(win(0.97)))
         assertEquals(1, offersWith(null))
+    }
+
+    @Test
+    fun `ParlayAPI's stream score is used when it is ahead of ESPN's scoreboard, ESPN keeps the clock, and the lead is journaled when ESPN catches up`() = runBlocking {
+        var board = scoreboard(100, 100)   // a tie on ESPN's scoreboard: nothing to offer
+        val log = ArrayList<String>()
+        val view = View(mapOf("m1" to book(bostonBid = 200, miamiBid = 200)))
+        val offers = ArrayList<TailOffer>()
+        val ahead = AltScore(EspnGame("Boston Celtics", "", "Miami Heat", "", 105, 80, live = true, period = 4, clockSec = 120.0), now, "ParlayAPI")
+        val r = runner(view, offers, null, fetcher = { u -> Fetched(if (u.contains("/summary?event=")) "{}" else board, 5L) }, journal = { log += it }, alt = { _, _, _ -> ahead })
+        r.look()
+        assertEquals("m1-b", offers.single().candidate.outcomeId)   // the stream's 105-80 decided it, with ESPN's clock
+        board = scoreboard(105, 80)
+        r.readScores()
+        assertTrue(log.any { it.contains("pbp-lead") })
     }
 }
