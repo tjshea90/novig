@@ -63,3 +63,4 @@
 - 2026-10-14 CLV vs losses: the whole loss is prop taker bets (-$114 of -$100); the de-vigged close is ~8 pts too high for prop Overs (won .410 vs close .486, n 542, z -3.6), so CLV and EV both overstate; addendum in research/bet_history_2026-10-14.md.
 - 2026-10-15 first GitHub review digest (`review-digest` branch, research/review/2026-10-15.md): 1,440 scanned bets, 315 closes (44%), CLV +0.51% ±0.73 (not separable from zero), ROI noise (±10.5 pts, 49 games); supported on CLV: player props +1.12 ±0.37 (190 closes), starts under 30 min +1.16 ±0.58; Tj's placed props still pool to ROI -10.5%, t -2.98 (the 2026-10-14 finding, fixed in v0.99.4); digest now splits placed bets before/after v0.99.4 (108 after: too few to judge).
 
+- 2026-10-20 ANALYST: engine live ROI +20.8% n=281; NBA/WNBA/game totals weak but n<200; see research/review/2026-10-20_analyst.md

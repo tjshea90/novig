@@ -80,3 +80,4 @@ Evidence in `research/review/pnl_2026-10-17.md`: 1,999 settled phone bets and bi
 - 2026-10-20 mirage, CH36: Claude tab gets a Research page (messages of kind research, not in Messages, no notification); ROUTINE.md has the daily-card rule. Revert: drop ResearchPage.
 - 2026-10-20 CH43: live tail lane: max 3 buys per game, no averaging down (Boston ML x12, $5.5). Revert: remove the two checks in TailTaker.attempt.
 - 2026-10-20 CH44: Kalshi slip hides bet at tap (provisional keys + tracker placedKey); Kalshi bid >=0.5 contract rounds to 1; engine publishes kalshi-feed.json, phone adopts it instead of local scan (fallback local). Revert: set engine mode OFF => local scan as before.
+- 2026-10-20 ANALYST (mirage): volume 525 engine orders, 537 bids resting; no rule change (no group >=200 settled with interval excluding 0 in a loosening/tightening direction).
