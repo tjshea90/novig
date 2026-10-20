@@ -99,7 +99,7 @@ class LiveLightRunner(
 
     private class Feed(val game: EspnGame, val atMs: Long, val source: String = "ESPN") {
         /** The clock is trusted: ESPN's, or a baseball score (no clock). Another source's clocked score is for paper records only until its clock is verified. */
-        fun trustedFor(league: String) = source == "ESPN" || league == "MLB"
+        fun trustedFor(league: String) = source == "ESPN" || source == com.tjshea.vigilant.data.parlay.ParlayPbp.SOURCE || league == "MLB"
     }
 
     private val _status = MutableStateFlow(LiveLightStatus())
@@ -127,6 +127,9 @@ class LiveLightRunner(
 
     /** ESPN's home-team win probability per Novig event and when it was read: a cross-check on the model's moneyline calls only (Tj, 2026-10-20), never a price. */
     private val espnWin = ConcurrentHashMap<String, Pair<Double, Long>>()
+
+    /** Per Novig event: when ParlayAPI's stream first showed a higher score than ESPN's scoreboard, and that total (the lead is journaled when ESPN catches up). */
+    private val pbpLead = ConcurrentHashMap<String, Pair<Long, Int>>()
     private val dirty = ConcurrentHashMap.newKeySet<String>()
     private val signal = Channel<Unit>(Channel.CONFLATED)
     private val offered = HashMap<String, Pair<Long, Double>>()
@@ -366,8 +369,20 @@ class LiveLightRunner(
             for (game in g.values.filter { it.ev.league == league }) {
                 val m = game.ev.matchup ?: continue
                 val espn = boards.filter { it.live }.firstOrNull { TeamMatcher.similarity(it.home, m.home) >= 0.5 && TeamMatcher.similarity(it.away, m.away) >= 0.5 }
-                val alt = if (espn == null) runCatching { altScore(league, m.home, m.away) }.getOrNull()?.takeIf { it.game.live && now - it.atMs <= STATE_MAX_AGE_MS } else null
-                val e = espn ?: alt?.game ?: run {
+                val altAll = runCatching { altScore(league, m.home, m.away) }.getOrNull()?.takeIf { it.game.live && now - it.atMs <= STATE_MAX_AGE_MS }
+                val alt = if (espn == null) altAll else null
+                // ParlayAPI's push stream carries ESPN's own play feed (CH47): when it already shows a higher total than the scoreboard, its SCORE is used and ESPN supplies the clock; how long it led is journaled.
+                val total = { g: EspnGame -> g.homeScore + g.awayScore }
+                val lead = if (espn != null && altAll != null && altAll.source == com.tjshea.vigilant.data.parlay.ParlayPbp.SOURCE && total(altAll.game) > total(espn)) altAll else null
+                if (lead != null) pbpLead.putIfAbsent(game.ev.eventId, now to total(lead.game))
+                else pbpLead[game.ev.eventId]?.let { (at, tot) ->
+                    if (espn != null && total(espn) >= tot) {
+                        pbpLead.remove(game.ev.eventId)
+                        jlog("pbp-lead") { put("eventId", game.ev.eventId); put("league", league); put("leadMs", now - at); put("total", tot) }
+                    }
+                }
+                val espnEff = if (lead != null && espn != null) espn.copy(homeScore = lead.game.homeScore, awayScore = lead.game.awayScore) else espn
+                val e = espnEff ?: alt?.game ?: run {
                     if (!espnDown && !feeds.containsKey(game.ev.eventId)) setLine(game.ev.eventId, "${game.ev.description}: no score (ESPN's ${league} scoreboard has no live game with these teams, and no other source has one)")
                     null
                 } ?: continue
