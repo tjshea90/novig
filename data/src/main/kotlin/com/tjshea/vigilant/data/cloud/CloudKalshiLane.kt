@@ -183,6 +183,8 @@ class CloudKalshiLane(
             cash = cash, autoNote = autoNote, bidNote = bidNote, betsPlaced = placed, betsPaper = paper, keyOnGitHub = hasKey(),
         )
         publishStatus()
+        // The rows themselves, so the phone's +EV list and Bet sheet read them instead of scanning Kalshi on the phone (Tj, 2026-10-20: "all the kalshi bet scanning on GitHub, it is lagging the screen").
+        runCatching { publish(FEED_FILE, kotlinx.serialization.json.JsonArray(result.feed(cfg.scan).filter { !it.isLive }.take(FEED_ROWS).map { CloudCodec.encode(it) }).toString()) }
         // The carry-over for the next job: the bets and bids, the same way the desk's files ride.
         runCatching { publish("kalshi-bets.json", kotlinx.serialization.json.Json.encodeToString(kotlinx.serialization.builtins.ListSerializer(com.tjshea.vigilant.data.tracker.TrackedBet.serializer()), tracker.all())) }
         runCatching { publish("kalshi-paper.json", kotlinx.serialization.json.Json.encodeToString(kotlinx.serialization.builtins.ListSerializer(com.tjshea.vigilant.data.tracker.TrackedBet.serializer()), paperTracker.all())) }
@@ -200,6 +202,8 @@ class CloudKalshiLane(
 
     companion object {
         const val MAX_ROWS = 40
+        const val FEED_ROWS = 100
+        const val FEED_FILE = "kalshi-feed.json"
         const val MAX_ARBS = 20
     }
 }

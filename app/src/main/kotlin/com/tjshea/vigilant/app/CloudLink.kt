@@ -477,6 +477,13 @@ class CloudLink(private val c: AppContainer) {
     suspend fun readKalshiStatus(): com.tjshea.vigilant.data.kalshitrade.KalshiEngineStatus? =
         (client.readText("cloud-feed", com.tjshea.vigilant.data.kalshitrade.KalshiEngineStatus.FILE, null) as? CloudClient.Poll.Fresh)?.value?.let(com.tjshea.vigilant.data.kalshitrade.KalshiEngineStatus::parse)
 
+    /** The engine's Kalshi list (`kalshi-feed.json` on `cloud-feed`): the rows its scan found, or null when there is none to read. */
+    suspend fun readKalshiFeed(): List<com.tjshea.vigilant.data.scanner.Opportunity>? {
+        val text = (client.readText("cloud-feed", com.tjshea.vigilant.data.cloud.CloudKalshiLane.FEED_FILE, null) as? CloudClient.Poll.Fresh)?.value ?: return null
+        val arr = runCatching { kotlinx.serialization.json.Json.parseToJsonElement(text) as? kotlinx.serialization.json.JsonArray }.getOrNull() ?: return null
+        return com.tjshea.vigilant.data.cloud.CloudCodec.decodeRows(arr).first
+    }
+
     /** True when a GitHub token is saved (the Kalshi tab shows the engine card only then). */
     fun kalshiCanReachGitHub(): Boolean = hasToken()
 

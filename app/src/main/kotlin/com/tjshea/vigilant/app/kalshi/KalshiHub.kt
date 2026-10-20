@@ -80,6 +80,8 @@ data class KalshiUi(
     val bidStatus: KalshiBidStatus? = null,
     val engine: com.tjshea.vigilant.data.kalshitrade.KalshiEngineStatus? = null,
     val engineNote: String? = null,
+    /** The list on screen is the GitHub engine's (not this phone's own scan). */
+    val engineFeed: Boolean = false,
     val bids: List<MakerBid> = emptyList(),
     val message: String? = null,
 )
@@ -228,6 +230,29 @@ class KalshiHub(private val c: AppContainer) {
         val settings = effective(ui.config)
         if (settings.leagues.isEmpty()) { say("Pick at least one league (Kalshi tab › Settings)."); return }
         lastScanStart = System.currentTimeMillis()
+        // The GitHub engine's Kalshi lane is the scan when it is on and fresh: the phone only reads its list (Tj, 2026-10-20). Its own scan is the fallback.
+        if (ui.config.engineMode != KalshiAutoMode.OFF && c.cloud.kalshiCanReachGitHub()) {
+            c.appScope.launch { if (!adoptEngineList()) scanLocally(settings) }
+            return
+        }
+        scanLocally(settings)
+    }
+
+    /** Reads the engine's status and list; true when they are fresh (under 10 minutes) and now the list on screen. */
+    private suspend fun adoptEngineList(): Boolean {
+        _ui.update { it.copy(progress = "Reading the GitHub engine's Kalshi list") }
+        val st = runCatching { c.cloud.readKalshiStatus() }.getOrNull()
+        val rows = if (st != null && st.mode != KalshiAutoMode.OFF && System.currentTimeMillis() - st.atMs < ENGINE_FRESH_MS) runCatching { c.cloud.readKalshiFeed() }.getOrNull() else null
+        if (st == null || rows == null) { _ui.update { it.copy(progress = null) }; return false }
+        _ui.update { u ->
+            u.copy(engine = st, progress = null, scanning = false, scannedAtMs = st.scannedAtMs, errors = emptyList(), engineFeed = true,
+                feed = rows.filter { o -> !o.isLive && o.key !in u.bets.mapNotNull { b -> b.placedKey } && o.key !in provisional })
+        }
+        return true
+    }
+
+    private fun scanLocally(settings: ScanSettings) {
+        _ui.update { it.copy(engineFeed = false) }
         val started = runner.start(settings, sources(settings), emptySet()) { report ->
             val result = report?.result
             if (result != null) afterScan(result)
