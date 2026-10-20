@@ -38,7 +38,7 @@ data class KalshiMoney(
             val line = when {
                 !ui.config.scan.maker -> "Kalshi bids are off (Kalshi › Setup › Bids)."
                 !ui.config.tradingEnabled -> "Kalshi bids need \"Place orders on Kalshi\" switched on (Kalshi › Setup)."
-                bs == null -> "No Kalshi bid pass yet."
+                bs == null -> if (ui.result == null) "No Kalshi bid pass yet: scan Kalshi first (pull to refresh on +EV with Kalshi on)." else "No Kalshi bid pass yet."
                 bs.stopped.isNotBlank() -> "Kalshi bids stopped: ${bs.stopped}"
                 else -> bs.note
             }

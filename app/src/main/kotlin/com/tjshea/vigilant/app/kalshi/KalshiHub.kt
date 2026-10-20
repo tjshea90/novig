@@ -274,7 +274,15 @@ class KalshiHub(private val c: AppContainer) {
             KalshiBidStatus("Bid pass failed: ${e.message ?: e.javaClass.simpleName}")
         }
         val bids = runCatching { bidRunner.bids() }.getOrDefault(emptyList())
-        _ui.update { it.copy(bidStatus = status ?: bidRunner.status, bids = bids) }
+        // Bids on but the pass was told to stand down: say which of the conditions is missing instead of showing nothing (CH39, Tj 2026-10-20: "toggles on but no bids").
+        val standDown = if (s.maker && !live) when {
+            !ui.venues.kalshi -> "Kalshi is switched off (Where to bet)."
+            !ui.config.tradingEnabled -> "\"Place orders on Kalshi\" is off (Kalshi › Setup)."
+            !trading.ready -> "No Kalshi key is saved on this phone (Settings › Kalshi)."
+            else -> null
+        } else null
+        val shown = standDown?.let { KalshiBidStatus("Bids can't post: $it", atMs = System.currentTimeMillis()) } ?: status ?: bidRunner.status
+        _ui.update { it.copy(bidStatus = shown, bids = bids) }
     }
 
     /** Cancel every Kalshi bid now. */
