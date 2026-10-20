@@ -1,21 +1,23 @@
-# CHECKPOINT 3781 — read me first, then TASKS.md
+# CHECKPOINT 3782 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T00:47:55Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-el5i79` · **builds on:** `cff41cdcd` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T01:03:38Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-el5i79` · **builds on:** `882d4504b` (this checkpoint is the commit after it)
 
 ## Just done
-Told Tj nothing is building yet; CH31 claimed, read LiveBoard.kt
+pre-ship: bet slip opens to full height as its content grows (CH28a)
 
 ## Do this next
-CH31a: find where the #1/#2 paper records are journaled (grep 'paper' in LiveSniper/TailTaker/LiveLightRunner), add a PaperRecordsCard to LiveBoard + UI; CH31c needs the BoltOdds /livescores and SX /live-scores shapes (Test sample); ship with CH28a
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  882d4504b ckpt 3781: Told Tj nothing is building yet; CH31 claimed, read LiveBoard.kt
   4ee0f3dea ckpt 3780: CH31 claimed and written; bet-sheet fix CH28a built; chat watcher running
   9f4871d14 ckpt 3779: CH31 written
   d791b9483 ckpt 3778: CH29 written
@@ -25,8 +27,4 @@ CH31a: find where the #1/#2 paper records are journaled (grep 'paper' in LiveSni
   dc08c3dae ckpt 3774: pre-release: v1.0.9: Tracker Yesterday + pick-a-day calendar with chart; en
   835c1573a ckpt 3773: pre-ship: v1.0.9: Tracker Yesterday + pick-a-day calendar with chart; engin
   9d5a7e018 ckpt 3772: CH27 tracker Yesterday + day picker built
-  c982bb3f1 ckpt 3771: CH25 ThinFair guard built, full suite green
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
