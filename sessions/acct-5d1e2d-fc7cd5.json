@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-el5i79",
- "head": "48d2cc1c24b1fd267eeb0c4b81f56beb5ebbb7bf",
+ "head": "42a9720a91f0719e32389def17083f655de0688e",
  "since": 1792452137,
- "beat": 1792461205,
- "beatIso": "2026-10-20T01:53:25Z",
- "done": "pre-release: Live paper records on the Live tab (graded: wins, return after fees) with a Paper/Real switch and typed or Kelly stakes for the lower tier and score-event buys; SX Bet live scores as a backup beside ESPN (paper-only for clocked sports until verified) (versionCode 351, v1.0.11)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.11), then run: bash tools/record-release.sh v1.0.11 351 \"Live paper records on the Live tab (graded: wins, return after fees) with a Paper/Real switch and typed or Kelly stakes for the lower tier and score-event buys; SX Bet live scores as a backup beside ESPN (paper-only for clocked sports until verified)\""
+ "beat": 1792461247,
+ "beatIso": "2026-10-20T01:54:07Z",
+ "done": "v1.0.11 released (CH31a/b/c-SX); Tj told",
+ "next": "CH31d show socket odds per game on Live board; BoltOdds scores need a Test-key recording; cross-exchange grading"
 }
