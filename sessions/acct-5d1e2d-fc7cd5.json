@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-el5i79",
- "head": "d96c529ff02147c2854e506e1805a05494d1e4e4",
+ "head": "950c6b7c3daa41f8020a70be42fa2850a6aafa8c",
  "since": 1792452137,
- "beat": 1792454838,
- "beatIso": "2026-10-20T00:07:18Z",
- "done": "WATCH 2026-10-19: engine healthy, no change",
- "next": "chat wake restarts watcher; EA4/EA10 open"
+ "beat": 1792454875,
+ "beatIso": "2026-10-20T00:07:55Z",
+ "done": "CH28a bet sheet re-expands on content growth (compiles)",
+ "next": "ship with next release; chat quiet"
 }
