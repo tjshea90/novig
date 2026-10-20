@@ -107,6 +107,9 @@ class KalshiHub(private val c: AppContainer) {
 
     private fun cfg(): KalshiConfig = _ui.value.config
 
+    /** The Kalshi scan's settings: its own money rules and filters, the fair-odds side (APIs, books, method) mirrored from the Novig settings ([KalshiMirror]). */
+    private fun effective(c0: KalshiConfig): ScanSettings = com.tjshea.vigilant.data.kalshitrade.KalshiMirror.fairOdds(c0.forScan(), c.settingsStore.flow.value)
+
     private val placer = KalshiBetPlacer(
         trading, tracker,
         limits = { cfg().scan.let { BetLimits.manual(it.apiMaxStake, it.apiMaxPerDay, it.apiMaxPerGame) } },
@@ -189,7 +192,7 @@ class KalshiHub(private val c: AppContainer) {
     fun scanNow() {
         val ui = _ui.value
         if (!ui.venues.kalshi) return
-        val settings = ui.config.forScan()
+        val settings = effective(ui.config)
         if (settings.leagues.isEmpty()) { say("Pick at least one league (Kalshi tab › Settings)."); return }
         lastScanStart = System.currentTimeMillis()
         val started = runner.start(settings, sources(settings), emptySet()) { report ->
@@ -229,7 +232,7 @@ class KalshiHub(private val c: AppContainer) {
     suspend fun bidPass() {
         lastBidPass = System.currentTimeMillis()
         val ui = _ui.value
-        val s = ui.config.forScan()
+        val s = effective(ui.config)
         val live = ui.config.tradingEnabled && ui.venues.kalshi && trading.ready
         val status = try {
             bidRunner.pass(if (live) s else s.copy(maker = false), ui.result, stopReason = if (s.paused) "Scanning is paused" else null)
@@ -252,7 +255,7 @@ class KalshiHub(private val c: AppContainer) {
     }
 
     private suspend fun runAuto(result: ScanResult, paper: Boolean) {
-        val settings = cfg().forScan()
+        val settings = effective(cfg())
         val report = try {
             auto.run(settings, result, paper)
         } catch (e: CancellationException) {

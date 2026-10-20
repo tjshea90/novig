@@ -32,9 +32,9 @@ data class KalshiConfig(
     /** Orders by hand (the Bet button) need this: off, the key is only read with. */
     val tradingEnabled: Boolean = false,
     val autoMode: KalshiAutoMode = KalshiAutoMode.OFF,
-    /** Scan again by itself while the app is open. */
-    val autoScan: Boolean = true,
-    val autoScanSeconds: Int = 90,
+    /** Scan again by itself while the app is open (off until switched on: every scan reads the fair-odds APIs, which spend credits; the GitHub engine is the unattended way). */
+    val autoScan: Boolean = false,
+    val autoScanSeconds: Int = 180,
     val arbMinProfit: Double = 0.005,
     val arbIncludeRisky: Boolean = false,
     /** Place both legs of an arbitrage by itself (needs trading on; paper first). Off by default. */
