@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-rlkku2",
- "head": "b8170c54dbdd3484219c7e7cbbad4be226e93de7",
+ "head": "7c0674b659e8c693700b939839a4aa7aad4e1e43",
  "since": 1792452137,
- "beat": 1792479728,
- "beatIso": "2026-10-20T07:02:08Z",
- "done": "pre-ship: v1.0.15: Research page in the Claude tab (daily analysis summary)",
- "next": "ship.sh gates and releases this"
+ "beat": 1792479762,
+ "beatIso": "2026-10-20T07:02:42Z",
+ "done": "pre-release: v1.0.15: Research page in the Claude tab (daily analysis summary) (versionCode 355, v1.0.15)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.15), then run: bash tools/record-release.sh v1.0.15 355 \"v1.0.15: Research page in the Claude tab (daily analysis summary)\""
 }
