@@ -1,13 +1,13 @@
-# CHECKPOINT 3853 — read me first, then TASKS.md
+# CHECKPOINT 3854 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T23:08:13Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-o9ngjz` · **builds on:** `32feed09a` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T23:15:39Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-o9ngjz` · **builds on:** `95275e2c8` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v1.0.24: ESPN win probability cross-checks live moneyline calls (CH46c) (versionCode 364, v1.0.24)
+v1.0.24 released (CH46c), CDN rejected by measurement
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.24), then run: bash tools/record-release.sh v1.0.24 364 "v1.0.24: ESPN win probability cross-checks live moneyline calls (CH46c)"
+CH46b ESPN odds fallback source (client, convert, ApiEntry switch, fallback-only chain slot, tests)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  93fcf844d ckpt 3853: pre-release: v1.0.24: ESPN win probability cross-checks live moneyline call
   32feed09a ckpt 3852: pre-ship: v1.0.24: ESPN win probability cross-checks live moneyline calls (
   eb9bfa8f8 ckpt 3851: answered ESPN API question, CH46 logged
   d48ccf03d ckpt 3850: v1.0.23 released (CH45), answered API question
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   b566abc9d ckpt 3846: CH45 logged, asked Tj version/details
   a762dc212 ckpt 3845: v1.0.22 released (CH44)
   a05886dbd ckpt 3844: pre-release: v1.0.22: Kalshi slip hides the bet, Kalshi bids round to 1 con
-  1904542fa ckpt 3843: pre-ship: v1.0.22: Kalshi slip hides the bet, Kalshi bids round to 1 contra
 ```
