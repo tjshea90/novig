@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-8xou8q",
- "head": "3b5bbc89c8a1972dc7fc4557ef2a400697cbf8e6",
+ "head": "b5d17643ee7a7f31dbe531cc6dada498e859768d",
  "since": 1792528851,
- "beat": 1792531453,
- "beatIso": "2026-10-20T21:24:13Z",
- "done": "v1.0.20 released (CH42 live bids mid tier)",
- "next": "CH42 follow-up: read Diagnostics LIVE LIGHT bid wants once a game is live; CH33b Kalshi in +EV"
+ "beat": 1792531489,
+ "beatIso": "2026-10-20T21:24:49Z",
+ "done": "pre-ship: v1.0.21: live tail lane caps buys per game and never averages down (CH43)",
+ "next": "ship.sh gates and releases this"
 }
