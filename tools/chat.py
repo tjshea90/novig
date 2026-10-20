@@ -340,6 +340,21 @@ def seat_verdict(seat, holder, at, stale_s=STALE_S):
     return "other"
 
 
+def context_lines(all_msgs, fresh, n=8):
+    """The last n messages (Tj's and Claude's) before the new batch, so a short message ('the other session is done')
+    is read against what was asked and promised just before it, never alone."""
+    ids = {m["id"] for m in fresh}
+    prior = sorted([m for m in all_msgs if m.get("id") not in ids and m.get("at", 0) < min(f.get("at", 0) for f in fresh)],
+                   key=lambda m: m.get("at", 0))[-n:]
+    if not prior:
+        return []
+    out = ["CHAT   THREAD BEFORE THIS (read it: a short message refers to it; if Tj said 'wait' or 'later' to something, he now means GO; open items are in TASKS.md):"]
+    for m in prior:
+        t = " / ".join(l.strip() for l in str(m.get("text", "")).splitlines() if l.strip())[:300]
+        out.append("CHAT   . %s %s: %s" % (hhmm(m.get("at", 0)), "TJ" if is_tj(m) else "claude", t))
+    return out
+
+
 def batch_lines(msgs, at, shown_before=()):
     """The lines the daemon prints for Tj's messages `msgs` (already sorted)."""
     if not msgs:
@@ -874,9 +889,13 @@ class Daemon:
         at = self.clock()
         todo, seen = self.pending(at)
         fresh = [m for m in todo if m["id"] not in self.shown]
+        try:
+            ctx = context_lines(self.store.load(at=at)[0], fresh) if fresh else []
+        except Exception:
+            ctx = []
         for m in fresh:
             m["_local_files"], m["_missing_files"] = download(self.g, self.store, m)
-        for line in batch_lines(fresh, at, self.shown_before):
+        for line in ctx + batch_lines(fresh, at, self.shown_before):
             self.out(line)
         self.shown.update(m["id"] for m in fresh)
         self._save_state()
