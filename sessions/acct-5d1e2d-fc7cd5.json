@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-el5i79",
  "head": "3a685d875044c713cd498f4666a39aad623d3d5f",
  "since": 1792452137,
- "beat": 1792458218,
- "beatIso": "2026-10-20T01:03:38Z",
+ "beat": 1792458223,
+ "beatIso": "2026-10-20T01:03:43Z",
  "done": "pre-ship: bet slip opens to full height as its content grows (CH28a)",
  "next": "ship.sh gates and releases this"
 }
