@@ -238,7 +238,8 @@ class KalshiHub(private val c: AppContainer) {
         } catch (e: Exception) {
             KalshiBidStatus("Bid pass failed: ${e.message ?: e.javaClass.simpleName}")
         }
-        _ui.update { it.copy(bidStatus = status ?: bidRunner.status, bids = runCatching { kotlinx.coroutines.runBlocking { bidRunner.bids() } }.getOrDefault(it.bids)) }
+        val bids = runCatching { bidRunner.bids() }.getOrDefault(emptyList())
+        _ui.update { it.copy(bidStatus = status ?: bidRunner.status, bids = bids) }
     }
 
     /** Cancel every Kalshi bid now. */

@@ -107,10 +107,57 @@ private fun ArbCard(a: ArbOpportunity, onPlace: () -> Unit) {
 
 // ---- Bids -----------------------------------------------------------------------------------------------------
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun KalshiBidsPage(hub: KalshiHub, ui: KalshiUi) {
-    Column(Modifier.fillMaxWidth().padding(16.dp)) {
-        EmptyState("Kalshi bids", "Resting bids on Kalshi (post-only orders under the fair price) are being built next. Bets and arbitrage work now.")
+    val c = ui.config
+    val now = System.currentTimeMillis()
+    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
+        SectionTitle("Bids on Kalshi")
+        Text(
+            "A bid is a resting order placed under the fair price that waits to be filled (post-only: Kalshi refuses it rather than let it take, and it expires by itself in a few minutes). It is the same bid desk as Novig's: " +
+                "fair odds from your sharp books, an edge margin, Kelly sizing, a per-game cap, a guard that pauses bids when fills are being picked off. It runs while this app is open.",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        SwitchLine("Post bids", "Needs \"Place orders on Kalshi\" in Setup. Off: every bid comes down.", c.scan.maker, "kalshiBidsOn") { v -> hub.update { it.copy(scan = it.scan.copy(maker = v)) } }
+        if (c.scan.maker && !c.tradingEnabled) Text("Bids are on but orders are off (Setup › Place orders on Kalshi): nothing is posted.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        Chips("Edge under the fair", listOf(0.02, 0.03, 0.04, 0.06, 0.08), c.scan.makerMargin, { Format.percent(it, 0) }) { v -> hub.update { it.copy(scan = it.scan.copy(makerMargin = v)) } }
+        Chips("Stake per bid", listOf(AutoBetStake.SIXTEENTH_KELLY, AutoBetStake.EIGHTH_KELLY, AutoBetStake.QUARTER_KELLY, AutoBetStake.HALF_KELLY, AutoBetStake.CUSTOM), c.scan.makerStakeMode, { it.label }) { v -> hub.update { it.copy(scan = it.scan.copy(makerStakeMode = v)) } }
+        if (c.scan.makerStakeMode == AutoBetStake.CUSTOM) Chips("My amount", listOf(1.0, 2.0, 5.0, 10.0), c.scan.makerStake, { Format.money(it) }) { v -> hub.update { it.copy(scan = it.scan.copy(makerStake = v)) } }
+        Chips("Most per bid", listOf(2.0, 5.0, 10.0, 25.0), c.scan.makerMaxStake, { Format.money(it) }) { v -> hub.update { it.copy(scan = it.scan.copy(makerMaxStake = v)) } }
+        Chips("Most bids up at once", listOf(5, 10, 20, 40, 80), c.scan.makerMaxBids, { it.toString() }) { v -> hub.update { it.copy(scan = it.scan.copy(makerMaxBids = v)) } }
+        Chips("Most dollars resting", listOf(25.0, 50.0, 100.0, 250.0, 500.0), c.scan.makerMaxDollars, { Format.money(it) }) { v -> hub.update { it.copy(scan = it.scan.copy(makerMaxDollars = v)) } }
+        Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(ui.bidStatus?.note ?: "No bid pass yet.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f).testTag("kalshiBidNote"))
+            OutlinedButton(onClick = hub::cancelBids, enabled = ui.bids.any { it.resting }) { Text("Cancel all") }
+        }
+        val active = ui.bids.filter { it.resting }
+        val filled = ui.bids.filter { it.filled > 0 }.sortedByDescending { it.firstFillAtMs ?: 0L }.take(20)
+        if (active.isNotEmpty()) {
+            SectionTitle("Resting")
+            active.sortedBy { it.startsTs }.forEach { b -> BidRow(b, now) }
+        }
+        if (filled.isNotEmpty()) {
+            SectionTitle("Filled")
+            filled.forEach { b -> BidRow(b, now) }
+        }
+        if (active.isEmpty() && filled.isEmpty()) Text("No bids yet.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
+        Text(" ", Modifier.padding(bottom = 24.dp))
+    }
+}
+
+@Composable
+private fun BidRow(b: com.tjshea.vigilant.data.novig.trading.maker.MakerBid, now: Long) {
+    Card(Modifier.fillMaxWidth().padding(vertical = 3.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
+        Column(Modifier.padding(12.dp)) {
+            Text(b.selection, fontWeight = FontWeight.SemiBold)
+            Text("${b.eventName} · ${b.marketLabel}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                "${b.contracts / 100} contracts at ${Format.percent(b.price, 0)} · fair ${Format.percent(b.fair, 1)} · " +
+                    (if (b.filled > 0) "filled ${b.filled / 100} · " else "") + "posted ${Format.age(b.postedAtMs, now)}",
+                style = MaterialTheme.typography.labelSmall,
+            )
+        }
     }
 }
 
