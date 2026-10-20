@@ -28,6 +28,8 @@ object LiveBoard {
         val sockets: List<SocketState>,
         val trend: List<LiveTrend.Sample>,
         val gameLines: List<String>,
+        /** The live paper records in words, one line per tier (CH31). */
+        val paper: List<String> = emptyList(),
     )
 
     private val ET: ZoneId = ZoneId.of("America/New_York")
@@ -57,7 +59,7 @@ object LiveBoard {
             else -> Triple("GitHub is starting live", Tone.WARN, st.liveNote.ifBlank { st.liveStopped.ifBlank { "The lane starts with the engine's next pass." } })
         }
         val stats = st?.liveStats.takeIf { running }
-        return Board(Where.GITHUB, title, tone, detail, tiles(stats, trend, today, now), st?.socketStates.orEmpty(), trend, stats?.gameLines.orEmpty())
+        return Board(Where.GITHUB, title, tone, detail, tiles(stats, trend, today, now), st?.socketStates.orEmpty(), trend, stats?.gameLines.orEmpty(), paperLines(st?.liveStats?.paper.orEmpty()))
     }
 
     fun phone(s: ScanSettings, stats: LiveStats, running: Boolean, sockets: List<SocketState>, trend: List<LiveTrend.Sample>, today: Today, now: Long): Board {
@@ -67,7 +69,16 @@ object LiveBoard {
             running -> Triple("Live on this phone: running" + if (s.tailLive.bet) " · REAL money" else " · paper", Tone.GOOD, if (stats.problem.isNotBlank()) stats.problem else "GitHub's live lane and its sockets are paused; this phone holds them.")
             else -> Triple("This phone is starting live", Tone.WARN, stats.problem.ifBlank { "It needs Novig's live feed on this phone (the read key) and a live game on a picked league." })
         }
-        return Board(Where.PHONE, title, tone, detail, tiles(stats.takeIf { running }, trend, today, now), sockets, trend, if (running) stats.gameLines else emptyList())
+        return Board(Where.PHONE, title, tone, detail, tiles(stats.takeIf { running }, trend, today, now), sockets, trend, if (running) stats.gameLines else emptyList(), paperLines(stats.paper))
+    }
+
+    /** How each paper tier is doing, in a line (Tj, 2026-10-20, CH31): bets, settled, wins against what the model said, return after fees, and the ones still open. */
+    fun paperLines(paper: List<PaperLine>): List<String> = paper.map { p ->
+        val name = when (p.tier) { "shadow" -> "Lower tier (model 75-89% sure)"; "score-event" -> "Score-event buys (just after a score)"; else -> p.tier }
+        val settled = p.wins + p.losses
+        val total = settled + p.pushes + p.open
+        if (settled == 0) "$name: $total paper bets, none settled yet (${p.open} open)"
+        else String.format(Locale.US, "%s: %d paper bets · %d settled, %d won (%.0f%%, the model said %.0f%%) · return %s%.1f%% after fees · %d open", name, total, settled, p.wins, 100.0 * p.wins / settled, 100.0 * p.expected, if (p.roi >= 0) "+" else "", 100.0 * p.roi, p.open)
     }
 
     /** The big numbers: games, pushes and judgments a minute (from the graph's readings), how fast a judgment follows its push, offers, bids up, and today's live bets. */
