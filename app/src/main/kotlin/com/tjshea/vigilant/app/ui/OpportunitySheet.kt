@@ -209,70 +209,7 @@ fun OpportunityDetail(
             )
         }
 
-        o.fair?.let { fair ->
-            SectionTitle("Fair odds: ${fair.sourceUsed.displayName} · ${fair.method.displayName}")
-            if (fair.sourceUsed != fair.requestedSource) {
-                Text(
-                    "No sharp book quoted this line, so the market average is used.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Edge.colors.warning,
-                )
-            }
-            val idx = o.referenceIndex
-            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                Text("Book", Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("This side", Modifier.width(60.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Other side", Modifier.width(60.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("No-vig", Modifier.width(52.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Hold", Modifier.width(46.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            HorizontalDivider()
-            fair.perBook.sortedByDescending { it.isSharp }.forEach { b ->
-                val used = b.book.bookTitle in fair.booksUsed
-                val color = if (used) Color.Unspecified else MaterialTheme.colorScheme.onSurfaceVariant
-                Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        b.book.bookTitle + if (b.isSharp) "  ★" else "",
-                        Modifier.weight(1f),
-                        color = color,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    // Both sides of the bet, as CNO's book table shows them (Tj, 2026-10-11): this bet's odds, then the other side's.
-                    Text(
-                        BookSides.thisSide(b.book.decimalOdds, idx) ?: "—",
-                        Modifier.width(60.dp),
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.SemiBold,
-                        color = color,
-                    )
-                    Text(
-                        BookSides.otherSides(b.book.decimalOdds, idx) ?: "—",
-                        Modifier.width(60.dp),
-                        fontFamily = FontFamily.Monospace,
-                        color = color,
-                    )
-                    Text(idx?.let { Format.percent(b.fairProbabilities[it]) } ?: "—", Modifier.width(52.dp), color = color, style = MaterialTheme.typography.bodySmall)
-                    Text(Format.percent(b.hold), Modifier.width(46.dp), color = color, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-            // Books whose odds looked wrong next to the rest of the market: shown, but not counted (Tj, 2026-10-11).
-            fair.excluded.forEach { b ->
-                Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(b.bookTitle, Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium)
-                    Text(BookSides.thisSide(b.decimalOdds, idx) ?: "—", Modifier.width(60.dp), fontFamily = FontFamily.Monospace, color = Edge.colors.warning)
-                    Text(BookSides.otherSides(b.decimalOdds, idx) ?: "—", Modifier.width(60.dp), fontFamily = FontFamily.Monospace, color = Edge.colors.warning)
-                    Text("odds look wrong, not counted", Modifier.width(98.dp), color = Edge.colors.warning, style = MaterialTheme.typography.labelSmall)
-                }
-            }
-            Text(
-                "★ sharp book (in the table) · one book a company · greyed rows weren't used for this line's fair price · amber rows looked wrong next to the rest of the market",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp),
-            )
-        }
+        FairOddsTable(o)
 
         if (q != null && o.fairProbability != null) {
             SectionTitle("Track this bet")
@@ -378,5 +315,74 @@ fun OpenInBookButton(suffix: String, opening: Boolean = false, modifier: Modifie
         } else {
             Text("Open in ${AppBook.name}" + suffix, maxLines = 1)
         }
+    }
+}
+
+/** The table of every book behind the fair odds, both sides, no-vig and hold (shared by the Novig and the Kalshi slips). */
+@Composable
+fun FairOddsTable(o: Opportunity) {
+    o.fair?.let { fair ->
+            SectionTitle("Fair odds: ${fair.sourceUsed.displayName} · ${fair.method.displayName}")
+            if (fair.sourceUsed != fair.requestedSource) {
+                Text(
+                    "No sharp book quoted this line, so the market average is used.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Edge.colors.warning,
+                )
+            }
+            val idx = o.referenceIndex
+            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                Text("Book", Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("This side", Modifier.width(60.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Other side", Modifier.width(60.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("No-vig", Modifier.width(52.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Hold", Modifier.width(46.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            HorizontalDivider()
+            fair.perBook.sortedByDescending { it.isSharp }.forEach { b ->
+                val used = b.book.bookTitle in fair.booksUsed
+                val color = if (used) Color.Unspecified else MaterialTheme.colorScheme.onSurfaceVariant
+                Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        b.book.bookTitle + if (b.isSharp) "  ★" else "",
+                        Modifier.weight(1f),
+                        color = color,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    // Both sides of the bet, as CNO's book table shows them (Tj, 2026-10-11): this bet's odds, then the other side's.
+                    Text(
+                        BookSides.thisSide(b.book.decimalOdds, idx) ?: "—",
+                        Modifier.width(60.dp),
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.SemiBold,
+                        color = color,
+                    )
+                    Text(
+                        BookSides.otherSides(b.book.decimalOdds, idx) ?: "—",
+                        Modifier.width(60.dp),
+                        fontFamily = FontFamily.Monospace,
+                        color = color,
+                    )
+                    Text(idx?.let { Format.percent(b.fairProbabilities[it]) } ?: "—", Modifier.width(52.dp), color = color, style = MaterialTheme.typography.bodySmall)
+                    Text(Format.percent(b.hold), Modifier.width(46.dp), color = color, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            // Books whose odds looked wrong next to the rest of the market: shown, but not counted (Tj, 2026-10-11).
+            fair.excluded.forEach { b ->
+                Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(b.bookTitle, Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium)
+                    Text(BookSides.thisSide(b.decimalOdds, idx) ?: "—", Modifier.width(60.dp), fontFamily = FontFamily.Monospace, color = Edge.colors.warning)
+                    Text(BookSides.otherSides(b.decimalOdds, idx) ?: "—", Modifier.width(60.dp), fontFamily = FontFamily.Monospace, color = Edge.colors.warning)
+                    Text("odds look wrong, not counted", Modifier.width(98.dp), color = Edge.colors.warning, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            Text(
+                "★ sharp book (in the table) · one book a company · greyed rows weren't used for this line's fair price · amber rows looked wrong next to the rest of the market",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
     }
 }
