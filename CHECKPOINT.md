@@ -1,13 +1,13 @@
-# CHECKPOINT 3801 — read me first, then TASKS.md
+# CHECKPOINT 3802 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T04:27:56Z · **tests:** all 6 fast checks green
-**Branch:** `claude/kalshi-vigilant-integration-v5u4ho` · **builds on:** `14ea836f9` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T04:29:01Z · **tests:** all 6 fast checks green
+**Branch:** `claude/kalshi-vigilant-integration-v5u4ho` · **builds on:** `acfefeaf0` (this checkpoint is the commit after it)
 
 ## Just done
-KV4: KalshiAsNovig adapter + KalshiBidRunner on the unchanged MakerDesk; tests green
+Kalshi bids in the hub + Bids page
 
 ## Do this next
-hub: bids wiring + Bids page; then full test gate, engine lane KV9, docs KV10
+wait for full test result; then KV9 engine lane, KV10 docs, ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ hub: bids wiring + Bids page; then full test gate, engine lane KV9, docs KV10
 
 ## Last ten checkpoints
 ```
+  d18e71c32 ckpt 3801: KV4: KalshiAsNovig adapter + KalshiBidRunner on the unchanged MakerDesk; te
   fd0eefdb9 ckpt 3800: KV6/7: Kalshi tab (EV, arb, bets, auto, setup), venue switches, bet sheet; 
   2852455ed ckpt 3799: KV6 KalshiHub (scan, bets, arb, venues) compiles
   390e15c1d ckpt 3798: KV8 settler + tests
@@ -25,8 +26,7 @@ hub: bids wiring + Bids page; then full test gate, engine lane KV9, docs KV10
   49d87ec9a ckpt 3794: KV3 core: KalshiBook, KalshiBetPlacer (whole contracts, rounded fee, IOC, l
   edfc06832 ckpt 3793: KV1 tests green (8). ApiBetPlanner reuse plan for Kalshi placer
   da67547f2 ckpt 3792: KV1: KalshiTradingClient (V2 orders w/ legacy fallback, cancel, balance/fil
-  a8f57e056 ckpt 3791: KV2 started: venue read in KalshiClient, BookBoard/SportsbookScanner seams,
 ```
 
-(3 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
