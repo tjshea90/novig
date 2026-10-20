@@ -6023,3 +6023,8 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [x] CH38b Kalshi money card on Engine > Money (KalshiMoney, KalshiMoneyTest)
 - [x] CH38c yes: bid settings are class BIDS in CloudScanKey and mirror to the engine
 - [x] CH39 shipped v1.0.18: bid status names the missing condition; cause on Tj phone unknown until he reads it
+
+## CH40 (Tj chat 19:17-19:24 UTC, 2026-10-20)
+- [x] CH40a API card with refused keys is amber ("working · N keys refused") and red "every key refused" when all are (DashboardScreen ApiCard).
+- [x] CH40b Kalshi "Check key" shows "Checking the key…" and its result/reason even when no key is read (KalshiHub.refreshBalance, KalshiPages).
+- [ ] CH40c Kalshi rows in the +EV tab = CH33b (still open); Tj sees none there. Also find why Kalshi scan/bids show nothing on his phone (needs his Kalshi page words).
