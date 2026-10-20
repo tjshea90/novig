@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "91bb116187d1dc9d7fae53d571db4d819eb2ad36",
+ "head": "87e8fdbf2ba54730b6b6747bc3635918c94a71bc",
  "since": 1792539161,
- "beat": 1792540233,
- "beatIso": "2026-10-20T23:50:33Z",
- "done": "CH47 probe read: PBP SSE real shape, arbs real shape, Pro key found",
- "next": "CH47d build ParlayPbp SSE feed + altScore"
+ "beat": 1792540363,
+ "beatIso": "2026-10-20T23:52:43Z",
+ "done": "CH47: Parlay pool uses biggest paid plan first (test), meter loaded before ordering",
+ "next": "CH47d PBP SSE feed + altScore wiring"
 }
