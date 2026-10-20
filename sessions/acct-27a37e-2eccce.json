@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/kalshi-vigilant-integration-v5u4ho",
- "head": "cd79c234cf6e1f38639088750c37ca1af2ec1a24",
+ "head": "e5765cfe7f890ceb6f835d0442b72128217cda22",
  "since": 1792468198,
- "beat": 1792471715,
- "beatIso": "2026-10-20T04:48:35Z",
- "done": "pre-ship: v1.0.12: Kalshi beside Novig: a Kalshi tab with its own +EV list, bets, auto-bet, bids, sure-profit arbitrage between the two venues, venue switches (Novig / Kalshi / both), and a GitHub engine Kalshi lane (off by default)",
- "next": "ship.sh gates and releases this"
+ "beat": 1792471745,
+ "beatIso": "2026-10-20T04:49:05Z",
+ "done": "pre-release: v1.0.12: Kalshi beside Novig: a Kalshi tab with its own +EV list, bets, auto-bet, bids, sure-profit arbitrage between the two venues, venue switches (Novig / Kalshi / both), and a GitHub engine Kalshi lane (off by default) (versionCode 352, v1.0.12)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.12), then run: bash tools/record-release.sh v1.0.12 352 \"v1.0.12: Kalshi beside Novig: a Kalshi tab with its own +EV list, bets, auto-bet, bids, sure-profit arbitrage between the two venues, venue switches (Novig / Kalshi / both), and a GitHub engine Kalshi lane (off by default)\""
 }
