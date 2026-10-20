@@ -6033,8 +6033,8 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [x] CH43 Boston ML bought 12x by live tail lane: per-game 3-buy cap + no averaging down (TailTakerTest)
 
 ## CH44 (Tj chat 21:24-21:32 UTC, 2026-10-20)
-- [ ] CH44a Kalshi bids: 0 resting, "Under one Kalshi contract" (cash $9.10): find why stakes < 1 contract, fix so bids post when affordable
-- [ ] CH44b Kalshi auto-bet: 0 passed (9338 of 9358 start >6h away, trap guard): review if too strict for Kalshi
-- [ ] CH44c Kalshi bet slip = Novig's: Bet button opens slip with amount prefilled; after Bet the row disappears and stays gone on rescans (screenshot 21:28)
-- [ ] CH44d Kalshi rows in +EV tab (= CH33b)
-- [ ] CH44e Kalshi scan on GitHub (engine), not the phone: phone lags with Kalshi scanning (KV9 engine lane, phone-only switch)
+- [x] CH44a Kalshi bids: 0 resting, "Under one Kalshi contract" (cash $9.10): find why stakes < 1 contract, fix so bids post when affordable
+- [x] CH44b Kalshi auto-bet: 0 passed (9338 of 9358 start >6h away, trap guard): review if too strict for Kalshi
+- [x] CH44c Kalshi bet slip = Novig's: Bet button opens slip with amount prefilled; after Bet the row disappears and stays gone on rescans (screenshot 21:28)
+- [x] CH44d Kalshi rows in +EV tab (= CH33b)
+- [x] CH44e Kalshi scan on GitHub (engine), not the phone: phone lags with Kalshi scanning (KV9 engine lane, phone-only switch)

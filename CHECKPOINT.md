@@ -1,22 +1,25 @@
-# CHECKPOINT 3842 — read me first, then TASKS.md
+# CHECKPOINT 3843 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T21:32:49Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-8xou8q` · **builds on:** `ec34c5c2b` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T21:35:55Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-8xou8q` · **builds on:** `20d309984` (this checkpoint is the commit after it)
 
 ## Just done
-v1.0.21 shipped (CH43); release triggered
+pre-ship: v1.0.22: Kalshi slip hides the bet, Kalshi bids round to 1 contract, Kalshi list scanned on GitHub (CH44)
 
 ## Do this next
-CH44a-e Kalshi: bids <1 contract, slip Bet button, +EV rows, scan on GitHub
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
      M TASKS.md
+     M app/build.gradle.kts
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  ba23decc7 ckpt 3842: v1.0.21 shipped (CH43); release triggered
   ec34c5c2b ckpt 3841: pre-release: v1.0.21: live tail lane caps buys per game and never averages 
   6114049a2 ckpt 3840: pre-ship: v1.0.21: live tail lane caps buys per game and never averages dow
   b5d17643e ckpt 3839: pre-ship: v1.0.21: live tail lane caps buys per game and never averages dow
@@ -26,5 +29,7 @@ CH44a-e Kalshi: bids <1 contract, slip Bet button, +EV rows, scan on GitHub
   2c1343606 ckpt 3835: v1.0.19 released (CH40,41)
   747a781ba ckpt 3834: pre-release: v1.0.19: refused-key API light, Kalshi Check key feedback, bid
   21abaa9af ckpt 3833: pre-ship: v1.0.19: refused-key API light, Kalshi Check key feedback, bids m
-  8cc77c975 ckpt 3832: pre-ship: CH40-41: refused-key API light, Kalshi Check key feedback, bids m
 ```
+
+(5 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
