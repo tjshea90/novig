@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-el5i79",
- "head": "3a685d875044c713cd498f4666a39aad623d3d5f",
+ "head": "d16876956a7d926b31f545e821a1e2458f2cd32d",
  "since": 1792452137,
- "beat": 1792458223,
- "beatIso": "2026-10-20T01:03:43Z",
- "done": "pre-ship: bet slip opens to full height as its content grows (CH28a)",
- "next": "ship.sh gates and releases this"
+ "beat": 1792458391,
+ "beatIso": "2026-10-20T01:06:31Z",
+ "done": "pre-release: bet slip opens to full height as its content grows (CH28a) (versionCode 350, v1.0.10)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.10), then run: bash tools/record-release.sh v1.0.10 350 \"bet slip opens to full height as its content grows (CH28a)\""
 }
