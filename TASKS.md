@@ -5946,3 +5946,7 @@ When you come back: read this first. tj Gmail already did: CH24a/b (watchdog fix
 - [x] CH25 (built, tests green) (t1792446562982-91ba) Tj: guard so engine auto-bet/bid never rests on a fair from only a few SMALL books with identical odds (same-source double count); favor large brands with similar-not-identical odds; exclude outlier/stale books from ANY fair calc in app+engine.
 - [x] CH26 (t1792446818266-a4e8) Tj: daily automatic analysis + tuning with full approval: already scheduled by the rotation routines (ROUTINE.md); confirmed in chat.
 - [x] CH27 (built, tests green) (t1792447685019-4a8f) Tracker: Yesterday section with slate P/L + chart, plus a dropdown to pick any calendar day and see that day's P/L + chart (screenshot in chat files).
+
+## CH28: bet slip opens half way; where are the live features (Tj, app chat t1792454530145-29bd + t1792454600833-e650, 2026-10-20 00:02Z)
+- [x] CH28a bet sheet only slides up half way (screenshot: Bet button cut off): ApiBetSheet now re-expands to full height whenever its content grows (ApiBettingUi.kt onSizeChanged + expand); compiles; ships with the next release.
+- [x] CH28b answer: live features status (CH22 list).
