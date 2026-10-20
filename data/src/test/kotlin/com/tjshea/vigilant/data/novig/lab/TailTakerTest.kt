@@ -93,6 +93,22 @@ class TailTakerTest {
     }
 
     @Test
+    fun `one game takes at most three buys, and a falling price is never averaged down`() = runTest {
+        val r = rig(rules = LiveTradeRules(enabled = true, bet = true, stake = 1.0, maxPerGame = 50.0, maxPerDay = 100.0, haltLoss = 50.0), scope = backgroundScope)
+        assertEquals("FILLED", r.taker.attempt(offer())!!.outcome)
+        now += 61_000L
+        assertNull("the ask fell 6 points under what was paid", r.taker.attempt(offer(cand(ask = 0.82, edge = 0.12))))
+        assertEquals(1, r.taker.status.value.skipped["price falling"])
+        assertEquals("FILLED", r.taker.attempt(offer(cand(ask = 0.88, outcome = "over")))!!.outcome)
+        now += 61_000L
+        assertEquals("FILLED", r.taker.attempt(offer())!!.outcome)
+        now += 61_000L
+        assertNull(r.taker.attempt(offer()))
+        assertEquals(1, r.taker.status.value.skipped["enough buys on this game"])
+        assertEquals(3, r.orders.placed.size)
+    }
+
+    @Test
     fun `only the conservative rules, a fair of 92 percent or more, and an edge that is real are bet`() = runTest {
         val r = rig(scope = backgroundScope)
         assertNull(r.taker.attempt(offer(cand(rule = "explore"))))
