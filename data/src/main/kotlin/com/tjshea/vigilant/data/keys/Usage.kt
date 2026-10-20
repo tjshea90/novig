@@ -593,7 +593,7 @@ class KeyPool(
                 }
             }
             // A sticky key stays first only while no key of a bigger plan is open (a Pro key bought later takes over from a Starter one).
-            val planOf = { k: String -> meter.flow.value.providers[policy.id]?.keys?.get(k)?.limit ?: 0 }
+            val planOf = { k: String? -> meter.flow.value.providers[policy.id]?.keys?.get(k ?: "")?.limit ?: 0 }
             val ordered = lastGood.takeIf { sticky && it in open && (pace == null || planOf(it) >= planOf(open.first())) }?.let { g -> listOf(g) + (open - g) } ?: open
             val key = meter.pick(policy, ordered, cost, held)
                 ?: if (held !== UsageMeter.NO_FLOOR && open.isNotEmpty() && meter.pick(policy, open, cost) != null) {
