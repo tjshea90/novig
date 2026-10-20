@@ -6022,4 +6022,4 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [x] CH38a cause: Kalshi bids need scan.maker AND tradingEnabled, both OFF by default (money switches); Engine Kalshi card now says which is off (KalshiMoney.bidLine)
 - [x] CH38b Kalshi money card on Engine > Money (KalshiMoney, KalshiMoneyTest)
 - [x] CH38c yes: bid settings are class BIDS in CloudScanKey and mirror to the engine
-- [ ] CH39 Tj 15:02: Kalshi toggles on but no Kalshi bids: trace KalshiHub.bidPass / KalshiBidRunner (what stops it)
+- [x] CH39 shipped v1.0.18: bid status names the missing condition; cause on Tj phone unknown until he reads it
