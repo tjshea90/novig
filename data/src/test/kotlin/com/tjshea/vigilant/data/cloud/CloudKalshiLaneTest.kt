@@ -101,7 +101,7 @@ class CloudKalshiLaneTest {
         val ec = KalshiEngineConfig(rev = 7, mode = mode, config = KalshiConfig(scan = scan, tradingEnabled = true, autoMode = KalshiAutoMode.LIVE))
         return CloudKalshiLane(
             scope = CoroutineScope(Dispatchers.Unconfined), readConfig = { ec }, trading = client, hasKey = { key }, venue = venue, sources = { sources() }, novigHeld = { _, _ -> null },
-            unavailable = { null }, dir = File.createTempFile("kl", "").also { it.delete(); it.mkdirs() }, publish = { n, t -> published[n] = t }, clock = { now },
+            unavailable = { null }, dir = File.createTempFile("kalshilane", "").also { it.delete(); it.mkdirs() }, publish = { n, t -> published[n] = t }, clock = { now },
         )
     }
 
