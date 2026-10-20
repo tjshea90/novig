@@ -6047,4 +6047,4 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [ ] CH46 trial cdn.espn.com scoreboard (?xhr=1) as faster live score source vs current ESPN call (data/tracker/Scores.kt, novig/lab/LabClock.kt); keep only if fresher. ESPN /odds endpoint = double count, skip.
 - [x] CH46a CDN scoreboard measured: cache 101 s vs site API 4 s = staler; NOT used for live (documented)
 - [x] CH46c ESPN win probability cross-check on live moneyline calls (veto 25 pts; EspnWinProbTest, LiveLightRunnerTest) v1.0.24
-- [~] CH46b (waiting Tj: ESPN lists ONE provider DraftKings = cannot meet 3-books rule; recommend skip) ESPN odds (core API /odds, DraftKings etc) as a never-called-unless-needed backup source: client + convert + ApiEntry switch + fallback-only chain slot + tests; keep Novig scan untouched
+- [x] CH46b CLOSED by Tj 23:18 (not built) (waiting Tj: ESPN lists ONE provider DraftKings = cannot meet 3-books rule; recommend skip) ESPN odds (core API /odds, DraftKings etc) as a never-called-unless-needed backup source: client + convert + ApiEntry switch + fallback-only chain slot + tests; keep Novig scan untouched
