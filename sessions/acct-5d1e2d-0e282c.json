@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-8xou8q",
- "head": "1904542fafea050dcf95a258bd920027b37ad49f",
+ "head": "a05886dbd9a00a428f2b7aa2b085397c518269cc",
  "since": 1792528851,
- "beat": 1792532361,
- "beatIso": "2026-10-20T21:39:21Z",
- "done": "pre-ship: v1.0.22: Kalshi slip hides the bet, Kalshi bids round to 1 contract, Kalshi list scanned on GitHub (CH44)",
- "next": "ship.sh gates and releases this"
+ "beat": 1792532387,
+ "beatIso": "2026-10-20T21:39:47Z",
+ "done": "pre-release: v1.0.22: Kalshi slip hides the bet, Kalshi bids round to 1 contract, Kalshi list scanned on GitHub (CH44) (versionCode 362, v1.0.22)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.22), then run: bash tools/record-release.sh v1.0.22 362 \"v1.0.22: Kalshi slip hides the bet, Kalshi bids round to 1 contract, Kalshi list scanned on GitHub (CH44)\""
 }
