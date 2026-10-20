@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "fc7cd5",
- "kind": "routine",
+ "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-1k8vlk",
+ "branch": "claude/optimistic-curie-el5i79",
  "head": "f29798332a030d1002b1a246da4a38d0376853a4",
  "since": 1792452137,
- "beat": 1792452137,
- "beatIso": "2026-10-19T23:22:17Z",
+ "beat": 1792454573,
+ "beatIso": "2026-10-20T00:02:53Z",
  "done": "WATCH 2026-10-19: engine healthy, no change",
  "next": "chat wake restarts watcher; EA4/EA10 open"
 }
