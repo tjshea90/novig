@@ -467,6 +467,19 @@ class CloudLink(private val c: AppContainer) {
         return null
     }
 
+    /** Tells the GitHub engine how to run Kalshi (KV9): `kalshi.json` on `cloud-config`, one small commit. Null when it was saved, else why not. The Kalshi tab calls it; nothing else writes this file. */
+    suspend fun putKalshiConfig(text: String): String? {
+        if (!hasToken()) return "no GitHub token saved (Settings › Cloud scan)"
+        return client.putFile(com.tjshea.vigilant.data.kalshitrade.KalshiEngineConfig.BRANCH, com.tjshea.vigilant.data.kalshitrade.KalshiEngineConfig.FILE, text.toByteArray(Charsets.UTF_8), "kalshi engine config")
+    }
+
+    /** The engine's Kalshi lane status (`kalshi-status.json` on `cloud-feed`), or null when there is none. */
+    suspend fun readKalshiStatus(): com.tjshea.vigilant.data.kalshitrade.KalshiEngineStatus? =
+        (client.readText("cloud-feed", com.tjshea.vigilant.data.kalshitrade.KalshiEngineStatus.FILE, null) as? CloudClient.Poll.Fresh)?.value?.let(com.tjshea.vigilant.data.kalshitrade.KalshiEngineStatus::parse)
+
+    /** True when a GitHub token is saved (the Kalshi tab shows the engine card only then). */
+    fun kalshiCanReachGitHub(): Boolean = hasToken()
+
     private suspend fun fetch(computedAt: Long) {
         when (val f = client.fetchFeed()) {
             is CloudClient.Poll.Fresh -> {

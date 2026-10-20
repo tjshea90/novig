@@ -77,6 +77,8 @@ data class KalshiUi(
     val arbBusy: Boolean = false,
     val autoNote: String? = null,
     val bidStatus: KalshiBidStatus? = null,
+    val engine: com.tjshea.vigilant.data.kalshitrade.KalshiEngineStatus? = null,
+    val engineNote: String? = null,
     val bids: List<MakerBid> = emptyList(),
     val message: String? = null,
 )
@@ -104,6 +106,7 @@ class KalshiHub(private val c: AppContainer) {
     private var loop: Job? = null
     private var lastScanStart = 0L
     private var lastSettleAt = 0L
+    private var lastEnginePoll = 0L
 
     private fun cfg(): KalshiConfig = _ui.value.config
 
@@ -172,9 +175,37 @@ class KalshiHub(private val c: AppContainer) {
 
     fun update(transform: (KalshiConfig) -> KalshiConfig) {
         c.appScope.launch {
+            val before = configStore.read()
             val saved = configStore.update(transform)
             _ui.update { it.copy(config = saved) }
+            // The GitHub engine follows this config while its Kalshi switch is not OFF (and once more when it goes OFF, so it takes its bids down).
+            if (saved.engineMode != KalshiAutoMode.OFF || before.engineMode != KalshiAutoMode.OFF) pushEngineConfig(saved)
         }
+    }
+
+    private var pushJob: Job? = null
+
+    /** Writes `kalshi.json` for the engine, at most once every few seconds (the chips are tapped one after another). */
+    private fun pushEngineConfig(cfg: KalshiConfig) {
+        pushJob?.cancel()
+        pushJob = c.appScope.launch {
+            delay(PUSH_SETTLE_MS)
+            val why = c.cloud.putKalshiConfig(com.tjshea.vigilant.data.kalshitrade.KalshiEngineConfig.text(com.tjshea.vigilant.data.kalshitrade.KalshiEngineConfig(System.currentTimeMillis(), cfg.engineMode, cfg, System.currentTimeMillis())))
+            _ui.update { it.copy(engineNote = if (why == null) "Sent to GitHub ${java.time.LocalTime.now().withNano(0)}" else "Not sent to GitHub: $why") }
+        }
+    }
+
+    /** Sets what the GitHub engine does for Kalshi: OFF, PAPER (records, orders nothing) or LIVE (orders with the Kalshi key on GitHub). */
+    fun setEngineMode(mode: KalshiAutoMode) {
+        update { it.copy(engineMode = mode) }
+        c.appScope.launch { delay(PUSH_SETTLE_MS + 2_000L); pollEngine() }
+    }
+
+    /** Reads the engine's Kalshi status once. */
+    suspend fun pollEngine() {
+        if (!c.cloud.kalshiCanReachGitHub()) return
+        val st = runCatching { c.cloud.readKalshiStatus() }.getOrNull()
+        if (st != null) _ui.update { it.copy(engine = st) }
     }
 
     // ---- scan -----------------------------------------------------------------------------------------------------
@@ -438,6 +469,7 @@ class KalshiHub(private val c: AppContainer) {
                     runCatching { scanNow() }
                 }
                 if (ui.config.scan.maker && ui.config.tradingEnabled && !ui.scanning && now - lastBidPass >= BID_EVERY_MS) runCatching { bidPass() }
+                if (ui.config.engineMode != KalshiAutoMode.OFF && now - lastEnginePoll >= ENGINE_POLL_MS) { lastEnginePoll = now; runCatching { pollEngine() } }
                 if (now - lastSettleAt >= SETTLE_EVERY_MS && c.kalshiSigner() != null) {
                     lastSettleAt = now
                     runCatching { refreshBets() }
@@ -457,6 +489,8 @@ class KalshiHub(private val c: AppContainer) {
         const val TICK_MS = 5_000L
         const val SETTLE_EVERY_MS = 3 * 60_000L
         const val BID_EVERY_MS = 60_000L
+        const val PUSH_SETTLE_MS = 4_000L
+        const val ENGINE_POLL_MS = 45_000L
 
         /** The most payout one arbitrage clip holds on a single venue while its other leg is placed. */
         const val CLIP = 10.0

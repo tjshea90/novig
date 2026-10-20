@@ -41,6 +41,8 @@ data class KalshiConfig(
     val arbAuto: KalshiAutoMode = KalshiAutoMode.OFF,
     /** The most payout dollars one arbitrage may take (each leg's cost is under it). */
     val arbMaxPayout: Double = 25.0,
+    /** What the GitHub engine does for Kalshi (the phone-only switch, default OFF): OFF / PAPER / LIVE. LIVE uses the Kalshi key sent to GitHub. See [KalshiEngineConfig]. */
+    val engineMode: KalshiAutoMode = KalshiAutoMode.OFF,
 ) {
     companion object {
         /** The leagues Kalshi lists game series for. */
