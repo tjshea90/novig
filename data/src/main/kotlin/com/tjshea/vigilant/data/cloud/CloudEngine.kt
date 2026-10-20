@@ -663,6 +663,10 @@ class CloudEngine(
                 log("API governor: resting ${ApiToggles.name(e.id)} for ${(e.untilMs - now) / 60_000L} min (silent, strike ${e.strikes})")
                 say(CloudMessages.Message("gov-rest-${e.id}-$now", now, "engine", "info", "Resting ${ApiToggles.name(e.id)} to save usage", "It answered nothing for ${ApiGovernor.LIMIT} scans in a row, so the engine scans without it for ${(e.untilMs - now) / 3_600_000L.coerceAtLeast(1)} h, then asks it once more (strike ${e.strikes} of ${ApiGovernor.REST_MS.size}).", 0, null))
             }
+            is ApiGovernor.Event.Recovered -> {
+                log("API governor: ${ApiToggles.name(e.id)} answers again")
+                say(CloudMessages.Message("api-ok-${e.id}-$now", now, "engine", "info", "${ApiToggles.name(e.id)} is working again", "It failed on an earlier scan and answered on the latest one.", 1, "APIS"))
+            }
             is ApiGovernor.Event.Resumed -> log("API governor: asking ${ApiToggles.name(e.id)} again")
             is ApiGovernor.Event.TurnedOff -> {
                 log("API governor: asking the phone to turn ${ApiToggles.name(e.id)} off (silent after every rest)")

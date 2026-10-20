@@ -20,12 +20,15 @@ class ApiGovernor(private val restMs: List<Long> = REST_MS) {
         data class Rested(override val id: String, val untilMs: Long, val strikes: Int) : Event
         data class Resumed(override val id: String) : Event
         data class TurnedOff(override val id: String) : Event
+        /** An API that failed (an error and no answer) on an earlier scan answered again (Tj, 2026-10-20: "send me a status update telling me the API is now working"). */
+        data class Recovered(override val id: String) : Event
     }
 
     private val streak = HashMap<String, Int>()
     private val strikes = HashMap<String, Int>()
     private val rests = HashMap<String, Rest>()
     private val offAsked = HashMap<String, Long>()
+    private val failed = HashSet<String>()
 
     /** Switch ids resting now (with their reason and end), for the status and the dashboard. */
     fun resting(now: Long): List<Rest> = rests.values.filter { it.untilMs > now }.sortedBy { it.id }
@@ -61,6 +64,8 @@ class ApiGovernor(private val restMs: List<Long> = REST_MS) {
             if (id == null || ApiToggles.policy(id)?.keyed != true || ApiToggles.isOn(settings, id) != true) continue
             if (id in rests) continue
             val answered = fs.any { it.fetched + it.reused > 0 }
+            if (answered && failed.remove(id)) events += Event.Recovered(id)
+            else if (!answered && fs.any { it.error != null }) failed += id
             val silent = fs.all { it.fetched + it.reused == 0 && it.standingBy == 0 && it.skipped == 0 && it.heldBack == null && it.error == null }
             when {
                 answered -> { streak.remove(id); strikes.remove(id) }
