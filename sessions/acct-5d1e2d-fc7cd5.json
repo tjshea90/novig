@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-rlkku2",
  "head": "117209b181c69b2a3a235c53a54ec65a8cfbbae8",
  "since": 1792452137,
- "beat": 1792477480,
- "beatIso": "2026-10-20T06:24:40Z",
+ "beat": 1792477494,
+ "beatIso": "2026-10-20T06:24:54Z",
  "done": "CH33 written (merge Kalshi into +EV tab)",
  "next": "CH33a: read Kalshi tab + Novig +EV tab code, plan merge"
 }
