@@ -6011,3 +6011,9 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 ## CH36 (Tj chat 06:55): "make sure the GitHub engine automatically starts as scheduled at 8am with auto bets and bids." / "in the Claude tab of the app, make a research tab next to chat and messages. the research tab should report to me a daily summary of the already scheduled automatic daily analysis of the bets and bids and GitHub system and what settings it tweaked and what it is considering and other relevant information so I can see how Claude is improving the app and profit engine"
 - [x] CH36a verified: keeper run 39365357998 in progress (sleeps to 08:00 ET), settings on, trading live, 359 bids resting; no change needed
 - [x] CH36b Research page (kind "research" messages, ROUTINE.md daily card rule, first card posted) -> v1.0.15
+
+## CH37 (Tj chat 14:26 UTC, 2026-10-20): Kalshi slip glitches
+- [x] CH37a Kalshi card's Bet / Open in Novig buttons were wired to Novig's slip ("Novig's order book couldn't be read"): a Kalshi card now has "Bet on Kalshi" (its own slip), no Open in Novig (FeedScreen.OpportunityCard)
+- [x] CH37b Kalshi slip shows the other books' odds table (FairOddsTable extracted from OpportunityDetail, used by KalshiBetSheet)
+- [x] CH37c Novig / Kalshi cards tinted (green / violet) when both are listed (venueTint)
+- [ ] CH37d compile, full tests, ship with the next release
