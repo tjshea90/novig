@@ -86,6 +86,28 @@ data class KalshiSettlement(
 
 data class KalshiBalance(val cash: Double, val portfolioValue: Double)
 
+/**
+ * The top of one market's book as Kalshi reports it: what a taker pays for YES is [yesAsk] and for NO is `1 - yesBid` (the NO ask), with [askSize] / [bidSize]
+ * contracts at each. [status] `active` or `open` is tradable. A side nobody offers has a null price.
+ */
+data class KalshiTop(
+    val ticker: String,
+    val yesBid: Double?,
+    val yesAsk: Double?,
+    val bidSize: Double?,
+    val askSize: Double?,
+    val status: String,
+) {
+    val tradable: Boolean get() = status == "active" || status == "open"
+    val noAsk: Double? get() = yesBid?.let { 1.0 - it }
+
+    /** The price to buy [side] ("yes" / "no") now, null when nobody sells it. */
+    fun priceFor(side: String): Double? = (if (side == "yes") yesAsk else noAsk)?.takeIf { it > 0.0 && it < 1.0 }
+
+    /** Contracts offered at [priceFor] [side]. */
+    fun sizeFor(side: String): Double? = if (side == "yes") askSize else bidSize
+}
+
 /** What an accepted order did right away. [filled] contracts matched at [averagePrice] with [averageFee] a contract; [remaining] rests (a GTC) or was cancelled (an IOC). */
 data class KalshiPlaced(
     val orderId: String,
@@ -348,6 +370,20 @@ open class KalshiTradingClient(
                 settledMs = o.str("settled_time")?.let(::parseTime),
             )
         }
+    }
+
+    /** The top of the book of each of [tickers] (up to 100 a request, signed), by ticker. A ticker Kalshi does not return is missing from the map. */
+    open suspend fun tops(tickers: Collection<String>): Map<String, KalshiTop> {
+        val out = HashMap<String, KalshiTop>()
+        for (chunk in tickers.distinct().chunked(100)) {
+            val arr = call("GET", "/markets", mapOf("tickers" to chunk.joinToString(","), "limit" to "100"))["markets"] as? JsonArray ?: continue
+            for (e in arr) {
+                val o = e as? JsonObject ?: continue
+                val t = o.str("ticker") ?: continue
+                out[t] = KalshiTop(t, o.dollars("yes_bid_dollars"), o.dollars("yes_ask_dollars"), o.count("yes_bid_size_fp"), o.count("yes_ask_size_fp"), o.str("status").orEmpty())
+            }
+        }
+        return out
     }
 
     /** Whether the key can reach the account at all (a balance read): the Test key button. */
