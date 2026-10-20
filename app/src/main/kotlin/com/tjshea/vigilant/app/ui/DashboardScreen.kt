@@ -50,14 +50,14 @@ private const val DASHBOARD_URL = "https://github.com/tjshea90/novig/blob/cloud-
  * [DashboardContent] takes plain values and no app objects, so it renders from sample data.
  */
 @Composable
-fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Modifier = Modifier, section: EngineSection? = null, onTestApi: (String) -> Unit = {}, onRetryApi: (String) -> Unit = {}) {
+fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Modifier = Modifier, section: EngineSection? = null, kalshi: com.tjshea.vigilant.app.kalshi.KalshiMoney? = null, onTestApi: (String) -> Unit = {}, onRetryApi: (String) -> Unit = {}) {
     val now = rememberNow(1_000)
     val meters = remember(state.usage, state.cloudUsage, state.settings.sgoPro, state.settings.oddsPapi, state.settings.unabated, state.settings.gates.useBoltOdds, state.settings.oddsPapiFree, now / 30_000L) {
         meterViews(state, now)
     }
     val u = state.cloudUi
     val board = remember(u.trades, u.desk, u.status, now / 15_000L) { EngineBoard.of(u.trades, u.desk, u.status, now) }
-    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, liveDirectAtMs = u.liveDirectAtMs, hoursOn = state.settings.cloudHours, section = section, refreshedAtMs = u.refreshedAtMs, refreshNote = u.refreshNote, testing = state.apiBusy, checks = state.apiChecks, onTestApi = onTestApi, onRetryApi = onRetryApi)
+    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, liveDirectAtMs = u.liveDirectAtMs, hoursOn = state.settings.cloudHours, section = section, refreshedAtMs = u.refreshedAtMs, refreshNote = u.refreshNote, kalshi = kalshi, testing = state.apiBusy, checks = state.apiChecks, onTestApi = onTestApi, onRetryApi = onRetryApi)
 }
 
 /**
@@ -86,6 +86,8 @@ fun DashboardContent(
     /** When the last pull to refresh read everything (0 = never) and what it said. */
     refreshedAtMs: Long = 0L,
     refreshNote: String = "",
+    /** Kalshi's money, shown under Novig's in the Money view (null while Kalshi is off). */
+    kalshi: com.tjshea.vigilant.app.kalshi.KalshiMoney? = null,
     /** ApiEntry names being tested now, the last Test now answers by name, and the Test now tap (by policy id). */
     testing: Set<String> = emptySet(),
     checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>> = emptyMap(),
@@ -100,6 +102,7 @@ fun DashboardContent(
         if (show(EngineSection.OVERVIEW)) OverviewSection(status, now, hoursOn, linkOkAtMs)
         if (show(EngineSection.MONEY)) {
             if (board != null) EngineMoneyCard(board, status, now) else if (section != null) Text("The engine's bets and bids appear here once it has placed any.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (kalshi != null && kalshi.kalshiOn) KalshiMoneyCard(kalshi)
         }
         if (show(EngineSection.APIS)) ApisSection(status, meters, now, testing, checks, onTestApi, onRetryApi)
         if (show(EngineSection.TRENDS)) TrendsSection(history)
@@ -416,5 +419,27 @@ private fun Sparkline(values: List<Float>, color: Color, modifier: Modifier) {
         values.forEachIndexed { i, v -> if (i == 0) path.moveTo(x(i), y(v)) else path.lineTo(x(i), y(v)) }
         drawPath(path, color, style = Stroke(width = 2.dp.toPx()))
         drawCircle(color, radius = 3.5.dp.toPx(), center = Offset(x(values.size - 1), y(values.last())))
+    }
+}
+
+/** Kalshi's money, apart from Novig's (CH38): the phone's own Kalshi record, violet like its +EV cards. */
+@Composable
+private fun KalshiMoneyCard(k: com.tjshea.vigilant.app.kalshi.KalshiMoney) {
+    SectionHeader("Kalshi (this phone)")
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.testTag("kalshiMoney")) {
+        fun m(x: Double) = "\$" + "%.2f".format(java.util.Locale.US, kotlin.math.abs(x))
+        fun sm(x: Double) = (if (x < 0) "-" else "+") + m(x)
+        val cash = k.cash?.let { "Wallet ${m(it)} cash" + (k.portfolio?.let { p -> " · ${m(p)} in positions" } ?: "") } ?: "Kalshi wallet not read yet"
+        Text(cash + " · orders ${if (k.ordersOn) "on" else "off"} · auto-bet ${k.autoMode.name.lowercase()}", style = MaterialTheme.typography.bodySmall)
+        val tiles = listOf(
+            DashboardModel.Tile("Open bets", "${k.open}", "${m(k.atRisk)} at risk"),
+            DashboardModel.Tile("Bids resting", "${k.bidsResting}", "${m(k.bidsDollars)} up"),
+            DashboardModel.Tile("Placed today", "${k.placedToday}", "Kalshi bets"),
+            DashboardModel.Tile("Settled", sm(k.settledProfit), "${k.won} won · ${k.lost} lost · today ${sm(k.profitToday)}", if (k.settledProfit > 0.005) Tone.GOOD else if (k.settledProfit < -0.005) Tone.BAD else Tone.NEUTRAL),
+        )
+        tiles.chunked(2).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) { row.forEach { t -> TileCard(t, Modifier.weight(1f)) } }
+        }
+        Text(k.bidLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag("kalshiBidLine"))
     }
 }
