@@ -23,7 +23,7 @@ class KalshiBetPlacerTest {
     private val start = now + 5 * 3_600_000L
 
     /** Records what the placer sends; answers from the tops and the script. */
-    private class Fake : KalshiTradingClient(OkHttpClient(), Json, { null }) {
+    private class Fake(val now: Long) : KalshiTradingClient(OkHttpClient(), Json, { null }) {
         var tops: Map<String, KalshiTop> = emptyMap()
         val buys = ArrayList<List<Any?>>()
         var fillAll = true
@@ -64,7 +64,7 @@ class KalshiBetPlacerTest {
 
     @Test
     fun `a +EV bet is whole contracts at the ask, with the fee rounded up in its edge, and is logged with the real fill`() = runTest {
-        val f = Fake().also { it.tops = tops() }
+        val f = Fake(now).also { it.tops = tops() }
         val t = tracker()
         val p = placer(f, t)
         val plan = (p.plan(target(), 20.0) as PlanResult.Ready).plan
@@ -83,7 +83,7 @@ class KalshiBetPlacerTest {
 
     @Test
     fun `a NO side is ordered as NO at 1 minus the yes bid`() = runTest {
-        val f = Fake().also { it.tops = tops(ask = 0.60) }
+        val f = Fake(now).also { it.tops = tops(ask = 0.60) }
         val t = target().copy(outcomeId = "ev|ml|AWAY").let { tg ->
             // The Ravens' NO: the same ticker bought as NO (price 1 - yes bid = 0.42).
             val a = NovigOutcome("ev|ml|AWAY", "Ravens", "TBD", BookRef(null, "KXNFLGAME-26OCT25BALDAL-BAL|no", null))
@@ -98,7 +98,7 @@ class KalshiBetPlacerTest {
 
     @Test
     fun `a negative EV price is never ordered, a closed market is refused, and the words say Kalshi`() = runTest {
-        val f = Fake().also { it.tops = tops(ask = 0.60) }
+        val f = Fake(now).also { it.tops = tops(ask = 0.60) }
         val r = placer(f).plan(target(fair = 0.46), 10.0) as PlanResult.Refused
         assertTrue(r.negativeEv)
         assertTrue(r.reason, r.reason.contains("Kalshi") && !r.reason.contains("Novig"))
@@ -110,7 +110,7 @@ class KalshiBetPlacerTest {
 
     @Test
     fun `a stake under one contract, or one the cent rounding makes negative, is refused with why`() = runTest {
-        val f = Fake().also { it.tops = tops() }
+        val f = Fake(now).also { it.tops = tops() }
         val tiny = placer(f).plan(target(), 0.30) as PlanResult.Refused
         assertTrue(tiny.reason, tiny.reason.contains("less than one Kalshi contract"))
         // One contract at 40c: model fee 1.68c rounds to 2c: edge 0.46/0.42 - 1 = 9.5%, still fine by hand; an auto-bet that wants 12% is refused for the rounding.
@@ -121,7 +121,7 @@ class KalshiBetPlacerTest {
 
     @Test
     fun `an IOC that matched nothing is not a bet`() = runTest {
-        val f = Fake().also { it.tops = tops(); it.fillAll = false }
+        val f = Fake(now).also { it.tops = tops(); it.fillAll = false }
         val t = tracker()
         val r = placer(f, t).place(target(), 10.0, 0.40)
         assertTrue(r.toString(), r is PlaceResult.NotFilled)
@@ -130,7 +130,7 @@ class KalshiBetPlacerTest {
 
     @Test
     fun `a lost answer is looked up by its client id and the order is never sent again`() = runTest {
-        val f = Fake().also { it.tops = tops(); it.failWith = KalshiApiException(0, "network", "timeout") }
+        val f = Fake(now).also { it.tops = tops(); it.failWith = KalshiApiException(0, "network", "timeout") }
         val r = placer(f).place(target(), 10.0, 0.40)
         assertTrue(r.toString(), r is PlaceResult.Unconfirmed)
         assertEquals(1, f.buys.size)
@@ -145,7 +145,7 @@ class KalshiBetPlacerTest {
 
     @Test
     fun `the same bet is not placed twice while the first is open`() = runTest {
-        val f = Fake().also { it.tops = tops() }
+        val f = Fake(now).also { it.tops = tops() }
         val t = tracker()
         val p = placer(f, t)
         assertTrue(p.place(target(), 10.0, 0.40) is PlaceResult.Placed)
@@ -156,7 +156,7 @@ class KalshiBetPlacerTest {
 
     @Test
     fun `a price that moved above what the sheet showed is refused`() = runTest {
-        val f = Fake().also { it.tops = tops(ask = 0.42) }
+        val f = Fake(now).also { it.tops = tops(ask = 0.42) }
         val r = placer(f).place(target(), 10.0, 0.40)
         assertTrue(r.toString(), r is PlaceResult.Refused && r.reason.contains("moved"))
         assertTrue(f.buys.isEmpty())
