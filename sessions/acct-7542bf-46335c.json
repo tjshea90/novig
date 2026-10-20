@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-7542bf",
+ "name": "tj outlook",
+ "nonce": "46335c",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/keen-keller-dqbym5",
+ "head": "4dd968728bb53de60c3feda7918b29ff48cf7fd4",
+ "since": 1792495622,
+ "beat": 1792495622,
+ "beatIso": "2026-10-20T11:27:02Z",
+ "done": "ENGINEER 2026-10-20 rotation: research card posted, no change",
+ "next": "WATCH engine start at 08:00 ET"
+}
