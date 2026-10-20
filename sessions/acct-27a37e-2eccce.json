@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "2eccce",
+ "kind": "interactive",
+ "task": "",
+ "branch": "claude/kalshi-vigilant-integration-v5u4ho",
+ "head": "42a9720a91f0719e32389def17083f655de0688e",
+ "since": 1792468198,
+ "beat": 1792468198,
+ "beatIso": "2026-10-20T03:49:58Z",
+ "done": "",
+ "next": ""
+}
