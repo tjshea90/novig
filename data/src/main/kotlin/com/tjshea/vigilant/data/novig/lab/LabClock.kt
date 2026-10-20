@@ -20,6 +20,8 @@ data class EspnGame(
     val live: Boolean,
     val period: Int,
     val clockSec: Double,
+    /** The game is over (ESPN's state "post"). */
+    val done: Boolean = false,
 ) {
     /** "HOME" or "AWAY" for the team Novig calls [ref] (its abbreviation, or a name); null when it matches neither. */
     fun sideOf(ref: String): String? = when {
@@ -104,6 +106,7 @@ object LabClock {
                 homeScore = home["score"].int() ?: return@mapNotNull null,
                 awayScore = away["score"].int() ?: return@mapNotNull null,
                 live = state == "in",
+                done = state == "post",
                 period = status?.get("period").int() ?: 0,
                 clockSec = clockSeconds(status?.get("displayClock").str()) ?: 0.0,
             )
