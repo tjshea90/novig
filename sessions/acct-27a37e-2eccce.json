@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/kalshi-vigilant-integration-v5u4ho",
- "head": "fd0eefdb9d1481e7b104483a727b0a5b7fbe79d3",
+ "head": "a59675195f555619fba2cb5855ff159ef49043bf",
  "since": 1792468198,
- "beat": 1792470177,
- "beatIso": "2026-10-20T04:22:57Z",
+ "beat": 1792470361,
+ "beatIso": "2026-10-20T04:26:01Z",
  "done": "KV6/7: Kalshi tab (EV, arb, bets, auto, setup), venue switches, bet sheet; compiles",
  "next": "run full tests (bash tools/test.sh) then fix; then bids KV4b, engine KV9, docs KV10"
 }
