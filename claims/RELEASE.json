@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/fc7cd5",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "fc7cd5",
+ "note": "v1.0.14: one +EV tab with Novig/Kalshi toggles and labelled rows (Kalshi tab out of the bar), bet slips open tall and scroll, phone never opens BoltOdds sockets while GitHub holds them",
+ "since": 1792478445,
+ "beat": 1792478445
+}
