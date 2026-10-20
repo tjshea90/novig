@@ -209,7 +209,15 @@ class CloudSources(
 
     /** SX Bet's live score for a game (CH31) while its switches are on; the engine's second score source behind ESPN. */
     fun altScore(s: ScanSettings, league: String, home: String, away: String): com.tjshea.vigilant.data.novig.lab.AltScore? =
-        if (s.gates.useSxBet && s.gates.sxSocket) sxConfirmFeed()?.scoreFor(league, home, away) else null
+        parlayScore(s, league, home, away) ?: if (s.gates.useSxBet && s.gates.sxSocket) sxConfirmFeed()?.scoreFor(league, home, away) else null
+
+    /** ParlayAPI's live play-by-play stream (CH47, Tj 2026-10-20: the default score source, ESPN the fallback) while ParlayAPI is on and a key of a Starter-or-bigger plan exists: the biggest plan's key opens it. */
+    private val parlayPbp = com.tjshea.vigilant.data.parlay.ParlayPbpStream(http, scope, key = {
+        keys(CloudKeys.PARLAY).filter { (parlayAccount.last[it]?.limit ?: 0) > 1_000 }.maxByOrNull { parlayAccount.last[it]?.limit ?: 0 }
+    })
+    fun parlayScore(s: ScanSettings, league: String, home: String, away: String): com.tjshea.vigilant.data.novig.lab.AltScore? =
+        if (s.useParlay && has(CloudKeys.PARLAY)) parlayPbp.scoreFor(league, home, away) else null
+    fun parlayPbpNote(): String = "ParlayAPI live stream: ${parlayPbp.board.size()} matches, ${parlayPbp.frames} frames, ${parlayPbp.connects} connections"
 
     @Volatile private var sxConfirm: com.tjshea.vigilant.data.sxbet.SxBetLiveFeed? = null
     private fun sxConfirmFeed(): com.tjshea.vigilant.data.sxbet.SxBetLiveFeed? {
