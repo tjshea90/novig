@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "d9dc79de50b739d4a8846f4b12e943f44dd22358",
+ "head": "379bfc7c1451067c5a1b9307eccfe710d633b3ce",
  "since": 1792528851,
- "beat": 1792538197,
- "beatIso": "2026-10-20T23:16:37Z",
- "done": "CH46b measured: one provider only, asked Tj",
- "next": "if Tj says build it anyway do CH46b else close"
+ "beat": 1792538330,
+ "beatIso": "2026-10-20T23:18:50Z",
+ "done": "CH46 closed by Tj",
+ "next": "idle: watch chat; open: Kalshi toggle lag (CH45a) if Tj reports"
 }
