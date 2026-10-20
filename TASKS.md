@@ -6038,3 +6038,6 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [x] CH44c Kalshi bet slip = Novig's: Bet button opens slip with amount prefilled; after Bet the row disappears and stays gone on rescans (screenshot 21:28)
 - [x] CH44d Kalshi rows in +EV tab (= CH33b)
 - [x] CH44e Kalshi scan on GitHub (engine), not the phone: phone lags with Kalshi scanning (KV9 engine lane, phone-only switch)
+
+## CH45 (Tj chat 22:00 UTC)
+- [ ] CH45a Kalshi toggle still lags after v1.0.22 and bids still "Under one Kalshi contract": confirm his version; if v1.0.22, lift 1-contract floor for stakes <0.5 contract (KalshiAsNovig) and profile toggle-on lag
