@@ -117,6 +117,7 @@ class CloudKalshiLaneTest {
         assertEquals(KalshiAutoMode.PAPER, st.mode)
         assertEquals(7L, st.rev)
         assertTrue(st.note, st.listed >= 1)
+        println("DEBUG " + st)
         assertEquals(1, st.betsPaper)
         assertTrue(client.buys.isEmpty())
     }
