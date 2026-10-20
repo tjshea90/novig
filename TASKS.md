@@ -5961,4 +5961,4 @@ When you come back: read this first. tj Gmail already did: CH24a/b (watchdog fix
 - [ ] CH31b a per-record switch Paper / Real with a stake setting: typed dollars or Kelly fraction; real only through the existing never-twice order path, RepeatGuard, caps and the Live features master switch; Kalshi/SX legs stay unorderable (standing rule), so cross-exchange stays paper unless Tj changes that rule.
 - [ ] CH31c score feeds: BoltOdds /livescores and SX Bet /live-scores read as sources beside ESPN (backup and in addition; fastest fresh score wins, stale never), shapes verified from the Test samples first (CH29a).
 - [ ] CH31d live odds from those sockets compared with Novig's live odds (consensus already exists; show it per game). Tests for each; ship as one release.
-- [ ] CH32 (chat t1792455417983-540f) the bet-slip fix (CH28a, built) ships in the same release as CH31.
+- [x] CH32 (v1.0.10) (chat t1792455417983-540f) the bet-slip fix (CH28a, built) ships in the same release as CH31.
