@@ -138,7 +138,7 @@ private fun EvPage(hub: KalshiHub, ui: com.tjshea.vigilant.app.kalshi.KalshiUi, 
     } else {
         LazyColumn(contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.testTag("kalshiFeed")) {
             items(ui.feed, key = { it.key }) { o ->
-                OpportunityCard(o, ui.config.scan, now, onOpen = false, onClick = { selected = o })
+                OpportunityCard(o, ui.config.scan, now, onOpen = false, venue = "Kalshi", onClick = { selected = o })
             }
         }
     }

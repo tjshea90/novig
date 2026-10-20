@@ -132,6 +132,7 @@ class KalshiHub(private val c: AppContainer) {
     private val bidDesk = MakerDesk(KalshiAsNovig(trading, outcomes), tracker, bidStore, lock = orderLock, cancelStrays = false)
     private val bidRunner = KalshiBidRunner(
         bidDesk, outcomes, cash = { if (trading.ready) trading.balance().cash else null },
+        onFills = { bets, _ -> bets.forEach { KalshiNotes.bidFilled(c.app, it) } },
         unavailable = { o -> com.tjshea.vigilant.data.reference.InjuryTags.wantOf(o)?.let { w -> com.tjshea.vigilant.data.reference.InjuryTags.tags(c.injuries.book.value, listOf(w), System.currentTimeMillis())[w.key] }?.let { com.tjshea.vigilant.data.reference.PlayerOut.forTag(it) } },
         tell = { title, text -> c.eventLog.warn("KALSHI", "$title: $text") },
         log = { c.eventLog.info("KALSHI", it) },
@@ -305,6 +306,10 @@ class KalshiHub(private val c: AppContainer) {
         }
         _ui.update { it.copy(autoNote = note) }
         if (report.placed.isNotEmpty()) c.eventLog.info("KALSHI", "auto-bet placed ${report.placed.size}")
+        if (!paper) {
+            report.placed.forEach { KalshiNotes.placed(c.app, it, "Kalshi auto-bet") }
+            report.stopped?.let { KalshiNotes.failed(c.app, "Kalshi auto-bet stopped", it) }
+        }
     }
 
     // ---- bets by hand ---------------------------------------------------------------------------------------------
@@ -323,6 +328,14 @@ class KalshiHub(private val c: AppContainer) {
         val r = withContext(Dispatchers.IO) { placer.place(target, stake, confirmedLimit, allowRepeat) }
         refreshBets()
         refreshBalance()
+        // The sheet closes at the tap, so the result comes as a notification (Tj, 2026-10-20, CH32c/d), as on the Novig side.
+        when (r) {
+            is PlaceResult.Placed -> KalshiNotes.placed(c.app, r.bet, "Kalshi bet")
+            is PlaceResult.NotFilled -> KalshiNotes.failed(c.app, "Kalshi bet not placed: ${o.selection}", r.reason)
+            is PlaceResult.Refused -> KalshiNotes.failed(c.app, "Kalshi bet not placed: ${o.selection}", r.reason)
+            is PlaceResult.Failed -> KalshiNotes.failed(c.app, "Kalshi bet failed: ${o.selection}", r.message)
+            is PlaceResult.Unconfirmed -> KalshiNotes.failed(c.app, "Kalshi bet unconfirmed (timed out): ${o.selection}", r.message)
+        }
         return r
     }
 
@@ -393,6 +406,12 @@ class KalshiHub(private val c: AppContainer) {
         )
         val out = executor.run(arb, cfg.arbMaxPayout, minOf(cfg.arbMaxPayout, CLIP), cfg.arbSettings)
         c.eventLog.info("KALSHI", "arbitrage ${arb.key}: $out")
+        when (out) {
+            is ArbOutcome.Done -> KalshiNotes.placed(c.app, "Kalshi arbitrage", "Locked in ${money(out.profit)} on ${money(out.payout)} of payout")
+            is ArbOutcome.Unhedged -> KalshiNotes.failed(c.app, "Kalshi arbitrage: ONE LEG ONLY", "${money(out.payout)} held on ${out.venue} alone (${out.reason}). Check both accounts.")
+            is ArbOutcome.Unknown -> KalshiNotes.failed(c.app, "Kalshi arbitrage: an order's answer was lost", out.message)
+            is ArbOutcome.Skipped -> {}
+        }
         return when (out) {
             is ArbOutcome.Done -> "Locked in ${money(out.profit)} on ${money(out.payout)} of payout (cost ${money(out.cost)})."
             is ArbOutcome.Skipped -> "Not placed: ${out.reason}."

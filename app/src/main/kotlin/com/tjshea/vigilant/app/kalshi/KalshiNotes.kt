@@ -38,6 +38,8 @@ object KalshiNotes {
     /** A bet placed at Kalshi by hand or by the auto-bet ([source] "Kalshi bet" / "Kalshi auto-bet"). */
     fun placed(app: Application, bet: TrackedBet, source: String) = post(app, placedTitle(bet, source), betText(bet))
 
+    fun placed(app: Application, title: String, text: String) = post(app, title, text)
+
     /** A resting bid that filled (a new fill or more of one). */
     fun bidFilled(app: Application, bet: TrackedBet) = post(app, "Kalshi bid filled ${money(bet.stake)} · ${bet.selection}", betText(bet))
 

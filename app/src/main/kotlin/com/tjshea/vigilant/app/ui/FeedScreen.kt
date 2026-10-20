@@ -616,6 +616,8 @@ fun OpportunityCard(
     injury: com.tjshea.vigilant.data.reference.Injury? = null,
     /** A team bet's game moved at Pinnacle (PARLAY_API.md §6.3): toward this side or against it. */
     move: com.tjshea.vigilant.data.reference.LineMove? = null,
+    /** The venue's name in the card's corner: null is the app's own book (Novig); the Kalshi tab says "Kalshi". */
+    venue: String? = null,
     onClick: () -> Unit,
 ) {
     val q = o.quote ?: return
@@ -673,7 +675,7 @@ fun OpportunityCard(
                     move?.let { LineMoveNote(it) }
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(AppBook.name.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text((venue ?: AppBook.name).uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     Text(Format.american(q.cost), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
                 }
             }
