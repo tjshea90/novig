@@ -48,11 +48,11 @@ fun VenueSwitchCard(modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Novig")
+                Text("Use Novig")
                 Switch(checked = ui.venues.novig, onCheckedChange = { hub.setVenues(novig = it) }, modifier = Modifier.testTag("venueNovig"))
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Kalshi")
+                Text("Use Kalshi")
                 Switch(checked = ui.venues.kalshi, onCheckedChange = { hub.setVenues(kalshi = it) }, modifier = Modifier.testTag("venueKalshi"))
             }
         }
