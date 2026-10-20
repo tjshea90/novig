@@ -442,8 +442,15 @@ fun ApiBetSheet(
     keySaved: Boolean = false,
 ) {
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    // The sheet's content grows after it opens (warnings, the price re-read): the sheet must follow it to full height, not stay where it first measured.
+    var contentHeight by remember { mutableIntStateOf(0) }
+    LaunchedEffect(contentHeight) {
+        if (contentHeight > 0 && state.currentValue != SheetValue.Hidden) runCatching { state.expand() }
+    }
     ModalBottomSheet(onDismissRequest = { if (!sheet.placing || sheet.sent) onDismiss() }, sheetState = state) {
-        ApiBetSheetContent(sheet, onStake, onConfirm, onRefresh, onRepeat, onDismiss, onAddMoney, onTypeStake, onFundWallet, keySaved)
+        Box(Modifier.onSizeChanged { contentHeight = it.height }) {
+            ApiBetSheetContent(sheet, onStake, onConfirm, onRefresh, onRepeat, onDismiss, onAddMoney, onTypeStake, onFundWallet, keySaved)
+        }
     }
 }
 
