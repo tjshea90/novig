@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-rlkku2",
  "head": "34e3a59f88bb7514ecf9202aec1e4ec8f4340e92",
  "since": 1792452137,
- "beat": 1792478671,
- "beatIso": "2026-10-20T06:44:31Z",
+ "beat": 1792478971,
+ "beatIso": "2026-10-20T06:49:31Z",
  "done": "pre-release: v1.0.14: one +EV tab with Novig/Kalshi toggles and labelled rows (Kalshi tab out of the bar), bet slips open tall and scroll, phone never opens BoltOdds sockets while GitHub holds them (versionCode 354, v1.0.14)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.14), then run: bash tools/record-release.sh v1.0.14 354 \"v1.0.14: one +EV tab with Novig/Kalshi toggles and labelled rows (Kalshi tab out of the bar), bet slips open tall and scroll, phone never opens BoltOdds sockets while GitHub holds them\""
 }
