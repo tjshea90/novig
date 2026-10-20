@@ -127,6 +127,7 @@ class CloudLiveLane(
     /** The one tracker of the engine's live fills, shared with [CloudPinnLane] (two copies of one file would go stale). */
     private val tracker: BetTracker = BetTracker(File(dir.also { it.mkdirs() }, "live-tracker.json")),
     private val confirm: (ScanSettings) -> LiveConfirm? = { null },
+    private val altScore: (ScanSettings, String, String, String) -> com.tjshea.vigilant.data.novig.lab.AltScore? = { _, _, _, _ -> null },
     /** A fill as a ledger entry, the markets the engine's auto-bet holds, and a line for Tj. */
     private val onEntry: suspend (TradeEntry) -> Unit = {},
     private val tell: suspend (String, String) -> Unit = { _, _ -> },
@@ -233,6 +234,7 @@ class CloudLiveLane(
         bids = { if (bidsOn(settings)) bidDesk else null },
         bidRules = { LiveLightBidRules(margin = LIGHT_BID_MARGIN) },
         confirm = { confirm(settings) },
+        altScore = { league, home, away -> altScore(settings, league, home, away) },
     )
 
     private var haltSeen = false

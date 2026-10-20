@@ -1,7 +1,7 @@
 package com.tjshea.vigilant.data.sxbet
 
 import com.tjshea.vigilant.data.novig.lab.EspnGame
-import com.tjshea.vigilant.data.reference.TeamMatcher
+import com.tjshea.vigilant.data.match.TeamMatcher
 
 /**
  * SX Bet's live scores (`fixtures:live_scores`, already on the socket) as a second score source behind ESPN's (Tj, 2026-10-20, CH31: "build the live score and odds feeds from the other sockets ... as backup or in addition").

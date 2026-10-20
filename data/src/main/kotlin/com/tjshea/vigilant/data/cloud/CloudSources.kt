@@ -201,6 +201,10 @@ class CloudSources(
         return if (all.isEmpty()) null else com.tjshea.vigilant.data.novig.lab.FirstLiveConfirm(all)
     }
 
+    /** SX Bet's live score for a game (CH31) while its switches are on; the engine's second score source behind ESPN. */
+    fun altScore(s: ScanSettings, league: String, home: String, away: String): com.tjshea.vigilant.data.novig.lab.AltScore? =
+        if (s.gates.useSxBet && s.gates.sxSocket) sxConfirmFeed()?.scoreFor(league, home, away) else null
+
     @Volatile private var sxConfirm: com.tjshea.vigilant.data.sxbet.SxBetLiveFeed? = null
     private fun sxConfirmFeed(): com.tjshea.vigilant.data.sxbet.SxBetLiveFeed? {
         sxConfirm?.let { return it }

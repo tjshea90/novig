@@ -1507,6 +1507,10 @@ class AppContainer(val app: Application) {
         com.tjshea.vigilant.data.novig.lab.LiveLightRunner(
             scope = appScope, source = novig, journal = ::liveLightJournal,
             paperReal = ::paperStake,
+            altScore = { league, home, away ->
+                val s = settingsStore.flow.value
+                if (s != null && s.gates.useSxBet && s.gates.sxSocket) sxConfirmFeed()?.scoreFor(league, home, away) else null
+            },
             paper = com.tjshea.vigilant.data.novig.lab.PaperBook(
                 load = { File(app.filesDir, "paper-records.json").takeIf { it.exists() }?.readText() },
                 save = { text -> File(app.filesDir, "paper-records.json").writeText(text) },
