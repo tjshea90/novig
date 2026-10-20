@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ParlayAPI Docs - Sports odds API documentation</title>
+<meta name="description" content="ParlayAPI documentation: real-time sports odds, player props, prediction markets, WebSocket streaming, and integration guidance.">
+<link rel="canonical" href="https://parlay-api.com/docs">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script defer src="/_analytics/script.js" data-website-id="809cd530-a8a1-4e46-bfc2-a76f2ba0681a" data-host-url="/_analytics"></script>
+<style>
+:root {
+    --bg: #06060b; --bg2: #0c0c14; --surface: #111119; --surface2: #16161f;
+    --border: #1e1e2e; --border2: #2a2a3d;
+    --text: #e8e8f0; --text2: #c4c4d4; --muted: #6e6e85;
+    --accent: #7c5cfc; --accent-light: #9b82fc; --accent-glow: rgba(124,92,252,0.3);
+    --teal: #00ddb8; --green: #22c55e; --red: #ef4444; --gold: #f59e0b;
+    --code-bg: #0c0c14;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+a { color: var(--accent-light); text-decoration: none; }
+a:hover { color: var(--accent); }
+code { font-family: 'JetBrains Mono', monospace; background: var(--code-bg); padding: 2px 7px; border-radius: 4px; font-size: 0.85em; color: var(--accent-light); border: 1px solid var(--border); }
+
+/* Layout */
+.layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+nav.sidebar { background: var(--bg2); border-right: 1px solid var(--border); padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.sidebar-logo { padding: 0 24px 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.sidebar-logo a { font-weight: 800; font-size: 1.15rem; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.logo-icon { width: 26px; height: 26px; background: linear-gradient(135deg, var(--accent), var(--teal)); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800; color: #fff; }
+.logo-text { color: var(--accent-light); font-weight: 400; }
+.sidebar-search { padding: 0 24px 16px; }
+.sidebar-search input { width: 100%; padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.85rem; outline: none; }
+.sidebar-search input:focus { border-color: var(--accent); }
+.sidebar-cta { display: block; margin: 0 24px 14px; padding: 9px 12px; text-align: center; background: linear-gradient(135deg, var(--accent), #5a3fd4); color: #fff; border-radius: 8px; font-size: 0.86rem; font-weight: 700; }
+.sidebar-cta:hover { color: #fff; opacity: 0.92; }
+.sidebar-section { padding: 12px 24px 4px; color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+.sidebar-link { display: block; padding: 6px 24px; color: var(--text2); font-size: 0.88rem; transition: all 0.15s; border-left: 2px solid transparent; }
+.sidebar-link:hover { color: var(--accent-light); background: var(--surface); }
+.sidebar-link.active { color: var(--accent); border-left-color: var(--accent); background: var(--surface); }
+.sidebar-link .method { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 3px; margin-right: 6px; min-width: 36px; text-align: center; }
+.method.get { background: rgba(34, 197, 94, 0.15); color: var(--green); }
+.method.post { background: rgba(124, 92, 252, 0.15); color: var(--accent); }
+.method.ws { background: rgba(0, 221, 184, 0.15); color: var(--teal); }
+
+/* Main */
+main { padding: 40px 60px 80px; max-width: 920px; }
+section { margin-bottom: 56px; scroll-margin-top: 24px; }
+section:first-child { margin-top: 0; }
+h1 { font-size: 2rem; font-weight: 800; margin-bottom: 12px; color: #fff; }
+h2 { font-size: 1.5rem; font-weight: 700; margin: 0 0 14px; color: #fff; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+h3 { font-size: 1.05rem; font-weight: 700; margin: 20px 0 10px; color: var(--text); }
+h4 { font-size: 0.92rem; font-weight: 700; margin: 16px 0 8px; color: var(--text2); }
+p { margin-bottom: 12px; color: var(--text2); }
+ul, ol { margin: 8px 0 14px 22px; color: var(--text2); }
+li { margin-bottom: 4px; }
+
+/* Endpoint header */
+.endpoint { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin: 14px 0 18px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-family: 'JetBrains Mono', monospace; font-size: 0.92rem; }
+.endpoint-method { font-weight: 700; padding: 3px 10px; border-radius: 4px; font-size: 0.78rem; }
+.endpoint-path { color: var(--text); font-weight: 500; }
+.endpoint-cost { margin-left: auto; font-size: 0.75rem; color: var(--muted); }
+.endpoint-cost strong { color: var(--gold); }
+
+/* Code blocks */
+.code-block { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; margin: 12px 0; overflow: hidden; position: relative; }
+.code-tabs { display: flex; gap: 0; background: var(--bg2); border-bottom: 1px solid var(--border); }
+.code-tab { padding: 8px 16px; cursor: pointer; color: var(--muted); font-size: 0.78rem; font-weight: 600; border: none; background: none; font-family: inherit; transition: all 0.15s; border-bottom: 2px solid transparent; }
+.code-tab:hover { color: var(--text2); }
+.code-tab.active { color: var(--accent-light); border-bottom-color: var(--accent); }
+.code-pane { display: none; padding: 16px 18px; overflow-x: auto; }
+.code-pane.active { display: block; }
+.code-pane pre { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; line-height: 1.55; color: var(--text); white-space: pre; }
+.code-copy { position: absolute; top: 8px; right: 12px; background: var(--surface); border: 1px solid var(--border2); color: var(--muted); padding: 3px 9px; border-radius: 5px; font-size: 0.7rem; cursor: pointer; font-family: inherit; transition: all 0.15s; opacity: 0; }
+.code-block:hover .code-copy { opacity: 1; }
+.code-copy:hover { color: var(--text); border-color: var(--accent); }
+
+/* Single-language code (no tabs) */
+.code-single { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin: 10px 0; overflow-x: auto; position: relative; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; }
+.code-single pre { color: var(--text); white-space: pre; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; font-size: 0.88rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+th { background: var(--bg2); color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; }
+td:first-child code { font-weight: 600; }
+tr:last-child td { border-bottom: none; }
+
+/* Signup CTA blocks (funnel: docs entries reached /signup at 11% vs 44% from the homepage) */
+.cta-block { background: linear-gradient(135deg, rgba(124,92,252,0.08), rgba(90,63,212,0.04)); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin: 20px 0; }
+.cta-block h3 { margin: 0 0 6px; }
+.cta-block p { margin: 0 0 14px; }
+.cta-block p:last-child { margin-bottom: 0; }
+.cta-block .btn { display: inline-block; background: linear-gradient(135deg, #7c5cfc, #5a3fd4); color: #fff; padding: 10px 22px; border-radius: 8px; font-weight: 600; }
+.cta-block .btn:hover { color: #fff; opacity: 0.92; }
+
+/* Callouts */
+.callout { background: var(--surface); border-left: 3px solid var(--accent); border-radius: 6px; padding: 12px 16px; margin: 14px 0; font-size: 0.9rem; color: var(--text2); }
+.callout strong { color: var(--text); }
+.callout.warn { border-left-color: var(--gold); }
+.callout.info { border-left-color: var(--teal); }
+
+/* Param list */
+.params { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin: 10px 0 16px; }
+.param-row { display: grid; grid-template-columns: 180px 1fr; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--border); align-items: start; }
+.param-row:last-child { border-bottom: none; }
+.param-name { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 0.85rem; color: var(--accent-light); }
+.param-name .req { color: var(--red); margin-left: 4px; font-size: 0.7rem; }
+.param-name .type { display: block; color: var(--muted); font-size: 0.72rem; font-weight: 400; margin-top: 2px; }
+.param-desc { color: var(--text2); font-size: 0.85rem; line-height: 1.5; }
+
+/* Mobile */
+@media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.sidebar { position: static; height: auto; max-height: 50vh; }
+    main { padding: 24px 18px 60px; }
+    .endpoint { font-size: 0.78rem; padding: 10px 12px; }
+    .endpoint-cost { width: 100%; margin-left: 0; }
+}
+
+/* Hide scrollbars on sidebar */
+nav.sidebar::-webkit-scrollbar { width: 4px; }
+nav.sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+<meta property="og:image" content="https://parlay-api.com/static/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+<div class="layout">
+
+<nav class="sidebar">
+    <div class="sidebar-logo">
+        <a href="/"><div class="logo-icon">P</div> Parlay<span class="logo-text">API</span></a>
+    </div>
+    <div class="sidebar-search">
+        <input type="search" id="search" placeholder="Search docs..." autocomplete="off">
+    </div>
+    <a class="sidebar-cta" href="/signup">Get a free API key</a>
+
+    <div class="sidebar-section">Get Started</div>
+    <a href="#quickstart" class="sidebar-link">Quick Start</a>
+    <a href="#auth" class="sidebar-link">Authentication</a>
+    <a href="#credits" class="sidebar-link">Credits &amp; Pricing</a>
+    <a href="#sdks" class="sidebar-link">Python SDK</a>
+
+    <div class="sidebar-section">Endpoints</div>
+    <a href="#sports" class="sidebar-link"><span class="method get">GET</span>Sports</a>
+    <a href="#events" class="sidebar-link"><span class="method get">GET</span>Events</a>
+    <a href="#odds" class="sidebar-link"><span class="method get">GET</span>Odds</a>
+    <a href="#props" class="sidebar-link"><span class="method get">GET</span>Player Props</a>
+    <a href="#line-movement" class="sidebar-link"><span class="method get">GET</span>Line Movement</a>
+    <a href="#consensus" class="sidebar-link"><span class="method get">GET</span>Consensus</a>
+    <a href="#arbitrage" class="sidebar-link"><span class="method get">GET</span>Arbitrage</a>
+    <a href="#ev" class="sidebar-link"><span class="method get">GET</span>EV Picks</a>
+    <a href="#live" class="sidebar-link"><span class="method get">GET</span>Live</a>
+    <a href="#inplay-arbs" class="sidebar-link"><span class="method get">GET</span>In-Play Arbs</a>
+    <a href="#live-pbp" class="sidebar-link"><span class="method get">GET</span>Live PBP / SSE</a>
+    <a href="#player-ratings" class="sidebar-link"><span class="method get">GET</span>Player Ratings</a>
+    <a href="#historical" class="sidebar-link"><span class="method get">GET</span>Historical</a>
+    <a href="#exchanges" class="sidebar-link"><span class="method get">GET</span>Exchanges</a>
+    <a href="#event-markets" class="sidebar-link"><span class="method get">GET</span>Event Markets</a>
+
+    <div class="sidebar-section">Real-Time</div>
+    <a href="#websocket-odds" class="sidebar-link"><span class="method ws">WS</span>/ws/odds</a>
+    <a href="#websocket-live" class="sidebar-link"><span class="method ws">WS</span>/ws/live</a>
+
+    <div class="sidebar-section">Reference</div>
+    <a href="#errors" class="sidebar-link">Errors &amp; Status Codes</a>
+    <a href="#sport-keys" class="sidebar-link">Sport Keys</a>
+    <a href="#bookmaker-keys" class="sidebar-link">Bookmaker Keys</a>
+    <a href="#market-keys" class="sidebar-link">Market Keys</a>
+    <a href="#migration" class="sidebar-link">Migration from TOA</a>
+    <a href="#embed-widget" class="sidebar-link">Embeddable Widget</a>
+    <a href="/docs/swagger" class="sidebar-link">Swagger / OpenAPI</a>
+    <a href="/answers" class="sidebar-link">Answers Hub</a>
+</nav>
+
+<main>
+
+<section id="quickstart">
+    <h1>ParlayAPI Documentation</h1>
+    <p>Real-time sports odds API with 30+ sources, player props, prediction-market exchanges, and WebSocket streaming. Some endpoints have similar request patterns to the-odds-api; validate integration behavior, coverage, and current plan costs before switching.</p>
+
+    <h2>Quick Start</h2>
+    <p>Start with a request below, or use <a href="/getting-started">the step-by-step guide</a> for key setup, response checks, and troubleshooting. For complete runnable examples, see <a href="/docs/sdks">the language quickstarts</a>.</p>
+    <div class="code-block">
+        <div class="code-tabs">
+            <button class="code-tab active" data-tab="qs-py">Python (SDK)</button>
+            <button class="code-tab" data-tab="qs-curl">curl</button>
+            <button class="code-tab" data-tab="qs-js">JavaScript</button>
+            <button class="code-tab" data-tab="qs-raw">Python (raw)</button>
+        </div>
+        <button class="code-copy" data-copy="qs-py">copy</button>
+        <div class="code-pane active" data-pane="qs-py"><pre>pip install parlay-api
+
+from parlay_api import ParlayAPI
+client = ParlayAPI(api_key="YOUR_KEY")
+odds = client.odds("baseball_mlb", regions="us")</pre></div>
+        <div class="code-pane" data-pane="qs-curl"><pre>curl "https://parlay-api.com/v1/sports/baseball_mlb/odds?regions=us" \
+  -H "X-API-Key: YOUR_KEY"</pre></div>
+        <div class="code-pane" data-pane="qs-js"><pre>const r = await fetch(
+  "https://parlay-api.com/v1/sports/baseball_mlb/odds?regions=us",
+  { headers: { "X-API-Key": "YOUR_KEY" } }
+);
+const odds = await r.json();</pre></div>
+        <div class="code-pane" data-pane="qs-raw"><pre>import requests
+r = requests.get(
+    "https://parlay-api.com/v1/sports/baseball_mlb/odds",
+    headers={"X-API-Key": "YOUR_KEY"},
+    params={"regions": "us"},
+)
+odds = r.json()</pre></div>
+    </div>
+
+    <div class="cta-block">
+        <p><strong>You'll need a key for the calls above.</strong> The free tier includes 1,000 credits a month, no card required.</p>
+        <a class="btn" href="/signup">Get a free API key</a>
+    </div>
+</section>
+
+<section id="auth">
+    <h2>Authentication</h2>
+    <p>Pass your API key one of two ways:</p>
+    <ul>
+        <li><strong>Header:</strong> <code>X-API-Key: YOUR_KEY</code> <em>(recommended)</em></li>
+        <li><strong>Query param:</strong> <code>?apiKey=YOUR_KEY</code> <em>(TOA-compatible)</em></li>
+    </ul>
+    <p>WebSocket connections use the query param: <code>wss://parlay-api.com/ws/odds/{sport_key}?apiKey=YOUR_KEY</code></p>
+    <div class="callout warn"><strong>Never commit your key.</strong> If you accidentally publish one, rotate it from the <a href="/dashboard">dashboard</a> immediately.</div>
+    <p><strong>Reveal and rotate</strong> mints the replacement immediately and leaves the previous secret working for a 14-day grace period. Once that period ends, a request still carrying the old secret answers <code>401</code> with <code>KEY_ROTATED</code>, and the message names both UTC times: when the key was replaced, and when the old secret stopped. A key that reached an expiry with no replacement answers <code>KEY_EXPIRED</code>, and a revoked or deleted key answers <code>KEY_REVOKED</code>. A stale deployment target is therefore identifiable from the error body alone, without opening a ticket.</p>
+</section>
+
+<section id="credits">
+    <h2>Credits &amp; Pricing</h2>
+    <p>Most paid endpoints deduct a fixed number of credits per call. Multi-market endpoints such as <code>/odds</code>, <code>/clv/history</code>, and <code>/sgp/price</code> use the formulas in <code>/v1/meta/credit-costs</code>. One <code>/props</code> call returns ALL books for that sport.</p>
+    <table>
+        <thead><tr><th>Endpoint</th><th>Credits</th><th>Notes</th></tr></thead>
+        <tbody>
+            <tr><td><code>/v1/sports</code></td><td>0</td><td>Free, lists active sport keys</td></tr>
+            <tr><td><code>/v1/sports/{key}/events</code></td><td>0</td><td>Deduped via canonical_event_id</td></tr>
+            <tr><td><code>/v1/sports/{key}/odds</code></td><td>markets x regions, or markets x one region-equivalent per ten books when <code>bookmakers=</code> is given</td><td>TOA-shape moneyline/spread/total, floor 1</td></tr>
+            <tr><td><code>/v1/sports/{key}/props</code></td><td>3</td><td>All books, all markets, single call</td></tr>
+            <tr><td><code>/v1/sports/{key}/consensus</code></td><td>3</td><td>Best/worst per (player, market, line)</td></tr>
+            <tr><td><code>/v1/sports/{key}/arbitrage</code></td><td>10</td><td>Cross-book arb scanner</td></tr>
+            <tr><td><code>/v1/sports/{key}/ev</code></td><td>10</td><td>+EV picks vs Pinnacle baseline</td></tr>
+            <tr><td><code>/v1/sports/{key}/middles</code></td><td>3</td><td>Cross-book middles: totals, spreads + player props, with hit/miss economics</td></tr>
+            <tr><td><code>/v1/sports/{key}/live</code></td><td>3</td><td>In-play games</td></tr>
+            <tr><td><code>/v1/sports/{key}/live/points</code></td><td>1</td><td>Live PBP snapshot (Free tier OK)</td></tr>
+            <tr><td><code>/v1/sports/{key}/live/sse</code></td><td>5 / connection</td><td>Live PBP stream (Starter+)</td></tr>
+            <tr><td><code>/v1/sports/{key}/live/book_latency</code></td><td>5</td><td>Per-book lag for arb-mining (Pro+)</td></tr>
+            <tr><td><code>/v1/sports/{key}/live/period_markets</code></td><td>2</td><td>1H, Q1-Q4 spreads/totals/h2h (Free OK)</td></tr>
+            <tr><td><code>/v1/inplay/arbs</code></td><td>5</td><td>Live arb scanner (5s refresh)</td></tr>
+            <tr><td><code>/v1/event-markets/search</code></td><td>0 beta</td><td>Kalshi, Polymarket, and Novig event-market discovery</td></tr>
+            <tr><td><code>/v1/historical/...</code></td><td>varies</td><td>See <code>/v1/meta/credit-costs</code></td></tr>
+            <tr><td><code>/v1/historical/stats</code></td><td>0</td><td>Public summary, cached 10min</td></tr>
+            <tr><td><code>/v1/stats</code></td><td>0</td><td>Public</td></tr>
+            <tr><td><code>/ws/odds/{key}</code></td><td>0 + tier</td><td>Business+ tier, no per-frame charge</td></tr>
+        </tbody>
+    </table>
+    <h3>Tiers</h3>
+    <table>
+        <thead><tr><th>Tier</th><th>Price</th><th>Credits/mo</th><th>Concurrent SSE/WS</th><th>Best for</th></tr></thead>
+        <tbody>
+            <tr><td>Free</td><td>$0</td><td>1,000</td><td>1 (polling only)</td><td>Trying it out, light testing</td></tr>
+            <tr><td>Starter</td><td><a href="/pricing">See plans</a></td><td>20,000</td><td>3 (PBP live/sse only)</td><td>Small scanner, 1-2 sports</td></tr>
+            <tr><td>Pro</td><td><a href="/pricing">See plans</a></td><td>100,000</td><td>25 (PBP live/sse only)</td><td>Serious bettor, multi-sport</td></tr>
+            <tr><td>Business</td><td><a href="/pricing">See plans</a></td><td>1,000,000</td><td>100 (full odds SSE + WS)</td><td>Higher-volume API use</td></tr>
+            <tr><td>Enterprise</td><td><a href="/pricing">See plans</a></td><td>5,000,000</td><td>1000 (full odds SSE + WS)</td><td>Higher-volume API use</td></tr>
+            <tr><td>Scale</td><td><a href="/pricing">See plans</a></td><td>50,000,000</td><td>1000 (full odds SSE + WS)</td><td>Higher-volume API use</td></tr>
+        </tbody>
+    </table>
+    <p>Concurrent SSE/WS = max simultaneous push-stream connections per API key. Polling endpoints are subject to the plan's rate limits and monthly credit allowance. Hit a stream connection limit and new SSE / WS connections return 429 / WS close 4002 with a clear reason; existing connections aren't affected. The full odds feed (<code>/ws/odds/{key}</code>, <code>/v1/sse/odds/{key}</code>) requires Business tier or above; Starter and Pro only reach the narrower in-play play-by-play stream (<code>/v1/sports/{key}/live/sse</code>, row above) within their connection cap.</p>
+
+    <h3>Sandbox (no auth, fake data)</h3>
+    <p>Hit <code>/v1/sandbox/sports</code>, <code>/v1/sandbox/sports/{sport_key}/odds</code>, <code>/v1/sandbox/sports/{sport_key}/live/period_markets</code>, or <code>/v1/sandbox/sports/{sport_key}/live/sse</code> to see the response shape with deterministic synthetic data. No API key, no credits consumed, IP rate-limited at 60 req/min. Useful for verifying integration shape during off-hours when no real games are live.</p>
+
+    <h3>Source health diagnostic</h3>
+    <p>Live-betting bots need to know when a source goes stale so they don't trade on dead data. <code>GET /v1/sports/{sport_key}/live/source-health?apiKey=YOUR_KEY</code> returns per-source freshness for the requested sport (events in the last 5 min, seconds since last event, latest capture timestamp). 1 credit per call. Recommended polling cadence: 30 seconds. A source with <code>seconds_since_last_event &gt; 60</code> during a known-live game has likely failed; failover yourself or rely on our internal failover (one source going down doesn't break customer SSE, primary auto-promotes).</p>
+
+    <h3>Postman + OpenAPI spec</h3>
+    <p>Full machine-readable OpenAPI spec at <code><a href="https://parlay-api.com/openapi.json" target="_blank">/openapi.json</a></code> (190+ paths). Postman supports importing OpenAPI directly: <strong>Postman → Import → Link → paste the URL above → Import</strong>. Auto-generated collection with every endpoint pre-populated.</p>
+
+    <h3>SDKs and language quickstarts</h3>
+    <p>Python: <code>python -m pip install parlay-api==0.3.2</code> &middot; <a href="https://pypi.org/project/parlay-api/0.3.2/">verified PyPI release</a> &middot; <a href="https://github.com/JacobiusMakes/parlay-api-python">public source</a>.</p>
+    <p>JavaScript / Node: start with <a href="/docs/sdks#javascript">the native fetch quickstart</a>, which needs no package install. The <a href="https://github.com/JacobiusMakes/parlay-api-js">JavaScript SDK source</a> is public; source availability does not establish an npm release.</p>
+    <p><a href="/docs/sdks">All eight language quickstarts</a> include setup, a first request, and empty-response handling. Check the published SDK version's features before relying on retry helpers or streaming support.</p>
+
+    <h3>API stability</h3>
+    <p>Read the full <a href="/docs/versioning" target="_blank">versioning + deprecation policy</a>. Short version: paths under <code>/v1/</code> are stable. Additive changes ship without notice. Breaking changes ship under <code>/v2/</code> with 12+ months of overlap. Pricing changes get 30+ days of notice. Your integration won't break overnight.</p>
+    <p>Every response includes <code>x-requests-used</code>, <code>x-requests-remaining</code>, and <code>x-requests-last</code> headers so you always know how much you've burned. Empty responses still bill normally (no auto-refund, see <a href="https://github.com/JacobiusMakes" target="_blank">the leak fix</a> if curious).</p>
+</section>
+
+<section id="sdks">
+    <h2>Python SDK</h2>
+    <p>Pure-Python single-file SDK on PyPI: <code>pip install parlay-api</code>. <a href="https://github.com/JacobiusMakes/parlay-api-python" target="_blank">Source on GitHub</a>.</p>
+    <p>The SDK provides a Python interface for ParlayAPI endpoints, with methods for ParlayAPI extensions and devig helpers. Check its documentation and validate your required endpoints and response handling before migrating an existing client.</p>
+    <div class="code-single"><pre>from parlay_api import ParlayAPI
+
+client = ParlayAPI(api_key="YOUR_KEY")
+
+# TOA-compatible methods
+sports = client.sports()
+events = client.events("baseball_mlb")
+odds = client.odds("baseball_mlb", regions="us", markets=["h2h", "spreads"])
+historical = client.historical_odds("baseball_mlb", date="2024-10-15")
+
+# Extensions
+props = client.props("baseball_mlb", markets=["player_total_bases"])
+arbs = client.arbitrage("baseball_mlb", limit=20)
+consensus = client.consensus("baseball_mlb")
+
+# Devig math (no network call)
+fair_over, fair_under = ParlayAPI.devig(over_price=-110, under_price=-110)
+edge_pct = ParlayAPI.edge(book_price=-105, fair_prob=fair_over)
+
+# WebSocket URL builder
+ws_url = client.websocket_url("baseball_mlb")</pre></div>
+</section>
+
+<section id="sports">
+    <h2>Sports</h2>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports</span><span class="endpoint-cost"><strong>0</strong> credits</span></div>
+    <p>List all sport keys with at least one event in the last 24 hours.</p>
+    <h4>Response</h4>
+    <div class="code-single"><pre>[
+  {
+    "key": "baseball_mlb",
+    "group": "Baseball",
+    "title": "MLB",
+    "description": "Major League Baseball",
+    "active": true,
+    "has_outrights": false
+  },
+  ...
+]</pre></div>
+    <p>See <a href="#sport-keys">Sport Keys</a> reference for the full list.</p>
+</section>
+
+<section id="events">
+    <h2>Events</h2>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports/{sport_key}/events</span><span class="endpoint-cost"><strong>0</strong> credits</span></div>
+    <p>List events for a sport. Deduped by <code>canonical_event_id</code> (an MD5 of sport + date + sorted team names) so the same matchup from books with different team naming conventions ("NY Yankees" vs "New York Yankees") collapses into one event.</p>
+    <h3>Parameters</h3>
+    <div class="params">
+        <div class="param-row"><div class="param-name">commenceTimeFrom<span class="type">ISO 8601 string</span></div><div class="param-desc">Filter to events starting after this time</div></div>
+        <div class="param-row"><div class="param-name">commenceTimeTo<span class="type">ISO 8601 string</span></div><div class="param-desc">Filter to events ending before this time</div></div>
+        <div class="param-row"><div class="param-name">dateFormat<span class="type">enum</span></div><div class="param-desc"><code>iso</code> (default) or <code>unix</code></div></div>
+    </div>
+    <h4>Response</h4>
+    <div class="code-single"><pre>[
+  {
+    "id": "8b1f3a2c0e9d4...",
+    "canonical_event_id": "ee78855a3bdd1019",
+    "sport_key": "baseball_mlb",
+    "sport_title": "MLB",
+    "commence_time": "2026-05-01T19:35:00Z",
+    "home_team": "New York Yankees",
+    "away_team": "Kansas City Royals"
+  },
+  ...
+]</pre></div>
+</section>
+
+<section id="odds">
+    <h2>Odds</h2>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports/{sport_key}/odds</span><span class="endpoint-cost"><strong>markets x regions</strong> credits, or <strong>markets x bookmakers/10 rounded up</strong> when <code>bookmakers=</code> is given</span></div>
+    <p>TOA-compatible game-line odds. Returns moneyline, spread, totals (and player_* markets if you ask for them) across every book that publishes them.</p>
+    <p><strong>You are only charged for markets this endpoint can serve.</strong> The price is <code>markets x regions</code>, so a key we cannot serve used to cost the same as one we can and then be dropped from the response. Since 2026-09-05 (ticket #295) such a key is dropped from the multiplier instead: the request is still answered exactly as before (a valid derived market never 400s here, so a migrating pipeline is never aborted mid-run) and the key costs nothing. Every charged response carries <code>x-markets-served</code>, the market keys the charge covered; anything we cannot serve here comes back in <code>x-markets-unservable</code> (billed zero) with the endpoint that owns it in <code>x-markets-served-elsewhere</code>. A servable key that no book is pricing right now still costs a credit and still appears in <code>x-markets-served</code>: that is coverage, not a gap.</p>
+    <p><strong><code>bookmakers=</code> replaces the region count in the price.</strong> A bookmaker list overrides <code>regions=</code> on this endpoint for the price as well as for the rows you get back. Every ten books you ask for count as one region-equivalent, rounded up and never below one, so <code>?markets=h2h&amp;bookmakers=&lt;11 books&gt;</code> costs 2 credits and not 1, and a list of ten books or fewer costs the same as a single region. This applies to <code>/v1/sports/{sport_key}/odds</code> only. On <code>/v1/sports/{sport_key}/events/{event_id}/odds</code> a bookmaker list replaces the region filter on the rows in exactly the same way, so you get the books you named rather than the books in the regions you asked for, but the price there stays markets x regions, and <code>/v1/historical/sports/{sport_key}/odds</code> takes no <code>bookmakers=</code> parameter at all. Quote any request against <code>POST /v1/meta/quote</code> before you send it: that preview applies this same rule.</p>
+    <p>Both sides of a two-way price always come from the same fixture, and from the same phase of it. When the same two teams or players meet twice in a day, each meeting is priced only from what a book posted for that meeting. A side that book has not posted for this fixture comes back with a null price rather than being filled from another match, so a null price is an absent quote and never a value we worked out for you.</p>
+    <h3>Parameters</h3>
+    <p><strong>Repeating a list parameter is the same as the comma form.</strong> <code>?markets=h2h&amp;markets=spreads</code> and <code>?markets=h2h,spreads</code> are one request and are billed identically: you get the union, not the last occurrence. This holds for <code>markets</code>, <code>bookmakers</code> and <code>regions</code> on every endpoint that takes them, REST, SSE and WebSocket alike. A value repeated across occurrences is counted once, so <code>?regions=us&amp;regions=us</code> costs one region.</p>
+    <div class="params">
+        <div class="param-row"><div class="param-name">regions<span class="type">comma-separated</span></div><div class="param-desc"><code>global</code>, <code>us</code>, <code>us2</code>, <code>uk</code>, <code>eu</code>, <code>au</code>, <code>fr</code>, <code>ca</code>, <code>br</code>, <code>mx</code>, <code>latam</code>, <code>asia</code>. Default: <code>us</code>. Each region maps to an allowlist of books, so a book we serve can still be absent from a region you did not ask for; <a href="/regions">/regions</a> and <code>GET /v1/meta/regions</code> publish the per-region book lists. Those lists separate the two questions: the <strong>active_books</strong> field is every book the region carries that has actually written prices in the last 24 hours, and <strong>books</strong> is the wider set this filter lets through, which includes books that currently return nothing. Every book carries a status (active, paused, retired, not_yet_integrated) and its last write age.<br><br>Region filters select book keys. In particular, <code>regions=ca</code> does not establish an Ontario source feed, Ontario-specific prices, licensing, account eligibility or whether an offer can be placed. Per-book activity is separate from market completeness and price parity.</div></div>
+        <div class="param-row"><div class="param-name">markets<span class="type">comma-separated</span></div><div class="param-desc">Servable here, and this is the whole list: <code>h2h</code> (moneyline), <code>spreads</code>, <code>totals</code>, <code>alternate_spreads</code>, <code>alternate_totals</code>, <code>outrights</code>, and any <code>player_*</code> / <code>batter_*</code> / <code>pitcher_*</code> / <code>anytime_*</code> / <code>futures_*</code> prop key (e.g. <code>player_total_bases</code>).<br>Any other catalogued key is accepted and answered, returns no odds here, and <strong>costs nothing</strong>: it is named in <code>x-markets-unservable</code> and routed by <code>x-markets-served-elsewhere</code>. The period keys <code>h2h_1st_half</code>, <code>spreads_1st_half</code>, <code>totals_1st_half</code>, <code>h2h_1st_quarter</code>, <code>h2h_1st_period</code>, <code>h2h_1st_5_innings</code>, <code>spreads_1st_5_innings</code> and <code>totals_1st_5_innings</code> are served by <a href="#live-pbp"><code>/v1/sports/{sport_key}/live/period_markets</code></a> (<code>?period=1H&amp;market=h2h</code>) and <code>/v1/historical/sports/{sport_key}/period_markets</code>. <code>team_totals</code>, <code>btts</code>, <code>correct_score</code>, <code>double_chance</code>, <code>draw_no_bet</code>, the MMA specials and the <code>horse_*</code> racing keys are served by <a href="#props"><code>/v1/sports/{sport_key}/props?markets=&lt;key&gt;</code></a>. Every catalogued key carries a <code>served_by</code> field in <code>GET /v1/markets</code>.</div></div>
+        <div class="param-row"><div class="param-name">bookmakers<span class="type">comma-separated</span></div><div class="param-desc">Filter to specific books: <code>draftkings,fanduel,pinnacle</code>. See <a href="#bookmaker-keys">Bookmaker Keys</a>.</div></div>
+        <div class="param-row"><div class="param-name">oddsFormat<span class="type">enum</span></div><div class="param-desc"><code>american</code> (default) or <code>decimal</code></div></div>
+        <div class="param-row"><div class="param-name">dateFormat<span class="type">enum</span></div><div class="param-desc"><code>iso</code> (default) or <code>unix</code></div></div>
+        <div class="param-row"><div class="param-name">eventIds<span class="type">comma-separated</span></div><div class="param-desc">Limit response to specific event IDs</div></div>
+    </div>
+    <h4>Example</h4>
+    <div class="code-block">
+        <div class="code-tabs">
+            <button class="code-tab active" data-tab="o-py">Python</button>
+            <button class="code-tab" data-tab="o-curl">curl</button>
+        </div>
+        <div class="code-pane active" data-pane="o-py"><pre>odds = client.odds(
+    "baseball_mlb",
+    regions="us",
+    markets=["h2h", "spreads", "totals"],
+    bookmakers=["draftkings", "fanduel", "pinnacle"],
+)</pre></div>
+        <div class="code-pane" data-pane="o-curl"><pre>curl "https://parlay-api.com/v1/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&bookmakers=draftkings,fanduel,pinnacle" \
+  -H "X-API-Key: YOUR_KEY"</pre></div>
+    </div>
+    <p class="why">Every event and row that carries <code>commence_time</code> also carries <code>commence_time_reported</code>. It is <code>true</code> when a source reported the start time you are reading, and <code>false</code> when no source did, in which case <code>commence_time</code> is <code>null</code>. We never fill a missing kickoff with a guess. Events with a null start time are still served, because their prices are real, but they are left out of any window you ask for with <code>commenceTimeFrom</code>, <code>commenceTimeTo</code>, <code>date</code> or <code>live=true</code>, since the question cannot be answered for them. Call the same endpoint without those parameters to see them. Outrights and futures are the exception: <code>markets=outrights</code> events are markets rather than fixtures, they never have a kickoff, and they are returned whether or not you narrow the board. Treat <code>commence_time</code> as nullable in every parser, on <code>/odds</code>, <code>/events</code>, <code>/props</code>, <code>/scores</code> and the historical endpoints alike.</p>
+    <p class="why">Every bookmaker block carries <code>stale_seconds</code> and <code>last_update_ms</code>, and both describe the OLDEST price in that block, so a fresh price on one side of a market never dates a stale one on the other. A book whose last price for a fixture is older than our 10 minute window is re-served for up to one hour; past that the book is left out of that market instead of being served as current. A block that came from that re-serve is marked <code>"topped_up": true</code>, so you can tell a re-served last price from a fresh write. The mark is on the block, so it covers every market listed under that bookmaker.</p>
+</section>
+
+<section id="props">
+    <h2>Player Props</h2>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports/{sport_key}/props</span><span class="endpoint-cost"><strong>3</strong> credits</span></div>
+    <p>Player prop odds from the books available for your query. Broad queries can return a limited board; check the completeness headers below. Each row has <code>over_price</code>, <code>under_price</code>, <code>line</code>, and the <code>bookmaker</code> source. Includes the standard sportsbooks plus DFS apps (PrizePicks, Underdog, Betr, Sleeper, Pick6) and exchange data (Novig, Kalshi).</p>
+    <h3>Parameters</h3>
+    <div class="params">
+        <div class="param-row"><div class="param-name">markets<span class="type">comma-separated</span></div><div class="param-desc">Filter to specific market keys, e.g. <code>player_total_bases,player_hits_runs_rbis</code>. See <a href="#market-keys">Market Keys</a>.</div></div>
+        <div class="param-row"><div class="param-name">bookmakers<span class="type">comma-separated</span></div><div class="param-desc">Filter to specific books</div></div>
+        <div class="param-row"><div class="param-name">player<span class="type">string</span></div><div class="param-desc">Partial-match player name (e.g. <code>?player=Judge</code>)</div></div>
+        <div class="param-row"><div class="param-name">eventId<span class="type">string</span></div><div class="param-desc">Limit to one game</div></div>
+        <div class="param-row"><div class="param-name">dfsOdds<span class="type">enum</span></div><div class="param-desc"><code>midpoint</code> (default, +100/-100 zero-vig) or <code>effective</code> (-137/-137 reflecting actual 2-pick payout)</div></div>
+        <div class="param-row"><div class="param-name">limit<span class="type">int 1-10000</span></div><div class="param-desc">Max rows returned, default 5000</div></div>
+        <div class="param-row"><div class="param-name">offset<span class="type">int 0-10000</span></div><div class="param-desc">Page offset within the result set, default 0. Counts rows in both flat and <code>grouped</code> mode. Follow <code>x-next-offset</code> while <code>x-result-has-more: true</code>. Past 10000 rows, narrow with <code>markets</code> or <code>bookmakers</code> instead of paging further.</div></div>
+        <div class="param-row"><div class="param-name">maxAgeSec<span class="type">int</span></div><div class="param-desc">Drop rows whose latest observation is older than N seconds. <code>/props</code> serves the latest row per book from the last 60 minutes, so a quiet market can be several minutes old; each row carries <code>age_seconds</code> (real write age) and this filter bounds it.</div></div>
+        <div class="param-row"><div class="param-name">grouped<span class="type">bool</span></div><div class="param-desc">Return one entry per prop with a <code>books[]</code> array instead of one row per book. Per-book fields (prices, links, freshness, and the DFS tags below) live inside <code>books[]</code>; <code>limit</code> and <code>offset</code> still count rows in this mode.</div></div>
+    </div>
+    <h4>Pagination and completeness headers</h4>
+    <p>Successful <code>200</code> responses carry pagination and completeness headers; conditional headers are described below. Read them rather than inferring completeness from the number of entries you got back. Error responses have a different body and header contract.</p>
+    <table>
+        <thead><tr><th>Header</th><th>Meaning</th></tr></thead>
+        <tbody>
+            <tr><td><code>x-result-page-size</code></td><td>Entries in this response. In <code>grouped=true</code> mode this is props, which is fewer than rows.</td></tr>
+            <tr><td><code>x-result-row-count</code></td><td>Rows behind this page. Equals page size in flat mode; higher in grouped mode.</td></tr>
+            <tr><td><code>x-result-limit</code></td><td>The <code>limit</code> this page was served under.</td></tr>
+            <tr><td><code>x-result-offset</code></td><td>The <code>offset</code> this page was served under.</td></tr>
+            <tr><td><code>x-result-has-more</code></td><td><code>true</code> when more rows exist past this page in the board built for this query. Loop on this value, not the entry count. <code>false</code> does not prove complete sportsbook coverage when <code>x-result-truncated</code> is <code>true</code>.</td></tr>
+            <tr><td><code>x-next-offset</code></td><td>The offset to request next. Present only when <code>x-result-has-more</code> is <code>true</code>.</td></tr>
+            <tr><td><code>x-result-truncated</code></td><td><code>true</code> when this response is known to be incomplete for a reason paging cannot fix: an internal per-source cap, a read window that did not reach a busy book's whole board, or a source that failed outright.</td></tr>
+            <tr><td><code>x-result-truncated-hint</code></td><td>Plain text saying which of those applied and what to do about it. Present whenever <code>x-result-truncated</code> is, plus as a softer note when more pages simply remain.</td></tr>
+            <tr><td><code>x-result-degraded</code></td><td>Comma separated book keys whose own query failed while this board was being built. An initial read failure leaves no rows from that book. A failed deeper read retains earlier rows, but completeness beyond them is unknown. Consensus, best price and EV computed from this response can be incomplete for those books. When the page you asked for falls past the end of such a board the response is <code>503</code> with <code>Retry-After</code> instead of an empty <code>200</code>, and no credits are charged for it.</td></tr>
+        </tbody>
+    </table>
+    <h4>Fetching a board across books</h4>
+    <p>For cross-book coverage comparisons, start with one request per bookmaker and the market you need, for example <code>?markets=player_anytime_td&amp;bookmakers=draftkings</code>. Paginate each query using <code>x-next-offset</code> while <code>x-result-has-more: true</code>, and inspect <code>x-result-truncated</code> on every page. A combined query can return fewer rows for a book than a query limited to that book.</p>
+    <p><code>x-result-truncated: true</code> together with <code>x-result-has-more: false</code> means you reached the end of a limited board, not the end of all available sportsbook offers. Increasing the offset cannot recover rows omitted from that board. A single-book query can still be truncated; narrow further by market, <code>eventId</code>, or player and check the headers again. Per-book requests reduce the scope but do not guarantee full coverage. Each successful request, including each page, costs 3 credits. Separate requests do not share a fixed snapshot, so a changing board can shift rows between pages.</p>
+    <h4>Degraded empty pages: <code>props_board_degraded</code></h4>
+    <p>If a requested page would be empty while known source read failures make completeness uncertain, the response is HTTP <code>503</code> with JSON <code>error: "props_board_degraded"</code>, <code>Retry-After: 5</code>, and <code>x-result-degraded</code> listing the affected book keys. This check also applies after <code>maxAgeSec</code> removes stale rows. No credits are charged for this response.</p>
+    <p>The JSON object includes <code>detail</code>, <code>dropped_sources</code> for books whose initial read failed, and <code>refill_failed_sources</code> for books whose deeper read failed. Earlier rows from a failed deeper read can remain available on a nonempty <code>200</code> page, with degraded/truncation metadata and the ordinary credit charge.</p>
+    <p>Handle HTTP status before parsing a successful row list. On <code>props_board_degraded</code>, wait at least the <code>Retry-After</code> interval and retry the same offset with a bounded retry policy, or narrow the query. Do not advance the offset or treat this error as the end of the board. The interval is not a promise that the next attempt will succeed. A cap without a known read failure can still produce an empty <code>200</code> page with the ordinary charge; check its truncation headers.</p>
+    <h4>Response shape</h4>
+    <p>The body is a JSON list. Read the player's name from <code>player</code>, not <code>player_name</code>. Pagination metadata is in response headers: <code>x-result-limit</code>, <code>x-result-offset</code>, <code>x-result-row-count</code>, <code>x-result-has-more</code>, and, when another page is available, <code>x-next-offset</code>. If <code>x-result-truncated: true</code>, narrow by market or bookmaker; reaching the last page does not prove an untruncated board. Limits and offsets count rows in both flat and grouped mode.</p>
+    <p>All pages of a props query use the same bounded board-construction window before applying <code>limit</code> and <code>offset</code>. Changing page size therefore does not change source scan allocation or sampling. Source updates, cache refreshes, and rows aging out of <code>maxAgeSec</code> can still change membership between requests; there is no frozen snapshot token. Prefer one large page when the query fits, retain complete selection identities when combining pages, and inspect truncation and degraded headers on every response.</p>
+    <p><code>player</code> is a display name and can differ across books, including name suffixes such as Jr. The props response does not currently provide a universal cross-book player ID. <code>canonical_event_id</code> groups event context; it is not an athlete ID. Do not assume that removing a suffix proves two names identify the same athlete. Cross-book player matching requires separate identity verification, plus matching fixture, market, period and line.</p>
+    <h4 id="props-source-contract">Market aliases, offer identity and completeness</h4>
+    <p>The <code>markets=</code> filter accepts known equivalent spellings. For NFL passing yards, <code>player_pass_yds</code>, <code>player_passing_yards</code>, and <code>player_pass_yards</code> belong to the same alias group. The filter matches that group; it does not rewrite every returned <code>market_key</code> to the spelling you requested. A request for <code>player_pass_yds</code> can therefore return <code>player_passing_yards</code>. Keep the returned key, and normalize only documented equivalents when matching your own market taxonomy. Keep <code>period</code> and <code>line</code> separate: a full-game offer and a first-half offer are not the same bet.</p>
+    <p>For FanDuel, <code>?includeSids=true</code> adds <code>over_sid</code> and <code>under_sid</code> where retained native metadata validates against the returned offer. These are provider selection identifiers for the corresponding side, not universal market or player IDs. Retain the bookmaker and fixture context, player, market family, period, line and side alongside each ID. Under <code>grouped=true</code>, read the IDs inside the relevant <code>books[]</code> entry. Some observations have no validated native IDs; do not invent one from a market key or assume that a name-based match proves native identity. Selection IDs may change when the provider replaces an offer.</p>
+    <p>A timestamp is observation metadata, not part of a selection's identity. <code>last_update</code> is the clock retained with that row; it is not a universal sportsbook publication or price-change clock. When present, <code>last_observed</code> with <code>last_update_type: "collector_observation"</code> identifies a validated collector observation. A later observation can carry unchanged lines and prices. Timestamp-only movement does not prove a new offering, a changed price, or current tradability. Repeated observations with the same validated native selection ID and matching offer context can be stored as observations of that selection; retain their clocks rather than treating each timestamp as a new selection.</p>
+    <p>For a large FanDuel NFL board, narrow one book by market, and further by <code>eventId</code> or player if needed. For example: <code>/v1/sports/americanfootball_nfl/props?bookmakers=fanduel&amp;markets=player_pass_yds&amp;includeSids=true&amp;limit=10000</code>. Follow <code>x-next-offset</code> while <code>x-result-has-more</code> is true and inspect truncation and degraded headers on every page. A scoped query can still be truncated. Non-truncated pages with no continuation and no degraded source indicate that the constructed API board was exhausted without those reported cuts; they do not prove every upstream sportsbook offer was captured.</p>
+    <p>A market catalogue describes observed markets, not an authoritative inventory of every offer at the sportsbook. Sequential market partitions do not share a frozen snapshot, even when each response is non-truncated. Their combined rows cannot establish a complete sportsbook board at one instant. Retain each request's scope, headers and observation times, and keep completeness unknown if your integration requires that stronger guarantee.</p>
+    <h4>NFL touchdown markets</h4>
+    <p><code>player_anytime_td</code> represents at least one scored touchdown with <code>line: 0.5</code>. Requests using <code>player_anytime_touchdown_scorer</code>, <code>anytime_td</code>, or <code>anytime_touchdown_scorer</code> are also accepted and return the canonical key. Novig's higher thresholds use <code>player_touchdowns_scored</code>: line 1.5 is 2+ touchdowns and line 2.5 is 3+. Passing touchdowns and combined passing/rushing/receiving totals are separate markets.</p>
+    <p>Bovada NFL anytime scorer offers for part of a game use separate keys: <code>player_anytime_td_1st_half</code>, <code>player_anytime_td_2nd_half</code>, and <code>player_anytime_td_1st_quarter</code> through <code>player_anytime_td_4th_quarter</code>. The unsuffixed key is full game. Player names no longer carry those period labels or Bovada team tags; name suffixes such as Jr are preserved. Query each segment with its own market key. Live-segment offers marked with labels such as <code>L1H</code> are omitted while their settlement meaning is unverified; they are not returned as full-game or prematch-period offers.</p>
+    <p>For an anytime offer, <code>over_price</code> is the supplied Yes price and <code>under_price</code> is the supplied No price. A null price means no usable quote was supplied through this feed. It does not prove that the sportsbook never offers that side. Do not calculate a missing No price from the Yes price. Keep the exact player, fixture, period and line when matching offers.</p>
+    <div class="code-single"><pre>[
+  {
+    "bookmaker": "draftkings",
+    "bookmaker_title": "DraftKings",
+    "player": "Aaron Judge",
+    "market_key": "player_home_runs",
+    "market": "Home Runs",
+    "line": 0.5,
+    "over_price": 290,
+    "under_price": -370,
+    "home_team": "New York Yankees",
+    "away_team": "Kansas City Royals",
+    "canonical_event_id": "ee78855a3bdd1019",
+    "commence_time": "2026-05-01T19:35:00Z",
+    "last_update": 1746130000000,
+    "age_seconds": 3
+  },
+  ...
+]</pre></div>
+    <p class="why">Every row carries <code>age_seconds</code>, the real age of that book's latest observation. Props serve the latest row per book from the last 60 minutes, so use <code>?maxAgeSec=N</code> to bound freshness on quiet markets.</p>
+    <h4>DFS projection tags: <code>odds_type</code> and <code>projection_type</code></h4>
+    <p>A DFS row carries a normalized source-declared projection type when the native payload provides enough evidence to classify it. Common values include <code>standard</code>, <code>demon</code>, <code>goblin</code>, <code>boosted</code>, <code>discounted</code>, <code>gimme_pick</code>, <code>stat_slice</code>, and <code>power_up</code>. <code>odds_type</code> holds the lowercase value; <code>projection_type</code> is the same value upper-cased and exists as an additive alias. Underdog reports <code>has_alternates</code> separately because a standard projection can also have an alternate ladder. A row without native type evidence has <strong>neither key</strong>, so check whether the key is present rather than testing it for a falsy value.</p>
+    <div class="code-single"><pre>{
+  "bookmaker": "prizepicks",
+  "player": "Jayden Daniels",
+  "market_key": "player_pass_yards",
+  "line": 204.5,
+  "odds_type": "demon",
+  "projection_type": "DEMON"
+}</pre></div>
+    <p class="why">With <code>?grouped=true</code> these two fields sit <strong>inside each <code>books[]</code> entry</strong>, beside that book's prices, and are absent from the entry of any book that did not report them. They are not a property of the prop: a group holding a PrizePicks <code>demon</code> alongside a DraftKings price carries no top-level tag at all, because there is no single honest value for one. For one release, a group whose <code>books[]</code> holds exactly one book repeats that book's tag at the top level as a compatibility bridge, since on a single-book group the value is unambiguous. Read the tag off the book you are pricing; the top-level copy is removed in the next release.</p>
+    <p class="why">The observation pair <code>last_observed</code> and <code>last_update_type</code> follows the same rule. A row bound to a validated live observation carries the instant its response body completed plus <code>last_update_type: "collector_observation"</code>; a row without that evidence carries neither key. Current Underdog and Pick6 rows also expose active native directions and selection IDs. Their <code>payout_multiplier_scope: "entry"</code> identifies pick'em entry payout multipliers, not American side prices. <code>native_identity</code> contains the provider's projection-line identifiers and can change when the provider creates a new line. Under <code>?grouped=true</code>, these book-specific fields sit inside that book's <code>books[]</code> entry.</p>
+    <h4>Injury object</h4>
+    <p>Rows for a player who has a current ESPN injury record also carry an <code>injury</code> object. Sourced from ESPN's public feed and rebuilt every 10 minutes, covering MLB, NBA, WNBA, NHL, NFL and NCAAF. A player with no record has no <code>injury</code> key, which normally means healthy.</p>
+    <div class="code-single"><pre>"injury": {
+  "status": "Out",
+  "description": "Haulcy (ankle) did not participate in Tuesday's practice.",
+  "date": "2026-09-01T23:18Z",
+  "team": "Indianapolis Colts",
+  "team_abbr": "IND",
+  "il_category": "O",
+  "body_part": "Ankle",
+  "side": "Left",
+  "position": "S",
+  "expected_return": "2026-09-13",
+  "updated_at": "2026-09-05T19:47:00Z"
+}</pre></div>
+    <p class="why"><code>description</code> is ESPN's short comment, falling back to the injury detail string, and a detail that is only ESPN's <code>Not Specified</code> placeholder counts as absent. The cache is rebuilt every 10 minutes and its size tracks the injury report, so this is a proportion and not a fixed count: about 97% of records carry a description (830 of 858 on the 2026-09-05 prod cache). The rest have nothing to say and the field is null rather than filled in. The raw <code>detail</code> is still served verbatim by the <code>/injuries</code> endpoints. <code>team</code> and <code>team_abbr</code> are resolved from ESPN's own team id and are null for an id outside the leagues above; no team is ever borrowed from another league. The same record is served in full by <code>/v1/sports/{sport_key}/injuries</code>.</p>
+</section>
+
+<section id="line-movement">
+    <h2>Line Movement</h2>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports/{sport_key}/line-movement</span><span class="endpoint-cost"><strong>2</strong> credits</span></div>
+    <p>Time-series price history for one event, grouped into a series per <code>(source, player, market_key, line)</code>. Use it for CLV and steam detection.</p>
+    <h3>Parameters</h3>
+    <div class="params">
+        <div class="param-row"><div class="param-name">eventId<span class="param-name"><span class="req">*</span></span><span class="type">string</span></div><div class="param-desc">Required. Accepts the <code>canonical_event_id</code> or the <code>event_id</code> from a <code>/props</code>, <code>/odds</code> or <code>/events</code> row. <code>event_id</code> is an accepted alias.</div></div>
+        <div class="param-row"><div class="param-name">player<span class="type">string</span></div><div class="param-desc">Partial-match player name. Strongly recommended: it is what keeps a busy event inside the row cap below.</div></div>
+        <div class="param-row"><div class="param-name">market<span class="type">string</span></div><div class="param-desc">Market key, expanded to its synonym group. <code>market_key</code> is an accepted alias.</div></div>
+        <div class="param-row"><div class="param-name">bookmaker<span class="type">string</span></div><div class="param-desc">Single book. <code>source</code> is an accepted alias.</div></div>
+        <div class="param-row"><div class="param-name">hours<span class="type">int 1-168</span></div><div class="param-desc">Lookback window, default 24. <code>window_minutes</code> (1-10080) is an accepted alias.</div></div>
+    </div>
+    <h4>Player-keyed books (PrizePicks, and the teamless tail of every other book)</h4>
+    <p>PrizePicks props are keyed by player, not by fixture: in a one-hour prod sample every PrizePicks row carried no team at all, 34,911 of 34,911. Sleeper, Underdog, Betr, Pinnacle, DraftKings and Caesars each write a smaller teamless tail as well. Those series are resolved by <code>player_name</code> + <code>market_key</code> + <code>sport_key</code> + <code>game_date</code>, the same identity <code>/props</code> publishes them under, so the <code>canonical_event_id</code> you read off a PrizePicks <code>/props</code> row works here directly.</p>
+    <p>Each series says how it was resolved. <code>matched_by: "team"</code> means the book stated the fixture and <code>home_team</code>/<code>away_team</code> are that fixture. <code>matched_by: "player"</code> means the book stated only the player, and the team fields are empty strings, exactly as <code>/props</code> serves them. A team is never inferred onto a player-keyed row.</p>
+    <p>Two limits of matching on a player. The identity available on a teamless row is <code>(sport_key, game_date, player_name)</code> and nothing else, so <strong>two athletes who share a name on the same slate cannot be separated</strong>: their observations arrive as one series. Nothing is fabricated when that happens - the series still carries <code>matched_by: "player"</code> and empty team fields - but it is a grouping, not a stated fixture. And when you ask with a team-keyed <code>eventId</code>, the companion player lane looks up at most the first 300 player names (alphabetically) found in that event's team-keyed rows. Passing <code>player</code> sidesteps both.</p>
+    <h4>Grouping, and books that quote no price</h4>
+    <p>A series is one <code>(source, player, market_key, line)</code>. A book that <em>moves</em> its line therefore produces one series per line rather than a single series showing the move; read the moves off the series' time ranges. <code>over_movement</code> describes the price at a fixed line, not the line itself.</p>
+    <p>PrizePicks and Betr quote no price at all - 0 of 34,982 PrizePicks rows and 0 of 8,657 Betr rows carried an over price in a one-hour prod sample - so their series come back with <code>over_price</code>, <code>under_price</code>, <code>opening_over</code>, <code>current_over</code> and <code>over_movement</code> all null, and everything they moved is in <code>line</code>. Underdog and Sleeper do carry prices. <code>/props</code> normalizes DFS flat payouts to +100/-100 for comparability; this endpoint serves the raw row, so the two differ by design.</p>
+    <h4>Limits, stated plainly</h4>
+    <ul>
+        <li><strong>Live table only, for every book.</strong> This endpoint reads <code>prop_snapshots</code>, the live table, which holds roughly the last 6.5 hours, so <code>hours=168</code> is accepted and clamped by the data rather than by an error. Resolving a player-keyed <code>eventId</code> searches that same window, so a book that pulled its slate hours ago still resolves. Older prices live in <a href="#historical"><code>/closing-odds</code></a>, which is a closing line per market and not a movement series. <strong>For PrizePicks and Betr not even that exists</strong>: they hold 0 rows in the closing archive (of 40,594,128), so a PrizePicks series older than the live table is not available from any endpoint. Underdog (1,336,439 rows) and Sleeper (46,231) are archived. Measured on prod 2026-09-05.</li>
+        <li><strong>5,000-row cap per request.</strong> The series query returns at most 5,000 rows, most recent first. Every response carries <code>X-Line-Movement-Row-Cap</code>, and <code>X-Line-Movement-Truncated: 1</code> when the cap actually bound. When it binds, the response covers only the most recent 5,000 rows of your window and <code>opening_over</code> is the oldest price in that slice, not the true open. It binds on the busiest events (275 of 7,072 team-keyed events over a 24-hour lookback in a prod sample); a <code>player</code> or <code>market</code> filter avoids it.</li>
+        <li><strong>Single-snapshot series are dropped.</strong> A series needs at least 2 observations to describe movement, so a book that quoted a price once and never moved it does not appear.</li>
+    </ul>
+    <h4>Response shape</h4>
+    <div class="code-single"><pre>[
+  {
+    "event_id": "18c52d6b8b8a0937",
+    "home_team": "",
+    "away_team": "",
+    "matched_by": "player",
+    "source": "prizepicks",
+    "player": "A.J. Brown",
+    "market_key": "player_receiving_yards",
+    "line": 62.5,
+    "snapshots": [{"timestamp_ms": 1757100000000, "time": "2026-09-05T17:20:00+00:00", "over_price": 100, "under_price": -100, "line": 62.5}, ...],
+    "count": 14,
+    "opening_over": 100,
+    "current_over": 100,
+    "over_movement": 0,
+    "opening_under": -100,
+    "current_under": -100,
+    "hours_tracked": 3.4
+  },
+  ...
+]</pre></div>
+    <p class="why">An empty result is returned as an object, not an array: <code>{movements: [], count: 0, event_id, sport_key, row_cap, min_snapshots_per_series, filters, note}</code>, where <code>note</code> names the reasons it can be empty. That holds on every empty path, including an <code>eventId</code> that resolves to nothing, and it does not change between a cache miss and the cache hit behind it. The two <code>X-Line-Movement-*</code> headers are on empty responses too.</p>
+</section>
+
+<section id="consensus">
+    <h2>Consensus</h2>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports/{sport_key}/consensus</span><span class="endpoint-cost"><strong>3</strong> credits</span></div>
+    <p>For each unique <code>(event, player, market, line)</code>, returns the best and worst price across all books, the average consensus price and implied probability (as a percent), and the spread between them. Useful for line-shopping. DFS books are excluded from the math. <strong>Moneyline consensus is included</strong> - pass <code>markets=h2h</code> for the per-side consensus moneyline of each game (<code>market_key</code> <code>h2h</code>, or <code>h2h_3_way</code> with a <code>Draw</code> side for soccer).</p>
+    <h4>Response per row</h4>
+    <div class="code-single"><pre>{
+  "canonical_event_id": "ee78855a3bdd1019",
+  "home_team": "New York Yankees", "away_team": "Kansas City Royals",
+  "player": "Aaron Judge", "market_key": "player_home_runs", "line": 0.5,
+  "num_books": 4, "total_books": 4,
+  "consensus_odds": 290, "consensus_prob": 25.6,
+  "best_odds": {"bookmaker": "fliff", "price": 310},
+  "worst_odds": {"bookmaker": "draftkings", "price": 270},
+  "spread": 40,
+  "all_books": [
+    {"bookmaker": "fliff", "price": 310},
+    {"bookmaker": "fanduel", "price": 295},
+    ...
+  ]
+}</pre></div>
+</section>
+
+<section id="arbitrage">
+    <h2>Arbitrage</h2>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports/{sport_key}/arbitrage</span><span class="endpoint-cost"><strong>10</strong> credits</span></div>
+    <p>Two-leg arbs across books on the same prop, with optimal stake split and projected profit. DFS books excluded. Profit cap 15% (anything higher is almost certainly stale or mis-paired data).</p>
+    <h3>Parameters</h3>
+    <div class="params">
+        <div class="param-row"><div class="param-name">limit<span class="type">int</span></div><div class="param-desc">Max arbs returned, default 50</div></div>
+        <div class="param-row"><div class="param-name">min_profit_pct<span class="type">float</span></div><div class="param-desc">Min profit threshold, default 0.5%</div></div>
+    </div>
+</section>
+
+<section id="ev">
+    <h2>+EV Picks</h2>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports/{sport_key}/ev</span><span class="endpoint-cost"><strong>10</strong> credits</span></div>
+    <p>Bets where one book's price implies a higher win probability than a "fair" baseline (Pinnacle de-vigged, with Novig as an exchange-priced cross-check). Returns book, line, edge percentage, and Kelly-optimal stake.</p>
+</section>
+
+<section id="live">
+    <h2>Live Games</h2>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports/{sport_key}/live</span><span class="endpoint-cost"><strong>3</strong> credits</span></div>
+    <p>Currently in-progress games with grouped book quotes. Sub-10s freshness on our in-play collectors.</p>
+</section>
+
+<section id="live-pbp">
+    <h2>Live Point-by-Point (PBP)</h2>
+    <p>Real-time match-state events. Covers tennis, baseball (MLB), basketball (NBA), hockey (NHL), MMA (UFC), boxing, NFL, and soccer (Premier League, La Liga, Bundesliga, Serie A, Ligue 1, UEFA Champions / Europa, MLS). Cross-source redundancy: when our primary feed for a sport drops, a fallback (ESPN / SofaScore) auto-promotes within 30 seconds.</p>
+
+    <h3>Snapshot (polling)</h3>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports/{sport_key}/live/points</span><span class="endpoint-cost"><strong>1</strong> credit</span></div>
+    <p>Returns current state for one match (with <code>match_id</code>) or all in-play matches for the sport (omit <code>match_id</code>). Free tier OK.</p>
+    <h3>Parameters</h3>
+    <div class="params">
+        <div class="param-row"><div class="param-name">match_id<span class="type">string</span></div><div class="param-desc">Optional. Single match. Omit for all in-play.</div></div>
+    </div>
+
+    <h3>Stream (Server-Sent Events)</h3>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports/{sport_key}/live/sse</span><span class="endpoint-cost"><strong>5</strong> credits per connection</span></div>
+    <p>Persistent SSE connection. Server pushes each state change (point won, game won, set closed, goal, foul, pitch outcome, period change) within ~50ms of the event. Starter+ tier required. Use the standard <code>EventSource</code> API.</p>
+    <p>The connection charge covers the initial snapshot plus streaming. Reconnects are billed as new connections.</p>
+    <pre>// JS
+const es = new EventSource('https://parlay-api.com/v1/sports/tennis/live/sse?match_id=...&apiKey=...');
+es.addEventListener('initial_state', e => console.log('snap', JSON.parse(e.data)));
+es.addEventListener('pbp_event', e => console.log('event', JSON.parse(e.data)));</pre>
+
+    <h3>Cross-book latency</h3>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports/{sport_key}/live/book_latency</span><span class="endpoint-cost"><strong>5</strong> credits</span></div>
+    <p>Per-book lag relative to our primary PBP feed. Returns each book's effective latency in seconds. Pro+ tier. Use case: arb scanners check this every few seconds and flag matches where a specific book has stale lines (positive lag &gt; 5s typically means an exploitable window).</p>
+    <pre>{
+  "sport_key": "baseball_mlb",
+  "results": [
+    {"match": "Yankees vs Rangers", "book": "fanduel",   "lag_seconds": 7.8, ...},
+    {"match": "Yankees vs Rangers", "book": "draftkings","lag_seconds": 1.2, ...},
+    {"match": "Yankees vs Rangers", "book": "caesars",   "lag_seconds": 4.0, ...}
+  ]
+}</pre>
+
+    <h3>Period markets (1H, Q1-Q4, halves, NHL periods)</h3>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports/{sport_key}/live/period_markets</span><span class="endpoint-cost"><strong>2</strong> credits</span></div>
+    <p>In-game spreads, totals, and h2h for sub-game periods: 1st half, 2nd half, quarters (NBA, WNBA, NFL, NCAAF), hockey periods (NHL), or first 5 / first 7 innings (MLB). Includes alternate lines: a single Q1 spread query for one NBA game returns ~8 to 10 alt lines. Open to all tiers (Free can run ~500 test calls; continuous high-frequency polling needs Pro or Business). Latency: 1 to 4 seconds (vs 30s+ on the-odds-api).</p>
+    <p>Query params: <code>period</code> (FT, 1H, 2H, Q1, Q2, Q3, Q4, OT, P1, P2, P3, F5, F7, or 'all'), <code>match_id</code>, <code>source</code>, <code>market</code> (spread, total, h2h). All optional except <code>apiKey</code>.</p>
+    <pre>GET /v1/sports/basketball_nba/live/period_markets?period=Q1&amp;market=spread&amp;apiKey=...
+
+{
+  "sport_key": "basketball_nba",
+  "period": "Q1",
+  "market": "spread",
+  "count": 18,
+  "results": [
+    {"source":"pinnacle", "home_team":"Oklahoma City Thunder",
+     "away_team":"Los Angeles Lakers", "period_key":"Q1",
+     "market":"spread", "side":"home", "line":-3.5, "price":-144,
+     "age_seconds":1, ...},
+    {"source":"pinnacle", "side":"away", "line":3.5, "price":120, ...},
+    ...alt lines from -2.5 through -6.0...
+  ]
+}</pre>
+    <p><code>GET /v1/sports/{sport_key}/live/period_markets/sources</code> returns which books have which periods active right now (last 10 min). Useful for client-side discovery.</p>
+    <p>Sports with period coverage: NBA (1H, 2H, Q1-Q4), WNBA (1H, 2H, Q1-Q4), NCAAB (1H, 2H), NFL (1H, 2H, Q1-Q4), NCAAF (1H, 2H, Q1-Q4), NHL (P1, P2, P3), MLB (F5, F7), soccer leagues (1H, 2H). Coverage depends on book availability per period; e.g. Pinnacle has every period for every sport, DraftKings/FanDuel/BetMGM/Caesars vary by league.</p>
+</section>
+
+<section id="inplay-arbs">
+    <h2>In-Play Arbitrage Scanner</h2>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/inplay/arbs</span><span class="endpoint-cost"><strong>5</strong> credits</span></div>
+    <p>Cross-book arbs detected during live games. Updated every 5 seconds. Pairs with the WebSocket: subscribers receive <code>{"type":"arb_flagged"}</code> frames the moment a new arb is found.</p>
+</section>
+
+<section id="player-ratings">
+    <h2>Player Ratings (market implied)</h2>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports/{sport_key}/player-ratings</span><span class="endpoint-cost"><strong>2</strong> credits</span></div>
+    <p>A strength rating for each player in a 1v1 sport, derived from the market rather than from results. Supported today for <code>table_tennis</code> and its sub leagues, where we hold paired moneylines from Bovada and Tenbet.</p>
+    <p><strong>What the number is.</strong> For every fixture we take the last price each book posted <em>before</em> the listed start time, remove the vig from the two sides, and fit an iterative Elo to those probabilities. So the rating answers "who did the market think was stronger, before a ball was struck".</p>
+    <p><strong>What the number is not.</strong> It is not an official ITTF or WTT ranking. It is not a results rating and it is not a prediction. Any price quoted at or after the start time is an in play price and is excluded, because an in play price mostly encodes who is currently ahead. <code>rating</code> and <code>implied_win_rate</code> are derived numbers, computed by ParlayAPI from book prices.</p>
+    <p><strong>Selection rules, all reported back in the response.</strong> A fixture is keyed by home player, away player and start time, so the same two players meeting twice in one day counts as two fixtures and neither borrows the other's price. Both sides must have a pregame price or the fixture is dropped. The two implied probabilities must sum to a plausible book total (0.98 to 1.30) or the fixture is dropped. One fixture counts once no matter how many books priced it. A book names the side either on its own ("Adam Svoboda") or inside a compound market label ("Adam Svoboda v Vaclav Dolezal &middot; Match Winner &middot; Adam Svoboda"); both are read, and the trailing name must match a side exactly.</p>
+    <p>Query params: <code>limit</code> (1 to 500, default 100), <code>min_matches</code> (1 to 50, default 3), <code>window_days</code> (1 to 180, default 30). Coverage is limited by how many pregame prices we hold, so <code>matches_used</code> is normally far smaller than the number of fixtures in the window; the response says exactly how many were dropped and why.</p>
+    <pre>GET /v1/sports/table_tennis/player-ratings?window_days=30&amp;min_matches=3&amp;apiKey=...
+
+{
+  "sport_key": "table_tennis",
+  "rating_kind": "market_implied",
+  "rating_basis": "pregame_closing_lines",
+  "rating_method": "iterative_elo_from_devigged_pregame_closing_moneylines",
+  "window_days": 30,
+  "data_window_start": "2026-08-06T06:00:00Z",
+  "data_window_end": "2026-09-05T02:05:00Z",
+  "min_matches": 3,
+  "total_rated_players": 1036,
+  "matches_used": 8750,
+  "matches_dropped_inplay_only": 17259,
+  "matches_dropped_one_sided": 71,
+  "matches_dropped_implied_total_out_of_range": 0,
+  "matches_priced_by_multiple_books": 168,
+  "implied_total_bounds": [0.98, 1.3],
+  "source_matches": 8750,
+  "ratings": [
+    {"player": "Andrew Baggaley", "rating": 1662.8, "matches": 9,
+     "implied_win_rate": 0.7092, "last_match_at": "2026-08-21T14:35:00Z"},
+    ...
+  ]
+}</pre>
+    <p>Field notes: <code>matches_used</code> is the number of fixtures behind the ratings. <code>matches_dropped_inplay_only</code> counts fixtures for which we hold a match winner price named to a side, but every such price was quoted at or after the start; fixtures we hold no named match winner price for are not counted here at all. <code>matches_dropped_one_sided</code> counts fixtures where only one player had a pregame price. <code>data_window_start</code> and <code>data_window_end</code> are the first and last fixture actually used, which can be narrower than <code>window_days</code>. <code>last_match_at</code> is that player's most recent used fixture. <code>source_matches</code> is retained as an alias of <code>matches_used</code>.</p>
+</section>
+
+<section id="historical">
+    <h2>Historical Odds</h2>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/historical/sports/{sport_key}/odds</span><span class="endpoint-cost"><strong>10 x markets x regions</strong> credits</span></div>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/historical/sports/{sport_key}/closing-odds</span><span class="endpoint-cost"><strong>10</strong> credits</span></div>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/historical/sports/{sport_key}/matches</span><span class="endpoint-cost"><strong>2</strong> credits</span></div>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/historical/stats</span><span class="endpoint-cost"><strong>0</strong> credits</span></div>
+    <p>Historical is split by product shape so modelers can tell prices from results. We do not derive or invent missing odds. Paid self-serve tiers permit internal analysis within one customer entity. Public/customer-facing display, resale or raw-feed/archive redistribution, sublicensing, commercial derived products, and any SLA require a separate signed agreement with express scope. See <a href="/legal/terms">the terms</a>.</p>
+    <p><code>/v1/historical/sports/{sport_key}/odds</code> takes <code>markets=</code> and charges <code>10 x markets x regions</code>. It serves <code>h2h</code>, <code>spreads</code> and <code>totals</code> and nothing else: the archive it reads has moneyline, spread and total columns, so there is no alt ladder, no outrights and no props in it. Any other key is answered but billed zero and named in <code>x-markets-unservable</code>. Prop history lives at <code>/v1/historical/sports/{sport_key}/closing-odds?markets=&lt;key&gt;</code> and period-market history at <code>/v1/historical/sports/{sport_key}/period_markets</code>; <code>outrights</code> and the alt ladder are live-only, on <code>/v1/sports/{sport_key}/odds</code>.</p>
+    <p>A retired book (an operator that has closed, currently <code>maverick_games</code>, closed 2026-09-01) is refused on every live endpoint but its closing lines captured while it was open stay queryable here and on the closing-line and bulk export endpoints, and each of its rows carries <code>"retired": true</code> with the <code>closed_on</code> date (the CSV export carries the same two facts as trailing columns). Games dated after the closure are not served for it: the book never closed them.</p>
+    <div class="callout" id="historical-window">
+        <p><strong>How far back you can read depends on your plan, not just on credits.</strong>
+        Every endpoint in this section is gated by a per-tier window as well as its credit cost.
+        Asking for a date older than your window returns <code>403</code> with
+        <code>error: "HISTORICAL_LIMIT"</code> and an <code>allowed_from</code> field naming the
+        oldest date you may read - even when you have your full credit allowance unspent.</p>
+        <table>
+            <thead><tr><th>Plan</th><th>Historical window</th><th>Oldest readable</th></tr></thead>
+            <tbody>
+                <tr><td>Free</td><td>48 hours</td><td>2 days back</td></tr>
+                <tr><td>Starter</td><td>168 hours</td><td>7 days back</td></tr>
+                <tr><td>Pro</td><td>720 hours</td><td>30 days back</td></tr>
+                <tr><td>Business</td><td>2,160 hours</td><td>90 days back</td></tr>
+                <tr><td>Enterprise</td><td>8,760 hours</td><td>1 year back</td></tr>
+                <tr><td>Scale</td><td>Up to 87,600 hours</td><td>Records available within that window</td></tr>
+            </tbody>
+        </table>
+        <p>The plan window is a maximum lookback, not a promise that records exist throughout it. Historical coverage varies by sport, league, market, bookmaker, and date. Check a representative sample for your exact scope and completeness before planning a backtest or purchase. Every historical response carries <code>x-historical-window-hours</code> and
+        <code>x-historical-window-from</code> headers, so you can read your own limit at runtime
+        instead of inferring it from a <code>403</code>. If you are backtesting a full season,
+        size your plan by this window first - the credit cost is rarely the binding constraint.</p>
+    </div>
+    <table>
+        <thead><tr><th>Product</th><th>Endpoint</th><th>Use case</th><th>Important distinction</th></tr></thead>
+        <tbody>
+            <tr><td>Point-in-time odds</td><td><code>/odds</code></td><td>TOA-compatible historical snapshots</td><td>Requires <code>date</code>; limited by tier window.</td></tr>
+            <tr><td>Closing odds</td><td><code>/closing-odds</code></td><td>Backtests at final pregame price</td><td>Game lines and prop closing rows where real prices exist.</td></tr>
+            <tr><td>Match/results archive</td><td><code>/matches</code></td><td>Schedules, teams, scores, esports results</td><td>Rows include <code>has_odds</code>; result-only rows are not price history.</td></tr>
+            <tr><td>Forward line movement</td><td><code>/line-movement</code></td><td>CLV and price-change tracking</td><td>Starts when ParlayAPI began capturing that market.</td></tr>
+        </tbody>
+    </table>
+    <p>Esports note: CS2, Dota 2, and Valorant have historical match/result archives plus current forward Pinnacle price capture. They do not yet have deep historical before/during/after odds movement for past years.</p>
+    <h3>Parameters</h3>
+    <div class="params">
+        <div class="param-row"><div class="param-name">date<span class="param-name"><span class="req">*</span></span><span class="type">YYYY-MM-DD</span></div><div class="param-desc">Required. Date of the games</div></div>
+        <div class="param-row"><div class="param-name">pricedOnly<span class="type">boolean</span></div><div class="param-desc">For <code>/matches</code>, return only rows that include real odds.</div></div>
+    </div>
+</section>
+
+<section id="exchanges">
+    <h2>Exchanges</h2>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/exchanges</span><span class="endpoint-cost"><strong>0</strong> credits</span></div>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/exchange/{exchange_key}/markets</span><span class="endpoint-cost"><strong>3</strong> credits</span></div>
+    <p>Exchange-specific data including order book depth where available. Currently <code>novig</code>.</p>
+</section>
+
+<section id="event-markets">
+    <h2>Event Market Search</h2>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/event-markets/search</span><span class="endpoint-cost"><strong>0</strong> credits in beta</span></div>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/prediction-markets/search</span><span class="endpoint-cost"><strong>0</strong> credits in beta</span></div>
+    <p>Free-text discovery across Kalshi, Polymarket, and Novig event markets. Built for Specials, next-team markets, coach-out markets, trade deadline markets, and other non-standard contracts that do not fit a fixed sport/event schema.</p>
+    <p>Try the live demo at <a href="/event-markets">/event-markets</a>.</p>
+    <h3>Parameters</h3>
+    <div class="params">
+        <div class="param-row"><div class="param-name">q<span class="type">string</span></div><div class="param-desc">Search text, for example <code>AJ Brown next team</code> or <code>Mike Vrabel out before September</code>.</div></div>
+        <div class="param-row"><div class="param-name">sources<span class="type">comma-separated</span></div><div class="param-desc"><code>kalshi,polymarket,novig</code>. Default checks all three.</div></div>
+        <div class="param-row"><div class="param-name">min_volume<span class="type">number</span></div><div class="param-desc">Hide low-volume markets below this source-native volume.</div></div>
+        <div class="param-row"><div class="param-name">min_confidence<span class="type">0-1</span></div><div class="param-desc">Hide weak text matches. Default <code>0</code>.</div></div>
+        <div class="param-row"><div class="param-name">sort<span class="type">enum</span></div><div class="param-desc"><code>balanced</code> shows a mix of venues. <code>match</code> sorts by match confidence and volume.</div></div>
+    </div>
+    <h4>Example</h4>
+    <div class="code-single"><pre>curl 'https://parlay-api.com/v1/event-markets/search?q=AJ%20Brown%20next%20team&amp;sources=kalshi,novig,polymarket&amp;min_volume=1000'</pre></div>
+    <h4>Response highlights</h4>
+    <div class="code-single"><pre>{
+  "query": "AJ Brown next team",
+  "credits_charged": 0,
+  "source_summary": {
+    "kalshi": {"count": 10, "max_volume": 283989.29},
+    "novig": {"count": 4, "max_volume": 9458.94}
+  },
+  "markets": [
+    {
+      "source": "kalshi",
+      "event_title": "A.J. Brown's Next Team",
+      "outcome": "New England",
+      "prices": {"yes_bid": 0.79, "yes_ask": 0.81}
+    }
+  ],
+  "clusters": [
+    {
+      "cluster_key": "aj brown next team",
+      "sources": ["kalshi", "novig"],
+      "note": "Candidate text match only. Prices remain source-native and are not blended."
+    }
+  ]
+}</pre></div>
+    <div class="callout warn"><strong>Settlement matters.</strong> Event-market clusters are discovery leads, not automatic arb proof. Compare the source settlement rules before acting on a cross-venue price gap.</div>
+</section>
+
+<section id="websocket-odds">
+    <h2>WebSocket: /ws/odds</h2>
+    <div class="endpoint"><span class="endpoint-method method ws">WS</span><span class="endpoint-path">wss://parlay-api.com/v1/ws/odds/{sport_key}?apiKey=YOUR_KEY</span></div>
+    <p>Real-time odds streaming for one sport. Business / Enterprise / Scale tier required. Receives eligible stored odds updates after collection, processing and server-side coalescing.</p>
+    <h3 id="websocket-auth">Authentication</h3>
+    <p>Every WebSocket route takes the key in any of these three forms. <code>/ws/odds</code> and <code>/ws/live</code> share one auth path, so a key that opens one opens the other, and both refuse with the same close codes.</p>
+    <table>
+        <thead><tr><th>Form</th><th>Example</th><th>When to use it</th></tr></thead>
+        <tbody>
+            <tr><td><code>X-API-Key</code> header</td><td><code>X-API-Key: YOUR_KEY</code></td><td>Recommended. Keeps the key out of URLs and access logs.</td></tr>
+            <tr><td><code>?apiKey=</code></td><td><code>wss://parlay-api.com/v1/ws/odds/baseball_mlb?apiKey=YOUR_KEY</code></td><td>Browser <code>WebSocket</code>, which cannot set headers.</td></tr>
+            <tr><td><code>?api_key=</code></td><td><code>wss://parlay-api.com/v1/ws/live/tennis_wta?api_key=YOUR_KEY</code></td><td>Identical to <code>?apiKey=</code>. Both spellings are accepted.</td></tr>
+        </tbody>
+    </table>
+    <p>A logged-in dashboard session cookie is a credential on <code>/ws/live</code> only, which is the free live board's own feed. The metered sockets (<code>/ws/odds</code>, <code>/ws/odds-fast</code>) need a key in one of the forms above, whatever browser they are opened from: the credit allowance is metered per key, and a cookie carries none. When both a key and a session cookie are present, the key wins.</p>
+    <p>Close codes on a refused connect are the same on every WebSocket route: <code>4003</code> no key on the request, <code>1008</code> key not valid, <code>4001</code> tier below Business (or an expired session), <code>4002</code> concurrent-connection cap, <code>4004</code> monthly credits spent. A refused connect is never billed.</p>
+    <div class="callout"><strong>Full WebSocket docs.</strong> This section is a quick reference. For the complete protocol, code examples in 10+ languages, +EV alert pattern, player-prop streaming, troubleshooting, and SSE alternative, see <a href="/docs/websocket">/docs/websocket</a> · <a href="/docs/websocket/quickstart">Quickstart</a> · <a href="/docs/websocket/examples">Examples</a> · <a href="/docs/websocket/player-props">Player props</a> · <a href="/docs/websocket/edge-alerts">Edge alerts</a> · <a href="/docs/websocket/troubleshooting">Troubleshooting</a> · <a href="/docs/websocket/sse">SSE</a> · <a href="/docs/websocket/migration">Migration</a>.</div>
+    <h3>Query params</h3>
+    <table>
+        <thead><tr><th>param</th><th>example</th><th>meaning</th></tr></thead>
+        <tbody>
+            <tr><td><code>bookmakers</code></td><td><code>fanduel,pinnacle,caesars</code></td><td>Only these books</td></tr>
+            <tr><td><code>markets</code></td><td><code>player_points,player_rebounds</code></td><td>Prop market keys</td></tr>
+            <tr><td><code>kinds</code></td><td><code>game,prop</code></td><td>Game lines, props, or both</td></tr>
+            <tr><td><code>event_id</code></td><td><code>ee78855a3bdd1019</code></td><td>Single event filter, without the subscribe frame</td></tr>
+            <tr><td><code>since</code></td><td><code>1757280000000</code></td><td>Resume cursor in epoch ms</td></tr>
+            <tr><td><code>diff</code></td><td><code>true</code></td><td>Frames after <code>initial_state</code> carry only changed fields</td></tr>
+            <tr><td><code>limit</code></td><td><code>1000</code></td><td>Rows in the <code>initial_state</code> frame. 1 to 1000, default 500. Same name, bounds and default as <code>/v1/sse/odds</code>. Any value that is not an integer in range closes the socket <code>4005</code>, carrying the same sentence the SSE endpoint's 422 gives.</td></tr>
+            <tr><td><code>max_age_s</code></td><td><code>600</code></td><td>Maximum retained observation age for game lines, including game selections stored as prop rows. Checked on initial snapshots and again before sending updates; 1 to 3600 seconds, default 600. Ordinary player props retain their existing window. A missing observation timestamp is not evidence of freshness.</td></tr>
+        </tbody>
+    </table>
+    <h3 id="complete-game-board">Complete current game-line baseline</h3>
+    <p>To seed a complete current game-line board, explicitly name the books and request <code>?kinds=game&amp;markets=h2h,spreads,totals&amp;limit=1000</code>. Accept the frame as a replacement only when it has <code>snapshot_scope="current_game_board"</code>, <code>snapshot_complete=true</code>, and <code>truncated=false</code>. It reports <code>resume_mode="replace"</code>; a supplied <code>since</code> is intentionally ignored and reported as <code>since_honored=false</code>.</p>
+    <p>Without <code>snapshot=complete</code>, other initial frames are bounded <code>recent_rows</code> samples. In that scope, <code>since</code> is a best-effort retained-observation filter, not an exactly-once replay cursor or lossless removal log. <code>diff</code> defaults to false and changes subsequent update frames only. <code>max_age_s</code> defaults to 600 seconds for game lines; it limits observation age but does not make a sample complete or prove that an unchanged price is still offered upstream.</p>
+    <h3 id="complete-native-props">Complete native NFL yards snapshots: WS and SSE</h3>
+    <p>Business tier and above can explicitly request <code>snapshot=complete</code> on <code>/v1/ws/odds/americanfootball_nfl</code> or <code>/v1/sse/odds/americanfootball_nfl</code>, with <code>bookmakers=novig,pick6</code> (or either source alone), <code>kinds=prop</code> and <code>markets=player_pass_yds,player_receiving_yards</code>. An event filter is optional. Other books, sports, kinds and markets are refused in this mode. Completeness covers requested eligible observed native selections, not every upstream offering or other props streams.</p>
+    <div class="code-single"><pre>/v1/sse/odds/americanfootball_nfl?bookmakers=novig,pick6&amp;kinds=prop&amp;markets=player_pass_yds,player_receiving_yards&amp;snapshot=complete&amp;limit=500</pre></div>
+    <p><code>limit</code> is rows per frame in this mode (1 to 1000, default 500). Configure clients for up to 512 KiB per frame, 64 frames, 16 MiB aggregate, 10,000 matching identities and a 20-second initial transfer. Timeout, unsupported scope, identity or marshal omission, and count or byte limits refuse the complete transfer rather than certify a partial board.</p>
+    <p>After <code>connected</code>, read <code>initial_state</code> and any <code>snapshot_chunk</code> parts in order. They share <code>snapshot_id</code> and <code>snapshot_generation</code>, with consecutive zero-based <code>snapshot_part</code>, <code>snapshot_parts</code>, <code>snapshot_total_count</code>, <code>count</code> and <code>data</code>. Parts have <code>snapshot_in_progress=true</code> and <code>snapshot_complete=false</code>. No live updates precede baseline completion.</p>
+    <p>Replace client state atomically only after the terminal <code>snapshot_complete</code> message: same ID and generation, <code>snapshot_part=snapshot_parts</code>, equal <code>matching_count</code> and <code>delivered_count</code>, <code>snapshot_complete=true</code>, <code>snapshot_in_progress=false</code>, unique identities, every part received, and no partial or truncation flags. An empty board still has one zero-row initial part and the terminal. Silence, heartbeat or an interrupted transfer never certifies completion.</p>
+    <p>A supplied <code>since</code> does not reduce this baseline: <code>resume_mode=replace</code> and <code>since_honored=false</code>. Reconnect performs a fresh complete enumeration. WebSocket subscription replacements start a fresh generation and independent 20-second deadline; retain the last completed baseline until the new terminal and discard older generation chunks. Queued updates follow the baseline; older native observations are rejected while newer observations preserve original quote clocks, literal prices and Pick6 payout metadata. This is not a durable change log. Omit <code>snapshot=complete</code> to retain the default single recent-row initial frame and change-event protocol.</p>
+    <h3 id="initial-state-books">The <code>initial_state</code> frame is filled per book</h3>
+    <p>The row budget set by <code>limit</code> is a <strong>fair allocation among the books the fetch returned</strong>, not a newest-first fill. Books draw rows in turn until the budget is spent, game lines before props within each book and freshest fixture first. Sharp books such as Pinnacle publish a great many rows on their own cadence; before this, a ten-book subscription could receive 500 rows of one book and meet the other nine only in later <code>odds_update</code> frames.</p>
+    <p>It is an allocation, not a coverage guarantee. The fill shares out what this connect's fetch came back with, so a book can still be thin or absent from the frame. The per-book numbers below describe this build only: they are what this one snapshot held after its own filters and what it served, and they say nothing about your account, the sport, or your next connect.</p>
+    <p>The frame says what it contains and what it left out:</p>
+    <table>
+        <thead><tr><th>field</th><th>meaning</th></tr></thead>
+        <tbody>
+            <tr><td><code>books</code></td><td>Every bookmaker key present in <code>data</code>, sorted. This is the universe this frame carries; a book the budget reached no rows for is not in it.</td></tr>
+            <tr><td><code>snapshot_fill</code></td><td><code>per_book</code>, the allocation policy above.</td></tr>
+            <tr><td><code>truncated_books</code></td><td>Present only when the budget ran out. Keyed by bookmaker, with the <code>served</code> and <code>omitted</code> row counts for this build. <code>served</code> can be 0, which means this snapshot held rows for that book and the budget reached none of them. Raise <code>limit</code>, or narrow your filters, to see more.</td></tr>
+        </tbody>
+    </table>
+    <div class="code-single"><pre>{"type": "initial_state", "sport_key": "americanfootball_nfl",
+ "count": 500, "snapshot_limit": 500, "snapshot_fill": "per_book",
+ "books": ["betmgm", "bovada", "caesars", "draftkings", "fanduel",
+           "novig", "pinnacle", ...],
+ "truncated": true,
+ "truncated_books": {"pinnacle": {"served": 320, "omitted": 4680}},
+ "data": [ ... ]}</pre></div>
+    <p>A book listed in <code>truncated_books</code> with a non-zero <code>served</code> is in <code>data</code>; one listed with <code>served</code> 0 is not, and does not appear in <code>books</code> either. A book in <code>missing_books</code> is a different case again: that field only appears on a <code>partial</code> frame, where a book's snapshot could not be read at all and the stream was served without it rather than refused.</p>
+    <p>There is <strong>no guarantee of eventual delivery</strong> of the omitted rows. An <code>odds_update</code> frame is sent when a row changes, so a line that does not move may never be pushed on this connection. If you need those rows in hand, raise <code>limit</code>, narrow <code>bookmakers</code> / <code>markets</code> / <code>kinds</code>, or inspect the available REST view at <code>/v1/sports/{sport_key}/odds</code>. That REST view is not a complete-baseline continuation protocol for DraftKings or FanDuel.</p>
+    <p>What the fill does not touch: the merged selector, the native current page and stream lifecycle behaviour are unchanged. Your <code>limit</code> carries into the re-attach, so a connection served a <code>partial</code> frame and re-attached later is filled at the same budget it asked for on connect.</p>
+    <h3 id="cfb-baseline-contract">CFB: verification, baseline and withdrawals</h3>
+    <p>For DraftKings and FanDuel pregame game lines, the supported REST request is <code>/v1/sports/americanfootball_ncaaf/odds?bookmakers=draftkings,fanduel&amp;regions=us&amp;markets=h2h,spreads,totals&amp;oddsFormat=american&amp;dateFormat=iso&amp;include=normalized,verification</code>. <code>/v1/odds</code> is not a supported route.</p>
+    <p>On these bookmaker blocks, <code>verified_at</code> is a source/fixture poll heartbeat. Its key does not bind a market, selection, line or displayed price. <code>is_current</code> reports whether that heartbeat is present and within the five-second threshold at response assembly; it does not certify every outcome. <code>topped_up=true</code> means the view retained older price rows. A fresh heartbeat does not independently reverify those rows or prove that none was suspended or withdrawn. <code>line_changed_at</code> is the retained row timestamp used by this legacy view, not a universal upstream price-change clock.</p>
+    <p>Stream <code>last_update</code> retains the stored price-row or source timestamp; it is not guaranteed to advance when a poll sees an unchanged price. The frame timestamp is a send clock, and <code>price_age_s</code> tracks retained price-change history. Neither a frame heartbeat nor a bookmaker heartbeat is authoritative per-outcome verification. The requested game-line age bound is rechecked on cached initial rows and before sending updates; dropping an expired row does not emit a source withdrawal.</p>
+    <p>DraftKings/FanDuel initial frames use <code>snapshot_scope="recent_rows"</code> and <code>snapshot_complete=false</code>. An <code>initial_state</code> frame ends that bounded initial response, not a complete current-board enumeration. There is no supported pagination cursor or end-of-snapshot signal that turns these views into a guaranteed complete current baseline. <code>since</code> filters retained observations; it is not an exactly-once replay cursor.</p>
+    <p><code>truncated=false</code> does not override <code>snapshot_complete=false</code>. <code>truncated_books</code> counts only known rows omitted by the final row budget. A fetch cap or another partial read can set <code>truncated=true</code> with <code>snapshot_partial_reasons</code> and no exact omitted counts.</p>
+    <p>These DraftKings/FanDuel feeds do not provide a guaranteed withdrawal stream or an authoritative complete replacement on reconnect. Missing rows and unchanged prices omitted from a snapshot cannot be classified as withdrawn from absence alone. Apply your own observation-age rejection, but do not treat it as proof of upstream suspension. Integrations requiring verified per-outcome current status, complete replacement and reliable removals cannot obtain those guarantees from this contract.</p>
+    <h3>Frame types</h3>
+    <table>
+        <thead><tr><th>type</th><th>When</th><th>Payload</th></tr></thead>
+        <tbody>
+            <tr><td><code>initial_state</code></td><td>On connect</td><td>Up to <code>limit</code> rows for the sport, shared across the requested books</td></tr>
+            <tr><td><code>odds_update</code></td><td>Every change</td><td>Array of changed rows</td></tr>
+            <tr><td><code>arb_flagged</code></td><td>New arb detected</td><td>The arb opportunity (5s scanner)</td></tr>
+            <tr><td><code>heartbeat</code></td><td>Every 30s</td><td>Connection health</td></tr>
+        </tbody>
+    </table>
+    <h3>Filter to one game</h3>
+    <p>Send a subscribe frame after connect:</p>
+    <div class="code-single"><pre>{"type": "subscribe", "event_id": "ee78855a3bdd1019"}</pre></div>
+    <p>To unsubscribe and receive sport-wide updates again:</p>
+    <div class="code-single"><pre>{"type": "unsubscribe"}</pre></div>
+    <h3>Python example</h3>
+    <div class="code-single"><pre>from parlay_api import ParlayAPI
+import asyncio, json
+import websockets
+
+async def stream():
+    client = ParlayAPI(api_key="YOUR_KEY")
+    url = client.websocket_url("baseball_mlb")
+    async with websockets.connect(url) as ws:
+        async for raw in ws:
+            frame = json.loads(raw)
+            if frame["type"] == "odds_update":
+                for row in frame["data"]:
+                    print(row["bookmaker"], row["player"],
+                          row["over_price"], row["under_price"])
+
+asyncio.run(stream())</pre></div>
+    <p>WebSocket minimum push intervals are Business 1.0 s, Enterprise 0.5 s and Scale 0.0 s. These are server-side coalescing settings, not book-publication-to-client latency bounds. Source polling, observation age, database-to-client delivery and HTTP request duration measure different stages; see <a href="/docs/streaming#timing">timing and freshness</a>.</p>
+    <h3>Row freshness: <code>last_update</code>, <code>price_age_s</code> and <code>line_changed_at_ms</code></h3>
+    <p>Every streamed row carries <code>last_update</code> (epoch milliseconds we last wrote or re-verified that price) and <code>price_age_s</code>, a server-computed convenience field with no client clock-skew guesswork. <code>price_age_s</code> is the seconds since the price last actually MOVED, not since the last write: when a book re-emits an unchanged price as a verification write, <code>last_update</code> advances but <code>price_age_s</code> keeps counting from the real move, so a frozen line never reads as fresh. The row also carries <code>line_changed_at_ms</code>, the epoch milliseconds of that last real move, if you want to compute the age yourself. Sharp books such as Pinnacle update on their own slower cadence, so a larger <code>price_age_s</code> there is real, not stale.</p>
+    <p>To protect live in-play consumers, a fast book's line that has stayed frozen for more than about 150 seconds during a commenced game is dropped from the live feed rather than streamed with a fresh-looking timestamp, so the socket agrees with <code>/live</code>. Read <code>price_age_s</code> if you want to enforce your own tighter or looser staleness cutoff.</p>
+</section>
+
+<section id="sse-hot">
+    <h2>SSE Hot Feed: /v1/sse/hot</h2>
+    <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">https://parlay-api.com/v1/sse/hot/{sport_key}?apiKey=YOUR_KEY</span></div>
+    <p>EventSource-compatible HTTP stream for enterprise hot paths. It sends a connection frame, source freshness, initial state, then live updates with a 5-second heartbeat.</p>
+    <h3>Filters</h3>
+    <table>
+        <thead><tr><th>param</th><th>example</th><th>meaning</th></tr></thead>
+        <tbody>
+            <tr><td><code>bookmakers</code></td><td><code>fanduel,pinnacle,caesars</code></td><td>Only these books</td></tr>
+            <tr><td><code>kinds</code></td><td><code>game,prop</code></td><td>Game lines, props, or both</td></tr>
+            <tr><td><code>markets</code></td><td><code>player_points,player_rebounds</code></td><td>Prop market keys</td></tr>
+            <tr><td><code>event_id</code></td><td><code>2026-05-07_Team_A_Team_B</code></td><td>Single event filter</td></tr>
+            <tr><td><code>heartbeat_s</code></td><td><code>5</code></td><td>1 to 30 seconds</td></tr>
+            <tr><td><code>limit</code></td><td><code>1000</code></td><td>Rows in the <code>initial_state</code> frame. 1 to 1000, default 500. Identical to <code>/ws/odds</code>, and shared across the requested books the same way.</td></tr>
+            <tr><td><code>max_age_s</code></td><td><code>600</code></td><td>Maximum retained game-line observation age on initial snapshots and before sending updates, including game selections stored as prop rows. 1 to 3600 seconds, default 600; ordinary player props retain their existing window.</td></tr>
+        </tbody>
+    </table>
+    <p>The <code>initial_state</code> frame here is the same frame <code>/ws/odds</code> sends, built by the same code and filled per book: see <a href="#initial-state-books">The <code>initial_state</code> frame is filled per book</a> above for <code>books</code>, <code>snapshot_fill</code> and <code>truncated_books</code>. Requesting the same params on either transport returns the same rows.</p>
+    <div class="code-single"><pre>const es = new EventSource(
+  "https://parlay-api.com/v1/sse/hot/baseball_mlb?apiKey=YOUR_KEY&bookmakers=fanduel,pinnacle&kinds=game&heartbeat_s=5"
+);
+
+es.onmessage = (ev) =&gt; {
+  const msg = JSON.parse(ev.data);
+  if (msg.type === "odds_update") console.log(msg.data);
+};</pre></div>
+    <div class="code-single"><pre># Python quickstart
+import json, requests
+
+url = "https://parlay-api.com/v1/sse/hot/baseball_mlb"
+params = {
+    "apiKey": "YOUR_KEY",
+    "bookmakers": "fanduel,pinnacle",
+    "kinds": "game",
+    "heartbeat_s": 5,
+}
+
+with requests.get(url, params=params, stream=True, timeout=60) as r:
+    r.raise_for_status()
+    for line in r.iter_lines(decode_unicode=True):
+        if line and line.startswith("data: "):
+            msg = json.loads(line[6:])
+            if msg["type"] in ("hot_feed_status", "odds_update"):
+                print(msg)</pre></div>
+    <p>Hot feed means fast delivery once a book update lands in our pipeline. It does not invent prices or promise that every external book publishes a new price every 5 seconds.</p>
+    <p>Operational check: admins run <code>python3 scripts/verify_book_coverage.py</code> before broad outreach or deploys to prove active books survive REST and SSE visibility.</p>
+</section>
+
+<section id="websocket-live">
+    <h2>WebSocket: /ws/live</h2>
+    <div class="endpoint"><span class="endpoint-method method ws">WS</span><span class="endpoint-path">wss://parlay-api.com/v1/ws/live/{sport_key}?apiKey=YOUR_KEY</span></div>
+    <p>The feed behind our own live board: game lines for one sport, plus the moneylines the board overlays onto each game card. It is a narrower feed than <code>/ws/odds</code>, not a live-only view of it. For spreads, totals, player props and alternate lines, use <code>/ws/odds</code> and read <code>commence_time</code> to pick out the games already under way.</p>
+    <p><strong>Auth is identical to <code>/ws/odds</code>:</strong> the <code>X-API-Key</code> header, <code>?apiKey=</code>, or <code>?api_key=</code>, on a Business / Enterprise / Scale key. See <a href="#websocket-auth">Authentication</a> above. The live dashboard opens this same socket with its session cookie, which is why a logged-in browser needs no key; this is the one route where the cookie is a credential.</p>
+    <p>Three protocol differences from <code>/ws/odds</code>, worth knowing before porting a client:</p>
+    <ul>
+        <li>No <code>initial_state</code> frame. You get <code>{"type":"connected", ...}</code> and then <code>odds_update</code> diffs, so inspect <code>GET /v1/sports/{sport_key}/odds</code> or use <code>/ws/odds</code> for a bounded initial view. Neither supplies a guaranteed complete current DraftKings/FanDuel baseline.</li>
+        <li>No query filters. <code>bookmakers</code>, <code>markets</code>, <code>kinds</code>, <code>diff</code>, <code>since</code>, <code>event_id</code> and <code>max_age_s</code> belong to <code>/ws/odds</code>; on this route they are ignored rather than applied.</li>
+        <li>The board payload is a property of the route, not of your credential: a Business key gets the same rows the dashboard cookie gets. Send <code>{"type":"subscribe","event_id":"..."}</code> to lock to one game, and that game arrives in full, which is what the board's game modal uses.</li>
+    </ul>
+    <p>This route used to accept the dashboard cookie and nothing else, so an API key was closed with <code>4001</code> "Not logged in" no matter which form it arrived in. Fixed 2026-09-05. If you worked around it by polling, you can go back to the socket.</p>
+</section>
+
+<section id="errors">
+    <h2>Errors &amp; Status Codes</h2>
+    <table>
+        <thead><tr><th>Code</th><th>Meaning</th><th>Action</th></tr></thead>
+        <tbody>
+            <tr><td><code>200</code></td><td>OK</td><td>Use response body</td></tr>
+            <tr><td><code>400</code></td><td>Invalid sport_key or param</td><td>Check spelling and <a href="#sport-keys">Sport Keys</a></td></tr>
+            <tr><td><code>401</code></td><td>Missing or invalid API key</td><td>Pass <code>X-API-Key</code> header or <code>?apiKey=</code></td></tr>
+            <tr><td><code>403</code></td><td>Credit limit exceeded</td><td>Wait for monthly reset or upgrade tier</td></tr>
+            <tr><td><code>404</code></td><td>Resource not found</td><td>Endpoint or event_id doesn't exist</td></tr>
+            <tr><td><code>422</code></td><td>Missing required param</td><td>Check the param table for that endpoint</td></tr>
+            <tr><td><code>429</code></td><td>Rate limited</td><td>Slow down or retry with backoff</td></tr>
+            <tr><td><code>500</code></td><td>Server error</td><td>Retry. If it persists, email <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f685838686998482b68697849a978fdb97869fd895999b">[email&#160;protected]</a></td></tr>
+        </tbody>
+    </table>
+    <p>The Python SDK raises typed exceptions: <code>InvalidAPIKeyError</code>, <code>CreditLimitExceededError</code>, <code>RateLimitedError</code>, <code>TierGatedError</code>, all subclasses of <code>ParlayAPIError</code>.</p>
+</section>
+
+<section id="sport-keys">
+    <h2>Sport Keys</h2>
+    <p>Live keys (those with active events in the last 24h). The <code>/v1/sports</code> endpoint returns the current authoritative list.</p>
+    <table>
+        <thead><tr><th>Key</th><th>Sport</th></tr></thead>
+        <tbody>
+            <tr><td><code>baseball_mlb</code></td><td>MLB</td></tr>
+            <tr><td><code>basketball_nba</code></td><td>NBA</td></tr>
+            <tr><td><code>basketball_wnba</code></td><td>WNBA</td></tr>
+            <tr><td><code>basketball_ncaab</code></td><td>NCAAB</td></tr>
+            <tr><td><code>icehockey_nhl</code></td><td>NHL</td></tr>
+            <tr><td><code>americanfootball_nfl</code></td><td>NFL</td></tr>
+            <tr><td><code>americanfootball_ncaaf</code></td><td>NCAAF</td></tr>
+            <tr><td><code>mma_mixed_martial_arts</code></td><td>MMA / UFC</td></tr>
+            <tr><td><code>tennis_atp</code></td><td>ATP</td></tr>
+            <tr><td><code>tennis_wta</code></td><td>WTA</td></tr>
+            <tr><td><code>soccer_epl</code></td><td>English Premier League</td></tr>
+            <tr><td><code>soccer_spain_la_liga</code></td><td>La Liga</td></tr>
+            <tr><td><code>soccer_germany_bundesliga</code></td><td>Bundesliga</td></tr>
+            <tr><td><code>soccer_italy_serie_a</code></td><td>Serie A</td></tr>
+            <tr><td><code>soccer_france_ligue_one</code></td><td>Ligue 1</td></tr>
+            <tr><td><code>soccer_usa_mls</code></td><td>MLS</td></tr>
+            <tr><td><code>golf_pga_championship</code></td><td>PGA Championship</td></tr>
+            <tr><td><code>disc_golf</code></td><td>Disc Golf</td></tr>
+            <tr><td><code>esports_lol</code></td><td>League of Legends</td></tr>
+            <tr><td><code>esports_cs2</code></td><td>Counter-Strike 2</td></tr>
+            <tr><td><code>esports_valorant</code></td><td>Valorant</td></tr>
+        </tbody>
+    </table>
+    <p>The table above is the headline subset, not the catalogue. <code>GET /v1/sports</code> serves 90+ keys in total, including the regional soccer, basketball, baseball and hockey leagues carried via Pinnacle, and it is the authoritative list and the authoritative count.</p>
+
+    <h3>How league keys are named</h3>
+    <p>Beyond the marquee leagues above, a key follows the pattern <code>&lt;sport&gt;_&lt;league&gt;</code>: the league's own name, lowercased, with spaces and separators collapsed to underscores. For example, Pinnacle's "Puerto Rico - Superior Nacional" is <code>basketball_puerto_rico_superior_nacional</code>, "Argentina - Torneo Federal" is <code>basketball_argentina_torneo_federal</code>, "Brazil - Paulista FPB U20" is <code>basketball_brazil_paulista_fpb_u20</code>, and "Lebanon - Lebanese Basketball League" is <code>basketball_lebanon_lebanese_basketball_league</code>.</p>
+    <p>Basketball is covered in full: every league Pinnacle carries is ingested automatically under its own key, from the majors (<code>basketball_nba</code>, <code>basketball_wnba</code>, <code>basketball_ncaab</code>) through the European competitions and every regional, women's and developmental league on offer. A new league appears the moment Pinnacle lists it, with no request or config change on your side.</p>
+    <p>Smaller leagues rotate in and out of the upstream offer, so a key is live only while that league has active events. <code>GET /v1/sports</code> is the authoritative list of what is live right now, and the umbrella <code>basketball</code> key aggregates every child league in a single call. Any key is queryable at <code>/v1/sports/{sport_key}/odds</code>, <code>/props</code>, <code>/ev</code>, <code>/arbitrage</code>, <code>/consensus</code> and the other per-sport endpoints.</p>
+</section>
+
+<section id="bookmaker-keys">
+    <h2>Bookmaker Keys</h2>
+    <table>
+        <thead><tr><th>Key</th><th>Book</th><th>Type</th></tr></thead>
+        <tbody>
+            <tr><td><code>draftkings</code></td><td>DraftKings</td><td>Sportsbook</td></tr>
+            <tr><td><code>fanduel</code></td><td>FanDuel</td><td>Sportsbook</td></tr>
+            <tr><td><code>caesars</code></td><td>Caesars</td><td>Sportsbook</td></tr>
+            <tr><td><code>bovada</code></td><td>Bovada</td><td>Sportsbook</td></tr>
+            <tr><td><code>betmgm</code></td><td>BetMGM</td><td>Sportsbook</td></tr>
+            <tr><td><code>fanatics</code></td><td>Fanatics</td><td>Sportsbook</td></tr>
+            <tr><td><code>pinnacle</code></td><td>Pinnacle</td><td>Sharp book (de-vig baseline)</td></tr>
+            <tr><td><code>fliff</code></td><td>Fliff</td><td>Sportsbook</td></tr>
+            <tr><td><code>bet365</code></td><td>bet365</td><td>Sportsbook</td></tr>
+            <tr><td><code>betrivers</code></td><td>BetRivers</td><td>Sportsbook</td></tr>
+            <tr><td><code>hardrock</code></td><td>Hard Rock</td><td>Sportsbook</td></tr>
+            <tr><td><code>parx</code></td><td>Parx</td><td>Sportsbook</td></tr>
+            <tr><td><code>pmu</code></td><td>PMU</td><td>Sportsbook (FR)</td></tr>
+            <tr><td><code>unibet</code></td><td>Unibet</td><td>Sportsbook (EU)</td></tr>
+            <tr><td><code>betrivers_ca</code></td><td>BetRivers (CA)</td><td>Sportsbook (CA)</td></tr>
+            <tr><td><code>sportsbet_au</code></td><td>Sportsbet (AU)</td><td>Sportsbook (AU)</td></tr>
+            <tr><td><code>rushbet</code></td><td>RushBet</td><td>Sportsbook (LATAM)</td></tr>
+            <tr><td><code>novig</code></td><td>Novig</td><td>Exchange</td></tr>
+            <tr><td><code>kalshi</code></td><td>Kalshi</td><td>Prediction market</td></tr>
+            <tr><td><code>polymarket</code></td><td>Polymarket</td><td>Prediction market</td></tr>
+            <tr><td><code>robinhood</code></td><td>Robinhood Event Contracts</td><td>Prediction market</td></tr>
+            <tr><td><code>prizepicks</code></td><td>PrizePicks</td><td>DFS pick'em</td></tr>
+            <tr><td><code>underdog</code></td><td>Underdog</td><td>DFS pick'em</td></tr>
+            <tr><td><code>betr</code></td><td>Betr</td><td>DFS pick'em</td></tr>
+            <tr><td><code>sleeper</code></td><td>Sleeper</td><td>DFS pick'em</td></tr>
+            <tr><td><code>pick6</code></td><td>Pick6 (DraftKings)</td><td>DFS pick'em</td></tr>
+        </tbody>
+    </table>
+    <p>This table is a subset. <code>GET /v1/bookmakers</code> is the integration registry; <code>?all=true</code> also includes non-active entries and their status. <code>status: active</code> and <code>endpoints</code> describe configured integrations and request families, not current data availability.</p>
+    <p>For a props source such as Betr or ParlayPlay, follow its <code>freshness_path</code> to <code>/v1/bookmakers/{key}/freshness</code>. The top-level <code>live_props</code> flag means the latest stored prop observation is at most 300 seconds old. It does not establish priced coverage or delivery for your requested sport and markets. Check the actual <code>/v1/sports/{sport_key}/props?bookmakers={key}</code> response, including row timestamps and source-specific price semantics; neither registry status nor a recent write guarantees a non-empty or complete result.</p>
+</section>
+
+<section id="market-keys">
+    <h2>Market Keys</h2>
+    <p>The most-used market keys per sport. Hit <code>/v1/sports/{sport_key}/props/markets</code> for the full live list.</p>
+
+    <h3>MLB</h3>
+    <p><code>player_total_bases</code>, <code>player_hits</code>, <code>player_home_runs</code>, <code>player_rbis</code>, <code>player_runs</code>, <code>player_singles</code>, <code>player_doubles</code>, <code>player_triples</code>, <code>player_walks</code>, <code>player_strikeouts</code>, <code>player_pitcher_outs</code>, <code>player_hits_allowed</code>, <code>player_earned_runs</code>, <code>player_hits_runs_rbis</code>, <code>player_first_hit</code>, <code>player_first_home_run</code></p>
+
+    <h3>NBA / WNBA</h3>
+    <p><code>player_points</code>, <code>player_rebounds</code>, <code>player_assists</code>, <code>player_threes</code>, <code>player_steals</code>, <code>player_blocks</code>, <code>player_turnovers</code>, <code>player_pra</code> (pts+reb+ast), <code>player_pts_rebs</code>, <code>player_pts_asts</code>, <code>player_rebs_asts</code>, <code>player_double_double</code>, <code>player_triple_double</code></p>
+
+    <h3>NHL</h3>
+    <p><code>player_goals</code>, <code>player_assists</code>, <code>player_points_nhl</code>, <code>player_shots_on_goal</code>, <code>player_saves</code>, <code>player_anytime_goal</code>, <code>player_powerplay_points</code>, <code>player_first_goal_scorer</code>, <code>player_anytime_goal_scorer</code></p>
+
+    <h3>NFL</h3>
+    <p><code>player_pass_yds</code>, <code>player_pass_tds</code>, <code>player_pass_completions</code>, <code>player_rush_yds</code>, <code>player_rec_yds</code>, <code>player_receptions</code>, <code>player_anytime_td</code>, <code>player_first_td</code>, <code>player_longest_rec</code>, <code>player_interceptions</code></p>
+
+    <h3>Soccer</h3>
+    <p><code>player_anytime_goalscorer</code>, <code>player_shots_on_target</code>, <code>player_assists</code>, <code>player_goals_assists</code>, <code>player_fouls</code>, <code>player_total_sets</code>, plus the standard <code>h2h</code>, <code>spreads</code>, <code>totals</code> at the game level.</p>
+
+    <h3>Period player props</h3>
+    <p>DFS boards publish first-quarter and first-half player lines alongside the full-game
+    line for the same player and stat. They are separate markets and they carry their own
+    market keys, using the same <code>_1st_quarter</code> / <code>_1st_half</code> suffixes as the
+    game-line period markets: <code>player_pass_yds_1st_quarter</code>,
+    <code>player_pass_yds_1st_half</code>, <code>player_rush_yds_1st_quarter</code>,
+    <code>player_rush_yds_1st_half</code>, <code>player_reception_yds_1st_quarter</code>,
+    <code>player_reception_yds_1st_half</code>, <code>player_receptions_1st_quarter</code>,
+    <code>player_receptions_1st_half</code>, <code>player_fantasy_points_1st_quarter</code>,
+    <code>player_fantasy_points_1st_half</code>. <code>GET /v1/markets</code> is the authoritative
+    list.</p>
+    <p>Every <code>/v1/sports/{sport_key}/props</code> row carries a <code>period</code> field, so
+    you never have to parse the key yourself: <code>"FULL"</code> for a confirmed full-game line,
+    <code>"Q1"</code> for first quarter, <code>"1H"</code> for first half (and <code>"P1"</code> /
+    <code>"F5"</code> where a sport uses them). Legacy unsuffixed PrizePicks rows whose segment
+    was not retained say <code>"UNKNOWN"</code> instead of being guessed as full game. It sits on
+    the prop, not on each book, because the segment is a property of the market rather than of
+    who priced it.</p>
+    <p><strong>Cutover note.</strong> Until this change was deployed, first-quarter and
+    first-half player projections were written under the full-game key, so one
+    player/market/snapshot group could hold several different lines with nothing to tell them
+    apart. Rows written from the deploy onward carry the suffixed key and the correct
+    <code>period</code>. There is no single cutover instant: the PrizePicks collection paths
+    are deployed separately, so each one changes over when it ships. Rows written before a path
+    changed over keep the old mixed key and report <code>"UNKNOWN"</code>: the segment was never
+    stored, so it cannot be recovered from the archived row. Until those legacy rows age out, a
+    filter on <code>market_key=player_pass_yds</code> can still include them alongside confirmed
+    full-game lines.</p>
+</section>
+
+<section id="migration">
+    <h2>Migration from the-odds-api</h2>
+    <p>If you're already using TOA, some moneyline, spread, and total endpoints have compatible request patterns. A host change alone does not complete a migration: create a ParlayAPI key, map your event IDs, and validate response fields, credit costs, and coverage for the exact sports, markets, books, and dates your application uses.</p>
+    <div class="code-single"><pre># Was:
+TOA_BASE = "https://api.the-odds-api.com/v4"
+
+# Now:
+TOA_BASE = "https://parlay-api.com/v1"</pre></div>
+    <p>Existing clients may need changes for authentication, identifiers, response handling, or endpoint-specific parameters. Compare the returned events, bookmakers, markets, timestamps, errors, and actual credits charged on a representative sample before switching production traffic. Player props use a different response shape; see <a href="#props">Player Props</a>. For customer-facing display, resale or redistribution, sublicensing, commercial derived products, or an SLA, see <a href="/legal/terms">the terms</a> and contact <a href="/support">support</a> about a separate signed agreement with express scope.</p>
+    <p>Detailed comparison: <a href="/vs-toa">parlay-api.com vs the-odds-api</a></p>
+</section>
+
+<section id="embed-widget">
+    <h2>Embeddable Odds Widget</h2>
+    <p>Need live odds on a page without writing any code? One script tag renders a compact moneyline
+    table (next games, up to 4 major US books) into any page. Keyless and free; the visible
+    "Live odds by ParlayAPI" footer link is the license. Odds are cached server-side for about a
+    minute per sport.</p>
+    <div class="code-single"><pre>&lt;div data-parlayapi-widget data-sport="americanfootball_nfl"&gt;&lt;/div&gt;
+&lt;script async src="https://parlay-api.com/widget.js"&gt;&lt;/script&gt;</pre></div>
+    <p>Pick a sport and preview it live at <a href="/widget">parlay-api.com/widget</a>. The backing
+    feed is <code>GET /v1/widget/odds?sport={sport_key}</code> (keyless, h2h only, 60 requests/hour
+    per IP, honest <code>cache_age_seconds</code> in the response). For full data in your own UI,
+    use <a href="#odds">GET /v1/sports/{sport_key}/odds</a> with an API key.</p>
+</section>
+
+<!-- No id on this section on purpose: the sidebar scroll-spy walks
+     section[id] and would clear the active link here, since no sidebar
+     entry points at the closing CTA. -->
+<section>
+    <div class="cta-block">
+        <h3>Ready to make your first call?</h3>
+        <p>Get a free API key in under a minute: 1,000 credits a month, no credit card required.</p>
+        <a class="btn" href="/signup">Get a free API key</a>
+        <p style="margin-top: 14px;">Prefer to read more first? Try the <a href="/answers">answers hub</a>, the <a href="/cookbook">cookbook</a>, or the <a href="/tools">free betting calculators</a>.</p>
+    </div>
+</section>
+
+</main>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// Copy buttons
+document.addEventListener('click', e => {
+    if (e.target.classList.contains('code-copy')) {
+        const tab = e.target.dataset.copy;
+        const pane = document.querySelector(`[data-pane="${tab}"]`);
+        if (pane) {
+            navigator.clipboard.writeText(pane.textContent.trim());
+            e.target.textContent = 'copied';
+            setTimeout(() => e.target.textContent = 'copy', 1500);
+        }
+    }
+});
+
+// Code tab switcher
+document.addEventListener('click', e => {
+    if (e.target.classList.contains('code-tab')) {
+        const tab = e.target.dataset.tab;
+        const block = e.target.closest('.code-block');
+        block.querySelectorAll('.code-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+        block.querySelectorAll('.code-pane').forEach(p => p.classList.toggle('active', p.dataset.pane === tab));
+        const copyBtn = block.querySelector('.code-copy');
+        if (copyBtn) copyBtn.dataset.copy = tab;
+    }
+});
+
+// Sidebar active link based on scroll
+const sections = Array.from(document.querySelectorAll('section[id]'));
+const links = Array.from(document.querySelectorAll('.sidebar-link'));
+function updateActive() {
+    const y = window.scrollY + 80;
+    let active = sections[0]?.id;
+    for (const s of sections) if (s.offsetTop <= y) active = s.id;
+    links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + active));
+}
+window.addEventListener('scroll', updateActive, { passive: true });
+updateActive();
+
+// Search filter (sidebar links only)
+document.getElementById('search').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase();
+    links.forEach(l => l.style.display = l.textContent.toLowerCase().includes(q) ? '' : 'none');
+});
+</script>
+
+</body>
+</html>

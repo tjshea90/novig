@@ -6048,3 +6048,8 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [x] CH46a CDN scoreboard measured: cache 101 s vs site API 4 s = staler; NOT used for live (documented)
 - [x] CH46c ESPN win probability cross-check on live moneyline calls (veto 25 pts; EspnWinProbTest, LiveLightRunnerTest) v1.0.24
 - [x] CH46b CLOSED by Tj 23:18 (not built) (waiting Tj: ESPN lists ONE provider DraftKings = cannot meet 3-books rule; recommend skip) ESPN odds (core API /odds, DraftKings etc) as a never-called-unless-needed backup source: client + convert + ApiEntry switch + fallback-only chain slot + tests; keep Novig scan untouched
+
+## CH47 (Tj chat 23:43 UTC)
+- [ ] CH47a read parlay-api.com docs fully (save to research/parlayapi_pro_2026-10-20/), compare with PARLAY_API.md
+- [ ] CH47b find which key is Pro (engine usage.json limit/plan), what Pro adds: speed, limits, SSE/WebSocket live feed, scores
+- [ ] CH47c build: engine + app use Pro features (paid-first key, live feed, live scores source); tests; ship
