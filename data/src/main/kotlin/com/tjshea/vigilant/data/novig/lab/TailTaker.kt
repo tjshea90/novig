@@ -65,6 +65,12 @@ object TailTradeLimits {
     /** The same outcome is not tried again within this long. */
     const val COOLDOWN_MS = 60_000L
 
+    /** Most filled buys on one game in a day, whatever the strike: the buys of one game are one bet on the same outcome (Tj, 2026-10-20: Boston bought 12 times while losing). */
+    const val MAX_BUYS_PER_GAME = 3
+
+    /** No buying the same outcome again once its ask has fallen this far below the cheapest price already paid: a falling price is the market disagreeing, not a discount. */
+    const val NO_AVERAGING_DOWN = 0.03
+
     /** The fewest contracts worth an order. */
     const val MIN_CONTRACTS = 20L
 
@@ -148,6 +154,12 @@ class TailTaker(
         if (r.bet) gate()?.let { return skip(it) }
         if (start - (lastTry[c.outcomeId] ?: 0L) < TailTradeLimits.COOLDOWN_MS) return skip("cooldown")
         if ((blacklist[c.marketId] ?: 0L) > start) return skip("market refused lately")
+        if (r.bet) {
+            val bought = synchronized(history) { history.filter { it.atMs >= dayStart(start) && it.mode == "BET" && it.filled > 0 && it.eventId == c.eventId } }
+            if (bought.size >= TailTradeLimits.MAX_BUYS_PER_GAME) return skip("enough buys on this game")
+            val paidBefore = bought.filter { it.outcomeId == c.outcomeId }.minOfOrNull { it.paid / (it.filled * EvMath.CONTRACT_PAYOUT_DOLLARS) }
+            if (paidBefore != null && c.ask < paidBefore - TailTradeLimits.NO_AVERAGING_DOWN) return skip("price falling")
+        }
         val limit = LiveEdge.reachPrice(c.fair, c.ask, o.fee, true, floor)
         if (ownBids().any { it.marketId == c.marketId && it.outcomeId != c.outcomeId && it.price >= 1.0 - limit - 1e-9 }) return skip("own bid in the way")
         if (!mutex.tryLock()) return skip("busy")
