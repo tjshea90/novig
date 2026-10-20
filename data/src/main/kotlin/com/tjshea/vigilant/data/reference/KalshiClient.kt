@@ -281,6 +281,33 @@ class KalshiClient(
         return RefSnapshot(league.oddsApiSportKey, parse(events, league, settings.exchangeMaxSpread, asOf), asOf, provider = id)
     }
 
+    /**
+     * Kalshi as a place to bet (Vigilant's Kalshi side, KV2): the same series read as [odds] (the socket's prices laid over them, the catalog shared, so a Novig scan that just ran
+     * makes this free), parsed in venue mode: each price is what a taker pays (yes ask / 1 - yes bid), carries its market ticker and side, and its size. Never feeds a fair line.
+     * [families] limits the series read (the venue's own market-kind switches); `null` takes the scan's.
+     */
+    suspend fun venueOdds(league: League, settings: ScanSettings): RefSnapshot {
+        val now = clock()
+        refreshLimits()
+        val series = selected(league, settings)
+        val events = ArrayList<EventDto>()
+        var failure: Exception? = null
+        var fetched = 0
+        var asOf = now
+        val read = readSeries(series)
+        for (s in series) {
+            val got = read[s] ?: continue
+            got.onSuccess { r ->
+                val (v, at) = view(r.readAtMs, r.events)
+                asOf = minOf(asOf, at)
+                events += v
+                fetched++
+            }.onFailure { if (failure == null) failure = it as? Exception ?: RuntimeException(it) }
+        }
+        if (fetched == 0 && failure != null) throw failure
+        return RefSnapshot(league.oddsApiSportKey, parse(events, league, settings.exchangeMaxSpread, asOf, venue = true), asOf, provider = VENUE_ID)
+    }
+
     private class KalshiThrottled : ReferenceException("Kalshi is limiting requests right now; it'll be back on the next scan.")
 
     /**
@@ -390,6 +417,9 @@ class KalshiClient(
 
     companion object {
         const val BOOK_KEY = "kalshi"
+
+        /** The provider id a venue read's snapshot carries (never a fair-line source's id). */
+        const val VENUE_ID = "kalshi-venue"
 
         /** The host Kalshi's docs name as production now ([altBaseUrl]). */
         const val ALT_URL = "https://external-api.kalshi.com/trade-api/v2"
