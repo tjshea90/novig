@@ -356,3 +356,4 @@ day that changes.
 | v1.0.15 | code 355 | 2026-10-20T07:09Z | v1.0.15: Research page in the Claude tab (daily analysis summary)
 | v1.0.16 | code 356 | 2026-10-20T14:54Z | v1.0.16: Kalshi cards bet on Kalshi's own slip, Kalshi slip shows other books' odds, Novig/Kalshi cards tinted
 | v1.0.17 | code 357 | 2026-10-20T15:13Z | v1.0.17: Engine tab Money shows Kalshi stats apart from Novig
+| v1.0.18 | code 358 | 2026-10-20T15:23Z | v1.0.18: Kalshi bids say in words why they are not posting
