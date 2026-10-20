@@ -67,7 +67,7 @@ class CloudKalshiLane(
     private val bidStore = MakerStore(File(dir, "kalshi-maker.json"))
     private val orderLock = Mutex()
     private val placer = KalshiBetPlacer(
-        trading, tracker, limits = { BetLimits(10.0, 50.0, maxPerGame = 25.0) }, lock = orderLock,
+        trading, tracker, limits = { BetLimits(10.0, 50.0, maxPerGame = 25.0) }, clock = clock, lock = orderLock,
     )
     private val bidDesk = MakerDesk(KalshiAsNovig(trading, outcomes, clock), tracker, bidStore, lock = orderLock, clock = clock, cancelStrays = false)
     private val bidRunner = KalshiBidRunner(bidDesk, outcomes, cash = { if (hasKey()) trading.balance().cash else null }, unavailable = unavailable, tell = tell, clock = clock, log = log)
