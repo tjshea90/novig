@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-yis368",
  "head": "4ae216182023fae929f5ef93439eb81e7d1a055a",
  "since": 1792452137,
- "beat": 1792508180,
- "beatIso": "2026-10-20T14:56:20Z",
+ "beat": 1792508187,
+ "beatIso": "2026-10-20T14:56:27Z",
  "done": "pre-ship: v1.0.17: Engine tab Money view shows Kalshi stats (bets, bids, wallet) apart from Novig, and says why Kalshi bids are not resting",
  "next": "ship.sh gates and releases this"
 }
