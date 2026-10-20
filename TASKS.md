@@ -6016,4 +6016,4 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [x] CH37a Kalshi card's Bet / Open in Novig buttons were wired to Novig's slip ("Novig's order book couldn't be read"): a Kalshi card now has "Bet on Kalshi" (its own slip), no Open in Novig (FeedScreen.OpportunityCard)
 - [x] CH37b Kalshi slip shows the other books' odds table (FairOddsTable extracted from OpportunityDetail, used by KalshiBetSheet)
 - [x] CH37c Novig / Kalshi cards tinted (green / violet) when both are listed (venueTint)
-- [ ] CH37d compile, full tests, ship with the next release
+- [x] CH37d built; shipping as v1.0.16
