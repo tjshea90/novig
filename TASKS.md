@@ -6031,3 +6031,10 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [x] CH41 (Tj 19:37) max bids total = up to 4x wallet: options 100%(current)/200/300/400% of wallet and a typed amount (Bids tab).
 - [x] CH42 (built v1.0.20: LiveLightBidRules mid tier 65-85% fair bid 15% under, LiveLightBidTiersTest) (Tj 19:42) live engine: offer live bids on obvious +EV totals (over well under the score-based model, and under well above) both at once; needs a live totals model from score/time. Research first (RESEARCH.md §132.3 guards; live bids pregame-only rule needs Tj's word: he has now asked).
 - [x] CH43 Boston ML bought 12x by live tail lane: per-game 3-buy cap + no averaging down (TailTakerTest)
+
+## CH44 (Tj chat 21:24-21:32 UTC, 2026-10-20)
+- [ ] CH44a Kalshi bids: 0 resting, "Under one Kalshi contract" (cash $9.10): find why stakes < 1 contract, fix so bids post when affordable
+- [ ] CH44b Kalshi auto-bet: 0 passed (9338 of 9358 start >6h away, trap guard): review if too strict for Kalshi
+- [ ] CH44c Kalshi bet slip = Novig's: Bet button opens slip with amount prefilled; after Bet the row disappears and stays gone on rescans (screenshot 21:28)
+- [ ] CH44d Kalshi rows in +EV tab (= CH33b)
+- [ ] CH44e Kalshi scan on GitHub (engine), not the phone: phone lags with Kalshi scanning (KV9 engine lane, phone-only switch)
