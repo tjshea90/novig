@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-el5i79",
  "head": "9ece40796ed3579e656693232b993a49e37ad0ee",
  "since": 1792452137,
- "beat": 1792458731,
- "beatIso": "2026-10-20T01:12:11Z",
+ "beat": 1792459739,
+ "beatIso": "2026-10-20T01:28:59Z",
  "done": "v1.0.10 released (CH28a); Tj told",
  "next": "CH31a-d: paper records are journal lines (LiveLightRunner jlog shadow/score-event); need a grader + Live board card; BoltOdds/SX score feeds; ship as v1.0.11"
 }
