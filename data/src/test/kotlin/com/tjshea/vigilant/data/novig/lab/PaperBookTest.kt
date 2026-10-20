@@ -2,11 +2,11 @@ package com.tjshea.vigilant.data.novig.lab
 
 import com.tjshea.vigilant.data.cloud.LiveBoard
 import com.tjshea.vigilant.data.cloud.PaperLine
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import org.junit.Test
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 
 class PaperBookTest {
     private fun rec(key: String = "shadow|o1", kind: String = "TOTAL", threshold: Double = 44.5, side: String = "UNDER", ref: String = "OKLA", ask: Double = 0.8, fair: Double = 0.85, tier: String = "shadow") =
@@ -58,7 +58,7 @@ class PaperBookTest {
 
     @Test fun boardWords() {
         val lines = LiveBoard.paperLines(listOf(PaperLine("shadow", open = 2, wins = 8, losses = 2, expected = 0.8, roi = 0.05), PaperLine("score-event", open = 3)))
-        assertTrue(lines[0].contains("8 won (80%") && lines[0].contains("+5.0%"), lines[0])
-        assertTrue(lines[1].contains("none settled yet"), lines[1])
+        assertTrue(lines[0], lines[0].contains("8 won (80%") && lines[0].contains("+5.0%"))
+        assertTrue(lines[1], lines[1].contains("none settled yet"))
     }
 }
