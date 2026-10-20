@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/kalshi-vigilant-integration-v5u4ho",
- "head": "43f18fd32637467d785f27c53285ac2d2600a838",
+ "head": "cd79c234cf6e1f38639088750c37ca1af2ec1a24",
  "since": 1792468198,
- "beat": 1792471162,
- "beatIso": "2026-10-20T04:39:22Z",
- "done": "KV9 phone side: GitHub engine card, kalshi.json push, status poll; lane honors STOP ALL and the orders switch",
- "next": "full test then ship"
+ "beat": 1792471215,
+ "beatIso": "2026-10-20T04:40:15Z",
+ "done": "pre-ship: v1.0.12: Kalshi beside Novig: a Kalshi tab with its own +EV list, bets, auto-bet, bids, sure-profit arbitrage between the two venues, venue switches (Novig / Kalshi / both), and a GitHub engine Kalshi lane (off by default)",
+ "next": "ship.sh gates and releases this"
 }
