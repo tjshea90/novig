@@ -114,18 +114,8 @@ fun KalshiBetSheet(hub: KalshiHub, ui: KalshiUi, o: Opportunity, now: Long, onDi
             Button(
                 onClick = {
                     val r = ready ?: return@Button
-                    busy = true
-                    scope.launch {
-                        val res = hub.place(o, stake, r.plan.limitPrice)
-                        outcome = when (res) {
-                            is PlaceResult.Placed -> "Placed: ${res.bet.contracts?.div(100)} contracts at ${Format.percent(res.bet.price)} for ${Format.money(res.bet.stake)}."
-                            is PlaceResult.NotFilled -> res.reason
-                            is PlaceResult.Refused -> res.reason
-                            is PlaceResult.Failed -> res.message
-                            is PlaceResult.Unconfirmed -> res.message
-                        }
-                        busy = false
-                    }
+                    hub.placeAsync(o, stake, r.plan.limitPrice)
+                    onDismiss()
                 },
                 enabled = ready != null && !busy && ui.config.tradingEnabled && outcome?.startsWith("Placed") != true,
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 16.dp).testTag("kalshiPlace"),

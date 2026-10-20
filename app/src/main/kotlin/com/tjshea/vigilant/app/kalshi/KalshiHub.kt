@@ -339,6 +339,11 @@ class KalshiHub(private val c: AppContainer) {
         return r
     }
 
+    /** Places the bet in the app's own scope so the Bet sheet can close at the tap (Tj, 2026-10-20, CH32c); the result is a notification ([place]). */
+    fun placeAsync(o: Opportunity, stake: Double, confirmedLimit: Double) {
+        c.appScope.launch { runCatching { place(o, stake, confirmedLimit) }.onFailure { if (it is CancellationException) throw it; KalshiNotes.failed(c.app, "Kalshi bet failed: ${o.selection}", it.message ?: it.javaClass.simpleName) } }
+    }
+
     suspend fun refreshBets() {
         runCatching { settler.run() }
         val bets = tracker.all()
