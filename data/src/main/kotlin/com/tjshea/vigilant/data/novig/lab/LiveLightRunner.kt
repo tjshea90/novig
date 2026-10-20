@@ -124,6 +124,9 @@ class LiveLightRunner(
     @Volatile private var games: Map<String, Game> = emptyMap()
     @Volatile private var marketEvent: Map<String, String> = emptyMap()
     private val feeds = ConcurrentHashMap<String, Feed>()
+
+    /** ESPN's home-team win probability per Novig event and when it was read: a cross-check on the model's moneyline calls only (Tj, 2026-10-20), never a price. */
+    private val espnWin = ConcurrentHashMap<String, Pair<Double, Long>>()
     private val dirty = ConcurrentHashMap.newKeySet<String>()
     private val signal = Channel<Unit>(Channel.CONFLATED)
     private val offered = HashMap<String, Pair<Long, Double>>()
@@ -372,6 +375,9 @@ class LiveLightRunner(
                 if (before == null) recatalog = true
                 if (before != null && (before.homeScore != e.homeScore || before.awayScore != e.awayScore)) { scoreAt[game.ev.eventId] = now; scoreHot = true }
                 feeds[game.ev.eventId] = if (espn != null) Feed(e, now) else Feed(e, alt!!.atMs, alt.source)
+                if (espn != null && espn.id.isNotEmpty() && now - (espnWin[game.ev.eventId]?.second ?: 0L) >= WIN_READ_MS) {
+                    fetch(LabClock.winProbUrl(path, espn.id))?.let { LabClock.parseWinProb(it.body) }?.let { espnWin[game.ev.eventId] = it to now }
+                }
                 if (before == null || before.homeScore != e.homeScore || before.awayScore != e.awayScore || before.period != e.period || before.clockSec != e.clockSec) {
                     dirty += game.ev.eventId
                     signal.trySend(Unit)
@@ -486,6 +492,19 @@ class LiveLightRunner(
                 jlog("passed") { put("eventId", eventId); put("rule", c.rule); put("outcomeId", c.outcomeId); put("ask", c.ask); put("fair", cand.fair); put("edge", cand.edge); put("why", "edge too large and no second live source") }
                 continue
             }
+            // ESPN's win probability as a cross-check (it can only hold a moneyline call back): a side the model backs that ESPN rates 25 points less likely is not offered.
+            if (line.kind == com.tjshea.vigilant.data.novig.burst.LadderKind.MARGIN && line.threshold == 0.0) {
+                val w = espnWin[eventId]?.takeIf { now - it.second <= WIN_MAX_AGE_MS }?.first
+                val team = feed.game.sideOf(line.ref)
+                if (w != null && team != null) {
+                    val pBet = (if (team == "HOME") w else 1.0 - w).let { if (c.side == "YES") it else 1.0 - it }
+                    if (cand.fair - pBet > WIN_VETO) {
+                        skip("ESPN's win probability disagrees")
+                        jlog("passed") { put("eventId", eventId); put("rule", c.rule); put("outcomeId", c.outcomeId); put("ask", c.ask); put("fair", cand.fair); put("espnWin", pBet); put("why", "ESPN win probability ${"%.0f".format(java.util.Locale.US, pBet * 100)}% vs model ${"%.0f".format(java.util.Locale.US, cand.fair * 100)}%") }
+                        continue
+                    }
+                }
+            }
             val offer = (TailOffers.build(game.ev, game.markets, points, st, cand, now) ?: continue).copy(confirm = second)
             offered[c.outcomeId] = now to c.ask
             upd { it.copy(offers = it.offers + 1, last = "${c.rule} · ${offer.target.selection} · ${"%.1f".format(java.util.Locale.US, c.edge * 100)}% edge · ${offer.state}") }
@@ -560,6 +579,10 @@ class LiveLightRunner(
 
         /** A score older than this is not what the game is now: nothing is judged on it. */
         const val STATE_MAX_AGE_MS = 12_000L
+        /** ESPN's win probability is read at most this often per game, trusted this long, and holds a call back when it rates the side this much less likely than the model. */
+        const val WIN_READ_MS = 10_000L
+        const val WIN_MAX_AGE_MS = 60_000L
+        const val WIN_VETO = 0.25
 
         /** The same outcome is handed to the taker again only after this long, or at a better price. */
         const val REOFFER_MS = 1_500L
