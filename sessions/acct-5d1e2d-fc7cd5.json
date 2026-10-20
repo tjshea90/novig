@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-rlkku2",
- "head": "e3aaabae72fe2b0d83c3e75cd463d47c6f5e7708",
+ "head": "117209b181c69b2a3a235c53a54ec65a8cfbbae8",
  "since": 1792452137,
- "beat": 1792477399,
- "beatIso": "2026-10-20T06:23:19Z",
- "done": "pre-release: v1.0.13: API status lights fixed (pinnapi refused = red, PinnWire lit), 'X is working again' message, chat draft kept across tabs, Kalshi slips say Kalshi + close at tap + minimum contract, Kalshi notifications (versionCode 353, v1.0.13)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.13), then run: bash tools/record-release.sh v1.0.13 353 \"v1.0.13: API status lights fixed (pinnapi refused = red, PinnWire lit), 'X is working again' message, chat draft kept across tabs, Kalshi slips say Kalshi + close at tap + minimum contract, Kalshi notifications\""
+ "beat": 1792477480,
+ "beatIso": "2026-10-20T06:24:40Z",
+ "done": "CH33 written (merge Kalshi into +EV tab)",
+ "next": "CH33a: read Kalshi tab + Novig +EV tab code, plan merge"
 }
