@@ -6030,3 +6030,4 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [ ] CH40c Kalshi rows in the +EV tab = CH33b (still open); Tj sees none there. Also find why Kalshi scan/bids show nothing on his phone (needs his Kalshi page words).
 - [x] CH41 (Tj 19:37) max bids total = up to 4x wallet: options 100%(current)/200/300/400% of wallet and a typed amount (Bids tab).
 - [x] CH42 (built v1.0.20: LiveLightBidRules mid tier 65-85% fair bid 15% under, LiveLightBidTiersTest) (Tj 19:42) live engine: offer live bids on obvious +EV totals (over well under the score-based model, and under well above) both at once; needs a live totals model from score/time. Research first (RESEARCH.md §132.3 guards; live bids pregame-only rule needs Tj's word: he has now asked).
+- [x] CH43 Boston ML bought 12x by live tail lane: per-game 3-buy cap + no averaging down (TailTakerTest)
