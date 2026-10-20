@@ -6042,3 +6042,6 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 ## CH45 (Tj chat 22:00 UTC)
 - [ ] CH45a Kalshi toggle still lags after v1.0.22 and bids still "Under one Kalshi contract": confirm his version; if v1.0.22, lift 1-contract floor for stakes <0.5 contract (KalshiAsNovig) and profile toggle-on lag
 - [x] CH45b Kalshi rows obey the Feed "at least N books" view filter (FeedScreen); CH45c Kalshi bids placed at min 1 contract even above Kelly (KalshiAsNovig), Tj 22:06
+
+## CH46 (Tj chat 22:57 UTC)
+- [ ] CH46 trial cdn.espn.com scoreboard (?xhr=1) as faster live score source vs current ESPN call (data/tracker/Scores.kt, novig/lab/LabClock.kt); keep only if fresher. ESPN /odds endpoint = double count, skip.
