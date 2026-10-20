@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/kalshi-vigilant-integration-v5u4ho",
- "head": "8196c29fb72d32752aed4615b884eaa29f986d65",
+ "head": "0ec1b5fac34e73b300886c6bc549443e9ec6fe83",
  "since": 1792468198,
- "beat": 1792470542,
- "beatIso": "2026-10-20T04:29:02Z",
- "done": "Kalshi bids in the hub + Bids page",
- "next": "wait for full test result; then KV9 engine lane, KV10 docs, ship"
+ "beat": 1792470739,
+ "beatIso": "2026-10-20T04:32:19Z",
+ "done": "KV10 docs: CLAUDE.md section, research note; KalshiMirror (APIs from Novig, money from Kalshi)",
+ "next": "full test gate -> ship.sh; then KV9 engine lane"
 }
