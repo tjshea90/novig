@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/kalshi-vigilant-integration-v5u4ho",
- "head": "707c2271881e2b98d3e7e7d534e31d5cc6e06a35",
+ "head": "e8e4aa6b26f186897e56dc90c5e9519c4d442049",
  "since": 1792468198,
- "beat": 1792469463,
- "beatIso": "2026-10-20T04:11:03Z",
- "done": "KV3b: KalshiAutoBettor (rules reuse, paper mode) + tests green",
- "next": "app layer: VenueMode + KalshiHub + Kalshi tab"
+ "beat": 1792469659,
+ "beatIso": "2026-10-20T04:14:19Z",
+ "done": "KV5b: ArbExecutor + placeExact + KalshiConfig/VenueMode + BorrowedSource + Scanner.heldSnapshot; tests green",
+ "next": "App layer: AppContainer hooks (kalshiHub), KalshiHub, tab, screens"
 }
