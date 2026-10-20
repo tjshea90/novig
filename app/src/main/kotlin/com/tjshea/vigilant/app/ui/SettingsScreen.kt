@@ -493,6 +493,8 @@ fun SettingsScreen(
 private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> Unit, onOpenAutoBet: (() -> Unit)?, onOpenBids: (() -> Unit)?, onOpenCno: (() -> Unit)? = null) {
     val s = state.settings
     var query by rememberSaveable { mutableStateOf("") }
+    // Novig, Kalshi or both (KV, Tj 2026-10-20): above the search so it is the first thing on the list.
+    com.tjshea.vigilant.app.ui.kalshi.VenueSwitchCard()
     OutlinedTextField(
         value = query,
         onValueChange = { query = it.take(40) },
