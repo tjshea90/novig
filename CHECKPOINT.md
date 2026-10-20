@@ -1,13 +1,13 @@
-# CHECKPOINT 3822 — read me first, then TASKS.md
+# CHECKPOINT 3823 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T11:27:02Z · **tests:** all 6 fast checks green
-**Branch:** `claude/keen-keller-dqbym5` · **builds on:** `f3309473c` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T14:41:37Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-yis368` · **builds on:** `0629ba206` (this checkpoint is the commit after it)
 
 ## Just done
-ENGINEER 2026-10-20 rotation: research card posted, no change
+pre-ship: v1.0.16: Kalshi cards bet on Kalshi's own slip (no Novig read), Kalshi slip shows other books' odds, Novig and Kalshi cards tinted differently
 
 ## Do this next
-WATCH engine start at 08:00 ET
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ WATCH engine start at 08:00 ET
 
 ## Last ten checkpoints
 ```
+  4dd968728 ckpt 3822: ENGINEER 2026-10-20 rotation: research card posted, no change
   f3309473c ckpt 3821: v1.0.15 released (CH33-36); chat quiet since ~07:00
   7c0674b65 ckpt 3820: pre-release: v1.0.15: Research page in the Claude tab (daily analysis summa
   b8170c54d ckpt 3819: pre-ship: v1.0.15: Research page in the Claude tab (daily analysis summary)
@@ -25,5 +26,7 @@ WATCH engine start at 08:00 ET
   849ed8270 ckpt 3815: CH33 built; CH34/35 written
   117209b18 ckpt 3814: CH33 written (merge Kalshi into +EV tab)
   685bb10e5 ckpt 3813: pre-release: v1.0.13: API status lights fixed (pinnapi refused = red, PinnW
-  5609379b2 ckpt 3812: v1.0.13 prepared
 ```
+
+(4 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
