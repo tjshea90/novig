@@ -349,3 +349,4 @@ day that changes.
 | v1.0.8 | code 348 | 2026-10-19T20:48Z | v1.0.8: Engine > APIs lights (green/amber/grey, tap for the error), Test now and Try again per API; cross-exchange hedge paper journal (Novig + Kalshi/SX)
 | v1.0.9 | code 349 | 2026-10-19T22:21Z | v1.0.9: Tracker Yesterday + pick-a-day calendar; thin-small-books guard for engine bets/bids; bids slider 80
 | v1.0.10 | code 350 | 2026-10-20T01:11Z | bet slip opens to full height as its content grows (CH28a)
+| v1.0.11 | code 351 | 2026-10-20T01:53Z | Live paper records on the Live tab with Paper/Real stakes; SX Bet live scores behind ESPN
