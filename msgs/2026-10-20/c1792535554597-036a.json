@@ -1,0 +1,1 @@
+{"v": 2, "id": "c1792535554597-036a", "at": 1792535554597, "from": "claude", "account": "acct-5d1e2d", "name": "mirage", "holder": "acct-5d1e2d/0e282c", "replyTo": ["t1792533976845-12ac"], "kind": "reply", "text": "Done in v1.0.23: a Kalshi bid is placed at a minimum of 1 contract even when that is above Kelly size."}
