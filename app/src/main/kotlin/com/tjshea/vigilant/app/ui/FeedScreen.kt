@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.app.ui
 
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.background
@@ -613,6 +614,18 @@ fun fairSourceLabel(s: ScanSettings): String = when (s.fairSource) {
     FairSource.BLEND -> "${(s.sharpWeight * 100).toInt()}% sharp blend"
 } + ", ${s.devigMethod.displayName.lowercase()} devig"
 
+/** A card's background by venue (CH37): Kalshi a faint violet, Novig a faint green when both venues are listed; no venue (one venue only) the app's own surface. */
+private fun venueTint(venue: String?, base: androidx.compose.ui.graphics.Color): androidx.compose.ui.graphics.Color = when (venue) {
+    "Kalshi" -> androidx.compose.ui.graphics.Color(0xFF8B5CF6).copy(alpha = 0.14f).compositeOver(base)
+    "Novig" -> androidx.compose.ui.graphics.Color(0xFF22C55E).copy(alpha = 0.10f).compositeOver(base)
+    else -> base
+}
+
+private fun venueAccent(venue: String?, base: androidx.compose.ui.graphics.Color): androidx.compose.ui.graphics.Color = when (venue) {
+    "Kalshi" -> androidx.compose.ui.graphics.Color(0xFFB794F6)
+    else -> base
+}
+
 @Composable
 fun OpportunityCard(
     o: Opportunity,
@@ -636,7 +649,7 @@ fun OpportunityCard(
     Card(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        colors = CardDefaults.cardColors(containerColor = venueTint(venue, MaterialTheme.colorScheme.surfaceContainer)),
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             LosingTypeBanner(losingTypeOf(o))
@@ -686,7 +699,7 @@ fun OpportunityCard(
                     move?.let { LineMoveNote(it) }
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text((venue ?: AppBook.name).uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text((venue ?: AppBook.name).uppercase(), style = MaterialTheme.typography.labelSmall, color = venueAccent(venue, MaterialTheme.colorScheme.primary), fontWeight = FontWeight.Bold)
                     Text(Format.american(q.cost), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
                 }
             }
@@ -714,9 +727,18 @@ fun OpportunityCard(
                 if (onOpen) {
                     Spacer(Modifier.width(8.dp))
                     // Betting through Novig's API (Tj, 2026-09-29): only when it's set up in Settings.
-                    ApiBetButton { it.betOpportunity(o) }
-                    Spacer(Modifier.width(6.dp))
-                    OpenBetButton(o, settings)
+                    // A Kalshi card bets on Kalshi (its own slip), never through Novig's.
+                    if (venue == "Kalshi") {
+                        androidx.compose.material3.FilledTonalButton(
+                            onClick = onClick,
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                            modifier = Modifier.testTag("kalshiBetButton"),
+                        ) { Text("Bet on Kalshi", maxLines = 1) }
+                    } else {
+                        ApiBetButton { it.betOpportunity(o) }
+                        Spacer(Modifier.width(6.dp))
+                        OpenBetButton(o, settings)
+                    }
                 }
             }
         }

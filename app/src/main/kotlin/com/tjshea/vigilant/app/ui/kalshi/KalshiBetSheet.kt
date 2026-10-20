@@ -93,6 +93,7 @@ fun KalshiBetSheet(hub: KalshiHub, ui: KalshiUi, o: Opportunity, now: Long, onDi
                 LabeledValue("Minimum", if (oneContract > 0.0) Format.money(oneContract) + " (1 contract)" else "—")
                 LabeledValue("Offered", o.ladder.firstOrNull()?.let { "${it.contracts / 100} contracts" } ?: "—")
             }
+            com.tjshea.vigilant.app.ui.FairOddsTable(o)
             SectionTitle("Bet")
             OutlinedTextField(
                 value = stakeText, onValueChange = { stakeText = it.filter { c -> c.isDigit() || c == '.' }.take(8) }, label = { Text("Dollars to spend") },
