@@ -8,6 +8,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.tjshea.vigilant.app.R
 import com.tjshea.vigilant.app.ScanService
+import com.tjshea.vigilant.app.withWallet
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import java.util.Locale
 
@@ -54,7 +55,7 @@ object KalshiNotes {
             val n = NotificationCompat.Builder(app, CHANNEL)
                 .setSmallIcon(R.drawable.ic_scan).setContentTitle(title).setContentText(text)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-                .setPriority(NotificationCompat.PRIORITY_HIGH).setCategory(NotificationCompat.CATEGORY_STATUS).setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH).setCategory(NotificationCompat.CATEGORY_STATUS).setAutoCancel(true).withWallet(app)
                 .build()
             NotificationManagerCompat.from(app).notify(next++, n)
         }
