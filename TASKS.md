@@ -5995,3 +5995,4 @@ Done 2026-10-20 (mirage): DashboardModel.apiHealth(st, meters) judges pinnapi/pi
 - [ ] CH32b Kalshi +EV bet slips say "Kalshi", not "Novig".
 - [ ] CH32c Kalshi bet slip closes right after Bet is pressed, like the Novig scanner.
 - [ ] CH32d Kalshi notifications: bet placed, bid filled, bet failed/timed out (like Novig's).
+- [ ] CH32e Kalshi slip starts at max(one contract cost, auto-entry stake) (Tj t1792474142690-802d)

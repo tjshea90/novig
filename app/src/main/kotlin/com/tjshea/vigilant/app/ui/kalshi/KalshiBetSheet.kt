@@ -54,7 +54,9 @@ fun KalshiBetSheet(hub: KalshiHub, ui: KalshiUi, o: Opportunity, now: Long, onDi
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val q = o.quote
-    var stakeText by remember(o.key) { mutableStateOf(String.format(Locale.US, "%.2f", (o.suggestedStake ?: ui.config.scan.slipCustomStake).coerceAtMost(ui.config.scan.apiMaxStake))) }
+    // Kalshi sells whole $1 contracts: the least a bet can be is one contract's price plus its fee (Tj, 2026-10-20). The slip opens at the larger of that and the amount already set (Kelly or the typed stake).
+    val oneContract = q?.let { Math.ceil((it.cost + it.fee) * 100 - 1e-9) / 100 } ?: 0.0
+    var stakeText by remember(o.key) { mutableStateOf(String.format(Locale.US, "%.2f", maxOf((o.suggestedStake ?: ui.config.scan.slipCustomStake).coerceAtMost(ui.config.scan.apiMaxStake), oneContract))) }
     val stake = stakeText.toDoubleOrNull() ?: 0.0
     var plan by remember(o.key) { mutableStateOf<PlanResult?>(null) }
     var busy by remember(o.key) { mutableStateOf(false) }
@@ -87,6 +89,7 @@ fun KalshiBetSheet(hub: KalshiHub, ui: KalshiUi, o: Opportunity, now: Long, onDi
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 LabeledValue("Fee", q?.let { Format.percent(it.fee, 2) + " of \$1" } ?: "—")
                 LabeledValue("Full Kelly", q?.let { Format.percent(it.kellyFraction) } ?: "—")
+                LabeledValue("Minimum", if (oneContract > 0.0) Format.money(oneContract) + " (1 contract)" else "—")
                 LabeledValue("Offered", o.ladder.firstOrNull()?.let { "${it.contracts / 100} contracts" } ?: "—")
             }
             SectionTitle("Bet")
