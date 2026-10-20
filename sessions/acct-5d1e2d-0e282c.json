@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "36558cfbcefb54ab5e7e29e788c33cc4f96a9d1a",
+ "head": "91bb116187d1dc9d7fae53d571db4d819eb2ad36",
  "since": 1792539161,
- "beat": 1792540014,
- "beatIso": "2026-10-20T23:46:54Z",
- "done": "CH47: tools/parlay.py + parlay.yml (plans, probe)",
- "next": "dispatch parlay.yml task plans then probe; read samples; build arb leads + PBP score source"
+ "beat": 1792540233,
+ "beatIso": "2026-10-20T23:50:33Z",
+ "done": "CH47 probe read: PBP SSE real shape, arbs real shape, Pro key found",
+ "next": "CH47d build ParlayPbp SSE feed + altScore"
 }
