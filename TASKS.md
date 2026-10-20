@@ -6005,6 +6005,6 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [ ] CH33d remove the separate Kalshi tab (keep Kalshi settings/arb reachable), tests, release
 - [x] CH33a-d built (FeedScreen `KalshiFeedPart`, venue chips, merged list labelled Novig/Kalshi, Kalshi tab out of the bar and reached via "Kalshi arb, bids, auto, setup"; VenueTabsTest updated, Kalshi tests green); ships with CH34/CH35
 ## CH34 (Tj chat 06:29): "boltodds is refusing the socket connection due to too many concurrent connections. figure out what this may be. it should be turned on on GitHub and off on my phone"
-- [ ] CH34a find why BoltOdds says too many connections (plan 3: engine uses 2, phone 2, Test probe 1; engine handovers overlap?); make sockets GitHub-on / phone-off
+- [x] CH34a (guard: BoltOddsStream.allowed + BoltOddsFeed.held; phone never opens Bolt sockets while the engine holds them; cause: any phone path (scan, stream engine, live tennis) opened sockets on top of the runner's 2 of the plan's 3) find why BoltOdds says too many connections (plan 3: engine uses 2, phone 2, Test probe 1; engine handovers overlap?); make sockets GitHub-on / phone-off
 ## CH35 (Tj chat 06:31, screenshot): "the bet slips still don't open all the way"
-- [ ] CH35a look at the screenshot, fix the Kalshi/Novig bet sheet not expanding fully
+- [x] CH35a (bet sheets are a fixed 92% tall, content scrolls) look at the screenshot, fix the Kalshi/Novig bet sheet not expanding fully
