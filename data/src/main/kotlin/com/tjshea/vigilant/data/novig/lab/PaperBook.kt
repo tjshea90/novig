@@ -113,6 +113,6 @@ class PaperBook(private val load: () -> String? = { null }, private val save: (S
         const val SHADOW = "shadow"
         const val SCORE_EVENT = "score-event"
         const val SAVE_MS = 10_000L
-        const val MAX = 6000
+        const val MAX = 3000
     }
 }

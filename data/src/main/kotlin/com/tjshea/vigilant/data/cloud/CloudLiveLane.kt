@@ -131,6 +131,7 @@ class CloudLiveLane(
     private val onEntry: suspend (TradeEntry) -> Unit = {},
     private val tell: suspend (String, String) -> Unit = { _, _ -> },
     private val journalLine: (String) -> Unit = {},
+    private val paperBook: com.tjshea.vigilant.data.novig.lab.PaperBook? = null,
     private val log: (String) -> Unit = {},
     private val clock: () -> Long = System::currentTimeMillis,
 ) : EngineLive {
@@ -221,7 +222,7 @@ class CloudLiveLane(
     @Volatile private var lastCash: Double? = null
 
     private val light: LiveLightRunner = LiveLightRunner(
-        scope = scope, source = source, journal = journalLine,
+        scope = scope, source = source, journal = journalLine, paper = paperBook,
         newView = { l -> SharedStreamView({ stream() }, l) },
         fetch = fetch, onOffer = { taker?.offer(it) }, leagues = { LEAGUES },
         bids = { if (bidsOn(settings)) bidDesk else null },

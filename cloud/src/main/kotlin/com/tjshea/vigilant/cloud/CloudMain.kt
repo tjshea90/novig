@@ -299,6 +299,11 @@ fun main(args: Array<String>) = runBlocking {
         orders = tradingClient?.let { com.tjshea.vigilant.data.cloud.TradingLiveOrders(it) }, port = tradePort, dir = File(out, "live-pinn"), tracker = liveTracker,
         onEntry = liveOnEntry, tell = liveTell, log = log::invoke,
     )
+    // The live paper records (CH31) ride from job to job in `paper.json` on cloud-feed, like the desk.
+    val paperBook = com.tjshea.vigilant.data.novig.lab.PaperBook(
+        load = { runCatching { PreviousFeed.read(git, cfgDir, "paper.json") }.getOrNull() },
+        save = { text -> publisher.stagePaper(text) },
+    )
     val tailLane = com.tjshea.vigilant.data.cloud.CloudLiveLane(
         scope = scope, source = novig, stream = { novig.stream as? com.tjshea.vigilant.data.novig.stream.NovigStream },
         fetch = { url ->
@@ -312,6 +317,7 @@ fun main(args: Array<String>) = runBlocking {
         tc = tradingClient, port = tradePort, dir = File(out, "live"), tracker = liveTracker, confirm = { s -> sources.liveConfirm(s) },
         onEntry = liveOnEntry, tell = liveTell,
         journalLine = { line -> runCatching { File(File(out, "cloud").also { it.mkdirs() }, "live-light-${java.time.LocalDate.now(java.time.ZoneId.of("America/New_York"))}-run$runId.jsonl").appendText(line + "\n") } },
+        paperBook = paperBook,
         log = log::invoke,
     )
     var deskText = ""
@@ -529,6 +535,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     private var evRows = 0
     private var evServed = 0L
     private var usageText: String? = null
+    private var paperText: String? = null
     private var usageAt = 0L
     private var tradesText: String? = null
     private var tradesAt = 0L
@@ -561,6 +568,13 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     fun stageTrades(text: String, at: Long) {
         tradesText = text; tradesAt = at
         status = status?.copy(tradesAtMs = at)
+        dirty = true
+    }
+
+    /** The live paper records (`paper.json`, CH31), carried to the next job. */
+    @Synchronized
+    fun stagePaper(text: String) {
+        paperText = text
         dirty = true
     }
 
@@ -614,6 +628,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         runCatching { File(dir, "DASHBOARD.md").writeText(CloudDashboard.markdown(st.copy(heartbeatMs = now), usageBook ?: UsageBook(), keyIds, now, repo)) }
         tradesText?.let { File(dir, "trades.json").writeText(it) }
         deskText?.let { File(dir, "desk.json").writeText(it) }
+        paperText?.let { File(dir, "paper.json").writeText(it) }
         ApiChain.measures.takeIf { it.isNotEmpty() }?.let { File(dir, "ranking.json").writeText(CloudRanking.encode(it)) }
         File(dir, "bids.json.gz").let { f -> bidsBytes?.let { f.writeBytes(it) } ?: f.delete() }
         evBytes?.let { File(dir, "propline-ev.json.gz").writeBytes(it) }

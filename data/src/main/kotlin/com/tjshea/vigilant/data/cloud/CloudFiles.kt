@@ -223,15 +223,22 @@ data class LiveStats(
     val judgeTookMs: Long = 0,
     val problem: String = "",
     val gameLines: List<String> = emptyList(),
+    /** How each tier of the live paper records has done (CH31). */
+    val paper: List<PaperLine> = emptyList(),
 ) {
     companion object {
         /** Live light's own status as numbers ([com.tjshea.vigilant.data.novig.lab.LiveLightRunner]). */
         fun of(st: com.tjshea.vigilant.data.novig.lab.LiveLightStatus, real: Boolean, bidsUp: Int): LiveStats = LiveStats(
             real = real, games = st.games, withScore = st.withScore, markets = st.markets, pushes = st.pushes, judgments = st.scans, offers = st.offers, bidWants = st.bidWants, bidsUp = bidsUp,
             lastPushMs = st.lastPushMs, lastJudgeMs = st.lastScanMs, judgeTookMs = st.lastScanTookMs, problem = st.problem.orEmpty().take(160), gameLines = st.gameLines.values.take(12).map { it.take(200) },
+            paper = st.paper.map { PaperLine(it.tier, it.open, it.wins, it.losses, it.pushes, it.expectedWinRate, it.roi) },
         )
     }
 }
+
+/** One tier of the live paper records in the status (CH31): [expected] is the model's average win chance on the settled ones, [roi] profit over cost after fees. */
+@Serializable
+data class PaperLine(val tier: String, val open: Int = 0, val wins: Int = 0, val losses: Int = 0, val pushes: Int = 0, val expected: Double = 0.0, val roi: Double = 0.0)
 
 /** One feed's answer on the last scan ([com.tjshea.vigilant.data.scanner.SourceReport] without the long words): leagues answered fresh/reused, games matched, leagues it stood by or skipped, and its error. */
 @Serializable
