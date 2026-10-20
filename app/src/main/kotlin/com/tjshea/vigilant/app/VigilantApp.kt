@@ -1463,7 +1463,7 @@ class AppContainer(val app: Application) {
     val tailTaker: com.tjshea.vigilant.data.novig.lab.TailTaker by lazy {
         com.tjshea.vigilant.data.novig.lab.TailTaker(
             orders = pinnOrders, scope = appScope, rules = ::tailTradeRules, minEdge = { settingsStore.flow.value?.tailLive?.minEdge ?: com.tjshea.vigilant.data.novig.lab.TailTradeLimits.DEFAULT_MIN_EDGE },
-            gate = ::tailGate,
+            gate = ::tailGate, paperStake = ::paperStake,
             ownBids = {
                 makerStore.flow.value.orEmpty().filter { it.resting }.map { com.tjshea.vigilant.data.pinnodds.LiveOwnBid(it.marketId, it.outcomeId, it.price) } +
                     (liveBidDesk.bidsNow() + lightBidDesk.bidsNow()).filter { it.active }.map { com.tjshea.vigilant.data.pinnodds.LiveOwnBid(it.marketId, it.outcomeId, it.price) }
@@ -1497,9 +1497,16 @@ class AppContainer(val app: Application) {
         }
     }
 
+    /** The live paper tiers' real-money switches and stake (CH31) with the wallet as Kelly's bankroll. */
+    private fun paperStake(): com.tjshea.vigilant.data.novig.lab.PaperStake {
+        val t = settingsStore.flow.value?.tailLive ?: return com.tjshea.vigilant.data.novig.lab.PaperStake()
+        return com.tjshea.vigilant.data.novig.lab.PaperStake(t.shadowReal, t.scoreReal, t.paperStake, t.paperKelly, wallet.flow.value?.dollars)
+    }
+
     val liveLight: com.tjshea.vigilant.data.novig.lab.LiveLightRunner by lazy {
         com.tjshea.vigilant.data.novig.lab.LiveLightRunner(
             scope = appScope, source = novig, journal = ::liveLightJournal,
+            paperReal = ::paperStake,
             paper = com.tjshea.vigilant.data.novig.lab.PaperBook(
                 load = { File(app.filesDir, "paper-records.json").takeIf { it.exists() }?.readText() },
                 save = { text -> File(app.filesDir, "paper-records.json").writeText(text) },

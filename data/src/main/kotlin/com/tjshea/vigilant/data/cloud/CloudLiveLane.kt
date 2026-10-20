@@ -190,8 +190,13 @@ class CloudLiveLane(
         TailTaker(
             orders = o, scope = scope, rules = ::rules, minEdge = { settings.tailLive.minEdge }, gate = ::gate, ownBids = ::ownBids, journal = tailJournal, onHalt = ::halt,
             logFills = { target, orderId, fills -> tracker.logApi(target, orderId, fills).also { record(it, "live tail bet") } != null },
-            lossToday = ::lossToday,
+            lossToday = ::lossToday, paperStake = ::paperStake,
         )
+    }
+
+    private fun paperStake(): com.tjshea.vigilant.data.novig.lab.PaperStake {
+        val t = settings.tailLive
+        return com.tjshea.vigilant.data.novig.lab.PaperStake(t.shadowReal, t.scoreReal, t.paperStake, t.paperKelly, lastCash)
     }
 
     private fun bidConfig(): LiveBidConfig {
@@ -222,7 +227,7 @@ class CloudLiveLane(
     @Volatile private var lastCash: Double? = null
 
     private val light: LiveLightRunner = LiveLightRunner(
-        scope = scope, source = source, journal = journalLine, paper = paperBook,
+        scope = scope, source = source, journal = journalLine, paper = paperBook, paperReal = ::paperStake,
         newView = { l -> SharedStreamView({ stream() }, l) },
         fetch = fetch, onOffer = { taker?.offer(it) }, leagues = { LEAGUES },
         bids = { if (bidsOn(settings)) bidDesk else null },
