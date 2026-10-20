@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-el5i79",
- "head": "120a71f9a0cec778950528b7efccee977dcb745b",
+ "head": "e842c0d4c8a25c8067230ba486172551d0b340fb",
  "since": 1792452137,
- "beat": 1792460124,
- "beatIso": "2026-10-20T01:35:24Z",
- "done": "v1.0.10 released (CH28a); Tj told",
- "next": "CH31a-d: paper records are journal lines (LiveLightRunner jlog shadow/score-event); need a grader + Live board card; BoltOdds/SX score feeds; ship as v1.0.11"
+ "beat": 1792460210,
+ "beatIso": "2026-10-20T01:36:50Z",
+ "done": "CH31a paper book + grader + Live-board lines built, PaperBookTest green",
+ "next": "CH31b real/paper stakes for paper tiers (TailLiveSettings + TailTaker), then CH31c score feeds, ship v1.0.11"
 }
