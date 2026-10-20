@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-rlkku2",
- "head": "cb1abfea3d6e2540c6c9cc413918986e34201765",
+ "head": "849ed8270347a9589739ea9eaf385fd362557668",
  "since": 1792452137,
- "beat": 1792477929,
- "beatIso": "2026-10-20T06:32:09Z",
- "done": "CH33 written (merge Kalshi into +EV tab)",
- "next": "CH33a: read Kalshi tab + Novig +EV tab code, plan merge"
+ "beat": 1792477968,
+ "beatIso": "2026-10-20T06:32:48Z",
+ "done": "CH33 built; CH34/35 written",
+ "next": "CH35 view screenshot, CH34 bolt connections, then ship"
 }
