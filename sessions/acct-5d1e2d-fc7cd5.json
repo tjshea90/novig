@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-el5i79",
- "head": "82a78c9106bdb3c104d2542d54723f55c9964104",
+ "head": "225880a5d5c46478d421046c5e1f60dec11755b1",
  "since": 1792452137,
- "beat": 1792460394,
- "beatIso": "2026-10-20T01:39:54Z",
- "done": "CH31a paper book + grader + Live-board lines built, PaperBookTest green",
- "next": "CH31b real/paper stakes for paper tiers (TailLiveSettings + TailTaker), then CH31c score feeds, ship v1.0.11"
+ "beat": 1792460424,
+ "beatIso": "2026-10-20T01:40:24Z",
+ "done": "CH31a/b built: paper book, grader, Live-board lines, real/paper stakes (typed or Kelly) for lower tier + score-event; tests green",
+ "next": "CH31c: BoltOdds livescores + SX live-scores as score sources behind ESPN in LiveLightRunner.readScores; then full ship v1.0.11"
 }
