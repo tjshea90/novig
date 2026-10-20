@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -610,7 +611,20 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
     SETTINGS("Settings", Icons.Filled.Settings),
     /** PropLine's +EV at Novig (Tj, 2026-10-16, TCL56): reached from the +EV tab's card, not in the bar. */
     PROPLINE("PropLine +EV", Icons.Filled.Star, inBar = false),
+
+    /** Kalshi (KV, Tj 2026-10-20): its own +EV, arbitrage with Novig, bets and auto-bet. Only while the Kalshi venue is switched on. */
+    KALSHI("Kalshi", Icons.Filled.ShoppingCart),
     ;
+
+    /**
+     * Whether the tab exists with these venues on (KV): the Novig tabs need Novig, the Kalshi tab needs Kalshi; the Engine, Claude, Tracker and Settings are always there.
+     * Null venues (a caller that does not know them) keeps every Novig tab, as the app was.
+     */
+    fun shownIn(mode: ScannerMode, venues: com.tjshea.vigilant.data.kalshitrade.VenueMode?): Boolean = when (this) {
+        KALSHI -> venues?.kalshi == true
+        EV, CNO, AUTOBET, BIDS, LIVE -> (venues?.novig ?: true) && shownIn(mode)
+        else -> shownIn(mode)
+    }
 
     /** Whether the tab exists in this scanner mode: CNO only hides what needs Vigilant's scanner. */
     fun shownIn(mode: ScannerMode): Boolean = when (this) {
@@ -626,6 +640,7 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
         TRACKER, SETTINGS -> true
         // The PropLine +EV list is retired (Tj, 2026-10-17: a waste of usage; its prop Overs lose, Vigilant disagrees on 94%): no tab, no card.
         PROPLINE -> false
+        KALSHI -> true
     }
 }
 
@@ -712,7 +727,9 @@ private fun VigilantRoot(
 ) {
     val mode = state.settings.scannerNow
     // The bar shows the central sections; the phone-side Auto-bet and CNO views are still tabs (Settings opens them) but are not in the bar.
-    val allTabs = Tab.entries.filter { it.shownIn(mode) }
+    val kalshiHub = com.tjshea.vigilant.app.ui.kalshi.rememberKalshiHub()
+    val venues = kalshiHub?.ui?.collectAsState()?.value?.venues
+    val allTabs = Tab.entries.filter { it.shownIn(mode, venues) }
     val tabs = allTabs.filter { it.inBar }
     var tabName by rememberSaveable { mutableStateOf<String?>(null) }
     // The Settings page open (null = its home list): kept here so the Auto-bet tab can open Betting.
@@ -782,6 +799,10 @@ private fun VigilantRoot(
         androidx.compose.foundation.layout.Box(modifier) {
             when (tab) {
                 Tab.ENGINE -> com.tjshea.vigilant.app.ui.EngineScreen(state, onOpenCloudSettings = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.CLOUD.name; tabName = Tab.SETTINGS.name }, onRefresh = { vm.refreshEngine() }, onReset = { vm.resetEngine() }, onTestApi = { id -> ApiEntry.entries.firstOrNull { it.policy?.id == id }?.let { vm.testApi(it) } }, onRetryApi = { id -> vm.retryApi(id) })
+                Tab.KALSHI -> if (kalshiHub != null) com.tjshea.vigilant.app.ui.kalshi.KalshiScreen(
+                    hub = kalshiHub,
+                    onOpenKeySettings = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.KALSHI.name; tabName = Tab.SETTINGS.name },
+                )
                 Tab.CLAUDE -> com.tjshea.vigilant.app.ui.ClaudeScreen(
                     state, onSend = vm::sendChat, onChatOpen = vm::setChatOpen, onChatRead = vm::markChatRead, onRetry = vm::retryChat, onDiscard = vm::discardChat,
                     onNewChat = vm::newChat, onClearChat = vm::clearChat, onLoadEarlier = vm::loadEarlierChat, chatFile = { id, n, name -> vm.chatFile(id, n, name) }, onMarkRead = vm::markClaudeRead,
