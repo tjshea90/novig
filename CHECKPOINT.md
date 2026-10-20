@@ -1,13 +1,13 @@
-# CHECKPOINT 3785 — read me first, then TASKS.md
+# CHECKPOINT 3786 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T01:36:50Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-el5i79` · **builds on:** `c85819952` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T01:40:24Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-el5i79` · **builds on:** `82a78c910` (this checkpoint is the commit after it)
 
 ## Just done
-CH31a paper book + grader + Live-board lines built, PaperBookTest green
+CH31a/b built: paper book, grader, Live-board lines, real/paper stakes (typed or Kelly) for lower tier + score-event; tests green
 
 ## Do this next
-CH31b real/paper stakes for paper tiers (TailLiveSettings + TailTaker), then CH31c score feeds, ship v1.0.11
+CH31c: BoltOdds livescores + SX live-scores as score sources behind ESPN in LiveLightRunner.readScores; then full ship v1.0.11
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ CH31b real/paper stakes for paper tiers (TailLiveSettings + TailTaker), then CH3
 
 ## Last ten checkpoints
 ```
+  e842c0d4c ckpt 3785: CH31a paper book + grader + Live-board lines built, PaperBookTest green
   9ece40796 ckpt 3784: v1.0.10 released (CH28a); Tj told
   d16876956 ckpt 3783: pre-release: bet slip opens to full height as its content grows (CH28a) (ve
   3a685d875 ckpt 3782: pre-ship: bet slip opens to full height as its content grows (CH28a)
@@ -25,8 +26,7 @@ CH31b real/paper stakes for paper tiers (TailLiveSettings + TailTaker), then CH3
   d791b9483 ckpt 3778: CH29 written
   950c6b7c3 ckpt 3777: CH28a bet sheet re-expands on content growth (compiles)
   f29798332 ckpt 3776: WATCH 2026-10-19: engine healthy, no change
-  ad8e50ac4 ckpt 3775: v1.0.9 released (CH24 CH25 CH26 CH27); chat quiet
 ```
 
-(7 automatic checkpoint(s) since the last deliberate one — the
+(6 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
