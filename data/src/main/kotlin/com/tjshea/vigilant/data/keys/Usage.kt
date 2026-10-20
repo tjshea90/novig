@@ -569,6 +569,7 @@ class KeyPool(
         val tried = HashSet<String>()
         var lastProblem: String? = null
         var shortWaits = 0
+        meter.load()   // the ordering below reads each key's plan from the meter's state
         // A pace sets each key's own floor (a paid key's day share, a free key's small closing-lines reserve); with none, every key keeps [reserve].
         val held: (KeyUsage, Long) -> Int = when {
             pace != null -> { u, now -> pace.floor(u, now) }
