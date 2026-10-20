@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "32feed09a9619ed86ae8e468e5f0edc9f4ff4564",
+ "head": "93fcf844dbddceede5b6053f704aa44c7d139f1b",
  "since": 1792528851,
- "beat": 1792537662,
- "beatIso": "2026-10-20T23:07:42Z",
- "done": "pre-ship: v1.0.24: ESPN win probability cross-checks live moneyline calls (CH46c)",
- "next": "ship.sh gates and releases this"
+ "beat": 1792537693,
+ "beatIso": "2026-10-20T23:08:13Z",
+ "done": "pre-release: v1.0.24: ESPN win probability cross-checks live moneyline calls (CH46c) (versionCode 364, v1.0.24)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.24), then run: bash tools/record-release.sh v1.0.24 364 \"v1.0.24: ESPN win probability cross-checks live moneyline calls (CH46c)\""
 }
