@@ -11,7 +11,13 @@ import com.tjshea.vigilant.data.kalshitrade.KalshiAutoBettor
 import com.tjshea.vigilant.data.kalshitrade.KalshiAutoMode
 import com.tjshea.vigilant.data.kalshitrade.KalshiBetPlacer
 import com.tjshea.vigilant.data.kalshitrade.KalshiBetTargets
-import com.tjshea.vigilant.data.kalshitrade.KalshiBook
+import com.tjshea.vigilant.data.kalshitrade.KalshiAsNovig
+import com.tjshea.vigilant.data.kalshitrade.KalshiBidRunner
+import com.tjshea.vigilant.data.kalshitrade.KalshiBidStatus
+import com.tjshea.vigilant.data.kalshitrade.KalshiOutcomes
+import com.tjshea.vigilant.data.novig.trading.maker.MakerBid
+import com.tjshea.vigilant.data.novig.trading.maker.MakerDesk
+import com.tjshea.vigilant.data.novig.trading.maker.MakerStore
 import com.tjshea.vigilant.data.kalshitrade.KalshiConfig
 import com.tjshea.vigilant.data.kalshitrade.KalshiFees
 import com.tjshea.vigilant.data.kalshitrade.KalshiScanner
@@ -70,6 +76,8 @@ data class KalshiUi(
     val arbNote: String? = null,
     val arbBusy: Boolean = false,
     val autoNote: String? = null,
+    val bidStatus: KalshiBidStatus? = null,
+    val bids: List<MakerBid> = emptyList(),
     val message: String? = null,
 )
 
@@ -113,6 +121,17 @@ class KalshiHub(private val c: AppContainer) {
         injuryOf = { o -> com.tjshea.vigilant.data.reference.InjuryTags.wantOf(o)?.let { w -> com.tjshea.vigilant.data.reference.InjuryTags.tags(c.injuries.book.value, listOf(w), System.currentTimeMillis())[w.key] } },
     )
 
+    private val outcomes = KalshiOutcomes()
+    private val bidStore = MakerStore(File(files, "kalshi_maker.json"))
+    private val bidDesk = MakerDesk(KalshiAsNovig(trading, outcomes), tracker, bidStore, lock = orderLock, cancelStrays = false)
+    private val bidRunner = KalshiBidRunner(
+        bidDesk, outcomes, cash = { if (trading.ready) trading.balance().cash else null },
+        unavailable = { o -> com.tjshea.vigilant.data.reference.InjuryTags.wantOf(o)?.let { w -> com.tjshea.vigilant.data.reference.InjuryTags.tags(c.injuries.book.value, listOf(w), System.currentTimeMillis())[w.key] }?.let { com.tjshea.vigilant.data.reference.PlayerOut.forTag(it) } },
+        tell = { title, text -> c.eventLog.warn("KALSHI", "$title: $text") },
+        log = { c.eventLog.info("KALSHI", it) },
+    )
+    private var lastBidPass = 0L
+
     init {
         c.appScope.launch {
             val cfg = configStore.read()
@@ -143,7 +162,7 @@ class KalshiHub(private val c: AppContainer) {
             }
             val saved = venueStore.update { next.copy(novigPausedByVenue = paused) }
             _ui.update { it.copy(venues = saved) }
-            if (!saved.kalshi) runCatching { runner.stop() }
+            if (!saved.kalshi) { runCatching { runner.stop() }; runCatching { bidRunner.stop("Kalshi was switched off") } }
             c.eventLog.info("KALSHI", "venues: Novig ${if (saved.novig) "on" else "off"}, Kalshi ${if (saved.kalshi) "on" else "off"}")
         }
     }
@@ -202,7 +221,33 @@ class KalshiHub(private val c: AppContainer) {
             KalshiAutoMode.PAPER -> runAuto(result, paper = true)
             KalshiAutoMode.LIVE -> if (cfg().tradingEnabled) runAuto(result, paper = false)
         }
+        bidPass()
         refreshBets()
+    }
+
+    /** One pass of the Kalshi bid desk on the last Kalshi scan (bids need orders on AND the bids switch; with either off, whatever is up comes down once). */
+    suspend fun bidPass() {
+        lastBidPass = System.currentTimeMillis()
+        val ui = _ui.value
+        val s = ui.config.forScan()
+        val live = ui.config.tradingEnabled && ui.venues.kalshi && trading.ready
+        val status = try {
+            bidRunner.pass(if (live) s else s.copy(maker = false), ui.result, stopReason = if (s.paused) "Scanning is paused" else null)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            KalshiBidStatus("Bid pass failed: ${e.message ?: e.javaClass.simpleName}")
+        }
+        _ui.update { it.copy(bidStatus = status ?: bidRunner.status, bids = runCatching { kotlinx.coroutines.runBlocking { bidRunner.bids() } }.getOrDefault(it.bids)) }
+    }
+
+    /** Cancel every Kalshi bid now. */
+    fun cancelBids() {
+        c.appScope.launch {
+            bidRunner.stop("Cancelled by you")
+            _ui.update { it.copy(bids = emptyList(), bidStatus = bidRunner.status) }
+            refreshBets()
+        }
     }
 
     private suspend fun runAuto(result: ScanResult, paper: Boolean) {
@@ -388,6 +433,7 @@ class KalshiHub(private val c: AppContainer) {
                 if (ui.config.autoScan && !ui.scanning && ui.config.scan.leagues.isNotEmpty() && now - lastScanStart >= ui.config.autoScanSeconds * 1000L) {
                     runCatching { scanNow() }
                 }
+                if (ui.config.scan.maker && ui.config.tradingEnabled && !ui.scanning && now - lastBidPass >= BID_EVERY_MS) runCatching { bidPass() }
                 if (now - lastSettleAt >= SETTLE_EVERY_MS && c.kalshiSigner() != null) {
                     lastSettleAt = now
                     runCatching { refreshBets() }
@@ -406,6 +452,7 @@ class KalshiHub(private val c: AppContainer) {
     companion object {
         const val TICK_MS = 5_000L
         const val SETTLE_EVERY_MS = 3 * 60_000L
+        const val BID_EVERY_MS = 60_000L
 
         /** The most payout one arbitrage clip holds on a single venue while its other leg is placed. */
         const val CLIP = 10.0
