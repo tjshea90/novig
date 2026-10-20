@@ -110,7 +110,7 @@ class KalshiHub(private val c: AppContainer) {
     private val auto = KalshiAutoBettor(
         placer, tracker, paperTracker,
         wallet = { if (trading.ready) trading.balance().cash else null },
-        injuryOf = { c.injuries.forBet(it) },
+        injuryOf = { o -> com.tjshea.vigilant.data.reference.InjuryTags.wantOf(o)?.let { w -> com.tjshea.vigilant.data.reference.InjuryTags.tags(c.injuries.book.value, listOf(w), System.currentTimeMillis())[w.key] } },
     )
 
     init {
@@ -143,7 +143,7 @@ class KalshiHub(private val c: AppContainer) {
             }
             val saved = venueStore.update { next.copy(novigPausedByVenue = paused) }
             _ui.update { it.copy(venues = saved) }
-            if (!saved.kalshi) runCatching { runner.cancelIfRunning() }
+            if (!saved.kalshi) runCatching { runner.stop() }
             c.eventLog.info("KALSHI", "venues: Novig ${if (saved.novig) "on" else "off"}, Kalshi ${if (saved.kalshi) "on" else "off"}")
         }
     }
@@ -186,7 +186,7 @@ class KalshiHub(private val c: AppContainer) {
         _ui.update {
             it.copy(
                 scanning = run.scanning,
-                progress = run.progress?.let { p -> "${p.stage} ${p.done}/${p.total}" },
+                progress = run.progress?.let { p -> if (p.total > 0) "${p.step} ${p.done}/${p.total}" else p.step },
                 result = result,
                 feed = result?.feed(cfg.scan)?.let { f -> f.filter { o -> !o.isLive } }.orEmpty(),
                 scannedAtMs = result?.computedAtMs,
