@@ -5996,3 +5996,10 @@ Done 2026-10-20 (mirage): DashboardModel.apiHealth(st, meters) judges pinnapi/pi
 - [x] CH32c Kalshi bet slip closes right after Bet is pressed, like the Novig scanner.
 - [x] CH32d Kalshi notifications: bet placed, bid filled, bet failed/timed out (like Novig's).
 - [x] CH32e Kalshi slip starts at max(one contract cost, auto-entry stake) (Tj t1792474142690-802d)
+
+## CH33: one +EV tab for Novig and Kalshi (Tj, app chat 2026-10-20, t1792477333974-949d + t1792477354614-d8b9)
+Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +ev tab with toggles for the scanned list to include kalshi or novig (I can also toggle them both on and the list will have positive EV bets for both). make sure each scanned bet says kalshi or novig. keep in mind the scanned bets can use the same sourced fair odds that novig already used, so it shouldn't use any extra API usage. also make sure the bet slips work just as well as the novig bet slips worked. they should be the same look and function as what it already had, just adding the kalshi" / "once this feature is built, remove the separate kalshi tab"
+- [ ] CH33a read how the Kalshi tab's +EV list/slip and the Novig +EV tab are built; plan the merge (no Novig behaviour change)
+- [ ] CH33b +EV tab: Novig / Kalshi toggles (both allowed), each row labelled with its venue, Kalshi rows reuse the held fair odds (no extra API calls)
+- [ ] CH33c bet slip per row opens the venue's own slip, same look/function
+- [ ] CH33d remove the separate Kalshi tab (keep Kalshi settings/arb reachable), tests, release
