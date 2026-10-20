@@ -141,6 +141,12 @@ class CloudSources(
         )
     }
 
+    /** Kalshi as a place to bet for the engine's Kalshi lane (KV9): the same signed client as the fair-line source, so a read made for either serves both. */
+    fun kalshiVenue(): ReferenceSource = com.tjshea.vigilant.data.kalshitrade.KalshiVenueSource(kalshi)
+
+    /** The Kalshi key the engine holds (null without the two secrets): the Kalshi lane trades with it ONLY when the phone's Kalshi engine switch is LIVE (KV9). */
+    fun kalshiTradingSigner(): KalshiSigner? = kalshiSigner
+
     /** One line for the engine's start-up log and status: whether Kalshi's key reached the engine and whether its socket is wanted. */
     fun kalshiNote(): String = if (kalshiSigner == null) "Kalshi: public reads (no key on GitHub)" else "Kalshi: signed key present, socket ${if (kalshiSocketWanted) "on" else "off"}"
     private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keys(CloudKeys.ODDS_API) }, usage, sticky = true), json)
