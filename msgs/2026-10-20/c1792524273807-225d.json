@@ -1,0 +1,1 @@
+{"v": 2, "id": "c1792524273807-225d", "at": 1792524273807, "from": "claude", "account": "acct-5d1e2d", "name": "mirage", "holder": "acct-5d1e2d/96eee1", "replyTo": [], "kind": "say", "text": "Still on it: fixed the API light (partial key refusals now amber, shipping soon). Now tracing why Check key shows nothing and Kalshi is missing from +EV."}
