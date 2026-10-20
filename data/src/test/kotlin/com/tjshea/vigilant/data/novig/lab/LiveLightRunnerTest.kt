@@ -50,7 +50,7 @@ class LiveLightRunnerTest {
     private fun book(bostonBid: Int, miamiBid: Int) = NovigBook("m1", 1L, mapOf("m1-b" to listOf(BidLevel(bostonBid, 5_000)), "m1-m" to listOf(BidLevel(miamiBid, 5_000))), 0L)
 
     private fun scoreboard(home: Int, away: Int, period: Int = 4, clock: String = "2:00") =
-        """{"events":[{"status":{"period":$period,"displayClock":"$clock","type":{"state":"in"}},"competitions":[{"competitors":[
+        """{"events":[{"id":"777","status":{"period":$period,"displayClock":"$clock","type":{"state":"in"}},"competitions":[{"competitors":[
         {"homeAway":"home","score":"$home","team":{"displayName":"Boston Celtics","abbreviation":"BOS"}},
         {"homeAway":"away","score":"$away","team":{"displayName":"Miami Heat","abbreviation":"MIA"}}]}]}]}"""
 
@@ -69,10 +69,10 @@ class LiveLightRunnerTest {
         override fun held(outcomeId: String) = heldPrice?.takeIf { outcomeId == "m1-b" }?.let { com.tjshea.vigilant.data.livebid.LiveBidHeld(it, 0L, null) }
     }
 
-    private fun runner(view: View, offers: MutableList<TailOffer>, board: String?, confirm: LiveConfirm? = null, clock: () -> Long = { now }, desk: Desk? = null, journal: (String) -> Unit = {}) =
+    private fun runner(view: View, offers: MutableList<TailOffer>, board: String?, confirm: LiveConfirm? = null, clock: () -> Long = { now }, desk: Desk? = null, journal: (String) -> Unit = {}, fetcher: (suspend (String) -> Fetched?)? = null) =
         LiveLightRunner(
             scope = TestScope(), source = Src(event, listOf(market)), newView = { _: BookListener -> view },
-            fetch = { board?.let { Fetched(it, 5L) } }, onOffer = { offers += it }, confirm = { confirm }, leagues = { setOf("NBA") }, clock = clock, bids = { desk }, publishMs = 0L, journal = journal,
+            fetch = fetcher ?: { board?.let { Fetched(it, 5L) } }, onOffer = { offers += it }, confirm = { confirm }, leagues = { setOf("NBA") }, clock = clock, bids = { desk }, publishMs = 0L, journal = journal,
         ).also { it.bind() }
 
     private suspend fun LiveLightRunner.look() { readCatalog(); readScores(); scanGame("ev") }
@@ -268,5 +268,20 @@ class LiveLightRunnerTest {
         val seen = HashSet<Any>()
         repeat(500) { r.scanGame("nope"); seen += r.status.value }
         assertTrue("published ${seen.size} different statuses", seen.size <= 3)
+    }
+
+    @Test
+    fun `ESPN's win probability holds back a call it rates far less likely, and says nothing when it agrees or has no read`() = runBlocking {
+        fun win(home: Double) = """{"winprobability":[{"homeWinPercentage":0.5,"tiePercentage":0.0},{"homeWinPercentage":$home,"tiePercentage":0.0}]}"""
+        suspend fun offersWith(homeWin: String?): Int {
+            val view = View(mapOf("m1" to book(bostonBid = 200, miamiBid = 200)))
+            val offers = ArrayList<TailOffer>()
+            val r = runner(view, offers, null, fetcher = { u -> Fetched(if (u.contains("/summary?event=777")) (homeWin ?: "{}") else scoreboard(105, 80), 5L) })
+            r.look()
+            return offers.size
+        }
+        assertEquals(0, offersWith(win(0.40)))   // the model backs Boston at ~0.9+, ESPN says 40%
+        assertEquals(1, offersWith(win(0.97)))
+        assertEquals(1, offersWith(null))
     }
 }
