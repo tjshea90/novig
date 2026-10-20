@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-yis368",
- "head": "861b1a5bb07277b63ec79467a5ff84558f1e816e",
+ "head": "b2f6d849beadf0da69977d2358b27aa33ce784ec",
  "since": 1792452137,
- "beat": 1792509483,
- "beatIso": "2026-10-20T15:18:03Z",
- "done": "pre-ship: v1.0.18: Kalshi bids say in words why they are not posting (no key, orders off, no scan yet)",
- "next": "ship.sh gates and releases this"
+ "beat": 1792509516,
+ "beatIso": "2026-10-20T15:18:36Z",
+ "done": "pre-release: v1.0.18: Kalshi bids say in words why they are not posting (no key, orders off, no scan yet) (versionCode 358, v1.0.18)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.18), then run: bash tools/record-release.sh v1.0.18 358 \"v1.0.18: Kalshi bids say in words why they are not posting (no key, orders off, no scan yet)\""
 }
