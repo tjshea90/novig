@@ -84,7 +84,7 @@ class ParlayPbpStream(
             call.execute().use { resp ->
                 if (!resp.isSuccessful) throw HttpRefused(resp.code)
                 board.heard[sport] = clock()
-                val src = resp.body.source()
+                val src = (resp.body ?: throw IOException("empty body")).source()
                 var event = ""
                 val data = StringBuilder()
                 while (true) {
