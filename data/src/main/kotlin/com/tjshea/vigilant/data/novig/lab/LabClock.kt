@@ -22,6 +22,8 @@ data class EspnGame(
     val clockSec: Double,
     /** The game is over (ESPN's state "post"). */
     val done: Boolean = false,
+    /** ESPN's event id (for its win-probability read); empty when the board did not carry one. */
+    val id: String = "",
 ) {
     /** "HOME" or "AWAY" for the team Novig calls [ref] (its abbreviation, or a name); null when it matches neither. */
     fun sideOf(ref: String): String? = when {
@@ -86,6 +88,18 @@ object LabClock {
     private fun JsonElement?.str(): String? = (this as? JsonPrimitive)?.contentOrNull
     private fun JsonElement?.int(): Int? = (this as? JsonPrimitive)?.let { it.intOrNull ?: it.contentOrNull?.toIntOrNull() }
 
+    /** ESPN's game summary, which carries `winprobability` (Tj, 2026-10-20: ESPN's win probability only cross-checks the live model). */
+    fun winProbUrl(path: String, eventId: String): String = "https://site.api.espn.com/apis/site/v2/sports/$path/summary?event=$eventId"
+
+    /** The newest home-team win probability in a game summary (a tie counts half), or null when the summary has none. */
+    fun parseWinProb(body: String): Double? {
+        val root = runCatching { json.parseToJsonElement(body) }.getOrNull().obj() ?: return null
+        val last = (root["winprobability"] as? JsonArray)?.lastOrNull().obj() ?: return null
+        val home = (last["homeWinPercentage"] as? JsonPrimitive)?.contentOrNull?.toDoubleOrNull() ?: return null
+        val tie = (last["tiePercentage"] as? JsonPrimitive)?.contentOrNull?.toDoubleOrNull() ?: 0.0
+        return (home + tie / 2.0).takeIf { it in 0.0..1.0 }
+    }
+
     /** ESPN's `.../scoreboard`: every game with both teams and a score. */
     fun parseEspn(body: String): List<EspnGame> {
         val root = runCatching { json.parseToJsonElement(body) }.getOrNull().obj() ?: return emptyList()
@@ -107,6 +121,7 @@ object LabClock {
                 awayScore = away["score"].int() ?: return@mapNotNull null,
                 live = state == "in",
                 done = state == "post",
+                id = o["id"].str() ?: "",
                 period = status?.get("period").int() ?: 0,
                 clockSec = clockSeconds(status?.get("displayClock").str()) ?: 0.0,
             )
