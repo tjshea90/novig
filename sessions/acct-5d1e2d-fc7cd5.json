@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-yis368",
  "head": "861b1a5bb07277b63ec79467a5ff84558f1e816e",
  "since": 1792452137,
- "beat": 1792509282,
- "beatIso": "2026-10-20T15:14:42Z",
+ "beat": 1792509289,
+ "beatIso": "2026-10-20T15:14:49Z",
  "done": "pre-ship: v1.0.18: Kalshi bids say in words why they are not posting (no key, orders off, no scan yet)",
  "next": "ship.sh gates and releases this"
 }

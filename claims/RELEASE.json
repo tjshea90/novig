@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/fc7cd5",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "fc7cd5",
+ "note": "v1.0.18: Kalshi bids say in words why they are not posting (no key, orders off, no scan yet)",
+ "since": 1792509289,
+ "beat": 1792509289
+}
