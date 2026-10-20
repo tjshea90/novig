@@ -342,7 +342,8 @@ fun FeedScreen(
                     }
                 }
                 // One list, best first, when Kalshi is on beside Novig (CH33); Novig's own order is kept when it is alone.
-                val kalshiRows = if (kalshi != null && kalshi.kalshiOn) kalshi.rows else emptyList()
+                // Same "at least N books" view filter as the Novig rows (Tj, 2026-10-20: Kalshi rows showed 2 of 2 books with a 3-book minimum on).
+                val kalshiRows = if (kalshi != null && kalshi.kalshiOn) viewFilter.apply(kalshi.rows) else emptyList()
                 val merged = if (kalshiRows.isEmpty()) shown.map { it to false } else (shown.map { it to false } + kalshiRows.map { it to true }).sortedByDescending { it.first.evPercent ?: 0.0 }
                 items(merged, key = { (o, k) -> (if (k) "kalshi/" else "") + o.key }) { (o, isKalshi) ->
                     if (isKalshi) OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), venue = "Kalshi") { kalshiSelected = o }
