@@ -6009,5 +6009,5 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 ## CH35 (Tj chat 06:31, screenshot): "the bet slips still don't open all the way"
 - [x] CH35a (bet sheets are a fixed 92% tall, content scrolls) look at the screenshot, fix the Kalshi/Novig bet sheet not expanding fully
 ## CH36 (Tj chat 06:55): "make sure the GitHub engine automatically starts as scheduled at 8am with auto bets and bids." / "in the Claude tab of the app, make a research tab next to chat and messages. the research tab should report to me a daily summary of the already scheduled automatic daily analysis of the bets and bids and GitHub system and what settings it tweaked and what it is considering and other relevant information so I can see how Claude is improving the app and profit engine"
-- [ ] CH36a verify tomorrow 08:00 ET start: cloud-config on, hours, trading LIVE, bids on, keeper running; fix anything off (not STOP ALL)
-- [ ] CH36b Research page in the Claude tab (Chat | Messages | Research): daily summary from the routine's output (CHANGES.md / digest / a daily research.json on cloud-config), phone reads it from GitHub
+- [x] CH36a verified: keeper run 39365357998 in progress (sleeps to 08:00 ET), settings on, trading live, 359 bids resting; no change needed
+- [x] CH36b Research page (kind "research" messages, ROUTINE.md daily card rule, first card posted) -> v1.0.15
