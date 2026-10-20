@@ -3,7 +3,6 @@ package com.tjshea.vigilant.data.kalshitrade
 import com.tjshea.vigilant.data.book.Sportsbook
 import com.tjshea.vigilant.data.book.SportsbookScanner
 import com.tjshea.vigilant.data.reference.KalshiClient
-import com.tjshea.vigilant.data.scanner.OddsScanner
 
 /**
  * Vigilant's scan for Kalshi (KV2, Tj 2026-10-20): the same machinery as the Novig scan (the planner, the pricing, the fair-line feeds, [com.tjshea.vigilant.data.scanner.ScanResult])
@@ -12,7 +11,7 @@ import com.tjshea.vigilant.data.scanner.OddsScanner
  * (the book is never among its own fair feeds), so a bet at Kalshi is judged by the OTHER books.
  */
 object KalshiScanner {
-    fun create(clock: () -> Long = System::currentTimeMillis): OddsScanner = SportsbookScanner(
+    fun create(clock: () -> Long = System::currentTimeMillis): SportsbookScanner = SportsbookScanner(
         book = Sportsbook.KALSHI,
         clock = clock,
         boardLineFeeds = listOf(KalshiClient.VENUE_ID),

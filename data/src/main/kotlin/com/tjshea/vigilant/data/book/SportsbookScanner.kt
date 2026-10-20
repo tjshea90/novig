@@ -204,6 +204,9 @@ class SportsbookScanner(
 
     override suspend fun unscannedLeagues(settings: ScanSettings): Set<String> = mutex.withLock { settings.leagues - lastLeagues }
 
+    /** Every answer held from [sourceId] (a venue's board feed), as read: the Kalshi arbitrage finder reads Kalshi's lines from here (KV5). */
+    fun heldSnapshots(sourceId: String): List<RefSnapshot> = synchronized(references) { references.filterKeys { it.startsWith("$sourceId|") }.values.map { it.snapshot } }
+
     /**
      * The settings every feed is asked with: the book first among the reference books, so it's always
      * asked for (The Odds API names at most 10 books per region: the book is never the one dropped).

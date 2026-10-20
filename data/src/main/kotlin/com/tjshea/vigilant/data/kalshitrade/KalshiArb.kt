@@ -66,8 +66,8 @@ data class ArbSettings(
     val minProfit: Double = 0.005,
     /** Props, first halves and other lines whose rules can differ between the venues. Off: game lines only. */
     val includeRisky: Boolean = false,
-    /** Both prices must have been read within this long. */
-    val maxAgeMs: Long = 90_000L,
+    /** Both prices must have been read within this long to be LISTED (an order re-reads both first). */
+    val maxAgeMs: Long = 300_000L,
     /** The least payout (dollars) both legs can fill, so a one-contract crumb is not listed. */
     val minPayout: Double = 2.0,
 )
