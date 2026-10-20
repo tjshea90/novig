@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-8xou8q",
- "head": "ba23decc7627dd4e0ff94b9ae1b5831895aa2909",
+ "head": "1904542fafea050dcf95a258bd920027b37ad49f",
  "since": 1792528851,
- "beat": 1792531970,
- "beatIso": "2026-10-20T21:32:50Z",
- "done": "v1.0.21 shipped (CH43); release triggered",
- "next": "CH44a-e Kalshi: bids <1 contract, slip Bet button, +EV rows, scan on GitHub"
+ "beat": 1792532156,
+ "beatIso": "2026-10-20T21:35:56Z",
+ "done": "pre-ship: v1.0.22: Kalshi slip hides the bet, Kalshi bids round to 1 contract, Kalshi list scanned on GitHub (CH44)",
+ "next": "ship.sh gates and releases this"
 }
