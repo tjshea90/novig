@@ -244,6 +244,7 @@ class KalshiHub(private val c: AppContainer) {
         val st = runCatching { c.cloud.readKalshiStatus() }.getOrNull()
         val rows = if (st != null && st.mode != KalshiAutoMode.OFF && System.currentTimeMillis() - st.atMs < ENGINE_FRESH_MS) runCatching { c.cloud.readKalshiFeed() }.getOrNull() else null
         if (st == null || rows == null) { _ui.update { it.copy(progress = null) }; return false }
+        engineRows = rows
         _ui.update { u ->
             u.copy(engine = st, progress = null, scanning = false, scannedAtMs = st.scannedAtMs, errors = emptyList(), engineFeed = true,
                 feed = rows.filter { o -> !o.isLive && o.key !in u.bets.mapNotNull { b -> b.placedKey } && o.key !in provisional })
@@ -268,7 +269,7 @@ class KalshiHub(private val c: AppContainer) {
                 scanning = run.scanning,
                 progress = run.progress?.let { p -> if (p.total > 0) "${p.step} ${p.done}/${p.total}" else p.step },
                 result = result,
-                feed = feedOf(result, cfg.scan, it.bets),
+                feed = feedOf(result, cfg.scan, it.bets, it.engineFeed),
                 scannedAtMs = result?.computedAtMs,
                 errors = run.report?.errors.orEmpty(),
             )
@@ -279,12 +280,14 @@ class KalshiHub(private val c: AppContainer) {
     private val provisional = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
 
     /** The Kalshi list: the scan's +EV rows, minus the ones already bet (the record's own keys, so a rescan or a restart never brings one back) or just sent. */
-    private fun feedOf(result: ScanResult?, scan: com.tjshea.vigilant.data.scanner.ScanSettings, bets: List<TrackedBet>): List<Opportunity> {
+    private fun feedOf(result: ScanResult?, scan: com.tjshea.vigilant.data.scanner.ScanSettings, bets: List<TrackedBet>, engine: Boolean = false): List<Opportunity> {
         val bet = bets.mapNotNullTo(HashSet()) { it.placedKey }
-        return result?.feed(scan)?.filter { o -> !o.isLive && o.key !in bet && o.key !in provisional }.orEmpty()
+        return (if (engine) engineRows else result?.feed(scan))?.filter { o -> !o.isLive && o.key !in bet && o.key !in provisional }.orEmpty()
     }
 
-    private fun refeed() = _ui.update { it.copy(feed = feedOf(it.result, cfg().scan, it.bets)) }
+    @Volatile private var engineRows: List<Opportunity> = emptyList()
+
+    private fun refeed() = _ui.update { it.copy(feed = feedOf(it.result, cfg().scan, it.bets, it.engineFeed)) }
 
     private suspend fun afterScan(result: ScanResult) {
         refreshArbs()
@@ -398,7 +401,7 @@ class KalshiHub(private val c: AppContainer) {
         runCatching { settler.run() }
         val bets = tracker.all()
         val paper = paperTracker.all()
-        _ui.update { it.copy(bets = bets, paperBets = paper, feed = feedOf(it.result, cfg().scan, bets)) }
+        _ui.update { it.copy(bets = bets, paperBets = paper, feed = feedOf(it.result, cfg().scan, bets, it.engineFeed)) }
     }
 
     fun refreshBalance() {
@@ -565,6 +568,7 @@ class KalshiHub(private val c: AppContainer) {
         const val SETTLE_EVERY_MS = 3 * 60_000L
         const val BID_EVERY_MS = 60_000L
         const val PUSH_SETTLE_MS = 4_000L
+        const val ENGINE_FRESH_MS = 10 * 60_000L
         const val ENGINE_POLL_MS = 45_000L
 
         /** The most payout one arbitrage clip holds on a single venue while its other leg is placed. */
