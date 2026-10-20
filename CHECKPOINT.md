@@ -1,13 +1,13 @@
-# CHECKPOINT 3831 — read me first, then TASKS.md
+# CHECKPOINT 3832 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T19:31:03Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-s1h6ch` · **builds on:** `37f0bdc1b` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T19:42:03Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-s1h6ch` · **builds on:** `cf7caaf52` (this checkpoint is the commit after it)
 
 ## Just done
-CH40a/b done, tests pass; ship next
+pre-ship: CH40-41: refused-key API light, Kalshi Check key feedback, bids may reach 200-400% of wallet (typed too)
 
 ## Do this next
-ship.sh release for CH40, then CH33b Kalshi in +EV
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ ship.sh release for CH40, then CH33b Kalshi in +EV
 
 ## Last ten checkpoints
 ```
+  68b44bfb9 ckpt 3831: CH40a/b done, tests pass; ship next
   464bc2bb5 ckpt 3830: WATCH 2026-10-20: engine healthy, no action
   a0b40a813 ckpt 3829: CHAT wake: v1.0.16-1.0.18 shipped (CH37-39 Kalshi slip/colours/Engine card/
   b2f6d849b ckpt 3828: pre-release: v1.0.18: Kalshi bids say in words why they are not posting (no
@@ -26,8 +27,7 @@ ship.sh release for CH40, then CH33b Kalshi in +EV
   46249149c ckpt 3824: pre-release: v1.0.16: Kalshi cards bet on Kalshi's own slip (no Novig read)
   b8a8de8d3 ckpt 3823: pre-ship: v1.0.16: Kalshi cards bet on Kalshi's own slip (no Novig read), K
   4dd968728 ckpt 3822: ENGINEER 2026-10-20 rotation: research card posted, no change
-  f3309473c ckpt 3821: v1.0.15 released (CH33-36); chat quiet since ~07:00
 ```
 
-(3 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

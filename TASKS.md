@@ -6028,4 +6028,4 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [x] CH40a API card with refused keys is amber ("working · N keys refused") and red "every key refused" when all are (DashboardScreen ApiCard).
 - [x] CH40b Kalshi "Check key" shows "Checking the key…" and its result/reason even when no key is read (KalshiHub.refreshBalance, KalshiPages).
 - [ ] CH40c Kalshi rows in the +EV tab = CH33b (still open); Tj sees none there. Also find why Kalshi scan/bids show nothing on his phone (needs his Kalshi page words).
-- [ ] CH41 (Tj 19:37) max bids total = up to 4x wallet: options 100%(current)/200/300/400% of wallet and a typed amount (Bids tab).
+- [x] CH41 (Tj 19:37) max bids total = up to 4x wallet: options 100%(current)/200/300/400% of wallet and a typed amount (Bids tab).
