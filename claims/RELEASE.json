@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/0e282c",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "0e282c",
+ "note": "v1.0.23: Kalshi rows follow the books-agree view filter; Kalshi bids may be 1 contract above Kelly (CH45)",
+ "since": 1792534677,
+ "beat": 1792534677
+}
