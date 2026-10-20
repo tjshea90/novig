@@ -5971,15 +5971,15 @@ DESIGN (research/kalshi_vigilant_2026-10-20.md): additive only. New package data
 - [x] KV3 data: KalshiBetPlacer (PLACER DONE KalshiBetPlacerTest 8; KalshiAutoBet rules still TODO (KV3b)) + KalshiAutoBet (same rules as AutoBet with Kalshi fee, caps, repeat guard, one decision one order) + paper mode
 - [ ] KV4 data: Kalshi bids (resting limit orders = maker quotes) via the unchanged MakerQuote decision on a Kalshi book; desk with own client-id prefix
 - [x] KV5 data: arbitrage finder (FINDER DONE KalshiArbTest 4; executor TODO (KV5b)) Novig x Kalshi (same fair-line key both venues, complement sides, fees both, size to both depths, stale guard, leg-risk rules) + tests
-- [ ] KV6 app: master toggles in Settings (Novig on/off, Kalshi on/off, both), Kalshi key screen exists (Settings > Kalshi); Kalshi trading permission/"can trade" check; separate settings object (no ScanSettings change) 
-- [ ] KV7 app: Kalshi tab (feed of +EV, bet sheet, auto-bet, bids, positions/tracker, arbitrage tab); bottom bar shows only enabled venues
-- [ ] KV8 tracker/grading: Kalshi positions + settlements -> P/L (own store, never mixed into Novig P/L unless "All" chip)
-- [ ] KV9 engine (GitHub): Kalshi scan/trade lane in CloudEngine using secrets KALSHI_KEY_ID/KALSHI_KEY_PEM (already sent by CloudLink.keysToSend); status/feed files separate (kalshi-feed.json.gz); a Kalshi TRADING key is a NEW decision (class C: ask Tj before live engine orders)
-- [ ] KV10 docs: CLAUDE.md section, KALSHI_API.md, BRIEF note, user setup steps; ship release
-- [ ] KV3b data: KalshiAutoBet (reuse AutoBet.rules/judgeVigilant/scanStake on the Kalshi ScanSettings; run over KalshiScanner results; same guards: pregame, fresh, trap guard, injuries, repeat, caps, paper mode)
-- [ ] KV5b data: ArbExecutor (Novig leg first via ApiBetPlacer, Kalshi second sized to the Novig fill; fair=1-other leg cost so each placer enforces profit; unhedged => notify + retry at break-even) + paper mode; app button + optional auto-arb (default off)
-- [ ] KV4b Kalshi bids: Kalshi book -> NovigBook(bidsByOutcome) so MakerQuote runs unchanged; PO GTC orders on 1c grid; maker fee 0.0175 on series that charge; desk with own client prefix
-- [ ] KV6b app: KalshiConfig store (ScanSettings copy + trading/arb/venue toggles), VenueMode (Novig on/off, Kalshi on/off, both), KalshiHub (ScanRunner(KalshiScanner), KalshiTradingClient from container signer, tracker file kalshi_bets.json), tab, bet sheet, arb screen
+- [x] KV6 app: master toggles in Settings (Novig on/off, Kalshi on/off, both), Kalshi key screen exists (Settings > Kalshi); Kalshi trading permission/"can trade" check; separate settings object (no ScanSettings change) 
+- [x] KV7 app: Kalshi tab (feed of +EV, bet sheet, auto-bet, bids, positions/tracker, arbitrage tab); bottom bar shows only enabled venues
+- [x] KV8 tracker/grading: Kalshi positions + settlements -> P/L (own store, never mixed into Novig P/L unless "All" chip)
+- [x] KV9 engine (GitHub): Kalshi scan/trade lane in CloudEngine using secrets KALSHI_KEY_ID/KALSHI_KEY_PEM (already sent by CloudLink.keysToSend); status/feed files separate (kalshi-feed.json.gz); a Kalshi TRADING key is a NEW decision (class C: ask Tj before live engine orders)
+- [x] KV10 docs: CLAUDE.md section, KALSHI_API.md, BRIEF note, user setup steps; ship release
+- [x] KV3b data: KalshiAutoBet (reuse AutoBet.rules/judgeVigilant/scanStake on the Kalshi ScanSettings; run over KalshiScanner results; same guards: pregame, fresh, trap guard, injuries, repeat, caps, paper mode)
+- [x] KV5b data: ArbExecutor (Novig leg first via ApiBetPlacer, Kalshi second sized to the Novig fill; fair=1-other leg cost so each placer enforces profit; unhedged => notify + retry at break-even) + paper mode; app button + optional auto-arb (default off)
+- [x] KV4b Kalshi bids: Kalshi book -> NovigBook(bidsByOutcome) so MakerQuote runs unchanged; PO GTC orders on 1c grid; maker fee 0.0175 on series that charge; desk with own client prefix
+- [x] KV6b app: KalshiConfig store (ScanSettings copy + trading/arb/venue toggles), VenueMode (Novig on/off, Kalshi on/off, both), KalshiHub (ScanRunner(KalshiScanner), KalshiTradingClient from container signer, tracker file kalshi_bets.json), tab, bet sheet, arb screen
 
 ## AS: API status tab lights lie; tell Tj when an API recovers (Tj, app chat 2026-10-20, t1792470821290-3a72)
 Tj: pinnapi keys are all refused (403) yet its card is green "working"; PinnWire (good Pinnacle source) is grey; BoltOdds was down earlier then came back: "if ever an API doesn't respond at first but then it is fixed, send me a status update telling me the API is now working".
@@ -5988,3 +5988,4 @@ Cause found (read-only, 2026-10-20): both Pinnacle hosts report under ONE feed i
 - [ ] AS2 app: ApiCard light: a Test-now result with all keys refused = red/amber, not green; PinnWire lit when it answered.
 - [ ] AS3 engine: ApiGovernor/ApiAdvisor posts a Messages note "X is working again" when an API that failed/was silent answers again (CloudMessages, tell_tj.py say); once per recovery. Test.
 (Another session, acct-27a37e, is editing the app: wait for its Kalshi work to land, then claim AS.)
+- [ ] KV11 follow-ups (after the first real Kalshi order): verify fee vs KalshiFees, tick sizes/price_ranges for bids, V2 vs legacy route; Kalshi orderbook read for bid competition (bestBid/bidLevels); engine-side arbitrage orders (needs both venues' accounts on the runner); engine_set.py support for kalshi.json; Kalshi tab in the floating widget/alerts
