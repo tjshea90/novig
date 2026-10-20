@@ -1,13 +1,13 @@
-# CHECKPOINT 3828 — read me first, then TASKS.md
+# CHECKPOINT 3829 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T15:18:35Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-yis368` · **builds on:** `861b1a5bb` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T15:27:45Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-yis368` · **builds on:** `f7eaaaf2f` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v1.0.18: Kalshi bids say in words why they are not posting (no key, orders off, no scan yet) (versionCode 358, v1.0.18)
+CHAT wake: v1.0.16-1.0.18 shipped (CH37-39 Kalshi slip/colours/Engine card/bid reason)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.18), then run: bash tools/record-release.sh v1.0.18 358 "v1.0.18: Kalshi bids say in words why they are not posting (no key, orders off, no scan yet)"
+Wait for Tj's reading of the Kalshi bid status line, then fix the cause (CH39)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  b2f6d849b ckpt 3828: pre-release: v1.0.18: Kalshi bids say in words why they are not posting (no
   861b1a5bb ckpt 3827: pre-ship: v1.0.18: Kalshi bids say in words why they are not posting (no ke
   fdfd8f61e ckpt 3826: pre-release: v1.0.17: Engine tab Money view shows Kalshi stats (bets, bids,
   4ae216182 ckpt 3825: pre-ship: v1.0.17: Engine tab Money view shows Kalshi stats (bets, bids, wa
@@ -25,5 +26,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   f3309473c ckpt 3821: v1.0.15 released (CH33-36); chat quiet since ~07:00
   7c0674b65 ckpt 3820: pre-release: v1.0.15: Research page in the Claude tab (daily analysis summa
   b8170c54d ckpt 3819: pre-ship: v1.0.15: Research page in the Claude tab (daily analysis summary)
-  34e3a59f8 ckpt 3818: pre-release: v1.0.14: one +EV tab with Novig/Kalshi toggles and labelled ro
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
