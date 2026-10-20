@@ -57,6 +57,16 @@ import java.util.concurrent.atomic.AtomicInteger
 class SportsbookScanner(
     val book: Sportsbook,
     private val clock: () -> Long = System::currentTimeMillis,
+    /**
+     * The feeds that carry the book's game lines, in priority order, and every feed its board is built from. The defaults are the sportsbooks' (PropLine, The Odds API); Kalshi's (KV) is its
+     * own venue source alone. A scanner given the defaults behaves exactly as before.
+     */
+    private val boardLineFeeds: List<String> = BOARD_LINE_FEEDS,
+    private val boardFeeds: List<String> = BOARD_FEEDS,
+    /** What taking a price on the book costs ([BookBoard.NO_FEE] for a sportsbook, Kalshi's schedule for Kalshi). */
+    private val fee: com.tjshea.vigilant.engine.MarketFee = BookBoard.NO_FEE,
+    /** False for a book the odds feeds do not name (Kalshi): the feeds are not asked for it as one of their books. */
+    private val askFeedsForBook: Boolean = true,
 ) : OddsScanner {
 
     private data class Cached(val snapshot: RefSnapshot, val requestKey: String)
@@ -113,7 +123,7 @@ class SportsbookScanner(
                 }
             }
             // Props need the book's games: they start once every feed that carries its game lines has answered.
-            val boardJobs = lineSources.filter { it.id in BOARD_LINE_FEEDS }.mapNotNull { jobs[it.id] }
+            val boardJobs = lineSources.filter { it.id in boardLineFeeds }.mapNotNull { jobs[it.id] }
             for (source in ordered.filter { it.needsCatalog }.sortedBy { if (it.fallbackFor == null) 0 else 1 }) {
                 val first = source.fallbackFor?.let { jobs[it] }
                 jobs[source.id] = async {
@@ -151,8 +161,8 @@ class SportsbookScanner(
         val leagueNames = ids.mapNotNullTo(LinkedHashSet()) { id -> before.game(id.substringBefore('|'))?.league?.novigName }
         val leagues = settings.selectedLeagues.filter { it.novigName in leagueNames }
         // The feed that gave the book's lines last time, PropLine first: one request per league.
-        val feeds = lastSources.filter { it.id in BOARD_LINE_FEEDS }
-            .sortedBy { BOARD_LINE_FEEDS.indexOf(it.id) }
+        val feeds = lastSources.filter { it.id in boardLineFeeds }
+            .sortedBy { boardLineFeeds.indexOf(it.id) }
             .filter { s -> leagues.any { l -> synchronized(references) { references["${s.id}|${l.novigName}"] } != null } }
         var error: String? = null
         val readLeagues = HashSet<String>()
@@ -199,14 +209,15 @@ class SportsbookScanner(
      * asked for (The Odds API names at most 10 books per region: the book is never the one dropped).
      */
     fun forBook(settings: ScanSettings): ScanSettings =
-        settings.copy(referenceBooks = listOf(book.feedKey) + settings.referenceBooks.filter { it != book.feedKey })
+        if (!askFeedsForBook) settings
+        else settings.copy(referenceBooks = listOf(book.feedKey) + settings.referenceBooks.filter { it != book.feedKey })
 
     /** The book's board from what's been fetched (every answer, however old: [BookBoard.plan] ages lines out). */
     private fun board(asked: ScanSettings, now: Long): BookBoard {
         val snaps = synchronized(references) {
-            asked.selectedLeagues.flatMap { l -> BOARD_FEEDS.mapNotNull { id -> references["$id|${l.novigName}"]?.snapshot } }
+            asked.selectedLeagues.flatMap { l -> boardFeeds.mapNotNull { id -> references["$id|${l.novigName}"]?.snapshot } }
         }
-        return BookBoard.build(book, snaps, now, now)
+        return BookBoard.build(book, snaps, now, now, fee)
     }
 
     /** Everything priced from what's been fetched, as of [now]; fair lines judged at [fairAsOf]. Null with no board. */
