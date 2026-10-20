@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-yis368",
- "head": "46249149c5e5770caf171894eb65dea896352883",
+ "head": "4ae216182023fae929f5ef93439eb81e7d1a055a",
  "since": 1792452137,
- "beat": 1792508031,
- "beatIso": "2026-10-20T14:53:51Z",
- "done": "pre-release: v1.0.16: Kalshi cards bet on Kalshi's own slip (no Novig read), Kalshi slip shows other books' odds, Novig and Kalshi cards tinted differently (versionCode 356, v1.0.16)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.16), then run: bash tools/record-release.sh v1.0.16 356 \"v1.0.16: Kalshi cards bet on Kalshi's own slip (no Novig read), Kalshi slip shows other books' odds, Novig and Kalshi cards tinted differently\""
+ "beat": 1792508180,
+ "beatIso": "2026-10-20T14:56:20Z",
+ "done": "pre-ship: v1.0.17: Engine tab Money view shows Kalshi stats (bets, bids, wallet) apart from Novig, and says why Kalshi bids are not resting",
+ "next": "ship.sh gates and releases this"
 }
