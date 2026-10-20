@@ -127,24 +127,25 @@ class TailTakerTest {
         assertTrue("a tenth-dollar stake, not the setting: $order", order.qty * order.price * com.tjshea.vigilant.engine.EvMath.CONTRACT_PAYOUT_DOLLARS <= 0.10 + 1e-9)
     }
 
+    private val PAY = com.tjshea.vigilant.engine.EvMath.CONTRACT_PAYOUT_DOLLARS
+
     @Test
     fun `the paper tiers buy for real at a typed stake or a Kelly fraction`() = runTest {
         val typed = rig(scope = backgroundScope, paper = PaperStake(shadowReal = true, dollars = 0.50))
         assertNull("under the 75 percent floor", typed.taker.attempt(offer(cand(rule = LiveLightScan.SHADOW_REAL, fair = 0.72, ask = 0.50, edge = 0.20, outcome = "s1"))))
         assertNotNull(typed.taker.attempt(offer(cand(rule = LiveLightScan.SHADOW_REAL, fair = 0.78, ask = 0.62, edge = 0.10, outcome = "s2"))))
         val o = typed.orders.placed.single()
-        assertTrue("about the typed 50 cents: $o", o.qty * o.price <= 0.50 + 1e-9 && o.qty * o.price > 0.40)
+        assertTrue("about the typed 50 cents: $o", o.qty * o.price * PAY <= 0.50 + 1e-9 && o.qty * o.price * PAY > 0.40)
         val kelly = rig(scope = backgroundScope, paper = PaperStake(scoreReal = true, kelly = 0.25, bankroll = 100.0))
         assertNotNull(kelly.taker.attempt(offer(cand(rule = LiveLightScan.SCORE_REAL, fair = 0.80, ask = 0.62, edge = 0.10, outcome = "k1"))))
         val k = kelly.orders.placed.single()
-        assertTrue("a Kelly stake is several dollars on a 100 wallet: $k", k.qty * k.price > 2.0)
+        assertTrue("a Kelly stake is several dollars on a 100 wallet: $k", k.qty * k.price * PAY > 2.0)
     }
 
     @Test
     fun `paper stake maths`() {
         assertEquals(0.10, PaperStake().stakeFor(0.8, 0.6)!!, 1e-9)
         assertNull(PaperStake(kelly = 0.5, bankroll = 100.0).stakeFor(0.5, 0.6))   // no edge, no stake
-        assertEquals(0.5 * ((0.8 / 0.6 - 1.0) / (1.0 / 0.6 - 1.0)) * 100.0 * 0.0 + PaperStake(kelly = 0.5, bankroll = 100.0).stakeFor(0.8, 0.6)!!, PaperStake(kelly = 0.5, bankroll = 100.0).stakeFor(0.8, 0.6)!!, 1e-9)
         assertTrue(PaperStake(kelly = 0.25, bankroll = 100.0).stakeFor(0.8, 0.6)!! > 5.0)
     }
 
