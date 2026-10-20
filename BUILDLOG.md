@@ -350,3 +350,4 @@ day that changes.
 | v1.0.9 | code 349 | 2026-10-19T22:21Z | v1.0.9: Tracker Yesterday + pick-a-day calendar; thin-small-books guard for engine bets/bids; bids slider 80
 | v1.0.10 | code 350 | 2026-10-20T01:11Z | bet slip opens to full height as its content grows (CH28a)
 | v1.0.11 | code 351 | 2026-10-20T01:53Z | Live paper records on the Live tab with Paper/Real stakes; SX Bet live scores behind ESPN
+| v1.0.12 | code 352 | 2026-10-20T04:56Z | v1.0.12: Kalshi beside Novig: a Kalshi tab with its own +EV list, bets, auto-bet, bids, sure-profit arbitrage between the two venues, venue switches (Novig / Kalshi / both), and a GitHub engine Kalshi lane (off by default)
