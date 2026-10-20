@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-8xou8q",
  "head": "6114049a29e11cd0d60ff9c4af6cb6433795f4b4",
  "since": 1792528851,
- "beat": 1792531774,
- "beatIso": "2026-10-20T21:29:34Z",
+ "beat": 1792531780,
+ "beatIso": "2026-10-20T21:29:40Z",
  "done": "pre-ship: v1.0.21: live tail lane caps buys per game and never averages down (CH43)",
  "next": "ship.sh gates and releases this"
 }
