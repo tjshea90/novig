@@ -41,7 +41,10 @@ object CloudMessages {
      * What the Messages list and the notifications show (Tj, 2026-10-18, TCL122-1: "only include important messages and API errors or recommendations. do not include bets and bids"): never a bet or bid
      * fill, never a quiet `info` line. Alerts, recommendations, shipped notices and anything pushed (priority 1) stay.
      */
-    fun worthShowing(m: Message): Boolean = m.kind != "bet" && !(m.kind == "info" && m.priority < 1)
+    fun worthShowing(m: Message): Boolean = m.kind != RESEARCH && m.kind != "bet" && !(m.kind == "info" && m.priority < 1)
+
+    /** The daily research summary (Tj, 2026-10-20, CH36): shown on the Claude tab's Research page, never in Messages and never as a notification. */
+    const val RESEARCH = "research"
 
     /** Newest first. */
     fun newestFirst(ms: Collection<Message>): List<Message> = ms.sortedByDescending { it.at }

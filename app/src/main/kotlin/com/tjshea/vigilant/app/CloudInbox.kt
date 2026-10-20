@@ -31,6 +31,8 @@ data class InboxState(
 ) {
     /** The messages worth listing (no bets or bids, no quiet info): what the screen, the unread count and the notifications use. */
     val shown: List<CloudMessages.Message> get() = messages.filter(CloudMessages::worthShowing)
+    /** The daily research summaries, newest first (the Research page). */
+    val research: List<CloudMessages.Message> get() = messages.filter { it.kind == CloudMessages.RESEARCH }.sortedByDescending { it.at }
     val unread: Int get() = shown.count { it.id !in readIds.toSet() }
 }
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tell Tj something through the Vigilant phone app, or ask the phone to switch an API (TCL28; Tj 2026-10-15).
 
-  python3 tools/tell_tj.py say "Title" "Body" [--kind recommendation|bet|alert|shipped|info] [--priority 0|1] [--action APIS]
+  python3 tools/tell_tj.py say "Title" "Body" [--kind recommendation|bet|alert|shipped|info|research] [--priority 0|1] [--action APIS]
   python3 tools/tell_tj.py set-api "reason" sgo=on parlay=off ...
   python3 tools/tell_tj.py chat-reply <message id> "answer"      (kept for old instructions: the same as python3 -I tools/chat.py reply <id> "answer")
   python3 tools/tell_tj.py selftest

@@ -59,3 +59,29 @@ fun MessagesPage(inbox: InboxState, onMarkRead: () -> Unit, onOpen: (String) -> 
         }
     }
 }
+
+/**
+ * The daily research summary (Tj, 2026-10-20, CH36: "report to me a daily summary of the already scheduled automatic daily analysis of the bets and bids and GitHub system and what settings it tweaked
+ * and what it is considering"): one card per day, written by the analysis routine with `tools/tell_tj.py say --kind research`, read from GitHub like the messages.
+ */
+@Composable
+fun ResearchPage(entries: List<CloudMessages.Message>, modifier: Modifier = Modifier) {
+    val now = rememberNow(60_000)
+    Column(modifier.testTag("research"), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        if (entries.isEmpty()) {
+            Text(
+                "Nothing yet. Each day the analysis routine writes here what it studied (bets, bids, the engine), which settings it changed and why, and what it is weighing next.",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        entries.forEach { m ->
+            Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().testTag("research-${m.id}")) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(m.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    if (m.body.isNotBlank()) Text(m.body, style = MaterialTheme.typography.bodyMedium)
+                    Text("${m.from} · ${DashboardModel.ago(now - m.at)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}

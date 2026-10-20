@@ -93,8 +93,9 @@ fun ClaudeScreen(
     Scaffold(topBar = { TopAppBar(title = { Text("Claude", fontWeight = FontWeight.Bold) }) }) { padding ->
         Column(Modifier.padding(padding).fillMaxSize().imePadding().padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().testTag("claudeSections")) {
-                SegmentedButton(selected = section == "chat", onClick = { section = "chat" }, shape = SegmentedButtonDefaults.itemShape(0, 2)) { Text(if (chatUnread > 0 && section != "chat") "Chat ($chatUnread)" else "Chat") }
-                SegmentedButton(selected = section == "messages", onClick = { section = "messages" }, shape = SegmentedButtonDefaults.itemShape(1, 2)) { Text(if (unread > 0) "Messages ($unread)" else "Messages") }
+                SegmentedButton(selected = section == "chat", onClick = { section = "chat" }, shape = SegmentedButtonDefaults.itemShape(0, 3)) { Text(if (chatUnread > 0 && section != "chat") "Chat ($chatUnread)" else "Chat") }
+                SegmentedButton(selected = section == "messages", onClick = { section = "messages" }, shape = SegmentedButtonDefaults.itemShape(1, 3)) { Text(if (unread > 0) "Messages ($unread)" else "Messages") }
+                SegmentedButton(selected = section == "research", onClick = { section = "research" }, shape = SegmentedButtonDefaults.itemShape(2, 3), modifier = Modifier.testTag("claudeSection-research")) { Text("Research") }
             }
             // The chat lays itself out (thread above, input pinned below, both inside the room the keyboard leaves); only the messages list scrolls here.
             if (section == "chat") ChatPage(
@@ -103,7 +104,8 @@ fun ClaudeScreen(
             )
             else VigilantPullToRefresh(busy = state.cloudUi.refreshing, onRefresh = onRefresh, modifier = Modifier.weight(1f).fillMaxWidth()) {
                 Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                    MessagesPage(state.claudeInbox, onMarkRead = onMarkRead, onOpen = onOpenPage, onDismiss = onDismissMessage, onClearAll = onClearMessages)
+                    if (section == "research") ResearchPage(state.claudeInbox.research)
+                    else MessagesPage(state.claudeInbox, onMarkRead = onMarkRead, onOpen = onOpenPage, onDismiss = onDismissMessage, onClearAll = onClearMessages)
                 }
             }
         }
