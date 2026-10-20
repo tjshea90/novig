@@ -87,12 +87,15 @@ object ParlayPbp {
     /** True for the leagues' matches whose primary source is an ESPN play feed (clock and period are ESPN's own, the way the lane already reads them). */
     fun clockTrusted(m: Match): Boolean = m.source.startsWith("espn_") && m.clockSec != null
 
-    /** A score for [home] v [away] from [matches], or null: only a match with a trusted clock and a live state counts. [now] stamps nothing: the score is as old as its newest event. */
-    fun scoreFor(matches: Collection<Match>, home: String, away: String): AltScore? {
+    /**
+     * A score for [home] v [away] from [matches], or null: only a match with a trusted clock and a live state counts. Its age is [heardMs], when the stream last spoke (a frame or a keep-alive), not the
+     * time of the match's newest event: a quiet stretch of a game is a current score, and a stream that went silent is an old one.
+     */
+    fun scoreFor(matches: Collection<Match>, home: String, away: String, heardMs: Long): AltScore? {
         for (m in matches) {
             if (!clockTrusted(m) || !m.inPlay) continue
             val g = asGame(m, home, away) ?: continue
-            return AltScore(g, m.atMs.coerceAtLeast(m.seenMs.coerceAtMost(m.atMs + 1)).let { minOf(it, System.currentTimeMillis()).coerceAtLeast(m.atMs) }, SOURCE)
+            return AltScore(g, heardMs, SOURCE)
         }
         return null
     }
@@ -101,6 +104,9 @@ object ParlayPbp {
 /** The matches of the streams read so far, by match id, per sport. */
 class ParlayPbpBoard {
     private val matches = ConcurrentHashMap<String, ParlayPbp.Match>()
+
+    /** When each sport's stream last spoke (any frame or keep-alive), ms. */
+    val heard = ConcurrentHashMap<String, Long>()
 
     fun put(m: ParlayPbp.Match) { matches[m.id] = m }
     fun get(id: String): ParlayPbp.Match? = matches[id]
