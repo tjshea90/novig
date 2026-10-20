@@ -412,6 +412,12 @@ fun TailLiveBlock(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) -> 
     LbDollars("Most in a day", listOf(5.0, 10.0, 20.0, 40.0, 100.0), s.tailLive.maxDay, "tailLiveMaxDay", 1.0, 10_000.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(maxDay = v)) } }
     LbDollars("Stop for the day when settled tail bets lose", listOf(3.0, 5.0, 10.0, 25.0), s.tailLive.haltLoss, "tailLiveHaltLoss", 1.0, 10_000.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(haltLoss = v)) } }
     LbPercent("Smallest edge after Novig's fee", listOf(0.03, 0.05, 0.07, 0.10), s.tailLive.minEdge, "tailLiveMinEdge", 1.0, 30.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(minEdge = v)) } }
+    SectionTitle("Paper records with real money")
+    LbHint("The Live tab's Paper records show how the lower tier (the model 75-89% sure) and the score-event buys (the same sides just after a score) are doing on paper. These switches make them buy for real, but only while \"Buy tail bets with real money\" above is on, and under the same game, day and loss limits. Each bet needs a 5% edge after fees.")
+    LbSwitch("Lower tier buys for real", "Sides the model calls 75-89% sure, at the stake below.", s.tailLive.shadowReal, "tailLiveShadowReal") { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(shadowReal = v)) } }
+    LbSwitch("Score-event buys for real", "The same sides in the minutes after a score, at the stake below.", s.tailLive.scoreReal, "tailLiveScoreReal") { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(scoreReal = v)) } }
+    LbDollars("Typed stake per paper-tier bet", listOf(0.10, 0.25, 0.50, 1.0, 2.0, 5.0), s.tailLive.paperStake, "tailLivePaperStake", 0.10, 25.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(paperStake = v)) } }
+    LbPercent("Or a Kelly fraction of the wallet (replaces the typed stake)", listOf(0.05, 0.10, 0.25, 0.50), s.tailLive.paperKelly, "tailLivePaperKelly", 1.0, 100.0, zeroLabel = "Typed stake") { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(paperKelly = v)) } }
     if (confirmingTail) {
         AlertDialog(
             onDismissRequest = { confirmingTail = false },
