@@ -1,23 +1,22 @@
-# CHECKPOINT 3852 — read me first, then TASKS.md
+# CHECKPOINT 3853 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T23:03:51Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-o9ngjz` · **builds on:** `fa1d8ea3f` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T23:08:13Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-o9ngjz` · **builds on:** `32feed09a` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v1.0.24: ESPN win probability cross-checks live moneyline calls (CH46c)
+pre-release: v1.0.24: ESPN win probability cross-checks live moneyline calls (CH46c) (versionCode 364, v1.0.24)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.24), then run: bash tools/record-release.sh v1.0.24 364 "v1.0.24: ESPN win probability cross-checks live moneyline calls (CH46c)"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  32feed09a ckpt 3852: pre-ship: v1.0.24: ESPN win probability cross-checks live moneyline calls (
   eb9bfa8f8 ckpt 3851: answered ESPN API question, CH46 logged
   d48ccf03d ckpt 3850: v1.0.23 released (CH45), answered API question
   4b234de1d ckpt 3849: pre-release: v1.0.23: Kalshi rows follow the books-agree view filter; Kalsh
@@ -27,8 +26,4 @@ ship.sh gates and releases this
   a762dc212 ckpt 3845: v1.0.22 released (CH44)
   a05886dbd ckpt 3844: pre-release: v1.0.22: Kalshi slip hides the bet, Kalshi bids round to 1 con
   1904542fa ckpt 3843: pre-ship: v1.0.22: Kalshi slip hides the bet, Kalshi bids round to 1 contra
-  ba23decc7 ckpt 3842: v1.0.21 shipped (CH43); release triggered
 ```
-
-(3 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
