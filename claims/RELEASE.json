@@ -5,7 +5,7 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "0e282c",
- "note": "v1.0.21: live tail lane caps buys per game and never averages down (CH43)",
+ "note": "v1.0.22: Kalshi slip hides the bet, Kalshi bids round to 1 contract, Kalshi list scanned on GitHub (CH44)",
  "since": 1792531780,
- "beat": 1792532156
+ "beat": 1792532162
 }
