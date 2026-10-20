@@ -375,6 +375,9 @@ object Planner {
     private fun refSide(novigAway: Boolean, swapped: Boolean): Side =
         if (novigAway != swapped) Side.AWAY else Side.HOME
 
+    /** [planMarket] for callers outside the scan (the Novig x Kalshi arbitrage finder, KV5): one Novig market read against a matched reference event. */
+    fun planOne(m: EventMatch, market: NovigMarket): PlannedMarket? = planMarket(m, market)
+
     private fun planMarket(m: EventMatch, market: NovigMarket): PlannedMarket? {
         val matchup = m.event.matchup ?: return null
         val refId = m.refEvent?.id ?: ""
