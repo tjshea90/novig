@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-8xou8q",
- "head": "6114049a29e11cd0d60ff9c4af6cb6433795f4b4",
+ "head": "ec34c5c2b17a7cc8b00f19b96ffdb28b7e2b4c3a",
  "since": 1792528851,
- "beat": 1792531780,
- "beatIso": "2026-10-20T21:29:40Z",
- "done": "pre-ship: v1.0.21: live tail lane caps buys per game and never averages down (CH43)",
- "next": "ship.sh gates and releases this"
+ "beat": 1792531936,
+ "beatIso": "2026-10-20T21:32:16Z",
+ "done": "pre-release: v1.0.21: live tail lane caps buys per game and never averages down (CH43) (versionCode 361, v1.0.21)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.21), then run: bash tools/record-release.sh v1.0.21 361 \"v1.0.21: live tail lane caps buys per game and never averages down (CH43)\""
 }
