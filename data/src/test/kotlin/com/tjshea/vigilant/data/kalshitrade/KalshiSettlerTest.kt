@@ -18,7 +18,7 @@ import java.io.File
 class KalshiSettlerTest {
     private val now = 1_790_500_000_000L
 
-    private class Fake(val result: String) : KalshiTradingClient(OkHttpClient(), Json, { null }) {
+    private class Fake(val result: String, val now: Long = 1_790_500_000_000L) : KalshiTradingClient(OkHttpClient(), Json, { null }) {
         override suspend fun order(orderId: String): KalshiOrder? = KalshiOrder(orderId, null, "T-1", "no", "executed", 0.6, 0.4, 5.0, 5.0, 0.0, 2.0, 0.0, 0.1, 0.0, null, null)
         override suspend fun settlements(sinceMs: Long?, limit: Int): List<KalshiSettlement> =
             if (result.isEmpty()) emptyList() else listOf(KalshiSettlement("T-1", "E", result, 0.0, 0.0, 5.0, 2.0, 5.0, 0.1, now))
