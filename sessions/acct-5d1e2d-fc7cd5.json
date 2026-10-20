@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-el5i79",
- "head": "225880a5d5c46478d421046c5e1f60dec11755b1",
+ "head": "29cf81e8da4fe3df1f67427ca2472fbdaaf54dc9",
  "since": 1792452137,
- "beat": 1792460424,
- "beatIso": "2026-10-20T01:40:24Z",
- "done": "CH31a/b built: paper book, grader, Live-board lines, real/paper stakes (typed or Kelly) for lower tier + score-event; tests green",
- "next": "CH31c: BoltOdds livescores + SX live-scores as score sources behind ESPN in LiveLightRunner.readScores; then full ship v1.0.11"
+ "beat": 1792460611,
+ "beatIso": "2026-10-20T01:43:31Z",
+ "done": "pre-ship: Live paper records on the Live tab (graded: wins, return after fees) with a Paper/Real switch and typed or Kelly stakes for the lower tier and score-event buys; SX Bet live scores as a backup beside ESPN (paper-only for clocked sports until verified)",
+ "next": "ship.sh gates and releases this"
 }
