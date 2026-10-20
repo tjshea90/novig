@@ -919,6 +919,7 @@ class KalshiFeedPart(
 )
 
 /** The Novig / Kalshi toggles above the list: either or both. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun VenueChipsRow(k: KalshiFeedPart, modifier: Modifier = Modifier) {
     androidx.compose.foundation.layout.FlowRow(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {

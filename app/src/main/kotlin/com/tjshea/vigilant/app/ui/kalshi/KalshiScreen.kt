@@ -45,18 +45,18 @@ import com.tjshea.vigilant.app.ui.rememberNow
 import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.Opportunity
 
-private enum class KPage(val label: String) { EV("+EV"), ARB("Arb"), BIDS("Bids"), BETS("Bets"), AUTO("Auto"), SETTINGS("Setup") }
+private enum class KPage(val label: String) { ARB("Arb"), BIDS("Bids"), BETS("Bets"), AUTO("Auto"), SETTINGS("Setup") }
 
 /**
- * The Kalshi tab (KV, Tj 2026-10-20): Kalshi's own +EV list (the same scan, rules and fair odds as the Novig side, priced at Kalshi's ask with Kalshi's fee), arbitrage between the two
+ * The Kalshi tab (KV, Tj 2026-10-20): arbitrage (its +EV list is in the +EV tab beside Novig's since CH33) between the two
  * venues, bids, the bets placed there, the auto-bet and its setup. Nothing here changes a Novig setting.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KalshiScreen(hub: KalshiHub, onOpenKeySettings: () -> Unit) {
     val ui by hub.ui.collectAsState()
-    var page by rememberSaveable { mutableStateOf(KPage.EV.name) }
-    val current = KPage.entries.firstOrNull { it.name == page } ?: KPage.EV
+    var page by rememberSaveable { mutableStateOf(KPage.ARB.name) }
+    val current = KPage.entries.firstOrNull { it.name == page } ?: KPage.ARB
     val now = rememberNow(5_000)
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(ui.message) { ui.message?.let { snackbar.showSnackbar(it); hub.messageShown() } }
@@ -95,7 +95,6 @@ fun KalshiScreen(hub: KalshiHub, onOpenKeySettings: () -> Unit) {
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             when (current) {
-                KPage.EV -> EvPage(hub, ui, now, onOpenKeySettings)
                 KPage.ARB -> ArbPage(hub, ui)
                 KPage.BIDS -> KalshiBidsPage(hub, ui)
                 KPage.BETS -> BetsPage(ui, now)
@@ -104,43 +103,4 @@ fun KalshiScreen(hub: KalshiHub, onOpenKeySettings: () -> Unit) {
             }
         }
     }
-}
-
-@Composable
-private fun EvPage(hub: KalshiHub, ui: com.tjshea.vigilant.app.kalshi.KalshiUi, now: Long, onOpenKeySettings: () -> Unit) {
-    var selected by remember { mutableStateOf<Opportunity?>(null) }
-    val leagues = remember { Leagues.ALL.filter { it.kalshiSeries.isNotEmpty() } }
-    LeagueChips(
-        leagues, ui.config.scan.leagues,
-        onToggle = { n -> hub.update { c -> c.copy(scan = c.scan.copy(leagues = if (n in c.scan.leagues) c.scan.leagues - n else c.scan.leagues + n)) } },
-        modifier = Modifier.padding(vertical = 6.dp),
-    )
-    if (!ui.hasKey) {
-        Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
-            Column(Modifier.padding(12.dp)) {
-                Text("No Kalshi key saved: the list works from public prices, but orders and your balance need your Key ID and private key.", style = MaterialTheme.typography.bodySmall)
-                TextButton(onClick = onOpenKeySettings) { Text("Add the Kalshi key") }
-            }
-        }
-    }
-    ui.errors.firstOrNull()?.let {
-        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
-    }
-    ui.autoNote?.let {
-        Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
-    }
-    if (ui.feed.isEmpty()) {
-        EmptyState(
-            if (ui.scannedAtMs == null) "Scan Kalshi" else "No +EV bets at Kalshi right now",
-            if (ui.scannedAtMs == null) "Tap Scan: Kalshi's prices are compared with the same sharp books Novig's are." else "Kalshi's prices were compared with the other books' fair odds; none is above ${Format.percent(ui.config.scan.minEvPercent)}.",
-            modifier = Modifier.padding(16.dp),
-        )
-    } else {
-        LazyColumn(contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.testTag("kalshiFeed")) {
-            items(ui.feed, key = { it.key }) { o ->
-                OpportunityCard(o, ui.config.scan, now, onOpen = false, venue = "Kalshi", onClick = { selected = o })
-            }
-        }
-    }
-    selected?.let { o -> KalshiBetSheet(hub, ui, o, now, onDismiss = { selected = null }) }
 }

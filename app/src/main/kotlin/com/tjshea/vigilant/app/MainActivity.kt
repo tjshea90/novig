@@ -613,7 +613,7 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
     PROPLINE("PropLine +EV", Icons.Filled.Star, inBar = false),
 
     /** Kalshi (KV, Tj 2026-10-20): its own +EV, arbitrage with Novig, bets and auto-bet. Only while the Kalshi venue is switched on. */
-    KALSHI("Kalshi", Icons.Filled.ShoppingCart),
+    KALSHI("Kalshi", Icons.Filled.ShoppingCart, inBar = false),
     ;
 
     /**
@@ -622,7 +622,9 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
      */
     fun shownIn(mode: ScannerMode, venues: com.tjshea.vigilant.data.kalshitrade.VenueMode?): Boolean = when (this) {
         KALSHI -> venues?.kalshi == true
-        EV, CNO, AUTOBET, BIDS, LIVE -> (venues?.novig ?: true) && shownIn(mode)
+        // The +EV tab lists both venues (CH33), so it stays when only Kalshi is on.
+        EV -> ((venues?.novig ?: true) || venues?.kalshi == true) && shownIn(mode)
+        CNO, AUTOBET, BIDS, LIVE -> (venues?.novig ?: true) && shownIn(mode)
         else -> shownIn(mode)
     }
 
@@ -728,7 +730,8 @@ private fun VigilantRoot(
     val mode = state.settings.scannerNow
     // The bar shows the central sections; the phone-side Auto-bet and CNO views are still tabs (Settings opens them) but are not in the bar.
     val kalshiHub = com.tjshea.vigilant.app.ui.kalshi.rememberKalshiHub()
-    val venues = kalshiHub?.ui?.collectAsState()?.value?.venues
+    val kalshiUi = kalshiHub?.ui?.collectAsState()?.value
+    val venues = kalshiUi?.venues
     val allTabs = Tab.entries.filter { it.shownIn(mode, venues) }
     val tabs = allTabs.filter { it.inBar }
     var tabName by rememberSaveable { mutableStateOf<String?>(null) }
@@ -812,8 +815,19 @@ private fun VigilantRoot(
                 )
                 Tab.EV -> FeedScreen(
                     state = state,
-                    onScan = onScan,
-                    onPull = onPull,
+                    onScan = { onScan(); if (kalshiUi?.venues?.kalshi == true) kalshiHub?.scanNow() },
+                    onPull = { onPull(); if (kalshiUi?.venues?.kalshi == true) kalshiHub?.scanNow() },
+                    kalshi = if (kalshiHub != null && kalshiUi != null) com.tjshea.vigilant.app.ui.KalshiFeedPart(
+                        rows = kalshiUi.feed,
+                        novigOn = kalshiUi.venues.novig,
+                        kalshiOn = kalshiUi.venues.kalshi,
+                        scanning = kalshiUi.scanning,
+                        note = kalshiUi.errors.firstOrNull() ?: kalshiUi.progress,
+                        onNovig = { kalshiHub.setVenues(novig = it) },
+                        onKalshi = { on -> kalshiHub.setVenues(kalshi = on); if (on) kalshiHub.scanNow() },
+                        onMore = { tabName = Tab.KALSHI.name },
+                        sheet = { o, dismiss -> com.tjshea.vigilant.app.ui.kalshi.KalshiBetSheet(kalshiHub, kalshiUi, o, System.currentTimeMillis(), onDismiss = dismiss) },
+                    ) else null,
                     onToggleLeague = vm::toggleLeague,
                     // Its Settings buttons are about fair-odds sources and keys: that page.
                     onOpenSettings = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.FAIR.name; tabName = Tab.SETTINGS.name },

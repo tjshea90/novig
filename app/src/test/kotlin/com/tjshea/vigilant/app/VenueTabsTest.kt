@@ -26,7 +26,8 @@ class VenueTabsTest {
 
         val kalshiOnly = VenueMode(novig = false, kalshi = true)
         assertTrue(Tab.KALSHI.shownIn(mode, kalshiOnly))
-        for (t in listOf(Tab.EV, Tab.CNO, Tab.BIDS, Tab.LIVE, Tab.AUTOBET)) assertFalse(t.name, t.shownIn(mode, kalshiOnly))
+        assertTrue(Tab.EV.shownIn(mode, kalshiOnly))
+        for (t in listOf(Tab.CNO, Tab.BIDS, Tab.LIVE, Tab.AUTOBET)) assertFalse(t.name, t.shownIn(mode, kalshiOnly))
         for (t in listOf(Tab.ENGINE, Tab.CLAUDE, Tab.TRACKER, Tab.SETTINGS)) assertTrue(t.name, t.shownIn(mode, kalshiOnly))
 
         val both = VenueMode(novig = true, kalshi = true)
