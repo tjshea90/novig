@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/kalshi-vigilant-integration-v5u4ho",
- "head": "edfc0683259db5ce2c469b53ee75e353d8a53eb4",
+ "head": "a1c6047472ecf97ffad5a664d2fd0371628f8ed0",
  "since": 1792468198,
- "beat": 1792468817,
- "beatIso": "2026-10-20T04:00:17Z",
+ "beat": 1792468998,
+ "beatIso": "2026-10-20T04:03:18Z",
  "done": "KV1 tests green (8). ApiBetPlanner reuse plan for Kalshi placer",
  "next": "KV3: parametrize ApiBetPlanner venue wording (default Novig), write KalshiBetPlacer"
 }
