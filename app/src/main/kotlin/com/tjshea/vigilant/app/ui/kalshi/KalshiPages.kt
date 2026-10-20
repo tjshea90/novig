@@ -273,12 +273,12 @@ internal fun SetupPage(hub: KalshiHub, ui: KalshiUi, onOpenKeySettings: () -> Un
         SectionTitle("Your Kalshi account")
         Text(
             if (ui.hasKey) "Key saved. " + (ui.balance?.let { "Cash ${Format.money(it)}" + (ui.portfolioValue?.let { p -> ", positions ${Format.money(p)}" } ?: "") } ?: (ui.balanceNote ?: "Reading the balance…"))
-            else "No key saved yet. Orders need your Kalshi Key ID and private key.",
+            else "No key saved yet. Orders need your Kalshi Key ID and private key." + (ui.balanceNote?.let { " ($it)" } ?: ""),
             style = MaterialTheme.typography.bodyMedium,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
             OutlinedButton(onClick = onOpenKeySettings) { Text(if (ui.hasKey) "Key & socket settings" else "Add the Kalshi key") }
-            OutlinedButton(onClick = hub::refreshBalance, enabled = ui.hasKey) { Text("Check key") }
+            OutlinedButton(onClick = hub::refreshBalance) { Text("Check key") }
         }
         EngineCard(hub, ui)
         SwitchLine("Place orders on Kalshi", "Off: the app only reads. On: the Bet button and the auto-bet (when set to real money) can spend your Kalshi cash.", c.tradingEnabled, "kalshiTrading") { v -> hub.update { it.copy(tradingEnabled = v) } }

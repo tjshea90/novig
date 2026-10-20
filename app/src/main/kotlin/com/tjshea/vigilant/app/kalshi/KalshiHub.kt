@@ -361,6 +361,7 @@ class KalshiHub(private val c: AppContainer) {
 
     fun refreshBalance() {
         if (c.kalshiSigner() == null) { _ui.update { it.copy(hasKey = false, balance = null, balanceNote = "No Kalshi key saved") }; return }
+        _ui.update { it.copy(hasKey = true, balance = null, balanceNote = "Checking the key…") }
         c.appScope.launch {
             val r = trading.ping()
             _ui.update {
