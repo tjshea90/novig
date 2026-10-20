@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-rlkku2",
  "head": "dea7514f732a35b10a2e54b4c805d26eacf44fc8",
  "since": 1792452137,
- "beat": 1792478170,
- "beatIso": "2026-10-20T06:36:10Z",
+ "beat": 1792478187,
+ "beatIso": "2026-10-20T06:36:27Z",
  "done": "CH33 merged +EV tab, CH34 bolt phone-socket guard, CH35 sheet height",
  "next": "ship v1.0.14 via ship.sh, release.yml, record-release, tell Tj"
 }
