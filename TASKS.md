@@ -5950,3 +5950,7 @@ When you come back: read this first. tj Gmail already did: CH24a/b (watchdog fix
 ## CH28: bet slip opens half way; where are the live features (Tj, app chat t1792454530145-29bd + t1792454600833-e650, 2026-10-20 00:02Z)
 - [x] CH28a bet sheet only slides up half way (screenshot: Bet button cut off): ApiBetSheet now re-expands to full height whenever its content grows (ApiBettingUi.kt onSizeChanged + expand); compiles; ships with the next release.
 - [x] CH28b answer: live features status (CH22 list).
+
+## CH29: live scores from the sockets, not only ESPN (Tj, app chat t1792454980009-4b9c, 2026-10-20 00:09Z, verbatim: "if there is no ESPN live score like the game in the screenshot, don't I have other sockets that have live scores, or other online sources for low latency scores? can't the novig odds be compared to the live odds from other sockets?")
+- [ ] CH29a read BoltOdds' /livescores subscription (accepted on Tj's key, never read) and SX Bet's public /live-scores as score sources behind ESPN for the live model (MLB with no ESPN game, etc.); verify shapes from the Test sample first.
+- [ ] CH29b show on the Live board which games are priced by consensus of live sockets (BoltLiveConsensus, Kalshi, SX) vs by score model.
