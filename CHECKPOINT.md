@@ -1,7 +1,7 @@
-# CHECKPOINT 3839 — read me first, then TASKS.md
+# CHECKPOINT 3840 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T21:24:49Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-8xou8q` · **builds on:** `3b5bbc89c` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T21:29:34Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-8xou8q` · **builds on:** `b5d17643e` (this checkpoint is the commit after it)
 
 ## Just done
 pre-ship: v1.0.21: live tail lane caps buys per game and never averages down (CH43)
@@ -13,11 +13,11 @@ ship.sh gates and releases this
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M research/review/CHANGES.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  b5d17643e ckpt 3839: pre-ship: v1.0.21: live tail lane caps buys per game and never averages dow
   f2276d57f ckpt 3838: v1.0.20 released (CH42 live bids mid tier)
   9305b7a25 ckpt 3837: pre-release: v1.0.20: live bids on obvious +EV totals/spreads (middle tier 
   5eb5ea12a ckpt 3836: pre-ship: v1.0.20: live bids on obvious +EV totals/spreads (middle tier 65-
@@ -27,8 +27,4 @@ ship.sh gates and releases this
   8cc77c975 ckpt 3832: pre-ship: CH40-41: refused-key API light, Kalshi Check key feedback, bids m
   68b44bfb9 ckpt 3831: CH40a/b done, tests pass; ship next
   464bc2bb5 ckpt 3830: WATCH 2026-10-20: engine healthy, no action
-  a0b40a813 ckpt 3829: CHAT wake: v1.0.16-1.0.18 shipped (CH37-39 Kalshi slip/colours/Engine card/
 ```
-
-(3 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
