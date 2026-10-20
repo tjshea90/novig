@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "145dde44274b98cac24490018c34d7ea7868fac1",
+ "head": "d9dc79de50b739d4a8846f4b12e943f44dd22358",
  "since": 1792528851,
- "beat": 1792538139,
- "beatIso": "2026-10-20T23:15:39Z",
- "done": "v1.0.24 released (CH46c), CDN rejected by measurement",
- "next": "CH46b ESPN odds fallback source (client, convert, ApiEntry switch, fallback-only chain slot, tests)"
+ "beat": 1792538197,
+ "beatIso": "2026-10-20T23:16:37Z",
+ "done": "CH46b measured: one provider only, asked Tj",
+ "next": "if Tj says build it anyway do CH46b else close"
 }
