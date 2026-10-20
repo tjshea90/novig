@@ -593,8 +593,8 @@ class KeyPool(
                 }
             }
             // A sticky key stays first only while no key of a bigger plan is open (a Pro key bought later takes over from a Starter one).
-            val ordered = lastGood.takeIf { sticky && it in open && (pace == null || open.firstOrNull() == it || meter.flow.value.providers[policy.id]?.keys?.let { ks -> (ks[it]?.limit ?: 0) >= (ks[open.first()]?.limit ?: 0) } != false) }
-                ?.let { g -> listOf(g) + (open - g) } ?: open
+            val planOf = { k: String -> meter.flow.value.providers[policy.id]?.keys?.get(k)?.limit ?: 0 }
+            val ordered = lastGood.takeIf { sticky && it in open && (pace == null || planOf(it) >= planOf(open.first())) }?.let { g -> listOf(g) + (open - g) } ?: open
             val key = meter.pick(policy, ordered, cost, held)
                 ?: if (held !== UsageMeter.NO_FLOOR && open.isNotEmpty() && meter.pick(policy, open, cost) != null) {
                     throw CreditsHeldBackException(heldBackMessage(all, open, cost, reserve, pace))
