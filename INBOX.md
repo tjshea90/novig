@@ -699,3 +699,12 @@ Then tell me how big of a task it would be to make a new vigilant app, copying a
 ```
 I sent these to the mirage account but then that account ran out of usage. Is it done yet?
 ```
+
+## 2026-10-20T03:50:09Z
+```
+The following is a large job, be aware Claude usage can run out at any time and interrupt you. You must have a good system to save all progress and checkpoint very frequently. You can save work to GitHub. Assume your usage will be cut at any time, and keep a ladder and task list that a new session can pick up and finish if you are interrupted mid task:
+
+Put kalshi into the vigilant app. I have a kalshi account. I want to be able to find positive EV bets on kalshi just like what vigilant already does for novig. It should be able to use all the same features, just as novig uses them, but for kalshi. Make sure to keep the two separate and be extremely careful but to break or interfere with anything the app does for novig. The novig features must work and not be broken or altered without high confidence that any changes will not break or negatively affect novig features in the app. Maybe make the kalshi portion of the app an entirely different tab or toggle. I should be able to completely toggle on and off and switch between three novig portion of the app and the kalshi portion. I should also be able to use both simultaneously. The app and GitHub engine should adopt as many features as possible from what is already built for moving so that there is no double work, and keep in mind that the scanning already in place can work for both kalshi and novig positive EV bet finding. Also create an arbitrage bet feature, which finds no risk bets between novig and kalshi which, due to the differences in odds, if I bet on both sides of a bet on novig and kalshi, I'm guaranteed to profit. 
+
+You will need to research how the kalshi API key is implemented for trading, and consider both bets and bids. I want all features to work for kalshi just as well as they work for novig. You may need to research kalshi docs. If i need to send my kalshi key or private key to GitHub, make the app send it. Let me know if I need to do anything to set this up
+```
