@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-8xou8q",
  "head": "1904542fafea050dcf95a258bd920027b37ad49f",
  "since": 1792528851,
- "beat": 1792532162,
- "beatIso": "2026-10-20T21:36:02Z",
+ "beat": 1792532361,
+ "beatIso": "2026-10-20T21:39:21Z",
  "done": "pre-ship: v1.0.22: Kalshi slip hides the bet, Kalshi bids round to 1 contract, Kalshi list scanned on GitHub (CH44)",
  "next": "ship.sh gates and releases this"
 }
