@@ -139,9 +139,16 @@ object DashboardModel {
     }
 
     /** How a provider did on the last scan (`CloudDashboard.health` over its feeds), by the provider id of its meter. */
-    fun apiHealth(st: CloudStatus?): Map<String, CloudDashboard.Health> {
+    fun apiHealth(st: CloudStatus?, meters: List<ProviderView> = emptyList()): Map<String, CloudDashboard.Health> {
         if (st == null || st.feedReportAtMs <= 0L) return emptyMap()
-        return st.feedReport.groupBy { CloudDashboard.providerOf(it.id) }.mapValues { (_, feeds) -> CloudDashboard.health(feeds, true) }
+        val out = st.feedReport.groupBy { CloudDashboard.providerOf(it.id) }.mapValues { (_, feeds) -> CloudDashboard.health(feeds, true) }.toMutableMap()
+        fun refused(id: String) = meters.firstOrNull { it.policy.id == id }?.keys?.let { ks -> ks.isNotEmpty() && ks.all { it.state == KeyState.REFUSED } } == true
+        fun hasKeys(id: String) = meters.firstOrNull { it.policy.id == id }?.keys?.any { it.state != KeyState.REFUSED } == true
+        // PinnWire and pinnapi report to the scan under ONE feed id ("pinnacle", the pinnapi card): judge each card by its own keys. A provider whose every key the
+        // provider refused is never green; PinnWire is lit whenever the Pinnacle feed answered and it has a key that is not refused.
+        if (out["pinnacle"] == CloudDashboard.Health.WORKING && "pinnwire" !in out && hasKeys("pinnwire")) out["pinnwire"] = CloudDashboard.Health.WORKING
+        for (v in meters) if (v.policy.keyed && refused(v.policy.id) && out[v.policy.id] != null) out[v.policy.id] = CloudDashboard.Health.FAILING
+        return out
     }
 
     /** The feeds of a provider as "sgo 8+0 · sgo-props 6+0" plus its first error or hold-back, for the API card's second line. */

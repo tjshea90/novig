@@ -167,7 +167,7 @@ private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: L
         }
 
         SectionHeader("APIs")
-        val health = remember(status) { DashboardModel.apiHealth(status) }
+        val health = remember(status, meters) { DashboardModel.apiHealth(status, meters) }
         val cards = remember(meters, health) {
             meters.filter { it.keys.isNotEmpty() || !it.policy.keyed || health.containsKey(it.policy.id) }.sortedBy { severity(health[it.policy.id]) }
         }
