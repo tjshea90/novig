@@ -62,7 +62,6 @@ class KalshiAsNovig(
 
     override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String, ttlMs: Long?): String {
         val ref = outcomes.refOf(outcomeId) ?: throw NovigApiException(400, "UNKNOWN_OUTCOME", "No Kalshi ticker is known for $outcomeId")
-        // Kalshi sells whole $1 contracts: a bid the desk sized at half a contract or more is one contract (Tj, 2026-10-20: "0 kalshi bids", every one was "under one contract"); less is refused.
         // Tj, 2026-10-20 (later): "a bid may be placed at the minimum contract on kalshi even if the amount is larger than Kelly": any positive size is at least one contract.
         val count = if (qty in 1L..99L) 1L else qty / 100L
         if (count < 1L) throw NovigApiException(400, "ORDER_TOO_SMALL", "Under one Kalshi contract")
