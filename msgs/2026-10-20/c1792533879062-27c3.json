@@ -1,0 +1,1 @@
+{"v": 2, "id": "c1792533879062-27c3", "at": 1792533879062, "from": "claude", "account": "acct-5d1e2d", "name": "mirage", "holder": "acct-5d1e2d/0e282c", "replyTo": ["t1792533844177-c963"], "kind": "reply", "text": "Got it: the 3-books minimum is being applied to Novig rows only; looking at where Kalshi rows skip it now, will make them use the same view filter and rules."}
