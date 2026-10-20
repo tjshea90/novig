@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-qatu8l",
  "head": "5609379b2a4b05104de9c86e96d8c85aa2f8e125",
  "since": 1792452137,
- "beat": 1792474524,
- "beatIso": "2026-10-20T05:35:24Z",
+ "beat": 1792474757,
+ "beatIso": "2026-10-20T05:39:17Z",
  "done": "v1.0.13 prepared",
  "next": "ship + release"
 }
