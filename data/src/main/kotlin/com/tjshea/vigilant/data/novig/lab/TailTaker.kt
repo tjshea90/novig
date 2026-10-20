@@ -179,7 +179,7 @@ class TailTaker(
         val perContract = (limit + Fees.takerFee(limit.coerceIn(0.001, 0.999), o.fee, true)) * payout
         // Experimental rules (the curve) trade a tenth-dollar stake (Tj, 2026-10-19) until proven; the original rules keep the setting.
         val experimental = o.candidate.rule == LiveLightCurve.RULE || o.candidate.rule == LiveLightScan.MID || paperTier(o.candidate.rule)
-        val stake = if (paperTier(o.candidate.rule)) (paperStake().stakeFor(o.candidate.fair, limit + Fees.takerFee(limit.coerceIn(0.001, 0.999), o.fee, true)) ?: return null).coerceIn(PaperStake.MIN, PaperStake.MAX) else if (experimental) TailTradeLimits.EXPERIMENTAL_STAKE else r.stake.coerceIn(LiveTradeLimits.MIN_STAKE, LiveTradeLimits.MAX_STAKE)
+        val stake = if (paperTier(o.candidate.rule)) paperStake().let { ps -> (ps.stakeFor(o.candidate.fair, limit + Fees.takerFee(limit.coerceIn(0.001, 0.999), o.fee, true)) ?: return null).also { if (ps.kelly > 0.0 && it < PaperStake.MIN) return null }.coerceIn(PaperStake.MIN, PaperStake.MAX) } else if (experimental) TailTradeLimits.EXPERIMENTAL_STAKE else r.stake.coerceIn(LiveTradeLimits.MIN_STAKE, LiveTradeLimits.MAX_STAKE)
         val today = history.filter { it.atMs >= dayStart(now) && it.mode == "BET" }
         val dayLeft = if (r.maxPerDay > 0) r.maxPerDay - today.sumOf { it.paid + it.feePaid } else Double.MAX_VALUE
         val gameLeft = if (r.maxPerGame > 0) r.maxPerGame - today.filter { it.eventId == o.candidate.eventId }.sumOf { it.paid + it.feePaid } else Double.MAX_VALUE
