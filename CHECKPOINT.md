@@ -1,13 +1,13 @@
-# CHECKPOINT 3808 — read me first, then TASKS.md
+# CHECKPOINT 3809 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T04:57:31Z · **tests:** all 6 fast checks green
-**Branch:** `claude/kalshi-vigilant-integration-v5u4ho` · **builds on:** `ce8372f22` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T05:19:22Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-qatu8l` · **builds on:** `fd56b616b` (this checkpoint is the commit after it)
 
 ## Just done
-v1.0.12 released and recorded (Kalshi KV1-KV10 + engine lane)
+chat watcher prints thread context; CHAT.md rule
 
 ## Do this next
-KV11 follow-ups after a first real Kalshi order
+AS1-AS3 API status fixes
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ KV11 follow-ups after a first real Kalshi order
 
 ## Last ten checkpoints
 ```
+  616f9aec7 ckpt 3808: v1.0.12 released and recorded (Kalshi KV1-KV10 + engine lane)
   e5765cfe7 ckpt 3807: pre-release: v1.0.12: Kalshi beside Novig: a Kalshi tab with its own +EV li
   cd79c234c ckpt 3806: pre-ship: v1.0.12: Kalshi beside Novig: a Kalshi tab with its own +EV list,
   43f18fd32 ckpt 3805: KV9 phone side: GitHub engine card, kalshi.json push, status poll; lane hon
@@ -25,5 +26,7 @@ KV11 follow-ups after a first real Kalshi order
   8196c29fb ckpt 3802: Kalshi bids in the hub + Bids page
   d18e71c32 ckpt 3801: KV4: KalshiAsNovig adapter + KalshiBidRunner on the unchanged MakerDesk; te
   fd0eefdb9 ckpt 3800: KV6/7: Kalshi tab (EV, arb, bets, auto, setup), venue switches, bet sheet; 
-  2852455ed ckpt 3799: KV6 KalshiHub (scan, bets, arb, venues) compiles
 ```
+
+(2 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
