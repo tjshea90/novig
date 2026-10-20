@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-el5i79",
  "head": "29cf81e8da4fe3df1f67427ca2472fbdaaf54dc9",
  "since": 1792452137,
- "beat": 1792460616,
- "beatIso": "2026-10-20T01:43:36Z",
+ "beat": 1792460820,
+ "beatIso": "2026-10-20T01:47:00Z",
  "done": "pre-ship: Live paper records on the Live tab (graded: wins, return after fees) with a Paper/Real switch and typed or Kelly stakes for the lower tier and score-event buys; SX Bet live scores as a backup beside ESPN (paper-only for clocked sports until verified)",
  "next": "ship.sh gates and releases this"
 }
