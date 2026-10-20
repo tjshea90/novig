@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-s1h6ch",
  "head": "2c134360680490108fee33b1c501c9751eb0995d",
  "since": 1792524186,
- "beat": 1792526303,
- "beatIso": "2026-10-20T19:58:23Z",
+ "beat": 1792527810,
+ "beatIso": "2026-10-20T20:23:30Z",
  "done": "v1.0.19 released (CH40,41)",
  "next": "CH42 live totals bids research; CH33b Kalshi in +EV"
 }
