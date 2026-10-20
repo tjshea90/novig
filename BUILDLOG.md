@@ -355,3 +355,4 @@ day that changes.
 | v1.0.14 | code 354 | 2026-10-20T06:50Z | v1.0.14: one +EV tab with Novig/Kalshi toggles and labelled rows (Kalshi tab out of the bar), bet slips open tall and scroll, phone never opens BoltOdds sockets while GitHub holds them
 | v1.0.15 | code 355 | 2026-10-20T07:09Z | v1.0.15: Research page in the Claude tab (daily analysis summary)
 | v1.0.16 | code 356 | 2026-10-20T14:54Z | v1.0.16: Kalshi cards bet on Kalshi's own slip, Kalshi slip shows other books' odds, Novig/Kalshi cards tinted
+| v1.0.17 | code 357 | 2026-10-20T15:13Z | v1.0.17: Engine tab Money shows Kalshi stats apart from Novig
