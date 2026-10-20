@@ -68,15 +68,15 @@ class KalshiBetPlacerTest {
         val t = tracker()
         val p = placer(f, t)
         val plan = (p.plan(target(), 20.0) as PlanResult.Ready).plan
-        // $20 buys 48 contracts at 40c + fee (0.07 x .4 x .6 = 1.68c each): 48 x 0.4168 = 20.0
-        assertEquals(4_800L, plan.contracts)
+        // $20 buys 47 whole contracts at 40c + fee (1.68c each): 47 x 0.4168 = 19.59
+        assertEquals(4_700L, plan.contracts)
         assertEquals(0.40, plan.limitPrice, 1e-12)
-        assertEquals(KalshiFees.takerFeeDollars(48.0, 0.40), plan.feeDollars, 1e-12)
-        assertEquals(0.46 / ((48 * 0.40 + plan.feeDollars) / 48) - 1.0, plan.evPercent, 1e-9)
+        assertEquals(KalshiFees.takerFeeDollars(47.0, 0.40), plan.feeDollars, 1e-12)
+        assertEquals(0.46 / ((47 * 0.40 + plan.feeDollars) / 47) - 1.0, plan.evPercent, 1e-9)
         val placed = p.place(target(), 20.0, plan.limitPrice) as PlaceResult.Placed
-        assertEquals(listOf<Any?>("KXNFLGAME-26OCT25BALDAL-BAL", "yes", 0.40, 48L, "immediate_or_cancel"), f.buys.single())
+        assertEquals(listOf<Any?>("KXNFLGAME-26OCT25BALDAL-BAL", "yes", 0.40, 47L, "immediate_or_cancel"), f.buys.single())
         assertEquals(0.40, placed.bet.price, 1e-9)
-        assertEquals(4_800L, placed.bet.contracts)
+        assertEquals(4_700L, placed.bet.contracts)
         assertEquals("Kalshi", placed.bet.book)
         assertEquals(1, t.all().size)
     }
