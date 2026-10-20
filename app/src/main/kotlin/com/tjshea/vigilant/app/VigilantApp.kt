@@ -1500,6 +1500,10 @@ class AppContainer(val app: Application) {
     val liveLight: com.tjshea.vigilant.data.novig.lab.LiveLightRunner by lazy {
         com.tjshea.vigilant.data.novig.lab.LiveLightRunner(
             scope = appScope, source = novig, journal = ::liveLightJournal,
+            paper = com.tjshea.vigilant.data.novig.lab.PaperBook(
+                load = { File(app.filesDir, "paper-records.json").takeIf { it.exists() }?.readText() },
+                save = { text -> File(app.filesDir, "paper-records.json").writeText(text) },
+            ),
             newView = { l -> com.tjshea.vigilant.data.novig.stream.SharedStreamView({ novig.stream as? com.tjshea.vigilant.data.novig.stream.NovigStream }, l) },
             fetch = ::feedRaceFetch, onOffer = { tailTaker.offer(it) }, leagues = { LAB_LEAGUES },
             bids = { if (lightBidsOn(settingsStore.flow.value)) lightBidDesk else null },

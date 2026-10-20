@@ -194,6 +194,9 @@ private fun LiveBoardCard(b: LiveBoard.Board, now: Long) {
                     Text(LiveBoard.socketWord(x, now), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 }
             }
+            Text("Paper records", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            if (b.paper.isEmpty()) Text("No paper bets yet: they appear when a live game gives the model a side to back.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            b.paper.forEach { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("livePaper")) }
             if (b.gameLines.isNotEmpty()) {
                 Text("Games it is watching", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                 b.gameLines.forEach { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
