@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-4dhnse",
- "head": "5eb5ea12a613045322ce3dae9961146378708229",
+ "head": "9305b7a25a9607b7363ddbb7f1cb9e2c724511fd",
  "since": 1792528851,
- "beat": 1792529441,
- "beatIso": "2026-10-20T20:50:41Z",
- "done": "pre-ship: v1.0.20: live bids on obvious +EV totals/spreads (middle tier 65-85% sure, bid 15% under fair)",
- "next": "ship.sh gates and releases this"
+ "beat": 1792529467,
+ "beatIso": "2026-10-20T20:51:07Z",
+ "done": "pre-release: v1.0.20: live bids on obvious +EV totals/spreads (middle tier 65-85% sure, bid 15% under fair) (versionCode 360, v1.0.20)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.20), then run: bash tools/record-release.sh v1.0.20 360 \"v1.0.20: live bids on obvious +EV totals/spreads (middle tier 65-85% sure, bid 15% under fair)\""
 }
