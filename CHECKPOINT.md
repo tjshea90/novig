@@ -1,22 +1,23 @@
-# CHECKPOINT 3794 — read me first, then TASKS.md
+# CHECKPOINT 3795 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T04:05:07Z · **tests:** all 6 fast checks green
-**Branch:** `claude/kalshi-vigilant-integration-v5u4ho` · **builds on:** `a87500e76` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T04:08:27Z · **tests:** all 6 fast checks green
+**Branch:** `claude/kalshi-vigilant-integration-v5u4ho` · **builds on:** `b41ed0831` (this checkpoint is the commit after it)
 
 ## Just done
-KV3 core: KalshiBook, KalshiBetPlacer (whole contracts, rounded fee, IOC, lost-answer lookup) + tests green; KALSHI_API.md TRADING section
+KV5 finder done (KalshiArb + Planner.planOne alias) tests green
 
 ## Do this next
-KV3b KalshiAutoBet rules; KV5 arbitrage; then app: KalshiHub + tab
+KV3b KalshiAutoBet then app layer (KalshiHub, VenueMode, tab)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-    M  KALSHI_API.md
+    M  TASKS.md
 
 ## Last ten checkpoints
 ```
+  49d87ec9a ckpt 3794: KV3 core: KalshiBook, KalshiBetPlacer (whole contracts, rounded fee, IOC, l
   edfc06832 ckpt 3793: KV1 tests green (8). ApiBetPlanner reuse plan for Kalshi placer
   da67547f2 ckpt 3792: KV1: KalshiTradingClient (V2 orders w/ legacy fallback, cancel, balance/fil
   a8f57e056 ckpt 3791: KV2 started: venue read in KalshiClient, BookBoard/SportsbookScanner seams,
@@ -26,8 +27,7 @@ KV3b KalshiAutoBet rules; KV5 arbitrage; then app: KalshiHub + tab
   29cf81e8d ckpt 3787: pre-ship: Live paper records on the Live tab (graded: wins, return after fe
   225880a5d ckpt 3786: CH31a/b built: paper book, grader, Live-board lines, real/paper stakes (typ
   e842c0d4c ckpt 3785: CH31a paper book + grader + Live-board lines built, PaperBookTest green
-  9ece40796 ckpt 3784: v1.0.10 released (CH28a); Tj told
 ```
 
-(7 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
