@@ -354,6 +354,21 @@ fun main(args: Array<String>) = runBlocking {
             delay(if (liveUrlRef.get().isEmpty()) 3_000L else 60_000L)
         }
     }
+    // The Kalshi lane (KV9, Tj 2026-10-20): prices Kalshi from the boards this scan holds, runs the Kalshi auto-bet and bids under the phone's `kalshi.json`, lists sure profits against Novig. Off unless the phone says
+    // PAPER or LIVE; it runs in a coroutine of its own after each finished scan and never delays the Novig list. The Kalshi key is the one the phone sent for the socket (KALSHI_KEY_ID / KALSHI_KEY_PEM).
+    val kalshiDir = File(out, "kalshi").apply { mkdirs() }
+    for (n in listOf("kalshi-bets.json", "kalshi-paper.json", "kalshi-maker.json")) runCatching { PreviousFeed.read(git, cfgDir, n) }.getOrNull()?.let { File(kalshiDir, n).writeText(it) }
+    val kalshiLane = com.tjshea.vigilant.data.cloud.CloudKalshiLane(
+        scope = scope,
+        readConfig = { ghClient.readFile(com.tjshea.vigilant.data.kalshitrade.KalshiEngineConfig.BRANCH, com.tjshea.vigilant.data.kalshitrade.KalshiEngineConfig.FILE)?.let(com.tjshea.vigilant.data.kalshitrade.KalshiEngineConfig::parse) },
+        trading = com.tjshea.vigilant.data.kalshitrade.KalshiTradingClient(http, json, { sources.kalshiTradingSigner() }),
+        hasKey = { sources.kalshiTradingSigner() != null },
+        venue = sources.kalshiVenue(), sources = sources::sources, novigHeld = { id, league -> scanner.heldSnapshot(id, league) },
+        unavailable = { o -> sources.unavailable(o, System.currentTimeMillis()) },
+        dir = kalshiDir, publish = { n, t -> publisher.stageExtra(n, t) },
+        tell = { title, body -> runCatching { postMessage(CloudMessages.Message("kalshi-${System.currentTimeMillis()}", System.currentTimeMillis(), "engine", "alert", title, body.take(400), 1, "CLOUD")) } },
+        log = log::invoke,
+    )
     val engine = CloudEngine(
         scanner = scanner, sources = sources::sources, config = { config.read() },
         publish = { feed, status -> publisher.stage(feed, status) },
@@ -372,7 +387,7 @@ fun main(args: Array<String>) = runBlocking {
         publishBids = { publisher.stageBids(it) },
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },
         // Every priced line within 2 points of break-even is logged, shown or not, with why it was not shown (Tj, 2026-10-16, TCL33).
-        onResult = { result, s -> runCatching { com.tjshea.vigilant.data.cloud.CrossExchange.find(result.opportunities + result.games.flatMap { it.outcomes }, System.currentTimeMillis()).forEach { crossJournal.append(it) } }; latestPriced.set((result.opportunities + result.games.flatMap { it.outcomes }).filter { it.quote != null }.distinctBy { it.key }); outcomeIndex.set(HashMap<String, CloudTrader.OutcomeInfo>(result.opportunities.size * 2).also { m -> for (o in result.opportunities) m[o.outcome.outcomeId] = CloudTrader.OutcomeInfo(o.market.eventId, o.eventName, o.event.startsTs, o.marketLabel, o.selection) }); latestUnpriced.set(result.opportunities.filter { it.quote == null && it.ladder.isNotEmpty() && !it.event.isLive }.distinctBy { it.key }); study.observeVigilant(result, s.copy(scanStudy = true), wideFloor = WIDE_FLOOR); study.flush() },
+        onResult = { result, s -> runCatching { com.tjshea.vigilant.data.cloud.CrossExchange.find(result.opportunities + result.games.flatMap { it.outcomes }, System.currentTimeMillis()).forEach { crossJournal.append(it) } }; latestPriced.set((result.opportunities + result.games.flatMap { it.outcomes }).filter { it.quote != null }.distinctBy { it.key }); outcomeIndex.set(HashMap<String, CloudTrader.OutcomeInfo>(result.opportunities.size * 2).also { m -> for (o in result.opportunities) m[o.outcome.outcomeId] = CloudTrader.OutcomeInfo(o.market.eventId, o.eventName, o.event.startsTs, o.marketLabel, o.selection) }); latestUnpriced.set(result.opportunities.filter { it.quote == null && it.ladder.isNotEmpty() && !it.event.isLive }.distinctBy { it.key }); study.observeVigilant(result, s.copy(scanStudy = true), wideFloor = WIDE_FLOOR); study.flush(); runCatching { kalshiLane.onNovigScan(result, s) } },
         trade = { rows, s, now ->
             val mode = s.gates.cloudTrading
             if (mode == CloudTradeMode.OFF) null else {
@@ -424,6 +439,7 @@ fun main(args: Array<String>) = runBlocking {
     val end = engine.run(until, started)
     // The window is over (or the job is): whatever rests on Novig under the engine's key is cancelled, and the ledger goes out one last time.
     runCatching { trader.windowEnded() }
+    runCatching { kalshiLane.stop("the engine's job or hours are over") }
     runCatching { study.flush() }
     runCatching { publisher.stageTrades(TradeLedger.text(trader.ledger), System.currentTimeMillis()) }
     log("cloud engine ending: $end after ${(System.currentTimeMillis() - started) / 60_000L} min, ${engine.passes} passes")
@@ -609,6 +625,16 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         dirty = true
     }
 
+    /** Small named files that ride with the push (the Kalshi lane's status and its carry-over, KV9). */
+    private val extra = HashMap<String, String>()
+
+    @Synchronized
+    fun stageExtra(name: String, text: String) {
+        if (extra[name] == text) return
+        extra[name] = text
+        dirty = true
+    }
+
     @Synchronized
     fun flush(force: Boolean = false) {
         val st = status ?: return
@@ -629,6 +655,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         tradesText?.let { File(dir, "trades.json").writeText(it) }
         deskText?.let { File(dir, "desk.json").writeText(it) }
         paperText?.let { File(dir, "paper.json").writeText(it) }
+        extra.forEach { (n, t) -> File(dir, n).writeText(t) }
         ApiChain.measures.takeIf { it.isNotEmpty() }?.let { File(dir, "ranking.json").writeText(CloudRanking.encode(it)) }
         File(dir, "bids.json.gz").let { f -> bidsBytes?.let { f.writeBytes(it) } ?: f.delete() }
         evBytes?.let { File(dir, "propline-ev.json.gz").writeBytes(it) }

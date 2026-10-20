@@ -19,7 +19,6 @@ import com.tjshea.vigilant.data.kalshitrade.KalshiTradingClient
 import com.tjshea.vigilant.data.novig.trading.BetLimits
 import com.tjshea.vigilant.data.novig.trading.maker.MakerDesk
 import com.tjshea.vigilant.data.novig.trading.maker.MakerStore
-import com.tjshea.vigilant.data.reference.Injury
 import com.tjshea.vigilant.data.reference.KalshiClient
 import com.tjshea.vigilant.data.reference.RefSnapshot
 import com.tjshea.vigilant.data.reference.ReferenceSource
@@ -52,7 +51,8 @@ class CloudKalshiLane(
     private val sources: (ScanSettings) -> List<ReferenceSource>,
     /** The Novig scan's held board for a source and league (null = none). */
     private val novigHeld: (sourceId: String, leagueName: String) -> RefSnapshot?,
-    private val injuryOf: (Opportunity) -> Injury?,
+    /** Why a bet's player cannot be bet on (the engine's injury reports), or null. */
+    private val unavailable: (Opportunity) -> String?,
     private val dir: File,
     /** Puts a small file on `cloud-feed` with the next push. */
     private val publish: (name: String, text: String) -> Unit,
@@ -70,7 +70,7 @@ class CloudKalshiLane(
         trading, tracker, limits = { BetLimits(10.0, 50.0, maxPerGame = 25.0) }, lock = orderLock,
     )
     private val bidDesk = MakerDesk(KalshiAsNovig(trading, outcomes, clock), tracker, bidStore, lock = orderLock, clock = clock, cancelStrays = false)
-    private val bidRunner = KalshiBidRunner(bidDesk, outcomes, cash = { if (hasKey()) trading.balance().cash else null }, unavailable = { null }, tell = tell, clock = clock, log = log)
+    private val bidRunner = KalshiBidRunner(bidDesk, outcomes, cash = { if (hasKey()) trading.balance().cash else null }, unavailable = unavailable, tell = tell, clock = clock, log = log)
     private val scanner = KalshiScanner.create(clock)
     private val settler = KalshiSettler(trading, tracker, clock)
     private var bidsUp = false
@@ -135,7 +135,7 @@ class CloudKalshiLane(
         if (cfg.autoMode != KalshiAutoMode.OFF) {
             val auto = KalshiAutoBettor(
                 placer, tracker, paperTracker, wallet = { if (hasKey()) trading.balance().cash else null }, clock = clock,
-                injuryOf = injuryOf,
+                unavailable = unavailable,
             )
             val r = auto.run(s.copy(autoBet = true), result, paper = !live)
             placed = r.placed.size

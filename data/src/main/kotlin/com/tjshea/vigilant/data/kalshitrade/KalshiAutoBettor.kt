@@ -60,8 +60,8 @@ class KalshiAutoBettor(
     private val paperTracker: BetTracker?,
     private val wallet: suspend () -> Double?,
     private val clock: () -> Long = System::currentTimeMillis,
-    /** The injury report of a bet's player (a prop), or null. */
-    private val injuryOf: (Opportunity) -> com.tjshea.vigilant.data.reference.Injury? = { null },
+    /** Why a bet's player cannot be bet on (an injury report that rules him out), or null. */
+    private val unavailable: (Opportunity) -> String? = { null },
     /** When a bet was first listed, by key, for the trap guard's second rule. */
     private val firstListed: (Opportunity) -> Long? = { null },
     /** The bet as decided ([AtBet]), kept on the bet once it fills. */
@@ -174,7 +174,7 @@ class KalshiAutoBettor(
         val q = o.quote ?: return "no Kalshi price"
         if (o.fairIsOld(now)) return "the other books' prices behind it are too old"
         if (o.priceIsOld(now) || now - (o.bookFetchedAtMs ?: 0L) > FRESH_PRICE_MS) return "no Kalshi price read in the last minute"
-        PlayerOut.forTag(injuryOf(o))?.let { return it }
+        unavailable(o)?.let { return it }
         if (!rules.byStars && TrapGuard.tooEarly(o.event.startsTs, now, settings.trapEarlyHours, firstListed(o), settings.trapFirstListed) != null) return TrapGuard.earlyReason(settings.trapEarlyHours)
         val a = o.agreement
         val kind = BetKind.of(o.marketLabel, o.selection)

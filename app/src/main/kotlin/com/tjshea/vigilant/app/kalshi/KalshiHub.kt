@@ -121,7 +121,7 @@ class KalshiHub(private val c: AppContainer) {
     private val auto = KalshiAutoBettor(
         placer, tracker, paperTracker,
         wallet = { if (trading.ready) trading.balance().cash else null },
-        injuryOf = { o -> com.tjshea.vigilant.data.reference.InjuryTags.wantOf(o)?.let { w -> com.tjshea.vigilant.data.reference.InjuryTags.tags(c.injuries.book.value, listOf(w), System.currentTimeMillis())[w.key] } },
+        unavailable = { o -> com.tjshea.vigilant.data.reference.InjuryTags.wantOf(o)?.let { w -> com.tjshea.vigilant.data.reference.InjuryTags.tags(c.injuries.book.value, listOf(w), System.currentTimeMillis())[w.key] }?.let { com.tjshea.vigilant.data.reference.PlayerOut.forTag(it) } },
     )
 
     private val outcomes = KalshiOutcomes()
