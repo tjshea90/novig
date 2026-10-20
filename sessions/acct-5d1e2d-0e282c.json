@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "87e8fdbf2ba54730b6b6747bc3635918c94a71bc",
+ "head": "0677af5e5953d992de6f577110953520a15e6272",
  "since": 1792539161,
- "beat": 1792540363,
- "beatIso": "2026-10-20T23:52:43Z",
+ "beat": 1792540545,
+ "beatIso": "2026-10-20T23:55:45Z",
  "done": "CH47: Parlay pool uses biggest paid plan first (test), meter loaded before ordering",
  "next": "CH47d PBP SSE feed + altScore wiring"
 }
