@@ -1,23 +1,22 @@
-# CHECKPOINT 3833 — read me first, then TASKS.md
+# CHECKPOINT 3834 — read me first, then TASKS.md
 
-**Written:** 2026-10-20T19:46:48Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-s1h6ch` · **builds on:** `8cc77c975` (this checkpoint is the commit after it)
+**Written:** 2026-10-20T19:51:03Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-s1h6ch` · **builds on:** `21abaa9af` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v1.0.19: refused-key API light, Kalshi Check key feedback, bids may reach 200-400% of wallet
+pre-release: v1.0.19: refused-key API light, Kalshi Check key feedback, bids may reach 200-400% of wallet (versionCode 359, v1.0.19)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.19), then run: bash tools/record-release.sh v1.0.19 359 "v1.0.19: refused-key API light, Kalshi Check key feedback, bids may reach 200-400% of wallet"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  21abaa9af ckpt 3833: pre-ship: v1.0.19: refused-key API light, Kalshi Check key feedback, bids m
   8cc77c975 ckpt 3832: pre-ship: CH40-41: refused-key API light, Kalshi Check key feedback, bids m
   68b44bfb9 ckpt 3831: CH40a/b done, tests pass; ship next
   464bc2bb5 ckpt 3830: WATCH 2026-10-20: engine healthy, no action
@@ -27,5 +26,4 @@ ship.sh gates and releases this
   fdfd8f61e ckpt 3826: pre-release: v1.0.17: Engine tab Money view shows Kalshi stats (bets, bids,
   4ae216182 ckpt 3825: pre-ship: v1.0.17: Engine tab Money view shows Kalshi stats (bets, bids, wa
   46249149c ckpt 3824: pre-release: v1.0.16: Kalshi cards bet on Kalshi's own slip (no Novig read)
-  b8a8de8d3 ckpt 3823: pre-ship: v1.0.16: Kalshi cards bet on Kalshi's own slip (no Novig read), K
 ```
