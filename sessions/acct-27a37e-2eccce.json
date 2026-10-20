@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/kalshi-vigilant-integration-v5u4ho",
- "head": "a8f57e0563b58293a233d2ba0e2f14c747bced8e",
+ "head": "da67547f26818b27436226bbbb264a108322b64e",
  "since": 1792468198,
- "beat": 1792468632,
- "beatIso": "2026-10-20T03:57:12Z",
- "done": "KV2 started: venue read in KalshiClient, BookBoard/SportsbookScanner seams, KalshiFees/Scanner/VenueSource, KalshiScannerTest",
- "next": "run :data tests Kalshi*, Sportsbook*, ExchangeClients; then KV1 trading client"
+ "beat": 1792468761,
+ "beatIso": "2026-10-20T03:59:21Z",
+ "done": "KV1: KalshiTradingClient (V2 orders w/ legacy fallback, cancel, balance/fills/positions/settlements) + test written",
+ "next": "run KalshiTradingClientTest, then KV3 placer/guards"
 }
