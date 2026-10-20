@@ -362,3 +362,4 @@ day that changes.
 | v1.0.21 | code 361 | 2026-10-20T21:40Z | v1.0.21: live tail lane caps buys per game, no averaging down (CH43)
 | v1.0.22 | code 362 | 2026-10-20T21:46Z | v1.0.22: Kalshi slip hides the bet, bids round to 1 contract, Kalshi list from GitHub (CH44)
 | v1.0.23 | code 363 | 2026-10-20T22:29Z | v1.0.23: Kalshi rows follow the books-agree view filter; Kalshi bids may be 1 contract above Kelly (CH45)
+| v1.0.24 | code 364 | 2026-10-20T23:14Z | v1.0.24: ESPN win probability cross-checks live moneyline calls (CH46c)
