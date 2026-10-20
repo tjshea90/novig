@@ -26,6 +26,14 @@ class ApiGovernorTest {
     }
 
     @Test
+    fun `an api that failed and then answers is announced once`() {
+        val g = ApiGovernor()
+        assertTrue(g.observe(listOf(FeedLine("parlay", error = "timeout"), FeedLine("sgo", fetched = 8)), settings, 0).isEmpty())
+        assertEquals(listOf<ApiGovernor.Event>(ApiGovernor.Event.Recovered("parlay")), g.observe(listOf(FeedLine("parlay", fetched = 3), FeedLine("sgo", fetched = 8)), settings, 1))
+        assertTrue(g.observe(listOf(FeedLine("parlay", fetched = 3), FeedLine("sgo", fetched = 8)), settings, 2).isEmpty())
+    }
+
+    @Test
     fun `try again forgives the one api, its rest and strikes go`() {
         val g = ApiGovernor()
         repeat(3) { g.observe(silent, settings, it.toLong()) }

@@ -102,6 +102,17 @@ class DashboardModelTest {
     }
 
     @Test
+    fun `pinnapi with every key refused is never green and pinnwire is lit when the shared pinnacle feed answered`() {
+        fun view(id: String, st: com.tjshea.vigilant.data.keys.KeyState) = com.tjshea.vigilant.data.keys.ProviderView(
+            com.tjshea.vigilant.data.keys.QuotaPolicy.ALL.first { it.id == id },
+            listOf(com.tjshea.vigilant.data.keys.KeyView(0, "abcd…wxyz", 0, null, null, st, null, null, null, false)), null, null, null, 0, 0, null)
+        val s = st { copy(feedReportAtMs = now - 1000, feedReport = listOf(FeedLine("pinnacle", fetched = 9))) }
+        val h = DashboardModel.apiHealth(s, listOf(view("pinnacle", com.tjshea.vigilant.data.keys.KeyState.REFUSED), view("pinnwire", com.tjshea.vigilant.data.keys.KeyState.ACTIVE)))
+        assertEquals(CloudDashboard.Health.FAILING, h["pinnacle"])
+        assertEquals(CloudDashboard.Health.WORKING, h["pinnwire"])
+    }
+
+    @Test
     fun `history adds one point per finished scan, keeps a day, and survives a round trip`() {
         val a = DashboardModel.record(emptyList(), st())
         assertEquals(1, a.size)
