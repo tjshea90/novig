@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "5b5e1e3027d2087a783d490e3a7d63918353ba43",
+ "head": "fb7092b71906c837afb7e8c486a585df845470f4",
  "since": 1792596542,
- "beat": 1792626489,
- "beatIso": "2026-10-21T23:48:09Z",
+ "beat": 1792626892,
+ "beatIso": "2026-10-21T23:54:52Z",
  "done": "SS done: SharpAPI WebSocket stream + game state built, v1.0.43 shipped (release building)",
  "next": "after the key is on GitHub: read engine-log 'SharpAPI' lines (stream connected, rows pushed, unplaced count, game state live), fix SHARPAPI.md \u00a75 where real frames differ"
 }
