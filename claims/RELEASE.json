@@ -7,5 +7,5 @@
  "nonce": "0e282c",
  "note": "v1.0.38: API card trusts a fresh accepted key check over a stale refusal (BoltOdds card)",
  "since": 1792609947,
- "beat": 1792610151
+ "beat": 1792610504
 }
