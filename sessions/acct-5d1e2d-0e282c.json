@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-s9zcjn",
  "head": "2295d61969844816f73f91caddc75fcbca07ce12",
  "since": 1792563808,
- "beat": 1792610781,
- "beatIso": "2026-10-21T19:26:21Z",
+ "beat": 1792611740,
+ "beatIso": "2026-10-21T19:42:20Z",
  "done": "BC: phone already closes BoltOdds sockets on toggle-off; STOP ALL/pause path and engine side still to verify",
  "next": "BC1-BC4, engine side first (CloudSources.applySockets, shutdown hook)"
 }
