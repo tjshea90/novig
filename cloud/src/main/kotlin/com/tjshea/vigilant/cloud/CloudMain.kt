@@ -269,12 +269,14 @@ fun main(args: Array<String>) = runBlocking {
         }
     }
     // One instance of each store, shared by the desk and by the file the phone reads (a second instance on the same file would keep a stale copy).
-    val deskStore = com.tjshea.vigilant.data.novig.trading.maker.MakerStore(File(deskDir, "maker.json"))
+    // Write-behind (XO2): the desk rewrote this file whole, synced, on every post, cancel and ended bid (about 700 times a pass at 95,000 bids a day: passes of 60-136 s instead of 25 s, and two stall-watchdog kills with a worker
+    // inside that write). It now writes at most every 3 s and when the job ends; ended bids that never filled leave it after 20 minutes (the bids-<day> journals are the record).
+    val deskStore = com.tjshea.vigilant.data.novig.trading.maker.MakerStore(File(deskDir, "maker.json"), writeBehindMs = 3_000L)
     val deskTracker = com.tjshea.vigilant.data.tracker.BetTracker(File(deskDir, "tracker.json"))
     val bidRunner: com.tjshea.vigilant.data.cloud.CloudBidRunner? = tradingClient?.let { tc ->
         val desk = com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(
             tc, deskTracker, deskStore,
-            cancelStrays = false, newClientId = com.tjshea.vigilant.data.novig.trading.maker.MakerDesk::engineClientId,
+            cancelStrays = false, newClientId = com.tjshea.vigilant.data.novig.trading.maker.MakerDesk::engineClientId, keepEndedMs = 20 * 60_000L,
         )
         com.tjshea.vigilant.data.cloud.CloudBidRunner(
             desk, com.tjshea.vigilant.data.cloud.CloudBidLane(novig), tradePort!!, tradeMarkets = { trader.openMarkets() },
@@ -486,6 +488,7 @@ fun main(args: Array<String>) = runBlocking {
     val end = engine.run(until, started)
     // The window is over (or the job is): whatever rests on Novig under the engine's key is cancelled, and the ledger goes out one last time.
     runCatching { trader.windowEnded() }
+    runCatching { kotlinx.coroutines.runBlocking { deskStore.flush() } }
     runCatching { kalshiLane.stop("the engine's job or hours are over") }
     runCatching { study.flush() }
     runCatching { publisher.stageTrades(TradeLedger.text(trader.ledger), System.currentTimeMillis()) }

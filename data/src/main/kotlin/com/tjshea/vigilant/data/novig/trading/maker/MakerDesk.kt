@@ -163,13 +163,16 @@ data class MakerBid(
 }
 
 /** Every bid posted, newest last; ended ones are kept [KEEP_MS] for the Make tab's numbers. */
-class MakerStore(file: File) {
+class MakerStore(file: File, writeBehindMs: Long = 0L) {
     // Fields still at their default are not written (v0.89.35): a bid is a log record whose defaults never change, and the file is rewritten whole and synced to the disk on every post and cancel (Tj's
-    // v0.89.34 file: 23 MB, 19,497 bids). Old files, written with every field, read the same.
-    private val store = JsonFileStore(file, ListSerializer(MakerBid.serializer()), { emptyList() }, Json { ignoreUnknownKeys = true; encodeDefaults = false })
+    // v0.89.34 file: 23 MB, 19,497 bids). Old files, written with every field, read the same. The engine's desk writes behind ([JsonFileStore]'s writeBehindMs): its passes ran 60-136 s on whole-file writes.
+    private val store = JsonFileStore(file, ListSerializer(MakerBid.serializer()), { emptyList() }, Json { ignoreUnknownKeys = true; encodeDefaults = false }, writeBehindMs)
     val flow get() = store.flow
     suspend fun all(): List<MakerBid> = store.read()
     suspend fun update(transform: (List<MakerBid>) -> List<MakerBid>) = store.update(transform)
+
+    /** Writes what a write-behind store has not written yet. */
+    suspend fun flush() = store.flush()
 
     companion object {
         /**
@@ -180,9 +183,9 @@ class MakerStore(file: File) {
         const val KEEP_MS = 6 * 3_600_000L
         const val KEEP_FILLED_MS = 7 * 24 * 3_600_000L
 
-        /** An ended bid that is past its keep window. */
-        fun expired(b: MakerBid, now: Long): Boolean =
-            b.status.ended && (endedOrPosted(b) < now - (if (b.filled > 0) KEEP_FILLED_MS else KEEP_MS))
+        /** An ended bid that is past its keep window ([keepMs] for one that never filled: the engine keeps them minutes, not hours, its journals hold the record). */
+        fun expired(b: MakerBid, now: Long, keepMs: Long = KEEP_MS): Boolean =
+            b.status.ended && (endedOrPosted(b) < now - (if (b.filled > 0) KEEP_FILLED_MS else keepMs))
 
         private fun endedOrPosted(b: MakerBid) = b.endedAtMs ?: b.postedAtMs
     }
@@ -241,6 +244,8 @@ class MakerDesk(
      */
     private val cancelStrays: Boolean = true,
     private val newClientId: () -> String = { NovigTradingClient.newClientId() },
+    /** How long an ended bid that never filled stays in the store ([MakerStore.KEEP_MS] unless set): the engine's desk keeps them only a few minutes so the document it rewrites stays small. */
+    private val keepEndedMs: Long = MakerStore.KEEP_MS,
 ) {
     /** The ids of the orders another desk placed: [orderIds] by Novig's id, [clientIds] by the id they were sent with (an order whose answer never came has only that one). */
     data class OtherOrders(val orderIds: Set<String>, val clientIds: Set<String>) {
@@ -923,8 +928,8 @@ class MakerDesk(
         val now = clock()
         val bids = store.all()
         // Ended bids past the keep window leave the list.
-        if (bids.any { MakerStore.expired(it, now) }) {
-            store.update { list -> list.filterNot { MakerStore.expired(it, now) } }
+        if (bids.any { MakerStore.expired(it, now, keepEndedMs) }) {
+            store.update { list -> list.filterNot { MakerStore.expired(it, now, keepEndedMs) } }
         }
         val active = store.all().filter { it.active }
         val open = try {

@@ -31,9 +31,19 @@ class JsonFileStore<T>(
     private val serializer: KSerializer<T>,
     private val default: () -> T,
     private val json: Json = Json { ignoreUnknownKeys = true; encodeDefaults = true },
+    /**
+     * Write-behind (XO2, the engine's bid desk): above 0, an [update] changes the in-memory document at once and writes the file only when [writeBehindMs] have passed since the last write (and on [flush]); 0 = every
+     * update writes the whole file and syncs it, as always. The desk's store was rewritten whole and synced on every post, cancel and ended bid: at 95,000 bids a day that was about 700 whole-file writes of a
+     * multi-megabyte document in each pass, so a pass took 60-136 s instead of its 25 s and two engine jobs were ended by the stall watchdog with a worker in the middle of that write. A crash loses at most [writeBehindMs]
+     * of changes: for the engine's bids that is harmless (a bid is post-only with its own expiry and the job takes every bid down when it ends), and a store whose records must survive a crash keeps 0.
+     */
+    private val writeBehindMs: Long = 0L,
+    private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private val mutex = Mutex()
     private val state = MutableStateFlow<T?>(null)
+    private var dirty = false
+    private var lastWriteMs = 0L
 
     /** Null until the first [read]. */
     val flow: StateFlow<T?> = state.asStateFlow()
@@ -42,9 +52,26 @@ class JsonFileStore<T>(
 
     suspend fun update(transform: (T) -> T): T = mutex.withLock {
         val next = transform(loadLocked())
-        writeLocked(next)
-        state.value = next
+        if (writeBehindMs <= 0L) {
+            writeLocked(next)
+            state.value = next
+        } else {
+            state.value = next
+            dirty = true
+            if (clock() - lastWriteMs >= writeBehindMs) persistLocked(next)
+        }
         next
+    }
+
+    /** Writes what a write-behind store has not written yet (a no-op for the others, or when nothing changed). Called when a job ends. */
+    suspend fun flush() = mutex.withLock {
+        if (dirty) state.value?.let { persistLocked(it) }
+    }
+
+    private suspend fun persistLocked(value: T) {
+        writeLocked(value)
+        dirty = false
+        lastWriteMs = clock()
     }
 
     private suspend fun loadLocked(): T {
