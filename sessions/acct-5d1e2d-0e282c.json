@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-7dry2r",
- "head": "dacae384c51ce1d46fd4d22ee0672051192b0a41",
+ "head": "7460636ca20c3a947d11a402d31d854af7d332ad",
  "since": 1792539161,
- "beat": 1792560339,
- "beatIso": "2026-10-21T05:25:39Z",
- "done": "CH57 design written",
- "next": "tools/clv_consensus.py (pure+selftest) over existing lines + propline archive"
+ "beat": 1792560396,
+ "beatIso": "2026-10-21T05:26:36Z",
+ "done": "CH57 clv_consensus.py + second-pass audit",
+ "next": "tell Tj; break down unconfirmed bets by kind/league"
 }
