@@ -39,6 +39,9 @@ object SharpApiBooks {
     /** SharpAPI's league slug for a Vigilant league (null = SharpAPI is not asked for it). */
     fun leagueSlug(league: League): String? = LEAGUES[league.novigName]
 
+    /** The same by Novig's league name ("NFL" -> "nfl"). */
+    fun leagueSlugOf(novigName: String): String? = LEAGUES[novigName]
+
     private val LEAGUES = mapOf(
         "NFL" to "nfl", "NCAAF" to "ncaaf", "NBA" to "nba", "NCAAB" to "ncaab", "WNBA" to "wnba", "MLB" to "mlb", "NHL" to "nhl", "ATP" to "atp", "WTA" to "wta", "UFC" to "ufc",
     )
