@@ -184,6 +184,16 @@ internal fun BetsPage(ui: KalshiUi, now: Long) {
                 }
             }
         }
+        item {
+            val funnel = remember(ui.result, ui.feed.size) { ui.result?.let { com.tjshea.vigilant.data.kalshitrade.KalshiFunnel.of(it, ui.feed.size) } }
+            Card(Modifier.fillMaxWidth().testTag("kalshiFunnel"), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("Where the Kalshi scan loses lines", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (funnel == null) Text(if (ui.engineFeed) "The GitHub engine made this list; scan here to see the funnel." else "Scan to see how many Kalshi games matched and priced.", style = MaterialTheme.typography.bodySmall)
+                    else com.tjshea.vigilant.data.kalshitrade.KalshiFunnel.lines(funnel).forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+                }
+            }
+        }
         if (ui.bets.isEmpty()) item { EmptyState("No Kalshi bets yet", "Bets you place or the auto-bet places on Kalshi are listed here, and settled from Kalshi's own record.") }
         items(ui.bets.sortedByDescending { it.createdAtMs }, key = { it.id }) { b -> BetRow(b, now) }
         if (ui.paperBets.isNotEmpty()) {
