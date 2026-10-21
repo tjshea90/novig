@@ -1,23 +1,22 @@
-# CHECKPOINT 3866 — read me first, then TASKS.md
+# CHECKPOINT 3867 — read me first, then TASKS.md
 
-**Written:** 2026-10-21T00:25:59Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-o9ngjz` · **builds on:** `2e6b22525` (this checkpoint is the commit after it)
+**Written:** 2026-10-21T00:36:31Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-o9ngjz` · **builds on:** `d679dc687` (this checkpoint is the commit after it)
 
 ## Just done
-CH48 tests, CH49 spend tally, parlay.yml arbscan
+CH48/49: tests updated; reply sent
 
 ## Do this next
-dispatch arbscan; check listen (tennis); ship v1.0.26
+wait arbscan/listen results; ship v1.0.26
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
-    M  .github/workflows/parlay.yml
      M CHECKPOINT.md
-    M  tools/parlay.py
 
 ## Last ten checkpoints
 ```
+  85911a6b5 ckpt 3866: CH48 tests, CH49 spend tally, parlay.yml arbscan
   498f11bba ckpt 3865: CH48 ApiState cards in app; CLAUDE.md phone=monitor rule; CH49 logged
   5758207c5 ckpt 3864: CH47/48: ApiMonitor (engine), apiChecks in status, parlay.yml listen task
   3850ad774 ckpt 3863: v1.0.25 shipped, replied to Tj batch; CH48 logged
@@ -27,8 +26,7 @@ dispatch arbscan; check listen (tennis); ship v1.0.26
   91bb11618 ckpt 3859: CH47 probe read: PBP SSE real shape, arbs real shape, Pro key found
   36558cfbc ckpt 3858: CH47: tools/parlay.py + parlay.yml (plans, probe)
   d958767df ckpt 3857: ANALYST 2026-10-20: no rule change
-  379bfc7c1 ckpt 3856: CH46 closed by Tj
 ```
 
-(7 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
