@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cb0c319e-caga5z",
- "head": "181fe07e0f01724102cb6b79a0bdb6bda28955bd",
+ "head": "5771d3dbb08ceaa567f0995b768913e8f4657cd4",
  "since": 1792596542,
- "beat": 1792600985,
- "beatIso": "2026-10-21T16:43:05Z",
+ "beat": 1792601173,
+ "beatIso": "2026-10-21T16:46:13Z",
  "done": "XO1 feed-level problems (API manager note+message, card), XO2 orders without a study line are added to the journal so they get graded (addOrders), tools/volume_report.py + digest section, TASKS triage",
  "next": "full floor, ship v1.0.36 (bump versionCode 376), release, record; then watch the engine's first API-manager and desk-pass behaviour; XO6 findings"
 }
