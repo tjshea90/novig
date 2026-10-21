@@ -252,7 +252,7 @@ fun CnoScreen(
                 item(key = "summary") {
                     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            "View: " + CnoView.describe(state.cnoUrl),
+                            "View: " + cnoViewWords(state.cnoUrl, state.settings.cnoFilters.venues),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -999,4 +999,11 @@ internal fun CnoVenueChips(venues: com.tjshea.vigilant.data.cno.CnoVenues, onVen
         FilterChip(selected = venues.kalshi, onClick = { onVenues(venues.copy(kalshi = !venues.kalshi)) }, label = { Text("Kalshi") }, modifier = Modifier.testTag("cnoVenueKalshi"))
         if (venues.kalshi) Text("Kalshi EV net of its fee", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
     }
+}
+
+/** The view's filters in words, with the books the scan reads (CK): the link's own book is replaced by Novig and/or Kalshi as the chips say. */
+internal fun cnoViewWords(url: String, venues: com.tjshea.vigilant.data.cno.CnoVenues): String {
+    val books = listOfNotNull("Novig".takeIf { venues.novig }, "Kalshi".takeIf { venues.kalshi }).joinToString(" + ").ifEmpty { "no book" }
+    val rest = CnoView.describe(url).split(" · ").drop(1)
+    return (listOf(books) + rest).joinToString(" · ")
 }
