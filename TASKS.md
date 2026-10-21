@@ -6101,7 +6101,7 @@ CH59 (2026-10-21, chat wake 06:20 UTC): Odds API audited: 18 credits today, all 
 - [x] XO3b adjust system/settings the evidence supports (class B gates), research/ note, NOTES.md line
 - [x] XO4a historical odds/props analysis from APIs that have history (PropLine archive+CLV, SGO/OddsPapi closes, ParlayAPI): patterns and methods; research/ note
 - [x] XO4b incorporate what is profitable into vigilant + engine (behind switches, tests): nothing in the engine changes (every candidate needs results the data does not hold yet: research/propline_history_study_2026-10-21.md section 4); built tools/orders_clv.py (CLV at the fill price per order, daily into engine-dataset) as the baseline for the calibrated-fair test
-- [ ] XO5a triage the open TASKS.md items (grep '^- \[ \]'): list built-vs-unbuilt-planned; build the unblocked ones (not those waiting on a live key/data/Tj)
+- [x] XO5a triage the open TASKS.md items (18 verified-done items ticked; built: TCL30d volume report, CH57 rest = tools/orders_clv.py, TCL94b FCS grading, the order-grading gap found by the full test (addOrders), feed-level API problems; the rest wait on Tj, live keys or evidence and are on the WATCH LIST XOW1-XOW5) (grep '^- \[ \]'): list built-vs-unbuilt-planned; build the unblocked ones (not those waiting on a live key/data/Tj)
 - [ ] XO6 full test protocol (.claude/skills/test-protocols/SKILL.md "full tests"), fix what it finds, record result
 
 WATCH LIST (XO, 2026-10-21; each waits on the number named, then is a class B change with a CHANGES.md line):
