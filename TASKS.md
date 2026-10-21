@@ -6141,3 +6141,11 @@ Finding 19:30: only ONE cloud-scan run is live (run 254), so no old runner holds
 - [x] SA4 (SharpApiLiveFeedTest, SharpApiExtrasTest; splits not built: public betting % does not price a bet) the other features that help: delta polling for speed (no SSE), closing lines / CLV, gamestate (live scores), EV opportunities as a cross-check, splits, account usage meter, Pinnacle changed-at freshness
 - [x] SA5 (v1.0.42, full floor 4144 green) tests, ship, release; tell Tj to send the key to GitHub
 - [ ] XOW6 (ENGINEER 2026-10-21 mirage) the engine's top held-back reason is stale fair (21 of 31 listed at 23:20Z; fair age median 21 min after an 844 s full scan). Before touching the 5/10 min limit: from `tradepass-<day>.jsonl` and `lines-*.csv.gz`, split held-back bets inside 6 h by fair age and compare their CLV to taken bets; loosen one 25% step only if the older-fair band beats the close with an interval above zero (class B). Else look at why quick-lane scans do not refresh fair for games inside 6 h sooner.
+
+## SS: SharpAPI WebSocket streaming + game state (Tj, interactive session acct-27a37e (tj Gmail), 2026-10-21, verbatim)
+"I added websocket streaming and game state support to the API trial. Find the docs for these features and add these to the app and GitHub engine in addition to everything else. Does this version support the streaming socket"
+(answered: no, v1.0.42 polls /odds/delta every 1-2 s; the stream is built here)
+- [ ] SS1 save the streaming (SSE, WebSocket, AsyncAPI) and game-state docs verbatim, update SHARPAPI.md
+- [ ] SS2 engine: one WebSocket stream (cap 1 connection per key, newer wins) feeding SharpApiFeed (odds:update upserts, odds:removed deletes, is_active), delta polling only as fallback/reconcile; status + socket switch (gates.sharpApiSocket)
+- [ ] SS3 game state: /gamestate + stream channel -> live scores for the live lane (AltScore) and grading/closing; status on the phone
+- [ ] SS4 tests, ship, release
