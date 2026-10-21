@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-nojqjb",
- "head": "c78075343c907e93abfdb18b9b686226c034cdba",
+ "head": "b3f05bc85c522d57cb5e0391b17594642925ba8a",
  "since": 1792539161,
- "beat": 1792561811,
- "beatIso": "2026-10-21T05:50:11Z",
- "done": "CH58 apiq journal + api_quality.py + value doc",
- "next": "ship with next release; CH57 consensus in GradeMain/lines_dataset; run api_quality.py after first archive"
+ "beat": 1792561849,
+ "beatIso": "2026-10-21T05:50:49Z",
+ "done": "pre-ship: v1.0.34: API quality journal (apiq), consensus CLV columns (CH57/CH58)",
+ "next": "ship.sh gates and releases this"
 }
