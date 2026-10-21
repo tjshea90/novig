@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "b1ee7e524e1c6e1ab5614a44ee7ddffeeb162265",
+ "head": "77c72f06eb5436a90c9d0e5d3f166d4aeb1fb0f6",
  "since": 1792596542,
- "beat": 1792620676,
- "beatIso": "2026-10-21T22:11:16Z",
- "done": "pre-release: v1.0.40: CNO scans Novig and Kalshi (tab chips, Kalshi EV net of fee, venue card colours); the whole CNO scan runs on the GitHub engine (cno.json.gz), phone adopts it (versionCode 380, v1.0.40)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.40), then run: bash tools/record-release.sh v1.0.40 380 \"v1.0.40: CNO scans Novig and Kalshi (tab chips, Kalshi EV net of fee, venue card colours); the whole CNO scan runs on the GitHub engine (cno.json.gz), phone adopts it\""
+ "beat": 1792620890,
+ "beatIso": "2026-10-21T22:14:50Z",
+ "done": "v1.0.40 released (CK). Full test in progress: Kalshi CNO rows' alerts/taps open Kalshi (betLink), link lane skips Kalshi rows (mutation-checked), engine CNO hands reads to the phone at once when its first read fails, Settings switch Scan CNO on GitHub, stale engine copy, SX Bet chip name, detail sheet Open in Kalshi",
+ "next": "continue full test sweep: adversarial review of v1.0.35-1.0.39 diffs (other sessions), then full floor, ship v1.0.41"
 }
