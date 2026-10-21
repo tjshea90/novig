@@ -155,6 +155,24 @@ object DashboardModel {
         return out
     }
 
+    /**
+     * A feed of [providerId] that the engine's watch found silent for several scans in a row while the provider itself still checks out (XO1, 2026-10-21: BoltOdds' lines socket was refused for "too many concurrent
+     * connections" for half an hour while its props socket and its REST check answered, so its card stayed green): words for the card, or null. Only feeds named in the engine's own alert ([CloudStatus.feedAlerts],
+     * [FeedWatch]: three scans or more) count, so one bad answer from a busy feed never colours a card.
+     */
+    fun feedProblem(st: CloudStatus?, providerId: String): String? {
+        if (st == null) return null
+        val alert = st.feedAlerts.firstNotNullOfOrNull { a ->
+            ALERT.find(a)?.destructured?.takeIf { (id, _) -> CloudDashboard.providerOf(id) == providerId }
+        } ?: return null
+        val (id, scans) = alert
+        val line = st.feedReport.firstOrNull { it.id == id }
+        val why = (line?.error ?: line?.heldBack)?.takeIf { it.isNotBlank() } ?: "no answer"
+        return "feed $id silent for $scans scans: ${why.take(90)}"
+    }
+
+    private val ALERT = Regex("^(\\S+) \\((\\d+) scans? in a row\\)")
+
     /** The feeds of a provider as "sgo 8+0 · sgo-props 6+0" plus its first error or hold-back, for the API card's second line. */
     fun apiDetail(st: CloudStatus?, providerId: String): String {
         val feeds = st?.feedReport.orEmpty().filter { CloudDashboard.providerOf(it.id) == providerId }

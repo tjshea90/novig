@@ -38,7 +38,7 @@ object ApiState {
 
     private fun since(ms: Long) = if (ms < 90_000L) "${ms / 1000} s" else if (ms < 7_200_000L) "${ms / 60_000L} min" else "${ms / 3_600_000L} h"
 
-    fun of(check: ApiCheckLine?, view: ProviderView?, lastScan: CloudDashboard.Health?, now: Long, phone: PhoneCheck? = null, engineRunning: Boolean = true): Verdict {
+    fun of(check: ApiCheckLine?, view: ProviderView?, lastScan: CloudDashboard.Health?, now: Long, phone: PhoneCheck? = null, engineRunning: Boolean = true, feedProblem: String? = null): Verdict {
         if (check != null && !check.on) return Verdict(Light.OFF, check.fix.ifBlank { if (!check.hasKey) "no key saved: never called" else "switched off: never called" })
         val keys = view?.keys.orEmpty()
         val refused = keys.count { it.state == KeyState.REFUSED }
@@ -86,6 +86,8 @@ object ApiState {
         if (refused > 0) return Verdict(Light.YELLOW, "$refused of ${keys.size} key${if (keys.size > 1) "s" else ""} refused; the others work")
         if (c.keys > 1 && c.keysOk < c.keys) return Verdict(Light.YELLOW, "${c.keys - c.keysOk} of ${c.keys} keys failed their check")
         if (c.ms > SLOW_MS) return Verdict(Light.YELLOW, "slow: answered in ${c.ms / 1000} s")
+        // The API checks out, but one of its feeds has been silent for several scans (a socket the provider refused while another one answers): amber, with the feed's own words.
+        if (feedProblem != null && engineRunning) return Verdict(Light.YELLOW, feedProblem + fix)
         val allowance = view?.totalAllowance
         val left = view?.totalLeft
         if (allowance != null && left != null && allowance > 0 && left.toDouble() / allowance < LOW_FRACTION) return Verdict(Light.YELLOW, "credits low: $left of $allowance left")

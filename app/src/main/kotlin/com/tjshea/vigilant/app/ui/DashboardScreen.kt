@@ -186,7 +186,7 @@ private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: L
                 val sid = switchIdOf(v.policy.id)
                 val entry = com.tjshea.vigilant.app.ApiEntry.entries.firstOrNull { it.policy?.id == v.policy.id }
                 val phone = entry?.let { e -> checks[e.name]?.takeIf { it.isNotEmpty() }?.let { cs -> com.tjshea.vigilant.data.cloud.ApiState.PhoneCheck(checkedAt[e.name] ?: 0L, cs.any { it.ok }, cs.count { it.ok }, cs.size, (cs.firstOrNull { !it.ok } ?: cs.first()).message) } }
-                v.policy.id to com.tjshea.vigilant.data.cloud.ApiState.of(status?.apiChecks?.firstOrNull { it.id == sid }, v, health[v.policy.id], now, phone, running)
+                v.policy.id to com.tjshea.vigilant.data.cloud.ApiState.of(status?.apiChecks?.firstOrNull { it.id == sid }, v, health[v.policy.id], now, phone, running, DashboardModel.feedProblem(status, v.policy.id))
             }
         }
         val cards = remember(meters, health, verdicts) {
