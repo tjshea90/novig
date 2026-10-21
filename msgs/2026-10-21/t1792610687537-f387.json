@@ -1,0 +1,1 @@
+{"v":2,"id":"t1792610687537-f387","at":1792610687537,"from":"tj","text":"boltodds says too many concurrent connections. I wonder if old GitHub runners are still connected. make it so if I ever press stop all or turn off the engine or pause scanning or toggle off an api, the system actually disconnects from the API or apis"}
