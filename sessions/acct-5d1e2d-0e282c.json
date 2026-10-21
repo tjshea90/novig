@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "cdfc3903217fc2f6aae68b465192c7b76f3b239f",
+ "head": "6cf4691322ebe61dcd65c57466cd3b5389d23511",
  "since": 1792539161,
- "beat": 1792545502,
- "beatIso": "2026-10-21T01:18:22Z",
- "done": "pre-release: v1.0.26: API monitor rebuild (engine checks every API, green/yellow/red/grey), ParlayAPI PBP recorder (tennis), Odds API gap-fill 3 h + spend tally (CH47-49) (versionCode 366, v1.0.26)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.26), then run: bash tools/record-release.sh v1.0.26 366 \"v1.0.26: API monitor rebuild (engine checks every API, green/yellow/red/grey), ParlayAPI PBP recorder (tennis), Odds API gap-fill 3 h + spend tally (CH47-49)\""
+ "beat": 1792545537,
+ "beatIso": "2026-10-21T01:18:57Z",
+ "done": "v1.0.26 released; TennisModel math + tests",
+ "next": "read first tennis pbplive frames (cloud-archive Release pbplive-*), wire tennis paper lane; Kalshi lag CH45a"
 }
