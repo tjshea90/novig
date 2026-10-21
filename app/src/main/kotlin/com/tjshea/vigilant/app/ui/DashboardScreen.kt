@@ -171,11 +171,19 @@ private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: L
 
         SectionHeader("APIs")
         val health = remember(status, meters) { DashboardModel.apiHealth(status, meters) }
-        val cards = remember(meters, health) {
-            meters.filter { it.keys.isNotEmpty() || !it.policy.keyed || health.containsKey(it.policy.id) }.sortedBy { severity(health[it.policy.id]) }
+        // Each card's light comes from the engine's own live check of the API (Tj, 2026-10-20, CH48), the ledger and the last scan, in that order ([com.tjshea.vigilant.data.cloud.ApiState]).
+        val verdicts = remember(status, meters, health, now / 20_000L) {
+            meters.associate { v ->
+                val sid = if (v.policy.id == "pinnacle") "pinnapi" else com.tjshea.vigilant.data.cloud.ApiToggles.idOfPolicy(v.policy.id)
+                v.policy.id to com.tjshea.vigilant.data.cloud.ApiState.of(status?.apiChecks?.firstOrNull { it.id == sid }, v, health[v.policy.id], now)
+            }
+        }
+        val cards = remember(meters, health, verdicts) {
+            meters.filter { it.keys.isNotEmpty() || !it.policy.keyed || health.containsKey(it.policy.id) || verdicts[it.policy.id]?.light == com.tjshea.vigilant.data.cloud.ApiState.Light.OFF }
+                .sortedBy { lightOrder(verdicts[it.policy.id]?.light) }
         }
         if (cards.isEmpty()) Text("No API has answered yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        cards.forEach { v -> ApiCard(v, health[v.policy.id], DashboardModel.apiDetail(status, v.policy.id), now, checks, testing, onTestApi, onRetryApi) }
+        cards.forEach { v -> ApiCard(v, verdicts.getValue(v.policy.id), DashboardModel.apiDetail(status, v.policy.id), now, checks, testing, onTestApi, onRetryApi) }
         if (health.isEmpty() && status != null) {
             Text("Which APIs worked on the last scan appears after the engine's next scan (it has to finish one on the new version).", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -199,13 +207,12 @@ private fun TrendsSection(history: List<DashboardModel.Point>) {
     }
 }
 
-private fun severity(h: CloudDashboard.Health?): Int = when (h) {
-    CloudDashboard.Health.FAILING -> 0
-    CloudDashboard.Health.SILENT -> 1
-    CloudDashboard.Health.HELD_BACK -> 2
-    CloudDashboard.Health.STANDING_BY -> 3
-    CloudDashboard.Health.WORKING -> 4
-    else -> 5
+private fun lightOrder(l: com.tjshea.vigilant.data.cloud.ApiState.Light?): Int = when (l) {
+    com.tjshea.vigilant.data.cloud.ApiState.Light.RED -> 0
+    com.tjshea.vigilant.data.cloud.ApiState.Light.YELLOW -> 1
+    com.tjshea.vigilant.data.cloud.ApiState.Light.UNKNOWN, null -> 2
+    com.tjshea.vigilant.data.cloud.ApiState.Light.GREEN -> 3
+    com.tjshea.vigilant.data.cloud.ApiState.Light.OFF -> 4
 }
 
 @Composable
@@ -327,27 +334,24 @@ private fun SectionHeader(text: String) {
 
 /** One API: health chip, name, what the last scan got from it, and its usage meter (the same ledger as Settings › APIs, with the engine's calls in it). */
 @Composable
-private fun ApiCard(v: ProviderView, health: CloudDashboard.Health?, detail: String, now: Long, checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>> = emptyMap(), testing: Set<String> = emptySet(), onTestApi: (String) -> Unit = {}, onRetryApi: (String) -> Unit = {}) {
+private fun ApiCard(v: ProviderView, verdict: com.tjshea.vigilant.data.cloud.ApiState.Verdict, detail: String, now: Long, checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>> = emptyMap(), testing: Set<String> = emptySet(), onTestApi: (String) -> Unit = {}, onRetryApi: (String) -> Unit = {}) {
     var open by androidx.compose.runtime.saveable.rememberSaveable(v.policy.id) { androidx.compose.runtime.mutableStateOf(false) }
     val entry = remember(v.policy.id) { com.tjshea.vigilant.app.ApiEntry.entries.firstOrNull { it.policy?.id == v.policy.id } }
-    // Some keys refused (Tj, 2026-10-20: "why does this still show working" with 3 of 6 pinnapi keys on 403): working on the others is amber, never green.
-    val refusedKeys = maxOf(v.keys.count { it.state == com.tjshea.vigilant.data.keys.KeyState.REFUSED }, (checks[entry?.name]?.count { !it.ok } ?: 0))
-    val allRefused = v.keys.isNotEmpty() && refusedKeys >= v.keys.size
-    val tone = when (health) {
-        CloudDashboard.Health.WORKING -> if (allRefused) Tone.BAD else if (refusedKeys > 0) Tone.WARN else Tone.GOOD
-        CloudDashboard.Health.FAILING -> Tone.BAD
-        CloudDashboard.Health.SILENT, CloudDashboard.Health.HELD_BACK -> Tone.WARN
+    val tone = when (verdict.light) {
+        com.tjshea.vigilant.data.cloud.ApiState.Light.GREEN -> Tone.GOOD
+        com.tjshea.vigilant.data.cloud.ApiState.Light.YELLOW -> Tone.WARN
+        com.tjshea.vigilant.data.cloud.ApiState.Light.RED -> Tone.BAD
         else -> Tone.NEUTRAL
     }
     val c = toneColor(tone)
-    // The light (Tj, 2026-10-19, CH23): neon green = answering well now, amber = a problem (tap the card for the words), grey = off or not judged.
-    val light = when (tone) { Tone.GOOD -> Color(0xFF39FF14); Tone.WARN, Tone.BAD -> Color(0xFFFFB300); Tone.NEUTRAL -> Color(0xFF6B7280) }
+    // The light (Tj, 2026-10-20, CH48): neon green = up and active, amber = slow, refused or a failed check (retrying by itself), red = no connection or no credits, grey = off or not checked yet.
+    val light = when (tone) { Tone.GOOD -> Color(0xFF39FF14); Tone.WARN -> Color(0xFFFFB300); Tone.BAD -> Color(0xFFFF3B30); Tone.NEUTRAL -> Color(0xFF6B7280) }
     Surface(onClick = { open = !open }, color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().testTag("dashboardApi-${v.policy.id}")) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(Modifier.size(14.dp).background(light, CircleShape).testTag("apiLight-${v.policy.id}"))
                 Text(v.policy.displayName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text((health?.label?.substringAfter(' ')?.let { if (allRefused && health == CloudDashboard.Health.WORKING) "every key refused" else if (refusedKeys > 0 && health == CloudDashboard.Health.WORKING) "working · $refusedKeys key${if (refusedKeys > 1) "s" else ""} refused" else it }) ?: if (v.policy.keyed && v.keys.isEmpty()) "no key" else "—", style = MaterialTheme.typography.labelMedium, color = c)
+                Text(verdict.words, style = MaterialTheme.typography.labelMedium, color = c, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 220.dp).testTag("apiWords-${v.policy.id}"))
             }
             if (detail.isNotBlank() && (open || tone != Tone.WARN && tone != Tone.BAD)) Text(detail, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             else if (detail.isNotBlank()) Text("Tap for the error", style = MaterialTheme.typography.labelSmall, color = light)
