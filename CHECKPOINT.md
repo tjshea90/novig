@@ -1,23 +1,22 @@
-# CHECKPOINT 3910 — read me first, then TASKS.md
+# CHECKPOINT 3911 — read me first, then TASKS.md
 
-**Written:** 2026-10-21T17:07:24Z · **tests:** all 9 fast checks green
-**Branch:** `claude/new-session-51eqix` · **builds on:** `3bf07d7c3` (this checkpoint is the commit after it)
+**Written:** 2026-10-21T17:08:00Z · **tests:** all 9 fast checks green
+**Branch:** `claude/new-session-51eqix` · **builds on:** `13541563e` (this checkpoint is the commit after it)
 
 ## Just done
-Research library: tools/research_index.py + research/INDEX.md (104 studies, status from repo references) + research/LEVERS.md (10 tuning levers with next-number, Closed list), briefing RESEARCH line, ROUTINE step 3a, CLAUDE.md rule, fast check
+Research index landed
 
 ## Do this next
-confirm v1.0.36 release (send_later), then XO6 full test protocol
+confirm v1.0.36 release, XO6 full test protocol
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M research/INDEX.md
-     M research/LEVERS.md
 
 ## Last ten checkpoints
 ```
+  13541563e ckpt 3910: Research library: tools/research_index.py + research/INDEX.md (104 studies,
   20f4af5d8 ckpt 3909: pre-release: v1.0.36: feed-level API problems on the API card, order gradin
   a0eaf1a28 ckpt 3908: Merged cut-off branch ccr-cb0c319e (feed-level API problems, order grading 
   181fe07e0 ckpt 3907: XO1 feed-level problems (API manager note+message, card), XO2 orders withou
@@ -28,6 +27,3 @@ confirm v1.0.36 release (send_later), then XO6 full test protocol
   2ee439375 ckpt 3902: XO1 complete (ApiState evidence rules, phone checks on pull-to-refresh, API
   014eff966 ckpt 3901: XO1 engine: ParlayAPI check was N x N reads (root cause of false 'no answer
 ```
-
-(9 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
