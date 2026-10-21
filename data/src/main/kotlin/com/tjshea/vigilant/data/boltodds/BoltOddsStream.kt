@@ -278,7 +278,12 @@ class BoltOddsStream(
             if (idle) { state = State.OFF; break }
             drops++
             lastClose = "code ${c.code}${if (c.reason.isNotBlank()) " ${client.redact(c.reason)}" else ""} after ${lived / 1000}s"
-            if (c.code == 1008 || c.reason.contains("invalid token", ignoreCase = true)) {
+            val tooMany = c.reason.contains("concurrent", ignoreCase = true) || c.reason.contains("too many", ignoreCase = true)
+            if (tooMany) {
+                // A connection-count refusal says nothing about the key (BC4): the key stays good, the socket backs off and says why.
+                lastRefusal = "BoltOdds refused the connection: ${c.reason.ifBlank { "too many concurrent connections" }}"
+                down(lastRefusal!!)
+            } else if (c.code == 1008 || c.reason.contains("invalid token", ignoreCase = true)) {
                 client.refuseKey(key, "BoltOdds closed the socket: ${c.reason.ifBlank { "policy violation" }}")
                 lastRefusal = "BoltOdds refused the key (${c.reason.ifBlank { "Invalid token" }})"
                 down(lastRefusal!!)
