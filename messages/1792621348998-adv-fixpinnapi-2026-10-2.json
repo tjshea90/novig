@@ -1,0 +1,1 @@
+{"id":"adv-fix:pinnapi-2026-10-21","at":1792621348998,"from":"engine","kind":"recommendation","title":"Pinnacle (pinnapi) refused 3 keys","body":"The provider rejected the key (wrong, expired or cancelled). Replace it in Settings › APIs, or the engine goes without Pinnacle (pinnapi).","priority":1,"action":"APIS"}
