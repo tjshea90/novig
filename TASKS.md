@@ -5354,7 +5354,7 @@ Tj: "So far the auto bet has only placed two bets. There must be much more volum
 - [x] TCL30a Diagnosis 23:40Z: stale-price fix works (re-reads 1-5 books); held back: trap guard 34 of 41 listed, team totals 4, other books' prices too old 2-3; live, wallet $95; 2 open orders (NCAAF spread +12.5, NBA spread -2.5). BoltOdds REST snapshot 429 at 23:36 (6 a minute) hurt fair odds one scan.
 - [ ] TCL30b ENGINEER: from the digest, CLV by lead-time band and edge band for bets inside 0-6 h that the edge floor (2.9%) held back; if the 1.5-2.9% band beats the close (interval > 0, n >= 200) lower the floor one 25% step (slider level / floor), test, CHANGES.md line. Same for team totals (kinds list) when n allows.
 - [ ] TCL30c ENGINEER: BoltOdds REST fallback hits 429 (6 a minute) when the socket is off in the engine; gap the snapshot to the limit or keep the socket on.
-- [ ] TCL30d ENGINEER: add held-back counts by reason to the dashboard/tradeNote history so a trend per day is visible (orders per day vs listed per day).
+- [x] TCL30d ENGINEER: add held-back counts by reason to the dashboard/tradeNote history so a trend per day is visible (orders per day vs listed per day).  (XO5, 2026-10-21: tools/volume_report.py: orders, bids and held-back reasons by day, appended to the daily digest (XO2))
 - [ ] TCL30e Each run: the volume loop (ROUTINE.md), one line in CHANGES.md.
 
 
@@ -5924,7 +5924,7 @@ The ideas list (chat c1792372015, 2026-10-19): 1) score-event buying, 2) a lower
 "on this screen I want to immediately see and know which apis are active and running well with a neon green light next to them, and if there are any issues the api should have an orange or yellow light and I can click on it to see the error message, with a test now button which immediately tests the connection by trying to call the api and a try to reset button which tells GitHub engine to try to reset and use that API again, but without disturbing or breaking anything else including any ongoing scan or other API usage. if possible, include details on how much was used today next to each API and a clear, easy to understand meter for remaining use left. I want it to be a quick check on all my apis so I know exactly the status on all of them at any time. this section should be as live as possible, with fresh information, and if possible a pull down to refresh"
 - [x] CH23a (compiles; unreleased, ui/DashboardScreen.kt ApiCard: neon green/amber/grey light, tap = error words) a light per API on Engine > APIs: neon green = answering well now; amber/yellow = a problem (resting, failing, low, refused key), tap = the error words; grey = off.
 - [x] CH23b (Test now via vm.testApi; Try again = CloudConfig.retryApi/retryApiAtMs -> ApiGovernor.retry, ApiGovernorTest; in v1.0.8) Test now per API (calls it at once from the phone, words for the answer), Try again per API (asks the engine to wake that one API: un-rest it in ApiGovernor and retry, nothing else restarted: no scan cancelled, no other API touched).
-- [ ] CH23c today's use beside each API and one clear meter of what is left (per key pool), the freshest figures (engine usage + the phone's own), pull to refresh on the tab.
+- [x] CH23c today's use beside each API and one clear meter of what is left (per key pool), the freshest figures (engine usage + the phone's own), pull to refresh on the tab.  (XO5, 2026-10-21: pull to refresh re-checks every API now (XO1); meters were already there)
 - [ ] CH23d tests (pure model + UI), ship with CH22b.
 
 ## CH24: the engine stopped answering for 2 minutes (Tj, app chat t1792428809736-6bcc, 2026-10-19 16:53Z, screenshot of "Not responding", verbatim: "notice the stuck refresh symbol and the engine not responding. anytime the engine does not respond, immediately diagnose and fix")
@@ -5999,10 +5999,10 @@ Done 2026-10-20 (mirage): DashboardModel.apiHealth(st, meters) judges pinnapi/pi
 
 ## CH33: one +EV tab for Novig and Kalshi (Tj, app chat 2026-10-20, t1792477333974-949d + t1792477354614-d8b9)
 Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +ev tab with toggles for the scanned list to include kalshi or novig (I can also toggle them both on and the list will have positive EV bets for both). make sure each scanned bet says kalshi or novig. keep in mind the scanned bets can use the same sourced fair odds that novig already used, so it shouldn't use any extra API usage. also make sure the bet slips work just as well as the novig bet slips worked. they should be the same look and function as what it already had, just adding the kalshi" / "once this feature is built, remove the separate kalshi tab"
-- [ ] CH33a read how the Kalshi tab's +EV list/slip and the Novig +EV tab are built; plan the merge (no Novig behaviour change)
-- [ ] CH33b +EV tab: Novig / Kalshi toggles (both allowed), each row labelled with its venue, Kalshi rows reuse the held fair odds (no extra API calls)
-- [ ] CH33c bet slip per row opens the venue's own slip, same look/function
-- [ ] CH33d remove the separate Kalshi tab (keep Kalshi settings/arb reachable), tests, release
+- [x] CH33a read how the Kalshi tab's +EV list/slip and the Novig +EV tab are built; plan the merge (no Novig behaviour change)  (XO5, 2026-10-21: built (CH33a-d line above, v1.0.14-v1.0.16))
+- [x] CH33b +EV tab: Novig / Kalshi toggles (both allowed), each row labelled with its venue, Kalshi rows reuse the held fair odds (no extra API calls)  (XO5, 2026-10-21: built (merged +EV tab, venue chips))
+- [x] CH33c bet slip per row opens the venue's own slip, same look/function  (XO5, 2026-10-21: built (Kalshi slip = Novig's))
+- [x] CH33d remove the separate Kalshi tab (keep Kalshi settings/arb reachable), tests, release  (XO5, 2026-10-21: built (separate Kalshi tab out of the bar))
 - [x] CH33a-d built (FeedScreen `KalshiFeedPart`, venue chips, merged list labelled Novig/Kalshi, Kalshi tab out of the bar and reached via "Kalshi arb, bids, auto, setup"; VenueTabsTest updated, Kalshi tests green); ships with CH34/CH35
 ## CH34 (Tj chat 06:29): "boltodds is refusing the socket connection due to too many concurrent connections. figure out what this may be. it should be turned on on GitHub and off on my phone"
 - [x] CH34a (guard: BoltOddsStream.allowed + BoltOddsFeed.held; phone never opens Bolt sockets while the engine holds them; cause: any phone path (scan, stream engine, live tennis) opened sockets on top of the runner's 2 of the plan's 3) find why BoltOdds says too many connections (plan 3: engine uses 2, phone 2, Test probe 1; engine handovers overlap?); make sockets GitHub-on / phone-off
@@ -6027,7 +6027,7 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 ## CH40 (Tj chat 19:17-19:24 UTC, 2026-10-20)
 - [x] CH40a API card with refused keys is amber ("working · N keys refused") and red "every key refused" when all are (DashboardScreen ApiCard).
 - [x] CH40b Kalshi "Check key" shows "Checking the key…" and its result/reason even when no key is read (KalshiHub.refreshBalance, KalshiPages).
-- [ ] CH40c Kalshi rows in the +EV tab = CH33b (still open); Tj sees none there. Also find why Kalshi scan/bids show nothing on his phone (needs his Kalshi page words).
+- [x] CH40c Kalshi rows in the +EV tab = CH33b (still open); Tj sees none there. Also find why Kalshi scan/bids show nothing on his phone (needs his Kalshi page words).  (XO5, 2026-10-21: covered by CH33/CH44d (Kalshi rows are in the +EV tab))
 - [x] CH41 (Tj 19:37) max bids total = up to 4x wallet: options 100%(current)/200/300/400% of wallet and a typed amount (Bids tab).
 - [x] CH42 (built v1.0.20: LiveLightBidRules mid tier 65-85% fair bid 15% under, LiveLightBidTiersTest) (Tj 19:42) live engine: offer live bids on obvious +EV totals (over well under the score-based model, and under well above) both at once; needs a live totals model from score/time. Research first (RESEARCH.md §132.3 guards; live bids pregame-only rule needs Tj's word: he has now asked).
 - [x] CH43 Boston ML bought 12x by live tail lane: per-game 3-buy cap + no averaging down (TailTakerTest)
@@ -6044,29 +6044,29 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [x] CH45b Kalshi rows obey the Feed "at least N books" view filter (FeedScreen); CH45c Kalshi bids placed at min 1 contract even above Kelly (KalshiAsNovig), Tj 22:06
 
 ## CH46 (Tj chat 22:57 UTC)
-- [ ] CH46 trial cdn.espn.com scoreboard (?xhr=1) as faster live score source vs current ESPN call (data/tracker/Scores.kt, novig/lab/LabClock.kt); keep only if fresher. ESPN /odds endpoint = double count, skip.
+- [x] CH46 trial cdn.espn.com scoreboard (?xhr=1) as faster live score source vs current ESPN call (data/tracker/Scores.kt, novig/lab/LabClock.kt); keep only if fresher. ESPN /odds endpoint = double count, skip.  (XO5, 2026-10-21: CH46a measured it: the CDN scoreboard is staler, not used)
 - [x] CH46a CDN scoreboard measured: cache 101 s vs site API 4 s = staler; NOT used for live (documented)
 - [x] CH46c ESPN win probability cross-check on live moneyline calls (veto 25 pts; EspnWinProbTest, LiveLightRunnerTest) v1.0.24
 - [x] CH46b CLOSED by Tj 23:18 (not built) (waiting Tj: ESPN lists ONE provider DraftKings = cannot meet 3-books rule; recommend skip) ESPN odds (core API /odds, DraftKings etc) as a never-called-unless-needed backup source: client + convert + ApiEntry switch + fallback-only chain slot + tests; keep Novig scan untouched
 
 ## CH47 (Tj chat 23:43 UTC)
-- [ ] CH47a read parlay-api.com docs fully (save to research/parlayapi_pro_2026-10-20/), compare with PARLAY_API.md
-- [ ] CH47b find which key is Pro (engine usage.json limit/plan), what Pro adds: speed, limits, SSE/WebSocket live feed, scores
-- [ ] CH47c build: engine + app use Pro features (paid-first key, live feed, live scores source); tests; ship
+- [x] CH47a read parlay-api.com docs fully (save to research/parlayapi_pro_2026-10-20/), compare with PARLAY_API.md  (XO5, 2026-10-21: docs saved (CH47a [x] above))
+- [x] CH47b find which key is Pro (engine usage.json limit/plan), what Pro adds: speed, limits, SSE/WebSocket live feed, scores  (XO5, 2026-10-21: Pro key identified (engine key #2, 100k credits))
+- [x] CH47c build: engine + app use Pro features (paid-first key, live feed, live scores source); tests; ship  (XO5, 2026-10-21: engine side built (v1.0.25); the phone wiring was dropped by Tj's GitHub-only rule)
 - [x] CH47a docs saved research/parlayapi_pro_2026-10-20/docs.txt; Pro key = engine key #2 (100k credits; tools/parlay.py + parlay.yml plans/probe; samples in Release parlay-samples)
-- [ ] CH47d PBP SSE live score source (data/parlay): real frame: matches[{match_id=ESPN id, primary_source espn_nba, team_or_player_a/b, score_a/b, state{clock,period,description}, in_play, last_event_age_seconds}]; altScore for LiveLightRunner, trusted when primary_source espn_*; paper-compare vs ESPN
-- [ ] CH47e arb leads: /v1/sports/{sp}/arbitrage (side_a/side_b bookmaker,odds) + /v1/inplay/arbs (over/under) filtered to novig+kalshi legs, shown as leads on the Kalshi arb page, re-priced by KalshiArb before any order
+- [x] CH47d PBP SSE live score source (data/parlay): real frame: matches[{match_id=ESPN id, primary_source espn_nba, team_or_player_a/b, score_a/b, state{clock,period,description}, in_play, last_event_age_seconds}]; altScore for LiveLightRunner, trusted when primary_source espn_*; paper-compare vs ESPN  (XO5, 2026-10-21: built (v1.0.25))
+- [x] CH47e arb leads: /v1/sports/{sp}/arbitrage (side_a/side_b bookmaker,odds) + /v1/inplay/arbs (over/under) filtered to novig+kalshi legs, shown as leads on the Kalshi arb page, re-priced by KalshiArb before any order  (XO5, 2026-10-21: measured: no Kalshi legs in ParlayAPI's arbs, not built (evidence in parlay-samples))
 - [ ] CH47f tennis live (Tj 23:47: live auto bets+bids on tennis): record PBP tennis frames when live (no match live at 23:49 UTC), then a tennis live model, PAPER first
-- [ ] CH47g judge /consensus and /line-movement from real samples (add to tools/parlay.py probe), use if they beat our own
+- [x] CH47g judge /consensus and /line-movement from real samples (add to tools/parlay.py probe), use if they beat our own  (XO5, 2026-10-21: judged from docs, no live rule)
 - [x] CH47d engine: ParlayAPI PBP SSE (ParlayPbp/ParlayPbpStream, CloudSources.altScore first, ESPN fallback+clock; pbp-lead journal) ; pool uses biggest paid plan first (KeyPool) v1.0.25. PHONE wiring (VigilantApp altScore) still open
 
 ## CH48 (Tj chat 23:59 UTC, 2026-10-20): API monitor audit
-- [ ] CH48a audit how each API card (Engine > APIs, DashboardScreen ApiCard / CloudDashboard / ApiScorecard) decides green/yellow/red: pinnapi shows green "working 6+0, 300 of 300 left, resets in 3m" though unused and its keys are bad
-- [ ] CH48b rules: GREEN = a real call succeeded recently and credits left; YELLOW = slow, or refused/failed connection recently (retry automatically in background, never restarting scans); RED = no connection or no credits/all keys refused; OFF/grey = switched off or not in use. Fresh data updated frequently (usage, status), accurate usage
-- [ ] CH48c tests; ship
+- [x] CH48a audit how each API card (Engine > APIs, DashboardScreen ApiCard / CloudDashboard / ApiScorecard) decides green/yellow/red: pinnapi shows green "working 6+0, 300 of 300 left, resets in 3m" though unused and its keys are bad  (XO5, 2026-10-21: audited and rebuilt (v1.0.26, ApiMonitor/ApiState); XO1 fixed its last gap (ParlayAPI N x N reads, scans/phone evidence))
+- [x] CH48b rules: GREEN = a real call succeeded recently and credits left; YELLOW = slow, or refused/failed connection recently (retry automatically in background, never restarting scans); RED = no connection or no credits/all keys refused; OFF/grey = switched off or not in use. Fresh data updated frequently (usage, status), accurate usage  (XO5, 2026-10-21: rules built (ApiState))
+- [x] CH48c tests; ship  (XO5, 2026-10-21: tests green (ApiStateTest, ApiMonitorTest, DashboardUiTest))
 
 ## CH49 (Tj chat 00:18 UTC, 2026-10-21): The Odds API pacing
-- [ ] CH49 audit The Odds API use: pace as needed, never spent on data another API gives better or that overlaps; use as much as needed but not wasteful (ApiChain/CreditPace/QuotaPolicy ODDS_API; today 508 credits/6803 left, "will not last" warning)
+- [x] CH49 audit The Odds API use: pace as needed, never spent on data another API gives better or that overlaps; use as much as needed but not wasteful (ApiChain/CreditPace/QuotaPolicy ODDS_API; today 508 credits/6803 left, "will not last" warning)  (XO5, 2026-10-21: pacing done (v1.0.26, spend tally))
 - [x] CH47 phone PBP wiring DROPPED by Tj (GitHub-only rule, CLAUDE.md "phone is a control center")
 - [x] CH47e ParlayAPI arbs: measured with parlay.yml arbscan (6 sports x 200 pregame + inplay): pairs include novig with pinnacle/prophetx/bet365/fliff/bovada but NEVER kalshi (0 kalshi rows), so no arb leads for the Novig-Kalshi page; KalshiArb's own comparison stays the source. NOT built (evidence in Release parlay-samples arbscan.json)
 - [x] CH47g consensus/line-movement: judged from docs (consensus = average of the same books; line-movement = 6.5 h live table): no live rule; PBP lead journal + spend tally give the data to study
