@@ -39,6 +39,10 @@ object ApiScorecard {
         val soleLines: Int = 0,
     )
 
+    /** One API on one finished scan as the quality journal keeps it (`apiq-<day>.jsonl`, archived with the engine's other journals; CH58). */
+    @Serializable
+    data class QualityRow(val atMs: Long, val card: Card)
+
     const val WINDOW = 12
     const val SURPLUS_MARGIN = 0.15
     /** A key allowance above the free tier's 1,000 marks a paid plan on the metered providers. */

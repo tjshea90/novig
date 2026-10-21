@@ -43,6 +43,8 @@ class CloudEngine(
     /** Publishes the list and its heartbeat; returns why not, or null. */
     private val publish: suspend (CloudFeed?, CloudStatus) -> String?,
     private val onFeed: (List<Opportunity>, Long) -> Unit = { _, _ -> },
+    /** Each finished scan's per-API scorecard, for the API-quality journal (CH58). */
+    private val onApiQuality: (List<ApiScorecard.Card>, Long) -> Unit = { _, _ -> },
     private val engine: String = "github-actions",
     private val runId: String = "",
     private val clock: () -> Long = System::currentTimeMillis,
@@ -706,6 +708,7 @@ class CloudEngine(
         ApiChain.paidProviders = paid.mapNotNull { ApiToggles.policy(it)?.id }.toSet()
         ApiChain.surplusProviders = surplus.mapNotNull { ApiToggles.policy(it)?.id }.toSet()
         apiCards = ApiScorecard.cards(phone, book, ApiChain.measures, feedLines, governor.resting(now).map { it.id }.toSet(), keyed, now, contribution)
+        runCatching { onApiQuality(apiCards, now) }
         advice = ApiAdvisor.advise(book, feedLines, feedAlerts, phone, keysOf, now) + ApiAdvisor.manage(apiCards, book, keysOf, phone, now)
         for (a in advice) {
             if (announced[a.id] == day) continue

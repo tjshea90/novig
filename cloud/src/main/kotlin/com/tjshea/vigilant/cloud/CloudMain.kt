@@ -78,6 +78,7 @@ fun main(args: Array<String>) = runBlocking {
     val scanner = Scanner(novig)
     val edge = EdgeLog(DayJournal(File(out, "cloud"), "edge", EdgeRow.serializer()) { it.atMs })
     // The volume journal (Tj, 2026-10-15: balance the best +EV bets with a decent number of fills): every trading pass's counts and why bets were held back, so a session can tune volume against edge with data.
+    val apiqJournal = DayJournal(File(out, "cloud"), "apiq", com.tjshea.vigilant.data.cloud.ApiScorecard.QualityRow.serializer()) { it.atMs }
     val passJournal = DayJournal(File(out, "cloud"), "tradepass", com.tjshea.vigilant.data.cloud.CloudTrader.PassRow.serializer()) { it.atMs }
     // SX Bet live research (Tj, 2026-10-18, TCL111f1): every live-score push and a capped sample of odds pushes, raw, to sxlive-<day>.jsonl (archived with the other journals), so the live feed is built on real frames.
     // Cross-exchange hedges seen on each finished scan, paper only (CH22b): crossx-<day>.jsonl, archived with the other journals.
@@ -404,6 +405,7 @@ fun main(args: Array<String>) = runBlocking {
         bidLines = { result, s, now -> sources.askInjuries(result, s, now); BidCandidates.from(result, s, now) { o -> sources.unavailable(o, now) } },
         publishBids = { publisher.stageBids(it) },
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },
+        onApiQuality = { cards, now -> for (c in cards) apiqJournal.append(com.tjshea.vigilant.data.cloud.ApiScorecard.QualityRow(now, c)) },
         // Every priced line within 2 points of break-even is logged, shown or not, with why it was not shown (Tj, 2026-10-16, TCL33).
         onResult = { result, s -> runCatching { com.tjshea.vigilant.data.cloud.CrossExchange.find(result.opportunities + result.games.flatMap { it.outcomes }, System.currentTimeMillis()).forEach { crossJournal.append(it) } }; latestPriced.set((result.opportunities + result.games.flatMap { it.outcomes }).filter { it.quote != null }.distinctBy { it.key }); outcomeIndex.set(HashMap<String, CloudTrader.OutcomeInfo>(result.opportunities.size * 2).also { m -> for (o in result.opportunities) m[o.outcome.outcomeId] = CloudTrader.OutcomeInfo(o.market.eventId, o.eventName, o.event.startsTs, o.marketLabel, o.selection) }); latestUnpriced.set(result.opportunities.filter { it.quote == null && it.ladder.isNotEmpty() && !it.event.isLive }.distinctBy { it.key }); study.observeVigilant(result, s.copy(scanStudy = true), wideFloor = WIDE_FLOOR); study.flush(); runCatching { kalshiLane.onNovigScan(result, s) } },
         trade = { rows, s, now ->
