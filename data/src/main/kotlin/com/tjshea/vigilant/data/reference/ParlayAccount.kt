@@ -42,7 +42,7 @@ class ParlayAccount(
         val source: String? = null,
     )
 
-    private val checkedAt = HashMap<String, Long>()
+    private val checkedAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
     /** One day of ParlayAPI's own usage log (`day` is its UTC date, "2026-09-30"). */
     data class Day(val day: String, val credits: Int, val requests: Int)
@@ -78,26 +78,34 @@ class ParlayAccount(
         for (key in keys()) {
             val now = clock()
             if (!force && (checkedAt[key]?.let { now - it < minAgeMs } == true)) continue
-            checkedAt[key] = now
-            val check = try {
-                read(key)
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                null
-            } ?: continue
-            answered++
-            last = last + (key to check)
-
-            val reason = check.reason?.lowercase().orEmpty()
-            meter.recordBalance(
-                QuotaPolicy.PARLAY, key, check.remaining, check.limit, check.used, check.resetAtMs, periodStartMs = check.periodStartMs,
-                exhausted = check.valid == false && reason.contains("exhaust"),
-                inactive = check.valid == false && (reason.contains("inactive") || reason.contains("invalid") || reason.contains("revoked")),
-                note = check.tier?.let { "plan: $it" },
-            )
+            if (readOne(key) != null) answered++
         }
         return answered
+    }
+
+    /**
+     * ONE key's account, read and laid into the meter; null when it could not be read. The API check ([com.tjshea.vigilant.data.keys.ApiProbe]) asks key by key through this: it used to call [refresh] with
+     * force for every key, which read ALL the keys once per key (ten keys = 100 reads, past the engine's 20 s allowance), so the engine's own check said "no answer within 20 s" and the card read "no connection"
+     * while the scans were using ParlayAPI without a hitch (Tj, 2026-10-21: "some of the apis claim to be failing, but when I test the keys they are green"). Safe to run for several keys at once.
+     */
+    suspend fun readOne(key: String): Check? {
+        checkedAt[key] = clock()
+        val check = try {
+            read(key)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        } ?: return null
+        synchronized(this) { last = last + (key to check) }
+        val reason = check.reason?.lowercase().orEmpty()
+        meter.recordBalance(
+            QuotaPolicy.PARLAY, key, check.remaining, check.limit, check.used, check.resetAtMs, periodStartMs = check.periodStartMs,
+            exhausted = check.valid == false && reason.contains("exhaust"),
+            inactive = check.valid == false && (reason.contains("inactive") || reason.contains("invalid") || reason.contains("revoked")),
+            note = check.tier?.let { "plan: $it" },
+        )
+        return check
     }
 
     private val historyAt = HashMap<String, Long>()
