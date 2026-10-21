@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-s9zcjn",
- "head": "fce8dea44cffe1b55542a5ddca2f3f89356c5816",
+ "head": "2d56888a0d89937dddff079292e6472bb349b015",
  "since": 1792563808,
- "beat": 1792610120,
- "beatIso": "2026-10-21T19:15:20Z",
- "done": "ApiState: a fresh accepted key check outranks a ledger 'every key refused' (BoltOdds card red beside green check); ApiStateTest updated, green",
- "next": "ship in the next release; check why BoltOdds ledger marks refused (socket 1008 too-many-connections?) and keep it out of key state"
+ "beat": 1792610151,
+ "beatIso": "2026-10-21T19:15:51Z",
+ "done": "pre-release: v1.0.38: API card trusts a fresh accepted key check over a stale refusal (BoltOdds card) (versionCode 378, v1.0.38)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.38), then run: bash tools/record-release.sh v1.0.38 378 \"v1.0.38: API card trusts a fresh accepted key check over a stale refusal (BoltOdds card)\""
 }
