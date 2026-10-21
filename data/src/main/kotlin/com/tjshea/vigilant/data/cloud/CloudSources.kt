@@ -110,6 +110,25 @@ class CloudSources(
     val sharpApiClient = com.tjshea.vigilant.data.sharpapi.SharpApiClient(http, json, { keys(CloudKeys.SHARPAPI).firstOrNull().orEmpty() }, usage)
     val sharpApiFeed = com.tjshea.vigilant.data.sharpapi.SharpApiFeed(sharpApiClient, log = { line -> println(line) })
     private val sharpApi = com.tjshea.vigilant.data.sharpapi.SharpApiSource(sharpApiFeed, sharpApiClient)
+    /** SharpAPI's live game state (SS): from the stream's `gamestate` channel, or `GET /gamestate` while the stream is not live ([refreshSharpApiGameState]). */
+    val sharpApiScores = com.tjshea.vigilant.data.sharpapi.SharpApiScores()
+    /** SharpAPI's WebSocket (SS, Tj 2026-10-21: the stream add-on): odds and game state pushed into the store; only the engine ever opens it (one stream per key, a newer one displaces the older). */
+    val sharpApiStream = com.tjshea.vigilant.data.sharpapi.SharpApiStream(http, { keys(CloudKeys.SHARPAPI).firstOrNull().orEmpty() }, sharpApiFeed, sharpApiScores, scope, log = { line -> println(line) })
+    @Volatile private var gameStateRefused = false
+
+    /** The game state by REST while the stream does not carry it (every few seconds while a lane may want scores); a 403 (no add-on) stops it for the job. */
+    suspend fun refreshSharpApiGameState(s: ScanSettings) {
+        if (gameStateRefused || !sharpApiOn(s) || (sharpApiStream.live && !sharpApiStream.gamestateRefused)) return
+        try {
+            sharpApiScores.applyRest(sharpApiClient.get("/gamestate", listOf("is_live" to "true")))
+        } catch (e: com.tjshea.vigilant.data.sharpapi.SharpApiException) {
+            if (e.status == 403) { gameStateRefused = true; println("SharpAPI game state: not on this key (${e.message?.take(100)})") }
+        }
+    }
+
+    /** SharpAPI's live score for a game (SS): the stream's (or REST's) game state while SharpAPI is on. */
+    fun sharpApiScore(s: ScanSettings, league: String, home: String, away: String): com.tjshea.vigilant.data.novig.lab.AltScore? =
+        if (sharpApiOn(s)) sharpApiScores.scoreFor(league, home, away)?.takeIf { System.currentTimeMillis() - it.atMs < 30_000L } else null
 
     /** The day's request count from SharpAPI itself onto the usage meter (hourly, with the other plan reads). */
     suspend fun refreshSharpApiUsage() {
@@ -121,7 +140,7 @@ class CloudSources(
     fun sharpApiOn(s: ScanSettings): Boolean = s.gates.useSharpApi && has(CloudKeys.SHARPAPI) && !sharpApiClient.down()
 
     /** SharpAPI's state in words (the engine's log, Diagnostics). */
-    fun sharpApiNote(): String = "SharpAPI: " + sharpApiClient.health() + " · held " + sharpApiFeed.describe() + " · " + sharpApiFeed.deltaCalls + " delta reads, " + sharpApiFeed.reloads + " whole reads" + (sharpApiFeed.lastNote?.let { " · $it" } ?: "")
+    fun sharpApiNote(): String = "SharpAPI: " + sharpApiClient.health() + " · stream " + sharpApiStream.health() + " (${sharpApiFeed.streamRows} rows pushed, ${sharpApiFeed.streamMissed} unplaced) · game state ${sharpApiScores.live()} live · held " + sharpApiFeed.describe() + " · " + sharpApiFeed.deltaCalls + " delta reads, " + sharpApiFeed.reloads + " whole reads" + (sharpApiFeed.lastNote?.let { " · $it" } ?: "")
 
     private val sxbet = com.tjshea.vigilant.data.reference.SxBetClient(http, json, { keys(CloudKeys.SXBET).firstOrNull().orEmpty() }, usage, socketOn = { sxSocketWanted }, scope = scope)
     /**
@@ -146,6 +165,7 @@ class CloudSources(
             add("Engine BoltOdds: socket ${if (s.gates.boltSocket) "ON" else "OFF"} · lines ${if (boltFeed.lines.live) "live" else "not live"} · props ${if (boltFeed.props.live) "live" else "not live"}")
             add("Engine Kalshi: " + (if (kalshiSigner == null) "no key on GitHub (public reads)" else "socket ${if (kalshiSocketWanted) "ON" else "OFF"} · ${if (kalshiStream.live) "live" else "not live"} · ${kalshiStream.subscribedCount} of ${kalshiStream.wantedCount} markets"))
             val sx = sxbet.stream
+            add("Engine SharpAPI: " + (if (!s.gates.useSharpApi) "API off" else if (!has(CloudKeys.SHARPAPI)) "no key on GitHub" else "socket ${if (s.gates.sharpApiSocket) "ON" else "OFF"} · ${sharpApiStream.health(now)} · game state ${sharpApiScores.live()} live"))
             add("Engine SX Bet: " + (if (!s.gates.useSxBet) "API off" else if (sx == null) "socket ${if (sxSocketWanted) "ON" else "OFF"} · no connection yet (opens with the first live game or scan)" else "socket ${if (sxSocketWanted) "ON" else "OFF"} · ${sx.health()} · last push ${ago(sx.lastMessageMs)} · ${sx.fixtureStatus.values.count { it == 2 }} games in play"))
         }
     }
@@ -158,6 +178,7 @@ class CloudSources(
             SocketState("BoltOdds lines", bolt, boltFeed.lines.live, boltFeed.lines.lastFrameMs, if (!s.gates.useBoltOdds) "API off" else if (!has(CloudKeys.BOLT)) "no key on GitHub" else if (!bolt) "socket off: read by request" else ""),
             SocketState("BoltOdds props", bolt, boltFeed.props.live, boltFeed.props.lastFrameMs, ""),
             SocketState("Kalshi", kalshiSocketWanted, kalshiStream.live, kalshiStream.lastFrameMs, if (kalshiSigner == null) "no key on GitHub (public reads)" else "${kalshiStream.subscribedCount} of ${kalshiStream.wantedCount} markets"),
+            SocketState("SharpAPI", s.gates.useSharpApi && s.gates.sharpApiSocket && has(CloudKeys.SHARPAPI), sharpApiStream.live, sharpApiStream.lastFrameMs, if (!s.gates.useSharpApi) "API off" else if (!has(CloudKeys.SHARPAPI)) "no key on GitHub" else "${sharpApiScores.live()} games' live state · ${sharpApiStream.health()}"),
             SocketState("SX Bet", sxSocketWanted, sx?.live == true, sx?.lastMessageMs ?: 0L, if (!s.gates.useSxBet) "API off" else if (sx == null) "no read key on GitHub" else "${sx.fixtureStatus.values.count { it == 2 }} games in play"),
         )
     }
@@ -252,7 +273,7 @@ class CloudSources(
 
     /** SX Bet's live score for a game (CH31) while its switches are on; the engine's second score source behind ESPN. */
     fun altScore(s: ScanSettings, league: String, home: String, away: String): com.tjshea.vigilant.data.novig.lab.AltScore? =
-        parlayScore(s, league, home, away) ?: if (s.gates.useSxBet && s.gates.sxSocket) sxConfirmFeed()?.scoreFor(league, home, away) else null
+        parlayScore(s, league, home, away) ?: sharpApiScore(s, league, home, away) ?: if (s.gates.useSxBet && s.gates.sxSocket) sxConfirmFeed()?.scoreFor(league, home, away) else null
 
     /** ParlayAPI's live play-by-play stream (CH47, Tj 2026-10-20: the default score source, ESPN the fallback) while ParlayAPI is on and a key of a Starter-or-bigger plan exists: the biggest plan's key opens it. */
     val parlayStream: com.tjshea.vigilant.data.parlay.ParlayPbpStream get() = parlayPbp
@@ -310,6 +331,7 @@ class CloudSources(
         if (!sxSocketWanted) sxbet.stream?.close()
         kalshiSocketWanted = s.useKalshi && s.gates.kalshiSocket && kalshiSigner != null
         if (!kalshiSocketWanted) kalshiStream.close()
+        if (!s.gates.useSharpApi || !s.gates.sharpApiSocket) sharpApiStream.close("socket off")
     }
 
     /** Every socket this engine holds is closed cleanly (job end, cancel, hours over): a socket left half-open counts against BoltOdds' 3 connections until its server times it out (BC3). */
@@ -317,6 +339,7 @@ class CloudSources(
         runCatching { boltFeed.close() }
         runCatching { sxbet.stream?.close() }
         runCatching { kalshiStream.close() }
+        runCatching { sharpApiStream.close("job ending") }
     }
 
     fun sources(s: ScanSettings): List<ReferenceSource> {
@@ -375,7 +398,13 @@ class CloudSources(
         // SX Bet: markets are public but prices need the read-only key; with the switch on and a key it prices beside the other exchanges.
         if (s.gates.useSxBet && has(CloudKeys.SXBET) && !sxbet.down()) add(sxbet)
         // SharpAPI: its switch and a key; the store keeps itself current while it is asked (the poller starts with the first league asked and drops leagues nobody asks for).
-        if (s.gates.useSharpApi && has(CloudKeys.SHARPAPI) && !sharpApiClient.down()) { add(sharpApi); sharpApiFeed.startPolling(scope) } else sharpApiFeed.stopPolling()
+        if (s.gates.useSharpApi && has(CloudKeys.SHARPAPI) && !sharpApiClient.down()) {
+            add(sharpApi)
+            sharpApiFeed.startPolling(scope)
+            // The stream carries the leagues the store holds plus the picked ones (a new league's first rows come from its REST read).
+            val slugs = sharpApiFeed.heldLeagues() + s.leagues.mapNotNull { com.tjshea.vigilant.data.sharpapi.SharpApiBooks.leagueSlugOf(it) }
+            sharpApiStream.want(s.gates.sharpApiSocket, slugs)
+        } else { sharpApiFeed.stopPolling(); sharpApiStream.close("SharpAPI off") }
         if (s.useKalshi) add(kalshi)
         if (s.usePropLine && has(CloudKeys.PROPLINE)) {
             add(propLine)

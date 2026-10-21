@@ -1420,6 +1420,8 @@ data class ApiGates(
     val useSxBet: Boolean = false,
     /** SharpAPI (SHARPAPI.md, Tj 2026-10-21: the Sharp plan): 25 books incl. Pinnacle, Circa, Bookmaker, Betfair, ProphetX, kept current on the engine by delta polling. On by default; nothing is sent without a key. */
     val useSharpApi: Boolean = true,
+    /** SharpAPI's WebSocket (SS, Tj 2026-10-21: the stream add-on): odds and game state pushed to the engine; off = the REST delta every 1-2 s. Only the engine ever opens it (one stream per key). */
+    val sharpApiSocket: Boolean = true,
     /** SX Bet: keep its WebSocket (best-odds and live-score channels) open and read books from it; off = the REST read every scan. Only matters while [useSxBet] is on. */
     val sxSocket: Boolean = true,
     /** BoltOdds: price the fair line with every sportsbook it lists (not only the picked ones). */

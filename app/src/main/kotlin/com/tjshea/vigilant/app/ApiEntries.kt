@@ -68,7 +68,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
      * Whether the API has a WebSocket the app can keep open (Tj, 2026-10-13: "a toggle for socket on or off" for every API that has one). Socket on = the connection is kept for real-time prices; socket
      * off with the API still on = the regular requests; the API off = never called ([isOn]). Novig's own market feed has its switch beside these rows ([novigSocket]).
      */
-    val hasSocket: Boolean get() = this == BOLTODDS || this == PINNODDS || this == KALSHI || this == SXBET
+    val hasSocket: Boolean get() = this == BOLTODDS || this == PINNODDS || this == KALSHI || this == SXBET || this == SHARPAPI
 
     fun socketOn(s: ScanSettings): Boolean = when (this) {
         BOLTODDS -> s.gates.boltSocket
