@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "5cebf0fcb56ad6f809a7ace9b3c8c9ce9a981a76",
+ "head": "ffd7bf25455fc22d94f3aaf0dc028a4aab3c8a3f",
  "since": 1792596542,
- "beat": 1792618506,
- "beatIso": "2026-10-21T21:35:06Z",
+ "beat": 1792618528,
+ "beatIso": "2026-10-21T21:35:28Z",
  "done": "Research index landed",
  "next": "confirm v1.0.36 release, XO6 full test protocol"
 }
