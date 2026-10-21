@@ -58,7 +58,7 @@ fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Mod
     }
     val u = state.cloudUi
     val board = remember(u.trades, u.desk, u.status, now / 15_000L) { EngineBoard.of(u.trades, u.desk, u.status, now) }
-    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, liveDirectAtMs = u.liveDirectAtMs, hoursOn = state.settings.cloudHours, section = section, refreshedAtMs = u.refreshedAtMs, refreshNote = u.refreshNote, kalshi = kalshi, testing = state.apiBusy, checks = state.apiChecks, onTestApi = onTestApi, onRetryApi = onRetryApi)
+    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, liveDirectAtMs = u.liveDirectAtMs, hoursOn = state.settings.cloudHours, section = section, refreshedAtMs = u.refreshedAtMs, refreshNote = u.refreshNote, kalshi = kalshi, testing = state.apiBusy, checks = state.apiChecks, checkedAt = state.apiCheckedAt, onTestApi = onTestApi, onRetryApi = onRetryApi)
 }
 
 /**
@@ -92,6 +92,7 @@ fun DashboardContent(
     /** ApiEntry names being tested now, the last Test now answers by name, and the Test now tap (by policy id). */
     testing: Set<String> = emptySet(),
     checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>> = emptyMap(),
+    checkedAt: Map<String, Long> = emptyMap(),
     onTestApi: (String) -> Unit = {},
     onRetryApi: (String) -> Unit = {},
 ) {
@@ -105,7 +106,7 @@ fun DashboardContent(
             if (board != null) EngineMoneyCard(board, status, now) else if (section != null) Text("The engine's bets and bids appear here once it has placed any.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (kalshi != null && kalshi.kalshiOn) KalshiMoneyCard(kalshi)
         }
-        if (show(EngineSection.APIS)) ApisSection(status, meters, now, testing, checks, onTestApi, onRetryApi)
+        if (show(EngineSection.APIS)) ApisSection(status, meters, now, testing, checks, checkedAt, onTestApi, onRetryApi)
         if (show(EngineSection.TRENDS)) TrendsSection(history)
         if (show(EngineSection.OVERVIEW)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -152,7 +153,7 @@ private fun OverviewSection(status: CloudStatus?, now: Long, hoursOn: Boolean, l
 
 /** APIs: the engine's API manager (which feed does what) and every API's health and usage meter. */
 @Composable
-private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: Long, testing: Set<String>, checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>>, onTestApi: (String) -> Unit, onRetryApi: (String) -> Unit) {
+private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: Long, testing: Set<String>, checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>>, checkedAt: Map<String, Long>, onTestApi: (String) -> Unit, onRetryApi: (String) -> Unit) {
     val running = DashboardModel.running(status, now)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         status?.apiCards?.takeIf { it.isNotEmpty() }?.let { cs ->
@@ -170,13 +171,21 @@ private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: L
             }
         }
 
+        status?.apiManager?.takeIf { it.isNotEmpty() }?.let { fixes ->
+            SectionHeader("API manager: what the engine is doing about failing APIs")
+            fixes.forEach { f -> InfoLine(f.name, f.note + (if (f.swaps > 0) " (fresh runners asked for: ${f.swaps} of ${com.tjshea.vigilant.data.cloud.ApiManager.MAX_SWAPS})" else ""), if (f.state == "off") Tone.BAD else Tone.WARN) }
+        }
         SectionHeader("APIs")
         val health = remember(status, meters) { DashboardModel.apiHealth(status, meters) }
         // Each card's light comes from the engine's own live check of the API (Tj, 2026-10-20, CH48), the ledger and the last scan, in that order ([com.tjshea.vigilant.data.cloud.ApiState]).
-        val verdicts = remember(status, meters, health, now / 20_000L) {
+        // XO1 (Tj, 2026-10-21): the light weighs three kinds of evidence, not the engine's last check alone: the engine's check (with the scans' proof that it reads the API), this phone's own fresh test of the
+        // same keys (pull to refresh runs it), and the usage ledger. An API the engine's runner cannot use but this phone can is yellow and says so, never red on the engine's word alone.
+        val verdicts = remember(status, meters, health, checks, checkedAt, now / 20_000L) {
             meters.associate { v ->
                 val sid = when (v.policy.id) { "pinnacle" -> "pinnapi"; "kalshi", "polymarket" -> v.policy.id; else -> com.tjshea.vigilant.data.cloud.ApiToggles.idOfPolicy(v.policy.id) }
-                v.policy.id to com.tjshea.vigilant.data.cloud.ApiState.of(status?.apiChecks?.firstOrNull { it.id == sid }, v, health[v.policy.id], now)
+                val entry = com.tjshea.vigilant.app.ApiEntry.entries.firstOrNull { it.policy?.id == v.policy.id }
+                val phone = entry?.let { e -> checks[e.name]?.takeIf { it.isNotEmpty() }?.let { cs -> com.tjshea.vigilant.data.cloud.ApiState.PhoneCheck(checkedAt[e.name] ?: 0L, cs.any { it.ok }, cs.count { it.ok }, cs.size, (cs.firstOrNull { !it.ok } ?: cs.first()).message) } }
+                v.policy.id to com.tjshea.vigilant.data.cloud.ApiState.of(status?.apiChecks?.firstOrNull { it.id == sid }, v, health[v.policy.id], now, phone, running)
             }
         }
         val cards = remember(meters, health, verdicts) {
