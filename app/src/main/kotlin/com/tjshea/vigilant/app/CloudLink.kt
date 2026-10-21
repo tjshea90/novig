@@ -134,6 +134,7 @@ class CloudLink(private val c: AppContainer) {
     private var feedFetchedFor = 0L
     private var bidsFetchedFor = 0L
     private var evFetchedFor = 0L
+    private var cnoFetchedFor = 0L
 
     private fun token(): String? {
         tokenPlain?.let { return it }
