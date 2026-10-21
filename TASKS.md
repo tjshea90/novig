@@ -6145,7 +6145,7 @@ Finding 19:30: only ONE cloud-scan run is live (run 254), so no old runner holds
 ## SS: SharpAPI WebSocket streaming + game state (Tj, interactive session acct-27a37e (tj Gmail), 2026-10-21, verbatim)
 "I added websocket streaming and game state support to the API trial. Find the docs for these features and add these to the app and GitHub engine in addition to everything else. Does this version support the streaming socket"
 (answered: no, v1.0.42 polls /odds/delta every 1-2 s; the stream is built here)
-- [ ] SS1 save the streaming (SSE, WebSocket, AsyncAPI) and game-state docs verbatim, update SHARPAPI.md
-- [ ] SS2 engine: one WebSocket stream (cap 1 connection per key, newer wins) feeding SharpApiFeed (odds:update upserts, odds:removed deletes, is_active), delta polling only as fallback/reconcile; status + socket switch (gates.sharpApiSocket)
-- [ ] SS3 game state: /gamestate + stream channel -> live scores for the live lane (AltScore) and grading/closing; status on the phone
+- [x] SS1 (research/sharpapi/docs_2026-10-21b/, SHARPAPI.md §5) save the streaming (SSE, WebSocket, AsyncAPI) and game-state docs verbatim, update SHARPAPI.md
+- [x] SS2 (SharpApiStreamTest) engine: one WebSocket stream (cap 1 connection per key, newer wins) feeding SharpApiFeed (odds:update upserts, odds:removed deletes, is_active), delta polling only as fallback/reconcile; status + socket switch (gates.sharpApiSocket)
+- [x] SS3 (SharpApiStreamTest; grading stays on ESPN/MLB/SGO) game state: /gamestate + stream channel -> live scores for the live lane (AltScore) and grading/closing; status on the phone
 - [ ] SS4 tests, ship, release

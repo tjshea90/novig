@@ -109,7 +109,7 @@ CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a 
 | 2026-10-03 | `scan_study_analysis_2026-10-03_v0.58.3.md` | Vigilant scan study v0.58.3 — analysis - File analysed: `vigilant-scan-study-v0.58.3-2026-10-03-2248.txt` (622 bets). Numbers below were computed with code from the JSON lines, not from the file's summary. CIs are bootstrap ove... | CODE |
 | 2026-10-03 | `external_report_2026-10-03_clv_ev.md` | Beating CLV, Finding True +EV, and Avoiding Trap Bets - **Compiled:** 2026-10-03 · **Purpose:** reference document for building a +EV betting app (taking and making bets/bids) and maximizing profit on the Novig prediction market. | CODE |
 |  | `v0701_partial/` | (no title) | CODE |
-|  | `sharpapi/` | (no title) | LEVER CODE |
+|  | `sharpapi/` | (no title) | APPLIED LEVER CODE |
 |  | `sgo/` | (no title) | WATCH CODE |
 |  | `propline/` | (no title) | APPLIED LEVER CLOSED WATCH CODE |
 |  | `live_leadlag.py` | (no title) | CODE |
