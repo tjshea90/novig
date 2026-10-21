@@ -37,6 +37,17 @@ class MakerGuardTest {
     }
 
     @Test
+    fun `several fills of one game that moved once are one judgment, not a stop (Tj, 2026-10-21)`() {
+        // Three lines of one game picked off together, then five good games: one bad game of six, nothing trips.
+        val oneGame = (1..3).map { fill(it, fairAfter = 0.47).copy(eventId = "same") }
+        val good = (4..8).map { fill(it, fairAfter = 0.53) }
+        val v = MakerGuard.check(oneGame + good)
+        assertEquals(6, v.judged)
+        assertEquals(1, v.pickedOff)
+        assertFalse(v.tripped)
+    }
+
+    @Test
     fun `half or more of the last eight judged fills picked off, with the average EV under 1 percent, stops the bids - and fewer than six fills never does`() {
         // Seven judged fills, five picked off: stop.
         val bad = (1..7).map { fill(it, fairAfter = if (it <= 5) 0.47 else 0.53) }
