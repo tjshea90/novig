@@ -1098,6 +1098,22 @@ class MakerTest {
     }
 
     @Test
+    fun `Volume mode's score is the hours to the start times how close the bid sits under Novig's offer, so a tight market on a nearer game goes first and a far offer goes last`() {
+        val tight = line("t-over", fair = 0.60, offer = 0.52, m = market("t", starts = now + 4 * 3_600_000L))
+        val wide = line("w-over", fair = 0.60, offer = 0.70, m = market("w", starts = now + 4 * 3_600_000L))
+        val soonWide = line("s-over", fair = 0.60, offer = 0.70, m = market("s", starts = now + 30 * 60_000L))
+        // the same price (50c): 2 points under the first offer, 20 under the second
+        assertTrue(BidVolume.score(tight, true, now, 0.50) > 5 * BidVolume.score(wide, true, now, 0.50))
+        // a game inside the hour with a far offer still ranks under a tight market four hours out: the offer's distance is worth more than the clock
+        assertTrue(BidVolume.score(tight, true, now, 0.50) > BidVolume.score(soonWide, true, now, 0.50))
+        // no offer known: the middle of the table, and the start alone decides
+        assertTrue(BidVolume.score(soonWide, true, now) > BidVolume.score(wide, true, now))
+        // the order of the desk follows it
+        val order = listOf(postOf(wide, 0.50), postOf(tight, 0.50), postOf(soonWide, 0.50)).sortedWith(MakerPlan.priority(volume, now)).map { it.line.market.marketId }
+        assertEquals(listOf("t", "s", "w"), order)
+    }
+
+    @Test
     fun `Volume mode runs no wallet-filling pass, scales the new stakes toward the wallet target, and says how the bids are spread`() = runBlocking {
         val rs = volume.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1, maxOdds = 0, minOdds = 0, perGameBids = 0, perGameBidDollars = 0.0)
         val near = (1..6).map { line("n$it-over", fair = 0.60, offer = 0.70, m = market("n$it", starts = start + 6 * 3_600_000L).copy(eventId = "g${it % 3}")).copy(league = "NHL", sharpFairs = listOf(0.60), books = 5, bookFairs = List(5) { 0.60 }) }

@@ -1,12 +1,10 @@
 package com.tjshea.vigilant.data.novig.trading.maker
 
-import com.tjshea.vigilant.data.scanner.BetKind
-
 /**
  * Volume mode for the bids (Tj, 2026-10-14: "The key is volume. I want hundreds or thousands of bids up at any time, on markets and types of bids most likely to be filled put up first. It can go down to 1.5% positive
  * EV on the safest bid types and 2.5% positive EV on riskier ones. The goal right now is pure volume and bid fills"). A bid's EV at its own price is its margin under the fair, so Volume mode posts every bid at the
  * most the floor allows ([SAFE_EV] for the types that hold up, [RISKY_EV] for the rest and for lines no sharp book prices): the highest price that still has that edge is the one that fills fastest.
- * Order is by how fast that kind of bid has filled ([score], from `research/bid_fill_speed_2026-10-14.md`), so the money goes first where fills come fastest. Pure.
+ * Order is by how fast bids like it have filled ([score]: the hours to the start and how close the price sits to Novig's offer, `research/bid_volume_study_2026-10-21.md`), so the money goes first where fills come fastest. Pure.
  */
 object BidVolume {
     /** The EV floor of the safest bid types (proven and steady: [BidTier]) when a sharp book prices the line. */
