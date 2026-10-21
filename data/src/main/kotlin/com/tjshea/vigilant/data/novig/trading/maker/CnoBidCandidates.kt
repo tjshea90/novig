@@ -24,6 +24,8 @@ object CnoBidCandidates {
     /** Why [row] gets no page read for a bid, or null when it does. */
     fun skipReason(row: CnoRow, filters: CnoFilters, rules: MakerRules, now: Long): String? {
         if (!Picks.isGame(row.event)) return "not a game"
+        // A Kalshi row (CK, 2026-10-21) was +EV at Kalshi's price, not Novig's: the Novig bid desk does not take it.
+        if (com.tjshea.vigilant.data.cno.CnoVenueSource.isKalshi(row)) return "listed at Kalshi, not Novig"
         CnoChecks.rejection(row, filters, now)?.takeIf { it in SCOPE }?.let { return it.text }
         if (row.oneWay) return "devigged from one side only"
         val starts = row.startsAtMs ?: return "no start time"
