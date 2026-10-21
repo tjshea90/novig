@@ -6,6 +6,7 @@ import com.tjshea.vigilant.data.cno.CnoFeed
 import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.data.cno.CnoSnapshot
 import com.tjshea.vigilant.data.cno.LivePrice
+import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -286,6 +287,47 @@ class ScanStudy(
         if (same) sweepGone(Sight.VIGILANT, Sight.GONE_VIGILANT, seen, now)
         maybeFlush(now)
         created
+    }
+
+    /** An order of the engine's as the study needs it ([addOrders]): what it bought, when, at what price and fair, and Novig's ids for the line. */
+    data class OrderLine(
+        val id: String, val atMs: Long, val league: String, val event: String, val startsTs: Long, val marketLabel: String, val selection: String,
+        val marketId: String, val outcomeId: String, val eventId: String, val price: Double, val fair: Double, val evPercent: Double, val note: String = "",
+    )
+
+    /**
+     * The engine's own orders whose line the scans never logged (XO2, 2026-10-21): 82 of the 459 orders on games that had started were never graded, because a bid fills on a line whose Novig ask can sit more than 2% above
+     * its fair, that is under the wide floor, so no scan logged the line, and the grader only grades what the journal holds. Each order whose (market, outcome) is not in [known] becomes a bet of its own in its
+     * game's day (its price, its fair and EV at the fill, how it was made), with its ids, so the same grader that grades the rest gives it a result and a closing line. Only orders on games already started are added
+     * (a game still to come may yet be logged by a scan). Returns how many were added.
+     */
+    suspend fun addOrders(orders: List<OrderLine>, known: Set<Pair<String, String>>): Int = settleLock.withLock {
+        val now = clock()
+        val byDay = HashMap<LocalDate, ArrayList<Line>>()
+        val seen = HashSet<Pair<String, String>>()
+        var added = 0
+        for (o in orders) {
+            val key = o.marketId to o.outcomeId
+            if (o.marketId.isBlank() || o.outcomeId.isBlank() || o.startsTs > now || key in known || !seen.add(key)) continue
+            val id = "o" + idOf(null, "order|${o.outcomeId}", o.startsTs).take(ID_LENGTH - 1)
+            val price = o.price.coerceIn(0.001, 0.999)
+            val american = Odds.probabilityToAmerican(price)
+            val atBet = AtBet(
+                atMs = o.atMs, version = "github-grader", how = AtBet.HOW_STUDY, scanner = "Vigilant", league = o.league, kind = BetKind.of(o.marketLabel, o.selection).name,
+                minutesToStart = (o.startsTs - o.atMs) / 60_000L, american = american, ev = o.evPercent, fair = o.fair,
+                rules = "NOT SHOWN (an order of the engine's, its line was never logged by a scan: ${o.note.take(60)})",
+            )
+            val bet = TrackedBet(
+                id = id, createdAtMs = o.atMs, league = o.league, eventName = o.event, startsTs = o.startsTs, marketLabel = o.marketLabel, selection = o.selection, marketId = o.marketId, outcomeId = o.outcomeId,
+                price = price, cost = price, fairAtBet = o.fair, evPercentAtBet = o.evPercent, stake = STUDY_STAKE, american = american, book = "Novig", eventId = o.eventId, atBet = atBet,
+            )
+            val lines = byDay.getOrPut(FreeScores.etDate(o.startsTs)) { ArrayList() }
+            lines += Line(Line.BET, id, now, b = bet)
+            lines += Line(Line.IDS, id, now, m = o.marketId, o = o.outcomeId)
+            added++
+        }
+        for ((day, lines) in byDay) withContext(io) { journal.append(day, lines) }
+        added
     }
 
     /** Why the list under [s] did not show [o]: the feed's own filters, in the feed's order ([com.tjshea.vigilant.data.scanner.ScanResult.feed]). */

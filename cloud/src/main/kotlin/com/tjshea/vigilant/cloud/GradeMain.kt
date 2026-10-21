@@ -67,6 +67,20 @@ private suspend fun gradeMain(args: Array<String>) {
 
     val study = ScanStudy(StudyJournal(journalDir), version = { "github-grader" })
     val scratch = File(journalDir.parentFile ?: File("."), "grading-scratch").apply { mkdirs() }
+    // The engine's own orders whose line no scan ever logged (a bid filled where the ask sat over 2% above fair: 82 of 459 started orders were never graded, 2026-10-21) are added to the journal as bets of their
+    // own, so the grader below gives them a result and a closing line like every other line. The lines it adds are kept with the rest of what this run added.
+    v("--trades")?.let { path ->
+        val ledger = File(path).takeIf { it.isFile }?.readText()?.let(TradeLedger::parse)
+        if (ledger != null) {
+            val journal = StudyJournal(journalDir)
+            val known = HashSet<Pair<String, String>>()
+            for (day in journal.days()) for (sb in journal.fold(day, withSights = false).values) known += sb.bet.marketId to sb.bet.outcomeId
+            val orders = ledger.entries.filter { it.kind != "live" && it.mode == "LIVE" }.map {
+                ScanStudy.OrderLine(it.id, it.atMs, it.league, it.event, it.startsTs, it.marketLabel, it.selection, it.marketId, it.outcomeId, it.eventId, it.avgPrice, it.fair, it.evPercent, if (it.note.startsWith("bid")) "bid" else "bet")
+            }
+            println("grade: ${study.addOrders(orders, known)} of the engine's orders had no line in the journal and were added")
+        }
+    }
     val report = study.settle(scores, closes, emptyList(), scratch)
     println("grade: looked ${report.looked}, graded ${report.graded}, closed ${report.closed} over ${report.days} day(s)" + (study.lastProblem?.let { ", problem: $it" } ?: ""))
 
