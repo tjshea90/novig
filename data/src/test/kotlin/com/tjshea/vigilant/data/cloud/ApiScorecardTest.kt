@@ -82,3 +82,13 @@ class ApiScorecardTest {
         org.junit.Assert.assertEquals(0, c.soleLines)
     }
 }
+
+class ApiQualityRowTest {
+    @org.junit.Test
+    fun `a quality row survives the journal's json`() {
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; encodeDefaults = true }
+        val row = ApiScorecard.QualityRow(1L, ApiScorecard.Card("sgo", "SGO", true, "active", p90AgeS = 40, offPinnaclePts = 0.4, answeredPct = 100, fedLines = 900, soleLines = 12))
+        val back = json.decodeFromString(ApiScorecard.QualityRow.serializer(), json.encodeToString(ApiScorecard.QualityRow.serializer(), row))
+        org.junit.Assert.assertEquals(row, back)
+    }
+}
