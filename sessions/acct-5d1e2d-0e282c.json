@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "50bf38c59b58c8ac6f682697431bad21e1d4194b",
+ "head": "527e1969ae450cf267c5a0de90956794970e391c",
  "since": 1792539161,
- "beat": 1792546580,
- "beatIso": "2026-10-21T01:36:20Z",
- "done": "pre-ship: v1.0.27: ParlayAPI Pro joins the hot refresh for games about to start (CH50)",
- "next": "ship.sh gates and releases this"
+ "beat": 1792546613,
+ "beatIso": "2026-10-21T01:36:53Z",
+ "done": "pre-release: v1.0.27: ParlayAPI Pro joins the hot refresh for games about to start (CH50) (versionCode 367, v1.0.27)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.27), then run: bash tools/record-release.sh v1.0.27 367 \"v1.0.27: ParlayAPI Pro joins the hot refresh for games about to start (CH50)\""
 }
