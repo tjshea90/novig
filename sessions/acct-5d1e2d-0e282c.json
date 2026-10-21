@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-7dry2r",
- "head": "f076e3bff95741dd6a2174193739ea1a27d7417b",
+ "head": "6b8485056db0e1165a9d7a1a38359a640ea32322",
  "since": 1792539161,
- "beat": 1792556667,
- "beatIso": "2026-10-21T04:24:27Z",
+ "beat": 1792556674,
+ "beatIso": "2026-10-21T04:24:34Z",
  "done": "CH51: dashboard shows Stopping when switch off; refreshNow reads have 20s deadlines (stuck spinner)",
  "next": "ship v1.0.29 then reply to Tj"
 }

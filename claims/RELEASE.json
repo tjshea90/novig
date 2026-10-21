@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/0e282c",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "0e282c",
+ "note": "v1.0.29: pull-to-refresh deadlines, Stopping headline when switched off",
+ "since": 1792556674,
+ "beat": 1792556674
+}
