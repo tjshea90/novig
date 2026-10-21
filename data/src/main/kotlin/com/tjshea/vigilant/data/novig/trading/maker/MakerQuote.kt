@@ -640,6 +640,11 @@ object MakerQuote {
     const val SHARP_RELAX_END_H = 2.0
     /** A sharp-confirmed read must be this fresh (ms) for the step-down. */
     const val SHARP_RELAX_FRESH_MS = 90_000L
+    /**
+     * And every book behind the fair, the sharp one included, must be no older than this (ms): [MakerLine.fairNewestMs] alone let a fresh soft book carry a sharp price minutes old
+     * into the step-down, the hours when lines move most (full test, 2026-10-21). The sharp-confirmation default's "oldest quote allowed".
+     */
+    const val SHARP_RELAX_OLDEST_MS = 180_000L
 
     /**
      * The margin of a bid confirmed by a fresh read with a sharp book in the fair, stepped down toward [SHARP_RELAX_FLOOR] as the game nears; null = not applicable
@@ -649,6 +654,8 @@ object MakerQuote {
         if (!rules.sharpRelax || obscure || rules.volume || rules.quick || line.sharpFairs.isEmpty() || usual <= SHARP_RELAX_FLOOR) return null
         val newest = line.fairNewestMs ?: return null
         if (now - newest > SHARP_RELAX_FRESH_MS) return null
+        val oldest = line.fairAsOfMs ?: return null
+        if (now - oldest > SHARP_RELAX_OLDEST_MS) return null
         val hours = (line.startsTs - now) / 3_600_000.0
         val t = ((SHARP_RELAX_START_H - hours) / (SHARP_RELAX_START_H - SHARP_RELAX_END_H)).coerceIn(0.0, 1.0)
         return usual + (SHARP_RELAX_FLOOR - usual) * t
