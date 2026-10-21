@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "77c72f06eb5436a90c9d0e5d3f166d4aeb1fb0f6",
+ "head": "0f5b24e2d29289bc17024de56c09d21caee9ad87",
  "since": 1792596542,
- "beat": 1792620890,
- "beatIso": "2026-10-21T22:14:50Z",
+ "beat": 1792621217,
+ "beatIso": "2026-10-21T22:20:17Z",
  "done": "v1.0.40 released (CK). Full test in progress: Kalshi CNO rows' alerts/taps open Kalshi (betLink), link lane skips Kalshi rows (mutation-checked), engine CNO hands reads to the phone at once when its first read fails, Settings switch Scan CNO on GitHub, stale engine copy, SX Bet chip name, detail sheet Open in Kalshi",
  "next": "continue full test sweep: adversarial review of v1.0.35-1.0.39 diffs (other sessions), then full floor, ship v1.0.41"
 }
