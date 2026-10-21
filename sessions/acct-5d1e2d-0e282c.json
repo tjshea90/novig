@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "5758207c5abee1ecfa38ebed1c418a01139e0e3e",
+ "head": "498f11bbad18bf81e83daab67f2f1dc54c390dc3",
  "since": 1792539161,
- "beat": 1792541918,
- "beatIso": "2026-10-21T00:18:38Z",
- "done": "CH47/48: ApiMonitor (engine), apiChecks in status, parlay.yml listen task",
- "next": "dispatch parlay.yml listen (tennis); app cards from apiChecks; phone PBP; arb leads; release v1.0.26"
+ "beat": 1792542092,
+ "beatIso": "2026-10-21T00:21:32Z",
+ "done": "CH48 ApiState cards in app; CLAUDE.md phone=monitor rule; CH49 logged",
+ "next": "ApiState test; CH49 Odds API audit; arb leads; tennis frames; ship v1.0.26"
 }
