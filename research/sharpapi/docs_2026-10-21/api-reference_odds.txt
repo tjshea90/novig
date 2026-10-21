@@ -1,0 +1,752 @@
+Source: https://docs.sharpapi.io/en/api-reference/odds/ (fetched 2026-10-21)
+
+# Odds Snapshot
+
+Get a snapshot of current odds from sportsbooks.
+
+GET /api/v1/odds
+
+Changed in v3.0.0: the odds response now carries a single timestamp field (delivery / feed-freshness). The former odds_changed_at, last_seen_at, and wire_received_at fields have been removed — read timestamp instead. There is no longer a field for when the price last moved.
+
+## AuthenticationPermalink for this section
+
+Requires API key. Available to all tiers.
+
+The sportsbooks returned in your results depend on your subscription tier. Free tier users receive odds from DraftKings and FanDuel only. See Book Access by Tier below.
+
+## Query ParametersPermalink for this section
+
+ | | Parameter | Type | Default | Description
+ | sportsbook | string | tier-allowed | Comma-separated sportsbook IDs (e.g., draftkings,fanduel). Tier limits enforced.
+ | sport | string | all | Filter by sport(s), comma-separated (e.g., basketball, football). Supports category aliases.
+ | league | string | all | Filter by league(s), comma-separated (e.g., nba, nfl, nhl)
+ | market | string | all | Filter by market type(s), comma-separated. Accepts category aliases (main, spread, total, props) or exact type names as they appear in the market_type response field (e.g., moneyline, point_spread, player_points). Also accepted as market_type=.
+ | event_id | string | — | Filter by event ID(s), comma-separated
+ | player_name | string | — | Filter to one player’s props. Exact match, case-insensitive, against the player_name response field (e.g. player_name=Caitlin Clark). The right filter on market types whose name starts with player_, and on the scorer and period-scoped player markets, because player_name is populated there. It matches nothing on most_*_player markets, where the response carries no player_name and the player appears only in selection — filter those with selection instead. See Player props.
+ | selection | string | — | Filter by the selection response field. Exact match, case-insensitive. On market types whose name starts with player_, selection is the side (Over / Under), so use player_name to filter to a player there. On the other markets is_player_prop: true covers — scorer, period-scoped player, and most_*_player — selection is the book’s own label and normally names the player. It is the only player filter available on most_*_player, which carries no player_name — but because the label is the book’s own, its exact text can differ between books.
+ | is_live | boolean | — | true = live only, false = prematch only, omit = both
+ | season_type | string | — | Filter by Preseason or Regular Season. Case-insensitive; _ and - read as a space. Applies to every read path, including group_by=event. Any other value returns 400 validation_error with details.parameter set to season_type and details.accepted listing the accepted values.
+ | group_by | string | — | Group results by field (e.g., event)
+ | is_alternate_line | boolean | — | Filter on the main-line cohort. false = main lines only, true = alternate lines only, omit = both. Includes cohort-pending rows when false; see the response field below.
+ | is_main_line | boolean | — | Positive-polarity inverse. true = main lines only and excludes cohort-pending rows, false = alternate lines only, omit = both. Use this for a strict main-lines-only view. Also accepted on /odds/best.
+ | state | string | — | US state code for deep-link routing only; does not filter odds or return state-specific prices. Accepts the 50 US state codes plus dc; unsupported nonempty codes (including on) return 400 invalid_filter. When set, deep_link URLs include ?state=XX; omitted or empty emits no ?state=, and the redirect endpoint then applies its own pa default. Only affects books with state-dependent URLs (BetMGM, Caesars, BetRivers).
+ | limit | integer | 50 | Max results per page (max 200)
+ | offset | integer | 0 | Pagination offset. Must be ≤ 500. Values above 500 return 400 offset_too_large — use cursor for deeper pagination. May produce duplicate rows when live data updates between requests.
+ | cursor | string | — | Opaque cursor from next_cursor in a previous response. Required for deep pagination (past offset 500) and recommended for any multi-page scan — stable against live data changes. Takes precedence over offset when both are provided.
+ | include_futures | boolean | false | Include futures markets (season-long props, outrights, championship winners, etc.) in results. Omit or set false to get game-odds only. Set true to bring futures back into this response. See Futures below.
+
+Use comma-separated values to filter by multiple sportsbooks: sportsbook=draftkings,fanduel,betmgm
+
+market= vs market_type — don’t confuse the filter name with the response field name. The response object contains a field called market_type (e.g. "market_type": "moneyline"). The query parameter is market= — which also accepts market_type= as an alias. Both ?market=moneyline and ?market_type=moneyline work and are equivalent. Passing an unrecognized value returns 400 invalid_filter. See Common 4xx Mistakes for the full error shape.
+
+league= takes league slugs, not market-segment slugs. League slugs look like nfl, nba, mlb. Market-segment slugs like nfl_1st_quarter_spreads belong on the market_segment= filter, not league=. Mixing them returns 400 invalid_filter. Fetch valid league slugs from GET /api/v1/leagues.
+
+### Market Category AliasesPermalink for this section
+
+Instead of listing individual market types, you can use a category alias to match a group of related markets. Aliases and exact types can be mixed freely in a comma-separated list.
+
+ | | Alias | Expands to
+ | main | Exactly moneyline, point_spread, run_line, puck_line, total_points, total_goals, total_runs — the full-game main markets across sports
+ | spread | Any market type containing spread or handicap (e.g. point_spread, set_handicap, asian_handicap, 1st_half_point_spread), plus run_line and puck_line
+ | total | Any market type containing total (e.g. total_points, total_runs, team_total, 1st_half_total_points, asian_total)
+ | props | All player_* market types (prefix match)
+
+# Fetch all "main" markets (moneyline + spreads + totals)
+curl "https://api.sharpapi.io/api/v1/odds?league=nba&market=main" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Mix an alias with an exact type
+curl "https://api.sharpapi.io/api/v1/odds?league=nfl&market=spread,moneyline" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# All player_* prop markets (see the note below on scorer markets)
+curl "https://api.sharpapi.io/api/v1/odds?league=nba&market=props" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+The props alias uses a prefix match, so it automatically includes any market type starting with player_ (e.g., player_points, player_rebounds, player_assists, player_strikeouts, etc.).
+It is narrower than the is_player_prop response field, which marks every player-level market — including scorer markets and period-scoped player markets, whose names do not start with player_. If you want all of those, name the market types you need instead of relying on props, and read is_player_prop on the rows that come back.
+
+Exact market types match exactly, with one carve-out: market=moneyline also matches the full-game 3-way sibling moneyline_3-way (home/draw/away) — the only moneyline some books emit for soccer-style markets. Period-scoped variants (1st_half_moneyline, etc.) are not included; use their exact names.
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X GET "https://api.sharpapi.io/api/v1/odds?league=nba&sportsbook=draftkings&market=moneyline" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+// Fetch all NBA moneyline odds using cursor-based pagination (recommended)
+async function fetchAllOdds() {
+ const results = [];
+ let cursor = null;
+
+ do {
+ const url = new URL('https://api.sharpapi.io/api/v1/odds');
+ url.searchParams.set('league', 'nba');
+ url.searchParams.set('sportsbook', 'draftkings');
+ url.searchParams.set('market', 'moneyline');
+ url.searchParams.set('limit', '200');
+ if (cursor) url.searchParams.set('cursor', cursor);
+
+ const { data, pagination } = await fetch(url, {
+ headers: { 'X-API-Key': 'YOUR_API_KEY' }
+ }).then(r => r.json());
+
+ results.push(...data);
+ cursor = pagination.has_more ? pagination.next_cursor : null;
+ } while (cursor);
+
+ return results;
+}
+
+### Python
+
+import requests
+
+# Fetch all NBA moneyline odds using cursor-based pagination (recommended)
+def fetch_all_odds():
+ results = []
+ params = {'league': 'nba', 'sportsbook': 'draftkings', 'market': 'moneyline', 'limit': 200}
+ cursor = None
+
+ while True:
+ if cursor:
+ params['cursor'] = cursor
+ resp = requests.get(
+ 'https://api.sharpapi.io/api/v1/odds',
+ params=params,
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+ ).json()
+
+ results.extend(resp['data'])
+ pagination = resp['pagination']
+ if not pagination['has_more']:
+ break
+ cursor = pagination['next_cursor']
+
+ return results
+
+## PaginationPermalink for this section
+
+Use cursor-based pagination for multi-page scans. The /odds endpoint serves live data that refreshes every ~15 seconds. With offset-based pagination, rows can shift positions between requests, causing duplicates at page boundaries. Cursor-based pagination anchors each page to the last seen item — no drift.
+
+Each response includes both next_cursor (stable) and next_offset (legacy) in the pagination object. For sequential full-dataset scans, always use next_cursor.
+
+# First page — no cursor needed
+curl "https://api.sharpapi.io/api/v1/odds?league=nfl&limit=200" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Subsequent pages — pass next_cursor from the previous response
+curl "https://api.sharpapi.io/api/v1/odds?league=nfl&limit=200&cursor=eyJlIjoiMzM0ODMxNTMiLCJiIjoiZHJhZnRraW5ncyIsIm0iOiJtb25leWxpbmUiLCJpIjoiZHJhZnRraW5nc18zMzQ4MzE1M19tb25leWxpbmVfUEhJIn0" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### Result orderPermalink for this section
+
+Results are returned in chronological order by event start time — events already under way and the soonest to start come first, later ones after. Events with no start time in the feed sort last.
+
+A single page is therefore a slice of the schedule, not a sample across the whole result set. A sportsbook with no games starting inside the stretch of the schedule that page covers will not appear on it, even when it has many matching rows later the same day — that is the expected behaviour, not a gap in coverage. To check whether a book carries a market, filter with ?sportsbook= or narrow with ?league= instead of reading an unfiltered first page.
+
+On a page that has rows, this is what meta.books reports: a book listed in in_scope with no entry in in_page returned no rows on that page — usually because its games fall outside the stretch of the schedule that page covers, not because it is missing the market.
+
+Cursors are opaque — do not parse or construct them. They encode the sort position of the last item on the current page and are only valid for the same filter parameters.
+
+?offset=N continues to work for shallow pagination (up to offset 500) and is appropriate for single-page requests or direct position access. Beyond 500, the API returns 400 offset_too_large — the server would otherwise have to sort the full filtered result set on every page, which is much cheaper to avoid than to optimize per-request. Use cursor for anything deeper.
+
+{
+ "error": {
+ "code": "offset_too_large",
+ "message": "offset must be <= 500; use `cursor=` from the previous response for deeper pagination",
+ "max_offset": 500
+ }
+}
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+The example below shows the flat fields only. As of May 2026, every row also carries optional nested reference blocks (home, away, sport_ref, league_ref, market_ref, sportsbook_ref) — see Nested reference blocks below.
+
+{
+ "data": [
+ {
+ "id": "draftkings_33483153_moneyline_PHO",
+ "sportsbook": "draftkings",
+ "event_id": "33483153",
+ "sport": "basketball",
+ "league": "nba",
+ "home_team": "PHI 76ers",
+ "away_team": "PHO Suns",
+ "market_type": "moneyline",
+ "selection": "PHO Suns",
+ "selection_type": "away",
+ "odds_american": -150,
+ "odds_decimal": 1.667,
+ "odds_probability": 0.60,
+ "line": null,
+ "is_main_line": true,
+ "is_alternate_line": false,
+ "event_start_time": "2026-01-26T19:00:00Z",
+ "timestamp": "2026-01-26T02:10:24.125Z",
+ "is_live": false
+ },
+ {
+ "id": "draftkings_33483153_moneyline_PHI",
+ "sportsbook": "draftkings",
+ "event_id": "33483153",
+ "sport": "basketball",
+ "league": "nba",
+ "home_team": "PHI 76ers",
+ "away_team": "PHO Suns",
+ "market_type": "moneyline",
+ "selection": "PHI 76ers",
+ "selection_type": "home",
+ "odds_american": 130,
+ "odds_decimal": 2.30,
+ "odds_probability": 0.4348,
+ "line": null,
+ "is_main_line": true,
+ "is_alternate_line": false,
+ "event_start_time": "2026-01-26T19:00:00Z",
+ "timestamp": "2026-01-26T02:10:24.125Z",
+ "is_live": false
+ }
+ ],
+ "pagination": {
+ "limit": 50,
+ "offset": 0,
+ "count": 2,
+ "has_more": true,
+ "next_offset": 50,
+ "next_cursor": "eyJlIjoiMzM0ODMxNTMiLCJiIjoiZHJhZnRraW5ncyIsIm0iOiJtb25leWxpbmUiLCJpIjoiZHJhZnRraW5nc18zMzQ4MzE1M19tb25leWxpbmVfUEhJIn0"
+ },
+ "updated_at": "2026-01-26T02:10:37.846Z"
+}
+
+### Empty results (200): meta.storePermalink for this section
+
+An empty page — 200 with "data": [] and "count": 0 — can mean two different things: your filters matched nothing, or the serving instance had nothing loaded when it answered (for example, during a store swap). Since September 2026 the response says which. Whenever /odds returns zero rows it adds a meta.store block, and reason is the field to branch on:
+
+{
+ "data": [],
+ "pagination": {
+ "limit": 50,
+ "offset": 0,
+ "count": 0,
+ "has_more": false,
+ "next_offset": null
+ },
+ "updated_at": "2026-09-07T02:41:18.552Z",
+ "meta": {
+ "store": {
+ "generation": 5019,
+ "ready": true,
+ "books": 39,
+ "rows": 810137,
+ "reason": "no_match"
+ }
+ }
+}
+
+ | | reason | Meaning | What to do
+ | warming | The serving instance has not completed a refresh cycle since it last changed mode — nothing is loaded yet | Retry
+ | store_empty | The instance is ready but holds zero odds rows, for example mid-way through a store swap | Retry — do not treat the empty page as authoritative
+ | no_match | The instance is ready and populated; your filters matched nothing | Authoritative — retrying will not change the answer
+
+ | | Field | Type | Meaning
+ | generation | integer | Snapshot generation this response was served from. 0 means nothing has been loaded since the process started.
+ | ready | boolean | At least one refresh cycle has completed since the instance’s last mode transition.
+ | books | integer | Sportsbooks present in the snapshot this response was served from, regardless of your filters.
+ | rows | integer | Odds rows held by that snapshot, regardless of your filters.
+ | reason | string | warming, store_empty, or no_match — see above.
+ | event_status | string | Present only when the page is empty because the single event you filtered on with event_id has ended: final (a settled completion is retained — the same record /events/{eventId} serves as status: "final") or gone (the event left the schedule within roughly the last hour with no settled completion — the same condition under which /events/{eventId} answers 410 Gone). Omitted otherwise. See Finished events below.
+ | completed_at | string | Accompanies event_status: "final" only — the RFC 3339 time the completion was detected, identical to completed_at on /events/{eventId}. Never sent with gone.
+
+- Present only on empty results. A response with rows is byte-for-byte unchanged and carries no meta.store; parsers that read data + pagination + updated_at keep working.
+
+- books and rows describe the whole snapshot, not your query — rows: 810137 is evidence that the store was populated, not a count of what you would have matched.
+
+- Queries that resolve to two or more sportsbooks also carry meta.books (the resolved book scope: in_scope and per-book in_page counts); meta.store is added alongside it. So does the empty page of a dashboard book selection that resolved to no book at all — see Empty sportsbook selection below.
+
+- An unknown league or sportsbook value is rejected with 400 invalid_filter rather than answered with an empty page. Other filters are not validated against the catalog: a market_type or event_id that exists nowhere returns an ordinary empty page with reason: "no_match".
+
+#### Finished events: event_status and completed_atPermalink for this section
+
+A client that keeps polling /odds?event_id=<id> after the game ends gets an authoritative empty page — reason: "no_match" is true, but it does not say why nothing matched. When the page is empty because the one event you filtered on has ended, meta.store says so too. This is the real response for an MLB game that had finished earlier the same night (a single-book query, so the body stays short — a multi-book query carries meta.books alongside, as above):
+
+GET /api/v1/odds?event_id=mlb_twins_whitesox_2026-09-06_b3&sportsbook=pinnacle&limit=1
+
+{
+ "data": [],
+ "pagination": {
+ "limit": 1,
+ "offset": 0,
+ "count": 0,
+ "has_more": false,
+ "next_offset": null
+ },
+ "updated_at": "2026-09-07T10:04:34.951684418Z",
+ "meta": {
+ "store": {
+ "generation": 13456,
+ "ready": true,
+ "books": 39,
+ "rows": 947879,
+ "reason": "no_match",
+ "event_status": "final",
+ "completed_at": "2026-09-07T02:09:37Z"
+ }
+ }
+}
+
+/events/mlb_twins_whitesox_2026-09-06_b3 returned status: "final" with the same completed_at at the same moment — both endpoints read the same record, so they cannot disagree.
+
+ | | event_status | Meaning | What to do
+ | final | A settled completion is retained for the event; completed_at is when it was detected. | Stop polling — the event is over; fetch the result from /events/{eventId}
+ | gone | The event left the schedule within roughly the last hour with no settled completion — postponed, cancelled, or finished so recently that no result has been settled yet. It is the same condition under which /events/{eventId} answers 410 Gone, and it is not a claim that the event finished. | Stop polling odds; check /events/{eventId} later for a result
+
+The signal is attached only when all of the following hold — otherwise the block keeps its plain shape and neither key is present:
+
+- the request filtered on exactly one event_id (a comma-separated list gets no signal — the field is singular);
+
+- the page is empty with reason: "no_match" (a warming or store_empty page never carries it — the emptiness is the store’s, and reason already says to retry);
+
+- the event is known to have ended. An event that is still live or upcoming, or an id that exists nowhere, gets a plain no_match with no event_status — so a single-id query answered without it means either a wrong id or an event that has not ended.
+
+A finished event whose odds are still cached returns those rows as usual; the signal appears once the page drains. completed_at is the time the completion was detected — typically a few minutes after the event left the live feed — not the final whistle, the same caveat as completed_at on /events. The status code never changes: a client polling an event through its life keeps getting 200.
+
+#### Empty sportsbook selection: meta.books.reasonPermalink for this section
+
+If the sportsbook selection saved on your dashboard resolves to nothing — every selected book is absent from the current snapshot, or not included in your tier — an unfiltered /odds request is answered with an empty page. The store is fine; the selection is the reason, and the response names it. meta.books — normally present only for queries resolving to two or more sportsbooks — is emitted with an empty scope, reason: "selection_disjoint", and selected, the selection that resolved to nothing (canonical sportsbook IDs, sorted):
+
+{
+ "data": [],
+ "pagination": {
+ "limit": 50,
+ "offset": 0,
+ "count": 0,
+ "has_more": false,
+ "next_offset": null
+ },
+ "updated_at": "2026-09-07T10:04:34.951684418Z",
+ "meta": {
+ "books": {
+ "in_scope": [],
+ "in_page": {},
+ "reason": "selection_disjoint",
+ "selected": ["betway", "bwin"]
+ },
+ "store": {
+ "generation": 13454,
+ "ready": true,
+ "books": 39,
+ "rows": 947919,
+ "reason": "no_match"
+ }
+ }
+}
+
+- meta.books.reason takes precedence. meta.store still rides alongside with reason: "no_match" — accurate for the store (it is populated), but not the cause. When meta.books.reason is present, that is why the page is empty; retrying will not change the answer. Fix the selection on your dashboard, or upgrade if the books you selected need a higher tier.
+
+- in_scope and in_page are present and empty ([] / {}, never null). The only reason value today is selection_disjoint.
+
+- Emitted only when the selection is genuinely the cause: the request carried no explicit sportsbook= filter, you have a dashboard selection, and your tier alone would have resolved to at least one book. It never appears on the Free tier (which always serves DraftKings and FanDuel regardless of selection) or on an empty or warming store — those pages are meta.store’s to explain.
+
+- With an explicit sportsbook= filter the same mismatch is rejected instead of answered with an empty page: 403 tier_restricted, 403 book_not_selected, or 503 book_unavailable.
+
+- Pages that resolve to one or more books are unchanged: the two-or-more-book block carries neither reason nor selected, and a single-book scope carries no meta.books at all.
+
+### Response HeadersPermalink for this section
+
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 299
+X-RateLimit-Reset: 1737853200
+X-Data-Delay: 0
+X-Request-Id: 1782526326424224-82519
+
+ | | Header | Description
+ | X-RateLimit-Limit | Maximum requests per minute for your tier
+ | X-RateLimit-Remaining | Requests remaining in current window
+ | X-RateLimit-Reset | Unix timestamp when the rate limit resets
+ | X-Data-Delay | Data delay in seconds (0 for real-time, 60 for free tier)
+ | X-Request-Id | Unique request identifier for debugging
+
+### Error ResponsesPermalink for this section
+
+401 Unauthorized
+
+No key supplied returns missing_api_key; a bad key returns invalid_api_key.
+
+{
+ "error": {
+ "code": "missing_api_key",
+ "message": "API key required. Pass via X-API-Key header, api_key query parameter, or Bearer token.",
+ "docs": "https://docs.sharpapi.io/en/authentication#authentication-methods"
+ }
+}
+
+403 Tier Restricted
+
+{
+ "error": {
+ "code": "tier_restricted",
+ "message": "Sportsbook 'pinnacle' requires Sharp tier or higher",
+ "docs": "https://sharpapi.io/pricing",
+ "tier": "pro",
+ "required_tier": "sharp"
+ }
+}
+
+429 Rate Limited
+
+retry_after is a Unix-millisecond timestamp of when the next window opens (not a duration); the standard Retry-After response header carries the equivalent seconds value.
+
+{
+ "error": {
+ "code": "rate_limited",
+ "message": "Rate limit exceeded for pro tier (300/min)",
+ "retry_after": 1737853260000,
+ "tier": "pro",
+ "limit": 300,
+ "docs": "https://sharpapi.io/pricing"
+ }
+}
+
+## Odds Object SchemaPermalink for this section
+
+ | | Field | Type | Description
+ | id | string | Unique odds identifier
+ | sportsbook | string | Sportsbook ID (e.g., draftkings)
+ | event_id | string | Event identifier
+ | sport | string | Sport slug (e.g., basketball, football)
+ | league | string | League slug (e.g., nba, nfl)
+ | home_team | string | Home team name
+ | away_team | string | Away team name
+ | market_type | string | Canonical market type, e.g. moneyline, point_spread, total_points, player_points. Period/segment markets carry a prefix (e.g. 1st_half_moneyline).
+ | selection | string | The outcome this price is on — a team name on moneyline/spread markets, Over/Under on totals. On market types whose name starts with player_ it is always the side (Over, Under, Yes, No), never the player; the player rides on player_name. On the other player-level markets that is_player_prop: true also covers it is the book’s own label, which normally names the player. See Player props below for the shape on each.
+ | selection_type | string | Canonical side identifier. See Selection types below for the full enum, including compound forms (e.g. home_over) emitted on multi-axis markets.
+ | team_side | string|undefined | Raw team-side hint from the adapter — one of home, away, draw. Useful when selection_type carries a compound value (e.g. home_over) and you want just the team axis without parsing. Absent when the adapter did not stamp it.
+ | odds_american | number | American odds (e.g., -110, +150)
+ | odds_decimal | number | Decimal odds (e.g., 1.909)
+ | odds_probability | number | Implied probability (e.g., 0.5238)
+ | line | number | null | Spread or total line value (null for moneyline)
+ | is_alternate_line | boolean | true when this row’s line differs from the best-effort main line for its cohort. false for the main line, for no-line markets (moneyline, outright), and for rows whose cohort hasn’t been resolved yet (cold start, brand-new event). See is_main_line for the positive-polarity sibling that disambiguates “main” from “cohort-pending”.
+ | is_main_line | boolean | true when this row’s line equals the best-effort main line for its cohort; false for alt-line rows and cohort-pending rows (cold start). Best-effort, not a uniqueness guarantee. A cohort is (event, market_type, selection axis), resolved per sportsbook: the selection axis is the player for player-prop markets, the team side for spread and team-total markets, and the raw selection everywhere else. Several rows of the same (event, market_type) are therefore normally is_main_line=true — Over and Under of a game total are separate cohorts, each with its own main line, and so is each outcome of a combination market (e.g. match result + total goals). No-line markets (moneyline, outright) are always true. The flag can flip when a book moves its line; the prior main becomes an alternate. Mutually exclusive with is_alternate_line: both true never coexist; both false is the cohort-pending state. Also accepted as a query filter on /odds/best?is_main_line=true.
+ | event_start_time | string | ISO 8601 event start time
+ | timestamp | string | ISO 8601 time SharpAPI last refreshed this odd through its pipeline — advances every ingest cycle. A feed-freshness / liveness signal; it is NOT when the price last changed. See understanding the timestamp field.
+ | is_live | boolean | Whether the event is currently live
+ | season_type | string | "Preseason" or "Regular Season", the same value as on /events. Omitted when not known (a league without a season calendar, a date outside it, or no start time); absent never means regular season.
+ | is_player_prop | boolean | true on any player-level market — a price about one named player rather than a team or the game as a whole. As well as the canonical player_* types (player_points, player_goals), it covers scorer markets (anytime_goal_scorer, first_goal_scorer, last_goal_scorer, anytime_touchdown_scorer), period- and segment-scoped player markets (1st_quarter_player_points, 1st_half_player_goals, 1st_set_player_games_won) and most_*_player markets. Contest-level markets that merely read like a superlative (most_corners) are not flagged. Wider than the props market alias, which is still a player_ prefix match — see Market Category Aliases. selection does not have one shape across every flagged row; see Player props.
+ | is_stale_pregame_price | boolean | true when a pre-game price has gone stale (the book was slow to update before kickoff).
+ | market_segment | string | Segment/period the market applies to, e.g. full_game, 1st_half, 6th_inning.
+ | market_name | string|undefined | Raw sportsbook market descriptor. Present only on opaque catch-all market types (game_prop, binary, player_prop) whose single canonical market_type collapses structurally-distinct markets — e.g. a ballybet “Game Prop” covering both a match-winner and a yes/no, or the full Polymarket question behind a binary row. Absent on all other rows.
+ | is_active | boolean | true (default) = market open and bettable; false = market suspended/closed with the price frozen at its last value (so you can grey it out rather than trust a stale price). Exposed as a queryable field you can also filter on. Absent is treated as true. An active→suspended transition is pushed on the odds stream as an odds:update carrying is_active: false.
+ | event_uuid | string|undefined | Stable canonical event UUID from the SharpAPI atlas, when the event is mapped. Where event_id carries the adapter’s primary event identifier (often the originating sportsbook’s), event_uuid is a feed-stable hash you can use for cross-feed joins. Absent for unmapped events.
+ | external_event_id | string|undefined | The sportsbook’s own native event ID, when distinct from event_id. Useful for round-tripping rows back to the sportsbook’s UI or API.
+ | deep_link | string|undefined | Resolver URL pointing to the sportsbook’s event or bet-slip page. Pass state= (e.g. state=nj) on the request to route through state-specific subdomains for books that need them (BetMGM, Caesars, BetRivers).
+ | market_id | string|undefined | The sportsbook’s own native market identifier. Some books don’t expose one — absent when unknown.
+ | external_market_id | string|undefined | A market identifier that is the same in every US state the sportsbook operates in. Present on FanDuel rows only today — FanDuel mints a per-state market_id; external_market_id carries the state-independent counterpart. Absent on all other books. When building a FanDuel bet-slip link yourself, use external_market_id together with selection_id — that pair works in any state. If you use the deep_link field directly, no change is needed: FanDuel deep_link values are already built from the state-independent id. Read as external_market_id ?? market_id to handle both FanDuel and all other books with a single expression.
+ | selection_id | string|undefined | The sportsbook’s own native selection/outcome identifier. Some books don’t expose one — absent when unknown.
+ | player_name | string|undefined | Player name, on player-level markets. On market types starting with player_ it is the only field carrying player identity, because selection there holds the side. It is also present on scorer and period-scoped player markets, where selection names the player as well. Not guaranteed on every row is_player_prop: true marks: on most_*_player markets it is absent and the player appears only in selection. See Player props.
+ | stat_category | string|undefined | Stat category, e.g. points, rebounds (player prop markets only)
+ | home_pitcher | string|undefined | MLB only. Home-team starting pitcher when published by the book.
+ | away_pitcher | string|undefined | MLB only. Away-team starting pitcher when published by the book.
+ | max_bet | number|undefined | The largest size available on this row. On a traditional sportsbook (Pinnacle, Circa Sports, SBOBET) it is the maximum wager the book will accept, in USD. On an exchange-style book it is the money resting at the best price, in size_currency. Absence means the venue publishes no size for the row; a number, 0.0 included, is a real figure. On an exchange-style book this field appears only while money is resting at the best price, so best_bid_liquidity of 0.0 arrives with no max_bet — the same fact, not a conflicting one. Polymarket is the exception: there the two fields describe opposite sides of the book, see best_bid_liquidity. See Liquidity and limits.
+ | size_currency | string|undefined | ISO-4217 code the money figures on this row are denominated in — max_bet, best_bid_liquidity and total_liquidity. GBP on Betfair and Smarkets, USD on every other book that publishes a size, and never converted: the venue’s own figure is handed through in the venue’s own currency. Absent on rows that carry no size, and on traditional sportsbooks, whose max_bet is a USD wager cap rather than a resting size. See Liquidity and limits.
+ | best_bid_liquidity | number|undefined | Exchange-style books only. Money resting at the published price — what a taker can match without moving the price. Denominated in size_currency. 0.0 means nothing is resting there; absence means the venue does not publish the figure. On Polymarket it is the bid side, not the published price. A Polymarket row is priced from the best ask; this field is the money resting at the best bid on the same outcome, the best bid price times the shares bid there, in USD. The size at the published price is max_bet, and the two rarely match. On Polymarket this field is never 0.0: when the best bid is empty, or its size is not yet known, the field is absent.
+ | total_liquidity | number|undefined | Exchange-style books only. Risk-able size summed across the whole book for this selection, not just the best price. Denominated in size_currency. 0.0 means an empty book; absence means the venue does not publish the figure. Not derivable from best_bid_liquidity, and some books publish one without the other.
+ | volume | number|undefined | Cumulative traded volume on the selection, in the exchange’s native units. Exchanges only — currently Kalshi, Novig and Robinhood. See Liquidity and limits.
+ | volume_24h | number|undefined | Rolling 24-hour traded volume, in the exchange’s native units. Exchanges only — currently Polymarket and Kalshi.
+ | open_interest | number|undefined | Outstanding open contracts on the selection. Exchanges only — currently Kalshi and Robinhood.
+ | exchange_token_id | string|undefined | Exchange-native token or market identifier for order-routing use cases. Emitted where the upstream exchange exposes a stable token ID, currently Polymarket (token_id) and SX Bet (marketHash).
+ | exchange | string|undefined | The venue a re-fronted market actually lives on, resolved per contract — e.g. Robinhood rows carry kalshi or rothera depending on which exchange backs that contract. On re-fronted books such as Robinhood, lets you tell which exchange is actually pricing the row without inferring it from the book id. Absent for native books and for first-party exchanges; absence does not indicate sportsbook pricing — first-party exchanges omit it too.
+ | polymarket_resolution | string|undefined | Polymarket only. UMA optimistic-oracle resolution status when the market has terminated — one of settled_normal, voided, disputed, proposed, unknown. Absent for live (unresolved) Polymarket markets and for every non-Polymarket book.
+ | home | object|undefined | New (May 2026). Nested home-team reference: {id, numerical_id, name, abbreviation, logo, city, mascot, conference, division}. See Entity reference IDs.
+ | away | object|undefined | New (May 2026). Nested away-team reference: {id, numerical_id, name, abbreviation, logo, city, mascot, conference, division}.
+ | sport_ref | object|undefined | New (May 2026). Nested sport reference: {id, numerical_id, name}.
+ | league_ref | object|undefined | New (May 2026). Nested league reference: {id, numerical_id, label}.
+ | market_ref | object|undefined | New (May 2026). Nested market reference: {id, numerical_id, label}.
+ | sportsbook_ref | object|undefined | New (May 2026). Nested sportsbook reference: {id, numerical_id, label}.
+
+### Selection typesPermalink for this section
+
+selection_type carries the canonical side identifier for each selection. Most markets are two-way (e.g. moneyline, point spread, total) and emit one of the simple values below. A small set of multi-axis markets (soccer double-chance, BTTS-combined, result × O/U, MMA round betting, tennis set betting, correct-score, etc.) encode two outcomes per selection and emit compound values joined by _.
+
+ | | Family | Values | Where they appear
+ | Two-way (team side) | home, away | moneyline, point_spread, puck_line, run_line, set_handicap, most period markets
+ | Two-way (line direction) | over, under | total_points, total_goals, total_runs, total_games, total_rounds, all player_*_o_u props
+ | Two-way (yes/no) | yes, no | binary, prop-style yes/no markets, exchange “back/lay” outcomes, Polymarket prediction markets
+ | Two-way (parity) | even, odd | Total-parity markets (e.g. total points odd/even)
+ | Three-way | draw | Three-way moneyline (soccer 1X2), draw-no-bet’s complementary side, next_goal “no goal”
+ | Compound (team × O/U) | home_over, home_under, away_over, away_under | Soccer match_result_total_goals (“Team A and Over N.5”) and analogous result-plus-total markets. Also team_total (“Team A Over N.5”), which carries a team and a direction and is therefore never a bare home/over.
+ | Compound (team × BTTS) | home_yes, home_no, away_yes, away_no, draw_yes, draw_no | Soccer match_result_both_teams_to_score
+ | Compound (double chance) | home_draw, away_draw, home_away | Soccer double_chance (1X / X2 / 12) and MMA double-chance
+ | Compound (round / method) | home_r1, home_r2, home_decision, away_r1, etc. | MMA round_betting and method-of-victory markets
+ | Catch-all | other | game_prop, next_goal “no goal”, and any selection where the canonical-side mapper cannot decompose the outcome cleanly. Always present in low volume; treat as opaque.
+
+Parsing compound values. Compound selection_type strings always join the team axis (home / away / draw) to the secondary axis with a single underscore. To recover just the team axis without parsing, read team_side — it is the raw side stamped by the adapter for the same row.
+
+Long-tail markets emit additional forms. Markets such as correct_score (e.g. "2_1"), set_betting (e.g. "0_2"), winning_margin, halftime_fulltime, first_goal, and anytime_goal encode score-level or compound outcomes directly in selection_type. If you depend on a closed enum, filter to the families above and treat any unrecognised value as opaque — do not error.
+
+### Player propsPermalink for this section
+
+On market types whose name starts with player_, a player prop is one row per (player, side, line). Those three axes live in three separate fields, and each has exactly one job:
+
+ | | Field | Carries | Example
+ | player_name | Who the prop is on — the only field with player identity | "Caitlin Clark"
+ | selection | Which side this price is — Over, Under, Yes, or No | "Over"
+ | selection_type | The same side, lowercased and canonical | "over"
+ | line | The threshold | 21.5
+
+So the canonical parse is player_name + selection_type + line, and the human label is built by joining them:
+
+{
+ "market_type": "player_points",
+ "player_name": "Caitlin Clark",
+ "selection": "Over",
+ "selection_type": "over",
+ "line": 21.5,
+ "odds_american": -115
+}
+
+→ Caitlin Clark Over 21.5 points (-115)
+
+On player_* markets, selection never carries the player. Sportsbooks label props inconsistently upstream — some send "Caitlin Clark Over", others send "Caitlin Clark" with the side only in a separate field. SharpAPI normalises all of them to the side, identically on every book.
+For joining and comparing across books, key on (market_type, player_name, selection_type, line) — the canonical parse above. selection is the human-readable rendering of selection_type and agrees with it on every row this contract covers, but selection_type is the field to key on: it is lowercase-canonical, and it stays correct on the carve-out rows below where selection falls back to the book’s own label.
+Scope: this applies to market types whose name starts with player_. It is narrower than is_player_prop: true, which marks every player-level market. On the rest of that set, selection is left exactly as the book sent it — see What selection holds on each player-level market below.
+
+Changed August 2026. Before this, selection passed through whatever the book sent, so on player_* markets it was the side on some books and the player name on others for the same market — a client keying on selection could not build a coherent cross-book row set. It is now always the side. player_name, selection_type, and line are unchanged, so integrations already built on those three are unaffected.
+One caller-visible break: the ?selection= query filter is an exact match on this field, so ?selection=Caitlin%20Clark no longer returns that player’s props on books that previously sent her name there. Use ?player_name=Caitlin%20Clark instead — it filters the same rows on the field that has always held player identity, on every book. Both filters are listed in Query Parameters above.
+Rare rows where the side is not one of the four directions (parity props with selection_type odd/even, and props the upstream book never attributed to a player) still pass selection through as sent — read selection_type there.
+
+#### What selection holds on each player-level marketPermalink for this section
+
+is_player_prop: true marks every market priced on one named player. The normalisation above is applied only to the player_* types, so the fields do not read the same way across the whole flagged set. What to expect:
+
+ | | Market family | selection | selection_type | player_name
+ | player_* (e.g. player_points, player_goals) | the side — Over, Under, Yes, No | the side, lowercased (over) | the player
+ | Period- and segment-scoped player markets (e.g. 1st_quarter_player_points, 1st_half_player_goals) | the book’s own label — the player’s name, sometimes with the direction appended ("Jonquel Jones Over") | the side, lowercased (over, under) | the player
+ | Scorer markets (e.g. anytime_goal_scorer, anytime_touchdown_scorer) | the player’s name | other — these markets have no Over/Under axis | the player
+ | most_*_player (e.g. most_points_player) | the player’s name | other | absent
+
+Two things follow for a client:
+
+- selection is not a reliable key across the flagged set. On player_* rows it is the side; elsewhere it is the book’s label. Key on (market_type, player_name, selection_type, line) where player_name is present, and on (market_type, selection) for most_*_player.
+
+- selection_type is other where the market has no direction. On a scorer or most_*_player market there is only one outcome per player — that they score, or that they lead the category — so there is no side to read. Do not treat other as missing data.
+
+### New (May 2026): nested reference blocksPermalink for this section
+
+Every odds row now carries six optional nested reference objects that bundle each entity’s slug id, display label, and stable numerical_id directly with the row. The flat string fields (sport, league, home_team, away_team, market_type, sportsbook) remain unchanged — the new blocks are purely additive.
+
+{
+ "id": "pinnacle_mlb_yankees_redsox_moneyline_NYY",
+ "sportsbook": "pinnacle",
+ "sport": "baseball",
+ "league": "mlb",
+ "home_team": "New York Yankees",
+ "away_team": "Boston Red Sox",
+ "market_type": "moneyline",
+ "selection": "New York Yankees",
+ "odds_american": -135,
+
+ "home": {
+ "id": "new_york_yankees",
+ "numerical_id": 20,
+ "name": "New York Yankees",
+ "abbreviation": "NYY",
+ "logo": "https://cdn.sharpapi.io/teams/baseball/20.png",
+ "city": "New York",
+ "mascot": "Yankees",
+ "conference": "AL",
+ "division": "East Division"
+ },
+ "away": {
+ "id": "boston_red_sox",
+ "numerical_id": 5,
+ "name": "Boston Red Sox",
+ "abbreviation": "BOS",
+ "logo": "https://cdn.sharpapi.io/teams/baseball/5.png",
+ "city": "Boston",
+ "mascot": "Red Sox",
+ "conference": "AL",
+ "division": "East Division"
+ },
+ "sport_ref": { "id": "baseball", "numerical_id": 3, "name": "Baseball" },
+ "league_ref": { "id": "mlb", "numerical_id": 354, "label": "MLB" },
+ "market_ref": { "id": "moneyline","numerical_id": 878, "label": "Moneyline" },
+ "sportsbook_ref": { "id": "pinnacle", "numerical_id": 28, "label": "Pinnacle" }
+}
+
+When fields are absent. Each block is emitted only when the underlying entity is mapped in the SharpAPI atlas and the book’s adapter stamps the reference — coverage is rolling out per book, so rows from some books omit the blocks even for well-known leagues. Unmapped entities (long-tail leagues, niche markets, fresh sportsbook additions) also omit the block, in which case the flat field on the row is the only ID you’ll see. Treat every block — and every inner field, including numerical_id and abbreviation — as optional.
+
+See Entity reference IDs for the full semantics, the dense-from-1 / frozen / never-reused contract, and recommended use cases (storage keys, cross-feed mapping, display labels).
+
+## Event-Grouped ResponsePermalink for this section
+
+Use group_by=event to group odds by event instead of a flat list. This is useful for building event-centric UIs.
+
+curl "https://api.sharpapi.io/api/v1/odds?league=nba&group_by=event" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+{
+ "data": [
+ {
+ "event_id": "nba_76ers_suns_2026-01-26_b3",
+ "event_name": "PHO Suns @ PHI 76ers",
+ "sport": "basketball",
+ "league": "nba",
+ "start_time": "2026-01-26T19:00:00Z",
+ "is_live": false,
+ "odds": [
+ {
+ "id": "draftkings_33483153_moneyline_PHO",
+ "sportsbook": "draftkings",
+ "market_type": "moneyline",
+ "selection": "PHO Suns",
+ "selection_type": "away",
+ "odds_american": -150,
+ "odds_decimal": 1.667,
+ "odds_probability": 0.60,
+ "line": null,
+ "timestamp": "2026-01-26T02:10:24.125Z"
+ }
+ ]
+ }
+ ],
+ "pagination": {
+ "limit": 50,
+ "offset": 0,
+ "count": 1,
+ "total": 1,
+ "has_more": false,
+ "next_offset": null
+ },
+ "updated_at": "2026-01-26T02:10:37.846Z"
+}
+
+Event-grouped responses paginate by event (not by odds row) and include a total event count in pagination. Cursor pagination is not available in grouped mode — use offset.
+
+## Asian Markets (Soccer)Permalink for this section
+
+Asian handicap and quarter-goal totals are carried, but they do not all arrive
+under a single market_type. One book can price the same Asian handicap under two
+different types, and two books can normalize it differently, so filtering on one
+exact type silently drops the rest — you get a short list or an empty array and no
+error.
+
+Use a category alias, not an exact market type:
+
+# Every handicap shape, all normalizations, one request
+curl "https://api.sharpapi.io/api/v1/odds?sport=soccer&market=spread" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Goal totals, including quarter-goal and Asian total lines
+curl "https://api.sharpapi.io/api/v1/odds?sport=soccer&market=total" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### Market name mappingPermalink for this section
+
+ | | You may know it as | market_type in the response
+ | Asian Handicap | asian_handicap on some books, point_spread on others, and both on the same book. The spread alias matches any type containing spread or handicap, so market=spread covers all of them
+ | Over/Under goals, Asian total | total_goals and asian_total_goals, plus period and team variants (1st_half_total_goals, team_total_goals). The total alias matches any type containing total, so market=total covers all of them
+ | 1X2 / match odds | moneyline on some books, moneyline_3-way on others — market=moneyline matches both. Either way it is three rows, with selection_type home, draw, away
+ | European handicap | point_spread — the same type some books use for Asian handicap
+ | 3-way handicap (handicap with a draw leg) | three_way_handicap — it contains handicap, so market=spread returns it too; three rows, the third being the draw, whose selection_type is draw on most books and other on some
+
+market_type=asian_handicap on its own is not “all Asian handicaps”. Several
+books publish every soccer handicap as point_spread and emit no asian_handicap
+rows at all; others emit both types side by side for the same line. A filter pinned
+to the exact string asian_handicap returns a partial list, or zero rows, rather
+than an error. Use market=spread and read the line.
+
+### Telling an Asian handicap from a European onePermalink for this section
+
+An asian_handicap or point_spread row on soccer arrives as exactly two rows per
+book and line — selection_type home and away, never draw. (market=spread
+also returns three_way_handicap, which does have a third leg; that type is
+labelled separately, so the market_type tells you which shape you have.) Within
+the two-row types, the line is what separates Asian from European:
+
+- Quarter lines (-0.25, -0.75, -1.25, -1.75) are Asian handicaps. No
+European handicap is priced at a quarter goal.
+
+- Whole and half lines (-1, -1.5) can be either.
+
+### Quarter lines are not roundedPermalink for this section
+
+line is a JSON number at the precision the book priced it. A -0.25 handicap
+comes back as -0.25; it is not collapsed into -0.5 or 0:
+
+{
+ "market_type": "asian_handicap",
+ "selection": "Burgess Hill Town FC",
+ "selection_type": "home",
+ "line": -0.75,
+ "odds_decimal": 2.68
+}
+
+Each distinct line is its own set of rows, so -0.25 and -0.5 on the same
+event are two separate prices — not one price you have to un-round. The same
+holds for quarter-goal totals (2.25, 2.75, 3.25 under total_goals and
+asian_total_goals).
+
+## Book Access by TierPermalink for this section
+
+The sportsbooks included in your odds results depend on your subscription tier.
+A book’s own minimum tier is the requires_tier field on
+GET /api/v1/sportsbooks.
+
+ | | Tier | Books | Adds
+ | Free | 2 | DraftKings, FanDuel
+ | Hobby | 5 | + BetMGM, Caesars, theScore Bet, BetRivers, Bet365 US
+ | Pro | 15 | + more major & regional books
+ | Sharp | 25 | + sharp books (Pinnacle, Circa, SBOBET, 1xBet)
+ | Enterprise | All (unlimited) | Every available sportsbook
+
+The Sportsbooks page carries the full per-book
+list, generated from the live catalogue — use it rather than this summary when you
+need to know whether one specific book is in reach.
+
+Pinnacle (sharp book) requires Sharp tier or higher. Requesting sportsbook=pinnacle on a Free, Hobby, or Pro tier will return a 403 tier_restricted error.
+
+## Filtering ExamplesPermalink for this section
+
+# Get live NBA odds from all your available books
+curl "https://api.sharpapi.io/api/v1/odds?league=nba&is_live=true" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Get moneyline and spread odds for a specific event
+curl "https://api.sharpapi.io/api/v1/odds?event_id=nba_76ers_suns_2026-01-26_b3&market=moneyline,spread" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Paginate through all NFL spread odds (use next_cursor from each response)
+curl "https://api.sharpapi.io/api/v1/odds?league=nfl&market=spread&limit=200" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+## FuturesPermalink for this section
+
+Futures markets — season-long props, outrights, championship winners, and similar — are excluded from this endpoint by default. Add ?include_futures=true to include them.
+
+/api/v1/futures/odds is the dedicated home for futures. It returns futures markets across all books and sports, with futures-specific fields. Use /api/v1/odds?include_futures=true when you need futures alongside game odds in a single response.
+
+Naming a futures market type does not opt you in. ?market=season_leader still returns nothing unless you also pass ?include_futures=true. The two parameters compose: ?market=season_leader&include_futures=true returns season_leader futures rows only.
+
+include_futures=true also applies to Odds Comparison and Batch Odds (as a request body field) with the same semantics.
+
+## Related EndpointsPermalink for this section
+
+- Odds Delta - Get only odds that changed since a given timestamp
+
+- Best Odds - Get the best odds across all books for each selection
+
+- Odds Comparison - Compare odds across books side by side
+
+- Batch Odds - Fetch odds for multiple events in one request
+
+- Markets - List available market types
+
+- Sportsbooks - List available sportsbooks and their status

@@ -1,0 +1,159 @@
+Source: https://docs.sharpapi.io/en/ (fetched 2026-10-21)
+
+# SharpAPI Documentation
+
+SharpAPI is a real-time sports betting odds aggregation platform that provides:
+
+- Real-time Odds - Continuously refreshed odds from major sportsbooks via REST or SSE streaming
+
+- Incremental Delta - /odds/delta returns only what changed since your last poll, with removals tracked — no re-downloading the whole board
+
+- +EV Detection - Automatic expected value calculation using sharp book references
+
+- Arbitrage Alerts - Cross-book arbitrage detection with optimal stake calculations
+
+- No-Vig Odds - Fair odds with bookmaker margin removed, using Pinnacle as the sharp reference
+
+- Streaming - Server-Sent Events and WebSocket push for odds, opportunities, and game state
+
+- Agent-Ready - Built-in MCP server and /llms.txt so AI assistants can discover and query the API without glue code
+
+## Base URLPermalink for this section
+
+https://api.sharpapi.io/api/v1
+
+All API requests should use api.sharpapi.io as the base URL.
+
+## Why SharpAPI?Permalink for this section
+
+ | | Feature | SharpAPI | Competitors
+ | Push delivery | SSE + WebSocket streaming | Polling only
+ | +EV detection | Automated | Manual
+ | Arbitrage w/ stakes | Optimal sizing | Detection only
+ | Sharp book reference | Pinnacle | Varies
+ | No-vig fair odds | Included | Not available
+
+## Staying Current — CheaplyPermalink for this section
+
+Three mechanics keep your view of the market fresh without burning your rate limit:
+
+- Measure freshness, don’t assume it. GET /health exposes newest_odds_age_s — the live age of the newest odds in the store, typically single-digit seconds. No key required — check it yourself right now.
+
+- Poll incrementally. GET /odds/delta?since=... returns only rows that changed since your watermark, plus a removed list — a delta poll is a few KB where a full snapshot is megabytes.
+
+- Or skip polling entirely. SSE and WebSocket streams push odds, opportunity, and game-state updates as they happen (WebSocket add-on).
+
+## PricingPermalink for this section
+
+ | | Tier | Price | Req/Min | Features
+ | Free | $0/mo | 12 | Odds, Schedule
+ | Hobby | $79/mo | 120 | Odds, Schedule, Arbitrage
+ | Pro | $229/mo | 300 | + EV, Middles
+ | Sharp | $399/mo | 1,000 | All + Priority Support
+
+Streaming requires WebSocket add-on ($99/mo). See Pricing for details.
+
+## Supported SportsbooksPermalink for this section
+
+### Major US BooksPermalink for this section
+
+- DraftKings
+
+- FanDuel
+
+- BetMGM
+
+- Caesars
+
+- Fanatics
+
+- BetRivers
+
+- theScore Bet
+
+- Bally Bet
+
+- Rebet
+
+### Sharp BooksPermalink for this section
+
+- Pinnacle (reference for +EV and no-vig calculations)
+
+- Circa Sports
+
+- SBOBET
+
+- 1xBet
+
+### Offshore / InternationalPermalink for this section
+
+- Bet365
+
+- Bovada
+
+- BetOnline
+
+- Betway
+
+- Sky Bet
+
+- Unibet
+
+- Ladbrokes
+
+- Betfred
+
+- Stake
+
+- Cloudbet
+
+### ExchangesPermalink for this section
+
+- ProphetX
+
+- Betfair
+
+- Novig — commission-free no-vig exchange
+
+### Prediction MarketsPermalink for this section
+
+- Polymarket
+
+- Kalshi
+
+43 sportsbooks with real-time odds aggregation, including exchanges and prediction markets.
+
+## Quick LinksPermalink for this section
+
+Sign up for free
+Get API KeyFirst API call in 2 minutes
+Quick StartFull endpoint documentation
+API ReferenceCompare plans and features
+Pricing
+
+## Key EndpointsPermalink for this section
+
+ | | Endpoint | Description | Tier
+ | GET /odds | Current odds snapshot | All
+ | GET /odds/best | Best odds across books | All
+ | GET /odds/delta | Incremental changes since a timestamp | All
+ | GET /events | Events & schedule | All
+ | GET /opportunities/ev | +EV opportunities | Pro+
+ | GET /opportunities/arbitrage | Arbitrage opportunities | Hobby+
+ | GET /opportunities/low_hold | Low hold lines | Pro+
+ | GET /stream | Real-time odds stream | Add-on
+
+## AuthenticationPermalink for this section
+
+Pass your API key using one of these methods:
+
+# Header (recommended)
+curl -H "X-API-Key: sk_live_xxx" https://api.sharpapi.io/api/v1/odds
+
+# Bearer token
+curl -H "Authorization: Bearer sk_live_xxx" https://api.sharpapi.io/api/v1/odds
+
+# Query parameter (for SSE)
+curl "https://api.sharpapi.io/api/v1/stream?api_key=sk_live_xxx"
+
+See Authentication for details.

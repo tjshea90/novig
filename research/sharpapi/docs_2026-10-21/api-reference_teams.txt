@@ -1,0 +1,205 @@
+Source: https://docs.sharpapi.io/en/api-reference/teams/ (fetched 2026-10-21)
+
+# Teams
+
+Look up teams across all sports and leagues. Each row is one team within one league, with its current event count. Useful for building search/autocomplete, labelling odds rows, and understanding what’s currently active.
+
+GET /api/v1/teams
+
+## AuthenticationPermalink for this section
+
+Requires an API key. Available on all tiers (Free included). Unauthenticated requests return 401.
+
+## Query ParametersPermalink for this section
+
+ | | Parameter | Type | Default | Description
+ | sport | string | all | Filter by sport (e.g., basketball, football, soccer)
+ | league | string | all | Filter by league slug (e.g., nba, nfl, england_-_premier_league). Matched case-insensitively, so NBA and nba behave the same.
+ | q | string | - | Search by team name, case-insensitive substring
+ | limit | integer | 50 | Results per page (max 500)
+ | offset | integer | 0 | Pagination offset
+ | cursor | string | - | Keyset cursor from a previous response’s pagination.next_cursor. Takes precedence over offset.
+
+league takes the slug exactly as it appears in the league field of a response — the same values /leagues lists. Slugs are not always the short abbreviation you might expect: Arsenal’s Premier League rows carry england_-_premier_league, and league=epl matches nothing.
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+# Get all NBA teams
+curl "https://api.sharpapi.io/api/v1/teams?league=nba" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Search for a team by name
+curl "https://api.sharpapi.io/api/v1/teams?q=lakers" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Get all basketball teams
+curl "https://api.sharpapi.io/api/v1/teams?sport=basketball" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+// Search for a team
+const response = await fetch(
+ 'https://api.sharpapi.io/api/v1/teams?q=arsenal',
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } },
+);
+const { data, pagination } = await response.json();
+
+console.log(`Found ${pagination.total} rows, showing ${pagination.count}`);
+data.forEach(team => {
+ console.log(`${team.name} (${team.sport}/${team.league}) - ${team.event_count} events`);
+});
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/teams',
+ params={'sport': 'basketball', 'league': 'nba'},
+ headers={'X-API-Key': 'YOUR_API_KEY'},
+)
+result = response.json()
+
+print(f"Found {result['pagination']['total']} rows")
+for team in result['data'][:10]:
+ # numerical_id is omitted for teams with no atlas entry
+ print(f" {team['name']} [{team.get('numerical_id', '-')}] — {team['event_count']} events")
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+Response to GET /api/v1/teams?q=arsenal&limit=3. Three rows, all named “Arsenal” or similar, each in a different league — and only the third has an atlas entry, so only it carries numerical_id, abbreviation and logo:
+
+{
+ "data": [
+ {
+ "name": "Arsenal (Stafford)",
+ "sport": "soccer",
+ "league": "cyber_live_arena_2x5_min",
+ "event_count": 4
+ },
+ {
+ "name": "Arsenal (V)",
+ "sport": "soccer",
+ "league": "soccer",
+ "event_count": 3
+ },
+ {
+ "name": "Arsenal",
+ "numerical_id": 1308,
+ "abbreviation": "ARS",
+ "logo": "https://cdn.sharpapi.io/teams/soccer/1308.png",
+ "sport": "soccer",
+ "league": "england_-_premier_league",
+ "event_count": 2
+ }
+ ],
+ "pagination": {
+ "limit": 3,
+ "offset": 0,
+ "count": 3,
+ "total": 21,
+ "has_more": true,
+ "next_offset": 3,
+ "next_cursor": "eyJ0IjoidGVhbXMiLCJ2IjoxLCJjIjoyLCJuIjoiQXJzZW5hbCIsInMiOiJzb2NjZXIiLCJsIjoiZW5nbGFuZF8tX3ByZW1pZXJfbGVhZ3VlIiwiaSI6MTMwOH0"
+ },
+ "updated_at": "2026-09-23T16:53:55.078830889Z"
+}
+
+A fully populated row — a US major-league team, where the atlas carries the metadata fields too:
+
+{
+ "name": "New York Yankees",
+ "numerical_id": 20,
+ "abbreviation": "NYY",
+ "logo": "https://cdn.sharpapi.io/teams/baseball/20.png",
+ "city": "New York",
+ "mascot": "Yankees",
+ "conference": "AL",
+ "division": "East Division",
+ "sport": "baseball",
+ "league": "mlb",
+ "event_count": 5
+}
+
+Every field except name, sport, league and event_count is omitted from the JSON entirely when it has no value — it is not sent as null. Read them with a default (team.get("numerical_id") in Python, team.numerical_id ?? null in JavaScript) rather than indexing directly.
+
+## Team Object SchemaPermalink for this section
+
+ | | Field | Type | Description
+ | name | string | Display name (e.g., Atlanta Dream, New York Yankees). Always present.
+ | numerical_id | integer | The atlas entry this row’s name resolves to. Frozen and never reused. Omitted when the name has no atlas entry — the key is simply absent, it is never sent as null or 0. See Entity reference IDs.
+ | abbreviation | string | Short code (e.g., ARS, NYY). Omitted where no broadly-recognized abbreviation exists.
+ | logo | string | Full CDN URL for the team crest. Treat the host as opaque. Omitted when unknown.
+ | city | string | The team’s geographic anchor (e.g., Boston, Los Angeles). Omitted when unknown.
+ | mascot | string | The team nickname portion of the name (e.g., Yankees, Lakers). Omitted when unknown.
+ | conference | string | League-defined conference (e.g., AL, Eastern, AFC). Format varies per league. Omitted when unknown.
+ | division | string | League-defined sub-grouping within the conference (e.g., East Division, AFC West). Omitted when unknown.
+ | sport | string | Sport slug (e.g., basketball, soccer, football, hockey). Always present.
+ | league | string | The league slug this row belongs to (e.g., mlb, nba, england_-_premier_league). Always present. A team that appears in more than one league produces one row per league.
+ | event_count | integer | Number of current events involving this team, in this league
+
+There is no id field on a /teams row. The slug-style id belongs to the nested home / away blocks on odds rows and opportunity legs (see below), and to the /sports and /leagues endpoints. If you previously read team.id here, switch to numerical_id (plus the name + sport + league fallback described next).
+
+### Row identity and numerical_idPermalink for this section
+
+These are two different things, and they are easy to mix up.
+
+Row identity — what makes a row unique in a response. A row is one team as it appears in one league, and the endpoint keys rows on the name + sport + league triple. That triple is what you should use as the primary key if you are storing the response as-is. Two rows can carry the same numerical_id (a team entered in several competitions), and rows with no atlas entry carry no numerical_id at all — so numerical_id alone cannot key a stored table.
+
+numerical_id — the handle on the underlying atlas entry. It is the atlas entry this row resolved to. The integer itself is frozen and never reused, so it is the right thing to store when you want a key that survives a display-label change — that is what Entity reference IDs is about. Use it as the foreign key when joining /teams rows against odds rows and opportunity legs.
+
+What it is not is a de-duplication key. Resolution happens per row, and one team entered in several leagues produces one row per league, all carrying the same value — Arsenal’s Premier League, EFL Cup and Champions League rows all carry 1308. Treat numerical_id as a join key, not as something that is unique within a response.
+
+Do not build a unique index on numerical_id alone — it repeats across rows, and it is absent entirely on rows with no atlas entry. Key your table on name + sport + league and carry numerical_id as an ordinary nullable column.
+
+Odds rows and opportunity legs carry nested home / away blocks ({id, numerical_id, name, abbreviation, ...}) that resolve the two competitors inline, so you often don’t need to call this endpoint just to label a row. Those blocks are where the slug-style id appears. As with every nested reference block, treat them as optional — a block, or any field inside it, may be absent for an entity the atlas has not mapped. See Entity reference IDs for the full contract.
+
+## PaginationPermalink for this section
+
+The response envelope is {data, pagination, updated_at} — the same flat shape as /events and /odds. There is no meta object on this endpoint.
+
+ | | Field | Type | Description
+ | pagination.limit | integer | Page size actually applied (capped at 500)
+ | pagination.offset | integer | Offset this page starts at
+ | pagination.count | integer | Number of rows in data on this page
+ | pagination.total | integer | Total rows matching the filters, across all pages
+ | pagination.has_more | boolean | Whether further pages exist
+ | pagination.next_offset | integer | null | Offset of the next page, or null on the last page
+ | pagination.next_cursor | string | Keyset cursor for the next page. Omitted on the last page. Prefer it over next_offset: it seeks from the last row served rather than counting from the start.
+ | pagination.warning | string | Present only when something about the request was adjusted — for example a limit above the cap, or an unrecognized cursor that was ignored.
+ | updated_at | string | ISO 8601 timestamp of the odds snapshot these counts were computed from (top level, a sibling of pagination — not inside it)
+
+## Use CasesPermalink for this section
+
+### Team Name MappingPermalink for this section
+
+Different sportsbooks use different names for the same team. The name on a /teams row is the normalized spelling — use it for display and for search-as-you-type, since q matches against it.
+
+For storage and joins, prefer numerical_id: display labels can be retuned, and Entity reference IDs exists precisely so a label change doesn’t break your keys. Treat name as the thing you show a user, and numerical_id as the thing you store.
+
+### Search / AutocompletePermalink for this section
+
+Use the q parameter to power a search-as-you-type UI:
+
+curl "https://api.sharpapi.io/api/v1/teams?q=lak"
+
+q is a plain case-insensitive substring match against the name field only — no other field is searched, so q=lak matches “Los Angeles Lakers” but q=LAL returns nothing.
+
+### Active TeamsPermalink for this section
+
+Filter by event_count client-side to show only teams with current events.
+
+## Related EndpointsPermalink for this section
+
+- Events - Get events for specific teams
+
+- Leagues - List available leagues
+
+- Sports - List available sports

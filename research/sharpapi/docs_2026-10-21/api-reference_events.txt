@@ -1,0 +1,372 @@
+Source: https://docs.sharpapi.io/en/api-reference/events/ (fetched 2026-10-21)
+
+# Events
+
+Unified endpoint for listing and searching events with filtering, pagination, and search.
+
+GET /api/v1/events
+
+This endpoint replaces the previous /schedule, /events/live, and /events/search endpoints. All functionality from those endpoints is now available here through query parameters. See Migration Notes below.
+
+## AuthenticationPermalink for this section
+
+Requires API key via X-API-Key header, Authorization: Bearer header, or api_key query param. Available to all tiers.
+
+## Query ParametersPermalink for this section
+
+ | | Parameter | Type | Default | Description
+ | sport | string | all | Filter by sport. Comma-separated for multiple (e.g., basketball,football)
+ | league | string | all | Filter by league. Comma-separated for multiple (e.g., nba,nfl)
+ | sportsbook | string | all | Filter by sportsbook (e.g., draftkings,pinnacle)
+ | status | string | — | Filter by lifecycle state: upcoming, live, or final. Omit for the default set (upcoming + live). final returns retained completions instead. An unrecognised value is rejected with 400 validation_error.
+ | is_live | boolean | — | true = live only, false = prematch only, omit = both
+ | season_type | string | — | Filter by Preseason or Regular Season. Case-insensitive; _ and - read as a space, so regular_season works. Any other value returns 400 validation_error with details.parameter set to season_type and details.accepted listing the accepted values. Ignored with status=final, because finished events keep no start time.
+ | date | string | — | Filter by date in YYYY-MM-DD format
+ | q | string | — | Search query matching team names or event names
+ | limit | integer | 50 | Results per page (max 200)
+ | offset | integer | 0 | Pagination offset
+
+Query parameters use singular form and comma-separated values for multiples: sport=basketball,football, not sports=basketball&sports=football.
+
+## Response HeadersPermalink for this section
+
+All responses include standard rate limit and metadata headers:
+
+ | | Header | Description
+ | X-RateLimit-Limit | Maximum requests per minute for your tier
+ | X-RateLimit-Remaining | Requests remaining in current window
+ | X-RateLimit-Reset | Unix timestamp when the rate limit window resets
+ | X-Data-Delay | Data delay for your tier (e.g., 0s, 60s)
+ | X-Request-Id | Unique request identifier for debugging
+
+## Event ObjectPermalink for this section
+
+ | | Field | Type | Description
+ | id | string | Canonical event identifier — the same for every sportsbook covering this event. Use as your primary key for cross-book matching. See Event Matching.
+ | uuid | string | Stable canonical event UUID (feed-stable hash; useful for cross-feed joins).
+ | external_ids | object | Map of sportsbook ID to that book’s native event ID (e.g., {"draftkings": "33483153"}). Use these for deep linking back to sportsbook pages.
+ | sport | string | Sport identifier (e.g., basketball, football)
+ | league | string | League slug (e.g., nba, nfl)
+ | home_team | string | Home team name
+ | away_team | string | Away team name
+ | start_time | string | ISO 8601 event start time. Absent on a finished event served from retention — test for the key, not for status.
+ | completed_at | string | ISO 8601 completion time. Present only on status: "final" rows.
+ | status | string | Event status: upcoming, live, or final. final is returned only when requested with ?status=final.
+ | is_live | boolean | Whether the event is currently live
+ | book_count | integer | Number of sportsbooks with odds for this event
+ | market_count | integer | Number of distinct markets available for this event
+ | season_type | string | "Preseason" or "Regular Season". Omitted when it is not known: a league without a published season calendar (today every league except nba), a date outside the calendar, or an event with no start time. An absent field never means regular season.
+ | markets | string[] | Sorted array of available market types (e.g., ["moneyline", "point_spread", "total_points"])
+ | books | string[] | Sorted array of sportsbook IDs with odds for this event
+
+Finished events. ?status=final returns retained completions, newest first — a separate result set, not part of the unfiltered list. Those rows omit start_time (no kickoff time is retained for them) and carry completed_at instead. A just-finished event whose odds are still cached keeps its real start_time, so branch on whether the key is present rather than on status.
+
+Live scores/period/clock are not on event rows. Fetch live game state from the Game State endpoint (or the gamestate stream channel), joined by id.
+
+## Example RequestsPermalink for this section
+
+### List upcoming NBA and NFL eventsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X GET "https://api.sharpapi.io/api/v1/events?sport=basketball,football&league=nba,nfl&limit=20" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const response = await fetch(
+ 'https://api.sharpapi.io/api/v1/events?sport=basketball,football&league=nba,nfl&limit=20',
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+const { data, pagination } = await response.json();
+console.log(`Found ${pagination.total} events, showing ${pagination.count}`);
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/events',
+ params={
+ 'sport': 'basketball,football',
+ 'league': 'nba,nfl',
+ 'limit': 20
+ },
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+data = response.json()
+print(f"Found {data['pagination']['total']} events")
+
+### Get live events onlyPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X GET "https://api.sharpapi.io/api/v1/events?is_live=true" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const response = await fetch(
+ 'https://api.sharpapi.io/api/v1/events?is_live=true',
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+const { data } = await response.json();
+console.log(`${data.length} live events`);
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/events',
+ params={'live': 'true'},
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+live_events = response.json()['data']
+
+### Search for a teamPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X GET "https://api.sharpapi.io/api/v1/events?q=celtics" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const response = await fetch(
+ 'https://api.sharpapi.io/api/v1/events?q=celtics',
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+const { data } = await response.json();
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/events',
+ params={'q': 'celtics'},
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+results = response.json()['data']
+
+### Filter by date and sportsbookPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X GET "https://api.sharpapi.io/api/v1/events?date=2026-02-08&sportsbook=draftkings,fanduel" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const response = await fetch(
+ 'https://api.sharpapi.io/api/v1/events?date=2026-02-08&sportsbook=draftkings,fanduel',
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+const { data } = await response.json();
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/events',
+ params={
+ 'date': '2026-02-08',
+ 'sportsbook': 'draftkings,fanduel'
+ },
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+data = response.json()
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+{
+ "data": [
+ {
+ "id": "nba_celtics_lakers_2026-02-08_b3",
+ "uuid": "d4d5935357a21a1f",
+ "external_ids": {
+ "draftkings": "33483200",
+ "fanduel": "nba-bos-lal-20260208"
+ },
+ "sport": "basketball",
+ "league": "nba",
+ "home_team": "Boston Celtics",
+ "away_team": "Los Angeles Lakers",
+ "start_time": "2026-02-08T19:30:00Z",
+ "status": "upcoming",
+ "is_live": false,
+ "book_count": 6,
+ "market_count": 14,
+ "markets": ["moneyline", "point_spread", "total_points"],
+ "books": ["betmgm", "caesars", "draftkings", "fanduel"]
+ },
+ {
+ "id": "nba_heat_warriors_2026-02-08_b3",
+ "uuid": "a1b2c3d4e5f60718",
+ "external_ids": {
+ "draftkings": "33483205"
+ },
+ "sport": "basketball",
+ "league": "nba",
+ "home_team": "Golden State Warriors",
+ "away_team": "Miami Heat",
+ "start_time": "2026-02-08T22:00:00Z",
+ "status": "upcoming",
+ "is_live": false,
+ "book_count": 5,
+ "market_count": 9,
+ "markets": ["moneyline", "point_spread", "total_points"],
+ "books": ["betmgm", "draftkings", "fanduel"]
+ }
+ ],
+ "pagination": {
+ "limit": 50,
+ "offset": 0,
+ "count": 2,
+ "total": 43,
+ "has_more": true,
+ "next_offset": 50
+ },
+ "updated_at": "2026-02-08T12:00:00Z"
+}
+
+### Empty results (200): meta.storePermalink for this section
+
+When /events returns zero events it adds a meta.store block saying why — the same reason vocabulary as /odds, so one branch handles both endpoints. data is [] (before September 2026 the default list serialized it as null; ?status=final already returned []), and pagination carries count: 0 and total: 0:
+
+{
+ "data": [],
+ "meta": {
+ "store": {
+ "ready": true,
+ "events": 11064,
+ "reason": "no_match"
+ }
+ },
+ "pagination": {
+ "limit": 50,
+ "offset": 0,
+ "count": 0,
+ "total": 0,
+ "has_more": false,
+ "next_offset": null
+ },
+ "updated_at": "2026-09-07T02:41:18.552Z"
+}
+
+ | | reason | Meaning | What to do
+ | warming | The serving instance has not completed a refresh cycle since it last changed mode — nothing is loaded yet | Retry
+ | store_empty | The instance is ready but the event cache this page was built from is empty | Retry — do not treat the empty page as authoritative
+ | no_match | The instance is ready and the cache is populated; your filters matched nothing | Authoritative — retrying will not change the answer
+
+ | | Field | Type | Meaning
+ | ready | boolean | At least one refresh cycle has completed since the instance’s last mode transition.
+ | events | integer | Events in the cache this page was built from, regardless of your filters. ?status=final pages are served from the settled-event store, so they report that store’s size instead.
+ | reason | string | warming, store_empty, or no_match — see above.
+
+meta.store is present only on empty results; a response with events is unchanged. There is deliberately no generation here — that counter belongs to the odds store, which does not back this endpoint. An unknown league or sportsbook value is rejected with 400 invalid_filter rather than answered with an empty page.
+
+### Error ResponsesPermalink for this section
+
+401 Unauthorized
+
+No key supplied returns missing_api_key; a bad key returns invalid_api_key.
+
+{
+ "error": {
+ "code": "missing_api_key",
+ "message": "API key required. Pass via X-API-Key header, api_key query parameter, or Bearer token.",
+ "docs": "https://docs.sharpapi.io/en/authentication#authentication-methods"
+ }
+}
+
+400 Bad Request
+
+Returned only for malformed numeric parameters (non-numeric limit or offset):
+
+{
+ "error": {
+ "code": "invalid_filter",
+ "details": {
+ "fields": {
+ "limit": ["abc"]
+ }
+ },
+ "message": "invalid filter values: limit=[abc]"
+ }
+}
+
+An invalid date value (or any filter that matches nothing) is not rejected — it returns 200 with an empty result set: data is [] (never null — before September 2026 the default list serialized it as null), pagination carries count: 0 and total: 0, and a meta.store block says whether the empty page is authoritative or should be retried — see Empty results under Response above.
+
+429 Rate Limited
+
+{
+ "error": {
+ "code": "rate_limited",
+ "message": "Rate limit exceeded. Upgrade your tier for higher limits.",
+ "docs": "https://docs.sharpapi.io/en/pricing"
+ }
+}
+
+## Migration from Previous EndpointsPermalink for this section
+
+Several legacy event sub-paths from earlier API versions are kept as deprecation signposts — hitting them returns 410 Gone with a machine-readable hint pointing at the correct endpoint.
+
+ | | Deprecated Path | Use Instead
+ | GET /events/search?q=celtics | GET /events?q=celtics
+ | GET /events/list | GET /events
+ | GET /events/all | GET /events
+ | GET /events/find | GET /events
+
+### 410 Response ShapePermalink for this section
+
+{
+ "error": {
+ "code": "unknown_endpoint",
+ "message": "There is no /api/v1/events/search endpoint. Use GET /api/v1/events — results can be filtered with ?sport=, ?league=, and ?book= query parameters.",
+ "correct_endpoint": "/api/v1/events",
+ "docs": "https://docs.sharpapi.io/api-reference"
+ }
+}
+
+Pre-v1 responses used camelCase field names (homeTeam, awayTeam, isLive, bookCount). The v1 API uses snake_case exclusively (home_team, away_team, is_live, book_count). Update your client code accordingly.
+
+### Key changes from previous versionsPermalink for this section
+
+- Field names are now snake_case (e.g., home_team instead of homeTeam)
+
+- Response uses the flat {data, pagination, updated_at} envelope instead of a top-level events array
+
+- Query parameters use singular form (sport instead of sports)
+
+- Base URL is https://api.sharpapi.io (not https://sharpapi.io)
+
+- Pagination now includes has_more and next_offset fields
+
+## Cross-Book Event MatchingPermalink for this section
+
+The id field is a canonical event identifier — the same real-world event gets the same id regardless of which sportsbook it comes from. Use it as your primary key when building cross-book comparison tools. The external_ids field maps each sportsbook to its native event ID for deep linking.
+
+See Event Matching for full details on how canonical IDs work.
+
+## Related EndpointsPermalink for this section
+
+- Event Details - Get full details for a single event
+
+- Event Odds - Get all odds for a specific event
+
+- Event Markets - Get available markets for an event
+
+- Odds Snapshot - Get current odds across all events

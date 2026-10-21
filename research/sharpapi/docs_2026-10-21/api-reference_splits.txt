@@ -1,0 +1,256 @@
+Source: https://docs.sharpapi.io/en/api-reference/splits/ (fetched 2026-10-21)
+
+# Betting Splits
+
+Get public betting splits (handle % and bet %) from DraftKings, Circa Sports and BetMGM.
+
+Each row covers one event at one source. It gives the share of tickets (bets_pct) and, where the source publishes it, the share of money (handle_pct) on each side of each market it covers: moneyline, spread and total. Use it to see which side the public is backing, and where the money is heavier than the ticket count. To see how one event’s splits moved over time, use the history endpoint described in Splits History below.
+
+GET /api/v1/splits
+
+## AuthenticationPermalink for this section
+
+Requires API key. Requires Pro tier ($229/mo) or higher.
+
+## What are betting splits?Permalink for this section
+
+Handle % is the percentage of total money wagered on each side.
+Bet % is the percentage of total tickets (bets placed) on each side.
+
+The gap between bet % and handle % reveals sharp money. If 30% of tickets carry 60% of the money, sharp bettors are on that side.
+
+## Data SourcesPermalink for this section
+
+ | | Source | Type | What it carries | Update Frequency
+ | DraftKings | Recreational book (~35% US market share) | Handle % and bet % | Every 5 minutes
+ | Circa Sports | Sharp-friendly book (attracts professionals) | Handle % and bet % | Every 5 minutes
+ | BetMGM | Recreational book — derived from its own public bet-percentage field | Bet % only — handle_pct members are null | Intermittent
+
+Comparing DraftKings (recreational) vs Circa (sharp) splits reveals where professional money diverges from the public.
+
+Coverage is fixed at these three books. It does not grow with your plan’s sportsbook allowance — selecting more books, or upgrading to a higher tier, adds no further splits sources. No other book publishes betting splits and none is planned. Because BetMGM carries a ticket percentage only, the bet %/handle % gap that reveals sharp money can be computed on DraftKings and Circa rows alone. History includes DraftKings, Circa and BetMGM samples captured during the retained 48-hour window. BetMGM publishes ticket percentages only; its handle percentages remain null.
+
+consensus is a label, not a sportsbook. When every source covering an event posts identical numbers, those rows are merged into a single row carrying "sportsbook": "consensus". The API applies it synthetically — it never appears in /api/v1/sportsbooks, though /splits?sportsbook=consensus does filter for it. Merged rows are not returned by a sportsbook=draftkings filter.
+
+## Query ParametersPermalink for this section
+
+ | | Parameter | Type | Description
+ | sport | string | Filter by sport (comma-separated). Example: basketball
+ | league | string | Filter by league (comma-separated). Example: nba,ncaab
+ | sportsbook | string | Filter by splits source. Example: draftkings,circa. Also accepts the synthetic consensus value.
+ | event_id | string | Filter by canonical event ID (comma-separated)
+ | market | string | Filter to events that carry a given split market (comma-separated). One or more of spread, total, moneyline.
+ | limit | integer | Max results (default 100, max 200)
+ | offset | integer | Pagination offset (default 0)
+
+## ResponsePermalink for this section
+
+{
+ "data": [
+ {
+ "event_id": "mlb_guardians_orioles_2026-04-16",
+ "sport": "baseball",
+ "league": "mlb",
+ "sportsbook": "draftkings",
+ "away_team": "Baltimore Orioles",
+ "home_team": "Cleveland Guardians",
+ "spread": {
+ "away_odds": -1.5,
+ "home_odds": 1.5,
+ "handle_pct": { "away": 0.22, "home": 0.78 },
+ "bets_pct": { "away": 0.20, "home": 0.80 }
+ },
+ "total": {
+ "line": 8,
+ "handle_pct": { "over": 0.53, "under": 0.47 },
+ "bets_pct": { "over": 0.57, "under": 0.43 }
+ },
+ "moneyline": {
+ "away_odds": 104,
+ "home_odds": -126,
+ "handle_pct": { "away": 0.28, "home": 0.72 },
+ "bets_pct": { "away": 0.33, "home": 0.67 }
+ },
+ "fetched_at": "2026-04-16T19:25:28.363825+00:00",
+ "available_metrics": ["bets_pct", "handle_pct"]
+ }
+ ],
+ "pagination": {
+ "limit": 100,
+ "offset": 0,
+ "count": 1,
+ "total": 41,
+ "has_more": false,
+ "next_offset": null
+ },
+ "updated_at": "2026-04-16T19:29:38.920698424Z"
+}
+
+In the /splits response the spread carries line values inside the away_odds/home_odds keys (e.g. -1.5 / +1.5) — the field naming is a known inconsistency. The historical endpoint uses away_line/home_line for the same data.
+
+## Response FieldsPermalink for this section
+
+ | | Field | Type | Description
+ | event_id | string | Canonical event ID — use this to join with /odds data
+ | sport | string | Atlas-normalized sport name
+ | league | string | Atlas-normalized league name
+ | sportsbook | string | Source sportsbook for the splits data (draftkings, circa, betmgm, or the synthetic consensus)
+ | away_team | string | Away team name
+ | home_team | string | Home team name
+ | spread.away_odds | number | Away spread line value (e.g., -1.5) — see callout above
+ | spread.home_odds | number | Home spread line value (e.g., +1.5)
+ | spread.handle_pct | object | Money % on each side (away, home; 0.0-1.0)
+ | spread.bets_pct | object | Ticket % on each side (away, home; 0.0-1.0)
+ | total.line | number | Over/under line (e.g., 225.5)
+ | total.handle_pct | object | Money % (over, under; 0.0-1.0)
+ | total.bets_pct | object | Ticket % (over, under; 0.0-1.0)
+ | moneyline.away_odds | number | Away moneyline odds (American format)
+ | moneyline.home_odds | number | Home moneyline odds (American format)
+ | moneyline.handle_pct | object | Money % on each side (away, home; 0.0-1.0)
+ | moneyline.bets_pct | object | Ticket % on each side (away, home; 0.0-1.0)
+ | fetched_at | string | ISO 8601 timestamp when data was last scraped
+ | available_metrics | array | Which split metrics this row’s sportsbook publishes at all — bets_pct, handle_pct, or both, always in that order. A statement about the book, not about this row’s values. Omitted when the book is undeclared — see below.
+
+Which values can be null, and which keys can be absent. The percentage keys and the moneyline odds keys above are always present, but some carry null instead of a number. Other keys can be missing rather than null: total.line is omitted on an event for which the book has posted no total, spread.away_odds / .home_odds are omitted on a betmgm row that has no spread line, and available_metrics is omitted for a book SharpAPI has not declared — read these with a default rather than assuming the key.
+handle_pct.away / .home (and .over / .under on totals) are null on every betmgm row, because BetMGM publishes a ticket percentage only — there is no handle figure to report. bets_pct members are null when the source has posted no percentage for that market yet; BetMGM’s feed is intermittent, so this shows up there. moneyline.away_odds / .home_odds are null when a book has pulled the moneyline for an event while still publishing its split percentages — this happens on DraftKings and Circa rows too, not only BetMGM. The OpenAPI spec declares all of these as nullable, so a generated client will accept them. spread.away_odds / .home_odds are null when the source has posted no spread line for the game, and that spread’s bets_pct and handle_pct members are then null too.
+
+The event_id field uses the same canonical ID format as the /odds endpoint, so you can join splits with odds data directly.
+For example, fetch odds for a specific game and compare with its splits:
+
+GET /api/v1/odds?event_id=nba_thunder_timberwolves_2026-03-15
+GET /api/v1/splits?event_id=nba_thunder_timberwolves_2026-03-15
+
+/odds does not include per-row public bet %.
+Betting splits (handle % and ticket %) are only available through this endpoint (/splits) and its historical counterpart (/splits/history). There is no public_bet_pct field on /odds rows.
+
+### Reading available_metricsPermalink for this section
+
+A splits row may carry available_metrics, an array naming the split metrics that this row’s sportsbook publishes at all. It describes the book, not the row: a book that publishes money share still lists handle_pct on a row whose handle_pct members happen to be null.
+
+Only two names can appear, always in this order, and each is exactly a key inside the spread, total and moneyline objects — so a name here points at a field you can look up:
+
+- bets_pct — share of tickets (bets placed), 0.0-1.0
+
+- handle_pct — share of money (handle), 0.0-1.0
+
+The field is omitted entirely when SharpAPI has not declared what a book publishes. Absent means not stated — never publishes nothing.
+
+Read the list together with the value. Taking handle_pct as the example:
+
+ | | available_metrics | handle_pct members | What it means
+ | present, lists handle_pct | numbers | The book publishes money share and we have it.
+ | present, lists handle_pct | null | The book publishes money share and we are missing it — a gap on our side, not a limit of the book.
+ | present, does not list handle_pct | null | The book does not publish money share. Nothing is broken.
+ | present, does not list handle_pct | numbers | Should not occur; treat it as a declaration that has fallen behind and trust the value.
+ | absent | numbers or null | Nothing is stated about this book. Do not infer either way — read the values on their own, and do not record the book as publishing nothing.
+
+A consensus row carries the intersection. A merged "sportsbook": "consensus" row folds several books together, so its claim has to hold for every one of them: it lists only the metrics all of its contributing books declare, and omits the field entirely if any one of them is undeclared.
+
+## ExamplesPermalink for this section
+
+All NBA SplitsDraftKings OnlySpecific Game
+
+### All NBA Splits
+
+curl "https://api.sharpapi.io/api/v1/splits?league=nba" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### DraftKings Only
+
+curl "https://api.sharpapi.io/api/v1/splits?sportsbook=draftkings&sport=basketball" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### Specific Game
+
+curl "https://api.sharpapi.io/api/v1/splits?event_id=nba_thunder_timberwolves_2026-03-15" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+## Splits HistoryPermalink for this section
+
+Track how splits shift over time for a specific event.
+
+GET /api/v1/splits/history?event_id={event_id}
+
+### Query ParametersPermalink for this section
+
+ | | Parameter | Type | Required | Description
+ | event_id | string | Yes | Canonical event ID
+ | sportsbook | string | No | Filter by book (comma-separated). Applied before pagination.
+ | start_time | string | No | Lower bound. RFC 3339 (2026-04-16T13:00:00Z) or Unix seconds (1776344602).
+ | end_time | string | No | Upper bound, same formats.
+ | limit | integer | No | Max entries (default 100, max 200).
+ | cursor | string | No | Opaque continuation token from meta.next_cursor; keep event, book and time filters unchanged.
+
+The retained window is 48 hours only. There is no longer-term archive or backfill beyond captured, retained samples. Follow meta.next_cursor while meta.has_more is true to read the complete window. meta.total, books, oldest, and newest describe the current page; meta.limit is the effective page size (default 100, maximum 200; larger values clamp to 200). Use the same end_time on every page for a fixed time range. Invalid timestamps or mismatched cursors return 400; temporary history-store failures return 503.
+
+### ResponsePermalink for this section
+
+Entries are sorted oldest-first. This endpoint emits the success envelope (success/data/meta) — distinct from /splits which emits data/pagination/updated_at.
+
+The history payload uses book (not sportsbook) and the spread carries away_line/home_line (not away_odds/home_odds). Both are known inconsistencies vs /splits. Each entry also carries available_metrics, with the same meaning as on /splits: the metrics that entry’s book publishes at all. It is omitted for a book SharpAPI has not declared.
+
+History values may be unavailable. Percentage members can be null; BetMGM never publishes handle percentages. Line and odds fields can be absent or null when unavailable. Check available_metrics for the metrics the book publishes, and handle missing/null values when reading individual markets.
+
+{
+ "success": true,
+ "data": [
+ {
+ "available_metrics": ["bets_pct", "handle_pct"],
+ "book": "circa",
+ "ts": "2026-04-16T13:03:21.071966+00:00",
+ "timestamp": 1776344602.36,
+ "spread": {
+ "away_line": -1.5,
+ "home_line": 1.5,
+ "handle_pct": { "away": 0.37, "home": 0.63 },
+ "bets_pct": { "away": 0.27, "home": 0.73 }
+ },
+ "total": {
+ "line": 8,
+ "handle_pct": { "over": 0.43, "under": 0.57 },
+ "bets_pct": { "over": 0.55, "under": 0.45 }
+ },
+ "moneyline": {
+ "away_odds": 104,
+ "home_odds": -126,
+ "handle_pct": { "away": 0.35, "home": 0.65 },
+ "bets_pct": { "away": 0.35, "home": 0.65 }
+ }
+ }
+ ],
+ "meta": {
+ "event_id": "mlb_guardians_orioles_2026-04-16",
+ "total": 1,
+ "books": ["circa"],
+ "limit": 100,
+ "has_more": false,
+ "next_cursor": "",
+ "oldest": "2026-04-16T13:03:22.360588312Z",
+ "newest": "2026-04-16T13:03:22.360588312Z",
+ "updated_at": "2026-04-16T19:28:50.525875452Z"
+ }
+}
+
+Data is collected every ~5 minutes and retained for 48 hours via a Valkey sorted set (splits_history:{event_id}) scored by Unix timestamp.
+
+Full HistoryDraftKings Only
+
+### Full History
+
+curl "https://api.sharpapi.io/api/v1/splits/history?event_id=nba_thunder_timberwolves_2026-03-15" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### DraftKings Only
+
+curl "https://api.sharpapi.io/api/v1/splits/history?event_id=nba_thunder_timberwolves_2026-03-15&sportsbook=draftkings" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+## Interpreting SplitsPermalink for this section
+
+ | | Signal | What it means
+ | Bet % high, Handle % low | Public side — lots of small bets
+ | Bet % low, Handle % high | Sharp side — fewer but larger bets
+ | DK and Circa agree | Market consensus — both public and sharp aligned
+ | DK and Circa diverge | Sharp-public split — Circa (sharp) disagrees with DK (public)
+
+Splits come from three books only — DraftKings and BetMGM (recreational) and Circa (sharp-adjacent). No true sharp book publishes splits, and no further sources are planned. Use splits as one signal alongside line movement and +EV analysis, not in isolation.

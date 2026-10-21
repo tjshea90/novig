@@ -1,0 +1,204 @@
+Source: https://docs.sharpapi.io/en/api-reference/odds-comparison/ (fetched 2026-10-21)
+
+# Odds Comparison
+
+Compare odds for a specific event across multiple sportsbooks. Results are a flat list of entries — one per (market, selection) — and each entry carries every book’s price (sorted best price first) plus the per-book hold.
+
+GET /api/v1/odds/comparison
+
+## AuthenticationPermalink for this section
+
+Requires API key. Available to all tiers.
+
+The sportsbooks included in the comparison depend on your tier’s book access. Free tier compares DraftKings and FanDuel; higher tiers include more books. See Book Access by Tier.
+
+## Query ParametersPermalink for this section
+
+ | | Parameter | Type | Default | Description
+ | event_id | string | required | Event ID to compare odds for
+ | market_segment | string | all | Filter to a contest segment (e.g., full_game, 1st_half, 1st_inning). Rows whose book hasn’t stamped a segment are excluded when this filter is set.
+ | include_futures | boolean | false | Include futures markets in results. A futures event ID returns an empty comparison by default; pass true to see it.
+
+The event_id parameter is required. This endpoint returns a detailed comparison for a single event.
+
+market and sportsbook query parameters are not supported on this endpoint — the response always covers every market and every book your tier can access for the event. Filter client-side on each entry’s market_type, or use /odds?event_id=...&market=... when you need server-side market filtering.
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+# Compare all odds for a specific event
+curl -X GET "https://api.sharpapi.io/api/v1/odds/comparison?event_id=mlb_royals_whitesox_2026-06-26_b2" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Moneyline only — filter client-side on market_type
+curl -s "https://api.sharpapi.io/api/v1/odds/comparison?event_id=mlb_royals_whitesox_2026-06-26_b2" \
+ -H "X-API-Key: YOUR_API_KEY" | jq '[.data[] | select(.market_type == "moneyline")]'
+
+### JavaScript
+
+const response = await fetch(
+ 'https://api.sharpapi.io/api/v1/odds/comparison?event_id=mlb_royals_whitesox_2026-06-26_b2',
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+const { data } = await response.json();
+
+// `data` is a flat array of { market_type, selection, line, books[], book_holds[] }
+// covering every market — filter client-side for the markets you want
+const moneylines = data.filter(entry => entry.market_type === 'moneyline');
+
+for (const entry of moneylines) {
+ const line = entry.line != null ? ` ${entry.line}` : '';
+ // books are sorted best price first
+ const best = entry.books[0];
+ const worst = entry.books[entry.books.length - 1];
+ console.log(`\n${entry.market_type} — ${entry.selection}${line}`);
+ console.log(` best ${best.odds_american} @ ${best.sportsbook}, worst ${worst.odds_american} @ ${worst.sportsbook}`);
+ for (const book of entry.books) {
+ console.log(` ${book.sportsbook}: ${book.odds_american}`);
+ }
+}
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/odds/comparison',
+ params={'event_id': 'mlb_royals_whitesox_2026-06-26_b2'},
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+result = response.json()
+
+# `data` is a flat list of {market_type, selection, line, books, book_holds}
+# covering every market — filter client-side for the markets you want
+moneylines = [e for e in result['data'] if e['market_type'] == 'moneyline']
+for entry in moneylines:
+ books = entry['books'] # sorted best price first
+ best, worst = books[0], books[-1]
+ line = f" {entry['line']}" if entry.get('line') is not None else ''
+ print(f"\n{entry['market_type']} — {entry['selection']}{line}")
+ print(f" best {best['odds_american']} @ {best['sportsbook']}, worst {worst['odds_american']} @ {worst['sportsbook']}")
+ for book in books:
+ print(f" {book['sportsbook']}: {book['odds_american']}")
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+{
+ "data": [
+ {
+ "market_type": "moneyline",
+ "selection": "CHI White Sox",
+ "line": null,
+ "books": [
+ { "sportsbook": "fanduel", "odds_american": -140, "odds_decimal": 1.714, "timestamp": "2026-06-27T02:11:20.000Z" },
+ { "sportsbook": "draftkings", "odds_american": -145, "odds_decimal": 1.690, "timestamp": "2026-06-27T02:11:24.000Z" },
+ { "sportsbook": "betmgm", "odds_american": -150, "odds_decimal": 1.667, "timestamp": "2026-06-27T02:11:18.000Z" }
+ ],
+ "book_holds": [
+ { "sportsbook": "fanduel", "hold": 4.2 },
+ { "sportsbook": "draftkings", "hold": 4.7 },
+ { "sportsbook": "betmgm", "hold": 5.1 }
+ ]
+ },
+ {
+ "market_type": "moneyline",
+ "selection": "KC Royals",
+ "line": null,
+ "books": [
+ { "sportsbook": "betmgm", "odds_american": 130, "odds_decimal": 2.300, "timestamp": "2026-06-27T02:11:18.000Z" },
+ { "sportsbook": "draftkings", "odds_american": 125, "odds_decimal": 2.250, "timestamp": "2026-06-27T02:11:24.000Z" }
+ ]
+ }
+ ],
+ "pagination": {
+ "limit": 0,
+ "offset": 0,
+ "count": 2,
+ "has_more": false,
+ "next_offset": null
+ },
+ "updated_at": "2026-06-27T02:11:20.000Z"
+}
+
+data is a flat array of comparison entries — one per (market, selection). The books array inside each entry is sorted best price first, so books[0] is the best available price and books[books.length - 1] is the worst. book_holds is present only when the book has priced both sides of the selection’s market.
+
+### Response HeadersPermalink for this section
+
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 297
+X-RateLimit-Reset: 1737853200
+X-Data-Delay: 0
+X-Request-Id: 1782526326424224-82519
+
+## Response SchemaPermalink for this section
+
+The response data is a flat array of comparison entries — one object per (market, selection) combination for the event. There is no top-level success flag and no meta object; pagination metadata is returned in the top-level pagination object and the snapshot time in updated_at.
+
+### Comparison EntryPermalink for this section
+
+ | | Field | Type | Description
+ | market_type | string | Market type (e.g., moneyline, spread, total_runs)
+ | selection | string | Selection name (team name, Over/Under, etc.)
+ | line | number | null | Line value (for spreads/totals); null for moneylines
+ | books | array | Each sportsbook’s price for this selection, sorted best price first
+ | book_holds | array | Per-book hold (%) for this selection. Omitted when the book has not priced the opposing side.
+
+### Book Odds Object (books[])Permalink for this section
+
+ | | Field | Type | Description
+ | sportsbook | string | Sportsbook ID
+ | odds_american | number | American odds
+ | odds_decimal | number | Decimal odds
+ | timestamp | string | ISO 8601 time SharpAPI last refreshed this odd through its pipeline — advances every ingest cycle. A feed-freshness / liveness signal; it is NOT when the price last changed. See understanding the timestamp field.
+
+### Book Hold Object (book_holds[])Permalink for this section
+
+ | | Field | Type | Description
+ | sportsbook | string | Sportsbook ID
+ | hold | number | Hold (overround) %, computed by pairing this book’s price on both sides of the selection’s market.
+
+## Understanding HoldPermalink for this section
+
+Each entry’s book_holds shows the bookmaker’s built-in margin, per book, for that selection’s market:
+
+- A lower hold means a more efficient (sharper) price.
+
+- A wide spread of holds across books for the same selection means line shopping is particularly valuable for that market.
+
+ | | Hold (%) | Interpretation
+ | < 2 | Very efficient market (sharp books)
+ | 2-5 | Normal market
+ | 5-8 | High margin (typical for props)
+ | > 8 | Very high margin
+
+## Use CasesPermalink for this section
+
+### Line ShoppingPermalink for this section
+
+The books array is sorted best price first, so books[0] is the price to take. Compare across books for the same selection:
+
+curl -s "https://api.sharpapi.io/api/v1/odds/comparison?event_id=mlb_royals_whitesox_2026-06-26_b2" \
+ -H "X-API-Key: YOUR_API_KEY" | jq '[.data[] | select(.market_type == "run_line")]'
+
+### Identifying Stale LinesPermalink for this section
+
+Look for books that haven’t updated recently by checking each book’s timestamp. A book with stale odds may be slow to adjust, creating temporary value.
+
+### Market EfficiencyPermalink for this section
+
+Compare book_holds across books for a selection. A wide spread between the lowest and highest hold means line shopping is particularly valuable for this market.
+
+## Related EndpointsPermalink for this section
+
+- Odds Snapshot - Get raw odds from individual sportsbooks
+
+- Best Odds - Get just the best odds with consensus and hold
+
+- Odds Delta - Get only odds that changed since a given timestamp
+
+- Batch Odds - Fetch comparison data for multiple events at once

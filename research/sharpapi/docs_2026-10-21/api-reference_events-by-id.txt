@@ -1,0 +1,218 @@
+Source: https://docs.sharpapi.io/en/api-reference/events-by-id/ (fetched 2026-10-21)
+
+# Event Details
+
+Get detailed information for a single event, including available markets and metadata.
+
+GET /api/v1/events/{eventId}
+
+## AuthenticationPermalink for this section
+
+Requires API key via X-API-Key header, Authorization: Bearer header, or api_key query param. Available to all tiers.
+
+## Path ParametersPermalink for this section
+
+ | | Parameter | Type | Required | Description
+ | eventId | string | Yes | Unique event identifier (e.g., nba_celtics_lakers_2026-02-08_b3)
+
+## Response HeadersPermalink for this section
+
+All responses include standard rate limit and metadata headers:
+
+ | | Header | Description
+ | X-RateLimit-Limit | Maximum requests per minute for your tier
+ | X-RateLimit-Remaining | Requests remaining in current window
+ | X-RateLimit-Reset | Unix timestamp when the rate limit window resets
+ | X-Data-Delay | Data delay for your tier (e.g., 0s, 60s)
+ | X-Request-Id | Unique request identifier for debugging
+
+## Event Detail ObjectPermalink for this section
+
+ | | Field | Type | Description
+ | id | string | Canonical event identifier — the same for every sportsbook covering this event. Use as your primary key for cross-book matching. See Event Matching.
+ | external_ids | object | Map of sportsbook ID to that book’s native event ID (e.g., { "draftkings": "12345", "fanduel": "67890" }). Use these for deep linking back to sportsbook pages.
+ | sport | string | Sport identifier (e.g., basketball, football)
+ | league | string | League slug (e.g., nba, nfl)
+ | home_team | string | Home team name
+ | away_team | string | Away team name
+ | start_time | string | ISO 8601 event start time. Absent on a finished event served from retention — test for the key, not for status.
+ | completed_at | string | ISO 8601 completion time. Present only on status: "final" rows.
+ | status | string | Event status: upcoming, live, or final.
+ | is_live | boolean | Whether the event is currently live
+ | season_type | string | "Preseason" or "Regular Season". Omitted when it is not known: a league without a published season calendar (today every league except nba), a date outside the calendar, or an event with no start time. An absent field never means regular season.
+ | books | array | Sportsbooks covering this event, sorted by market count descending
+ | markets | array | Market types available for this event, sorted by selection count descending
+
+### Books ArrayPermalink for this section
+
+Each entry in the books array describes a sportsbook that has odds for this event.
+
+ | | Field | Type | Description
+ | id | string | Sportsbook identifier (e.g., draftkings, pinnacle)
+ | name | string | Display name of the sportsbook
+ | market_count | integer | Number of distinct market types this book offers for the event
+ | last_update | string | ISO 8601 timestamp of the most recent odds update from this book
+
+### Markets ArrayPermalink for this section
+
+Each entry in the markets array summarizes an available market type for this event.
+
+ | | Field | Type | Description
+ | type | string | Canonical market type identifier (e.g., moneyline, point_spread, total_points, player_points)
+ | selection_count | integer | Number of distinct selections available in this market
+ | book_count | integer | Number of sportsbooks offering this market
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X GET "https://api.sharpapi.io/api/v1/events/nba_celtics_lakers_2026-02-08_b3" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const eventId = 'nba_celtics_lakers_2026-02-08_b3';
+const response = await fetch(
+ `https://api.sharpapi.io/api/v1/events/${eventId}`,
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+const { data } = await response.json();
+console.log(`${data.home_team} vs ${data.away_team}`);
+console.log(`Markets: ${data.markets.map(m => m.type).join(', ')}`);
+
+### Python
+
+import requests
+
+event_id = 'nba_celtics_lakers_2026-02-08_b3'
+response = requests.get(
+ f'https://api.sharpapi.io/api/v1/events/{event_id}',
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+event = response.json()['data']
+print(f"{event['home_team']} vs {event['away_team']}")
+print(f"Markets: {[m['type'] for m in event['markets']]}")
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+Single-resource responses wrap the object in data as a single object (not an array).
+
+{
+ "data": {
+ "id": "nba_celtics_lakers_2026-02-08_b3",
+ "external_ids": {
+ "draftkings": "12345678",
+ "fanduel": "87654321",
+ "pinnacle": "556677889",
+ "betmgm": "ms_44556"
+ },
+ "sport": "basketball",
+ "league": "nba",
+ "home_team": "Boston Celtics",
+ "away_team": "Los Angeles Lakers",
+ "start_time": "2026-02-08T19:30:00Z",
+ "status": "upcoming",
+ "is_live": false,
+ "books": [
+ {
+ "id": "draftkings",
+ "name": "DraftKings",
+ "market_count": 5,
+ "last_update": "2026-02-08T12:05:00Z"
+ },
+ {
+ "id": "fanduel",
+ "name": "FanDuel",
+ "market_count": 4,
+ "last_update": "2026-02-08T12:04:30Z"
+ },
+ {
+ "id": "pinnacle",
+ "name": "Pinnacle",
+ "market_count": 3,
+ "last_update": "2026-02-08T12:03:00Z"
+ },
+ {
+ "id": "betmgm",
+ "name": "BetMGM",
+ "market_count": 3,
+ "last_update": "2026-02-08T12:02:15Z"
+ }
+ ],
+ "markets": [
+ {
+ "type": "moneyline",
+ "selection_count": 2,
+ "book_count": 4
+ },
+ {
+ "type": "point_spread",
+ "selection_count": 2,
+ "book_count": 4
+ },
+ {
+ "type": "total_points",
+ "selection_count": 2,
+ "book_count": 3
+ },
+ {
+ "type": "player_points",
+ "selection_count": 18,
+ "book_count": 2
+ },
+ {
+ "type": "team_total",
+ "selection_count": 4,
+ "book_count": 1
+ }
+ ]
+ },
+ "updated_at": "2026-02-08T12:05:00Z"
+}
+
+### Error ResponsesPermalink for this section
+
+404 Not Found
+
+{
+ "error": {
+ "code": "not_found",
+ "message": "Event not found"
+ }
+}
+
+401 Unauthorized
+
+No key supplied returns missing_api_key; a bad key returns invalid_api_key.
+
+{
+ "error": {
+ "code": "missing_api_key",
+ "message": "API key required. Pass via X-API-Key header, api_key query parameter, or Bearer token.",
+ "docs": "https://docs.sharpapi.io/en/authentication#authentication-methods"
+ }
+}
+
+## Use CasesPermalink for this section
+
+- Cross-book comparison — The canonical id is the same across all sportsbooks, so all odds returned are already matched to the same real-world event. See Event Matching.
+
+- Market analysis — See every available market type and how many books offer each
+
+- Sharp reference — Compare soft book odds against Pinnacle (the sharp benchmark)
+
+- Deep linking — Use external_ids to link users to a specific sportsbook’s event page
+
+## Related EndpointsPermalink for this section
+
+- Events - List and search events
+
+- Event Odds - Get paginated odds for this event
+
+- Event Markets - Get available market types for this event
+
+- Odds Snapshot - Get current odds across all events

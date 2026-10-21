@@ -1,0 +1,107 @@
+Source: https://docs.sharpapi.io/en/concepts/market-lifecycle/ (fetched 2026-10-21)
+
+# Market Lifecycle: Suspensions and Removals
+
+Markets leave the board constantly — a book suspends after a goal, retires a handicap or total threshold as the line moves, or settles the event. SharpAPI signals every one of these transitions explicitly on every consumption surface. You never need to infer that a market closed by waiting for its price to look stale.
+
+This page is the map: which signal fires when, on which surface, and how to keep your local state clean.
+
+## The Two Ways a Market Leaves the BoardPermalink for this section
+
+Sportsbooks take markets off the board in two distinct ways, and SharpAPI mirrors both faithfully:
+
+ | | Mode | What the book does | What SharpAPI emits
+ | Removal | The book takes the market down entirely (dominant mode — e.g. Pinnacle pulling a handicap/total rung, DK/FD suspending during a scoring play, an event settling) | The row’s id appears in removed[] on /odds/delta and in an odds:removed event on the SSE stream and WebSocket. The row is absent from the next /odds snapshot.
+ | Suspension in place | The book keeps the market posted but flags it closed — the price is frozen and not bettable | The row stays present with is_active: false. The transition is pushed as an odds:update carrying is_active: false, plus a dedicated odds:locked event on the stream.
+
+SharpAPI never fabricates a row a book didn’t post. A removed market is signaled by an explicit removal event carrying its id — not by a synthetic “closed” price row. Odds ids are deterministic — a stable hash of book, event, market, line, and selection — so a market that comes back re-arrives under the same id, and delete-on-removal plus upsert-on-update keeps your state exactly in sync with the board.
+
+## Signal Matrix by SurfacePermalink for this section
+
+ | | Surface | Removal signal | Suspension signal
+ | GET /odds (snapshot polling) | Row absent from the next response | is_active: false on the row
+ | GET /odds/delta | removed[] — {id, sportsbook, removed_at} objects | is_active: false on rows in data[]
+ | SSE /stream | odds:removed — {ids: [...], count, book} | odds:update with is_active: false, plus odds:locked
+ | WebSocket | odds:removed event | odds:update with is_active: false, plus odds:locked
+
+If you poll plain /odds, removal is communicated by absence: diff each snapshot against the previous one and drop rows whose ids no longer appear. This works, but it makes you do the diffing — for explicit removal notices, use /odds/delta (its removed[] array names every dropped id since your last poll) or the stream (push, no polling at all).
+
+The delta endpoint retains removals for 10 minutes. Poll at the recommended cadence (chain since from the terminal page’s meta.server_time — the page where has_more is false) and you’ll never miss one; see Odds Delta for the removed_truncated and since_clamped safety flags.
+
+## Threshold Ladders: Handicaps and TotalsPermalink for this section
+
+Handicap (spread) and total markets are ladders — a set of rungs at different lines (-2.5, -3, -3.5, …; O/U 2.25, 2.5, 2.75, …). When the main line moves, books — Pinnacle in particular — retire rungs at the old thresholds and post new ones. Each rung is its own odds row with its own id, so:
+
+- A retired rung (the threshold-point market disappearing) fires odds:removed / shows up in removed[], exactly like any other removal.
+
+- The new rung arrives as a fresh row via odds:update (or in the next snapshot/delta), with is_main_line / is_alternate_line flags telling you where it sits in the ladder.
+
+- A rung that returns (common in live play — books re-center ladders constantly) re-arrives under the same deterministic id.
+
+Ladder churn is heavy during live play: alternate rungs come and go many times per game. Treat a removal as “off the board right now”, not as a terminal close — only event settlement is final.
+
+total 2.5 (id …_total_over_2.5) ── line moves to 3 ──▶ odds:removed [..._total_over_2.5]
+ odds:update [..._total_over_3] (new rung)
+
+### Recommended client patternPermalink for this section
+
+Key your local state by odds id and apply three rules, in event order:
+
+- odds:update (or a row in data[]) → upsert the row.
+
+- odds:removed (or an id in removed[]) → delete the row.
+
+- is_active: false → keep the row but mark it unbettable (grey it out); a re-open arrives as a normal odds:update with is_active: true and a fresh price.
+
+# Delta-polling loop: explicit removals, no client-side diffing
+since = initial_timestamp
+while True:
+ offset = 0
+ while True:
+ r = get(f"/api/v1/odds/delta?since={since}&sportsbook=pinnacle"
+ f"&limit=500&offset={offset}").json()
+ for row in r["data"]:
+ local_state[row["id"]] = row # upsert (covers is_active flips)
+ for gone in r.get("removed", []):
+ local_state.pop(gone["id"], None) # delete — the close signal
+ if not r["pagination"]["has_more"]:
+ if r.get("overflow"): # scan stopped short: since would gap
+ raise RuntimeError("re-baseline from /odds, then resume with the "
+ "first baseline page's updated_at as since")
+ since = r["meta"]["server_time"] # terminal page: real watermark
+ break
+ if r["pagination"]["next_offset"] is None:
+ raise RuntimeError("re-baseline from /odds, then resume with the "
+ "first baseline page's updated_at as since")
+ offset = r["pagination"]["next_offset"]
+ sleep(5)
+
+// SSE: push-based, the same three rules
+es.addEventListener('odds:update', (e) => {
+ for (const row of JSON.parse(e.data).odds) localState.set(row.id, row);
+});
+es.addEventListener('odds:removed', (e) => {
+ for (const id of JSON.parse(e.data).ids) localState.delete(id);
+});
+
+## Frozen Prices and Stale-Price GuardsPermalink for this section
+
+Two row-level flags protect you from acting on a price the book is no longer honoring:
+
+ | | Field | Meaning
+ | is_active | false = the market is suspended/closed with the price frozen at its last value. Grey it out; don’t bet it, don’t feed it into EV math. Absent means true.
+ | is_stale_pregame_price | true on a live row that still carries a pre-game price that hasn’t moved since kickoff — filter with ?is_stale_pregame_price=false if you only want prices repriced in-play.
+
+SharpAPI’s own EV and arbitrage engines exclude is_active: false legs, so opportunity endpoints never surface an edge against a frozen, unbettable price.
+
+Pinnacle mostly removes suspended markets (→ odds:removed) and flags a smaller subset closed in place (→ is_active: false / odds:locked). US retail books like DraftKings and FanDuel pull markets entirely during scoring plays — you’ll see removals, not is_active flips. Handle both modes and you’re covered for every book.
+
+## RelatedPermalink for this section
+
+- Odds Delta — removed[] reference, retention window, polling pattern
+
+- SSE Stream — odds:removed, odds:locked, is_active on odds:update
+
+- WebSocket — the same events over WS
+
+- Live vs. Pre-Match — book suspension behavior during live play

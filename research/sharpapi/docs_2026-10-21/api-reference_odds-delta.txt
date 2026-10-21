@@ -1,0 +1,312 @@
+Source: https://docs.sharpapi.io/en/api-reference/odds-delta/ (fetched 2026-10-21)
+
+# Odds Delta
+
+Get only the odds that have changed since a given timestamp. This endpoint returns the same odds format as /odds but filtered to items updated after your since value, making it ideal for polling clients that want incremental updates without re-fetching the full snapshot.
+
+GET /api/v1/odds/delta
+
+## AuthenticationPermalink for this section
+
+Requires API key. Available to all tiers.
+
+Advance since from the terminal page of each delta window — the page where pagination.has_more is false. On that page, meta.server_time reports the server’s watermark; carry it into your next request’s since. On every earlier page (has_more: true), meta.server_time deliberately holds at the since you sent, so that you cannot skip rows you have not fetched yet — treat it as “keep paging”, not as a new watermark.
+
+## Query ParametersPermalink for this section
+
+ | | Parameter | Type | Default | Description
+ | since | string | required | ISO 8601 timestamp. Only return odds updated after this time (e.g., 2026-02-11T12:00:00Z)
+ | sportsbook | string | all | Comma-separated sportsbook IDs (e.g., draftkings,fanduel)
+ | sport | string | all | Filter by sport (e.g., basketball, football)
+ | league | string | all | Filter by league (e.g., nba, nfl)
+ | market | string | all | Filter by market type (e.g., moneyline, spread, total). Supports category aliases — see Odds: Market Category Aliases. Also accepted as market_type=.
+ | event_id | string | - | Filter by event ID
+ | is_live | boolean | false | Return only live/in-play events
+ | state | string | — | US state code for deep-link routing only; does not filter odds or return state-specific prices. Accepts the 50 US state codes plus dc; unsupported nonempty codes (including on) return 400 invalid_filter. When set, deep_link URLs include ?state=XX; omitted or empty emits no ?state=, and the redirect endpoint then applies its own pa default. Only affects books with state-dependent URLs (BetMGM, Caesars, BetRivers).
+ | limit | integer | 50 | Max results per page (max 500)
+ | offset | integer | 0 | Pagination offset. Must be ≤ 500. While has_more is true, request the next page with offset set to the response’s next_offset, keeping since unchanged. Advance since only from the terminal page (has_more: false).
+
+The since parameter is required. Omitting it returns a 400 validation_error error.
+
+since has a 10-minute retention window for removals. Odds removals older than 10 minutes are pruned from memory. If you send a since older than that, the data array still honors your timestamp, but the removed list can only contain odds removed within the last 10 minutes — and since_clamped: true will be set on the response. Advance since at the cadence in the Polling Pattern section below to avoid this.
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+# Get all odds changes in the last 30 seconds
+curl -X GET "https://api.sharpapi.io/api/v1/odds/delta?since=2026-02-11T12:00:00Z&league=nba" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+let since = new Date(Date.now() - 30000).toISOString();
+
+async function pollDelta() {
+ let offset = 0;
+ while (true) {
+ const response = await fetch(
+ `https://api.sharpapi.io/api/v1/odds/delta?since=${since}&league=nba&limit=500&offset=${offset}`,
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+ );
+ const { data, removed, pagination, meta, overflow } = await response.json();
+
+ console.log(`${pagination.count} odds changed, ${removed.length} removed`);
+ // ...apply data as upserts and removed as deletions...
+
+ if (!pagination.has_more) {
+ if (overflow) {
+ // Terminal page, but the server's bounded scan (Free tier) stopped short
+ // of the window: rows past it are unreachable at any offset, so this
+ // watermark would skip them. Re-bootstrap instead — see "When a window
+ // cannot be drained" below. Never advance since from this response.
+ throw new Error(
+ 'delta window not fully scanned: re-baseline from /odds (cursor=), ' +
+ "then resume with the FIRST baseline page's updated_at as since"
+ );
+ }
+ // Terminal page: server_time is the real watermark. Chain it into
+ // the next window's since so windows never gap or overlap.
+ since = meta.server_time;
+ break;
+ }
+ if (pagination.next_offset === null) {
+ // Window too large to drain by offset — a fresh since must come from a
+ // new /odds baseline, never from this response. See Polling Pattern below.
+ throw new Error(
+ 'delta window exceeds offset paging: re-baseline from /odds (cursor=), ' +
+ "then resume with the FIRST baseline page's updated_at as since"
+ );
+ }
+ // Keep since unchanged while draining the window.
+ offset = pagination.next_offset;
+ }
+}
+
+// Poll every 5 seconds
+setInterval(pollDelta, 5000);
+
+### Python
+
+import requests
+import time
+from datetime import datetime, timezone, timedelta
+
+since = (datetime.now(timezone.utc) - timedelta(seconds=30)).isoformat()
+
+while True:
+ offset = 0
+ while True:
+ response = requests.get(
+ 'https://api.sharpapi.io/api/v1/odds/delta',
+ params={'since': since, 'league': 'nba', 'limit': 500, 'offset': offset},
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+ )
+ result = response.json()
+ pagination = result['pagination']
+
+ print(f"{pagination['count']} odds changed, {len(result['removed'])} removed")
+ # ...apply data as upserts and removed as deletions...
+
+ if not pagination['has_more']:
+ if result.get('overflow'):
+ # Terminal page, but the server's bounded scan (Free tier) stopped
+ # short of the window: rows past it are unreachable at any offset,
+ # so this watermark would skip them. Re-bootstrap instead — see
+ # "When a window cannot be drained" below. Never advance since
+ # from this response.
+ raise RuntimeError(
+ 'delta window not fully scanned: re-baseline from /odds '
+ "(cursor=), then resume with the FIRST baseline page's "
+ 'updated_at as since'
+ )
+ # Terminal page: server_time is the real watermark. Chain it into
+ # the next window's since so windows never gap or overlap.
+ since = result['meta']['server_time']
+ break
+ if pagination['next_offset'] is None:
+ # Window too large to drain by offset — a fresh since must come from
+ # a new /odds baseline, never from this response. See Polling Pattern below.
+ raise RuntimeError(
+ 'delta window exceeds offset paging: re-baseline from /odds '
+ "(cursor=), then resume with the FIRST baseline page's "
+ 'updated_at as since'
+ )
+ # Keep since unchanged while draining the window.
+ offset = pagination['next_offset']
+
+ time.sleep(5)
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+{
+ "data": [
+ {
+ "id": "199954867251468",
+ "sportsbook": "draftkings",
+ "event_id": "nba_celtics_lakers_2026-02-08_b3",
+ "sport": "basketball",
+ "league": "nba",
+ "home_team": "Los Angeles Lakers",
+ "away_team": "Boston Celtics",
+ "market_type": "moneyline",
+ "selection": "Boston Celtics",
+ "selection_type": "away",
+ "odds_american": -150,
+ "odds_decimal": 1.667,
+ "odds_probability": 0.60,
+ "line": null,
+ "event_start_time": "2026-02-08T19:00:00Z",
+ "timestamp": "2026-02-08T12:00:15.125Z",
+ "is_live": false,
+ "is_main_line": true
+ }
+ ],
+ "removed": [
+ {
+ "id": "102044417046441",
+ "sportsbook": "pinnacle",
+ "removed_at": "2026-02-08T12:00:07Z",
+ "event_start": "2026-02-08T12:00:00Z",
+ "was_live": false,
+ "boundary": true
+ }
+ ],
+ "pagination": {
+ "limit": 50,
+ "offset": 0,
+ "count": 1,
+ "total": 1,
+ "has_more": false,
+ "next_offset": null,
+ "next_cursor": null
+ },
+ "updated_at": "2026-02-08T12:00:20Z",
+ "meta": {
+ "server_time": "2026-02-08T12:00:20Z"
+ }
+}
+
+Each data row carries the full odds object documented on Odds Snapshot (trimmed here for brevity). Apply data rows as upserts and removed rows as deletions to your local copy.
+
+### Response HeadersPermalink for this section
+
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 299
+X-RateLimit-Reset: 1737853200
+X-Data-Delay: 0
+X-Request-Id: 1782526326424224-82519
+
+### Error ResponsesPermalink for this section
+
+400 Missing since parameter
+
+{
+ "error": {
+ "code": "validation_error",
+ "message": "since query parameter is required (ISO 8601 timestamp)"
+ }
+}
+
+400 Offset too large
+
+{
+ "error": {
+ "code": "offset_too_large",
+ "message": "offset must be <= 500; page with `next_offset` until `has_more` is false, then advance `since` to the response's top-level `updated_at` (mirrored as `meta.server_time`; a response field, not a row field) — it holds at your current `since` while `has_more` is true; keep paging while `next_offset` is non-null even if `overflow` is true (that only means `total` is capped); when `next_offset` is null while `has_more` or `overflow` is true, re-bootstrap from paged `/odds` (`cursor=`) and resume delta with a fresh `since`",
+ "max_offset": 500
+ }
+}
+
+401 Unauthorized
+
+No key supplied returns missing_api_key; a bad key returns invalid_api_key.
+
+{
+ "error": {
+ "code": "missing_api_key",
+ "message": "API key required. Pass via X-API-Key header, api_key query parameter, or Bearer token.",
+ "docs": "https://docs.sharpapi.io/en/authentication#authentication-methods"
+ }
+}
+
+## Delta Response SchemaPermalink for this section
+
+The data array contains the same odds objects as the /odds endpoint. Only odds updated after the since timestamp are included.
+
+### The removed ArrayPermalink for this section
+
+The top-level removed array names every odds row that left the board since your since timestamp — markets a book took down (suspension, a handicap/total threshold retired by a line move, event settled). Delete these ids from your local state; this is the explicit close signal, so you never need to diff snapshots yourself. Present only when at least one removal matched your filters. See Market Lifecycle for the full close/suspend signal map.
+
+ | | Field | Type | Description
+ | removed[].id | string | The odds ID that is no longer on the board
+ | removed[].sportsbook | string | The book that removed it
+ | removed[].removed_at | string | ISO 8601 timestamp of when SharpAPI observed the removal
+ | removed[].event_start | string | Optional. The scheduled start time for this event, as reported by the sportsbook at removal time. Present when the sportsbook supplied a parseable start time.
+ | removed[].was_live | boolean | Optional. Whether the removed market was an in-play market at removal time. false means pre-event/prematch; true means in-play.
+ | removed[].boundary | boolean | Optional. Present and true only when was_live is false and the sportsbook is currently posting live rows for this event. This is a filtering aid indicating the removal likely coincides with the sportsbook’s pre-event to live board swap — not a reason code, and not a deterministic transition detector. A pre-event market pulled hours after the event went live can also receive boundary: true (stale prematch). Absent when was_live is true, when the event has not yet gone live on that book, or when the book does not carry in-play data. SSE/WS removal events are unchanged and do not carry these fields.
+
+On top of the standard {data, pagination, updated_at} shape, the delta envelope adds:
+
+ | | Field | Type | Description
+ | removed | array | Odds removed since since, each {id, sportsbook, removed_at}, with optional event_start, was_live, and boundary fields. Apply as deletions to your local copy.
+ | meta.server_time | string | ISO 8601 watermark, mirrored as top-level updated_at. Holds at the since you sent while has_more is true; reports the server’s watermark only on the terminal page (has_more: false). Advance your since from the terminal page only.
+ | pagination.total | integer | Exact count of matching changes on the terminal page. While has_more is true it is an upper bound capped at 10000 — do not use it for progress or sizing before the traversal completes.
+ | pagination.next_cursor | null | Always null on /odds/delta — this endpoint pages with next_offset + since, never cursors. Emitted explicitly so “no cursor here” is distinguishable from a missing field.
+ | overflow | boolean | Optional. Present and true when total is not an exact count for this page — the raw candidate tail exceeded the 10000 cap, or (Free tier) the server’s bounded scan stopped before covering the whole window. data rows are unaffected: keep paging while next_offset is non-null; total and overflow correct themselves on the page that drains. Re-bootstrap when next_offset is null while has_more or overflow is true.
+
+### Truncation and Clamping FlagsPermalink for this section
+
+Two optional top-level boolean flags appear only when the server had to apply a safety limit to the response. Well-behaved clients polling at the recommended cadence never see them.
+
+ | | Field | Type | Description
+ | removed_truncated | boolean | Present and true when the removed array hit the 1000-entry server cap. There are more removed odds the server didn’t include. Usually means your since is too old or your filters are too broad — narrow the window or filter set and re-poll.
+ | since_clamped | boolean | Present and true when since was older than the server’s 10-minute removal retention. The data array still honors your original since, but removed is restricted to the last 10 minutes of removals. Advance since to meta.server_time each call to avoid this.
+
+## Polling PatternPermalink for this section
+
+The recommended polling pattern drains each window, then chains since from the terminal page:
+
+- Make an initial request with since set to a recent timestamp
+
+- Apply data as upserts and removed as deletions
+
+- While pagination.has_more is true and pagination.next_offset is non-null, request the next page with offset set to next_offset, keeping since unchanged
+
+- On the terminal page (has_more: false), read meta.server_time and use it as the since value in your next request — unless overflow is still true on that page (Free tier’s bounded scan): then re-bootstrap instead of advancing (see below)
+
+- Repeat on your desired interval (e.g., every 5 seconds)
+
+This ensures:
+
+- No gaps - server_time is the server’s clock and only advances once you hold every row in the window, so you won’t miss updates to clock drift or a partial read
+
+- No duplicates - each delta window is non-overlapping
+
+- Minimal payload - only changed odds are returned
+
+Advancing since from a page where has_more is true cannot skip data — meta.server_time equals your current since on those pages — but it does stop your loop from making progress: the next request re-reads the same window. Always drain to the terminal page before advancing since.
+
+### When a window cannot be drainedPermalink for this section
+
+offset is capped at 500, so a window with more matching changes than offset paging can reach ends with next_offset: null while has_more is still true. On the Free tier, the server’s bounded scan can also leave overflow: true standing on the terminal page itself (has_more: false) — rows beyond the scan budget are unreachable at any offset, and advancing since there would skip them. Both states are the same signal — re-bootstrap whenever next_offset is null while has_more or overflow is true:
+
+- Fetch a full baseline from /odds using cursor= pagination
+
+- Resume delta polling with since set to the first baseline page’s updated_at — later pages are read later, so resuming from the last page’s value would gap changes that landed on earlier pages during the crawl
+
+Polling at the recommended cadence with limit=500 keeps windows small enough that this path is rarely needed.
+
+If no odds have changed since your since timestamp, the response will have an empty data array and count: 0. This is normal and expected during quiet periods.
+
+## Related EndpointsPermalink for this section
+
+- Odds Snapshot - Get the full current odds snapshot
+
+- SSE Stream - Real-time push updates via Server-Sent Events
+
+- WebSocket Stream - Real-time push updates via WebSocket

@@ -1,0 +1,198 @@
+Source: https://docs.sharpapi.io/en/api-reference/odds-closing/ (fetched 2026-10-21)
+
+# Closing Line
+
+Returns the closing-line snapshot for an event — the per-book odds captured the moment each sportsbook flipped the event from pre-match to live. The endpoint is the canonical source for closing-line value (CLV) analysis on bets placed before tip-off.
+
+GET /api/v1/odds/closing
+
+Each sportsbook is captured independently the first time it transitions a given event to is_live=true. Captured snapshots live in Valkey for 48 hours after the event starts. Beyond that window, use /api/v1/historical/odds/closing (Enterprise, ClickHouse-backed).
+
+## AuthenticationPermalink for this section
+
+Requires API key. Available to Pro, Sharp, and Enterprise tiers (closing_line feature).
+
+## Query ParametersPermalink for this section
+
+ | | Parameter | Type | Default | Description
+ | event_id | string | required | Event identifier. Same IDs as /api/v1/events.
+ | sportsbook | string | all | Comma-separated book filter (e.g., draftkings,fanduel). books= is accepted as a legacy alias.
+
+event_id is required. Omitting it returns 400 validation_error. Invalid characters in the value also return 400 validation_error.
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X GET "https://api.sharpapi.io/api/v1/odds/closing?event_id=mlb_athletics_mariners_2026-04-22" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const response = await fetch(
+ 'https://api.sharpapi.io/api/v1/odds/closing?event_id=mlb_athletics_mariners_2026-04-22',
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+const { data } = await response.json();
+
+// Per-book closing prices for CLV
+for (const [book, payload] of Object.entries(data.books)) {
+ console.log(`${book}: ${payload.odds.length} closing prices (captured ${payload.captured_at}, ${payload.capture_trigger})`);
+}
+
+### Python
+
+import requests
+
+r = requests.get(
+ "https://api.sharpapi.io/api/v1/odds/closing",
+ params={"event_id": "mlb_athletics_mariners_2026-04-22"},
+ headers={"X-API-Key": "YOUR_API_KEY"},
+)
+snap = r.json()["data"]
+
+for book, payload in snap["books"].items():
+ print(f"{book}: {len(payload['odds'])} closing prices ({payload['capture_trigger']})")
+
+## ResponsePermalink for this section
+
+{
+ "success": true,
+ "data": {
+ "event_id": "mlb_athletics_mariners_2026-04-22",
+ "sport": "baseball",
+ "league": "mlb",
+ "home_team": "Seattle Mariners",
+ "away_team": "Athletics",
+ "event_start_time": "2026-04-22T22:10:00Z",
+ "captured_at": "2026-04-22T22:09:58.412Z",
+ "books": {
+ "draftkings": {
+ "captured_at": "2026-04-22T22:09:58.412Z",
+ "seconds_before_kickoff": -3,
+ "capture_trigger": "transition",
+ "is_final": true,
+ "odds": [
+ {
+ "sportsbook": "draftkings",
+ "market_type": "moneyline",
+ "selection": "Seattle Mariners",
+ "selection_type": "home",
+ "line": null,
+ "odds_american": -165,
+ "odds_decimal": 1.606,
+ "implied_probability": 0.6226,
+ "no_vig_probability": 0.6041,
+ "fair_close_decimal": 1.6554,
+ "closing_probability": 0.6041,
+ "source_updated_at": "2026-04-22T22:09:55.001Z"
+ }
+ ]
+ },
+ "pinnacle": {
+ "captured_at": "2026-04-22T22:09:50.120Z",
+ "seconds_before_kickoff": 8,
+ "capture_trigger": "kickoff",
+ "is_final": true,
+ "odds": [
+ {
+ "sportsbook": "pinnacle",
+ "market_type": "moneyline",
+ "selection": "Seattle Mariners",
+ "selection_type": "home",
+ "line": null,
+ "odds_american": -158,
+ "odds_decimal": 1.633,
+ "implied_probability": 0.6122,
+ "no_vig_probability": 0.5980,
+ "fair_close_decimal": 1.6722,
+ "closing_probability": 0.5980,
+ "source_updated_at": "2026-04-22T22:09:46.300Z"
+ }
+ ]
+ }
+ }
+ },
+ "meta": {
+ "source": "valkey",
+ "updated_at": "2026-04-22T17:34:54.692Z"
+ }
+}
+
+### Empty ResponsePermalink for this section
+
+If no closing snapshot has been captured (event hasn’t started yet, or event ID has no captures within the 48h window), the response returns an empty books object:
+
+{
+ "success": true,
+ "data": {
+ "event_id": "mlb_athletics_mariners_2026-04-22",
+ "books": {}
+ },
+ "meta": {
+ "source": "valkey",
+ "updated_at": "2026-04-22T17:34:54.692Z"
+ }
+}
+
+## Response FieldsPermalink for this section
+
+ | | Field | Type | Description
+ | data.event_id | string | Event identifier echoed from the request.
+ | data.sport | string | Sport (e.g., baseball). Empty when no captures exist.
+ | data.league | string | League (e.g., mlb). Empty when no captures exist.
+ | data.home_team, data.away_team | string | Team names. Empty when no captures exist.
+ | data.event_start_time | string | ISO 8601 scheduled start time.
+ | data.captured_at | string | ISO 8601 timestamp of the first capture (the earliest book to flip the event live).
+ | data.books | object | Map of book_id → BookClosing object (see below). Empty {} if nothing captured.
+
+### BookClosing shape (data.books[<book>])Permalink for this section
+
+ | | Field | Type | Description
+ | odds | ClosingOdd[] | Captured closing prices for this book
+ | captured_at | string | ISO 8601 time this book’s closing line was captured
+ | seconds_before_kickoff | integer | Seconds before kickoff at capture (can be negative)
+ | capture_trigger | string | transition | kickoff | disappearance | evict | backfill (confidence: transition > kickoff > others)
+ | is_final | boolean | Whether this is the final/locked capture for the book
+
+### ClosingOdd shapePermalink for this section
+
+ | | Field | Type | Description
+ | sportsbook | string | Book identifier (lowercase).
+ | market_type | string | Canonical market type, e.g. moneyline, run_line, total_runs, 1st_inning_total_runs, player_points.
+ | selection | string | Selection label (e.g., team name, player name, over, under).
+ | selection_type | string | home, away, over, under, etc.
+ | line | number? | Spread or total line, when applicable. null on moneylines.
+ | odds_american | integer | American-format odds at capture.
+ | odds_decimal | number | Decimal-format odds (full precision).
+ | market_id | string | Sportsbook/native market identifier.
+ | selection_id | string | Sportsbook/native selection identifier.
+ | canonical_key | string | Stable cross-book key (<event_id>:<market_type>:<selection>[:<line>]) for joining.
+ | implied_probability | number | Raw implied probability (with vig).
+ | no_vig_probability | number? | Power-devigged fair probability; null for single-selection markets.
+ | fair_close_decimal | number | Fair (no-vig) decimal price at close.
+ | closing_probability | number | Closing fair probability used for CLV.
+ | source_updated_at | string | ISO 8601 timestamp of the source odds record used for capture.
+ | market_segment | string? | Segment/period the market applies to (e.g. full_game, 1st_half, 1st_inning), when derived.
+ | player_name | string? | Present for player props.
+ | stat_category | string? | Stat category (points, rebounds, etc.) for player props.
+
+## CachingPermalink for this section
+
+Responses are cached at the edge for 30s (s-maxage=30) and at the client for 10s (max-age=10). Closing snapshots don’t change after capture, so this is safe.
+
+## Error CodesPermalink for this section
+
+ | | Status | Code | Meaning
+ | 400 | validation_error | Missing or malformed event_id.
+ | 401 | missing_api_key / invalid_api_key | See Authentication.
+ | 403 | tier_restricted | Tier below Pro.
+ | 503 | not_ready | Closing-line capture is not currently available (e.g., backing store unreachable). Retry.
+
+## RelatedPermalink for this section
+
+- /api/v1/historical/odds/closing — Enterprise; long-term ClickHouse history beyond the 48h window.
+
+- /api/v1/historical/clv — CLV analytics aggregated across opportunities.

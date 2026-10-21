@@ -1,0 +1,375 @@
+Source: https://docs.sharpapi.io/en/api-reference/sportsbooks/ (fetched 2026-10-21)
+
+# Sportsbooks
+
+Get a list of available sportsbooks and their current status, including which tier is required to access each book’s data.
+
+## EndpointsPermalink for this section
+
+GET /api/v1/sportsbooks
+
+Requires an API key. Available on all tiers (Free included). Unauthenticated requests return 401.
+
+## List All SportsbooksPermalink for this section
+
+### Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X GET "https://api.sharpapi.io/api/v1/sportsbooks" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const response = await fetch('https://api.sharpapi.io/api/v1/sportsbooks', {
+ headers: { 'X-API-Key': 'YOUR_API_KEY' },
+});
+const { data } = await response.json();
+
+// Filter for sharp books
+const sharpBooks = data.filter(b => b.is_sharp);
+console.log('Sharp books:', sharpBooks.map(b => b.display_name));
+
+// Check which books require a higher tier
+const proBooks = data.filter(b => b.requires_tier === 'pro');
+console.log('Pro-tier books:', proBooks.map(b => b.display_name));
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/sportsbooks',
+ headers={'X-API-Key': 'YOUR_API_KEY'},
+)
+result = response.json()
+
+for book in result['data']:
+ tier_note = f" (requires {book['requires_tier']})" if book['requires_tier'] else ""
+ sharp_note = " [SHARP]" if book['is_sharp'] else ""
+ print(f"{book['display_name']}{sharp_note}{tier_note}: {book['event_count']} events")
+
+### ResponsePermalink for this section
+
+Real response, truncated to 6 of the 61 books currently returned (has_limits, added September 2026, has been inserted into each row to show the current shape). Every entry carries the full field set, except that numerical_id is omitted on a book not yet mapped in the atlas:
+
+{
+ "data": [
+ {
+ "id": "draftkings",
+ "display_name": "DraftKings",
+ "short_name": "DraftKings",
+ "numerical_id": 17,
+ "category": "major_us",
+ "is_sharp": false,
+ "has_live_odds": true,
+ "has_player_props": true,
+ "has_limits": false,
+ "regions": ["US"],
+ "requires_tier": "free",
+ "status": "active",
+ "event_count": 457,
+ "last_update": "2026-07-02T18:17:55.852268618Z",
+ "coming_soon": false
+ },
+ {
+ "id": "fanduel",
+ "display_name": "FanDuel",
+ "short_name": "FanDuel",
+ "numerical_id": 19,
+ "category": "major_us",
+ "is_sharp": false,
+ "has_live_odds": true,
+ "has_player_props": true,
+ "has_limits": false,
+ "regions": ["US"],
+ "requires_tier": "free",
+ "status": "active",
+ "event_count": 494,
+ "last_update": "2026-07-02T18:17:55.921509102Z",
+ "coming_soon": false
+ },
+ {
+ "id": "bet365",
+ "display_name": "Bet365 US",
+ "short_name": "Bet365 US",
+ "numerical_id": 4,
+ "category": "regional",
+ "is_sharp": false,
+ "has_live_odds": true,
+ "has_player_props": true,
+ "has_limits": false,
+ "regions": ["US"],
+ "requires_tier": "hobby",
+ "status": "active",
+ "event_count": 35,
+ "last_update": "2026-07-02T18:16:34.848726023Z",
+ "coming_soon": false
+ },
+ {
+ "id": "polymarket",
+ "display_name": "Polymarket",
+ "short_name": "Polymarket",
+ "numerical_id": 29,
+ "category": "exchange",
+ "is_sharp": false,
+ "has_live_odds": false,
+ "has_player_props": false,
+ "has_limits": false,
+ "regions": ["GLOBAL"],
+ "requires_tier": "hobby",
+ "status": "active",
+ "event_count": 1040,
+ "last_update": "2026-07-02T18:17:44.093204728Z",
+ "coming_soon": false
+ },
+ {
+ "id": "saba",
+ "display_name": "SABA",
+ "short_name": "SABA",
+ "numerical_id": 32,
+ "category": "regional",
+ "is_sharp": false,
+ "has_live_odds": true,
+ "has_player_props": true,
+ "has_limits": false,
+ "regions": ["GLOBAL"],
+ "requires_tier": "pro",
+ "status": "active",
+ "event_count": 2930,
+ "last_update": "2026-07-02T18:17:50.012487996Z",
+ "coming_soon": false
+ },
+ {
+ "id": "pinnacle",
+ "display_name": "Pinnacle",
+ "short_name": "Pinnacle",
+ "numerical_id": 28,
+ "category": "sharp",
+ "is_sharp": true,
+ "has_live_odds": true,
+ "has_player_props": true,
+ "has_limits": true,
+ "regions": ["GLOBAL"],
+ "requires_tier": "sharp",
+ "status": "active",
+ "event_count": 740,
+ "last_update": "2026-07-02T18:17:55.967604052Z",
+ "coming_soon": false
+ }
+ ],
+ "updated_at": "2026-07-02T18:17:55.590257979Z"
+}
+
+## Sportsbook Object SchemaPermalink for this section
+
+ | | Field | Type | Description
+ | id | string | Unique identifier (use in API filters)
+ | numerical_id | integer | Stable integer key (frozen, never reused; omitted when unmapped). New (May 2026) — additive, optional. See Entity reference IDs.
+ | display_name | string | Human-readable name
+ | short_name | string | Short display name
+ | category | string | Book category (e.g. major_us, regional, sharp)
+ | has_live_odds | boolean | Supports live/in-play odds
+ | has_player_props | boolean | Supports player prop markets
+ | has_limits | boolean | null | Publishes per-selection bet limits (max_bet on odds rows). Derived from the book’s current snapshot — true, false, or null when no rows have been observed. New (September 2026); see below.
+ | regions | string[] | Available regions: US, UK, EU, AU, GLOBAL
+ | is_sharp | boolean | Whether the book is considered a sharp/efficient market
+ | status | string | active or inactive
+ | event_count | integer | Number of events currently available
+ | last_update | string | ISO 8601 timestamp of last data update
+ | currently_serving | boolean | true when the book is backed by odds data the API is serving right now. false for a book not launched yet, an inactive book, or a selectable book with no data at the moment (see idle_reason). It does not say how long a book has been without data. New (October 2026).
+ | idle_reason | string | null | Why a book with no data has none, when known. "no_demand": the book can be selected but is paused because no customer has it selected; selecting it starts it again. "feed_gap": at least one customer has the book selected and it still has no data, because it is starting up after being selected or its data feed is interrupted; these rows are also listed in the default response. null in every other case; do not read it as a fault. More values may be added; treat a value you do not recognise as null. New (October 2026).
+ | requires_tier | string | Minimum tier required: free, hobby, pro, or sharp (string; never null)
+ | coming_soon | boolean | true for announced books not yet live
+
+Changed (September 2026): two has_player_props declarations corrected. has_player_props is true when a book is declared to support player props or is currently serving player_* markets. fliff: true → false — Fliff prices moneyline, spread and totals only and has never emitted a player-prop market. prophetx: false → true — ProphetX emits player props on every active day on record, so it already read true whenever it was active; it now reads true during quiet windows too. If you filter books on has_player_props, fliff leaves your book set and prophetx is always in it. The Props column in the per-book tables below is regenerated from the live response and reflects the correction from its next regeneration.
+
+The event_count may be 0 and last_update may be null if a sportsbook is temporarily unavailable or experiencing data delays.
+
+### New (May 2026): numerical_idPermalink for this section
+
+numerical_id is a frozen, dense-from-1 integer assigned per sportsbook in the SharpAPI atlas. It’s stable across rebrands and slug renames — pinnacle is numerical_id: 28 regardless of any future display-name changes.
+
+- Frozen: never reused or remapped.
+
+- Optional: omitted for sportsbooks not yet mapped (e.g. brand-new books in the catalog before assignment); slug id is always present.
+
+- Domain-scoped: unique across sportsbooks only.
+
+Every odds row and opportunity leg also carries a matching sportsbook_ref block ({id, label, numerical_id}). See Entity reference IDs.
+
+### New (September 2026): has_limitsPermalink for this section
+
+has_limits reports whether a sportsbook publishes per-selection bet limits — the max_bet field on odds rows. Only a small minority of books do (9 of 61 at the time of writing), and on every other book max_bet is simply absent from the row, which looks identical to a selection that happens to carry no limit. has_limits is the per-book answer to “is this absence a missing capability or a missing value?”
+
+ | | Value | Meaning
+ | true | At least one row in the book’s current snapshot carries max_bet
+ | false | Rows were observed and none carry max_bet — a real negative finding
+ | null | No rows observed, so no claim is made — rows with coming_soon: true and books that currently have zero rows
+
+- Derived, not declared. Unlike has_live_odds and has_player_props, which combine observed data with a per-book configuration entry, has_limits is computed from the odds SharpAPI is serving right now and nothing else. When a book starts or stops publishing limits, the flag follows on its own — the set of limit-publishing books does change, so read the flag rather than caching a list of books.
+
+- Any row, not every row. true means the book publishes limits somewhere in its current snapshot; individual rows can still omit max_bet. Treat it as “worth reading max_bet on this book”, not as a guarantee on every selection.
+
+- Always present; null is not false. The key is on every row. Guard the three states explicitly — a client that treats null as “no limits” re-creates the ambiguity the field exists to remove.
+
+- Same freshness as last_update. Both are recomputed in the same pass, so has_limits lags the true book state by the same amount: at most about 40 seconds across the recompute, in-process response cache and HTTP cache layers, and typically 15 seconds or less.
+
+See Liquidity and Limits for how to use max_bet once a book reports has_limits: true.
+
+## Book Access by TierPermalink for this section
+
+The per-tier and per-category book tables below are regenerated from the live /sportsbooks response when the docs are updated (last regenerated 2026-07-02) and can lag the roster between updates. The authoritative, always-current list is the GET /api/v1/sportsbooks response itself — fetch it rather than relying on these tables.
+
+The requires_tier field indicates the minimum subscription tier needed to access a sportsbook’s odds data through the API.
+
+ | | Tier | Books Available | Included Sportsbooks
+ | Free | 2 | DraftKings, FanDuel
+ | Hobby | 52 | + 888sport (Italy), Bally Bet — temporarily unavailable, Bet365 US, Betano — temporarily unavailable, Betfred, BetMGM, BetOnline, betPARX, BetRivers, Betsson, BetVictor, Betway — temporarily unavailable, Bovada — temporarily unavailable, bwin, Caesars, Coral — temporarily unavailable, Fanatics, Fanatics Markets — temporarily unavailable, Fliff, Galera.bet — temporarily unavailable, Gemini, GG Bet — temporarily unavailable, Goldrush — temporarily unavailable, Hard Rock Bet, Kalshi, Ladbrokes, Ladbrokes UK — temporarily unavailable, LowVig — temporarily unavailable, Matchbook — temporarily unavailable, Novig, Paddy Power, Polymarket, Polymarket US, PrizePicks, PrizePicks Flex, Rebet, Robinhood — temporarily unavailable, Sky Bet, Smarkets, Sportingbet BR — temporarily unavailable, Sportzino, Stake, SX Bet — temporarily unavailable, theScore Bet, Thrillzz — temporarily unavailable, Underdog Fantasy, Underdog Fantasy Multipliers, Underdog Predictions, Unibet — temporarily unavailable, Unibet (Canada) — temporarily unavailable
+ | Pro | 53 | + SABA
+ | Sharp | 61 | Choose any 25, including sharp books like Pinnacle
+ | Enterprise | 61 | All available sportsbooks
+
+requires_tier is the book’s minimum tier class — it is not the only gate. Each tier also has a book-count cap (Free 2, Hobby 5, Pro 15, Sharp 25, Enterprise unlimited), and Free keys are additionally whitelisted to DraftKings + FanDuel only — so a Free key cannot access eighteenbet or sportingbet_br even though those books carry requires_tier: "free". See the tier comparison for the full matrix.
+
+Pinnacle, Circa Sports, SBOBET, 1xBet, ProphetX, and both Betfair feeds (betfair and betfair_lay) require Sharp tier or higher. Pinnacle is a sharp book whose efficient lines are used as the reference for +EV calculations. Circa Sports is another known sharp book with deliberately tight lines and a focused prop menu. Requesting sharp book odds on Free, Hobby, or Pro tier will return a 403 tier_restricted error.
+
+### Understanding requires_tierPermalink for this section
+
+ | | Value | Meaning
+ | "free" | Available on all tiers, including Free
+ | "hobby" | Requires Hobby tier or higher
+ | "pro" | Requires Pro tier or higher
+ | "sharp" | Requires Sharp or Enterprise tier
+
+## Supported SportsbooksPermalink for this section
+
+### Major US BooksPermalink for this section
+
+ | | ID | Name | Live | Props | Tier
+ | draftkings | DraftKings | Yes | Yes | Free
+ | fanduel | FanDuel | Yes | Yes | Free
+ | ballybet | Bally Bet — temporarily unavailable | Yes | Yes | Hobby
+ | bet365 | Bet365 US | Yes | Yes | Hobby
+ | betmgm | BetMGM | Yes | Yes | Hobby
+ | betonline | BetOnline | Yes | Yes | Hobby
+ | betparx | betPARX | Yes | Yes | Hobby
+ | betrivers | BetRivers | Yes | Yes | Hobby
+ | bovada | Bovada — temporarily unavailable | Yes | Yes | Hobby
+ | caesars | Caesars | Yes | Yes | Hobby
+ | fanatics | Fanatics | Yes | Yes | Hobby
+ | fanatics_markets | Fanatics Markets — temporarily unavailable | Yes | No | Hobby
+ | fliff | Fliff | Yes | Yes | Hobby
+ | gemini | Gemini | Yes | Yes | Hobby
+ | hardrock | Hard Rock Bet | Yes | Yes | Hobby
+ | lowvig | LowVig — temporarily unavailable | No | No | Hobby
+ | novig | Novig | Yes | Yes | Hobby
+ | polymarket_us | Polymarket US | No | No | Hobby
+ | prizepicks | PrizePicks | Yes | Yes | Hobby
+ | prizepicks_flex | PrizePicks Flex | No | Yes | Hobby
+ | rebet | Rebet | Yes | Yes | Hobby
+ | robinhood | Robinhood — temporarily unavailable | Yes | Yes | Hobby
+ | sportzino | Sportzino | Yes | No | Hobby
+ | thescorebet | theScore Bet | Yes | Yes | Hobby
+ | thrillzz | Thrillzz — temporarily unavailable | No | Yes | Hobby
+ | underdog | Underdog Fantasy | No | Yes | Hobby
+ | underdog_multipliers | Underdog Fantasy Multipliers | No | Yes | Hobby
+ | underdog_predictions | Underdog Predictions | No | Yes | Hobby
+
+### Sharp BooksPermalink for this section
+
+ | | ID | Name | Live | Props | Tier
+ | onexbet | 1xBet | Yes | No | Sharp
+ | bookmaker | Bookmaker | Yes | Yes | Sharp
+ | circa | Circa Sports | No | Yes | Sharp
+ | pinnacle | Pinnacle | Yes | Yes | Sharp
+ | sbobet | SBOBET | Yes | No | Sharp
+
+Reading Pinnacle timestamps. Each odds row carries a single timestamp field — the time SharpAPI last refreshed that row through its pipeline (feed-freshness), which advances every ingest cycle even when Pinnacle holds the line steady. It is not when the price last moved; SharpAPI no longer exposes a separate “when the price last changed” field. See understanding the timestamp field for what “stale” actually means on their feed.
+
+### InternationalPermalink for this section
+
+ | | ID | Name | Live | Props | Tier
+ | sport888_it | 888sport (Italy) | Yes | Yes | Hobby
+ | betano | Betano — temporarily unavailable | Yes | Yes | Hobby
+ | betfred | Betfred | Yes | No | Hobby
+ | betsson | Betsson | Yes | Yes | Hobby
+ | betvictor | BetVictor | Yes | No | Hobby
+ | betway | Betway — temporarily unavailable | Yes | Yes | Hobby
+ | bwin | bwin | Yes | Yes | Hobby
+ | coral | Coral — temporarily unavailable | Yes | Yes | Hobby
+ | galera | Galera.bet — temporarily unavailable | No | Yes | Hobby
+ | ggbet | GG Bet — temporarily unavailable | Yes | No | Hobby
+ | goldrush | Goldrush — temporarily unavailable | Yes | No | Hobby
+ | ladbrokes | Ladbrokes | Yes | Yes | Hobby
+ | ladbrokes_uk | Ladbrokes UK — temporarily unavailable | Yes | Yes | Hobby
+ | matchbook | Matchbook — temporarily unavailable | Yes | Yes | Hobby
+ | paddypower | Paddy Power | Yes | Yes | Hobby
+ | skybet | Sky Bet | Yes | No | Hobby
+ | smarkets | Smarkets | Yes | No | Hobby
+ | sportingbet_br | Sportingbet BR — temporarily unavailable | Yes | Yes | Hobby
+ | stake | Stake | Yes | Yes | Hobby
+ | sx_bet | SX Bet — temporarily unavailable | Yes | No | Hobby
+ | unibet | Unibet — temporarily unavailable | Yes | Yes | Hobby
+ | unibet_ca | Unibet (Canada) — temporarily unavailable | Yes | Yes | Hobby
+ | saba | SABA | Yes | Yes | Pro
+ | betfair_lay | Betfair Exchange (Lay) — temporarily unavailable | Yes | No | Sharp
+
+### ExchangesPermalink for this section
+
+ | | ID | Name | Live | Props | Tier
+ | betfair | Betfair | Yes | Yes | Sharp
+ | prophetx | ProphetX | Yes | Yes | Sharp
+
+Betfair’s two sides are two separate books. An exchange quotes two prices for every selection — the back price (bet for an outcome) and the lay price (bet against it). SharpAPI serves each as its own book: betfair is the back side, betfair_lay is the lay side, and both require Sharp tier. Odds rows carry no side field, so the sportsbook ID is what tells you which side a price is.
+A lay price is not a better back price. Laying is taking the other end of someone’s bet: you keep their stake if the outcome does not happen, and you owe (odds − 1) × their stake if it does. A lay quote is therefore normally higher than the back quote on the same selection, so feeding betfair_lay to a model that assumes back odds makes the market look better priced than it is. Do not pool the two books.
+Both feeds carry the exchange’s size figures, in GBP and never converted — max_bet, best_bid_liquidity and size_currency; neither emits total_liquidity — see Liquidity and limits. The full price-by-price order book is not included.
+
+### Prediction MarketsPermalink for this section
+
+ | | ID | Name | Live | Props | Tier
+ | kalshi | Kalshi | Yes | Yes | Hobby
+ | polymarket | Polymarket | Yes | No | Hobby
+
+Polymarket and Kalshi are prediction market platforms. Unlike traditional sportsbooks, they use binary outcome contracts priced between $0 and $1. SharpAPI normalizes contract prices into standard odds formats (American, decimal, implied probability) so you can compare them directly with sportsbook odds. Kalshi is CFTC-regulated. SharpAPI ingests the global polymarket.com  venue, not PolymarketUS.
+Polymarket rows additionally carry a polymarket_resolution field reflecting the upstream UMA optimistic-oracle lifecycle (settled_normal / voided / disputed / proposed / unknown). See Polymarket Resolution for the per-value semantics and the upstream caveat that cancellation, participant withdrawal, and event-not-occurred all collapse to the single voided bucket.
+
+## Sharp vs Soft BooksPermalink for this section
+
+### Sharp BooksPermalink for this section
+
+- Lower vig (juice) — tighter margins mean better odds accuracy
+
+- Efficient lines — used as the reference for +EV and fair value calculations
+
+- Not available in all regions — Pinnacle is not licensed in the US
+
+- Examples: Pinnacle, Circa Sports, SBOBET, 1xBet
+
+### Soft BooksPermalink for this section
+
+- Higher vig — wider margins create more room for +EV opportunities
+
+- More promotions — bonuses, boosts, and free bets
+
+- Slower line movement — may lag behind sharp market moves
+
+- Where value is found — the gap between soft book odds and sharp reference creates +EV
+
+- Examples: DraftKings, FanDuel, BetMGM, Caesars
+
+Sharp books like Pinnacle set efficient lines quickly. Soft books often lag behind, creating windows where their odds offer positive expected value compared to the sharp reference. This is the foundation of +EV betting strategy.
+
+Building a live betting tool? DraftKings and FanDuel have has_live_odds: true but frequently suspend markets during scoring plays and key moments. If you need continuous live coverage, Pinnacle (Sharp tier) is the reliable reference. See Live vs. Pre-Match for a full breakdown of book behavior during live play.
+
+## Related EndpointsPermalink for this section
+
+- Odds Snapshot - Filter odds by sportsbook
+
+- Best Odds - Best odds across all books with sharp reference
+
+- Odds Comparison - Compare odds across books side by side
+
+- Sports - List available sports

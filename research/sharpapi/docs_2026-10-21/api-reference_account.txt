@@ -1,0 +1,170 @@
+Source: https://docs.sharpapi.io/en/api-reference/account/ (fetched 2026-10-21)
+
+# Account Info
+
+Retrieve your account details, tier information, rate limits, and enabled features.
+
+GET /api/v1/account
+
+This endpoint replaces the former /me endpoint. The response format has been updated to use the standard v1 envelope.
+
+## AuthenticationPermalink for this section
+
+Requires API key. Available to all tiers.
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X GET "https://api.sharpapi.io/api/v1/account" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const response = await fetch(
+ 'https://api.sharpapi.io/api/v1/account',
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+const { data } = await response.json();
+
+console.log(`Tier: ${data.tier}`);
+console.log(`Rate limit: ${data.rate_limit.requests_per_minute} req/min`);
+console.log(`Max books: ${data.rate_limit.max_books}`);
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/account',
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+account = response.json()['data']
+
+print(f"Tier: {account['tier']}")
+print(f"Features: {account['features']}")
+print(f"Streaming: {account['streaming']['enabled']}")
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+{
+ "data": {
+ "key_id": "key_abc123def456",
+ "tier": "pro",
+ "rate_limit": {
+ "requests_per_minute": 300,
+ "max_books": 15
+ },
+ "features": [
+ "odds",
+ "schedule",
+ "ev",
+ "arbitrage",
+ "middles",
+ "low_hold",
+ "closing_line",
+ "splits"
+ ],
+ "streaming": {
+ "enabled": true,
+ "max_connections": 1
+ }
+ },
+ "updated_at": "2026-02-08T14:44:32.123Z"
+}
+
+### Response HeadersPermalink for this section
+
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 287
+X-RateLimit-Reset: 1707401100
+X-Data-Delay: 0
+X-Request-Id: req_acct123xyz
+
+### Error ResponsesPermalink for this section
+
+401 Unauthorized
+
+No key supplied returns missing_api_key; a bad key returns invalid_api_key.
+
+{
+ "error": {
+ "code": "missing_api_key",
+ "message": "API key required. Pass via X-API-Key header, api_key query parameter, or Bearer token.",
+ "docs": "https://docs.sharpapi.io/en/authentication"
+ }
+}
+
+## Response FieldsPermalink for this section
+
+### data ObjectPermalink for this section
+
+ | | Field | Type | Description
+ | key_id | string | Identifier for the API key used in this request
+ | tier | string | Subscription tier: free, hobby, pro, sharp, or enterprise
+ | rate_limit | object | Rate limit and book access — see below
+ | features | string[] | Capabilities enabled on this tier — see below
+ | streaming | object | SSE/WebSocket streaming availability — see below
+
+A top-level updated_at field (ISO 8601 timestamp) accompanies data.
+
+### rate_limit ObjectPermalink for this section
+
+ | | Field | Type | Description
+ | requests_per_minute | number | Maximum API requests allowed per minute on your tier
+ | max_books | number | Maximum sportsbooks accessible on your tier (999 indicates unlimited)
+
+### features ArrayPermalink for this section
+
+Array of capability tokens enabled on your tier. Possible values:
+
+ | | Value | Description
+ | odds | Live odds endpoints
+ | schedule | Event/schedule endpoints
+ | ev | +EV opportunity detection
+ | arbitrage | Arbitrage detection
+ | middles | Middles detection
+ | low_hold | Low-hold opportunity detection
+ | history | Historical odds endpoints
+ | futures | Futures markets
+ | closing_line | Closing line value endpoints
+ | splits | Public betting splits
+
+### streaming ObjectPermalink for this section
+
+ | | Field | Type | Description
+ | enabled | boolean | Whether SSE/WebSocket streaming is available (via tier, add-on, or trial)
+ | max_connections | number | Maximum concurrent streaming connections (0 if streaming not enabled)
+
+## Use CasesPermalink for this section
+
+### Check Feature Access Before Making RequestsPermalink for this section
+
+const { data: account } = await fetch(
+ 'https://api.sharpapi.io/api/v1/account',
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+).then(r => r.json());
+
+if (!account.features.includes('ev')) {
+ console.log('Upgrade to Pro tier for +EV detection');
+} else {
+ // Proceed with EV endpoint
+ const evData = await fetch(
+ 'https://api.sharpapi.io/api/v1/opportunities/ev',
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+ ).then(r => r.json());
+}
+
+## Related EndpointsPermalink for this section
+
+- Usage Stats - Detailed request and streaming usage
+
+- API Key Management - Create, rotate, and delete API keys
+
+- Authentication - How to authenticate requests
+
+- Pricing - Compare tier features and limits

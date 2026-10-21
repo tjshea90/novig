@@ -1,0 +1,140 @@
+Source: https://docs.sharpapi.io/en/api-reference/events-odds/ (fetched 2026-10-21)
+
+# Event Odds
+
+Get every current odds row for a single event, across all sportsbooks available on your tier.
+
+GET /api/v1/events/{eventId}/odds
+
+This endpoint returns all of the event’s odds in one response. It does not paginate and does not accept sportsbook / market / limit / offset filters — book visibility is determined by your tier. For filtering, pagination, or cursoring, use GET /api/v1/odds?event_id={eventId} instead.
+
+## AuthenticationPermalink for this section
+
+Requires API key via X-API-Key header, Authorization: Bearer header, or api_key query param. Available to all tiers.
+
+## Path ParametersPermalink for this section
+
+ | | Parameter | Type | Required | Description
+ | eventId | string | Yes | Unique event identifier (e.g., nba_celtics_lakers_2026-02-08_b3)
+
+## Example RequestPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X GET "https://api.sharpapi.io/api/v1/events/nba_celtics_lakers_2026-02-08_b3/odds" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const eventId = 'nba_celtics_lakers_2026-02-08_b3';
+const response = await fetch(
+ `https://api.sharpapi.io/api/v1/events/${eventId}/odds`,
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+const { data } = await response.json();
+console.log(`${data.length} odds rows for this event`);
+
+### Python
+
+import requests
+
+event_id = 'nba_celtics_lakers_2026-02-08_b3'
+response = requests.get(
+ f'https://api.sharpapi.io/api/v1/events/{event_id}/odds',
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+odds = response.json()['data']
+print(f"{len(odds)} odds rows for this event")
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+The response is a flat { data, updated_at } object — there is no meta and no pagination.
+
+{
+ "data": [
+ {
+ "id": "dk_nba_celtics_lakers_2026-02-08_b3_ml_home",
+ "sportsbook": "draftkings",
+ "event_id": "nba_celtics_lakers_2026-02-08_b3",
+ "sport": "basketball",
+ "league": "nba",
+ "home_team": "Boston Celtics",
+ "away_team": "Los Angeles Lakers",
+ "market_type": "moneyline",
+ "selection": "Boston Celtics",
+ "selection_type": "home",
+ "line": null,
+ "odds_american": -180,
+ "odds_decimal": 1.556,
+ "odds_probability": 0.643,
+ "is_main_line": true,
+ "is_live": false,
+ "event_start_time": "2026-02-08T19:30:00Z",
+ "timestamp": "2026-02-08T12:05:00Z"
+ },
+ {
+ "id": "pin_nba_celtics_lakers_2026-02-08_b3_ml_home",
+ "sportsbook": "pinnacle",
+ "event_id": "nba_celtics_lakers_2026-02-08_b3",
+ "sport": "basketball",
+ "league": "nba",
+ "home_team": "Boston Celtics",
+ "away_team": "Los Angeles Lakers",
+ "market_type": "moneyline",
+ "selection": "Boston Celtics",
+ "selection_type": "home",
+ "line": null,
+ "odds_american": -175,
+ "odds_decimal": 1.571,
+ "odds_probability": 0.636,
+ "is_main_line": true,
+ "is_live": false,
+ "event_start_time": "2026-02-08T19:30:00Z",
+ "timestamp": "2026-02-08T12:03:00Z"
+ }
+ ],
+ "updated_at": "2026-02-08T12:05:00Z"
+}
+
+## Odds ObjectPermalink for this section
+
+Each row is the full odds object — the same flat schema returned by Odds Snapshot, including odds_american, odds_decimal, odds_probability (flat — there is no nested odds object), is_main_line, is_alternate_line, event_uuid, deep_link, the nested home/away/*_ref reference blocks, and so on. See the Odds Object Schema for the complete field list.
+
+## Error ResponsesPermalink for this section
+
+404 Not Found
+
+{
+ "error": {
+ "code": "not_found",
+ "message": "Event not found"
+ }
+}
+
+401 Unauthorized
+
+No key supplied returns missing_api_key; a bad key returns invalid_api_key.
+
+{
+ "error": {
+ "code": "missing_api_key",
+ "message": "API key required. Pass via X-API-Key header, api_key query parameter, or Bearer token.",
+ "docs": "https://docs.sharpapi.io/en/authentication#authentication-methods"
+ }
+}
+
+## Related EndpointsPermalink for this section
+
+- Odds Snapshot - Filter, paginate, and cursor odds across all events (use ?event_id= to scope to one event)
+
+- Events - List and search events
+
+- Event Details - Get event details with embedded market summary
+
+- Event Markets - List available market types for an event
+
+- Best Odds - Get the best odds across all sportsbooks

@@ -1,0 +1,201 @@
+Source: https://docs.sharpapi.io/en/concepts/event-matching/ (fetched 2026-10-21)
+
+# Event Matching
+
+## The ProblemPermalink for this section
+
+Each sportsbook uses its own internal event IDs. The same Lakers vs Celtics game might be event 33483200 on DraftKings, nba-bos-lal-20260208 on FanDuel, and 556677889 on Pinnacle. Without a unified identifier, building cross-book comparison tools requires implementing your own event matching logic.
+
+## How SharpAPI Solves ThisPermalink for this section
+
+SharpAPI generates a canonical event ID for every event. This ID is deterministic — the same real-world event always gets the same id, regardless of which sportsbook it comes from.
+
+Format: {league}_{teamA}_{teamB}_{YYYY-MM-DD}_b{N}
+
+The trailing _b{N} is a 6-hour start-time bucket — see Start-time bucket suffix below.
+
+Example: A Celtics vs Lakers game on February 8, 2026 produces the same ID across all sportsbooks:
+
+ | | Sportsbook | Native Event ID | SharpAPI id
+ | DraftKings | 33483200 | nba_celtics_lakers_2026-02-08_b3
+ | FanDuel | nba-bos-lal-20260208 | nba_celtics_lakers_2026-02-08_b3
+ | Pinnacle | 556677889 | nba_celtics_lakers_2026-02-08_b3
+ | BetMGM | ms_44556 | nba_celtics_lakers_2026-02-08_b3
+
+## Two Types of Event IDsPermalink for this section
+
+Every event in the API has two ID fields:
+
+ | | Field | Scope | Purpose
+ | id | Cross-book (canonical) | Use as your primary key for matching events across sportsbooks
+ | external_ids | Per-sportsbook | Map of each book’s native event ID, useful for deep links
+
+{
+ "id": "nba_celtics_lakers_2026-02-08_b3",
+ "external_ids": {
+ "draftkings": "33483200",
+ "fanduel": "nba-bos-lal-20260208",
+ "pinnacle": "556677889",
+ "betmgm": "ms_44556"
+ }
+}
+
+## How Canonical IDs Are GeneratedPermalink for this section
+
+The canonical ID is built from four components:
+
+- League code — sport mapped to league (e.g., basketball → nba)
+
+- Team names — normalized and alphabetically sorted
+
+- Date — event start date in YYYY-MM-DD format
+
+- Start-time bucket — _b{N} suffix where N is in 0..3
+
+### Team Name NormalizationPermalink for this section
+
+Team names are normalized to handle variations across sportsbooks:
+
+- "Los Angeles Lakers" → lakers
+
+- "LA Lakers" → lakers
+
+- "LAL" → lakers
+
+Normalization strips prefixes (“The”, “Los”, “Las”), suffixes (“FC”, “United”, “City”), punctuation, and accents. Teams are then sorted alphabetically so the ID is identical regardless of home/away ordering.
+
+### Start-time bucket suffix (_b{N})Permalink for this section
+
+The _b{N} suffix is a 6-hour start-time bucket. N is in 0..3:
+
+ | | Bucket | Hour range
+ | _b0 | 00:00–05:59
+ | _b1 | 06:00–11:59
+ | _b2 | 12:00–17:59
+ | _b3 | 18:00–23:59
+
+For US-league sports (NBA, NFL, NHL, MLB, NCAAB, NCAAF, WNBA, NCAAW) the bucket is anchored to Eastern Time so a 7:30 PM ET tip-off lands in _b3 regardless of how books stamp their UTC offsets. For all other sports (soccer, tennis, cricket, etc.) the bucket is anchored to UTC.
+
+Why this exists. Same matchup, same calendar date, different real-world fixtures are possible:
+
+- An MLB doubleheader with two games on the same day.
+
+- A US-evening MLB game UTC-stamped onto the next calendar day, plus a real next-day rematch UTC-stamped onto the same date.
+
+Without the bucket, both fixtures would collide on one ID and odds would be mixed. With it, the two games land on different _bN suffixes and stay separate.
+
+What this means for cross-book matching. Inside one fixture, every book that reports a start time within the same 6-hour window converges on the same _b{N}. Across a bucket boundary — for example, one book stamps a soccer kick-off at 17:55 UTC (_b2) and another at 18:10 UTC (_b3) — books can fragment across two canonical IDs. This is a known limitation. If you observe this, file a ticket with the event details.
+
+### Doubleheader suffix (_g{N})Permalink for this section
+
+When one book reports both games of a same-day doubleheader in a single update, the two fixtures are disambiguated with a trailing _g{N} suffix placed after the bucket — e.g. mlb_athletics_mariners_2026-05-02_b0 and mlb_athletics_mariners_2026-05-02_b0_g1. Books that see only one of the two games emit the bare bucketed ID. The residual cross-book mismatch for doubleheaders is therefore: same _b{N} base, one side carrying a _g{N} suffix and the other not.
+
+### Grouping one matchup across IDsPermalink for this section
+
+To collapse the rows that belong to a single physical fixture but landed on different canonical IDs, pick the level that matches your tolerance for merging:
+
+- 
+Same-fixture collapse (recommended). Strip a trailing _g{N} suffix and compare the remainder, keeping the _b{N} bucket intact:
+
+key = event_id with a trailing _g{N} removed # ..._b0_g1 → ..._b0
+group events whose stripped key is identical
+
+This reunites the doubleheader-suffix mismatch above without merging distinct games. It mirrors the server-side same-event predicate.
+
+- 
+Loose matchup grouping (display). To gather every price for a matchup on a date regardless of bucket — e.g. to render one card per game in a UI and absorb the cross-bucket-boundary fragmentation described above — strip both the _g{N} and _b{N} suffixes and group by {league}_{teamA}_{teamB}_{date}, tolerating ±1 day for starts that cross UTC midnight:
+
+key = "{league}_{teamA}_{teamB}_{date}" # teams are already alpha-sorted; _b{N}/_g{N} dropped
+group keys that share league + teams and whose dates are within 1 day of each other
+
+Tradeoff: because this discards the bucket, a genuine same-day doubleheader collapses into one group. Use level 1 when the two games must stay apart.
+
+## Live vs Pre-Match Share The Same Event IDPermalink for this section
+
+A given fixture has one canonical event ID that covers both pre-match and live (in-play) odds. The is_live field on each odds row tells you which state the price was collected in:
+
+{
+ "event_id": "nba_celtics_lakers_2026-02-08_b3",
+ "sportsbook": "pinnacle",
+ "market_type": "moneyline",
+ "is_live": false,
+ "odds_american": -140
+}
+
+When the game tips off, new odds for the same fixture flow in under the same event_id with is_live: true. To get the live snapshot for a specific game, filter on both:
+
+GET /api/v1/odds?event_id=nba_celtics_lakers_2026-02-08_b3&is_live=true
+
+See Live vs Pre-Match Odds for the per-book quality picture during live play.
+
+## Using Canonical IDs in Your ApplicationPermalink for this section
+
+### As a Primary KeyPermalink for this section
+
+Use the id field as your database primary key when storing events:
+
+// Fetch events from the API
+const { data: events } = await fetch(
+ 'https://api.sharpapi.io/api/v1/events?league=nba',
+ { headers: { 'X-API-Key': API_KEY } }
+).then(r => r.json());
+
+// Store using canonical ID as primary key
+for (const event of events) {
+ await db.events.upsert({
+ id: event.id, // "nba_celtics_lakers_2026-02-08_b3"
+ home_team: event.home_team,
+ away_team: event.away_team,
+ start_time: event.start_time,
+ external_ids: event.external_ids
+ });
+}
+
+### Cross-Book Odds ComparisonPermalink for this section
+
+The canonical ID lets you compare odds for the same event across all books:
+
+// Get odds filtered to a specific event
+const { data } = await fetch(
+ 'https://api.sharpapi.io/api/v1/events/nba_celtics_lakers_2026-02-08_b3/odds',
+ { headers: { 'X-API-Key': API_KEY } }
+).then(r => r.json());
+
+// All odds in the response are for the same canonical event
+// Group by sportsbook to compare
+const byBook = {};
+for (const odds of data.odds) {
+ byBook[odds.sportsbook] = byBook[odds.sportsbook] || [];
+ byBook[odds.sportsbook].push(odds);
+}
+
+### Deep Linking to SportsbooksPermalink for this section
+
+Use external_ids to link users back to a specific sportsbook’s event page:
+
+const event = await getEvent('nba_celtics_lakers_2026-02-08_b3');
+
+// Build a sportsbook-specific link
+const dkEventId = event.external_ids['draftkings'];
+// → "33483200"
+
+## How This Powers EV and Arbitrage DetectionPermalink for this section
+
+SharpAPI’s opportunity detection engines rely on canonical event IDs internally:
+
+- EV calculation finds the sharp reference (Pinnacle) odds for the same eventId and compares them to soft book odds
+
+- Arbitrage detection groups all odds by eventId + market type to find cross-book price discrepancies
+
+- Middles detection finds overlapping lines across books for the same eventId
+
+This is the same matching system exposed to you through the API — when you see an arbitrage opportunity with legs from different sportsbooks, the canonical event ID is what linked those odds together.
+
+## Key PropertiesPermalink for this section
+
+ | | Property | Detail
+ | Deterministic | Same inputs always produce the same ID — no random UUIDs
+ | Stable | The ID doesn’t change once generated
+ | Human-readable | nba_celtics_lakers_2026-02-08_b3 is meaningful at a glance
+ | Sortable | IDs sort naturally by league, team, and date
+ | No prefix | Canonical IDs do not carry an evt_ prefix. Treat the ID as an opaque string and pass it through unchanged when calling the API.

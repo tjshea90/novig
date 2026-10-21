@@ -1,0 +1,293 @@
+Source: https://docs.sharpapi.io/en/api-reference/historical-odds-closing/ (fetched 2026-10-21)
+
+# Historical Closing Odds
+
+Retrieve the closing odds captured for all events on a specific date — the last pre-match price from each sportsbook before a game went live, with devigged no-vig probabilities.
+
+GET /api/v1/historical/odds/closing
+
+Enterprise tier required. This endpoint is gated by the history feature, which is available only on the Enterprise tier. Lower tiers receive a 403 tier_restricted error.
+
+Closing lines are captured in real time on is_live false→true transitions and persisted to ClickHouse. There is no rolling-window limit — full history is available (meta.tier_window_days is "unlimited").
+
+## AuthenticationPermalink for this section
+
+Requires API key. Enterprise tier required (history feature).
+
+## Query ParametersPermalink for this section
+
+ | | Parameter | Type | Required | Description
+ | date | string | Yes | Date in YYYY-MM-DD format (UTC).
+ | sport | string | Yes | Sport identifier, e.g. baseball, basketball, football.
+ | league | string | Yes | League identifier, e.g. mlb, nba, nfl.
+ | include_degraded | boolean | No | Default false. Rows whose “closing” price actually drifted in-play (priced well after kickoff) are excluded by default. Pass true to include them — each such row is flagged odds_after_kickoff: true so you can exclude it from CLV math.
+
+date, sport, and league are required. The response is filtered to events matching the exact sport and league on that UTC date.
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X GET "https://api.sharpapi.io/api/v1/historical/odds/closing?date=2026-06-30&sport=baseball&league=mlb" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const params = new URLSearchParams({ date: '2026-06-30', sport: 'baseball', league: 'mlb' });
+const response = await fetch(
+ `https://api.sharpapi.io/api/v1/historical/odds/closing?${params}`,
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+const { data } = await response.json();
+console.log(`Found ${data.total_events} events, ${data.total_lines} closing lines`);
+
+for (const event of data.events) {
+ // `books` is an object keyed by sportsbook name
+ for (const [book, payload] of Object.entries(event.books)) {
+ const ml = payload.odds.find(o => o.market_type === 'moneyline');
+ if (ml) console.log(`${event.away_team} @ ${event.home_team} — ${book}: ${ml.odds_american}`);
+ }
+}
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/historical/odds/closing',
+ params={'date': '2026-06-30', 'sport': 'baseball', 'league': 'mlb'},
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+data = response.json()['data']
+print(f"{data['total_events']} events, {data['total_lines']} lines")
+
+for event in data['events']:
+ print(f"\n{event['away_team']} @ {event['home_team']}")
+ for book, payload in event['books'].items(): # books is an object keyed by book
+ for line in payload['odds']:
+ if line['market_type'] == 'moneyline':
+ nv = line.get('no_vig_probability')
+ print(f" {book}: {line['odds_american']}" + (f" (no-vig: {nv:.3f})" if nv else ''))
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+This is a wrapped response: { success, data, meta }.
+
+Live response (truncated to one event, moneyline + one player prop; a real response carries every book and market captured for every event on the date):
+
+{
+ "success": true,
+ "data": {
+ "date": "2026-06-30",
+ "sport": "baseball",
+ "league": "mlb",
+ "events": [
+ {
+ "event_id": "mlb_phillies_pirates_2026-06-30_b3",
+ "sport": "baseball",
+ "league": "mlb",
+ "home_team": "Philadelphia Phillies",
+ "away_team": "Pittsburgh Pirates",
+ "event_start_time": "2026-06-30T22:40:00Z",
+ "captured_at": "2026-06-30T22:42:56.227Z",
+ "books": {
+ "pinnacle": {
+ "captured_at": "2026-07-01T02:18:19.094Z",
+ "seconds_before_kickoff": -13099,
+ "capture_trigger": "evict",
+ "is_final": true,
+ "odds": [
+ {
+ "sportsbook": "pinnacle",
+ "market_type": "moneyline",
+ "market_id": "1632103992_moneyline_0",
+ "selection": "Pittsburgh Pirates",
+ "selection_type": "away",
+ "selection_id": "away",
+ "canonical_key": "mlb_phillies_pirates_2026-06-30_b3:moneyline:away",
+ "odds_american": 182,
+ "odds_decimal": 2.82,
+ "implied_probability": 0.35460992907801414,
+ "no_vig_probability": 0.34684612016316746,
+ "fair_close_decimal": 2.88312292358804,
+ "closing_probability": 0.3417584456103625,
+ "source_updated_at": "2026-06-30T21:22:43.926672195Z",
+ "max_bet": 15000,
+ "team_side": "away"
+ }
+ ]
+ },
+ "draftkings": {
+ "captured_at": "2026-06-30T22:42:58.116Z",
+ "seconds_before_kickoff": -178,
+ "capture_trigger": "transition",
+ "is_final": true,
+ "odds": [
+ {
+ "sportsbook": "draftkings",
+ "market_type": "moneyline",
+ "market_id": "1_85320694",
+ "selection": "PIT Pirates",
+ "selection_type": "away",
+ "selection_id": "0ML85320694_3",
+ "canonical_key": "mlb_phillies_pirates_2026-06-30_b3:moneyline:away",
+ "odds_american": 191,
+ "odds_decimal": 2.91,
+ "implied_probability": 0.3436426116838488,
+ "no_vig_probability": 0.32880208077734696,
+ "fair_close_decimal": 3.04134328358209,
+ "closing_probability": 0.3170282527982699,
+ "source_updated_at": "2026-06-30T20:43:21.398Z",
+ "team_side": "away"
+ },
+ {
+ "sportsbook": "draftkings",
+ "market_type": "player_earned_runs",
+ "market_id": "347277229",
+ "selection": "Bubba Chandler Over",
+ "selection_type": "over",
+ "selection_id": "0QA347277229#2197684044_13L84240Q1-339433858Q20",
+ "canonical_key": "mlb_phillies_pirates_2026-06-30_b3:player_earned_runs:chandler_bub:over:2.5",
+ "line": 2.5,
+ "odds_american": -136,
+ "odds_decimal": 1.7352941176470589,
+ "implied_probability": 0.576271186440678,
+ "no_vig_probability": 0.5379072681704261,
+ "fair_close_decimal": 1.8590564938846825,
+ "closing_probability": 0.5420932938608679,
+ "source_updated_at": "2026-06-30T22:39:57.090381809Z",
+ "player_name": "Bubba Chandler",
+ "stat_category": "earned_runs"
+ }
+ ]
+ }
+ }
+ }
+ ],
+ "total_events": 40,
+ "total_lines": 76974
+ },
+ "meta": {
+ "source": "clickhouse",
+ "tier_window_days": "unlimited",
+ "filters": {
+ "sport": "baseball",
+ "league": "mlb",
+ "date": "2026-06-30"
+ },
+ "updated_at": "2026-07-02T18:10:45.258906934Z"
+ }
+}
+
+data.events is null (not []) when no events match the filters for that date.
+
+### Error ResponsesPermalink for this section
+
+400 Validation Error
+
+{
+ "error": {
+ "code": "validation_error",
+ "message": "date parameter is required in YYYY-MM-DD format"
+ }
+}
+
+403 Tier Restricted
+
+{
+ "error": {
+ "code": "tier_restricted",
+ "message": "This endpoint requires Enterprise tier or higher",
+ "docs": "https://sharpapi.io/pricing",
+ "tier": "pro",
+ "required_tier": "enterprise"
+ }
+}
+
+## Response FieldsPermalink for this section
+
+### data objectPermalink for this section
+
+ | | Field | Type | Description
+ | date | string | The requested date (YYYY-MM-DD)
+ | sport | string | Sport filter applied
+ | league | string | League filter applied
+ | events | array | null | Closing-line events matching the date/sport/league. null when none match.
+ | total_events | integer | Number of events in the response
+ | total_lines | integer | Total number of individual closing lines across all events and books
+
+### Event objectPermalink for this section
+
+ | | Field | Type | Description
+ | event_id | string | Canonical event identifier
+ | sport | string | Sport
+ | league | string | League
+ | home_team | string | Home team name
+ | away_team | string | Away team name
+ | event_start_time | string | ISO 8601 scheduled start time
+ | captured_at | string | ISO 8601 timestamp of the first closing-line capture for this event
+ | books | object | Map of sportsbook ID → per-book closing payload (see below)
+
+### Per-book payload (books[<sportsbook>])Permalink for this section
+
+ | | Field | Type | Description
+ | odds | array | Closing-line entries for this book (see below)
+ | captured_at | string | ISO 8601 time this book’s closing line was captured
+ | seconds_before_kickoff | integer | Seconds before kickoff at capture. Negative when the capture happened after the scheduled start — slightly negative for transition/kickoff captures, potentially hours negative for evict/backfill captures (the odds themselves are still the last pre-match prices seen).
+ | capture_trigger | string | What triggered the capture: transition | kickoff | disappearance | evict | backfill (confidence order: transition > kickoff > others)
+ | is_final | boolean | Whether this is the final/locked closing capture for the book
+
+### Closing line entry (books[<sportsbook>].odds[])Permalink for this section
+
+Optional fields are omitted from the JSON (not serialized as null) when they don’t apply — use presence checks ('line' in entry / .get()) rather than null checks.
+
+ | | Field | Type | Description
+ | sportsbook | string | Sportsbook ID
+ | market_type | string | Market type: moneyline, point_spread, total_runs, player_earned_runs, etc.
+ | market_id | string | Sportsbook/native market identifier
+ | selection | string | Selection label (team name, Over/Under, player)
+ | selection_type | string | home, away, over, under, etc.
+ | selection_id | string | Sportsbook/native selection identifier
+ | canonical_key | string | Stable cross-book key for joining: <event_id>:<market_type>[:<player>]:<selection_type>[:<line>]. Omitted on a small fraction of rows where no canonical key could be derived.
+ | line | number | Spread or total value (-3.5, 2.5). Omitted for moneylines and other line-less markets.
+ | odds_american | integer | American odds at close
+ | odds_decimal | number | Decimal odds at close
+ | implied_probability | number | Raw implied probability (with vig)
+ | no_vig_probability | number | Proportionally-devigged fair probability (0.0–1.0) within this book’s complementary market pair. Omitted when the captured selections don’t form a complete complementary group (e.g. multi-way markets, missing counterpart).
+ | fair_close_decimal | number | Fair (no-vig) decimal price at close. Present exactly when no_vig_probability is.
+ | closing_probability | number | Power-devigged closing fair probability (the value used for CLV). Omitted when no complementary pair was available.
+ | source_updated_at | string | ISO 8601 timestamp the source odds record was last confirmed current upstream (last-seen-alive, not last price change)
+ | player_name | string | Player name — player-prop markets only
+ | stat_category | string | Player-prop stat category (e.g. earned_runs, total_bases) — player-prop markets only
+ | team_side | string | home | away | draw — the team axis for team-anchored rows (moneylines, team totals). Omitted when not team-anchored.
+ | market_segment | string | Contest slice the market covers (1st_half, 1st_5_innings, …). Omitted for full-game markets.
+ | max_bet | number | The book’s maximum stake on this selection at close — only for books that expose limits (e.g. Pinnacle)
+ | odds_after_kickoff | boolean | true when the row’s price last moved well after kickoff (in-play drift, not a true close). Such rows only appear with include_degraded=true; exclude them from CLV math.
+
+### meta objectPermalink for this section
+
+ | | Field | Type | Description
+ | source | string | Backing store — "clickhouse"
+ | tier_window_days | string | Lookback window — "unlimited" on Enterprise
+ | filters | object | Echo of the sport / league / date filters applied
+ | updated_at | string | ISO 8601 response timestamp
+
+## Use CasesPermalink for this section
+
+CLV analysis: Compare no_vig_probability / closing_probability across books against Pinnacle. A soft book with a higher fair probability on the side you took closed looser — positive CLV.
+
+Line shopping audit: Retrieve closing lines across all books to understand where value was available at close (use canonical_key to align the same selection across books).
+
+Model calibration: Use implied_probability and no_vig_probability as historical ground truth for calibrating your own probability models.
+
+## Related EndpointsPermalink for this section
+
+- Closing Line Value (CLV) — Aggregate CLV% rollups grouped by sportsbook, sport, league, or day
+
+- Closing Line — Current/most-recent closing capture (Pro+, real-time)
+
+- Odds Snapshot — Current real-time odds

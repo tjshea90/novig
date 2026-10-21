@@ -1,0 +1,161 @@
+Source: https://docs.sharpapi.io/en/api-reference/account-usage/ (fetched 2026-10-21)
+
+# Usage Stats
+
+View how many requests your key has made so far today (UTC day), its current rate-limit window — requests remaining this minute and when the window resets — and the number of open streams.
+
+GET /api/v1/account/usage
+
+This endpoint replaces the former /me/usage endpoint. The response format has been updated to use the standard v1 envelope.
+
+## AuthenticationPermalink for this section
+
+Requires API key. Available to all tiers.
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X GET "https://api.sharpapi.io/api/v1/account/usage" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const response = await fetch(
+ 'https://api.sharpapi.io/api/v1/account/usage',
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+const { data } = await response.json();
+
+console.log(`Requests today (UTC): ${data.requests_today}`);
+console.log(`Rate limit remaining this minute: ${data.rate_limit.remaining}/${data.rate_limit.limit}`);
+console.log(`Active streams: ${data.active_streams}`);
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/account/usage',
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+usage = response.json()['data']
+
+print(f"Requests today (UTC): {usage['requests_today']}")
+print(f"Rate limit remaining this minute: {usage['rate_limit']['remaining']}/{usage['rate_limit']['limit']}")
+print(f"Active streams: {usage['active_streams']}")
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+{
+ "data": {
+ "active_streams": 2,
+ "rate_limit": {
+ "limit": 300,
+ "remaining": 287,
+ "reset": 1770562200
+ },
+ "requests_today": 1284
+ },
+ "updated_at": "2026-02-08T14:49:12.123Z"
+}
+
+requests_today is the number of requests made with this key so far in the current UTC day. It resets to 0 at 00:00 UTC. A request is counted each time it passes through the rate limiter, including requests the limiter rejects with 429. On 19 October 2026 the count started when this field went live, so that day’s figure is lower than the real total.
+rate_limit.limit, rate_limit.remaining and rate_limit.reset describe the separate one-minute rate-limit window, not the daily count.
+
+### Response HeadersPermalink for this section
+
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 287
+X-RateLimit-Reset: 1770562200
+X-Data-Delay: 0
+X-Request-Id: req_usage789abc
+
+### Error ResponsesPermalink for this section
+
+401 Unauthorized
+
+No key supplied returns missing_api_key; a bad key returns invalid_api_key.
+
+{
+ "error": {
+ "code": "missing_api_key",
+ "message": "API key required. Pass via X-API-Key header, api_key query parameter, or Bearer token.",
+ "docs": "https://docs.sharpapi.io/en/authentication"
+ }
+}
+
+## Response FieldsPermalink for this section
+
+ | | Field | Type | Description
+ | requests_today | integer | Requests made with this key so far in the current UTC day. Resets at 00:00 UTC. Every request that passes through the rate limiter is counted, including ones rejected with 429. No weekly or monthly total is reported.
+ | rate_limit | object | The current one-minute rate-limit window — see below
+ | active_streams | integer | Streaming connections currently open on this key
+
+The envelope also carries a top-level updated_at (RFC 3339 timestamp).
+
+### Rate Limit ObjectPermalink for this section
+
+ | | Field | Type | Description
+ | limit | integer | Requests allowed per minute on your tier
+ | remaining | integer | Requests left in the current minute (limit minus the requests already counted in this minute, never below 0). Independent of requests_today
+ | reset | integer | Unix timestamp (seconds) when the current one-minute window ends
+
+## Use CasesPermalink for this section
+
+### Monitor Rate Limit UsagePermalink for this section
+
+from datetime import datetime, timezone
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/account/usage',
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+usage = response.json()['data']
+
+rl = usage['rate_limit']
+usage_pct = (1 - rl['remaining'] / rl['limit']) * 100
+print(f"Rate limit used this minute: {usage_pct:.1f}%")
+print(f"Window resets at: {datetime.fromtimestamp(rl['reset'], tz=timezone.utc).isoformat()}")
+
+### Track Your Daily RequestsPermalink for this section
+
+requests_today is a daily figure; use rate_limit for per-minute pacing. This example compares the daily count with a budget you choose yourself (the response does not include a daily cap):
+
+import requests
+
+DAILY_BUDGET = 50_000 # your own target; the API does not report a daily cap
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/account/usage',
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+usage = response.json()['data']
+
+used = usage['requests_today']
+print(f"Requests today (UTC): {used} of {DAILY_BUDGET} ({used / DAILY_BUDGET * 100:.1f}%)")
+
+### Check Open StreamsPermalink for this section
+
+const { data } = await fetch(
+ 'https://api.sharpapi.io/api/v1/account/usage',
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+).then(r => r.json());
+
+console.log(`${data.active_streams} stream(s) open on this key`);
+
+The response does not include your tier’s concurrent-stream cap; see Pricing for the per-tier limits.
+
+## Related EndpointsPermalink for this section
+
+- Account Info - Account details, tier, and features
+
+- API Key Management - Manage your API keys
+
+- Pricing - Compare tier limits

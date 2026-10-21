@@ -1,0 +1,89 @@
+Source: https://docs.sharpapi.io/en/concepts/polymarket-resolution/ (fetched 2026-10-21)
+
+# Polymarket Resolution Status
+
+Polymarket is a prediction-market CLOB whose markets are graded by the UMA optimistic oracle , not by a sportsbook trading desk. When you read Polymarket odds through SharpAPI, the row may carry an extra field — polymarket_resolution — that reflects where that market sits in the UMA resolution lifecycle.
+
+This field is Polymarket-only. Other sportsbook rows (Pinnacle, DraftKings, FanDuel, etc.) do not carry it because their upstream wire formats don’t emit an equivalent signal. See our Pinnacle wire survey for the parallel investigation that concluded the same field cannot be delivered for traditional books.
+
+## When the field appearsPermalink for this section
+
+ | | Market state | polymarket_resolution
+ | Actively trading | omitted (field not present)
+ | Closed, resolved with a winner | "settled_normal"
+ | Closed, voided / refunded | "voided"
+ | Closed, UMA dispute in flight | "disputed"
+ | Closed, UMA proposal submitted, dispute window open | "proposed"
+ | Closed, lifecycle fields empty (legacy market) | "unknown"
+ | Any non-Polymarket book | omitted
+
+The field is additive. Existing parsers that ignore unknown fields will continue to work unchanged.
+
+## Value semanticsPermalink for this section
+
+### settled_normalPermalink for this section
+
+The UMA oracle declared a winning outcome. In a binary market, exactly one outcome resolved to $1.00 and the other to $0.00. This is the typical end state.
+
+{
+ "sportsbook": "polymarket",
+ "marketType": "binary",
+ "selection": "Yes",
+ "odds": -10000,
+ "polymarket_resolution": "settled_normal",
+ "trueProbability": 1.0
+}
+
+### voidedPermalink for this section
+
+The UMA oracle voided the market — both binary outcomes resolved to $0.50 (“refund everyone”). This is the same wire signature for all of:
+
+- A cancelled match (sporting event cancelled or abandoned)
+
+- A participant withdrawing before the event
+
+- The event never occurring (e.g. “Map 3 winner” when the series ended in 2 maps)
+
+- Any other UMA-determined void
+
+Polymarket does not distinguish why a market was voided. The human-readable reason lives in the off-chain UMA dispute thread on the UMA oracle frontend, not in the Polymarket API. If your application needs to know cancellation-vs-withdrawal-vs-no-event, that information cannot be sourced from Polymarket’s wire — you would need to read the UMA dispute body directly.
+This is an intentional design choice from UMA’s optimistic-oracle architecture, not a SharpAPI omission. We chose to expose voided as a single bucket rather than guess from heuristics — per our no-inference policy, if upstream is ambiguous, we don’t make a guess.
+
+### disputedPermalink for this section
+
+The UMA proposer submitted a resolution that was challenged. The market is now in a UMA token-holder vote, typically 48 hours. The terminal resolution will eventually become settled_normal or voided once the vote concludes.
+
+### proposedPermalink for this section
+
+The UMA proposer submitted a candidate resolution; the dispute window is open (typically 2 hours). The market will transition to settled_normal / voided once the window closes uncontested, or to disputed if challenged.
+
+### unknownPermalink for this section
+
+The market is closed but the UMA lifecycle fields are empty. This happens on legacy Polymarket markets that pre-date UMA-status tracking, or on rare edge cases where the Gamma API doesn’t surface lifecycle history. The field is unknown rather than guessing.
+
+## Delayed resolutionPermalink for this section
+
+Polymarket markets can resolve days or weeks after the underlying event ends. The polymarket_resolution field appears whenever the upstream resolution lifecycle advances, even long after the market closed.
+
+If your application processes resolution events (for grading, settlement reconciliation, etc.), watch the SSE stream / WebSocket for these late-arriving rows.
+
+## Comparison with other booksPermalink for this section
+
+ | | Book | Equivalent field? | Notes
+ | Polymarket | polymarket_resolution | 5-state enum, derived from UMA oracle
+ | Kalshi | (not yet) | Kalshi has settlement events but we don’t surface them today — separate request
+ | Pinnacle | (not available upstream) | Pinnacle’s wire emits no real-time reason field; cancellationReason exists only on the post-grading Lines API partner endpoint
+ | DraftKings / FanDuel / BetMGM / Caesars | (not available) | Suspended markets simply disappear from the feed; no status field is emitted
+ | Other odds aggregators | (no reason) | Where a fixture-level cancellation status exists, it carries no reason; per-market objects have no status field
+
+The data customers want — a per-book settlement reason — is not industry-standard. Polymarket is the rare case where the upstream wire actually carries it, because UMA resolution is on-chain and publicly observable.
+
+## Why the field is Polymarket-prefixedPermalink for this section
+
+We deliberately named the field polymarket_resolution rather than a generic resolutionStatus so it’s obvious the values are Polymarket-specific. A future Kalshi version would be a separate kalshiResolution field with its own enum — the wire formats are different enough that a unified enum would either be lowest-common-denominator (useless) or full of asterisks for “Polymarket-only” / “Kalshi-only” values.
+
+## See alsoPermalink for this section
+
+- Odds API reference
+
+- Live vs. Pre-Match — covers the related marketStatus semantics

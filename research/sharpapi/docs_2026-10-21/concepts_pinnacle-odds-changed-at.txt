@@ -1,0 +1,71 @@
+Source: https://docs.sharpapi.io/en/concepts/pinnacle-odds-changed-at/ (fetched 2026-10-21)
+
+# Understanding the timestamp field
+
+Every odds row SharpAPI returns carries a single timestamp field. It is the time SharpAPI last refreshed that row through its pipeline — a delivery / feed-freshness signal that advances on every ingest cycle, even when the underlying price has not moved. This page explains what timestamp tracks, what it does not track, and how to reason about freshness on books like Pinnacle that hold lines steady.
+
+SharpAPI exposes one per-odd timestamp: timestamp. There is no longer a separate field for “when the price last moved.” The former odds_changed_at, last_seen_at, and wire_received_at fields have been removed — read timestamp instead.
+
+## What timestamp Actually MeansPermalink for this section
+
+timestamp is the ISO 8601 time SharpAPI last refreshed this odd through its pipeline. It advances every ingest cycle in which the row is delivered, whether or not the row was re-observed from the source.
+
+This makes it a feed-freshness / liveness signal, not a price-change signal. A fresh timestamp tells you the row is being actively maintained; it does not tell you when the trading desk last repriced the line.
+
+## Why a Fresh timestamp Does Not Mean the Price Just MovedPermalink for this section
+
+Pinnacle is a market-maker. Their trading desk publishes a new price only when actual flow forces a re-price — they do not shade lines around retail action to squeeze margin the way soft books do. That discipline is the reason Pinnacle is used as the sharp reference for +EV calculations, but it also means a line can sit unchanged for long stretches while SharpAPI keeps delivering it and advancing timestamp every cycle.
+
+Observed over a 24-hour window of Pinnacle’s own CDN responses, the rate at which Pinnacle published new data (rather than a cached 304 Not Modified) varies enormously by sport:
+
+ | | Sport | Pinnacle CDN “new data” rate
+ | Soccer | ~94%
+ | Tennis | ~66%
+ | NHL | ~51%
+ | MLB | ~18%
+ | NBA | ~9%
+
+NBA and MLB player props commonly go long stretches without the trading desk moving the line — 30+ minutes is not unusual. Because timestamp reflects delivery freshness rather than the last price move, it stays fresh throughout: the row is still being maintained, the desk simply has not repriced.
+
+## How to Read timestampPermalink for this section
+
+timestamp answers one question: “how fresh is this row in SharpAPI’s feed?”
+
+- A recent timestamp (a few seconds old for a major-league market) means the row is being delivered. It does NOT by itself mean the price was re-observed this cycle.
+
+- A stale timestamp (more than a minute or two old for a major-league market) is a freshness signal worth investigating — the row may not be getting maintained.
+
+{
+ "sportsbook": "pinnacle",
+ "market_type": "player_total_bases",
+ "selection": "Edmundo Sosa Over",
+ "line": 0.5,
+ "odds_american": -129,
+ "timestamp": "2026-04-21T21:35:02Z"
+}
+
+In this example the pipeline last refreshed this row at 21:35:02Z. As long as that value keeps advancing each cycle, the row is being delivered; that does not on its own tell you the price was re-observed this cycle.
+
+timestamp is a delivery stamp, not a price-age stamp — do not use it as your only freshness gate. If it stops advancing for a major-league market, that is a feed signal worth investigating. If it keeps advancing, the row is being delivered; it does not on its own tell you the price was re-observed this cycle.
+
+## Benchmarking Across VendorsPermalink for this section
+
+When comparing SharpAPI’s delivery against another vendor, compare against timestamp — it is SharpAPI’s delivery / feed-freshness stamp. Computing now - timestamp measures how fresh the row is in the feed.
+
+Be careful comparing freshness fields across platforms: some vendors surface a source-update time (when the trading desk last moved the line) under similar field names. A source-update time on a quiet market like NBA player props can routinely read hours old because the desk has not repriced — not because delivery is slow. SharpAPI’s timestamp is a delivery stamp, so it stays fresh as long as the row is being maintained.
+
+For an aggregate counterpart, the /health endpoint exposes Pinnacle’s CDN publish cadence per sport (cdn_fetch_pct_1h, cdn_fetch_pct_24h). Low values for a given sport indicate the trading desk is holding lines steady; high values indicate active repricing. This lets you separate “Pinnacle is quiet” from “pipeline is stuck” without instrumenting anything yourself.
+
+## Why Pinnacle Is DifferentPermalink for this section
+
+Pinnacle accepts sharp action and re-prices based on real flow rather than shading lines around retail bettors. That market-maker discipline is why we use them as the devig reference for +EV — their lines are the closest thing to a fair price available in the market. The tradeoff is that pre-match lines can sit unchanged for long stretches when nothing in the market has moved. With a delivery-oriented timestamp, that quiet period shows up correctly as a fresh, actively-maintained row rather than a “stale” one.
+
+## RelatedPermalink for this section
+
+- Odds Snapshot — the timestamp field on the REST odds response
+
+- Streaming — timestamp on odds:update deltas
+
+- Live vs. Pre-Match — publish cadence and book delivery mechanisms
+
+- EV Calculation — why Pinnacle is the sharp reference

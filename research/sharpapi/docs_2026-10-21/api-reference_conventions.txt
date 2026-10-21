@@ -1,0 +1,191 @@
+Source: https://docs.sharpapi.io/en/api-reference/conventions/ (fetched 2026-10-21)
+
+# Response Conventions
+
+SharpAPI returns predictable response shapes across every REST endpoint. This page codifies those conventions so you can build generic parsers, not per-endpoint special cases.
+
+This page describes the REST conventions. SSE streams are covered in SSE Stream, and the bidirectional WebSocket protocol has its own AsyncAPI 3.0 spec.
+
+## HTTP status codes, not envelopesPermalink for this section
+
+The HTTP status code is the source of truth for success or failure. Response bodies do not carry a success flag — it would duplicate information already on response.status and invites clients to check the wrong place.
+
+ | | Status | Meaning
+ | 200 | Success with a body
+ | 201 | Created (API key creation)
+ | 204 | Success, no body (key deletion)
+ | 302 | Redirect (deeplinks)
+ | 400 | Validation error — client-side bug
+ | 401 | Missing or invalid API key
+ | 403 | Tier doesn’t include the requested feature
+ | 404 | Resource doesn’t exist (or opaque ID didn’t match)
+ | 429 | Rate limit exceeded
+ | 5xx | Upstream or internal server error
+
+## Success envelope shapesPermalink for this section
+
+Two top-level shapes. Both put data first and updated_at last, with an optional pagination block in between.
+
+### Non-paginated responsePermalink for this section
+
+Used for singletons, reference data, and summary endpoints. data is whatever the endpoint returns — a single resource, an array, or a map.
+
+{
+ "data": { ... },
+ "updated_at": "2026-04-16T19:29:38.920698424Z"
+}
+
+### Paginated list responsePermalink for this section
+
+Used for endpoints that support limit / offset / cursor.
+
+{
+ "data": [ ... ],
+ "pagination": {
+ "limit": 50,
+ "offset": 0,
+ "count": 50,
+ "total": 1247,
+ "has_more": true,
+ "next_offset": 50
+ },
+ "updated_at": "2026-04-16T19:29:38.920698424Z"
+}
+
+count is the length of the current data page, total is the full matching set. next_offset is null when has_more is false, and also when the next page would exceed the endpoint’s max_offset — in that case next_cursor is the way forward, and it is not subject to the cap.
+
+### Endpoint-specific extensionsPermalink for this section
+
+A handful of endpoints add extra top-level keys alongside data. These are additive — generic parsers that read data + pagination + updated_at keep working.
+
+ | | Field | Emitted by | Meaning
+ | overflow: true | /odds, /odds/delta | total > 10_000 — consumer should pull a fresh snapshot via /odds instead of paginating through delta.
+ | removed: [...] | /odds/delta | IDs of odds removed since ?since=.
+ | missing: [...] | POST /odds/batch | Event IDs that were requested but not found.
+ | meta.store | /odds, /events | Present only on empty results. reason says why: warming or store_empty → retry; no_match → authoritative. On /odds, event_status (final / gone) and completed_at additionally name a finished event when the page was filtered on a single event_id. See the Empty results section on each endpoint page.
+ | meta.books | /odds | Resolved book scope: in_scope plus per-book in_page counts, on queries resolving to two or more sportsbooks. On an empty page whose dashboard book selection resolved to no book, reason: "selection_disjoint" and selected name the cause and take precedence over meta.store.reason.
+
+## Error envelopePermalink for this section
+
+Every non-2xx response returns a single error object.
+
+{
+ "error": {
+ "code": "rate_limited",
+ "message": "Rate limit exceeded. Retry after 3 seconds.",
+ "docs": "https://docs.sharpapi.io/en/authentication#rate-limits",
+ "retryAfter": 3,
+ "retry_after": 1709993460000
+ }
+}
+
+ | | Field | Always present? | Notes
+ | code | Yes | Stable string. Check this, not the prose message.
+ | message | Yes | Human-readable English. Safe to surface to end users.
+ | docs | Sometimes | Link to the relevant doc page.
+ | retryAfter | On 429 | Seconds until the client should retry.
+ | retry_after | On 429 | Unix epoch milliseconds when the client can retry — same instant as retryAfter, different unit and casing. Both are wire-contract fields; keep whichever suits your client, they never disagree.
+ | tier | On 403 | The tier that would unlock the endpoint.
+
+Both retry fields are 429-only — the server’s other non-2xx responses share one generic error builder that never sets either key, so there’s no 5xx case where they appear.
+
+### Common error codesPermalink for this section
+
+missing_api_key, invalid_api_key, validation_error, tier_restricted, rate_limited, too_many_streams, not_found, upstream_error, internal_error.
+
+See the full list (21 HTTP codes + 6 WebSocket frame codes, with HTTP statuses) in API Overview → Error Codes. bad_request and invalid_request are deprecated — both were collapsed into validation_error.
+
+## TimestampsPermalink for this section
+
+Every timestamp in a SharpAPI response is RFC 3339 / ISO 8601 with UTC — string form like 2026-04-16T19:29:38.920698424Z. Nanosecond precision from the server; clients can safely parse with second or millisecond precision.
+
+Two fields you’ll see often:
+
+- updated_at — when the server emitted the response. Top-level on every success response.
+
+- fetched_at — when the upstream sportsbook was last polled (present in odds payloads).
+
+Older, stream-layer timestamps appear as Unix-seconds floats (timestamp) alongside their RFC 3339 counterpart (ts) on WebSocket messages.
+
+## Field casingPermalink for this section
+
+Snake case everywhere. Fields inside data, pagination, meta, error, and every WebSocket / SSE message use snake_case — event_id, market_type, profit_percent, detected_at, odds_american, stake_percent.
+
+The few camelCase leftovers you might spot (e.g. eventIds in a WebSocket subscribe payload input) are client-to-server request shapes. Everything server-to-client is snake_case, with one exception: retryAfter on the 429 error body (see Error envelope) predates this convention and stays for backward compatibility with existing clients — it is not a pattern to extend.
+
+## Canonical IDsPermalink for this section
+
+Most identifiers are stable, opaque, and joinable across endpoints.
+
+ | | Field | Format | Example
+ | event_id | {league}_{home}_{away}_{date} | mlb_guardians_orioles_2026-04-16
+ | game_id | Same as event_id in runner output | nba_thunder_timberwolves_2026-03-15
+ | hash_id (middles) | 16-char lowercase hex | cc229ed94a2ee679
+ | betting_tool_id | Human-readable canonical key | middle:prematch:mlb_...:total_runs:...
+ | API key | Prefixed token | sk_live_...
+
+Join /splits and /odds by event_id. Track an opportunity across polls by hash_id.
+
+## Rate limit headersPermalink for this section
+
+Every authenticated response includes:
+
+ | | Header | Meaning
+ | X-RateLimit-Limit | Requests allowed per minute for your tier.
+ | X-RateLimit-Remaining | Requests remaining in the current window.
+ | X-RateLimit-Reset | Unix timestamp when the window resets.
+ | X-Data-Delay | Odds delay in seconds for your tier (0 = real-time).
+ | X-Request-Id | Unique request identifier — include this in support requests.
+
+## Conditional requests and ETagPermalink for this section
+
+Every cacheable 200 response carries a strong ETag header — a content hash of the response body. Send it back on your next request via If-None-Match to get a 304 Not Modified with no body when the content hasn’t changed. Saves bandwidth on large payloads (/odds responses can be multi-MB) and lets you poll more aggressively without re-downloading unchanged data.
+
+GET /api/v1/odds?sport=basketball HTTP/1.1
+Authorization: Bearer sk_...
+
+HTTP/1.1 200 OK
+ETag: "9dc023776c4b382"
+Cache-Control: private, max-age=0, must-revalidate
+Content-Type: application/json
+
+{ "data": [...], "updated_at": "..." }
+
+On the next poll, echo the ETag:
+
+GET /api/v1/odds?sport=basketball HTTP/1.1
+Authorization: Bearer sk_...
+If-None-Match: "9dc023776c4b382"
+
+HTTP/1.1 304 Not Modified
+ETag: "9dc023776c4b382"
+
+Supported on every cached GET: /odds, /odds/delta, /odds/best, /odds/comparison, /events, /events/:id, /sportsbooks, /sports, /leagues, /markets, /teams, /opportunities/*.
+
+Notes:
+
+- ETag is strong — a byte-for-byte match of the response body. Two bytewise-identical responses always share an ETag; any change produces a new one.
+
+- If-None-Match: * always matches, so it forces a 304 whenever any cached response exists (useful for “is there anything new?” probes).
+
+- Cache-Control: private, max-age=0, must-revalidate signals that responses are per-caller — don’t share them across users via a shared proxy.
+
+- ETags are tier-scoped. A free-tier ETag won’t match a pro-tier request for the same URL because the responses are filtered differently. You only need to handle this if you change tiers mid-session.
+
+- Most HTTP clients handle If-None-Match automatically when you enable their cache (e.g. requests-cache in Python, undici + CacheStore in Node.js). For hand-rolled polling, cache the last ETag per URL in memory and send it on the next request.
+
+## What this is notPermalink for this section
+
+- No success field on responses. HTTP status codes do that job.
+
+- No envelope-of-envelopes. The top-level object is the envelope; meta.updated_at nesting is not used.
+
+- No mixed casing. Any response field is snake_case, with one grandfathered exception (retryAfter, see Field casing). Any WebSocket input field may be camelCase — everything else is snake_case.
+
+## Machine-readable source of truthPermalink for this section
+
+- REST surface: openapi.json from the docs domain root (OpenAPI 3.1)
+
+- WebSocket surface: asyncapi.yaml (AsyncAPI 3.0)
+
+Both files are published as static assets and can be diffed in CI. If this page drifts from the spec, the spec wins — the spec is generated from the deployed server.

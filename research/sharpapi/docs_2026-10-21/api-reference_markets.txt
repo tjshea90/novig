@@ -1,0 +1,265 @@
+Source: https://docs.sharpapi.io/en/api-reference/markets/ (fetched 2026-10-21)
+
+# Markets
+
+Get available market types, their configurations, and sport availability.
+
+GET /api/v1/markets
+
+Requires an API key. Available on all tiers (Free included). Unauthenticated requests return 401.
+
+## Query ParametersPermalink for this section
+
+This endpoint takes no query parameters — it always returns the full market catalog. (A sport parameter is silently ignored; filter client-side on each market’s sports array instead.)
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+# List all markets
+curl -X GET "https://api.sharpapi.io/api/v1/markets" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const response = await fetch('https://api.sharpapi.io/api/v1/markets', {
+ headers: { 'X-API-Key': 'YOUR_API_KEY' },
+});
+const { data } = await response.json();
+
+// List markets with event counts
+data.forEach(m => {
+ console.log(`${m.name} (${m.id}): ${m.event_count ?? 0} events across ${m.sports.length} sports`);
+});
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/markets',
+ headers={'X-API-Key': 'YOUR_API_KEY'},
+)
+result = response.json()
+
+for market in result['data']:
+ events = market['event_count'] or 0
+ print(f"{market['name']} ({market['id']}): {events} events across {len(market['sports'])} sports")
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+Real response, truncated to three of the 500+ market types currently returned (ordered by event_count descending):
+
+{
+ "data": [
+ {
+ "id": "moneyline",
+ "name": "Moneyline",
+ "numerical_id": 878,
+ "event_count": 22608,
+ "sports": ["aussie_rules", "badminton", "baseball", "basketball", "boxing", "cricket", "cycling", "darts", "entertainment", "esports", "football", "golf", "handball", "hockey", "lacrosse", "mma", "motorsports", "olympics", "politics", "rugby_league", "rugby_union", "snooker", "soccer", "table_tennis", "tennis", "unknown", "volleyball"]
+ },
+ {
+ "id": "total_points",
+ "name": "Total Points",
+ "numerical_id": 1344,
+ "event_count": 14852,
+ "sports": ["aussie_rules", "badminton", "basketball", "darts", "esports", "football", "handball", "lacrosse", "motorsports", "olympics", "rugby_league", "rugby_union", "snooker", "unknown", "volleyball"]
+ },
+ {
+ "id": "player_points",
+ "name": "Player Points",
+ "numerical_id": 1030,
+ "event_count": 2090,
+ "sports": ["basketball", "motorsports", "rugby_league", "soccer"]
+ }
+ ],
+ "updated_at": "2026-07-02T18:18:04.820409247Z"
+}
+
+## Market Object SchemaPermalink for this section
+
+ | | Field | Type | Description
+ | id | string | Market slug — the exact value the odds endpoints accept as market_type= (or its alias market=). See Using Markets in Filters.
+ | name | string | Human-readable label, for display only. It is not a filter value — pass id instead.
+ | numerical_id | integer | Stable integer key (frozen, never reused; omitted when unmapped). New (May 2026) — additive, optional. See Entity reference IDs.
+ | event_count | integer | Number of events currently offering this market
+ | sports | string[] | Sport IDs that currently have this market
+
+### New (May 2026): numerical_idPermalink for this section
+
+numerical_id is a frozen, dense-from-1 integer assigned per market type in the SharpAPI atlas. The market catalog covers ~3,000 canonical types (core lines + period markets + player props across all sports).
+
+- Frozen: never reused or remapped.
+
+- Optional: omitted for niche markets that haven’t been assigned an integer yet — slug id is always present.
+
+- Domain-scoped: unique across markets only.
+
+Every odds row and opportunity leg also carries a matching market_ref block ({id, label, numerical_id}). See Entity reference IDs.
+
+### Changed (September 2026): MLB walks props are split by rolePermalink for this section
+
+Before 2026-09-08, MLB walks props arrived under a single market id —
+player_walks — on most sportsbooks, whether the line was a batter’s walks
+drawn or a pitcher’s walks allowed. Two books used ids no other book used.
+Filtering market=player_walks therefore returned a mix of the two stats, and
+comparing that id across books could line a batter up against a pitcher.
+
+Three market ids now carry distinct meanings:
+
+ | | Market id | Meaning
+ | player_walks | Batter walks — bases on balls drawn at the plate
+ | player_walks_allowed | Pitcher walks allowed — bases on balls issued
+ | player_batting_walks | Retired. These rows now publish as player_walks
+
+What this means for existing integrations:
+
+- player_walks_allowed gained books. It previously carried Underdog only;
+it now also carries DraftKings and ProphetX. If you already query it, expect
+more rows and more cross-book comparisons on it.
+
+- player_walks lost pitcher rows on every book that labels the two stats
+distinguishably. A filter that treated every player_walks row as a batter
+prop is now correct on those books.
+
+- player_batting_walks no longer receives rows. One book published its
+batter walks there and now publishes them as player_walks. Query
+player_walks instead; a filter on the retired id returns nothing.
+
+- No response field changed shape, no id was removed from the /markets
+catalog, and nothing outside MLB walks was touched.
+
+Known limitation — some books are still mixed. Splitting the two stats
+relies on the sportsbook labelling them differently in its own feed. Four books
+do not, so their player_walks rows still contain pitcher walks-allowed
+alongside batter walks: Stake, Betway, bwin and bet365 US
+(as of 2026-09-09). If you compare walks props across books, either exclude
+those four or check the player’s position on your side. This note will be
+updated as they are split.
+
+## Market TypesPermalink for this section
+
+The tables below are a descriptive market reference. The Has line column describes the market type, not a field on the /markets response (the response carries only id, name, numerical_id, event_count, sports).
+
+### Core MarketsPermalink for this section
+
+The most popular and widely available betting markets.
+
+ | | Market | Description | Has line | Examples
+ | moneyline | Pick the winner outright | No | Lakers -150, Celtics +130
+ | point_spread | Point spread / handicap betting | Yes | Lakers -4.5 (-110), Celtics +4.5 (-110)
+ | total_points | Over/Under combined score | Yes | Over 220.5 (-110), Under 220.5 (-110)
+ | team_total | Bet on one team’s score | Yes | Lakers Over 112.5, Lakers Under 112.5
+
+### Prop MarketsPermalink for this section
+
+Player and game proposition bets for more specific outcomes.
+
+ | | Market | Description | Has line | Examples
+ | player_prop | Individual player statistics (points, rebounds, assists, etc.) | Yes | LeBron James Over 25.5 Points
+ | game_prop | Game-specific outcomes (will there be overtime, etc.) | No | First Team to Score
+
+### Period MarketsPermalink for this section
+
+Markets for specific periods within a game (halves, quarters).
+
+ | | Market | Description | Has line
+ | 1st_half | 1st half moneyline, spread, or total | Yes
+ | 1st_quarter | 1st quarter moneyline, spread, or total | Yes
+
+### Other MarketsPermalink for this section
+
+ | | Market | Description | Has line | Examples
+ | future | Long-term bets on season outcomes or championships | No | NBA Championship Winner, MVP Award Winner
+
+## Selection TypesPermalink for this section
+
+ | | Type | Used In | Description
+ | home | Moneyline, Spread, Period | Home team wins or covers
+ | away | Moneyline, Spread, Period | Away team wins or covers
+ | over | Total, Props, Period | Over the line value
+ | under | Total, Props, Period | Under the line value
+ | yes | Game Props, Team Props | Outcome occurs
+ | no | Game Props, Team Props | Outcome does not occur
+
+## Market Availability by SportPermalink for this section
+
+ | | Sport | Moneyline | Spread | Total | Player Props | Team Props | Period
+ | Basketball (NBA) | Yes | Yes | Yes | Yes | Yes | Yes
+ | Football (NFL) | Yes | Yes | Yes | Yes | Yes | Yes
+ | Baseball (MLB) | Yes | Yes | Yes | Yes | Yes | Yes
+ | Hockey (NHL) | Yes | Yes | Yes | Yes | Yes | Yes
+ | Basketball (NCAAB) | Yes | Yes | Yes | Limited | Limited | Yes
+ | Football (NCAAF) | Yes | Yes | Yes | Limited | Limited | Yes
+ | Soccer | Yes | Yes | Yes | Limited | Limited | Limited
+ | Tennis | Yes | No | Yes | Limited | No | No
+ | MMA (UFC) | Yes | No | No | Limited | No | No
+ | Golf (PGA) | Yes | No | No | Limited | No | No
+
+“Limited” means the market is available for some events but not all, depending on the sportsbook and event. Use the odds endpoints to see which markets are available for a specific event.
+
+## Using Markets in FiltersPermalink for this section
+
+Use the market id as a filter parameter on other endpoints. The odds endpoints accept it as market_type= or, equivalently, as market=. The name field is a display label — it is not a filter value.
+
+# Get only moneyline odds
+curl "https://api.sharpapi.io/api/v1/odds?market=moneyline" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Get spread and total odds
+curl "https://api.sharpapi.io/api/v1/odds?market=point_spread,total_points" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Get player props only
+curl "https://api.sharpapi.io/api/v1/odds?market=player_prop" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Best odds for moneyline markets
+curl "https://api.sharpapi.io/api/v1/odds/best?market=moneyline" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### Worked example: a /markets row to an odds queryPermalink for this section
+
+Props are where the display name and the slug differ most, so this is where the mapping matters. Take this row from the /markets response (other fields omitted):
+
+{
+ "id": "player_longest_reception",
+ "name": "Player Longest Reception",
+ "sports": ["football"]
+}
+
+Pass the id — player_longest_reception — and not the name:
+
+curl "https://api.sharpapi.io/api/v1/odds?market_type=player_longest_reception&league=nfl" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+Every row that comes back echoes the same slug in its own market_type field, so you can always go from a result back to its /markets entry.
+
+## Understanding LinesPermalink for this section
+
+Markets that have a line include a numerical line value in the odds response:
+
+- Spread: The point handicap (e.g., -6.5 means the team must win by 7+)
+
+- Total: The combined score threshold (e.g., 215.5 for over/under)
+
+- Player Props: The stat threshold (e.g., 24.5 points for a player)
+
+- Team Props: The team stat threshold (e.g., 105.5 team total points)
+
+Markets without a line (like moneyline) have line: null in the odds response. The /markets catalog does not say which kind a market is; read line on the odds rows themselves.
+
+## Related EndpointsPermalink for this section
+
+- Odds Snapshot - Filter odds by market type
+
+- Best Odds - Best odds filtered by market
+
+- Sports - See which sports are available
+
+- Sportsbooks - See which books support which markets

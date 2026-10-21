@@ -1,0 +1,150 @@
+Source: https://docs.sharpapi.io/en/api-reference/events-markets/ (fetched 2026-10-21)
+
+# Event Markets
+
+Get the available market types for a specific event, including how many sportsbooks offer each market and which books they are.
+
+GET /api/v1/events/{eventId}/markets
+
+## AuthenticationPermalink for this section
+
+Requires API key via X-API-Key header, Authorization: Bearer header, or api_key query param. Available to all tiers.
+
+## Path ParametersPermalink for this section
+
+ | | Parameter | Type | Required | Description
+ | eventId | string | Yes | Unique event identifier (e.g., nba_celtics_lakers_2026-02-08_b3)
+
+## Market ObjectPermalink for this section
+
+Each entry summarizes one market type for the event. There is no per-selection breakdown on this endpoint — fetch Event Odds for individual selections and prices.
+
+ | | Field | Type | Description
+ | market_type | string | Canonical market type identifier (e.g., moneyline, point_spread, total_points, player_points)
+ | market_label | string | Human-readable market name (e.g., Moneyline, Point Spread)
+ | selection_count | integer | Number of distinct selections within this market
+ | book_count | integer | Number of sportsbooks offering this market
+ | books | string[] | Sportsbook IDs offering this market
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X GET "https://api.sharpapi.io/api/v1/events/nba_celtics_lakers_2026-02-08_b3/markets" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const eventId = 'nba_celtics_lakers_2026-02-08_b3';
+const response = await fetch(
+ `https://api.sharpapi.io/api/v1/events/${eventId}/markets`,
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+const { data } = await response.json();
+
+for (const market of data) {
+ console.log(`${market.market_type} (${market.market_label}): ${market.book_count} books, ${market.selection_count} selections`);
+ console.log(` books: ${market.books.join(', ')}`);
+}
+
+### Python
+
+import requests
+
+event_id = 'nba_celtics_lakers_2026-02-08_b3'
+response = requests.get(
+ f'https://api.sharpapi.io/api/v1/events/{event_id}/markets',
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+result = response.json()
+
+for market in result['data']:
+ print(f"{market['market_type']} ({market['market_label']}): {market['book_count']} books, {market['selection_count']} selections")
+ print(f" books: {', '.join(market['books'])}")
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+A flat { data, updated_at } object — there is no success flag, no meta, and no per-selection sub-array.
+
+{
+ "data": [
+ {
+ "market_type": "moneyline",
+ "market_label": "Moneyline",
+ "selection_count": 2,
+ "book_count": 6,
+ "books": ["betmgm", "caesars", "draftkings", "fanduel", "pinnacle", "betrivers"]
+ },
+ {
+ "market_type": "point_spread",
+ "market_label": "Point Spread",
+ "selection_count": 2,
+ "book_count": 6,
+ "books": ["betmgm", "caesars", "draftkings", "fanduel", "pinnacle", "betrivers"]
+ },
+ {
+ "market_type": "total_points",
+ "market_label": "Total Points",
+ "selection_count": 2,
+ "book_count": 6,
+ "books": ["betmgm", "caesars", "draftkings", "fanduel", "pinnacle", "betrivers"]
+ },
+ {
+ "market_type": "player_points",
+ "market_label": "Player Points",
+ "selection_count": 24,
+ "book_count": 4,
+ "books": ["draftkings", "fanduel", "betmgm", "caesars"]
+ }
+ ],
+ "updated_at": "2026-02-08T12:05:00Z"
+}
+
+### Error ResponsesPermalink for this section
+
+404 Not Found
+
+{
+ "error": {
+ "code": "not_found",
+ "message": "Event not found"
+ }
+}
+
+401 Unauthorized
+
+No key supplied returns missing_api_key; a bad key returns invalid_api_key.
+
+{
+ "error": {
+ "code": "missing_api_key",
+ "message": "API key required. Pass via X-API-Key header, api_key query parameter, or Bearer token.",
+ "docs": "https://docs.sharpapi.io/en/authentication#authentication-methods"
+ }
+}
+
+## Use CasesPermalink for this section
+
+- Market discovery — Determine which market types are available before requesting odds, reducing unnecessary API calls
+
+- Sportsbook coverage — See which sportsbooks cover each market (books) to identify comparison opportunities
+
+- Line shopping prep — Identify markets offered by multiple books where you can shop for the best line
+
+- Player props availability — Check if player prop markets are available (often limited to certain books and closer to game time)
+
+Use this endpoint to check market availability before calling GET /api/v1/odds?event_id={eventId}&market=… — it avoids requesting market types that do not exist for a given event.
+
+## Related EndpointsPermalink for this section
+
+- Events - List and search events
+
+- Event Details - Get event details with embedded market summary
+
+- Event Odds - Get all odds for this event
+
+- Markets - List all market types across the platform

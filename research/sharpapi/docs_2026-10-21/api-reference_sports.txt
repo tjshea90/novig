@@ -1,0 +1,173 @@
+Source: https://docs.sharpapi.io/en/api-reference/sports/ (fetched 2026-10-21)
+
+# Sports
+
+Get a list of all available sports with their leagues and event counts.
+
+## EndpointsPermalink for this section
+
+GET /api/v1/sports
+
+Requires an API key. Available on all tiers (Free included). Unauthenticated requests return 401.
+
+## Query ParametersPermalink for this section
+
+ | | Parameter | Type | Default | Description
+ | sportsbook | string | all | Restrict counts and league lists to one or more books (comma-separated), e.g. sportsbook=draftkings
+
+## List All SportsPermalink for this section
+
+### Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X GET "https://api.sharpapi.io/api/v1/sports" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const response = await fetch('https://api.sharpapi.io/api/v1/sports', {
+ headers: { 'X-API-Key': 'YOUR_API_KEY' },
+});
+const { data } = await response.json();
+
+data.forEach(sport => {
+ console.log(`${sport.name}: ${sport.event_count} events (${sport.live_count} live)`);
+ console.log(` Leagues: ${sport.leagues.join(', ')}`);
+});
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/sports',
+ headers={'X-API-Key': 'YOUR_API_KEY'},
+)
+result = response.json()
+
+for sport in result['data']:
+ print(f"{sport['name']}: {sport['event_count']} events ({sport['live_count']} live)")
+ print(f" Leagues: {', '.join(sport['leagues'])}")
+
+### ResponsePermalink for this section
+
+Real response, truncated to four sports (the full response currently returns ~28). Sports are ordered by event_count descending, and league arrays can be large — soccer alone carries 300+ league slugs:
+
+{
+ "data": [
+ {
+ "id": "tennis",
+ "name": "Tennis",
+ "numerical_id": 28,
+ "event_count": 1677,
+ "live_count": 133,
+ "leagues": ["atp", "atp_challenger", "itf_men", "itf_women", "utr", "wta"]
+ },
+ {
+ "id": "boxing",
+ "name": "Boxing",
+ "numerical_id": 5,
+ "event_count": 197,
+ "live_count": 0,
+ "leagues": ["boxing_matches"]
+ },
+ {
+ "id": "mma",
+ "name": "MMA",
+ "numerical_id": 17,
+ "event_count": 144,
+ "live_count": 0,
+ "leagues": ["ufc"]
+ },
+ {
+ "id": "horse_racing",
+ "name": "Horse_racing",
+ "event_count": 53,
+ "live_count": 0,
+ "leagues": ["horse", "horses_daily"]
+ }
+ ],
+ "updated_at": "2026-07-02T18:17:55.590257979Z"
+}
+
+Note horse_racing has no numerical_id — the field is omitted for sports that haven’t been mapped in the atlas yet.
+
+## Sport Object SchemaPermalink for this section
+
+ | | Field | Type | Description
+ | id | string | Sport identifier (lowercase, use in API filters)
+ | numerical_id | integer | Stable integer key for the sport (frozen, never reused; omitted when unmapped). New (May 2026) — additive, optional. See Entity reference IDs.
+ | name | string | Human-readable sport name
+ | leagues | string[] | League IDs within this sport
+ | event_count | integer | Total events currently available with odds
+ | live_count | integer | Events currently live/in-play
+
+### New (May 2026): numerical_idPermalink for this section
+
+numerical_id is a frozen, dense-from-1 integer assigned per sport in the SharpAPI atlas. Use it as a compact storage key when you don’t need the human-readable slug.
+
+- Frozen: never reused or remapped once assigned.
+
+- Optional: omitted for sports that haven’t been mapped yet — the slug id is always present.
+
+- Domain-scoped: unique across sports only; pair with the entity domain to disambiguate.
+
+See Entity reference IDs for the full semantics, plus the matching sport_ref block emitted on every odds row and opportunity leg.
+
+## Available SportsPermalink for this section
+
+The sport IDs currently returned by the live endpoint (the list is dynamic — see the callout below):
+
+ | | ID | Display Name | Popular Leagues
+ | basketball | Basketball | NBA, NCAAB, WNBA
+ | football | Football | NFL, NCAAF
+ | hockey | Hockey | NHL
+ | baseball | Baseball | MLB
+ | soccer | Soccer | Premier League, La Liga, Serie A, Bundesliga, MLS
+ | tennis | Tennis | ATP, WTA, Challenger, ITF
+ | mma | MMA | UFC
+ | golf | Golf | PGA
+ | boxing | Boxing | —
+ | cricket | Cricket | —
+ | rugby_union | Rugby Union | —
+ | rugby_league | Rugby League | —
+ | aussie_rules | Aussie Rules | AFL
+ | lacrosse | Lacrosse | PLL
+ | motorsports | Motorsports | F1, NASCAR
+ | darts | Darts | PDC
+ | snooker | Snooker | —
+ | table_tennis | Table Tennis | —
+ | volleyball | Volleyball | —
+ | handball | Handball | —
+ | water_polo | Water Polo | —
+ | horse_racing | Horse Racing | —
+ | cycling | Cycling | —
+ | olympics | Olympics | —
+ | politics | Politics | —
+ | entertainment | Entertainment | —
+ | esports | Esports | LoL, CS2, Dota 2
+
+The event_count and live_count values are dynamic and change based on current schedules. The sport list itself is derived from events currently carrying odds — a fully off-season sport (e.g. curling in summer) drops out of the response entirely rather than showing 0 events. Don’t hard-code this table; fetch the endpoint.
+
+## Using Sports in FiltersPermalink for this section
+
+Use the sport id as a filter parameter on other endpoints:
+
+# Get odds for basketball only
+curl "https://api.sharpapi.io/api/v1/odds?sport=basketball" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Get events for multiple sports
+curl "https://api.sharpapi.io/api/v1/events?sport=basketball,football" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+## Related EndpointsPermalink for this section
+
+- Leagues - List leagues with optional sport filter
+
+- Odds Snapshot - Filter odds by sport
+
+- Events - Filter events by sport

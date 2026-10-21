@@ -1,0 +1,251 @@
+Source: https://docs.sharpapi.io/en/api-reference/historical-clv/ (fetched 2026-10-21)
+
+# Closing Line Value (CLV)
+
+Aggregate Closing Line Value statistics for SharpAPI’s graded +EV predictions. For every +EV opportunity the engine flags, the system later captures the sharp reference’s closing line and grades the pick against it — this endpoint serves those grades, aggregated along the dimension you choose (group_by), together with realized win/loss outcomes where the game result is known.
+
+GET /api/v1/historical/odds/clv
+
+Enterprise tier required. The /api/v1/historical/* aggregate endpoints are gated by the history feature. Lower tiers receive 403 tier_restricted. If you’re on Pro or Sharp and want closing-line data, use Closing Odds — per-event raw closing prices, available on your tier.
+
+URL moved. This endpoint was previously served at /api/v1/historical/clv. The old path still works but is deprecated — responses on it carry Deprecation: true and a Link: </api/v1/historical/odds/clv>; rel="successor-version" header. No withdrawal date has been announced; the old path will not be removed without advance notice. Use /api/v1/historical/odds/clv in new integrations.
+
+Changed 2026-09-19 — win_rate now covers every settled bet. Until this release, wins, losses and win_rate counted only settled picks that also had a captured closing line. They now count every settled pick, whether or not a closing line was captured. Two consequences: because settling a bet does not require a captured closing line, wins + losses routinely exceeds total_graded, and win_rate itself moves — across the recent +EV series as a whole it reads roughly two points lower, though an individual group can move either way. total_graded, avg_clv_percent and avg_ev_percent are unchanged, and no field was added, removed or renamed. If you have benchmarked against the old win_rate, re-baseline it from this date.
+
+## How CLV is computedPermalink for this section
+
+When an event transitions from pre-match to live, the platform captures each book’s last pre-match price as that event’s closing line. The closing price of the sharp reference (devig_book — typically Pinnacle) is devigged with the Power method to a no-vig closing probability, and each graded prediction is scored as:
+
+CLV% = (closing_no_vig_prob × entry_decimal_odds − 1) × 100
+
+where entry_decimal_odds is the price at the moment SharpAPI flagged the opportunity. Positive CLV means the flagged price beat the close — you could have bet at better odds than the market’s final fair value implied.
+
+Data is served from the historical ClickHouse store. Aggregates are computed over logical predictions — repeated price snapshots of the same pick (same event, market, selection, book, line) are collapsed into one row before counting, so a pick that was re-observed at several prices is not counted multiple times.
+
+## Query ParametersPermalink for this section
+
+ | | Parameter | Type | Default | Description
+ | from | string | 7 days ago | Start date (YYYY-MM-DD or ISO 8601).
+ | to | string | today | End date (YYYY-MM-DD or ISO 8601).
+ | group_by | string | sportsbook | Aggregation dimension. One of: sportsbook, sport, league, market, day, devig_book.
+ | sport | string | all | Filter by sport(s), comma-separated (e.g. basketball,baseball).
+ | league | string | all | Filter by league(s), comma-separated (e.g. nba,mlb).
+ | sportsbook | string | all | Filter by sportsbook(s), comma-separated.
+ | devig_book | string | all | Filter by the sharp reference the pick was priced against (e.g. pinnacle).
+
+### History windowPermalink for this section
+
+This endpoint is Enterprise-only, and the Enterprise history window is unlimited (meta.tier_window_days = "unlimited"). from defaults to 7 days ago when omitted; there is no enforced upper bound on how far back you can query.
+
+CLV history starts on 2026-09-11 (08:17 UTC). Earlier picks are not served, so a from/to window that ends before that date returns an empty groups array rather than an error.
+
+Filter by devig_book=pinnacle for the meaningful signal. CLV validity is dominated by the sharp reference the pick was priced against. Pinnacle-referenced CLV is the predictive series; picks priced against fallback references (e.g. bookmaker) carry structurally negative CLV and should not be read as edge. Group by devig_book to see the split.
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+# CLV by sportsbook for the past 7 days
+curl -X GET "https://api.sharpapi.io/api/v1/historical/odds/clv?group_by=sportsbook" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Pinnacle-referenced CLV only, grouped by sport
+curl -X GET "https://api.sharpapi.io/api/v1/historical/odds/clv?devig_book=pinnacle&group_by=sport" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Day-by-day CLV for DraftKings picks over a date range
+curl -X GET "https://api.sharpapi.io/api/v1/historical/odds/clv?sportsbook=draftkings&group_by=day&from=2026-09-14&to=2026-09-21" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const params = new URLSearchParams({
+ devig_book: 'pinnacle',
+ group_by: 'sportsbook',
+});
+const response = await fetch(
+ `https://api.sharpapi.io/api/v1/historical/odds/clv?${params}`,
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+const { data } = await response.json();
+for (const group of data.groups) {
+ // avg_clv_percent, avg_ev_percent, and win_rate are null when a group
+ // has no graded / no settled rows — guard before formatting.
+ const clv = group.avg_clv_percent !== null
+ ? `${group.avg_clv_percent.toFixed(2)}%`
+ : 'n/a';
+ const wr = group.win_rate !== null
+ ? `${(group.win_rate * 100).toFixed(1)}% over ${group.wins + group.losses} settled`
+ : 'no settled bets';
+ console.log(`${group.group_key}: avg CLV ${clv} (${group.total_graded} graded), win rate ${wr}`);
+}
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/historical/odds/clv',
+ params={'devig_book': 'pinnacle', 'group_by': 'sportsbook'},
+ headers={'X-API-Key': 'YOUR_API_KEY'},
+)
+payload = response.json()
+for group in payload['data']['groups']:
+ # avg_clv_percent / avg_ev_percent / win_rate are None when a group has
+ # no graded / no settled rows — guard before formatting.
+ clv = (
+ f"{group['avg_clv_percent']:.2f}%"
+ if group['avg_clv_percent'] is not None else 'n/a'
+ )
+ settled = group['wins'] + group['losses']
+ wr = (
+ f"{group['win_rate'] * 100:.1f}% over {settled} settled"
+ if group['win_rate'] is not None else 'no settled bets'
+ )
+ print(f"{group['group_key']}: avg CLV {clv} "
+ f"({group['total_graded']} graded), win rate {wr}")
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+{
+ "success": true,
+ "data": {
+ "date_range": {
+ "from": "2026-10-07T09:53:31.881",
+ "to": "2026-10-14T09:53:31.881"
+ },
+ "group_by": "sportsbook",
+ "groups": [
+ {
+ "group_key": "matchbook",
+ "total_graded": 7585,
+ "wins": 4846,
+ "losses": 4105,
+ "win_rate": 0.541392023237627,
+ "avg_clv_percent": -1.4250430370269482,
+ "avg_ev_percent": 1.3196234670527511,
+ "total_predictions": 10039
+ },
+ {
+ "group_key": "sx_bet",
+ "total_graded": 7310,
+ "wins": 3423,
+ "losses": 3290,
+ "win_rate": 0.5099061522419187,
+ "avg_clv_percent": -0.4994217699214386,
+ "avg_ev_percent": 1.0263501475197079,
+ "total_predictions": 7414
+ }
+ ]
+ },
+ "meta": {
+ "filters": {
+ "devig_book": null,
+ "group_by": "sportsbook",
+ "league": null,
+ "sport": null,
+ "sportsbook": null
+ },
+ "groups_limit": 500,
+ "groups_total": 52,
+ "groups_truncated": false,
+ "source": "clickhouse",
+ "tier_window_days": "unlimited",
+ "updated_at": "2026-10-14T08:50:20Z"
+ }
+}
+
+This sample answers a request with no parameters (group_by=sportsbook over the last 7 days), captured on 2026-10-14 and shortened to the first two of its 52 groups. The meta block is unedited, so groups_total still counts all 52.
+
+An empty groups array is a valid response when no graded predictions exist for the requested filters and date range — not an error.
+
+One response carries at most meta.groups_limit (500) groups, and the endpoint has no limit, offset or cursor. Groups are ordered by total_graded, highest first, with ties broken by group_key. That holds for group_by=day too, so sort by group_key yourself if you need a time series. When more groups qualify than the cap allows, the response holds the first 500 in that order, meta.groups_total reports how many qualified, and meta.groups_truncated is true. In practice only group_by=league over a window of several weeks reaches the cap; narrow the window or filter by sport to see the rest.
+
+Three different counts — don’t mix denominators. total_predictions counts every tracked pick (including ones never graded). total_graded counts picks with a CLV grade (a closing line was captured and compared). wins + losses counts every pick whose game outcome is settled, whether or not a closing line was captured — and win_rate is computed over that population. The two are independent, not nested: settling needs no closing line, and a CLV-graded pick may not have settled yet. Neither is a subset of the other, and wins + losses routinely exceeds total_graded. A group can legitimately show total_graded: 7585 next to wins + losses: 8951. win_rate is null when a group has no settled bets.
+
+### Error ResponsesPermalink for this section
+
+403 Tier Restricted
+
+{
+ "error": {
+ "code": "tier_restricted",
+ "message": "This endpoint requires Enterprise tier or higher",
+ "docs": "https://sharpapi.io/pricing",
+ "tier": "pro",
+ "required_tier": "enterprise"
+ }
+}
+
+400 Validation Error
+
+{
+ "error": {
+ "code": "validation_error",
+ "message": "Invalid group_by. Must be one of: day, devig_book, league, market, sport, sportsbook"
+ }
+}
+
+## Response FieldsPermalink for this section
+
+### data objectPermalink for this section
+
+ | | Field | Type | Description
+ | date_range | object | Actual from/to used after tier clamping
+ | group_by | string | The dimension used for aggregation
+ | groups | array | Array of group rows
+
+### Group row fieldsPermalink for this section
+
+ | | Field | Type | Description
+ | group_key | string | The group identifier (sportsbook name, sport, league, market type, YYYY-MM-DD date, or devig book)
+ | total_graded | integer | Logical predictions with a CLV grade (closing line captured and compared)
+ | wins | integer | Predictions whose game outcome settled as a win. Counted over every settled prediction, not only CLV-graded ones
+ | losses | integer | Predictions whose game outcome settled as a loss. Counted over every settled prediction, not only CLV-graded ones
+ | win_rate | number | null | wins / (wins + losses). Computed over every settled prediction — a different population from total_graded, so the two do not share a denominator; null when no settled bets exist in the group
+ | avg_clv_percent | number | null | Average CLV% across graded predictions. Positive = flagged prices beat the close on average. null when not computable
+ | avg_ev_percent | number | null | Average expected value % at detection time for the group’s predictions. null when not computable
+ | total_predictions | integer | All tracked predictions in the group, including ones not (yet) graded
+
+### meta objectPermalink for this section
+
+ | | Field | Type | Description
+ | filters | object | Echo of the applied filters (sport, league, sportsbook, devig_book, group_by); null for unused filters
+ | groups_limit | integer | Most groups one response carries (500). It is a cap, not a page size: there is no limit, offset or cursor
+ | groups_total | integer | Groups that qualified for your filters and window (at least one CLV-graded or settled pick), counted before the cap is applied
+ | groups_truncated | boolean | true when groups_total is larger than the number of groups returned, meaning the response holds only the first groups_limit groups in total_graded order. Always present
+ | source | string | "clickhouse" — the historical analytics store
+ | tier_window_days | integer | string | Maximum lookback for your tier (e.g. 90), or "unlimited"
+ | updated_at | string | Data freshness, not the response time: when SharpAPI first flagged the newest pick counted in the response (ISO 8601, UTC, whole seconds). A pick is counted only once it is CLV-graded or settled, so this trails the request time and moves only when a more recently flagged pick is graded or settled. When no pick matches, it falls back to the response time (with fractional seconds)
+
+## Interpreting CLVPermalink for this section
+
+ | | CLV% | Interpretation
+ | > +2% | Flagged prices consistently beat the close by a wide margin — strong captured value
+ | +0.5% to +2% | Prices modestly beat the close — typical for soft books against a sharp reference
+ | -0.5% to +0.5% | Near-market — efficient pricing or mixed results
+ | < -0.5% | Prices tightened into the close — late steam or sharp-side action
+
+CLV is not ROI — read it with the right caveats.
+
+- Market efficiency varies. In the sharpest, most liquid markets (for example NBA spreads and totals, and major-league player props), beating the close does not reliably convert into realized profit — closing-line beats there often reflect noise in an efficient market rather than edge. In softer markets, positive CLV remains the best leading indicator of long-run profitability.
+
+- Use win_rate alongside avg_clv_percent. The endpoint returns realized outcomes for exactly this reason: a group with positive CLV but a sub-breakeven settled record over a large sample is telling you the CLV there isn’t converting. Read the pairing as a direction, not a like-for-like comparison: avg_clv_percent covers CLV-graded picks while win_rate covers every settled pick, so the two are computed over different populations.
+
+- Mind the sample size. Groups with small total_graded or few settled bets (wins + losses) are noise — compare groups only at meaningful volume.
+
+- The sharp reference matters. Only sharp-referenced CLV (filter devig_book=pinnacle) carries this meaning; fallback-referenced rows do not.
+
+## Related EndpointsPermalink for this section
+
+- Closing Odds — Per-event raw closing prices (Pro tier and up)
+
+- Closing Odds by Date — Historical per-event closing prices for a given date
+
+- +EV Opportunities — Real-time positive expected value bets
+
+- Odds Snapshot — Current pre-match and live odds

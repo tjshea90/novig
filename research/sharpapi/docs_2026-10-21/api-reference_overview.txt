@@ -1,0 +1,385 @@
+Source: https://docs.sharpapi.io/en/api-reference/overview/ (fetched 2026-10-21)
+
+# API Reference Overview
+
+Complete reference for the SharpAPI v1 REST API. All endpoints return JSON and follow consistent conventions for authentication, filtering, pagination, and error handling.
+
+## Base URLPermalink for this section
+
+https://api.sharpapi.io/api/v1
+
+Always use api.sharpapi.io as the base URL, not sharpapi.io.
+
+## OpenAPI SpecificationPermalink for this section
+
+The full OpenAPI 3.1 spec is available for import into tools like Postman, Insomnia, or code generators:
+
+- 
+Download OpenAPI Spec (JSON)
+
+This spec covers all endpoints, request/response schemas, and authentication requirements.
+
+## Request FormatPermalink for this section
+
+- All requests use HTTPS
+
+- Authentication via X-API-Key header, Authorization: Bearer header, or api_key query param
+
+- Request bodies (where applicable) use JSON with Content-Type: application/json
+
+- All field names are snake_case
+
+## Endpoint SummaryPermalink for this section
+
+The REST endpoints below. All require an API key except /api/v1/health and /api/v1/deeplink/:id.
+
+### OddsPermalink for this section
+
+ | | Method | Path | Auth | Min Tier
+ | GET | /api/v1/odds | Yes | Free
+ | GET | /api/v1/odds/delta | Yes | Free
+ | GET | /api/v1/odds/best | Yes | Free
+ | GET | /api/v1/odds/comparison | Yes | Free
+ | POST | /api/v1/odds/batch | Yes | Free
+ | GET | /api/v1/odds/closing | Yes | Pro
+
+### EventsPermalink for this section
+
+ | | Method | Path | Auth | Min Tier
+ | GET | /api/v1/events | Yes | Free
+ | GET | /api/v1/events/:eventId | Yes | Free
+ | GET | /api/v1/events/:eventId/odds | Yes | Free
+ | GET | /api/v1/events/:eventId/markets | Yes | Free
+
+### OpportunitiesPermalink for this section
+
+ | | Method | Path | Auth | Min Tier
+ | GET | /api/v1/opportunities/ev | Yes | Pro
+ | GET | /api/v1/opportunities/arbitrage | Yes | Hobby
+ | GET | /api/v1/opportunities/middles | Yes | Pro
+ | GET | /api/v1/opportunities/middles/summary | Yes | Pro
+ | GET | /api/v1/opportunities/middles/:id | Yes | Pro
+ | GET | /api/v1/opportunities/low_hold | Yes | Pro
+
+### SplitsPermalink for this section
+
+ | | Method | Path | Auth | Min Tier
+ | GET | /api/v1/splits | Yes | Pro
+ | GET | /api/v1/splits/history | Yes | Pro
+
+### Live Game StatePermalink for this section
+
+ | | Method | Path | Auth | Min Tier
+ | GET | /api/v1/gamestate | Yes | Game State add-on
+ | GET | /api/v1/gamestate/:sport | Yes | Game State add-on
+
+### StreamingPermalink for this section
+
+ | | Method | Path | Auth | Min Tier
+ | GET | /api/v1/stream | Yes | WebSocket add-on
+ | GET | /api/v1/stream/odds | Yes | WebSocket add-on
+ | GET | /api/v1/stream/opportunities | Yes | WebSocket add-on
+ | GET | /api/v1/stream/all | Yes | WebSocket add-on
+ | GET | /api/v1/stream/events/:eventId | Yes | WebSocket add-on
+ | GET | /api/v1/stream/gamestate | Yes | Game State add-on
+
+### Deep LinksPermalink for this section
+
+ | | Method | Path | Auth | Min Tier
+ | GET | /api/v1/deeplink/:id | No | -
+ | POST | /api/v1/deeplinks/batch | Yes | Free
+
+### AccountPermalink for this section
+
+ | | Method | Path | Auth | Min Tier
+ | GET | /api/v1/account | Yes | Free
+ | GET | /api/v1/account/usage | Yes | Free
+ | GET | /api/v1/account/keys | Yes | Free
+ | POST | /api/v1/account/keys | Yes | Free
+ | DELETE | /api/v1/account/keys/:keyId | Yes | Free
+ | POST | /api/v1/account/keys/:keyId/rotate | Yes | Free
+
+### Reference DataPermalink for this section
+
+ | | Method | Path | Auth | Min Tier
+ | GET | /api/v1/sports | Yes | Free
+ | GET | /api/v1/leagues | Yes | Free
+ | GET | /api/v1/sportsbooks | Yes | Free
+ | GET | /api/v1/markets | Yes | Free
+ | GET | /api/v1/teams | Yes | Free
+ | GET | /api/v1/injuries | Yes | Enterprise
+
+### EnterprisePermalink for this section
+
+ | | Method | Path | Auth | Min Tier
+ | GET | /api/v1/futures | Yes | Enterprise
+ | GET | /api/v1/futures/odds | Yes | Enterprise
+
+### Historical (Enterprise)Permalink for this section
+
+ | | Method | Path | Auth | Min Tier
+ | GET | /api/v1/historical/odds | Yes | Enterprise
+ | GET | /api/v1/historical/odds/movements | Yes | Enterprise
+ | GET | /api/v1/historical/odds/closing | Yes | Enterprise
+ | GET | /api/v1/historical/odds/clv | Yes | Enterprise
+ | GET | /api/v1/historical/opportunities | Yes | Enterprise
+ | GET | /api/v1/historical/opportunities/:id | Yes | Enterprise
+ | GET | /api/v1/historical/summary | Yes | Enterprise
+
+On /api/v1/historical/odds/movements, is_opening: true marks the first time SharpAPI observed this selection in this series; it is not the market’s opening price.
+
+The historical-odds tree was reorganized in June 2026 so every view nests under /api/v1/historical/*. The old paths /api/v1/historical/clv and /api/v1/odds/historical still work as deprecated aliases (responses carry Deprecation: true and a Link header pointing to the canonical path) — use /api/v1/historical/odds/clv and /api/v1/historical/odds in new integrations. No withdrawal date has been announced; the old paths will not be removed without advance notice.
+
+### HealthPermalink for this section
+
+ | | Method | Path | Auth | Min Tier
+ | GET | /api/v1/health | No | -
+
+## Response FormatPermalink for this section
+
+Two top-level shapes — both put data first and updated_at last, with an optional pagination block in between. There is no success field; the HTTP status code is the source of truth. See Response Conventions for the full rule set.
+
+### Paginated list responsePermalink for this section
+
+{
+ "data": [
+ {
+ "id": "draftkings_33483153_moneyline_PHO",
+ "sportsbook": "draftkings",
+ "sport": "basketball",
+ "home_team": "PHI 76ers",
+ "away_team": "PHO Suns",
+ "market_type": "moneyline",
+ "selection": "PHO Suns",
+ "odds_american": -150,
+ "odds_decimal": 1.667,
+ "odds_probability": 0.60,
+ "is_live": false
+ }
+ ],
+ "pagination": {
+ "limit": 50,
+ "offset": 0,
+ "count": 1,
+ "total": 3095,
+ "has_more": true,
+ "next_offset": 50,
+ "next_cursor": "eyJlIjoiMzM0ODMxNTMiLCJiIjoiZHJhZnRraW5ncyIsIm0iOiJtb25leWxpbmUiLCJpIjoiZHJhZnRraW5nc18zMzQ4MzE1M19tb25leWxpbmVfUEhJIn0"
+ },
+ "updated_at": "2026-01-26T02:10:37.846Z"
+}
+
+ | | Field | Description
+ | data | Array of results
+ | pagination.limit | Maximum items per page (default: 50, max: 200)
+ | pagination.offset | Current offset into results
+ | pagination.count | Number of items returned in this response
+ | pagination.total | Total matching items across all pages. Omitted on endpoints that can’t compute it cheaply (e.g. /odds).
+ | pagination.has_more | Whether more results exist beyond this page
+ | pagination.next_offset | Offset value to use for the next page. Prefer next_cursor on live-data endpoints.
+ | pagination.next_cursor | Opaque cursor for the next page. Pass as ?cursor= — stable against live data changes. Recommended for multi-page scans. Sent by the cursor-supporting endpoints (/odds, /events, /teams) and omitted on the last page. /odds/delta takes no cursor and always sends null here — it pages with next_offset + since.
+ | updated_at | ISO 8601 timestamp of when the data was last refreshed
+
+### Single resource responsePermalink for this section
+
+Used for singletons (/account, /events/:eventId) and non-paginated reference endpoints. No pagination block.
+
+{
+ "data": {
+ "id": "nba_celtics_lakers_2026-02-08_b3",
+ "sport": "nba",
+ "home_team": "PHI 76ers",
+ "away_team": "PHO Suns",
+ "start_time": "2026-01-26T19:00:00Z"
+ },
+ "updated_at": "2026-01-26T02:10:37.846Z"
+}
+
+### Error EnvelopePermalink for this section
+
+All errors follow a consistent format:
+
+{
+ "error": {
+ "code": "rate_limited",
+ "message": "Rate limit exceeded. Upgrade your plan or wait 45 seconds.",
+ "docs": "https://docs.sharpapi.io/en/authentication#rate-limits"
+ }
+}
+
+ | | Field | Description
+ | error.code | Machine-readable error code
+ | error.message | Human-readable description
+ | error.docs | Link to relevant documentation (optional — included on auth, tier, rate limit, and streaming errors)
+ | error.correct_endpoint | The correct endpoint to use (optional — included on unknown_endpoint errors when the API recognizes the path as a known wrong route)
+ | error.retry_after | Unix-millisecond timestamp of when the next request window opens — not a seconds duration (optional — included on rate_limited errors). For a seconds-based delay, read the standard Retry-After response header.
+
+## Standard Response HeadersPermalink for this section
+
+Headers returned on authenticated API responses (X-Response-Cache appears only on cacheable endpoints):
+
+ | | Header | Example | Description
+ | X-RateLimit-Limit | 300 | Maximum requests per minute for your tier
+ | X-RateLimit-Remaining | 299 | Requests remaining in the current window
+ | X-RateLimit-Reset | 1705804800 | Unix timestamp when the rate limit resets
+ | X-Data-Delay | 0 | Data delay in seconds (60 for Free, 0 for paid tiers)
+ | X-Request-Id | 1782526326424224-82519 | Unique request identifier for debugging and support
+ | X-Response-Cache | HIT | Server-side response-cache state (HIT or MISS). Present only on cacheable endpoints (odds, reference data, opportunities); a HIT was served from a sub-second-TTL cache, not recomputed
+ | Alt-Svc | h3=":443"; ma=86400 | Indicates HTTP/3 (QUIC) is available on this host. Clients that opt in skip the TCP + TLS handshake on subsequent connections — see Connection Reuse below
+
+Include the X-Request-Id value when contacting support about a specific request.
+
+## Connection ReusePermalink for this section
+
+For polling clients, the dominant cost on a fresh connection to api.sharpapi.io is the TLS handshake — typically 150–200 ms — not the API server itself, which returns in ~40–50 ms once TCP + TLS are up. Reusing a single TLS connection across requests collapses subsequent calls to roughly the server-side TTFB.
+
+# Fresh connection — first request pays full TCP + TLS:
+curl -o /dev/null -s \
+ -w "ssl=%{time_appconnect}s ttfb=%{time_starttransfer}s total=%{time_total}s\n" \
+ -H "X-API-Key: $SHARPAPI_KEY" \
+ https://api.sharpapi.io/api/v1/gamestate/baseball
+# → ssl=0.16s ttfb=0.20s total=0.20s
+
+# Two URLs in one curl call — the second reuses the open connection:
+curl -o /dev/null -s \
+ -w "ssl=%{time_appconnect}s ttfb=%{time_starttransfer}s total=%{time_total}s\n" \
+ -H "X-API-Key: $SHARPAPI_KEY" \
+ https://api.sharpapi.io/api/v1/gamestate/baseball \
+ https://api.sharpapi.io/api/v1/gamestate/tennis
+# → ssl=0.00s ttfb=0.04s total=0.04s
+
+### RecommendationsPermalink for this section
+
+- HTTP/1.1 keep-alive is the default in curl, Python httpx / requests.Session(), aiohttp, Node fetch / axios / undici, Go http.Client, OkHttp, and most other modern clients. Reuse a single client/session across calls — don’t construct a new client per request.
+
+- HTTP/2 connection coalescing multiplexes many concurrent requests over one connection to the same host. Enabled by default in HTTP/2-capable clients.
+
+- HTTP/3 (QUIC) is offered via Alt-Svc: h3=":443". Clients that opt in (curl --http3, httpx[http2,http3], Node undici with allowH2: true) skip the TCP handshake entirely on subsequent connections. Worthwhile for cold-start workloads such as serverless functions.
+
+- For real-time data, use streaming. The /api/v1/stream endpoint keeps a single connection open and pushes deltas as they happen — no per-request handshake at all.
+
+For a polling client hitting /api/v1/odds once per second, the TLS cost amortizes to ~0 after the first request. The 150 ms handshake matters most for serverless / short-lived clients that close the connection between calls.
+
+## Tier ComparisonPermalink for this section
+
+ | | Feature | Free | Hobby | Pro | Sharp | Enterprise
+ | Sportsbooks | 2 (DK, FD) | 5 | 15 | 25 (choose any) | All (unlimited)
+ | Data Delay | 60s | 0s | 0s | 0s | 0s
+ | Requests/min | 12 | 120 | 300 | 1,000 | Custom
+ | Pinnacle | No | No | No | Yes | Yes
+ | Arbitrage | No | Yes | Yes | Yes | Yes
+ | EV / Middles / Low Hold / Splits | No | No | Yes | Yes | Yes
+ | Streaming | No | Add-on | Add-on | Add-on | Included
+ | Batch max events | 10 | 10 | 50 | 50 | 100
+
+Streaming requires the WebSocket add-on ($99/mo) on paid tiers. Enterprise includes streaming at no extra cost.
+
+## FilteringPermalink for this section
+
+All list endpoints support filtering via query parameters. Filters use singular parameter names and accept comma-separated values for multi-select.
+
+### Filter ParametersPermalink for this section
+
+ | | Parameter | Type | Example | Description
+ | sportsbook | string | draftkings,fanduel | Filter by one or more sportsbooks
+ | sport | string | basketball,football | Filter by sport
+ | league | string | nba,nfl | Filter by league
+ | market | string | moneyline,spread | Filter by market type
+ | event_id | string | nba_celtics_lakers_2026-02-08_b3 | Filter by event ID
+ | is_live | boolean | true | Only live/in-progress events
+ | sort | string | -odds_american | Sort field with optional - prefix for descending. Supported on the opportunities endpoints; ignored on odds endpoints.
+ | min_odds | number | -110 | Minimum American odds filter
+ | max_odds | number | 200 | Maximum American odds filter
+ | group_by | string | event | Group results by field
+ | limit | number | 25 | Results per page (default: 50, max: 200)
+ | offset | number | 50 | Pagination offset. May produce duplicate rows on live endpoints when data changes between requests.
+ | cursor | string | — | Opaque cursor from next_cursor. Recommended for multi-page scans over live data — eliminates offset drift.
+
+#### Deprecated aliasesPermalink for this section
+
+Older spellings of two filters are still accepted: event for event_id, and live for
+is_live. They return the same rows, so nothing breaks — but the response carries
+Deprecation: true and a Warning header, and these names may be withdrawn in a future
+version. Use the canonical names above in new code. No withdrawal date has been announced
+and the response carries no Sunset header; the aliases will not be withdrawn without
+advance notice.
+
+### ExamplesPermalink for this section
+
+# Multiple sportsbooks (comma-separated)
+curl "https://api.sharpapi.io/api/v1/odds?sportsbook=draftkings,fanduel" \
+ -H "X-API-Key: YOUR_KEY"
+
+# Combine filters
+curl "https://api.sharpapi.io/api/v1/odds?league=nba,nhl&sportsbook=pinnacle&is_live=true" \
+ -H "X-API-Key: YOUR_KEY"
+
+# Paginate through results
+curl "https://api.sharpapi.io/api/v1/odds?limit=25&offset=50" \
+ -H "X-API-Key: YOUR_KEY"
+
+Parameter names are always singular (sportsbook, not sportsbooks). Use commas to pass multiple values: sportsbook=draftkings,fanduel.
+
+## Odds FormatsPermalink for this section
+
+All odds are returned as flat fields on each odds object:
+
+{
+ "odds_american": -110,
+ "odds_decimal": 1.909,
+ "odds_probability": 0.5238
+}
+
+ | | Field | Example | Description
+ | odds_american | -110, +150 | Standard US format
+ | odds_decimal | 1.909, 2.50 | Multiplier format
+ | odds_probability | 0.5238 | Implied probability (0 to 1)
+
+## Error CodesPermalink for this section
+
+The canonical list of error codes emitted by the API. The string in error.code is the stable contract — check it rather than the prose message.
+
+### HTTP error codesPermalink for this section
+
+Emitted in REST responses.
+
+ | | Code | HTTP Status | Description
+ | missing_api_key | 401 | No API key supplied via X-API-Key, ?api_key=, or Authorization: Bearer
+ | invalid_api_key | 401 | API key was supplied but is not recognized
+ | expired_api_key | 401 | API key has expired — generate a new one in the dashboard
+ | disabled_api_key | 401 | API key is disabled, usually because the subscription lapsed
+ | unauthorized | 401 | Bearer-token auth failed on an internal endpoint (distinct from invalid_api_key)
+ | invalid_token | 401 | Clerk session token failed verification (dashboard-only endpoints)
+ | tier_restricted | 403 | Endpoint or feature is not available on your tier — response includes tier and required_tier
+ | book_not_selected | 403 | A requested sportsbook is allowed by your tier but excluded by your dashboard book selection — response details lists requested / selected
+ | not_found | 404 | Resource not found
+ | method_not_allowed | 405 | HTTP method is not supported on this route
+ | gone | 410 | Event has ended or expired — use /api/v1/events for current events
+ | unknown_endpoint | 410 | Wrong API path — response includes correct_endpoint with the right route (e.g. /api/v1/arbitrage → /api/v1/opportunities/arbitrage)
+ | validation_error | 400 | Request body or query parameters failed validation
+ | invalid_filter | 400 | One or more filter values failed registry validation — response details.fields lists the rejected values, with did_you_mean suggestions
+ | offset_too_large | 400 | offset exceeds the per-endpoint maximum (currently 500 on /odds and /odds/delta). Switch to cursor-based pagination or advance since
+ | cursor_expired | 400 | The pagination cursor is no longer valid (live data shifted past it) — restart the scan without cursor
+ | rate_limited | 429 | Per-minute request rate limit exceeded — response includes retry_after
+ | concurrent_request_cap | 429 | Too many in-flight requests for your tier — reduce parallelism or upgrade
+ | too_many_streams | 429 | Maximum concurrent SSE or WebSocket streams exceeded for this API key
+ | backpressure | — | Emitted as an SSE event: error (not an HTTP status) when the client cannot keep up; server then closes the stream
+ | upstream_error | 502 | Temporary issue reaching an upstream sportsbook or auth provider
+ | service_unavailable | 503 | A required service (e.g. key management) is not configured or is offline
+ | book_unavailable | 503 | A requested sportsbook is temporarily unavailable (no current snapshot in the store)
+ | not_ready | 503 | A backing store the endpoint depends on (e.g. ClickHouse, closing-line capture) is not yet ready to serve the request. Retry with backoff
+ | internal_error | 500 | Unexpected server error — retry with backoff and contact support with X-Request-Id if it persists
+
+bad_request and invalid_request are deprecated — both were collapsed into validation_error. Clients that match on the old strings should add validation_error to their error map.
+
+### WebSocket frame error codesPermalink for this section
+
+Emitted only inside {"type": "error", "code": "..."} frames on an open WebSocket connection. They describe client-protocol mistakes and do not correspond to an HTTP status.
+
+ | | Code | Meaning
+ | invalid_message | Frame could not be parsed as JSON or did not match the expected shape
+ | unknown_message_type | type field is not one of the documented values (auth, subscribe, filter, refresh_token, ping)
+ | missing_token | auth or refresh_token frame did not include a token field
+ | missing_channels | subscribe frame did not include a non-empty channels array
+ | not_authenticated | Frame requires an authenticated session (sent subscribe, filter, or refresh_token before auth)
+ | already_authenticated | Client sent a second auth frame after the first one succeeded

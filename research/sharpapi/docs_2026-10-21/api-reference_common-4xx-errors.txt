@@ -1,0 +1,129 @@
+Source: https://docs.sharpapi.io/en/api-reference/common-4xx-errors/ (fetched 2026-10-21)
+
+# Common 4xx Mistakes
+
+Six client-side usage mistakes account for most of the recurring 4xx/410 responses SharpAPI returns. Each error body already names the fix — this page collects them in one place so you can map a status code to the correction without opening a support ticket.
+
+These are client-side errors, not outages. The general error envelope (fields, status-code meanings, the full code list) lives in Response Conventions. Always branch on error.code, not the prose message.
+
+## offset above 500 → 400 offset_too_largePermalink for this section
+
+Deep pagination with offset is capped at 500 on /api/v1/odds and /api/v1/odds/delta. A full scan + sort costs the same regardless of how deep the offset is, so the cap prevents expensive page chains.
+
+{
+ "error": {
+ "code": "offset_too_large",
+ "message": "offset must be <= 500; use cursor= from the previous response for deeper pagination",
+ "max_offset": 500
+ }
+}
+
+Fix: don’t page past offset=500. To reach more rows, either
+
+- pass the cursor= value from the previous /odds response (keyset pagination — no offset limit), or
+
+- narrow the request so each result set fits under the cap: add league=, a date/event= filter, or a single market_type=.
+
+On /odds/delta, advance since= to the previous response’s updated_at instead of increasing offset.
+
+## market= vs market_type= confusion → 400 invalid_filterPermalink for this section
+
+The response field that names the market is called market_type (e.g. "market_type": "moneyline"). The query parameter is market= — the two names differ by design, because the filter also accepts category aliases that expand to multiple types. Sending ?market_type=moneyline works (it is accepted as an alias for market=), but the common mistake is passing the full exact-type name when a category alias was intended, or vice versa.
+
+ | | What you want | Correct param
+ | All moneylines | ?market=moneyline
+ | All spreads (point spread, puck line, run line, set handicap) | ?market=spread
+ | All totals | ?market=total
+ | All player props | ?market=props
+ | Exact type from response | ?market=<market_type value> (e.g. market=point_spread)
+
+market= and market_type= are interchangeable on the query string — both reach the same filter. Category aliases (main, spread, total, props) expand to a group of types; everything else is treated as an exact type match and validated against the market registry. A value that matches neither an alias nor a registry slug returns 400 invalid_filter with a did_you_mean hint.
+
+## League slug passed as league= when it is a market segment → 400 invalid_filterPermalink for this section
+
+League slugs (e.g. nfl, nba, mlb) and market-segment slugs (e.g. nfl_1st_quarter_spreads, nba_player_points) look similar but belong to different filter parameters. Passing a market-segment slug as a league value returns 400 invalid_filter because it is not a valid league:
+
+{
+ "error": {
+ "code": "invalid_filter",
+ "message": "invalid filter values: league=[nfl_1st_quarter_spreads]; see GET /api/v1/leagues for valid values",
+ "details": {
+ "fields": { "league": ["nfl_1st_quarter_spreads"] }
+ }
+ }
+}
+
+Fix: use market_segment=nfl_1st_quarter_spreads (or market=<type>) for market filtering, and league=nfl for league filtering. Fetch valid league slugs from GET /api/v1/leagues and valid market-segment slugs from GET /api/v1/markets.
+
+## Pre-namespace opportunity paths → 410 GonePermalink for this section
+
+Every opportunity type lives under /api/v1/opportunities/. The bare shorthand paths (/api/v1/ev, /api/v1/arbitrage, /api/v1/middles, /api/v1/low_hold) return 410 Gone and name their replacement:
+
+{
+ "error": {
+ "code": "unknown_endpoint",
+ "message": "There is no /api/v1/ev endpoint. Use GET /api/v1/opportunities/ev (Pro tier or higher).",
+ "correct_endpoint": "/api/v1/opportunities/ev",
+ "docs": "https://docs.sharpapi.io/api-reference"
+ }
+}
+
+Fix: use the namespaced path in correct_endpoint.
+
+ | | You sent | Use instead
+ | /api/v1/ev | /api/v1/opportunities/ev (Pro+)
+ | /api/v1/arbitrage | /api/v1/opportunities/arbitrage (Hobby+)
+ | /api/v1/middles | /api/v1/opportunities/middles (Pro+)
+ | /api/v1/low_hold | /api/v1/opportunities/low-hold
+
+## Streaming on the API root → 400Permalink for this section
+
+Real-time streaming is not served from the API root (https://api.sharpapi.io/). A request to the root carrying streaming intent — a channels=/channel= query parameter or a WebSocket Upgrade header — is answered with a pointer to the real endpoints instead of the docs redirect a bare root visit returns:
+
+{
+ "error": {
+ "code": "validation_error",
+ "message": "Streaming is not available on the API root. Use Server-Sent Events at GET /api/v1/stream, or WebSocket at wss://ws.sharpapi.io — both require the WebSocket add-on. Channels: odds, opportunities, gamestate.",
+ "stream_endpoints": {
+ "sse": "https://api.sharpapi.io/api/v1/stream",
+ "websocket": "wss://ws.sharpapi.io"
+ },
+ "docs": "https://docs.sharpapi.io/api-reference"
+ }
+}
+
+Fix: pick a transport —
+
+- Server-Sent Events: GET https://api.sharpapi.io/api/v1/stream — see SSE Stream.
+
+- WebSocket: wss://ws.sharpapi.io — see WebSocket Stream.
+
+Both require the WebSocket add-on (or an active streaming trial / Enterprise).
+
+## Unknown filter slug → 400 invalid_filterPermalink for this section
+
+?league=, ?sport=, ?sportsbook=, and ?market= are validated against the live registry. An unknown value returns 400 invalid_filter rather than silently matching zero rows — so a typo reads as a client bug, not “no data”. The body always points at the endpoint that lists valid values, and adds a did_you_mean suggestion when the value is close to a real slug:
+
+{
+ "error": {
+ "code": "invalid_filter",
+ "message": "invalid filter values: league=[norway_2nd_div]; see GET /api/v1/leagues for valid values",
+ "details": {
+ "fields": { "league": ["norway_2nd_div"] },
+ "reference": { "league": "/api/v1/leagues" },
+ "did_you_mean": [
+ { "field": "league", "value": "norway_2nd_div", "try": { "league": "norway_-_second_division" } }
+ ]
+ }
+ }
+}
+
+Fix: fetch the valid set from the reference endpoint named in details.reference and filter with an exact slug:
+
+ | | Rejected field | Valid values from
+ | league | GET /api/v1/leagues
+ | sport | GET /api/v1/sports
+ | sportsbook | GET /api/v1/sportsbooks
+ | market | GET /api/v1/markets
+
+details.fields and did_you_mean are the machine-readable path — key SDK behaviour off those, not the prose message.

@@ -1,0 +1,221 @@
+Source: https://docs.sharpapi.io/en/api-reference/odds-best/ (fetched 2026-10-21)
+
+# Best Odds
+
+Get the best available odds for each selection across all sportsbooks. This endpoint compares odds from every book available on your tier and returns the most favorable line for each selection, along with per-book comparisons and edge calculations.
+
+GET /api/v1/odds/best
+
+## AuthenticationPermalink for this section
+
+Requires API key. Available to all tiers.
+
+Best Odds is available on all tiers, including Free. The sportsbooks compared depend on your tier’s book access (Free compares DraftKings and FanDuel; Sharp+ includes Pinnacle).
+
+## Query ParametersPermalink for this section
+
+ | | Parameter | Type | Default | Description
+ | sport | string | all | Filter by sport(s), comma-separated (e.g., basketball, football)
+ | league | string | all | Filter by league(s), comma-separated (e.g., nba, nfl)
+ | market | string | all | Filter by market type(s), comma-separated (e.g., moneyline, spread, total). Supports category aliases — see Odds: Market Category Aliases. Also accepted as market_type=.
+ | event_id | string | — | Filter by event ID(s), comma-separated
+ | is_live | boolean | — | true = live only, false = prematch only, omit = both
+ | is_main_line | boolean | — | true = main-line entries only (best-effort main line for each (event, market_type, selection axis) cohort, plus no-line markets like moneyline; one market usually has several such rows, one per selection axis); false = alt-line entries only; omit = both. This is scoped per market, so period/prop markets keep their own main line — for full-game lines only, use ?market=main (see note below). See the is_main_line response field below for the cohort semantics.
+ | limit | integer | 50 | Max results per page (max 200)
+ | offset | integer | 0 | Pagination offset
+
+Stale odds (older than 5 minutes for pre-game, 1 minute for live) are automatically excluded from best-odds comparisons to prevent misleading results.
+
+is_main_line vs market=main. is_main_line is evaluated per (event, market_type, selection axis) cohort, where the selection axis is the player for player-prop markets, the team side for spread and team-total markets, and the raw selection everywhere else — it marks the best-effort main line within each market’s own ladder. Period and player-prop markets therefore legitimately return is_main_line=true rows (e.g. the main first-half total, or the main points line for each player on a player-prop market). Several rows of one market are normally main at once, one per selection axis — Over and Under of a total are separate cohorts, and so is each outcome of a combination market (e.g. match result + total goals). So ?is_main_line=true is not a “main game lines only” filter, nor a uniqueness guarantee. To restrict results to full-game core lines (moneyline, full-game spread, full-game total), use the ?market=main category alias instead — optionally combined with ?is_main_line=true to also drop alt lines within those markets.
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X GET "https://api.sharpapi.io/api/v1/odds/best?league=nba&market=spread" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const response = await fetch(
+ 'https://api.sharpapi.io/api/v1/odds/best?league=nba&market=spread',
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+const { data } = await response.json();
+
+data.forEach(item => {
+ console.log(
+ `${item.selection}: Best ${item.best_odds.american} at ${item.best_book}` +
+ ` (${item.all_books.length} books compared)`
+ );
+});
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/odds/best',
+ params={'league': 'nba', 'market': 'spread'},
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+result = response.json()
+
+for item in result['data']:
+ best = item['best_odds']['american']
+ book = item['best_book']
+ books = len(item['all_books'])
+ print(f"{item['selection']}: Best {best} at {book} ({books} books compared)")
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+{
+ "data": [
+ {
+ "event_id": "mlb_athletics_marlins_2026-07-03_b3",
+ "event_name": "Miami Marlins @ Oakland Athletics",
+ "sport": "baseball",
+ "league": "mlb",
+ "market_type": "moneyline",
+ "selection": "Miami Marlins",
+ "line": null,
+ "is_main_line": true,
+ "best_odds": {
+ "american": 110,
+ "decimal": 2.1,
+ "probability": 0.4762,
+ "odds_probability": 0.4762
+ },
+ "consensus_odds": {
+ "american": 104,
+ "decimal": 2.0425,
+ "probability": 0.4896,
+ "odds_probability": 0.4896
+ },
+ "market_hold": 0.67,
+ "best_book": "fanduel",
+ "all_books": [
+ { "book": "betonline", "sportsbook": "betonline", "odds": { "american": 103, "decimal": 2.03 }, "edge": -0.61 },
+ { "book": "fanduel", "sportsbook": "fanduel", "odds": { "american": 110, "decimal": 2.1 }, "edge": 2.82 },
+ { "book": "rebet", "sportsbook": "rebet", "odds": { "american": 100, "decimal": 2 }, "edge": -2.08 }
+ ],
+ "timestamp": "2026-07-02T18:18:32.7421063Z"
+ }
+ ],
+ "pagination": {
+ "limit": 50,
+ "offset": 0,
+ "count": 1,
+ "total": 54,
+ "has_more": true,
+ "next_offset": 1
+ },
+ "updated_at": "2026-07-02T18:18:35.000Z"
+}
+
+### Response HeadersPermalink for this section
+
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 298
+X-RateLimit-Reset: 1737853200
+X-Data-Delay: 0
+X-Request-Id: 1782526326424224-82519
+
+### Error ResponsesPermalink for this section
+
+401 Unauthorized
+
+No key supplied returns missing_api_key; a bad key returns invalid_api_key.
+
+{
+ "error": {
+ "code": "missing_api_key",
+ "message": "API key required. Pass via X-API-Key header, api_key query parameter, or Bearer token.",
+ "docs": "https://docs.sharpapi.io/en/authentication#authentication-methods"
+ }
+}
+
+429 Rate Limited
+
+retry_after is a Unix-millisecond timestamp of the next window (not a duration); the Retry-After header carries the equivalent seconds value.
+
+{
+ "error": {
+ "code": "rate_limited",
+ "message": "Rate limit exceeded for pro tier (300/min)",
+ "retry_after": 1737853260000,
+ "tier": "pro",
+ "limit": 300,
+ "docs": "https://sharpapi.io/pricing"
+ }
+}
+
+## Best Odds Object SchemaPermalink for this section
+
+ | | Field | Type | Description
+ | event_id | string | Event identifier
+ | event_name | string | Event display name (e.g., “Lakers @ Celtics”)
+ | sport | string | Sport slug
+ | league | string | League slug
+ | market_type | string | Market type (e.g., moneyline, spread, total)
+ | selection | string | Selection name (team name, Over/Under)
+ | line | number | null | Line value (for spreads/totals)
+ | is_main_line | boolean | true for the best-effort main line of this (event, market_type, selection axis) cohort and for no-line markets (moneyline, outright); false for alt-line entries and cohort-pending rows (cold start). Best-effort, not a uniqueness guarantee — one market normally has several is_main_line=true rows, one per selection axis. Filterable via ?is_main_line=true. Mirrors the is_main_line field on /odds.
+ | best_odds | object | Best odds available across all books
+ | best_odds.american | number | Best American odds
+ | best_odds.decimal | number | Best decimal odds
+ | best_odds.probability | number | Implied probability of best odds (also emitted as odds_probability)
+ | consensus_odds | object | Consensus (vig-included) line across books — probability-space average of every book’s implied probability, converted back to american / decimal / probability (also emitted as odds_probability).
+ | market_hold | number | Market hold (overround) %, derived from the consensus prices of the market’s two sides (sum of consensus implied probabilities − 1). 0 when the opposing side isn’t priced or the computed value falls outside the plausible range.
+ | best_book | string | Sportsbook ID with the best odds
+ | all_books | array | All sportsbooks’ odds for this selection
+ | all_books[].book | string | Sportsbook ID
+ | all_books[].sportsbook | string | Sportsbook ID (alias of book)
+ | all_books[].odds | object | Odds object (american, decimal)
+ | all_books[].edge | number | Payout edge vs the consensus price, in percent: (book_decimal / consensus_decimal − 1) × 100. Positive = pays better than consensus; negative = worse.
+ | timestamp | string | ISO 8601 time SharpAPI last refreshed this odd through its pipeline — advances every ingest cycle. A feed-freshness / liveness signal; it is NOT when the price last changed.
+ | player_name | string|undefined | Player name (player prop markets only)
+ | stat_category | string|undefined | Stat category, e.g. points, rebounds (player prop markets only)
+
+Pinnacle is commonly used as the sharp reference. When Pinnacle is available in all_books, you can identify it by book: "pinnacle" and compare its odds to soft books to find +EV opportunities.
+
+## Why Best Odds MatterPermalink for this section
+
+Finding the best available odds is the foundation of profitable sports betting:
+
+### 1. Line Shopping Saves MoneyPermalink for this section
+
+The difference between -105 and -110 may seem small, but it compounds dramatically over time:
+
+ | | Odds | $100 Bet Win | Breakeven Win Rate
+ | -115 | +$87 | 53.5%
+ | -110 | +$91 | 52.4%
+ | -105 | +$95 | 51.2%
+ | +100 | +$100 | 50.0%
+
+### 2. Long-term ImpactPermalink for this section
+
+Over 1,000 bets at a 52% win rate:
+
+ | | Consistent Odds | Net Result
+ | -115 | -$44 loss
+ | -110 | +$18 profit
+ | -105 | +$80 profit
+
+### 3. Edge ComparisonPermalink for this section
+
+The edge field on each book in all_books shows how much better (or worse) that book’s payout is compared to the consensus price across all books — positive means the book pays above consensus, negative below. It quantifies the value of shopping across books at a glance.
+
+## Related EndpointsPermalink for this section
+
+- Odds Snapshot - Get raw odds from individual sportsbooks
+
+- Odds Delta - Get only odds that changed since a given timestamp
+
+- Odds Comparison - Compare odds side by side across books
+
+- Sportsbooks - See which books are available and their status

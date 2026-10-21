@@ -1,0 +1,292 @@
+Source: https://docs.sharpapi.io/en/api-reference/odds-batch/ (fetched 2026-10-21)
+
+# Batch Odds
+
+Fetch odds for multiple events in a single request. This avoids making separate API calls for each event, reducing latency and rate limit consumption.
+
+POST /api/v1/odds/batch
+
+## AuthenticationPermalink for this section
+
+Requires API key. Available to all tiers.
+
+## Request BodyPermalink for this section
+
+Send a JSON body with the following fields:
+
+ | | Field | Type | Required | Description
+ | event_ids | string[] | Yes | Array of event IDs to fetch odds for
+ | sportsbook | string | No | Single sportsbook ID filter (defaults to all available for your tier)
+ | market | string | No | Single market type filter (defaults to all)
+ | include_futures | boolean | No | Include futures markets in results. Defaults to false — futures events return no rows unless set to true.
+
+### Batch Limits by TierPermalink for this section
+
+The maximum number of events per batch request depends on your tier:
+
+ | | Tier | Max Events per Batch
+ | Free | 10
+ | Hobby | 10
+ | Pro | 50
+ | Sharp | 50
+ | Enterprise | 100
+
+Exceeding the batch limit for your tier will return a 400 validation_error error. Split large requests into multiple batches if needed.
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+curl -X POST "https://api.sharpapi.io/api/v1/odds/batch" \
+ -H "X-API-Key: YOUR_API_KEY" \
+ -H "Content-Type: application/json" \
+ -d '{
+ "event_ids": ["mlb_phillies_pirates_2026-07-02_b2", "mlb_athletics_marlins_2026-07-03_b3"],
+ "sportsbook": "draftkings",
+ "market": "moneyline"
+ }'
+
+### JavaScript
+
+const response = await fetch('https://api.sharpapi.io/api/v1/odds/batch', {
+ method: 'POST',
+ headers: {
+ 'X-API-Key': 'YOUR_API_KEY',
+ 'Content-Type': 'application/json'
+ },
+ body: JSON.stringify({
+ event_ids: ['mlb_phillies_pirates_2026-07-02_b2', 'mlb_athletics_marlins_2026-07-03_b3'],
+ sportsbook: 'draftkings',
+ market: 'moneyline'
+ })
+});
+
+const { data } = await response.json();
+console.log(`Fetched ${data.events.length} events (${data.missing_events.length} missing)`);
+
+// Events are nested under data.events
+for (const event of data.events) {
+ console.log(`${event.event_name}: ${event.odds.length} odds`);
+}
+
+if (data.missing_events.length > 0) {
+ console.warn('Missing events:', data.missing_events);
+}
+
+### Python
+
+import requests
+
+response = requests.post(
+ 'https://api.sharpapi.io/api/v1/odds/batch',
+ headers={
+ 'X-API-Key': 'YOUR_API_KEY',
+ 'Content-Type': 'application/json'
+ },
+ json={
+ 'event_ids': ['mlb_phillies_pirates_2026-07-02_b2', 'mlb_athletics_marlins_2026-07-03_b3'],
+ 'sportsbook': 'draftkings',
+ 'market': 'moneyline'
+ }
+)
+result = response.json()
+data = result['data']
+print(f"Fetched {len(data['events'])} events ({len(data['missing_events'])} missing)")
+
+# Events are nested under data.events
+for event in result['data']['events']:
+ print(f"\n{event['event_name']}: {len(event['odds'])} odds")
+
+if result['data']['missing_events']:
+ print(f"Missing: {result['data']['missing_events']}")
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+{
+ "data": {
+ "events": [
+ {
+ "event_id": "mlb_phillies_pirates_2026-07-02_b2",
+ "event_name": "Pittsburgh Pirates @ Philadelphia Phillies",
+ "sport": "baseball",
+ "league": "mlb",
+ "start_time": "2026-07-02T16:35:00Z",
+ "is_live": true,
+ "odds": [
+ {
+ "id": "92183869662116",
+ "sportsbook": "draftkings",
+ "event_uuid": "217ee1d7227d1ad1",
+ "external_event_id": "34343268",
+ "market_type": "moneyline",
+ "market_label": "Moneyline",
+ "selection": "PIT Pirates",
+ "selection_type": "away",
+ "odds_american": 104,
+ "odds_decimal": 2.04,
+ "odds_probability": 0.4902,
+ "line": null,
+ "timestamp": "2026-07-02T18:21:35.800662605Z"
+ },
+ {
+ "id": "47445279247340",
+ "sportsbook": "draftkings",
+ "event_uuid": "217ee1d7227d1ad1",
+ "external_event_id": "34343268",
+ "market_type": "moneyline",
+ "market_label": "Moneyline",
+ "selection": "PHI Phillies",
+ "selection_type": "home",
+ "odds_american": -135,
+ "odds_decimal": 1.741,
+ "odds_probability": 0.5745,
+ "line": null,
+ "timestamp": "2026-07-02T18:21:35.800662605Z"
+ }
+ ]
+ }
+ ],
+ "missing_events": ["mlb_athletics_marlins_2026-07-03_b3"]
+ },
+ "updated_at": "2026-07-02T18:21:36Z"
+}
+
+### Response HeadersPermalink for this section
+
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 296
+X-RateLimit-Reset: 1737853200
+X-Data-Delay: 0
+X-Request-Id: 1782526326424224-82519
+
+### Error ResponsesPermalink for this section
+
+400 Batch Limit Exceeded
+
+{
+ "error": {
+ "code": "validation_error",
+ "message": "Maximum 10 event_ids per request for hobby tier"
+ }
+}
+
+400 Missing Events Field
+
+{
+ "error": {
+ "code": "validation_error",
+ "message": "event_ids array required"
+ }
+}
+
+401 Unauthorized
+
+No key supplied returns missing_api_key; a bad key returns invalid_api_key.
+
+{
+ "error": {
+ "code": "missing_api_key",
+ "message": "API key required. Pass via X-API-Key header, api_key query parameter, or Bearer token.",
+ "docs": "https://docs.sharpapi.io/en/authentication#authentication-methods"
+ }
+}
+
+## Response StructurePermalink for this section
+
+The batch response nests events and missing IDs under data. There is no meta block — derive counts client-side from data.events.length and data.missing_events.length.
+
+### Data ObjectPermalink for this section
+
+ | | Field | Type | Description
+ | data.events | EventOdds[] | Array of event objects with nested odds
+ | data.missing_events | string[] | Event IDs that were not found or had no odds
+
+If an event ID in your request has no odds (e.g., the event has ended, doesn’t exist, or has no rows matching your sportsbook/market filters), it will appear in data.missing_events rather than causing an error. The response will still include odds for all valid events.
+
+## Response SchemaPermalink for this section
+
+Each item in the data.events array is an event object with nested odds:
+
+### Event ObjectPermalink for this section
+
+ | | Field | Type | Description
+ | event_id | string | Event identifier
+ | event_name | string | Human-readable event name
+ | sport | string | Sport slug
+ | league | string | League slug
+ | start_time | string | ISO 8601 event start time
+ | is_live | boolean | Whether event is live
+ | odds | array | Array of odds for this event
+
+### Odds Object (nested in event)Permalink for this section
+
+ | | Field | Type | Description
+ | id | string | Unique odds identifier (same id as /odds rows)
+ | sportsbook | string | Sportsbook ID
+ | event_uuid | string|undefined | Stable canonical event UUID from the SharpAPI atlas, when mapped
+ | external_event_id | string|undefined | The sportsbook’s own native event ID, when distinct from event_id
+ | market_type | string | Canonical market type (e.g., moneyline)
+ | market_label | string|undefined | Human-readable market display label (e.g., Moneyline)
+ | selection | string | Selection name
+ | selection_type | string | home, away, over, under, etc. — see Selection types
+ | odds_american | number | American odds
+ | odds_decimal | number | Decimal odds
+ | odds_probability | number | Implied probability
+ | line | number | null | Line value
+ | timestamp | string | ISO 8601 time SharpAPI last refreshed this odd through its pipeline — advances every ingest cycle. A feed-freshness / liveness signal; it is NOT when the price last changed. See understanding the timestamp field.
+
+## Use CasesPermalink for this section
+
+### Pre-game Odds LoadingPermalink for this section
+
+Load odds for an entire day’s slate in a single call instead of making dozens of individual requests:
+
+# Get all NBA event IDs from the events endpoint
+events_response = requests.get(
+ 'https://api.sharpapi.io/api/v1/events',
+ params={'league': 'nba', 'limit': 50},
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+event_ids = [e['id'] for e in events_response.json()['data']]
+
+# Batch fetch all odds at once
+odds_response = requests.post(
+ 'https://api.sharpapi.io/api/v1/odds/batch',
+ headers={'X-API-Key': 'YOUR_API_KEY', 'Content-Type': 'application/json'},
+ json={'event_ids': event_ids}
+)
+
+### Dashboard RefreshPermalink for this section
+
+Periodically refresh odds for events a user is watching:
+
+async function refreshWatchlist(eventIds) {
+ const response = await fetch('https://api.sharpapi.io/api/v1/odds/batch', {
+ method: 'POST',
+ headers: {
+ 'X-API-Key': 'YOUR_API_KEY',
+ 'Content-Type': 'application/json'
+ },
+ body: JSON.stringify({ event_ids: eventIds })
+ });
+
+ const { data } = await response.json();
+
+ if (data.missing_events.length > 0) {
+ console.warn('Missing events:', data.missing_events);
+ }
+
+ return data.events;
+}
+
+## Related EndpointsPermalink for this section
+
+- Odds Snapshot - Get odds with flexible query filters
+
+- Best Odds - Get best odds across books per selection
+
+- Events - List events to get event IDs for batch requests

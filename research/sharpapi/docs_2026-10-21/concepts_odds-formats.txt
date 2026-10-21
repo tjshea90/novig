@@ -1,0 +1,86 @@
+Source: https://docs.sharpapi.io/en/concepts/odds-formats/ (fetched 2026-10-21)
+
+# Odds Formats
+
+## Three Formats, One ConceptPermalink for this section
+
+SharpAPI returns odds in three formats simultaneously:
+
+{
+ "odds": {
+ "american": -110,
+ "decimal": 1.909,
+ "odds_probability": 0.5238
+ }
+}
+
+## American OddsPermalink for this section
+
+The standard in the US. Shows how much you win or must risk.
+
+ | | Odds | Meaning | $100 Bet Profit
+ | -110 | Risk $110 to win $100 | $90.91
+ | +150 | Risk $100 to win $150 | $150
+ | -200 | Risk $200 to win $100 | $50
+ | +200 | Risk $100 to win $200 | $200
+
+Conversion formulas:
+
+If negative: Decimal = 1 + (100 / |American|)
+If positive: Decimal = 1 + (American / 100)
+
+## Decimal OddsPermalink for this section
+
+Standard in Europe/Australia. Shows total return per unit staked.
+
+ | | Decimal | $100 Bet Return | Profit
+ | 1.909 | $190.90 | $90.90
+ | 2.50 | $250.00 | $150.00
+ | 1.50 | $150.00 | $50.00
+
+Tip:
+Decimal odds include your stake. A $100 bet at 2.50 returns $250 total ($150 profit + $100 stake).
+
+## Implied ProbabilityPermalink for this section
+
+The market’s estimate of the outcome’s likelihood.
+
+Implied Probability = 1 / Decimal Odds
+
+ | | Decimal | Probability | Interpretation
+ | 2.00 | 50% | Coin flip
+ | 1.50 | 66.7% | 2/3 chance
+ | 3.00 | 33.3% | 1/3 chance
+
+Warning:
+Implied probability includes the bookmaker’s margin (vig). True probability is typically 2-5% lower.
+
+## The Vig (Juice)Permalink for this section
+
+Bookmakers build in a profit margin:
+
+Fair coin flip: Both sides at 2.00 (50% + 50% = 100%)
+With vig: Both sides at 1.91 (52.4% + 52.4% = 104.8%)
+
+The extra 4.8% is the bookmaker’s edge.
+
+## Converting Between FormatsPermalink for this section
+
+// American to Decimal
+function americanToDecimal(american) {
+ return american > 0
+ ? 1 + (american / 100)
+ : 1 + (100 / Math.abs(american));
+}
+
+// Decimal to American
+function decimalToAmerican(decimal) {
+ return decimal >= 2.0
+ ? (decimal - 1) * 100
+ : -100 / (decimal - 1);
+}
+
+// Decimal to Probability
+function decimalToProb(decimal) {
+ return 1 / decimal;
+}

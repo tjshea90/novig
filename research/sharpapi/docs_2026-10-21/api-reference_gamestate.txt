@@ -1,0 +1,652 @@
+Source: https://docs.sharpapi.io/en/api-reference/gamestate/ (fetched 2026-10-21)
+
+# Live Game State
+
+Aggregated live game state — scores, periods, clocks, possession, and
+sport-specific situational data — merged across sportsbooks into a
+single authoritative view per event. One row per live fixture,
+consensus-selected from the books covering it. A fixture that has just
+finished also stays in the response briefly, with is_live: false, as a
+terminal row — see Query Parameters and
+Finished events.
+
+GET /api/v1/gamestate
+GET /api/v1/gamestate/{sport}
+
+## AuthenticationPermalink for this section
+
+Requires API key. Available on the Game State add-on ($79/mo) or the
+Enterprise tier. Keys without either receive 403 tier_restricted
+with addon: "game_state" in the error body. Add the add-on from the
+billing page  on any paid plan
+(Hobby / Pro / Sharp); Enterprise keys get it included.
+
+Live game state also streams over the gamestate channel on
+SSE and WebSocket
+— see Streaming below. (Streaming access requires the
+WebSocket add-on or Enterprise, in addition to the Game State
+requirement above.)
+
+## Path ParametersPermalink for this section
+
+ | | Parameter | Type | Description
+ | sport | string | (optional) Single sport to return. Matches a known Atlas sport (soccer, tennis, esports, basketball, table_tennis, baseball, hockey, cricket, volleyball, handball, football, olympics, darts, boxing, rugby_league, mma, aussie_rules, snooker, rugby_union, golf, floorball, water_polo, lacrosse, futsal, other). Case-insensitive. An unknown sport returns an empty data object — and so does a supported sport with nothing live and nothing recently finished right now (or nothing live at all, when you send ?is_live=true); see the note below.
+
+An empty data object does not mean the sport is unsupported. Game state is
+merged per sport into a gamestate:{sport} key with a 60-second TTL (GAMESTATE_TTL
+in the aggregator — deliberately twice the 30-second livestate window), so when no
+match is live that key expires and there are no live rows left to return. The whole
+response is {"data":{}} — identical to the response for a sport we do not cover —
+once no recently finished event is still inside the carry window either. Sending
+?is_live=true excludes the carried rows outright, so with that filter an empty
+data object means only that nothing is in play. Several sports above are seasonal (the European
+handball and floorball domestic seasons ramp through September), so a spot check out
+of season reads as “not supported”.
+Use GET /api/v1/sports to see event_count and live_count per sport; a sport with
+event_count > 0 and live_count: 0 is covered and simply has nothing in play.
+other is the fallback bucket for sports Atlas has not mapped; it is accepted and
+produced no live game state in the last 30 days.
+
+Without the path parameter, returns every sport with live or recently finished
+events.
+
+## Query ParametersPermalink for this section
+
+ | | Parameter | Type | Default | Description
+ | status | string | — | final = only the carried finished rows — the mirror of /events?status=final. final is the only accepted value: there is no live, because live rows are the default set and ?is_live=true asks for them alone. Case-insensitive. Any other value returns 400 validation_error with accepted: ["final"].
+ | is_live | string | — | true = in-progress events only, false = non-live events only — today that is the recently finished events still inside the carry window. Omit for both. Only true and false are accepted; any other value returns 400 validation_error. The value is lowercased and whitespace-trimmed first, so TRUE is accepted. An empty value (?is_live=) is read as omitted — no filter.
+
+The accepted values apply to every REST /gamestate response, on both
+GET /api/v1/gamestate and GET /api/v1/gamestate/{sport}. Omit both and
+you get the default set: everything live, plus the finished rows still
+inside the carry window.
+
+Breaking change: unrecognised is_live values now return 400.
+?is_live=1, ?is_live=0, ?is_live=yes and every other unrecognised value
+previously returned 200 carrying the non-live rows — a client asking for
+live games received exactly the rows it was excluding, with no signal the
+value had not been understood. Those requests now fail loudly instead. Send
+true or false.
+
+An unrecognised value returns 400 with the accepted set in details, and no
+data key:
+
+{
+ "error": {
+ "code": "validation_error",
+ "message": "is_live must be one of: true, false",
+ "details": {
+ "parameter": "is_live",
+ "accepted": ["true", "false"]
+ }
+ }
+}
+
+?status= is validated the same way: ?status=zzz returns 400 with
+"parameter": "status" and "accepted": ["final"].
+
+## Response EnvelopePermalink for this section
+
+{
+ "data": {
+ "<sport>": {
+ "<event_id>": { ...event state... }
+ }
+ },
+ "updated_at": "2026-04-23T23:55:01.234Z"
+}
+
+Every event state is keyed by its canonical event_id within its sport
+bucket. updated_at is the server’s time when this response was built
+— use it to gauge freshness if polling.
+
+## Event State FieldsPermalink for this section
+
+Every field is optional except where noted. Presence varies by sport —
+tennis events carry sets_home / server; hockey events carry
+power_play; soccer events carry corners_* / yellow_cards_*; etc.
+
+### Always presentPermalink for this section
+
+ | | Field | Type | Notes
+ | home_team | string | Normalized home team name
+ | away_team | string | Normalized away team name
+ | sport | string | Sport bucket (baseball, soccer, …)
+ | league | string | Atlas league id (e.g. mlb, england_-_premier_league)
+ | home_score | integer | Current home score in the natural unit for the sport (runs, points, goals, sets — tennis uses summed set points)
+ | away_score | integer | Current away score
+ | is_live | boolean | true while the event is in progress. A recently finished event stays in the response briefly with false — it is a terminal row; filter either set with ?is_live=
+ | primary_book | string | The book the merged scores were selected from. Consensus-respecting — higher-quality books win ties
+ | book_count | integer | Number of sportsbooks that contributed live state for this event at merge time
+
+“Always present” means always present on a live row. A carried
+finished row is built from the completion record, not from a live merge,
+so it carries neither primary_book nor book_count, and no
+game_period / game_clock. Its score fields also depend on the sport:
+set-scored sports carry sets_home / sets_away instead of
+home_score / away_score. Branch on status === "final" before
+reading any of these. The full terminal shape is in
+Finished events.
+
+### Temporal (most team sports)Permalink for this section
+
+ | | Field | Type | Example
+ | game_period | string | "T5" (MLB top of 5th), "Q3" (NBA Q3), "2H" (soccer 2nd half), "P2" (NHL), "S2" (tennis 2nd set), "FT" (full time)
+ | game_clock | string | "49:06" for countup sports (soccer), "5:42" for countdown sports (basketball, hockey)
+ | period_number | integer | game_period as a number, for sorting and comparing progress: "Q3" → 3, "2H" → 2, "S2" → 2; the top and bottom of an inning share it ("T8" and "B8" → 8). Overtime keeps counting past regulation: "OT" → 5 and "OT2" → 6 in a four-quarter game, soccer extra time "ET" → 3. Omitted, never null, when the period has no number ("HT", "SO", "PK", "FT") and for every sport except baseball, basketball, football, hockey, soccer and tennis. How a row’s regulation_periods changes the overtime number: Match structure
+
+### SituationalPermalink for this section
+
+ | | Field | Type | Notes
+ | possession | "home" | "away" | Which team has possession (team sports) or is serving (tennis)
+ | server | "home" | "away" | Tennis only — current server
+ | last_play | string | Sport-specific last-play description when available
+ | is_timeout | boolean | true during a timeout
+
+### Sport-specificPermalink for this section
+
+ | | Field | Sport | Type
+ | fouls_home, fouls_away | basketball, soccer | integer
+ | corners_home, corners_away | soccer | integer
+ | yellow_cards_home, yellow_cards_away | soccer | integer
+ | red_cards_home, red_cards_away | soccer | integer
+ | power_play | hockey | "home" | "away"
+ | sets_home, sets_away | tennis | integer (sets won)
+ | win_prob_home, win_prob_away, win_prob_book, win_prob_at, momentum, momentum_window_s, prematch_winprob_home, prematch_winprob_away, winprob_dip | tennis | live-only win probability + trend — Enterprise keys only; see Win probability (tennis)
+ | hits_home, hits_away | baseball | integer
+ | errors_home, errors_away | baseball | integer — fielding errors
+ | home_pitcher, away_pitcher | baseball | string — starting pitcher display name (roster-level, not the pitcher currently on the mound — see in_play.currentPitcher below)
+ | in_play | baseball | object — at-bat state; see Baseball in_play block
+ | wickets_home, wickets_away | cricket | integer
+ | overs | cricket | float
+ | batting_team | cricket | "home" | "away"
+
+### Match structurePermalink for this section
+
+How the event is scheduled to be played. These three fields come from
+DraftKings’ event data, so they appear only on a live row that DraftKings
+contributed to at merge time, and only when DraftKings published the value.
+Otherwise the field is omitted, never null — check for the key before
+reading it. Finished-event rows never carry them.
+
+ | | Field | Sport | Type | Notes
+ | regulation_periods | basketball, football, hockey, soccer, baseball | integer | Regulation periods, overtime excluded. Typical values: NBA and NFL 4, men’s college basketball 2 (halves), women’s college basketball 4, NHL 3, soccer 2, MLB 9 (innings)
+ | period_length_seconds | basketball, football, hockey, soccer | integer | Game-clock length of one regulation period, in seconds. Typical values: NBA 720, NFL and college football 900, men’s college basketball 1200, women’s college basketball 600, NHL 1200, soccer 2700. Never sent for baseball
+ | best_of_sets | tennis | integer | 3 (best of three sets) or 5 (best of five)
+
+When a row carries regulation_periods, period_number counts overtime
+from it rather than from the sport’s usual format. A men’s college
+basketball game is two halves, so its first overtime is period_number
+3, where the four-quarter default would give 5. Rows without the field
+use the usual format: four quarters for basketball and football, three
+periods for hockey, two halves for soccer.
+
+### Baseball in_play blockPermalink for this section
+
+Per-at-bat state on live baseball events. Populated whenever the
+contributing book exposes pitch-level data (currently FanDuel, BetMGM,
+Betway, theScoreBet, and ProphetX); omitted otherwise. Inner field
+names are camelCase — they are not snake-cased by the API
+transform.
+
+"in_play": {
+ "outs": 1, // 0, 1, or 2
+ "balls": 2, // 0-3
+ "strikes": 1, // 0-2
+ "runners": {"first": true, "second": false, "third": true},
+ "currentPitcher": "Zach Agnos", // pitcher on the mound now
+ "currentBatter": "Tyrone Taylor" // active hitter
+}
+
+ | | Field | Type | Range / Notes
+ | outs | integer | 0, 1, or 2. 3 is never emitted — by the time the third out is recorded upstream, the next half-inning has already begun (outs returns to 0 and game_period advances). The third out manifests as a transition between frames, not a steady-state value.
+ | balls | integer | 0-3. 4 is a walk; the at-bat ends and the field resets.
+ | strikes | integer | 0-2. 3 is a strikeout; the at-bat ends and the field resets.
+ | runners | object | {"first": bool, "second": bool, "third": bool} — base-by-base occupancy.
+ | currentPitcher | string | Display name of the pitcher currently on the mound. Distinct from the roster-level home_pitcher / away_pitcher (starting pitchers).
+ | currentBatter | string | Display name of the active hitter.
+
+Detecting half-inning transitions. No discrete inning_end event
+is emitted. To detect the moment a half-inning ends, watch
+in_play.outs and game_period together across consecutive frames:
+the transition surfaces as outs dropping (2 → 0, or 1 → 0
+if a frame was skipped) and game_period flipping (e.g. B5 →
+T6) — typically in the same frame, occasionally split across two
+consecutive frames. The frame’s timestamp is your half-inning-end
+moment.
+
+### Win probability (tennis)Permalink for this section
+
+Enterprise only. The win-probability family (win_prob_*,
+momentum, momentum_window_s, prematch_winprob_*, winprob_dip)
+is included for Enterprise keys only. Keys with the Game State
+add-on alone receive every other gamestate field; these are omitted.
+Contact sales about Enterprise access.
+
+Live win-probability fields on tennis events — tennis only today.
+The values are computed server-side at serve time from the de-vigged
+live moneyline (Pinnacle anchors when it prices the match, otherwise a
+cross-book consensus median), so the same numbers appear on REST,
+WebSocket, and SSE alike. They are present only on Enterprise keys,
+only while the event is live, and while a fresh live moneyline
+exists; omitted otherwise.
+
+{
+ "home_team": "J. Doe",
+ "away_team": "R. Roe",
+ "sport": "tennis",
+ "league": "atp",
+ "home_score": 9,
+ "away_score": 10,
+ "sets_home": 1,
+ "sets_away": 1,
+ "game_period": "S3",
+ "is_live": true,
+ "server": "home",
+ "win_prob_home": 0.6421, // P(home wins the match)
+ "win_prob_away": 0.3579, // 1 - win_prob_home
+ "win_prob_book": "pinnacle", // where the probability came from
+ "win_prob_at": "2026-07-03T14:05:11Z", // freshest contributing odds time
+ "momentum": 0.0312, // + = swinging toward home
+ "momentum_window_s": 120,
+ "prematch_winprob_home": 0.7104, // prematch baseline, frozen at go-live
+ "prematch_winprob_away": 0.2896, // (present only when captured pre-match)
+ "winprob_dip": 0.0683, // prematch favorite is 6.8pp below their prematch level
+ "primary_book": "draftkings",
+ "book_count": 4
+}
+
+ | | Field | Type | Notes
+ | win_prob_home | float | Probability (0–1) that the home side wins the match, de-vigged from the live moneyline. win_prob_home + win_prob_away = 1.
+ | win_prob_away | float | Away-side complement.
+ | win_prob_book | string | Source of the probability: "pinnacle" (Pinnacle prices the match — preferred), "consensus" (median across two or more contributing books), or a single book id when only one book carries a fresh live line.
+ | win_prob_at | string | ISO 8601 — timestamp of the freshest odds that fed the number, not the server clock. If it stops advancing, the underlying moneyline has gone quiet; treat the probability as aging.
+ | momentum | float | Smoothed, signed change of win_prob_home over the last momentum_window_s seconds. Positive = the match is swinging toward home, negative = toward away. A display/trend signal, not a prediction — see below.
+ | momentum_window_s | integer | Length of the momentum window in seconds (currently 120).
+ | prematch_winprob_home | float | Prematch baseline — the home side’s de-vigged win probability from the prematch moneyline, frozen when the match went live. Oriented home/away exactly like win_prob_home. Present only when a prematch baseline was captured before go-live; when it wasn’t, this field and the two below are omitted.
+ | prematch_winprob_away | float | Away-side complement of the prematch baseline (1 - prematch_winprob_home).
+ | winprob_dip | float | How far the prematch favorite currently sits below their own prematch win probability (favorite’s prematch_winprob_* minus their live win_prob_*). Positive = the favorite has dipped below their prematch level; 0 or negative = at or above it.
+
+win_prob is graded continuously against final match outcomes and is
+sharp (Brier score ≈ 0.02–0.06 in ongoing grading, vs 0.25 for a
+coin-flip), with a known conservative tilt: strong favorites win
+slightly more often than the stated probability suggests.
+momentum describes what already happened to win_prob — it is
+intended for UI meters and trend arrows. In our grading it carries no
+measurable predictive signal for where win_prob goes next; do not
+treat it as predictive or build betting logic on it.
+
+Absence = not computable right now. These fields are only written
+when the event is live and a fresh live moneyline exists. Pre-match
+events, non-tennis sports, and matches whose live price has gone stale
+simply omit them — no null placeholders.
+
+### FreshnessPermalink for this section
+
+ | | Field | Type | Meaning
+ | stale | true (omitted otherwise) | The primary_book’s livestate key TTL dropped below the aggregator’s freshness threshold (~10s) at merge time. Scores are the last known values; the book has gone quiet. Treat the event’s scores and period as potentially lagging the real game state.
+ | aggregator_stale | true (omitted otherwise) | The SharpAPI aggregator itself hasn’t written a new gamestate:{sport} shard for this sport in more than ~30s. Broader signal than stale — indicates a pipeline hiccup, not a single-book issue. If you see this persistently, reach out to support.
+
+Absence = fresh. Both stale and aggregator_stale are only
+written when truthy, keeping the payload compact. If you don’t see
+them on an event, the data is considered fresh.
+
+## Finished eventsPermalink for this section
+
+A fixture used to vanish from /gamestate the moment it ended — the
+final score was only ever visible to a client that happened to poll
+during the last live cycle. Finished events now stay on this endpoint
+for 15 minutes after completion as a terminal row, so any poller
+on a sane interval sees the final at least once.
+
+The window is server-side and currently 15 minutes
+(GAMESTATE_TERMINAL_CARRY_SECONDS, default 900). After it elapses
+the row disappears for good; the settled result remains available on
+/api/v1/events?status=final, which is where
+the terminal row is sourced from.
+
+### What a terminal row looks likePermalink for this section
+
+{
+ "home_team": "Skelleftea AIK",
+ "away_team": "Geneva Servette HC",
+ "sport": "hockey",
+ "league": "champions_hockey_league",
+ "home_score": 2,
+ "away_score": 1,
+ "score_type": "points",
+ "winner": "home",
+ "status": "final",
+ "completed_at": "2026-09-10T18:54:03Z",
+ "is_live": false,
+ "stale": false
+}
+
+ | | Field | Type | Notes
+ | status | "final" | Present only on a terminal row. Live rows carry no status key at all, so status === "final" is the reliable test — don’t infer it from is_live.
+ | completed_at | string | ISO 8601 — when SharpAPI detected the completion, not a league-official final whistle. The carry window is measured from this timestamp.
+ | score_type | "points" | "sets" | Which score fields carry the result. "sets" for the set-scored sports (tennis, table_tennis, volleyball, badminton); "points" everywhere else.
+ | winner | "home" | "away" | "draw" | Optional — omitted when the outcome can’t be determined; see below. "draw" is only produced for sports where a level score is a real result (soccer, hockey, football, rugby_union, rugby_league).
+ | is_live | false | Always explicitly false, so any is_live-gated rendering treats the row as not live.
+ | stale | false | Always explicitly false. This is the one place stale appears when it isn’t truthy — the “absence = fresh” rule above holds for live rows only.
+
+Final scores use the live field names, per sport. A points sport
+puts its tally in home_score / away_score. A set-scored sport puts
+its set count in sets_home / sets_away and carries no
+home_score / away_score — a tennis final is 2-1 in sets, and putting
+that in home_score would collide with the live row’s game points:
+
+{
+ "home_team": "Mikhail Biserov",
+ "away_team": "Vasily Yugov",
+ "sport": "table_tennis",
+ "league": "pro_league",
+ "sets_home": 2,
+ "sets_away": 1,
+ "score_type": "sets",
+ "winner": "home",
+ "status": "final",
+ "completed_at": "2026-09-10T18:55:25Z",
+ "is_live": false,
+ "stale": false
+}
+
+winner can be absent, and that is meaningful. It is omitted when
+the recorded result does not settle the match:
+
+- a level score in a sport that cannot draw (basketball, handball,
+esports, baseball…) — the game went to overtime, was abandoned, or the
+feed stopped before the decider;
+
+- a sub-terminal set count in a set-scored sport (a leader with fewer
+than two sets can’t have won any format);
+
+- a snapshot whose scores never arrived, which is recorded as 0-0.
+That is why a 0-0 with no winner is not the same as a genuine
+goalless draw — a real one carries "winner": "draw".
+
+Treat a missing winner as “not settled”, not as a tie. If you are
+grading or settling anything, skip these rows.
+
+### Which fields a terminal row does not carryPermalink for this section
+
+A terminal row is projected from the completion record, not from a live
+cross-book merge, so these live fields are simply absent:
+primary_book, book_count, game_period, game_clock, period_number, the
+match structure fields, and every
+situational field (possession, corners_*, power_play, in_play,
+the tennis win-probability family, and so on). Read them only after
+checking the row is not status: "final".
+
+### Filtering finished eventsPermalink for this section
+
+ | | You want | Request
+ | Live rows only (pre-carry behaviour) | ?is_live=true
+ | Finished rows only | ?status=final
+ | Both (the default) | no parameter
+
+# Just the finals from the last 15 minutes, one sport
+curl "https://api.sharpapi.io/api/v1/gamestate/soccer?status=final" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Exactly what you got before the carry existed
+curl "https://api.sharpapi.io/api/v1/gamestate?is_live=true" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+If a finished event is still live somewhere, the live row wins. An
+event_id that appears both in the live slate and in the carried set is
+returned once, as the live row. A book still pricing the game keeps it
+live until every book has dropped it.
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+# All live events across every sport
+curl "https://api.sharpapi.io/api/v1/gamestate" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# One sport
+curl "https://api.sharpapi.io/api/v1/gamestate/soccer" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const res = await fetch('https://api.sharpapi.io/api/v1/gamestate/soccer', {
+ headers: { 'X-API-Key': process.env.SHARPAPI_KEY }
+});
+const { data, updated_at } = await res.json();
+for (const [eventId, state] of Object.entries(data.soccer ?? {})) {
+ if (state.stale || state.aggregator_stale) continue; // skip lagging rows
+ console.log(
+ `${state.home_team} ${state.home_score}-${state.away_score} ${state.away_team}`,
+ `(${state.game_period ?? '?'} ${state.game_clock ?? ''}, ${state.primary_book})`
+ );
+}
+
+### Python
+
+import httpx, os
+r = httpx.get(
+ "https://api.sharpapi.io/api/v1/gamestate/soccer",
+ headers={"X-API-Key": os.environ["SHARPAPI_KEY"]},
+)
+body = r.json()
+for event_id, state in body["data"].get("soccer", {}).items():
+ if state.get("stale") or state.get("aggregator_stale"):
+ continue # skip lagging rows
+ print(
+ f"{state['home_team']} {state['home_score']}-{state['away_score']} "
+ f"{state['away_team']} ({state.get('game_period')} "
+ f"{state.get('game_clock','')}, {state['primary_book']})"
+ )
+
+## Example ResponsePermalink for this section
+
+{
+ "data": {
+ "soccer": {
+ "argentina_-_primera_division_bocajuniors_defensayjusticia_2026-04-23": {
+ "home_team": "Defensa y Justicia",
+ "away_team": "Boca Juniors",
+ "sport": "soccer",
+ "league": "argentina_-_primera_division",
+ "home_score": 0,
+ "away_score": 1,
+ "game_period": "2H",
+ "game_clock": "49:06",
+ "is_live": true,
+ "possession": "away",
+ "corners_home": 1,
+ "corners_away": 0,
+ "fouls_home": 0,
+ "fouls_away": 0,
+ "yellow_cards_home": 0,
+ "yellow_cards_away": 0,
+ "red_cards_home": 0,
+ "red_cards_away": 0,
+ "primary_book": "draftkings",
+ "book_count": 6
+ },
+ "chile_-_primera_division_concepcion_palestino_2026-04-24": {
+ "home_team": "Palestino",
+ "away_team": "Concepción",
+ "sport": "soccer",
+ "league": "chile_-_primera_division",
+ "home_score": 0,
+ "away_score": 0,
+ "is_live": true,
+ "primary_book": "unibet",
+ "book_count": 1,
+ "stale": true
+ },
+ "montenegro_-_prva_liga_bokelj_otrantolympiculcinj_2026-04-23": {
+ "home_team": "Bokelj",
+ "away_team": "FK Otrant-Olympic Ulcinj",
+ "sport": "soccer",
+ "league": "montenegro_-_prva_liga",
+ "home_score": 2,
+ "away_score": 1,
+ "score_type": "points",
+ "winner": "home",
+ "status": "final",
+ "completed_at": "2026-04-23T23:48:55Z",
+ "is_live": false,
+ "stale": false
+ }
+ }
+ },
+ "updated_at": "2026-04-23T23:55:01.234Z"
+}
+
+The third row is a terminal row: the match ended
+about six minutes before this response was built, so it is carried with
+status: "final" and its final score, and it carries no primary_book,
+book_count, game_period or game_clock.
+
+## Cross-Book Merge ModelPermalink for this section
+
+Each event’s fields are merged from every sportsbook’s livestate
+snapshot via a three-class algorithm:
+
+- Class A — Scores are picked by consensus: among books at the most
+advanced period rank, the highest-total score with ≥2 backers wins. A
+single book reporting an outlier score (common in the first seconds
+of a score change, or from a misbehaving adapter) is rejected.
+
+- Class B — Temporal fields (game_period, game_clock) are
+selected by sport-aware clock direction — countdown vs countup — and
+period rank.
+
+- Class C — Situational fields (possession, corners_*, etc.)
+are priority-filled from a fixed book ranking.
+
+primary_book reports which book the winning scores came from.
+book_count is the total number of books that contributed any state
+for the event at merge time.
+
+## StreamingPermalink for this section
+
+Every update that the REST endpoint would surface on the next poll also
+fires a gamestate:update event on the streaming channels — including
+the finished-event carry: a finished event stays in
+the streamed slate as its status: "final" row for the same window, and
+is announced once with a gamestate:final
+frame:
+
+- SSE: GET /api/v1/stream/gamestate
+
+- WebSocket: subscribe to {channels: ["gamestate"]} on
+wss://ws.sharpapi.io/ws
+
+Both transports open with a gamestate:snapshot carrying the full
+current slate — live rows plus any finished rows still inside the carry
+window — as a flat list of event rows, each with its event_id. What
+follows differs by transport.
+
+### Delivery semantics: WebSocket vs SSEPermalink for this section
+
+ | | | WebSocket | SSE
+ | gamestate:update | Incremental — only the rows that changed since your previous frame | Full slate — the complete current set, live rows plus carried finals (matching your filters), re-emitted on every update cycle
+ | gamestate:final | One frame per finished event — see below | One frame per finished event — same payload, no SSE id: line
+ | Removals | Explicit gamestate:removed frames carrying a list of event_ids. A finished event first changes to its status: "final" row (a gamestate:update); its gamestate:removed arrives when the carry window ends | Never sent — a finished event stays in each gamestate:update as its status: "final" row until the carry window ends, then stops appearing (with sport/league filters there is one edge case — see the callout below)
+ | Reconnect | Resumable: resume=true&from_seq=N replays missed gamestate:update, gamestate:final and gamestate:removed frames from the replay buffer (best-effort, ~5-minute TTL-bound window; outrun it and you fall back to a fresh snapshot) | Not resumable — Last-Event-ID replay covers the odds channel only. A gamestate reconnect always re-bootstraps with a fresh gamestate:snapshot. Gamestate frames carry no SSE id: line, so a plain EventSource on the gamestate channel reconnects without a Last-Event-ID — its connected event carries neither resumed nor fallback_reason. Only a reconnect that does present a Last-Event-ID (e.g. on the all channel, where odds events set the resume cursor, or a hand-set header) is acknowledged with resumed: false and fallback_reason: "channel_unsupported"
+
+Client pattern. On WebSocket, keep a map keyed by event_id and
+apply deltas: merge gamestate:update rows in, delete
+gamestate:removed ids. On SSE, build the same keyed map but
+replace it wholesale on every gamestate:update — anything absent
+from the new payload has left the slate. Don’t apply SSE payloads as
+deltas, or ended events will linger in your state forever. On both
+transports, check status === "final" before treating a row as live.
+SSE edge case with filters. An unfiltered stream receives an empty
+{"data": []} update when the last event leaves the slate, but a stream with
+sport/league filters gets no gamestate:update at all on
+cycles where zero events match — so the wholesale replace never fires
+for the final ended event. If heartbeats keep arriving but
+gamestate:updates stop, treat your slate as possibly empty and
+expire rows that haven’t been refreshed recently.
+
+### Finished-event announcementsPermalink for this section
+
+When an event finishes, each transport sends one gamestate:final frame
+for it. The frame carries the event’s terminal row — the same shape as
+the REST row in Finished events, plus its
+event_id.
+
+WebSocket:
+
+{"type":"gamestate:final","seq":48213,"global_seq":"48213","data":[{"event_id":"atp_jdoe_rroe_2026-07-03","home_team":"J. Doe","away_team":"R. Roe","sport":"tennis","league":"atp","sets_home":1,"sets_away":2,"score_type":"sets","winner":"away","status":"final","completed_at":"2026-07-03T19:42:10Z","is_live":false,"stale":false}]}
+
+SSE (the same {"data": [...]} envelope as gamestate:update):
+
+event: gamestate:final
+data: {"data":[{"event_id":"atp_jdoe_rroe_2026-07-03","home_team":"J. Doe","away_team":"R. Roe","sport":"tennis","league":"atp","sets_home":1,"sets_away":2,"score_type":"sets","winner":"away","status":"final","completed_at":"2026-07-03T19:42:10Z","is_live":false,"stale":false}]}
+
+- Same access and filters as gamestate:update. A subscription that
+receives gamestate:update receives gamestate:final, and your
+sport/league filters apply to it. Without game-state access you
+receive neither.
+
+- WebSocket replays it. Like gamestate:update and
+gamestate:removed, it is kept in the replay buffer and re-sent on a
+from_seq reconnect. SSE gamestate frames are not resumable.
+
+- It is an announcement, not the only delivery. The same row is also
+in the slate (gamestate:snapshot and gamestate:update) for the
+whole carry window, so a client that misses the frame still sees the
+final.
+
+“Once per event” can occasionally repeat — dedupe on (event_id, completed_at).
+You can receive gamestate:final more than once for the same event.
+event_id and completed_at are identical on every repeat, so drop a
+frame whose pair you have already handled. Dropping a duplicate is always
+safe, because the row is still in the slate.
+
+## Rate Limits & QuotasPermalink for this section
+
+Rate limits follow your base tier, not the add-on — Hobby keys keep
+their 120 req/min, Pro keep 300, Sharp keep 1,000, Enterprise custom.
+See Pricing . /gamestate counts the
+same as other REST calls toward the per-minute quota.
+
+## TroubleshootingPermalink for this section
+
+- 403 tier_restricted with addon: "game_state" — your key
+doesn’t have the Game State add-on. Add it from
+Billing  for $79/mo, or
+upgrade to Enterprise.
+
+- 400 validation_error with parameter: "status" — the only
+accepted ?status= value is final. There is no live value; live
+rows are the default set, or ask for them alone with ?is_live=true.
+
+- 400 validation_error with parameter: "is_live" — ?is_live=
+accepts only true / false. 1 and 0 are rejected; they used to
+read as false and hand back the opposite of what was asked for.
+
+- A row with status: "final" and is_live: false — not a bug. It
+is a finished event inside its 15-minute carry
+window. Filter with ?is_live=true for the pre-carry behaviour.
+
+- primary_book / book_count missing — you’re reading a terminal
+row. Check status before reading live-only fields.
+
+- Empty data object — no live events in scope. This is common
+between events on smaller sport schedules. Poll again.
+
+- Events with stale: true — the primary book has gone silent.
+Scores may lag; consider filtering them out or surfacing a UI
+indicator.
+
+- Events with aggregator_stale: true — the SharpAPI aggregator
+hasn’t refreshed that sport in >30s. If persistent, reach out to
+support; a brief bump can happen during redeploys.
+
+- Same match appears twice under different event_ids — known
+limitation for some regional leagues where sportsbooks use
+inconsistent league naming. Use (home_team, away_team) as a
+secondary dedup key on the client until the remaining alias gaps
+close.

@@ -1,0 +1,463 @@
+Source: https://docs.sharpapi.io/en/api-reference/opportunities-ev/ (fetched 2026-10-21)
+
+# +EV Opportunities
+
+Find positive expected value betting opportunities across all sportsbooks.
+
+GET /api/v1/opportunities/ev
+
+This endpoint replaces the former /positive-ev and /value-bets endpoints. All scoring fields (confidence, kelly_percent, fair_probability) are now included in every response.
+
+Multi-book results: When multiple sportsbooks are +EV on the same selection, the API returns a separate opportunity for each book. For example, if DraftKings is +105, FanDuel is +103, and BetMGM is +101 on the same moneyline, you’ll see three entries — each with its own sportsbook, odds_american, ev_percentage, kelly_percent, and confidence. Results are sorted by EV% descending by default, so the best-odds book appears first. Use the sportsbook filter to narrow to specific books.
+
+Live game state: EV rows do not carry scores, period, or clock. Live game state is served exclusively by the Game State endpoint and the gamestate stream channel. Join rows to game state by event_id.
+
+## AuthenticationPermalink for this section
+
+Requires API key. Pro tier or higher required. Your account must have the ev feature enabled.
+
+## Query ParametersPermalink for this section
+
+ | | Parameter | Type | Default | Description
+ | sport | string | all | Filter by sport(s), comma-separated (e.g. basketball, football, ice_hockey)
+ | league | string | all | Filter by league(s), comma-separated (e.g. nba, nfl, nhl)
+ | sportsbook | string | tier-allowed | Filter by sportsbook(s), comma-separated. Tier limits enforced.
+ | market | string | all | Filter by market type(s), comma-separated. Supports category aliases (main, spread, total, props) or exact types (point_spread, player_points).
+ | event_id | string | all | Filter by game/event ID(s), comma-separated
+ | min_ev | number | 0 | Minimum EV percentage threshold. The engine only surfaces opportunities above ~0.1% EV, so min_ev=0 and omitting the parameter are equivalent.
+ | max_ev | number | — | Maximum EV percentage threshold
+ | is_live | boolean | — | true = live only, false = prematch only, omit = both
+ | min_odds | number | — | Minimum American odds (e.g., -200)
+ | max_odds | number | — | Maximum American odds (e.g., +500)
+ | min_market_width | number | — | Minimum market width (vig indicator). Lower width = sharper market.
+ | max_market_width | number | — | Maximum market width
+ | max_hold | number | 5.0 | Maximum book hold (vig) percentage. Drops opportunities where the market hold exceeds this threshold.
+ | min_kelly | number | — | Minimum Kelly percentage (e.g. 2 = 2% bankroll allocation)
+ | max_kelly | number | — | Maximum Kelly percentage
+ | min_confidence | number | — | Minimum confidence score (0–100)
+ | max_confidence | number | — | Maximum confidence score (0–100)
+ | max_odds_age | number | — | Maximum odds age in seconds. Filters out stale opportunities where the underlying odds are older than this threshold.
+ | is_player_prop | boolean | — | true = player props only, false = game-level markets only
+ | is_alternate_line | boolean | — | true = alternate lines only, false = main line only
+ | arb_available | boolean | — | true = only opportunities that also have an arbitrage cross-reference
+ | player_name | string | — | Filter to a specific player (alias: player). Case-insensitive exact match on the canonical name (e.g. Aaron Judge).
+ | stat_category | string | — | Filter to a player-prop stat category (e.g. points, rebounds, passing_yards)
+ | selection | string | — | Filter to a specific selection name (case-insensitive exact match)
+ | devig_book | string | — | Override the sharp anchor book used for devigging. Defaults to Pinnacle.
+ | date_range | string | — | Filter by event date: today, tomorrow, or week. Dates are evaluated in US Eastern Time (ET).
+ | sort | string | -ev | Sort field. Options: ev, confidence/confidence_score, kelly/kelly_percent, time/start_time, book_count/books. Prefix with - for descending.
+ | limit | integer | 50 | Results per page (max 200)
+ | offset | integer | 0 | Pagination offset
+
+### Filtering Multiple ValuesPermalink for this section
+
+Use comma-separated values for multi-select filters:
+
+?sportsbook=draftkings,fanduel&league=nba,nfl
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+# Basic EV opportunities for NBA
+curl -X GET "https://api.sharpapi.io/api/v1/opportunities/ev?league=nba&min_ev=2" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const response = await fetch(
+ 'https://api.sharpapi.io/api/v1/opportunities/ev?league=nba&min_ev=2',
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+const { data, pagination } = await response.json();
+console.log(`Found ${pagination.total} +EV opportunities`);
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/opportunities/ev',
+ params={
+ 'league': 'nba',
+ 'min_ev': 2,
+ },
+ headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+data = response.json()
+for opp in data['data']:
+ print(f"{opp['selection']} @ {opp['sportsbook']}: {opp['ev_percentage']}% EV")
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+Real response for GET /api/v1/opportunities/ev?limit=2 (live tennis, captured 2026-07-02):
+
+{
+ "data": [
+ {
+ "arb_available": false,
+ "arb_profit": 0,
+ "away_team": "Jiri Lehecka",
+ "book_count": 8,
+ "confidence": 85,
+ "cross_ref_count": 1,
+ "cross_ref_dispersion": null,
+ "deep_link": "https://api.sharpapi.io/api/v1/deeplink/213493110750883",
+ "detected_at": "2026-07-02T18:10:09.102807044Z",
+ "devig_method": "POWER",
+ "display_selection": "Over 27.5",
+ "est_correction_s": 0,
+ "ev_percentage": 14.85,
+ "event_id": "tennis_men_alex_molcan_jiri_lehecka_2026-07-02",
+ "event_name": "Jiri Lehecka @ Alex Molcan",
+ "external_event_id": "34344853",
+ "fair_probability": 0.2393,
+ "home_team": "Alex Molcan",
+ "id": "fbdcf59049c3d385",
+ "is_alternate_line": false,
+ "is_live": true,
+ "is_player_prop": false,
+ "kelly_percent": 3.91,
+ "league": "atp",
+ "line": 27.5,
+ "market_id": "tennis_men_alex_molcan_jiri_lehecka_2026-07-02:total_games:27.5",
+ "market_type": "total_games",
+ "market_width": 4.781228895356837,
+ "no_vig_odds": 318,
+ "odds_american": 380,
+ "odds_decimal": 4.8,
+ "odds_probability": 0.2083,
+ "oldest_odds_age_seconds": 1.7,
+ "partner_fair_probability": 0.7607,
+ "player_id": null,
+ "player_name": null,
+ "possibly_stale": false,
+ "selection": "Over",
+ "selection_id": "0QA348202437#2200852961_13L44337Q11374667207Q20",
+ "sharp_book": "pinnacle",
+ "single_sharp_period": false,
+ "sport": "tennis",
+ "sportsbook": "draftkings",
+ "sportsbooks": [
+ "draftkings"
+ ],
+ "start_time": "2026-07-02T15:40:00Z",
+ "stat_category": null,
+ "warnings": [
+ "SINGLE_SHARP_REF"
+ ]
+ },
+ {
+ "arb_available": true,
+ "arb_profit": 3.45,
+ "away_team": "Jakub Mensik",
+ "book_count": 4,
+ "confidence": 80,
+ "cross_ref_count": 1,
+ "cross_ref_dispersion": null,
+ "deep_link": "https://api.sharpapi.io/api/v1/deeplink/226072303819692",
+ "detected_at": "2026-07-02T18:10:00.944122076Z",
+ "devig_method": "POWER",
+ "display_selection": "Under 44.5",
+ "est_correction_s": 29,
+ "ev_percentage": 14.38,
+ "event_id": "tennis_men_grigor_dimitrov_jakub_mensik_2026-07-02",
+ "event_name": "Jakub Mensik @ Grigor Dimitrov",
+ "external_event_id": "1028209623",
+ "fair_probability": 0.4485,
+ "home_team": "Grigor Dimitrov",
+ "id": "2385ab8c057dcd49",
+ "is_alternate_line": false,
+ "is_live": true,
+ "is_player_prop": false,
+ "kelly_percent": 9.27,
+ "league": "atp",
+ "line": 44.5,
+ "market_id": "tennis_men_grigor_dimitrov_jakub_mensik_2026-07-02:total_games:44.5",
+ "market_type": "total_games",
+ "market_width": 4.8401734395482565,
+ "no_vig_odds": 123,
+ "odds_american": 155,
+ "odds_decimal": 2.55,
+ "odds_probability": 0.3922,
+ "oldest_odds_age_seconds": 3.2,
+ "partner_fair_probability": 0.5515,
+ "player_id": null,
+ "player_name": null,
+ "possibly_stale": false,
+ "selection": "Under",
+ "selection_id": "4244429455",
+ "sharp_book": "pinnacle",
+ "single_sharp_period": false,
+ "sport": "tennis",
+ "sportsbook": "ballybet",
+ "sportsbooks": [
+ "ballybet"
+ ],
+ "start_time": "2026-07-02T15:55:00Z",
+ "stat_category": null,
+ "warnings": [
+ "SINGLE_SHARP_REF"
+ ]
+ }
+ ],
+ "pagination": {
+ "count": 2,
+ "has_more": true,
+ "limit": 2,
+ "next_cursor": "eyJ2IjoxNC4zOCwiaSI6IiJ9",
+ "next_offset": 2,
+ "offset": 0,
+ "total": 351
+ },
+ "updated_at": "2026-07-02T18:10:19.758741204Z"
+}
+
+### Response HeadersPermalink for this section
+
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 298
+X-RateLimit-Reset: 1707401000
+X-Data-Delay: 0
+X-Request-Id: 1783016224442558-9486
+
+### Error ResponsesPermalink for this section
+
+401 Unauthorized
+
+No key supplied returns missing_api_key; a bad key returns invalid_api_key.
+
+{
+ "error": {
+ "code": "missing_api_key",
+ "message": "API key required. Pass via X-API-Key header, api_key query parameter, or Bearer token.",
+ "docs": "https://docs.sharpapi.io/en/authentication#authentication-methods"
+ }
+}
+
+403 Tier Restricted
+
+{
+ "error": {
+ "code": "tier_restricted",
+ "message": "This endpoint requires Pro tier or higher",
+ "docs": "https://sharpapi.io/pricing",
+ "tier": "hobby",
+ "required_tier": "pro"
+ }
+}
+
+429 Rate Limited
+
+retry_after is a Unix-millisecond timestamp of the next window (not a duration); the Retry-After header carries the equivalent seconds value.
+
+{
+ "error": {
+ "code": "rate_limited",
+ "message": "Rate limit exceeded for pro tier (300/min)",
+ "retry_after": 1737853260000,
+ "tier": "pro",
+ "limit": 300,
+ "docs": "https://sharpapi.io/pricing"
+ }
+}
+
+## Response FieldsPermalink for this section
+
+### Core FieldsPermalink for this section
+
+ | | Field | Type | Description
+ | id | string | Unique opportunity identifier (hash)
+ | event_id | string|null | Associated event identifier
+ | external_event_id | string|null | Sportsbook’s native event ID
+ | selection_id | string|null | Sportsbook’s native outcome/selection ID (for deep linking to the bet slip)
+ | ev_percentage | number | Expected value as a percentage (e.g., 4.2 = 4.2% EV)
+ | odds_american | number | Current American odds at the sportsbook
+ | odds_decimal | number | Decimal odds (e.g., 1.952)
+ | no_vig_odds | number|null | Fair (no-vig) American odds derived from the sharp line
+ | fair_probability | number|null | No-vig (devigged) fair probability (0.0 to 1.0)
+ | partner_fair_probability | number|null | The complementary side’s fair probability from the same devig call — on 2-way markets fair_probability + partner_fair_probability = 1.0. null on n-way markets or when the partner side couldn’t be resolved.
+ | market_width | number|null | Width of the market (vig indicator)
+ | devig_method | string | De-vig method used, uppercase (e.g. POWER)
+ | sharp_book | string | Sharp book used as the devig reference (e.g., pinnacle; circa is also used). Override via the devig_book query param.
+ | cross_ref_count | number | Number of sharp reference books that priced this market. 1 = single sharp ref (see the SINGLE_SHARP_REF warning).
+ | cross_ref_dispersion | number|null | Spread (max − min) of devigged fair probabilities across the sharp reference books, in percentage points. null when fewer than 2 sharp refs priced the market.
+ | selection | string | The selection (team name, Over/Under, player, etc.)
+ | display_selection | string | Human-readable selection including the line (e.g. "Over 27.5", "PHI 76ers -3.5")
+ | market_type | string | Market type (moneyline, point_spread, total_points, etc.)
+ | market_id | string|null | Canonical market identifier for this row’s market group (joins sibling selections of the same market)
+ | external_market_id | string|null | State-independent market identifier. Present on FanDuel rows only — use this instead of market_id when building a FanDuel bet-slip link, paired with selection_id. null on all other books. See external_market_id on /odds.
+ | market_segment | string|undefined | Contest slice (full_game, 1st_half, 1st_5_innings, set_1, …). Omitted when the adapter didn’t derive a segment.
+ | team_side | string|undefined | Raw side per the adapter (home | away | draw | over | under). Omitted when not stamped.
+ | line | number|null | Spread/total line (e.g., -3.5, 220.5)
+ | sportsbook | string | Sportsbook offering these odds. Multiple entries may exist for the same selection if several books are +EV.
+ | event_name | string | Human-readable event name (e.g. “Away @ Home”)
+ | sport | string | Sport identifier (lowercase)
+ | league | string | League identifier
+ | home_team | string|null | Home team name
+ | away_team | string|null | Away team name
+ | start_time | string|null | ISO 8601 event start time
+ | is_live | boolean | Whether the event is currently live
+ | is_alternate_line | boolean | true when this opportunity’s line differs from the market’s canonical main line. Markets with no line (moneyline, outright) always emit false.
+ | confidence | number | Multi-factor confidence score (0-100)
+ | kelly_percent | number|null | Full-Kelly optimal bet percentage of bankroll (0–100, e.g. 2.1 = 2.1% of bankroll). Most practitioners apply a fractional Kelly multiplier (¼ or ½) before sizing — see Kelly Criterion below.
+ | book_count | number | Number of sportsbooks offering this market
+ | arb_available | boolean | Whether an arbitrage exists on this market
+ | arb_profit | number|null | Arbitrage profit percentage if available
+ | is_player_prop | boolean | Whether this is a player prop market
+ | player_name | string|null | Player name (if player prop)
+ | player_id | string|null | Canonical cross-book player ID (e.g. baseball_mlb_corbin_carroll), resolved by atlas_players. null until resolved — group player props on player_id and fall back to player_name.
+ | stat_category | string|null | Stat type (if player prop, e.g., points, rebounds)
+ | possibly_stale | boolean | true if underlying odds may have moved since detection
+ | oldest_odds_age_seconds | number|null | Age of the stalest odds used in the EV calculation (seconds)
+ | est_correction_s | number|null | Estimated seconds until the bet-side book corrects toward the sharp move (P50 follow-lag for this sportsbook+sport). null when no sample is available.
+ | warnings | string[] | Data quality warnings. The EV engine emits exactly four: LIVE_STALE_ODDS (live, and the oldest odds used are more than 30s old), STALE_PREMATCH_ODDS (prematch, and the bet-side price has not moved in more than 60 minutes while the feed is still alive — the row is served, with possibly_stale: true), SINGLE_SHARP_REF (only one sharp book priced the market, so the fair probability is uncorroborated), SINGLE_SHARP_PERIOD (the single-sharp subset that is also a period/derivative sub-slice). Empty array when none apply. POTENTIALLY_STALE_ODDS and LOW_IMPLIED_TOTAL are arbitrage-only flags and are never emitted here — see Arbitrage.
+ | single_sharp_period | boolean | true when only one sharp book priced the line and the market is a period/derivative sub-slice (innings, halves, quarters, sets). Filterable flag for phantom-suspect period EV; mirrors the SINGLE_SHARP_PERIOD warning.
+ | quality_tier | string|undefined | Grader-certified quality label — A (bet-this), B (edge), or C (informational). Present on every opportunity; omitted on suspended rows (is_suspended). Output-only — there is no quality_tier query filter. See Quality Tier below for the criteria.
+ | is_suspended | boolean|undefined | true (omitted otherwise) when the sharp reference is currently suspended live: the bet is still offerable but the edge is unknown, so ev_percentage, fair_probability, no_vig_odds, kelly_percent, and market_width are nulled rather than shown stale. suspended_since (Unix epoch seconds) accompanies it.
+ | detected_at | string | ISO 8601 timestamp when the +EV was first detected
+ | odds_probability | number | Implied probability of odds_american (vig-included)
+ | sportsbooks | string[] | All sportsbooks currently offering this +EV selection
+ | deep_link | string|undefined | Resolver URL to the sportsbook bet slip (pass state= for state subdomains)
+ | home | object|undefined | Reserved — not currently emitted on this endpoint. Nested home-team reference: {id, numerical_id, name, abbreviation, logo, city, mascot, conference, division}. See Entity reference IDs.
+ | away | object|undefined | Reserved — not currently emitted on this endpoint. Nested away-team reference (same shape as home).
+ | sport_ref | object|undefined | Reserved — not currently emitted on this endpoint. Nested sport reference: {id, numerical_id, name}.
+ | league_ref | object|undefined | Reserved — not currently emitted on this endpoint. Nested league reference: {id, numerical_id, label}.
+ | market_ref | object|undefined | Reserved — not currently emitted on this endpoint. Nested market reference: {id, numerical_id, label}.
+ | sportsbook_ref | object|undefined | Reserved — not currently emitted on this endpoint. Nested sportsbook reference: {id, numerical_id, label}.
+
+### Nested reference blocks (reserved)Permalink for this section
+
+The response schema reserves six nested reference objects (home, away, sport_ref, league_ref, market_ref, sportsbook_ref) mirroring the blocks on /odds. As of 2026-07-02 the EV engine does not stamp them, so live /opportunities/ev rows never include these blocks — today they appear only on /odds rows for atlas-mapped books. Treat every block (and every inner field) as optional and never require them; when the EV pipeline is wired to emit them, they will appear additively without changing any existing flat field. See Entity reference IDs for the shape and the dense-from-1 / frozen / never-reused guarantees.
+
+## Understanding Expected ValuePermalink for this section
+
+Expected Value (EV) measures the average profit or loss per bet over time. A positive EV (+EV) bet means you have a mathematical edge over the sportsbook.
+
+EV% = (fair_probability x decimal_odds - 1) x 100
+
+Where:
+
+- fair_probability = No-vig probability derived from the sharp book (Pinnacle)
+
+- decimal_odds = The decimal odds offered by the soft book
+
+### How SharpAPI Calculates EVPermalink for this section
+
+SharpAPI uses Pinnacle (a sharp book with efficient odds) as the source of truth for fair probability.
+
+Step 1: Get the sharp book odds
+
+Pinnacle: Team A -115 / Team B +105
+
+Step 2: Remove the vig to find fair probability (Power method)
+
+// Implied probabilities (with vig)
+probA = 1 / 1.87 = 0.535 // -115 in decimal = 1.87
+probB = 1 / 2.05 = 0.488 // +105 in decimal = 2.05
+total = 1.023 // 2.3% vig
+
+// Power devig: solve for k where probA^k + probB^k = 1
+// k ≈ 1.036 for this market
+fairProbA = 0.535^1.036 = 0.522 (52.2%)
+fairProbB = 0.488^1.036 = 0.478 (47.8%)
+
+Step 3: Compare to a soft book
+
+DraftKings: Team A -105 (decimal 1.952)
+Fair probability: 52.3%
+
+EV% = (0.523 x 1.952 - 1) x 100
+EV% = +2.1%
+
+A +2.1% EV means you expect to profit $2.10 for every $100 wagered on this bet over time.
+
+### Why This WorksPermalink for this section
+
+ | | Book Type | Characteristics
+ | Sharp (Pinnacle) | Low vig, efficient odds, accurate probabilities
+ | Soft (DraftKings, FanDuel, BetMGM) | Higher vig, slower to adjust, exploitable
+
+When soft books are slow to update their odds after a market move, their implied probability deviates from reality, creating a +EV opportunity.
+
+## EV ThresholdsPermalink for this section
+
+ | | EV % | Quality | Suggested Action
+ | < 0% | Negative EV | Avoid
+ | 0 - 2% | Marginal | Only viable at high volume
+ | 2 - 5% | Good | Standard profitable threshold
+ | 5%+ | Excellent | High confidence opportunities
+
+We recommend setting min_ev=2 for most use cases. Marginal EV (below 2%) can be eroded by line movement before you place the bet.
+
+## Quality TierPermalink for this section
+
+Every opportunity carries a quality_tier — a grader-certified A / B / C label that supersedes the rough EV Thresholds heuristic above with evidence from SharpAPI’s historical grading ledger. It answers “how much should I trust this edge?”, not just “how big is the stated EV?”
+
+ | | Tier | Meaning | Criteria
+ | A | Bet this | ev_percentage ≥ 4 (≥ 6 for player props), Pinnacle-anchored (sharp_book: "pinnacle"), prematch (is_live: false), and the (book, sport, market) segment is not flagged by our nightly reliability model. Historically the only class with consistently positive graded ROI.
+ | B | Edge | ev_percentage ≥ 2 (≥ 4 for props) and the segment is not exclusion-flagged. Includes live, non-Pinnacle-anchored, and watch-flagged rows that clear the band — historically around break-even.
+ | C | Informational | Everything else, plus any exclusion-flagged segment regardless of EV. Disclosed as market intelligence, not a recommended bet.
+
+quality_tier is output-only — there is no quality_tier query parameter. Filter client-side. min_ev / is_live / sportsbook are only partial proxies: min_ev alone does not reproduce a tier, because the sharp anchor, prematch/live state, and segment reliability also gate it.
+
+A high ev_percentage does not guarantee tier A. Two prematch, Pinnacle-anchored baseball totals from the same book illustrate why:
+
+ | | Selection | ev_percentage | quality_tier | Why
+ | 1st 5 Innings Total Runs — Over 5 | 7.35 | A | Segment unflagged
+ | Total Runs — Over 9 | 7.94 | B | Higher EV, but the full-game total_runs segment is watch-flagged for historically weak results
+
+The higher-EV row is B, not A, because our reliability model has seen that segment underperform — exactly the “big EV number that’s actually the artifact” the tiering is designed to demote. See EV Calculation → Quality Tiers for the grading rationale behind the bands.
+
+A tier is not a profit guarantee. Even tier A carries variance (see Kelly Criterion and the Variance Warning below). Suspended rows (is_suspended: true) carry no tier — their edge is unknown, so no quality claim is made.
+
+## Kelly CriterionPermalink for this section
+
+The kelly_percent field is the optimal percentage of your bankroll (0–100) to wager according to the full Kelly criterion. A value of 2.1 means full Kelly recommends 2.1% of bankroll; a value of 34.4 means 34.4%.
+
+Kelly% = (fair_prob × decimal_odds - 1) / (decimal_odds - 1) × 100
+
+This is full Kelly, computed from the model’s fair probability with no quality-of-signal adjustment. Full Kelly is mathematically optimal only when the true probability is known exactly. In practice, sharp anchors carry uncertainty (single sharp reference, late-arriving live odds, low cross-validation), and full Kelly can produce dangerously large stake suggestions. See confidence, cross_ref_count, and warnings (e.g. SINGLE_SHARP_REF, LIVE_STALE_ODDS) before sizing.
+Use a fractional Kelly multiplier: most practitioners apply ¼ or ½ Kelly (kelly_percent × 0.25 or × 0.5). Cap any single bet at 1–2% of bankroll regardless of what kelly_percent reports, especially when warnings is non-empty or confidence < 80.
+
+### Kelly Sizing GuidePermalink for this section
+
+ | | kelly_percent | Risk Level | Recommendation
+ | < 1 | Low | Small edge, consider skipping
+ | 1 – 3 | Moderate | Standard bet size — quarter Kelly = 0.25–0.75% of bankroll
+ | 3 – 5 | Aggressive | Strong edge — quarter Kelly = 0.75–1.25% of bankroll
+ | 5+ | Very aggressive | Excellent edge or sharp-signal artifact; cap at 1–2% of bankroll regardless
+
+Variance Warning: +EV does not guarantee profit on every bet. Over 100 bets at 5% EV, actual results can range widely. The edge only materializes over hundreds or thousands of bets. Never bet more than you can afford to lose.
+
+## Best PracticesPermalink for this section
+
+- Set a minimum EV threshold - Use min_ev=2 or higher to focus on meaningful edges
+
+- Use Kelly sizing - kelly_percent is a percentage (e.g. 2.1 = 2.1% of bankroll). Apply a fractional Kelly multiplier (¼ or ½) before sizing
+
+- Filter by confidence - Use confidence to prioritize high-confidence opportunities
+
+- Monitor market_width - Narrow markets (low width) indicate more efficient pricing and more reliable EV calculations
+
+- Act quickly - +EV opportunities are fleeting; lines move fast
+
+- Track your results - Log every bet and compare actual ROI to expected EV over time
+
+- Use fractional Kelly - Most professionals use quarter or half Kelly to reduce variance
+
+## Related EndpointsPermalink for this section
+
+- Arbitrage Opportunities - Guaranteed profit across books
+
+- Low Hold Opportunities - Tightest lines across books
+
+- Middles - Line discrepancy opportunities
+
+- Best Odds - Find the best price across all books
+
+- EV Calculation Concepts - Deep dive into the math

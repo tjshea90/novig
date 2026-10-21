@@ -1,0 +1,158 @@
+Source: https://docs.sharpapi.io/en/concepts/live-vs-prematch/ (fetched 2026-10-21)
+
+# Live vs. Pre-Match Odds
+
+SharpAPI collects odds from sportsbooks in two states: pre-match (before a game starts) and live (in-play, after the game begins). These are fundamentally different markets with different update patterns, depth, and reliability — especially across different book types.
+
+## What Is Pre-Match?Permalink for this section
+
+Pre-match odds are set before a game begins. This is where:
+
+- Market depth is greatest — books offer their full menu of lines, spreads, totals, and player props
+
+- Updates are measured — lines move hours or days before tip-off, usually in response to sharp action or news
+
+- All books participate fully — every book in the API has pre-match coverage for their supported sports
+
+Pre-match is the backbone of most +EV and arbitrage workflows. The overwhelming majority of odds in the API at any given time are pre-match.
+
+## What Is Live (In-Play)?Permalink for this section
+
+Live odds are active during a game. They reflect real-time probabilities as the game state changes — a team scores, a player gets hurt, or time runs out. You can filter to live-only odds using the live=true query parameter.
+
+# Live odds only
+GET /api/v1/odds?is_live=true&sport=basketball&league=nba
+
+# Pre-match odds only
+GET /api/v1/odds?is_live=false&sport=basketball&league=nba
+
+Each odds item carries an is_live boolean field indicating its state at the time of collection:
+
+{
+ "sportsbook": "pinnacle",
+ "event_id": "nba_cavaliers_celtics_2026-04-18",
+ "sport": "basketball",
+ "league": "nba",
+ "market_type": "moneyline",
+ "odds_american": -140,
+ "is_live": true
+}
+
+## How Books Deliver OddsPermalink for this section
+
+The delivery mechanism is the root cause of the staleness differences between book types — not just polling interval.
+
+### Push vs. PollPermalink for this section
+
+ | | Book | Delivery mechanism | Source latency
+ | Pinnacle | MQTT push — SharpAPI subscribes to Pinnacle’s WebSocket/MQTT feed; odds arrive as the book streams them | p50 ~0.8 s, p95 ~3.8–4.2 s (tail latency during high-reconnect windows)
+ | DraftKings | HTTP poll — SharpAPI fetches the DK endpoint on a schedule | p50 ~8 s, p95 ~21 s
+ | FanDuel | HTTP poll — SharpAPI fetches the FD endpoint on a schedule | p50 ~2.7 s, p95 ~5.9 s
+ | Other sharp books | WS push (Circa) or fast poll (Bet365); HTTP poll (SBOBET, 1xBet) | Circa and Bet365 similar to Pinnacle; SBOBET and 1xBet similar to DK/FD
+ | US retail books | HTTP poll | Similar to DK/FD
+
+Pinnacle’s MQTT push means SharpAPI receives a price the moment the book sends it — no polling delay sits in the path. For DraftKings and FanDuel, the p50/p95 numbers above reflect the full round-trip: time from when the book updates its line to when SharpAPI has the new price. These numbers come from April 2026 Prometheus measurements. They measure collection only — how long a price takes to reach SharpAPI. What a key is then served depends on tier: Free odds are held back by a 60-second data delay, while every paid tier is served undelayed.
+
+Pinnacle’s p95 tail latency (3.8–4.2 s) reflects reconnect overhead during high-volatility windows. Infrastructure work is ongoing to reduce this. The median (0.8 s) is a reliable guide for normal play — use the p95 to size your tolerance budget for live-sensitive strategies.
+
+## How Books Behave During Live PlayPermalink for this section
+
+This is where expectations diverge significantly between sharp books and US retail books.
+
+### Sharp Books (Pinnacle, Circa, SBOBET, 1xBet)Permalink for this section
+
+Sharp books treat live betting as a core product:
+
+- Rarely suspend — markets stay open during scoring plays, injuries, and timeouts. Pinnacle’s live suspension rate is a fraction of US books.
+
+- Deep market menus — Pinnacle offers 20–50+ live markets per event across major sports, including live spreads, totals, alternative lines, and team totals
+
+- Push delivery — Pinnacle MQTT feed typically delivers under 1 s median; prices reflect game state quickly
+
+- Continuous price discovery — the live line is the sharpest available read on current win probability
+
+Pinnacle’s live odds are used as the sharp reference price in +EV calculations, just as they are for pre-match.
+
+Pinnacle, Circa, SBOBET, 1xBet, and other sharp books require Sharp tier or higher. Requesting sharp book data on Free, Hobby, or Pro tier returns a 403 tier_restricted error.
+
+### US Retail Books (DraftKings, FanDuel, BetMGM, Caesars)Permalink for this section
+
+US regulated books have live betting, but with important limitations:
+
+ | | Behavior | Sharp Books | US Books (DK/FD)
+ | Delivery mechanism | MQTT / WS push | HTTP poll
+ | Staleness (p50) | ~0.8 s (Pinnacle) | 8 s (DK) / 2.7 s (FD)
+ | Staleness (p95) | ~3.8–4.2 s (Pinnacle) | 21 s (DK) / 5.9 s (FD)
+ | Market suspension during scoring plays | Rare | Very frequent
+ | Market suspension during reviews/timeouts | Occasional | Standard practice
+ | Live market menu depth | 20–50+ markets | 3–10 markets
+ | Live props availability | Yes (Pinnacle) | Limited or none
+
+Suspension is the key issue. When an NBA team scores, DraftKings and FanDuel typically pull their live moneylines, spreads, and totals off the board while they reprice. During peak action (4th quarter of a close game), these books may be suspended more often than they are open. This is a regulatory risk-management pattern, not an API limitation.
+
+When a DK or FD market is suspended, it simply disappears from the API — these books pull the market rather than flagging it. The removal itself is signaled explicitly: the row’s id appears in removed[] on /odds/delta and in an odds:removed event on the stream — see Market Lifecycle. If you call GET /api/v1/odds?is_live=true&sportsbook=draftkings during a scoring drive, you may get zero results for that event even though the game is in progress.
+
+### What This Means in PracticePermalink for this section
+
+If you are building a live odds dashboard that needs continuous coverage without gaps, you cannot rely on DraftKings or FanDuel alone. Plan for:
+
+- Frequent null windows — design your frontend to handle “no current price” gracefully
+
+- Data staleness — the last live price you saw from DK may be 30–90 seconds old before markets reopen
+
+If you are building a live +EV scanner, the essential piece is Pinnacle as your sharp reference. Without a live Pinnacle price, you cannot calculate whether DK/FD are offering value. This requires Sharp tier.
+
+If you are building a pre-match tool, DraftKings and FanDuel are fully viable on Free tier. Pre-match coverage is comprehensive, suspension is not a factor, and update frequency is more than sufficient.
+
+## Book Coverage SummaryPermalink for this section
+
+ | | Book | has_live_odds | Practical Live Quality | Tier Required
+ | Pinnacle | Yes | Excellent — deep, fast, rarely suspends | Sharp
+ | Circa Sports | Yes | Good — sharp US book, focused menu | Sharp
+ | SBOBET | Yes | Polled feed — updates slower than the push books; no player props | Sharp
+ | 1xBet | Yes | Polled feed — updates slower than the push books; no player props | Sharp
+ | Bet365 | Yes | Good — large international menu | Hobby
+ | BetMGM | Yes | Moderate — regular suspensions | Hobby
+ | Caesars | Yes | Moderate — regular suspensions | Hobby
+ | DraftKings | Yes | Limited — frequent suspensions, thin menu | Free
+ | FanDuel | Yes | Limited — frequent suspensions, thin menu | Free
+ | Novig | No | Pre-match only | Hobby
+ | Polymarket | No | Pre-match only (prediction market) | Hobby
+
+has_live_odds: true means the sportsbook offers in-play betting and SharpAPI collects those prices when they are available. It does not guarantee continuous coverage — US books suspend frequently enough that live data has meaningful gaps.
+
+## Recommended Approaches by Use CasePermalink for this section
+
+### Live +EV or Live ArbitragePermalink for this section
+
+- Required: Sharp tier (for Pinnacle as reference)
+
+- Pattern: Poll ?is_live=true&sportsbook=pinnacle as your reference price; poll US books for the soft price; compute EV when both are non-null
+
+- Handle: null soft prices gracefully — they occur constantly during live play
+
+### Live Odds Display (Dashboard)Permalink for this section
+
+- Viable: any paid tier — all are served undelayed and can poll live odds over REST. What differs is the book-count cap — how many books one key may have selected at once: Hobby 5, Pro 15, Sharp 25. That caps simultaneous selections, not the list of books a tier can reach.
+
+- Pattern: Fetch ?is_live=true on a 5–10 second interval; display last-seen price with a “last updated” timestamp; show a “market suspended” state when no price is returned
+
+- Avoid: assuming a missing price means odds are unavailable forever — markets typically reopen within 30–90 seconds
+
+### Pre-Match Only (Most Common)Permalink for this section
+
+- Viable: Free tier with DraftKings + FanDuel
+
+- Pattern: Use ?is_live=false if you want to explicitly exclude in-play lines from your results
+
+- Note: Omitting the is_live parameter returns both pre-match and live odds mixed together
+
+Free tier is capped at 12 requests per 60 seconds, and Free odds are served on a 60-second data delay. That rules out live polling on Free, regardless of book — at a 5-second interval you would hit the cap in under a minute. Every paid tier is served undelayed and can poll live odds over REST; paid tiers differ by rate limit and book-count cap, not by live access. Real-time push over WebSocket is a separate add-on, not a tier.
+
+## RelatedPermalink for this section
+
+- Odds Snapshot — is_live query parameter reference
+
+- Sportsbooks — Full book list with has_live_odds and tier requirements
+
+- +EV Opportunities — Pre-computed +EV using Pinnacle as the sharp reference

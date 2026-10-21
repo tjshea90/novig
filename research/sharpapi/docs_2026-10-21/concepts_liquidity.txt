@@ -1,0 +1,60 @@
+Source: https://docs.sharpapi.io/en/concepts/liquidity/ (fetched 2026-10-21)
+
+# Liquidity and Limits
+
+SharpAPI surfaces every liquidity and limit signal we receive from upstream books. These fields are optional on /api/v1/odds rows because traditional sportsbooks and exchange-style books expose different data.
+
+## Fields on odds rowsPermalink for this section
+
+ | | Field | Type | Meaning | Emitting books
+ | max_bet | number | The largest size available on the row. On a traditional sportsbook, the maximum wager the book will accept on this market or selection at the current line. On an exchange-style book, the money resting at the best price — see below. | Pinnacle, Circa Sports, SBOBET, and exchange-style books that publish a size
+ | size_currency | string | ISO-4217 code the money figures on the row are denominated in: max_bet, best_bid_liquidity and total_liquidity. GBP on Betfair and Smarkets, USD on every other book that publishes a size. Never converted. | Exchange-style books that publish a size
+ | best_bid_liquidity | number | Money resting at the published price — what a taker can match without moving the price. On Polymarket, the money resting at the best bid instead — see below. | Exchange-style books that publish a size
+ | total_liquidity | number | Risk-able size summed across the whole book for the selection, not just the best price. | Exchange-style books that publish a size
+ | volume | number | Cumulative traded volume on the selection, in the exchange’s native units. | Kalshi, Novig, Robinhood
+ | volume_24h | number | Rolling 24-hour traded volume in the exchange’s native units. | Polymarket, Kalshi
+ | open_interest | number | Outstanding open contracts on the selection. | Kalshi, Robinhood
+ | exchange_token_id | string | Exchange-native token or market hash for downstream order routing. | Polymarket (token_id), SX Bet (marketHash)
+ | exchange | string | The venue a re-fronted market actually lives on, resolved per contract. | Robinhood (kalshi, rothera)
+
+These values are returned only when present in the source feed. Absence means the upstream book did not expose that signal for the row; it does not imply zero liquidity or a zero limit. For max_bet specifically, the book list above is a point-in-time snapshot: /api/v1/sportsbooks publishes the live per-book answer as has_limits, derived from each book’s current rows (null until rows have been observed).
+
+The exchange-side fields (volume, volume_24h, open_interest, and exchange_token_id) are liquidity proxies, not a full depth-of-book feed. Their units are not directly comparable across books.
+
+## Money figures on exchange rowsPermalink for this section
+
+An exchange quotes a price that only a finite amount of money can be matched at, so the size fields mean something different there than they do on a traditional sportsbook.
+
+- max_bet is the size resting at the best price, not a posted ceiling. A traditional sportsbook’s max_bet is the most it will accept on the market — a rule it has set. An exchange’s is how much money is actually sitting at the quoted price right now. The field name is the same; the fact is not. The presence of size_currency is what tells the two apart.
+
+- size_currency labels the currency. Nothing is converted. The number is the venue’s own figure in the venue’s own currency, handed through unchanged. Sorting or filtering exchanges by size without reading size_currency compares pounds against dollars.
+
+- One rule for all three money fields: absent means “the venue does not publish this figure”, and a number — including 0.0 — is a real measurement. Never read an absent field as zero, and never read a 0.0 as missing data.
+
+- On an exchange, max_bet appears only while money is resting at the best price. It tracks that resting size, so an empty best price arrives as best_bid_liquidity: 0.0 with no max_bet alongside it. Read that pair as one fact stated once — nothing is resting at the quoted price — not as a size that is unknown and zero at the same time. On these books max_bet: 0.0 is not sent, because it would read as the much stronger claim “this market accepts no wager”.
+
+- On Polymarket, best_bid_liquidity is the bid side and max_bet is the ask side. A Polymarket row is priced from the best ask, and max_bet is the money resting there. best_bid_liquidity is the money resting at the best bid on the same outcome — the best bid price times the shares bid there, in USD — so it says nothing about how much can be taken at the published price, and the two rarely match. It is never 0.0: when the best bid is empty, or its size is not yet known, the field is absent, so the 0.0-without-max_bet pair in the previous item does not occur on Polymarket.
+
+- Not every exchange publishes both depth figures. Some give the size at the best price only, some the whole-book total only. Neither can be derived from the other, so read each field rather than inferring one from the other.
+
+- Prices on Kalshi, Matchbook, ProphetX and Polymarket have a fee taken out; max_bet does not. On Kalshi, Matchbook and ProphetX odds_american and odds_decimal are the best price a bettor can take, with the venue’s fee or commission already taken out, so they reflect what a bettor actually receives after fees. A market whose fee cannot be determined is published at the price before the fee. On Polymarket the price is the best ask net of a flat 5% of winnings (a decimal price d is published as 1 + (d - 1) × 0.95) on every row. This is a fixed deduction, not Polymarket’s own fee schedule. max_bet is still the money resting at the venue’s own price, before the fee or deduction.
+
+## What we do not surfacePermalink for this section
+
+- Price-by-price order-book depth. Exchange-style books that publish depth give us the size at the best price (best_bid_liquidity) and a whole-book total (total_liquidity), both listed above. The full ladder — every price level with the size resting at each one — is not available on any endpoint today. Traditional sportsbooks do not operate a visible order book at all.
+
+- Pre-bet limit checks. No upstream book exposes a public “will this wager be accepted at this size” probe. On a traditional sportsbook max_bet is the book’s posted ceiling on the market; on an exchange-style book it is the size resting at the best price. Either way, the actual accept-or-reject decision is made at slip-submission time.
+
+- Real-time suspension reasons. When a book pulls a line, /api/v1/odds/delta can emit a removal and the row disappears from /api/v1/odds, but upstream feeds usually do not include a structured reason.
+
+## Detecting coverage gapsPermalink for this section
+
+If a customer-side coverage check relies on liquidity:
+
+- Filter /api/v1/odds by the books you care about.
+
+- For exchange-style books, filter rows where volume_24h or open_interest exceeds your minimum threshold.
+
+- For traditional books, use max_bet when emitted as a coarse limit signal.
+
+- For everything else, fall back to row presence: an odds row is a positive signal that the book is currently quoting that market.

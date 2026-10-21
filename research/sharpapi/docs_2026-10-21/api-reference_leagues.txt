@@ -1,0 +1,210 @@
+Source: https://docs.sharpapi.io/en/api-reference/leagues/ (fetched 2026-10-21)
+
+# Leagues
+
+Get a list of available leagues with optional sport filtering.
+
+GET /api/v1/leagues
+
+Requires an API key. Available on all tiers (Free included). Unauthenticated requests return 401.
+
+## Query ParametersPermalink for this section
+
+ | | Parameter | Type | Default | Description
+ | sport | string | all | Filter by sport (e.g., basketball, football)
+ | sportsbook | string | all | Restrict the league list and counts to one or more books (comma-separated), e.g. sportsbook=draftkings
+
+## Example RequestsPermalink for this section
+
+cURLJavaScriptPython
+
+### cURL
+
+# List all leagues
+curl -X GET "https://api.sharpapi.io/api/v1/leagues" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Filter by sport
+curl -X GET "https://api.sharpapi.io/api/v1/leagues?sport=basketball" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+### JavaScript
+
+const response = await fetch(
+ 'https://api.sharpapi.io/api/v1/leagues?sport=basketball',
+ { headers: { 'X-API-Key': 'YOUR_API_KEY' } },
+);
+const { data } = await response.json();
+
+data.forEach(league => {
+ console.log(`${league.display_name} (${league.sport}): ${league.event_count} events`);
+});
+
+### Python
+
+import requests
+
+response = requests.get(
+ 'https://api.sharpapi.io/api/v1/leagues',
+ params={'sport': 'basketball'},
+ headers={'X-API-Key': 'YOUR_API_KEY'},
+)
+result = response.json()
+
+for league in result['data']:
+ print(f"{league['display_name']} ({league['sport']}): {league['event_count']} events")
+
+## ResponsePermalink for this section
+
+### Success (200)Permalink for this section
+
+Real response for ?sport=basketball, truncated to the first three of ~140 basketball leagues:
+
+{
+ "data": [
+ {
+ "id": "nba",
+ "display_name": "NBA",
+ "numerical_id": 364,
+ "sport": "basketball",
+ "event_count": 414,
+ "live_count": 0
+ },
+ {
+ "id": "ncaab",
+ "display_name": "NCAAB",
+ "numerical_id": 366,
+ "sport": "basketball",
+ "event_count": 138,
+ "live_count": 0
+ },
+ {
+ "id": "wnba",
+ "display_name": "WNBA",
+ "numerical_id": 611,
+ "sport": "basketball",
+ "event_count": 98,
+ "live_count": 5
+ }
+ ],
+ "updated_at": "2026-07-02T18:17:55.590257979Z"
+}
+
+### All Leagues (No Filter)Permalink for this section
+
+Real response, truncated — the full unfiltered list currently returns 800+ leagues, ordered by event_count descending. Note the canonical slug form for soccer leagues (england_-_premier_league), and that numerical_id is omitted on unmapped entries (like the game grouping bucket below):
+
+{
+ "data": [
+ {
+ "id": "atp",
+ "display_name": "ATP",
+ "numerical_id": 15,
+ "sport": "tennis",
+ "event_count": 1008,
+ "live_count": 60
+ },
+ {
+ "id": "fifa_-_world_cup",
+ "display_name": "FIFA - World Cup",
+ "numerical_id": 197,
+ "sport": "soccer",
+ "event_count": 978,
+ "live_count": 0
+ },
+ {
+ "id": "nfl",
+ "display_name": "NFL",
+ "numerical_id": 376,
+ "sport": "football",
+ "event_count": 746,
+ "live_count": 0
+ },
+ {
+ "id": "mlb",
+ "display_name": "MLB",
+ "numerical_id": 354,
+ "sport": "baseball",
+ "event_count": 646,
+ "live_count": 14
+ },
+ {
+ "id": "game",
+ "display_name": "Game",
+ "sport": "soccer",
+ "event_count": 536,
+ "live_count": 0
+ },
+ {
+ "id": "england_-_premier_league",
+ "display_name": "England - Premier League",
+ "numerical_id": 163,
+ "sport": "soccer",
+ "event_count": 55,
+ "live_count": 0
+ }
+ ],
+ "updated_at": "2026-07-02T18:17:55.590257979Z"
+}
+
+## League Object SchemaPermalink for this section
+
+ | | Field | Type | Description
+ | id | string | League identifier (lowercase, use in API filters)
+ | numerical_id | integer | Stable integer key for the league (frozen, never reused; omitted when unmapped). New (May 2026) — additive, optional. See Entity reference IDs.
+ | display_name | string | Human-readable league name
+ | sport | string | Parent sport ID
+ | event_count | integer | Total events currently available with odds
+ | live_count | integer | Events currently live/in-play
+
+### New (May 2026): numerical_idPermalink for this section
+
+numerical_id is a frozen, dense-from-1 integer assigned per league in the SharpAPI atlas. The live catalog currently serves 800+ leagues across ~28 sports; mapped leagues carry the integer, unmapped ones omit it. Use it as a compact join/index key when storing rows in your own database.
+
+- Frozen: never reused or remapped.
+
+- Optional: omitted for leagues that haven’t been mapped yet — slug id is always present.
+
+- Domain-scoped: unique across leagues only.
+
+Every odds row and opportunity leg also carries a matching league_ref block ({id, label, numerical_id}) so you don’t need to second-fetch this endpoint just to label a row. See Entity reference IDs for the full contract.
+
+## Common LeaguesPermalink for this section
+
+The endpoint is the canonical source of truth — call GET /api/v1/leagues for the complete, up-to-date list. The live catalog currently returns 800+ leagues across ~28 sports including UEFA continental competitions, multiple basketball circuits per country, and full tennis/golf/MMA/esports/cricket coverage. The illustrative subset below shows the highest-volume entries you’ll typically filter on:
+
+ | | Sport | Common league IDs
+ | Basketball | nba, ncaab, wnba
+ | Football | nfl, ncaaf
+ | Hockey | nhl
+ | Baseball | mlb
+ | Soccer | england_-_premier_league, spain_-_la_liga, italy_-_serie_a, germany_-_bundesliga, france_-_ligue_1, uefa_-_champions_league, usa_-_major_league_soccer
+ | Tennis | atp, wta, atp_challenger, itf_men, itf_women
+ | MMA | ufc
+ | Golf | pga, dp_world_tour, world_tour
+
+- League IDs use canonical slug form (england_-_premier_league, not epl). Some short forms are accepted as filter input for backward compatibility, but the canonical slug is what /leagues returns and what other endpoints emit on response payloads.
+
+- The event_count and live_count values are dynamic. Off-season leagues (e.g., MLB in winter, WNBA in fall) show 0 events but stay in the catalog.
+
+- For programmatic access (e.g. building dropdown filters), call /api/v1/leagues and use the response — never hard-code a list.
+
+## Using Leagues in FiltersPermalink for this section
+
+Use the league id as a filter parameter on other endpoints:
+
+# Get NBA odds
+curl "https://api.sharpapi.io/api/v1/odds?league=nba" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+# Get best odds for NFL and NBA
+curl "https://api.sharpapi.io/api/v1/odds/best?league=nfl,nba" \
+ -H "X-API-Key: YOUR_API_KEY"
+
+## Related EndpointsPermalink for this section
+
+- Sports - List available sports
+
+- Odds Snapshot - Filter odds by league
+
+- Events - Filter events by league
