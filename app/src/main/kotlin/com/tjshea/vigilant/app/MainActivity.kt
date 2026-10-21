@@ -500,6 +500,11 @@ class MainActivity : ComponentActivity() {
      * Vigilant floating over it when the mini window is on. Falls back to Novig's app or site.
      */
     private fun openInNovig(row: CnoRow) {
+        // A Kalshi row (CK, 2026-10-21): CNO's own link to the bet at Kalshi, else Kalshi's site; never a Novig search.
+        if (com.tjshea.vigilant.data.cno.CnoVenueSource.isKalshi(row)) {
+            runCatching { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(row.betUrl ?: "https://kalshi.com/sports"))) }
+            return
+        }
         if (openingBet == row.key) return
         openingBet = row.key
         lifecycleScope.launch {
@@ -1089,5 +1094,6 @@ private fun CnoTab(
         opening = openingBet,
         onPause = vm::setPaused,
         onScope = { t -> vm.updateSettings { s -> s.copy(cnoFilters = s.cnoFilters.copy(scope = t(s.cnoFilters.scope))) } },
+        onVenues = { v -> vm.updateSettings { s -> s.copy(cnoFilters = s.cnoFilters.copy(venues = v)) } },
     )
 }

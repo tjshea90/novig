@@ -351,7 +351,15 @@ class AppContainer(val app: Application) {
 
     val cno = CnoFeed(
         // Its own client over the shared one: CNO's DNS fallback, short keep-alive, retry (CnoNetwork).
-        CnoClient(CnoNetwork.client(http, online = { NetKind.of(app) != NetKind.NONE })),
+        // Novig's and Kalshi's lists, each read through its own client (its own page session), merged (CK, 2026-10-21); the GitHub engine's list when the cloud scan drives (CloudCno).
+        com.tjshea.vigilant.data.cloud.SwitchingCnoSource(
+            local = com.tjshea.vigilant.data.cno.CnoVenueSource(
+                CnoClient(CnoNetwork.client(http, online = { NetKind.of(app) != NetKind.NONE })),
+                CnoClient(CnoNetwork.client(http, online = { NetKind.of(app) != NetKind.NONE })),
+            ),
+            cloud = cloudCno,
+            useCloud = { cloudCnoOn() },
+        ),
         JsonFileStore(File(app.filesDir, "cno.json"), CnoCache.serializer(), { CnoCache() }, json),
         linkStore = JsonFileStore(File(app.filesDir, "cno_links.json"), CnoLinks.serializer(), { CnoLinks() }, json),
         // Bet links from Novig's catalog first, so taps don't depend on CNO answering (Tj, 2026-09-27).
