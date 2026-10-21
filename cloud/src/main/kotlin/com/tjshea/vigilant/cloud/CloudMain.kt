@@ -369,8 +369,17 @@ fun main(args: Array<String>) = runBlocking {
         tell = { title, body -> runCatching { postMessage(CloudMessages.Message("kalshi-${System.currentTimeMillis()}", System.currentTimeMillis(), "engine", "alert", title, body.take(400), 1, "CLOUD")) } },
         log = log::invoke,
     )
+    // The API monitor (Tj, 2026-10-20, CH48): every API that is on is checked through its free account read every few minutes, a failing one again at once and then after 30 s, 1, 2, 5 min, on a loop of its own that no scan waits for.
+    val apiMonitor = com.tjshea.vigilant.data.cloud.ApiMonitor(sources.apiProbe, sources::keysOf)
+    scope.launch {
+        while (isActive) {
+            val s = latestSettings.get()
+            if (s != null && novigKeyed?.addressRefused(System.currentTimeMillis()) != true) runCatching { apiMonitor.tick(s) }
+            delay(10_000L)
+        }
+    }
     val engine = CloudEngine(
-        scanner = scanner, sources = sources::sources, config = { config.read() },
+        scanner = scanner, sources = sources::sources, config = { config.read() }, apiChecks = { apiMonitor.lines() },
         publish = { feed, status -> publisher.stage(feed, status) },
         // The bid desk's candidate lines (Tj, 2026-10-15), only while the phone has Vigilant-priced bids on: the fair side of every bid decision is made here, the phone adds Novig's books and posts.
         prepare = { s -> latestSettings.set(s); novigKeyed?.configure(s) },
