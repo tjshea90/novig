@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe | listen"
+        description: "plans | probe | listen | arbscan"
         default: "plans"
 
 permissions:
@@ -42,6 +42,12 @@ jobs:
               if [ -f out/parlay/REPORT.txt ]; then
                 gh release view parlay-samples >/dev/null 2>&1 || gh release create parlay-samples --title "ParlayAPI Pro samples (keyless)" --notes "Real answers of the Pro, live and arb endpoints, trimmed; written by .github/workflows/parlay.yml (task probe)."
                 gh release upload parlay-samples out/parlay/* --clobber
+              fi ;;
+            arbscan)
+              python3 -I tools/parlay.py arbscan out/parlay
+              if [ -f out/parlay/arbscan.json ]; then
+                gh release view parlay-samples >/dev/null 2>&1 || gh release create parlay-samples --title "ParlayAPI Pro samples (keyless)" --notes "Real answers of the Pro, live and arb endpoints, trimmed."
+                gh release upload parlay-samples out/parlay/arbscan.json --clobber
               fi ;;
             listen)
               python3 -I tools/parlay.py listen out/parlay "${SPORT:-tennis}"

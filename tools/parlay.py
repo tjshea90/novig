@@ -188,6 +188,43 @@ def cmd_listen(outdir, sport="tennis", wait_min=40, seconds=120):
     return 0
 
 
+def cmd_arbscan(outdir):
+    """Does ParlayAPI's arb feed ever pair the two venues Tj can bet (Novig and Kalshi)? Counts the book pairs of the pregame /arbitrage (200 per sport) and of /inplay/arbs; ~70 credits."""
+    keys = keys_from_env()
+    ranked = sorted(((usage_of(k), k) for k in keys), key=lambda t: -rank(t[0]))
+    if not ranked or ranked[0][0].get("status") != 200:
+        print("no usable key")
+        return 0
+    key = ranked[0][1]
+    os.makedirs(outdir, exist_ok=True)
+    pairs = {}
+    rows = []
+
+    def add(src, a, b, profit, mkt):
+        k = tuple(sorted((a or "?", b or "?")))
+        pairs[(src,) + k] = pairs.get((src,) + k, 0) + 1
+        if "kalshi" in k:
+            rows.append({"src": src, "a": a, "b": b, "profit": profit, "market": mkt})
+
+    for sp in ("basketball_nba", "icehockey_nhl", "baseball_mlb", "americanfootball_nfl", "americanfootball_ncaaf", "basketball_ncaab"):
+        st, h, data = request("/v1/sports/%s/arbitrage" % sp, key, {"limit": 200, "min_profit_pct": 0.1})
+        d = j(data)
+        for a in d if isinstance(d, list) else []:
+            if isinstance(a, dict):
+                add("pre:" + sp, (a.get("side_a") or {}).get("bookmaker"), (a.get("side_b") or {}).get("bookmaker"), a.get("profit_pct"), a.get("market_key"))
+        print(sp, st, len(d) if isinstance(d, list) else "?")
+    st, h, data = request("/v1/inplay/arbs", key)
+    d = j(data)
+    for a in (d.get("arbs", []) if isinstance(d, dict) else []):
+        add("inplay", (a.get("over") or {}).get("bookmaker"), (a.get("under") or {}).get("bookmaker"), a.get("profit_pct"), a.get("market_key"))
+    with open(os.path.join(outdir, "arbscan.json"), "w") as f:
+        json.dump({"pairs": sorted(([list(k), v] for k, v in pairs.items()), key=lambda t: -t[1])[:80], "kalshi_rows": rows[:50]}, f, indent=1)
+    print("pairs with kalshi:", len(rows), "total pair kinds:", len(pairs))
+    nov_k = [r for r in rows if "novig" in (r["a"], r["b"])]
+    print("novig+kalshi pairs:", len(nov_k))
+    return 0
+
+
 def selftest():
     assert keys_from_env({"PARLAY_API_KEY": "a, b;c\nd"}) == ["a", "b", "c", "d"]
     assert keys_from_env({}) == []
@@ -203,6 +240,8 @@ if __name__ == "__main__":
         sys.exit(selftest())
     if c == "plans":
         sys.exit(cmd_plans())
+    if c == "arbscan":
+        sys.exit(cmd_arbscan(sys.argv[2] if len(sys.argv) > 2 else "out/parlay"))
     if c == "listen":
         sys.exit(cmd_listen(sys.argv[2] if len(sys.argv) > 2 else "out/parlay", sys.argv[3] if len(sys.argv) > 3 else "tennis"))
     if c == "probe":
