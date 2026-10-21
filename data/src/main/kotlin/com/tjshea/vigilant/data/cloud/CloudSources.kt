@@ -159,7 +159,7 @@ class CloudSources(
     /** The free account reads of every API, the phone's Test now, run by the engine's [ApiMonitor]. */
     val apiProbe: com.tjshea.vigilant.data.keys.ApiProbe by lazy { com.tjshea.vigilant.data.keys.ApiProbe(http, usage, parlayAccount, pinnWireAccount = pinnWireAccountForProbe) }
     /** The keys of [p] this engine holds (from its secrets), for the monitor. */
-    fun keysOf(p: com.tjshea.vigilant.data.keys.ApiProvider): List<String> = CloudKeys.envFor(com.tjshea.vigilant.data.keys.ApiToggles0.policyIdOf(p))?.let { keys(it) }.orEmpty()
+    fun keysOf(p: com.tjshea.vigilant.data.keys.ApiProvider): List<String> = CloudKeys.BY_PROVIDER[p]?.let { keys(it) }.orEmpty()
     fun parlayPlans(): String = keys(CloudKeys.PARLAY).mapIndexedNotNull { i, k -> parlayAccount.last[k]?.let { c -> "#${i + 1} ${c.tier ?: "?"} ${c.remaining ?: "?"}/${c.limit ?: "?"}" } }.joinToString(", ").ifBlank { "none read" }
     suspend fun refreshParlayAccounts(force: Boolean = false): Int = if (has(CloudKeys.PARLAY)) parlayAccount.refresh(force, minAgeMs = 50 * 60_000L) else 0
     private val parlayQuality = ParlaySourceQuality(http, json)
