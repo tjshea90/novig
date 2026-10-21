@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "9473f03f290e2c190da31746736800932f419dc9",
+ "head": "01bc3ee0f22b3b88b564899138f0ecbe634b5677",
  "since": 1792596542,
- "beat": 1792625363,
- "beatIso": "2026-10-21T23:29:23Z",
- "done": "SA4a: SharpApiLiveFeed (Pinnacle live from the store as Pinnodds frames, 1 s), PinnFeedChoice.SHARPAPI on engine and phone, gates.sharpApiLiveReal (default off = paper), live leagues polled every 1 s; SharpApiLiveFeedTest green",
- "next": "SA4b: closing-line + EV-at-Novig journals on the engine, account usage hourly; CHANGES.md; CLAUDE.md; full floor; ship"
+ "beat": 1792625428,
+ "beatIso": "2026-10-21T23:30:28Z",
+ "done": "pre-release: v1.0.42: SharpAPI Sharp plan: the engine keeps a copy of 25 books (Pinnacle, Circa, Bookmaker, Betfair, ProphetX...) current every 2 s, SharpAPI Pinnacle as a live feed, closing lines + SharpAPI +EV journals, Circa/Bookmaker sharp (versionCode 382, v1.0.42)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.42), then run: bash tools/record-release.sh v1.0.42 382 \"v1.0.42: SharpAPI Sharp plan: the engine keeps a copy of 25 books (Pinnacle, Circa, Bookmaker, Betfair, ProphetX...) current every 2 s, SharpAPI Pinnacle as a live feed, closing lines + SharpAPI +EV journals, Circa/Bookmaker sharp\""
 }
