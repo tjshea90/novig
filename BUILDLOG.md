@@ -377,3 +377,4 @@ day that changes.
 | v1.0.36 | code 376 | 2026-10-21T17:10Z | v1.0.36: feed-level API problems on the API card, order grading fix, FCS games in NCAAF grading, volume report tool
 | v1.0.37 | code 377 | 2026-10-21T17:36Z | v1.0.37: sharp-confirmed bids step their margin down to 1.5% under the sharp book as the game nears (CH59)
 | v1.0.38 | code 378 | 2026-10-21T19:21Z | v1.0.38: API card trusts a fresh accepted key check over a stale refusal (BoltOdds card)
+| v1.0.39 | code 379 | 2026-10-21T21:19Z | v1.0.39: engine closes BoltOdds/Kalshi/SX sockets cleanly on job end or cancel; a 'too many concurrent connections' close no longer marks the BoltOdds key refused
