@@ -222,3 +222,32 @@ class SharpApiLiveFeedTest {
         assertEquals(0, lf.liveGames)
     }
 }
+
+/** The extras read the docs' own example answers (SHARPAPI.md §3). */
+class SharpApiExtrasTest {
+    @Test
+    fun `a closing snapshot gives every book's close with SharpAPI's devigged fair`() {
+        val body = Json.parseToJsonElement(
+            """{"success":true,"data":{"event_id":"mlb_athletics_mariners_2026-04-22","sport":"baseball","league":"mlb","home_team":"Seattle Mariners","away_team":"Athletics","event_start_time":"2026-04-22T22:10:00Z","captured_at":"2026-04-22T22:09:58.412Z","books":{"pinnacle":{"captured_at":"2026-04-22T22:09:50.120Z","seconds_before_kickoff":8,"capture_trigger":"kickoff","is_final":true,"odds":[{"sportsbook":"pinnacle","market_type":"moneyline","selection":"Seattle Mariners","selection_type":"home","line":null,"odds_american":-158,"odds_decimal":1.633,"implied_probability":0.6122,"no_vig_probability":0.5980,"fair_close_decimal":1.6722,"closing_probability":0.5980,"source_updated_at":"2026-04-22T22:09:46.300Z"}]}}},"meta":{"source":"valkey"}}""",
+        ).jsonObject
+        val c = SharpApiExtras.parseClosings(body, 1L).single()
+        assertEquals("pinnacle", c.book)
+        assertEquals(0.598, c.closingProbability!!, 1e-9)
+        assertEquals("kickoff", c.trigger)
+        assertEquals("home", c.selectionType)
+        assertTrue(SharpApiExtras.parseClosings(Json.parseToJsonElement("""{"success":true,"data":{"event_id":"x","books":{}}}""").jsonObject, 1L).isEmpty())
+    }
+
+    @Test
+    fun `an EV row keeps the fields a study needs`() {
+        val body = Json.parseToJsonElement(
+            """{"data":[{"id":"h","event_id":"nba_x","ev_percentage":4.2,"odds_american":105,"odds_decimal":2.05,"fair_probability":0.51,"sharp_book":"pinnacle","cross_ref_count":2,"selection":"Over","display_selection":"Over 27.5","market_type":"player_points","line":27.5,"sportsbook":"novig","league":"nba","home_team":"A","away_team":"B","start_time":"2026-02-08T19:00:00Z","is_live":false,"player_name":"Jayson Tatum","quality_tier":"B","warnings":["SINGLE_SHARP_REF"],"oldest_odds_age_seconds":12.5,"kelly_percent":2.1}],"pagination":{"has_more":false}}""",
+        ).jsonObject
+        val e = SharpApiExtras.parseEv(body, 5L).single()
+        assertEquals("Over 27.5", e.selection)
+        assertEquals(4.2, e.evPercent!!, 1e-9)
+        assertEquals("Jayson Tatum", e.player)
+        assertEquals(listOf("SINGLE_SHARP_REF"), e.warnings)
+        assertEquals(2, e.crossRefs)
+    }
+}
