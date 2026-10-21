@@ -40,14 +40,16 @@ object MakerGuard {
 
     /** The newest [window] of [bids]' fills judged since [fromMs] (the guard's own start: Tj's last Resume), and what they say. */
     fun check(bids: List<MakerBid>, fromMs: Long = 0L, anchorSharp: Boolean = true, window: Int = 8): Verdict {
-        val fills = bids.filter { it.filled > 0 && it.fillEv(anchorSharp) != null && (it.firstFillAtMs ?: 0L) >= fromMs && (it.firstFillAtMs ?: 0L) > 0L }
-            .sortedByDescending { it.firstFillAtMs }.take(window)
+        val all = bids.filter { it.filled > 0 && it.fillEv(anchorSharp) != null && (it.firstFillAtMs ?: 0L) >= fromMs && (it.firstFillAtMs ?: 0L) > 0L }
+        // Count GAMES, not fills (CLAUDE.md: "counting games not bets"; Tj, 2026-10-21): three spread lines of one NBA game filled together when the market moved once, and that one move stopped every bid on every league.
+        val fills = all.groupBy { it.eventId }.values.map { g -> g.maxByOrNull { it.firstFillAtMs ?: 0L }!! to g.map { it.fillEv(anchorSharp)!! }.average() }
+            .sortedByDescending { it.first.firstFillAtMs }.take(window)
         if (fills.isEmpty()) return Verdict(0, 0, null, null, false)
-        val evs = fills.map { it.fillEv(anchorSharp)!! }
+        val evs = fills.map { it.second }
         val picked = evs.count { it < 0.0 }
         val mean = evs.average()
         val tripped = fills.size >= MIN_JUDGED && picked * 2 >= fills.size && mean < MIN_MEAN_EV
-        return Verdict(fills.size, picked, mean, fills.map { it.evAtFair }.average(), tripped)
+        return Verdict(fills.size, picked, mean, fills.map { it.first.evAtFair }.average(), tripped)
     }
 
     /** The stop's own words (kept on the setting, shown on the tab): [Verdict.text] and what to do. */
