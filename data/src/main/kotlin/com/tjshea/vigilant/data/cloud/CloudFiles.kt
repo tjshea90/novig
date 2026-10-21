@@ -156,6 +156,10 @@ data class CloudStatus(
     val feedReportAtMs: Long = 0L,
     /** The engine's own live check of every API (switch state, last check, how it went): [ApiMonitor]. */
     val apiChecks: List<ApiCheckLine> = emptyList(),
+    /** What the API manager is doing about APIs whose check fails ([ApiManager], XO1: restarted, asked for a fresh runner, switched off) and how many fresh runners it has asked for in a row per API (carried from job to job, with the time of the newest). */
+    val apiManager: List<ApiFix> = emptyList(),
+    val apiHandovers: Map<String, Int> = emptyMap(),
+    val apiHandoverAtMs: Long = 0L,
     /** What to refill, buy, fix or switch off ([ApiAdvisor]), most urgent first; empty = nothing to do. */
     val advice: List<ApiAdvisor.Advice> = emptyList(),
     /** APIs the engine is resting to save usage, in words ("ParlayAPI until 22:30 UTC: answered nothing for 3 scans in a row"), and the switch ids it has asked the phone to turn off ([ApiGovernor]). */
