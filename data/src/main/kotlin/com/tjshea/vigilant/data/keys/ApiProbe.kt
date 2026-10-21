@@ -8,6 +8,9 @@ import com.tjshea.vigilant.data.reference.SgoUsage
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.sync.withPermit
 
 /**
  * Asks each API, key by key, whether the key is alive and accepted, and, where the API offers a prompt that says how much is left, reads it and writes it straight into the usage meter (Tj, 2026-10-11:
@@ -49,26 +52,61 @@ class ApiProbe(
         val polymarket: String = "https://gamma-api.polymarket.com",
     )
 
-    /** One key's answer: [ok] = alive and accepted; [message] says so in words, with what is left when the API told. */
-    data class Check(val masked: String, val ok: Boolean, val message: String)
-
-    /** Every key of [provider], one at a time (the APIs' own limits are respected by the gap between keys). */
-    suspend fun check(provider: ApiProvider, keys: List<String>): List<Check> {
-        if (keys.isEmpty()) return listOf(Check("", false, "No key saved."))
-        return keys.map { key ->
-            val masked = UsageViews.mask(key)
-            try {
-                one(provider, key.trim()).let { (ok, msg) ->
-                    // A key the API just accepted is no longer refused, whichever API it is: the rotation tries it again on the very next call.
-                    if (ok) policyOf(provider)?.let { meter.recordAccepted(it, key.trim()) }
-                    Check(masked, ok, msg)
+    /** One key's answer: [ok] = alive and accepted; [message] says so in words, with what is left when the API told; [kind] is why, for the engine's API manager (XO1). */
+    data class Check(val masked: String, val ok: Boolean, val message: String, val kind: Kind = Kind.of(ok, message)) {
+        /**
+         * What a check found, in the terms the manager acts on: a REFUSED key is the provider's word (or an address it does not like: a fresh runner may help); UNREACHABLE is no answer at all (a restart and
+         * a fresh runner may help); SPENT and THROTTLED are about allowances (waiting helps, a fresh runner does not); ERROR is any other answer that was not the account (a 5xx).
+         */
+        enum class Kind { OK, REFUSED, UNREACHABLE, SPENT, THROTTLED, ERROR;
+            companion object {
+                fun of(ok: Boolean, message: String): Kind {
+                    val m = message.lowercase()
+                    return when {
+                        ok && ("used up" in m || "are used up" in m || "credits are used" in m) -> SPENT
+                        ok && ("rate limited" in m || "limit was hit" in m) -> THROTTLED
+                        ok -> OK
+                        m.startsWith("refused") || "not accepted" in m || m.startsWith("not valid") || "plan is not active" in m || "inactive" in m -> REFUSED
+                        m.startsWith("could not be reached") || "no answer" in m -> UNREACHABLE
+                        else -> ERROR
+                    }
                 }
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Check(masked, false, "Could not be reached (${(e.message ?: e.javaClass.simpleName).take(80)}).")
             }
         }
+    }
+
+    /**
+     * Every key of [provider], asked a few at a time ([parallelFor]) with a deadline of its own ([keyTimeoutMs]): one slow or silent key never takes the others' answers with it, and ten ParlayAPI keys no
+     * longer need a minute (Tj, 2026-10-21: the engine's check timed out as a whole and the card said "no connection" while the scans used the API). The APIs' own limits are respected: the keys of the APIs
+     * that count a request per check (PinnWire, pinnapi) go two at a time. Results are in the order of [keys].
+     */
+    suspend fun check(provider: ApiProvider, keys: List<String>, keyTimeoutMs: Long = KEY_TIMEOUT_MS): List<Check> {
+        if (keys.isEmpty()) return listOf(Check("", false, "No key saved."))
+        val gate = kotlinx.coroutines.sync.Semaphore(parallelFor(provider))
+        return kotlinx.coroutines.coroutineScope {
+            keys.map { key -> async { gate.withPermit { checkKey(provider, key, keyTimeoutMs) } } }.awaitAll()
+        }
+    }
+
+    private suspend fun checkKey(provider: ApiProvider, key: String, keyTimeoutMs: Long): Check {
+        val masked = UsageViews.mask(key)
+        return try {
+            val answer = kotlinx.coroutines.withTimeoutOrNull(keyTimeoutMs) { one(provider, key.trim()) }
+                ?: return Check(masked, false, "Could not be reached (no answer within ${keyTimeoutMs / 1000} s).")
+            val (ok, msg) = answer
+            // A key the API just accepted is no longer refused, whichever API it is: the rotation tries it again on the very next call.
+            if (ok) policyOf(provider)?.let { meter.recordAccepted(it, key.trim()) }
+            Check(masked, ok, msg)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Check(masked, false, "Could not be reached (${(e.message ?: e.javaClass.simpleName).take(80)}).")
+        }
+    }
+
+    private fun parallelFor(provider: ApiProvider): Int = when (provider) {
+        ApiProvider.PINNWIRE, ApiProvider.PINNAPI -> 2
+        else -> 4
     }
 
     /** The keyless feeds: reachable or not. */
@@ -153,8 +191,8 @@ class ApiProbe(
         }
         ApiProvider.PARLAY -> {
             val pa = parlayAccount ?: return false to "ParlayAPI account reader is not available."
-            pa.refresh(force = true)
-            val c = pa.last[key]
+            // This key's account only (XO1): reading every key's account once per key was N x N requests.
+            val c = pa.readOne(key)
             when {
                 c == null -> false to "Could not read this key's account (no answer, or the key is not accepted)."
                 c.valid == false -> false to "Not valid: ${c.reason ?: "refused"}."
@@ -254,5 +292,10 @@ class ApiProbe(
                 else -> false to "Answered HTTP ${r.code}."
             }
         }
+    }
+
+    companion object {
+        /** How long one key's check may take before it counts as no answer (the engine's runner and a phone on mobile data both answer an account read in well under this). */
+        const val KEY_TIMEOUT_MS = 12_000L
     }
 }
