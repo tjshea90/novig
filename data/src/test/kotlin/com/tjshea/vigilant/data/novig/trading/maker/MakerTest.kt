@@ -2253,7 +2253,7 @@ class MakerTest {
 
     @Test
     fun `a bid confirmed by a fresh sharp read steps its margin down as the game nears, never under 1_5 percent of the sharp fair (Tj 2026-10-21)`() {
-        val sharp = line(fair = 0.52, offer = 0.60).copy(sharpFairs = listOf(0.52), fairNewestMs = now - 30_000)
+        val sharp = line(fair = 0.52, offer = 0.60).copy(sharpFairs = listOf(0.52), fairNewestMs = now - 30_000, fairAsOfMs = now - 60_000)
         val usual = MakerQuote.decide(sharp, rules.copy(sharpRelax = false), now) as MakerDecision.Post
         val relaxed = MakerQuote.decide(sharp, rules, now) as MakerDecision.Post
         assertTrue("6 h out is part-way: a higher bid than the usual margin's", relaxed.price > usual.price)
@@ -2265,6 +2265,7 @@ class MakerTest {
         val stale = sharp.copy(fairNewestMs = now - 10 * 60_000L)
         assertEquals(usual.price, (MakerQuote.decide(stale, rules, now) as MakerDecision.Post).price, 0.0)
         // No sharp book, no step-down.
-        assertEquals(usual.price, (MakerQuote.decide(sharp.copy(sharpFairs = emptyList()), rules, now) as MakerDecision.Post).price, 0.0)
+        assertEquals(usual.price, (MakerQuote.decide(sharp.copy(sharpFairs = emptyList()), rules, now) as MakerDecision.Post).price, 0.0)        // A fresh soft book does not make a sharp price minutes old fresh (full test 2026-10-21): every book behind the fair must be within 3 minutes.
+        assertEquals(usual.price, (MakerQuote.decide(sharp.copy(fairAsOfMs = now - 5 * 60_000L), rules, now) as MakerDecision.Post).price, 0.0)
     }
 }
