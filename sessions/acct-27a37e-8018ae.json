@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "63db3e81f6651fd074db77458a8e763ee5077cd9",
+ "head": "ab65f67cfd387c53b3d8529f5fbaf77e460b0f40",
  "since": 1792596542,
- "beat": 1792624901,
- "beatIso": "2026-10-21T23:21:41Z",
- "done": "SA2/SA3 tested: SharpApiTest (6: lines, pairs, excluded books, live split, store load+delta, 401/429); toggle/schema/pages tests updated; full floor green",
- "next": "SA4: SharpApiLiveFeed (Pinnacle live from the store as Pinnodds frames) + PinnFeedChoice.SHARPAPI on the engine; closing-line + EV journals; CHANGES.md; ship"
+ "beat": 1792625031,
+ "beatIso": "2026-10-21T23:23:51Z",
+ "done": "SA4a: SharpApiLiveFeed (Pinnacle live from the store as Pinnodds frames, 1 s), PinnFeedChoice.SHARPAPI on engine and phone, gates.sharpApiLiveReal (default off = paper), live leagues polled every 1 s; SharpApiLiveFeedTest green",
+ "next": "SA4b: closing-line + EV-at-Novig journals on the engine, account usage hourly; CHANGES.md; CLAUDE.md; full floor; ship"
 }
