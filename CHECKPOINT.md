@@ -1,10 +1,10 @@
-# CHECKPOINT 3884 — read me first, then TASKS.md
+# CHECKPOINT 3885 — read me first, then TASKS.md
 
-**Written:** 2026-10-21T04:58:26Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-7dry2r` · **builds on:** `2d322251e` (this checkpoint is the commit after it)
+**Written:** 2026-10-21T05:01:41Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-7dry2r` · **builds on:** `28ce4fa12` (this checkpoint is the commit after it)
 
 ## Just done
-CH53: bid wallet target = the max the user sets
+fix MakerTest for deployPct 1.0
 
 ## Do this next
 ship v1.0.31
@@ -13,10 +13,11 @@ ship v1.0.31
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/build.gradle.kts
+     M data/src/test/kotlin/com/tjshea/vigilant/data/novig/trading/maker/MakerTest.kt
 
 ## Last ten checkpoints
 ```
+  28ce4fa12 ckpt 3884: CH53: bid wallet target = the max the user sets
   81914c18b ckpt 3883: pre-release: v1.0.30: refresh arrow flashes, status bar names what is loadi
   b610dc97e ckpt 3882: CH52: pull arrow flashes 1s, status bar shows read in flight
   db4acd910 ckpt 3881: pre-release: v1.0.29: pull-to-refresh deadlines, Stopping headline when swi
@@ -26,8 +27,4 @@ ship v1.0.31
   70c7ac506 ckpt 3878: v1.0.28 laned scan shipped, release.yml triggered
   47a50bfcf ckpt 3877: pre-release: v1.0.28: laned scan on the engine: quick 48 h scans between fu
   6e76f9766 ckpt 3876: pre-ship: v1.0.28: laned scan on the engine: quick 48 h scans between full 
-  7a72f94db ckpt 3875: pre-ship: v1.0.28: laned scan on the engine: quick 48 h scans between full 
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)

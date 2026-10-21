@@ -1071,7 +1071,7 @@ class MakerTest {
         assertTrue(volume.volume)
         assertEquals(BidVolume.MAX_BIDS, volume.maxBids)
         assertEquals("any start time", 0, volume.earlyHours)
-        assertEquals("the stake scale-up target is kept", 0.9, MakerRules.of(ScanSettings(maker = true, vigGuards = ScanGuards(bidVolume = true, bidDeploy = true))).deployPct, 1e-9)
+        assertEquals("the stake scale-up target is the whole allowed wallet", 1.0, MakerRules.of(ScanSettings(maker = true, vigGuards = ScanGuards(bidVolume = true, bidDeploy = true))).deployPct, 1e-9)
         assertFalse("off: the usual rules", MakerRules.of(ScanSettings(maker = true, vigGuards = ScanGuards(bidVolume = false))).volume)
         // The safest types (a proven NHL prop with a sharp book) bid at 1.5% under the fair; a risky one (an NFL prop) and a line with no sharp book at 2.5%.
         val safe = line("s-over", fair = 0.60, offer = 0.70, m = market("s")).copy(league = "NHL", sharpFairs = listOf(0.60), books = 5, bookFairs = listOf(0.60, 0.60, 0.60, 0.60, 0.60))
