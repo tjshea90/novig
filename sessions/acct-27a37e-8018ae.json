@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "cc2080cb68e7e1e561a4e5bef3bdaea5d8c3076b",
+ "head": "c27ca88b9affe2d7e62ba0ba372f140c22521720",
  "since": 1792596542,
- "beat": 1792625478,
- "beatIso": "2026-10-21T23:31:18Z",
+ "beat": 1792625519,
+ "beatIso": "2026-10-21T23:31:59Z",
  "done": "SA done: v1.0.42 shipped (release building); SharpAPI on engine (store + delta), live feed, extras, Settings page; awaiting Tj's key on GitHub",
  "next": "after Tj sends the key: read engine-log 'SharpAPI:' line (plans, rows held, delta reads), first apiq numbers for circa/bookmaker/pinnacle, fix SHARPAPI.md where the live answers differ"
 }
