@@ -1,7 +1,7 @@
-# CHECKPOINT 3875 — read me first, then TASKS.md
+# CHECKPOINT 3876 — read me first, then TASKS.md
 
-**Written:** 2026-10-21T01:49:37Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-byd011` · **builds on:** `8979c1643` (this checkpoint is the commit after it)
+**Written:** 2026-10-21T01:58:21Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-byd011` · **builds on:** `7a72f94db` (this checkpoint is the commit after it)
 
 ## Just done
 pre-ship: v1.0.28: laned scan on the engine: quick 48 h scans between full ones keep near games' fair and Novig prices minutes old (CH50b)
@@ -13,10 +13,11 @@ ship.sh gates and releases this
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  7a72f94db ckpt 3875: pre-ship: v1.0.28: laned scan on the engine: quick 48 h scans between full 
   527e1969a ckpt 3874: pre-release: v1.0.27: ParlayAPI Pro joins the hot refresh for games about t
   50bf38c59 ckpt 3873: pre-ship: v1.0.27: ParlayAPI Pro joins the hot refresh for games about to s
   6cf469132 ckpt 3872: v1.0.26 released; TennisModel math + tests
@@ -26,8 +27,4 @@ ship.sh gates and releases this
   aba37be79 ckpt 3868: PARLAY_API.md section 10 (Pro facts)
   d951d81da ckpt 3867: CH48/49: tests updated; reply sent
   85911a6b5 ckpt 3866: CH48 tests, CH49 spend tally, parlay.yml arbscan
-  498f11bba ckpt 3865: CH48 ApiState cards in app; CLAUDE.md phone=monitor rule; CH49 logged
 ```
-
-(3 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
