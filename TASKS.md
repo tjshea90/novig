@@ -6073,3 +6073,4 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [~] CH47f tennis: the engine keeps ParlayAPI's tennis PBP stream open and records raw frames (pbplive-<day>.jsonl in cloud-archive Releases); no tennis was live 00:20-00:58 UTC. NEXT SESSION: read the first real tennis frames, then build the live tennis model in PAPER before any real tennis bet or bid
 - [x] CH48 API monitor rebuilt (ApiMonitor engine checks, ApiState lights, ApiStateTest, ApiMonitorTest, DashboardUiTest) v1.0.26
 - [x] CH49 Odds API: scarce feeds gap-fill every 3 h (was 30 min), per-purpose spend tally logged hourly ("Spend:" in engine log): NEXT: read first day of numbers, cut purposes others serve
+- [x] CH47f1 TennisModel (engine, pure maths + TennisModelTest): game/tiebreak/set/match win prob from score+serve, calibrate(pregame prob). NOT wired to a feed or money: needs real frames
