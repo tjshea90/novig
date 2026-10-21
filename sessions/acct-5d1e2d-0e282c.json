@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-7dry2r",
- "head": "7a77e6bb472bf2f4987709992130c20bd5a56251",
+ "head": "dacae384c51ce1d46fd4d22ee0672051192b0a41",
  "since": 1792539161,
- "beat": 1792560293,
- "beatIso": "2026-10-21T05:24:53Z",
- "done": "pre-release: v1.0.33: Kalshi funnel card (where the scan loses lines), Live tab socket note (versionCode 373, v1.0.33)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.33), then run: bash tools/record-release.sh v1.0.33 373 \"v1.0.33: Kalshi funnel card (where the scan loses lines), Live tab socket note\""
+ "beat": 1792560339,
+ "beatIso": "2026-10-21T05:25:39Z",
+ "done": "CH57 design written",
+ "next": "tools/clv_consensus.py (pure+selftest) over existing lines + propline archive"
 }
