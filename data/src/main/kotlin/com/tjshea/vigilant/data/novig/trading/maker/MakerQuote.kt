@@ -108,6 +108,8 @@ data class MakerRules(
     val requireSharp: Boolean = false,
     /** The margin is under the lower of the blended fair and the sharpest book's own fair, not the blend alone ([ScanSettings.makerAnchorSharp]). */
     val anchorSharp: Boolean = true,
+    /** Sharp-confirmed bids step their margin down toward [MakerQuote.SHARP_RELAX_FLOOR] as the game nears (not a Settings switch yet; tests turn it off). */
+    val sharpRelax: Boolean = true,
     /** "Quick & likely to win" ([QuickLikely]): the rules are already narrowed, and the bids that go up first are the ones most likely to fill and win. */
     val quick: Boolean = false,
     /**
@@ -579,12 +581,13 @@ object MakerQuote {
             is Pre.Price -> { obscure = pre.obscure; pre.price to pre.until }
         }
         // A small-market bid is posted under a wider margin: never under the normal one.
-        val margin = marginOf(line, rules, obscure)
+        val relaxed = sharpRelaxedMargin(line, rules, now, marginOf(line, rules, obscure), obscure)
+        val margin = relaxed ?: marginOf(line, rules, obscure)
         fun skip(why: String) = MakerDecision.Skip(line, why)
         val blend = line.fair!!
         // The margin is under the lower of the blend and the sharpest book's own fair (only lines with their books' fairs worked out get here: [MakerLines.from]).
         val fair = MakerRules.anchorOf(blend, line.sharpFairs, rules.anchorSharp)
-        val price = if (fair < blend - 1e-12) PriceGrid.floor(fair / (1.0 + margin)) ?: return skip("The sharp book's price is too small to bid under") else blendPrice
+        val price = if (fair < blend - 1e-12 || relaxed != null) PriceGrid.floor(fair / (1.0 + margin)) ?: return skip("The sharp book's price is too small to bid under") else blendPrice
         outsideWindow(price, rules)?.let { return skip(it) }
         rules.profit?.judge(ProfitProfile.Instrument.BID, line.league, line.kind.label, line.selection, blend / price - 1.0, (line.startsTs - now) / 60_000L)?.blocked?.let { return skip("Not bid: $it") }
         if (line.kind in MakerRules.GAME_LINES && line.sharpFairs.isEmpty()) return skip("Game lines need a sharp book (Pinnacle, Circa …) in the fair")
@@ -597,7 +600,7 @@ object MakerQuote {
         if (rules.novigMove) line.novigMove?.let { m -> com.tjshea.vigilant.data.scanner.TrapGuard.moveReason(line.kind, m)?.let { return skip(it) } }
         if (rules.sharpVeto) {
             if (line.sharpFairs.any { it <= price + 1e-9 }) return skip("A sharp book's own price says this bid isn't +EV")
-            if (line.sharpFairs.any { !com.tjshea.vigilant.data.scanner.SharpVeto.passes(it / price - 1.0, rules.sharpMinEv) }) {
+            if (line.sharpFairs.any { !com.tjshea.vigilant.data.scanner.SharpVeto.passes(it / price - 1.0, if (relaxed != null) minOf(rules.sharpMinEv, SHARP_RELAX_FLOOR) else rules.sharpMinEv) }) {
                 return skip("A sharp book's own price gives this bid under the sharp veto's ${percent(rules.sharpMinEv)} edge")
             }
         }
@@ -628,6 +631,27 @@ object MakerQuote {
         val contracts = floor(stake / (price * EvMath.CONTRACT_PAYOUT_DOLLARS) + 1e-9).toLong()
         if (contracts < 1) return skip("The stake is too small for one contract")
         return MakerDecision.Post(line, price, contracts, fair / price - 1.0, until, anchorFair = fair, obscure = obscure)
+    }
+
+    /** Lowest margin (under the sharp book's own fair) a sharp-confirmed bid steps down to (Tj, 2026-10-21, chat: "lower the EV gradually ... to a limit of 1.5% under the sharp book"). */
+    const val SHARP_RELAX_FLOOR = 0.015
+    /** The step-down runs from this many hours before the start (the usual margin) to [SHARP_RELAX_END_H] (the floor). */
+    const val SHARP_RELAX_START_H = 12.0
+    const val SHARP_RELAX_END_H = 2.0
+    /** A sharp-confirmed read must be this fresh (ms) for the step-down. */
+    const val SHARP_RELAX_FRESH_MS = 90_000L
+
+    /**
+     * The margin of a bid confirmed by a fresh read with a sharp book in the fair, stepped down toward [SHARP_RELAX_FLOOR] as the game nears; null = not applicable
+     * (switch off, small market, volume mode, no sharp book, read not fresh, or [usual] already at or under the floor).
+     */
+    fun sharpRelaxedMargin(line: MakerLine, rules: MakerRules, now: Long, usual: Double, obscure: Boolean): Double? {
+        if (!rules.sharpRelax || obscure || rules.volume || line.sharpFairs.isEmpty() || usual <= SHARP_RELAX_FLOOR) return null
+        val newest = line.fairNewestMs ?: return null
+        if (now - newest > SHARP_RELAX_FRESH_MS) return null
+        val hours = (line.startsTs - now) / 3_600_000.0
+        val t = ((SHARP_RELAX_START_H - hours) / (SHARP_RELAX_START_H - SHARP_RELAX_END_H)).coerceIn(0.0, 1.0)
+        return usual + (SHARP_RELAX_FLOOR - usual) * t
     }
 
     /** The margin a bid on [line] is posted under: the rules' own, a small market's wider one, and (tiered bids) the tier's extra points. */
