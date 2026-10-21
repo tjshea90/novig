@@ -16,6 +16,12 @@ class DashboardModelTest {
     ).f()
 
     @Test
+    fun `a beating engine whose switch is off is stopping, not running`() {
+        assertEquals("Stopping: switched off", DashboardModel.headline(st(), now, switchedOff = true).title)
+        assertEquals("Running", DashboardModel.headline(st(), now, switchedOff = false).title)
+    }
+
+    @Test
     fun `the headline says what the engine is doing and when it is not to be trusted`() {
         assertEquals("Not connected", DashboardModel.headline(null, now).title)
         assertEquals(Tone.GOOD, DashboardModel.headline(st(), now).tone)
