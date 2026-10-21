@@ -251,3 +251,55 @@ class SharpApiExtrasTest {
         assertEquals(2, e.crossRefs)
     }
 }
+
+/** SharpAPI's WebSocket (SS): the per-book snapshot fills the store, compact deltas merge by id, removals delete, game state becomes the live lane's score. */
+class SharpApiStreamTest {
+    private var now = java.time.Instant.parse("2026-10-25T23:30:00Z").toEpochMilli()
+
+    private fun obj(s: String) = Json.parseToJsonElement(s).jsonObject
+
+    @Test
+    fun `frames go into the store and the score board`() {
+        val feed = SharpApiFeed(SharpApiClient(OkHttpClient(), Json, { "" }), clock = { now })
+        val scores = SharpApiScores(clock = { now })
+        val st = SharpApiStream(OkHttpClient(), { "sk_test_FAKE" }, feed, scores, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined), clock = { now })
+        st.handle(obj("""{"type":"connected","stream_id":"ws_x","global_seq":"10","features":{"ev":true}}"""))
+        assertTrue(st.live)
+        st.handle(obj("""{"type":"initial","source":"pinnacle","data":[{"id":"p1","sportsbook":"pinnacle","event_id":"nfl_chiefs_raiders_2026-10-25_b3","league":"nfl","home_team":"Kansas City Chiefs","away_team":"Las Vegas Raiders","market_type":"moneyline","selection":"Kansas City Chiefs","selection_type":"home","odds_decimal":1.5,"event_start_time":"2026-10-25T23:00:00Z","timestamp":"2026-10-25T23:29:58Z","is_live":true}],"count":1}"""))
+        assertEquals(1.5, feed.rows("nfl").single().decimal, 1e-9)
+        // A compact delta: only the id and what changed.
+        st.handle(obj("""{"type":"odds:update","source":"pinnacle","data":[{"id":"p1","odds_decimal":1.62,"odds_american":-161,"timestamp":"2026-10-25T23:30:00Z"},{"id":"unknown","odds_decimal":2.0}],"count":2}"""))
+        val r = feed.rows("nfl").single()
+        assertEquals(1.62, r.decimal, 1e-9)
+        assertTrue(r.live)
+        assertEquals(1L, feed.streamMissed)
+        st.handle(obj("""{"type":"odds:locked","source":"pinnacle","data":[{"id":"p1","is_active":false}]}"""))
+        assertFalse(feed.rows("nfl").single().active)
+        st.handle(obj("""{"type":"odds:removed","source":"pinnacle","ids":["p1"],"count":1}"""))
+        assertTrue(feed.rows("nfl").isEmpty())
+        // Game state: a snapshot, an update carrying only what changed, a removal.
+        st.handle(obj("""{"type":"gamestate:snapshot","data":[{"event_id":"nfl_chiefs_raiders_2026-10-25_b3","home_team":"Kansas City Chiefs","away_team":"Las Vegas Raiders","sport":"football","league":"nfl","home_score":7,"away_score":3,"is_live":true,"game_period":"Q2","period_number":2,"game_clock":"5:42","book_count":4}]}"""))
+        val sc = scores.scoreFor("NFL", "Kansas City Chiefs", "Las Vegas Raiders")!!
+        assertEquals(7, sc.game.homeScore)
+        assertEquals(342.0, sc.game.clockSec, 1e-9)
+        assertEquals(2, sc.game.period)
+        st.handle(obj("""{"type":"gamestate:update","data":[{"event_id":"nfl_chiefs_raiders_2026-10-25_b3","away_score":10}]}"""))
+        assertEquals(10, scores.scoreFor("NFL", "Kansas City Chiefs", "Las Vegas Raiders")!!.game.awayScore)
+        assertEquals(7, scores.scoreFor("NFL", "Kansas City Chiefs", "Las Vegas Raiders")!!.game.homeScore)
+        // Novig naming the teams the other way round reads the score the other way round.
+        assertEquals(10, scores.scoreFor("NFL", "Las Vegas Raiders", "Kansas City Chiefs")!!.game.homeScore)
+        st.handle(obj("""{"type":"gamestate:removed","data":["nfl_chiefs_raiders_2026-10-25_b3"]}"""))
+        assertNull(scores.scoreFor("NFL", "Kansas City Chiefs", "Las Vegas Raiders"))
+    }
+
+    @Test
+    fun `the REST game state replaces the slate and a final is not a live score`() {
+        val scores = SharpApiScores(clock = { now })
+        scores.applyRest(obj("""{"data":{"football":{"nfl_a_b_2026-10-25_b3":{"home_team":"A Team","away_team":"B Team","sport":"football","league":"nfl","home_score":21,"away_score":20,"is_live":false,"status":"final","winner":"home"}}}}"""))
+        assertEquals(1, scores.size())
+        assertNull(scores.scoreFor("NFL", "A Team", "B Team"))
+        assertEquals(0, scores.live())
+        assertEquals(342.0, SharpApiScores.seconds("5:42")!!, 1e-9)
+        assertNull(SharpApiScores.seconds("HT"))
+    }
+}
