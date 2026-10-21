@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-7dry2r",
- "head": "b25f273fe0a4ec2e64c2bdf762e662883230ad60",
+ "head": "963e360f8ac75b01afed7ba5af9288482a97dc67",
  "since": 1792539161,
- "beat": 1792559213,
- "beatIso": "2026-10-21T05:06:53Z",
- "done": "CH54: picked-off guard counts games",
- "next": "ship v1.0.32"
+ "beat": 1792559397,
+ "beatIso": "2026-10-21T05:09:57Z",
+ "done": "pre-release: v1.0.32: picked-off guard counts games not fills (versionCode 372, v1.0.32)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.32), then run: bash tools/record-release.sh v1.0.32 372 \"v1.0.32: picked-off guard counts games not fills\""
 }
