@@ -6152,4 +6152,4 @@ Finding 19:30: only ONE cloud-scan run is live (run 254), so no old runner holds
 
 ## GS: "I have the game state support. Build it in" (Tj, interactive, 2026-10-21)
 (game state was already in v1.0.43: stream channel + REST, live-lane score source)
-- [ ] GS1 engine journals every final SharpAPI reports (sharpapi-finals-<day>, archived) for grading research; finals counted in the hourly log
+- [x] GS1 (SharpApiStreamTest) engine journals every final SharpAPI reports (sharpapi-finals-<day>, archived) for grading research; finals counted in the hourly log
