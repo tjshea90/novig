@@ -139,7 +139,7 @@ class ApiTogglesTest {
 
     @Test
     fun `tennis picked does not switch any API on`() {
-        val off = ScanSettings(leagues = setOf("NFL", "ATP", "WTA"), usePinnacle = false, usePolymarket = false, useKalshi = false, useParlay = false, usePropLine = false, useOddsApi = false)
+        val off = ScanSettings(leagues = setOf("NFL", "ATP", "WTA"), usePinnacle = false, usePolymarket = false, useKalshi = false, useParlay = false, usePropLine = false, useOddsApi = false, gates = com.tjshea.vigilant.data.scanner.ApiGates(useSharpApi = false))
         assertEquals(emptySet<String>(), off.enabledSources)
     }
 

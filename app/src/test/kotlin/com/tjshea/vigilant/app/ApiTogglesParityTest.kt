@@ -20,7 +20,8 @@ class ApiTogglesParityTest {
         "PINNAPI" to "pinnapi",
         "KALSHI" to "kalshi",
         "POLYMARKET" to "polymarket",
-        "SXBET" to "sxbet"
+        "SXBET" to "sxbet",
+        "SHARPAPI" to "sharpapi",
     )
 
     @Test fun `every phone API switch has an engine id, and both flip the same setting`() {

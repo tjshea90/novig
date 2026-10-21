@@ -177,7 +177,8 @@ class LowUsageBidsTest {
         assertTrue(e.usePropLine)
         assertFalse(e.includeLive)
         // Only the sources that carry a picked book can be read at all: not Pinnacle's feed, Polymarket or The Odds API.
-        assertEquals(setOf("kalshi", "parlay", "parlay_1h", "parlay_props", "propline", "propline_props"), e.enabledSources)
+        // SharpAPI is flat-rate and read from memory on the engine: like SGO and OddsPapi, it stays in whenever it is on (SA, 2026-10-21).
+        assertEquals(setOf("kalshi", "parlay", "parlay_1h", "parlay_props", "propline", "propline_props", "sharpapi"), e.enabledSources)
         assertEquals(setOf("kalshi", "parlay", "parlay_1h", "parlay_props"), on.copy(lowUsageBooks = setOf("kalshi", "prophetx")).effective().enabledSources)
     }
 
