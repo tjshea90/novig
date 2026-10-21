@@ -8,8 +8,8 @@
  "branch": "ccr-cb0c319e-caga5z",
  "head": "3ef63bc4149ea89385840d9176d7cd0c532f4e7d",
  "since": 1792596542,
- "beat": 1792599103,
- "beatIso": "2026-10-21T16:11:43Z",
+ "beat": 1792599282,
+ "beatIso": "2026-10-21T16:14:42Z",
  "done": "pre-ship: v1.0.35: API manager (restart, fresh runner, switch off + message), API lights weigh the engine, the scans and this phone's own test (pull to refresh re-checks every API), bids ordered by fill chance (XO1, XO2)",
  "next": "ship.sh gates and releases this"
 }
