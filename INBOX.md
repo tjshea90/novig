@@ -708,3 +708,15 @@ Put kalshi into the vigilant app. I have a kalshi account. I want to be able to 
 
 You will need to research how the kalshi API key is implemented for trading, and consider both bets and bids. I want all features to work for kalshi just as well as they work for novig. You may need to research kalshi docs. If i need to send my kalshi key or private key to GitHub, make the app send it. Let me know if I need to do anything to set this up
 ```
+
+## 2026-10-21T15:29:20Z
+```
+For the vigilant android app, GitHub engine, and Claude:
+
+1) some of the apis claim to be failing, but when I test the keys they are green and accepted. Make sure the API screen shows accurate information, especially after I pull to refresh. If any keys are failing, make it a smart api manager that tries to diagnose or restart the API without breaking or interfering with anything else. If any important apis are not responding, automatically try to get a fresh GitHub runner on the next scan. If the api is not accepted after a few new GitHub runners, send me a message and turn off the API toggle until I look at it. 
+2) diagnose the low volume of bid fills and auto bets. Tweak the settings as needed for more volume, but keep reasonable safeguards and a floor for positive EV. 
+3) run an analysis on the saved scans, bets, and bids. Find patterns and profitable bet and bid types as well as what types beat the clv. Adjust the system and settings as needed for maximum profit. 
+4) review and analyze historical odds and props from my apis which have this feature. Find patterns and profitable methods to incorporate into vigilant and the GitHub engine. 
+5) build anything left that is logged and not built yet but planned to be built. 
+6) run full test protocol
+```
