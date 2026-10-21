@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-gc6pie",
  "head": "9f8538b7f38025ea10c386685cb129f48f101693",
  "since": 1792563808,
- "beat": 1792617051,
- "beatIso": "2026-10-21T21:10:51Z",
+ "beat": 1792617056,
+ "beatIso": "2026-10-21T21:10:56Z",
  "done": "pre-ship: v1.0.39: engine closes BoltOdds/Kalshi/SX sockets cleanly on job end or cancel; a 'too many concurrent connections' close no longer marks the BoltOdds key refused",
  "next": "ship.sh gates and releases this"
 }
