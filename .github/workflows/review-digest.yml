@@ -104,6 +104,14 @@ jobs:
             echo
             # By ORIGIN (TCL69): manual / phone-auto / phone-bid / engine-auto / engine-bid, so the rules are judged only on the bets the engine and the phone's auto-bet took, never on Tj's hand bets.
             python3 -I tools/bets_dataset.py table --phone "pd/phone/bets/*.jsonl" $( [ -f trades.json ] && echo --engine trades.json ) || echo "origin table failed"
+            echo
+            # The engine's VOLUME (TCL30d, XO2): orders a day, bids posted and filled with the fill rate by hours to the start and by distance under Novig's offer, and the auto-bet's held-back reasons by day,
+            # from the bid dataset and the pass journals, so a run reads one table instead of crunching 340,000 bids (tools/volume_report.py, research/bid_volume_study_2026-10-21.md).
+            echo "== THE ENGINE'S VOLUME (tools/volume_report.py) =="
+            mkdir -p vol/tp
+            gh release download engine-dataset -p 'bids.csv.gz' -D vol --clobber 2>/dev/null || true
+            for TAG in $(gh release list --limit 500 --json tagName --jq '.[].tagName' | grep '^cloud-archive-' | sort | tail -7); do gh release download "$TAG" -p 'tradepass-*' -D vol/tp --clobber 2>/dev/null || true; done
+            if [ -f trades.json ]; then python3 -I tools/volume_report.py run --trades trades.json --bids vol/bids.csv.gz --passes vol/tp || echo "volume report failed"; else echo "no trades.json yet"; fi
           } >> out/latest.txt
           wc -c out/latest.txt
 
