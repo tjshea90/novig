@@ -95,7 +95,7 @@ class CnoVenueSource(
 
         /** [row]'s EV net of Kalshi's taker fee: the fair probability (CNO's, else implied by its EV) over the price plus the fee a contract. */
         fun kalshiNetEv(row: CnoRow): Double {
-            val p = com.tjshea.vigilant.engine.Odds.americanToProbability(row.odds)
+            val p = 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(row.odds)
             if (p <= 0.0 || p >= 1.0) return row.ev
             val fair = row.fairProbability ?: ((1.0 + row.ev) * p)
             return fair / (p + KalshiFees.takerPerContract(p)) - 1.0
