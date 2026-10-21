@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-27a37e/8018ae",
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "8018ae",
+ "note": "v1.0.40: CNO scans Novig and Kalshi (tab chips, Kalshi EV net of fee, venue card colours); the whole CNO scan runs on the GitHub engine (cno.json.gz), phone adopts it",
+ "since": 1792620098,
+ "beat": 1792620098
+}

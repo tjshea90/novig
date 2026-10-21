@@ -8,8 +8,8 @@
  "branch": "claude/new-session-51eqix",
  "head": "264845c108dd2d4e55d5ad459884fa76d0466101",
  "since": 1792596542,
- "beat": 1792620086,
- "beatIso": "2026-10-21T22:01:26Z",
+ "beat": 1792620098,
+ "beatIso": "2026-10-21T22:01:38Z",
  "done": "CK2/CK3 built: CnoVenueSource (Novig+Kalshi reads, Kalshi EV net of fee), venue chips + venue card colours on the CNO tab, Kalshi rows open at Kalshi and are skipped by Novig bids; engine CNO loop publishes cno.json.gz, phone adopts it (SwitchingCnoSource, falls back to its own reads when the engine does not serve); CnoVenuesTest, CloudCnoTest green",
  "next": "CK UI test for venue chips, full floor, ship v1.0.40, then CK5 full test protocol"
 }
