@@ -6059,3 +6059,8 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [ ] CH47f tennis live (Tj 23:47: live auto bets+bids on tennis): record PBP tennis frames when live (no match live at 23:49 UTC), then a tennis live model, PAPER first
 - [ ] CH47g judge /consensus and /line-movement from real samples (add to tools/parlay.py probe), use if they beat our own
 - [x] CH47d engine: ParlayAPI PBP SSE (ParlayPbp/ParlayPbpStream, CloudSources.altScore first, ESPN fallback+clock; pbp-lead journal) ; pool uses biggest paid plan first (KeyPool) v1.0.25. PHONE wiring (VigilantApp altScore) still open
+
+## CH48 (Tj chat 23:59 UTC, 2026-10-20): API monitor audit
+- [ ] CH48a audit how each API card (Engine > APIs, DashboardScreen ApiCard / CloudDashboard / ApiScorecard) decides green/yellow/red: pinnapi shows green "working 6+0, 300 of 300 left, resets in 3m" though unused and its keys are bad
+- [ ] CH48b rules: GREEN = a real call succeeded recently and credits left; YELLOW = slow, or refused/failed connection recently (retry automatically in background, never restarting scans); RED = no connection or no credits/all keys refused; OFF/grey = switched off or not in use. Fresh data updated frequently (usage, status), accurate usage
+- [ ] CH48c tests; ship
