@@ -7,5 +7,5 @@
  "nonce": "0e282c",
  "note": "v1.0.26: API monitor rebuild (engine checks every API, green/yellow/red/grey), ParlayAPI PBP recorder (tennis), Odds API gap-fill 3 h + spend tally (CH47-49)",
  "since": 1792544839,
- "beat": 1792544839
+ "beat": 1792545056
 }
