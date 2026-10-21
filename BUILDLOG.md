@@ -374,3 +374,4 @@ day that changes.
 | v1.0.33 | code 373 | 2026-10-21T05:24Z | v1.0.33: Kalshi funnel card (where the scan loses lines), Live tab socket note
 | v1.0.34 | code 374 | 2026-10-21T05:59Z | v1.0.34: API quality journal (apiq), consensus CLV columns (CH57/CH58)
 | v1.0.35 | code 375 | 2026-10-21T16:21Z | v1.0.35: API manager (restart, fresh runner, switch off + message), API lights weigh the engine, the scans and this phone's own test (pull to refresh re-checks every API), bids ordered by fill chance (XO1, XO2)
+| v1.0.36 | code 376 | 2026-10-21T17:10Z | v1.0.36: feed-level API problems on the API card, order grading fix, FCS games in NCAAF grading, volume report tool
