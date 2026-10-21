@@ -1,21 +1,25 @@
-# CHECKPOINT 3888 — read me first, then TASKS.md
+# CHECKPOINT 3889 — read me first, then TASKS.md
 
-**Written:** 2026-10-21T05:09:57Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-7dry2r` · **builds on:** `59be3d1ef` (this checkpoint is the commit after it)
+**Written:** 2026-10-21T05:12:04Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-7dry2r` · **builds on:** `688726251` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v1.0.32: picked-off guard counts games not fills (versionCode 372, v1.0.32)
+CH56 first CLV audit written
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.32), then run: bash tools/record-release.sh v1.0.32 372 "v1.0.32: picked-off guard counts games not fills"
+reply to Tj; CH55 Kalshi funnel; clv_audit.py
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+     M research/lab/NOTES.md
+    ?? research/clv_audit_2026-10-21.md
 
 ## Last ten checkpoints
 ```
+  963e360f8 ckpt 3888: pre-release: v1.0.32: picked-off guard counts games not fills (versionCode 
   b25f273fe ckpt 3887: CH54: picked-off guard counts games
   31688d055 ckpt 3886: pre-release: v1.0.31: bids always target the most-the-bids-may-be-worth set
   934647eaf ckpt 3885: fix MakerTest for deployPct 1.0
@@ -25,7 +29,6 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   db4acd910 ckpt 3881: pre-release: v1.0.29: pull-to-refresh deadlines, Stopping headline when swi
   f076e3bff ckpt 3880: CH51: dashboard shows Stopping when switch off; refreshNow reads have 20s d
   ae9575801 ckpt 3875: v1.0.27 released; chat quiet 30 min
-  6c12a33be ckpt 3879: v1.0.28 released and recorded; told Tj
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the

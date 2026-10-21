@@ -64,3 +64,4 @@
 - 2026-10-15 first GitHub review digest (`review-digest` branch, research/review/2026-10-15.md): 1,440 scanned bets, 315 closes (44%), CLV +0.51% ±0.73 (not separable from zero), ROI noise (±10.5 pts, 49 games); supported on CLV: player props +1.12 ±0.37 (190 closes), starts under 30 min +1.16 ±0.58; Tj's placed props still pool to ROI -10.5%, t -2.98 (the 2026-10-14 finding, fixed in v0.99.4); digest now splits placed bets before/after v0.99.4 (108 after: too few to judge).
 
 - 2026-10-20 ANALYST: engine live ROI +20.8% n=281; NBA/WNBA/game totals weak but n<200; see research/review/2026-10-20_analyst.md
+- 2026-10-21 CLV audit: only 27% of listed bets have a close; sharp closes ~+0.8..3%, Novig-last-trades noisy; ROI se 5.5% (research/clv_audit_2026-10-21.md)
