@@ -838,3 +838,9 @@ https://docs.sharpapi.io/en/concepts/polymarket-resolution/
 
 Build sharpapi sharp plan support into vigilant app and the GitHub engine. There are many features it offers. Add any and all features that can benefit the app and GitHub engine. Make sure to use full advantage of the features and speed of the sharp plan. I have no websocket or sse addon. I have 25 sports books picked. Use this API freely for all the ways it can improve speed or accuracy or anything else in the GitHub engine or app
 ```
+
+## 2026-10-21T23:31:46Z
+```
+I added websocket streaming and game state support to the API trial. Find the docs for these features and add these to the app and GitHub engine in addition to everything else
+Does this version support the streaming socket
+```
