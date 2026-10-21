@@ -181,6 +181,7 @@ private fun LiveBoardCard(b: LiveBoard.Board, now: Long) {
                 LiveSpark("Judgments a minute", judged, Edge.colors.warning)
             } else Text("The graphs fill in while the lane runs and this tab is open (one reading a second).", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("Sockets (${b.where.label})", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            Text("The BoltOdds sockets also feed the pregame scan's fair odds (read from memory, no API credits), so they stay open while Live is off; switch them in Settings › APIs › Sockets.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (b.sockets.isEmpty()) Text("No word on the sockets yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             b.sockets.forEach { x ->
                 val c = when (LiveBoard.socketTone(x)) {
