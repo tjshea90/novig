@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-s9zcjn",
  "head": "fce8dea44cffe1b55542a5ddca2f3f89356c5816",
  "since": 1792563808,
- "beat": 1792609947,
- "beatIso": "2026-10-21T19:12:27Z",
+ "beat": 1792610120,
+ "beatIso": "2026-10-21T19:15:20Z",
  "done": "ApiState: a fresh accepted key check outranks a ledger 'every key refused' (BoltOdds card red beside green check); ApiStateTest updated, green",
  "next": "ship in the next release; check why BoltOdds ledger marks refused (socket 1008 too-many-connections?) and keep it out of key state"
 }
