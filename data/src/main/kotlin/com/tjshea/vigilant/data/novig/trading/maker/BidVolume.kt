@@ -42,20 +42,23 @@ object BidVolume {
         hours < 1 -> 12.8
         hours < 2 -> 7.1
         hours < 6 -> 4.6
-        hours < 12 -> 3.9
+        hours < 12 -> 3.7
         hours < 24 -> 2.2
         else -> 0.65
     }
 
-    /** [gapPoints]: Novig's offer minus the bid's price, in points of probability; null = no offer is known (the middle of the table). */
+    /**
+     * [gapPoints]: Novig's offer minus the bid's price, in points of probability, rounded so a price on the cent grid falls in the bin it ends (a gap of exactly 2 points is the 1-2 bin). No offer known (a one-sided
+     * book: 18% of all bids, which filled 0.27 in a thousand) ranks last.
+     */
     private fun gapLift(gapPoints: Double?): Double = when {
-        gapPoints == null -> 1.3
-        gapPoints <= 1.0 -> 13.7
-        gapPoints <= 2.0 -> 6.1
-        gapPoints <= 3.0 -> 2.1
-        gapPoints <= 5.0 -> 1.3
-        gapPoints <= 15.0 -> 0.9
-        else -> 0.54
+        gapPoints == null -> 0.3
+        gapPoints <= 1.0 -> 14.5
+        gapPoints <= 2.0 -> 3.4
+        gapPoints <= 3.0 -> 1.9
+        gapPoints <= 5.0 -> 1.2
+        gapPoints <= 15.0 -> 0.84
+        else -> 0.58
     }
 
     /**
@@ -64,7 +67,7 @@ object BidVolume {
      */
     fun score(line: MakerLine, leadsSide: Boolean, now: Long, price: Double? = null): Double {
         val hours = ((line.startsTs - now) / 3_600_000.0).coerceAtLeast(0.0)
-        val gap = if (price != null && line.offer != null) (line.offer - price) * 100.0 else null
+        val gap = if (price != null && line.offer != null) Math.round((line.offer - price) * 100.0 * 1e6) / 1e6 else null
         return hoursLift(hours) * gapLift(gap) * (if (leadsSide) 1.5 else 1.0) / 10.0
     }
 }

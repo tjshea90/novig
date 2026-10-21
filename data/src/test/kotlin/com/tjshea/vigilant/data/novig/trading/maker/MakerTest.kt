@@ -1103,11 +1103,12 @@ class MakerTest {
         val wide = line("w-over", fair = 0.60, offer = 0.70, m = market("w", starts = now + 4 * 3_600_000L))
         val soonWide = line("s-over", fair = 0.60, offer = 0.70, m = market("s", starts = now + 30 * 60_000L))
         // the same price (50c): 2 points under the first offer, 20 under the second
-        assertTrue("tight ${BidVolume.score(tight, true, now, 0.50)} wide ${BidVolume.score(wide, true, now, 0.50)} offers ${tight.offer} ${wide.offer}", BidVolume.score(tight, true, now, 0.50) > 5 * BidVolume.score(wide, true, now, 0.50))
+        assertTrue(BidVolume.score(tight, true, now, 0.50) > 5 * BidVolume.score(wide, true, now, 0.50))
         // a game inside the hour with a far offer still ranks under a tight market four hours out: the offer's distance is worth more than the clock
-        assertTrue("soonWide ${BidVolume.score(soonWide, true, now, 0.50)}", BidVolume.score(tight, true, now, 0.50) > BidVolume.score(soonWide, true, now, 0.50))
-        // no offer known: the middle of the table, and the start alone decides
-        assertTrue("nooffer ${BidVolume.score(soonWide, true, now)} ${BidVolume.score(wide, true, now)}", BidVolume.score(soonWide, true, now) > BidVolume.score(wide, true, now))
+        assertTrue(BidVolume.score(tight, true, now, 0.50) > BidVolume.score(soonWide, true, now, 0.50))
+        // no offer known (a one-sided book fills least of all): it ranks under a bid with a far offer
+        assertTrue(BidVolume.score(wide, true, now, 0.50) > BidVolume.score(wide, true, now))
+        assertTrue("with no offer the start alone still orders", BidVolume.score(soonWide, true, now) > BidVolume.score(wide, true, now))
         // the order of the desk follows it
         val order = listOf(postOf(wide, 0.50), postOf(tight, 0.50), postOf(soonWide, 0.50)).sortedWith(MakerPlan.priority(volume, now)).map { it.line.market.marketId }
         assertEquals(listOf("t", "s", "w"), order)
