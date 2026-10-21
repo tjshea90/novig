@@ -67,6 +67,27 @@ class FreeScoresTest {
         assertEquals(1, requests.size)
     }
 
+    // XO2 (2026-10-21, TCL94b): ESPN's college football scoreboard is FBS only (groups=80); FCS games (Brown @ Princeton) are groups=81, and the engine's bets on them stayed ungraded.
+    @Test
+    fun `NCAAF reads the FBS list and the FCS list, each game once`() = runTest {
+        routes["/espn/football/college-football/scoreboard"] = res("espn-nfl-scoreboard.json")
+        val f = feeds()
+        val games = f.games("NCAAF", LocalDate.of(2026, 9, 24))!!
+        assertEquals("the same game in both lists is one game", 1, games.size)
+        val groups = requests.map { it.requestUrl!!.queryParameter("groups") }
+        assertEquals(listOf("80", "81"), groups)
+        f.games("NCAAF", LocalDate.of(2026, 9, 24))
+        assertEquals("kept for the day's re-reads", 2, requests.size)
+    }
+
+    @Test
+    fun `a failing FCS list leaves the FBS list as it was`() = runTest {
+        // only the FBS answer exists: the second request gets a 404 from the stand-in server (its path is registered once, so make the second call fail by a different path)
+        routes["/espn/football/college-football/scoreboard"] = res("espn-nfl-scoreboard.json")
+        val f = FreeScores(OkHttpClient(), json, espnBase = server.url("/espn").toString().trimEnd('/'), mlbBase = server.url("/mlb").toString().trimEnd('/'), gapMs = 0)
+        assertEquals(1, f.games("NCAAF", LocalDate.of(2026, 9, 25))!!.size)
+    }
+
     @Test
     fun `ESPN's football box score reads as Novig's stats`() = runTest {
         routes["/espn/football/nfl/summary"] = res("espn-nfl-summary.json")

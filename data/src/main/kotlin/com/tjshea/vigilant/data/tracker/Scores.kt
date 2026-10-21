@@ -132,7 +132,15 @@ class FreeScores(
             else -> ""
         }
         val root = get("$espnBase/$path/scoreboard?dates=${date.format(DAY)}$extra") ?: return null
-        return if (league.uppercase() in TENNIS) parseEspnTennisDay(root, league.uppercase()) else parseEspnDay(root, league.uppercase())
+        val games = if (league.uppercase() in TENNIS) parseEspnTennisDay(root, league.uppercase()) else parseEspnDay(root, league.uppercase())
+        // FCS games are a list of their own on ESPN (groups=81; groups=80 is FBS only): Novig lists them (Brown @ Princeton, Austin Peay @ West Georgia) and the engine bets them, and without their scores those
+        // bets stayed ungraded for ever (XO2, 2026-10-21: TCL94b). Asked only for NCAAF, once per day while the answer is kept; a failure of this second list leaves the FBS list as it was.
+        if (league.uppercase() == "NCAAF") {
+            val fcs = get("$espnBase/$path/scoreboard?dates=${date.format(DAY)}&groups=81&limit=400")?.let { parseEspnDay(it, "NCAAF") }.orEmpty()
+            val have = games.mapTo(HashSet()) { it.id }
+            return games + fcs.filter { it.id !in have }
+        }
+        return games
     }
 
     private suspend fun espnBox(game: GameScore): List<PlayerLine>? {
