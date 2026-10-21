@@ -369,3 +369,4 @@ day that changes.
 | v1.0.28 | code 368 | 2026-10-21T02:07Z | v1.0.28: laned scan on the engine: quick 48 h scans between full ones keep near games' fair and Novig prices minutes old (CH50b)
 | v1.0.29 | code 369 | 2026-10-21T04:38Z | v1.0.29: pull-to-refresh deadlines, Stopping headline when switched off
 | v1.0.30 | code 370 | 2026-10-21T04:57Z | v1.0.30: refresh arrow flashes, status bar names what is loading
+| v1.0.31 | code 371 | 2026-10-21T05:10Z | v1.0.31: bids always target the most-the-bids-may-be-worth setting
