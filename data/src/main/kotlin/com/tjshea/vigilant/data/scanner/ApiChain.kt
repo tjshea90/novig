@@ -51,8 +51,8 @@ object ApiChain {
     /** When a scarce feed (small monthly allowance, [SourceScore.SCARCE]) was last asked for a league to fill a gap or add an extra book, so it is not asked again every scan for the same gap. */
     private val scarceAsked = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
-    /** A scarce feed fills the same league's gap at most this often (a fallback because every better feed failed is never held back). */
-    const val SCARCE_GAP_MS = 30 * 60_000L
+    /** A scarce feed fills the same league's gap at most this often (3 h since 2026-10-21, Tj: "if the odds api is last in line, why is it being used so much"; a fallback because every better feed failed is never held back). */
+    const val SCARCE_GAP_MS = 3 * 3_600_000L
 
     /** The chains, best first: the shipped order re-ranked by [measures]. */
     private val CHAINS: List<List<Pair<String, Kind>>>
