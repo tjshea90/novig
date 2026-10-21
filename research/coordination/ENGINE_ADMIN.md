@@ -18,6 +18,8 @@ Every session may do all of these without asking (Tj's word; the exceptions are 
 | Change any app/engine setting or switch (rules, filters, bet and bid kinds, sizes, Kelly, caps, wallet use, API and socket switches, engine hours, trading off/paper/live, Run/Stop) | `python3 tools/engine_set.py path=value ... [--on\|--off] --why "..."` (writes `cloud-config` as `claude:<account>`; the engine reads it at once, the phone adopts it, `CloudClaudeConfig`) |
 | Start the engine on schedule even when the app's toggles are off | `engine_set.py --on` (sets `on`, `gates.cloudScan`, un-pauses; refuses to start over STOP ALL) and `run_workflow cloud-scan.yml` |
 | Stop the engine (not STOP ALL) | `engine_set.py --off` |
+| Replace the runner (new address, latest `main` code) without cancelling a scan mid-way | `engine_set.py --reset --why "..."`: the job ends as RESET between scans and the workflow starts the next one |
+| Check every API now (free account reads) | `engine_set.py --check-apis` |
 | Start, cancel, re-run any workflow; replace a runner | `mcp__github__actions_run_trigger`, `mcp__github__actions_list`, `get_job_logs` |
 | Edit workflows, tools, code, docs, ship a release | edit, `bash ship.sh`, `release.yml`, `record-release.sh` (the lease rule in PROTOCOL.md; code and workflows need the lease or `NOLEASE_VERIFIED=1`) |
 | Tell Tj, or ask the phone to switch an API | `tools/tell_tj.py say`, `set-api` |

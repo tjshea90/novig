@@ -4,6 +4,8 @@ and on GitHub except the stop all master switch").
 
   python3 tools/engine_set.py vigGuards.bidDeployKelly=20 gates.cloudTrading=LIVE [--on | --off] [--why "reason"]
   python3 tools/engine_set.py --show vigGuards.bidDeployKelly
+  python3 tools/engine_set.py --reset --why "new runner on the latest main"     # replace the runner: the job ends as RESET between scans and the workflow starts the next one (XO1)
+  python3 tools/engine_set.py --check-apis                                      # every API is checked now (free account reads), no scan touched
 
 Writes ONE commit onto `cloud-config` (plain, non-force push): settings.json with the `settings` tree changed and `device` = "claude:<account>". The engine reads it at once; the phone adopts it the next time it looks
 (`CloudClaudeConfig`, then publishes its own copy). --on sets `on` and gates.cloudScan, --off turns them off; the engine's 08:00-01:00 hours and Tj's manual Run/Stop timestamps are left alone.
@@ -41,7 +43,7 @@ def set_path(tree, path, v):
 
 def main(argv):
     why = argv[argv.index("--why") + 1] if "--why" in argv else "engine_set"
-    rest = [a for i, a in enumerate(argv) if a not in ("--why", "--on", "--off", "--show") and not (i and argv[i - 1] == "--why")]
+    rest = [a for i, a in enumerate(argv) if a not in ("--why", "--on", "--off", "--show", "--reset", "--check-apis") and not (i and argv[i - 1] == "--why")]
     # never FETCH_HEAD: another fetch in this checkout at the same moment would swap it and settings would be written from the wrong branch (CR, 2026-10-19)
     git("fetch", "-q", "origin", "+refs/heads/%s:refs/vigilant/engine-set-%s" % (BRANCH, BRANCH))
     parent = git("rev-parse", "refs/vigilant/engine-set-" + BRANCH).stdout.strip()
@@ -53,7 +55,7 @@ def main(argv):
                 t = t[p]
             print(a, t)
         return 0
-    if not rest and "--on" not in argv and "--off" not in argv:
+    if not rest and not any(f in argv for f in ("--on", "--off", "--reset", "--check-apis")):
         print(__doc__); return 2
     for pr in rest:
         k, v = pr.split("=", 1)
@@ -64,6 +66,11 @@ def main(argv):
         cfg["on"] = True; cfg["settings"]["gates"]["cloudScan"] = True; cfg["settings"]["pausedByHand"] = False
     if "--off" in argv:
         cfg["on"] = False; cfg["settings"]["gates"]["cloudScan"] = False
+    # top-level requests the engine serves once each (CloudConfig.resetAtMs / checkApisAtMs): a job that began before the value ends as RESET and a new runner starts; every API is checked now
+    if "--reset" in argv:
+        cfg["resetAtMs"] = int(time.time() * 1000); print("resetAtMs ->", cfg["resetAtMs"])
+    if "--check-apis" in argv:
+        cfg["checkApisAtMs"] = int(time.time() * 1000); print("checkApisAtMs ->", cfg["checkApisAtMs"])
     cfg["device"] = "claude:" + me().replace("claude:", "")[:30]
     cfg["rev"] = max(int(time.time() * 1000), int(cfg.get("rev", 0)) + 1)
     text = json.dumps(cfg, separators=(",", ":"))
