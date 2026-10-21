@@ -724,4 +724,7 @@ For the vigilant android app, GitHub engine, and Claude:
 ## 2026-10-21T17:01:53Z
 ```
 Were you able to recover the extensive Claude work from the session that was interrupted on the 6 tasks I asked for
+## 2026-10-21T17:01:25Z
+```
+This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
 ```
