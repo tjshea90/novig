@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cb0c319e-caga5z",
- "head": "90de10c200fab8917958003c762bdfb866c1da55",
+ "head": "4b3d945a9ad9cd44bdf8e3320e46729bc48c85ee",
  "since": 1792596542,
- "beat": 1792599507,
- "beatIso": "2026-10-21T16:18:27Z",
+ "beat": 1792599687,
+ "beatIso": "2026-10-21T16:21:27Z",
  "done": "pre-release: v1.0.35: API manager (restart, fresh runner, switch off + message), API lights weigh the engine, the scans and this phone's own test (pull to refresh re-checks every API), bids ordered by fill chance (XO1, XO2) (versionCode 375, v1.0.35)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.35), then run: bash tools/record-release.sh v1.0.35 375 \"v1.0.35: API manager (restart, fresh runner, switch off + message), API lights weigh the engine, the scans and this phone's own test (pull to refresh re-checks every API), bids ordered by fill chance (XO1, XO2)\""
 }
