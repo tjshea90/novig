@@ -173,7 +173,8 @@ class ScanStudyAppTest {
             .filter { f -> f.readText().let { "readWide(" in it || "fetchWide(" in it } }.map { it.name }.toSortedSet()
         // One more reader since v0.75.0: the lane that reads CNO for bids priced from it (CnoBidLane, RESEARCH.md §114) asks for the wide read as a source of candidate sides; the background cycle calls it only
         // with bids on and "Bids priced from" set to CrazyNinjaOdds (below), so with that off nothing in the app reads or asks for the wide read.
-        assertEquals(sortedSetOf("CnoBidLane.kt", "CnoClient.kt", "CnoFeed.kt"), data)
+        // CK (2026-10-21): CnoVenues forwards the wide read to each book's client and merges them; CloudCno's switching source skips it while the engine serves the list. Neither shows a row.
+        assertEquals(sortedSetOf("CloudCno.kt", "CnoBidLane.kt", "CnoClient.kt", "CnoFeed.kt", "CnoVenues.kt"), data)
         val cycle = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
         assertTrue(cycle.contains("if (settings.bidsFromCno && settings.autoScansCno && !c.currentSettings().paused && AppBook.isNovig) {"))
         val callers = File("src/main/kotlin/com/tjshea/vigilant/app").walkTopDown().filter { it.isFile && it.extension == "kt" && "cnoBids.step(" in it.readText() }.map { it.name }.toList()

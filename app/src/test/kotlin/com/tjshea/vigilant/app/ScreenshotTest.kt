@@ -628,7 +628,7 @@ class ScreenshotTest {
         shoot("8_cno") { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), {}, {}) }
         compose.onNodeWithText("Justin Jefferson Under 69.5").assertIsDisplayed()
         compose.onNodeWithText("Conservative worst case · to +150 · 4+ books · ≥1% EV").assertIsDisplayed()
-        compose.onNodeWithText("View: Novig · 3+ books").assertIsDisplayed()
+        compose.onNodeWithText("View: Novig + Kalshi · 3+ books").assertIsDisplayed()
         compose.onNodeWithText("Read 20s ago · odds 49s old · every 15 s", substring = true).assertIsDisplayed()
         compose.onNodeWithText("4 bets pass · 2 hidden: 1 too few books, 1 longer odds than your cap").assertIsDisplayed()
         compose.onAllNodesWithText("Walker Buehler Over 15.5").assertCountEquals(0) // 3 books: too thin
@@ -1531,6 +1531,8 @@ class ScreenshotTest {
     // ---- Full test, 2026-09-27 ~02:40Z ------------------------------------------------------
 
     /** 8f's screenshot: the ✕ on cards with a Kelly stake was squeezed smaller than a touch target. */
+    // Tall enough for every card under the CNO tab's header (its Novig / Kalshi chips since v1.0.40).
+    @Config(qualifiers = "w393dp-h1400dp-xxhdpi")
     @Test fun cnoCardButtonsKeepTheirSizeWhateverTheValuesRowHolds() {
         screen { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), {}, {}) }
         listOf("Ohio -33.5", "Brock Bowers Under 4.5", "Justin Jefferson Under 69.5").forEach { bet ->
