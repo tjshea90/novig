@@ -7,5 +7,5 @@
  "nonce": "0e282c",
  "note": "ApiState: a fresh accepted key check outranks a stale ledger refusal (BoltOdds card)",
  "since": 1792609263,
- "beat": 1792609265
+ "beat": 1792609268
 }
