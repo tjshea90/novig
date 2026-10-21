@@ -728,3 +728,8 @@ Were you able to recover the extensive Claude work from the session that was int
 ```
 This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
 ```
+
+## 2026-10-21T17:04:47Z
+```
+Make sure all the research projects from this session and past Claude sessions are organized and Claude remembers them and can access them at any time and they aren't just sitting idle on GitHub-they are used for engine tuning for maximum profit
+```
