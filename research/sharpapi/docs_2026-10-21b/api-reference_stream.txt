@@ -1,0 +1,948 @@
+Source: https://docs.sharpapi.io/en/api-reference/stream/ (fetched 2026-10-21)
+
+# Unified Stream
+
+GET /api/v1/stream — Real-time odds and opportunity updates via Server-Sent Events (SSE).
+
+When you connect, the stream sends a snapshot of the current data, then pushes each change as it happens: odds updates and removals, new and expired +EV, arbitrage, middles and low-hold opportunities, and live game state with the Game State add-on or Enterprise. Use it instead of polling the REST endpoints when you keep a local copy of odds or opportunities and need it current. Choose what you receive with the channel parameter, and narrow it by sport, league, sportsbook, event or market.
+
+Requires WebSocket Add-on ($99/mo) on any paid tier, or Enterprise (included). Free tier does not support streaming.
+
+## AuthenticationPermalink for this section
+
+Pass your API key via header or query parameter:
+
+# Header (recommended for server-side)
+curl -H "X-API-Key: sk_live_your_key" \
+ https://api.sharpapi.io/api/v1/stream
+
+# Query param (required for browser EventSource)
+https://api.sharpapi.io/api/v1/stream?api_key=sk_live_your_key
+
+## Query ParametersPermalink for this section
+
+ | | Parameter | Type | Default | Description
+ | channel | string | opportunities | What to stream: odds, opportunities, gamestate (Game State add-on or Enterprise), or all. Also accepts the plural alias channels. A comma-separated list of more than one channel collapses to all — see the note below.
+ | sport | string | all | Filter by sport(s), comma-separated (e.g. basketball, football, ice_hockey)
+ | sportsbook | string | tier-allowed | Filter by sportsbook(s), comma-separated
+ | league | string | all | Filter by league(s), comma-separated
+ | event_id | string | all | Filter by event ID(s), comma-separated
+ | season_type | string | all | Filter odds rows by Preseason or Regular Season (case-insensitive; _ and - read as a space). Unlike REST, an unknown value does not fail the connection: it is dropped and listed under invalid in the filter_warning event. Not available on the WebSocket subscribe.
+ | market | string | all | Filter by market type(s), comma-separated (e.g. moneyline, point_spread, total_points, player_points). Also accepted as market_type=.
+ | min_ev | number | 2.0 | Minimum EV percentage for +EV opportunity events
+ | min_profit | number | 0.5 | Minimum profit percentage for arbitrage events only (does not apply to low-hold filtering)
+ | state | string | — | US state code for deep-link routing only; does not filter or reprice odds. Accepts the 50 US state codes plus dc. A valid code adds ?state= to odds deep links. Omitted, empty, or unsupported codes add no suffix, so the redirect applies its own pa default. Unsupported codes emit filter_warning after connected; the handshake succeeds.
+ | api_key | string | — | API key (alternative to header auth for browser EventSource)
+
+### Channel OptionsPermalink for this section
+
+ | | Channel | Events Delivered | Use Case
+ | odds | snapshot, odds:update, odds:locked, odds:removed, heartbeat | Track odds movements
+ | opportunities | snapshot, ev:detected/expired, arb:detected/expired, middles:detected/expired, low_hold:detected/expired, heartbeat | Alert on opportunities
+ | gamestate | gamestate:snapshot, gamestate:update, gamestate:final, heartbeat | Live scores, periods, clocks, and situational data per event. Each gamestate:update re-emits the full current slate — there is no gamestate:removed on SSE (see gamestate:update). Requires the Game State add-on ($79/mo, any paid plan) or Enterprise. See Live Game State for the full field catalog.
+ | all | All event types | Full real-time picture
+
+One subscription per SSE stream. For parity with the WebSocket API, the endpoint accepts both channel and the plural channels, and either one tolerates a comma-separated value. But an SSE connection carries a single subscription: if you pass more than one valid channel (e.g. ?channels=odds,opportunities), the request collapses to channel=all instead of returning an error. A single value (?channel=odds) streams just that channel. To subscribe to a specific subset of channels selectively, use the WebSocket API, which supports true multi-channel channels= filtering on one connection.
+
+### Convenience RoutesPermalink for this section
+
+ | | Route | Equivalent To
+ | GET /api/v1/stream/odds | /api/v1/stream?channel=odds
+ | GET /api/v1/stream/opportunities | /api/v1/stream?channel=opportunities
+ | GET /api/v1/stream/gamestate | /api/v1/stream?channel=gamestate
+ | GET /api/v1/stream/all | /api/v1/stream?channel=all
+ | GET /api/v1/stream/events/:eventId | /api/v1/stream?channel=odds&event_id=:eventId
+
+## SSE Event TypesPermalink for this section
+
+### connectedPermalink for this section
+
+Sent immediately when the stream is established.
+
+event: connected
+data: {"stream_id":"stream_1704960637000","channel":"all","filters":{"sportsbook":null,"sport":["basketball"],"league":["nba"],"event":null,"market":null},"reconnected":false}
+
+ | | Field | Type | Description
+ | stream_id | string | Unique stream identifier
+ | channel | string | Echo of requested channel (odds, opportunities, or all)
+ | filters | object | Echo of active filters
+ | resume | object | Self-describing resume contract: { durable, enabled, scope, resumable_channels }. Sent on every connect so your client learns the guarantees up front — see the Streaming Reliability Contract
+ | reconnected | boolean | true if this is a reconnection via Last-Event-ID (also echoed back as last_event_id)
+ | resumed | boolean | Present when you reconnected with a Last-Event-ID. true → the server is replaying the missed odds events (with replayed_count) instead of sending a snapshot; if it cannot finish the replay, a full snapshot follows after all, labelled mode: "full_resync" on snapshot:complete. false → the server could not resume; a full snapshot follows and fallback_reason says why
+ | replayed_count | number | On resumed: true — how many buffered events are replayed
+ | fallback_reason | string | On resumed: false — why the resume fell back (e.g. seq_too_old, process_restarted, filter_changed, channel_unsupported). Informational; the recovery is the same: accept the full snapshot. Full value list
+ | trial | object | undefined | Present if user is on a streaming trial. Contains active, expires_at, remaining_hours, max_streams
+
+### snapshotPermalink for this section
+
+Full data dump sent after connected. Contains all current odds or opportunities matching your filters. Large datasets are chunked across multiple snapshot events (up to 1000 items each).
+
+Each odds object in the snapshot contains all fields — this is the full Odds shape that your client should store locally. Subsequent odds:update events send only changed fields (see below).
+
+On the opportunities and all channels, opportunity chunks carry their array under the opportunity type instead of odds — ev, arbitrage, middles, or low_hold — with the same count, total, offset, and has_more fields. Store those items by id as well: a later ev:detected (or arb:/middles:/low_hold:detected) with the same id is an update to one of them.
+
+event: snapshot
+data: {"odds":[{"id":"123456","sportsbook":"draftkings","event_id":"nba_phosuns_phi76ers_2026-02-08","sport":"basketball","league":"nba","home_team":"PHI 76ers","away_team":"PHO Suns","market_type":"moneyline","selection":"PHO Suns","selection_type":"away","odds_american":-155,"odds_decimal":1.645,"odds_probability":0.608,"line":null,"event_start_time":"2026-02-08T19:00:00Z","is_live":false,"timestamp":"2026-02-08T18:47:20Z","deep_link":"https://sportsbook.draftkings.com/event/..."}],"count":1000,"total":3200,"offset":0,"has_more":true}
+
+ | | Field | Type | Description
+ | odds | array | Array of full Odds objects (see Odds endpoint for all fields)
+ | count | number | Number of odds in this chunk
+ | total | number | Total number of odds matching filters
+ | offset | number | Offset of this chunk in the full result
+ | has_more | boolean | true if more snapshot chunks follow
+
+### snapshot:completePermalink for this section
+
+Signals the initial data phase is done and live deltas follow. Safe to hide loading states after receiving this. On a reconnect, this event also labels the recovery outcome — your client must branch on mode:
+
+event: snapshot:complete
+data: {"timestamp":"2026-02-08T18:47:20.123Z"}
+
+ | | mode | When | Client action
+ | (absent) | Fresh connect | None — baseline loaded
+ | "full_resync" | A reconnect could not resume; the full snapshot you just received replaces everything (fallback_reason included) | Discard prior local state — treat the snapshot as the new authoritative baseline
+ | "resume" | A reconnect successfully replayed missed events (replayed_count included; no snapshot was sent) | Nothing — your state is continuous
+
+event: snapshot:complete
+data: {"timestamp":"2026-02-08T18:47:20.123Z","mode":"full_resync","fallback_reason":"seq_too_old"}
+
+See the Streaming Reliability Contract for the full recovery semantics.
+
+### odds:updatePermalink for this section
+
+Fired when odds change for a sportsbook. Only sent on odds or all channels.
+
+Compact delta payload. Delta events contain only fields that can change between updates — id, odds_american, odds_decimal, odds_probability, line, is_live, and timestamp. Static fields like sportsbook, sport, league, home_team, away_team, market_type, market_name, selection, deep_link, season_type, and event_start_time are not included in deltas. Merge each delta into your local odds map by id using the full objects received in the initial snapshot. Some rows arrive in full instead of as a delta: a row for an id you don’t hold yet is sent complete, with every Odds field, in the same odds:update envelope — store it as is rather than skipping it. See Migration: Compact SSE Deltas below.
+
+event: odds:update
+id: 3f9c2a1b:12847
+data: {"odds":[{"id":"123456","odds_american":-150,"odds_decimal":1.667,"odds_probability":0.6,"line":null,"is_live":false,"timestamp":"2026-02-08T18:47:38Z"}],"count":1,"book":"draftkings","partial":false}
+
+Delta object fields (OddsDelta):
+
+ | | Field | Type | Description
+ | id | string | Unique odds ID — matches the id from the initial snapshot
+ | odds_american | number | Updated American odds (e.g. -150)
+ | odds_decimal | number | Updated decimal odds (e.g. 1.667)
+ | odds_probability | number | Updated implied probability (e.g. 0.6)
+ | line | number | null | Updated line/spread (e.g. -3.5), or null for moneyline
+ | is_live | boolean | Whether the event is currently live
+ | is_active | boolean | true = market open/bettable; false = market suspended/closed with the price frozen. A market suspending (e.g. after a goal) emits an odds:update with is_active: false — grey out the line rather than trusting the frozen price. See also the odds:locked event.
+ | is_main_line | boolean | true when this line is the best-effort main line for its cohort; false for alternate lines. A cohort is (event, market_type, selection axis), resolved per sportsbook — the selection axis is the player for player-prop markets, the team side for spread and team-total markets, and the raw selection everywhere else — so several rows of one market are normally main at once (Over and Under of a total are separate cohorts). See the is_main_line field on /odds for the full semantics. Can flip as the main line moves.
+ | is_alternate_line | boolean | Negative-polarity sibling of is_main_line (mutually exclusive).
+ | is_stale_pregame_price | boolean | true when a live row still carries a pre-game price that hasn’t moved since kickoff.
+ | timestamp | string | ISO 8601 time SharpAPI last refreshed this odd through its pipeline — advances every ingest cycle. A feed-freshness / liveness signal; it is NOT when the price last changed. See understanding the timestamp field.
+
+Exchange books additionally carry the dynamic volume, volume_24h, open_interest, and max_bet fields when present. Everything else — sportsbook, sport, league, home_team, away_team, market_type, market_name, selection, deep_link, event_start_time, and the nested entity refs — is static and comes from the initial snapshot; merge each delta into your local map by id and never read a static field off a delta. Two kinds of row are sent in full, with every Odds field, inside the same envelope: a row whose id you don’t hold yet (a market that opened or re-opened after your snapshot), which you store as is, and a row whose competition reference changed. Merging by id handles both. A change to any other static field is not streamed on its own; your next full snapshot carries the current values.
+
+Envelope fields:
+
+ | | Field | Type | Description
+ | odds | array | Array of OddsDelta objects (compact — dynamic fields only)
+ | count | number | Number of odds in this chunk
+ | book | string | Sportsbook that changed (e.g. "draftkings")
+ | partial | boolean | true if more chunks follow for this update batch
+ | replay | boolean | Present and true only on frames re-sent during a resume; absent on live traffic
+
+### ev:detectedPermalink for this section
+
+A new positive expected value opportunity, or an updated version of one already sent (same id). Only sent on opportunities or all channels.
+
+:detected means new or updated — upsert by id. Since 2026-09-26, the SSE stream re-sends an opportunity whose content changed under the same id — a new price, EV%, fair probability, leg odds, is_suspended, or quality_tier — in the ordinary ev:detected, arb:detected, middles:detected, or low_hold:detected event, as the WebSocket API does. Before that date SSE delivered these updates unevenly — some content changes did reach the client under the same id, most did not — so a client that skipped a repeat id could hold a stale version until the opportunity expired or it reconnected.
+
+- Store opportunities by id, and replace the stored version with each :detected item.
+
+- Alert only on an id you have not seen. A known id is an update, not a new opportunity. Count the ids from the snapshot chunks as seen, and forget an id when *:expired lists it.
+
+*:expired events and the payload format are unchanged.
+
+event: ev:detected
+data: {"opportunities":[{"id":"a1b2c3d4e5f6","game_id":"nba_phosuns_phi76ers_2026-02-08","ev_percentage":4.35,"odds_american":-105,"odds_decimal":1.952,"no_vig_odds":-101,"selection":"PHO Suns -3.5","market":"point_spread","line":-3.5,"sportsbook":"draftkings","game":"PHO Suns @ PHI 76ers","sport":"basketball","league":"nba","home_team":"PHI 76ers","away_team":"PHO Suns","start_time":"2026-02-08T19:00:00.000Z","is_live":false,"confidence_score":72,"kelly_percent":3.8,"book_count":4,"detected_at":"2026-02-08T18:47:20.000Z"}],"count":1,"type":"ev"}
+
+All four :detected events share this envelope:
+
+ | | Field | Type | Description
+ | opportunities | array | New or updated opportunities. Upsert each one by id
+ | count | number | Number of items in opportunities
+ | type | string | ev, arbitrage, middles, or low_hold
+
+### ev:expiredPermalink for this section
+
+A previously detected +EV opportunity is no longer available. expired lists the ids to remove; count and type are as on ev:detected.
+
+event: ev:expired
+data: {"expired":["a1b2c3d4e5f6"],"count":1,"type":"ev"}
+
+### arb:detectedPermalink for this section
+
+A new arbitrage opportunity, or an updated version of one already sent (same id). Only sent on opportunities or all channels.
+
+event: arb:detected
+data: {"opportunities":[{"id":"61c501b83ce932d1","event_id":"nba_phosuns_phi76ers_2026-02-08","event_name":"PHO Suns @ PHI 76ers","sport":"basketball","league":"nba","market_type":"moneyline","line":null,"profit_percent":2.8,"implied_total":97.2,"is_live":false,"legs":[{"sportsbook":"draftkings","selection":"PHO Suns","odds_american":150,"odds_decimal":2.5,"implied_probability":0.4,"stake_percent":41.4},{"sportsbook":"fanduel","selection":"PHI 76ers","odds_american":-130,"odds_decimal":1.769,"implied_probability":0.5652,"stake_percent":58.6}],"detected_at":"2026-02-08T18:47:21.000Z"}],"count":1,"type":"arbitrage"}
+
+### arb:expiredPermalink for this section
+
+A previously detected arbitrage opportunity is no longer available.
+
+event: arb:expired
+data: {"expired":["61c501b83ce932d1"],"count":1,"type":"arbitrage"}
+
+### middles:detectedPermalink for this section
+
+A new middle opportunity, or an updated version of one already sent (same id). Only sent on opportunities or all channels.
+
+event: middles:detected
+data: {"opportunities":[{"id":"middle_abc123","event_id":"nba_phosuns_phi76ers_2026-02-08","event_name":"PHO Suns @ PHI 76ers","sport":"basketball","league":"nba","market_type":"player_points","side1":{"book":"draftkings","selection":"Over 22.5","line":22.5,"odds":{"american":-110,"decimal":1.909,"probability":0.5238,"fair_probability":0.51},"stake_percent":50,"odds_age_seconds":2.1,"deep_link":null},"side2":{"book":"fanduel","selection":"Under 23.5","line":23.5,"odds":{"american":-105,"decimal":1.952,"probability":0.5122,"fair_probability":0.49},"stake_percent":50,"odds_age_seconds":1.5,"deep_link":null},"middle_size":1,"middle_numbers":[23],"middle_probability":0.12,"expected_value":3.5,"quality_score":85,"detected_at":"2026-02-08T18:47:22.000Z"}],"count":1,"type":"middles"}
+
+### middles:expiredPermalink for this section
+
+A previously detected middle opportunity is no longer available.
+
+event: middles:expired
+data: {"expired":["middle_abc123"],"count":1,"type":"middles"}
+
+### low_hold:detectedPermalink for this section
+
+A new low-hold opportunity, or an updated version of one already sent (same id). Only sent on opportunities or all channels.
+
+event: low_hold:detected
+data: {"opportunities":[{"id":"lowhold_abc123","event_id":"nba_phosuns_phi76ers_2026-02-08","event_name":"PHO Suns @ PHI 76ers","sport":"basketball","league":"nba","market_type":"moneyline","line":null,"home_team":"PHI 76ers","away_team":"PHO Suns","start_time":"2026-02-08T19:00:00.000Z","hold_percentage":1.2,"is_live":false,"all_books":["draftkings","fanduel"],"side1":{"selection":"PHO Suns","books":["draftkings"],"line":null,"odds":{"american":-108,"decimal":1.926,"implied_probability":0.5192,"fair_probability":0.5096},"deep_links":{"draftkings":"https://sportsbook.draftkings.com/event/..."}},"side2":{"selection":"PHI 76ers","books":["fanduel"],"line":null,"odds":{"american":110,"decimal":2.1,"implied_probability":0.4762,"fair_probability":0.4904},"deep_links":{"fanduel":"https://sportsbook.fanduel.com/event/..."}},"detected_at":"2026-02-08T18:47:22.000Z"}],"count":1,"type":"low_hold"}
+
+### low_hold:expiredPermalink for this section
+
+A previously detected low-hold opportunity is no longer available.
+
+event: low_hold:expired
+data: {"expired":["lowhold_abc123"],"count":1,"type":"low_hold"}
+
+### gamestate:snapshotPermalink for this section
+
+Full current live slate, sent once after connected on the
+gamestate (or all) channel. The payload is a flat list of event
+rows — each row has the same shape as a
+Live Game State REST event, plus its
+event_id.
+
+event: gamestate:snapshot
+data: {"data":[{"event_id":"atp_jdoe_rroe_2026-07-03","home_team":"J. Doe","away_team":"R. Roe","sport":"tennis","league":"atp","home_score":9,"away_score":10,"game_period":"S3","is_live":true,"primary_book":"draftkings","book_count":4}]}
+
+### gamestate:updatePermalink for this section
+
+Fired on each gamestate update cycle. Only sent on gamestate or
+all channels.
+
+Full-slate re-emit — not a delta. Unlike odds:update, every SSE
+gamestate:update carries the complete current live slate
+matching your filters. There is no gamestate:removed event on
+SSE — a finished event stays in the payload as its status: "final"
+row for the carry window,
+then stops appearing.
+Replace your local gamestate wholesale on every gamestate:update;
+don’t merge it as a delta, or ended events will linger in your state
+forever. One edge case: with sport/league filters set, a cycle
+matching zero events sends no gamestate:update at all (only
+unfiltered streams get the empty {"data": []} payload), so the final
+ended event is never replaced away — if heartbeats continue but
+updates stop, treat the slate as possibly empty and expire unrefreshed
+rows. If you need incremental delivery — changed-row updates plus
+explicit gamestate:removed id lists — use the
+WebSocket API instead; see
+Delivery semantics: WebSocket vs SSE.
+
+event: gamestate:update
+data: {"data":[{"event_id":"atp_jdoe_rroe_2026-07-03","home_team":"J. Doe","away_team":"R. Roe","sport":"tennis","league":"atp","home_score":10,"away_score":10,"game_period":"S3","is_live":true,"primary_book":"draftkings","book_count":4}]}
+
+The gamestate channel is also not resumable over SSE:
+Last-Event-ID replay covers the odds channel only. A gamestate
+reconnect always re-bootstraps with a fresh gamestate:snapshot —
+treat every reconnect as a fresh start: clear local gamestate and
+rebuild from the new snapshot. Note that gamestate frames (and
+heartbeats) carry no SSE id: line, so a plain EventSource on the
+gamestate channel reconnects without a Last-Event-ID — its
+connected event carries neither resumed nor fallback_reason.
+Those keys appear only when the reconnect does present a
+Last-Event-ID (e.g. on the all channel, where odds events set the
+resume cursor, or a hand-set header): the server then acknowledges
+with resumed: false and fallback_reason: "channel_unsupported".
+
+### gamestate:finalPermalink for this section
+
+Sent once when an event finishes, carrying its terminal row
+(status: "final", final scores, completed_at). Same {"data": [...]}
+envelope, access and sport/league filters as gamestate:update, and
+no id: line. The row also stays in every gamestate:update for the
+carry window, so this frame is an announcement, not the only delivery.
+It can occasionally repeat — dedupe on
+(event_id, completed_at). See
+Finished-event announcements.
+
+event: gamestate:final
+data: {"data":[{"event_id":"atp_jdoe_rroe_2026-07-03","home_team":"J. Doe","away_team":"R. Roe","sport":"tennis","league":"atp","sets_home":1,"sets_away":2,"score_type":"sets","winner":"away","status":"final","completed_at":"2026-07-03T19:42:10Z","is_live":false,"stale":false}]}
+
+### odds:lockedPermalink for this section
+
+Fired when a market is suspended/closed (e.g. after a goal, during a line move, or a late-game lockout) — the price is frozen but the selection is no longer bettable. Carries the suspended subset of the current delta, same payload shape as odds:update, with is_active: false. Only sent on odds or all channels.
+
+It is a dedicated lock signal and is supplementary — the same rows also arrive in odds:update with is_active: false, so clients that already read is_active need not subscribe to odds:locked separately. Use it when you want a dedicated lock signal without parsing every odds:update.
+
+event: odds:locked
+id: 3f9c2a1b:12851
+data: {"odds":[{"id":"123456","odds_american":-2500,"is_live":true,"is_active":false,"timestamp":"2026-02-08T18:47:38Z"}],"count":1,"book":"pinnacle","partial":false}
+
+A market re-opening emits a normal odds:update with is_active: true (and a fresh price). Markets a book removes entirely come through odds:removed instead.
+
+The envelope is the same as odds:update, including the replay field: odds:locked frames re-sent during a resume carry "replay": true, exactly like replayed odds:update and odds:removed frames.
+
+### odds:removedPermalink for this section
+
+Odds removed by a sportsbook (e.g. market taken down, event settled). Only sent on odds or all channels.
+
+event: odds:removed
+id: 3f9c2a1b:12850
+data: {"ids":["123456","789012"],"count":2,"book":"draftkings"}
+
+ | | Field | Type | Description
+ | ids | string[] | Odds IDs to remove from local state
+ | count | number | Number of removed odds
+ | book | string | Sportsbook that removed the odds
+ | replay | boolean | Present and true only on frames re-sent during a resume; absent on live traffic
+
+### heartbeatPermalink for this section
+
+Keep-alive sent every 30 seconds. If you do not receive a heartbeat within 60 seconds, the connection is stale — reconnect.
+
+event: heartbeat
+data: {"type":"heartbeat","timestamp":"2026-01-26T02:11:07.846Z","seq":12847,"global_seq":"12847","book_updated_ms":{"draftkings":1769393467000,"pinnacle":1769393465500}}
+
+The heartbeat doubles as a freshness watchdog: it stamps the current data sequence (seq as a number, global_seq as a JS-safe string) and per-book last-emission clocks (book_updated_ms). Heartbeats arriving while global_seq stays flat during live games means your subscription is frozen — reconnect. A single book’s book_updated_ms going stale while others advance means that book has gone quiet. Heartbeats carry no id: line and are never replayed.
+
+### resync_requiredPermalink for this section
+
+Sent when live deltas were skipped because your client consumed too slowly (see the slow-consumer policy). Delivered as soon as backpressure clears, before the next data event — your local state is now incomplete. Refetch /api/v1/odds for your filter scope, or reconnect for a fresh snapshot.
+
+event: resync_required
+data: {"reason":"backpressure","message":"Deltas were dropped due to slow consumption. Request /api/v1/odds for a full snapshot or reconnect."}
+
+### displacedPermalink for this section
+
+Sent as the final event when a newer connection on the same API key takes the stream slot (newer-wins — see One Connection, Many Topics); the stream then closes. reconnect: false is load-bearing: do not auto-reconnect, or you will kick your own newer session in a loop.
+
+event: displaced
+data: {"code":"too_many_streams","message":"Displaced by a newer connection on the same API key (newer-wins). This stream was closed because another session took the single per-key stream slot.","reconnect":false,"hint":"Run one stream per key. To stream from multiple processes concurrently, request a maxStreams increase for your key or mint a separate key per process at https://sharpapi.io/dashboard.","docs":"https://docs.sharpapi.io/streaming/single-connection"}
+
+The hint is the server’s literal wording. The increase it refers to is a per-key maxStreams override, sold as a paid add-on on any paid tier — see Concurrent Stream Limits.
+
+### errorPermalink for this section
+
+Recoverable errors keep the connection open:
+
+event: error
+data: {"code":"upstream_error","message":"Temporary issue fetching DraftKings data. Will retry."}
+
+One class of error is terminal: streaming connections are periodically re-authorized while open. If your key loses its entitlements mid-stream (downgrade, revoked key, add-on removed), the server sends an error with code tier_restricted or invalid_api_key and then closes the stream. Reconnect to re-authorize with your current entitlements — see the reliability contract.
+
+event: error
+data: {"code":"tier_restricted","message":"Streaming access was removed for this key — reconnect to re-authorize."}
+
+## ReconnectionPermalink for this section
+
+SSE reconnects automatically (EventSource re-sends the Last-Event-ID header for you; the server hints retry: 3000). On reconnect the server resolves one of two outcomes — both explicit, never silent:
+
+- Resume (connected ack: resumed: true) — the missed odds events are replayed from a best-effort window covering roughly the last 2 minutes; no snapshot is sent. Keep your local state; the replayed deltas bring it current. Every replayed frame carries "replay": true so you can tell it from live traffic. A snapshot:complete with mode: "resume" marks the transition to live data. resumed: true means the replay started, not that it finished: if the server cannot complete it, snapshot chunks follow the replayed frames and snapshot:complete carries mode: "full_resync" — path 2 after all. Clear your local state when the first of those chunks arrives — or, if the full re-sync carries no snapshot chunk at all because nothing matches your filters any more, when snapshot:complete reports mode: "full_resync".
+
+- Full re-sync (connected ack: resumed: false + fallback_reason) — the server could not replay (disconnected too long, reconnect landed across server maintenance, filters changed, or a non-resumable channel). A fresh full snapshot follows, and its snapshot:complete is labelled mode: "full_resync". Clear your local state before applying it — stale odds from the previous session must not mix with the new baseline.
+
+Only odds:update, odds:locked, and odds:removed events carry SSE id: lines — the resume cursor is odds-only on SSE (gamestate and opportunities frames carry no id: lines, so their reconnects just get a fresh snapshot; an all reconnect sends its cursor and gets fallback_reason: "channel_unsupported"). Treat the id value as an opaque cursor: echo it, never parse it.
+
+// Browsers handle this automatically with EventSource.
+// For custom clients, echo the last id: value you received:
+const headers = {
+ 'X-API-Key': 'YOUR_KEY',
+ 'Last-Event-ID': '3f9c2a1b:12847' // opaque — echo verbatim
+};
+
+Clear local state only when a full snapshot follows: on a connected without resumed: true; on a snapshot chunk that arrives after resumed: true; or, when a full re-sync after resumed: true carries no snapshot chunk at all, on the snapshot:complete that reports mode: "full_resync". Don’t clear on every reconnect, or on reconnected: true (also sent for a resume): after a successful resume no snapshot follows, so clearing there would leave your client with nothing to merge deltas into. The reliability contract covers both paths in detail.
+
+Resume is a best-effort optimization, not a durable log — reconnects across server maintenance or longer outages re-baseline with a full snapshot, and the server always tells you which path you got. Design for the full snapshot as the routine recovery path. The connected ack’s resume descriptor states these guarantees machine-readably on every connect.
+
+## Resync, sequencing, and gap detectionPermalink for this section
+
+Three questions come up when hardening a production SSE client. The answers below are the
+contract — anything not stated here is not guaranteed.
+
+### Can I ask for a fresh snapshot on an open stream?Permalink for this section
+
+No — SSE is one-way. There is no client-to-server message channel on /api/v1/stream, so
+there is no resync or refresh frame to send, and resync_required is server-to-client
+only. Filters are likewise fixed for the life of a connection by the query parameters you
+connected with; there is no way to change them in place.
+
+Reconnecting is the only way to get a fresh baseline, and how you reconnect decides what you get:
+
+ | | You want | Do this
+ | A fresh full snapshot, discarding everything | Open a new connection with no Last-Event-ID. A newly constructed EventSource has no stored last-event id, so closing the old one and constructing a new one is enough in the browser; custom clients simply omit the header.
+ | To keep your state and only fill the gap | Reconnect with Last-Event-ID — see Reconnection
+
+A connection that sends no cursor is never treated as a resume attempt: you get the normal
+connected → snapshot chunks → snapshot:complete bootstrap, and connected carries neither
+resumed nor fallback_reason.
+
+### Is there a sequence number I can gap-detect on?Permalink for this section
+
+No — do not build gap detection on a counter. The server signals loss explicitly instead, and
+those signals are the contract.
+
+Two surfaces on SSE carry a sequence, and neither is a delivery counter:
+
+- The id: line on odds:update, odds:locked, and odds:removed is a resume cursor.
+Treat it as opaque: echo it back verbatim as Last-Event-ID, never parse it or do arithmetic on
+it. Its internal shape is not part of this contract and varies with the resume scheme in use.
+
+- seq / global_seq on the heartbeat is a freshness signal. Use it as
+described there — flat across heartbeats during live games means your subscription is frozen, so
+reconnect.
+
+Four reasons the counter cannot stand in for gap detection:
+
+- It is not contiguous for any client. A single counter is shared by every sportsbook and
+every channel — it advances for channels you are not subscribed to, and for WebSocket broadcasts
+on the same instance — while you receive only your subscribed, filtered subset. A jump greater
+than 1 is normal — a client that alarms on seq != last + 1 will alarm continuously.
+
+- It is not ordered across sportsbooks. Each book’s delta is sequenced concurrently, so two
+consecutive frames from different books can carry a decreasing value. If you persist a cursor
+of your own, persist the maximum you have seen, not the last.
+
+- It does not survive server maintenance. A cursor minted before a restart, or by a different
+server instance, is rejected on reconnect (process_restarted / foreign_seq) and you are
+re-baselined.
+
+- SSE data payloads carry no sequence field at all. The value exists only in the opaque id:
+line and on the heartbeat — there is nothing to read off an odds:update body.
+
+Key on the three explicit loss signals instead. Each one means your local state is now incomplete:
+
+ | | Signal | Meaning | Recovery
+ | resync_required | Live deltas were dropped because your client read too slowly | Refetch /api/v1/odds for your filter scope, or reconnect
+ | connected with resumed: false + fallback_reason | A resume was attempted and declined; a full snapshot follows | Discard local state and rebuild from that snapshot
+ | snapshot:complete with mode: "full_resync" | The snapshot you just received is an authoritative new baseline | Same — discard, then rebuild
+
+### Is a gap after a disconnect ever silently dropped?Permalink for this section
+
+No. Every reconnect resolves to one of the two outcomes in Reconnection, and
+the server always tells you which one you got:
+
+- Replayed — you receive the buffered odds deltas you missed, not a fresh snapshot.
+Deletions are replayed as first-class odds:removed frames, so rows that disappeared while you
+were away are deleted from your map rather than left stale. Every replayed frame carries
+"replay": true. The walk ends with snapshot:complete / mode: "resume" and a
+replayed_count.
+
+- Declined — connected carries resumed: false and a fallback_reason, and a full
+present-state snapshot follows, labelled mode: "full_resync". Deletions here are implicit:
+the fresh snapshot simply omits rows that are gone, which is why you must clear local state
+before applying it.
+
+The SSE replay window covers roughly the last 2 minutes and is also entry-capped, so sustained
+volume shortens it further. It is best-effort and tied to the server instance that served your
+connection — a reconnect that lands on another instance, or crosses server maintenance, re-baselines
+with a full snapshot. Resume covers the dedicated odds channel only: reconnects on
+opportunities or gamestate carry no cursor and simply start over with a fresh snapshot, and a
+reconnect on the multiplexed all channel takes the full-re-sync path with
+fallback_reason: "channel_unsupported". WebSocket resume covers more channels and a longer
+window — see the Streaming Reliability Contract.
+
+## Code ExamplesPermalink for this section
+
+BrowserNode.jsPython
+
+### Browser
+
+// Local odds map — keyed by odds ID, stores full Odds objects from snapshot.
+// Delta events merge into this map by ID.
+const oddsMap = new Map();
+let resuming = false; // set by `connected` with `resumed: true` — see Reconnection
+
+// Opportunities by type, each keyed by `id`. A `:detected` item is a new
+// opportunity OR an updated version of one you already hold (same `id`).
+const oppsByType = { ev: new Map(), arbitrage: new Map(), middles: new Map(), low_hold: new Map() };
+
+// Upsert by `id`. Returns true only the first time an `id` is seen —
+// alert on that, not on every `:detected` item.
+function upsertOpp(type, opp) {
+ const isNew = !oppsByType[type].has(opp.id);
+ oppsByType[type].set(opp.id, opp); // replace the version you held
+ return isNew;
+}
+
+const eventSource = new EventSource(
+ 'https://api.sharpapi.io/api/v1/stream?channel=all&league=nba&api_key=YOUR_KEY'
+);
+
+eventSource.addEventListener('connected', (e) => {
+ const { stream_id, channel, resumed } = JSON.parse(e.data);
+ // Keep local odds only when the server resumed (`resumed: true`): it replays the
+ // deltas you missed instead of sending a snapshot. Every other connect — a first
+ // connect (no `resumed` field) or `resumed: false` — is followed by a full
+ // snapshot, so clear now. Don't key this off `reconnected`: that is `true` for a
+ // resume too, and clearing there leaves nothing to merge the replayed deltas into.
+ resuming = resumed === true;
+ if (!resuming) oddsMap.clear();
+ // Opportunities are never resumed: every connect re-sends them in `snapshot`.
+ for (const map of Object.values(oppsByType)) map.clear();
+ console.log(`Stream ${stream_id} connected (${channel})`);
+});
+
+eventSource.addEventListener('snapshot', (e) => {
+ const data = JSON.parse(e.data);
+ // A snapshot after `resumed: true` means the server gave up on the resume: this
+ // snapshot replaces your state (its `snapshot:complete` says `full_resync`).
+ if (resuming) {
+ oddsMap.clear();
+ resuming = false;
+ }
+ // Opportunity chunks carry `ev` / `arbitrage` / `middles` / `low_hold` instead of `odds`
+ for (const type of Object.keys(oppsByType)) {
+ for (const opp of data[type] ?? []) oppsByType[type].set(opp.id, opp);
+ }
+ if (!data.odds) return;
+ // Store full Odds objects keyed by ID
+ for (const odd of data.odds) {
+ oddsMap.set(odd.id, odd);
+ }
+ console.log(`Snapshot chunk: ${data.count} odds (${oddsMap.size}/${data.total} total)`);
+});
+
+eventSource.addEventListener('snapshot:complete', (e) => {
+ const { mode } = JSON.parse(e.data); // "resume", "full_resync", or absent on a first connect
+ // A full re-sync can arrive with no `snapshot` chunk at all — nothing matches your
+ // filters any more — so the clear in the `snapshot` handler never ran. The `resuming`
+ // guard is what keeps this from wiping a snapshot you have just stored.
+ if (mode === 'full_resync' && resuming) oddsMap.clear();
+ resuming = false;
+ console.log(`Snapshot complete: ${oddsMap.size} odds loaded`);
+});
+
+eventSource.addEventListener('odds:update', (e) => {
+ const { odds, book } = JSON.parse(e.data);
+ // Merge compact deltas into local state — only dynamic fields are sent
+ for (const delta of odds) {
+ const existing = oddsMap.get(delta.id);
+ if (existing) {
+ Object.assign(existing, delta); // Merge changed fields
+ } else {
+ // An `id` you don't hold yet arrives as a complete row — store it as is
+ oddsMap.set(delta.id, delta);
+ }
+ }
+ console.log(`${book}: ${odds.length} odds updated`);
+});
+
+eventSource.addEventListener('odds:removed', (e) => {
+ const { ids, book } = JSON.parse(e.data);
+ for (const id of ids) {
+ oddsMap.delete(id);
+ }
+ console.log(`${book}: ${ids.length} odds removed`);
+});
+
+// Each `:detected` item is upserted; only a first-seen `id` is logged as new.
+eventSource.addEventListener('ev:detected', (e) => {
+ const { opportunities: opps } = JSON.parse(e.data);
+ opps.forEach(opp => {
+ if (upsertOpp('ev', opp)) console.log(`+EV: ${opp.selection} at ${opp.ev_percentage}%`);
+ });
+});
+
+eventSource.addEventListener('arb:detected', (e) => {
+ const { opportunities: arbs } = JSON.parse(e.data);
+ arbs.forEach(arb => {
+ if (upsertOpp('arbitrage', arb)) console.log(`Arb: ${arb.profit_percent}% profit`);
+ });
+});
+
+eventSource.addEventListener('middles:detected', (e) => {
+ const { opportunities: middles } = JSON.parse(e.data);
+ middles.forEach(m => {
+ if (upsertOpp('middles', m)) console.log(`Middle: ${m.event_name} — EV ${m.expected_value}%`);
+ });
+});
+
+eventSource.addEventListener('low_hold:detected', (e) => {
+ const { opportunities: holds } = JSON.parse(e.data);
+ holds.forEach(h => {
+ if (upsertOpp('low_hold', h)) console.log(`Low hold: ${h.hold_percentage}%`);
+ });
+});
+
+// `:expired` lists the ids that are gone. Forget them, so an `id` that
+// comes back later counts as new again.
+for (const prefix of ['ev', 'arb', 'middles', 'low_hold']) {
+ eventSource.addEventListener(`${prefix}:expired`, (e) => {
+ const { expired, type } = JSON.parse(e.data); // type: 'ev' | 'arbitrage' | 'middles' | 'low_hold'
+ for (const id of expired) oppsByType[type].delete(id);
+ });
+}
+
+eventSource.addEventListener('heartbeat', () => {
+ console.log('Connection alive');
+});
+
+eventSource.onerror = () => {
+ console.log('Connection lost, auto-reconnecting...');
+};
+
+### Node.js
+
+import EventSource from 'eventsource';
+
+// Local odds map — keyed by odds ID
+const oddsMap = new Map();
+let resuming = false; // set by `connected` with `resumed: true`
+// Opportunities keyed by `id` — `:detected` carries new AND updated items
+const evMap = new Map();
+const arbMap = new Map();
+
+const es = new EventSource(
+ 'https://api.sharpapi.io/api/v1/stream?channel=all&sport=basketball&league=nba',
+ { headers: { 'X-API-Key': 'YOUR_KEY' } }
+);
+
+es.addEventListener('connected', (e) => {
+ const { stream_id, resumed } = JSON.parse(e.data);
+ // Clear odds on every connect that is NOT a resume: a first connect carries no
+ // `resumed` field, `resumed: false` means the resume was declined, and a full
+ // snapshot follows both. `resumed: true` replays instead — keep local state.
+ resuming = resumed === true;
+ if (!resuming) oddsMap.clear();
+ evMap.clear(); // opportunities are never resumed — the snapshot re-sends them
+ arbMap.clear();
+ console.log(`Stream ${stream_id} connected (resumed: ${resumed ?? 'fresh'})`);
+});
+
+es.addEventListener('snapshot', (e) => {
+ // A snapshot after `resumed: true` means the resume was abandoned part-way and
+ // this snapshot replaces your state
+ if (resuming) {
+ oddsMap.clear();
+ resuming = false;
+ }
+ // Opportunity chunks carry `ev` / `arbitrage` / ... instead of `odds`
+ const { odds, ev, arbitrage } = JSON.parse(e.data);
+ for (const odd of odds ?? []) {
+ oddsMap.set(odd.id, odd);
+ }
+ for (const opp of ev ?? []) evMap.set(opp.id, opp);
+ for (const arb of arbitrage ?? []) arbMap.set(arb.id, arb);
+});
+
+es.addEventListener('snapshot:complete', (e) => {
+ const { mode } = JSON.parse(e.data); // "resume", "full_resync", or absent on a first connect
+ // A full re-sync matching no rows sends no `snapshot` chunk, so clear here too
+ if (mode === 'full_resync' && resuming) oddsMap.clear();
+ resuming = false;
+ console.log(`Ready: ${oddsMap.size} odds loaded`);
+});
+
+es.addEventListener('odds:update', (e) => {
+ const { odds, book } = JSON.parse(e.data);
+ // Merge compact deltas into full local objects
+ for (const delta of odds) {
+ const existing = oddsMap.get(delta.id);
+ // An `id` you don't hold yet arrives as a complete row — store it as is
+ if (existing) Object.assign(existing, delta);
+ else oddsMap.set(delta.id, delta);
+ }
+ console.log(`${book}: ${odds.length} odds updated`);
+});
+
+es.addEventListener('odds:removed', (e) => {
+ const { ids, book } = JSON.parse(e.data);
+ for (const id of ids) oddsMap.delete(id);
+ console.log(`${book}: ${ids.length} odds removed`);
+});
+
+es.addEventListener('ev:detected', (e) => {
+ const { opportunities } = JSON.parse(e.data);
+ for (const opp of opportunities) {
+ const isNew = !evMap.has(opp.id);
+ evMap.set(opp.id, opp); // upsert — a known id is an update (new price / EV%)
+ if (isNew) console.log(`+EV: ${opp.selection} — ${opp.ev_percentage}% EV`);
+ }
+});
+
+es.addEventListener('ev:expired', (e) => {
+ const { expired } = JSON.parse(e.data);
+ for (const id of expired) evMap.delete(id);
+ console.log(`EV expired: ${expired.length} opportunities`);
+});
+
+es.addEventListener('arb:detected', (e) => {
+ const { opportunities } = JSON.parse(e.data);
+ for (const arb of opportunities) {
+ const isNew = !arbMap.has(arb.id);
+ arbMap.set(arb.id, arb); // upsert — a known id is an update (new leg odds)
+ if (isNew) console.log(`Arb: ${arb.profit_percent}% across ${arb.legs.length} legs`);
+ }
+});
+
+es.addEventListener('arb:expired', (e) => {
+ const { expired } = JSON.parse(e.data);
+ for (const id of expired) arbMap.delete(id);
+ console.log(`Arb expired: ${expired.length} opportunities`);
+});
+
+es.onerror = (err) => {
+ console.error('Stream error:', err.message);
+};
+
+### Python
+
+import sseclient
+import requests
+import json
+
+url = 'https://api.sharpapi.io/api/v1/stream'
+params = {
+ 'channel': 'all',
+ 'sport': 'basketball',
+ 'league': 'nba',
+}
+headers = {'X-API-Key': 'YOUR_KEY'}
+
+# Local odds dict — keyed by odds ID, stores full odds objects from snapshot
+odds_map: dict[str, dict] = {}
+resuming = False # set by 'connected' with resumed True — see Reconnection
+
+# Opportunities by type, each keyed by id. A `:detected` item is a new
+# opportunity OR an updated version of one you already hold (same id).
+opps_by_type: dict[str, dict[str, dict]] = {
+ 'ev': {}, 'arbitrage': {}, 'middles': {}, 'low_hold': {},
+}
+
+def upsert_opp(opp_type: str, opp: dict) -> bool:
+ """Upsert by id. True only the first time an id is seen — alert on that."""
+ is_new = opp['id'] not in opps_by_type[opp_type]
+ opps_by_type[opp_type][opp['id']] = opp # replace the version you held
+ return is_new
+
+response = requests.get(url, params=params, headers=headers, stream=True)
+client = sseclient.SSEClient(response)
+
+for event in client.events():
+ data = json.loads(event.data) if event.data else {}
+
+ if event.event == 'connected':
+ # Keep local odds only on a resume (resumed is True): the server replays the
+ # deltas you missed. A first connect (no 'resumed' key) and resumed False are
+ # both followed by a full snapshot — clear now. Don't use 'reconnected':
+ # it is True for a resume too.
+ resuming = data.get('resumed') is True
+ if not resuming:
+ odds_map.clear()
+ # Opportunities are never resumed: every connect re-sends them in `snapshot`.
+ for held in opps_by_type.values():
+ held.clear()
+ print(f"Stream {data['stream_id']} connected ({data['channel']})")
+
+ elif event.event == 'snapshot':
+ # A snapshot after resumed True means the server gave up on the resume:
+ # this snapshot replaces your state.
+ if resuming:
+ odds_map.clear()
+ resuming = False
+ # Opportunity chunks carry 'ev' / 'arbitrage' / 'middles' / 'low_hold' instead of 'odds'
+ for opp_type, held in opps_by_type.items():
+ for opp in data.get(opp_type, []):
+ held[opp['id']] = opp
+ # Store full odds objects keyed by ID
+ for odd in data.get('odds', []):
+ odds_map[odd['id']] = odd
+ print(f"Snapshot chunk: {data['count']} items ({data['offset'] + data['count']}/{data['total']})")
+
+ elif event.event == 'snapshot:complete':
+ # A full re-sync matching no rows sends no snapshot chunk, so clear here too
+ if data.get('mode') == 'full_resync' and resuming:
+ odds_map.clear()
+ resuming = False
+ print(f"Ready: {len(odds_map)} odds loaded")
+
+ elif event.event == 'odds:update':
+ # Merge compact deltas into local state
+ for delta in data.get('odds', []):
+ existing = odds_map.get(delta['id'])
+ if existing:
+ existing.update(delta)
+ else:
+ # An id you don't hold yet arrives as a complete row — store it as is
+ odds_map[delta['id']] = delta
+ print(f"{data['book']}: {data['count']} odds updated")
+
+ elif event.event == 'odds:removed':
+ for odd_id in data.get('ids', []):
+ odds_map.pop(odd_id, None)
+ print(f"{data['book']}: {data['count']} odds removed")
+
+ # Each `:detected` item is upserted; only a first-seen id is printed as new.
+ elif event.event == 'ev:detected':
+ for opp in data['opportunities']:
+ if upsert_opp('ev', opp):
+ print(f"+EV: {opp['selection']} at {opp['ev_percentage']}%")
+
+ elif event.event == 'arb:detected':
+ for arb in data['opportunities']:
+ if upsert_opp('arbitrage', arb):
+ print(f"Arb: {arb['profit_percent']}% profit")
+
+ elif event.event == 'middles:detected':
+ for m in data['opportunities']:
+ if upsert_opp('middles', m):
+ print(f"Middle: {m.get('event_name', '?')} — EV {m.get('expected_value', '?')}%")
+
+ elif event.event == 'low_hold:detected':
+ for h in data['opportunities']:
+ if upsert_opp('low_hold', h):
+ print(f"Low hold: {h['hold_percentage']}%")
+
+ elif event.event in ('ev:expired', 'arb:expired', 'middles:expired', 'low_hold:expired'):
+ # 'type' is 'ev', 'arbitrage', 'middles' or 'low_hold'. Forget the ids,
+ # so an id that comes back later counts as new again.
+ for opp_id in data['expired']:
+ opps_by_type[data['type']].pop(opp_id, None)
+ print(f"{data['type']} expired: {len(data['expired'])} opportunities")
+
+ elif event.event == 'heartbeat':
+ pass # silent keepalive
+
+## Concurrent Stream LimitsPermalink for this section
+
+The cap is per API key and is shared across SSE and WebSocket. It is not per connection URL: a connection with different filters does not get its own slot.
+
+ | | Plan | Max concurrent streams per key
+ | Any paid tier (streaming via the $99/mo WebSocket Add-on) | 1
+ | Any paid tier with Additional Concurrent Streams provisioned (a per-key maxStreams override) | The number provisioned on the key — still 1 until the override is granted; contact sales
+
+Opening a stream beyond your cap does not return an error — it displaces the oldest. The new connection always succeeds and the older one is closed (“newer wins”).
+The displaced side is told explicitly:
+
+- SSE — a final displaced event with reconnect: false, then teardown
+
+- WebSocket — close code 4001 displaced by newer session
+
+A displaced client should not auto-reconnect. The slot is now held by the newer session, so reconnecting would kick that one straight back and start a reconnect loop.
+On SSE this takes an explicit action: a native EventSource reconnects on its own after any server teardown, and reconnect: false in the event payload does not stop it — that field is advice to your code, not a browser instruction. Call eventSource.close() inside your displaced handler.
+
+429 too_many_streams is still returned, but only when a key that already HAS streaming access resolves to zero slots — an explicit maxStreams: 0 override. A key without streaming access never reaches the limiter at all: it is refused earlier with 403 tier_restricted. On a normal paid tier you get displacement, not a 429.
+
+### Managing StreamsPermalink for this section
+
+- The cap counts open connections per API key, not unique URLs — see One Connection, Many Topics for covering many sports, leagues and books on a single socket
+
+- The cap is coordinated across API instances — slot ownership is mirrored in shared state, not held per process — so spreading connections over several of your own hosts is not a supported way around it
+
+- To run genuinely parallel streams, request a per-key maxStreams increase (a paid add-on on any paid tier) or mint a separate key per process
+
+- Closing the HTTP connection (or calling eventSource.close()) frees the slot immediately
+
+- Use broader filters on fewer streams rather than many narrow streams
+
+- The connected event payload includes your stream_id for tracking
+
+## Error HandlingPermalink for this section
+
+### Stream-Level ErrorsPermalink for this section
+
+Errors sent as SSE events are recoverable — the connection stays open:
+
+event: error
+data: {"code":"upstream_error","message":"Temporary issue fetching data. Will retry."}
+
+### Connection-Level ErrorsPermalink for this section
+
+These close the connection. Handle them in onerror:
+
+ | | Error Code | HTTP Status | Description | Resolution
+ | too_many_streams | 429 | Too many concurrent streams | Close unused streams
+ | tier_restricted | 403 | Streaming not available on your tier | Add WebSocket add-on
+ | invalid_api_key | 401 | API key missing or invalid | Check your API key
+ | validation_error | 400 | Invalid filter parameters | Check query params
+
+## Best PracticesPermalink for this section
+
+- Use the right channel — channel=odds for odds only, channel=opportunities for opportunities only, channel=all for everything
+
+- Use filters to reduce bandwidth — Pass sport, league, sportsbook, market, and event_id params to narrow data
+
+- Set thresholds — Use min_ev and min_profit to filter out low-value opportunities server-side
+
+- Wait for snapshot:complete — This signals all initial data has been sent. Hide loading states after receiving it
+
+- Handle odds:removed — Remove odds from local state when received to avoid showing stale data
+
+- Handle reconnection gracefully — EventSource auto-reconnects, but reset local state when you receive a new snapshot event
+
+- Process updates asynchronously — Do not block the event handler; queue updates for background processing
+
+- Monitor heartbeats — If no heartbeat arrives within 60 seconds, consider the connection stale and reconnect
+
+- Close unused streams — Each open stream counts against your concurrent limit
+
+- Use Last-Event-ID — Enables the server to replay missed events after a reconnection
+
+- Upsert opportunities by id — A :detected item can be an update to an opportunity you already hold. Alert only on an id you have not seen, and forget the ids that *:expired lists
+
+## Migration: Compact SSE DeltasPermalink for this section
+
+Breaking change for SSE odds:update consumers. The odds:update event now sends compact OddsDelta objects containing only dynamic fields (id, odds_american, odds_decimal, odds_probability, line, is_live, timestamp). Static fields like sportsbook, sport, league, home_team, away_team, market_type, selection, deep_link, and event_start_time are only sent in the initial snapshot event. The exception is a row whose id you have not received before — a market that opened or re-opened mid-stream — which is sent in full, with every Odds field, in the same odds:update envelope.
+
+Why: The previous payload sent the full Odds object on every change, producing ~170 KB/s per connection. The compact delta reduces bandwidth by ~5x, sending only the 6-7 fields that actually changed.
+
+What to change in your client:
+
+- 
+Store snapshot odds in a local map keyed by id. The snapshot event still sends full Odds objects with all fields. An odds:update row for an id that is not in the map is itself a full Odds object — add it to the map.
+
+- 
+Merge odds:update deltas by id instead of treating them as standalone objects. Each delta only contains the fields that can change — look up the full object in your local map and apply the update.
+
+- 
+Do not access static fields on delta objects. Fields like event_id, market_type, selection, home_team, and sportsbook are not present in deltas. Read them from your local map instead.
+
+Before (broken — accessing fields not in delta):
+
+eventSource.addEventListener('odds:update', (e) => {
+ const { odds } = JSON.parse(e.data);
+ for (const o of odds) {
+ // ❌ o.event_id, o.market_type, o.selection are undefined in deltas
+ console.log(`${o.event_id} ${o.market_type}: ${o.selection} → ${o.odds_american}`);
+ }
+});
+
+After (correct — merge into local state):
+
+eventSource.addEventListener('odds:update', (e) => {
+ const { odds } = JSON.parse(e.data);
+ for (const delta of odds) {
+ const full = oddsMap.get(delta.id);
+ if (full) {
+ Object.assign(full, delta); // Merge changed fields
+ // ✅ full.event_id, full.market_type, full.selection are still available
+ console.log(`${full.event_id} ${full.market_type}: ${full.selection} → ${full.odds_american}`);
+ } else {
+ // An `id` you don't hold yet arrives as a complete row — store it as is
+ oddsMap.set(delta.id, delta);
+ }
+ }
+});
+
+## Related EndpointsPermalink for this section
+
+- +EV Opportunities - REST endpoint for EV data (streamed via ev:detected)
+
+- Arbitrage Opportunities - REST endpoint for arbs (streamed via arb:detected)
+
+- Low Hold Opportunities - REST endpoint for low hold (streamed via low_hold:detected)
+
+- Middles Summary - Aggregate middle stats for dashboard polling
+
+- WebSocket API - Bidirectional alternative to SSE

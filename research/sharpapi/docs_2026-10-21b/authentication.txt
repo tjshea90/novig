@@ -1,0 +1,158 @@
+Source: https://docs.sharpapi.io/en/authentication/ (fetched 2026-10-21)
+
+# Authentication
+
+All API requests require authentication via an API key. Your key starts with sk_ followed by live_ or test_.
+
+## Authentication MethodsPermalink for this section
+
+SharpAPI supports three authentication methods, listed in priority order:
+
+### 1. X-API-Key Header (Recommended)Permalink for this section
+
+The most secure method for server-side applications.
+
+curl -H "X-API-Key: sk_live_your_key" \
+ https://api.sharpapi.io/api/v1/odds
+
+### 2. Authorization Bearer HeaderPermalink for this section
+
+Standard OAuth-style bearer token format.
+
+curl -H "Authorization: Bearer sk_live_your_key" \
+ https://api.sharpapi.io/api/v1/odds
+
+### 3. Query ParameterPermalink for this section
+
+Useful for SSE streaming in browsers where you cannot set custom headers.
+
+curl "https://api.sharpapi.io/api/v1/stream?api_key=sk_live_your_key"
+
+Security Warning: Never expose your API key in client-side code or public repositories. Use a backend proxy for browser applications.
+
+## Getting Your API KeyPermalink for this section
+
+- Sign Up - Create an account at sharpapi.io/sign-up 
+
+- Access Dashboard - Log in to your dashboard
+
+- Copy Key - Your API key is displayed on the main dashboard
+
+Ready to make your first call? Follow the Quick Start guide.
+
+## Subscription TiersPermalink for this section
+
+ | | Tier | Price | Requests/Min | Data Delay | Key Features
+ | Free | $0/mo | 12 | 60s | Odds, Events
+ | Hobby | $79/mo | 120 | Real-time | Odds, Events, Arbitrage
+ | Pro | $229/mo | 300 | Real-time | + EV, Middles
+ | Sharp | $399/mo | 1,000 | Real-time | + Priority Support
+ | Enterprise | Custom | Custom | Real-time | + SLA
+
+See Pricing for full details.
+
+## Rate LimitsPermalink for this section
+
+Rate limits are enforced per API key. Current limits are returned in response headers:
+
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 299
+X-RateLimit-Reset: 1705804800
+
+ | | Header | Description
+ | X-RateLimit-Limit | Maximum requests per minute for your tier
+ | X-RateLimit-Remaining | Requests remaining in current window
+ | X-RateLimit-Reset | Unix timestamp when limit resets
+
+### Rate Limit ResponsePermalink for this section
+
+When exceeded, you’ll receive a 429 response:
+
+{
+ "error": {
+ "code": "rate_limited",
+ "message": "Rate limit exceeded. Upgrade your plan or wait before retrying.",
+ "docs": "https://docs.sharpapi.io/en/authentication#rate-limits"
+ }
+}
+
+Implement exponential backoff when you receive a 429 response. Check X-RateLimit-Reset for when the window resets.
+
+## Feature Access by TierPermalink for this section
+
+ | | Feature | Free | Hobby | Pro | Sharp | Enterprise
+ | GET /odds | Yes | Yes | Yes | Yes | Yes
+ | GET /odds/best | Yes | Yes | Yes | Yes | Yes
+ | GET /odds/comparison | Yes | Yes | Yes | Yes | Yes
+ | POST /odds/batch | Yes | Yes | Yes | Yes | Yes
+ | GET /events | Yes | Yes | Yes | Yes | Yes
+ | GET /events/:eventId | Yes | Yes | Yes | Yes | Yes
+ | GET /events/:eventId/odds | Yes | Yes | Yes | Yes | Yes
+ | GET /events/:eventId/markets | Yes | Yes | Yes | Yes | Yes
+ | GET /opportunities/ev | No | No | Yes | Yes | Yes
+ | GET /opportunities/arbitrage | No | Yes | Yes | Yes | Yes
+ | GET /opportunities/middles | No | No | Yes | Yes | Yes
+ | GET /stream | No | Add-on | Add-on | Add-on | Yes
+ | GET /account | Yes | Yes | Yes | Yes | Yes
+ | GET /account/usage | Yes | Yes | Yes | Yes | Yes
+ | GET /account/keys | Yes | Yes | Yes | Yes | Yes
+
+Streaming requires the WebSocket add-on ($99/mo) on any paid tier. Enterprise includes streaming at no extra cost.
+
+## Public Reference EndpointsPermalink for this section
+
+The following reference data endpoints are accessible without authentication at 10 requests/minute:
+
+- GET /api/v1/sports - List all sports
+
+- GET /api/v1/leagues - List all leagues
+
+- GET /api/v1/sportsbooks - List all sportsbooks
+
+- GET /api/v1/markets - List all market types
+
+- GET /api/v1/health - Health check
+
+Authenticated requests receive higher rate limits based on your subscription tier.
+
+## Error CodesPermalink for this section
+
+Auth-related codes you’ll see most often. For the full list of 19 HTTP codes plus the 6 WebSocket frame codes, see API Overview → Error Codes.
+
+ | | Code | HTTP Status | Description
+ | missing_api_key | 401 | No API key was supplied
+ | invalid_api_key | 401 | API key was supplied but is not recognized
+ | expired_api_key | 401 | API key has expired
+ | disabled_api_key | 401 | API key is disabled, usually because the subscription lapsed
+ | unauthorized | 401 | Bearer-token auth failed on admin or monitoring endpoints (distinct from invalid_api_key)
+ | invalid_token | 401 | Clerk dashboard session token failed verification
+ | tier_restricted | 403 | Endpoint or feature not available on your tier
+ | rate_limited | 429 | Too many requests — see retry_after
+ | too_many_streams | 429 | Maximum concurrent SSE / WebSocket connections reached
+ | validation_error | 400 | Malformed request parameters (replaces the deprecated bad_request / invalid_request)
+ | upstream_error | 502 | Temporary issue reaching upstream
+ | internal_error | 500 | Unexpected server error
+
+### Error Response FormatPermalink for this section
+
+All errors follow a consistent format:
+
+{
+ "error": {
+ "code": "invalid_api_key",
+ "message": "Invalid API key",
+ "docs": "https://docs.sharpapi.io/en/authentication"
+ }
+}
+
+## Best PracticesPermalink for this section
+
+- Store keys securely - Use environment variables, never commit to version control
+
+- Use server-side requests - Never expose keys in client-side JavaScript
+
+- Implement retry logic - Handle 429 errors with exponential backoff
+
+- Monitor usage - Check the /account/usage endpoint to track consumption
+
+- Rotate keys regularly - Use the /account/keys/:keyId/rotate endpoint periodically for security

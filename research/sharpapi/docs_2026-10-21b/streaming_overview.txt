@@ -1,0 +1,255 @@
+Source: https://docs.sharpapi.io/en/streaming/overview/ (fetched 2026-10-21)
+
+# Streaming Overview
+
+Real-time odds and opportunity updates via SSE or WebSocket.
+
+SharpAPI offers two streaming protocols: SSE (Server-Sent Events) over HTTP and WebSocket for bidirectional communication. Both deliver the same real-time data — choose based on your use case.
+
+## Why Streaming?Permalink for this section
+
+With REST you see a change on your next poll. Streaming pushes changed rows to you as they happen.
+
+ | | Approach | Update delivery | Bandwidth | Use Case
+ | REST polling | On your next poll | High (full payload each poll) | Casual browsing, dashboards
+ | SSE streaming | Pushed on change | Low (only deltas) | Live betting, alerts, automated systems
+ | WebSocket | Pushed on change | Low (only deltas) | Bidirectional comms, dynamic filter updates
+
+### Key BenefitsPermalink for this section
+
+- No poll interval — Updates are pushed as soon as our pipeline detects a change, instead of waiting for your next request
+
+- Lower bandwidth — Only changed data is sent, not full snapshots on every poll
+
+- Two protocols — SSE for simplicity, WebSocket for bidirectional control
+
+- Automatic reconnection — SSE reconnects natively; WebSocket with simple retry logic
+
+## How SSE WorksPermalink for this section
+
+Server-Sent Events is a W3C standard for server-to-client streaming over HTTP:
+
+Client Server
+ | |
+ |--- GET /api/v1/stream ------->|
+ | |
+ |<-- event: connected ----------| Stream established
+ |<-- event: snapshot -----------| Full current state
+ |<-- event: odds:update --------| Delta update
+ |<-- event: odds:update --------| Delta update
+ |<-- event: ev:detected --------| Opportunity (new or updated)
+ |<-- event: heartbeat ----------| Keep-alive (every 30s)
+ | ... |
+
+SSE automatically reconnects on disconnect, and the server uses Last-Event-ID to try to replay missed odds events. Resume is best-effort: when the server can’t replay (longer outages, server maintenance), it says so explicitly and re-baselines you with a fresh snapshot. See the Streaming Reliability Contract for the exact semantics your client must handle.
+
+## RequirementsPermalink for this section
+
+ | | Tier | Streaming Access
+ | Free | Not available
+ | Hobby + Add-on ($99/mo) | 1 stream (newer-wins displacement)
+ | Pro + Add-on ($99/mo) | 1 stream (newer-wins displacement)
+ | Sharp + Add-on ($99/mo) | 1 stream (newer-wins displacement)
+ | Enterprise | Included (custom limits)
+
+Newer-wins displacement: opening a stream beyond your cap closes the oldest one. One well-managed connection is sufficient for most use cases — see Single-Connection Patterns for techniques. Fleet deployments needing multiple simultaneous streams can request a higher per-key limit, a paid add-on on any paid tier, via sales.
+
+## Quick StartPermalink for this section
+
+### BrowserPermalink for this section
+
+// Local odds map — snapshot fills it, deltas merge into it
+const oddsMap = new Map();
+
+const eventSource = new EventSource(
+ 'https://api.sharpapi.io/api/v1/stream?channel=all&league=nba&api_key=YOUR_KEY'
+);
+
+eventSource.addEventListener('connected', (e) => {
+ const { stream_id, resumed } = JSON.parse(e.data);
+ // A full snapshot follows every connect except a resume (resumed === true,
+ // `odds` channel only), which replays missed deltas into the state you hold.
+ // A started resume can still fall back to a full snapshot; this short example
+ // leaves that out — the Streaming Reliability Contract has the complete client.
+ if (resumed !== true) oddsMap.clear();
+ console.log('Stream connected:', stream_id);
+});
+
+eventSource.addEventListener('snapshot', (e) => {
+ const { odds } = JSON.parse(e.data);
+ if (!odds) return; // opportunity chunks carry `ev` / `arbitrage` / `middles` / `low_hold` instead
+ for (const odd of odds) oddsMap.set(odd.id, odd);
+ console.log('Snapshot chunk:', odds.length, 'odds');
+});
+
+eventSource.addEventListener('odds:update', (e) => {
+ const { odds, book } = JSON.parse(e.data);
+ // Delta only contains dynamic fields — merge into local state by ID
+ for (const delta of odds) {
+ const full = oddsMap.get(delta.id);
+ if (full) Object.assign(full, delta);
+ else oddsMap.set(delta.id, delta);
+ }
+ console.log(`${book}: ${odds.length} odds updated`);
+});
+
+eventSource.addEventListener('ev:detected', (e) => {
+ // {opportunities, count, type}: new opportunities, or updated versions of ones already sent (same `id`)
+ const { opportunities: opps } = JSON.parse(e.data);
+ opps.forEach(opp => console.log(`+EV: ${opp.selection} at ${opp.ev_percentage}% EV`));
+});
+
+eventSource.addEventListener('heartbeat', () => {
+ console.log('Connection alive');
+});
+
+eventSource.onerror = () => {
+ console.log('Connection lost, auto-reconnecting...');
+};
+
+### Node.jsPermalink for this section
+
+import EventSource from 'eventsource';
+
+const oddsMap = new Map();
+
+const es = new EventSource(
+ 'https://api.sharpapi.io/api/v1/stream?channel=odds&league=nba',
+ { headers: { 'X-API-Key': 'YOUR_KEY' } }
+);
+
+es.addEventListener('snapshot', (e) => {
+ const { odds } = JSON.parse(e.data);
+ for (const odd of odds) oddsMap.set(odd.id, odd);
+ console.log(`Received ${odds.length} initial odds`);
+});
+
+es.addEventListener('connected', (e) => {
+ const { resumed } = JSON.parse(e.data);
+ if (resumed !== true) oddsMap.clear();
+});
+
+es.addEventListener('odds:update', (e) => {
+ const { odds, book } = JSON.parse(e.data);
+ // Merge compact deltas into local state
+ for (const delta of odds) {
+ const full = oddsMap.get(delta.id);
+ if (full) Object.assign(full, delta);
+ else oddsMap.set(delta.id, delta);
+ }
+ console.log(`${book}: ${odds.length} odds updated`);
+});
+
+Track rows by id, not by a composite key.
+The id field on every snapshot row and every odds:update delta is the stable identifier for that (event, sportsbook, market, selection) tuple — it does not change when the line moves. For asian-handicap / team-total / over-under markets, the line field updates in place under the same id, so building a composite key like (event_id, market_type, selection, line) makes your local map miss every line-change.
+
+// ✗ Wrong — composite key breaks on line updates (e.g. asian_handicap -0.5 → -0.75
+// produces a different composite key, and your tracking map loses the row)
+const key = `${o.event_id}|${o.market_type}|${o.selection}|${o.line ?? ''}`
+oddsMap.set(key, o)
+
+// ✓ Right — `id` is stable across line updates
+oddsMap.set(o.id, o)
+
+This affects asian-handicap, team-total, over/under, and any market where the line can move. Moneyline / win-only markets have line=null so composite keys happen to work for them — but the bug only surfaces the moment your client subscribes to a line-bearing market.
+
+### PythonPermalink for this section
+
+import sseclient
+import requests
+import json
+
+url = 'https://api.sharpapi.io/api/v1/stream'
+params = {'channel': 'all', 'league': 'nba'}
+headers = {'X-API-Key': 'YOUR_KEY'}
+
+odds_map: dict[str, dict] = {}
+
+response = requests.get(url, params=params, headers=headers, stream=True)
+client = sseclient.SSEClient(response)
+
+for event in client.events():
+ data = json.loads(event.data) if event.data else {}
+
+ if event.event == 'connected':
+ # A full snapshot follows every connect except a resume (resumed == True,
+ # odds channel only), which replays deltas into your existing state.
+ # A started resume can still fall back to a full snapshot; this short
+ # example leaves that out — see the Streaming Reliability Contract.
+ if data.get('resumed') is not True:
+ odds_map.clear()
+ print(f"Stream {data['stream_id']} connected")
+ elif event.event == 'snapshot':
+ for odd in data.get('odds', []):
+ odds_map[odd['id']] = odd
+ print(f"Snapshot: {data['count']} odds")
+ elif event.event == 'odds:update':
+ # Delta only has dynamic fields — merge by ID
+ for delta in data.get('odds', []):
+ existing = odds_map.get(delta['id'])
+ if existing:
+ existing.update(delta)
+ else:
+ odds_map[delta['id']] = delta
+ print(f"{data['book']}: {data['count']} odds updated")
+ elif event.event == 'ev:detected':
+ # {opportunities, count, type}: new, or updated versions of ones already sent (same id)
+ for opp in data['opportunities']:
+ print(f"+EV: {opp['selection']} at {opp['ev_percentage']}%")
+
+## Event TypesPermalink for this section
+
+ | | Event | Description
+ | connected | Stream established, returns stream ID, active filters, and channels
+ | snapshot / opportunities_snapshot | Full odds/opportunities data dump (all fields)
+ | snapshot:complete | All initial data has been sent
+ | odds:update | Compact delta — only dynamic fields (id, odds_american, odds_decimal, odds_probability, line, is_live, timestamp). Merge by id into snapshot state. A row for an id not yet in your map arrives in full — store it.
+ | odds:removed | Odds removed by a sportsbook
+ | ev:detected | New +EV opportunity, or an updated version of one already sent (same id) — upsert by id
+ | ev:expired | +EV opportunity no longer available
+ | arb:detected | New arbitrage opportunity, or an updated version of one already sent (same id)
+ | arb:expired | Arbitrage opportunity no longer available
+ | middles:detected | New middle opportunity, or an updated version of one already sent (same id). See Middles Summary for aggregated stats
+ | middles:expired | Middle opportunity no longer available
+ | low_hold:detected | New low-hold opportunity, or an updated version of one already sent (same id)
+ | low_hold:expired | Low-hold opportunity no longer available
+ | heartbeat | Keep-alive sent every 30 seconds — carries seq/global_seq so you can detect a frozen subscription (see reliability contract)
+ | resync_required | Deltas were skipped while your client consumed too slowly — refetch /odds or reconnect
+ | displaced | A newer connection on the same API key took the stream slot — this stream closes; do not auto-reconnect
+ | error | Recoverable errors keep the connection open. Entitlement changes (tier_restricted, invalid_api_key) arrive as an error and then the stream closes — reconnect to re-authorize
+
+## SSE vs WebSocketPermalink for this section
+
+ | | Feature | SSE | WebSocket
+ | Protocol | HTTP (one-way) | ws:// / wss:// (bidirectional)
+ | Endpoint | GET /api/v1/stream | wss://ws.sharpapi.io
+ | Channel subscriptions | Set once via query params | Update anytime via subscribe message
+ | Filter updates | Reconnect with new params | Send subscribe message
+ | Reconnection | Automatic (Last-Event-ID) | Manual (with backoff)
+ | Resumable channels (best-effort) | odds only | odds, opportunities, gamestate, closing_line
+ | Browser support | Native EventSource | Native WebSocket
+ | Best for | Simple consumers, SSR | Dynamic filters, two-way comms
+
+Both protocols deliver the same event types and data payloads.
+
+## Full API ReferencePermalink for this section
+
+- Streaming Reliability Contract — Snapshot+delta model, resume semantics, slow-consumer policy — what your client must handle
+
+- SSE Stream API Reference — Query parameters, event payloads, reconnection
+
+- WebSocket API Reference — Connection lifecycle, message protocol, close codes
+
+- WebSocket Streaming Guide — Quick start, reconnection patterns, best practices
+
+## SDKs with Streaming SupportPermalink for this section
+
+- TypeScript SDK — Built-in SSE client with type-safe event handlers
+
+- Python SDK — Handler-based and iterator-based streaming patterns
+
+## Example ProjectsPermalink for this section
+
+- Arbitrage Scanner — Real-time arb detection with Discord alerts
+
+- Value Betting Bot — +EV alert bot for Discord/Telegram

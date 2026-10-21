@@ -1,0 +1,291 @@
+Source: https://docs.sharpapi.io/en/streaming/reliability/ (fetched 2026-10-21)
+
+# Streaming Reliability Contract
+
+What the stream guarantees, what it deliberately does not, and exactly what your client must implement to consume it correctly. This page is the contract; the SSE and WebSocket references document the individual message shapes.
+
+The design principle: freshness over completeness. Odds are perishable — a delta delivered late is worse than a fresh snapshot, because a stale price looks identical to a live one. Every policy below (bounded resume, message skipping under backpressure, disconnecting clients that can’t keep up) follows from that principle. Build your client to treat disconnect → reconnect → resnapshot as normal operation, not as an error path.
+
+## 1. Snapshot, then deltasPermalink for this section
+
+Every connection follows the same lifecycle on both transports:
+
+- connected — ack with your tier, filters, and the resume descriptor (below).
+
+- Initial snapshot — the full current state for your subscribed channels and filters (SSE: snapshot chunks; WS: opportunities_snapshot + per-book initial messages).
+
+- snapshot:complete — the baseline is done; live deltas follow.
+
+- Deltas — incremental updates you merge into local state.
+
+Deltas are keyed by a stable identifier per channel. Merge by that key — never by a composite you build yourself (see the id warning):
+
+ | | Channel | Delta events | Key your local state by | Removal signal
+ | odds | odds:update, odds:locked | id on each row — stable for the (event, sportsbook, market, selection) tuple; the line moves in place under the same id | odds:removed carries ids to delete
+ | Opportunities (ev, arbitrage, middles, low_hold) | *:detected | id on each opportunity | *:expired carries expired id array
+ | gamestate (WS) | gamestate:update (changed rows) | event_id | gamestate:removed carries event ids
+ | gamestate (SSE) | gamestate:update (full slate re-emit) | replace the whole slate each update — not a delta | ended events stop appearing
+ | closing_line (WS) | closing_line:captured | append-only feed — nothing to merge or remove | —
+
+## 2. Resume is best-effort — say it plainlyPermalink for this section
+
+Reconnecting with a cursor (Last-Event-ID on SSE, from_seq on WS) lets the server try to replay what you missed instead of resending a full snapshot. This works well for brief drops. The window is per-transport: roughly the last 5 minutes on WebSocket, roughly the last 2 minutes on SSE. Both are also capped by entry count (WebSocket additionally by bytes), so sustained volume shortens them further.
+
+It is not a durable, gap-free log:
+
+- The replay window lives in the memory of the server instance that served your connection. A reconnect that lands on a different instance, or crosses a server deploy or restart, cannot resume and re-baselines with a full snapshot.
+
+- The fallback is explicit, never silent. You always learn the outcome from the connected ack and the snapshot:complete that follows — the server never pretends a lossy reconnect was gap-free.
+
+Design for the full snapshot as the routine recovery path and treat a successful resume as an optimization. If your use case cannot tolerate re-baselining, reconcile against REST /api/v1/odds after any reconnect.
+
+## 3. The resume descriptorPermalink for this section
+
+Every connected ack — SSE and WS, fresh connect or reconnect — carries a self-describing resume object so your client can discover the contract up front:
+
+"resume": {
+ "durable": false,
+ "enabled": true,
+ "scope": "process_local",
+ "resumable_channels": ["odds"]
+}
+
+ | | Field | Meaning
+ | durable | false today: resume is a best-effort optimization, not a durable log. If this ever flips to true, resume has become gap-free across reconnects — until then, implement the fallback paths below.
+ | enabled | Whether this transport currently attempts replay at all. When false, every reconnect gets a full snapshot (with fallback_reason: "disabled" if you sent a cursor).
+ | scope | process_local — the replay window is tied to the specific server instance; reconnects that land elsewhere re-baseline.
+ | resumable_channels | Which channels the replay window covers on this transport (below).
+
+Per-transport coverage differs:
+
+ | | Transport | resumable_channels | Cursor
+ | WebSocket | odds, opportunities, gamestate, closing_line | ?from_seq= — the last global_seq you saw (string form; JS-safe past 253). Optionally echo ?filter_hash= from your connected ack so the server can verify your filter scope is unchanged before replaying.
+ | SSE | odds only | Last-Event-ID header — sent automatically by EventSource. Only odds:update, odds:locked, and odds:removed events carry id: lines; treat the id as an opaque cursor (echo it, never parse it). gamestate and opportunities frames carry no id: lines, so their reconnects just get a fresh snapshot; an all reconnect sends its cursor and gets fallback_reason: "channel_unsupported".
+
+WebSocket resume covers strictly more channels — prefer WS for correctness-sensitive consumers of opportunities, gamestate, or closing-line data.
+
+## 4. The two recovery outcomes you MUST handlePermalink for this section
+
+A reconnect with a cursor resolves to one of two paths. The connected ack tells you which (resumed: true/false), and the snapshot:complete that follows labels the recovery mode:
+
+resumed: true means the replay has started, not that it finished. If the server cannot complete it, snapshot chunks follow the replayed frames and snapshot:complete carries mode: "full_resync": discard your local state when the first chunk arrives. If no chunk arrives — a full resync of a scope with no matching rows — clear at the snapshot:complete that reports mode: "full_resync".
+
+ | | snapshot:complete signal | What happened | What your client does
+ | mode: "full_resync" (+ fallback_reason) | The server could not resume — a full snapshot was sent instead | Discard all prior local state. The snapshot you just received is the new authoritative baseline.
+ | mode: "resume" with gap_detected: true | Replay started but part of the missed range was already evicted mid-replay (WS) | Keep local state, but refetch the affected data via REST /odds — some updates in the gap were not replayed.
+ | mode: "resume" (no gap_detected) | Replay delivered everything you missed (replayed_count events) | Nothing — you are continuous. Live deltas follow.
+
+Handling only one path is the classic implementation bug: a client that only handles full_resync silently keeps stale rows after a gapped resume; a client that only handles resume mixes a fresh snapshot into a stale map. Handle both.
+
+On a fallback, connected carries resumed: false plus a fallback_reason explaining why (informational — the recovery action is the same either way: accept the labeled full snapshot). Values include:
+
+ | | fallback_reason | Why
+ | seq_too_old | Your cursor fell outside the replay window (disconnected too long, or high volume shortened the window)
+ | process_restarted | The stream was re-baselined by server maintenance — cursors from before it are structurally unresumable
+ | foreign_seq | Your cursor was minted by a different server instance than the one you reconnected to
+ | filter_changed | You reconnected with different filters — replaying the old scope would serve misfiltered data, so the server re-baselines
+ | channel_unsupported | This channel is not in resumable_channels for this transport (permanent — e.g. SSE all)
+ | gap_too_large | The gap is technically replayable but so large that a fresh snapshot is cheaper and converges faster
+ | disabled | Resume is currently off for this transport (resume.enabled: false)
+ | parse_error | The cursor was malformed
+
+Treat this as an open set — new values may appear; unknown values mean the same thing (a full snapshot follows).
+
+## 5. Slow-consumer policyPermalink for this section
+
+The server never lets one slow client hold back the feed — or feed itself stale prices. Delivery degrades in three explicit stages:
+
+- Buffering. Each connection has a bounded send buffer that absorbs normal bursts.
+
+- Skipping. Under sustained backpressure, live delta messages are skipped rather than queued into staleness. When pressure clears, the server sends a resync_required control message before the next data message, so you know your state is now incomplete: refetch via REST /odds or reconnect. The initial snapshot phase is never skipped — only live deltas are.
+
+- Disconnecting. A client that stays too slow is disconnected — WS close 1008 (reason "sustained backpressure — reconnect" or "sustained skip rate — reconnect"), SSE stream teardown. Reconnect and take a fresh snapshot; delivering you a backlog of stale odds would be worse.
+
+{
+ "type": "resync_required",
+ "reason": "backpressure",
+ "message": "Deltas were dropped due to slow consumption. Request /api/v1/odds for a full snapshot or reconnect."
+}
+
+If you hit stage 2 or 3 regularly: narrow your subscription (channels, sport, league, sportsbook, market filters), move JSON parsing off the receive loop, or consume from a faster network position.
+
+Detecting a stalled stream. Heartbeats arrive every 30 seconds on both transports and carry the current seq / global_seq. Heartbeats flowing while global_seq stays flat during live games means your subscription is frozen — reconnect proactively. SSE heartbeats additionally carry book_updated_ms (per-book last-emission clocks) so you can spot a single book going quiet while others stream. No heartbeat for more than 60 seconds means the connection is dead — reconnect.
+
+Reconnect etiquette. Use exponential backoff with jitter (e.g. 1s → 2s → 4s … capped at 30s), reset on a successful connected. EventSource retries automatically (the server hints retry: 3000); WebSocket clients implement their own loop.
+
+## 6. One connection per key — displacement is explicitPermalink for this section
+
+Each API key holds one stream slot by default, shared across SSE and WS, with newer-wins semantics: a connection beyond the cap displaces the oldest, and the new connection always succeeds. The displaced connection is told explicitly:
+
+- WS: close code 4001 with reason "displaced by newer session".
+
+- SSE: a final displaced event (code: "too_many_streams", reconnect: false), then the stream closes.
+
+Do not auto-reconnect after a displacement — the slot is held by your newer session, and reconnecting would kick it straight back (a self-inflicted reconnect storm). One well-filtered connection covers effectively everything — see One Connection, Many Topics. Fleets that genuinely need parallel streams request a higher per-key limit (hello@sharpapi.io) or use one key per process.
+
+## 7. Entitlements are re-checked while you streamPermalink for this section
+
+Authorization is not connect-time-only: the server periodically re-verifies each streaming connection’s entitlements, and promptly after a subscription change. If your key loses access mid-stream (downgrade, revoked key, add-on removal), the stream closes explicitly rather than continuing on the stale grant:
+
+- WS: close code 4003 (reason states what changed, e.g. tier or streaming access).
+
+- SSE: an error event with code tier_restricted or invalid_api_key, then the stream closes.
+
+Reconnect to obtain your current entitlements. Upgrades work the same way — a connection keeps its connect-time grant, so reconnect after upgrading to pick up new access.
+
+## Client checklistPermalink for this section
+
+- Apply the initial snapshot, then merge deltas by the stable key for each channel (§1); delete on odds:removed / *:expired.
+
+- Wait for snapshot:complete before treating state as complete.
+
+- Persist your cursor (Last-Event-ID / last global_seq) and present it on reconnect.
+
+- On reconnect, branch on the outcome: full_resync → discard state; resume + gap_detected → refetch via REST /odds; clean resume → continue (§4).
+
+- Handle resync_required → refetch or reconnect (§5).
+
+- Reconnect with backoff + jitter on any close except displaced / 4001 displaced (§6).
+
+- On 4003 / SSE error (tier_restricted, invalid_api_key) → reconnect to re-authorize (§7).
+
+- Watch heartbeats: none for 60s, or global_seq flat during live games → reconnect (§5).
+
+## Reference implementationsPermalink for this section
+
+### SSE — reconnect with Last-Event-ID (browser)Permalink for this section
+
+EventSource re-sends Last-Event-ID automatically; your job is only to branch on the recovery outcome:
+
+const oddsMap = new Map();
+let resuming = false;
+const es = new EventSource(
+ 'https://api.sharpapi.io/api/v1/stream?channel=odds&league=nba&api_key=YOUR_KEY'
+);
+
+es.addEventListener('connected', (e) => {
+ const ack = JSON.parse(e.data);
+ // ack.resume describes the contract: { durable, enabled, scope, resumable_channels }
+ resuming = ack.resumed === true;
+ if (!resuming) {
+ // A full snapshot follows: a first connect, a reconnect without a
+ // Last-Event-ID, or a resume that fell back (resumed: false). Discard
+ // stale state NOW, before the snapshot chunks arrive. Do NOT clear on
+ // resumed: true — the server replays deltas into the state you hold.
+ oddsMap.clear();
+ if (ack.fallback_reason) console.log('re-baselining:', ack.fallback_reason);
+ }
+});
+
+es.addEventListener('snapshot', (e) => {
+ if (resuming) {
+ // The server abandoned the resume after the replayed frames: this
+ // snapshot is the new baseline (snapshot:complete says full_resync).
+ oddsMap.clear();
+ resuming = false;
+ }
+ for (const odd of JSON.parse(e.data).odds) oddsMap.set(odd.id, odd);
+});
+
+es.addEventListener('snapshot:complete', (e) => {
+ const { mode } = JSON.parse(e.data);
+ // mode "full_resync": the snapshot above is the new baseline.
+ // mode "resume": replayed deltas already merged — state is continuous.
+ // No mode key: fresh connect. Either way, state is complete from here.
+ // A full resync with no matching rows sends no chunks, so clear here too.
+ if (mode === 'full_resync' && resuming) oddsMap.clear();
+ resuming = false;
+ console.log('ready', mode ?? 'fresh');
+});
+
+es.addEventListener('odds:update', (e) => {
+ for (const delta of JSON.parse(e.data).odds) {
+ const row = oddsMap.get(delta.id);
+ if (row) Object.assign(row, delta);
+ // A line that opened after your snapshot arrives as a full row
+ else if (delta.sportsbook !== undefined) oddsMap.set(delta.id, delta);
+ }
+});
+
+es.addEventListener('odds:removed', (e) => {
+ for (const id of JSON.parse(e.data).ids) oddsMap.delete(id);
+});
+
+es.addEventListener('resync_required', () => {
+ // Deltas were skipped while we were slow — state is incomplete.
+ es.close(); // simplest recovery: reconnect for a fresh snapshot
+ reconnectWithBackoff();
+});
+
+es.addEventListener('displaced', () => {
+ es.close(); // newer session on this key took the slot —
+ // do NOT reconnect automatically (§6)
+});
+
+### WebSocket — resume with from_seqPermalink for this section
+
+let lastGlobalSeq = null;
+let delay = 1000;
+
+function connect() {
+ const params = new URLSearchParams({
+ api_key: 'YOUR_KEY',
+ channels: 'odds,ev',
+ });
+ if (lastGlobalSeq) params.set('from_seq', lastGlobalSeq); // resume attempt
+ const ws = new WebSocket(`wss://ws.sharpapi.io?${params}`);
+
+ ws.onmessage = (event) => {
+ const msg = JSON.parse(event.data);
+ if (msg.global_seq) lastGlobalSeq = msg.global_seq; // string — keep as-is
+
+ switch (msg.type) {
+ case 'connected':
+ delay = 1000; // reset backoff
+ if (msg.resumed === false) {
+ oddsMap.clear(); // full snapshot follows — discard stale state
+ console.log('resume fell back:', msg.fallback_reason);
+ }
+ break;
+ case 'snapshot:complete':
+ if (msg.mode === 'resume' && msg.gap_detected) {
+ refetchFromRest(); // GET /api/v1/odds for your filter scope
+ }
+ break;
+ case 'initial':
+ for (const odd of msg.data) oddsMap.set(odd.id, odd);
+ break;
+ case 'odds:update':
+ for (const odd of msg.data) oddsMap.set(odd.id, odd);
+ break;
+ case 'odds:removed':
+ for (const id of msg.ids) oddsMap.delete(id);
+ break;
+ case 'resync_required':
+ refetchFromRest(); // deltas were skipped — reconcile
+ break;
+ }
+ };
+
+ ws.onclose = (event) => {
+ if (event.code === 4001 && event.reason.includes('displaced')) {
+ return; // newer session owns the slot — do not reconnect (§6)
+ }
+ // 4003 (entitlements changed), 1008 (too slow), 1012 (restart), network
+ // drops: reconnect with backoff — from_seq makes it a resume attempt.
+ setTimeout(connect, delay);
+ delay = Math.min(delay * 2, 30000);
+ };
+}
+
+connect();
+
+## See alsoPermalink for this section
+
+- Streaming Overview — protocols, channels, quick start
+
+- SSE API Reference — event payloads and parameters
+
+- WebSocket API Reference — message schemas and close codes
+
+- One Connection, Many Topics — filter patterns that make one stream enough

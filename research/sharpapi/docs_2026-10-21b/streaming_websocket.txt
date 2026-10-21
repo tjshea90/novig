@@ -1,0 +1,157 @@
+Source: https://docs.sharpapi.io/en/streaming/websocket/ (fetched 2026-10-21)
+
+# WebSocket Streaming
+
+Real-time odds and opportunity updates via WebSocket at wss://ws.sharpapi.io.
+
+For full API documentation including all message types, schemas, and close codes, see the WebSocket API Reference.
+
+## SSE vs WebSocketPermalink for this section
+
+SharpAPI offers two streaming protocols. Both deliver the same data at the same speed.
+
+ | | | SSE | WebSocket
+ | URL | https://api.sharpapi.io/api/v1/stream | wss://ws.sharpapi.io
+ | Direction | Server → Client | Bidirectional
+ | Update filters | Reconnect required | Send subscribe message
+ | Reconnection | Automatic (Last-Event-ID) | Manual (implement backoff)
+ | Best for | Simple consumers, browsers | Interactive apps, dashboards
+
+Choose SSE if you set filters once and just want data to flow.
+Choose WebSocket if you need to change filters on the fly or prefer a bidirectional protocol.
+
+## Quick StartPermalink for this section
+
+### 1. ConnectPermalink for this section
+
+Use the channels parameter to subscribe only to the data you need:
+
+// Only EV opportunities + odds — no middles, low_hold, or arbitrage
+const ws = new WebSocket(
+ 'wss://ws.sharpapi.io?api_key=YOUR_KEY&channels=ev,odds&sport=basketball&sportsbook=draftkings&league=nba'
+);
+
+Available channels: ev, arbitrage, middles, low_hold, odds. Omit channels to receive everything your tier supports.
+
+Available filters: sport, sportsbook, league, market, event_id — all comma-separated.
+
+Threshold filters: min_ev (default 2.0), min_profit (default 0.5, applies to arbitrage only, not low-hold) — filter out low-value opportunities server-side.
+
+### 2. Handle MessagesPermalink for this section
+
+ws.onmessage = (event) => {
+ const msg = JSON.parse(event.data);
+
+ switch (msg.type) {
+ case 'connected':
+ console.log(msg.message); // "Welcome to SharpAPI WebSocket"
+ break;
+ case 'opportunities_snapshot':
+ if (msg.ev) console.log('EV:', msg.ev); // EV opportunity snapshot
+ break;
+ case 'initial':
+ console.log('Odds:', msg.data); // Per-sportsbook odds snapshot
+ break;
+ case 'snapshot:complete':
+ console.log('All initial data loaded'); // Safe to hide loading state
+ break;
+ case 'odds:update':
+ console.log(msg.source, msg.data); // Incremental odds update
+ break;
+ case 'ev:detected':
+ console.log('+EV:', msg.data); // New or updated +EV opportunities (Pro+) — upsert by id
+ break;
+ }
+};
+
+### 3. Keep AlivePermalink for this section
+
+setInterval(() => {
+ if (ws.readyState === WebSocket.OPEN) {
+ ws.send(JSON.stringify({ type: 'ping' }));
+ }
+}, 25000);
+
+### 4. Update Channels & Filters (No Reconnect Needed)Permalink for this section
+
+ws.send(JSON.stringify({
+ type: 'subscribe',
+ channels: ['low_hold'],
+ filters: { sports: ['football'], sportsbooks: ['fanduel', 'betmgm'], leagues: ['nfl'] }
+}));
+
+## Message FlowPermalink for this section
+
+On connect you receive messages in order:
+
+- connected — Welcome message with your tier, features, and active channels
+
+- subscribed — Confirmation of active channels and filters
+
+- opportunities_snapshot — One per subscribed opportunity channel (ev, arbitrage, middles, low_hold)
+
+- initial — Per-sportsbook odds snapshot (only if odds channel is subscribed)
+
+- snapshot:complete — Signals all initial data has been sent
+
+Snapshot chunking & frame size: Large snapshots are split across multiple frames to prevent backpressure. Every snapshot frame is capped at 256KB serialized; odds snapshots are additionally split per sportsbook, and opportunity snapshots at up to 300 items per frame. Wait for snapshot:complete before treating the initial data as fully loaded. If your client library enforces a maximum incoming-message size, leave it at 512KB or higher — Python websockets’ 1MB default (max_size=2**20) is fine. A client capped below 256KB closes with 1009 (message too big) mid-snapshot and will reconnect-loop without ever receiving data.
+
+After that, you receive incremental updates for your subscribed channels:
+
+- odds:update — Odds changed for a sportsbook (requires odds channel)
+
+- odds:removed — Odds removed by a sportsbook (requires odds channel)
+
+- ev:detected / ev:expired — +EV opportunities (requires ev channel)
+
+- arb:detected / arb:expired — Arbitrage opportunities (requires arbitrage channel)
+
+- middles:detected / middles:expired — Middle opportunities (requires middles channel)
+
+- low_hold:detected / low_hold:expired — Low-hold opportunities (requires low_hold channel)
+
+- heartbeat — Server keepalive every 30 seconds
+
+## ReconnectionPermalink for this section
+
+Unlike SSE, WebSocket does not auto-reconnect. Implement exponential backoff:
+
+let reconnectDelay = 1000;
+let lastGlobalSeq = null; // global_seq is a string — store it as-is
+
+ws.onmessage = (event) => {
+ const msg = JSON.parse(event.data);
+ if (msg.global_seq) lastGlobalSeq = msg.global_seq;
+};
+
+ws.onclose = (event) => {
+ if (event.code === 1000) return; // intentional close
+ if (event.code === 4001 && event.reason.includes('displaced')) return; // newer session owns the slot
+
+ setTimeout(() => {
+ reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+ // Pass from_seq to attempt a resume (best-effort, ~5-min replay window).
+ // If the server can't resume it falls back to a full snapshot and says so.
+ connect({ from_seq: lastGlobalSeq });
+ }, reconnectDelay);
+};
+
+Reset reconnectDelay to 1000 on successful connection.
+
+The server keeps a replay buffer of roughly the last 5 minutes of events. Pass from_seq=N on reconnect to replay missed events instead of taking a full snapshot. Resume is best-effort: on longer outages or reconnects across server maintenance the server re-baselines you with a full snapshot, labelled mode: "full_resync" on snapshot:complete — and a resume that hits a gap sets gap_detected: true. Your client must handle both outcomes — see the Streaming Reliability Contract and Reconnection with Replay.
+
+## Close CodesPermalink for this section
+
+ | | Code | Meaning | Action
+ | 1000 | Normal close | No action needed
+ | 1006 | Abnormal closure (client-side) | Network drop — always reconnect
+ | 1008 | Slow consumer — sustained backpressure | Reconnect, consume faster / narrow filters (slow-consumer policy)
+ | 1012 | Server restarting (maintenance) | Reconnect with backoff; expect a full re-baseline
+ | 4001 | Auth failed or displaced by a newer session on the same key — read the close reason | Bad key → fix it. "displaced by newer session" → do not auto-reconnect (single-connection)
+ | 4003 | Entitlements changed mid-stream (downgrade, revoked key, add-on removed) | Reconnect to re-authorize with current entitlements
+
+Code 1006 is RFC 6455 reserved and never sent by the server. Your WebSocket library generates it locally when the TCP connection drops without a closing handshake (network failure, process kill). Always reconnect when you see it — the example below already does this correctly: it skips reconnect only on 1000 and on a 4001 displacement, never on 1006.
+
+## Full API ReferencePermalink for this section
+
+For complete documentation including all message schemas, error handling, and multi-language examples, see the WebSocket API Reference.

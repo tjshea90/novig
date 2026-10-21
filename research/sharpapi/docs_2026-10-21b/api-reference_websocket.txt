@@ -1,0 +1,1117 @@
+Source: https://docs.sharpapi.io/en/api-reference/websocket/ (fetched 2026-10-21)
+
+# WebSocket Stream
+
+wss://ws.sharpapi.io — Real-time odds and opportunity updates via WebSocket.
+
+Requires WebSocket Add-on ($99/mo) on any paid tier, or Enterprise (included). Free tier does not support streaming.
+
+A machine-readable AsyncAPI 3.0 description of this endpoint — channels, messages, schemas, and bindings — is published at /asyncapi.yaml. Use it for SDK codegen or to drive AsyncAPI tooling such as Studio .
+
+## Why WebSocket?Permalink for this section
+
+WebSocket provides a persistent, full-duplex connection. Compared to SSE:
+
+ | | Feature | SSE (/api/v1/stream) | WebSocket (ws.sharpapi.io)
+ | Direction | Server → Client only | Bidirectional
+ | Reconnection | Automatic (Last-Event-ID) | Client-managed
+ | Filters | Set once via query params | Update anytime via subscribe message
+ | Protocol | HTTP/1.1 streaming | WebSocket (RFC 6455)
+ | Browser support | Native EventSource | Native WebSocket
+
+Both protocols deliver the same data at the same latency. Choose WebSocket when you need to change filters without reconnecting.
+
+## AuthenticationPermalink for this section
+
+Pass your API key as a query parameter on the connection URL:
+
+wss://ws.sharpapi.io?api_key=sk_live_your_key
+
+You can also pass initial filters and channel subscriptions as query parameters:
+
+wss://ws.sharpapi.io?api_key=sk_live_your_key&channels=ev,odds&sport=basketball&sportsbook=draftkings,fanduel&league=nba
+
+### Query ParametersPermalink for this section
+
+ | | Parameter | Type | Default | Description
+ | api_key | string | — | Your API key. Required unless you send it as a subprotocol entry.
+ | channels | string | all | Subscribe to specific data channels, comma-separated. Valid values: ev, arbitrage, middles, low_hold, odds. Omit to receive all tier-allowed data.
+ | sport | string | all | Filter by sport(s), comma-separated (e.g. basketball, football, ice_hockey)
+ | sportsbook | string | tier-allowed | Filter by sportsbook(s), comma-separated
+ | league | string | all | Filter by league(s), comma-separated
+ | market | string | all | Filter by market type(s), comma-separated (e.g. moneyline, point_spread, total_points, player_points). Also accepted as market_type=.
+ | event_id | string | all | Filter by specific event ID(s), comma-separated
+ | min_ev | number | 2.0 | Minimum EV percentage for +EV opportunities
+ | min_profit | number | 0.5 | Minimum profit percentage for arbitrage and low-hold opportunities
+ | min_odds | number | — | Filter odds by minimum American odds value (e.g., -200)
+ | max_odds | number | — | Filter odds by maximum American odds value (e.g., 500)
+ | state | string | — | US state code for sportsbook deep links in odds and opportunity events (e.g., nj, ny, il). Ensures deep_link URLs redirect to the correct state-specific sportsbook domain.
+ | from_seq | string | — | Attempt best-effort replay after this opaque global_seq checkpoint. See Reconnection with Replay.
+
+Use channels to reduce payload size. Without channels, the server sends all opportunity types plus the full odds dump. If you only need low-hold data, connect with channels=low_hold to skip EV, arbitrage, middles, and raw odds entirely.
+
+### API key as a subprotocolPermalink for this section
+
+A key in the URL is kept wherever the URL is logged: proxies, server access logs, browser history. Browsers cannot set headers on a WebSocket, so a browser client can send the key in the Sec-WebSocket-Protocol header instead, which is the second argument of the WebSocket constructor. Offer sharpapi-v1 and an entry of the form sharpapi.key.<your key>, and leave api_key off the URL:
+
+const ws = new WebSocket('wss://ws.sharpapi.io?channels=ev,odds', [
+ 'sharpapi-v1',
+ `sharpapi.key.${apiKey}`,
+]);
+
+- The server answers with sharpapi-v1 alone and never echoes the key entry. Always offer sharpapi-v1 beside the key: a browser fails the handshake when it offered subprotocols and the server selects none.
+
+- If the URL also carries api_key, the URL key is used and the subprotocol entry is ignored.
+
+- A missing or invalid key refuses the upgrade with 401 (missing_api_key or invalid_api_key). A browser does not expose that status: the socket fires error, then close with code 1006.
+
+## Connection LifecyclePermalink for this section
+
+Client Server
+ | |
+ |--- WS Upgrade ?api_key=xxx&channels=ev,odds →|
+ | | Auth + acquire stream slot
+ |← connected ----------------------------------| Welcome (tier, features, channels)
+ |← subscribed ---------------------------------| Filter confirmation
+ |← opportunities_snapshot (ev) ----------------| EV opportunities
+ |← initial (draftkings) -----------------------| Odds per sportsbook
+ |← initial (fanduel) --------------------------| (chunked by book)
+ |← snapshot:complete --------------------------| All initial data sent
+ | |
+ |← odds:update --------------------------------| Incremental odds update
+ |← ev:detected --------------------------------| +EV opportunity (new or updated)
+ |← heartbeat ----------------------------------| Keep-alive (every 30s)
+ | |
+ |--- { type: "ping" } → |
+ |← pong ---------------------------------------|
+ | |
+ |--- { type: "subscribe", channels, filters } →| Update channels/filters
+ |← subscribed ---------------------------------| New subscription confirmed
+ | |
+ |--- close ----------------------------------→| Normal close (1000)
+
+## Message ProtocolPermalink for this section
+
+### Client → ServerPermalink for this section
+
+subscribe — Set or update channels and filters. Sent automatically on connect if passed as query params.
+
+{
+ "type": "subscribe",
+ "channels": ["ev", "odds"],
+ "filters": {
+ "sports": ["basketball"],
+ "sportsbooks": ["draftkings", "fanduel"],
+ "leagues": ["nba"],
+ "markets": ["moneyline", "player_points"],
+ "eventIds": ["32825-35775-2026-02-08"],
+ "min_ev": 3.0,
+ "min_profit": 1.5
+ }
+}
+
+ | | Field | Type | Description
+ | channels | string[] | Optional. Data channels to subscribe to: ev, arbitrage, middles, low_hold, odds. Omit to keep current channels.
+ | filters.sports | string[] | Optional. Filter by sport(s): basketball, football, ice_hockey, baseball, soccer, etc.
+ | filters.sportsbooks | string[] | Optional. Filter by sportsbook(s).
+ | filters.leagues | string[] | Optional. Filter by league(s).
+ | filters.markets | string[] | Optional. Filter by market type(s).
+ | filters.eventIds | string[] | Optional. Filter by specific event ID(s).
+ | filters.min_ev | number | Optional. Minimum EV percentage threshold (default 2.0).
+ | filters.min_profit | number | Optional. Minimum profit percentage for arbitrage/low-hold (default 0.5).
+
+filter — Replace the active filters without changing channels. This
+updates live delivery but does not send a fresh snapshot.
+
+{
+ "type": "filter",
+ "filters": {
+ "sports": ["basketball"],
+ "sportsbooks": ["draftkings", "fanduel"],
+ "leagues": ["nba"]
+ }
+}
+
+ping — Keepalive. Send every 25 seconds to prevent timeouts.
+
+{ "type": "ping" }
+
+unsubscribe — Remove one or more active channels. To obtain a fresh
+snapshot for a channel on the same authenticated connection, unsubscribe it,
+optionally send a filter update, and then subscribe to the channel again.
+
+{ "type": "unsubscribe", "channels": ["odds"] }
+
+A duplicate subscribe for an already-active channel and a standalone
+filter update change live delivery but do not send a fresh snapshot. To force
+a fresh baseline without reconnecting, send resync (below).
+
+#### resyncPermalink for this section
+
+{ "type": "resync", "channels": ["odds"] }
+
+Re-sends the initial snapshot for channels you are already subscribed to,
+on the open socket. Your subscriptions and filters are untouched, so no updates
+are lost in a gap between unsubscribe and subscribe.
+
+- Acknowledged with resync:started, then the same snapshot sequence a fresh
+subscribe produces.
+
+- Only already-subscribed channels are accepted — this is not a back-door
+subscribe. Naming any channel you do not hold rejects the whole message
+with channel_not_subscribed.
+
+- Rate limited to one per 10 seconds per connection — a refusal is
+resync_rate_limited with retry_after_ms, and an overlapping request is
+resync_in_progress. A snapshot dump is expensive, so an unbounded client-driven
+dump would be a self-inflicted denial of service.
+
+- Support is advertised as features.client_resync on the connected ack —
+detect it there rather than probing.
+
+resync_required is the separate server-to-client signal described under
+Full Resynchronization; never echo it back.
+
+### Server → ClientPermalink for this section
+
+#### connectedPermalink for this section
+
+Sent immediately after successful authentication.
+
+{
+ "type": "connected",
+ "seq": 12847,
+ "message": "Welcome to SharpAPI real-time odds stream",
+ "stream_id": "ws_mle3husw_ezoyvp",
+ "tier": "pro",
+ "features": { "ev": true, "arbitrage": true, "middles": true, "low_hold": true },
+ "channels": ["ev", "odds"],
+ "global_seq": "12847",
+ "books": { "max": -1, "allowed": null },
+ "streams": { "max": 1, "active": 1 },
+ "heartbeat_interval_ms": 30000,
+ "pong_timeout_ms": 120000,
+ "timestamp": "2026-02-08T18:47:17.559Z"
+}
+
+ | | Field | Type | Description
+ | seq | integer | Legacy integer representation of the process-global checkpoint. Not every control or snapshot frame includes it.
+ | stream_id | string | Unique connection identifier
+ | tier | string | Your subscription tier
+ | features | object | Which opportunity types your tier supports
+ | channels | string[] | null | Active channel subscriptions, or null if receiving all tier-allowed data
+ | global_seq | string | JavaScript-safe decimal string checkpoint. Treat it as opaque and store it without numeric conversion.
+ | resumed | boolean | On a from_seq attempt, whether replay was accepted. A decline includes fallback_reason.
+ | fallback_reason | string | Present when a requested resume is declined; the connection then receives a full authoritative snapshot.
+ | streams | object | Your per-key concurrent-stream cap. max is authoritative — it is the same value the server enforces with. active is advisory: it is counted per server process while the cap is enforced fleet-wide, so active < max does not prove your next connection will not displace an existing one. Handle close 4001 regardless.
+ | heartbeat_interval_ms | integer | Cadence of the application heartbeat frame, in milliseconds. Size your liveness watchdog from this value rather than hardcoding one — see heartbeat.
+ | pong_timeout_ms | integer | The server’s read deadline. If no PONG arrives inside this window the connection is closed. This is a hard deadline, unlike the best-effort heartbeat frame.
+ | books.max | integer | Maximum sportsbooks allowed for your tier (-1 = unlimited)
+ | books.allowed | string[] | null | Specific allowed sportsbooks, or null for all
+ | streams.max | integer | Concurrent streams allowed on this key — the cap that is actually enforced, including any maxStreams override. See Concurrent Stream Limits.
+ | streams.active | integer | Streams currently held by this key, counted on the serving instance only. Advisory: a lower bound, never proof that connecting will not displace an existing session.
+
+#### subscribedPermalink for this section
+
+Confirms one requested channel and the resolved filter state. The server sends
+one acknowledgement per entry in the subscribe.channels array.
+
+{
+ "type": "subscribed",
+ "channel": "ev",
+ "filters": {
+ "sport": ["basketball"],
+ "sportsbook": ["draftkings", "fanduel"],
+ "league": ["nba"],
+ "min_ev": 3.0,
+ "min_profit": 1.5
+ }
+}
+
+#### unsubscribedPermalink for this section
+
+Confirms removal of one requested channel. As with subscribed, the server
+sends one acknowledgement per channel in the client message.
+
+{
+ "type": "unsubscribed",
+ "channel": "odds"
+}
+
+#### opportunities_snapshotPermalink for this section
+
+Snapshot of opportunities for a single channel type. Sent once per subscribed opportunity channel during the initial data load. Only includes the opportunity type you subscribed to.
+
+{
+ "type": "opportunities_snapshot",
+ "ev": [
+ {
+ "id": "a1b2c3d4e5f6",
+ "game_id": "nba_indianapacers_torontoraptors_2026-02-08",
+ "ev_percentage": 4.35,
+ "odds_american": -110,
+ "odds_decimal": 1.909,
+ "no_vig_odds": -101,
+ "selection": "Tyrese Haliburton Over 22.5",
+ "market": "player_points",
+ "line": 22.5,
+ "sportsbook": "draftkings",
+ "game": "Indiana Pacers @ Toronto Raptors",
+ "sport": "basketball",
+ "league": "nba",
+ "home_team": "Toronto Raptors",
+ "away_team": "Indiana Pacers",
+ "start_time": "2026-02-08T19:00:00.000Z",
+ "is_live": false,
+ "confidence_score": 72,
+ "kelly_percent": 3.8,
+ "book_count": 4,
+ "detected_at": "2026-02-08T18:47:20.000Z"
+ }
+ ],
+ "timestamp": "2026-02-08T18:47:17.700Z"
+}
+
+The top-level key matches the channel type: ev, arbitrage, middles, or low_hold. Each snapshot message contains only one type. Large snapshots are automatically chunked — when this happens, messages include chunk and totalChunks fields.
+
+All opportunity fields use snake_case naming (e.g. event_id, market_type, profit_percent, detected_at). This applies consistently across all channels, message types, and protocols (REST, SSE, and WebSocket).
+
+#### initialPermalink for this section
+
+Per-sportsbook odds snapshot. Sent once per sportsbook when the odds channel is subscribed. Requires the odds channel.
+
+{
+ "type": "initial",
+ "source": "draftkings",
+ "data": [ /* NormalizedOdds[] */ ],
+ "count": 1500,
+ "timestamp": "2026-02-08T18:47:17.800Z"
+}
+
+Odds are chunked by sportsbook — you will receive one initial message per book. Large books may be split across multiple messages (each frame is capped at 256KB serialized). If you don’t need raw odds, omit the odds channel to skip this entirely.
+
+#### snapshot:completePermalink for this section
+
+Signals the end of an initial snapshot, a full-resync fallback, or a successful
+replay. A full snapshot carries books and total_odds. When a requested
+resume is declined, it also carries mode: "full_resync" and the same
+fallback_reason reported by connected:
+
+{
+ "type": "snapshot:complete",
+ "books": ["draftkings", "fanduel", "pinnacle"],
+ "total_odds": 2841,
+ "mode": "full_resync",
+ "fallback_reason": "seq_too_old"
+}
+
+An accepted normal or coalesced replay has a different completion shape:
+
+{
+ "type": "snapshot:complete",
+ "mode": "resume",
+ "replayed_count": 127,
+ "skipped_count": 3,
+ "last_seq": "12974",
+ "gap_detected": false
+}
+
+An ordinary fresh snapshot omits mode and fallback_reason. Replay acceptance
+is reported by the earlier connected frame, not this completion frame.
+
+ | | Field | Type | Description
+ | books | string[] | List of sportsbooks included in the initial snapshot
+ | total_odds | integer | Total odds rows sent in the full snapshot
+ | mode | string | resume after replay, or full_resync after an explicitly declined resume. An ordinary fresh snapshot may omit it.
+ | fallback_reason | string | Why the requested checkpoint could not be replayed. Matches the reason in connected.
+ | replayed_count | integer | Normal replay: buffered frames sent. Coalesced replay: current changed rows sent.
+ | skipped_count | integer | Buffered frames excluded by the active subscription and filters. Coalesced replay reports 0.
+ | last_seq | string | Server-issued receipt for the completed replay walk. Persist it only after receiving this completion boundary.
+ | gap_detected | boolean | On a started replay, true means the client must reconcile state instead of treating completion as authoritative.
+
+#### odds:updatePermalink for this section
+
+Incremental odds update from a single sportsbook.
+
+{
+ "type": "odds:update",
+ "seq": 46,
+ "source": "draftkings",
+ "data": [ /* NormalizedOdds[] */ ],
+ "count": 23,
+ "timestamp": "2026-02-08T18:47:19.123Z"
+}
+
+#### odds:lockedPermalink for this section
+
+A market was suspended/closed (e.g. after a goal, a line move, or a late-game lockout) — the price is frozen and no longer bettable. Carries the suspended subset of the delta (same payload as odds:update, with is_active: false).
+
+Supplementary: the same rows also arrive in odds:update with is_active: false, so clients reading is_active need not subscribe separately. A re-open emits a normal odds:update with is_active: true; a full removal comes through odds:removed.
+
+{
+ "type": "odds:locked",
+ "seq": 48,
+ "source": "pinnacle",
+ "data": [ /* NormalizedOdds[] with is_active: false */ ],
+ "count": 1,
+ "timestamp": "2026-02-08T18:47:19.250Z"
+}
+
+#### odds:removedPermalink for this section
+
+Odds removed by a sportsbook (e.g. market taken down, event settled).
+
+{
+ "type": "odds:removed",
+ "seq": 47,
+ "source": "draftkings",
+ "ids": ["odd_id_1", "odd_id_2"],
+ "count": 2,
+ "timestamp": "2026-02-08T18:47:19.200Z"
+}
+
+#### ev:detectedPermalink for this section
+
+New +EV opportunity, or an updated version of one already sent (same id). Pro tier or higher only.
+
+:detected means new or updated — upsert by id. The WebSocket stream re-sends an opportunity whose content changed under the same id — a new price, EV%, fair probability, leg odds, is_suspended, or quality_tier — in the ordinary ev:detected, arb:detected, middles:detected, or low_hold:detected message. Store opportunities by id and replace the stored version with each item. Alert only on an id you have not seen, and forget an id when *:expired lists it. The SSE stream behaves the same way since 2026-09-26.
+
+{
+ "type": "ev:detected",
+ "seq": 48,
+ "data": [
+ {
+ "id": "a1b2c3d4e5f6",
+ "game_id": "nba_indianapacers_torontoraptors_2026-02-08",
+ "ev_percentage": 4.35,
+ "odds_american": -110,
+ "odds_decimal": 1.909,
+ "no_vig_odds": -101,
+ "selection": "Tyrese Haliburton Over 22.5",
+ "market": "player_points",
+ "line": 22.5,
+ "sportsbook": "draftkings",
+ "game": "Indiana Pacers @ Toronto Raptors",
+ "sport": "basketball",
+ "league": "nba",
+ "home_team": "Toronto Raptors",
+ "away_team": "Indiana Pacers",
+ "start_time": "2026-02-08T19:00:00.000Z",
+ "is_live": false,
+ "confidence_score": 72,
+ "kelly_percent": 3.8,
+ "book_count": 4,
+ "detected_at": "2026-02-08T18:47:20.000Z"
+ }
+ ],
+ "timestamp": "2026-02-08T18:47:20.000Z"
+}
+
+#### ev:expiredPermalink for this section
+
+Previously detected +EV opportunity is no longer available.
+
+{
+ "type": "ev:expired",
+ "seq": 49,
+ "data": {
+ "expired": [
+ "32825-35775-2026-02-08:draftkings:Tyrese Haliburton Over 22.5"
+ ]
+ },
+ "timestamp": "2026-02-08T18:47:25.000Z"
+}
+
+#### arb:detectedPermalink for this section
+
+New arbitrage opportunity, or an updated version of one already sent (same id). Hobby tier or higher only.
+
+{
+ "type": "arb:detected",
+ "seq": 50,
+ "data": [
+ {
+ "id": "61c501b83ce932d1",
+ "event_id": "nba_indianapacers_torontoraptors_2026-02-08",
+ "event_name": "Indiana Pacers @ Toronto Raptors",
+ "sport": "basketball",
+ "league": "nba",
+ "market_type": "moneyline",
+ "line": null,
+ "profit_percent": 2.8,
+ "implied_total": 97.2,
+ "is_live": false,
+ "legs": [
+ {
+ "sportsbook": "draftkings",
+ "selection": "Indiana Pacers",
+ "odds_american": 125,
+ "odds_decimal": 2.25,
+ "implied_probability": 0.4444,
+ "stake_percent": 52.8
+ },
+ {
+ "sportsbook": "fanduel",
+ "selection": "Toronto Raptors",
+ "odds_american": -110,
+ "odds_decimal": 1.909,
+ "implied_probability": 0.5238,
+ "stake_percent": 47.2
+ }
+ ],
+ "detected_at": "2026-02-08T18:47:21.000Z"
+ }
+ ],
+ "timestamp": "2026-02-08T18:47:21.000Z"
+}
+
+#### arb:expiredPermalink for this section
+
+Previously detected arbitrage opportunity is no longer available.
+
+{
+ "type": "arb:expired",
+ "seq": 51,
+ "data": {
+ "expired": [
+ "32825-35775-2026-02-08:moneyline"
+ ]
+ },
+ "timestamp": "2026-02-08T18:47:26.000Z"
+}
+
+#### middles:detectedPermalink for this section
+
+New middle opportunity, or an updated version of one already sent (same id). Requires middles channel.
+
+{
+ "type": "middles:detected",
+ "seq": 52,
+ "data": [
+ {
+ "id": "abc123",
+ "event_id": "nba_indianapacers_torontoraptors_2026-02-08",
+ "event_name": "Indiana Pacers @ Toronto Raptors",
+ "sport": "basketball",
+ "league": "nba",
+ "market_type": "player_points",
+ "side1": {
+ "book": "draftkings",
+ "selection": "Over 22.5",
+ "line": 22.5,
+ "odds": { "american": -110, "decimal": 1.909, "probability": 0.5238, "fair_probability": 0.51 },
+ "stake_percent": 50,
+ "odds_age_seconds": 3.2,
+ "deep_link": null
+ },
+ "side2": {
+ "book": "fanduel",
+ "selection": "Under 23.5",
+ "line": 23.5,
+ "odds": { "american": -105, "decimal": 1.952, "probability": 0.5122, "fair_probability": 0.49 },
+ "stake_percent": 50,
+ "odds_age_seconds": 1.8,
+ "deep_link": null
+ },
+ "middle_size": 1,
+ "middle_numbers": [23],
+ "middle_probability": 0.12,
+ "expected_value": 3.5,
+ "roi_percentage": 4.2,
+ "quality_score": 85,
+ "detected_at": "2026-02-08T18:47:22.000Z"
+ }
+ ],
+ "timestamp": "2026-02-08T18:47:22.000Z"
+}
+
+#### middles:expiredPermalink for this section
+
+Previously detected middle opportunity is no longer available.
+
+{
+ "type": "middles:expired",
+ "seq": 53,
+ "data": {
+ "expired": ["abc123"]
+ },
+ "timestamp": "2026-02-08T18:47:27.000Z"
+}
+
+#### low_hold:detectedPermalink for this section
+
+New low-hold opportunity, or an updated version of one already sent (same id). Requires low_hold channel.
+
+{
+ "type": "low_hold:detected",
+ "seq": 54,
+ "data": [
+ {
+ "id": "def456",
+ "event_id": "nba_indianapacers_torontoraptors_2026-02-08",
+ "event_name": "Indiana Pacers @ Toronto Raptors",
+ "sport": "basketball",
+ "league": "nba",
+ "market_type": "moneyline",
+ "line": null,
+ "home_team": "Toronto Raptors",
+ "away_team": "Indiana Pacers",
+ "start_time": "2026-02-08T19:00:00.000Z",
+ "hold_percentage": 1.2,
+ "is_live": false,
+ "all_books": ["draftkings", "fanduel"],
+ "side1": {
+ "selection": "Indiana Pacers",
+ "books": ["draftkings"],
+ "line": null,
+ "odds": { "american": -108, "decimal": 1.926, "implied_probability": 0.5192, "fair_probability": 0.5096 },
+ "deep_links": { "draftkings": "https://sportsbook.draftkings.com/event/..." }
+ },
+ "side2": {
+ "selection": "Toronto Raptors",
+ "books": ["fanduel"],
+ "line": null,
+ "odds": { "american": 110, "decimal": 2.1, "implied_probability": 0.4762, "fair_probability": 0.4904 },
+ "deep_links": { "fanduel": "https://sportsbook.fanduel.com/event/..." }
+ },
+ "detected_at": "2026-02-08T18:47:22.000Z"
+ }
+ ],
+ "timestamp": "2026-02-08T18:47:22.000Z"
+}
+
+#### low_hold:expiredPermalink for this section
+
+Previously detected low-hold opportunity is no longer available.
+
+{
+ "type": "low_hold:expired",
+ "seq": 55,
+ "data": {
+ "expired": ["def456"]
+ },
+ "timestamp": "2026-02-08T18:47:28.000Z"
+}
+
+#### heartbeatPermalink for this section
+
+An application-level liveness frame, sent on a fixed cadence to every
+authenticated connection regardless of market activity — it keeps arriving on a
+quiet overnight book. Its interval is advertised as heartbeat_interval_ms on
+the connected ack (30 s today).
+
+{
+ "type": "heartbeat",
+ "seq": 150,
+ "global_seq": "150",
+ "timestamp": "2026-02-08T18:48:17.559Z"
+}
+
+It carries the current sequence value, which is what makes it useful beyond
+liveness. Read it as a two-sided check rather than a one-line rule, because
+it is a single counter shared by every channel and book on the server instance
+you are connected to:
+
+- It advancing does not mean your data is flowing. It moves whenever any
+book emits content, so it cannot reveal a single-book stall — one book silent
+while the others stream keeps the counter climbing.
+
+- It sitting still does not always mean something is broken. It is equally
+flat on a genuinely quiet slate, such as an overnight card with nothing
+moving.
+
+So treat a flat global_seq as a stall signal only when your own rows are also
+stale and you expect activity. Reconnecting on a flat counter alone re-dumps a
+full snapshot on a quiet market — the spiral described below. For per-book
+liveness, track when you last received a row for each book you care about: the
+WebSocket heartbeat frame carries no per-book timestamps.
+
+This is a stall signal only, never a reconnect checkpoint — see
+Reconnection with Replay for the safe receipt.
+
+This frame is best-effort, and the two 30-second timers are different
+contracts. The heartbeat is fanned out with a non-blocking send, so a
+backpressured client legitimately misses a cycle — and the condition that drops
+it is your own slowness, so a watchdog set at one interval turns a transient
+stall into a spurious reconnect, which re-dumps a full snapshot and makes the
+backpressure worse.
+The hard contract is the protocol PONG deadline (pong_timeout_ms,
+120 s today): if no PONG arrives inside that window the server closes the
+connection. That is a read deadline, not a missed-beat counter.
+Size a heartbeat watchdog from both advertised values:
+
+watchdog_ms = min(3 * heartbeat_interval_ms, pong_timeout_ms - heartbeat_interval_ms)
+
+which is 90 s at today’s cadences. The min matters: a bare 3x can exceed the
+whole pong budget under a different cadence. The two timers are independently
+phased — the read deadline resets when your PONG arrives, the heartbeat runs off
+a server-wide ticker — so this bounds how long you wait, it does not guarantee
+your watchdog fires before the server closes. Treat a keepalive close as a
+reconnect, not a fault.
+
+#### pongPermalink for this section
+
+Response to a client ping.
+
+{
+ "type": "pong"
+}
+
+#### errorPermalink for this section
+
+Error notification. The connection may remain open (for non-fatal errors) or close (for auth/limit errors).
+
+{
+ "type": "error",
+ "code": "unknown_message_type",
+ "message": "Unknown message type: foobar"
+}
+
+The WebSocket layer emits a small, fixed set of frame-level error codes for client-protocol mistakes. They are distinct from the HTTP error codes returned by REST endpoints.
+
+ | | Code | Meaning
+ | invalid_message | Frame could not be parsed as JSON or did not match the expected shape
+ | unknown_message_type | type field is not one of auth, token_refresh, subscribe, filter, ping, unsubscribe
+ | missing_token | auth or token_refresh frame did not include a token field
+ | missing_channels | subscribe frame did not include a non-empty channels array
+ | not_authenticated | Sent subscribe, filter, or token_refresh before auth succeeded
+ | already_authenticated | Client sent a second auth frame after the first one succeeded
+
+WebSocket frames may also carry the HTTP-style invalid_api_key, tier_restricted, and too_many_streams codes — these cause the server to close the connection after the frame is sent. See API Overview → Error Codes for the full list.
+
+## Close CodesPermalink for this section
+
+ | | Code | Meaning | Resolution
+ | 1000 | Normal close | Client or server initiated clean close
+ | 1006 | Abnormal closure (client-side) | Network drop or process kill — always reconnect
+ | 1009 | Message too big (client-side) | Your library’s incoming-message cap is below the 256KB snapshot frame size — raise it (e.g. Python websockets max_size) to at least 512KB
+ | 4001 | Authentication failure, or displaced by a newer session | Check your API key. If the close reason is displaced by newer session, another connection took the single per-key slot — do not auto-reconnect
+ | 4003 | Entitlements changed mid-stream (downgrade, revoked key, add-on removed) | Reconnect to re-authorize with current entitlements. If the plan actually changed, fix that first — a reconnect on a revoked key or removed add-on is refused at authentication, not retried
+
+Code 1006 is RFC 6455 reserved and is never transmitted over the wire. Your WebSocket library generates it locally when the TCP connection is lost without a proper closing handshake (network failure, process kill, OS-level timeout). The server did not send it. Always reconnect on 1006.
+
+## Sequence NumbersPermalink for this section
+
+global_seq is a JavaScript-safe decimal string checkpoint for best-effort
+reconnect replay. Replayable data frames may also carry seq, the same
+process-global checkpoint in a legacy integer representation. These values are
+not per-connection counters and are not contiguous for a filtered subscriber:
+frames for other channels, books, and subscribers consume values too.
+
+Observed numeric gaps therefore do not indicate loss or a dropped message.
+React to explicit recovery signals—resync_required, gap_detected, and a
+declined resume—rather than requiring N+1 continuity. Snapshot and control
+frames do not uniformly carry either sequence field. Replayed data retains its
+original checkpoint and adds "replay": true.
+
+Delivery across books can also reorder process-global values, so a client may
+observe 101 before 100. Never compute a reconnect checkpoint from the last
+value observed, a running maximum, per-source maxima, or apparent contiguity.
+There is no client-computable checkpoint that advances between server-issued
+receipts.
+
+The safe advancing receipt is last_seq on a received snapshot:complete with
+mode: "resume". On a fresh connection or full-resync fallback,
+connected.global_seq is a conservative floor, but do not commit that floor
+until the following fresh/full snapshot:complete confirms the authoritative
+baseline was fully received. heartbeat.global_seq is unsafe as a receipt: it
+can reflect a value minted ahead of delivery. Preserve safe checkpoints as
+decimal strings without JavaScript numeric conversion.
+
+## Reconnection with ReplayPermalink for this section
+
+For a brief disconnect, reconnect with the same channels and filters plus the
+last committed server receipt. from_seq alone requests best-effort,
+process-local replay:
+
+wss://ws.sharpapi.io?api_key=YOUR_KEY&channels=ev,odds&sport=basketball&sportsbook=draftkings,fanduel&league=nba&from_seq=12900
+
+ | | Parameter | Effect
+ | from_seq=N | Attempts replay strictly after checkpoint N
+
+When accepted, connected includes "resumed": true; replayed frames are
+marked "replay": true, and the replay phase ends with
+snapshot:complete in "mode": "resume". Receipt of that completion frame’s
+last_seq is what advances the safe checkpoint. connected.global_seq on an
+accepted resume describes the intended replay end, not proof that all replay
+frames reached the client. Normal replay sends eligible frames strictly after
+from_seq in buffer order and catches up frames that arrived during that walk.
+A wide odds-only gap may instead be coalesced to current changed-row state
+rather than every intermediate transition. If coalescing is ineligible or
+exceeds its send cap, the server explicitly falls back to a full snapshot; it
+does not silently truncate the replay. Apply updates and removals idempotently.
+
+When the checkpoint cannot be honored, the outcome is explicit:
+connected includes "resumed": false and "fallback_reason", followed by
+authoritative snapshots and snapshot:complete with
+"mode": "full_resync". Current reasons include parse_error, foreign_seq,
+process_restarted, seq_too_old, gap_too_large, and disabled.
+
+If a replay starts but later completes with "gap_detected": true, reconcile
+from REST or obtain a fresh snapshot using one of the procedures below.
+
+from_seq is a latency optimization over the short replay buffer, not a
+completeness mechanism. There is no advancing client-computable checkpoint
+between server receipts. Use a full snapshot or REST reconciliation whenever
+complete state matters.
+
+let resumeCheckpoint;
+let pendingSnapshotFloor;
+
+ws.onmessage = (event) => {
+ const msg = JSON.parse(event.data);
+
+ if (msg.type === 'connected') {
+ // A fresh/full-resync floor becomes safe only after its snapshot finishes.
+ pendingSnapshotFloor = msg.resumed === true ? undefined : msg.global_seq;
+ }
+
+ if (msg.type === 'snapshot:complete' && msg.mode === 'resume') {
+ if (msg.gap_detected) {
+ // The server declared this walk gapped: the checkpoint is not reusable.
+ resumeCheckpoint = undefined;
+ reconcileThroughRestOrRequestFreshSnapshot();
+ } else {
+ // Server receipt: all replay frames before this boundary were delivered.
+ resumeCheckpoint = msg.last_seq;
+ }
+ pendingSnapshotFloor = undefined;
+ } else if (
+ msg.type === 'snapshot:complete' &&
+ (msg.mode === 'full_resync' || msg.mode === undefined) &&
+ pendingSnapshotFloor
+ ) {
+ // The authoritative fresh/full baseline is now complete.
+ resumeCheckpoint = pendingSnapshotFloor;
+ pendingSnapshotFloor = undefined;
+ }
+
+ if (msg.replay) {
+ console.log('Replayed event:', msg.type);
+ }
+};
+
+// On reconnect:
+function reconnect() {
+ const params = new URLSearchParams({
+ api_key: 'YOUR_KEY',
+ channels: 'ev,odds'
+ });
+ if (resumeCheckpoint) params.set('from_seq', resumeCheckpoint);
+ ws = new WebSocket(`wss://ws.sharpapi.io?${params}`);
+}
+
+Replay retention is nominal and best-effort, not a guaranteed duration. Process
+routing, deployments, time-based expiry, entry/byte eviction, and replay limits
+can all shorten the usable window. Durable resume_id is not currently
+supported as a customer checkpoint; live production frames omit it. Persist
+only the server-issued checkpoint receipts described above.
+As verified on 2026-08-27, production runs the durable log in measurement-only
+shadow mode. This dated deployment setting is not a promise that durable
+resume is available.
+
+## Full ResynchronizationPermalink for this section
+
+Use any of the three supported fresh-snapshot paths:
+
+- 
+Reconnect without from_seq, then restore the intended channels and filters
+in the connection URL or subscription messages. The fresh connection sends
+a new authoritative snapshot.
+
+- 
+On an authenticated connection, send unsubscribe for the affected
+channel, optionally update filters, then subscribe to it again. The
+unsubscribe/resubscribe transition makes the channel new and sends a fresh
+snapshot.
+
+- 
+Send resync with the affected channels on the open socket — the
+subscription is never dropped, so nothing is lost in an unsubscribe window.
+See resync.
+
+A duplicate subscribe or filter-only update does not trigger a snapshot.
+
+The server sends resync_required after backpressure drops live deltas:
+
+{
+ "type": "resync_required",
+ "reason": "backpressure",
+ "dropped": 54,
+ "message": "Deltas were dropped due to slow consumption. Request /api/v1/odds for a full snapshot or reconnect."
+}
+
+dropped is the number of frames dropped for your connection since the
+previous resync_required — not a lifetime total, and not a fleet-wide
+figure. It is there so you can size the gap: a handful of frames on a quiet
+market is a different decision from several hundred mid-slate.
+
+The frame is only sent when that count is non-zero, so receiving one always
+means real loss. Recover by reconciling through REST or by using any
+fresh-snapshot path above; do not echo resync_required back to the server.
+
+## Code ExamplesPermalink for this section
+
+BrowserNode.jsPythonTypeScript SDK
+
+### Browser
+
+// Subscribe to EV opportunities + odds only (skip middles, low_hold, arbitrage)
+const ws = new WebSocket(
+ 'wss://ws.sharpapi.io?api_key=YOUR_KEY&channels=ev,odds&sport=basketball&league=nba'
+);
+
+ws.onmessage = (event) => {
+ const msg = JSON.parse(event.data);
+
+ switch (msg.type) {
+ case 'connected':
+ console.log(msg.message, '| tier:', msg.tier, '| channels:', msg.channels);
+ break;
+ case 'subscribed':
+ console.log('Channels:', msg.channels, '| Filters:', msg.sportsbooks, msg.leagues);
+ break;
+ case 'opportunities_snapshot':
+ if (msg.ev) console.log(`EV snapshot: ${msg.ev.length} opportunities`);
+ break;
+ case 'initial':
+ const books = Object.keys(msg.data);
+ console.log(`Odds snapshot: ${books.length} books`);
+ break;
+ case 'snapshot:complete':
+ console.log('All initial data received');
+ break;
+ case 'odds:update':
+ console.log(`${msg.source}: ${msg.data.length} odds updated`);
+ break;
+ case 'ev:detected':
+ msg.data.forEach(ev =>
+ console.log(`+EV: ${ev.selection} at ${ev.ev_percentage}%`)
+ );
+ break;
+ case 'heartbeat':
+ break; // silent keepalive
+ }
+};
+
+ws.onclose = (event) => {
+ console.log(`Closed: ${event.code} ${event.reason}`);
+};
+
+// Send ping every 25s to keep alive
+setInterval(() => {
+ if (ws.readyState === WebSocket.OPEN) {
+ ws.send(JSON.stringify({ type: 'ping' }));
+ }
+}, 25000);
+
+// Update channels and filters without reconnecting
+function updateSubscription(channels, { sports, sportsbooks, leagues } = {}) {
+ ws.send(JSON.stringify({
+ type: 'subscribe',
+ channels,
+ filters: { sports, sportsbooks, leagues }
+ }));
+}
+
+### Node.js
+
+import WebSocket from 'ws';
+
+// Subscribe to low-hold only — no odds dump, no EV/arb/middles
+const ws = new WebSocket(
+ 'wss://ws.sharpapi.io?api_key=YOUR_KEY&channels=low_hold'
+);
+
+ws.on('message', (raw) => {
+ const msg = JSON.parse(raw.toString());
+
+ if (msg.type === 'connected') {
+ console.log(msg.message);
+ console.log('Tier:', msg.tier, '| Channels:', msg.channels);
+ }
+ else if (msg.type === 'opportunities_snapshot' && msg.low_hold) {
+ console.log(`Low-hold snapshot: ${msg.low_hold.length} opportunities`);
+ }
+ else if (msg.type === 'snapshot:complete') {
+ console.log('Initial data complete');
+ }
+ else if (msg.type === 'low_hold:detected') {
+ console.log(`+${msg.data.length} low-hold opportunities`);
+ }
+ else if (msg.type === 'low_hold:expired') {
+ console.log(`-${msg.data.expired.length} low-hold expired`);
+ }
+});
+
+ws.on('close', (code, reason) => {
+ console.log(`Closed: ${code} ${reason}`);
+ if (code !== 1000 && !(code === 4001 && String(reason).includes('displaced'))) {
+ // Reconnect logic here
+ }
+});
+
+// Keepalive
+setInterval(() => {
+ if (ws.readyState === WebSocket.OPEN) {
+ ws.send(JSON.stringify({ type: 'ping' }));
+ }
+}, 25000);
+
+### Python
+
+import json
+import websocket
+import threading
+import time
+
+API_KEY = "YOUR_KEY"
+# Subscribe to middles channel only
+URL = f"wss://ws.sharpapi.io?api_key={API_KEY}&channels=middles&league=nba"
+
+def on_message(ws, raw):
+ msg = json.loads(raw)
+ msg_type = msg["type"]
+
+ if msg_type == "connected":
+ print(f'{msg["message"]} | tier: {msg["tier"]} | channels: {msg["channels"]}')
+ elif msg_type == "opportunities_snapshot" and "middles" in msg:
+ print(f'Middles snapshot: {len(msg["middles"])} opportunities')
+ elif msg_type == "snapshot:complete":
+ print("Initial data complete")
+ elif msg_type == "middles:detected":
+ for m in msg["data"]:
+ print(f'Middle: {m["event_name"]} — EV {m.get("expected_value", "?")}%')
+ elif msg_type == "middles:expired":
+ print(f'Expired: {len(msg["data"]["expired"])} middles')
+ elif msg_type == "heartbeat":
+ pass # silent keepalive
+
+def on_close(ws, code, reason):
+ print(f"Closed: {code} {reason}")
+
+def on_open(ws):
+ # Start ping thread
+ def ping():
+ while ws.sock and ws.sock.connected:
+ ws.send(json.dumps({"type": "ping"}))
+ time.sleep(25)
+ threading.Thread(target=ping, daemon=True).start()
+
+ws = websocket.WebSocketApp(URL,
+ on_message=on_message,
+ on_close=on_close,
+ on_open=on_open)
+
+ws.run_forever()
+
+### TypeScript SDK
+
+import { SharpAPI } from '@sharpapi/client';
+
+const api = new SharpAPI('YOUR_KEY');
+
+const stream = api.stream.oddsWs({
+ channels: ['ev', 'odds'],
+ sport: ['basketball'],
+ sportsbook: ['draftkings', 'fanduel'],
+ league: ['nba'],
+});
+
+stream.on('connected', ({ message, tier, channels }) => {
+ console.log(message, '| tier:', tier, '| channels:', channels);
+});
+
+stream.on('opportunities_snapshot', ({ ev, arbitrage, middles, low_hold }) => {
+ if (ev) console.log(`EV snapshot: ${ev.length}`);
+ if (low_hold) console.log(`Low-hold snapshot: ${low_hold.length}`);
+});
+
+stream.on('snapshot:complete', () => {
+ console.log('All initial data received');
+});
+
+stream.on('odds:update', ({ data, source }) => {
+ console.log(`${source}: ${data.length} odds updated`);
+});
+
+stream.on('ev:detected', ({ data }) => {
+ data.forEach(ev =>
+ console.log(`+EV: ${ev.selection} at ${ev.ev_percentage}%`)
+ );
+});
+
+stream.on('error', ({ message }) => {
+ console.error('Error:', message);
+});
+
+stream.connect();
+
+// Update channels and filters later without reconnecting
+stream.updateSubscription({
+ channels: ['low_hold'],
+ sports: ['football'],
+ sportsbooks: ['pinnacle'],
+ leagues: ['nfl'],
+});
+
+// Disconnect when done
+// stream.disconnect();
+
+## Concurrent Stream LimitsPermalink for this section
+
+The cap is per API key and is shared across WebSocket and SSE. It is not per connection URL: a socket with different channels does not get its own slot.
+
+ | | Plan | Max concurrent streams per key
+ | Any paid tier (streaming via the $99/mo WebSocket Add-on) | 1
+ | Any paid tier with Additional Concurrent Streams provisioned (a per-key maxStreams override) | The number provisioned on the key
+
+### Additional Concurrent StreamsPermalink for this section
+
+Running more than one simultaneous socket on a single key — a hot/warm failover pair, or one connection per worker in your own fleet — is a provisioned capacity increase applied to your key (a per-key maxStreams override), not a code change on your side. It is a paid add-on on any paid tier — contact sales with the number of streams you need; it takes effect on your next connection, with no key rotation and no redeploy.
+
+Confirm what you were granted by reading streams.max on the connected ack — it reports the cap that is actually enforced, so you never have to infer your limit from being displaced:
+
+"streams": { "max": 4, "active": 2 }
+
+streams.active counts the streams held on the instance serving you, while the cap is enforced across the fleet. So it is a lower bound: active < max does not guarantee a new connection will avoid displacing one of your own sessions. Treat it as a diagnostic (“am I about to kick my other session?”), and keep handling 4001 regardless.
+
+Minting a separate key per process is the alternative and needs no provisioning — each key carries its own slot.
+
+Opening a connection beyond your streams.max does not reject it — it displaces the oldest session. The new socket always connects and the older one is closed with 4001 displaced by newer session (“newer wins”). The equivalent signal on SSE is a final displaced event with reconnect: false.
+A displaced client should not auto-reconnect. The slot is now held by the newer session, so reconnecting would kick that one straight back and start a reconnect loop.
+The cap is coordinated across API instances — slot ownership is mirrored in shared state, not held per process — so spreading connections over several of your own hosts is not a supported way around it. To run genuinely parallel sockets, use Additional Concurrent Streams above. See One Connection, Many Topics for covering many sports, leagues and books on a single socket.
+
+429 too_many_streams is returned at the HTTP upgrade only when a key that already HAS streaming access resolves to zero slots — an explicit maxStreams: 0 override. A key without streaming access is refused earlier with 403 tier_restricted, before the upgrade, and never reaches the limiter. On a normal paid tier you get displacement instead.
+
+## Best PracticesPermalink for this section
+
+- Use channels — Subscribe only to the data you need. channels=low_hold skips the entire odds dump and other opportunity types, reducing initial payload from megabytes to kilobytes
+
+- Send pings every 25 seconds — The server sends heartbeats every 30s, but explicit pings prevent proxy/firewall timeouts
+
+- Use filters — Pass sport, sportsbook, league, market, and event_id params to narrow data within your subscribed channels
+
+- Set thresholds — Use min_ev and min_profit to filter out low-value opportunities at the server, reducing noise
+
+- Update via subscribe — Change channels, filters, and thresholds without reconnecting
+
+- Handle close codes — 4001 means bad key or displaced by a newer session (read the close reason to tell them apart), 4003 means entitlements changed mid-stream (downgrade, revoked key, add-on removed) — reconnect to re-authorize, after checking the plan actually still allows it
+
+- Track server receipts — Commit snapshot:complete.last_seq after a successful resume, or the pending connected.global_seq floor only after its fresh/full snapshot completes; never derive from_seq from arbitrary data or heartbeat frames
+
+- Implement reconnection — Unlike SSE, WebSocket does not auto-reconnect. Use exponential backoff (1s, 2s, 4s, …) with from_seq replay for brief outages
+
+- Wait for snapshot:complete — This signals all initial data has been sent. Hide loading states after receiving it
+
+- Handle odds:removed — Remove odds from your local state when you receive this message to avoid showing stale data
+
+- Close unused connections — Each key allows 1 concurrent stream by default (streams.max on the connected ack); a connection beyond that cap displaces the oldest one (close 4001)
+
+## RelatedPermalink for this section
+
+- SSE Stream API Reference — Server-Sent Events alternative
+
+- Streaming Overview — Concepts and comparison
+
+- WebSocket Streaming Guide — Getting started guide
