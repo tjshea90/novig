@@ -1,22 +1,22 @@
-# CHECKPOINT 3935 — read me first, then TASKS.md
+# CHECKPOINT 3936 — read me first, then TASKS.md
 
-**Written:** 2026-10-21T23:31:18Z · **tests:** all 9 fast checks green
-**Branch:** `claude/new-session-51eqix` · **builds on:** `01bc3ee0f` (this checkpoint is the commit after it)
+**Written:** 2026-10-21T23:47:18Z · **tests:** all 9 fast checks green
+**Branch:** `claude/new-session-51eqix` · **builds on:** `b38c066e2` (this checkpoint is the commit after it)
 
 ## Just done
-SA done: v1.0.42 shipped (release building); SharpAPI on engine (store + delta), live feed, extras, Settings page; awaiting Tj's key on GitHub
+pre-release: v1.0.43: SharpAPI WebSocket stream (odds and game state pushed to the engine; REST delta becomes a 60 s reconcile) and live game state as a live-lane score source; socket switch in Settings > APIs (versionCode 383, v1.0.43)
 
 ## Do this next
-after Tj sends the key: read engine-log 'SharpAPI:' line (plans, rows held, delta reads), first apiq numbers for circa/bookmaker/pinnacle, fix SHARPAPI.md where the live answers differ
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.43), then run: bash tools/record-release.sh v1.0.43 383 "v1.0.43: SharpAPI WebSocket stream (odds and game state pushed to the engine; REST delta becomes a 60 s reconcile) and live game state as a live-lane score source; socket switch in Settings > APIs"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  cc2080cb6 ckpt 3935: SA done: v1.0.42 shipped (release building); SharpAPI on engine (store + de
   01bc3ee0f ckpt 3934: pre-release: v1.0.42: SharpAPI Sharp plan: the engine keeps a copy of 25 bo
   ab65f67cf ckpt 3933: SA4a: SharpApiLiveFeed (Pinnacle live from the store as Pinnodds frames, 1 
   fbb5059fc ckpt 3931: ENGINEER 2026-10-21: watched engine, volume loop recorded, XOW6 added, no c
@@ -26,5 +26,7 @@ after Tj sends the key: read engine-log 'SharpAPI:' line (plans, rows held, delt
   2ccee2a88 ckpt 3929: v1.0.41 recorded; engine verified: CNO answers the runner (100 rows, good r
   f88f264b1 ckpt 3928: TR: four trial APIs judged (research/api_trials_2026-10-21.md): SharpAPI wo
   a7b61ccd6 ckpt 3927: pre-release: v1.0.41: full test fixes: Kalshi CNO rows open at Kalshi every
-  8047b101b ckpt 3926: full test (CK5/XO6) done: floor 4135 green, 134 screens viewed, 7 fixes (se
 ```
+
+(13 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
