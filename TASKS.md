@@ -6118,3 +6118,11 @@ Finding 19:30: only ONE cloud-scan run is live (run 254), so no old runner holds
 - [ ] BC2 every stop path closes the API's sockets/clients: STOP ALL, engine off/hours end, pause scanning, an API toggle off (phone `ApiEntry.setOn` + engine `ApiToggles`); test per path in ApiSocketTogglesTest
 - [x] BC3 a cancelled/ended engine job closes BoltOdds/Kalshi/SX sockets in a shutdown hook before exit
 - [x] BC4 a socket refusal (too many connections) must not mark the key REFUSED in the usage ledger
+
+## CK: CNO scanner with Kalshi, venue toggles, and the whole CNO scan on the GitHub engine (Tj, interactive session acct-27a37e (tj Gmail), 2026-10-21, verbatim)
+"Add kalshi to the cno scanner. It should work just as it does now, but with both novig and kalshi. Also add toggles to the cno tab where I can turn on and off novig and kalshi for the scan. Use the same color coding for cards that is already in place for the vigilant scanner. Then put the entire cno scanner on GitHub engine. I want to be able to see the results on my phone from the cno scan, but all the bandwidth and processing is on GitHub, just like vigilant already does.. Then do the full test protocol"
+- [ ] CK1 study: how CNO is read (CnoFeed/CnoClient/CnoPage), whether CNO lists Kalshi as a target book, RESEARCH.md §76.3 (why this container never reads CNO), how the Vigilant feed colours Novig vs Kalshi cards
+- [ ] CK2 Kalshi in the CNO scan (same list logic, Kalshi rows beside Novig rows), Novig / Kalshi toggles on the CNO tab, card colours as the Vigilant scanner's
+- [ ] CK3 CNO scan on the GitHub engine (engine reads CNO, publishes the list on cloud-feed, phone shows it; phone does no CNO reading while it runs), settings mirrored (CloudScanKey)
+- [ ] CK4 tests, ship, release
+- [ ] CK5 full test protocol (= XO6), fix what it finds, record result
