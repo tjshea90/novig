@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cb0c319e-caga5z",
- "head": "7ec7bcc00ab355e4cb9ccda0a24decc81618ee04",
+ "head": "2b87e79fc588dd275f27341595105a385a5ab193",
  "since": 1792596542,
- "beat": 1792598446,
- "beatIso": "2026-10-21T16:00:46Z",
+ "beat": 1792598646,
+ "beatIso": "2026-10-21T16:04:06Z",
  "done": "XO1 engine: ParlayAPI check was N x N reads (root cause of false 'no answer within 20 s'), concurrent per-key probe with diagnosis kinds, ApiManager ladder (restart, fresh runner End.API, off+message), checkApisAtMs request; 41 tests green",
  "next": "XO1 phone: ApiState cross-check (scans fine, manager fix, phone test), pull-to-refresh requests engine recheck + phone tests, card shows manager notes; then XO2 volume diagnosis"
 }
