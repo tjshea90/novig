@@ -301,7 +301,7 @@ fun OpenBetButton(o: Opportunity, settings: ScanSettings, modifier: Modifier = M
  * link is being found (a CNO bet), so it spins and waits.
  */
 @Composable
-fun OpenInBookButton(suffix: String, opening: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun OpenInBookButton(suffix: String, opening: Boolean = false, modifier: Modifier = Modifier, book: String = AppBook.name, onClick: () -> Unit) {
     androidx.compose.material3.FilledTonalButton(
         onClick = onClick,
         enabled = !opening,
@@ -313,7 +313,7 @@ fun OpenInBookButton(suffix: String, opening: Boolean = false, modifier: Modifie
             Spacer(Modifier.width(6.dp))
             Text("Opening…", maxLines = 1)
         } else {
-            Text("Open in ${AppBook.name}" + suffix, maxLines = 1)
+            Text("Open in $book" + suffix, maxLines = 1)
         }
     }
 }

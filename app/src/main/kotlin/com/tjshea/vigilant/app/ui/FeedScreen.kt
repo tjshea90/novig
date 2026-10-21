@@ -616,13 +616,13 @@ fun fairSourceLabel(s: ScanSettings): String = when (s.fairSource) {
 } + ", ${s.devigMethod.displayName.lowercase()} devig"
 
 /** A card's background by venue (CH37): Kalshi a faint violet, Novig a faint green when both venues are listed; no venue (one venue only) the app's own surface. */
-private fun venueTint(venue: String?, base: androidx.compose.ui.graphics.Color): androidx.compose.ui.graphics.Color = when (venue) {
+internal fun venueTint(venue: String?, base: androidx.compose.ui.graphics.Color): androidx.compose.ui.graphics.Color = when (venue) {
     "Kalshi" -> androidx.compose.ui.graphics.Color(0xFF8B5CF6).copy(alpha = 0.14f).compositeOver(base)
     "Novig" -> androidx.compose.ui.graphics.Color(0xFF22C55E).copy(alpha = 0.10f).compositeOver(base)
     else -> base
 }
 
-private fun venueAccent(venue: String?, base: androidx.compose.ui.graphics.Color): androidx.compose.ui.graphics.Color = when (venue) {
+internal fun venueAccent(venue: String?, base: androidx.compose.ui.graphics.Color): androidx.compose.ui.graphics.Color = when (venue) {
     "Kalshi" -> androidx.compose.ui.graphics.Color(0xFFB794F6)
     else -> base
 }

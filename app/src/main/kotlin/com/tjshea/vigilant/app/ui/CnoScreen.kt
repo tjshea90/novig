@@ -131,6 +131,8 @@ fun CnoScreen(
     onPull: () -> Unit = onRefresh,
     /** The league chips: change which games the list looks at (Tj, 2026-10-07; [CnoScope]). */
     onScope: ((CnoScope) -> CnoScope) -> Unit = {},
+    /** The Novig / Kalshi chips: which books the CNO scan lists (CK, 2026-10-21). */
+    onVenues: (com.tjshea.vigilant.data.cno.CnoVenues) -> Unit = {},
 ) {
     val now = rememberNow(5_000)
     val cno = state.cno
@@ -239,6 +241,8 @@ fun CnoScreen(
                                 }
                             }
                             // Tj, 2026-09-27: "select the time periods 12h 24h 48h and anytime for the cno scanner … as well".
+                            // Tj, 2026-10-21 (CK): "add toggles to the cno tab where I can turn on and off novig and kalshi for the scan".
+                            CnoVenueChips(state.settings.cnoFilters.venues, onVenues)
                             if (on) StartsWithinRow(state.settings.startsWithinHours, onStartsWithin)
                             // Tj, 2026-10-07: "right now I can't filter sports leagues at all" in CNO only: the league chips the +EV tab has, for CrazyNinjaOdds' own list.
                             if (on) CnoLeagueChips(state.settings.cnoFilters.scope, onScope)
@@ -616,10 +620,13 @@ private fun CnoCard(
     val row = pick.row
     val old = !live && now - snap.dataAtMs > MiniWindow.CNO_OLD_MS
     val check = books?.view?.let { CnoBooks.check(it, row, pick.live, preferListOdds = priceAtMs > it.fetchedAtMs) }
+    val atKalshi = com.tjshea.vigilant.data.cno.CnoVenueSource.isKalshi(row)
+    val venue = if (settings.cnoFilters.venues.both) (if (atKalshi) "Kalshi" else "Novig") else null
     Card(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        // Coloured by venue as the +EV tab's cards are (CH37): only while both books are listed.
+        colors = CardDefaults.cardColors(containerColor = venueTint(venue, MaterialTheme.colorScheme.surfaceContainer)),
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             LosingTypeBanner(losingTypeOf(row))
@@ -673,7 +680,7 @@ private fun CnoCard(
                     move?.let { LineMoveNote(it) }
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(row.book.uppercase() + if (live) " NOW" else "", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text(row.book.uppercase() + if (live) " NOW" else "", style = MaterialTheme.typography.labelSmall, color = venueAccent(venue, MaterialTheme.colorScheme.primary), fontWeight = FontWeight.Bold)
                     Text(MiniWindow.american(row.odds), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
                     listedOdds?.let { Text("CNO had ${MiniWindow.american(it)}", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning, fontWeight = FontWeight.SemiBold) }
                 }
@@ -696,7 +703,7 @@ private fun CnoCard(
                 Spacer(Modifier.width(8.dp))
                 ApiBetButton { it.betCno(row) }
                 Spacer(Modifier.width(6.dp))
-                OpenInBookButton(cnoSlipStakeSuffix(pick, settings), opening = opening, onClick = onOpen)
+                OpenInBookButton(if (atKalshi) "" else cnoSlipStakeSuffix(pick, settings), opening = opening, book = if (atKalshi) "Kalshi" else com.tjshea.vigilant.app.AppBook.name, onClick = onOpen)
             }
         }
     }
@@ -982,3 +989,14 @@ internal object BookTableText {
 
 private fun priceText(odds: Int?, available: Double?): String =
     if (odds == null) "—" else MiniWindow.american(odds) + (available?.let { " ${Format.money(it).substringBefore('.')}" } ?: "")
+
+/** Which books the CNO scan lists (CK, 2026-10-21): Novig and Kalshi, each on or off; the cards are coloured by venue while both are on. */
+@Composable
+internal fun CnoVenueChips(venues: com.tjshea.vigilant.data.cno.CnoVenues, onVenues: (com.tjshea.vigilant.data.cno.CnoVenues) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.testTag("cnoVenues")) {
+        Text("Scan", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        FilterChip(selected = venues.novig, onClick = { onVenues(venues.copy(novig = !venues.novig)) }, label = { Text("Novig") }, modifier = Modifier.testTag("cnoVenueNovig"))
+        FilterChip(selected = venues.kalshi, onClick = { onVenues(venues.copy(kalshi = !venues.kalshi)) }, label = { Text("Kalshi") }, modifier = Modifier.testTag("cnoVenueKalshi"))
+        if (venues.kalshi) Text("Kalshi EV net of its fee", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+    }
+}
