@@ -75,6 +75,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         PINNODDS -> s.gates.pinnSocket
         KALSHI -> s.gates.kalshiSocket
         SXBET -> s.gates.sxSocket
+        SHARPAPI -> s.gates.sharpApiSocket
         else -> false
     }
 
@@ -83,6 +84,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         PINNODDS -> s.copy(gates = s.gates.copy(pinnSocket = on))
         KALSHI -> s.copy(gates = s.gates.copy(kalshiSocket = on))
         SXBET -> s.copy(gates = s.gates.copy(sxSocket = on))
+        SHARPAPI -> s.copy(gates = s.gates.copy(sharpApiSocket = on))
         else -> s
     }
 
@@ -93,6 +95,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
             PINNODDS -> "On: the live push feed stays open for the live lane and live bids. Off: no socket, so the live lane waits (Pinnacle's REST boards in scans are unaffected)."
             SXBET -> "On (needs your SX Bet key): the best-odds and live-score channels push every change, so books are read from the socket. Off: the REST read every scan."
             KALSHI -> "On (needs your Kalshi key): a socket pushes every price change, so scans read Kalshi without asking it. Off: the signed or public REST read every scan."
+            SHARPAPI -> "On (needs the stream add-on): the GitHub engine keeps SharpAPI's WebSocket open, so every price change and live score is pushed to it. Off: the engine asks for the changes every 1-2 seconds. The phone never opens it (one stream per key)."
             else -> ""
         }
 
