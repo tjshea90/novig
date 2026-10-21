@@ -207,7 +207,11 @@ class CloudPinnLane(
 
         fun takerOn(s: ScanSettings) = s.engineLive && s.pinnLive
         /** The real-orders gate of the feed the engine is on (SX Bet's own, else the soft-book average's). */
-        fun feedReal(s: ScanSettings) = if (s.pinnWebsite.sx) s.gates.sxLiveReal else s.gates.boltLiveReal
+        fun feedReal(s: ScanSettings) = when {
+            s.pinnWebsite.sharpApi -> s.gates.sharpApiLiveReal
+            s.pinnWebsite.sx -> s.gates.sxLiveReal
+            else -> s.gates.boltLiveReal
+        }
         fun takerReal(s: ScanSettings) = takerOn(s) && s.pinnLiveBet && s.gates.cloudTrading == CloudTradeMode.LIVE && feedReal(s)
         fun bidsOn(s: ScanSettings) = s.engineLive && s.liveBid
         fun bidsReal(s: ScanSettings) = bidsOn(s) && s.liveBidReal && s.gates.cloudTrading == CloudTradeMode.LIVE && feedReal(s)

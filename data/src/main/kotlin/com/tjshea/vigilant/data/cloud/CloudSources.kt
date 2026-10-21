@@ -276,6 +276,13 @@ class CloudSources(
         return com.tjshea.vigilant.data.sxbet.SxBetLiveFeed(st, sxbet, ensureOpen = { sxSocketWanted = true; st.open() }, sink = sink, scope = scope)
     }
 
+    /** The live lane's feed on SharpAPI's Pinnacle (SA), or null without a key or with the switch off. */
+    fun sharpApiLiveFeed(settings: () -> ScanSettings, sink: (String, Long) -> Unit, scope: kotlinx.coroutines.CoroutineScope): com.tjshea.vigilant.data.sharpapi.SharpApiLiveFeed? {
+        if (!settings().gates.useSharpApi || !has(CloudKeys.SHARPAPI)) return null
+        sharpApiFeed.startPolling(scope)
+        return com.tjshea.vigilant.data.sharpapi.SharpApiLiveFeed(sharpApiFeed, { settings().leagues }, sink, scope)
+    }
+
     /** SX Bet's socket (null without a scope): the engine hangs its research recorder on it. */
     val sxStream: com.tjshea.vigilant.data.sxbet.SxBetStream? get() = sxbet.stream
 

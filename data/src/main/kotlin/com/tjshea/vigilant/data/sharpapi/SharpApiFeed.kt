@@ -79,7 +79,7 @@ class SharpApiFeed(
     private val clock: () -> Long = System::currentTimeMillis,
     private val log: (String) -> Unit = {},
 ) {
-    private class LeagueState(@Volatile var since: String? = null, @Volatile var loadedAtMs: Long = 0L, @Volatile var polledAtMs: Long = 0L, @Volatile var askedAtMs: Long = 0L, @Volatile var soonestMs: Long = Long.MAX_VALUE)
+    private class LeagueState(@Volatile var since: String? = null, @Volatile var loadedAtMs: Long = 0L, @Volatile var polledAtMs: Long = 0L, @Volatile var askedAtMs: Long = 0L, @Volatile var soonestMs: Long = Long.MAX_VALUE, @Volatile var live: Boolean = false)
 
     private val rows = ConcurrentHashMap<String, SaRow>()
     private val byLeague = ConcurrentHashMap<String, MutableSet<String>>()
@@ -203,7 +203,8 @@ class SharpApiFeed(
                     if (now - st.askedAtMs > IDLE_MS) { drop(league); continue }
                     if (st.since == null) continue
                     val hot = st.soonestMs - now < HOT_HOURS * 3_600_000L
-                    if (now - maxOf(st.polledAtMs, st.loadedAtMs) < (if (hot) HOT_EVERY_MS else COLD_EVERY_MS)) continue
+                    val every = when { st.live -> LIVE_EVERY_MS; hot -> HOT_EVERY_MS; else -> COLD_EVERY_MS }
+                    if (now - maxOf(st.polledAtMs, st.loadedAtMs) < every) continue
                     val ok = try { deltaStep(league) } catch (e: CancellationException) { throw e } catch (e: SharpApiException) { lastNote = "$league delta: ${e.message}"; true }
                     if (!ok) { log("SharpAPI: $league's changes were too many to page; reading it again whole"); load(league) }
                 }
@@ -213,6 +214,9 @@ class SharpApiFeed(
     }
 
     fun stopPolling() { poller?.cancel(); poller = null }
+
+    /** The live feed says [league] has games in play with prices: its changes are then read every [LIVE_EVERY_MS]. */
+    fun markLive(league: String, live: Boolean) { leagues[league]?.live = live }
 
     val polling: Boolean get() = poller?.isActive == true
 
@@ -239,6 +243,8 @@ class SharpApiFeed(
         const val MARKETS = "moneyline,spread,total,props"
         const val TICK_MS = 500L
         const val HOT_EVERY_MS = 2_000L
+        /** A league with games in play (the live feed's): its changes every second. */
+        const val LIVE_EVERY_MS = 1_000L
         const val COLD_EVERY_MS = 15_000L
         const val HOT_HOURS = 12L
         /** Without a poller, how long a whole read of a league is used before it is read again. */

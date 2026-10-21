@@ -307,8 +307,11 @@ fun main(args: Array<String>) = runBlocking {
     val pinnLane = com.tjshea.vigilant.data.cloud.CloudPinnLane(
         scope = scope, source = novig, stream = { novig.stream as? com.tjshea.vigilant.data.novig.stream.NovigStream },
         feed = { settings, sink, rules ->
-            if (settings().pinnWebsite.sx) sources.sxLiveFeed(settings, sink, scope) ?: sources.boltLiveFeed(settings, sink, scope, rules)
-            else sources.boltLiveFeed(settings, sink, scope, rules)
+            when {
+                settings().pinnWebsite.sharpApi -> sources.sharpApiLiveFeed(settings, sink, scope) ?: sources.boltLiveFeed(settings, sink, scope, rules)
+                settings().pinnWebsite.sx -> sources.sxLiveFeed(settings, sink, scope) ?: sources.boltLiveFeed(settings, sink, scope, rules)
+                else -> sources.boltLiveFeed(settings, sink, scope, rules)
+            }
         },
         orders = tradingClient?.let { com.tjshea.vigilant.data.cloud.TradingLiveOrders(it) }, port = tradePort, dir = File(out, "live-pinn"), tracker = liveTracker,
         onEntry = liveOnEntry, tell = liveTell, log = log::invoke,
