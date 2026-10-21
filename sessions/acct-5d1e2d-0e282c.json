@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-spy7mj",
- "head": "4d8dc0b637748eaf53973fc83d3ab9267336dcad",
+ "head": "4c082641030dafde7b2e796cfdd5617606690ea3",
  "since": 1792563808,
- "beat": 1792603658,
- "beatIso": "2026-10-21T17:27:38Z",
- "done": "pre-ship: v1.0.37: sharp-confirmed bids step their margin down to 1.5% under the sharp book as the game nears (CH59)",
- "next": "ship.sh gates and releases this"
+ "beat": 1792603843,
+ "beatIso": "2026-10-21T17:30:43Z",
+ "done": "pre-release: v1.0.37: sharp-confirmed bids step their margin down to 1.5% under the sharp book as the game nears (CH59) (versionCode 377, v1.0.37)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.37), then run: bash tools/record-release.sh v1.0.37 377 \"v1.0.37: sharp-confirmed bids step their margin down to 1.5% under the sharp book as the game nears (CH59)\""
 }
