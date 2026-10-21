@@ -1,22 +1,22 @@
-# CHECKPOINT 3868 — read me first, then TASKS.md
+# CHECKPOINT 3869 — read me first, then TASKS.md
 
-**Written:** 2026-10-21T00:47:01Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-o9ngjz` · **builds on:** `6ccd8ca0f` (this checkpoint is the commit after it)
+**Written:** 2026-10-21T00:57:42Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-o9ngjz` · **builds on:** `b6a5466f9` (this checkpoint is the commit after it)
 
 ## Just done
-PARLAY_API.md section 10 (Pro facts)
+CH49: scarce feeds gap-fill every 3h
 
 ## Do this next
-wait arbscan; ship
+wait arbscan/listen; ship v1.0.26
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-    M  PARLAY_API.md
 
 ## Last ten checkpoints
 ```
+  aba37be79 ckpt 3868: PARLAY_API.md section 10 (Pro facts)
   d951d81da ckpt 3867: CH48/49: tests updated; reply sent
   85911a6b5 ckpt 3866: CH48 tests, CH49 spend tally, parlay.yml arbscan
   498f11bba ckpt 3865: CH48 ApiState cards in app; CLAUDE.md phone=monitor rule; CH49 logged
@@ -26,7 +26,6 @@ wait arbscan; ship
   2dc31786a ckpt 3861: pre-ship: v1.0.25: ParlayAPI live play-by-play stream as the engine's score
   87e8fdbf2 ckpt 3860: CH47: Parlay pool uses biggest paid plan first (test), meter loaded before 
   91bb11618 ckpt 3859: CH47 probe read: PBP SSE real shape, arbs real shape, Pro key found
-  36558cfbc ckpt 3858: CH47: tools/parlay.py + parlay.yml (plans, probe)
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the
