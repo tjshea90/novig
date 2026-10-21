@@ -91,6 +91,6 @@ class CloudCnoTest {
         assertFalse(CloudCno.wanted(on.copy(scanner = ScannerMode.VIGILANT)))
         assertFalse(CloudCno.wanted(on.copy(gates = on.gates.copy(cnoOnGitHub = false))))
         assertFalse(CloudCno.wanted(on.copy(gates = on.gates.copy(cloudScan = false))))
-        assertFalse(CloudCno.wanted(on.copy(paused = true)))
+        assertFalse(CloudCno.wanted(on.copy(pausedByHand = true)))
     }
 }
