@@ -44,6 +44,11 @@ class DashboardUiTest {
         scanNote = "EV spread of 16792 priced lines: +EV 230 · 0 to -2% 1482", tradeMode = "live", tradeNote = "live: looked 33, passed 0, ordered 0 (\$0.00)",
         walletCash = 124.27, walletEquity = 124.27, walletReadAtMs = now - 30_000, novigRoute = "Novig read-only key active: 16 reads a second, websocket on",
         feedReportAtMs = now - 90_000, feedReport = listOf(FeedLine("propline", fetched = 6, matched = 100), FeedLine("bolt", error = "BoltOdds: the lines socket is not connected")),
+        // The engine's own live checks (CH48): PropLine answered 30 s ago, BoltOdds failed its last two.
+        apiChecks = listOf(
+            com.tjshea.vigilant.data.cloud.ApiCheckLine("propline", "PropLine", on = true, atMs = now - 30_000, ok = true, keysOk = 1, keys = 1, ms = 240),
+            com.tjshea.vigilant.data.cloud.ApiCheckLine("boltodds", "BoltOdds Pro", on = true, atMs = now - 20_000, ok = false, keys = 1, ms = 900, message = "Could not be reached", failStreak = 2),
+        ),
     )
 
     private val propline = UsageViews.build(
@@ -70,9 +75,9 @@ class DashboardUiTest {
         compose.onNodeWithText("Bets listed").assertExists()
         compose.onNodeWithTag("dashboardApi-propline").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("794 of 2000 requests left", substring = true).assertExists()
-        compose.onNodeWithText("working").assertExists()
+        compose.onNodeWithText("up · checked 30 s ago", substring = true).assertExists()
         compose.onNodeWithTag("dashboardApi-boltodds").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("failing").assertExists()
+        compose.onNodeWithText("no connection", substring = true).assertExists()
         // A problem's words stay behind a tap (CH23): the card says so, and the tap shows the error and the Test now / Try again buttons.
         compose.onNodeWithText("Tap for the error").assertExists()
         compose.onNodeWithTag("dashboardApi-boltodds").performClick()
