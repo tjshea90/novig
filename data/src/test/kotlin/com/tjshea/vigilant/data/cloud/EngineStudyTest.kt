@@ -102,4 +102,34 @@ class EngineStudyTest {
             dir.deleteRecursively()
         }
     }
+
+    // XO2 (2026-10-21): 82 of 459 started engine orders were never graded: a bid fills where the Novig ask sits over 2% above fair, so no scan logged that line and the grader only grades the journal.
+    @Test
+    fun `an order whose line no scan logged is added to the journal as a bet of its own once its game has started, once, and a known line or a future game is left alone`() = runBlocking {
+        val dir = Files.createTempDirectory("engine-study-orders").toFile()
+        try {
+            val started = now - 5 * 3_600_000L
+            val study = ScanStudy(StudyJournal(dir), clock = { now }, version = { "github-grader" }, flushEveryMs = 0, io = kotlinx.coroutines.Dispatchers.Unconfined)
+            fun order(m: String, o: String, starts: Long) = ScanStudy.OrderLine(
+                id = "ord-$o", atMs = starts - 2 * 3_600_000L, league = "NHL", event = "Calgary Flames @ Vegas Golden Knights", startsTs = starts, marketLabel = "Team Total", selection = "Vegas Golden Knights Under 3.5",
+                marketId = m, outcomeId = o, eventId = "ev-$m", price = 0.505, fair = 0.5154, evPercent = 0.0205, note = "bid",
+            )
+            val orders = listOf(order("m1", "o1", started), order("m2", "o2", started), order("m3", "o3", now + 3_600_000L), order("", "o4", started))
+            val added = study.addOrders(orders, known = setOf("m2" to "o2"))
+            assertEquals("m1/o1 only: m2/o2 is already in the journal, m3 has not started, m4 has no market id", 1, added)
+            val j = StudyJournal(dir)
+            val bets = j.days().flatMap { j.fold(it).values }
+            val b = bets.single().bet
+            assertEquals("m1", b.marketId); assertEquals("o1", b.outcomeId)
+            assertEquals(0.505, b.price, 1e-9); assertEquals(BetStatus.PENDING, b.status)
+            assertEquals("the kind the dataset reads", "TEAM_TOTAL", b.atBet?.kind)
+            assertTrue(b.atBet?.rules.orEmpty().startsWith("NOT SHOWN (an order of the engine's"))
+            assertEquals("minutes to the start at the fill", 120L, b.atBet?.minutesToStart)
+            // a second run knows the journal now: nothing is added twice
+            val known = j.days().flatMap { j.fold(it).values }.map { it.bet.marketId to it.bet.outcomeId }.toSet()
+            assertEquals(0, ScanStudy(StudyJournal(dir), clock = { now }, flushEveryMs = 0, io = kotlinx.coroutines.Dispatchers.Unconfined).addOrders(orders, known))
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
 }
