@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-nojqjb",
  "head": "b3f05bc85c522d57cb5e0391b17594642925ba8a",
  "since": 1792539161,
- "beat": 1792561849,
- "beatIso": "2026-10-21T05:50:49Z",
+ "beat": 1792561856,
+ "beatIso": "2026-10-21T05:50:56Z",
  "done": "pre-ship: v1.0.34: API quality journal (apiq), consensus CLV columns (CH57/CH58)",
  "next": "ship.sh gates and releases this"
 }
