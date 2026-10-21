@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-nojqjb",
- "head": "11b139127b4974ac0ab900df596a49c821a0fb13",
+ "head": "0bc0c712a4c0cb396e9ac2997cfc31278ffd0945",
  "since": 1792539161,
- "beat": 1792560962,
- "beatIso": "2026-10-21T05:36:02Z",
- "done": "CH57 clv_consensus.py + second-pass audit",
- "next": "tell Tj; break down unconfirmed bets by kind/league"
+ "beat": 1792561131,
+ "beatIso": "2026-10-21T05:38:51Z",
+ "done": "CH58 apiq journal + api_quality.py + value doc",
+ "next": "ship with next release; CH57 consensus in GradeMain/lines_dataset; run api_quality.py after first archive"
 }
