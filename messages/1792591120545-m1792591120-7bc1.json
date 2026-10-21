@@ -1,0 +1,1 @@
+{"id": "m1792591120-7bc1", "at": 1792591120545, "from": "claude:watchdog", "kind": "alert", "title": "The engine was stuck: restarted", "body": "GitHub engine run 39608741298 had gone quiet (the scan's progress has not moved for 14 min). It was cancelled and a fresh run started by the watchdog; nothing for you to do.", "priority": 0}
