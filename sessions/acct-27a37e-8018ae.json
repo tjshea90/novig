@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "a0eaf1a28427c07613b7dfcf0c6956bcd0d2d0bc",
+ "head": "20f4af5d828ce1bffd20857a8ee343e60b9c6eb7",
  "since": 1792596542,
- "beat": 1792601863,
- "beatIso": "2026-10-21T16:57:43Z",
- "done": "Merged cut-off branch ccr-cb0c319e (feed-level API problems, order grading fix, FCS grading, volume_report); full floor 4119 green",
- "next": "ship v1.0.36 (ship.sh, release.yml, record-release.sh), then XO5 triage, XO6 test protocol"
+ "beat": 1792601916,
+ "beatIso": "2026-10-21T16:58:36Z",
+ "done": "pre-release: v1.0.36: feed-level API problems on the API card, order grading fix (orders with no logged line), FCS games in NCAAF grading, volume report tool (versionCode 376, v1.0.36)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.36), then run: bash tools/record-release.sh v1.0.36 376 \"v1.0.36: feed-level API problems on the API card, order grading fix (orders with no logged line), FCS games in NCAAF grading, volume report tool\""
 }
