@@ -6102,7 +6102,7 @@ CH59 (2026-10-21, chat wake 06:20 UTC): Odds API audited: 18 credits today, all 
 - [x] XO4a historical odds/props analysis from APIs that have history (PropLine archive+CLV, SGO/OddsPapi closes, ParlayAPI): patterns and methods; research/ note
 - [x] XO4b incorporate what is profitable into vigilant + engine (behind switches, tests): nothing in the engine changes (every candidate needs results the data does not hold yet: research/propline_history_study_2026-10-21.md section 4); built tools/orders_clv.py (CLV at the fill price per order, daily into engine-dataset) as the baseline for the calibrated-fair test
 - [x] XO5a triage the open TASKS.md items (18 verified-done items ticked; built: TCL30d volume report, CH57 rest = tools/orders_clv.py, TCL94b FCS grading, the order-grading gap found by the full test (addOrders), feed-level API problems; the rest wait on Tj, live keys or evidence and are on the WATCH LIST XOW1-XOW5) (grep '^- \[ \]'): list built-vs-unbuilt-planned; build the unblocked ones (not those waiting on a live key/data/Tj)
-- [ ] XO6 full test protocol (.claude/skills/test-protocols/SKILL.md "full tests"), fix what it finds, record result
+- [x] XO6 (done as CK5, v1.0.41) full test protocol (.claude/skills/test-protocols/SKILL.md "full tests"), fix what it finds, record result
 
 WATCH LIST (XO, 2026-10-21; each waits on the number named, then is a class B change with a CHANGES.md line):
 - [ ] XOW1 prop calibration column in `tools/lines_dataset.py` (Over: fair - bias(p), Under: fair + bias(p), table in research/propline_history_study_2026-10-21.md) and the test at 200 settled per side; only then touch `PropHaircut` (Over -7, Under -3).
@@ -6124,5 +6124,5 @@ Finding 19:30: only ONE cloud-scan run is live (run 254), so no old runner holds
 - [x] CK1 study: how CNO is read (CnoFeed/CnoClient/CnoPage), whether CNO lists Kalshi as a target book, RESEARCH.md §76.3 (why this container never reads CNO), how the Vigilant feed colours Novig vs Kalshi cards
 - [x] CK2 (CnoVenuesTest, CnoVenuesUiTest, CnoMakerLinesTest) Kalshi in the CNO scan (same list logic, Kalshi rows beside Novig rows), Novig / Kalshi toggles on the CNO tab, card colours as the Vigilant scanner's
 - [x] CK3 (CloudCnoTest; the engine's live reads of CNO are the first proof: status.cnoNote) CNO scan on the GitHub engine (engine reads CNO, publishes the list on cloud-feed, phone shows it; phone does no CNO reading while it runs), settings mirrored (CloudScanKey)
-- [ ] CK4 tests, ship, release
-- [ ] CK5 full test protocol (= XO6), fix what it finds, record result
+- [x] CK4 (v1.0.40) tests, ship, release
+- [x] CK5 (v1.0.41; floor 4135 green + 134 screens looked at; fixes: Kalshi CNO alerts/taps/detail open Kalshi, link lane skips Kalshi rows, engine CNO hands reads to the phone at once on a failed first read, Scan CNO on GitHub switch, stale engine copy, SX Bet chip name, CH59 step-down needs every fair book within 3 min; tests CnoVenuesTest, CnoVenuesUiTest, CloudCnoTest, MakerTest, MoreBooksTest) full test protocol (= XO6), fix what it finds, record result

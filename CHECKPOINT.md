@@ -1,21 +1,23 @@
-# CHECKPOINT 3925 — read me first, then TASKS.md
+# CHECKPOINT 3926 — read me first, then TASKS.md
 
-**Written:** 2026-10-21T22:14:49Z · **tests:** all 9 fast checks green
-**Branch:** `claude/new-session-51eqix` · **builds on:** `67901f983` (this checkpoint is the commit after it)
+**Written:** 2026-10-21T22:21:02Z · **tests:** all 9 fast checks green
+**Branch:** `claude/new-session-51eqix` · **builds on:** `0f5b24e2d` (this checkpoint is the commit after it)
 
 ## Just done
-v1.0.40 released (CK). Full test in progress: Kalshi CNO rows' alerts/taps open Kalshi (betLink), link lane skips Kalshi rows (mutation-checked), engine CNO hands reads to the phone at once when its first read fails, Settings switch Scan CNO on GitHub, stale engine copy, SX Bet chip name, detail sheet Open in Kalshi
+full test (CK5/XO6) done: floor 4135 green, 134 screens viewed, 7 fixes (see TASKS CK5)
 
 ## Do this next
-continue full test sweep: adversarial review of v1.0.35-1.0.39 diffs (other sessions), then full floor, ship v1.0.41
+ship v1.0.41 and release; then the engine's first live CNO reads (status.cnoNote, engine-log) are the proof CK3 works on a runner
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  77c72f06e ckpt 3925: v1.0.40 released (CK). Full test in progress: Kalshi CNO rows' alerts/taps 
   d283653f0 ckpt 3924: pre-release: v1.0.40: CNO scans Novig and Kalshi (tab chips, Kalshi EV net 
   6916f0eaf ckpt 3923: CK2/CK3 built: CnoVenueSource (Novig+Kalshi reads, Kalshi EV net of fee), v
   038eed8e0 ckpt 3922: v1.0.39 released (BC3,BC4)
@@ -25,8 +27,7 @@ continue full test sweep: adversarial review of v1.0.35-1.0.39 diffs (other sess
   2295d6196 ckpt 3918: BC: phone already closes BoltOdds sockets on toggle-off; STOP ALL/pause pat
   906472197 ckpt 3917: BC task written (BoltOdds too many connections, clean disconnect on every s
   2d56888a0 ckpt 3916: pre-release: v1.0.38: API card trusts a fresh accepted key check over a sta
-  e96c94d08 ckpt 3915: ApiState: a fresh accepted key check outranks a ledger 'every key refused' 
 ```
 
-(10 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
