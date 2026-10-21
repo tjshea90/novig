@@ -39,7 +39,10 @@ import java.util.zip.GZIPOutputStream
  * The bid desk's candidate lines as the GitHub engine publishes them (`bids.json.gz`; Tj, 2026-10-15): every side worth taking to Novig's books for a bid, with the fair odds' side of the work already done
  * ([com.tjshea.vigilant.data.novig.trading.maker.BidCandidates]). [partial]: the scan behind them is still running (its finished leagues only), as a [com.tjshea.vigilant.data.scanner.ScanResult.partial] is.
  */
-class CloudBids(val atMs: Long, val partial: Boolean, val configRev: Long, val lines: List<BidLine>, val unreadable: Int = 0) {
+class CloudBids(val atMs: Long, val partial: Boolean, val configRev: Long, val lines: List<BidLine>, val unreadable: Int = 0,
+    /** A quick scan's reach (CloudLanes): bids on games starting after it were not judged and stay up. In memory only, for the engine's own desk. */
+    val reachUntilMs: Long? = null,
+) {
     companion object {
         const val VERSION = 1
 

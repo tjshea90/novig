@@ -145,6 +145,12 @@ class CloudEngine(
     @Volatile private var lastScanEndedAt = 0L
     @Volatile private var lastScanForRefresh = 0L
     @Volatile private var lastRestartAt = 0L
+
+    /** The laned scan ([CloudLanes]): when the last FULL scan finished, under which fetch settings, its rows, and the reach of the quick scan now running (null = a full scan). */
+    @Volatile private var lastFullAtMs = 0L
+    @Volatile private var lastFullKey: String? = null
+    @Volatile private var lastFullRows: List<Opportunity> = emptyList()
+    @Volatile private var nearReachMs: Long? = null
     /** The settings revision the running scan was priced under, and whether the phone has since changed something that only the NEXT scan applies. */
     @Volatile private var pricedRev = 0L
     @Volatile private var settingsPending = false
@@ -366,9 +372,13 @@ class CloudEngine(
         val t0 = clock()
         var cfg = cfg0
         // The settings the scan READS under stay as they were when it began; the list is filtered under the newest ones (a raised minimum edge shows at once, no scan is thrown away for it).
-        val scanSettings = governor.apply(forCloud(cfg0.settings), clock())
-        runCatching { prepare(scanSettings) }.onFailure { log("could not prepare the scan's connections: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
         val fetchKey = CloudScanKey.fetchKey(cfg0.settings)
+        val near = CloudLanes.nearOnly(cfg0.settings, t0, lastFullAtMs, lastFullKey, fetchKey.toString())
+        nearReachMs = if (near) CloudLanes.reachMs(t0) else null
+        val base = governor.apply(forCloud(cfg0.settings), clock())
+        val scanSettings = if (near) base.copy(vigGuards = base.vigGuards.copy(nearScan = true)) else base
+        if (near) log("quick scan of the next ${com.tjshea.vigilant.data.scanner.FarLane.NEAR_HOURS} h (the last full scan ended ${(t0 - lastFullAtMs) / 1000}s ago)")
+        runCatching { prepare(scanSettings) }.onFailure { log("could not prepare the scan's connections: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
         var fetchChangeRev = 0L
         var fetchChangeSince = 0L
         val scanKey = CloudScanKey.scanKey(cfg0.settings)
@@ -429,7 +439,7 @@ class CloudEngine(
             if (now - lastPublishedAt >= partialEveryMs) {
                 lastPublishedAt = now
                 partial.getAndSet(null)?.let { r ->
-                    val rows = r.feed(filterSettings)
+                    val rows = withFar(r.feed(filterSettings), now)
                     val feed = CloudFeed(now, cfg.rev, r.stats, rows)
                     onFeed(rows, now)
                     lastPublished = feed; lastAges = CloudCurrency.of(rows, now)
@@ -518,7 +528,9 @@ class CloudEngine(
             return@supervisorScope false
         }
         val done = clock()
-        val rows = result.feed(filterSettings)
+        val ownRows = result.feed(filterSettings)
+        val rows = withFar(ownRows, done)
+        if (nearReachMs == null) { lastFullAtMs = done; lastFullKey = fetchKey.toString(); lastFullRows = ownRows }
         val feed = CloudFeed(done, cfg.rev, result.stats, rows)
         passes++
         lastRows = rows.size
@@ -534,6 +546,13 @@ class CloudEngine(
         if (bids != null) deskPass(latest)
         false
     }
+
+    /** A quick scan's list carries the last full scan's rows for the games past its reach ([CloudLanes.merge]); a full scan's is its own. */
+    private fun withFar(rows: List<Opportunity>, now: Long): List<Opportunity> =
+        if (nearReachMs == null) rows else CloudLanes.merge(rows, lastFullRows, nearScanStart)
+
+    /** When the quick scan now running began: its reach is measured from it. */
+    private val nearScanStart: Long get() = (nearReachMs ?: 0L) - (com.tjshea.vigilant.data.scanner.FarLane.NEAR_HOURS + 6) * 3_600_000L
 
     /** When the scan's progress (step and count) last CHANGED, for the stall check (the phone's STALLED chip, the watchdog): 0 when no scan is running. */
     private var progressSig: Pair<String?, Int?>? = null
@@ -582,12 +601,14 @@ class CloudEngine(
     private suspend fun sendBids(result: ScanResult, rev: Long, settings: ScanSettings, now: Long) {
         val make = bidLines ?: return
         val s = forCloud(settings)
+        // A quick scan judges only the near games: the phone's file keeps the full scan's candidates (the phone's desk would read a complete list as "the rest are gone").
+        if (nearReachMs != null && !(s.engineBids && bids != null)) return
         // The engine's own desk takes the candidates straight (no file, no phone in the loop): TCL31.
         val desk = bids
         if (s.engineBids && desk != null) {
             runCatching {
                 val lines = make(result, s, now)
-                desk.put(CloudBids(now, result.partial, rev, lines))
+                desk.put(CloudBids(now, result.partial, rev, lines, reachUntilMs = nearReachMs))
                 if (bidsOn) { bidsOn = false; publishBids(null) }
                 bidsAt = now; bidsCount = lines.size
             }.onFailure { if (it is CancellationException) throw it; log("candidate lines failed: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
