@@ -36,42 +36,37 @@ object BidVolume {
         return if (agreeing < need) "Volume mode needs $need books on a ${BidTier.label(BidTier.of(line))}'s side (only $agreeing)" else null
     }
 
-    // Fills per 100 bid-hours, measured on 24,267 bids (research/bid_fill_speed_2026-10-14.md).
-    private fun leadFactor(hours: Double): Double = when {
-        hours < 1 -> 25.7
-        hours < 3 -> 16.9
-        hours < 6 -> 15.7
-        hours < 12 -> 8.9
-        hours < 24 -> 5.6
-        hours < 72 -> 1.0
-        else -> 0.5
+    // Fills per 1,000 bids posted, by the hours to the start and by how far the bid sits under Novig's offer (the ask), measured on 339,555 bids of the engine's own desk, 2026-10-16..21 (528 fills; XO2,
+    // research/bid_volume_study_2026-10-21.md). Ranked by these two alone, held out a day at a time, the top fifth of the bids held 59.5% of the fills against 38.4% for the earlier hours x kind x league x
+    // lead-of-side factors (area under the capture curve 0.754 against 0.614, better on each of the six days): kind and league added nothing once these two were in. A bid close to the offer fills 25 times as
+    // often as one 15 points under it, and one on a game inside the hour 20 times as often as one a day and more out.
+    private fun hoursLift(hours: Double): Double = when {
+        hours < 1 -> 12.8
+        hours < 2 -> 7.1
+        hours < 6 -> 4.6
+        hours < 12 -> 3.9
+        hours < 24 -> 2.2
+        else -> 0.65
     }
 
-    private fun kindFactor(kind: BetKind): Double = when (kind) {
-        BetKind.PROP -> 17.1
-        BetKind.TEAM_TOTAL -> 5.8
-        BetKind.MONEYLINE -> 7.8
-        BetKind.PERIOD -> 3.1
-        BetKind.SPREAD -> 1.5
-        BetKind.TOTAL -> 1.3
-        BetKind.OTHER -> 3.0
+    /** [gapPoints]: Novig's offer minus the bid's price, in points of probability; null = no offer is known (the middle of the table). */
+    private fun gapLift(gapPoints: Double?): Double = when {
+        gapPoints == null -> 1.3
+        gapPoints <= 1.0 -> 13.7
+        gapPoints <= 2.0 -> 6.1
+        gapPoints <= 3.0 -> 2.1
+        gapPoints <= 5.0 -> 1.3
+        gapPoints <= 15.0 -> 0.9
+        else -> 0.54
     }
 
-    private fun leagueFactor(league: String): Double = when (league.uppercase()) {
-        "WNBA" -> 33.0
-        "NHL" -> 22.6
-        "MLB" -> 16.1
-        "NFL" -> 10.3
-        "NBA" -> 9.3
-        "NCAAF" -> 3.4
-        "ATP" -> 1.5
-        "WTA" -> 0.5
-        else -> 8.0
-    }
-
-    /** How likely this bid is to fill fast, relative (bigger = sooner): the product of how fast its hours-to-start, kind, league and place in the queue have filled. */
-    fun score(line: MakerLine, leadsSide: Boolean, now: Long): Double {
+    /**
+     * How likely this bid is to fill fast, relative (bigger = sooner): how fast bids this near the start and this close to the offer have filled ([hoursLift] x [gapLift]), a bid that leads its side first (a bid
+     * behind another fills only after it). [price] is the bid's own price; without it only the start counts.
+     */
+    fun score(line: MakerLine, leadsSide: Boolean, now: Long, price: Double? = null): Double {
         val hours = ((line.startsTs - now) / 3_600_000.0).coerceAtLeast(0.0)
-        return leadFactor(hours) * kindFactor(line.kind) * leagueFactor(line.league) * (if (leadsSide) 16.2 else 3.5) / 1_000.0
+        val gap = if (price != null && line.offer != null) (line.offer - price) * 100.0 else null
+        return hoursLift(hours) * gapLift(gap) * (if (leadsSide) 1.5 else 1.0) / 10.0
     }
 }

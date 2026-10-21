@@ -913,7 +913,7 @@ object MakerPlan {
         if (kept.sumOf { it.restingDollars } > room + 1e-9) {
             val worth = compareBy<RestingBid> { it.auto }
                 // Volume mode: the bids that fill fastest are the last to come down when the money falls short.
-                .thenByDescending { r -> if (rules.volume) byOutcome[r.outcomeId]?.let { BidVolume.score(it.line, it.leads, now) } ?: 0.0 else 0.0 }
+                .thenByDescending { r -> if (rules.volume) byOutcome[r.outcomeId]?.let { BidVolume.score(it.line, it.leads, now, it.price) } ?: 0.0 else 0.0 }
                 .thenBy { it.obscure }
                 // Many-bids mode: the riskiest tier's bids come down first when the money falls short.
                 .thenBy { if (rules.tiered) byOutcome[it.outcomeId]?.line?.let { l -> BidTier.of(l) } ?: BidTier.PROVEN else 0 }
@@ -1070,7 +1070,7 @@ object MakerPlan {
      */
     fun priority(rules: MakerRules, now: Long = System.currentTimeMillis()): Comparator<MakerDecision.Post> {
         // Volume mode: the bids that fill fastest go up first ([BidVolume.score]); the edge breaks a tie.
-        if (rules.volume) return compareByDescending<MakerDecision.Post> { BidVolume.score(it.line, it.leads, now) }.thenByDescending { it.evAtFair }
+        if (rules.volume) return compareByDescending<MakerDecision.Post> { BidVolume.score(it.line, it.leads, now, it.price) }.thenByDescending { it.evAtFair }
         val base = if (rules.tiered) compareBy<MakerDecision.Post> { BidTier.of(it.line) }.thenBy { it.obscure } else compareBy<MakerDecision.Post> { it.obscure }
         // Profit-proven only: the types of bid with the best history go up first (a neutral or unknown type scores 0, so nothing is held back for want of data).
         val byProfit = rules.profit?.let { pf ->
