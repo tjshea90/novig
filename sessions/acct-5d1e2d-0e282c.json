@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "6cf4691322ebe61dcd65c57466cd3b5389d23511",
+ "head": "50bf38c59b58c8ac6f682697431bad21e1d4194b",
  "since": 1792539161,
- "beat": 1792546253,
- "beatIso": "2026-10-21T01:30:53Z",
- "done": "v1.0.26 released; TennisModel math + tests",
- "next": "read first tennis pbplive frames (cloud-archive Release pbplive-*), wire tennis paper lane; Kalshi lag CH45a"
+ "beat": 1792546345,
+ "beatIso": "2026-10-21T01:32:25Z",
+ "done": "pre-ship: v1.0.27: ParlayAPI Pro joins the hot refresh for games about to start (CH50)",
+ "next": "ship.sh gates and releases this"
 }
