@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-spy7mj",
- "head": "d76a9865b9874a1a63396bbe43e904e63df0592b",
+ "head": "59d5c29de67952d15a02342bb18a48b54ad14e07",
  "since": 1792563808,
- "beat": 1792602853,
- "beatIso": "2026-10-21T17:14:13Z",
+ "beat": 1792603122,
+ "beatIso": "2026-10-21T17:18:42Z",
  "done": "CH59 sharp-confirmed bid margin step-down to 1.5% (tests green, not released)",
  "next": "CH59: add Settings switch + CloudScanKey entry, then ship release; tell Tj in chat"
 }
