@@ -267,7 +267,8 @@ data class MakerRules(
             perGameBids = s.vigGuards.bidPerGameBids.coerceAtLeast(0),
             popularFirst = s.makerPopularFirst,
             tiered = s.vigGuards.bidMany,
-            deployPct = if (s.vigGuards.bidDeploy) s.vigGuards.bidDeployPct.coerceIn(10, 100) / 100.0 else 0.0,
+            // The target is always the most the bids may be worth: the desk's wallet is already cash x "most the bids up may be worth" (MakerRunner.forBids), so 100% of it (Tj, 2026-10-21: "always target the maximum").
+            deployPct = if (s.vigGuards.bidDeploy) 1.0 else 0.0,
             deployMaxKelly = s.vigGuards.bidDeployKelly.coerceIn(5, 100) / 100.0,
             postsPerPass = if (s.vigGuards.bidMany) MANY_POSTS_PER_PASS else POSTS_PER_PASS,
             requireSharp = s.makerRequireSharp,

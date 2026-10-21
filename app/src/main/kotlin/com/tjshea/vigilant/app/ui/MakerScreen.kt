@@ -368,7 +368,7 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
                 ) { on -> actions.onUpdate { it.copy(vigGuards = it.vigGuards.copy(bidFarLane = on)) } }
                 SwitchRow(
                     "Keep the wallet working",
-                    "While the bids up are worth less than ${ui.settings.vigGuards.bidDeployPct}% of the wallet, every new bid stakes more (never over ${ui.settings.vigGuards.bidDeployKelly}% of full Kelly for its own edge or the most per bid), and if that is still not enough, riskier bids go up too: games up to 36 h away, a sharp book required, a margin 4 points wider (so a higher edge) and half the stake. With nothing left even there, bids reach games later in the week (up to 7 days) at a margin 2 points wider again. Every bid is still positive EV; the riskier ones are the last to go up and the first to come down.",
+                    "While the bids up are worth less than the most you allow below (${ui.settings.vigGuards.bidWalletPct}% of the wallet), every new bid stakes more (never over ${ui.settings.vigGuards.bidDeployKelly}% of full Kelly for its own edge or the most per bid), and if that is still not enough, riskier bids go up too: games up to 36 h away, a sharp book required, a margin 4 points wider (so a higher edge) and half the stake. With nothing left even there, bids reach games later in the week (up to 7 days) at a margin 2 points wider again. Every bid is still positive EV; the riskier ones are the last to go up and the first to come down.",
                     ui.settings.vigGuards.bidDeploy, "bidDeploy",
                 ) { on -> actions.onUpdate { it.copy(vigGuards = it.vigGuards.copy(bidDeploy = on)) } }
                 Text("Most the bids up may be worth (of the wallet)", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
@@ -393,15 +393,6 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
                 )
                 Text("Novig holds no cash behind a resting bid, so more than 100% is allowed; if the bids filled all at once beyond your cash, later ones would be refused.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (ui.settings.vigGuards.bidDeploy) {
-                    Text("Wallet target", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
-                    androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
-                        listOf(50, 70, 90, 100).forEach { pct ->
-                            androidx.compose.material3.FilterChip(
-                                selected = ui.settings.vigGuards.bidDeployPct == pct, onClick = { actions.onUpdate { it.copy(vigGuards = it.vigGuards.copy(bidDeployPct = pct)) } },
-                                label = { Text("$pct%") }, modifier = Modifier.testTag("bidDeployPct-$pct"),
-                            )
-                        }
-                    }
                     Text("Most of full Kelly a bigger stake may reach", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
                     androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
                         listOf(13 to "⅛", 25 to "¼", 33 to "⅓", 50 to "½").forEach { (pct, label) ->

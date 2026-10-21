@@ -578,7 +578,7 @@ object HealthChecks {
         val b = s.betting.balance ?: return
         if (b < 5.0) return
         val resting = x.makerBids.filter { it.active }.sumOf { it.restingDollars }
-        val target = set.vigGuards.bidDeployPct / 100.0 * b
+        val target = set.vigGuards.bidWalletPct.coerceIn(100, 2000) / 100.0 * b
         if (resting < 0.5 * target) {
             add(Check(Level.WARN, "Wallet deployment", "only ${String.format(Locale.US, "$%.2f", resting)} of ${String.format(Locale.US, "$%.2f", b)} is working in bids (target ${String.format(Locale.US, "$%.2f", target)})", "see WALLET DEPLOYMENT: what is wanted and what limits it (few games on Novig, the EV and sharp rules)", "MakerDesk.deployScale / deployFor"))
         } else add(Check(Level.OK, "Wallet deployment", "${String.format(Locale.US, "$%.2f", resting)} of ${String.format(Locale.US, "$%.2f", b)} is working in bids (target ${String.format(Locale.US, "$%.2f", target)})"))
