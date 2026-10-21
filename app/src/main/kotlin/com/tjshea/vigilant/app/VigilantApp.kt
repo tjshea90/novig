@@ -346,6 +346,14 @@ class AppContainer(val app: Application) {
      * CrazyNinjaOdds' +EV list (RESEARCH.md §18). It reads only while [MainActivity] is started
      * (on screen, or as the mini window), at most once per 30 s; the last list is kept on disk.
      */
+    /** The GitHub engine's CNO list as this phone last fetched it (`cno.json.gz`, CK 2026-10-21), and the source that adopts it. */
+    val cloudCnoLatest = com.tjshea.vigilant.data.cloud.CloudCnoLatest()
+    private val cloudCno = com.tjshea.vigilant.data.cloud.CloudCnoSource(cloudCnoLatest)
+
+    /** Whether the engine serves the CNO list now ([com.tjshea.vigilant.data.cloud.CloudCno.engineServes]); else this phone reads CNO itself. */
+    suspend fun cloudCnoOn(): Boolean =
+        com.tjshea.vigilant.data.cloud.CloudCno.wanted(currentSettings()) && com.tjshea.vigilant.data.cloud.CloudCno.engineServes(cloud.latest.status, System.currentTimeMillis())
+
     /** Finds a CNO bet in Novig's own public catalog: its exact bet-slip link without asking CNO. */
     val betFinder = NovigBetFinder(http, json)
 

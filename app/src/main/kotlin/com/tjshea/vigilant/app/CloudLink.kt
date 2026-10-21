@@ -524,6 +524,19 @@ class CloudLink(private val c: AppContainer) {
         }
     }
 
+    /** The engine's CNO list (CK): kept for the CNO feed's source, which adopts it on its next read (one is asked now, so the tab shows it at once). */
+    private suspend fun fetchCno(s: ScanSettings) {
+        when (val b = client.fetchCno()) {
+            is CloudClient.Poll.Fresh -> {
+                cnoFetchedFor = b.value.atMs
+                c.cloudCnoLatest.put(b.value, System.currentTimeMillis())
+                if (c.cloudCnoOn()) runCatching { c.cno.refresh(com.tjshea.vigilant.data.cloud.CloudCno.viewOf(s), s.cnoFilters) }
+            }
+            is CloudClient.Poll.Failed -> latest.why = b.why
+            else -> {}
+        }
+    }
+
     /** PropLine's +EV lines at Novig, for the +EV tab's PropLine screen. */
     private suspend fun fetchPropLineEv() {
         when (val b = client.fetchPropLineEv()) {
@@ -543,6 +556,7 @@ class CloudLink(private val c: AppContainer) {
         if (st.computedAtMs > 0L && st.computedAtMs != feedFetchedFor) fetch(st.computedAtMs)
         if (s.bidsFromCloud && st.bidsAtMs > 0L && st.bidsAtMs != bidsFetchedFor) fetchBids()
         if (st.propLineEvAtMs > 0L && st.propLineEvAtMs != evFetchedFor) fetchPropLineEv()
+        if (st.cnoAtMs > 0L && st.cnoAtMs != cnoFetchedFor && com.tjshea.vigilant.data.cloud.CloudCno.wanted(s)) fetchCno(s)
     }
 
     private val refreshMutex = kotlinx.coroutines.sync.Mutex()
