@@ -39,6 +39,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -441,7 +442,7 @@ fun main(args: Array<String>) = runBlocking {
         launch { cnoFeed.watch(configs) }
         // Each listed bet's CNO page (the green check, the bids priced from CNO), as the phone keeps it while its books check is on.
         launch {
-            cnoFeed.keepBooksFresh(kotlinx.coroutines.flow.map(cnoFeed.state) { st -> if (latestCfg.get()?.settings?.cnoCheckBooks != false && cnoConfig().enabled) st.snapshot?.rows.orEmpty() else emptyList() })
+            cnoFeed.keepBooksFresh(cnoFeed.state.map { st -> if (latestCfg.get()?.settings?.cnoCheckBooks != false && cnoConfig().enabled) st.snapshot?.rows.orEmpty() else emptyList() })
         }
         // A pull to refresh on the phone (the same request that starts a Vigilant scan) reads CNO at once too.
         launch {
