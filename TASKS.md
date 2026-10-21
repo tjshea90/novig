@@ -6068,3 +6068,8 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 ## CH49 (Tj chat 00:18 UTC, 2026-10-21): The Odds API pacing
 - [ ] CH49 audit The Odds API use: pace as needed, never spent on data another API gives better or that overlaps; use as much as needed but not wasteful (ApiChain/CreditPace/QuotaPolicy ODDS_API; today 508 credits/6803 left, "will not last" warning)
 - [x] CH47 phone PBP wiring DROPPED by Tj (GitHub-only rule, CLAUDE.md "phone is a control center")
+- [x] CH47e ParlayAPI arbs: measured with parlay.yml arbscan (6 sports x 200 pregame + inplay): pairs include novig with pinnacle/prophetx/bet365/fliff/bovada but NEVER kalshi (0 kalshi rows), so no arb leads for the Novig-Kalshi page; KalshiArb's own comparison stays the source. NOT built (evidence in Release parlay-samples arbscan.json)
+- [x] CH47g consensus/line-movement: judged from docs (consensus = average of the same books; line-movement = 6.5 h live table): no live rule; PBP lead journal + spend tally give the data to study
+- [~] CH47f tennis: the engine keeps ParlayAPI's tennis PBP stream open and records raw frames (pbplive-<day>.jsonl in cloud-archive Releases); no tennis was live 00:20-00:58 UTC. NEXT SESSION: read the first real tennis frames, then build the live tennis model in PAPER before any real tennis bet or bid
+- [x] CH48 API monitor rebuilt (ApiMonitor engine checks, ApiState lights, ApiStateTest, ApiMonitorTest, DashboardUiTest) v1.0.26
+- [x] CH49 Odds API: scarce feeds gap-fill every 3 h (was 30 min), per-purpose spend tally logged hourly ("Spend:" in engine log): NEXT: read first day of numbers, cut purposes others serve
