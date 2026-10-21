@@ -134,4 +134,16 @@ class DashboardModelTest {
         assertTrue(DashboardModel.decode("not json").isEmpty())
         assertTrue("a status with no finished scan adds nothing", DashboardModel.record(emptyList(), CloudStatus()).isEmpty())
     }
+
+    @Test fun `a feed the engine found silent for several scans is named for its provider, with its error, and nothing else is`() {
+        val st = CloudStatus(
+            feedAlerts = listOf("bolt (5 scans in a row)", "oddspapi_free-props (3 scans in a row)"),
+            feedReport = listOf(FeedLine("bolt", error = "BoltOdds: the lines socket is not connected (Too many concurrent connections.)"), FeedLine("bolt-props", fetched = 6), FeedLine("sgo", fetched = 6)),
+            feedReportAtMs = 1L,
+        )
+        assertEquals("feed bolt silent for 5 scans: BoltOdds: the lines socket is not connected (Too many concurrent connections.)", DashboardModel.feedProblem(st, "boltodds"))
+        assertNull("a provider with no alerted feed has none", DashboardModel.feedProblem(st, "sgo"))
+        assertEquals("a feed with no error says no answer", "feed oddspapi_free-props silent for 3 scans: no answer", DashboardModel.feedProblem(st, "oddspapi_free"))
+        assertNull(DashboardModel.feedProblem(null, "boltodds"))
+    }
 }

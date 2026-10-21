@@ -95,4 +95,13 @@ class ApiStateTest {
         val bad = ApiState.of(check(at = now - 5 * 3_600_000L), view(good()), null, now, phone.copy(ok = false, keysOk = 0, message = "Refused (HTTP 401)"), engineRunning = false)
         assertEquals(Light.RED, bad.light)
     }
+
+    @Test fun `an API that checks out but has a feed silent for several scans is amber with the feed's own words`() {
+        val problem = "feed bolt silent for 5 scans: BoltOdds: the lines socket is not connected (Too many concurrent connections.)"
+        val v = ApiState.of(check(), view(good()), CloudDashboard.Health.WORKING, now, feedProblem = problem)
+        assertEquals(Light.YELLOW, v.light); assertTrue(v.words, v.words.startsWith("feed bolt silent for 5 scans"))
+        // never when the engine is not running (the alert is old news then), and a check that is red stays red
+        assertEquals(Light.GREEN, ApiState.of(check(), view(good()), CloudDashboard.Health.WORKING, now, engineRunning = true, feedProblem = null).light)
+        assertEquals(Light.RED, ApiState.of(check(ok = false, streak = 3), view(good()), CloudDashboard.Health.WORKING, now, feedProblem = problem).light)
+    }
 }
