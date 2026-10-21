@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "9dd40f",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-k6xck0",
+ "head": "edf8cc5e2d6cbc8b77d53227de52db6df7e1cff1",
+ "since": 1792603635,
+ "beat": 1792603635,
+ "beatIso": "2026-10-21T17:27:15Z",
+ "done": "ANALYST 2026-10-21 skipped: under 100 new settled; engine healthy",
+ "next": "next ANALYST at 100+ new settled; XOW1-5 watch list"
+}
