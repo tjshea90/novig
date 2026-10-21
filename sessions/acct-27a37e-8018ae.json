@@ -8,8 +8,8 @@
  "branch": "ccr-cb0c319e-caga5z",
  "head": "2ee4393752a3b76b271d4d61fbd54f25a2c20b8f",
  "since": 1792596542,
- "beat": 1792598829,
- "beatIso": "2026-10-21T16:07:09Z",
+ "beat": 1792599009,
+ "beatIso": "2026-10-21T16:10:09Z",
  "done": "XO1 complete (ApiState evidence rules, phone checks on pull-to-refresh, API manager section, tests green), XO2a bid volume study + BidVolume.score hours x offer-gap (tests green), CHANGES entries",
  "next": "run the whole test floor (bash tools/test.sh), ship v1.0.35 (ship.sh, release.yml, record-release.sh), then engine_set bidPerGameDollars=6.25 after the engine restarts on main's code; then XO3/XO4 analysis, XO5 backlog, XO6 full test protocol"
 }
