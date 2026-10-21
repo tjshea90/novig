@@ -35,9 +35,10 @@ class ApiStateTest {
         assertEquals(Light.RED, ApiState.of(null, view(good()), CloudDashboard.Health.FAILING, now).light)
     }
 
-    @Test fun `every key refused is red even when a check passed, one refused key is yellow`() {
+    @Test fun `every key refused is red unless a fresh check was accepted (then yellow), one refused key is yellow`() {
         val refused = KeyUsage(periodStart = month, refused = true, refusals = 3)
-        assertEquals(Light.RED, ApiState.of(check(), view(refused, refused), CloudDashboard.Health.WORKING, now).light)
+        assertEquals(Light.YELLOW, ApiState.of(check(), view(refused, refused), CloudDashboard.Health.WORKING, now).light)
+        assertEquals(Light.RED, ApiState.of(check(), view(refused, refused), CloudDashboard.Health.WORKING, now, engineRunning = false).light)
         val v = ApiState.of(check(), view(good(), refused), CloudDashboard.Health.WORKING, now)
         assertEquals(Light.YELLOW, v.light); assertTrue(v.words.contains("1 of 2 keys refused"))
     }
