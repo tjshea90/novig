@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cb0c319e-caga5z",
- "head": "9d65a42cc3601c1aa0b0f5ce4ada8bf0c0a675bc",
+ "head": "3c14feebd9b1f95e9146921089166a75a073306d",
  "since": 1792596542,
- "beat": 1792599915,
- "beatIso": "2026-10-21T16:25:15Z",
+ "beat": 1792600097,
+ "beatIso": "2026-10-21T16:28:17Z",
  "done": "XO2 plumbing: JsonFileStore write-behind for the engine desk (+keepEndedMs), per-game bid cap 8 via engine_set, tools/orders_clv.py + wiring (CH57 rest), engine_set --reset/--check-apis",
  "next": "run the full floor, land on main, then reset the engine so it runs v1.0.35 + write-behind; then XO3 doc, XO4 doc, XO5 triage, XO6 full test protocol"
 }
