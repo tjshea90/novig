@@ -545,7 +545,9 @@ class CloudLink(private val c: AppContainer) {
             var ok = 0
             var asked = 0
             fun <T> got(p: CloudClient.Poll<T>): T? { asked++; return (p as? CloudClient.Poll.Fresh<T>)?.value?.also { ok++ } }
-            runCatching { got(client.pollStatus(null))?.let { st -> if (s != null) onStatus(st, s) else latest.status = st; latest.statusOkAtMs = System.currentTimeMillis() } }
+            // Every read has its own deadline: one that hangs must not keep the pull's arrow up for ever (Tj, 2026-10-21: "this loading symbol gets stuck").
+            suspend fun <T> within(block: suspend () -> T): T? = try { kotlinx.coroutines.withTimeoutOrNull(20_000L) { block() } } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (_: Throwable) { null }
+            runCatching { got(within { client.pollStatus(null) } ?: CloudClient.Poll.Failed)?.let { st -> if (s != null) onStatus(st, s) else latest.status = st; latest.statusOkAtMs = System.currentTimeMillis() } }
             runCatching { got(client.fetchTrades(null))?.let { t -> _ui.update { it.copy(trades = t, tradesReadAtMs = System.currentTimeMillis()) } } }
             runCatching { got(client.fetchDesk(null))?.let { d -> _ui.update { it.copy(desk = d, deskReadAtMs = System.currentTimeMillis()) } } }
             runCatching { got(client.fetchUsage(null))?.let { u -> c.cloudUsage.value = u } }

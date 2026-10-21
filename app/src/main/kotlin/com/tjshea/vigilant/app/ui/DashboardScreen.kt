@@ -226,7 +226,7 @@ private fun toneColor(t: Tone): Color = when (t) {
 
 @Composable
 private fun HeadlineCard(status: CloudStatus?, now: Long, cloudOn: Boolean, hoursOn: Boolean, linkOkAtMs: Long? = null) {
-    val h = remember(status, now / 1_000L, linkOkAtMs) { DashboardModel.headline(status, now, hoursOn, linkOkAtMs) }
+    val h = remember(status, now / 1_000L, linkOkAtMs, cloudOn) { DashboardModel.headline(status, now, hoursOn, linkOkAtMs, switchedOff = !cloudOn) }
     val progress = remember(status) { DashboardModel.scanProgress(status) }
     val c = toneColor(h.tone)
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().testTag("dashboardHeadline")) {

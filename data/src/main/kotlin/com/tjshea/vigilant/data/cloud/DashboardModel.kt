@@ -50,11 +50,13 @@ object DashboardModel {
         }
     }
 
-    fun headline(st: CloudStatus?, now: Long, hoursOn: Boolean = true, linkOkAtMs: Long? = null): Headline {
+    fun headline(st: CloudStatus?, now: Long, hoursOn: Boolean = true, linkOkAtMs: Long? = null, switchedOff: Boolean = false): Headline {
         if (st == null) return Headline("Not connected", Tone.NEUTRAL, "No word from the GitHub engine yet. Save the GitHub token in Settings › Cloud scan, and switch the cloud scan on.")
         val beat = if (st.heartbeatMs > 0) now - st.heartbeatMs else Long.MAX_VALUE
         return when {
             linkLost(linkOkAtMs, now) -> Headline("Can't reach GitHub", Tone.BAD, "This phone has not heard from GitHub for ${if ((linkOkAtMs ?: 0L) > 0L) ago(now - linkOkAtMs!!).removeSuffix(" ago") else "a while"}. Everything below is OLD, from ${if (st.heartbeatMs > 0) ago(beat) else "an earlier run"}: do not trust it.")
+            // The phone's switch is off but the engine has not read it yet (it ends within about 10 minutes): say so, not "Running" (Tj, 2026-10-21).
+            switchedOff && !st.idle && beat < STALE_MS -> Headline("Stopping: switched off", Tone.WARN, "The cloud scan is switched off on the phone. The engine ends within about 10 minutes (last heartbeat ${ago(beat)}); what is below is its last reading.")
             // Closed hours are not a failure: the engine ends itself at the window's end and the next one starts at 8 am.
             hoursOn && !running(st, now) && !EngineHours.isOpen(now) -> Headline("Idle: outside its hours", Tone.NEUTRAL, "The engine runs 8 am to 1 am Eastern and stopped ${ago(beat)}. What is shown below is its last reading, not live.")
             st.idle && beat < STALE_MS -> Headline("Idle", Tone.NEUTRAL, st.problem ?: "The engine is switched off (the phone's switch) or outside its hours (8 am to 1 am Eastern).")
