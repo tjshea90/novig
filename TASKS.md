@@ -6074,3 +6074,5 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [x] CH48 API monitor rebuilt (ApiMonitor engine checks, ApiState lights, ApiStateTest, ApiMonitorTest, DashboardUiTest) v1.0.26
 - [x] CH49 Odds API: scarce feeds gap-fill every 3 h (was 30 min), per-purpose spend tally logged hourly ("Spend:" in engine log): NEXT: read first day of numbers, cut purposes others serve
 - [x] CH47f1 TennisModel (engine, pure maths + TennisModelTest): game/tiebreak/set/match win prob from score+serve, calibrate(pregame prob). NOT wired to a feed or money: needs real frames
+- [x] CH50 (Tj 01:30 stale odds) ParlayAPI joins hot refresh every 150 s while paid (Scanner.HOT_METERED) v1.0.27
+- [ ] CH50b laned scan: near games (<12h) read first and re-read often, far games slower; scan is 795 s at 13 Novig reads/s (TASKS TCL16)
