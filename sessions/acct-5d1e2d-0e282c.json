@@ -5,11 +5,11 @@
  "nonce": "0e282c",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-7dry2r",
+ "branch": "claude/optimistic-curie-nojqjb",
  "head": "7460636ca20c3a947d11a402d31d854af7d332ad",
  "since": 1792539161,
- "beat": 1792560396,
- "beatIso": "2026-10-21T05:26:36Z",
+ "beat": 1792560745,
+ "beatIso": "2026-10-21T05:32:25Z",
  "done": "CH57 clv_consensus.py + second-pass audit",
  "next": "tell Tj; break down unconfirmed bets by kind/league"
 }
