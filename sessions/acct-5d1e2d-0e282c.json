@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-4f21ww",
  "head": "f32b6cb1e2306c3ac86b39c543bc46ae756636c6",
  "since": 1792563808,
- "beat": 1792596057,
- "beatIso": "2026-10-21T15:20:57Z",
+ "beat": 1792597472,
+ "beatIso": "2026-10-21T15:44:32Z",
  "done": "CH59 sharp-confirmed bid margin step-down to 1.5% (tests green, not released)",
  "next": "CH59: add Settings switch + CloudScanKey entry, then ship release; tell Tj in chat"
 }
