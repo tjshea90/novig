@@ -126,7 +126,7 @@ class EngineStudyTest {
             assertTrue(b.atBet?.rules.orEmpty().startsWith("NOT SHOWN (an order of the engine's"))
             assertEquals("minutes to the start at the fill", 120L, b.atBet?.minutesToStart)
             // a second run knows the journal now: nothing is added twice
-            val known = j.days().flatMap { j.fold(it).values }.map { it.bet.marketId to it.bet.outcomeId }.toSet()
+            val known = j.days().flatMap { j.fold(it).values }.map { it.bet.marketId to it.bet.outcomeId }.toSet() + ("m2" to "o2")
             assertEquals(0, ScanStudy(StudyJournal(dir), clock = { now }, flushEveryMs = 0, io = kotlinx.coroutines.Dispatchers.Unconfined).addOrders(orders, known))
         } finally {
             dir.deleteRecursively()
