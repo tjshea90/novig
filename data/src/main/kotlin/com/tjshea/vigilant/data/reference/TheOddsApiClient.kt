@@ -384,10 +384,24 @@ class TheOddsApiClient(
         }
     }
 
+    /** Credits and calls this feed spent today (UTC), by what the call was for (CH49, Tj 2026-10-21: "make sure it isn't being wasted on anything that other apis offer better"): read by the engine's hourly log line so the next audit has real numbers. */
+    private val spentBy = java.util.concurrent.ConcurrentHashMap<String, IntArray>()
+    @Volatile private var spentDay = ""
+
+    private fun tally(what: String, cost: Int) {
+        val day = java.time.Instant.ofEpochMilli(clock()).atZone(java.time.ZoneOffset.UTC).toLocalDate().toString()
+        if (day != spentDay) { spentBy.clear(); spentDay = day }
+        if (spentBy.size < 200 || spentBy.containsKey(what)) spentBy.computeIfAbsent(what) { IntArray(2) }.let { synchronized(it) { it[0] += cost; it[1]++ } }
+    }
+
+    /** "NFL props 24 credits/8 calls · ..." biggest spender first, today only; blank before any call. */
+    fun spendToday(): String = spentBy.entries.sortedByDescending { it.value[0] }.take(12).joinToString(" · ") { "${it.key} ${it.value[0]}/${it.value[1]}" }
+
     /** One reply turned into what the key pool records: the provider's own credit figures ([CreditHeaders]) and the value. */
     private fun <T> answer(response: okhttp3.Response, what: String, notFound: T, parse: (String) -> T, charged: (T) -> Int): KeyAttemptResult<Answer<T>> {
         val body = response.body?.string().orEmpty()
         val credits = CreditHeaders.read({ response.header(it) }, clock())
+        if (response.isSuccessful) tally(what, credits.cost ?: 0)
         val remaining = credits.remaining
         val used = credits.used
         val last = credits.cost
