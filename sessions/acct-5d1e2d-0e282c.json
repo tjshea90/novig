@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-o9ngjz",
  "head": "cd29105afc474cc90a38d15362ecf67ced6fc3dc",
  "since": 1792539161,
- "beat": 1792544262,
- "beatIso": "2026-10-21T00:57:42Z",
+ "beat": 1792544506,
+ "beatIso": "2026-10-21T01:01:46Z",
  "done": "CH49: scarce feeds gap-fill every 3h",
  "next": "wait arbscan/listen; ship v1.0.26"
 }
