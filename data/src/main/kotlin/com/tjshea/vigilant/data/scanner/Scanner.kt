@@ -1356,8 +1356,9 @@ class Scanner(
      */
     private suspend fun hotFair(ordered: List<ReferenceSource>, leagues: List<League>, settings: ScanSettings, pump: BookPump) {
         val everyMs = settings.vigGuards.hotEverySeconds.coerceIn(10, 600) * 1_000L
-        val feeds = ordered.filter { it.id in HOT_FEEDS }
+        val feeds = ordered.filter { it.id in HOT_FEEDS || it.id in HOT_METERED }
         if (feeds.isEmpty()) return
+        var meteredAt = 0L
         while (true) {
             kotlinx.coroutines.delay(everyMs)
             val cat = catalog ?: continue
@@ -1366,7 +1367,11 @@ class Scanner(
             val hotLeagues = leagues.filter { l -> cat.events.any { it.league == l.novigName && it.startsTs <= until && it.startsTs > t - Planner.STARTED_GRACE_MS } }
             if (hotLeagues.isEmpty()) continue
             val sink = ArrayList<String>()
+            // A credit-metered feed joins only while its provider is a paid plan (ParlayAPI Pro: Tj, 2026-10-21, odds 18 min old), at most every HOT_METERED_MS, and its key pace still decides whether a call goes out.
+            val meteredDue = t - meteredAt >= HOT_METERED_MS
+            if (meteredDue) meteredAt = t
             for (source in feeds) {
+                if (source.id in HOT_METERED && (!meteredDue || CloudProviderPaid.has(source.id))) continue
                 val context = if (source.needsCatalog) ScanContext(cat.events, cat.markets, t) else null
                 try {
                     fetchSource(source, hotLeagues, settings, clock(), sink, context, force = true, onCall = { })
@@ -1479,6 +1484,9 @@ class Scanner(
          * The feeds the hot refresh asks again ([hotFair]): the ones that cost nothing per read (BoltOdds' boards, Kalshi's and Polymarket's public reads) or are flat-rate (SportsGameOdds Pro, OddsPapi v5). Never a
          * credit-metered or daily-capped feed (ParlayAPI, The Odds API, PropLine, Pinnacle's hosts, OddsPapi Free): their budgets are a day's share, and the full scan keeps asking them.
          */
+        /** Credit-metered feeds that also join the hot refresh, slowly, while their provider is paid (see [hotFair]). */
+        val HOT_METERED = setOf("parlay")
+        const val HOT_METERED_MS = 150_000L
         val HOT_FEEDS = setOf("sgo", "sgo-props", "oddspapi", "oddspapi-props", "bolt", "bolt-props", "kalshi", "polymarket", "sxbet")
 
         /** A hot line this close to zero (or above it) has its Novig book read again by the hot refresh. */
