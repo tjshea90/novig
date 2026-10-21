@@ -299,6 +299,9 @@ class SharpApiStreamTest {
         assertEquals(1, scores.size())
         assertNull(scores.scoreFor("NFL", "A Team", "B Team"))
         assertEquals(0, scores.live())
+        // A settled final is handed out once for the journal (GS).
+        assertEquals(21, scores.takeFinals().single().homeScore)
+        assertTrue(scores.takeFinals().isEmpty())
         assertEquals(342.0, SharpApiScores.seconds("5:42")!!, 1e-9)
         assertNull(SharpApiScores.seconds("HT"))
     }

@@ -6149,3 +6149,7 @@ Finding 19:30: only ONE cloud-scan run is live (run 254), so no old runner holds
 - [x] SS2 (SharpApiStreamTest) engine: one WebSocket stream (cap 1 connection per key, newer wins) feeding SharpApiFeed (odds:update upserts, odds:removed deletes, is_active), delta polling only as fallback/reconcile; status + socket switch (gates.sharpApiSocket)
 - [x] SS3 (SharpApiStreamTest; grading stays on ESPN/MLB/SGO) game state: /gamestate + stream channel -> live scores for the live lane (AltScore) and grading/closing; status on the phone
 - [x] SS4 (v1.0.43, 4146 tests green) tests, ship, release
+
+## GS: "I have the game state support. Build it in" (Tj, interactive, 2026-10-21)
+(game state was already in v1.0.43: stream channel + REST, live-lane score source)
+- [ ] GS1 engine journals every final SharpAPI reports (sharpapi-finals-<day>, archived) for grading research; finals counted in the hourly log

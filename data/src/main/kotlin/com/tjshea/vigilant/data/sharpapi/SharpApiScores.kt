@@ -11,6 +11,14 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.intOrNull
 import java.util.concurrent.ConcurrentHashMap
 
+/** A settled final as journaled (GS): the event, its teams and the final score as SharpAPI reports it. */
+@kotlinx.serialization.Serializable
+data class SaFinal(val atMs: Long, val eventId: String, val sport: String, val league: String, val home: String, val away: String, val homeScore: Int?, val awayScore: Int?, val winner: String?) {
+    companion object {
+        fun of(g: SaGameState) = SaFinal(g.atMs, g.eventId, g.sport, g.league, g.home, g.away, g.homeScore, g.awayScore, g.winner)
+    }
+}
+
 /** One game's live state from SharpAPI's game-state channel (SHARPAPI.md §5): scores merged across the books covering it. */
 data class SaGameState(
     val eventId: String,
@@ -43,6 +51,12 @@ class SharpApiScores(private val clock: () -> Long = System::currentTimeMillis) 
         private set
     @Volatile var frames = 0L
         private set
+
+    /** Finals not yet handed out by [takeFinals] (a final is handed out once per event and completion). */
+    private val finalsSeen = ConcurrentHashMap.newKeySet<String>()
+
+    /** Every final (status "final" with a winner, the docs' "settled") not handed out before: the engine journals them for grading research. */
+    fun takeFinals(): List<SaGameState> = games.values.filter { it.final && it.winner != null && finalsSeen.add(it.eventId) }
 
     fun size(): Int = games.size
     fun live(): Int = games.values.count { it.live && !it.final }

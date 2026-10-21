@@ -150,10 +150,14 @@ fun main(args: Array<String>) = runBlocking {
     val evJournal = DayJournal(File(out, "cloud"), "propline-ev", com.tjshea.vigilant.data.reference.PlEvRow.serializer()) { it.seenAtMs }
     // SharpAPI's extras (SA, 2026-10-21): every book's closing price of each game the store held (Pinnacle's devigged close for CLV, captured at the moment each book turned the game live; SharpAPI keeps them 48 h),
     // and SharpAPI's own +EV list at Novig every 10 minutes, both journaled for the studies (archived to the cloud-archive Releases with the other journals).
-    // SharpAPI's game state by REST while its stream does not carry it (SS): every 5 s, nothing while SharpAPI is off or the stream is live.
+    // SharpAPI's game state by REST while its stream does not carry it (SS): every 5 s, nothing while SharpAPI is off or the stream is live. Every settled final (a winner named) is journaled once for grading
+    // research (GS: `sharpapi-finals-<day>`, archived with the other journals).
+    val saFinalsJournal = DayJournal(File(out, "cloud"), "sharpapi-finals", com.tjshea.vigilant.data.sharpapi.SaFinal.serializer()) { it.atMs }
     scope.launch {
         while (isActive) {
             latestSettings.get()?.let { s -> runCatching { sources.refreshSharpApiGameState(s) } }
+            val finals = sources.sharpApiScores.takeFinals()
+            if (finals.isNotEmpty()) runCatching { saFinalsJournal.appendAll(finals.map(com.tjshea.vigilant.data.sharpapi.SaFinal::of)) }
             delay(5_000L)
         }
     }
