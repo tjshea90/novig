@@ -66,6 +66,8 @@ enum class ApiProvider(val storageKey: String, val displayName: String) {
 
     /** sx.bet read-only API key (SXBET_API.md, Tj 2026-10-18): scope "Market data: read" only. Markets are public; the books and the WebSocket token need it. */
     SXBET("sxbet", "SX Bet"),
+    /** SharpAPI (SHARPAPI.md, Tj 2026-10-21): the Sharp plan, 25 books including Pinnacle, Circa, Bookmaker, Betfair, ProphetX; 1,000 requests a minute. */
+    SHARPAPI("sharpapi", "SharpAPI"),
 }
 
 /** Tj's own API keys per provider, in the order [KeyPool] tries them. */

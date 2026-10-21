@@ -143,8 +143,12 @@ data class QuotaPolicy(
         val POLYMARKET = QuotaPolicy("polymarket", "Polymarket", "requests", keyed = false, rule = "No key needed. Allows 300 requests per 10 seconds.")
         val SXBET = QuotaPolicy("sxbet", "SX Bet", "requests", keyed = true, period = QuotaPeriod.DAY_UTC, rule = "Markets, sports and scores are public (500 a minute per IP, shared); odds need a free read-only API key (best odds 5,500 a minute, 100 markets a call). Realtime is a WebSocket that does not spend the request budget.")
         val KALSHI = QuotaPolicy("kalshi", "Kalshi", "requests", keyed = false, rule = "No key needed. Allows 20 requests a second.")
+        val SHARPAPI = QuotaPolicy(
+            "sharpapi", "SharpAPI", "requests", keyed = true, period = QuotaPeriod.DAY_UTC,
+            rule = "Sharp plan: 1,000 requests a minute, no daily cap (the count resets at 00:00 UTC), 25 books picked on SharpAPI's dashboard, Pinnacle included, no data delay. The engine keeps a copy of the odds and polls the changes every 2 seconds (under 900 a minute).",
+        )
 
-        val ALL = listOf(SGO, BOLTODDS, ODDSPAPI, ODDSPAPI_FREE, UNABATED, PINNWIRE, PINNAPI, PROPLINE, PARLAY, ODDS_API, NOVIG, POLYMARKET, KALSHI, SXBET)
+        val ALL = listOf(SGO, BOLTODDS, ODDSPAPI, ODDSPAPI_FREE, UNABATED, PINNWIRE, PINNAPI, PROPLINE, PARLAY, ODDS_API, NOVIG, POLYMARKET, KALSHI, SXBET, SHARPAPI)
     }
 }
 
