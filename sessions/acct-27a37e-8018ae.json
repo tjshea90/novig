@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "a7b61ccd6481c76d7bdfb9fcc2deb63763d8a614",
+ "head": "ec5d3ef8ea39cd8ee50d78fb4ef381f451a47c1e",
  "since": 1792596542,
- "beat": 1792621339,
- "beatIso": "2026-10-21T22:22:19Z",
+ "beat": 1792621438,
+ "beatIso": "2026-10-21T22:23:58Z",
  "done": "pre-release: v1.0.41: full test fixes: Kalshi CNO rows open at Kalshi everywhere, Scan CNO on GitHub switch, faster phone fallback when CNO refuses the runner, bid step-down needs every fair book fresh, copy fixes (versionCode 381, v1.0.41)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.41), then run: bash tools/record-release.sh v1.0.41 381 \"v1.0.41: full test fixes: Kalshi CNO rows open at Kalshi everywhere, Scan CNO on GitHub switch, faster phone fallback when CNO refuses the runner, bid step-down needs every fair book fresh, copy fixes\""
 }
