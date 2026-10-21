@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/0e282c",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "0e282c",
+ "note": "v1.0.28: laned scan on the engine: quick 48 h scans between full ones keep near games' fair and Novig prices minutes old (CH50b)",
+ "since": 1792547383,
+ "beat": 1792547383
+}
