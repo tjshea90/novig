@@ -49,60 +49,38 @@ object TennisModel {
 
     /** First to 7 (win by 2). [aFirst]: A serves the first point; then two each. [a] and [b] are the points so far. */
     fun tiebreakWin(pA: Double, pB: Double, aFirst: Boolean, a: Int = 0, b: Int = 0): Double {
-        val memo = HashMap<Int, Double>()
         fun serverIsA(n: Int): Boolean = if (((n + 1) / 2) % 2 == 0) aFirst else !aFirst
+        fun pointA(n: Int): Double = if (serverIsA(n)) pA else 1 - pB
+        // From 6-6 on the lead stays in -1..+1 until someone goes two clear: the distribution of the lead is stepped point by point (a few dozen points hold all but a vanishing share).
+        fun tail(lead0: Int, played: Int): Double {
+            var dist = mapOf(lead0 to 1.0)
+            var win = 0.0
+            var k = played
+            repeat(120) {
+                val next = HashMap<Int, Double>()
+                for ((lead, pr) in dist) {
+                    val pa = pointA(k)
+                    if (lead + 1 >= 2) win += pr * pa else next[lead + 1] = (next[lead + 1] ?: 0.0) + pr * pa
+                    if (lead - 1 > -2) next[lead - 1] = (next[lead - 1] ?: 0.0) + pr * (1 - pa)
+                }
+                dist = next
+                k++
+            }
+            return win
+        }
+        val memo = HashMap<Int, Double>()
         fun rec(x: Int, y: Int): Double {
             if (x >= 7 && x - y >= 2) return 1.0
             if (y >= 7 && y - x >= 2) return 0.0
-            if (x >= 6 && y >= 6) {
-                // Level (or one ahead) from 6-6 on: points come in pairs; closed form over a pair that is two points played by the players the schedule gives. Cap the recursion and use the pair rule.
-                val d = x - y
-                val n = x + y
-                val aServesFirstOfPair = serverIsA(n)
-                // From a tie at an even total: the next two points have servers (s, other). A wins both: pa1*pa2; loses both: ...
-                val pa1 = if (serverIsA(n)) pA else 1 - pB
-                val pa2 = if (serverIsA(n + 1)) pA else 1 - pB
-                val winBoth = pa1 * pa2
-                val loseBoth = (1 - pa1) * (1 - pa2)
-                val split = 1 - winBoth - loseBoth
-                val fromTie = winBoth / (winBoth + loseBoth).coerceAtLeast(1e-12)
-                return when {
-                    d == 0 -> fromTie
-                    d == 1 -> pa1 + (1 - pa1) * fromTieAfterOne(pA, pB, aFirst, n + 1)
-                    d == -1 -> pa1 * fromTieAfterOne(pA, pB, aFirst, n + 1, behind = true)
-                    else -> fromTie
-                }.also { aServesFirstOfPair.let { } ; split.let { } }
-            }
+            if (x >= 6 && y >= 6) return tail(x - y, x + y)
             val key = x * 64 + y
             memo[key]?.let { return it }
-            val pa = if (serverIsA(x + y)) pA else 1 - pB
+            val pa = pointA(x + y)
             val v = pa * rec(x + 1, y) + (1 - pa) * rec(x, y + 1)
             memo[key] = v
             return v
         }
         return rec(a, b)
-    }
-
-    /** From one point ahead (or behind) at [n] points played: win the next point and take the tiebreak, else back to a tie. Level states repeat every pair, so this is evaluated by value iteration. */
-    private fun fromTieAfterOne(pA: Double, pB: Double, aFirst: Boolean, n: Int, behind: Boolean = false): Double {
-        fun serverIsA(k: Int): Boolean = if (((k + 1) / 2) % 2 == 0) aFirst else !aFirst
-        // Iterate the 6-6 pair process directly: state = lead of A (0, +1, -1), point index n. A tiebreak that reaches 6-6 ends within a few dozen points with overwhelming probability.
-        var win = 0.0
-        var dist = mapOf(if (behind) -1 to 1.0 else 1 to 1.0)
-        var k = n
-        repeat(80) {
-            val next = HashMap<Int, Double>()
-            for ((lead, pr) in dist) {
-                val pa = if (serverIsA(k)) pA else 1 - pB
-                val up = lead + 1
-                val down = lead - 1
-                if (up >= 2) win += pr * pa else next[up] = (next[up] ?: 0.0) + pr * pa
-                if (down > -2) next[down] = (next[down] ?: 0.0) + pr * (1 - pa)
-            }
-            dist = next
-            k++
-        }
-        return win
     }
 
     // ---- a set -------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -142,36 +120,32 @@ object TennisModel {
         val need = cfg.bestOf / 2 + 1
         if (st.setsA >= need) return 1.0
         if (st.setsB >= need) return 0.0
-        val decider = (st.setsA + st.setsB == cfg.bestOf - 1)
+        val decider = st.setsA + st.setsB == cfg.bestOf - 1
         val tb = !decider || cfg.finalSetTiebreak
-        // Who serves the first game of the next set: the server alternates every game, so it is the one NOT serving the last game of the set just ended; the set's game count decides. Approximated from a fresh set: A serves
-        // next set's first game when the sets so far ended on an even number of games with A starting... a state that gives it explicitly is better, so a new set is started with A serving iff [aSetStarts].
-        fun setStart(aStarts: Boolean) = aStarts
-        val inTiebreak = st.gamesA == 6 && st.gamesB == 6 && tb
-        val curSet = if (inTiebreak) tiebreakWin(pA, pB, st.aServes, st.pointsA, st.pointsB) else {
-            // Within the current game: the server wins it from the points so far, then the set continues with the other serving.
-            val gameServerIsA = st.aServes
-            val pa = if (gameServerIsA) gameFrom(pA, st.pointsA, st.pointsB) else 1 - gameFrom(pB, st.pointsB, st.pointsA)
-            val atLove = st.pointsA == 0 && st.pointsB == 0
-            if (atLove) setWin(pA, pB, st.gamesA, st.gamesB, st.aServes, tb)
-            else pa * setWin(pA, pB, st.gamesA + 1, st.gamesB, !st.aServes, tb) + (1 - pa) * setWin(pA, pB, st.gamesA, st.gamesB + 1, !st.aServes, tb)
+        val inTiebreak = tb && st.gamesA == 6 && st.gamesB == 6
+        val curSet = when {
+            inTiebreak -> tiebreakWin(pA, pB, st.aServes, st.pointsA, st.pointsB)
+            st.pointsA == 0 && st.pointsB == 0 -> setWin(pA, pB, st.gamesA, st.gamesB, st.aServes, tb)
+            else -> {
+                // Part-way through a game: the server's chance to take it, then the set goes on with the other serving.
+                val aWinsGame = if (st.aServes) gameFrom(pA, st.pointsA, st.pointsB) else 1 - gameFrom(pB, st.pointsB, st.pointsA)
+                aWinsGame * setWin(pA, pB, st.gamesA + 1, st.gamesB, !st.aServes, tb) + (1 - aWinsGame) * setWin(pA, pB, st.gamesA, st.gamesB + 1, !st.aServes, tb)
+            }
         }
-        // Later sets: A serves first in them iff the new-set starter alternates; use the average of the two (the effect is a few tenths of a point).
-        val futureSets = HashMap<Triple<Int, Int, Boolean>, Double>()
+        // Who serves the first game of a later set depends on how many games this set took, which is not known yet: the mean of both is used (a few tenths of a point at most).
+        val cache = HashMap<Triple<Int, Int, Boolean>, Double>()
         fun later(sa: Int, sb: Int, aStarts: Boolean): Double {
             if (sa >= need) return 1.0
             if (sb >= need) return 0.0
-            return futureSets.getOrPut(Triple(sa, sb, aStarts)) {
-                val dec = (sa + sb == cfg.bestOf - 1)
-                val t = !dec || cfg.finalSetTiebreak
+            return cache.getOrPut(Triple(sa, sb, aStarts)) {
+                val t = !(sa + sb == cfg.bestOf - 1) || cfg.finalSetTiebreak
                 val w = setWin(pA, pB, 0, 0, aStarts, t)
                 w * later(sa + 1, sb, !aStarts) + (1 - w) * later(sa, sb + 1, !aStarts)
             }
         }
-        // The next set starts with the server who did not serve the current set's last game; unknown here, so take the mean of both starts.
-        val nextStartsA = !st.aServes
-        return curSet * 0.5.let { 1.0 }.let { avg(later(st.setsA + 1, st.setsB, nextStartsA), later(st.setsA + 1, st.setsB, !nextStartsA)) } +
-            (1 - curSet) * avg(later(st.setsA, st.setsB + 1, nextStartsA), later(st.setsA, st.setsB + 1, !nextStartsA)).also { setStart(true) }
+        val ifWon = avg(later(st.setsA + 1, st.setsB, true), later(st.setsA + 1, st.setsB, false))
+        val ifLost = avg(later(st.setsA, st.setsB + 1, true), later(st.setsA, st.setsB + 1, false))
+        return curSet * ifWon + (1 - curSet) * ifLost
     }
 
     private fun avg(a: Double, b: Double) = (a + b) / 2
