@@ -26,7 +26,9 @@ def num(x):
 def load_lines(path):
     """outcome_id -> the line row (the first one if several), from propline-clv.csv.gz."""
     out = {}
-    opener = gzip.open if path.endswith(".gz") else open
+    with open(path, "rb") as probe:
+        gz = probe.read(2) == b"\x1f\x8b"
+    opener = gzip.open if gz else open
     with opener(path, "rt", newline="") as f:
         for r in csv.DictReader(f):
             oid = r.get("outcome_id") or ""
@@ -53,7 +55,7 @@ def rows(trades, lines):
         pnl = num(e.get("pnl"))
         settled = status in ("WON", "LOST")
         lead = None
-        if e.get("startsTs") and e.get("atMs"):
+        if e.get("startsTs") is not None and e.get("atMs") is not None:
             lead = (e["startsTs"] - e["atMs"]) / 3.6e6
         ln = lines.get(e.get("outcomeId") or "")
         row = {
