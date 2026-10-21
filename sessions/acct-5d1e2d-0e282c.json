@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-gc6pie",
  "head": "e971b437570eb1beefcfe4a171c0c2e9e2e50b15",
  "since": 1792563808,
- "beat": 1792613658,
- "beatIso": "2026-10-21T20:14:18Z",
+ "beat": 1792613664,
+ "beatIso": "2026-10-21T20:14:24Z",
  "done": "BC3 shutdown hook closes sockets, BC4 too-many-connections no longer refuses key",
  "next": "ship v1.0.39 (ship.sh, release.yml, record-release.sh); BC1/BC2 verify STOP ALL paths"
 }
