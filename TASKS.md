@@ -6114,7 +6114,7 @@ WATCH LIST (XO, 2026-10-21; each waits on the number named, then is a class B ch
 
 ## BC: BoltOdds "too many concurrent connections" and clean disconnects (Tj, chat 2026-10-21 19:24 UTC, verbatim: "boltodds says too many concurrent connections. I wonder if old GitHub runners are still connected. make it so if I ever press stop all or turn off the engine or pause scanning or toggle off an api, the system actually disconnects from the API or apis")
 Finding 19:30: only ONE cloud-scan run is live (run 254), so no old runner holds a socket; suspects are the phone's own BoltOdds sockets plus the engine's 2 plus the Test probe (plan allows 3), or a half-open socket left by a cancelled run (cancel skips the clean close; `engine_set.py --reset` is the clean end).
-- [ ] BC1 find who holds the 3 connections now (phone sockets open while engine scans? `phoneSockets` rule) and fix the cause
+- [ ] BC1 (phone side already closes boltFeed when the API or socket is off or !phoneSockets: VigilantApp.kt:583; check STOP ALL/pause go through boltActive; engine side unchecked) find who holds the 3 connections now (phone sockets open while engine scans? `phoneSockets` rule) and fix the cause
 - [ ] BC2 every stop path closes the API's sockets/clients: STOP ALL, engine off/hours end, pause scanning, an API toggle off (phone `ApiEntry.setOn` + engine `ApiToggles`); test per path in ApiSocketTogglesTest
 - [ ] BC3 a cancelled/ended engine job closes BoltOdds/Kalshi/SX sockets in a shutdown hook before exit
 - [ ] BC4 a socket refusal (too many connections) must not mark the key REFUSED in the usage ledger
