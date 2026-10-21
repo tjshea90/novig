@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "feb737aaf281b52c882da0170c30e98f13a39b4e",
+ "head": "13541563ec1abfec7425405dc793c10e816fe39a",
  "since": 1792596542,
- "beat": 1792602298,
- "beatIso": "2026-10-21T17:04:58Z",
- "done": "pre-release: v1.0.36: feed-level API problems on the API card, order grading fix (orders with no logged line), FCS games in NCAAF grading, volume report tool (versionCode 376, v1.0.36)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.36), then run: bash tools/record-release.sh v1.0.36 376 \"v1.0.36: feed-level API problems on the API card, order grading fix (orders with no logged line), FCS games in NCAAF grading, volume report tool\""
+ "beat": 1792602444,
+ "beatIso": "2026-10-21T17:07:24Z",
+ "done": "Research library: tools/research_index.py + research/INDEX.md (104 studies, status from repo references) + research/LEVERS.md (10 tuning levers with next-number, Closed list), briefing RESEARCH line, ROUTINE step 3a, CLAUDE.md rule, fast check",
+ "next": "confirm v1.0.36 release (send_later), then XO6 full test protocol"
 }
