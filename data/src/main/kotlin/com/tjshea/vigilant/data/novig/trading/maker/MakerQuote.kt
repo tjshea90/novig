@@ -643,10 +643,10 @@ object MakerQuote {
 
     /**
      * The margin of a bid confirmed by a fresh read with a sharp book in the fair, stepped down toward [SHARP_RELAX_FLOOR] as the game nears; null = not applicable
-     * (switch off, small market, volume mode, no sharp book, read not fresh, or [usual] already at or under the floor).
+     * (switch off, small market, volume or quick mode (their margins are their own), no sharp book, read not fresh, or [usual] already at or under the floor).
      */
     fun sharpRelaxedMargin(line: MakerLine, rules: MakerRules, now: Long, usual: Double, obscure: Boolean): Double? {
-        if (!rules.sharpRelax || obscure || rules.volume || line.sharpFairs.isEmpty() || usual <= SHARP_RELAX_FLOOR) return null
+        if (!rules.sharpRelax || obscure || rules.volume || rules.quick || line.sharpFairs.isEmpty() || usual <= SHARP_RELAX_FLOOR) return null
         val newest = line.fairNewestMs ?: return null
         if (now - newest > SHARP_RELAX_FRESH_MS) return null
         val hours = (line.startsTs - now) / 3_600_000.0
