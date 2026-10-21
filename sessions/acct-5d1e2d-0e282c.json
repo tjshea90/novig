@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-s9zcjn",
- "head": "f8fb64662c3175991e89531b0752e0420f1ef1b8",
+ "head": "906472197f61db9fa570e5390a251eeb03012705",
  "since": 1792563808,
- "beat": 1792610700,
- "beatIso": "2026-10-21T19:25:00Z",
- "done": "pre-release: v1.0.38: API card trusts a fresh accepted key check over a stale refusal (BoltOdds card) (versionCode 378, v1.0.38)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.38), then run: bash tools/record-release.sh v1.0.38 378 \"v1.0.38: API card trusts a fresh accepted key check over a stale refusal (BoltOdds card)\""
+ "beat": 1792610736,
+ "beatIso": "2026-10-21T19:25:36Z",
+ "done": "BC task written (BoltOdds too many connections, clean disconnect on every stop)",
+ "next": "BC1 find who holds the 3 connections; BC2-4"
 }
