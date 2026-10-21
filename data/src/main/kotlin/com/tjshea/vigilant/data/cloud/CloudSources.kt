@@ -155,6 +155,11 @@ class CloudSources(
     /** ParlayAPI's own account read per key (free): plan and credits into the meter, so an upgraded key is found and goes first ([KeyPool]). The engine asks hourly ([refreshParlayAccounts]). */
     private val parlayAccount = com.tjshea.vigilant.data.reference.ParlayAccount(http, { keys(CloudKeys.PARLAY) }, usage, json)
     /** Which ParlayAPI key (by position, never the key) is on which plan, as last read: for the engine's log. */
+    private val pinnWireAccountForProbe get() = pinnWireAccount
+    /** The free account reads of every API, the phone's Test now, run by the engine's [ApiMonitor]. */
+    val apiProbe: com.tjshea.vigilant.data.keys.ApiProbe by lazy { com.tjshea.vigilant.data.keys.ApiProbe(http, usage, parlayAccount, pinnWireAccount = pinnWireAccountForProbe) }
+    /** The keys of [p] this engine holds (from its secrets), for the monitor. */
+    fun keysOf(p: com.tjshea.vigilant.data.keys.ApiProvider): List<String> = CloudKeys.envFor(com.tjshea.vigilant.data.keys.ApiToggles0.policyIdOf(p))?.let { keys(it) }.orEmpty()
     fun parlayPlans(): String = keys(CloudKeys.PARLAY).mapIndexedNotNull { i, k -> parlayAccount.last[k]?.let { c -> "#${i + 1} ${c.tier ?: "?"} ${c.remaining ?: "?"}/${c.limit ?: "?"}" } }.joinToString(", ").ifBlank { "none read" }
     suspend fun refreshParlayAccounts(force: Boolean = false): Int = if (has(CloudKeys.PARLAY)) parlayAccount.refresh(force, minAgeMs = 50 * 60_000L) else 0
     private val parlayQuality = ParlaySourceQuality(http, json)

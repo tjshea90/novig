@@ -77,6 +77,8 @@ class CloudEngine(
     private val novigAddress: () -> String = { "" },
     /** The tunnel address of the live status server, or blank ([CloudLive]); read each time a status is built. */
     private val liveUrl: () -> String = { "" },
+    /** [ApiMonitor]'s lines, read each time a status is built. */
+    private val apiChecks: () -> List<ApiCheckLine> = { emptyList() },
     /** One line per socket the engine holds, for the status file. */
     private val socketLines: () -> List<String> = { emptyList() },
     /** Each socket's state for the phone's Live dashboard (TCL122-4). */
@@ -562,7 +564,7 @@ class CloudEngine(
             addressHandovers = addressWatch?.count ?: 0, addressHandoverAtMs = addressWatch?.atMs ?: 0L,
             tradeMode = tradeStatus?.mode.orEmpty(), tradeNote = tradeStatus?.note.orEmpty().take(400), tradeStopped = tradeStatus?.stopped.orEmpty().take(200), tradesAtMs = tradeStatus?.changedAtMs ?: 0L,
             walletSleep = walletSleep, walletCheckedAtMs = walletCheckedAt, walletCash = walletCash ?: -1.0, walletEquity = walletEquity ?: -1.0, walletReadAtMs = walletReadAt,
-            feedReport = feedLines, feedReportAtMs = feedLinesAt, feedAlerts = feedAlerts,
+            feedReport = feedLines, feedReportAtMs = feedLinesAt, feedAlerts = feedAlerts, apiChecks = runCatching(apiChecks).getOrDefault(emptyList()),
             advice = advice, apiCards = apiCards, governorOff = governor.askedOff().sorted(),
             deskActive = !idle && deskStatus?.active == true, deskNote = deskStatus?.note.orEmpty().take(500), deskResting = deskStatus?.resting ?: 0, deskRestingDollars = deskStatus?.restingDollars ?: 0.0,
             deskAtMs = deskStatus?.atMs ?: 0L, deskStopped = deskStatus?.stopped.orEmpty().take(200),
