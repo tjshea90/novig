@@ -197,7 +197,7 @@ class MainActivity : ComponentActivity() {
                 } else {
                     // Remembered: LocalOpenNovig is a static local, and a new value redraws everything under it.
                     val openNovigLocal: (String?) -> Unit = remember { { link -> openNovig(link) } }
-                    CompositionLocalProvider(LocalOpenNovig provides openNovigLocal) {
+                    CompositionLocalProvider(LocalOpenNovig provides openNovigLocal, com.tjshea.vigilant.app.ui.LocalRefreshStep provides (if (state.cloudUi.refreshing) state.cloudUi.refreshStep else "")) {
                         VigilantRoot(
                             state, vm,
                             onScan = { scan() },

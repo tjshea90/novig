@@ -1,6 +1,19 @@
 package com.tjshea.vigilant.app.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -49,20 +62,38 @@ fun VigilantPullToRefresh(
         if (started && holdWhileBusy) withTimeoutOrNull(MAX_HOLD_MS) { snapshotFlow { busyNow }.first { !it } }
         pulled = false
     }
+    val step = LocalRefreshStep.current
+    Box(modifier) {
     PullToRefreshBox(
         isRefreshing = pulled,
         onRefresh = {
             pulled = true
             onRefresh()
         },
-        modifier = modifier,
+        modifier = Modifier.fillMaxSize(),
         state = state,
         content = content,
     )
+    if (step.isNotEmpty()) RefreshStatusBar(step, Modifier.align(Alignment.TopCenter))
+    }
+}
+
+/** What the pull in flight is reading ("" = none), provided once at the top of the app from [com.tjshea.vigilant.app.CloudLink.Ui.refreshStep]. */
+val LocalRefreshStep = compositionLocalOf { "" }
+
+/** A thin strip with a moving line and the words of the read in flight; gone the moment the pull ends. */
+@Composable
+fun RefreshStatusBar(step: String, modifier: Modifier = Modifier) {
+    Surface(color = MaterialTheme.colorScheme.secondaryContainer, modifier = modifier.fillMaxWidth().testTag("refreshStatusBar")) {
+        Column {
+            LinearProgressIndicator(Modifier.fillMaxWidth().height(2.dp))
+            Text(step, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+        }
+    }
 }
 
 /** How long a pull waits for its work to start before letting go. */
 const val START_WAIT_MS = 1_200L
 
-/** The longest a pull keeps the arrow up while the work runs. */
-const val MAX_HOLD_MS = 20_000L
+/** The longest the arrow stays up: it flashes and goes (Tj, 2026-10-21: "show the refresh icon then quickly it disappears and a status bar telling me what is loading"); the work is shown by [LocalRefreshStep]'s bar. */
+const val MAX_HOLD_MS = 1_000L

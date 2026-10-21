@@ -86,6 +86,8 @@ class CloudLink(private val c: AppContainer) {
         val propLineEv: com.tjshea.vigilant.data.reference.PlEvFeed? = null,
         /** A pull to refresh is reading everything now ([refreshNow]); the pull's arrow stays until it is false again. */
         val refreshing: Boolean = false,
+        /** What the pull is reading right now, in words ("" when none); the status bar under the top of every pulled screen shows it. */
+        val refreshStep: String = "",
         /** When the last pull to refresh finished (this phone's clock; 0 = never) and how many of its reads answered. */
         val refreshedAtMs: Long = 0L,
         val refreshNote: String = "",
@@ -540,25 +542,31 @@ class CloudLink(private val c: AppContainer) {
         if (!hasToken()) return 0
         if (!refreshMutex.tryLock()) { refreshMutex.withLock { }; return 0 }
         try {
-            _ui.update { it.copy(refreshing = true) }
+            _ui.update { it.copy(refreshing = true, refreshStep = "Starting") }
             val s = c.settingsStore.flow.value
             var ok = 0
             var asked = 0
             fun <T> got(p: CloudClient.Poll<T>): T? { asked++; return (p as? CloudClient.Poll.Fresh<T>)?.value?.also { ok++ } }
             // Every read has its own deadline: one that hangs must not keep the pull's arrow up for ever (Tj, 2026-10-21: "this loading symbol gets stuck").
             suspend fun <T> within(block: suspend () -> CloudClient.Poll<T>): CloudClient.Poll<T> = kotlinx.coroutines.withTimeoutOrNull(20_000L) { block() } ?: CloudClient.Poll.Failed("no answer in 20 s")
+            fun step(t: String) = _ui.update { it.copy(refreshStep = t) }
+            step("Reading the engine's status")
             runCatching { got(within { client.pollStatus(null) })?.let { st -> if (s != null) onStatus(st, s) else latest.status = st; latest.statusOkAtMs = System.currentTimeMillis() } }
+            step("Reading orders")
             runCatching { got(within { client.fetchTrades(null) })?.let { t -> _ui.update { it.copy(trades = t, tradesReadAtMs = System.currentTimeMillis()) } } }
+            step("Reading bids")
             runCatching { got(within { client.fetchDesk(null) })?.let { d -> _ui.update { it.copy(desk = d, deskReadAtMs = System.currentTimeMillis()) } } }
+            step("Reading API usage")
             runCatching { got(within { client.fetchUsage(null) })?.let { u -> c.cloudUsage.value = u } }
+            step("Reading messages and chat")
             runCatching { kotlinx.coroutines.withTimeout(20_000L) { inbox.pollMessages(); chat.poll() }; asked += 2; ok += 2 }.onFailure { asked += 2; if (it is kotlinx.coroutines.CancellationException && it !is kotlinx.coroutines.TimeoutCancellationException) throw it }
             if (s != null) runCatching { publishUi(s) }
             val now = System.currentTimeMillis()
-            _ui.update { it.copy(refreshing = false, refreshedAtMs = now, refreshNote = if (ok == asked) "Everything read just now" else "$ok of $asked reads answered" + (latest.why?.let { w -> ": $w" } ?: "")) }
+            _ui.update { it.copy(refreshing = false, refreshStep = "", refreshedAtMs = now, refreshNote = if (ok == asked) "Everything read just now" else "$ok of $asked reads answered" + (latest.why?.let { w -> ": $w" } ?: "")) }
             syncNow()
             return ok
         } finally {
-            _ui.update { it.copy(refreshing = false) }
+            _ui.update { it.copy(refreshing = false, refreshStep = "") }
             refreshMutex.unlock()
         }
     }
