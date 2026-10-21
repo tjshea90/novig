@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/0e282c",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "0e282c",
+ "note": "v1.0.25: ParlayAPI live play-by-play stream as the engine's score source, Pro key first (CH47)",
+ "since": 1792541011,
+ "beat": 1792541011
+}

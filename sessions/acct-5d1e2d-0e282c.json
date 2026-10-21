@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "2dc31786a408c1a7ba3f860b4e19836c5bf51b88",
+ "head": "cf107af52412f7940dccddb8906af4d7f11481c1",
  "since": 1792539161,
- "beat": 1792540839,
- "beatIso": "2026-10-21T00:00:39Z",
+ "beat": 1792541011,
+ "beatIso": "2026-10-21T00:03:31Z",
  "done": "pre-ship: v1.0.25: ParlayAPI live play-by-play stream as the engine's score source, Pro key first (CH47)",
  "next": "ship.sh gates and releases this"
 }
