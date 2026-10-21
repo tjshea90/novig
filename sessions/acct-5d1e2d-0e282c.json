@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-byd011",
- "head": "7a72f94db566e5825608450f7a2fbb0119f668fc",
+ "head": "6e76f976685cedd0da8f78e60c19a9f08855d25d",
  "since": 1792539161,
- "beat": 1792547871,
- "beatIso": "2026-10-21T01:57:51Z",
+ "beat": 1792547901,
+ "beatIso": "2026-10-21T01:58:21Z",
  "done": "pre-ship: v1.0.28: laned scan on the engine: quick 48 h scans between full ones keep near games' fair and Novig prices minutes old (CH50b)",
  "next": "ship.sh gates and releases this"
 }
