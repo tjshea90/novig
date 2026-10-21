@@ -43,6 +43,9 @@ import java.util.concurrent.CopyOnWriteArrayList
  * for a bad key; the socket accepted, then closed with code 1008 "Invalid token"). No live key has been used.
  */
 class BoltOddsLiveTest {
+    /** The fixtures play tomorrow (UTC), so the games are always upcoming whichever day the suite runs. */
+    private val DAY: java.time.LocalDate = java.time.LocalDate.now(java.time.ZoneOffset.UTC).plusDays(1)
+
     private lateinit var server: MockWebServer
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val rest = CopyOnWriteArrayList<RecordedRequest>()
@@ -477,6 +480,6 @@ class BoltOddsLiveTest {
         val feed = BoltOddsFeed(client(), OkHttpClient(), scope, wsUrl = wsUrl())
         assertEquals(listOf("lines", "props"), listOf(feed.lines.name, feed.props.name))
         assertFalse(feed.connected)
-        assertEquals(Instant.parse("${DAY}T23:30:00Z").toEpochMilli(), BoltParser.whenMs("${DAY}, 07:30 PM"))
+        assertEquals(Instant.parse("2026-10-20T23:30:00Z").toEpochMilli(), BoltParser.whenMs("2026-10-20, 07:30 PM"))
     }
 }
