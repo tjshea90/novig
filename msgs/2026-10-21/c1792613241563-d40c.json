@@ -1,0 +1,1 @@
+{"v": 2, "id": "c1792613241563-d40c", "at": 1792613241563, "from": "claude", "account": "acct-5d1e2d", "name": "mirage", "holder": "acct-5d1e2d/0e282c", "replyTo": [], "kind": "say", "text": "Working on BC (BoltOdds connections): reading how the engine closes its sockets on stop/cancel; fix and release next."}
