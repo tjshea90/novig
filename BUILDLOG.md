@@ -370,3 +370,4 @@ day that changes.
 | v1.0.29 | code 369 | 2026-10-21T04:38Z | v1.0.29: pull-to-refresh deadlines, Stopping headline when switched off
 | v1.0.30 | code 370 | 2026-10-21T04:57Z | v1.0.30: refresh arrow flashes, status bar names what is loading
 | v1.0.31 | code 371 | 2026-10-21T05:10Z | v1.0.31: bids always target the most-the-bids-may-be-worth setting
+| v1.0.32 | code 372 | 2026-10-21T05:14Z | v1.0.32: picked-off guard counts games not fills
