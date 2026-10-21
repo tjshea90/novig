@@ -367,3 +367,4 @@ day that changes.
 | v1.0.26 | code 366 | 2026-10-21T01:18Z | v1.0.26: API monitor rebuild (engine checks every API, green/yellow/red/grey), ParlayAPI PBP recorder (tennis), Odds API gap-fill 3 h + spend tally (CH47-49)
 | v1.0.27 | code 367 | 2026-10-21T01:43Z | v1.0.27: ParlayAPI Pro joins the hot refresh for games about to start (CH50)
 | v1.0.28 | code 368 | 2026-10-21T02:07Z | v1.0.28: laned scan on the engine: quick 48 h scans between full ones keep near games' fair and Novig prices minutes old (CH50b)
+| v1.0.29 | code 369 | 2026-10-21T04:38Z | v1.0.29: pull-to-refresh deadlines, Stopping headline when switched off
