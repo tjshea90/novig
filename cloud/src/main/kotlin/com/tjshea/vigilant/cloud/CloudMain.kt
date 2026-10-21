@@ -488,7 +488,7 @@ fun main(args: Array<String>) = runBlocking {
     val end = engine.run(until, started)
     // The window is over (or the job is): whatever rests on Novig under the engine's key is cancelled, and the ledger goes out one last time.
     runCatching { trader.windowEnded() }
-    runCatching { kotlinx.coroutines.runBlocking { deskStore.flush() } }
+    runCatching { deskStore.flush() }
     runCatching { kalshiLane.stop("the engine's job or hours are over") }
     runCatching { study.flush() }
     runCatching { publisher.stageTrades(TradeLedger.text(trader.ledger), System.currentTimeMillis()) }
