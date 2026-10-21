@@ -1,22 +1,22 @@
-# CHECKPOINT 3926 — read me first, then TASKS.md
+# CHECKPOINT 3927 — read me first, then TASKS.md
 
-**Written:** 2026-10-21T22:21:02Z · **tests:** all 9 fast checks green
-**Branch:** `claude/new-session-51eqix` · **builds on:** `0f5b24e2d` (this checkpoint is the commit after it)
+**Written:** 2026-10-21T22:22:18Z · **tests:** all 9 fast checks green
+**Branch:** `claude/new-session-51eqix` · **builds on:** `8047b101b` (this checkpoint is the commit after it)
 
 ## Just done
-full test (CK5/XO6) done: floor 4135 green, 134 screens viewed, 7 fixes (see TASKS CK5)
+pre-release: v1.0.41: full test fixes: Kalshi CNO rows open at Kalshi everywhere, Scan CNO on GitHub switch, faster phone fallback when CNO refuses the runner, bid step-down needs every fair book fresh, copy fixes (versionCode 381, v1.0.41)
 
 ## Do this next
-ship v1.0.41 and release; then the engine's first live CNO reads (status.cnoNote, engine-log) are the proof CK3 works on a runner
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.41), then run: bash tools/record-release.sh v1.0.41 381 "v1.0.41: full test fixes: Kalshi CNO rows open at Kalshi everywhere, Scan CNO on GitHub switch, faster phone fallback when CNO refuses the runner, bid step-down needs every fair book fresh, copy fixes"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  8047b101b ckpt 3926: full test (CK5/XO6) done: floor 4135 green, 134 screens viewed, 7 fixes (se
   77c72f06e ckpt 3925: v1.0.40 released (CK). Full test in progress: Kalshi CNO rows' alerts/taps 
   d283653f0 ckpt 3924: pre-release: v1.0.40: CNO scans Novig and Kalshi (tab chips, Kalshi EV net 
   6916f0eaf ckpt 3923: CK2/CK3 built: CnoVenueSource (Novig+Kalshi reads, Kalshi EV net of fee), v
@@ -26,8 +26,4 @@ ship v1.0.41 and release; then the engine's first live CNO reads (status.cnoNote
   e971b4375 ckpt 3919: BC3 shutdown hook closes sockets, BC4 too-many-connections no longer refuse
   2295d6196 ckpt 3918: BC: phone already closes BoltOdds sockets on toggle-off; STOP ALL/pause pat
   906472197 ckpt 3917: BC task written (BoltOdds too many connections, clean disconnect on every s
-  2d56888a0 ckpt 3916: pre-release: v1.0.38: API card trusts a fresh accepted key check over a sta
 ```
-
-(4 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
