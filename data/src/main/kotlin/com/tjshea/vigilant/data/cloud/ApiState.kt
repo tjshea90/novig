@@ -45,9 +45,12 @@ object ApiState {
         val allRefused = keys.isNotEmpty() && refused >= keys.size
         // Red: nothing can be asked of it. Credits used up, or every key refused by the provider (the ledger knows from real calls and checks).
         if (view != null && view.spent) return Verdict(Light.RED, "no credits left" + (keys.mapNotNull { it.until }.minOrNull()?.let { " · back ${com.tjshea.vigilant.data.keys.UsageMeter.whenText(it, now)}" } ?: ""))
-        if (allRefused) return Verdict(Light.RED, "every key refused by the provider")
         val engineFresh = check != null && check.atMs > 0L && engineRunning && now - check.atMs <= STALE_MS
         val phoneFresh = phone != null && now - phone.atMs <= PHONE_FRESH_MS
+        // A ledger refusal can be old or come from one socket (BoltOdds' "too many connections"): a fresh check that was ACCEPTED outranks it (Tj, 2026-10-21: red "every key refused" beside a green key test).
+        val acceptedNow = (engineFresh && check!!.ok && check.keysOk > 0) || (phoneFresh && phone!!.ok && phone.keysOk > 0)
+        if (allRefused && acceptedNow) return Verdict(Light.YELLOW, "an earlier call was refused, but the latest key check was accepted" + (check?.fix?.takeIf { it.isNotBlank() }?.let { " · engine: $it" } ?: ""))
+        if (allRefused) return Verdict(Light.RED, "every key refused by the provider")
         val fix = check?.fix?.takeIf { it.isNotBlank() }?.let { " · engine: $it" }.orEmpty()
         if (!engineFresh) {
             // The engine is not checking (outside its hours, or a stale check): this phone's own fresh test is the evidence there is.
