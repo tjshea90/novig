@@ -6096,10 +6096,17 @@ CH59 (2026-10-21, chat wake 06:20 UTC): Odds API audited: 18 credits today, all 
 - [x] XO1d still refused after N new runners -> Messages note to Tj + turn that API's toggle OFF (mirrored to phone) until he looks; recovery message already exists (AS3)
 - [x] XO1e tests (ApiMonitorTest/ApiGovernorTest/DashboardModelTest/DashboardUiTest), ship
 - [x] XO2a volume diagnosis (research/bid_volume_study_2026-10-21.md; fills/day 79-143, 0.9 per 1000 postings; far bids, distance to the offer, per-game $5 limit): count engine orders/fills per day, bids resting vs filled, top held-back reasons (tradepass journals, status.tradeNote/deskNote, desk.json); coordinate with mirage's CH59 (sharp-confirmed bid margin step-down)
-- [ ] XO2b tweak settings/rules for more volume with +EV floor kept, class B evidence + CHANGES.md line with revert rule
-- [ ] XO3a analysis of saved scans/bets/bids (phone-data, cloud-archive journals, engine-dataset lines/bids csv, digest): profitable types, what beats the CLV (use CH57 consensus CLV), by kind/side/league/edge/lead time/origin, counting games
-- [ ] XO3b adjust system/settings the evidence supports (class B gates), research/ note, NOTES.md line
-- [ ] XO4a historical odds/props analysis from APIs that have history (PropLine archive+CLV, SGO/OddsPapi closes, ParlayAPI): patterns and methods; research/ note
-- [ ] XO4b incorporate what is profitable into vigilant + engine (behind switches, tests)
+- [x] XO2b tweak settings/rules for more volume with +EV floor kept, class B evidence + CHANGES.md line with revert rule
+- [x] XO3a analysis of saved scans/bets/bids (phone-data, cloud-archive journals, engine-dataset lines/bids csv, digest): profitable types, what beats the CLV (use CH57 consensus CLV), by kind/side/league/edge/lead time/origin, counting games
+- [x] XO3b adjust system/settings the evidence supports (class B gates), research/ note, NOTES.md line
+- [x] XO4a historical odds/props analysis from APIs that have history (PropLine archive+CLV, SGO/OddsPapi closes, ParlayAPI): patterns and methods; research/ note
+- [x] XO4b incorporate what is profitable into vigilant + engine (behind switches, tests): nothing in the engine changes (every candidate needs results the data does not hold yet: research/propline_history_study_2026-10-21.md section 4); built tools/orders_clv.py (CLV at the fill price per order, daily into engine-dataset) as the baseline for the calibrated-fair test
 - [ ] XO5a triage the open TASKS.md items (grep '^- \[ \]'): list built-vs-unbuilt-planned; build the unblocked ones (not those waiting on a live key/data/Tj)
 - [ ] XO6 full test protocol (.claude/skills/test-protocols/SKILL.md "full tests"), fix what it finds, record result
+
+WATCH LIST (XO, 2026-10-21; each waits on the number named, then is a class B change with a CHANGES.md line):
+- [ ] XOW1 prop calibration column in `tools/lines_dataset.py` (Over: fair - bias(p), Under: fair + bias(p), table in research/propline_history_study_2026-10-21.md) and the test at 200 settled per side; only then touch `PropHaircut` (Over -7, Under -3).
+- [ ] XOW2 Kalshi-weighted prop fair (Kalshi is the only prop book that beats the market, +4.3 bp): test on the lines that carry it (`sharp_in_fair`, `n_fair_books`) before building.
+- [ ] XOW3 per-kind trap windows (props and team totals to 24 h; spreads and game totals stay at 6 h): at 200 settled each beyond 6 h (now props 137, team totals 51, spreads 193, game totals 206); a `trapEarlyHoursByKind` setting is not built yet.
+- [ ] XOW4 bids with no sharp book in the fair: CLV -0.15% on 30 closes; at 100 closes raise the floor (RISKY_EV) or drop them. NCAAF bids (+0.1% CLV, 59 closes): same test at 120 closes. Spread and game-total bids (ROI -39% / -20%): at 200 settled fills.
+- [ ] XOW5 `bidDeployPct` 100 -> 125 after two days of fills at the new per-game limit; a margin tilt by side (Unders lower, Overs higher) at 100 closes per side.
