@@ -720,3 +720,8 @@ For the vigilant android app, GitHub engine, and Claude:
 5) build anything left that is logged and not built yet but planned to be built. 
 6) run full test protocol
 ```
+
+## 2026-10-21T17:01:25Z
+```
+This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
+```
