@@ -1519,7 +1519,7 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
     val s = state.settings
     val u = state.cloudUi
     val keyNow = rememberNow(30_000)
-    Intro("GitHub's computers (free for this public repository) run Vigilant's scanner with the APIs you sent them keys for, under exactly these settings, and send this phone the +EV list. Pull to refresh and Scan ask GitHub for a new scan; the Feed shows its progress and how fresh each price is. Stays on this phone: live games, every order, Pinnodds and your Kalshi key. BoltOdds' key and a read-only Novig key made for GitHub can go there for faster scanning.")
+    Intro("GitHub's computers (free for this public repository) run Vigilant's scanner with the APIs you sent them keys for, under exactly these settings, and send this phone the +EV list. Pull to refresh and Scan ask GitHub for a new scan; the Feed shows its progress and how fresh each price is. It also reads CrazyNinjaOdds' list (Novig and Kalshi) when the CNO scanner is on. Stays on this phone: your own orders and Pinnodds. BoltOdds' key, your Kalshi key and a read-only Novig key made for GitHub can go there for faster scanning.")
     // 1. the token
     SectionTitle("GitHub token")
     var token by remember { mutableStateOf("") }
