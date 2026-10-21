@@ -6129,5 +6129,6 @@ Finding 19:30: only ONE cloud-scan run is live (run 254), so no old runner holds
 
 ## TR: four free-trial APIs to judge (Tj, interactive session acct-27a37e (tj Gmail), 2026-10-21, verbatim)
 "I can get free trials for all of the following apis. Research what they offer and if any of them are good for the vigilant app, GitHub engine, or live betting, let me know so we can build it: https://tennis-api.com/ https://sharpapi.io/ https://sportmicro.com/ https://sportsdata.io/developers/api-documentation"
-- [ ] TR1 read each site's docs/pricing (data, books incl. Pinnacle, latency, sockets/streams, limits, trial terms); save findings to research/api_trials_2026-10-21.md
-- [ ] TR2 verdict per API against what Vigilant already has (fair-odds sharpness, freshness, live, scores/grading, props), recommend which trials to take; tell Tj
+- [x] TR1 (research/api_trials_2026-10-21.md) read each site's docs/pricing (data, books incl. Pinnacle, latency, sockets/streams, limits, trial terms); save findings to research/api_trials_2026-10-21.md
+- [x] TR2 (same file: SharpAPI yes at Sharp tier, the other three no) verdict per API against what Vigilant already has (fair-odds sharpness, freshness, live, scores/grading, props), recommend which trials to take; tell Tj
+- [ ] TR3 build SharpAPI on the engine (SharpApiClient/Source, CloudKeys SHARPAPI_API_KEY, ApiChain, switch, apiq measurement) when Tj starts the trial
