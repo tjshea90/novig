@@ -733,6 +733,11 @@ So: every session builds, tests, ships and releases improvements to the engine, 
 
 **Standing instruction from Tj (2026-10-16):** "see how to make the context automatically reset and just tell me when you make handoffs for a new Claude session every time you see it getting long". A session cannot clear its own context; what it can do (and must) is: when the conversation is long (many compactions, or a big task just finished), run `bash tools/ckpt.sh "did" "next"` with a specific next step, then tell Tj "Handoff ready: start a new session, it resumes from CHECKPOINT.md" (in your reply; the chat account also in the app chat: `python3 -I tools/chat.py say "..."`). The SessionStart briefing and `chat_watch.sh` carry the new session on by themselves.
 
+## The phone is a control center and monitor; processing and Internet use run on GitHub (Tj, 2026-10-20, permanent)
+
+**Standing instruction from Tj (2026-10-20, chat 00:20 UTC, verbatim):** "I didn't ask for pbp on the phone. it should all run on GitHub. pbp on GitHub engine. but I can monitor and control it on my phone. I want the features, just the processing and Internet usage should be on GitHub. ideally for this entire app, my phone is just a control center and monitor of what is running on GitHub".
+So: a new feature (a feed, a stream, a scan, a check, a model) is built in the GitHub engine (`CloudSources`, `CloudEngine`, `cloud/`) with its status published in `status.json` and its switches mirrored; the phone gets a card, a switch and the numbers, never its own copy of the work, unless Tj asks for the phone to do it or it needs a phone-only thing (his own trading keys, Novig's stream under his key, the one-connection sockets). Example: ParlayAPI's play-by-play stream and the API monitor (`ApiMonitor`, `ApiState`) run on the engine only.
+
 ## Session Learnings (auto-updated by handoff)
 
 ### Implicit Rules

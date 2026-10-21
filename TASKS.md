@@ -6064,3 +6064,7 @@ Tj, verbatim: "merge the kalshi and novig positive EV scanners into the single +
 - [ ] CH48a audit how each API card (Engine > APIs, DashboardScreen ApiCard / CloudDashboard / ApiScorecard) decides green/yellow/red: pinnapi shows green "working 6+0, 300 of 300 left, resets in 3m" though unused and its keys are bad
 - [ ] CH48b rules: GREEN = a real call succeeded recently and credits left; YELLOW = slow, or refused/failed connection recently (retry automatically in background, never restarting scans); RED = no connection or no credits/all keys refused; OFF/grey = switched off or not in use. Fresh data updated frequently (usage, status), accurate usage
 - [ ] CH48c tests; ship
+
+## CH49 (Tj chat 00:18 UTC, 2026-10-21): The Odds API pacing
+- [ ] CH49 audit The Odds API use: pace as needed, never spent on data another API gives better or that overlaps; use as much as needed but not wasteful (ApiChain/CreditPace/QuotaPolicy ODDS_API; today 508 credits/6803 left, "will not last" warning)
+- [x] CH47 phone PBP wiring DROPPED by Tj (GitHub-only rule, CLAUDE.md "phone is a control center")
