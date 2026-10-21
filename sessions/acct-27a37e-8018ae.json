@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "b38c066e2e3ae3b91fa75681495906e2f16ba7d2",
+ "head": "99d105a3dd3b3bfff16f13f057469d0776945e97",
  "since": 1792596542,
- "beat": 1792626402,
- "beatIso": "2026-10-21T23:46:42Z",
- "done": "SA done: v1.0.42 shipped (release building); SharpAPI on engine (store + delta), live feed, extras, Settings page; awaiting Tj's key on GitHub",
- "next": "after Tj sends the key: read engine-log 'SharpAPI:' line (plans, rows held, delta reads), first apiq numbers for circa/bookmaker/pinnacle, fix SHARPAPI.md where the live answers differ"
+ "beat": 1792626439,
+ "beatIso": "2026-10-21T23:47:19Z",
+ "done": "pre-release: v1.0.43: SharpAPI WebSocket stream (odds and game state pushed to the engine; REST delta becomes a 60 s reconcile) and live game state as a live-lane score source; socket switch in Settings > APIs (versionCode 383, v1.0.43)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.43), then run: bash tools/record-release.sh v1.0.43 383 \"v1.0.43: SharpAPI WebSocket stream (odds and game state pushed to the engine; REST delta becomes a 60 s reconcile) and live game state as a live-lane score source; socket switch in Settings > APIs\""
 }
