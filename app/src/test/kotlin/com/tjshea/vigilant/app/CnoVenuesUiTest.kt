@@ -86,4 +86,19 @@ class CnoVenuesUiTest {
         cnoTab()
         compose.onRoot().captureRoboImage("screenshots/5s_cno_tab_venues.png")
     }
+
+    @Test
+    fun `the bet sheet of a Kalshi row opens Kalshi`() {
+        val s = SampleCno.withBooks()
+        val pick = s.cnoPicks(SampleScan.NOW)!!.picks.first().let { it.copy(row = it.row.copy(book = "Kalshi")) }
+        compose.setContent {
+            CompositionLocalProvider(LocalClock provides { SampleScan.NOW }) {
+                VigilantTheme(darkTheme = true) {
+                    com.tjshea.vigilant.app.ui.CnoDetail(pick, s.cno.snapshot, s.settings, s.cnoUrl, s.books[pick.row.key], SampleScan.NOW)
+                }
+            }
+        }
+        compose.onNodeWithText("Open in Kalshi").assertExists()
+        compose.onNodeWithText("Open in Kalshi opens CNO's link to this bet at Kalshi.", substring = true).assertExists()
+    }
 }
