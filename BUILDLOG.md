@@ -372,3 +372,4 @@ day that changes.
 | v1.0.31 | code 371 | 2026-10-21T05:10Z | v1.0.31: bids always target the most-the-bids-may-be-worth setting
 | v1.0.32 | code 372 | 2026-10-21T05:14Z | v1.0.32: picked-off guard counts games not fills
 | v1.0.33 | code 373 | 2026-10-21T05:24Z | v1.0.33: Kalshi funnel card (where the scan loses lines), Live tab socket note
+| v1.0.34 | code 374 | 2026-10-21T05:59Z | v1.0.34: API quality journal (apiq), consensus CLV columns (CH57/CH58)
