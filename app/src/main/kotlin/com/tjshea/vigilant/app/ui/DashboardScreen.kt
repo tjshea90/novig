@@ -180,9 +180,10 @@ private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: L
         // Each card's light comes from the engine's own live check of the API (Tj, 2026-10-20, CH48), the ledger and the last scan, in that order ([com.tjshea.vigilant.data.cloud.ApiState]).
         // XO1 (Tj, 2026-10-21): the light weighs three kinds of evidence, not the engine's last check alone: the engine's check (with the scans' proof that it reads the API), this phone's own fresh test of the
         // same keys (pull to refresh runs it), and the usage ledger. An API the engine's runner cannot use but this phone can is yellow and says so, never red on the engine's word alone.
+        fun switchIdOf(policyId: String) = when (policyId) { "pinnacle" -> "pinnapi"; "kalshi", "polymarket" -> policyId; else -> com.tjshea.vigilant.data.cloud.ApiToggles.idOfPolicy(policyId) }
         val verdicts = remember(status, meters, health, checks, checkedAt, now / 20_000L) {
             meters.associate { v ->
-                val sid = when (v.policy.id) { "pinnacle" -> "pinnapi"; "kalshi", "polymarket" -> v.policy.id; else -> com.tjshea.vigilant.data.cloud.ApiToggles.idOfPolicy(v.policy.id) }
+                val sid = switchIdOf(v.policy.id)
                 val entry = com.tjshea.vigilant.app.ApiEntry.entries.firstOrNull { it.policy?.id == v.policy.id }
                 val phone = entry?.let { e -> checks[e.name]?.takeIf { it.isNotEmpty() }?.let { cs -> com.tjshea.vigilant.data.cloud.ApiState.PhoneCheck(checkedAt[e.name] ?: 0L, cs.any { it.ok }, cs.count { it.ok }, cs.size, (cs.firstOrNull { !it.ok } ?: cs.first()).message) } }
                 v.policy.id to com.tjshea.vigilant.data.cloud.ApiState.of(status?.apiChecks?.firstOrNull { it.id == sid }, v, health[v.policy.id], now, phone, running)
@@ -193,11 +194,11 @@ private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: L
                 .sortedBy { lightOrder(verdicts[it.policy.id]?.light) }
         }
         if (cards.isEmpty()) Text("No API has answered yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        cards.forEach { v -> ApiCard(v, verdicts.getValue(v.policy.id), DashboardModel.apiDetail(status, v.policy.id), now, checks, testing, onTestApi, onRetryApi) }
+        cards.forEach { v -> ApiCard(v, verdicts.getValue(v.policy.id), DashboardModel.apiDetail(status, v.policy.id), now, checks, testing, onTestApi, onRetryApi, engine = status?.apiChecks?.firstOrNull { it.id == switchIdOf(v.policy.id) }) }
         if (health.isEmpty() && status != null) {
             Text("Which APIs worked on the last scan appears after the engine's next scan (it has to finish one on the new version).", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Text("Pull down for a fresh read of every API's own usage figure.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Pull down: the engine checks every API right now and this phone tests the same keys itself; each light weighs both, the scans, and the usage figures.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -344,7 +345,7 @@ private fun SectionHeader(text: String) {
 
 /** One API: health chip, name, what the last scan got from it, and its usage meter (the same ledger as Settings › APIs, with the engine's calls in it). */
 @Composable
-private fun ApiCard(v: ProviderView, verdict: com.tjshea.vigilant.data.cloud.ApiState.Verdict, detail: String, now: Long, checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>> = emptyMap(), testing: Set<String> = emptySet(), onTestApi: (String) -> Unit = {}, onRetryApi: (String) -> Unit = {}) {
+private fun ApiCard(v: ProviderView, verdict: com.tjshea.vigilant.data.cloud.ApiState.Verdict, detail: String, now: Long, checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>> = emptyMap(), testing: Set<String> = emptySet(), onTestApi: (String) -> Unit = {}, onRetryApi: (String) -> Unit = {}, engine: com.tjshea.vigilant.data.cloud.ApiCheckLine? = null) {
     var open by androidx.compose.runtime.saveable.rememberSaveable(v.policy.id) { androidx.compose.runtime.mutableStateOf(false) }
     val entry = remember(v.policy.id) { com.tjshea.vigilant.app.ApiEntry.entries.firstOrNull { it.policy?.id == v.policy.id } }
     val tone = when (verdict.light) {
@@ -365,6 +366,12 @@ private fun ApiCard(v: ProviderView, verdict: com.tjshea.vigilant.data.cloud.Api
             }
             if (detail.isNotBlank() && (open || tone != Tone.WARN && tone != Tone.BAD)) Text(detail, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             else if (detail.isNotBlank()) Text("Tap for the error", style = MaterialTheme.typography.labelSmall, color = light)
+            if (open && engine != null && engine.on && engine.atMs > 0L) {
+                // What the engine's own check found, in full: the engine and this phone can disagree (a runner's address, a key that differs), and the two lines below say which is which.
+                Text("Engine check ${DashboardModel.ago(now - engine.atMs)}: ${if (engine.ok) "✓" else "✗"} ${engine.keysOk} of ${engine.keys} keys · ${engine.message}" + (if (engine.kind.isNotBlank()) " [${engine.kind}]" else ""), style = MaterialTheme.typography.labelSmall, color = if (engine.ok) Edge.colors.positive else Edge.colors.negative)
+                if (engine.scanOkAtMs > 0L) Text("The scans last read data from it ${DashboardModel.ago(now - engine.scanOkAtMs)}.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (engine.fix.isNotBlank()) Text("API manager: ${engine.fix}", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
+            }
             if (open && entry != null) {
                 val last = checks[entry.name]
                 last?.forEach { ch -> Text((if (ch.ok) "✓ " else "✗ ") + ch.masked + ": " + ch.message, style = MaterialTheme.typography.labelSmall, color = if (ch.ok) Edge.colors.positive else Edge.colors.negative) }
