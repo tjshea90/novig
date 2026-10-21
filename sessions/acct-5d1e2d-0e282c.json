@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-7dry2r",
- "head": "31688d055f440323e7146c481b6d1fdc0f40671b",
+ "head": "b25f273fe0a4ec2e64c2bdf762e662883230ad60",
  "since": 1792539161,
- "beat": 1792559116,
- "beatIso": "2026-10-21T05:05:16Z",
- "done": "pre-release: v1.0.31: bids always target the most-the-bids-may-be-worth setting (versionCode 371, v1.0.31)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.31), then run: bash tools/record-release.sh v1.0.31 371 \"v1.0.31: bids always target the most-the-bids-may-be-worth setting\""
+ "beat": 1792559208,
+ "beatIso": "2026-10-21T05:06:48Z",
+ "done": "CH54: picked-off guard counts games",
+ "next": "ship v1.0.32"
 }
