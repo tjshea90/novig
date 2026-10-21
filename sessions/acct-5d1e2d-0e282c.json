@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-7dry2r",
- "head": "81914c18bc44174a21711a6d359a035529811175",
+ "head": "2d322251e87d8479f79da5154fd7da6216a8e31c",
  "since": 1792539161,
- "beat": 1792558279,
- "beatIso": "2026-10-21T04:51:19Z",
+ "beat": 1792558675,
+ "beatIso": "2026-10-21T04:57:55Z",
  "done": "pre-release: v1.0.30: refresh arrow flashes, status bar names what is loading (versionCode 370, v1.0.30)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.30), then run: bash tools/record-release.sh v1.0.30 370 \"v1.0.30: refresh arrow flashes, status bar names what is loading\""
 }
