@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-7dry2r",
  "head": "b25f273fe0a4ec2e64c2bdf762e662883230ad60",
  "since": 1792539161,
- "beat": 1792559208,
- "beatIso": "2026-10-21T05:06:48Z",
+ "beat": 1792559213,
+ "beatIso": "2026-10-21T05:06:53Z",
  "done": "CH54: picked-off guard counts games",
  "next": "ship v1.0.32"
 }
