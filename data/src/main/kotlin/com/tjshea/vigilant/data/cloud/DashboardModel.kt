@@ -155,21 +155,26 @@ object DashboardModel {
         return out
     }
 
+    /** A feed the engine's watch found silent for [scans] scans in a row, with the reason its last report gave ([why]). */
+    data class SilentFeed(val feedId: String, val scans: Int, val why: String) {
+        val words: String get() = "feed $feedId silent for $scans scans: ${why.take(90)}"
+    }
+
+    /** The feeds named in the engine's alert ([CloudStatus.feedAlerts], [FeedWatch]: three scans or more), each with its own error or hold-back from [lines]. */
+    fun silentFeeds(alerts: List<String>, lines: List<FeedLine>): List<SilentFeed> = alerts.mapNotNull { a ->
+        ALERT.find(a)?.destructured?.let { (id, n) ->
+            val line = lines.firstOrNull { it.id == id }
+            SilentFeed(id, n.toInt(), (line?.error ?: line?.heldBack)?.takeIf { it.isNotBlank() } ?: "no answer")
+        }
+    }
+
     /**
      * A feed of [providerId] that the engine's watch found silent for several scans in a row while the provider itself still checks out (XO1, 2026-10-21: BoltOdds' lines socket was refused for "too many concurrent
-     * connections" for half an hour while its props socket and its REST check answered, so its card stayed green): words for the card, or null. Only feeds named in the engine's own alert ([CloudStatus.feedAlerts],
-     * [FeedWatch]: three scans or more) count, so one bad answer from a busy feed never colours a card.
+     * connections" for half an hour while its props socket and its REST check answered, so its card stayed green): words for the card, or null. Only feeds named in the engine's own alert count, so one bad answer
+     * from a busy feed never colours a card.
      */
-    fun feedProblem(st: CloudStatus?, providerId: String): String? {
-        if (st == null) return null
-        val alert = st.feedAlerts.firstNotNullOfOrNull { a ->
-            ALERT.find(a)?.destructured?.takeIf { (id, _) -> CloudDashboard.providerOf(id) == providerId }
-        } ?: return null
-        val (id, scans) = alert
-        val line = st.feedReport.firstOrNull { it.id == id }
-        val why = (line?.error ?: line?.heldBack)?.takeIf { it.isNotBlank() } ?: "no answer"
-        return "feed $id silent for $scans scans: ${why.take(90)}"
-    }
+    fun feedProblem(st: CloudStatus?, providerId: String): String? =
+        st?.let { silentFeeds(it.feedAlerts, it.feedReport).firstOrNull { f -> CloudDashboard.providerOf(f.feedId) == providerId }?.words }
 
     private val ALERT = Regex("^(\\S+) \\((\\d+) scans? in a row\\)")
 
