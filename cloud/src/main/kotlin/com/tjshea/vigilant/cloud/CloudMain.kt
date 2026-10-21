@@ -478,7 +478,7 @@ fun main(args: Array<String>) = runBlocking {
                     on = c.enabled,
                     note = st.error ?: snap?.note.orEmpty(),
                 )
-                if (st.error != null && c.enabled) log("CNO: ${st.error.take(160)}")
+                st.error?.takeIf { c.enabled }?.let { e -> log("CNO: ${e.take(160)}") }
             }
             delay(3_000L)
         }
