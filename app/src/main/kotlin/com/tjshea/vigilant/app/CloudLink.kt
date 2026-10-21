@@ -546,12 +546,12 @@ class CloudLink(private val c: AppContainer) {
             var asked = 0
             fun <T> got(p: CloudClient.Poll<T>): T? { asked++; return (p as? CloudClient.Poll.Fresh<T>)?.value?.also { ok++ } }
             // Every read has its own deadline: one that hangs must not keep the pull's arrow up for ever (Tj, 2026-10-21: "this loading symbol gets stuck").
-            suspend fun <T> within(block: suspend () -> T): T? = try { kotlinx.coroutines.withTimeoutOrNull(20_000L) { block() } } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (_: Throwable) { null }
-            runCatching { got(within { client.pollStatus(null) } ?: CloudClient.Poll.Failed)?.let { st -> if (s != null) onStatus(st, s) else latest.status = st; latest.statusOkAtMs = System.currentTimeMillis() } }
-            runCatching { got(client.fetchTrades(null))?.let { t -> _ui.update { it.copy(trades = t, tradesReadAtMs = System.currentTimeMillis()) } } }
-            runCatching { got(client.fetchDesk(null))?.let { d -> _ui.update { it.copy(desk = d, deskReadAtMs = System.currentTimeMillis()) } } }
-            runCatching { got(client.fetchUsage(null))?.let { u -> c.cloudUsage.value = u } }
-            runCatching { inbox.pollMessages(); chat.poll(); asked += 2; ok += 2 }
+            suspend fun <T> within(block: suspend () -> CloudClient.Poll<T>): CloudClient.Poll<T> = kotlinx.coroutines.withTimeoutOrNull(20_000L) { block() } ?: CloudClient.Poll.Failed("no answer in 20 s")
+            runCatching { got(within { client.pollStatus(null) })?.let { st -> if (s != null) onStatus(st, s) else latest.status = st; latest.statusOkAtMs = System.currentTimeMillis() } }
+            runCatching { got(within { client.fetchTrades(null) })?.let { t -> _ui.update { it.copy(trades = t, tradesReadAtMs = System.currentTimeMillis()) } } }
+            runCatching { got(within { client.fetchDesk(null) })?.let { d -> _ui.update { it.copy(desk = d, deskReadAtMs = System.currentTimeMillis()) } } }
+            runCatching { got(within { client.fetchUsage(null) })?.let { u -> c.cloudUsage.value = u } }
+            runCatching { kotlinx.coroutines.withTimeout(20_000L) { inbox.pollMessages(); chat.poll() }; asked += 2; ok += 2 }.onFailure { asked += 2; if (it is kotlinx.coroutines.CancellationException && it !is kotlinx.coroutines.TimeoutCancellationException) throw it }
             if (s != null) runCatching { publishUi(s) }
             val now = System.currentTimeMillis()
             _ui.update { it.copy(refreshing = false, refreshedAtMs = now, refreshNote = if (ok == asked) "Everything read just now" else "$ok of $asked reads answered" + (latest.why?.let { w -> ": $w" } ?: "")) }
