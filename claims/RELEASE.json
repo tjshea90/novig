@@ -7,5 +7,5 @@
  "nonce": "8018ae",
  "note": "v1.0.41: full test fixes: Kalshi CNO rows open at Kalshi everywhere, Scan CNO on GitHub switch, faster phone fallback when CNO refuses the runner, bid step-down needs every fair book fresh, copy fixes",
  "since": 1792621271,
- "beat": 1792621592
+ "beat": 1792621988
 }

@@ -8,8 +8,8 @@
  "branch": "claude/new-session-51eqix",
  "head": "f88f264b1293c1f859892c91fff6a63c5f53e1b6",
  "since": 1792596542,
- "beat": 1792621592,
- "beatIso": "2026-10-21T22:26:32Z",
+ "beat": 1792621988,
+ "beatIso": "2026-10-21T22:33:08Z",
  "done": "TR: four trial APIs judged (research/api_trials_2026-10-21.md): SharpAPI worth a Sharp-tier trial (Circa, Bookmaker, Betfair, ProphetX + SSE), Tennis-API/Sportmicro/SportsDataIO not now",
  "next": "TR3 build SharpAPI client on the engine when Tj starts the trial"
 }
