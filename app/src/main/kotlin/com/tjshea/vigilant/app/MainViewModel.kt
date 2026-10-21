@@ -273,6 +273,8 @@ data class UiState(
     /** Settings › APIs: each API's last key check (by [ApiEntry] name), the ones being checked, and the combined test's report. */
     val apiChecks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>> = emptyMap(),
     val apiBusy: Set<String> = emptySet(),
+    /** When each API's last key check from this phone finished (by [ApiEntry] name; XO1): a card weighs the phone's test only while it is fresh. */
+    val apiCheckedAt: Map<String, Long> = emptyMap(),
     val apiTestLines: List<String>? = null,
     val apiTestBusy: Boolean = false,
     val usageBusy: Boolean = false,
@@ -1598,8 +1600,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     else c.apiProbe.check(entry.provider!!, keysFor(entry.provider))
                 }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull()
             }
-            _state.update { it.copy(apiBusy = it.apiBusy - entry.name, apiChecks = if (checks != null) it.apiChecks + (entry.name to checks) else it.apiChecks) }
+            _state.update { it.copy(apiBusy = it.apiBusy - entry.name, apiChecks = if (checks != null) it.apiChecks + (entry.name to checks) else it.apiChecks, apiCheckedAt = if (checks != null) it.apiCheckedAt + (entry.name to System.currentTimeMillis()) else it.apiCheckedAt) }
             if (entry == ApiEntry.PARLAY) refreshBalances(force = true)
+        }
+    }
+
+    /**
+     * The phone tests every API that is ON, now (XO1, Tj 2026-10-21: "make sure the API screen shows accurate information, especially after I pull to refresh"): the same free account reads as Test now, a few
+     * at a time, each key with a deadline of its own, nothing switched off is touched. The two Pinnacle boards cost a request per key (no free prompt) and are left to their own Test button. What it finds is what
+     * the Engine > APIs cards weigh beside the engine's own check ([com.tjshea.vigilant.data.cloud.ApiState]): an API the engine's runner cannot reach but this phone can is said so, not painted red.
+     */
+    suspend fun checkApisFromPhone() {
+        val on = ApiEntry.active(_state.value.settings).filter { it != ApiEntry.PINNWIRE && it != ApiEntry.PINNAPI }
+        if (on.isEmpty()) return
+        val gate = kotlinx.coroutines.sync.Semaphore(4)
+        kotlinx.coroutines.coroutineScope {
+            on.map { e ->
+                async(Dispatchers.IO) {
+                    gate.withPermit {
+                        val checks = runCatching {
+                            kotlinx.coroutines.withTimeout(45_000L) {
+                                if (e.keyless) listOf(c.apiProbe.reach(kalshi = e == ApiEntry.KALSHI)) + kalshiKeyChecks(e)
+                                else if (keysFor(e.provider!!).isEmpty()) emptyList() else c.apiProbe.check(e.provider, keysFor(e.provider))
+                            }
+                        }.onFailure { if (it is kotlinx.coroutines.CancellationException && it !is kotlinx.coroutines.TimeoutCancellationException) throw it }.getOrNull()
+                        if (!checks.isNullOrEmpty()) _state.update { it.copy(apiChecks = it.apiChecks + (e.name to checks), apiCheckedAt = it.apiCheckedAt + (e.name to System.currentTimeMillis())) }
+                    }
+                }
+            }.awaitAll()
         }
     }
 
@@ -1632,7 +1660,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     lines.removeAt(lines.size - 1)
                     if (checks == null) { lines += "FAIL ${e.title}: no answer in 40 s"; show(); continue }
                     lines += (if (checks.all { it.ok }) "OK   " else "FAIL ") + e.title + ": " + checks.joinToString(" | ") { (if (it.masked.isBlank() || it.masked == "no key") "" else it.masked + " ") + it.message }
-                    _state.update { it.copy(apiChecks = it.apiChecks + (e.name to checks)) }
+                    _state.update { it.copy(apiChecks = it.apiChecks + (e.name to checks), apiCheckedAt = it.apiCheckedAt + (e.name to System.currentTimeMillis())) }
                     show()
                 }
                 lines += ""
@@ -2507,7 +2535,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** Pull to refresh on the Engine tab: every cloud loop reads at once. */
     /** Pull to refresh on the Engine tab (TCL122-3): every file the engine publishes is read now, and every API's own usage figure with it. */
     fun refreshEngine() {
-        viewModelScope.launch(Dispatchers.IO) { c.cloud.refreshNow() }
+        // The engine checks every API now (the pull waits for it, bounded) and this phone tests the same keys itself, so each card has fresh evidence from both sides (XO1).
+        viewModelScope.launch(Dispatchers.IO) { c.cloud.refreshNow(apis = true) }
+        viewModelScope.launch(Dispatchers.IO) { runCatching { checkApisFromPhone() } }
         refreshUsage()
     }
     /** Pull to refresh on a page that shows only the engine's files (Tracker, Bids, Live, Messages): read them now. */
