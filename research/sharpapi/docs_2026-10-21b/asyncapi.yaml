@@ -1,0 +1,1134 @@
+asyncapi: 3.1.0
+
+info:
+  title: SharpAPI WebSocket Stream
+  version: 1.2.0
+  description: |
+    Bidirectional real-time stream of odds updates and opportunity events
+    (`+EV`, arbitrage, middles, low-hold) over WebSocket.
+
+    REST and SSE are documented in `openapi.json`. This spec covers only the
+    WebSocket endpoint, which OpenAPI 3.x cannot fully model.
+
+    ## Subprotocols
+
+    Public clients negotiate `sharpapi-v1` by passing it in the
+    `Sec-WebSocket-Protocol` header (browsers: second arg to the `WebSocket`
+    constructor). It carries JSON throughout.
+
+    | Subprotocol   | Wire format for `data` payloads | When to use         |
+    |---------------|---------------------------------|---------------------|
+    | `sharpapi-v1` | JSON throughout                 | All public clients  |
+
+    The server may also accept additional subprotocols reserved for first-party
+    SDKs and internal services. Those are not part of the documented public API
+    and may change without notice — public clients should always negotiate
+    `sharpapi-v1`.
+
+    ## Authentication
+
+    Send the API key on the upgrade request, one of two ways:
+
+    - The `api_key` query parameter, for any client.
+    - A `Sec-WebSocket-Protocol` entry of the form `sharpapi.key.<KEY>`,
+      offered beside `sharpapi-v1`. Browsers cannot set custom headers on a
+      WebSocket upgrade, so this is how a browser keeps the key out of the
+      URL. The server selects `sharpapi-v1` and never echoes the key entry.
+
+    When both are sent, the query parameter wins. `Authorization` and
+    `X-API-Key` headers are not read on the upgrade. A missing or invalid key
+    refuses the upgrade with HTTP `401` (`missing_api_key` or
+    `invalid_api_key`).
+
+    ## Reconnection, replay, and fresh snapshots
+
+    Treat sequence values as opaque decimal strings, not client receipts.
+    Reconnecting with a committed server-issued checkpoint in `from_seq`
+    requests best-effort, process-local replay. Replayable data frames may
+    carry `global_seq` and the same checkpoint as legacy integer `seq`, but
+    these values are process-global rather than per-connection. Observed
+    numeric gaps do not indicate loss: filtering naturally hides frames for
+    other channels and books, and delivery across books can reorder values.
+    Never derive `from_seq` from the last value observed, a running maximum,
+    per-source maxima, or apparent contiguity.
+
+    An accepted replay starts with `connected.resumed: true`, marks replayed
+    frames with `replay: true`, and ends at `snapshot:complete` with
+    `mode: resume`; its `last_seq` is the safe advancing server receipt.
+    `connected.global_seq` is a conservative floor on a fresh/full-resync path,
+    but it becomes usable only after the following fresh/full
+    `snapshot:complete` confirms the authoritative baseline was received.
+    `heartbeat.global_seq` is unsafe as a receipt because it can be ahead of
+    delivery. There is no client-computable checkpoint that advances between
+    server receipts. `from_seq` is a latency optimization, not a completeness
+    mechanism; use a full snapshot or REST reconciliation for complete state.
+    Normal replay sends eligible buffered frames strictly after `from_seq` in
+    buffer order. An eligible wide odds-only gap may instead be
+    coalesced to current changed-row state; an ineligible or over-cap attempt
+    explicitly falls back rather than silently truncating replay. A decline is
+    explicit: `connected` has `resumed: false` and `fallback_reason`, then
+    authoritative snapshots end at `snapshot:complete` with
+    `mode: full_resync`. Retention is best-effort; routing, deploys, expiry,
+    capacity eviction, and replay limits can shorten the usable window.
+
+    Three paths give an unconditional fresh snapshot: reconnect without
+    `from_seq` and restore channels/filters; on an authenticated socket use
+    `unsubscribe`, optionally update filters, and then `subscribe` again; or
+    send `resync` with the affected channels, which re-sends the snapshot
+    without dropping the subscription (already-subscribed channels only, rate
+    limited, advertised as `features.client_resync`). A duplicate subscribe or
+    filter-only update does not send a snapshot. If the server sends
+    `resync_required`, reconcile via REST or use any fresh-snapshot route. As verified on 2026-08-27,
+    production's durable log is measurement-only (`shadow`): `resume_id` is
+    not currently supported as a customer checkpoint, and live frames omit it.
+
+    Concurrent stream limits and full close-code semantics live in the API
+    reference (`/api-reference/websocket`).
+  license:
+    name: Proprietary
+    url: https://sharpapi.io/terms
+  contact:
+    name: SharpAPI Support
+    url: https://sharpapi.io
+    email: support@sharpapi.io
+
+servers:
+  production:
+    host: ws.sharpapi.io
+    pathname: /
+    protocol: wss
+    description: Production WebSocket endpoint.
+    security:
+      - $ref: '#/components/securitySchemes/ApiKeyQuery'
+
+defaultContentType: application/json
+
+channels:
+  stream:
+    address: /
+    title: SharpAPI live stream
+    description: |
+      The single root WebSocket channel. All client and server messages flow
+      over the same connection — there is no per-topic URL routing. Use the
+      `subscribe` message (or initial query parameters) to choose which data
+      *channels* (`ev`, `arbitrage`, `middles`, `low_hold`, `odds`, and
+      `gamestate` on keys that carry game-state access) the server pushes back.
+    bindings:
+      ws:
+        method: GET
+        query:
+          type: object
+          properties:
+            api_key:
+              type: string
+              description: Your API key. Required unless the key is sent as a `sharpapi.key.<KEY>` subprotocol entry.
+            channels:
+              type: string
+              description: Comma-separated channel list — e.g. `ev,odds`. Omit to receive all tier-allowed data.
+            sport:
+              type: string
+              description: Initial sport filter (comma-separated).
+            sportsbook:
+              type: string
+              description: Initial sportsbook filter (comma-separated).
+            league:
+              type: string
+              description: Initial league filter (comma-separated).
+            market:
+              type: string
+              description: Initial market filter (comma-separated).
+            event_id:
+              type: string
+              description: Initial event ID filter (comma-separated).
+            min_ev:
+              type: number
+              description: Minimum EV percentage. Default `2.0`.
+            min_profit:
+              type: number
+              description: Minimum profit percentage for arb / low-hold. Default `0.5`.
+            min_odds:
+              type: number
+              description: Minimum American odds (e.g. `-200`).
+            max_odds:
+              type: number
+              description: Maximum American odds (e.g. `500`).
+            state:
+              type: string
+              description: US state code for deep-link URL generation (e.g. `nj`).
+            from_seq:
+              type: string
+              examples: ['12847']
+              description: Committed server-issued decimal-string receipt for a best-effort replay attempt; do not derive it from arbitrary `global_seq` observations.
+        bindingVersion: '0.1.0'
+    messages:
+      Subscribe:           { $ref: '#/components/messages/Subscribe' }
+      Filter:              { $ref: '#/components/messages/Filter' }
+      Unsubscribe:         { $ref: '#/components/messages/Unsubscribe' }
+      Ping:                { $ref: '#/components/messages/Ping' }
+      Connected:           { $ref: '#/components/messages/Connected' }
+      Subscribed:          { $ref: '#/components/messages/Subscribed' }
+      Unsubscribed:        { $ref: '#/components/messages/Unsubscribed' }
+      OpportunitiesSnapshot: { $ref: '#/components/messages/OpportunitiesSnapshot' }
+      Initial:             { $ref: '#/components/messages/Initial' }
+      SnapshotComplete:    { $ref: '#/components/messages/SnapshotComplete' }
+      OddsUpdate:          { $ref: '#/components/messages/OddsUpdate' }
+      OddsRemoved:         { $ref: '#/components/messages/OddsRemoved' }
+      GamestateFinal:      { $ref: '#/components/messages/GamestateFinal' }
+      EvDetected:          { $ref: '#/components/messages/EvDetected' }
+      EvExpired:           { $ref: '#/components/messages/EvExpired' }
+      ArbDetected:         { $ref: '#/components/messages/ArbDetected' }
+      ArbExpired:          { $ref: '#/components/messages/ArbExpired' }
+      MiddlesDetected:     { $ref: '#/components/messages/MiddlesDetected' }
+      MiddlesExpired:      { $ref: '#/components/messages/MiddlesExpired' }
+      LowHoldDetected:     { $ref: '#/components/messages/LowHoldDetected' }
+      LowHoldExpired:      { $ref: '#/components/messages/LowHoldExpired' }
+      Heartbeat:           { $ref: '#/components/messages/Heartbeat' }
+      SourceHealth:        { $ref: '#/components/messages/SourceHealth' }
+      Pong:                { $ref: '#/components/messages/Pong' }
+      Error:               { $ref: '#/components/messages/Error' }
+      ResyncRequired:      { $ref: '#/components/messages/ResyncRequired' }
+      Resync:              { $ref: '#/components/messages/Resync' }
+      ResyncStarted:       { $ref: '#/components/messages/ResyncStarted' }
+
+operations:
+  send:
+    action: send
+    channel: { $ref: '#/channels/stream' }
+    title: Messages the client sends
+    summary: Subscribe, unsubscribe, resync, update filters, or ping.
+    messages:
+      - $ref: '#/channels/stream/messages/Subscribe'
+      - $ref: '#/channels/stream/messages/Filter'
+      - $ref: '#/channels/stream/messages/Unsubscribe'
+      - $ref: '#/channels/stream/messages/Resync'
+      - $ref: '#/channels/stream/messages/Ping'
+
+  receive:
+    action: receive
+    channel: { $ref: '#/channels/stream' }
+    title: Messages the client receives
+    summary: All server-pushed messages (lifecycle, snapshots, deltas, opportunities, control).
+    messages:
+      - $ref: '#/channels/stream/messages/Connected'
+      - $ref: '#/channels/stream/messages/Subscribed'
+      - $ref: '#/channels/stream/messages/Unsubscribed'
+      - $ref: '#/channels/stream/messages/OpportunitiesSnapshot'
+      - $ref: '#/channels/stream/messages/Initial'
+      - $ref: '#/channels/stream/messages/SnapshotComplete'
+      - $ref: '#/channels/stream/messages/OddsUpdate'
+      - $ref: '#/channels/stream/messages/OddsRemoved'
+      - $ref: '#/channels/stream/messages/GamestateFinal'
+      - $ref: '#/channels/stream/messages/EvDetected'
+      - $ref: '#/channels/stream/messages/EvExpired'
+      - $ref: '#/channels/stream/messages/ArbDetected'
+      - $ref: '#/channels/stream/messages/ArbExpired'
+      - $ref: '#/channels/stream/messages/MiddlesDetected'
+      - $ref: '#/channels/stream/messages/MiddlesExpired'
+      - $ref: '#/channels/stream/messages/LowHoldDetected'
+      - $ref: '#/channels/stream/messages/LowHoldExpired'
+      - $ref: '#/channels/stream/messages/Heartbeat'
+      - $ref: '#/channels/stream/messages/SourceHealth'
+      - $ref: '#/channels/stream/messages/Pong'
+      - $ref: '#/channels/stream/messages/Error'
+      - $ref: '#/channels/stream/messages/ResyncRequired'
+      - $ref: '#/channels/stream/messages/ResyncStarted'
+
+components:
+  securitySchemes:
+    ApiKeyQuery:
+      type: httpApiKey
+      in: query
+      name: api_key
+      description: Pass your API key as `?api_key=<KEY>` on the connection URL.
+
+  messages:
+    # ── Client → Server ─────────────────────────────────────────────────────
+    Subscribe:
+      name: subscribe
+      title: Update channels and filters
+      summary: Replace the active channel and filter set without reconnecting.
+      contentType: application/json
+      payload:
+        type: object
+        required: [type]
+        properties:
+          type: { type: string, const: subscribe }
+          channels:
+            type: array
+            description: |
+              Channel list. Omit to leave channels unchanged. `gamestate`
+              requires game-state access on the key — check for the
+              `game_state` capability on the `connected` ack rather than
+              probing; without it the server rejects the channel.
+            items:
+              type: string
+              enum: [ev, arbitrage, middles, low_hold, odds, gamestate]
+          filters:
+            type: object
+            properties:
+              sports:      { type: array, items: { type: string } }
+              sportsbooks: { type: array, items: { type: string } }
+              leagues:     { type: array, items: { type: string } }
+              markets:     { type: array, items: { type: string } }
+              eventIds:    { type: array, items: { type: string } }
+              min_ev:      { type: number, description: "Minimum EV % (default 2.0)." }
+              min_profit:  { type: number, description: "Minimum profit % for arb / low-hold (default 0.5)." }
+      examples:
+        - name: NbaEvAndOdds
+          payload:
+            type: subscribe
+            channels: [ev, odds]
+            filters:
+              sports: [basketball]
+              sportsbooks: [draftkings, fanduel]
+              leagues: [nba]
+              markets: [moneyline, player_points]
+              min_ev: 3.0
+              min_profit: 1.5
+
+    Resync:
+      name: resync
+      title: Re-send the snapshot for channels you already hold
+      summary: |
+        Re-sends the initial snapshot for channels the connection is ALREADY
+        subscribed to, without dropping the subscription — so no updates are
+        lost in a gap between unsubscribe and subscribe. Acknowledged with
+        `resync:started`, then the same snapshot sequence a fresh subscribe
+        produces. Support is advertised as `features.client_resync` on the
+        `connected` ack; detect it there rather than probing.
+
+        Naming any channel the connection does not hold rejects the WHOLE
+        message with `channel_not_subscribed` — this is not a back-door
+        subscribe. Rate limited to one per 10s per connection; a refusal is
+        `resync_rate_limited` carrying `retry_after_ms`, and an overlapping
+        request is `resync_in_progress`. A snapshot dump is expensive, which is
+        why an unbounded client-driven dump is not offered.
+
+        Sent before authenticating is `not_authenticated`; sent with an empty
+        or absent `channels` is `missing_channels`. Those five are every error
+        this message can produce.
+      contentType: application/json
+      payload:
+        type: object
+        required: [type, channels]
+        properties:
+          type: { type: string, const: resync }
+          channels:
+            type: array
+            minItems: 1
+            items:
+              type: string
+              enum: [ev, arbitrage, middles, low_hold, odds, gamestate]
+
+    ResyncStarted:
+      name: resync:started
+      title: Resync accepted
+      summary: |
+        Acknowledges an accepted `resync`. The snapshot frames for the listed
+        channels follow, ending at `snapshot:complete` exactly as a fresh
+        subscribe does.
+      contentType: application/json
+      payload:
+        type: object
+        required: [type, channels]
+        properties:
+          type: { type: string, const: "resync:started" }
+          channels:
+            type: array
+            items: { type: string }
+            description: The channels whose snapshots are being re-sent.
+
+    Unsubscribe:
+      name: unsubscribe
+      title: Remove active channels
+      summary: |
+        Remove one or more channels. To request a fresh snapshot on the same
+        authenticated connection, unsubscribe the affected channel, optionally
+        update filters, and subscribe to it again. Duplicate subscribe and a
+        filter-only update do not resend a snapshot.
+      contentType: application/json
+      payload:
+        type: object
+        required: [type, channels]
+        properties:
+          type: { type: string, const: unsubscribe }
+          channels:
+            type: array
+            minItems: 1
+            items:
+              type: string
+              enum: [ev, arbitrage, middles, low_hold, odds, gamestate]
+
+    Filter:
+      name: filter
+      title: Replace active filters
+      summary: Update live-delivery filters without changing channels or sending a fresh snapshot.
+      contentType: application/json
+      payload:
+        type: object
+        required: [type, filters]
+        properties:
+          type: { type: string, const: filter }
+          filters:
+            type: object
+            properties:
+              sports:      { type: array, items: { type: string } }
+              sportsbooks: { type: array, items: { type: string } }
+              leagues:     { type: array, items: { type: string } }
+              markets:     { type: array, items: { type: string } }
+              eventIds:    { type: array, items: { type: string } }
+              min_ev:      { type: number, description: "Minimum EV % (default 2.0)." }
+              min_profit:  { type: number, description: "Minimum profit % for arb / low-hold (default 0.5)." }
+      examples:
+        - name: NbaBooks
+          payload:
+            type: filter
+            filters:
+              sports: [basketball]
+              sportsbooks: [draftkings, fanduel]
+              leagues: [nba]
+
+    Ping:
+      name: ping
+      title: Application-level keepalive
+      summary: Send every ~25s to defeat proxy idle timeouts.
+      contentType: application/json
+      payload:
+        type: object
+        required: [type]
+        properties:
+          type: { type: string, const: ping }
+
+    # ── Server → Client (lifecycle) ─────────────────────────────────────────
+    Connected:
+      name: connected
+      title: Welcome message
+      summary: First message sent after a successful upgrade and tier check.
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            required: [stream_id, tier, features, channels, global_seq, books]
+            properties:
+              type:       { type: string, const: connected }
+              message:    { type: string }
+              stream_id:  { type: string, description: "Unique connection identifier." }
+              tier:       { type: string, enum: [free, hobby, pro, sharp, enterprise] }
+              features:   { $ref: '#/components/schemas/TierFeatures' }
+              channels:
+                description: Active channel subscriptions, or `null` for all tier-allowed data.
+                oneOf:
+                  - type: array
+                    items: { type: string, enum: [ev, arbitrage, middles, low_hold, odds, gamestate] }
+                  - type: 'null'
+              global_seq:
+                type: string
+                example: '12847'
+                description: |
+                  JavaScript-safe process-global decimal string checkpoint.
+                  It is not a per-connection or contiguous counter. On a
+                  fresh/full-resync path it is a conservative floor; commit it
+                  only after the following snapshot completion boundary.
+              resumed:
+                type: boolean
+                description: On a `from_seq` attempt, whether replay was accepted.
+              fallback_reason:
+                type: string
+                enum: [parse_error, foreign_seq, process_restarted, seq_too_old, gap_too_large, disabled]
+                description: Present when resume is declined; authoritative snapshots follow.
+              books:      { $ref: '#/components/schemas/BookAllowance' }
+              streams:    { $ref: '#/components/schemas/StreamAllowance' }
+
+    Subscribed:
+      name: subscribed
+      title: Active subscription confirmation
+      summary: One acknowledgement per requested channel, with the resolved filter state.
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            required: [channel, filters]
+            properties:
+              type:        { type: string, const: subscribed }
+              channel:
+                type: string
+                enum: [ev, arbitrage, middles, low_hold, odds, gamestate]
+              filters:
+                type: object
+                properties:
+                  sport:      { type: array, items: { type: string } }
+                  sportsbook: { type: array, items: { type: string } }
+                  league:     { type: array, items: { type: string } }
+                  market:     { type: array, items: { type: string } }
+                  event:      { type: array, items: { type: string } }
+                  live:       { type: boolean }
+                  min_ev:     { type: number }
+                  min_profit: { type: number }
+                  min_odds:   { type: number }
+                  max_odds:   { type: number }
+
+    Unsubscribed:
+      name: unsubscribed
+      title: Channel removal confirmation
+      summary: One acknowledgement per channel requested in an `unsubscribe` message.
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            required: [channel]
+            properties:
+              type:    { type: string, const: unsubscribed }
+              channel: { type: string }
+
+    # ── Server → Client (initial snapshots) ─────────────────────────────────
+    OpportunitiesSnapshot:
+      name: opportunities_snapshot
+      title: Initial opportunities for one channel
+      summary: |
+        One message per subscribed opportunity channel during the initial
+        load. The top-level key matches the channel: `ev`, `arbitrage`,
+        `middles`, or `low_hold`. Large snapshots are chunked — when split,
+        each frame includes `chunk` and `totalChunks`.
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            properties:
+              type:        { type: string, const: opportunities_snapshot }
+              chunk:       { type: integer, minimum: 1 }
+              totalChunks: { type: integer, minimum: 1 }
+              ev:          { type: array, items: { $ref: '#/components/schemas/EvOpportunity' } }
+              arbitrage:   { type: array, items: { $ref: '#/components/schemas/ArbOpportunity' } }
+              middles:     { type: array, items: { $ref: '#/components/schemas/MiddleOpportunity' } }
+              low_hold:    { type: array, items: { $ref: '#/components/schemas/LowHoldOpportunity' } }
+
+    Initial:
+      name: initial
+      title: Initial odds snapshot, per sportsbook
+      summary: One message per book; large books are split (≤1000 odds per frame).
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            required: [source, data]
+            properties:
+              type:   { type: string, const: initial }
+              source: { type: string, description: "Sportsbook ID." }
+              data:
+                type: array
+                description: Array of NormalizedOdds entries (see REST `/odds` schema in openapi.json).
+                items: { type: object, additionalProperties: true }
+              count:  { type: integer }
+
+    SnapshotComplete:
+      name: snapshot:complete
+      title: Initial-data sentinel
+      summary: Terminal boundary for a fresh snapshot, full-resync fallback, or accepted replay.
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            properties:
+              type:        { type: string, const: snapshot:complete }
+              books:       { type: array, items: { type: string } }
+              total_odds:  { type: integer, description: "Rows sent by a fresh or full-resync odds snapshot." }
+              mode:
+                type: string
+                enum: [resume, full_resync]
+                description: Replay completion or authoritative full-snapshot fallback boundary.
+              fallback_reason:
+                type: string
+                description: On `full_resync`, the same explicit reason reported by `connected`.
+              gap_detected:
+                type: boolean
+                description: When true after replay started, reconcile through REST or obtain a fresh snapshot.
+              replayed_count:
+                type: integer
+                description: Buffered frames sent by normal replay, or changed rows sent by coalesced replay.
+              skipped_count:
+                type: integer
+                description: Buffered frames excluded by filters; coalesced replay reports zero.
+              last_seq:
+                type: string
+                description: Server-issued receipt at the completed normal/coalesced replay boundary.
+
+    # ── Server → Client (odds deltas) ───────────────────────────────────────
+    OddsUpdate:
+      name: odds:update
+      title: Incremental odds update
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            required: [source, data]
+            properties:
+              type:   { type: string, const: odds:update }
+              source: { type: string }
+              data:
+                type: array
+                items: { type: object, additionalProperties: true }
+              count: { type: integer }
+
+    OddsRemoved:
+      name: odds:removed
+      title: Odds removed by a book
+      summary: Market was taken down, line was settled, or selection was withdrawn.
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            required: [source, ids]
+            properties:
+              type:   { type: string, const: odds:removed }
+              source: { type: string }
+              ids:    { type: array, items: { type: string } }
+              count:  { type: integer }
+
+    GamestateFinal:
+      name: gamestate:final
+      title: Event finished
+      summary: One-shot announcement that an event finished, carrying its terminal game-state row.
+      description: |
+        Sent once per finished event to `gamestate` / `all` subscribers with
+        game-state access, after the same `sport` / `league` filters as
+        `gamestate:update`. Replayable on a `from_seq` reconnect. The row
+        (`status: "final"`, `completed_at`, final scores) also stays in the
+        gamestate slate for the carry window, so this frame is never the only
+        delivery. It can occasionally repeat, so dedupe on
+        `(event_id, completed_at)`.
+        See https://docs.sharpapi.io/api-reference/gamestate/#finished-event-announcements
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            required: [data]
+            properties:
+              type: { type: string, const: "gamestate:final" }
+              data:
+                type: array
+                minItems: 1
+                maxItems: 1
+                items:
+                  type: object
+                  required: [event_id, status, completed_at]
+                  additionalProperties: true
+                  properties:
+                    event_id:     { type: string }
+                    status:       { type: string, const: final }
+                    completed_at: { type: string, format: date-time }
+                    score_type:   { type: string, enum: [points, sets] }
+                    winner:       { type: string, enum: [home, away, draw] }
+                    is_live:      { type: boolean, const: false }
+                    stale:        { type: boolean, const: false }
+
+    # ── Server → Client (opportunity deltas) ────────────────────────────────
+    EvDetected:
+      name: ev:detected
+      title: New or updated +EV opportunity (upsert by id)
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            required: [data]
+            properties:
+              type: { type: string, const: ev:detected }
+              data:
+                type: array
+                items: { $ref: '#/components/schemas/EvOpportunity' }
+
+    EvExpired:
+      name: ev:expired
+      title: +EV opportunities no longer available
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            properties:
+              type: { type: string, const: ev:expired }
+              data: { $ref: '#/components/schemas/ExpiredIds' }
+
+    ArbDetected:
+      name: arb:detected
+      title: New or updated arbitrage opportunity (upsert by id)
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            required: [data]
+            properties:
+              type: { type: string, const: arb:detected }
+              data:
+                type: array
+                items: { $ref: '#/components/schemas/ArbOpportunity' }
+
+    ArbExpired:
+      name: arb:expired
+      title: Arbitrage opportunities no longer available
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            properties:
+              type: { type: string, const: arb:expired }
+              data: { $ref: '#/components/schemas/ExpiredIds' }
+
+    MiddlesDetected:
+      name: middles:detected
+      title: New or updated middle opportunity (upsert by id)
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            required: [data]
+            properties:
+              type: { type: string, const: middles:detected }
+              data:
+                type: array
+                items: { $ref: '#/components/schemas/MiddleOpportunity' }
+
+    MiddlesExpired:
+      name: middles:expired
+      title: Middle opportunities no longer available
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            properties:
+              type: { type: string, const: middles:expired }
+              data: { $ref: '#/components/schemas/ExpiredIds' }
+
+    LowHoldDetected:
+      name: low_hold:detected
+      title: New or updated low-hold opportunity (upsert by id)
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            required: [data]
+            properties:
+              type: { type: string, const: low_hold:detected }
+              data:
+                type: array
+                items: { $ref: '#/components/schemas/LowHoldOpportunity' }
+
+    LowHoldExpired:
+      name: low_hold:expired
+      title: Low-hold opportunities no longer available
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            properties:
+              type: { type: string, const: low_hold:expired }
+              data: { $ref: '#/components/schemas/ExpiredIds' }
+
+    # ── Server → Client (control) ───────────────────────────────────────────
+    Heartbeat:
+      name: heartbeat
+      title: Server keepalive
+      summary: |
+        Sent every ~30s (`heartbeat_interval_ms` on the `connected` ack). Distinct
+        from `pong` (which is the reply to a client `ping`). Carries the current
+        `seq`/`global_seq` peeked without advancing them, so it is a stall signal
+        only and never a reconnect receipt. Best-effort: a backpressured client
+        may miss a cycle. The hard liveness contract is the protocol PONG
+        deadline (`pong_timeout_ms`), not a missed-heartbeat count.
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            properties:
+              type: { type: string, const: heartbeat }
+              source_health:
+                type: object
+                description: |
+                  Compact `{sportsbook_id: status}` echo of the per-book source
+                  health, so a client that missed a `source_health` frame
+                  re-syncs within one heartbeat. Present only when the
+                  `source_health` capability is advertised on the `connected`
+                  ack and a snapshot has been taken; the full detail is in the
+                  `source_health` message.
+                additionalProperties:
+                  type: string
+                  enum: [streaming, degraded_polling, stale]
+
+    SourceHealth:
+      name: source_health
+      title: Per-book data-source health
+      summary: |
+        Sent once immediately after the `connected` ack (before the snapshot
+        burst) and again whenever a book's status changes, debounced per book.
+        Only on connections whose `connected` ack advertises the
+        `source_health` capability.
+
+        If the server has not taken its first status snapshot by the time you
+        connect, no frame follows the ack — and the `heartbeat` carries no
+        `source_health` echo yet either, since both read the same snapshot. In
+        that case the first heartbeat that carries `source_health` is how the
+        client learns the state, and the next status change sends a full frame.
+
+        Advisory: it reports how the data for a book is being sourced right
+        now, and is not a delivery guarantee.
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            required: [books]
+            properties:
+              type: { type: string, const: source_health }
+              books:
+                type: object
+                description: |
+                  Keyed by sportsbook ID. Only books with a monitored source
+                  appear, so treat an absent book as "no status reported"
+                  rather than as unhealthy.
+                additionalProperties: { $ref: '#/components/schemas/BookSourceHealth' }
+
+    Pong:
+      name: pong
+      title: Reply to a client ping
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            properties:
+              type: { type: string, const: pong }
+
+    Error:
+      name: error
+      title: Non-fatal or fatal error
+      summary: |
+        Application-layer error frame. Non-fatal errors keep the connection
+        open (e.g. unknown message type). Auth and rate-limit errors are
+        delivered via WebSocket close codes — see "Close codes" below.
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            required: [code, message]
+            properties:
+              type:    { type: string, const: error }
+              code:    { type: string, description: "Stable error code (e.g. `unknown_type`, `invalid_filter`)." }
+              message: { type: string }
+
+    ResyncRequired:
+      name: resync_required
+      title: Client state may be incomplete
+      summary: |
+        Server-to-client backpressure signal. Reconcile through REST, reconnect
+        without `from_seq` while restoring channels and filters, or use the
+        authenticated unsubscribe/resubscribe fresh-snapshot path. This is not
+        a message clients send.
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/ServerEnvelope'
+          - type: object
+            properties:
+              type: { type: string, const: resync_required }
+
+  schemas:
+    ServerEnvelope:
+      type: object
+      description: Common optional fields used by server-pushed messages; snapshot and control frames are not uniformly sequenced.
+      required: [type]
+      properties:
+        type:
+          type: string
+          description: Message type discriminator.
+        seq:
+          type: integer
+          description: Legacy integer form of the process-global checkpoint on replayable data frames; not per-connection or contiguous for filtered clients.
+        global_seq:
+          type: string
+          example: '12847'
+          description: JavaScript-safe process-global value. Present on replayable data frames and selected lifecycle frames; arbitrary observations are not reconnect receipts.
+        replay:
+          type: boolean
+          description: Set to `true` on messages that were re-emitted from the replay buffer after a `from_seq` reconnect.
+        timestamp:
+          type: string
+          format: date-time
+          description: Server emit time (RFC 3339).
+
+    TierFeatures:
+      type: object
+      description: |
+        Capabilities available on this connection: the tier's own feature list —
+        the same set the REST `/account` response returns — plus the
+        connection-level protocol flags below.
+
+        Every value is `true` — the server adds a key only when it is granting
+        that capability and never writes `false`, which is why each property
+        below is declared `const: true`. An absent key means the capability is
+        not available on this connection, so `'ev' in features` and
+        `features.ev === true` always agree.
+
+        The map is derived live per connection rather than fixed, and the object
+        is deliberately open: a build may send a key that is not listed here.
+        Ignore a key you do not recognise instead of rejecting the frame. An
+        unlisted key follows the same rule — it too is only ever `true`.
+      additionalProperties: { type: boolean, const: true }
+      properties:
+        odds:         { type: boolean, const: true }
+        schedule:     { type: boolean, const: true }
+        ev:           { type: boolean, const: true }
+        arbitrage:    { type: boolean, const: true }
+        middles:      { type: boolean, const: true }
+        low_hold:     { type: boolean, const: true }
+        history:      { type: boolean, const: true }
+        futures:      { type: boolean, const: true }
+        closing_line: { type: boolean, const: true }
+        splits:       { type: boolean, const: true }
+        game_state:
+          type: boolean
+          const: true
+          description: >-
+            Present when this key has game-state access. Use it to tell whether
+            you may subscribe to the `gamestate` channel, rather than probing.
+        source_health:
+          type: boolean
+          const: true
+          description: >-
+            Present when this server has source-health reporting enabled: a
+            `source_health` frame follows this ack, another is sent on each
+            status change, and the `heartbeat` carries a compact
+            `{book: status}` echo. Conditional: a build with it disabled omits
+            the key.
+        client_resync:
+          type: boolean
+          const: true
+          description: >-
+            Present when the build accepts the client-sent `resync` message.
+            Detect support here rather than probing with a message that older
+            builds answer as an unknown message type.
+
+    BookSourceHealth:
+      type: object
+      description: One book's current source status, as reported by `source_health`.
+      required: [status, since]
+      properties:
+        status:
+          type: string
+          enum: [streaming, degraded_polling, stale]
+          description: >-
+            `streaming` — live push feed. `degraded_polling` — the feed fell
+            back to polling, so updates arrive on a slower cadence.
+            `stale` — no fresh data is being observed for this book.
+        since:
+          type: string
+          format: date-time
+          description: >-
+            When the current status began, as observed by this server process
+            (RFC 3339). It restarts from the server's own first observation
+            after a restart, so it is a lower bound, not a historical record.
+        expected_cadence_seconds:
+          description: >-
+            Rough update interval to expect while in this status, or `null`
+            when no cadence can be stated.
+          oneOf:
+            - type: integer
+            - type: 'null'
+        streaming_sports:
+          type: array
+          description: Sports currently on the live push feed. Omitted when none are.
+          items: { type: string }
+
+    StreamAllowance:
+      type: object
+      description: |
+        Concurrent-stream limits for the API key on this connection. The cap is
+        per key and shared across WebSocket and SSE; exceeding it displaces the
+        oldest connection (close `4001`) rather than rejecting the new one.
+      properties:
+        max:
+          type: integer
+          description: |
+            Concurrent streams allowed on this key — the cap actually enforced,
+            including any provisioned increase above the tier default.
+        active:
+          type: integer
+          description: |
+            Streams currently held by this key, counted on the serving instance
+            only. Advisory and a LOWER BOUND: enforcement is fleet-wide, so
+            `active` < `max` does not guarantee a new connection will avoid
+            displacing one of your own sessions. Handle `4001` regardless.
+    BookAllowance:
+      type: object
+      description: Book limits enforced for the connection.
+      properties:
+        max:
+          type: integer
+          description: Maximum allowed books (`-1` = unlimited).
+        allowed:
+          oneOf:
+            - type: array
+              items: { type: string }
+            - type: 'null'
+          description: Whitelist of allowed sportsbooks, or `null` if unrestricted.
+
+    ExpiredIds:
+      type: object
+      description: Payload shape used by every `*:expired` message.
+      required: [expired]
+      properties:
+        expired:
+          type: array
+          items: { type: string }
+          description: Stable opportunity identifiers no longer offered.
+
+    EvOpportunity:
+      type: object
+      description: |
+        +EV opportunity. Field set mirrors the REST `/opportunities/ev` row;
+        canonical schema lives in openapi.json (`EVOpportunity`).
+      properties:
+        id:                { type: string }
+        game_id:           { type: string }
+        ev_percentage:     { type: number }
+        odds_american:     { type: integer }
+        odds_decimal:      { type: number }
+        no_vig_odds:       { type: integer }
+        selection:         { type: string }
+        market:            { type: string }
+        line:              { type: [number, 'null'] }
+        sportsbook:        { type: string }
+        game:              { type: string }
+        sport:             { type: string }
+        league:            { type: string }
+        home_team:         { type: string }
+        away_team:         { type: string }
+        start_time:        { type: string, format: date-time }
+        is_live:           { type: boolean }
+        confidence_score:  { type: number }
+        kelly_percent:     { type: number }
+        book_count:        { type: integer }
+        detected_at:       { type: string, format: date-time }
+      additionalProperties: true
+
+    ArbOpportunity:
+      type: object
+      description: Arbitrage opportunity (mirrors REST `ArbitrageOpportunity`).
+      properties:
+        id:             { type: string }
+        event_id:       { type: string }
+        event_name:     { type: string }
+        sport:          { type: string }
+        league:         { type: string }
+        market_type:    { type: string }
+        line:           { type: [number, 'null'] }
+        profit_percent: { type: number }
+        implied_total:  { type: number }
+        is_live:        { type: boolean }
+        legs:
+          type: array
+          items:
+            type: object
+            properties:
+              sportsbook:           { type: string }
+              selection:            { type: string }
+              odds_american:        { type: integer }
+              odds_decimal:         { type: number }
+              implied_probability:  { type: number }
+              stake_percent:        { type: number }
+        detected_at: { type: string, format: date-time }
+      additionalProperties: true
+
+    MiddleOpportunity:
+      type: object
+      description: Middle opportunity (mirrors REST `MiddleOpportunity`).
+      properties:
+        id:                  { type: string }
+        event_id:            { type: string }
+        event_name:          { type: string }
+        sport:               { type: string }
+        league:              { type: string }
+        market_type:         { type: string }
+        side1:               { $ref: '#/components/schemas/MiddleSide' }
+        side2:               { $ref: '#/components/schemas/MiddleSide' }
+        middle_size:         { type: number }
+        middle_numbers:      { type: array, items: { type: integer } }
+        middle_probability:  { type: number }
+        expected_value:      { type: number }
+        roi_percentage:      { type: number }
+        quality_score:       { type: number }
+        detected_at:         { type: string, format: date-time }
+      additionalProperties: true
+
+    MiddleSide:
+      type: object
+      properties:
+        book:             { type: string }
+        selection:        { type: string }
+        line:             { type: number }
+        odds:
+          type: object
+          properties:
+            american:         { type: integer }
+            decimal:          { type: number }
+            probability:      { type: number }
+            fair_probability: { type: number }
+        stake_percent:    { type: number }
+        odds_age_seconds: { type: number }
+        deep_link:        { type: [string, 'null'] }
+
+    LowHoldOpportunity:
+      type: object
+      description: Low-hold opportunity (mirrors REST `LowHoldOpportunity`).
+      properties:
+        id:              { type: string }
+        event_id:        { type: string }
+        event_name:      { type: string }
+        sport:           { type: string }
+        league:          { type: string }
+        market_type:     { type: string }
+        line:            { type: [number, 'null'] }
+        home_team:       { type: string }
+        away_team:       { type: string }
+        start_time:      { type: string, format: date-time }
+        hold_percentage: { type: number }
+        is_live:         { type: boolean }
+        all_books:       { type: array, items: { type: string } }
+        side1:           { $ref: '#/components/schemas/LowHoldSide' }
+        side2:           { $ref: '#/components/schemas/LowHoldSide' }
+        detected_at:     { type: string, format: date-time }
+      additionalProperties: true
+
+    LowHoldSide:
+      type: object
+      properties:
+        selection: { type: string }
+        books:     { type: array, items: { type: string } }
+        line:      { type: [number, 'null'] }
+        odds:
+          type: object
+          properties:
+            american:            { type: integer }
+            decimal:             { type: number }
+            implied_probability: { type: number }
+            fair_probability:    { type: number }
+        deep_links:
+          type: object
+          additionalProperties: { type: string }
+          description: Map of book ID → state-aware deep link URL.
