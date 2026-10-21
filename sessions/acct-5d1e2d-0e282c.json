@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-7dry2r",
  "head": "b610dc97efb6dc2f13d89389ec5f1bc4f9a67d52",
  "since": 1792539161,
- "beat": 1792558116,
- "beatIso": "2026-10-21T04:48:36Z",
+ "beat": 1792558121,
+ "beatIso": "2026-10-21T04:48:41Z",
  "done": "CH52: pull arrow flashes 1s, status bar shows read in flight",
  "next": "ship v1.0.30"
 }
