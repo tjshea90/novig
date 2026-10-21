@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "0f5677f0e27c3d46b262b1a9b60d28b6d1f075dd",
+ "head": "340405fb6428b95161a2bdcdbfff28a70d1750f3",
  "since": 1792596542,
- "beat": 1792624665,
- "beatIso": "2026-10-21T23:17:45Z",
- "done": "SA2/SA3 code: SharpApiClient (900/min, 4 in flight, 401/429 handling, usage meter), SharpApiFeed (league load by cursor + per-league /odds/delta, hot 2 s / cold 15 s), SharpApiConvert + SharpApiBooks + SharpApiSource; wired: ApiProvider, QuotaPolicy, ApiProbe Test (/account + /account/usage), CloudKeys SHARPAPI_API_KEY + cloud-scan.yml, CloudSources, ApiToggles, CloudScanKey, ApiMonitor, ApiManager, SOURCE_ORDER/HOT_FEEDS, phone ApiEntry + Settings page + index + phone source; Circa/Bookmaker sharp (schema 23). Compiles.",
- "next": "tests: SharpApiConvertTest, SharpApiFeedTest (MockWebServer), fix ApiTogglesTest/AltMarketsTest schema; then SA4 live feed"
+ "beat": 1792624718,
+ "beatIso": "2026-10-21T23:18:38Z",
+ "done": "SA2/SA3 tested: SharpApiTest (6: lines, pairs, excluded books, live split, store load+delta, 401/429); toggle/schema/pages tests updated; full floor green",
+ "next": "SA4: SharpApiLiveFeed (Pinnacle live from the store as Pinnodds frames) + PinnFeedChoice.SHARPAPI on the engine; closing-line + EV journals; CHANGES.md; ship"
 }
