@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-byd011",
- "head": "70c7ac506eebe77dc91dfb8b425dc5ff1adf41ae",
+ "head": "550d00beec237c96d6d3598bcd7177403d936460",
  "since": 1792539161,
- "beat": 1792548165,
- "beatIso": "2026-10-21T02:02:45Z",
+ "beat": 1792548422,
+ "beatIso": "2026-10-21T02:07:02Z",
  "done": "v1.0.28 laned scan shipped, release.yml triggered",
  "next": "confirm v1.0.28 release, record-release.sh v1.0.28 368, tell Tj in chat; then read first scan notes for quick-scan timing"
 }
