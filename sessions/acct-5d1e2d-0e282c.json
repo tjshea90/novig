@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "701b79f6a69142f4b4ab52eeac7f58765d1107c7",
+ "head": "3850ad7743917cfd06ab4d23af45385a9814a49e",
  "since": 1792539161,
- "beat": 1792541261,
- "beatIso": "2026-10-21T00:07:41Z",
- "done": "pre-release: v1.0.25: ParlayAPI live play-by-play stream as the engine's score source, Pro key first (CH47) (versionCode 365, v1.0.25)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.25), then run: bash tools/record-release.sh v1.0.25 365 \"v1.0.25: ParlayAPI live play-by-play stream as the engine's score source, Pro key first (CH47)\""
+ "beat": 1792541321,
+ "beatIso": "2026-10-21T00:08:41Z",
+ "done": "v1.0.25 shipped, replied to Tj batch; CH48 logged",
+ "next": "record v1.0.25 release; CH48a audit API monitor; CH47e arb leads; phone PBP wiring"
 }
