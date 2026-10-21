@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "f6f2275880e3d590edd24af0461452d35094e4bf",
+ "head": "b919a87feb00834d3044091a57f5dac3330bcd14",
  "since": 1792596542,
- "beat": 1792623205,
- "beatIso": "2026-10-21T22:53:25Z",
+ "beat": 1792623360,
+ "beatIso": "2026-10-21T22:56:00Z",
  "done": "v1.0.41 recorded; engine verified: CNO answers the runner (100 rows, good read seconds old), but 0 Kalshi rows: added a list note saying how many Kalshi rows CNO listed and how many its fee put under the minimum (CnoVenuesTest)",
  "next": "next session: read the engine's cno note to see Kalshi's count; TR3 SharpAPI when Tj starts the trial"
 }
