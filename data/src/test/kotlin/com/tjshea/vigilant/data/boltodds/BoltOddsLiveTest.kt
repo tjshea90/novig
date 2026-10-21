@@ -104,7 +104,7 @@ class BoltOddsLiveTest {
                     "/api/get_info" -> MockResponse().setBody(infoBody)
                     "/api/get_markets" -> MockResponse().setBody(marketsBody)
                     "/api/snapshot" -> MockResponse().setResponseCode(snapshotCode).setBody(snapshotBody)
-                    "/api/get_games" -> MockResponse().setBody("""{"Boston Celtics vs New York Knicks, 2026-10-20, 07":{"when":"2026-10-20, 07:30 PM","game":"Boston Celtics vs New York Knicks, 2026-10-20, 07","orig_teams":"Boston Celtics vs New York Knicks","universal_id":"abc123","sport":"NBA"}}""")
+                    "/api/get_games" -> MockResponse().setBody("""{"Boston Celtics vs New York Knicks, ${DAY}, 07":{"when":"${DAY}, 07:30 PM","game":"Boston Celtics vs New York Knicks, ${DAY}, 07","orig_teams":"Boston Celtics vs New York Knicks","universal_id":"abc123","sport":"NBA"}}""")
                     "/api/get_parlays" -> MockResponse().setBody("""[{"odds":"+1746","total_bets":3238,"type":"SGP_PLUS","legs":{}}]""")
                     "/api/playbyplay/user" -> MockResponse().setResponseCode(403).setBody("""{"detail":"Not available on your plan"}""")
                     "/api/livescores/user" -> MockResponse().setBody("""{"games":[]}""")
@@ -130,8 +130,8 @@ class BoltOddsLiveTest {
 
     private suspend fun until(timeoutMs: Long = 8_000, check: () -> Boolean) = withTimeout(timeoutMs) { while (!check()) delay(20) }
 
-    private fun game(book: String, ml1: String = "-150", ml2: String = "+130", at: String = "2026-10-20T14:00:00+00:00", sport: String = "NBA", action: String = "initial_state") =
-        """{"timestamp":"$at","action":"$action","data":{"sport":"$sport","sportsbook":"$book","game":"Boston Celtics vs New York Knicks, 2026-10-20, 07","home_team":"Boston Celtics","away_team":"New York Knicks","info":{"id":1,"game":"Boston Celtics vs New York Knicks, 2026-10-20, 07","when":"2026-10-20, 07:30 PM","link":"x"},"outcomes":{"Boston Celtics Moneyline":{"odds":"$ml1","outcome_name":"Moneyline","outcome_line":null,"outcome_over_under":null,"outcome_target":"Boston Celtics"},"New York Knicks Moneyline":{"odds":"$ml2","outcome_name":"Moneyline","outcome_line":null,"outcome_over_under":null,"outcome_target":"New York Knicks"}}}}"""
+    private fun game(book: String, ml1: String = "-150", ml2: String = "+130", at: String = "${DAY}T14:00:00+00:00", sport: String = "NBA", action: String = "initial_state") =
+        """{"timestamp":"$at","action":"$action","data":{"sport":"$sport","sportsbook":"$book","game":"Boston Celtics vs New York Knicks, ${DAY}, 07","home_team":"Boston Celtics","away_team":"New York Knicks","info":{"id":1,"game":"Boston Celtics vs New York Knicks, ${DAY}, 07","when":"${DAY}, 07:30 PM","link":"x"},"outcomes":{"Boston Celtics Moneyline":{"odds":"$ml1","outcome_name":"Moneyline","outcome_line":null,"outcome_over_under":null,"outcome_target":"Boston Celtics"},"New York Knicks Moneyline":{"odds":"$ml2","outcome_name":"Moneyline","outcome_line":null,"outcome_over_under":null,"outcome_target":"New York Knicks"}}}}"""
 
     private val filters = BoltFilters(sports = listOf("NBA"), sportsbooks = listOf("draftkings", "fanduel"), markets = listOf("Moneyline"))
 
@@ -223,7 +223,7 @@ class BoltOddsLiveTest {
         assertEquals(listOf("draftkings", "fanduel"), snap.queryParameterValues("sportsbooks"))
         assertEquals(2, s.board.gamesOf(listOf("NBA")).size)
         // a live line moves, a book removes a line
-        serverSockets.last().frame(game("draftkings", ml1 = "-170", ml2 = "+148", at = "2026-10-20T14:30:00+00:00", action = "game_update"))
+        serverSockets.last().frame(game("draftkings", ml1 = "-170", ml2 = "+148", at = "${DAY}T14:30:00+00:00", action = "game_update"))
         until { s.board.gamesOf(listOf("NBA")).any { g -> g.sportsbook == "draftkings" && g.outcomes.values.any { it.odds == -170 } } }
         assertTrue(s.live)
         assertNotNull("a book that spoke is vouched for", s.aliveAt("draftkings", "NBA"))
@@ -301,7 +301,7 @@ class BoltOddsLiveTest {
             val s = stream(client())
             s.want(filters)
             assertTrue("$kind: ready", s.awaitReady(8_000))
-            serverSockets.last().frame(game("draftkings", ml1 = "-170", ml2 = "+148", at = "2026-10-20T14:30:00+00:00", action = "game_update"))
+            serverSockets.last().frame(game("draftkings", ml1 = "-170", ml2 = "+148", at = "${DAY}T14:30:00+00:00", action = "game_update"))
             until { s.board.gamesOf(listOf("NBA")).any { g -> g.outcomes.values.any { it.odds == -170 } } }
             assertTrue("$kind: counted as binary (${s.binaryFrames} binary, ${s.textFrames} text)", s.binaryFrames >= 2 && s.textFrames == 0L)
             assertTrue("$kind: raw frames kept for Diagnostics", s.rawFrames.isNotEmpty() && s.rawFrames.first().startsWith("binary"))
@@ -355,7 +355,7 @@ class BoltOddsLiveTest {
         val s = stream(client())
         s.want(filters)
         assertTrue(s.awaitReady(8_000))
-        serverSockets.last().send("""{"timestamp":"2026-10-20T14:40:00+00:00","action":"book_clear","data":{"sport":{},"sportsbook":"fanduel","game":{},"home_team":{},"away_team":{},"info":{},"outcomes":{}}}""")
+        serverSockets.last().send("""{"timestamp":"${DAY}T14:40:00+00:00","action":"book_clear","data":{"sport":{},"sportsbook":"fanduel","game":{},"home_team":{},"away_team":{},"info":{},"outcomes":{}}}""")
         until { rest.count { it.requestUrl!!.encodedPath == "/api/snapshot" } == 2 }
         until { s.board.gamesOf(listOf("NBA")).size == 2 }
         s.close()
@@ -425,7 +425,7 @@ class BoltOddsLiveTest {
 
     @Test fun `the games source and the props source answer for their own socket`() = runBlocking {
         val feed = BoltOddsFeed(client(), OkHttpClient(), scope, wsUrl = wsUrl())
-        val props = """{"timestamp":"2026-10-20T14:00:00+00:00","action":"initial_state","data":{"sport":"NBA","sportsbook":"draftkings","game":"Boston Celtics vs New York Knicks, 2026-10-20, 07","home_team":"Boston Celtics","away_team":"New York Knicks","info":{"id":1,"game":"g","when":"2026-10-20, 07:30 PM","link":"x"},"outcomes":{
+        val props = """{"timestamp":"${DAY}T14:00:00+00:00","action":"initial_state","data":{"sport":"NBA","sportsbook":"draftkings","game":"Boston Celtics vs New York Knicks, ${DAY}, 07","home_team":"Boston Celtics","away_team":"New York Knicks","info":{"id":1,"game":"g","when":"${DAY}, 07:30 PM","link":"x"},"outcomes":{
             "o":{"odds":"-115","outcome_name":"Player Points","outcome_line":"27.5","outcome_over_under":"Over","outcome_target":"Jayson Tatum"},
             "u":{"odds":"-105","outcome_name":"Player Points","outcome_line":"27.5","outcome_over_under":"Under","outcome_target":"Jayson Tatum"}}}}"""
         snapshotBody = "[$props]"
@@ -477,6 +477,6 @@ class BoltOddsLiveTest {
         val feed = BoltOddsFeed(client(), OkHttpClient(), scope, wsUrl = wsUrl())
         assertEquals(listOf("lines", "props"), listOf(feed.lines.name, feed.props.name))
         assertFalse(feed.connected)
-        assertEquals(Instant.parse("2026-10-20T23:30:00Z").toEpochMilli(), BoltParser.whenMs("2026-10-20, 07:30 PM"))
+        assertEquals(Instant.parse("${DAY}T23:30:00Z").toEpochMilli(), BoltParser.whenMs("${DAY}, 07:30 PM"))
     }
 }
