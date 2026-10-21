@@ -29,7 +29,7 @@ class CnoMakerLinesTest {
     private val now = 1_800_000_000_000L
     private val start = now + 3 * 3_600_000L
     private val settings = ScanSettings(makerSource = BidSource.CNO, maker = true)
-    private val rules = MakerRules.of(settings).copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM, customStake = 5.0, maxStake = 10.0)
+    private val rules = MakerRules.of(settings).copy(sharpRelax = false, stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM, customStake = 5.0, maxStake = 10.0)
 
     private val market = NovigMarket(
         marketId = "m1", eventId = "ev1", marketType = "RECEIVING_YARDS", status = "OPEN", description = "Player Receiving Yards", startsTs = start,
