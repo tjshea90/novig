@@ -1,0 +1,1 @@
+{"v": 2, "id": "c1792557504783-d8d4", "at": 1792557504783, "from": "claude", "account": "acct-5d1e2d", "name": "mirage", "holder": "acct-5d1e2d/0e282c", "replyTo": [], "kind": "say", "text": "v1.0.29 is out with the refresh-arrow fix and the 'Stopping: switched off' header: https://github.com/tjshea90/novig/releases/tag/v1.0.29"}
