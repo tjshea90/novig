@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "85911a6b5e34a41bedbd109f115266189cf4903e",
+ "head": "d951d81da4e0c344b3c90faedc8d617191077e56",
  "since": 1792539161,
- "beat": 1792542915,
- "beatIso": "2026-10-21T00:35:15Z",
- "done": "CH48 tests, CH49 spend tally, parlay.yml arbscan",
- "next": "dispatch arbscan; check listen (tennis); ship v1.0.26"
+ "beat": 1792542991,
+ "beatIso": "2026-10-21T00:36:31Z",
+ "done": "CH48/49: tests updated; reply sent",
+ "next": "wait arbscan/listen results; ship v1.0.26"
 }
