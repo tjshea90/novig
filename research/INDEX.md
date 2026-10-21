@@ -4,7 +4,7 @@ Every study in `research/`, newest first, and how it is USED. Tuning levers and 
 Statuses: APPLIED (a change in `research/review/CHANGES.md` cites it), LEVER (on LEVERS.md), CLOSED (verdict and disposition on LEVERS.md), WATCH (an open TASKS.md item waits on its number),
 CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a sample, marked in its first lines), IDLE (cited nowhere: act on it or mark it).
 
-104 entries; 1 idle: api_study_v0.95.5_2026-10-12.md
+104 entries; 0 idle
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
@@ -78,7 +78,7 @@ CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a 
 | 2026-10-12 | `boltodds_live_v0.95.1_evidence_2026-10-12.md` | v0.95.1 file (Tj, 2026-10-12 ~20:35Z): BoltOdds live feed still 0 games - File: research/uploads/2026-10-12/147d424b-vigilant-diagnostics-v0.95.1-2026-10-12-1634.txt.gz | CLOSED |
 | 2026-10-12 | `boltodds_live_v0.95.0_first_evidence_2026-10-12.md` | BoltOdds live feed, first evidence (Tj's v0.95.0 file, 2026-10-12 ~20:15Z) - File: research/uploads/2026-10-12/fe2662f3-vigilant-diagnostics-v0.95.0-2026-10-12-1615.txt.gz and 5 screenshots (4:13-4:14 PM). | CLOSED |
 | 2026-10-12 | `boltodds_2026-10-12/` | (no title) | CODE |
-| 2026-10-12 | `api_study_v0.95.5_2026-10-12.md` | API study, first data: v0.95.5 Source race (Tj's file d284cd75, scan 20:07-20:09 ET, 144 s) - File: research/uploads/2026-10-12/d284cd75-vigilant-diagnostics-v0.95.5-2026-10-12-2009.txt.gz. Quote age = when the board was read m... | IDLE |
+| 2026-10-12 | `api_study_v0.95.5_2026-10-12.md` | API study, first data: v0.95.5 Source race (Tj's file d284cd75, scan 20:07-20:09 ET, 144 s) - File: research/uploads/2026-10-12/d284cd75-vigilant-diagnostics-v0.95.5-2026-10-12-2009.txt.gz. Quote age = when the board was read m... | LEVER |
 | 2026-10-12 | `api_shopping_list_2026-10-12.md` | API shopping list (Tj asked to simplify, 2026-10-12). Budget rule: $50/month or less. Everything not named here: do nothing. - 1. PinnWire + pinnapi (Pinnacle, real-time): as many as you can, 100 requests/day each. THE most val... | CLOSED |
 | 2026-10-12 | `api_freshness_2026-10-12.md` | What could be measured from this container (keyless), 2026-10-12 22:05Z - - PropLine `GET /v1/freshness` (no key): three samples 15 s apart. Per-book "staleness" = seconds since that book's LATEST market update: Pinnacle 0-1 s,... | LEVER CODE |
 | 2026-10-11 | `unabated_oddspapi_2026-10-11/` | (no title) | CODE |
