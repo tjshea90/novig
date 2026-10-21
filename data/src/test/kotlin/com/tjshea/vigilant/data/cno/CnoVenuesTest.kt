@@ -93,7 +93,8 @@ class CnoVenuesTest {
         val feed = CnoFeed(Fake("Novig"), clock = { 0L }, catalog = { asked++; null })
         val kalshi = CnoRow(0.05, event = "e", market = "m", bet = "b", odds = 110, book = "Kalshi", betUrl = "https://crazyninjaodds.com/x")
         val job = backgroundScope.launch { feed.keepLinksFresh(kotlinx.coroutines.flow.flowOf(listOf(kalshi))) }
-        testScheduler.advanceUntilIdle()
+        testScheduler.advanceTimeBy(30_000L)
+        testScheduler.runCurrent()
         assertEquals(0, asked)
         job.cancel()
     }
