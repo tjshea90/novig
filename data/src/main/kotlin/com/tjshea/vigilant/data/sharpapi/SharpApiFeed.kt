@@ -107,13 +107,63 @@ class SharpApiFeed(
     @Volatile var lastNote: String? = null
         private set
 
+    // ---- the WebSocket stream ([SharpApiStream], SS 2026-10-21): pushes merge into the same rows; while it is live and covers a league, its delta poll is only a reconcile every [RECONCILE_MS] ----
+
+    /** The leagues the stream is filtered to and when it last spoke (a frame or a heartbeat); 0 = not connected. */
+    @Volatile var streamLeagues: Set<String> = emptySet()
+    @Volatile var streamHeardAtMs: Long = 0L
+    @Volatile var streamRows = 0L
+        private set
+    /** Compact deltas for a row the store does not hold yet (the next reconcile reads it). */
+    @Volatile var streamMissed = 0L
+        private set
+
+    private fun streamCovers(league: String, now: Long): Boolean = league in streamLeagues && now - streamHeardAtMs < STREAM_ALIVE_MS
+
+    /**
+     * Rows pushed by the stream (`initial` full rows, `odds:update`/`odds:locked` full or compact rows): a held row takes the fields the push carries (the price, line, live and active flags, the delivery
+     * stamp, the size); a new row is kept only when it carries everything a price needs.
+     */
+    fun streamRows(data: JsonArray) {
+        for (e in data) {
+            val o = e as? JsonObject ?: continue
+            val id = (o["id"] as? JsonPrimitive)?.content ?: continue
+            val held = rows[id]
+            if (held != null) {
+                fun d(k: String) = (o[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.doubleOrNull
+                fun b(k: String) = (o[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.booleanOrNull
+                val merged = held.copy(
+                    decimal = d("odds_decimal")?.takeIf { it > 1.0 } ?: held.decimal,
+                    line = if (o.containsKey("line")) d("line") else held.line,
+                    live = b("is_live") ?: held.live,
+                    active = b("is_active") ?: held.active,
+                    stalePregame = b("is_stale_pregame_price") ?: held.stalePregame,
+                    atMs = SaRow.time((o["timestamp"] as? JsonPrimitive)?.content) ?: clock(),
+                    maxBet = d("max_bet") ?: held.maxBet,
+                )
+                rows[id] = merged
+                streamRows++
+            } else {
+                val r = SaRow.parse(o)
+                if (r == null || r.league.isBlank()) { streamMissed++; continue }
+                put(r.league, r)
+                streamRows++
+            }
+        }
+    }
+
+    fun streamRemove(ids: Collection<String>) { for (id in ids) rows[id]?.let { remove(it.league, id) } }
+
     /** Every row held for [league] (SharpAPI's slug). */
     fun rows(league: String): List<SaRow> = byLeague[league]?.mapNotNull { rows[it] }.orEmpty()
 
     fun size(): Int = rows.size
 
     /** When [league] was last read whole or brought up to date by a delta (0 = never). */
-    fun freshAt(league: String): Long = leagues[league]?.let { maxOf(it.loadedAtMs, it.polledAtMs) } ?: 0L
+    fun freshAt(league: String): Long = leagues[league]?.let { st -> maxOf(st.loadedAtMs, st.polledAtMs, if (streamCovers(league, clock())) streamHeardAtMs else 0L) } ?: 0L
+
+    /** The leagues held now (what the stream is filtered to). */
+    fun heldLeagues(): Set<String> = leagues.keys.toSet()
 
     /** The leagues held, with their row counts and how old each is (Diagnostics, the engine's log). */
     fun describe(now: Long = clock()): String = leagues.entries.sortedBy { it.key }.joinToString(", ") { (k, st) -> "$k ${byLeague[k]?.size ?: 0} rows ${(now - maxOf(st.loadedAtMs, st.polledAtMs)) / 1000}s" }.ifBlank { "nothing held yet" }
@@ -214,7 +264,7 @@ class SharpApiFeed(
                     if (now - st.askedAtMs > IDLE_MS) { drop(league); continue }
                     if (st.since == null) continue
                     val hot = st.soonestMs - now < HOT_HOURS * 3_600_000L
-                    val every = when { st.live -> LIVE_EVERY_MS; hot -> HOT_EVERY_MS; else -> COLD_EVERY_MS }
+                    val every = when { streamCovers(league, now) -> RECONCILE_MS; st.live -> LIVE_EVERY_MS; hot -> HOT_EVERY_MS; else -> COLD_EVERY_MS }
                     if (now - maxOf(st.polledAtMs, st.loadedAtMs) < every) continue
                     val ok = try { deltaStep(league) } catch (e: CancellationException) { throw e } catch (e: SharpApiException) { lastNote = "$league delta: ${e.message}"; true }
                     if (!ok) { log("SharpAPI: $league's changes were too many to page; reading it again whole"); load(league) }
@@ -263,6 +313,10 @@ class SharpApiFeed(
         const val MARKETS = "moneyline,spread,total,props"
         const val TICK_MS = 500L
         const val HOT_EVERY_MS = 2_000L
+        /** While the stream is live and covers a league, its REST delta is only a reconcile (rows the compact pushes could not place, anything missed). */
+        const val RECONCILE_MS = 60_000L
+        /** The stream counts as live while it spoke (a frame or the 30 s heartbeat) this recently. */
+        const val STREAM_ALIVE_MS = 75_000L
         /** A league with games in play (the live feed's): its changes every second. */
         const val LIVE_EVERY_MS = 1_000L
         const val COLD_EVERY_MS = 15_000L
