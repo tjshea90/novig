@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-4f21ww",
- "head": "296afabf5a1b43bc27240bffdcef8e54a95996f5",
+ "head": "f32b6cb1e2306c3ac86b39c543bc46ae756636c6",
  "since": 1792563808,
- "beat": 1792595880,
- "beatIso": "2026-10-21T15:18:00Z",
- "done": "chat wake: ParlayAPI Pro spend explained (engine 363 of 7300)",
- "next": "CH57 remaining; after 7 days of apiq run api_quality.py and trim redundant ParlayAPI purposes"
+ "beat": 1792596057,
+ "beatIso": "2026-10-21T15:20:57Z",
+ "done": "CH59 sharp-confirmed bid margin step-down to 1.5% (tests green, not released)",
+ "next": "CH59: add Settings switch + CloudScanKey entry, then ship release; tell Tj in chat"
 }
