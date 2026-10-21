@@ -6126,3 +6126,8 @@ Finding 19:30: only ONE cloud-scan run is live (run 254), so no old runner holds
 - [x] CK3 (CloudCnoTest; the engine's live reads of CNO are the first proof: status.cnoNote) CNO scan on the GitHub engine (engine reads CNO, publishes the list on cloud-feed, phone shows it; phone does no CNO reading while it runs), settings mirrored (CloudScanKey)
 - [x] CK4 (v1.0.40) tests, ship, release
 - [x] CK5 (v1.0.41; floor 4135 green + 134 screens looked at; fixes: Kalshi CNO alerts/taps/detail open Kalshi, link lane skips Kalshi rows, engine CNO hands reads to the phone at once on a failed first read, Scan CNO on GitHub switch, stale engine copy, SX Bet chip name, CH59 step-down needs every fair book within 3 min; tests CnoVenuesTest, CnoVenuesUiTest, CloudCnoTest, MakerTest, MoreBooksTest) full test protocol (= XO6), fix what it finds, record result
+
+## TR: four free-trial APIs to judge (Tj, interactive session acct-27a37e (tj Gmail), 2026-10-21, verbatim)
+"I can get free trials for all of the following apis. Research what they offer and if any of them are good for the vigilant app, GitHub engine, or live betting, let me know so we can build it: https://tennis-api.com/ https://sharpapi.io/ https://sportmicro.com/ https://sportsdata.io/developers/api-documentation"
+- [ ] TR1 read each site's docs/pricing (data, books incl. Pinnacle, latency, sockets/streams, limits, trial terms); save findings to research/api_trials_2026-10-21.md
+- [ ] TR2 verdict per API against what Vigilant already has (fair-odds sharpness, freshness, live, scores/grading, props), recommend which trials to take; tell Tj
