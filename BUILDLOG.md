@@ -364,3 +364,4 @@ day that changes.
 | v1.0.23 | code 363 | 2026-10-20T22:29Z | v1.0.23: Kalshi rows follow the books-agree view filter; Kalshi bids may be 1 contract above Kelly (CH45)
 | v1.0.24 | code 364 | 2026-10-20T23:14Z | v1.0.24: ESPN win probability cross-checks live moneyline calls (CH46c)
 | v1.0.25 | code 365 | 2026-10-21T00:14Z | v1.0.25: ParlayAPI live play-by-play stream as the engine's score source, Pro key first (CH47)
+| v1.0.26 | code 366 | 2026-10-21T01:18Z | v1.0.26: API monitor rebuild (engine checks every API, green/yellow/red/grey), ParlayAPI PBP recorder (tennis), Odds API gap-fill 3 h + spend tally (CH47-49)
