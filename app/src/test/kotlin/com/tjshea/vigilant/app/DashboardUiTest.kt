@@ -58,10 +58,10 @@ class DashboardUiTest {
     )
     private val bolt = UsageViews.build(QuotaPolicy.BOLTODDS, listOf("b1"), ProviderUsage(keys = mapOf("b1" to KeyUsage(periodStart = day, used = 104)), dayStart = day, callsToday = 110), now)
 
-    private fun show(st: CloudStatus?, history: List<DashboardModel.Point> = emptyList()) = compose.setContent {
+    private fun show(st: CloudStatus?, history: List<DashboardModel.Point> = emptyList(), checks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>> = emptyMap(), checkedAt: Map<String, Long> = emptyMap()) = compose.setContent {
         VigilantTheme(darkTheme = true) {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-                DashboardContent(st, history, listOf(propline, bolt), now, cloudOn = true, onOpenCloudSettings = {})
+                DashboardContent(st, history, listOf(propline, bolt), now, cloudOn = true, onOpenCloudSettings = {}, checks = checks, checkedAt = checkedAt)
             }
         }
     }
@@ -100,5 +100,29 @@ class DashboardUiTest {
         compose.onNodeWithTag("dashboardTrend-Scan time").performScrollTo().assertIsDisplayed()
         compose.onNodeWithTag("dashboardTrend-Wallet").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("$130.00").assertExists()
+    }
+
+    // XO1 (Tj, 2026-10-21): "some of the apis claim to be failing, but when I test the keys they are green and accepted".
+    @Test
+    fun `a failing check while the scans read the API fine is amber and says both, and the API manager says what it is doing`() {
+        val st = status.copy(
+            apiChecks = listOf(
+                com.tjshea.vigilant.data.cloud.ApiCheckLine("propline", "PropLine", on = true, atMs = now - 30_000, ok = true, keysOk = 1, keys = 1, ms = 240),
+                com.tjshea.vigilant.data.cloud.ApiCheckLine("boltodds", "BoltOdds Pro", on = true, atMs = now - 20_000, ok = false, keys = 1, ms = 20_000, message = "no answer within 20 s", failStreak = 6, kind = "unreachable", scanOkAtMs = now - 60_000L, fix = "its check fails but the scans are reading it fine: left alone"),
+            ),
+            apiManager = listOf(com.tjshea.vigilant.data.cloud.ApiFix("boltodds", "BoltOdds Pro", "watching", "its check fails (unreachable) but the scans are reading it fine: left alone")),
+        )
+        show(st)
+        compose.onNodeWithTag("dashboardApi-boltodds").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("scans are reading it fine", substring = true).assertExists()
+        compose.onNodeWithText("API manager: what the engine is doing about failing APIs").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun `with the engine idle the phone's own fresh test of the keys is the evidence on the card`() {
+        val idle = status.copy(heartbeatMs = now - 5 * 3_600_000L, lastScanEndedAtMs = now - 5 * 3_600_000L, apiChecks = listOf(com.tjshea.vigilant.data.cloud.ApiCheckLine("propline", "PropLine", on = true, atMs = now - 5 * 3_600_000L, ok = true, keysOk = 1, keys = 1, ms = 240)))
+        show(idle, checks = mapOf(ApiEntry.PROPLINE.name to listOf(com.tjshea.vigilant.data.keys.ApiProbe.Check("k1…", true, "Active and accepted"))), checkedAt = mapOf(ApiEntry.PROPLINE.name to now - 8_000L))
+        compose.onNodeWithTag("dashboardApi-propline").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("tested from this phone", substring = true).assertExists()
     }
 }
