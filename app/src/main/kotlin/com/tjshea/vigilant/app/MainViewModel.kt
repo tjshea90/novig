@@ -2539,8 +2539,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun refreshEngine() {
         // The engine checks every API now (the pull waits for it, bounded) and this phone tests the same keys itself, so each card has fresh evidence from both sides (XO1).
         viewModelScope.launch(Dispatchers.IO) { c.cloud.refreshNow(apis = true) }
+        // That check is also every usage prompt's read (the meters are filled from it), so the older refreshUsage() read is not made a second time; ParlayAPI's usage chart is the Settings page's own refresh.
         viewModelScope.launch(Dispatchers.IO) { runCatching { checkApisFromPhone() } }
-        refreshUsage()
     }
     /** Pull to refresh on a page that shows only the engine's files (Tracker, Bids, Live, Messages): read them now. */
     fun refreshCloud() { viewModelScope.launch(Dispatchers.IO) { c.cloud.refreshNow() } }
