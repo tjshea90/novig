@@ -8,8 +8,8 @@
  "branch": "ccr-cb0c319e-caga5z",
  "head": "951a72808fa5203d385bdabc115c9889d706577f",
  "since": 1792596542,
- "beat": 1792597876,
- "beatIso": "2026-10-21T15:51:16Z",
+ "beat": 1792598078,
+ "beatIso": "2026-10-21T15:54:38Z",
  "done": "XO1 engine: ParlayAPI check was N x N reads (root cause of false 'no answer within 20 s'), concurrent per-key probe with diagnosis kinds, ApiManager ladder (restart, fresh runner End.API, off+message), checkApisAtMs request; 41 tests green",
  "next": "XO1 phone: ApiState cross-check (scans fine, manager fix, phone test), pull-to-refresh requests engine recheck + phone tests, card shows manager notes; then XO2 volume diagnosis"
 }
