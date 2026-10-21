@@ -378,3 +378,4 @@ day that changes.
 | v1.0.37 | code 377 | 2026-10-21T17:36Z | v1.0.37: sharp-confirmed bids step their margin down to 1.5% under the sharp book as the game nears (CH59)
 | v1.0.38 | code 378 | 2026-10-21T19:21Z | v1.0.38: API card trusts a fresh accepted key check over a stale refusal (BoltOdds card)
 | v1.0.39 | code 379 | 2026-10-21T21:19Z | v1.0.39: engine closes BoltOdds/Kalshi/SX sockets cleanly on job end or cancel; a 'too many concurrent connections' close no longer marks the BoltOdds key refused
+| v1.0.40 | code 380 | 2026-10-21T22:14Z | v1.0.40: CNO scans Novig and Kalshi (tab chips, Kalshi EV net of fee, venue card colours); the whole CNO scan runs on the GitHub engine (cno.json.gz), phone adopts it
