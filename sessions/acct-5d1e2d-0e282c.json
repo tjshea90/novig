@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-spy7mj",
- "head": "cb7b3025c474fdf29ac5f87817dfec0754e95fe0",
+ "head": "4d8dc0b637748eaf53973fc83d3ab9267336dcad",
  "since": 1792563808,
- "beat": 1792603648,
- "beatIso": "2026-10-21T17:27:28Z",
+ "beat": 1792603658,
+ "beatIso": "2026-10-21T17:27:38Z",
  "done": "pre-ship: v1.0.37: sharp-confirmed bids step their margin down to 1.5% under the sharp book as the game nears (CH59)",
  "next": "ship.sh gates and releases this"
 }
