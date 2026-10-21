@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "b13ca3d292f2097d1bfe9880cc7b778f3e36e690",
+ "head": "2ccee2a88d2a8e01b3645d3fe6d9138d34c52e1e",
  "since": 1792596542,
- "beat": 1792622242,
- "beatIso": "2026-10-21T22:37:22Z",
- "done": "TR: four trial APIs judged (research/api_trials_2026-10-21.md): SharpAPI worth a Sharp-tier trial (Circa, Bookmaker, Betfair, ProphetX + SSE), Tennis-API/Sportmicro/SportsDataIO not now",
- "next": "TR3 build SharpAPI client on the engine when Tj starts the trial"
+ "beat": 1792622276,
+ "beatIso": "2026-10-21T22:37:56Z",
+ "done": "v1.0.41 recorded; engine verified: CNO answers the runner (100 rows, good read seconds old), but 0 Kalshi rows: added a list note saying how many Kalshi rows CNO listed and how many its fee put under the minimum (CnoVenuesTest)",
+ "next": "next session: read the engine's cno note to see Kalshi's count; TR3 SharpAPI when Tj starts the trial"
 }
