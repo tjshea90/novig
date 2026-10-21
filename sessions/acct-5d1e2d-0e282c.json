@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "4b1532e84c5afc740d31f8b1ec85ec7e75fe6dc8",
+ "head": "8eefd9d9d0dce1b0ab12df920176264d6c3c52b7",
  "since": 1792539161,
- "beat": 1792541660,
- "beatIso": "2026-10-21T00:14:20Z",
+ "beat": 1792541847,
+ "beatIso": "2026-10-21T00:17:27Z",
  "done": "v1.0.25 shipped, replied to Tj batch; CH48 logged",
  "next": "record v1.0.25 release; CH48a audit API monitor; CH47e arb leads; phone PBP wiring"
 }
