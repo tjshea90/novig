@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-gc6pie",
- "head": "6b4573224bbd0a7446f0b4f773bc583efdc54fbf",
+ "head": "038eed8e0beb75096c21046ad78cd62829adb38d",
  "since": 1792563808,
- "beat": 1792617599,
- "beatIso": "2026-10-21T21:19:59Z",
- "done": "pre-release: v1.0.39: engine closes BoltOdds/Kalshi/SX sockets cleanly on job end or cancel; a 'too many concurrent connections' close no longer marks the BoltOdds key refused (versionCode 379, v1.0.39)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.39), then run: bash tools/record-release.sh v1.0.39 379 \"v1.0.39: engine closes BoltOdds/Kalshi/SX sockets cleanly on job end or cancel; a 'too many concurrent connections' close no longer marks the BoltOdds key refused\""
+ "beat": 1792617636,
+ "beatIso": "2026-10-21T21:20:36Z",
+ "done": "v1.0.39 released (BC3,BC4)",
+ "next": "BC1/BC2 verify stop paths + tests"
 }
