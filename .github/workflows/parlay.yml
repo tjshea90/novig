@@ -3,12 +3,13 @@ name: ParlayAPI Pro (Tj, 2026-10-20)
 # Free, no Claude usage. Tj's ParlayAPI Pro key is one of the keys in the PARLAY_API_KEY secret (the phone's "send my API keys" writes them all); tools/parlay.py finds the biggest one by its own credits_total.
 # Tasks (workflow_dispatch):
 #   plans    each key's tier and credits (log only, keys shown as #N)
+#   listen   wait up to 40 min for a tennis (or other sport) match to be in play, then record 2 minutes of its live play-by-play stream (raw frames) into the same Release
 #   probe    one call to every Pro/live/arb endpoint; the answers (keyless, trimmed) go to the `parlay-samples` Release so parsers are checked against real shapes (about 60 credits)
 on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe"
+        description: "plans | probe | listen"
         default: "plans"
 
 permissions:
@@ -21,7 +22,7 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -40,6 +41,12 @@ jobs:
               python3 -I tools/parlay.py probe out/parlay
               if [ -f out/parlay/REPORT.txt ]; then
                 gh release view parlay-samples >/dev/null 2>&1 || gh release create parlay-samples --title "ParlayAPI Pro samples (keyless)" --notes "Real answers of the Pro, live and arb endpoints, trimmed; written by .github/workflows/parlay.yml (task probe)."
+                gh release upload parlay-samples out/parlay/* --clobber
+              fi ;;
+            listen)
+              python3 -I tools/parlay.py listen out/parlay "${SPORT:-tennis}"
+              if ls out/parlay/* >/dev/null 2>&1; then
+                gh release view parlay-samples >/dev/null 2>&1 || gh release create parlay-samples --title "ParlayAPI Pro samples (keyless)" --notes "Real answers of the Pro, live and arb endpoints, trimmed."
                 gh release upload parlay-samples out/parlay/* --clobber
               fi ;;
           esac

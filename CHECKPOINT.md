@@ -1,22 +1,24 @@
-# CHECKPOINT 3863 — read me first, then TASKS.md
+# CHECKPOINT 3864 — read me first, then TASKS.md
 
-**Written:** 2026-10-21T00:08:41Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-o9ngjz` · **builds on:** `701b79f6a` (this checkpoint is the commit after it)
+**Written:** 2026-10-21T00:18:37Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-o9ngjz` · **builds on:** `8eefd9d9d` (this checkpoint is the commit after it)
 
 ## Just done
-v1.0.25 shipped, replied to Tj batch; CH48 logged
+CH47/48: ApiMonitor (engine), apiChecks in status, parlay.yml listen task
 
 ## Do this next
-record v1.0.25 release; CH48a audit API monitor; CH47e arb leads; phone PBP wiring
+dispatch parlay.yml listen (tennis); app cards from apiChecks; phone PBP; arb leads; release v1.0.26
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
+    M  .github/workflows/parlay.yml
      M CHECKPOINT.md
-     M TASKS.md
+    M  tools/parlay.py
 
 ## Last ten checkpoints
 ```
+  3850ad774 ckpt 3863: v1.0.25 shipped, replied to Tj batch; CH48 logged
   701b79f6a ckpt 3862: pre-release: v1.0.25: ParlayAPI live play-by-play stream as the engine's sc
   2dc31786a ckpt 3861: pre-ship: v1.0.25: ParlayAPI live play-by-play stream as the engine's score
   87e8fdbf2 ckpt 3860: CH47: Parlay pool uses biggest paid plan first (test), meter loaded before 
@@ -26,5 +28,7 @@ record v1.0.25 release; CH48a audit API monitor; CH47e arb leads; phone PBP wiri
   379bfc7c1 ckpt 3856: CH46 closed by Tj
   d9dc79de5 ckpt 3855: CH46b measured: one provider only, asked Tj
   145dde442 ckpt 3854: v1.0.24 released (CH46c), CDN rejected by measurement
-  93fcf844d ckpt 3853: pre-release: v1.0.24: ESPN win probability cross-checks live moneyline call
 ```
+
+(4 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)

@@ -162,6 +162,32 @@ def cmd_probe(outdir):
     return 0
 
 
+def cmd_listen(outdir, sport="tennis", wait_min=40, seconds=120):
+    """Wait (up to [wait_min] minutes, one 1-credit /live/points a minute) for a match of [sport] to be in play, then listen to its PBP stream for [seconds] and keep the raw frames: the shapes a live model is built on."""
+    keys = keys_from_env()
+    ranked = sorted(((usage_of(k), k) for k in keys), key=lambda t: -rank(t[0]))
+    if not ranked or ranked[0][0].get("status") != 200:
+        print("no usable key")
+        return 0
+    key = ranked[0][1]
+    os.makedirs(outdir, exist_ok=True)
+    end = time.time() + wait_min * 60
+    while time.time() < end:
+        st, h, data = request("/v1/sports/%s/live/points" % sport, key)
+        d = j(data)
+        n = len(d.get("matches", [])) if isinstance(d, dict) else 0
+        print("%s: %d in play" % (time.strftime("%H:%M:%S"), n))
+        if st == 200 and n:
+            with open(os.path.join(outdir, "points_%s.json" % sport), "w") as f:
+                json.dump(trim(d, 6), f, indent=1)
+            lines = listen_sse(key, sport, seconds, os.path.join(outdir, "sse_%s_live.txt" % sport))
+            print("listened: %d lines" % len(lines))
+            return 0
+        time.sleep(60)
+    print("no %s match in play within %d min" % (sport, wait_min))
+    return 0
+
+
 def selftest():
     assert keys_from_env({"PARLAY_API_KEY": "a, b;c\nd"}) == ["a", "b", "c", "d"]
     assert keys_from_env({}) == []
@@ -177,7 +203,9 @@ if __name__ == "__main__":
         sys.exit(selftest())
     if c == "plans":
         sys.exit(cmd_plans())
+    if c == "listen":
+        sys.exit(cmd_listen(sys.argv[2] if len(sys.argv) > 2 else "out/parlay", sys.argv[3] if len(sys.argv) > 3 else "tennis"))
     if c == "probe":
         sys.exit(cmd_probe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay"))
-    print("usage: parlay.py plans | probe [dir] | selftest")
+    print("usage: parlay.py plans | probe [dir] | listen [dir] [sport] | selftest")
     sys.exit(2)
