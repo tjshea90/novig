@@ -4,7 +4,7 @@ Every study in `research/`, newest first, and how it is USED. Tuning levers and 
 Statuses: APPLIED (a change in `research/review/CHANGES.md` cites it), LEVER (on LEVERS.md), CLOSED (verdict and disposition on LEVERS.md), WATCH (an open TASKS.md item waits on its number),
 CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a sample, marked in its first lines), IDLE (cited nowhere: act on it or mark it).
 
-105 entries; 0 idle
+106 entries; 0 idle
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
@@ -14,7 +14,7 @@ CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a 
 | 2026-10-21 | `clv_audit_2026-10-21.md` | CLV audit of the engine's listed bets (2026-10-21, CH56) - Source: `engine-dataset` Release `lines-*.csv.gz` (13,103 lines). Listed bets (shown=1): 612; settled 373; **only 164 of the 612 have any CLV at all** (27%). | LEVER |
 | 2026-10-21 | `bid_volume_study_2026-10-21.md` | Why the bid fills are few, and what ranks the bids that fill (XO2, 2026-10-21) - Tj, 2026-10-21: "diagnose the low volume of bid fills and auto bets. Tweak the settings as needed for more volume, but keep reasonable safeguards ... | APPLIED LEVER CODE |
 | 2026-10-21 | `api_value_2026-10-21.md` | Which APIs are worth it (CH58, 2026-10-21) — framework now, numbers as the journal fills - **Data.** From this release the engine writes `apiq-<day>-run<id>.jsonl.gz` (one scorecard per API per finished scan: p90 quote age, dis... | LEVER CLOSED |
-| 2026-10-21 | `api_trials_2026-10-21.md` | Four free-trial APIs judged for Vigilant (TR, Tj 2026-10-21) - Tj: "I can get free trials for all of the following apis. Research what they offer and if any of them are good for the vigilant app, GitHub engine, or live betting"... | LEVER WATCH |
+| 2026-10-21 | `api_trials_2026-10-21.md` | Four free-trial APIs judged for Vigilant (TR, Tj 2026-10-21) - Tj: "I can get free trials for all of the following apis. Research what they offer and if any of them are good for the vigilant app, GitHub engine, or live betting"... | LEVER |
 | 2026-10-20 | `parlayapi_pro_2026-10-20/` | (no title) | CLOSED |
 | 2026-10-20 | `kalshi_vigilant_2026-10-20.md` | Kalshi inside Vigilant (KV) — design, evidence, open items (2026-10-20, Tj's request in the app session) - Put Kalshi beside Novig: +EV bets, bids, the same features, kept separate (Novig must not change), venue toggles (Novig ... | CODE |
 | 2026-10-19 | `stale_branches_2026-10-19.txt` | (no title) | CODE |
@@ -109,6 +109,7 @@ CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a 
 | 2026-10-03 | `scan_study_analysis_2026-10-03_v0.58.3.md` | Vigilant scan study v0.58.3 — analysis - File analysed: `vigilant-scan-study-v0.58.3-2026-10-03-2248.txt` (622 bets). Numbers below were computed with code from the JSON lines, not from the file's summary. CIs are bootstrap ove... | CODE |
 | 2026-10-03 | `external_report_2026-10-03_clv_ev.md` | Beating CLV, Finding True +EV, and Avoiding Trap Bets - **Compiled:** 2026-10-03 · **Purpose:** reference document for building a +EV betting app (taking and making bets/bids) and maximizing profit on the Novig prediction market. | CODE |
 |  | `v0701_partial/` | (no title) | CODE |
+|  | `sharpapi/` | (no title) | LEVER CODE |
 |  | `sgo/` | (no title) | WATCH CODE |
 |  | `propline/` | (no title) | APPLIED LEVER CLOSED WATCH CODE |
 |  | `live_leadlag.py` | (no title) | CODE |
