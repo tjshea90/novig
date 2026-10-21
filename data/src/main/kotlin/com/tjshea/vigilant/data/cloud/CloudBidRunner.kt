@@ -119,7 +119,7 @@ class CloudBidRunner(
                 val lines = lane.lines(now, rules, keep = mine).filter { it.marketId !in held }
                 val moved = withMoves(lines, rules, now, read = stop == null)
                 val r = desk.cycle(
-                    moved, rules, stop, s.apiMaxPerDay, wallet, denied = emptySet(), autoPost = true, partial = cloud?.partial == true, keepPosting = { true }, reachUntilMs = null,
+                    moved, rules, stop, s.apiMaxPerDay, wallet, denied = emptySet(), autoPost = true, partial = cloud?.partial == true, keepPosting = { true }, reachUntilMs = cloud?.reachUntilMs,
                 )
                 fills.addAll(r.fills); problems = r.problems; placed = r.placed; cancelled = r.cancelled
                 waiting = r.waiting.entries.maxByOrNull { it.value }?.let { " · ${r.waiting.values.sum()} waiting: ${it.key}" }.orEmpty()

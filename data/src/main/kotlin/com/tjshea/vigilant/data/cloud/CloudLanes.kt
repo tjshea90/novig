@@ -20,7 +20,7 @@ object CloudLanes {
     /** [near]'s rows plus the last full scan's rows for games starting after the quick scan's hours (a game the quick scan priced is never taken from the old list twice). */
     fun merge(near: List<Opportunity>, lastFull: List<Opportunity>, now: Long): List<Opportunity> {
         val cut = now + FarLane.NEAR_HOURS * 3_600_000L
-        val have = near.mapTo(HashSet()) { it.outcome.id }
-        return near + lastFull.filter { it.event.startsTs > cut && it.outcome.id !in have }
+        val have = near.mapTo(HashSet()) { it.outcome.outcomeId }
+        return near + lastFull.filter { it.event.startsTs > cut && it.outcome.outcomeId !in have }
     }
 }
