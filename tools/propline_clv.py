@@ -256,6 +256,16 @@ def summarize(rows):
     return "\n".join(L) + "\n"
 
 
+def _consensus_cols(r):
+    """CH57: every close we hold for this bet, cross-checked (tools/clv_consensus.py): clv_consensus, clv_sources, clv_n_sources, clv_confirmed ('' = no close)."""
+    import importlib.util, os
+    spec = importlib.util.spec_from_file_location("clv_consensus", os.path.join(os.path.dirname(os.path.abspath(__file__)), "clv_consensus.py"))
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    c, srcs, ok = m.consensus(m.closes(r), m.fl(r.get("cost")))
+    return {"clv_consensus": "" if c is None else round(c, 5), "clv_sources": "|".join(srcs), "clv_n_sources": len(srcs), "clv_confirmed": "" if c is None else int(ok)}
+
+
 def run(lines, archives, out, summary):
     arch = Archive()
     arch.load(archives)
@@ -265,6 +275,7 @@ def run(lines, archives, out, summary):
         for r in read_csv(p):
             g = grade_bet(arch, r)
             r.update(g)
+            r.update(_consensus_cols(r))
             rows.append(r)
     if not rows:
         print("no bets")
