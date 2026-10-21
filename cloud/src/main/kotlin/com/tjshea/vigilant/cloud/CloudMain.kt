@@ -121,6 +121,7 @@ fun main(args: Array<String>) = runBlocking {
             log("PropLine plans: " + sources.propLinePlans())
             runCatching { sources.refreshPinnWireAccounts() }
             log("PinnWire accounts: " + sources.pinnWirePlans())
+            log("Spend: " + sources.spendNotes())
             delay(60 * 60_000L)
         }
     }
