@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-byd011",
  "head": "6c12a33be57b14249950521b9d0ad2c94eadb3d8",
  "since": 1792539161,
- "beat": 1792548463,
- "beatIso": "2026-10-21T02:07:43Z",
+ "beat": 1792548761,
+ "beatIso": "2026-10-21T02:12:41Z",
  "done": "v1.0.28 released and recorded; told Tj",
  "next": "read first quick-scan timings in status.scanNote/engine-log once engine restarts on new code; watch chat"
 }
