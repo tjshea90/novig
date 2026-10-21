@@ -172,6 +172,70 @@ fun main(args: Array<String>) = runBlocking {
         }
     }
     val config = ConfigReader(git, cfgDir)
+    // The newest config the engine read (every 3 s), and whether its last heartbeat was idle: the CNO loop below reads both for free.
+    val latestCfg = java.util.concurrent.atomic.AtomicReference<CloudConfig?>(null)
+    val engineIdle = java.util.concurrent.atomic.AtomicBoolean(true)
+    // The CNO scan on GitHub (Tj, 2026-10-21, CK): the phone's own CnoFeed over Novig's and Kalshi's lists, with the phone's CNO settings; the list and each listed bet's books page go to cloud-feed
+    // as cno.json.gz, every read goes through the study like the Vigilant scan's (the engine's archive), and the phone shows it without reading CNO itself.
+    val cnoFeed = com.tjshea.vigilant.data.cno.CnoFeed(com.tjshea.vigilant.data.cno.CnoVenueSource(com.tjshea.vigilant.data.cno.CnoClient(http), com.tjshea.vigilant.data.cno.CnoClient(http)))
+    scope.launch {
+        fun cnoConfig(): com.tjshea.vigilant.data.cno.CnoConfig {
+            val cfg = latestCfg.get()
+            val s = cfg?.settings
+            val on = cfg != null && s != null && cfg.on && !engineIdle.get() && com.tjshea.vigilant.data.cloud.CloudCno.wanted(s)
+            return com.tjshea.vigilant.data.cno.CnoConfig(
+                enabled = on,
+                url = s?.let { com.tjshea.vigilant.data.cloud.CloudCno.viewOf(it) } ?: com.tjshea.vigilant.data.cno.CnoView.DEFAULT,
+                // "Taps only" on the phone still reads on the engine: nothing taps there. Never faster than the phone's own fastest pace.
+                intervalSeconds = s?.cnoRefreshSeconds?.takeIf { it != 0 } ?: 15,
+                filters = s?.cnoFilters ?: com.tjshea.vigilant.data.cno.CnoFilters(),
+            )
+        }
+        val configs = kotlinx.coroutines.flow.flow { while (true) { emit(cnoConfig()); delay(3_000L) } }
+        launch { cnoFeed.watch(configs) }
+        // Each listed bet's CNO page (the green check, the bids priced from CNO), as the phone keeps it while its books check is on.
+        launch {
+            cnoFeed.keepBooksFresh(cnoFeed.state.map { st -> if (latestCfg.get()?.settings?.cnoCheckBooks != false && cnoConfig().enabled) st.snapshot?.rows.orEmpty() else emptyList() })
+        }
+        // A pull to refresh on the phone (the same request that starts a Vigilant scan) reads CNO at once too.
+        launch {
+            var served = 0L
+            while (isActive) {
+                val c = cnoConfig()
+                val asked = latestCfg.get()?.refreshAtMs ?: 0L
+                if (served == 0L) served = asked
+                if (c.enabled && asked > served) { served = asked; runCatching { cnoFeed.refresh(c.url, c.filters) } }
+                delay(3_000L)
+            }
+        }
+        // Publishing: when the list, its books or its error changed (a heartbeat-sized check every 3 s); the study sees every new read.
+        var lastKey: Any? = null
+        var lastGood = 0L
+        var lastObserved = 0L
+        while (isActive) {
+            val c = cnoConfig()
+            val st = cnoFeed.state.value
+            val snap = st.snapshot
+            if (snap != null && st.error == null) lastGood = maxOf(lastGood, snap.fetchedAtMs)
+            val books = cnoFeed.books.value.mapNotNull { (k, v) -> v.view?.let { k to it } }.toMap()
+            if (c.enabled && snap != null && snap.fetchedAtMs != lastObserved) {
+                lastObserved = snap.fetchedAtMs
+                latestCfg.get()?.settings?.let { s -> runCatching { study.observeCno(snap, s.copy(scanStudy = true), cnoFeed.books.value, emptyMap(), emptyMap()); study.flush() } }
+            }
+            val key = listOf(c.enabled, snap?.fetchedAtMs, books.keys.size, books.values.sumOf { it.fetchedAtMs }, st.error)
+            if (key != lastKey) {
+                lastKey = key
+                val now = System.currentTimeMillis()
+                publisher.stageCno(
+                    com.tjshea.vigilant.data.cloud.CloudCnoFeed(now, snap, books.filterKeys { k -> snap?.rows?.any { it.key == k } == true }, st.error, st.errors, lastGood, st.pausedUntilMs),
+                    on = c.enabled,
+                    note = st.error ?: snap?.note.orEmpty(),
+                )
+                if (st.error != null && c.enabled) log("CNO: ${st.error.take(160)}")
+            }
+            delay(3_000L)
+        }
+    }
     val started = System.currentTimeMillis()
     val until = started + minutes * 60_000L
     log("cloud engine starting: $minutes min, run $runId, keys present: " + CloudKeys.ALL.filter { CloudKeys.fromEnv(it).isNotEmpty() }.joinToString(",") { n -> CloudKeys.fromEnv(n).size.let { c -> if (c > 1) "$n($c keys)" else n } }.ifBlank { "none (public feeds only)" } + " · Novig read-only key: " + (if (novigKeyed != null) "present" else "none (public routes)") + " · " + sources.kalshiNote())
@@ -419,8 +483,8 @@ fun main(args: Array<String>) = runBlocking {
         }
     }
     val engine = CloudEngine(
-        scanner = scanner, sources = sources::sources, config = { config.read() }, apiChecks = { apiManager.lines() }, apiFixes = { apiManager.fixes() }, apiSwaps = { apiManager.swaps() }, apiSwapAtMs = { apiManager.swapAtMs() }, onCheckApis = { apiManager.recheckAll() },
-        publish = { feed, status -> publisher.stage(feed, status) },
+        scanner = scanner, sources = sources::sources, config = { config.read().also { latestCfg.set(it) } }, apiChecks = { apiManager.lines() }, apiFixes = { apiManager.fixes() }, apiSwaps = { apiManager.swaps() }, apiSwapAtMs = { apiManager.swapAtMs() }, onCheckApis = { apiManager.recheckAll() },
+        publish = { feed, status -> engineIdle.set(status.idle); publisher.stage(feed, status) },
         // The bid desk's candidate lines (Tj, 2026-10-15), only while the phone has Vigilant-priced bids on: the fair side of every bid decision is made here, the phone adds Novig's books and posts.
         prepare = { s -> latestSettings.set(s); novigKeyed?.configure(s) },
         novigRoute = { novigKeyed?.route(System.currentTimeMillis()) ?: CloudNovig.PUBLIC_ONLY },
@@ -604,6 +668,12 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     private var evAt = 0L
     private var evRows = 0
     private var evServed = 0L
+    private var cnoBytes: ByteArray? = null
+    private var cnoOn = false
+    private var cnoAt = 0L
+    private var cnoGood = 0L
+    private var cnoRows = 0
+    private var cnoNote = ""
     private var usageText: String? = null
     private var paperText: String? = null
     private var usageAt = 0L
@@ -619,7 +689,8 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     @Synchronized
     fun stage(feed: CloudFeed?, st: CloudStatus): String? {
         if (feed != null) feedBytes = CloudFeed.encode(feed)
-        status = st.copy(feedBytes = feedBytes?.size ?: 0, bidsBytes = bidsBytes?.size ?: 0, propLineEvAtMs = evAt, propLineEvRows = evRows, propLineServedAtMs = evServed, usageAtMs = usageAt, tradesAtMs = maxOf(st.tradesAtMs, tradesAt), deskBytes = deskText?.length ?: 0)
+        status = st.copy(feedBytes = feedBytes?.size ?: 0, bidsBytes = bidsBytes?.size ?: 0, propLineEvAtMs = evAt, propLineEvRows = evRows, propLineServedAtMs = evServed, usageAtMs = usageAt, tradesAtMs = maxOf(st.tradesAtMs, tradesAt), deskBytes = deskText?.length ?: 0,
+            cnoOn = cnoOn, cnoAtMs = cnoAt, cnoGoodAtMs = cnoGood, cnoRows = cnoRows, cnoNote = cnoNote)
         dirty = true
         return lastProblem
     }
@@ -679,6 +750,15 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         dirty = true
     }
 
+    /** The CNO scan's list and books pages (`cno.json.gz`, CK), announced in the status; goes out with the next push. */
+    @Synchronized
+    fun stageCno(f: com.tjshea.vigilant.data.cloud.CloudCnoFeed, on: Boolean, note: String) {
+        cnoBytes = com.tjshea.vigilant.data.cloud.CloudCnoFeed.encode(f)
+        cnoOn = on; cnoAt = f.atMs; cnoGood = f.lastGoodAtMs; cnoRows = f.snapshot?.rows?.size ?: 0; cnoNote = note.take(200)
+        status = status?.copy(cnoOn = cnoOn, cnoAtMs = cnoAt, cnoGoodAtMs = cnoGood, cnoRows = cnoRows, cnoNote = cnoNote)
+        dirty = true
+    }
+
     /** Small named files that ride with the push (the Kalshi lane's status and its carry-over, KV9). */
     private val extra = HashMap<String, String>()
 
@@ -713,6 +793,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         ApiChain.measures.takeIf { it.isNotEmpty() }?.let { File(dir, "ranking.json").writeText(CloudRanking.encode(it)) }
         File(dir, "bids.json.gz").let { f -> bidsBytes?.let { f.writeBytes(it) } ?: f.delete() }
         evBytes?.let { File(dir, "propline-ev.json.gz").writeBytes(it) }
+        cnoBytes?.let { File(dir, "cno.json.gz").writeBytes(it) }
         File(dir, "status.json").writeText(CloudStatus.text(st.copy(heartbeatMs = now)))
         logTail().takeIf { it.isNotBlank() }?.let { File(dir, "engine-log.txt").writeText(it + "\n") }
         git.run(dir, "add", "-A")
