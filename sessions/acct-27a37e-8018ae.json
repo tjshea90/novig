@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "b919a87feb00834d3044091a57f5dac3330bcd14",
+ "head": "41c3fa5eafb78dbe05b4a1e8d7ee4222868f46b3",
  "since": 1792596542,
- "beat": 1792623360,
- "beatIso": "2026-10-21T22:56:00Z",
- "done": "v1.0.41 recorded; engine verified: CNO answers the runner (100 rows, good read seconds old), but 0 Kalshi rows: added a list note saying how many Kalshi rows CNO listed and how many its fee put under the minimum (CnoVenuesTest)",
- "next": "next session: read the engine's cno note to see Kalshi's count; TR3 SharpAPI when Tj starts the trial"
+ "beat": 1792623509,
+ "beatIso": "2026-10-21T22:58:29Z",
+ "done": "SA1: SharpAPI docs saved (39 pages + llms-full) and SHARPAPI.md written",
+ "next": "SA2: SharpApiClient + SharpApiFeed (cursor baseline + /odds/delta every 2 s) in data/.../sharpapi/, tests"
 }
