@@ -22,7 +22,8 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
     PINNODDS("Pinnodds", ApiProvider.PINNODDS, null, "Pinnacle's live push feed and REST board", false),
     KALSHI("Kalshi", null, QuotaPolicy.KALSHI, "Exchange prices, free to read; a key adds a real-time socket and a bigger read budget", false),
     POLYMARKET("Polymarket", null, QuotaPolicy.POLYMARKET, "Free exchange prices, no key", false),
-    SXBET("SX Bet", ApiProvider.SXBET, QuotaPolicy.SXBET, "Exchange odds read as a sharp source: markets are public, prices need a free read-only key", false);
+    SXBET("SX Bet", ApiProvider.SXBET, QuotaPolicy.SXBET, "Exchange odds read as a sharp source: markets are public, prices need a free read-only key", false),
+    SHARPAPI("SharpAPI", ApiProvider.SHARPAPI, QuotaPolicy.SHARPAPI, "Sharp plan: Pinnacle, Circa, Bookmaker, Betfair, ProphetX and 20 more books, kept current on the GitHub engine every 2 seconds", false);
 
     /** Whether the app is allowed to call it at all. */
     fun isOn(s: ScanSettings): Boolean = when (this) {
@@ -40,6 +41,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         KALSHI -> s.useKalshi
         POLYMARKET -> s.usePolymarket
         SXBET -> s.gates.useSxBet
+        SHARPAPI -> s.gates.useSharpApi
     }
 
     fun setOn(s: ScanSettings, on: Boolean): ScanSettings = when (this) {
@@ -57,6 +59,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         KALSHI -> s.copy(useKalshi = on)
         POLYMARKET -> s.copy(usePolymarket = on)
         SXBET -> s.copy(gates = s.gates.copy(useSxBet = on))
+        SHARPAPI -> s.copy(gates = s.gates.copy(useSharpApi = on))
     }
 
     val keyless: Boolean get() = provider == null
@@ -109,6 +112,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
             KALSHI -> com.tjshea.vigilant.app.ui.SettingsPage.KALSHI
             POLYMARKET -> null
             SXBET -> com.tjshea.vigilant.app.ui.SettingsPage.SXBET
+            SHARPAPI -> com.tjshea.vigilant.app.ui.SettingsPage.SHARPAPI
         }
 
     companion object {

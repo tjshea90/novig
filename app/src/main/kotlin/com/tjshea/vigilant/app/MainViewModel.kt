@@ -142,6 +142,8 @@ data class UiState(
     val opKeys: List<String> = emptyList(),
     val unKeys: List<String> = emptyList(),
     val sxKeys: List<String> = emptyList(),
+    /** SharpAPI's keys (SHARPAPI.md, Tj 2026-10-21). */
+    val sharpKeys: List<String> = emptyList(),
     val boltKeys: List<String> = emptyList(),
     val op4Keys: List<String> = emptyList(),
     /** Every provider's usage ledger, updated after each call (the meters). */
@@ -343,6 +345,7 @@ data class UiState(
         ApiProvider.ODDSPAPI -> opKeys
         ApiProvider.UNABATED -> unKeys
         ApiProvider.SXBET -> sxKeys
+        ApiProvider.SHARPAPI -> sharpKeys
         ApiProvider.BOLTODDS -> boltKeys
         ApiProvider.ODDSPAPI_FREE -> op4Keys
     }
@@ -359,6 +362,7 @@ data class UiState(
         ApiProvider.ODDSPAPI -> copy(opKeys = keys)
         ApiProvider.UNABATED -> copy(unKeys = keys)
         ApiProvider.SXBET -> copy(sxKeys = keys)
+        ApiProvider.SHARPAPI -> copy(sharpKeys = keys)
         ApiProvider.BOLTODDS -> copy(boltKeys = keys)
         ApiProvider.ODDSPAPI_FREE -> copy(op4Keys = keys)
     }

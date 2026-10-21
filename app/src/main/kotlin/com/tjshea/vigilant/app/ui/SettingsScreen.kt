@@ -167,6 +167,8 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
 
     /** Unabated's FREE API: soft-book lines and props at no credit cost, the last source in line (Tj, 2026-10-11). A page of [APIS]. */
     SXBET("SX Bet", "An exchange read as a sharp source: public markets, free read-only key for the prices", SettingsGroup.FIND),
+    /** SharpAPI's Sharp plan (Tj, 2026-10-21; SHARPAPI.md): 25 books incl. Pinnacle, Circa, Bookmaker, Betfair, ProphetX, kept current on the GitHub engine. A page of [APIS]. */
+    SHARPAPI("SharpAPI", "Sharp plan: Pinnacle, Circa, Bookmaker, Betfair, ProphetX and more, kept current on GitHub every 2 seconds", SettingsGroup.FIND),
     UNABATED("Unabated (free)", "Free lines and props from DraftKings, FanDuel, MGM, Caesars and more; fills in what the other feeds miss", SettingsGroup.FIND),
 
     /** OddsPapi's FREE v4 plan: Pinnacle closing lines for CLV from free historical odds (Tj, 2026-10-11). A page of [APIS]. */
@@ -206,7 +208,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** The page this one belongs to, or null for a page on the Settings home list: the APIs' own pages and their usage details open from APIs & keys and go back to it. */
     val parent: SettingsPage?
         get() = when (this) {
-            SGO, BOLTODDS, KALSHI, SXBET, ODDSPAPI, UNABATED, ODDSPAPI_FREE, PINNACLE, PROPLINE, PARLAY, ODDS_API, USAGE -> APIS
+            SGO, BOLTODDS, KALSHI, SXBET, SHARPAPI, ODDSPAPI, UNABATED, ODDSPAPI_FREE, PINNACLE, PROPLINE, PARLAY, ODDS_API, USAGE -> APIS
             else -> null
         }
 
@@ -214,7 +216,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     fun shownIn(s: ScanSettings): Boolean = when (this) {
         CNO -> s.cnoOn
         FEED, FAIR -> s.vigilantOn
-        ALERTS, RESEARCH, SGO, BOLTODDS, KALSHI, SXBET, ODDSPAPI, UNABATED, ODDSPAPI_FREE -> AppBook.isNovig
+        ALERTS, RESEARCH, SGO, BOLTODDS, KALSHI, SXBET, SHARPAPI, ODDSPAPI, UNABATED, ODDSPAPI_FREE -> AppBook.isNovig
         APIS -> true
         // Central sections of their own since 2026-10-16 (the Engine and Claude tabs): not Settings pages any more.
         DASHBOARD, CHAT, MESSAGES -> false
@@ -322,6 +324,11 @@ object SettingsSummary {
             SettingsPage.SXBET -> when {
                 state.sxKeys.isEmpty() -> "No key saved"
                 s.gates.useSxBet -> "On: sharp exchange odds"
+                else -> "Off (key saved)"
+            }
+            SettingsPage.SHARPAPI -> when {
+                state.sharpKeys.isEmpty() -> "No key saved"
+                s.gates.useSharpApi -> "On: Pinnacle, Circa and 23 more books"
                 else -> "Off (key saved)"
             }
             SettingsPage.UNABATED -> when {
@@ -476,6 +483,7 @@ fun SettingsScreen(
                 SettingsPage.PARLAY -> ParlayPage(state, keys, onUpdate)
                 SettingsPage.ODDS_API -> OddsApiPage(state, keys, onUpdate)
                 SettingsPage.SXBET -> SxBetPage(state, keys, onUpdate)
+                SettingsPage.SHARPAPI -> SharpApiPage(state, keys, onUpdate)
                 SettingsPage.UNABATED -> UnabatedPage(state, keys, reportActions, onUpdate)
                 SettingsPage.BOLTODDS -> BoltOddsPage(state, keys, reportActions, onUpdate)
                 SettingsPage.KALSHI -> KalshiPage(state, reportActions, onUpdate)
@@ -1748,6 +1756,18 @@ private fun ColumnScope.SxBetPage(state: UiState, keys: KeyActions, onUpdate: ((
     Intro("SX Bet is a peer-to-peer sports exchange. Vigilant reads its order books as a sharp price. Create a key at sx.bet > Account > API with ONLY the \"Market data: read\" scope (never trading or withdraw), paste it here, then Test it in Settings > APIs.")
     KeyListEditor(ApiProvider.SXBET, state.sxKeys, keys, "Add an SX Bet key")
     SwitchRow("Use SX Bet", if (state.sxKeys.isEmpty()) "Needs a saved read-only key to price anything" else "On: its odds join the sharp books", s.gates.useSxBet, tag = "sxbetSwitch") { v -> onUpdate { it.copy(gates = it.gates.copy(useSxBet = v)) } }
+}
+
+/**
+ * Settings › SharpAPI (Tj, 2026-10-21; SHARPAPI.md): the key and the one switch. The GitHub engine keeps a copy of SharpAPI's odds (read once a league, then only the changes every 2 seconds), so Pinnacle, Circa,
+ * Bookmaker, Betfair, ProphetX and the other books Tj picked on SharpAPI's dashboard price every scan from memory. Off: nothing is sent to SharpAPI.
+ */
+@Composable
+private fun ColumnScope.SharpApiPage(state: UiState, keys: KeyActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
+    Intro("SharpAPI (Sharp plan) carries Pinnacle, Circa, Bookmaker, Betfair, ProphetX and the other books you picked on SharpAPI's dashboard (25). Paste your key here, Test it in Settings > APIs, then send it to GitHub (Settings > Cloud scan > Send my API keys): the GitHub engine reads each league once and then only what changed, every 2 seconds, so its prices reach every scan from memory. Pick the books on SharpAPI's dashboard; Novig, Kalshi, Polymarket and SX Bet are read by Vigilant itself, so they are better left off there.")
+    KeyListEditor(ApiProvider.SHARPAPI, state.sharpKeys, keys, "Add a SharpAPI key")
+    SwitchRow("Use SharpAPI", if (state.sharpKeys.isEmpty()) "Needs a saved key to price anything" else "On: its books join the fair odds (Circa and Bookmaker count as sharp)", s.gates.useSharpApi, tag = "sharpapiSwitch") { v -> onUpdate { it.copy(gates = it.gates.copy(useSharpApi = v)) } }
 }
 
 /**
