@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-o9ngjz",
  "head": "6cf4691322ebe61dcd65c57466cd3b5389d23511",
  "since": 1792539161,
- "beat": 1792545537,
- "beatIso": "2026-10-21T01:18:57Z",
+ "beat": 1792546253,
+ "beatIso": "2026-10-21T01:30:53Z",
  "done": "v1.0.26 released; TennisModel math + tests",
  "next": "read first tennis pbplive frames (cloud-archive Release pbplive-*), wire tennis paper lane; Kalshi lag CH45a"
 }
