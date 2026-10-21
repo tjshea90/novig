@@ -8,8 +8,8 @@
  "branch": "claude/new-session-51eqix",
  "head": "2ccee2a88d2a8e01b3645d3fe6d9138d34c52e1e",
  "since": 1792596542,
- "beat": 1792622276,
- "beatIso": "2026-10-21T22:37:56Z",
+ "beat": 1792623177,
+ "beatIso": "2026-10-21T22:52:57Z",
  "done": "v1.0.41 recorded; engine verified: CNO answers the runner (100 rows, good read seconds old), but 0 Kalshi rows: added a list note saying how many Kalshi rows CNO listed and how many its fee put under the minimum (CnoVenuesTest)",
  "next": "next session: read the engine's cno note to see Kalshi's count; TR3 SharpAPI when Tj starts the trial"
 }
