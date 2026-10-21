@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "8047b101bbd2f3db093aca9730a467288bcf20cb",
+ "head": "a7b61ccd6481c76d7bdfb9fcc2deb63763d8a614",
  "since": 1792596542,
- "beat": 1792621271,
- "beatIso": "2026-10-21T22:21:11Z",
- "done": "full test (CK5/XO6) done: floor 4135 green, 134 screens viewed, 7 fixes (see TASKS CK5)",
- "next": "ship v1.0.41 and release; then the engine's first live CNO reads (status.cnoNote, engine-log) are the proof CK3 works on a runner"
+ "beat": 1792621339,
+ "beatIso": "2026-10-21T22:22:19Z",
+ "done": "pre-release: v1.0.41: full test fixes: Kalshi CNO rows open at Kalshi everywhere, Scan CNO on GitHub switch, faster phone fallback when CNO refuses the runner, bid step-down needs every fair book fresh, copy fixes (versionCode 381, v1.0.41)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.41), then run: bash tools/record-release.sh v1.0.41 381 \"v1.0.41: full test fixes: Kalshi CNO rows open at Kalshi everywhere, Scan CNO on GitHub switch, faster phone fallback when CNO refuses the runner, bid step-down needs every fair book fresh, copy fixes\""
 }
