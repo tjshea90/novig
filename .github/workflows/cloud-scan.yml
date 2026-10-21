@@ -161,9 +161,10 @@ jobs:
           END=$(cat out/end 2>/dev/null || echo UNKNOWN)
           echo "engine ended: $END"
           # TIME_UP: this job's time is over. ADDRESS: Novig refused this runner's internet address (data-center addresses are fine to Novig, one in a restricted state or on a list is not): draw another runner
-          # (no limit and no cooldown since 2026-10-18, TCL115: every refused runner is replaced at once until one is accepted: cloud/ AddressWatch). Not IDLE: the phone switched the engine off.
+          # (no limit and no cooldown since 2026-10-18, TCL115: every refused runner is replaced at once until one is accepted: cloud/ AddressWatch). API: the API manager asked for a fresh runner because an important API
+          # is not answering (XO1, ApiManager: at most 3 in a row per API, then the API is switched off). Not IDLE: the phone switched the engine off.
           # The dispatch is tried again (a lost one would leave the hours without an engine until the keeper's next look, 2 minutes later).
-          if [ "$END" = "TIME_UP" ] || [ "$END" = "ADDRESS" ] || [ "$END" = "STALL" ] || [ "$END" = "RESET" ]; then
+          if [ "$END" = "TIME_UP" ] || [ "$END" = "ADDRESS" ] || [ "$END" = "STALL" ] || [ "$END" = "RESET" ] || [ "$END" = "API" ]; then
             for i in 1 2 3 4; do gh workflow run cloud-scan.yml --ref main && break; echo "hand-over dispatch failed, try $i"; sleep $((i * 10)); done
           fi
           # Whatever the reason (WINDOW: the hours closed; IDLE: the phone switched it off; anything else: a crash), the keeper must be there to start the next engine (EA, Tj 2026-10-19).
