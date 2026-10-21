@@ -1685,7 +1685,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             val on = ApiEntry.active(_state.value.settings)
             for (e in ApiEntry.entries.filter { it in on && it.usagePrompt && it.provider != null && keysFor(it.provider).isNotEmpty() }) {
-                runCatching { kotlinx.coroutines.withTimeout(30_000L) { c.apiProbe.check(e.provider!!, keysFor(e.provider)) } }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                runCatching { kotlinx.coroutines.withTimeout(30_000L) { c.apiProbe.check(e.provider!!, keysFor(e.provider)) } }.onFailure { if (it is kotlinx.coroutines.CancellationException && it !is kotlinx.coroutines.TimeoutCancellationException) throw it }
             }
             if (ApiEntry.PARLAY in on && keysFor(ApiProvider.PARLAY).isNotEmpty()) runCatching { kotlinx.coroutines.withTimeout(30_000L) { c.parlayAccount.refreshHistory(true) } }
             _state.update { it.copy(usageBusy = false) }
