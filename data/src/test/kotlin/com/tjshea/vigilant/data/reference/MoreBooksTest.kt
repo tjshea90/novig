@@ -55,5 +55,7 @@ class MoreBooksTest {
     fun `the book once called ESPN BET goes by its name now`() {
         assertEquals("theScore Bet", TheOddsApiClient.bookTitle("espnbet"))
         assertEquals("Fliff", TheOddsApiClient.bookTitle("fliff"))
+        // The sharp-book chip for SX Bet read "sxbet" (full test 2026-10-21).
+        assertEquals("SX Bet", TheOddsApiClient.bookTitle("sxbet"))
     }
 }
