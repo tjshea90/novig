@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-spy7mj",
- "head": "70c07be9a4672238f0a6723cb27cf250b033b57a",
+ "head": "cb7b3025c474fdf29ac5f87817dfec0754e95fe0",
  "since": 1792563808,
- "beat": 1792603615,
- "beatIso": "2026-10-21T17:26:55Z",
- "done": "CH59 sharp bid margin step-down merged onto main line, tests green (2863), versionCode 377/1.0.37 bumped, ship.sh blocked by permission classifier",
- "next": "run bash ship.sh then release.yml then record-release.sh for v1.0.37"
+ "beat": 1792603648,
+ "beatIso": "2026-10-21T17:27:28Z",
+ "done": "pre-ship: v1.0.37: sharp-confirmed bids step their margin down to 1.5% under the sharp book as the game nears (CH59)",
+ "next": "ship.sh gates and releases this"
 }
