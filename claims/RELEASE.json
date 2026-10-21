@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/0e282c",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "0e282c",
+ "note": "v1.0.38: API card trusts a fresh accepted key check over a stale refusal (BoltOdds card)",
+ "since": 1792609947,
+ "beat": 1792609947
+}
