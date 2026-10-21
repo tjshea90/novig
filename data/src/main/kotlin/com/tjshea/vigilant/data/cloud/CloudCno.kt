@@ -75,7 +75,8 @@ object CloudCno {
         if (st.idle || now - st.heartbeatMs > ALIVE_MS) return false
         if (!st.cnoOn) return false
         val good = st.cnoGoodAtMs
-        return if (good > 0L) st.heartbeatMs - good < REFUSED_MS else st.heartbeatMs - st.startedAtMs < REFUSED_MS
+        // No good read yet in this job: served while it is still trying without an error; an error before any good read (CNO refusing the runner) hands the reads to the phone at once.
+        return if (good > 0L) st.heartbeatMs - good < REFUSED_MS else st.cnoNote.isBlank() && st.heartbeatMs - st.startedAtMs < REFUSED_MS
     }
 }
 

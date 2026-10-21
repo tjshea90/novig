@@ -82,6 +82,8 @@ class CloudCnoTest {
         // A new job's first minutes: no read yet, still trying.
         assertTrue(CloudCno.engineServes(ok.copy(cnoGoodAtMs = 0L, startedAtMs = now - 60_000L), now))
         assertFalse(CloudCno.engineServes(ok.copy(cnoGoodAtMs = 0L), now))
+        // The new job's first read failed (CNO refusing the runner): the phone reads at once rather than showing nothing for ten minutes.
+        assertFalse(CloudCno.engineServes(ok.copy(cnoGoodAtMs = 0L, startedAtMs = now - 60_000L, cnoNote = "CrazyNinjaOdds is busy (HTTP 403)"), now))
     }
 
     @Test
