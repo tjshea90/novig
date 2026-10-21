@@ -2,6 +2,7 @@ package com.tjshea.vigilant.data.cno
 
 import com.tjshea.vigilant.data.kalshitrade.KalshiFees
 import com.tjshea.vigilant.engine.Odds
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -84,6 +85,17 @@ class CnoVenuesTest {
         } catch (e: CnoException) {
             assertEquals("timeout", e.message)
         }
+    }
+
+    @Test
+    fun `the link lane looks for no Novig link for a Kalshi row`() = runTest {
+        var asked = 0
+        val feed = CnoFeed(Fake("Novig"), clock = { 0L }, catalog = { asked++; null })
+        val kalshi = CnoRow(0.05, event = "e", market = "m", bet = "b", odds = 110, book = "Kalshi", betUrl = "https://crazyninjaodds.com/x")
+        val job = backgroundScope.launch { feed.keepLinksFresh(kotlinx.coroutines.flow.flowOf(listOf(kalshi))) }
+        testScheduler.advanceUntilIdle()
+        assertEquals(0, asked)
+        job.cancel()
     }
 
     @Test
