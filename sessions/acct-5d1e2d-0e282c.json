@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "0e282c",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-l0ocee",
+ "head": "fbb5059fc0154a315e96c1d620c854e0ad4a73f6",
+ "since": 1792624947,
+ "beat": 1792624947,
+ "beatIso": "2026-10-21T23:22:27Z",
+ "done": "ENGINEER 2026-10-21: watched engine, volume loop recorded, XOW6 added, no code change",
+ "next": "XOW6: split held-back bets by fair age vs CLV"
+}
