@@ -5,11 +5,11 @@
  "nonce": "0e282c",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-s9zcjn",
+ "branch": "claude/optimistic-curie-gc6pie",
  "head": "2295d61969844816f73f91caddc75fcbca07ce12",
  "since": 1792563808,
- "beat": 1792611740,
- "beatIso": "2026-10-21T19:42:20Z",
+ "beat": 1792613195,
+ "beatIso": "2026-10-21T20:06:35Z",
  "done": "BC: phone already closes BoltOdds sockets on toggle-off; STOP ALL/pause path and engine side still to verify",
  "next": "BC1-BC4, engine side first (CloudSources.applySockets, shutdown hook)"
 }
