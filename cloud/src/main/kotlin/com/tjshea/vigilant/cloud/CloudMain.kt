@@ -416,7 +416,7 @@ fun main(args: Array<String>) = runBlocking {
         }
     }
     val engine = CloudEngine(
-        scanner = scanner, sources = sources::sources, config = { config.read() }, apiChecks = { apiManager.lines() }, apiFixes = { apiManager.fixes() }, apiSwaps = { apiManager.swaps() }, apiSwapAtMs = { apiManager.swapAtMs() },
+        scanner = scanner, sources = sources::sources, config = { config.read() }, apiChecks = { apiManager.lines() }, apiFixes = { apiManager.fixes() }, apiSwaps = { apiManager.swaps() }, apiSwapAtMs = { apiManager.swapAtMs() }, onCheckApis = { apiManager.recheckAll() },
         publish = { feed, status -> publisher.stage(feed, status) },
         // The bid desk's candidate lines (Tj, 2026-10-15), only while the phone has Vigilant-priced bids on: the fair side of every bid decision is made here, the phone adds Novig's books and posts.
         prepare = { s -> latestSettings.set(s); novigKeyed?.configure(s) },

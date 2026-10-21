@@ -57,6 +57,11 @@ data class CloudConfig(
      */
     val retryApi: String = "",
     val retryApiAtMs: Long = 0L,
+    /**
+     * Check every API now (Tj, 2026-10-21, XO1: "make sure the API screen shows accurate information, especially after I pull to refresh"): the phone's clock when it asked. A value newer than the one the engine
+     * last served makes every API due at once in [ApiMonitor] (free account reads; the Pinnacle boards, which cost a request per key, keep their own schedule); no scan is touched.
+     */
+    val checkApisAtMs: Long = 0L,
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }

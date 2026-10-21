@@ -85,6 +85,8 @@ class CloudEngine(
     private val apiFixes: () -> List<ApiFix> = { emptyList() },
     private val apiSwaps: () -> Map<String, Int> = { emptyMap() },
     private val apiSwapAtMs: () -> Long = { 0L },
+    /** The phone asked for every API to be checked now ([CloudConfig.checkApisAtMs]); the API manager makes them all due. */
+    private val onCheckApis: () -> Unit = {},
     /** One line per socket the engine holds, for the status file. */
     private val socketLines: () -> List<String> = { emptyList() },
     /** Each socket's state for the phone's Live dashboard (TCL122-4). */
@@ -185,6 +187,11 @@ class CloudEngine(
     @Volatile private var apiHandOver: String? = null
     /** When a scan last read data from each API, by switch id ([ApiManager.switchIdsOfFeed]): the manager's proof that an API whose own check fails is fine for the scans. */
     private val answeredAtMs = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+    private var checkSeenMs = 0L
+    private fun serveCheckRequest(c: CloudConfig?) {
+        if (c != null && c.checkApisAtMs > checkSeenMs) { checkSeenMs = c.checkApisAtMs; runCatching(onCheckApis) }
+    }
 
     /** The API manager asks for a fresh runner: this job ends after the scan it is on ([End.API]). False when one is already asked for. Never cancels a scan or touches an order. */
     fun requestHandOver(why: String): Boolean { if (apiHandOver != null) return false; apiHandOver = why; return true }
@@ -291,6 +298,7 @@ class CloudEngine(
             lastCfg = cfg
             cfg?.settings?.let { phoneSettings = it }
             cfg?.let { manualCfg = it }
+            serveCheckRequest(cfg)
             if (cfg != null) {
                 if (resetBaseline < 0L) resetBaseline = cfg.resetAtMs
                 if (cfg.resetAtMs > resetBaseline) {
@@ -484,6 +492,7 @@ class CloudEngine(
                 val newer = runCatching { readConfig() }.getOrNull()
                 // What the phone asks for out of band (a PropLine sweep, a manual Run or Stop) is seen at once, not only between scans (2026-10-17: a pull to refresh sat unanswered through a whole scan).
                 newer?.let { manualCfg = it }
+                serveCheckRequest(newer)
                 newer?.takeIf { it.retryApiAtMs > retrySeenMs }?.let { r ->
                     retrySeenMs = r.retryApiAtMs
                     if (r.retryApi.isNotBlank()) log("Try again: ${ApiToggles.name(ApiToggles.idOfPolicy(r.retryApi) ?: r.retryApi)} " + (if (governor.retry(r.retryApi)) "forgiven, the next scan asks it" else "was not resting"))
