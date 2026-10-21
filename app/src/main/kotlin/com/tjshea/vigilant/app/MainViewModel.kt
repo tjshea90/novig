@@ -44,6 +44,8 @@ import com.tjshea.vigilant.data.tracker.PlacedIndex
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.MutableStateFlow
