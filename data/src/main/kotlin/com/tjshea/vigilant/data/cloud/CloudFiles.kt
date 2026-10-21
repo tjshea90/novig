@@ -143,6 +143,12 @@ data class CloudStatus(
     /** The newest [CloudConfig.propLineRefreshAtMs] a finished PropLine sweep was run for (the engine's echo, in the phone's own clock): the pull-to-refresh is done when it reaches the request. */
     val propLineServedAtMs: Long = 0L,
     val propLineEvRows: Int = 0,
+    /** The CNO scan on the engine (CK, 2026-10-21; [CloudCno]): its loop is on, when `cno.json.gz` last changed, when CNO last answered, the rows listed, and why the last read failed. */
+    val cnoOn: Boolean = false,
+    val cnoAtMs: Long = 0L,
+    val cnoGoodAtMs: Long = 0L,
+    val cnoRows: Int = 0,
+    val cnoNote: String = "",
     /** The engine's own trading (TCL20d): its mode (off / paper / live), what its last pass did in words, why ordering has stopped if it has, and when `trades.json` last changed. */
     val tradeMode: String = "",
     val tradeNote: String = "",

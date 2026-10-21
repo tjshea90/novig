@@ -60,7 +60,7 @@ object CloudScanKey {
         // gates: sockets, the live lane, the streaming engine, the guards of orders: all the phone's
         "gates.usePinnodds", "gates.liveOnly", "gates.cloudScan", "gates.cloudSave", "gates.cloudHours", "gates.liveMaster",
         // the engine's own trading (TCL20d): read by the engine from the settings it is given, never a reason to restart a scan
-        "gates.cloudTrading", "gates.cloudKelly", "gates.cloudBetCap", "gates.cloudGameCap", "gates.cloudWalletUse", "gates.cloudDayStop",
+        "gates.cloudTrading", "gates.cnoOnGitHub", "gates.cloudKelly", "gates.cloudBetCap", "gates.cloudGameCap", "gates.cloudWalletUse", "gates.cloudDayStop",
         "gates.pinnSocket", "gates.kalshiSocket", "gates.novigOrderPush", "gates.novigSocketOrders", "gates.moneyDeposited",
         "gates.streamScan", "gates.streamGapSeconds", "gates.streamLive", "gates.boltLiveMinCompanies",
         "gates.boltLiveMaxAgeSeconds", "gates.boltLiveMaxSpreadPoints", "gates.boltLiveReal", "gates.sxLiveReal",

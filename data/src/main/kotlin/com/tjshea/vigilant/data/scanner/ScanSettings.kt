@@ -1399,6 +1399,11 @@ data class ApiGates(
      * holds back almost every taker bet on a game further out, and resting bids are how those games earn. The bid rules are the phone's own (bid slider, many, kinds, windows); the switch only decides WHERE they run.
      */
     val cloudBids: Boolean = true,
+    /**
+     * The CNO scan runs on the GitHub engine while the cloud scan drives (Tj, 2026-10-21, CK: "put the entire cno scanner on GitHub engine ... all the bandwidth and processing is on GitHub"):
+     * the engine reads CrazyNinjaOdds (Novig's and Kalshi's lists, each bet's books page) and the phone adopts its list ([com.tjshea.vigilant.data.cloud.CloudCno]); off = the phone reads CNO itself.
+     */
+    val cnoOnGitHub: Boolean = true,
     /** The one main switch for every live feature and socket (Tj, 2026-10-14): see [LiveMasterMode]. */
     val liveMaster: LiveMasterMode = LiveMasterMode(),
     /**
