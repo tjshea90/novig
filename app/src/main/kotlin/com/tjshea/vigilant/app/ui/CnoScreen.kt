@@ -837,6 +837,8 @@ fun CnoDetail(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        // A row CNO listed at Kalshi (CK) opens at Kalshi.
+        val openBook = if (com.tjshea.vigilant.data.cno.CnoVenueSource.isKalshi(row)) "Kalshi" else AppBook.name
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = onOpenInNovig, enabled = !opening, modifier = Modifier.testTag("openInSheet")) {
                 if (opening) {
@@ -844,7 +846,7 @@ fun CnoDetail(
                     Spacer(Modifier.width(8.dp))
                     Text("Opening…")
                 } else {
-                    Text("Open in ${AppBook.name}")
+                    Text("Open in $openBook")
                 }
             }
             if (onPlaced != null) OutlinedButton(onClick = onPlaced) { Text("I placed it") }
@@ -856,7 +858,7 @@ fun CnoDetail(
         // ParlayAPI's call on this bet at the price shown, only on a tap (5 credits; PARLAY_API.md §6.4).
         SecondOpinionFor(com.tjshea.vigilant.data.reference.InjuryTags.cnoKey(row), remember(row.key, row.odds) { com.tjshea.vigilant.data.reference.VerdictQueries.of(row) })
         Text(
-            "Open in ${AppBook.name} puts this bet in ${AppBook.name}'s bet slip." +
+            (if (openBook == "Kalshi") "Open in Kalshi opens CNO's link to this bet at Kalshi." else "Open in ${AppBook.name} puts this bet in ${AppBook.name}'s bet slip.") +
                 if (onPlaced != null) " \"I placed it\" hides it here and in the widget until the game is over." else "",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
