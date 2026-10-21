@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "20f4af5d828ce1bffd20857a8ee343e60b9c6eb7",
+ "head": "feb737aaf281b52c882da0170c30e98f13a39b4e",
  "since": 1792596542,
- "beat": 1792602111,
- "beatIso": "2026-10-21T17:01:51Z",
+ "beat": 1792602298,
+ "beatIso": "2026-10-21T17:04:58Z",
  "done": "pre-release: v1.0.36: feed-level API problems on the API card, order grading fix (orders with no logged line), FCS games in NCAAF grading, volume report tool (versionCode 376, v1.0.36)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.36), then run: bash tools/record-release.sh v1.0.36 376 \"v1.0.36: feed-level API problems on the API card, order grading fix (orders with no logged line), FCS games in NCAAF grading, volume report tool\""
 }
