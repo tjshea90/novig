@@ -36,11 +36,11 @@ class ApiMonitorTest {
         server.enqueue(MockResponse().setResponseCode(500))
         m.tick(s)
         val prop = m.lines().first { it.id == "propline" }
-        assertTrue(prop.on); assertFalse(prop.ok); assertEquals(1, prop.failStreak)
+        assertTrue("on $prop", prop.on); assertFalse("ok $prop", prop.ok); assertEquals("streak $prop", 1, prop.failStreak)
         assertFalse(m.lines().first { it.id == "odds_api" }.on)
-        assertEquals(1, server.requestCount)   // only PropLine was asked
+        assertEquals("requests", 1, server.requestCount)   // only PropLine was asked
         m.tick(s)                               // the first retry is due at once, the second only after 30 s
-        assertEquals(2, m.lines().first { it.id == "propline" }.failStreak)
+        assertEquals("retry ${m.lines()}", 2, m.lines().first { it.id == "propline" }.failStreak)
         server.enqueue(MockResponse().setHeader("X-Daily-Remaining", "900").setHeader("X-Daily-Used", "100").setHeader("X-Daily-Limit", "1000").setBody("[]"))
         m.tick(s); assertEquals(2, server.requestCount)   // waiting
         now += 31_000L
