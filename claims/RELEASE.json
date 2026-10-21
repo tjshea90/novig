@@ -5,7 +5,7 @@
  "label": "acct-27a37e",
  "name": "tj Gmail",
  "nonce": "8018ae",
- "note": "v1.0.42: SharpAPI Sharp plan: the engine keeps a copy of 25 books (Pinnacle, Circa, Bookmaker, Betfair, ProphetX...) current every 2 s, SharpAPI Pinnacle as a live feed, closing lines + SharpAPI +EV journals, Circa/Bookmaker sharp",
+ "note": "v1.0.43: SharpAPI WebSocket stream (odds and game state pushed to the engine; REST delta becomes a 60 s reconcile) and live game state as a live-lane score source; socket switch in Settings > APIs",
  "since": 1792625363,
- "beat": 1792626146
+ "beat": 1792626208
 }
