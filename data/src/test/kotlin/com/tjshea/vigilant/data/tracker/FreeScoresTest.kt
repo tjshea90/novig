@@ -82,10 +82,15 @@ class FreeScoresTest {
 
     @Test
     fun `a failing FCS list leaves the FBS list as it was`() = runTest {
-        // only the FBS answer exists: the second request gets a 404 from the stand-in server (its path is registered once, so make the second call fail by a different path)
-        routes["/espn/football/college-football/scoreboard"] = res("espn-nfl-scoreboard.json")
-        val f = FreeScores(OkHttpClient(), json, espnBase = server.url("/espn").toString().trimEnd('/'), mlbBase = server.url("/mlb").toString().trimEnd('/'), gapMs = 0)
-        assertEquals(1, f.games("NCAAF", LocalDate.of(2026, 9, 25))!!.size)
+        val fbs = res("espn-nfl-scoreboard.json")
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                requests += request
+                return if (request.requestUrl!!.queryParameter("groups") == "81") MockResponse().setResponseCode(500) else MockResponse().setBody(fbs)
+            }
+        }
+        assertEquals(1, feeds().games("NCAAF", LocalDate.of(2026, 9, 25))!!.size)
+        assertEquals(listOf("80", "81"), requests.map { it.requestUrl!!.queryParameter("groups") })
     }
 
     @Test
