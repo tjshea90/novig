@@ -1371,7 +1371,7 @@ class Scanner(
             val meteredDue = t - meteredAt >= HOT_METERED_MS
             if (meteredDue) meteredAt = t
             for (source in feeds) {
-                if (source.id in HOT_METERED && (!meteredDue || CloudProviderPaid.has(source.id))) continue
+                if (source.id in HOT_METERED && (!meteredDue || source.id !in ApiChain.paidProviders)) continue
                 val context = if (source.needsCatalog) ScanContext(cat.events, cat.markets, t) else null
                 try {
                     fetchSource(source, hotLeagues, settings, clock(), sink, context, force = true, onCall = { })
