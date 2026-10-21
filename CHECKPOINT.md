@@ -1,24 +1,24 @@
-# CHECKPOINT 3889 — read me first, then TASKS.md
+# CHECKPOINT 3890 — read me first, then TASKS.md
 
-**Written:** 2026-10-21T05:12:04Z · **tests:** all 6 fast checks green
-**Branch:** `claude/optimistic-curie-7dry2r` · **builds on:** `688726251` (this checkpoint is the commit after it)
+**Written:** 2026-10-21T05:14:00Z · **tests:** all 6 fast checks green
+**Branch:** `claude/optimistic-curie-7dry2r` · **builds on:** `67877a337` (this checkpoint is the commit after it)
 
 ## Just done
-CH56 first CLV audit written
+CH55 Kalshi funnel card, Live sockets caption
 
 ## Do this next
-reply to Tj; CH55 Kalshi funnel; clv_audit.py
+ship v1.0.33; clv_audit.py
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
      M TASKS.md
-     M research/lab/NOTES.md
-    ?? research/clv_audit_2026-10-21.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  ebba49ab3 ckpt 3889: CH56 first CLV audit written
   963e360f8 ckpt 3888: pre-release: v1.0.32: picked-off guard counts games not fills (versionCode 
   b25f273fe ckpt 3887: CH54: picked-off guard counts games
   31688d055 ckpt 3886: pre-release: v1.0.31: bids always target the most-the-bids-may-be-worth set
@@ -28,8 +28,7 @@ reply to Tj; CH55 Kalshi funnel; clv_audit.py
   b610dc97e ckpt 3882: CH52: pull arrow flashes 1s, status bar shows read in flight
   db4acd910 ckpt 3881: pre-release: v1.0.29: pull-to-refresh deadlines, Stopping headline when swi
   f076e3bff ckpt 3880: CH51: dashboard shows Stopping when switch off; refreshNow reads have 20s d
-  ae9575801 ckpt 3875: v1.0.27 released; chat quiet 30 min
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
