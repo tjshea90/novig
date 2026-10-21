@@ -101,14 +101,14 @@ class CnoVenueSource(
             return fair / (p + KalshiFees.takerPerContract(p)) - 1.0
         }
 
-        /** Kalshi's rows re-stated net of the fee, and a row the fee takes under [filters]' EV floor dropped. */
+        /** The Kalshi read's rows (every one is at Kalshi: the read is scoped to its `site_id`) re-stated net of the fee, and a row the fee takes under [filters]' EV floor dropped. */
         fun netOfKalshiFee(s: CnoSnapshot, filters: CnoFilters): CnoSnapshot =
-            s.copy(rows = s.rows.map { r -> if (isKalshi(r) || s.url.contains("site_id=${CnoView.KALSHI_SITE_ID}")) r.copy(ev = kalshiNetEv(r)) else r }.filter { s.wide || it.ev >= filters.minEv - 1e-9 })
+            s.copy(rows = s.rows.map { r -> r.copy(ev = kalshiNetEv(r)) }.filter { s.wide || it.ev >= filters.minEv - 1e-9 })
     }
 }
 
 /** The link for one book: [url] with every `site_id` replaced by [siteId]. */
-internal fun CnoView.forSite(url: String, siteId: String): String {
+fun CnoView.forSite(url: String, siteId: String): String {
     val u = url.toHttpUrlOrNull() ?: return url
     return u.newBuilder().removeAllQueryParameters("site_id").addQueryParameter("site_id", siteId).build().toString()
 }

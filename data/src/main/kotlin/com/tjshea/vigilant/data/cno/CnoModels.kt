@@ -86,6 +86,8 @@ data class CnoFilters(
     val minSides: Int = 2,
     /** Which games the list looks at: leagues, kinds of bet, pregame only, liquidity, words, props per game ([CnoScope]; everything by default). */
     val scope: CnoScope = CnoScope(),
+    /** Which books the scan lists: Novig, Kalshi or both ([CnoVenues], CK 2026-10-21; both by default). */
+    val venues: CnoVenues = CnoVenues(),
 )
 
 /** One read of Tj's CNO view. */

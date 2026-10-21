@@ -11,6 +11,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 object CnoView {
     const val PAGE = "https://crazyninjaodds.com/site/tools/positive-ev.aspx"
     const val NOVIG_SITE_ID = "17"
+    const val KALSHI_SITE_ID = "31"
 
     /** Novig only, with CNO's own recommended minimums (3 books, 2 market sides). */
     const val DEFAULT = "$PAGE?site_id=$NOVIG_SITE_ID&books_min=3&sides_min=2"
@@ -36,6 +37,9 @@ object CnoView {
 
     /** Whether the view includes live games (Novig charges takers a fee on those; pregame is free). */
     fun includesLive(link: String): Boolean = link.toHttpUrlOrNull()?.queryParameter("live") == "1"
+
+    /** The book's name for CNO's `site_id` ("17" → Novig). */
+    fun bookName(siteId: String): String = books[siteId] ?: "book $siteId"
 
     fun isCno(url: HttpUrl): Boolean = url.host == "crazyninjaodds.com" || url.host == "www.crazyninjaodds.com"
 
