@@ -241,7 +241,8 @@ class CnoMakerLinesTest {
         assertEquals("no bid on either side would sit inside the price window", CnoBidCandidates.skipReason(row(fair = 0.97), filters, rules, now))
         // The scope Tj gave the CNO scanner binds: a league he left out is not read.
         val nflOnly = filters.copy(scope = com.tjshea.vigilant.data.cno.CnoScope(leagues = setOf("NBA")))
-        assertEquals("in a league you left out", CnoBidCandidates.skipReason(row(), nflOnly, rules, now))
+        assertEquals("in a league you left out", CnoBidCandidates.skipReason(row(), nflOnly, rules, now))        // A row CNO listed at Kalshi (CK) was +EV at Kalshi's price: the Novig bid desk does not take it.
+        assertEquals("listed at Kalshi, not Novig", CnoBidCandidates.skipReason(row().copy(book = "Kalshi"), filters, rules, now))
     }
 
     @Test
