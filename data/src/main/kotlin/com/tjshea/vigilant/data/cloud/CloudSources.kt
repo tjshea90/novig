@@ -284,6 +284,13 @@ class CloudSources(
         if (!kalshiSocketWanted) kalshiStream.close()
     }
 
+    /** Every socket this engine holds is closed cleanly (job end, cancel, hours over): a socket left half-open counts against BoltOdds' 3 connections until its server times it out (BC3). */
+    fun closeSockets() {
+        runCatching { boltFeed.close() }
+        runCatching { sxbet.stream?.close() }
+        runCatching { kalshiStream.close() }
+    }
+
     fun sources(s: ScanSettings): List<ReferenceSource> {
         applySockets(s)
         pinnWireWanted = s.usePinnacle && s.gates.usePinnwire

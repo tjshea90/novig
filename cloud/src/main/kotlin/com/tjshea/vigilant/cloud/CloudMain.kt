@@ -486,7 +486,10 @@ fun main(args: Array<String>) = runBlocking {
         }
     }.apply { isDaemon = true; name = "loop-watchdog"; start() }
     engineHolder.set(engine)
+    // A cancelled job gets SIGTERM first: close the provider sockets cleanly so none stays half-open on the provider's connection count (BC3).
+    Runtime.getRuntime().addShutdownHook(Thread { runCatching { sources.closeSockets() } })
     val end = engine.run(until, started)
+    runCatching { sources.closeSockets() }
     // The window is over (or the job is): whatever rests on Novig under the engine's key is cancelled, and the ledger goes out one last time.
     runCatching { trader.windowEnded() }
     runCatching { deskStore.flush() }
