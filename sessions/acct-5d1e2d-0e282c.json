@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-7dry2r",
- "head": "b409fea5676ad2ef7a1901ce0b617ff18b358e46",
+ "head": "f076e3bff95741dd6a2174193739ea1a27d7417b",
  "since": 1792539161,
- "beat": 1792555278,
- "beatIso": "2026-10-21T04:01:18Z",
- "done": "v1.0.27 released; chat quiet 30 min",
- "next": "CH50b laned scan; CH47f tennis once pbplive frames exist; CH45a Kalshi lag if Tj reports; read Spend: log for Odds API"
+ "beat": 1792555302,
+ "beatIso": "2026-10-21T04:01:42Z",
+ "done": "CH51: dashboard shows Stopping when switch off; refreshNow reads have 20s deadlines (stuck spinner)",
+ "next": "ship v1.0.29 then reply to Tj"
 }
