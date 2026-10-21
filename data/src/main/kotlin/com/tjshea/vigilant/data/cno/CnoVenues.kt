@@ -102,8 +102,17 @@ class CnoVenueSource(
         }
 
         /** The Kalshi read's rows (every one is at Kalshi: the read is scoped to its `site_id`) re-stated net of the fee, and a row the fee takes under [filters]' EV floor dropped. */
-        fun netOfKalshiFee(s: CnoSnapshot, filters: CnoFilters): CnoSnapshot =
-            s.copy(rows = s.rows.map { r -> r.copy(ev = kalshiNetEv(r)) }.filter { s.wide || it.ev >= filters.minEv - 1e-9 })
+        fun netOfKalshiFee(s: CnoSnapshot, filters: CnoFilters): CnoSnapshot {
+            val net = s.rows.map { r -> r.copy(ev = kalshiNetEv(r)) }
+            val kept = net.filter { s.wide || it.ev >= filters.minEv - 1e-9 }
+            // Say what became of Kalshi's rows, so an empty Kalshi side reads as "the fee took them", not as a read that failed (2026-10-21: the engine's first list had 100 Novig rows and no Kalshi).
+            val words = if (s.wide) null else when {
+                s.rows.isEmpty() -> "Kalshi: CNO lists no +EV bet there"
+                kept.size < s.rows.size -> "Kalshi: ${s.rows.size} listed by CNO, ${s.rows.size - kept.size} under your minimum after Kalshi's fee"
+                else -> null
+            }
+            return s.copy(rows = kept, note = listOfNotNull(s.note, words).joinToString(" · ").ifBlank { null })
+        }
     }
 }
 

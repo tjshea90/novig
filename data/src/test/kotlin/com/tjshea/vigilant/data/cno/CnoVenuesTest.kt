@@ -49,6 +49,8 @@ class CnoVenuesTest {
         val snap = CnoVenueSource(Fake("Novig", ev = 0.04), Fake("Kalshi", ev = 0.04)).fetch(url, CnoFilters(minEv = 0.03))
         assertEquals(listOf("Novig"), snap.rows.map { it.book })
         assertEquals(0.04, snap.rows.single().ev, 1e-12)
+        // And the list says so, so an empty Kalshi side is not read as a failure.
+        assertEquals("Kalshi: 1 listed by CNO, 1 under your minimum after Kalshi's fee", snap.note)
     }
 
     @Test
