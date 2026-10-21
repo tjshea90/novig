@@ -111,6 +111,15 @@ class CloudSources(
     val sharpApiFeed = com.tjshea.vigilant.data.sharpapi.SharpApiFeed(sharpApiClient, log = { line -> println(line) })
     private val sharpApi = com.tjshea.vigilant.data.sharpapi.SharpApiSource(sharpApiFeed, sharpApiClient)
 
+    /** The day's request count from SharpAPI itself onto the usage meter (hourly, with the other plan reads). */
+    suspend fun refreshSharpApiUsage() {
+        if (!has(CloudKeys.SHARPAPI)) return
+        val k = keys(CloudKeys.SHARPAPI).first()
+        com.tjshea.vigilant.data.sharpapi.SharpApiExtras.requestsToday(sharpApiClient)?.let { n -> runCatching { usage.recordBalance(com.tjshea.vigilant.data.keys.QuotaPolicy.SHARPAPI, k, null, used = n) } }
+    }
+
+    fun sharpApiOn(s: ScanSettings): Boolean = s.gates.useSharpApi && has(CloudKeys.SHARPAPI) && !sharpApiClient.down()
+
     /** SharpAPI's state in words (the engine's log, Diagnostics). */
     fun sharpApiNote(): String = "SharpAPI: " + sharpApiClient.health() + " · held " + sharpApiFeed.describe() + " · " + sharpApiFeed.deltaCalls + " delta reads, " + sharpApiFeed.reloads + " whole reads" + (sharpApiFeed.lastNote?.let { " · $it" } ?: "")
 

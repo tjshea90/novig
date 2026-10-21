@@ -82,6 +82,17 @@ class SharpApiFeed(
     private class LeagueState(@Volatile var since: String? = null, @Volatile var loadedAtMs: Long = 0L, @Volatile var polledAtMs: Long = 0L, @Volatile var askedAtMs: Long = 0L, @Volatile var soonestMs: Long = Long.MAX_VALUE, @Volatile var live: Boolean = false)
 
     private val rows = ConcurrentHashMap<String, SaRow>()
+
+    /** Every game the store has held (its league, teams and start), kept 3 days after its start: what the closing-line capture reads. */
+    data class EventMeta(val eventId: String, val league: String, val home: String, val away: String, val startMs: Long)
+    private val events = ConcurrentHashMap<String, EventMeta>()
+
+    /** The games held in the last 3 days that started between [fromMs] and [toMs]. */
+    fun eventsStarted(fromMs: Long, toMs: Long): List<EventMeta> {
+        val now = clock()
+        events.values.removeIf { now - it.startMs > 3 * 86_400_000L }
+        return events.values.filter { it.startMs in fromMs..toMs }
+    }
     private val byLeague = ConcurrentHashMap<String, MutableSet<String>>()
     private val leagues = ConcurrentHashMap<String, LeagueState>()
     private val loadMutex = ConcurrentHashMap<String, Mutex>()
@@ -229,6 +240,7 @@ class SharpApiFeed(
     }
 
     private fun put(league: String, r: SaRow) {
+        r.startMs?.let { s -> if (!events.containsKey(r.eventId)) events[r.eventId] = EventMeta(r.eventId, r.league.ifBlank { league }, r.home, r.away, s) }
         val old = rows.put(r.id, r)
         if (old != null && old.league != r.league) byLeague[old.league]?.remove(r.id)
         byLeague.getOrPut(r.league.ifBlank { league }) { ConcurrentHashMap.newKeySet() } += r.id

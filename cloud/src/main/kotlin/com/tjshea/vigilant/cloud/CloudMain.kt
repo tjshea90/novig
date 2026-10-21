@@ -132,6 +132,7 @@ fun main(args: Array<String>) = runBlocking {
             runCatching { sources.refreshPinnWireAccounts() }
             log("PinnWire accounts: " + sources.pinnWirePlans())
             log("Spend: " + sources.spendNotes())
+            runCatching { sources.refreshSharpApiUsage() }
             log(sources.sharpApiNote())
             delay(60 * 60_000L)
         }
@@ -147,6 +148,35 @@ fun main(args: Array<String>) = runBlocking {
     // PropLine's own +EV read at Novig (Tj, 2026-10-16, TCL56): with a paid key, every 15 minutes (and only while the key is within the day's share of its requests) the pregame games of the picked
     // leagues are asked for their +EV lines at Novig; the list goes to cloud-feed for the phone's PropLine screen, and every sweep's rows to a journal that the archive loop keeps for research.
     val evJournal = DayJournal(File(out, "cloud"), "propline-ev", com.tjshea.vigilant.data.reference.PlEvRow.serializer()) { it.seenAtMs }
+    // SharpAPI's extras (SA, 2026-10-21): every book's closing price of each game the store held (Pinnacle's devigged close for CLV, captured at the moment each book turned the game live; SharpAPI keeps them 48 h),
+    // and SharpAPI's own +EV list at Novig every 10 minutes, both journaled for the studies (archived to the cloud-archive Releases with the other journals).
+    val saCloseJournal = DayJournal(File(out, "cloud"), "sharpapi-closing", com.tjshea.vigilant.data.sharpapi.SaClosing.serializer()) { it.atMs }
+    val saEvJournal = DayJournal(File(out, "cloud"), "sharpapi-ev", com.tjshea.vigilant.data.sharpapi.SaEv.serializer()) { it.seenAtMs }
+    scope.launch {
+        delay(120_000L)
+        val closed = HashSet<String>()
+        var evAt = 0L
+        while (isActive) {
+            val s = latestSettings.get()
+            val now = System.currentTimeMillis()
+            if (s != null && sources.sharpApiOn(s)) {
+                // Closings: games that started 15 min to 47 h ago and were not captured yet (at most 30 a pass, 1 request each).
+                for (e in sources.sharpApiFeed.eventsStarted(now - 47 * 3_600_000L, now - 15 * 60_000L).filter { it.eventId !in closed }.take(30)) {
+                    runCatching { com.tjshea.vigilant.data.sharpapi.SharpApiExtras.closings(sources.sharpApiClient, e.eventId, now) }.onSuccess { rows ->
+                        if (rows.isNotEmpty()) { closed += e.eventId; runCatching { saCloseJournal.appendAll(rows) } }
+                    }
+                }
+                if (now - evAt >= 10 * 60_000L) {
+                    evAt = now
+                    runCatching { com.tjshea.vigilant.data.sharpapi.SharpApiExtras.evAtNovig(sources.sharpApiClient, now) }.onSuccess { rows ->
+                        runCatching { saEvJournal.appendAll(rows) }
+                        log("SharpAPI +EV at Novig: ${rows.size} lines (" + rows.groupingBy { it.quality ?: "?" }.eachCount().entries.joinToString(", ") { "${it.key} ${it.value}" } + ")")
+                    }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("SharpAPI +EV read failed: ${e.message?.take(120)}") }
+                }
+            }
+            delay(5 * 60_000L)
+        }
+    }
     if (PROPLINE_EV_SWEEP) scope.launch {
         delay(90_000L)
         // The first sweep waits for the first scan (up to 8 min): Bet slips are built from what the scan holds, and a sweep before it has none (2026-10-17: a restart's first sweep had no Bet buttons).
