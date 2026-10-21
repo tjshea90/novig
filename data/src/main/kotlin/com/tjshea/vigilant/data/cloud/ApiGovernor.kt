@@ -29,12 +29,16 @@ class ApiGovernor(private val restMs: List<Long> = REST_MS) {
     private val rests = HashMap<String, Rest>()
     private val offAsked = HashMap<String, Long>()
     private val failed = HashSet<String>()
+    private val forced = HashMap<String, Long>()
 
     /** Switch ids resting now (with their reason and end), for the status and the dashboard. */
     fun resting(now: Long): List<Rest> = rests.values.filter { it.untilMs > now }.sortedBy { it.id }
 
-    /** The settings the engine scans under: [s] with every resting API off. */
-    fun apply(s: ScanSettings, now: Long): ScanSettings = ApiToggles.rest(s, resting(now).map { it.id })
+    /** The settings the engine scans under: [s] with every resting API off, and every API the API manager switched off (XO1) for [FORCE_MS] or until the phone's settings say it is off. */
+    fun apply(s: ScanSettings, now: Long): ScanSettings = ApiToggles.rest(s, resting(now).map { it.id } + forced.filterValues { now - it < FORCE_MS }.keys)
+
+    /** The API manager switched [id] off (XO1): the engine's own copy has it off from now, whether or not the config write that tells the phone has landed yet. Ends on its own after [FORCE_MS]. */
+    fun forceOff(id: String, now: Long) { forced[id] = now; rests.remove(id); streak.remove(id) }
 
     /** Try again (Tj, CH23): forgives [policyId]'s rests, strikes and silence so the next scan asks it; true when it was resting or struck. Nothing else changes. */
     fun retry(policyId: String): Boolean {
@@ -58,6 +62,8 @@ class ApiGovernor(private val restMs: List<Long> = REST_MS) {
             if (r.untilMs <= now) { rests.remove(r.id); events += Event.Resumed(r.id) }
         }
         for (id in offAsked.keys.toList()) if (ApiToggles.isOn(settings, id) == false) { offAsked.remove(id); strikes.remove(id) }
+        // the settings now say off themselves: the manager's own copy of that is no longer needed
+        for (id in forced.keys.toList()) if (ApiToggles.isOn(settings, id) == false) forced.remove(id)
         // 2. what each credit-metered API answered on this scan
         val byApi = feeds.groupBy { ApiToggles.idOfPolicy(CloudDashboard.providerOf(it.id)) }
         for ((id, fs) in byApi) {
@@ -93,6 +99,8 @@ class ApiGovernor(private val restMs: List<Long> = REST_MS) {
 
     companion object {
         const val LIMIT = 3
+        /** How long the engine's own copy keeps an API the manager switched off if the config write that tells the phone never lands. */
+        const val FORCE_MS = 6 * 3_600_000L
         val REST_MS = listOf(3_600_000L, 3 * 3_600_000L, 9 * 3_600_000L)
     }
 }
