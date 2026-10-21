@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-o9ngjz",
  "head": "85911a6b5e34a41bedbd109f115266189cf4903e",
  "since": 1792539161,
- "beat": 1792542359,
- "beatIso": "2026-10-21T00:25:59Z",
+ "beat": 1792542713,
+ "beatIso": "2026-10-21T00:31:53Z",
  "done": "CH48 tests, CH49 spend tally, parlay.yml arbscan",
  "next": "dispatch arbscan; check listen (tennis); ship v1.0.26"
 }
