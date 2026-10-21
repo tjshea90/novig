@@ -71,25 +71,25 @@ class ApiManagerTest {
         assertEquals("a fresh runner is asked for", 1, h.swaps.size)
         assertEquals(mapOf("sgo" to 1), m.swaps())
         assertEquals("fresh-runner", m.fixes().single().state)
-        // The next job: the count is carried, the API fails again for long enough: the second and third swaps, then off.
+        // The next jobs: the count is carried, the API fails again for long enough each time: the second and third swaps, then off.
+        var prev = m
         for (n in 2..3) {
-            val m2 = manager(f, h, m.swaps())
+            val m2 = manager(f, h, prev.swaps())
             now += 60_000L
             f.map["sgo"] = line("sgo", false, streak = 1, kind = "unreachable", atMs = now); m2.turn()
             now += 5 * 60_000L
             f.map["sgo"] = line("sgo", false, streak = 5, kind = "unreachable", atMs = now); m2.turn()
             assertEquals("swap $n", n, h.swaps.size)
             assertEquals(mapOf("sgo" to n), m2.swaps())
-            if (n == 3) {
-                val m3 = manager(f, h, m2.swaps())
-                now += 60_000L; f.map["sgo"] = line("sgo", false, streak = 1, kind = "unreachable", atMs = now); m3.turn()
-                now += 5 * 60_000L; f.map["sgo"] = line("sgo", false, streak = 5, kind = "unreachable", atMs = now); m3.turn()
-                assertEquals("off after the third runner did not help", listOf("sgo"), h.offs)
-                assertEquals("no fourth runner", 3, h.swaps.size)
-                assertTrue("Tj is told, with a notification", h.said.any { it.second.startsWith("Switched") && it.third == 1 })
-                assertEquals("off", m3.fixes().single().state)
-            }
+            prev = m2
         }
+        val m3 = manager(f, h, prev.swaps())
+        now += 60_000L; f.map["sgo"] = line("sgo", false, streak = 1, kind = "unreachable", atMs = now); m3.turn()
+        now += 5 * 60_000L; f.map["sgo"] = line("sgo", false, streak = 5, kind = "unreachable", atMs = now); m3.turn()
+        assertEquals("off after the third runner did not help", listOf("sgo"), h.offs)
+        assertEquals("no fourth runner", 3, h.swaps.size)
+        assertTrue("Tj is told, with a notification", h.said.any { it.second.startsWith("Switched") && it.third == 1 })
+        assertEquals("off", m3.fixes().single().state)
     }
 
     @Test
