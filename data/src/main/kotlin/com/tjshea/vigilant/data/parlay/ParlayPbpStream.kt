@@ -15,6 +15,10 @@ import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
+/** One raw SSE event kept for research (`pbplive-<day>.jsonl`): the sport, the event name, the data exactly as sent. */
+@kotlinx.serialization.Serializable
+data class PbpRow(val atMs: Long, val sport: String, val event: String, val data: String)
+
 /**
  * One ParlayAPI live play-by-play SSE connection per sport that the live lane asks about (`GET /v1/sports/{sport}/live/sse`, key in the X-API-Key header, Starter and up: Starter 3 connections at once,
  * Pro 25; 5 credits per connection, a reconnect is billed as a new one, so a dropped connection waits [BACKOFF_MS] first and an idle one is closed). Demand-driven: [scoreFor] is what the lane calls, and
@@ -30,6 +34,9 @@ class ParlayPbpStream(
     private val onNote: (String) -> Unit = {},
 ) {
     val board = ParlayPbpBoard()
+
+    /** Sees every complete event as received (sport, event name, data text, arrival ms): the engine's recorder for sports whose frames have not been verified (tennis) keeps them raw. */
+    @Volatile var tap: ((sport: String, event: String, data: String, atMs: Long) -> Unit)? = null
     private val wanted = ConcurrentHashMap<String, Long>()
     private val jobs = ConcurrentHashMap<String, Job>()
     private val stoppedUntil = ConcurrentHashMap<String, Long>()
@@ -37,6 +44,9 @@ class ParlayPbpStream(
         private set
     @Volatile var connects = 0L
         private set
+
+    /** Keeps [sport]'s stream open (for recording) though no game is asked about; call it every minute or so. */
+    fun watch(sport: String) { wanted[sport] = clock(); ensure(sport) }
 
     /** The score of [home] v [away] in [league] from the stream, opening the sport's stream when it is not open; null when nothing live matches. */
     fun scoreFor(league: String, home: String, away: String): AltScore? {
@@ -109,6 +119,7 @@ class ParlayPbpStream(
     internal fun accept(sport: String, event: String, data: String) {
         val now = clock()
         frames++
+        runCatching { tap?.invoke(sport, event, data, now) }
         when (event) {
             "initial_state" -> ParlayPbp.parseInitial(data, now).forEach { board.put(it.copy(sport = it.sport.ifEmpty { sport })) }
             "pbp_event" -> ParlayPbp.parseEvent(data, now) { board.get(it) }?.let { board.put(it.copy(sport = it.sport.ifEmpty { sport })) }

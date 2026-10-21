@@ -84,6 +84,14 @@ fun main(args: Array<String>) = runBlocking {
     val crossJournal = DayJournal(File(out, "cloud"), "crossx", com.tjshea.vigilant.data.cloud.CrossExchange.Row.serializer()) { it.atMs }
     val sxLive = DayJournal(File(out, "cloud"), "sxlive", com.tjshea.vigilant.data.sxbet.SxLiveRow.serializer()) { it.atMs }
     val sxOddsSeen = java.util.concurrent.atomic.AtomicInteger()
+    // ParlayAPI's live play-by-play frames (CH47): tennis (and any sport not ESPN-sourced) raw, so a live model is built on real shapes; US leagues a capped sample. pbplive-<day>.jsonl, archived with the other journals.
+    val pbpLive = DayJournal(File(out, "cloud"), "pbplive", com.tjshea.vigilant.data.parlay.PbpRow.serializer()) { it.atMs }
+    val pbpSeen = java.util.concurrent.atomic.AtomicInteger()
+    sources.parlayStream.tap = { sport, event, data, at ->
+        val keep = if (sport == "tennis" || sport.startsWith("soccer")) pbpSeen.incrementAndGet() <= 20_000 else event == "initial_state" || pbpSeen.incrementAndGet() % 40 == 0
+        if (keep) runCatching { pbpLive.append(com.tjshea.vigilant.data.parlay.PbpRow(at, sport, event, data.take(6_000))) }
+    }
+    scope.launch { while (isActive) { runCatching { sources.parlayStream.watch("tennis") }; delay(60_000L) } }
     sources.sxStream?.tap = { channel, data, at ->
         val keep = when (channel) {
             "fixtures:live_scores", "fixtures:global", "main_line:global" -> true

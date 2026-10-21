@@ -219,6 +219,7 @@ class CloudSources(
         parlayScore(s, league, home, away) ?: if (s.gates.useSxBet && s.gates.sxSocket) sxConfirmFeed()?.scoreFor(league, home, away) else null
 
     /** ParlayAPI's live play-by-play stream (CH47, Tj 2026-10-20: the default score source, ESPN the fallback) while ParlayAPI is on and a key of a Starter-or-bigger plan exists: the biggest plan's key opens it. */
+    val parlayStream: com.tjshea.vigilant.data.parlay.ParlayPbpStream get() = parlayPbp
     private val parlayPbp = com.tjshea.vigilant.data.parlay.ParlayPbpStream(http, scope, key = {
         keys(CloudKeys.PARLAY).filter { (parlayAccount.last[it]?.limit ?: 0) > 1_000 }.maxByOrNull { parlayAccount.last[it]?.limit ?: 0 }
     })
