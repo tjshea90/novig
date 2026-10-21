@@ -25,13 +25,16 @@ class ApiManagerTest {
         val swaps = ArrayList<String>()
         val offs = ArrayList<String>()
         val said = ArrayList<Triple<String, String, Int>>()
+        val sayBodies = ArrayList<String>()
         val answered = HashMap<String, Long>()
+        var silent: List<DashboardModel.SilentFeed> = emptyList()
         var handOverFree = true
         override suspend fun restart(id: String) { restarts += id }
         override fun freshRunner(why: String): Boolean { swaps += why; return handOverFree }
         override suspend fun turnOff(id: String, why: String) { offs += id }
-        override suspend fun say(key: String, title: String, body: String, priority: Int) { said += Triple(key, title, priority) }
+        override suspend fun say(key: String, title: String, body: String, priority: Int) { said += Triple(key, title, priority); sayBodies += body }
         override fun answeredAt(id: String) = answered[id] ?: 0L
+        override fun silentFeeds() = silent
         override fun log(line: String) {}
     }
 
@@ -173,5 +176,38 @@ class ApiManagerTest {
         assertEquals(listOf("odds_api"), ApiManager.switchIdsOfFeed("oddsapi_props"))
         assertEquals(listOf("parlay"), ApiManager.switchIdsOfFeed("parlay_1h"))
         assertEquals(listOf("kalshi"), ApiManager.switchIdsOfFeed("kalshi"))
+    }
+
+    @Test
+    fun `an API whose check passes but whose feed stays silent says so on its card at once and to Tj once a day after twenty minutes, and nothing is restarted, replaced or switched off`() = runBlocking {
+        val f = Fake(); val h = Hooked(); val m = manager(f, h)
+        f.map["boltodds"] = line("boltodds", true)
+        h.silent = listOf(DashboardModel.SilentFeed("bolt", 5, "BoltOdds: the lines socket is not connected (BoltOdds refused the key (Too many concurrent connections.))"))
+        m.turn()
+        assertTrue(m.lines().single().fix.startsWith("its check passes but feed bolt silent for 5 scans"))
+        assertTrue("not yet said: the card says it, Tj is told after twenty minutes", h.said.isEmpty())
+        now += 21 * 60_000L; f.map["boltodds"] = line("boltodds", true)
+        m.turn()
+        assertEquals(1, h.said.size)
+        assertTrue(h.said[0].second.contains("a feed has been silent") && h.said[0].third == 0)
+        m.turn(); now += 60_000L; m.turn()
+        assertEquals("once a day", 1, h.said.size)
+        assertTrue(h.restarts.isEmpty() && h.swaps.isEmpty() && h.offs.isEmpty())
+        assertEquals("watching", m.fixes().single().state)
+        // the feed answers again: the note goes
+        h.silent = emptyList()
+        m.turn()
+        assertEquals("", m.lines().single().fix)
+        assertTrue(m.fixes().isEmpty())
+    }
+
+    @Test
+    fun `the explanation of a refused connection names the provider's connection limit`() = runBlocking {
+        val f = Fake(); val h = Hooked(); val m = manager(f, h)
+        f.map["boltodds"] = line("boltodds", true)
+        h.silent = listOf(DashboardModel.SilentFeed("bolt", 5, "BoltOdds: the lines socket is not connected (BoltOdds refused the key (Too many concurrent connections.))"))
+        m.turn(); now += 25 * 60_000L; f.map["boltodds"] = line("boltodds", true); m.turn()
+        val body = h.sayBodies.single()
+        assertTrue(body, body.contains("allows only a few connections at once") && body.contains("nothing was switched off"))
     }
 }
