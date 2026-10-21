@@ -380,16 +380,43 @@ fun main(args: Array<String>) = runBlocking {
         log = log::invoke,
     )
     // The API monitor (Tj, 2026-10-20, CH48): every API that is on is checked through its free account read every few minutes, a failing one again at once and then after 30 s, 1, 2, 5 min, on a loop of its own that no scan waits for.
+    // The API manager on top of it (XO1, Tj 2026-10-21): a failing one is diagnosed, restarted, earns a fresh runner if it is important, and is switched off with a message after a few new runners did not help.
     val apiMonitor = com.tjshea.vigilant.data.cloud.ApiMonitor(sources.apiProbe, sources::keysOf)
+    val apiManager = com.tjshea.vigilant.data.cloud.ApiManager(
+        apiMonitor,
+        object : com.tjshea.vigilant.data.cloud.ApiManager.Hooks {
+            override suspend fun restart(id: String) {
+                sources.restartApi(id)
+                com.tjshea.vigilant.data.cloud.ApiToggles.policy(id)?.let { governor.retry(it.id) }
+            }
+            override fun freshRunner(why: String): Boolean = engineHolder.get()?.requestHandOver(why) == true
+            override suspend fun turnOff(id: String, why: String) {
+                val now = System.currentTimeMillis()
+                // The engine's own copy has it off at once; the config write is how the phone (and every session) sees it.
+                governor.forceOff(id, now)
+                val cfg = config.read() ?: return
+                if (com.tjshea.vigilant.data.cloud.ApiToggles.isOn(cfg.settings, id) == false) return
+                val next = cfg.copy(rev = maxOf(cfg.rev + 1, now), device = "claude:api-manager", settings = com.tjshea.vigilant.data.cloud.ApiToggles.setOn(cfg.settings, id, false))
+                ghClient.writeConfig(next)?.let { log("API manager: could not write $id's switch off to cloud-config: $it") }
+            }
+            override suspend fun say(key: String, title: String, body: String, priority: Int) {
+                val now = System.currentTimeMillis()
+                runCatching { postMessage(CloudMessages.Message(key, now, "engine", if (priority > 0) "alert" else "info", title.take(90), body.take(600), priority, "APIS")) }
+            }
+            override fun answeredAt(id: String): Long = engineHolder.get()?.answeredAt(id) ?: 0L
+            override fun log(line: String) { log.invoke(line) }
+        },
+        previousSwaps = prevStatus?.takeIf { System.currentTimeMillis() - it.apiHandoverAtMs < com.tjshea.vigilant.data.cloud.ApiManager.CARRY_MS }?.apiHandovers.orEmpty(),
+    )
     scope.launch {
         while (isActive) {
             val s = latestSettings.get()
-            if (s != null && novigKeyed?.addressRefused(System.currentTimeMillis()) != true) runCatching { apiMonitor.tick(s) }
+            if (s != null && novigKeyed?.addressRefused(System.currentTimeMillis()) != true) runCatching { apiManager.step(s) }
             delay(10_000L)
         }
     }
     val engine = CloudEngine(
-        scanner = scanner, sources = sources::sources, config = { config.read() }, apiChecks = { apiMonitor.lines() },
+        scanner = scanner, sources = sources::sources, config = { config.read() }, apiChecks = { apiManager.lines() }, apiFixes = { apiManager.fixes() }, apiSwaps = { apiManager.swaps() }, apiSwapAtMs = { apiManager.swapAtMs() },
         publish = { feed, status -> publisher.stage(feed, status) },
         // The bid desk's candidate lines (Tj, 2026-10-15), only while the phone has Vigilant-priced bids on: the fair side of every bid decision is made here, the phone adds Novig's books and posts.
         prepare = { s -> latestSettings.set(s); novigKeyed?.configure(s) },
