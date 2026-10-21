@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-spy7mj",
- "head": "0f6295f5fc841323eb96abfdcdbc236239d44e4b",
+ "head": "70c07be9a4672238f0a6723cb27cf250b033b57a",
  "since": 1792563808,
- "beat": 1792603314,
- "beatIso": "2026-10-21T17:21:54Z",
- "done": "CH59 sharp-confirmed bid margin step-down to 1.5% (tests green, not released)",
- "next": "CH59: add Settings switch + CloudScanKey entry, then ship release; tell Tj in chat"
+ "beat": 1792603372,
+ "beatIso": "2026-10-21T17:22:52Z",
+ "done": "CH59 sharp bid margin step-down merged onto main line, tests green (2863), versionCode 377/1.0.37 bumped, ship.sh blocked by permission classifier",
+ "next": "run bash ship.sh then release.yml then record-release.sh for v1.0.37"
 }
