@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -114,7 +116,8 @@ class DashboardUiTest {
         )
         show(st)
         compose.onNodeWithTag("dashboardApi-boltodds").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("scans are reading it fine", substring = true).assertExists()
+        // the card's own words and the API manager's line both say it
+        compose.onAllNodesWithText("scans are reading it fine", substring = true).assertCountEquals(2)
         compose.onNodeWithText("API manager: what the engine is doing about failing APIs").performScrollTo().assertIsDisplayed()
     }
 
