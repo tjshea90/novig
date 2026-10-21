@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-nojqjb",
- "head": "7460636ca20c3a947d11a402d31d854af7d332ad",
+ "head": "11b139127b4974ac0ab900df596a49c821a0fb13",
  "since": 1792539161,
- "beat": 1792560795,
- "beatIso": "2026-10-21T05:33:15Z",
+ "beat": 1792560962,
+ "beatIso": "2026-10-21T05:36:02Z",
  "done": "CH57 clv_consensus.py + second-pass audit",
  "next": "tell Tj; break down unconfirmed bets by kind/league"
 }
