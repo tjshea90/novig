@@ -220,6 +220,14 @@ class SharpApiFeed(
 
     val polling: Boolean get() = poller?.isActive == true
 
+    /** Rows laid in as if [league] had just been read whole (the tests). */
+    internal fun seed(league: String, list: List<SaRow>, since: String = "2026-01-01T00:00:00Z") {
+        val st = leagues.getOrPut(league) { LeagueState() }
+        byLeague[league]?.toList()?.forEach { remove(league, it) }
+        list.forEach { put(league, it) }
+        st.since = since; st.loadedAtMs = clock(); st.askedAtMs = clock()
+    }
+
     private fun put(league: String, r: SaRow) {
         val old = rows.put(r.id, r)
         if (old != null && old.league != r.league) byLeague[old.league]?.remove(r.id)

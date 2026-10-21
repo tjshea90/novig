@@ -184,3 +184,41 @@ class SharpApiTest {
     private fun page(rows: List<String>, next: String?, updated: String) =
         """{"data":[${rows.joinToString(",")}],"pagination":{"limit":200,"offset":0,"count":${rows.size},"has_more":${next != null},"next_cursor":${next?.let { "\"$it\"" } ?: "null"}},"updated_at":"$updated"}"""
 }
+
+/** SharpAPI's Pinnacle as the live lane's feed (SA): Pinnodds frames from the store's live Pinnacle rows; a changed line is sent again, a line taken off the board is sent closed, a stale store sends nothing. */
+class SharpApiLiveFeedTest {
+    private var now = java.time.Instant.parse("2026-10-25T23:30:00Z").toEpochMilli()
+    private val start = now - 30 * 60_000L
+
+    private fun live(id: String, sel: String, type: String, dec: Double, market: String = "moneyline", line: Double? = null, book: String = "pinnacle") =
+        SaRow(id, book, "nfl_chiefs_raiders_2026-10-25_b3", "nfl", "Kansas City Chiefs", "Las Vegas Raiders", start, market, null, sel, type, null, null, line, dec, now - 500, true, true, false, 5000.0)
+
+    @Test
+    fun `live Pinnacle rows become frames, changes and closings follow`() {
+        val feed = SharpApiFeed(SharpApiClient(OkHttpClient(), Json, { "" }), clock = { now })
+        val frames = mutableListOf<String>()
+        val lf = SharpApiLiveFeed(feed, { setOf("NFL") }, { f, _ -> frames += f }, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined), clock = { now })
+        val nfl = listOf(Leagues.byNovigName("NFL")!! to "nfl")
+        feed.seed("nfl", listOf(live("1", "Chiefs", "home", 1.5), live("2", "Raiders", "away", 2.7), live("3", "Chiefs", "home", 1.4, book = "draftkings"), live("4", "Raiders", "away", 3.0, book = "draftkings")))
+        lf.update(nfl, now)
+        assertEquals(1, frames.size)
+        val f = Json.parseToJsonElement(frames.single()).jsonObject
+        val m = (f["rec"]!!.jsonObject["markets"] as kotlinx.serialization.json.JsonArray).single().jsonObject
+        assertEquals("s;0;m", (m["key"] as kotlinx.serialization.json.JsonPrimitive).content)
+        assertEquals(1, lf.liveGames)
+        // Unchanged: nothing new in the frame's markets.
+        lf.update(nfl, now)
+        assertEquals(0, (Json.parseToJsonElement(frames.last()).jsonObject["rec"]!!.jsonObject["markets"] as kotlinx.serialization.json.JsonArray).size)
+        // Pinnacle took the moneyline down: it is sent closed.
+        feed.seed("nfl", listOf(live("3", "Chiefs", "home", 1.4, book = "draftkings"), live("4", "Raiders", "away", 3.0, book = "draftkings")))
+        lf.update(nfl, now)
+        assertTrue(frames.last().contains("\"closed\""))
+        // A store that has not been brought up to date for seconds prices nothing.
+        feed.seed("nfl", listOf(live("1", "Chiefs", "home", 1.5), live("2", "Raiders", "away", 2.7)))
+        val n = frames.size
+        now += SharpApiLiveFeed.STALE_MS + 1_000L
+        lf.update(nfl, now)
+        assertEquals(n, frames.size)
+        assertEquals(0, lf.liveGames)
+    }
+}
