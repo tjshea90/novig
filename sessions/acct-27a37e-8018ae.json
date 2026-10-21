@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "340405fb6428b95161a2bdcdbfff28a70d1750f3",
+ "head": "63db3e81f6651fd074db77458a8e763ee5077cd9",
  "since": 1792596542,
- "beat": 1792624718,
- "beatIso": "2026-10-21T23:18:38Z",
+ "beat": 1792624901,
+ "beatIso": "2026-10-21T23:21:41Z",
  "done": "SA2/SA3 tested: SharpApiTest (6: lines, pairs, excluded books, live split, store load+delta, 401/429); toggle/schema/pages tests updated; full floor green",
  "next": "SA4: SharpApiLiveFeed (Pinnacle live from the store as Pinnodds frames) + PinnFeedChoice.SHARPAPI on the engine; closing-line + EV journals; CHANGES.md; ship"
 }
