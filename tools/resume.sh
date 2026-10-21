@@ -171,6 +171,9 @@ print("  LAB   %s; read research/lab/NOTES.md" % state)
 PYLAB
     fi
 
+    # RESEARCH (Tj, 2026-10-21): every study is indexed and tied to a tuning lever; one line, never fails the briefing.
+    timeout 20 python3 -I tools/research_index.py brief 2>/dev/null | head -1
+
     # CLOUD (Tj, 2026-10-14): the phone saves every bet/bid/study day to the phone-data branch, the GitHub engine publishes to cloud-feed. One line, read-only, never fails the briefing.
     if timeout 8 git ls-remote --heads origin phone-data cloud-feed 2>/dev/null | grep . >/dev/null; then
       echo "  CLOUD phone-data (bets/bids/study, git fetch origin phone-data; files phone/bets, phone/study) and cloud-feed (status.json) exist; rules: CLAUDE.md 'Cloud scan'"
