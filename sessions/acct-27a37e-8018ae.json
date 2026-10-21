@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "01bc3ee0f22b3b88b564899138f0ecbe634b5677",
+ "head": "cc2080cb68e7e1e561a4e5bef3bdaea5d8c3076b",
  "since": 1792596542,
- "beat": 1792625428,
- "beatIso": "2026-10-21T23:30:28Z",
- "done": "pre-release: v1.0.42: SharpAPI Sharp plan: the engine keeps a copy of 25 books (Pinnacle, Circa, Bookmaker, Betfair, ProphetX...) current every 2 s, SharpAPI Pinnacle as a live feed, closing lines + SharpAPI +EV journals, Circa/Bookmaker sharp (versionCode 382, v1.0.42)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.42), then run: bash tools/record-release.sh v1.0.42 382 \"v1.0.42: SharpAPI Sharp plan: the engine keeps a copy of 25 books (Pinnacle, Circa, Bookmaker, Betfair, ProphetX...) current every 2 s, SharpAPI Pinnacle as a live feed, closing lines + SharpAPI +EV journals, Circa/Bookmaker sharp\""
+ "beat": 1792625478,
+ "beatIso": "2026-10-21T23:31:18Z",
+ "done": "SA done: v1.0.42 shipped (release building); SharpAPI on engine (store + delta), live feed, extras, Settings page; awaiting Tj's key on GitHub",
+ "next": "after Tj sends the key: read engine-log 'SharpAPI:' line (plans, rows held, delta reads), first apiq numbers for circa/bookmaker/pinnacle, fix SHARPAPI.md where the live answers differ"
 }
