@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "3e280d555d66e1403ecb9a989f0e16c65856454f",
+ "head": "8deca5bc44113aa534c0535f32643b070060c0d2",
  "since": 1792596542,
- "beat": 1792624128,
- "beatIso": "2026-10-21T23:08:48Z",
+ "beat": 1792624415,
+ "beatIso": "2026-10-21T23:13:35Z",
  "done": "SA2/SA3 code: SharpApiClient (900/min, 4 in flight, 401/429 handling, usage meter), SharpApiFeed (league load by cursor + per-league /odds/delta, hot 2 s / cold 15 s), SharpApiConvert + SharpApiBooks + SharpApiSource; wired: ApiProvider, QuotaPolicy, ApiProbe Test (/account + /account/usage), CloudKeys SHARPAPI_API_KEY + cloud-scan.yml, CloudSources, ApiToggles, CloudScanKey, ApiMonitor, ApiManager, SOURCE_ORDER/HOT_FEEDS, phone ApiEntry + Settings page + index + phone source; Circa/Bookmaker sharp (schema 23). Compiles.",
  "next": "tests: SharpApiConvertTest, SharpApiFeedTest (MockWebServer), fix ApiTogglesTest/AltMarketsTest schema; then SA4 live feed"
 }
