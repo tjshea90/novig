@@ -1724,6 +1724,7 @@ class AppContainer(val app: Application) {
             s.pinnWebsite.website -> "the free Pinnacle website feed is minutes old (cached): real live bets need the Pinnodds socket"
             s.pinnWebsite.bolt && !s.gates.boltLiveReal -> "the soft-book average is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             s.pinnWebsite.sx && !s.gates.sxLiveReal -> "the SX Bet exchange mid is paper-only until you allow real orders on it (Settings › Pinnodds live)"
+            s.pinnWebsite.sharpApi && !s.gates.sharpApiLiveReal -> "SharpAPI's Pinnacle is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             trading == null -> "no betting key connected"
             wallet == null -> "wallet not read yet"
             wallet < stake * 1.2 -> "wallet too low"
@@ -1835,7 +1836,12 @@ class AppContainer(val app: Application) {
             newFeed = { listener -> readConnection?.let { com.tjshea.vigilant.data.novig.stream.SharedStreamView({ novig.stream as? NovigStream }, listener) } },
             openFeed = { onFrame ->
                 // The feed is read at each start of the engine; changing it in Settings restarts the engine (pinnTick).
-                if (settingsStore.flow.value?.pinnWebsite?.sx == true && sxBetClient.stream != null) {
+                if (settingsStore.flow.value?.pinnWebsite?.sharpApi == true && keyStore.current(ApiProvider.SHARPAPI).isNotEmpty()) {
+                    // SharpAPI's Pinnacle (SA, 2026-10-21): live leagues' changes read every second, spoken as Pinnodds frames (on the phone only when live runs on the phone).
+                    activeWebsiteFeed = null; boltLiveFeed = null; boltFeed.liveTennis = false
+                    sharpApiFeed.startPolling(appScope)
+                    com.tjshea.vigilant.data.sharpapi.SharpApiLiveFeed(sharpApiFeed, { settingsStore.flow.value?.leagues.orEmpty() }, onFrame, appScope)
+                } else if (settingsStore.flow.value?.pinnWebsite?.sx == true && sxBetClient.stream != null) {
                     // SX Bet's exchange mid (Tj, 2026-10-18, TCL118): pushed by its socket with the live scores, spoken as Pinnodds frames.
                     activeWebsiteFeed = null; boltLiveFeed = null; boltFeed.liveTennis = false
                     val st = sxBetClient.stream!!
@@ -1938,6 +1944,7 @@ class AppContainer(val app: Application) {
             // Pinnacle's website feed is served from a cache and was measured 90-400 s old (RESEARCH.md §127): never a basis for a real order.
             s.liveBidReal && s.pinnWebsite.website -> "the free Pinnacle website feed is minutes old (cached): real live bids need the Pinnodds socket"
             s.liveBidReal && s.pinnWebsite.sx && !s.gates.sxLiveReal -> "the SX Bet exchange mid is paper-only until you allow real orders on it (Settings › Pinnodds live)"
+            s.liveBidReal && s.pinnWebsite.sharpApi && !s.gates.sharpApiLiveReal -> "SharpAPI's Pinnacle is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             s.liveBidReal && s.pinnWebsite.bolt && !s.gates.boltLiveReal -> "the soft-book average is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             else -> null
         }
