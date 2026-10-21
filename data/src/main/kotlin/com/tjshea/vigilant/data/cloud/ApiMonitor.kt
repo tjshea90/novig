@@ -76,7 +76,7 @@ class ApiMonitor(
         Target("sgo", ApiProvider.SPORTSGAMEODDS, okEveryMs), Target("boltodds", ApiProvider.BOLTODDS, okEveryMs), Target("oddspapi", ApiProvider.ODDSPAPI, okEveryMs),
         Target("oddspapi_free", ApiProvider.ODDSPAPI_FREE, 30 * 60_000L), Target("unabated", ApiProvider.UNABATED, 30 * 60_000L), Target("parlay", ApiProvider.PARLAY, okEveryMs),
         Target("propline", ApiProvider.PROPLINE, okEveryMs), Target("odds_api", ApiProvider.THE_ODDS_API, okEveryMs), Target("pinnwire", ApiProvider.PINNWIRE, pinnEveryMs),
-        Target("pinnapi", ApiProvider.PINNAPI, pinnEveryMs), Target("sxbet", ApiProvider.SXBET, okEveryMs), Target("kalshi", null, okEveryMs), Target("polymarket", null, okEveryMs),
+        Target("pinnapi", ApiProvider.PINNAPI, pinnEveryMs), Target("sxbet", ApiProvider.SXBET, okEveryMs), Target("sharpapi", ApiProvider.SHARPAPI, okEveryMs), Target("kalshi", null, okEveryMs), Target("polymarket", null, okEveryMs),
     )
     private val lines = java.util.concurrent.ConcurrentHashMap<String, ApiCheckLine>()
     private val dueAt = java.util.concurrent.ConcurrentHashMap<String, Long>()

@@ -124,6 +124,7 @@ jobs:
           ODDSPAPI_FREE_API_KEY: ${{ secrets.ODDSPAPI_FREE_API_KEY }}
           UNABATED_API_KEY: ${{ secrets.UNABATED_API_KEY }}
           SXBET_API_KEY: ${{ secrets.SXBET_API_KEY }}
+          SHARPAPI_API_KEY: ${{ secrets.SHARPAPI_API_KEY }}
           PINNWIRE_API_KEY: ${{ secrets.PINNWIRE_API_KEY }}
           PINNAPI_API_KEY: ${{ secrets.PINNAPI_API_KEY }}
           PINNODDS_API_KEY: ${{ secrets.PINNODDS_API_KEY }}

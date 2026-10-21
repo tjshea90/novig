@@ -895,6 +895,10 @@ data class ScanSettings(
         if (s.schema < 22) {
             s = s.copy(sharpBooks = s.sharpBooks + "sxbet", schema = 22)
         }
+        // SA (Tj, 2026-10-21, SharpAPI's Sharp plan): Circa and Bookmaker, sharp books SharpAPI brings, join the sharp books once (research/review/CHANGES.md).
+        if (s.schema < 23) {
+            s = s.copy(sharpBooks = s.sharpBooks + "circa" + "bookmaker", schema = 23)
+        }
         return s
     }
 
@@ -1123,6 +1127,7 @@ data class ScanSettings(
             // BoltOdds Pro: its own two sources (BOLTODDS_API.md §7); off, this set is exactly what it was.
             if (gates.useBoltOdds) { add("bolt"); add("bolt-props") }
             if (gates.useSxBet) add("sxbet")
+            if (gates.useSharpApi) add("sharpapi")
             // Unabated Free: its own two sources, last in the order (UNABATED_API.md §3); off, this set is exactly what it was.
             if (unabated) { add("unabated"); add("unabated-props") }
             // OddsPapi Free (v4) reads whole games for the fair average only when Tj gives it a daily request figure; with 0 it is closing lines only.
@@ -1413,6 +1418,8 @@ data class ApiGates(
     val useBoltOdds: Boolean = false,
     /** SX Bet (SXBET_API.md, Tj 2026-10-18): an exchange read as a sharp fair-line source (markets public, books need a read-only key). Off by default; off, nothing is sent to SX Bet. */
     val useSxBet: Boolean = false,
+    /** SharpAPI (SHARPAPI.md, Tj 2026-10-21: the Sharp plan): 25 books incl. Pinnacle, Circa, Bookmaker, Betfair, ProphetX, kept current on the engine by delta polling. On by default; nothing is sent without a key. */
+    val useSharpApi: Boolean = true,
     /** SX Bet: keep its WebSocket (best-odds and live-score channels) open and read books from it; off = the REST read every scan. Only matters while [useSxBet] is on. */
     val sxSocket: Boolean = true,
     /** BoltOdds: price the fair line with every sportsbook it lists (not only the picked ones). */

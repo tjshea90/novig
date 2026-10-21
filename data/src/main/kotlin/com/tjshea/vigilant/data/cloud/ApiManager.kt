@@ -202,7 +202,7 @@ class ApiManager(
         const val CARRY_MS = 3 * 3_600_000L
 
         /** The data the scan, the fair lines and the bids stand on: a failing one earns a fresh runner. The others (The Odds API, Unabated, OddsPapi Free, Kalshi, Polymarket) are retried and, if they never recover, switched off. */
-        val IMPORTANT = setOf("sgo", "boltodds", "parlay", "propline", "pinnwire", "pinnapi", "oddspapi", "sxbet")
+        val IMPORTANT = setOf("sgo", "boltodds", "parlay", "propline", "pinnwire", "pinnapi", "oddspapi", "sxbet", "sharpapi")
 
         /** The switch ids a feed's answer counts for ("pinnacle" is one feed for both Pinnacle hosts). */
         fun switchIdsOfFeed(feedId: String): List<String> {

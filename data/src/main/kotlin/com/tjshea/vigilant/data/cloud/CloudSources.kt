@@ -103,6 +103,17 @@ class CloudSources(
     private val boltProps = BoltPropsSource(boltFeed)
 
     private val polymarket = PolymarketClient(http, json, usage = usage)
+    /**
+     * SharpAPI's Sharp plan (Tj, 2026-10-21, SA; SHARPAPI.md): the engine keeps a copy of its odds store (each league read once, then `/odds/delta` every 2 s for leagues with a game within 12 h), so a scan reads
+     * Pinnacle, Circa, Bookmaker, Betfair, ProphetX, SBOBET and the rest from memory. No stream add-on: delta polling is the fastest thing the plan allows.
+     */
+    val sharpApiClient = com.tjshea.vigilant.data.sharpapi.SharpApiClient(http, json, { keys(CloudKeys.SHARPAPI).firstOrNull().orEmpty() }, usage)
+    val sharpApiFeed = com.tjshea.vigilant.data.sharpapi.SharpApiFeed(sharpApiClient, log = { line -> println(line) })
+    private val sharpApi = com.tjshea.vigilant.data.sharpapi.SharpApiSource(sharpApiFeed, sharpApiClient)
+
+    /** SharpAPI's state in words (the engine's log, Diagnostics). */
+    fun sharpApiNote(): String = "SharpAPI: " + sharpApiClient.health() + " · held " + sharpApiFeed.describe() + " · " + sharpApiFeed.deltaCalls + " delta reads, " + sharpApiFeed.reloads + " whole reads" + (sharpApiFeed.lastNote?.let { " · $it" } ?: "")
+
     private val sxbet = com.tjshea.vigilant.data.reference.SxBetClient(http, json, { keys(CloudKeys.SXBET).firstOrNull().orEmpty() }, usage, socketOn = { sxSocketWanted }, scope = scope)
     /**
      * Kalshi's signed key and socket (Tj, 2026-10-16, chat: "I want to send my kalshi key to GitHub so GitHub can use the socket for faster odds"; he accepted that an API key can trade, which is why this
@@ -346,6 +357,8 @@ class CloudSources(
         if (s.usePolymarket) add(polymarket)
         // SX Bet: markets are public but prices need the read-only key; with the switch on and a key it prices beside the other exchanges.
         if (s.gates.useSxBet && has(CloudKeys.SXBET) && !sxbet.down()) add(sxbet)
+        // SharpAPI: its switch and a key; the store keeps itself current while it is asked (the poller starts with the first league asked and drops leagues nobody asks for).
+        if (s.gates.useSharpApi && has(CloudKeys.SHARPAPI) && !sharpApiClient.down()) { add(sharpApi); sharpApiFeed.startPolling(scope) } else sharpApiFeed.stopPolling()
         if (s.useKalshi) add(kalshi)
         if (s.usePropLine && has(CloudKeys.PROPLINE)) {
             add(propLine)
@@ -370,6 +383,8 @@ object CloudKeys {
     const val ODDSPAPI_FREE = "ODDSPAPI_FREE_API_KEY"
     const val UNABATED = "UNABATED_API_KEY"
     const val SXBET = "SXBET_API_KEY"
+    /** SharpAPI's key (Tj, 2026-10-21: the Sharp plan trial). Read only; it carries no trading. */
+    const val SHARPAPI = "SHARPAPI_API_KEY"
     const val PINNWIRE = "PINNWIRE_API_KEY"
     const val PINNAPI = "PINNAPI_API_KEY"
 
@@ -410,11 +425,11 @@ object CloudKeys {
     /** The secret holding each meter's keys (the dashboard needs the keys' order to say which one is active). A policy with no secret here has no key on GitHub. */
     fun envFor(policyId: String): String? = when (policyId) {
         "sgo" -> SGO; "oddspapi" -> ODDSPAPI; "oddspapi_free" -> ODDSPAPI_FREE; "unabated" -> UNABATED; "pinnwire" -> PINNWIRE; "pinnacle" -> PINNAPI; "pinnodds" -> PINNODDS
-        "propline" -> PROPLINE; "oddsapi" -> ODDS_API; "parlay" -> PARLAY; "boltodds" -> BOLT; "sxbet" -> SXBET
+        "propline" -> PROPLINE; "oddsapi" -> ODDS_API; "parlay" -> PARLAY; "boltodds" -> BOLT; "sxbet" -> SXBET; "sharpapi" -> SHARPAPI
         else -> null
     }
 
-    val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, SXBET, PINNWIRE, PINNAPI, PINNODDS, PROPLINE, ODDS_API, PARLAY, BOLT)
+    val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, SXBET, SHARPAPI, PINNWIRE, PINNAPI, PINNODDS, PROPLINE, ODDS_API, PARLAY, BOLT)
 
     /**
      * Which of the phone's keys go to which repository secret (the app sends them: Settings › Cloud scan › Send my API keys to GitHub; Tj, 2026-10-14). **Pinnodds is never in it** (its socket allows one
@@ -433,6 +448,7 @@ object CloudKeys {
         com.tjshea.vigilant.data.keys.ApiProvider.PARLAY to PARLAY,
         com.tjshea.vigilant.data.keys.ApiProvider.BOLTODDS to BOLT,
         com.tjshea.vigilant.data.keys.ApiProvider.SXBET to SXBET,
+        com.tjshea.vigilant.data.keys.ApiProvider.SHARPAPI to SHARPAPI,
     )
 
     /** Secrets Tj added in GitHub himself, which the phone does not send (Pinnodds' REST key, 2026-10-18: "pinnodds api key is now added as a secret"). The engine reads them like the others. */
