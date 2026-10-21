@@ -841,6 +841,14 @@ private fun ColumnScope.CnoPage(s: ScanSettings, onUpdate: SettingsUpdate) {
             tag = "cnoOnlyAgreed",
         ) { v -> onUpdate { it.copy(cnoOnlyAgreed = v, cnoCheckBooks = true) } }
     }
+    // CK (Tj, 2026-10-21): "put the entire cno scanner on GitHub engine".
+    if (AppBook.isNovig) SwitchRow(
+        "Scan CNO on GitHub",
+        "While Scan on GitHub is on, the GitHub engine reads CrazyNinjaOdds (Novig's and Kalshi's lists and each bet's books) and this phone only shows its list. " +
+            "If the engine is off or CNO refuses it, the phone reads CNO itself until the engine is back.",
+        s.gates.cnoOnGitHub,
+        tag = "cnoOnGitHub",
+    ) { v -> onUpdate { it.copy(gates = it.gates.copy(cnoOnGitHub = v)) } }
     // Novig's own order books: Vigilant MGM has no such public feed for BetMGM.
     if (AppBook.isNovig) SwitchRow(
         "Novig's price now",

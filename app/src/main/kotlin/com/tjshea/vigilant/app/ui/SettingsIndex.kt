@@ -104,6 +104,7 @@ object SettingsIndex {
         Entry("Smallest edge (EV) listed", SettingsPage.CNO, "The smallest edge CNO's list shows", "min ev minimum cno"),
         Entry("Require a complete sportsbook", SettingsPage.CNO, "Only markets with every side priced", "complete"),
         Entry("Green ✓ when books agree", SettingsPage.CNO, "Check each top bet against every book's own odds", "check agree verify books only"),
+        Entry("Scan CNO on GitHub", SettingsPage.CNO, "The GitHub engine reads CrazyNinjaOdds; the phone shows its list", "cno github engine cloud crazyninjaodds kalshi", novig),
         Entry("Novig's price now", SettingsPage.CNO, "Show Novig's current price, not CNO's minute-old one", "live price novig current", novig),
         Entry("Player teams", SettingsPage.CNO, "Show the player's team on player bets", "team roster espn"),
         Entry("Read the list every", SettingsPage.CNO, "How often CNO's list refreshes on screen", "refresh interval seconds"),
