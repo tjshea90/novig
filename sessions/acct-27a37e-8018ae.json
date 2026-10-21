@@ -8,8 +8,8 @@
  "branch": "claude/new-session-51eqix",
  "head": "b1ee7e524e1c6e1ab5614a44ee7ddffeeb162265",
  "since": 1792596542,
- "beat": 1792620400,
- "beatIso": "2026-10-21T22:06:40Z",
+ "beat": 1792620676,
+ "beatIso": "2026-10-21T22:11:16Z",
  "done": "pre-release: v1.0.40: CNO scans Novig and Kalshi (tab chips, Kalshi EV net of fee, venue card colours); the whole CNO scan runs on the GitHub engine (cno.json.gz), phone adopts it (versionCode 380, v1.0.40)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.40), then run: bash tools/record-release.sh v1.0.40 380 \"v1.0.40: CNO scans Novig and Kalshi (tab chips, Kalshi EV net of fee, venue card colours); the whole CNO scan runs on the GitHub engine (cno.json.gz), phone adopts it\""
 }
