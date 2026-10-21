@@ -129,6 +129,8 @@ class CloudLink(private val c: AppContainer) {
     @Volatile private var propLineRequestedAt = 0L
     @Volatile private var retryApiId = ""
     @Volatile private var retryApiAt = 0L
+    /** The phone's clock when it last asked the engine to check every API now ([CloudConfig.checkApisAtMs]). */
+    @Volatile private var checkApisAt = 0L
     private var feedFetchedFor = 0L
     private var bidsFetchedFor = 0L
     private var evFetchedFor = 0L
@@ -444,6 +446,18 @@ class CloudLink(private val c: AppContainer) {
         return null
     }
 
+    /**
+     * Check every API now (XO1, Tj 2026-10-21: "make sure the API screen shows accurate information, especially after I pull to refresh"): the engine makes every API due at once in its monitor (free account reads;
+     * no scan is touched). Returns the phone's clock of the request, or null when it could not be sent.
+     */
+    suspend fun requestApiCheck(): Long? {
+        if (!hasToken()) return null
+        val at = maxOf(System.currentTimeMillis(), checkApisAt + 1)
+        checkApisAt = at
+        c.settingsStore.flow.value?.let { pushSettings(it, force = true) } ?: return null
+        return at
+    }
+
     suspend fun requestPropLineSweep(): String? {
         if (!hasToken()) { _ui.update { it.copy(note = "Save a GitHub token first (Settings › Cloud scan).") }; return "no token" }
         val now = System.currentTimeMillis()
@@ -538,7 +552,7 @@ class CloudLink(private val c: AppContainer) {
      * status, list, orders, bids, API usage, messages and chat, one after another, and returns when every read has answered (the pull's arrow stays up until then, [Ui.refreshing]). The loops go on beside
      * it. Returns how many reads answered. A second pull while one runs waits for it and returns at once.
      */
-    suspend fun refreshNow(): Int {
+    suspend fun refreshNow(apis: Boolean = false): Int {
         if (!hasToken()) return 0
         if (!refreshMutex.tryLock()) { refreshMutex.withLock { }; return 0 }
         try {
@@ -552,6 +566,22 @@ class CloudLink(private val c: AppContainer) {
             fun step(t: String) = _ui.update { it.copy(refreshStep = t) }
             step("Reading the engine's status")
             runCatching { got(within { client.pollStatus(null) })?.let { st -> if (s != null) onStatus(st, s) else latest.status = st; latest.statusOkAtMs = System.currentTimeMillis() } }
+            // On the Engine tab the pull also makes the engine check every API (XO1): the cards must show what is true now, not what the last 5-minute check said. Only while an engine is running; bounded.
+            if (apis && latest.status?.let { com.tjshea.vigilant.data.cloud.DashboardModel.running(it, System.currentTimeMillis()) } == true) {
+                step("Asking the engine to check every API")
+                val asked = runCatching { requestApiCheck() }.getOrNull()
+                if (asked != null) {
+                    val deadline = asked + 25_000L
+                    while (System.currentTimeMillis() < deadline) {
+                        kotlinx.coroutines.delay(2_500L)
+                        val st = (within { client.pollStatus(null) } as? CloudClient.Poll.Fresh<com.tjshea.vigilant.data.cloud.CloudStatus>)?.value ?: continue
+                        if (s != null) onStatus(st, s) else latest.status = st
+                        latest.statusOkAtMs = System.currentTimeMillis()
+                        // the Pinnacle boards cost a request per key and keep their own schedule: they are not waited for
+                        if (st.apiChecks.filter { it.on && it.hasKey && it.id != "pinnwire" && it.id != "pinnapi" }.all { it.atMs >= asked - 2_000L }) break
+                    }
+                }
+            }
             step("Reading orders")
             runCatching { got(within { client.fetchTrades(null) })?.let { t -> _ui.update { it.copy(trades = t, tradesReadAtMs = System.currentTimeMillis()) } } }
             step("Reading bids")
@@ -644,11 +674,11 @@ class CloudLink(private val c: AppContainer) {
         runCatching { wantedFile.writeText(if (wanted) "1" else "0") }
         // Not wanted and nothing owed: the engine is left alone (no request is made for a phone that never used the cloud scan).
         if (!wanted && !offPending.exists()) return
-        val key = (if (wanted) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode() + "r$refreshRequestedAt" + "m$manualRunUntil,$manualStopUntil" + "x$resetRequestedAt" + "p$propLineRequestedAt" + "y$retryApiAt"
+        val key = (if (wanted) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode() + "r$refreshRequestedAt" + "m$manualRunUntil,$manualStopUntil" + "x$resetRequestedAt" + "p$propLineRequestedAt" + "y$retryApiAt" + "k$checkApisAt"
         if (key == lastPushedKey && !force) return
         val rev = maxOf(System.currentTimeMillis(), lastRev + 1)
         loadManual()
-        val why = client.writeConfig(CloudConfig(rev = rev, on = wanted, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt, manualRunUntilMs = manualRunUntil, manualStopUntilMs = manualStopUntil, resetAtMs = resetRequestedAt, propLineRefreshAtMs = propLineRequestedAt, retryApi = retryApiId, retryApiAtMs = retryApiAt))
+        val why = client.writeConfig(CloudConfig(rev = rev, on = wanted, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt, manualRunUntilMs = manualRunUntil, manualStopUntilMs = manualStopUntil, resetAtMs = resetRequestedAt, propLineRefreshAtMs = propLineRequestedAt, retryApi = retryApiId, retryApiAtMs = retryApiAt, checkApisAtMs = checkApisAt))
         if (why == null) {
             if (wanted) runCatching { sendKeys(auto = true) }
             lastPushedKey = key; lastRev = rev

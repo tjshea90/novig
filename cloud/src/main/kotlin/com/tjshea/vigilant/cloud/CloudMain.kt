@@ -412,7 +412,7 @@ fun main(args: Array<String>) = runBlocking {
         while (isActive) {
             val s = latestSettings.get()
             if (s != null && novigKeyed?.addressRefused(System.currentTimeMillis()) != true) runCatching { apiManager.step(s) }
-            delay(10_000L)
+            delay(3_000L)   // a tick only checks what is due (a free comparison); 3 s so a pull to refresh on the phone is answered in seconds
         }
     }
     val engine = CloudEngine(
