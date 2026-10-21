@@ -21,7 +21,7 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
  * A passing check clears everything for that API. A spent or rate-limited API is not failing (it is accepted: the allowance is another matter, [ApiGovernor] and [ApiAdvisor] own it).
  */
 class ApiManager(
-    private val monitor: ApiMonitor,
+    private val monitor: ApiChecks,
     private val hooks: Hooks,
     private val clock: () -> Long = System::currentTimeMillis,
     previousSwaps: Map<String, Int> = emptyMap(),

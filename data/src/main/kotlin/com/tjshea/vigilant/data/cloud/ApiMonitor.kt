@@ -44,6 +44,13 @@ data class ApiCheckLine(
     val fix: String = "",
 )
 
+/** What the [ApiManager] needs of a monitor (so its ladder can be tested with scripted lines): the lines, a turn of checking, and "check it now". */
+interface ApiChecks {
+    fun lines(): List<ApiCheckLine>
+    suspend fun tick(s: ScanSettings, maxPerTick: Int = 6)
+    fun recheckNow(id: String? = null)
+}
+
 /**
  * The engine's API monitor: every API that is switched on and has a key is checked through its own FREE account read ([ApiProbe.check]: the same call as the phone's Test now, which also lays the answer into the usage
  * ledger: credits left, a refused key marked, an accepted one cleared) every [okEveryMs]; a failing one is tried again at once and then after 30 s, 1 min, 2 min, 5 min, without touching any scan. The Pinnacle
@@ -61,7 +68,7 @@ class ApiMonitor(
     private val pinnEveryMs: Long = 2 * 3_600_000L,
     private val timeoutMs: Long = 75_000L,
     private val keyTimeoutMs: Long = ApiProbe.KEY_TIMEOUT_MS,
-) {
+) : ApiChecks {
     /** A switch id, the provider whose keys it checks (null = keyless: kalshi, polymarket) and how often a good one is checked again. */
     private data class Target(val id: String, val provider: ApiProvider?, val every: Long)
 
@@ -75,7 +82,7 @@ class ApiMonitor(
     private val dueAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
     /** The lines as last known, in a stable order. */
-    fun lines(): List<ApiCheckLine> = targets.mapNotNull { lines[it.id] }
+    override fun lines(): List<ApiCheckLine> = targets.mapNotNull { lines[it.id] }
 
     /** One API's line, or null when it has none yet. */
     fun line(id: String): ApiCheckLine? = lines[id]
@@ -87,7 +94,7 @@ class ApiMonitor(
      * Makes [id] (or every API) due at once: the next [tick] checks it whatever its schedule says. The Pinnacle boards, which cost a real request per key, are left on their own schedule unless they are
      * failing or have never been checked: a pull to refresh must not spend their day's allowance.
      */
-    fun recheckNow(id: String? = null) {
+    override fun recheckNow(id: String?) {
         for (t in targets) {
             if (id != null && t.id != id) continue
             val l = lines[t.id]
@@ -100,7 +107,7 @@ class ApiMonitor(
      * Checks whatever is due under [s] (at most [maxPerTick] APIs at once, so a hung provider never holds the rest), and lists every API's switch state. Never throws. Each API's check has [timeoutMs] in all and
      * every key its own deadline, so a partial answer (some keys fine, one silent) is kept instead of being thrown away with the slow one.
      */
-    suspend fun tick(s: ScanSettings, maxPerTick: Int = 6) {
+    override suspend fun tick(s: ScanSettings, maxPerTick: Int) {
         val now = clock()
         val due = ArrayList<Pair<Target, List<String>>>()
         for (t in targets) {
