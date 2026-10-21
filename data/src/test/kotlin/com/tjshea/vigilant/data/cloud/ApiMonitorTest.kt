@@ -6,7 +6,7 @@ import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.UsageBook
 import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.scanner.ScanSettings
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -29,7 +29,7 @@ class ApiMonitorTest {
     }
 
     @Test
-    fun `an API that is off is listed and never called, one that is on is checked, a failure is retried after its wait`() = runTest {
+    fun `an API that is off is listed and never called, one that is on is checked, a failure is retried after its wait`() = runBlocking {
         var now = 1_800_000_000_000L
         val m = monitor({ now }, mapOf(ApiProvider.PROPLINE to listOf("k1"), ApiProvider.THE_ODDS_API to listOf("k2")))
         val s = ScanSettings().let { ApiToggles.setOn(ApiToggles.setOn(it, "propline", true), "odds_api", false) }
