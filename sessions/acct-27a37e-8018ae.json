@@ -8,8 +8,8 @@
  "branch": "claude/new-session-51eqix",
  "head": "8047b101bbd2f3db093aca9730a467288bcf20cb",
  "since": 1792596542,
- "beat": 1792621263,
- "beatIso": "2026-10-21T22:21:03Z",
+ "beat": 1792621271,
+ "beatIso": "2026-10-21T22:21:11Z",
  "done": "full test (CK5/XO6) done: floor 4135 green, 134 screens viewed, 7 fixes (see TASKS CK5)",
  "next": "ship v1.0.41 and release; then the engine's first live CNO reads (status.cnoNote, engine-log) are the proof CK3 works on a runner"
 }
