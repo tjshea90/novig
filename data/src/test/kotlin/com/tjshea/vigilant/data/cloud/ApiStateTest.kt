@@ -54,4 +54,45 @@ class ApiStateTest {
         assertEquals(Light.RED, ApiState.of(check(), view(spent), CloudDashboard.Health.WORKING, now).light)
         assertEquals(Light.YELLOW, ApiState.of(check(), view(good(left = 5_000)), CloudDashboard.Health.WORKING, now).light)
     }
+
+    // ---- XO1 (Tj, 2026-10-21): "some of the apis claim to be failing, but when I test the keys they are green and accepted"
+
+    @Test fun `a failing check while the scans read the API fine is yellow with both facts, never red`() {
+        val c = check(ok = false, streak = 6, keys = 10).copy(scanOkAtMs = now - 60_000L, message = "no answer within 20 s")
+        val v = ApiState.of(c, view(good()), CloudDashboard.Health.WORKING, now)
+        assertEquals(Light.YELLOW, v.light)
+        assertTrue(v.words, v.words.contains("scans are reading it fine") && v.words.contains("no answer within 20 s"))
+        // the same check with no scan evidence is red
+        assertEquals(Light.RED, ApiState.of(c.copy(scanOkAtMs = 0L), view(good()), CloudDashboard.Health.FAILING, now).light)
+        // scan evidence older than ten minutes does not count
+        assertEquals(Light.RED, ApiState.of(c.copy(scanOkAtMs = now - 11 * 60_000L), view(good()), CloudDashboard.Health.FAILING, now).light)
+    }
+
+    @Test fun `the engine cannot use it but the phones fresh test is accepted is yellow and says the keys or address differ`() {
+        val c = check(ok = false, streak = 4).copy(message = "Refused (HTTP 403): this key is not accepted.", kind = "refused", fix = "asked for a fresh runner (1 of 3)")
+        val phone = ApiState.PhoneCheck(now - 20_000L, ok = true, keysOk = 1, keys = 1, message = "Active and accepted")
+        val v = ApiState.of(c, view(good()), CloudDashboard.Health.FAILING, now, phone)
+        assertEquals(Light.YELLOW, v.light)
+        assertTrue(v.words, v.words.contains("this phone's test is accepted") && v.words.contains("fresh runner (1 of 3)"))
+        // a phone test that is old is not evidence
+        assertEquals(Light.RED, ApiState.of(c, view(good()), CloudDashboard.Health.FAILING, now, phone.copy(atMs = now - 20 * 60_000L)).light)
+    }
+
+    @Test fun `the managers word is on the line of a failing API and a switched-off API says why`() {
+        val c = check(ok = false, streak = 5).copy(fix = "restarted its connection after 3 failed checks (unreachable)")
+        assertTrue(ApiState.of(c, view(good()), null, now).words.endsWith("engine: restarted its connection after 3 failed checks (unreachable)"))
+        val off = ApiCheckLine("sgo", "SportsGameOdds", on = false, fix = "switched off: it was not accepted on 3 fresh runners in a row. Fix its key or plan, then switch it on in Settings › APIs.")
+        val v = ApiState.of(off, view(good()), null, now)
+        assertEquals(Light.OFF, v.light); assertTrue(v.words.startsWith("switched off: it was not accepted"))
+    }
+
+    @Test fun `with the engine not running the phones own fresh test is the evidence and an old engine check is not shown as live`() {
+        val phone = ApiState.PhoneCheck(now - 5_000L, ok = true, keysOk = 3, keys = 3, message = "ok")
+        val v = ApiState.of(check(at = now - 5 * 3_600_000L), view(good()), CloudDashboard.Health.WORKING, now, phone, engineRunning = false)
+        assertEquals(Light.GREEN, v.light); assertTrue(v.words, v.words.contains("tested from this phone") && v.words.contains("engine is not running"))
+        val none = ApiState.of(check(at = now - 5 * 3_600_000L), view(good()), CloudDashboard.Health.WORKING, now, null, engineRunning = false)
+        assertEquals(Light.UNKNOWN, none.light); assertTrue(none.words, none.words.startsWith("engine not running"))
+        val bad = ApiState.of(check(at = now - 5 * 3_600_000L), view(good()), null, now, phone.copy(ok = false, keysOk = 0, message = "Refused (HTTP 401)"), engineRunning = false)
+        assertEquals(Light.RED, bad.light)
+    }
 }
