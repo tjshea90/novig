@@ -69,6 +69,9 @@ class UnabatedClient(
     /** Two failures in a row and nothing good for [DOWN_AFTER_MS]: the source gives nothing until one call works again. */
     fun down(now: Long = clock()): Boolean = failures >= 2 && now - lastOkMs > DOWN_AFTER_MS && now - lastFailMs < RETRY_AFTER_MS
 
+    /** Forgets the failures so the next call is made at once (the API manager's restart, XO1: a client that is "down" waits [RETRY_AFTER_MS] before it asks again). Touches nothing else. */
+    fun restart() { failures = 0; lastFailMs = 0L }
+
     suspend fun leagues() = UnabatedParser.leagues(get("/league"))
     suspend fun betTypes() = UnabatedParser.betTypes(get("/bettype"))
     suspend fun periods(league: String) = UnabatedParser.periods(get("/period-type/$league"))

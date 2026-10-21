@@ -58,6 +58,9 @@ class SxBetClient(
 
     fun hasKey() = key().isNotBlank()
     fun down(now: Long = clock()) = now < restUntil || (failures >= 3 && now - lastOkMs > 120_000L)
+
+    /** Forgets the failures and any rate-limit rest so the next call is made at once (the API manager's restart, XO1). Touches nothing else. */
+    fun restart() { failures = 0; restUntil = 0L }
     fun health(now: Long = clock()) = when {
         !hasKey() -> "no key (markets are public, prices need a read-only key)"
         now < restUntil -> "resting after HTTP 429 for ${(restUntil - now) / 1000}s"

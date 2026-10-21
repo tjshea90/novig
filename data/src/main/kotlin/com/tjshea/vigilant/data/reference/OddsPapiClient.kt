@@ -55,6 +55,9 @@ class OddsPapiClient(
      */
     fun down(now: Long = clock()): Boolean = failures >= 2 && now - lastOkMs > DOWN_AFTER_MS && now - lastFailMs < RETRY_AFTER_MS
 
+    /** Forgets the failures so the next call is made at once (the API manager's restart, XO1: a client that is "down" waits [RETRY_AFTER_MS] before it asks again). Touches nothing else. */
+    fun restart() { failures = 0; lastFailMs = 0L }
+
     /** The answer body of `GET [path]` with [params]; throws [ReferenceException] when the service refuses, errs or is unreadable. */
     suspend fun get(path: String, params: List<Pair<String, String>> = emptyList()): String = try {
         requests++

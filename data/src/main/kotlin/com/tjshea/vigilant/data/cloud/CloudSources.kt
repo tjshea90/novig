@@ -97,7 +97,8 @@ class CloudSources(
     private val op4Games = Op4GamesSource(op4Feed)
     private val op4Props = Op4PropsSource(op4Feed)
 
-    private val boltFeed = BoltOddsFeed(BoltOddsClient(http, { keys(CloudKeys.BOLT) }, usage), http, scope)
+    private val boltClient = BoltOddsClient(http, { keys(CloudKeys.BOLT) }, usage)
+    private val boltFeed = BoltOddsFeed(boltClient, http, scope)
     private val boltGames = BoltGamesSource(boltFeed)
     private val boltProps = BoltPropsSource(boltFeed)
 
@@ -159,6 +160,20 @@ class CloudSources(
     /** The free account reads of every API, the phone's Test now, run by the engine's [ApiMonitor]. */
     val apiProbe: com.tjshea.vigilant.data.keys.ApiProbe by lazy { com.tjshea.vigilant.data.keys.ApiProbe(http, usage, parlayAccount, pinnWireAccount = pinnWireAccountForProbe) }
     /** The keys of [p] this engine holds (from its secrets), for the monitor. */
+    /**
+     * Starts one API's client in this process again from clean (the API manager's restart, XO1): its failure memory is cleared so the next scan asks it at once, and nothing else is touched (no scan,
+     * no socket, no other API). The APIs that keep no failure memory of their own (the key-pool ones) need nothing: their next call and the monitor's recheck are the restart.
+     */
+    fun restartApi(id: String) {
+        when (id) {
+            "sgo" -> sgoClient.restart()
+            "oddspapi" -> opClient.restart()
+            "unabated" -> unabatedClient.restart()
+            "boltodds" -> boltClient.restart()
+            "sxbet" -> sxbet.restart()
+        }
+    }
+
     fun keysOf(p: com.tjshea.vigilant.data.keys.ApiProvider): List<String> = CloudKeys.BY_PROVIDER[p]?.let { keys(it) }.orEmpty()
     /** What The Odds API and ParlayAPI spent today by purpose (credits/calls), for the engine's hourly log: the numbers an audit of "is it wasted on what others give better" needs. */
     fun spendNotes(): String = "The Odds API today: ${oddsApi.spendToday().ifBlank { "nothing" }} | ParlayAPI today: ${parlayOdds.spendToday().ifBlank { "nothing" }}"

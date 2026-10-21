@@ -154,6 +154,9 @@ class SportsGameOddsClient(
      */
     fun down(now: Long = clock()): Boolean = failures >= 2 && now - lastOkMs > DOWN_AFTER_MS && now - lastFailMs < RETRY_AFTER_MS
 
+    /** Forgets the failures so the next call is made at once (the API manager's restart, XO1: a client that is "down" waits [RETRY_AFTER_MS] before it asks again). Touches nothing else. */
+    fun restart() { failures = 0; lastFailMs = 0L }
+
     private suspend fun get(path: String, params: List<Pair<String, String>>): String = try {
         requests++
         getWithRetry(path, params).also { failures = 0; lastOkMs = clock() }

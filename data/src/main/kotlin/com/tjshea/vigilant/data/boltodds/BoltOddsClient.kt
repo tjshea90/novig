@@ -87,6 +87,9 @@ class BoltOddsClient(
     /** Two failures in a row and nothing good for two minutes. */
     fun down(now: Long = clock()): Boolean = failures >= 2 && now - lastOkMs > DOWN_AFTER_MS && now - lastFailMs < RETRY_AFTER_MS
 
+    /** Forgets the failures so the next call is made at once (the API manager's restart, XO1: a client that is "down" waits [RETRY_AFTER_MS] before it asks again). Touches nothing else. */
+    fun restart() { failures = 0; lastFailMs = 0L }
+
     suspend fun info(): BoltInfo {
         val root = parse(get("/get_info"))
         fun list(k: String) = ((root[k] as? JsonArray) ?: JsonArray(emptyList())).mapNotNull { (it as? JsonPrimitive)?.takeIf { p -> p.isString }?.content }
