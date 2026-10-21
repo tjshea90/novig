@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "264845c108dd2d4e55d5ad459884fa76d0466101",
+ "head": "d283653f0783f94bea28a9c03fbb76acb948e446",
  "since": 1792596542,
- "beat": 1792620098,
- "beatIso": "2026-10-21T22:01:38Z",
- "done": "CK2/CK3 built: CnoVenueSource (Novig+Kalshi reads, Kalshi EV net of fee), venue chips + venue card colours on the CNO tab, Kalshi rows open at Kalshi and are skipped by Novig bids; engine CNO loop publishes cno.json.gz, phone adopts it (SwitchingCnoSource, falls back to its own reads when the engine does not serve); CnoVenuesTest, CloudCnoTest green",
- "next": "CK UI test for venue chips, full floor, ship v1.0.40, then CK5 full test protocol"
+ "beat": 1792620165,
+ "beatIso": "2026-10-21T22:02:45Z",
+ "done": "pre-release: v1.0.40: CNO scans Novig and Kalshi (tab chips, Kalshi EV net of fee, venue card colours); the whole CNO scan runs on the GitHub engine (cno.json.gz), phone adopts it (versionCode 380, v1.0.40)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.40), then run: bash tools/record-release.sh v1.0.40 380 \"v1.0.40: CNO scans Novig and Kalshi (tab chips, Kalshi EV net of fee, venue card colours); the whole CNO scan runs on the GitHub engine (cno.json.gz), phone adopts it\""
 }
