@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-o9ngjz",
- "head": "b7624016add88639fcf467c67db7808ba988ce9f",
+ "head": "85911a6b5e34a41bedbd109f115266189cf4903e",
  "since": 1792539161,
- "beat": 1792542280,
- "beatIso": "2026-10-21T00:24:40Z",
- "done": "CH48 ApiState cards in app; CLAUDE.md phone=monitor rule; CH49 logged",
- "next": "ApiState test; CH49 Odds API audit; arb leads; tennis frames; ship v1.0.26"
+ "beat": 1792542359,
+ "beatIso": "2026-10-21T00:25:59Z",
+ "done": "CH48 tests, CH49 spend tally, parlay.yml arbscan",
+ "next": "dispatch arbscan; check listen (tennis); ship v1.0.26"
 }
