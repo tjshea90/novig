@@ -380,3 +380,4 @@ day that changes.
 | v1.0.39 | code 379 | 2026-10-21T21:19Z | v1.0.39: engine closes BoltOdds/Kalshi/SX sockets cleanly on job end or cancel; a 'too many concurrent connections' close no longer marks the BoltOdds key refused
 | v1.0.40 | code 380 | 2026-10-21T22:14Z | v1.0.40: CNO scans Novig and Kalshi (tab chips, Kalshi EV net of fee, venue card colours); the whole CNO scan runs on the GitHub engine (cno.json.gz), phone adopts it
 | v1.0.41 | code 381 | 2026-10-21T22:33Z | v1.0.41: full test fixes: Kalshi CNO rows open at Kalshi everywhere, Scan CNO on GitHub switch, faster phone fallback when CNO refuses the runner, bid step-down needs every fair book fresh, copy fixes
+| v1.0.42 | code 382 | 2026-10-21T23:48Z | v1.0.42: SharpAPI Sharp plan: the engine keeps a copy of 25 books (Pinnacle, Circa, Bookmaker, Betfair, ProphetX...) current every 2 s, SharpAPI Pinnacle as a live feed, closing lines + SharpAPI +EV journals, Circa/Bookmaker sharp
