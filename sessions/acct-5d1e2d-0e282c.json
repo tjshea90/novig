@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-7dry2r",
- "head": "6b8485056db0e1165a9d7a1a38359a640ea32322",
+ "head": "db4acd91090bd2b8e2b9e4622ef64f0f2522b8e7",
  "since": 1792539161,
- "beat": 1792556674,
- "beatIso": "2026-10-21T04:24:34Z",
- "done": "CH51: dashboard shows Stopping when switch off; refreshNow reads have 20s deadlines (stuck spinner)",
- "next": "ship v1.0.29 then reply to Tj"
+ "beat": 1792556834,
+ "beatIso": "2026-10-21T04:27:14Z",
+ "done": "pre-release: v1.0.29: pull-to-refresh deadlines, Stopping headline when switched off (versionCode 369, v1.0.29)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.29), then run: bash tools/record-release.sh v1.0.29 369 \"v1.0.29: pull-to-refresh deadlines, Stopping headline when switched off\""
 }
