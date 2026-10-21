@@ -198,6 +198,9 @@ class CloudEngine(
 
     /** When a scan last read data from the API with switch id [id] (0 = not in this job). */
     fun answeredAt(id: String): Long = answeredAtMs[id] ?: 0L
+
+    /** The feeds the engine's watch found silent for several scans in a row, each with its own reason ([FeedWatch]): the API manager's word on an API whose check passes but one of whose feeds does not answer. */
+    fun silentFeeds(): List<DashboardModel.SilentFeed> = DashboardModel.silentFeeds(feedAlerts, feedLines)
     @Volatile private var lastPublished: CloudFeed? = null
     @Volatile private var lastAges = CloudCurrency.UNKNOWN
     @Volatile private var tradeStatus: TradeStatus? = null

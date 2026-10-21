@@ -406,6 +406,7 @@ fun main(args: Array<String>) = runBlocking {
                 runCatching { postMessage(CloudMessages.Message(key, now, "engine", if (priority > 0) "alert" else "info", title.take(90), body.take(600), priority, "APIS")) }
             }
             override fun answeredAt(id: String): Long = engineHolder.get()?.answeredAt(id) ?: 0L
+            override fun silentFeeds() = engineHolder.get()?.silentFeeds().orEmpty()
             override fun log(line: String) { log.invoke(line) }
         },
         previousSwaps = prevStatus?.takeIf { System.currentTimeMillis() - it.apiHandoverAtMs < com.tjshea.vigilant.data.cloud.ApiManager.CARRY_MS }?.apiHandovers.orEmpty(),

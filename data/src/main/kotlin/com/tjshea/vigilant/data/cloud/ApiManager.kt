@@ -38,6 +38,8 @@ class ApiManager(
         suspend fun say(key: String, title: String, body: String, priority: Int)
         /** When a scan last read data from this API (the engine's clock), 0 = not in this job. */
         fun answeredAt(id: String): Long
+        /** The feeds the engine's watch found silent for several scans in a row, with their reasons ([FeedWatch]); an API whose own check passes can still have one (a socket the provider refused). */
+        fun silentFeeds(): List<DashboardModel.SilentFeed> = emptyList()
         fun log(line: String)
     }
 
@@ -48,6 +50,9 @@ class ApiManager(
         var off = false
         var note = ""
         var noteAt = 0L
+        /** Since when a feed of this API (whose check passes) has been silent, and the day Tj was last told about it. */
+        var feedSince = 0L
+        var feedSaidDay = ""
     }
 
     private val state = HashMap<String, St>()
@@ -87,6 +92,7 @@ class ApiManager(
         // An API that was switched off by the manager and is on again (Tj looked at it) starts over.
         for (l in all) if (l.on) state[l.id]?.takeIf { it.off }?.let { it.off = false; it.swaps = 0; it.note = ""; it.failingSince = 0L; it.restarted = false }
         val checked = all.filter { it.on && it.hasKey && it.atMs > 0L }
+        val silentBySwitch = hooks.silentFeeds().flatMap { f -> switchIdsOfFeed(f.feedId).map { it to f } }.groupBy({ it.first }, { it.second })
         val failing = checked.filter { !it.ok }
         val healthy = checked.count { it.ok }
         // Every API on failing together: the runner's connection, not the APIs.
@@ -111,7 +117,19 @@ class ApiManager(
                     hooks.log("API manager: ${l.name} answers again" + if (st.swaps > 0) " after ${st.swaps} fresh runner(s)" else " after a restart")
                     if (st.swaps > 0) hooks.say("api-back-${l.id}-$now", "${l.name} is working again", "It failed its check, the engine restarted it and asked for ${st.swaps} fresh runner(s); it answers now. Nothing to do.", 1)
                 }
-                st.failingSince = 0L; st.restarted = false; st.swaps = 0; st.note = ""; st.noteAt = 0L
+                st.failingSince = 0L; st.restarted = false; st.swaps = 0
+                // The API checks out, but one of its feeds may stay silent (BoltOdds' lines socket refused for "too many concurrent connections" while its props socket and its REST check answered, 2026-10-21): said on
+                // its card at once and to Tj once a day after FEED_SAY_AFTER_MS. Nothing is restarted, replaced or switched off for it: its key and account are fine, and a fresh runner would not free a connection.
+                val feed = silentBySwitch[l.id]?.firstOrNull()
+                if (feed == null) { st.note = ""; st.noteAt = 0L; st.feedSince = 0L }
+                else {
+                    if (st.feedSince == 0L) st.feedSince = now
+                    setNote(st, "its check passes but ${feed.words}", now)
+                    if (now - st.feedSince >= FEED_SAY_AFTER_MS && st.feedSaidDay != day) {
+                        st.feedSaidDay = day
+                        hooks.say("feed-${l.id}-$day", "${l.name}: a feed has been silent for ${(now - st.feedSince) / 60_000L} min", feedExplanation(l.name, feed), 0)
+                    }
+                }
                 continue
             }
             if (st.failingSince == 0L) st.failingSince = minOf(l.atMs, now)
@@ -139,6 +157,13 @@ class ApiManager(
                 }
             } else if (failingFor >= OPTIONAL_OFF_MS) off(l, st, "it kept failing for ${failingFor / 60_000L} min (last: ${l.message.take(80)})", now)
         }
+    }
+
+    private fun feedExplanation(name: String, f: DashboardModel.SilentFeed): String {
+        val base = "${f.words}. $name's own check passes and its other feeds answer, so the key and the account are fine."
+        return if (f.why.contains("concurrent connections", ignoreCase = true))
+            "$base The provider allows only a few connections at once and has refused this one: something else is holding them (an old engine job's sockets that did not close, the phone app, or another tool using the same key). The engine retries by itself with a growing wait and recovers the moment a connection frees up; nothing was switched off and nothing needs doing unless it lasts for hours."
+        else "$base The engine keeps retrying; nothing was switched off."
     }
 
     private fun setNote(st: St, note: String, now: Long) { if (st.note != note) { st.note = note; st.noteAt = now } }
@@ -169,6 +194,8 @@ class ApiManager(
         const val SCAN_FINE_MS = 10 * 60_000L
         /** This many APIs failing at once with none healthy is the runner's connection. */
         const val RUNNER_WIDE_MIN = 3
+        /** A silent feed of an API whose check passes is said to Tj once a day after this long. */
+        const val FEED_SAY_AFTER_MS = 20 * 60_000L
         /** Switch-offs in a day, at most: a wide outage must never leave the engine with nothing on. */
         const val MAX_OFFS_PER_DAY = 3
         /** A swap count carried from the previous job is only believed if the swap was this recent. */
