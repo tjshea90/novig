@@ -2096,6 +2096,11 @@ class AppContainer(val app: Application) {
 
     private val polymarket = PolymarketClient(http, json, usage = usage)
     /** SX Bet (SXBET_API.md, Tj 2026-10-18): the exchange's markets are public, its books need the saved read-only key. */
+    /** SharpAPI (SHARPAPI.md, Tj 2026-10-21): on the phone, only when it scans by itself (the GitHub engine is where it runs); each league is read whole and kept a minute, no delta polling here. */
+    val sharpApiClient = com.tjshea.vigilant.data.sharpapi.SharpApiClient(http, json, { keyStore.current(ApiProvider.SHARPAPI).firstOrNull().orEmpty() }, usage)
+    private val sharpApiFeed = com.tjshea.vigilant.data.sharpapi.SharpApiFeed(sharpApiClient)
+    private val sharpApiSource = com.tjshea.vigilant.data.sharpapi.SharpApiSource(sharpApiFeed, sharpApiClient)
+
     val sxBetClient = com.tjshea.vigilant.data.reference.SxBetClient(http, json, { keyStore.current(ApiProvider.SXBET).firstOrNull().orEmpty() }, usage, socketOn = { sxSocketOn }, scope = appScope)
     @Volatile var sxSocketOn = false
     /**
@@ -2339,6 +2344,7 @@ class AppContainer(val app: Application) {
         sxSocketOn = settings.gates.useSxBet && settings.gates.sxSocket && settings.phoneSockets
         if (!sxSocketOn) sxBetClient.stream?.close()
         if (settings.gates.useSxBet && keyStore.current(ApiProvider.SXBET).isNotEmpty() && !sxBetClient.down()) add(sxBetClient)
+        if (settings.gates.useSharpApi && keyStore.current(ApiProvider.SHARPAPI).isNotEmpty() && !sharpApiClient.down()) add(sharpApiSource)
         if (settings.useKalshi) add(kalshi)
         if (settings.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty()) {
             add(propLine)

@@ -44,6 +44,7 @@ class ApiTogglesTest {
         c.keyStore.setKeys(ApiProvider.UNABATED, listOf("un"))
         c.keyStore.setKeys(ApiProvider.BOLTODDS, listOf("bolt"))
         c.keyStore.setKeys(ApiProvider.SXBET, listOf("sx"))
+        c.keyStore.setKeys(ApiProvider.SHARPAPI, listOf("sk_test_FAKE"))
     }
 
     /** The source ids each API contributes (Pinnacle's three hosts share one source). */
@@ -59,6 +60,7 @@ class ApiTogglesTest {
         ApiEntry.KALSHI to setOf("kalshi"),
         ApiEntry.POLYMARKET to setOf("polymarket"),
         ApiEntry.SXBET to setOf("sxbet"),
+        ApiEntry.SHARPAPI to setOf("sharpapi"),
     )
 
     @Test
