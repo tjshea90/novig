@@ -543,6 +543,7 @@ class TheOddsApiClient(
             PolymarketClient.BOOK_KEY -> "Polymarket"
             KalshiClient.BOOK_KEY -> "Kalshi"
             "prophetx" -> "ProphetX"
+            SxBetConvert.BOOK_KEY -> "SX Bet"
             "bet365" -> "bet365"
             else -> KNOWN_BOOKMAKERS[key] ?: key
         }
