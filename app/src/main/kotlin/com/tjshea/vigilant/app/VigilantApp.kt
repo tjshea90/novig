@@ -1256,6 +1256,8 @@ class AppContainer(val app: Application) {
      * answered. A tap in the widget or the CNO tab, and a background alert, all ask this.
      */
     suspend fun betLink(row: CnoRow): TapLink.Link? = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        // A row CNO listed at Kalshi (CK): its own link to the bet at Kalshi; never Novig's version of the same bet (it was +EV at Kalshi's price, not Novig's).
+        if (com.tjshea.vigilant.data.cno.CnoVenueSource.isKalshi(row)) return@withContext TapLink.Link(row.betUrl ?: "https://kalshi.com/sports", exact = row.betUrl != null)
         val state = cno.state.value
         val paused = (state.pausedUntilMs ?: 0L) > System.currentTimeMillis()
         val found = TapLink.resolve(

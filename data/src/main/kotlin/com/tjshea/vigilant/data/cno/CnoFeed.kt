@@ -506,7 +506,8 @@ class CnoFeed(
             .collectLatest { list ->
                 while (true) {
                     val now = clock()
-                    val missing = list.filter { novigLinks[linkKey(it)] == null }
+                    // A Kalshi row (CK) has no Novig link to find: its tap opens CNO's own link to Kalshi.
+                    val missing = list.filter { novigLinks[linkKey(it)] == null && !CnoVenueSource.isKalshi(it) }
                     if (missing.isEmpty()) awaitCancellation()
                     // 1. Novig's catalog, which doesn't depend on CNO at all.
                     val fromCatalog = if (catalog == null) null else missing.firstOrNull { r -> catalogTriedAt[linkKey(r)]?.let { now - it >= LINK_RETRY_MS } ?: true }
