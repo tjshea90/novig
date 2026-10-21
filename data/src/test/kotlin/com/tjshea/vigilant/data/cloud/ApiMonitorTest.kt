@@ -1,6 +1,6 @@
 package com.tjshea.vigilant.data.cloud
 
-import com.tjshea.vigilant.data.JsonFileStore
+import com.tjshea.vigilant.data.store.JsonFileStore
 import com.tjshea.vigilant.data.keys.ApiProbe
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.UsageBook
