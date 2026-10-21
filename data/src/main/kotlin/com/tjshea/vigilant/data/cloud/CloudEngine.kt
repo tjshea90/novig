@@ -81,6 +81,10 @@ class CloudEngine(
     private val liveUrl: () -> String = { "" },
     /** [ApiMonitor]'s lines, read each time a status is built. */
     private val apiChecks: () -> List<ApiCheckLine> = { emptyList() },
+    /** The API manager's word for the status ([ApiManager], XO1): what it is doing about failing APIs, the fresh runners asked for in a row per API, and when the newest was asked for. */
+    private val apiFixes: () -> List<ApiFix> = { emptyList() },
+    private val apiSwaps: () -> Map<String, Int> = { emptyMap() },
+    private val apiSwapAtMs: () -> Long = { 0L },
     /** One line per socket the engine holds, for the status file. */
     private val socketLines: () -> List<String> = { emptyList() },
     /** Each socket's state for the phone's Live dashboard (TCL122-4). */
@@ -126,8 +130,8 @@ class CloudEngine(
     /** What the engine's trading says about itself in the heartbeat. */
     data class TradeStatus(val mode: String, val note: String, val stopped: String, val changedAtMs: Long, val cash: Double? = null, val equity: Double? = null)
 
-    /** TIME_UP: the job's time is over; IDLE: the phone switched the engine off; ADDRESS: Novig refused this runner's address, the next job is started at once; WINDOW: the engine's hours (08:00-01:00 Eastern, [EngineHours]) are over or not yet begun: no hand-over, the schedule starts the next engine when they open. */
-    enum class End { TIME_UP, IDLE, ADDRESS, WINDOW, RESET }
+    /** TIME_UP: the job's time is over; IDLE: the phone switched the engine off; ADDRESS: Novig refused this runner's address, the next job is started at once; WINDOW: the engine's hours (08:00-01:00 Eastern, [EngineHours]) are over or not yet begun: no hand-over, the schedule starts the next engine when they open; RESET: the phone asked for a new runner; API: the API manager asked for a fresh runner because an important API is not answering ([ApiManager], XO1): the next job is started at once. */
+    enum class End { TIME_UP, IDLE, ADDRESS, WINDOW, RESET, API }
 
     @Volatile var passes = 0
         private set
@@ -177,6 +181,16 @@ class CloudEngine(
     private val deskLock = kotlinx.coroutines.sync.Mutex()
     @Volatile private var addressEnd = false
     @Volatile private var windowEnd = false
+    /** Why the API manager wants a fresh runner (null = it does not): the job ends between two scans ([End.API]). */
+    @Volatile private var apiHandOver: String? = null
+    /** When a scan last read data from each API, by switch id ([ApiManager.switchIdsOfFeed]): the manager's proof that an API whose own check fails is fine for the scans. */
+    private val answeredAtMs = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+    /** The API manager asks for a fresh runner: this job ends after the scan it is on ([End.API]). False when one is already asked for. Never cancels a scan or touches an order. */
+    fun requestHandOver(why: String): Boolean { if (apiHandOver != null) return false; apiHandOver = why; return true }
+
+    /** When a scan last read data from the API with switch id [id] (0 = not in this job). */
+    fun answeredAt(id: String): Long = answeredAtMs[id] ?: 0L
     @Volatile private var lastPublished: CloudFeed? = null
     @Volatile private var lastAges = CloudCurrency.UNKNOWN
     @Volatile private var tradeStatus: TradeStatus? = null
@@ -321,6 +335,12 @@ class CloudEngine(
                 addressEnd = true
                 problem = publish(null, status(cfg.rev, startedAtMs, untilMs, emptyList(), idle = false))
                 return End.ADDRESS
+            }
+            // The API manager asked for a fresh runner (an important API is not answering): between two scans, never in the middle of one (XO1).
+            apiHandOver?.let { why ->
+                log("API manager: $why: this job ends so a new runner starts")
+                problem = publish(null, status(cfg.rev, startedAtMs, untilMs, emptyList(), idle = false))
+                return End.API
             }
             val restarted = scanOnce(cfg, startedAtMs, untilMs)
             lastBeat = clock()
@@ -518,6 +538,7 @@ class CloudEngine(
         scanNote = describe(report)
         log("scan report: $scanNote")
         feedLines = report.sources.map { FeedLine(it.id, it.name, it.fetched, it.reused, it.matched, it.standingBy, it.skipped, it.error?.take(120), it.heldBack?.take(120)) }
+        for (f in feedLines) if (f.fetched + f.reused > 0) for (id in ApiManager.switchIdsOfFeed(f.id)) answeredAtMs[id] = clock()
         feedLinesAt = clock()
         feedAlerts = feedWatch.observe(feedLines).also { if (it != feedAlerts && it.isNotEmpty()) log("silent feeds: " + it.joinToString(", ")) }
         contribution = runCatching { ApiScorecard.contribution(report.result, clock()) }.getOrDefault(emptyMap())
@@ -587,6 +608,7 @@ class CloudEngine(
             walletSleep = walletSleep, walletCheckedAtMs = walletCheckedAt, walletCash = walletCash ?: -1.0, walletEquity = walletEquity ?: -1.0, walletReadAtMs = walletReadAt,
             feedReport = feedLines, feedReportAtMs = feedLinesAt, feedAlerts = feedAlerts, apiChecks = runCatching(apiChecks).getOrDefault(emptyList()),
             advice = advice, apiCards = apiCards, governorOff = governor.askedOff().sorted(),
+            apiManager = runCatching(apiFixes).getOrDefault(emptyList()), apiHandovers = runCatching(apiSwaps).getOrDefault(emptyMap()), apiHandoverAtMs = runCatching(apiSwapAtMs).getOrDefault(0L),
             deskActive = !idle && deskStatus?.active == true, deskNote = deskStatus?.note.orEmpty().take(500), deskResting = deskStatus?.resting ?: 0, deskRestingDollars = deskStatus?.restingDollars ?: 0.0,
             deskAtMs = deskStatus?.atMs ?: 0L, deskStopped = deskStatus?.stopped.orEmpty().take(200),
             liveActive = !idle && liveStatus?.active == true, liveNote = liveStatus?.note.orEmpty().take(400), liveStopped = liveStatus?.stopped.orEmpty().take(200), liveAtMs = liveStatus?.atMs ?: 0L,
