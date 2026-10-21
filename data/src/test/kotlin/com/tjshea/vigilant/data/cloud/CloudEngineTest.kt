@@ -63,11 +63,11 @@ class CloudEngineTest {
 
     private val on = CloudConfig(rev = 1, on = true, settings = ScanSettings(leagues = setOf("NBA"), includeLive = true, scanner = ScannerMode.BOTH, gates = com.tjshea.vigilant.data.scanner.ApiGates().copy(cloudHours = false)), passGapSeconds = 5)
 
-    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, fetchSettleMs: Long = 0, addressWatch: AddressWatch? = null, addressBlocked: () -> Boolean = { false }, clock: () -> Long = System::currentTimeMillis, walletProbe: (suspend (ScanSettings) -> Double?)? = null, walletEveryMs: Long = CloudEngine.WALLET_EVERY_MS, walletRetryMs: Long = CloudEngine.WALLET_RETRY_MS, trade: (suspend (List<com.tjshea.vigilant.data.scanner.Opportunity>, ScanSettings, Long) -> CloudEngine.TradeStatus?)? = null, governor: ApiGovernor = ApiGovernor(), overrideSink: suspend (CloudOverrides.Request) -> Unit = {}, messageSink: suspend (CloudMessages.Message) -> Unit = {}) = CloudEngine(
+    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, fetchSettleMs: Long = 0, addressWatch: AddressWatch? = null, addressBlocked: () -> Boolean = { false }, clock: () -> Long = System::currentTimeMillis, walletProbe: (suspend (ScanSettings) -> Double?)? = null, walletEveryMs: Long = CloudEngine.WALLET_EVERY_MS, walletRetryMs: Long = CloudEngine.WALLET_RETRY_MS, trade: (suspend (List<com.tjshea.vigilant.data.scanner.Opportunity>, ScanSettings, Long) -> CloudEngine.TradeStatus?)? = null, governor: ApiGovernor = ApiGovernor(), overrideSink: suspend (CloudOverrides.Request) -> Unit = {}, messageSink: suspend (CloudMessages.Message) -> Unit = {}, apiSwaps: () -> Map<String, Int> = { emptyMap() }, onCheckApis: () -> Unit = {}) = CloudEngine(
         scanner = scanner, sources = { emptyList() }, config = { cfg() },
         publish = { f, s -> published += f to s; null },
         pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = idleExitMs, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, fetchSettleMs = fetchSettleMs, restartEveryMs = restartEveryMs,
-        addressWatch = addressWatch, addressBlocked = addressBlocked, clock = clock, walletProbe = walletProbe, walletEveryMs = walletEveryMs, walletRetryMs = walletRetryMs, trade = trade, governor = governor, overrideSink = overrideSink, messageSink = messageSink,
+        addressWatch = addressWatch, addressBlocked = addressBlocked, clock = clock, walletProbe = walletProbe, walletEveryMs = walletEveryMs, walletRetryMs = walletRetryMs, trade = trade, governor = governor, overrideSink = overrideSink, messageSink = messageSink, apiSwaps = apiSwaps, onCheckApis = onCheckApis,
     )
 
     @Test
@@ -228,6 +228,37 @@ class CloudEngineTest {
         assertEquals(CloudEngine.End.ADDRESS, end)
         assertEquals("not one scan (so not one request to any fair-odds API)", 0, scanner.calls.get())
         assertEquals("the streak is counted", 1, watch.count)
+    }
+
+    @Test
+    fun `the API manager asks for a fresh runner, the job ends as API between scans without starting one, and the status carries the count`() = runBlocking {
+        val scanner = FakeScanner { _, _, _ -> report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val e = engine(scanner, { on }, published, apiSwaps = { mapOf("sgo" to 1) })
+        assertTrue(e.requestHandOver("SportsGameOdds is not answering"))
+        assertFalse("one hand-over at a time", e.requestHandOver("again"))
+        val end = e.run(untilMs = System.currentTimeMillis() + 2_000)
+        assertEquals(CloudEngine.End.API, end)
+        assertEquals("a scan is never started, and never cut in the middle", 0, scanner.calls.get())
+        assertEquals("the last word out says how many fresh runners were asked for", mapOf("sgo" to 1), published.last().second.apiHandovers)
+    }
+
+    @Test
+    fun `a check-every-API request on the phone reaches the monitor once, and the value read at the start is served once`() = runBlocking {
+        val scanner = FakeScanner { _, _, _ -> report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val cfg = java.util.concurrent.atomic.AtomicReference(on.copy(checkApisAtMs = 3_000L))
+        val asked = AtomicInteger()
+        val e = engine(scanner, { cfg.get() }, published, onCheckApis = { asked.incrementAndGet() })
+        val job = GlobalScope.async { e.run(untilMs = System.currentTimeMillis() + 3_000) }
+        delay(300)
+        assertEquals("the request found in the config is served once", 1, asked.get())
+        delay(200)
+        assertEquals("and not again while the value is the same", 1, asked.get())
+        cfg.set(cfg.get().copy(checkApisAtMs = 9_000L))
+        delay(400)
+        assertEquals("a newer request is served", 2, asked.get())
+        job.cancel()
     }
 
     @Test

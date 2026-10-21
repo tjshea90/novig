@@ -49,4 +49,33 @@ class ApiMonitorTest {
         val ok = m.lines().first { it.id == "propline" }
         assertTrue(ok.ok); assertEquals(0, ok.failStreak); assertEquals(3, server.requestCount)
     }
+
+    @Test
+    fun `a check says why it failed, keeps the keys that answered, and a recheck request makes every API due at once`() = runBlocking {
+        var now = 1_800_000_000_000L
+        val m = monitor({ now }, mapOf(ApiProvider.PROPLINE to listOf("k1abcdefghijkl", "k2abcdefghijkl", "k3abcdefghijkl")))
+        val s = ScanSettings().let { ApiToggles.setOn(it, "propline", true) }
+        server.dispatcher = object : okhttp3.mockwebserver.Dispatcher() {
+            override fun dispatch(request: okhttp3.mockwebserver.RecordedRequest): MockResponse = when (request.getHeader("X-API-Key")) {
+                "k1abcdefghijkl" -> MockResponse().setResponseCode(401)
+                "k2abcdefghijkl" -> MockResponse().setResponseCode(401)
+                else -> MockResponse().setHeader("X-Daily-Remaining", "900").setHeader("X-Daily-Limit", "1000").setBody("[]")
+            }
+        }
+        m.tick(s)
+        val a = m.lines().first { it.id == "propline" }
+        assertTrue("one key answered: the API is up", a.ok); assertEquals(1, a.keysOk); assertEquals(3, a.keys)
+        assertEquals("refused", a.kind); assertEquals(2, a.refused); assertEquals(0, a.unreachable); assertEquals(0, a.failStreak)
+        val before = server.requestCount
+        now += 60_000L
+        m.tick(s); assertEquals("not due yet (checked every 5 minutes)", before, server.requestCount)
+        m.recheckNow()
+        m.tick(s); assertEquals("a pull to refresh makes it due now", before + 3, server.requestCount)
+        // all keys refused: not ok, kind refused, streak counts
+        server.dispatcher = object : okhttp3.mockwebserver.Dispatcher() { override fun dispatch(request: okhttp3.mockwebserver.RecordedRequest) = MockResponse().setResponseCode(403) }
+        now += 400_000L
+        m.tick(s)
+        val b = m.lines().first { it.id == "propline" }
+        assertFalse(b.ok); assertEquals("refused", b.kind); assertEquals(1, b.failStreak)
+    }
 }
