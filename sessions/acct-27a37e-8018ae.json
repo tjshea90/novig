@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "13541563ec1abfec7425405dc793c10e816fe39a",
+ "head": "590ef9bb4cc75d0357f14d1c62133744535dd5d9",
  "since": 1792596542,
- "beat": 1792602444,
- "beatIso": "2026-10-21T17:07:24Z",
- "done": "Research library: tools/research_index.py + research/INDEX.md (104 studies, status from repo references) + research/LEVERS.md (10 tuning levers with next-number, Closed list), briefing RESEARCH line, ROUTINE step 3a, CLAUDE.md rule, fast check",
- "next": "confirm v1.0.36 release (send_later), then XO6 full test protocol"
+ "beat": 1792602480,
+ "beatIso": "2026-10-21T17:08:00Z",
+ "done": "Research index landed",
+ "next": "confirm v1.0.36 release, XO6 full test protocol"
 }
