@@ -1,0 +1,1 @@
+{"v":2,"id":"t1792595603301-75bc","at":1792595603301,"from":"tj","text":"due to low fills, if a bid can be confirmed by a fresh odds read from at least one sharp book, lower the EV gradually for all such bids to a limit of 1.5% under the sharp book"}
