@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "99d105a3dd3b3bfff16f13f057469d0776945e97",
+ "head": "5b5e1e3027d2087a783d490e3a7d63918353ba43",
  "since": 1792596542,
- "beat": 1792626439,
- "beatIso": "2026-10-21T23:47:19Z",
- "done": "pre-release: v1.0.43: SharpAPI WebSocket stream (odds and game state pushed to the engine; REST delta becomes a 60 s reconcile) and live game state as a live-lane score source; socket switch in Settings > APIs (versionCode 383, v1.0.43)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.43), then run: bash tools/record-release.sh v1.0.43 383 \"v1.0.43: SharpAPI WebSocket stream (odds and game state pushed to the engine; REST delta becomes a 60 s reconcile) and live game state as a live-lane score source; socket switch in Settings > APIs\""
+ "beat": 1792626489,
+ "beatIso": "2026-10-21T23:48:09Z",
+ "done": "SS done: SharpAPI WebSocket stream + game state built, v1.0.43 shipped (release building)",
+ "next": "after the key is on GitHub: read engine-log 'SharpAPI' lines (stream connected, rows pushed, unplaced count, game state live), fix SHARPAPI.md \u00a75 where real frames differ"
 }
