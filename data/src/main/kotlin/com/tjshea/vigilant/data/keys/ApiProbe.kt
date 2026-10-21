@@ -44,6 +44,7 @@ class ApiProbe(
         val op4: String = "https://api.oddspapi.io",
         val unabated: String = "https://data.unabated.com",
         val sxbet: String = "https://api.sx.bet",
+        val sharpapi: String = "https://api.sharpapi.io/api/v1",
         val bolt: String = "https://spro.agency/api",
         val pinnodds: String = "https://pinnodds.com",
         val pinnwire: String = "https://pinnwire.com/kit/v1",
@@ -135,6 +136,7 @@ class ApiProbe(
         ApiProvider.UNABATED -> QuotaPolicy.UNABATED
         ApiProvider.BOLTODDS -> QuotaPolicy.BOLTODDS
         ApiProvider.SXBET -> QuotaPolicy.SXBET
+        ApiProvider.SHARPAPI -> QuotaPolicy.SHARPAPI
         ApiProvider.PINNODDS -> null
     }
 
@@ -235,6 +237,29 @@ class ApiProbe(
                 r.code == 401 || r.code == 403 -> { meter.recordBalance(QuotaPolicy.SXBET, key, null, inactive = true); false to refused(r.code) }
                 r.code == 429 -> true to "Accepted, rate limited for the moment (HTTP 429)."
                 r.isSuccessful -> { meter.recordAccepted(QuotaPolicy.SXBET, key); true to "Active and accepted · SX Bet publishes no allowance for market data (best odds 5,500 a minute)." }
+                else -> false to "Answered HTTP ${r.code}."
+            }
+        }
+        ApiProvider.SHARPAPI -> {
+            // /account says the tier, the minute's allowance and the books the key may pick; /account/usage the day's count (SHARPAPI.md §3). Neither spends anything that matters (no daily cap).
+            val r = get("${hosts.sharpapi}/account", listOf("X-API-Key" to key, "Accept" to "application/json"))
+            when {
+                r.code == 401 -> { meter.recordBalance(QuotaPolicy.SHARPAPI, key, null, inactive = true); false to refused(401) }
+                r.code == 429 -> true to "Accepted, rate limited for the moment (HTTP 429)."
+                r.isSuccessful -> {
+                    val a = runCatching { kotlinx.serialization.json.Json.parseToJsonElement(r.body).let { it as kotlinx.serialization.json.JsonObject }["data"] as kotlinx.serialization.json.JsonObject }.getOrNull()
+                    fun str(o: kotlinx.serialization.json.JsonObject?, k: String) = (o?.get(k) as? kotlinx.serialization.json.JsonPrimitive)?.content
+                    val tier = str(a, "tier")
+                    val rate = a?.get("rate_limit") as? kotlinx.serialization.json.JsonObject
+                    val rpm = str(rate, "requests_per_minute")
+                    val books = str(rate, "max_books")
+                    val u = runCatching { get("${hosts.sharpapi}/account/usage", listOf("X-API-Key" to key, "Accept" to "application/json")) }.getOrNull()
+                    val today = u?.takeIf { it.isSuccessful }?.let { x -> runCatching { ((kotlinx.serialization.json.Json.parseToJsonElement(x.body) as kotlinx.serialization.json.JsonObject)["data"] as kotlinx.serialization.json.JsonObject)["requests_today"].toString().toIntOrNull() }.getOrNull() }
+                    meter.recordBalance(QuotaPolicy.SHARPAPI, key, null, used = today)
+                    meter.recordAccepted(QuotaPolicy.SHARPAPI, key)
+                    val pinnacle = if (tier == "sharp" || tier == "enterprise") "Pinnacle included" else "no Pinnacle on this tier (Sharp needed)"
+                    true to "Active and accepted · ${tier ?: "?"} tier, ${rpm ?: "?"} requests a minute, up to ${books ?: "?"} books, $pinnacle" + (today?.let { " · $it requests today" } ?: "") + "."
+                }
                 else -> false to "Answered HTTP ${r.code}."
             }
         }
