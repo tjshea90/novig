@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/new-session-51eqix",
- "head": "ec5d3ef8ea39cd8ee50d78fb4ef381f451a47c1e",
+ "head": "f88f264b1293c1f859892c91fff6a63c5f53e1b6",
  "since": 1792596542,
- "beat": 1792621438,
- "beatIso": "2026-10-21T22:23:58Z",
- "done": "pre-release: v1.0.41: full test fixes: Kalshi CNO rows open at Kalshi everywhere, Scan CNO on GitHub switch, faster phone fallback when CNO refuses the runner, bid step-down needs every fair book fresh, copy fixes (versionCode 381, v1.0.41)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.41), then run: bash tools/record-release.sh v1.0.41 381 \"v1.0.41: full test fixes: Kalshi CNO rows open at Kalshi everywhere, Scan CNO on GitHub switch, faster phone fallback when CNO refuses the runner, bid step-down needs every fair book fresh, copy fixes\""
+ "beat": 1792621592,
+ "beatIso": "2026-10-21T22:26:32Z",
+ "done": "TR: four trial APIs judged (research/api_trials_2026-10-21.md): SharpAPI worth a Sharp-tier trial (Circa, Bookmaker, Betfair, ProphetX + SSE), Tennis-API/Sportmicro/SportsDataIO not now",
+ "next": "TR3 build SharpAPI client on the engine when Tj starts the trial"
 }
