@@ -740,3 +740,16 @@ Add kalshi to the cno scanner. It should work just as it does now, but with both
 
 Then do the full test protocol
 ```
+
+## 2026-10-21T22:23:47Z
+```
+I can get free trials for all of the following apis. Research what they offer and if any of them are good for the vigilant app, GitHub engine, or live betting, let me know so we can build it:
+
+https://tennis-api.com/
+
+https://sharpapi.io/
+
+https://sportmicro.com/
+
+https://sportsdata.io/developers/api-documentation
+```
