@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-sq6ev3",
- "head": "9d019033f7be1fc236d85dba6746f7aba756dc83",
+ "head": "b9b5732c27b6e8855acc87540871d9a376d8985b",
  "since": 1792539161,
- "beat": 1792563668,
- "beatIso": "2026-10-21T06:21:08Z",
- "done": "v1.0.34 released (CH57 columns, CH58 journal)",
- "next": "CH57: bids CLV + grader keeps all closes; run api_quality.py once apiq files exist in cloud-archive"
+ "beat": 1792563719,
+ "beatIso": "2026-10-21T06:21:59Z",
+ "done": "chat wake: Odds API audit (no change), CH57 scope noted",
+ "next": "CH57 remaining: grader TrackedBet.closes list + bids CLV join (needs design + full tests); run api_quality.py once apiq files exist"
 }
