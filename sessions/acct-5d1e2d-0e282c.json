@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-gc6pie",
- "head": "4de2738adb579362b853aa3559938a558ad2bb67",
+ "head": "e971b437570eb1beefcfe4a171c0c2e9e2e50b15",
  "since": 1792563808,
- "beat": 1792613629,
- "beatIso": "2026-10-21T20:13:49Z",
- "done": "BC: phone already closes BoltOdds sockets on toggle-off; STOP ALL/pause path and engine side still to verify",
- "next": "BC1-BC4, engine side first (CloudSources.applySockets, shutdown hook)"
+ "beat": 1792613658,
+ "beatIso": "2026-10-21T20:14:18Z",
+ "done": "BC3 shutdown hook closes sockets, BC4 too-many-connections no longer refuses key",
+ "next": "ship v1.0.39 (ship.sh, release.yml, record-release.sh); BC1/BC2 verify STOP ALL paths"
 }
