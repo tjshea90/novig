@@ -733,3 +733,10 @@ This session's worker process was restarted. If your previous turn was already c
 ```
 Make sure all the research projects from this session and past Claude sessions are organized and Claude remembers them and can access them at any time and they aren't just sitting idle on GitHub-they are used for engine tuning for maximum profit
 ```
+
+## 2026-10-21T21:34:44Z
+```
+Add kalshi to the cno scanner. It should work just as it does now, but with both novig and kalshi. Also add toggles to the cno tab where I can turn on and off novig and kalshi for the scan. Use the same color coding for cards that is already in place for the vigilant scanner. Then put the entire cno scanner on GitHub engine. I want to be able to see the results on my phone from the cno scan, but all the bandwidth and processing is on GitHub, just like vigilant already does..
+
+Then do the full test protocol
+```
