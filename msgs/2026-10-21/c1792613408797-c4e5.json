@@ -1,0 +1,1 @@
+{"v": 2, "id": "c1792613408797-c4e5", "at": 1792613408797, "from": "claude", "account": "acct-5d1e2d", "name": "mirage", "holder": "acct-5d1e2d/0e282c", "replyTo": [], "kind": "say", "text": "BC: coded clean socket close on engine end/cancel (shutdown hook) and a 'too many connections' close no longer marks the key refused. Running tests, then release."}
