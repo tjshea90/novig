@@ -24,4 +24,15 @@ class MakerKeepTest {
         assertTrue(MakerStore.expired(bid(ended, endedAgoH = 8 * 24, filled = 3), now))
         assertFalse("a bid still resting is never dropped", MakerStore.expired(bid(open, endedAgoH = null, postedAgoH = 100), now))
     }
+
+    @Test fun `the engine's desk keeps an ended unfilled bid only its own few minutes, a filled one still a week`() {
+        val ended = MakerStatus.entries.first { it.ended }
+        val twentyMin = 20 * 60_000L
+        // 0.5 h ago is past a 20-minute keep but inside the default six hours
+        assertFalse(MakerStore.expired(bid(ended, endedAgoH = 0), now, twentyMin))
+        val b = bid(ended, endedAgoH = 0).copy(endedAtMs = now - 30 * 60_000L)
+        assertTrue(MakerStore.expired(b, now, twentyMin))
+        assertFalse("the default keep is unchanged", MakerStore.expired(b, now))
+        assertFalse("a filled bid is kept a week whatever the unfilled keep", MakerStore.expired(b.copy(filled = 2), now, twentyMin))
+    }
 }
