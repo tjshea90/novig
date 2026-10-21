@@ -175,7 +175,7 @@ private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: L
         // Each card's light comes from the engine's own live check of the API (Tj, 2026-10-20, CH48), the ledger and the last scan, in that order ([com.tjshea.vigilant.data.cloud.ApiState]).
         val verdicts = remember(status, meters, health, now / 20_000L) {
             meters.associate { v ->
-                val sid = if (v.policy.id == "pinnacle") "pinnapi" else com.tjshea.vigilant.data.cloud.ApiToggles.idOfPolicy(v.policy.id)
+                val sid = when (v.policy.id) { "pinnacle" -> "pinnapi"; "kalshi", "polymarket" -> v.policy.id; else -> com.tjshea.vigilant.data.cloud.ApiToggles.idOfPolicy(v.policy.id) }
                 v.policy.id to com.tjshea.vigilant.data.cloud.ApiState.of(status?.apiChecks?.firstOrNull { it.id == sid }, v, health[v.policy.id], now)
             }
         }
