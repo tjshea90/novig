@@ -5,11 +5,11 @@
  "nonce": "0e282c",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-byd011",
- "head": "6c12a33be57b14249950521b9d0ad2c94eadb3d8",
+ "branch": "claude/optimistic-curie-o9ngjz",
+ "head": "ae9575801d8f4f163592b7567d8629fe62c2bb1f",
  "since": 1792539161,
- "beat": 1792548761,
- "beatIso": "2026-10-21T02:12:41Z",
- "done": "v1.0.28 released and recorded; told Tj",
- "next": "read first quick-scan timings in status.scanNote/engine-log once engine restarts on new code; watch chat"
+ "beat": 1792548840,
+ "beatIso": "2026-10-21T02:14:00Z",
+ "done": "v1.0.27 released; chat quiet 30 min",
+ "next": "CH50b laned scan; CH47f tennis once pbplive frames exist; CH45a Kalshi lag if Tj reports; read Spend: log for Odds API"
 }
