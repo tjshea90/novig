@@ -132,6 +132,7 @@ fun main(args: Array<String>) = runBlocking {
             runCatching { sources.refreshPinnWireAccounts() }
             log("PinnWire accounts: " + sources.pinnWirePlans())
             log("Spend: " + sources.spendNotes())
+            log(sources.sharpApiNote())
             delay(60 * 60_000L)
         }
     }

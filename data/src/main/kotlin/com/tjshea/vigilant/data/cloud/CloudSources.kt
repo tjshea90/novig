@@ -182,6 +182,7 @@ class CloudSources(
             "unabated" -> unabatedClient.restart()
             "boltodds" -> boltClient.restart()
             "sxbet" -> sxbet.restart()
+            "sharpapi" -> sharpApiClient.restart()
         }
     }
 
