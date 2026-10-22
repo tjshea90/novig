@@ -99,7 +99,7 @@ class TailTakerTest {
     )
 
     @Test
-    fun `buys an earlier job made count: the carried ledger's three buys of one game stop a fourth, whatever this run's journal says`() = runTest {
+    fun `three buys of one game made by earlier jobs stop a fourth, whatever this run's journal says`() = runTest {
         val r = rig(rules = LiveTradeRules(enabled = true, bet = true, stake = 1.0, maxPerGame = 50.0, maxPerDay = 100.0, haltLoss = 50.0), prior = { listOf(bought("a"), bought("b"), bought("c")) }, scope = backgroundScope)
         assertNull(r.taker.attempt(offer()))
         assertEquals(1, r.taker.status.value.skipped["enough buys on this game"])
