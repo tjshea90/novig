@@ -64,6 +64,7 @@ class TailTakerTest {
     private fun rig(
         rules: LiveTradeRules = LiveTradeRules(enabled = true, bet = true, stake = 1.0, maxPerGame = 3.0, maxPerDay = 10.0, haltLoss = 5.0),
         gate: String? = null, ownBids: List<LiveOwnBid> = emptyList(), loss: Double = 0.0, minEdge: Double = 0.05, scope: kotlinx.coroutines.CoroutineScope, lock: Mutex? = null, paper: PaperStake = PaperStake(),
+        prior: (() -> List<LiveRecord>)? = null, repeat: com.tjshea.vigilant.data.tracker.RepeatGuard.Rules? = null, held: List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = emptyList(),
     ): Rig {
         val orders = FakeOrders()
         val journal = DayJournal(tmp.newFolder("j" + System.nanoTime()), "tail-live", LiveRecord.serializer()) { it.atMs }
@@ -73,7 +74,7 @@ class TailTakerTest {
         val taker = TailTaker(
             orders = orders, scope = scope, rules = { rules }, minEdge = { minEdge }, gate = { gate }, ownBids = { ownBids }, journal = journal, onHalt = { halts += it },
             logFills = { _, id, _ -> logged += id; true }, lossToday = { loss }, clock = { now }, dayStart = { base - 3_600_000L }, pause = { now += it },
-            newClientId = { "00000000-0000-4000-8000-%012d".format(++n) }, lock = lock, paperStake = { paper },
+            newClientId = { "00000000-0000-4000-8000-%012d".format(++n) }, lock = lock, paperStake = { paper }, priorBuys = prior, repeat = { repeat }, held = { held },
         )
         return Rig(taker, orders, journal, halts, logged)
     }
@@ -90,6 +91,37 @@ class TailTakerTest {
         assertEquals(listOf("order-1"), r.logged)
         assertEquals(1, r.taker.status.value.bets)
         assertEquals(rec, r.journal.readAll().single())
+    }
+
+    private fun bought(id: String, event: String = "A @ B") = LiveRecord(
+        id = id, atMs = base + 1, mode = "BET", outcome = "FILLED", league = "NBA", event = event, eventId = "", marketId = "mkt", outcomeId = "under", market = "Total", selection = "under", side = "", lineKey = "",
+        fair = 0.95, ask = 0.88, limitPrice = 0.88, fee = 0.0, ev = 0.07, contracts = 100, filled = 100, paid = 0.88, feePaid = 0.0,
+    )
+
+    @Test
+    fun `buys an earlier job made count: the carried ledger's three buys of one game stop a fourth, whatever this run's journal says`() = runTest {
+        val r = rig(rules = LiveTradeRules(enabled = true, bet = true, stake = 1.0, maxPerGame = 50.0, maxPerDay = 100.0, haltLoss = 50.0), prior = { listOf(bought("a"), bought("b"), bought("c")) }, scope = backgroundScope)
+        assertNull(r.taker.attempt(offer()))
+        assertEquals(1, r.taker.status.value.skipped["enough buys on this game"])
+        assertTrue(r.orders.placed.isEmpty())
+        // another game is untouched by them
+        assertEquals("FILLED", r.taker.attempt(offer().let { it.copy(target = it.target.copy(eventName = "C @ D")) })!!.outcome)
+    }
+
+    @Test
+    fun `the game's and the day's dollar limits count what earlier jobs spent`() = runTest {
+        val r = rig(rules = LiveTradeRules(enabled = true, bet = true, stake = 1.0, maxPerGame = 1.5, maxPerDay = 100.0, haltLoss = 50.0), prior = { listOf(bought("a").copy(paid = 1.3)) }, scope = backgroundScope)
+        assertNull("only 20 cents of the game's limit is left: under the minimum order", r.taker.attempt(offer()))
+        assertEquals(1, r.taker.status.value.skipped["limit reached"])
+    }
+
+    @Test
+    fun `the repeat guard refuses a third bet on one side from the ledger's positions`() = runTest {
+        val held = listOf(com.tjshea.vigilant.data.tracker.RepeatGuard.Pos("mkt", "under", 1.0, 1.2, count = 2))
+        val r = rig(rules = LiveTradeRules(enabled = true, bet = true, stake = 1.0, maxPerGame = 50.0, maxPerDay = 100.0, haltLoss = 50.0), repeat = com.tjshea.vigilant.data.tracker.RepeatGuard.Rules(maxBets = 2), held = held, scope = backgroundScope)
+        assertNull(r.taker.attempt(offer()))
+        assertTrue(r.taker.status.value.skipped.keys.any { it.startsWith("repeat guard") })
+        assertTrue(r.orders.placed.isEmpty())
     }
 
     @Test
