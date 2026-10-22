@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-wju7hd",
- "head": "f1f8876026b6c98fc8d7606398dcfe8bbf76ce8f",
+ "head": "f8a27fbfacd0eb2c424b06c21c2006b8dd9f241a",
  "since": 1792624947,
- "beat": 1792627297,
- "beatIso": "2026-10-22T00:01:37Z",
- "done": "ENGINEER 2026-10-21: watched engine, volume loop recorded, XOW6 added, no code change",
- "next": "XOW6: split held-back bets by fair age vs CLV"
+ "beat": 1792627419,
+ "beatIso": "2026-10-22T00:03:39Z",
+ "done": "chat: SharpAPI key verified live on engine after reset",
+ "next": "watch SharpAPI log lines + BoltOdds lines socket"
 }
