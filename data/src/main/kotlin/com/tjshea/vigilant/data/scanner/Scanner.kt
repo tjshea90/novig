@@ -1359,6 +1359,7 @@ class Scanner(
         val feeds = ordered.filter { it.id in HOT_FEEDS || it.id in HOT_METERED }
         if (feeds.isEmpty()) return
         var meteredAt = 0L
+        var meteredFarAt = 0L
         while (true) {
             kotlinx.coroutines.delay(everyMs)
             val cat = catalog ?: continue
@@ -1370,12 +1371,20 @@ class Scanner(
             // A credit-metered feed joins only while its provider is a paid plan (ParlayAPI Pro: Tj, 2026-10-21, odds 18 min old), at most every HOT_METERED_MS, and its key pace still decides whether a call goes out.
             val meteredDue = t - meteredAt >= HOT_METERED_MS
             if (meteredDue) meteredAt = t
+            // Credits (Tj, 2026-10-22, "audit ParlayAPI pacing for wasted usage"): a league whose soonest game is over 3 h away may be 10 min old (Freshness.FAR_OFF_AGE_MS), so a metered feed
+            // re-reads it every HOT_METERED_FAR_MS, not every 150 s; only leagues with a game inside 3 h keep the fast pace.
+            val farDue = t - meteredFarAt >= HOT_METERED_FAR_MS
+            if (farDue) meteredFarAt = t
+            val nearUntil = t + Freshness.FAR_OFF_MS
+            val nearLeagues = hotLeagues.filter { l -> cat.events.any { it.league == l.novigName && it.startsTs <= nearUntil && it.startsTs > t - Planner.STARTED_GRACE_MS } }
             for (source in feeds) {
                 if (source.id in HOT_METERED && (!meteredDue || source.id !in ApiChain.paidProviders)) continue
+                val asked = if (source.id in HOT_METERED && !farDue) nearLeagues else hotLeagues
+                if (asked.isEmpty()) continue
                 val context = if (source.needsCatalog) ScanContext(cat.events, cat.markets, t) else null
                 try {
-                    fetchSource(source, hotLeagues, settings, clock(), sink, context, force = true, onCall = { })
-                    pump.hotFairReads += hotLeagues.count { source.supports(it) }
+                    fetchSource(source, asked, settings, clock(), sink, context, force = true, onCall = { })
+                    pump.hotFairReads += asked.count { source.supports(it) }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -1487,6 +1496,7 @@ class Scanner(
         /** Credit-metered feeds that also join the hot refresh, slowly, while their provider is paid (see [hotFair]). */
         val HOT_METERED = setOf("parlay")
         const val HOT_METERED_MS = 150_000L
+        const val HOT_METERED_FAR_MS = 420_000L
         val HOT_FEEDS = setOf("sgo", "sgo-props", "oddspapi", "oddspapi-props", "bolt", "bolt-props", "kalshi", "polymarket", "sxbet", "sharpapi")
 
         /** A hot line this close to zero (or above it) has its Novig book read again by the hot refresh. */
