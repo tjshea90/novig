@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-wju7hd",
- "head": "45cf825cbdbe5d4fd4ca3df1274d2f9a3f82f5ae",
+ "head": "02bfe711520754aab30be43635117be10e5b30da",
  "since": 1792624947,
- "beat": 1792634022,
- "beatIso": "2026-10-22T01:53:42Z",
- "done": "SharpAPI: game start time taken from sibling rows (44k of 45k rows had none); census",
- "next": "restart engine; verify SharpAPI lines per league"
+ "beat": 1792634047,
+ "beatIso": "2026-10-22T01:54:07Z",
+ "done": "ParlayAPI pacing: a key met part-way through its period is paced on what was left when met",
+ "next": "restart engine; BoltOdds lines socket; NS1 follow-ups"
 }
