@@ -83,7 +83,8 @@ class SharpApiLiveFeed(
         val now = clock()
         val picked = leagues().mapNotNull { Leagues.byNovigName(it) }.mapNotNull { l -> SharpApiBooks.leagueSlug(l)?.let { l to it } }
         // Keep the picked leagues asked for (so the store holds and polls them), at most every 30 s.
-        if (now - ensuredAtMs > ENSURE_MS) { ensuredAtMs = now; for ((_, slug) in picked) runCatching { feed.ensure(slug) } }
+        // Each league on its own coroutine: a big cold read (NFL is 74k rows) must not hold tennis, which is small and lives now.
+        if (now - ensuredAtMs > ENSURE_MS) { ensuredAtMs = now; for ((_, slug) in picked) scope.launch { runCatching { feed.ensure(slug) } } }
         update(picked, now)
     }
 
