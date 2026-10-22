@@ -1001,7 +1001,7 @@ object MakerPlan {
                 GAME_REACHED.format(money(rules.maxPerGame))
             rules.perGameBids > 0 && (r.gameBids[w.line.market.eventId] ?: 0) >= rules.perGameBids -> GAME_BIDS_REACHED.format(rules.perGameBids)
             rules.perGameBidDollars > 0.0 && (r.gameDollars[w.line.market.eventId] ?: 0.0) + w.cost > rules.perGameBidDollars + 1e-9 -> GAME_BID_DOLLARS_REACHED.format(money(rules.perGameBidDollars))
-            rules.repeat != null && com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules.repeat, r.pos, w.line.marketId, w.line.outcomeId, w.cost, w.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, w.line.market.outcomes.map { it.outcomeId }) != null -> REPEAT_GUARD
+            rules.repeat != null && com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules.repeat, r.pos, w.line.marketId, w.line.outcomeId, w.cost, w.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, w.line.market.outcomes.map { it.outcomeId }, com.tjshea.vigilant.data.tracker.RepeatGuard.family(w.line.eventName, w.line.startsTs, w.line.marketLabel, w.line.selection)) != null -> REPEAT_GUARD
             w.cost > r.spend + (freed[w.line.outcomeId] ?: 0.0) + 1e-9 -> BUDGET_REACHED
             else -> null
         }

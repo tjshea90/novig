@@ -201,7 +201,7 @@ class TailTaker(
         val perContract = (limit + Fees.takerFee(limit.coerceIn(0.001, 0.999), o.fee, true)) * payout
         val c = o.candidate
         val positions = runCatching { held() }.getOrDefault(emptyList())
-        return com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules, positions, c.marketId, c.outcomeId, qty * perContract, qty * payout, o.target.market.outcomes.map { it.outcomeId })
+        return com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules, positions, c.marketId, c.outcomeId, qty * perContract, qty * payout, o.target.market.outcomes.map { it.outcomeId }, com.tjshea.vigilant.data.tracker.RepeatGuard.family(o.target.eventName, o.target.startsTs, o.target.marketLabel, o.target.selection))
     }
 
     private suspend fun lossLimitHit(r: LiveTradeRules): String? {
