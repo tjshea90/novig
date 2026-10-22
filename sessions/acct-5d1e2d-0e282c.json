@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-vobqze",
  "head": "b89d78c38074622fc596658dc4b6f7072d468337",
  "since": 1792624947,
- "beat": 1792690795,
- "beatIso": "2026-10-22T17:39:55Z",
+ "beat": 1792690826,
+ "beatIso": "2026-10-22T17:40:26Z",
  "done": "CH58i: SharpAPI store polls each league in its own coroutine (tennis was stale behind NFL deltas)",
  "next": "reset engine; read liveNote"
 }
