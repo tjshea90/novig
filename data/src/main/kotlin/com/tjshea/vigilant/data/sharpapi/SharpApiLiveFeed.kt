@@ -81,7 +81,7 @@ class SharpApiLiveFeed(
 
     private suspend fun tick() {
         val now = clock()
-        val picked = leagues().mapNotNull { Leagues.byNovigName(it) }.mapNotNull { l -> SharpApiBooks.leagueSlug(l)?.let { l to it } }
+        val picked = leagues().mapNotNull { Leagues.byNovigName(it) }.flatMap { l -> listOfNotNull(SharpApiBooks.leagueSlug(l)).plus(TENNIS_TIERS[l.novigName].orEmpty()).map { l to it } }
         // Keep the picked leagues asked for (so the store holds and polls them), at most every 30 s.
         // Each league on its own coroutine: a big cold read (NFL is 74k rows) must not hold tennis, which is small and lives now.
         if (now - ensuredAtMs > ENSURE_MS) { ensuredAtMs = now; for ((_, slug) in picked) scope.launch { runCatching { feed.ensure(slug) } } }
@@ -216,6 +216,8 @@ class SharpApiLiveFeed(
         const val TICK_MS = 1_000L
         const val ENSURE_MS = 30_000L
         /** A league whose store was last brought up to date longer ago than this is not current enough to price a live line. */
+        /** SharpAPI lists Challenger and ITF tennis as leagues of their own (2026-10-22: Novig's three live matches were Challengers, and `atp` had no live row); they are read as the tour's own. */
+        private val TENNIS_TIERS = mapOf("ATP" to listOf("atp_challenger", "itf_men"), "WTA" to listOf("itf_women"))
         const val STALE_MS = 4_000L
         const val LIMIT = 100_000.0
         const val ID_BASE = 7_000_000_000L
