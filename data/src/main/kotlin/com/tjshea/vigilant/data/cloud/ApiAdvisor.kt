@@ -63,7 +63,7 @@ object ApiAdvisor {
                     frac < LOW_FRACTION -> out += Advice("refill:$id", "refill", 1, id, "$name is running low", "$left of $allowance ${policy.unit} left (${(frac * 100).toInt()}%)" + (resets?.let { ", resets $it" } ?: "") + ". Add a key or move to a bigger plan before it runs out.")
                 }
                 // The pace against what is left: a monthly allowance that will not last to its reset. Judged in the provider's own units
-                // (credits) over the period so far (Runway), never from today's request count: a free call (The Odds API's /events, OddsPapi's
+                // (credits) over the period so far (as Runway does), never from today's request count: a free call (The Odds API's /events, OddsPapi's
                 // historical odds, a usage read) costs no credit, and counting them said "will not last" of a key at 4,494 of 10,500 credits
                 // (AF, 2026-10-22: 8,976 calls today, 0 credits).
                 val reset = v.nextReset
