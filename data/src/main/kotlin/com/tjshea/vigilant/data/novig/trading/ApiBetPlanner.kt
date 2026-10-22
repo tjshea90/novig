@@ -143,7 +143,7 @@ object ApiBetPlanner {
         /** Settings › Profit-proven only: what Tj's own bet history says about this TYPE of bet. The auto-bet is refused a type that has lost money; a bet by hand only gets a note. Null = off. */
         profit: com.tjshea.vigilant.data.scanner.ProfitProfile? = null,
     ): PlanResult {
-        fun no(reason: String) = PlanResult.Refused(reason)
+        fun no(reason: String, gone: Boolean = false) = PlanResult.Refused(reason, gone = gone)
         if (!(stake > 0.0)) return no("Pick an amount to bet.")
         if (stake > limits.maxStake + 1e-9) return no("That's over your ${money(limits.maxStake)} limit per bet (Settings › Betting & Novig account).")
         if (spentToday + stake > limits.maxPerDay + 1e-9) {
@@ -190,7 +190,7 @@ object ApiBetPlanner {
         if (book == null) return no("Novig's order book couldn't be read just now: try again in a moment.")
         if (now - book.fetchedAtMs > MAX_BOOK_AGE_MS) return no("Novig's price is ${(now - book.fetchedAtMs) / 1000} seconds old: try again in a moment.")
         val levels = book.takeLadder(target.market, target.outcomeId).sortedBy { it.price }
-        val best = levels.firstOrNull() ?: return no("Nobody is offering this side on Novig right now.")
+        val best = levels.firstOrNull() ?: return no("Nobody is offering this side on Novig right now.", gone = true)
         if (AutoBet.tooLong(limits.maxOdds, Odds.probabilityToAmerican(best.price.coerceIn(0.001, 0.999)))) {
             return no("Novig's best price is now ${american(best.price)}, longer than your ${Odds.formatAmerican(limits.maxOdds)} limit.")
         }
@@ -202,7 +202,7 @@ object ApiBetPlanner {
         }
         val listed = target.listedPrice.takeIf { live }
         if (listed != null && best.price > listed + 1e-9) {
-            return no("Novig's price moved: it was listed at ${american(listed)} and the best now is ${american(best.price)}. Nothing is bet unless it can fill at the listed odds: look at the list again.")
+            return no("Novig's price moved: it was listed at ${american(listed)} and the best now is ${american(best.price)}. Nothing is bet unless it can fill at the listed odds: look at the list again.", gone = true)
         }
         val bestQuote = EvMath.quote(target.fair, best.price, fee, eventLive = live)
         // No money ever goes on a negative-EV bet (Tj, 2026-10-11: "If a bet ever becomes negative EV anywhere in the app on any scanner, prevent me from betting it at all ... No money should ever
