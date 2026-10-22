@@ -129,6 +129,27 @@ class PropLineClient(
         return Board(first.events.map { it.copy(markets = ev) }, first.novig.map { it.copy(markets = nv) })
     }
 
+    /**
+     * Player props for EVERY game of [sportKey] at once (bulk `/sports/{sport}/odds?markets=<prop keys>`): PropLine's docs (2026-10-22) say a slate is one call, not one per game, and send
+     * `X-PropLine-Hint` to a key that reads several games one by one. Asked in parts of at most [CHUNK] markets (an answer heavy enough to time out was seen on one game's 17 NFL markets);
+     * the parts' markets are merged per game. Throws when a part fails, so the caller can read the games one by one instead.
+     */
+    suspend fun bulkProps(sportKey: String, markets: List<String>, books: List<String>): Board {
+        require(markets.isNotEmpty()) { "No markets to ask for" }
+        val ev = LinkedHashMap<String, RefEvent>()
+        val nv = LinkedHashMap<String, RefEvent>()
+        for (part in markets.chunked(CHUNK)) {
+            val b = call(
+                "/sports/$sportKey/odds",
+                listOf("markets" to part.joinToString(","), "bookmakers" to asked(books).distinct().joinToString(",")) + idParams(),
+                notFound = Board(emptyList(), emptyList()),
+            ) { parseBoard(it, json, sportKey) }.value
+            for (e in b.events) ev[e.id] = ev[e.id]?.let { it.copy(markets = it.markets + e.markets) } ?: e
+            for (e in b.novig) nv[e.id] = nv[e.id]?.let { it.copy(markets = it.markets + e.markets) } ?: e
+        }
+        return Board(ev.values.toList(), nv.values.toList())
+    }
+
     private suspend fun eventBoardOnce(sportKey: String, eventId: String, markets: List<String>, books: List<String>): Board? {
         return call(
             "/sports/$sportKey/events/$eventId/odds",
@@ -448,6 +469,12 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
 
     private val mutex = Mutex()
     private val bought = HashMap<String, Bought>()
+
+    /** Bulk slate reads made and failed (each failure read the games one by one): the scan diagnostics' word on [PropLineClient.bulkProps]. */
+    @Volatile var bulkReads = 0
+        private set
+    @Volatile var bulkFailures = 0
+        private set
     private var scanAt = Long.MIN_VALUE
     private var toBuy: Map<String, List<String>> = emptyMap()
 
@@ -470,13 +497,31 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
         var failure: Exception? = null
         if (buying.isNotEmpty()) {
             try {
-                val listed = client.events(sport)
+                // A paid key reading several games of one sport: the whole slate in one bulk call per part of the markets (PropLine's advice, 2026-10-22), not one call per game.
+                // A failed bulk read falls back to the games one by one below.
+                val bulk: PropLineClient.Board? = if (client.plan() != null && buying.size >= BULK_MIN_GAMES) {
+                    val markets = buying.flatMap { toBuy[it.eventId].orEmpty() }.distinct()
+                    try { client.bulkProps(sport, markets, books) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { bulkFailures++; null }
+                } else null
+                val listed = bulk?.events ?: client.events(sport)
                 val matches = com.tjshea.vigilant.data.scanner.Planner.matchEvents(buying, listOf(RefSnapshot(sport, listed, now, provider = ID)))
+                if (bulk != null) {
+                    bulkReads++
+                    val novigOf = bulk.novig.associateBy { it.id }
+                    for (m in matches) {
+                        val ref = m.refEvent ?: continue
+                        val wanted = toBuy[m.event.eventId].orEmpty().toSet()
+                        // Only the markets this game was asked for (the slate's union carries others), so a game's board is what its own read would have been.
+                        fun keep(e: RefEvent?) = e?.markets.orEmpty().filter { mk -> PropLineProps.keyOf(sport, mk.stat) in wanted }
+                        bought[m.event.eventId] = Bought(m.event.eventId, ref.copy(markets = keep(ref)), now, ask, novig = novigOf[ref.id]?.let { n -> ref.copy(markets = keep(n)) })
+                    }
+                }
+                val unread = if (bulk != null) emptyList() else matches
                 // A paid key reads several games at once (the client's own spacing still sets the pace, and PropLine allows 20 in flight); the free key one at a time, as before.
                 val width = if (client.plan() != null) 6 else 1
                 val gate = kotlinx.coroutines.sync.Semaphore(width)
                 val results: List<Triple<String, RefEvent, Result<PropLineClient.Board?>>> = kotlinx.coroutines.coroutineScope {
-                    matches.sortedBy { it.event.startsTs }.mapNotNull { m ->
+                    unread.sortedBy { it.event.startsTs }.mapNotNull { m ->
                         val ref = m.refEvent ?: return@mapNotNull null
                         val markets = toBuy[m.event.eventId].orEmpty()
                         if (markets.isEmpty()) return@mapNotNull null
@@ -553,6 +598,9 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
 
     companion object {
         const val ID = "propline_props"
+
+        /** From this many games of one sport to buy in a scan, a paid key reads them with the bulk call ([PropLineClient.bulkProps]). */
+        const val BULK_MIN_GAMES = 2
 
         /** A game's props are re-used this long at most, so they're current through a scan (RESEARCH.md §24). */
         const val REUSE_MS = com.tjshea.vigilant.data.scanner.Freshness.MAX_REUSE_MS
