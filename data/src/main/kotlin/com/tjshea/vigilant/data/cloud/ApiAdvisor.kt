@@ -1,7 +1,5 @@
 package com.tjshea.vigilant.data.cloud
 
-import com.tjshea.vigilant.data.keys.Runway
-import com.tjshea.vigilant.data.keys.RunwayLevel
 
 import com.tjshea.vigilant.data.keys.KeyState
 import com.tjshea.vigilant.data.keys.QuotaPolicy
@@ -68,11 +66,17 @@ object ApiAdvisor {
                 // (credits) over the period so far (Runway), never from today's request count: a free call (The Odds API's /events, OddsPapi's
                 // historical odds, a usage read) costs no credit, and counting them said "will not last" of a key at 4,494 of 10,500 credits
                 // (AF, 2026-10-22: 8,976 calls today, 0 credits).
-                val run = Runway.line(v, now)
                 val reset = v.nextReset
-                if (left > 0 && reset != null && frac >= LOW_FRACTION && run?.level == RunwayLevel.SHORT &&
-                    policy.period == com.tjshea.vigilant.data.keys.QuotaPeriod.MONTH_UTC && (reset - now) > 86_400_000L) {
-                    out += Advice("buy:$id", "buy", 1, id, "$name will not last to its reset", run.text.substringAfter(": ") + ". A bigger plan, or letting it rest, would cover it.")
+                val start = v.periodStart
+                val used = (allowance - left).coerceAtLeast(0)
+                if (left > 0 && used > 0 && reset != null && start != null && frac >= LOW_FRACTION && reset - now > 86_400_000L &&
+                    policy.period == com.tjshea.vigilant.data.keys.QuotaPeriod.MONTH_UTC && now - start >= 2 * 86_400_000L) {
+                    val perDay = used / ((now - start) / 86_400_000.0)
+                    val daysLeft = left / perDay.coerceAtLeast(1.0)
+                    val daysToReset = (reset - now) / 86_400_000.0
+                    if (daysLeft < daysToReset * 0.8) {
+                        out += Advice("buy:$id", "buy", 1, id, "$name will not last to its reset", "At this month's pace (${String.format(java.util.Locale.US, "%.0f", perDay)} ${policy.unit} a day) its $left remaining last about ${String.format(java.util.Locale.US, "%.0f", daysLeft)} days, but it resets in ${String.format(java.util.Locale.US, "%.0f", daysToReset)}. A bigger plan, or letting it rest, would cover it.")
+                    }
                 }
             }
             if (id.let { ApiToggles.policy(it)?.id } in silentProviders) {
