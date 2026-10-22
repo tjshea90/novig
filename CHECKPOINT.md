@@ -1,13 +1,13 @@
-# CHECKPOINT 3994 — read me first, then TASKS.md
+# CHECKPOINT 3995 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T20:15:46Z · **tests:** 1 RED: test_research_index.sh (8 green)
-**Branch:** `claude/optimistic-curie-upaxtv` · **builds on:** `e15922c93` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T21:02:11Z · **tests:** 1 RED: test_research_index.sh (8 green)
+**Branch:** `claude/optimistic-curie-lpr7ge` · **builds on:** `ee99b3c20` (this checkpoint is the commit after it)
 
 ## Just done
-full data test done
+CH58k: lane note now shows judged/offered/skips/bid gate so tennis non-placement has a visible cause
 
 ## Do this next
-land main; CH58k
+after engine restarts onto main: read liveNote skips for tennis; then fix the commonest skip
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ land main; CH58k
 
 ## Last ten checkpoints
 ```
+  3b65e4226 ckpt 3994: full data test done
   e15922c93 ckpt 3993: CH58j: Live games tile counts tennis lane (mergeStats), tests green
   5ccfffeeb ckpt 3992: chat: answered Live screenshot, added CH58j
   0d4e78b0a ckpt 3991: chat 2026-10-22: live tennis fixed (CH58e-i), Bovada=Ozoon, ParlayAPI far-l
@@ -25,5 +26,7 @@ land main; CH58k
   3b5c9e19c ckpt 3987: CH58h: live SharpAPI rows with no start time (tennis) become games, sent wi
   40c8eed15 ckpt 3986: research index rebuilt
   66bb2e471 ckpt 3985: ENGINEER 2026-10-22: CH57a ParlayAPI spend study written
-  c5f553a1c ckpt 3984: CH58g: live note puts the reason first (was cut off by the note cap)
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
