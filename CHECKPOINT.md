@@ -1,13 +1,13 @@
-# CHECKPOINT 4006 — read me first, then TASKS.md
+# CHECKPOINT 4007 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T22:30:40Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-950a7aea-8abdo8` · **builds on:** `ab4f43fd8` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T22:33:44Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-950a7aea-8abdo8` · **builds on:** `8a54273cd` (this checkpoint is the commit after it)
 
 ## Just done
-AF: BoltOdds consensus + DK/FD prediction markets out of fair lines (double counting), /api/odds/user in key check and concurrency refusals
+AF: Polymarket prices re-read live from CLOB /books (Gamma's are a cached copy), V2 positionIds
 
 ## Do this next
-audit Kalshi, Polymarket, SX Bet, PinnWire/pinnapi/Pinnodds, The Odds API, OddsPapi, Unabated docs vs code
+audit Kalshi, SX Bet, PinnWire/pinnapi/Pinnodds, The Odds API, OddsPapi, Unabated; then docs + report
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ audit Kalshi, Polymarket, SX Bet, PinnWire/pinnapi/Pinnodds, The Odds API, OddsP
 
 ## Last ten checkpoints
 ```
+  6b4bdc0fd ckpt 4006: AF: BoltOdds consensus + DK/FD prediction markets out of fair lines (double
   da26ad4f5 ckpt 4005: AF: PropLine bulk slate props (1 call per sport/part vs per game), STEALS_B
   7330825f1 ckpt 4004: AF: Novig catalog best bids screen the scan (2 requests instead of ~9,600 b
   62dba7012 ckpt 4004: CH63a: CloudCodec keeps Kalshi ticker (bookRef)
@@ -25,8 +26,7 @@ audit Kalshi, Polymarket, SX Bet, PinnWire/pinnapi/Pinnodds, The Odds API, OddsP
   b569e2b18 ckpt 4001: AF1: api-docs mirror workflow + tool
   cc5f7c524 ckpt 4000: CH60b: PinnWire/pinnapi wait for SharpAPI Pinnacle (ApiChain.pinnacleNeeded
   670802ba9 ckpt 3999: CH60a answered
-  f4ad84602 ckpt 3998: CH59a closed (Novig lists 1 live tennis game, matched); CH59b audit
 ```
 
-(9 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
