@@ -93,14 +93,17 @@ class SharpApiLiveFeed(
         val open = HashSet<String>()
         var live = 0
         var fresh = false
+        val why = ArrayList<String>()
         for ((league, slug) in picked) {
             val stale = now - feed.freshAt(slug) > STALE_MS
             if (!stale) fresh = true
             val rows = feed.rows(slug)
             val hasLive = rows.any { it.live && it.book == PINNACLE }
             feed.markLive(slug, hasLive)
+            if (hasLive && stale) why += "${slug}: live rows but the store is ${(now - feed.freshAt(slug)) / 1000}s old"
             if (stale || !hasLive) continue
             val ctx = SharpApiConvert.Context(league, setOf(PINNACLE), FAMILIES, includeLive = true, nowMs = now, liveOnly = true)
+            val before = live
             for (e in SharpApiConvert.events(rows.filter { it.book == PINNACLE }, ctx)) {
                 val key = e.id
                 open += key
@@ -123,6 +126,7 @@ class SharpApiLiveFeed(
                 for (k in st.lines.keys.toList()) if (k !in here) { markets += closed(k, ++version); st.lines.remove(k) }
                 send(frame(st.id, league, e.home, e.away, e.commenceMs, markets))
             }
+            if (live == before) why += "$slug: live Pinnacle rows gave no game (" + SharpApiConvert.census(rows.filter { it.book == PINNACLE && it.live }, ctx).take(300) + ")"
         }
         // A game that left: its lines close, then it is forgotten.
         for ((key, st) in games.entries.toList()) if (key !in open) {
@@ -134,7 +138,7 @@ class SharpApiLiveFeed(
         note = when {
             picked.isEmpty() -> "SharpAPI live: none of the picked leagues is one SharpAPI carries"
             !fresh -> "SharpAPI live: the store is not current (${feed.lastNote ?: "waiting for SharpAPI"})"
-            live == 0 -> "SharpAPI live: no game in play with Pinnacle prices in the picked leagues (rows held / live Pinnacle rows: " + picked.joinToString(", ") { (_, slug) -> "$slug ${feed.rows(slug).size}/${feed.rows(slug).count { it.live && it.book == PINNACLE }}" } + ")"
+            live == 0 -> "SharpAPI live: no game in play with Pinnacle prices in the picked leagues (rows held / live Pinnacle rows: " + picked.joinToString(", ") { (_, slug) -> "$slug ${feed.rows(slug).size}/${feed.rows(slug).count { it.live && it.book == PINNACLE }}" } + ")" + why.joinToString("") { " | $it" }
             else -> "SharpAPI live: $live games in play with Pinnacle prices (store ${feed.describe(now)})"
         }
     }
