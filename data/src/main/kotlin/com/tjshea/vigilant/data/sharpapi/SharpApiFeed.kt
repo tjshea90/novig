@@ -266,13 +266,21 @@ class SharpApiFeed(
                     val hot = st.soonestMs - now < HOT_HOURS * 3_600_000L
                     val every = when { streamCovers(league, now) -> RECONCILE_MS; st.live -> LIVE_EVERY_MS; hot -> HOT_EVERY_MS; else -> COLD_EVERY_MS }
                     if (now - maxOf(st.polledAtMs, st.loadedAtMs) < every) continue
-                    val ok = try { deltaStep(league) } catch (e: CancellationException) { throw e } catch (e: SharpApiException) { lastNote = "$league delta: ${e.message}"; true }
-                    if (!ok) { log("SharpAPI: $league's changes were too many to page; reading it again whole"); load(league) }
+                    // One coroutine a league: a slow NFL delta must not hold tennis' 1 s turn (2026-10-22: tennis stores read 18 to 115 s old behind the serial loop).
+                    if (!polling_.add(league)) continue
+                    launch {
+                        try {
+                            val ok = try { deltaStep(league) } catch (e: CancellationException) { throw e } catch (e: SharpApiException) { lastNote = "$league delta: ${e.message}"; true }
+                            if (!ok) { log("SharpAPI: $league's changes were too many to page; reading it again whole"); load(league) }
+                        } finally { polling_.remove(league) }
+                    }
                 }
                 delay(TICK_MS)
             }
         }
     }
+
+    private val polling_ = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
 
     fun stopPolling() { poller?.cancel(); poller = null }
 
