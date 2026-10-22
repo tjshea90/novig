@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-vobqze",
- "head": "cda7195b154509c166210b1a7e917703656212b2",
+ "head": "3b5c9e19ceb5dca9fd34d70294d5b2c5bb08fec4",
  "since": 1792624947,
- "beat": 1792690127,
- "beatIso": "2026-10-22T17:28:47Z",
- "done": "CH58g: live note puts the reason first (was cut off by the note cap)",
- "next": "read liveNote atp reason"
+ "beat": 1792690155,
+ "beatIso": "2026-10-22T17:29:15Z",
+ "done": "CH58h: live SharpAPI rows with no start time (tennis) become games, sent without a start",
+ "next": "check liveNote: tennis games should show; then matched count"
 }
