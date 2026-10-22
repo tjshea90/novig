@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "ce820b0f37a218d8a1d421d7c2a58447c53969e6",
+ "head": "7330825f1f0bb9f667f71be695491a53a6f9e253",
  "since": 1792596542,
- "beat": 1792707505,
- "beatIso": "2026-10-22T22:18:25Z",
- "done": "AF3 part: advisor pace in credits (no false Odds API buy), governor rests APIs that match nothing (Unabated), job end flushes socket close frames (BoltOdds concurrent refusals)",
- "next": "read api-docs branch when the mirror lands; per-API docs vs code audit"
+ "beat": 1792707641,
+ "beatIso": "2026-10-22T22:20:41Z",
+ "done": "AF: Novig catalog best bids screen the scan (2 requests instead of ~9,600 book reads), maker-credit cut in fee fallback, NOVIG_API.md \u00a728",
+ "next": "continue per-API audit: SharpAPI, PropLine, ParlayAPI, SGO, Kalshi, Polymarket, SX, Pinn*, Odds API, OddsPapi, Unabated"
 }
