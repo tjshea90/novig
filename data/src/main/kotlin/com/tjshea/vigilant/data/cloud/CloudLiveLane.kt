@@ -132,6 +132,8 @@ class CloudLiveLane(
     private val onEntry: suspend (TradeEntry) -> Unit = {},
     /** The engine's ledger, carried from job to job: the live lane's limits and repeat guard count what earlier jobs bought (a runner starts with no journal or tracker of its own). */
     private val ledger: (() -> List<TradeEntry>)? = null,
+    /** What Novig itself says the account holds beyond [counted] ("outcome|market" keys the lane already counts): hand bets and fills the ledger never saw (DV4). */
+    private val accountExtra: (Set<String>) -> List<RepeatGuard.Pos> = { emptyList() },
     private val tell: suspend (String, String) -> Unit = { _, _ -> },
     private val journalLine: (String) -> Unit = {},
     private val paperBook: com.tjshea.vigilant.data.novig.lab.PaperBook? = null,
@@ -179,7 +181,11 @@ class CloudLiveLane(
     }
 
     /** What the ledger holds open (bets, bid fills and live fills), as repeat-guard positions; [excludeLive]: the live fills are left out (the tracker already holds this run's own). */
-    private fun ledgerPositions(excludeLive: Boolean = false): List<RepeatGuard.Pos> = TradePositions.of(ledger?.invoke().orEmpty(), excludeLive)
+    private fun ledgerPositions(excludeLive: Boolean = false): List<RepeatGuard.Pos> {
+        val entries = ledger?.invoke().orEmpty()
+        val counted = (entries.map { it.outcomeId + "|" + it.marketId } + tracker.all().map { it.outcomeId + "|" + it.marketId }).toSet()
+        return TradePositions.of(entries, excludeLive) + accountExtra(counted)
+    }
 
     private suspend fun lossToday(): Double {
         val from = ApiBetPlacer.localMidnight(clock())

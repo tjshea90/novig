@@ -379,7 +379,7 @@ fun main(args: Array<String>) = runBlocking {
             }.getOrNull()
         },
         tc = tradingClient, port = tradePort, dir = File(out, "live"), tracker = liveTracker, confirm = { s -> sources.liveConfirm(s) }, altScore = { s, l, h, a -> sources.altScore(s, l, h, a) },
-        onEntry = liveOnEntry, ledger = { trader.ledger.entries }, tell = liveTell,
+        onEntry = liveOnEntry, ledger = { trader.ledger.entries }, accountExtra = accountHeld::extra, tell = liveTell,
         journalLine = { line -> runCatching { File(File(out, "cloud").also { it.mkdirs() }, "live-light-${java.time.LocalDate.now(java.time.ZoneId.of("America/New_York"))}-run$runId.jsonl").appendText(line + "\n") } },
         paperBook = paperBook,
         log = log::invoke,
