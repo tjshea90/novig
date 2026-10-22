@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-lpr7ge",
  "head": "47176632cee42e70f773d0dc28531c0c7109baea",
  "since": 1792691263,
- "beat": 1792707186,
- "beatIso": "2026-10-22T22:13:06Z",
+ "beat": 1792707372,
+ "beatIso": "2026-10-22T22:16:12Z",
  "done": "CH62a: Arb note shows the engine's full check",
  "next": "ship with next release; CH62b engine-published arbs; CH61a finish"
 }
