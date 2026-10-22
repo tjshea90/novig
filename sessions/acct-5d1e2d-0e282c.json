@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-vobqze",
- "head": "4ee4c1a2807e141d46ca0eee7c8158fa1b2030ee",
+ "head": "a588387ed5b6a9a96c7df0854e8e5a31930c2a04",
  "since": 1792624947,
- "beat": 1792688457,
- "beatIso": "2026-10-22T17:00:57Z",
+ "beat": 1792688837,
+ "beatIso": "2026-10-22T17:07:17Z",
  "done": "CH58e: live note says why live tennis rows give no game (stale store or census of dropped rows)",
  "next": "read status.liveNote after engine restart; fix the named cause"
 }
