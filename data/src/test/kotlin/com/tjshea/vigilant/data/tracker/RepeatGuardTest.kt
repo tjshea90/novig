@@ -111,4 +111,17 @@ class RepeatGuardTest {
         assertTrue(held.size == 1)
         assertEquals(40.0, held.single().payout, 1e-9)
     }
+
+    @Test fun `the red X says why a side is held: the same side, or another line of its team, player or prop`() {
+        val fam = RepeatGuard.family("Phoenix Suns @ Portland Trail Blazers", 1_000L, "Three Pointers Made", "Khaman Maluach Under 0.5")
+        val held = listOf(RepeatGuard.Pos("m1", "under-0.5", 2.69, 4.76, count = 1, family = fam))
+        assertTrue(RepeatGuard.heldWhy(held, "under-0.5", fam)!!.startsWith("You already hold this same side"))
+        val otherLine = RepeatGuard.family("Phoenix Suns @ Portland Trail Blazers", 1_000L, "Three Pointers Made", "Khaman Maluach Under 1.5")
+        assertEquals(fam, otherLine)
+        assertTrue(RepeatGuard.heldWhy(held, "under-1.5", otherLine)!!.contains("another line"))
+        assertNull("another player is not held", RepeatGuard.heldWhy(held, "x", RepeatGuard.family("Phoenix Suns @ Portland Trail Blazers", 1_000L, "Three Pointers Made", "Devin Booker Under 2.5")))
+        assertNull(RepeatGuard.heldWhy(emptyList(), "under-0.5", fam))
+        // the other side of the same market is a hedge, not a repeat
+        assertNull(RepeatGuard.heldWhy(held, "over-0.5", ""))
+    }
 }
