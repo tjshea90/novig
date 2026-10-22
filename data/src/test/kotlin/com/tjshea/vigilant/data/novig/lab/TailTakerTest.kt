@@ -112,7 +112,7 @@ class TailTakerTest {
     fun `the game's and the day's dollar limits count what earlier jobs spent`() = runTest {
         val r = rig(rules = LiveTradeRules(enabled = true, bet = true, stake = 1.0, maxPerGame = 1.5, maxPerDay = 100.0, haltLoss = 50.0), prior = { listOf(bought("a").copy(paid = 1.3)) }, scope = backgroundScope)
         assertNull("only 20 cents of the game's limit is left: under the minimum order", r.taker.attempt(offer()))
-        assertEquals(1, r.taker.status.value.skipped["limit reached"])
+        assertEquals(mapOf("limit reached" to 1), r.taker.status.value.skipped)
     }
 
     @Test
@@ -234,7 +234,7 @@ class TailTakerTest {
         assertTrue("$5 stake but $1 left in the game", rec.contracts in 80L..120L)
         now += 61_000L
         assertNull("the game is at its cap", r.taker.attempt(offer(cand(outcome = "over"))))
-        assertEquals(1, r.taker.status.value.skipped["limit reached"])
+        assertEquals(mapOf("limit reached" to 1), r.taker.status.value.skipped)
     }
 
     @Test
