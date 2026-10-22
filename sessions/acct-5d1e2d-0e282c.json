@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-lpr7ge",
- "head": "d58942dc1488b3e4312e002dfd33f1fcc85e1539",
+ "head": "e153a71da78f667d36e8d11ba45591b8e6f473c5",
  "since": 1792709550,
- "beat": 1792710412,
- "beatIso": "2026-10-22T23:06:52Z",
- "done": "bump 1.0.51 (391)",
- "next": "ship.sh, release.yml, record-release"
+ "beat": 1792710450,
+ "beatIso": "2026-10-22T23:07:30Z",
+ "done": "pre-release: CH65c the phone never scans Kalshi itself while the GitHub engine drives: it only reads the engine's Kalshi list (fixes the out-of-memory crashes) (versionCode 391, v1.0.51)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.51), then run: bash tools/record-release.sh v1.0.51 391 \"CH65c the phone never scans Kalshi itself while the GitHub engine drives: it only reads the engine's Kalshi list (fixes the out-of-memory crashes)\""
 }
