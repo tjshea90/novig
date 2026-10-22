@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-lpr7ge",
  "head": "69b6689d1917a6afbc44fa065c7a4cd2c808d782",
  "since": 1792691263,
- "beat": 1792702931,
- "beatIso": "2026-10-22T21:02:11Z",
+ "beat": 1792703151,
+ "beatIso": "2026-10-22T21:05:51Z",
  "done": "CH58k: lane note now shows judged/offered/skips/bid gate so tennis non-placement has a visible cause",
  "next": "after engine restarts onto main: read liveNote skips for tennis; then fix the commonest skip"
 }
