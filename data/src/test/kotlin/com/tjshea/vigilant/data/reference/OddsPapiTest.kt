@@ -165,6 +165,8 @@ class OddsPapiTest {
         assertEquals("hardrockbet", OpBooks.appKey("hard-rock-bet")); assertEquals("hardrockbet", OpBooks.appKey("hardrock"))
         assertEquals("williamhill_us", OpBooks.appKey("caesars")); assertEquals("betonlineag", OpBooks.appKey("betonline.ag"))
         assertEquals("circa", OpBooks.appKey("x", "Circa Sports"))
+        // BoltOdds lists a derived "consensus" line and DraftKings/FanDuel prediction markets: never a fair-line vote of their own (AF, 2026-10-22).
+        assertEquals(null, OpBooks.appKey("consensus")); assertEquals(null, OpBooks.appKey("dk predictions")); assertEquals(null, OpBooks.appKey("fd predicts"))
         assertNull(OpBooks.appKey("novig")); assertNull(OpBooks.appKey("kalshi")); assertNull(OpBooks.appKey("polymarket")); assertNull(OpBooks.appKey("prophetx")); assertNull(OpBooks.appKey("prizepicks"))
         val cat = OpParser.bookmakers(catalog)
         assertEquals(listOf("caesars", "circa", "draftkings", "pinnacle"), OpBooks.slugsFor(wanted, cat))
