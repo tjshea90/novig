@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-wju7hd",
  "head": "45e4808e30dfd5cfa74545c18ef63055c5493225",
  "since": 1792624947,
- "beat": 1792630459,
- "beatIso": "2026-10-22T00:54:19Z",
+ "beat": 1792630643,
+ "beatIso": "2026-10-22T00:57:23Z",
  "done": "SharpAPI census diagnostics (why rows drop), scan diagnostics log",
  "next": "ship v1.0.46, read census, fix SharpAPI conversion; fix Novig stream tune() in engine (NS1)"
 }
