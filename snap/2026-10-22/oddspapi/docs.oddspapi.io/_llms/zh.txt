@@ -1,0 +1,137 @@
+# OddsPapi API: Chinese
+
+## Chinese
+
+### 开始使用
+
+#### 开始
+
+- [OddsPapi - B2B体育博彩赔率API](https://docs.oddspapi.io/zh/index.md): B2B低延迟实时体育赔率API。通过WebSocket流式传输实时博彩赔率、赛事、比分、阵容、伤病和统计数据。REST API用于快照和历史数据。
+- [快速入门指南 - 几分钟内连接Odds API](https://docs.oddspapi.io/zh/quickstart.md): 几分钟内开始使用OddsPapi。连接WebSocket网关，使用API密钥认证，订阅频道，并流式传输实时体育赔率数据。
+- [AI与LLM集成 - 文档导出](https://docs.oddspapi.io/zh/ai.md): 为AI工具、LLM和离线使用下载OddsPapi文档。提供TXT和OpenAPI JSON格式的机器可读导出，适用于ChatGPT、Claude和其他AI助手。
+
+#### 覆盖范围
+
+- [运动覆盖 - 按运动划分的赛事与期货](https://docs.oddspapi.io/zh/coverage.md): OddsPapi B2B 赔率 API 的覆盖范围：以 sharp 交易型博彩商为核心的 350+ 家博彩公司，外加 60+ 项运动与预测市场主题，按 sportId 标注赛事与期货可用性。
+- [博彩商覆盖 —— Sharp 书、交易所与零售博彩商](https://docs.oddspapi.io/zh/coverage/bookmakers.md): OddsPapi 在 350+ 家博彩公司上的覆盖：sharp 交易型博彩商、交易所与预测市场、零售体育博彩商 —— 含各博彩商的能力、新鲜度上限与状态信号。
+- [盘口覆盖 —— 市场类型、线值、赛段与球员盘](https://docs.oddspapi.io/zh/coverage/markets.md): OddsPapi 覆盖哪些盘口：市场类型、赛段范围、亚洲盘与欧洲让分盘、大小球、球员盘，以及如何通过 GET /markets 枚举各运动的完整盘口图谱。
+
+#### 用 OddsPapi 构建
+
+- [预测市场与交易所 —— 订单簿深度、限额与订单路由](https://docs.oddspapi.io/zh/guides/prediction-markets.md): 在 OddsPapi 上构建做市与套利系统：聚合的交易所价格、back/lay 订单簿深度、用于订单路由的场内原生 ID、投注限额，以及各场馆的实测延迟。
+- [Sharp 盘口交易与 CLV —— 限额、延迟与收盘线价值](https://docs.oddspapi.io/zh/guides/sharp-line-trading.md): 在 OddsPapi 上针对 sharp 博彩商盘口交易：每条价格的投注限额、各博彩商的实测观察延迟、主盘过滤、陈旧数据处理，以及 CLV 测量。
+- [将 OddsPapi 作为第二数据源运行 —— 映射与交叉校验](https://docs.oddspapi.io/zh/guides/second-feed.md): 在现有赔率数据源之外接入 OddsPapi：通过外部提供商 ID 与映射接口关联赛事，基于稳定的选项键比较价格，并测量哪一路数据更快。
+- [端到端支撑一家体育博彩 —— 赛程、价格、滚球与结算](https://docs.oddspapi.io/zh/guides/sportsbook.md): 在 OddsPapi 上构建完整博彩产品：发现运动与锦标赛、加载赛程、建模盘口与选项、推送价格与滚球状态，并完成投注结算。
+- [结算与评级 —— 逐 outcome 评级、四分之一盘与周期盘](https://docs.oddspapi.io/zh/guides/settlement.md): 在 OddsPapi 上为投注评级：基于冻结 ID 的逐 outcome 结算评级、亚洲四分之一盘的半注计算、周期盘评级，以及 UNDECIDED 与 CANCELLED 的处理方式。
+- [评估 OddsPapi —— 亲自测量延迟、覆盖与恢复](https://docs.oddspapi.io/zh/guides/evaluation.md): OddsPapi 试用方案：按博彩商记录观测延迟并对照公布数值、演练恢复路径、用 API 实测核对覆盖范围，并用 CLV 为速度之争给出定论。
+- [各项目的周期 - fulltime 与 result 的区别](https://docs.oddspapi.io/zh/guides/periods.md): 理解 OddsPapi 各运动项目的 period 周期体系：什么时候 fulltime 是一个独立的事实，什么时候它与 result 完全等价，以及如何在不写死假设的前提下按 marketType 与 period 对盘口分组。
+- [串关与 SGP - 构建投注单](https://docs.oddspapi.io/zh/guides/parlays.md): OddsPapi 多关投注的工作流指南：如何在 parlay 与 SGP 端点之间选择、如何让实时投注单保持正确报价、如何横向比较博彩公司，以及某一关被暂停时如何优雅降级。
+
+### API
+
+#### 入门
+
+- [REST API概述 - 体育数据HTTP端点](https://docs.oddspapi.io/zh/api-reference/overview.md): OddsPapi REST API参考。用于体育博彩数据快照、元数据检索、历史赔率和恢复工作流的HTTP端点。支持8种语言。
+- [API认证 - 如何认证请求](https://docs.oddspapi.io/zh/api-reference/authentication.md): 了解如何使用API密钥认证OddsPapi API请求，可通过 X-API-Key 请求头或 apiKey 查询参数传入。
+- [API错误代码 - HTTP状态码和错误处理](https://docs.oddspapi.io/zh/api-reference/errors.md): OddsPapi API错误响应完整指南。HTTP状态码、错误格式、速率限制头和常见错误原因故障排除。
+- [API速率限制 - 请求配额和限流](https://docs.oddspapi.io/zh/api-reference/rate-limits.md): OddsPapi API速率限制和配额。每个端点的请求限制、速率限制头以及处理429响应的最佳实践。
+- [核心概念 - ID、数据模型和最佳实践](https://docs.oddspapi.io/zh/api-reference/concepts.md): 了解OddsPapi数据模型：赛事ID、盘口ID、赔率标识符、实体关系、时间戳以及套利检测的实施最佳实践。
+- [串关 - 多关组合定价](https://docs.oddspapi.io/zh/api-reference/parlays.md): 使用 OddsPapi 的 oddsIds 为串关和带相关性的同场串关（SGP）定价。并列比较多家博彩公司、读取相关性加成，并正确处理被暂停或缺失的各关。
+- [枚举值 - 状态ID、赛段和结算状态](https://docs.oddspapi.io/zh/api-reference/enumerations.md): OddsPapi API中所有固定枚举值的完整参考：statusId生命周期值、period键以及结算状态。
+- [可靠性与运维 - 正常运行时间、状态与事件响应](https://docs.oddspapi.io/zh/api-reference/reliability.md): OddsPapi 如何为交易提供可靠的实时数据：冗余架构、实时状态页、恢复设计、支持响应和事件处理。
+
+#### API 参考
+
+##### common
+
+- [获取博彩公司](https://docs.oddspapi.io/api-reference/common/获取博彩公司.md): 列出博彩公司。
+- [获取体育运动](https://docs.oddspapi.io/api-reference/common/获取体育运动.md): 列出体育运动。
+- [获取锦标赛](https://docs.oddspapi.io/api-reference/common/获取锦标赛.md): 列出锦标赛。
+- [获取赛季](https://docs.oddspapi.io/api-reference/common/获取赛季.md): 列出赛季。
+- [获取参赛方](https://docs.oddspapi.io/api-reference/common/获取参赛方.md): 列出参赛方。
+- [获取球员](https://docs.oddspapi.io/api-reference/common/获取球员.md): 列出球员。
+- [获取场馆](https://docs.oddspapi.io/api-reference/common/获取场馆.md): 按ID列出场馆。
+- [获取盘口](https://docs.oddspapi.io/api-reference/common/获取盘口.md): 列出盘口。
+- [获取货币](https://docs.oddspapi.io/api-reference/common/获取货币.md): 列出货币及汇率。
+
+##### fixtures
+
+- [获取赛事](https://docs.oddspapi.io/api-reference/fixtures/获取赛事.md): 列出赛事。
+- [今日赛事](https://docs.oddspapi.io/api-reference/fixtures/今日赛事.md): 列出今日赛事。
+- [实时赛事](https://docs.oddspapi.io/api-reference/fixtures/实时赛事.md): 列出实时赛事。
+
+##### fixtures/odds
+
+- [赛事赔率](https://docs.oddspapi.io/api-reference/fixturesodds/赛事赔率.md): 获取赛事当前赔率。
+- [赛事赔率CLV](https://docs.oddspapi.io/api-reference/fixturesodds/赛事赔率clv.md): 获取赛事的开盘与收盘赔率（OLV/CLV）。
+- [历史赔率](https://docs.oddspapi.io/api-reference/fixturesodds/历史赔率.md): 获取赛事的历史赔率时间线。
+- [主要赔率](https://docs.oddspapi.io/api-reference/fixturesodds/主要赔率.md): 获取多个赛事的当前主要赔率。
+
+##### parlays
+
+- [串关赔率](https://docs.oddspapi.io/api-reference/parlays/串关赔率.md): 根据选定的 `oddsIds` 计算串关（accumulator）赔率。
+- [同场串关（SGP）赔率](https://docs.oddspapi.io/api-reference/parlays/同场串关（sgp）赔率.md): 根据选定的 `oddsIds` 计算带相关性的同场串关（SGP）赔率。
+
+##### mapping
+
+- [赛事映射](https://docs.oddspapi.io/api-reference/mapping/赛事映射.md): 列出外部博彩公司的赛事映射。
+- [期货映射](https://docs.oddspapi.io/api-reference/mapping/期货映射.md): 将内部期货ID映射到博彩公司/供应商期货ID。
+
+##### settlement
+
+- [赛事结算](https://docs.oddspapi.io/api-reference/settlement/赛事结算.md): 获取赛事的结算数据。
+- [期货结算](https://docs.oddspapi.io/api-reference/settlement/期货结算.md): 获取期货的结算数据。
+
+##### futures
+
+- [获取期货](https://docs.oddspapi.io/api-reference/futures/获取期货.md): 列出期货。
+- [实时期货](https://docs.oddspapi.io/api-reference/futures/实时期货.md): 列出实时期货。
+
+##### futures/odds
+
+- [期货赔率](https://docs.oddspapi.io/api-reference/futuresodds/期货赔率.md): 获取期货的最新赔率。
+- [期货赔率CLV](https://docs.oddspapi.io/api-reference/futuresodds/期货赔率clv.md): 获取期货赔率的OLV和CLV。
+- [历史期货赔率](https://docs.oddspapi.io/api-reference/futuresodds/历史期货赔率.md): 获取期货的历史赔率变化。
+
+##### media
+
+- [博彩公司图标](https://docs.oddspapi.io/api-reference/media/博彩公司图标.md): 获取博彩公司Logo。
+- [分类图标](https://docs.oddspapi.io/api-reference/media/分类图标.md): 获取分类图标。
+- [锦标赛图标](https://docs.oddspapi.io/api-reference/media/锦标赛图标.md): 获取锦标赛图片。
+- [参赛方图标](https://docs.oddspapi.io/api-reference/media/参赛方图标.md): 获取参赛方图片。
+
+### WebSocket
+
+#### 入门
+
+- [WebSocket API概述 - 实时体育数据流](https://docs.oddspapi.io/zh/websocket/overview.md): 连接OddsPapi WebSocket网关以获取低延迟实时体育博彩数据。使用JSON或MessagePack编码流式传输实时赔率、比分、赛事和事件。
+- [WebSocket认证和频道过滤器](https://docs.oddspapi.io/zh/websocket/auth.md): 对OddsPapi WebSocket网关进行认证并配置频道订阅。按体育、锦标赛、赛事和博彩公司过滤以获取目标数据流。
+- [WebSocket 压缩（zstd）](https://docs.oddspapi.io/zh/websocket/compression.md): 使用zstd降低WebSocket带宽。两种可选模式：receiveType: zstd（无字典，一行代码解码）或receiveType: zstd-dict（按频道训练的字典，压缩比最佳）。
+- [WebSocket恢复和重放 - 连接恢复](https://docs.oddspapi.io/zh/websocket/resume-replay.md): 优雅地处理WebSocket断开连接。使用serverEpoch和entryId游标恢复数据流而不产生间隙。自动重放错过的更新。
+- [WebSocket故障排除 - 常见问题和解决方案](https://docs.oddspapi.io/zh/websocket/troubleshooting.md): 调试OddsPapi WebSocket连接问题。登录错误、空响应、二进制解码、背压断开连接、关闭代码和恢复失败的解决方案。
+- [交互式WebSocket控制台 - 测试实时数据](https://docs.oddspapi.io/zh/websocket/console.md): 在浏览器中测试OddsPapi WebSocket API。用于连接网关、订阅频道和查看实时体育数据的交互式控制台。
+
+#### 频道
+
+- [赛事频道 - 实时比赛元数据流](https://docs.oddspapi.io/zh/websocket/channels/fixtures.md): 通过WebSocket流式传输实时赛事元数据。比赛状态、开始时间、参赛方、比分，以及 Betradar、Pinnacle、Flashscore、OpticOdds 的供应商ID映射。
+- [期货频道 - 赛季投注市场元数据](https://docs.oddspapi.io/zh/websocket/channels/futures.md): 通过WebSocket流式传输期货市场元数据。赛季投注、冠军赔率和长期市场数据用于体育博彩平台。
+- [博彩商频道 - 体育博彩状态和元数据](https://docs.oddspapi.io/zh/websocket/channels/bookmakers.md): 通过WebSocket流式传输每个赛事的博彩商状态。跟踪哪些体育博彩提供赔率、检测过期/暂停市场并监控参赛方轮换标志。
+- [期货博彩商频道 - 赛季市场博彩商状态](https://docs.oddspapi.io/zh/websocket/channels/bookmakersFutures.md): 通过WebSocket流式传输每个期货市场的博彩商状态。跟踪哪些体育博彩提供赛季投注赔率并检测市场暂停。
+- [赔率频道 - 实时博彩赔率流](https://docs.oddspapi.io/zh/websocket/channels/odds.md): 通过WebSocket流式传输低延迟实时博彩赔率。聚合自350+家博彩公司的实时赔率，支持小数、分数、美式赔率格式及订单簿深度。
+- [比分频道 - 实时比赛比分流](https://docs.oddspapi.io/zh/websocket/channels/scores.md): 通过WebSocket流式传输实时比赛比分。按节次比分更新、最终结果和实时体育数据，适用于博彩和媒体平台。
+- [时钟频道 - 实时比赛时钟更新](https://docs.oddspapi.io/zh/websocket/channels/clocks.md): 通过WebSocket流式传输实时比赛时钟更新。节、剩余时间和暂停状态。
+- [货币频道 - 汇率和加密货币价格](https://docs.oddspapi.io/zh/websocket/channels/currencies.md): 通过WebSocket流式传输实时货币汇率。法定货币和加密货币定价数据，包括BTC、ETH和主要代币用于赔率转换。
+
+### 更新日志
+
+#### 版本
+
+- [API更新日志 - 更新、功能和重大变更](https://docs.oddspapi.io/zh/changelog/index.md): OddsPapi API更新日志。新功能、改进、错误修复和重大变更。跟踪WebSocket和REST API更新以进行体育博彩数据集成。
+
+## OpenAPI Specs
+
+- [openapi](/zh/api-reference/openapi.json)
+
+## Optional
+
+- [Status+](https://oddspapi-v5.instatus.com)

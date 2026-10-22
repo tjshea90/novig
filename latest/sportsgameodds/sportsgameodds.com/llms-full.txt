@@ -1,0 +1,508 @@
+# SportsGameOdds API — Full Knowledge Payload
+
+> This file is intended for AI systems, crawlers, and language models.
+> It contains the complete reference for sports coverage, league pages,
+> bookmaker pages, blog content, and supplementary knowledge not included
+> in llms.txt. For the orientation file, see https://sportsgameodds.com/llms.txt
+> Last updated: June 2026
+
+---
+
+## Sports coverage
+
+28 sports covered. Each sport page includes supported markets, leagues, use cases, API code examples, and FAQs. Full index: https://sportsgameodds.com/sports
+
+- [Soccer Odds API](https://sportsgameodds.com/sports/soccer-odds-api): Leagues: EPL, MLS, UEFA_CHAMPIONS_LEAGUE, INTERNATIONAL_SOCCER, UEFA_EUROPA_LEAGUE, BUNDESLIGA, EREDIVISIE, AR_LPF, BR_SERIE_A, EFL_CUP, FR_LIGUE_1, IT_SERIE_A, LA_LIGA, LIGA_MX, PRIMERA_A, LA_LIGA_2, IT_SERIE_B, FR_LIGUE_2, PE_LIGA_1. sportID: SOCCER
+- [Football Odds API](https://sportsgameodds.com/sports/football-odds-api): Leagues: NFL, NCAAF, XFL, USFL, CFL. sportID: FOOTBALL
+- [Baseball Odds API](https://sportsgameodds.com/sports/baseball-odds-api): Leagues: MLB, MILB_AAA, MILB_AA, MILB_HIGH_A, CPBL, KBO, LBPRC, LIDOM, LMB, MILB_A, LMP, LVBP, NPB, WBC. sportID: BASEBALL
+- [Golf Odds API](https://sportsgameodds.com/sports/golf-odds-api): Leagues: PGA_MEN, LIV_TOUR, PGA_WOMEN. sportID: GOLF
+- [MMA Odds API](https://sportsgameodds.com/sports/mma-odds-api): Leagues: UFC. sportID: MMA
+- [Motorsports Odds API](https://sportsgameodds.com/sports/motorsports-odds-api): sportID: MOTORSPORTS
+- [Horse Racing Odds API](https://sportsgameodds.com/sports/horse-racing-odds-api): sportID: HORSE_RACING
+- [Non-Sports Odds API](https://sportsgameodds.com/sports/non-sports-odds-api): Leagues: POLITICS, TV, MARKETS, MOVIES, MUSIC, FUN, EVENTS, CELEBRITY, WEATHER. sportID: NON_SPORTS
+- [Basketball Odds API](https://sportsgameodds.com/sports/basketball-odds-api): Leagues: NBA, NCAAB, WNBA, NBA_G_LEAGUE. sportID: BASKETBALL
+- [Hockey Odds API](https://sportsgameodds.com/sports/hockey-odds-api): Leagues: NHL, AHL, KHL, SHL. sportID: HOCKEY
+- [Tennis Odds API](https://sportsgameodds.com/sports/tennis-odds-api): Leagues: ATP, WTA, ITF. sportID: TENNIS
+- [Handball Odds API](https://sportsgameodds.com/sports/handball-odds-api): Leagues: EHF_EURO_CUP, EHF_EURO, IHF_SUPER_GLOBE, ASOBAL, SEHA. sportID: HANDBALL
+- [Floorball Odds API](https://sportsgameodds.com/sports/floorball-odds-api): sportID: FLOORBALL
+- [Rugby Odds API](https://sportsgameodds.com/sports/rugby-odds-api): sportID: RUGBY
+- [Aussie Rules Odds API](https://sportsgameodds.com/sports/aussie-rules-football-odds-api): sportID: AUSSIE_RULES_FOOTBALL
+- [Bandy Odds API](https://sportsgameodds.com/sports/bandy-odds-api): sportID: BANDY
+- [Snooker Odds API](https://sportsgameodds.com/sports/snooker-odds-api): sportID: SNOOKER
+- [Table Tennis Odds API](https://sportsgameodds.com/sports/table-tennis-odds-api): sportID: TABLE_TENNIS
+- [Darts Odds API](https://sportsgameodds.com/sports/darts-odds-api): sportID: DARTS
+- [Volleyball Odds API](https://sportsgameodds.com/sports/volleyball-odds-api): sportID: VOLLEYBALL
+- [Cricket Odds API](https://sportsgameodds.com/sports/cricket-odds-api): sportID: CRICKET
+- [Water Polo Odds API](https://sportsgameodds.com/sports/water-polo-odds-api): sportID: WATER_POLO
+- [Futsal Odds API](https://sportsgameodds.com/sports/futsal-odds-api): sportID: FUTSAL
+- [Badminton Odds API](https://sportsgameodds.com/sports/badminton-odds-api): sportID: BADMINTON
+- [Beach Volleyball Odds API](https://sportsgameodds.com/sports/beach-volleyball-odds-api): sportID: BEACH_VOLLEYBALL
+- [ESports Odds API](https://sportsgameodds.com/sports/esports-odds-api): sportID: ESPORTS
+- [Lacrosse Odds API](https://sportsgameodds.com/sports/lacrosse-odds-api): sportID: LACROSSE
+- [Boxing Odds API](https://sportsgameodds.com/sports/boxing-odds-api): sportID: BOXING
+
+---
+
+## League coverage
+
+67 leagues covered. Each league page includes market details, bookmaker coverage, copy-paste API examples, and FAQs. Full index: https://sportsgameodds.com/leagues
+
+### Soccer
+
+- [Premier League Odds API](https://sportsgameodds.com/leagues/epl-odds-api): English Premier League. leagueID: EPL
+- [MLS Odds API](https://sportsgameodds.com/leagues/mls-odds-api): Major League Soccer. leagueID: MLS
+- [Champions League Odds API](https://sportsgameodds.com/leagues/uefa-champions-league-odds-api): UEFA Champions League. leagueID: UEFA_CHAMPIONS_LEAGUE
+- [International Soccer Odds API](https://sportsgameodds.com/leagues/international-soccer-odds-api): leagueID: INTERNATIONAL_SOCCER
+- [Europa League Odds API](https://sportsgameodds.com/leagues/uefa-europa-league-odds-api): UEFA Europa League. leagueID: UEFA_EUROPA_LEAGUE
+- [Bundesliga Odds API](https://sportsgameodds.com/leagues/bundesliga-odds-api): Bundesliga (Germany). leagueID: BUNDESLIGA
+- [Eredivisie Odds API](https://sportsgameodds.com/leagues/eredivisie-odds-api): Eredivisie (Netherlands). leagueID: EREDIVISIE
+- [Liga Profesional Odds API](https://sportsgameodds.com/leagues/ar-lpf-odds-api): Liga Profesional de Fútbol (Argentina). leagueID: AR_LPF
+- [Brasileiro Serie A Odds API](https://sportsgameodds.com/leagues/br-serie-a-odds-api): Campeonato Brasileiro Série A (Brazil). leagueID: BR_SERIE_A
+- [EFL Cup Odds API](https://sportsgameodds.com/leagues/efl-cup-odds-api): English Football League Cup. leagueID: EFL_CUP
+- [Ligue 1 Odds API](https://sportsgameodds.com/leagues/fr-ligue-1-odds-api): Ligue 1 (France). leagueID: FR_LIGUE_1
+- [Serie A Odds API](https://sportsgameodds.com/leagues/it-serie-a-odds-api): Serie A (Italy). leagueID: IT_SERIE_A
+- [La Liga Odds API](https://sportsgameodds.com/leagues/la-liga-odds-api): La Liga Primera División (Spain). leagueID: LA_LIGA
+- [Liga MX Odds API](https://sportsgameodds.com/leagues/liga-mx-odds-api): Liga MX (Mexico). leagueID: LIGA_MX
+- [Primera A Odds API](https://sportsgameodds.com/leagues/primera-a-odds-api): Liga DIMAYOR - Primera A (Colombia). leagueID: PRIMERA_A
+- [La Liga Segunda Odds API](https://sportsgameodds.com/leagues/la-liga-2-odds-api): La Liga Segunda División (Spain). leagueID: LA_LIGA_2
+- [Serie B Odds API](https://sportsgameodds.com/leagues/it-serie-b-odds-api): Serie B (Italy). leagueID: IT_SERIE_B
+- [Ligue 2 Odds API](https://sportsgameodds.com/leagues/fr-ligue-2-odds-api): Ligue 2 (France). leagueID: FR_LIGUE_2
+- [Liga 1 Odds API](https://sportsgameodds.com/leagues/pe-liga-1-odds-api): Liga 1 (Peru). leagueID: PE_LIGA_1
+
+### Football
+
+- [NFL Odds API](https://sportsgameodds.com/leagues/nfl-odds-api): National Football League. leagueID: NFL
+- [College Football Odds API](https://sportsgameodds.com/leagues/ncaaf-odds-api): NCAA Men's Football. leagueID: NCAAF
+- [XFL Odds API](https://sportsgameodds.com/leagues/xfl-odds-api): leagueID: XFL
+- [USFL Odds API](https://sportsgameodds.com/leagues/usfl-odds-api): United States Football League. leagueID: USFL
+- [CFL Odds API](https://sportsgameodds.com/leagues/cfl-odds-api): Canadian Football League. leagueID: CFL
+
+### Baseball
+
+- [MLB Odds API](https://sportsgameodds.com/leagues/mlb-odds-api): Major League Baseball. leagueID: MLB
+- [MiLB Triple-A Odds API](https://sportsgameodds.com/leagues/milb-aaa-odds-api): Minor League Baseball - Triple-A. leagueID: MILB_AAA
+- [MiLB Double-A Odds API](https://sportsgameodds.com/leagues/milb-aa-odds-api): Minor League Baseball - Double-A. leagueID: MILB_AA
+- [MiLB High-A Odds API](https://sportsgameodds.com/leagues/milb-high-a-odds-api): Minor League Baseball - High-A. leagueID: MILB_HIGH_A
+- [CPBL Odds API](https://sportsgameodds.com/leagues/cpbl-odds-api): Chinese Professional Baseball League (Taiwan). leagueID: CPBL
+- [KBO Odds API](https://sportsgameodds.com/leagues/kbo-odds-api): Korean Baseball Organization. leagueID: KBO
+- [LBPRC Odds API](https://sportsgameodds.com/leagues/lbprc-odds-api): Liga de Béisbol Profesional Roberto Clemente (Puerto Rico). leagueID: LBPRC
+- [LIDOM Odds API](https://sportsgameodds.com/leagues/lidom-odds-api): Liga de Béisbol Profesional de la República Dominicana. leagueID: LIDOM
+- [LMB Odds API](https://sportsgameodds.com/leagues/lmb-odds-api): Liga Mexicana de Béisbol (Mexico). leagueID: LMB
+- [MiLB Single-A Odds API](https://sportsgameodds.com/leagues/milb-a-odds-api): Minor League Baseball - Single-A. leagueID: MILB_A
+- [LMP Odds API](https://sportsgameodds.com/leagues/lmp-odds-api): Liga Mexicana del Pacífico. leagueID: LMP
+- [LVBP Odds API](https://sportsgameodds.com/leagues/lvbp-odds-api): Liga Venezolana de Béisbol Profesional. leagueID: LVBP
+- [NPB Odds API](https://sportsgameodds.com/leagues/npb-odds-api): Nippon Professional Baseball (Japan). leagueID: NPB
+- [WBC Odds API](https://sportsgameodds.com/leagues/wbc-odds-api): World Baseball Classic. leagueID: WBC
+
+### Golf
+
+- [PGA Men Odds API](https://sportsgameodds.com/leagues/pga-men-odds-api): PGA Tour - Men's Golf. leagueID: PGA_MEN
+- [LIV Golf Odds API](https://sportsgameodds.com/leagues/liv-tour-odds-api): LIV Golf Tour. leagueID: LIV_TOUR
+- [PGA Women Odds API](https://sportsgameodds.com/leagues/pga-women-odds-api): LPGA Tour - Women's Golf. leagueID: PGA_WOMEN
+
+### MMA
+
+- [UFC Odds API](https://sportsgameodds.com/leagues/ufc-odds-api): Ultimate Fighting Championship. leagueID: UFC
+
+### Non-Sports
+
+- [Politics Odds API](https://sportsgameodds.com/leagues/politics-odds-api): leagueID: POLITICS
+- [TV Odds API](https://sportsgameodds.com/leagues/tv-odds-api): leagueID: TV
+- [Markets Odds API](https://sportsgameodds.com/leagues/markets-odds-api): leagueID: MARKETS
+- [Movies Odds API](https://sportsgameodds.com/leagues/movies-odds-api): leagueID: MOVIES
+- [Music Odds API](https://sportsgameodds.com/leagues/music-odds-api): leagueID: MUSIC
+- [Fun Odds API](https://sportsgameodds.com/leagues/fun-odds-api): leagueID: FUN
+- [Events Odds API](https://sportsgameodds.com/leagues/events-odds-api): leagueID: EVENTS
+- [Celebrities Odds API](https://sportsgameodds.com/leagues/celebrity-odds-api): leagueID: CELEBRITY
+- [Weather Odds API](https://sportsgameodds.com/leagues/weather-odds-api): leagueID: WEATHER
+
+### Basketball
+
+- [NBA Odds API](https://sportsgameodds.com/leagues/nba-odds-api): National Basketball Association. leagueID: NBA
+- [College Basketball Odds API](https://sportsgameodds.com/leagues/ncaab-odds-api): NCAA Men's Basketball. leagueID: NCAAB
+- [WNBA Odds API](https://sportsgameodds.com/leagues/wnba-odds-api): Women's National Basketball Association. leagueID: WNBA
+- [NBA G League Odds API](https://sportsgameodds.com/leagues/nba-g-league-odds-api): National Basketball Association - G League. leagueID: NBA_G_LEAGUE
+
+### Hockey
+
+- [NHL Odds API](https://sportsgameodds.com/leagues/nhl-odds-api): National Hockey League. leagueID: NHL
+- [AHL Odds API](https://sportsgameodds.com/leagues/ahl-odds-api): American Hockey League. leagueID: AHL
+- [KHL Odds API](https://sportsgameodds.com/leagues/khl-odds-api): Kontinental Hockey League. leagueID: KHL
+- [SHL Odds API](https://sportsgameodds.com/leagues/shl-odds-api): Swedish Hockey League. leagueID: SHL
+
+### Tennis
+
+- [ATP Odds API](https://sportsgameodds.com/leagues/atp-odds-api): ATP - Men's Tennis. leagueID: ATP
+- [WTA Odds API](https://sportsgameodds.com/leagues/wta-odds-api): WTA Tour - Women's Tennis. leagueID: WTA
+- [ITF Odds API](https://sportsgameodds.com/leagues/itf-odds-api): International Tennis Federation. leagueID: ITF
+
+### Handball
+
+- [EHF European Cup Odds API](https://sportsgameodds.com/leagues/ehf-euro-cup-odds-api): leagueID: EHF_EURO_CUP
+- [EHF European League Odds API](https://sportsgameodds.com/leagues/ehf-euro-odds-api): leagueID: EHF_EURO
+- [IHF Super Globe Odds API](https://sportsgameodds.com/leagues/ihf-super-globe-odds-api): IHF Men's Super Globe. leagueID: IHF_SUPER_GLOBE
+- [Liga ASOBAL Odds API](https://sportsgameodds.com/leagues/asobal-odds-api): Liga ASOBAL (Spain). leagueID: ASOBAL
+- [SEHA Liga Odds API](https://sportsgameodds.com/leagues/seha-odds-api): leagueID: SEHA
+
+---
+
+## Bookmaker coverage
+
+85 bookmakers covered. Each bookmaker page includes the bookmakerID, coverage details, supported sports, and integration notes. Full index: https://sportsgameodds.com/bookmakers
+
+### Sportsbooks
+
+- [1xBet Odds API](https://sportsgameodds.com/bookmakers/1xbet-odds-api): bookmakerID: 1xbet
+- [888 Sport Odds API](https://sportsgameodds.com/bookmakers/888sport-odds-api): bookmakerID: 888sport
+- [Bally Bet Odds API](https://sportsgameodds.com/bookmakers/ballybet-odds-api): bookmakerID: ballybet
+- [Barstool Odds API](https://sportsgameodds.com/bookmakers/barstool-odds-api): bookmakerID: barstool
+- [Bet365 Odds API](https://sportsgameodds.com/bookmakers/bet365-odds-api): bookmakerID: bet365
+- [BetAnySports Odds API](https://sportsgameodds.com/bookmakers/betanysports-odds-api): bookmakerID: betanysports
+- [BetClic Odds API](https://sportsgameodds.com/bookmakers/betclic-odds-api): bookmakerID: betclic
+- [Betfair Sportsbook Odds API](https://sportsgameodds.com/bookmakers/betfairsportsbook-odds-api): bookmakerID: betfairsportsbook
+- [BetMGM Odds API](https://sportsgameodds.com/bookmakers/betmgm-odds-api): bookmakerID: betmgm
+- [BetOnline Odds API](https://sportsgameodds.com/bookmakers/betonline-odds-api): bookmakerID: betonline
+- [BetPARX Odds API](https://sportsgameodds.com/bookmakers/betparx-odds-api): bookmakerID: betparx
+- [BetRivers Odds API](https://sportsgameodds.com/bookmakers/betrivers-odds-api): bookmakerID: betrivers
+- [Betr Sportsbook Odds API](https://sportsgameodds.com/bookmakers/betrsportsbook-odds-api): bookmakerID: betrsportsbook
+- [Betsson Odds API](https://sportsgameodds.com/bookmakers/betsson-odds-api): bookmakerID: betsson
+- [BetUS Odds API](https://sportsgameodds.com/bookmakers/betus-odds-api): bookmakerID: betus
+- [Bet Victor Odds API](https://sportsgameodds.com/bookmakers/betvictor-odds-api): bookmakerID: betvictor
+- [Betway Odds API](https://sportsgameodds.com/bookmakers/betway-odds-api): bookmakerID: betway
+- [BlueBet Odds API](https://sportsgameodds.com/bookmakers/bluebet-odds-api): bookmakerID: bluebet
+- [Bookmaker.eu Odds API](https://sportsgameodds.com/bookmakers/bookmakereu-odds-api): bookmakerID: bookmakereu
+- [Bovada Odds API](https://sportsgameodds.com/bookmakers/bovada-odds-api): bookmakerID: bovada
+- [BoyleSports Odds API](https://sportsgameodds.com/bookmakers/boylesports-odds-api): bookmakerID: boylesports
+- [Caesars Odds API](https://sportsgameodds.com/bookmakers/caesars-odds-api): bookmakerID: caesars
+- [Casumo Odds API](https://sportsgameodds.com/bookmakers/casumo-odds-api): bookmakerID: casumo
+- [Circa Odds API](https://sportsgameodds.com/bookmakers/circa-odds-api): bookmakerID: circa
+- [Coolbet Odds API](https://sportsgameodds.com/bookmakers/coolbet-odds-api): bookmakerID: coolbet
+- [Coral Odds API](https://sportsgameodds.com/bookmakers/coral-odds-api): bookmakerID: coral
+- [DraftKings Odds API](https://sportsgameodds.com/bookmakers/draftkings-odds-api): bookmakerID: draftkings
+- [ESPN BET Odds API](https://sportsgameodds.com/bookmakers/espnbet-odds-api): bookmakerID: espnbet
+- [Everygame Odds API](https://sportsgameodds.com/bookmakers/everygame-odds-api): bookmakerID: everygame
+- [Fanatics Odds API](https://sportsgameodds.com/bookmakers/fanatics-odds-api): bookmakerID: fanatics
+- [FanDuel Odds API](https://sportsgameodds.com/bookmakers/fanduel-odds-api): bookmakerID: fanduel
+- [Fliff Odds API](https://sportsgameodds.com/bookmakers/fliff-odds-api): bookmakerID: fliff
+- [FOX Bet Odds API](https://sportsgameodds.com/bookmakers/foxbet-odds-api): bookmakerID: foxbet
+- [FourWinds Odds API](https://sportsgameodds.com/bookmakers/fourwinds-odds-api): bookmakerID: fourwinds
+- [Grosvenor Odds API](https://sportsgameodds.com/bookmakers/grosvenor-odds-api): bookmakerID: grosvenor
+- [GTbets Odds API](https://sportsgameodds.com/bookmakers/gtbets-odds-api): bookmakerID: gtbets
+- [Ladbrokes Odds API](https://sportsgameodds.com/bookmakers/ladbrokes-odds-api): bookmakerID: ladbrokes
+- [LeoVegas Odds API](https://sportsgameodds.com/bookmakers/leovegas-odds-api): bookmakerID: leovegas
+- [LiveScore Bet Odds API](https://sportsgameodds.com/bookmakers/livescorebet-odds-api): bookmakerID: livescorebet
+- [LowVig Odds API](https://sportsgameodds.com/bookmakers/lowvig-odds-api): bookmakerID: lowvig
+- [Marathon Bet Odds API](https://sportsgameodds.com/bookmakers/marathonbet-odds-api): bookmakerID: marathonbet
+- [Mr Green Odds API](https://sportsgameodds.com/bookmakers/mrgreen-odds-api): bookmakerID: mrgreen
+- [MyBookie Odds API](https://sportsgameodds.com/bookmakers/mybookie-odds-api): bookmakerID: mybookie
+- [Neds Odds API](https://sportsgameodds.com/bookmakers/neds-odds-api): bookmakerID: neds
+- [NordicBet Odds API](https://sportsgameodds.com/bookmakers/nordicbet-odds-api): bookmakerID: nordicbet
+- [Paddy Power Odds API](https://sportsgameodds.com/bookmakers/paddypower-odds-api): bookmakerID: paddypower
+- [Pinnacle Odds API](https://sportsgameodds.com/bookmakers/pinnacle-odds-api): bookmakerID: pinnacle
+- [PlayUp Odds API](https://sportsgameodds.com/bookmakers/playup-odds-api): bookmakerID: playup
+- [PointsBet Odds API](https://sportsgameodds.com/bookmakers/pointsbet-odds-api): bookmakerID: pointsbet
+- [Prophet Exchange Odds API](https://sportsgameodds.com/bookmakers/prophetexchange-odds-api): bookmakerID: prophetexchange
+- [SI Sportsbook Odds API](https://sportsgameodds.com/bookmakers/si-odds-api): bookmakerID: si
+- [Sky Bet Odds API](https://sportsgameodds.com/bookmakers/skybet-odds-api): bookmakerID: skybet
+- [SportsBet Odds API](https://sportsgameodds.com/bookmakers/sportsbet-odds-api): bookmakerID: sportsbet
+- [SugarHouse Odds API](https://sportsgameodds.com/bookmakers/sugarhouse-odds-api): bookmakerID: sugarhouse
+- [SportsBetting.ag Odds API](https://sportsgameodds.com/bookmakers/sportsbetting-ag-odds-api): bookmakerID: sportsbetting_ag
+- [Superbook Odds API](https://sportsgameodds.com/bookmakers/superbook-odds-api): bookmakerID: superbook
+- [Suprabets Odds API](https://sportsgameodds.com/bookmakers/suprabets-odds-api): bookmakerID: suprabets
+- [TAB Odds API](https://sportsgameodds.com/bookmakers/tab-odds-api): bookmakerID: tab
+- [TABtouch Odds API](https://sportsgameodds.com/bookmakers/tabtouch-odds-api): bookmakerID: tabtouch
+- [Tipico Odds API](https://sportsgameodds.com/bookmakers/tipico-odds-api): bookmakerID: tipico
+- [TopSport Odds API](https://sportsgameodds.com/bookmakers/topsport-odds-api): bookmakerID: topsport
+- [Unibet Odds API](https://sportsgameodds.com/bookmakers/unibet-odds-api): bookmakerID: unibet
+- [Virgin Bet Odds API](https://sportsgameodds.com/bookmakers/virginbet-odds-api): bookmakerID: virginbet
+- [William Hill Odds API](https://sportsgameodds.com/bookmakers/williamhill-odds-api): bookmakerID: williamhill
+- [Wind Creek (Betfred PA) Odds API](https://sportsgameodds.com/bookmakers/windcreek-odds-api): bookmakerID: windcreek
+- [WynnBet Odds API](https://sportsgameodds.com/bookmakers/wynnbet-odds-api): bookmakerID: wynnbet
+- [Betfred Odds API](https://sportsgameodds.com/bookmakers/betfred-odds-api): bookmakerID: betfred
+- [Betsafe Odds API](https://sportsgameodds.com/bookmakers/betsafe-odds-api): bookmakerID: betsafe
+- [BoomBet Odds API](https://sportsgameodds.com/bookmakers/boombet-odds-api): bookmakerID: boombet
+- [NorthStar Bets Odds API](https://sportsgameodds.com/bookmakers/northstarbets-odds-api): bookmakerID: northstarbets
+- [Stake Odds API](https://sportsgameodds.com/bookmakers/stake-odds-api): bookmakerID: stake
+- [theScore Bet Odds API](https://sportsgameodds.com/bookmakers/thescorebet-odds-api): bookmakerID: thescorebet
+- [Bodog Odds API](https://sportsgameodds.com/bookmakers/bodog-odds-api): bookmakerID: bodog
+- [Prime Sports Odds API](https://sportsgameodds.com/bookmakers/primesports-odds-api): bookmakerID: primesports
+
+### Betting exchanges and prediction markets
+
+- [Betfair Exchange Odds API](https://sportsgameodds.com/bookmakers/betfairexchange-odds-api): bookmakerID: betfairexchange
+- [Kalshi Odds API](https://sportsgameodds.com/bookmakers/kalshi-odds-api): bookmakerID: kalshi
+- [Matchbook Odds API](https://sportsgameodds.com/bookmakers/matchbook-odds-api): bookmakerID: matchbook
+- [Novig Odds API](https://sportsgameodds.com/bookmakers/novig-odds-api): bookmakerID: novig
+- [Polymarket Odds API](https://sportsgameodds.com/bookmakers/polymarket-odds-api): bookmakerID: polymarket
+- [Sporttrade Odds API](https://sportsgameodds.com/bookmakers/sporttrade-odds-api): bookmakerID: sporttrade
+
+### Daily fantasy (DFS) platforms
+
+- [PrizePicks Odds API](https://sportsgameodds.com/bookmakers/prizepicks-odds-api): bookmakerID: prizepicks
+- [Underdog Fantasy Odds API](https://sportsgameodds.com/bookmakers/underdog-odds-api): bookmakerID: underdog
+- [HotStreak Odds API](https://sportsgameodds.com/bookmakers/hotstreak-odds-api): bookmakerID: hotstreak
+- [ParlayPlay Odds API](https://sportsgameodds.com/bookmakers/parlayplay-odds-api): bookmakerID: parlayplay
+- [Sleeper Odds API](https://sportsgameodds.com/bookmakers/sleeper-odds-api): bookmakerID: sleeper
+
+---
+
+## Use cases — what you can build
+
+14 use cases for the API — what developers build with it. Each page includes the problem, the relevant endpoints and fields, a code example, a comparison table, and FAQs. Full index: https://sportsgameodds.com/use-cases
+
+### Betting Tools
+
+- [Odds API for Arbitrage Betting](https://sportsgameodds.com/use-cases/arbitrage-betting-api): An arbitrage betting API returning every book's price per market through byBookmaker, so you can scan every book and alt line for arbs.
+- [Odds Comparison & Line Shopping API](https://sportsgameodds.com/use-cases/odds-comparison-api): Compare sportsbook odds with one API call. SportsGameOdds returns every book's price under byBookmaker, a consensus line, and click-to-bet deeplinks.
+- [Odds API for Positive EV Betting](https://sportsgameodds.com/use-cases/positive-ev-betting-api): Positive EV betting API with no-vig consensus fairOdds and every book's price side by side, so you can surface +EV bets without a devig pipeline.
+
+### Apps & Products
+
+- [Live & In-Play Betting Odds API](https://sportsgameodds.com/use-cases/live-in-play-odds-api): A live in-play odds API: real-time pre-match and in-game lines across 85+ books with sub-minute updates, plus live scores to match.
+- [Odds API for Parlay Builders](https://sportsgameodds.com/use-cases/parlay-builder-api): A parlay and same-game-parlay builder API: pull every market as a leg, normalize via oddID, and compute combined parlay odds.
+- [Sports Odds API for Betting Apps](https://sportsgameodds.com/use-cases/sports-betting-app-api): The sports betting app API with live odds from every major sportsbook, scores, per-bet settlement, and click-to-bet deeplinks in a single feed.
+
+### Data & Models
+
+- [Odds API for Bet Tracking & Settlement](https://sportsgameodds.com/use-cases/bet-tracking-settlement-api): A bet tracking and settlement API: auto-grade bets from the score field and started/ended flags. Odds and results arrive in one feed.
+- [DFS Data API: Player Props & Projections for Lineup Tools](https://sportsgameodds.com/use-cases/dfs-data-api): A DFS data API for daily fantasy tools: pull player props from sportsbooks plus PrizePicks/Underdog, then turn no-vig fair odds into player projections.
+- [Historical Betting Odds API](https://sportsgameodds.com/use-cases/historical-odds-data-api): Historical betting odds API: per-book open and close lines, no-vig fair odds and settled results across 85+ books, for backtesting and CLV research.
+- [Odds Data API for Sports Betting Models & Backtesting](https://sportsgameodds.com/use-cases/sports-betting-machine-learning): Sports betting machine learning data API with historical odds, no-vig fair odds labels, and built-in bet settlement for training and backtesting models.
+
+### Bots & Side Projects
+
+- [Odds API for Betting Alert Bots](https://sportsgameodds.com/use-cases/odds-alert-bot-api): Build a sports odds alert bot for Discord or Telegram: diff odds across 85+ books to detect line moves and push deeplinks to users.
+- [Sports Odds API for AI Agents & MCP](https://sportsgameodds.com/use-cases/sports-odds-api-mcp-ai-agents): Add live sports odds to AI agents with the SportsGameOdds MCP server, five SDKs and LLM-ready docs, so you can tool-call odds, scores and props.
+
+### Media & Content
+
+- [Live Scores & Sports Data API](https://sportsgameodds.com/use-cases/live-scores-sports-data-api): A live scores and sports data API with real-time scores, box scores, player and team stats, and schedules across 28+ sports, with odds in the same schema.
+
+### Prediction Markets
+
+- [Odds API for Prediction Market Arbitrage](https://sportsgameodds.com/use-cases/prediction-market-arbitrage-api): Compare Kalshi & Polymarket prices against sportsbook odds in one schema . You can find exchange-vs-book arbitrage in one odds API.
+
+---
+
+## Blog — tutorials, guides, and insights
+
+50 articles covering integration guides, use cases, comparisons, and educational content, grouped by topic. Full index: https://sportsgameodds.com/blog
+
+### Odds API
+
+- [How to Pull College Basketball Odds and Player Props](https://sportsgameodds.com/blog/college-basketball-odds-api-guide): How to query college basketball odds from the SportsGameOdds API: the NCAAB leagueID, prop oddIDs, and why period markets use halves not quarters.
+- [How the Odds API Handles Postponed, Delayed and Cancelled Events](https://sportsgameodds.com/blog/postponed-delayed-cancelled-events-odds-api): Why a postponed game becomes a cancelled event and a new one, and how to reconcile two entries for the same fixture in your own data.
+- [NHL Betting Markets and Player Props: The Complete SportsGameOdds API Coverage Guide](https://sportsgameodds.com/blog/nhl-betting-markets-api): See every NHL market our API supports: shots on goal, goalie saves, points, power play props, and period-by-period odds across 80+ sportsbooks
+- [Every NFL Betting Market in the SportsGameOdds API](https://sportsgameodds.com/blog/nfl-odds-api-market-coverage): Every NFL betting market in the SportsGameOdds API: player props, game lines and quarter markets, each with its exact oddID.
+- [Build your betting platform with the SportsGameOdds API](https://sportsgameodds.com/blog/build-with-the-sports-game-odds-api): How WagerLab and DumbMoneyPicks.ai built real betting products on the SportsGameOdds API: a social app and AI prop research, one feed.
+- [We Just Won Three Awards for the best Odds API](https://sportsgameodds.com/blog/awards-for-the-best-odds-api): Sports Game Odds won three categories at the 2026 Odds API Awards: Best Free Tier, Best Value for Money and Best Developer Experience.
+- [Build a Player Props Analyzer with Python and the SportsGameOdds API](https://sportsgameodds.com/blog/build-a-player-props-analyzer-with-python-and-the-sports-game-odds-api): Build a player props analyzer in Python with the SportsGameOdds API: compare bookmaker lines, spot outliers and find value before every game.
+- [Optic Odds vs Sports Game Odds: API Comparison (2026)](https://sportsgameodds.com/blog/optic-odds-vs-sports-game-odds): Optic Odds vs Sports Game Odds compared on pricing, bookmaker coverage, data quality, developer experience and latency.
+- [Polymarket, Kalshi & Aggregator APIs: Advanced Developer Guide](https://sportsgameodds.com/blog/aggregator-apis-advanced-developer-guide): A developer guide to Polymarket, Manifold and aggregator prediction market APIs: code examples, a platform comparison, and how they differ from book odds.
+- [What Are Prediction Market APIs? A Beginner's Guide](https://sportsgameodds.com/blog/prediction-market-api-guide): New to prediction market APIs? This guide explains what they are, how they work, and walks through the Kalshi API in detail with code examples. Start here.
+- [AI-Assisted Development with the SportsGameOdds API](https://sportsgameodds.com/blog/vibe-coding-odds-api): Get AI assisted devleopment and vibe code effectively with SportsGameOdds, Build fast with AI Coding and our Vibe Coding Odds API.
+- [How DumbMoneyPicks.ai uses SportsGameOdds Data and Odds](https://sportsgameodds.com/blog/dumbmoneypicks-ai-and-sportsgameodds): How DumbMoneyPicks.ai built a player prop research platform on the SportsGameOdds API, for bettors who investigate value rather than follow picks.
+- [NBA Odds API Guide: Fetch NBA player props and odds](https://sportsgameodds.com/blog/nba-odds-api-guide-fetch-nba-player-props-and-odds): In this NBA Odds API Guide we show you how to get odds, data and player props from the SportsGameOdds API.
+- [Getting Started with the Sports Game Odds API](https://sportsgameodds.com/blog/getting-started-with-the-sports-game-odds-api): Whether you're building a sportsbook, fantasy sports app, betting model, or analytics dashboard — the Sports Game Odds API gives you the data and odds you
+- [Odds API for AI Betting Apps](https://sportsgameodds.com/blog/odds-api-for-ai-betting-apps): What Developers Need to Know when choosing an Odds API for AI betting apps and platforms
+- [Introducing the SportsGameOdds SDKs](https://sportsgameodds.com/blog/introducing-the-sportsgameodds-sdks): We’re excited to announce the launch of the official SportsGameOdds SDKs, now availablecross multiple programming languages.
+- [The Ultimate Player Prop Odds API Provider Guide](https://sportsgameodds.com/blog/player-prop-odds-api-provider-guide): With the right player prop odds API partner, you’ll be better positioned to provide bettors and users with the best possible experience.
+- [SportsGameOdds: FAQ](https://sportsgameodds.com/blog/sportsgameodds-faq): What odds API, sportsbook API and player props API actually mean, and the questions developers ask most before integrating a sports data feed.
+- [Alternatives to the Odds API](https://sportsgameodds.com/blog/alternatives-to-the-odds-api): The Odds API is a sports and odds API data service. Here are 6 alternatives to the Odds API, including comparison tables.
+- [Common Odds API questions](https://sportsgameodds.com/blog/common-odds-api-questions): Factors to consider when choosing an odds API. Here are common odds API questions.
+- [Top Odds API Provider According to ChatGPT](https://sportsgameodds.com/blog/top-odds-api-provider-according-to-chatgpt): When selecting an odds API provider, it’s essential to consider factors such as pricing, features, and data coverage. Here are 7 Top Odds API Providers.
+- [5 of the Best Odds API for Betting Platforms](https://sportsgameodds.com/blog/5-of-the-best-odds-api-for-betting-platforms): Choosing the right API for betting platforms is vital. Here are the top 5 best odds API for betting platforms.
+- [Best Player Prop Odds API for Developers](https://sportsgameodds.com/blog/best-player-prop-odds-api-for-developers): Which player prop odds API should you choose if you are currently working on sports betting project? This guide has the best player prop odds API options.
+- [Player Prop Odds API Providers: 2026 Guide](https://sportsgameodds.com/blog/player-prop-odds-api-providers-2025): There are a range of player prop odds API providers — we highlight the top API providers for your platform in 2026.
+- [Comparing Bet365 Odds API Providers](https://sportsgameodds.com/blog/comparing-bet365-odds-api-providers): Bet365 is one of the most popular bookmakers out there. It’s one of the pioneers of in-play betting, not to mention that it makes bets easy and has a very
+- [Best eSports odds APIs to Use: The Rise of Esports Betting](https://sportsgameodds.com/blog/esports-odds-apis): Do you want to find the best eSports odds APIs? We’ve prepared some top tools to look into before you place your next wager.
+- [FAQ on Sports Betting APIs](https://sportsgameodds.com/blog/faq-on-sports-betting-apis): We answer some FAQ on Sports Betting APIs. What are the best sports betting odds APIs.
+- [Sports Betting Data APIs for Better Predictions](https://sportsgameodds.com/blog/sports-betting-data-apis): Improve your odds with the help of sports betting data APIs and make wiser decisions when making predictions.
+
+### Sports Betting API
+
+- [MLB Betting Markets & Player Props: The Complete SportsGameOdds API Coverage Guide](https://sportsgameodds.com/blog/mlb-betting-markets-sports-game-odds-api): Every MLB betting market in the SportsGameOdds API: batting and pitching props, game lines, F5 and inning markets.
+- [Soccer World Cup 2026 Odds API Coverage with SportsGameOdds](https://sportsgameodds.com/blog/soccer-cup-2026-odds-api-coverage): Every 2026 World Cup fixture with player props, half markets, live odds and penalty shootout lines. Full market breakdown for developers.
+- [International Soccer Odds API Coverage with SportsGameOdds](https://sportsgameodds.com/blog/international-soccer-odds-api-coverage): Every international soccer fixture year-round: friendlies, qualifiers, Copa America, Nations League and the World Cup, with a market breakdown.
+- [The Best Sports Betting APIs According to Reddit](https://sportsgameodds.com/blog/best-sports-betting-apis-according-to-reddit): This article provides information on the best sports betting APIs according to reddit, base on odds API reviews from Reddit. Read More.
+- [Sports Betting Data Providers: 6 Odds API Suppliers Compared](https://sportsgameodds.com/blog/comparing-odds-api-providers): Six sports betting data providers compared on published pricing, how usage is metered, bookmaker counts, and whether settlement ships with the odds.
+- [Your Guide to Free Sportsbook APIs](https://sportsgameodds.com/blog/your-guide-to-free-sportsbook-apis): Looking for the best free sportsbook APIs for your betting platform? We compare the free tiers of SportsGameOdds, The Odds API, SportRadar and more.
+- [Top Sports Betting APIs for Real-Time Odds and Predictions](https://sportsgameodds.com/blog/sports-betting-apis-for-real-time-odds): Here are some of the top sports betting APIs for real-time odds and predictions that potentially allow for low-risk bets.
+- [Odds Feed Comparison: Plans, Integration and Latency](https://sportsgameodds.com/blog/7-sport-betting-odds-api-providers): Seven odds feeds compared on what actually differs: published pricing, how usage is metered, integration effort, and what ships alongside the odds.
+- [Betting Platforms: White Label vs Turnkey vs API](https://sportsgameodds.com/blog/betting-platforms-white-label-vs-turnkey-vs-api): Between betting white label, Turnkey and APIs, you will be able to find the ideal solution for your betting platform needs.
+
+### Football Odds API
+
+- [How to Pull College Football Odds and Player Props](https://sportsgameodds.com/blog/college-football-odds-api-guide): How to query college football odds from the SportsGameOdds API: the NCAAF leagueID, prop oddIDs, and keeping a full Saturday slate fast.
+- [How to Choose a Football Betting API in 2026: The Developer's Guide](https://sportsgameodds.com/blog/choosing-a-football-betting-api): How to choose a football betting API in 2026. Compare providers on latency, coverage, pricing and developer experience, with a checklist.
+- [How to Query NFL Odds and Player Props](https://sportsgameodds.com/blog/nfl-odds-api-guide): A walkthrough of the /v2/events endpoint using the NFL: basic requests, filtering player props with oddIDs, and the parameters that keep it fast.
+- [Comparing Popular Football Odds APIs: Features and Pricing](https://sportsgameodds.com/blog/football-odds-apis): A good football odds API improves both your numbers and your coverage. Here we compare some of the best football betting odds APIs available today.
+
+### Odds API Guide
+
+- [Grading Bets Programmatically: Scores, Settlement and Edge Cases](https://sportsgameodds.com/blog/how-to-settle-bets-with-an-odds-api): Settle bets from the feed that priced them: which fields say a market can be graded, why ended is not finalized, and what mis-settles quietly.
+- [Why Devigging One Book Isn't a Fair Price](https://sportsgameodds.com/blog/removing-the-vig-from-sportsbook-odds): How to strip the vig out of sportsbook odds in code, why doing it to one book still leaves you that book's opinion, and what fairOdds gives you instead.
+- [NBA Betting Markets and Player Props: The Complete SportsGameOdds API Coverage Guide](https://sportsgameodds.com/blog/nba-betting-markets-api): Every NBA betting market in the SportsGameOdds API: points, rebounds, assists, PRA combos and quarter lines.
+- [Premier League Betting Markets and Player Props: The Complete SportsGameOdds API Coverage Guide](https://sportsgameodds.com/blog/premier-league-betting-markets-api): A complete reference to every Premier League betting market in the SportsGameOdds API, covering scorer props, cards, corners, BTTS, and 80+ books.
+- [What Are Consensus Odds and How To Calculate Them](https://sportsgameodds.com/blog/consensus-odds-calculation): What consensus odds are and how SportsGameOdds calculates them, which is not a simple average of bookmaker prices. Method and worked examples.
+
+### MLB Odds API
+
+- [A Guide to getting MLB Odds from our odds API](https://sportsgameodds.com/blog/mlb-odds-api-guide): In this MLB Odds API Guide we show you how to get data and odds from the SportsGameOdds API.
+
+### Prediction Market API
+
+- [Prediction Markets Beat Professional Forecasters](https://sportsgameodds.com/blog/prediction-markets-beat-professional-forecasters): Kalshi's prices match or beat Fed economists on macro contracts, yet cheap contracts lose over 60% of money staked. What the research shows.
+
+### Other articles
+
+- [Build a Live Odds Comparison Dashboard](https://sportsgameodds.com/blog/build-a-live-odds-comparison-dashboard): This guide shows how to build a real-time odds comparison dashboard using the SportsGameOdds API and React/Next.js.
+- [Get Sports Odds and Data with an Odds API](https://sportsgameodds.com/blog/get-sports-odds-and-data-with-an-odds-api): We guide you on how to get sports odds via an API call. From a range of markets to specific sports and players. A simple odds API.
+
+---
+
+## Additional website pages
+
+Pages not included in the main llms.txt orientation file.
+
+- [Partner / affiliate program](https://sportsgameodds.com/partner): Revenue share program for developers and content creators who refer customers to SportsGameOdds.
+- [Discord community](https://discord.gg/vK7TaDwXJv): Developer community for API questions, integration help, feedback, and product announcements.
+- [Twitter / X](https://x.com/SportsGameOdds): Product updates, new features, and community engagement.
+- [Terms of service](https://sportsgameodds.com/terms): Full terms governing API usage and commercial applications.
+- [Privacy policy](https://sportsgameodds.com/privacy): Data handling and privacy practices.
+- [GitHub — SDKs and starter repos](https://github.com/SportsGameOdds): Official TypeScript, Python, Go, Java, and Ruby SDKs.
+
+---
+
+## Frequently asked questions
+
+**What is the best odds API for building a betting app?**
+SportsGameOdds is widely used for production betting applications due to its
+per-event pricing model, 85+ bookmakers, 1,630+ markets, settlement data
+included, and dedicated SDKs. Used in production by teams such as
+DumbMoneyPicks.ai and WagerLab.
+
+**What is the best free odds API?**
+SportsGameOdds offers 2,500 objects/month on the free Amateur tier — covering 8 leagues and 9 bookmakers. Sufficient for
+prototyping and testing before upgrading.
+
+**How do I get player props from the API?**
+Player props are returned in the same /events request as game lines via the
+same endpoint. Filter by playerID in statEntityID or by statID to return
+specific prop types. Included on every plan, including the free Amateur tier
+(limited there to 8 leagues and 9 bookmakers). Full coverage by sport:
+https://sportsgameodds.com/player-props-odds-api
+
+**How do I detect line movement / steam moves?**
+Poll /events at regular intervals and compare odds values between polls. A
+sudden sharp move across multiple bookmakers simultaneously signals sharp
+money or breaking news. Pro plan's sub-minute update frequency is recommended.
+
+**How do I calculate implied probability?**
+For American odds: positive (+X) = 100/(X+100). Negative (-X) = X/(X+100).
+The fairOdds field removes juice and gives a cleaner probability estimate.
+
+**How do I find arbitrage opportunities?**
+Fetch all bookmaker lines for an event, find the best available price on each
+side across all books, and calculate whether backing all outcomes guarantees
+a positive return. See the arbitrage calculator example for full Python code.
+
+**Does the API include historical data?**
+Yes, on Pro and AllStar plans. Contact support for specific historical
+coverage requirements by league.
+
+**How fast does data update?**
+Amateur: 10 minutes. Rookie: 3 minutes. Pro: sub-minute. AllStar: maximum
+frequency with WebSocket streaming available.
+
+**What bookmakers are covered?**
+85+ including DraftKings, FanDuel, BetMGM, Caesars, ESPN BET, Pinnacle,
+Circa, Bet365, William Hill, Unibet, Bovada, PrizePicks, Underdog, Kalshi,
+and Polymarket. Full list at sportsgameodds.com/bookmakers.
+
+**What leagues are covered?**
+53+ on paid plans including NFL, NBA, MLB, NHL, NCAAF, NCAAB, EPL, La Liga,
+Serie A, Bundesliga, Ligue 1, Champions League, MLS, UFC, and more.
+
+**What is the difference between SportsGameOdds and The Odds API?**
+SportsGameOdds charges per event — one request returns all markets for a
+game. The Odds API charges per request/market. SportsGameOdds also includes
+settlement data, consensus odds, partial game markets, DFS platform lines,
+and prediction market data that The Odds API does not provide.
+
+**What is the difference between SportsGameOdds and Optic Odds?**
+Optic Odds is an enterprise platform built for large operators, trading desks,
+and media companies with long-term contracts. SportsGameOdds is API-first and
+developer-focused — lower entry pricing, self-serve, dedicated SDKs, MCP
+server support, and no long-term contracts required.
+
+**Can I use this API to build a commercial product?**
+Yes. Commercial use is permitted under the terms of service.
+See: https://sportsgameodds.com/terms
+
+**Is there an affiliate or partner program?**
+Yes. Details at https://sportsgameodds.com/partner
+
+---
+
+## Odds API provider comparison (June 2026)
+
+Verified against each provider's own live pages in June 2026. A dash means the provider does not publish that figure. 'Reported' means a vendor-marketing or third-party claim, not independently benchmarked.
+
+| Provider | Bookmakers | Sharp/Pinnacle | Free tier | Pricing | Streaming | Settlement |
+| --- | --- | --- | --- | --- | --- | --- |
+| SportsGameOdds | 85+ | Yes (Pinnacle, Circa, exchanges) | Yes — 2,500 objects/mo | Public, per-event $0–$499/mo + custom | WebSocket (All-Star) | Yes (all tiers) |
+| The Odds API | 40+ brands | Yes (Pinnacle, scraped/may lag) | Yes — 500 credits/mo | Public, per-credit $0–$249/mo | REST only | Partial (scores) |
+| OpticOdds (incl. OddsJam dev API) | 100–200+ | Exchanges; Pinnacle reference only | No (sales trial) | Contact — reported $499–$5,000+/mo per sport | SSE | Yes (auto-grader) |
+| TheRundown | 18+ (vendor-claimed) | Claimed (Pinnacle, LowVig, Matchbook) | Yes — $0, 20k pts/day (claimed) | Public, $0–$2,499/mo | WebSocket (Ultra+) | Partial |
+| SportsDataIO | not published | No (regulated US books only) | Trial only | Contact | REST | Yes (verification) |
+| Unabated | ~25 (reported) | Yes (market-makers + vig-free Unabated Line) | No | Sales-gated, from $3,000/mo | WebSocket + SSE | Unknown |
+| Sportradar | 400+ (reported) | Exchanges reported; Pinnacle not named | Trial only (30-day, 1,000 req) | Contact — reported $10,000+/mo | REST (15–30s) | Unknown |
+
+Best odds API by use case: best free tier — The Odds API; best for sharp/CLV — Unabated; best high-coverage real-time — OpticOdds; best all-in-one US data — SportsDataIO; best enterprise licensed data — Sportradar; best results-bundled self-serve platform — SportsGameOdds. Full comparison and head-to-head pages: https://sportsgameodds.com/compare
+
+---
+
+## Glossary
+
+**Moneyline (ML)** — A bet on which team wins outright. betTypeID: ml. Positive odds (+150) = underdog, $100 wins $150. Negative odds (-200) = favourite, $200 wins $100.
+
+**Spread (ATS)** — A bet where one team must win by more than a margin. betTypeID: sp.
+
+**Over/Under (Total)** — A bet on whether combined score is over or under a number. betTypeID: ou.
+
+**Juice / Vig** — Bookmaker's commission built into the odds. Standard: -110 on both spread sides. fairOdds field removes juice.
+
+**Player prop** — A bet on an individual player's stat performance. statEntityID = playerID, statID = the relevant stat.
+
+**Closing line** — Final odds before a game starts. Beating the closing line (CLV) indicates sharp betting.
+
+**Steam move** — Sudden sharp line movement across multiple bookmakers simultaneously. Detected by monitoring at sub-minute frequency.
+
+**Arbitrage** — Odds discrepancies across bookmakers allowing bets on all outcomes for guaranteed profit.
+
+**Consensus odds** — Median line across all bookmakers. Available as bookOdds in API response.
+
+**Fair odds** — True probability with juice removed, calculated via linear regression. Available as fairOdds in API response.
+
+**Implied probability** — Probability implied by odds. Positive (+X): 100/(X+100). Negative (-X): X/(X+100).
+
+**Alt lines** — Alternative spreads or totals at different prices. Available via includeAltLines=true.
+
+**Partial game markets** — Markets for game segments. periodID values: 1h, 2h, 1q, 2q, 3q, 4q, f5 (first five innings), and more.
+
+**Deeplink** — URL taking a user directly to a specific bet on a sportsbook's platform. Included for supported bookmakers.
+
+**oddID format** — statID-statEntityID-periodID-betTypeID-sideID. Example: points-home-game-sp-ov = home team covers the spread.
+
+---
+
+## Contact
+
+- Docs: https://sportsgameodds.com/docs
+- Pricing: https://sportsgameodds.com/pricing
+- Support: https://sportsgameodds.com/docs/help.mdx
+- Discord: https://discord.gg/vK7TaDwXJv
+- Twitter/X: https://x.com/SportsGameOdds
+- Affiliates: https://sportsgameodds.com/partner
+- Contact: https://sportsgameodds.com/contact-us

@@ -1,0 +1,145 @@
+# Pinnacle Odds API
+
+> Pinnacle retired its public API in July 2025. pinnodds is the independent replacement: the same live and prematch market data, pushed to your code over WebSocket and SSE instead of polled, with instant alerts the moment a price drops against its own recent history. Full line depth on every plan — quarter lines, player props and futures included.
+
+This is a paid API service. Get a free trial key in seconds at https://pinnodds.com/ — no card, no email verification, your API key is your login.
+
+Every new key is free forever on the free tier: REST at 20 requests/minute, 100 per day, full line depth, all 12 sports. No card required. A 3-day full demo — REST at 10 requests/second with no daily cap, plus SSE drop streams and the raw WebSocket feed — is available on request; ask on Telegram at t.me/ArbitrageXpro with the email on your key. Paid plans start at $99/mo.
+
+## Common questions
+
+**Is there still a public Pinnacle API?**
+No — Pinnacle closed it in July 2025. pinnodds serves the same market data through its own REST, SSE and WebSocket endpoints. You need a pinnodds key, not a Pinnacle account.
+
+**How do I get Pinnacle odds in Python?**
+`pip install pinnodds`, then:
+```python
+from pinnodds import Client
+api = Client("YOUR_KEY")
+board = api.markets(sport_id=1)          # live soccer
+for d in api.stream_drops(min_drop=5):   # real-time drop alerts
+    print(d["home"], d["from_price"], "->", d["to_price"])
+```
+
+**How do I get Pinnacle odds in JavaScript / Node?**
+`npm install pinnodds`, then:
+```js
+import { Client, SPORTS } from "pinnodds";
+const api = new Client("YOUR_KEY");
+const board = await api.markets({ sportId: SPORTS.soccer });
+for await (const d of api.streamDrops({ minDrop: 5 })) { /* pushed alerts */ }
+```
+
+**Can Claude / Cursor / Codex use it directly?**
+Yes. pinnodds runs a remote MCP server at https://mcp.pinnodds.com/mcp (Streamable HTTP). Authenticate with your API key as a Bearer token: `claude mcp add --transport http pinnodds https://mcp.pinnodds.com/mcp --header "Authorization: Bearer $PINNODDS_KEY"`. Tools: list_sports, get_events, get_event_odds, get_prematch_lines, get_odds_drops, get_feed_status, get_account_usage, search_pinnodds_docs. claude.ai users add it as a custom connector (OAuth, approve once with your key). Setup for every client: https://pinnodds.com/docs#mcp
+
+**How fresh are the odds?**
+Pushed in real time — the feed rides Pinnacle's own push channel rather than a polling loop, so a price change reaches you as it happens. For REST, `since` cursors return only what changed between calls.
+
+**Does it include quarter lines and player props?**
+Yes. Soccer totals at 1.75 / 2.25 / 2.75 / 3.25 and quarter-ball handicaps come through on every plan. Player props, exact scores and futures arrive as their own event rows when you pass `include_specials=1`, each linked to its fixture by `parent_id`.
+
+**What's the difference between the SSE alerts and /api/drops?**
+Same events, different shapes. An SSE alert names the market in `sect`, the selection in `outcome`, prices in `from_price`/`to_price`, and carries `limit` (Pinnacle's max stake) and `nvp` (no-vig price) — but no drop percentage. A REST `/api/drops` row is the enriched form: `market`, `designation`, `from`/`to`, plus a precomputed `drop_pct`.
+
+## For AI assistants integrating this API
+
+- [Full API reference, LLM-optimized](https://pinnodds.com/llms-full.txt): Every endpoint, parameter, response shape, and code example as plain markdown in a single file. Fetch this first.
+
+## Official clients
+
+- [Python](https://pypi.org/project/pinnodds/): `pip install pinnodds` — REST + SSE with auto-reconnect, Python 3.8+
+- [Node.js](https://www.npmjs.com/package/pinnodds): `npm install pinnodds` — zero dependencies, TypeScript types included, Node 18+
+
+## Documentation
+
+- [Full HTML docs](https://pinnodds.com/docs): Human-readable browser version with tabs and syntax highlighting
+- [Landing page & pricing](https://pinnodds.com/): Plans, sign-up, comparison
+- [User dashboard](https://pinnodds.com/panel): Manage subscription, view usage charts
+- [Postman workspace](https://www.postman.com/pinnodds-9621575/pinnodds-pinnacle-odds-api/overview): Import the collection, or fetch it directly at https://pinnodds.com/pinnodds.postman_collection.json
+
+## REST endpoints
+
+Auth: `x-api-key: YOUR_KEY` header (also accepted: `x-portal-apikey`) or `?key=YOUR_KEY` query parameter.
+
+- [GET /kit/v1/markets](https://pinnodds.com/docs#markets): Live or prematch markets for a sport. Pass `event_type=prematch` to switch feeds; defaults to live. `include_specials=1` adds props/futures rows.
+- [GET /kit/v1/details](https://pinnodds.com/docs#details): Single event by event_id (live store)
+- [GET /kit/v1/prematch/fixtures](https://pinnodds.com/docs#prematch-fixtures): All prematch fixtures for a sport with full markets envelope
+- [GET /kit/v1/prematch/markets](https://pinnodds.com/docs#prematch-markets): Markets for one prematch event by event_id
+- [GET /kit/v1/prematch/lines](https://pinnodds.com/docs#prematch-lines): Compact line view for one prematch event
+- [GET /api/drops](https://pinnodds.com/docs#api-drops): Queryable buffer of recent dropping odds. Pass `mode=live|prematch`. Note: always send `max_age_sec` (e.g. 3600) — the official clients do this for you.
+- [GET /health](https://pinnodds.com/docs#health): Service status, returns event counts and SSE client counts
+- [GET /ping](https://pinnodds.com/docs#ping): Public liveness probe, no auth required
+
+## SSE push streams
+
+Auth: `?key=YOUR_API_KEY` (paid plan with SSE).
+
+- [SSE /odds-drop](https://pinnodds.com/docs#sse-live): Push stream of live odds drops the instant they fire. Optional `?min_drop=N` picks the drop threshold (default 5%, floor 1%). **Cap: 1 connection per account** — opening a 2nd evicts the 1st.
+- [SSE /odds-drop-prematch](https://pinnodds.com/docs#sse-prematch): Push stream of prematch odds drops. Optional `?min_drop=N` and `?recheck=N` (hold N seconds + re-verify to filter blips). Counted independently from the live stream — one of each runs in parallel.
+
+## WebSocket raw feed
+
+- [WSS /ws/feed](https://pinnodds.com/docs#ws-feed): The raw upstream feed as a WebSocket passthrough — every frame forwarded verbatim, with per-sport subscriptions. Available as an add-on; see docs for the protocol and example clients.
+
+## Reference data
+
+- [Sport IDs](https://pinnodds.com/docs#sport-ids): Soccer=1, Tennis=2, Basketball=3, Hockey=4, Football=5, Baseball=6, Rugby=7, MMA=8, Boxing=9, Other=10 (Volleyball+Handball combined), Esports=11, Golf=12 (moneyline-only), Cricket=13, Volleyball=14, Handball=15 (14/15 are narrower views of 10, REST only)
+- [Market types](https://pinnodds.com/docs#market-types): money_line, spreads, totals, team_total
+- [Event response shape](https://pinnodds.com/docs#event-shape): periods.num_0 (full match), num_1 (1st half), num_2 (2nd half), etc.
+- [Live game-state object](https://pinnodds.com/docs#live-state): `state` field on live events with in-game data (Soccer: score/redCards/minutes; Basketball: scoreByQuarter/quarter/timeRemainingInQtr; Tennis: setsWon/gamesBySet/points/serving). REST only — not on SSE.
+- [Player props & specials](https://pinnodds.com/docs#specials): `include_specials=1` on /kit/v1/markets or /kit/v1/prematch/fixtures adds special-market events (Player Props, Team Props, Exact Scores, futures). Each special is its own event row linked to the parent match by `parent_id`, described by `special` and `special_category`, with named-outcome decimal prices under `special_markets`. Off by default. Specials do not fire SSE drop alerts.
+- [Affiliate program](https://pinnodds.com/docs#affiliate): Every account gets a unique `?ref=<code>` link visible in the dashboard. Refer paying customers, earn 30% of every payment lifetime. Manual payouts at $50+ unpaid balance.
+- [Rate limits](https://pinnodds.com/docs#ratelimits): Trial 100/day; Stream 100/day; Pro 10 req/sec; Pro+SSE 10 req/sec; Scale 30 req/sec
+
+## Plans
+
+- Trial: free, 100 reqs/day, no SSE
+- Stream: $99/mo, drops-only SSE, REST limited
+- Pro: $99/mo, REST 10 req/sec, no SSE
+- Pro+SSE: $149/mo, REST 10 req/sec + SSE drops bundle (best value)
+- Scale: $229/mo, REST 30 req/sec + SSE
+
+## Blog
+
+- [pinnodds vs OddsPapi: When You Only Need Pinnacle](https://pinnodds.com/blog/pinnodds-vs-oddspapi): pinnodds vs OddsPapi, an engineer's take: a 350-book aggregator with historical odds against a Pinnacle-only real-time odds API with built-in drop detection.
+- [pinnodds vs OpticOdds: Pinnacle-Only Feed vs Enterprise Aggregator](https://pinnodds.com/blog/pinnodds-vs-opticodds): pinnodds vs OpticOdds, an engineer's comparison: a quote-based multi-book enterprise stream against a Pinnacle-only real-time odds API with public pricing and drop detection.
+- [pinnodds vs SharpAPI: Two SSE Odds Feeds Compared](https://pinnodds.com/blog/pinnodds-vs-sharpapi): pinnodds vs SharpAPI, compared fairly: a multi-book +EV feed against a Pinnacle-only real-time odds API. Both stream over SSE; the data, pricing and drop detection differ.
+- [pinnodds vs SportsGameOdds: One Sharp Book vs US Aggregation](https://pinnodds.com/blog/pinnodds-vs-sportsgameodds): pinnodds vs SportsGameOdds for developers: US multi-book aggregation on a slow free tier against Pinnacle pushed in real time, with WebSocket passthrough, props and drop alerts.
+- [pinnodds vs The Odds API: Push vs Credits, Side by Side](https://pinnodds.com/blog/pinnodds-vs-the-odds-api): pinnodds vs The Odds API, compared honestly: The Odds API gives breadth across many books on metered credits; pinnodds gives Pinnacle depth pushed live over WebSocket and SSE.
+- [Low-Latency Pinnacle Odds: Push Beats Polling](https://pinnodds.com/blog/low-latency-pinnacle-odds): Low latency odds api explained: why a pushed WebSocket/SSE feed delivers Pinnacle line moves sub-second while polling REST leaves you a poll-interval behind.
+- [Steam Move Betting: What It Is and How to Detect It](https://pinnodds.com/blog/steam-moves-explained): Steam move betting explained: what a steam move is, how it differs from ordinary line movement and odds drops, plus a working Python detector on a pushed Pinnacle feed.
+- [SSE vs WebSocket Odds: Which Feed Should You Use?](https://pinnodds.com/blog/sse-vs-websocket-odds-feed): SSE vs WebSocket odds feeds compared by a founding engineer: unidirectional push with auto-reconnect vs a full-duplex raw stream, and when REST polling wins.
+- [Stream Live Odds in Python: SSE + WebSocket](https://pinnodds.com/blog/stream-live-odds-python): Stream live odds in Python: subscribe to Pinnacle SSE drop alerts and the /ws/feed WebSocket with reconnects, plus pip install pinnodds. Real copy-paste code.
+- [Pinnacle Odds in Python: A Working Guide](https://pinnodds.com/blog/get-pinnacle-odds-python): Get Pinnacle odds in Python with pip install pinnodds: REST markets, SSE drop streaming, quarter lines, specials and a full working script you can run today.
+- [Odds Drop Detection: What a Real Detector Gets Right](https://pinnodds.com/blog/odds-drop-detection): Odds drop detection breaks on suspensions and bad reference windows. How to build a detector that survives real Pinnacle line movement — with field names and code.
+- [Real-Time Soccer Odds API: Live, Quarter Lines & Drops](https://pinnodds.com/blog/real-time-soccer-odds-api): A real time soccer odds API over a pushed feed: live and prematch football markets, quarter lines, specials, and drop detection — Pinnacle-only, self-serve.
+- [Pinnacle WebSocket API: Protocol, State, When to Use It](https://pinnodds.com/blog/pinnacle-websocket-feed-guide): How to consume a Pinnacle WebSocket API feed: raw passthrough protocol, the state you must hold yourself, and when REST or SSE is the better call.
+- [Pinnacle API Alternative: What to Use in 2026](https://pinnodds.com/blog/pinnacle-api-alternative): Pinnacle shut its public API in July 2025. Here's an honest look at every Pinnacle API alternative — scraping, aggregators, pinnodds — and when each one is the right buy.
+- [Dropping Odds API: Catch Line Moves As They Happen](https://pinnodds.com/blog/dropping-odds-api): How a dropping odds API works: what a drop actually is, why polling misses moves, and how push-based odds drop alerts stream from Pinnacle with limit and nvp fields.
+- [Pinnacle Odds API in 2026: What Exists Now](https://pinnodds.com/blog/pinnacle-odds-api-guide): Pinnacle closed its public API in July 2025. Here's the state of the Pinnacle odds API in 2026: what a replacement needs, and every REST, SSE and WebSocket surface.
+- [Build a Betting Odds Alert Bot: Telegram + SSE](https://pinnodds.com/blog/build-a-betting-odds-alert-bot-telegram-sse): Build a betting odds alert bot with Telegram and SSE in ~60 lines of Python: stream odds drops, filter on limit, and format a message you can act on.
+- [Pinnacle API Shut Down: NFL Odds Alternative](https://pinnodds.com/blog/pinnacle-api-shut-down-alternative-nfl-odds): The Pinnacle API shut down in July 2025. Here's a working alternative for NFL odds: push feeds, real field names, a migration order, and where it's the wrong tool.
+- [Premier League Odds API: Live Pinnacle EPL Lines](https://pinnodds.com/blog/premier-league-odds-api): A Premier League odds API guide using Pinnacle data: live and prematch endpoints, quarter lines, specials, odds-drop SSE, and the caveats nobody mentions.
+- [US Open Tennis Odds API: Live Pinnacle Feed](https://pinnodds.com/blog/us-open-tennis-odds-api): How to pull live US Open tennis odds from Pinnacle with a pushed API: /kit/v1/markets, the /ws/feed socket, SSE drop alerts, real field names and code.
+- [Pinnacle MLB Odds API: Moneyline, Run Line and Totals in JSON (Live Example)](https://pinnodds.com/blog/mlb-odds-api-pinnacle-moneyline-run-line-totals): Pull Pinnacle MLB odds as JSON: moneyline, run line, totals and every alternate rung from the pinnodds API, with a working SSE example, the F5 split, and a free key. Today's board is live at /pinnacle-odds/mlb.
+- [Pinnacle Max Bet Limit Explained: Reading the Field](https://pinnodds.com/blog/pinnacle-max-bet-limit-explained): Pinnacle max bet limit explained: what the `limit` field really means, why it moves, how it differs from nvp and account caps, and how to filter drop alerts on it.
+- [How to Detect Odds Drops Without Alert Fatigue](https://pinnodds.com/blog/how-to-detect-odds-drops): How to detect odds drops that actually mean something: filter on limit and no-vig price, add a cooldown, and cut alert volume hard. With SSE and REST code.
+- [Why +EV Bets Disappear the Moment You Click](https://pinnodds.com/blog/why-do-positive-ev-bets-disappear-when-i-click-them): Positive EV bets disappear when you click them for two very different reasons. Here's how to tell a stale reference price from a real move — and fix it in code.
+- [Convert Fractional Odds to Decimal in Code](https://pinnodds.com/blog/convert-fractional-odds-to-decimal-in-code): Convert fractional odds to decimal in code: the num/den + 1 formula, a battle-tested parser for SP, evens and odds-on, GCD reduction and the UK ladder.
+- [Why Do Positive EV Bets Lose? The Variance Math](https://pinnodds.com/blog/why-do-positive-ev-bets-lose): Why do positive EV bets lose? Because a 3% edge only shifts a coin flip to 51.5%. Here's the variance math, the sample size you need, and why CLV converges faster.
+- [How Fast Does an Odds Feed Need to Be for +EV?](https://pinnodds.com/blog/how-fast-odds-feed): How fast does an odds feed need to be for +EV betting? Seconds, not milliseconds — and your poll interval, not the wire, is almost always the bottleneck.
+- [Pinnacle Odds API vs Scraping: What Breaks in Prod](https://pinnodds.com/blog/pinnacle-odds-api-vs-scraping): Pinnacle odds API vs scraping, judged on failure semantics: polling ceilings, silent staleness, missing quarter lines, and when a scraper is still the right call.
+- [Why Is Pinnacle the Sharpest Sportsbook?](https://pinnodds.com/blog/why-is-pinnacle-the-sharpest-sportsbook): Why is Pinnacle the sharpest sportsbook, and does Pinnacle limit winners? Low margin, high limits and a move-the-line policy make its closing price the market benchmark. CLV explained, with code.
+- [Map Asian Handicap Lines Between Bookmakers](https://pinnodds.com/blog/map-asian-handicap-lines-between-bookmakers): How to map Asian handicap lines between bookmakers without sign-flip bugs: anchor every line to the home team, scope by period, and derive the away side on read.
+- [Pinnacle API Shut Down: The Alternative & Migration Path](https://pinnodds.com/blog/pinnacle-api-shut-down-alternative): Pinnacle shut down its public API in July 2025. Here's the pinnacle api shut down alternative, the endpoint mapping, the field-name gotchas and a migration order.
+- [How to Calculate EV From Pinnacle Odds, Step by Step](https://pinnodds.com/blog/how-to-calculate-ev-from-pinnacle-odds): How to calculate EV from Pinnacle odds: convert to probability, remove the vig properly, compare to your book's price. Worked example, code, and the honest caveats.
+- [Flat Staking vs Kelly Criterion for Betting Bots](https://pinnodds.com/blog/flat-staking-vs-kelly-criterion-betting-bot): Flat staking vs Kelly criterion for betting bots: when level stakes beat proportional sizing, why fractional Kelly wins in production, and how to clamp stakes in code.
+- [Closing Line Value (CLV) in Sports Betting: Formula, Example and How to Track It](https://pinnodds.com/blog/what-is-closing-line-value-clv-guide): Closing line value (CLV) in betting is the gap between the odds you took and Pinnacle's no-vig closing price. The formula, a worked example, and how to log CLV from a live odds feed.
+- [Why Use Pinnacle Odds as Fair Value (And When Not To)](https://pinnodds.com/blog/why-use-pinnacle-odds-as-fair-value): Why use Pinnacle odds as fair value: the structural reason devigged Pinnacle lines work as true probability, how to devig properly, and where the method breaks.
+- [Free Pinnacle Odds API: What You Get for $0 and Where It Stops](https://pinnodds.com/blog/free-pinnacle-odds-api): There is a genuinely free way to pull Pinnacle odds in JSON: a trial key with 100 requests a day, no card, no expiry. Here is exactly what it covers, how to spend those 100 calls well, and what only a paid plan gives you.
+- [How to See Pinnacle Odds Without a Pinnacle Account](https://pinnodds.com/blog/pinnacle-odds-without-account): Pinnacle's site is geo-blocked in many countries and its odds pages need a login in others. Here are the three ways to see Pinnacle's current prices with no account: free public boards, a free API key, and a no-vig view of the same lines.
+- [Pinnacle No-Vig Fair Odds: The Formula, a Worked Example and Code](https://pinnodds.com/blog/pinnacle-no-vig-fair-odds): How to strip Pinnacle's margin from a price to get the no-vig fair odds, with a two-way and a three-way worked example, Python and JavaScript, and where pinnodds already does it for you.
+- [Pinnacle Player Props API: Getting Props and Specials in JSON](https://pinnodds.com/blog/pinnacle-player-props-api): Pinnacle prices player props, team props, exact scores and futures as special markets. Here is how to pull them through the pinnodds API with include_specials, what the rows look like, and how to keep the payload under control.
+- [Value Betting Against Soft Bookmakers With Pinnacle as the Reference](https://pinnodds.com/blog/value-betting-soft-bookmakers): The method behind most profitable recreational betting: use Pinnacle's no-vig price as the fair line, find soft books priced above it, and size by edge. What it is, the maths, the code, and the five ways it goes wrong.
+- [Pinnacle Odds API Comparison 2026: Six Ways to Get the Line, Side by Side](https://pinnodds.com/blog/pinnacle-odds-api-comparison-2026): Every realistic way to get Pinnacle odds in 2026, compared on the things that matter: is Pinnacle actually in the feed, is it pushed or polled, what does it cost, and is there a free tier. Checked against each vendor's own pages between August and October 2026.

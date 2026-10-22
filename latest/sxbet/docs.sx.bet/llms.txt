@@ -1,0 +1,162 @@
+# SX Bet Documentation
+
+> Developer documentation for the SX Bet API — a peer-to-peer sports prediction market. Build trading bots, market-making systems, and custom frontends with REST, WebSocket, and on-chain APIs.
+
+- [Migrate to V3 in 30 minutes](https://docs.sx.bet/developers/migrate-to-v3.md): How to migrate an existing V2 integration to V3.
+- [V3 Improvements](https://docs.sx.bet/developers/new-in-v3.md): An overview of the V3 exchange model and how it's structured.
+- [SX Bet Overview](https://docs.sx.bet/user-guides/getting-started/overview.md): The prediction market for sports — better odds, open API, no limits.
+- [How Does SX Bet Work?](https://docs.sx.bet/user-guides/getting-started/how-it-works.md): Understand the peer-to-peer exchange model on SX Bet
+- [Quickstart](https://docs.sx.bet/user-guides/getting-started/quickstart.md): Sign up, fund your wallet, and place your first bet on SX Bet in minutes.
+- [Deposit By Transferring Crypto](https://docs.sx.bet/user-guides/deposit-withdraw/transfer-crypto.md): Learn how to deposit USDC on SX Bet by transferring crypto from your wallet or exchange.
+- [Deposit From Coinbase](https://docs.sx.bet/user-guides/deposit-withdraw/deposit-from-coinbase.md): Learn how to deposit USDC on SX Bet directly from your Coinbase account.
+- [Deposit With Interac e-Transfer](https://docs.sx.bet/user-guides/deposit-withdraw/interac.md): Learn how to deposit USDC on SX Bet using Interac e-Transfer.
+- [Deposit From Crypto Wallet](https://docs.sx.bet/user-guides/deposit-withdraw/deposit-from-wallet.md): Learn how to deposit USDC on SX Bet using your crypto wallet.
+- [Withdraw USDC to a Crypto Exchange](https://docs.sx.bet/user-guides/deposit-withdraw/withdraw-to-exchange.md): Want to cash your crypto in for real currency? Here is the guide.
+- [Withdraw With Interac e-Transfer](https://docs.sx.bet/user-guides/deposit-withdraw/withdraw-interac.md): Withdraw your USDC to a Canadian bank account via Interac e-Transfer.
+- [Large Withdrawals](https://docs.sx.bet/user-guides/deposit-withdraw/large-withdrawals.md): Use the Arbitrum Native Bridge to save on fees for large withdrawals.
+- [Finding Markets](https://docs.sx.bet/user-guides/markets/finding-markets.md): How to search for events, switch between market types, and find alt lines on SX Bet.
+- [Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md): Learn how to read the SX Bet order book to find available odds and liquidity.
+- [Market Orders (Taker)](https://docs.sx.bet/user-guides/trading/market-orders.md): Place a market order to bet at the best available odds on SX Bet.
+- [Limit Orders (Maker)](https://docs.sx.bet/user-guides/trading/limit-orders.md): Place a limit order to offer odds and act as the bookmaker on SX Bet.
+- [Managing Positions](https://docs.sx.bet/user-guides/trading/capital-efficiency.md): Learn how SX Bet locks collateral and how you can unlock capital by trading both sides of a market.
+- [Peer-to-Peer Parlays](https://docs.sx.bet/user-guides/trading/parlays.md): Learn about peer-to-peer parlays on SX Bet.
+- [Fees](https://docs.sx.bet/user-guides/trading/fees.md): Learn about trading fees, gas fees, and bridging fees on SX Bet.
+- [SX Bet Maker Rewards](https://docs.sx.bet/user-guides/rewards/maker-rewards.md): Earn USDC rewards by providing liquidity on SX Bet markets.
+- [Tournaments](https://docs.sx.bet/user-guides/rewards/tournaments.md): Compete for prizes with SX Bet Tournaments.
+- [How to Use Bet Credits](https://docs.sx.bet/user-guides/rewards/bet-credits.md): Learn how to use bet credits on SX Bet.
+- [Betting Rules](https://docs.sx.bet/user-guides/more/betting-rules.md): Sport-specific rules that govern how bets are settled on SX Bet.
+- [Export Your Wallet Into MetaMask](https://docs.sx.bet/user-guides/faq/export-wallet-metamask.md): Sign up with email? No problem — export your Fortmatic wallet into MetaMask.
+- [SX Bet Developer Hub](https://docs.sx.bet/developers/introduction.md): Build trading bots, custom frontends, and analytics tools on the SX Bet peer-to-peer sports prediction market. Explore quickstarts, API references, and real-time data guides.
+- [What is SX Bet?](https://docs.sx.bet/developers/what-is-sx-bet.md): An overview of how SX Bet works as a peer-to-peer prediction market.
+- [What can you build?](https://docs.sx.bet/developers/what-can-you-build.md): Explore the kinds of applications and tools you can build on top of SX Bet.
+- [Quickstart](https://docs.sx.bet/developers/quickstart.md): Go from zero to your first bet on SX Bet.
+- [Testnet & Mainnet](https://docs.sx.bet/developers/testnet-and-mainnet.md): How to develop on SX Bet testnet and switch to mainnet when you're ready.
+- [V3 Improvements](https://docs.sx.bet/developers/new-in-v3.md): An overview of the V3 exchange model and how it's structured.
+- [Migrate to V3 in 30 minutes](https://docs.sx.bet/developers/migrate-to-v3.md): How to migrate an existing V2 integration to V3.
+- [Accounts](https://docs.sx.bet/developers/accounts.md): Understand accounts and proxy wallets on SX Bet.
+- [Funding](https://docs.sx.bet/developers/funding.md): How to fund your proxy wallet with USDC on SX Bet.
+- [Reading balances](https://docs.sx.bet/developers/balances-and-ledger.md): Understand your balances and ledger on SX Bet.
+- [Fees](https://docs.sx.bet/developers/fees.md): The five per-account fee rates on SX Bet v3, how each is charged, and how to read your own rates.
+- [Authentication](https://docs.sx.bet/developers/authentication.md): Different operations on SX Bet require different levels of authentication. Here's what you need and why.
+- [The exchange model](https://docs.sx.bet/developers/exchange-model.md): How SX Bet works as a peer-to-peer prediction market exchange.
+- [The order book](https://docs.sx.bet/developers/order-book.md): How the order book is structured and working code to fetch it and update it.
+- [Time in force](https://docs.sx.bet/developers/time-in-force.md): The order time-in-force options available on SX Bet: GTC, IOC, and FOK.
+- [Unit conversions](https://docs.sx.bet/developers/unit-conversions.md): How odds and amounts are represented on the SX Bet API, and how to convert them.
+- [Markets](https://docs.sx.bet/developers/markets-and-events.md): What a market is on SX Bet, and every field on a market row.
+- [Quarter-line markets](https://docs.sx.bet/developers/quarter-line-markets.md): How quarter-line markets work on SX Bet.
+- [Parlays](https://docs.sx.bet/developers/parlays.md): How SX Bet's request-for-quote parlay system works.
+- [Overview](https://docs.sx.bet/developers/markets-overview.md): Sports, leagues, fixtures, and markets need no API key.
+- [Fetching markets](https://docs.sx.bet/developers/fetch-markets.md): Query active sports markets from the SX Bet API.
+- [Fetching odds](https://docs.sx.bet/developers/odds.md): Read the order book and best odds over REST, then stream both in realtime.
+- [Public trades](https://docs.sx.bet/developers/public-trades.md): Query the public trade feed from the SX Bet API.
+- [Book versioning](https://docs.sx.bet/developers/book-versioning.md): How to determine whether an order book update is newer than the one you have.
+- [Realtime overview](https://docs.sx.bet/developers/realtime-overview.md): Subscribe to live updates on markets, orders, trades, odds, and scores using the SX Bet WebSocket API.
+- [Initialization](https://docs.sx.bet/developers/realtime-initialization.md): Connect to the SX Bet real-time WebSocket API using Centrifuge.
+- [Recovery & reliability](https://docs.sx.bet/developers/realtime-reliability.md): Maintain consistent state across connects and reconnects on the SX Bet real-time API.
+- [Channel and limit reference](https://docs.sx.bet/developers/realtime-reference.md): Channels, per-namespace history, and connection limits for the SX Bet WebSocket API.
+- [Posting orders](https://docs.sx.bet/developers/posting-orders.md): How to construct, sign, and submit orders to the SX Bet orderbook.
+- [Client order id](https://docs.sx.bet/developers/client-order-id.md): Attach your own id to an order so you can reconcile it across HTTP and realtime.
+- [Taking liquidity](https://docs.sx.bet/developers/taking-liquidity.md): How to fill existing orders on the SX Bet orderbook as a taker.
+- [Market making](https://docs.sx.bet/developers/market-making.md): An overview of market making on SX Bet — how the maker role works, how exposure is budgeted, and where the book's design constrains a quoting loop.
+- [Market making parlays](https://docs.sx.bet/developers/market-making-parlays.md): How to listen for parlay requests, price them, and submit orders as a market maker.
+- [Cancelling orders](https://docs.sx.bet/developers/cancelling-orders.md): How to cancel open orders on the SX Bet exchange.
+- [Odds rounding](https://docs.sx.bet/developers/odds-rounding.md): How to validate and round odds to the SX Bet odds ladder.
+- [Heartbeat](https://docs.sx.bet/developers/heartbeat.md): Arm a dead-man switch that cancels your open orders if your process dies.
+- [Betting delays](https://docs.sx.bet/developers/betting-delays.md): Betting delays added to guard against toxic flow.
+- [Capital efficiency](https://docs.sx.bet/developers/capital-efficiency.md): How SX Bet's capital efficiency system reduces locked escrow by recognizing hedged positions.
+- [Exposure limits](https://docs.sx.bet/developers/risk-limits.md): How SX Bet manages exposure
+- [Order lifecycle](https://docs.sx.bet/developers/order-lifecycle.md): How order statuses changes during an order's lifetime.
+- [Bet lifecycle](https://docs.sx.bet/developers/bet-lifecycle.md): How a bet's status changes from placement to settlement on SX Bet.
+- [Maintenance](https://docs.sx.bet/developers/maintenance.md): What happens to your resting orders during a maintenance window or matching engine restart.
+- [Bet grains](https://docs.sx.bet/developers/which-grain.md): How to choose between bets, fills, and positions when querying your trade data.
+- [Tracking your orders](https://docs.sx.bet/developers/my-orders.md): How to track your open orders
+- [Account models for external sites](https://docs.sx.bet/developers/account-models.md): The two supported ways to represent your site's users on SX.bet.
+- [External user id](https://docs.sx.bet/developers/external-user-id.md): Tag orders with your own user id.
+- [Work With Us](https://docs.sx.bet/developers/work-with-us.md): Building at scale or exploring a partnership? Let's talk.
+- [Rate limits](https://docs.sx.bet/developers/rate-limits.md): Request limits for the SX Bet REST API.
+- [API key permissions](https://docs.sx.bet/developers/api-key-permissions.md): Scopes you can grant an API key
+- [SX Bet API Reference](https://docs.sx.bet/api-reference/introduction.md): REST endpoints and real-time WebSocket data for markets, orders, trades, and positions on the SX Bet exchange.
+- [References](https://docs.sx.bet/api-reference/references.md): Endpoints, chain IDs, contract addresses, and network details for mainnet and testnet.
+- [Testnet](https://docs.sx.bet/api-reference/testnet.md): Using the SX Bet testnet for development and testing
+- [API Keys](https://docs.sx.bet/api-reference/api-key.md): Generating and using an API key
+- [Authentication by route](https://docs.sx.bet/api-reference/auth-matrix.md): Which SX Bet API routes require authentication.
+- [Exchange metadata](https://docs.sx.bet/api-reference/get-metadata-obv3.md): Retrieve exchange metadata including contract addresses, supported tokens, and limits
+- [Sports](https://docs.sx.bet/api-reference/get-sports.md): List all sports available for betting on the SX Bet exchange.
+- [Leagues](https://docs.sx.bet/api-reference/get-leagues.md): List all leagues supported by the SX Bet exchange.
+- [Active leagues](https://docs.sx.bet/api-reference/get-leagues-active.md): Get leagues that currently have active markets on the SX Bet exchange.
+- [Teams](https://docs.sx.bet/api-reference/get-teams.md): Get all teams within a specific league on SX Bet.
+- [Fixtures](https://docs.sx.bet/api-reference/get-fixture-active.md): Retrieve active fixtures (games and events) for a league on SX Bet.
+- [Fixture status](https://docs.sx.bet/api-reference/get-fixture-status.md): Check the current status of specific fixtures by event ID on SX Bet.
+- [Live scores](https://docs.sx.bet/api-reference/get-live-scores.md): Get real-time live scores for active events on SX Bet.
+- [Search fixtures](https://docs.sx.bet/api-reference/search.md): Find active fixtures by team name on SX Bet.
+- [Market types](https://docs.sx.bet/api-reference/market-types.md): Reference of market types on SX Bet.
+- [Fixture statuses](https://docs.sx.bet/api-reference/fixture-statuses.md): Reference of fixture statuses on SX Bet.
+- [Active markets](https://docs.sx.bet/api-reference/get-markets-active.md): Retrieve all active betting markets on the SX Bet exchange, with filters for sport, league, and event.
+- [Find markets](https://docs.sx.bet/api-reference/get-markets-find.md): Look up specific markets by their market hash, including settlement details for resolved markets.
+- [Popular markets](https://docs.sx.bet/api-reference/get-markets-popular.md): Get the most popular betting markets by volume on the SX Bet exchange.
+- [Parlay markets](https://docs.sx.bet/api-reference/parlay-markets.md): How parlay (multi-leg) markets work on SX Bet
+- [Deploy a proxy wallet](https://docs.sx.bet/api-reference/post-user-deploy-proxy.md): Deploy a proxy wallet for your account on SX Bet.
+- [Pending proxy deployment](https://docs.sx.bet/api-reference/get-user-pending-deploy-proxy.md): Check whether a proxy wallet deployment is still pending.
+- [Fund a proxy wallet](https://docs.sx.bet/api-reference/post-user-transfer-to-proxy.md): Transfer tokens from your wallet to your proxy wallet on SX Bet.
+- [Pending deposit](https://docs.sx.bet/api-reference/get-user-transfer-to-proxy-pending.md): List open deposits to your proxy wallet by session id.
+- [Deposit status](https://docs.sx.bet/api-reference/get-user-transfer-to-proxy-status.md): Get the outcome of a proxy deposit by session id.
+- [Get your proxy wallet](https://docs.sx.bet/api-reference/get-user-proxy.md): Get the proxy wallet address for the authenticated account.
+- [Get your balance](https://docs.sx.bet/api-reference/get-user-balance-v3.md): Get your wallet balance from the SX Bet API.
+- [Get your ledger](https://docs.sx.bet/api-reference/get-ledger-v3.md): Get your ledger from the SX Bet API.
+- [Get your fees](https://docs.sx.bet/api-reference/get-user-fees-v3.md): Get the fee rates that apply to your account from the SX Bet API.
+- [Get privacy setting](https://docs.sx.bet/api-reference/get-user-privacy-v3.md): Read whether your betting activity is published.
+- [Change privacy setting](https://docs.sx.bet/api-reference/post-user-privacy-v3.md): Choose whether your bets and orders are published with your identity.
+- [Unit conversion](https://docs.sx.bet/api-reference/unit-conversion.md): Converting token amounts and odds formats.
+- [Order signing](https://docs.sx.bet/api-reference/eip712-order-signing.md): How to sign an order with your private key or an injected wallet.
+- [Get market orderbook snapshot](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot.md): Get a snapshot of the order book for a market on SX Bet. Requires an API key.
+- [Get event orderbook snapshot](https://docs.sx.bet/api-reference/get-event-orderbook-snapshot.md): Get a snapshot of the order book for markets on an event.
+- [Best odds](https://docs.sx.bet/api-reference/get-best-odds-v3.md): Get the best available odds for a set of markets on the SX Bet exchange.
+- [Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md): Submit a new order to the SX Bet orderbook.
+- [Get your orders](https://docs.sx.bet/api-reference/get-orders-v3.md): Query your active orders on the SX Bet orderbook.
+- [Get a market's de-anonymized orders](https://docs.sx.bet/api-reference/get-orders-v3-public.md): Read the de-anonymized resting orders on a market.
+- [Get a user's de-anonymized orders](https://docs.sx.bet/api-reference/get-orders-v3-user-public.md): Read one user's de-anonymized resting orders, across markets.
+- [Get an order by ID](https://docs.sx.bet/api-reference/get-order-v3.md): Look up one of your orders by its signed order ID — any status.
+- [Get an order by client ID](https://docs.sx.bet/api-reference/get-order-v3-by-client-id.md): Look up one of your orders by the clientOrderId you set on submit — any status.
+- [Cancel orders by id](https://docs.sx.bet/api-reference/delete-orders-v3.md): Cancel specific open orders by order id on the SX Bet exchange.
+- [Cancel orders by market](https://docs.sx.bet/api-reference/delete-orders-v3-market.md): Cancel all your open orders on a single market on SX Bet.
+- [Cancel orders by event](https://docs.sx.bet/api-reference/delete-orders-v3-event.md): Cancel all your open orders for a specific event on SX Bet.
+- [Cancel all orders](https://docs.sx.bet/api-reference/delete-orders-v3-all.md): Cancel all your open orders across all markets on SX Bet.
+- [Set heartbeat](https://docs.sx.bet/api-reference/post-heartbeat-v3.md): Register or refresh a heartbeat timer for your proxy wallet.
+- [Get your bets](https://docs.sx.bet/api-reference/get-trades-v3.md): Query your bet history from the SX Bet API.
+- [Get a trade by ID](https://docs.sx.bet/api-reference/get-trade-v3.md): Look up one of your bets by its opaque tradeId.
+- [Get your fills](https://docs.sx.bet/api-reference/get-fills-v3.md): Get your fill history from the SX Bet API.
+- [Get your positions](https://docs.sx.bet/api-reference/get-positions-v3.md): Get your positions from the SX Bet API.
+- [Get de-anonymized positions](https://docs.sx.bet/api-reference/get-positions-v3-public.md): Read one bettor's positions, counting only the bets they placed while de-anonymized.
+- [Get the trade tape](https://docs.sx.bet/api-reference/get-trades-v3-public.md): Query recent trades on the SX Bet exchange.
+- [Order Book Updates](https://docs.sx.bet/api-reference/channel-orderbook-v3.md): Subscribe to real-time changes in a market's order book
+- [Event Order Book Updates](https://docs.sx.bet/api-reference/channel-orderbook-v3-event.md): Subscribe to real-time order book updates for every market on an event
+- [Best Odds](https://docs.sx.bet/api-reference/channel-best-odds-v3.md): Subscribe to real-time best odds updates
+- [De-anonymized Order Updates](https://docs.sx.bet/api-reference/channel-public-orders-v3.md): Subscribe to real-time changes in a market's de-anonymized orders
+- [Trade Updates](https://docs.sx.bet/api-reference/channel-recent-trades-v3.md): Subscribe to real-time trade updates
+- [Market Updates](https://docs.sx.bet/api-reference/channel-markets.md): Subscribe to real-time market changes
+- [Line Changes](https://docs.sx.bet/api-reference/channel-line-changes.md): Subscribe to real-time line changes
+- [Live Score & Fixture Updates](https://docs.sx.bet/api-reference/channel-fixtures.md): Subscribe to real-time live scores and fixture updates
+- [Parlay Market Requests](https://docs.sx.bet/api-reference/channel-parlay-requests.md): Subscribe to real-time parlay market requests
+- [Active Order Updates](https://docs.sx.bet/api-reference/channel-orders-v3.md): Subscribe to real-time changes in a user's orders
+- [Your Trade Updates](https://docs.sx.bet/api-reference/channel-trades-v3.md): Subscribe to real-time updates for your own trades
+- [Fill Updates](https://docs.sx.bet/api-reference/channel-fills-v3.md): Subscribe to real-time updates for your own fills
+- [Safe info](https://docs.sx.bet/api-reference/get-user-multisig-info.md): Signers, threshold, and the pending transaction on your proxy's Safe.
+- [Check a proxy address](https://docs.sx.bet/api-reference/get-user-multisig-proxy.md): See whether a proxy address is registered and deployed.
+- [Prepare a withdrawal](https://docs.sx.bet/api-reference/post-user-multisig-withdraw-prepare.md): Build the Safe transaction that withdraws funds from your proxy.
+- [Execute a withdrawal](https://docs.sx.bet/api-reference/post-user-multisig-withdraw-execute.md): Submit your signature for a prepared withdrawal.
+- [Prepare a transfer](https://docs.sx.bet/api-reference/post-user-multisig-transfer-prepare.md): Build the Safe transaction that moves funds to another proxy.
+- [Execute a transfer](https://docs.sx.bet/api-reference/post-user-multisig-transfer-execute.md): Submit your signature for a prepared transfer between proxies.
+- [Prepare adding a signer](https://docs.sx.bet/api-reference/post-user-multisig-add-signer-prepare.md): Build the Safe transaction that adds a signer.
+- [Execute adding a signer](https://docs.sx.bet/api-reference/post-user-multisig-add-signer-execute.md): Execute a prepared add-signer transaction.
+- [Prepare removing a signer](https://docs.sx.bet/api-reference/post-user-multisig-remove-signer-prepare.md): Build the Safe transaction that removes a signer.
+- [Execute removing a signer](https://docs.sx.bet/api-reference/post-user-multisig-remove-signer-execute.md): Execute a prepared remove-signer transaction.
+- [Prepare a threshold change](https://docs.sx.bet/api-reference/post-user-multisig-set-threshold-prepare.md): Build the Safe transaction that changes how many signers must sign for an action.
+- [Execute a threshold change](https://docs.sx.bet/api-reference/post-user-multisig-set-threshold-execute.md): Execute a prepared threshold change.
+- [Cancel a pending transaction](https://docs.sx.bet/api-reference/post-user-multisig-cancel.md): Delete a pending Safe transaction that has not been executed
+
+## OpenAPI Specs
+
+- [openapi](/openapi.json)
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

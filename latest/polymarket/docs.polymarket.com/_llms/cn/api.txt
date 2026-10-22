@@ -1,0 +1,290 @@
+# Polymarket Documentation: Chinese API 参考
+
+## API 参考
+
+### 概览
+
+- [概览](https://docs.polymarket.com/cn/api-reference/predictions/overview.md): 了解用于构建 Polymarket 预测市场集成的 API。
+- [速率限制](https://docs.polymarket.com/cn/api-reference/rate-limits.md): Polymarket API 的 Cloudflare IP 速率限制
+- [CLOB 交易速率限制](https://docs.polymarket.com/cn/api-reference/trading-rate-limits.md): 按签名者地址划分的 CLOB 下单和取消令牌桶限制
+- [获取速率限制等级](https://docs.polymarket.com/cn/api-reference/account/get-rate-limit-tier.md): Returns the [trading rate limit tier](/api-reference/trading-rate-limits) currently assigned to your signer. The tier returned is the one for the signer address of the API credentials used.
+- [地区限制](https://docs.polymarket.com/cn/api-reference/geoblock.md): 在 Polymarket API 下单前检查地区限制
+- [Data API v2](https://docs.polymarket.com/cn/api-reference/data-api/overview.md): 通过统一的响应契约读取钱包投资组合、交易与活动流、市场状态以及排行榜。
+- [获取数据新鲜度](https://docs.polymarket.com/cn/api-reference/service/get-data-freshness.md): How fresh the data behind this API is.
+
+### 事件
+
+- [获取事件列表（键集分页）](https://docs.polymarket.com/cn/api-reference/events/list-events-keyset-pagination.md): Returns events using cursor-based (keyset) pagination for stable, efficient paging through large result sets. Use `next_cursor` from each response as `after_cursor` in the next request. The `offset` parameter is explicitly rejected; use `after_cursor` instead.
+- [获取事件列表](https://docs.polymarket.com/cn/api-reference/events/list-events.md)
+- [按 ID 获取事件](https://docs.polymarket.com/cn/api-reference/events/get-event-by-id.md)
+- [按 Slug 获取事件](https://docs.polymarket.com/cn/api-reference/events/get-event-by-slug.md)
+- [获取事件标签](https://docs.polymarket.com/cn/api-reference/events/get-event-tags.md)
+
+### 市场
+
+- [获取市场列表（键集分页）](https://docs.polymarket.com/cn/api-reference/markets/list-markets-keyset-pagination.md): Returns markets using cursor-based (keyset) pagination for stable, efficient paging through large result sets. Use `next_cursor` from each response as `after_cursor` in the next request. The `offset` parameter is explicitly rejected; use `after_cursor` instead.
+- [获取市场列表](https://docs.polymarket.com/cn/api-reference/markets/list-markets.md)
+- [按 ID 获取市场](https://docs.polymarket.com/cn/api-reference/markets/get-market-by-id.md)
+- [按 Slug 获取市场](https://docs.polymarket.com/cn/api-reference/markets/get-market-by-slug.md)
+- [按 ID 获取市场标签](https://docs.polymarket.com/cn/api-reference/markets/get-market-tags-by-id.md)
+- [按 Token 获取市场](https://docs.polymarket.com/cn/api-reference/markets/get-market-by-token.md): Returns the parent market for a given token ID. Useful when you have a token ID and need to resolve its parent market without knowing the condition ID in advance.
+- [列出市场最大持仓者](https://docs.polymarket.com/cn/api-reference/markets/list-a-markets-top-holders.md): Top holders of a market, netted per user and grouped by outcome token.
+- [获取市场未平仓量](https://docs.polymarket.com/cn/api-reference/markets/get-open-interest.md): Priced gross open interest per market.
+- [获取事件实时成交量](https://docs.polymarket.com/cn/api-reference/markets/get-live-volume-for-an-event.md): Cumulative one-side (taker) volume per market.
+- [获取市场结算状态](https://docs.polymarket.com/cn/api-reference/markets/get-resolution-state.md): Complete resolution state by one selector family.
+- [查询代币](https://docs.polymarket.com/cn/api-reference/markets/look-up-tokens.md): Resolves token ids, or the tokens of conditions, to their condition, module, outcome, market, event and neg-risk question index in one call. Exactly one selector per request.
+- [获取简化市场](https://docs.polymarket.com/cn/api-reference/markets/get-simplified-markets.md)
+- [获取抽样市场](https://docs.polymarket.com/cn/api-reference/markets/get-sampling-markets.md)
+- [获取简化抽样市场](https://docs.polymarket.com/cn/api-reference/markets/get-sampling-simplified-markets.md)
+
+### 订单簿与价格
+
+- [获取订单簿](https://docs.polymarket.com/cn/api-reference/market-data/get-order-book.md): Retrieves the order book summary for a specific token ID. Includes bids, asks, market details, and last trade price.
+- [获取订单簿（请求体）](https://docs.polymarket.com/cn/api-reference/market-data/get-order-books-request-body.md): Retrieves order book summaries for multiple token IDs using a request body.
+- [获取市场价格](https://docs.polymarket.com/cn/api-reference/market-data/get-market-price.md): Retrieves the best market price for a specific token ID and side (bid or ask). Returns the best bid price for BUY side or best ask price for SELL side.
+- [获取市场价格（查询参数）](https://docs.polymarket.com/cn/api-reference/market-data/get-market-prices-query-parameters.md): Retrieves market prices for multiple token IDs and sides using query parameters.
+- [获取市场价格（请求体）](https://docs.polymarket.com/cn/api-reference/market-data/get-market-prices-request-body.md): Retrieves market prices for multiple token IDs and sides using a request body. Each request must include both token_id and side.
+- [获取中间价](https://docs.polymarket.com/cn/api-reference/data/get-midpoint-price.md): Retrieves the midpoint price for a specific token ID. The midpoint is calculated as the average of the best bid and best ask prices.
+- [获取中间价（查询参数）](https://docs.polymarket.com/cn/api-reference/market-data/get-midpoint-prices-query-parameters.md): Retrieves midpoint prices for multiple token IDs using query parameters. The midpoint is calculated as the average of the best bid and best ask prices.
+- [获取中间价（请求体）](https://docs.polymarket.com/cn/api-reference/market-data/get-midpoint-prices-request-body.md): Retrieves midpoint prices for multiple token IDs using a request body. The midpoint is calculated as the average of the best bid and best ask prices.
+- [获取价差](https://docs.polymarket.com/cn/api-reference/market-data/get-spread.md): Retrieves the spread for a specific token ID. The spread is the difference between the best ask and best bid prices.
+- [获取价差](https://docs.polymarket.com/cn/api-reference/market-data/get-spreads.md): Retrieves spreads for multiple token IDs. The spread is the difference between the best ask and best bid prices.
+- [获取最新成交价](https://docs.polymarket.com/cn/api-reference/market-data/get-last-trade-price.md): Retrieves the last trade price and side for a specific token ID. Returns default values of "0.5" for price and empty string for side if no trades found.
+- [获取最新成交价（查询参数）](https://docs.polymarket.com/cn/api-reference/market-data/get-last-trade-prices-query-parameters.md): Retrieves last trade prices for multiple token IDs using query parameters. Maximum 500 token IDs can be requested per call.
+- [获取最新成交价（请求体）](https://docs.polymarket.com/cn/api-reference/market-data/get-last-trade-prices-request-body.md): Retrieves last trade prices for multiple token IDs using a request body. Maximum 500 token IDs can be requested per call.
+- [获取历史价格](https://docs.polymarket.com/cn/api-reference/markets/get-prices-history.md): Retrieve historical price data for a market.
+- [获取代币价格历史](https://docs.polymarket.com/cn/api-reference/markets/get-a-tokens-price-history.md): The price-history series for one outcome token, or a single point-in-time observation.
+- [批量获取历史价格](https://docs.polymarket.com/cn/api-reference/markets/get-batch-prices-history.md): Retrieve historical price data for multiple markets in a single request.
+- [获取费率](https://docs.polymarket.com/cn/api-reference/market-data/get-fee-rate.md): Retrieves the base fee rate for a specific token ID. The fee rate can be provided either as a query parameter or as a path parameter.
+- [通过路径参数获取费率](https://docs.polymarket.com/cn/api-reference/market-data/get-fee-rate-by-path-parameter.md): Retrieves the base fee rate for a specific token ID using the token ID as a path parameter.
+- [获取最小价格变动单位](https://docs.polymarket.com/cn/api-reference/market-data/get-tick-size.md): Retrieves the minimum tick size (price increment) for a specific token ID. The tick size can be provided either as a query parameter or as a path parameter.
+- [通过路径参数获取最小价格变动单位](https://docs.polymarket.com/cn/api-reference/market-data/get-tick-size-by-path-parameter.md): Retrieves the minimum tick size (price increment) for a specific token ID using the token ID as a path parameter.
+- [获取 CLOB 市场信息](https://docs.polymarket.com/cn/api-reference/markets/get-clob-market-info.md): Returns all CLOB-level parameters for a market in a single call — tokens, tick size, base fees, rewards, RFQ status, and fee details.
+- [获取服务器时间](https://docs.polymarket.com/cn/api-reference/data/get-server-time.md): Returns the current Unix timestamp of the server. This can be used to synchronize client time with server time.
+
+### 订单
+
+- [提交新订单](https://docs.polymarket.com/cn/api-reference/trade/post-a-new-order.md): Creates a new order in the order book
+- [取消单个订单](https://docs.polymarket.com/cn/api-reference/trade/cancel-single-order.md): Cancels a single order by its ID. Works even in cancel-only mode.
+- [按 ID 获取订单](https://docs.polymarket.com/cn/api-reference/trade/get-single-order-by-id.md): Retrieves a specific order by its ID (order hash) for the authenticated user, including canceled or fully matched orders. Builder-authenticated clients can also use this endpoint to retrieve orders attributed to their builder account.
+- [批量提交订单](https://docs.polymarket.com/cn/api-reference/trade/post-multiple-orders.md): Creates multiple new orders in the order book. Orders are processed in parallel. Maximum 15 orders per request.
+- [获取用户订单](https://docs.polymarket.com/cn/api-reference/trade/get-user-orders.md): Retrieves live orders for the authenticated user. Returns paginated results. Filtering by id returns that order regardless of status, including canceled or fully matched orders. Builder-authenticated clients can also use this endpoint to retrieve orders attributed to their builder account.
+- [批量取消订单](https://docs.polymarket.com/cn/api-reference/trade/cancel-multiple-orders.md): Cancels multiple orders by their IDs. Maximum 1000 orders per request. Duplicate order IDs in the request are automatically ignored. Works even in cancel-only mode.
+- [取消所有订单](https://docs.polymarket.com/cn/api-reference/trade/cancel-all-orders.md): Cancels all open orders for the authenticated user. Works even in cancel-only mode.
+- [取消市场订单](https://docs.polymarket.com/cn/api-reference/trade/cancel-orders-for-a-market.md): Cancels all open orders for the authenticated user in a specific market (condition) and asset. Works even in cancel-only mode.
+- [获取订单计分状态](https://docs.polymarket.com/cn/api-reference/trade/get-order-scoring-status.md): Checks if a specific order is currently scoring for rewards.
+- [发送心跳](https://docs.polymarket.com/cn/api-reference/trade/send-heartbeat.md): Sends one legacy order heartbeat for the authenticated API key. The first accepted send enables timeout cancellation for all open orders owned by that API key, across markets and processes. Keep sending accepted heartbeats every 5 seconds. No scheduler or disarm operation is provided; stopping sends…
+
+### 交易
+
+- [列出交易](https://docs.polymarket.com/cn/api-reference/feeds/list-trades.md): Keyset-paginated trade feed in the standard `{ data, pagination }` envelope.
+- [获取交易](https://docs.polymarket.com/cn/api-reference/trade/get-trades.md): Retrieves trades for the authenticated user. Returns paginated results. Requires readonly or level 2 API key authentication.
+- [获取 Builder 交易](https://docs.polymarket.com/cn/api-reference/trade/get-builder-trades.md): Retrieves trades attributed to a builder code.
+
+### 返利
+
+- [获取做市商当前返佣](https://docs.polymarket.com/cn/api-reference/rebates/get-current-rebated-fees-for-a-maker.md): Returns the current rebated fees for a maker address on a given date. Returns null when the maker has no rebated-fee rows.
+
+### 奖励
+
+- [获取当前有效的奖励配置](https://docs.polymarket.com/cn/api-reference/rewards/get-current-active-rewards-configurations.md): Returns all current active rewards configurations grouped by market.
+- [获取指定市场的原始奖励](https://docs.polymarket.com/cn/api-reference/rewards/get-raw-rewards-for-a-specific-market.md): Returns an array of present and future rewards configured on a market.
+- [获取多个奖励市场](https://docs.polymarket.com/cn/api-reference/rewards/get-multiple-markets-with-rewards.md): Returns a list of active markets with their reward configurations. Supports text search, tag filtering, numeric filters, and sorting.
+- [获取用户指定日期的收益](https://docs.polymarket.com/cn/api-reference/rewards/get-earnings-for-user-by-date.md): Returns an array of user earnings per market for a provided day.
+- [获取用户指定日期的总收益](https://docs.polymarket.com/cn/api-reference/rewards/get-total-earnings-for-user-by-date.md): Returns the summed total rewards earnings for a user on a provided day, grouped by asset address.
+- [获取用户奖励比例](https://docs.polymarket.com/cn/api-reference/rewards/get-reward-percentages-for-user.md): Returns the real-time percentages of rewards that a user is earning per market.
+- [获取用户收益和市场配置](https://docs.polymarket.com/cn/api-reference/rewards/get-user-earnings-and-markets-configuration.md): Returns an array of current rewards including user earnings and live percentages per market for a provided day.
+
+### 个人资料
+
+- [按钱包地址获取公开资料](https://docs.polymarket.com/cn/api-reference/profiles/get-public-profile-by-wallet-address.md)
+- [获取用户资料统计](https://docs.polymarket.com/cn/api-reference/wallet/get-a-users-profile-stats.md): The profile card for one wallet in a single call.
+- [获取用户或市场的仓位](https://docs.polymarket.com/cn/api-reference/wallet/list-positions-for-a-user-or-market.md): A keyset page of positions in the standard `{ data, pagination }` envelope. One route serves a user's open book, their closed book (`status=CLOSED`), and a market's holders (market anchor).
+- [获取投资组合价值](https://docs.polymarket.com/cn/api-reference/wallet/get-portfolio-value.md): The user's portfolio value: single-market holdings marked to market plus unresolved combo positions at cost basis.
+- [获取用户盈亏曲线](https://docs.polymarket.com/cn/api-reference/wallet/get-a-users-pnl-series.md): Complete cumulative native-PnL atoms and compositions.
+- [获取用户交易量](https://docs.polymarket.com/cn/api-reference/wallet/get-a-users-trading-volume.md): One wallet's trading volume over a window, in both units side by side.
+- [列出账户活动](https://docs.polymarket.com/cn/api-reference/feeds/list-account-activity.md): Keyset-paginated activity feed (trades, splits, merges, redeems, …) in the standard `{ data, pagination }` envelope.
+- [获取钱包授权状态](https://docs.polymarket.com/cn/api-reference/wallet/get-wallet-approvals.md): Polygon token/operator approval state for one wallet.
+
+### 榜单
+
+- [获取交易者榜单](https://docs.polymarket.com/cn/api-reference/boards/get-the-trader-leaderboard.md): The ranked board of realized PnL, combos included.
+- [获取最大盈利榜](https://docs.polymarket.com/cn/api-reference/boards/list-the-biggest-wins.md): The biggest single winning positions.
+- [获取 Builder 排行榜](https://docs.polymarket.com/cn/api-reference/boards/get-the-builders-leaderboard.md): The ranked board of builders by volume.
+- [获取 Builder 交易量走势](https://docs.polymarket.com/cn/api-reference/boards/get-builder-volume-over-time.md): The per-builder volume time series.
+
+#### feeds
+
+- [List account activity](https://docs.polymarket.com/api-reference/feeds/list-account-activity.md): Keyset-paginated activity feed (trades, splits, merges, redeems, …) in the standard `{ data, pagination }` envelope.
+- [List combo activity](https://docs.polymarket.com/api-reference/feeds/list-combo-activity.md): Keyset-paginated combo lifecycle + redemption feed for a user, in the standard `{ data, pagination }` envelope.
+- [List trades](https://docs.polymarket.com/api-reference/feeds/list-trades.md): Keyset-paginated trade feed in the standard `{ data, pagination }` envelope.
+
+#### wallet
+
+- [Get wallet approvals](https://docs.polymarket.com/api-reference/wallet/get-wallet-approvals.md): Polygon token/operator approval state for one wallet.
+- [List positions for a user or market](https://docs.polymarket.com/api-reference/wallet/list-positions-for-a-user-or-market.md): A keyset page of positions in the standard `{ data, pagination }` envelope. One route serves a user's open book, their closed book (`status=CLOSED`), and a market's holders (market anchor).
+- [List combo positions](https://docs.polymarket.com/api-reference/wallet/list-combo-positions.md): Combo positions for a user, in the standard `{ data, pagination }` envelope.
+- [Get a user's PnL series](https://docs.polymarket.com/api-reference/wallet/get-a-users-pnl-series.md): Complete cumulative native-PnL atoms and compositions.
+- [Get a user's profile stats](https://docs.polymarket.com/api-reference/wallet/get-a-users-profile-stats.md): The profile card for one wallet in a single call.
+- [Get a user's trading volume](https://docs.polymarket.com/api-reference/wallet/get-a-users-trading-volume.md): One wallet's trading volume over a window, in both units side by side.
+- [Get portfolio value](https://docs.polymarket.com/api-reference/wallet/get-portfolio-value.md): The user's portfolio value: single-market holdings marked to market plus unresolved combo positions at cost basis.
+
+#### boards
+
+- [List the biggest wins](https://docs.polymarket.com/api-reference/boards/list-the-biggest-wins.md): The biggest single winning positions.
+- [Get the builders leaderboard](https://docs.polymarket.com/api-reference/boards/get-the-builders-leaderboard.md): The ranked board of builders by volume.
+- [Get builder volume over time](https://docs.polymarket.com/api-reference/boards/get-builder-volume-over-time.md): The per-builder volume time series.
+- [Get the trader leaderboard](https://docs.polymarket.com/api-reference/boards/get-the-trader-leaderboard.md): The ranked board of realized PnL, combos included.
+
+#### markets
+
+- [List a market's top holders](https://docs.polymarket.com/api-reference/markets/list-a-markets-top-holders.md): Top holders of a market, netted per user and grouped by outcome token.
+- [Get live volume for an event](https://docs.polymarket.com/api-reference/markets/get-live-volume-for-an-event.md): Cumulative one-side (taker) volume per market.
+- [Get open interest](https://docs.polymarket.com/api-reference/markets/get-open-interest.md): Priced gross open interest per market.
+- [Get a token's price history](https://docs.polymarket.com/api-reference/markets/get-a-tokens-price-history.md): The price-history series for one outcome token, or a single point-in-time observation.
+- [Get resolution state](https://docs.polymarket.com/api-reference/markets/get-resolution-state.md): Complete resolution state by one selector family.
+- [Look up tokens](https://docs.polymarket.com/api-reference/markets/look-up-tokens.md): Resolves token ids, or the tokens of conditions, to their condition, module, outcome, market, event and neg-risk question index in one call. Exactly one selector per request.
+
+#### service
+
+- [Get data freshness](https://docs.polymarket.com/api-reference/service/get-data-freshness.md): How fresh the data behind this API is.
+
+### 搜索
+
+- [搜索市场、事件和资料](https://docs.polymarket.com/cn/api-reference/search/search-markets-events-and-profiles.md)
+
+### 标签
+
+- [获取标签列表](https://docs.polymarket.com/cn/api-reference/tags/list-tags.md)
+- [按 ID 获取标签](https://docs.polymarket.com/cn/api-reference/tags/get-tag-by-id.md)
+- [按 Slug 获取标签](https://docs.polymarket.com/cn/api-reference/tags/get-tag-by-slug.md)
+- [按标签 ID 获取相关标签关系](https://docs.polymarket.com/cn/api-reference/tags/get-related-tags-relationships-by-tag-id.md)
+- [按标签 Slug 获取相关标签关系](https://docs.polymarket.com/cn/api-reference/tags/get-related-tags-relationships-by-tag-slug.md)
+- [获取与标签 ID 相关的标签](https://docs.polymarket.com/cn/api-reference/tags/get-tags-related-to-a-tag-id.md)
+- [获取与标签 Slug 相关的标签](https://docs.polymarket.com/cn/api-reference/tags/get-tags-related-to-a-tag-slug.md)
+
+### 系列
+
+- [获取系列列表](https://docs.polymarket.com/cn/api-reference/series/list-series.md)
+- [按 ID 获取系列](https://docs.polymarket.com/cn/api-reference/series/get-series-by-id.md)
+
+### 评论
+
+- [获取评论列表](https://docs.polymarket.com/cn/api-reference/comments/list-comments.md)
+- [按评论 ID 获取评论](https://docs.polymarket.com/cn/api-reference/comments/get-comments-by-comment-id.md)
+- [按用户地址获取评论](https://docs.polymarket.com/cn/api-reference/comments/get-comments-by-user-address.md)
+
+### 体育
+
+- [获取体育元数据](https://docs.polymarket.com/cn/api-reference/sports/get-sports-metadata-information.md)
+- [获取有效的体育市场类型](https://docs.polymarket.com/cn/api-reference/sports/get-valid-sports-market-types.md)
+- [获取队伍列表](https://docs.polymarket.com/cn/api-reference/sports/list-teams.md)
+
+### Relayer
+
+- [提交交易](https://docs.polymarket.com/cn/api-reference/relayer/submit-a-transaction.md): Submit a transaction request to the Relayer. Authenticated using Builder API Keys or Relayer API Keys.
+- [按 ID 获取交易](https://docs.polymarket.com/cn/api-reference/relayer/get-a-transaction-by-id.md): Gets a transaction submitted to the Relayer. Takes in a required transaction ID as a query parameter.
+- [获取用户最近的交易](https://docs.polymarket.com/cn/api-reference/relayer/get-recent-transactions-for-a-user.md): Gets the most recent transactions submitted to the Relayer, owned by a specific user. Authenticated using Builder API Keys or Relayer API Keys.
+- [获取用户当前 Nonce](https://docs.polymarket.com/cn/api-reference/relayer/get-current-nonce-for-a-user.md): Gets the current Proxy or Safe nonce for a user. Takes in the user's signer address and the type of nonce to retrieve.
+- [获取 Relayer 地址和 Nonce](https://docs.polymarket.com/cn/api-reference/relayer/get-relayer-address-and-nonce.md): Fetches the relayer address and nonce for a specific user. Takes in the user's signer address and the type of nonce to retrieve.
+- [检查钱包是否已部署](https://docs.polymarket.com/cn/api-reference/relayer/check-if-a-wallet-is-deployed.md): Returns whether the wallet at the given address is deployed onchain.
+- [获取所有 Relayer API Key](https://docs.polymarket.com/cn/api-reference/relayer-api-keys/get-all-relayer-api-keys.md): Returns all relayer API keys for the authenticated address. Auth allowed: Gamma auth or Relayer API key auth (`RELAYER_API_KEY` + `RELAYER_API_KEY_ADDRESS`).
+
+### Combos
+
+- [获取组合市场](https://docs.polymarket.com/cn/api-reference/combo-markets/get-combo-markets.md): Returns active markets that can be used as combo legs, ordered by volume descending. This endpoint is public and does not require CLOB authentication.
+- [提交报价](https://docs.polymarket.com/cn/api-reference/maker/submit-a-quote.md): Submit a signed maker quote for an active RFQ. Requires CLOB L2 authentication for the maker role.
+- [取消报价](https://docs.polymarket.com/cn/api-reference/maker/cancel-a-quote.md): Cancel an active maker quote before it is selected. Requires CLOB L2 authentication for the maker role. `signer_address` and `maker_address` must match the authenticated identity.
+- [确认或拒绝最终确认](https://docs.polymarket.com/cn/api-reference/maker/confirm-or-decline-last-look.md): Respond to a last-look confirmation request for a selected quote. Requires CLOB L2 authentication for the maker role. `decision` must be `CONFIRM` or `DECLINE`.
+- [列出组合仓位](https://docs.polymarket.com/cn/api-reference/wallet/list-combo-positions.md): Combo positions for a user, in the standard `{ data, pagination }` envelope.
+- [列出组合活动](https://docs.polymarket.com/cn/api-reference/feeds/list-combo-activity.md): Keyset-paginated combo lifecycle + redemption feed for a user, in the standard `{ data, pagination }` envelope.
+- [报价方网关](https://docs.polymarket.com/cn/api-reference/wss/rfq.md): Authenticated WebSocket for combinatorial RFQ quoters — receive requests, submit quotes, confirm last look, and track execution.
+
+### 永续合约
+
+- [修改订单](https://docs.polymarket.com/cn/api-reference/modify-orders.md): Modify the price and total quantity of existing orders by exchange order ID. Requires proxy signature, see [proxy signing](/http/signing#2-proxy-signing).
+- [按客户端订单 ID 修改订单](https://docs.polymarket.com/cn/api-reference/modify-orders-coid.md): Modify the price and total quantity of existing orders by client order ID. Requires proxy signature, see [proxy signing](/http/signing#2-proxy-signing).
+- [修改订单](https://docs.polymarket.com/cn/api-reference/wss/perps-modify-orders.md): 通过永续合约 WebSocket 按订单 ID 修改订单。
+- [按客户端订单 ID 修改订单](https://docs.polymarket.com/cn/api-reference/wss/perps-modify-orders-coid.md): 通过永续合约 WebSocket 按客户端订单 ID 修改订单。
+- [批量更新杠杆](https://docs.polymarket.com/cn/api-reference/update-leverage-for-multiple-instruments.md): Update leverage for up to 100 unique instruments. Updates are processed sequentially and are not atomic. If only some responses arrive before the gateway deadline, missing item results use `internal_error`; whether those updates applied is unknown. If no responses arrive, the request returns 503 — r…
+- [批量更新杠杆](https://docs.polymarket.com/cn/api-reference/wss/perps-update-leverages.md): 通过永续合约 WebSocket 批量更新杠杆。
+- [获取交易所统计数据](https://docs.polymarket.com/cn/api-reference/get-exchange-statistics.md): Get aggregate statistics for all pUSD-quoted Polymarket perpetual markets. The time window is half-open: trades at `start_timestamp` are included and trades at `end_timestamp` are excluded. The maximum window is 31 days. Open interest is the one-sided USD notional from the latest complete sample bef…
+- [获取构建者资料及资格](https://docs.polymarket.com/cn/api-reference/get-builder-profile-and-eligibility.md): Public builder profile for an address. Returns the saved display name and current registration, enablement, platform admission and fee-cap fields. The name is null for unregistered addresses or builders without a saved name.
+- [更新构建者显示名称](https://docs.polymarket.com/cn/api-reference/update-your-builder-display-name.md): Sign with the owner wallet of an existing registered Perps builder using the standard signed-operation format: op.type is updateBuilder and op.args contains only name. No Admin credentials or trading proxy are needed. The signer determines the account; no address or version parameter is accepted. Na…
+- [授权构建者费用](https://docs.polymarket.com/cn/api-reference/approve-or-revoke-builder-fees-with-an-account-owner-signature.md)
+- [查询构建者授权](https://docs.polymarket.com/cn/api-reference/read-builder-approvals-including-retained-revoked-versions.md)
+- [查询构建者收益明细](https://docs.polymarket.com/cn/api-reference/get-authenticated-builder-receipts.md): Returns this account's builder credits only. The time window is inclusive, defaults to the last seven days, and is bounded to 90 days. Supply the same start_timestamp, end_timestamp and as_of_sequence to compare list and summary. Older receipts remain queryable by selecting a past window. Zero-fee e…
+- [查询构建者收益汇总](https://docs.polymarket.com/cn/api-reference/get-authenticated-builder-settled-earnings-summary.md): Returns this account's builder credits only. The time window is inclusive, defaults to the last seven days, and is bounded to 90 days. Supply the same start_timestamp, end_timestamp and as_of_sequence to compare list and summary. Older receipts remain queryable by selecting a past window. Zero-fee e…
+- [Builder Fills](https://docs.polymarket.com/cn/api-reference/wss/perps-builder-fills.md): Live attributed fills for an authenticated Perps builder.
+- [获取排行榜](https://docs.polymarket.com/cn/api-reference/get-leaderboard.md): Get the global perpetuals leaderboard, ranked by PnL, notional volume, current account value, or ROI across all instruments.
+- [获取交易竞赛](https://docs.polymarket.com/cn/api-reference/get-trading-competitions.md): List trading competitions for the carousel, newest first, with the live competition's ID (for "Back to live") and the one the Competitions tab should open on: the live competition, else the next upcoming one, else the most recently ended one.
+- [获取交易竞赛详情](https://docs.polymarket.com/cn/api-reference/get-trading-competition.md): Settings, status and prize table of one competition: its markets and boosts (also for upcoming competitions), the qualification minimum, the market the "Start Trading" button opens (the boosted market with the most 24-hour volume, else the top market overall), and when the leaderboard was last updat…
+- [获取交易竞赛排行榜](https://docs.polymarket.com/cn/api-reference/get-trading-competition-leaderboard.md): Ranked leaderboard rows at any depth. Only accounts that reached the minimum volume are ranked; ties go to higher boosted volume, then the earlier first qualifying fill. `prize` is the projected prize while live and the prize won once the competition ends. `updated_at` is the event time the standing…
+- [获取账户的交易竞赛数据](https://docs.polymarket.com/cn/api-reference/get-trading-competition-account.md): One account's standing: rank and score once qualified, otherwise its volume so far and how much more it needs to rank; projected or won prize; places and score from the prize zone; every position it held when the competition started, by market, and whether it has since been closed. An address with n…
+- [获取交易竞赛概览](https://docs.polymarket.com/cn/api-reference/get-trading-competition-widget.md): The live competition at a glance for the trading page: when it ends, and, with `address`, that account's rank and progress toward the qualification minimum. Designed to be polled; it reads only the published standings. Without a live competition only `timestamp` is set.
+- [获取账户兜底清算转账记录](https://docs.polymarket.com/cn/api-reference/get-account-backstop-transfers.md): Get exact quote cash transfers for backstops of the authenticated account. Defaults to the last 90 days. Rows are ordered newest first. If no end time is provided, the current time will be used. Maximum of 100 entries returned per request.
+- [批量获取仓位分享卡快照](https://docs.polymarket.com/cn/api-reference/get-position-share-card-snapshots.md): Build share-card numbers, candles and trade markers for a registered account. Supply up to 20 active instruments and 4 historical fills, with at least one selection. History keys use instrument_id, trade_id and the public fill timestamp in milliseconds. Trade IDs are UInt64 decimal strings; returned…
+- [获取注册状态](https://docs.polymarket.com/cn/api-reference/get-registration.md): Check whether an address has a Perps account. Registration is permanent, so a `true` answer never changes; a `false` answer flips as soon as the address registers.
+- [止盈止损](https://docs.polymarket.com/cn/api-reference/wss/perps-tpsl.md): 通过永续合约 WebSocket 接收止盈止损订单的实时生命周期更新。
+
+### WebSocket
+
+- [市场频道](https://docs.polymarket.com/cn/api-reference/wss/market.md): Public WebSocket for real-time orderbook, price, and market lifecycle updates.
+- [用户频道](https://docs.polymarket.com/cn/api-reference/wss/user.md): Authenticated WebSocket for real-time order and trade updates.
+- [体育频道](https://docs.polymarket.com/cn/api-reference/wss/sports.md): Public WebSocket for real-time sports match results.
+
+### PolyBolt WebSocket
+
+- [PolyBolt WebSocket](https://docs.polymarket.com/cn/api-reference/live-data/overview.md): 通过一个 WebSocket 连接实时接收加密货币、股票类资产和 TWAP 参考价格。
+- [实时数据频道](https://docs.polymarket.com/cn/api-reference/wss/polybolt.md): PolyBolt WebSocket 消息参考，涵盖加密货币、股票类资产和 TWAP 参考价格。
+
+#### Websockets
+
+- [Live Data Channel](https://docs.polymarket.com/api-reference/websockets/live-data-channel.md): Send JSON text frames tagged with op. The server answers every op with an ack or an error ack (never a close, except for policy breaches, close 4008, and an expired Access Token, close 1008) and pushes envelopes for subscribed channels. Limits per connection: 64 active (channel, filter) subscription…
+
+### 跨链桥
+
+- [获取支持的资产](https://docs.polymarket.com/cn/api-reference/bridge/get-supported-assets.md)
+- [创建跨链桥地址](https://docs.polymarket.com/cn/api-reference/bridge/create-bridge-addresses.md)
+- [获取报价](https://docs.polymarket.com/cn/api-reference/bridge/get-a-quote.md)
+- [获取交易状态](https://docs.polymarket.com/cn/api-reference/bridge/get-transaction-status.md): Returns the deposits and withdrawals seen at a bridge address, newest first. Responses are cursor-paginated: each request returns one page plus a `nextCursor`. To read the full history, pass each `nextCursor` back as `cursor` until it comes back null. To track only recent activity, keep requesting t…
+- [创建提现地址](https://docs.polymarket.com/cn/api-reference/bridge/create-withdrawal-addresses.md)
+
+### 数据 API v1（旧版）
+
+- [获取用户当前仓位](https://docs.polymarket.com/cn/api-reference/core/get-current-positions-for-a-user.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/positions`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
+- [获取用户已关闭的仓位](https://docs.polymarket.com/cn/api-reference/core/get-closed-positions-for-a-user.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/positions?status=CLOSED`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
+- [获取市场仓位](https://docs.polymarket.com/cn/api-reference/core/get-positions-for-a-market.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/positions`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
+- [获取用户或市场的交易](https://docs.polymarket.com/cn/api-reference/core/get-trades-for-a-user-or-markets.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/trades`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
+- [获取用户活动](https://docs.polymarket.com/cn/api-reference/core/get-user-activity.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/activity`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
+- [获取用户仓位总价值](https://docs.polymarket.com/cn/api-reference/core/get-total-value-of-a-users-positions.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/value`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
+- [获取用户交易过的市场总数](https://docs.polymarket.com/cn/api-reference/misc/get-total-markets-a-user-has-traded.md)
+- [下载账户快照（CSV ZIP）](https://docs.polymarket.com/cn/api-reference/misc/download-an-accounting-snapshot-zip-of-csvs.md)
+- [获取市场主要持仓者](https://docs.polymarket.com/cn/api-reference/core/get-top-holders-for-markets.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/holders`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
+- [获取未平仓量](https://docs.polymarket.com/cn/api-reference/misc/get-open-interest.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/oi`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
+- [获取事件实时交易量](https://docs.polymarket.com/cn/api-reference/misc/get-live-volume-for-an-event.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/live-volume`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
+- [获取交易者排行榜](https://docs.polymarket.com/cn/api-reference/core/get-trader-leaderboard-rankings.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/leaderboard`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
+- [获取 Builder 汇总排行榜](https://docs.polymarket.com/cn/api-reference/builders/get-aggregated-builder-leaderboard.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/builders/leaderboard`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
+- [获取 Builder 每日交易量时间序列](https://docs.polymarket.com/cn/api-reference/builders/get-daily-builder-volume-time-series.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/builders/volume`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
+- [获取用户组合仓位](https://docs.polymarket.com/cn/api-reference/core/get-user-combo-positions.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/positions/combos`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2). Combinatorial (multi-market) positions held by a user, with per-leg breakdown. Also available at /v1/data/user/{address}/positions/combos (address from the path).…
+- [获取用户组合活动](https://docs.polymarket.com/cn/api-reference/core/get-user-combo-activity.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/activity/combos`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2). Combo lifecycle and redeem events (split / merge / convert / compress / wrap / unwrap / redeem) for a user, with per-leg breakdown. The combo counterpart to /activ…
+
+## OpenAPI Specs
+
+- [clob-openapi](/api-spec/clob-openapi.yaml)
+- [openapi](https://data-api.polymarket.com/v2/openapi.json)
+- [gamma-openapi](/api-spec/gamma-openapi.yaml)
+- [relayer-openapi](/api-spec/relayer-openapi.yaml)
+- [combos-rfq-openapi](/api-spec/combos-rfq-openapi.yaml)
+- [perps-openapi](/api-spec/perps-openapi.json)
+- [bridge-openapi](/api-spec/bridge-openapi.yaml)
+- [data-openapi](/api-spec/data-openapi.yaml)
+
+## AsyncAPI Specs
+
+- [asyncapi-rfq](/asyncapi-rfq.json)
+- [asyncapi-perps](/asyncapi-perps.json)
+- [asyncapi](/asyncapi.json)
+- [asyncapi](https://ws-live-v2.polymarket.com/asyncapi.json)
+- [asyncapi-user](/asyncapi-user.json)
+- [asyncapi-sports](/asyncapi-sports.json)

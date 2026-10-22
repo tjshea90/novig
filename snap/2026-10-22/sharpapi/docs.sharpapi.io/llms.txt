@@ -1,0 +1,48 @@
+# SharpAPI
+
+> Real-time sports betting odds API with +EV detection, arbitrage alerts, and SSE streaming from 40+ sportsbooks.
+
+## Docs
+
+- [API Documentation](https://docs.sharpapi.io): Full API reference, guides, and examples
+- [Full LLM Documentation](https://docs.sharpapi.io/llms-full.txt): Complete API documentation in plain text for LLM consumption
+- [OpenAPI Specification](https://docs.sharpapi.io/openapi.json): OpenAPI 3.1.0 spec with all endpoints, schemas, and examples
+- [Quick Start](https://docs.sharpapi.io/en/quickstart): Get started in 2 minutes
+- [Authentication](https://docs.sharpapi.io/en/authentication): API key setup and auth methods
+- [Pricing](https://docs.sharpapi.io/en/pricing): Subscription tiers and feature comparison
+- [MCP Server](https://docs.sharpapi.io/en/sdks/mcp/): Hosted MCP endpoint at https://mcp.sharpapi.io/mcp, 17 tools for AI assistants
+
+## API
+
+- Base URL: `https://api.sharpapi.io/api/v1`
+- Auth: `X-API-Key` header, Bearer token, or `?api_key=` query param
+
+## Key Endpoints
+
+- `GET /odds` — Current odds snapshot with filtering
+- `GET /odds/best` — Best odds across sportsbooks
+- `GET /odds/delta` — Incremental odds changes since timestamp
+- `GET /odds/comparison` — Side-by-side book comparison
+- `POST /odds/batch` — Batch odds for multiple events
+- `GET /events` — Event listing with filtering
+- `GET /events/{id}` — Single event details
+- `GET /events/{id}/odds` — Odds for specific event
+- `GET /events/{id}/markets` — Available markets per event
+- `GET /opportunities/ev` — +EV opportunities (Pro+)
+- `GET /opportunities/arbitrage` — Arbitrage detection (Hobby+)
+- `GET /opportunities/middles` — Middle opportunities (Pro+)
+- `GET /opportunities/low_hold` — Low-hold markets (Pro+)
+- `GET /stream` — SSE real-time streaming (add-on)
+- `GET /sports` — Available sports
+- `GET /leagues` — Available leagues
+- `GET /sportsbooks` — Supported sportsbooks
+- `GET /markets` — Market types
+
+## Optional
+
+- [TypeScript SDK](https://docs.sharpapi.io/en/sdks/typescript): `npm install @sharp-api/client`
+- [Python SDK](https://docs.sharpapi.io/en/sdks/python): `pip install sharpapi`
+- [MCP Server](https://docs.sharpapi.io/en/sdks/mcp/): Connect Claude Desktop, Claude Code, or any MCP client to https://mcp.sharpapi.io/mcp
+- [Streaming Guide](https://docs.sharpapi.io/en/streaming/overview): SSE and WebSocket setup
+- [Arbitrage Concepts](https://docs.sharpapi.io/en/concepts/arbitrage): How arbitrage detection works
+- [EV Calculation](https://docs.sharpapi.io/en/concepts/ev-calculation): Expected value methodology

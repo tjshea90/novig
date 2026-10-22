@@ -1,0 +1,104 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.kalshi.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Exchange Sharding
+
+> Exchange sharding in the Predictions API
+
+## Overview
+
+Kalshi splits trading across multiple matching engines to scale capacity.
+Exchange instances correspond to specific categories (e.g. "crypto" or "combos").
+Kalshi plans to add shards incrementally to maintain a healthy balance of traffic.
+
+## Balance Management
+
+Kalshi's collateralization checks run within the matching engine. Programmatic traders normally need to fund the relevant exchange shard before placing an order. FCM members can instead enable [automatic collateral transfers on eligible FIX sessions](/fix/authentication.md#optional-fields).
+
+**Funding Overview**
+
+* Account transfers can be made through the [Intra Account Transfer API](/api-reference/portfolio/intra-account-transfer.md).
+* Manual transfers are also available through the [Kalshi UI](https://kalshi.com/account/exchange-indexes).
+* [Get Balance](/api-reference/portfolio/get-balance.md) provides a breakdown of account balances across exchange indexes.
+
+**Automatic Order Transfers on the App and Web**
+
+Since the exchange sharding rollout, orders placed through the Kalshi App and Web
+automatically transfer capital between exchange shards as needed to fund the order.
+Market makers can disable this feature on the
+[Exchange Indexes settings page](https://kalshi.com/account/exchange-indexes).
+
+**Subaccounts Overview**
+
+* To fund a subaccount on a new exchange instance, first transfer user-level funds to the desired exchange instance.
+* Next, use [Create Subaccount](/api-reference/portfolio/create-subaccount.md) with the `exchange_index` parameter to provision the subaccount on the new instance.
+* Then, use [Transfer Between Subaccounts](/api-reference/portfolio/transfer-between-subaccounts.md) with the `exchange_index` parameter to transfer funds from the primary account to the subaccount on that instance.
+* [Get All Subaccount Balances](/api-reference/portfolio/get-all-subaccount-balances.md) provides a breakdown of subaccount balances for each `(exchange_index, subaccount)` pair.
+
+**Auto-Rebalancing**
+
+* Users may opt in to automatic rebalancing between exchange shards.
+* The customer supplies a target balance allocation as a percentage of their balance across exchange shards. For example, `{Default: 80, Combos: 20}`.
+* Every 10 seconds, Kalshi computes the customer's balance on each exchange shard as its account balance minus the value of its resting orders.
+* If the balance has drifted from the target allocation, Kalshi executes an intra-exchange account transfer on the customer's behalf to restore the target allocation.
+* Target balance allocations can be configured through the [REST API](/api-reference/portfolio/set-target-balance-allocation.md) and the clearing portal.
+
+## Order routing
+
+### Market Data
+
+* The `exchange_index` field is provided on [`GET /markets`](/api-reference/market/get-markets), [`GET /events`](/api-reference/events/get-events), and via the [market and event lifecycle WebSocket streams](/websockets/market-and-event-lifecycle.md) for newly created events and markets.
+* Market ticker formats are unaffected by exchange sharding. The `exchange_index` field is the authoritative source of truth.
+
+> [!WARNING]
+>
+> Auto-routing requires the market ticker: provide `market_ticker` for API2 or `Symbol<55>` for FIX. An order ID alone cannot identify the exchange shard.
+
+### API2
+
+The `exchange_index` query parameter is available on a per-endpoint basis.
+
+* If `exchange_index >= 0`, routes directly to the target exchange.
+* If `exchange_index` is `-1`, auto-routes using the required `market_ticker`.
+* If `exchange_index` is omitted and `market_ticker` is provided, auto-routes using `market_ticker`.
+* Otherwise, defaults to exchange index `0`.
+
+### FIX
+
+[`ExDestination<100>`](/fix/order-entry) is available on a per-message basis for event-contract sessions.
+
+* If `ExDestination<100> >= 0`, routes directly to the target exchange.
+* If `ExDestination<100>` is `-1`, auto-routes using the required market ticker in `Symbol<55>`.
+* If `ExDestination<100>` is omitted and `Symbol<55>` is provided, auto-routes using `Symbol<55>`.
+
+Sessions with `UseCapReservation<21032>` or [automatic collateral transfers (`AutoTransfer<21035>`)](/fix/authentication#optional-fields) enabled must omit `ExDestination<100>` or use `-1` for new orders and replacements.
+
+Margined FIX sessions always route to exchange index `0`.
+
+## Series Shard Assignments
+
+The following assignments determine the shard where new events are created. Shard 0 is the catch-all for all categories and tags not listed below.
+
+| Shard index | Category | Tags | Series list |
+| - | - | - | - |
+| 0 | *All other categories* | *All other tags* | — |
+| 1 | Exotics (Combos) | — | [`GET /series?category=Exotics`](https://api.elections.kalshi.com/trade-api/v2/series?category=Exotics) |
+| 2 | Crypto | — | [`GET /series?category=Crypto`](https://api.elections.kalshi.com/trade-api/v2/series?category=Crypto) |
+| 2 | Commodities | — | [`GET /series?category=Commodities`](https://api.elections.kalshi.com/trade-api/v2/series?category=Commodities) |
+| 3 | Sports | Tennis, Baseball, Basketball | [`GET /series?category=Sports&tags=Tennis,Baseball,Basketball`](https://api.elections.kalshi.com/trade-api/v2/series?category=Sports\&tags=Tennis%2CBaseball%2CBasketball) |
+
+## FAQ
+
+* All child markets of an event will live on the same exchange instance.
+* There is currently no plan to migrate any live market to a new exchange instance.
+* Single REST order writes that explicitly target a nonzero shard are rate-limited against that shard's Write budget. Auto-routed single REST order writes are billed to the unscoped Write bucket and every nonzero shard's Write bucket. REST batch writes and explicit shard 0 writes use only the unscoped Write budget. See [Rate Limits and Tiers](/getting_started/rate_limits.md#sharded-exchanges-have-per-shard-write-budgets).
+* Providing `ExDestination` / `exchange_index` is unnecessary for all RFQ operations, including FIX [`QuoteRequest` (`35=R`), `Quote` (`35=S`), and `AcceptQuote` (`35=UA`)](/fix/rfq-messages), which are routed internally by Kalshi.
+* When trading via FIX, both `MassCancelRequest` and `CancelOrdersOnDisconnect` will target all exchange shards for the FIX session.
+* Automatic routing will incur an additional latency cost.
+* Subaccount balances are local to a specific exchange instance.
+* Order groups do not function across exchange instances.
+* [`KXMVECROSSCATEGORY-SHARD1-R`](https://demo-api.kalshi.co/trade-api/v2/multivariate_event_collections/KXMVECROSSCATEGORY-SHARD1-R) is live in demo for testing.
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

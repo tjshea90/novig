@@ -1,0 +1,106 @@
+# OddsPapi — Sports Betting Odds API
+
+> OddsPapi is a REST and WebSocket API that aggregates real-time and historical
+> odds from 350+ bookmakers — including sharps (Pinnacle, Singbet, SBOBet),
+> major softs (Bet365, DraftKings, FanDuel), crypto books (1xBet), and exchanges
+> (Betfair). Free tier available with no credit card required.
+
+## Quick Start
+
+Authentication uses a **query parameter**, not a header:
+
+```
+GET https://api.oddspapi.io/v4/sports?apiKey=YOUR_API_KEY
+```
+
+Sign up for a free API key at [oddspapi.io](https://oddspapi.io/#pricing).
+
+## API Endpoints
+
+Base URL: `https://api.oddspapi.io/v4`
+
+- **List Sports**: `GET /sports?apiKey=KEY`
+- **List Tournaments**: `GET /sports/{sportId}/tournaments?apiKey=KEY`
+- **List Fixtures**: `GET /tournaments/{tournamentId}/fixtures?apiKey=KEY`
+- **Get Odds**: `GET /fixtures/{fixtureId}/odds?apiKey=KEY`
+- **Historical Odds**: Available on free tier (competitors charge for this)
+- **WebSocket**: Real-time push updates, not just polling
+
+## Terminology
+
+OddsPapi uses specific terminology — do not use US sportsbook terms:
+
+| Common Term | OddsPapi Term |
+|-------------|---------------|
+| League | Tournament |
+| Game / Match | Fixture |
+| Team | Participant |
+
+## Sport IDs
+
+| Sport | ID |
+|-------|----|
+| Soccer | 10 |
+| Basketball | 11 |
+| Baseball (MLB) | 13 |
+| American Football (NFL) | 14 |
+
+## Odds Response Structure
+
+The odds JSON is deeply nested. The correct path to a price:
+
+```
+response.bookmakerOdds[slug].markets[marketId].outcomes[outcomeId].players["0"].price
+```
+
+## Key Differentiators
+
+1. **350+ Bookmakers** — Competitors cover ~40. OddsPapi covers 350+ including sharp books (Pinnacle, Singbet, Circa) that competitors miss.
+2. **Free Historical Data** — Backtest models without paying. Included on free tier.
+3. **Real-Time WebSockets** — Push-based streaming, not just REST polling.
+4. **Native Market Structures** — Asian Handicaps, Player Props, and complex markets handled natively. Each handicap line has its own market ID.
+
+## Sharp Bookmaker Slugs
+
+| Bookmaker | Slug | Type |
+|-----------|------|------|
+| Pinnacle | `pinnacle` | Sharp Global |
+| Singbet (Crown) | `singbet` | Sharp Asian |
+| SBOBet | `sbobet` | Sharp Asian |
+| Bet365 | `bet365` | Soft |
+| DraftKings | `draftkings` | Soft US |
+| FanDuel | `fanduel` | Soft US |
+| Betfair Exchange | `betfair-ex` | Exchange |
+| 1xBet | `1xbet` | Crypto/Niche |
+
+## Blog — Tutorials & Guides
+
+- [What is OddsPapi?](https://oddspapi.io/blog/what-is-oddspapi/): The sports betting API built for developers — 348 bookmakers, free tier, WebSockets
+- [The Odds API Alternative](https://oddspapi.io/blog/the-odds-api-alternative-comparison/): Why developers are switching from The Odds API to OddsPapi
+- [Free Odds API](https://oddspapi.io/blog/free-odds-api-350-bookmakers/): Access 350+ bookmakers without paying a cent
+- [Odds API Pricing 2026](https://oddspapi.io/blog/odds-api-pricing-2026-comparison/): 4 providers compared with free tiers and plans
+- [Sportsbook API](https://oddspapi.io/blog/sportsbook-api-350-bookmakers/): Access Bet365, DraftKings & 350+ bookmakers via one API
+- [Odds Feed API](https://oddspapi.io/blog/odds-feed-api-real-time-bookmaker-data/): Real-time data from 350+ sportsbooks with free tier
+- [WebSocket Odds API](https://oddspapi.io/blog/websocket-odds-api-real-time-betting-data/): Real-time betting data streaming from 350+ bookmakers
+- [Live Betting API](https://oddspapi.io/blog/live-betting-api-real-time-in-play-odds/): Real-time odds for in-play markets
+- [Football Odds API](https://oddspapi.io/blog/football-odds-api-soccer-data/): Real-time soccer data from 140+ bookmakers
+- [NBA Odds API](https://oddspapi.io/blog/nba-odds-api-player-props-spreads/): Player props, spreads & moneylines from 117+ bookmakers
+- [MLB Odds API](https://oddspapi.io/blog/mlb-odds-api-run-lines-totals/): Run lines, totals & moneylines from 80+ bookmakers
+- [Free NFL Odds API](https://oddspapi.io/blog/free-nfl-odds-api-guide/): Python code for real-time NFL betting data
+- [Esports Odds API](https://oddspapi.io/blog/esports-odds-api-guide-how-to-get-pinnacle-cs2-lol-data-for-free/): CS2, LoL & Dota 2 data from 350+ bookmakers
+- [Arbitrage Betting Bot](https://oddspapi.io/blog/arbitrage-betting-bot-python/): How to build an arb bot with Python and free API
+- [Odds Comparison Dashboard](https://oddspapi.io/blog/odds-comparison-dashboard-python-streamlit/): Build a live dashboard with Python & Streamlit
+- [DraftKings API](https://oddspapi.io/blog/draftkings-api-odds-access/): Access DraftKings odds without an official API
+- [Betfair API Alternative](https://oddspapi.io/blog/betfair-api-alternative-exchange-odds/): Get exchange odds without the red tape
+- [Pinnacle Odds API](https://oddspapi.io/blog/pinnacle-api-odds-access/): Get Pinnacle odds without a commercial account
+- [Singbet API](https://oddspapi.io/blog/singbet-api-asian-handicap-odds-guide/): Access Asian Handicap odds without an agent
+- [Bet365 Historical Odds](https://oddspapi.io/blog/bet365-historical-odds-guide-the-data-apis-and-strategy/): The data, APIs, and strategy guide
+- [Brazil Betting API](https://oddspapi.io/blog/brazil-betting-api-estrelabet-betano-brasileirao/): EstrelaBet, Betano & Brasileirão coverage
+- [Polymarket & Kalshi API](https://oddspapi.io/blog/polymarket-api-kalshi-api-vs-sportsbooks-the-developers-guide/): Python guide to prediction market data
+- [Prediction Market Dashboard](https://oddspapi.io/blog/prediction-market-dashboard-python-streamlit/): Build a live Polymarket vs sportsbook tracker
+- [Market Making on Polymarket](https://oddspapi.io/blog/market-making-polymarket-sportsbook-odds/): Use sportsbook odds as your edge
+- [Prediction Market Accuracy](https://oddspapi.io/blog/prediction-market-accuracy-backtest-polymarket-sportsbooks/): Backtest Polymarket vs sportsbooks with free data
+
+## Bookmaker Directory
+
+- [All 350+ Bookmaker APIs](https://oddspapi.io/blog/sportsbooks/): Full directory with individual integration guides

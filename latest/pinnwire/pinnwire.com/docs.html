@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
+<meta charset="utf-8">
+<meta name="theme-color" content="#0f172a">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PinnWire API Docs — Real-Time Pinnacle Odds (REST, WS, SSE)</title>
+<meta name="description" content="PinnWire API documentation: real-time Pinnacle odds over REST, WebSocket and SSE. Endpoints, drop alerts, player props, free trial key.">
+<meta name="keywords" content="pinnacle odds api docs, pinnacle api documentation, pinnacle websocket api, pinnacle odds rest api, sse odds drop alerts, pinnacle api endpoints">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://pinnwire.com/docs.html">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pinnwire.com/docs.html">
+<meta property="og:site_name" content="PinnWire">
+<meta property="og:title" content="PinnWire API Docs — Real-Time Pinnacle Odds">
+<meta property="og:description" content="REST, WebSocket and SSE reference for real-time Pinnacle odds. Try every endpoint now with key=demo — no signup.">
+<meta property="og:image" content="https://pinnwire.com/og-cover.png?v=2">
+<meta property="og:image:alt" content="PinnWire — real-time Pinnacle odds API with a live market board">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PinnWire API Docs — Real-Time Pinnacle Odds">
+<meta name="twitter:image" content="https://pinnwire.com/og-cover.png?v=2">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"TechArticle","headline":"PinnWire API Documentation — Real-Time Pinnacle Odds over REST, WebSocket, SSE","url":"https://pinnwire.com/docs.html","about":"Real-time Pinnacle sports odds API reference","publisher":{"@type":"Organization","name":"PinnWire","url":"https://pinnwire.com/"}}
+</script>
+<link rel="stylesheet" href="/style.css?v=9">
+<style>
+.docgrid{display:grid;grid-template-columns:220px 1fr;gap:36px;align-items:start}
+.sidebar{position:sticky;top:16px;font-size:.85rem;border-right:1px solid var(--line);padding:16px 16px 16px 0;max-height:calc(100vh - 32px);overflow-y:auto}
+.sidebar .sh{color:var(--mut);font-size:.68rem;letter-spacing:.12em;font-weight:700;margin:16px 0 6px}
+.sidebar .sh:first-child{margin-top:0}
+.sidebar a{display:flex;align-items:baseline;gap:7px;color:var(--ink);text-decoration:none;padding:3px 0;line-height:1.35}
+.sidebar a:hover{color:var(--acc)}
+.sidebar a.active{color:var(--acc);font-weight:700}
+.sidebar a{border-left:2px solid transparent;padding-left:8px;margin-left:-10px}
+.sidebar a.active{border-left-color:var(--acc)}
+.m{font-size:.62rem;font-weight:800;letter-spacing:.04em;flex:none;width:26px}
+.m.get{color:var(--acc)} .m.sse{color:#b45309} .m.ws{color:#7c3aed} .m.post{color:#0369a1}
+.doc h2{margin-top:8px;padding-top:24px;border-top:1px solid var(--line)}
+.doc section:first-child h2{border-top:0;padding-top:0}
+.doc h3{font-size:1.05rem;margin:22px 0 8px;font-family:ui-monospace,Menlo,Consolas,monospace}
+.doc section{padding:12px 0 20px}
+.doc p{margin:8px 0}
+.doc table{margin:10px 0}
+.doc .note{color:var(--mut);font-size:.9rem}
+.aibar{display:flex;align-items:center;gap:10px;border:2px solid var(--acc);background:var(--soft);border-radius:12px;padding:10px 14px;margin:14px 0;flex-wrap:wrap;font-size:.92rem}
+.aibar button{background:var(--acc);color:#fff;border:0;border-radius:999px;padding:6px 16px;font-weight:600;cursor:pointer}
+@media(max-width:760px){.docgrid{grid-template-columns:1fr}.sidebar{position:static;border-right:0;border-bottom:1px solid var(--line);max-height:none;padding:0 0 12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <a class="logo" href="/">pinn<span>wire</span></a>
+  <div class="nlinks">
+    <a href="/docs.html">Docs</a>
+    <a href="/compare.html">Compare</a>
+    <a href="/blog.html">Guides</a>
+    <a href="/free-tools.html">Free tools</a>
+    <a href="/#pricing">Pricing</a>
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/status.html">Status</a>
+  </div>
+  <a class="cta" href="/#trial">Free trial key</a>
+</nav>
+
+<div class="docgrid">
+<aside class="sidebar">
+  <div class="sh">Getting started</div>
+  <a href="#intro">Introduction</a>
+  <a href="#sdks">Official SDKs</a>
+  <a href="#auth">Authentication</a>
+  <a href="#limits">Rate limits</a>
+  <a href="#errors">Errors</a>
+  <div class="sh">Live odds</div>
+  <a href="#markets"><span class="m get">GET</span>/kit/v1/markets</a>
+  <a href="#details"><span class="m get">GET</span>/kit/v1/details</a>
+  <div class="sh">Prematch odds</div>
+  <a href="#fixtures"><span class="m get">GET</span>/kit/v1/prematch/fixtures</a>
+  <a href="#pmarkets"><span class="m get">GET</span>/kit/v1/prematch/markets</a>
+  <a href="#lines"><span class="m get">GET</span>/kit/v1/prematch/lines</a>
+  <a href="#specials">Player props &amp; specials</a>
+  <div class="sh">Dropping odds</div>
+  <a href="#drops"><span class="m get">GET</span>/api/drops</a>
+  <a href="#sse"><span class="m sse">SSE</span>/odds-drop</a>
+  <a href="#ssepre"><span class="m sse">SSE</span>/odds-drop-prematch</a>
+  <div class="sh">WebSocket</div>
+  <a href="#ws"><span class="m ws">WS</span>/ws real-time <small style="color:var(--mut)">add-on</small></a>
+  <div class="sh">Status</div>
+  <a href="#health"><span class="m get">GET</span>/v1/health</a>
+  <a href="#signup"><span class="m post">POST</span>/signup</a>
+  <div class="sh">Reference</div>
+  <a href="#sports">Sport IDs</a>
+  <a href="#shapes">Markets &amp; periods</a>
+  <a href="#plans">Plans &amp; pricing</a>
+</aside>
+
+<main class="doc">
+
+<section id="intro">
+<h1 style="font-size:1.6rem;margin-bottom:18px;letter-spacing:-.01em">PinnWire API Documentation</h1>
+<p style="line-height:1.65">This page is the full reference for PinnWire's real-time Pinnacle odds API: REST endpoints, a queryable drops buffer, push-based SSE drop alerts and a raw WebSocket. The REST endpoints are testable right now with the public demo key (key=demo) — no signup; SSE and WebSocket need a plan key. The same content ships as plain text for LLM and agent use (llms-full.txt).</p>
+<p>Real-time live and prematch Pinnacle odds — REST snapshots, a queryable drops buffer, push-based SSE drop alerts, and a raw Real-time WebSocket. REST and the SSE drop streams deliver decimal prices; the raw WebSocket is a verbatim feed passthrough, so its <code>price</code> fields keep the feed's native odds format. The <code>/kit/v1/*</code> endpoints mirror common third-party Pinnacle API formats: swap the base URL and key in an existing client and it should just work.</p>
+<p class="note"><strong>Need instant suspensions or prices? Use WebSocket.</strong> REST only updates when you request again.</p>
+<p>Base URL: <code>https://pinnwire.com</code>. All responses are JSON.</p>
+<div class="aibar">
+  <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line,#e2e8f0);border-radius:999px;padding:4px 10px;vertical-align:middle" aria-hidden="true"><!--
+    Claude --><svg width="15" height="15" viewBox="0 0 16 16"><g stroke="#D97757" stroke-width="1.7" stroke-linecap="round"><line x1="8" y1="8" x2="8" y2="1.5"/><line x1="8" y1="8" x2="12.6" y2="3.4"/><line x1="8" y1="8" x2="14.5" y2="8"/><line x1="8" y1="8" x2="12.6" y2="12.6"/><line x1="8" y1="8" x2="8" y2="14.5"/><line x1="8" y1="8" x2="3.4" y2="12.6"/><line x1="8" y1="8" x2="1.5" y2="8"/><line x1="8" y1="8" x2="3.4" y2="3.4"/></g><circle cx="8" cy="8" r="1.6" fill="#D97757"/></svg><!--
+    ChatGPT --><svg width="15" height="15" viewBox="0 0 24 24" fill="#0f172a" fill-rule="evenodd"><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"/></svg><!--
+    Gemini --><svg width="15" height="15" viewBox="0 0 16 16"><path d="M8 0c.8 4.4 3.6 7.2 8 8-4.4.8-7.2 3.6-8 8-.8-4.4-3.6-7.2-8-8 4.4-.8 7.2-3.6 8-8Z" fill="#4285F4"/></svg></span>
+  <span>Integrating with an AI assistant? One prompt gives it the full reference:</span>
+  <button id="aidocs">Copy prompt</button>
+</div>
+<p class="note">The complete API reference also ships as plain text, optimized for LLM context windows: <a href="/llms-full.txt">/llms-full.txt</a> (full contents, the source of truth for the API) · <a href="/llms.txt">/llms.txt</a> (short index, auto-discovered by tools that probe the root). Both files are updated together and carry the same "Last updated" date — this page is updated with them.</p>
+<pre><code>curl "https://pinnwire.com/kit/v1/markets?sport_id=1&amp;key=YOUR_KEY"</code></pre>
+</section>
+
+<section id="sdks">
+<h2>Official SDKs and MCP</h2>
+<p>Install the official Node.js or Python client, or connect an AI agent through the read-only MCP server.</p>
+<pre><code>npm install pinnwire
+pip install pinnwire
+
+MCP: https://pinnwire.com/mcp?key=YOUR_KEY</code></pre>
+<p><a href="https://github.com/PinnWire/pinnwire-sdk">SDK source on GitHub</a> · <a href="https://www.npmjs.com/package/pinnwire">npm package</a> · <a href="https://pypi.org/project/pinnwire/">PyPI package</a> · <a href="/sports-odds-mcp-server.html">MCP setup guide</a></p>
+</section>
+
+<section id="auth">
+<h2>Authentication</h2>
+<p>Your API key is your only credential — no username, no password. Get a free trial key in seconds on the <a href="/#trial">homepage</a> (no card), or try everything right now with the public demo key: literally <code>key=demo</code> (10 req/min, 50/day, REST only).</p>
+<p>Pass the key either way:</p>
+<table>
+<tr><td><code>x-api-key: YOUR_KEY</code></td><td>header — recommended</td></tr>
+<tr><td><code>?key=YOUR_KEY</code></td><td>query parameter — handy for curl and browsers</td></tr>
+</table>
+<p class="note">Failure → HTTP 401 <code>{"error":"invalid_key"}</code>. SSE needs a plan with drop alerts (Stream, Pro&nbsp;+&nbsp;Drops, Scale). WebSocket needs the WS add-on.</p>
+</section>
+
+<section id="limits">
+<h2>Rate limits</h2>
+<table>
+<tr><th>Plan</th><th>REST limit</th></tr>
+<tr><td>Trial · Stream</td><td>20/min, 100/day</td></tr>
+<tr><td>Demo key</td><td>10/min, 50/day</td></tr>
+<tr><td>Pro · Pro + Drops</td><td>10 req/s</td></tr>
+<tr><td>Scale</td><td>30 req/s</td></tr>
+</table>
+<p class="note">Over the limit → HTTP 429 with a <code>Retry-After</code> header and body <code>{"error":"rate_limited","window":"minute","limit":20,"retry_after_ms":41052}</code>. Honor <code>Retry-After</code>. SSE connections are not counted against REST limits.</p>
+</section>
+
+<section id="errors">
+<h2>Errors</h2>
+<table>
+<tr><th>Status</th><th>Error</th><th>When</th></tr>
+<tr><td>401</td><td><code>invalid_key</code></td><td>Key missing or unknown</td></tr>
+<tr><td>403</td><td><code>plan_lacks_sse</code></td><td>SSE endpoint on a plan without drop alerts</td></tr>
+<tr><td>429</td><td><code>rate_limited</code></td><td>Per-key rate limit exceeded</td></tr>
+<tr><td>400</td><td><code>sport_id required</code> · <code>bad_market_type</code></td><td>Bad or missing parameter</td></tr>
+<tr><td>404</td><td><code>not_found</code></td><td>Unknown event_id or path</td></tr>
+<tr><td>WS 1008</td><td>invalid key / plan lacks ws</td><td>JSON error frame, then close</td></tr>
+<tr><td>WS 1011</td><td><code>slow_consumer</code></td><td>Client fell &gt;32&nbsp;MB behind</td></tr>
+</table>
+</section>
+
+<section id="markets">
+<h2>GET /kit/v1/markets</h2>
+<p>Every event for a sport with all markets across every period. Live by default.</p>
+<table>
+<tr><th>Param</th><th>Required</th><th>Description</th></tr>
+<tr><td><code>sport_id</code></td><td>yes</td><td>Sport ID (<a href="#sports">list</a>), or <code>all</code> for every sport in one call</td></tr>
+<tr><td><code>event_type</code></td><td>no</td><td><code>live</code> (default) or <code>prematch</code></td></tr>
+<tr><td><code>since</code></td><td>no</td><td>Only events changed after this ms timestamp — pass back the top-level <code>last</code> from your previous call</td></tr>
+<tr><td><code>include_specials</code></td><td>no</td><td><code>1</code> = flat special rows · <code>nested</code> = under each event's <code>specials</code> array (<a href="#specials">details</a>)</td></tr>
+<tr><td><code>include_alt_units</code></td><td>no</td><td><code>1</code> = also list each fixture's side markets (soccer corners and bookings, tennis games, volleyball points, esports kills) as their own events. Each event's <code>units</code> says what its lines count; <code>parent_id</code> is the main event</td></tr>
+</table>
+<pre><code>{
+  "sport_id": 1, "last": 1787571116381,
+  "events": [{
+    "event_id": 1628594960, "sport_id": 1,
+    "league_id": 2196, "league_name": "Spain - La Liga",
+    "home": "Alaves", "away": "Villarreal",
+    "starts": "2026-08-28T19:30:00Z", "start_ts": "2026-08-28T19:30:00Z",
+    "event_type": "live", "is_have_odds": true, "is_have_periods": true,
+    "periods": {
+      "num_0": {
+        "number": 0,
+        "money_line": { "home": 2.45, "draw": 3.30, "away": 2.90 },
+        "spreads": { "-0.5": { "hdp": -0.5, "home": 2.06, "away": 1.82, "max": 500 } },
+        "totals":  { "2.5":  { "points": 2.5, "over": 1.90, "under": 1.98, "max": 500 } },
+        "team_total": { "home": { "points": 1.5, "over": 1.86, "under": 2.00 } },
+        "team_totals": { "home": {
+          "1.5": { "points": 1.5, "over": 1.86, "under": 2.00, "max": 100 },
+          "2.5": { "points": 2.5, "over": 3.00, "under": 1.36, "max": 100 } }, "away": {} }
+      }
+    },
+    "state": {
+      "match": { "state": 2, "minutes": 9 },
+      "home": { "score": 1, "redCards": 0 },
+      "away": { "score": 0, "redCards": 1 },
+      "home_stats": [ { "period": 0, "score": 1 } ],
+      "away_stats": [ { "period": 0, "score": 0 } ]
+    }
+  }]
+}</code></pre>
+<p class="note"><code>start_ts</code> aliases <code>starts</code>. <code>draw</code> is absent on 2-way markets. <code>team_total</code> = primary line per side; <code>team_totals</code> = ALL alternate lines keyed by points. <code>state</code> = live game-state passed through from the feed (live events only, absent on prematch; field names are sport-specific — soccer <code>{state, minutes}</code>, tennis sets/serving, etc.). Fields appear only when Pinnacle publishes them — iterate defensively.</p>
+</section>
+
+<section id="details">
+<h2>GET /kit/v1/details</h2>
+<p>One event by ID: <code>?event_id=N</code> → <code>{ events: [&lt;one event&gt;] }</code>. A special's ID returns the special shape directly — no flag needed.</p>
+</section>
+
+<section id="fixtures">
+<h2>GET /kit/v1/prematch/fixtures</h2>
+<p>Every upcoming fixture for a sport with full markets. Equivalent to <code>/kit/v1/markets?event_type=prematch</code>. Params: <code>sport_id</code> (required; <code>all</code> for every sport), <code>since</code>, <code>include_specials</code>, <code>include_alt_units</code>.</p>
+<pre><code>curl "https://pinnwire.com/kit/v1/prematch/fixtures?sport_id=1&amp;include_specials=1&amp;key=YOUR_KEY"</code></pre>
+</section>
+
+<section id="pmarkets">
+<h2>GET /kit/v1/prematch/markets</h2>
+<p>Single prematch event by ID (<code>?event_id=N</code>). Same shape as <code>/kit/v1/details</code>.</p>
+</section>
+
+<section id="lines">
+<h2>GET /kit/v1/prematch/lines</h2>
+<p>Compact line view for one event — active full-game prices, no period structure. Lighter than /markets; ideal for tickers.</p>
+<table>
+<tr><th>Param</th><th>Required</th><th>Description</th></tr>
+<tr><td><code>event_id</code></td><td>yes</td><td>Event ID</td></tr>
+<tr><td><code>market_type</code></td><td>no</td><td>One of <code>money_line</code>, <code>spreads</code>, <code>totals</code>, <code>team_total</code></td></tr>
+</table>
+<pre><code>{ "event_id": 1634696920, "home": "Kairat Almaty", "away": "Atyrau",
+  "starts": "2026-08-24T11:00:00Z",
+  "lines": { "money_line": { "home": 1.935, "draw": 2.52, "away": 4.98 },
+             "spreads": [ { "hdp": -0.5, "home": 1.935, "away": 1.8, "max": 250 } ],
+             "totals":  [ { "points": 2.5, "over": 1.9, "under": 1.98, "max": 250 } ],
+             "team_total": { "home": { "points": 1.5, "over": 1.86, "under": 2.0 } } } }</code></pre>
+</section>
+
+<section id="specials">
+<h2>Player props &amp; specials</h2>
+<p>Special-market events — Player Props, Team Props, Exact Scores, futures — ride alongside the main fixtures. Off by default; opt in with <code>include_specials</code> on <code>/kit/v1/markets</code> or <code>/kit/v1/prematch/fixtures</code>: <code>1</code> adds them as flat extra rows, <code>nested</code> groups them under each parent event's <code>specials</code> array.</p>
+<pre><code>{ "event_id": 1634672697, "sport_id": 1,
+  "special": "Anytime Goalscorer", "special_category": "Player Props",
+  "special_units": "Regular", "parent_id": 1634444746,
+  "special_markets": { "num_0": [ { "type": "moneyline", "key": "s;0;m", "side": null,
+      "max_risk": 100, "prices": [
+        { "name": "John Striker", "participant_id": 9001, "points": null, "price": 3.5 } ] } ] } }</code></pre>
+<p class="note">Decimal prices, named outcomes. Fetch a single special via <code>/kit/v1/details?event_id=&lt;special_id&gt;</code> — no flag needed. Qualifying special-market price falls appear on <a href="#drops">/api/drops</a> and the applicable SSE drop stream with <code>participant_name</code>.</p>
+</section>
+
+<section id="drops">
+<h2>GET /api/drops</h2>
+<p>Queryable buffer of recent dropping-odds events (last ~3 hours). Alias: <code>/v1/drops</code>.</p>
+<table>
+<tr><th>Param</th><th>Description</th></tr>
+<tr><td><code>mode</code></td><td><code>live</code> (default) or <code>prematch</code></td></tr>
+<tr><td><code>sport_id</code></td><td>One sport; omit for all</td></tr>
+<tr><td><code>min_drop_pct</code></td><td>Minimum drop percent (default 5, fractional ok)</td></tr>
+<tr><td><code>max_drop_pct</code></td><td>Optional cap</td></tr>
+<tr><td><code>max_age_sec</code></td><td>Only drops fresher than this</td></tr>
+<tr><td><code>markets</code></td><td>csv subset of <code>moneyline,spread,total,team_total</code></td></tr>
+<tr><td><code>periods</code></td><td>csv of period numbers (<code>0</code>=match, <code>1</code>=1st half…)</td></tr>
+<tr><td><code>live</code></td><td><code>1</code> = exclude drops on events not yet started</td></tr>
+<tr><td><code>limit</code></td><td>Max drops returned (default 500)</td></tr>
+</table>
+<pre><code>{ "total": 42, "drops": [
+  { "event_id": 1629725918, "sport_id": 1, "sport_name": "Soccer",
+    "league": "Australia - NPL Victoria",
+    "home": "Bentleigh Greens", "away": "St Albans Saints",
+    "market": "spread", "period": 0, "side": "home", "points": -0.5,
+    "from": 2.37, "to": 2.25, "drop_pct": 5.06,
+    "nvp": 2.21, "starts": "2026-08-24T11:00:00Z",
+    "is_live": false, "alerted": 1787571116, "age_s": 12 } ],
+  "meta": { "mode": "live", "events_in_store": 597, "tracked_outcomes": 122035 } }</code></pre>
+<p class="note"><code>nvp</code> is the no-vig fair price — <code>(to / nvp) − 1</code> estimates your edge. Special-market drops carry <code>participant_name</code>. (The SSE streams use <code>from_price</code>/<code>to_price</code>/<code>sect</code>/<code>outcome</code> — that matches the wire format of comparable SSE feeds.)</p>
+</section>
+
+<section id="sse">
+<h2>SSE /odds-drop (live)</h2>
+<p>Push stream of live odds drops. One connection, sub-second from price move to your code. Plans: Stream, Pro&nbsp;+&nbsp;Drops, Scale.</p>
+<pre><code>curl -N "https://pinnwire.com/odds-drop?key=YOUR_KEY&amp;min_drop=5"
+
+data: {"type":"connected","id":"…"}
+data: [{"home":"…","away":"…","sect":"Spread","from_price":2.24,
+        "to_price":2.21,"drop_pct":1.34,"nvp":2.385,"is_live":true,…}]</code></pre>
+<p class="note">Frames are JSON arrays of drop objects (same shape as /api/drops). <code>min_drop=N</code> overrides the default 5% threshold per connection — floor 1%, no upper cap. Keep-alive comments (<code>:ka</code>) every 25 s — ignore them.</p>
+</section>
+
+<section id="ssepre">
+<h2>SSE /odds-drop-prematch</h2>
+<p>Identical to <code>/odds-drop</code>, prematch feed only. Prematch lines move slowly — a 90-second sample may surface zero drops; that's normal.</p>
+<p><b><code>recheck=N</code></b> (prematch only): stable-price filter. Holds each drop N seconds, re-reads the current price, and only emits if the drop still passes your threshold against the original <code>from_price</code>. Bounced-back prices are silently suppressed; emitted alerts include <code>rechecked_ms</code>. Ignored on the live endpoint.</p>
+<pre><code># Only emit if a ≥7% drop is still ≥7% after 30s
+curl -N "https://pinnwire.com/odds-drop-prematch?key=YOUR_KEY&amp;recheck=30&amp;min_drop=7"</code></pre>
+</section>
+
+<section id="ws">
+<h2>Real-time WebSocket <small style="color:var(--mut);font-size:.8rem">+$89/mo add-on</small></h2>
+<p>Raw feed passthrough — every frame forwarded verbatim in a thin envelope. This is the full state stream (opens, closes, every reprice), not the drop alerts. Much higher volume.</p>
+<pre><code>wss://pinnwire.com/ws?key=YOUR_KEY     (also accepted: /ws/feed)</code></pre>
+<p>On connect: <code>{"type":"connected","events_in_store":N}</code>. <b>Subscribe within 10&nbsp;s</b> or the socket is closed — by sport (every event in that sport) and/or by specific event IDs (filtered, max 200 per stream):</p>
+<pre><code>{ "type": "subscribe", "streams": ["live","prematch"],
+  "sport_ids": [1, 2], "event_ids": [1631005165] }
+{ "type": "unsubscribe", "streams": ["live"], "sport_ids": [2] }
+{ "type": "pong" }   // reply to the server's ping</code></pre>
+<p>Each subscription is acked (<code>subscribed</code>/<code>unsubscribed</code>) and answered with a <code>snapshot</code> of the matching events (large baselines are split into chunks tagged <code>seq</code>/<code>final</code>; a single-frame snapshot has neither). Then continuous frames of type <code>live</code> (<code>{topic, op, rec}</code>, op = add/upd/del), <code>prematch_ws</code>, <code>prematch_matchups</code>, <code>prematch_markets</code> — only for what you subscribed to. A frame matches if its sport is in your sport subs <i>or</i> its event ID is in your event subs. Deleted events are auto-removed from your event subs.</p>
+<p>Heartbeat: server sends <code>{"type":"ping","ts":…,"buffered_max_bytes":N}</code> every 30&nbsp;s — reply <code>{"type":"pong"}</code> or be closed after ~75&nbsp;s (1001 "stale"). <code>buffered_max_bytes</code> is your send-backlog high-water mark since the last ping — use it to measure headroom.</p>
+<table>
+<tr><th>Close</th><th>Reason</th><th>Meaning</th></tr>
+<tr><td>1001</td><td><code>evicted by newer connection</code></td><td>One connection per key — a second one evicts the first</td></tr>
+<tr><td>1001</td><td><code>stale</code></td><td>No pong for ~75 s</td></tr>
+<tr><td>1008</td><td><code>no subscribe</code> / invalid key / plan lacks ws</td><td>Fix and reconnect</td></tr>
+<tr><td>1011</td><td><code>deregistered: slow_consumer</code></td><td>Client fell &gt;32 MB behind — reconnect immediately</td></tr>
+</table>
+<p class="note">Compression: <code>permessage-deflate</code> is negotiated per connection — your client decides. ~5× smaller frames (helps thin/long-haul links), but adds a latency tail during update bursts. Far from the server → enable; fat stable pipe → off. Node <code>ws</code>: <code>{perMessageDeflate: true}</code>; Python websockets: on by default; browsers: automatic.</p>
+<p class="note">Errors: <code>{"type":"error","code":"invalid_subscribe"|"event_id_cap"}</code>. Merge rules: key your book by <code>rec.id</code> + market key (<code>m.key</code>, else <code>type|period|side|points</code>) — never team names. Dedupe on <code>markets[i].version</code>, not <code>rec.version</code>. <code>m.status</code> present and not <code>"open"</code> closes a market — guard on presence (<code>m.status != null</code>), because an absent <code>status</code> is not a close, and apply the close before the version dedupe so a close cannot be discarded as an unchanged re-send. These merge rules are for the raw WebSocket; REST returns the book already merged, where a closed market is absent from <code>markets[]</code>. Live topic channel <code>ld</code> is the real price; <code>dz</code> is a volatility signal, not a second price. Reconnects re-sync from the snapshot — server keeps no session state.</p>
+</section>
+
+<section id="health">
+<h2>GET /v1/health · GET /ping</h2>
+<p><code>/v1/health?key=…</code> → <code>{"status":"ok","generated_at":"2026-09-15T12:00:00.000Z","last_odds_update_seconds_ago":2,"events_in_store":N,"upstream":{…},"ws_clients":N}</code>. <code>generated_at</code> is the response time; <code>last_odds_update_seconds_ago</code> is the age of the newest odds frame. <code>/ping</code> is public, returns <code>ok</code> — for load balancers and uptime monitors.</p>
+</section>
+
+<section id="signup">
+<h2>POST /signup</h2>
+<p>Protected browser signup handler used by the <a href="/#trial">homepage free-key box</a>. It requires a fresh Cloudflare Turnstile token, then emails the key (the key is never returned in the response). For safety, repeat sends have a cooldown and trial-email delivery has persistent global limits. Use the homepage instead of calling this route directly.</p>
+</section>
+
+<section id="sports">
+<h2>Sport IDs</h2>
+<p><code>sport_id</code>: 1 Soccer · 2 Tennis · 3 Basketball · 4 Hockey · 5 Football · 6 Baseball · 7 Rugby · 8 MMA · 9 Boxing · 10 Volleyball/Handball · 11 Esports · 12 Golf · 13 Cricket</p>
+<p class="note">Golf is typically moneyline-only — the upstream feed doesn't price spreads/totals for golf.</p>
+</section>
+
+<section id="shapes">
+<h2>Markets &amp; periods</h2>
+<table>
+<tr><th>Field</th><th>Shape</th></tr>
+<tr><td><code>money_line</code></td><td><code>{ home, away, draw? }</code> — decimal odds</td></tr>
+<tr><td><code>spreads</code></td><td><code>{ "&lt;hdp&gt;": { hdp, home, away, max } }</code></td></tr>
+<tr><td><code>totals</code></td><td><code>{ "&lt;points&gt;": { points, over, under, max } }</code></td></tr>
+<tr><td><code>team_total</code></td><td><code>{ home: {points, over, under}, away: {…} }</code></td></tr>
+</table>
+<p><code>periods</code> keys: <code>num_0</code> full match · <code>num_1</code> 1st half / 1st set · <code>num_2</code> 2nd half / set · <code>num_3</code>–<code>num_4</code> quarters/sets · <code>num_5</code> extra time. Not every period exists for every event — iterate defensively.</p>
+</section>
+
+<section id="plans">
+<h2>Plans &amp; pricing</h2>
+<table>
+<tr><th>Plan</th><th>Price</th><th>REST</th><th>SSE drops</th><th>Raw WS</th></tr>
+<tr><td>Trial</td><td>$0</td><td>20/min, 100/day</td><td>—</td><td>—</td></tr>
+<tr><td>Stream</td><td>$89/mo</td><td>20/min, 100/day</td><td>✓</td><td>—</td></tr>
+<tr><td>Pro</td><td>$89/mo</td><td>10 req/s</td><td>—</td><td>add-on</td></tr>
+<tr><td>Pro + Drops</td><td>$139/mo</td><td>10 req/s</td><td>✓</td><td>add-on</td></tr>
+<tr><td>Scale</td><td>$219/mo</td><td>30 req/s</td><td>✓</td><td>add-on</td></tr>
+<tr><td>Raw WebSocket</td><td>+$89/mo</td><td colspan="3">adds the real-time WebSocket on Pro, Pro&nbsp;+&nbsp;Drops and Scale (not on Trial or Stream)</td></tr>
+</table>
+<p class="note">Every plan: all 13 sports, live + prematch, full line depth, specials. Buy directly at <a href="/#pricing">pinnwire.com/#pricing</a> (card checkout) — questions: <a href="/cdn-cgi/l/email-protection#f380929f9680b3839a9d9d849a8196dd909c9e"><span class="__cf_email__" data-cfemail="0a796b666f794a7a6364647d63786f24696567">[email&#160;protected]</span></a>.</p>
+</section>
+
+</main>
+</div>
+
+<!-- guide-index -->
+<section class="related">
+  <h2>Pinnacle odds API guides</h2>
+  <p>Worked examples and reference material built on the PinnWire feed.</p>
+  <ul>
+    <li><a href="/what-is-nvp-no-vig-price.html">What is NVP? No-vig price explained</a></li>
+    <li><a href="/how-to-devig-pinnacle-odds.html">How to de-vig Pinnacle odds</a></li>
+    <li><a href="/calculate-ev-from-pinnacle-odds.html">Calculate EV from Pinnacle odds</a></li>
+    <li><a href="/closing-line-value-pinnacle-odds-guide.html">Closing line value (CLV) guide</a></li>
+    <li><a href="/pinnacle-api-python-guide.html">Pinnacle odds API with Python</a></li>
+    <li><a href="/pinnacle-odds-api-nodejs-guide.html">Pinnacle odds API with Node.js</a></li>
+    <li><a href="/live-odds-websocket-architecture-guide.html">Live odds WebSocket architecture</a></li>
+    <li><a href="/pinnacle-line-movement-api-guide.html">Track Pinnacle line movement</a></li>
+    <li><a href="/configure-pinnacle-odds-drop-alerts.html">Configure odds drop alerts</a></li>
+    <li><a href="/best-pinnacle-odds-api-selection-guide.html">Best Pinnacle odds API: selection guide</a></li>
+    <li><a href="/migrate-from-legacy-pinnacle-api.html">Migrate from the legacy Pinnacle API</a></li>
+    <li><a href="/pinnacle-odds-api-vs-scraping.html">Odds API vs scraping</a></li>
+    <li><a href="/free-pinnacle-odds-api-guide.html">Free Pinnacle odds API</a></li>
+    <li><a href="/kelly-criterion-pinnacle-odds-python.html">Kelly criterion in Python</a></li>
+    <li><a href="/why-pinnacle-odds-are-sharp.html">Why Pinnacle odds are sharp</a></li>
+  </ul>
+  <p><a href="/blog.html">Browse all guides →</a></p>
+</section>
+
+<footer>
+<div style="color:var(--mut);font-size:.8rem;line-height:1.6;margin-bottom:10px">Documentation for a real-time <a href="/">Pinnacle odds API</a> — <a href="/pinnacle-websocket-api.html">Pinnacle WebSocket API</a>, SSE dropping-odds alerts with no-vig fair prices, live &amp; prematch sharp bookmaker odds. The <a href="/compare.html">Pinnacle API alternative</a> with a free demo key — no signup.</div>
+<div>© 2026 PinnWire · Not a bookmaker · 18+ · Not affiliated with Pinnacle · <a href="/">Home</a> · <a href="/blog.html">Guides</a> · <a href="/latency.html">Latency</a> · <a href="/reviews.html">Reviews</a> · <a href="/status.html">Status</a> · <a href="/llms-full.txt">llms-full.txt</a> · <a href="https://github.com/PinnWire/pinnwire-sdk">GitHub</a> · <a href="https://www.npmjs.com/package/pinnwire">npm</a> · <a href="https://pypi.org/project/pinnwire/">PyPI</a> · <a href="/free-tools.html">Free tools</a></div></footer>
+</div>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+document.getElementById('aidocs').onclick=function(){
+  const p=`I'm building with the PinnWire Pinnacle odds API. Read the full reference at https://pinnwire.com/llms-full.txt, then ask me what I want to build and which key to use: my own pk_ key, or the shared demo key (50 requests/day for all users). Don't call the API until I answer.`;
+  navigator.clipboard.writeText(p).then(()=>{this.textContent='Copied ✓';setTimeout(()=>this.textContent='Copy prompt',1500)});
+};
+// Scrollspy: highlight the sidebar link for the section currently in view
+(function(){
+  const links={}; document.querySelectorAll('.sidebar a[href^="#"]').forEach(a=>links[a.getAttribute('href').slice(1)]=a);
+  let current=null;
+  const io=new IntersectionObserver((entries)=>{
+    for(const e of entries){
+      if(e.isIntersecting){
+        if(current)current.classList.remove('active');
+        current=links[e.target.id];
+        if(current){current.classList.add('active');
+          current.scrollIntoView({block:'nearest'});}
+      }
+    }
+  },{rootMargin:'0px 0px -70% 0px'});
+  document.querySelectorAll('.doc section[id]').forEach(s=>io.observe(s));
+})();
+</script>
+</body>
+</html>

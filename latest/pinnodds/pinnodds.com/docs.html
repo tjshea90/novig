@@ -1,0 +1,2482 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="/ref-capture.js?v=20260928"></script>
+<meta charset="utf-8"/>
+<!-- Consent-gated tag loader: GA4 + Google Ads + Clarity + Meta live in /consent.js -->
+<script src="/consent.js" data-no-meta="1"></script>
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png">
+<link rel="apple-touch-icon" href="/logo.png">
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="color-scheme" content="dark"/>
+<meta name="theme-color" content="#0a0e14"/>
+<title>Pinnacle API Documentation — Odds, WebSocket &amp; SSE Reference</title>
+<meta name="description" content="Complete Pinnacle API documentation: live and prematch odds over REST, WebSocket and SSE, with copy-paste examples in Python, Node and cURL. Free key, no card, and a 3-day full demo on request."/>
+<meta name="robots" content="index, follow"/>
+<link rel="canonical" href="https://pinnodds.com/docs"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","@id":"https://pinnodds.com/docs#article","headline":"Pinnacle Odds API Documentation","description":"Complete working reference for the pinnodds real-time Pinnacle odds API: authentication, live and prematch REST endpoints, SSE drop streams, the raw WebSocket feed, rate limits and reference data.","url":"https://pinnodds.com/docs","dateModified":"2026-08-13","author":{"@id":"https://pinnodds.com/#organization"},"publisher":{"@id":"https://pinnodds.com/#organization"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://pinnodds.com/docs"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://pinnodds.com/"},{"@type":"ListItem","position":2,"name":"API Documentation","item":"https://pinnodds.com/docs"}]},{"@type":"ItemList","name":"pinnodds API endpoints","itemListElement":[{"@type":"ListItem","position":1,"name":"GET /kit/v1/markets","url":"https://pinnodds.com/docs#markets"},{"@type":"ListItem","position":2,"name":"GET /kit/v1/details","url":"https://pinnodds.com/docs#details"},{"@type":"ListItem","position":3,"name":"GET /kit/v1/prematch/fixtures","url":"https://pinnodds.com/docs#prematch-fixtures"},{"@type":"ListItem","position":4,"name":"GET /kit/v1/prematch/markets","url":"https://pinnodds.com/docs#prematch-markets"},{"@type":"ListItem","position":5,"name":"GET /kit/v1/prematch/lines","url":"https://pinnodds.com/docs#prematch-lines"},{"@type":"ListItem","position":6,"name":"GET /api/drops","url":"https://pinnodds.com/docs#api-drops"},{"@type":"ListItem","position":7,"name":"SSE /odds-drop","url":"https://pinnodds.com/docs#sse-live"},{"@type":"ListItem","position":8,"name":"SSE /odds-drop-prematch","url":"https://pinnodds.com/docs#sse-prematch"},{"@type":"ListItem","position":9,"name":"WSS /ws/feed","url":"https://pinnodds.com/docs#ws-feed"},{"@type":"ListItem","position":10,"name":"GET /health","url":"https://pinnodds.com/docs#health"},{"@type":"ListItem","position":11,"name":"GET /ping","url":"https://pinnodds.com/docs#ping"}]}]}</script>
+
+<meta property="og:type" content="article"/>
+<meta property="og:url" content="https://pinnodds.com/docs"/>
+<meta property="og:title" content="Pinnacle API Documentation — Odds, WebSocket &amp; SSE"/>
+<meta property="og:description" content="REST, SSE, WebSocket endpoints for live and prematch Pinnacle odds with drops detection. Copy-paste examples in curl, Node, Python, Go, PHP."/>
+<meta property="og:image" content="https://pinnodds.com/og-cover.png"/>
+<meta name="twitter:card" content="summary_large_image"/>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;650;700&family=Geist+Mono:wght@400;500;600;700&display=swap" as="style">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;650;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;650;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+<style>
+/* ============================================================
+   PINNODDS DOCS — "TRADING TERMINAL" design system
+   ground #0a0e14 · panels #10151d · hairlines #1c2530
+   up #34d399 · down #f87171 · signal #fbbf24 · muted #9aa7b8
+   ============================================================ */
+:root{
+  color-scheme:dark;
+  --bg:#0a0e14;
+  --bg-deep:#070a0f;
+  --panel:#10151d;
+  --panel2:#0d121a;
+  --panel-hi:#151c26;
+  --line:#1c2530;
+  --line-2:#26313f;
+  --up:#34d399;
+  --down:#f87171;
+  --sig:#fbbf24;
+  --muted:#9aa7b8;
+  --muted-2:#6c7a8c;
+  --text:#e8eef6;
+
+  /* aliases kept so inline style="…var(--x)…" in the body still resolves */
+  --border:#1c2530;
+  --accent:#34d399;
+  --first:#7dd3fc;
+  --warn:#fbbf24;
+  --danger:#f87171;
+  --gold:#fbbf24;
+
+  --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"Geist",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+  --statusH:28px; --navH:54px;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{
+  -webkit-text-size-adjust:100%;
+  scroll-behavior:smooth;
+  scroll-padding-top:calc(var(--statusH) + var(--navH) + 16px);
+}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--sans); font-size:15px; line-height:1.62;
+  font-variant-numeric:tabular-nums;
+  overflow-x:hidden;
+}
+img,svg{max-width:100%}
+h1,h2,h3,h4,h5{margin:0; font-weight:600; line-height:1.15; letter-spacing:-.01em}
+p{margin:0}
+::selection{background:rgba(251,191,36,.28); color:#fff}
+:focus-visible{outline:2px solid var(--sig); outline-offset:2px; border-radius:1px}
+a{color:var(--first); text-decoration:none}
+a:hover{text-decoration:underline}
+
+.skip{
+  position:absolute; left:-9999px; top:0; z-index:200; background:var(--sig); color:#0a0e14;
+  font-family:var(--mono); font-size:12px; padding:10px 16px; text-decoration:none;
+}
+.skip:focus{left:8px; top:8px}
+
+/* ============ STATUS BAR ============ */
+.statusbar{
+  position:sticky; top:0; z-index:60;
+  height:var(--statusH);
+  display:flex; align-items:center; gap:var(--s4);
+  padding:0 16px;
+  background:var(--bg-deep);
+  border-bottom:1px solid var(--line);
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.11em;
+  color:var(--muted-2); text-transform:uppercase; white-space:nowrap;
+  overflow:hidden;
+}
+.statusbar b{color:var(--muted); font-weight:600}
+.statusbar .sep{width:1px;height:12px;background:var(--line);flex:none}
+.led{display:inline-flex; align-items:center; gap:7px; color:var(--up); font-weight:600}
+.led i{
+  width:7px;height:7px;border-radius:50%; background:var(--up); flex:none;
+  box-shadow:0 0 0 0 rgba(52,211,153,.6); animation:pulse 2.2s infinite;
+}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(52,211,153,.55)}
+  70%{box-shadow:0 0 0 7px rgba(52,211,153,0)}
+  100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}
+}
+.sb-right{margin-left:auto; display:flex; align-items:center; gap:var(--s4)}
+@media (max-width:900px){ .sb-hide{display:none} }
+
+/* ============ NAV ============ */
+.nav{
+  position:sticky; top:var(--statusH); z-index:55;
+  height:var(--navH);
+  display:flex; align-items:center; gap:var(--s5);
+  padding:0 16px;
+  background:rgba(10,14,20,.88); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.logo{
+  display:flex; align-items:center; gap:10px; text-decoration:none;
+  font-family:var(--mono); font-size:17px; font-weight:700; letter-spacing:-.02em; color:#fff;
+}
+.logo:hover{text-decoration:none}
+.logo__mark{
+  width:22px;height:22px;flex:none;border:1px solid var(--line-2);
+  background:var(--panel); display:grid; place-items:center;
+}
+.logo__mark span{display:block;width:8px;height:8px;background:var(--up);box-shadow:0 0 9px rgba(52,211,153,.8)}
+.logo em{font-style:normal;color:var(--up)}
+.nav__links{display:flex;align-items:center;gap:var(--s5);margin-left:var(--s5)}
+.nav__links a{
+  font-family:var(--mono); font-size:12px; font-weight:500; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--muted); text-decoration:none;
+  padding:6px 0; border-bottom:1px solid transparent; transition:color .15s, border-color .15s;
+}
+.nav__links a:hover{color:var(--text); border-bottom-color:var(--sig); text-decoration:none}
+.nav__links a[aria-current="page"]{color:var(--sig); border-bottom-color:var(--sig)}
+.nav__cta{margin-left:auto; display:flex; align-items:center; gap:var(--s3)}
+@media (max-width:1020px){ .nav__links{display:none} }
+@media (max-width:560px){ .nav__cta .key--ghost{display:none} }
+
+/* ---------- terminal key buttons ---------- */
+.key{
+  --k:#e8eef6;
+  display:inline-flex; align-items:center; justify-content:center; gap:9px;
+  font-family:var(--mono); font-size:12.5px; font-weight:600;
+  letter-spacing:.11em; text-transform:uppercase;
+  color:var(--k); text-decoration:none; cursor:pointer;
+  padding:12px 20px; border:1px solid var(--line-2);
+  background:linear-gradient(180deg,#182029 0%,#0f151d 100%);
+  box-shadow:0 2px 0 0 #05080c, inset 0 1px 0 0 rgba(255,255,255,.045);
+  transition:transform .1s ease, box-shadow .1s ease, border-color .16s ease, color .16s ease;
+}
+.key:hover{ border-color:#3d4c5e; color:#fff; text-decoration:none }
+.key:active{ transform:translateY(2px); box-shadow:0 0 0 0 #05080c }
+.key--primary{
+  --k:#0a0e14; border-color:#c9971b;
+  background:linear-gradient(180deg,#fcd34d 0%,#f5b91b 100%);
+  box-shadow:0 2px 0 0 #8a6608, inset 0 1px 0 0 rgba(255,255,255,.4);
+}
+.key--primary:hover{ border-color:#ffe08a; color:#0a0e14; background:linear-gradient(180deg,#ffdf7a 0%,#fbc42a 100%) }
+.key--ghost{ background:transparent; box-shadow:none; border-color:var(--line-2) }
+.key--ghost:hover{ background:rgba(255,255,255,.03) }
+.key--sm{ padding:8px 13px; font-size:11px }
+
+/* ============ SHELL ============ */
+.shell{
+  display:grid;
+  grid-template-columns:272px minmax(0,1fr);
+  align-items:start;
+}
+@media (max-width:1120px){ .shell{grid-template-columns:244px minmax(0,1fr)} }
+
+/* ============ SIDEBAR (terminal panel) ============ */
+aside{
+  position:sticky; top:calc(var(--statusH) + var(--navH));
+  height:calc(100vh - var(--statusH) - var(--navH));
+  overflow-y:auto; overscroll-behavior:contain;
+  border-right:1px solid var(--line);
+  background:var(--panel2);
+  padding:0 0 40px;
+  font-size:13px;
+  scrollbar-width:thin; scrollbar-color:#26313f transparent;
+}
+aside::-webkit-scrollbar{width:8px}
+aside::-webkit-scrollbar-thumb{background:#1c2530}
+aside::-webkit-scrollbar-thumb:hover{background:#26313f}
+
+aside .brand{
+  display:flex; align-items:center; gap:9px;
+  position:sticky; top:0; z-index:2;
+  min-height:34px; padding:8px 14px; margin:0 0 10px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#141b25 0%,#0e1420 100%);
+  font-family:var(--mono); font-size:10.5px; font-weight:600;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
+  text-decoration:none;
+}
+aside .brand::before{
+  content:""; width:7px; height:7px; flex:none;
+  border:1px solid rgba(52,211,153,.55); background:var(--up);
+  box-shadow:0 0 8px rgba(52,211,153,.85);
+}
+aside .brand:hover{color:var(--text); text-decoration:none}
+aside .brand b{color:var(--up); font-weight:600}
+
+aside .toc-h{
+  display:flex; align-items:center; gap:10px;
+  font-family:var(--mono); font-size:9.5px; font-weight:600;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--sig);
+  margin:20px 14px 8px;
+}
+aside .toc-h::after{content:""; flex:1; height:1px; background:var(--line)}
+
+aside a{
+  display:block; padding:5px 14px 5px 13px;
+  color:var(--muted); font-size:13px; line-height:1.4;
+  border-left:1px solid transparent;
+  transition:color .14s, background .14s, border-color .14s;
+}
+aside a:hover{background:var(--panel-hi); color:var(--text); text-decoration:none}
+aside a.method{font-family:var(--mono); font-size:11.5px; letter-spacing:.01em}
+aside a.active{
+  color:var(--text); background:var(--panel-hi);
+  border-left-color:var(--sig);
+}
+aside a .verb{
+  display:inline-block; min-width:30px;
+  font-family:var(--mono); font-size:9.5px; font-weight:700;
+  letter-spacing:.12em; color:var(--up); margin-right:8px;
+  background:none; padding:0;
+}
+aside a .verb.post{color:var(--sig)}
+aside a .verb.sse{color:var(--sig)}
+aside a code{background:none; border:0; padding:0; color:var(--muted-2); font-size:11px}
+
+/* mobile TOC */
+details.mobile-toc{display:none}
+@media (max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  aside{display:none}
+  details.mobile-toc{
+    display:block; margin:0 0 20px;
+    border:1px solid var(--line); background:var(--panel);
+  }
+  details.mobile-toc summary{
+    list-style:none; cursor:pointer;
+    display:flex; align-items:center; gap:10px;
+    padding:11px 14px; border-bottom:1px solid transparent;
+    font-family:var(--mono); font-size:10.5px; font-weight:600;
+    letter-spacing:.18em; text-transform:uppercase; color:var(--muted);
+    background:linear-gradient(180deg,#141b25 0%,#0e1420 100%);
+  }
+  details.mobile-toc summary::-webkit-details-marker{display:none}
+  details.mobile-toc summary::before{content:">"; color:var(--sig); font-weight:700; transition:transform .2s ease}
+  details.mobile-toc[open] summary{border-bottom-color:var(--line)}
+  details.mobile-toc[open] summary::before{transform:rotate(90deg); color:var(--up)}
+  details.mobile-toc summary::after{content:none}
+  details.mobile-toc nav{padding:10px 14px 14px; display:flex; flex-direction:column; gap:2px}
+  details.mobile-toc nav a{
+    font-family:var(--mono); font-size:12px; color:var(--muted);
+    padding:5px 0; text-decoration:none;
+  }
+  details.mobile-toc nav a:hover{color:var(--sig); text-decoration:none}
+}
+
+/* ============ MAIN / PROSE ============ */
+main{
+  padding:40px 44px 96px; max-width:940px; min-width:0;
+}
+@media (max-width:1120px){ main{padding:34px 30px 80px} }
+@media (max-width:700px){ main{padding:24px 16px 64px} }
+
+main h1{
+  font-family:var(--mono); font-size:clamp(26px,3.2vw,34px);
+  letter-spacing:-.03em; margin:0 0 10px;
+}
+main > p:first-of-type{color:var(--muted); max-width:70ch}
+
+main h2{
+  display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap;
+  font-family:var(--mono); font-size:20px; font-weight:600; letter-spacing:-.01em;
+  margin:52px 0 16px; padding-bottom:12px;
+  border-bottom:1px solid var(--line);
+}
+main h2::before{
+  content:""; width:16px; height:1px; flex:none; background:var(--sig); opacity:.8;
+}
+main h3{
+  font-family:var(--mono); font-size:15.5px; font-weight:600;
+  margin:30px 0 10px; color:var(--text);
+}
+main h4{
+  font-family:var(--mono); font-size:11px; font-weight:600;
+  letter-spacing:.18em; text-transform:uppercase; color:var(--sig);
+  margin:24px 0 10px;
+}
+main h5{font-family:var(--mono); color:var(--muted)}
+
+main p{color:var(--muted); line-height:1.7; font-size:14.5px; max-width:74ch}
+main p + p{margin-top:10px}
+main ul, main ol{color:var(--muted); line-height:1.7; font-size:14.5px; max-width:74ch}
+main ul{padding-left:20px}
+main li{margin:4px 0}
+main li::marker{color:var(--muted-2)}
+main b, main strong{color:var(--text); font-weight:600}
+main em, main i{color:var(--muted)}
+main a{color:var(--first)}
+main a:hover{color:#a5e2ff}
+
+main code{
+  font-family:var(--mono); font-size:12.6px;
+  color:var(--sig); background:rgba(251,191,36,.07);
+  border:1px solid rgba(251,191,36,.16);
+  padding:1px 5px; border-radius:0;
+  word-break:break-word;
+}
+main pre code{background:none; border:0; padding:0; color:inherit; font-size:inherit}
+main h2 code, main h3 code, main h5 code{font-size:.9em}
+
+/* quick links row */
+.quick-links{display:flex; gap:10px; margin:22px 0 8px; flex-wrap:wrap}
+.quick-links a{
+  font-family:var(--mono); font-size:11px; font-weight:600;
+  letter-spacing:.11em; text-transform:uppercase;
+  color:var(--text); text-decoration:none;
+  padding:9px 14px; border:1px solid var(--line-2);
+  background:linear-gradient(180deg,#182029 0%,#0f151d 100%);
+  box-shadow:0 2px 0 0 #05080c, inset 0 1px 0 0 rgba(255,255,255,.045);
+  transition:border-color .16s, color .16s;
+}
+.quick-links a:hover{border-color:#3d4c5e; color:#fff; text-decoration:none}
+
+/* ============ ENDPOINT = TERMINAL WINDOW ============ */
+.endpoint{
+  position:relative;
+  background:var(--panel);
+  border:1px solid var(--line);
+  margin:20px 0 28px;
+  transition:border-color .18s ease, box-shadow .18s ease;
+}
+.endpoint::after{
+  content:""; position:absolute; inset:-1px; pointer-events:none;
+  background:
+    linear-gradient(var(--line-2),var(--line-2)) left top/9px 1px no-repeat,
+    linear-gradient(var(--line-2),var(--line-2)) left top/1px 9px no-repeat,
+    linear-gradient(var(--line-2),var(--line-2)) right bottom/9px 1px no-repeat,
+    linear-gradient(var(--line-2),var(--line-2)) right bottom/1px 9px no-repeat;
+  opacity:.9;
+}
+.endpoint:hover{border-color:#33404f; box-shadow:0 0 0 1px rgba(251,191,36,.08), 0 18px 44px -30px rgba(0,0,0,.9)}
+.endpoint-head{
+  display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap;
+  min-height:34px; padding:8px 14px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#141b25 0%,#0e1420 100%);
+  font-family:var(--mono); font-size:13px;
+}
+.verb{
+  font-family:var(--mono); font-size:9.5px; font-weight:700;
+  letter-spacing:.16em; text-transform:uppercase;
+  padding:3px 8px; border-radius:0; border:1px solid transparent;
+}
+.verb.get{color:var(--up); background:rgba(52,211,153,.10); border-color:rgba(52,211,153,.35)}
+.verb.post{color:var(--sig); background:rgba(251,191,36,.10); border-color:rgba(251,191,36,.38)}
+.verb.sse{color:var(--sig); background:rgba(251,191,36,.10); border-color:rgba(251,191,36,.38)}
+.path{
+  font-family:var(--mono); font-size:12.5px; font-weight:600;
+  letter-spacing:.02em; color:var(--text); word-break:break-all;
+}
+.auth-pill{
+  margin-left:auto; font-family:var(--mono); font-size:9px; font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase;
+  padding:3px 8px; border:1px solid var(--line-2); border-radius:0; white-space:nowrap;
+}
+.auth-pill.key{color:var(--up); border-color:rgba(52,211,153,.32); background:rgba(52,211,153,.07)}
+.auth-pill.pub{color:var(--muted-2); background:rgba(255,255,255,.02)}
+.auth-pill + .auth-pill{margin-left:0}
+.endpoint-body{padding:18px 18px 20px}
+.endpoint-body > p{font-size:14px}
+@media (max-width:640px){ .endpoint-body{padding:14px} }
+
+/* ============ CODE PANES ============ */
+.codewrap{position:relative; margin:10px 0 0}
+pre{
+  margin:0; padding:16px 18px; overflow-x:auto;
+  background:var(--bg-deep);
+  border:1px solid var(--line);
+  border-radius:0;
+  box-shadow:inset 0 1px 0 0 rgba(255,255,255,.02);
+  font-family:var(--mono); font-size:12.4px; line-height:1.72; color:#cbd6e4;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin; scrollbar-color:#26313f transparent;
+}
+pre::-webkit-scrollbar{height:8px}
+pre::-webkit-scrollbar-thumb{background:#1c2530}
+pre .c{color:var(--muted-2)}
+pre .k{color:#c084fc}
+pre .s{color:var(--up)}
+pre .n{color:#7dd3fc}
+.copybtn{
+  position:absolute; top:7px; right:7px; z-index:3;
+  font-family:var(--mono); font-size:9px; font-weight:600;
+  letter-spacing:.16em; text-transform:uppercase;
+  color:var(--muted-2); background:#10151d;
+  border:1px solid var(--line-2); padding:4px 8px; cursor:pointer;
+  opacity:0; transition:opacity .15s, color .15s, border-color .15s;
+}
+.codewrap:hover .copybtn, .copybtn:focus-visible{opacity:1}
+.copybtn:hover{color:var(--sig); border-color:rgba(251,191,36,.45)}
+.copybtn.done{color:var(--up); border-color:rgba(52,211,153,.5); opacity:1}
+
+/* ============ TABS ============ */
+.tabs{
+  display:flex; flex-wrap:wrap; gap:0;
+  margin:16px 0 0; padding:0; width:auto;
+  background:none; border:0; border-radius:0;
+}
+.tabs button{
+  font-family:var(--mono); font-size:10px; font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase;
+  padding:6px 12px; margin:0 -1px -1px 0;
+  border:1px solid var(--line); border-radius:0;
+  background:var(--panel2); color:var(--muted-2);
+  cursor:pointer; transition:.15s;
+}
+.tabs button:hover:not(.active){color:var(--text); border-color:var(--line-2)}
+.tabs button.active{background:var(--sig); border-color:var(--sig); color:#0a0e14; font-weight:700}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+.tab-pane .codewrap{margin-top:0}
+.tabs + .tab-pane .codewrap pre, .tab-pane pre{border-top-color:var(--line)}
+
+/* ============ TABLES = DATA GRID ============ */
+.tbl-scroll{
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+  margin:10px 0 16px; border:1px solid var(--line); background:var(--panel);
+  scrollbar-width:thin; scrollbar-color:#26313f transparent;
+}
+.tbl-scroll::-webkit-scrollbar{height:8px}
+.tbl-scroll::-webkit-scrollbar-thumb{background:#1c2530}
+main table, .param-table{
+  width:100%; border-collapse:collapse; margin:0;
+  font-size:13px; font-variant-numeric:tabular-nums;
+}
+main table th, .param-table th{
+  text-align:left; vertical-align:bottom;
+  padding:8px 12px; white-space:nowrap;
+  font-family:var(--mono); font-size:9.5px; font-weight:600;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--muted-2);
+  background:var(--panel2); border-bottom:1px solid var(--line);
+}
+main table td, .param-table td{
+  padding:9px 12px; vertical-align:top;
+  border-bottom:1px solid rgba(28,37,48,.75);
+  color:var(--muted); line-height:1.6;
+}
+main table tbody tr:last-child td{border-bottom:0}
+main table tbody tr{transition:background .14s ease}
+main table tbody tr:hover td{background:rgba(255,255,255,.022)}
+main table td.name, .param-table td.name{
+  font-family:var(--mono); font-size:12px; font-weight:600;
+  color:var(--up); white-space:nowrap;
+}
+main table td.type, .param-table td.type{
+  font-family:var(--mono); font-size:11.5px; color:var(--muted-2); white-space:nowrap;
+}
+main table td.desc, .param-table td.desc{color:var(--muted); white-space:normal; min-width:220px}
+.param-table .req{
+  font-family:var(--mono); font-size:8.5px; font-weight:700;
+  letter-spacing:.14em; text-transform:uppercase;
+  color:var(--down); margin-left:6px;
+}
+
+/* ============ CALLOUTS ============ */
+.callout{
+  background:rgba(125,211,252,.06);
+  border:1px solid var(--line); border-left:3px solid var(--first);
+  border-radius:0; padding:12px 16px; margin:16px 0;
+  font-size:13.6px; line-height:1.68; color:var(--muted); max-width:82ch;
+}
+.callout b{color:var(--first)}
+.callout.warn{background:rgba(251,191,36,.07); border-left-color:var(--sig)}
+.callout.warn b{color:var(--sig)}
+.callout code{font-size:12.2px}
+
+/* ============ FOOTER ============ */
+.docfoot{
+  border-top:1px solid var(--line); background:var(--bg-deep);
+  padding:22px 16px;
+  display:flex; flex-wrap:wrap; align-items:center; gap:12px 28px;
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--muted-2);
+}
+.docfoot a{color:var(--muted-2); text-decoration:none}
+.docfoot a:hover{color:var(--sig); text-decoration:none}
+.docfoot .right{margin-left:auto; display:flex; flex-wrap:wrap; gap:20px}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important}
+  html{scroll-behavior:auto}
+}
+
+/* ============ MOBILE NAV (hamburger + drawer) ============ */
+.nav__toggle-box{display:none}
+.nav__toggle{
+  display:none; flex-direction:column; justify-content:center; gap:5px;
+  width:48px; height:48px; padding:12px; margin-left:auto; cursor:pointer;
+  border:1px solid var(--line); background:var(--panel);
+}
+.nav__toggle span{display:block; height:2px; background:var(--text); transition:transform .18s, opacity .18s}
+@media (max-width:1020px){ .nav__toggle{display:flex} }
+.drawer{
+  position:fixed; inset:0; top:0; z-index:200;
+  background:rgba(10,14,20,.98);
+  display:none; overflow-y:auto; padding:80px 16px 40px;
+}
+body.drawer-open{overflow:hidden}
+body.drawer-open .drawer{display:block}
+.drawer a{
+  display:flex; align-items:center; gap:14px;
+  min-height:54px; padding:0 14px; margin-bottom:4px;
+  font-family:var(--mono); font-size:15px; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--text); text-decoration:none;
+  border:1px solid var(--line); background:var(--panel);
+}
+.drawer a i{font-style:normal; font-size:11px; color:var(--up); letter-spacing:.14em}
+.nav__toggle-box:checked + .nav__toggle span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.nav__toggle-box:checked + .nav__toggle span:nth-child(2){opacity:0}
+.nav__toggle-box:checked + .nav__toggle span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+@media (max-width:640px){ .key{min-height:44px} }
+</style>
+<script>/* first-touch acquisition capture - see landing.html for the commented version */(function(){try{if(localStorage.getItem("po_acq"))return;var q=new URLSearchParams(location.search),src=null;if(q.get("utm_source")){src=q.get("utm_source")+(q.get("utm_medium")?" / "+q.get("utm_medium"):"")+(q.get("utm_campaign")?" / "+q.get("utm_campaign"):"");}else if(q.get("gclid")){src="google / cpc";}else if(q.get("fbclid")){src="facebook / paid";}else if(document.referrer){try{src=new URL(document.referrer).hostname.replace(/^www\./,"");}catch(e){src="unknown"}if(src===location.hostname.replace(/^www\./,""))src=null;}else{src="direct";}if(src)localStorage.setItem("po_acq",JSON.stringify({s:String(src).slice(0,80),lp:location.pathname.slice(0,24),ts:Date.now()}).slice(0,120));}catch(e){}})();</script>
+</head>
+<body>
+
+<a class="skip" href="#intro">Skip to content</a>
+
+<div class="statusbar" role="status" aria-label="Service status">
+  <span class="led"><i></i>FEED LIVE</span>
+  <span class="sep"></span>
+  <span class="sb-hide">SESSION <b id="clock">00:00:00</b> UTC</span>
+  <span class="sep sb-hide"></span>
+  <span class="sb-hide">DOC <b>API REFERENCE</b></span>
+  <div class="sb-right">
+    <span class="sb-hide">TRANSPORT <b>REST / SSE / WS</b></span>
+    <span class="sep sb-hide"></span>
+    <span>BASE <b>pinnodds.com</b></span>
+    <span class="sep"></span>
+    <span>V1</span>
+  </div>
+</div>
+
+<nav class="nav">
+  <a class="logo" href="/" aria-label="pinnodds home">
+    <span class="logo__mark" aria-hidden="true"><span></span></span>
+    pinn<em>odds</em>
+  </a>
+  <div class="nav__links">
+    <a href="/">Home</a>
+    <a href="/docs" aria-current="page">Docs</a>
+    <a href="/blog">Blog</a>
+    <a href="/panel">Panel</a>
+    <a href="/cdn-cgi/l/email-protection#acc5c2cac3ecdcc5c2c2c3c8c8df82cfc3c1">Support</a>
+  </div>
+  <div class="nav__cta">
+    <a class="key key--ghost key--sm" href="/panel">Dashboard</a>
+    <a class="key key--primary key--sm" href="/">Get free trial key</a>
+      <input type="checkbox" id="navT" class="nav__toggle-box" aria-hidden="true">
+    <label for="navT" class="nav__toggle" aria-label="Open menu" role="button" tabindex="0">
+      <span></span><span></span><span></span>
+    </label>
+  </div>
+</nav>
+<div class="drawer" id="navDrawer" aria-label="Site navigation">
+    <a href="/"><i>01</i>Home</a>
+    <a href="#top"><i>02</i>Docs top</a>
+    <a href="/blog"><i>03</i>Blog</a>
+    <a href="/panel"><i>04</i>Panel</a>
+    <a href="/pinnacle-websocket-api"><i>05</i>WebSocket API</a>
+    <a href="/cdn-cgi/l/email-protection#432a2d252c03332a2d2d2c2727306d202c2e"><i>06</i>Support</a>
+</div>
+
+<div class="shell">
+<aside>
+  <a class="brand" href="/">Pinnacle<b>Odds</b>API</a>
+
+  <div class="toc-h">Getting started</div>
+  <a href="#intro">Introduction</a>
+  <a href="#auth">Authentication</a>
+  <a href="#ratelimits">Rate limits</a>
+  <a href="#errors">Errors</a>
+
+  <div class="toc-h">Live odds</div>
+  <a class="method" href="#markets"><span class="verb">GET</span>/kit/v1/markets</a>
+  <a class="method" href="#details"><span class="verb">GET</span>/kit/v1/details</a>
+
+  <div class="toc-h">Prematch odds</div>
+  <a class="method" href="#prematch-fixtures"><span class="verb">GET</span>/kit/v1/prematch/fixtures</a>
+  <a class="method" href="#prematch-markets"><span class="verb">GET</span>/kit/v1/prematch/markets</a>
+  <a class="method" href="#prematch-lines"><span class="verb">GET</span>/kit/v1/prematch/lines</a>
+  <a class="method" href="#specials"><span class="verb" style="background:#3a2a0e; color:#fbbf24">NEW</span>Player props &amp; specials</a>
+
+  <div class="toc-h">Dropping odds</div>
+  <a class="method" href="#api-drops"><span class="verb">GET</span>/api/drops</a>
+  <a class="method" href="#sse-live"><span class="verb">SSE</span>/odds-drop</a>
+  <a class="method" href="#sse-prematch"><span class="verb">SSE</span>/odds-drop-prematch</a>
+  <a class="method" href="#ws-feed"><span class="verb" style="background:#0e4d2a; color:#4ade80">WS</span>/ws/feed <span style="color:#fbbf24; font-size:10px">$99/mo add-on</span></a>
+  <a class="method" href="#prematch-recheck" style="padding-left: 20px; font-size: 11px">↳ <code>?recheck=N</code> stable filter</a>
+
+  <div class="toc-h">Services</div>
+  <a class="method" href="#sportsmeld"><span class="verb" style="background:#3a2a0e; color:#fbbf24">NEW</span>SportsMeld matching <span style="color:#fbbf24; font-size:10px">free trial</span></a>
+
+  <div class="toc-h">AI assistants</div>
+  <a class="method" href="#mcp"><span class="verb" style="background:#1e3a5f; color:#93c5fd">MCP</span>mcp.pinnodds.com <span style="color:#fbbf24; font-size:10px">new</span></a>
+
+  <div class="toc-h">Status</div>
+  <a class="method" href="#health"><span class="verb">GET</span>/health</a>
+  <a class="method" href="#ping"><span class="verb">GET</span>/ping</a>
+
+  <div class="toc-h">Reference</div>
+  <a href="#sport-ids">Sport IDs</a>
+  <a href="#market-types">Market types</a>
+  <a href="#event-shape">Event object</a>
+  <a href="#staleness">Detecting stale prices</a>
+  <a href="#live-state">Live state object</a>
+  <a href="#affiliate">Affiliate program</a>
+</aside>
+
+<main>
+
+<details class="mobile-toc">
+  <summary>Contents</summary>
+  <nav>
+    <a href="#auth">Authentication</a>
+    <a href="#ratelimits">Rate limits</a>
+    <a href="#errors">Errors</a>
+    <a href="#markets">GET /kit/v1/markets</a>
+    <a href="#details">GET /kit/v1/details</a>
+    <a href="#prematch-fixtures">GET /kit/v1/prematch/fixtures</a>
+    <a href="#prematch-markets">GET /kit/v1/prematch/markets</a>
+    <a href="#prematch-lines">GET /kit/v1/prematch/lines</a>
+    <a href="#specials">Player props &amp; specials</a>
+    <a href="#api-drops">GET /api/drops</a>
+    <a href="#sse-live">SSE /odds-drop</a>
+    <a href="#sse-prematch">SSE /odds-drop-prematch</a>
+    <a href="#ws-feed">WS /ws/feed</a>
+    <a href="#sportsmeld">SportsMeld matching</a>
+    <a href="#mcp">MCP server (Claude, Cursor, Codex)</a>
+    <a href="#health">GET /health</a>
+    <a href="#sport-ids">Sport IDs</a>
+    <a href="#event-shape">Event object</a>
+    <a href="#staleness">Detecting stale prices</a>
+  </nav>
+</details>
+
+<h1>Pinnacle API Documentation</h1>
+<p style="font-size: 16px;">Live and prematch odds from Pinnacle, plus a real-time dropping-odds engine — delivered over a REST API that mirrors popular third-party formats, with optional Server-Sent Events streams for push-based clients. Underlying live feed is MQTT WebSocket so updates arrive within ~200 ms.</p>
+
+<div class="quick-links">
+  <a href="/">← Landing</a>
+  <a href="/panel">Dashboard</a>
+  <a href="#markets">Jump to /markets</a>
+  <a href="#specials">Player props &amp; specials</a>
+</div>
+
+<!-- ─────────────────── Intro ─────────────────── -->
+<h2 id="intro">Introduction</h2>
+<p>Base URL for this deployment: <code id="baseUrl">https://pinnodds.com</code>. Every endpoint below is relative to that host. All responses are JSON.</p>
+<p>All requests are authenticated with an <b>API key</b> — your key <em>is</em> your login; there's no username or password. Get a free trial key in one click from the <a href="/">landing page</a>.</p>
+
+<div class="callout">
+  <b>Drop-in compatibility.</b> The <code>/kit/v1/*</code> endpoints mirror the shape of common third-party Pinnacle API formats. Swap the base URL + key in your existing client and it should just work.
+</div>
+
+<div class="callout" style="background: rgba(74,222,128,.06); border-left-color: var(--accent);">
+  <b style="color: var(--accent);">Integrating with an AI assistant?</b> Point Cursor / Claude / ChatGPT at <a href="/llms-full.txt"><code>/llms-full.txt</code></a> — full API reference in one plain-text fetch, optimized for LLM context windows. The shorter <a href="/llms.txt"><code>/llms.txt</code></a> index is auto-discovered by tools that probe the root.
+</div>
+
+<!-- ─────────────────── Auth ─────────────────── -->
+<h2 id="auth">Authentication</h2>
+<p>Pass your API key in one of three ways, in priority order:</p>
+<ol style="color: var(--muted); line-height: 1.8; font-size: 14px;">
+  <li><code>x-portal-apikey</code> header (recommended — matches legacy third-party APIs)</li>
+  <li><code>x-api-key</code> header</li>
+  <li><code>?key=</code> query parameter (useful for browsers / one-offs)</li>
+</ol>
+<pre><span class="c"># Header (recommended)</span>
+curl -H "x-portal-apikey: <span class="s">YOUR_KEY</span>" \
+  "https://pinnodds.com/kit/v1/markets?sport_id=2&amp;event_type=live"
+
+<span class="c"># Query string</span>
+curl "https://pinnodds.com/kit/v1/markets?sport_id=2&amp;event_type=live&amp;key=<span class="s">YOUR_KEY</span>"</pre>
+
+<!-- ─────────────────── Rate limits ─────────────────── -->
+<h2 id="ratelimits">Rate limits</h2>
+<p>Limits are enforced per-key across fixed windows. When you exceed one, you get <code>429</code> with a <code>Retry-After</code> header.</p>
+<table class="param-table">
+  <thead><tr><th>Plan</th><th>Price</th><th>Second</th><th>Minute</th><th>Hour</th><th>Day</th><th>Total</th><th>SSE drops</th></tr></thead>
+  <tbody>
+    <tr><td class="name">Trial</td><td>$0</td><td>—</td><td>20</td><td>100</td><td>100</td><td>Unlimited</td><td style="color:var(--muted)">—</td></tr>
+    <tr><td class="name">Stream</td><td>$99/mo</td><td>—</td><td>20</td><td>100</td><td>100</td><td>Unlimited</td><td style="color:var(--accent); font-weight:600">✓ Included</td></tr>
+    <tr><td class="name">Pro</td><td>$99/mo</td><td>10 req/sec</td><td>—</td><td>—</td><td>—</td><td>Unlimited</td><td style="color:var(--muted)">—</td></tr>
+    <tr><td class="name">Pro + SSE</td><td>$149/mo</td><td>10 req/sec</td><td>—</td><td>—</td><td>—</td><td>Unlimited</td><td style="color:var(--accent); font-weight:600">✓ Included</td></tr>
+    <tr><td class="name">Scale</td><td>$229/mo</td><td>30 req/sec</td><td>—</td><td>—</td><td>—</td><td>Unlimited</td><td style="color:var(--accent); font-weight:600">✓ Included</td></tr>
+  </tbody>
+</table>
+<p style="color: var(--muted); font-size: 13px; margin-top: 6px"><b>Trial</b> is capped at <b>100 requests per day</b> total — once you exceed it you'll get <code>429</code> with <code>window=day</code> until UTC midnight rolls over. <b>Stream</b> ($99/mo) gives you push SSE drops only. <b>Pro</b> ($99/mo) gives you REST 10 req/sec only. <b>Pro + SSE</b> ($149/mo) bundles both — saves $49 vs buying separately.</p>
+<pre><span class="c"># 429 response when you hit a limit</span>
+HTTP/1.1 429 Too Many Requests
+Retry-After: 41
+Content-Type: application/json
+
+{
+  <span class="k">"error"</span>: <span class="s">"rate_limited"</span>,
+  <span class="k">"window"</span>: <span class="s">"minute"</span>,
+  <span class="k">"limit"</span>: <span class="n">20</span>,
+  <span class="k">"retry_after_ms"</span>: <span class="n">41052</span>
+}</pre>
+
+<!-- ─────────────────── Errors ─────────────────── -->
+<h2 id="errors">Errors</h2>
+<table class="param-table">
+  <thead><tr><th>Status</th><th>Error code</th><th>When it happens</th></tr></thead>
+  <tbody>
+    <tr><td class="type">400</td><td class="name">—</td><td class="desc">Malformed or missing required parameter</td></tr>
+    <tr><td class="type">401</td><td class="name">missing_key</td><td class="desc">No API key was sent</td></tr>
+    <tr><td class="type">401</td><td class="name">invalid_key</td><td class="desc">Key not in our DB (typo, deleted, or regenerated)</td></tr>
+    <tr><td class="type">401</td><td class="name">Unauthorized</td><td class="desc">SSE token missing or rejected (only on <code>/odds-drop*</code> streams)</td></tr>
+    <tr><td class="type">403</td><td class="name">plan_lacks_sse</td><td class="desc">Key is valid but the plan doesn't include SSE streams (Stream, Pro&nbsp;+&nbsp;SSE, Scale only)</td></tr>
+    <tr><td class="type">403</td><td class="name">plan_lacks_ws</td><td class="desc">Key is valid but the WebSocket add-on isn't active on the account</td></tr>
+    <tr><td class="type">413</td><td class="name">payload_too_large</td><td class="desc">Request body over 64&nbsp;KB (POST endpoints)</td></tr>
+    <tr><td class="type">429</td><td class="name">rate_limited</td><td class="desc">Key exceeded its rate limit — honor the <code>Retry-After</code> header. Also sent on connection floods to SSE/WS endpoints</td></tr>
+    <tr><td class="type">500</td><td class="name">internal</td><td class="desc">Unexpected server error — safe to retry with backoff</td></tr>
+    <tr><td class="type">503</td><td class="name">prematch_disabled</td><td class="desc">Prematch endpoint hit while the prematch ingester is off</td></tr>
+  </tbody>
+</table>
+
+<!-- ─────────────────── LIVE ODDS ─────────────────── -->
+<h2>Live odds</h2>
+<p>Snapshot of every event currently in-play. Updates arrive via the upstream MQTT WebSocket so each call returns fresh prices (typical lag &lt;200 ms).</p>
+
+<!-- /kit/v1/markets -->
+<div class="endpoint" id="markets">
+  <div class="endpoint-head">
+    <span class="verb get">GET</span>
+    <span class="path">/kit/v1/markets</span>
+    <span class="auth-pill key">API key</span>
+  </div>
+  <div class="endpoint-body">
+    <p>Returns every event for a sport, with all markets (moneyline, spreads, totals, team totals) across every period (match, 1st half, 2nd half, etc.). Live by default; pass <code>event_type=prematch</code> to switch feeds.</p>
+    <p><b>Query parameters</b></p>
+    <table class="param-table">
+      <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="name">sport_id <span class="req">required</span></td><td class="type">integer</td><td class="desc">Dropping-odds sport id. See <a href="#sport-ids">Sport IDs</a>.</td></tr>
+        <tr><td class="name">event_type</td><td class="type">"live" | "prematch"</td><td class="desc">Defaults to <code>live</code>. Pass <code>prematch</code> to receive prematch fixtures with the same response envelope. Both flavors return identical event shape — only <code>event_type</code> on each event differs. Equivalent to <a href="#prematch-fixtures"><code>/kit/v1/prematch/fixtures</code></a> with that param set.</td></tr>
+        <tr><td class="name">since</td><td class="type">integer</td><td class="desc">Return only events that changed since this <code>last</code> value (incremental polling).</td></tr>
+        <tr><td class="name">include_specials</td><td class="type">1 | nested</td><td class="desc">Include special-market events (Player Props, Team Props, Exact Scores, futures). <code>1</code> = flat extra rows linked by <code>parent_id</code> (delta-friendly); <code>nested</code> = grouped under each parent event's <code>specials</code> array (one row per match). Off by default. See <a href="#specials">Player props &amp; specials</a>.</td></tr>
+        <tr><td class="name">is_have_odds</td><td class="type">0 | 1</td><td class="desc">Legacy compat — accepted and ignored. We always return events with odds.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout" style="margin: 8px 0 12px; font-size: 12px; padding: 10px 14px;">
+      <b>Tip.</b> A live and a prematch call return the same envelope and the same per-event field shape — only the <code>event_type</code> on each event differs. Existing client code that iterates <code>events[*].periods.num_0</code> works for both feeds without branching.
+    </div>
+    <div class="tabs" data-group="markets">
+      <button class="active" data-tab="curl">curl</button>
+      <button data-tab="js">Node.js</button>
+      <button data-tab="py">Python</button>
+      <button data-tab="go">Go</button>
+      <button data-tab="php">PHP</button>
+    </div>
+    <div class="tab-pane active" data-group="markets" data-tab="curl">
+<pre>curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
+  "https://pinnodds.com/kit/v1/markets?sport_id=2&amp;event_type=live"</pre>
+    </div>
+    <div class="tab-pane" data-group="markets" data-tab="js">
+<pre><span class="k">const</span> res = <span class="k">await</span> fetch(
+  <span class="s">`${BASE}/kit/v1/markets?sport_id=2&amp;event_type=live`</span>,
+  { headers: { <span class="s">"x-portal-apikey"</span>: KEY } }
+);
+<span class="k">const</span> { events, last } = <span class="k">await</span> res.json();</pre>
+    </div>
+    <div class="tab-pane" data-group="markets" data-tab="py">
+<pre><span class="k">import</span> requests
+r = requests.get(
+  <span class="s">f"{BASE}/kit/v1/markets"</span>,
+  params={<span class="s">"sport_id"</span>: <span class="n">2</span>, <span class="s">"event_type"</span>: <span class="s">"live"</span>},
+  headers={<span class="s">"x-portal-apikey"</span>: KEY},
+)
+data = r.json()</pre>
+    </div>
+    <div class="tab-pane" data-group="markets" data-tab="go">
+<pre><span class="k">package</span> main
+
+<span class="k">import</span> (
+  <span class="s">"encoding/json"</span>
+  <span class="s">"net/http"</span>
+)
+
+req, _ := http.NewRequest(<span class="s">"GET"</span>, BASE+<span class="s">"/kit/v1/markets?sport_id=2&amp;event_type=live"</span>, <span class="k">nil</span>)
+req.Header.Set(<span class="s">"x-portal-apikey"</span>, KEY)
+resp, _ := http.DefaultClient.Do(req)
+<span class="k">defer</span> resp.Body.Close()
+
+<span class="k">var</span> out <span class="k">struct</span> { Events []map[<span class="k">string</span>]<span class="k">interface</span>{} <span class="s">`json:"events"`</span>; Last int64 <span class="s">`json:"last"`</span> }
+json.NewDecoder(resp.Body).Decode(&amp;out)</pre>
+    </div>
+    <div class="tab-pane" data-group="markets" data-tab="php">
+<pre><span class="k">&lt;?php</span>
+$ch = curl_init(BASE . <span class="s">"/kit/v1/markets?sport_id=2&amp;event_type=live"</span>);
+curl_setopt_array($ch, [
+  CURLOPT_RETURNTRANSFER =&gt; <span class="k">true</span>,
+  CURLOPT_HTTPHEADER     =&gt; [<span class="s">"x-portal-apikey: $KEY"</span>],
+]);
+$body = curl_exec($ch);
+curl_close($ch);
+$data = json_decode($body, <span class="k">true</span>);</pre>
+    </div>
+    <p style="margin-top:14px"><b>Response</b> — see <a href="#event-shape">Event object</a></p>
+<pre>{
+  <span class="k">"sport_id"</span>: <span class="n">2</span>,
+  <span class="k">"sport_name"</span>: <span class="s">"Tennis"</span>,
+  <span class="k">"last"</span>: <span class="n">141</span>,
+  <span class="k">"last_call"</span>: <span class="n">141</span>,
+  <span class="k">"events"</span>: [
+    { <span class="c">/* see Event object below */</span> }
+  ]
+}</pre>
+  </div>
+</div>
+
+<!-- /kit/v1/details -->
+<div class="endpoint" id="details">
+  <div class="endpoint-head">
+    <span class="verb get">GET</span>
+    <span class="path">/kit/v1/details</span>
+    <span class="auth-pill key">API key</span>
+  </div>
+  <div class="endpoint-body">
+    <p>Fetch a single event by ID. Same event shape as <code>/kit/v1/markets</code>.</p>
+    <table class="param-table">
+      <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="name">event_id <span class="req">required</span></td><td class="type">integer</td><td class="desc">Arcadia matchup ID from a previous <code>/markets</code> response.</td></tr>
+      </tbody>
+    </table>
+<pre>curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
+  "https://pinnodds.com/kit/v1/details?event_id=<span class="n">1628594960</span>"</pre>
+  </div>
+</div>
+
+<!-- ─────────────────── PREMATCH ODDS ─────────────────── -->
+<h2>Prematch odds</h2>
+<p>Pinnacle's prematch lines for upcoming fixtures. Prices are pushed as Pinnacle publishes them (MQTT <code>/pre</code>), and a separate REST poller re-reads the full board about every 15 s for fixtures that appear or disappear. Stored independently from the live feed — querying it never starves the live snapshot.</p>
+
+<div class="callout">
+  <b>When to use which.</b> Use <code>/kit/v1/markets</code> for in-play prices, <code>/kit/v1/prematch/fixtures</code> for upcoming-event lines. The two surfaces share the same sport IDs and event-object shape so client code can branch on a single field.
+</div>
+
+<!-- /kit/v1/prematch/fixtures -->
+<div class="endpoint" id="prematch-fixtures">
+  <div class="endpoint-head">
+    <span class="verb get">GET</span>
+    <span class="path">/kit/v1/prematch/fixtures</span>
+    <span class="auth-pill key">API key</span>
+  </div>
+  <div class="endpoint-body">
+    <p>Every prematch fixture for a sport, with its current full markets/periods structure. Mirrors the shape of <code>/kit/v1/markets</code> — only the <code>event_type</code> field differs.</p>
+    <p><b>Query parameters</b></p>
+    <table class="param-table">
+      <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="name">sport_id <span class="req">required</span></td><td class="type">integer</td><td class="desc">Dropping-odds sport id. See <a href="#sport-ids">Sport IDs</a>.</td></tr>
+        <tr><td class="name">since</td><td class="type">integer</td><td class="desc">Return only events that changed since this <code>last</code> value (incremental polling).</td></tr>
+        <tr><td class="name">include_specials</td><td class="type">1 | nested</td><td class="desc">Include special-market events (Player Props, Team Props, Exact Scores, futures). <code>1</code> = flat extra rows linked by <code>parent_id</code> (delta-friendly); <code>nested</code> = grouped under each parent event's <code>specials</code> array (one row per match). Off by default. See <a href="#specials">Player props &amp; specials</a>.</td></tr>
+      </tbody>
+    </table>
+    <div class="tabs" data-group="pf">
+      <button class="active" data-tab="curl">curl</button>
+      <button data-tab="js">Node.js</button>
+      <button data-tab="py">Python</button>
+      <button data-tab="go">Go</button>
+      <button data-tab="php">PHP</button>
+    </div>
+    <div class="tab-pane active" data-group="pf" data-tab="curl">
+<pre>curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
+  "https://pinnodds.com/kit/v1/prematch/fixtures?sport_id=1"</pre>
+    </div>
+    <div class="tab-pane" data-group="pf" data-tab="js">
+<pre><span class="k">const</span> r = <span class="k">await</span> fetch(
+  <span class="s">`${BASE}/kit/v1/prematch/fixtures?sport_id=1`</span>,
+  { headers: { <span class="s">"x-portal-apikey"</span>: KEY } }
+);
+<span class="k">const</span> { events } = <span class="k">await</span> r.json();
+<span class="k">const</span> withOdds = events.filter(e =&gt; e.is_have_odds &amp;&amp; e.periods?.num_0);</pre>
+    </div>
+    <div class="tab-pane" data-group="pf" data-tab="py">
+<pre><span class="k">import</span> requests
+r = requests.get(
+  <span class="s">f"{BASE}/kit/v1/prematch/fixtures"</span>,
+  params={<span class="s">"sport_id"</span>: <span class="n">1</span>},
+  headers={<span class="s">"x-portal-apikey"</span>: KEY},
+)
+events = r.json()[<span class="s">"events"</span>]
+with_odds = [e <span class="k">for</span> e <span class="k">in</span> events <span class="k">if</span> e.get(<span class="s">"is_have_odds"</span>) <span class="k">and</span> e.get(<span class="s">"periods"</span>, {}).get(<span class="s">"num_0"</span>)]</pre>
+    </div>
+    <div class="tab-pane" data-group="pf" data-tab="go">
+<pre>req, _ := http.NewRequest(<span class="s">"GET"</span>, BASE+<span class="s">"/kit/v1/prematch/fixtures?sport_id=1"</span>, <span class="k">nil</span>)
+req.Header.Set(<span class="s">"x-portal-apikey"</span>, KEY)
+resp, _ := http.DefaultClient.Do(req)
+<span class="k">defer</span> resp.Body.Close()
+
+<span class="k">var</span> out <span class="k">struct</span> { Events []map[<span class="k">string</span>]<span class="k">interface</span>{} <span class="s">`json:"events"`</span> }
+json.NewDecoder(resp.Body).Decode(&amp;out)
+<span class="c">// out.Events[i] has periods, money_line, spreads, totals, team_total, etc.</span></pre>
+    </div>
+    <div class="tab-pane" data-group="pf" data-tab="php">
+<pre><span class="k">&lt;?php</span>
+$ch = curl_init(BASE . <span class="s">"/kit/v1/prematch/fixtures?sport_id=1"</span>);
+curl_setopt_array($ch, [
+  CURLOPT_RETURNTRANSFER =&gt; <span class="k">true</span>,
+  CURLOPT_HTTPHEADER     =&gt; [<span class="s">"x-portal-apikey: $KEY"</span>],
+]);
+$data = json_decode(curl_exec($ch), <span class="k">true</span>);
+curl_close($ch);
+$with_odds = array_filter($data[<span class="s">"events"</span>], <span class="k">fn</span>($e) =&gt; ($e[<span class="s">"is_have_odds"</span>] ?? <span class="k">false</span>) &amp;&amp; isset($e[<span class="s">"periods"</span>][<span class="s">"num_0"</span>]));</pre>
+    </div>
+    <p style="margin-top:14px"><b>Response</b> — same shape as <a href="#markets"><code>/kit/v1/markets</code></a> with <code>event_type: "prematch"</code> on each event:</p>
+<pre><span class="c"># → 200 OK — same envelope as /kit/v1/markets, only event_type differs</span>
+{
+  <span class="k">"sport_id"</span>: <span class="n">1</span>,
+  <span class="k">"sport_name"</span>: <span class="s">"Soccer"</span>,
+  <span class="k">"last"</span>: <span class="n">523864</span>,
+  <span class="k">"last_call"</span>: <span class="n">523864</span>,
+  <span class="k">"events"</span>: [
+    {
+      <span class="k">"event_id"</span>: <span class="n">1629513753</span>,
+      <span class="k">"sport_id"</span>: <span class="n">1</span>,
+      <span class="k">"league_id"</span>: <span class="n">5488</span>,
+      <span class="k">"league_name"</span>: <span class="s">"Italy - Serie A"</span>,
+      <span class="k">"home"</span>: <span class="s">"Cremonese"</span>,
+      <span class="k">"away"</span>: <span class="s">"Lazio"</span>,
+      <span class="k">"starts"</span>: <span class="s">"2026-05-04T16:30:00Z"</span>,
+      <span class="k">"start_ts"</span>: <span class="s">"2026-05-04T16:30:00Z"</span>,  <span class="c">// alias of starts (back-compat)</span>
+      <span class="k">"event_type"</span>: <span class="s">"prematch"</span>,
+      <span class="k">"is_have_odds"</span>: <span class="k">true</span>,
+      <span class="k">"is_have_periods"</span>: <span class="k">true</span>,
+      <span class="k">"periods"</span>: {
+        <span class="k">"num_0"</span>: {
+          <span class="k">"number"</span>: <span class="n">0</span>,
+          <span class="k">"description"</span>: <span class="s">"Game"</span>,
+          <span class="k">"money_line"</span>: { <span class="k">"home"</span>: <span class="n">2.45</span>, <span class="k">"draw"</span>: <span class="n">3.30</span>, <span class="k">"away"</span>: <span class="n">2.90</span> },
+          <span class="k">"spreads"</span>: { <span class="s">"-0.5"</span>: { <span class="k">"hdp"</span>: -<span class="n">0.5</span>, <span class="k">"home"</span>: <span class="n">2.06</span>, <span class="k">"away"</span>: <span class="n">1.82</span>, <span class="k">"max"</span>: <span class="n">500</span> } },
+          <span class="k">"totals"</span>:  { <span class="s">"2.5"</span>:  { <span class="k">"points"</span>: <span class="n">2.5</span>, <span class="k">"over"</span>: <span class="n">1.90</span>, <span class="k">"under"</span>: <span class="n">1.98</span>, <span class="k">"max"</span>: <span class="n">500</span> } },
+          <span class="k">"team_total"</span>: { <span class="k">"home"</span>: { <span class="k">"points"</span>: <span class="n">1.5</span>, <span class="k">"over"</span>: <span class="n">1.86</span>, <span class="k">"under"</span>: <span class="n">2.00</span> } },
+          <span class="k">"meta"</span>: { <span class="k">"number"</span>: <span class="n">0</span>, <span class="k">"max_total"</span>: <span class="n">500</span>, <span class="k">"home_score"</span>: <span class="n">0</span>, <span class="k">"away_score"</span>: <span class="n">0</span> }
+        }
+        <span class="c">// num_1 (1st half), num_2 (2nd half), etc. when offered</span>
+      },
+      <span class="k">"status"</span>: <span class="s">"pending"</span>
+    }
+  ]
+}</pre>
+  </div>
+</div>
+
+<!-- /kit/v1/prematch/markets -->
+<div class="endpoint" id="prematch-markets">
+  <div class="endpoint-head">
+    <span class="verb get">GET</span>
+    <span class="path">/kit/v1/prematch/markets</span>
+    <span class="auth-pill key">API key</span>
+  </div>
+  <div class="endpoint-body">
+    <p>Full markets payload for a single prematch event — every period, money line, spread, total, team total. Use this once you've picked an event from <code>/prematch/fixtures</code>.</p>
+    <table class="param-table">
+      <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="name">event_id <span class="req">required</span></td><td class="type">integer</td><td class="desc">Pinnacle matchup ID.</td></tr>
+      </tbody>
+    </table>
+<pre>curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
+  "https://pinnodds.com/kit/v1/prematch/markets?event_id=<span class="n">1629513753</span>"</pre>
+  </div>
+</div>
+
+<!-- /kit/v1/prematch/lines -->
+<div class="endpoint" id="prematch-lines">
+  <div class="endpoint-head">
+    <span class="verb get">GET</span>
+    <span class="path">/kit/v1/prematch/lines</span>
+    <span class="auth-pill key">API key</span>
+  </div>
+  <div class="endpoint-body">
+    <p>Line view for a single prematch event, optionally narrowed to one market type. Returns the same <code>periods</code> structure (<code>num_0</code>, <code>num_1</code>, …) as <code>/markets</code>; with <code>market_type</code> set, each period carries only that market — a lighter payload, ideal for tickers.</p>
+    <table class="param-table">
+      <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="name">event_id <span class="req">required</span></td><td class="type">integer</td><td class="desc">Pinnacle matchup ID.</td></tr>
+        <tr><td class="name">market_type</td><td class="type">string</td><td class="desc">Filter to one market: <code>money_line</code> | <code>spreads</code> | <code>totals</code> | <code>team_total</code>. Omit for all markets.</td></tr>
+      </tbody>
+    </table>
+<pre>curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
+  "https://pinnodds.com/kit/v1/prematch/lines?event_id=<span class="n">1629513753</span>&amp;market_type=totals"</pre>
+  </div>
+</div>
+
+<!-- ─────────────────── SPECIALS / PLAYER PROPS ─────────────────── -->
+<h2 id="specials">Player props &amp; specials</h2>
+<p>Beyond the main match markets, we carry Pinnacle's <b>special markets</b>: <b>Player Props</b> (anytime/first goalscorer, "player X to score", player to be booked), <b>Team Props</b> (HT/FT, winning margin, exact total goals, odd/even, 3-way handicaps, "team to score" …), <b>Exact Scores</b> (correct score), and <b>tournament futures</b> (to reach the final, outrights). Each special is its own event row with its own <code>event_id</code>, linked to the main match by <code>parent_id</code>.</p>
+
+<div class="endpoint">
+  <div class="endpoint-head">
+    <span class="verb get">GET</span>
+    <span class="path">/kit/v1/prematch/fixtures?include_specials=1</span>
+    <span class="auth-pill key">API key</span>
+  </div>
+  <div class="endpoint-body">
+    <p>Specials are <b>excluded by default</b> so existing integrations keep their payload size — opt in with <code>include_specials=1</code> (flat rows, cheapest with <code>?since</code> polling) or <code>include_specials=nested</code> (specials grouped under each parent event's <code>specials</code> array — one row per match) on <a href="#prematch-fixtures"><code>/kit/v1/prematch/fixtures</code></a> or <a href="#markets"><code>/kit/v1/markets</code></a>. To fetch a single special's prices, pass its <code>event_id</code> to <a href="#prematch-markets"><code>/kit/v1/prematch/markets</code></a> — no flag needed there.</p>
+    <p><b>Special-row fields</b> (on top of the standard event fields):</p>
+    <table class="param-table">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="name">special</td><td class="type">string</td><td class="desc">Market description, e.g. <code>"Anytime Goalscorer"</code>, <code>"Mohamed Salah To Score"</code>, <code>"Winning Margin"</code>.</td></tr>
+        <tr><td class="name">special_category</td><td class="type">string</td><td class="desc"><code>"Player Props"</code> | <code>"Team Props"</code> | <code>"Exact Scores"</code> | <code>"Futures"</code> | …</td></tr>
+        <tr><td class="name">special_units</td><td class="type">string</td><td class="desc">Units the outcomes are counted in (e.g. <code>"Regular"</code>, <code>"Corners"</code>, <code>"Runs"</code>).</td></tr>
+        <tr><td class="name">parent_id</td><td class="type">integer</td><td class="desc">The main match's <code>event_id</code> — group a fixture's specials by this.</td></tr>
+        <tr><td class="name">special_markets</td><td class="type">object</td><td class="desc">Named-outcome prices per period: <code>{"num_0": [{type, key, side, max_risk, prices: [{name, participant_id, points, price}]}]}</code>. <code>price</code> is decimal odds; <code>name</code> is the outcome ("Mohamed Salah", "Yes", "2-1", "4+"); <code>max_risk</code> is Pinnacle's max stake for the market.</td></tr>
+      </tbody>
+    </table>
+    <p><b>Example</b> — player props for Australia vs Egypt (main event <code>1632164518</code>):</p>
+<pre>curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
+  "https://pinnodds.com/kit/v1/prematch/fixtures?sport_id=<span class="n">1</span>&amp;include_specials=<span class="n">1</span>"
+<span class="c"># → rows with parent_id 1632164518 include:</span>
+<span class="c">#   1632190502  "Anytime Goalscorer"        (Player Props)</span>
+<span class="c">#   1632190468  "First Goalscorer"          (Player Props)</span>
+<span class="c">#   1632278803  "Mohamed Salah To Score"    (Player Props)</span>
+<span class="c">#   1632181240  "Winning Margin"            (Team Props)  … ~50 more</span>
+
+curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
+  "https://pinnodds.com/kit/v1/prematch/markets?event_id=<span class="n">1632278803</span>"</pre>
+<pre>{
+  <span class="k">"events"</span>: [{
+    <span class="k">"event_id"</span>: <span class="n">1632278803</span>,
+    <span class="k">"home"</span>: <span class="s">"Australia"</span>, <span class="k">"away"</span>: <span class="s">"Egypt"</span>,
+    <span class="k">"parent_id"</span>: <span class="n">1632164518</span>,
+    <span class="k">"special"</span>: <span class="s">"Mohamed Salah To Score"</span>,
+    <span class="k">"special_category"</span>: <span class="s">"Player Props"</span>,
+    <span class="k">"special_markets"</span>: {
+      <span class="k">"num_0"</span>: [{
+        <span class="k">"type"</span>: <span class="s">"moneyline"</span>, <span class="k">"max_risk"</span>: <span class="n">1000</span>,
+        <span class="k">"prices"</span>: [
+          { <span class="k">"name"</span>: <span class="s">"No"</span>,  <span class="k">"price"</span>: <span class="n">1.33</span> },
+          { <span class="k">"name"</span>: <span class="s">"Yes"</span>, <span class="k">"price"</span>: <span class="n">3.43</span> }
+        ]
+      }]
+    }
+  }]
+}</pre>
+    <div class="callout" style="margin: 8px 0 12px; font-size: 12px; padding: 10px 14px;">
+      <b>Scope notes.</b> Specials do <b>not</b> fire on the <a href="#sse-live">SSE drop streams</a> (BTTS and Draw&nbsp;No&nbsp;Bet remain the only alerting specials); their price moves <em>do</em> appear on <a href="#api-drops"><code>/api/drops</code></a> with <code>participant_name</code> set. Specials are thin markets — check <code>max_risk</code> before sizing. Like all prematch rows, a special's ID dies at kickoff.
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────── DROPPING ODDS ─────────────────── -->
+<h2>Dropping odds</h2>
+<p>Detect price movements ("drops") in real time across both live and prematch feeds. A drop fires when an outcome's decimal odds fall by ≥ a threshold in a configured window. Each drop carries the <code>from</code> and <code>to</code> price plus full event context.</p>
+
+<!-- /api/drops -->
+<div class="endpoint" id="api-drops">
+  <div class="endpoint-head">
+    <span class="verb get">GET</span>
+    <span class="path">/api/drops</span>
+    <span class="auth-pill key">API key</span>
+  </div>
+  <div class="endpoint-body">
+    <p>Pull-style queryable buffer of recent drops. Apply filters and read the full result set — useful for batch jobs, dashboards, or polling clients.</p>
+    <p>Each drop carries <code>nvp</code> — the vig-removed ("no-vig") fair price for that outcome, the same value emitted on the <a href="#sse-live">SSE streams</a>. Use it to gauge edge, e.g. <code>edge = to / nvp - 1</code>.</p>
+    <p><b>Query parameters</b></p>
+    <table class="param-table">
+      <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="name">mode</td><td class="type">"live" | "prematch"</td><td class="desc">Which feed to query. Defaults to <code>live</code>.</td></tr>
+        <tr><td class="name">sport_id</td><td class="type">integer</td><td class="desc">Filter to a single sport. Omit for all.</td></tr>
+        <tr><td class="name">min_drop_pct</td><td class="type">number</td><td class="desc">Minimum drop percentage (default <code>5</code>). Fractional allowed.</td></tr>
+        <tr><td class="name">max_drop_pct</td><td class="type">number</td><td class="desc">Optional cap.</td></tr>
+        <tr><td class="name">max_age_sec</td><td class="type">integer</td><td class="desc">Only return drops fresher than this. Up to ~3 h.</td></tr>
+        <tr><td class="name">markets</td><td class="type">csv</td><td class="desc">Subset of <code>moneyline,spread,total,team_total</code>.</td></tr>
+        <tr><td class="name">periods</td><td class="type">csv</td><td class="desc">Period numbers (<code>0</code>=full match, <code>1</code>=1st half, etc.).</td></tr>
+        <tr><td class="name">live</td><td class="type">0 | 1</td><td class="desc">Live-mode only. <code>1</code> = exclude any drops on events not yet started.</td></tr>
+        <tr><td class="name">limit</td><td class="type">integer</td><td class="desc">Max drops to return (default <code>500</code>).</td></tr>
+      </tbody>
+    </table>
+    <div class="tabs" data-group="apidrops">
+      <button class="active" data-tab="curl">curl</button>
+      <button data-tab="js">Node.js</button>
+      <button data-tab="py">Python</button>
+      <button data-tab="go">Go</button>
+      <button data-tab="php">PHP</button>
+    </div>
+    <div class="tab-pane active" data-group="apidrops" data-tab="curl">
+<pre><span class="c"># Live drops, soccer only, ≥7%, last 10 min</span>
+curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
+  "https://pinnodds.com/api/drops?mode=live&amp;sport_id=1&amp;min_drop_pct=7&amp;max_age_sec=600"
+
+<span class="c"># Prematch drops, all sports, last hour</span>
+curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
+  "https://pinnodds.com/api/drops?mode=prematch&amp;min_drop_pct=2&amp;max_age_sec=3600"</pre>
+    </div>
+    <div class="tab-pane" data-group="apidrops" data-tab="js">
+<pre><span class="k">const</span> qs = <span class="k">new</span> URLSearchParams({
+  mode: <span class="s">"live"</span>, sport_id: <span class="n">1</span>, min_drop_pct: <span class="n">7</span>, max_age_sec: <span class="n">600</span>,
+});
+<span class="k">const</span> r = <span class="k">await</span> fetch(<span class="s">`${BASE}/api/drops?${qs}`</span>, {
+  headers: { <span class="s">"x-portal-apikey"</span>: KEY },
+});
+<span class="k">const</span> { total, drops } = <span class="k">await</span> r.json();
+<span class="k">for</span> (<span class="k">const</span> d <span class="k">of</span> drops) {
+  <span class="k">const</span> ev = (d.to / d.nvp) - <span class="n">1</span>;       <span class="c">// edge vs no-vig price</span>
+  <span class="k">if</span> (ev &gt; <span class="n">0.02</span>) console.log(<span class="s">"+EV"</span>, d.home, d.market, d.from, <span class="s">"→"</span>, d.to);
+}</pre>
+    </div>
+    <div class="tab-pane" data-group="apidrops" data-tab="py">
+<pre><span class="k">import</span> requests
+r = requests.get(
+  <span class="s">f"{BASE}/api/drops"</span>,
+  params={
+    <span class="s">"mode"</span>: <span class="s">"live"</span>, <span class="s">"sport_id"</span>: <span class="n">1</span>,
+    <span class="s">"min_drop_pct"</span>: <span class="n">7</span>, <span class="s">"max_age_sec"</span>: <span class="n">600</span>,
+  },
+  headers={<span class="s">"x-portal-apikey"</span>: KEY},
+)
+<span class="k">for</span> d <span class="k">in</span> r.json()[<span class="s">"drops"</span>]:
+    ev = (d[<span class="s">"to"</span>] / d[<span class="s">"nvp"</span>]) - <span class="n">1</span>
+    <span class="k">if</span> ev &gt; <span class="n">0.02</span>:
+        <span class="k">print</span>(<span class="s">"+EV"</span>, d[<span class="s">"home"</span>], d[<span class="s">"market"</span>], d[<span class="s">"from"</span>], <span class="s">"→"</span>, d[<span class="s">"to"</span>])</pre>
+    </div>
+    <div class="tab-pane" data-group="apidrops" data-tab="go">
+<pre>q := url.Values{}
+q.Set(<span class="s">"mode"</span>, <span class="s">"live"</span>); q.Set(<span class="s">"sport_id"</span>, <span class="s">"1"</span>)
+q.Set(<span class="s">"min_drop_pct"</span>, <span class="s">"7"</span>); q.Set(<span class="s">"max_age_sec"</span>, <span class="s">"600"</span>)
+
+req, _ := http.NewRequest(<span class="s">"GET"</span>, BASE+<span class="s">"/api/drops?"</span>+q.Encode(), <span class="k">nil</span>)
+req.Header.Set(<span class="s">"x-portal-apikey"</span>, KEY)
+resp, _ := http.DefaultClient.Do(req)
+<span class="k">defer</span> resp.Body.Close()
+
+<span class="k">var</span> out <span class="k">struct</span> {
+  Total int <span class="s">`json:"total"`</span>
+  Drops []<span class="k">struct</span> {
+    Home, Market <span class="k">string</span>; From, To, NVP <span class="k">float64</span>
+  } <span class="s">`json:"drops"`</span>
+}
+json.NewDecoder(resp.Body).Decode(&amp;out)</pre>
+    </div>
+    <div class="tab-pane" data-group="apidrops" data-tab="php">
+<pre><span class="k">&lt;?php</span>
+$qs = http_build_query([
+  <span class="s">"mode"</span> =&gt; <span class="s">"live"</span>, <span class="s">"sport_id"</span> =&gt; <span class="n">1</span>,
+  <span class="s">"min_drop_pct"</span> =&gt; <span class="n">7</span>, <span class="s">"max_age_sec"</span> =&gt; <span class="n">600</span>,
+]);
+$ch = curl_init(BASE . <span class="s">"/api/drops?$qs"</span>);
+curl_setopt_array($ch, [
+  CURLOPT_RETURNTRANSFER =&gt; <span class="k">true</span>,
+  CURLOPT_HTTPHEADER     =&gt; [<span class="s">"x-portal-apikey: $KEY"</span>],
+]);
+$data = json_decode(curl_exec($ch), <span class="k">true</span>);
+curl_close($ch);
+<span class="k">foreach</span> ($data[<span class="s">"drops"</span>] <span class="k">as</span> $d) {
+  $ev = ($d[<span class="s">"to"</span>] / $d[<span class="s">"nvp"</span>]) - <span class="n">1</span>;
+  <span class="k">if</span> ($ev &gt; <span class="n">0.02</span>) <span class="k">echo</span> <span class="s">"+EV {$d['home']} {$d['from']} → {$d['to']}\n"</span>;
+}</pre>
+    </div>
+
+<pre><span class="c"># Response</span>
+{
+  <span class="k">"total"</span>: <span class="n">42</span>,
+  <span class="k">"drops"</span>: [
+    {
+      <span class="k">"event_id"</span>: <span class="n">1629725918</span>,
+      <span class="k">"sport_name"</span>: <span class="s">"Soccer"</span>,
+      <span class="k">"league"</span>: <span class="s">"Australia - NPL Victoria"</span>,
+      <span class="k">"home"</span>: <span class="s">"Bentleigh Greens"</span>,
+      <span class="k">"away"</span>: <span class="s">"St Albans Saints"</span>,
+      <span class="k">"market"</span>: <span class="s">"spread"</span>,
+      <span class="k">"period"</span>: <span class="n">0</span>,
+      <span class="k">"side"</span>: <span class="s">"home"</span>,
+      <span class="k">"points"</span>: -<span class="n">0.5</span>,
+      <span class="k">"from"</span>: <span class="n">2.37</span>,
+      <span class="k">"to"</span>: <span class="n">2.25</span>,
+      <span class="k">"nvp"</span>: <span class="n">2.34</span>,
+      <span class="k">"drop_pct"</span>: <span class="n">5.06</span>,
+      <span class="k">"age_s"</span>: <span class="n">12</span>,
+      <span class="k">"is_live"</span>: <span class="k">false</span>
+    }
+  ],
+  <span class="k">"meta"</span>: { <span class="k">"mode"</span>: <span class="s">"live"</span>, <span class="k">"events_in_store"</span>: <span class="n">2552</span>, <span class="k">"tracked_outcomes"</span>: <span class="n">122035</span>,
+            <span class="k">"drops_buffered"</span>: <span class="n">968</span>, <span class="k">"source"</span>: <span class="s">"ws"</span>, <span class="k">"ts"</span>: <span class="n">1783079852368</span> }
+}</pre>
+    <p style="font-size:12px; color:inherit"><b>Note.</b> Drops on <a href="#specials">special markets</a> (player/team props) carry <code>participant_name</code> — the named outcome that moved (e.g. <code>"Mohamed Salah"</code>) — with <code>nvp: null</code> (no two-way devig exists for multi-outcome ladders).</p>
+  </div>
+</div>
+
+<!-- /odds-drop SSE (live) -->
+<div class="endpoint" id="sse-live">
+  <div class="endpoint-head">
+    <span class="verb sse">SSE</span>
+    <span class="path">/odds-drop</span>
+    <span class="auth-pill key">API key OR token</span>
+  </div>
+  <div class="endpoint-body">
+    <p>Server-Sent Events stream of <b>live</b> drops as they happen. One TCP connection, push-based — no polling. <b>Available on the Stream, Pro + SSE, and Scale plans.</b> During your first 3 days every new key can connect (the signup demo includes the WebSocket feed). After that, trial keys and Pro (REST-only) cannot connect.</p>
+    <div class="callout warn" style="margin: 12px 0">
+      <b>⚠ One SSE connection per account.</b> Opening a second SSE connection with the same key evicts the first. EventSource auto-reconnect after a network blip works fine (the dying old socket gets reaped before the new one registers). If you genuinely need two or more independent connections — e.g. prod + staging, or fan-out across multiple servers — email <a href="/cdn-cgi/l/email-protection#6801060e072818010606070c0c1b460b0705"><span class="__cf_email__" data-cfemail="2b42454d446b5b424545444f4f5805484446">[email&#160;protected]</span></a> and we'll issue a second account on the same plan at no extra cost. The cap itself stays at one connection per key — it's how we detect keys being shared or resold — so extra connections come as extra keys.
+    </div>
+    <p><b>Two auth methods accepted</b> (use either):</p>
+    <table class="param-table">
+      <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="name">key</td><td class="type">string</td><td class="desc">Your SaaS API key, in the <code>x-portal-apikey</code> / <code>x-api-key</code> header or as <code>?key=</code>. Plan must include SSE (Stream / Pro + SSE / Scale).</td></tr>
+        <tr><td class="name">token</td><td class="type">string</td><td class="desc">Legacy SSE token (separate from the API key) as <code>?token=</code>. Kept for admin / pre-account customers.</td></tr>
+        <tr><td class="name">min_drop</td><td class="type">number</td><td class="desc">Optional. Drop-percent threshold for THIS subscriber. <code>?min_drop=7</code> = only alerts where price fell ≥7%. <code>?min_drop=1</code> = receive every drop, including small ones. Default if omitted: <b>5%</b>. Floor: 1%. No upper cap.</td></tr>
+      </tbody>
+    </table>
+    <div class="tabs" data-group="sselive">
+      <button class="active" data-tab="curl">curl</button>
+      <button data-tab="js">Node.js</button>
+      <button data-tab="py">Python</button>
+      <button data-tab="go">Go</button>
+      <button data-tab="php">PHP</button>
+    </div>
+    <div class="tab-pane active" data-group="sselive" data-tab="curl">
+<pre><span class="c"># With your API key (paid plan)</span>
+curl -N "https://pinnodds.com/odds-drop?key=<span class="s">$API_KEY</span>"
+
+<span class="c"># Or with a legacy SSE token</span>
+curl -N "https://pinnodds.com/odds-drop?token=<span class="s">$SSE_TOKEN</span>"</pre>
+    </div>
+    <div class="tab-pane" data-group="sselive" data-tab="js">
+<pre><span class="c">// npm i eventsource</span>
+<span class="k">import</span> EventSource <span class="k">from</span> <span class="s">"eventsource"</span>;
+
+<span class="k">const</span> es = <span class="k">new</span> EventSource(<span class="s">`${BASE}/odds-drop?key=${API_KEY}`</span>);
+
+es.onmessage = (e) =&gt; {
+  <span class="k">const</span> payload = JSON.parse(e.data);
+  <span class="k">if</span> (payload.type === <span class="s">"connected"</span>) <span class="k">return</span>;
+  <span class="k">if</span> (payload.type === <span class="s">"error"</span>) { console.error(payload.error, payload.message); <span class="k">return</span>; }
+  <span class="k">for</span> (<span class="k">const</span> drop <span class="k">of</span> payload) {
+    <span class="k">const</span> ev = (drop.to_price / drop.nvp) - <span class="n">1</span>;
+    <span class="k">if</span> (ev &gt; <span class="n">0.02</span>) console.log(<span class="s">"+EV"</span>, drop.sport, drop.home, drop.from_price, <span class="s">"→"</span>, drop.to_price);
+  }
+};
+es.onerror = (err) =&gt; console.error(<span class="s">"sse closed"</span>, err);</pre>
+    </div>
+    <div class="tab-pane" data-group="sselive" data-tab="py">
+<pre><span class="c"># pip install sseclient-py requests</span>
+<span class="k">import</span> json, requests
+<span class="k">from</span> sseclient <span class="k">import</span> SSEClient
+
+resp = requests.get(<span class="s">f"{BASE}/odds-drop?key={API_KEY}"</span>, stream=<span class="k">True</span>)
+<span class="k">for</span> ev <span class="k">in</span> SSEClient(resp).events():
+    <span class="k">if</span> <span class="k">not</span> ev.data: <span class="k">continue</span>
+    payload = json.loads(ev.data)
+    <span class="k">if</span> <span class="k">isinstance</span>(payload, <span class="k">dict</span>) <span class="k">and</span> payload.get(<span class="s">"type"</span>) <span class="k">in</span> (<span class="s">"connected"</span>, <span class="s">"error"</span>):
+        <span class="k">continue</span>
+    <span class="k">for</span> drop <span class="k">in</span> payload:
+        ev_pct = (drop[<span class="s">"to_price"</span>] / drop[<span class="s">"nvp"</span>]) - <span class="n">1</span>
+        <span class="k">if</span> ev_pct &gt; <span class="n">0.02</span>:
+            <span class="k">print</span>(<span class="s">"+EV"</span>, drop[<span class="s">"sport"</span>], drop[<span class="s">"home"</span>], drop[<span class="s">"from_price"</span>], <span class="s">"→"</span>, drop[<span class="s">"to_price"</span>])</pre>
+    </div>
+    <div class="tab-pane" data-group="sselive" data-tab="go">
+<pre><span class="k">package</span> main
+
+<span class="k">import</span> (
+  <span class="s">"bufio"</span>; <span class="s">"encoding/json"</span>; <span class="s">"net/http"</span>; <span class="s">"strings"</span>; <span class="s">"fmt"</span>
+)
+
+<span class="k">type</span> Drop <span class="k">struct</span> { Home, Sport <span class="k">string</span>; FromPrice, ToPrice, NVP <span class="k">float64</span> }
+
+req, _ := http.NewRequest(<span class="s">"GET"</span>, BASE+<span class="s">"/odds-drop?key="</span>+API_KEY, <span class="k">nil</span>)
+req.Header.Set(<span class="s">"Accept"</span>, <span class="s">"text/event-stream"</span>)
+resp, _ := http.DefaultClient.Do(req)
+<span class="k">defer</span> resp.Body.Close()
+
+scanner := bufio.NewScanner(resp.Body)
+scanner.Buffer(make([]<span class="k">byte</span>, <span class="n">1024</span>*<span class="n">1024</span>), <span class="n">10</span>*<span class="n">1024</span>*<span class="n">1024</span>)
+<span class="k">for</span> scanner.Scan() {
+  line := scanner.Text()
+  <span class="k">if</span> !strings.HasPrefix(line, <span class="s">"data: "</span>) { <span class="k">continue</span> }
+  body := strings.TrimPrefix(line, <span class="s">"data: "</span>)
+  <span class="k">var</span> drops []Drop
+  <span class="k">if</span> <span class="k">err</span> := json.Unmarshal([]<span class="k">byte</span>(body), &amp;drops); <span class="k">err</span> != <span class="k">nil</span> { <span class="k">continue</span> }
+  <span class="k">for</span> _, d := <span class="k">range</span> drops {
+    <span class="k">if</span> ev := d.ToPrice/d.NVP - <span class="n">1</span>; ev &gt; <span class="n">0.02</span> {
+      fmt.Println(<span class="s">"+EV"</span>, d.Sport, d.Home, d.FromPrice, <span class="s">"→"</span>, d.ToPrice)
+    }
+  }
+}</pre>
+    </div>
+    <div class="tab-pane" data-group="sselive" data-tab="php">
+<pre><span class="k">&lt;?php</span>
+$ch = curl_init(BASE . <span class="s">"/odds-drop?key=$API_KEY"</span>);
+curl_setopt_array($ch, [
+  CURLOPT_HTTPHEADER     =&gt; [<span class="s">"Accept: text/event-stream"</span>],
+  CURLOPT_TIMEOUT        =&gt; <span class="n">0</span>,
+  CURLOPT_WRITEFUNCTION  =&gt; <span class="k">function</span>($ch, $chunk) {
+    <span class="k">static</span> $buf = <span class="s">""</span>;
+    $buf .= $chunk;
+    <span class="k">while</span> (($pos = strpos($buf, <span class="s">"\n\n"</span>)) !== <span class="k">false</span>) {
+      $line = substr($buf, <span class="n">0</span>, $pos); $buf = substr($buf, $pos + <span class="n">2</span>);
+      <span class="k">if</span> (strpos($line, <span class="s">"data: "</span>) !== <span class="n">0</span>) <span class="k">continue</span>;
+      $payload = json_decode(substr($line, <span class="n">6</span>), <span class="k">true</span>);
+      <span class="k">if</span> (!is_array($payload) || isset($payload[<span class="s">"type"</span>])) <span class="k">continue</span>;
+      <span class="k">foreach</span> ($payload <span class="k">as</span> $d) {
+        $ev = ($d[<span class="s">"to_price"</span>] / $d[<span class="s">"nvp"</span>]) - <span class="n">1</span>;
+        <span class="k">if</span> ($ev &gt; <span class="n">0.02</span>) <span class="k">echo</span> <span class="s">"+EV {$d['sport']} {$d['home']} → {$d['to_price']}\n"</span>;
+      }
+    }
+    <span class="k">return</span> strlen($chunk);
+  },
+]);
+curl_exec($ch);</pre>
+    </div>
+
+<pre><span class="c"># Stream framing (what arrives over the wire)</span>
+data: {"type": "connected", "id": "d648beb8-bde8-..."}
+
+data: [{"home": "Sunshine Coast Phoenix", "away": "Cairns Dolphins",
+        "league": "Australia - NBL1 Women", "from_price": 2.86,
+        "to_price": 2.7, "outcome": "Home", "period": 4,
+        "sect": "Moneyline", "id": 1629729400, "sport": "Basketball",
+        "interval": 25, "alerted": 1777625196, "sport_id": 3,
+        "nvp": 3.04, "starts": 1777624200, ...}]</pre>
+    <div class="callout" style="margin-top: 12px">
+      <b>Trial users:</b> connecting with a trial key returns <code>{"type":"error","error":"plan_lacks_sse"}</code> as the only frame. Upgrade to <a href="/panel">Stream, Pro + SSE, or Scale</a> to access SSE.
+    </div>
+    <p style="font-size:13px; color: var(--muted); margin-top:10px"><b>Connect throttling.</b> Rapid reconnect loops get a single <code>{"type":"error","error":"rate_limited"}</code> frame with a <code>Retry-After: 60</code> header — back off instead of hammering the endpoint; a healthy client reconnects with exponential backoff.</p>
+  </div>
+</div>
+
+<!-- /odds-drop-prematch SSE -->
+<div class="endpoint" id="sse-prematch">
+  <div class="endpoint-head">
+    <span class="verb sse">SSE</span>
+    <span class="path">/odds-drop-prematch</span>
+    <span class="auth-pill key">API key OR token</span>
+  </div>
+  <div class="endpoint-body">
+    <p>Same shape and auth as <a href="#sse-live"><code>/odds-drop</code></a>, but emits drops on the prematch feed only. Useful when you want to trade upcoming-fixture line moves and not be flooded with in-play noise.</p>
+    <p><b>Optional query parameter:</b> <code>?min_drop=N</code> overrides the default 5% drop threshold for this subscriber (same as on <a href="#sse-live"><code>/odds-drop</code></a>). Composes with <code>?recheck=N</code>. Floor is 1%.</p>
+    <p style="color: var(--muted); font-size: 13px"><b>One connection per account</b> — see the same warning on <a href="#sse-live"><code>/odds-drop</code></a>. Live and prematch each count as one SSE slot, so you can run one of each in parallel under the default cap.</p>
+    <div class="tabs" data-group="sseprem">
+      <button class="active" data-tab="curl">curl</button>
+      <button data-tab="js">Node.js</button>
+      <button data-tab="py">Python</button>
+      <button data-tab="go">Go</button>
+      <button data-tab="php">PHP</button>
+    </div>
+    <div class="tab-pane active" data-group="sseprem" data-tab="curl">
+<pre>curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</span>"</pre>
+    </div>
+    <div class="tab-pane" data-group="sseprem" data-tab="js">
+<pre><span class="c">// Identical to /odds-drop integration — only the URL changes.</span>
+<span class="k">import</span> EventSource <span class="k">from</span> <span class="s">"eventsource"</span>;
+<span class="k">const</span> es = <span class="k">new</span> EventSource(<span class="s">`${BASE}/odds-drop-prematch?key=${API_KEY}`</span>);
+es.onmessage = (e) =&gt; {
+  <span class="k">const</span> p = JSON.parse(e.data);
+  <span class="k">if</span> (Array.isArray(p)) <span class="k">for</span> (<span class="k">const</span> d <span class="k">of</span> p) console.log(d.sport, d.home, d.from_price, <span class="s">"→"</span>, d.to_price);
+};</pre>
+    </div>
+    <div class="tab-pane" data-group="sseprem" data-tab="py">
+<pre><span class="k">import</span> json, requests
+<span class="k">from</span> sseclient <span class="k">import</span> SSEClient
+
+resp = requests.get(<span class="s">f"{BASE}/odds-drop-prematch?key={API_KEY}"</span>, stream=<span class="k">True</span>)
+<span class="k">for</span> ev <span class="k">in</span> SSEClient(resp).events():
+    p = json.loads(ev.data) <span class="k">if</span> ev.data <span class="k">else</span> <span class="k">None</span>
+    <span class="k">if</span> <span class="k">isinstance</span>(p, <span class="k">list</span>):
+        <span class="k">for</span> d <span class="k">in</span> p: <span class="k">print</span>(d[<span class="s">"sport"</span>], d[<span class="s">"home"</span>], d[<span class="s">"from_price"</span>], <span class="s">"→"</span>, d[<span class="s">"to_price"</span>])</pre>
+    </div>
+    <div class="tab-pane" data-group="sseprem" data-tab="go">
+<pre>req, _ := http.NewRequest(<span class="s">"GET"</span>, BASE+<span class="s">"/odds-drop-prematch?key="</span>+API_KEY, <span class="k">nil</span>)
+resp, _ := http.DefaultClient.Do(req)
+<span class="k">defer</span> resp.Body.Close()
+
+scanner := bufio.NewScanner(resp.Body)
+scanner.Buffer(make([]<span class="k">byte</span>, <span class="n">1024</span>*<span class="n">1024</span>), <span class="n">10</span>*<span class="n">1024</span>*<span class="n">1024</span>)
+<span class="k">for</span> scanner.Scan() {
+  line := scanner.Text()
+  <span class="k">if</span> !strings.HasPrefix(line, <span class="s">"data: "</span>) { <span class="k">continue</span> }
+  <span class="c">// parse JSON array of drops, same shape as /odds-drop</span>
+}</pre>
+    </div>
+    <div class="tab-pane" data-group="sseprem" data-tab="php">
+<pre><span class="k">&lt;?php</span>
+<span class="c">// Same WRITEFUNCTION pattern as /odds-drop, just change the URL:</span>
+$ch = curl_init(BASE . <span class="s">"/odds-drop-prematch?key=$API_KEY"</span>);
+<span class="c">// ... see the /odds-drop PHP example for the full streaming reader ...</span></pre>
+    </div>
+    <div class="callout warn" style="margin: 12px 0 0">
+      <b>Volume note.</b> Prematch lines move slowly. Expect &lt; 1 drop/sec on a typical day, vs. tens per second on the live stream during prime hours. A 90-second sample may surface zero drops — that's normal.
+    </div>
+
+    <h3 id="prematch-recheck" style="margin: 22px 0 6px; font-size: 15px">Optional: <code>?recheck=N</code> stable-price filter</h3>
+    <p style="margin: 0 0 8px"><b>How to use it.</b> Append <code>&amp;recheck=N</code> to the URL where <code>N</code> is the number of seconds you want the server to wait before emitting each drop. The server holds the alert for <code>N</code> seconds, re-checks the current Pinnacle price for that exact line, and only sends it if the drop is still real (price hasn't bounced back). If you want a 30-second stability check:</p>
+<pre><span class="c"># Standard prematch feed (instant, default — unchanged)</span>
+curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</span>"
+
+<span class="c"># Wait 30 seconds, then re-verify before emitting</span>
+curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</span>&amp;recheck=30"</pre>
+<pre><span class="c">// EventSource (Node.js / browser)</span>
+<span class="k">const</span> es = <span class="k">new</span> EventSource(<span class="s">`${BASE}/odds-drop-prematch?key=${API_KEY}&amp;recheck=30`</span>);</pre>
+    <table class="param-table" style="margin-top: 8px">
+      <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">recheck</td>
+          <td class="type">integer (seconds)</td>
+          <td class="desc">
+            How long to hold each drop before re-checking the current Pinnacle price. Surviving alerts pass the same 5% threshold the scanner used and gain a new <code>rechecked_ms</code> field with the actual wait time. Bounced prices are silently suppressed. Omit (or pass <code>0</code>) for the default instant feed. No upper cap — the parameter only affects your own connection. Other customers connected without it are unaffected.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0"><b>When to use this.</b> If you place bets manually or your placement loop is &gt;5s, prematch prices that bounce back within seconds create noise. Asking for <code>recheck=30</code> trades 30s of latency for the confidence that the line was stable enough to be actionable.</p>
+    <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0"><b>Note.</b> Available only on <code>/odds-drop-prematch</code>. The live stream <code>/odds-drop</code> is push-based and sub-second; a recheck window is semantically meaningless there and the parameter is silently ignored.</p>
+  </div>
+</div>
+
+<!-- ─────────────────── WEBSOCKET FEED (add-on) ─────────────────── -->
+<h2>WebSocket Feed (Add-on)</h2>
+
+<div class="endpoint" id="ws-feed">
+  <div class="endpoint-head">
+    <span class="verb get" style="background:#0e4d2a; color:#4ade80">WS</span>
+    <span class="path">/ws/feed</span>
+    <span class="auth-pill key">API key</span>
+    <span class="auth-pill" style="background:#3a2a0a; color:#fbbf24">$99/mo add-on</span>
+  </div>
+  <div class="endpoint-body">
+    <p>
+      Forwards <b>raw Pinnacle frames</b> to your client — not drops, not derived metrics. Live MQTT messages and prematch REST responses delivered byte-identical to what we receive ourselves, wrapped in a thin envelope. Power-user feature for customers who want to rebuild Pinnacle's full state machine on their side.
+    </p>
+    <p style="background:#1f2a36; padding:10px 14px; border-radius:6px; border-left:3px solid #fbbf24; font-size:13px">
+      <b>This is NOT the same as <code>/odds-drop</code> SSE.</b> SSE delivers our filtered drop alerts (every detected drop by default &mdash; the engine floor is ~0.99%; narrow it with <code>?min_drop=</code>). This WS delivers <i>every</i> Pinnacle frame including market open/close/settle signals. Output volume is much higher.
+    </p>
+
+    <h4>Pricing</h4>
+    <ul>
+      <li><b>$99/month</b> add-on on top of any REST-bearing plan (Pro, Pro + SSE, Scale).</li>
+      <li><b>Stream and Trial plans are not eligible</b> — they have no REST quota.</li>
+      <li>New / renewal checkout: $99 (30d), $297 (90d), $594 (180d) bundled with your base plan.</li>
+      <li>Mid-cycle upgrade: <b>prorated</b> to your renewal date — pay only for the days remaining. Quote via your dashboard.</li>
+    </ul>
+
+    <h4>Subscribe protocol</h4>
+    <p>Client must send a <code>subscribe</code> message within 5s of connecting. You can subscribe by <b>sport</b> (firehose) or by specific <b>event_ids</b> (narrow filter), or both in one message:</p>
+<pre>{ <span class="k">"type"</span>: <span class="s">"subscribe"</span>,
+  <span class="k">"streams"</span>:   [<span class="s">"live"</span>, <span class="s">"prematch"</span>],
+  <span class="k">"sport_ids"</span>: [<span class="n">1</span>, <span class="n">2</span>],            <span class="c">// 1=Soccer, 2=Tennis — full firehose for the sport</span>
+  <span class="k">"event_ids"</span>: [<span class="n">1631005165</span>]      <span class="c">// Pinnacle matchup IDs — narrow filter, just these events</span>
+}</pre>
+    <p style="font-size: 13px; color: var(--muted)"><b>Filter rule:</b> a frame is delivered if its sport_id matches a sport-level sub <i>or</i> its event_id matches an event-level sub. So <code>sport_ids:[2], event_ids:[12345]</code> means "all of Tennis plus this one specific event in any sport". Either field can be omitted but at least one is required.</p>
+    <p style="font-size: 13px; color: var(--muted)"><b>Discovery pattern:</b> customers don't usually know matchup IDs upfront. Subscribe to a sport first → grep the snapshot for the events you care about (by team name, league, start time) → unsubscribe from the sport, subscribe to those specific event_ids. This narrows bandwidth to exactly the matches you're trading.</p>
+    <p style="font-size: 13px; color: var(--muted)"><b>Per-stream cap:</b> 200 event_ids per connection per stream. Subscribing past the cap returns <code>{type:"error", code:"event_id_cap", ...}</code> and the request is rejected wholesale. The hub auto-clears event_ids from your sub when Pinnacle removes the event (<code>op:"del"</code>), so you don't need to send unsubscribe yourself.</p>
+
+    <h4>Server-sent messages</h4>
+    <p>Immediately after each subscribe, one <code>snapshot</code> per subscription group:</p>
+<pre><span class="c">// Sport-level subscribe → one snapshot per (stream, sport_id) with every</span>
+<span class="c">// event currently in our store for that sport.</span>
+{ <span class="k">"type"</span>: <span class="s">"snapshot"</span>, <span class="k">"stream"</span>: <span class="s">"live"</span>, <span class="k">"sport_id"</span>: <span class="n">1</span>,
+  <span class="k">"events"</span>: [ <span class="c">/* full Pinnacle records, untouched */</span> ],
+  <span class="k">"ts"</span>: <span class="n">1779200000000</span> }
+
+<span class="c">// Event-level subscribe → one snapshot per batch of event_ids, with just</span>
+<span class="c">// the records we currently have. Missing IDs appear in the stream once</span>
+<span class="c">// Pinnacle pushes them.</span>
+{ <span class="k">"type"</span>: <span class="s">"snapshot"</span>, <span class="k">"stream"</span>: <span class="s">"live"</span>,
+  <span class="k">"event_ids"</span>: [<span class="n">1631005165</span>],
+  <span class="k">"events"</span>: [ <span class="c">/* full Pinnacle records, untouched (one per matched id) */</span> ],
+  <span class="k">"ts"</span>: <span class="n">1779200000000</span> }</pre>
+
+    <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0"><b>Large snapshots arrive in multiple frames.</b> A big baseline (e.g. prematch soccer, thousands of events) is split across several <code>snapshot</code> frames so no single message overruns your client's max-message limit. The split frames carry <code>"seq"</code> (0, 1, 2, …) and <code>"final"</code> (<code>true</code> only on the last); a small baseline that fits in one frame is sent as a single <code>snapshot</code> with no <code>seq</code>/<code>final</code>. <b>Merge each frame's <code>events</code> into your book by event id</b> (the same way you apply the deltas that follow) and you need no special handling. If instead you rebuild your book from the snapshot wholesale, wait for <code>final: true</code> before treating the baseline as complete.</p>
+<pre><span class="c">// A split (chunked) snapshot — merge events from every frame until final:true.</span>
+{ <span class="k">"type"</span>: <span class="s">"snapshot"</span>, <span class="k">"stream"</span>: <span class="s">"prematch"</span>, <span class="k">"sport_id"</span>: <span class="n">1</span>,
+  <span class="k">"seq"</span>: <span class="n">0</span>, <span class="k">"final"</span>: <span class="k">false</span>, <span class="k">"events"</span>: [ <span class="c">/* first chunk */</span> ], <span class="k">"ts"</span>: <span class="n">1779200000000</span> }
+{ <span class="k">"type"</span>: <span class="s">"snapshot"</span>, <span class="k">"stream"</span>: <span class="s">"prematch"</span>, <span class="k">"sport_id"</span>: <span class="n">1</span>,
+  <span class="k">"seq"</span>: <span class="n">1</span>, <span class="k">"final"</span>: <span class="k">true</span>,  <span class="k">"events"</span>: [ <span class="c">/* last chunk  */</span> ], <span class="k">"ts"</span>: <span class="n">1779200000000</span> }</pre>
+
+    <p>Then continuous frames as Pinnacle pushes / we poll:</p>
+<pre><span class="c">// Live MQTT — `topic`, `op`, `rec` exactly as we received from Pinnacle.</span>
+{ <span class="k">"type"</span>: <span class="s">"live"</span>, <span class="k">"sport_id"</span>: <span class="n">1</span>,
+  <span class="k">"topic"</span>: <span class="s">"matchups/reg/sp/29/live/ld"</span>,
+  <span class="k">"op"</span>: <span class="s">"upd"</span>,
+  <span class="k">"rec"</span>: { <span class="c">/* Pinnacle record verbatim */</span> },
+  <span class="k">"ts"</span>: <span class="n">1779200000123</span> }
+
+<span class="c">// Prematch REST poll responses — `data` is the response array verbatim.</span>
+{ <span class="k">"type"</span>: <span class="s">"prematch_matchups"</span>, <span class="k">"sport_id"</span>: <span class="n">1</span>,
+  <span class="k">"arcadia_sid"</span>: <span class="n">29</span>,
+  <span class="k">"data"</span>: [ <span class="c">/* /sports/29/matchups response verbatim */</span> ],
+  <span class="k">"ts"</span>: <span class="n">1779200005000</span> }
+
+{ <span class="k">"type"</span>: <span class="s">"prematch_markets"</span>, <span class="k">"sport_id"</span>: <span class="n">1</span>,
+  <span class="k">"arcadia_sid"</span>: <span class="n">29</span>,
+  <span class="k">"matchup_id"</span>: <span class="n">1631005165</span>,
+  <span class="k">"data"</span>: [ <span class="c">/* /matchups/.../markets/related/straight verbatim */</span> ],
+  <span class="k">"ts"</span>: <span class="n">1779200005230</span> }
+
+<span class="c">// Membership delta — what JOINED or LEFT the prematch set this cycle.</span>
+<span class="c">// MQTT never announces this: /pre carries prices for matchups you already</span>
+<span class="c">// track, and is blind to the set itself. Measured over 10 min across all 13</span>
+<span class="c">// sports: 34 membership changes, 0 announced by MQTT. This frame is the only</span>
+<span class="c">// timely signal — including when a matchup leaves prematch for warmup/live.</span>
+{ <span class="k">"type"</span>: <span class="s">"prematch_membership"</span>, <span class="k">"sport_id"</span>: <span class="n">1</span>,
+  <span class="k">"arcadia_sid"</span>: <span class="n">29</span>,
+  <span class="k">"added"</span>: [ <span class="n">1634753718</span>, <span class="n">1634753879</span> ],
+  <span class="k">"removed"</span>: [ <span class="n">1634713508</span> ],
+  <span class="k">"ts"</span>: <span class="n">1779200005010</span> }
+
+<span class="c">// Heartbeat every 30s — reply with {"type":"pong"} or socket closes after ~75s.</span>
+<span class="c">// buffered_max_bytes = the highest server-side send backlog for YOUR socket</span>
+<span class="c">// since the previous ping, then reset. Steady-state 0 means you are draining</span>
+<span class="c">// as fast as we send; a number that climbs across pings means your read loop</span>
+<span class="c">// is falling behind, and at 128 MB you are evicted with</span>
+<span class="c">// 1011 "deregistered: slow_consumer". Track it to see headroom, not just breaches.</span>
+{ <span class="k">"type"</span>: <span class="s">"ping"</span>, <span class="k">"ts"</span>: <span class="n">1779200030000</span>, <span class="k">"buffered_max_bytes"</span>: <span class="n">0</span> }</pre>
+
+    <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0"><b>Fidelity contract.</b> <code>events</code>, <code>rec</code>, and <code>data</code> are never transformed. We only add envelope fields (<code>type</code>, <code>stream</code>, <code>sport_id</code>, <code>topic</code>, <code>op</code>, <code>ts</code>). Your code can reuse a Pinnacle parser unchanged.</p>
+    <div style="border-left: 3px solid var(--accent); background: rgba(52,211,153,.06); padding: 12px 16px; margin: 14px 0; border-radius: 4px">
+      <p style="margin: 0 0 8px; font-size: 13px"><b><code>prematch_membership</code> — use this to track the set.</b></p>
+      <p style="margin: 0 0 8px; font-size: 13px; color: var(--muted)">
+        MQTT <code>/pre</code> is a <b>price</b> channel. It carries updates for matchups already in your set and is
+        structurally blind to the set&rsquo;s boundaries — it never says &ldquo;this fixture now exists&rdquo; or
+        &ldquo;this one is gone&rdquo;. Measured on production over 10&nbsp;minutes across all 13 sports:
+        <b>34 membership changes, 0 announced by MQTT</b>.
+      </p>
+      <p style="margin: 0 0 8px; font-size: 13px; color: var(--muted)">
+        A client relying on <code>prematch_ws</code> alone therefore <b>misses new fixtures entirely</b> and
+        <b>holds removed ones as live odds forever</b>. It is also why push goes quiet for a matchup that has moved to
+        warmup/live: that transition is a membership change, and MQTT does not report it.
+      </p>
+      <p style="margin: 0 0 8px; font-size: 13px; color: var(--muted)">
+        <code>prematch_membership</code> answers the same question as the full board at roughly
+        <b>1/50,000th the bytes</b>, every cycle (~25&nbsp;s) instead of every 10&nbsp;minutes.
+      </p>
+      <p style="margin: 0; font-size: 13px; color: var(--muted)">
+        <b>Recommended consumption:</b> take the <code>snapshot</code> chunks as your baseline &rarr; apply
+        <code>prematch_ws</code> for prices &rarr; apply <code>prematch_membership</code> (fetch details for
+        <code>added</code>, drop <code>removed</code>) &rarr; ignore <code>prematch_matchups</code> unless you
+        specifically want the periodic full resync. Complete, and never transfers a ~19&nbsp;MB board.
+      </p>
+    </div>
+    <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0"><b>Frame flow on firehose subs.</b> <code>live</code>, <code>prematch_matchups</code> and <code>prematch_markets</code> frames all flow on <code>sport_ids</code> subscriptions exactly the same way they do on <code>event_ids</code> subscriptions. There's no event-id-only mode &mdash; the filter is identical, only the criterion (whole sport vs. specific ids) changes.</p>
+
+    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--accent); background:rgba(74,222,128,0.08); border-radius:6px; font-size:14px;">
+      <b>Live channels: <code>ld</code> vs <code>dz</code>.</b> Pinnacle runs <b>two update channels for every live match</b>, and both arrive on your one WebSocket. Which channel a <code>live</code> frame came from is the last segment of its <code>topic</code> &mdash; e.g. <code>matchups/reg/sp/29/live/<b>ld</b></code>:
+      <ul style="margin:8px 0 6px 0; padding-left:18px; line-height:1.6">
+        <li><code>ld</code> &mdash; <b>live_delay</b>, the primary channel (~85% of updates). This is <b>the current price</b> &mdash; the same line pinnacle.com shows. Treat it as your source of truth.</li>
+        <li><code>dz</code> &mdash; <b>danger_zone</b> (~15%), fired only in volatile moments (goal threat, break point, red card) when Pinnacle is repricing hard and often about to suspend. Earliest signal of a fast move, but jumpy.</li>
+        <li><code>pre</code> &mdash; a prematch matchup update carried on the live stream.</li>
+      </ul>
+      Parse it in one line: <code>const channel = msg.topic.split("/").pop();</code> (<code>"ld"</code> | <code>"dz"</code> | <code>"pre"</code>).
+      <b>Key your price/book on <code>ld</code>; use <code>dz</code> as a volatility/suspension signal, not a second price.</b> Merging both channels into one book makes the price appear to &ldquo;spike and revert&rdquo; &mdash; that&rsquo;s the two channels interleaving, not a line move and not out-of-order delivery (each single market&rsquo;s stream is strictly ordered; verify with <code>rec.version</code> per <code>event_id</code>+channel). This split is <b>live only</b> &mdash; prematch has no danger_zone.
+    </div>
+
+    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--gold); background:rgba(212,175,55,0.08); border-radius:6px; font-size:14px;">
+      <b>One fixture can have several matchup ids &mdash; key by <code>event_id</code>, not by teams.</b> Pinnacle issues a live match as a <b>parent matchup plus re-issued/related child matchups</b>, all sharing the same <code>rec.parentId</code> and the same team names. The <b>same market</b> (identical market <code>key</code>, e.g. <code>s;0;s;-1.5</code>) can therefore appear under two different <code>event_id</code>s at the same time &mdash; one live, one stale/closing &mdash; with different prices.
+      <ul style="margin:8px 0 6px 0; padding-left:18px; line-height:1.6">
+        <li><b>Key your book by <code>rec.id</code> (the matchup/event id) + market <code>key</code></b> &mdash; never by team names or <code>parentId</code>. If you merge markets across matchup ids, the two ids&rsquo; prices interleave and the market appears to <b>&ldquo;spike and revert&rdquo;</b> even though each individual matchup&rsquo;s stream is perfectly stable and strictly ordered. That&rsquo;s an assembly artifact, not a line move &mdash; pinnacle.com and our REST <code>/kit</code> endpoints don&rsquo;t show it because they collapse to one canonical matchup per fixture.</li>
+        <li><b>Dedupe on the market <code>version</code>.</b> We forward every upstream frame verbatim, and Pinnacle re-sends unchanged markets frequently (same <code>markets[i].version</code>, same price &mdash; often &gt;50% of updates). Skip a market whose <code>version</code> you&rsquo;ve already applied to drop that noise.</li>
+      </ul>
+      If you need the pre-collapsed &ldquo;one row per fixture&rdquo; view instead of the raw multi-matchup stream, use the REST snapshot endpoints (<code>/kit/v1/markets</code>) which already do this.
+    </div>
+
+    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--gold); background:rgba(212,175,55,0.08); border-radius:6px; font-size:14px;">
+      <b>Two version fields &mdash; use <code>markets[i].version</code> for change-detection, NOT <code>rec.version</code>.</b> A live record carries a top-level <code>rec.version</code> AND a per-market <code>markets[i].version</code>, and they behave differently:
+      <ul style="margin:8px 0 6px 0; padding-left:18px; line-height:1.6">
+        <li><code>rec.version</code> is a coarse record/board stamp. <b>Pinnacle freezes it for the whole match once a fixture is in-play</b> &mdash; it does <b>not</b> increment when a price changes. Keying dedup or ordering on it will make live prices look like they &ldquo;change under a frozen version&rdquo; and cause you to <b>drop real price updates</b>.</li>
+        <li><code>markets[i].version</code> is the real per-market counter. It <b>increments on every genuine price change</b> and is strictly monotonic per <code>(event_id, market key)</code>. This is the field to dedupe and order on.</li>
+      </ul>
+      So if you see the moneyline move while <code>rec.version</code> stays constant, that is <b>not</b> a re-published/stale frame &mdash; check <code>markets[i].version</code>, which will have advanced. A spike-then-revert whose intermediate frame has a <b>higher</b> market version is a genuine transient Pinnacle reprice (relayed verbatim), not a replay.
+    </div>
+
+    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid #f59e0b; background:rgba(245,158,11,0.08); border-radius:6px; font-size:14px;">
+      <b>One connection per account.</b> The limit is keyed on the <b>account</b> &mdash; not on the API key,
+      and not on the source IP. Two processes on the same account collide even from different machines.
+      (SSE is a separate slot; you can run SSE and WebSocket at the same time.)
+      <br><br>
+      Opening a second connection does <b>not</b> fail the new connection &mdash; it <b>evicts the oldest</b>
+      one with <code>close code 1001</code>, reason <code>"evicted by newer connection"</code>.
+      <br><br>
+      This is the most common cause of &ldquo;the socket goes silent for long stretches while REST stays
+      healthy&rdquo;. The trigger is usually not a deliberate second consumer, but a monitoring or logging
+      process sharing the key, a deploy where the new instance connects before the old one closes, or a
+      retry loop that reconnects without closing the previous socket. Two consumers on one account kick each
+      other continuously, and whichever socket lost the race receives nothing.
+      <br><br>
+      <b>Supported pattern:</b> open <b>one</b> connection and fan out to your components inside your own
+      process &mdash; this also guarantees your components share an identical view of the book. If you need
+      transport-level separation, contact us about a second credential.
+      <br><br>
+      <b>Close codes:</b>
+      <code>1001 "evicted by newer connection"</code> &middot;
+      <code>1001 "stale"</code> (no pong for 75&nbsp;s) &middot;
+      <code>1001 "server shutdown"</code> &middot;
+      <code>1011 "deregistered: &lt;cause&gt;"</code> &middot;
+      <code>1006</code> with no reason (abnormal close &mdash; historically an oversized frame exceeding your
+      client's max-message limit).
+      <br><br>
+      <b>On <code>1011 "deregistered: …"</code>.</b> This means a server-side fault dropped you out of the
+      fan-out &mdash; a failed write, or backpressure eviction. Causes seen today are
+      <code>deregistered: send_err</code>, <code>deregistered: send_threw</code> and
+      <code>deregistered: slow_consumer</code>. <b>Match on the <code>deregistered: </code> prefix</b>, not on
+      the full string, so any cause added later is still caught. It is deliberately outside the 1001
+      lifecycle family so you can distinguish "we closed you on purpose" from "something broke". Treat it
+      as retryable: reconnect immediately, no cooldown needed.
+    </div>
+
+    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--first); background:rgba(96,165,250,0.08); border-radius:6px; font-size:14px;">
+      <b>Compression is a tradeoff &mdash; choose deliberately.</b>
+      <code>permessage-deflate</code> is negotiated per connection, so <b>your client decides</b>.
+      <br><br>
+      <b>What it costs.</b> Compression uses <i>context takeover</i>, which makes it a strictly <b>serial
+      per-connection pipeline</b>: every message waits for the previous message's zlib job. Pinnacle pushes
+      in mass-update cycles, and during those bursts the compression queue backs up &mdash; frames already
+      carrying their <code>ts</code> get compressed and flushed together, so you receive a burst of frames
+      whose timestamps span more than a second. Measured back-to-back on the same subscription
+      (soccer&nbsp;+&nbsp;tennis live, ~62&nbsp;frames/s, from a client with ample bandwidth),
+      <code>local_recv &minus; ts</code>:
+      <table style="width:100%; margin:10px 0; font-size:13px; border-collapse:collapse">
+        <tr><th style="text-align:left; padding:4px 8px"></th><th style="text-align:right; padding:4px 8px">deflate on</th><th style="text-align:right; padding:4px 8px">deflate off</th></tr>
+        <tr><td style="padding:4px 8px">p50</td><td style="text-align:right; padding:4px 8px">43 ms</td><td style="text-align:right; padding:4px 8px">&minus;46 ms</td></tr>
+        <tr><td style="padding:4px 8px">p95</td><td style="text-align:right; padding:4px 8px">748 ms</td><td style="text-align:right; padding:4px 8px">136 ms</td></tr>
+        <tr><td style="padding:4px 8px">p99</td><td style="text-align:right; padding:4px 8px"><b>1241 ms</b></td><td style="text-align:right; padding:4px 8px"><b>187 ms</b></td></tr>
+        <tr><td style="padding:4px 8px">max</td><td style="text-align:right; padding:4px 8px">1527 ms</td><td style="text-align:right; padding:4px 8px">228 ms</td></tr>
+        <tr><td style="padding:4px 8px">frames &gt; 1 s</td><td style="text-align:right; padding:4px 8px"><b>2.14 %</b></td><td style="text-align:right; padding:4px 8px"><b>0.00 %</b></td></tr>
+      </table>
+      <b>What it buys.</b> Live frames compress about <b>5&times;</b>. A single TCP connection over a
+      long-haul path tops out around <b>0.4 MB/s</b> (measured Dublin&nbsp;&rarr;&nbsp;Greece at ~70 ms RTT),
+      so if your <i>link</i> is the bottleneck, an update burst overflows the pipe and queues in the kernel
+      &mdash; producing multi-second lag that compression genuinely eliminates.
+      <br><br>
+      <b>How to choose.</b> Stable connection, bandwidth not your limit &rarr; <b>turn it off</b>, the tail
+      disappears. Far from the server, thin link, or many sports at high volume &rarr; <b>leave it on</b>.
+      Don't guess &mdash; measure <code>local_recv &minus; ts</code> percentiles both ways on your own path.
+      <br><br>
+      Defaults differ by language: Python's <code>websockets</code> is <b>on</b> by default
+      (<code>compression=None</code> to disable); Node's <code>ws</code> (<code>{ perMessageDeflate: true }</code>)
+      and Go's <code>gorilla/websocket</code> (<code>EnableCompression: true</code>) are <b>off</b> by default.
+      Same URL, same JSON either way &mdash; decompression is transparent.
+    </div>
+
+    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--first); background:rgba(96,165,250,0.08); border-radius:6px; font-size:14px;">
+      <b>Maximum message size &mdash; set your client limit to 8 MB.</b> It's a ceiling, not an allocation,
+      so it costs nothing and absorbs future sport or specials expansion. <b>2 MB</b> is the smallest we'd
+      advise. Current measured maxima (uncompressed, 5-minute capture, soccer&nbsp;+&nbsp;tennis):
+      <code>prematch_matchups</code> 512&nbsp;KB and <code>snapshot</code> 512&nbsp;KB (both chunked, bounded
+      by construction); <code>prematch_markets</code> 32&nbsp;KB and <code>live</code> 13&nbsp;KB (not
+      chunked, scoped to a single event).
+      <br><br>
+      Before <b>2026-07-22 19:48 UTC</b> these frames were <b>not</b> chunked &mdash; the soccer snapshot
+      reached ~19&nbsp;MB and the bulk <code>prematch_matchups</code> frame ~10&nbsp;MB, so any client whose
+      limit sat below that had the socket dropped with <code>1006</code> and no close frame.
+    </div>
+
+    <h4>Example clients</h4>
+    <div class="tabs" data-group="wsfeed">
+      <button class="active" data-tab="curl">wscat</button>
+      <button data-tab="js">Node.js</button>
+      <button data-tab="py">Python</button>
+      <button data-tab="go">Go</button>
+      <button data-tab="php">PHP</button>
+    </div>
+    <div class="tab-pane active" data-group="wsfeed" data-tab="curl">
+<pre><span class="c"># npm i -g wscat — quick CLI client for ad-hoc inspection</span>
+wscat -c <span class="s">"wss://pinnodds.com/ws/feed?key=$API_KEY"</span>
+
+<span class="c"># then paste a subscribe frame at the prompt:</span>
+{<span class="s">"type"</span>:<span class="s">"subscribe"</span>,<span class="s">"streams"</span>:[<span class="s">"live"</span>],<span class="s">"sport_ids"</span>:[<span class="n">1</span>,<span class="n">2</span>]}</pre>
+    </div>
+    <div class="tab-pane" data-group="wsfeed" data-tab="js">
+<pre><span class="c">// npm i ws</span>
+<span class="k">import</span> WebSocket <span class="k">from</span> <span class="s">"ws"</span>;
+
+<span class="c">// Compression adds a ~1.2s p99 tail during mass-update bursts — leave it OFF</span>
+<span class="c">// unless bandwidth is your bottleneck. maxPayload 8 MB clears the 512 KB chunk ceiling.</span>
+<span class="k">const</span> ws = <span class="k">new</span> WebSocket(<span class="s">`wss://pinnodds.com/ws/feed?key=${API_KEY}`</span>, { perMessageDeflate: <span class="k">false</span>, maxPayload: <span class="n">8</span> * <span class="n">1024</span> * <span class="n">1024</span> });
+
+ws.on(<span class="s">"open"</span>, () =&gt; {
+  ws.send(JSON.stringify({
+    type: <span class="s">"subscribe"</span>,
+    streams: [<span class="s">"live"</span>, <span class="s">"prematch"</span>],
+    sport_ids: [<span class="n">1</span>, <span class="n">2</span>],            <span class="c">// firehose Soccer + Tennis</span>
+    event_ids: [<span class="n">1631005165</span>],       <span class="c">// plus this specific matchup</span>
+  }));
+});
+
+ws.on(<span class="s">"message"</span>, (raw) =&gt; {
+  <span class="k">const</span> msg = JSON.parse(raw);
+  <span class="k">switch</span> (msg.type) {
+    <span class="k">case</span> <span class="s">"ping"</span>:     ws.send(JSON.stringify({type:<span class="s">"pong"</span>})); <span class="k">break</span>;
+    <span class="k">case</span> <span class="s">"snapshot"</span>: console.log(<span class="s">`snapshot ${msg.stream}: ${msg.events.length} events`</span>); <span class="k">break</span>;
+    <span class="k">case</span> <span class="s">"live"</span>:     console.log(<span class="s">`live event=${msg.rec.id} op=${msg.op}`</span>); <span class="k">break</span>;
+    <span class="k">case</span> <span class="s">"prematch_matchups"</span>: console.log(<span class="s">`matchups sport=${msg.sport_id} n=${msg.data.length}`</span>); <span class="k">break</span>;
+    <span class="k">case</span> <span class="s">"prematch_markets"</span>:  console.log(<span class="s">`markets event=${msg.matchup_id} n=${msg.data.length}`</span>); <span class="k">break</span>;
+    <span class="k">case</span> <span class="s">"error"</span>:    console.error(msg.code, msg.message); <span class="k">break</span>;
+  }
+});
+ws.on(<span class="s">"close"</span>, (code) =&gt; console.error(<span class="s">"closed"</span>, code));</pre>
+    </div>
+    <div class="tab-pane" data-group="wsfeed" data-tab="py">
+<pre><span class="c"># pip install websockets</span>
+<span class="k">import</span> asyncio, json, os, websockets
+
+<span class="k">async def</span> main():
+    url = <span class="s">f"wss://pinnodds.com/ws/feed?key={os.environ['API_KEY']}"</span>
+    <span class="c"># websockets enables compression BY DEFAULT — it serializes sends and adds a</span>
+    <span class="c"># ~1.2s p99 tail during mass-update bursts. Pass compression=None unless your</span>
+    <span class="c"># link (not our server) is the bottleneck. max_size clears the 512 KB chunk ceiling.</span>
+    <span class="k">async with</span> websockets.connect(url, compression=<span class="k">None</span>, max_size=<span class="n">8</span> * <span class="n">1024</span> * <span class="n">1024</span>) <span class="k">as</span> ws:
+        <span class="k">await</span> ws.send(json.dumps({
+            <span class="s">"type"</span>: <span class="s">"subscribe"</span>,
+            <span class="s">"streams"</span>: [<span class="s">"live"</span>, <span class="s">"prematch"</span>],
+            <span class="s">"sport_ids"</span>: [<span class="n">1</span>, <span class="n">2</span>],
+            <span class="s">"event_ids"</span>: [<span class="n">1631005165</span>],
+        }))
+        <span class="k">async for</span> raw <span class="k">in</span> ws:
+            msg = json.loads(raw)
+            t = msg[<span class="s">"type"</span>]
+            <span class="k">if</span> t == <span class="s">"ping"</span>:
+                <span class="k">await</span> ws.send(json.dumps({<span class="s">"type"</span>: <span class="s">"pong"</span>}))
+            <span class="k">elif</span> t == <span class="s">"snapshot"</span>:
+                <span class="k">print</span>(<span class="s">f"snapshot {msg['stream']}: {len(msg['events'])} events"</span>)
+            <span class="k">elif</span> t == <span class="s">"live"</span>:
+                <span class="k">print</span>(<span class="s">f"live event={msg['rec']['id']} op={msg['op']}"</span>)
+            <span class="k">elif</span> t == <span class="s">"prematch_matchups"</span>:
+                <span class="k">print</span>(<span class="s">f"matchups sport={msg['sport_id']} n={len(msg['data'])}"</span>)
+            <span class="k">elif</span> t == <span class="s">"prematch_markets"</span>:
+                <span class="k">print</span>(<span class="s">f"markets event={msg['matchup_id']} n={len(msg['data'])}"</span>)
+            <span class="k">elif</span> t == <span class="s">"error"</span>:
+                <span class="k">print</span>(<span class="s">"error"</span>, msg[<span class="s">"code"</span>], msg.get(<span class="s">"message"</span>))
+
+asyncio.run(main())</pre>
+    </div>
+    <div class="tab-pane" data-group="wsfeed" data-tab="go">
+<pre><span class="c">// go get github.com/gorilla/websocket</span>
+<span class="k">package</span> main
+
+<span class="k">import</span> (
+  <span class="s">"encoding/json"</span>; <span class="s">"fmt"</span>; <span class="s">"log"</span>; <span class="s">"os"</span>
+  <span class="s">"github.com/gorilla/websocket"</span>
+)
+
+<span class="k">func</span> main() {
+  url := <span class="s">"wss://pinnodds.com/ws/feed?key="</span> + os.Getenv(<span class="s">"API_KEY"</span>)
+  <span class="c">// EnableCompression stays false: it serializes sends and adds a ~1.2s p99 tail.</span>
+  <span class="c">// Turn it on only if your link (not our server) is the bottleneck.</span>
+  dialer := websocket.Dialer{EnableCompression: <span class="k">false</span>}
+  ws, _, err := dialer.Dial(url, <span class="k">nil</span>)
+  <span class="k">if</span> err != <span class="k">nil</span> { log.Fatal(err) }
+  <span class="k">defer</span> ws.Close()
+
+  sub := <span class="k">map</span>[<span class="k">string</span>]<span class="k">any</span>{
+    <span class="s">"type"</span>: <span class="s">"subscribe"</span>,
+    <span class="s">"streams"</span>: []<span class="k">string</span>{<span class="s">"live"</span>, <span class="s">"prematch"</span>},
+    <span class="s">"sport_ids"</span>: []<span class="k">int</span>{<span class="n">1</span>, <span class="n">2</span>},
+    <span class="s">"event_ids"</span>: []<span class="k">int64</span>{<span class="n">1631005165</span>},
+  }
+  <span class="k">if</span> err := ws.WriteJSON(sub); err != <span class="k">nil</span> { log.Fatal(err) }
+
+  <span class="k">for</span> {
+    _, raw, err := ws.ReadMessage()
+    <span class="k">if</span> err != <span class="k">nil</span> { log.Fatal(err) }
+    <span class="k">var</span> msg <span class="k">map</span>[<span class="k">string</span>]json.RawMessage
+    <span class="k">if</span> err := json.Unmarshal(raw, &amp;msg); err != <span class="k">nil</span> { <span class="k">continue</span> }
+    <span class="k">var</span> t <span class="k">string</span>; json.Unmarshal(msg[<span class="s">"type"</span>], &amp;t)
+    <span class="k">switch</span> t {
+    <span class="k">case</span> <span class="s">"ping"</span>:     ws.WriteJSON(<span class="k">map</span>[<span class="k">string</span>]<span class="k">any</span>{<span class="s">"type"</span>:<span class="s">"pong"</span>})
+    <span class="k">case</span> <span class="s">"snapshot"</span>: fmt.Println(<span class="s">"snapshot"</span>, <span class="k">string</span>(msg[<span class="s">"stream"</span>]))
+    <span class="k">case</span> <span class="s">"live"</span>:     fmt.Println(<span class="s">"live"</span>, <span class="k">string</span>(msg[<span class="s">"rec"</span>])[:<span class="n">60</span>])
+    <span class="k">case</span> <span class="s">"error"</span>:    fmt.Println(<span class="s">"error"</span>, <span class="k">string</span>(msg[<span class="s">"code"</span>]))
+    }
+  }
+}</pre>
+    </div>
+    <div class="tab-pane" data-group="wsfeed" data-tab="php">
+<pre><span class="c">// composer require textalk/websocket</span>
+<span class="k">&lt;?php</span>
+<span class="k">use</span> WebSocket\Client;
+
+$ws = <span class="k">new</span> Client(<span class="s">"wss://pinnodds.com/ws/feed?key="</span> . $_ENV[<span class="s">"API_KEY"</span>]);
+
+$ws-&gt;send(json_encode([
+  <span class="s">"type"</span>      =&gt; <span class="s">"subscribe"</span>,
+  <span class="s">"streams"</span>   =&gt; [<span class="s">"live"</span>, <span class="s">"prematch"</span>],
+  <span class="s">"sport_ids"</span> =&gt; [<span class="n">1</span>, <span class="n">2</span>],
+  <span class="s">"event_ids"</span> =&gt; [<span class="n">1631005165</span>],
+]));
+
+<span class="k">while</span> (<span class="k">true</span>) {
+  $raw = $ws-&gt;receive();
+  $msg = json_decode($raw, <span class="k">true</span>);
+  <span class="k">switch</span> ($msg[<span class="s">"type"</span>]) {
+    <span class="k">case</span> <span class="s">"ping"</span>:     $ws-&gt;send(json_encode([<span class="s">"type"</span>=&gt;<span class="s">"pong"</span>])); <span class="k">break</span>;
+    <span class="k">case</span> <span class="s">"snapshot"</span>: echo <span class="s">"snapshot {$msg['stream']}: "</span> . count($msg[<span class="s">"events"</span>]) . <span class="s">" events\n"</span>; <span class="k">break</span>;
+    <span class="k">case</span> <span class="s">"live"</span>:     echo <span class="s">"live event={$msg['rec']['id']} op={$msg['op']}\n"</span>; <span class="k">break</span>;
+    <span class="k">case</span> <span class="s">"error"</span>:    fwrite(STDERR, <span class="s">"error: {$msg['code']} {$msg['message']}\n"</span>); <span class="k">break</span>;
+  }
+}</pre>
+    </div>
+
+    <h4>Frame semantics — how to read what we forward</h4>
+    <p>Pinnacle pushes incremental updates over MQTT. Once you start receiving frames, the <code>op</code>, <code>topic</code>, and inner <code>rec</code>/<code>data</code> shape determines how to merge into your local state.</p>
+
+    <h5 style="margin: 14px 0 6px; color: var(--text); font-size: 13px; text-transform: uppercase; letter-spacing: .1em">Live frames — <code>type:"live"</code></h5>
+    <table style="width: 100%; margin: 0 0 14px">
+      <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td class="name">op</td><td class="type">string</td><td class="desc"><b>add</b> = new event or new markets appeared. <b>upd</b> = incremental change (typically just changed markets — merge by composite key, don't replace the whole list). <b>del</b> = event removed by Pinnacle (kicked off, settled, voided) — drop your local copy.</td></tr>
+        <tr><td class="name">topic</td><td class="type">string</td><td class="desc">Source MQTT topic. Format: <code>matchups/reg/sp/{arcadia_sid}/live/{ld|dz|both}</code> for live, <code>matchups/.../pre</code> for prematch.<br><b>ld</b> = "line drawing": main markets (moneyline, 1X2, primary spread/total).<br><b>dz</b> = "draft zone": alternative spreads and totals.<br><b>both</b> = combined push covering both.<br><code>matchups/spc/...</code> instead of <code>reg</code> means a "special" matchup (props, futures).</td></tr>
+        <tr><td class="name">rec.id</td><td class="type">int</td><td class="desc">Pinnacle matchup ID. Stable across the event's lifetime.</td></tr>
+        <tr><td class="name">rec.markets</td><td class="type">array</td><td class="desc">May be a SUBSET on <code>op:"upd"</code> — Pinnacle only sends what changed. <b>Merge by composite key</b> (<code>m.key</code> if present, otherwise <code>type|period|side|points</code>). A market with <code>m.status !== "open"</code> is a CLOSE signal: drop it from your local list, do not merge it back as if still active.</td></tr>
+        <tr><td class="name">rec.periods</td><td class="type">array</td><td class="desc">Per-period status. <code>periods[n].status === "closed"</code> or <code>"settled"</code> implicitly closes ALL markets for that period — drop those locally too, even if they weren't listed in <code>markets</code>.</td></tr>
+        <tr><td class="name">rec.parentId</td><td class="type">int?</td><td class="desc">If present, this is a CHILD matchup (alt periods, props derived from a parent event). Its full metadata (participants, league) lives on the parent record.</td></tr>
+        <tr><td class="name">rec.startTime, status</td><td class="type">string</td><td class="desc">Event-level metadata. Tennis / Golf / Fights frequently see <code>startTime</code> updates without any market change (reschedules) — track these to surface to your users.</td></tr>
+      </tbody>
+    </table>
+
+    <h5 style="margin: 14px 0 6px; color: var(--text); font-size: 13px; text-transform: uppercase; letter-spacing: .1em">Prematch frames — <code>prematch_matchups</code> + <code>prematch_markets</code></h5>
+    <table style="width: 100%; margin: 0 0 14px">
+      <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td class="name">type</td><td class="type">string</td><td class="desc"><code>prematch_matchups</code> = response from <code>/sports/{sid}/matchups</code>. The full per-sport matchup list, sent once per board poll cycle (currently about every 15 s). Prematch price changes arrive sooner, the moment Pinnacle pushes them, as <code>prematch_ws</code> frames. <b>Includes both prematch and live entries</b> — filter by <code>data[i].isLive === false</code> if you want strict prematch.<br><code>prematch_markets</code> = response from <code>/matchups/{id}/markets/related/straight</code>. Fired only when Pinnacle bumped <code>matchup.version</code>, so roughly the events that had market activity in the last cycle.</td></tr>
+        <tr><td class="name">data</td><td class="type">array</td><td class="desc">For <code>prematch_matchups</code>: array of full matchup records (event metadata). For <code>prematch_markets</code>: array of market objects scoped to one matchup.<br><b>This is the authoritative current snapshot from Pinnacle</b> — any market in your local store that's NOT in this list has been closed by Pinnacle. Drop it. <b>For a large sport (e.g. soccer) this frame is split into several chunks</b> tagged <code>seq</code>/<code>final</code> (same as the subscribe snapshot); when chunked, the authoritative set is the <b>union across the whole chunk group</b> — accumulate until <code>final: true</code> before dropping anything.</td></tr>
+        <tr><td class="name">matchup_id</td><td class="type">int</td><td class="desc">(prematch_markets only) The matchup this markets array belongs to.</td></tr>
+        <tr><td class="name">mode</td><td class="type">string?</td><td class="desc">Present only when MQTT is down and we fell back to live REST polling. Value: <code>"rest_fallback"</code>. Frame shape is otherwise identical, so customers usually ignore this field.</td></tr>
+      </tbody>
+    </table>
+
+    <h5 style="margin: 14px 0 6px; color: var(--text); font-size: 13px; text-transform: uppercase; letter-spacing: .1em">Merge recipe (pseudocode)</h5>
+<pre><span class="c">// Maintain a Map&lt;matchupId, MatchupState&gt;. For each incoming frame:</span>
+
+<span class="k">if</span> (msg.type === <span class="s">"snapshot"</span>) {
+  <span class="k">for</span> (<span class="k">const</span> ev <span class="k">of</span> msg.events) state.set(ev.id, ev);
+}
+
+<span class="k">if</span> (msg.type === <span class="s">"live"</span>) {
+  <span class="k">if</span> (msg.op === <span class="s">"del"</span>)  { state.delete(msg.rec.id); <span class="k">return</span>; }
+  <span class="k">const</span> existing = state.get(msg.rec.id) ?? {};
+  <span class="k">const</span> merged = { ...existing, ...msg.rec };
+  <span class="k">if</span> (msg.rec.markets) {
+    <span class="k">const</span> byKey = <span class="k">new</span> Map((existing.markets ?? []).map(m =&gt; [marketKey(m), m]));
+    <span class="k">for</span> (<span class="k">const</span> m <span class="k">of</span> msg.rec.markets) {
+      <span class="k">if</span> (m.status &amp;&amp; m.status !== <span class="s">"open"</span>) byKey.delete(marketKey(m));   <span class="c">// close signal</span>
+      <span class="k">else</span> byKey.set(marketKey(m), m);
+    }
+    merged.markets = [...byKey.values()];
+  }
+  <span class="c">// Honour period-level closes — wipe all markets for closed periods.</span>
+  <span class="k">if</span> (msg.rec.periods) {
+    <span class="k">const</span> closed = <span class="k">new</span> Set(msg.rec.periods.filter(p =&gt; p.status !== <span class="s">"open"</span>).map(p =&gt; p.period));
+    <span class="k">if</span> (closed.size) merged.markets = merged.markets.filter(m =&gt; !closed.has(m.period ?? <span class="n">0</span>));
+  }
+  state.set(msg.rec.id, merged);
+}
+
+<span class="k">if</span> (msg.type === <span class="s">"prematch_markets"</span>) {
+  <span class="c">// AUTHORITATIVE snapshot for one matchup — replace, don't merge.</span>
+  <span class="k">const</span> existing = state.get(msg.matchup_id) ?? {};
+  state.set(msg.matchup_id, { ...existing, markets: msg.data });
+}
+
+<span class="k">function</span> marketKey(m) {
+  <span class="k">return</span> m.key ?? <span class="s">`${m.type}|${m.period ?? 0}|${m.side ?? ""}|${m.prices?.[0]?.points ?? ""}`</span>;
+}</pre>
+
+    <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0"><b>Reconnect strategy.</b> Re-subscribe on reconnect. Server-side state is not preserved — the snapshot at the start of every connection is your sync point. Exponential backoff (1s → 2s → 4s → 30s cap) recommended. One connection per account on this endpoint (separate slot from SSE — you can run both; opening a second WS connection evicts the first with close code 1001).</p>
+
+    <p style="margin-top:16px"><b>Limits &amp; error frames</b></p>
+    <table class="param-table">
+      <thead><tr><th>Error / behavior</th><th>Trigger</th><th>What to do</th></tr></thead>
+      <tbody>
+        <tr><td class="name">sport_id_cap</td><td class="desc">More than <b>32</b> <code>sport_ids</code> in one subscribe</td><td class="desc">Split into batches (there are ~14 real sports — you'll rarely hit this)</td></tr>
+        <tr><td class="name">event_id_cap</td><td class="desc">More than <b>200</b> tracked <code>event_ids</code> per stream</td><td class="desc">Unsubscribe finished events; slots auto-free on <code>op:"del"</code></td></tr>
+        <tr><td class="name">subscribe_rate_limited</td><td class="desc">More than <b>30 subscribe messages per 10&nbsp;s</b></td><td class="desc">Batch sports/events into fewer subscribe messages</td></tr>
+        <tr><td class="name">backpressure</td><td class="desc">Subscribe while your connection is backlogged (&gt;32&nbsp;MB unsent)</td><td class="desc">The sport was NOT subscribed — drain, then resubscribe</td></tr>
+        <tr><td class="name">slow_consumer <span style="color:var(--muted); font-weight:400">(close)</span></td><td class="desc">Unsent buffer exceeds <b>128&nbsp;MB</b> — you're reading too slowly</td><td class="desc">Connection is closed; reconnect and read faster / subscribe narrower</td></tr>
+        <tr><td class="name">rate_limited <span style="color:var(--muted); font-weight:400">(HTTP 429)</span></td><td class="desc">Connection-open flood on the endpoint</td><td class="desc">Back off per <code>Retry-After</code>; don't reconnect in a tight loop</td></tr>
+        <tr><td class="name">plan_lacks_ws <span style="color:var(--muted); font-weight:400">(HTTP 403)</span></td><td class="desc">WS add-on not active on the account</td><td class="desc">Purchase the add-on in the <a href="/panel">dashboard</a></td></tr>
+        <tr><td class="name">invalid_json / invalid_message / unknown_message_type</td><td class="desc">Malformed client message</td><td class="desc">Fix the message shape — see subscribe example above</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:13px; margin-top:8px">You can also send <code>{"type":"unsubscribe", "streams":[…], "sport_ids":[…]}</code>; every subscribe/unsubscribe is acknowledged with a <code>{"type":"subscribed"|"unsubscribed", "stream", "sport_id"}</code> frame — treat the ack (plus the snapshot) as confirmation, not the send itself.</p>
+  </div>
+</div>
+
+<!-- ─────────────────── SPORTSMELD ─────────────────── -->
+<h2 id="sportsmeld">SportsMeld — team &amp; event matching <span style="font-size:12px; color:#fbbf24; font-weight:600; letter-spacing:.06em; text-transform:uppercase; margin-left:8px">Free 30-day trial</span></h2>
+
+<div class="endpoint">
+  <div class="endpoint-body">
+    <p>
+      <b>SportsMeld</b> is our separate entity-resolution service: it decides whether two team/player
+      names refer to the same real-world entity ("Man Utd" = "Manchester United" ≠ "Man City"), and
+      clusters the same fixture across bookmaker feeds. Use it to join this API's Pinnacle names to
+      any other book you consume — no hand-maintained alias tables. 8 sports, high-precision hybrid
+      ML pipeline, cached lookups in sub-millisecond time.
+    </p>
+    <p>
+      It runs on its own base URL with its own key (not your pinnodds key):
+      <code>Authorization: Bearer sportsmeld_...</code> against
+      <code>https://sportsmeld.arbitragex.pro</code>. Full reference:
+      <a href="https://sportsmeld.arbitragex.pro/docs" target="_blank" rel="noopener">sportsmeld.arbitragex.pro/docs</a>.
+    </p>
+
+    <p style="margin-top:14px"><b>Name matching</b> — one reference vs candidate names:</p>
+<pre><span class="c">POST https://sportsmeld.arbitragex.pro/api/match</span>
+{
+  <span class="k">"reference"</span>: <span class="s">"Manchester United"</span>,
+  <span class="k">"names"</span>: [<span class="s">"Man Utd"</span>, <span class="s">"Man City"</span>, <span class="s">"MUFC"</span>],
+  <span class="k">"sport"</span>: <span class="s">"soccer"</span>
+}
+<span class="c">// → details[]: { name, match: true|false, confidence, ambiguous, method }</span></pre>
+
+    <p style="margin-top:14px"><b>Fixture matching</b> — cluster the same game across 2+ books:</p>
+<pre><span class="c">POST https://sportsmeld.arbitragex.pro/api/match-events</span>
+{
+  <span class="k">"sport"</span>: <span class="s">"soccer"</span>,
+  <span class="k">"sources"</span>: [
+    { <span class="k">"name"</span>: <span class="s">"pinnodds"</span>, <span class="k">"events"</span>: [{ <span class="k">"id"</span>: <span class="s">"1632373638"</span>, <span class="k">"left"</span>: <span class="s">"Manchester United"</span>, <span class="k">"right"</span>: <span class="s">"Liverpool FC"</span>, <span class="k">"timestamp"</span>: <span class="n">1720008000</span> }] },
+    { <span class="k">"name"</span>: <span class="s">"bet365"</span>,   <span class="k">"events"</span>: [{ <span class="k">"id"</span>: <span class="s">"b77"</span>, <span class="k">"left"</span>: <span class="s">"Man Utd"</span>, <span class="k">"right"</span>: <span class="s">"Liverpool"</span>, <span class="k">"timestamp"</span>: <span class="n">1720008000</span> }] }
+  ]
+}
+<span class="c">// → matched[] clusters (ids echoed back), partial[], unmatched{}, stats</span>
+<span class="c">// timestamps optional; when both sides have one, matches only within ±12h</span></pre>
+
+    <p style="margin-top:14px">
+      <b>Launch offer:</b> every pinnodds user gets a <b>free 30-day trial</b> on the scout tier —
+      15 req/s, 25 names per <code>/api/match</code> call, 5 sources &amp; 500 events/source on
+      <code>/api/match-events</code>. Free during launch; paid plans later.
+      Claim it yourself in <a href="/panel">your panel</a> (Subscription card → "Get your free key")
+      — the key is shown once and emailed to your account address, and you can rotate it from the
+      panel any time (rotation never changes your expiry).
+      Questions? <a href="https://t.me/ArbitrageXpro" target="_blank" rel="noopener">Telegram @ArbitrageXpro</a>.
+    </p>
+  </div>
+</div>
+
+<!-- ─────────────────── MCP ─────────────────── -->
+<h2 id="mcp">MCP server <span style="font-size:12px; color:#93c5fd; font-weight:600; letter-spacing:.06em; text-transform:uppercase; margin-left:8px">Claude · Cursor · Codex · VS Code</span></h2>
+<p>
+  pinnodds ships a remote <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">Model Context Protocol</a> server so an AI assistant can query
+  Pinnacle odds with your existing API key. Add one URL to your client and ask in plain language: <i>&ldquo;which Premier League games are live and what are the totals?&rdquo;</i>,
+  <i>&ldquo;show me the biggest odds drops in tennis in the last 10 minutes&rdquo;</i>, <i>&ldquo;how much of my daily quota is left?&rdquo;</i>
+</p>
+<div class="endpoint" id="mcp-endpoint">
+  <div class="endpoint-head">
+    <span class="verb" style="background:#1e3a5f; color:#93c5fd">MCP</span>
+    <span class="path">https://mcp.pinnodds.com/mcp</span>
+    <span class="auth-pill key">Bearer API key</span>
+  </div>
+  <div class="endpoint-body">
+    <p>Streamable HTTP, stateless, POST only. Two ways to authenticate, both backed by your ordinary pinnodds API key &mdash; calls count against the same plan limits and appear in your panel like any other request:</p>
+    <ul style="margin:6px 0 10px 18px; font-size:14px">
+      <li><b>OAuth 2.1</b> (claude.ai, and any client that supports it): the client discovers <code>/.well-known/oauth-protected-resource</code>, you approve once on the pinnodds authorization page by entering your key, and the client receives a short-lived token with automatic refresh.</li>
+      <li><b>Bearer API key</b> (Claude Code, Cursor, VS Code, Codex, the Claude API): send the key directly.</li>
+    </ul>
+    <pre>Authorization: Bearer <span class="s">YOUR_PINNODDS_KEY</span>      <span class="c"># or the OAuth access token</span></pre>
+
+    <h4 style="margin:18px 0 8px">Connect your client</h4>
+    <div class="tabs" data-group="mcp">
+      <button class="active" data-tab="claude">Claude Code</button>
+      <button data-tab="claudeai">claude.ai</button>
+      <button data-tab="desktop">Claude Desktop</button>
+      <button data-tab="cursor">Cursor</button>
+      <button data-tab="vscode">VS Code</button>
+      <button data-tab="codex">Codex CLI</button>
+      <button data-tab="api">Claude API</button>
+    </div>
+    <div class="tab-pane active" data-group="mcp" data-tab="claude">
+<pre>claude mcp add --transport http pinnodds https://mcp.pinnodds.com/mcp \
+  --header <span class="s">"Authorization: Bearer $PINNODDS_KEY"</span></pre>
+      <p style="color: var(--muted); font-size: 13px">Then <code>/mcp</code> inside Claude Code shows <b>pinnodds</b> connected with 8 tools. Team-wide: put the same entry in <code>.mcp.json</code> with <code>"Authorization": "Bearer ${PINNODDS_KEY}"</code> so the key stays in the environment.</p>
+    </div>
+    <div class="tab-pane" data-group="mcp" data-tab="claudeai">
+<pre>Settings &rarr; Connectors &rarr; Add custom connector
+Name:  pinnodds
+URL:   <span class="s">https://mcp.pinnodds.com/mcp</span>
+Leave the OAuth client fields empty &rarr; Add &rarr; Connect</pre>
+      <p style="color: var(--muted); font-size: 13px">claude.ai opens the pinnodds authorization page; enter your API key once and approve. The connector then holds a short-lived token (refreshed automatically) &mdash; your key itself never leaves pinnodds. Revoke by removing the connector.</p>
+    </div>
+    <div class="tab-pane" data-group="mcp" data-tab="desktop">
+<pre>{
+  <span class="s">"mcpServers"</span>: {
+    <span class="s">"pinnodds"</span>: {
+      <span class="s">"type"</span>: <span class="s">"http"</span>,
+      <span class="s">"url"</span>: <span class="s">"https://mcp.pinnodds.com/mcp"</span>,
+      <span class="s">"headers"</span>: { <span class="s">"Authorization"</span>: <span class="s">"Bearer YOUR_PINNODDS_KEY"</span> }
+    }
+  }
+}</pre>
+      <p style="color: var(--muted); font-size: 13px">Claude Desktop &rarr; Settings &rarr; Developer &rarr; Edit Config.</p>
+    </div>
+    <div class="tab-pane" data-group="mcp" data-tab="cursor">
+<pre><span class="c">// ~/.cursor/mcp.json (or .cursor/mcp.json in a project)</span>
+{
+  <span class="s">"mcpServers"</span>: {
+    <span class="s">"pinnodds"</span>: {
+      <span class="s">"url"</span>: <span class="s">"https://mcp.pinnodds.com/mcp"</span>,
+      <span class="s">"headers"</span>: { <span class="s">"Authorization"</span>: <span class="s">"Bearer YOUR_PINNODDS_KEY"</span> }
+    }
+  }
+}</pre>
+    </div>
+    <div class="tab-pane" data-group="mcp" data-tab="vscode">
+<pre><span class="c">// .vscode/mcp.json</span>
+{
+  <span class="s">"servers"</span>: {
+    <span class="s">"pinnodds"</span>: {
+      <span class="s">"type"</span>: <span class="s">"http"</span>,
+      <span class="s">"url"</span>: <span class="s">"https://mcp.pinnodds.com/mcp"</span>,
+      <span class="s">"headers"</span>: { <span class="s">"Authorization"</span>: <span class="s">"Bearer ${input:pinnodds-key}"</span> }
+    }
+  },
+  <span class="s">"inputs"</span>: [{ <span class="s">"id"</span>: <span class="s">"pinnodds-key"</span>, <span class="s">"type"</span>: <span class="s">"promptString"</span>, <span class="s">"password"</span>: <span class="k">true</span>, <span class="s">"description"</span>: <span class="s">"pinnodds API key"</span> }]
+}</pre>
+    </div>
+    <div class="tab-pane" data-group="mcp" data-tab="codex">
+<pre><span class="c"># ~/.codex/config.toml</span>
+[mcp_servers.pinnodds]
+url = <span class="s">"https://mcp.pinnodds.com/mcp"</span>
+bearer_token_env_var = <span class="s">"PINNODDS_KEY"</span></pre>
+    </div>
+    <div class="tab-pane" data-group="mcp" data-tab="api">
+<pre><span class="c"># Messages API — attach the server to a request (MCP connector)</span>
+<span class="s">"mcp_servers"</span>: [{
+  <span class="s">"type"</span>: <span class="s">"url"</span>,
+  <span class="s">"url"</span>: <span class="s">"https://mcp.pinnodds.com/mcp"</span>,
+  <span class="s">"name"</span>: <span class="s">"pinnodds"</span>,
+  <span class="s">"authorization_token"</span>: <span class="s">"YOUR_PINNODDS_KEY"</span>
+}]</pre>
+    </div>
+
+    <h4 style="margin:18px 0 8px">Tools</h4>
+    <table>
+      <thead><tr><th>Tool</th><th>What it does</th><th>Quota</th></tr></thead>
+      <tbody>
+        <tr><td style="white-space:nowrap"><code>list_sports</code></td><td>Sport ids and names.</td><td>free</td></tr>
+        <tr><td style="white-space:nowrap"><code>get_events</code></td><td>Live or prematch events for one sport; filter with <code>query</code> (team/league words), capped rows.</td><td>1 call</td></tr>
+        <tr><td style="white-space:nowrap"><code>get_event_odds</code></td><td>Moneyline, spreads, totals, team totals for one event and chosen periods. Concise = 5 lines around the main line.</td><td>1 call</td></tr>
+        <tr><td style="white-space:nowrap"><code>get_prematch_lines</code></td><td>Every alternate line of one market for a prematch event.</td><td>1 call</td></tr>
+        <tr><td style="white-space:nowrap"><code>get_odds_drops</code></td><td>Recent sharp price drops (steam), filter by sport, market, period, size and age.</td><td>1 call</td></tr>
+        <tr><td style="white-space:nowrap"><code>get_feed_status</code></td><td>Feed health and freshness.</td><td>1 call</td></tr>
+        <tr><td style="white-space:nowrap"><code>get_account_usage</code></td><td>Your plan, limits, expiry and requests used today.</td><td>1 call</td></tr>
+        <tr><td style="white-space:nowrap"><code>search_pinnodds_docs</code></td><td>Search this reference.</td><td>free</td></tr>
+      </tbody>
+    </table>
+    <div class="callout" style="margin-top:14px">
+      <b>Quota.</b> Prices are always live: every tool call is one request against your plan, exactly like a REST call &mdash; nothing is served from a cache. Responses are trimmed so they do not flood the assistant&rsquo;s context.
+      A Trial key has 100 requests per day; a long analysis session will hit that. When the server answers <code>rate_limited</code>, it also stops calling upstream until the window resets.
+      Streams (SSE, WebSocket) are not exposed over MCP &mdash; use them directly.
+    </div>
+    <p style="color: var(--muted); font-size: 13px; margin-top:12px">Also listed in the <a href="https://registry.modelcontextprotocol.io" target="_blank" rel="noopener">official MCP registry</a> as <code>com.pinnodds/odds</code>. Questions: <a href="/cdn-cgi/l/email-protection#7e171018113e0e171010111a1a0d501d1113"><span class="__cf_email__" data-cfemail="d0b9beb6bf90a0b9bebebfb4b4a3feb3bfbd">[email&#160;protected]</span></a>.</p>
+  </div>
+</div>
+
+<!-- ─────────────────── STATUS ─────────────────── -->
+<h2>Status</h2>
+
+<!-- /health -->
+<div class="endpoint" id="health">
+  <div class="endpoint-head">
+    <span class="verb get">GET</span>
+    <span class="path">/health</span>
+    <span class="auth-pill key">API key</span>
+  </div>
+  <div class="endpoint-body">
+    <p>Operational status of both feeds. Useful for dashboards and alerts.</p>
+    <p>The top-level fields describe the <b>live</b> feed. The nested <code>prematch</code> object describes the <b>prematch</b> feed, which runs as an independent service — one can be degraded while the other is fine, so check both.</p>
+<pre>{
+  <span class="k">"status"</span>: <span class="s">"healthy"</span>,        <span class="c">// healthy | degraded — LIVE feed only</span>
+  <span class="k">"degraded_reason"</span>: <span class="k">null</span>,
+  <span class="k">"live_write_age_ms"</span>: <span class="n">546</span>,   <span class="c">// ms since the last live write</span>
+  <span class="k">"source"</span>: <span class="s">"ws"</span>,            <span class="c">// ws | rest | none</span>
+  <span class="k">"events_in_store"</span>: <span class="n">145</span>,
+  <span class="k">"version"</span>: <span class="n">50352678</span>,      <span class="c">// same cursor as /kit `last`</span>
+  <span class="k">"ws_messages"</span>: <span class="n">1768510</span>,
+  <span class="k">"rest_polls"</span>: <span class="n">149010</span>,
+  <span class="k">"uptime_s"</span>: <span class="n">138836</span>,
+  <span class="k">"prematch"</span>: {
+    <span class="k">"enabled"</span>: <span class="k">true</span>,
+    <span class="k">"status"</span>: <span class="s">"healthy"</span>,      <span class="c">// healthy | degraded | unreachable</span>
+    <span class="k">"degraded_reason"</span>: <span class="k">null</span>,
+    <span class="k">"events_in_store"</span>: <span class="n">15891</span>,
+    <span class="k">"write_age_ms"</span>: <span class="n">71</span>,       <span class="c">// ms since the last prematch write</span>
+    <span class="k">"version"</span>: <span class="n">50352723</span>,
+    <span class="k">"source"</span>: <span class="s">"ws"</span>,
+    <span class="k">"rest_polls"</span>: <span class="n">104828</span>,
+    <span class="k">"checked_age_ms"</span>: <span class="n">1204</span>    <span class="c">// age of this prematch reading</span>
+  }
+}</pre>
+    <p style="margin-top:14px"><b>Alerting on this endpoint</b></p>
+    <ul style="color:#7a8697; font-size:13px; line-height:1.8">
+      <li><code>status</code> covers the live feed only. A prematch problem never changes it — watch <code>prematch.status</code> separately.</li>
+      <li><code>live_write_age_ms</code> and <code>prematch.write_age_ms</code> are the freshness numbers to alert on. Both normally sit well under a second.</li>
+      <li><code>prematch.status: "unreachable"</code> means the health check itself could not reach the prematch service. Prematch data may still be fine; treat it as "unknown", not "down".</li>
+      <li>Deployments without a prematch service report <code>"prematch": {"enabled": false}</code> and nothing else.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- /ping -->
+<div class="endpoint" id="ping">
+  <div class="endpoint-head">
+    <span class="verb get">GET</span>
+    <span class="path">/ping</span>
+    <span class="auth-pill pub">Public</span>
+  </div>
+  <div class="endpoint-body">
+    <p>Public liveness probe. Returns <code>ok</code> in plain text. Useful for load balancers and uptime monitors that can't send an auth header.</p>
+<pre>curl https://pinnodds.com/ping
+<span class="c"># ok</span></pre>
+  </div>
+</div>
+
+<!-- ─────────────────── REFERENCE ─────────────────── -->
+<h2 id="sport-ids">Sport IDs</h2>
+<p>Sport IDs are stable integers — once you've coded against an ID it stays valid. Mapped to Pinnacle's internal sport IDs (e.g. dropping-odds <code>1</code> = Pinnacle <code>29</code> = Soccer).</p>
+<table class="param-table">
+  <thead><tr><th>ID</th><th>Sport</th><th>Pinnacle internal ID</th></tr></thead>
+  <tbody>
+    <tr><td class="name">1</td><td>Soccer</td><td class="type">29</td></tr>
+    <tr><td class="name">2</td><td>Tennis</td><td class="type">33</td></tr>
+    <tr><td class="name">3</td><td>Basketball</td><td class="type">4</td></tr>
+    <tr><td class="name">4</td><td>Hockey</td><td class="type">19</td></tr>
+    <tr><td class="name">5</td><td>Football</td><td class="type">15</td></tr>
+    <tr><td class="name">6</td><td>Baseball</td><td class="type">3</td></tr>
+    <tr><td class="name">7</td><td>Rugby (Union + League)</td><td class="type">27, 26</td></tr>
+    <tr><td class="name">8</td><td>MMA (UFC, Bellator, ONE, etc.)</td><td class="type">22</td></tr>
+    <tr><td class="name">9</td><td>Boxing</td><td class="type">6</td></tr>
+    <tr><td class="name">10</td><td>Other (Volleyball + Handball, combined)</td><td class="type">34, 18</td></tr>
+    <tr><td class="name">11</td><td>Esports (Dota 2, CS2, LoL, etc.)</td><td class="type">12</td></tr>
+    <tr><td class="name">12</td><td>Golf (PGA, DP World Tour, LIV — head-to-heads)</td><td class="type">17</td></tr>
+    <tr><td class="name">13</td><td>Cricket (T20, ODI, Test — added July 2026)</td><td class="type">8</td></tr>
+    <tr><td class="name">14</td><td>Volleyball (the volleyball half of 10)</td><td class="type">34</td></tr>
+    <tr><td class="name">15</td><td>Handball (the handball half of 10)</td><td class="type">18</td></tr>
+  </tbody>
+</table>
+<p style="color: var(--muted); font-size: 13px; margin-top: 8px"><b>Volleyball &amp; Handball (IDs 14 / 15):</b> ID <code>10</code> has always returned both sports in one board, and it still does &mdash; nothing about <code>sport_id=10</code> has changed. IDs <code>14</code> and <code>15</code> are narrower views of that same data, so you can request volleyball without handball. The two overlap ID <code>10</code>: if you poll <code>10</code>, <code>14</code> and <code>15</code> you receive every volleyball and handball event twice. Available on the REST endpoints (<code>/kit/v1/markets</code>, <code>/kit/v1/prematch/*</code>, <code>/api/drops</code>); the WebSocket feed still routes these events under ID <code>10</code>, and a subscribe for 14 or 15 is rejected rather than silently delivering nothing.</p>
+<p style="color: var(--muted); font-size: 13px; margin-top: 8px"><b>Golf note:</b> Pinnacle exposes Golf as moneyline-only (head-to-head matchups, outright winners). Spreads, totals, and team totals are not provided for Golf — your client should expect <code>spreads</code>, <code>totals</code>, and <code>team_total</code> to be empty objects on Golf events. Drops on Golf will only fire from the Moneyline section.</p>
+
+<h2 id="market-types">Market types</h2>
+<p>Returned inside each event's <code>periods[&lt;num_N&gt;]</code> object.</p>
+<table class="param-table">
+  <thead><tr><th>Field</th><th>Shape</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td class="name">money_line</td><td class="type">{ home, away, draw }</td><td class="desc">3-way (or 2-way for no-draw sports) match result. Decimal odds.</td></tr>
+    <tr><td class="name">spreads</td><td class="type">{ "&lt;hdp&gt;": { hdp, home, away, max } }</td><td class="desc">Handicap markets keyed by the point spread.</td></tr>
+    <tr><td class="name">totals</td><td class="type">{ "&lt;points&gt;": { points, over, under, max } }</td><td class="desc">Over/under markets keyed by the total.</td></tr>
+    <tr><td class="name">team_total</td><td class="type">{ home: {...}, away: {...} }</td><td class="desc">Primary per-team total line per side. Backward-compatible — only ONE line per side. For all alt lines, use <code>team_totals</code> below.</td></tr>
+    <tr><td class="name">team_totals</td><td class="type">{ home: { "&lt;points&gt;": {points, over, under, max} }, away: {...} }</td><td class="desc">ALL alternate team-total lines, keyed by points per side. Use this when Pinnacle exposes multiple lines (e.g. home Over 0.5 / 1.5 / 2.5).</td></tr>
+    <tr><td class="name">meta</td><td class="type">object</td><td class="desc">Per-period meta: current scores, max stakes.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="event-shape">Event object</h2>
+<pre>{
+  <span class="k">"event_id"</span>: <span class="n">1628594960</span>,
+  <span class="k">"sport_id"</span>: <span class="n">1</span>,
+  <span class="k">"league_id"</span>: <span class="n">2037</span>,
+  <span class="k">"league_name"</span>: <span class="s">"China - Super League"</span>,
+  <span class="k">"starts"</span>: <span class="s">"2026-04-17T12:00:00Z"</span>,
+  <span class="k">"last"</span>: <span class="n">1776430365</span>,   <span class="c">// serve time, NOT last update — see below</span>
+  <span class="k">"home"</span>: <span class="s">"Yunnan Yukun"</span>,
+  <span class="k">"away"</span>: <span class="s">"Tianjin Jinmen Tiger"</span>,
+  <span class="k">"event_type"</span>: <span class="s">"live"</span>,
+  <span class="k">"live_status_id"</span>: <span class="n">1</span>,
+  <span class="k">"parent_id"</span>: <span class="n">1628594613</span>,
+  <span class="k">"is_have_odds"</span>: <span class="k">true</span>,
+  <span class="k">"is_have_periods"</span>: <span class="k">true</span>,
+  <span class="k">"periods"</span>: {
+    <span class="k">"num_0"</span>: {
+      <span class="k">"number"</span>: <span class="n">0</span>,
+      <span class="k">"description"</span>: <span class="s">"Game"</span>,
+      <span class="k">"money_line"</span>: { <span class="k">"home"</span>: <span class="n">2.450</span>, <span class="k">"draw"</span>: <span class="n">3.300</span>, <span class="k">"away"</span>: <span class="n">2.900</span> },
+      <span class="k">"spreads"</span>: { <span class="s">"-0.5"</span>: { <span class="k">"hdp"</span>: -<span class="n">0.5</span>, <span class="k">"home"</span>: <span class="n">2.060</span>, <span class="k">"away"</span>: <span class="n">1.820</span>, <span class="k">"max"</span>: <span class="n">500</span> } },
+      <span class="k">"totals"</span>:  { <span class="s">"2.5"</span>:  { <span class="k">"points"</span>: <span class="n">2.5</span>, <span class="k">"over"</span>: <span class="n">1.900</span>, <span class="k">"under"</span>: <span class="n">1.980</span>, <span class="k">"max"</span>: <span class="n">500</span> } },
+      <span class="k">"team_total"</span>: { <span class="k">"home"</span>: { <span class="k">"points"</span>: <span class="n">1.5</span>, <span class="k">"over"</span>: <span class="n">1.860</span>, <span class="k">"under"</span>: <span class="n">2.000</span> } },
+      <span class="k">"team_totals"</span>: {
+        <span class="k">"home"</span>: {
+          <span class="s">"0.5"</span>: { <span class="k">"points"</span>: <span class="n">0.5</span>, <span class="k">"over"</span>: <span class="n">1.200</span>, <span class="k">"under"</span>: <span class="n">4.500</span>, <span class="k">"max"</span>: <span class="n">100</span> },
+          <span class="s">"1.5"</span>: { <span class="k">"points"</span>: <span class="n">1.5</span>, <span class="k">"over"</span>: <span class="n">1.860</span>, <span class="k">"under"</span>: <span class="n">2.000</span>, <span class="k">"max"</span>: <span class="n">100</span> },
+          <span class="s">"2.5"</span>: { <span class="k">"points"</span>: <span class="n">2.5</span>, <span class="k">"over"</span>: <span class="n">3.200</span>, <span class="k">"under"</span>: <span class="n">1.400</span>, <span class="k">"max"</span>: <span class="n">100</span> }
+        },
+        <span class="k">"away"</span>: { <span class="c">/* same shape */</span> }
+      },
+      <span class="k">"meta"</span>: { <span class="k">"number"</span>: <span class="n">0</span>, <span class="k">"max_total"</span>: <span class="n">500</span>, <span class="k">"home_score"</span>: <span class="n">0</span>, <span class="k">"away_score"</span>: <span class="n">1</span> }
+    },
+    <span class="k">"num_1"</span>: { <span class="c">/* first half */</span> }
+  },
+  <span class="k">"state"</span>: {
+    <span class="k">"match"</span>: { <span class="k">"state"</span>: <span class="n">1</span>, <span class="k">"minutes"</span>: <span class="n">23</span> },
+    <span class="k">"home"</span>:  { <span class="k">"score"</span>: <span class="n">1</span>, <span class="k">"redCards"</span>: <span class="n">0</span> },
+    <span class="k">"away"</span>:  { <span class="k">"score"</span>: <span class="n">0</span>, <span class="k">"redCards"</span>: <span class="n">0</span> },
+    <span class="k">"home_stats"</span>: [{ <span class="k">"period"</span>: <span class="n">0</span> }, { <span class="k">"period"</span>: <span class="n">1</span> }],
+    <span class="k">"away_stats"</span>: [{ <span class="k">"period"</span>: <span class="n">0</span> }, { <span class="k">"period"</span>: <span class="n">1</span> }]
+  }
+}</pre>
+<p style="margin-top:10px">Special-market rows (returned only with <code>include_specials=1</code>, or when fetched by their own <code>event_id</code>) additionally carry <code>special</code>, <code>special_category</code>, <code>special_units</code> and <code>special_markets</code>, with an empty <code>periods</code> object — see <a href="#specials">Player props &amp; specials</a> for the shape. BTTS / Draw&nbsp;No&nbsp;Bet rows keep their historical shape (<code>special</code> + <code>special_outcomes</code> with prices in the <code>money_line</code> slots) and appear regardless of the flag.</p>
+
+<div class="callout" style="margin-top:20px">
+  <b>The two <code>last</code> fields are different things.</b>
+  <ul style="margin:10px 0 0; padding-left:18px; line-height:1.9">
+    <li><b>Top level</b> (<code>last</code> / <code>last_call</code>, next to <code>sport_id</code>) is our store's sequence number. It only moves forward, and it is the value you pass to <code>since=</code>.</li>
+    <li><b>Inside each event</b>, <code>last</code> is the Unix second at which we rendered the response. It is the <i>same value for every event in the payload</i> and says nothing about when that event's odds moved. Don't compute freshness from it.</li>
+  </ul>
+</div>
+
+<h2 id="staleness">Detecting stale prices</h2>
+
+<p>Every REST response carries three headers telling you how old the data behind it is. This is the direct answer — read these before anything else.</p>
+<table class="param-table">
+  <thead><tr><th>Header</th><th>Value</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td class="name">X-Data-Status</td><td class="type">fresh</td><td class="desc">Data is current — act on it</td></tr>
+    <tr><td class="name">X-Data-Status</td><td class="type">stale</td><td class="desc">Upstream has gone quiet past our threshold. <b>The board is withheld</b> — you get the ordinary empty shape, not an error, so your client keeps parsing. This is how you tell "no fresh data" apart from "no matches right now"</td></tr>
+    <tr><td class="name">X-Data-Status</td><td class="type">unknown</td><td class="desc">Nothing has been written yet (cold start). Not an outage</td></tr>
+    <tr><td class="name">X-Data-Age-Ms</td><td class="type">integer</td><td class="desc">Age of the newest data on that board, in ms, rounded down to whole seconds. Absent when the age is unknown — never a sentinel like <code>-1</code></td></tr>
+    <tr><td class="name">X-Data-Board</td><td class="type">live · prematch</td><td class="desc">Which board the two values above describe, so a client polling both can keep them apart</td></tr>
+  </tbody>
+</table>
+<pre>curl -sD - -o /dev/null -H "x-portal-apikey: <span class="s">$KEY</span>" \
+  "https://pinnodds.com/kit/v1/markets?sport_id=<span class="n">29</span>" | grep -i x-data
+<span class="c"># -&gt; x-data-board: live</span>
+<span class="c"># -&gt; x-data-status: fresh</span>
+<span class="c"># -&gt; x-data-age-ms: 0</span></pre>
+<ul style="color:#7a8697; font-size:13px; line-height:1.8; margin-top:14px">
+  <li><b>Set your own tolerance.</b> Below the withholding threshold you still receive the last known prices, which is usually what you want — a quiet market is not a broken one. If your strategy needs tighter limits, compare <code>X-Data-Age-Ms</code> against your own number and skip the cycle yourself.</li>
+  <li><b>The <code>last</code> field in the body is NOT a data age.</b> It is our serve cursor and is identical for every event in a response. Use the headers for freshness and <code>last</code> for deltas — they answer different questions.</li>
+  <li><b>REST only.</b> The SSE and WebSocket streams do not currently carry this signal. On a push stream, silence is the signal: poll <a href="#health"><code>/health</code></a> alongside it, which turns <code>degraded</code> with a reason such as <code>no live write for 900s</code>.</li>
+</ul>
+
+<p style="margin-top:22px">For deltas and bandwidth, use the top-level <code>last</code> cursor — it is exact, and a full board is large while the change set is usually a handful of events.</p>
+<pre>curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
+  "https://pinnodds.com/kit/v1/prematch/fixtures?sport_id=<span class="n">1</span>"
+<span class="c"># -&gt; { "last": 50352786, "events": [ ...1522 events... ] }</span>
+
+curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
+  "https://pinnodds.com/kit/v1/prematch/fixtures?sport_id=<span class="n">1</span>&amp;since=<span class="n">50352786</span>"
+<span class="c"># -&gt; { "last": 50353005, "events": [ ...7 events that changed... ] }</span></pre>
+<ul style="color:#7a8697; font-size:13px; line-height:1.8; margin-top:14px">
+  <li><b>Feed quiet</b> — <code>last</code> does not advance between polls. <code>X-Data-Age-Ms</code> above answers this directly; if you want a second source, <a href="#health"><code>/health</code></a> carries <code>live_write_age_ms</code> and <code>prematch.write_age_ms</code>, which tell you <i>which</i> feed is quiet.</li>
+  <li><b>Event unchanged</b> — <code>last</code> advances but the event is absent from the <code>since=</code> response. Its prices genuinely have not moved. Keep your cached copy.</li>
+  <li><b>Event gone</b> — it stops appearing in a full (no <code>since=</code>) response. Pinnacle has pulled it, or it has kicked off and moved to the live feed.</li>
+  <li>Always carry the <code>last</code> from the response you just received. Don't reuse an older one or substitute a wall-clock timestamp.</li>
+</ul>
+<p style="color:#7a8697; font-size:13px">If you need a real timestamp per price change, use <a href="#api-drops"><code>/api/drops</code></a>. Every drop carries its own <code>ts</code> (epoch ms) and <code>age_s</code>.</p>
+
+<h2 id="live-state">Live state object</h2>
+<p>Live events include a <code>state</code> object with in-game state passed through from Pinnacle. Field names are sport-specific and are NOT renamed by us. <code>state</code> is <code>null</code> on prematch events.</p>
+
+<p>Three top-level fields make up the object:</p>
+<ul>
+  <li><code>state.match</code> — overall match-level state (clock / current period). Sport-dependent.</li>
+  <li><code>state.home</code> / <code>state.away</code> — current state for each participant.</li>
+  <li><code>state.home_stats</code> / <code>state.away_stats</code> — array indexed by period. Currently only the <code>period</code> index is present; per-period stat values are not populated.</li>
+</ul>
+
+<table class="param-table" style="margin-top: 16px">
+  <thead><tr><th>Sport</th><th>Match-level fields</th><th>Per-participant fields</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="name">Soccer (1)</td>
+      <td class="type"><code>state</code> (period state code, 1 = 1H, 2 = 2H, etc.), <code>minutes</code> (game clock minute)</td>
+      <td class="type"><code>score</code>, <code>redCards</code></td>
+    </tr>
+    <tr>
+      <td class="name">Basketball (3)</td>
+      <td class="type"><code>quarter</code> (1-4 + OT), <code>timeRemainingInQtr</code> (string "MM:SS")</td>
+      <td class="type"><code>score</code></td>
+    </tr>
+    <tr>
+      <td class="name">Tennis (2)</td>
+      <td class="type"><code>set</code> (current set number)</td>
+      <td class="type"><code>setsWon</code>, <code>gamesBySet</code> (array), <code>points</code> (string: "0"/"15"/"30"/"40"/"Adv"), <code>serving</code> (boolean)</td>
+    </tr>
+    <tr>
+      <td class="name">Other sports</td>
+      <td class="type">Varies. Common: <code>period</code> / <code>state</code></td>
+      <td class="type">Always <code>score</code>. Sport-specific extras may appear.</td>
+    </tr>
+  </tbody>
+</table>
+<p style="color: var(--muted); font-size: 13px; margin-top: 8px"><b>Note:</b> Per-participant live state currently covers <code>score</code> and <code>redCards</code> (plus the match-level clock/period). Yellow cards and corners are <b>not</b> populated on the main event. Fields appear only when there is a non-default value to publish, so treat every field as optional and code defensively.</p>
+
+<p><b>Where it lives:</b> the <code>state</code> field is returned by <code>GET /kit/v1/markets?event_type=live</code> only. Prematch endpoints (<code>/kit/v1/prematch/*</code>) do not return <code>state</code> — none of these fields exist before kickoff. The <code>/odds-drop</code> SSE stream does NOT include <code>state</code>; use the REST endpoint when you need live game state.</p>
+
+<h2 id="affiliate">Affiliate program</h2>
+<p>Every account gets a unique referral link. Anyone who signs up via your link and becomes a paying customer earns you <b>30% of every payment they make</b>, for as long as their subscription stays active — first payment, renewals, upgrades, all of it.</p>
+
+<table class="param-table" style="margin-top: 14px">
+  <thead><tr><th>Topic</th><th>Detail</th></tr></thead>
+  <tbody>
+    <tr><td class="name">Your link</td><td class="desc">Shown in your <a href="/panel">dashboard</a>. Format: <code>https://pinnodds.com/?ref=&lt;8-char-code&gt;</code>. Copy + share anywhere.</td></tr>
+    <tr><td class="name">Commission</td><td class="desc"><b>30%</b> of every USD payment your referrals make. Compounds across renewals and upgrades — not a one-time bounty.</td></tr>
+    <tr><td class="name">Attribution</td><td class="desc">A signup is attributed if the visitor lands on pinnodds.com with your <code>?ref=</code> parameter and then signs up + verifies email in the same browser session. We don't use cross-device cookies — straight session-based attribution.</td></tr>
+    <tr><td class="name">Tracking</td><td class="desc">Your panel shows a live list of every signup attributed to you, whether they're on a paid plan, and how much you've earned (unpaid + paid out).</td></tr>
+    <tr><td class="name">Payouts</td><td class="desc">Processed manually. Once your unpaid balance reaches <b>$50+</b> we'll reach out to arrange transfer (crypto, bank transfer, or PayPal — whichever you prefer). Faster payouts are available on request — email <a href="/cdn-cgi/l/email-protection#254c4b434a65554c4b4b4a4141560b464a48"><span class="__cf_email__" data-cfemail="741d1a121b34041d1a1a1b1010075a171b19">[email&#160;protected]</span></a>.</td></tr>
+    <tr><td class="name">Self-referral</td><td class="desc">Blocked. You can't sign up via your own link.</td></tr>
+    <tr><td class="name">Refunds</td><td class="desc">If a referred customer's payment is refunded by us (rare), the corresponding commission is voided. We don't claw back already-paid commissions for routine churn — only for actual refunds.</td></tr>
+  </tbody>
+</table>
+
+<p style="color: var(--muted); font-size: 13px; margin-top: 10px"><b>Privacy:</b> in your panel, referred users' emails are masked (e.g. <code>j***@gmail.com</code>) so you can recognize friends you invited without exposing full addresses if you screenshot the dashboard. Admins see unmasked emails in our internal tooling.</p>
+
+<div class="callout warn" style="margin-top: 40px">
+  <b>Need something we don't have?</b> Historical archives, custom rate above 30 req/sec, or a market we don't surface yet — email <a href="/cdn-cgi/l/email-protection#1c75727a735c6c7572727378786f327f7371"><span class="__cf_email__" data-cfemail="50393e363f1020393e3e3f3434237e333f3d">[email&#160;protected]</span></a> and tell us what you need.
+</div>
+
+</main>
+</div>
+
+<footer class="docfoot">
+  <span>&copy; <span id="yr">2026</span> PINNODDS</span>
+  <span>DATA SERVICE ONLY &middot; NOT A BOOKMAKER</span>
+  <span>NOT AFFILIATED WITH PINNACLE</span>
+  <span class="right">
+    <a href="/">Home</a>
+    <a href="/pinnacle-odds-api">Pinnacle API</a>
+    <a href="/pinnacle-api-pricing">Pricing</a>
+    <a href="/the-odds-api-alternative">vs The Odds API</a>
+    <a href="/sharpapi-alternative">vs SharpAPI</a>
+    <a href="/docs">Docs</a>
+    <a href="/blog">Blog</a>
+    <a href="/panel">Panel</a>
+    <a href="/about">About</a>
+    <a href="/terms">Terms</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/cookies">Cookies</a>
+    <a href="#" onclick="window.pinnConsent&&pinnConsent.open();return false">Cookie settings</a>
+    <a href="/cdn-cgi/l/email-protection#5c35323a331c2c3532323338382f723f3331"><span class="__cf_email__" data-cfemail="c0a9aea6af80b0a9aeaeafa4a4b3eea3afad">[email&#160;protected]</span></a>
+  </span>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+(function(){
+  "use strict";
+
+  /* ---- session clock (status bar) ---- */
+  var clockEl = document.getElementById("clock");
+  function pad(n){ return n < 10 ? "0" + n : "" + n; }
+  function tickClock(){
+    var d = new Date();
+    clockEl.textContent = pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + ":" + pad(d.getUTCSeconds());
+  }
+  tickClock(); setInterval(tickClock, 1000);
+  document.getElementById("yr").textContent = new Date().getFullYear();
+
+  /* ---- wrap code blocks: terminal pane + copy button ---- */
+  document.querySelectorAll("main pre").forEach(function(pre){
+    var wrap = document.createElement("div");
+    wrap.className = "codewrap";
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "copybtn";
+    btn.textContent = "Copy";
+    btn.setAttribute("aria-label", "Copy code to clipboard");
+    btn.addEventListener("click", function(){
+      var text = pre.innerText;
+      var done = function(){
+        btn.textContent = "Copied";
+        btn.classList.add("done");
+        setTimeout(function(){ btn.textContent = "Copy"; btn.classList.remove("done"); }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function(){});
+      } else {
+        var ta = document.createElement("textarea");
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try { document.execCommand("copy"); done(); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+    });
+    wrap.appendChild(btn);
+  });
+
+  /* ---- wrap tables so wide data grids scroll inside themselves ---- */
+  document.querySelectorAll("main table").forEach(function(t){
+    if (t.parentNode && t.parentNode.classList.contains("tbl-scroll")) return;
+    var box = document.createElement("div");
+    box.className = "tbl-scroll";
+    t.parentNode.insertBefore(box, t);
+    box.appendChild(t);
+  });
+
+  /* ---- tab switching for code examples (ported verbatim) ---- */
+  document.querySelectorAll(".tabs").forEach(function(tabs){
+    var group = tabs.dataset.group;
+    tabs.querySelectorAll("button").forEach(function(btn){
+      btn.onclick = function(){
+        tabs.querySelectorAll("button").forEach(function(b){ b.classList.remove("active"); });
+        btn.classList.add("active");
+        document.querySelectorAll('.tab-pane[data-group="' + group + '"]').forEach(function(p){ p.classList.remove("active"); });
+        document.querySelector('.tab-pane[data-group="' + group + '"][data-tab="' + btn.dataset.tab + '"]').classList.add("active");
+      };
+    });
+  });
+
+  /* ---- smooth scroll for sidebar + mobile TOC links (ported) ---- */
+  document.querySelectorAll("aside a[href^='#'], details.mobile-toc a[href^='#']").forEach(function(a){
+    a.onclick = function(e){
+      var id = a.getAttribute("href").slice(1);
+      var el = document.getElementById(id);
+      if (el) {
+        e.preventDefault();
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        history.replaceState({}, "", "#" + id);
+      }
+    };
+  });
+
+  /* ---- scrollspy: mark the sidebar link for the section in view ---- */
+  var links = {}, targets = [];
+  document.querySelectorAll("aside a[href^='#']").forEach(function(a){
+    var id = a.getAttribute("href").slice(1);
+    var el = document.getElementById(id);
+    if (!el) return;
+    links[id] = a;
+    targets.push(el);
+  });
+  if (targets.length && "IntersectionObserver" in window) {
+    var visible = {};
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting) visible[en.target.id] = en.boundingClientRect.top;
+        else delete visible[en.target.id];
+      });
+      var ids = Object.keys(visible);
+      if (!ids.length) return;
+      var top = ids.sort(function(a, b){ return visible[a] - visible[b]; })[0];
+      for (var k in links) links[k].classList.remove("active");
+      if (links[top]) links[top].classList.add("active");
+    }, { rootMargin: "-96px 0px -70% 0px", threshold: 0 });
+    targets.forEach(function(t){ io.observe(t); });
+  }
+})();
+</script>
+
+<script>
+(function(){
+  var navT = document.getElementById("navT");
+  if(!navT) return;
+  navT.addEventListener("change", function(){
+    document.body.classList.toggle("drawer-open", navT.checked);
+  });
+  var d = document.getElementById("navDrawer");
+  if(d) d.addEventListener("click", function(e){
+    if(e.target.closest("a")){ navT.checked = false; document.body.classList.remove("drawer-open"); }
+  });
+})();
+</script>
+</body>
+</html>
