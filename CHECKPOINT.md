@@ -1,13 +1,13 @@
-# CHECKPOINT 3973 — read me first, then TASKS.md
+# CHECKPOINT 3974 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T05:59:21Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-p7zdn2` · **builds on:** `f641e116d` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T06:03:54Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-p7zdn2` · **builds on:** `5f3245740` (this checkpoint is the commit after it)
 
 ## Just done
-live lane note shows feed/live/Novig/matched/lines counts (compiles)
+data tests passed
 
 ## Do this next
-land on main via tools/test.sh :data:test --tests '*CloudEngineTest*', reset engine, read the lane note for tennis matching
+reset engine; read lane note
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ land on main via tools/test.sh :data:test --tests '*CloudEngineTest*', reset eng
 
 ## Last ten checkpoints
 ```
+  5f3245740 ckpt 3973: live lane note shows feed/live/Novig/matched/lines counts (compiles)
   4bca336f1 ckpt 3972: pinnLive+liveBid on (paper)
   40695f29c ckpt 3971: live feed -> SHARPAPI
   697f2404b ckpt 3970: ParlayAPI study made a standing ROUTINE item
@@ -25,8 +26,4 @@ land on main via tools/test.sh :data:test --tests '*CloudEngineTest*', reset eng
   ce6a55d74 ckpt 3966: pre-release: DV4: repeat guard in the engine's bid desk and live lane also 
   73ed6907d ckpt 3965: pre-ship: DV4: repeat guard in the engine's bid desk and live lane also rea
   34a7b3f48 ckpt 3964: pre-ship: DV4: repeat guard in the engine'"s
-  e0a1a19e0 ckpt 3963: tennis watch removed
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
