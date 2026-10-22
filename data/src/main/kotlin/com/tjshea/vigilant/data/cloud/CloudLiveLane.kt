@@ -130,6 +130,8 @@ class CloudLiveLane(
     private val altScore: (ScanSettings, String, String, String) -> com.tjshea.vigilant.data.novig.lab.AltScore? = { _, _, _, _ -> null },
     /** A fill as a ledger entry, the markets the engine's auto-bet holds, and a line for Tj. */
     private val onEntry: suspend (TradeEntry) -> Unit = {},
+    /** The engine's ledger, carried from job to job: the live lane's limits and repeat guard count what earlier jobs bought (a runner starts with no journal or tracker of its own). */
+    private val ledger: () -> List<TradeEntry> = { emptyList() },
     private val tell: suspend (String, String) -> Unit = { _, _ -> },
     private val journalLine: (String) -> Unit = {},
     private val paperBook: com.tjshea.vigilant.data.novig.lab.PaperBook? = null,
@@ -167,6 +169,20 @@ class CloudLiveLane(
         }
     }
 
+    /** Today's real tail buys from the ledger, as the taker's own records. */
+    private fun priorBuys(): List<LiveRecord> = ledger().filter { it.mode == "LIVE" && it.note.startsWith("live tail") }.map { e ->
+        LiveRecord(
+            id = e.id, atMs = e.atMs, mode = "BET", outcome = "FILLED", league = e.league, event = e.event, eventId = e.eventId, marketId = e.marketId, outcomeId = e.outcomeId, market = e.marketLabel,
+            selection = e.selection, side = "", lineKey = "", fair = e.fair, ask = e.avgPrice, limitPrice = e.avgPrice, fee = 0.0, ev = e.evPercent, contracts = e.contracts, filled = e.contracts,
+            paid = e.cost, feePaid = e.fee,
+        )
+    }
+
+    /** What the ledger holds open (bets, bid fills and live fills), as repeat-guard positions; [excludeLive]: the live fills are left out (the tracker already holds this run's own). */
+    private fun ledgerPositions(excludeLive: Boolean = false): List<RepeatGuard.Pos> = ledger().filter { (it.status == "OPEN" || it.status == "UNCONFIRMED") && it.contracts > 0 && !(excludeLive && it.mode == "LIVE") }.map { e ->
+        RepeatGuard.Pos(e.marketId, e.outcomeId, e.cost + e.fee, e.payout, family = RepeatGuard.family(e.event, e.startsTs, e.marketLabel, e.selection))
+    }
+
     private suspend fun lossToday(): Double {
         val from = ApiBetPlacer.localMidnight(clock())
         val net = tracker.all().filter { it.source == BetTracker.SOURCE_TAIL && (it.settledAtMs ?: 0L) >= from }.sumOf { it.profit ?: 0.0 }
@@ -192,6 +208,7 @@ class CloudLiveLane(
             orders = o, scope = scope, rules = ::rules, minEdge = { settings.tailLive.minEdge }, gate = ::gate, ownBids = ::ownBids, journal = tailJournal, onHalt = ::halt,
             logFills = { target, orderId, fills -> tracker.logApi(target, orderId, fills).also { record(it, "live tail bet") } != null },
             lossToday = ::lossToday, paperStake = ::paperStake,
+            priorBuys = if (ledger() === NO_LEDGER) null else ::priorBuys, repeat = { settings.gates.repeatRules() }, held = { ledgerPositions() },
         )
     }
 
@@ -222,7 +239,7 @@ class CloudLiveLane(
         logFills = { target, orderId, fills -> tracker.logMakerFills(target, orderId, fills).also { record(it, "live light bid") }?.id },
         onHalt = ::halt, version = "github-engine",
         repeat = { settings.gates.repeatRules() },
-        heldBets = { RepeatGuard.fromBets(tracker.all()) },
+        heldBets = { RepeatGuard.fromBets(tracker.all()) + ledgerPositions(excludeLive = true) },
     )
 
     @Volatile private var lastCash: Double? = null
@@ -272,6 +289,7 @@ class CloudLiveLane(
 
     companion object {
         const val LIGHT_BID_MARGIN = 0.07
+        private val NO_LEDGER: List<TradeEntry> = emptyList()
         val LEAGUES = setOf("NFL", "NCAAF", "NBA", "WNBA", "NCAAB", "NHL", "MLB")
 
         fun bidsOn(s: ScanSettings) = s.engineLive && s.tailLive.on && s.tailLive.light && s.tailLive.bids

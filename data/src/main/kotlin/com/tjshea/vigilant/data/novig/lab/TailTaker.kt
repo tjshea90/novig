@@ -110,6 +110,14 @@ class TailTaker(
     private val lock: Mutex? = null,
     /** The lower tier's and the score-event buys' stake setting (CH31). */
     private val paperStake: () -> PaperStake = { PaperStake() },
+    /**
+     * The real buys already made (the engine's carried ledger): when given, the day's and the game's limits and the no-averaging-down rule count these, not only this run's journal. On the runner each job
+     * starts with an empty journal, so a restart used to give every limit back (Tj, 2026-10-22: eight buys of one team in one game across restarts).
+     */
+    private val priorBuys: (() -> List<LiveRecord>)? = null,
+    /** The repeat and hedge guard's rules (null = off) and the positions Tj holds, ledger-wide ([com.tjshea.vigilant.data.tracker.RepeatGuard]); a real buy that breaks them is refused. */
+    private val repeat: () -> com.tjshea.vigilant.data.tracker.RepeatGuard.Rules? = { null },
+    private val held: suspend () -> List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = { emptyList() },
 ) {
     private val _status = MutableStateFlow(LiveTradeStatus())
     val status: StateFlow<LiveTradeStatus> = _status.asStateFlow()
@@ -155,7 +163,7 @@ class TailTaker(
         if (start - (lastTry[c.outcomeId] ?: 0L) < TailTradeLimits.COOLDOWN_MS) return skip("cooldown")
         if ((blacklist[c.marketId] ?: 0L) > start) return skip("market refused lately")
         if (r.bet) {
-            val bought = history.filter { it.atMs >= dayStart(start) && it.mode == "BET" && it.filled > 0 && it.eventId == c.eventId }
+            val bought = betsToday(start).filter { it.filled > 0 && sameGame(it, o) }
             if (bought.size >= TailTradeLimits.MAX_BUYS_PER_GAME) return skip("enough buys on this game")
             val paidBefore = bought.filter { it.outcomeId == c.outcomeId }.minOfOrNull { it.paid / (it.filled * EvMath.CONTRACT_PAYOUT_DOLLARS) }
             if (paidBefore != null && c.ask < paidBefore - TailTradeLimits.NO_AVERAGING_DOWN) return skip("price falling")
@@ -172,11 +180,28 @@ class TailTaker(
                 return skip("halted")
             }
             val qty = size(o, limit, r, start) ?: return skip("limit reached")
+            if (r.bet) repeatWhy(o, limit, qty)?.let { return skip("repeat guard: $it") }
             return withContext(NonCancellable) { if (r.bet) trade(o, limit, qty) else paper(o, limit, qty) }
         } finally {
             lock?.unlock()
             mutex.unlock()
         }
+    }
+
+    /** Today's real buys: the carried ledger's when it is given, else this run's own journal. */
+    private fun betsToday(now: Long): List<LiveRecord> = (priorBuys?.let { runCatching(it).getOrDefault(history) } ?: history).filter { it.atMs >= dayStart(now) && it.mode == "BET" }
+
+    /** One game: the same event id, or (for a ledger entry, which carries none) the same event name. */
+    private fun sameGame(rec: LiveRecord, o: TailOffer): Boolean =
+        if (rec.eventId.isNotBlank()) rec.eventId == o.candidate.eventId else rec.event.isNotBlank() && rec.event == o.target.eventName
+
+    private suspend fun repeatWhy(o: TailOffer, limit: Double, qty: Long): String? {
+        val rules = repeat() ?: return null
+        val payout = EvMath.CONTRACT_PAYOUT_DOLLARS
+        val perContract = (limit + Fees.takerFee(limit.coerceIn(0.001, 0.999), o.fee, true)) * payout
+        val c = o.candidate
+        val positions = runCatching { held() }.getOrDefault(emptyList())
+        return com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules, positions, c.marketId, c.outcomeId, qty * perContract, qty * payout, o.target.market.outcomes.map { it.outcomeId })
     }
 
     private suspend fun lossLimitHit(r: LiveTradeRules): String? {
@@ -192,9 +217,9 @@ class TailTaker(
         // Experimental rules (the curve) trade a tenth-dollar stake (Tj, 2026-10-19) until proven; the original rules keep the setting.
         val experimental = o.candidate.rule == LiveLightCurve.RULE || o.candidate.rule == LiveLightScan.MID || paperTier(o.candidate.rule)
         val stake = if (paperTier(o.candidate.rule)) paperStake().let { ps -> (ps.stakeFor(o.candidate.fair, limit + Fees.takerFee(limit.coerceIn(0.001, 0.999), o.fee, true)) ?: return null).also { if (ps.kelly > 0.0 && it < PaperStake.MIN) return null }.coerceIn(PaperStake.MIN, PaperStake.MAX) } else if (experimental) TailTradeLimits.EXPERIMENTAL_STAKE else r.stake.coerceIn(LiveTradeLimits.MIN_STAKE, LiveTradeLimits.MAX_STAKE)
-        val today = history.filter { it.atMs >= dayStart(now) && it.mode == "BET" }
+        val today = betsToday(now)
         val dayLeft = if (r.maxPerDay > 0) r.maxPerDay - today.sumOf { it.paid + it.feePaid } else Double.MAX_VALUE
-        val gameLeft = if (r.maxPerGame > 0) r.maxPerGame - today.filter { it.eventId == o.candidate.eventId }.sumOf { it.paid + it.feePaid } else Double.MAX_VALUE
+        val gameLeft = if (r.maxPerGame > 0) r.maxPerGame - today.filter { sameGame(it, o) }.sumOf { it.paid + it.feePaid } else Double.MAX_VALUE
         val q = minOf(o.candidate.contracts, Math.floor(stake / perContract).toLong(), Math.floor(minOf(dayLeft, gameLeft) / perContract).toLong())
         return q.takeIf { it >= (if (experimental) TailTradeLimits.EXPERIMENTAL_MIN_CONTRACTS else TailTradeLimits.MIN_CONTRACTS) }
     }
