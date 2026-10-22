@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-vobqze",
- "head": "3b5c9e19ceb5dca9fd34d70294d5b2c5bb08fec4",
+ "head": "fcb9d9c4ad7b7e68a08f5f5342412977c06cb0a4",
  "since": 1792624947,
- "beat": 1792690155,
- "beatIso": "2026-10-22T17:29:15Z",
- "done": "CH58h: live SharpAPI rows with no start time (tennis) become games, sent without a start",
- "next": "check liveNote: tennis games should show; then matched count"
+ "beat": 1792690271,
+ "beatIso": "2026-10-22T17:31:11Z",
+ "done": "Bovada=Ozoon=Bodog, Borgata=BetMGM merged in BookCompany",
+ "next": "research more pairs via measured match if data allows"
 }
