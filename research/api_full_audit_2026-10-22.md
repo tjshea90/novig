@@ -55,5 +55,7 @@ Tj, 2026-10-22: "do a full analysis of each api used. Thoroughly and fully revie
 - **Unabated:** recommend switching it off for good (Settings > APIs); the governor now rests it automatically either way.
 - **pinnapi:** both keys answer 403 (refused): replace or remove them.
 
+The report page for Tj: `research/api_audit_report_2026-10-22.html` (published as an artifact).
+
 ## How to judge it tomorrow
 Engine log `scan report:` lines: "Novig prices in N s" (expect the cold scan's Novig step far under 420 s), `PinnWire accounts:` (keys should last into the evening), PropLine `plans:` used vs share (props requests per scan down), `API governor: resting Unabated ... (matched nothing)`, BoltOdds props socket live (no "too many concurrent").
