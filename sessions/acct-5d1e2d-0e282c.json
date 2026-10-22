@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-wju7hd",
- "head": "617145d3b63c3618f63490d17ca278373a46b892",
+ "head": "7695f9d68fda6088294c6a094bc2b39cd1da9752",
  "since": 1792624947,
- "beat": 1792628485,
- "beatIso": "2026-10-22T00:21:25Z",
- "done": "SharpAPI card on Engine>APIs without a phone key; SharpAPI switch on Live sockets",
- "next": "ship v1.0.44"
+ "beat": 1792628533,
+ "beatIso": "2026-10-22T00:22:13Z",
+ "done": "pre-ship: v1.0.44: SharpAPI shows on Engine > APIs (engine's own key check makes the card) and has its socket switch on the Live tab",
+ "next": "ship.sh gates and releases this"
 }
