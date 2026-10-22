@@ -56,7 +56,7 @@ class CompositeLive(private val lanes: List<EngineLive>) : EngineLive {
 
     /** The first lane's numbers (the light lane's score, push and judgment counters) with every lane's games and markets added in. */
     private fun mergeStats(all: List<LiveStats>): LiveStats? {
-        val first = all.firstOrNull() ?: return null
+        val first = all.firstOrNull { it.pushes > 0 || it.judgments > 0 || it.paper.isNotEmpty() || it.gameLines.isNotEmpty() } ?: all.firstOrNull() ?: return null
         return first.copy(games = all.sumOf { it.games }, markets = all.sumOf { it.markets })
     }
 
