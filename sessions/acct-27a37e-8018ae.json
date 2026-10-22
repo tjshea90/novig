@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "4faa781e32006a74f4115bfb7bb4feea1eea36f8",
+ "head": "064b848cdb5335ba1a1c236f93c2d1b2c231bdcc",
  "since": 1792596542,
- "beat": 1792708670,
- "beatIso": "2026-10-22T22:37:50Z",
- "done": "AF: PinnWire sport_id=all (one request for every sport, ~6x fewer of the 100/day per key), boards cut per sport with JsonSplit",
- "next": "audit The Odds API, OddsPapi v5/v4, Unabated, Pinnodds; then docs (*_API.md), research report, full tests, ship"
+ "beat": 1792708811,
+ "beatIso": "2026-10-22T22:40:11Z",
+ "done": "AF: report research/api_full_audit_2026-10-22.md, API memory docs, CHANGES, TASKS AF6-AF10",
+ "next": "full test result, then ship.sh + release.yml + record-release, publish report artifact, tell Tj"
 }
