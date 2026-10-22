@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-lpr7ge",
- "head": "4bd03c5f999bb094333995bcd11fd6c71c048789",
+ "head": "12df96f3ef709b4d6fce6b536c190667e10cc377",
  "since": 1792709550,
- "beat": 1792709796,
- "beatIso": "2026-10-22T22:56:36Z",
- "done": "CH65: lag/crash likely local Kalshi scan during engine restarts; 1.0.49 waits",
- "next": "if still crashing on 1.0.49 get Diagnostics; CH65b carry kalshi files across restarts"
+ "beat": 1792709839,
+ "beatIso": "2026-10-22T22:57:19Z",
+ "done": "CH65c: phone never scans Kalshi while cloud drives",
+ "next": "wait for v1.0.50 tag (acct-27a37e), then ship.sh 1.0.51 (code 391), release.yml, record"
 }
