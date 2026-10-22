@@ -592,7 +592,9 @@ class AppContainer(val app: Application) {
         syncOp(s)
         // Novig's live feed: the best-bid channel and keeping the connection open follow their switches (a new connection gets them in [useConnection]).
         novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush); novig.stream?.configureCompression(s.gates.novigCompress)
-        orderSocket?.let { sock -> sock.enabled = s.gates.novigSocketOrders; if (s.gates.novigSocketOrders) sock.warm() }
+        // With the GitHub engine driving the phone takes no socket of its own (Tj, 2026-10-22, CH66: "I don't want my phone taking socket connections unless I specifically turn GitHub off"): hand bets go by REST.
+        val ownSockets = !s.cloudDrives
+        orderSocket?.let { sock -> sock.enabled = s.gates.novigSocketOrders && ownSockets; if (s.gates.novigSocketOrders && ownSockets) sock.warm() }
         // Switched off (or its key gone, or Live games only mode asleep): the sockets are closed at once, not left to idle out.
         // With the engine scanning and live on GitHub the phone holds none of these (TCL122-4, [ScanSettings.phoneSockets]): the runner has them.
         boltFeed.held = s.phoneSockets
@@ -600,8 +602,8 @@ class AppContainer(val app: Application) {
         if (!s.useKalshi || !s.gates.kalshiSocket || !s.phoneSockets) kalshiStream.close()
         if (!s.phoneSockets) { sxSocketOn = false; sxBetClient.stream?.close() }
         // Novig's market feed follows its socket switch (Settings › APIs): off = the scan reads books by request; back on = the feed is built again.
-        if (!s.gates.novigSocket && novig.stream != null) { novig.stream?.close(); novig.stream = null }
-        else if (s.gates.novigSocket && novig.stream == null && readConnection != null) useConnection(readConnection)
+        if ((!s.gates.novigSocket || !ownSockets) && novig.stream != null) { novig.stream?.close(); novig.stream = null }
+        else if (s.gates.novigSocket && ownSockets && novig.stream == null && readConnection != null) useConnection(readConnection)
         val on = AppBook.isNovig && s.sgoPro
         sgoCloses.enabled = on
         sgoScores.enabled = on
@@ -1286,7 +1288,7 @@ class AppContainer(val app: Application) {
         novig.keyed = signer
         novig.stream = signer?.let { sg -> NovigStream(http, sg, appScope, onEvent = { warn, text -> if (warn) eventLog.warn("NOVIG", text) else eventLog.info("NOVIG", text) }) }
         // The socket switch (Settings › APIs) is off: the feed is not kept, every read is by request.
-        if (settingsStore.flow.value?.gates?.novigSocket == false) { novig.stream?.close(); novig.stream = null }
+        if (settingsStore.flow.value?.let { !it.gates.novigSocket || it.cloudDrives } == true) { novig.stream?.close(); novig.stream = null }
         settingsStore.flow.value?.let { s -> novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush); novig.stream?.configureCompression(s.gates.novigCompress) }
         val alias = connection?.tradingAlias
         val key = connection?.tradingKeyId
@@ -1294,8 +1296,8 @@ class AppContainer(val app: Application) {
         // Orders over the websocket (NOVIG_API.md §27): a connection of its own on the TRADING key (the read key's connection cannot place), opened as soon as betting is set up and kept while orders are likely.
         orderSocket?.close()
         orderSocket = tradingSigner?.let { sg -> com.tjshea.vigilant.data.novig.trading.NovigOrderSocket(http, sg, appScope) }
-        settingsStore.flow.value?.let { s -> orderSocket?.enabled = s.gates.novigSocketOrders }
-        orderSocket?.warm()
+        settingsStore.flow.value?.let { s -> orderSocket?.enabled = s.gates.novigSocketOrders && !s.cloudDrives }
+        if (settingsStore.flow.value?.cloudDrives != true) orderSocket?.warm()
         val client = tradingSigner?.let { sg -> NovigTradingClient(sg, json, batchOrders = true, orderSocket = { orderSocket }) }
         trading = client
         subaccountKeyId = connection?.subaccountKeyId?.takeIf { client != null }
@@ -2066,7 +2068,8 @@ class AppContainer(val app: Application) {
         if (!AppBook.isNovig) return
         // The Feed's live lane (Settings › Include live games) keeps the same two sockets open: it is the reason the engine runs when neither the taker nor the bids are on.
         if (!s.pinnWebsite.bolt) boltFeed.liveTennis = false
-        val wanted = ((s.pinnLive || s.liveBid) && !engineRunsLive()) || (s.includeLive && !s.paused)
+        // The Feed's live lane holds the same sockets, so it too waits while live runs on GitHub (CH66).
+        val wanted = ((s.pinnLive || s.liveBid) && !engineRunsLive()) || (s.includeLive && !s.paused && s.phoneLive)
         if (com.tjshea.vigilant.data.scanner.Dormant.PINNODDS || !wanted || s.killed) {   // dormant (Tj, 2026-10-09): never opened
             if (pinnRunner.running) pinnRunner.stop(if (s.killed) "stopped by STOP ALL" else null)
             liveScan.clear(if (s.killed) "STOP ALL is on" else null)
