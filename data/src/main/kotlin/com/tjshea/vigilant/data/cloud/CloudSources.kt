@@ -279,7 +279,7 @@ class CloudSources(
     val parlayStream: com.tjshea.vigilant.data.parlay.ParlayPbpStream get() = parlayPbp
     private val parlayPbp = com.tjshea.vigilant.data.parlay.ParlayPbpStream(http, scope, key = {
         keys(CloudKeys.PARLAY).filter { (parlayAccount.last[it]?.limit ?: 0) > 1_000 }.maxByOrNull { parlayAccount.last[it]?.limit ?: 0 }
-    })
+    }, onNote = { line -> println(line) })
     fun parlayScore(s: ScanSettings, league: String, home: String, away: String): com.tjshea.vigilant.data.novig.lab.AltScore? =
         if (s.useParlay && has(CloudKeys.PARLAY)) parlayPbp.scoreFor(league, home, away) else null
     fun parlayPbpNote(): String = "ParlayAPI live stream: ${parlayPbp.board.size()} matches, ${parlayPbp.frames} frames, ${parlayPbp.connects} connections (${parlayPbp.connectsBySport.entries.joinToString(", ") { "${it.key} ${it.value}" }}; 5 credits each)"
