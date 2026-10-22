@@ -511,8 +511,9 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
                     for (m in matches) {
                         val ref = m.refEvent ?: continue
                         val wanted = toBuy[m.event.eventId].orEmpty().toSet()
+                        val stats = PropLineProps.marketsFor(sport).filter { it.first in wanted }.mapTo(HashSet()) { it.second }
                         // Only the markets this game was asked for (the slate's union carries others), so a game's board is what its own read would have been.
-                        fun keep(e: RefEvent?) = e?.markets.orEmpty().filter { mk -> PropLineProps.keyOf(sport, mk.stat) in wanted }
+                        fun keep(e: RefEvent?) = e?.markets.orEmpty().filter { mk -> mk.stat in stats }
                         bought[m.event.eventId] = Bought(m.event.eventId, ref.copy(markets = keep(ref)), now, ask, novig = novigOf[ref.id]?.let { n -> ref.copy(markets = keep(n)) })
                     }
                 }
