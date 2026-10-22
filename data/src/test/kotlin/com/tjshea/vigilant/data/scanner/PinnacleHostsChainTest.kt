@@ -12,7 +12,7 @@ class PinnacleHostsChainTest {
     private val now = 1_791_000_000_000L
     private val nfl = Leagues.ALL.first { it.novigName == "NFL" }
     private val game = NovigEvent("ev1", "FOOTBALL", "NFL", NovigEvent.STATUS_PREGAME, "Denver Broncos @ Los Angeles Chargers", now + 3_600_000L)
-    private val noProps = ScanSettings().copy(families = setOf(MarketFamily.GAME_LINES))
+    private val noProps = ScanSettings().copy(families = setOf(MarketFamily.MONEYLINE, MarketFamily.SPREAD, MarketFamily.TOTAL))
     private fun ctx(books: Set<String>, answered: Boolean = true, covered: Set<String> = setOf("MONEYLINE:0", "SPREAD:0", "TOTAL:0"), pinnProps: Set<String> = emptySet()) =
         ScanContext(novigEvents = listOf(game), now = now, covered = mapOf("ev1" to covered), firstAnswered = if (answered) setOf("NFL") else emptySet(), coveredBooks = mapOf("NFL" to books), pinnacleProps = pinnProps)
 
