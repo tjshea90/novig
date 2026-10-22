@@ -59,3 +59,10 @@ The report page for Tj: `research/api_audit_report_2026-10-22.html` (published a
 
 ## How to judge it tomorrow
 Engine log `scan report:` lines: "Novig prices in N s" (expect the cold scan's Novig step far under 420 s), `PinnWire accounts:` (keys should last into the evening), PropLine `plans:` used vs share (props requests per scan down), `API governor: resting Unabated ... (matched nothing)`, BoltOdds props socket live (no "too many concurrent").
+
+## Follow-up build (AG, same evening)
+- **Built:** `AuditFeeds` (engine): `kalshi-live-<day>` (Kalshi public live data of every sports game in play, every 30 s, raw `details`), `sharpapi-splits-<day>` (DraftKings/Circa/BetMGM tickets and money %, every 30 min), `novig-close-<day>` (Novig's own last trade before the start of every side the engine ordered or bid on, from 1-minute candles, `history` bucket). All read-only, archived with the other journals. Tests: `AuditFeedsTest`.
+- **Live check of v1.0.50 on the engine (23:14 UTC, run 39869592352):** scan 269 s (was 422 s); 12,610 Novig prices in 268 s, every one screened without a one-by-one book read (catalog bids + stream); first bet listed at 119 s. The long pole is now SharpAPI's cold load (244 s) on a fresh runner.
+- **AF8 live first halves, not built (needs a design):** the live lanes' `LiveMatcher.targets` and `LiveTarget` know only full-game MONEY/SPREAD/TOTAL priced from Pinnacle's period 0; a 1H market needs a period on `LiveTarget`, the Pinnacle book's period-1 lines (`num_1`) in every live feed that speaks Pinnodds frames (SharpAPI's live feed must carry `1st_half_*` live rows), and a paper run. First step: count live `1st_half_*` rows in SharpAPI's store during an NFL Sunday.
+- **AF7 participants, not built:** Novig `GET /v3/catalog/participants` would let props match by player id; the current name matching has no measured failure rate to fix yet. Measure the unmatched-prop count first.
+- **BoltOdds:** after the reset the LINES socket was refused for concurrency (the old job's sockets). The key check now prints why `/api/odds/user` could not be read when it can't, so the next check names the cause.

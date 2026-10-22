@@ -6224,10 +6224,10 @@ CH65 (Tj chat 22:52 UTC 2026-10-22, t1792709523628-0e03): "with kalshi on, the a
 - [ ] CH65b keep kalshi-feed.json/kalshi-status.json across engine restarts (carry job to job) so the gap has a last-good list instead of nothing
 
 ## AG: build and release the queued API-audit items without disturbing mirage (Tj, 2026-10-22 ~23:10 UTC, verbatim: "Without disturbing the other Claude account, build and release the next queued items from the vigilant API audit. Also, I'm considering buying both propline streaming and parlayapi streaming. What do you think")
-- [ ] AG1 (AF9) SharpAPI `/splits` journaled for the studies
-- [ ] AG2 (AF6) Kalshi `live_data/batch` score reader + journal (samples), keyless
-- [ ] AG3 (AF7) Novig candles (own close) and participants
-- [ ] AG4 (AF8) Novig live 1H markets in the live lanes
+- [x] AG1 (AF9) SharpAPI `/splits` journaled (`sharpapi-splits-<day>`), test AuditFeedsTest
+- [x] AG2 (AF6) Kalshi live data journal (`kalshi-live-<day>`, KalshiLiveData), test AuditFeedsTest; next: map its details into a score source once samples exist
+- [x] AG3 (AF7) Novig candles -> `novig-close-<day>` (NovigCloses), test AuditFeedsTest; participants deferred (no measured matching failure)
+- [~] AG4 (AF8) studied, needs a period through LiveTarget/Pinnacle book/feeds (research/api_full_audit_2026-10-22.md follow-up); first count live 1st_half rows in SharpAPI's store
 - [ ] AG5 full tests, release after mirage's (coord RELEASE claim), report
 - [ ] AG6 answer: PropLine Streaming Lite / ParlayAPI Business streaming worth buying? (from fed/sole lines, freshness, CLV)
 Rule for this job: stay out of CloudMain.kt and the Kalshi trading/feed files mirage is editing (CH65b); merge main before each push.
