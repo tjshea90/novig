@@ -6194,3 +6194,10 @@ CH60 (Tj chat 21:45 UTC 2026-10-22, t1792705505420-eb05): "make sure the app and
 
 CH61 (Tj chat 21:52 UTC 2026-10-22, t1792705931238-8a94): "audit all of the apis. I don't want wasted usage anywhere on any api. a lot of usage is fine, but no waste"
 - [ ] CH61a audit every API's spend by purpose vs what a fresher/already-paid feed gives (engine 'Spend:' lines, usage.json, cloud-archive logs); one table in research/api_waste_audit_2026-10-22.md; fix clear waste with tests (CH60b done for PinnWire/pinnapi)
+
+## AF: full API audit, every API to its full potential, no waste (Tj, 2026-10-22 session ccr-950a7aea, verbatim: "For the vigilant app and GitHub engine, do a full analysis of each api used. Thoroughly and fully review the docs. Look for potential llms docs. I want every single api to be used to its full potential, accuracy, speed, and features that can benefit the app and GitHub engine, but make sure usage is not wasted. Every time I ask about the apis, it seems like Claude figures out more features and speed can be used from the apis. Make the audit and research thorough, and look for all ways for each api to increase speed, accuracy, features, and correct commands and limits so all apis are used correctly and to the best of their abilities. Fix and implement all changes and updates. Send me a report of the findings and changes and updates.")
+- [ ] AF1 inventory every API (app + engine): docs files, llms.txt / llms-full.txt / OpenAPI found today, saved under research/api_docs_2026-10-22/
+- [ ] AF2 per API: docs vs code (endpoints, params, limits, headers, sockets, batching, compression, ETags, features unused) -> research/api_full_audit_2026-10-22.md (one table + per-API findings)
+- [ ] AF3 implement the fixes/features found, with tests; full test gate
+- [ ] AF4 ship (ship.sh, release.yml, record-release), CHANGES.md lines
+- [ ] AF5 report to Tj (artifact link) + chat
