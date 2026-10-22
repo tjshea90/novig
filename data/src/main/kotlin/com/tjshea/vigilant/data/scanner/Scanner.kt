@@ -1126,6 +1126,7 @@ class Scanner(
         val covered = HashMap<String, MutableSet<String>>()
         val answeredLeagues = HashSet<String>()
         val books = HashMap<String, MutableSet<String>>()
+        val pinnProps = HashSet<String>()
         for (league in leagues) {
             for (firstId in firstIds) {
                 val key = "$firstId|${league.novigName}"
@@ -1137,10 +1138,11 @@ class Scanner(
                     val ref = m.refEvent ?: continue
                     covered.getOrPut(m.event.eventId) { HashSet() } += ref.markets.map { it.coverage }
                     books.getOrPut(league.novigName) { HashSet() } += ref.markets.map { it.bookKey }
+                    if (ref.markets.any { it.bookKey == "pinnacle" && it.coverage.startsWith("PROP:") }) pinnProps += league.novigName
                 }
             }
         }
-        return board.copy(covered = covered, firstAnswered = answeredLeagues, coveredBooks = books)
+        return board.copy(covered = covered, firstAnswered = answeredLeagues, coveredBooks = books, pinnacleProps = pinnProps)
     }
 
     private suspend fun fetchSource(

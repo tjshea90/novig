@@ -149,7 +149,7 @@ object ApiChain {
         if (games.any { e -> missing(Kind.LINES, e, context) }) return true
         val sport = league.pinnacleSportId
         val props = MarketFamily.PLAYER_PROPS in settings.families && sport != null && com.tjshea.vigilant.data.reference.PinnacleProps.hasProps(sport)
-        return props && games.any { e -> missing(Kind.PROPS, e, context) }
+        return props && league.novigName !in context.pinnacleProps
     }
 
     private fun missing(kind: Kind, e: NovigEvent, context: ScanContext): Boolean {
