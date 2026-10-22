@@ -6153,3 +6153,6 @@ Finding 19:30: only ONE cloud-scan run is live (run 254), so no old runner holds
 ## GS: "I have the game state support. Build it in" (Tj, interactive, 2026-10-21)
 (game state was already in v1.0.43: stream channel + REST, live-lane score source)
 - [x] GS1 (SharpApiStreamTest) engine journals every final SharpAPI reports (sharpapi-finals-<day>, archived) for grading research; finals counted in the hourly log
+
+## NS: the engine's scan should lean on the Novig socket (Tj, chat 2026-10-22 00:23: "is the GitHub engine taking full advantage of the novig socket? why does it take so long to scan? I thought the socket makes everything constantly updated")
+- [ ] NS1 subscribe the markets of games within 12 h on the engine's Novig stream (complete books via live()/books(), never bbo for sizing) and read only the far games by request; the cold pass then covers far games only. Measure: scan ms, hot-row age. See TCL16a, NOVIG_API.md §26.
