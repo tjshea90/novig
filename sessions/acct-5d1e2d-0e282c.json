@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-wju7hd",
  "head": "0fc71f2821e2d8dbb8e0e74c57b787f03ca9001b",
  "since": 1792624947,
- "beat": 1792629089,
- "beatIso": "2026-10-22T00:31:29Z",
+ "beat": 1792629094,
+ "beatIso": "2026-10-22T00:31:34Z",
  "done": "pre-ship: v1.0.45: the engine logs what the Novig stream holds and what SharpAPI returns per league after each scan; SharpAPI +EV cross-check stands down when Novig is not a picked book",
  "next": "ship.sh gates and releases this"
 }
