@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-vobqze",
- "head": "b2ab250b1135dcc1d35cbfb8da243eaec136cd9e",
+ "head": "b89d78c38074622fc596658dc4b6f7072d468337",
  "since": 1792624947,
- "beat": 1792690763,
- "beatIso": "2026-10-22T17:39:23Z",
- "done": "Bovada=Ozoon=Bodog, Borgata=BetMGM merged in BookCompany",
- "next": "research more pairs via measured match if data allows"
+ "beat": 1792690795,
+ "beatIso": "2026-10-22T17:39:55Z",
+ "done": "CH58i: SharpAPI store polls each league in its own coroutine (tennis was stale behind NFL deltas)",
+ "next": "reset engine; read liveNote"
 }
