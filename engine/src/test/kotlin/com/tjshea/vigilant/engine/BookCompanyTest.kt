@@ -26,6 +26,10 @@ class BookCompanyTest {
         assertEquals(BookCompany.of("williamhill_us"), BookCompany.of("caesars"))
         assertEquals(BookCompany.of("betonlineag"), BookCompany.of("lowvig"))
         assertEquals(BookCompany.of("Hard Rock Bet"), BookCompany.of("hardrockbet"))
+        // Tj, 2026-10-22: Bodog is Ozoon since 2026-02 (same sportsbook), Bovada is its US brand; Borgata runs on BetMGM.
+        assertEquals(BookCompany.of("bovada"), BookCompany.of("Ozoon"))
+        assertEquals(BookCompany.of("bovada"), BookCompany.of("bodog"))
+        assertEquals(BookCompany.of("betmgm"), BookCompany.of("Borgata Online"))
         // Researched 2026-10-11 (RESEARCH.md §130): Flutter, Evoke, Entain, Penn, Fanatics+PointsBet US, Kambi's BetRivers/betPARX, Super Group.
         assertEquals(BookCompany.of("fanduel"), BookCompany.of("sportsbet_au"))
         assertEquals(BookCompany.of("williamhill"), BookCompany.of("mrgreen"))
