@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "cc5f7c524a503643a716e095c36b63ee6ce194b8",
+ "head": "a4b1a6c5491327dcbef432ad18a36a2861d3a102",
  "since": 1792596542,
- "beat": 1792706655,
- "beatIso": "2026-10-22T22:04:15Z",
+ "beat": 1792706689,
+ "beatIso": "2026-10-22T22:04:49Z",
  "done": "GS: game state was in v1.0.43; added the engine's sharpapi-finals journal (settled finals, once each); v1.0.43 recorded",
  "next": "after the key is on GitHub: read engine-log SharpAPI lines (stream, rows, game state live); SHARPAPI.md fixes from real frames"
 }
