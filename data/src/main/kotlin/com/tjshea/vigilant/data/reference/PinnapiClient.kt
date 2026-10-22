@@ -64,6 +64,8 @@ class PinnapiClient(
         val props: Boolean,
         /** False: switched off in Settings; the host is never asked (Tj, 2026-10-11). */
         val enabled: () -> Boolean = { true },
+        /** The host takes `sport_id=all` (PinnWire's docs, 2026-10-22): one request answers every sport, so a scan's sports cost ONE request of the key's 100 a day, not one each. */
+        val allSports: Boolean = false,
     )
 
     /** pinnapi alone (the app before v0.16.0, and the tests written for it). */
@@ -105,14 +107,24 @@ class PinnapiClient(
     }
 
     private suspend fun boardFor(sport: Int, props: Boolean, share: Long = shareMs): Board {
-        boards[sport to props]?.takeIf { clock() - it.fetchedAtMs < (if (it.host == FIRST_NAME) minOf(share, FIRST_SHARE_MS) else share) }?.let { return it }
+        fun young(b: Board?) = b?.takeIf { clock() - it.fetchedAtMs < (if (it.host == FIRST_NAME) minOf(share, FIRST_SHARE_MS) else share) }
+        // A board read with specials holds the game lines too.
+        (young(boards[sport to props]) ?: if (!props) young(boards[sport to true]) else null)?.let { return it }
         var problem: String? = null
         // A board with props asks the hosts that send them first (PinnWire), then the rest; game lines keep the given order (pinnapi ahead of PinnWire, Tj 2026-10-18).
         val order = (listOfNotNull(first()) + hosts).let { all -> if (props) all.sortedByDescending { it.props } else all }
         for (host in order) {
             if (!host.enabled() || host.pool.keyCount() == 0) continue
             val events = try {
-                fetch(host, sport, props && host.props)
+                if (host.allSports) {
+                    // Every sport Vigilant prices in one request: each is kept as its own board for the leagues asked next.
+                    val specials = props && host.props
+                    val bySport = fetchAll(host, specials)
+                    val at = clock()
+                    for (s in COVERED_SPORTS) boards[s to specials] = Board(bySport[s].orEmpty(), at, host.name)
+                    allSportReads++
+                    bySport[sport].orEmpty()
+                } else fetch(host, sport, props && host.props)
             } catch (e: AllKeysExhaustedException) {
                 // This feed's keys are spent (or refused): the next feed may still have some. The pool rests
                 // them until their limit resets, so later scans go straight to the next feed, then back.
@@ -132,9 +144,41 @@ class PinnapiClient(
         throw ReferenceException(problem ?: "No Pinnacle key. Add a free PinnWire or pinnapi key in Settings.")
     }
 
-    private suspend fun fetch(host: Host, sport: Int, specials: Boolean): List<JsonObject> {
+    /** Reads with `sport_id=all` (for Diagnostics: one request standing in for a scan's sports). */
+    @Volatile var allSportReads = 0
+        private set
+
+    /**
+     * `sport_id=all`: every sport's prematch board in one request, cut one event at a time ([com.tjshea.vigilant.data.JsonSplit]) and kept only for the sports Vigilant prices ([COVERED_SPORTS]),
+     * so the heap holds what one sport's reads would have held. Grouped by each event's `sport_id`.
+     */
+    private suspend fun fetchAll(host: Host, specials: Boolean): Map<Int, List<JsonObject>> {
+        val raw = fetchText(host, "all", specials)
+        val out = HashMap<Int, MutableList<JsonObject>>()
+        val split = com.tjshea.vigilant.data.JsonSplit.elements(raw, "events")
+        if (split != null) {
+            for (i in 0 until split.size) {
+                val text = split.element(i)
+                val sid = SPORT_ID.find(text)?.groupValues?.get(1)?.toIntOrNull() ?: continue
+                if (sid !in COVERED_SPORTS) continue
+                (runCatching { json.parseToJsonElement(text) as? JsonObject }.getOrNull() ?: continue).let { out.getOrPut(sid) { ArrayList() } += it }
+            }
+        } else {
+            (json.parseToJsonElement(raw).jsonObject["events"] as? JsonArray)?.forEach { e ->
+                val o = e as? JsonObject ?: return@forEach
+                val sid = (o["sport_id"] as? JsonPrimitive)?.content?.toIntOrNull() ?: return@forEach
+                if (sid in COVERED_SPORTS) out.getOrPut(sid) { ArrayList() } += o
+            }
+        }
+        return out
+    }
+
+    private suspend fun fetch(host: Host, sport: Int, specials: Boolean): List<JsonObject> =
+        (json.parseToJsonElement(fetchText(host, sport.toString(), specials)).jsonObject["events"] as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty()
+
+    private suspend fun fetchText(host: Host, sport: String, specials: Boolean): String {
         val url = "${host.baseUrl}/markets".toHttpUrl().newBuilder()
-            .addQueryParameter("sport_id", sport.toString())
+            .addQueryParameter("sport_id", sport)
             .addQueryParameter("event_type", "prematch")
             .apply { if (specials) addQueryParameter("include_specials", "1") }
             .build()
@@ -157,9 +201,7 @@ class PinnapiClient(
                     }
                     response.code == 401 || response.code == 403 -> KeyAttemptResult.Invalid("HTTP ${response.code}, key refused")
                     !response.isSuccessful -> throw ReferenceException("Pinnacle (${host.name}) HTTP ${response.code}")
-                    else -> KeyAttemptResult.Success(
-                        (json.parseToJsonElement(body).jsonObject["events"] as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty(),
-                    )
+                    else -> KeyAttemptResult.Success(body)
                 }
             }
         }
@@ -177,7 +219,11 @@ class PinnapiClient(
         const val FIRST_SHARE_MS = 15_000L
 
         fun pinnapi(pool: KeyPool, baseUrl: String = PINNAPI_URL, enabled: () -> Boolean = { true }) = Host("pinnapi", pool, baseUrl, "x-portal-apikey", props = false, enabled = enabled)
-        fun pinnwire(pool: KeyPool, baseUrl: String = PINNWIRE_URL, enabled: () -> Boolean = { true }) = Host("PinnWire", pool, baseUrl, "x-api-key", props = true, enabled = enabled)
+        fun pinnwire(pool: KeyPool, baseUrl: String = PINNWIRE_URL, enabled: () -> Boolean = { true }) = Host("PinnWire", pool, baseUrl, "x-api-key", props = true, enabled = enabled, allSports = true)
+
+        /** Pinnacle's sports among Vigilant's leagues: what a `sport_id=all` read keeps. */
+        val COVERED_SPORTS: Set<Int> by lazy { com.tjshea.vigilant.data.scanner.Leagues.ALL.mapNotNull { it.pinnacleSportId }.toSet() }
+        private val SPORT_ID = Regex("\"sport_id\"\\s*:\\s*(\\d+)")
 
         /** Pinnodds' REST board: the same `/kit/v1/markets` answer as PinnWire's (its docs: one request a sport, specials with `include_specials=1`), from Pinnacle's own push store, written under a second behind Pinnacle. */
         fun pinnodds(pool: KeyPool, baseUrl: String = PINNODDS_URL) = Host(FIRST_NAME, pool, baseUrl, "x-api-key", props = true)
