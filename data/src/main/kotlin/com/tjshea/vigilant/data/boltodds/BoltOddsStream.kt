@@ -283,6 +283,9 @@ class BoltOddsStream(
                 // A connection-count refusal says nothing about the key (BC4): the key stays good, the socket backs off and says why.
                 lastRefusal = "BoltOdds refused the connection: ${c.reason.ifBlank { "too many concurrent connections" }}"
                 down(lastRefusal!!)
+                // Who holds the plan's sockets (`/api/odds/user`, AF 2026-10-22): an earlier runner's half-open socket shows here until BoltOdds times it out.
+                val refusal = lastRefusal
+                scope.launch { client.oddsUser()?.let { u -> if (lastRefusal == refusal && u.connections != null) { lastRefusal = "$refusal (BoltOdds counts ${u.summary()})"; lastError = lastRefusal } } }
             } else if (c.code == 1008 || c.reason.contains("invalid token", ignoreCase = true)) {
                 client.refuseKey(key, "BoltOdds closed the socket: ${c.reason.ifBlank { "policy violation" }}")
                 lastRefusal = "BoltOdds refused the key (${c.reason.ifBlank { "Invalid token" }})"

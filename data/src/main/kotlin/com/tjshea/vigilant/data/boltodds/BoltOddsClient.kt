@@ -27,6 +27,35 @@ import okhttp3.Request
 /** `get_info`: the exact spellings a subscription filter takes (BOLTODDS_API.md §2, §4). */
 data class BoltInfo(val sports: List<String>, val sportsbooks: List<String>)
 
+/**
+ * `/api/odds/user` (BoltOdds docs, 2026-10-22): what the key has open on the odds feed right now (sockets, each one's subscription) and its `/api/snapshot` token budget for the current 24 h.
+ * The way to see a half-open socket from an earlier runner that still counts against the plan's connections.
+ */
+data class BoltOddsUser(val plan: String?, val connections: Int?, val subscribed: Int, val unsubscribed: Int, val tokensUsed: Double?, val dailyTokens: Double?, val resetsAt: String?) {
+    fun summary(): String = buildList {
+        connections?.let { add("$it socket${if (it == 1) "" else "s"} open on this key" + (if (unsubscribed > 0) " ($unsubscribed not subscribed)" else "")) }
+        if (tokensUsed != null && dailyTokens != null) add("snapshot tokens ${"%.0f".format(java.util.Locale.US, tokensUsed)} of ${"%.0f".format(java.util.Locale.US, dailyTokens)} today")
+    }.joinToString(" · ")
+
+    companion object {
+        fun parse(text: String): BoltOddsUser? {
+            val root = runCatching { Json.parseToJsonElement(text) as? JsonObject }.getOrNull() ?: return null
+            fun prim(o: JsonObject?, k: String) = (o?.get(k) as? JsonPrimitive)?.takeIf { it.toString() != "null" }
+            val subs = (root["subscriptions"] as? JsonArray).orEmpty().mapNotNull { it as? JsonObject }
+            val snap = root["snapshot"] as? JsonObject
+            return BoltOddsUser(
+                plan = prim(root, "plan")?.content,
+                connections = prim(root, "connections")?.content?.toDoubleOrNull()?.toInt(),
+                subscribed = subs.count { prim(it, "subscribed")?.content == "true" },
+                unsubscribed = subs.count { prim(it, "subscribed")?.content == "false" },
+                tokensUsed = prim(snap, "tokens_used")?.content?.toDoubleOrNull(),
+                dailyTokens = prim(snap, "daily_tokens")?.content?.toDoubleOrNull(),
+                resetsAt = prim(snap, "resets_at")?.content,
+            )
+        }
+    }
+}
+
 /** One entry of `get_games`. */
 data class BoltGameInfo(val game: String, val sport: String, val whenText: String?, val universalId: String?)
 
@@ -190,6 +219,9 @@ class BoltOddsClient(
 
     /** `get_parlays` for one sportsbook slug (raw text; Pro). Not used by the scan: Test key reads it for the sample. */
     suspend fun parlaysRaw(book: String): String = get("/get_parlays", listOf("sportsbooks" to book))
+
+    /** `/api/odds/user`: the key's open sockets and snapshot token budget ([BoltOddsUser]). Paced like the snapshot (the docs allow 6 a minute per IP). Null when it cannot be read. */
+    suspend fun oddsUser(): BoltOddsUser? = runCatching { get("/odds/user", snapshot = true) }.getOrNull()?.let { BoltOddsUser.parse(it) }
 
     /** An optional endpoint's raw reply for the sample (`/playbyplay/user`, `/livescores/user`): its HTTP code and body, never an exception for a plan that lacks it. */
     suspend fun probe(path: String): Pair<Int, String> {

@@ -284,7 +284,10 @@ class ApiProbe(
                     meter.recordAccepted(QuotaPolicy.BOLTODDS, key)
                     val info = runCatching { kotlinx.serialization.json.Json.parseToJsonElement(r.body) as? kotlinx.serialization.json.JsonObject }.getOrNull()
                     fun count(k: String) = (info?.get(k) as? kotlinx.serialization.json.JsonArray)?.size
-                    true to "Active and accepted · ${count("sports") ?: "?"} sports, ${count("sportsbooks") ?: "?"} sportsbooks. BoltOdds publishes no usage figure: the odds come over its websocket (Pro: 3 connections at once)."
+                    // Its open sockets and snapshot tokens (`/api/odds/user`, 2026-10-22 docs): one more GET of the 12 a minute.
+                    val user = runCatching { get("${hosts.bolt}/odds/user?key=$key", listOf("Accept" to "application/json")) }.getOrNull()
+                        ?.takeIf { it.isSuccessful }?.let { com.tjshea.vigilant.data.boltodds.BoltOddsUser.parse(it.body) }?.summary()?.takeIf { it.isNotBlank() }
+                    true to "Active and accepted · ${count("sports") ?: "?"} sports, ${count("sportsbooks") ?: "?"} sportsbooks" + (user?.let { " · $it" } ?: "") + ". The odds come over its websocket (Pro: 3 connections at once)."
                 }
                 else -> false to "Answered HTTP ${r.code}."
             }
