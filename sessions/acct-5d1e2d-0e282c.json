@@ -5,11 +5,11 @@
  "nonce": "0e282c",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-upaxtv",
+ "branch": "claude/optimistic-curie-lpr7ge",
  "head": "3b65e4226dd338b45fdcf48fe51fda2d93f69f29",
  "since": 1792691263,
- "beat": 1792700876,
- "beatIso": "2026-10-22T20:27:56Z",
+ "beat": 1792702457,
+ "beatIso": "2026-10-22T20:54:17Z",
  "done": "full data test done",
  "next": "land main; CH58k"
 }
