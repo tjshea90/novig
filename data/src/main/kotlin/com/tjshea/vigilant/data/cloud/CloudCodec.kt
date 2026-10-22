@@ -159,9 +159,18 @@ object CloudCodec {
         strike = j.dbl("sk"),
     )
 
-    private fun outcome(o: NovigOutcome) = buildJsonObject { put("id", o.outcomeId); put("n", o.name); put("st", o.status) }
+    // The Kalshi ticker rides on `bookRef.outcomeId` ("TICKER|yes"): without it the phone cannot order a bet from the engine's Kalshi list (Tj, 2026-10-22: "its ticker is missing" on every Kalshi bet).
+    private fun outcome(o: NovigOutcome) = buildJsonObject {
+        put("id", o.outcomeId); put("n", o.name); put("st", o.status)
+        o.bookRef?.let { r -> put("br", buildJsonObject { r.eventId?.let { put("e", it) }; r.outcomeId?.let { put("o", it) }; r.eventLink?.let { put("l", it) } }) }
+    }
 
-    private fun outcome(j: JsonObject) = NovigOutcome(j.str("id"), j.str("n"), j.str("st"))
+    private fun outcome(j: JsonObject) = NovigOutcome(
+        j.str("id"), j.str("n"), j.str("st"),
+        bookRef = (j["br"] as? JsonObject)?.let { b ->
+            com.tjshea.vigilant.data.book.BookRef((b["e"] as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull, (b["o"] as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull, (b["l"] as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull)
+        },
+    )
 
     private fun fairLine(f: FairLine) = buildJsonObject {
         put("p", doubles(f.probabilities))
