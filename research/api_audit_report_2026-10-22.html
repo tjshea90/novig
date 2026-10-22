@@ -1,0 +1,126 @@
+<title>Vigilant API Audit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a per-API ledger table is the spine, findings grouped by API under it. */
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --fg: #1b2230; --muted: #5b6577; --rule: #dde2ea;
+  --accent: #1f6feb; --good: #1a7f4b; --warn: #a3620a; --next: #6b4fbb;
+  --good-bg: #e6f4ec; --warn-bg: #fbf0dc; --next-bg: #efeafb; --acc-bg: #e7effd;
+  --sans: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f141b; --panel: #161c25; --fg: #e4e9f1; --muted: #9aa5b6; --rule: #273141;
+  --accent: #6ea8ff; --good: #5fd39a; --warn: #f0b45a; --next: #b9a2ff;
+  --good-bg: #13291f; --warn-bg: #2d2412; --next-bg: #231d38; --acc-bg: #15233a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f141b; --panel: #161c25; --fg: #e4e9f1; --muted: #9aa5b6; --rule: #273141;
+  --accent: #6ea8ff; --good: #5fd39a; --warn: #f0b45a; --next: #b9a2ff;
+  --good-bg: #13291f; --warn-bg: #2d2412; --next-bg: #231d38; --acc-bg: #15233a; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--sans); }
+.wrap { max-width: 920px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 1.2rem; margin: 36px 0 10px; text-wrap: balance; }
+h3 { font-size: 1rem; margin: 22px 0 6px; }
+p, li { max-width: 68ch; }
+.sub { color: var(--muted); margin: 0 0 18px; }
+.eyebrow { font: 600 .72rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 18px 0 8px; }
+.fact { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; }
+.fact b { display: block; font: 600 1.3rem/1.2 var(--mono); font-variant-numeric: tabular-nums; }
+.fact span { color: var(--muted); font-size: .85rem; }
+.tablebox { overflow-x: auto; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: .9rem; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-size: .75rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chip { display: inline-block; font: 600 .72rem/1 var(--sans); padding: 4px 8px; border-radius: 999px; white-space: nowrap; }
+.chg { color: var(--good); background: var(--good-bg); }
+.ok { color: var(--accent); background: var(--acc-bg); }
+.nx { color: var(--next); background: var(--next-bg); }
+.wr { color: var(--warn); background: var(--warn-bg); }
+code { font: .85em var(--mono); background: var(--acc-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+ol.changes { padding-left: 1.3em; }
+ol.changes li { margin: 0 0 12px; }
+ol.changes li b { font-weight: 700; }
+.note { border-left: 3px solid var(--accent); padding: 4px 0 4px 12px; color: var(--muted); }
+a { color: var(--accent); }
+footer { margin-top: 40px; color: var(--muted); font-size: .85rem; }
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Vigilant · GitHub engine · 2026-10-22</div>
+  <h1>Vigilant API Audit</h1>
+  <p class="sub">Every API the app and engine use, checked against its current docs (llms.txt, llms-full.txt, OpenAPI) and against what the live engine was actually spending. 13 changes built, tested and shipped; 5 more found and queued.</p>
+
+  <div class="facts">
+    <div class="fact"><b>685</b><span>doc pages mirrored verbatim, 16 providers</span></div>
+    <div class="fact"><b>13</b><span>fixes and features built, each with a test</span></div>
+    <div class="fact"><b>~9,600 → 1-2</b><span>Novig requests to screen a cold scan</span></div>
+    <div class="fact"><b>~6×</b><span>fewer PinnWire requests (100/day per key)</span></div>
+  </div>
+
+  <h2>Why Claude kept finding more</h2>
+  <p>Each audit re-read the docs from the repo's own memory files, so anything a provider added since went unseen. A new free GitHub workflow (<code>api-docs.yml</code>) now fetches every provider's docs every Monday onto the <code>api-docs</code> branch and writes a diff of what changed. The next audit starts from that diff.</p>
+
+  <h2>Every API at a glance</h2>
+  <div class="tablebox"><table>
+    <thead><tr><th>API</th><th>Used today</th><th>What the audit found</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>Novig</td><td class="num">7,258 calls</td><td>Catalog now lists each outcome's best bid (since Oct 20); Maker Credit cut to 25% live / 50% futures (Oct 22)</td><td><span class="chip chg">Changed</span></td></tr>
+      <tr><td>PropLine Pro</td><td class="num">13.4k / 25k</td><td>Props read one call per game; the docs say one bulk call per slate. Free injury report unused</td><td><span class="chip chg">Changed</span></td></tr>
+      <tr><td>BoltOdds Pro</td><td class="num">sockets</td><td>Props socket refused "too many concurrent connections"; fair line counted BoltOdds' own consensus line and DraftKings/FanDuel prediction markets</td><td><span class="chip chg">Changed</span></td></tr>
+      <tr><td>Polymarket</td><td class="num">12.6k (free)</td><td>Prices came from Gamma's cached copy, stamped as current</td><td><span class="chip chg">Changed</span></td></tr>
+      <tr><td>PinnWire</td><td class="num">12 of 13 keys spent</td><td>One request per sport; the API answers every sport in one request</td><td><span class="chip chg">Changed</span></td></tr>
+      <tr><td>Unabated (free)</td><td class="num">1,704 calls</td><td>Quotes 20 h old, 0 lines used, slowed every scan 75 s</td><td><span class="chip chg">Auto-rested</span></td></tr>
+      <tr><td>The Odds API</td><td class="num">8,983 calls, 0 credits</td><td>App told you to buy a plan by counting free calls as credits</td><td><span class="chip chg">Fixed advice</span></td></tr>
+      <tr><td>ParlayAPI</td><td class="num">61% left, 30% of month</td><td>Params and costs match its docs; in surplus</td><td><span class="chip ok">Correct</span></td></tr>
+      <tr><td>SharpAPI</td><td class="num">467k (flat)</td><td>Docs unchanged since yesterday's build; stream, delta, closes all per docs</td><td><span class="chip ok">Correct</span></td></tr>
+      <tr><td>SportsGameOdds</td><td class="num">13.8k</td><td>Already filters by oddID, the docs' top speed advice</td><td><span class="chip ok">Correct</span></td></tr>
+      <tr><td>Kalshi</td><td class="num">24k (free)</td><td>Token budgets read from the account; new public live-score endpoint found</td><td><span class="chip nx">Next: scores</span></td></tr>
+      <tr><td>SX Bet</td><td class="num">29k (free)</td><td>Limits and channels match its docs</td><td><span class="chip ok">Correct</span></td></tr>
+      <tr><td>OddsPapi Free</td><td class="num">458</td><td>Used for closes from the free historical route</td><td><span class="chip ok">Correct</span></td></tr>
+      <tr><td>pinnapi</td><td class="num">2 keys</td><td>Both keys answer 403 (refused)</td><td><span class="chip wr">Replace keys</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>What changed</h2>
+  <ol class="changes">
+    <li><b>Novig scan screening from the catalog.</b> One signed catalog request lists up to 5,000 markets with each side's best bid. The engine uses those to screen every market at once, then reads the full order book only for the +EV ones before anything is shown or bet. The cold scan's Novig step was 13,727 one-by-one reads over 420 s. The public (cached) route is never used for this.</li>
+    <li><b>Novig fees.</b> The fallback fee table now has the Oct 22 Maker Credit cut (25% live, 50% futures). Live markets already read their own fee.</li>
+    <li><b>PropLine bulk props.</b> A whole slate's props in one call per sport, not one per game, with a per-game fallback if the bulk answer fails. Steals + blocks props map to Novig's relisted <code>STEALS_BLOCKS</code>.</li>
+    <li><b>Injuries for free.</b> PropLine's injury report (free on any key) is asked first; ParlayAPI's 1-credit report only covers what PropLine didn't.</li>
+    <li><b>No double-counted books.</b> BoltOdds' "consensus" line and DraftKings Predictions / FanDuel Predicts no longer vote in the fair line. Same company or derived from other books, per your one-company rule.</li>
+    <li><b>BoltOdds socket visibility.</b> The key check and any "too many connections" refusal now show how many sockets are open on the key and the snapshot token budget.</li>
+    <li><b>Clean hand-overs.</b> At job end the engine waits for its sockets' close frames to leave, so the next runner isn't locked out by the old one's half-open sockets.</li>
+    <li><b>Polymarket live prices.</b> After Gamma lists the games, prices are re-read from the live CLOB order books (100 per request, free).</li>
+    <li><b>PinnWire in one request.</b> <code>sport_id=all</code> answers every sport at once; the scan's other sports read it from memory. Combined with yesterday's change (PinnWire only where SharpAPI lacks Pinnacle), the 100/day keys should last through the evening.</li>
+    <li><b>Useless APIs rest themselves.</b> An API that answers but matches no Novig game for 6 scans in a row is rested 1 h, then 3 h, then 9 h. It is never switched off for good on that ground.</li>
+    <li><b>Correct "buy more" advice.</b> Monthly runway is judged on credits used, not request count.</li>
+    <li><b>Weekly docs mirror.</b> <code>api-docs.yml</code> keeps every provider's docs and a change list in the repo.</li>
+    <li><b>Memory files updated</b> for Novig, BoltOdds, PropLine, Kalshi and Unabated, with the full study in <code>research/api_full_audit_2026-10-22.md</code>.</li>
+  </ol>
+
+  <h2>Found, queued next</h2>
+  <ul>
+    <li><b>Kalshi live scores</b> (<code>live_data/batch</code>, public, 100 games per call): a score source for the live lane and tennis. Needs one recorded sample during live games.</li>
+    <li><b>Novig participants and candles:</b> match props by player id instead of by name; Novig's own closing price for CLV studies.</li>
+    <li><b>Novig live first halves</b> (NFL/NCAAF 1H now stay open live): not priced by the live lanes yet.</li>
+    <li><b>SharpAPI public betting splits:</b> log for the studies.</li>
+    <li><b>BoltOdds now lists Circa and BookMaker:</b> with "every book" on they flow in automatically; tomorrow's engine census will confirm.</li>
+  </ul>
+
+  <h2>Your calls</h2>
+  <ul>
+    <li><b>pinnapi:</b> both keys are refused. Replace them or remove them in Settings › APIs.</li>
+    <li><b>Unabated:</b> recommend switching it off; its free tier carries only books other feeds already give. The engine rests it on its own either way.</li>
+    <li><b>PropLine Streaming Lite</b> ($39/mo) would push every price change instead of polling. Not needed now; only worth it if PropLine props become a major source of bets.</li>
+  </ul>
+
+  <p class="note">How to judge it tomorrow: the engine log's scan report (Novig seconds per scan), PinnWire keys left at midnight UTC, PropLine used vs its day share, the governor resting Unabated, and BoltOdds' props socket staying connected.</p>
+
+  <footer>Built by Claude (acct-27a37e, tj Gmail). Code, tests and the full study are in the novig repo.</footer>
+</div>
