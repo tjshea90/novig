@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-vobqze",
  "head": "4ee4c1a2807e141d46ca0eee7c8158fa1b2030ee",
  "since": 1792624947,
- "beat": 1792688183,
- "beatIso": "2026-10-22T16:56:23Z",
+ "beat": 1792688457,
+ "beatIso": "2026-10-22T17:00:57Z",
  "done": "CH58e: live note says why live tennis rows give no game (stale store or census of dropped rows)",
  "next": "read status.liveNote after engine restart; fix the named cause"
 }
