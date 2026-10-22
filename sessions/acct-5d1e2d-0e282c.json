@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-wju7hd",
- "head": "a20110529f4d1a887871e3f4abe30088b6a27b4d",
+ "head": "b57a0271837c1f1c35716e6cd9fcaa7a025e0802",
  "since": 1792624947,
- "beat": 1792637686,
- "beatIso": "2026-10-22T02:54:46Z",
- "done": "live tail lane: limits, 3-buys-per-game and repeat guard now count the carried ledger (a restart gave them back)",
- "next": "restart engine; confirm; ParlayAPI PBP log"
+ "beat": 1792637721,
+ "beatIso": "2026-10-22T02:55:21Z",
+ "done": "CHANGES.md entry",
+ "next": "restart engine"
 }
