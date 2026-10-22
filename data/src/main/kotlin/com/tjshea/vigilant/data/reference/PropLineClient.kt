@@ -670,6 +670,8 @@ object PropLineProps {
             "player_rebounds_assists" to "REBOUNDS_ASSISTS",
             "player_steals" to "STEALS",
             "player_blocks" to "BLOCKS",
+            // Novig lists STEALS_BLOCKS again (changelog 2026-10-22); PropLine carries it as player_blocks_steals ("stocks", 2026-10-22 docs).
+            "player_blocks_steals" to "STEALS_BLOCKS",
             "player_double_double" to "DOUBLE_DOUBLE",
         ),
         "icehockey_nhl" to listOf(
