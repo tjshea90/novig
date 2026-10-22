@@ -176,7 +176,7 @@ class SharpApiLiveFeed(
                 put("isLive", true)
                 put("units", if (league?.tennis == true) "Sets" else "Regular")
                 if (league != null && home != null && away != null) {
-                    startMs?.let { put("startTime", java.time.Instant.ofEpochMilli(it).toString()) }
+                    startMs?.takeIf { it > 0 }?.let { put("startTime", java.time.Instant.ofEpochMilli(it).toString()) }
                     put("league", buildJsonObject { put("name", league.novigName) })
                     put("participants", buildJsonArray {
                         add(buildJsonObject { put("name", home); put("alignment", "home") })

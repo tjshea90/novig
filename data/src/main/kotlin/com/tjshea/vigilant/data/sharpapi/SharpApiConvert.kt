@@ -83,7 +83,8 @@ object SharpApiConvert {
         for (r in rows) {
             if (!r.active || r.stalePregame) continue
             if (ctx.liveOnly != r.live) continue
-            val start = r.startMs ?: starts[r.eventId] ?: continue
+            // A live row may carry no start time (tennis, 2026-10-22): the live lane then matches without one (0 = unknown).
+            val start = r.startMs ?: starts[r.eventId] ?: if (ctx.liveOnly) 0L else continue
             if (!ctx.liveOnly && !ctx.includeLive && start <= ctx.nowMs) continue
             byEvent.getOrPut(r.eventId) { ArrayList() } += r
         }
@@ -96,7 +97,7 @@ object SharpApiConvert {
                 if (ctx.wanted != null && key !in ctx.wanted) continue
                 markets += marketsOf(rowsOfBook, key, ctx)
             }
-            if (markets.isNotEmpty()) out += RefEvent("sharpapi-$eventId", ctx.league.oddsApiSportKey, starts[eventId] ?: continue, first.home, first.away, markets)
+            if (markets.isNotEmpty()) out += RefEvent("sharpapi-$eventId", ctx.league.oddsApiSportKey, starts[eventId] ?: if (ctx.liveOnly) 0L else continue, first.home, first.away, markets)
         }
         return out
     }
@@ -116,7 +117,7 @@ object SharpApiConvert {
                 !r.active -> bump("inactive")
                 r.stalePregame -> bump("stale pregame flag")
                 ctx.liveOnly != r.live -> bump(if (r.live) "live row" else "pregame row")
-                (r.startMs ?: starts[r.eventId]) == null -> bump("no start time")
+                (r.startMs ?: starts[r.eventId]) == null && !ctx.liveOnly -> bump("no start time")
                 !ctx.liveOnly && !ctx.includeLive && (r.startMs ?: starts[r.eventId])!! <= ctx.nowMs -> bump("already started")
                 SharpApiBooks.appKey(r.book) == null -> bump("book excluded (${r.book})")
                 else -> {
