@@ -8,8 +8,8 @@
  "branch": "ccr-950a7aea-8abdo8",
  "head": "b71397e9935b9f48fbb423e130937aa103cfeca4",
  "since": 1792710535,
- "beat": 1792711201,
- "beatIso": "2026-10-22T23:20:01Z",
+ "beat": 1792711206,
+ "beatIso": "2026-10-22T23:20:06Z",
  "done": "pre-ship: API audit follow-up (AG): Kalshi live-data, SharpAPI splits and Novig own-close journals on the engine; BoltOdds open-socket check says why when unreadable",
  "next": "ship.sh gates and releases this"
 }

@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-27a37e/8018ae",
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "8018ae",
+ "note": "API audit follow-up (AG): Kalshi live-data, SharpAPI splits and Novig own-close journals on the engine; BoltOdds open-socket check says why when unreadable",
+ "since": 1792711206,
+ "beat": 1792711206
+}
