@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "0e282c",
- "kind": "routine",
+ "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-l0ocee",
- "head": "fbb5059fc0154a315e96c1d620c854e0ad4a73f6",
+ "branch": "claude/optimistic-curie-wju7hd",
+ "head": "f1f8876026b6c98fc8d7606398dcfe8bbf76ce8f",
  "since": 1792624947,
- "beat": 1792624947,
- "beatIso": "2026-10-21T23:22:27Z",
+ "beat": 1792627297,
+ "beatIso": "2026-10-22T00:01:37Z",
  "done": "ENGINEER 2026-10-21: watched engine, volume loop recorded, XOW6 added, no code change",
  "next": "XOW6: split held-back bets by fair age vs CLV"
 }
