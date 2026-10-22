@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-wju7hd",
  "head": "c18dbd13d928ff15412290d73f9852d3b6cd97ab",
  "since": 1792624947,
- "beat": 1792629323,
- "beatIso": "2026-10-22T00:35:23Z",
+ "beat": 1792629740,
+ "beatIso": "2026-10-22T00:42:20Z",
  "done": "pre-release: v1.0.45: the engine logs what the Novig stream holds and what SharpAPI returns per league after each scan; SharpAPI +EV cross-check stands down when Novig is not a picked book (versionCode 385, v1.0.45)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.45), then run: bash tools/record-release.sh v1.0.45 385 \"v1.0.45: the engine logs what the Novig stream holds and what SharpAPI returns per league after each scan; SharpAPI +EV cross-check stands down when Novig is not a picked book\""
 }
