@@ -255,6 +255,8 @@ fun main(args: Array<String>) = runBlocking {
     // Every Novig outcome of the last scan, so the account's positions can be put in their games (TCL91).
     val outcomeIndex = java.util.concurrent.atomic.AtomicReference<Map<String, CloudTrader.OutcomeInfo>>(emptyMap())
     trader.describeOutcome = { id -> outcomeIndex.get()[id] }
+    val accountHeld = com.tjshea.vigilant.data.cloud.AccountHeld({ tradePort?.positions() }, { id -> outcomeIndex.get()[id] })
+    if (tradePort != null) scope.launch { while (isActive) { accountHeld.refresh(); delay(com.tjshea.vigilant.data.cloud.AccountHeld.EVERY_MS) } }
     runCatching { PreviousFeed.read(git, cfgDir, "trades.json") }.getOrNull()?.let { text ->
         TradeLedger.parse(text)?.let { trader.load(it); log("trades: ${it.entries.size} entries carried over from the previous job") }
     }
@@ -320,7 +322,10 @@ fun main(args: Array<String>) = runBlocking {
         val desk = com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(
             tc, deskTracker, deskStore,
             cancelStrays = false, newClientId = com.tjshea.vigilant.data.novig.trading.maker.MakerDesk::engineClientId, keepEndedMs = 20 * 60_000L,
-            extraHeld = { com.tjshea.vigilant.data.cloud.TradePositions.of(trader.ledger.entries.filter { !it.note.startsWith("bid") }) },
+            extraHeld = {
+                val counted = (trader.ledger.entries.map { it.outcomeId + "|" + it.marketId } + deskTracker.all().map { it.outcomeId + "|" + it.marketId }).toSet()
+                com.tjshea.vigilant.data.cloud.TradePositions.of(trader.ledger.entries.filter { !it.note.startsWith("bid") }) + accountHeld.extra(counted)
+            },
         )
         com.tjshea.vigilant.data.cloud.CloudBidRunner(
             desk, com.tjshea.vigilant.data.cloud.CloudBidLane(novig), tradePort!!, tradeMarkets = { trader.openMarkets() },

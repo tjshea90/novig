@@ -384,3 +384,25 @@ object TradePositions {
             com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(e.marketId, e.outcomeId, e.cost + e.fee, e.payout, family = com.tjshea.vigilant.data.tracker.RepeatGuard.family(e.event, e.startsTs, e.marketLabel, e.selection))
         }
 }
+
+/**
+ * What Novig itself says the subaccount holds (hand bets, bid fills, anything the engine's ledger never saw), kept fresh every [EVERY_MS] so the engine's desks and live lane can count it
+ * in the repeat guard after a restart (Tj, 2026-10-22, DV4). [extra] drops what the caller already counts (by "outcome|market"), so nothing is counted twice.
+ */
+class AccountHeld(private val read: suspend () -> List<com.tjshea.vigilant.data.novig.trading.NovigPosition>?, private val describe: (String) -> CloudTrader.OutcomeInfo?) {
+    @Volatile private var snapshot: List<Pair<String, com.tjshea.vigilant.data.tracker.RepeatGuard.Pos>> = emptyList()
+
+    /** Reads again; a failed read keeps the last good snapshot. */
+    suspend fun refresh() {
+        val rows = runCatching { read() }.getOrNull() ?: return
+        snapshot = rows.filter { it.qty > 0L }.map { p ->
+            val i = describe(p.outcomeId)
+            val fam = i?.let { com.tjshea.vigilant.data.tracker.RepeatGuard.family(it.eventName, it.startsTs, it.marketLabel, it.selection) }.orEmpty()
+            (p.outcomeId + "|" + p.marketId) to com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(p.marketId, p.outcomeId, p.cost, p.qty.toDouble(), family = fam)
+        }
+    }
+
+    fun extra(counted: Set<String>): List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = snapshot.filter { it.first !in counted }.map { it.second }
+
+    companion object { const val EVERY_MS = 20_000L }
+}
