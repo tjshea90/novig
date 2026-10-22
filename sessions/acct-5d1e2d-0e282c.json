@@ -6,10 +6,10 @@
  "kind": "routine",
  "task": "",
  "branch": "claude/optimistic-curie-lpr7ge",
- "head": "0b24cd86d55d2b63a4ba95c6e8461c075bfb13a0",
+ "head": "f97f469157bc5df665a4605dc268768e408b9c53",
  "since": 1792711303,
- "beat": 1792712836,
- "beatIso": "2026-10-22T23:47:16Z",
- "done": "CH66a: phone sockets/auto-bet/bids gated while GitHub drives",
- "next": "ship 1.0.52 after checking board; CH66b/c/e"
+ "beat": 1792712880,
+ "beatIso": "2026-10-22T23:48:00Z",
+ "done": "bump 1.0.53 (393)",
+ "next": "ship"
 }
