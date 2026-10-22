@@ -518,12 +518,14 @@ class CreditPace(
         // and let the engine spend about 69,000 at once.
         val usedBefore = (u.used.toLong() - u.charged).coerceAtLeast(0L)
         val hadHistory = usedBefore > limit * HISTORY_FRACTION
-        val leftAtFirst = if (hadHistory) (limit - usedBefore).coerceAtLeast(0L) else limit.toLong()
+        // A key met only after its period began (or never timed) with credits already gone is paced on what was left when met; one met before its period began was used across it, so its whole limit is the month's.
+        val metLate = hadHistory && (u.firstSeenMs ?: 0L) > start
+        val leftAtFirst = if (metLate) (limit - usedBefore).coerceAtLeast(0L) else limit.toLong()
         val pool = (leftAtFirst - reserve).coerceAtLeast(0)
         // Spread over what's left of the period from the key's first answer (ParlayAPI's credits run on the calendar month: a plan bought on
         // the 30th gets its whole month's credits for that last day, not a thirtieth of them; checked with Tj's key 2026-09-30), and a key
         // seen since before the period began over the whole period. Through the end of today (Tj's day), never less than a whole day.
-        val from = maxOf(start, u.firstSeenMs ?: start).coerceAtMost(reset - 1)
+        val from = (if (hadHistory && !metLate) start else maxOf(start, u.firstSeenMs ?: start)).coerceAtMost(reset - 1)
         val window = reset - from
         val elapsed = maxOf(endOfToday - from, minOf(DAY_MS, window)).coerceAtMost(window)
         val allowed = pool * elapsed / window
