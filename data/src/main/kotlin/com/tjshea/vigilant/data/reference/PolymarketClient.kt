@@ -14,6 +14,8 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.time.Instant
@@ -123,8 +125,12 @@ class PolymarketClient(
 
         /** A market's first outcome token: `clobTokenIds` (a JSON array encoded as a string) or, for a Protocol V2 market, `positionIds`. */
         internal fun firstToken(m: MarketDto, json: Json): String? {
-            val raw = m.clobTokenIds ?: m.positionIds ?: return null
-            return runCatching { json.decodeFromString(ListSerializer(kotlinx.serialization.serializer<String>()), raw).firstOrNull() }.getOrNull()?.takeIf { it.isNotBlank() }
+            val raw = m.clobTokenIds ?: when (val p = m.positionIds) {
+                is kotlinx.serialization.json.JsonArray -> return (p.firstOrNull() as? kotlinx.serialization.json.JsonPrimitive)?.content?.takeIf { it.isNotBlank() }
+                is kotlinx.serialization.json.JsonPrimitive -> p.content.takeIf { p !is kotlinx.serialization.json.JsonNull }
+                else -> null
+            } ?: return null
+            return runCatching { json.decodeFromString(ListSerializer(String.serializer()), raw).firstOrNull() }.getOrNull()?.takeIf { it.isNotBlank() }
         }
 
         /** `POST /books`' answer: token -> (best bid, best ask), each side's best level whatever order the levels come in. */
@@ -263,20 +269,7 @@ class PolymarketClient(
         val events: List<EventRefDto> = emptyList(),
         /** The outcomes' CLOB token ids, a JSON array encoded as a string (CTF markets). */
         val clobTokenIds: String? = null,
-        /** A Protocol V2 market's outcome ids (Gamma, 2026-10 docs), as Gamma sends them: kept as text. */
-        @kotlinx.serialization.Serializable(with = JsonAsText::class) val positionIds: String? = null,
+        /** A Protocol V2 market's outcome ids (Gamma, 2026-10 docs): an array, or an array encoded as a string. */
+        val positionIds: kotlinx.serialization.json.JsonElement? = null,
     )
-
-    /** Reads any JSON value (an array or an encoded string) as the text of a JSON array. */
-    object JsonAsText : kotlinx.serialization.KSerializer<String?> {
-        override val descriptor = kotlinx.serialization.descriptors.PrimitiveSerialDescriptor("JsonAsText", kotlinx.serialization.descriptors.PrimitiveKind.STRING)
-        override fun deserialize(decoder: kotlinx.serialization.encoding.Decoder): String? {
-            val el = (decoder as? kotlinx.serialization.json.JsonDecoder)?.decodeJsonElement() ?: return decoder.decodeString()
-            return when (el) {
-                is kotlinx.serialization.json.JsonPrimitive -> if (el is kotlinx.serialization.json.JsonNull) null else el.content
-                else -> el.toString()
-            }
-        }
-        override fun serialize(encoder: kotlinx.serialization.encoding.Encoder, value: String?) { encoder.encodeString(value.orEmpty()) }
-    }
 }
