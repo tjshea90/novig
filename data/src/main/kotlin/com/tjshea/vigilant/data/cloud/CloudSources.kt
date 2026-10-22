@@ -316,14 +316,11 @@ class CloudSources(
         return com.tjshea.vigilant.data.sxbet.SxBetLiveFeed(st, sxbet, ensureOpen = { sxSocketWanted = true; st.open() }, sink = sink, scope = scope)
     }
 
-    /** The leagues the live lane reads: the picked ones, plus tennis whenever live tennis is wanted (Tj, 2026-10-22: the app's league list had no ATP/WTA, and the phone's copy of the settings kept taking them out). */
-    internal fun liveLeagues(s: ScanSettings): Set<String> = if (s.liveBidQuality.tennis) s.leagues + setOf("ATP", "WTA") else s.leagues
-
     /** The live lane's feed on SharpAPI's Pinnacle (SA), or null without a key or with the switch off. */
     fun sharpApiLiveFeed(settings: () -> ScanSettings, sink: (String, Long) -> Unit, scope: kotlinx.coroutines.CoroutineScope): com.tjshea.vigilant.data.sharpapi.SharpApiLiveFeed? {
         if (!settings().gates.useSharpApi || !has(CloudKeys.SHARPAPI)) return null
         sharpApiFeed.startPolling(scope)
-        return com.tjshea.vigilant.data.sharpapi.SharpApiLiveFeed(sharpApiFeed, { liveLeagues(settings()) }, sink, scope)
+        return com.tjshea.vigilant.data.sharpapi.SharpApiLiveFeed(sharpApiFeed, { com.tjshea.vigilant.data.sharpapi.SharpApiLiveFeed.leaguesFor(settings()) }, sink, scope)
     }
 
     /** SX Bet's socket (null without a scope): the engine hangs its research recorder on it. */

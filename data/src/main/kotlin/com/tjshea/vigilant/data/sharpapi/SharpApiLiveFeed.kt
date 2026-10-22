@@ -205,6 +205,8 @@ class SharpApiLiveFeed(
     }
 
     companion object {
+        /** The leagues the live lane reads: the picked ones, plus tennis whenever live tennis is wanted (Tj, 2026-10-22: the app's league list had no ATP/WTA, and the phone's copy of the settings kept taking them out). */
+        fun leaguesFor(s: com.tjshea.vigilant.data.scanner.ScanSettings): Set<String> = if (s.liveBidQuality.tennis) s.leagues + setOf("ATP", "WTA") else s.leagues
         const val PINNACLE = "pinnacle"
         const val TICK_MS = 1_000L
         const val ENSURE_MS = 30_000L
