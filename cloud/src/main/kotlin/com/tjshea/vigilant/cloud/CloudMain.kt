@@ -320,6 +320,7 @@ fun main(args: Array<String>) = runBlocking {
         val desk = com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(
             tc, deskTracker, deskStore,
             cancelStrays = false, newClientId = com.tjshea.vigilant.data.novig.trading.maker.MakerDesk::engineClientId, keepEndedMs = 20 * 60_000L,
+            extraHeld = { com.tjshea.vigilant.data.cloud.TradePositions.of(trader.ledger.entries.filter { !it.note.startsWith("bid") }) },
         )
         com.tjshea.vigilant.data.cloud.CloudBidRunner(
             desk, com.tjshea.vigilant.data.cloud.CloudBidLane(novig), tradePort!!, tradeMarkets = { trader.openMarkets() },

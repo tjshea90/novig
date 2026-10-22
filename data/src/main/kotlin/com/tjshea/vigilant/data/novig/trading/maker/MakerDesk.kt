@@ -246,6 +246,8 @@ class MakerDesk(
     private val newClientId: () -> String = { NovigTradingClient.newClientId() },
     /** How long an ended bid that never filled stays in the store ([MakerStore.KEEP_MS] unless set): the engine's desk keeps them only a few minutes so the document it rewrites stays small. */
     private val keepEndedMs: Long = MakerStore.KEEP_MS,
+    /** Positions held elsewhere (the engine's auto-bet and live buys, from its ledger, which survives a restart) that the repeat guard counts beside this desk's own bets and bids. */
+    private val extraHeld: () -> List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = { emptyList() },
 ) {
     /** The ids of the orders another desk placed: [orderIds] by Novig's id, [clientIds] by the id they were sent with (an order whose answer never came has only that one). */
     data class OtherOrders(val orderIds: Set<String>, val clientIds: Set<String>) {
@@ -377,7 +379,7 @@ class MakerDesk(
             wanted = decisions.filterIsInstance<MakerDecision.Post>(), resting = resting, rules = rules, now = now,
             skips = decisions.filterIsInstance<MakerDecision.Skip>().associate { it.line.outcomeId to it.why }, stopAll = stopAll, budget = budget,
             repost = autoPost, partial = partial, reachUntilMs = reachUntilMs, heldItems = GameExposure.items(bets) + GameExposure.bidItems(others), onTheWay = comingDown(allBids),
-            held = if (rules.repeat != null) com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(bets) + com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(others) else emptyList(),
+            held = if (rules.repeat != null) com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(bets) + com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(others) + runCatching(extraHeld).getOrDefault(emptyList()) else emptyList(),
         )
         val noReplace = HashSet<String>()
         val cancelled = withContext(NonCancellable) { runCancels(actions.cancels, problems, fills, noReplace) }
