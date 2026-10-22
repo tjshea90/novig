@@ -8,8 +8,8 @@
  "branch": "ccr-950a7aea-8abdo8",
  "head": "097bf2e90962c1ce9219dc490e8f77fb9afb60a1",
  "since": 1792596542,
- "beat": 1792709428,
- "beatIso": "2026-10-22T22:50:28Z",
+ "beat": 1792709435,
+ "beatIso": "2026-10-22T22:50:35Z",
  "done": "pre-ship: API audit (AF): Novig catalog best-bid screening, PropLine bulk props + free injuries, BoltOdds double-count fix and socket visibility, Polymarket live CLOB prices, PinnWire one request for all sports, governor rests useless APIs, advisor credit pace, weekly API docs mirror",
  "next": "ship.sh gates and releases this"
 }
