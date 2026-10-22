@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-wju7hd",
- "head": "7c98a59c757aa4b689f818552e39ffc281ec22c1",
+ "head": "aa6131a2514b3c2f71db840f3cf1d6d11a3ebae2",
  "since": 1792624947,
- "beat": 1792634315,
- "beatIso": "2026-10-22T01:58:35Z",
- "done": "ParlayAPI pacing: a key met part-way through its period is paced on what was left when met",
- "next": "restart engine; BoltOdds lines socket; NS1 follow-ups"
+ "beat": 1792634341,
+ "beatIso": "2026-10-22T01:59:01Z",
+ "done": "SX Bet diagnostics in the scan log",
+ "next": "restart engine, read SX diagnostics, BoltOdds follow-up"
 }
