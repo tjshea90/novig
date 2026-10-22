@@ -183,7 +183,8 @@ class CloudLiveLane(
     /** What the ledger holds open (bets, bid fills and live fills), as repeat-guard positions; [excludeLive]: the live fills are left out (the tracker already holds this run's own). */
     private fun ledgerPositions(excludeLive: Boolean = false): List<RepeatGuard.Pos> {
         val entries = ledger?.invoke().orEmpty()
-        val counted = (entries.map { it.outcomeId + "|" + it.marketId } + tracker.all().map { it.outcomeId + "|" + it.marketId }).toSet()
+        // Every fill of this lane is also a ledger entry, so the ledger's keys cover the tracker's too.
+        val counted = entries.mapTo(HashSet()) { it.outcomeId + "|" + it.marketId }
         return TradePositions.of(entries, excludeLive) + accountExtra(counted)
     }
 
