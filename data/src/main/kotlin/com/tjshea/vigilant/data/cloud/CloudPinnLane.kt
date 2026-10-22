@@ -187,6 +187,8 @@ class CloudPinnLane(
         val note = buildString {
             append("live taker ${if (takerOn(s)) (if (takerReal(s)) "REAL" else "paper") else "off"} · live bids ${if (bidsOn(s)) (if (bidsReal(s)) "REAL" else "paper") else "off"}")
             append(" · soft-book feed ${st.socket}")
+            // Where games drop out (Tj, 2026-10-22: tennis never matched): the feed's games, those in play, Novig's live events, the pairs matched, the lines targeted.
+            append(" · feed ${st.pinnEvents} games, ${st.pinnLive} live · Novig ${st.novigGames} · matched ${st.matched} · ${st.targets} lines")
             if (bidsOn(s)) append(" · ${bidDesk.bidsNow().count { it.active }} bids up")
         }
         return LiveLaneStatus(true, note, halt, now)
