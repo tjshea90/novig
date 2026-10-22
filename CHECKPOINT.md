@@ -1,21 +1,23 @@
-# CHECKPOINT 3954 — read me first, then TASKS.md
+# CHECKPOINT 3955 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T02:33:32Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-wju7hd` · **builds on:** `262b69003` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T02:43:14Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-wju7hd` · **builds on:** `64895da15` (this checkpoint is the commit after it)
 
 ## Just done
-PBP stream connection log
+PBP last-end diagnostics; NS2 written
 
 ## Do this next
-restart engine, read PBP connection durations, cut waste
+restart engine once, read PBP connection log, NS2a/b
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  d9708b94e ckpt 3954: PBP stream connection log
   7a9a5e4be ckpt 3953: ParlayAPI PBP stream: doubling backoff for streams that end early (5 credit
   aa6131a25 ckpt 3952: SX Bet diagnostics in the scan log
   02bfe7115 ckpt 3951: ParlayAPI pacing: a key met part-way through its period is paced on what wa
@@ -25,8 +27,7 @@ restart engine, read PBP connection durations, cut waste
   87e01c809 ckpt 3947: census tested
   45e4808e3 ckpt 3946: SharpAPI census diagnostics (why rows drop), scan diagnostics log
   c18dbd13d ckpt 3945: pre-release: v1.0.45: the engine logs what the Novig stream holds and what 
-  0fc71f282 ckpt 3944: pre-ship: v1.0.45: the engine logs what the Novig stream holds and what Sha
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

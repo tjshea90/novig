@@ -6156,3 +6156,7 @@ Finding 19:30: only ONE cloud-scan run is live (run 254), so no old runner holds
 
 ## NS: the engine's scan should lean on the Novig socket (Tj, chat 2026-10-22 00:23: "is the GitHub engine taking full advantage of the novig socket? why does it take so long to scan? I thought the socket makes everything constantly updated")
 - [ ] NS1 subscribe the markets of games within 12 h on the engine's Novig stream (complete books via live()/books(), never bbo for sizing) and read only the far games by request; the cold pass then covers far games only. Measure: scan ms, hot-row age. See TCL16a, NOVIG_API.md §26.
+
+## NS2 (Tj chat 2026-10-22 02:38: "if other apis can cover the same live games as parlayapi, use them instead and slow down the parlayapi usage")
+- [ ] NS2a verify SharpAPI game-state clock against ESPN on live games (journal: score, period, clock per game, differences); when it matches, `SharpApiScores` becomes a trusted score source (`LiveLightRunner.Feed.trustedFor`) and ParlayAPI's PBP stream is asked only for games SharpAPI does not cover.
+- [ ] NS2b read the PBP connection log (`ParlayAPI live stream:` line in the scan diagnostics: connections per sport, last duration and why it ended) and stop the early re-connections; the day-long tennis `watch` in CloudMain only records frames.
