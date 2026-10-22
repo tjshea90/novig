@@ -388,3 +388,4 @@ day that changes.
 | v1.0.47 | code 387 | 2026-10-22T04:36Z | DV4: repeat guard in the engine's bid desk and live lane also reads Novig's own open positions (survives restarts)
 | v1.0.48 | code 388 | 2026-10-22T13:38Z | CH58: live SharpAPI feed reads ATP/WTA tennis; live lane note with feed/Novig/matched counts; live feed and live bids on (paper)
 | v1.0.49 | code 389 | 2026-10-22T22:48Z | CH62a Arb note shows the engine's full check; CH63a Kalshi bets from the engine list keep their ticker; CH64a the phone waits for the engine's Kalshi list instead of scanning Kalshi itself
+| v1.0.50 | code 390 | 2026-10-22T23:01Z | API audit (AF): Novig catalog best-bid screening, PropLine bulk props + free injuries, BoltOdds double-count fix and socket visibility, Polymarket live CLOB prices, PinnWire one request for all sports, governor rests useless APIs, advisor credit pace, weekly API docs mirror
