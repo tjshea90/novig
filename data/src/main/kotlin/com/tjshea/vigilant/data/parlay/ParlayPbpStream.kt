@@ -71,6 +71,10 @@ class ParlayPbpStream(
     /** Connections opened per sport, for the diagnostics (a flapping stream shows here at 5 credits each). */
     val connectsBySport = java.util.concurrent.ConcurrentHashMap<String, Int>()
 
+    /** How long each sport's last connection lasted and what ended it. */
+    val lastEnd = java.util.concurrent.ConcurrentHashMap<String, String>()
+    private val lastWhy = java.util.concurrent.ConcurrentHashMap<String, String>()
+
     private suspend fun run(sport: String) {
         while (scope.isActive && clock() - (wanted[sport] ?: 0L) < IDLE_MS) {
             val k = key() ?: return
@@ -78,7 +82,9 @@ class ParlayPbpStream(
             try {
                 connects++
                 connectsBySport.merge(sport, 1, Int::plus)
+                lastWhy.remove(sport)
                 connect(sport, k)
+                lastWhy.putIfAbsent(sport, "server closed it or the sport went idle")
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: HttpRefused) {
@@ -86,10 +92,12 @@ class ParlayPbpStream(
                 stoppedUntil[sport] = clock() + if (e.code == 429) 60_000L else REFUSED_MS
                 return
             } catch (e: IOException) {
+                lastWhy[sport] = "dropped: ${e.message?.take(60)}"
                 onNote("ParlayAPI live stream $sport dropped: ${e.message}")
             }
             val wait = if (clock() - openedAt >= STABLE_MS) backoffMs else minOf((waits[sport] ?: backoffMs) * 2, MAX_BACKOFF_MS)
             waits[sport] = if (clock() - openedAt >= STABLE_MS) backoffMs else wait
+            lastEnd[sport] = "${(clock() - openedAt) / 1000} s" + (lastWhy[sport]?.let { " ($it)" } ?: "")
             onNote("ParlayAPI live stream $sport ended after ${(clock() - openedAt) / 1000} s, ${board.all(sport).size} matches: the next connection (5 credits) waits ${(if (clock() - openedAt >= STABLE_MS) backoffMs else wait) / 1000} s")
             delay(if (clock() - openedAt >= STABLE_MS) backoffMs else wait)
         }
