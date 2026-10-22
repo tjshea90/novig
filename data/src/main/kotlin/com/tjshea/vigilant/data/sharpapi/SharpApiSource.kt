@@ -25,6 +25,9 @@ class SharpApiSource(
     /** What each league last gave (Diagnostics, the engine's log). */
     val lastReads = java.util.concurrent.ConcurrentHashMap<String, String>()
 
+    /** Why each league's rows did or did not become lines ([SharpApiConvert.census]). */
+    val lastCensus = java.util.concurrent.ConcurrentHashMap<String, String>()
+
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val now = clock()
         val slug = SharpApiBooks.leagueSlug(league)
@@ -35,6 +38,7 @@ class SharpApiSource(
         }
         val ctx = SharpApiConvert.Context(league, wanted = null, families = settings.families, includeLive = settings.includeLive, nowMs = clock())
         val events = SharpApiConvert.events(feed.rows(slug), ctx)
+        lastCensus[league.novigName] = SharpApiConvert.census(feed.rows(slug), ctx)
         lastReads[league.novigName] = "${events.size} games, ${events.sumOf { it.markets.size }} lines from ${events.flatMap { e -> e.markets.map { it.bookKey } }.distinct().size} books"
         return RefSnapshot(league.oddsApiSportKey, events, feed.freshAt(slug).takeIf { it > 0 } ?: now, provider = ID)
     }

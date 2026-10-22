@@ -90,6 +90,39 @@ object SharpApiConvert {
         return out
     }
 
+    /**
+     * Why rows of a league did not become lines, in words (the engine's scan diagnostics, 2026-10-22: 60,501 NFL rows held and 118 lines from one book came out): the books the store holds, and for the rows
+     * the first reason each was left out, plus the commonest `selection_type` values that no side was read from.
+     */
+    fun census(rows: List<SaRow>, ctx: Context): String {
+        val books = rows.groupingBy { it.book }.eachCount()
+        val why = java.util.TreeMap<String, Int>()
+        val unreadSides = HashMap<String, Int>()
+        fun bump(k: String) { why[k] = (why[k] ?: 0) + 1 }
+        for (r in rows) {
+            when {
+                !r.active -> bump("inactive")
+                r.stalePregame -> bump("stale pregame flag")
+                ctx.liveOnly != r.live -> bump(if (r.live) "live row" else "pregame row")
+                r.startMs == null -> bump("no start time")
+                !ctx.liveOnly && !ctx.includeLive && r.startMs <= ctx.nowMs -> bump("already started")
+                SharpApiBooks.appKey(r.book) == null -> bump("book excluded (${r.book})")
+                else -> {
+                    val ref = refOf(ctx.league.novigName, r.marketType, r.segment)
+                    when {
+                        ref == null -> bump("market not priced (${r.marketType})")
+                        familyOf(ref) !in ctx.families -> bump("family off (${familyOf(ref)})")
+                        side(r) == null -> { bump("side unread"); unreadSides["${r.marketType}/${r.selectionType}/${r.teamSide}"] = (unreadSides["${r.marketType}/${r.selectionType}/${r.teamSide}"] ?: 0) + 1 }
+                        else -> bump("kept for pairing")
+                    }
+                }
+            }
+        }
+        return "${rows.size} rows from ${books.size} books (" + books.entries.sortedByDescending { it.value }.take(30).joinToString(",") { "${it.key} ${it.value}" } + "); left out: " +
+            why.entries.sortedByDescending { it.value }.take(10).joinToString(", ") { "${it.key} ${it.value}" } +
+            (if (unreadSides.isNotEmpty()) "; unread sides: " + unreadSides.entries.sortedByDescending { it.value }.take(6).joinToString(", ") { "${it.key} ${it.value}" } else "")
+    }
+
     /** The kind and period of a SharpAPI market, or null for one Vigilant does not price (3-way moneylines, period moneylines, game props, futures...). */
     fun refOf(league: String, marketType: String, segment: String?): Ref? {
         val tennis = league == "ATP" || league == "WTA"
