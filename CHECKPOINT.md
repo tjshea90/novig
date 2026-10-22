@@ -1,13 +1,13 @@
-# CHECKPOINT 4007 — read me first, then TASKS.md
+# CHECKPOINT 4008 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T22:33:44Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-950a7aea-8abdo8` · **builds on:** `8a54273cd` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T22:37:50Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-950a7aea-8abdo8` · **builds on:** `00ab6545e` (this checkpoint is the commit after it)
 
 ## Just done
-AF: Polymarket prices re-read live from CLOB /books (Gamma's are a cached copy), V2 positionIds
+AF: PinnWire sport_id=all (one request for every sport, ~6x fewer of the 100/day per key), boards cut per sport with JsonSplit
 
 ## Do this next
-audit Kalshi, SX Bet, PinnWire/pinnapi/Pinnodds, The Odds API, OddsPapi, Unabated; then docs + report
+audit The Odds API, OddsPapi v5/v4, Unabated, Pinnodds; then docs (*_API.md), research report, full tests, ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ audit Kalshi, SX Bet, PinnWire/pinnapi/Pinnodds, The Odds API, OddsPapi, Unabate
 
 ## Last ten checkpoints
 ```
+  7082c59b1 ckpt 4007: AF: Polymarket prices re-read live from CLOB /books (Gamma's are a cached c
   6b4bdc0fd ckpt 4006: AF: BoltOdds consensus + DK/FD prediction markets out of fair lines (double
   da26ad4f5 ckpt 4005: AF: PropLine bulk slate props (1 call per sport/part vs per game), STEALS_B
   7330825f1 ckpt 4004: AF: Novig catalog best bids screen the scan (2 requests instead of ~9,600 b
@@ -25,7 +26,6 @@ audit Kalshi, SX Bet, PinnWire/pinnapi/Pinnodds, The Odds API, OddsPapi, Unabate
   2df747e57 ckpt 4002: AF1: api-docs mirror workflow; research index rebuilt
   b569e2b18 ckpt 4001: AF1: api-docs mirror workflow + tool
   cc5f7c524 ckpt 4000: CH60b: PinnWire/pinnapi wait for SharpAPI Pinnacle (ApiChain.pinnacleNeeded
-  670802ba9 ckpt 3999: CH60a answered
 ```
 
 (3 automatic checkpoint(s) since the last deliberate one — the
