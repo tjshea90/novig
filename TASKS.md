@@ -6180,3 +6180,5 @@ CH58 (Tj chat 06:11 UTC 2026-10-22, t1792649505341-4372, verbatim): "I want live
 - [~] CH58b (found 07:10: league list lost ATP/WTA, fixed in code SharpApiLiveFeed.leaguesFor, on main; engine stopped outside hours, restarts 12:00 UTC or when Tj presses Run) fix whatever CH58a shows (names vs Novig's "Player Round of N" events, LiveMatcher tennis pairs)
 - [ ] CH58c Live tab: a Tennis section like the other sports: live matches, set/game score (SharpAPI game state, ParlayAPI PBP), the lane's live bets and bids on them (engine status field + LiveDashboard card, LiveBoardTest)
 - [ ] CH58d several live feeds at once: Pinnacle prices from SharpAPI as the fair, SX/Bolt as second opinions and score sources, all sockets on together (today CloudPinnLane takes one feed: pinnWebsite.feed); paper first, real orders only from paper results
+
+  - [ ] CH58j (chat 2026-10-22 19:56 screenshot) Live tab: feed 8 live, SharpAPI 6 in play, but matched to Novig only 2 and 1 line priced; Live games 0. Find why Challenger/ITF live matches fail to match/price and fix.

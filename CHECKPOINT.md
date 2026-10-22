@@ -1,21 +1,23 @@
-# CHECKPOINT 3991 — read me first, then TASKS.md
+# CHECKPOINT 3992 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T17:47:43Z · **tests:** 1 RED: test_research_index.sh (8 green)
-**Branch:** `claude/optimistic-curie-vobqze` · **builds on:** `f908d672a` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T19:58:59Z · **tests:** 1 RED: test_research_index.sh (8 green)
+**Branch:** `claude/optimistic-curie-upaxtv` · **builds on:** `0d4e78b0a` (this checkpoint is the commit after it)
 
 ## Just done
-chat 2026-10-22: live tennis fixed (CH58e-i), Bovada=Ozoon, ParlayAPI far-league pacing (CH57b part 1)
+chat: answered Live screenshot, added CH58j
 
 ## Do this next
-CH57b: read Spend lines after the engine runs on the new pacing; CH58c/d Live tab tennis section; live tennis is paper until Tj switches live real
+CH58j: why live tennis matches 2/8 and prices 1 line
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  0d4e78b0a ckpt 3991: chat 2026-10-22: live tennis fixed (CH58e-i), Bovada=Ozoon, ParlayAPI far-l
   f908d672a ckpt 3990: CH57b: metered feeds read far leagues (soonest game over 3 h) every 7 min, 
   b89d78c38 ckpt 3989: CH58i: SharpAPI store polls each league in its own coroutine (tennis was st
   fcb9d9c4a ckpt 3988: Bovada=Ozoon=Bodog, Borgata=BetMGM merged in BookCompany
@@ -25,5 +27,4 @@ CH57b: read Spend lines after the engine runs on the new pacing; CH58c/d Live ta
   c5f553a1c ckpt 3984: CH58g: live note puts the reason first (was cut off by the note cap)
   74f4181ef ckpt 3983: CH58f: live feed reads SharpAPI atp_challenger/itf_men/itf_women (Novig's l
   4ee4c1a28 ckpt 3982: CH58e: live note says why live tennis rows give no game (stale store or cen
-  ac3d86efa ckpt 3981: pre-release: CH58: live SharpAPI feed reads ATP/WTA tennis; live lane note 
 ```
