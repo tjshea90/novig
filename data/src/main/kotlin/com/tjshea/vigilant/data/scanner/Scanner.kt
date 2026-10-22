@@ -510,7 +510,9 @@ class Scanner(
                     signal.receive()
                     continue
                 }
-                // Books the websocket already holds cost no request: all of them at once.
+                // Books the websocket already holds cost no request: all of them at once. The catalog's best bids (one request lists 5,000 markets) screen the rest
+                // the same way, kept current here; every +EV one is read as a complete book before it is shown ([deepenEdges]).
+                runCatching { novig.refreshTops(pending.map { it.market.marketId }) }.onFailure { if (it is CancellationException) throw it }
                 val pushed = novig.pushedTop(pending.map { it.market.marketId })
                 if (pushed.isNotEmpty()) {
                     val ids = fetchOrder(pending.filter { it.market.marketId in pushed }, settings, preview)
