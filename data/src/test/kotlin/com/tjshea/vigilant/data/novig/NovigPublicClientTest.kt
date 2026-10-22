@@ -723,4 +723,59 @@ class NovigPublicClientTest {
         assertNull(batch.keyProblem)
         assertTrue("some were closed (${batch.gone}) and some failed (${batch.failed}), the rest came through the key (${batch.viaKey})", batch.gone > 0 && batch.failed > 0 && batch.viaKey > 0)
     }
+
+    /** A catalog page as Novig lists it since 2026-10-20: each outcome with its best resting bid (`bid {price, qty}`), absent when none rests. */
+    private val catalogWithBids = """{"items":[
+        {"marketId":"m1","eventId":"e1","marketType":"MONEY","status":"OPEN","description":"A @ B","startsTs":9999999,
+         "fee":{"coefficient":"0.06","makerCredit":"0.25","charged":"WHEN_LIVE"},
+         "outcomes":[{"outcomeId":"o1","name":"A","status":"TBD","bid":{"price":"0.450","qty":1200}},{"outcomeId":"o2","name":"B","status":"TBD","bid":{"price":"0.520","qty":800}}]},
+        {"marketId":"m2","eventId":"e1","marketType":"TOTAL","status":"OPEN","description":"A @ B","startsTs":9999999,
+         "outcomes":[{"outcomeId":"o3","name":"Over","status":"TBD"},{"outcomeId":"o4","name":"Under","status":"TBD","bid":{"price":"0.300","qty":50}}]}]}"""
+
+    @Test
+    fun `the signed catalog's best bids screen every listed market with no book read, young ones only, re-read when old`() = runBlocking {
+        val catalogReads = AtomicInteger(0)
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = when (request.requestUrl!!.encodedPath) {
+                "/v3/limits" -> MockResponse().setBody(limitsBody)
+                "/v3/catalog/markets" -> { catalogReads.incrementAndGet(); MockResponse().setBody(catalogWithBids) }
+                else -> MockResponse().setResponseCode(404)
+            }
+        }
+        val c = keyed(client())
+        val markets = c.markets(listOf("NFL"), emptyList(), emptyList(), null)
+        assertEquals(listOf("m1", "m2"), markets.map { it.marketId })
+        val tops = c.pushedTop(listOf("m1", "m2", "m9"))
+        assertEquals(setOf("m1", "m2"), tops.keys)
+        val m1 = tops.getValue("m1")
+        assertTrue("a best-bid-only book, never a ladder", m1.partial)
+        assertEquals(now, m1.fetchedAtMs)
+        // Buying A costs 1 - B's best bid; buying B costs 1 - A's.
+        assertEquals(0.48, m1.takeLadder(markets[0], "o1").first().price, 1e-9)
+        assertEquals(800L, m1.takeLadder(markets[0], "o1").first().contracts)
+        assertEquals(0.55, m1.takeLadder(markets[0], "o2").first().price, 1e-9)
+        // No bid on Over: nothing to buy Under with; Over is bought from Under's bid.
+        assertTrue(tops.getValue("m2").takeLadder(markets[1], "o4").isEmpty())
+        assertEquals(0.70, tops.getValue("m2").takeLadder(markets[1], "o3").first().price, 1e-9)
+        // Still young: no re-read. Old: one re-read of the same query, then young again.
+        c.refreshTops(listOf("m1", "m2"))
+        assertEquals(1, catalogReads.get())
+        now += NovigPublicClient.CATALOG_TOP_REFRESH_MS
+        c.refreshTops(listOf("m1", "m2"))
+        assertEquals(2, catalogReads.get())
+        assertEquals(now, c.pushedTop(listOf("m1")).getValue("m1").fetchedAtMs)
+        // Too old to screen with: dropped from the screen.
+        now += NovigPublicClient.CATALOG_TOP_MAX_AGE_MS + 1
+        assertTrue(c.pushedTop(listOf("m1", "m2")).isEmpty())
+    }
+
+    @Test
+    fun `the public catalog is cached at Novig's edge, so its bids never screen a price`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = MockResponse().setBody(catalogWithBids)
+        }
+        val c = client()
+        c.markets(listOf("NFL"), emptyList(), emptyList(), null)
+        assertTrue(c.pushedTop(listOf("m1", "m2")).isEmpty())
+    }
 }
