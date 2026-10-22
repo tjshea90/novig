@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aosilm",
  "head": "73ed6907d5f239d89f44489e08f47f774779fb14",
  "since": 1792624947,
- "beat": 1792643187,
- "beatIso": "2026-10-22T04:26:27Z",
+ "beat": 1792643401,
+ "beatIso": "2026-10-22T04:30:01Z",
  "done": "pre-ship: DV4: repeat guard in the engine's bid desk and live lane also reads Novig's own open positions (survives restarts)",
  "next": "ship.sh gates and releases this"
 }
