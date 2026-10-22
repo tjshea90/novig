@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-wju7hd",
  "head": "7695f9d68fda6088294c6a094bc2b39cd1da9752",
  "since": 1792624947,
- "beat": 1792628533,
- "beatIso": "2026-10-22T00:22:13Z",
+ "beat": 1792628538,
+ "beatIso": "2026-10-22T00:22:18Z",
  "done": "pre-ship: v1.0.44: SharpAPI shows on Engine > APIs (engine's own key check makes the card) and has its socket switch on the Live tab",
  "next": "ship.sh gates and releases this"
 }
