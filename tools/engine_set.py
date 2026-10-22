@@ -35,6 +35,11 @@ def set_path(tree, path, v):
     for p in parts[:-1]:
         tree = tree[p]
     old = tree[parts[-1]]
+    if isinstance(old, list) and v[:1] in ("+", "-") and all(isinstance(x, str) for x in old):
+        # "leagues=+ATP" adds one name to a list of names, "leagues=-ATP" takes it out
+        name = v[1:]
+        tree[parts[-1]] = old + [name] if v[0] == "+" and name not in old else [x for x in old if not (v[0] == "-" and x == name)]
+        return old
     if old is None or isinstance(old, (dict, list)):
         raise SystemExit("refused: %s is not a plain number, boolean or text setting" % path)
     tree[parts[-1]] = parse(v, old)
