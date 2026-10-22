@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/0e282c",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "0e282c",
+ "note": "v1.0.44: SharpAPI shows on Engine > APIs (engine's own key check makes the card) and has its socket switch on the Live tab",
+ "since": 1792628288,
+ "beat": 1792628288
+}
