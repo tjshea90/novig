@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-wju7hd",
- "head": "d9708b94e3422db936fe958c17fb0fae391d97cc",
+ "head": "e8b3dfb8a314dd430447ca34af0af4846a130513",
  "since": 1792624947,
- "beat": 1792636719,
- "beatIso": "2026-10-22T02:38:39Z",
- "done": "PBP stream connection log",
- "next": "restart engine, read PBP connection durations, cut waste"
+ "beat": 1792636994,
+ "beatIso": "2026-10-22T02:43:14Z",
+ "done": "PBP last-end diagnostics; NS2 written",
+ "next": "restart engine once, read PBP connection log, NS2a/b"
 }
