@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-p7zdn2",
- "head": "10d52160cf7fcce0110d3a0398822d0f06b5e4c1",
+ "head": "e7ba43fcbf424c0102a14af4fe5687226501b351",
  "since": 1792624947,
- "beat": 1792646434,
- "beatIso": "2026-10-22T05:20:34Z",
- "done": "CH57 parlay spend noted, replied",
- "next": "CH57a read key usage breakdown and archived Spend lines, then trim; CH56a/b tennis"
+ "beat": 1792646548,
+ "beatIso": "2026-10-22T05:22:28Z",
+ "done": "engine_set list support; ATP/WTA added to leagues",
+ "next": "verify liveStats shows tennis; consider SHARPAPI feed"
 }
