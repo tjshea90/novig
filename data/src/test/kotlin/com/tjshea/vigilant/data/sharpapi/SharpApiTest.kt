@@ -208,6 +208,18 @@ class SharpApiLiveFeedTest {
         SaRow(id, book, "nfl_chiefs_raiders_2026-10-25_b3", "nfl", "Kansas City Chiefs", "Las Vegas Raiders", start, market, null, sel, type, null, null, line, dec, now - 500, true, true, false, 5000.0)
 
     @Test
+    fun `a live row with no start time still becomes a game, sent without a start`() {
+        val feed = SharpApiFeed(SharpApiClient(OkHttpClient(), Json, { "" }), clock = { now })
+        val frames = mutableListOf<String>()
+        val lf = SharpApiLiveFeed(feed, { setOf("NFL") }, { f, _ -> frames += f }, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined), clock = { now })
+        val nfl = listOf(Leagues.byNovigName("NFL")!! to "nfl")
+        feed.seed("nfl", listOf(live("1", "home", "home", 1.80), live("2", "away", "away", 2.10)).map { it.copy(startMs = null) })
+        lf.update(nfl, now)
+        assertEquals(1, lf.liveGames)
+        assertTrue(frames.isNotEmpty() && "startTime" !in frames.first())
+    }
+
+    @Test
     fun `live Pinnacle rows become frames, changes and closings follow`() {
         val feed = SharpApiFeed(SharpApiClient(OkHttpClient(), Json, { "" }), clock = { now })
         val frames = mutableListOf<String>()
