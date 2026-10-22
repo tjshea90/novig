@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-lpr7ge",
  "head": "be74f1ef969eead2bf24cf3e9a4d23a9db5f91ca",
  "since": 1792711303,
- "beat": 1792713297,
- "beatIso": "2026-10-22T23:54:57Z",
+ "beat": 1792713511,
+ "beatIso": "2026-10-22T23:58:31Z",
  "done": "pre-ship: CH66a with GitHub driving, the phone takes no Novig/order sockets and posts no Vigilant bets or bids of its own; the Feed's live lane waits too",
  "next": "ship.sh gates and releases this"
 }
