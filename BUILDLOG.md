@@ -385,3 +385,4 @@ day that changes.
 | v1.0.44 | code 384 | 2026-10-22T00:30Z | SharpAPI card on Engine > APIs from the engine's key check; SharpAPI switch on Live
 | v1.0.45 | code 385 | 2026-10-22T03:14Z | engine scan diagnostics (Novig stream, SharpAPI census, SX, ParlayAPI stream); SharpAPI +EV cross-check stands down when Novig is not a picked book
 | v1.0.46 | code 386 | 2026-10-22T03:23Z | red X for held player/team/prop on the bet slip; dead bets leave the list; diversification caps; ledger-backed guards
+| v1.0.47 | code 387 | 2026-10-22T04:36Z | DV4: repeat guard in the engine's bid desk and live lane also reads Novig's own open positions (survives restarts)
