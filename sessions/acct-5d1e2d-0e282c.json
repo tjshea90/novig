@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-lpr7ge",
  "head": "fed10374833a6c605771ed18e774190162323fca",
  "since": 1792707892,
- "beat": 1792708597,
- "beatIso": "2026-10-22T22:36:37Z",
+ "beat": 1792708805,
+ "beatIso": "2026-10-22T22:40:05Z",
  "done": "bump 1.0.49 (389)",
  "next": "ship.sh, release.yml, record-release"
 }
