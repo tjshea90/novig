@@ -1,22 +1,24 @@
-# CHECKPOINT 4023 — read me first, then TASKS.md
+# CHECKPOINT 4024 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T23:48:00Z · **tests:** 1 RED: test_research_index.sh (8 green)
-**Branch:** `claude/optimistic-curie-lpr7ge` · **builds on:** `0b24cd86d` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T23:49:27Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-lpr7ge` · **builds on:** `38b121329` (this checkpoint is the commit after it)
 
 ## Just done
-bump 1.0.53 (393)
+research index
 
 ## Do this next
-ship
+ship 1.0.53
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/build.gradle.kts
+     M research/INDEX.md
+     M research/LEVERS.md
 
 ## Last ten checkpoints
 ```
+  f97f46915 ckpt 4023: bump 1.0.53 (393)
   0b24cd86d ckpt 4022: CH66a: phone sockets/auto-bet/bids gated while GitHub drives
   3c1f1b202 ckpt 4021: AG done: v1.0.52 released and recorded; engine takes it at its next handove
   941bd8176 ckpt 4020: pre-release: API audit follow-up (AG): Kalshi live-data, SharpAPI splits an
@@ -26,5 +28,7 @@ ship
   a94b2c548 ckpt 4017: AG1/AG2/AG3: SharpAPI splits, Kalshi live data, Novig own-close journals (A
   e153a71da ckpt 4016: pre-release: CH65c the phone never scans Kalshi itself while the GitHub eng
   d5efe45d5 ckpt 4015: bump 1.0.51 (391)
-  1a6678b9b ckpt 4014: AF done: v1.0.50 released and recorded; report artifact published
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)

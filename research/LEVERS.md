@@ -40,3 +40,4 @@ Studies whose verdict is taken and where nothing is left to tune. Disposition af
 - `research/propline_clv_first_run_2026-10-16.md` - the first PropLine CLV run; the method is `tools/propline_clv.py`, results feed the CLV lever.
 - `research/cloud_wallet_conflicts_2026-10-15.md`, `research/ACTIVE_LOG_2026-10-07.md`, `research/TASKS_TRIAGE_2026-10-18.md` - session logs; superseded by TASKS.md and CHANGES.md.
 - `research/parlayapi_pro_2026-10-20` - ParlayAPI Pro docs and samples (TASKS.md CH47 builds on them).
+- `research/phone_vs_engine_2026-10-22.md`, `research/pinnwire_waste_2026-10-22.md`, `research/api_waste_audit_2026-10-22.md` - CH66 phone gating and the PinnWire / API waste fixes (APPLIED in code; CHANGES.md has the revert rules).
