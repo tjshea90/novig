@@ -90,7 +90,7 @@ class ParlayPbpStream(
             }
             val wait = if (clock() - openedAt >= STABLE_MS) backoffMs else minOf((waits[sport] ?: backoffMs) * 2, MAX_BACKOFF_MS)
             waits[sport] = if (clock() - openedAt >= STABLE_MS) backoffMs else wait
-            if (clock() - openedAt < STABLE_MS) onNote("ParlayAPI live stream $sport ended after ${(clock() - openedAt) / 1000} s: the next connection (5 credits) waits ${wait / 1000} s")
+            onNote("ParlayAPI live stream $sport ended after ${(clock() - openedAt) / 1000} s, ${board.all(sport).size} matches: the next connection (5 credits) waits ${(if (clock() - openedAt >= STABLE_MS) backoffMs else wait) / 1000} s")
             delay(if (clock() - openedAt >= STABLE_MS) backoffMs else wait)
         }
     }
