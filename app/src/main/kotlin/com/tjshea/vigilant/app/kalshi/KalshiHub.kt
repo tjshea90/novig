@@ -421,6 +421,16 @@ class KalshiHub(private val c: AppContainer) {
 
     // ---- arbitrage ------------------------------------------------------------------------------------------------
 
+    /**
+     * Tj, 2026-10-22 ("why is this only checking 6 novig lines"): in cloud mode this phone holds only the rows the GitHub list sends, but the engine's own Kalshi pass compares ALL the Novig lines it priced.
+     * When its status is fresh the note says so, with its count and what it found.
+     */
+    private fun engineArbNote(st: com.tjshea.vigilant.data.kalshitrade.KalshiEngineStatus?): String {
+        if (st == null || st.mode == KalshiAutoMode.OFF || st.priced == 0 || System.currentTimeMillis() - st.atMs > ENGINE_FRESH_MS) return ""
+        val found = if (st.arbs.isEmpty()) "found none" else "found ${st.arbs.size}: " + st.arbs.take(2).joinToString("; ") { "${it.selectionNovig} + ${it.selectionKalshi} (${"%.1f".format(it.profit * 100)}%)" }
+        return " The GitHub engine checked all ${st.priced} Novig lines it priced and $found."
+    }
+
     /** Lists the sure profits between the Novig scan on screen and Kalshi's lines held by the last Kalshi scan. */
     suspend fun refreshArbs() {
         val ui = _ui.value
@@ -433,7 +443,7 @@ class KalshiHub(private val c: AppContainer) {
         _ui.update {
             it.copy(
                 arbs = arbs,
-                arbNote = if (arbs.isEmpty()) "No sure profit between Novig and Kalshi right now (checked ${novig.opportunities.size} Novig prices against ${kalshi.sumOf { s -> s.events.size }} Kalshi games)." else "${arbs.size} found",
+                arbNote = if (arbs.isEmpty()) "No sure profit between Novig and Kalshi right now (checked ${novig.opportunities.size} Novig prices against ${kalshi.sumOf { s -> s.events.size }} Kalshi games)." + engineArbNote(ui.engine) else "${arbs.size} found",
             )
         }
     }

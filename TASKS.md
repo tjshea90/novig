@@ -6201,3 +6201,7 @@ CH61 (Tj chat 21:52 UTC 2026-10-22, t1792705931238-8a94): "audit all of the apis
 - [ ] AF3 implement the fixes/features found, with tests; full test gate
 - [ ] AF4 ship (ship.sh, release.yml, record-release), CHANGES.md lines
 - [ ] AF5 report to Tj (artifact link) + chat
+
+CH62 (Tj chat 22:08 UTC 2026-10-22, t1792706891132-fef6, screenshot): "why is this only checking 6 novig lines" (Kalshi > Arb: 'checked 6 Novig prices against 375 Kalshi games')
+- [x] CH62a cause: cloud mode gives the phone only the list's rows; KalshiHub.refreshArbs compared those. The engine's lane compares all priced lines (status.priced). Note now adds the engine's count and arbs (KalshiHub.engineArbNote). Ships with the next release.
+- [ ] CH62b engine publishes executable arbs (the Novig row pieces) so the Arb tab can list/place them in cloud mode
