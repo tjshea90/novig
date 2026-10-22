@@ -1,13 +1,13 @@
-# CHECKPOINT 4017 — read me first, then TASKS.md
+# CHECKPOINT 4018 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T23:14:48Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-950a7aea-8abdo8` · **builds on:** `621c52108` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T23:19:28Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-950a7aea-8abdo8` · **builds on:** `a6897b07f` (this checkpoint is the commit after it)
 
 ## Just done
-AG1/AG2/AG3: SharpAPI splits, Kalshi live data, Novig own-close journals (AuditFeeds, one-line hook in CloudMain)
+AG: journals built, notes, full tests green
 
 ## Do this next
-check archive picks the journals; AG4 study note; streaming answer; full tests; release after mirage
+release next version after mirage (merge main, bump, ship)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ check archive picks the journals; AG4 study note; streaming answer; full tests; 
 
 ## Last ten checkpoints
 ```
+  a94b2c548 ckpt 4017: AG1/AG2/AG3: SharpAPI splits, Kalshi live data, Novig own-close journals (A
   e153a71da ckpt 4016: pre-release: CH65c the phone never scans Kalshi itself while the GitHub eng
   d5efe45d5 ckpt 4015: bump 1.0.51 (391)
   1a6678b9b ckpt 4014: AF done: v1.0.50 released and recorded; report artifact published
@@ -25,8 +26,7 @@ check archive picks the journals; AG4 study note; streaming answer; full tests; 
   16d814aa7 ckpt 4012: pre-release: API audit (AF): Novig catalog best-bid screening, PropLine bul
   097bf2e90 ckpt 4011: pre-ship: API audit (AF): Novig catalog best-bid screening, PropLine bulk p
   d3d3139c0 ckpt 4010: handoff: API audit to acct-27a37e; releasing 1.0.49
-  3783adc03 ckpt 4006: pre-release: CH62a Arb note shows the engine's full check; CH63a Kalshi bet
 ```
 
-(9 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
