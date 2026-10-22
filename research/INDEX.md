@@ -4,10 +4,11 @@ Every study in `research/`, newest first, and how it is USED. Tuning levers and 
 Statuses: APPLIED (a change in `research/review/CHANGES.md` cites it), LEVER (on LEVERS.md), CLOSED (verdict and disposition on LEVERS.md), WATCH (an open TASKS.md item waits on its number),
 CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a sample, marked in its first lines), IDLE (cited nowhere: act on it or mark it).
 
-106 entries; 0 idle
+107 entries; 0 idle
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
+| 2026-10-22 | `parlay_spend_2026-10-22.md` | ParlayAPI Pro spend, 2026-10-22 (ENGINEER, acct-27a37e) — CH57a - Source: the engine's `ParlayAPI plans:` and `Spend:` log lines (cloud-archive-2026-10-21/22 engine logs; no key was used by this session). | APPLIED |
 | 2026-10-21 | `propline_history_study_2026-10-21.md` | What PropLine's history says (XO4, 2026-10-21): calibration of the closes, which books are accurate, and how early Novig prices pay - Tj, 2026-10-21: "review and analyze historical odds and props from my apis which have this fe... | LEVER WATCH CODE |
 | 2026-10-21 | `engine_profit_study_2026-10-21.md` | What makes money, and what beats the close, in the engine's own record (XO3, 2026-10-21) - Tj, 2026-10-21: "run an analysis on the saved scans, bets, and bids. Find patterns and profitable bet and bid types as well as what type... | LEVER CODE |
 | 2026-10-21 | `clv_consensus_2026-10-21.md` | CLV consensus: one accurate close per bet and bid (design, CH57, 2026-10-21) - Tj (chat 05:14 UTC): "always get clv data from multiple sources ... have the engine check it for accuracy before counting each bet as beating clv or... | LEVER |
