@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "b71397e9935b9f48fbb423e130937aa103cfeca4",
+ "head": "941bd817600202d46c7ee481bedebea2a154fdb8",
  "since": 1792710535,
- "beat": 1792711206,
- "beatIso": "2026-10-22T23:20:06Z",
- "done": "pre-ship: API audit follow-up (AG): Kalshi live-data, SharpAPI splits and Novig own-close journals on the engine; BoltOdds open-socket check says why when unreadable",
- "next": "ship.sh gates and releases this"
+ "beat": 1792711357,
+ "beatIso": "2026-10-22T23:22:37Z",
+ "done": "pre-release: API audit follow-up (AG): Kalshi live-data, SharpAPI splits and Novig own-close journals on the engine; BoltOdds open-socket check says why when unreadable (versionCode 392, v1.0.52)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.52), then run: bash tools/record-release.sh v1.0.52 392 \"API audit follow-up (AG): Kalshi live-data, SharpAPI splits and Novig own-close journals on the engine; BoltOdds open-socket check says why when unreadable\""
 }
