@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-lpr7ge",
- "head": "f9695ea891e0e7ed92cd7f85486f1e543252002c",
+ "head": "47176632cee42e70f773d0dc28531c0c7109baea",
  "since": 1792691263,
- "beat": 1792707138,
- "beatIso": "2026-10-22T22:12:18Z",
- "done": "CH60b: PinnWire/pinnapi wait for SharpAPI Pinnacle (ApiChain.pinnacleNeeded); CH61a first audit pass",
- "next": "engine reset onto it; read PinnWire accounts line tomorrow; finish CH61a (Odds API call count, pinnapi 403 keys, CH57b)"
+ "beat": 1792707186,
+ "beatIso": "2026-10-22T22:13:06Z",
+ "done": "CH62a: Arb note shows the engine's full check",
+ "next": "ship with next release; CH62b engine-published arbs; CH61a finish"
 }
