@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-p7zdn2",
  "head": "5b2bc391bd3adfe4369cde429790e35a3a6f79fb",
  "since": 1792624947,
- "beat": 1792650397,
- "beatIso": "2026-10-22T06:26:37Z",
+ "beat": 1792650578,
+ "beatIso": "2026-10-22T06:29:38Z",
  "done": "lane note carries the feed's own note (store freshness, per-league live Pinnacle rows)",
  "next": "reset engine; read why the SharpAPI store is not current / has no atp rows"
 }
