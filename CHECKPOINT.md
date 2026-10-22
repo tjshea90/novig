@@ -1,22 +1,22 @@
-# CHECKPOINT 3980 — read me first, then TASKS.md
+# CHECKPOINT 3981 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T11:22:55Z · **tests:** all 9 fast checks green
-**Branch:** `claude/keen-keller-qomaqq` · **builds on:** `618ac4373` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T13:31:22Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-qrfdgy` · **builds on:** `f0438fb78` (this checkpoint is the commit after it)
 
 ## Just done
-ANALYST 2026-10-22: no rule change, research card posted
+pre-release: CH58: live SharpAPI feed reads ATP/WTA tennis; live lane note with feed/Novig/matched counts; live feed and live bids on (paper) (versionCode 388, v1.0.48)
 
 ## Do this next
-CH57a spend split when engine runs; NBA/spreads leak at 200 CLV n
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.48), then run: bash tools/record-release.sh v1.0.48 388 "CH58: live SharpAPI feed reads ATP/WTA tennis; live lane note with feed/Novig/matched counts; live feed and live bids on (paper)"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M research/review/STATE.json
 
 ## Last ten checkpoints
 ```
+  283ea08f9 ckpt 3980: ANALYST 2026-10-22: no rule change, research card posted
   618ac4373 ckpt 3979: CH58b tennis forced into live feed; engine down until hours
   4fa188354 ckpt 3978: live SharpAPI feed reads ATP/WTA whenever live tennis is on (the phone's co
   5b2bc391b ckpt 3977: lane note carries the feed's own note (store freshness, per-league live Pin
@@ -26,5 +26,4 @@ CH57a spend split when engine runs; NBA/spreads leak at 200 CLV n
   5f3245740 ckpt 3973: live lane note shows feed/live/Novig/matched/lines counts (compiles)
   4bca336f1 ckpt 3972: pinnLive+liveBid on (paper)
   40695f29c ckpt 3971: live feed -> SHARPAPI
-  697f2404b ckpt 3970: ParlayAPI study made a standing ROUTINE item
 ```
