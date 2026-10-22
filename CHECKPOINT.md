@@ -1,13 +1,13 @@
-# CHECKPOINT 3949 — read me first, then TASKS.md
+# CHECKPOINT 3950 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T01:32:11Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-wju7hd` · **builds on:** `fb44e546c` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T01:39:10Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-wju7hd` · **builds on:** `992e42331` (this checkpoint is the commit after it)
 
 ## Just done
-data tests green (Kalshi test flake on first run)
+SharpAPI: game start time taken from sibling rows (44k of 45k rows had none); census
 
 ## Do this next
-read census, restart engine
+restart engine; verify SharpAPI lines per league
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ read census, restart engine
 
 ## Last ten checkpoints
 ```
+  4922afaaa ckpt 3949: data tests green (Kalshi test flake on first run)
   fb44e546c ckpt 3948: Novig stream gets the key's limits when created after them
   87e01c809 ckpt 3947: census tested
   45e4808e3 ckpt 3946: SharpAPI census diagnostics (why rows drop), scan diagnostics log
@@ -25,5 +26,7 @@ read census, restart engine
   d8affb98c ckpt 3942: answered Tj on Novig socket use; NS1 task written
   7695f9d68 ckpt 3941: pre-ship: v1.0.44: SharpAPI shows on Engine > APIs (engine's own key check 
   617145d3b ckpt 3940: SharpAPI card on Engine>APIs without a phone key; SharpAPI switch on Live s
-  f8a27fbfa ckpt 3939: chat: SharpAPI key verified live on engine after reset
 ```
+
+(3 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
