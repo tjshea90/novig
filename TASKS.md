@@ -6209,3 +6209,6 @@ CH62 (Tj chat 22:08 UTC 2026-10-22, t1792706891132-fef6, screenshot): "why is th
 CH63 (Tj chat 22:18 UTC 2026-10-22, t1792707520395-3d67, screenshot): "it is saying this error on every kalshi bet now" (Kalshi bet sheet: "This isn't a Kalshi market the app can order on (its ticker is missing)")
 - [x] CH63a cause: CloudCodec dropped NovigOutcome.bookRef (the Kalshi ticker) in the engine's kalshi-feed.json rows; fixed (outcome 'br'), test CloudCodecTest 'a Kalshi row keeps each outcome's ticker'. Needs app release (phone decodes) + engine on main.
 - [ ] CH63b ship release with CH62a + CH63a, tell Tj
+
+CH64 (Tj chat 22:23 UTC 2026-10-22, t1792707800929-9df2): "the app is extremely laggy right now. it always seems like it gets laggy after I turn kalshi scanning on"
+- [~] CH64a likely cause: after an engine restart there are ~10 min with no kalshi-feed.json, and KalshiHub.scanNow then scanned all of Kalshi on the phone; now it waits while the engine's heartbeat is alive (in ship batch with CH62a/CH63a). If lag persists with the engine list adopted: profile the phone (Diagnostics HeapCensus, KalshiHub.refreshArbs, requoteListed, Kalshi socket on the phone).
