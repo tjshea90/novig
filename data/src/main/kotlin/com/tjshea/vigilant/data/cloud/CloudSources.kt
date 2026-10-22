@@ -433,6 +433,11 @@ class CloudSources(
             add(parlayHalves)
         }
     }
+
+    companion object {
+        /** How long [closeSockets] waits for the close frames to leave before the job ends. */
+        const val CLOSE_FLUSH_MS = 1_500L
+    }
 }
 
 /** The repository secrets the engine reads (each may hold several keys, separated by commas, spaces or newlines). */
