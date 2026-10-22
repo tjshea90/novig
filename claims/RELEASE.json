@@ -7,5 +7,5 @@
  "nonce": "0e282c",
  "note": "v1.0.46: red X on the bet slip for a player, team or prop you already hold; a bet the slip finds gone leaves the list at once; diversification caps (bets per game, dollars per team/player/prop, one bet per side) for bets and bids on the engine and phone, remembered across engine restarts; live tail lane limits no longer reset on a restart; SharpAPI, Novig stream and ParlayAPI fixes",
  "since": 1792638882,
- "beat": 1792638882
+ "beat": 1792639059
 }
