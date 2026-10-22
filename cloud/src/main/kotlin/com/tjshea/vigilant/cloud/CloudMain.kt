@@ -93,7 +93,7 @@ fun main(args: Array<String>) = runBlocking {
         val keep = if (sport == "tennis" || sport.startsWith("soccer")) pbpSeen.incrementAndGet() <= 20_000 else event == "initial_state" || pbpSeen.incrementAndGet() % 40 == 0
         if (keep) runCatching { pbpLive.append(com.tjshea.vigilant.data.parlay.PbpRow(at, sport, event, data.take(6_000))) }
     }
-    scope.launch { while (isActive) { runCatching { sources.parlayStream.watch("tennis") }; delay(60_000L) } }
+    // Tennis frames are recorded when the live lane asks about a live tennis game (scoreFor opens the sport then). A day-long watch only bought 5-credit connections with no matches (2026-10-22: 6 in 25 minutes, each dropped after 30 s).
     sources.sxStream?.tap = { channel, data, at ->
         val keep = when (channel) {
             "fixtures:live_scores", "fixtures:global", "main_line:global" -> true
