@@ -383,3 +383,4 @@ day that changes.
 | v1.0.42 | code 382 | 2026-10-21T23:48Z | v1.0.42: SharpAPI Sharp plan: the engine keeps a copy of 25 books (Pinnacle, Circa, Bookmaker, Betfair, ProphetX...) current every 2 s, SharpAPI Pinnacle as a live feed, closing lines + SharpAPI +EV journals, Circa/Bookmaker sharp
 | v1.0.43 | code 383 | 2026-10-21T23:55Z | v1.0.43: SharpAPI WebSocket stream (odds and game state pushed to the engine; REST delta becomes a 60 s reconcile) and live game state as a live-lane score source; socket switch in Settings > APIs
 | v1.0.44 | code 384 | 2026-10-22T00:30Z | SharpAPI card on Engine > APIs from the engine's key check; SharpAPI switch on Live
+| v1.0.45 | code 385 | 2026-10-22T03:14Z | engine scan diagnostics (Novig stream, SharpAPI census, SX, ParlayAPI stream); SharpAPI +EV cross-check stands down when Novig is not a picked book
