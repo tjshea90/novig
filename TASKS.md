@@ -6228,6 +6228,6 @@ CH65 (Tj chat 22:52 UTC 2026-10-22, t1792709523628-0e03): "with kalshi on, the a
 - [x] AG2 (AF6) Kalshi live data journal (`kalshi-live-<day>`, KalshiLiveData), test AuditFeedsTest; next: map its details into a score source once samples exist
 - [x] AG3 (AF7) Novig candles -> `novig-close-<day>` (NovigCloses), test AuditFeedsTest; participants deferred (no measured matching failure)
 - [~] AG4 (AF8) studied, needs a period through LiveTarget/Pinnacle book/feeds (research/api_full_audit_2026-10-22.md follow-up); first count live 1st_half rows in SharpAPI's store
-- [ ] AG5 full tests, release after mirage's (coord RELEASE claim), report
-- [ ] AG6 answer: PropLine Streaming Lite / ParlayAPI Business streaming worth buying? (from fed/sole lines, freshness, CLV)
+- [x] AG5 full tests green (4,145), v1.0.52 (392) released after mirage's v1.0.51 and recorded
+- [x] AG6 answered in the session: ParlayAPI Business no (0 lines only it feeds, Pro credits unspent); PropLine Streaming Lite not yet: decide after AF10 data on PropLine-only lines' CLV
 Rule for this job: stay out of CloudMain.kt and the Kalshi trading/feed files mirage is editing (CH65b); merge main before each push.
