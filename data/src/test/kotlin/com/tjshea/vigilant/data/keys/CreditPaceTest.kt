@@ -59,14 +59,15 @@ class CreditPaceTest {
     fun `a paced call past today's share waits without failing, an unpaced one still goes`() = runBlocking<Unit> {
         val m = meter()
         val pool = KeyPool(QuotaPolicy.PARLAY, { listOf("k") }, m)
-        // The server says: 7,000 used of 20,000 by the 10th, ahead of the pace.
+        // The server says: 7,000 used of 20,000 when the key is first met on the 10th; what was left (13,000) is spread over the 20 days to the reset, so a day's share (about 650) is spent and the next call waits.
         pool.execute(cost = 1) { KeyAttemptResult.Success(Unit, cost = 1, remaining = 13_000, used = 7_000) }
+        pool.execute(cost = 700) { KeyAttemptResult.Success(Unit, cost = 700, remaining = 12_300, used = 7_700) }
         val e = assertThrows(CreditsHeldBackException::class.java) {
             runBlocking { pool.execute(cost = 5, reserve = 300, pace = pace) { KeyAttemptResult.Success(Unit) } }
         }
         assertTrue(e.message!!, e.message!!.contains("today's share"))
         var closes = false
-        pool.execute(cost = 5) { closes = true; KeyAttemptResult.Success(Unit, cost = 5, remaining = 12_995, used = 7_005) }
+        pool.execute(cost = 5) { closes = true; KeyAttemptResult.Success(Unit, cost = 5, remaining = 12_295, used = 7_705) }
         assertTrue(closes)
         // A spent key is still a spent key, not a held-back one.
         val spent = KeyPool(QuotaPolicy.PARLAY, { listOf("s") }, m)
@@ -219,5 +220,16 @@ class CreditPaceTest {
         assertEquals(20_000 - (19_700L * (10 * 24 + 4) / (30 * 24)).toInt(), newYork.floor(u2.copy(firstSeenMs = sept1 - 1), tenth))
         // ...and on the month's last evening only the reserve is kept.
         assertEquals(300, newYork.floor(u2.copy(firstSeenMs = sept1 - 1), Instant.parse("2026-09-30T23:00:00Z").toEpochMilli()))
+    }
+
+    @Test
+    fun `a new 100,000 plan met with 17,000 used is paced on what was left, not allowed the month so far`() {
+        val oct1 = Instant.parse("2026-10-01T00:00:00Z").toEpochMilli()
+        val seen = Instant.parse("2026-10-21T21:59:00Z").toEpochMilli()
+        val now = Instant.parse("2026-10-22T02:00:00Z").toEpochMilli()
+        val u = KeyUsage(periodStart = oct1, used = 18_000, remaining = 82_000, limit = 100_000, firstSeenMs = seen, charged = 750, resetAtMs = Instant.parse("2026-11-01T00:00:00Z").toEpochMilli())
+        val today = CreditPace(QuotaPolicy.PARLAY, reserve = 300, freeLimit = 1_000, zone = { utc }).spendableToday(u, now)
+        // 82,000 spread over the 9 days left (a day and a bit through the end of today): about 9,000 a day, never the 60,000+ the month-so-far rule allowed.
+        assertTrue("a day's share, about 9,000-12,000: $today", today in 8_000..13_000)
     }
 }
