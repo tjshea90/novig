@@ -232,7 +232,13 @@ class KalshiHub(private val c: AppContainer) {
         lastScanStart = System.currentTimeMillis()
         // The GitHub engine's Kalshi lane is the scan when it is on and fresh: the phone only reads its list (Tj, 2026-10-20). Its own scan is the fallback.
         if (ui.config.engineMode != KalshiAutoMode.OFF && c.cloud.kalshiCanReachGitHub()) {
-            c.appScope.launch { if (!adoptEngineList()) scanLocally(settings) }
+            c.appScope.launch {
+                if (adoptEngineList()) return@launch
+                // Tj, 2026-10-22 ("laggy after I turn kalshi scanning on"): an engine that is alive but has not finished its first scan (the ten minutes after a restart) is waited for; this phone scans all of Kalshi itself only when the engine is down.
+                val st = c.cloud.latest.status
+                if (st != null && !st.idle && System.currentTimeMillis() - st.heartbeatMs <= com.tjshea.vigilant.data.cloud.CloudCno.ALIVE_MS) _ui.update { it.copy(scanning = false, progress = "The GitHub engine is still reading Kalshi; its list appears here when it is ready.") }
+                else scanLocally(settings)
+            }
             return
         }
         scanLocally(settings)
