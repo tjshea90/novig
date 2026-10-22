@@ -65,11 +65,19 @@ class ParlayPbpStream(
         }
     }
 
+    /** Each sport's reconnect wait: doubled while its connections end within [STABLE_MS] (every one is billed 5 credits: Tj, 2026-10-22, "do not waste any parlayapi usage"), back to [backoffMs] after a long one. */
+    private val waits = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+    /** Connections opened per sport, for the diagnostics (a flapping stream shows here at 5 credits each). */
+    val connectsBySport = java.util.concurrent.ConcurrentHashMap<String, Int>()
+
     private suspend fun run(sport: String) {
         while (scope.isActive && clock() - (wanted[sport] ?: 0L) < IDLE_MS) {
             val k = key() ?: return
+            val openedAt = clock()
             try {
                 connects++
+                connectsBySport.merge(sport, 1, Int::plus)
                 connect(sport, k)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
@@ -80,7 +88,10 @@ class ParlayPbpStream(
             } catch (e: IOException) {
                 onNote("ParlayAPI live stream $sport dropped: ${e.message}")
             }
-            delay(backoffMs)
+            val wait = if (clock() - openedAt >= STABLE_MS) backoffMs else minOf((waits[sport] ?: backoffMs) * 2, MAX_BACKOFF_MS)
+            waits[sport] = if (clock() - openedAt >= STABLE_MS) backoffMs else wait
+            if (clock() - openedAt < STABLE_MS) onNote("ParlayAPI live stream $sport ended after ${(clock() - openedAt) / 1000} s: the next connection (5 credits) waits ${wait / 1000} s")
+            delay(if (clock() - openedAt >= STABLE_MS) backoffMs else wait)
         }
     }
 
@@ -132,6 +143,12 @@ class ParlayPbpStream(
     companion object {
         /** Wait before reconnecting (a reconnect costs 5 credits). */
         const val BACKOFF_MS = 20_000L
+
+        /** A connection that lasted this long was a real one: its sport reconnects after [BACKOFF_MS] again. */
+        const val STABLE_MS = 5 * 60_000L
+
+        /** The longest wait between two connections of a stream that keeps ending early. */
+        const val MAX_BACKOFF_MS = 15 * 60_000L
         /** A stream nobody has asked about for this long is closed. */
         const val IDLE_MS = 15 * 60_000L
         /** After a refusal (key out of credits, no plan for streams) the sport is left alone this long. */

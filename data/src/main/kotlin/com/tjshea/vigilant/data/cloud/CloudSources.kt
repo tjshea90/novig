@@ -282,7 +282,7 @@ class CloudSources(
     })
     fun parlayScore(s: ScanSettings, league: String, home: String, away: String): com.tjshea.vigilant.data.novig.lab.AltScore? =
         if (s.useParlay && has(CloudKeys.PARLAY)) parlayPbp.scoreFor(league, home, away) else null
-    fun parlayPbpNote(): String = "ParlayAPI live stream: ${parlayPbp.board.size()} matches, ${parlayPbp.frames} frames, ${parlayPbp.connects} connections"
+    fun parlayPbpNote(): String = "ParlayAPI live stream: ${parlayPbp.board.size()} matches, ${parlayPbp.frames} frames, ${parlayPbp.connects} connections (${parlayPbp.connectsBySport.entries.joinToString(", ") { "${it.key} ${it.value}" }}; 5 credits each)"
 
     @Volatile private var sxConfirm: com.tjshea.vigilant.data.sxbet.SxBetLiveFeed? = null
     private fun sxConfirmFeed(): com.tjshea.vigilant.data.sxbet.SxBetLiveFeed? {
