@@ -6231,3 +6231,6 @@ CH65 (Tj chat 22:52 UTC 2026-10-22, t1792709523628-0e03): "with kalshi on, the a
 - [ ] AG5 full tests, release after mirage's (coord RELEASE claim), report
 - [ ] AG6 answer: PropLine Streaming Lite / ParlayAPI Business streaming worth buying? (from fed/sole lines, freshness, CLV)
 Rule for this job: stay out of CloudMain.kt and the Kalshi trading/feed files mirage is editing (CH65b); merge main before each push.
+
+CH66 (Tj chat 23:39 UTC 2026-10-22, t1792712388108-24de, verbatim): "I want everything to run on GitHub. Make sure if I toggle on automatic bets and bids and toggle on the different API sockets, it is doing this for the GitHub engine and not on my phone. I want to use my phone app as a control center for GitHub. I don't want my phone taking socket connections unless I specifically turn GitHub off"
+- [ ] CH66a audit every phone-side socket, auto-bet, bid desk and scan path against cloudDrives; list in research/phone_vs_engine_2026-10-22.md; gate any that still runs on the phone while GitHub drives (Novig stream, BoltOdds, Kalshi, SX, Pinnodds sockets; auto-bet; bid desk; live; CNO) with a test per gate
