@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-vobqze",
- "head": "a588387ed5b6a9a96c7df0854e8e5a31930c2a04",
+ "head": "74f4181efacdfaf9b714b558ab80fc09208ea0c6",
  "since": 1792624947,
- "beat": 1792688837,
- "beatIso": "2026-10-22T17:07:17Z",
- "done": "CH58e: live note says why live tennis rows give no game (stale store or census of dropped rows)",
- "next": "read status.liveNote after engine restart; fix the named cause"
+ "beat": 1792688872,
+ "beatIso": "2026-10-22T17:07:52Z",
+ "done": "CH58f: live feed reads SharpAPI atp_challenger/itf_men/itf_women (Novig's live matches were Challengers); tiers loaded in parallel",
+ "next": "check liveNote after engine restart: tennis games should show"
 }
