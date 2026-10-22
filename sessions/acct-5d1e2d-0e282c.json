@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-vobqze",
  "head": "c5f553a1c16e09d7c460a8ac5897b24a373c28ea",
  "since": 1792624947,
- "beat": 1792689269,
- "beatIso": "2026-10-22T17:14:29Z",
+ "beat": 1792689450,
+ "beatIso": "2026-10-22T17:17:30Z",
  "done": "CH58g: live note puts the reason first (was cut off by the note cap)",
  "next": "read liveNote atp reason"
 }
