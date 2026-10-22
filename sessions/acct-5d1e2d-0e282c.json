@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-wju7hd",
- "head": "030392088bedb5a739f42405c628d35572d48c9b",
+ "head": "45cf825cbdbe5d4fd4ca3df1274d2f9a3f82f5ae",
  "since": 1792624947,
- "beat": 1792633714,
- "beatIso": "2026-10-22T01:48:34Z",
+ "beat": 1792634022,
+ "beatIso": "2026-10-22T01:53:42Z",
  "done": "SharpAPI: game start time taken from sibling rows (44k of 45k rows had none); census",
  "next": "restart engine; verify SharpAPI lines per league"
 }
