@@ -1,13 +1,13 @@
-# CHECKPOINT 3953 — read me first, then TASKS.md
+# CHECKPOINT 3954 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T02:06:06Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-wju7hd` · **builds on:** `00aafa5dc` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T02:33:32Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-wju7hd` · **builds on:** `262b69003` (this checkpoint is the commit after it)
 
 ## Just done
-ParlayAPI PBP stream: doubling backoff for streams that end early (5 credits per connection); SX and PBP diagnostics
+PBP stream connection log
 
 ## Do this next
-restart engine, read SX + PBP diag, tell Tj
+restart engine, read PBP connection durations, cut waste
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ restart engine, read SX + PBP diag, tell Tj
 
 ## Last ten checkpoints
 ```
+  7a9a5e4be ckpt 3953: ParlayAPI PBP stream: doubling backoff for streams that end early (5 credit
   aa6131a25 ckpt 3952: SX Bet diagnostics in the scan log
   02bfe7115 ckpt 3951: ParlayAPI pacing: a key met part-way through its period is paced on what wa
   030392088 ckpt 3950: SharpAPI: game start time taken from sibling rows (44k of 45k rows had none
@@ -25,7 +26,6 @@ restart engine, read SX + PBP diag, tell Tj
   45e4808e3 ckpt 3946: SharpAPI census diagnostics (why rows drop), scan diagnostics log
   c18dbd13d ckpt 3945: pre-release: v1.0.45: the engine logs what the Novig stream holds and what 
   0fc71f282 ckpt 3944: pre-ship: v1.0.45: the engine logs what the Novig stream holds and what Sha
-  515a5ea41 ckpt 3943: pre-release: v1.0.44: SharpAPI shows on Engine > APIs (engine's own key che
 ```
 
 (2 automatic checkpoint(s) since the last deliberate one — the
