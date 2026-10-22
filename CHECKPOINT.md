@@ -1,13 +1,13 @@
-# CHECKPOINT 3987 — read me first, then TASKS.md
+# CHECKPOINT 3988 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T17:29:15Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-vobqze` · **builds on:** `cda7195b1` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T17:31:11Z · **tests:** 1 RED: test_research_index.sh (8 green)
+**Branch:** `claude/optimistic-curie-vobqze` · **builds on:** `68870840c` (this checkpoint is the commit after it)
 
 ## Just done
-CH58h: live SharpAPI rows with no start time (tennis) become games, sent without a start
+Bovada=Ozoon=Bodog, Borgata=BetMGM merged in BookCompany
 
 ## Do this next
-check liveNote: tennis games should show; then matched count
+research more pairs via measured match if data allows
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ check liveNote: tennis games should show; then matched count
 
 ## Last ten checkpoints
 ```
+  3b5c9e19c ckpt 3987: CH58h: live SharpAPI rows with no start time (tennis) become games, sent wi
   40c8eed15 ckpt 3986: research index rebuilt
   66bb2e471 ckpt 3985: ENGINEER 2026-10-22: CH57a ParlayAPI spend study written
   c5f553a1c ckpt 3984: CH58g: live note puts the reason first (was cut off by the note cap)
@@ -25,7 +26,6 @@ check liveNote: tennis games should show; then matched count
   283ea08f9 ckpt 3980: ANALYST 2026-10-22: no rule change, research card posted
   618ac4373 ckpt 3979: CH58b tennis forced into live feed; engine down until hours
   4fa188354 ckpt 3978: live SharpAPI feed reads ATP/WTA whenever live tennis is on (the phone's co
-  5b2bc391b ckpt 3977: lane note carries the feed's own note (store freshness, per-league live Pin
 ```
 
 (2 automatic checkpoint(s) since the last deliberate one — the
