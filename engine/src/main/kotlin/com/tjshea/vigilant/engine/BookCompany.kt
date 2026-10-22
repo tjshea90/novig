@@ -21,7 +21,7 @@ object BookCompany {
         // Entain's one trading desk (Tj, 2026-10-12, a screenshot: Dalton Kincaid Over 56.5, bwin / partysports / BetMGM / sportsinteraction all -120 / -111 with the same hold, "4 of 4 books agree"):
         // Sports Interaction (Canada; Entain bought its owner Avid Gaming in 2022), Party Sports (Entain's Party brands, launched in Ontario with bwin in April 2022) and bwin are Entain's own; BetMGM is
         // Entain's joint venture with MGM Resorts and quoted the same line. Sources: research/book_company_2026-10-12.md.
-        group("entain", "ladbrokes", "coral", "neds", "sportingbet", "bwin", "gamebookers", "gala", "eurobet", "sportsinteraction", "si", "partysports", "party", "betcity", "crystalbet", "supersport", "betmgm", "mgm", "betmgmuk")
+        group("entain", "ladbrokes", "coral", "neds", "sportingbet", "bwin", "gamebookers", "gala", "eurobet", "sportsinteraction", "si", "partysports", "party", "betcity", "crystalbet", "supersport", "betmgm", "mgm", "betmgmuk", "borgata", "borgataonline", "borgatacasino")
         // Kambi's one trading desk (Tj, 2026-10-11, six "agreeing" books with identical odds: Bally Bet, betPARX, Casumo, Grosvenor, TABtouch, Unibet): these are DIFFERENT owners (Bally's, Greenwood/Parx, Casumo, Rank, RWWA, Kindred) who all
         // run Kambi's sportsbook, whose traders compile one line for them all, so they quote one line and are one opinion, not many (RESEARCH.md §46, §134). Sources: Kambi's and the operators' own announcements.
         // Rush Street's BetRivers/SugarHouse/RushBet, Greenwood's betPARX/Parx, Bally's Bally Bet, Kindred's Unibet/Maria/32Red, Casumo, Rank's Grosvenor/Enracha/YoSports, RWWA's TABtouch, LiveScore Bet / Virgin Bet,
@@ -36,7 +36,8 @@ object BookCompany {
         group("fanatics", "fanatics", "fanaticssportsbook", "pointsbet", "pointsbetus")
         group("hardrock", "hardrock", "hardrockbet", "hr")
         group("bet365", "bet365")
-        group("bodog", "bovada", "bodog")
+        // Bodog became Ozoon in Canada on 2026-02-16 with the same sportsbook and the same accounts (Covers, LCB), and Bovada is the Bodog brand for the US (Tj, 2026-10-22: "treat bovada and ozoon as a single sports book").
+        group("bodog", "bovada", "bodog", "ozoon", "ozooncanada", "bodog88", "bodogeu")
         group("digitalgaming", "betonlineag", "betonline", "lowvig", "sportsbettingag", "sportsbetting")
         group("betsson", "betsson", "betsafe", "nordicbet")
         group("windcreek", "windcreek", "windcreekbet")
