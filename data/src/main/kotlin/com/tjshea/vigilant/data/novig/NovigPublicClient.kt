@@ -478,6 +478,27 @@ class NovigPublicClient(
         }
     }
 
+    /** The `history` bucket (4 a second, docs: api/throttling), modeled at 3 a second: candles and other history reads never touch the `read` bucket the scan runs on. */
+    private val historyGate = RateGate(3.0, 4, rateClock, sleep)
+
+    /**
+     * [marketId]'s price candles (`GET /v3/history/markets/{id}/candles`, signed, `history` bucket; changelog 2026-10-20): one series per outcome, oldest first, an interval without a trade has none.
+     * Null without a key, for a market Novig does not know, or on any refusal (research reads never stand the key down).
+     */
+    suspend fun candles(marketId: String, interval: String, startsAfter: Long? = null, startsBefore: Long? = null): Map<String, List<NovigCandle>>? {
+        val signer = keyed ?: return null
+        val query = listOfNotNull("interval" to interval, startsAfter?.let { "startsAfter" to it.toString() }, startsBefore?.let { "startsBefore" to it.toString() })
+            .joinToString("&") { (k, v) -> "${queryEncode(k)}=${queryEncode(v)}" }
+        historyGate.acquire()
+        return runCatching {
+            http.newCall(signer.signedRequest("GET", "/v3/history/markets/$marketId/candles", query)).await().use { r ->
+                count(r.code)
+                if (!r.isSuccessful) return@use null
+                parseCandles(r.body?.string().orEmpty(), json)
+            }
+        }.getOrNull()
+    }
+
     /** The last book seen for [marketId], without any network. */
     fun cached(marketId: String): NovigBook? = bookCache[marketId]?.book
 
@@ -824,6 +845,22 @@ class NovigPublicClient(
         const val MAX_SHORT_RETRIES = 8
         const val MAX_PAGES = 20
 
+        /** A candles answer: outcome id -> its candles, oldest first. */
+        fun parseCandles(body: String, json: Json): Map<String, List<NovigCandle>>? {
+            val root = runCatching { json.parseToJsonElement(body) as? kotlinx.serialization.json.JsonObject }.getOrNull() ?: return null
+            val series = root["series"] as? kotlinx.serialization.json.JsonArray ?: return null
+            fun prim(o: kotlinx.serialization.json.JsonObject, k: String) = (o[k] as? kotlinx.serialization.json.JsonPrimitive)?.content
+            return series.mapNotNull { e ->
+                val o = e as? kotlinx.serialization.json.JsonObject ?: return@mapNotNull null
+                val id = prim(o, "outcomeId") ?: return@mapNotNull null
+                id to (o["candles"] as? kotlinx.serialization.json.JsonArray).orEmpty().mapNotNull { c ->
+                    val k = c as? kotlinx.serialization.json.JsonObject ?: return@mapNotNull null
+                    NovigCandle(prim(k, "t")?.toLongOrNull() ?: return@mapNotNull null, prim(k, "o")?.toDoubleOrNull(), prim(k, "h")?.toDoubleOrNull(),
+                        prim(k, "l")?.toDoubleOrNull(), prim(k, "c")?.toDoubleOrNull() ?: return@mapNotNull null, prim(k, "volume")?.toLongOrNull() ?: 0L)
+                }
+            }.toMap()
+        }
+
         /** A catalog best bid screens a scan's price this long after its read ([pushedTop]); a +EV one is read as a complete book before it is shown (Scanner.deepenEdges). */
         const val CATALOG_TOP_MAX_AGE_MS = 30_000L
 
@@ -899,6 +936,9 @@ private data class FeeDto(val coefficient: String? = null, val makerCredit: Stri
         return MarketFee(c, m, charge)
     }
 }
+
+/** One candle of [NovigPublicClient.candles], in one outcome's frame: [c] is the interval's last trade price. */
+data class NovigCandle(val t: Long, val o: Double?, val h: Double?, val l: Double?, val c: Double, val volume: Long)
 
 @Serializable
 private data class BboDto(val price: String = "", val qty: Long = 0)
