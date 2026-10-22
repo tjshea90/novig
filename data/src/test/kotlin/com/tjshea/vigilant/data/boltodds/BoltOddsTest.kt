@@ -466,4 +466,16 @@ class BoltOddsTest {
         assertEquals(now, alive.lastUpdateMs)
         assertNotNull(alive.lastUpdateMs)
     }
+
+    @Test
+    fun `odds user reads the key's open sockets and snapshot tokens as the docs print them`() {
+        val body = """{"plan":"Pro","connections":3,"subscriptions":[{"subscribed":true,"sports":["NBA","NHL"],"sportsbooks":["draftkings"],"games":["all"],"markets":[]},
+            {"subscribed":true,"sports":["NFL"]},{"subscribed":false}],"snapshot":{"daily_tokens":300,"tokens_used":41.66,"resets_at":"2026-10-23T12:29:36+00:00"}}"""
+        val u = BoltOddsUser.parse(body)!!
+        assertEquals(3, u.connections)
+        assertEquals(2, u.subscribed)
+        assertEquals(1, u.unsubscribed)
+        assertEquals("3 sockets open on this key (1 not subscribed) · snapshot tokens 42 of 300 today", u.summary())
+        assertEquals(null, BoltOddsUser.parse("not json"))
+    }
 }
