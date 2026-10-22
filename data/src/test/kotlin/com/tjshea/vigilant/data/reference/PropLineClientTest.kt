@@ -372,6 +372,37 @@ class PropLineClientTest {
     }
 
     @Test
+    fun `a paid key reads a slate's props in one bulk call, not one per game, and falls back to per game when it fails`() = runTest {
+        val colts = NovigEvent("nB", "FOOTBALL", "NFL", NovigEvent.STATUS_PREGAME, "Houston Texans @ Indianapolis Colts", start + hour)
+        val two = context.copy(
+            novigEvents = listOf(game, colts),
+            novigMarkets = context.novigMarkets + prop("m3", "PASSING_YARDS", "C.J. Stroud", 240.5).copy(eventId = "nB"),
+        )
+        val second = props.replace("\"555\"", "\"556\"").replace("Dallas Cowboys", "Indianapolis Colts").replace("Baltimore Ravens", "Houston Texans")
+            .replace("Lamar Jackson", "C.J. Stroud").replace("${iso(start)}", "${iso(start + hour)}")
+        routes["/v1/sports/americanfootball_nfl/odds"] = { ok("[$props,$second]") }
+        routes["/v1/sports/americanfootball_nfl/events/555/odds"] = { ok(props) }
+        routes["/v1/sports/americanfootball_nfl/events/556/odds"] = { ok(second) }
+        meter.recordBalance(QuotaPolicy.PROPLINE, "pl-key", remaining = 24_000, limit = 25_000, used = 1_000)
+        val paid = PropLineClient(OkHttpClient(), KeyPool(QuotaPolicy.PROPLINE, { listOf("pl-key") }, meter), json, server.url("/v1").toString().trimEnd('/'), clock = { clockMs }, minIntervalMs = 0, meter = meter)
+        val source = PropLinePropsSource(paid)
+        val snap = source.odds(nfl, ScanSettings(referenceBooks = listOf("fanduel"), propLineGamesPerScan = ScanSettings.NO_LIMIT), two)
+        val paths = requests.map { it.requestUrl!!.encodedPath }
+        assertEquals(listOf("/v1/sports/americanfootball_nfl/odds"), paths)
+        assertEquals(setOf("player_pass_yds", "player_field_goals_made"), requests.single().requestUrl!!.queryParameter("markets")!!.split(",").toSet())
+        assertEquals(setOf("Lamar Jackson", "C.J. Stroud"), snap.events.flatMap { e -> e.markets.mapNotNull { it.subject } }.toSet())
+        assertEquals(1, source.bulkReads)
+        // A slate answer that fails reads the games one by one.
+        requests.clear()
+        routes["/v1/sports/americanfootball_nfl/odds"] = { MockResponse().setResponseCode(504) }
+        routes["/v1/sports/americanfootball_nfl/events"] = { ok(realEvents) }
+        clockMs = now + 20 * 60_000L
+        val again = PropLinePropsSource(paid).odds(nfl, ScanSettings(referenceBooks = listOf("fanduel"), propLineGamesPerScan = ScanSettings.NO_LIMIT), two.copy(now = clockMs))
+        assertTrue(requests.any { it.requestUrl!!.encodedPath.endsWith("/events/555/odds") })
+        assertEquals(setOf("Lamar Jackson", "C.J. Stroud"), again.events.flatMap { e -> e.markets.mapNotNull { it.subject } }.toSet())
+    }
+
+    @Test
     fun `no props are bought when player props aren't priced`() = runTest {
         val source = PropLinePropsSource(client())
         val snap = source.odds(nfl, ScanSettings(families = setOf(MarketFamily.MONEYLINE)), context)
