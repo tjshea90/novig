@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-upaxtv",
- "head": "e15922c93fe5a51c77fe3f2851d4871f6946fe4b",
+ "head": "3b65e4226dd338b45fdcf48fe51fda2d93f69f29",
  "since": 1792691263,
- "beat": 1792700122,
- "beatIso": "2026-10-22T20:15:22Z",
- "done": "CH58j: Live games tile counts tennis lane (mergeStats), tests green",
- "next": "CH58k: why matched tennis lines are not judged/bet"
+ "beat": 1792700146,
+ "beatIso": "2026-10-22T20:15:46Z",
+ "done": "full data test done",
+ "next": "land main; CH58k"
 }
