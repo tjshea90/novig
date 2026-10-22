@@ -1,13 +1,13 @@
-# CHECKPOINT 3945 — read me first, then TASKS.md
+# CHECKPOINT 3946 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T00:35:23Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-wju7hd` · **builds on:** `0fc71f282` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T00:54:19Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-wju7hd` · **builds on:** `6d24962aa` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v1.0.45: the engine logs what the Novig stream holds and what SharpAPI returns per league after each scan; SharpAPI +EV cross-check stands down when Novig is not a picked book (versionCode 385, v1.0.45)
+SharpAPI census diagnostics (why rows drop), scan diagnostics log
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.45), then run: bash tools/record-release.sh v1.0.45 385 "v1.0.45: the engine logs what the Novig stream holds and what SharpAPI returns per league after each scan; SharpAPI +EV cross-check stands down when Novig is not a picked book"
+ship v1.0.46, read census, fix SharpAPI conversion; fix Novig stream tune() in engine (NS1)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  c18dbd13d ckpt 3945: pre-release: v1.0.45: the engine logs what the Novig stream holds and what 
   0fc71f282 ckpt 3944: pre-ship: v1.0.45: the engine logs what the Novig stream holds and what Sha
   515a5ea41 ckpt 3943: pre-release: v1.0.44: SharpAPI shows on Engine > APIs (engine's own key che
   d8affb98c ckpt 3942: answered Tj on Novig socket use; NS1 task written
@@ -25,5 +26,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   f1f887602 ckpt 3938: GS: game state was in v1.0.43; added the engine's sharpapi-finals journal (
   5b5e1e302 ckpt 3937: SS done: SharpAPI WebSocket stream + game state built, v1.0.43 shipped (rel
   99d105a3d ckpt 3936: pre-release: v1.0.43: SharpAPI WebSocket stream (odds and game state pushed
-  cc2080cb6 ckpt 3935: SA done: v1.0.42 shipped (release building); SharpAPI on engine (store + de
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
