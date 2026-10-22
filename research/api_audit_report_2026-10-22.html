@@ -120,6 +120,19 @@ footer { margin-top: 40px; color: var(--muted); font-size: .85rem; }
     <li><b>PropLine Streaming Lite</b> ($39/mo) would push every price change instead of polling. Not needed now; only worth it if PropLine props become a major source of bets.</li>
   </ul>
 
+  <h2>Follow-up, v1.0.52</h2>
+  <ul>
+    <li><b>Live result of v1.0.50 on the engine:</b> the scan took 269 s (was 422 s), and all 12,610 Novig prices were screened without one-by-one book reads. The slowest step is now SharpAPI's first load on a fresh runner.</li>
+    <li><b>New research journals on the engine:</b> Kalshi live scores of every game in play, SharpAPI public betting splits (DraftKings, Circa, BetMGM), and Novig's own closing price for every side the engine bet or bid on. All are read-only.</li>
+    <li><b>Not built yet:</b> live first halves need period support through the whole live pricing path, so the first step is to measure whether SharpAPI's live feed carries them. Matching props by Novig player id waits until there's a measured matching failure to fix.</li>
+  </ul>
+
+  <h2>Buying streaming</h2>
+  <ul>
+    <li><b>ParlayAPI Business ($40/mo): don't buy.</b> It fed 922 lines and none that no other feed had. 61% of your Pro credits are still unspent, and ParlayAPI's own docs say its data refreshes every 30-60 s upstream, so a socket wouldn't be much fresher than polling. SharpAPI's stream and BoltOdds already push those books.</li>
+    <li><b>PropLine Streaming Lite ($39/mo): not yet.</b> PropLine is the only source for about 1,800 lines (mostly props), and its quotes run about 4 minutes old, so a push feed could help. But the bulk-props change means the 25,000-request Pro plan is enough now. Its +EV prop Overs also lost in the 25,909-bet test. Decide after a day or two, once we know whether bets on PropLine-only lines beat the close.</li>
+  </ul>
+
   <p class="note">How to judge it tomorrow: the engine log's scan report (Novig seconds per scan), PinnWire keys left at midnight UTC, PropLine used vs its day share, the governor resting Unabated, and BoltOdds' props socket staying connected.</p>
 
   <footer>Built by Claude (acct-27a37e, tj Gmail). Code, tests and the full study are in the novig repo.</footer>
