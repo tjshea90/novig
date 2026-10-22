@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-wju7hd",
  "head": "7a9a5e4be287a030b22241f39c702dda68d2277c",
  "since": 1792624947,
- "beat": 1792634766,
- "beatIso": "2026-10-22T02:06:06Z",
+ "beat": 1792635286,
+ "beatIso": "2026-10-22T02:14:46Z",
  "done": "ParlayAPI PBP stream: doubling backoff for streams that end early (5 credits per connection); SX and PBP diagnostics",
  "next": "restart engine, read SX + PBP diag, tell Tj"
 }
