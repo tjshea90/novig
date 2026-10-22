@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aosilm",
- "head": "ce6a55d74a2508855272b2e864e2c8c0d3d94fc2",
+ "head": "ad3e6312d449d52ec5845b57014b7f789ea7805f",
  "since": 1792624947,
- "beat": 1792643812,
- "beatIso": "2026-10-22T04:36:52Z",
+ "beat": 1792644059,
+ "beatIso": "2026-10-22T04:40:59Z",
  "done": "pre-release: DV4: repeat guard in the engine's bid desk and live lane also reads Novig's own open positions (survives restarts) (versionCode 387, v1.0.47)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.47), then run: bash tools/record-release.sh v1.0.47 387 \"DV4: repeat guard in the engine's bid desk and live lane also reads Novig's own open positions (survives restarts)\""
 }
