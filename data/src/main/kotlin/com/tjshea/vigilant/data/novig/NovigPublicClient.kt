@@ -66,6 +66,12 @@ interface NovigSource {
     /** Moves these markets to the live feed's full book (a no-op for a source with no best-bid channel). */
     fun deepen(marketIds: Collection<String>) {}
 
+    /**
+     * Makes the best bids the catalog carries for [marketIds] current for [pushedTop] (re-reads the catalog pages they came from when those are older
+     * than a few seconds): a no-op for a source with no such catalog. Cheap: one request lists up to 5,000 markets' best bids.
+     */
+    suspend fun refreshTops(marketIds: Collection<String>) {}
+
     /** How many markets the live feed can hold at once: what a scan may hand it. */
     fun watchRoom(): Int = com.tjshea.vigilant.data.novig.stream.NovigStream.MAX_MARKETS
 
@@ -231,6 +237,8 @@ class NovigPublicClient(
 
     override fun trimCaches() {
         bookCache.clear()
+        catalogTops.clear()
+        topQuery.clear()
     }
 
     override fun cachedBooks(): Int = bookCache.size
@@ -246,8 +254,16 @@ class NovigPublicClient(
     override fun pushed(marketIds: Collection<String>): Map<String, NovigBook> =
         if (marketIds.isEmpty()) emptyMap() else liveStream()?.live(marketIds).orEmpty()
 
-    override fun pushedTop(marketIds: Collection<String>): Map<String, NovigBook> =
-        if (marketIds.isEmpty()) emptyMap() else liveStream()?.liveTop(marketIds).orEmpty()
+    override fun pushedTop(marketIds: Collection<String>): Map<String, NovigBook> {
+        if (marketIds.isEmpty()) return emptyMap()
+        val pushed = liveStream()?.liveTop(marketIds).orEmpty()
+        if (catalogTops.isEmpty()) return pushed
+        // The feed's push is newer than any catalog read; the catalog's best bids fill in the markets the feed does not hold yet, while they are young.
+        val cut = clock() - CATALOG_TOP_MAX_AGE_MS
+        val out = HashMap(pushed)
+        for (id in marketIds) if (id !in out) catalogTops[id]?.takeIf { it.fetchedAtMs >= cut }?.let { out[id] = it }
+        return out
+    }
 
     override fun deepen(marketIds: Collection<String>) {
         if (marketIds.isNotEmpty()) liveStream()?.deepen(marketIds)
@@ -334,21 +350,66 @@ class NovigPublicClient(
             if (statuses.isNotEmpty()) put("status", statuses.joinToString(","))
             startsBefore?.let { put("startsBefore", it.toString()) }
             put("limit", "1000")
-        }) { body -> json.decodeFromString(EventPageDto.serializer(), body).let { it.items.map(EventDto::toDomain) to it.next } }
+        }) { body, _ -> json.decodeFromString(EventPageDto.serializer(), body).let { it.items.map(EventDto::toDomain) to it.next } }
 
     override suspend fun markets(
         leagues: Collection<String>,
         marketTypes: Collection<String>,
         eventStatuses: Collection<String>,
         startsBefore: Long?,
-    ): List<NovigMarket> =
-        catalog("/v3/catalog/markets", "/v3/public/catalog/markets", buildMap {
-            if (leagues.isNotEmpty()) put("league", leagues.joinToString(","))
-            if (marketTypes.isNotEmpty()) put("marketType", marketTypes.joinToString(","))
-            if (eventStatuses.isNotEmpty()) put("eventStatus", eventStatuses.joinToString(","))
-            startsBefore?.let { put("startsBefore", it.toString()) }
-            put("limit", "5000")
-        }) { body -> json.decodeFromString(MarketPageDto.serializer(), body).let { it.items.map(MarketDto::toDomain) to it.next } }
+    ): List<NovigMarket> = marketsBy(buildMap {
+        if (leagues.isNotEmpty()) put("league", leagues.joinToString(","))
+        if (marketTypes.isNotEmpty()) put("marketType", marketTypes.joinToString(","))
+        if (eventStatuses.isNotEmpty()) put("eventStatus", eventStatuses.joinToString(","))
+        startsBefore?.let { put("startsBefore", it.toString()) }
+        put("limit", "5000")
+    })
+
+    private suspend fun marketsBy(params: Map<String, String>): List<NovigMarket> {
+        val readAt = clock()
+        return catalog("/v3/catalog/markets", "/v3/public/catalog/markets", params) { body, signed ->
+            val page = json.decodeFromString(MarketPageDto.serializer(), body)
+            if (signed) keepTops(page.items, params, readAt)
+            page.items.map(MarketDto::toDomain) to page.next
+        }
+    }
+
+    /**
+     * Each outcome's best resting bid as the catalog lists it (since 2026-10-20: `outcomes[].bid {price, qty}`, NOVIG_API.md §28), kept as a best-bid-only book ([NovigBook.partial]) stamped
+     * at the read: what one request says of up to 5,000 markets, where a scan used to read ~9,600 books one by one (AF, 2026-10-22: 13,727 prices in 420 s). Only from the SIGNED route
+     * (the public one is cached at Novig's edge, so its age is unknown), and only from a page that carries the field at all (absent = no bid rests, so a page with none anywhere says
+     * nothing about the feature).
+     */
+    private fun keepTops(items: List<MarketDto>, params: Map<String, String>, readAt: Long) {
+        if (items.none { m -> m.outcomes.any { it.bid != null } }) return
+        for (m in items) {
+            catalogTops[m.marketId] = m.topBook(readAt)
+            topQuery[m.marketId] = params
+        }
+        topReadAt[params] = readAt
+    }
+
+    private val catalogTops = java.util.concurrent.ConcurrentHashMap<String, NovigBook>()
+    private val topQuery = java.util.concurrent.ConcurrentHashMap<String, Map<String, String>>()
+    private val topReadAt = java.util.concurrent.ConcurrentHashMap<Map<String, String>, Long>()
+    private val topLock = kotlinx.coroutines.sync.Mutex()
+
+    override suspend fun refreshTops(marketIds: Collection<String>) {
+        if (keyed == null || clock() < keyedDownUntil || clock() < keyedCatalogDownUntil) return
+        val now = clock()
+        val stale = marketIds.mapNotNull { topQuery[it] }.distinct().filter { q -> now - (topReadAt[q] ?: 0L) >= CATALOG_TOP_REFRESH_MS }
+        if (stale.isEmpty()) return
+        topLock.withLock {
+            for (q in stale) {
+                if (clock() - (topReadAt[q] ?: 0L) < CATALOG_TOP_REFRESH_MS) continue
+                try { marketsBy(q) } catch (e: CancellationException) { throw e } catch (_: Exception) { topReadAt[q] = clock() }
+            }
+            // Never let the tops outgrow what a scan can use: a market not re-listed for a while has left the catalog.
+            val cut = clock() - 10 * CATALOG_TOP_MAX_AGE_MS
+            catalogTops.entries.removeIf { it.value.fetchedAtMs < cut }
+            topQuery.keys.retainAll(catalogTops.keys)
+        }
+    }
 
     /** A market looked up one at a time, and when: the same market is asked for by the paper lab's grading, the CNO live prices and the settler, over and over (Tj's 2026-10-13 file: 1,186 of 7,780 public calls refused). */
     private class Looked(val at: Long, val market: NovigMarket?)
@@ -428,12 +489,12 @@ class NovigPublicClient(
      * public throttle a carrier's shared address splits with strangers; docs: api/throttling), else, or
      * if that fails, the public routes. Same parameters and pages either way.
      */
-    private suspend fun <T> catalog(signedPath: String, publicPath: String, params: Map<String, String>, parse: (String) -> Pair<List<T>, String?>): List<T> {
+    private suspend fun <T> catalog(signedPath: String, publicPath: String, params: Map<String, String>, parse: (String, Boolean) -> Pair<List<T>, String?>): List<T> {
         val signer = keyed?.takeIf { clock() >= keyedDownUntil && clock() >= keyedCatalogDownUntil }
         if (signer != null) {
             ensureLimits(signer)
             try {
-                return paged(signedPath, params, parse, signer)
+                return paged(signedPath, params, { parse(it, true) }, signer)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -441,7 +502,7 @@ class NovigPublicClient(
                 keyDownWhy = (e as? NovigApiException)?.brief ?: e.message ?: e.javaClass.simpleName
             }
         }
-        return paged(publicPath, params, parse)
+        return paged(publicPath, params, { parse(it, false) })
     }
 
     /**
@@ -761,6 +822,12 @@ class NovigPublicClient(
         const val SHORT_RETRY_SECONDS = 5
         const val MAX_SHORT_RETRIES = 8
         const val MAX_PAGES = 20
+
+        /** A catalog best bid screens a scan's price this long after its read ([pushedTop]); a +EV one is read as a complete book before it is shown (Scanner.deepenEdges). */
+        const val CATALOG_TOP_MAX_AGE_MS = 30_000L
+
+        /** [refreshTops] re-reads a catalog query whose best bids are this old. */
+        const val CATALOG_TOP_REFRESH_MS = 12_000L
     }
 }
 
@@ -833,7 +900,16 @@ private data class FeeDto(val coefficient: String? = null, val makerCredit: Stri
 }
 
 @Serializable
-private data class OutcomeDto(val outcomeId: String, val name: String = "", val status: String = "TBD")
+private data class BboDto(val price: String = "", val qty: Long = 0)
+
+@Serializable
+private data class OutcomeDto(
+    val outcomeId: String,
+    val name: String = "",
+    val status: String = "TBD",
+    /** The best resting bid on this outcome (catalog reads since 2026-10-20); absent when none rests. The ask on the other outcome is `1 - bid`. */
+    val bid: BboDto? = null,
+)
 
 @Serializable
 private data class MarketDto(
@@ -858,6 +934,17 @@ private data class MarketDto(
         fee = fee?.toDomain(),
         outcomes = outcomes.map { NovigOutcome(it.outcomeId, it.name, it.status) },
         strike = strike?.toDoubleOrNull(),
+    )
+
+    /** The catalog's best bids as a best-bid-only book ([NovigBook.partial]): one level per outcome, none where no bid rests. */
+    fun topBook(at: Long) = NovigBook(
+        marketId = marketId,
+        seq = 0L,
+        bidsByOutcome = outcomes.associate { o ->
+            o.outcomeId to listOfNotNull(o.bid?.let { b -> b.price.toDoubleOrNull()?.let { p -> Math.round(p * 1000).toInt() }?.takeIf { it in 1..999 && b.qty > 0 }?.let { BidLevel(it, b.qty) } })
+        },
+        fetchedAtMs = at,
+        partial = true,
     )
 }
 
