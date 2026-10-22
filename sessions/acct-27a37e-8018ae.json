@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "2a14ab561227a6f2842a5014f7deded45dd2ea59",
+ "head": "b71397e9935b9f48fbb423e130937aa103cfeca4",
  "since": 1792710535,
- "beat": 1792711169,
- "beatIso": "2026-10-22T23:19:29Z",
- "done": "AG: journals built, notes, full tests green",
- "next": "release next version after mirage (merge main, bump, ship)"
+ "beat": 1792711201,
+ "beatIso": "2026-10-22T23:20:01Z",
+ "done": "pre-ship: API audit follow-up (AG): Kalshi live-data, SharpAPI splits and Novig own-close journals on the engine; BoltOdds open-socket check says why when unreadable",
+ "next": "ship.sh gates and releases this"
 }
