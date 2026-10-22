@@ -115,3 +115,5 @@ SharpAPI's Sharp plan (25 books Tj picked on its dashboard) is a new fair-odds s
 
 ## 2026-10-22 ENGINEER (acct-27a37e): no setting changed
 CH57a done (research/parlay_spend_2026-10-22.md): ParlayAPI Pro 75,276 of 100,000 left, burn ~640/h (~10.9k/day) vs ~8.1k/day available to Nov 1; CreditPace is braking, props ~70% of spend. CH57b (cut NFL/off-slate leagues' props, compare prop CLV) waits for that measurement. Engine healthy (heartbeat 1 min, Novig read key 16/s). Revert: n/a.
+
+- 2026-10-22 (mirage, Tj chat t1792705696949-3544) PinnWire/pinnapi asked only where SharpAPI's pushed Pinnacle is missing (ApiChain.pinnacleNeeded; research/pinnwire_waste_2026-10-22.md). Revert: drop the PINNACLE_HOSTS lines in ApiChain.better/needed.
