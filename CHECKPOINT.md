@@ -1,13 +1,13 @@
-# CHECKPOINT 3981 — read me first, then TASKS.md
+# CHECKPOINT 3982 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T13:31:22Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-qrfdgy` · **builds on:** `f0438fb78` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T16:52:52Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-vobqze` · **builds on:** `31b35ac64` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: CH58: live SharpAPI feed reads ATP/WTA tennis; live lane note with feed/Novig/matched counts; live feed and live bids on (paper) (versionCode 388, v1.0.48)
+CH58e: live note says why live tennis rows give no game (stale store or census of dropped rows)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.48), then run: bash tools/record-release.sh v1.0.48 388 "CH58: live SharpAPI feed reads ATP/WTA tennis; live lane note with feed/Novig/matched counts; live feed and live bids on (paper)"
+read status.liveNote after engine restart; fix the named cause
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  ac3d86efa ckpt 3981: pre-release: CH58: live SharpAPI feed reads ATP/WTA tennis; live lane note 
   283ea08f9 ckpt 3980: ANALYST 2026-10-22: no rule change, research card posted
   618ac4373 ckpt 3979: CH58b tennis forced into live feed; engine down until hours
   4fa188354 ckpt 3978: live SharpAPI feed reads ATP/WTA whenever live tennis is on (the phone's co
@@ -25,5 +26,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   94fa3f2e0 ckpt 3974: data tests passed
   5f3245740 ckpt 3973: live lane note shows feed/live/Novig/matched/lines counts (compiles)
   4bca336f1 ckpt 3972: pinnLive+liveBid on (paper)
-  40695f29c ckpt 3971: live feed -> SHARPAPI
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
