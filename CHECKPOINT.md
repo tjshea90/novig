@@ -1,21 +1,23 @@
-# CHECKPOINT 3956 — read me first, then TASKS.md
+# CHECKPOINT 3957 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T02:54:46Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-wju7hd` · **builds on:** `e60372aba` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T02:55:21Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-wju7hd` · **builds on:** `a20110529` (this checkpoint is the commit after it)
 
 ## Just done
-live tail lane: limits, 3-buys-per-game and repeat guard now count the carried ledger (a restart gave them back)
+CHANGES.md entry
 
 ## Do this next
-restart engine; confirm; ParlayAPI PBP log
+restart engine
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  a20110529 ckpt 3956: live tail lane: limits, 3-buys-per-game and repeat guard now count the carr
   e8b3dfb8a ckpt 3955: PBP last-end diagnostics; NS2 written
   d9708b94e ckpt 3954: PBP stream connection log
   7a9a5e4be ckpt 3953: ParlayAPI PBP stream: doubling backoff for streams that end early (5 credit
@@ -25,8 +27,4 @@ restart engine; confirm; ParlayAPI PBP log
   4922afaaa ckpt 3949: data tests green (Kalshi test flake on first run)
   fb44e546c ckpt 3948: Novig stream gets the key's limits when created after them
   87e01c809 ckpt 3947: census tested
-  45e4808e3 ckpt 3946: SharpAPI census diagnostics (why rows drop), scan diagnostics log
 ```
-
-(8 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
