@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-vobqze",
- "head": "71da1fd6d675cd15daede01c2e8b4885577d6fe0",
+ "head": "f908d672aad32a85f9729c735842832ced6f234c",
  "since": 1792624947,
- "beat": 1792691074,
- "beatIso": "2026-10-22T17:44:34Z",
- "done": "CH58i: SharpAPI store polls each league in its own coroutine (tennis was stale behind NFL deltas)",
- "next": "reset engine; read liveNote"
+ "beat": 1792691111,
+ "beatIso": "2026-10-22T17:45:11Z",
+ "done": "CH57b: metered feeds read far leagues (soonest game over 3 h) every 7 min, not 150 s",
+ "next": "reset engine; measure Spend lines next hour"
 }
