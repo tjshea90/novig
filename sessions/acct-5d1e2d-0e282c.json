@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-wju7hd",
- "head": "d8affb98c190b32350d86e7551d48f96ca1bc941",
+ "head": "515a5ea41ace08199ee828eb9d5d05679349f7b4",
  "since": 1792624947,
- "beat": 1792628669,
- "beatIso": "2026-10-22T00:24:29Z",
- "done": "answered Tj on Novig socket use; NS1 task written",
- "next": "finish v1.0.44 ship, record-release, then NS1"
+ "beat": 1792628702,
+ "beatIso": "2026-10-22T00:25:02Z",
+ "done": "pre-release: v1.0.44: SharpAPI shows on Engine > APIs (engine's own key check makes the card) and has its socket switch on the Live tab (versionCode 384, v1.0.44)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.44), then run: bash tools/record-release.sh v1.0.44 384 \"v1.0.44: SharpAPI shows on Engine > APIs (engine's own key check makes the card) and has its socket switch on the Live tab\""
 }
