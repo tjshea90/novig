@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-wju7hd",
- "head": "685d768488d03678505fc397c803814fbb7b6457",
+ "head": "617145d3b63c3618f63490d17ca278373a46b892",
  "since": 1792624947,
- "beat": 1792627925,
- "beatIso": "2026-10-22T00:12:05Z",
- "done": "chat: SharpAPI key verified live on engine after reset",
- "next": "watch SharpAPI log lines + BoltOdds lines socket"
+ "beat": 1792628006,
+ "beatIso": "2026-10-22T00:13:26Z",
+ "done": "SharpAPI card on Engine>APIs without a phone key; SharpAPI switch on Live sockets",
+ "next": "ship v1.0.44"
 }
