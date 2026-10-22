@@ -117,7 +117,7 @@ sealed interface PlanResult {
     data class Ready(val plan: BetPlan) : PlanResult
 
     /** Nothing is sent: [reason] says why, in words for the card. [gameLimit]: it's the per-game limit ([BetLimits.maxPerGame]), which the auto-bet counts under one reason. */
-    data class Refused(val reason: String, val gameLimit: Boolean = false, /** The bet is not +EV at Novig's price now: the lists drop it (Tj, 2026-10-14). */ val negativeEv: Boolean = false) : PlanResult
+    data class Refused(val reason: String, val gameLimit: Boolean = false, /** The bet is not +EV at Novig's price now: the lists drop it (Tj, 2026-10-14). */ val negativeEv: Boolean = false, /** The listed price is not on offer any more (it moved, or nobody sells): the lists drop the row until it is priced again (Tj, 2026-10-22). */ val gone: Boolean = false) : PlanResult
 }
 
 /**
