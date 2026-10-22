@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "6df159b8c913a898f4dbbd355edb04496aa5f29c",
+ "head": "da26ad4f5e32908a21a8fb03578f031f6fc41efc",
  "since": 1792596542,
- "beat": 1792707822,
- "beatIso": "2026-10-22T22:23:42Z",
- "done": "AF: Novig catalog best bids screen the scan (2 requests instead of ~9,600 book reads), maker-credit cut in fee fallback, NOVIG_API.md \u00a728",
- "next": "continue per-API audit: SharpAPI, PropLine, ParlayAPI, SGO, Kalshi, Polymarket, SX, Pinn*, Odds API, OddsPapi, Unabated"
+ "beat": 1792707956,
+ "beatIso": "2026-10-22T22:25:56Z",
+ "done": "AF: PropLine bulk slate props (1 call per sport/part vs per game), STEALS_BLOCKS mapped, PropLine free injury report before ParlayAPI's 1-credit one",
+ "next": "audit ParlayAPI, SGO, BoltOdds, Kalshi, Polymarket, SX, Pinn*, Odds API, OddsPapi, Unabated docs vs code"
 }
