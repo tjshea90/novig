@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "da26ad4f5e32908a21a8fb03578f031f6fc41efc",
+ "head": "3bfa27eb2804bfe324fa6a78d7ae0de91b1a04c2",
  "since": 1792596542,
- "beat": 1792707956,
- "beatIso": "2026-10-22T22:25:56Z",
+ "beat": 1792708188,
+ "beatIso": "2026-10-22T22:29:48Z",
  "done": "AF: PropLine bulk slate props (1 call per sport/part vs per game), STEALS_BLOCKS mapped, PropLine free injury report before ParlayAPI's 1-credit one",
  "next": "audit ParlayAPI, SGO, BoltOdds, Kalshi, Polymarket, SX, Pinn*, Odds API, OddsPapi, Unabated docs vs code"
 }
