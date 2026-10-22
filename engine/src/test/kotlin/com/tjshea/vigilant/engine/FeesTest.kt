@@ -44,4 +44,15 @@ class FeesTest {
         val perDollar = Fees.takerFee(0.5, MarketFee.FUTURES, eventLive = false)
         assertEquals(1.5, perDollar * 10_000 * 0.01, 1e-9)
     }
+
+    @Test
+    fun `the maker credit falls to 25 percent live and 50 percent on futures from Eastern midnight 2026-10-22, the taker fee stays 0 06`() {
+        assertEquals(java.time.ZonedDateTime.of(2026, 10, 22, 0, 0, 0, 0, java.time.ZoneId.of("America/New_York")).toInstant().toEpochMilli(), MarketFee.CREDIT_CUT_FROM_MS)
+        val after = MarketFee.gameFor("NFL", MarketFee.CREDIT_CUT_FROM_MS)
+        assertEquals(0.06, after.coefficient, 0.0)
+        assertEquals(0.25, after.makerCredit, 0.0)
+        assertEquals(0.5, MarketFee.gameFor("NFL", MarketFee.CREDIT_CUT_FROM_MS - 1).makerCredit, 0.0)
+        assertEquals(0.5, MarketFee.futuresFor(MarketFee.CREDIT_CUT_FROM_MS).makerCredit, 0.0)
+        assertEquals(0.7, MarketFee.futuresFor(MarketFee.CREDIT_CUT_FROM_MS - 1).makerCredit, 0.0)
+    }
 }
