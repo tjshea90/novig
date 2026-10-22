@@ -113,7 +113,7 @@ class CloudBidRunnerTest {
         return BidLine(l, start)
     }
 
-    private val deployOn = ScanSettings(gates = ApiGates(cloudScan = true, cloudTrading = CloudTradeMode.LIVE))
+    private val deployOn = ScanSettings(gates = ApiGates(cloudScan = true, cloudTrading = CloudTradeMode.LIVE, repeatMaxFamilyDollars = 0.0, repeatMaxGameBets = 0))
 
     /** One bid per side (the wallet-deployment second rung off) so the counts below are about the wiring. */
     private val live = deployOn.copy(vigGuards = deployOn.vigGuards.copy(bidDeploy = false))
