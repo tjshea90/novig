@@ -73,7 +73,7 @@ class SharpApiTest {
             row("4", "bwin", "moneyline", "Las Vegas Raiders", "away", 3.20).copy(startMs = null),
         )
         val e = SharpApiConvert.events(rows, ctx()).single()
-        assertEquals(start, e.startMs)
+        assertEquals(start, e.commenceMs)
         assertEquals(setOf("pinnacle", "bwin"), e.markets.map { it.bookKey }.toSet())
         assertTrue(SharpApiConvert.census(rows, ctx()).contains("kept for pairing 4"))
     }
