@@ -6217,3 +6217,7 @@ CH63 (Tj chat 22:18 UTC 2026-10-22, t1792707520395-3d67, screenshot): "it is say
 
 CH64 (Tj chat 22:23 UTC 2026-10-22, t1792707800929-9df2): "the app is extremely laggy right now. it always seems like it gets laggy after I turn kalshi scanning on"
 - [~] CH64a likely cause: after an engine restart there are ~10 min with no kalshi-feed.json, and KalshiHub.scanNow then scanned all of Kalshi on the phone; now it waits while the engine's heartbeat is alive (in ship batch with CH62a/CH63a). If lag persists with the engine list adopted: profile the phone (Diagnostics HeapCensus, KalshiHub.refreshArbs, requoteListed, Kalshi socket on the phone).
+
+CH65 (Tj chat 22:52 UTC 2026-10-22, t1792709523628-0e03): "with kalshi on, the app is getting so laggy that it crashes"
+- [~] CH65a likely the same cause as CH64a (phone scanned all of Kalshi itself while the engine's kalshi-feed.json was absent after each engine restart; the engine was reset twice in the hour, mine 21:46 and another at ~22:5x); fixed in v1.0.49. If it still crashes on 1.0.49: need Diagnostics report (HeapCensus), then cap/stop the phone's local Kalshi scan entirely in cloud mode.
+- [ ] CH65b keep kalshi-feed.json/kalshi-status.json across engine restarts (carry job to job) so the gap has a last-good list instead of nothing
