@@ -6,10 +6,10 @@
  "kind": "routine",
  "task": "rotation",
  "branch": "claude/wizardly-meitner-4zhu8r",
- "head": "c5f553a1c16e09d7c460a8ac5897b24a373c28ea",
+ "head": "66bb2e471e754fd2af323dffa9d46ccfbeecb9a0",
  "since": 1792689689,
- "beat": 1792689726,
- "beatIso": "2026-10-22T17:22:06Z",
- "done": "",
- "next": ""
+ "beat": 1792689844,
+ "beatIso": "2026-10-22T17:24:04Z",
+ "done": "ENGINEER 2026-10-22: CH57a ParlayAPI spend study written",
+ "next": "CH57b: skip props for leagues with no game in the hot window; compare ParlayAPI prop CLV vs SharpAPI/SGO"
 }
