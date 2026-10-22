@@ -6222,3 +6222,12 @@ CH65 (Tj chat 22:52 UTC 2026-10-22, t1792709523628-0e03): "with kalshi on, the a
 - [~] CH65a likely the same cause as CH64a (phone scanned all of Kalshi itself while the engine's kalshi-feed.json was absent after each engine restart; the engine was reset twice in the hour, mine 21:46 and another at ~22:5x); fixed in v1.0.49. If it still crashes on 1.0.49: need Diagnostics report (HeapCensus), then cap/stop the phone's local Kalshi scan entirely in cloud mode.
 - [x] CH65c (Tj 22:55 "cut out the phone kalshi scan"): KalshiHub.scanNow never runs scanLocally while cloudDrives; ships as 1.0.51 after acct-27a37e 1.0.50
 - [ ] CH65b keep kalshi-feed.json/kalshi-status.json across engine restarts (carry job to job) so the gap has a last-good list instead of nothing
+
+## AG: build and release the queued API-audit items without disturbing mirage (Tj, 2026-10-22 ~23:10 UTC, verbatim: "Without disturbing the other Claude account, build and release the next queued items from the vigilant API audit. Also, I'm considering buying both propline streaming and parlayapi streaming. What do you think")
+- [ ] AG1 (AF9) SharpAPI `/splits` journaled for the studies
+- [ ] AG2 (AF6) Kalshi `live_data/batch` score reader + journal (samples), keyless
+- [ ] AG3 (AF7) Novig candles (own close) and participants
+- [ ] AG4 (AF8) Novig live 1H markets in the live lanes
+- [ ] AG5 full tests, release after mirage's (coord RELEASE claim), report
+- [ ] AG6 answer: PropLine Streaming Lite / ParlayAPI Business streaming worth buying? (from fed/sole lines, freshness, CLV)
+Rule for this job: stay out of CloudMain.kt and the Kalshi trading/feed files mirage is editing (CH65b); merge main before each push.
