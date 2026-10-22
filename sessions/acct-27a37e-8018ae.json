@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "a6897b07f1c48b345a385286eee6238156953e57",
+ "head": "2a14ab561227a6f2842a5014f7deded45dd2ea59",
  "since": 1792710535,
- "beat": 1792711136,
- "beatIso": "2026-10-22T23:18:56Z",
- "done": "AG1/AG2/AG3: SharpAPI splits, Kalshi live data, Novig own-close journals (AuditFeeds, one-line hook in CloudMain)",
- "next": "check archive picks the journals; AG4 study note; streaming answer; full tests; release after mirage"
+ "beat": 1792711169,
+ "beatIso": "2026-10-22T23:19:29Z",
+ "done": "AG: journals built, notes, full tests green",
+ "next": "release next version after mirage (merge main, bump, ship)"
 }
