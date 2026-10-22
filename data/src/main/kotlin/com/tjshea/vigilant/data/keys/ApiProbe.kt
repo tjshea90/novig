@@ -285,8 +285,10 @@ class ApiProbe(
                     val info = runCatching { kotlinx.serialization.json.Json.parseToJsonElement(r.body) as? kotlinx.serialization.json.JsonObject }.getOrNull()
                     fun count(k: String) = (info?.get(k) as? kotlinx.serialization.json.JsonArray)?.size
                     // Its open sockets and snapshot tokens (`/api/odds/user`, 2026-10-22 docs): one more GET of the 12 a minute.
-                    val user = runCatching { get("${hosts.bolt}/odds/user?key=$key", listOf("Accept" to "application/json")) }.getOrNull()
-                        ?.takeIf { it.isSuccessful }?.let { com.tjshea.vigilant.data.boltodds.BoltOddsUser.parse(it.body) }?.summary()?.takeIf { it.isNotBlank() }
+                    val ur = runCatching { get("${hosts.bolt}/odds/user?key=$key", listOf("Accept" to "application/json")) }.getOrNull()
+                    val user = ur?.takeIf { it.isSuccessful }?.let { com.tjshea.vigilant.data.boltodds.BoltOddsUser.parse(it.body) }?.summary()?.takeIf { it.isNotBlank() }
+                        // Said when it could not be read, so the next check shows why (the first engine check, 2026-10-22 23:10, said nothing).
+                        ?: "open sockets not readable (" + (ur?.let { "HTTP ${it.code}" + (if (it.isSuccessful) ", unexpected reply" else "") } ?: "no answer") + ")"
                     true to "Active and accepted · ${count("sports") ?: "?"} sports, ${count("sportsbooks") ?: "?"} sportsbooks" + (user?.let { " · $it" } ?: "") + ". The odds come over its websocket (Pro: 3 connections at once)."
                 }
                 else -> false to "Answered HTTP ${r.code}."
