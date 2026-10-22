@@ -87,7 +87,7 @@ fun LiveScreen(
             if (!s.liveOnGitHub) LightStatus(s, light, now)
 
             SectionTitle("Sockets")
-            LiveNote(if (s.liveOnGitHub) "On GitHub: the runner holds BoltOdds, Kalshi and SX Bet; this phone keeps only Novig's feed for the bids." else "On this phone: it holds the sockets; the runner reads those feeds by request for its pregame scan.")
+            LiveNote(if (s.liveOnGitHub) "On GitHub: the runner holds BoltOdds, Kalshi, SX Bet and SharpAPI; this phone keeps only Novig's feed for the bids." else "On this phone: it holds the sockets; the runner reads those feeds by request for its pregame scan.")
             LiveSwitch("Novig market feed", "Novig's own live prices: what Live light, the scan and the bids read.", s.gates.novigSocket, "liveSocketNovig") { v -> onUpdate { it.copy(gates = it.gates.copy(novigSocket = v)) } }
             LiveSwitch("BoltOdds", "Soft-book odds pushed live: Live light's second opinion on a decided game.", s.gates.boltSocket, "liveSocketBolt") { v -> onUpdate { it.copy(gates = it.gates.copy(boltSocket = v)) } }
             LiveSwitch("Kalshi", "The exchange's real-time prices (needs your Kalshi API key).", s.gates.kalshiSocket, "liveSocketKalshi") { v -> onUpdate { it.copy(gates = it.gates.copy(kalshiSocket = v)) } }
