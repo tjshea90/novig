@@ -1,0 +1,54 @@
+name: API docs mirror (Tj, 2026-10-22, AF)
+
+# Free, no Claude usage, keyless. Fetches every API's public docs verbatim (llms.txt, llms-full.txt, OpenAPI, and the
+# pages each llms.txt links to: tools/api_docs_fetch.py) onto the never-rewritten `api-docs` branch: snap/<day>/ and
+# latest/, plus CHANGES.md (what each provider added, changed or removed since the last run). Weekly, and on demand.
+# A session reads it with: git fetch origin api-docs && git show origin/api-docs:CHANGES.md
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 9 * * 1"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: api-docs
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - run: python3 -I tools/api_docs_fetch.py selftest
+      - run: python3 -I tools/api_docs_fetch.py fetch "$RUNNER_TEMP/new"
+      - name: Commit to api-docs
+        run: |
+          set -e
+          day=$(date -u +%F)
+          git config user.name "vigilant-docs-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if git fetch --depth 1 origin api-docs; then
+            git worktree add "$RUNNER_TEMP/b" FETCH_HEAD
+            cd "$RUNNER_TEMP/b"
+            git checkout -B api-docs
+          else
+            git worktree add --detach "$RUNNER_TEMP/b"
+            cd "$RUNNER_TEMP/b"
+            git checkout --orphan api-docs
+            git rm -rfq . || true
+          fi
+          python3 -I "$GITHUB_WORKSPACE/tools/api_docs_fetch.py" diff latest "$RUNNER_TEMP/new" CHANGES.md
+          rm -rf latest "snap/$day"
+          mkdir -p snap
+          cp -r "$RUNNER_TEMP/new" latest
+          cp -r "$RUNNER_TEMP/new" "snap/$day"
+          cp CHANGES.md "snap/$day/CHANGES.md"
+          git add -A
+          git commit -qm "api docs mirror $day" || echo "no change"
+          for i in 1 2 3; do git push origin api-docs && break; sleep 5; done
+          head -40 CHANGES.md
