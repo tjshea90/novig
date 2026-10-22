@@ -722,8 +722,8 @@ class CloudEngine(
         val day = java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneOffset.UTC).toLocalDate().toString()
         for (e in governor.observe(feedLines, phone, now)) when (e) {
             is ApiGovernor.Event.Rested -> {
-                log("API governor: resting ${ApiToggles.name(e.id)} for ${(e.untilMs - now) / 60_000L} min (silent, strike ${e.strikes})")
-                say(CloudMessages.Message("gov-rest-${e.id}-$now", now, "engine", "info", "Resting ${ApiToggles.name(e.id)} to save usage", "It answered nothing for ${ApiGovernor.LIMIT} scans in a row, so the engine scans without it for ${(e.untilMs - now) / 3_600_000L.coerceAtLeast(1)} h, then asks it once more (strike ${e.strikes} of ${ApiGovernor.REST_MS.size}).", 0, null))
+                log("API governor: resting ${ApiToggles.name(e.id)} for ${(e.untilMs - now) / 60_000L} min (${if (e.useless) "matched nothing" else "silent"}, strike ${e.strikes})")
+                say(CloudMessages.Message("gov-rest-${e.id}-$now", now, "engine", "info", "Resting ${ApiToggles.name(e.id)} to save usage", (if (e.useless) "It answered but none of its lines matched a Novig game for ${ApiGovernor.USELESS_LIMIT} scans in a row (it only slowed the scan)" else "It answered nothing for ${ApiGovernor.LIMIT} scans in a row") + ", so the engine scans without it for ${(e.untilMs - now) / 3_600_000L.coerceAtLeast(1)} h, then asks it once more (strike ${e.strikes} of ${ApiGovernor.REST_MS.size}).", 0, null))
             }
             is ApiGovernor.Event.Recovered -> {
                 log("API governor: ${ApiToggles.name(e.id)} answers again")

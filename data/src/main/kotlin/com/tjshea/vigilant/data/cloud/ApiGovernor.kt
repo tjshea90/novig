@@ -9,6 +9,9 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
  *    switched off, so nothing calls it and nothing is spent) for [REST_MS] (1 h, then 3 h, then 9 h), then asks it once more;
  *  - one that answers again is forgiven (strikes cleared); one that is silent after the third rest is TURNED OFF for good: the engine asks the phone to switch it off ([CloudOverrides]) and says why
  *    ([CloudMessages]); Tj switches it back on after fixing the key or plan, and its strikes start again.
+ *  - an API that answers but whose answers give the scan NOTHING (no event matched to Novig from it) for [USELESS_LIMIT] scans in a row, while other feeds matched games on those
+ *    same scans, is rested the same way (AF, 2026-10-22: Unabated answered every scan with quotes 20 h old, matched 0 events and held the fair-odds step 75 s; flat-rate or not, it cost freshness).
+ *    A useless API is never turned off for good on that ground: after the last rest it is rested again for the longest rest, so a feed that starts carrying lines comes back by itself.
  * It never touches a keyless API (nothing to save), an API the phone has off, or the two Pinnacle boards (one shared feed), and it never makes a decision from a scan whose feeds are unknown.
  * The phone's own switch is never changed here: a rest lives in the engine's copy only, and the TURNED OFF step goes through the override file like any other request.
  */
@@ -17,7 +20,7 @@ class ApiGovernor(private val restMs: List<Long> = REST_MS) {
 
     sealed interface Event {
         val id: String
-        data class Rested(override val id: String, val untilMs: Long, val strikes: Int) : Event
+        data class Rested(override val id: String, val untilMs: Long, val strikes: Int, val useless: Boolean = false) : Event
         data class Resumed(override val id: String) : Event
         data class TurnedOff(override val id: String) : Event
         /** An API that failed (an error and no answer) on an earlier scan answered again (Tj, 2026-10-20: "send me a status update telling me the API is now working"). */
@@ -25,6 +28,8 @@ class ApiGovernor(private val restMs: List<Long> = REST_MS) {
     }
 
     private val streak = HashMap<String, Int>()
+    private val uselessStreak = HashMap<String, Int>()
+    private val uselessStrikes = HashMap<String, Int>()
     private val strikes = HashMap<String, Int>()
     private val rests = HashMap<String, Rest>()
     private val offAsked = HashMap<String, Long>()
@@ -66,6 +71,7 @@ class ApiGovernor(private val restMs: List<Long> = REST_MS) {
         for (id in forced.keys.toList()) if (ApiToggles.isOn(settings, id) == false) forced.remove(id)
         // 2. what each credit-metered API answered on this scan
         val byApi = feeds.groupBy { ApiToggles.idOfPolicy(CloudDashboard.providerOf(it.id)) }
+        val scanMatched = feeds.sumOf { it.matched }
         for ((id, fs) in byApi) {
             if (id == null || ApiToggles.policy(id)?.keyed != true || ApiToggles.isOn(settings, id) != true) continue
             if (id in rests) continue
@@ -73,6 +79,19 @@ class ApiGovernor(private val restMs: List<Long> = REST_MS) {
             if (answered && failed.remove(id)) events += Event.Recovered(id)
             else if (!answered && fs.any { it.error != null }) failed += id
             val silent = fs.all { it.fetched + it.reused == 0 && it.standingBy == 0 && it.skipped == 0 && it.heldBack == null && it.error == null }
+            val matched = fs.sumOf { it.matched }
+            if (answered && matched == 0 && scanMatched > 0 && id !in NEVER_USELESS) {
+                val n = (uselessStreak[id] ?: 0) + 1
+                uselessStreak[id] = n
+                if (n >= USELESS_LIMIT) {
+                    uselessStreak.remove(id)
+                    val strike = ((uselessStrikes[id] ?: 0) + 1).coerceAtMost(restMs.size)
+                    uselessStrikes[id] = strike
+                    val until = now + restMs[strike - 1]
+                    rests[id] = Rest(id, now, until, strike, "answered but matched no game for $USELESS_LIMIT scans in a row")
+                    events += Event.Rested(id, until, strike, useless = true)
+                }
+            } else if (matched > 0) { uselessStreak.remove(id); uselessStrikes.remove(id) }
             when {
                 answered -> { streak.remove(id); strikes.remove(id) }
                 silent -> {
@@ -99,6 +118,10 @@ class ApiGovernor(private val restMs: List<Long> = REST_MS) {
 
     companion object {
         const val LIMIT = 3
+        /** Scans in a row an API may answer with nothing matched before it is rested as useless (about 40 minutes of scans). */
+        const val USELESS_LIMIT = 6
+        /** Exchanges and sockets read from memory (free to ask, and their worth is the moment a line appears): never rested as useless. */
+        val NEVER_USELESS = setOf("kalshi", "polymarket", "boltodds", "sxbet", "sharpapi")
         /** How long the engine's own copy keeps an API the manager switched off if the config write that tells the phone never lands. */
         const val FORCE_MS = 6 * 3_600_000L
         val REST_MS = listOf(3_600_000L, 3 * 3_600_000L, 9 * 3_600_000L)
