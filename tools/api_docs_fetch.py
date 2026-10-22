@@ -62,6 +62,17 @@ SEEDS = [
     ("pinnapi", ["https://pinnapi.com/llms.txt", "https://pinnapi.com/llms-full.txt", "https://pinnapi.com/docs"],
      None),
 ]
+# Public reference data (keyless) saved beside the docs, so a session can check coverage offline: which Kalshi sports series exist, which market
+# types Novig lists (and which trade live), Polymarket's sports, SX Bet's leagues. Saved as data/<name>.json.
+DATA = [
+    ("kalshi-sports-series", "https://api.elections.kalshi.com/trade-api/v2/series?category=Sports"),
+    ("novig-market-types", "https://api.novig.com/v3/public/types/markets"),
+    ("novig-live-market-types", "https://api.novig.com/v3/public/types/markets/live"),
+    ("novig-leagues", "https://api.novig.com/v3/public/catalog/leagues"),
+    ("polymarket-sports", "https://gamma-api.polymarket.com/sports"),
+    ("sxbet-leagues", "https://api.sx.bet/leagues/active"),
+    ("sharpapi-health", "https://api.sharpapi.io/api/v1/health"),
+]
 MAX_FOLLOW = 700           # pages followed from one API's llms.txt
 GAP_S = 0.15               # politeness between requests to one host
 UA = "Vigilant-docs-mirror/1.0 (+https://github.com/tjshea90/novig)"
@@ -135,6 +146,14 @@ def fetch(root):
                     if link not in done and followed < MAX_FOLLOW:
                         queue.append(link)
                         followed += 1
+    for name, url in DATA:
+        status, body = get(url)
+        time.sleep(GAP_S)
+        manifest.append(f"data\t{status}\t{len(body)}\t{hashlib.sha1(body).hexdigest()[:12] if body else '-'}\t{url}")
+        if status == 200 and body:
+            os.makedirs(os.path.join(root, "data"), exist_ok=True)
+            with open(os.path.join(root, "data", name + ".json"), "wb") as f:
+                f.write(body)
     with open(os.path.join(root, "MANIFEST.tsv"), "w") as f:
         f.write("api\tstatus\tbytes\tsha1\turl\n" + "\n".join(manifest) + "\n")
     ok = sum(1 for m in manifest if m.split("\t")[1] == "200")
