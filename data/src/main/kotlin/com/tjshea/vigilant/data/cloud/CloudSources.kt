@@ -345,11 +345,14 @@ class CloudSources(
     }
 
     /** Every socket this engine holds is closed cleanly (job end, cancel, hours over): a socket left half-open counts against BoltOdds' 3 connections until its server times it out (BC3). */
-    fun closeSockets() {
+    fun closeSockets(flushMs: Long = CLOSE_FLUSH_MS) {
         runCatching { boltFeed.close() }
         runCatching { sxbet.stream?.close() }
         runCatching { kalshiStream.close() }
         runCatching { sharpApiStream.close("job ending") }
+        // OkHttp sends a close frame from its own writer thread after close() returns; the JVM ends right after this call, so give the frames a moment
+        // to leave (AF, 2026-10-22: the next job's BoltOdds props socket was refused "Too many concurrent connections" by the old job's half-open ones).
+        if (flushMs > 0) runCatching { Thread.sleep(flushMs) }
     }
 
     fun sources(s: ScanSettings): List<ReferenceSource> {
