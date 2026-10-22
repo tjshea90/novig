@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-lpr7ge",
- "head": "f47a4eff96dd551fde73d8386bab271bb8f0c833",
+ "head": "fed10374833a6c605771ed18e774190162323fca",
  "since": 1792707892,
- "beat": 1792708557,
- "beatIso": "2026-10-22T22:35:57Z",
- "done": "",
- "next": ""
+ "beat": 1792708592,
+ "beatIso": "2026-10-22T22:36:32Z",
+ "done": "bump 1.0.49 (389)",
+ "next": "ship.sh, release.yml, record-release"
 }
