@@ -64,6 +64,17 @@ class CloudCodecTest {
     }
 
     @Test
+    fun `a Kalshi row keeps each outcome's ticker so the phone can order it`() {
+        val r = row()
+        val ref = com.tjshea.vigilant.data.book.BookRef("KXNFLGAME-1", "KXNFLGAME-1-NYK|yes", "https://kalshi.com/m")
+        val market = r.market.copy(outcomes = r.market.outcomes.mapIndexed { i, o -> o.copy(bookRef = if (i == 0) ref else ref.copy(outcomeId = "KXNFLGAME-1-NYK|no")) })
+        val kr = r.copy(market = market, outcome = market.outcomes.first())
+        val back = CloudCodec.decode(Json.parseToJsonElement(Json.encodeToString(JsonObject.serializer(), CloudCodec.encode(kr))) as JsonObject)!!
+        assertEquals(kr, back)
+        assertEquals(mapOf("o1" to com.tjshea.vigilant.data.kalshitrade.KalshiBook.Ref("KXNFLGAME-1-NYK", "yes"), "o2" to com.tjshea.vigilant.data.kalshitrade.KalshiBook.Ref("KXNFLGAME-1-NYK", "no")), com.tjshea.vigilant.data.kalshitrade.KalshiBook.refs(back.market))
+    }
+
+    @Test
     fun `a row with an unknown league or a missing part is skipped and counted, never fails the feed`() {
         val good = CloudCodec.encode(row())
         val unknownLeague = JsonObject(good + ("lg" to JsonPrimitive("CURLING")))
