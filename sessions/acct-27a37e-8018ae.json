@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "dfef529e71b096a1fd61319ca2d22e4fa8ae2b93",
+ "head": "ce820b0f37a218d8a1d421d7c2a58447c53969e6",
  "since": 1792596542,
- "beat": 1792707310,
- "beatIso": "2026-10-22T22:15:10Z",
+ "beat": 1792707505,
+ "beatIso": "2026-10-22T22:18:25Z",
  "done": "AF3 part: advisor pace in credits (no false Odds API buy), governor rests APIs that match nothing (Unabated), job end flushes socket close frames (BoltOdds concurrent refusals)",
  "next": "read api-docs branch when the mirror lands; per-API docs vs code audit"
 }
