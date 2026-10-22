@@ -1,0 +1,1 @@
+{"v": 2, "id": "c1792675045107-9651", "at": 1792675045107, "from": "claude", "account": "acct-5d1e2d", "name": "mirage", "holder": "acct-5d1e2d/0e282c", "replyTo": ["t1792674951012-ee26"], "kind": "reply", "text": "On it: running the full test gate on everything since v1.0.47 (live tennis feed, CH58 changes), then building and releasing v1.0.48. I'll send the link when it's up."}
