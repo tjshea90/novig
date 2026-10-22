@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "097bf2e90962c1ce9219dc490e8f77fb9afb60a1",
+ "head": "16d814aa782decdc43490718ee16834495eebff2",
  "since": 1792596542,
- "beat": 1792709435,
- "beatIso": "2026-10-22T22:50:35Z",
- "done": "pre-ship: API audit (AF): Novig catalog best-bid screening, PropLine bulk props + free injuries, BoltOdds double-count fix and socket visibility, Polymarket live CLOB prices, PinnWire one request for all sports, governor rests useless APIs, advisor credit pace, weekly API docs mirror",
- "next": "ship.sh gates and releases this"
+ "beat": 1792709593,
+ "beatIso": "2026-10-22T22:53:13Z",
+ "done": "pre-release: API audit (AF): Novig catalog best-bid screening, PropLine bulk props + free injuries, BoltOdds double-count fix and socket visibility, Polymarket live CLOB prices, PinnWire one request for all sports, governor rests useless APIs, advisor credit pace, weekly API docs mirror (versionCode 390, v1.0.50)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.50), then run: bash tools/record-release.sh v1.0.50 390 \"API audit (AF): Novig catalog best-bid screening, PropLine bulk props + free injuries, BoltOdds double-count fix and socket visibility, Polymarket live CLOB prices, PinnWire one request for all sports, governor rests useless APIs, advisor credit pace, weekly API docs mirror\""
 }
