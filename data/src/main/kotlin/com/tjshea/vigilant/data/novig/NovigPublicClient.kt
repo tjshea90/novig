@@ -376,7 +376,7 @@ class NovigPublicClient(
     }
 
     /**
-     * Each outcome's best resting bid as the catalog lists it (since 2026-10-20: `outcomes[].bid {price, qty}`, NOVIG_API.md §28), kept as a best-bid-only book ([NovigBook.partial]) stamped
+     * Each outcome's best resting bid as the catalog lists it (since 2026-10-20: `outcomes[].bid {price, qty}`, NOVIG_API.md §29), kept as a best-bid-only book ([NovigBook.partial]) stamped
      * at the read: what one request says of up to 5,000 markets, where a scan used to read ~9,600 books one by one (AF, 2026-10-22: 13,727 prices in 420 s). Only from the SIGNED route
      * (the public one is cached at Novig's edge, so its age is unknown), and only from a page that carries the field at all (absent = no bid rests, so a page with none anywhere says
      * nothing about the feature).
