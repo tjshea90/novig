@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-wju7hd",
  "head": "617145d3b63c3618f63490d17ca278373a46b892",
  "since": 1792624947,
- "beat": 1792628288,
- "beatIso": "2026-10-22T00:18:08Z",
+ "beat": 1792628485,
+ "beatIso": "2026-10-22T00:21:25Z",
  "done": "SharpAPI card on Engine>APIs without a phone key; SharpAPI switch on Live sockets",
  "next": "ship v1.0.44"
 }
