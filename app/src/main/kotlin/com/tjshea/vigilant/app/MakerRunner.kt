@@ -442,8 +442,8 @@ class MakerRunner(
         s.maker && s.makerHalted != null -> "Stopped by the picked-off guard"
         // The GitHub engine posts the bids (TCL31) while its heartbeat is fresh and says its desk is live; a silent engine hands them back to this phone at once. Its bids carry their own client-id prefix, so this desk never takes them for strays.
         s.engineBids && c.cloud.ui.value.status?.deskLive(clock()) == true -> "The GitHub engine posts the bids now"
-        // Tj, 2026-10-22, CH66: with the GitHub engine driving, bids are the engine's job whatever its state: this phone posts none (switch Engine trading to Live to have GitHub post them).
-        s.bidsFromCloud -> "Bids run on GitHub (Settings › Cloud scan › Engine trading); this phone posts none while the engine drives"
+        // Tj, 2026-10-22, CH66: with the GitHub engine driving, bids are the engine's job whatever its state: this phone posts none unless Settings › Cloud scan › Engine trading › Bids on GitHub is switched off (and Engine trading to Live to have GitHub post them).
+        s.bidsFromCloud && s.gates.cloudBids -> "Bids run on GitHub (Settings › Cloud scan › Engine trading); this phone posts none while the engine drives"
         else -> null
     }
 

@@ -635,7 +635,8 @@ class MakerAppTest {
         assertTrue("the sample board makes bids: $local", local.size >= 2)
         // the same board through the engine's candidates and the phone's lane
         app.container.makerStore.update { emptyList() }
-        val s = SampleScan.settings.copy(maker = true).let { it.copy(gates = it.gates.copy(cloudScan = true)) }
+        // Bids on GitHub are switched off here: this is the PHONE posting the engine's candidates (with them on, the phone stands down: CH66).
+        val s = SampleScan.settings.copy(maker = true).let { it.copy(gates = it.gates.copy(cloudScan = true, cloudBids = false)) }
         app.container.settingsStore.update { s }
         assertTrue(s.bidsFromCloud)
         app.container.cloudBids.put(com.tjshea.vigilant.data.cloud.CloudBids(now, false, 1L, com.tjshea.vigilant.data.novig.trading.maker.BidCandidates.from(SampleScan.resultNoOtherBids(), s, now)))
