@@ -6,10 +6,10 @@
  "kind": "routine",
  "task": "",
  "branch": "claude/optimistic-curie-lpr7ge",
- "head": "371f7ba8097272f9cfabc59cb88b3d0397863ae9",
+ "head": "be74f1ef969eead2bf24cf3e9a4d23a9db5f91ca",
  "since": 1792711303,
- "beat": 1792713213,
- "beatIso": "2026-10-22T23:53:33Z",
- "done": "research index",
- "next": "ship 1.0.53"
+ "beat": 1792713291,
+ "beatIso": "2026-10-22T23:54:51Z",
+ "done": "pre-ship: CH66a with GitHub driving, the phone takes no Novig/order sockets and posts no Vigilant bets or bids of its own; the Feed's live lane waits too",
+ "next": "ship.sh gates and releases this"
 }
