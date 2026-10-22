@@ -294,6 +294,16 @@ class CloudSources(
         }
     }
 
+    /** What SX Bet's socket has heard and what became of it, for the scan diagnostics (2026-10-22: "it says only 1 live game, it may have a matching problem"). */
+    fun sxDiagnostics(): String {
+        val st = sxbet.stream ?: return "SX Bet: no socket"
+        val feed = sxConfirmFeed()
+        val statuses = st.fixtureStatus.values.groupingBy { it }.eachCount().entries.joinToString(",") { "status ${it.key}: ${it.value}" }
+        val now = System.currentTimeMillis()
+        val liveScores = st.scores.values.count { !it.finished && now - it.atMs <= 120_000L }
+        return "SX Bet: ${st.scores.size} scores heard ($liveScores live and fresh), ${st.fixtureStatus.size} fixture statuses ($statuses), ${feed?.liveGames ?: 0} games with lines in Vigilant's leagues, ${feed?.linesLive ?: 0} lines live; ${feed?.note ?: "no live-feed note yet"}"
+    }
+
     /** The BoltOdds soft-book average as a live price feed for [com.tjshea.vigilant.data.pinnodds.PinnLiveRunner] (the phone's `BoltLiveFeed`, same arguments); the engine has no Pinnodds. */
     fun boltLiveFeed(settings: () -> ScanSettings, sink: (String, Long) -> Unit, scope: kotlinx.coroutines.CoroutineScope, rules: () -> com.tjshea.vigilant.data.boltodds.BoltLiveConsensus.Rules): com.tjshea.vigilant.data.boltodds.BoltLiveFeed =
         com.tjshea.vigilant.data.boltodds.BoltLiveFeed(

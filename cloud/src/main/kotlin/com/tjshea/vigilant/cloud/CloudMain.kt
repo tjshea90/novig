@@ -534,7 +534,7 @@ fun main(args: Array<String>) = runBlocking {
         // The bid desk's candidate lines (Tj, 2026-10-15), only while the phone has Vigilant-priced bids on: the fair side of every bid decision is made here, the phone adds Novig's books and posts.
         prepare = { s -> latestSettings.set(s); novigKeyed?.configure(s) },
         novigRoute = { novigKeyed?.route(System.currentTimeMillis()) ?: CloudNovig.PUBLIC_ONLY },
-        scanDiagnostics = { novigKeyed?.feedReport().orEmpty() + listOf("SharpAPI reads: " + sources.sharpApi.lastReads.entries.joinToString(", ") { "${it.key} ${it.value}" }) + sources.sharpApi.lastCensus.entries.map { "SharpAPI ${it.key}: ${it.value}" } },
+        scanDiagnostics = { novigKeyed?.feedReport().orEmpty() + listOf(sources.sxDiagnostics()) + listOf("SharpAPI reads: " + sources.sharpApi.lastReads.entries.joinToString(", ") { "${it.key} ${it.value}" }) + sources.sharpApi.lastCensus.entries.map { "SharpAPI ${it.key}: ${it.value}" } },
         liveUrl = { liveUrlRef.get() },
         socketLines = { sources.socketLines(com.tjshea.vigilant.data.cloud.CloudEngine.forCloud(latestSettings.get() ?: com.tjshea.vigilant.data.scanner.ScanSettings())) },
         socketStates = { sources.socketStates(com.tjshea.vigilant.data.cloud.CloudEngine.forCloud(latestSettings.get() ?: com.tjshea.vigilant.data.scanner.ScanSettings())) },
