@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-vobqze",
- "head": "48f3b6d36605433f3ea380f5332ee593cf9e22bc",
+ "head": "c5f553a1c16e09d7c460a8ac5897b24a373c28ea",
  "since": 1792624947,
- "beat": 1792689238,
- "beatIso": "2026-10-22T17:13:58Z",
- "done": "CH58f: live feed reads SharpAPI atp_challenger/itf_men/itf_women (Novig's live matches were Challengers); tiers loaded in parallel",
- "next": "check liveNote after engine restart: tennis games should show"
+ "beat": 1792689269,
+ "beatIso": "2026-10-22T17:14:29Z",
+ "done": "CH58g: live note puts the reason first (was cut off by the note cap)",
+ "next": "read liveNote atp reason"
 }
