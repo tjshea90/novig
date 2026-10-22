@@ -36,3 +36,8 @@ Market keys: MLB `pitcher_*`/`batter_*`; **NBA** `player_points|rebounds|assists
 5. **Grading**: `/results` as one more source for prop grading and for the engine's trade settlement (box-score actual_value).
 6. **+EV section in the app**: the engine asks `/ev?bookmakers=novig&max_age=300` per pregame event, publishes the lines, the phone shows them in a PropLine +EV screen.
 7. **Research feeds for Claude**: `/movement` steam, `/best-line` at Novig, `/trends` and `/history` hit rates, `/books/accuracy`, saved as small daily files in `research/propline/`.
+
+## Docs re-read 2026-10-22 (AF)
+- Bulk `GET /v1/sports/{sport}/odds?markets=<prop keys>` returns every game's props in one call (PropLine's advice; `X-PropLine-Hint` is sent to keys that read games one by one): used for a paid key (`PropLineClient.bulkProps`, fallback per game). Limits: 20 in flight per key, Pro burst 50 / 20 a second, `/ev` cached 45 s server-side.
+- Free `GET /v1/sports/{sport}/injuries` (+ `/history`): used before ParlayAPI's 1-credit injuries (`PropLineInjuries`). `player_blocks_steals` maps to Novig's `STEALS_BLOCKS`.
+- New: `max_age` on both /odds endpoints, `includePregameOnly`, `line_added`/`line_pulled`/`availability` stream events and a 25 s `heartbeat` (Streaming Lite+), `/v1/freshness` per book (free).

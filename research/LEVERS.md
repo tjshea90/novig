@@ -20,6 +20,9 @@ Moves already made are in `research/review/CHANGES.md`; the open ones are TASKS.
 | Books on one desk count once (Kambi group etc.) | `engine/BookCompany.kt` | `research/book_company_kambi_2026-10-11.md`, `research/book_company_2026-10-12.md` | add a book only on a documented provider or 80%+ identical lines over 100+ lines |
 | Scan speed: how old the fair is when the list shows | `ScanGuards.hotRefresh`, `HotBudget` | `research/scan_speed_2026-10-15.md`, `research/cloud_review_2026-10-15.md` | list's median fair age in `status.json` `ScanTiming` (was 14.7 min) |
 
+## API usage (AF, 2026-10-22)
+- Studies: `research/api_full_audit_2026-10-22.md`, `research/api_waste_audit_2026-10-22.md`. Levers: `NovigPublicClient.CATALOG_TOP_MAX_AGE_MS` (catalog best-bid screen), `PropLinePropsSource.BULK_MIN_GAMES`, PinnWire `Host.allSports`, `ApiGovernor.USELESS_LIMIT`. The number that settles it: the engine's `scan report:` Novig seconds per scan, PinnWire keys left at 00:00 UTC, PropLine used vs its day share.
+
 ## Closed
 Studies whose verdict is taken and where nothing is left to tune. Disposition after the dash. A closed study is reopened only if its number changes.
 

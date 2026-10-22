@@ -43,3 +43,6 @@ Settings › **Unabated** (key list, Test key / Test and share sample, one switc
 
 ## 4. Not known until a live sample
 Bet-type names (the example shows `betTypeId` 71/72 for NBA totals, 1 = moneyline), which leagues the free key lists, prop bet-type naming (unmapped ones are listed by Test key), period names beyond `game`, whether Novig's rows carry `sourcePrice`.
+
+## Docs re-read 2026-10-22 (AF)
+Free API: REST only, at least 15 s delayed, one odds request per 5 s per key, books DraftKings, FanDuel, MGM, Caesars, theScoreBet, PrizePicks, Pick6, Fanatics, Novig, Underdog, ProphetX, Kalshi, Underdog PM, Polymarket; SSE is Concierge/Enterprise only. Every one of those books reaches the engine through a better feed, and on 2026-10-22 its quotes were p90 20.6 h old and matched 0 games while holding the fair-odds step 75 s: the API governor now rests an API that matches nothing for 6 scans (`ApiGovernor.USELESS_LIMIT`). Recommendation: switch it off.
