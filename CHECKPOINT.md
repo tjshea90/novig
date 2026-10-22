@@ -1,22 +1,23 @@
-# CHECKPOINT 3968 — read me first, then TASKS.md
+# CHECKPOINT 3969 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T05:20:34Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-p7zdn2` · **builds on:** `dc939715d` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T05:22:28Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-p7zdn2` · **builds on:** `a3cbf5d78` (this checkpoint is the commit after it)
 
 ## Just done
-CH57 parlay spend noted, replied
+engine_set list support; ATP/WTA added to leagues
 
 ## Do this next
-CH57a read key usage breakdown and archived Spend lines, then trim; CH56a/b tennis
+verify liveStats shows tennis; consider SHARPAPI feed
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  10d52160c ckpt 3968: CH57 parlay spend noted, replied
   dc939715d ckpt 3967: CH56 tennis live diagnosis, replied to Tj
   ce6a55d74 ckpt 3966: pre-release: DV4: repeat guard in the engine's bid desk and live lane also 
   73ed6907d ckpt 3965: pre-ship: DV4: repeat guard in the engine's bid desk and live lane also rea
@@ -26,5 +27,7 @@ CH57a read key usage breakdown and archived Spend lines, then trim; CH56a/b tenn
   27cc19336 ckpt 3961: v1.0.46 shipped (DV1-3)
   27688fd85 ckpt 3960: pre-release: v1.0.46: red X on the bet slip for a player, team or prop you 
   cafef0ecf ckpt 3959: pre-ship: v1.0.46: red X on the bet slip for a player, team or prop you alr
-  84f2b1bb0 ckpt 3958: DV tasks written
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
