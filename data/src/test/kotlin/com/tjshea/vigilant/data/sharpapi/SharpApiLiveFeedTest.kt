@@ -1,3 +1,5 @@
+package com.tjshea.vigilant.data.sharpapi
+
 
 class SharpApiLiveLeaguesTest {
     @org.junit.Test
