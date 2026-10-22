@@ -129,6 +129,33 @@ class ExchangeClientsTest {
     }
 
     @Test
+    fun `polymarket's listed prices are re-read live from the CLOB's books, and a market the CLOB does not answer keeps Gamma's`() = runBlocking {
+        // The moneyline carries its CLOB token ids; Gamma says 0.62/0.63, the live book says 0.70/0.71.
+        val gamma = ExchangeFixtures.polymarketNfl.replaceFirst("\"outcomes\":\"[\\\"Ravens\\\", \\\"Cowboys\\\"]\",", "\"outcomes\":\"[\\\"Ravens\\\", \\\"Cowboys\\\"]\",\"clobTokenIds\":\"[\\\"tokR\\\", \\\"tokC\\\"]\",")
+        assertTrue(gamma.contains("clobTokenIds"))
+        var booksBody = ""
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = when (request.requestUrl!!.encodedPath) {
+                "/books" -> { booksBody = request.body.readUtf8(); MockResponse().setBody("""[{"market":"0x1","asset_id":"tokR","bids":[{"price":"0.68","size":"500"},{"price":"0.70","size":"900"}],"asks":[{"price":"0.73","size":"100"},{"price":"0.71","size":"800"}]}]""") }
+                else -> MockResponse().setBody(gamma)
+            }
+        }
+        val now = Instant.parse("2026-09-25T12:00:00Z").toEpochMilli()
+        val c = PolymarketClient(OkHttpClient(), json, base("/"), clobUrl = base("/"), clock = { now })
+        val snap = c.odds(nfl, settings.copy(families = setOf(MarketFamily.MONEYLINE, MarketFamily.SPREAD), daysAhead = 3))
+        assertEquals("""[{"token_id":"tokR"}]""", booksBody)
+        val g = snap.events.first { it.id == "pm:nfl-bal-dal-2026-09-27" }
+        val ml = g.markets.single { it.kind == LineKind.MONEYLINE }
+        assertEquals(1 / 0.71, ml.quotes.first { it.side == Side.AWAY }.decimalOdds, 1e-12)
+        assertEquals(1 / 0.30, ml.quotes.first { it.side == Side.HOME }.decimalOdds, 1e-12)
+        // The spread had no token ids: Gamma's price as before.
+        assertEquals(1 / 0.49, g.markets.single { it.kind == LineKind.SPREAD }.quotes.first { it.side == Side.AWAY }.decimalOdds, 1e-12)
+        // V2 markets name their outcomes by positionIds (an array).
+        val v2 = PolymarketClient.parseMarkets("""[{"id":"9","outcomes":"[\"A\", \"B\"]","positionIds":["p1","p2"]}]""", json).single()
+        assertEquals("p1", PolymarketClient.firstToken(v2, json))
+    }
+
+    @Test
     fun `a league polymarket doesn't list is never requested`() {
         assertTrue(!PolymarketClient(OkHttpClient(), json).supports(Leagues.byNovigName("Boxing")!!))
     }
