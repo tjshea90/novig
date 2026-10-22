@@ -190,6 +190,10 @@ class PropLineClient(
     suspend fun scoresRaw(sportKey: String): String? =
         call("/sports/$sportKey/scores", listOf("daysFrom" to "3"), notFound = null) { raw -> raw }.value
 
+    /** The sport's current injury report (`/sports/{sport}/injuries`, free on any key; ESPN's list refreshed every 10 minutes, conference reports for college). One request. */
+    suspend fun injuriesRaw(sportKey: String): String? =
+        call("/sports/${PropLineInjuries.sportOf(sportKey) ?: sportKey}/injuries", emptyList(), notFound = null) { raw -> raw }.value
+
     /** One game's official box score (`/events/{id}/stats`, free): player_name, stat_type, stat_value rows. One request. */
     suspend fun statsRaw(sportKey: String, eventId: String): String? =
         call("/sports/$sportKey/events/$eventId/stats", emptyList(), notFound = null) { raw -> raw }.value

@@ -240,6 +240,9 @@ class CloudSources(
     private val pinnoddsHost = PinnapiClient.pinnodds(KeyPool(QuotaPolicy.PINNODDS, { keys(CloudKeys.PINNODDS) }, usage))
     private val propLine = PropLineClient(http, KeyPool(QuotaPolicy.PROPLINE, { keys(CloudKeys.PROPLINE) }, usage), json, relayNovig = true, bookIds = false, meter = usage)
     private val propLineProps = PropLinePropsSource(propLine)
+    @Volatile private var propLineInjuriesOn = false
+    /** PropLine's free injury report, asked before ParlayAPI's 1-credit one (AF, 2026-10-22). */
+    private val propLineInjuries = com.tjshea.vigilant.data.reference.PropLineInjuries(propLine, injuries, json, active = { propLineInjuriesOn })
     /** PropLine's plan per key from its quota headers (Tj, 2026-10-16, TCL56): the paid key is found and used first ([KeyPool]). The engine asks hourly. */
     private val propLineAccount = com.tjshea.vigilant.data.reference.PropLineAccount(http, { keys(CloudKeys.PROPLINE) }, usage)
     fun propLinePlans(): String = keys(CloudKeys.PROPLINE).mapIndexedNotNull { i, k -> propLineAccount.last[k]?.let { c -> "#${i + 1} ${c.tier} used ${if (c.remaining != null && c.limit != null) c.limit!! - c.remaining!! else "?"}/${c.limit ?: "?"}" + (if (!c.valid) " (${c.reason})" else "") } }.joinToString(", ").ifBlank { "none read" }
@@ -381,20 +384,24 @@ class CloudSources(
      */
     suspend fun askInjuries(result: com.tjshea.vigilant.data.scanner.ScanResult, s: ScanSettings, now: Long) {
         parlayInjuriesOn = s.useParlay && has(CloudKeys.PARLAY)
-        if (!parlayInjuriesOn) return
+        propLineInjuriesOn = s.usePropLine && has(CloudKeys.PROPLINE)
+        if (!parlayInjuriesOn && !propLineInjuriesOn) return
         val book = injuries.book.value
         val uncovered = HashMap<String, MutableSet<String>>()
         val seen = HashSet<String>()
         for (o in result.opportunities) {
             if (o.kind != com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP || o.isLive || !o.league.oddsApiListed || o.league.novigName !in s.leagues) continue
             val sport = o.league.oddsApiSportKey
-            if (sport !in ParlayInjuries.SPORTS) continue
+            if (sport !in ParlayInjuries.SPORTS && com.tjshea.vigilant.data.reference.PropLineInjuries.sportOf(sport) == null) continue
             val player = o.lineKey?.subject ?: continue
             if (!seen.add("$sport|$player") || book.covers(sport, player, now)) continue
             uncovered.getOrPut(sport) { HashSet() } += player
         }
         if (uncovered.isEmpty()) return
-        kotlinx.coroutines.coroutineScope { uncovered.map { (sport, players) -> async { runCatching { parlayInjuries.fill(sport, players) } } }.awaitAll() }
+        // PropLine's report is free: asked first; ParlayAPI (1 credit a league) only for a sport PropLine did not answer.
+        val answered = kotlinx.coroutines.coroutineScope { uncovered.map { (sport, players) -> async { sport to (runCatching { propLineInjuries.fill(sport, players) }.getOrDefault(false)) } }.awaitAll() }
+            .filter { it.second }.mapTo(HashSet()) { it.first }
+        kotlinx.coroutines.coroutineScope { uncovered.filterKeys { it !in answered }.map { (sport, players) -> async { runCatching { parlayInjuries.fill(sport, players) } } }.awaitAll() }
     }
 
     /** What is in [sources], by name, for the status file and the logs (never a key). */

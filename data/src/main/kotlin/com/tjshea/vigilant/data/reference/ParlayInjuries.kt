@@ -306,3 +306,72 @@ class ParlayInjuries(
         }
     }
 }
+
+/**
+ * PropLine's injury report (`GET /v1/sports/{sport}/injuries`, free on any key, PropLine docs 2026-10-22): the same ESPN list ParlayAPI relays for 1 credit a league, plus the
+ * conferences' availability reports for college sports, with `status_code` (out, out_first_half, doubtful, questionable, probable, game_time_decision, day_to_day, injured_list,
+ * suspended, other). Asked first, so ParlayAPI's paid read is left for the players PropLine does not cover. Same rules: a sport at most every [ParlayInjuries.REUSE_MS].
+ */
+class PropLineInjuries(
+    private val client: PropLineClient,
+    private val index: InjuryIndex,
+    private val json: Json,
+    private val active: suspend () -> Boolean,
+    private val clock: () -> Long = System::currentTimeMillis,
+) {
+    private val readAt = HashMap<String, Long>()
+    private val mutex = Mutex()
+
+    @Volatile
+    var requests: Int = 0
+        private set
+
+    suspend fun fill(sportKey: String, players: Collection<String>): Boolean {
+        if (sportOf(sportKey) == null || players.isEmpty() || !active()) return false
+        val now = clock()
+        mutex.withLock {
+            if (readAt[sportKey]?.let { now - it < ParlayInjuries.REUSE_MS } == true) return false
+            readAt[sportKey] = now
+        }
+        requests++
+        val body = try {
+            client.injuriesRaw(sportKey)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return false
+        } ?: return false
+        val list = runCatching { parse(body, json) }.getOrNull() ?: return false
+        index.record(sportKey, list, asked = players)
+        return true
+    }
+
+    companion object {
+        /** The Odds API sport keys Vigilant uses -> PropLine's own keys for the sports its injury report covers (others answer 404). */
+        private val SPORTS = mapOf(
+            "americanfootball_nfl" to "football_nfl", "americanfootball_ncaaf" to "football_ncaaf", "basketball_nba" to "basketball_nba",
+            "basketball_wnba" to "basketball_wnba", "icehockey_nhl" to "hockey_nhl", "baseball_mlb" to "baseball_mlb",
+            "basketball_ncaab" to "basketball_ncaab", "basketball_ncaaw" to "basketball_ncaaw",
+        )
+
+        fun sportOf(sportKey: String): String? = SPORTS[sportKey] ?: sportKey.takeIf { it in SPORTS.values }
+
+        /** `{sport, count, players[]}` into reports; a cleared player is not listed. */
+        fun parse(body: String, json: Json): List<Injury> {
+            val root = json.parseToJsonElement(body) as? JsonObject ?: return emptyList()
+            val rows = (root["players"] as? JsonArray).orEmpty()
+            return rows.mapNotNull { r ->
+                val o = r as? JsonObject ?: return@mapNotNull null
+                val player = with(ParlayInjuries) { o.str("player_name") } ?: return@mapNotNull null
+                val status = with(ParlayInjuries) { o.str("status") } ?: return@mapNotNull null
+                with(ParlayInjuries) {
+                    Injury(
+                        player = player, status = status, team = o.str("team"), teamAbbr = o.str("team_abbr"), position = o.str("position"),
+                        bodyPart = o.str("body_part"), side = o.str("side"), detail = o.str("detail") ?: o.str("injury_type"),
+                        expectedReturn = o.str("expected_return"), reportedAtMs = time(o.str("source_updated_at") ?: o.str("status_since")),
+                    )
+                }
+            }
+        }
+    }
+}
