@@ -252,6 +252,8 @@ fun main(args: Array<String>) = runBlocking {
     } else null
     log("trading: ${if (tradePort != null) "the trading key is present (orders possible only if the phone's switch says live)" else "no trading key: paper only"}")
     val trader = CloudTrader(unavailable = { o, now -> sources.unavailable(o, now) }, port = tradePort).also { traderRef = it }
+    // The API audit's research journals (AF6/AF7/AF9): Kalshi live data, SharpAPI splits, Novig's own closes of the engine's sides. Read-only, archived with the other journals.
+    AuditFeeds.launch(scope, out, http, json, sources, novig, { latestSettings.get() }, { traderRef?.ledger?.entries.orEmpty() }, log::invoke)
     // Every Novig outcome of the last scan, so the account's positions can be put in their games (TCL91).
     val outcomeIndex = java.util.concurrent.atomic.AtomicReference<Map<String, CloudTrader.OutcomeInfo>>(emptyMap())
     trader.describeOutcome = { id -> outcomeIndex.get()[id] }
