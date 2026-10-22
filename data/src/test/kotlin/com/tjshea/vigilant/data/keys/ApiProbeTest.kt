@@ -158,10 +158,18 @@ class ApiProbeTest {
     }
 
     @Test fun boltOddsKeyIsCheckedWithGetInfoAndARefusalIsToldApartFromAnOutage() = runBlocking {
-        handler = { r -> if (r.requestUrl!!.queryParameter("key") == "boltboltbolt1") ok("""{"sports":["NBA","MLB"],"sportsbooks":["draftkings","fanduel","novig"]}""") else MockResponse().setResponseCode(403).setBody("""{"detail":"Invalid API token"}""") }
+        handler = { r ->
+            when {
+                r.requestUrl!!.queryParameter("key") != "boltboltbolt1" -> MockResponse().setResponseCode(403).setBody("""{"detail":"Invalid API token"}""")
+                r.requestUrl!!.encodedPath.endsWith("/odds/user") -> ok("""{"plan":"Pro","connections":2,"subscriptions":[{"subscribed":true},{"subscribed":true}],"snapshot":{"daily_tokens":300,"tokens_used":12,"resets_at":null}}""")
+                else -> ok("""{"sports":["NBA","MLB"],"sportsbooks":["draftkings","fanduel","novig"]}""")
+            }
+        }
         val good = probe.check(ApiProvider.BOLTODDS, listOf("boltboltbolt1")).single()
         assertTrue(good.message, good.ok); assertTrue(good.message, good.message.contains("2 sports, 3 sportsbooks"))
-        assertEquals("/bolt/get_info", requests.last().requestUrl!!.encodedPath)
+        // The key's open sockets and snapshot tokens come from /api/odds/user (AF, 2026-10-22).
+        assertTrue(good.message, good.message.contains("2 sockets open on this key · snapshot tokens 12 of 300 today"))
+        assertEquals(listOf("/bolt/get_info", "/bolt/odds/user"), requests.takeLast(2).map { it.requestUrl!!.encodedPath })
         val bad = probe.check(ApiProvider.BOLTODDS, listOf("wrongwrongwrong")).single()
         assertFalse(bad.message, bad.ok); assertTrue(bad.message, bad.message.contains("Invalid API token"))
         assertTrue("a refused key rests", usage(QuotaPolicy.BOLTODDS, "wrongwrongwrong").refused)
