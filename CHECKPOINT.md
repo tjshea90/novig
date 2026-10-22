@@ -1,13 +1,13 @@
-# CHECKPOINT 3995 — read me first, then TASKS.md
+# CHECKPOINT 3996 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T21:02:11Z · **tests:** 1 RED: test_research_index.sh (8 green)
-**Branch:** `claude/optimistic-curie-lpr7ge` · **builds on:** `ee99b3c20` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T21:33:12Z · **tests:** 1 RED: test_research_index.sh (8 green)
+**Branch:** `claude/optimistic-curie-lpr7ge` · **builds on:** `69b6689d1` (this checkpoint is the commit after it)
 
 ## Just done
-CH58k: lane note now shows judged/offered/skips/bid gate so tennis non-placement has a visible cause
+CH58k: found live lane idle because Tj's Live master switch is OFF (phone, 20:54 UTC); asked him
 
 ## Do this next
-after engine restarts onto main: read liveNote skips for tennis; then fix the commonest skip
+if Tj says turn it on: engine_set liveMaster; then read liveNote skips for tennis and fix the commonest
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ after engine restarts onto main: read liveNote skips for tennis; then fix the co
 
 ## Last ten checkpoints
 ```
+  69b6689d1 ckpt 3995: CH58k: lane note now shows judged/offered/skips/bid gate so tennis non-plac
   3b65e4226 ckpt 3994: full data test done
   e15922c93 ckpt 3993: CH58j: Live games tile counts tennis lane (mergeStats), tests green
   5ccfffeeb ckpt 3992: chat: answered Live screenshot, added CH58j
@@ -25,8 +26,4 @@ after engine restarts onto main: read liveNote skips for tennis; then fix the co
   fcb9d9c4a ckpt 3988: Bovada=Ozoon=Bodog, Borgata=BetMGM merged in BookCompany
   3b5c9e19c ckpt 3987: CH58h: live SharpAPI rows with no start time (tennis) become games, sent wi
   40c8eed15 ckpt 3986: research index rebuilt
-  66bb2e471 ckpt 3985: ENGINEER 2026-10-22: CH57a ParlayAPI spend study written
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
