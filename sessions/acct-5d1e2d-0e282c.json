@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-wju7hd",
- "head": "e60372abac05e861c44d1f4e0ea50c312d74f321",
+ "head": "a20110529f4d1a887871e3f4abe30088b6a27b4d",
  "since": 1792624947,
- "beat": 1792637660,
- "beatIso": "2026-10-22T02:54:20Z",
- "done": "PBP last-end diagnostics; NS2 written",
- "next": "restart engine once, read PBP connection log, NS2a/b"
+ "beat": 1792637686,
+ "beatIso": "2026-10-22T02:54:46Z",
+ "done": "live tail lane: limits, 3-buys-per-game and repeat guard now count the carried ledger (a restart gave them back)",
+ "next": "restart engine; confirm; ParlayAPI PBP log"
 }
