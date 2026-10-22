@@ -182,7 +182,7 @@ fun main(args: Array<String>) = runBlocking {
                     runCatching { com.tjshea.vigilant.data.sharpapi.SharpApiExtras.evAtNovig(sources.sharpApiClient, now) }.onSuccess { rows ->
                         runCatching { saEvJournal.appendAll(rows) }
                         log("SharpAPI +EV at Novig: ${rows.size} lines (" + rows.groupingBy { it.quality ?: "?" }.eachCount().entries.joinToString(", ") { "${it.key} ${it.value}" } + ")")
-                    }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("SharpAPI +EV read failed: ${e.message?.take(120)}") }
+                    }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("SharpAPI +EV read failed: ${e.message?.take(120)}"); if (e.message?.contains("book_not_selected") == true) { evAt = now + 6 * 3_600_000L - 10 * 60_000L; log("SharpAPI +EV at Novig: Novig is not among the books picked on SharpAPI's dashboard; not asked again for 6 h (add it there to turn this cross-check on)") } }
                 }
             }
             delay(5 * 60_000L)
@@ -534,7 +534,7 @@ fun main(args: Array<String>) = runBlocking {
         // The bid desk's candidate lines (Tj, 2026-10-15), only while the phone has Vigilant-priced bids on: the fair side of every bid decision is made here, the phone adds Novig's books and posts.
         prepare = { s -> latestSettings.set(s); novigKeyed?.configure(s) },
         novigRoute = { novigKeyed?.route(System.currentTimeMillis()) ?: CloudNovig.PUBLIC_ONLY },
-        novigStreamReport = { novigKeyed?.feedReport().orEmpty() },
+        scanDiagnostics = { novigKeyed?.feedReport().orEmpty() + listOf("SharpAPI reads: " + sources.sharpApi.lastReads.entries.joinToString(", ") { "${it.key} ${it.value}" }) },
         liveUrl = { liveUrlRef.get() },
         socketLines = { sources.socketLines(com.tjshea.vigilant.data.cloud.CloudEngine.forCloud(latestSettings.get() ?: com.tjshea.vigilant.data.scanner.ScanSettings())) },
         socketStates = { sources.socketStates(com.tjshea.vigilant.data.cloud.CloudEngine.forCloud(latestSettings.get() ?: com.tjshea.vigilant.data.scanner.ScanSettings())) },

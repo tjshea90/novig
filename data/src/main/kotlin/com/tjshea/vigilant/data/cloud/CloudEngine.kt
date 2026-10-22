@@ -77,8 +77,8 @@ class CloudEngine(
     /** One line on how Novig is being read now ([CloudNovig.route]). */
     private val novigRoute: () -> String = { "" },
     private val novigAddress: () -> String = { "" },
-    /** The Novig stream's own report (what it holds, its allowance, refusals), logged after each scan so a slow scan can be explained (NS1, Tj 2026-10-22). */
-    private val novigStreamReport: () -> List<String> = { emptyList() },
+    /** The Novig stream's own report (what it holds, its allowance, refusals) and what each league gave from SharpAPI, logged after each scan so a slow scan can be explained (NS1, Tj 2026-10-22). */
+    private val scanDiagnostics: () -> List<String> = { emptyList() },
     /** The tunnel address of the live status server, or blank ([CloudLive]); read each time a status is built. */
     private val liveUrl: () -> String = { "" },
     /** [ApiMonitor]'s lines, read each time a status is built. */
@@ -551,7 +551,7 @@ class CloudEngine(
         novigWatch.observe(report.errors, clock())?.let { ev -> novigOutage(ev) }
         scanNote = describe(report)
         log("scan report: $scanNote")
-        runCatching(novigStreamReport).getOrDefault(emptyList()).takeIf { it.isNotEmpty() }?.let { log("Novig stream: " + it.joinToString(" | ").take(900)) }
+        runCatching(scanDiagnostics).getOrDefault(emptyList()).takeIf { it.isNotEmpty() }?.let { log("scan diagnostics: " + it.joinToString(" | ").take(1400)) }
         feedLines = report.sources.map { FeedLine(it.id, it.name, it.fetched, it.reused, it.matched, it.standingBy, it.skipped, it.error?.take(120), it.heldBack?.take(120)) }
         for (f in feedLines) if (f.fetched + f.reused > 0) for (id in ApiManager.switchIdsOfFeed(f.id)) answeredAtMs[id] = clock()
         feedLinesAt = clock()

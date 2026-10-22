@@ -109,7 +109,7 @@ class CloudSources(
      */
     val sharpApiClient = com.tjshea.vigilant.data.sharpapi.SharpApiClient(http, json, { keys(CloudKeys.SHARPAPI).firstOrNull().orEmpty() }, usage)
     val sharpApiFeed = com.tjshea.vigilant.data.sharpapi.SharpApiFeed(sharpApiClient, log = { line -> println(line) })
-    private val sharpApi = com.tjshea.vigilant.data.sharpapi.SharpApiSource(sharpApiFeed, sharpApiClient)
+    val sharpApi = com.tjshea.vigilant.data.sharpapi.SharpApiSource(sharpApiFeed, sharpApiClient)
     /** SharpAPI's live game state (SS): from the stream's `gamestate` channel, or `GET /gamestate` while the stream is not live ([refreshSharpApiGameState]). */
     val sharpApiScores = com.tjshea.vigilant.data.sharpapi.SharpApiScores()
     /** SharpAPI's WebSocket (SS, Tj 2026-10-21: the stream add-on): odds and game state pushed into the store; only the engine ever opens it (one stream per key, a newer one displaces the older). */
