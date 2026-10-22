@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-wju7hd",
- "head": "41b3f7f968d3ee754619358fd3eb9648802dffe8",
+ "head": "cafef0ecfaf5167fddedcc111123a35174a2e7fc",
  "since": 1792624947,
- "beat": 1792638830,
- "beatIso": "2026-10-22T03:13:50Z",
- "done": "DV tasks written",
- "next": "DV1 red X, DV2 list removal, DV3 limits"
+ "beat": 1792638877,
+ "beatIso": "2026-10-22T03:14:37Z",
+ "done": "pre-ship: v1.0.46: red X on the bet slip for a player, team or prop you already hold; a bet the slip finds gone leaves the list at once; diversification caps (bets per game, dollars per team/player/prop, one bet per side) for bets and bids on the engine and phone, remembered across engine restarts; live tail lane limits no longer reset on a restart; SharpAPI, Novig stream and ParlayAPI fixes",
+ "next": "ship.sh gates and releases this"
 }
