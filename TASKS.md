@@ -6205,3 +6205,7 @@ CH61 (Tj chat 21:52 UTC 2026-10-22, t1792705931238-8a94): "audit all of the apis
 CH62 (Tj chat 22:08 UTC 2026-10-22, t1792706891132-fef6, screenshot): "why is this only checking 6 novig lines" (Kalshi > Arb: 'checked 6 Novig prices against 375 Kalshi games')
 - [x] CH62a cause: cloud mode gives the phone only the list's rows; KalshiHub.refreshArbs compared those. The engine's lane compares all priced lines (status.priced). Note now adds the engine's count and arbs (KalshiHub.engineArbNote). Ships with the next release.
 - [ ] CH62b engine publishes executable arbs (the Novig row pieces) so the Arb tab can list/place them in cloud mode
+
+CH63 (Tj chat 22:18 UTC 2026-10-22, t1792707520395-3d67, screenshot): "it is saying this error on every kalshi bet now" (Kalshi bet sheet: "This isn't a Kalshi market the app can order on (its ticker is missing)")
+- [x] CH63a cause: CloudCodec dropped NovigOutcome.bookRef (the Kalshi ticker) in the engine's kalshi-feed.json rows; fixed (outcome 'br'), test CloudCodecTest 'a Kalshi row keeps each outcome's ticker'. Needs app release (phone decodes) + engine on main.
+- [ ] CH63b ship release with CH62a + CH63a, tell Tj
