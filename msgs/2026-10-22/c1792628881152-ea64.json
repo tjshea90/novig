@@ -1,0 +1,1 @@
+{"v": 2, "id": "c1792628881152-ea64", "at": 1792628881152, "from": "claude", "account": "acct-5d1e2d", "name": "mirage", "holder": "acct-5d1e2d/0e282c", "replyTo": ["t1792628864358-27a6"], "kind": "reply", "text": "Building it now (task NS1). v1.0.44 is building on GitHub; I'll send its link when it lands, and report when the socket change is tested."}
