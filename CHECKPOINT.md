@@ -1,13 +1,13 @@
-# CHECKPOINT 3988 — read me first, then TASKS.md
+# CHECKPOINT 3989 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T17:31:11Z · **tests:** 1 RED: test_research_index.sh (8 green)
-**Branch:** `claude/optimistic-curie-vobqze` · **builds on:** `68870840c` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T17:39:55Z · **tests:** 1 RED: test_research_index.sh (8 green)
+**Branch:** `claude/optimistic-curie-vobqze` · **builds on:** `b2ab250b1` (this checkpoint is the commit after it)
 
 ## Just done
-Bovada=Ozoon=Bodog, Borgata=BetMGM merged in BookCompany
+CH58i: SharpAPI store polls each league in its own coroutine (tennis was stale behind NFL deltas)
 
 ## Do this next
-research more pairs via measured match if data allows
+reset engine; read liveNote
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ research more pairs via measured match if data allows
 
 ## Last ten checkpoints
 ```
+  fcb9d9c4a ckpt 3988: Bovada=Ozoon=Bodog, Borgata=BetMGM merged in BookCompany
   3b5c9e19c ckpt 3987: CH58h: live SharpAPI rows with no start time (tennis) become games, sent wi
   40c8eed15 ckpt 3986: research index rebuilt
   66bb2e471 ckpt 3985: ENGINEER 2026-10-22: CH57a ParlayAPI spend study written
@@ -25,8 +26,7 @@ research more pairs via measured match if data allows
   ac3d86efa ckpt 3981: pre-release: CH58: live SharpAPI feed reads ATP/WTA tennis; live lane note 
   283ea08f9 ckpt 3980: ANALYST 2026-10-22: no rule change, research card posted
   618ac4373 ckpt 3979: CH58b tennis forced into live feed; engine down until hours
-  4fa188354 ckpt 3978: live SharpAPI feed reads ATP/WTA whenever live tennis is on (the phone's co
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
