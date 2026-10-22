@@ -5,11 +5,11 @@
  "nonce": "8018ae",
  "kind": "interactive",
  "task": "",
- "branch": "claude/new-session-51eqix",
- "head": "f1f8876026b6c98fc8d7606398dcfe8bbf76ce8f",
+ "branch": "ccr-3d66032e-ynqoxw",
+ "head": "cc5f7c524a503643a716e095c36b63ee6ce194b8",
  "since": 1792596542,
- "beat": 1792627180,
- "beatIso": "2026-10-21T23:59:40Z",
+ "beat": 1792706447,
+ "beatIso": "2026-10-22T22:00:47Z",
  "done": "GS: game state was in v1.0.43; added the engine's sharpapi-finals journal (settled finals, once each); v1.0.43 recorded",
  "next": "after the key is on GitHub: read engine-log SharpAPI lines (stream, rows, game state live); SHARPAPI.md fixes from real frames"
 }
