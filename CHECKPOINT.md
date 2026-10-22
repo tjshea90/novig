@@ -1,13 +1,13 @@
-# CHECKPOINT 3982 — read me first, then TASKS.md
+# CHECKPOINT 3983 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T16:52:52Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-vobqze` · **builds on:** `31b35ac64` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T17:07:52Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-vobqze` · **builds on:** `a588387ed` (this checkpoint is the commit after it)
 
 ## Just done
-CH58e: live note says why live tennis rows give no game (stale store or census of dropped rows)
+CH58f: live feed reads SharpAPI atp_challenger/itf_men/itf_women (Novig's live matches were Challengers); tiers loaded in parallel
 
 ## Do this next
-read status.liveNote after engine restart; fix the named cause
+check liveNote after engine restart: tennis games should show
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ read status.liveNote after engine restart; fix the named cause
 
 ## Last ten checkpoints
 ```
+  4ee4c1a28 ckpt 3982: CH58e: live note says why live tennis rows give no game (stale store or cen
   ac3d86efa ckpt 3981: pre-release: CH58: live SharpAPI feed reads ATP/WTA tennis; live lane note 
   283ea08f9 ckpt 3980: ANALYST 2026-10-22: no rule change, research card posted
   618ac4373 ckpt 3979: CH58b tennis forced into live feed; engine down until hours
@@ -25,8 +26,7 @@ read status.liveNote after engine restart; fix the named cause
   6e6b0dde1 ckpt 3975: data tests green
   94fa3f2e0 ckpt 3974: data tests passed
   5f3245740 ckpt 3973: live lane note shows feed/live/Novig/matched/lines counts (compiles)
-  4bca336f1 ckpt 3972: pinnLive+liveBid on (paper)
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
