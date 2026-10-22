@@ -189,8 +189,9 @@ private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: L
                 v.policy.id to com.tjshea.vigilant.data.cloud.ApiState.of(status?.apiChecks?.firstOrNull { it.id == sid }, v, health[v.policy.id], now, phone, running, DashboardModel.feedProblem(status, v.policy.id))
             }
         }
-        val cards = remember(meters, health, verdicts) {
-            meters.filter { it.keys.isNotEmpty() || !it.policy.keyed || health.containsKey(it.policy.id) || verdicts[it.policy.id]?.light == com.tjshea.vigilant.data.cloud.ApiState.Light.OFF }
+        val cards = remember(meters, health, verdicts, status) {
+            // An API the engine checked with a key it holds is a card even when this phone's ledger has no key for it yet (SharpAPI's key goes to GitHub only; Tj, 2026-10-22).
+            meters.filter { it.keys.isNotEmpty() || status?.apiChecks?.any { c -> c.hasKey && c.id == switchIdOf(it.policy.id) } == true || !it.policy.keyed || health.containsKey(it.policy.id) || verdicts[it.policy.id]?.light == com.tjshea.vigilant.data.cloud.ApiState.Light.OFF }
                 .sortedBy { lightOrder(verdicts[it.policy.id]?.light) }
         }
         if (cards.isEmpty()) Text("No API has answered yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
