@@ -347,6 +347,8 @@ class AutoBettor(
         val rules = AutoBet.rules(settings)
         if (!settings.autoBet || !(settings.autoBetTennis || settings.autoBetVigilant)) return Report()
         if (settings.gates.cloudTrading != com.tjshea.vigilant.data.scanner.CloudTradeMode.OFF) return Report()
+        // Tj, 2026-10-22, CH66: with the GitHub engine driving, Vigilant's bets are the engine's (Engine trading), never this phone's.
+        if (settings.cloudDrives) return Report()
         if (settings.killed || c.settingsStore.flow.value?.killed == true) return finish(now, Report(), blocker = "Stopped by the STOP button: tap RESUME on the red bar to run again")
         settings.autoBetHalted?.let { return finish(now, Report(halted = true), blocker = "stopped: $it (the Auto-bet tab › Resume auto-bet)") }
         failure?.takeIf { now < failedUntilMs }?.let { return finish(now, Report(stopped = it), blocker = it) }
