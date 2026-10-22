@@ -2,8 +2,8 @@ package com.tjshea.vigilant.data.cloud
 
 import com.tjshea.vigilant.data.novig.trading.NovigPosition
 import kotlinx.coroutines.runBlocking
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import org.junit.Test
+import org.junit.Assert.assertEquals
 
 class AccountHeldTest {
     private val start = 1_800_000_000_000L
