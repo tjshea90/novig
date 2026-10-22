@@ -1,21 +1,23 @@
-# CHECKPOINT 3996 — read me first, then TASKS.md
+# CHECKPOINT 3997 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T21:33:12Z · **tests:** 1 RED: test_research_index.sh (8 green)
-**Branch:** `claude/optimistic-curie-lpr7ge` · **builds on:** `69b6689d1` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T21:39:39Z · **tests:** 1 RED: test_research_index.sh (8 green)
+**Branch:** `claude/optimistic-curie-lpr7ge` · **builds on:** `ae436ce1d` (this checkpoint is the commit after it)
 
 ## Just done
-CH58k: found live lane idle because Tj's Live master switch is OFF (phone, 20:54 UTC); asked him
+CH58k closed: lane judges tennis, no lag edge
 
 ## Do this next
-if Tj says turn it on: engine_set liveMaster; then read liveNote skips for tennis and fix the commonest
+CH58c tennis section in Live tab; watch bid skip reasons
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  ae436ce1d ckpt 3996: CH58k: found live lane idle because Tj's Live master switch is OFF (phone, 
   69b6689d1 ckpt 3995: CH58k: lane note now shows judged/offered/skips/bid gate so tennis non-plac
   3b65e4226 ckpt 3994: full data test done
   e15922c93 ckpt 3993: CH58j: Live games tile counts tennis lane (mergeStats), tests green
@@ -25,5 +27,4 @@ if Tj says turn it on: engine_set liveMaster; then read liveNote skips for tenni
   b89d78c38 ckpt 3989: CH58i: SharpAPI store polls each league in its own coroutine (tennis was st
   fcb9d9c4a ckpt 3988: Bovada=Ozoon=Bodog, Borgata=BetMGM merged in BookCompany
   3b5c9e19c ckpt 3987: CH58h: live SharpAPI rows with no start time (tennis) become games, sent wi
-  40c8eed15 ckpt 3986: research index rebuilt
 ```
