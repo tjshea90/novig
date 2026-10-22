@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "2b934bde2712e109a799146b2336ae85b073e633",
+ "head": "dfef529e71b096a1fd61319ca2d22e4fa8ae2b93",
  "since": 1792596542,
- "beat": 1792707280,
- "beatIso": "2026-10-22T22:14:40Z",
- "done": "AF1: api-docs mirror workflow; research index rebuilt",
- "next": "dispatch api-docs.yml on main, read api-docs branch, per-API audit"
+ "beat": 1792707310,
+ "beatIso": "2026-10-22T22:15:10Z",
+ "done": "AF3 part: advisor pace in credits (no false Odds API buy), governor rests APIs that match nothing (Unabated), job end flushes socket close frames (BoltOdds concurrent refusals)",
+ "next": "read api-docs branch when the mirror lands; per-API docs vs code audit"
 }
