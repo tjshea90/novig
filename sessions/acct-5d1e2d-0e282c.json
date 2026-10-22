@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-lpr7ge",
- "head": "c562058b68575f093e586bd1f19ecd5c9024608e",
+ "head": "8d01b69fc61f015a44fb866c3d97b588a55b7cbe",
  "since": 1792709550,
- "beat": 1792709550,
- "beatIso": "2026-10-22T22:52:30Z",
- "done": "",
- "next": ""
+ "beat": 1792709609,
+ "beatIso": "2026-10-22T22:53:29Z",
+ "done": "CH65: lag/crash likely local Kalshi scan during engine restarts; 1.0.49 waits",
+ "next": "if still crashing on 1.0.49 get Diagnostics; CH65b carry kalshi files across restarts"
 }
