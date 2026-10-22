@@ -323,7 +323,8 @@ fun main(args: Array<String>) = runBlocking {
             tc, deskTracker, deskStore,
             cancelStrays = false, newClientId = com.tjshea.vigilant.data.novig.trading.maker.MakerDesk::engineClientId, keepEndedMs = 20 * 60_000L,
             extraHeld = {
-                val counted = (trader.ledger.entries.map { it.outcomeId + "|" + it.marketId } + deskTracker.all().map { it.outcomeId + "|" + it.marketId }).toSet()
+                // Bid fills are mirrored into the ledger (onFills), so its keys cover the desk's own bets.
+                val counted = trader.ledger.entries.mapTo(HashSet()) { it.outcomeId + "|" + it.marketId }
                 com.tjshea.vigilant.data.cloud.TradePositions.of(trader.ledger.entries.filter { !it.note.startsWith("bid") }) + accountHeld.extra(counted)
             },
         )
