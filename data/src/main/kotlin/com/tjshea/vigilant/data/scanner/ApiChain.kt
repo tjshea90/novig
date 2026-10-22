@@ -73,6 +73,7 @@ object ApiChain {
 
     /** The feeds above [sourceId] on its chain that are on ([enabled]), best first: the ones it waits for. Empty for the best one and for a feed that is not on a chain. */
     fun better(sourceId: String, enabled: Collection<String>): List<String> {
+        if (sourceId == PINNACLE_HOSTS) return PINNACLE_FIRST.filter { it in enabled }
         val chain = CHAINS.firstOrNull { c -> c.any { it.first == sourceId } } ?: return emptyList()
         val at = chain.indexOfFirst { it.first == sourceId }
         return chain.take(at).map { it.first }.filter { it in enabled }
@@ -92,6 +93,7 @@ object ApiChain {
      * books they sent). Pure.
      */
     fun needed(sourceId: String, league: League, settings: ScanSettings, context: ScanContext): Boolean {
+        if (sourceId == PINNACLE_HOSTS) return pinnacleNeeded(league, settings, context)
         val kind = kindOf(sourceId) ?: return true
         // Audition: a feed with no recent measurement is asked once so it can be measured, and can earn first place (a feed that always stands by could never be ranked).
         if (settings.gates.rankByMeasure && measures.isNotEmpty() && SourceScore.auditionDue(sourceId, context.now, measures) && (context.now - (auditioned[sourceId] ?: 0L)) > SourceScore.AUDITION_MS) {
@@ -124,6 +126,30 @@ object ApiChain {
             scarceAsked[key] = context.now
         }
         return true
+    }
+
+    /** Pinnacle's own hosts (PinnWire, pinnapi, Pinnodds REST): requests-a-day keys, so they are asked only for what no pushed Pinnacle feed already sent. */
+    const val PINNACLE_HOSTS = "pinnacle"
+
+    /** The feeds that carry Pinnacle by push (SharpAPI's MQTT feed, median under a second; research/pinnwire_waste_2026-10-22.md): the hosts wait for them. */
+    private val PINNACLE_FIRST = listOf("sharpapi", "sharpapi-props")
+
+    /**
+     * Whether Pinnacle's request-metered hosts should be asked for [league] now (Tj, 2026-10-22: "make sure the usage is not being wasted if Pinnacle can be read elsewhere just as fresh or more fresh").
+     * Yes when the pushed feeds did not answer the league, sent no Pinnacle price for it, left a Novig game without game lines, or (when player props are on and Pinnacle has them for the sport)
+     * priced no prop at all; otherwise they stand by and spend nothing. Pure.
+     */
+    fun pinnacleNeeded(league: League, settings: ScanSettings, context: ScanContext): Boolean {
+        if (settings.gates.askAllSources) return true
+        if (league.novigName !in context.firstAnswered) return true
+        if ("pinnacle" !in context.coveredBooks[league.novigName].orEmpty()) return true
+        val horizon = context.now + (settings.daysAhead.coerceAtLeast(1) + 1) * 86_400_000L
+        val games = context.novigEvents.filter { it.league == league.novigName && it.startsTs <= horizon && it.matchup != null }
+        if (games.isEmpty()) return false
+        if (games.any { e -> missing(Kind.LINES, e, context) }) return true
+        val sport = league.pinnacleSportId
+        val props = MarketFamily.PLAYER_PROPS in settings.families && sport != null && com.tjshea.vigilant.data.reference.PinnacleProps.hasProps(sport)
+        return props && games.any { e -> missing(Kind.PROPS, e, context) }
     }
 
     private fun missing(kind: Kind, e: NovigEvent, context: ScanContext): Boolean {
