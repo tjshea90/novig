@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-vobqze",
- "head": "93ea3994ddfca2f63a2978ed5ac1bf08ba6baa9b",
+ "head": "31b35ac64be75216f1173d4350fdc471b61f7842",
  "since": 1792624947,
- "beat": 1792687611,
- "beatIso": "2026-10-22T16:46:51Z",
+ "beat": 1792687829,
+ "beatIso": "2026-10-22T16:50:29Z",
  "done": "pre-release: CH58: live SharpAPI feed reads ATP/WTA tennis; live lane note with feed/Novig/matched counts; live feed and live bids on (paper) (versionCode 388, v1.0.48)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.48), then run: bash tools/record-release.sh v1.0.48 388 \"CH58: live SharpAPI feed reads ATP/WTA tennis; live lane note with feed/Novig/matched counts; live feed and live bids on (paper)\""
 }
