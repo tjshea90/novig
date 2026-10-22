@@ -7,5 +7,5 @@
  "nonce": "0e282c",
  "note": "v1.0.45: the engine logs what the Novig stream holds and what SharpAPI returns per league after each scan; SharpAPI +EV cross-check stands down when Novig is not a picked book",
  "since": 1792629094,
- "beat": 1792629297
+ "beat": 1792629323
 }
