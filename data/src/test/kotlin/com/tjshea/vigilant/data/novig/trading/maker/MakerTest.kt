@@ -37,7 +37,7 @@ class MakerTest {
     private var now = 1_800_000_000_000L
     private val start = now + 6 * 3_600_000L
     /** The defaults with a fixed $5 a bid (the sizing tests below cover Kelly). */
-    private val rules = MakerRules.of(ScanSettings()).copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM, customStake = 5.0, maxStake = 10.0, deployPct = 0.0, perGameBidDollars = 0.0, perGameBids = 0)
+    private val rules = MakerRules.of(ScanSettings()).let { it.copy(repeat = it.repeat?.copy(maxGameBets = 0, maxFamilyDollars = 0.0)) }.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM, customStake = 5.0, maxStake = 10.0, deployPct = 0.0, perGameBidDollars = 0.0, perGameBids = 0)
 
     /** A far-off game's fair is fresh for 10 minutes (Freshness), seen 30 s ago: a bid rests 9.5 min at most, not the 30-minute expiry. */
     private val life = 10 * 60_000L - 30_000L
