@@ -1495,6 +1495,9 @@ data class ApiGates(
     val repeatHedge: Boolean = true,
     /** Other lines of the same team or player in one game the auto-bet may hold ([com.tjshea.vigilant.data.tracker.RepeatGuard.family]; 0 = no limit; Tj, 2026-10-14). */
     val repeatMaxLines: Int = com.tjshea.vigilant.data.tracker.RepeatGuard.DEFAULT_MAX_LINES,
+    /** Bets in one game across all markets, and dollars on one team, player or prop of one game (Tj, 2026-10-22: strict diversification; 0 = no limit). */
+    val repeatMaxGameBets: Int = com.tjshea.vigilant.data.tracker.RepeatGuard.DEFAULT_MAX_GAME_BETS,
+    val repeatMaxFamilyDollars: Double = com.tjshea.vigilant.data.tracker.RepeatGuard.DEFAULT_MAX_FAMILY_DOLLARS,
     /**
      * The streaming engine (Tj, 2026-10-12): a push on the Novig or BoltOdds socket starts a scan pass at once (free sources only: the BoltOdds board in memory and Novig's pushed books, no API credits), and the
      * auto-bet and the bid desk judge its result, instead of waiting for the next interval. Default OFF: off changes nothing. [streamGapSeconds] is the least time between two passes.
@@ -1518,7 +1521,7 @@ data class ApiGates(
 ) {
     /** The guard's rules for the placers, or null with the guard switched off. */
     fun repeatRules(): com.tjshea.vigilant.data.tracker.RepeatGuard.Rules? =
-        if (repeatGuard) com.tjshea.vigilant.data.tracker.RepeatGuard.Rules(repeatMaxBets.coerceAtLeast(0), repeatMaxDollars.coerceAtLeast(0.0), repeatHedge, repeatMaxLines.coerceAtLeast(0)) else null
+        if (repeatGuard) com.tjshea.vigilant.data.tracker.RepeatGuard.Rules(repeatMaxBets.coerceAtLeast(0), repeatMaxDollars.coerceAtLeast(0.0), repeatHedge, repeatMaxLines.coerceAtLeast(0), repeatMaxGameBets.coerceAtLeast(0), repeatMaxFamilyDollars.coerceAtLeast(0.0)) else null
 }
 
 /**

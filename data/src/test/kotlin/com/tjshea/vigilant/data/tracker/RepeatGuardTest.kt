@@ -124,4 +124,19 @@ class RepeatGuardTest {
         // the other side of the same market is a hedge, not a repeat
         assertNull(RepeatGuard.heldWhy(held, "over-0.5", ""))
     }
+
+    @Test fun `one game takes at most so many bets and one team player or prop at most so many dollars`() {
+        val rules = RepeatGuard.Rules(maxBets = 5, maxDollars = 100.0, maxLines = 0, maxGameBets = 3, maxFamilyDollars = 10.0)
+        val g = "a @ b|7|"
+        val held = listOf(
+            RepeatGuard.Pos("m1", "o1", 4.0, 8.0, family = g + "x|total"),
+            RepeatGuard.Pos("m2", "o2", 4.0, 8.0, family = g + "y|total"),
+            RepeatGuard.Pos("m3", "o3", 4.0, 8.0, family = g + "z|total"),
+        )
+        assertTrue("a fourth bet in the game", RepeatGuard.check(rules, held, "m4", "o4", 2.0, 4.0, family = g + "w|total")!!.contains("this game"))
+        assertNull("another game is free", RepeatGuard.check(rules, held, "m4", "o4", 2.0, 4.0, family = "c @ d|7|w|total"))
+        val two = held.take(2)
+        assertNull(RepeatGuard.check(rules, two, "m4", "o4", 2.0, 4.0, family = g + "w|total"))
+        assertTrue("12 on one team passes 10", RepeatGuard.check(rules, listOf(RepeatGuard.Pos("m1", "o1", 8.0, 16.0, family = g + "x|total")), "m5", "o5", 4.0, 8.0, family = g + "x|total")!!.contains("limit on one of them"))
+    }
 }

@@ -15,7 +15,9 @@ import java.util.Locale
 object RepeatGuard {
 
     /** [maxBets] and [maxDollars] of 0 = no limit on that. */
-    data class Rules(val maxBets: Int = DEFAULT_MAX_BETS, val maxDollars: Double = DEFAULT_MAX_DOLLARS, val hedge: Boolean = true, /** Other lines of one team, player or side in one game ([family]); 0 = no limit (Tj, 2026-10-14). */ val maxLines: Int = DEFAULT_MAX_LINES)
+    data class Rules(val maxBets: Int = DEFAULT_MAX_BETS, val maxDollars: Double = DEFAULT_MAX_DOLLARS, val hedge: Boolean = true, /** Other lines of one team, player or side in one game ([family]); 0 = no limit (Tj, 2026-10-14). */ val maxLines: Int = DEFAULT_MAX_LINES,
+        /** Most bets (a bid fill counts) in one game across every market and side; 0 = no limit (Tj, 2026-10-22: diversify, not too much on one game). */ val maxGameBets: Int = 0,
+        /** Most dollars, bets and resting bids together, on one team, player or prop of one game ([family]); 0 = no limit. */ val maxFamilyDollars: Double = 0.0)
 
     /** One position on one outcome: what it cost (fees included) and what it pays if that outcome wins (a contract pays $1). A resting bid counts as if it filled. */
     data class Pos(val marketId: String, val outcomeId: String, val dollars: Double, val payout: Double, val count: Int = 1, /** [family] of the bet, "" = unknown (never counted as a line). */ val family: String = "")
@@ -36,6 +38,19 @@ object RepeatGuard {
             val lines = held.filter { it.family == family && it.outcomeId != outcomeId && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId }.size
             if (lines >= rules.maxLines) {
                 return "Already $lines other line${if (lines == 1) "" else "s"} of the same team or player in this game (limit ${rules.maxLines}): they win and lose together, so another line is the same risk again."
+            }
+        }
+        if (family.isNotBlank()) {
+            val game = gameOf(family)
+            if (rules.maxGameBets > 0) {
+                val inGame = held.filter { it.family.isNotBlank() && gameOf(it.family) == game }.sumOf { it.count }
+                if (inGame >= rules.maxGameBets) return "Already $inGame bets in this game (limit ${rules.maxGameBets}): spread the risk over other games instead of piling onto one."
+            }
+            if (rules.maxFamilyDollars > 0.0) {
+                val onFamily = held.filter { it.family == family }.sumOf { it.dollars }
+                if (onFamily > 0.0 && onFamily + dollars > rules.maxFamilyDollars + EPS) {
+                    return "${money(onFamily)} is already on this team, player or prop in this game; ${money(dollars)} more would pass the ${money(rules.maxFamilyDollars)} limit on one of them."
+                }
             }
         }
         val sameDollars = same.sumOf { it.dollars }
@@ -98,6 +113,9 @@ object RepeatGuard {
         return "$event|${startsTs / BUCKET_MS}|$key"
     }
 
+    /** The game part of a [family] (event and start bucket). */
+    private fun gameOf(family: String): String = family.split('|').take(2).joinToString("|")
+
     private const val BUCKET_MS = 12L * 3_600_000L
 
     private fun money(v: Double) = String.format(Locale.US, "$%.2f", v)
@@ -110,4 +128,6 @@ object RepeatGuard {
     const val DEFAULT_MAX_BETS = 2
     const val DEFAULT_MAX_DOLLARS = 100.0
     const val DEFAULT_MAX_LINES = 1
+    const val DEFAULT_MAX_GAME_BETS = 6
+    const val DEFAULT_MAX_FAMILY_DOLLARS = 12.0
 }
