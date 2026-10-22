@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-vobqze",
  "head": "fcb9d9c4ad7b7e68a08f5f5342412977c06cb0a4",
  "since": 1792624947,
- "beat": 1792690271,
- "beatIso": "2026-10-22T17:31:11Z",
+ "beat": 1792690458,
+ "beatIso": "2026-10-22T17:34:18Z",
  "done": "Bovada=Ozoon=Bodog, Borgata=BetMGM merged in BookCompany",
  "next": "research more pairs via measured match if data allows"
 }
