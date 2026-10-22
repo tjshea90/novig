@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "7082c59b115375dfe1090709c38ae3bad6020bec",
+ "head": "7c49bd32a7b779df1f66386fe53719b4910f1017",
  "since": 1792596542,
- "beat": 1792708424,
- "beatIso": "2026-10-22T22:33:44Z",
+ "beat": 1792708609,
+ "beatIso": "2026-10-22T22:36:49Z",
  "done": "AF: Polymarket prices re-read live from CLOB /books (Gamma's are a cached copy), V2 positionIds",
  "next": "audit Kalshi, SX Bet, PinnWire/pinnapi/Pinnodds, The Odds API, OddsPapi, Unabated; then docs + report"
 }
