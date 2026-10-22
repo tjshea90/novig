@@ -31,6 +31,15 @@ data class MarketFee(
         /** Eastern midnight, Thursday 2026-10-15 (04:00Z): from here a live fill on EVERY straight contract pays 0.06 (docs.novig.com/api-reference/changelog, "Live Taker Fee Rises to 0.06"). */
         const val ALL_RAISED_FROM_MS = 1_792_036_800_000L
 
+        /**
+         * The live schedule from Thursday 2026-10-22: the taker fee stays 0.06, the Maker Credit drops from 50% to 25% of it on every straight contract
+         * (docs.novig.com/api-reference/changelog, "Maker Credit Drops to 25% Live and 50% on Futures").
+         */
+        val GAME_LIVE_CREDIT_CUT = MarketFee(coefficient = 0.06, makerCredit = 0.25, charged = FeeCharge.WHEN_LIVE)
+
+        /** Eastern midnight, Thursday 2026-10-22 (04:00Z): from here the Maker Credit is 25% live and 50% on eligible futures. */
+        const val CREDIT_CUT_FROM_MS = 1_792_641_600_000L
+
         /** Eastern midnight, Thursday 2026-10-08 (04:00Z): from here a live fill in [RAISED_LEAGUES] pays the raised coefficient. */
         const val RAISED_FROM_MS = 1_791_432_000_000L
 
@@ -40,10 +49,14 @@ data class MarketFee(
          * from this table"); this is for CNO's picks, the Tracker's hand-placed bets and the sharp checks, which have the league and not the market.
          */
         fun gameFor(league: String?, atMs: Long = System.currentTimeMillis()): MarketFee =
-            if (atMs >= ALL_RAISED_FROM_MS || (atMs >= RAISED_FROM_MS && league != null && league.uppercase() in RAISED_LEAGUES)) GAME_LIVE_RAISED else GAME
+            if (atMs >= CREDIT_CUT_FROM_MS) GAME_LIVE_CREDIT_CUT
+            else if (atMs >= ALL_RAISED_FROM_MS || (atMs >= RAISED_FROM_MS && league != null && league.uppercase() in RAISED_LEAGUES)) GAME_LIVE_RAISED else GAME
 
-        /** Novig's documented NFL/MLB/NCAAF futures schedule: charged pregame too. */
+        /** Novig's documented NFL/MLB/NCAAF futures schedule: charged pregame too. The Maker Credit on eligible futures fell from 70% to 50% on 2026-10-22 ([futuresFor]). */
         val FUTURES = MarketFee(coefficient = 0.06, makerCredit = 0.7, charged = FeeCharge.ALWAYS)
+
+        /** The futures schedule at [atMs]. */
+        fun futuresFor(atMs: Long = System.currentTimeMillis()): MarketFee = if (atMs >= CREDIT_CUT_FROM_MS) FUTURES.copy(makerCredit = 0.5) else FUTURES
     }
 }
 
