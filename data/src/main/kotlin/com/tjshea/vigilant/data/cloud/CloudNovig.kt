@@ -53,6 +53,10 @@ class CloudNovig(
         st.configureCompression(g.novigCompress)
     }
 
+    /** The stream's own report, or nothing while it is off. */
+    @Synchronized
+    fun feedReport(): List<String> = stream?.feedReport().orEmpty()
+
     /** Closes the stream (the job is ending). */
     @Synchronized
     fun close() { stream?.close(); stream = null; novig.stream = null }
