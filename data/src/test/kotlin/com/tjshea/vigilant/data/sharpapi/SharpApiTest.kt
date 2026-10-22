@@ -65,6 +65,20 @@ class SharpApiTest {
     }
 
     @Test
+    fun `a book whose rows carry no start time takes the game's start from the other books' rows`() {
+        val rows = listOf(
+            row("1", "pinnacle", "moneyline", "Kansas City Chiefs", "home", 1.40),
+            row("2", "pinnacle", "moneyline", "Las Vegas Raiders", "away", 3.10),
+            row("3", "bwin", "moneyline", "Kansas City Chiefs", "home", 1.38).copy(startMs = null),
+            row("4", "bwin", "moneyline", "Las Vegas Raiders", "away", 3.20).copy(startMs = null),
+        )
+        val e = SharpApiConvert.events(rows, ctx()).single()
+        assertEquals(start, e.startMs)
+        assertEquals(setOf("pinnacle", "bwin"), e.markets.map { it.bookKey }.toSet())
+        assertTrue(SharpApiConvert.census(rows, ctx()).contains("kept for pairing 4"))
+    }
+
+    @Test
     fun `a pair that does not close, a suspended row, an excluded book and a live row price nothing in the pregame read`() {
         val rows = listOf(
             row("1", "pinnacle", "moneyline", "Kansas City Chiefs", "home", 1.40),
