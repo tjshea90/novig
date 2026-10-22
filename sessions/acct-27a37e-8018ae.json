@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "3bfa27eb2804bfe324fa6a78d7ae0de91b1a04c2",
+ "head": "6b4bdc0fd75a92676abd124e0dc601eba65319fe",
  "since": 1792596542,
- "beat": 1792708188,
- "beatIso": "2026-10-22T22:29:48Z",
- "done": "AF: PropLine bulk slate props (1 call per sport/part vs per game), STEALS_BLOCKS mapped, PropLine free injury report before ParlayAPI's 1-credit one",
- "next": "audit ParlayAPI, SGO, BoltOdds, Kalshi, Polymarket, SX, Pinn*, Odds API, OddsPapi, Unabated docs vs code"
+ "beat": 1792708240,
+ "beatIso": "2026-10-22T22:30:40Z",
+ "done": "AF: BoltOdds consensus + DK/FD prediction markets out of fair lines (double counting), /api/odds/user in key check and concurrency refusals",
+ "next": "audit Kalshi, Polymarket, SX Bet, PinnWire/pinnapi/Pinnodds, The Odds API, OddsPapi, Unabated docs vs code"
 }
