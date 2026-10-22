@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-lpr7ge",
- "head": "47176632cee42e70f773d0dc28531c0c7109baea",
+ "head": "62dba7012eeed685e36a8a1450e24f1b525e8114",
  "since": 1792691263,
- "beat": 1792707552,
- "beatIso": "2026-10-22T22:19:12Z",
- "done": "CH62a: Arb note shows the engine's full check",
- "next": "ship with next release; CH62b engine-published arbs; CH61a finish"
+ "beat": 1792707631,
+ "beatIso": "2026-10-22T22:20:31Z",
+ "done": "CH63a: CloudCodec keeps Kalshi ticker (bookRef)",
+ "next": "bash ship.sh then release.yml, record-release; tell Tj"
 }
