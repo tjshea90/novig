@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-7542bf",
+ "name": "tj outlook",
+ "nonce": "477a43",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/keen-keller-qomaqq",
+ "head": "283ea08f950d1ce8d21c66077154b35fc12a4e07",
+ "since": 1792668175,
+ "beat": 1792668175,
+ "beatIso": "2026-10-22T11:22:55Z",
+ "done": "ANALYST 2026-10-22: no rule change, research card posted",
+ "next": "CH57a spend split when engine runs; NBA/spreads leak at 200 CLV n"
+}
