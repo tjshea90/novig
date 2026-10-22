@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "b569e2b18f4cd057ad200263b6124b9d6ff80d41",
+ "head": "2df747e57f5ade9f334e5a702676dbdb704f0094",
  "since": 1792596542,
- "beat": 1792706874,
- "beatIso": "2026-10-22T22:07:54Z",
- "done": "AF1: api-docs mirror workflow + tool",
+ "beat": 1792706909,
+ "beatIso": "2026-10-22T22:08:29Z",
+ "done": "AF1: api-docs mirror workflow; research index rebuilt",
  "next": "dispatch api-docs.yml on main, read api-docs branch, per-API audit"
 }
