@@ -117,3 +117,52 @@ object SharpApiExtras {
         ((client.usage()["data"] as? JsonObject)?.get("requests_today") as? JsonPrimitive)?.intOrNull
     }.getOrNull()
 }
+
+/**
+ * One source's public betting split for one game (`GET /splits`, SharpAPI's Sharp plan; AF9, SHARPAPI.md §3): ticket % and money % on each side of the moneyline, spread and total at DraftKings,
+ * Circa or BetMGM. Journaled raw for the studies (does money on a side that tickets are against, at Circa above all, predict the close?); never part of a price.
+ */
+@Serializable
+data class SaSplit(
+    val seenAtMs: Long,
+    val eventId: String,
+    val league: String,
+    val book: String,
+    val home: String? = null,
+    val away: String? = null,
+    val fetchedAt: String? = null,
+    /** The row as SharpAPI sent it (spread / total / moneyline with bets_pct and handle_pct). */
+    val raw: String,
+)
+
+object SharpApiSplits {
+    private fun JsonObject.s(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull && it.isString }?.content
+
+    /** Every split row SharpAPI holds now, [PAGE] at a time, at most [MAX_PAGES] pages. */
+    suspend fun all(client: SharpApiClient, now: Long): List<SaSplit> {
+        val out = ArrayList<SaSplit>()
+        var offset = 0
+        repeat(MAX_PAGES) {
+            val body = client.get("/splits", listOf("limit" to PAGE.toString(), "offset" to offset.toString()))
+            val rows = parse(body, now)
+            out += rows
+            val pg = body["pagination"] as? JsonObject
+            val more = (pg?.get("has_more") as? JsonPrimitive)?.booleanOrNull == true
+            val next = (pg?.get("next_offset") as? JsonPrimitive)?.intOrNull
+            if (!more || next == null || rows.isEmpty()) return out
+            offset = next
+        }
+        return out
+    }
+
+    fun parse(body: JsonObject, now: Long): List<SaSplit> = (body["data"] as? JsonArray).orEmpty().mapNotNull { e ->
+        val o = e as? JsonObject ?: return@mapNotNull null
+        SaSplit(now, o.s("event_id") ?: return@mapNotNull null, o.s("league").orEmpty(), o.s("sportsbook").orEmpty(), o.s("home_team"), o.s("away_team"), o.s("fetched_at"), o.toString())
+    }
+
+    const val PAGE = 200
+    const val MAX_PAGES = 10
+
+    /** Splits update every 5 minutes at their sources; read every half hour (the study needs the drift, not every tick). */
+    const val EVERY_MS = 30 * 60_000L
+}
