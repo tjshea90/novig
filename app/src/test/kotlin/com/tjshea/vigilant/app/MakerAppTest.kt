@@ -663,6 +663,20 @@ class MakerAppTest {
     }
 
     @Test
+    fun `with the GitHub engine driving and bids on GitHub, this phone posts no bid (Tj, 2026-10-22)`() = runBlocking {
+        val s = SampleScan.settings.copy(maker = true).let { it.copy(gates = it.gates.copy(cloudScan = true, cloudBids = true)) }
+        app.container.settingsStore.update { s }
+        app.container.cloudBids.put(com.tjshea.vigilant.data.cloud.CloudBids(now, false, 1L, com.tjshea.vigilant.data.novig.trading.maker.BidCandidates.from(SampleScan.resultNoOtherBids(), s, now)))
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        MakerRunner(
+            app, app.container, clock = { now }, scan = { error("no scan") },
+            desk = { com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(novig, app.container.tracker, app.container.makerStore, lock = app.container.orderLock, clock = { now }) },
+        ).run("test")
+        assertTrue("nothing posted from the phone: ${novig.placed}", novig.placed.isEmpty())
+    }
+
+    @Test
     fun `the lane's stop takes every CNO bid down, and nothing is posted while it holds`() = runBlocking {
         val novig = FakeNovig()
         app.container.installTradingForTest(novig, "sub-1")
