@@ -67,12 +67,23 @@ object SharpApiConvert {
     /** What one row is about, once its name is read. */
     data class Ref(val kind: LineKind, val period: Int, val stat: String? = null)
 
+    /**
+     * The start time of each game, from any row that carries one: most books' rows arrive with no `event_start_time` (2026-10-22: 44,387 of 45,164 NFL rows), but the event id is shared by every book,
+     * so a game takes the start time its other rows give.
+     */
+    fun startsOf(rows: List<SaRow>): Map<String, Long> {
+        val out = HashMap<String, Long>()
+        for (r in rows) r.startMs?.let { out.putIfAbsent(r.eventId, it) }
+        return out
+    }
+
     fun events(rows: List<SaRow>, ctx: Context): List<RefEvent> {
         val byEvent = LinkedHashMap<String, MutableList<SaRow>>()
+        val starts = startsOf(rows)
         for (r in rows) {
             if (!r.active || r.stalePregame) continue
             if (ctx.liveOnly != r.live) continue
-            val start = r.startMs ?: continue
+            val start = r.startMs ?: starts[r.eventId] ?: continue
             if (!ctx.liveOnly && !ctx.includeLive && start <= ctx.nowMs) continue
             byEvent.getOrPut(r.eventId) { ArrayList() } += r
         }
@@ -85,7 +96,7 @@ object SharpApiConvert {
                 if (ctx.wanted != null && key !in ctx.wanted) continue
                 markets += marketsOf(rowsOfBook, key, ctx)
             }
-            if (markets.isNotEmpty()) out += RefEvent("sharpapi-$eventId", ctx.league.oddsApiSportKey, first.startMs ?: continue, first.home, first.away, markets)
+            if (markets.isNotEmpty()) out += RefEvent("sharpapi-$eventId", ctx.league.oddsApiSportKey, starts[eventId] ?: continue, first.home, first.away, markets)
         }
         return out
     }
@@ -96,6 +107,7 @@ object SharpApiConvert {
      */
     fun census(rows: List<SaRow>, ctx: Context): String {
         val books = rows.groupingBy { it.book }.eachCount()
+        val starts = startsOf(rows)
         val why = java.util.TreeMap<String, Int>()
         val unreadSides = HashMap<String, Int>()
         fun bump(k: String) { why[k] = (why[k] ?: 0) + 1 }
@@ -104,8 +116,8 @@ object SharpApiConvert {
                 !r.active -> bump("inactive")
                 r.stalePregame -> bump("stale pregame flag")
                 ctx.liveOnly != r.live -> bump(if (r.live) "live row" else "pregame row")
-                r.startMs == null -> bump("no start time")
-                !ctx.liveOnly && !ctx.includeLive && r.startMs <= ctx.nowMs -> bump("already started")
+                (r.startMs ?: starts[r.eventId]) == null -> bump("no start time")
+                !ctx.liveOnly && !ctx.includeLive && (r.startMs ?: starts[r.eventId])!! <= ctx.nowMs -> bump("already started")
                 SharpApiBooks.appKey(r.book) == null -> bump("book excluded (${r.book})")
                 else -> {
                     val ref = refOf(ctx.league.novigName, r.marketType, r.segment)
