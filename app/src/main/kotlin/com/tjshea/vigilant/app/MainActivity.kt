@@ -197,7 +197,8 @@ class MainActivity : ComponentActivity() {
                 } else {
                     // Remembered: LocalOpenNovig is a static local, and a new value redraws everything under it.
                     val openNovigLocal: (String?) -> Unit = remember { { link -> openNovig(link) } }
-                    CompositionLocalProvider(LocalOpenNovig provides openNovigLocal, com.tjshea.vigilant.app.ui.LocalRefreshStep provides (if (state.cloudUi.refreshing) state.cloudUi.refreshStep else "")) {
+                    val heldPositions = remember(state.bets, state.cloudUi.trades) { com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(state.bets) + com.tjshea.vigilant.data.cloud.TradePositions.of(state.cloudUi.trades?.entries.orEmpty()) }
+                    CompositionLocalProvider(com.tjshea.vigilant.app.ui.LocalHeldPositions provides heldPositions, LocalOpenNovig provides openNovigLocal, com.tjshea.vigilant.app.ui.LocalRefreshStep provides (if (state.cloudUi.refreshing) state.cloudUi.refreshStep else "")) {
                         VigilantRoot(
                             state, vm,
                             onScan = { scan() },

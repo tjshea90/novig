@@ -55,6 +55,25 @@ object RepeatGuard {
         return null
     }
 
+    /**
+     * The red X on a hand bet's slip (Tj, 2026-10-22: "if I already bet the same player or team or prop, give me the big red x"): in words, why the side is already held: the same side again, or another
+     * line of the same team, player or prop in this game ([family]). Null when nothing like it is held. A resting bid counts as held. The other side of a market is a hedge, not a repeat, and says nothing here.
+     */
+    fun heldWhy(held: List<Pos>, outcomeId: String, family: String): String? {
+        if (outcomeId.isBlank()) return null
+        val same = held.filter { it.outcomeId == outcomeId }
+        if (same.isNotEmpty()) {
+            val dollars = same.sumOf { it.dollars }
+            val bets = same.sumOf { it.count }
+            return "You already hold this same side: ${money(dollars)} on it (${if (bets > 0) "$bets bet${if (bets == 1) "" else "s"}" else "resting bid"}). A new price on it is not a new bet."
+        }
+        if (family.isNotBlank()) {
+            val other = held.filter { it.family == family && it.outcomeId.isNotBlank() }
+            if (other.isNotEmpty()) return "You already hold another line of this same team, player or prop in this game (${money(other.sumOf { it.dollars })} on ${other.mapTo(HashSet()) { it.outcomeId }.size}): they win and lose together."
+        }
+        return null
+    }
+
     /** The open API bets of the Tracker as positions, locks included (a lock is a position on the other side like any other); a ✓ mark has no contracts and holds nothing here. */
     fun fromBets(bets: List<TrackedBet>): List<Pos> = bets
         .filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() && (it.contracts ?: 0L) > 0L }

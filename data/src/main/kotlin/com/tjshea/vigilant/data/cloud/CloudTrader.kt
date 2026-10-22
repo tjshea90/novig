@@ -375,3 +375,12 @@ class CloudTrader(
         private fun money(v: Double) = String.format(java.util.Locale.US, "$%.2f", v)
     }
 }
+
+
+/** The engine's ledger as repeat-guard positions (what is open, with the player, team and prop each entry is on), for the engine's own lanes and the phone's bet slip. */
+object TradePositions {
+    fun of(entries: List<TradeEntry>, excludeLive: Boolean = false): List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> =
+        entries.filter { (it.status == "OPEN" || it.status == "UNCONFIRMED") && it.contracts > 0 && !(excludeLive && it.mode == "LIVE") }.map { e ->
+            com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(e.marketId, e.outcomeId, e.cost + e.fee, e.payout, family = com.tjshea.vigilant.data.tracker.RepeatGuard.family(e.event, e.startsTs, e.marketLabel, e.selection))
+        }
+}

@@ -179,9 +179,7 @@ class CloudLiveLane(
     }
 
     /** What the ledger holds open (bets, bid fills and live fills), as repeat-guard positions; [excludeLive]: the live fills are left out (the tracker already holds this run's own). */
-    private fun ledgerPositions(excludeLive: Boolean = false): List<RepeatGuard.Pos> = ledger?.invoke().orEmpty().filter { (it.status == "OPEN" || it.status == "UNCONFIRMED") && it.contracts > 0 && !(excludeLive && it.mode == "LIVE") }.map { e ->
-        RepeatGuard.Pos(e.marketId, e.outcomeId, e.cost + e.fee, e.payout, family = RepeatGuard.family(e.event, e.startsTs, e.marketLabel, e.selection))
-    }
+    private fun ledgerPositions(excludeLive: Boolean = false): List<RepeatGuard.Pos> = TradePositions.of(ledger?.invoke().orEmpty(), excludeLive)
 
     private suspend fun lossToday(): Double {
         val from = ApiBetPlacer.localMidnight(clock())

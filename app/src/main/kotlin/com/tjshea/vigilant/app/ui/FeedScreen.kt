@@ -868,10 +868,10 @@ internal fun agedOutText(state: UiState, now: Long): String? {
  * A red X with big words on a bet of a TYPE that has lost money in Tj's history (Tj, 2026-10-17). Warns only: nothing is hidden and the bet can still be placed by hand. [reason] null draws nothing.
  */
 @Composable
-fun LosingTypeBanner(reason: String?, modifier: Modifier = Modifier) {
+fun LosingTypeBanner(reason: String?, modifier: Modifier = Modifier, title: String = "STAY AWAY: this type loses money", tag: String = "losingTypeBanner") {
     if (reason == null) return
     Row(
-        modifier.fillMaxWidth().background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(10.dp)).border(2.dp, MaterialTheme.colorScheme.error, RoundedCornerShape(10.dp)).padding(horizontal = 10.dp, vertical = 8.dp).testTag("losingTypeBanner"),
+        modifier.fillMaxWidth().background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(10.dp)).border(2.dp, MaterialTheme.colorScheme.error, RoundedCornerShape(10.dp)).padding(horizontal = 10.dp, vertical = 8.dp).testTag(tag),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(30.dp).background(MaterialTheme.colorScheme.error, CircleShape), contentAlignment = Alignment.Center) {
@@ -879,11 +879,18 @@ fun LosingTypeBanner(reason: String?, modifier: Modifier = Modifier) {
         }
         Spacer(Modifier.width(10.dp))
         Column {
-            Text("STAY AWAY: this type loses money", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onErrorContainer)
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onErrorContainer)
             Text(reason, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
         }
     }
 }
+
+/** What this phone holds as positions, for the bet slip's red X: the Tracker's open bets, the engine's open orders and resting bids (Tj, 2026-10-22). */
+val LocalHeldPositions = androidx.compose.runtime.staticCompositionLocalOf<List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos>> { emptyList() }
+
+/** Why [o] is already held (the same side, or another line of its team, player or prop in this game); null when it is not. */
+fun heldWhyOf(held: List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos>, o: Opportunity): String? =
+    com.tjshea.vigilant.data.tracker.RepeatGuard.heldWhy(held, o.outcome.outcomeId, com.tjshea.vigilant.data.tracker.RepeatGuard.family(o.event.description, o.event.startsTs, o.marketLabel, o.selection))
 
 /** The warning for an Opportunity / a CNO row / a PropLine line (null = this type has not lost). */
 fun losingTypeOf(o: Opportunity): String? = com.tjshea.vigilant.data.scanner.ProfitProfile.losingType(o.league.novigName, com.tjshea.vigilant.data.scanner.BetKind.of(o.marketLabel, o.selection).label, o.selection)
