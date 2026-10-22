@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "7c49bd32a7b779df1f66386fe53719b4910f1017",
+ "head": "4faa781e32006a74f4115bfb7bb4feea1eea36f8",
  "since": 1792596542,
- "beat": 1792708609,
- "beatIso": "2026-10-22T22:36:49Z",
- "done": "AF: Polymarket prices re-read live from CLOB /books (Gamma's are a cached copy), V2 positionIds",
- "next": "audit Kalshi, SX Bet, PinnWire/pinnapi/Pinnodds, The Odds API, OddsPapi, Unabated; then docs + report"
+ "beat": 1792708670,
+ "beatIso": "2026-10-22T22:37:50Z",
+ "done": "AF: PinnWire sport_id=all (one request for every sport, ~6x fewer of the 100/day per key), boards cut per sport with JsonSplit",
+ "next": "audit The Odds API, OddsPapi v5/v4, Unabated, Pinnodds; then docs (*_API.md), research report, full tests, ship"
 }
