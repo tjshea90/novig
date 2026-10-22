@@ -6237,3 +6237,4 @@ CH66 (Tj chat 23:39 UTC 2026-10-22, t1792712388108-24de, verbatim): "I want ever
 - [ ] CH66b engine publishes the Feed's live rows so the Feed shows live games with the phone's live lane off
 - [ ] CH66c the CNO auto-bet lane places from the engine, not the phone, while GitHub drives
 - [ ] CH66e restart the engine once at a quiet moment after the batch lands (Tj 23:41: "restart it at the next best time")
+- [ ] CH67 flaky: NovigPublicClientTest 'never add up to a stand-down' failed once in the full suite (passes alone, 38/38); find the timing dependence (shared global state / real clock)
