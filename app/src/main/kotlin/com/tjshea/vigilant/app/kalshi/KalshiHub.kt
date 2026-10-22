@@ -237,8 +237,14 @@ class KalshiHub(private val c: AppContainer) {
                 // Tj, 2026-10-22 ("laggy after I turn kalshi scanning on"): an engine that is alive but has not finished its first scan (the ten minutes after a restart) is waited for; this phone scans all of Kalshi itself only when the engine is down.
                 val st = c.cloud.latest.status
                 if (st != null && !st.idle && System.currentTimeMillis() - st.heartbeatMs <= com.tjshea.vigilant.data.cloud.CloudCno.ALIVE_MS) _ui.update { it.copy(scanning = false, progress = "The GitHub engine is still reading Kalshi; its list appears here when it is ready.") }
+                else if (c.settingsStore.flow.value?.cloudDrives == true) _ui.update { it.copy(scanning = false, progress = "The GitHub engine is not answering; its Kalshi list appears here when it is back (this phone does not scan Kalshi itself while the cloud scan drives).") }
                 else scanLocally(settings)
             }
+            return
+        }
+        // The GitHub engine drives (Tj, 2026-10-22: the phone ran out of memory reading Unabated, PinnWire, ParlayAPI... for a Kalshi scan of its own): this phone never runs that scan then.
+        if (c.settingsStore.flow.value?.cloudDrives == true) {
+            _ui.update { it.copy(scanning = false, progress = "Kalshi is scanned on GitHub; turn on Engine > Kalshi (Setup) to read its list here.") }
             return
         }
         scanLocally(settings)
