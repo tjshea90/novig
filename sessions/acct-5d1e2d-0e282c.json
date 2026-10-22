@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-wju7hd",
  "head": "030392088bedb5a739f42405c628d35572d48c9b",
  "since": 1792624947,
- "beat": 1792633334,
- "beatIso": "2026-10-22T01:42:14Z",
+ "beat": 1792633523,
+ "beatIso": "2026-10-22T01:45:23Z",
  "done": "SharpAPI: game start time taken from sibling rows (44k of 45k rows had none); census",
  "next": "restart engine; verify SharpAPI lines per league"
 }
