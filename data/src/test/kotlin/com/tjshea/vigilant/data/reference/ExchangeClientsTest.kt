@@ -514,6 +514,22 @@ class ExchangeClientsTest {
     }
 
     @Test
+    fun `PinnWire answers every sport in one request, and the next league reads it from memory`() = runBlocking {
+        // One football game (sport 7, from the real reply), one soccer game Vigilant never prices (sport 29), cut out before parsing.
+        val all = pinnwireFootball.replaceFirst("\"events\":[", "\"events\":[{\"event_id\":1,\"sport_id\":29,\"league_name\":\"Spain - La Liga\",\"home\":\"A\",\"away\":\"B\",\"starts\":\"2026-09-27T17:00:00Z\",\"periods\":{}},")
+        server.enqueue(MockResponse().setBody(all))
+        val c = pinnacle(listOf("wire-key"), emptyList())
+        val nflSnap = c.odds(nfl, settings)
+        assertEquals("all", server.takeRequest().requestUrl!!.queryParameter("sport_id"))
+        assertEquals("Pittsburgh Steelers", nflSnap.events.single().home)
+        // NCAAF is the same sport, the NBA another: both answered by that one read.
+        c.odds(Leagues.byNovigName("NCAAF")!!, settings)
+        c.odds(Leagues.byNovigName("NBA")!!, settings)
+        assertEquals(1, server.requestCount)
+        assertEquals(1, c.allSportReads)
+    }
+
+    @Test
     fun `without player props the feed isn't asked for them`() = runBlocking {
         server.enqueue(MockResponse().setBody(ExchangeFixtures.pinnapiFootball))
         pinnacle(listOf("w"), emptyList()).odds(nfl, settings.copy(families = setOf(MarketFamily.MONEYLINE, MarketFamily.SPREAD)))
