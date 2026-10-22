@@ -48,7 +48,7 @@ class CloudNovig(
             if (stream != null) { stream?.close(); stream = null; novig.stream = null; log("Novig stream closed (the socket switch is off): every read is by request") }
             return
         }
-        val st = stream ?: NovigStream(http, sg, scope, wsUrl = wsUrl, onEvent = { warn, text -> log((if (warn) "Novig stream WARN: " else "Novig stream: ") + text.take(200)) }).also { stream = it; novig.stream = it }
+        val st = stream ?: NovigStream(http, sg, scope, wsUrl = wsUrl, onEvent = { warn, text -> log((if (warn) "Novig stream WARN: " else "Novig stream: ") + text.take(200)) }).also { stream = it; novig.stream = it; novig.limits?.let { l -> it.tune(l.streamCapacity, l.streamPerSec, l.maxWatchedMarkets) } }
         st.configureFeed(g.novigBbo, g.novigKeepOpen, false)
         st.configureCompression(g.novigCompress)
     }
