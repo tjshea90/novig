@@ -96,4 +96,32 @@ class ApiGovernorTest {
         repeat(5) { g.observe(listOf(FeedLine("pinnacle")), pin, it.toLong()) }
         assertTrue("two boards share one feed: no single switch owns it", g.resting(10).isEmpty())
     }
+
+    @Test
+    fun `an api that answers but matches nothing while others match is rested as useless, never turned off`() {
+        val on = ApiToggles.setOn(settings, "unabated", true)
+        val useless = listOf(FeedLine("unabated", fetched = 1), FeedLine("sgo", fetched = 8, matched = 140), FeedLine("parlay", fetched = 6, matched = 147))
+        val g = ApiGovernor()
+        repeat(ApiGovernor.USELESS_LIMIT - 1) { assertTrue(g.observe(useless, on, it.toLong()).isEmpty()) }
+        val ev = g.observe(useless, on, 10)
+        assertEquals(listOf<ApiGovernor.Event>(ApiGovernor.Event.Rested("unabated", 10 + h, 1, useless = true)), ev)
+        assertEquals(false, ApiToggles.isOn(g.apply(on, 11), "unabated"))
+        assertEquals("the matching feeds are left alone", true, ApiToggles.isOn(g.apply(on, 11), "sgo"))
+        // after every rest it is only rested again, never switched off for good
+        var t = 10L
+        repeat(5) {
+            t += 10 * h
+            repeat(ApiGovernor.USELESS_LIMIT) { g.observe(useless, on, t + it) }
+        }
+        assertTrue(g.askedOff().isEmpty())
+        assertEquals(listOf("unabated"), g.resting(t + ApiGovernor.USELESS_LIMIT).map { it.id })
+        // a quiet board (nothing matched anywhere) is no evidence
+        val quiet = listOf(FeedLine("unabated", fetched = 1), FeedLine("sgo", fetched = 8))
+        val g2 = ApiGovernor()
+        repeat(20) { assertTrue(g2.observe(quiet, on, it.toLong()).isEmpty()) }
+        // exchanges read from memory are never rested for it
+        val ex = ApiToggles.setOn(settings, "kalshi", true)
+        val g3 = ApiGovernor()
+        repeat(20) { assertTrue(g3.observe(listOf(FeedLine("kalshi", fetched = 6), FeedLine("sgo", fetched = 8, matched = 9)), ex, it.toLong()).isEmpty()) }
+    }
 }
