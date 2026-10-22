@@ -189,6 +189,12 @@ class CloudPinnLane(
             append(" · soft-book feed ${st.socket}")
             // Where games drop out (Tj, 2026-10-22: tennis never matched): the feed's games, those in play, Novig's live events, the pairs matched, the lines targeted.
             append(" · feed ${st.pinnEvents} games, ${st.pinnLive} live · Novig ${st.novigGames} · matched ${st.matched} · ${st.targets} lines")
+            // Why a matched line places nothing (Tj, 2026-10-22, CH58k): lines judged, bets offered, the commonest skip reasons, the bid judge's gate.
+            append(" · judged ${st.evaluations} · offered ${st.candidates}")
+            if (st.skips.isNotEmpty()) append(" · skips ${st.skips.entries.sortedByDescending { it.value }.take(4).joinToString(", ") { "${it.key} ${it.value}" }}")
+            append(" · bid lines ${st.bidTargets} judged ${st.bidJudged}")
+            st.bidGate?.let { append(" · bid gate: $it") }
+            st.problem?.let { append(" · problem: $it") }
             st.feedNote?.let { append(" · $it") }
             if (bidsOn(s)) append(" · ${bidDesk.bidsNow().count { it.active }} bids up")
         }
