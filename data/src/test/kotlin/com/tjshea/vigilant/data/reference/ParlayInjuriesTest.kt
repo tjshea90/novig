@@ -172,4 +172,21 @@ class ParlayInjuriesTest {
         assertFalse(injuries.fill("baseball_mlb", listOf("Someone")))
         assertEquals(1, server.requestCount)
     }
+
+    @Test
+    fun `PropLine's free injury report is read into the same reports, its sport keys mapped`() {
+        val body = """{"sport":"football_nfl","count":2,"players":[
+            {"player_name":"Patrick Mahomes","player_id":"espn:3139477","espn_athlete_id":"3139477","team":"Kansas City Chiefs","team_abbr":"KC","position":"QB",
+             "status":"Questionable","status_code":"questionable","injury_type":"Ankle","body_part":"Ankle","detail":"Sprain","side":"Right","expected_return":null,
+             "status_since":"2026-10-20T15:00:00Z","source_updated_at":"2026-10-21T16:45Z"},
+            {"player_name":"Rashee Rice","team":"Kansas City Chiefs","status":"Out","status_code":"out"},
+            {"player_name":null,"status":"Out"}]}"""
+        val list = PropLineInjuries.parse(body, kotlinx.serialization.json.Json { ignoreUnknownKeys = true })
+        assertEquals(listOf("Patrick Mahomes", "Rashee Rice"), list.map { it.player })
+        assertEquals(InjuryLevel.RED, list[1].level)
+        assertEquals("KC", list[0].teamAbbr)
+        assertEquals("football_nfl", PropLineInjuries.sportOf("americanfootball_nfl"))
+        assertEquals("hockey_nhl", PropLineInjuries.sportOf("icehockey_nhl"))
+        assertEquals(null, PropLineInjuries.sportOf("soccer_epl"))
+    }
 }
