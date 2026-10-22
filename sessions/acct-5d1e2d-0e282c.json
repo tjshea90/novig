@@ -6,10 +6,10 @@
  "kind": "routine",
  "task": "",
  "branch": "claude/optimistic-curie-lpr7ge",
- "head": "be74f1ef969eead2bf24cf3e9a4d23a9db5f91ca",
+ "head": "2c3c40a9e84583f4d3834ab9ff090ec715831f18",
  "since": 1792711303,
- "beat": 1792713511,
- "beatIso": "2026-10-22T23:58:31Z",
- "done": "pre-ship: CH66a with GitHub driving, the phone takes no Novig/order sockets and posts no Vigilant bets or bids of its own; the Feed's live lane waits too",
- "next": "ship.sh gates and releases this"
+ "beat": 1792713547,
+ "beatIso": "2026-10-22T23:59:07Z",
+ "done": "pre-release: CH66a with GitHub driving, the phone takes no Novig/order sockets and posts no Vigilant bets or bids of its own; the Feed's live lane waits too (versionCode 393, v1.0.53)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.53), then run: bash tools/record-release.sh v1.0.53 393 \"CH66a with GitHub driving, the phone takes no Novig/order sockets and posts no Vigilant bets or bids of its own; the Feed's live lane waits too\""
 }
