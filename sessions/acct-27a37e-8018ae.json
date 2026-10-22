@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "54624b3f16ad17d0b7634c78c4205eb2e4837d69",
+ "head": "b569e2b18f4cd057ad200263b6124b9d6ff80d41",
  "since": 1792596542,
- "beat": 1792706835,
- "beatIso": "2026-10-22T22:07:15Z",
- "done": "GS: game state was in v1.0.43; added the engine's sharpapi-finals journal (settled finals, once each); v1.0.43 recorded",
- "next": "after the key is on GitHub: read engine-log SharpAPI lines (stream, rows, game state live); SHARPAPI.md fixes from real frames"
+ "beat": 1792706874,
+ "beatIso": "2026-10-22T22:07:54Z",
+ "done": "AF1: api-docs mirror workflow + tool",
+ "next": "dispatch api-docs.yml on main, read api-docs branch, per-API audit"
 }
