@@ -1,13 +1,13 @@
-# CHECKPOINT 4018 — read me first, then TASKS.md
+# CHECKPOINT 4019 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T23:19:28Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-950a7aea-8abdo8` · **builds on:** `a6897b07f` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T23:21:43Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-i9za1f` · **builds on:** `2a14ab561` (this checkpoint is the commit after it)
 
 ## Just done
-AG: journals built, notes, full tests green
+WATCH 2026-10-22 done: engine healthy, no action
 
 ## Do this next
-release next version after mirage (merge main, bump, ship)
+none; next slot normal
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ release next version after mirage (merge main, bump, ship)
 
 ## Last ten checkpoints
 ```
+  2a14ab561 ckpt 4018: AG: journals built, notes, full tests green
   a94b2c548 ckpt 4017: AG1/AG2/AG3: SharpAPI splits, Kalshi live data, Novig own-close journals (A
   e153a71da ckpt 4016: pre-release: CH65c the phone never scans Kalshi itself while the GitHub eng
   d5efe45d5 ckpt 4015: bump 1.0.51 (391)
@@ -25,8 +26,4 @@ release next version after mirage (merge main, bump, ship)
   8d01b69fc ckpt 4011: CH65: lag/crash likely local Kalshi scan during engine restarts; 1.0.49 wai
   16d814aa7 ckpt 4012: pre-release: API audit (AF): Novig catalog best-bid screening, PropLine bul
   097bf2e90 ckpt 4011: pre-ship: API audit (AF): Novig catalog best-bid screening, PropLine bulk p
-  d3d3139c0 ckpt 4010: handoff: API audit to acct-27a37e; releasing 1.0.49
 ```
-
-(2 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
