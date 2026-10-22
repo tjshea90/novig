@@ -68,6 +68,8 @@ data class LiveRunnerStatus(
     val socket: String = "off",
     val pinnEvents: Int = 0,
     val pinnLive: Int = 0,
+    /** What the price feed itself says (its `note`: which leagues it reads, whether its store is current), for the engine's status line. */
+    val feedNote: String? = null,
     val novigGames: Int = 0,
     val matched: Int = 0,
     val targets: Int = 0,
@@ -711,7 +713,7 @@ class PinnLiveRunner(
             is PinnSocketState.Down -> s.message
         }
         _status.value = _status.value.copy(
-            running = job?.isActive == true, socket = socket, pinnEvents = book.events.size, pinnLive = book.events.values.count { it.live }, novigGames = catalogEvents.size, matched = matchedGames,
+            running = job?.isActive == true, socket = socket, pinnEvents = book.events.size, pinnLive = book.events.values.count { it.live }, feedNote = pinn.note, novigGames = catalogEvents.size, matched = matchedGames,
             targets = targetsByMarket.size, watched = watched, frames = book.frames, frameAgeMs = pinn.lastFrameAtMs.takeIf { it > 0 }?.let { now - it }, evaluations = evaluations,
             candidates = candidates, skips = skips.toMap(), lastCandidate = lastCandidate, bidTargets = bidTargetsNow, bidJudged = bidJudged, bidGate = bidGate, bidError = bidError,
             problem = (pinn.state.value as? PinnSocketState.Down)?.message ?: novig.problemSince(_status.value.sinceMs ?: 0L) ?: loopError?.let { "engine error (carried on): $it" },

@@ -134,7 +134,7 @@ class SharpApiLiveFeed(
         note = when {
             picked.isEmpty() -> "SharpAPI live: none of the picked leagues is one SharpAPI carries"
             !fresh -> "SharpAPI live: the store is not current (${feed.lastNote ?: "waiting for SharpAPI"})"
-            live == 0 -> "SharpAPI live: no game in play with Pinnacle prices in the picked leagues"
+            live == 0 -> "SharpAPI live: no game in play with Pinnacle prices in the picked leagues (rows held / live Pinnacle rows: " + picked.joinToString(", ") { (_, slug) -> "$slug ${feed.rows(slug).size}/${feed.rows(slug).count { it.live && it.book == PINNACLE }}" } + ")"
             else -> "SharpAPI live: $live games in play with Pinnacle prices (store ${feed.describe(now)})"
         }
     }
