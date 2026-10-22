@@ -26,6 +26,9 @@ object OpBooks {
     private val EXCLUDED = setOf(
         "novig", "novigus", "kalshi", "polymarket", "prizepicks", "underdog", "underdogfantasy", "sleeper", "parlayplay", "prophetx", "prophetexchange", "sporttrade", "dabble", "hotstreak", "primesports",
         "betfairexchange", "matchbook", "smarkets",
+        // Never a vote of their own in a fair line (AF, 2026-10-22: BoltOdds lists all three and "every book" priced with them): BoltOdds' "consensus" is a line DERIVED from the other books
+        // (counting it counts them twice), and DraftKings Predictions / FanDuel Predicts are DraftKings' and FanDuel's own prediction markets, the same company as the sportsbook (CLAUDE.md, one company).
+        "consensus", "sharpconsensus", "dkpredictions", "draftkingspredictions", "fdpredicts", "fanduelpredicts",
     )
 
     /** Books Vigilant's default list lacks (Circa, SuperBook, bet365): added to the fair line while OddsPapi is on and `ScanSettings.opExtraBooks`. */
