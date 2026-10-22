@@ -1,21 +1,24 @@
-# CHECKPOINT 4013 — read me first, then TASKS.md
+# CHECKPOINT 4014 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T22:53:56Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-950a7aea-8abdo8` · **builds on:** `16d814aa7` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T23:01:35Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-950a7aea-8abdo8` · **builds on:** `39b23b7b0` (this checkpoint is the commit after it)
 
 ## Just done
-AF: v1.0.50 gated and pushed, release.yml triggered; report artifact https://claude.ai/artifact/2efdVhbKSZ6uVK8Bt38sMT
+AF done: v1.0.50 released and recorded; report artifact published
 
 ## Do this next
-confirm v1.0.50 Release, record-release.sh, tell Tj (reply + no chat: this account is not the chat account)
+AF10 tomorrow: read engine scan report (Novig secs), PinnWire keys left, PropLine bulk reads, governor resting Unabated, Bolt props socket; AF6-AF9 queued
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  cac87f30c ckpt 4013: AF: v1.0.50 gated and pushed, release.yml triggered; report artifact https:
+  8d01b69fc ckpt 4011: CH65: lag/crash likely local Kalshi scan during engine restarts; 1.0.49 wai
   16d814aa7 ckpt 4012: pre-release: API audit (AF): Novig catalog best-bid screening, PropLine bul
   097bf2e90 ckpt 4011: pre-ship: API audit (AF): Novig catalog best-bid screening, PropLine bulk p
   d3d3139c0 ckpt 4010: handoff: API audit to acct-27a37e; releasing 1.0.49
@@ -24,6 +27,4 @@ confirm v1.0.50 Release, record-release.sh, tell Tj (reply + no chat: this accou
   4faa781e3 ckpt 4008: AF: PinnWire sport_id=all (one request for every sport, ~6x fewer of the 10
   fed103748 ckpt 4005: bump 1.0.49 (389)
   7082c59b1 ckpt 4007: AF: Polymarket prices re-read live from CLOB /books (Gamma's are a cached c
-  6b4bdc0fd ckpt 4006: AF: BoltOdds consensus + DK/FD prediction markets out of fair lines (double
-  da26ad4f5 ckpt 4005: AF: PropLine bulk slate props (1 call per sport/part vs per game), STEALS_B
 ```

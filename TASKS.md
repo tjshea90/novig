@@ -6204,8 +6204,8 @@ CH61 (Tj chat 21:52 UTC 2026-10-22, t1792705931238-8a94): "audit all of the apis
 - [ ] AF8 Novig live NFL/NCAAF first halves (open live since 2026-10-22): price them in the live lanes
 - [ ] AF9 SharpAPI `/splits` journal for the studies (public betting %)
 - [ ] AF10 read tomorrow: Novig step time per scan, PinnWire keys lasting, PropLine bulk reads/failures, governor resting Unabated, BoltOdds props socket live, Circa on the Bolt board
-- [ ] AF4 ship (ship.sh, release.yml, record-release), CHANGES.md lines
-- [ ] AF5 report to Tj (artifact link) + chat
+- [x] AF4 shipped v1.0.50 (code 390), Release confirmed, recorded
+- [x] AF5 report: https://claude.ai/artifact/2efdVhbKSZ6uVK8Bt38sMT (this account does not answer the app chat; told in the session reply)
 
 CH62 (Tj chat 22:08 UTC 2026-10-22, t1792706891132-fef6, screenshot): "why is this only checking 6 novig lines" (Kalshi > Arb: 'checked 6 Novig prices against 375 Kalshi games')
 - [x] CH62a cause: cloud mode gives the phone only the list's rows; KalshiHub.refreshArbs compared those. The engine's lane compares all priced lines (status.priced). Note now adds the engine's count and arbs (KalshiHub.engineArbNote). Ships with the next release.
