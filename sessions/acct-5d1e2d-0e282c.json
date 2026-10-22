@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aosilm",
  "head": "34a7b3f48b7fc4d8532d39fcb298ff65c147dfa8",
  "since": 1792624947,
- "beat": 1792642791,
- "beatIso": "2026-10-22T04:19:51Z",
+ "beat": 1792643142,
+ "beatIso": "2026-10-22T04:25:42Z",
  "done": "pre-ship: DV4: repeat guard in the engine'\"s",
  "next": "ship.sh gates and releases this"
 }
