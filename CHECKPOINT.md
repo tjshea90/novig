@@ -1,13 +1,13 @@
-# CHECKPOINT 3997 — read me first, then TASKS.md
+# CHECKPOINT 3998 — read me first, then TASKS.md
 
-**Written:** 2026-10-22T21:39:39Z · **tests:** 1 RED: test_research_index.sh (8 green)
-**Branch:** `claude/optimistic-curie-lpr7ge` · **builds on:** `ae436ce1d` (this checkpoint is the commit after it)
+**Written:** 2026-10-22T21:43:33Z · **tests:** 1 RED: test_research_index.sh (8 green)
+**Branch:** `claude/optimistic-curie-lpr7ge` · **builds on:** `af6fb9fb1` (this checkpoint is the commit after it)
 
 ## Just done
-CH58k closed: lane judges tennis, no lag edge
+CH59a closed (Novig lists 1 live tennis game, matched); CH59b audit
 
 ## Do this next
-CH58c tennis section in Live tab; watch bid skip reasons
+CH58d second-opinion feeds, CH58c Tennis section
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ CH58c tennis section in Live tab; watch bid skip reasons
 
 ## Last ten checkpoints
 ```
+  a622da7a6 ckpt 3997: CH58k closed: lane judges tennis, no lag edge
   ae436ce1d ckpt 3996: CH58k: found live lane idle because Tj's Live master switch is OFF (phone, 
   69b6689d1 ckpt 3995: CH58k: lane note now shows judged/offered/skips/bid gate so tennis non-plac
   3b65e4226 ckpt 3994: full data test done
@@ -26,5 +27,7 @@ CH58c tennis section in Live tab; watch bid skip reasons
   f908d672a ckpt 3990: CH57b: metered feeds read far leagues (soonest game over 3 h) every 7 min, 
   b89d78c38 ckpt 3989: CH58i: SharpAPI store polls each league in its own coroutine (tennis was st
   fcb9d9c4a ckpt 3988: Bovada=Ozoon=Bodog, Borgata=BetMGM merged in BookCompany
-  3b5c9e19c ckpt 3987: CH58h: live SharpAPI rows with no start time (tennis) become games, sent wi
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
