@@ -192,7 +192,8 @@ class CloudPinnLane(
             st.feedNote?.let { append(" · $it") }
             if (bidsOn(s)) append(" · ${bidDesk.bidsNow().count { it.active }} bids up")
         }
-        return LiveLaneStatus(true, note, halt, now)
+        // The Live tab's "Live games" tile counts these too (Tj, 2026-10-22: it said 0 with tennis matched): games matched to Novig and the lines targeted.
+        return LiveLaneStatus(true, note, halt, now, LiveStats(real = takerReal(s), games = st.matched, markets = st.targets))
     }
 
     override suspend fun stop(why: String) {

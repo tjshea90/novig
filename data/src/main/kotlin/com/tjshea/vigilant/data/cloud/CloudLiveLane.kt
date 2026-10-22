@@ -51,7 +51,13 @@ class CompositeLive(private val lanes: List<EngineLive>) : EngineLive {
     override suspend fun pass(s: ScanSettings, now: Long): LiveLaneStatus? {
         val all = lanes.mapNotNull { runCatching { it.pass(s, now) }.onFailure { e -> if (e is CancellationException) throw e }.getOrNull() }
         if (all.isEmpty()) return null
-        return LiveLaneStatus(all.any { it.active }, all.joinToString(" | ") { it.note }, all.map { it.stopped }.filter { it.isNotBlank() }.joinToString("; "), now, all.firstNotNullOfOrNull { it.stats })
+        return LiveLaneStatus(all.any { it.active }, all.joinToString(" | ") { it.note }, all.map { it.stopped }.filter { it.isNotBlank() }.joinToString("; "), now, mergeStats(all.mapNotNull { it.stats }))
+    }
+
+    /** The first lane's numbers (the light lane's score, push and judgment counters) with every lane's games and markets added in. */
+    private fun mergeStats(all: List<LiveStats>): LiveStats? {
+        val first = all.firstOrNull() ?: return null
+        return first.copy(games = all.sumOf { it.games }, markets = all.sumOf { it.markets })
     }
 
     override suspend fun stop(why: String) { for (l in lanes) runCatching { l.stop(why) }.onFailure { if (it is CancellationException) throw it } }
