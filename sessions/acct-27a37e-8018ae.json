@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-950a7aea-8abdo8",
- "head": "7330825f1f0bb9f667f71be695491a53a6f9e253",
+ "head": "6df159b8c913a898f4dbbd355edb04496aa5f29c",
  "since": 1792596542,
- "beat": 1792707641,
- "beatIso": "2026-10-22T22:20:41Z",
+ "beat": 1792707822,
+ "beatIso": "2026-10-22T22:23:42Z",
  "done": "AF: Novig catalog best bids screen the scan (2 requests instead of ~9,600 book reads), maker-credit cut in fee fallback, NOVIG_API.md \u00a728",
  "next": "continue per-API audit: SharpAPI, PropLine, ParlayAPI, SGO, Kalshi, Polymarket, SX, Pinn*, Odds API, OddsPapi, Unabated"
 }
