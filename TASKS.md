@@ -6220,4 +6220,5 @@ CH64 (Tj chat 22:23 UTC 2026-10-22, t1792707800929-9df2): "the app is extremely 
 
 CH65 (Tj chat 22:52 UTC 2026-10-22, t1792709523628-0e03): "with kalshi on, the app is getting so laggy that it crashes"
 - [~] CH65a likely the same cause as CH64a (phone scanned all of Kalshi itself while the engine's kalshi-feed.json was absent after each engine restart; the engine was reset twice in the hour, mine 21:46 and another at ~22:5x); fixed in v1.0.49. If it still crashes on 1.0.49: need Diagnostics report (HeapCensus), then cap/stop the phone's local Kalshi scan entirely in cloud mode.
+- [x] CH65c (Tj 22:55 "cut out the phone kalshi scan"): KalshiHub.scanNow never runs scanLocally while cloudDrives; ships as 1.0.51 after acct-27a37e 1.0.50
 - [ ] CH65b keep kalshi-feed.json/kalshi-status.json across engine restarts (carry job to job) so the gap has a last-good list instead of nothing
