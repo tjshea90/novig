@@ -881,3 +881,13 @@ Did these updates improve the novig scan speed? How much?
 ```
 Ask for the permission and any other permissions you need to have full control of this project
 ```
+
+## 2026-10-23T02:02:58Z
+```
+A few changes: 
+
+1) look at the difference in the kalshi and novig bet slips in the screenshot. I want uniform design and function between the two exchanges, the only different is the bets go to different companies. I want the bet button for kalshi cards which opens the mini bet slip just like novig cards
+2) make the x button on the top right of kalshi cards just like novig cards, to remove results from the list
+3) any time I press the x button on any scanned card, whether kalshi or novig, make that bet disappear and not return, even if I rescan.
+4) sometimes I open a bet slip and I can't bet it because it is either no longer available, or no longer positive EV, or a sharp book says it isn't positive EV, etc. if any of this happens, immediately remove the result from the scan, and only return it to the scanned list if it becomes bettable. 
+```
