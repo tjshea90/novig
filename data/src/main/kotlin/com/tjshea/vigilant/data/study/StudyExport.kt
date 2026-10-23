@@ -420,6 +420,16 @@ object StudyExport {
         }
     }
 
+    /**
+     * The order days are taken in under the budget: today and the days already played, newest first, then the games still to come, soonest first. A day of games not yet played has
+     * no result and no close, so it must never push out one that has them (FX, 2026-10-23: the engine's study in the daily digest held six future game days and 0 started bets for days).
+     */
+    internal fun daysByUse(days: List<LocalDate>, now: Long, zone: java.util.TimeZone): List<LocalDate> {
+        val today = java.time.Instant.ofEpochMilli(now).atZone(zone.toZoneId()).toLocalDate()
+        val (played, toCome) = days.partition { !it.isAfter(today) }
+        return played.sortedDescending() + toCome.sorted()
+    }
+
     // ---- the file -----------------------------------------------------------------------------------------------------
 
     /**
@@ -432,16 +442,18 @@ object StudyExport {
         out: java.io.Writer, journal: StudyJournal, tracked: List<TrackedBet>, meta: Meta, now: Long, tmp: File, maxBytes: Long = MAX_BYTES,
         /** Vigilant's own bids (Make orders, files/maker.json): every one posted in the last 14 days, for the BIDS section. */
         bids: List<com.tjshea.vigilant.data.novig.trading.maker.MakerBid> = emptyList(),
+        /** How many bytes of journal the days may total (the daily review keeps no bets' lines, so it adds up far more days than a file Claude reads line by line). */
+        dayBudget: Long = maxBytes * DAYS_FACTOR,
     ): Int {
         // A bet Tj took comes before a bid of Vigilant's that filled on the same line (Tj, 2026-10-07: a bid is not Tj's own bet).
         val ownIndex = tracked.filter { !it.isLock && it.createdAtMs < it.startsTs }.sortedBy { it.isBid }.groupBy { PlacedIndex.identity(it.eventName, it.marketLabel, it.selection) ?: "" }
             .filterKeys { it.isNotEmpty() }
-        val all = journal.days().reversed()
+        val all = daysByUse(journal.days(), now, meta.zone)
         var bytes = 0L
         val days = ArrayList<LocalDate>()
         for (d in all) {
             val size = journal.file(d).length()
-            if (days.isNotEmpty() && bytes + size > maxBytes * DAYS_FACTOR) break
+            if (days.isNotEmpty() && bytes + size > dayBudget) break
             bytes += size
             days += d
         }
@@ -632,7 +644,7 @@ object StudyExport {
         "",
         "WHAT THIS IS: the scan study, a log of EVERY +EV bet Vigilant's scanners found on Novig — CrazyNinjaOdds (\"CNO\") and Vigilant's own scan — not only the ones Tj bet, and not only the ones the app showed him:",
         "besides the list the app shows (CNO read under Tj's filters), the study reads CNO a second time with its numeric filters opened right up (the WIDE read) and logs every row, flagged by why Tj's list would hide it.",
-        "${rows + cut} bets from game days ${first ?: "?"} to ${last ?: "?"} ($days days, ${bytes / 1024} KB of log)" + (if (leftOut > 0) "; $leftOut older day(s) are on the phone but left out to keep this file a size Claude can read" else "") +
+        "${rows + cut} bets from game days ${first ?: "?"} to ${last ?: "?"} ($days days, ${bytes / 1024} KB of log)" + (if (leftOut > 0) "; $leftOut older day(s) are on the phone but left out to keep this file a size Claude can read (days not yet played go first)" else "") +
             (if (cut > 0) "; $cut bets (the hidden ones first) are counted in the SUMMARY but their lines were left out for the same reason." else "."),
         meta.wide?.let { "THE WIDE READ: $it" } ?: "THE WIDE READ: off, or it hasn't read yet: every bet here was in a list the app shows.",
         "Each bet was logged the moment a scan first found it, with everything the app knew then (and every column CNO printed for it, `cols`); watched while it stayed listed (every change of odds, EV or books, and when a scan dropped it); then, after its game,",
