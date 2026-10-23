@@ -8,7 +8,7 @@ CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a 
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
-| 2026-10-23 | `star_rating_2026-10-23.md` | One star rating, fitted to the data (ST1, Tj 2026-10-23, chat t1792793515523-b161) - `BetRating` stays 1-5 stars in half steps; it is now ONE score of six parts (coverage 20, agreement 20, edge 25, sharp book 25, consensus 10, ... | CODE |
+| 2026-10-23 | `star_rating_2026-10-23.md` | One star rating, fitted to the data (ST1, Tj 2026-10-23, chat t1792793515523-b161) - `BetRating` stays 1-5 stars in half steps; it is now ONE score of six parts (coverage 20, agreement 20, edge 25, sharp book 25, consensus 10, ... | LEVER CODE |
 | 2026-10-23 | `ch73_audit_2026-10-23.md` | CH73 audit: what the phone runs while the GitHub engine drives (2026-10-23) - Method: every use of `ScanSettings.cloudDrives` (the one predicate for "the engine is the scan") in app/ and data/. | IDLE |
 | 2026-10-23 | `bid_side_split_2026-10-23.md` | Bid side split: Over/Under and favorite/underdog (CH75, Tj 2026-10-23 "yes") - Data: engine-dataset `bids.csv.gz`, 575,842 ended bids, 2026-10-16 onward. Quality = mean `fill_ev` (fair after the fill vs price paid), a CLV-style... | IDLE |
 | 2026-10-22 | `pinnwire_waste_2026-10-22.md` | PinnWire / pinnapi were asked every scan though SharpAPI streams Pinnacle (2026-10-22, Tj chat t1792705696949-3544) - Tj: more PinnWire keys are coming; usage may be spent as needed "but you must make sure the usage is not bein... | APPLIED CLOSED CODE |
