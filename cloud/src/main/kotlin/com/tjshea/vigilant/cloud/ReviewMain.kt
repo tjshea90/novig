@@ -35,7 +35,8 @@ object Review {
             rules = "the rules in force when each bet was listed are in that bet's own atBet.preset and atBet.version; the digest adds every day together",
             zone = TimeZone.getTimeZone("America/New_York"),
         )
-        val bets = full.bufferedWriter().use { w -> StudyExport.write(w, StudyJournal(dir), emptyList(), meta, now, tmp) }
+        // The digest keeps the summary and splits, never the bets' lines, so it adds up every day it can (a file's 72 MB day budget held only the engine's games still to come: FX 2026-10-23).
+        val bets = full.bufferedWriter().use { w -> StudyExport.write(w, StudyJournal(dir), emptyList(), meta, now, tmp, maxBytes = LINE_BYTES, dayBudget = DAY_BYTES) }
         // Everything above the bets' own lines: the lines are in phone-data already and would make the digest as big as the journals.
         val keep = ArrayList<String>()
         full.bufferedReader().useLines { lines ->
@@ -51,6 +52,12 @@ object Review {
 
     /** About 60k tokens at most: a scheduled Claude session reads this, and the summary and splits are what it needs. */
     const val MAX_CHARS = 240_000
+
+    /** The bets' lines the export writes and the digest then drops: a little, so no gigabyte scratch file. */
+    const val LINE_BYTES = 2L * 1024 * 1024
+
+    /** Journal bytes the digest adds up: every day the engine has (a played day is ~100 MB), bounded so a runner's memory and the job's time hold. */
+    const val DAY_BYTES = 4L * 1024 * 1024 * 1024
 }
 
 fun main(args: Array<String>) {
