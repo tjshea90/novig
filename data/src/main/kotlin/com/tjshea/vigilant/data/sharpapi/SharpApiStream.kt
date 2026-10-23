@@ -161,6 +161,13 @@ class SharpApiStream(
             handle(o)
         }
 
+        // The server's close (1008 slow consumer, 1012 restart, 4001 displaced) arrives here, not at onClosed: OkHttp calls onClosed only once WE have closed too. Without this the stream
+        // stayed "live" on a dead socket until the 90 s silence check, and the REST poll stayed at its 60 s reconcile meanwhile (FX, 2026-10-23).
+        override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+            webSocket.close(code, null)
+            closed(webSocket, code, reason)
+        }
+
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) = closed(webSocket, code, reason)
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {

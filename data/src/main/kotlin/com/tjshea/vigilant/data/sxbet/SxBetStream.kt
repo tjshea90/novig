@@ -164,6 +164,8 @@ class SxBetStream(
             override fun onMessage(webSocket: WebSocket, text: String) {
                 text.split('\n').filter { it.isNotBlank() }.forEach { line -> runCatching { handle(webSocket, json.parseToJsonElement(line).jsonObject) }.onFailure { lastError = "frame: ${it.message}".take(160) } }
             }
+            // A close from the server reaches onClosing; onClosed follows only once this side closes too, so without it a server close left the loop waiting on a dead socket (FX, 2026-10-23).
+            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) { webSocket.close(code, null); lastError = "closed $code $reason".trim(); done.complete(Unit) }
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { lastError = "closed $code $reason".trim(); done.complete(Unit) }
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) { lastError = (t.message ?: t.javaClass.simpleName).take(160); done.complete(Unit) }
         }
