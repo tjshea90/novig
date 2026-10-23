@@ -6257,3 +6257,5 @@ CH70 (Tj live message in the session, 2026-10-23 ~02:05 UTC, verbatim): "A few c
 
 CH71 (Tj live message 2026-10-23: "nobody was selling at that price anymore" is an example of a type of bet error to remove from the scanned results)
 - [x] CH71a an order that ends NotFilled ("nobody was selling at that price any more") or Refused with words that say the bet is gone/closed/not +EV/sharp book against takes the row off the scanned list (Novig: negativeSeen; Kalshi: deadSeen) until a newer price read lists it again; ApiBettingController.unbettableResult, UNBETTABLE_WORDS, KalshiHub.place; test UnbettableRowsTest. Ships as 1.0.60 after 1.0.59.
+
+- [x] CH72 pull to refresh re-tests only failing/stale (over 60 s) APIs, phone (MainViewModel.checkApisFromPhone) and engine (ApiMonitor.recheckNow); ApiMonitorTest. Ships with the next release.
