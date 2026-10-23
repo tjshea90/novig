@@ -191,7 +191,7 @@ class ProfitProfile(
 
         /** The history points for a bet as the scanners know it, from the shipped profile (0 when it can't be read). */
         fun typePointsOf(league: String, kind: String, selection: String, startsAtMs: Long?, now: Long): Double =
-            shipped?.typePoints(league, kind, selection, startsAtMs?.let { (it - now) / 60_000L }) ?: 0.0
+            startsAtMs?.let { (it - now) / 60_000L }.let { lead -> (shipped?.typePoints(league, kind, selection, lead) ?: 0.0) + BetRating.leadPoints(lead) }
 
         val shipped: ProfitProfile? by lazy { ProfitProfile::class.java.getResourceAsStream("/profit_profile.json")?.bufferedReader()?.use { parse(it.readText()) } }
     }

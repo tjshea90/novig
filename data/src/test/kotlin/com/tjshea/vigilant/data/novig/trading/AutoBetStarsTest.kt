@@ -118,4 +118,12 @@ class AutoBetStarsTest {
         assertTrue(BetRating.rate(base.copy(typePoints = -15.0)).stars < BetRating.rate(base).stars)
         assertTrue(BetRating.rate(base.copy(typePoints = 15.0)).stars >= BetRating.rate(base).stars)
     }
+
+    @Test
+    fun `two small books with no sharp book are at most two stars, and lead time moves the points (ST1)`() {
+        val two = BetRating.Inputs(2, 2, 0.06, sharpAgrees = false, sharpAgainst = false, spread = 0.005)
+        assertTrue(BetRating.rate(two).stars <= 2.0)
+        assertTrue(BetRating.rate(two.copy(sharpAgrees = true)).stars > 2.0)
+        assertTrue(BetRating.leadPoints(120) > BetRating.leadPoints(3000))
+    }
 }

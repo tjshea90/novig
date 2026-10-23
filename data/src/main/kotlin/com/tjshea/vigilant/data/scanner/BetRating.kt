@@ -50,6 +50,18 @@ object BetRating {
     /** The least EV (a fraction: 0.02 = 2%) a bet needs to be rated 3½ stars or better, and the most it can have under it (Tj, 2026-10-11). */
     const val MIN_EV_FOR_HIGH_STARS = 0.02
     const val MAX_STARS_UNDER_MIN_EV = 3.0
+    const val MAX_STARS_SMALL_BOOKS = 2.0
+
+    /**
+     * Points for how long before the game the bet is taken (ST1, from the engine's graded +EV lines: CLV vs the Pinnacle/Circa close was +1.9% / +3.1% / +1.1% inside 1 h / 1-6 h / 6-13 h, +0.2% beyond 24 h):
+     * the closer to the start the more the price tends to hold, the earlier the more it tends to give back. Small on purpose; [ProfitProfile.typePoints] carries the history's own lead term.
+     */
+    fun leadPoints(minToStart: Long?): Double = when {
+        minToStart == null -> 0.0
+        minToStart <= 360 -> 3.0
+        minToStart <= 1440 -> 0.0
+        else -> -4.0
+    }
 
     fun rate(i: Inputs): Rating {
         val books = i.books.coerceAtLeast(0)
@@ -65,6 +77,8 @@ object BetRating {
         val points = 20 * coverage + 20 * agree + 25 * edge + 25 * sharp + 10 * tight + i.typePoints
         var stars = 1.0 + 4.0 * (points / 100.0).coerceIn(0.0, 1.0).pow(1.5)
         stars = minOf(stars, ceiling(books, i.sharpAgainst))
+        // Two companies and no sharp book among them = two small names agreeing with each other (Tj, 2026-10-23): at most 2 stars (research/star_rating_2026-10-23.md: <=2 books closed -1.7 points worse, t -1.7).
+        if (books in 1..2 && !i.sharpAgrees && !i.sharpAgainst) stars = minOf(stars, MAX_STARS_SMALL_BOOKS)
         // 3½ stars and up take a real edge (Tj, 2026-10-11): under +2% EV at the price you would pay, a bet is at most 3 stars however well the books agree.
         if (i.ev < MIN_EV_FOR_HIGH_STARS - 1e-12) stars = minOf(stars, MAX_STARS_UNDER_MIN_EV)
         if (i.ev <= 0.0) stars = MIN
