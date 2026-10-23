@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-lpr7ge",
  "head": "16505337171b6394272bfcdee5f23c758f3253ae",
  "since": 1792716227,
- "beat": 1792716930,
- "beatIso": "2026-10-23T00:55:30Z",
+ "beat": 1792717155,
+ "beatIso": "2026-10-23T00:59:15Z",
  "done": "CH68b: NO buys try the legacy route first; bump 1.0.56",
  "next": "ship, release, engine reset once, ask Tj to retry"
 }
