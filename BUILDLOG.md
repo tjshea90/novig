@@ -391,3 +391,4 @@ day that changes.
 | v1.0.50 | code 390 | 2026-10-22T23:01Z | API audit (AF): Novig catalog best-bid screening, PropLine bulk props + free injuries, BoltOdds double-count fix and socket visibility, Polymarket live CLOB prices, PinnWire one request for all sports, governor rests useless APIs, advisor credit pace, weekly API docs mirror
 | v1.0.51 | code 391 | 2026-10-22T23:12Z | CH65c the phone never scans Kalshi itself while the GitHub engine drives: it only reads the engine's Kalshi list (fixes the out-of-memory crashes)
 | v1.0.52 | code 392 | 2026-10-22T23:27Z | API audit follow-up (AG): Kalshi live-data, SharpAPI splits and Novig own-close journals on the engine; BoltOdds open-socket check says why when unreadable
+| v1.0.53 | code 393 | 2026-10-23T00:05Z | CH66a with GitHub driving, the phone takes no Novig/order sockets and posts no Vigilant bets or bids of its own; the Feed's live lane waits too
