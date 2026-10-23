@@ -77,7 +77,8 @@ class KalshiBidRunnerTest {
         override suspend fun orders(status: String?, ticker: String?, limit: Int): List<KalshiOrder> = resting.filter { status == null || it.status == status }
         override suspend fun order(orderId: String): KalshiOrder? = resting.firstOrNull { it.orderId == orderId }
         override suspend fun fills(sinceMs: Long?, ticker: String?, orderId: String?, limit: Int): List<KalshiFill> = emptyList()
-        override suspend fun cancel(orderId: String, ticker: String?): Boolean { resting.removeAll { it.orderId == orderId }; return true }
+        val cancels = ArrayList<Pair<String, String?>>()
+        override suspend fun cancel(orderId: String, ticker: String?): Boolean { cancels += orderId to ticker; resting.removeAll { it.orderId == orderId }; return true }
         override suspend fun balance() = KalshiBalance(100.0, 0.0)
     }
 
@@ -89,6 +90,19 @@ class KalshiBidRunnerTest {
         val store = MakerStore(File.createTempFile("kalshi-bids", ".json").also { it.delete() })
         val desk = MakerDesk(KalshiAsNovig(client, outcomes) { now }, tracker, store, clock = { now }, pause = {}, cancelStrays = false)
         return KalshiBidRunner(desk, outcomes, cash = { 100.0 }, clock = { now })
+    }
+
+    /** FX, 2026-10-23: the desk takes a bid down by its id alone; Kalshi's V2 cancel finds the order's exchange shard only from its market, so the adapter hands the ticker it knows. */
+    @Test
+    fun `a bid taken down by id is cancelled on its own market, and Kalshi's refusals say they are Kalshi's`() = runTest {
+        val client = Fake2(now)
+        client.resting += KalshiOrder("o-7", "c", "KXNFL-T", "yes", "resting", 0.4, 0.6, 2.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, now, null)
+        val a = KalshiAsNovig(client, KalshiOutcomes()) { now }
+        a.orders("OPEN", 100, null)
+        assertEquals("CANCELED", a.cancelOrder("o-7"))
+        assertEquals("o-7" to "KXNFL-T", client.cancels.single())
+        val e = com.tjshea.vigilant.data.novig.signing.NovigApiException(429, com.tjshea.vigilant.data.novig.signing.NovigApiException.KALSHI_PREFIX + "RATE_LIMITED", null)
+        assertTrue(e.message, e.message!!.startsWith("Kalshi"))
     }
 
     @Test
