@@ -27,7 +27,14 @@ class BoltOddsFeed(
 ) {
     private val socketHttp = BoltOddsStream.socketClient(http)
 
-    val lines = BoltOddsStream("lines", socketHttp, client, BoltBoard(clock) { it != LineKind.PLAYER_PROP }, scope, wsUrl, clock)
+    /** One connection plans (Growth, Starter): the lines socket also carries the player props and the props socket stays shut (CH76). */
+    @Volatile var oneSocket: Boolean = false
+        private set
+    @Volatile var plan: String? = null
+        private set
+    private var planCheckedMs = 0L
+
+    val lines = BoltOddsStream("lines", socketHttp, client, BoltBoard(clock) { oneSocket || it != LineKind.PLAYER_PROP }, scope, wsUrl, clock)
     val props = BoltOddsStream("props", socketHttp, client, BoltBoard(clock) { it == LineKind.PLAYER_PROP }, scope, wsUrl, clock)
 
     /** False on the phone while the GitHub engine holds BoltOdds' sockets (CH34): both streams refuse to connect, and reads use the REST snapshot. */
@@ -86,13 +93,27 @@ class BoltOddsFeed(
         }
     }
 
-    /** The BoltOdds leagues among the selected ones, in Settings' order. */
-    private fun leaguesOf(settings: ScanSettings): List<League> = settings.selectedLeagues.filter { BoltBooks.supports(it) }
+    /** The BoltOdds leagues among the selected ones, in Settings' order; a plan that covers few leagues gets the [GROWTH_PRIORITY] ones first. */
+    private fun leaguesOf(settings: ScanSettings): List<League> {
+        val all = settings.selectedLeagues.filter { BoltBooks.supports(it) }
+        if (!oneSocket) return all
+        return all.sortedBy { GROWTH_PRIORITY.indexOf(it.novigName).let { i -> if (i < 0) Int.MAX_VALUE else i } }.take(GROWTH_LEAGUES)
+    }
+
+    /** Reads the key's plan (`/api/odds/user`, at most hourly): Growth and Starter hold ONE connection, so the props socket would be refused. A refused props socket says the same. */
+    private suspend fun checkPlan() {
+        if (clock() - planCheckedMs < PLAN_TTL_MS) return
+        planCheckedMs = clock()
+        client.oddsUser()?.plan?.let { plan = it }
+        val p = plan?.lowercase().orEmpty()
+        oneSocket = "growth" in p || "starter" in p || (props.lastError?.contains("concurrent", ignoreCase = true) == true)
+    }
 
     /**
      * Subscribes both sockets for [settings] (waking them if they are asleep) and returns them. The props socket is only used while player props are among the market families.
      */
     suspend fun arrange(settings: ScanSettings): List<BoltOddsStream> {
+        checkPlan()
         val leagues = leaguesOf(settings)
         if (leagues.isEmpty()) return emptyList()
         val info = info()
@@ -121,6 +142,14 @@ class BoltOddsFeed(
             lastPlan = "REST snapshot (socket off) · sports ${sports.size} · books ${books.size.takeIf { it > 0 } ?: "all"} · line markets ${lineMarkets.size.takeIf { it > 0 } ?: "all"}"
             return out
         }
+        if (oneSocket) {
+            props.close()
+            lines.want(if (wantProps) lineFilters.copy(markets = (lineMarkets + names(true)).distinct().sorted()) else lineFilters)
+            out += lines
+            if (wantProps) out += props
+            lastPlan = "one socket (plan ${plan ?: "?"}) · sports ${sports.size} · books ${books.size.takeIf { it > 0 } ?: "all"} · markets ${lineMarkets.size}${if (wantProps) "+props" else ""}"
+            return out
+        }
         lines.want(lineFilters)
         out += lines
         if (wantProps) {
@@ -139,8 +168,8 @@ class BoltOddsFeed(
     suspend fun events(league: League, settings: ScanSettings, props: Boolean): List<RefEvent> {
         if (!BoltBooks.supports(league)) return emptyList()
         val streams = arrange(settings)
-        val stream = if (props) this.props else lines
-        if (stream !in streams) return emptyList()
+        val stream = if (props && !oneSocket) this.props else lines
+        if (!(if (props) this.props else lines).let { it in streams }) return emptyList()
         val socketOn = settings.gates.boltSocket && held
         if (socketOn) {
             stream.use()
@@ -155,7 +184,9 @@ class BoltOddsFeed(
         val info = info()
         val sports = BoltBooks.sportsFor(league, info?.sports)
         val ctx = BoltContext(
-            league = league, wanted = BoltBooks.wanted(settings), families = settings.families, includeLive = settings.includeLive, nowMs = clock(),
+            league = league, wanted = BoltBooks.wanted(settings),
+            families = if (!oneSocket) settings.families else if (props) setOf(MarketFamily.PLAYER_PROPS) else settings.families - MarketFamily.PLAYER_PROPS,
+            includeLive = settings.includeLive, nowMs = clock(),
             aliveAt = { book, sport -> if (socketOn) stream.aliveAt(book, sport) else null },
         )
         return BoltConvert.events(stream.board.gamesOf(sports), ctx)
@@ -202,6 +233,10 @@ class BoltOddsFeed(
     }
 
     companion object {
+        const val PLAN_TTL_MS = 3_600_000L
+        const val GROWTH_LEAGUES = 3
+        /** Which leagues a 3-league plan keeps: the ones with the most +EV volume and bid fills in the engine's data (CH76). */
+        val GROWTH_PRIORITY = listOf("NCAAF", "NBA", "NHL", "NFL", "MLB", "NCAAB", "WNBA")
         const val META_TTL_MS = 6 * 3_600_000L
         const val RETRY_MS = 5 * 60_000L
 
