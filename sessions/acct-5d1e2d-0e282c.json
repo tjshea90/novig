@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-lpr7ge",
- "head": "2c199b37ab06b5e7499ed7e2087e649ab32b840e",
+ "head": "f5a94cb7b202cd3de3500e747ea982e321f777c4",
  "since": 1792714365,
- "beat": 1792714724,
- "beatIso": "2026-10-23T00:18:44Z",
- "done": "CH68a card shows Kalshi's exact refusal; bump 1.0.54",
- "next": "ship, release, ask Tj to retry a Kalshi bet"
+ "beat": 1792714757,
+ "beatIso": "2026-10-23T00:19:17Z",
+ "done": "pre-release: CH68a Kalshi bet card shows Kalshi's exact refusal words (to find why it says not enough money) (versionCode 394, v1.0.54)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.54), then run: bash tools/record-release.sh v1.0.54 394 \"CH68a Kalshi bet card shows Kalshi's exact refusal words (to find why it says not enough money)\""
 }
