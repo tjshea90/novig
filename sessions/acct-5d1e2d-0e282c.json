@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-lpr7ge",
  "head": "a5e9986dcb0ab488f60a4d773f0204f3c0cc85fc",
  "since": 1792715293,
- "beat": 1792715409,
- "beatIso": "2026-10-23T00:30:09Z",
+ "beat": 1792715415,
+ "beatIso": "2026-10-23T00:30:15Z",
  "done": "CH68a: refusal shows the order sent and Kalshi cash now; bump 1.0.55",
  "next": "ship, release, Tj retries"
 }
