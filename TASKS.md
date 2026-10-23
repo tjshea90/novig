@@ -6238,3 +6238,6 @@ CH66 (Tj chat 23:39 UTC 2026-10-22, t1792712388108-24de, verbatim): "I want ever
 - [ ] CH66c the CNO auto-bet lane places from the engine, not the phone, while GitHub drives
 - [ ] CH66e restart the engine once at a quiet moment after the batch lands (Tj 23:41: "restart it at the next best time")
 - [ ] CH67 flaky: NovigPublicClientTest 'never add up to a stand-down' failed once in the full suite (passes alone, 38/38); find the timing dependence (shared global state / real clock)
+
+CH68 (Tj chat 00:12 UTC 2026-10-23, t1792714344773-0be2): "all of my kalshi bets say I don't have enough money for the bet, but there is enough money in my kalshi account. see if you can figure this out"
+- [~] CH68a the text only comes from Kalshi's own `insufficient*` code (nothing in the placer checks cash); engine reads cash $6.29; the card now shows Kalshi's exact code and detail (1.0.54). Next: read the real answer from Tj's retry (Diagnostics net block / the card), then fix the cause (suspects: V2 'ask of YES' for NO buys needing a YES position or full $1 collateral; subaccount; count units).
