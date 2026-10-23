@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "d492cbeefa3dbf83a6ea43b99f971329397dd22f",
+ "head": "8e828381fb28861b2328ad7a2463f72e65450653",
  "since": 1792797865,
- "beat": 1792799785,
- "beatIso": "2026-10-23T23:56:25Z",
- "done": "FX2: SharpAPI and SX Bet streams ignored server closes (no onClosing): a dead socket counted as live until the 90 s silence check while REST polled only every 60 s; now answered and reconnected at once; SharpAPI close codes counted+logged; tab bar labels fit with 8 tabs (screenshot drew 10); sharp-book chips named (Circa, Bookmaker, SBOBET); star help + Fair odds hint copy current. All with tests failing on old code.",
- "next": "read star check rerun; finish API verdicts; land + engine reset; full regression; ship"
+ "beat": 1792799962,
+ "beatIso": "2026-10-23T23:59:22Z",
+ "done": "FX2/FX3: star check rerun read (recorded lines only: ROI rises with stars, CLV/ROI slope +0.5/+5.0 pts per star, t~1; type points and sharp component not confirmed out of sample); API value table over 501 scans x 3 days read",
+ "next": "full regression floor (running), then write research/full_test, star_rating_review, api_verdicts; CHANGES.md; ship"
 }
