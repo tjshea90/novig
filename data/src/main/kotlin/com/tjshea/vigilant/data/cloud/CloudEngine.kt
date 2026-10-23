@@ -198,6 +198,7 @@ class CloudEngine(
         deskLock.withLock { runCatching { b.serve(reqs, s, clock()) }.onFailure { if (it is CancellationException) throw it; log("bid requests failed: ${it.javaClass.simpleName}") } }
     }
 
+    private var deskKeySeen: String? = null
     private var checkSeenMs = 0L
     private fun serveCheckRequest(c: CloudConfig?) {
         if (c != null && c.checkApisAtMs > checkSeenMs) { checkSeenMs = c.checkApisAtMs; runCatching(onCheckApis) }
@@ -514,6 +515,12 @@ class CloudEngine(
                 }
                 // Nothing to decide unless the phone wrote something new (a revision, a switch-off, a refresh): the settings are compared only then.
                 if (newer != null && (newer.rev != cfg.rev || !newer.on || newer.refreshAtMs > handledRefresh)) {
+                    // The bid desk follows a change of its mode or rules at once (Tj, 2026-10-23, CH74d: "make sure GitHub begins using the updated settings immediately"), not at its next 25 s pass.
+                    val deskKey = CloudScanKey.key(newer.settings, CloudScanKey.Kind.BIDS) + "|${newer.settings.maker}|${newer.settings.makerRecommend}|${newer.settings.killed}"
+                    if (deskKey != deskKeySeen) {
+                        deskKeySeen = deskKey; phoneSettings = newer.settings
+                        launch { deskPass(newer.settings) }
+                    }
                     val fetchChanged = CloudScanKey.fetchKey(newer.settings) != fetchKey
                     if (fetchChanged && newer.rev != fetchChangeRev) { fetchChangeRev = newer.rev; fetchChangeSince = now }
                     when {

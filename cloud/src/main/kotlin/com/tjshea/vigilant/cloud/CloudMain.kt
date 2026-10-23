@@ -398,7 +398,8 @@ fun main(args: Array<String>) = runBlocking {
             val bids = com.tjshea.vigilant.data.cloud.DeskFile.trim(deskStore.all(), now)
             for (b in deskStore.all()) if (b.status.ended && now - (b.endedAtMs ?: b.postedAtMs) > 120_000L && bidsJournaled.add(b.clientId)) runCatching { bidJournal.append(b) }
             val fills = deskTracker.all().filter { it.createdAtMs >= now - 7L * 24 * 3_600_000L }
-            val body = com.tjshea.vigilant.data.cloud.DeskFile(0L, "", "", bids, fills)
+            val (recs, results, served) = r.extras()
+            val body = com.tjshea.vigilant.data.cloud.DeskFile(0L, "", "", bids, fills, recs, results, served)
             val text = com.tjshea.vigilant.data.cloud.DeskFile.text(body)
             if (text != deskText) { deskText = text; publisher.stageDesk(com.tjshea.vigilant.data.cloud.DeskFile.text(body.copy(atMs = now, note = r.status()?.note.orEmpty(), stopped = r.status()?.stopped.orEmpty())), now) }
         }
@@ -406,6 +407,7 @@ fun main(args: Array<String>) = runBlocking {
             override fun put(b: CloudBids) = r.put(b)
             override suspend fun pass(s: com.tjshea.vigilant.data.scanner.ScanSettings, now: Long) = r.pass(s, now).also { runCatching { stageDesk(now) } }
             override suspend fun stop(why: String) { r.stop(why); runCatching { stageDesk(System.currentTimeMillis()) } }
+            override suspend fun serve(requests: List<com.tjshea.vigilant.data.cloud.BidRequest>, s: com.tjshea.vigilant.data.scanner.ScanSettings, now: Long) { r.serve(requests, s, now); runCatching { stageDesk(now) } }
         }
     }
     var lastStoppedSaid = ""
