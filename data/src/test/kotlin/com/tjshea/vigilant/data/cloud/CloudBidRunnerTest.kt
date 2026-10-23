@@ -249,7 +249,7 @@ class CloudBidRunnerTest {
         assertFalse(ScanSettings().engineBids)
         assertFalse(live.copy(gates = live.gates.copy(cloudScan = false)).engineBids)
         assertFalse(live.copy(pausedByHand = true).engineBids)
-        assertTrue("the phone's own maker switch is not needed: the engine does it", !live.maker && live.engineBids)
+        assertFalse("Off and Recommend never post (Tj, 2026-10-23)", live.copy(maker = false).engineBids)
         assertTrue("the engine runs the bid profile", CloudEngine.forCloud(live).maker)
         assertFalse("a phone with the engine not bidding is unchanged", CloudEngine.forCloud(ScanSettings()).maker)
     }
