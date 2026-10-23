@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "59e69cd7985929d88d4705b2d5431d3630b6722d",
+ "head": "bae980fcbf39ea4359d1def96d3c417b7b3467d1",
  "since": 1792797865,
- "beat": 1792799334,
- "beatIso": "2026-10-23T23:48:54Z",
+ "beat": 1792799514,
+ "beatIso": "2026-10-23T23:51:54Z",
  "done": "FX2: study splits capped at 25 groups (engine digest's Books agreeing had hundreds of 1-bet groups, hid every other split; ScanStudyTest); StarCheck leaves out lines logged before the rating's inputs were recorded (914 rows were rated 1 star on missing data) + same-lines old-vs-new table",
  "next": "re-dispatch review-digest.yml, read the star check, decide the rating's fix"
 }
