@@ -1,0 +1,1 @@
+{"id":"adv-fix:pinnwire-2026-10-23","at":1792758235341,"from":"engine","kind":"recommendation","title":"Pinnacle (PinnWire) refused 18 keys","body":"The provider rejected the key (wrong, expired or cancelled). Replace it in Settings › APIs, or the engine goes without Pinnacle (PinnWire).","priority":1,"action":"APIS"}
