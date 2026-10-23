@@ -65,10 +65,16 @@ class SharpApiStream(
     @Volatile var gamestateRefused = false
         private set
 
+    /** How the connections ended, by close code (FX, 2026-10-23: 52 connections in a 3.8 h job and no word why; 1008 = SharpAPI found us a slow consumer, 1006 a drop, 1012 a server restart). */
+    private val closeCodes = java.util.concurrent.ConcurrentHashMap<Int, Int>()
+
+    /** "1006×3, 1008×40" or "" with none. */
+    fun closesText(): String = closeCodes.entries.sortedBy { it.key }.joinToString(", ") { "${it.key}×${it.value}" }
+
     fun health(now: Long = clock()): String = when {
         !wanted -> "off"
         refusedKey != null && refusedKey == key() -> "the key was refused (${lastClose ?: "4001"})"
-        live -> "live (last frame ${(now - lastFrameMs) / 1000}s ago, ${frames} frames, ${connects} connections)"
+        live -> "live (last frame ${(now - lastFrameMs) / 1000}s ago, ${frames} frames, ${connects} connections" + (closesText().takeIf { it.isNotEmpty() }?.let { "; closes $it" }.orEmpty()) + ")"
         now < retryAtMs -> "reconnecting in ${(retryAtMs - now) / 1000}s (${lastClose ?: "closed"})"
         else -> "connecting" + (lastClose?.let { " (last close: $it)" } ?: "")
     }
@@ -208,6 +214,8 @@ class SharpApiStream(
         live = false
         feed.streamLeagues = emptySet()
         lastClose = "$code ${reason.take(80)}".trim()
+        closeCodes.merge(code, 1, Int::plus)
+        if (code != 1000) log("SharpAPI stream: closed $lastClose (connection $connects; closes so far ${closesText()})")
         val now = clock()
         when {
             code == 1000 && !wanted -> {}
