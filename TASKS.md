@@ -6288,5 +6288,14 @@ Analyze the current star system; make ONE rating that combines all factors, remo
 - [x] ST1c released v1.0.64
 - [x] ST1d (Tj 22:14) research from existing research/ + API history/CLV (PropLine clv, SGO closes, OddsPapi historical, propline_clv Release) + reputable web sources (closing-line value, devig, favorite-longshot, sharp-book literature); cite them in research/star_rating_*.md
 - [x] ST1e (Tj 22:16) one book, or two small-name books, pricing a bet = risky: demote (today: <2 companies caps 1.5 stars, 2 caps 3.0; add a small-book test)
-- [ ] ST2 (Tj 22:41) sort-by-stars in the list does nothing and the sort filters disappeared (v1.0.64): find cause, fix, release
+- [x] ST2 (Tj 22:41) sort-by-stars in the list does nothing and the sort filters disappeared (v1.0.64): find cause, fix, release (done v1.0.65, next line)
 - [x] ST2 fixed in v1.0.65: merged Kalshi+Novig list obeys Best EV/Soonest/Stars, sort buttons show when only Kalshi rows exist, old bets sorted; CNO tab got the same three buttons
+
+## FX: full tests of app + engine, bug/waste hunt, star-rating review, API verdicts (Tj, 2026-10-23, typed prompt, verbatim)
+"Run full tests protocol on the Android app and on the GitHub engine. Look for and fix bugs, bad code, waste of bandwidth or processing, waste of api usage, and ways to optimize the code and ui. Review the stars rating system for rating bets and make sure it is sound and based on good data. Look at all the available apis and how well they respond, their freshness, features, and contributions to the app and GitHub engine, and tell me which ones to continue, which ones are bad or not needed, which ones to consider buying, etc. Make sure this is based on sufficient data and history"
+- [ ] FX1 automated floor: tools/test_*.sh, bash tools/test.sh (engine, data, app, cloud), -Pscreenshots and look at the PNGs; engine selftests (engine_alarm, engine_watchdog, deadman, chat, lines_dataset, trade_summary, engine_study, tell_tj)
+- [ ] FX2 sweep: bugs, bad code, bandwidth/processing waste, API-usage waste, UI/code optimizations (app + engine); each fix with a test that fails before it; findings in research/full_test_2026-10-23.md
+- [ ] FX3 star rating review: BetRating (ST1) against the data (engine lines/grades/CLV, phone bets), is each term backed by enough settled games; fix what is not sound; write it in research/star_rating_review_2026-10-23.md
+- [ ] FX4 API verdicts: every API's measured response, freshness, features and contribution (status.json ranking/usage, engine logs, cloud-archive journals, usage ledgers, the 2026-10-22 audit) over enough history; continue / drop / buy list in research/api_verdicts_2026-10-23.md, report to Tj
+- [ ] FX5 full regression (exit code AND output), ship.sh, release.yml, record-release.sh, link to Tj
+
