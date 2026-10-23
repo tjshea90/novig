@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-lpr7ge",
- "head": "26fb8fb98ee7ed881d2307a1722cdff19dbfbb0e",
+ "head": "750b5a8d1d463b056b5832eacac03d8a93e6e54b",
  "since": 1792715293,
- "beat": 1792715676,
- "beatIso": "2026-10-23T00:34:36Z",
+ "beat": 1792716117,
+ "beatIso": "2026-10-23T00:41:57Z",
  "done": "pre-release: CH68a Kalshi refusal shows the exact order sent and Kalshi's cash at that moment (versionCode 395, v1.0.55)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.55), then run: bash tools/record-release.sh v1.0.55 395 \"CH68a Kalshi refusal shows the exact order sent and Kalshi's cash at that moment\""
 }
