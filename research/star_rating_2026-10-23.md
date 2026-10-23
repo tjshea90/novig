@@ -23,3 +23,14 @@
 - Practitioner sources (SharpAPI docs on CLV, vendor blogs) say only that CLV is meaningful against a sharp reference; not peer reviewed.
 ## Next
 Regenerate `profit_profile.json` whenever Tj shares a new history file; refit the lead and agreement points when the dataset has 3x the closed rows (LEVERS.md: add a star-rating lever).
+
+## Cross-check on the APIs' own history (Tj 22:35): Release `propline-clv` (19,452 engine lines; +EV 2,676; 563 with PropLine's Pinnacle close, 1,713 settled)
+A second, independent close (PropLine archive Pinnacle, not SGO) and real results. Agrees with what ST1 changed:
+- Kind CLV: props +3.8% (t 3.4), team totals +2.1% (t 4.3), moneylines +1.3%, spreads +0.6%, totals -0.1%. League: NHL +3.0% (t 4.5), NBA +1.5%, NCAAF +1.2%, NFL -0.8%, ATP/WTA -1.1%.
+- Edge: 0-2% +0.5%, 2-4% +2.1%, 4-6% +2.4%. Lead: <1 h +2.9%, 1-6 h +1.2%, 6-24 h +1.3%, >24 h +0.3% (same order as SGO's closes).
+- Books pricing both sides (results, ROI per $1): 1 book -20.7%, 2 books -11.6%, 3-5 books about 0, 6+ -8.3%. Agreement share (results): <=50% -16.6%, 50-75% -13.8%, 75-99% -3.4%, 100% -4.5%. Supports the small-book cap and the agreement points. (CLV by agreement is flat here: noisy.)
+Disagrees or is unclear:
+- Results by lead: <1 h bets lost -23% (n 226, t -3.4) although they beat the close by the most; 1-6 h +4.6%. ROI is noisier than CLV; lead points stay small (+3 / 0 / -4).
+- Totals: overs -19.7% ROI (n 213, t -2.7) here, but Tj's own history had game-total overs +21.6% (n 89, t 1.1). Opposite signs = noise; the type points shrink toward 0 and are capped.
+- Prop overs: CLV positive, ROI -7% (n 294, t -1.0); prop unders +4.6% (n 446). Matches the decision to give overs no CLV bonus.
+- Old star buckets, results: 4.5 stars +24% (n 45, t 1.4), 3.5 +2.5%, 3.0 -10.7% (n 547, t -2.2), 1.5-2.0 about -15%. Ordered roughly right at the ends, flat in the middle: another reason to refit when the sample triples.
