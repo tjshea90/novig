@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-x1kgjg",
- "head": "eb410e4f6fa1725cd3c0a50bd2d278dbc9ffaa0c",
+ "head": "c11513e95943a29ee138bc3d53c54f690fb91d98",
  "since": 1792726357,
- "beat": 1792731903,
- "beatIso": "2026-10-23T05:05:03Z",
- "done": "CH72 pull-to-refresh tests only failing/stale APIs",
- "next": "include in next release (needs full tools/test.sh before ship)"
+ "beat": 1792732094,
+ "beatIso": "2026-10-23T05:08:14Z",
+ "done": "CH73 part 1: master switch 'Run on GitHub' (off=phone mode, trading OFF), token save turns it on; full suite green (4153 pass). Not shipped",
+ "next": "CH73a audit of phone-side work while GitHub drives; CH72 Kalshi bid pace + fresh prices; then ship as one release"
 }
