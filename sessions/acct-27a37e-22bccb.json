@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "b8f28279241c48a9afcc2c5a69f5b127dd6d781d",
+ "head": "72184f30cbfb7901eca285d3721da25bb7c0ef8e",
  "since": 1792797865,
- "beat": 1792798592,
- "beatIso": "2026-10-23T23:36:32Z",
- "done": "FX1 floor green (4,192 tests, exit 0), 25 py selftests ok, 134 screenshots read; FX2 fix: StudyExport takes played game days before future ones (digest's engine study showed 0 started bets since 10-21), review gets its own day budget; StarCheckMain.kt written (not yet compiled)",
- "next": "compile+test StudyExport/StarCheck, add review-digest steps (api_quality + starcheck), trigger it; UI: tab labels truncated, circa/bookmaker chips, stale star help copy"
+ "beat": 1792798730,
+ "beatIso": "2026-10-23T23:38:50Z",
+ "done": "FX2: StudyExport played-days-first (test fails on old code), Review day budget 4 GB/-Xmx8g; StarCheckMain + :cloud:starcheck + StarCheckTest; api_quality.py medians over ON scans + by-day table; review-digest.yml runs both",
+ "next": "dispatch review-digest.yml on this branch, read API VALUE + STAR RATING CHECK from review-digest/latest.txt; meanwhile code sweep"
 }
