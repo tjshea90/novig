@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-gxcjqr",
  "head": "28dc12f35b47c22902d59f69cf968bd0f79bb19d",
  "since": 1792765957,
- "beat": 1792766096,
- "beatIso": "2026-10-23T14:34:56Z",
+ "beat": 1792766555,
+ "beatIso": "2026-10-23T14:42:35Z",
  "done": "pre-ship: CH73: master switch Run on GitHub (default on; off = phone mode, engine off, trading OFF); audit shows the phone stands down while the engine drives",
  "next": "ship.sh gates and releases this"
 }
