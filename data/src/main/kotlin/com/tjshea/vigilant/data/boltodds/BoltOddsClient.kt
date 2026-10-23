@@ -105,7 +105,26 @@ class BoltOddsClient(
     fun keyCount(): Int = keys().size
 
     /** The first saved key the meter has not refused or rested, or null: the key a socket connects with. */
-    suspend fun nextKey(): String? = meter.pick(QuotaPolicy.BOLTODDS, keys(), 1)
+    suspend fun nextKey(): String? = meter.pick(QuotaPolicy.BOLTODDS, keys().sortedByDescending { planRank[it] ?: 0 }, 1)
+
+    /** Key -> how good its plan is (paid 3 > unknown 1... trial/free 0 would lose to an unread key, so unread is 1 and trial/free are 0): read by [rankKeys], so the sockets use the paid key first. */
+    private val planRank = java.util.concurrent.ConcurrentHashMap<String, Int>()
+    @Volatile var planNotes: String = ""
+        private set
+
+    /** Reads every saved key's own plan once (`/api/odds/user`, free) and orders [nextKey] by it: Growth/Pro/Starter before Trial/Free (CH76: three keys are saved, one is the paid plan). */
+    suspend fun rankKeys() {
+        val notes = ArrayList<String>()
+        for ((i, k) in keys().withIndex()) {
+            acquire(snapshot = true)
+            val r = runCatching { http.newCall(Request.Builder().url(url("/odds/user", k, emptyList())).get().build()).awaitText() }.getOrNull()
+            val u = r?.takeIf { it.code == 200 }?.let { BoltOddsUser.parse(it.body) }
+            val plan = u?.plan?.lowercase().orEmpty()
+            planRank[k] = when { plan.isBlank() -> 1; "trial" in plan || "free" in plan -> 0; "pro" in plan -> 4; "growth" in plan -> 3; else -> 2 }
+            notes += "#${i + 1} ${u?.plan ?: "unread (HTTP ${r?.code ?: "?"})"}"
+        }
+        planNotes = notes.joinToString(", ")
+    }
 
     /** A socket's key was refused (close 1008 "Invalid token"): rests until the next day, other keys carry on. */
     suspend fun refuseKey(key: String, why: String) = meter.recordRejected(QuotaPolicy.BOLTODDS, key, why.take(120))
