@@ -393,3 +393,4 @@ day that changes.
 | v1.0.52 | code 392 | 2026-10-22T23:27Z | API audit follow-up (AG): Kalshi live-data, SharpAPI splits and Novig own-close journals on the engine; BoltOdds open-socket check says why when unreadable
 | v1.0.53 | code 393 | 2026-10-23T00:05Z | CH66a with GitHub driving, the phone takes no Novig/order sockets and posts no Vigilant bets or bids of its own; the Feed's live lane waits too
 | v1.0.54 | code 394 | 2026-10-23T00:23Z | CH68a Kalshi bet card shows Kalshi's exact refusal words (to find why it says not enough money)
+| v1.0.55 | code 395 | 2026-10-23T00:41Z | CH68a Kalshi refusal shows the exact order sent and Kalshi's cash at that moment
