@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-96459k",
  "head": "2f886f94f3c97956a68572decd2b8b18315cdba9",
  "since": 1792726357,
- "beat": 1792727636,
- "beatIso": "2026-10-23T03:53:56Z",
+ "beat": 1792728399,
+ "beatIso": "2026-10-23T04:06:39Z",
  "done": "CH72 pull-to-refresh tests only failing/stale APIs",
  "next": "include in next release (needs full tools/test.sh before ship)"
 }
