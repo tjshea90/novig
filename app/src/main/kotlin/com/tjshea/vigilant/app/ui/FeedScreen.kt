@@ -109,6 +109,7 @@ fun FeedScreen(
 ) {
     var selected by remember { mutableStateOf<Opportunity?>(null) }
     var kalshiSelected by remember { mutableStateOf<Opportunity?>(null) }
+    var kalshiSlip by remember { mutableStateOf<Opportunity?>(null) }
     var showOld by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     // The ParlayAPI pick whose sheet is open (its key: a recheck re-prices it while it's open; TASKS.md P4).
     var parlaySelected by remember { mutableStateOf<String?>(null) }
@@ -161,6 +162,13 @@ fun FeedScreen(
             snackbar.currentSnackbarData?.dismiss()
             val r = snackbar.showSnackbar(text, actionLabel = "Undo", duration = SnackbarDuration.Short)
             if (r == SnackbarResult.ActionPerformed) onUnhide(key)
+        }
+    }
+    fun undoableKalshi(text: String, key: String, undo: (String) -> Unit) {
+        scope.launch {
+            snackbar.currentSnackbarData?.dismiss()
+            val r = snackbar.showSnackbar(text, actionLabel = "Undo", duration = SnackbarDuration.Short)
+            if (r == SnackbarResult.ActionPerformed) undo(key)
         }
     }
     val hide: (Opportunity) -> Unit = { o ->
@@ -346,7 +354,11 @@ fun FeedScreen(
                 val kalshiRows = if (kalshi != null && kalshi.kalshiOn) viewFilter.apply(kalshi.rows) else emptyList()
                 val merged = if (kalshiRows.isEmpty()) shown.map { it to false } else (shown.map { it to false } + kalshiRows.map { it to true }).sortedByDescending { it.first.evPercent ?: 0.0 }
                 items(merged, key = { (o, k) -> (if (k) "kalshi/" else "") + o.key }) { (o, isKalshi) ->
-                    if (isKalshi) OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), venue = "Kalshi") { kalshiSelected = o }
+                    if (isKalshi) OpportunityCard(
+                        o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), venue = "Kalshi",
+                        onHide = if (kalshi != null) ({ kalshi.onHide(o); undoableKalshi("Removed: ${o.selection}.", o.key, kalshi.onUnhide) }) else null,
+                        onBet = { kalshiSlip = o },
+                    ) { kalshiSelected = o }
                     else OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), onHide = { hide(o) }, injury = state.injuries[o.key], move = state.lineMoves[o.key], venue = if (kalshi != null && kalshi.kalshiOn) "Novig" else null) { selected = o }
                 }
                 // Old bets (Tj, 2026-10-17): the Novig price or the other books' prices behind them are past the app's own old limits, so they are not in the list above; one tap shows them, marked OLD.
@@ -384,6 +396,7 @@ fun FeedScreen(
     }
 
     kalshiSelected?.let { o -> kalshi?.sheet?.invoke(o) { kalshiSelected = null } }
+    kalshiSlip?.let { o -> kalshi?.slip?.invoke(o) { kalshiSlip = null } }
 
     selected?.let { o ->
         // Show the freshest copy of the selected line: a scan may have re-priced it since the tap.
@@ -643,6 +656,8 @@ fun OpportunityCard(
     move: com.tjshea.vigilant.data.reference.LineMove? = null,
     /** The venue's name in the card's corner: null is the app's own book (Novig); the Kalshi tab says "Kalshi". */
     venue: String? = null,
+    /** A Kalshi card's Bet button: opens the mini bet slip (a Novig card's is [ApiBetButton]). */
+    onBet: (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     val q = o.quote ?: return
@@ -730,11 +745,19 @@ fun OpportunityCard(
                     // Betting through Novig's API (Tj, 2026-09-29): only when it's set up in Settings.
                     // A Kalshi card bets on Kalshi (its own slip), never through Novig's.
                     if (venue == "Kalshi") {
+                        // The same two buttons as a Novig card (Tj, 2026-10-23): Bet (the mini slip) and Open in Kalshi.
                         androidx.compose.material3.FilledTonalButton(
-                            onClick = onClick,
+                            onClick = onBet ?: onClick,
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 6.dp),
                             modifier = Modifier.testTag("kalshiBetButton"),
-                        ) { Text("Bet on Kalshi", maxLines = 1) }
+                        ) { Text("Bet", maxLines = 1) }
+                        Spacer(Modifier.width(6.dp))
+                        val uri = androidx.compose.ui.platform.LocalUriHandler.current
+                        androidx.compose.material3.FilledTonalButton(
+                            onClick = { runCatching { uri.openUri(o.outcome.bookRef?.eventLink ?: "https://kalshi.com/sports") } },
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                            modifier = Modifier.testTag("kalshiOpenButton"),
+                        ) { Text("Open in Kalshi" + (o.quote?.let { " · " + Format.money(o.suggestedStake ?: 0.0) } ?: ""), maxLines = 1) }
                     } else {
                         ApiBetButton { it.betOpportunity(o) }
                         Spacer(Modifier.width(6.dp))
@@ -946,6 +969,11 @@ class KalshiFeedPart(
     val onKalshi: (Boolean) -> Unit,
     val onMore: () -> Unit,
     val sheet: @Composable (Opportunity, () -> Unit) -> Unit,
+    /** The mini bet slip of a card's Bet button: the same slip as Novig's, for Kalshi's price and order. */
+    val slip: @Composable (Opportunity, () -> Unit) -> Unit = sheet,
+    /** The card's X: off the list for good; [onUnhide] is the Undo. */
+    val onHide: (Opportunity) -> Unit = {},
+    val onUnhide: (String) -> Unit = {},
 )
 
 /** The Novig / Kalshi toggles above the list: either or both. */

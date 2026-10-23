@@ -833,6 +833,9 @@ private fun VigilantRoot(
                         onKalshi = { on -> kalshiHub.setVenues(kalshi = on); if (on) kalshiHub.scanNow() },
                         onMore = { tabName = Tab.KALSHI.name },
                         sheet = { o, dismiss -> com.tjshea.vigilant.app.ui.kalshi.KalshiBetSheet(kalshiHub, kalshiUi, o, System.currentTimeMillis(), onDismiss = dismiss) },
+                        slip = { o, dismiss -> com.tjshea.vigilant.app.ui.kalshi.KalshiMiniSlip(kalshiHub, kalshiUi, o, dismiss) },
+                        onHide = kalshiHub::hide,
+                        onUnhide = kalshiHub::unhide,
                     ) else null,
                     onToggleLeague = vm::toggleLeague,
                     // Its Settings buttons are about fair-odds sources and keys: that page.
