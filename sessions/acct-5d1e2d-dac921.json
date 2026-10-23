@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-gxcjqr",
- "head": "28dc12f35b47c22902d59f69cf968bd0f79bb19d",
+ "head": "67895df92692395a7062de7ac433720ff018a30d",
  "since": 1792765957,
- "beat": 1792766555,
- "beatIso": "2026-10-23T14:42:35Z",
- "done": "pre-ship: CH73: master switch Run on GitHub (default on; off = phone mode, engine off, trading OFF); audit shows the phone stands down while the engine drives",
- "next": "ship.sh gates and releases this"
+ "beat": 1792766586,
+ "beatIso": "2026-10-23T14:43:06Z",
+ "done": "pre-release: CH73: master switch Run on GitHub (default on; off = phone mode, engine off, trading OFF); audit shows the phone stands down while the engine drives (versionCode 401, v1.0.61)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.61), then run: bash tools/record-release.sh v1.0.61 401 \"CH73: master switch Run on GitHub (default on; off = phone mode, engine off, trading OFF); audit shows the phone stands down while the engine drives\""
 }
