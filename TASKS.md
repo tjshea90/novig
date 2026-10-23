@@ -6285,6 +6285,6 @@ Tj: "audit the entire bids tab ... recoded to transform from a phone bid engine 
 Analyze the current star system; make ONE rating that combines all factors, remove the separate "after your history this is x stars"; promote bet types that won (overs/unders, favorites/underdogs, prop kinds, sport) and demote losing ones proportionately, from Tj's bets AND API historical data; also weigh books agreeing, a sharp book agreeing, EV size, and CLV drivers (lead time, bet type, sport, sharp price, both sides offered). Keep the 1-5 star scale: 5 = most profitable type, 1 = least/riskiest. Applies to the scanners (Vigilant + CNO).
 - [x] ST1a map the current star code (where history stars live) and write research/star_rating_*.md with the data fit
 - [x] ST1b (part 1) history is a +-15 point term in BetRating (typePoints), "after your history" removed, adjustedStars no longer double-counts; AutoBetStarsTest. Still to do: app compile check, small-book demotion (ST1e), data study (ST1a/d)
-- [ ] ST1c release, tell Tj
+- [x] ST1c released v1.0.64
 - [x] ST1d (Tj 22:14) research from existing research/ + API history/CLV (PropLine clv, SGO closes, OddsPapi historical, propline_clv Release) + reputable web sources (closing-line value, devig, favorite-longshot, sharp-book literature); cite them in research/star_rating_*.md
 - [x] ST1e (Tj 22:16) one book, or two small-name books, pricing a bet = risky: demote (today: <2 companies caps 1.5 stars, 2 caps 3.0; add a small-book test)
