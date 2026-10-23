@@ -132,13 +132,17 @@ class CloudKalshiLane(
         val t0 = clock()
         val srcs = sources(s).map { src -> BorrowedSource(src, novigHeld, { true }, clock, borrowProps = true) } + venue
         val report = scanner.scan(s, srcs, emptySet())
-        val result = report.result
-        if (result == null) {
+        val scanned = report.result
+        if (scanned == null) {
             last = last.copy(atMs = clock(), mode = ec.mode, rev = ec.rev, note = "no Kalshi result: ${report.errors.firstOrNull()?.take(140) ?: "nothing came back"}")
             publishStatus()
             return
         }
         val scanMs = clock() - t0
+        // The scan takes about two minutes and the auto-bet takes only a Kalshi price read in the last minute ([KalshiAutoBettor.FRESH_PRICE_MS]): on the engine 97% of the lines were held back as "no Kalshi
+        // price read in the last minute" (log, 2026-10-23). The +EV lines' leagues are read again just before judging, as the Novig trader re-reads its books; with Kalshi's socket live that is a read of
+        // memory, not a request ([KalshiClient.venueOdds]). A failed re-read keeps the scan's result and its honest ages.
+        val result = fresher(s, scanned)
         // Bets: the same auto-bet rules, paper or real.
         var autoNote = ""
         var placed = 0
@@ -190,6 +194,21 @@ class CloudKalshiLane(
         runCatching { publish("kalshi-paper.json", kotlinx.serialization.json.Json.encodeToString(kotlinx.serialization.builtins.ListSerializer(com.tjshea.vigilant.data.tracker.TrackedBet.serializer()), paperTracker.all())) }
         runCatching { publish("kalshi-maker.json", kotlinx.serialization.json.Json { encodeDefaults = false }.encodeToString(kotlinx.serialization.builtins.ListSerializer(com.tjshea.vigilant.data.novig.trading.maker.MakerBid.serializer()), bidStore.all())) }
         log("kalshi lane: ${last.note}" + (autoNote.takeIf { it.isNotEmpty() }?.let { " · auto: $it" }.orEmpty()) + (bidNote.takeIf { it.isNotEmpty() }?.let { " · bids: $it" }.orEmpty()))
+    }
+
+    /** [scanned] with the Kalshi side of its +EV lines read again now, when the scan ended long enough ago for them to have aged past the auto-bet's freshness rule. */
+    internal suspend fun fresher(s: ScanSettings, scanned: ScanResult): ScanResult {
+        if (clock() - scanned.computedAtMs < KalshiAutoBettor.FRESH_PRICE_MS / 2) return scanned
+        val ids = scanned.opportunities.filter { !it.isLive && (it.evPercent ?: 0.0) > 0.0 }.map { it.market.marketId }.distinct()
+        if (ids.isEmpty()) return scanned
+        return try {
+            scanner.recheck(s, ids) { _, _ -> }.result ?: scanned
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            log("kalshi lane: re-read before judging failed: ${e.message?.take(120)}")
+            scanned
+        }
     }
 
     /** The engine's hours or the job are over: every Kalshi bid comes down. */
