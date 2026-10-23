@@ -1627,7 +1627,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * the Engine > APIs cards weigh beside the engine's own check ([com.tjshea.vigilant.data.cloud.ApiState]): an API the engine's runner cannot reach but this phone can is said so, not painted red.
      */
     suspend fun checkApisFromPhone() {
-        val on = ApiEntry.active(_state.value.settings).filter { it != ApiEntry.PINNWIRE && it != ApiEntry.PINNAPI }
+        val st = _state.value
+        val now = System.currentTimeMillis()
+        // Only an API that is failing, never checked or last checked over a minute ago is tested again (Tj, 2026-10-23: a pull should not re-test healthy ones).
+        val on = ApiEntry.active(st.settings).filter { it != ApiEntry.PINNWIRE && it != ApiEntry.PINNAPI }.filter { e ->
+            val at = st.apiCheckedAt[e.name] ?: 0L
+            val cs = st.apiChecks[e.name]
+            at == 0L || now - at >= 60_000L || cs.isNullOrEmpty() || cs.any { !it.ok }
+        }
         if (on.isEmpty()) return
         val gate = kotlinx.coroutines.sync.Semaphore(4)
         kotlinx.coroutines.coroutineScope {

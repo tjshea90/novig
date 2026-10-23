@@ -99,6 +99,8 @@ class ApiMonitor(
             if (id != null && t.id != id) continue
             val l = lines[t.id]
             if (id == null && t.every == pinnEveryMs && l != null && l.ok && l.atMs > 0L) continue
+            // A pull to refresh leaves an API that checked green in the last minute alone (Tj, 2026-10-23: re-testing healthy APIs on every pull is waste).
+            if (id == null && l != null && l.ok && l.atMs > 0L && clock() - l.atMs < 60_000L) continue
             dueAt[t.id] = 0L
         }
     }
