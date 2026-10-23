@@ -399,3 +399,4 @@ day that changes.
 | v1.0.58 | code 398 | 2026-10-23T02:01Z | CH68d Kalshi: when an order is refused for balance, the app moves your cash from the other exchange shards to the market's shard and sends it again
 | v1.0.59 | code 399 | 2026-10-23T02:21Z | CH70 Kalshi cards and slip match Novig's: X, Bet opens the same mini slip, Open in Kalshi; X removes for good; unbettable bets leave the list until a newer price shows them bettable
 | v1.0.60 | code 400 | 2026-10-23T02:32Z | CH71a an order that finds nobody selling (or a refusal that says the bet is gone) takes the row off the scanned list until a newer price lists it again
+| v1.0.61 | code 401 | 2026-10-23T14:47Z | CH73: master switch Run on GitHub (default on; off = phone mode, engine off, trading OFF); audit shows the phone stands down while the engine drives
