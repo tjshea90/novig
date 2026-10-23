@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-lpr7ge",
- "head": "4def26506377cdfd73bd5bbbea83daf9cc67c199",
+ "head": "86dc43e694e01c74986843fb5a269e607ab8890c",
  "since": 1792721011,
- "beat": 1792722077,
- "beatIso": "2026-10-23T02:21:17Z",
- "done": "CH71a: NotFilled/gone order results take the row off the list",
- "next": "wait for v1.0.59 tag+record, then ship 1.0.60"
+ "beat": 1792722113,
+ "beatIso": "2026-10-23T02:21:53Z",
+ "done": "bump 1.0.60",
+ "next": "ship"
 }
