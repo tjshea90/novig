@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-yprd2y",
- "head": "98fa56d7ff0b73e6f6145f03341011a2f68aa524",
+ "head": "a89b4636013c612eaebb7047f95e8bd164812a76",
  "since": 1792768029,
- "beat": 1792793983,
- "beatIso": "2026-10-23T22:19:43Z",
+ "beat": 1792794371,
+ "beatIso": "2026-10-23T22:26:11Z",
  "done": "ST1: history folded into the one BetRating (typePoints), history line removed, tests green",
  "next": "ST1a/d: write research/star_rating study (profit_profile, propline_clv, engine-dataset, web sources); ST1e small-book demotion; compile :app; then ship + tell Tj"
 }
