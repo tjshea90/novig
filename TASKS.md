@@ -6276,3 +6276,5 @@ Tj: "audit the entire bids tab ... recoded to transform from a phone bid engine 
 - [x] CH74f (Tj 15:52 UTC) a "Restart bid engine" button on the Bids tab: clears the picked-off halt and the guard's memory (BidRequest kind "restart"), so bids resume at once
 
 - [x] CH75 (split done; results-by-side at 200+ settled fills per side) bid side split: Over/Under and favorite/underdog on engine bids+bets, CLV first (Tj 18:25 "yes" to the Under/underdog bid hypothesis); result to chat + research/, lever in LEVERS.md
+
+- [ ] CH76 BoltOdds Growth plan (Tj 18:28 chat): key says Growth ($219: 3 leagues, all markets, 1 connection). Sample sent before the new key reached GitHub showed free/trial. After the key lands: read /api/odds/user plan; then engine uses ONE socket (lines+props share, or lines first), subscribes only the 3 best leagues, never opens a 2nd socket (BoltOddsFeed/CloudSources), plan shown in status; tests
