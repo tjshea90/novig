@@ -162,7 +162,7 @@ class CloudSources(
     fun socketLines(s: ScanSettings, now: Long = System.currentTimeMillis()): List<String> {
         fun ago(ms: Long) = if (ms <= 0L) "never" else "${((now - ms) / 1000L).coerceAtLeast(0)} s ago"
         return buildList {
-            add("Engine BoltOdds: socket ${if (s.gates.boltSocket) "ON" else "OFF"} · lines ${if (boltFeed.lines.live) "live" else "not live"} · props ${if (boltFeed.props.live) "live" else "not live"}")
+            add("Engine BoltOdds: socket ${if (s.gates.boltSocket) "ON" else "OFF"} · lines ${if (boltFeed.lines.live) "live" else "not live"} · props ${if (boltFeed.oneSocket) "on the lines socket (plan ${boltFeed.plan})" else if (boltFeed.props.live) "live" else "not live"}")
             add("Engine Kalshi: " + (if (kalshiSigner == null) "no key on GitHub (public reads)" else "socket ${if (kalshiSocketWanted) "ON" else "OFF"} · ${if (kalshiStream.live) "live" else "not live"} · ${kalshiStream.subscribedCount} of ${kalshiStream.wantedCount} markets"))
             val sx = sxbet.stream
             add("Engine SharpAPI: " + (if (!s.gates.useSharpApi) "API off" else if (!has(CloudKeys.SHARPAPI)) "no key on GitHub" else "socket ${if (s.gates.sharpApiSocket) "ON" else "OFF"} · ${sharpApiStream.health(now)} · game state ${sharpApiScores.live()} live"))
@@ -176,7 +176,7 @@ class CloudSources(
         val bolt = boltActive(s) && s.gates.boltSocket
         return listOf(
             SocketState("BoltOdds lines", bolt, boltFeed.lines.live, boltFeed.lines.lastFrameMs, if (!s.gates.useBoltOdds) "API off" else if (!has(CloudKeys.BOLT)) "no key on GitHub" else if (!bolt) "socket off: read by request" else ""),
-            SocketState("BoltOdds props", bolt, boltFeed.props.live, boltFeed.props.lastFrameMs, ""),
+            SocketState("BoltOdds props", bolt, if (boltFeed.oneSocket) boltFeed.lines.live else boltFeed.props.live, if (boltFeed.oneSocket) boltFeed.lines.lastFrameMs else boltFeed.props.lastFrameMs, if (boltFeed.oneSocket) "one-connection plan: shares the lines socket" else ""),
             SocketState("Kalshi", kalshiSocketWanted, kalshiStream.live, kalshiStream.lastFrameMs, if (kalshiSigner == null) "no key on GitHub (public reads)" else "${kalshiStream.subscribedCount} of ${kalshiStream.wantedCount} markets"),
             SocketState("SharpAPI", s.gates.useSharpApi && s.gates.sharpApiSocket && has(CloudKeys.SHARPAPI), sharpApiStream.live, sharpApiStream.lastFrameMs, if (!s.gates.useSharpApi) "API off" else if (!has(CloudKeys.SHARPAPI)) "no key on GitHub" else "${sharpApiScores.live()} games' live state · ${sharpApiStream.health()}"),
             SocketState("SX Bet", sxSocketWanted, sx?.live == true, sx?.lastMessageMs ?: 0L, if (!s.gates.useSxBet) "API off" else if (sx == null) "no read key on GitHub" else "${sx.fixtureStatus.values.count { it == 2 }} games in play"),
