@@ -190,6 +190,14 @@ class CloudEngine(
     /** When a scan last read data from each API, by switch id ([ApiManager.switchIdsOfFeed]): the manager's proof that an API whose own check fails is fine for the scans. */
     private val answeredAtMs = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
+    /** The Bids tab's requests ([CloudConfig.bidRequests]) are served as soon as the config is read, under the desk's lock; the desk remembers which it served. */
+    private suspend fun serveBidRequests(c: CloudConfig?) {
+        val b = bids ?: return
+        val reqs = c?.bidRequests?.takeIf { it.isNotEmpty() } ?: return
+        val s = c.settings
+        deskLock.withLock { runCatching { b.serve(reqs, s, clock()) }.onFailure { if (it is CancellationException) throw it; log("bid requests failed: ${it.javaClass.simpleName}") } }
+    }
+
     private var checkSeenMs = 0L
     private fun serveCheckRequest(c: CloudConfig?) {
         if (c != null && c.checkApisAtMs > checkSeenMs) { checkSeenMs = c.checkApisAtMs; runCatching(onCheckApis) }
@@ -304,6 +312,7 @@ class CloudEngine(
             cfg?.settings?.let { phoneSettings = it }
             cfg?.let { manualCfg = it }
             serveCheckRequest(cfg)
+            serveBidRequests(cfg)
             if (cfg != null) {
                 if (resetBaseline < 0L) resetBaseline = cfg.resetAtMs
                 if (cfg.resetAtMs > resetBaseline) {
@@ -498,6 +507,7 @@ class CloudEngine(
                 // What the phone asks for out of band (a PropLine sweep, a manual Run or Stop) is seen at once, not only between scans (2026-10-17: a pull to refresh sat unanswered through a whole scan).
                 newer?.let { manualCfg = it }
                 serveCheckRequest(newer)
+                serveBidRequests(newer)
                 newer?.takeIf { it.retryApiAtMs > retrySeenMs }?.let { r ->
                     retrySeenMs = r.retryApiAtMs
                     if (r.retryApi.isNotBlank()) log("Try again: ${ApiToggles.name(ApiToggles.idOfPolicy(r.retryApi) ?: r.retryApi)} " + (if (governor.retry(r.retryApi)) "forgiven, the next scan asks it" else "was not resting"))

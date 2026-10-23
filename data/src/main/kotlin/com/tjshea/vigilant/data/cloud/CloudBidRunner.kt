@@ -149,7 +149,8 @@ class CloudBidRunner(
                 fills.addAll(r.fills); problems = r.problems; placed = r.placed; cancelled = r.cancelled
                 lastRules = rules
                 if (!auto) {
-                    val ready = r.decisions.filterIsInstance<MakerDecision.Post>().sortedByDescending { it.evAtFair }.take(MAX_RECS)
+                    val upNow = desk.bids().filter { it.active }.mapTo(HashSet()) { it.outcomeId }
+                    val ready = r.decisions.filterIsInstance<MakerDecision.Post>().filter { it.line.outcomeId !in upNow }.sortedByDescending { it.evAtFair }.take(MAX_RECS)
                     posts = ready.associateBy { it.line.outcomeId }
                     recs = ready.map { BidRec.of(it) }
                 } else { posts = emptyMap(); recs = emptyList() }
