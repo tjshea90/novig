@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-x1kgjg",
  "head": "c11513e95943a29ee138bc3d53c54f690fb91d98",
  "since": 1792726357,
- "beat": 1792732094,
- "beatIso": "2026-10-23T05:08:14Z",
+ "beat": 1792733173,
+ "beatIso": "2026-10-23T05:26:13Z",
  "done": "CH73 part 1: master switch 'Run on GitHub' (off=phone mode, trading OFF), token save turns it on; full suite green (4153 pass). Not shipped",
  "next": "CH73a audit of phone-side work while GitHub drives; CH72 Kalshi bid pace + fresh prices; then ship as one release"
 }
