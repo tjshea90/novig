@@ -194,6 +194,43 @@ open class KalshiTradingClient(
 
     private fun sub(q: MutableMap<String, String>): MutableMap<String, String> = q.also { m -> subaccount?.let { m["subaccount"] = it.toString() } }
 
+    /** When each market's shard was last funded, so a refusal that persists is not answered with transfer after transfer. */
+    private val fundedAt = HashMap<String, Long>()
+
+    /** What the last shard move did, in words (shown on the Kalshi page and in a refusal). */
+    @Volatile var lastFunding: String? = null
+        private set
+
+    /**
+     * Moves the cash held on the other exchange shards to the shard [ticker] trades on (`POST /portfolio/intra_exchange_instance_transfer`, event contract to event contract, centicents, a client transfer id),
+     * then waits a few seconds for it to arrive. Null = the money is there now and the order may be sent again; else why not (said in words).
+     */
+    suspend fun fundShardFor(ticker: String): String? {
+        val now = clock()
+        synchronized(fundedAt) { fundedAt[ticker]?.takeIf { now - it < 60_000L }?.let { return "cash was moved for this market a moment ago and is still not enough" }; fundedAt[ticker] = now }
+        val shard = (call("GET", "/markets/$ticker")["market"] as? JsonObject)?.num("exchange_index")?.toInt() ?: 0
+        val before = balance()
+        val here = before.shards.firstOrNull { it.first == shard }?.second ?: 0.0
+        val sources = before.shards.filter { it.first != shard && it.second >= 0.01 }
+        if (sources.isEmpty()) return "no other exchange shard holds cash (cash by shard: ${before.shards.joinToString { "#${it.first} $${"%.2f".format(Locale.US, it.second)}" }.ifEmpty { "not reported" }}); fund the account on Kalshi"
+        for ((idx, dollars) in sources) {
+            val body = buildJsonObject {
+                put("source", "event_contract"); put("destination", "event_contract")
+                put("source_exchange_shard", idx); put("destination_exchange_shard", shard)
+                put("amount", Math.round(dollars * 10_000.0))
+                put("client_transfer_id", newClientId())
+            }
+            call("POST", "/portfolio/intra_exchange_instance_transfer", body = body, write = true)
+        }
+        lastFunding = "moved ${sources.joinToString { "$${"%.2f".format(Locale.US, it.second)} from shard #${it.first}" }} to shard #$shard (the shard of $ticker)"
+        repeat(10) {
+            kotlinx.coroutines.delay(1_000L)
+            val h = balance().shards.firstOrNull { it.first == shard }?.second ?: 0.0
+            if (h > here + 0.005) return null
+        }
+        return "the transfer was accepted but the cash had not arrived after 10 seconds"
+    }
+
     /** The last order this client sent, in words (ticker, side, count, price, time in force): shown beside a refusal so Kalshi's answer can be checked against what was asked. */
     @Volatile var lastOrder: String? = null
         private set
@@ -276,7 +313,15 @@ open class KalshiTradingClient(
                 subaccount?.let { put("subaccount", it) }
             }
             try {
-                return placed(call("POST", "/portfolio/events/orders", body = v2, write = true), clientOrderId, price)
+                return try {
+                    placed(call("POST", "/portfolio/events/orders", body = v2, write = true), clientOrderId, price)
+                } catch (e: KalshiApiException) {
+                    // insufficient_balance with cash in the account (Tj, 2026-10-23; docs.kalshi.com exchange_sharding): an order spends the balance of ITS market's exchange shard. The cash on the other shards is
+                    // moved there (inside the same account, never out of it), once a minute at most, and the order sent again: a refused order placed nothing.
+                    if (e.status == 400 && e.code?.contains("insufficient", true) == true && fundShardFor(ticker) == null) {
+                        placed(call("POST", "/portfolio/events/orders", body = v2, write = true), clientOrderId, price)
+                    } else throw e
+                }
             } catch (e: KalshiApiException) {
                 // The route is gone (a retired path answers 404 or 405): the old one, from now on. Anything else is Kalshi's answer to this order.
                 if (e.status != 404 && e.status != 405) throw e
