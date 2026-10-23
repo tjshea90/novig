@@ -312,8 +312,9 @@ fun AutoBetSection(
         onUpdate { it.copy(vigGuards = it.vigGuards.copy(autoBetMinStars = v)) }
     }
     Text(
-        "Every bet is rated 1 to 5 stars on how much to trust its edge: how many companies price both sides, how many agree it is +EV, the size of the edge, whether a sharp book agrees and how tightly the books' fair odds sit together. " +
-            "A bet under +2% EV is rated 3★ at most. Pick 3½★ and only bets rated 3½ or better are placed (CrazyNinjaOdds', Vigilant's and tennis bets alike).",
+        "Every bet is rated 1 to 5 stars on how much to trust its edge: how many companies price both sides, how many agree it is +EV, the size of the edge, whether a sharp book agrees, how tightly the books' fair odds sit together, " +
+            "and how this type of bet (league, kind, over/under) has done in your history, plus a little for bets close to the start. One or two small books with no sharp book among them is 2★ at most, and a bet under +2% EV is 3★ at most. " +
+            "Pick 3½★ and only bets rated 3½ or better are placed (CrazyNinjaOdds', Vigilant's and tennis bets alike).",
         style = MaterialTheme.typography.bodySmall, color = subtle,
     )
     // While a minimum is picked the rating alone chooses the bets (Tj, 2026-10-11): say so beside the filters it switches off.

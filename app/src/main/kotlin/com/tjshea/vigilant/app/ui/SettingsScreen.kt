@@ -1004,7 +1004,7 @@ private fun ColumnScope.FairOddsTab(state: UiState, onUpdate: SettingsUpdate, on
             )
         }
     }
-    Hint("Pinnacle comes from your PinnWire or pinnapi key (or PropLine / The Odds API). Polymarket and Kalshi are exchanges: their prices count as sharp when the market is tight (3¢ or less).")
+    Hint("Pinnacle, Circa and Bookmaker come from SharpAPI, SportsGameOdds and OddsPapi (Pinnacle also from PinnWire, pinnapi, PropLine and The Odds API). Polymarket, Kalshi and SX Bet are exchanges: their prices count as sharp when the market is tight (3¢ or less).")
 
     Text("Fewest books for an average: ${s.minBooks}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
     ChoiceChips((1..5).toList(), s.minBooks, { it.toString() }) { v -> onUpdate { it.copy(minBooks = v) } }
