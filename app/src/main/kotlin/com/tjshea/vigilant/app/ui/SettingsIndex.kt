@@ -33,7 +33,7 @@ object SettingsIndex {
 
     val entries: List<Entry> = listOf(
         // Cloud scan (Tj, 2026-10-14)
-        Entry("Scan on GitHub", SettingsPage.CLOUD, "Run the scans on GitHub's computers; the phone only sets the settings and shows the list", "cloud github actions engine scan remote server offload", novig),
+        Entry("Run on GitHub (master switch)", SettingsPage.CLOUD, "GitHub runs scans, bets and bids; the phone only sets the settings and shows the engine. Off = phone mode, engine shut down", "cloud github actions engine scan remote server offload", novig),
         Entry("GitHub token", SettingsPage.CLOUD, "The token that lets this phone read the cloud list, send settings and save history to GitHub", "cloud github token pat", novig),
         Entry("Send my API keys to GitHub", SettingsPage.CLOUD, "Seal the keys saved on this phone and store them as the repository's secrets for the engine", "cloud github secrets keys upload send engine", novig),
         Entry("Save bets, bids and history to GitHub", SettingsPage.CLOUD, "Automatic permanent saving of every bet, bid and the scan study to GitHub for Claude to analyse", "cloud github save backup history phone-data", novig),
