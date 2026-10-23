@@ -298,7 +298,8 @@ data class UiState(
      */
     private fun goneSeen(o: Opportunity, now: Long): Boolean {
         val at = negativeSeen[o.key] ?: return false
-        return now - at < 120_000L && (o.bookFetchedAtMs ?: 0L) <= at
+        // Until a price read newer than the finding lists it again (Tj, 2026-10-23: "only return it to the scanned list if it becomes bettable"); the entry itself is forgotten after six hours.
+        return now - at < 6 * 3_600_000L && (o.bookFetchedAtMs ?: 0L) <= at
     }
 
     /**
