@@ -6286,3 +6286,5 @@ Analyze the current star system; make ONE rating that combines all factors, remo
 - [ ] ST1a map the current star code (where history stars live) and write research/star_rating_*.md with the data fit
 - [ ] ST1b build the single rating + tests, remove the history line
 - [ ] ST1c release, tell Tj
+- [ ] ST1d (Tj 22:14) research from existing research/ + API history/CLV (PropLine clv, SGO closes, OddsPapi historical, propline_clv Release) + reputable web sources (closing-line value, devig, favorite-longshot, sharp-book literature); cite them in research/star_rating_*.md
+- [ ] ST1e (Tj 22:16) one book, or two small-name books, pricing a bet = risky: demote (today: <2 companies caps 1.5 stars, 2 caps 3.0; add a small-book test)
