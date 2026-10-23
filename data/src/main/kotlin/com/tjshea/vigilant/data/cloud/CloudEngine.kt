@@ -641,10 +641,10 @@ class CloudEngine(
         val make = bidLines ?: return
         val s = forCloud(settings)
         // A quick scan judges only the near games: the phone's file keeps the full scan's candidates (the phone's desk would read a complete list as "the rest are gone").
-        if (nearReachMs != null && !(s.engineBids && bids != null)) return
+        if (nearReachMs != null && !(s.engineDesk && bids != null)) return
         // The engine's own desk takes the candidates straight (no file, no phone in the loop): TCL31.
         val desk = bids
-        if (s.engineBids && desk != null) {
+        if (s.engineDesk && desk != null) {
             runCatching {
                 val lines = make(result, s, now)
                 desk.put(CloudBids(now, result.partial, rev, lines, reachUntilMs = nearReachMs))
@@ -811,7 +811,7 @@ class CloudEngine(
             // (BoltOdds' REST is paced by its client) and the phone holds the sockets.
             gates = s.gates.copy(liveOnly = LiveOnlyMode(), boltSocket = s.liveOnGitHub, kalshiSocket = s.gates.kalshiSocket && s.liveOnGitHub, sxSocket = s.gates.sxSocket && s.liveOnGitHub),
             // The engine posts the bids itself (TCL31): the scan then runs the bid profile (far lane, many, deployment) exactly as a phone with auto bids on does.
-            maker = s.maker || s.engineBids, makerRecommend = s.makerRecommend && !s.engineBids,
+            maker = s.maker || s.engineDesk, makerRecommend = s.makerRecommend && !s.engineDesk,
             // The long scan keeps the soonest games' fair odds and likeliest Novig books young (Tj, 2026-10-15: "Is this speed too slow for pre game betting and bidding?"): see [com.tjshea.vigilant.data.scanner.ScanGuards.hotRefresh].
             vigGuards = s.vigGuards.copy(hotRefresh = true),
             // The bet slider's kinds are re-derived on the runner, so the engine takes up a change of the ladder (totals added 2026-10-17) without waiting for the phone to re-apply its slider.

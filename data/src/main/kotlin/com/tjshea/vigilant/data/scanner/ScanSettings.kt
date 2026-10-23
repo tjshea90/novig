@@ -968,6 +968,12 @@ data class ScanSettings(
     /** The Bids tab's Automatic is what lets the engine post: Off and Recommend never post (Tj, 2026-10-23: "I think it was posting bids even when I had it toggled off"). */
     val engineBids: Boolean get() = maker && cloudDrives && !killed && gates.cloudTrading == CloudTradeMode.LIVE && gates.cloudBids && makerSource == BidSource.VIGILANT
 
+    /** Recommend on the engine (Tj, 2026-10-23, CH74c): the engine's desk finds the bids and lists them, and posts one only when a Post request arrives from the phone; nothing is posted by itself. */
+    val engineRecommend: Boolean get() = !maker && makerRecommend && cloudDrives && !killed && gates.cloudTrading == CloudTradeMode.LIVE && gates.cloudBids && makerSource == BidSource.VIGILANT
+
+    /** The engine's desk runs for Automatic or Recommend; the phone's own desk stays down for either. */
+    val engineDesk: Boolean get() = engineBids || engineRecommend
+
     /** The scanner choice as it runs. */
     val scannerNow: ScannerMode get() = scanner
 
