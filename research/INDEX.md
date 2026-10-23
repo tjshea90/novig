@@ -4,11 +4,12 @@ Every study in `research/`, newest first, and how it is USED. Tuning levers and 
 Statuses: APPLIED (a change in `research/review/CHANGES.md` cites it), LEVER (on LEVERS.md), CLOSED (verdict and disposition on LEVERS.md), WATCH (an open TASKS.md item waits on its number),
 CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a sample, marked in its first lines), IDLE (cited nowhere: act on it or mark it).
 
-114 entries; 3 idle: api_audit_report_2026-10-22.html, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md
+115 entries; 4 idle: api_audit_report_2026-10-22.html, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
 | 2026-10-23 | `ch73_audit_2026-10-23.md` | CH73 audit: what the phone runs while the GitHub engine drives (2026-10-23) - Method: every use of `ScanSettings.cloudDrives` (the one predicate for "the engine is the scan") in app/ and data/. | IDLE |
+| 2026-10-23 | `bid_side_split_2026-10-23.md` | Bid side split: Over/Under and favorite/underdog (CH75, Tj 2026-10-23 "yes") - Data: engine-dataset `bids.csv.gz`, 575,842 ended bids, 2026-10-16 onward. Quality = mean `fill_ev` (fair after the fill vs price paid), a CLV-style... | IDLE |
 | 2026-10-22 | `pinnwire_waste_2026-10-22.md` | PinnWire / pinnapi were asked every scan though SharpAPI streams Pinnacle (2026-10-22, Tj chat t1792705696949-3544) - Tj: more PinnWire keys are coming; usage may be spent as needed "but you must make sure the usage is not bein... | APPLIED CLOSED CODE |
 | 2026-10-22 | `phone_vs_engine_2026-10-22.md` | Phone vs engine audit (Tj chat t1792712388108-24de, 2026-10-22 23:39 UTC) - Rule (Tj): with the GitHub engine driving, toggles on the phone are settings for the engine; the phone takes no socket and runs no auto-bet or bid of i... | CLOSED |
 | 2026-10-22 | `parlay_spend_2026-10-22.md` | ParlayAPI Pro spend, 2026-10-22 (ENGINEER, acct-27a37e) — CH57a - Source: the engine's `ParlayAPI plans:` and `Spend:` log lines (cloud-archive-2026-10-21/22 engine logs; no key was used by this session). | APPLIED |
