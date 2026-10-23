@@ -48,7 +48,7 @@ class CloudKalshiLaneTest {
         override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot = snap
     }
 
-    private fun ev(id: String, book: String, away: Double, home: Double, ids: Boolean = false) = RefEvent(
+    private fun ev(id: String, book: String, away: Double, home: Double, ids: Boolean = false, at: Long = now - 2_000) = RefEvent(
         id, nfl.oddsApiSportKey, start, "Dallas Cowboys", "Baltimore Ravens",
         listOf(
             RefBookMarket(
@@ -57,7 +57,7 @@ class CloudKalshiLaneTest {
                     RefQuote(Side.AWAY, 1 / away, null, if (ids) "KXNFLGAME-26OCT25BALDAL-BAL|yes" else null, if (ids) 800.0 else null),
                     RefQuote(Side.HOME, 1 / home, null, if (ids) "KXNFLGAME-26OCT25BALDAL-DAL|yes" else null, if (ids) 800.0 else null),
                 ),
-                now - 2_000,
+                at,
             ),
         ),
     )
@@ -93,7 +93,9 @@ class CloudKalshiLaneTest {
         override suspend fun settlements(sinceMs: Long?, limit: Int) = emptyList<com.tjshea.vigilant.data.kalshitrade.KalshiSettlement>()
     }
 
-    private fun lane(mode: KalshiAutoMode, client: FakeClient, published: MutableMap<String, String>, key: Boolean = true): CloudKalshiLane {
+    private fun lane(
+        mode: KalshiAutoMode, client: FakeClient, published: MutableMap<String, String>, key: Boolean = true, venue: ReferenceSource = this.venue, clock: () -> Long = { now },
+    ): CloudKalshiLane {
         val scan = KalshiConfig.defaultScan().copy(
             leagues = setOf("NFL"), autoBet = true, autoBetMinEv = 0.02, autoBetBooks = 2, autoBetTwoSided = 2, autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 10.0, autoBetMaxStake = 10.0,
             trapEarlyHours = 0, trapFirstListed = false, sharpAutoBet = SharpMode.OFF, apiMaxPerDay = 100.0, apiMaxPerGame = 0.0,
@@ -101,7 +103,7 @@ class CloudKalshiLaneTest {
         val ec = KalshiEngineConfig(rev = 7, mode = mode, config = KalshiConfig(scan = scan, tradingEnabled = true, autoMode = KalshiAutoMode.LIVE))
         return CloudKalshiLane(
             scope = CoroutineScope(Dispatchers.Unconfined), readConfig = { ec }, trading = client, hasKey = { key }, venue = venue, sources = { sources() }, novigHeld = { _, _ -> null },
-            unavailable = { null }, dir = File.createTempFile("kalshilane", "").also { it.delete(); it.mkdirs() }, publish = { n, t -> published[n] = t }, clock = { now },
+            unavailable = { null }, dir = File.createTempFile("kalshilane", "").also { it.delete(); it.mkdirs() }, publish = { n, t -> published[n] = t }, clock = clock,
         )
     }
 
@@ -132,6 +134,29 @@ class CloudKalshiLaneTest {
         assertNotNull(out["kalshi-bets.json"])
         assertTrue(out["kalshi-bets.json"]!!.contains("KXNFLGAME") || out["kalshi-bets.json"]!!.length > 10)
         assertEquals(1, KalshiEngineStatus.parse(out[KalshiEngineStatus.FILE]!!)!!.betsPlaced)
+    }
+
+    /** FX, 2026-10-23: the engine's Kalshi scan takes about two minutes, so 97% of its lines were held back as "no Kalshi price read in the last minute". They are read again before judging. */
+    @Test
+    fun `a long Kalshi scan's lines are read again before the auto-bet judges them`() = runTest {
+        var t = now
+        var reads = 0
+        val slowVenue = object : ReferenceSource {
+            override val id = KalshiClient.VENUE_ID
+            override val displayName = "Kalshi"
+            override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
+                reads++
+                val at = t
+                // The first read is the scan's; the rest of the scan takes 90 s, past the auto-bet's one-minute freshness rule.
+                if (reads == 1) t += 90_000
+                return RefSnapshot(nfl.oddsApiSportKey, listOf(ev("kalshi:26OCT25BALDAL", "kalshi", 0.40, 0.62, ids = true, at = at)), at, provider = KalshiClient.VENUE_ID)
+            }
+        }
+        val client = FakeClient(now)
+        val out = HashMap<String, String>()
+        lane(KalshiAutoMode.LIVE, client, out, venue = slowVenue, clock = { t }).runOnce(novigScan(), phone)
+        assertTrue("the lines were read again", reads >= 2)
+        assertEquals(KalshiEngineStatus.parse(out[KalshiEngineStatus.FILE]!!)!!.autoNote, 1, client.buys.size)
     }
 
     @Test
