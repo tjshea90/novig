@@ -644,7 +644,7 @@ object StudyExport {
         "",
         "WHAT THIS IS: the scan study, a log of EVERY +EV bet Vigilant's scanners found on Novig — CrazyNinjaOdds (\"CNO\") and Vigilant's own scan — not only the ones Tj bet, and not only the ones the app showed him:",
         "besides the list the app shows (CNO read under Tj's filters), the study reads CNO a second time with its numeric filters opened right up (the WIDE read) and logs every row, flagged by why Tj's list would hide it.",
-        "${rows + cut} bets from game days ${first ?: "?"} to ${last ?: "?"} ($days days, ${bytes / 1024} KB of log)" + (if (leftOut > 0) "; $leftOut older day(s) are on the phone but left out to keep this file a size Claude can read (days not yet played go first)" else "") +
+        "${rows + cut} bets from game days ${first ?: "?"} to ${last ?: "?"} ($days days, ${bytes / 1024} KB of log)" + (if (leftOut > 0) "; $leftOut older day(s) are on the phone but left out to keep this file a size Claude can read (days with games still to come are left out before any played day)" else "") +
             (if (cut > 0) "; $cut bets (the hidden ones first) are counted in the SUMMARY but their lines were left out for the same reason." else "."),
         meta.wide?.let { "THE WIDE READ: $it" } ?: "THE WIDE READ: off, or it hasn't read yet: every bet here was in a list the app shows.",
         "Each bet was logged the moment a scan first found it, with everything the app knew then (and every column CNO printed for it, `cols`); watched while it stayed listed (every change of odds, EV or books, and when a scan dropped it); then, after its game,",
