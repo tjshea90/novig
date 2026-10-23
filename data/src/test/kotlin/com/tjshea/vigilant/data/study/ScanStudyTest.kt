@@ -623,6 +623,30 @@ class ScanStudyTest {
         assertEquals(2, StudyExport.write(StringWriter(), j, emptyList(), meta, now, File(tmp.root, "export.tmp")))
     }
 
+    /** FX, 2026-10-23: the engine's study in the daily digest held only game days still to come (no result, no close) and pushed out every played day: "Closes found: 0 of 0 started bets". */
+    @Test
+    fun `a game day still to come never pushes out a played one`() = runBlocking {
+        val j = journal()
+        val s = study(j)
+        s.cno(snap(moneyline))
+        s.flush()
+        val later = day.plusDays(5)
+        val laterStart = start + 5 * 86_400_000L
+        val bet = j.fold(day).values.single().bet
+        j.append(later, listOf(Line(Line.BET, "future1", laterStart - 3_600_000L, b = bet.copy(id = "future1", startsTs = laterStart, createdAtMs = laterStart - 3_600_000L))))
+        val meta = StudyExport.Meta("0.57.0", 99, "moto g", "rules")
+        val out = StringWriter()
+        // The budget holds one day: the played (today's) one is taken, the one to come is left out.
+        val n = StudyExport.write(out, j, emptyList(), meta, now, File(tmp.root, "export.tmp"), maxBytes = j.file(day).length() / 3)
+        assertEquals(1, n)
+        assertTrue(out.toString().contains("game days $day to $day"))
+        assertEquals(listOf(day, day.minusDays(1), later, later.plusDays(1)), StudyExport.daysByUse(listOf(later.plusDays(1), day.minusDays(1), later, day), now, meta.zone))
+        // A bigger day budget (the daily review's) takes both, whatever the lines' limit.
+        assertEquals(2, StudyExport.write(StringWriter(), j, emptyList(), meta, now, File(tmp.root, "export.tmp"), maxBytes = j.file(day).length() / 3, dayBudget = Long.MAX_VALUE).let {
+            val o = StringWriter(); StudyExport.write(o, j, emptyList(), meta, now, File(tmp.root, "export.tmp"), maxBytes = 10_000_000, dayBudget = Long.MAX_VALUE)
+        })
+    }
+
     /** Tj, 2026-10-05: "make sure the auto bid feature is also thoroughly tracked in the scan/diagnosis feature and all information logged so I can see how well my auto bids do". */
     @Test
     fun `the export carries the bids - the summary, every filled bid and the newest unfilled ones as JSON lines - and the read me says how to judge them`() = runBlocking {
