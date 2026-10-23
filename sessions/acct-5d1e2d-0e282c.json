@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-lpr7ge",
- "head": "43550540a889f7d934ab70ab1b23c32fcdeb6788",
+ "head": "2c199b37ab06b5e7499ed7e2087e649ab32b840e",
  "since": 1792714365,
- "beat": 1792714365,
- "beatIso": "2026-10-23T00:12:45Z",
- "done": "",
- "next": ""
+ "beat": 1792714492,
+ "beatIso": "2026-10-23T00:14:52Z",
+ "done": "CH68a card shows Kalshi's exact refusal; bump 1.0.54",
+ "next": "ship, release, ask Tj to retry a Kalshi bet"
 }
