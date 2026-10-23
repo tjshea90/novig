@@ -16,7 +16,9 @@ import kotlin.math.sqrt
  *  4. **Sharp book** (25): a sharp book for the market prices both sides and says +EV (full), none prices it (a third of the points: unproven, not disproven), or one says it is NOT +EV (none).
  *  5. **Consensus** (10): how tightly the books' own fair chances sit together (standard deviation: 1 point or less is full, 5 or more nothing; unknown is half).
  *
- * The points total 0-100 and become stars on a curve, `1 + 4 * (points/100)^1.5`, so the top half stars take real evidence while a middling bet lands in the middle. Then ceilings that
+ * 6. **Type of bet** (-15 to +15, ST1, Tj 2026-10-23): what the history says about this kind of bet (league, kind, over/under, lead time), shrunk by sample size ([ProfitProfile.typePoints]).
+ *
+ * The points total 0-100 (plus or minus the type points, kept in 0-100) and become stars on a curve, `1 + 4 * (points/100)^1.5`, so the top half stars take real evidence while a middling bet lands in the middle. Then ceilings that
  * evidence alone cannot be argued past: under two pricing companies at most 1½ stars, two at most 3, three at most 4; a sharp book against it at most 2½; and no edge at all is 1. A bet under +2% EV is at most 3 stars (Tj, 2026-10-11: 3½ and up need a real edge).
  * Rounded to the nearest half star.
  */
@@ -31,6 +33,8 @@ object BetRating {
         val sharpAgrees: Boolean,
         val sharpAgainst: Boolean,
         val spread: Double? = null,
+        /** Points (of 100) for the TYPE of bet from the history ([ProfitProfile.typePoints]): negative for a type that has lost, positive for one that has won. */
+        val typePoints: Double = 0.0,
     )
 
     /** A rating: [stars] in half steps from 1.0 to 5.0, and the [points] it came from. */
@@ -58,7 +62,7 @@ object BetRating {
             else -> 0.3
         }
         val tight = i.spread?.let { ((0.05 - it) / 0.04).coerceIn(0.0, 1.0) } ?: 0.5
-        val points = 20 * coverage + 20 * agree + 25 * edge + 25 * sharp + 10 * tight
+        val points = 20 * coverage + 20 * agree + 25 * edge + 25 * sharp + 10 * tight + i.typePoints
         var stars = 1.0 + 4.0 * (points / 100.0).coerceIn(0.0, 1.0).pow(1.5)
         stars = minOf(stars, ceiling(books, i.sharpAgainst))
         // 3½ stars and up take a real edge (Tj, 2026-10-11): under +2% EV at the price you would pay, a bet is at most 3 stars however well the books agree.

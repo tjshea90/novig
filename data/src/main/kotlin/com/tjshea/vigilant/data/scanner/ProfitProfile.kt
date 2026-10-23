@@ -77,6 +77,29 @@ class ProfitProfile(
         return Judgement(blocked, score, favoured, penalty, blocker?.let { "${it.label} ${pct(it.g.roi)} over ${it.g.n} bets" })
     }
 
+    /**
+     * The history's share of ONE star rating (Tj, 2026-10-23, ST1: "a single rating system that combines all factors"): points added to or taken off [BetRating]'s 0-100 total for the
+     * TYPE of bet (league, kind, side, lead time; not the edge, which the rating already scores). It is the same shrunk, specificity-weighted ROI as [judge]'s score, so a thin group moves it
+     * little, a clear winner adds up to [TYPE_POINTS] and a clear loser takes as many off; no group with a big enough sample = 0.
+     */
+    fun typePoints(league: String, kind: String, selection: String, leadMin: Long?): Double {
+        val table = groups[Instrument.BET.key] ?: return 0.0
+        val side = sideOf(selection)
+        var sum = 0.0
+        var weight = 0.0
+        for ((dim, key, specific) in listOf(
+            Triple("league|kind|side", "$league|$kind|$side", 3), Triple("league|kind", "$league|$kind", 2), Triple("kind|side", "$kind|$side", 2),
+            Triple("league", league, 1), Triple("kind", kind, 1), Triple("side", side, 1), Triple("lead", leadBucket(leadMin), 0),
+        )) {
+            val g = table[dim]?.get(key) ?: continue
+            if (g.n < (if (specific >= 2) minN else 2 * minN)) continue
+            sum += (specific + 1) * g.roi * g.n / (g.n + SHRINK)
+            weight += specific + 1
+        }
+        if (weight == 0.0) return 0.0
+        return (sum / weight * 100.0 * POINTS_PER_ROI).coerceIn(-TYPE_POINTS, TYPE_POINTS)
+    }
+
     private fun dimWords(dim: String) = when (dim) { "ev" -> "an edge of"; "lead" -> "placed"; else -> "" }
     private fun pct(v: Double) = String.format(Locale.US, "%+.1f%%", v * 100)
 
@@ -99,6 +122,9 @@ class ProfitProfile(
 
         /** The engine's hard block by type needs this many settled bets in the group (Tj, 2026-10-17: "big enough samples"). */
         const val TYPE_MIN_N = 100
+        /** The most points (of 100) the type of bet adds to or takes off a rating, and how many points a percent of shrunk ROI is worth. */
+        const val TYPE_POINTS = 15.0
+        const val POINTS_PER_ROI = 0.8
         const val STAR_BASE = 0.5
         const val STAR_PER_T = 0.5
         const val STAR_MAX = 2.0
@@ -152,10 +178,8 @@ class ProfitProfile(
          * Tj's history says loses money has its stars lowered by [Judgement.starPenalty]; every other bet, and every bet with the switch off, keeps [stars]. The auto-bet and the cards both read this.
          */
         fun adjustedStars(profitProven: Boolean, stars: Double?, league: String, kind: String, selection: String, ev: Double?, startsAtMs: Long?, now: Long): Double? {
-            if (stars == null || !profitProven) return stars
-            val pf = shipped ?: return stars
-            val lead = startsAtMs?.let { (it - now) / 60_000L }
-            return (stars - pf.judge(Instrument.BET, league, kind, selection, ev, lead).starPenalty).coerceAtLeast(0.0)
+            // One rating (ST1): the history is inside the stars now ([BetRating.Inputs.typePoints]), so nothing is taken off a second time.
+            return stars
         }
 
         /**
@@ -164,6 +188,10 @@ class ProfitProfile(
          */
         fun losingType(league: String, kind: String, selection: String): String? =
             shipped?.judge(Instrument.BET, league, kind, selection, null, null, typeOnly = true)?.blockShort
+
+        /** The history points for a bet as the scanners know it, from the shipped profile (0 when it can't be read). */
+        fun typePointsOf(league: String, kind: String, selection: String, startsAtMs: Long?, now: Long): Double =
+            shipped?.typePoints(league, kind, selection, startsAtMs?.let { (it - now) / 60_000L }) ?: 0.0
 
         val shipped: ProfitProfile? by lazy { ProfitProfile::class.java.getResourceAsStream("/profit_profile.json")?.bufferedReader()?.use { parse(it.readText()) } }
     }
