@@ -6241,3 +6241,7 @@ CH66 (Tj chat 23:39 UTC 2026-10-22, t1792712388108-24de, verbatim): "I want ever
 
 CH68 (Tj chat 00:12 UTC 2026-10-23, t1792714344773-0be2): "all of my kalshi bets say I don't have enough money for the bet, but there is enough money in my kalshi account. see if you can figure this out"
 - [~] CH68a the text only comes from Kalshi's own `insufficient*` code (nothing in the placer checks cash); engine reads cash $6.29; the card now shows Kalshi's exact code and detail (1.0.54). Next: read the real answer from Tj's retry (Diagnostics net block / the card), then fix the cause (suspects: V2 'ask of YES' for NO buys needing a YES position or full $1 collateral; subaccount; count units).
+
+CH69 (Tj chat 00:41-00:42 UTC 2026-10-23): ParlayAPI "half spent" (phone meter key 2: 43,623 of 100,000 'counted here') vs the engine's account read of the pro key 72,040 left at 00:10Z; Tj: "nevermind I may have been looking at the wrong meter ... just make sure it isn't being wasted"
+- [ ] CH69a find why the phone's key 2 meter says 'counted here' 43,623 while the engine holds the provider's own figure 72,040 (same key? different key id on phone vs engine? UsageMerge counts adding?); show the provider's figure when any machine has read it
+- [ ] CH69b ParlayAPI spend: CH57b (NFL game lines and props on non-NFL days, 3 credits a call) is the cut that costs nothing; owned by the API-audit session (acct-27a37e), post on the board before touching
