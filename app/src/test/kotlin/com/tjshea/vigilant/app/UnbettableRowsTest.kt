@@ -19,4 +19,14 @@ class UnbettableRowsTest {
         val reread = flagged.copy(feed = flagged.feed.map { if (it.key == row.key) it.copy(bookFetchedAtMs = found + 5_000L) else it })
         assertTrue("a newer read lists it again", reread.feedAt(now).any { it.key == row.key })
     }
+
+    @Test
+    fun `an order that found nobody selling, or a refusal that says the bet is gone, takes the row off the list`() {
+        assertTrue(UNBETTABLE_WORDS.containsMatchIn("Novig has closed this market."))
+        assertTrue(UNBETTABLE_WORDS.containsMatchIn("The edge is gone: Novig's best price is now +120."))
+        assertTrue(UNBETTABLE_WORDS.containsMatchIn("A sharp book prices both sides of this bet and says it is not +EV at Novig's price, so nothing is bet on it."))
+        assertTrue(UNBETTABLE_WORDS.containsMatchIn("Nobody is offering this side on Kalshi right now."))
+        assertFalse("a limit the user set is not the bet's fault", UNBETTABLE_WORDS.containsMatchIn("That's over your \$10 limit per bet (Settings)."))
+        assertFalse(UNBETTABLE_WORDS.containsMatchIn("Pick an amount to bet."))
+    }
 }
