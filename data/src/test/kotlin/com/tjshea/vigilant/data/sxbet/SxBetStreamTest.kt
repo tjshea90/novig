@@ -108,6 +108,19 @@ class SxBetStreamTest {
         s.close()
     }
 
+    /** FX, 2026-10-23: a close sent by the server (a restart, 1012) reaches onClosing only; the stream must answer it and connect again at once, not wait on a dead socket. */
+    @Test fun aCloseFromTheServerIsAnsweredAndTheStreamConnectsAgain() = runBlocking {
+        val s = stream()
+        s.watch(listOf("0xA"))
+        s.open()
+        until { s.live }
+        val connects = tokenRequests.size
+        val first = serverSocket
+        first.close(1012, "server restart")
+        until(3_000) { tokenRequests.size > connects && serverSocket !== first && s.live }
+        s.close()
+    }
+
     @Test fun scoresAndMainLinesAreKept() = runBlocking {
         val s = stream()
         s.open()
