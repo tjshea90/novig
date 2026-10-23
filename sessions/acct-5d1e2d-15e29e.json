@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-4w5jix",
  "head": "e72e299470f48ca4050315844fc472893f0ef359",
  "since": 1792768029,
- "beat": 1792769996,
- "beatIso": "2026-10-23T15:39:56Z",
+ "beat": 1792770003,
+ "beatIso": "2026-10-23T15:40:03Z",
  "done": "pre-ship: CH74a: Bids tab shows the engine's resting bids; Off/Recommend stop engine bids",
  "next": "ship.sh gates and releases this"
 }

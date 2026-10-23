@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/15e29e",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "15e29e",
+ "note": "CH74a: Bids tab shows the engine's resting bids; Off/Recommend stop engine bids",
+ "since": 1792770003,
+ "beat": 1792770003
+}
