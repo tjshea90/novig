@@ -57,5 +57,7 @@ class MoreBooksTest {
         assertEquals("Fliff", TheOddsApiClient.bookTitle("fliff"))
         // The sharp-book chip for SX Bet read "sxbet" (full test 2026-10-21).
         assertEquals("SX Bet", TheOddsApiClient.bookTitle("sxbet"))
+        // Every sharp-book choice in Settings › Fair odds has a name, not its key (FX, 2026-10-23: "circa" and "bookmaker" showed raw).
+        for (key in com.tjshea.vigilant.data.scanner.FairSettings.KNOWN_SHARP_CANDIDATES) assertTrue(key, TheOddsApiClient.bookTitle(key) != key || key == "bet365")
     }
 }
