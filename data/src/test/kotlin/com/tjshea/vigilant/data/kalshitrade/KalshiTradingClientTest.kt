@@ -236,10 +236,10 @@ class KalshiTradingClientTest {
     @Test
     fun `a cancel by id alone looks the order up for its market and never uses the retired route`() = runTest {
         routes["GET /trade-api/v2/portfolio/orders/o-3"] = {
-            MockResponse().setBody("""{"order":{"order_id":"o-3","client_order_id":"c","ticker":"KXNBA-T","side":"yes","action":"buy","status":"resting","yes_price_dollars":"0.4000","no_price_dollars":"0.6000","initial_count_fp":"2.00","remaining_count_fp":"2.00"}}""")
+            MockResponse().setBody("""{"order":{"order_id":"o-3","client_order_id":"$cid","ticker":"KXNBA-T","outcome_side":"yes","book_side":"bid","status":"resting","yes_price_dollars":"0.4000","no_price_dollars":"0.6000","fill_count_fp":"0.00","initial_count_fp":"2.00","remaining_count_fp":"2.00","created_time":"2026-10-20T10:00:00Z"}}""")
         }
         routes["GET /trade-api/v2/portfolio/orders/o-4"] = {
-            MockResponse().setBody("""{"order":{"order_id":"o-4","client_order_id":"c","ticker":"KXNBA-T","side":"yes","action":"buy","status":"executed","yes_price_dollars":"0.4000","no_price_dollars":"0.6000","initial_count_fp":"2.00","remaining_count_fp":"0.00"}}""")
+            MockResponse().setBody("""{"order":{"order_id":"o-4","client_order_id":"$cid","ticker":"KXNBA-T","outcome_side":"yes","book_side":"bid","status":"executed","yes_price_dollars":"0.4000","no_price_dollars":"0.6000","fill_count_fp":"2.00","initial_count_fp":"2.00","remaining_count_fp":"0.00","created_time":"2026-10-20T10:00:00Z"}}""")
         }
         routes["DELETE /trade-api/v2/portfolio/events/orders/o-3"] = { MockResponse().setBody("""{"order_id":"o-3","reduced_by":"2.00"}""") }
         routes["DELETE /trade-api/v2/portfolio/orders/o-3"] = { MockResponse().setResponseCode(400).setBody("""{"error":{"code":"deprecated","message":"Please switch to the V2 endpoints"}}""") }
