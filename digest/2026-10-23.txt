@@ -1,9 +1,9 @@
-VIGILANT DAILY REVIEW (made by GitHub from the phone-data branch) · 2026-10-23T23:40:56.289Z · 18 study day files · 8172 bets logged
+VIGILANT DAILY REVIEW (made by GitHub from the phone-data branch) · 2026-10-23T23:51:50.714Z · 18 study day files · 8172 bets logged
 
-VIGILANT SCAN STUDY · version github-review · vigilant-scan-study-vgithub-review-2026-10-23-1940.txt
+VIGILANT SCAN STUDY · version github-review · vigilant-scan-study-vgithub-review-2026-10-23-1951.txt
 
 == READ ME FIRST (for Claude) ==
-This file was made by the Vigilant app (Android, Kotlin + Compose; modules engine, data, app) on Oct 23, 2026 7:40 PM EDT, version github-review (code 0), on GitHub Actions.
+This file was made by the Vigilant app (Android, Kotlin + Compose; modules engine, data, app) on Oct 23, 2026 7:51 PM EDT, version github-review (code 0), on GitHub Actions.
 Vigilant finds +EV bets on the Novig sportsbook for Tj, who owns it; it is built across Claude sessions. Repo: github.com/tjshea90/novig (public), branch main.
 
 WHAT THIS IS: the scan study, a log of EVERY +EV bet Vigilant's scanners found on Novig — CrazyNinjaOdds ("CNO") and Vigilant's own scan — not only the ones Tj bet, and not only the ones the app showed him:
@@ -124,219 +124,7 @@ Why started bets have no close yet, most common first (each source's own reason;
    1 of 5 not agreeing · 32 bets · 9-9-0 (W-L-P) · 14 open · ROI +3.64% (+0.7u on 18u, ±49.4 points over 18 games) · CLV -2.36% ±4.84 over 14 games on 14 closes, beat the close 29% · EV listed +2.45%
    2 of 8 not agreeing · 32 bets · 6-14-0 (W-L-P) · 12 open · ROI -36.03% (-7.2u on 20u, ±45.2 points over 19 games) · CLV -1.76% ±2.56 over 15 games on 16 closes, beat the close 56% · EV listed +2.25%
    every one (13 of 13) · 31 bets · 8-7-0 (W-L-P) · 16 open · ROI +11.26% (+1.7u on 15u, ±54.8 points over 15 games) · CLV +0.14% ±4.26 over 13 games on 13 closes, beat the close 54% · EV listed +3.09%
-   2 of 10 not agreeing · 30 bets · 8-11-0 (W-L-P) · 11 open · ROI -15.57% (-3.0u on 19u, ±46.1 points over 19 games) · CLV -2.28% ±2.62 over 15 games on 15 closes, beat the close 27% · EV listed +2.03%
-   1 of 9 not agreeing · 30 bets · 8-13-0 (W-L-P) · 9 open · ROI -15.46% (-3.2u on 21u, ±48.9 points over 20 games) · CLV -2.04% ±3.52 over 11 games on 11 closes, beat the close 36% · EV listed +2.16%
-   2 of 6 not agreeing · 29 bets · 16-9-0 (W-L-P) · 4 open · ROI +35.19% (+8.8u on 25u, ±41.5 points over 25 games) · CLV +1.25% ±2.29 over 16 games on 16 closes, beat the close 56% · EV listed +2.07%
-   2 of 11 not agreeing · 27 bets · 8-8-0 (W-L-P) · 11 open · ROI -0.33% (-0.1u on 16u, ±50.7 points over 16 games) · CLV -1.84% ±2.17 over 16 games on 16 closes, beat the close 38% · EV listed +1.68%
-   2 of 7 not agreeing · 25 bets · 10-14-0 (W-L-P) · 1 open · ROI -11.02% (-2.6u on 24u, ±42.9 points over 22 games) · CLV +0.94% ±2.78 over 9 games on 9 closes, beat the close 67% · EV listed +2.20%
-   3 of 11 not agreeing · 21 bets · 6-9-0 (W-L-P) · 6 open · ROI -16.78% (-2.5u on 15u, ±53.5 points over 15 games) · CLV -0.36% ±5.49 over 9 games on 9 closes, beat the close 33% · EV listed +1.88%
-   1 of 12 not agreeing · 20 bets · 2-5-0 (W-L-P) · 13 open · ROI -36.15% (-2.5u on 7u, ±80.8 points over 7 games) · CLV -4.36% on 4 closes, beat the close 50% · EV listed +1.92%
-   2 of 9 not agreeing · 20 bets · 6-7-1 (W-L-P) · 6 open · ROI +1.32% (+0.2u on 13u, ±62.1 points over 13 games) · CLV +4.18% ±5.01 over 13 games on 13 closes, beat the close 62% · EV listed +2.05%
-   1 of 13 not agreeing · 20 bets · 6-6-0 (W-L-P) · 8 open · ROI +7.03% (+0.8u on 12u, ±63.4 points over 12 games) · CLV +2.28% ±2.84 over 9 games on 9 closes, beat the close 78% · EV listed +1.89%
-   2 of 13 not agreeing · 17 bets · 9-2-0 (W-L-P) · 6 open · ROI +73.11% (+8.0u on 11u, ±51.4 points over 11 games) · CLV -2.26% ±4.09 over 9 games on 9 closes, beat the close 33% · EV listed +2.01%
-   every one (15 of 15) · 16 bets · 0-9-0 (W-L-P) · 7 open · ROI -100.00% (-9.0u on 9u, ±0.0 points over 9 games) · CLV -5.53% ±2.34 over 7 games on 7 closes, beat the close 0% · EV listed +2.40%
-   2 of 12 not agreeing · 15 bets · 2-6-0 (W-L-P) · 7 open · ROI -49.97% (-4.0u on 8u, ±64.4 points over 8 games) · CLV -2.17% ±4.07 over 7 games on 7 closes, beat the close 29% · EV listed +1.72%
-   3 of 10 not agreeing · 15 bets · 6-5-0 (W-L-P) · 4 open · ROI +16.98% (+1.9u on 11u, ±67.0 points over 11 games) · CLV +2.05% ±2.27 over 10 games on 10 closes, beat the close 70% · EV listed +1.99%
-   2 of 5 not agreeing · 15 bets · 6-6-0 (W-L-P) · 3 open · ROI -0.05% (-0.0u on 12u, ±60.4 points over 9 games) · CLV -1.09% on 4 closes, beat the close 25% · EV listed +2.10%
-   4 of 8 not agreeing · 13 bets · 4-4-0 (W-L-P) · 5 open · ROI +11.52% (+0.9u on 8u, ±83.1 points over 8 games) · CLV -1.06% ±3.55 over 6 games on 6 closes, beat the close 50% · EV listed +2.12%
-   every one (18 of 18) · 13 bets · 4-4-0 (W-L-P) · 5 open · ROI +3.94% (+0.3u on 8u, ±87.5 points over 7 games) · CLV -1.08% ±3.79 over 7 games on 8 closes, beat the close 63% · EV listed +2.41%
-   2 of 4 not agreeing · 13 bets · 3-8-0 (W-L-P) · 2 open · ROI -41.63% (-4.6u on 11u, ±59.2 points over 11 games) · CLV +2.63% on 3 closes, beat the close 67% · EV listed +3.20%
-   3 of 12 not agreeing · 12 bets · 2-5-0 (W-L-P) · 5 open · ROI -39.45% (-2.8u on 7u, ±76.7 points over 7 games) · CLV -3.81% ±6.84 over 6 games on 6 closes, beat the close 17% · EV listed +1.99%
-   4 of 12 not agreeing · 11 bets · 2-3-0 (W-L-P) · 6 open · ROI -18.00% (-0.9u on 5u, ±98.7 points over 5 games) · CLV -4.26% ±3.56 over 5 games on 5 closes, beat the close 20% · EV listed +1.60%
-   1 of 14 not agreeing · 11 bets · 4-2-0 (W-L-P) · 5 open · ROI +42.41% (+2.5u on 6u, ±89.3 points over 6 games) · CLV +3.62% ±5.43 over 6 games on 6 closes, beat the close 67% · EV listed +2.00%
-   every one (20 of 20) · 11 bets · 5-4-0 (W-L-P) · 2 open · ROI +15.53% (+1.4u on 9u, ±71.6 points over 9 games) · CLV -2.11% ±2.81 over 7 games on 7 closes, beat the close 29% · EV listed +2.50%
-   every one (16 of 16) · 10 bets · 3-5-0 (W-L-P) · 2 open · ROI -20.44% (-1.6u on 8u, ±76.1 points over 8 games) · CLV +1.56% ±3.57 over 7 games on 7 closes, beat the close 57% · EV listed +2.23%
-   3 of 9 not agreeing · 10 bets · 4-3-0 (W-L-P) · 3 open · ROI +17.72% (+1.2u on 7u, ±97.8 points over 6 games) · CLV +1.05% ±3.32 over 6 games on 7 closes, beat the close 57% · EV listed +1.70%
-   4 of 10 not agreeing · 10 bets · 3-4-0 (W-L-P) · 3 open · ROI -18.73% (-1.3u on 7u, ±76.3 points over 7 games) · CLV -1.69% on 4 closes, beat the close 25% · EV listed +2.19%
-   every one (14 of 14) · 10 bets · 4-1-0 (W-L-P) · 5 open · ROI +75.24% (+3.8u on 5u, ±86.9 points over 5 games) · CLV -1.36% on 4 closes, beat the close 50% · EV listed +3.10%
-   3 of 13 not agreeing · 9 bets · 4-2-0 (W-L-P) · 3 open · ROI +43.10% (+2.6u on 6u, ±89.5 points over 6 games) · CLV -1.16% on 4 closes, beat the close 75% · EV listed +1.84%
-   1 of 16 not agreeing · 9 bets · 3-1-1 (W-L-P) · 4 open · ROI +56.58% (+2.3u on 4u) · CLV -2.21% ±3.78 over 5 games on 5 closes, beat the close 40% · EV listed +1.91%
-   1 of 19 not agreeing · 9 bets · 2-2-0 (W-L-P) · 5 open · ROI -1.72% (-0.1u on 4u) · CLV -0.76% on 3 closes, beat the close 67% · EV listed +2.56%
-   4 of 5 not agreeing · 9 bets · 4-3-0 (W-L-P) · 2 open · ROI +12.72% (+0.9u on 7u, ±78.2 points over 7 games) · CLV -1.25% on 4 closes, beat the close 75% · EV listed +2.38%
-   4 of 11 not agreeing · 9 bets · 0-7-0 (W-L-P) · 2 open · ROI -100.00% (-7.0u on 7u, ±0.0 points over 7 games) · CLV +3.35% ±3.42 over 5 games on 5 closes, beat the close 100% · EV listed +1.72%
-   3 of 7 not agreeing · 9 bets · 1-3-0 (W-L-P) · 5 open · ROI -40.48% (-1.6u on 4u) · CLV -0.16% on 1 closes, beat the close 0% · EV listed +1.81%
-   1 of 15 not agreeing · 8 bets · 2-3-0 (W-L-P) · 3 open · ROI -15.19% (-0.8u on 5u, ±102.4 points over 5 games) · CLV -0.23% on 4 closes, beat the close 50% · EV listed +2.15%
-   2 of 14 not agreeing · 8 bets · 2-2-0 (W-L-P) · 4 open · ROI +4.18% (+0.2u on 4u) · CLV -5.84% on 3 closes, beat the close 33% · EV listed +1.83%
-   2 of 21 not agreeing · 8 bets · 2-2-0 (W-L-P) · 4 open · ROI +6.22% (+0.2u on 4u) · CLV +4.67% on 2 closes, beat the close 100% · EV listed +2.32%
-   2 of 15 not agreeing · 8 bets · 3-1-0 (W-L-P) · 4 open · ROI +75.18% (+3.0u on 4u) · CLV -2.26% on 3 closes, beat the close 33% · EV listed +1.90%
-   every one (17 of 17) · 8 bets · 1-4-0 (W-L-P) · 3 open · ROI -57.89% (-2.9u on 5u, ±82.5 points over 5 games) · CLV -1.56% on 4 closes, beat the close 50% · EV listed +3.74%
-   4 of 20 not agreeing · 8 bets · 4-4-0 (W-L-P) · ROI +7.16% (+0.6u on 8u, ±79.5 points over 8 games) · CLV -1.46% ±2.53 over 5 games on 5 closes, beat the close 20% · EV listed +1.89%
-   4 of 9 not agreeing · 8 bets · 3-3-0 (W-L-P) · 2 open · ROI +1.16% (+0.1u on 6u, ±88.8 points over 6 games) · CLV +2.31% on 3 closes, beat the close 67% · EV listed +2.16%
-   3 of 6 not agreeing · 8 bets · 3-3-0 (W-L-P) · 2 open · ROI +5.71% (+0.3u on 6u, ±92.7 points over 6 games) · CLV -3.07% on 4 closes, beat the close 25% · EV listed +2.04%
-   3 of 14 not agreeing · 7 bets · 0-6-0 (W-L-P) · 1 open · ROI -100.00% (-6.0u on 6u, ±0.0 points over 6 games) · CLV +1.29% ±5.54 over 6 games on 6 closes, beat the close 33% · EV listed +1.90%
-   3 of 8 not agreeing · 7 bets · 3-2-0 (W-L-P) · 2 open · ROI +24.60% (+1.2u on 5u, ±100.6 points over 5 games) · CLV -3.88% on 4 closes, beat the close 50% · EV listed +1.95%
-   1 of 21 not agreeing · 7 bets · 1-3-0 (W-L-P) · 3 open · ROI -39.76% (-1.6u on 4u) · CLV -1.94% on 3 closes, beat the close 33% · EV listed +2.17%
-   1 of 27 not agreeing · 6 bets · 2-2-0 (W-L-P) · 2 open · ROI +2.04% (+0.1u on 4u) · CLV +1.04% on 4 closes, beat the close 75% · EV listed +1.82%
-   2 of 22 not agreeing · 6 bets · 2-2-0 (W-L-P) · 2 open · ROI +9.02% (+0.4u on 4u) · CLV +3.32% on 4 closes, beat the close 75% · EV listed +2.03%
-   every one (22 of 22) · 6 bets · 1-2-0 (W-L-P) · 3 open · ROI -30.56% (-0.9u on 3u) · CLV -2.18% on 3 closes, beat the close 33% · EV listed +2.01%
-   5 of 10 not agreeing · 6 bets · 0-4-0 (W-L-P) · 2 open · ROI -100.00% (-4.0u on 4u) · CLV -0.82% on 4 closes, beat the close 25% · EV listed +2.07%
-   5 of 11 not agreeing · 6 bets · 2-4-0 (W-L-P) · ROI -35.80% (-2.1u on 6u, ±65.5 points over 5 games) · CLV -1.88% on 5 closes, beat the close 40% · EV listed +2.06%
-   3 of 16 not agreeing · 5 bets · 2-1-0 (W-L-P) · 2 open · ROI +42.80% (+1.3u on 3u) · CLV -1.03% on 3 closes, beat the close 67% · EV listed +2.08%
-   5 of 12 not agreeing · 5 bets · 0-1-0 (W-L-P) · 4 open · ROI -100.00% (-1.0u on 1u) · no close yet · EV listed +2.53%
-   5 of 14 not agreeing · 5 bets · 2-1-0 (W-L-P) · 2 open · ROI +31.17% (+0.9u on 3u) · CLV -5.52% on 1 closes, beat the close 0% · EV listed +1.59%
-   1 of 20 not agreeing · 5 bets · 2-2-0 (W-L-P) · 1 open · ROI +5.97% (+0.2u on 4u) · CLV -0.52% on 3 closes, beat the close 33% · EV listed +2.54%
-   4 of 7 not agreeing · 5 bets · 1-3-0 (W-L-P) · 1 open · ROI -51.92% (-2.1u on 4u) · CLV -2.06% on 4 closes, beat the close 25% · EV listed +2.04%
-   1 of 18 not agreeing · 5 bets · 2-1-0 (W-L-P) · 2 open · ROI +34.80% (+1.0u on 3u) · CLV -0.11% on 2 closes, beat the close 50% · EV listed +2.35%
-   2 of 17 not agreeing · 5 bets · 2-2-0 (W-L-P) · 1 open · ROI +2.59% (+0.1u on 4u) · CLV +0.92% on 4 closes, beat the close 75% · EV listed +2.47%
-   2 of 19 not agreeing · 5 bets · 1-2-0 (W-L-P) · 2 open · ROI -31.27% (-0.9u on 3u) · CLV +2.50% on 3 closes, beat the close 67% · EV listed +2.70%
-   5 of 18 not agreeing · 5 bets · 0-1-0 (W-L-P) · 4 open · ROI -100.00% (-1.0u on 1u) · CLV -2.91% on 1 closes, beat the close 0% · EV listed +2.14%
-   3 of 5 not agreeing · 5 bets · 1-2-0 (W-L-P) · 2 open · ROI -32.67% (-1.0u on 3u) · CLV +2.01% on 2 closes, beat the close 100% · EV listed +1.40%
-   3 of 18 not agreeing · 5 bets · 1-1-0 (W-L-P) · 3 open · ROI +8.70% (+0.2u on 2u) · CLV +7.89% on 3 closes, beat the close 67% · EV listed +2.57%
-   7 of 10 not agreeing · 5 bets · 0-2-0 (W-L-P) · 3 open · ROI -100.00% (-2.0u on 2u) · CLV -3.73% on 1 closes, beat the close 0% · EV listed +1.96%
-   1 of 25 not agreeing · 4 bets · 0-2-0 (W-L-P) · 2 open · ROI -100.00% (-2.0u on 2u) · CLV +1.19% on 2 closes, beat the close 50% · EV listed +1.89%
-   7 of 11 not agreeing · 4 bets · 0-2-0 (W-L-P) · 2 open · ROI -100.00% (-2.0u on 2u) · CLV +4.54% on 1 closes, beat the close 100% · EV listed +1.79%
-   1 of 23 not agreeing · 4 bets · 1-1-0 (W-L-P) · 2 open · ROI +8.70% (+0.2u on 2u) · CLV -2.95% on 2 closes, beat the close 0% · EV listed +2.62%
-   4 of 13 not agreeing · 4 bets · 1-0-0 (W-L-P) · 3 open · ROI +90.48% (+0.9u on 1u) · no close yet · EV listed +2.03%
-   6 of 11 not agreeing · 4 bets · 1-0-0 (W-L-P) · 3 open · ROI +104.08% (+1.0u on 1u) · CLV -2.03% on 1 closes, beat the close 0% · EV listed +2.22%
-   3 of 24 not agreeing · 4 bets · 2-1-0 (W-L-P) · 1 open · ROI +46.71% (+1.4u on 3u) · CLV -1.45% on 3 closes, beat the close 0% · EV listed +1.67%
-   6 of 12 not agreeing · 4 bets · 0-2-0 (W-L-P) · 2 open · ROI -100.00% (-2.0u on 2u) · CLV -6.43% on 1 closes, beat the close 0% · EV listed +1.78%
-   7 of 12 not agreeing · 4 bets · 3-1-0 (W-L-P) · ROI +38.84% (+1.6u on 4u) · CLV +1.30% on 1 closes, beat the close 100% · EV listed +1.56%
-   2 of 20 not agreeing · 4 bets · 0-3-0 (W-L-P) · 1 open · ROI -100.00% (-3.0u on 3u) · CLV -5.27% on 3 closes, beat the close 0% · EV listed +1.77%
-   4 of 17 not agreeing · 4 bets · 1-2-0 (W-L-P) · 1 open · ROI -30.56% (-0.9u on 3u) · CLV +1.69% on 2 closes, beat the close 100% · EV listed +2.12%
-   3 of 17 not agreeing · 4 bets · 2-1-0 (W-L-P) · 1 open · ROI +58.75% (+1.8u on 3u) · CLV +1.33% on 3 closes, beat the close 33% · EV listed +1.66%
-   3 of 4 not agreeing · 4 bets · 2-1-0 (W-L-P) · 1 open · ROI +25.94% (+0.8u on 3u) · CLV +12.21% on 2 closes, beat the close 100% · EV listed +1.87%
-   2 of 18 not agreeing · 3 bets · 1-0-0 (W-L-P) · 2 open · ROI +129.89% (+1.3u on 1u) · CLV -0.45% on 1 closes, beat the close 0% · EV listed +2.23%
-   5 of 19 not agreeing · 3 bets · 2-1-0 (W-L-P) · ROI +30.94% (+0.9u on 3u) · CLV -2.77% on 3 closes, beat the close 0% · EV listed +1.63%
-   every one (31 of 31) · 3 bets · 0-3-0 (W-L-P) · ROI -100.00% (-3.0u on 3u) · CLV -4.40% on 3 closes, beat the close 33% · EV listed +2.20%
-   6 of 9 not agreeing · 3 bets · 2-1-0 (W-L-P) · ROI +54.15% (+1.6u on 3u) · CLV -3.61% on 3 closes, beat the close 0% · EV listed +2.17%
-   5 of 8 not agreeing · 3 bets · 2-1-0 (W-L-P) · ROI +49.09% (+1.5u on 3u) · CLV +0.33% on 2 closes, beat the close 50% · EV listed +1.73%
-   1 of 30 not agreeing · 3 bets · 1-1-0 (W-L-P) · 1 open · ROI +3.09% (+0.1u on 2u) · CLV +3.09% on 1 closes, beat the close 100% · EV listed +2.04%
-   2 of 26 not agreeing · 3 bets · 3-0-0 (W-L-P) · ROI +106.90% (+3.2u on 3u) · CLV -6.22% on 3 closes, beat the close 33% · EV listed +2.15%
-   6 of 8 not agreeing · 3 bets · 1-2-0 (W-L-P) · ROI -18.70% (-0.6u on 3u) · CLV -1.99% on 1 closes, beat the close 0% · EV listed +7.02%
-   1 of 26 not agreeing · 3 bets · 2-1-0 (W-L-P) · ROI +40.41% (+1.2u on 3u) · CLV -1.96% on 3 closes, beat the close 67% · EV listed +1.72%
-   7 of 14 not agreeing · 3 bets · 2-0-0 (W-L-P) · 1 open · ROI +102.92% (+2.1u on 2u) · CLV +2.46% on 1 closes, beat the close 100% · EV listed +2.09%
-   5 of 9 not agreeing · 3 bets · 1-1-0 (W-L-P) · 1 open · ROI -13.79% (-0.3u on 2u) · CLV -8.66% on 1 closes, beat the close 0% · EV listed +1.65%
-   4 of 23 not agreeing · 3 bets · 1-2-0 (W-L-P) · ROI -31.97% (-1.0u on 3u) · CLV +1.10% on 3 closes, beat the close 67% · EV listed +1.69%
-   every one (19 of 19) · 3 bets · 2-1-0 (W-L-P) · ROI +42.10% (+1.3u on 3u) · CLV -0.08% on 3 closes, beat the close 67% · EV listed +2.61%
-   11 of 14 not agreeing · 3 bets · 2-0-0 (W-L-P) · 1 open · ROI +101.05% (+2.0u on 2u) · no close yet · EV listed +1.96%
-   8 of 20 not agreeing · 3 bets · 2-0-0 (W-L-P) · 1 open · ROI +101.05% (+2.0u on 2u) · CLV -0.66% on 2 closes, beat the close 0% · EV listed +1.78%
-   5 of 6 not agreeing · 3 bets · 0-3-0 (W-L-P) · ROI -100.00% (-3.0u on 3u) · CLV -0.85% on 2 closes, beat the close 50% · EV listed +1.99%
-   6 of 13 not agreeing · 3 bets · 2-0-0 (W-L-P) · 1 open · ROI +85.22% (+1.7u on 2u) · CLV +0.30% on 1 closes, beat the close 100% · EV listed +1.85%
-   4 of 18 not agreeing · 3 bets · 1-2-0 (W-L-P) · ROI -30.56% (-0.9u on 3u) · CLV +0.44% on 2 closes, beat the close 50% · EV listed +1.92%
-   6 of 24 not agreeing · 3 bets · 0-1-0 (W-L-P) · 2 open · ROI -100.00% (-1.0u on 1u) · CLV +3.09% on 1 closes, beat the close 100% · EV listed +1.80%
-   2 of 23 not agreeing · 3 bets · 1-1-0 (W-L-P) · 1 open · ROI +5.26% (+0.1u on 2u) · CLV +3.85% on 2 closes, beat the close 100% · EV listed +1.55%
-   2 of 28 not agreeing · 3 bets · 0-0-0 (W-L-P) · 3 open · no result yet · CLV -4.83% on 1 closes, beat the close 0% · EV listed +1.74%
-   2 of 24 not agreeing · 3 bets · 0-0-0 (W-L-P) · 3 open · no result yet · no close yet · EV listed +2.32%
-   7 of 13 not agreeing · 2 bets · 0-0-0 (W-L-P) · 2 open · no result yet · no close yet · EV listed +2.50%
-   4 of 27 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV +6.88% on 2 closes, beat the close 50% · EV listed +2.17%
-   2 of 36 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV -0.81% on 1 closes, beat the close 0% · EV listed +2.18%
-   2 of 27 not agreeing · 2 bets · 1-0-0 (W-L-P) · 1 open · ROI +104.08% (+1.0u on 1u) · CLV +4.25% on 1 closes, beat the close 100% · EV listed +1.55%
-   2 of 31 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV -8.24% on 1 closes, beat the close 0% · EV listed +1.84%
-   every one (27 of 27) · 2 bets · 0-0-0 (W-L-P) · 2 open · no result yet · no close yet · EV listed +2.29%
-   4 of 30 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV -8.74% on 2 closes, beat the close 50% · EV listed +1.89%
-   every one (29 of 29) · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV -3.83% on 1 closes, beat the close 0% · EV listed +1.93%
-   2 of 32 not agreeing · 2 bets · 2-0-0 (W-L-P) · ROI +107.30% (+2.1u on 2u) · CLV -0.14% on 2 closes, beat the close 50% · EV listed +1.82%
-   every one (23 of 23) · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV +4.35% on 2 closes, beat the close 50% · EV listed +2.05%
-   1 of 33 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +1.01% (+0.0u on 2u) · CLV +0.39% on 2 closes, beat the close 50% · EV listed +1.63%
-   2 of 35 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -1.14% on 2 closes, beat the close 50% · EV listed +1.74%
-   3 of 26 not agreeing · 2 bets · 1-0-0 (W-L-P) · 1 open · ROI +100.00% (+1.0u on 1u) · no close yet · EV listed +1.60%
-   every one (39 of 39) · 2 bets · 1-1-0 (W-L-P) · ROI -24.24% (-0.5u on 2u) · CLV +0.51% on 2 closes, beat the close 50% · EV listed +4.25%
-   8 of 10 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -2.28% on 2 closes, beat the close 0% · EV listed +2.29%
-   3 of 20 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +7.53% (+0.2u on 2u) · CLV +0.71% on 2 closes, beat the close 50% · EV listed +1.67%
-   1 of 24 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV -0.75% on 1 closes, beat the close 0% · EV listed +1.63%
-   7 of 19 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -3.99% on 2 closes, beat the close 0% · EV listed +3.29%
-   6 of 21 not agreeing · 2 bets · 0-1-1 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV +1.89% on 1 closes, beat the close 100% · EV listed +1.95%
-   3 of 22 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +2.04% (+0.0u on 2u) · CLV -13.08% on 2 closes, beat the close 0% · EV listed +2.09%
-   4 of 15 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +16.28% (+0.3u on 2u) · no close yet · EV listed +1.90%
-   3 of 21 not agreeing · 2 bets · 2-0-0 (W-L-P) · ROI +111.93% (+2.2u on 2u) · CLV -0.86% on 2 closes, beat the close 50% · EV listed +2.18%
-   5 of 17 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -0.94% on 1 closes, beat the close 0% · EV listed +1.56%
-   3 of 15 not agreeing · 2 bets · 1-0-0 (W-L-P) · 1 open · ROI +150.00% (+1.5u on 1u) · no close yet · EV listed +1.66%
-   12 of 20 not agreeing · 2 bets · 2-0-0 (W-L-P) · ROI +104.17% (+2.1u on 2u) · CLV +2.17% on 1 closes, beat the close 100% · EV listed +1.66%
-   3 of 33 not agreeing · 2 bets · 1-0-0 (W-L-P) · 1 open · ROI +110.53% (+1.1u on 1u) · CLV -6.85% on 1 closes, beat the close 0% · EV listed +1.67%
-   6 of 7 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -5.66% on 1 closes, beat the close 0% · EV listed +2.06%
-   1 of 17 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +5.26% (+0.1u on 2u) · CLV -2.52% on 2 closes, beat the close 0% · EV listed +2.27%
-   7 of 16 not agreeing · 2 bets · 2-0-0 (W-L-P) · ROI +92.95% (+1.9u on 2u) · CLV +0.14% on 2 closes, beat the close 50% · EV listed +1.65%
-   2 of 3 not agreeing · 2 bets · 2-0-0 (W-L-P) · ROI +110.01% (+2.2u on 2u) · CLV +2.42% on 1 closes, beat the close 100% · EV listed +2.49%
-   2 of 16 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV +2.79% on 1 closes, beat the close 100% · EV listed +1.99%
-   5 of 15 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +3.09% (+0.1u on 2u) · no close yet · EV listed +1.68%
-   5 of 7 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI -2.91% (-0.1u on 2u) · CLV +8.88% on 1 closes, beat the close 100% · EV listed +2.16%
-   7 of 20 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -1.04% on 1 closes, beat the close 0% · EV listed +1.57%
-   4 of 14 not agreeing · 2 bets · 1-0-0 (W-L-P) · 1 open · ROI +115.05% (+1.2u on 1u) · CLV -7.53% on 1 closes, beat the close 0% · EV listed +1.68%
-   9 of 10 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +3.09% (+0.1u on 2u) · no close yet · EV listed +2.21%
-   4 of 6 not agreeing · 2 bets · 1-0-0 (W-L-P) · 1 open · ROI +132.56% (+1.3u on 1u) · CLV +6.47% on 1 closes, beat the close 100% · EV listed +2.01%
-   every one (21 of 21) · 2 bets · 1-1-0 (W-L-P) · ROI +5.26% (+0.1u on 2u) · CLV -3.43% on 2 closes, beat the close 0% · EV listed +3.02%
-   6 of 10 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV +0.04% on 1 closes, beat the close 100% · EV listed +2.55%
-   8 of 21 not agreeing · 2 bets · 2-0-0 (W-L-P) · ROI +100.59% (+2.0u on 2u) · CLV +0.13% on 1 closes, beat the close 100% · EV listed +2.22%
-   every one (25 of 25) · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV -1.26% on 1 closes, beat the close 0% · EV listed +2.68%
-   4 of 4 not agreeing · 2 bets · 2-0-0 (W-L-P) · ROI +79.45% (+1.6u on 2u) · no close yet · EV listed +2.21%
-   2 of 2 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI -25.37% (-0.5u on 2u) · CLV -5.11% on 2 closes, beat the close 50% · EV listed +2.42%
-   3 of 28 not agreeing · 2 bets · 0-0-0 (W-L-P) · 2 open · no result yet · no close yet · EV listed +1.98%
-   4 of 19 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +1.69%
-   9 of 20 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV +1.05% on 1 closes, beat the close 100% · EV listed +2.12%
-   7 of 39 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +100.00% (+1.0u on 1u) · CLV -8.08% on 1 closes, beat the close 0% · EV listed +1.91%
-   3 of 31 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +1.56%
-   every one (28 of 28) · 1 bets · 0-0-1 (W-L-P) · no result yet · CLV -11.22% on 1 closes, beat the close 0% · EV listed +2.49%
-   12 of 35 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +3.46%
-   23 of 27 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +1.73%
-   1 of 29 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +2.02%
-   17 of 29 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · CLV -3.29% on 1 closes, beat the close 0% · EV listed +1.66%
-   8 of 31 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +108.33% (+1.1u on 1u) · CLV -2.25% on 1 closes, beat the close 0% · EV listed +1.58%
-   5 of 20 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · no close yet · EV listed +1.89%
-   2 of 29 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -2.26% on 1 closes, beat the close 0% · EV listed +2.53%
-   4 of 29 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +102.02% (+1.0u on 1u) · CLV -8.03% on 1 closes, beat the close 0% · EV listed +1.71%
-   5 of 31 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -7.94% on 1 closes, beat the close 0% · EV listed +1.57%
-   3 of 32 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV +5.33% on 1 closes, beat the close 100% · EV listed +1.78%
-   3 of 37 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +94.17% (+0.9u on 1u) · CLV +3.90% on 1 closes, beat the close 100% · EV listed +2.84%
-   11 of 13 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV +3.58% on 1 closes, beat the close 100% · EV listed +1.87%
-   2 of 25 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +104.08% (+1.0u on 1u) · CLV +3.46% on 1 closes, beat the close 100% · EV listed +1.55%
-   4 of 32 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +106.19% (+1.1u on 1u) · CLV +1.12% on 1 closes, beat the close 100% · EV listed +1.55%
-   2 of 38 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV +2.04% on 1 closes, beat the close 100% · EV listed +2.72%
-   2 of 39 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -6.09% on 1 closes, beat the close 0% · EV listed +2.15%
-   7 of 21 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · no close yet · EV listed +1.58%
-   5 of 23 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -11.24% on 1 closes, beat the close 0% · EV listed +1.80%
-   11 of 27 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +146.91% (+1.5u on 1u) · CLV -1.83% on 1 closes, beat the close 0% · EV listed +1.52%
-   7 of 22 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +102.02% (+1.0u on 1u) · CLV +9.29% on 1 closes, beat the close 100% · EV listed +2.37%
-   4 of 28 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV +12.27% on 1 closes, beat the close 100% · EV listed +1.71%
-   7 of 9 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · no close yet · EV listed +1.53%
-   13 of 19 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -1.59% on 1 closes, beat the close 0% · EV listed +1.50%
-   4 of 21 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +115.05% (+1.2u on 1u) · CLV -5.38% on 1 closes, beat the close 0% · EV listed +1.58%
-   5 of 21 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +110.53% (+1.1u on 1u) · no close yet · EV listed +1.54%
-   8 of 11 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -1.06% on 1 closes, beat the close 0% · EV listed +1.79%
-   6 of 20 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +104.08% (+1.0u on 1u) · no close yet · EV listed +1.54%
-   4 of 25 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +104.08% (+1.0u on 1u) · CLV +0.60% on 1 closes, beat the close 100% · EV listed +1.68%
-   8 of 19 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -2.10% on 1 closes, beat the close 0% · EV listed +1.58%
-   10 of 23 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +104.08% (+1.0u on 1u) · CLV +2.04% on 1 closes, beat the close 100% · EV listed +1.54%
-   7 of 24 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +106.19% (+1.1u on 1u) · CLV +6.57% on 1 closes, beat the close 100% · EV listed +1.71%
-   6 of 18 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +104.08% (+1.0u on 1u) · CLV -6.12% on 1 closes, beat the close 0% · EV listed +1.57%
-   11 of 40 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +63.93% (+0.6u on 1u) · CLV -2.73% on 1 closes, beat the close 0% · EV listed +1.51%
-   15 of 28 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +100.00% (+1.0u on 1u) · CLV -7.99% on 1 closes, beat the close 0% · EV listed +1.91%
-   10 of 30 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +98.02% (+1.0u on 1u) · CLV -0.54% on 1 closes, beat the close 0% · EV listed +1.62%
-   11 of 17 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +92.31% (+0.9u on 1u) · CLV -3.85% on 1 closes, beat the close 0% · EV listed +1.77%
-   10 of 26 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV +7.58% on 1 closes, beat the close 100% · EV listed +1.53%
-   every one (24 of 24) · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -12.98% on 1 closes, beat the close 0% · EV listed +2.10%
-   10 of 10 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +120.00% (+1.2u on 1u) · CLV -3.73% on 1 closes, beat the close 0% · EV listed +3.02%
-   9 of 18 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -0.00% on 1 closes, beat the close 0% · EV listed +1.58%
-   8 of 16 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · no close yet · EV listed +1.60%
-   5 of 25 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV +2.37% on 1 closes, beat the close 100% · EV listed +1.55%
-   6 of 16 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +100.00% (+1.0u on 1u) · CLV +4.28% on 1 closes, beat the close 100% · EV listed +2.19%
-   8 of 9 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · no close yet · EV listed +3.03%
-   7 of 15 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -0.99% on 1 closes, beat the close 0% · EV listed +1.52%
-   6 of 17 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · no close yet · EV listed +2.07%
-   6 of 36 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +76.99% (+0.8u on 1u) · CLV -0.00% on 1 closes, beat the close 0% · EV listed +3.01%
-   7 of 8 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -1.33% on 1 closes, beat the close 0% · EV listed +1.66%
-   6 of 15 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · no close yet · EV listed +1.54%
-   every one (26 of 26) · 1 bets · 1-0-0 (W-L-P) · ROI +104.08% (+1.0u on 1u) · CLV +2.51% on 1 closes, beat the close 100% · EV listed +6.11%
-   5 of 13 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · no close yet · EV listed +1.57%
-   5 of 22 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +112.77% (+1.1u on 1u) · CLV -3.48% on 1 closes, beat the close 0% · EV listed +1.75%
-   1 of 28 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV +1.09% on 1 closes, beat the close 100% · EV listed +2.34%
-   6 of 22 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +106.19% (+1.1u on 1u) · CLV +1.15% on 1 closes, beat the close 100% · EV listed +1.72%
-   8 of 14 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -3.07% on 1 closes, beat the close 0% · EV listed +1.52%
-   12 of 13 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +132.56% (+1.3u on 1u) · CLV +6.81% on 1 closes, beat the close 100% · EV listed +2.22%
-   3 of 23 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -2.53% on 1 closes, beat the close 0% · EV listed +2.10%
-   5 of 16 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -11.04% on 1 closes, beat the close 0% · EV listed +2.53%
-   5 of 5 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +108.00% (+1.1u on 1u) · no close yet · EV listed +9.15%
-   3 of 19 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +100.00% (+1.0u on 1u) · no close yet · EV listed +2.21%
-   5 of 33 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +1.91%
-   9 of 13 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +1.54%
-   5 of 28 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +1.81%
-   6 of 14 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +2.62%
-   5 of 29 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +2.10%
-   4 of 16 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +1.95%
-   8 of 17 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +2.00%
-   7 of 23 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +1.68%
-   7 of 18 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +1.77%
-   3 of 27 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +1.54%
-   1 of 31 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +1.89%
+   … and 213 smaller groups (931 bets), counted in the summary
 -- Books saying not +EV --
    not recorded · 5558 bets · 2084-1872-1 (W-L-P) · 34 void · 1567 open · ROI -0.66% (-26.0u on 3956u, ±3.2 points over 229 games) · CLV +0.42% ±0.21 over 221 games on 2216 closes, beat the close 57% · EV listed +0.97%
    none · 1324 bets · 431-468-8 (W-L-P) · 2 void · 415 open · ROI +0.50% (+4.5u on 899u, ±8.2 points over 274 games) · CLV -1.22% ±0.73 over 232 games on 486 closes, beat the close 45% · EV listed +3.61%
@@ -1035,13 +823,13 @@ Why started bets have no close yet, most common first (each source's own reason;
 -- league+kind+side (n>=15)
 
 == THE ENGINE'S OWN SCAN STUDY (GitHub's record of every bet its scans listed, graded by engine-grade.yml; same report as above; cut at 90000 characters) ==
-review digest: 131967 characters -> /home/runner/work/novig/novig/out/engine-study.txt
-VIGILANT DAILY REVIEW (made by GitHub from the phone-data branch) · 2026-10-23T23:42:12.697Z · 17 study day files · 21415 bets logged
+review digest: 62435 characters -> /home/runner/work/novig/novig/out/engine-study.txt
+VIGILANT DAILY REVIEW (made by GitHub from the phone-data branch) · 2026-10-23T23:53:49.591Z · 17 study day files · 21415 bets logged
 
-VIGILANT SCAN STUDY · version github-review · vigilant-scan-study-vgithub-review-2026-10-23-1942.txt
+VIGILANT SCAN STUDY · version github-review · vigilant-scan-study-vgithub-review-2026-10-23-1953.txt
 
 == READ ME FIRST (for Claude) ==
-This file was made by the Vigilant app (Android, Kotlin + Compose; modules engine, data, app) on Oct 23, 2026 7:42 PM EDT, version github-review (code 0), on GitHub Actions.
+This file was made by the Vigilant app (Android, Kotlin + Compose; modules engine, data, app) on Oct 23, 2026 7:53 PM EDT, version github-review (code 0), on GitHub Actions.
 Vigilant finds +EV bets on the Novig sportsbook for Tj, who owns it; it is built across Claude sessions. Repo: github.com/tjshea90/novig (public), branch main.
 
 WHAT THIS IS: the scan study, a log of EVERY +EV bet Vigilant's scanners found on Novig — CrazyNinjaOdds ("CNO") and Vigilant's own scan — not only the ones Tj bet, and not only the ones the app showed him:
@@ -1162,389 +950,248 @@ Why started bets have no close yet, most common first (each source's own reason;
    6 of 8 not agreeing · 230 bets · 58-78-0 (W-L-P) · 94 open · ROI -7.50% (-10.2u on 136u, ±22.5 points over 73 games) · CLV -1.30% ±1.49 over 37 games on 45 closes, beat the close 31% · EV listed -1.32%
    8 of 9 not agreeing · 226 bets · 72-60-0 (W-L-P) · 94 open · ROI +1.41% (+1.9u on 132u, ±16.6 points over 84 games) · CLV -2.66% ±1.59 over 34 games on 46 closes, beat the close 35% · EV listed -1.50%
    2 of 3 not agreeing · 220 bets · 70-73-0 (W-L-P) · 77 open · ROI +8.03% (+11.5u on 143u, ±31.1 points over 98 games) · CLV -1.52% ±2.72 over 36 games on 44 closes, beat the close 39% · EV listed -1.14%
-   9 of 10 not agreeing · 202 bets · 64-59-0 (W-L-P) · 79 open · ROI -2.58% (-3.2u on 123u, ±18.5 points over 72 games) · CLV -0.62% ±1.44 over 38 games on 53 closes, beat the close 45% · EV listed -1.54%
-   2 of 4 not agreeing · 177 bets · 48-66-0 (W-L-P) · 63 open · ROI -8.47% (-9.7u on 114u, ±23.3 points over 74 games) · CLV +1.81% ±2.67 over 21 games on 25 closes, beat the close 56% · EV listed -0.88%
-   every one (3 of 3) · 175 bets · 55-55-0 (W-L-P) · 65 open · ROI +4.01% (+4.4u on 110u, ±20.2 points over 62 games) · CLV +1.99% ±2.37 over 29 games on 31 closes, beat the close 58% · EV listed +2.29%
-   3 of 5 not agreeing · 174 bets · 44-61-0 (W-L-P) · 69 open · ROI +16.18% (+17.0u on 105u, ±33.1 points over 74 games) · CLV -0.24% ±2.75 over 22 games on 23 closes, beat the close 61% · EV listed -1.06%
-   10 of 11 not agreeing · 170 bets · 60-56-0 (W-L-P) · 54 open · ROI -4.01% (-4.7u on 116u, ±18.1 points over 75 games) · CLV -1.41% ±1.31 over 47 games on 65 closes, beat the close 32% · EV listed -1.55%
-   13 of 13 not agreeing · 149 bets · 53-30-0 (W-L-P) · 66 open · ROI +4.97% (+4.1u on 83u, ±15.9 points over 52 games) · CLV -2.15% ±1.29 over 33 games on 44 closes, beat the close 23% · EV listed -1.74%
-   11 of 12 not agreeing · 148 bets · 53-39-0 (W-L-P) · 56 open · ROI +14.68% (+13.5u on 92u, ±21.5 points over 58 games) · CLV -1.84% ±1.39 over 37 games on 53 closes, beat the close 34% · EV listed -1.49%
-   8 of 10 not agreeing · 148 bets · 44-54-0 (W-L-P) · 50 open · ROI -4.44% (-4.4u on 98u, ±22.2 points over 63 games) · CLV -0.41% ±1.49 over 37 games on 45 closes, beat the close 42% · EV listed -1.38%
-   7 of 9 not agreeing · 147 bets · 52-50-0 (W-L-P) · 45 open · ROI +8.23% (+8.4u on 102u, ±19.6 points over 58 games) · CLV -1.53% ±1.77 over 27 games on 32 closes, beat the close 38% · EV listed -1.38%
-   9 of 11 not agreeing · 146 bets · 47-47-0 (W-L-P) · 52 open · ROI +2.09% (+2.0u on 94u, ±21.6 points over 60 games) · CLV -1.80% ±1.57 over 32 games on 49 closes, beat the close 39% · EV listed -1.40%
-   4 of 7 not agreeing · 136 bets · 31-51-0 (W-L-P) · 54 open · ROI -5.90% (-4.8u on 82u, ±33.0 points over 56 games) · CLV +1.75% ±5.59 over 17 games on 19 closes, beat the close 53% · EV listed -1.07%
-   3 of 6 not agreeing · 136 bets · 29-44-0 (W-L-P) · 63 open · ROI -7.20% (-5.3u on 73u, ±30.2 points over 51 games) · CLV +1.00% ±3.86 over 13 games on 17 closes, beat the close 65% · EV listed -0.91%
-   5 of 8 not agreeing · 131 bets · 34-51-0 (W-L-P) · 46 open · ROI -17.71% (-15.1u on 85u, ±24.9 points over 61 games) · CLV -2.18% ±2.74 over 18 games on 20 closes, beat the close 40% · EV listed -1.23%
-   every one (1 of 1) · 125 bets · 36-47-0 (W-L-P) · 1 void · 41 open · ROI -16.94% (-14.1u on 83u, ±23.7 points over 67 games) · CLV -0.91% ±2.40 over 17 games on 17 closes, beat the close 35% · EV listed +1.59%
-   every one (4 of 4) · 121 bets · 34-39-0 (W-L-P) · 48 open · ROI -1.34% (-1.0u on 73u, ±27.2 points over 41 games) · CLV +1.19% ±2.91 over 18 games on 24 closes, beat the close 63% · EV listed +2.41%
-   7 of 10 not agreeing · 120 bets · 40-39-0 (W-L-P) · 41 open · ROI +5.81% (+4.6u on 79u, ±22.4 points over 52 games) · CLV -3.67% ±2.68 over 23 games on 26 closes, beat the close 35% · EV listed -1.29%
-   8 of 11 not agreeing · 118 bets · 39-44-0 (W-L-P) · 35 open · ROI -1.44% (-1.2u on 83u, ±25.1 points over 51 games) · CLV -1.32% ±1.63 over 29 games on 40 closes, beat the close 30% · EV listed -1.34%
-   14 of 14 not agreeing · 105 bets · 29-31-0 (W-L-P) · 45 open · ROI -25.27% (-15.2u on 60u, ±20.6 points over 40 games) · CLV -3.12% ±2.24 over 24 games on 29 closes, beat the close 24% · EV listed -1.71%
-   10 of 12 not agreeing · 103 bets · 31-33-0 (W-L-P) · 39 open · ROI -3.28% (-2.1u on 64u, ±26.0 points over 41 games) · CLV +0.06% ±2.57 over 22 games on 30 closes, beat the close 47% · EV listed -1.45%
-   6 of 9 not agreeing · 95 bets · 32-31-0 (W-L-P) · 32 open · ROI +16.08% (+10.1u on 63u, ±30.9 points over 50 games) · CLV +0.20% ±2.70 over 19 games on 21 closes, beat the close 48% · EV listed -1.20%
-   every one (5 of 5) · 94 bets · 21-29-0 (W-L-P) · 2 void · 42 open · ROI -8.50% (-4.3u on 50u, ±31.9 points over 38 games) · CLV -1.00% ±3.27 over 21 games on 23 closes, beat the close 57% · EV listed +2.45%
-   12 of 13 not agreeing · 92 bets · 33-27-0 (W-L-P) · 32 open · ROI -0.33% (-0.2u on 60u, ±23.2 points over 45 games) · CLV -0.67% ±1.21 over 27 games on 34 closes, beat the close 29% · EV listed -1.64%
-   1 of 3 not agreeing · 91 bets · 27-31-0 (W-L-P) · 33 open · ROI +0.49% (+0.3u on 58u, ±29.8 points over 47 games) · CLV -4.28% ±4.72 over 13 games on 14 closes, beat the close 43% · EV listed +0.70%
-   11 of 13 not agreeing · 90 bets · 21-31-0 (W-L-P) · 38 open · ROI -14.06% (-7.3u on 52u, ±30.6 points over 40 games) · CLV -0.64% ±1.97 over 20 games on 24 closes, beat the close 42% · EV listed -1.47%
-   9 of 12 not agreeing · 89 bets · 33-34-0 (W-L-P) · 22 open · ROI +8.99% (+6.0u on 67u, ±26.2 points over 50 games) · CLV -1.30% ±1.86 over 30 games on 39 closes, beat the close 36% · EV listed -1.29%
-   2 of 5 not agreeing · 85 bets · 16-32-0 (W-L-P) · 37 open · ROI -19.57% (-9.4u on 48u, ±40.2 points over 43 games) · CLV -0.84% ±3.54 over 17 games on 18 closes, beat the close 39% · EV listed -0.26%
-   every one (6 of 6) · 84 bets · 19-35-0 (W-L-P) · 30 open · ROI -23.35% (-12.6u on 54u, ±32.8 points over 35 games) · CLV +2.14% ±2.91 over 19 games on 21 closes, beat the close 57% · EV listed +1.25%
-   13 of 14 not agreeing · 81 bets · 26-18-0 (W-L-P) · 37 open · ROI +5.41% (+2.4u on 44u, ±26.0 points over 34 games) · CLV -1.54% ±1.53 over 22 games on 25 closes, beat the close 28% · EV listed -1.58%
-   15 of 15 not agreeing · 79 bets · 32-15-0 (W-L-P) · 32 open · ROI +14.65% (+6.9u on 47u, ±23.0 points over 37 games) · CLV -2.69% ±1.22 over 25 games on 29 closes, beat the close 17% · EV listed -1.73%
-   1 of 4 not agreeing · 79 bets · 21-25-0 (W-L-P) · 1 void · 32 open · ROI +2.38% (+1.1u on 46u, ±32.2 points over 37 games) · CLV -1.04% ±3.37 over 14 games on 17 closes, beat the close 41% · EV listed +0.74%
-   every one (7 of 7) · 78 bets · 23-26-0 (W-L-P) · 29 open · ROI +2.92% (+1.4u on 49u, ±32.8 points over 37 games) · CLV +3.50% ±3.57 over 25 games on 28 closes, beat the close 64% · EV listed +1.79%
-   6 of 10 not agreeing · 75 bets · 23-32-0 (W-L-P) · 20 open · ROI -7.88% (-4.3u on 55u, ±28.8 points over 42 games) · CLV -1.29% ±3.03 over 19 games on 19 closes, beat the close 37% · EV listed -1.26%
-   17 of 17 not agreeing · 72 bets · 28-18-0 (W-L-P) · 26 open · ROI +11.02% (+5.1u on 46u, ±24.4 points over 39 games) · CLV -1.20% ±1.72 over 26 games on 31 closes, beat the close 23% · EV listed -1.70%
-   7 of 11 not agreeing · 71 bets · 17-25-0 (W-L-P) · 29 open · ROI -9.91% (-4.2u on 42u, ±35.8 points over 32 games) · CLV -1.78% ±1.83 over 20 games on 24 closes, beat the close 38% · EV listed -1.24%
-   every one (8 of 8) · 71 bets · 21-23-0 (W-L-P) · 27 open · ROI +0.42% (+0.2u on 44u, ±33.3 points over 31 games) · CLV +0.78% ±3.98 over 23 games on 24 closes, beat the close 63% · EV listed +1.30%
-   3 of 7 not agreeing · 71 bets · 12-23-0 (W-L-P) · 36 open · ROI -22.38% (-7.8u on 35u, ±49.9 points over 25 games) · CLV +2.73% ±3.03 over 11 games on 13 closes, beat the close 62% · EV listed -0.64%
-   5 of 10 not agreeing · 71 bets · 17-24-0 (W-L-P) · 30 open · ROI -10.58% (-4.3u on 41u, ±34.2 points over 34 games) · CLV -1.61% ±3.16 over 14 games on 14 closes, beat the close 43% · EV listed -0.95%
-   4 of 8 not agreeing · 70 bets · 16-24-0 (W-L-P) · 30 open · ROI -3.47% (-1.4u on 40u, ±40.4 points over 33 games) · CLV -1.61% ±8.93 over 10 games on 10 closes, beat the close 50% · EV listed -0.91%
-   2 of 6 not agreeing · 66 bets · 20-17-0 (W-L-P) · 29 open · ROI +22.28% (+8.2u on 37u, ±40.4 points over 33 games) · CLV -4.53% ±11.43 over 8 games on 8 closes, beat the close 50% · EV listed -0.12%
-   16 of 16 not agreeing · 65 bets · 21-13-0 (W-L-P) · 31 open · ROI -1.35% (-0.5u on 34u, ±27.4 points over 30 games) · CLV -1.30% ±1.56 over 18 games on 20 closes, beat the close 35% · EV listed -1.71%
-   8 of 12 not agreeing · 62 bets · 17-17-0 (W-L-P) · 28 open · ROI +3.15% (+1.1u on 34u, ±32.8 points over 26 games) · CLV +1.74% ±3.42 over 15 games on 17 closes, beat the close 65% · EV listed -1.26%
-   5 of 9 not agreeing · 60 bets · 17-14-0 (W-L-P) · 29 open · ROI +15.18% (+4.7u on 31u, ±42.0 points over 28 games) · CLV -1.18% ±3.34 over 9 games on 9 closes, beat the close 33% · EV listed -0.97%
-   every one (9 of 9) · 59 bets · 17-17-0 (W-L-P) · 25 open · ROI +7.33% (+2.5u on 34u, ±36.1 points over 25 games) · CLV -0.88% ±2.64 over 27 games on 31 closes, beat the close 45% · EV listed +1.46%
-   12 of 14 not agreeing · 59 bets · 21-18-0 (W-L-P) · 20 open · ROI +5.46% (+2.1u on 39u, ±28.5 points over 28 games) · CLV +0.04% ±1.30 over 18 games on 22 closes, beat the close 41% · EV listed -1.46%
-   every one (10 of 10) · 56 bets · 14-17-0 (W-L-P) · 25 open · ROI -3.17% (-1.0u on 31u, ±36.3 points over 23 games) · CLV +2.02% ±2.99 over 15 games on 17 closes, beat the close 59% · EV listed +1.50%
-   14 of 15 not agreeing · 56 bets · 19-15-0 (W-L-P) · 22 open · ROI -1.52% (-0.5u on 34u, ±35.6 points over 29 games) · CLV -1.28% ±1.93 over 19 games on 21 closes, beat the close 29% · EV listed -1.65%
-   13 of 15 not agreeing · 54 bets · 19-15-0 (W-L-P) · 20 open · ROI +11.07% (+3.8u on 34u, ±34.6 points over 30 games) · CLV -0.88% ±1.57 over 17 games on 18 closes, beat the close 44% · EV listed -1.52%
-   10 of 13 not agreeing · 52 bets · 14-14-0 (W-L-P) · 24 open · ROI +0.92% (+0.3u on 28u, ±38.0 points over 24 games) · CLV -2.53% ±2.17 over 17 games on 17 closes, beat the close 24% · EV listed -1.44%
-   6 of 11 not agreeing · 51 bets · 15-21-0 (W-L-P) · 15 open · ROI -3.54% (-1.3u on 36u, ±38.2 points over 31 games) · CLV +1.40% ±2.97 over 17 games on 19 closes, beat the close 53% · EV listed -1.12%
-   7 of 12 not agreeing · 49 bets · 21-17-0 (W-L-P) · 11 open · ROI +18.99% (+7.2u on 38u, ±39.5 points over 32 games) · CLV -2.77% ±4.33 over 15 games on 18 closes, beat the close 33% · EV listed -1.23%
-   9 of 13 not agreeing · 46 bets · 16-11-0 (W-L-P) · 19 open · ROI +16.27% (+4.4u on 27u, ±40.9 points over 23 games) · CLV -1.43% ±2.97 over 13 games on 15 closes, beat the close 33% · EV listed -1.30%
-   18 of 18 not agreeing · 46 bets · 7-18-0 (W-L-P) · 21 open · ROI -50.69% (-12.7u on 25u, ±30.7 points over 21 games) · CLV -2.58% ±1.78 over 14 games on 15 closes, beat the close 13% · EV listed -1.70%
-   5 of 11 not agreeing · 45 bets · 13-23-0 (W-L-P) · 9 open · ROI -19.15% (-6.9u on 36u, ±33.5 points over 25 games) · CLV -2.09% ±2.27 over 16 games on 18 closes, beat the close 33% · EV listed -0.97%
-   4 of 11 not agreeing · 44 bets · 15-19-0 (W-L-P) · 10 open · ROI -6.93% (-2.4u on 34u, ±35.1 points over 28 games) · CLV +2.19% ±2.82 over 20 games on 22 closes, beat the close 45% · EV listed -0.59%
-   4 of 9 not agreeing · 43 bets · 6-15-0 (W-L-P) · 22 open · ROI -34.20% (-7.2u on 21u, ±44.5 points over 20 games) · CLV -3.07% ±4.78 over 5 games on 5 closes, beat the close 20% · EV listed -0.65%
-   11 of 15 not agreeing · 42 bets · 11-9-0 (W-L-P) · 22 open · ROI +10.03% (+2.0u on 20u, ±43.3 points over 16 games) · CLV +2.14% ±3.58 over 9 games on 10 closes, beat the close 70% · EV listed -1.31%
-   1 of 6 not agreeing · 42 bets · 12-18-0 (W-L-P) · 12 open · ROI -15.53% (-4.7u on 30u, ±42.3 points over 27 games) · CLV +2.70% ±4.09 over 11 games on 11 closes, beat the close 82% · EV listed +0.60%
-   11 of 14 not agreeing · 42 bets · 7-13-0 (W-L-P) · 22 open · ROI -33.87% (-6.8u on 20u, ±37.7 points over 18 games) · CLV -1.02% ±2.03 over 10 games on 11 closes, beat the close 27% · EV listed -1.42%
-   6 of 12 not agreeing · 41 bets · 14-9-0 (W-L-P) · 18 open · ROI +30.90% (+7.1u on 23u, ±46.7 points over 21 games) · CLV -3.18% ±3.63 over 12 games on 14 closes, beat the close 21% · EV listed -0.99%
-   15 of 16 not agreeing · 41 bets · 10-13-0 (W-L-P) · 18 open · ROI -23.87% (-5.5u on 23u, ±39.0 points over 20 games) · CLV -2.30% ±3.84 over 7 games on 7 closes, beat the close 14% · EV listed -1.68%
-   19 of 19 not agreeing · 39 bets · 11-11-0 (W-L-P) · 17 open · ROI -4.66% (-1.0u on 22u, ±43.3 points over 21 games) · CLV -0.55% ±2.88 over 17 games on 18 closes, beat the close 39% · EV listed -1.64%
-   4 of 10 not agreeing · 39 bets · 16-18-0 (W-L-P) · 5 open · ROI +8.25% (+2.8u on 34u, ±37.8 points over 28 games) · CLV +2.44% ±3.19 over 15 games on 15 closes, beat the close 67% · EV listed -0.46%
-   15 of 17 not agreeing · 38 bets · 13-8-0 (W-L-P) · 17 open · ROI +12.67% (+2.7u on 21u, ±42.0 points over 18 games) · CLV -2.26% ±2.10 over 14 games on 16 closes, beat the close 25% · EV listed -1.57%
-   17 of 18 not agreeing · 38 bets · 10-12-0 (W-L-P) · 16 open · ROI -22.98% (-5.1u on 22u, ±36.3 points over 18 games) · CLV -0.18% ±1.24 over 14 games on 15 closes, beat the close 40% · EV listed -1.52%
-   12 of 15 not agreeing · 37 bets · 12-9-0 (W-L-P) · 16 open · ROI +28.16% (+5.9u on 21u, ±39.2 points over 15 games) · CLV -2.47% ±5.26 over 6 games on 6 closes, beat the close 33% · EV listed -1.47%
-   20 of 20 not agreeing · 36 bets · 11-9-0 (W-L-P) · 16 open · ROI -2.24% (-0.4u on 20u, ±39.8 points over 17 games) · CLV -1.10% ±1.57 over 14 games on 16 closes, beat the close 38% · EV listed -1.64%
-   10 of 14 not agreeing · 35 bets · 7-13-0 (W-L-P) · 15 open · ROI -20.54% (-4.1u on 20u, ±51.1 points over 19 games) · CLV -1.81% ±2.69 over 11 games on 11 closes, beat the close 45% · EV listed -1.29%
-   3 of 8 not agreeing · 35 bets · 11-10-0 (W-L-P) · 14 open · ROI +19.63% (+4.1u on 21u, ±51.8 points over 21 games) · CLV +1.02% ±1.93 over 7 games on 7 closes, beat the close 57% · EV listed +0.05%
-   2 of 7 not agreeing · 35 bets · 12-12-0 (W-L-P) · 11 open · ROI +31.27% (+7.5u on 24u, ±60.9 points over 21 games) · CLV +7.03% ±5.40 over 9 games on 9 closes, beat the close 78% · EV listed -0.04%
-   every one (11 of 11) · 34 bets · 10-10-0 (W-L-P) · 14 open · ROI +17.46% (+3.5u on 20u, ±42.9 points over 16 games) · CLV +4.39% ±2.25 over 13 games on 13 closes, beat the close 92% · EV listed +2.98%
-   1 of 9 not agreeing · 32 bets · 9-9-0 (W-L-P) · 14 open · ROI +9.33% (+1.7u on 18u, ±55.4 points over 17 games) · CLV +3.03% ±2.10 over 12 games on 13 closes, beat the close 85% · EV listed +0.14%
-   1 of 5 not agreeing · 31 bets · 5-13-0 (W-L-P) · 13 open · ROI -34.55% (-6.2u on 18u, ±54.8 points over 16 games) · CLV +5.16% on 4 closes, beat the close 50% · EV listed -0.07%
-   14 of 16 not agreeing · 31 bets · 9-9-0 (W-L-P) · 13 open · ROI -2.81% (-0.5u on 18u, ±49.2 points over 18 games) · CLV -1.07% ±1.70 over 12 games on 12 closes, beat the close 50% · EV listed -1.69%
-   14 of 17 not agreeing · 31 bets · 9-9-0 (W-L-P) · 13 open · ROI -8.37% (-1.5u on 18u, ±47.1 points over 17 games) · CLV -2.06% ±2.75 over 10 games on 10 closes, beat the close 30% · EV listed -1.62%
-   3 of 11 not agreeing · 31 bets · 10-12-0 (W-L-P) · 9 open · ROI -1.79% (-0.4u on 22u, ±46.1 points over 20 games) · CLV -1.57% ±3.71 over 15 games on 17 closes, beat the close 41% · EV listed -0.18%
-   1 of 8 not agreeing · 31 bets · 8-10-0 (W-L-P) · 13 open · ROI -5.19% (-0.9u on 18u, ±50.5 points over 18 games) · CLV -0.01% ±2.91 over 15 games on 15 closes, beat the close 40% · EV listed +0.73%
-   every one (13 of 13) · 29 bets · 12-9-0 (W-L-P) · 8 open · ROI +21.85% (+4.6u on 21u, ±46.9 points over 18 games) · CLV +3.23% ±3.48 over 11 games on 12 closes, beat the close 58% · EV listed +1.60%
-   2 of 8 not agreeing · 29 bets · 5-11-0 (W-L-P) · 13 open · ROI -36.34% (-5.8u on 16u, ±46.4 points over 14 games) · CLV -0.43% ±2.53 over 8 games on 8 closes, beat the close 38% · EV listed +0.02%
-   19 of 20 not agreeing · 29 bets · 11-7-0 (W-L-P) · 11 open · ROI +16.17% (+2.9u on 18u, ±45.7 points over 18 games) · CLV -1.52% ±2.41 over 13 games on 13 closes, beat the close 23% · EV listed -1.56%
-   every one (12 of 12) · 29 bets · 9-9-0 (W-L-P) · 1 void · 10 open · ROI +7.33% (+1.3u on 18u, ±42.1 points over 15 games) · CLV -0.44% ±2.98 over 9 games on 10 closes, beat the close 60% · EV listed +1.23%
-   18 of 19 not agreeing · 29 bets · 10-5-0 (W-L-P) · 14 open · ROI +29.71% (+4.5u on 15u, ±51.2 points over 12 games) · CLV -0.00% ±3.50 over 8 games on 9 closes, beat the close 44% · EV listed -1.51%
-   8 of 13 not agreeing · 29 bets · 6-8-0 (W-L-P) · 15 open · ROI -7.26% (-1.0u on 14u, ±54.3 points over 13 games) · CLV +2.28% ±4.59 over 6 games on 6 closes, beat the close 83% · EV listed -1.38%
-   8 of 14 not agreeing · 28 bets · 5-12-0 (W-L-P) · 11 open · ROI -22.73% (-3.9u on 17u, ±62.3 points over 17 games) · CLV -3.19% ±4.07 over 8 games on 8 closes, beat the close 25% · EV listed -1.16%
-   16 of 17 not agreeing · 27 bets · 9-8-0 (W-L-P) · 10 open · ROI +4.29% (+0.7u on 17u, ±47.7 points over 16 games) · CLV -0.79% ±1.93 over 10 games on 11 closes, beat the close 36% · EV listed -1.45%
-   1 of 7 not agreeing · 26 bets · 6-9-0 (W-L-P) · 11 open · ROI -19.79% (-3.0u on 15u, ±55.4 points over 13 games) · CLV +3.55% ±4.37 over 6 games on 8 closes, beat the close 63% · EV listed +1.07%
-   2 of 9 not agreeing · 25 bets · 9-6-0 (W-L-P) · 10 open · ROI +27.87% (+4.2u on 15u, ±54.9 points over 15 games) · CLV +7.19% ±5.13 over 7 games on 7 closes, beat the close 86% · EV listed +0.01%
-   12 of 16 not agreeing · 25 bets · 12-7-0 (W-L-P) · 6 open · ROI +27.32% (+5.2u on 19u, ±49.7 points over 15 games) · CLV -0.49% ±2.59 over 12 games on 13 closes, beat the close 38% · EV listed -1.33%
-   1 of 10 not agreeing · 25 bets · 7-12-0 (W-L-P) · 6 open · ROI -24.53% (-4.7u on 19u, ±46.0 points over 19 games) · CLV +0.45% ±2.13 over 15 games on 15 closes, beat the close 40% · EV listed +0.03%
-   15 of 18 not agreeing · 25 bets · 7-9-0 (W-L-P) · 9 open · ROI -11.33% (-1.8u on 16u, ±56.6 points over 15 games) · CLV -3.14% ±2.10 over 11 games on 11 closes, beat the close 27% · EV listed -1.60%
-   5 of 12 not agreeing · 25 bets · 5-13-0 (W-L-P) · 7 open · ROI -43.84% (-7.9u on 18u, ±41.8 points over 16 games) · CLV -1.72% ±3.95 over 12 games on 13 closes, beat the close 38% · EV listed -0.57%
-   11 of 16 not agreeing · 25 bets · 4-8-0 (W-L-P) · 13 open · ROI -20.16% (-2.4u on 12u, ±61.5 points over 11 games) · CLV -0.65% ±3.95 over 8 games on 8 closes, beat the close 38% · EV listed -1.26%
-   1 of 11 not agreeing · 24 bets · 9-8-0 (W-L-P) · 7 open · ROI +13.83% (+2.4u on 17u, ±52.8 points over 17 games) · CLV +1.54% ±3.96 over 13 games on 13 closes, beat the close 62% · EV listed +0.65%
-   9 of 14 not agreeing · 24 bets · 9-5-0 (W-L-P) · 10 open · ROI +63.50% (+8.9u on 14u, ±73.7 points over 13 games) · CLV -3.60% ±4.58 over 7 games on 8 closes, beat the close 38% · EV listed -1.09%
-   13 of 16 not agreeing · 24 bets · 8-7-0 (W-L-P) · 9 open · ROI +14.92% (+2.2u on 15u, ±57.9 points over 14 games) · CLV -2.30% ±1.62 over 11 games on 12 closes, beat the close 25% · EV listed -1.38%
-   22 of 22 not agreeing · 24 bets · 6-9-0 (W-L-P) · 9 open · ROI -30.32% (-4.5u on 15u, ±45.4 points over 15 games) · CLV -1.79% ±2.35 over 14 games on 14 closes, beat the close 29% · EV listed -1.76%
-   16 of 18 not agreeing · 24 bets · 10-7-0 (W-L-P) · 7 open · ROI +27.79% (+4.7u on 17u, ±52.5 points over 16 games) · CLV +0.32% ±3.49 over 6 games on 6 closes, beat the close 50% · EV listed -1.59%
-   4 of 12 not agreeing · 24 bets · 8-10-0 (W-L-P) · 6 open · ROI +2.31% (+0.4u on 18u, ±61.3 points over 14 games) · CLV -1.13% ±3.50 over 10 games on 12 closes, beat the close 25% · EV listed -0.47%
-   10 of 15 not agreeing · 23 bets · 9-7-0 (W-L-P) · 7 open · ROI +43.32% (+6.9u on 16u, ±64.4 points over 14 games) · CLV -0.33% ±2.87 over 5 games on 5 closes, beat the close 40% · EV listed -1.32%
-   3 of 10 not agreeing · 22 bets · 5-8-0 (W-L-P) · 9 open · ROI -20.16% (-2.6u on 13u, ±57.3 points over 13 games) · CLV -3.46% ±3.53 over 6 games on 6 closes, beat the close 33% · EV listed -0.26%
-   6 of 13 not agreeing · 22 bets · 7-8-0 (W-L-P) · 7 open · ROI +18.72% (+2.8u on 15u, ±67.5 points over 14 games) · CLV -2.50% ±3.55 over 12 games on 13 closes, beat the close 38% · EV listed -0.83%
-   3 of 9 not agreeing · 21 bets · 7-9-0 (W-L-P) · 5 open · ROI +7.22% (+1.2u on 16u, ±64.5 points over 16 games) · CLV -0.58% ±3.55 over 8 games on 8 closes, beat the close 50% · EV listed -0.50%
-   24 of 24 not agreeing · 21 bets · 13-4-0 (W-L-P) · 4 open · ROI +25.11% (+4.3u on 17u, ±33.7 points over 16 games) · CLV -1.30% ±1.71 over 14 games on 15 closes, beat the close 33% · EV listed -1.67%
-   13 of 17 not agreeing · 20 bets · 5-7-0 (W-L-P) · 8 open · ROI -19.59% (-2.4u on 12u, ±56.6 points over 12 games) · CLV -3.50% ±3.37 over 9 games on 9 closes, beat the close 22% · EV listed -1.51%
-   12 of 17 not agreeing · 20 bets · 5-9-0 (W-L-P) · 6 open · ROI -32.10% (-4.5u on 14u, ±50.2 points over 14 games) · CLV +0.33% ±2.56 over 10 games on 10 closes, beat the close 50% · EV listed -1.61%
-   2 of 10 not agreeing · 20 bets · 10-3-0 (W-L-P) · 7 open · ROI +62.94% (+8.2u on 13u, ±51.5 points over 13 games) · CLV +0.67% ±4.80 over 8 games on 8 closes, beat the close 50% · EV listed -0.09%
-   23 of 23 not agreeing · 20 bets · 11-5-0 (W-L-P) · 4 open · ROI +14.02% (+2.2u on 16u, ±43.1 points over 14 games) · CLV -5.05% ±3.30 over 11 games on 12 closes, beat the close 8% · EV listed -1.78%
-   5 of 13 not agreeing · 19 bets · 4-7-0 (W-L-P) · 8 open · ROI -26.71% (-2.9u on 11u, ±60.2 points over 11 games) · CLV +1.91% ±8.01 over 5 games on 5 closes, beat the close 40% · EV listed -0.57%
-   17 of 19 not agreeing · 19 bets · 3-6-0 (W-L-P) · 10 open · ROI -37.19% (-3.3u on 9u, ±65.7 points over 8 games) · CLV -1.91% ±3.79 over 7 games on 8 closes, beat the close 63% · EV listed -1.56%
-   7 of 13 not agreeing · 19 bets · 3-5-0 (W-L-P) · 11 open · ROI -4.26% (-0.3u on 8u, ±96.6 points over 8 games) · CLV +4.43% ±4.43 over 5 games on 5 closes, beat the close 80% · EV listed -0.96%
-   21 of 21 not agreeing · 19 bets · 7-2-0 (W-L-P) · 10 open · ROI +39.79% (+3.6u on 9u, ±55.8 points over 9 games) · CLV +1.15% ±3.65 over 8 games on 8 closes, beat the close 50% · EV listed -1.66%
-   11 of 17 not agreeing · 18 bets · 7-5-0 (W-L-P) · 6 open · ROI +47.99% (+5.8u on 12u, ±83.8 points over 9 games) · CLV -1.62% on 3 closes, beat the close 0% · EV listed -1.28%
-   18 of 20 not agreeing · 18 bets · 4-5-0 (W-L-P) · 9 open · ROI -11.26% (-1.0u on 9u, ±69.5 points over 9 games) · CLV -1.74% ±2.33 over 9 games on 9 closes, beat the close 44% · EV listed -1.49%
-   19 of 21 not agreeing · 18 bets · 7-6-0 (W-L-P) · 5 open · ROI -3.09% (-0.4u on 13u, ±46.8 points over 12 games) · CLV -2.07% ±3.39 over 7 games on 8 closes, beat the close 13% · EV listed -1.47%
-   15 of 19 not agreeing · 17 bets · 5-7-0 (W-L-P) · 5 open · ROI -10.28% (-1.2u on 12u, ±66.8 points over 11 games) · CLV -1.40% ±0.80 over 8 games on 9 closes, beat the close 22% · EV listed -1.52%
-   3 of 12 not agreeing · 16 bets · 6-5-0 (W-L-P) · 5 open · ROI +23.36% (+2.6u on 11u, ±71.0 points over 11 games) · CLV +1.13% ±3.13 over 8 games on 8 closes, beat the close 63% · EV listed -0.22%
-   9 of 15 not agreeing · 16 bets · 3-5-0 (W-L-P) · 8 open · ROI +14.90% (+1.2u on 8u, ±123.0 points over 8 games) · CLV +2.27% on 3 closes, beat the close 100% · EV listed -1.32%
-   14 of 18 not agreeing · 16 bets · 2-5-0 (W-L-P) · 9 open · ROI -50.14% (-3.5u on 7u, ±64.3 points over 7 games) · CLV -2.36% on 4 closes, beat the close 25% · EV listed -1.40%
-   6 of 14 not agreeing · 16 bets · 4-4-0 (W-L-P) · 8 open · ROI +10.52% (+0.8u on 8u, ±83.7 points over 8 games) · CLV -2.87% ±5.36 over 5 games on 5 closes, beat the close 40% · EV listed -0.51%
-   4 of 13 not agreeing · 16 bets · 3-5-0 (W-L-P) · 8 open · ROI -17.95% (-1.4u on 8u, ±78.9 points over 8 games) · CLV -2.45% ±2.44 over 6 games on 6 closes, beat the close 17% · EV listed -0.69%
-   1 of 14 not agreeing · 15 bets · 4-4-0 (W-L-P) · 1 void · 6 open · ROI +2.36% (+0.2u on 8u, ±75.5 points over 6 games) · CLV +3.65% on 6 closes, beat the close 83% · EV listed -0.08%
-   13 of 18 not agreeing · 15 bets · 4-6-0 (W-L-P) · 5 open · ROI -27.14% (-2.7u on 10u, ±52.1 points over 9 games) · CLV +0.80% ±5.09 over 6 games on 7 closes, beat the close 43% · EV listed -1.34%
-   2 of 11 not agreeing · 15 bets · 3-8-0 (W-L-P) · 4 open · ROI -44.28% (-4.9u on 11u, ±56.9 points over 11 games) · CLV -1.42% ±3.24 over 7 games on 7 closes, beat the close 43% · EV listed +1.01%
-   26 of 26 not agreeing · 15 bets · 2-8-0 (W-L-P) · 5 open · ROI -72.41% (-7.2u on 10u, ±36.0 points over 10 games) · CLV -0.35% ±2.02 over 8 games on 8 closes, beat the close 25% · EV listed -1.73%
-   every one (15 of 15) · 14 bets · 3-8-0 (W-L-P) · 3 open · ROI -46.37% (-5.1u on 11u, ±54.5 points over 11 games) · CLV -1.80% ±3.39 over 8 games on 8 closes, beat the close 50% · EV listed +0.40%
-   17 of 21 not agreeing · 14 bets · 6-1-0 (W-L-P) · 7 open · ROI +78.68% (+5.5u on 7u, ±60.0 points over 7 games) · CLV -4.68% ±2.76 over 6 games on 6 closes, beat the close 17% · EV listed -1.36%
-   19 of 22 not agreeing · 14 bets · 6-4-0 (W-L-P) · 4 open · ROI +11.84% (+1.2u on 10u, ±60.9 points over 10 games) · CLV -0.78% ±3.78 over 6 games on 6 closes, beat the close 33% · EV listed -1.30%
-   10 of 16 not agreeing · 14 bets · 2-4-0 (W-L-P) · 8 open · ROI -12.73% (-0.8u on 6u, ±111.8 points over 6 games) · CLV -0.49% on 3 closes, beat the close 67% · EV listed -1.36%
-   18 of 21 not agreeing · 14 bets · 5-6-0 (W-L-P) · 3 open · ROI +1.35% (+0.1u on 11u, ±73.5 points over 11 games) · CLV -0.43% ±3.50 over 9 games on 9 closes, beat the close 56% · EV listed -1.53%
-   16 of 20 not agreeing · 14 bets · 6-7-0 (W-L-P) · 1 open · ROI -6.29% (-0.8u on 13u, ±57.9 points over 13 games) · CLV -2.20% ±3.30 over 9 games on 9 closes, beat the close 22% · EV listed -1.17%
-   every one (14 of 14) · 13 bets · 5-3-0 (W-L-P) · 5 open · ROI +26.02% (+2.1u on 8u, ±72.9 points over 8 games) · CLV +3.59% ±2.56 over 8 games on 8 closes, beat the close 88% · EV listed +0.45%
-   21 of 22 not agreeing · 13 bets · 4-4-0 (W-L-P) · 5 open · ROI +0.24% (+0.0u on 8u, ±74.8 points over 8 games) · CLV -1.32% ±3.66 over 7 games on 7 closes, beat the close 43% · EV listed -1.70%
-   1 of 12 not agreeing · 12 bets · 2-5-0 (W-L-P) · 5 open · ROI -32.35% (-2.3u on 7u, ±73.7 points over 6 games) · CLV -3.40% ±2.17 over 5 games on 5 closes, beat the close 0% · EV listed +0.93%
-   20 of 21 not agreeing · 12 bets · 2-7-0 (W-L-P) · 3 open · ROI -63.65% (-5.7u on 9u, ±47.2 points over 9 games) · CLV -4.33% ±4.25 over 6 games on 6 closes, beat the close 33% · EV listed -1.61%
-   17 of 20 not agreeing · 12 bets · 2-5-0 (W-L-P) · 5 open · ROI -44.22% (-3.1u on 7u, ±70.6 points over 7 games) · CLV -3.72% ±3.29 over 7 games on 7 closes, beat the close 29% · EV listed -1.61%
-   16 of 19 not agreeing · 12 bets · 4-4-0 (W-L-P) · 4 open · ROI -15.97% (-1.3u on 8u, ±63.0 points over 8 games) · CLV -0.04% ±2.92 over 6 games on 6 closes, beat the close 50% · EV listed -1.64%
-   22 of 23 not agreeing · 11 bets · 3-3-0 (W-L-P) · 5 open · ROI -3.20% (-0.2u on 6u, ±84.9 points over 6 games) · CLV -1.17% ±3.24 over 7 games on 7 closes, beat the close 43% · EV listed -1.62%
-   15 of 20 not agreeing · 11 bets · 4-4-0 (W-L-P) · 3 open · ROI -0.41% (-0.0u on 8u, ±64.5 points over 7 games) · CLV +0.88% ±3.29 over 5 games on 6 closes, beat the close 50% · EV listed -1.19%
-   every one (16 of 16) · 11 bets · 2-4-0 (W-L-P) · 5 open · ROI -34.78% (-2.1u on 6u, ±81.3 points over 6 games) · CLV +2.54% ±2.89 over 6 games on 6 closes, beat the close 83% · EV listed +0.52%
-   19 of 23 not agreeing · 11 bets · 2-7-0 (W-L-P) · 2 open · ROI -55.33% (-5.0u on 9u, ±57.9 points over 9 games) · CLV -1.29% ±3.82 over 6 games on 6 closes, beat the close 33% · EV listed -1.59%
-   3 of 13 not agreeing · 11 bets · 4-4-0 (W-L-P) · 3 open · ROI +4.73% (+0.4u on 8u, ±77.8 points over 8 games) · CLV -2.73% ±3.28 over 6 games on 6 closes, beat the close 17% · EV listed +0.61%
-   14 of 20 not agreeing · 11 bets · 3-2-0 (W-L-P) · 6 open · ROI +20.16% (+1.0u on 5u, ±96.3 points over 5 games) · CLV -0.37% ±5.75 over 5 games on 5 closes, beat the close 60% · EV listed -1.50%
-   14 of 19 not agreeing · 11 bets · 3-7-0 (W-L-P) · 1 open · ROI -43.81% (-4.4u on 10u, ±56.2 points over 10 games) · CLV -0.99% ±4.37 over 7 games on 7 closes, beat the close 57% · EV listed -1.22%
-   7 of 14 not agreeing · 11 bets · 5-5-0 (W-L-P) · 1 open · ROI +20.52% (+2.1u on 10u, ±68.2 points over 9 games) · CLV +0.96% ±4.64 over 8 games on 8 closes, beat the close 38% · EV listed -0.96%
-   23 of 24 not agreeing · 10 bets · 4-3-0 (W-L-P) · 3 open · ROI +16.71% (+1.2u on 7u, ±81.2 points over 7 games) · CLV +1.03% ±5.82 over 7 games on 7 closes, beat the close 43% · EV listed -1.50%
-   25 of 27 not agreeing · 10 bets · 5-1-0 (W-L-P) · 4 open · ROI +55.52% (+3.3u on 6u, ±76.5 points over 6 games) · CLV +0.60% ±3.20 over 8 games on 8 closes, beat the close 63% · EV listed -1.46%
-   24 of 26 not agreeing · 10 bets · 6-1-0 (W-L-P) · 3 open · ROI +29.70% (+2.1u on 7u, ±49.4 points over 7 games) · CLV -1.76% ±1.34 over 6 games on 6 closes, beat the close 17% · EV listed -1.45%
-   20 of 23 not agreeing · 10 bets · 6-2-0 (W-L-P) · 2 open · ROI +51.16% (+4.1u on 8u, ±81.1 points over 8 games) · CLV -1.63% ±2.84 over 6 games on 6 closes, beat the close 33% · EV listed -1.10%
-   25 of 25 not agreeing · 10 bets · 7-2-0 (W-L-P) · 1 open · ROI +31.38% (+2.8u on 9u, ±54.1 points over 9 games) · CLV -1.09% ±3.03 over 9 games on 9 closes, beat the close 44% · EV listed -1.77%
-   8 of 17 not agreeing · 10 bets · 3-4-0 (W-L-P) · 3 open · ROI -5.75% (-0.4u on 7u, ±87.1 points over 7 games) · CLV +2.47% on 3 closes, beat the close 67% · EV listed -1.29%
-   8 of 16 not agreeing · 10 bets · 3-5-0 (W-L-P) · 2 open · ROI -8.66% (-0.7u on 8u, ±86.3 points over 7 games) · CLV -1.33% on 4 closes, beat the close 25% · EV listed -0.89%
-   23 of 25 not agreeing · 10 bets · 4-5-0 (W-L-P) · 1 open · ROI -36.69% (-3.3u on 9u, ±49.2 points over 9 games) · CLV -1.86% ±1.45 over 9 games on 9 closes, beat the close 11% · EV listed -1.43%
-   9 of 16 not agreeing · 9 bets · 2-3-0 (W-L-P) · 4 open · ROI +11.84% (+0.6u on 5u, ±147.3 points over 5 games) · CLV -0.49% on 2 closes, beat the close 50% · EV listed -0.64%
-   16 of 24 not agreeing · 9 bets · 2-4-0 (W-L-P) · 3 open · ROI -30.18% (-1.8u on 6u, ±86.9 points over 6 games) · CLV -3.90% ±1.96 over 6 games on 6 closes, beat the close 0% · EV listed -1.38%
-   1 of 13 not agreeing · 9 bets · 2-4-0 (W-L-P) · 3 open · ROI -25.51% (-1.5u on 6u, ±92.3 points over 6 games) · CLV +1.59% on 2 closes, beat the close 100% · EV listed +0.09%
-   8 of 15 not agreeing · 9 bets · 3-3-0 (W-L-P) · 3 open · ROI +24.70% (+1.5u on 6u, ±111.2 points over 6 games) · CLV -5.12% on 2 closes, beat the close 0% · EV listed -1.27%
-   20 of 24 not agreeing · 9 bets · 1-5-0 (W-L-P) · 3 open · ROI -67.32% (-4.0u on 6u, ±64.1 points over 6 games) · CLV -0.29% ±2.65 over 6 games on 6 closes, beat the close 50% · EV listed -1.19%
-   25 of 26 not agreeing · 9 bets · 8-0-0 (W-L-P) · 1 open · ROI +64.75% (+5.2u on 8u, ±24.2 points over 8 games) · CLV +0.36% ±2.28 over 8 games on 8 closes, beat the close 50% · EV listed -1.66%
-   24 of 25 not agreeing · 9 bets · 5-3-0 (W-L-P) · 1 open · ROI -1.39% (-0.1u on 8u, ±59.9 points over 8 games) · CLV -0.73% ±3.30 over 8 games on 8 closes, beat the close 25% · EV listed -1.66%
-   2 of 13 not agreeing · 8 bets · 5-2-0 (W-L-P) · 1 open · ROI +50.15% (+3.5u on 7u, ±76.9 points over 7 games) · CLV -0.52% ±7.15 over 5 games on 5 closes, beat the close 20% · EV listed -0.00%
-   13 of 19 not agreeing · 8 bets · 3-3-0 (W-L-P) · 2 open · ROI +9.49% (+0.6u on 6u, ±96.3 points over 6 games) · CLV +1.32% on 4 closes, beat the close 75% · EV listed -1.42%
-   12 of 18 not agreeing · 8 bets · 2-2-0 (W-L-P) · 4 open · ROI +60.50% (+2.4u on 4u) · CLV +3.05% on 1 closes, beat the close 100% · EV listed -1.13%
-   15 of 21 not agreeing · 8 bets · 4-2-0 (W-L-P) · 2 open · ROI +64.27% (+3.9u on 6u, ±120.6 points over 6 games) · CLV -1.69% on 3 closes, beat the close 33% · EV listed -1.22%
-   11 of 19 not agreeing · 8 bets · 1-2-0 (W-L-P) · 5 open · ROI -32.66% (-1.0u on 3u) · CLV -0.31% on 3 closes, beat the close 33% · EV listed -1.11%
-   7 of 16 not agreeing · 8 bets · 1-3-0 (W-L-P) · 4 open · ROI -47.92% (-1.9u on 4u) · CLV +0.32% on 3 closes, beat the close 33% · EV listed -0.91%
-   6 of 16 not agreeing · 8 bets · 1-1-0 (W-L-P) · 6 open · ROI +2.04% (+0.0u on 2u) · CLV -1.72% on 2 closes, beat the close 0% · EV listed -0.80%
-   21 of 24 not agreeing · 8 bets · 3-4-0 (W-L-P) · 1 open · ROI -23.81% (-1.7u on 7u, ±72.3 points over 7 games) · CLV +3.46% ±3.56 over 6 games on 6 closes, beat the close 83% · EV listed -1.48%
-   23 of 26 not agreeing · 8 bets · 4-4-0 (W-L-P) · ROI -16.07% (-1.3u on 8u, ±63.5 points over 8 games) · CLV -0.41% ±2.33 over 7 games on 7 closes, beat the close 43% · EV listed -1.61%
-   13 of 21 not agreeing · 8 bets · 4-3-0 (W-L-P) · 1 open · ROI +10.19% (+0.7u on 7u, ±76.8 points over 7 games) · CLV -6.67% ±4.29 over 6 games on 6 closes, beat the close 17% · EV listed -0.75%
-   21 of 23 not agreeing · 8 bets · 2-1-0 (W-L-P) · 5 open · ROI +40.91% (+1.2u on 3u) · CLV -1.53% on 4 closes, beat the close 0% · EV listed -1.56%
-   2 of 15 not agreeing · 7 bets · 3-2-0 (W-L-P) · 2 open · ROI +29.66% (+1.5u on 5u, ±103.9 points over 5 games) · CLV +7.80% on 3 closes, beat the close 67% · EV listed -0.74%
-   1 of 16 not agreeing · 7 bets · 2-2-0 (W-L-P) · 3 open · ROI +2.59% (+0.1u on 4u) · CLV +0.72% on 3 closes, beat the close 67% · EV listed +1.31%
-   7 of 17 not agreeing · 7 bets · 0-2-0 (W-L-P) · 5 open · ROI -100.00% (-2.0u on 2u) · CLV -0.35% on 1 closes, beat the close 0% · EV listed -0.65%
-   19 of 24 not agreeing · 7 bets · 4-0-0 (W-L-P) · 3 open · ROI +121.43% (+4.9u on 4u) · CLV -9.50% on 4 closes, beat the close 25% · EV listed -0.86%
-   3 of 15 not agreeing · 7 bets · 3-3-0 (W-L-P) · 1 open · ROI +3.49% (+0.2u on 6u, ±92.9 points over 6 games) · CLV -1.94% on 4 closes, beat the close 25% · EV listed -0.49%
-   5 of 17 not agreeing · 7 bets · 4-1-0 (W-L-P) · 2 open · ROI +66.74% (+3.3u on 5u, ±82.3 points over 5 games) · CLV -1.50% on 4 closes, beat the close 50% · EV listed -0.89%
-   11 of 18 not agreeing · 7 bets · 4-1-0 (W-L-P) · 2 open · ROI +56.81% (+2.8u on 5u, ±77.7 points over 5 games) · CLV +0.37% on 4 closes, beat the close 75% · EV listed -1.10%
-   10 of 18 not agreeing · 7 bets · 4-0-0 (W-L-P) · 3 open · ROI +96.23% (+3.8u on 4u) · CLV -0.98% on 2 closes, beat the close 50% · EV listed -1.24%
-   9 of 19 not agreeing · 7 bets · 0-3-0 (W-L-P) · 4 open · ROI -100.00% (-3.0u on 3u) · CLV -4.81% on 2 closes, beat the close 0% · EV listed -1.25%
-   4 of 14 not agreeing · 6 bets · 1-1-0 (W-L-P) · 4 open · ROI +4.17% (+0.1u on 2u) · CLV +0.11% on 2 closes, beat the close 50% · EV listed -0.72%
-   2 of 14 not agreeing · 6 bets · 3-1-0 (W-L-P) · 2 open · ROI +54.96% (+2.2u on 4u) · CLV -2.87% on 4 closes, beat the close 25% · EV listed +3.28%
-   22 of 26 not agreeing · 6 bets · 2-1-0 (W-L-P) · 3 open · ROI +34.09% (+1.0u on 3u) · CLV -0.57% on 3 closes, beat the close 33% · EV listed -1.65%
-   every one (18 of 18) · 6 bets · 2-3-0 (W-L-P) · 1 open · ROI -22.40% (-1.1u on 5u, ±93.4 points over 5 games) · CLV +0.28% ±2.39 over 5 games on 5 closes, beat the close 40% · EV listed +2.09%
-   23 of 27 not agreeing · 6 bets · 0-3-0 (W-L-P) · 3 open · ROI -100.00% (-3.0u on 3u) · CLV -0.01% on 4 closes, beat the close 50% · EV listed -0.93%
-   20 of 27 not agreeing · 6 bets · 1-2-0 (W-L-P) · 3 open · ROI -8.68% (-0.3u on 3u) · CLV -1.11% on 3 closes, beat the close 33% · EV listed -1.23%
-   7 of 15 not agreeing · 6 bets · 1-3-0 (W-L-P) · 2 open · ROI -50.98% (-2.0u on 4u) · CLV -4.24% on 1 closes, beat the close 0% · EV listed -0.76%
-   20 of 26 not agreeing · 6 bets · 0-3-0 (W-L-P) · 3 open · ROI -100.00% (-3.0u on 3u) · CLV -3.30% on 2 closes, beat the close 50% · EV listed -1.49%
-   14 of 21 not agreeing · 6 bets · 2-1-0 (W-L-P) · 3 open · ROI +51.59% (+1.5u on 3u) · no close yet · EV listed -1.14%
-   10 of 17 not agreeing · 6 bets · 4-1-0 (W-L-P) · 1 open · ROI +72.59% (+3.6u on 5u, ±86.5 points over 5 games) · CLV -3.23% on 3 closes, beat the close 0% · EV listed -1.28%
-   7 of 18 not agreeing · 6 bets · 2-3-0 (W-L-P) · 1 open · ROI -16.83% (-0.8u on 5u, ±100.1 points over 5 games) · CLV -1.15% on 3 closes, beat the close 67% · EV listed -0.65%
-   25 of 28 not agreeing · 6 bets · 2-4-0 (W-L-P) · ROI -35.51% (-2.1u on 6u, ±65.9 points over 5 games) · CLV -2.02% ±4.40 over 5 games on 6 closes, beat the close 50% · EV listed -1.50%
-   13 of 20 not agreeing · 6 bets · 1-1-0 (W-L-P) · 4 open · ROI -3.85% (-0.1u on 2u) · CLV +4.26% on 2 closes, beat the close 100% · EV listed -0.83%
-   24 of 27 not agreeing · 6 bets · 4-1-0 (W-L-P) · 1 open · ROI +45.72% (+2.3u on 5u, ±80.1 points over 5 games) · CLV -3.62% ±4.36 over 6 games on 6 closes, beat the close 17% · EV listed -1.54%
-   22 of 25 not agreeing · 6 bets · 4-2-0 (W-L-P) · ROI +32.50% (+1.9u on 6u, ±82.6 points over 6 games) · CLV +0.06% on 4 closes, beat the close 50% · EV listed -1.54%
-   15 of 22 not agreeing · 6 bets · 2-4-0 (W-L-P) · ROI -37.56% (-2.3u on 6u, ±77.5 points over 6 games) · CLV -1.35% ±6.41 over 6 games on 6 closes, beat the close 50% · EV listed -1.44%
-   5 of 15 not agreeing · 5 bets · 3-0-0 (W-L-P) · 2 open · ROI +103.26% (+3.1u on 3u) · CLV -1.42% on 2 closes, beat the close 50% · EV listed -0.34%
-   5 of 14 not agreeing · 5 bets · 0-4-0 (W-L-P) · 1 open · ROI -100.00% (-4.0u on 4u) · CLV -0.77% on 2 closes, beat the close 50% · EV listed -0.03%
-   1 of 15 not agreeing · 5 bets · 2-1-0 (W-L-P) · 2 open · ROI +34.68% (+1.0u on 3u) · CLV -1.64% on 3 closes, beat the close 33% · EV listed +0.66%
-   19 of 25 not agreeing · 5 bets · 2-1-0 (W-L-P) · 2 open · ROI +48.31% (+1.4u on 3u) · CLV +2.48% on 3 closes, beat the close 100% · EV listed -1.20%
-   20 of 22 not agreeing · 5 bets · 2-1-0 (W-L-P) · 2 open · ROI +28.83% (+0.9u on 3u) · CLV +6.12% on 3 closes, beat the close 67% · EV listed -1.43%
-   30 of 30 not agreeing · 5 bets · 4-0-0 (W-L-P) · 1 open · ROI +67.01% (+2.7u on 4u) · CLV +0.83% on 4 closes, beat the close 75% · EV listed -1.62%
-   9 of 17 not agreeing · 5 bets · 1-0-0 (W-L-P) · 4 open · ROI +102.02% (+1.0u on 1u) · CLV +0.53% on 1 closes, beat the close 100% · EV listed -0.36%
-   24 of 28 not agreeing · 5 bets · 0-4-0 (W-L-P) · 1 open · ROI -100.00% (-4.0u on 4u) · CLV -4.54% on 3 closes, beat the close 0% · EV listed -1.50%
-   27 of 27 not agreeing · 5 bets · 1-3-0 (W-L-P) · 1 open · ROI -52.38% (-2.1u on 4u) · CLV -3.61% ±3.04 over 5 games on 5 closes, beat the close 20% · EV listed -1.66%
-   17 of 22 not agreeing · 5 bets · 2-1-0 (W-L-P) · 2 open · ROI +15.33% (+0.5u on 3u) · CLV -1.91% on 1 closes, beat the close 0% · EV listed -1.47%
-   9 of 18 not agreeing · 5 bets · 2-3-0 (W-L-P) · ROI -9.37% (-0.5u on 5u, ±109.0 points over 5 games) · CLV +2.03% ±3.81 over 5 games on 5 closes, beat the close 60% · EV listed -0.74%
-   2 of 12 not agreeing · 5 bets · 1-1-0 (W-L-P) · 3 open · ROI +7.53% (+0.2u on 2u) · CLV +2.86% on 1 closes, beat the close 100% · EV listed +0.74%
-   7 of 20 not agreeing · 5 bets · 3-1-0 (W-L-P) · 1 open · ROI +53.64% (+2.1u on 4u) · CLV +3.83% on 3 closes, beat the close 67% · EV listed -0.71%
-   12 of 19 not agreeing · 5 bets · 3-0-0 (W-L-P) · 2 open · ROI +97.48% (+2.9u on 3u) · CLV +0.57% on 2 closes, beat the close 50% · EV listed -0.90%
-   2 of 19 not agreeing · 5 bets · 3-2-0 (W-L-P) · ROI +23.46% (+1.2u on 5u, ±99.0 points over 5 games) · CLV +2.00% on 2 closes, beat the close 50% · EV listed +2.53%
-   9 of 21 not agreeing · 5 bets · 2-2-0 (W-L-P) · 1 open · ROI +118.75% (+4.8u on 4u) · no close yet · EV listed -0.74%
-   20 of 25 not agreeing · 5 bets · 3-1-0 (W-L-P) · 1 open · ROI +74.34% (+3.0u on 4u) · CLV -3.47% on 3 closes, beat the close 0% · EV listed -1.33%
-   16 of 22 not agreeing · 5 bets · 2-2-0 (W-L-P) · 1 open · ROI +6.98% (+0.3u on 4u) · CLV +0.10% on 4 closes, beat the close 50% · EV listed -1.44%
-   16 of 21 not agreeing · 4 bets · 1-0-0 (W-L-P) · 3 open · ROI +138.10% (+1.4u on 1u) · no close yet · EV listed -1.37%
-   6 of 25 not agreeing · 4 bets · 0-2-0 (W-L-P) · 2 open · ROI -100.00% (-2.0u on 2u) · CLV -4.78% on 2 closes, beat the close 0% · EV listed +0.21%
-   27 of 31 not agreeing · 4 bets · 0-3-0 (W-L-P) · 1 open · ROI -100.00% (-3.0u on 3u) · CLV +4.07% on 3 closes, beat the close 67% · EV listed -1.40%
-   4 of 19 not agreeing · 4 bets · 1-2-0 (W-L-P) · 1 open · ROI -28.32% (-0.8u on 3u) · CLV +1.07% on 3 closes, beat the close 67% · EV listed +0.02%
-   8 of 18 not agreeing · 4 bets · 1-1-0 (W-L-P) · 2 open · ROI -12.28% (-0.2u on 2u) · no close yet · EV listed -0.40%
-   22 of 24 not agreeing · 4 bets · 0-2-0 (W-L-P) · 2 open · ROI -100.00% (-2.0u on 2u) · CLV -4.48% on 2 closes, beat the close 0% · EV listed -1.44%
-   every one (22 of 22) · 4 bets · 2-1-0 (W-L-P) · 1 open · ROI +38.89% (+1.2u on 3u) · CLV -0.02% on 3 closes, beat the close 67% · EV listed -0.04%
-   3 of 14 not agreeing · 4 bets · 1-3-0 (W-L-P) · ROI -51.92% (-2.1u on 4u) · CLV +0.09% on 2 closes, beat the close 50% · EV listed +0.37%
-   29 of 29 not agreeing · 4 bets · 3-1-0 (W-L-P) · ROI +41.48% (+1.7u on 4u) · CLV -0.59% on 4 closes, beat the close 50% · EV listed -1.55%
-   15 of 23 not agreeing · 4 bets · 0-3-0 (W-L-P) · 1 open · ROI -100.00% (-3.0u on 3u) · CLV -2.20% on 2 closes, beat the close 0% · EV listed -0.82%
-   2 of 17 not agreeing · 4 bets · 2-2-0 (W-L-P) · ROI +10.37% (+0.4u on 4u) · CLV -4.57% on 3 closes, beat the close 33% · EV listed +0.85%
-   5 of 16 not agreeing · 4 bets · 1-2-0 (W-L-P) · 1 open · ROI -25.09% (-0.8u on 3u) · CLV +0.07% on 1 closes, beat the close 100% · EV listed -0.50%
-   4 of 15 not agreeing · 4 bets · 2-0-0 (W-L-P) · 2 open · ROI +105.18% (+2.1u on 2u) · no close yet · EV listed +0.11%
-   2 of 23 not agreeing · 4 bets · 2-2-0 (W-L-P) · ROI +3.14% (+0.1u on 4u) · CLV +2.90% on 3 closes, beat the close 100% · EV listed +1.10%
-   26 of 27 not agreeing · 4 bets · 2-1-0 (W-L-P) · 1 open · ROI +21.53% (+0.6u on 3u) · CLV +7.40% on 2 closes, beat the close 100% · EV listed -1.74%
-   18 of 26 not agreeing · 4 bets · 1-3-0 (W-L-P) · ROI -62.69% (-2.5u on 4u) · CLV -0.84% on 3 closes, beat the close 67% · EV listed -0.93%
-   14 of 22 not agreeing · 4 bets · 2-1-0 (W-L-P) · 1 open · ROI +51.48% (+1.5u on 3u) · CLV -1.76% on 2 closes, beat the close 0% · EV listed -1.36%
-   3 of 21 not agreeing · 4 bets · 0-4-0 (W-L-P) · ROI -100.00% (-4.0u on 4u) · CLV -2.65% on 2 closes, beat the close 0% · EV listed +1.97%
-   18 of 23 not agreeing · 4 bets · 1-2-0 (W-L-P) · 1 open · ROI -31.97% (-1.0u on 3u) · CLV -2.25% on 3 closes, beat the close 0% · EV listed -1.52%
-   17 of 23 not agreeing · 4 bets · 0-2-0 (W-L-P) · 2 open · ROI -100.00% (-2.0u on 2u) · CLV -8.33% on 1 closes, beat the close 0% · EV listed -1.71%
-   21 of 27 not agreeing · 4 bets · 1-3-0 (W-L-P) · ROI -50.00% (-2.0u on 4u) · CLV -4.19% on 4 closes, beat the close 0% · EV listed -1.37%
-   18 of 22 not agreeing · 4 bets · 1-3-0 (W-L-P) · ROI -48.98% (-2.0u on 4u) · CLV -0.68% on 4 closes, beat the close 0% · EV listed -1.05%
-   12 of 20 not agreeing · 4 bets · 1-2-0 (W-L-P) · 1 open · ROI +28.21% (+0.8u on 3u) · CLV -2.30% on 2 closes, beat the close 50% · EV listed -1.04%
-   6 of 15 not agreeing · 4 bets · 1-1-0 (W-L-P) · 2 open · ROI +19.05% (+0.4u on 2u) · CLV +4.03% on 2 closes, beat the close 100% · EV listed -0.26%
-   3 of 18 not agreeing · 4 bets · 1-3-0 (W-L-P) · ROI -49.49% (-2.0u on 4u) · CLV -0.87% on 3 closes, beat the close 33% · EV listed +0.99%
-   14 of 25 not agreeing · 4 bets · 1-3-0 (W-L-P) · ROI -45.05% (-1.8u on 4u) · CLV +5.58% on 4 closes, beat the close 50% · EV listed -0.11%
-   4 of 16 not agreeing · 4 bets · 2-1-0 (W-L-P) · 1 open · ROI +36.76% (+1.1u on 3u) · CLV +1.20% on 3 closes, beat the close 33% · EV listed -0.05%
-   8 of 19 not agreeing · 3 bets · 0-2-0 (W-L-P) · 1 open · ROI -100.00% (-2.0u on 2u) · CLV +3.27% on 3 closes, beat the close 33% · EV listed -0.90%
-   1 of 18 not agreeing · 3 bets · 0-1-0 (W-L-P) · 2 open · ROI -100.00% (-1.0u on 1u) · CLV +1.88% on 1 closes, beat the close 100% · EV listed -0.54%
-   22 of 27 not agreeing · 3 bets · 0-2-0 (W-L-P) · 1 open · ROI -100.00% (-2.0u on 2u) · CLV -4.69% on 2 closes, beat the close 0% · EV listed -1.45%
-   20 of 29 not agreeing · 3 bets · 0-2-0 (W-L-P) · 1 open · ROI -100.00% (-2.0u on 2u) · CLV -2.59% on 2 closes, beat the close 0% · EV listed -0.82%
-   2 of 16 not agreeing · 3 bets · 0-2-0 (W-L-P) · 1 open · ROI -100.00% (-2.0u on 2u) · CLV +6.20% on 2 closes, beat the close 50% · EV listed +0.64%
-   28 of 28 not agreeing · 3 bets · 1-0-0 (W-L-P) · 2 open · ROI +17.65% (+0.2u on 1u) · CLV +1.02% on 1 closes, beat the close 100% · EV listed -1.67%
-   5 of 21 not agreeing · 3 bets · 0-1-0 (W-L-P) · 2 open · ROI -100.00% (-1.0u on 1u) · CLV -0.00% on 1 closes, beat the close 0% · EV listed -0.02%
-   4 of 21 not agreeing · 3 bets · 1-1-0 (W-L-P) · 1 open · ROI -9.91% (-0.2u on 2u) · CLV -4.31% on 1 closes, beat the close 0% · EV listed +1.11%
-   12 of 23 not agreeing · 3 bets · 1-0-0 (W-L-P) · 2 open · ROI +104.08% (+1.0u on 1u) · CLV +6.94% on 1 closes, beat the close 100% · EV listed -0.80%
-   2 of 21 not agreeing · 3 bets · 2-0-0 (W-L-P) · 1 open · ROI +124.62% (+2.5u on 2u) · CLV -0.61% on 2 closes, beat the close 50% · EV listed +0.86%
-   22 of 28 not agreeing · 3 bets · 2-1-0 (W-L-P) · ROI +35.60% (+1.1u on 3u) · CLV +1.05% on 3 closes, beat the close 67% · EV listed -1.23%
-   10 of 20 not agreeing · 3 bets · 0-3-0 (W-L-P) · ROI -100.00% (-3.0u on 3u) · CLV +1.67% on 3 closes, beat the close 33% · EV listed -0.32%
-   21 of 26 not agreeing · 3 bets · 1-0-0 (W-L-P) · 2 open · ROI +222.58% (+2.2u on 1u) · CLV -1.86% on 2 closes, beat the close 0% · EV listed -1.26%
-   4 of 20 not agreeing · 3 bets · 2-1-0 (W-L-P) · ROI +29.19% (+0.9u on 3u) · CLV -6.32% on 1 closes, beat the close 0% · EV listed +1.74%
-   3 of 16 not agreeing · 3 bets · 0-3-0 (W-L-P) · ROI -100.00% (-3.0u on 3u) · CLV +0.64% on 3 closes, beat the close 67% · EV listed -0.03%
-   28 of 30 not agreeing · 3 bets · 1-2-0 (W-L-P) · ROI -43.50% (-1.3u on 3u) · CLV -10.36% on 3 closes, beat the close 0% · EV listed -1.27%
-   31 of 31 not agreeing · 3 bets · 2-1-0 (W-L-P) · ROI -13.11% (-0.4u on 3u) · CLV -2.19% on 2 closes, beat the close 0% · EV listed -1.43%
-   29 of 31 not agreeing · 3 bets · 3-0-0 (W-L-P) · ROI +116.54% (+3.5u on 3u) · CLV -2.06% on 3 closes, beat the close 33% · EV listed -1.29%
-   6 of 21 not agreeing · 3 bets · 1-2-0 (W-L-P) · ROI -31.97% (-1.0u on 3u) · CLV -1.42% on 3 closes, beat the close 33% · EV listed +0.26%
-   10 of 21 not agreeing · 3 bets · 1-2-0 (W-L-P) · ROI -42.03% (-1.3u on 3u) · CLV -1.30% on 3 closes, beat the close 33% · EV listed -0.27%
-   11 of 20 not agreeing · 3 bets · 1-2-0 (W-L-P) · ROI -16.67% (-0.5u on 3u) · CLV -0.54% on 2 closes, beat the close 0% · EV listed -1.21%
-   26 of 28 not agreeing · 3 bets · 1-2-0 (W-L-P) · ROI -7.41% (-0.2u on 3u) · CLV +3.46% on 3 closes, beat the close 100% · EV listed -1.57%
-   18 of 25 not agreeing · 3 bets · 2-1-0 (W-L-P) · ROI +16.00% (+0.5u on 3u) · CLV -2.63% on 3 closes, beat the close 33% · EV listed -1.20%
-   10 of 19 not agreeing · 3 bets · 1-0-0 (W-L-P) · 2 open · ROI +100.00% (+1.0u on 1u) · CLV -0.00% on 1 closes, beat the close 0% · EV listed -1.12%
-   8 of 21 not agreeing · 3 bets · 2-1-0 (W-L-P) · ROI +33.73% (+1.0u on 3u) · CLV -2.58% on 2 closes, beat the close 0% · EV listed +1.10%
-   27 of 29 not agreeing · 3 bets · 3-0-0 (W-L-P) · ROI +78.71% (+2.4u on 3u) · CLV -0.36% on 3 closes, beat the close 33% · EV listed -1.57%
-   17 of 24 not agreeing · 3 bets · 1-1-0 (W-L-P) · 1 open · ROI -1.96% (-0.0u on 2u) · CLV -8.04% on 2 closes, beat the close 0% · EV listed -1.69%
-   20 of 28 not agreeing · 3 bets · 2-1-0 (W-L-P) · ROI +43.78% (+1.3u on 3u) · CLV +1.41% on 3 closes, beat the close 67% · EV listed -1.12%
-   17 of 28 not agreeing · 3 bets · 1-2-0 (W-L-P) · ROI +4.17% (+0.1u on 3u) · CLV -1.00% on 3 closes, beat the close 0% · EV listed -0.37%
-   1 of 19 not agreeing · 3 bets · 1-2-0 (W-L-P) · ROI -32.66% (-1.0u on 3u) · CLV +5.28% on 3 closes, beat the close 100% · EV listed +0.77%
-   7 of 24 not agreeing · 3 bets · 0-3-0 (W-L-P) · ROI -100.00% (-3.0u on 3u) · CLV -0.96% on 3 closes, beat the close 67% · EV listed -0.79%
-   24 of 30 not agreeing · 3 bets · 0-3-0 (W-L-P) · ROI -100.00% (-3.0u on 3u) · CLV +3.36% on 3 closes, beat the close 67% · EV listed -1.48%
-   31 of 32 not agreeing · 3 bets · 1-2-0 (W-L-P) · ROI -57.81% (-1.7u on 3u) · CLV -2.73% on 3 closes, beat the close 0% · EV listed -1.46%
-   24 of 29 not agreeing · 3 bets · 3-0-0 (W-L-P) · ROI +131.08% (+3.9u on 3u) · CLV -5.07% on 3 closes, beat the close 33% · EV listed -0.96%
-   21 of 25 not agreeing · 3 bets · 1-2-0 (W-L-P) · ROI -37.11% (-1.1u on 3u) · CLV -0.51% on 3 closes, beat the close 33% · EV listed -1.46%
-   28 of 32 not agreeing · 3 bets · 1-0-0 (W-L-P) · 2 open · ROI +76.99% (+0.8u on 1u) · CLV -3.13% on 3 closes, beat the close 33% · EV listed -1.19%
-   9 of 20 not agreeing · 3 bets · 0-0-0 (W-L-P) · 3 open · no result yet · no close yet · EV listed -1.33%
-   every one (17 of 17) · 2 bets · 0-0-0 (W-L-P) · 2 open · no result yet · no close yet · EV listed -1.43%
-   every one (20 of 20) · 2 bets · 1-0-0 (W-L-P) · 1 open · ROI +110.53% (+1.1u on 1u) · no close yet · EV listed +1.96%
-   14 of 23 not agreeing · 2 bets · 0-0-0 (W-L-P) · 2 open · no result yet · no close yet · EV listed -1.86%
-   1 of 17 not agreeing · 2 bets · 0-0-0 (W-L-P) · 2 open · no result yet · no close yet · EV listed -0.66%
-   23 of 28 not agreeing · 2 bets · 1-0-0 (W-L-P) · 1 open · ROI +96.08% (+1.0u on 1u) · CLV +6.67% on 1 closes, beat the close 100% · EV listed -1.19%
-   30 of 32 not agreeing · 2 bets · 1-0-0 (W-L-P) · 1 open · ROI +185.71% (+1.9u on 1u) · CLV +11.57% on 1 closes, beat the close 100% · EV listed -1.62%
-   19 of 27 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV +0.49% on 1 closes, beat the close 100% · EV listed -1.17%
-   3 of 26 not agreeing · 2 bets · 1-0-0 (W-L-P) · 1 open · ROI +106.19% (+1.1u on 1u) · no close yet · EV listed +0.43%
-   22 of 30 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV -7.27% on 1 closes, beat the close 0% · EV listed -1.75%
-   5 of 18 not agreeing · 2 bets · 1-0-0 (W-L-P) · 1 open · ROI +83.49% (+0.8u on 1u) · no close yet · EV listed -1.39%
-   18 of 27 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -2.03% on 2 closes, beat the close 50% · EV listed -0.26%
-   25 of 31 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV +1.49% on 2 closes, beat the close 100% · EV listed -1.50%
-   2 of 18 not agreeing · 2 bets · 1-0-0 (W-L-P) · 1 open · ROI +88.68% (+0.9u on 1u) · CLV +5.85% on 1 closes, beat the close 100% · EV listed +0.39%
-   24 of 32 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -7.13% on 2 closes, beat the close 50% · EV listed -1.37%
-   17 of 26 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV +11.82% on 1 closes, beat the close 100% · EV listed -1.52%
-   10 of 27 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +17.65% (+0.4u on 2u) · CLV +1.62% on 2 closes, beat the close 50% · EV listed +0.31%
-   2 of 20 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -9.38% on 2 closes, beat the close 0% · EV listed +2.21%
-   13 of 26 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -9.38% on 2 closes, beat the close 0% · EV listed -1.41%
-   13 of 24 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +75.44% (+1.5u on 2u) · CLV -4.52% on 1 closes, beat the close 0% · EV listed -0.21%
-   13 of 27 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +44.93% (+0.9u on 2u) · CLV +0.54% on 1 closes, beat the close 100% · EV listed -1.94%
-   1 of 20 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +7.53% (+0.2u on 2u) · CLV +0.63% on 2 closes, beat the close 100% · EV listed +5.07%
-   6 of 20 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +1.01% (+0.0u on 2u) · CLV -0.37% on 2 closes, beat the close 50% · EV listed +1.21%
-   10 of 23 not agreeing · 2 bets · 2-0-0 (W-L-P) · ROI +183.83% (+3.7u on 2u) · CLV +4.91% on 2 closes, beat the close 100% · EV listed -0.04%
-   14 of 24 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV -5.93% on 1 closes, beat the close 0% · EV listed -1.40%
-   18 of 29 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV +5.82% on 2 closes, beat the close 100% · EV listed -1.22%
-   16 of 23 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +21.95% (+0.4u on 2u) · CLV -0.49% on 2 closes, beat the close 50% · EV listed -1.27%
-   15 of 25 not agreeing · 2 bets · 1-0-0 (W-L-P) · 1 open · ROI +98.02% (+1.0u on 1u) · no close yet · EV listed -1.42%
-   27 of 28 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -1.67% on 2 closes, beat the close 50% · EV listed -1.23%
-   1 of 23 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -1.45% on 2 closes, beat the close 50% · EV listed +2.01%
-   4 of 29 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +16.28% (+0.3u on 2u) · CLV +4.63% on 2 closes, beat the close 100% · EV listed +0.92%
-   10 of 28 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI -1.96% (-0.0u on 2u) · CLV -5.09% on 2 closes, beat the close 0% · EV listed -0.15%
-   18 of 24 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -0.72% on 2 closes, beat the close 50% · EV listed -0.74%
-   5 of 23 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV +2.20% on 1 closes, beat the close 100% · EV listed +0.07%
-   26 of 32 not agreeing · 2 bets · 2-0-0 (W-L-P) · ROI +120.59% (+2.4u on 2u) · CLV +0.26% on 2 closes, beat the close 50% · EV listed -1.53%
-   32 of 35 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI -3.85% (-0.1u on 2u) · CLV +1.23% on 2 closes, beat the close 50% · EV listed -1.48%
-   21 of 32 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV -2.47% on 1 closes, beat the close 0% · EV listed +0.10%
-   29 of 30 not agreeing · 2 bets · 1-0-0 (W-L-P) · 1 open · ROI +88.68% (+0.9u on 1u) · CLV -9.93% on 1 closes, beat the close 0% · EV listed -1.30%
-   32 of 33 not agreeing · 2 bets · 2-0-0 (W-L-P) · ROI +53.38% (+1.1u on 2u) · CLV -1.37% on 2 closes, beat the close 50% · EV listed -1.64%
-   28 of 29 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -1.28% on 2 closes, beat the close 0% · EV listed -1.37%
-   21 of 30 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -2.70% on 2 closes, beat the close 0% · EV listed -1.41%
-   25 of 30 not agreeing · 2 bets · 0-2-0 (W-L-P) · ROI -100.00% (-2.0u on 2u) · CLV -3.98% on 2 closes, beat the close 0% · EV listed -1.44%
-   19 of 29 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +156.41% (+3.1u on 2u) · CLV +0.69% on 2 closes, beat the close 50% · EV listed -0.98%
-   16 of 27 not agreeing · 2 bets · 2-0-0 (W-L-P) · ROI +104.42% (+2.1u on 2u) · CLV -1.85% on 2 closes, beat the close 50% · EV listed -1.04%
-   5 of 22 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI +6.38% (+0.1u on 2u) · no close yet · EV listed +1.27%
-   16 of 26 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV +2.16% on 1 closes, beat the close 100% · EV listed -1.16%
-   26 of 29 not agreeing · 2 bets · 1-0-0 (W-L-P) · 1 open · ROI +62.60% (+0.6u on 1u) · CLV -8.61% on 1 closes, beat the close 0% · EV listed -0.99%
-   every one (23 of 23) · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV -0.33% on 1 closes, beat the close 0% · EV listed +2.38%
-   7 of 28 not agreeing · 2 bets · 1-1-0 (W-L-P) · ROI -7.41% (-0.1u on 2u) · CLV -3.27% on 2 closes, beat the close 50% · EV listed +0.98%
-   1 of 21 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · no close yet · EV listed +2.32%
-   7 of 19 not agreeing · 2 bets · 0-1-0 (W-L-P) · 1 open · ROI -100.00% (-1.0u on 1u) · CLV -5.07% on 1 closes, beat the close 0% · EV listed +0.08%
-   3 of 17 not agreeing · 2 bets · 0-0-0 (W-L-P) · 2 open · no result yet · no close yet · EV listed +1.61%
-   5 of 20 not agreeing · 2 bets · 0-0-0 (W-L-P) · 2 open · no result yet · no close yet · EV listed +0.64%
-   18 of 38 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed -0.74%
-   26 of 31 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +0.17%
-   33 of 34 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed -1.26%
-   6 of 17 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed -0.37%
-   23 of 29 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed -1.14%
-   8 of 23 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed -1.11%
-   8 of 27 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +0.25%
-   4 of 22 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed -0.95%
-   29 of 33 not agreeing · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed -1.52%
-   8 of 30 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · no close yet · EV listed +0.33%
-   10 of 22 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +102.02% (+1.0u on 1u) · no close yet · EV listed -1.76%
-   32 of 38 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -6.61% on 1 closes, beat the close 0% · EV listed -1.90%
-   34 of 36 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -1.29% on 1 closes, beat the close 0% · EV listed -1.82%
-   5 of 19 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · no close yet · EV listed +1.21%
-   9 of 26 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -10.80% on 1 closes, beat the close 0% · EV listed -1.01%
-   4 of 24 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -7.38% on 1 closes, beat the close 0% · EV listed +2.10%
-   4 of 26 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV +1.29% on 1 closes, beat the close 100% · EV listed +1.10%
-   19 of 26 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +68.07% (+0.7u on 1u) · CLV -4.19% on 1 closes, beat the close 0% · EV listed -1.08%
-   12 of 25 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · no close yet · EV listed -0.09%
-   34 of 35 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +100.00% (+1.0u on 1u) · CLV -3.82% on 1 closes, beat the close 0% · EV listed -0.72%
-   16 of 25 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -4.45% on 1 closes, beat the close 0% · EV listed -1.07%
-   18 of 28 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +181.69% (+1.8u on 1u) · CLV +7.45% on 1 closes, beat the close 100% · EV listed -0.48%
-   6 of 27 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +96.08% (+1.0u on 1u) · CLV -8.61% on 1 closes, beat the close 0% · EV listed -1.93%
-   21 of 29 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +122.22% (+1.2u on 1u) · CLV +13.18% on 1 closes, beat the close 100% · EV listed -0.36%
-   12 of 22 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · no close yet · EV listed -1.33%
-   27 of 33 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +170.27% (+1.7u on 1u) · CLV -5.07% on 1 closes, beat the close 0% · EV listed -1.97%
-   30 of 33 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -6.16% on 1 closes, beat the close 0% · EV listed -0.60%
-   3 of 27 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +104.08% (+1.0u on 1u) · CLV +2.04% on 1 closes, beat the close 100% · EV listed +0.79%
-   3 of 25 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +115.05% (+1.2u on 1u) · CLV +0.13% on 1 closes, beat the close 100% · EV listed +1.53%
-   31 of 41 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +277.36% (+2.8u on 1u) · CLV +4.36% on 1 closes, beat the close 100% · EV listed -1.98%
-   27 of 32 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -3.12% on 1 closes, beat the close 0% · EV listed -1.14%
-   15 of 27 not agreeing · 1 bets · 1-0-0 (W-L-P) · ROI +69.49% (+0.7u on 1u) · CLV -1.77% on 1 closes, beat the close 0% · EV listed +0.28%
-   37 of 37 not agreeing · 1 bets · 0-1-0 (W-L-P) · ROI -100.00% (-1.0u on 1u) · CLV -1.08% on 1 closes, beat the close 0% · EV listed -1.95%
-   23 of 33 not agreeing ·
+   … and 424 smaller groups (8113 bets), counted in the summary
+-- Books saying not +EV --
+   3 or more · 14420 bets · 4929-3954-0 (W-L-P) · 5537 open · ROI -1.01% (-89.9u on 8883u, ±1.4 points over 282 games) · CLV -1.26% ±0.11 over 258 games on 3273 closes, beat the close 37% · EV listed -1.45%
+   1 · 2510 bets · 943-813-0 (W-L-P) · 2 void · 752 open · ROI -4.52% (-79.3u on 1756u, ±4.5 points over 398 games) · CLV -0.99% ±0.82 over 205 games on 341 closes, beat the close 39% · EV listed -0.79%
+   2 · 1862 bets · 767-538-0 (W-L-P) · 557 open · ROI -0.50% (-6.5u on 1305u, ±6.1 points over 276 games) · CLV -0.94% ±0.87 over 168 games on 276 closes, beat the close 40% · EV listed -1.11%
+   none · 1464 bets · 436-534-0 (W-L-P) · 5 void · 489 open · ROI -4.59% (-44.5u on 970u, ±9.3 points over 208 games) · CLV +0.83% ±0.79 over 135 games on 334 closes, beat the close 55% · EV listed +6.67%
+   not recorded · 1159 bets · 210-213-0 (W-L-P) · 12 void · 724 open · ROI +1.23% (+5.2u on 423u, ±9.3 points over 75 games) · CLV +1.88% ±0.65 over 65 games on 337 closes, beat the close 67% · EV listed +2.10%
+-- Sharp veto --
+   not recorded · 20349 bets · 7118-5893-0 (W-L-P) · 7 void · 7331 open · ROI -1.73% (-224.5u on 13011u, ±1.3 points over 456 games) · CLV -0.98% ±0.14 over 358 games on 4276 closes, beat the close 39% · EV listed -0.74%
+   NO_SHARP · 1039 bets · 164-158-0 (W-L-P) · 11 void · 706 open · ROI +2.19% (+7.1u on 322u, ±10.8 points over 15 games) · CLV +1.30% ±0.42 over 29 games on 281 closes, beat the close 67% · EV listed +2.07%
+   PASSED · 26 bets · 3-1-0 (W-L-P) · 1 void · 21 open · ROI +61.00% (+2.4u on 4u) · CLV +1.51% on 4 closes, beat the close 75% · EV listed +4.33%
+   VETOED · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +5.20%
+-- Sharpest book on the page --
+   not recorded · 20349 bets · 7118-5893-0 (W-L-P) · 7 void · 7331 open · ROI -1.73% (-224.5u on 13011u, ±1.3 points over 456 games) · CLV -0.98% ±0.14 over 358 games on 4276 closes, beat the close 39% · EV listed -0.74%
+   none on the page · 1039 bets · 164-158-0 (W-L-P) · 11 void · 706 open · ROI +2.19% (+7.1u on 322u, ±10.8 points over 15 games) · CLV +1.30% ±0.42 over 29 games on 281 closes, beat the close 67% · EV listed +2.07%
+   FanDuel agreed · 9 bets · 1-0-0 (W-L-P) · 8 open · ROI +117.00% (+1.2u on 1u) · CLV -2.72% on 1 closes, beat the close 0% · EV listed +3.83%
+   ProphetX agreed · 8 bets · 1-0-0 (W-L-P) · 7 open · ROI +102.00% (+1.0u on 1u) · CLV +1.44% on 1 closes, beat the close 100% · EV listed +4.08%
+   Caesars agreed · 6 bets · 1-1-0 (W-L-P) · 1 void · 3 open · ROI +12.50% (+0.3u on 2u) · CLV +5.17% on 1 closes, beat the close 100% · EV listed +5.42%
+   Kalshi agreed · 3 bets · 0-0-0 (W-L-P) · 3 open · no result yet · CLV +2.14% on 1 closes, beat the close 100% · EV listed +4.27%
+   ProphetX said no · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +5.20%
+-- Time to the start --
+   24 h or more · 10875 bets · 2925-2499-0 (W-L-P) · 2 void · 5449 open · ROI -1.93% (-104.6u on 5424u, ±2.3 points over 205 games) · CLV -1.26% ±0.18 over 165 games on 2422 closes, beat the close 38% · EV listed -0.82%
+   6-24 h · 6111 bets · 2520-1948-0 (W-L-P) · 10 void · 1633 open · ROI +0.62% (+27.6u on 4468u, ±2.8 points over 332 games) · CLV -0.52% ±0.25 over 267 games on 1356 closes, beat the close 44% · EV listed -0.55%
+   2-6 h · 2488 bets · 1040-845-0 (W-L-P) · 4 void · 599 open · ROI -1.91% (-35.9u on 1885u, ±4.6 points over 273 games) · CLV -0.15% ±0.53 over 189 games on 402 closes, beat the close 47% · EV listed -0.20%
+   30 min-2 h · 1322 bets · 567-501-0 (W-L-P) · 1 void · 253 open · ROI -3.13% (-33.4u on 1068u, ±6.7 points over 232 games) · CLV -0.13% ±0.51 over 135 games on 249 closes, beat the close 46% · EV listed -0.18%
+   under 30 min · 619 bets · 233-259-0 (W-L-P) · 2 void · 125 open · ROI -13.97% (-68.7u on 492u, ±9.6 points over 160 games) · CLV +0.16% ±0.77 over 79 games on 132 closes, beat the close 41% · EV listed +0.37%
+-- Book check's EV --
+   not recorded · 21384 bets · 7282-6049-0 (W-L-P) · 18 void · 8035 open · ROI -1.62% (-215.5u on 13331u, ±1.3 points over 469 games) · CLV -0.84% ±0.14 over 372 games on 4556 closes, beat the close 41% · EV listed -0.60%
+   4% and up · 29 bets · 3-3-0 (W-L-P) · 1 void · 22 open · ROI +7.33% (+0.4u on 6u) · CLV +3.53% on 5 closes, beat the close 80% · EV listed +4.72%
+   3–4% · 2 bets · 0-0-0 (W-L-P) · 2 open · no result yet · no close yet · EV listed +3.48%
+-- Companies pricing both sides --
+   10 or more · 6295 bets · 2036-1995-0 (W-L-P) · 2 void · 2262 open · ROI -0.36% (-14.4u on 4031u, ±2.0 points over 214 games) · CLV -1.08% ±0.13 over 200 games on 2403 closes, beat the close 38% · EV listed -1.21%
+   6-9 · 5846 bets · 1857-1600-0 (W-L-P) · 2389 open · ROI -0.95% (-32.9u on 3457u, ±3.1 points over 234 games) · CLV -0.67% ±0.33 over 203 games on 932 closes, beat the close 42% · EV listed -1.24%
+   4-5 · 3186 bets · 1152-768-0 (W-L-P) · 3 void · 1263 open · ROI -3.41% (-65.5u on 1920u, ±4.5 points over 216 games) · CLV -0.81% ±0.71 over 140 games on 352 closes, beat the close 43% · EV listed -1.13%
+   2 · 1966 bets · 807-635-0 (W-L-P) · 1 void · 523 open · ROI -6.37% (-91.8u on 1442u, ±4.7 points over 290 games) · CLV -2.18% ±1.07 over 119 games on 207 closes, beat the close 30% · EV listed +3.24%
+   1 · 1809 bets · 750-552-0 (W-L-P) · 1 void · 506 open · ROI -2.22% (-28.9u on 1302u, ±4.5 points over 349 games) · CLV -2.02% ±0.66 over 117 games on 168 closes, beat the close 27% · EV listed -1.24%
+   not recorded · 1159 bets · 210-213-0 (W-L-P) · 12 void · 724 open · ROI +1.23% (+5.2u on 423u, ±9.3 points over 75 games) · CLV +1.88% ±0.65 over 65 games on 337 closes, beat the close 67% · EV listed +2.10%
+   3 · 1152 bets · 471-289-0 (W-L-P) · 392 open · ROI +1.48% (+11.3u on 760u, ±7.5 points over 215 games) · CLV -1.13% ±0.94 over 104 games on 161 closes, beat the close 42% · EV listed -0.74%
+   0 · 2 bets · 2-0-0 (W-L-P) · ROI +96.91% (+1.9u on 2u) · CLV +18.44% on 1 closes, beat the close 100% · EV listed +10.57%
+-- Kind of bet --
+   Spreads · 8062 bets · 2902-2107-0 (W-L-P) · 3053 open · ROI -1.54% (-77.3u on 5009u, ±2.1 points over 346 games) · CLV -1.05% ±0.21 over 232 games on 1398 closes, beat the close 39% · EV listed -1.30%
+   Game totals · 7273 bets · 2671-2203-0 (W-L-P) · 2399 open · ROI -1.56% (-76.1u on 4874u, ±2.1 points over 355 games) · CLV -1.25% ±0.14 over 222 games on 1166 closes, beat the close 38% · EV listed -1.08%
+   Player props · 2251 bets · 567-643-0 (W-L-P) · 19 void · 1022 open · ROI -1.34% (-16.2u on 1210u, ±8.5 points over 74 games) · CLV +1.65% ±0.64 over 98 games on 655 closes, beat the close 64% · EV listed +4.32%
+   Team totals · 1376 bets · 424-431-0 (W-L-P) · 521 open · ROI -2.07% (-17.7u on 855u, ±3.9 points over 161 games) · CLV -1.52% ±0.36 over 109 games on 361 closes, beat the close 37% · EV listed -1.08%
+   Moneylines · 1290 bets · 370-324-0 (W-L-P) · 596 open · ROI -3.73% (-25.9u on 694u, ±4.1 points over 424 games) · CLV -1.25% ±0.29 over 308 games on 518 closes, beat the close 36% · EV listed -0.98%
+   1st half / inning / set lines · 1129 bets · 351-344-0 (W-L-P) · 434 open · ROI -0.27% (-1.9u on 695u, ±2.7 points over 115 games) · CLV -1.70% ±0.17 over 101 games on 463 closes, beat the close 29% · EV listed -1.29%
+   Other · 34 bets · 0-0-0 (W-L-P) · 34 open · no result yet · no close yet · EV listed +1.77%
+-- Sport --
+   College football · 10041 bets · 3329-2719-0 (W-L-P) · 3993 open · ROI -1.69% (-102.1u on 6048u, ±2.0 points over 114 games) · CLV -1.21% ±0.13 over 115 games on 1879 closes, beat the close 38% · EV listed -1.18%
+   Basketball · 4690 bets · 1637-1320-0 (W-L-P) · 3 void · 1730 open · ROI -1.01% (-29.9u on 2957u, ±2.9 points over 46 games) · CLV -0.42% ±0.36 over 48 games on 801 closes, beat the close 46% · EV listed +0.80%
+   Football · 3019 bets · 977-833-0 (W-L-P) · 1209 open · ROI -2.94% (-53.3u on 1810u, ±3.8 points over 15 games) · CLV -1.08% ±0.31 over 15 games on 824 closes, beat the close 38% · EV listed -0.67%
+   Tennis · 1873 bets · 693-669-0 (W-L-P) · 511 open · ROI -3.09% (-42.1u on 1362u, ±3.9 points over 234 games) · CLV -1.24% ±0.32 over 136 games on 262 closes, beat the close 31% · EV listed -1.15%
+   Hockey · 1380 bets · 543-408-0 (W-L-P) · 13 void · 416 open · ROI +1.55% (+14.7u on 951u, ±3.8 points over 55 games) · CLV -0.38% ±0.28 over 51 games on 643 closes, beat the close 48% · EV listed -0.48%
+   Baseball · 229 bets · 58-46-0 (W-L-P) · 2 void · 123 open · ROI -0.31% (-0.3u on 104u, ±9.2 points over 5 games) · CLV -0.61% ±0.60 over 7 games on 94 closes, beat the close 38% · EV listed -0.91%
+   Not recorded · 126 bets · 48-57-0 (W-L-P) · 1 void · 20 open · ROI -1.82% (-1.9u on 105u, ±19.7 points over 61 games) · CLV +5.19% ±2.15 over 43 games on 58 closes, beat the close 69% · EV listed +2.56%
+   Soccer · 41 bets · 0-0-0 (W-L-P) · 41 open · no result yet · no close yet · EV listed +1.74%
+   Other · 16 bets · 0-0-0 (W-L-P) · 16 open · no result yet · no close yet · EV listed -0.53%
+-- Preset --
+   3 (Safe CLV all markets) (changed) · 21289 bets · 7237-5995-0 (W-L-P) · 18 void · 8039 open · ROI -1.61% (-213.1u on 13232u, ±1.3 points over 469 games) · CLV -0.92% ±0.12 over 372 games on 4503 closes, beat the close 41% · EV listed -0.62%
+   none · 126 bets · 48-57-0 (W-L-P) · 1 void · 20 open · ROI -1.82% (-1.9u on 105u, ±19.7 points over 61 games) · CLV +5.19% ±2.15 over 43 games on 58 closes, beat the close 69% · EV listed +2.56%
+-- How placed --
+   study · 21415 bets · 7285-6052-0 (W-L-P) · 19 void · 8059 open · ROI -1.61% (-215.0u on 13337u, ±1.3 points over 469 games) · CLV -0.84% ±0.14 over 372 games on 4561 closes, beat the close 41% · EV listed -0.60%
+-- Novig dollars at the price --
+   under $25 · 19118 bets · 6687-5300-0 (W-L-P) · 8 void · 7123 open · ROI -1.15% (-137.5u on 11987u, ±1.2 points over 450 games) · CLV -1.06% ±0.12 over 343 games on 3922 closes, beat the close 39% · EV listed -1.27%
+   $100-500 · 800 bets · 197-256-0 (W-L-P) · 5 void · 342 open · ROI -8.80% (-39.8u on 453u, ±11.2 points over 178 games) · CLV +0.21% ±0.91 over 115 games on 197 closes, beat the close 53% · EV listed +5.30%
+   $500 or more · 762 bets · 222-287-0 (W-L-P) · 253 open · ROI -5.82% (-29.6u on 509u, ±11.2 points over 184 games) · CLV -1.03% ±0.92 over 116 games on 226 closes, beat the close 41% · EV listed +6.62%
+   $25-100 · 609 bets · 131-152-0 (W-L-P) · 5 void · 321 open · ROI -2.17% (-6.2u on 283u, ±11.2 points over 126 games) · CLV +1.54% ±1.11 over 85 games on 158 closes, beat the close 60% · EV listed +3.22%
+   not recorded · 126 bets · 48-57-0 (W-L-P) · 1 void · 20 open · ROI -1.82% (-1.9u on 105u, ±19.7 points over 61 games) · CLV +5.19% ±2.15 over 43 games on 58 closes, beat the close 69% · EV listed +2.56%
+-- Book page's age --
+   not recorded · 21382 bets · 7280-6049-0 (W-L-P) · 18 void · 8035 open · ROI -1.63% (-217.4u on 13329u, ±1.3 points over 469 games) · CLV -0.85% ±0.14 over 372 games on 4555 closes, beat the close 41% · EV listed -0.61%
+   under 30 s · 28 bets · 5-2-0 (W-L-P) · 1 void · 20 open · ROI +48.26% (+3.4u on 7u) · CLV +6.01% ±5.75 over 5 games on 6 closes, beat the close 83% · EV listed +5.04%
+   30 s-2 min · 5 bets · 0-1-0 (W-L-P) · 4 open · ROI -100.00% (-1.0u on 1u) · no close yet · EV listed +4.78%
+-- Novig's own trades just before (trap guard) --
+   not recorded · 21415 bets · 7285-6052-0 (W-L-P) · 19 void · 8059 open · ROI -1.61% (-215.0u on 13337u, ±1.3 points over 469 games) · CLV -0.84% ±0.14 over 372 games on 4561 closes, beat the close 41% · EV listed -0.60%
+-- Who listed it (c = CNO, v = Vigilant's scan) --
+   v · 20017 bets · 7089-5865-0 (W-L-P) · 7 void · 7056 open · ROI -1.76% (-227.4u on 12954u, ±1.3 points over 456 games) · CLV -0.95% ±0.14 over 358 games on 4228 closes, beat the close 39% · EV listed -0.75%
+   c · 960 bets · 151-137-0 (W-L-P) · 12 void · 660 open · ROI +5.00% (+14.4u on 288u, ±11.3 points over 14 games) · CLV +1.41% ±0.44 over 29 games on 251 closes, beat the close 68% · EV listed +2.10%
+   c+v · 438 bets · 45-50-0 (W-L-P) · 343 open · ROI -2.19% (-2.1u on 95u, ±20.3 points over 25 games) · CLV -1.98% ±1.83 over 24 games on 82 closes, beat the close 49% · EV listed +0.32%
+-- Would the app's own CNO screen have shown it --
+   shown · 21304 bets · 7269-6043-0 (W-L-P) · 18 void · 7974 open · ROI -1.61% (-214.4u on 13312u, ±1.3 points over 469 games) · CLV -0.85% ±0.14 over 372 games on 4528 closes, beat the close 41% · EV listed -0.61%
+   hidden: SHORT_ODDS · 108 bets · 15-9-0 (W-L-P) · 1 void · 83 open · ROI -8.67% (-2.1u on 24u, ±30.4 points over 12 games) · CLV +0.68% ±0.67 over 13 games on 33 closes, beat the close 67% · EV listed +1.48%
+   hidden: MISMATCH · 3 bets · 1-0-0 (W-L-P) · 2 open · ROI +146.00% (+1.5u on 1u) · no close yet · EV listed +1.88%
+-- League --
+   NCAAF · 10060 bets · 3337-2729-0 (W-L-P) · 3994 open · ROI -1.71% (-103.9u on 6066u, ±2.0 points over 114 games) · CLV -1.19% ±0.13 over 115 games on 1887 closes, beat the close 38% · EV listed -1.17%
+   NBA · 4531 bets · 1568-1255-0 (W-L-P) · 3 void · 1705 open · ROI -0.80% (-22.5u on 2823u, ±3.1 points over 43 games) · CLV -0.24% ±0.43 over 45 games on 767 closes, beat the close 47% · EV listed +0.89%
+   NFL · 3029 bets · 983-837-0 (W-L-P) · 1209 open · ROI -2.74% (-49.8u on 1820u, ±3.7 points over 15 games) · CLV -1.05% ±0.31 over 15 games on 827 closes, beat the close 38% · EV listed -0.66%
+   NHL · 1426 bets · 552-426-0 (W-L-P) · 13 void · 435 open · ROI +0.87% (+8.5u on 978u, ±4.0 points over 55 games) · CLV -0.14% ±0.31 over 51 games on 667 closes, beat the close 49% · EV listed -0.39%
+   ATP · 1076 bets · 370-347-0 (W-L-P) · 359 open · ROI -1.90% (-13.6u on 717u, ±5.7 points over 125 games) · CLV -1.13% ±0.38 over 94 games on 177 closes, beat the close 33% · EV listed -1.12%
+   WTA · 797 bets · 323-322-0 (W-L-P) · 152 open · ROI -4.42% (-28.5u on 645u, ±5.1 points over 109 games) · CLV -1.46% ±0.57 over 42 games on 85 closes, beat the close 25% · EV listed -1.18%
+   MLB · 236 bets · 63-47-0 (W-L-P) · 3 void · 123 open · ROI +3.47% (+3.8u on 110u, ±11.9 points over 5 games) · CLV -0.61% ±0.60 over 7 games on 94 closes, beat the close 38% · EV listed -0.80%
+   WNBA · 203 bets · 89-89-0 (W-L-P) · 25 open · ROI -5.09% (-9.1u on 178u) · CLV -0.65% on 57 closes, beat the close 47% · EV listed -0.96%
+   UFC · 16 bets · 0-0-0 (W-L-P) · 16 open · no result yet · no close yet · EV listed -0.53%
+   Premier League (England) · 11 bets · 0-0-0 (W-L-P) · 11 open · no result yet · no close yet · EV listed +1.63%
+   MLS (USA) · 10 bets · 0-0-0 (W-L-P) · 10 open · no result yet · no close yet · EV listed +1.74%
+   LaLiga (Spain) · 8 bets · 0-0-0 (W-L-P) · 8 open · no result yet · no close yet · EV listed +1.53%
+   Serie A (Italy) · 4 bets · 0-0-0 (W-L-P) · 4 open · no result yet · no close yet · EV listed +1.92%
+   Ligue 1 (France) · 4 bets · 0-0-0 (W-L-P) · 4 open · no result yet · no close yet · EV listed +1.55%
+   UEFA Europa League · 2 bets · 0-0-0 (W-L-P) · 2 open · no result yet · no close yet · EV listed +1.15%
+   Bundesliga (Germany) · 2 bets · 0-0-0 (W-L-P) · 2 open · no result yet · no close yet · EV listed +3.74%
+-- Market --
+   Spread · 7512 bets · 2680-1878-0 (W-L-P) · 2954 open · ROI -1.39% (-63.3u on 4558u, ±2.2 points over 211 games) · CLV -1.04% ±0.21 over 203 games on 1351 closes, beat the close 39% · EV listed -1.32%
+   Total · 6541 bets · 2389-1917-0 (W-L-P) · 2235 open · ROI -1.40% (-60.2u on 4306u, ±2.3 points over 212 games) · CLV -1.23% ±0.14 over 203 games on 1136 closes, beat the close 39% · EV listed -1.07%
+   Team Total · 1361 bets · 418-424-0 (W-L-P) · 519 open · ROI -1.95% (-16.4u on 842u, ±3.8 points over 152 games) · CLV -1.52% ±0.36 over 109 games on 361 closes, beat the close 37% · EV listed -1.09%
+   Moneyline · 1290 bets · 370-324-0 (W-L-P) · 596 open · ROI -3.73% (-25.9u on 694u, ±4.1 points over 424 games) · CLV -1.25% ±0.29 over 308 games on 518 closes, beat the close 36% · EV listed -0.98%
+   Total Games · 708 bets · 279-283-0 (W-L-P) · 146 open · ROI -2.90% (-16.3u on 562u, ±4.9 points over 141 games) · CLV -1.80% ±0.75 over 17 games on 27 closes, beat the close 26% · EV listed -1.29%
+   1H Total · 546 bets · 177-177-0 (W-L-P) · 192 open · ROI -1.23% (-4.4u on 354u, ±3.6 points over 96 games) · CLV -1.68% ±0.23 over 87 games on 237 closes, beat the close 27% · EV listed -1.23%
+   1H Spread · 528 bets · 155-153-0 (W-L-P) · 220 open · ROI -0.77% (-2.4u on 308u, ±3.6 points over 89 games) · CLV -1.72% ±0.24 over 78 games on 207 closes, beat the close 30% · EV listed -1.40%
+   Games Spread · 521 bets · 217-223-0 (W-L-P) · 81 open · ROI -3.23% (-14.2u on 440u, ±7.6 points over 133 games) · CLV -1.44% ±0.74 over 28 games on 46 closes, beat the close 24% · EV listed -1.10%
+   Points · 244 bets · 85-94-0 (W-L-P) · 3 void · 62 open · ROI +6.02% (+10.8u on 179u, ±17.1 points over 25 games) · CLV +2.24% ±1.33 over 26 games on 77 closes, beat the close 61% · EV listed +10.55%
+   Player Points · 194 bets · 31-43-0 (W-L-P) · 1 void · 119 open · ROI -14.76% (-10.9u on 74u, ±21.7 points over 12 games) · CLV +1.32% ±1.06 over 21 games on 56 closes, beat the close 66% · EV listed +2.36%
+   Receiving Yards · 167 bets · 56-60-0 (W-L-P) · 51 open · ROI -0.99% (-1.2u on 116u, ±34.9 points over 15 games) · CLV -1.20% ±1.98 over 12 games on 33 closes, beat the close 42% · EV listed +0.31%
+   Player Shots On Goal · 117 bets · 0-0-0 (W-L-P) · 8 void · 109 open · no result yet · CLV +1.48% ±0.78 over 14 games on 84 closes, beat the close 68% · EV listed +2.50%
+   Assists · 117 bets · 38-47-0 (W-L-P) · 32 open · ROI +0.53% (+0.4u on 85u, ±28.0 points over 24 games) · CLV +0.71% ±3.15 over 25 games on 40 closes, beat the close 65% · EV listed +14.50%
+   Points Rebounds Assists · 104 bets · 39-43-0 (W-L-P) · 22 open · ROI +4.83% (+4.0u on 82u, ±24.6 points over 17 games) · CLV +3.54% ±5.74 over 7 games on 12 closes, beat the close 50% · EV listed +0.92%
+   Player Assists · 101 bets · 17-21-0 (W-L-P) · 1 void · 62 open · ROI -11.48% (-4.4u on 38u, ±35.2 points over 12 games) · CLV +2.67% ±1.95 over 14 games on 27 closes, beat the close 67% · EV listed +2.12%
+   Rebounds · 92 bets · 25-45-0 (W-L-P) · 22 open · ROI -17.73% (-12.4u on 70u, ±27.0 points over 17 games) · CLV +4.20% ±4.16 over 12 games on 20 closes, beat the close 70% · EV listed +25.96%
+   Player Rebounds · 90 bets · 22-24-0 (W-L-P) · 44 open · ROI -3.09% (-1.4u on 46u, ±30.7 points over 13 games) · CLV +1.81% ±1.56 over 10 games on 26 closes, beat the close 81% · EV listed +1.96%
+   Rushing Yards · 90 bets · 34-31-0 (W-L-P) · 25 open · ROI +3.42% (+2.2u on 65u, ±24.9 points over 14 games) · CLV -1.40% ±4.13 over 8 games on 14 closes, beat the close 43% · EV listed +4.03%
+   Shots On Goal · 89 bets · 12-23-0 (W-L-P) · 1 void · 53 open · ROI -25.61% (-9.0u on 35u, ±40.6 points over 15 games) · CLV +2.19% ±1.39 over 33 games on 60 closes, beat the close 68% · EV listed +1.91%
+   Player Points + Rebounds + Assists · 67 bets · 21-18-0 (W-L-P) · 28 open · ROI +13.96% (+5.4u on 39u, ±28.1 points over 11 games) · no close yet · EV listed +2.37%
+   Player Receptions · 66 bets · 9-2-0 (W-L-P) · 55 open · ROI +63.55% (+7.0u on 11u) · CLV +2.44% on 8 closes, beat the close 75% · EV listed +1.90%
+   Player Goals · 59 bets · 5-1-0 (W-L-P) · 1 void · 52 open · ROI +9.47% (+0.6u on 6u, ±44.8 points over 6 games) · CLV +0.44% ±0.61 over 16 games on 40 closes, beat the close 65% · EV listed +0.88%
+   Player Threes · 56 bets · 19-13-0 (W-L-P) · 24 open · ROI +11.16% (+3.6u on 32u, ±20.0 points over 12 games) · CLV -2.48% ±3.15 over 7 games on 12 closes, beat the close 33% · EV listed +1.88%
+   Player Receiving Yards · 56 bets · 11-12-0 (W-L-P) · 33 open · ROI -7.24% (-1.7u on 23u) · CLV +1.09% on 8 closes, beat the close 75% · EV listed +2.14%
+   Receptions · 52 bets · 21-18-0 (W-L-P) · 13 open · ROI +7.68% (+3.0u on 39u, ±31.1 points over 13 games) · CLV -1.65% ±3.48 over 12 games on 21 closes, beat the close 48% · EV listed +0.88%
+-- Odds when first listed --
+   +101 to +200 · 7411 bets · 1995-2537-0 (W-L-P) · 12 void · 2867 open · ROI -0.59% (-26.9u on 4532u, ±3.5 points over 400 games) · CLV +0.28% ±0.35 over 294 games on 1910 closes, beat the close 50% · EV listed +0.28%
+   -150 to +100 · 5985 bets · 1895-1748-0 (W-L-P) · 4 void · 2338 open · ROI -3.11% (-113.3u on 3643u, ±2.3 points over 399 games) · CLV -1.81% ±0.26 over 302 games on 1926 closes, beat the close 35% · EV listed -1.09%
+   under -300 · 3282 bets · 1863-345-0 (W-L-P) · 1 void · 1073 open · ROI -1.86% (-41.0u on 2208u, ±3.2 points over 220 games) · CLV -1.32% ±0.35 over 102 games on 180 closes, beat the close 23% · EV listed -1.62%
+   -300 to -151 · 3117 bets · 1265-663-0 (W-L-P) · 1 void · 1188 open · ROI -2.27% (-43.7u on 1928u, ±3.9 points over 296 games) · CLV -1.57% ±0.38 over 183 games on 390 closes, beat the close 34% · EV listed -1.44%
+   +201 to +400 · 1401 bets · 241-629-0 (W-L-P) · 1 void · 530 open · ROI -2.11% (-18.4u on 870u, ±12.8 points over 173 games) · CLV +0.16% ±1.21 over 93 games on 138 closes, beat the close 43% · EV listed +0.87%
+   over +400 · 219 bets · 26-130-0 (W-L-P) · 63 open · ROI +18.14% (+28.3u on 156u, ±44.3 points over 81 games) · CLV -3.34% ±10.20 over 14 games on 17 closes, beat the close 29% · EV listed +1.07%
+-- EV when first listed --
+   under 1.5% · 19605 bets · 6836-5488-0 (W-L-P) · 8 void · 7273 open · ROI -1.52% (-187.1u on 12324u, ±1.2 points over 452 games) · CLV -1.12% ±0.11 over 358 games on 4085 closes, beat the close 39% · EV listed -1.33%
+   1.5% to 2.5% · 837 bets · 202-248-0 (W-L-P) · 5 void · 382 open · ROI -4.66% (-21.0u on 450u, ±10.2 points over 161 games) · CLV +1.35% ±0.94 over 125 games on 278 closes, beat the close 57% · EV listed +1.92%
+   2.5% to 4% · 466 bets · 113-127-0 (W-L-P) · 2 void · 224 open · ROI +0.24% (+0.6u on 240u, ±14.0 points over 126 games) · CLV +1.99% ±1.63 over 73 games on 113 closes, beat the close 57% · EV listed +3.15%
+   4% to 6% · 233 bets · 55-57-0 (W-L-P) · 4 void · 117 open · ROI +7.81% (+8.7u on 112u, ±22.4 points over 68 games) · CLV +1.37% ±1.75 over 42 games on 52 closes, beat the close 58% · EV listed +4.83%
+   10% or more · 160 bets · 51-93-0 (W-L-P) · 16 open · ROI -8.00% (-11.5u on 144u, ±27.3 points over 36 games) · CLV +3.76% ±9.76 over 9 games on 12 closes, beat the close 75% · EV listed +51.47%
+   6% to 10% · 114 bets · 28-39-0 (W-L-P) · 47 open · ROI -7.11% (-4.8u on 67u, ±25.7 points over 48 games) · CLV +2.67% ±4.82 over 18 games on 21 closes, beat the close 57% · EV listed +7.60%
+-- Books behind the fair (CNO's count) --
+   ? · 20349 bets · 7118-5893-0 (W-L-P) · 7 void · 7331 open · ROI -1.73% (-224.5u on 13011u, ±1.3 points over 456 games) · CLV -0.98% ±0.14 over 358 games on 4276 closes, beat the close 39% · EV listed -0.74%
+   8 or more · 647 bets · 106-93-0 (W-L-P) · 5 void · 443 open · ROI +7.95% (+15.8u on 199u, ±17.6 points over 15 games) · CLV +1.06% ±0.70 over 29 games on 191 closes, beat the close 65% · EV listed +2.06%
+   6 · 98 bets · 20-18-0 (W-L-P) · 2 void · 58 open · ROI +7.88% (+3.0u on 38u, ±18.7 points over 13 games) · CLV +0.33% ±1.63 over 13 games on 22 closes, beat the close 50% · EV listed +2.51%
+   7 · 91 bets · 9-14-0 (W-L-P) · 3 void · 65 open · ROI -24.18% (-5.6u on 23u, ±36.3 points over 10 games) · CLV +2.35% ±1.32 over 12 games on 20 closes, beat the close 80% · EV listed +2.29%
+   5 · 71 bets · 7-11-0 (W-L-P) · 2 void · 51 open · ROI -22.30% (-4.0u on 18u, ±43.5 points over 10 games) · CLV +1.79% ±2.13 over 10 games on 18 closes, beat the close 78% · EV listed +2.26%
+   4 · 66 bets · 11-9-0 (W-L-P) · 46 open · ROI +7.76% (+1.6u on 20u, ±34.8 points over 11 games) · CLV +3.66% ±4.03 over 10 games on 16 closes, beat the close 69% · EV listed +1.95%
+   3 · 51 bets · 8-10-0 (W-L-P) · 33 open · ROI -16.42% (-3.0u on 18u, ±64.7 points over 8 games) · CLV +0.45% ±1.08 over 7 games on 11 closes, beat the close 73% · EV listed +1.91%
+   2 · 42 bets · 6-4-0 (W-L-P) · 32 open · ROI +16.58% (+1.7u on 10u, ±73.2 points over 8 games) · CLV +2.58% ±3.34 over 5 games on 7 closes, beat the close 71% · EV listed +2.35%
+-- Share of two-sided books agreeing (the book check) --
+   under 50% · 16381 bets · 5978-4419-0 (W-L-P) · 5984 open · ROI -0.64% (-67.0u on 10397u, ±1.3 points over 429 games) · CLV -1.44% ±0.12 over 335 games on 3213 closes, beat the close 36% · EV listed -1.51%
+   50% to 74% · 1811 bets · 488-664-0 (W-L-P) · 659 open · ROI -7.04% (-81.2u on 1152u, ±8.2 points over 250 games) · CLV -0.65% ±0.80 over 177 games on 431 closes, beat the close 43% · EV listed -0.33%
+   every book (100%) · 1462 bets · 434-534-0 (W-L-P) · 5 void · 489 open · ROI -4.80% (-46.5u on 968u, ±9.3 points over 207 games) · CLV +0.78% ±0.79 over 134 games on 333 closes, beat the close 55% · EV listed +6.66%
+   no check · 1161 bets · 212-213-0 (W-L-P) · 12 void · 724 open · ROI +1.68% (+7.1u on 425u, ±9.4 points over 75 games) · CLV +1.93% ±0.62 over 65 games on 338 closes, beat the close 67% · EV listed +2.11%
+   75% to 99% · 600 bets · 173-222-0 (W-L-P) · 2 void · 203 open · ROI -6.97% (-27.5u on 395u, ±12.1 points over 157 games) · CLV +0.68% ±0.84 over 126 games on 246 closes, beat the close 52% · EV listed +0.53%
+-- How long it stayed listed --
+   6 h or more · 12767 bets · 4395-3471-0 (W-L-P) · 5 void · 4896 open · ROI -2.25% (-177.2u on 7866u, ±1.6 points over 252 games) · CLV -1.28% ±0.12 over 221 games on 3213 closes, beat the close 38% · EV listed -1.03%
+   1 to 6 h · 3529 bets · 1209-981-0 (W-L-P) · 1 void · 1338 open · ROI -1.46% (-31.9u on 2190u, ±4.7 points over 307 games) · CLV -0.79% ±0.43 over 231 games on 552 closes, beat the close 41% · EV listed -0.21%
+   10 to 60 min · 2729 bets · 975-861-0 (W-L-P) · 8 void · 885 open · ROI +1.47% (+27.0u on 1836u, ±5.0 points over 350 games) · CLV +0.13% ±0.59 over 207 games on 411 closes, beat the close 48% · EV listed +0.24%
+   2 to 10 min · 1287 bets · 299-321-0 (W-L-P) · 4 void · 663 open · ROI -0.88% (-5.4u on 620u, ±10.3 points over 187 games) · CLV +1.39% ±0.88 over 89 games on 172 closes, beat the close 56% · EV listed +0.58%
+   under 2 min · 977 bets · 359-361-0 (W-L-P) · 257 open · ROI -3.55% (-25.5u on 720u, ±8.3 points over 250 games) · CLV +0.83% ±1.08 over 115 games on 155 closes, beat the close 48% · EV listed -0.55%
+   ? · 126 bets · 48-57-0 (W-L-P) · 1 void · 20 open · ROI -1.82% (-1.9u on 105u, ±19.7 points over 61 games) · CLV +5.19% ±2.15 over 43 games on 58 closes, beat the close 69% · EV listed +2.56%
+-- Whether a scan dropped it before the start --
+   still listed at its last look · 13192 bets · 5137-4146-0 (W-L-P) · 5 void · 3904 open · ROI -2.18% (-202.6u on 9283u, ±1.5 points over 451 games) · CLV -1.21% ±0.15 over 356 games on 3448 closes, beat the close 37% · EV listed -0.81%
+   dropped off the list · 8223 bets · 2148-1906-0 (W-L-P) · 14 void · 4155 open · ROI -0.31% (-12.5u on 4054u, ±3.5 points over 318 games) · CLV +0.30% ±0.35 over 223 games on 1113 closes, beat the close 52% · EV listed -0.25%
+-- Hour of day first listed (Eastern) --
+   13-16 · 5120 bets · 1646-1320-0 (W-L-P) · 3 void · 2151 open · ROI -0.46% (-13.5u on 2966u, ±4.4 points over 262 games) · CLV -0.68% ±0.40 over 204 games on 852 closes, beat the close 40% · EV listed -0.43%
+   10-12 · 4269 bets · 1556-1267-0 (W-L-P) · 4 void · 1442 open · ROI -2.75% (-77.7u on 2823u, ±3.4 points over 266 games) · CLV -1.06% ±0.43 over 213 games on 855 closes, beat the close 39% · EV listed -0.73%
+   20-23 · 4209 bets · 1605-1393-0 (W-L-P) · 1 void · 1210 open · ROI -3.06% (-91.9u on 2998u, ±3.8 points over 238 games) · CLV -1.05% ±0.32 over 183 games on 1408 closes, beat the close 39% · EV listed -0.76%
+   17-19 · 2869 bets · 827-724-0 (W-L-P) · 4 void · 1314 open · ROI -2.75% (-42.6u on 1551u, ±5.8 points over 224 games) · CLV +0.23% ±0.57 over 155 games on 477 closes, beat the close 50% · EV listed -0.04%
+   06-09 · 2500 bets · 695-522-0 (W-L-P) · 6 void · 1277 open · ROI +1.47% (+17.8u on 1217u, ±5.8 points over 212 games) · CLV -0.60% ±0.55 over 158 games on 431 closes, beat the close 46% · EV listed -0.72%
+   00-05 · 2448 bets · 956-826-0 (W-L-P) · 1 void · 665 open · ROI -0.40% (-7.2u on 1782u, ±4.5 points over 282 games) · CLV -1.31% ±0.62 over 194 games on 538 closes, beat the close 38% · EV listed -0.94%
+-- Tj placed it --
+   no · 21415 bets · 7285-6052-0 (W-L-P) · 19 void · 8059 open · ROI -1.61% (-215.0u on 13337u, ±1.3 points over 469 games) · CLV -0.84% ±0.14 over 372 games on 4561 closes, beat the close 41% · EV listed -0.60%
+-- Price moved after the first look (best listed odds vs the first) --
+   same · 11001 bets · 3695-2986-0 (W-L-P) · 11 void · 4309 open · ROI +1.85% (+123.6u on 6681u, ±3.9 points over 453 games) · CLV +2.06% ±0.32 over 342 games on 1841 closes, beat the close 63% · EV listed -0.47%
+   got longer (better for the bettor) · 10288 bets · 3542-3009-0 (W-L-P) · 7 void · 3730 open · ROI -5.14% (-336.7u on 6551u, ±3.9 points over 347 games) · CLV -2.97% ±0.26 over 286 games on 2662 closes, beat the close 25% · EV listed -0.77%
+   ? · 126 bets · 48-57-0 (W-L-P) · 1 void · 20 open · ROI -1.82% (-1.9u on 105u, ±19.7 points over 61 games) · CLV +5.19% ±2.15 over 43 games on 58 closes, beat the close 69% · EV listed +2.56%
+-- Close source, for the bets that have one (never pool across them; Novig's trades split by how many trades are behind the close) --
+   SportsGameOdds · 1961 bets · 851-874-0 (W-L-P) · 236 open · ROI -2.09% (-36.0u on 1725u, ±2.9 points over 207 games) · CLV -0.32% ±0.22 over 211 games on 1961 closes, beat the close 45% · EV listed -0.52%
+   Novig's last trades: 3-5 trades · 1036 bets · 498-483-0 (W-L-P) · 55 open · ROI -4.70% (-46.1u on 981u, ±4.5 points over 224 games) · CLV -1.28% ±0.28 over 255 games on 1036 closes, beat the close 37% · EV listed -0.96%
+   Novig's last trades: 11 or more trades · 743 bets · 362-341-0 (W-L-P) · 40 open · ROI +1.31% (+9.2u on 703u, ±4.0 points over 144 games) · CLV -1.11% ±0.33 over 158 games on 743 closes, beat the close 40% · EV listed -0.90%
+   Novig's last trades: 6-10 trades · 610 bets · 296-292-0 (W-L-P) · 22 open · ROI -1.16% (-6.8u on 588u, ±6.1 points over 168 games) · CLV -1.40% ±0.43 over 183 games on 610 closes, beat the close 37% · EV listed -0.86%
+   ESPN · 211 bets · 104-98-0 (W-L-P) · 9 open · ROI +3.89% (+7.9u on 202u, ±4.3 points over 73 games) · CLV -0.86% ±0.57 over 76 games on 211 closes, beat the close 42% · EV listed -0.77%
+-- Where it closed against its price (CLV) --
+   no close · 16854 bets · 5174-3964-0 (W-L-P) · 19 void · 7697 open · ROI -1.57% (-143.2u on 9138u, ±1.7 points over 447 games) · no close yet · EV listed -0.56%
+   CLV 0 to -5% · 1747 bets · 835-794-0 (W-L-P) · 118 open · ROI -4.27% (-69.5u on 1629u, ±4.1 points over 278 games) · CLV -2.18% ±0.08 over 313 games on 1747 closes, beat the close 0% · EV listed -0.95%
+   CLV 0 to +5% · 1267 bets · 592-526-0 (W-L-P) · 149 open · ROI +3.91% (+43.7u on 1118u, ±9.8 points over 248 games) · CLV +2.16% ±0.09 over 271 games on 1267 closes, beat the close 100% · EV listed -0.62%
+   CLV under -5% · 948 bets · 406-501-0 (W-L-P) · 41 open · ROI -10.84% (-98.3u on 907u, ±13.4 points over 207 games) · CLV -9.00% ±0.41 over 217 games on 948 closes, beat the close 0% · EV listed -0.95%
+   CLV over +5% · 599 bets · 278-267-0 (W-L-P) · 54 open · ROI +9.59% (+52.2u on 545u, ±16.3 points over 162 games) · CLV +9.66% ±0.53 over 180 games on 599 closes, beat the close 100% · EV listed -0.05%
+-- PROPS: what the sharp-ranked book said (the app's veto; the first of Kalshi, ProphetX, then FanDuel/Caesars, DraftKings on MLB, that prices both sides) --
+   no book page was read (no verdict) · 2218 bets · 562-640-0 (W-L-P) · 18 void · 998 open · ROI -1.54% (-18.6u on 1202u, ±8.5 points over 74 games) · CLV +1.61% ±0.66 over 98 games on 649 closes, beat the close 64% · EV listed +4.31%
+   an originating book (FanDuel, Caesars or DraftKings) agrees · 15 bets · 2-1-0 (W-L-P) · 1 void · 11 open · ROI +47.33% (+1.4u on 3u) · CLV +1.23% on 2 closes, beat the close 50% · EV listed +4.47%
+   an exchange (Kalshi or ProphetX) agrees · 11 bets · 1-0-0 (W-L-P) · 10 open · ROI +102.00% (+1.0u on 1u) · CLV +1.79% on 2 closes, beat the close 100% · EV listed +4.14%
+   no sharp-ranked book prices both sides (not vetoed) · 6 bets · 2-2-0 (W-L-P) · 2 open · ROI -1.55% (-0.1u on 4u) · CLV +15.03% on 2 closes, beat the close 100% · EV listed +7.87%
+   an exchange (Kalshi or ProphetX) says no (vetoed) · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +5.20%
+-- PROPS: the sharp book's own edge at Novig's price --
+   sharp edge 4% or more · 18 bets · 2-1-0 (W-L-P) · 1 void · 14 open · ROI +47.33% (+1.4u on 3u) · CLV +1.23% on 2 closes, beat the close 50% · EV listed +4.49%
+   sharp edge 2 to 4% · 4 bets · 0-0-0 (W-L-P) · 4 open · no result yet · CLV +2.14% on 1 closes, beat the close 100% · EV listed +4.26%
+   sharp edge 1 to 2% · 4 bets · 1-0-0 (W-L-P) · 3 open · ROI +102.00% (+1.0u on 1u) · CLV +1.44% on 1 closes, beat the close 100% · EV listed +3.64%
+   sharp edge 0 to 1% · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +5.20%
+-- PROPS: are the exchanges (Kalshi, ProphetX) on the bet's page --
+   no book page was read · 2218 bets · 562-640-0 (W-L-P) · 18 void · 998 open · ROI -1.54% (-18.6u on 1202u, ±8.5 points over 74 games) · CLV +1.61% ±0.66 over 98 games on 649 closes, beat the close 64% · EV listed +4.31%
+   an exchange prices both sides · 25 bets · 4-2-0 (W-L-P) · 1 void · 18 open · ROI +35.47% (+2.1u on 6u) · CLV +6.18% on 5 closes, beat the close 80% · EV listed +5.02%
+   neither exchange is on the page · 7 bets · 1-1-0 (W-L-P) · 5 open · ROI +12.50% (+0.3u on 2u) · CLV +5.17% on 1 closes, beat the close 100% · EV listed +4.49%
+   an exchange prices one side only · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +7.88%
+
+== WHAT IF PROPS NEEDED A SHARP BOOK (props only; Tj asked 2026-10-03 whether to require one. Each rule is simulated over the logged props: the app's rules are unchanged. 'not judged' = no book page was read, so there is no sharp verdict) ==
+-- TODAY'S RULE: skip a prop only when a sharp-ranked book that prices both sides says it isn't +EV enough (no sharp book on the page: kept) --
+   KEPT · 32 bets · 5-3-0 (W-L-P) · 1 void · 23 open · ROI +29.73% (+2.4u on 8u, ±60.3 points over 5 games) · CLV +6.01% ±5.75 over 5 games on 6 closes, beat the close 83% · EV listed +4.99%
+   DROPPED · 1 bets · 0-0-0 (W-L-P) · 1 open · no result yet · no close yet · EV listed +5.20%
+   NOT JUDGED · 2218 bets · 562-640-0 (W-L-P) · 18 void · 998 open · ROI -1.54% (-18.6u on 1202u, ±8.5 points over 74 games) · CLV +1.61% ±0.66 over 98 games on 649 closes, beat the close 64% · EV listed +4.31%
+-- REQUIRE a sharp-ranked book (Kalshi, ProphetX, FanDuel, Caesars, DraftKings) to price both sides and agree --
+   KEPT · 26 bets · 3-1-0 (W-L-P) · 1 void · 21 open · ROI +61.00% (+2.4u on 4u) · CLV +1.51% on 4 closes, beat the close 75% · EV listed +4.33%
+   DROPPED · 7 bets · 2-2-0 (W-L-P) · 3 open · ROI -1.55% (-0.1u on 4u) · CLV +15.03% on 2 closes, beat the close 100% · EV listed +7.49%
+   NOT JUDGED · 2218 bets · 562-640-0 (W-L-P) · 18 void · 998 open · ROI -1.54% (-18.6u on 1202u, ±8.5 points over 74 games) · CLV +1.61% ±0.66 over 98 games on 649 closes, beat the close 64% · EV listed +4.31%
+-- REQUIRE an exchange (Kalshi or ProphetX) to price both sides and agree --
+   KEPT · 11 bets · 1-0-0 (W-L-P) · 10 open · ROI +102.00% (+1.0u on 1u) · CLV +1.79% on 2 closes, beat the close 100% · EV listed +4.14%
+   DROPPED · 22 bets · 4-3-0 (W-L-P) · 1 void · 14 open · ROI +19.40% (+1.4u on 7u, ±78.6 points over 5 games) · CLV +8.13% on 4 closes, beat the close 75% · EV listed +5.43%
+   NOT JUDGED · 2218 bets · 562-640-0 (W-L-P) · 18 void · 998 open · ROI -1.54% (-18.6u on 1202u, ±8.5 points over 74 games) · CLV +1.61% ±0.66 over 98 games on 649 closes, beat the close 64% · EV listed +4.31%
+
+
 == THE ENGINE'S OWN ORDERS (trades.json on cloud-feed: paper or live, settled by engine-grade.yml) ==
-ENGINE ORDERS: 1004 in the ledger; stopped: no; day start equity $265.14
-ALL                          orders 1004  at risk $   406.75  settled  656  won  334  pnl $    25.32  ROI    +8.6%  avg EV when placed +3.4%
+ENGINE ORDERS: 1008 in the ledger; stopped: no; day start equity $265.14
+ALL                          orders 1008  at risk $   409.39  settled  656  won  334  pnl $    25.32  ROI    +8.6%  avg EV when placed +3.5%
 -- by mode --
-LIVE                         orders 1004  at risk $   406.75  settled  656  won  334  pnl $    25.32  ROI    +8.6%  avg EV when placed +3.4%
+LIVE                         orders 1008  at risk $   409.39  settled  656  won  334  pnl $    25.32  ROI    +8.6%  avg EV when placed +3.5%
 -- by league --
 NCAAF                        orders  370  at risk $   106.59  settled  186  won  101  pnl $     7.67  ROI   +11.9%  avg EV when placed +3.3%
-NBA                          orders  305  at risk $   149.02  settled  234  won  104  pnl $    -1.71  ROI    -1.5%  avg EV when placed +3.4%
+NBA                          orders  308  at risk $   151.46  settled  234  won  104  pnl $    -1.71  ROI    -1.5%  avg EV when placed +3.4%
 NHL                          orders  139  at risk $    66.79  settled   98  won   55  pnl $     7.97  ROI   +19.4%  avg EV when placed +2.5%
-NFL                          orders  127  at risk $    55.39  settled   95  won   55  pnl $    14.95  ROI   +30.2%  avg EV when placed +5.2%
+NFL                          orders  128  at risk $    55.58  settled   95  won   55  pnl $    14.95  ROI   +30.2%  avg EV when placed +5.2%
 MLB                          orders   31  at risk $    15.25  settled   21  won   11  pnl $     1.39  ROI   +12.8%  avg EV when placed +2.8%
 WNBA                         orders   26  at risk $    12.12  settled   19  won    7  pnl $    -4.23  ROI   -40.6%  avg EV when placed +3.2%
 ATP                          orders    3  at risk $     1.17  settled    3  won    1  pnl $    -0.72  ROI   -61.3%  avg EV when placed +3.7%
 UFC                          orders    3  at risk $     0.42  settled    0  won    0  pnl $     0.00  ROI      n/a  avg EV when placed +3.0%
 -- by kind --
-Team totals                  orders  240  at risk $   103.56  settled  184  won  108  pnl $    14.10  ROI   +17.3%  avg EV when placed +2.4%
-Player props                 orders  213  at risk $   128.19  settled  137  won   68  pnl $    21.80  ROI   +25.0%  avg EV when placed +3.7%
+Team totals                  orders  241  at risk $   103.75  settled  184  won  108  pnl $    14.10  ROI   +17.3%  avg EV when placed +2.4%
+Player props                 orders  214  at risk $   128.64  settled  137  won   68  pnl $    21.80  ROI   +25.0%  avg EV when placed +3.7%
 Spreads                      orders  210  at risk $    51.21  settled  110  won   46  pnl $    -3.89  ROI   -12.4%  avg EV when placed +3.8%
 Game totals                  orders  138  at risk $    28.48  settled   67  won   29  pnl $    -2.36  ROI   -16.2%  avg EV when placed +3.0%
 1st half / inning / set lines orders  133  at risk $    60.26  settled  109  won   53  pnl $    -3.81  ROI    -7.4%  avg EV when placed +2.3%
-live                         orders   36  at risk $    28.94  settled   31  won   19  pnl $    -1.44  ROI    -5.8%  avg EV when placed +8.2%
+live                         orders   38  at risk $    30.93  settled   31  won   19  pnl $    -1.44  ROI    -5.8%  avg EV when placed +8.2%
 Moneylines                   orders   34  at risk $     6.13  settled   18  won   11  pnl $     0.92  ROI   +31.8%  avg EV when placed +3.1%
 
 == BETS AND BIDS BY ORIGIN (TCL69: judge the rules on phone-auto, phone-bid, engine-auto, engine-bid; manual is shown, never evidence for them) ==
@@ -1552,32 +1199,32 @@ Moneylines                   orders   34  at risk $     6.13  settled   18  won 
 | origin | rows | settled | staked | profit | ROI | z | CLV (n) |
 |:--|--:|--:|--:|--:|--:|--:|:--|
 | manual | 2561 | 1885 | $1645.79 | -92.10 | -5.6% | -1.63 | +0.2% (1556) |
-| engine-bid | 890 | 551 | $216.87 | +11.71 | +5.4% | +1.59 |  |
+| engine-bid | 892 | 551 | $216.87 | +11.71 | +5.4% | +1.59 |  |
 | phone-auto | 548 | 542 | $703.38 | -30.32 | -4.3% | -1.66 | +0.8% (481) |
 | phone-bid | 529 | 524 | $568.00 | +6.18 | +1.1% | +0.30 | +2.2% (428) |
-| engine-auto | 114 | 105 | $77.04 | +13.61 | +17.7% | +0.00 |  |
+| engine-auto | 116 | 105 | $77.04 | +13.61 | +17.7% | +0.00 |  |
 | manual-bid | 34 | 32 | $25.40 | -0.28 | -1.1% | -0.38 | +0.4% (25) |
 | lock | 12 | 12 | $16.86 | +10.99 | +65.2% | +2.78 |  |
-| ALL FOR RULES (auto + bids) | 2081 | 1722 | $1565.29 | +1.18 | +0.1% | +0.16 | +1.5% (909) |
+| ALL FOR RULES (auto + bids) | 2085 | 1722 | $1565.29 | +1.18 | +0.1% | +0.16 | +1.5% (909) |
 
 -- rule evidence by kind (auto + bids only) --
 | kind | rows | settled | staked | profit | ROI | z | CLV (n) |
 |:--|--:|--:|--:|--:|--:|--:|:--|
-| Player props | 809 | 730 | $907.63 | -19.91 | -2.2% | -0.92 | +2.0% (563) |
-| Team totals | 382 | 326 | $227.68 | +47.92 | +21.0% | +3.43 | +2.9% (129) |
+| Player props | 810 | 730 | $907.63 | -19.91 | -2.2% | -0.92 | +2.0% (563) |
+| Team totals | 383 | 326 | $227.68 | +47.92 | +21.0% | +3.43 | +2.9% (129) |
 | Spreads | 335 | 234 | $163.29 | -19.43 | -11.9% | -1.50 | -1.8% (97) |
 | Game totals | 248 | 174 | $103.19 | +18.64 | +18.1% | +0.49 | -0.6% (74) |
 | 1st half / inning / set lines | 156 | 132 | $68.50 | -1.25 | -1.8% | +0.36 | +2.9% (23) |
 | Moneylines | 115 | 95 | $70.29 | -23.35 | -33.2% | -1.33 | -2.4% (23) |
-| live | 36 | 31 | $24.70 | -1.44 | -5.8% | -1.80 |  |
+| live | 38 | 31 | $24.70 | -1.44 | -5.8% | -1.80 |  |
 
 -- rule evidence by league (auto + bids only) --
 | league | rows | settled | staked | profit | ROI | z | CLV (n) |
 |:--|--:|--:|--:|--:|--:|--:|:--|
 | NCAAF | 524 | 334 | $199.24 | +40.79 | +20.5% | +2.66 | +0.8% (123) |
-| NFL | 466 | 432 | $497.19 | -33.92 | -6.8% | -1.00 | +1.7% (314) |
+| NFL | 467 | 432 | $497.19 | -33.92 | -6.8% | -1.00 | +1.7% (314) |
 | NHL | 407 | 365 | $355.00 | +37.23 | +10.5% | +1.65 | +2.6% (247) |
-| NBA | 386 | 315 | $199.87 | -29.72 | -14.9% | -1.72 | -5.0% (59) |
+| NBA | 389 | 315 | $199.87 | -29.72 | -14.9% | -1.72 | -5.0% (59) |
 | MLB | 128 | 117 | $142.52 | +7.15 | +5.0% | +0.20 | +2.2% (86) |
 | WNBA | 71 | 64 | $77.50 | -10.89 | -14.1% | -1.55 | +0.7% (43) |
 | WTA | 51 | 50 | $50.04 | -12.36 | -24.7% | -1.86 | +1.8% (25) |
@@ -1597,7 +1244,7 @@ Moneylines                   orders   34  at risk $     6.13  settled   18  won 
 | 10-20 | 17 | 77 | $44.73 |
 | 10-21 | 14 | 189 | $107.31 |
 | 10-22 | 3 | 105 | $40.59 |
-| 10-23 | 3 | 98 | $50.77 |
+| 10-23 | 5 | 100 | $53.40 |
 
 ## Bids a day (UTC days; a fill rate under 2 per 1000 postings means most postings cannot fill)
 
@@ -1661,14 +1308,14 @@ By day (scans on / median fed / median sole / median p90 s / failing scans):
   Unabated               10-21 6/0.0/0.0/45093/0  10-22 182/0.0/0.0/59826.0/2  10-23 0/None/None/None/0
 
 == STAR RATING CHECK (cloud/StarCheckMain.kt over the engine-dataset lines) ==
-star check: 125 lines -> /home/runner/work/novig/novig/out/stars.txt
-STAR RATING CHECK (cloud/StarCheckMain.kt) · 2880 +EV lines the engine saw, game days 2026-10-15 to 2026-11-01 (14 days) · 844 with a close · 1727 settled
+star check: 119 lines -> /home/runner/work/novig/novig/out/stars.txt
+STAR RATING CHECK (cloud/StarCheckMain.kt) · 1968 +EV lines the engine saw, game days 2026-10-15 to 2026-11-01 (14 days) · 507 with a close · 1304 settled
 Each line re-rated with the rating the app ships now (history points from profit_profile.json as of 2026-10-16, lead points, the small-book cap). CLV = close_fair / cost - 1 (positive = beat the close);
 ROI per $1 at the first price. ± is a 95% interval over GAMES (a game's lines averaged first). A sound rating gives more CLV and more ROI as the stars rise; intervals that overlap do not differ.
 The history points were fitted to Tj's own bets (out of sample here); the lead points and the small-book cap were fitted to these lines (in sample).
+Left out: 912 lines logged before the engine recorded the rating's inputs (companies, agreement): not recordable                912 · CLV   337 bets   58 games   +3.68%   ±1.50 · results   423 bets   61 games ROI   -0.22%  ±21.29 · win 50%
 -- Stars now (re-rated) --
-  1.0                           478 · CLV   195 bets   37 games   +3.32%   ±1.75 · results   162 bets   24 games ROI  -28.48%  ±30.22 · win 49%
-  1.5                           569 · CLV   158 bets   63 games   +2.70%   ±1.45 · results   345 bets  114 games ROI   -9.28%  ±17.07 · win 48%
+  1.5                           135 · CLV    16 bets   16 games   -0.24%   ±3.75 · results    84 bets   63 games ROI  -24.65%  ±23.66 · win 42%
   2.0                           433 · CLV    48 bets   35 games   +0.49%   ±4.32 · results   314 bets   93 games ROI   -4.92%  ±18.20 · win 39%
   2.5                           255 · CLV    43 bets   38 games   -0.28%   ±2.89 · results   153 bets   95 games ROI  -14.26%  ±19.54 · win 40%
   3.0                           762 · CLV   280 bets  146 games   +0.27%   ±0.91 · results   507 bets  185 games ROI   -3.57%  ±11.81 · win 44%
@@ -1677,17 +1324,17 @@ The history points were fitted to Tj's own bets (out of sample here); the lead p
   4.5                            71 · CLV    29 bets   26 games   +1.98%   ±2.08 · results    47 bets   40 games ROI   -4.07%  ±31.97 · win 47%
   5.0                            14 · CLV     4 bets    4 games   +0.01%      ±? · results     9 bets    9 games ROI  +18.83%  ±73.73 · win 56%
 -- Stars now, coarse --
-  1-1.5                        1047 · CLV   353 bets   71 games   +2.87%   ±1.40 · results   507 bets  118 games ROI  -14.60%  ±16.27 · win 48%
+  1-1.5                         135 · CLV    16 bets   16 games   -0.24%   ±3.75 · results    84 bets   63 games ROI  -24.65%  ±23.66 · win 42%
   2-2.5                         688 · CLV    91 bets   62 games   -0.75%   ±2.16 · results   467 bets  142 games ROI   -8.19%  ±14.86 · win 40%
   3-3.5                         899 · CLV   315 bets  150 games   +0.15%   ±0.85 · results   596 bets  196 games ROI   -7.26%  ±11.35 · win 43%
   4-5                           246 · CLV    85 bets   62 games   +1.11%   ±2.13 · results   157 bets  101 games ROI   -0.81%  ±19.87 · win 46%
 -- Stars now, the lines the list showed --
-  1-1.5                         819 · CLV   283 bets   31 games   +2.03%   ±0.98 · results   334 bets   27 games ROI  +17.30%  ±30.08 · win 51%
+  1-1.5                          33 · CLV     4 bets    4 games   +7.94%      ±? · results    16 bets   15 games ROI  +33.69%  ±53.53 · win 63%
   2-2.5                         183 · CLV    27 bets   21 games   +0.13%   ±2.28 · results   125 bets   62 games ROI   -5.18%  ±21.93 · win 43%
   3-3.5                         365 · CLV   132 bets   83 games   +0.15%   ±1.34 · results   248 bets  127 games ROI   -0.52%  ±16.00 · win 46%
   4-5                           218 · CLV    79 bets   58 games   +0.04%   ±1.78 · results   139 bets   92 games ROI   -0.74%  ±19.95 · win 48%
 -- Stars as logged (the rating of the day) --
-  not logged                    914 · CLV   338 bets   58 games   +3.70%   ±1.50 · results   425 bets   61 games ROI   -0.14%  ±21.29 · win 50%
+  not logged                      2 · CLV     1 bets    1 games  +18.44%      ±? · results     2 bets    2 games ROI  +96.91%      ±? · win 100%
   1.5                           144 · CLV    19 bets   19 games   -1.08%   ±2.43 · results    91 bets   67 games ROI  -22.35%  ±22.81 · win 43%
   2.0                           197 · CLV    62 bets   48 games   -1.69%   ±1.65 · results   130 bets   88 games ROI  -11.96%  ±20.96 · win 41%
   2.5                           440 · CLV   113 bets   77 games   +0.16%   ±2.36 · results   293 bets  142 games ROI   -9.81%  ±15.17 · win 43%
@@ -1696,18 +1343,22 @@ The history points were fitted to Tj's own bets (out of sample here); the lead p
   4.0                           149 · CLV    54 bets   45 games   -0.86%   ±2.24 · results   101 bets   68 games ROI   -7.48%  ±23.74 · win 43%
   4.5                            76 · CLV    24 bets   20 games   +3.51%   ±2.58 · results    45 bets   34 games ROI  +36.08%  ±36.01 · win 56%
   5.0                            36 · CLV    12 bets   12 games   +6.35%   ±7.53 · results    18 bets   17 games ROI   +4.79%  ±49.78 · win 50%
+-- Stars now vs as logged, the same lines (logged -> now) --
+  lowered                       574 · CLV    87 bets   55 games   +2.07%   ±2.41 · results   384 bets   99 games ROI   -8.09%  ±17.46 · win 41%
+  raised                        314 · CLV   134 bets   86 games   -0.49%   ±1.29 · results   235 bets  141 games ROI   -8.76%  ±16.41 · win 44%
+  same                         1078 · CLV   285 bets  153 games   +0.17%   ±0.94 · results   683 bets  228 games ROI  -11.71%  ±10.25 · win 42%
 -- Stars now, by period (stability) --
   early 2.5-3                   638 · CLV   299 bets  142 games   -0.08%   ±1.05 · results   609 bets  186 games ROI   -8.51%  ±10.95 · win 43%
   early 3.5+                    224 · CLV    97 bets   70 games   +1.10%   ±1.64 · results   215 bets  115 games ROI   -8.19%  ±17.16 · win 44%
-  early <2.5                    693 · CLV   171 bets   71 games   +2.50%   ±2.30 · results   617 bets  147 games ROI  -16.85%  ±13.36 · win 43%
+  early <2.5                    417 · CLV    57 bets   43 games   +0.82%   ±3.45 · results   364 bets  125 games ROI  -19.32%  ±14.61 · win 39%
   late 2.5-3                    379 · CLV    24 bets   15 games   +2.90%   ±1.82 · results    51 bets   18 games ROI  -20.75%  ±39.95 · win 45%
   late 3.5+                     159 · CLV    23 bets   11 games   -0.81%   ±2.87 · results    31 bets   12 games ROI  -21.61%  ±50.41 · win 52%
-  late <2.5                     787 · CLV   230 bets   18 games   +0.95%   ±1.79 · results   204 bets   17 games ROI  +11.38%  ±46.06 · win 51%
-  CLV per star: -0.44 points (t -1.9, bets as the unit)
-  ROI per star: -0.25 points (t -0.1, bets as the unit)
+  late <2.5                     151 · CLV     7 bets    6 games   -1.99%   ±9.95 · results    34 bets   14 games ROI  +23.78%  ±50.64 · win 53%
+  CLV per star: +0.50 points (t 1.0, bets as the unit)
+  ROI per star: +4.99 points (t 1.2, bets as the unit)
 == Each input of the rating on its own ==
 -- Companies pricing both sides --
-  0                             914 · CLV   338 bets   58 games   +3.70%   ±1.50 · results   425 bets   61 games ROI   -0.14%  ±21.29 · win 50%
+  0                               2 · CLV     1 bets    1 games  +18.44%      ±? · results     2 bets    2 games ROI  +96.91%      ±? · win 100%
   1                             116 · CLV    14 bets   14 games   -0.77%   ±2.89 · results    74 bets   54 games ROI  -26.43%  ±25.34 · win 41%
   2                             453 · CLV    47 bets   39 games   +0.33%   ±4.27 · results   337 bets  112 games ROI  -13.38%  ±16.94 · win 38%
   3                             162 · CLV    25 bets   24 games   +0.70%   ±3.46 · results    96 bets   71 games ROI   +3.67%  ±23.93 · win 47%
@@ -1719,70 +1370,60 @@ The history points were fitted to Tj's own bets (out of sample here); the lead p
   50-75%                        282 · CLV    78 bets   61 games   -1.47%   ±1.37 · results   193 bets  121 games ROI  -11.03%  ±16.99 · win 42%
   75-99%                        354 · CLV   159 bets   97 games   +0.91%   ±1.32 · results   251 bets  134 games ROI  -11.50%  ±15.03 · win 43%
   <=50%                         340 · CLV    76 bets   63 games   -0.03%   ±2.79 · results   212 bets  127 games ROI  -17.15%  ±16.31 · win 38%
-  unknown                       914 · CLV   338 bets   58 games   +3.70%   ±1.50 · results   425 bets   61 games ROI   -0.14%  ±21.29 · win 50%
+  unknown                         2 · CLV     1 bets    1 games  +18.44%      ±? · results     2 bets    2 games ROI  +96.91%      ±? · win 100%
 -- Edge at the price --
-  0-2%                         1692 · CLV   540 bets  177 games   +0.49%   ±0.75 · results   990 bets  233 games ROI  -11.49%   ±9.68 · win 44%
+  0-2%                         1153 · CLV   331 bets  163 games   +0.39%   ±0.81 · results   754 bets  230 games ROI  -11.63%   ±9.83 · win 42%
   12%+                          137 · CLV     8 bets    6 games   -2.88%  ±15.33 · results   129 bets   28 games ROI  -28.26%  ±29.61 · win 33%
-  2-4%                          706 · CLV   219 bets   99 games   +1.76%   ±1.29 · results   414 bets  146 games ROI   -8.48%  ±14.27 · win 47%
-  4-6%                          214 · CLV    52 bets   39 games   +1.06%   ±2.13 · results   112 bets   61 games ROI   -0.04%  ±24.12 · win 49%
-  6-12%                         131 · CLV    25 bets   19 games   +4.90%   ±4.89 · results    82 bets   50 games ROI   -2.46%  ±28.07 · win 44%
+  2-4%                          389 · CLV   111 bets   74 games   +0.18%   ±1.59 · results   245 bets  127 games ROI   -5.40%  ±16.45 · win 45%
+  4-6%                          169 · CLV    36 bets   30 games   +0.90%   ±2.56 · results    97 bets   60 games ROI   +1.39%  ±24.69 · win 52%
+  6-12%                         120 · CLV    21 bets   17 games   +5.25%   ±5.48 · results    79 bets   49 games ROI   -4.49%  ±28.13 · win 44%
 -- Sharp book --
   against                        48 · CLV     9 bets    9 games   -2.74%   ±4.21 · results    35 bets   31 games ROI   -5.34%  ±38.40 · win 43%
   agrees                       1074 · CLV   389 bets  176 games   +0.30%   ±0.85 · results   718 bets  233 games ROI  -13.03%  ±10.31 · win 42%
-  none priced it               1758 · CLV   446 bets   98 games   +1.94%   ±1.29 · results   974 bets  165 games ROI   -1.88%  ±12.84 · win 46%
+  none priced it                846 · CLV   109 bets   62 games   +0.65%   ±1.74 · results   551 bets  146 games ROI   -1.12%  ±13.83 · win 43%
 -- Books' fair spread (sd) --
   1-3 pts                       615 · CLV   165 bets   96 games   +1.08%   ±1.28 · results   393 bets  146 games ROI   -9.67%  ±13.64 · win 40%
   3-5 pts                        57 · CLV    16 bets   12 games   -3.76%   ±8.24 · results    37 bets   21 games ROI  +14.16%  ±43.33 · win 46%
   <=1 pt                       1160 · CLV   310 bets  154 games   +0.08%   ±0.83 · results   783 bets  208 games ROI   -8.39%  ±10.70 · win 44%
   >5 pts                         18 · CLV     1 bets    1 games  +64.58%      ±? · results    15 bets   14 games ROI   -9.46% ±102.86 · win 27%
-  unknown                      1030 · CLV   352 bets   71 games   +2.89%   ±1.40 · results   499 bets  112 games ROI  -11.83%  ±16.69 · win 48%
+  unknown                       118 · CLV    15 bets   15 games   +0.51%   ±3.68 · results    76 bets   56 games ROI  -22.02%  ±25.32 · win 42%
 -- Lead time --
-  1-6h                          601 · CLV   168 bets   80 games   +1.42%   ±1.02 · results   451 bets  136 games ROI   +3.28%  ±15.13 · win 48%
-  6-24h                         780 · CLV   296 bets   98 games   +1.25%   ±1.12 · results   508 bets  156 games ROI  -16.29%  ±13.24 · win 44%
-  <1h                           268 · CLV   101 bets   50 games   +1.50%   ±1.29 · results   225 bets   76 games ROI  -28.43%  ±18.12 · win 38%
-  >24h                         1231 · CLV   279 bets   96 games   +0.39%   ±1.57 · results   543 bets  122 games ROI   -3.89%  ±12.81 · win 43%
+  1-6h                          332 · CLV    81 bets   54 games   +0.53%   ±1.15 · results   286 bets  122 games ROI   -1.19%  ±17.14 · win 45%
+  6-24h                         498 · CLV   133 bets   87 games   +0.91%   ±1.29 · results   370 bets  148 games ROI  -14.38%  ±13.92 · win 41%
+  <1h                           122 · CLV    29 bets   23 games   +0.27%   ±1.11 · results   115 bets   63 games ROI  -30.81%  ±20.99 · win 32%
+  >24h                         1016 · CLV   264 bets   91 games   +0.17%   ±1.64 · results   533 bets  121 games ROI   -2.47%  ±12.89 · win 44%
 -- History + lead points --
-  -5..-0.5                     1321 · CLV   391 bets  138 games   +0.94%   ±1.08 · results   844 bets  187 games ROI   -4.49%  ±11.54 · win 47%
-  0.5..5                        523 · CLV   129 bets   71 games   -0.86%   ±1.09 · results   362 bets  145 games ROI  -22.83%  ±13.02 · win 41%
-  <=-5                          914 · CLV   287 bets   64 games   +1.83%   ±1.59 · results   419 bets   65 games ROI  -15.91%  ±18.21 · win 40%
-  >=5                            60 · CLV    19 bets   15 games   +0.58%   ±1.92 · results    55 bets   42 games ROI   -7.97%  ±32.50 · win 44%
-  about 0                        62 · CLV    18 bets   18 games   +0.85%   ±2.26 · results    47 bets   36 games ROI   -5.18%  ±33.72 · win 51%
+  -5..-0.5                      892 · CLV   236 bets  118 games   +0.11%   ±1.11 · results   564 bets  178 games ROI   -5.74%  ±11.97 · win 45%
+  0.5..5                        495 · CLV   120 bets   68 games   -1.01%   ±1.13 · results   346 bets  143 games ROI  -21.80%  ±13.31 · win 40%
+  <=-5                          467 · CLV   116 bets   52 games   +1.52%   ±1.98 · results   297 bets   62 games ROI   -9.24%  ±20.27 · win 39%
+  >=5                            58 · CLV    18 bets   14 games   +0.76%   ±2.03 · results    53 bets   40 games ROI   -3.37%  ±33.50 · win 45%
+  about 0                        56 · CLV    17 bets   17 games   +0.96%   ±2.39 · results    44 bets   34 games ROI   -5.26%  ±34.84 · win 50%
 -- Kind --
-  1st half / inning / set li     73 · CLV    30 bets   24 games   -0.22%   ±2.29 · results    53 bets   37 games ROI  -13.94%  ±30.58 · win 43%
-  Game totals                   612 · CLV   148 bets   92 games   -0.27%   ±1.08 · results   393 bets  156 games ROI  -21.40%  ±13.43 · win 40%
-  Moneylines                    152 · CLV    49 bets   48 games   -0.59%   ±2.58 · results    71 bets   63 games ROI  -14.21%  ±25.01 · win 49%
-  Other                          32 · CLV     0 bets    0 games        -      ±? · results     0 bets    0 games ROI        -      ±? · win -
-  Player props                 1327 · CLV   431 bets   70 games   +3.17%   ±1.40 · results   754 bets   54 games ROI   +0.80%  ±18.39 · win 46%
-  Spreads                       509 · CLV   135 bets   88 games   -0.43%   ±1.16 · results   325 bets  154 games ROI   -9.71%  ±13.44 · win 41%
-  Team totals                   175 · CLV    51 bets   42 games   +1.93%   ±1.39 · results   131 bets   97 games ROI   +0.57%  ±18.90 · win 49%
+  1st half / inning / set li     63 · CLV    26 bets   22 games   -0.46%   ±2.45 · results    45 bets   34 games ROI  -11.29%  ±32.45 · win 42%
+  Game totals                   593 · CLV   146 bets   92 games   -0.17%   ±1.12 · results   389 bets  156 games ROI  -21.50%  ±13.43 · win 40%
+  Moneylines                    146 · CLV    47 bets   46 games   -0.57%   ±2.70 · results    69 bets   61 games ROI  -15.03%  ±25.31 · win 49%
+  Player props                  539 · CLV   114 bets   56 games   +2.50%   ±1.73 · results   385 bets   48 games ROI   -4.08%  ±20.39 · win 42%
+  Spreads                       492 · CLV   133 bets   87 games   -0.47%   ±1.17 · results   323 bets  154 games ROI   -9.63%  ±13.43 · win 41%
+  Team totals                   135 · CLV    41 bets   35 games   +1.01%   ±1.74 · results    93 bets   76 games ROI   +8.62%  ±21.74 · win 53%
 -- Kind and side --
-  1st half / inning / set li     24 · CLV     7 bets    6 games   -3.05%   ±2.64 · results    15 bets   14 games ROI   -5.48%  ±53.73 · win 47%
-  1st half / inning / set li     35 · CLV    16 bets   15 games   -0.14%   ±3.54 · results    27 bets   20 games ROI   -5.16%  ±47.26 · win 44%
-  1st half / inning / set li     14 · CLV     7 bets    7 games   +2.62%   ±2.58 · results    11 bets   10 games ROI  -21.16%  ±63.23 · win 36%
-  Game totals over              315 · CLV    81 bets   58 games   +0.61%   ±1.81 · results   213 bets  104 games ROI  -22.12%  ±19.25 · win 38%
-  Game totals under             297 · CLV    67 bets   53 games   -0.81%   ±1.52 · results   180 bets  111 games ROI  -17.21%  ±20.29 · win 43%
-  Moneylines other              152 · CLV    49 bets   48 games   -0.59%   ±2.58 · results    71 bets   63 games ROI  -14.21%  ±25.01 · win 49%
-  Other other                    32 · CLV     0 bets    0 games        -      ±? · results     0 bets    0 games ROI        -      ±? · win -
-  Player props other              2 · CLV     0 bets    0 games        -      ±? · results     0 bets    0 games ROI        -      ±? · win -
-  Player props over             555 · CLV   172 bets   42 games   +5.60%   ±3.24 · results   294 bets   36 games ROI  +10.90%  ±27.29 · win 40%
-  Player props under            770 · CLV   259 bets   65 games   +1.94%   ±1.32 · results   460 bets   50 games ROI   +0.01%  ±19.42 · win 50%
-  Spreads other                 509 · CLV   135 bets   88 games   -0.43%   ±1.16 · results   325 bets  154 games ROI   -9.71%  ±13.44 · win 41%
-  Team totals over               92 · CLV    28 bets   24 games   +2.18%   ±2.38 · results    68 bets   58 games ROI   +7.19%  ±26.22 · win 51%
-  Team totals under              83 · CLV    23 bets   22 games   +1.43%   ±2.07 · results    63 bets   53 games ROI  -12.06%  ±26.33 · win 46%
+  1st half / inning / set li     19 · CLV     6 bets    6 games   -2.82%   ±2.83 · results    11 bets   11 games ROI  -10.03%  ±61.38 · win 45%
+  1st half / inning / set li     32 · CLV    15 bets   14 games   -0.53%   ±3.71 · results    25 bets   19 games ROI   -0.27%  ±48.70 · win 44%
+  1st half / inning / set li     12 · CLV     5 bets    5 games   +3.23%   ±3.50 · results     9 bets    8 games ROI  -27.76%  ±69.18 · win 33%
+  Game totals over              306 · CLV    80 bets   58 games   +0.72%   ±1.84 · results   212 bets  104 games ROI  -22.12%  ±19.25 · win 38%
+  Game totals under             287 · CLV    66 bets   52 games   -0.77%   ±1.55 · results   177 bets  111 games ROI  -15.04%  ±21.99 · win 42%
+  Moneylines other              146 · CLV    47 bets   46 games   -0.57%   ±2.70 · results    69 bets   61 games ROI  -15.03%  ±25.31 · win 49%
+  Player props over             178 · CLV    22 bets   18 games   +9.01%   ±8.25 · results   142 bets   31 games ROI   +1.50%  ±31.52 · win 33%
+  Player props under            361 · CLV    92 bets   50 games   +2.04%   ±1.79 · results   243 bets   46 games ROI   -0.86%  ±21.33 · win 47%
+  Spreads other                 492 · CLV   133 bets   87 games   -0.47%   ±1.17 · results   323 bets  154 games ROI   -9.63%  ±13.43 · win 41%
+  Team totals over               78 · CLV    23 bets   19 games   +1.10%   ±2.35 · results    54 bets   47 games ROI   +8.29%  ±29.00 · win 52%
+  Team totals under              57 · CLV    18 bets   17 games   +0.80%   ±2.53 · results    39 bets   34 games ROI   +8.40%  ±33.97 · win 54%
 -- League --
   ATP                            99 · CLV    17 bets   13 games   -1.17%   ±1.55 · results    66 bets   33 games ROI  -11.39%  ±32.18 · win 41%
-  Bundesliga (Germany)            1 · CLV     0 bets    0 games        -      ±? · results     0 bets    0 games ROI        -      ±? · win -
-  LaLiga (Spain)                  8 · CLV     0 bets    0 games        -      ±? · results     0 bets    0 games ROI        -      ±? · win -
-  Ligue 1 (France)                4 · CLV     0 bets    0 games        -      ±? · results     0 bets    0 games ROI        -      ±? · win -
-  MLB                            37 · CLV    12 bets    3 games   -0.19%      ±? · results    18 bets    3 games ROI  +21.71%      ±? · win 50%
-  MLS (USA)                      10 · CLV     0 bets    0 games        -      ±? · results     0 bets    0 games ROI        -      ±? · win -
-  NBA                           844 · CLV   225 bets   26 games   +2.01%   ±1.85 · results   672 bets   28 games ROI  -19.81%  ±16.03 · win 43%
-  NCAAF                         887 · CLV   238 bets   87 games   -0.08%   ±1.31 · results   522 bets  110 games ROI   -4.27%  ±11.81 · win 47%
-  NFL                           549 · CLV   117 bets   15 games   +0.90%   ±2.62 · results   283 bets   15 games ROI  -13.11%  ±15.85 · win 43%
-  NHL                           341 · CLV   217 bets   44 games   +1.91%   ±1.56 · results    94 bets   48 games ROI  -12.44%  ±23.72 · win 44%
-  Premier League (England)       10 · CLV     0 bets    0 games        -      ±? · results     0 bets    0 games ROI        -      ±? · win -
-  Serie A (Italy)                 2 · CLV     0 bets    0 games        -      ±? · results     0 bets    0 games ROI        -      ±? · win -
-  UEFA Europa League              2 · CLV     0 bets    0 games        -      ±? · results     0 bets    0 games ROI        -      ±? · win -
+  MLB                            23 · CLV    12 bets    3 games   -0.19%      ±? · results    12 bets    3 games ROI   -9.90%      ±? · win 33%
+  NBA                           464 · CLV   105 bets   26 games   +1.39%   ±2.06 · results   382 bets   28 games ROI  -22.49%  ±17.72 · win 38%
+  NCAAF                         851 · CLV   230 bets   87 games   -0.12%   ±1.31 · results   504 bets  110 games ROI   -4.00%  ±11.77 · win 47%
+  NFL                           347 · CLV    80 bets   15 games   +0.66%   ±2.62 · results   207 bets   15 games ROI  -14.66%  ±18.47 · win 39%
+  NHL                           103 · CLV    48 bets   33 games   +0.94%   ±1.39 · results    66 bets   42 games ROI   -4.77%  ±26.42 · win 47%
   UFC                             5 · CLV     0 bets    0 games        -      ±? · results     0 bets    0 games ROI        -      ±? · win -
-  WNBA                           26 · CLV     7 bets    2 games   +6.06%      ±? · results    25 bets    2 games ROI  +21.32%      ±? · win 60%
+  WNBA                           21 · CLV     4 bets    2 games   +5.20%      ±? · results    20 bets    2 games ROI  +78.89%      ±? · win 65%
   WTA                            55 · CLV    11 bets   11 games   -1.01%   ±1.53 · results    47 bets   25 games ROI  -46.08%  ±30.22 · win 34%
