@@ -6,10 +6,10 @@
  "kind": "routine",
  "task": "rotation",
  "branch": "claude/optimistic-curie-nzj8hm",
- "head": "f5b889f7430dd8336c962571324d04a7d418eb5d",
+ "head": "1bb4f757fffb8324cad5e94b6252f80948bfbaac",
  "since": 1792797185,
- "beat": 1792797700,
- "beatIso": "2026-10-23T23:21:40Z",
- "done": "",
- "next": ""
+ "beat": 1792797785,
+ "beatIso": "2026-10-23T23:23:05Z",
+ "done": "ANALYST 2026-10-23: no rule change",
+ "next": "WATCH list: spreads/game totals at n200"
 }
