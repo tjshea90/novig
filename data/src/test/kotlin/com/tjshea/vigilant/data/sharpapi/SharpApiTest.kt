@@ -5,6 +5,7 @@ import com.tjshea.vigilant.data.reference.RefBookMarket
 import com.tjshea.vigilant.data.reference.Side
 import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.MarketFamily
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -316,6 +317,36 @@ class SharpApiStreamTest {
         assertEquals(10, scores.scoreFor("NFL", "Las Vegas Raiders", "Kansas City Chiefs")!!.game.homeScore)
         st.handle(obj("""{"type":"gamestate:removed","data":["nfl_chiefs_raiders_2026-10-25_b3"]}"""))
         assertNull(scores.scoreFor("NFL", "Kansas City Chiefs", "Las Vegas Raiders"))
+    }
+
+    /** FX, 2026-10-23: the engine's stream showed 52 connections in a 3.8 h job and no word why; how each one ended is now counted and logged. */
+    @Test
+    fun `how the stream's connections end is counted by close code and logged`() = runBlocking {
+        val server = MockWebServer()
+        server.dispatcher = object : okhttp3.mockwebserver.Dispatcher() {
+            override fun dispatch(request: okhttp3.mockwebserver.RecordedRequest) = okhttp3.mockwebserver.MockResponse().withWebSocketUpgrade(object : okhttp3.WebSocketListener() {
+                override fun onOpen(webSocket: okhttp3.WebSocket, response: okhttp3.Response) {
+                    webSocket.send("""{"type":"connected","stream_id":"ws_x","global_seq":"1"}""")
+                    webSocket.close(1008, "slow consumer")
+                }
+            })
+        }
+        server.start()
+        val logs = java.util.concurrent.CopyOnWriteArrayList<String>()
+        val feed = SharpApiFeed(SharpApiClient(OkHttpClient(), Json, { "" }), clock = { System.currentTimeMillis() })
+        val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default)
+        val st = SharpApiStream(OkHttpClient(), { "sk_test_FAKE" }, feed, SharpApiScores(), scope, url = server.url("/").toString().replace("http", "ws"), log = { logs += it })
+        try {
+            st.want(true, setOf("nfl"))
+            val until = System.currentTimeMillis() + 10_000
+            while (!st.closesText().contains("1008") && System.currentTimeMillis() < until) kotlinx.coroutines.delay(100)
+            assertTrue(st.closesText(), st.closesText().startsWith("1008×"))
+            assertTrue(logs.toString(), logs.any { it.contains("closed 1008 slow consumer") })
+        } finally {
+            st.close()
+            scope.cancel()
+            server.shutdown()
+        }
     }
 
     @Test
