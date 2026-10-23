@@ -249,7 +249,7 @@ class CloudSources(
     suspend fun boltPlanNote(): String {
         if (!has(CloudKeys.BOLT)) return "BoltOdds: no key"
         val u = runCatching { boltClient.oddsUser() }.getOrNull()
-        return "BoltOdds plan: ${u?.plan ?: "unread"} · ${u?.summary() ?: "no account read"} · ${boltFeed.keyCount()} keys · ${if (boltFeed.oneSocket) "ONE socket mode" else "lines + props sockets"}"
+        return "BoltOdds plan: ${u?.plan ?: "unread"} · ${u?.summary() ?: "no account read"} · ${boltClient.keyCount()} keys · ${if (boltFeed.oneSocket) "ONE socket mode" else "lines + props sockets"}"
     }
     fun propLinePlans(): String = keys(CloudKeys.PROPLINE).mapIndexedNotNull { i, k -> propLineAccount.last[k]?.let { c -> "#${i + 1} ${c.tier} used ${if (c.remaining != null && c.limit != null) c.limit!! - c.remaining!! else "?"}/${c.limit ?: "?"}" + (if (!c.valid) " (${c.reason})" else "") } }.joinToString(", ").ifBlank { "none read" }
     private val propLineEv = com.tjshea.vigilant.data.reference.PropLineEvSweep(propLine, json)
