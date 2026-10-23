@@ -231,4 +231,26 @@ class KalshiTradingClientTest {
         assertTrue(c.cancel("o-1", "T"))
         assertFalse(c.cancel("o-2", "T"))
     }
+
+    /** FX, 2026-10-23: the bid desk cancels by order id alone; Kalshi's V2 cancel cannot find the order's shard without its market, so the bids stayed up and the retired route said "Please switch to the V2 endpoints". */
+    @Test
+    fun `a cancel by id alone looks the order up for its market and never uses the retired route`() = runTest {
+        routes["GET /trade-api/v2/portfolio/orders/o-3"] = {
+            MockResponse().setBody("""{"order":{"order_id":"o-3","client_order_id":"c","ticker":"KXNBA-T","side":"yes","action":"buy","status":"resting","yes_price_dollars":"0.4000","no_price_dollars":"0.6000","initial_count_fp":"2.00","remaining_count_fp":"2.00"}}""")
+        }
+        routes["GET /trade-api/v2/portfolio/orders/o-4"] = {
+            MockResponse().setBody("""{"order":{"order_id":"o-4","client_order_id":"c","ticker":"KXNBA-T","side":"yes","action":"buy","status":"executed","yes_price_dollars":"0.4000","no_price_dollars":"0.6000","initial_count_fp":"2.00","remaining_count_fp":"0.00"}}""")
+        }
+        routes["DELETE /trade-api/v2/portfolio/events/orders/o-3"] = { MockResponse().setBody("""{"order_id":"o-3","reduced_by":"2.00"}""") }
+        routes["DELETE /trade-api/v2/portfolio/orders/o-3"] = { MockResponse().setResponseCode(400).setBody("""{"error":{"code":"deprecated","message":"Please switch to the V2 endpoints"}}""") }
+        val c = client()
+        assertTrue(c.cancel("o-3"))
+        val del = seen.single { it.method == "DELETE" }
+        assertEquals("/trade-api/v2/portfolio/events/orders/o-3", del.requestUrl!!.encodedPath)
+        assertEquals("KXNBA-T", del.requestUrl!!.queryParameter("market_ticker"))
+        // An order that is no longer resting, or one Kalshi does not know, is not cancelled at all.
+        assertFalse(c.cancel("o-4"))
+        assertFalse(c.cancel("o-404"))
+        assertEquals(1, seen.count { it.method == "DELETE" })
+    }
 }
