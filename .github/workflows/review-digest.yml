@@ -115,6 +115,29 @@ jobs:
           } >> out/latest.txt
           wc -c out/latest.txt
 
+      # FX (Tj, 2026-10-23: "tell me which [APIs] to continue ... based on sufficient data and history"; "make sure [the star rating] is sound and based on good data"): both over the WHOLE archive,
+      # crunched here for free and read by Claude from the digest. api_quality.py: every API's scorecard of every finished engine scan (apiq journals). StarCheckMain.kt: every graded engine line
+      # re-rated with the rating the app ships now, against its close and its result.
+      - name: API value and the star rating check
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p apiq lines
+          for TAG in $(gh release list --limit 500 --json tagName --jq '.[].tagName' | grep '^cloud-archive-' || true); do
+            gh release download "$TAG" -p 'apiq-*' -D apiq --clobber 2>/dev/null || true
+          done
+          gh release download engine-dataset -p 'lines-*.csv.gz' -D lines --clobber 2>/dev/null || true
+          {
+            echo
+            echo "== API VALUE (tools/api_quality.py over every apiq journal in the cloud-archive Releases) =="
+            if ls apiq/apiq-* >/dev/null 2>&1; then python3 -I tools/api_quality.py apiq || echo "api_quality failed"; else echo "no apiq journals yet"; fi
+            echo
+            echo "== STAR RATING CHECK (cloud/StarCheckMain.kt over the engine-dataset lines) =="
+            if ls lines/lines-*.csv.gz >/dev/null 2>&1; then ./gradlew :cloud:starcheck --args="$PWD/lines $PWD/out/stars.txt" --no-daemon -q && cat out/stars.txt || echo "star check failed"; else echo "no engine lines yet"; fi
+          } >> out/latest.txt
+          wc -c out/latest.txt
+
       - name: Append to the review-digest branch (never forced)
         env:
           GH_TOKEN: ${{ github.token }}
