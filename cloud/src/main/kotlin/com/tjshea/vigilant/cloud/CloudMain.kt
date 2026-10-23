@@ -129,6 +129,7 @@ fun main(args: Array<String>) = runBlocking {
             log("ParlayAPI plans: " + sources.parlayPlans())
             runCatching { sources.refreshPropLineAccounts() }
             log("PropLine plans: " + sources.propLinePlans())
+            log(sources.boltPlanNote())
             runCatching { sources.refreshPinnWireAccounts() }
             log("PinnWire accounts: " + sources.pinnWirePlans())
             log("Spend: " + sources.spendNotes())
