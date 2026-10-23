@@ -6265,3 +6265,11 @@ CH71 (Tj live message 2026-10-23: "nobody was selling at that price anymore" is 
 - [ ] CH73c Bid tab (Off/Recommend/Auto) and other per-feature modes become controls of the engine's settings in GitHub mode
 - [ ] CH73d move remaining phone work to the engine (CH66b/c, CH72 first) or retire it in GitHub mode; test + release as one version
 - [x] CH73e (Tj 04:45) before release: no leakage/wasted usage; phone as an efficient low-latency monitor (best mechanism: ETag polling of status/feed, push only where free); full tests; then ship. Done so far: default cloudScan=true, master switch relabelled "Run on GitHub", off sets cloudTrading OFF.
+
+## CH74: the Bids tab becomes the GitHub engine's bid control center and monitor (Tj, 2026-10-23 15:22-15:38 UTC, chat, verbatim summary)
+Tj: "audit the entire bids tab ... recoded to transform from a phone bid engine to the live GitHub control center. all settings, controls and toggles control the GitHub engine bids. Off = engine posts no bids; Recommend = engine recommends and only bids when I press Post; Auto = engine posts by itself. The slider and every other bids setting control the engine. Wait ~15 s after my last change, then send the WHOLE bids settings to GitHub at once, and GitHub uses them immediately." Also: "0 resting is incorrect" (done in v1.0.62: tab shows desk.json) and "posting while off" (done: engineBids needs maker).
+- [x] CH74a engineBids requires maker (Off/Recommend never post); Bids tab reads the engine's desk.json when the engine drives (CloudBidRunnerTest)
+- [ ] CH74b audit every control on the Bids tab (MakerScreen) against what the ENGINE does with it; fix the ones the engine ignores or the phone shows from its own empty desk (resting list, fills, ready/skipped, Run a pass now, Cancel, Post)
+- [ ] CH74c Recommend on the engine: engine publishes its would-post bids (recommendations); the Post button writes a post request (cloud-config) the engine serves once (never twice); Cancel / Cancel all likewise
+- [ ] CH74d debounce: settings changes on the Bids tab are sent to cloud-config as ONE write 15 s after the last change (all bids settings together), the engine applies at once (read every 3 s; no re-scan needed: bid rules are PRICING/BIDS kind in CloudScanKey)
+- [ ] CH74e test + release
