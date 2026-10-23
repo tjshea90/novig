@@ -6274,3 +6274,5 @@ Tj: "audit the entire bids tab ... recoded to transform from a phone bid engine 
 - [x] CH74d debounce: settings changes on the Bids tab are sent to cloud-config as ONE write 15 s after the last change (all bids settings together), the engine applies at once (read every 3 s; no re-scan needed: bid rules are PRICING/BIDS kind in CloudScanKey)
 - [ ] CH74e test + release
 - [x] CH74f (Tj 15:52 UTC) a "Restart bid engine" button on the Bids tab: clears the picked-off halt and the guard's memory (BidRequest kind "restart"), so bids resume at once
+
+- [ ] CH75 bid side split: Over/Under and favorite/underdog on engine bids+bets, CLV first (Tj 18:25 "yes" to the Under/underdog bid hypothesis); result to chat + research/, lever in LEVERS.md
