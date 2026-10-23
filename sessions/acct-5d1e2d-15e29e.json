@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-beub9m",
- "head": "d0cf0e5464991d97e7c27b52ab95199ff1a329b5",
+ "head": "7814b11985b14b055eaa4ab84f68c96ea7c5caec",
  "since": 1792768029,
- "beat": 1792782104,
- "beatIso": "2026-10-23T19:01:44Z",
- "done": "research index rebuilt",
- "next": "watch chat"
+ "beat": 1792782133,
+ "beatIso": "2026-10-23T19:02:13Z",
+ "done": "CH76 BoltOdds Growth one-socket mode",
+ "next": "restart engine, verify props arrive, tell Tj"
 }
