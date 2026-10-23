@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -961,6 +962,9 @@ class CloudLink(private val c: AppContainer) {
         const val POLL_PENDING_MS = 3_000L
         const val SAVE_EVERY_MS = 15 * 60_000L
         const val RETRY_PUSH_MS = 10 * 60_000L
+
+        /** Bid-rule edits are sent this long after the last change ([CloudScanKey.bidsEditOnly]). */
+        const val BIDS_EDIT_QUIET_MS = 15_000L
         const val ENGINE_DEAD_S = 240L
         const val MAX_PER_PASS = 40
         const val MAX_FILE_BYTES = 20_000_000
