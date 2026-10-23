@@ -672,7 +672,7 @@ fun OpportunityCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 EvBadge(q.evPercent)
                 Spacer(Modifier.width(8.dp))
-                StarRating(o.rating, adjusted = adjustedStarsOf(settings, o, now))
+                StarRating(o.rating)
                 Spacer(Modifier.width(10.dp))
                 Text(
                     "${o.league.emoji} ${o.league.displayName} · ${if (o.isLive) "LIVE" else Format.startTime(o.event.startsTs)}",

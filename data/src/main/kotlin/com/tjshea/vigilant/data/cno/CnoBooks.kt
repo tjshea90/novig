@@ -196,11 +196,13 @@ object CnoBooks {
         /** A sharp book ([SHARP_CODES]) prices both sides and makes the price +EV alone / says it is not. */
         val sharpAgrees: Boolean = false,
         val sharpAgainst: Boolean = false,
+        /** The history's points for this type of bet ([com.tjshea.vigilant.data.scanner.ProfitProfile.typePoints]); set by the row overload of [check]. */
+        val typePoints: Double = 0.0,
     ) {
         /** The 1-5 star rating of this bet from what the books say ([BetRating]); null with no usable fair line. */
         val rating: com.tjshea.vigilant.data.scanner.BetRating.Rating? get() = ev?.let {
             com.tjshea.vigilant.data.scanner.BetRating.rate(
-                com.tjshea.vigilant.data.scanner.BetRating.Inputs(twoSided, agreeing, it, sharpAgrees, sharpAgainst, spread),
+                com.tjshea.vigilant.data.scanner.BetRating.Inputs(twoSided, agreeing, it, sharpAgrees, sharpAgainst, spread, typePoints),
             )
         }
     }
@@ -214,7 +216,11 @@ object CnoBooks {
 
     /** Checks [row] (its book's price, and Novig's taker fee if the game is [live]) against [view]. */
     fun check(view: CnoBooksView, row: CnoRow, live: Boolean = false, preferListOdds: Boolean = false): Check =
-        check(view, row.odds, live, codeFor(row.book) ?: NOVIG, preferListOdds, row.league)
+        check(view, row.odds, live, codeFor(row.book) ?: NOVIG, preferListOdds, row.league).copy(
+            typePoints = com.tjshea.vigilant.data.scanner.ProfitProfile.typePointsOf(
+                row.league, com.tjshea.vigilant.data.scanner.BetKind.of(row.market, row.bet).label, row.bet, row.startsAtMs, System.currentTimeMillis(),
+            ),
+        )
 
     /**
      * [listOdds] is the price in CNO's +EV list at book [judged]; [live] adds Novig's taker fee
