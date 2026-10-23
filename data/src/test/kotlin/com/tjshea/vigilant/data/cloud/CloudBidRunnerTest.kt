@@ -174,7 +174,7 @@ class CloudBidRunnerTest {
         put(r, "m1")
         r.runner.pass(live, now)
         assertEquals(1, r.store.all().count { it.active })
-        for (off in listOf(live.copy(maker = false), live.copy(gates = live.gates.copy(cloudBids = false)), live.copy(gates = live.gates.copy(cloudTrading = CloudTradeMode.PAPER)))) {
+        for (off in listOf(live.copy(maker = false, makerRecommend = false), live.copy(gates = live.gates.copy(cloudBids = false)), live.copy(gates = live.gates.copy(cloudTrading = CloudTradeMode.PAPER)))) {
             assertFalse(off.engineBids)
             assertNull(r.runner.pass(off, now))
         }
@@ -249,7 +249,8 @@ class CloudBidRunnerTest {
         assertFalse(ScanSettings().engineBids)
         assertFalse(live.copy(gates = live.gates.copy(cloudScan = false)).engineBids)
         assertFalse(live.copy(pausedByHand = true).engineBids)
-        assertFalse("Off and Recommend never post (Tj, 2026-10-23)", live.copy(maker = false).engineBids)
+        assertFalse("Off never posts (Tj, 2026-10-23)", live.copy(maker = false, makerRecommend = false).engineDesk)
+        assertFalse("Recommend never posts by itself", live.copy(maker = false, makerRecommend = true).engineBids)
         assertTrue("the engine runs the bid profile", CloudEngine.forCloud(live).maker)
         assertFalse("a phone with the engine not bidding is unchanged", CloudEngine.forCloud(ScanSettings()).maker)
     }
