@@ -102,7 +102,7 @@ class KalshiBidRunnerTest {
         assertEquals("CANCELED", a.cancelOrder("o-7"))
         assertEquals("o-7" to "KXNFL-T", client.cancels.single())
         val e = com.tjshea.vigilant.data.novig.signing.NovigApiException(429, com.tjshea.vigilant.data.novig.signing.NovigApiException.KALSHI_PREFIX + "RATE_LIMITED", null)
-        assertTrue(e.message, e.message!!.startsWith("Kalshi"))
+        assertTrue(e.advice, e.advice.startsWith("Kalshi") && e.brief.startsWith("Kalshi"))
     }
 
     @Test

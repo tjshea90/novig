@@ -28,8 +28,6 @@ class NovigApiException(val status: Int, val code: String?, val serverMessage: S
      */
     val brief: String
         get() = when {
-            // An answer of Kalshi's carried through the bid desk's Novig-shaped client (kalshitrade/KalshiAsNovig): Kalshi's words, never Novig's.
-            code?.startsWith(KALSHI_PREFIX) == true -> "Kalshi: " + (serverMessage ?: "HTTP $status")
             status == 451 && code == "ANONYMIZED_NETWORK" ->
                 "Novig lists the internet address of the network this phone is on as a VPN or proxy ($code), so the key can't read here. Settings › Betting & Novig account › Test key checks your other connection."
             status == 451 && code == "RESTRICTED_NETWORK_REGION" ->
