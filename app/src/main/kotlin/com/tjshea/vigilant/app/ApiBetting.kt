@@ -753,6 +753,11 @@ class ApiBettingController(
                 }
             }
             if (result !is PlaceResult.Placed) toasts.tryEmit(resultNote(result, target))
+            // "Nobody was selling at that price any more" and the like (Tj, 2026-10-23): the row leaves the scanned list now and returns only when a newer price read lists it again.
+            if (unbettableResult(result)) {
+                val t = clock()
+                target.placedKey?.let { k -> state.update { it.copy(negativeSeen = it.negativeSeen.filterValues { at -> t - at < 6 * 3_600_000L } + (k to t)) } }
+            }
             if (result is PlaceResult.Placed) {
                 withContext(NonCancellable) {
                     provisional?.join()
@@ -769,6 +774,13 @@ class ApiBettingController(
                 }
             }
         }
+    }
+
+    /** The order showed the bet cannot be had at its listed price now: nobody selling, or a refusal that says it is gone, closed or no longer +EV. */
+    internal fun unbettableResult(r: PlaceResult): Boolean = when (r) {
+        is PlaceResult.NotFilled -> true
+        is PlaceResult.Refused -> UNBETTABLE_WORDS.containsMatchIn(r.reason)
+        else -> false
     }
 
     /** A bet that did not end as Placed, in a line for the notification (the sheet may be closed by then). */
@@ -841,3 +853,6 @@ class ApiBettingController(
         const val LIVE_GONE = "This live price has left the list: Pinnacle's and Novig's prices behind it are more than 5 seconds old, so nothing is bet on them. Tap the bet again when it is back on the list."
     }
 }
+
+/** Words of a refusal that mean the listed bet is no longer there to take (closed, nobody selling, the edge gone, a sharp book against it, the price moved). */
+internal val UNBETTABLE_WORDS = Regex("(?i)nobody (is )?(offering|selling)|closed|edge is gone|no longer|not \\+EV|sharp book|price moved|moved against")

@@ -415,6 +415,8 @@ class KalshiHub(private val c: AppContainer) {
         if (c.kalshiSigner() == null) return PlaceResult.Refused("No Kalshi key is saved (Settings › Kalshi).")
         val target = KalshiBetTargets.of(o) ?: return PlaceResult.Refused("This bet has no fair price.")
         val r = withContext(Dispatchers.IO) { placer.place(target, stake, confirmedLimit, allowRepeat) }
+        // Nobody was selling at that price any more, or the refusal says it is gone (Tj, 2026-10-23): off the list until a newer price read lists it again.
+        if (r is PlaceResult.NotFilled || (r is PlaceResult.Refused && com.tjshea.vigilant.app.UNBETTABLE_WORDS.containsMatchIn(r.reason))) { deadSeen[o.key] = System.currentTimeMillis(); refeed() }
         refreshBets()
         refreshBalance()
         // The sheet closes at the tap, so the result comes as a notification (Tj, 2026-10-20, CH32c/d), as on the Novig side.
