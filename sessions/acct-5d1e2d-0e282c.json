@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-lpr7ge",
- "head": "16505337171b6394272bfcdee5f23c758f3253ae",
+ "head": "3bc4a2ed5c0bc4fc0ee83f56009cbaaf3131cf7b",
  "since": 1792716227,
- "beat": 1792717155,
- "beatIso": "2026-10-23T00:59:15Z",
- "done": "CH68b: NO buys try the legacy route first; bump 1.0.56",
- "next": "ship, release, engine reset once, ask Tj to retry"
+ "beat": 1792717191,
+ "beatIso": "2026-10-23T00:59:51Z",
+ "done": "pre-release: CH68b Kalshi NO buys use the order form that names the NO side first (fixes insufficient_balance on every NO bet, if that is the cause) (versionCode 396, v1.0.56)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.56), then run: bash tools/record-release.sh v1.0.56 396 \"CH68b Kalshi NO buys use the order form that names the NO side first (fixes insufficient_balance on every NO bet, if that is the cause)\""
 }
