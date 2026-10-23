@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "e9e72fb9ab5c41d12b7f07c7d9bd0e282e02c9d9",
+ "head": "5e21abe12b0af1738cad6faf51535443bccd6d9c",
  "since": 1792797865,
- "beat": 1792799107,
- "beatIso": "2026-10-23T23:45:07Z",
- "done": "FX2: StudyExport played-days-first (test fails on old code), Review day budget 4 GB/-Xmx8g; StarCheckMain + :cloud:starcheck + StarCheckTest; api_quality.py medians over ON scans + by-day table; review-digest.yml runs both",
- "next": "dispatch review-digest.yml on this branch, read API VALUE + STAR RATING CHECK from review-digest/latest.txt; meanwhile code sweep"
+ "beat": 1792799146,
+ "beatIso": "2026-10-23T23:45:46Z",
+ "done": "FX2 engine bugs from the live log: (1) Kalshi bid cancels sent by id alone went to shard 0, 404'd and fell to the retired route ('Please switch to the V2 endpoints'): cancel now carries the market ticker (remembered by KalshiAsNovig, looked up otherwise), no legacy fallback; Kalshi 429s no longer say 'Novig asked us to slow down'; (2) Kalshi lane re-reads +EV lines before judging (97% were 'no Kalshi price read in the last minute' after a 2-min scan). Tests fail on old code.",
+ "next": "Pinnacle source silent 73 scans (error text says Pinnodds); BoltOdds Free key; bid churn; then land + engine reset"
 }
