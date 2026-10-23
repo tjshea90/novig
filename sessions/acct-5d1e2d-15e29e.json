@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-4w5jix",
- "head": "3151046da04421dfaa237acae46aa4b7fc0a073c",
+ "head": "5255b00658b097a6b8fc3d4b89a08d6a223bc020",
  "since": 1792768029,
- "beat": 1792770989,
- "beatIso": "2026-10-23T15:56:29Z",
- "done": "pre-release: CH74a: Bids tab shows the engine's resting bids; Off/Recommend stop engine bids (versionCode 402, v1.0.62)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.62), then run: bash tools/record-release.sh v1.0.62 402 \"CH74a: Bids tab shows the engine's resting bids; Off/Recommend stop engine bids\""
+ "beat": 1792771079,
+ "beatIso": "2026-10-23T15:57:59Z",
+ "done": "pre-ship: CH74: Bids tab controls the GitHub engine's bids: Recommend + Post on the engine, restart button, 15 s settings batching",
+ "next": "ship.sh gates and releases this"
 }
