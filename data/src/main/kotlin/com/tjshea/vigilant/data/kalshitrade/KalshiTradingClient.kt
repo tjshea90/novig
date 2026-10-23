@@ -193,6 +193,8 @@ open class KalshiTradingClient(
 
     private fun sub(q: MutableMap<String, String>): MutableMap<String, String> = q.also { m -> subaccount?.let { m["subaccount"] = it.toString() } }
 
+    @Volatile private var legacyGone = false
+
     /** The last order this client sent, in words (ticker, side, count, price, time in force): shown beside a refusal so Kalshi's answer can be checked against what was asked. */
     @Volatile var lastOrder: String? = null
         private set
@@ -205,50 +207,8 @@ open class KalshiTradingClient(
         return KalshiBalance(cash, pv)
     }
 
-    /**
-     * Buys [count] whole contracts of [outcomeSide] ("yes" or "no") on [ticker] at [price] dollars (that side's price), or better.
-     * [tif]: [IOC] takes what it can now and cancels the rest; [GTC] rests (with [postOnly] it is refused rather than taking, which is a bid); [FOK] all or nothing.
-     * [expirationMs] limits how long a GTC rests.
-     */
-    open suspend fun buy(
-        ticker: String,
-        outcomeSide: String,
-        price: Double,
-        count: Long,
-        clientOrderId: String,
-        tif: String = IOC,
-        postOnly: Boolean = false,
-        expirationMs: Long? = null,
-    ): KalshiPlaced {
-        require(outcomeSide == "yes" || outcomeSide == "no") { "side must be yes or no: $outcomeSide" }
-        lastOrder = "$ticker ${outcomeSide.uppercase()} x$count @ ${dollars(price)} $tif"
-        require(count >= 1) { "count must be at least 1" }
-        require(price > 0.0 && price < 1.0) { "price must be inside (0, 1): $price" }
-        require(isUuid(clientOrderId)) { "client order id must be a UUID: $clientOrderId" }
-        require(tif == IOC || tif == GTC || tif == FOK) { "unknown time in force $tif" }
-        require(!postOnly || tif == GTC) { "post only needs a resting (GTC) order" }
-        if (!legacy) {
-            val v2 = buildJsonObject {
-                put("ticker", ticker)
-                put("client_order_id", clientOrderId)
-                // The YES leg: buying YES is a bid at its price; buying NO at p is an ask on YES at 1 - p.
-                put("side", if (outcomeSide == "yes") "bid" else "ask")
-                put("count", count.toString() + ".00")
-                put("price", dollars(if (outcomeSide == "yes") price else 1.0 - price))
-                put("time_in_force", tif)
-                if (postOnly) put("post_only", true)
-                put("self_trade_prevention_type", "taker_at_cross")
-                if (expirationMs != null && tif == GTC) put("expiration_time", expirationMs / 1000L)
-                subaccount?.let { put("subaccount", it) }
-            }
-            try {
-                return placed(call("POST", "/portfolio/events/orders", body = v2, write = true), clientOrderId, price)
-            } catch (e: KalshiApiException) {
-                // The route is gone (a retired path answers 404 or 405): the old one, from now on. Anything else is Kalshi's answer to this order.
-                if (e.status != 404 && e.status != 405) throw e
-                legacy = true
-            }
-        }
+    /** The old route's order (`POST /portfolio/orders`, an explicit action and side): the same client id, so a lost answer is found the same way. */
+    private suspend fun buyLegacy(ticker: String, outcomeSide: String, price: Double, count: Long, clientOrderId: String, tif: String, postOnly: Boolean, expirationMs: Long?): KalshiPlaced {
         val old = buildJsonObject {
             put("ticker", ticker)
             put("client_order_id", clientOrderId)
@@ -273,6 +233,63 @@ open class KalshiTradingClient(
             order?.takeIf { it.fillCount > 0.0 }?.let { it.cost / it.fillCount },
             order?.takeIf { it.fillCount > 0.0 }?.let { it.fees / it.fillCount },
         )
+    }
+
+    /**
+     * Buys [count] whole contracts of [outcomeSide] ("yes" or "no") on [ticker] at [price] dollars (that side's price), or better.
+     * [tif]: [IOC] takes what it can now and cancels the rest; [GTC] rests (with [postOnly] it is refused rather than taking, which is a bid); [FOK] all or nothing.
+     * [expirationMs] limits how long a GTC rests.
+     */
+    open suspend fun buy(
+        ticker: String,
+        outcomeSide: String,
+        price: Double,
+        count: Long,
+        clientOrderId: String,
+        tif: String = IOC,
+        postOnly: Boolean = false,
+        expirationMs: Long? = null,
+    ): KalshiPlaced {
+        require(outcomeSide == "yes" || outcomeSide == "no") { "side must be yes or no: $outcomeSide" }
+        lastOrder = "$ticker ${outcomeSide.uppercase()} x$count @ ${dollars(price)} $tif"
+        require(count >= 1) { "count must be at least 1" }
+        require(price > 0.0 && price < 1.0) { "price must be inside (0, 1): $price" }
+        require(isUuid(clientOrderId)) { "client order id must be a UUID: $clientOrderId" }
+        require(tif == IOC || tif == GTC || tif == FOK) { "unknown time in force $tif" }
+        require(!postOnly || tif == GTC) { "post only needs a resting (GTC) order" }
+        // Buying NO (Tj, 2026-10-23: every Kalshi bet got HTTP 400 insufficient_balance with $6.29 in the account; the V2 form sends NO as a sell of YES, which Kalshi may charge differently): the route that names the NO side
+        // is tried first; a refusal there places nothing (so there is no double order); only a gone route (404/405) falls through to the V2 form.
+        if (outcomeSide == "no" && !legacy && !legacyGone) {
+            try {
+                return buyLegacy(ticker, outcomeSide, price, count, clientOrderId, tif, postOnly, expirationMs)
+            } catch (e: KalshiApiException) {
+                if (e.status != 404 && e.status != 405) throw e
+                legacyGone = true
+            }
+        }
+        if (!legacy) {
+            val v2 = buildJsonObject {
+                put("ticker", ticker)
+                put("client_order_id", clientOrderId)
+                // The YES leg: buying YES is a bid at its price; buying NO at p is an ask on YES at 1 - p.
+                put("side", if (outcomeSide == "yes") "bid" else "ask")
+                put("count", count.toString() + ".00")
+                put("price", dollars(if (outcomeSide == "yes") price else 1.0 - price))
+                put("time_in_force", tif)
+                if (postOnly) put("post_only", true)
+                put("self_trade_prevention_type", "taker_at_cross")
+                if (expirationMs != null && tif == GTC) put("expiration_time", expirationMs / 1000L)
+                subaccount?.let { put("subaccount", it) }
+            }
+            try {
+                return placed(call("POST", "/portfolio/events/orders", body = v2, write = true), clientOrderId, price)
+            } catch (e: KalshiApiException) {
+                // The route is gone (a retired path answers 404 or 405): the old one, from now on. Anything else is Kalshi's answer to this order.
+                if (e.status != 404 && e.status != 405) throw e
+                legacy = true
+            }
+        }
+        return buyLegacy(ticker, outcomeSide, price, count, clientOrderId, tif, postOnly, expirationMs)
     }
 
     private fun placed(o: JsonObject, clientOrderId: String, intended: Double): KalshiPlaced = KalshiPlaced(
