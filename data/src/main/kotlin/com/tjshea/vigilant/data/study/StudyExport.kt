@@ -551,7 +551,10 @@ object StudyExport {
             val groups = splits.getValue(split)
             if (groups.isEmpty()) continue
             out.appendLine("-- ${split.label} --")
-            groups.entries.sortedByDescending { it.value.n }.forEach { out.appendLine("   " + it.value.line(it.key)) }
+            // The biggest groups only (FX, 2026-10-23: the engine's "Books agreeing" split had one group per "x of y", hundreds of one-bet lines that took the digest's whole engine budget).
+            val sorted = groups.entries.sortedByDescending { it.value.n }
+            sorted.take(MAX_SPLIT_GROUPS).forEach { out.appendLine("   " + it.value.line(it.key)) }
+            if (sorted.size > MAX_SPLIT_GROUPS) out.appendLine("   … and ${sorted.size - MAX_SPLIT_GROUPS} smaller groups (${sorted.drop(MAX_SPLIT_GROUPS).sumOf { it.value.n }} bets), counted in the summary")
         }
         for (x in extraSplits) {
             val groups = extras.getValue(x.name)
