@@ -307,8 +307,10 @@ fun main(args: Array<String>) = runBlocking {
     val governor = ApiGovernor().also { g -> prevStatus?.governorOff?.let { g.seedOff(it, started) } }
     // The engine's bid desk (TCL31): the phone's own desk on the runner, with the trading key. Its record of bids and fills is carried from job to job in `desk.json` and rebuilt into the desk's files here.
     val deskDir = File(out, "desk").apply { mkdirs() }
+    var carriedDesk: com.tjshea.vigilant.data.cloud.DeskFile? = null
     if (tradingClient != null) runCatching { PreviousFeed.read(git, cfgDir, "desk.json") }.getOrNull()?.let { text ->
         com.tjshea.vigilant.data.cloud.DeskFile.parse(text)?.let { f ->
+            carriedDesk = f
             val keep = com.tjshea.vigilant.data.cloud.DeskFile.trim(f.bids, System.currentTimeMillis())
             File(deskDir, "maker.json").writeText(Json { encodeDefaults = false }.encodeToString(com.tjshea.vigilant.data.cloud.DeskFile.bidsSerializer, keep))
             File(deskDir, "tracker.json").writeText(Json { encodeDefaults = false }.encodeToString(kotlinx.serialization.builtins.ListSerializer(com.tjshea.vigilant.data.tracker.TrackedBet.serializer()), f.fills))
@@ -394,6 +396,7 @@ fun main(args: Array<String>) = runBlocking {
     val bidsJournaled = HashSet<String>()
     // The runner behind a thin wrapper that puts the desk's record on cloud-feed after each pass (only when the bids or fills changed: the file is the phone's screen of the engine's bids).
     val bidFacade: com.tjshea.vigilant.data.cloud.EngineBids? = bidRunner?.let { r ->
+        carriedDesk?.let { r.restore(it) }
         suspend fun stageDesk(now: Long) {
             val bids = com.tjshea.vigilant.data.cloud.DeskFile.trim(deskStore.all(), now)
             for (b in deskStore.all()) if (b.status.ended && now - (b.endedAtMs ?: b.postedAtMs) > 120_000L && bidsJournaled.add(b.clientId)) runCatching { bidJournal.append(b) }
