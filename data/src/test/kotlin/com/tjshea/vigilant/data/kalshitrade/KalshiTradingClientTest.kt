@@ -95,15 +95,11 @@ class KalshiTradingClientTest {
     }
 
     @Test
-    fun `buying NO tries the route that names the NO side first, and a refusal there places nothing more`() = runTest {
-        routes["POST /trade-api/v2/portfolio/orders"] = { MockResponse().setResponseCode(400).setBody("""{"error":{"code":"insufficient_balance","message":"insufficient balance"}}""") }
-        routes["POST /trade-api/v2/portfolio/events/orders"] = { MockResponse().setBody("""{"order_id":"never","fill_count":"0.00","remaining_count":"1.00","ts_ms":1}""") }
-        val e = runCatching { client().buy("T", "no", 0.42, 1, cid) }.exceptionOrNull() as KalshiApiException
-        assertEquals(400, e.status)
-        assertEquals("one request only: the V2 form was not tried", 1, seen.size)
-        val body = json.parseToJsonElement(seen.single().body.readUtf8()).jsonObject
-        assertEquals("no", body["side"]!!.jsonPrimitive.content)
-        assertEquals("0.4200", body["no_price_dollars"]!!.jsonPrimitive.content)
+    fun `the balance read carries the cash of each exchange shard`() = runTest {
+        routes["GET /trade-api/v2/portfolio/balance"] = { MockResponse().setBody("""{"balance":629,"balance_dollars":"6.2900","portfolio_value":0,"balance_breakdown":[{"exchange_index":0,"balance":"0.0000"},{"exchange_index":1,"balance":"6.2900"}]}""") }
+        val b = client().balance()
+        assertEquals(6.29, b.cash, 1e-9)
+        assertEquals(listOf(0 to 0.0, 1 to 6.29), b.shards)
     }
 
     @Test

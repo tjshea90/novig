@@ -84,7 +84,8 @@ data class KalshiSettlement(
     val settledMs: Long?,
 )
 
-data class KalshiBalance(val cash: Double, val portfolioValue: Double)
+/** [shards]: the available balance on each exchange shard (Kalshi's `balance_breakdown`): an order can only spend the balance of the shard its market trades on. */
+data class KalshiBalance(val cash: Double, val portfolioValue: Double, val shards: List<Pair<Int, Double>> = emptyList())
 
 /**
  * The top of one market's book as Kalshi reports it: what a taker pays for YES is [yesAsk] and for NO is `1 - yesBid` (the NO ask), with [askSize] / [bidSize]
@@ -193,8 +194,6 @@ open class KalshiTradingClient(
 
     private fun sub(q: MutableMap<String, String>): MutableMap<String, String> = q.also { m -> subaccount?.let { m["subaccount"] = it.toString() } }
 
-    @Volatile private var legacyGone = false
-
     /** The last order this client sent, in words (ticker, side, count, price, time in force): shown beside a refusal so Kalshi's answer can be checked against what was asked. */
     @Volatile var lastOrder: String? = null
         private set
@@ -204,7 +203,12 @@ open class KalshiTradingClient(
         val o = call("GET", "/portfolio/balance", sub(HashMap()))
         val cash = o.dollars("balance_dollars") ?: (o.num("balance")?.div(100.0)) ?: 0.0
         val pv = o.dollars("portfolio_value_dollars") ?: (o.num("portfolio_value")?.div(100.0)) ?: 0.0
-        return KalshiBalance(cash, pv)
+        val shards = (o["balance_breakdown"] as? kotlinx.serialization.json.JsonArray)?.mapNotNull { e ->
+            val b = e as? JsonObject ?: return@mapNotNull null
+            val idx = b.num("exchange_index")?.toInt() ?: return@mapNotNull null
+            idx to (b.dollars("balance") ?: 0.0)
+        }.orEmpty()
+        return KalshiBalance(cash, pv, shards)
     }
 
     /** The old route's order (`POST /portfolio/orders`, an explicit action and side): the same client id, so a lost answer is found the same way. */
@@ -257,16 +261,6 @@ open class KalshiTradingClient(
         require(isUuid(clientOrderId)) { "client order id must be a UUID: $clientOrderId" }
         require(tif == IOC || tif == GTC || tif == FOK) { "unknown time in force $tif" }
         require(!postOnly || tif == GTC) { "post only needs a resting (GTC) order" }
-        // Buying NO (Tj, 2026-10-23: every Kalshi bet got HTTP 400 insufficient_balance with $6.29 in the account; the V2 form sends NO as a sell of YES, which Kalshi may charge differently): the route that names the NO side
-        // is tried first; a refusal there places nothing (so there is no double order); only a gone route (404/405) falls through to the V2 form.
-        if (outcomeSide == "no" && !legacy && !legacyGone) {
-            try {
-                return buyLegacy(ticker, outcomeSide, price, count, clientOrderId, tif, postOnly, expirationMs)
-            } catch (e: KalshiApiException) {
-                if (e.status != 404 && e.status != 405) throw e
-                legacyGone = true
-            }
-        }
         if (!legacy) {
             val v2 = buildJsonObject {
                 put("ticker", ticker)
