@@ -124,3 +124,5 @@ CH57a done (research/parlay_spend_2026-10-22.md): ParlayAPI Pro 75,276 of 100,00
 - 2026-10-23 chat (Tj 03:40, class: Tj direct): engine bids to 800% of wallet (vigGuards.bidWalletPct 400->800), makerMargin 0.02412->0.02, 1/16 Kelly and popular-first kept. Revert: python3 tools/engine_set.py vigGuards.bidWalletPct=400 makerMargin=0.02412.
 
 - 2026-10-23 chat (mirage): Tj "restart the auto bids": picked-off guard had halted the engine desk (4 of last 8 games picked off, +0.5% vs +2.8%). Set makerGuardFromMs=1792768200000 (guard judges only fills after now) + --reset for a fresh runner. Revert: makerGuardFromMs=0. Watch the next fills; the guard can trip again.
+
+- 2026-10-23 CH74 (v1.0.63): the Bids tab drives the engine desk. engineBids needs maker (Off never posts); Recommend runs on the engine (desk.json recs, Post/Cancel/Cancel all/Restart requests in cloud-config bidRequests, served once, stale after 5 min); bid-rule edits go to GitHub 15 s after the last change (mode switches and other settings at once); the engine desk runs a pass at once on a rule or mode change. Revert: engineBids without `maker &&`, BIDS_EDIT_QUIET_MS = 1500.
