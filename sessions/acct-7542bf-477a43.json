@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-7542bf",
+ "name": "tj outlook",
+ "nonce": "477a43",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/keen-keller-1zz21l",
+ "head": "1b82d88ceba5e95f6c4673047af151cd808c8bf2",
+ "since": 1792754692,
+ "beat": 1792754692,
+ "beatIso": "2026-10-23T11:24:52Z",
+ "done": "ENGINEER 2026-10-23: CH57b spend re-read, no change",
+ "next": "next ANALYST at 100+ settled; CH57b NFL cut only if balance < 8k x days left"
+}
