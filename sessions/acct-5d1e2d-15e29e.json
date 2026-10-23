@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-yprd2y",
- "head": "74969c12a1622356cd534668e5c302c38bca4601",
+ "head": "ebfe78b7ed567687607215566e71a6ff6544b2e5",
  "since": 1792768029,
- "beat": 1792794683,
- "beatIso": "2026-10-23T22:31:23Z",
- "done": "ST1: single star rating (type+lead points, small-book cap), study written, full suite green",
- "next": "ship via ship.sh, release.yml, record-release, tell Tj; later refit weights when 3x closed rows"
+ "beat": 1792794714,
+ "beatIso": "2026-10-23T22:31:54Z",
+ "done": "pre-release: ST1: one combined star rating (type of bet, lead time, small-book cap); history stars removed (versionCode 404, v1.0.64)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.64), then run: bash tools/record-release.sh v1.0.64 404 \"ST1: one combined star rating (type of bet, lead time, small-book cap); history stars removed\""
 }
