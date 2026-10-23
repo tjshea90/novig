@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import com.tjshea.vigilant.data.cloud.BidRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -83,6 +84,8 @@ class CloudLink(private val c: AppContainer) {
         /** The engine's bids (`desk.json`) as of the phone's last read, and when (this phone's clock). */
         val desk: com.tjshea.vigilant.data.cloud.DeskFile? = null,
         val deskReadAtMs: Long = 0L,
+        /** The Bids tab's presses for the engine's desk sent so far ([CloudLink.requestBid]): the tab shows the ones the engine has not answered yet. */
+        val bidRequests: List<BidRequest> = emptyList(),
         /** PropLine's +EV lines at Novig, as the engine's last sweep found them (`propline-ev.json.gz`, TCL56); null = none yet. */
         val propLineEv: com.tjshea.vigilant.data.reference.PlEvFeed? = null,
         /** A pull to refresh is reading everything now ([refreshNow]); the pull's arrow stays until it is false again. */
@@ -132,6 +135,8 @@ class CloudLink(private val c: AppContainer) {
     @Volatile private var retryApiAt = 0L
     /** The phone's clock when it last asked the engine to check every API now ([CloudConfig.checkApisAtMs]). */
     @Volatile private var checkApisAt = 0L
+    /** The Bids tab's presses for the engine's desk, newest last; each is sent with every config write for 10 minutes (the engine serves each id once and drops stale ones) ([CloudConfig.bidRequests]). */
+    @Volatile private var bidRequests: List<BidRequest> = emptyList()
     private var feedFetchedFor = 0L
     private var bidsFetchedFor = 0L
     private var evFetchedFor = 0L
@@ -458,6 +463,17 @@ class CloudLink(private val c: AppContainer) {
      * Check every API now (XO1, Tj 2026-10-21: "make sure the API screen shows accurate information, especially after I pull to refresh"): the engine makes every API due at once in its monitor (free account reads;
      * no scan is touched). Returns the phone's clock of the request, or null when it could not be sent.
      */
+    /** A press on the Bids tab for the engine's desk (Post a recommendation, Cancel, Cancel all, Restart): sent at once, not after the settings' 15 s wait. False when no token is saved. */
+    suspend fun requestBid(kind: String, key: String): Boolean {
+        if (!hasToken()) return false
+        val now = System.currentTimeMillis()
+        val keep = bidRequests.filter { now - it.atMs < 10 * 60_000L }
+        bidRequests = keep + BidRequest(kind, key, maxOf(now, (keep.maxOfOrNull { it.atMs } ?: 0L) + 1))
+        _ui.update { it.copy(bidRequests = bidRequests) }
+        c.settingsStore.flow.value?.let { pushSettings(it, force = true) } ?: return false
+        return true
+    }
+
     suspend fun requestApiCheck(): Long? {
         if (!hasToken()) return null
         val at = maxOf(System.currentTimeMillis(), checkApisAt + 1)
@@ -696,11 +712,11 @@ class CloudLink(private val c: AppContainer) {
         runCatching { wantedFile.writeText(if (wanted) "1" else "0") }
         // Not wanted and nothing owed: the engine is left alone (no request is made for a phone that never used the cloud scan).
         if (!wanted && !offPending.exists()) return
-        val key = (if (wanted) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode() + "r$refreshRequestedAt" + "m$manualRunUntil,$manualStopUntil" + "x$resetRequestedAt" + "p$propLineRequestedAt" + "y$retryApiAt" + "k$checkApisAt"
+        val key = (if (wanted) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode() + "r$refreshRequestedAt" + "m$manualRunUntil,$manualStopUntil" + "x$resetRequestedAt" + "p$propLineRequestedAt" + "y$retryApiAt" + "k$checkApisAt" + "b" + bidRequests.joinToString(",") { it.id }
         if (key == lastPushedKey && !force) return
         val rev = maxOf(System.currentTimeMillis(), lastRev + 1)
         loadManual()
-        val why = client.writeConfig(CloudConfig(rev = rev, on = wanted, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt, manualRunUntilMs = manualRunUntil, manualStopUntilMs = manualStopUntil, resetAtMs = resetRequestedAt, propLineRefreshAtMs = propLineRequestedAt, retryApi = retryApiId, retryApiAtMs = retryApiAt, checkApisAtMs = checkApisAt))
+        val why = client.writeConfig(CloudConfig(rev = rev, on = wanted, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt, manualRunUntilMs = manualRunUntil, manualStopUntilMs = manualStopUntil, resetAtMs = resetRequestedAt, propLineRefreshAtMs = propLineRequestedAt, retryApi = retryApiId, retryApiAtMs = retryApiAt, checkApisAtMs = checkApisAt, bidRequests = bidRequests.filter { System.currentTimeMillis() - it.atMs < 10 * 60_000L }))
         if (why == null) {
             if (wanted) runCatching { sendKeys(auto = true) }
             lastPushedKey = key; lastRev = rev
