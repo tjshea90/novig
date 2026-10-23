@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-4w5jix",
- "head": "ddef7bcaab9e377d4af2e82cc3723d6d9df19d9a",
+ "head": "a19f4eeb199722ff08fa8546e551342a993f57cf",
  "since": 1792768029,
- "beat": 1792769345,
- "beatIso": "2026-10-23T15:29:05Z",
- "done": "chat: restarted engine bids (guard reset + fresh runner)",
- "next": "watch desk.json for bids resting and fills"
+ "beat": 1792769379,
+ "beatIso": "2026-10-23T15:29:39Z",
+ "done": "Bids: engineBids needs maker (Off/Recommend never post); Bids tab shows the engine desk",
+ "next": "ship.sh, release.yml, record-release"
 }
