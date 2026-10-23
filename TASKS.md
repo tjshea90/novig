@@ -6289,4 +6289,4 @@ Analyze the current star system; make ONE rating that combines all factors, remo
 - [x] ST1d (Tj 22:14) research from existing research/ + API history/CLV (PropLine clv, SGO closes, OddsPapi historical, propline_clv Release) + reputable web sources (closing-line value, devig, favorite-longshot, sharp-book literature); cite them in research/star_rating_*.md
 - [x] ST1e (Tj 22:16) one book, or two small-name books, pricing a bet = risky: demote (today: <2 companies caps 1.5 stars, 2 caps 3.0; add a small-book test)
 - [ ] ST2 (Tj 22:41) sort-by-stars in the list does nothing and the sort filters disappeared (v1.0.64): find cause, fix, release
-- [x] ST2 diagnosis: Kalshi+Novig merged list was always EV-sorted and the sort buttons/header hid when Novig's own list was empty (fix in FeedScreen/FeedOrder.comparator); test + release pending
+- [x] ST2 fixed in v1.0.65: merged Kalshi+Novig list obeys Best EV/Soonest/Stars, sort buttons show when only Kalshi rows exist, old bets sorted; CNO tab got the same three buttons
