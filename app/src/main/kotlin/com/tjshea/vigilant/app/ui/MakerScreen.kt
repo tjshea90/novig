@@ -85,6 +85,8 @@ data class MakerUi(
     val lastPass: String? = null,
     /** Bids priced from CrazyNinjaOdds ([ScanSettings.makerSource]): what the lane reads for them and why it stops them; null with bids priced from Vigilant's scan. */
     val cno: com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.Status? = null,
+    /** The GitHub engine's desk is the one bidding (its heartbeat is live): its recommendations, stop and answers to this phone's button presses; null = this phone's own desk. */
+    val engine: EngineDeskUi? = null,
 ) {
     /** Bids are priced from CrazyNinjaOdds ([ScanSettings.makerSource]). */
     val fromCno: Boolean get() = settings.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO
@@ -150,7 +152,29 @@ data class MakerActions(
     val onUndoDeny: (String) -> Unit = {},
     /** Pull to refresh (TCL122-3): the engine's bids read again and the desk's preview worked out now. */
     val onRefresh: () -> Unit = {},
+    /** A press for the engine's desk (CH74): kind post (key = outcome id), cancel (key = order id), cancelAll, restart. */
+    val onEngine: (String, String) -> Unit = { _, _ -> },
 )
+
+/** What the engine's desk says for the Bids tab (CH74): [recs] are what Recommend mode offers, [stopped] why it stands down (empty = running), [results] what the phone's requests came to, [pending] the ones sent and not answered. */
+@Immutable
+data class EngineDeskUi(
+    val recs: List<com.tjshea.vigilant.data.cloud.BidRec> = emptyList(),
+    val stopped: String = "",
+    val results: List<com.tjshea.vigilant.data.cloud.BidResult> = emptyList(),
+    val pending: Set<String> = emptySet(),
+) {
+    /** The words under a recommended bid's Post button: sent and waiting, posted, or why not. */
+    fun postLine(outcomeId: String): String? {
+        val r = results.filter { it.kind == "post" && it.key == outcomeId }.maxByOrNull { it.requestAtMs }
+        return when {
+            "post:$outcomeId" in pending && (r == null) -> "Sent to GitHub: waiting for it to post…"
+            r == null -> null
+            r.ok -> "Posted by GitHub"
+            else -> "Not posted: ${r.why}"
+        }
+    }
+}
 
 /** The tab's words, free of Compose so they're tested. */
 object MakerText {
@@ -413,7 +437,16 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
             }
             item(key = "restingTitle") { SectionTitle("Resting now (${resting.size})") }
             if (resting.isEmpty()) item(key = "restingNone") { Muted("No bids up right now.") }
-            items(resting, key = { "r-" + it.clientId }) { b -> RestingRow(b, ui.now, actions.onCancel) }
+            items(resting, key = { "r-" + it.clientId }) { b -> RestingRow(b, ui.now, if (ui.engine != null) ({ id: String -> actions.onEngine("cancel", id) }) else actions.onCancel) }
+            if (ui.engine != null) {
+                if (ui.mode == BidMode.RECOMMEND) {
+                    item(key = "engineRecsTitle") {
+                        SectionTitle("Recommended by GitHub (${ui.engine.recs.size})")
+                        Muted("GitHub's engine found these bids under your rules and posts one only when you press Post. Each is re-checked on the engine's latest prices first.")
+                    }
+                    items(ui.engine.recs, key = { "e-" + it.outcomeId }) { r -> EngineRecRow(r, ui.now, ui.engine.postLine(r.outcomeId), ui.setUp, actions) }
+                }
+            } else {
             item(key = "readyTitle") {
                 SectionTitle(if (ui.settings.maker) "Next to post (${ready.size})" else "Recommended: approve or deny (${ready.size})")
                 Muted(
@@ -433,7 +466,8 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
             }
             items(ready.take(MAX_READY), key = { "p-" + it.line.outcomeId }) { d -> ReadyRow(d, ui.now, ui.setUp, ui.settings.maker, actions) }
             if (ready.size > MAX_READY) item(key = "readyMore") { Muted("+${ready.size - MAX_READY} more (cheapest first)") }
-            val skipped = ui.skipped
+            }
+            val skipped = if (ui.engine != null) emptyList() else ui.skipped
             if (skipped.isNotEmpty()) {
                 item(key = "skipped") {
                     TextButton(onClick = { skippedOpen = !skippedOpen }, modifier = Modifier.testTag("makerSkippedToggle")) {
@@ -540,7 +574,18 @@ private fun MakerHead(ui: MakerUi, actions: MakerActions) {
             )
         }
         Text(MakerText.status(ui), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp).testTag("makerStatus"))
-        ui.problem?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.negative, modifier = Modifier.padding(top = 4.dp)) }
+        if (ui.engine != null) {
+            ui.engine.stopped.takeIf { it.isNotBlank() && ui.mode != BidMode.OFF }?.let { why ->
+                Banner(why, Modifier.padding(top = 8.dp).testTag("engineStopped"), color = MaterialTheme.colorScheme.error, action = "Restart bid engine", onAction = { actions.onEngine("restart", "") })
+            }
+            ui.engine.results.filter { it.kind == "restart" || it.kind == "cancelAll" || it.kind == "cancel" }.maxByOrNull { it.requestAtMs }?.takeIf { ui.now - it.atMs < 120_000L }?.let { r ->
+                Muted((if (r.kind == "restart") "Restart" else "Cancel") + (if (r.ok) ": done" else ": ${r.why}"))
+            }
+        } else ui.problem?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.negative, modifier = Modifier.padding(top = 4.dp)) }
+        if (ui.engine != null) Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+            OutlinedButton(onClick = { actions.onEngine("restart", "") }, modifier = Modifier.testTag("makerRestart")) { Text("Restart bid engine") }
+            if (ui.resting.isNotEmpty()) OutlinedButton(onClick = { actions.onEngine("cancelAll", "") }, modifier = Modifier.testTag("makerCancelAll")) { Text("Cancel all") }
+        } else
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
             OutlinedButton(onClick = actions.onRunNow, enabled = ui.setUp && !ui.running, modifier = Modifier.testTag("makerRunNow")) {
                 Text(if (ui.running) "Working…" else if (ui.settings.maker) "Run a pass now" else "Check my bids now")
@@ -1036,6 +1081,19 @@ private fun RestingRow(b: MakerBid, now: Long, onCancel: (String) -> Unit) {
             )
             val id = b.orderId
             if (id != null) TextButton(onClick = { onCancel(id) }, modifier = Modifier.testTag("cancelBid-$id")) { Text("Cancel") }
+        }
+    }
+}
+
+@Composable
+private fun EngineRecRow(r: com.tjshea.vigilant.data.cloud.BidRec, now: Long, line: String?, setUp: Boolean, actions: MakerActions) {
+    RowCard {
+        BetTitle(r.selection, "${r.marketLabel} · ${r.event}")
+        Text(MakerText.bidLine(r.price, r.fair.takeIf { it > 0.0 } ?: r.price, r.evAtFair, r.contracts), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
+        Text("starts in ${MakerText.span(r.startsTs - now)} · ${r.books} books", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Text(line.orEmpty(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+            TextButton(onClick = { actions.onEngine("post", r.outcomeId) }, enabled = setUp, modifier = Modifier.testTag("postEngineBid-${r.outcomeId}")) { Text("Post") }
         }
     }
 }
