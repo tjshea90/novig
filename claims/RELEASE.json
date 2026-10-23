@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/dac921",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "dac921",
+ "note": "CH73: master switch Run on GitHub (default on; off = phone mode, engine off, trading OFF); audit shows the phone stands down while the engine drives",
+ "since": 1792766096,
+ "beat": 1792766096
+}
