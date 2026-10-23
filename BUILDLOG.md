@@ -400,3 +400,4 @@ day that changes.
 | v1.0.59 | code 399 | 2026-10-23T02:21Z | CH70 Kalshi cards and slip match Novig's: X, Bet opens the same mini slip, Open in Kalshi; X removes for good; unbettable bets leave the list until a newer price shows them bettable
 | v1.0.60 | code 400 | 2026-10-23T02:32Z | CH71a an order that finds nobody selling (or a refusal that says the bet is gone) takes the row off the scanned list until a newer price lists it again
 | v1.0.61 | code 401 | 2026-10-23T14:47Z | CH73: master switch Run on GitHub (default on; off = phone mode, engine off, trading OFF); audit shows the phone stands down while the engine drives
+| v1.0.62 | code 402 | 2026-10-23T15:50Z | CH74a: Bids tab shows the engine's resting bids; Off/Recommend stop engine bids
