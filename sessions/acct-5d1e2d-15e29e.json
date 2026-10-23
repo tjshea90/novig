@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-yprd2y",
- "head": "92686cad7485e0f2d09ef5e700b58cc4e2061a6c",
+ "head": "454574295caa9925142300591ab9ae400411aa9e",
  "since": 1792795303,
- "beat": 1792795915,
- "beatIso": "2026-10-23T22:51:55Z",
- "done": "",
- "next": ""
+ "beat": 1792795965,
+ "beatIso": "2026-10-23T22:52:45Z",
+ "done": "ST2: feed sort fix + CNO sort buttons",
+ "next": "ship v1.0.65"
 }
