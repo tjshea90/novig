@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "5e21abe12b0af1738cad6faf51535443bccd6d9c",
+ "head": "59e69cd7985929d88d4705b2d5431d3630b6722d",
  "since": 1792797865,
- "beat": 1792799146,
- "beatIso": "2026-10-23T23:45:46Z",
- "done": "FX2 engine bugs from the live log: (1) Kalshi bid cancels sent by id alone went to shard 0, 404'd and fell to the retired route ('Please switch to the V2 endpoints'): cancel now carries the market ticker (remembered by KalshiAsNovig, looked up otherwise), no legacy fallback; Kalshi 429s no longer say 'Novig asked us to slow down'; (2) Kalshi lane re-reads +EV lines before judging (97% were 'no Kalshi price read in the last minute' after a 2-min scan). Tests fail on old code.",
- "next": "Pinnacle source silent 73 scans (error text says Pinnodds); BoltOdds Free key; bid churn; then land + engine reset"
+ "beat": 1792799334,
+ "beatIso": "2026-10-23T23:48:54Z",
+ "done": "FX2: study splits capped at 25 groups (engine digest's Books agreeing had hundreds of 1-bet groups, hid every other split; ScanStudyTest); StarCheck leaves out lines logged before the rating's inputs were recorded (914 rows were rated 1 star on missing data) + same-lines old-vs-new table",
+ "next": "re-dispatch review-digest.yml, read the star check, decide the rating's fix"
 }
