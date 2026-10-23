@@ -103,6 +103,42 @@ class KalshiTradingClientTest {
     }
 
     @Test
+    fun `insufficient_balance moves the cash of the other shards to the market's shard and sends the order again`() = runTest {
+        var orders = 0
+        var bal = 0
+        routes["POST /trade-api/v2/portfolio/events/orders"] = {
+            orders += 1
+            if (orders == 1) MockResponse().setResponseCode(400).setBody("""{"error":{"code":"insufficient_balance","message":"insufficient balance"}}""")
+            else MockResponse().setBody("""{"order_id":"o-9","fill_count":"1.00","remaining_count":"0.00","ts_ms":1}""")
+        }
+        routes["GET /trade-api/v2/markets/T"] = { MockResponse().setBody("""{"market":{"ticker":"T","exchange_index":2}}""") }
+        routes["GET /trade-api/v2/portfolio/balance"] = {
+            bal += 1
+            MockResponse().setBody(if (bal <= 1) """{"balance":629,"balance_dollars":"6.2900","portfolio_value":0,"balance_breakdown":[{"exchange_index":0,"balance":"6.2900"},{"exchange_index":2,"balance":"0.0000"}]}"""
+                else """{"balance":629,"balance_dollars":"6.2900","portfolio_value":0,"balance_breakdown":[{"exchange_index":0,"balance":"0.0000"},{"exchange_index":2,"balance":"6.2900"}]}""")
+        }
+        routes["POST /trade-api/v2/portfolio/intra_exchange_instance_transfer"] = { MockResponse().setBody("""{"transfer_id":"t-1"}""") }
+        val placed = client().buy("T", "no", 0.42, 1, cid)
+        assertEquals("o-9", placed.orderId)
+        assertEquals(2, orders)
+        val transfer = seen.first { it.path!!.endsWith("intra_exchange_instance_transfer") }
+        val body = json.parseToJsonElement(transfer.body.readUtf8()).jsonObject
+        assertEquals("0", body["source_exchange_shard"]!!.jsonPrimitive.content)
+        assertEquals("2", body["destination_exchange_shard"]!!.jsonPrimitive.content)
+        assertEquals("62900", body["amount"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun `a refusal that persists after a move is not answered with another move`() = runTest {
+        routes["POST /trade-api/v2/portfolio/events/orders"] = { MockResponse().setResponseCode(400).setBody("""{"error":{"code":"insufficient_balance","message":"insufficient balance"}}""") }
+        routes["GET /trade-api/v2/markets/T"] = { MockResponse().setBody("""{"market":{"ticker":"T","exchange_index":0}}""") }
+        routes["GET /trade-api/v2/portfolio/balance"] = { MockResponse().setBody("""{"balance":0,"balance_dollars":"0.0000","portfolio_value":0,"balance_breakdown":[{"exchange_index":0,"balance":"0.0000"}]}""") }
+        val e = runCatching { client().buy("T", "yes", 0.42, 1, cid) }.exceptionOrNull() as KalshiApiException
+        assertEquals(400, e.status)
+        assertTrue("no transfer without cash on another shard", seen.none { it.path!!.endsWith("intra_exchange_instance_transfer") })
+    }
+
+    @Test
     fun `a retired V2 route falls back to the legacy one and stays there`() = runTest {
         routes["POST /trade-api/v2/portfolio/events/orders"] = { MockResponse().setResponseCode(404).setBody("{}") }
         routes["POST /trade-api/v2/portfolio/orders"] = {
