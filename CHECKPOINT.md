@@ -1,21 +1,23 @@
-# CHECKPOINT 4044 — read me first, then TASKS.md
+# CHECKPOINT 4045 — read me first, then TASKS.md
 
-**Written:** 2026-10-23T03:31:15Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-lpr7ge` · **builds on:** `6d56913b3` (this checkpoint is the commit after it)
+**Written:** 2026-10-23T03:41:58Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-96459k` · **builds on:** `2861e87d8` (this checkpoint is the commit after it)
 
 ## Just done
-chat session 2026-10-22/23: shipped v1.0.49-1.0.60 (Kalshi ticker, no phone Kalshi scan, phone gating while GitHub drives, Kalshi shard cash move confirmed, Kalshi card/slip = Novig's, unbettable rows leave the list); API audit handed to acct-27a37e
+chat: engine bids set to 800% wallet, margin 0.02
 
 ## Do this next
-open: CH56a/b tennis model, CH57b/CH69b ParlayAPI spend (API-audit session), CH62b engine arbs, CH65b carry kalshi files across restarts, CH66b/c live Feed rows + CNO auto-bet on the engine, CH67 flaky NovigPublicClientTest, CH69a ParlayAPI meter mismatch
+watch chat; check desk.json for bid count next run
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  2861e87d8 ckpt 4044: chat session 2026-10-22/23: shipped v1.0.49-1.0.60 (Kalshi ticker, no phone
   900772ee5 ckpt 4043: CH68d confirmed by Tj: Kalshi bets went through
   2e23b0dbd ckpt 4042: pre-release: CH71a an order that finds nobody selling (or a refusal that sa
   86dc43e69 ckpt 4041: bump 1.0.60
@@ -25,5 +27,4 @@ open: CH56a/b tennis model, CH57b/CH69b ParlayAPI spend (API-audit session), CH6
   998597a65 ckpt 4037: pre-release: CH68d Kalshi: when an order is refused for balance, the app mo
   b7de370d5 ckpt 4036: CH68d: cross-shard cash move on insufficient_balance; bump 1.0.58
   6bd1b1c07 ckpt 4035: pre-release: CH68c Kalshi refusal shows the cash on each exchange shard; th
-  09b8d77e1 ckpt 4034: CH68c: shard breakdown in refusal; NO-first removed; bump 1.0.57
 ```
