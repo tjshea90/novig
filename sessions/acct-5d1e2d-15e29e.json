@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-4w5jix",
- "head": "cc9c94ea19eb1e93dc9289cc39d5327992dcc336",
+ "head": "e72e299470f48ca4050315844fc472893f0ef359",
  "since": 1792768029,
- "beat": 1792769962,
- "beatIso": "2026-10-23T15:39:22Z",
- "done": "CH74 written",
- "next": "CH74b-e after ship of v1.0.62"
+ "beat": 1792769996,
+ "beatIso": "2026-10-23T15:39:56Z",
+ "done": "pre-ship: CH74a: Bids tab shows the engine's resting bids; Off/Recommend stop engine bids",
+ "next": "ship.sh gates and releases this"
 }
