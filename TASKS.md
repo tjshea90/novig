@@ -6275,4 +6275,4 @@ Tj: "audit the entire bids tab ... recoded to transform from a phone bid engine 
 - [ ] CH74e test + release
 - [x] CH74f (Tj 15:52 UTC) a "Restart bid engine" button on the Bids tab: clears the picked-off halt and the guard's memory (BidRequest kind "restart"), so bids resume at once
 
-- [ ] CH75 bid side split: Over/Under and favorite/underdog on engine bids+bets, CLV first (Tj 18:25 "yes" to the Under/underdog bid hypothesis); result to chat + research/, lever in LEVERS.md
+- [x] CH75 (split done; results-by-side at 200+ settled fills per side) bid side split: Over/Under and favorite/underdog on engine bids+bets, CLV first (Tj 18:25 "yes" to the Under/underdog bid hypothesis); result to chat + research/, lever in LEVERS.md
