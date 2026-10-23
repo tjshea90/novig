@@ -396,3 +396,4 @@ day that changes.
 | v1.0.55 | code 395 | 2026-10-23T00:41Z | CH68a Kalshi refusal shows the exact order sent and Kalshi's cash at that moment
 | v1.0.56 | code 396 | 2026-10-23T01:05Z | CH68b Kalshi NO buys use the order form that names the NO side first (fixes insufficient_balance on every NO bet, if that is the cause)
 | v1.0.57 | code 397 | 2026-10-23T01:46Z | CH68c Kalshi refusal shows the cash on each exchange shard; the retired old order route is no longer tried first
+| v1.0.58 | code 398 | 2026-10-23T02:01Z | CH68d Kalshi: when an order is refused for balance, the app moves your cash from the other exchange shards to the market's shard and sends it again
