@@ -24,6 +24,12 @@ import java.util.zip.GZIPOutputStream
  * or the switch moves; read by the engine before every pass. [rev] only ever grows (the phone's clock in ms at the write), so the engine can say which settings a feed was priced under.
  * [on] false = the engine finishes its job and starts nothing (the phone is asleep and so is the cloud: no scan, no API call, no minute spent).
  */
+/** One button press on the Bids tab for the engine's desk: [kind] is post (key = the outcome id), cancel (key = the order id) or cancelAll. */
+@Serializable
+data class BidRequest(val kind: String, val key: String = "", val atMs: Long = 0L) {
+    val id: String get() = "$kind:$key:$atMs"
+}
+
 @Serializable
 data class CloudConfig(
     val rev: Long = 0L,
@@ -62,6 +68,11 @@ data class CloudConfig(
      * last served makes every API due at once in [ApiMonitor] (free account reads; the Pinnacle boards, which cost a request per key, keep their own schedule); no scan is touched.
      */
     val checkApisAtMs: Long = 0L,
+    /**
+     * The Bids tab's by-hand actions for the engine's desk (Tj, 2026-10-23, CH74c: "on recommend mode, the GitHub engine will recommend and only bid if I press post"): Post a recommended bid, Cancel one, Cancel all.
+     * Each carries the phone's clock; the engine serves each id once ([BidRequest.id]) and says what came of it in `desk.json` ([DeskFile.results]).
+     */
+    val bidRequests: List<BidRequest> = emptyList(),
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }
