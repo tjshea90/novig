@@ -9,6 +9,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import com.tjshea.vigilant.data.scanner.BetRating
 import com.tjshea.vigilant.data.scanner.ProfitProfile
 import org.junit.Test
 
@@ -106,12 +107,15 @@ class AutoBetStarsTest {
     }
 
     @Test
-    fun `the adjusted stars are the shown stars unless Profit-proven only is on and the type lost money`() {
-        val lost = ProfitProfile.adjustedStars(true, 4.5, "NFL", "Player props", "A Over 1.5", 0.03, 1_000_000L, 0L)
-        val shipped = ProfitProfile.shipped!!.judge(ProfitProfile.Instrument.BET, "NFL", "Player props", "A Over 1.5", 0.03, 0L)
-        assertEquals(4.5 - shipped.starPenalty, lost!!, 1e-9)
-        assertTrue("the shipped profile lowers an NFL prop over", lost < 4.5)
-        assertEquals(4.5, ProfitProfile.adjustedStars(false, 4.5, "NFL", "Player props", "A Over 1.5", 0.03, 1_000_000L, 0L)!!, 0.0)
+    fun `history is inside the one rating, so the adjusted stars are the shown stars (ST1)`() {
+        assertEquals(4.5, ProfitProfile.adjustedStars(true, 4.5, "NFL", "Player props", "A Over 1.5", 0.03, 1_000_000L, 0L)!!, 0.0)
         assertEquals(null, ProfitProfile.adjustedStars(true, null, "NFL", "Player props", "A Over 1.5", 0.03, 1_000_000L, 0L))
+        val lost = ProfitProfile.typePointsOf("NFL", "Player props", "A Over 1.5", 1_000_000L, 0L)
+        val won = ProfitProfile.typePointsOf("NFL", "Game totals", "Over 45.5", 1_000_000L, 0L)
+        assertTrue("a losing type takes points off ($lost)", lost <= 0.0)
+        assertTrue("points stay in range", lost >= -ProfitProfile.TYPE_POINTS && won <= ProfitProfile.TYPE_POINTS)
+        val base = BetRating.Inputs(5, 5, 0.05, true, false, 0.01)
+        assertTrue(BetRating.rate(base.copy(typePoints = -15.0)).stars < BetRating.rate(base).stars)
+        assertTrue(BetRating.rate(base.copy(typePoints = 15.0)).stars >= BetRating.rate(base).stars)
     }
 }
