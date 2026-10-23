@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "15e29e",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/optimistic-curie-nzj8hm",
  "head": "f5b889f7430dd8336c962571324d04a7d418eb5d",
  "since": 1792797185,
- "beat": 1792797685,
- "beatIso": "2026-10-23T23:21:25Z",
+ "beat": 1792797700,
+ "beatIso": "2026-10-23T23:21:40Z",
  "done": "",
  "next": ""
 }
