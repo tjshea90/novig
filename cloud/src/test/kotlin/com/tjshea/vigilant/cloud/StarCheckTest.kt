@@ -52,6 +52,10 @@ class StarCheckTest {
         assertTrue(text, text.contains("STAR RATING CHECK") && text.contains("30 +EV lines"))
         for (title in listOf("Stars now (re-rated)", "Stars as logged", "Companies pricing both sides", "Sharp book", "Lead time", "History + lead points", "CLV per star")) assertTrue(title, text.contains(title))
         assertEquals("Game totals", StarCheck.kindLabel("TOTAL"))
+        // A line logged before the rating's inputs were recorded is left out of the tables (it would be rated on missing data), and counted.
+        val old = "y1,2026-10-15,,,120,NBA,BASKETBALL,PROP,Points,Over 20.5,\"Old game\",1,,+100,0.5,0.03,0.52,,blend,60,5,100,,,,0,,,,,0,1,,,,,WON,1.0,0.53,SGO,0.05,,m,o"
+        val withOld = StarCheck.report(StarCheck.parse(sequenceOf(head, old) + rows.asSequence()), profile = null)
+        assertTrue(withOld, withOld.contains("30 +EV lines") && withOld.contains("Left out: 1 lines"))
         assertEquals("Other", StarCheck.kindLabel("SOMETHING"))
     }
 

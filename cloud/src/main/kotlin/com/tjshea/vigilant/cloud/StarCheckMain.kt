@@ -21,6 +21,8 @@ object StarCheck {
     data class Line(
         val id: String, val day: String, val event: String, val league: String, val kind: String, val selection: String, val minToStart: Long?, val ev: Double,
         val books: Int, val agreeing: Int?, val sharp: Boolean?, val spread: Double?, val loggedStars: Double?, val status: String, val profit: Double?, val clv: Double?, val shown: Boolean,
+        /** False when the line was logged before the engine recorded the rating's inputs (no companies, no fair books): re-rating it would only rate the missing data. */
+        val recorded: Boolean = true,
     ) {
         val settled: Boolean get() = status == "WON" || status == "LOST" || status == "PUSH"
     }
@@ -69,6 +71,7 @@ object StarCheck {
                 minToStart = c.f("min_to_start").toDoubleOrNull()?.toLong(), ev = ev, books = two ?: (c.f("n_fair_books").toIntOrNull() ?: 0), agreeing = c.f("books_agreeing").toIntOrNull(),
                 sharp = sharp, spread = c.f("fair_spread").toDoubleOrNull(), loggedStars = c.f("stars").toDoubleOrNull(), status = c.f("status"),
                 profit = c.f("profit_units").toDoubleOrNull(), clv = c.f("clv").toDoubleOrNull(), shown = c.f("shown") == "1",
+                recorded = two != null || (c.f("n_fair_books").toIntOrNull() ?: 0) > 0,
             )
         }
         return out
@@ -123,7 +126,9 @@ object StarCheck {
     }
 
     fun report(lines: List<Line>, profile: ProfitProfile? = ProfitProfile.shipped): String {
-        val ls = lines.distinctBy { it.id }
+        val all = lines.distinctBy { it.id }
+        val missing = all.filter { !it.recorded }
+        val ls = all.filter { it.recorded }
         val stars = ls.associateWith { rated(it, profile).stars }
         val days = ls.map { it.day }.filter { it.isNotEmpty() }.distinct().sorted()
         val out = ArrayList<String>()
@@ -132,11 +137,16 @@ object StarCheck {
         out += "Each line re-rated with the rating the app ships now (history points from profit_profile.json as of ${profile?.asOf ?: "?"}, lead points, the small-book cap). CLV = close_fair / cost - 1 (positive = beat the close);"
         out += "ROI per \$1 at the first price. ± is a 95% interval over GAMES (a game's lines averaged first). A sound rating gives more CLV and more ROI as the stars rise; intervals that overlap do not differ."
         out += "The history points were fitted to Tj's own bets (out of sample here); the lead points and the small-book cap were fitted to these lines (in sample)."
+        if (missing.isNotEmpty()) out += "Left out: ${missing.size} lines logged before the engine recorded the rating's inputs (companies, agreement): " + row("not recordable", missing).trim()
         val halfOrder = Comparator<String> { a, b -> (a.toDoubleOrNull() ?: 0.0).compareTo(b.toDoubleOrNull() ?: 0.0) }
         out += table("Stars now (re-rated)", ls, { String.format(Locale.US, "%.1f", stars.getValue(it)) }, halfOrder)
         out += table("Stars now, coarse", ls, { val s = stars.getValue(it); when { s < 2.0 -> "1-1.5"; s < 3.0 -> "2-2.5"; s < 4.0 -> "3-3.5"; else -> "4-5" } })
         out += table("Stars now, the lines the list showed", ls.filter { it.shown }, { val s = stars.getValue(it); when { s < 2.0 -> "1-1.5"; s < 3.0 -> "2-2.5"; s < 4.0 -> "3-3.5"; else -> "4-5" } })
         out += table("Stars as logged (the rating of the day)", ls, { it.loggedStars?.let { s -> String.format(Locale.US, "%.1f", s) } ?: "not logged" }, halfOrder)
+        out += table("Stars now vs as logged, the same lines (logged -> now)", ls.filter { it.loggedStars != null }, { l ->
+            val old = l.loggedStars!!; val now = stars.getValue(l)
+            when { now > old + 0.25 -> "raised"; now < old - 0.25 -> "lowered"; else -> "same" }
+        })
         val firstHalf = days.take(days.size / 2).toSet()
         out += table("Stars now, by period (stability)", ls, { val s = stars.getValue(it); (if (it.day in firstHalf) "early " else "late ") + when { s < 2.5 -> "<2.5"; s < 3.5 -> "2.5-3"; else -> "3.5+" } })
         slope(ls.filter { it.clv != null }.map { stars.getValue(it) to it.clv!! })?.let { (b, t) -> out += String.format(Locale.US, "  CLV per star: %+.2f points (t %.1f, bets as the unit)", b * 100, t) }
