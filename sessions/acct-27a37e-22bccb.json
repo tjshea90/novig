@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "3d8945f6322fc48a83b43a9b3864267dfb683aa7",
+ "head": "d492cbeefa3dbf83a6ea43b99f971329397dd22f",
  "since": 1792797865,
- "beat": 1792799701,
- "beatIso": "2026-10-23T23:55:01Z",
- "done": "FX2: study splits capped at 25 groups (engine digest's Books agreeing had hundreds of 1-bet groups, hid every other split; ScanStudyTest); StarCheck leaves out lines logged before the rating's inputs were recorded (914 rows were rated 1 star on missing data) + same-lines old-vs-new table",
- "next": "re-dispatch review-digest.yml, read the star check, decide the rating's fix"
+ "beat": 1792799785,
+ "beatIso": "2026-10-23T23:56:25Z",
+ "done": "FX2: SharpAPI and SX Bet streams ignored server closes (no onClosing): a dead socket counted as live until the 90 s silence check while REST polled only every 60 s; now answered and reconnected at once; SharpAPI close codes counted+logged; tab bar labels fit with 8 tabs (screenshot drew 10); sharp-book chips named (Circa, Bookmaker, SBOBET); star help + Fair odds hint copy current. All with tests failing on old code.",
+ "next": "read star check rerun; finish API verdicts; land + engine reset; full regression; ship"
 }
