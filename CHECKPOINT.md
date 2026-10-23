@@ -1,22 +1,23 @@
-# CHECKPOINT 4063 — read me first, then TASKS.md
+# CHECKPOINT 4064 — read me first, then TASKS.md
 
-**Written:** 2026-10-23T19:31:40Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-beub9m` · **builds on:** `7f9bfcabb` (this checkpoint is the commit after it)
+**Written:** 2026-10-23T19:40:53Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-beub9m` · **builds on:** `43c0797c9` (this checkpoint is the commit after it)
 
 ## Just done
-CH76 rank BoltOdds keys by plan
+CH76 done, reported keys are not Growth
 
 ## Do this next
-restart engine, verify
+none
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M data/src/main/kotlin/com/tjshea/vigilant/data/boltodds/BoltOddsFeed.kt
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  43c0797c9 ckpt 4063: CH76 rank BoltOdds keys by plan
   70d51597a ckpt 4062: CH76 log BoltOdds plan line
   7814b1198 ckpt 4061: CH76 BoltOdds Growth one-socket mode
   6bbea3766 ckpt 4060: research index rebuilt
@@ -26,8 +27,4 @@ restart engine, verify
   5255b0065 ckpt 4056: pre-ship: CH74: Bids tab controls the GitHub engine's bids: Recommend + Pos
   a0bb25f6e ckpt 4055: pre-release: CH74a: Bids tab shows the engine's resting bids; Off/Recommend
   e72e29947 ckpt 4054: pre-ship: CH74a: Bids tab shows the engine's resting bids; Off/Recommend st
-  cc9c94ea1 ckpt 4053: CH74 written
 ```
-
-(2 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
