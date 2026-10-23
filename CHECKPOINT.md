@@ -1,13 +1,13 @@
-# CHECKPOINT 4077 — read me first, then TASKS.md
+# CHECKPOINT 4078 — read me first, then TASKS.md
 
-**Written:** 2026-10-23T23:56:25Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-f7c47823-ez8xwu` · **builds on:** `a9575cf3c` (this checkpoint is the commit after it)
+**Written:** 2026-10-23T23:59:22Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-f7c47823-ez8xwu` · **builds on:** `d492cbeef` (this checkpoint is the commit after it)
 
 ## Just done
-FX2: SharpAPI and SX Bet streams ignored server closes (no onClosing): a dead socket counted as live until the 90 s silence check while REST polled only every 60 s; now answered and reconnected at once; SharpAPI close codes counted+logged; tab bar labels fit with 8 tabs (screenshot drew 10); sharp-book chips named (Circa, Bookmaker, SBOBET); star help + Fair odds hint copy current. All with tests failing on old code.
+FX2/FX3: star check rerun read (recorded lines only: ROI rises with stars, CLV/ROI slope +0.5/+5.0 pts per star, t~1; type points and sharp component not confirmed out of sample); API value table over 501 scans x 3 days read
 
 ## Do this next
-read star check rerun; finish API verdicts; land + engine reset; full regression; ship
+full regression floor (running), then write research/full_test, star_rating_review, api_verdicts; CHANGES.md; ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ read star check rerun; finish API verdicts; land + engine reset; full regression
 
 ## Last ten checkpoints
 ```
+  d492cbeef ckpt 4077: FX2: SharpAPI and SX Bet streams ignored server closes (no onClosing): a de
   59e69cd79 ckpt 4076: FX2: study splits capped at 25 groups (engine digest's Books agreeing had h
   5e21abe12 ckpt 4075: FX2 engine bugs from the live log: (1) Kalshi bid cancels sent by id alone 
   72184f30c ckpt 4074: FX2: StudyExport played-days-first (test fails on old code), Review day bud
@@ -25,8 +26,4 @@ read star check rerun; finish API verdicts; land + engine reset; full regression
   3e0dff430 ckpt 4070: pre-release: ST2: stars/soonest sort works on the merged Novig+Kalshi list 
   454574295 ckpt 4069: ST2: feed sort fix + CNO sort buttons
   08b8813b1 ckpt 4068: v1.0.64 released: single star rating; cross-check on propline-clv written
-  ebfe78b7e ckpt 4067: pre-release: ST1: one combined star rating (type of bet, lead time, small-b
 ```
-
-(10 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
