@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-4w5jix",
  "head": "a0bb25f6e2a20374b75aaf8fa20b769dfa2809c1",
  "since": 1792768029,
- "beat": 1792770186,
- "beatIso": "2026-10-23T15:43:06Z",
+ "beat": 1792770612,
+ "beatIso": "2026-10-23T15:50:12Z",
  "done": "pre-release: CH74a: Bids tab shows the engine's resting bids; Off/Recommend stop engine bids (versionCode 402, v1.0.62)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.62), then run: bash tools/record-release.sh v1.0.62 402 \"CH74a: Bids tab shows the engine's resting bids; Off/Recommend stop engine bids\""
 }
