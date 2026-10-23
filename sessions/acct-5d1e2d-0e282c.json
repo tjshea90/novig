@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-lpr7ge",
  "head": "b7de370d5fe8396447ab2c0c63c0250fb24f4d4a",
  "since": 1792720130,
- "beat": 1792720203,
- "beatIso": "2026-10-23T01:50:03Z",
+ "beat": 1792720430,
+ "beatIso": "2026-10-23T01:53:50Z",
  "done": "CH68d: cross-shard cash move on insufficient_balance; bump 1.0.58",
  "next": "ship, release, engine reset, Tj retries"
 }
