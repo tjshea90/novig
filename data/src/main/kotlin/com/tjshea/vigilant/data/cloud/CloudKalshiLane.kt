@@ -196,10 +196,11 @@ class CloudKalshiLane(
         log("kalshi lane: ${last.note}" + (autoNote.takeIf { it.isNotEmpty() }?.let { " · auto: $it" }.orEmpty()) + (bidNote.takeIf { it.isNotEmpty() }?.let { " · bids: $it" }.orEmpty()))
     }
 
-    /** [scanned] with the Kalshi side of its +EV lines read again now, when the scan ended long enough ago for them to have aged past the auto-bet's freshness rule. */
+    /** [scanned] with the Kalshi side of its +EV lines read again now when their prices have aged toward the auto-bet's freshness rule (half of it); else [scanned] as it is. */
     internal suspend fun fresher(s: ScanSettings, scanned: ScanResult): ScanResult {
-        if (clock() - scanned.computedAtMs < KalshiAutoBettor.FRESH_PRICE_MS / 2) return scanned
-        val ids = scanned.opportunities.filter { !it.isLive && (it.evPercent ?: 0.0) > 0.0 }.map { it.market.marketId }.distinct()
+        val now = clock()
+        val ids = scanned.opportunities.filter { !it.isLive && (it.evPercent ?: 0.0) > 0.0 && now - (it.bookFetchedAtMs ?: 0L) > KalshiAutoBettor.FRESH_PRICE_MS / 2 }
+            .map { it.market.marketId }.distinct()
         if (ids.isEmpty()) return scanned
         return try {
             scanner.recheck(s, ids) { _, _ -> }.result ?: scanned
