@@ -395,3 +395,4 @@ day that changes.
 | v1.0.54 | code 394 | 2026-10-23T00:23Z | CH68a Kalshi bet card shows Kalshi's exact refusal words (to find why it says not enough money)
 | v1.0.55 | code 395 | 2026-10-23T00:41Z | CH68a Kalshi refusal shows the exact order sent and Kalshi's cash at that moment
 | v1.0.56 | code 396 | 2026-10-23T01:05Z | CH68b Kalshi NO buys use the order form that names the NO side first (fixes insufficient_balance on every NO bet, if that is the cause)
+| v1.0.57 | code 397 | 2026-10-23T01:46Z | CH68c Kalshi refusal shows the cash on each exchange shard; the retired old order route is no longer tried first
