@@ -6280,3 +6280,9 @@ Tj: "audit the entire bids tab ... recoded to transform from a phone bid engine 
 - [x] CH76 (keys on GitHub are Free/Trial/Trial, waiting for the Growth key; one-socket + 3-league Growth mode built, engine restart to load it) BoltOdds Growth plan (Tj 18:28 chat): key says Growth ($219: 3 leagues, all markets, 1 connection). Sample sent before the new key reached GitHub showed free/trial. After the key lands: read /api/odds/user plan; then engine uses ONE socket (lines+props share, or lines first), subscribes only the 3 best leagues, never opens a 2nd socket (BoltOddsFeed/CloudSources), plan shown in status; tests
 
 - [ ] CH77 BoltOdds NFL (Tj 20:11 chat): when NFL Sunday is near, let a Growth-plan key read NFL (swap into the 3-league set, e.g. in place of NCAAB/NHL on game days; `BoltOddsFeed.GROWTH_PRIORITY`), and/or test using both Trial keys at once, one connection per key (needs 2 sockets per feed; check Trial league limits first).
+
+## ST1: one combined star rating, fitted to the data (Tj, 2026-10-23 22:11 UTC, chat t1792793515523-b161, verbatim summary)
+Analyze the current star system; make ONE rating that combines all factors, remove the separate "after your history this is x stars"; promote bet types that won (overs/unders, favorites/underdogs, prop kinds, sport) and demote losing ones proportionately, from Tj's bets AND API historical data; also weigh books agreeing, a sharp book agreeing, EV size, and CLV drivers (lead time, bet type, sport, sharp price, both sides offered). Keep the 1-5 star scale: 5 = most profitable type, 1 = least/riskiest. Applies to the scanners (Vigilant + CNO).
+- [ ] ST1a map the current star code (where history stars live) and write research/star_rating_*.md with the data fit
+- [ ] ST1b build the single rating + tests, remove the history line
+- [ ] ST1c release, tell Tj
