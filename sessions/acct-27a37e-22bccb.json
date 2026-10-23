@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "81f55f389ca4c5473714f033aa9b927ff49882e3",
+ "head": "b8f28279241c48a9afcc2c5a69f5b127dd6d781d",
  "since": 1792797865,
- "beat": 1792798340,
- "beatIso": "2026-10-23T23:32:20Z",
- "done": "FX: full-test request written into TASKS.md (FX1-FX5), claimed",
- "next": "FX1: run the floor (tools/test.sh + screenshots + selftests), then FX2-FX4"
+ "beat": 1792798592,
+ "beatIso": "2026-10-23T23:36:32Z",
+ "done": "FX1 floor green (4,192 tests, exit 0), 25 py selftests ok, 134 screenshots read; FX2 fix: StudyExport takes played game days before future ones (digest's engine study showed 0 started bets since 10-21), review gets its own day budget; StarCheckMain.kt written (not yet compiled)",
+ "next": "compile+test StudyExport/StarCheck, add review-digest steps (api_quality + starcheck), trigger it; UI: tab labels truncated, circa/bookmaker chips, stale star help copy"
 }
