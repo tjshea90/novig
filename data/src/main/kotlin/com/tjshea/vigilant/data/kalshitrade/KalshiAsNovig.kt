@@ -56,6 +56,9 @@ class KalshiAsNovig(
 ) {
     private val expiry = ConcurrentHashMap<String, Long>()
 
+    /** Each order's market ticker, kept from its placement or a listing: Kalshi's cancel needs it to find the order's exchange shard ([KalshiTradingClient.cancel]). */
+    private val tickers = ConcurrentHashMap<String, String>()
+
     override val batchOrders: Boolean get() = false
 
     override suspend fun balance(subaccountKeyId: String): Double = kalshi.balance().cash
@@ -76,6 +79,7 @@ class KalshiAsNovig(
                 postOnly = post, expirationMs = expiresAt,
             )
             expiresAt?.let { expiry[placed.orderId] = it }
+            remember(placed.orderId, ref.ticker)
             return placed.orderId
         } catch (e: KalshiApiException) {
             throw asNovig(e)
@@ -83,9 +87,15 @@ class KalshiAsNovig(
     }
 
     override suspend fun cancelOrder(orderId: String): String? = try {
-        if (kalshi.cancel(orderId)) "CANCELED" else null
+        (if (kalshi.cancel(orderId, tickers[orderId])) "CANCELED" else null).also { tickers.remove(orderId) }
     } catch (e: KalshiApiException) {
         throw asNovig(e)
+    }
+
+    private fun remember(orderId: String, ticker: String) {
+        // A bounded memory (the desk keeps a few hundred resting); a forgotten one is looked up by the cancel itself.
+        if (tickers.size > MAX_TICKERS) tickers.clear()
+        tickers[orderId] = ticker
     }
 
     override suspend fun cancelOrders(marketId: String?, eventId: String?): Int {
@@ -136,6 +146,7 @@ class KalshiAsNovig(
     override suspend fun positions(marketId: String?) = emptyList<com.tjshea.vigilant.data.novig.trading.NovigPosition>()
 
     private fun toNovig(o: KalshiOrder): NovigOrder {
+        if (o.status == "resting") remember(o.orderId, o.ticker) else tickers.remove(o.orderId)
         val outcome = outcomes.outcomeOf(o.ticker, o.outcomeSide) ?: "${o.ticker}|${o.outcomeSide}"
         val qty = (o.initialCount * 100.0).roundToLong()
         val rest = (o.remainingCount * 100.0).roundToLong()
@@ -152,10 +163,15 @@ class KalshiAsNovig(
         qty = (f.count * 100.0).roundToLong(), cost = f.count * f.price, taker = f.taker, fee = f.fee, ts = f.ts ?: clock(),
     )
 
+    // Kalshi's answers keep their status (the desk's stop rules read it) but say they are Kalshi's: "Novig asked us to slow down" was printed for Kalshi's own 429s.
     private fun asNovig(e: KalshiApiException): NovigApiException = when {
-        e.status == 429 -> NovigApiException(429, "RATE_LIMITED", e.detail)
-        e.isAuth -> NovigApiException(e.status, "KEY_REFUSED", e.detail)
+        e.status == 429 -> NovigApiException(429, NovigApiException.KALSHI_PREFIX + "RATE_LIMITED", e.detail ?: "Kalshi asked us to slow down. Try again in a few seconds.")
+        e.isAuth -> NovigApiException(e.status, NovigApiException.KALSHI_PREFIX + "KEY_REFUSED", e.detail)
         e.status == 400 || e.status == 409 || e.status == 422 -> NovigApiException(400, e.code?.uppercase() ?: "REFUSED", e.detail)
         else -> NovigApiException(e.status, e.code, e.detail)
+    }
+
+    private companion object {
+        const val MAX_TICKERS = 20_000
     }
 }

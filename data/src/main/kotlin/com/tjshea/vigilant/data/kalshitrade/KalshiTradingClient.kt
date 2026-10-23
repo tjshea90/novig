@@ -361,16 +361,17 @@ open class KalshiTradingClient(
     open suspend fun findByClientId(clientOrderId: String, ticker: String): KalshiOrder? =
         orders(ticker = ticker, limit = 200).firstOrNull { it.clientOrderId == clientOrderId }
 
-    /** Cancels a resting order. True when Kalshi cancelled it, false when it was already gone (filled or cancelled). */
+    /**
+     * Cancels a resting order. True when Kalshi cancelled it, false when it was already gone (filled or cancelled). The V2 route finds the order's exchange shard only from its market's
+     * [ticker] (docs, Cancel Order (V2): "An order_id alone cannot identify the exchange shard"); without one the order is looked up for it first. The old route is never tried as a fallback:
+     * Kalshi has retired it ("Please switch to the V2 endpoints", seen on the engine 2026-10-23 for every bid the desk took down by id alone: they stayed up).
+     */
     open suspend fun cancel(orderId: String, ticker: String? = null): Boolean = try {
-        val q = sub(HashMap())
-        ticker?.let { q["market_ticker"] = it }
+        val market = ticker ?: order(orderId)?.let { o -> if (o.status != "resting") return false else o.ticker }
         if (!legacy) {
-            try {
-                call("DELETE", "/portfolio/events/orders/$orderId", q, write = true)
-            } catch (e: KalshiApiException) {
-                if (e.status == 404 && e.code?.contains("order", true) != true) call("DELETE", "/portfolio/orders/$orderId", sub(HashMap()), write = true) else throw e
-            }
+            val q = sub(HashMap())
+            market?.let { q["market_ticker"] = it }
+            call("DELETE", "/portfolio/events/orders/$orderId", q, write = true)
         } else {
             call("DELETE", "/portfolio/orders/$orderId", sub(HashMap()), write = true)
         }
