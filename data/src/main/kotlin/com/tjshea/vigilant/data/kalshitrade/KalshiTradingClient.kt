@@ -193,6 +193,10 @@ open class KalshiTradingClient(
 
     private fun sub(q: MutableMap<String, String>): MutableMap<String, String> = q.also { m -> subaccount?.let { m["subaccount"] = it.toString() } }
 
+    /** The last order this client sent, in words (ticker, side, count, price, time in force): shown beside a refusal so Kalshi's answer can be checked against what was asked. */
+    @Volatile var lastOrder: String? = null
+        private set
+
     /** Cash and the value of the positions, in dollars. */
     open suspend fun balance(): KalshiBalance {
         val o = call("GET", "/portfolio/balance", sub(HashMap()))
@@ -217,6 +221,7 @@ open class KalshiTradingClient(
         expirationMs: Long? = null,
     ): KalshiPlaced {
         require(outcomeSide == "yes" || outcomeSide == "no") { "side must be yes or no: $outcomeSide" }
+        lastOrder = "$ticker ${outcomeSide.uppercase()} x$count @ ${dollars(price)} $tif"
         require(count >= 1) { "count must be at least 1" }
         require(price > 0.0 && price < 1.0) { "price must be inside (0, 1): $price" }
         require(isUuid(clientOrderId)) { "client order id must be a UUID: $clientOrderId" }
