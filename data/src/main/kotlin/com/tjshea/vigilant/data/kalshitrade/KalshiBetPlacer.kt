@@ -299,7 +299,8 @@ class KalshiBetPlacer(
     /** Kalshi's refusal in words for the card. */
     private fun advice(e: KalshiApiException): String = when {
         e.isAuth -> "Kalshi refused the key (${e.code ?: e.status}): ${e.detail ?: "check that the key can trade"} (Settings › Kalshi)."
-        e.code?.contains("insufficient", true) == true -> "Kalshi says the account doesn't have enough money for this order."
+        // Kalshi's own words go on the card too (Tj, 2026-10-23: "all my kalshi bets say I don't have enough money" with money in the account): the reason must be readable, not only the guess.
+        e.code?.contains("insufficient", true) == true -> "Kalshi says the account doesn't have enough money for this order (Kalshi: HTTP ${e.status} ${e.code}${e.detail?.let { " — $it" }.orEmpty()})."
         e.code?.contains("market_closed", true) == true || e.detail?.contains("closed", true) == true -> "Kalshi says this market is closed."
         else -> "Kalshi refused the order: ${e.code ?: e.status}${e.detail?.let { " — $it" }.orEmpty()}"
     }
