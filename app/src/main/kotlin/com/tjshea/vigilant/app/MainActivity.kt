@@ -937,11 +937,13 @@ private fun VigilantRoot(
                             onRefresh = { vm.refreshCloud(); vm.makerPreview() },
                         )
                     }
+                    // The GitHub engine posts the bids (its heartbeat is live): the tab shows ITS desk (desk.json), not this phone's empty one (Tj, 2026-10-23: "it says 0 resting, which is incorrect").
+                    val engineDesk = state.cloudUi.desk?.takeIf { state.settings.engineBids && state.cloudUi.status?.deskLive(now) == true }
                     com.tjshea.vigilant.app.ui.MakerScreen(
                         com.tjshea.vigilant.app.ui.MakerUi(
-                            settings = state.settings, setUp = state.betting.enabled, vigilantOn = state.settings.vigilantOn, bids = bids.orEmpty(),
-                            decisions = status.decisions, scanAtMs = status.scanAtMs, lastPassAtMs = status.lastAtMs, running = status.running,
-                            problem = status.problem, bets = state.bets, now = now,
+                            settings = state.settings, setUp = state.betting.enabled, vigilantOn = state.settings.vigilantOn, bids = engineDesk?.bids ?: bids.orEmpty(),
+                            decisions = if (engineDesk != null) emptyList() else status.decisions, scanAtMs = status.scanAtMs, lastPassAtMs = engineDesk?.atMs ?: status.lastAtMs, running = status.running,
+                            problem = if (engineDesk != null) listOf(engineDesk.stopped, engineDesk.note).firstOrNull { it.isNotBlank() } else status.problem, bets = state.bets, now = now,
                             denied = denied.orEmpty().filter { it.startsTs > now }, backgroundFeeds = state.settings.autoScansVigilant,
                             waiting = status.lastReport?.waiting.orEmpty(), lastPass = status.lastReport?.let(com.tjshea.vigilant.app.ui.MakerText::passLine),
                             cno = if (state.settings.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO) cnoLane else null,

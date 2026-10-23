@@ -965,7 +965,8 @@ data class ScanSettings(
     /** The phone's own live lanes (Live light, the live taker, live bids) may run: not while the engine scans and live is set to GitHub ("I'm not interested in phone live betting unless I specifically press phone"). */
     val phoneLive: Boolean get() = !cloudDrives || !tailLive.engine
 
-    val engineBids: Boolean get() = cloudDrives && !killed && gates.cloudTrading == CloudTradeMode.LIVE && gates.cloudBids && makerSource == BidSource.VIGILANT
+    /** The Bids tab's Automatic is what lets the engine post: Off and Recommend never post (Tj, 2026-10-23: "I think it was posting bids even when I had it toggled off"). */
+    val engineBids: Boolean get() = maker && cloudDrives && !killed && gates.cloudTrading == CloudTradeMode.LIVE && gates.cloudBids && makerSource == BidSource.VIGILANT
 
     /** The scanner choice as it runs. */
     val scannerNow: ScannerMode get() = scanner
