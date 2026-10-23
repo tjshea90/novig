@@ -548,6 +548,7 @@ class TheOddsApiClient(
             // Sharp books since schema 23 (SharpAPI, SGO and OddsPapi carry them) that The Odds API does not list: the Fair odds chips showed their raw keys.
             "circa" -> "Circa"
             "bookmaker" -> "Bookmaker"
+            "sbobet" -> "SBOBET"
             else -> KNOWN_BOOKMAKERS[key] ?: key
         }
 
