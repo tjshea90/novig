@@ -104,6 +104,7 @@ class BoltOddsFeed(
     private suspend fun checkPlan() {
         if (clock() - planCheckedMs < PLAN_TTL_MS) return
         planCheckedMs = clock()
+        if (client.planNotes.isEmpty()) runCatching { client.rankKeys() }
         client.oddsUser()?.plan?.let { plan = it }
         val p = plan?.lowercase().orEmpty()
         oneSocket = "growth" in p || "starter" in p || (props.lastError?.contains("concurrent", ignoreCase = true) == true)
