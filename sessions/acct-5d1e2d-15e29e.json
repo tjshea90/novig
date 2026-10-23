@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-yprd2y",
  "head": "5aad4db1436a09d16b5311af0e8b25d97762f905",
  "since": 1792768029,
- "beat": 1792794432,
- "beatIso": "2026-10-23T22:27:12Z",
+ "beat": 1792794446,
+ "beatIso": "2026-10-23T22:27:26Z",
  "done": "ST1: single star rating (type+lead points, small-book cap), study written, full suite green",
  "next": "ship via ship.sh, release.yml, record-release, tell Tj; later refit weights when 3x closed rows"
 }
