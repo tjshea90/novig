@@ -634,17 +634,15 @@ class ScanStudyTest {
         val laterStart = start + 5 * 86_400_000L
         val bet = j.fold(day).values.single().bet
         j.append(later, listOf(Line(Line.BET, "future1", laterStart - 3_600_000L, b = bet.copy(id = "future1", startsTs = laterStart, createdAtMs = laterStart - 3_600_000L))))
-        val meta = StudyExport.Meta("0.57.0", 99, "moto g", "rules")
+        val meta = StudyExport.Meta("0.57.0", 99, "moto g", "rules", zone = java.util.TimeZone.getTimeZone("America/New_York"))
         val out = StringWriter()
         // The budget holds one day: the played (today's) one is taken, the one to come is left out.
         val n = StudyExport.write(out, j, emptyList(), meta, now, File(tmp.root, "export.tmp"), maxBytes = j.file(day).length() / 3)
         assertEquals(1, n)
         assertTrue(out.toString().contains("game days $day to $day"))
         assertEquals(listOf(day, day.minusDays(1), later, later.plusDays(1)), StudyExport.daysByUse(listOf(later.plusDays(1), day.minusDays(1), later, day), now, meta.zone))
-        // A bigger day budget (the daily review's) takes both, whatever the lines' limit.
-        assertEquals(2, StudyExport.write(StringWriter(), j, emptyList(), meta, now, File(tmp.root, "export.tmp"), maxBytes = j.file(day).length() / 3, dayBudget = Long.MAX_VALUE).let {
-            val o = StringWriter(); StudyExport.write(o, j, emptyList(), meta, now, File(tmp.root, "export.tmp"), maxBytes = 10_000_000, dayBudget = Long.MAX_VALUE)
-        })
+        // A bigger day budget (the daily review's) takes both.
+        assertEquals(2, StudyExport.write(StringWriter(), j, emptyList(), meta, now, File(tmp.root, "export.tmp"), dayBudget = Long.MAX_VALUE))
     }
 
     /** Tj, 2026-10-05: "make sure the auto bid feature is also thoroughly tracked in the scan/diagnosis feature and all information logged so I can see how well my auto bids do". */
