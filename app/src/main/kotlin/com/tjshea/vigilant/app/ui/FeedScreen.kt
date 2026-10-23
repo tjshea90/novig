@@ -313,7 +313,7 @@ fun FeedScreen(
                         )
                     }
                 }
-                item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort, onStartsWithin, errorApplies) { onRecheck(feedMarketIds(state, now)) } }
+                item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort, onStartsWithin, errorApplies, extraRows = if (kalshi != null && kalshi.kalshiOn) viewFilter.apply(kalshi.rows).size else 0) { onRecheck(feedMarketIds(state, now)) } }
                 // The real-time live lane (Settings › Include live games): what it is linked to and how fresh its bets are, or why it shows none (Tj, 2026-10-11).
                 if (AppBook.isNovig && state.settings.includeLive && state.settings.leagues.isNotEmpty()) {
                     item(key = "live") {
@@ -352,7 +352,7 @@ fun FeedScreen(
                 // One list, best first, when Kalshi is on beside Novig (CH33); Novig's own order is kept when it is alone.
                 // Same "at least N books" view filter as the Novig rows (Tj, 2026-10-20: Kalshi rows showed 2 of 2 books with a 3-book minimum on).
                 val kalshiRows = if (kalshi != null && kalshi.kalshiOn) viewFilter.apply(kalshi.rows) else emptyList()
-                val merged = if (kalshiRows.isEmpty()) shown.map { it to false } else (shown.map { it to false } + kalshiRows.map { it to true }).sortedByDescending { it.first.evPercent ?: 0.0 }
+                val merged = if (kalshiRows.isEmpty()) shown.map { it to false } else (shown.map { it to false } + kalshiRows.map { it to true }).sortedWith(com.tjshea.vigilant.data.scanner.FeedOrder.comparator(state.settings.feedSort).let { c -> Comparator<Pair<Opportunity, Boolean>> { a, b -> c.compare(a.first, b.first) } })
                 items(merged, key = { (o, k) -> (if (k) "kalshi/" else "") + o.key }) { (o, isKalshi) ->
                     if (isKalshi) OpportunityCard(
                         o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), venue = "Kalshi",
@@ -362,7 +362,7 @@ fun FeedScreen(
                     else OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), onHide = { hide(o) }, injury = state.injuries[o.key], move = state.lineMoves[o.key], venue = if (kalshi != null && kalshi.kalshiOn) "Novig" else null) { selected = o }
                 }
                 // Old bets (Tj, 2026-10-17): the Novig price or the other books' prices behind them are past the app's own old limits, so they are not in the list above; one tap shows them, marked OLD.
-                val oldBets = state.feedOldAt(now).let { viewFilter.apply(it) }.let { if (kalshi != null && !kalshi.novigOn) emptyList() else it }
+                val oldBets = state.feedOldAt(now).let { viewFilter.apply(it) }.let { com.tjshea.vigilant.data.scanner.FeedOrder.sort(it, state.settings.feedSort) }.let { if (kalshi != null && !kalshi.novigOn) emptyList() else it }
                 if (oldBets.isNotEmpty()) {
                     item(key = "oldToggle") {
                         TextButton(onClick = { showOld = !showOld }, modifier = Modifier.padding(horizontal = 12.dp).testTag("oldBetsToggle")) {
@@ -423,6 +423,8 @@ private fun FeedSummary(
     onStartsWithin: (Int) -> Unit,
     /** Whether a scan's error still holds now ([com.tjshea.vigilant.app.MainViewModel.errorStillApplies]): one that no longer does leaves the screen by itself. */
     errorApplies: (String) -> Boolean,
+    /** Kalshi's rows listed beside Novig's (venue Both/Kalshi): with any, the sort buttons and the list header show even when Novig's own list is empty (Tj, 2026-10-23: the sort vanished). */
+    extraRows: Int = 0,
     onRecheck: () -> Unit,
 ) {
     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -508,20 +510,20 @@ private fun FeedSummary(
                 action = "Fair odds settings",
                 onAction = onOpenSettings,
             )
-            allLater -> EmptyState(
+            allLater && extraRows == 0 -> EmptyState(
                 "Nothing starting in the next ${state.settings.startsWithinHours} hours",
                 "Every +EV bet this scan found is on a game starting later. Widen the window to see them.",
                 action = "Show any time",
                 onAction = { onStartsWithin(0) },
             )
-            state.feed.isNotEmpty() && shown.isEmpty() -> EmptyState(
+            state.feed.isNotEmpty() && shown.isEmpty() && extraRows == 0 -> EmptyState(
                 "Odds too old to compare",
                 "The other books' prices behind these bets are too old to compare (${Freshness.LIMIT_TEXT}), so they're " +
                     "hidden: they could show +EV that isn't there any more. Scan for current odds.",
                 action = "Scan now",
                 onAction = onScan,
             )
-            state.feed.isEmpty() -> EmptyState(
+            state.feed.isEmpty() && extraRows == 0 -> EmptyState(
                 "No +EV right now",
                 "${result.stats.outcomesWithFair} prices checked across ${result.stats.matchedEvents} games " +
                     "starting in ${windowLabel(state.settings.effective().scanWindowHours)}. " +
@@ -535,7 +537,7 @@ private fun FeedSummary(
             else -> Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "${shown.size} bet${if (shown.size == 1) "" else "s"} ≥ +${Format.percent(state.settings.minEvPercent)} EV · " +
+                        "${shown.size + extraRows} bet${if (shown.size + extraRows == 1) "" else "s"} ≥ +${Format.percent(state.settings.minEvPercent)} EV · " +
                             "${result.stats.outcomesWithFair} checked" + if (status.scanning) " so far" else "",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -122,10 +122,13 @@ data class LiveAges(val pinnLineChangedMs: Long, val pinnFeedMs: Long, val novig
 
 /** The Feed's orders (Tj, 2026-10-11 added Stars: the 1-5 star rating, best first, the bigger edge first among equals). */
 object FeedOrder {
-    fun sort(list: List<Opportunity>, sort: FeedSort): List<Opportunity> = when (sort) {
-        FeedSort.EV -> list.sortedByDescending { it.evPercent }
-        FeedSort.START -> list.sortedWith(compareBy<Opportunity> { it.event.startsTs }.thenByDescending { it.evPercent })
-        FeedSort.STARS -> list.sortedWith(compareByDescending<Opportunity> { it.rating?.stars ?: 0.0 }.thenByDescending { it.evPercent })
+    fun sort(list: List<Opportunity>, sort: FeedSort): List<Opportunity> = list.sortedWith(comparator(sort))
+
+    /** The order of [sort], for lists that mix Novig's and Kalshi's rows (the Feed's merged list used to be EV-only whatever was picked). */
+    fun comparator(sort: FeedSort): Comparator<Opportunity> = when (sort) {
+        FeedSort.EV -> compareByDescending { it.evPercent }
+        FeedSort.START -> compareBy<Opportunity> { it.event.startsTs }.thenByDescending { it.evPercent }
+        FeedSort.STARS -> compareByDescending<Opportunity> { it.rating?.stars ?: 0.0 }.thenByDescending { it.evPercent }
     }
 }
 
