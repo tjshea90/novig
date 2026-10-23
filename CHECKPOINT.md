@@ -1,23 +1,24 @@
-# CHECKPOINT 4048 — read me first, then TASKS.md
+# CHECKPOINT 4049 — read me first, then TASKS.md
 
-**Written:** 2026-10-23T14:34:02Z · **tests:** 1 RED: test_research_index.sh (8 green)
-**Branch:** `claude/optimistic-curie-gxcjqr` · **builds on:** `1b82d88ce` (this checkpoint is the commit after it)
+**Written:** 2026-10-23T14:34:49Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-gxcjqr` · **builds on:** `ac4fb1b1b` (this checkpoint is the commit after it)
 
 ## Just done
-CH73 audit written
+pre-ship: CH73: master switch Run on GitHub (default on; off = phone mode, engine off, trading OFF); audit shows the phone stands down while the engine drives
 
 ## Do this next
-ship 1.0.61
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
      M TASKS.md
-    ?? research/ch73_audit_2026-10-23.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  10930e032 ckpt 4048: CH73 audit written
   1b82d88ce ckpt 4047: ENGINEER 2026-10-23: CH57b spend re-read, no change
   c11513e95 ckpt 4046: CH73 part 1: master switch 'Run on GitHub' (off=phone mode, trading OFF), t
   80643f85e ckpt 4045: chat: engine bids set to 800% wallet, margin 0.02
@@ -27,5 +28,7 @@ ship 1.0.61
   86dc43e69 ckpt 4041: bump 1.0.60
   e588f8528 ckpt 4040: CH71a: NotFilled/gone order results take the row off the list
   151a44cf8 ckpt 4039: pre-release: CH70 Kalshi cards and slip match Novig's: X, Bet opens the sam
-  96965c89c ckpt 4038: CH70: Kalshi card = Novig card (X, Bet mini slip, Open in Kalshi), hide per
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
