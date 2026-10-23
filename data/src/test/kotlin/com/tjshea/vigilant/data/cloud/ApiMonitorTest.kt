@@ -67,6 +67,7 @@ class ApiMonitorTest {
         assertTrue("one key answered: the API is up", a.ok); assertEquals(1, a.keysOk); assertEquals(3, a.keys)
         assertEquals("refused", a.kind); assertEquals(2, a.refused); assertEquals(0, a.unreachable); assertEquals(0, a.failStreak)
         val before = server.requestCount
+        m.recheckNow(); m.tick(s); assertEquals("a pull right after a green check leaves it alone", before, server.requestCount)
         now += 60_000L
         m.tick(s); assertEquals("not due yet (checked every 5 minutes)", before, server.requestCount)
         m.recheckNow()
