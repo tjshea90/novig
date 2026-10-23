@@ -939,7 +939,7 @@ private fun VigilantRoot(
                         )
                     }
                     // The GitHub engine posts the bids (its heartbeat is live): the tab shows ITS desk (desk.json), not this phone's empty one (Tj, 2026-10-23: "it says 0 resting, which is incorrect").
-                    val engineDesk = state.cloudUi.desk?.takeIf { state.settings.engineBids && state.cloudUi.status?.deskLive(now) == true }
+                    val engineDesk = state.cloudUi.desk?.takeIf { state.settings.engineDesk && state.cloudUi.status?.deskLive(now) == true }
                     com.tjshea.vigilant.app.ui.MakerScreen(
                         com.tjshea.vigilant.app.ui.MakerUi(
                             settings = state.settings, setUp = state.betting.enabled, vigilantOn = state.settings.vigilantOn, bids = engineDesk?.bids ?: bids.orEmpty(),
