@@ -105,6 +105,16 @@ object CloudScanKey {
     fun withFilters(base: ScanSettings, from: ScanSettings): ScanSettings =
         base.copy(minEvPercent = from.minEvPercent, maxEvPercent = from.maxEvPercent, minOdds = from.minOdds, maxOdds = from.maxOdds, feedSort = from.feedSort)
 
+    /**
+     * True when everything that differs between [old] and [new] is a bid rule ([Kind.BIDS]) and the bid mode (Off / Recommend / Automatic) is unchanged: the Bids tab is being edited and the phone waits for
+     * Tj to stop before it sends them all at once (Tj, 2026-10-23, CH74d). A mode switch, or any other setting changing, is sent at once.
+     */
+    fun bidsEditOnly(old: ScanSettings, new: ScanSettings): Boolean {
+        val a = flat(old); val b = flat(new)
+        val changed = (a.keys + b.keys).filter { a[it] != b[it] }
+        return changed.isNotEmpty() && changed.all { kindOf(it) == Kind.BIDS }
+    }
+
     /** Settings paths no decision has been made about (a new setting): empty while every one is classified. */
     fun unclassified(s: ScanSettings): List<String> = flat(s).keys.filter { kindOf(it) == null }
 }

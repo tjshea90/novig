@@ -323,7 +323,13 @@ class CloudLink(private val c: AppContainer) {
         }
         // 2. write
         scope.launch(Dispatchers.IO) {
-            c.settingsStore.flow.filterNotNull().debounce(1_500L).collect { s -> pushSettings(s) }
+            // Bid-rule edits wait for 15 s of quiet and then go together (Tj, 2026-10-23, CH74d); anything else (a switch, the mode, another page) waits 1.5 s as before.
+            var sent: ScanSettings? = null
+            c.settingsStore.flow.filterNotNull().collectLatest { s ->
+                val base = sent
+                delay(if (base != null && com.tjshea.vigilant.data.cloud.CloudScanKey.bidsEditOnly(base, s)) BIDS_EDIT_QUIET_MS else 1_500L)
+                pushSettings(s); sent = s
+            }
         }
         scope.launch(Dispatchers.IO) {
             // A failed write is tried again; settings are also re-sent every 10 minutes so the engine always has them (a new job reads them first thing).
