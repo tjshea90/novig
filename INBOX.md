@@ -896,3 +896,14 @@ A few changes:
 ```
 "nobody was selling at that price anymore" is an example of a type of bet error to remove from the scanned results
 ```
+
+## 2026-10-23T23:24:36Z
+```
+Run full tests protocol on the Android app and on the GitHub engine. 
+
+Look for and fix bugs, bad code, waste of bandwidth or processing, waste of api usage, and ways to optimize the code and ui.
+
+Review the stars rating system for rating bets and make sure it is sound and based on good data.
+
+Look at all the available apis and how well they respond, their freshness, features, and contributions to the app and GitHub engine, and tell me which ones to continue, which ones are bad or not needed, which ones to consider buying, etc. Make sure this is based on sufficient data and history
+```
