@@ -28,6 +28,8 @@ class NovigApiException(val status: Int, val code: String?, val serverMessage: S
      */
     val brief: String
         get() = when {
+            // An answer of Kalshi's carried through the bid desk's Novig-shaped client (kalshitrade/KalshiAsNovig): Kalshi's words, never Novig's.
+            code?.startsWith(KALSHI_PREFIX) == true -> "Kalshi: " + (serverMessage ?: "HTTP $status")
             status == 451 && code == "ANONYMIZED_NETWORK" ->
                 "Novig lists the internet address of the network this phone is on as a VPN or proxy ($code), so the key can't read here. Settings › Betting & Novig account › Test key checks your other connection."
             status == 451 && code == "RESTRICTED_NETWORK_REGION" ->
@@ -38,6 +40,8 @@ class NovigApiException(val status: Int, val code: String?, val serverMessage: S
     /** What Tj should actually do about it (NOVIG_API.md §4, §11; docs.novig.com/api/errors). */
     val advice: String
         get() = when {
+            // An answer of Kalshi's carried through the bid desk's Novig-shaped client (kalshitrade/KalshiAsNovig): Kalshi's words, never Novig's.
+            code?.startsWith(KALSHI_PREFIX) == true -> "Kalshi: " + (serverMessage ?: "HTTP $status")
             status == 451 && code == "ANONYMIZED_NETWORK" ->
                 "Novig's network screen lists the internet address this phone is using as a VPN, proxy or Tor exit (Novig code $code). " +
                     "It judges the address, not the phone: with no VPN on, it's the Wi-Fi's or the carrier's shared address that's listed. " +
@@ -85,6 +89,9 @@ class NovigApiException(val status: Int, val code: String?, val serverMessage: S
     val betRefused: Boolean get() = code in BET_REFUSAL_CODES
 
     companion object {
+        /** Codes of answers that came from Kalshi through [com.tjshea.vigilant.data.kalshitrade.KalshiAsNovig]. */
+        const val KALSHI_PREFIX = "KALSHI_"
+
         /** The 451 codes about the request's network rather than the key holder's device. */
         val NETWORK_CODES = setOf("ANONYMIZED_NETWORK", "RESTRICTED_NETWORK_REGION")
 
