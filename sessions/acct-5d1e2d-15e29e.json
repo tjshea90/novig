@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-4w5jix",
- "head": "a19f4eeb199722ff08fa8546e551342a993f57cf",
+ "head": "cc9c94ea19eb1e93dc9289cc39d5327992dcc336",
  "since": 1792768029,
- "beat": 1792769854,
- "beatIso": "2026-10-23T15:37:34Z",
- "done": "Bids: engineBids needs maker (Off/Recommend never post); Bids tab shows the engine desk",
- "next": "ship.sh, release.yml, record-release"
+ "beat": 1792769962,
+ "beatIso": "2026-10-23T15:39:22Z",
+ "done": "CH74 written",
+ "next": "CH74b-e after ship of v1.0.62"
 }
