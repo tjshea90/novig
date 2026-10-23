@@ -1,22 +1,24 @@
-# CHECKPOINT 4047 — read me first, then TASKS.md
+# CHECKPOINT 4048 — read me first, then TASKS.md
 
-**Written:** 2026-10-23T11:24:52Z · **tests:** all 9 fast checks green
-**Branch:** `claude/keen-keller-1zz21l` · **builds on:** `c11513e95` (this checkpoint is the commit after it)
+**Written:** 2026-10-23T14:34:02Z · **tests:** 1 RED: test_research_index.sh (8 green)
+**Branch:** `claude/optimistic-curie-gxcjqr` · **builds on:** `1b82d88ce` (this checkpoint is the commit after it)
 
 ## Just done
-ENGINEER 2026-10-23: CH57b spend re-read, no change
+CH73 audit written
 
 ## Do this next
-next ANALYST at 100+ settled; CH57b NFL cut only if balance < 8k x days left
+ship 1.0.61
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M research/parlay_spend_2026-10-22.md
+     M TASKS.md
+    ?? research/ch73_audit_2026-10-23.md
 
 ## Last ten checkpoints
 ```
+  1b82d88ce ckpt 4047: ENGINEER 2026-10-23: CH57b spend re-read, no change
   c11513e95 ckpt 4046: CH73 part 1: master switch 'Run on GitHub' (off=phone mode, trading OFF), t
   80643f85e ckpt 4045: chat: engine bids set to 800% wallet, margin 0.02
   2861e87d8 ckpt 4044: chat session 2026-10-22/23: shipped v1.0.49-1.0.60 (Kalshi ticker, no phone
@@ -26,5 +28,4 @@ next ANALYST at 100+ settled; CH57b NFL cut only if balance < 8k x days left
   e588f8528 ckpt 4040: CH71a: NotFilled/gone order results take the row off the list
   151a44cf8 ckpt 4039: pre-release: CH70 Kalshi cards and slip match Novig's: X, Bet opens the sam
   96965c89c ckpt 4038: CH70: Kalshi card = Novig card (X, Bet mini slip, Open in Kalshi), hide per
-  998597a65 ckpt 4037: pre-release: CH68d Kalshi: when an order is refused for balance, the app mo
 ```
