@@ -935,6 +935,7 @@ private fun VigilantRoot(
                             onDeny = vm::makerDeny,
                             onUndoDeny = vm::makerUndoDeny,
                             onRefresh = { vm.refreshCloud(); vm.makerPreview() },
+                            onEngine = vm::engineBidRequest,
                         )
                     }
                     // The GitHub engine posts the bids (its heartbeat is live): the tab shows ITS desk (desk.json), not this phone's empty one (Tj, 2026-10-23: "it says 0 resting, which is incorrect").
@@ -947,6 +948,12 @@ private fun VigilantRoot(
                             denied = denied.orEmpty().filter { it.startsTs > now }, backgroundFeeds = state.settings.autoScansVigilant,
                             waiting = status.lastReport?.waiting.orEmpty(), lastPass = status.lastReport?.let(com.tjshea.vigilant.app.ui.MakerText::passLine),
                             cno = if (state.settings.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO) cnoLane else null,
+                            engine = engineDesk?.let { d ->
+                                com.tjshea.vigilant.app.ui.EngineDeskUi(
+                                    recs = d.recs, stopped = d.stopped, results = d.results,
+                                    pending = state.cloudUi.bidRequests.filter { r -> d.results.none { it.kind == r.kind && it.key == r.key && it.requestAtMs == r.atMs } && now - r.atMs < 5 * 60_000L }.mapTo(HashSet()) { it.kind + ":" + it.key },
+                                )
+                            },
                         ),
                         actions,
                     )

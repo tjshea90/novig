@@ -2563,6 +2563,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** Pull to refresh on a page that shows only the engine's files (Tracker, Bids, Live, Messages): read them now. */
     fun refreshCloud() { viewModelScope.launch(Dispatchers.IO) { c.cloud.refreshNow() } }
 
+    /** A press on the Bids tab for the GitHub engine's desk (CH74): post a recommended bid, cancel one, cancel all, restart the desk. */
+    fun engineBidRequest(kind: String, key: String) {
+        viewModelScope.launch(Dispatchers.IO) { if (!c.cloud.requestBid(kind, key)) _toasts.tryEmit("Save a GitHub token first (Settings › Cloud scan): the engine cannot be asked without it.") }
+    }
+
     /** Pull to refresh on the Tracker (TCL122-3): every bet graded now, Novig's fills synced, the wallet and the engine's orders read again. */
     fun refreshTracker() {
         settleBets(force = true, announce = true)
