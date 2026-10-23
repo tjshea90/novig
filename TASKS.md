@@ -6273,3 +6273,4 @@ Tj: "audit the entire bids tab ... recoded to transform from a phone bid engine 
 - [ ] CH74c Recommend on the engine: engine publishes its would-post bids (recommendations); the Post button writes a post request (cloud-config) the engine serves once (never twice); Cancel / Cancel all likewise
 - [ ] CH74d debounce: settings changes on the Bids tab are sent to cloud-config as ONE write 15 s after the last change (all bids settings together), the engine applies at once (read every 3 s; no re-scan needed: bid rules are PRICING/BIDS kind in CloudScanKey)
 - [ ] CH74e test + release
+- [ ] CH74f (Tj 15:52 UTC) a "Restart bid engine" button on the Bids tab: clears the picked-off halt and the guard's memory (BidRequest kind "restart"), so bids resume at once
