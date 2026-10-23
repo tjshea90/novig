@@ -237,6 +237,8 @@ class ApiBettingTest {
         assertTrue(refused(ApiBetPlanner.plan(against, book(), 5.0, now, manual, 0.0)).contains("sharp book"))
         assertTrue(refused(ApiBetPlanner.plan(against, book(), 5.0, now, limits, 0.0)).contains("sharp book"))
         ready(ApiBetPlanner.plan(target(), book(), 5.0, now, manual, 0.0))
+        // The slip drops the row from the list at once (Tj, 2026-10-23): a sharp book against it counts as "gone".
+        assertTrue((ApiBetPlanner.plan(against, book(), 5.0, now, manual, 0.0) as PlanResult.Refused).gone)
     }
 
     /** Tj, 2026-10-11: "if I bet any live game, it only places the bet if it can be filled at the odds listed in the scan". */
