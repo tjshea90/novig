@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-yprd2y",
  "head": "454574295caa9925142300591ab9ae400411aa9e",
  "since": 1792795303,
- "beat": 1792795970,
- "beatIso": "2026-10-23T22:52:50Z",
+ "beat": 1792795973,
+ "beatIso": "2026-10-23T22:52:53Z",
  "done": "ST2: feed sort fix + CNO sort buttons",
  "next": "ship v1.0.65"
 }
