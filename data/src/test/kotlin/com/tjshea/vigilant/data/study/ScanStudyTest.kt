@@ -623,6 +623,25 @@ class ScanStudyTest {
         assertEquals(2, StudyExport.write(StringWriter(), j, emptyList(), meta, now, File(tmp.root, "export.tmp")))
     }
 
+    /** FX, 2026-10-23: one "Books agreeing" group per "x of y" gave the engine's digest hundreds of one-bet lines and pushed every other split out of it. */
+    @Test
+    fun `a split prints its biggest groups only and counts the rest in one line`() = runBlocking {
+        val j = journal()
+        val s = study(j)
+        s.cno(snap(moneyline))
+        s.flush()
+        val bet = j.fold(day).values.single().bet
+        j.append(day, (1..30).map { i ->
+            Line(Line.BET, "many$i", now, b = bet.copy(id = "many$i", atBet = bet.atBet!!.copy(twoSided = 30 + i, agreeing = 0)))
+        })
+        val out = StringWriter()
+        StudyExport.write(out, j, emptyList(), StudyExport.Meta("0.57.0", 99, "moto g", "rules"), now, File(tmp.root, "export.tmp"))
+        val text = out.toString()
+        val split = text.substringAfter("-- Books agreeing --\n").substringBefore("\n-- ")
+        assertEquals(26, split.lines().count { it.isNotBlank() })
+        assertTrue(split, split.contains("… and 6 smaller groups (6 bets), counted in the summary"))
+    }
+
     /** FX, 2026-10-23: the engine's study in the daily digest held only game days still to come (no result, no close) and pushed out every played day: "Closes found: 0 of 0 started bets". */
     @Test
     fun `a game day still to come never pushes out a played one`() = runBlocking {
