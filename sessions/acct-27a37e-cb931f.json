@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "cb931f",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-mc7img",
+ "head": "61d6cb9840eaecd5dcebaa9a05278c42f20cd1e8",
+ "since": 1792776423,
+ "beat": 1792776423,
+ "beatIso": "2026-10-23T17:27:03Z",
+ "done": "WATCH 2026-10-23: engine healthy, pinnacle+bolt-props feeds silent (watched by apiManager)",
+ "next": "next ANALYST/ENGINEER per rotation; CH74e release v1.0.63 pending by owner"
+}
