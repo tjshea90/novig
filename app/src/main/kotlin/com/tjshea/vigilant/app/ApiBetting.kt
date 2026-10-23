@@ -79,6 +79,8 @@ data class BetSheetUi(
     /** What Novig said of the last "Add money" from this sheet (applied), or why it wasn't. */
     val fundMessage: String? = null,
     val fundError: String? = null,
+    /** Where the order goes: "Novig" or "Kalshi" (Tj, 2026-10-23: one slip for both exchanges, only the company differs). */
+    val venue: String = "Novig",
 )
 
 /**

@@ -490,7 +490,7 @@ fun ApiBetSheetContent(
         if (result != null) {
             ResultBlock(result)
             // Novig refused it for the wallet's balance (the sheet's own check read an older balance): the money block is open.
-            if (result !is PlaceResult.Placed) {
+            if (result !is PlaceResult.Placed && sheet.venue == "Novig") {
                 AddMoneyBlock(sheet, keySaved, suggest = null, autoOpen = result is PlaceResult.Failed && WALLET_WORDS.containsMatchIn(result.message), onFund = onFundWallet, onSettings = onAddMoney)
             }
             Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth().testTag("betDone")) { Text("Done") }
@@ -524,20 +524,21 @@ fun ApiBetSheetContent(
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 LabeledValue("Edge now", Format.evPercentShort(plan.evPercent), valueColor = if (plan.evPercent >= 0) Edge.colors.positive else Edge.colors.negative)
                 LabeledValue("Profit if it wins", Format.money(plan.profitIfWon))
-                sheet.balance?.let { LabeledValue("Wallet", Format.money(it), valueColor = if (it + 1e-9 < plan.expectedCost) Edge.colors.negative else androidx.compose.ui.graphics.Color.Unspecified) }
+                sheet.balance?.let { LabeledValue(if (sheet.venue == "Novig") "Wallet" else "${sheet.venue} cash", Format.money(it), valueColor = if (it + 1e-9 < plan.expectedCost) Edge.colors.negative else androidx.compose.ui.graphics.Color.Unspecified) }
             }
             plan.note?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning) }
             val short = sheet.balance != null && sheet.balance + 1e-9 < plan.expectedCost
             if (short) {
                 Text(
-                    "The Vigilant wallet holds ${Format.money(sheet.balance)}, less than this bet's ${Format.money(plan.expectedCost)}: add money to it first.",
+                    (if (sheet.venue == "Novig") "The Vigilant wallet holds" else "Your ${sheet.venue} account shows") + " ${Format.money(sheet.balance)}, less than this bet's ${Format.money(plan.expectedCost)}: " + (if (sheet.venue == "Novig") "add money to it first." else "add money on ${sheet.venue} first."),
                     style = MaterialTheme.typography.bodySmall, color = Edge.colors.negative, modifier = Modifier.testTag("walletShort"),
                 )
             }
             Text(
-                "It's placed as one order that buys at ${Format.american(plan.limitPrice)} or better and never rests: if Novig's price moves against you first, " +
+                "It's placed as one order that buys at ${Format.american(plan.limitPrice)} or better and never rests: if ${sheet.venue}'s price moves against you first, " +
                     "or nobody's selling, nothing is bought. " +
-                    if (plan.live) "In play Novig charges its taker fee: ${Format.money(plan.feeDollars)} of what you pay is fee." else "Pregame bets pay no Novig fee.",
+                    if (sheet.venue != "Novig") "${sheet.venue} charges a taker fee: ${Format.money(plan.feeDollars)} of what you pay is fee."
+                    else if (plan.live) "In play Novig charges its taker fee: ${Format.money(plan.feeDollars)} of what you pay is fee." else "Pregame bets pay no Novig fee.",
                 style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.testTag("betFeeNote"),
             )
@@ -548,7 +549,7 @@ fun ApiBetSheetContent(
             ) {
                 if (sheet.placing) {
                     CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                    Text(if (sheet.sent) "  Sent to Novig, finishing…" else "  Placing…")
+                    Text(if (sheet.sent) "  Sent to ${sheet.venue}, finishing…" else "  Placing…")
                 } else {
                     Text((if (plan.live) "Place LIVE bet · " else "Place bet · ") + Format.money(plan.expectedCost), fontWeight = FontWeight.Bold)
                 }
@@ -565,13 +566,13 @@ fun ApiBetSheetContent(
         if (sheet.plan == null && sheet.refusal == null && !sheet.resolving && sheet.target != null) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                Text("  Reading Novig's price…", style = MaterialTheme.typography.bodyMedium)
+                Text("  Reading ${sheet.venue}'s price…", style = MaterialTheme.typography.bodyMedium)
             }
         }
         // Add money to the wallet, in every bet slip whatever the wallet holds (Tj, 2026-10-01: "Right now if I have one cent, there is no option to add money
         // in the bet slip"): open already, with what the bet is short by, when the wallet can't cover it.
         val shortBy = sheet.plan?.let { p -> sheet.balance?.takeIf { it + 1e-9 < p.expectedCost }?.let { p.expectedCost - it } }
-        AddMoneyBlock(sheet, keySaved, suggest = shortBy, autoOpen = shortBy != null, onFund = onFundWallet, onSettings = onAddMoney)
+        if (sheet.venue == "Novig") AddMoneyBlock(sheet, keySaved, suggest = shortBy, autoOpen = shortBy != null, onFund = onFundWallet, onSettings = onAddMoney)
         if (!sheet.placing || sheet.sent) TextButton(onClick = onDismiss, modifier = Modifier.testTag("closeSentBet")) { Text(if (sheet.sent) "Close (the result comes as a notification)" else "Cancel") }
         Spacer(Modifier.height(4.dp))
     }
