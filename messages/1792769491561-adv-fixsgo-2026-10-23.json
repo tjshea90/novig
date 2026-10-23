@@ -1,0 +1,1 @@
+{"id":"adv-fix:sgo-2026-10-23","at":1792769491561,"from":"engine","kind":"recommendation","title":"SportsGameOdds refused a key","body":"The provider rejected the key (wrong, expired or cancelled). Replace it in Settings › APIs, or the engine goes without SportsGameOdds.","priority":1,"action":"APIS"}
