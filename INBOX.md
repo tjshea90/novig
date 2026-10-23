@@ -891,3 +891,8 @@ A few changes:
 3) any time I press the x button on any scanned card, whether kalshi or novig, make that bet disappear and not return, even if I rescan.
 4) sometimes I open a bet slip and I can't bet it because it is either no longer available, or no longer positive EV, or a sharp book says it isn't positive EV, etc. if any of this happens, immediately remove the result from the scan, and only return it to the scanned list if it becomes bettable. 
 ```
+
+## 2026-10-23T02:14:31Z
+```
+"nobody was selling at that price anymore" is an example of a type of bet error to remove from the scanned results
+```
