@@ -107,8 +107,9 @@ class WalletStripTest {
             WalletStrip(WalletBalance.Reading(18.51, System.currentTimeMillis() - 150_000), 3, 8.2, onRefresh = {})
             NavigationBar {
                 // The bar the app draws (MainActivity: shown tabs that are in the bar), not every tab: the PNG showed ten tabs cut to "Engin", "Clauc", "Settir" while the phone has eight.
-                for (t in Tab.entries.filter { it.inBar && it.shownIn(com.tjshea.vigilant.data.scanner.ScannerMode.BOTH) }) {
-                    NavigationBarItem(selected = t == Tab.BIDS, onClick = {}, icon = { TabGlyph(t) }, label = { TabLabel(t) })
+                val bar = Tab.entries.filter { it.inBar && it.shownIn(com.tjshea.vigilant.data.scanner.ScannerMode.BOTH) }
+                for (t in bar) {
+                    NavigationBarItem(selected = t == Tab.BIDS, onClick = {}, icon = { TabGlyph(t) }, label = { TabLabel(t, bar.size) })
                 }
             }
         }

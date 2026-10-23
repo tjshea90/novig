@@ -654,11 +654,11 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
 
 /** A tab's name under its icon: one line, the bar's small type, never broken mid-word. */
 @Composable
-internal fun TabLabel(t: Tab) {
+internal fun TabLabel(t: Tab, tabsInBar: Int = 7) {
     Text(
         t.label, maxLines = 1, softWrap = false,
-        // Seven tabs leave each about 47 dp on a 393 dp phone: "Auto-bet" and "Settings" fit at 10 sp with no added letter spacing.
-        style = androidx.compose.material3.MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 0.sp),
+        // Seven tabs leave each about 56 dp on a 393 dp phone: "Auto-bet" and "Settings" fit at 10 sp with no added letter spacing. Eight leave 49 dp, where "Settings" ran off the screen's edge (FX 2026-10-23): 9 sp.
+        style = androidx.compose.material3.MaterialTheme.typography.labelSmall.copy(fontSize = if (tabsInBar >= 8) 9.sp else 10.sp, letterSpacing = 0.sp),
     )
 }
 
@@ -796,7 +796,7 @@ private fun VigilantRoot(
                         },
                         icon = { TabIconWithCount(t, state) },
                         // One line in the bar's small type: seven tabs on a phone wrapped "Auto-bet", "Tracker" and "Settings" mid-word.
-                        label = { TabLabel(t) },
+                        label = { TabLabel(t, tabs.size) },
                     )
                 }
             }
