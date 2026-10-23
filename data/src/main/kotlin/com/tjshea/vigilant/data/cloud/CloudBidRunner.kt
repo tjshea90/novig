@@ -1,6 +1,7 @@
 package com.tjshea.vigilant.data.cloud
 
 import com.tjshea.vigilant.data.novig.trading.maker.MakerBid
+import com.tjshea.vigilant.data.novig.trading.maker.MakerDecision
 import com.tjshea.vigilant.data.novig.trading.maker.MakerDesk
 import com.tjshea.vigilant.data.novig.trading.maker.MakerGuard
 import com.tjshea.vigilant.data.novig.trading.maker.MakerLine
@@ -37,6 +38,8 @@ interface EngineBids {
     suspend fun pass(s: ScanSettings, now: Long): BidStatus?
     /** Takes every bid the engine has up down and stops posting ([why] in words). */
     suspend fun stop(why: String)
+    /** Serves the phone's Bids-tab requests (Post, Cancel, Cancel all, Restart) once each, at once ([CloudConfig.bidRequests]). */
+    suspend fun serve(requests: List<BidRequest>, s: ScanSettings, now: Long) {}
 }
 
 /**
@@ -72,6 +75,23 @@ class CloudBidRunner(
     @Volatile private var guardFromMs = 0L
     @Volatile private var lastStatus: BidStatus? = null
     @Volatile private var up = false
+    /** Was the last pass posting by itself (Automatic)? A switch to Recommend or Off takes the engine's own bids down once. */
+    @Volatile private var lastAuto = false
+    /** The bids the last Recommend pass would post, best first, and what the phone's requests came to ([DeskFile.recs], [DeskFile.results]). */
+    @Volatile private var posts: Map<String, MakerDecision.Post> = emptyMap()
+    @Volatile private var recs: List<BidRec> = emptyList()
+    private val servedIds = java.util.concurrent.ConcurrentLinkedDeque<String>()
+    private val results = java.util.concurrent.ConcurrentLinkedDeque<BidResult>()
+    @Volatile private var lastRules: MakerRules? = null
+
+    /** What the desk file carries beyond the bids: the recommendations, what the requests came to, the request ids already served (kept across jobs). */
+    fun extras(): Triple<List<BidRec>, List<BidResult>, List<String>> = Triple(recs, results.toList(), servedIds.toList())
+
+    /** The served ids and results the last job left in `desk.json`, so a request is never served twice across a hand-over. */
+    fun restore(f: DeskFile) {
+        f.served.forEach { if (it !in servedIds) servedIds.add(it) }
+        f.results.forEach { results.add(it) }
+    }
 
     override fun put(b: CloudBids) = lane.put(b)
 
@@ -84,12 +104,17 @@ class CloudBidRunner(
     }
 
     override suspend fun pass(s: ScanSettings, now: Long): BidStatus? {
-        if (!s.engineBids) {
+        if (!s.engineDesk) {
             // Switched off (or no longer live): whatever the engine has up comes down once, then the desk is quiet.
             if (up) stop("the engine's bids are switched off on the phone")
+            recs = emptyList(); posts = emptyMap()
             return null.also { lastStatus = null }
         }
         up = true
+        val auto = s.engineBids
+        // Automatic to Recommend: the bids the desk posted by itself come down once (the ones approved by hand stay), so "Recommend" never leaves automatic bids resting (Tj, 2026-10-23).
+        if (lastAuto && !auto) runCatching { desk.cancelAuto("the Bids tab was switched to Recommend") }.onFailure { if (it is CancellationException) throw it }
+        lastAuto = auto
         val sb = CloudEngine.forCloud(s)
         // Tj, 2026-10-17: "if the engine isn't running the auto bids posted [must not] get stale and picked off at bad prices". A bid rests on Novig on its own, so one the engine can no longer watch (the runner lost, the
         // JVM halted by the watchdog) lives only as long as [ENGINE_BID_TTL_MS]: Novig removes it by itself. A live engine re-posts it from the current fair [ENGINE_REFRESH_BEFORE_MS] before it ends.
@@ -119,12 +144,18 @@ class CloudBidRunner(
                 val lines = lane.lines(now, rules, keep = mine).filter { it.marketId !in held }
                 val moved = withMoves(lines, rules, now, read = stop == null)
                 val r = desk.cycle(
-                    moved, rules, stop, s.apiMaxPerDay, wallet, denied = emptySet(), autoPost = true, partial = cloud?.partial == true, keepPosting = { true }, reachUntilMs = cloud?.reachUntilMs,
+                    moved, rules, stop, s.apiMaxPerDay, wallet, denied = emptySet(), autoPost = auto, partial = cloud?.partial == true, keepPosting = { true }, reachUntilMs = cloud?.reachUntilMs,
                 )
                 fills.addAll(r.fills); problems = r.problems; placed = r.placed; cancelled = r.cancelled
+                lastRules = rules
+                if (!auto) {
+                    val ready = r.decisions.filterIsInstance<MakerDecision.Post>().sortedByDescending { it.evAtFair }.take(MAX_RECS)
+                    posts = ready.associateBy { it.line.outcomeId }
+                    recs = ready.map { BidRec.of(it) }
+                } else { posts = emptyMap(); recs = emptyList() }
                 waiting = r.waiting.entries.maxByOrNull { it.value }?.let { " · ${r.waiting.values.sum()} waiting: ${it.key}" }.orEmpty()
                 // Still under the wallet target: the DEEPER second bids (the phone's second rung), only while the bids up are under it.
-                if (stop == null && cloud?.partial != true && !rules.volume) {
+                if (auto && stop == null && cloud?.partial != true && !rules.volume) {
                     val d = desk.cycle(
                         moved, rules.copy(margin = rules.margin + MakerDesk.DEEP_MARGIN), stop, s.apiMaxPerDay, wallet, denied = emptySet(), autoPost = true, partial = false, keepPosting = { true }, rung = 1,
                     )
@@ -144,6 +175,7 @@ class CloudBidRunner(
         val resting = bids.filter { it.resting }
         val dollars = resting.sumOf { it.restingDollars }
         val note = buildString {
+            if (!auto) append("RECOMMEND: ${recs.size} bids ready, none posted until you press Post · ")
             append("${resting.size} bids resting (${money(dollars)})")
             if (placed > 0 || cancelled > 0 || fills.isNotEmpty()) append(" · this pass: $placed posted, $cancelled taken down, ${fills.size} filled")
             if (cloud == null && stop == null) append(" · no fresh candidate list: the bids up are kept")
@@ -155,8 +187,40 @@ class CloudBidRunner(
         return BidStatus(true, note, resting.size, dollars, stop.orEmpty(), now).also { lastStatus = it }
     }
 
+    override suspend fun serve(requests: List<BidRequest>, s: ScanSettings, now: Long) {
+        for (r in requests.sortedBy { it.atMs }) {
+            if (r.id in servedIds) continue
+            servedIds.add(r.id); while (servedIds.size > MAX_SERVED) servedIds.pollFirst()
+            // A request older than a few minutes is stale (the phone was off or the engine was down): it is dropped, never acted on late.
+            if (now - r.atMs > REQUEST_MAX_AGE_MS) { done(r, false, "too old (the engine was not listening when it was sent)", now); continue }
+            if (!s.engineDesk && r.kind != "cancel" && r.kind != "cancelAll") { done(r, false, "the engine's bids are switched off", now); continue }
+            val why: String? = try {
+                when (r.kind) {
+                    "post" -> {
+                        val d = posts[r.key]
+                        val rules = lastRules
+                        if (d == null || rules == null) "that bid is no longer on offer (the fair or the book moved)"
+                        else if (s.killed) "Stopped by the kill switch"
+                        else port.blocked?.let { "Novig refused the engine's key or place: $it" }
+                            ?: desk.post(d, rules, port.cash()?.let { c -> c * s.vigGuards.bidWalletPct.coerceIn(100, 2000) / 100.0 }, s.apiMaxPerDay)
+                    }
+                    "cancel" -> desk.cancel(r.key)
+                    "cancelAll" -> { desk.cancelAll("Cancel all, from the phone"); null }
+                    "restart" -> { haltedUntil = 0L; haltedWhy = ""; guardFromMs = now; null }
+                    else -> "unknown request"
+                }
+            } catch (e: CancellationException) { throw e } catch (e: Exception) { "failed: ${e.javaClass.simpleName}" }
+            done(r, why == null, why.orEmpty(), now)
+        }
+    }
+
+    private fun done(r: BidRequest, ok: Boolean, why: String, now: Long) {
+        results.add(BidResult(r.kind, r.key, r.atMs, ok, why.take(200), now)); while (results.size > MAX_RESULTS) results.pollFirst()
+        log("bid request ${r.kind} ${r.key.take(8)}: ${if (ok) "done" else "refused: $why"}")
+    }
+
     override suspend fun stop(why: String) {
-        up = false
+        up = false; lastAuto = false
         runCatching { desk.cancelAll(why) }.onFailure { if (it is CancellationException) throw it; log("bids not all taken down: ${it.javaClass.simpleName}") }
         lastStatus = BidStatus(false, "bids down: $why", atMs = clock())
     }
@@ -201,6 +265,10 @@ class CloudBidRunner(
         /** Only fills of the last 8 hours are judged: older ones were priced against a different fair (feeds come and go) and cannot say how the bids do now. */
         const val JUDGE_WINDOW_MS = 8 * 3_600_000L
         const val MOVE_READ_MS = 15 * 60_000L
+        const val MAX_RECS = 60
+        const val MAX_SERVED = 200
+        const val MAX_RESULTS = 30
+        const val REQUEST_MAX_AGE_MS = 5 * 60_000L
         const val MAX_MOVE_READS = 12
 
         private fun money(v: Double) = String.format(Locale.US, "$%.2f", v)
@@ -232,6 +300,12 @@ data class DeskFile(
     val bids: List<MakerBid> = emptyList(),
     /** The bids' fills as the tracker keeps them: carried to the next job so repeat/exposure guards stay whole. */
     val fills: List<TrackedBet> = emptyList(),
+    /** Recommend mode: the bids the desk would post now, best first (the phone's Post button names one by [BidRec.outcomeId]). */
+    val recs: List<BidRec> = emptyList(),
+    /** What the phone's recent requests came to ([BidResult]); empty when none. */
+    val results: List<BidResult> = emptyList(),
+    /** Request ids already served, carried to the next job so a hand-over never serves one twice. */
+    val served: List<String> = emptyList(),
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = false; coerceInputValues = true }
@@ -248,3 +322,21 @@ data class DeskFile(
         val bidsSerializer = ListSerializer(MakerBid.serializer())
     }
 }
+
+/** One recommended bid in `desk.json` (Recommend mode): what the Bids tab lists and the Post button names. */
+@Serializable
+data class BidRec(
+    val outcomeId: String, val event: String, val league: String, val selection: String, val marketLabel: String, val startsTs: Long,
+    val price: Double, val contracts: Long, val evAtFair: Double, val fair: Double, val books: Int, val cost: Double,
+) {
+    companion object {
+        fun of(d: MakerDecision.Post) = BidRec(
+            d.line.outcomeId, d.line.eventName, d.line.league, d.line.selection, d.line.marketLabel, d.line.startsTs,
+            d.price, d.contracts, d.evAtFair, d.line.fair ?: 0.0, d.line.books, d.cost,
+        )
+    }
+}
+
+/** What one [BidRequest] came to, for the phone to show (and to stop showing it as pending). */
+@Serializable
+data class BidResult(val kind: String, val key: String, val requestAtMs: Long, val ok: Boolean, val why: String, val atMs: Long)
