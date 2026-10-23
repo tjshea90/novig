@@ -116,7 +116,7 @@ class CloudBidRunnerTest {
     private val deployOn = ScanSettings(gates = ApiGates(cloudScan = true, cloudTrading = CloudTradeMode.LIVE, repeatMaxFamilyDollars = 0.0, repeatMaxGameBets = 0))
 
     /** One bid per side (the wallet-deployment second rung off) so the counts below are about the wiring. */
-    private val live = deployOn.copy(vigGuards = deployOn.vigGuards.copy(bidDeploy = false))
+    private val live = deployOn.copy(maker = true, vigGuards = deployOn.vigGuards.copy(bidDeploy = false))
 
     private class Rig(val trading: FakeTrading, val runner: CloudBidRunner, val store: MakerStore, val filled: MutableList<Pair<List<TrackedBet>, Int>>, val held: MutableSet<String>)
 
@@ -174,7 +174,7 @@ class CloudBidRunnerTest {
         put(r, "m1")
         r.runner.pass(live, now)
         assertEquals(1, r.store.all().count { it.active })
-        for (off in listOf(live.copy(gates = live.gates.copy(cloudBids = false)), live.copy(gates = live.gates.copy(cloudTrading = CloudTradeMode.PAPER)))) {
+        for (off in listOf(live.copy(maker = false), live.copy(gates = live.gates.copy(cloudBids = false)), live.copy(gates = live.gates.copy(cloudTrading = CloudTradeMode.PAPER)))) {
             assertFalse(off.engineBids)
             assertNull(r.runner.pass(off, now))
         }
