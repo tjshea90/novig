@@ -1549,9 +1549,9 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
     // 2. the scan
     SectionTitle("Scan")
     SwitchRow(
-        "Scan on GitHub", "On: this phone makes no scan of its own and calls no odds API for it. Off: the app is what it was.",
+        "Run on GitHub (master switch)", "On (default): the GitHub engine does the scanning, betting and bidding; this phone only sends your settings and shows what it does. Off = phone mode: the engine is shut down completely (switched off, trading off, bids taken down) and this phone runs everything itself.",
         s.cloudScan, tag = "cloudScanSwitch", enabled = u.hasToken,
-    ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudScan = v)) } }
+    ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudScan = v, cloudTrading = if (v) it.gates.cloudTrading else com.tjshea.vigilant.data.cloud.CloudTradeMode.OFF)) } }
     SwitchRow(
         "Only 8 am to 1 am Eastern", "GitHub's engine starts by itself at 8:00 and stops at 1:00 the next morning America/New_York every day (daylight saving included). Off: it runs round the clock.",
         s.cloudHours, tag = "cloudHoursSwitch", enabled = u.hasToken,

@@ -1380,7 +1380,7 @@ data class ApiGates(
     /** Live games only mode (Tj, 2026-10-11): see [LiveOnlyMode]. */
     val liveOnly: LiveOnlyMode = LiveOnlyMode(),
     /** Cloud scan on / history saving to GitHub on (see [ScanSettings.cloudScan]). */
-    val cloudScan: Boolean = false,
+    val cloudScan: Boolean = true,
     val cloudSave: Boolean = true,
     /** The GitHub engine works only 08:00-01:00 America/New_York ([com.tjshea.vigilant.data.cloud.EngineHours]), Tj 2026-10-15; off = round the clock. */
     val cloudHours: Boolean = true,
