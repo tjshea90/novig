@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-gxcjqr",
- "head": "10930e03299e2d36ab41346f7c614c493473e7f1",
+ "head": "28dc12f35b47c22902d59f69cf968bd0f79bb19d",
  "since": 1792765957,
- "beat": 1792766042,
- "beatIso": "2026-10-23T14:34:02Z",
- "done": "CH73 audit written",
- "next": "ship 1.0.61"
+ "beat": 1792766089,
+ "beatIso": "2026-10-23T14:34:49Z",
+ "done": "pre-ship: CH73: master switch Run on GitHub (default on; off = phone mode, engine off, trading OFF); audit shows the phone stands down while the engine drives",
+ "next": "ship.sh gates and releases this"
 }
