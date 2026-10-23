@@ -98,6 +98,15 @@ class KalshiHub(private val c: AppContainer) {
     val tracker = BetTracker(File(files, "kalshi_bets.json"), ownBook = "Kalshi")
     val paperTracker = BetTracker(File(files, "kalshi_paper.json"), ownBook = "Kalshi")
 
+    /** The bets Tj removed with the X (their list key, and when): they stay off the list, rescan after rescan (Tj, 2026-10-23). */
+    private val hiddenStore = JsonFileStore(File(files, "kalshi_hidden.json"), KalshiHidden.serializer(), { KalshiHidden() }, c.json)
+    @Volatile private var hiddenKeys: Set<String> = emptySet()
+
+    /** Bets the slip found unbettable (gone, no longer +EV, a sharp book against), by list key and when: off the list until a price read newer than that lists them again. */
+    private val deadSeen = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+    private fun offList(o: Opportunity): Boolean = o.key in hiddenKeys || deadSeen[o.key]?.let { (o.bookFetchedAtMs ?: 0L) <= it } == true
+
     private val trading = KalshiTradingClient(c.http, c.json, { c.kalshiSigner() })
     private val scanner = KalshiScanner.create()
     private val runner = ScanRunner(scanner, c.appScope)
@@ -146,6 +155,7 @@ class KalshiHub(private val c: AppContainer) {
         c.appScope.launch {
             val cfg = configStore.read()
             val venues = venueStore.read()
+            hiddenKeys = hiddenStore.read().keys.keys
             _ui.update { it.copy(config = cfg, venues = venues, hasKey = c.kalshiSigner() != null, bets = tracker.all(), paperBets = paperTracker.all()) }
             start()
         }
@@ -259,7 +269,7 @@ class KalshiHub(private val c: AppContainer) {
         engineRows = rows
         _ui.update { u ->
             u.copy(engine = st, progress = null, scanning = false, scannedAtMs = st.scannedAtMs, errors = emptyList(), engineFeed = true,
-                feed = rows.filter { o -> !o.isLive && o.key !in u.bets.mapNotNull { b -> b.placedKey } && o.key !in provisional })
+                feed = rows.filter { o -> !o.isLive && o.key !in u.bets.mapNotNull { b -> b.placedKey } && o.key !in provisional && !offList(o) })
         }
         return true
     }
@@ -294,7 +304,7 @@ class KalshiHub(private val c: AppContainer) {
     /** The Kalshi list: the scan's +EV rows, minus the ones already bet (the record's own keys, so a rescan or a restart never brings one back) or just sent. */
     private fun feedOf(result: ScanResult?, scan: com.tjshea.vigilant.data.scanner.ScanSettings, bets: List<TrackedBet>, engine: Boolean = false): List<Opportunity> {
         val bet = bets.mapNotNullTo(HashSet()) { it.placedKey }
-        return (if (engine) engineRows else result?.feed(scan))?.filter { o -> !o.isLive && o.key !in bet && o.key !in provisional }.orEmpty()
+        return (if (engine) engineRows else result?.feed(scan))?.filter { o -> !o.isLive && o.key !in bet && o.key !in provisional && !offList(o) }.orEmpty()
     }
 
     @Volatile private var engineRows: List<Opportunity> = emptyList()
@@ -377,7 +387,26 @@ class KalshiHub(private val c: AppContainer) {
     /** What [stake] would do now: the Bet sheet's numbers. */
     suspend fun plan(o: Opportunity, stake: Double, allowRepeat: Boolean = false): PlanResult {
         val target = KalshiBetTargets.of(o) ?: return PlanResult.Refused("This bet has no fair price.")
-        return placer.plan(target, stake, allowRepeat)
+        val r = placer.plan(target, stake, allowRepeat)
+        // Gone, no longer +EV or a sharp book against it: the row leaves the list at once (Tj, 2026-10-23); a price read newer than now brings it back if it is bettable then.
+        if (r is PlanResult.Refused && (r.negativeEv || r.gone)) { deadSeen[o.key] = System.currentTimeMillis(); refeed() }
+        return r
+    }
+
+    /** The X on a Kalshi card: the bet is off the list for good (it does not come back on a rescan); [unhide] is the snackbar's Undo. */
+    fun hide(o: Opportunity) {
+        hiddenKeys = hiddenKeys + o.key
+        refeed()
+        c.appScope.launch {
+            val now = System.currentTimeMillis()
+            hiddenStore.update { h -> KalshiHidden((h.keys.filterValues { now - it < 7 * 86_400_000L }) + (o.key to now)) }
+        }
+    }
+
+    fun unhide(key: String) {
+        hiddenKeys = hiddenKeys - key
+        refeed()
+        c.appScope.launch { hiddenStore.update { h -> KalshiHidden(h.keys - key) } }
     }
 
     /** Places the bet the sheet showed (its limit price is the ceiling). */
@@ -597,3 +626,7 @@ class KalshiHub(private val c: AppContainer) {
         const val CLIP = 10.0
     }
 }
+
+/** The Kalshi bets removed with the X: list key to the time it was removed. */
+@kotlinx.serialization.Serializable
+data class KalshiHidden(val keys: Map<String, Long> = emptyMap())
