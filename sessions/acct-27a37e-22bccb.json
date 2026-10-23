@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "0db69eb704a0ad9db75dd2e5eb5aa821f545a7c6",
+ "head": "e9e72fb9ab5c41d12b7f07c7d9bd0e282e02c9d9",
  "since": 1792797865,
- "beat": 1792798910,
- "beatIso": "2026-10-23T23:41:50Z",
+ "beat": 1792799107,
+ "beatIso": "2026-10-23T23:45:07Z",
  "done": "FX2: StudyExport played-days-first (test fails on old code), Review day budget 4 GB/-Xmx8g; StarCheckMain + :cloud:starcheck + StarCheckTest; api_quality.py medians over ON scans + by-day table; review-digest.yml runs both",
  "next": "dispatch review-digest.yml on this branch, read API VALUE + STAR RATING CHECK from review-digest/latest.txt; meanwhile code sweep"
 }
