@@ -38,6 +38,13 @@ tasks.register<JavaExec>("review") {
     jvmArgs("-Xmx8g")
 }
 
+// The star rating check (StarCheckMain.kt): `./gradlew :cloud:starcheck --args="<dir of lines-*.csv.gz> <output file>"`, run by .github/workflows/review-digest.yml (FX, 2026-10-23).
+tasks.register<JavaExec>("starcheck") {
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.tjshea.vigilant.cloud.StarCheckMainKt")
+    jvmArgs("-Xmx4g")
+}
+
 // The daily grader of the engine's scan study (GradeMain.kt): `./gradlew :cloud:grade --args="--journal DIR --new DIR [--trades FILE --results FILE]"`, run by .github/workflows/engine-grade.yml.
 tasks.register<JavaExec>("grade") {
     classpath = sourceSets["main"].runtimeClasspath
