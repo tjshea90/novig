@@ -6264,3 +6264,4 @@ CH71 (Tj live message 2026-10-23: "nobody was selling at that price anymore" is 
 - [ ] CH73b ONE master toggle "Run on: GitHub (default) / Phone": GitHub = phone does only settings out + monitor in; Phone = engine shut down completely (on:false, trading off, bids down) and every GitHub-side feature off. Does not touch STOP ALL.
 - [ ] CH73c Bid tab (Off/Recommend/Auto) and other per-feature modes become controls of the engine's settings in GitHub mode
 - [ ] CH73d move remaining phone work to the engine (CH66b/c, CH72 first) or retire it in GitHub mode; test + release as one version
+- [ ] CH73e (Tj 04:45) before release: no leakage/wasted usage; phone as an efficient low-latency monitor (best mechanism: ETag polling of status/feed, push only where free); full tests; then ship. Done so far: default cloudScan=true, master switch relabelled "Run on GitHub", off sets cloudTrading OFF.
