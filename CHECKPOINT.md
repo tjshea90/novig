@@ -1,13 +1,13 @@
-# CHECKPOINT 4075 — read me first, then TASKS.md
+# CHECKPOINT 4076 — read me first, then TASKS.md
 
-**Written:** 2026-10-23T23:45:46Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-f7c47823-ez8xwu` · **builds on:** `e9e72fb9a` (this checkpoint is the commit after it)
+**Written:** 2026-10-23T23:48:54Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-f7c47823-ez8xwu` · **builds on:** `b31ddb047` (this checkpoint is the commit after it)
 
 ## Just done
-FX2 engine bugs from the live log: (1) Kalshi bid cancels sent by id alone went to shard 0, 404'd and fell to the retired route ('Please switch to the V2 endpoints'): cancel now carries the market ticker (remembered by KalshiAsNovig, looked up otherwise), no legacy fallback; Kalshi 429s no longer say 'Novig asked us to slow down'; (2) Kalshi lane re-reads +EV lines before judging (97% were 'no Kalshi price read in the last minute' after a 2-min scan). Tests fail on old code.
+FX2: study splits capped at 25 groups (engine digest's Books agreeing had hundreds of 1-bet groups, hid every other split; ScanStudyTest); StarCheck leaves out lines logged before the rating's inputs were recorded (914 rows were rated 1 star on missing data) + same-lines old-vs-new table
 
 ## Do this next
-Pinnacle source silent 73 scans (error text says Pinnodds); BoltOdds Free key; bid churn; then land + engine reset
+re-dispatch review-digest.yml, read the star check, decide the rating's fix
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Pinnacle source silent 73 scans (error text says Pinnodds); BoltOdds Free key; b
 
 ## Last ten checkpoints
 ```
+  5e21abe12 ckpt 4075: FX2 engine bugs from the live log: (1) Kalshi bid cancels sent by id alone 
   72184f30c ckpt 4074: FX2: StudyExport played-days-first (test fails on old code), Review day bud
   b8f282792 ckpt 4073: FX1 floor green (4,192 tests, exit 0), 25 py selftests ok, 134 screenshots 
   8c5eba4e6 ckpt 4072: FX: full-test request written into TASKS.md (FX1-FX5), claimed
@@ -25,8 +26,7 @@ Pinnacle source silent 73 scans (error text says Pinnodds); BoltOdds Free key; b
   08b8813b1 ckpt 4068: v1.0.64 released: single star rating; cross-check on propline-clv written
   ebfe78b7e ckpt 4067: pre-release: ST1: one combined star rating (type of bet, lead time, small-b
   1068f47a7 ckpt 4066: ST1: single star rating (type+lead points, small-book cap), study written, 
-  98fa56d7f ckpt 4065: ST1: history folded into the one BetRating (typePoints), history line remov
 ```
 
-(9 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
