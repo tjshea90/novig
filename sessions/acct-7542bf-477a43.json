@@ -3,13 +3,13 @@
  "label": "acct-7542bf",
  "name": "tj outlook",
  "nonce": "477a43",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/keen-keller-1zz21l",
  "head": "c11513e95943a29ee138bc3d53c54f690fb91d98",
  "since": 1792668175,
- "beat": 1792754568,
- "beatIso": "2026-10-23T11:22:48Z",
+ "beat": 1792754582,
+ "beatIso": "2026-10-23T11:23:02Z",
  "done": "ANALYST 2026-10-22: no rule change, research card posted",
  "next": "CH57a spend split when engine runs; NBA/spreads leak at 200 CLV n"
 }
