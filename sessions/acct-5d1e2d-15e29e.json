@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "15e29e",
+ "kind": "interactive",
+ "task": "",
+ "branch": "claude/optimistic-curie-yprd2y",
+ "head": "29a4076e0a4df7c73d278d0c482601c00111db4a",
+ "since": 1792795303,
+ "beat": 1792795303,
+ "beatIso": "2026-10-23T22:41:43Z",
+ "done": "",
+ "next": ""
+}
