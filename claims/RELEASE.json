@@ -7,5 +7,5 @@
  "nonce": "0e282c",
  "note": "CH68d Kalshi: when an order is refused for balance, the app moves your cash from the other exchange shards to the market's shard and sends it again",
  "since": 1792720203,
- "beat": 1792720466
+ "beat": 1792720830
 }
