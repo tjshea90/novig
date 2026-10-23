@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-lpr7ge",
  "head": "96965c89c6946b359abf8402b85a34f2dfdfd50e",
  "since": 1792721011,
- "beat": 1792721388,
- "beatIso": "2026-10-23T02:09:48Z",
+ "beat": 1792721393,
+ "beatIso": "2026-10-23T02:09:53Z",
  "done": "CH70: Kalshi card = Novig card (X, Bet mini slip, Open in Kalshi), hide persists, unbettable rows stay off until a newer read; bump 1.0.59",
  "next": "ship, release, tell Tj"
 }
