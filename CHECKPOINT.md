@@ -1,24 +1,22 @@
-# CHECKPOINT 4056 — read me first, then TASKS.md
+# CHECKPOINT 4057 — read me first, then TASKS.md
 
-**Written:** 2026-10-23T15:57:59Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-4w5jix` · **builds on:** `e72a53244` (this checkpoint is the commit after it)
+**Written:** 2026-10-23T16:02:33Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-4w5jix` · **builds on:** `5255b0065` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: CH74: Bids tab controls the GitHub engine's bids: Recommend + Post on the engine, restart button, 15 s settings batching
+pre-release: CH74: Bids tab controls the GitHub engine's bids: Recommend + Post on the engine, restart button, 15 s settings batching (versionCode 403, v1.0.63)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.63), then run: bash tools/record-release.sh v1.0.63 403 "CH74: Bids tab controls the GitHub engine's bids: Recommend + Post on the engine, restart button, 15 s settings batching"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M app/build.gradle.kts
-     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  5255b0065 ckpt 4056: pre-ship: CH74: Bids tab controls the GitHub engine's bids: Recommend + Pos
   a0bb25f6e ckpt 4055: pre-release: CH74a: Bids tab shows the engine's resting bids; Off/Recommend
   e72e29947 ckpt 4054: pre-ship: CH74a: Bids tab shows the engine's resting bids; Off/Recommend st
   cc9c94ea1 ckpt 4053: CH74 written
@@ -28,8 +26,4 @@ ship.sh gates and releases this
   28dc12f35 ckpt 4049: pre-ship: CH73: master switch Run on GitHub (default on; off = phone mode, 
   10930e032 ckpt 4048: CH73 audit written
   1b82d88ce ckpt 4047: ENGINEER 2026-10-23: CH57b spend re-read, no change
-  c11513e95 ckpt 4046: CH73 part 1: master switch 'Run on GitHub' (off=phone mode, trading OFF), t
 ```
-
-(16 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
