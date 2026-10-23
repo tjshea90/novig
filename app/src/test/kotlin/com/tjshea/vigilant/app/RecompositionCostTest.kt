@@ -26,7 +26,8 @@ class RecompositionCostTest {
         val cno = source("ui/CnoScreen.kt")
         assertTrue(cno.contains("val screened = remember(*keys) { state.cnoPicks(now) }"))
         assertTrue(cno.contains("val candidates = remember(*keys) { state.cnoCandidates(now) }"))
-        assertTrue(cno.contains("val picks = remember(*keys) { state.cnoShown(now)"))
+        assertTrue(cno.contains("val picks = remember(*keys, cnoSort) {"))
+        assertTrue(cno.contains("state.cnoShown(now).map { it to state.livePick(it, now).ev }"))
     }
 
     @Test
