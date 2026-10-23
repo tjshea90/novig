@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-beub9m",
- "head": "70d51597ad8418e128f2965caa3b7d1d3b2317db",
+ "head": "43c0797c982f184eafefaf5680d4f1f176ea145e",
  "since": 1792768029,
- "beat": 1792783570,
- "beatIso": "2026-10-23T19:26:10Z",
- "done": "CH76 log BoltOdds plan line",
- "next": "restart engine, read plan line"
+ "beat": 1792783901,
+ "beatIso": "2026-10-23T19:31:41Z",
+ "done": "CH76 rank BoltOdds keys by plan",
+ "next": "restart engine, verify"
 }
