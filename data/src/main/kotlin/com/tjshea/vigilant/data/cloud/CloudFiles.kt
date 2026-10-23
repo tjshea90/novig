@@ -19,17 +19,17 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
-/**
- * What the phone tells the GitHub engine (Tj, 2026-10-14: "I just control the settings from the phone"). Written by the app to `settings.json` on the `cloud-config` branch whenever a setting changes
- * or the switch moves; read by the engine before every pass. [rev] only ever grows (the phone's clock in ms at the write), so the engine can say which settings a feed was priced under.
- * [on] false = the engine finishes its job and starts nothing (the phone is asleep and so is the cloud: no scan, no API call, no minute spent).
- */
-/** One button press on the Bids tab for the engine's desk: [kind] is post (key = the outcome id), cancel (key = the order id) or cancelAll. */
+/** One button press on the Bids tab for the engine's desk: [kind] is post (key = the outcome id), cancel (key = the order id), cancelAll or restart (clears the picked-off halt). */
 @Serializable
 data class BidRequest(val kind: String, val key: String = "", val atMs: Long = 0L) {
     val id: String get() = "$kind:$key:$atMs"
 }
 
+/**
+ * What the phone tells the GitHub engine (Tj, 2026-10-14: "I just control the settings from the phone"). Written by the app to `settings.json` on the `cloud-config` branch whenever a setting changes
+ * or the switch moves; read by the engine before every pass. [rev] only ever grows (the phone's clock in ms at the write), so the engine can say which settings a feed was priced under.
+ * [on] false = the engine finishes its job and starts nothing (the phone is asleep and so is the cloud: no scan, no API call, no minute spent).
+ */
 @Serializable
 data class CloudConfig(
     val rev: Long = 0L,
