@@ -276,4 +276,51 @@ class CloudBidRunnerTest {
         val kept = DeskFile.trim(listOf(b, gone, recent), now).map { it.clientId }
         assertEquals(listOf(b.clientId, "recent"), kept)
     }
+
+    private val recommend get() = live.copy(maker = false, makerRecommend = true)
+
+    @Test
+    fun `Recommend lists the bids and posts nothing until a Post request, which is served once`() = runBlocking {
+        val r = rig()
+        put(r, "m1")
+        r.runner.pass(recommend, now)
+        assertEquals("nothing posts by itself in Recommend", 0, r.trading.placed.size)
+        val rec = r.runner.extras().first.single()
+        assertEquals("m1-over", rec.outcomeId)
+        val req = BidRequest("post", rec.outcomeId, now)
+        r.runner.serve(listOf(req, req), recommend, now)
+        assertEquals("posted once for the press, however often the config repeats it", 1, r.trading.placed.size)
+        assertTrue(r.runner.extras().second.single().ok)
+        r.runner.pass(recommend, now)
+        assertEquals("a posted bid is no longer a recommendation", 0, r.runner.extras().first.size)
+    }
+
+    @Test
+    fun `a request that is too old or finds no recommendation is refused, not acted on`() = runBlocking {
+        val r = rig()
+        put(r, "m1")
+        r.runner.pass(recommend, now)
+        r.runner.serve(listOf(BidRequest("post", "m1-over", now - 10 * 60_000L), BidRequest("post", "nothing-over", now)), recommend, now)
+        assertEquals(0, r.trading.placed.size)
+        assertEquals(listOf(false, false), r.runner.extras().second.map { it.ok })
+    }
+
+    @Test
+    fun `switching Automatic to Recommend takes the automatic bids down and Off takes them all down`() = runBlocking {
+        val r = rig()
+        put(r, "m1")
+        r.runner.pass(live, now)
+        assertEquals(1, r.store.all().count { it.active })
+        r.runner.pass(recommend, now)
+        assertEquals("the automatic bid came down", 0, r.store.all().count { it.active })
+    }
+
+    @Test
+    fun `restart clears the picked-off halt`() = runBlocking {
+        val r = rig()
+        put(r, "m1")
+        r.runner.pass(live, now)
+        r.runner.serve(listOf(BidRequest("restart", "", now)), live, now)
+        assertTrue(r.runner.extras().second.single().ok)
+    }
 }
