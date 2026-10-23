@@ -80,17 +80,30 @@ class KalshiTradingClientTest {
     }
 
     @Test
-    fun `buying NO at 37 cents is an ask on the YES leg at 63 cents`() = runTest {
+    fun `buying NO at 37 cents is an ask on the YES leg at 63 cents when the old route is gone`() = runTest {
+        routes["POST /trade-api/v2/portfolio/orders"] = { MockResponse().setResponseCode(404).setBody("{}") }
         routes["POST /trade-api/v2/portfolio/events/orders"] = { MockResponse().setBody("""{"order_id":"o-2","fill_count":"0.00","remaining_count":"5.00","ts_ms":1}""") }
         val placed = client().buy("T", "no", 0.37, 5, cid, KalshiTradingClient.GTC, postOnly = true, expirationMs = 1_800_000_000_000L)
         assertEquals(5.0, placed.remaining, 0.0)
         assertNull(placed.averagePrice)
-        val body = json.parseToJsonElement(seen.single().body.readUtf8()).jsonObject
+        val body = json.parseToJsonElement(seen.last().body.readUtf8()).jsonObject
         assertEquals("ask", body["side"]!!.jsonPrimitive.content)
         assertEquals("0.6300", body["price"]!!.jsonPrimitive.content)
         assertEquals("good_till_canceled", body["time_in_force"]!!.jsonPrimitive.content)
         assertEquals("true", body["post_only"]!!.jsonPrimitive.content)
         assertEquals("1800000000", body["expiration_time"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun `buying NO tries the route that names the NO side first, and a refusal there places nothing more`() = runTest {
+        routes["POST /trade-api/v2/portfolio/orders"] = { MockResponse().setResponseCode(400).setBody("""{"error":{"code":"insufficient_balance","message":"insufficient balance"}}""") }
+        routes["POST /trade-api/v2/portfolio/events/orders"] = { MockResponse().setBody("""{"order_id":"never","fill_count":"0.00","remaining_count":"1.00","ts_ms":1}""") }
+        val e = runCatching { client().buy("T", "no", 0.42, 1, cid) }.exceptionOrNull() as KalshiApiException
+        assertEquals(400, e.status)
+        assertEquals("one request only: the V2 form was not tried", 1, seen.size)
+        val body = json.parseToJsonElement(seen.single().body.readUtf8()).jsonObject
+        assertEquals("no", body["side"]!!.jsonPrimitive.content)
+        assertEquals("0.4200", body["no_price_dollars"]!!.jsonPrimitive.content)
     }
 
     @Test
