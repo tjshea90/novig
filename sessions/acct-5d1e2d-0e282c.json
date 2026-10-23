@@ -5,11 +5,11 @@
  "nonce": "0e282c",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-96459k",
- "head": "2f886f94f3c97956a68572decd2b8b18315cdba9",
+ "branch": "claude/optimistic-curie-x1kgjg",
+ "head": "80643f85e48a5eeab0ba942dfa1fdf20b2af10e7",
  "since": 1792726357,
- "beat": 1792728399,
- "beatIso": "2026-10-23T04:06:39Z",
+ "beat": 1792729036,
+ "beatIso": "2026-10-23T04:17:16Z",
  "done": "CH72 pull-to-refresh tests only failing/stale APIs",
  "next": "include in next release (needs full tools/test.sh before ship)"
 }
