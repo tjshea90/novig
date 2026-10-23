@@ -146,7 +146,17 @@ fun CnoScreen(
     // with "only bets the books agree on", so are the ones without the green check.
     val candidates = remember(*keys) { state.cnoCandidates(now) }
     // Best EV first at the prices shown (Novig's price now re-orders them between CNO's reads, as in the widget).
-    val picks = remember(*keys) { state.cnoShown(now).sortedByDescending { state.livePick(it, now).ev } }
+    // Best EV, soonest or most stars (Tj, 2026-10-23: "add these same filters to the cno scanner"); a per-viewer choice like the +EV tab's, EV first by default.
+    var cnoSort by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(com.tjshea.vigilant.data.scanner.FeedSort.EV) }
+    val picks = remember(*keys, cnoSort) {
+        fun stars(p: CnoPick): Double = state.booksAt(p.row.key, now)?.view?.let { v -> CnoBooks.check(v, p.row, p.live)?.rating?.stars } ?: 0.0
+        val all = state.cnoShown(now).map { it to state.livePick(it, now).ev }
+        when (cnoSort) {
+            com.tjshea.vigilant.data.scanner.FeedSort.EV -> all.sortedByDescending { it.second }
+            com.tjshea.vigilant.data.scanner.FeedSort.START -> all.sortedWith(compareBy<Pair<CnoPick, Double>> { it.first.row.startsAtMs ?: Long.MAX_VALUE }.thenByDescending { it.second })
+            com.tjshea.vigilant.data.scanner.FeedSort.STARS -> all.sortedWith(compareByDescending<Pair<CnoPick, Double>> { stars(it.first) }.thenByDescending { it.second })
+        }.map { it.first }
+    }
     val placedHere = state.placed.filter { it.key.startsWith("cno:") }
     val (removedHere, betHere) = placedHere.partition { it.hidden }
     var showPlaced by remember { mutableStateOf(false) }
@@ -314,14 +324,25 @@ fun CnoScreen(
                                     onlyAgreedText(state, candidates.size - picks.size, now).let { if (it.isEmpty()) "" else "; $it" } +
                                     ". It's read again ${refreshLabel(state.settings)}.",
                             )
-                            screened != null -> Text(
-                                "${picks.size} bet${if (picks.size == 1) " passes" else "s pass"}" +
-                                    hiddenText(screened).let { if (it.isEmpty()) "" else " · $it" } +
-                                    laterText(state, screened.picks, now).let { if (it.isEmpty()) "" else " · $it" } +
-                                    onlyAgreedText(state, candidates.size - picks.size, now).let { if (it.isEmpty()) "" else " · $it" },
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                            screened != null -> Column {
+                                Text(
+                                    "${picks.size} bet${if (picks.size == 1) " passes" else "s pass"}" +
+                                        hiddenText(screened).let { if (it.isEmpty()) "" else " · $it" } +
+                                        laterText(state, screened.picks, now).let { if (it.isEmpty()) "" else " · $it" } +
+                                        onlyAgreedText(state, candidates.size - picks.size, now).let { if (it.isEmpty()) "" else " · $it" },
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    com.tjshea.vigilant.data.scanner.FeedSort.entries.forEach { sort ->
+                                        val picked = cnoSort == sort
+                                        TextButton(onClick = { cnoSort = sort }, modifier = Modifier.testTag("cnoSort" + sort.name), contentPadding = PaddingValues(horizontal = 8.dp)) {
+                                            Text(sort.displayName, style = MaterialTheme.typography.labelMedium, fontWeight = if (picked) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (picked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                    }
+                                }
+                            }
                         }
                         if (on && betHere.isNotEmpty()) {
                             SetAsideList(betHere, "you placed", "✓", "Not placed", showPlaced, { showPlaced = !showPlaced }, onUnplace)
