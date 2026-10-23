@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-x1kgjg",
- "head": "80643f85e48a5eeab0ba942dfa1fdf20b2af10e7",
+ "head": "14baac8dd6e33bbbe0ae2567132c31ed309e760c",
  "since": 1792726357,
- "beat": 1792729036,
- "beatIso": "2026-10-23T04:17:16Z",
+ "beat": 1792730222,
+ "beatIso": "2026-10-23T04:37:02Z",
  "done": "CH72 pull-to-refresh tests only failing/stale APIs",
  "next": "include in next release (needs full tools/test.sh before ship)"
 }
