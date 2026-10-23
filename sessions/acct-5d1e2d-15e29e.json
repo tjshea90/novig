@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-4w5jix",
- "head": "5255b00658b097a6b8fc3d4b89a08d6a223bc020",
+ "head": "e672aec4a30a371af6b93657f1389ec35c22aac3",
  "since": 1792768029,
- "beat": 1792771326,
- "beatIso": "2026-10-23T16:02:06Z",
- "done": "pre-ship: CH74: Bids tab controls the GitHub engine's bids: Recommend + Post on the engine, restart button, 15 s settings batching",
- "next": "ship.sh gates and releases this"
+ "beat": 1792771353,
+ "beatIso": "2026-10-23T16:02:33Z",
+ "done": "pre-release: CH74: Bids tab controls the GitHub engine's bids: Recommend + Post on the engine, restart button, 15 s settings batching (versionCode 403, v1.0.63)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.63), then run: bash tools/record-release.sh v1.0.63 403 \"CH74: Bids tab controls the GitHub engine's bids: Recommend + Post on the engine, restart button, 15 s settings batching\""
 }
