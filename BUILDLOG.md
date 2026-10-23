@@ -402,3 +402,4 @@ day that changes.
 | v1.0.61 | code 401 | 2026-10-23T14:47Z | CH73: master switch Run on GitHub (default on; off = phone mode, engine off, trading OFF); audit shows the phone stands down while the engine drives
 | v1.0.62 | code 402 | 2026-10-23T15:50Z | CH74a: Bids tab shows the engine's resting bids; Off/Recommend stop engine bids
 | v1.0.63 | code 403 | 2026-10-23T16:07Z | CH74: Bids tab controls the GitHub engine's bids: Recommend + Post on the engine, restart button, 15 s settings batching
+| v1.0.64 | code 404 | 2026-10-23T22:36Z | ST1: one combined star rating (type of bet, lead time, small-book cap); history stars removed
