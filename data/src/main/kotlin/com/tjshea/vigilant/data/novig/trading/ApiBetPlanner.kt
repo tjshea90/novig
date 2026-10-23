@@ -162,14 +162,14 @@ object ApiBetPlanner {
         val life = book?.lifecycle
         val wentLive = life?.live == true
         val live = target.live || target.startsTs <= now || wentLive
-        if (life != null && life.closed) return no("Novig has closed this market (its live feed says ${life.status?.lowercase() ?: "closed"}).")
+        if (life != null && life.closed) return no("Novig has closed this market (its live feed says ${life.status?.lowercase() ?: "closed"}).", gone = true)
         if (live && !limits.manual) {
             return no(
                 if (wentLive && !target.live && target.startsTs > now) "Novig has put this game in play (its live feed says so): the auto-bet is pregame only (a live game can only be bet by hand, with the Bet button)."
                 else "This game is live: the auto-bet is pregame only (a live game can only be bet by hand, with the Bet button).",
             )
         }
-        if (target.market.status != "OPEN") return no("Novig has closed this market.")
+        if (target.market.status != "OPEN") return no("Novig has closed this market.", gone = true)
         val fee = target.market.fee ?: return no("Novig's fee for this market couldn't be read, so its cost can't be worked out.")
         // Money is at stake: an unknown age isn't taken as fresh (the app's lists do, to show a bet; a bet placed needs the age). By hand, Tj
         // decides: the age is said beside the EV.
@@ -198,7 +198,7 @@ object ApiBetPlanner {
             return no("Novig's best price is now ${american(best.price)}, shorter than your ${Odds.formatAmerican(limits.minOdds)} limit.")
         }
         if (target.sharpAgainst) {
-            return no("A sharp book prices both sides of this bet and says it is not +EV at Novig's price, so nothing is bet on it.")
+            return no("A sharp book prices both sides of this bet and says it is not +EV at Novig's price, so nothing is bet on it.", gone = true)
         }
         val listed = target.listedPrice.takeIf { live }
         if (listed != null && best.price > listed + 1e-9) {
