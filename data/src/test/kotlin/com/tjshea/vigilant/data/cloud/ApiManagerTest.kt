@@ -236,7 +236,10 @@ class ApiManagerTest {
         m.turn()
         assertTrue("not at once: a passing refusal gets twenty minutes", h.offs.isEmpty())
         now += 21 * 60_000L; f.map["boltodds"] = line("boltodds", true)
-        m.turn(); now += 60_000L; m.turn()
+        m.turn()
+        assertEquals(listOf("boltodds"), h.offs)
+        // The switch is off now (the engine wrote it): the next turns do nothing more.
+        f.map["boltodds"] = line("boltodds", true).copy(on = false); now += 60_000L; m.turn()
         assertEquals(listOf("boltodds"), h.offs)
         assertTrue(h.swaps.isEmpty() && h.restarts.isEmpty())
         val body = h.sayBodies.single()
