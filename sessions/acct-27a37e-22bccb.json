@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "fc85b89f5484fd924c1901ad4fa6165b854952a3",
+ "head": "c3314c18776a6116307dbccfc895d41efcdefbf3",
  "since": 1792797865,
- "beat": 1792800838,
- "beatIso": "2026-10-24T00:13:58Z",
+ "beat": 1792801285,
+ "beatIso": "2026-10-24T00:21:25Z",
  "done": "BX done: BoltOdds no longer earns runner swaps (out of ApiManager.IMPORTANT); a feed refused for its key/plan is switched off once after 20 min with one message; BoltOdds off on the engine (Tj had switched it off at 20:05 ET). Full suite 4,205 green. v1.0.66 release building.",
  "next": "confirm v1.0.66 Release, record-release.sh, engine --reset so the Kalshi/stream/BoltOdds fixes run, tell Tj"
 }
