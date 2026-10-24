@@ -7,5 +7,5 @@
  "nonce": "32f65a",
  "note": "S5: star scale fixed at the bottom: 0 = no trusted edge (EV under 0.5% or over 25%, or a sharp book against: these lost to the close), under 1% EV = 1 star; every rated level (1-5) beat the close; star check judges on Pinnacle/Circa closes over games",
  "since": 1792807693,
- "beat": 1792807693
+ "beat": 1792807871
 }
