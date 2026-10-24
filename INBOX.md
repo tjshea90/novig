@@ -912,3 +912,12 @@ Look at all the available apis and how well they respond, their freshness, featu
 ```
 I'm getting a lot of boltodds errors, see what can be done. Maybe just turn it off. The GitHub engine shouldn't keep resetting on boltodds errors because there are a lot of them
 ```
+
+## 2026-10-24T00:56:21Z
+```
+You said :
+
+"re-rated 1,968 of the engine's past bets with today's rating. Losses shrink as stars rise: −24.7% ROI at 1–1½★, about −8% at 2–3½★, and −0.8% at 4–5★."
+
+So basically all of my bets are negative roi? 
+```
