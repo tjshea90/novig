@@ -1,0 +1,26 @@
+{
+ "v": 2,
+ "seat": {
+  "holder": "acct-5d1e2d/15e29e",
+  "account": "acct-5d1e2d",
+  "name": "mirage",
+  "since": 1792768051438,
+  "beat": 1792879241183,
+  "state": "idle",
+  "note": "",
+  "noteAt": 1792784431172
+ },
+ "wake": {
+  "at": 1792877493164,
+  "ids": [
+   "t1792877241631-d618",
+   "t1792877466073-ac2e"
+  ],
+  "result": "fired acct-5d1e2d (mirage)",
+  "fires": [
+   1792858295594,
+   1792871734267,
+   1792877493164
+  ]
+ }
+}
