@@ -1,13 +1,13 @@
-# CHECKPOINT 4139 — read me first, then TASKS.md
+# CHECKPOINT 4140 — read me first, then TASKS.md
 
-**Written:** 2026-10-24T20:19:59Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-fnde3y` · **builds on:** `6a0b22771` (this checkpoint is the commit after it)
+**Written:** 2026-10-24T20:20:52Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-fnde3y` · **builds on:** `79f54531a` (this checkpoint is the commit after it)
 
 ## Just done
-answered disappearing-bets: still happening after 1.0.77
+CH80d evidence recorded
 
 ## Do this next
-CH80a investigate FEEDHIDE bulk (feedAt fair-age, requoteListed)
+CH80d fix requote of partial books
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ CH80a investigate FEEDHIDE bulk (feedAt fair-age, requoteListed)
 
 ## Last ten checkpoints
 ```
+  79f54531a ckpt 4139: answered disappearing-bets: still happening after 1.0.77
   6a0b22771 ckpt 4138: CH85 diagnostics review answered
   f94488d04 ckpt 4137: CH80 fixed in engine (v1.0.77, released, engine reset); Tj pausing the nofi
   7b1da61ba ckpt 4136: pre-release: CH80: the +EV list no longer empties at each engine scan start
@@ -26,5 +27,4 @@ CH80a investigate FEEDHIDE bulk (feedAt fair-age, requoteListed)
   04c7f1a26 ckpt 4132: pre-release: The phone saves its full Diagnostics report to GitHub every 20
   45ac45990 ckpt 4131: pre-ship: The phone saves its full Diagnostics report to GitHub every 20 mi
   c27122c3f ckpt 4130: pre-release: CH82+CH81: engine restart reads 'stopped or restarting' not 's
-  8589e8341 ckpt 4129: pre-ship: CH82+CH81: engine restart reads 'stopped or restarting' not 'swit
 ```
