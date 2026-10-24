@@ -103,7 +103,7 @@ object StarCheck {
      * difference between them is evidence and not a tuning artefact. Judge a variant on BOTH halves of the period, on the rated (1-5★) lines, over games. All of them keep the no-trusted-edge floor.
      */
     val VARIANTS: List<Pair<String, (Line, ProfitProfile?) -> Double>> = listOf(
-        "SX: the type's proven record (star_evidence.json)" to { l, p -> rated(l, p, BetRating.Weights.SR, BetRating.Scale.SX).stars },
+        "SX (v1.0.69+, shipped): the type's record at Novig" to { l, p -> rated(l, p, BetRating.Weights.SR, BetRating.Scale.SX).stars },
         "S6: edge ladder, breadth ceilings" to { l, p -> rated(l, p, BetRating.Weights.SR, BetRating.Scale.S6).stars },
         "S5 (v1.0.68): SR support curve + floor" to { l, p -> rated(l, p, BetRating.Weights.SR, BetRating.Scale.S5).stars },
         "ST1 support curve + floor" to { l, p -> rated(l, p, BetRating.Weights.ST1, BetRating.Scale.S5).stars },

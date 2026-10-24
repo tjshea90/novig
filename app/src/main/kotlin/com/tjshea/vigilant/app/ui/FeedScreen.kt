@@ -818,6 +818,10 @@ fun StarRating(rating: com.tjshea.vigilant.data.scanner.BetRating.Rating?, modif
                 style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning, maxLines = 1, softWrap = false, modifier = Modifier.testTag("starsAdjusted"),
             )
         }
+        // SX: on the bet sheet, the record behind the stars (the type's games and CLV against Novig's own close).
+        if (large) com.tjshea.vigilant.data.scanner.BetRating.evidenceText(rating)?.let {
+            Text(" · $it", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, modifier = Modifier.testTag("starEvidence"))
+        }
 }
 
 /**

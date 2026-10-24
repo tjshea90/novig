@@ -195,6 +195,17 @@ object BetRating {
     private fun losingDoubt(cell: StarEvidence.Cell): String? =
         if (cell.upper < LOSING_CLV && (cell.btZ == null || cell.btZ <= -LOSING_Z)) "bets like this lost to Novig's close (${pct(cell.clv)} over ${cell.games} games)" else null
 
+    /** The record behind a rating in words, for the bet sheet (SX): "proven at Novig: 412 games, CLV +1.2%" or "not proven at Novig yet: ...", null without one. */
+    fun evidenceText(r: Rating): String? {
+        val c = r.evidence ?: return if (r.trusted) "+EV against the books; no record of this type at Novig yet" else null
+        val clv = String.format(Locale.US, "%+.1f%%", c.clv * 100)
+        return when {
+            !r.trusted -> null
+            r.stars >= 3.0 -> "proven at Novig: ${c.games} games of this type, CLV $clv against Novig's close"
+            else -> "not proven at Novig yet: ${c.games} games of this type, CLV $clv against Novig's close"
+        }
+    }
+
     /** SX's z steps: each one passed adds half a star to 1 (eight steps: 5 stars at 2.58, 99% one-sided). */
     val Z_STEPS = listOf(0.5, 1.0, 1.32, 1.64, 1.81, 1.96, 2.33, 2.58)
     const val MIN_CLV_FOR_FOUR = 0.005

@@ -87,6 +87,8 @@ class StarEvidenceTest {
         assertEquals("a sharp book against", BetRating.NONE, sx(inputs(type()).copy(sharpAgrees = false, sharpAgainst = true), proven).stars, 0.0)
         assertEquals("no type or no record: +EV, unproven", 1.0, sx(inputs(null), proven).stars, 0.0)
         assertEquals(1.0, sx(inputs(type(kind = BetKind.MONEYLINE, selection = "Bulls", cost = 0.45)), proven).stars, 0.0)
+        assertTrue(BetRating.evidenceText(r)!!.startsWith("proven at Novig: 400 games"))
+        assertTrue(BetRating.evidenceText(sx(inputs(null), proven))!!.contains("no record"))
         // The support score is still worked out (the engine's stake sizing reads it).
         assertTrue(r.support in 1.0..5.0 && r.points > 0.0)
     }
