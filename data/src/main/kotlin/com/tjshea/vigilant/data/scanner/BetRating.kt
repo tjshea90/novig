@@ -27,7 +27,7 @@ import kotlin.math.sqrt
  * under +1% at most 1 star (S5: the smallest edges make the least). Rounded to the nearest half star.
  *
  * **No trusted edge** (S5, [NONE]): under +0.5% EV, over +25%, or a sharp book for the market saying it is not +EV. On the engine's 2,880 graded +EV lines (research/star_rating_s5_2026-10-24.md)
- * the 440 under +0.5% lost to the close (CLV -2.1% / -0.4%, ROI -14% / -18%), the 98 over +30% lost (ROI -27%; mostly two-book props: a stale or mismatched quote) and the sharp book's "no" is
+ * the 440 under +0.5% lost to the close (CLV -2.1% / -0.4%, ROI -14% / -18%), the 105 over +25% lost (ROI -27%; mostly two-book props: a stale or mismatched quote) and the sharp book's "no" is
  * the sharpest price there is; every star level from 1 up beat the close.
  */
 object BetRating {

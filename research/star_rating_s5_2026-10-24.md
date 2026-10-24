@@ -11,7 +11,7 @@ The engine's whole graded dataset (`engine-dataset` Release, `lines-*.csv.gz`, g
 ## What the data says
 1. **The +EV list is real value overall**: +EV lines with a Pinnacle close beat it by +2.05% (±1.0, 136 games).
 2. **Tiny edges are not real.** Stated EV 0-0.25%: CLV -2.09% (all) / -0.96% (sharp), ROI -14%; 0.25-0.5%: -0.43% / -0.51%, ROI -18% (440 lines). From +0.5% up every band beats the close; +1% up, steadily (1-2%: +1.3% / +2.5%; 3-5%: +2.0% / +4.2%; 5-8%: +3.3% / +4.7%).
-3. **Huge edges are not real.** Over +30%: 98 lines, ROI -27% (mostly two-book props: a stale or mismatched quote). The list hides them by default (25% cap), but a star minimum on the auto-bet bypasses the list's filters (only the too-good cap and a 0.5% floor stay).
+3. **Huge edges are not real.** Over +25%: 105 lines, ROI -27.5% (98 of them over +30%) (mostly two-book props: a stale or mismatched quote). The list hides them by default (25% cap), but a star minimum on the auto-bet bypasses the list's filters (only the too-good cap and a 0.5% floor stay).
 4. **A sharp book against**: 48 lines, mean EV +0.31%, CLV -2.7% (9 closes). Few, but the sharpest price there is says no edge.
 5. **The stated edge is the one input with a measurable effect** (regression of CLV on the inputs, clustered by game): about 0.43 of each point of stated edge survives to the close (t 2.3). Coverage, agreement and consensus show no positive effect on this sample (coverage -1.9 t); single-company lines and lines where half or fewer books agree DID lose on ROI (-31% and -22%).
 6. **Bet type / history points**: lines the history scores +0.5..+5 did worst again (ROI -22.8%, 149 games), as in the 10-23 review. Not confirmed out of sample (twice).
