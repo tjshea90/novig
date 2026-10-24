@@ -6368,3 +6368,8 @@ CH78 (Tj chat 06:55 UTC 2026-10-24): "a lot of no one was selling at that price,
 
 CH80 (Tj chat 16:28 UTC 2026-10-24): "+ev tab ... bets disappear but then the same ones at the same price come back shortly, still +EV with sellers."
 - [ ] CH80a leading theory: feedAt hides rows whose fair age passes Freshness.maxAgeMs (engine fair median 222 s, max 512 s, Pinnacle silent) until the next list refreshes them; other suspect requoteDuringScan/goneSeen. Add a hidden-reason counter (fairIsOld / priceStale / goneSeen / staleLive) to Diagnostics so the cause is read from data; then fix. Do NOT loosen the age cut-off without his word.
+
+CH81 (Tj chat 17:05 UTC 2026-10-24): "1) in the +EV scanner, prices no one is selling at return to the list. 2) I still don't see any kalshi bets 3) make sure sx bet and the other apis are properly matching lines and props"
+- [ ] CH81a +EV list: a price nobody sold at comes back (CH75 goneSeen/deadPrice); find the path that re-lists it (engine list rows carry bookFetchedAtMs newer than the finding?) and fix + test
+- [~] CH81b Kalshi bets: engine reset 17:1x UTC to run the OFF-scans code (v1.0.72); verify kalshi-status.json lists rows, then that the phone's +EV Kalshi chip shows them
+- [ ] CH81c audit matching of SX Bet and every other API's lines/props (teams, start, line, side, player/prop names) from the engine's unmatched/left-out counts and the dataset; fix mismatches
