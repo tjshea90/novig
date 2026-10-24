@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-fnde3y",
- "head": "008d574e523f7a4830438b4c6ab50de3e0de936e",
+ "head": "aab4a5cda7a69e2de3334f6200233b77e5e4361a",
  "since": 1792818666,
- "beat": 1792875949,
- "beatIso": "2026-10-24T21:05:49Z",
+ "beat": 1792876342,
+ "beatIso": "2026-10-24T21:12:22Z",
  "done": "pre-release: CH81i: order-end timing + NOFILL kept in the report; the phone stops asking for a missing bids file (versionCode 418, v1.0.78)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.78), then run: bash tools/record-release.sh v1.0.78 418 \"CH81i: order-end timing + NOFILL kept in the report; the phone stops asking for a missing bids file\""
 }
