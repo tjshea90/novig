@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "52d4803ac39e15c3221e8c2e115c8c508c85ed18",
+ "head": "a2fd0a22ff8b04028def68dc894615bf1d53eb96",
  "since": 1792809425,
- "beat": 1792810491,
- "beatIso": "2026-10-24T02:54:51Z",
+ "beat": 1792810636,
+ "beatIso": "2026-10-24T02:57:16Z",
  "done": "SB1-2: phone study (8,384 +EV lines) + engine lines re-rated: edge predicts sharp CLV monotone in both; S5 support-heavy stars do not order bets (-0.12/star); S6 design chosen (edge ladder, thin small edges no trusted edge, breadth caps); research/star_rating_sb_2026-10-24.md",
  "next": "implement S6 in BetRating (ladder, thin floor, breadth caps, Rating.support for CloudKelly), StarCheck variants, tests, full suite, v1.0.69; then SB3 workflow for API history"
 }
