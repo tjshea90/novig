@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "a7af834c7550af2c454d5a2c9349f831d7fb5de3",
+ "head": "6a94c9011ec3d9b8e2c0ad8fa0395f93438d1936",
  "since": 1792809425,
- "beat": 1792824323,
- "beatIso": "2026-10-24T06:45:23Z",
- "done": "SX findings 4-5: Novig's own close is the yardstick (ROI = 0.82 x CLV_novig); outside-books edges show negative CLV vs Novig close in the backtest; but the backtest's type table fails validation on real Vigilant/CNO lines, so not shipped. Streaming Novig public trades 10-12..10-22 for the real lines' markets",
- "next": "join trades -> Novig close (last pregame trades) per real line, grade real lines on CLV_novig by every input, design stars from what orders them, validate halves"
+ "beat": 1792824406,
+ "beatIso": "2026-10-24T06:46:46Z",
+ "done": "SX5 done: Scale.SX shipped in code (type's proof at Novig from star_evidence.json; floors + losing types 0; safeguards cap top); validated out of sample; star-evidence.yml weekly refresh; docs",
+ "next": "SX6: CLAUDE.md section, full suite, version 409/1.0.69, ship.sh, release.yml, record, engine reset, message Tj"
 }
