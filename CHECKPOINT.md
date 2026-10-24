@@ -1,22 +1,22 @@
-# CHECKPOINT 4093 — read me first, then TASKS.md
+# CHECKPOINT 4094 — read me first, then TASKS.md
 
-**Written:** 2026-10-24T02:18:37Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-305d3f7a-i2z8ja` · **builds on:** `b63c17ad9` (this checkpoint is the commit after it)
+**Written:** 2026-10-24T02:49:43Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-o6nryz` · **builds on:** `3a35a84af` (this checkpoint is the commit after it)
 
 ## Just done
-S5 done: v1.0.68 released and recorded (no-trusted-edge floor, 1 star under 1%, star check on sharp closes over games); engine reset onto it
+CH75: dead price remembered after NotFilled; test green
 
 ## Do this next
-watch the digest's STAR RATING CHECK (sharp CLV per star, rated lines) for two digests; switch to the edge ladder only by the LEVERS.md rule; FX6 (API attribution per line) next
+full suite, then release with next batch; tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  230599af4 ckpt 4093: S5 done: v1.0.68 released and recorded (no-trusted-edge floor, 1 star under
   a79976d1e ckpt 4092: pre-release: S5: star scale fixed at the bottom: 0 = no trusted edge (EV un
   8b0c5e816 ckpt 4091: pre-ship: S5: star scale fixed at the bottom: 0 = no trusted edge (EV under
   8f5d90a9b ckpt 4090: S5a-c: star scale checked on the engine's 20,840 graded lines; 0 = no trust
@@ -26,5 +26,7 @@ watch the digest's STAR RATING CHECK (sharp CLV per star, rated lines) for two d
   6ba9c7de4 ckpt 4086: SR1-2: verified the cut-off session's SR weights against review-digest run 
   fa7239519 ckpt 4085: OK1-3: The Odds API credits corrected/explained (per-key daily pace, no cre
   9c7198ea1 ckpt 4084: Corrected The Odds API claim (Tj's screenshot): 5,082 of 10,500 credits lef
-  27b505acd ckpt 4083: SR1: BetRating.Weights (CURRENT = ST1, unchanged behaviour) + StarCheck sco
 ```
+
+(4 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
