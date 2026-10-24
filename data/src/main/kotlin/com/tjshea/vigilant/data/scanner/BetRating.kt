@@ -10,13 +10,15 @@ import kotlin.math.sqrt
  * contradictory evidence. One rating for both scanners, from the same five facts about a bet, all worked out the same way (RESEARCH.md §131):
  *
  *  1. **Coverage** (20 points): how many companies price BOTH sides of the line (sister sites count once). A fair line from one book is that book's opinion; five is a market.
- *  2. **Agreement** (20): the share of those companies that, each on its own devigged worst case, make the price +EV.
- *  3. **Edge** (25): the EV at the price you would pay (taker fee included). 0% scores nothing, 6%+ is full marks; above 12% the score falls again, because an edge that large on a
+ *  2. **Agreement** (25; 20 before SR): the share of those companies that, each on its own devigged worst case, make the price +EV.
+ *  3. **Edge** (30; 25 before SR): the EV at the price you would pay (taker fee included). 0% scores nothing, 6%+ is full marks; above 12% the score falls again, because an edge that large on a
  *     priced market is usually a stale or mismatched quote, not a gift.
- *  4. **Sharp book** (25): a sharp book for the market prices both sides and says +EV (full), none prices it (a third of the points: unproven, not disproven), or one says it is NOT +EV (none).
+ *  4. **Sharp book** (15; 25 before SR): a sharp book for the market prices both sides and says +EV (full), none prices it (a third of the points: unproven, not disproven), or one says it is NOT +EV (none).
  *  5. **Consensus** (10): how tightly the books' own fair chances sit together (standard deviation: 1 point or less is full, 5 or more nothing; unknown is half).
  *
- * 6. **Type of bet** (-15 to +15, ST1, Tj 2026-10-23): what the history says about this kind of bet (league, kind, over/under, lead time), shrunk by sample size ([ProfitProfile.typePoints]).
+ * 6. **Type of bet** (-7.5 to +7.5 since SR; ±15 in ST1, Tj 2026-10-23): what the history says about this kind of bet (league, kind, over/under, lead time), shrunk by sample size ([ProfitProfile.typePoints]).
+ *
+ * The weights are [Weights]; [CURRENT] is SR's (Tj, 2026-10-24), chosen on the engine's graded lines by the daily star check, which keeps scoring the alternatives beside it.
  *
  * The points total 0-100 (plus or minus the type points, kept in 0-100) and become stars on a curve, `1 + 4 * (points/100)^1.5`, so the top half stars take real evidence while a middling bet lands in the middle. Then ceilings that
  * evidence alone cannot be argued past: under two pricing companies at most 1½ stars, two at most 3, three at most 4; a sharp book against it at most 2½; and no edge at all is 1. A bet under +2% EV is at most 3 stars (Tj, 2026-10-11: 3½ and up need a real edge).
@@ -52,11 +54,18 @@ object BetRating {
         companion object {
             /** ST1 (v1.0.64): the weights before SR. */
             val ST1 = Weights()
+
+            /**
+             * SR (Tj, 2026-10-24): the sharp book 25 -> 15 points, the edge 25 -> 30, agreement 20 -> 25, the type of bet at half. Chosen from six principled weightings re-scored on the engine's 1,968 graded
+             * +EV lines (research/star_rating_review_2026-10-23.md, "SR"): CLV per star +0.77 (ST1 +0.50), ROI per star +6.2 points (ST1 +5.0), better in the first half of the period on both; the sharp book's
+             * agreement showed no CLV or ROI of its own there (partly circular: the fair leans on it and the close is Pinnacle's), and the history's type points did not hold out of sample.
+             */
+            val SR = Weights(agreement = 25.0, edge = 30.0, sharp = 15.0, typeScale = 0.5)
         }
     }
 
     /** The weights the app rates with. */
-    val CURRENT: Weights = Weights.ST1
+    val CURRENT: Weights = Weights.SR
 
     /** A rating: [stars] in half steps from 1.0 to 5.0, and the [points] it came from. */
     data class Rating(val stars: Double, val points: Double) {

@@ -95,7 +95,7 @@ object StarCheck {
         "type x0.5" to BetRating.Weights.ST1.copy(typeScale = 0.5),
         "no type" to BetRating.Weights.ST1.copy(typeScale = 0.0),
         "sharp 15, edge 30, agree 25" to BetRating.Weights(agreement = 25.0, edge = 30.0, sharp = 15.0),
-        "sharp 15, edge 30, agree 25, type x0.5" to BetRating.Weights(agreement = 25.0, edge = 30.0, sharp = 15.0, typeScale = 0.5),
+        "SR (v1.0.67): sharp 15, edge 30, agree 25, type x0.5" to BetRating.Weights.SR,
         "sharp 15, edge 30, agree 25, no type" to BetRating.Weights(agreement = 25.0, edge = 30.0, sharp = 15.0, typeScale = 0.0),
     )
 
