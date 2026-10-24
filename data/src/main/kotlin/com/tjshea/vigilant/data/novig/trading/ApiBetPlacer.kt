@@ -344,6 +344,8 @@ class ApiBetPlacer(
                 pause(POLL_MS)
             }
         }
+        // Why a bet takes seconds, or misses (Tj, 2026-10-24: orders ended after 5.7 s where pregame used to take 94 ms): what the last read said and how long the order ran.
+        timing("order end: ${clock() - started} ms after the order was sent, last read: $seen, push ${if (feed != null) "live" else "off"}, terminal ${order?.terminal == true}")
         var fills = readFills(orderId)
         if (fills.isEmpty() && order?.status == "FILLED") {
             // The order says filled and its fills haven't shown yet.
