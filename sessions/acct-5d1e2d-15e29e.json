@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-fnde3y",
- "head": "79f54531a99f1c081c9adec10ac16c0d713d4a13",
+ "head": "c662e331972b256dfb150d7a78b611d3382e3f36",
  "since": 1792818666,
- "beat": 1792873199,
- "beatIso": "2026-10-24T20:19:59Z",
- "done": "answered disappearing-bets: still happening after 1.0.77",
- "next": "CH80a investigate FEEDHIDE bulk (feedAt fair-age, requoteListed)"
+ "beat": 1792873252,
+ "beatIso": "2026-10-24T20:20:52Z",
+ "done": "CH80d evidence recorded",
+ "next": "CH80d fix requote of partial books"
 }
