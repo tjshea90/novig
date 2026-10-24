@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-fnde3y",
- "head": "c662e331972b256dfb150d7a78b611d3382e3f36",
+ "head": "194d348887d322f88da046afdca82b105c3e9921",
  "since": 1792818666,
- "beat": 1792873252,
- "beatIso": "2026-10-24T20:20:52Z",
- "done": "CH80d evidence recorded",
- "next": "CH80d fix requote of partial books"
+ "beat": 1792873334,
+ "beatIso": "2026-10-24T20:22:14Z",
+ "done": "CH81a: Tj saw bets return",
+ "next": "read NOFILL in next phone/diag"
 }
