@@ -7,5 +7,5 @@
  "nonce": "32f65a",
  "note": "SX: stars are the bet type's proof at Novig (CLV against Novig's own close of Vigilant/CNO graded lines + point-in-time backtest); 0 = no trusted edge incl. types losing on both sources, 1 = +EV unproven, up to 5 = proven at 99%; weekly star-evidence refresh",
  "since": 1792824965,
- "beat": 1792824965
+ "beat": 1792825143
 }
