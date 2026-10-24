@@ -6298,4 +6298,5 @@ Analyze the current star system; make ONE rating that combines all factors, remo
 - [ ] FX3 star rating review: BetRating (ST1) against the data (engine lines/grades/CLV, phone bets), is each term backed by enough settled games; fix what is not sound; write it in research/star_rating_review_2026-10-23.md
 - [ ] FX4 API verdicts: every API's measured response, freshness, features and contribution (status.json ranking/usage, engine logs, cloud-archive journals, usage ledgers, the 2026-10-22 audit) over enough history; continue / drop / buy list in research/api_verdicts_2026-10-23.md, report to Tj
 - [ ] FX5 full regression (exit code AND output), ship.sh, release.yml, record-release.sh, link to Tj
+- [ ] FX6 record which API supplied each book behind a line's fair (AtBet/study journal + tools/lines_dataset.py column), so the API review can rank APIs by the CLV of the lines they priced (research/api_verdicts_2026-10-23.md: today only coverage/freshness can be judged)
 
