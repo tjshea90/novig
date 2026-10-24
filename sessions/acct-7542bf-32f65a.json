@@ -8,8 +8,8 @@
  "branch": "ccr-305d3f7a-i2z8ja",
  "head": "b7e8e5b265f21406785fdc62fde31cd709287116",
  "since": 1792809425,
- "beat": 1792818846,
- "beatIso": "2026-10-24T05:14:06Z",
+ "beat": 1792821678,
+ "beatIso": "2026-10-24T06:01:18Z",
  "done": "SX findings 2-3 written (point-in-time multiplicative edge lost; favourite-longshot bias; multiplicative close miscalibrated on longshots)",
  "next": "read rerun (ev_wc + raw closes): calibrate close devig on results, then table + stars"
 }
