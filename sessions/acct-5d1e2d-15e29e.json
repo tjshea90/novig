@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-hj14wp",
  "head": "148cdc6ad930dac3b7f1f3d629df3c0d47a2bc4c",
  "since": 1792818666,
- "beat": 1792865570,
- "beatIso": "2026-10-24T18:12:50Z",
+ "beat": 1792865575,
+ "beatIso": "2026-10-24T18:12:55Z",
  "done": "pre-ship: CH80: the +EV list no longer empties at each engine scan start: rows the new scan has not re-read yet stay listed with their own stamps (found from the phone's FEEDHIDE log)",
  "next": "ship.sh gates and releases this"
 }
