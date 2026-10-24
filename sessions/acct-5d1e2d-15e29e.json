@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "92ec17a42b305d9cb8f62959884c523cc240bab1",
+ "head": "70fcf78284ef91411ea51234f922252b1b383f2b",
  "since": 1792818666,
- "beat": 1792863232,
- "beatIso": "2026-10-24T17:33:52Z",
- "done": "CH83 written; diagnostics paste triaged",
- "next": "CH83a: split bets.json hot/archive"
+ "beat": 1792863291,
+ "beatIso": "2026-10-24T17:34:51Z",
+ "done": "CH83 scoped: archive not write-behind",
+ "next": "CH83a with real history file test; ship 1.0.74 (CH82 wording) when batch ready"
 }
