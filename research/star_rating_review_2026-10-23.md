@@ -17,6 +17,9 @@ Tj: "Review the stars rating system for rating bets and make sure it is sound an
 
 Slope: +0.50 CLV points and +5.0 ROI points per star (t 1.0 and 1.2, bets as the unit).
 
+## Lines, not bets (Tj asked 2026-10-24: "So basically all of my bets are negative roi?")
+The table above is every +EV LINE the engine's scan saw (59% of them under +2% EV, most never ordered), each counted as one unit at its first price. It is not Tj's bets and not the engine's orders. Actual bets, same digest (by origin): Tj's own by hand -5.6% (1,885 settled, -$92.10, CLV +0.2%), phone auto-bet -4.3% (542, -$30.32, CLV +0.8%), phone bids +1.1% (524, +$6.18, CLV +2.2%), engine bids +5.4% (551, +$11.71), engine auto-bets +17.7% (105, +$13.61), locks +65% (12, +$10.99); all auto + bids +0.1% (1,722 settled, +$1.18, CLV +1.5%). No group's z passes ±2 except locks; by kind, team totals are the one clear winner (auto + bids +21%, z 3.4).
+
 ## Verdict
 1. **The direction is right**: more stars, more CLV and better results, on lines the rating never saw while it was fitted. The ordering is clean in ROI and nearly clean in CLV.
 2. **The evidence is thin**: every interval overlaps its neighbour; t ≈ 1. Two weeks of engine lines is not yet enough to call the rating proven. Nothing here is broken, and nothing here supports a confident re-weighting either.
