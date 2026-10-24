@@ -124,6 +124,13 @@ class ApiManager(
                 if (feed == null) { st.note = ""; st.noteAt = 0L; st.feedSince = 0L }
                 else {
                     if (st.feedSince == 0L) st.feedSince = now
+                    // The provider refuses the KEY (its plan, Tj 2026-10-24: BoltOdds' keys on GitHub are Free, "Free plan cannot access API", silent for hours with errors all day): retrying cannot help and
+                    // a new runner cannot either, so after the same twenty minutes the API is switched off once, with one message saying what would fix it.
+                    if (keyRefused(feed.why) && now - st.feedSince >= FEED_SAY_AFTER_MS) {
+                        off(l, st, "the provider refuses its key on GitHub (${feed.why.substringAfterLast("(").trimEnd(')').take(80)})", now,
+                            body = "${l.name} has been silent for ${(now - st.feedSince) / 60_000L} min because it refuses the key the engine holds (${feed.why.take(120)}). Retrying cannot fix that and a new GitHub runner cannot either, so the engine switched ${l.name} OFF instead of erroring all day. To use it again: put a key on a plan that includes its API in Settings › APIs, send it to GitHub, then switch ${l.name} back on.")
+                        continue
+                    }
                     setNote(st, "its check passes but ${feed.words}", now)
                     if (now - st.feedSince >= FEED_SAY_AFTER_MS && st.feedSaidDay != day) {
                         st.feedSaidDay = day
@@ -168,14 +175,14 @@ class ApiManager(
 
     private fun setNote(st: St, note: String, now: Long) { if (st.note != note) { st.note = note; st.noteAt = now } }
 
-    private suspend fun off(l: ApiCheckLine, st: St, why: String, now: Long) {
+    private suspend fun off(l: ApiCheckLine, st: St, why: String, now: Long, body: String? = null) {
         if (st.off) return
         if (offsToday >= MAX_OFFS_PER_DAY) { setNote(st, "still failing; not switched off (the day's limit of $MAX_OFFS_PER_DAY switch-offs is used)", now); return }
         st.off = true; offsToday++
         hooks.log("API manager: switching ${l.name} off: $why")
         runCatching { hooks.turnOff(l.id, why) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; hooks.log("API manager: could not switch ${l.name} off: ${it.javaClass.simpleName}") }
         setNote(st, "switched off: $why. Fix its key or plan, then switch it on in Settings › APIs.", now)
-        hooks.say("api-off-${l.id}-$now", "Switched ${l.name} off", "${l.name} was not accepted: $why. The engine restarted it and tried ${st.swaps} fresh GitHub runner(s). It is OFF now and stays off until you look at it: check its key and plan, then switch it back on in Settings › APIs (the ladder starts again).", 1)
+        hooks.say("api-off-${l.id}-$now", "Switched ${l.name} off", body ?: "${l.name} was not accepted: $why. The engine restarted it and tried ${st.swaps} fresh GitHub runner(s). It is OFF now and stays off until you look at it: check its key and plan, then switch it back on in Settings › APIs (the ladder starts again).", 1)
     }
 
     companion object {
@@ -201,8 +208,18 @@ class ApiManager(
         /** A swap count carried from the previous job is only believed if the swap was this recent. */
         const val CARRY_MS = 3 * 3_600_000L
 
-        /** The data the scan, the fair lines and the bids stand on: a failing one earns a fresh runner. The others (The Odds API, Unabated, OddsPapi Free, Kalshi, Polymarket) are retried and, if they never recover, switched off. */
-        val IMPORTANT = setOf("sgo", "boltodds", "parlay", "propline", "pinnwire", "pinnapi", "oddspapi", "sxbet", "sharpapi")
+        /**
+         * The data the scan, the fair lines and the bids stand on: a failing one earns a fresh runner. The others (The Odds API, Unabated, OddsPapi Free, Kalshi, Polymarket, BoltOdds) are retried and, if they
+         * never recover, switched off. BoltOdds is not among them (Tj, 2026-10-24: "The GitHub engine shouldn't keep resetting on boltodds errors because there are a lot of them"): it carries no sharp book,
+         * its refusals are about its keys' plan and its connection limit, which a new runner does not change, and a cancelled runner leaves its sockets half-open, which makes the refusals worse.
+         */
+        val IMPORTANT = setOf("sgo", "parlay", "propline", "pinnwire", "pinnapi", "oddspapi", "sxbet", "sharpapi")
+
+        /** A silent feed whose provider refused the key itself or its plan (BoltOdds: "Free plan cannot access API"): nothing on the engine can fix it, only a key on another plan. */
+        private val KEY_REFUSED = Regex("refused the key \\((?!too many concurrent)|plan cannot access|invalid api token|key (was )?refused|not (included|available) (in|on) (your|this) plan", RegexOption.IGNORE_CASE)
+
+        /** Whether [why] (a silent feed's own reason) is the provider refusing the key or its plan, not a passing fault. */
+        fun keyRefused(why: String): Boolean = KEY_REFUSED.containsMatchIn(why)
 
         /** The switch ids a feed's answer counts for ("pinnacle" is one feed for both Pinnacle hosts). */
         fun switchIdsOfFeed(feedId: String): List<String> {
