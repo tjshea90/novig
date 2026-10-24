@@ -161,6 +161,7 @@ object AutoBet {
         val min = com.tjshea.vigilant.data.scanner.BetRating.label(rules.minStars)
         if (stars == null) return "it has no star rating yet (you need $min stars)"
         if (stars >= rules.minStars - 1e-9) return null
+        if (stars < com.tjshea.vigilant.data.scanner.BetRating.MIN) return "it has no trusted edge (no stars; you need $min)"
         val had = shown?.takeIf { kotlin.math.abs(it - stars) > 1e-9 }
         return if (had == null) "its rating is under your $min-star minimum"
         else "its rating is ${com.tjshea.vigilant.data.scanner.BetRating.label(stars)}★ after Profit-proven only lowered the shown ${com.tjshea.vigilant.data.scanner.BetRating.label(had)}★ (your history says this type of bet loses money), under your $min-star minimum"

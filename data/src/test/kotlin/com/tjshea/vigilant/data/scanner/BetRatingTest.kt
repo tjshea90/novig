@@ -87,7 +87,7 @@ class BetRatingTest {
         val strong = BetRating.Inputs(books = 5, agreeing = 5, ev = 0.019, sharpAgrees = true, sharpAgainst = false, spread = 0.005)
         assertEquals(3.0, BetRating.rate(strong).stars, 1e-9)
         assertTrue("the same bet at +2% keeps its rating", BetRating.rate(strong.copy(ev = 0.02)).stars >= 3.5)
-        assertEquals("no edge is still 1", 1.0, BetRating.rate(strong.copy(ev = 0.0)).stars, 1e-9)
+        assertEquals("no edge has no stars (S5)", BetRating.NONE, BetRating.rate(strong.copy(ev = 0.0)).stars, 1e-9)
         // A bet already under 3 stars is untouched.
         val weak = BetRating.Inputs(books = 2, agreeing = 1, ev = 0.01, sharpAgrees = false, sharpAgainst = false)
         assertTrue(BetRating.rate(weak).stars <= 3.0)
@@ -107,5 +107,29 @@ class BetRatingTest {
         assertEquals(17.5, BetRating.rate(sharp, BetRating.Weights.ST1).points - BetRating.rate(none, BetRating.Weights.ST1).points, 1e-9)
         // The edge now carries more: +1 point of EV (under 6%) is worth 5 points under SR, 4.17 under ST1.
         assertEquals(5.0, BetRating.rate(none.copy(ev = 0.05)).points - BetRating.rate(none).points, 1e-9)
+    }
+
+    /** S5 (Tj, 2026-10-24): every rated bet is +EV on the evidence; a line the data does not trust has no stars, and the smallest edges are 1 star. */
+    @Test
+    fun `no trusted edge under half a percent, over 25 percent or against a sharp book, and 1 star under 1 percent`() {
+        val strong = BetRating.Inputs(books = 8, agreeing = 8, ev = 0.04, sharpAgrees = true, sharpAgainst = false, spread = 0.005)
+        assertTrue(BetRating.rate(strong).stars >= 4.0)
+        for (doubted in listOf(strong.copy(ev = 0.0049), strong.copy(ev = 0.0), strong.copy(ev = -0.01), strong.copy(ev = 0.2501), strong.copy(ev = 0.6), strong.copy(sharpAgrees = false, sharpAgainst = true))) {
+            val r = BetRating.rate(doubted)
+            assertEquals("$doubted", BetRating.NONE, r.stars, 0.0)
+            assertTrue(!r.trusted && r.doubt != null)
+            assertEquals("☆", r.glyphs)
+        }
+        assertEquals("a sharp book against says why", true, BetRating.rate(strong.copy(sharpAgrees = false, sharpAgainst = true)).doubt!!.contains("sharp"))
+        // +0.5% to +1%: a real edge but the smallest: exactly 1 star however strong the support.
+        assertEquals(1.0, BetRating.rate(strong.copy(ev = 0.005)).stars, 0.0)
+        assertEquals(1.0, BetRating.rate(strong.copy(ev = 0.0099)).stars, 0.0)
+        assertTrue(BetRating.rate(strong.copy(ev = 0.0099)).trusted)
+        assertTrue(BetRating.rate(strong.copy(ev = 0.01)).stars > 1.0)
+        assertNull(BetRating.rate(strong).doubt)
+        // Every star minimum the auto-bet offers refuses a line with no trusted edge.
+        ScanSettings.AUTO_BET_STARS_CHOICES.filter { it > 0.0 }.forEach { min ->
+            assertNotNull(AutoBet.starsReason(AutoBet.rules(ScanSettings(autoBetMinStars = min)), BetRating.NONE))
+        }
     }
 }
