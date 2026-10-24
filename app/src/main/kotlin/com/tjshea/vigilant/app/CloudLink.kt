@@ -540,10 +540,11 @@ class CloudLink(private val c: AppContainer) {
     }
 
     /** GitHub's candidate lines for the bid desk: handed to the lane, which gives them Novig's books ([CloudBidLane]). */
-    private suspend fun fetchBids() {
+    private suspend fun fetchBids(announcedAtMs: Long) {
         when (val b = client.fetchBids()) {
             is CloudClient.Poll.Fresh -> { bidsFetchedFor = b.value.atMs; c.cloudBids.put(b.value) }
-            is CloudClient.Poll.Failed -> latest.why = b.why
+            // The status announces a stamp whose file the feed branch does not hold (diagnostics 2026-10-24: 113 refused reads in 25 minutes): ask again only when the stamp changes.
+            is CloudClient.Poll.Failed -> { bidsFetchedFor = announcedAtMs; latest.why = b.why }
             else -> {}
         }
     }
@@ -578,7 +579,7 @@ class CloudLink(private val c: AppContainer) {
         recordHistory(st)
         latest.why = null
         if (st.computedAtMs > 0L && st.computedAtMs != feedFetchedFor) fetch(st.computedAtMs)
-        if (s.bidsFromCloud && st.bidsAtMs > 0L && st.bidsAtMs != bidsFetchedFor) fetchBids()
+        if (s.bidsFromCloud && st.bidsAtMs > 0L && st.bidsAtMs != bidsFetchedFor) fetchBids(st.bidsAtMs)
         if (st.propLineEvAtMs > 0L && st.propLineEvAtMs != evFetchedFor) fetchPropLineEv()
         if (st.cnoAtMs > 0L && st.cnoAtMs != cnoFetchedFor && com.tjshea.vigilant.data.cloud.CloudCno.wanted(s)) fetchCno(s)
     }
