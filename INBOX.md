@@ -987,3 +987,8 @@ I have accepted edits if you need any permissions. You have full permissions to 
 ```
 This must be comprehensive, well researched, using all resources necessary. It involves real money
 ```
+
+## 2026-10-24T03:57:17Z
+```
+How long until the backtest finishes?
+```
