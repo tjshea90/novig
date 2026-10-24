@@ -25,6 +25,8 @@ object StarCheck {
         val recorded: Boolean = true,
         /** The close is a sharp book's (Pinnacle or Circa, S5): the honest yardstick. Novig's own last trades and soft books' closes are weaker. */
         val sharpClose: Boolean = false,
+        /** The price paid per $1 of payout (sets favourite / underdog for the evidence table). */
+        val cost: Double? = null,
     ) {
         val settled: Boolean get() = status == "WON" || status == "LOST" || status == "PUSH"
     }
@@ -75,6 +77,7 @@ object StarCheck {
                 profit = c.f("profit_units").toDoubleOrNull(), clv = c.f("clv").toDoubleOrNull(), shown = c.f("shown") == "1",
                 recorded = two != null || (c.f("n_fair_books").toIntOrNull() ?: 0) > 0,
                 sharpClose = c.f("close_via").let { "Pinnacle" in it || "Circa" in it },
+                cost = c.f("cost").toDoubleOrNull(),
             )
         }
         return out
@@ -87,7 +90,13 @@ object StarCheck {
         (profile?.typePoints(l.league, kindLabel(l.kind), l.selection, l.minToStart) ?: 0.0) + BetRating.leadPoints(l.minToStart)
 
     fun rated(l: Line, profile: ProfitProfile? = ProfitProfile.shipped, w: BetRating.Weights = BetRating.CURRENT, scale: BetRating.Scale = BetRating.CURRENT_SCALE): BetRating.Rating =
-        BetRating.rate(BetRating.Inputs(l.books, l.agreeing, l.ev, sharpAgrees = l.sharp == true, sharpAgainst = l.sharp == false, spread = l.spread, typePoints = typePoints(l, profile)), w, scale)
+        BetRating.rate(BetRating.Inputs(l.books, l.agreeing, l.ev, sharpAgrees = l.sharp == true, sharpAgainst = l.sharp == false, spread = l.spread, typePoints = typePoints(l, profile), type = typeOf(l)), w, scale)
+
+    /** The line's type for the evidence table (SX). */
+    fun typeOf(l: Line): com.tjshea.vigilant.data.scanner.BetType {
+        val kind = BetKind.entries.firstOrNull { it.name == l.kind } ?: BetKind.OTHER
+        return com.tjshea.vigilant.data.scanner.BetType.of(l.league, kind, l.selection, l.cost, null, 0L).copy(minToStart = l.minToStart)
+    }
 
     /**
      * Ratings scored beside the app's own every day (SR, S5 2026-10-24): each one principled (a part the data does not confirm made smaller, the parts it confirms made larger), never a fitted search, so a

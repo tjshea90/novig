@@ -92,7 +92,8 @@ data class Opportunity(
         if (q == null || fair == null) null else {
             val a = agreement
             BetRating.rate(BetRating.Inputs(a.twoSided, a.agreeing, q.evPercent, a.sharpAgrees, a.sharpAgainst, a.spread,
-                typePoints = ProfitProfile.typePointsOf(league.novigName, BetKind.of(marketLabel, selection).label, selection, event.startsTs, System.currentTimeMillis())))
+                typePoints = ProfitProfile.typePointsOf(league.novigName, BetKind.of(marketLabel, selection).label, selection, event.startsTs, System.currentTimeMillis()),
+                type = BetType.of(league.novigName, BetKind.of(marketLabel, selection), selection, q.price, event.startsTs, System.currentTimeMillis())))
         }
     }
     val eventName: String get() = event.description

@@ -198,11 +198,13 @@ object CnoBooks {
         val sharpAgainst: Boolean = false,
         /** The history's points for this type of bet ([com.tjshea.vigilant.data.scanner.ProfitProfile.typePoints]); set by the row overload of [check]. */
         val typePoints: Double = 0.0,
+        /** The bet's type for the star evidence table ([com.tjshea.vigilant.data.scanner.StarEvidence]); set by the row overload of [check]. */
+        val type: com.tjshea.vigilant.data.scanner.BetType? = null,
     ) {
         /** The 1-5 star rating of this bet from what the books say ([BetRating]); null with no usable fair line. */
         val rating: com.tjshea.vigilant.data.scanner.BetRating.Rating? get() = ev?.let {
             com.tjshea.vigilant.data.scanner.BetRating.rate(
-                com.tjshea.vigilant.data.scanner.BetRating.Inputs(twoSided, agreeing, it, sharpAgrees, sharpAgainst, spread, typePoints),
+                com.tjshea.vigilant.data.scanner.BetRating.Inputs(twoSided, agreeing, it, sharpAgrees, sharpAgainst, spread, typePoints, type),
             )
         }
     }
@@ -220,7 +222,13 @@ object CnoBooks {
             typePoints = com.tjshea.vigilant.data.scanner.ProfitProfile.typePointsOf(
                 row.league, com.tjshea.vigilant.data.scanner.BetKind.of(row.market, row.bet).label, row.bet, row.startsAtMs, System.currentTimeMillis(),
             ),
+            type = com.tjshea.vigilant.data.scanner.BetType.of(
+                row.league, com.tjshea.vigilant.data.scanner.BetKind.of(row.market, row.bet), row.bet, americanCost(row.odds), row.startsAtMs, System.currentTimeMillis(),
+            ),
         )
+
+    /** The price per $1 of payout of [american] odds. */
+    private fun americanCost(american: Int): Double = if (american > 0) 100.0 / (american + 100.0) else -american / (-american + 100.0)
 
     /**
      * [listOdds] is the price in CNO's +EV list at book [judged]; [live] adds Novig's taker fee
