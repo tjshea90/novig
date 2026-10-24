@@ -1,0 +1,1402 @@
+{
+"asOf": "2026-10-24",
+"source": "tools/star_table.py: real = real_novig_close.csv.gz; backtest = all.csv.gz",
+"metric": "CLV against Novig's own close (real: mean of the last 10 pregame trades; backtest: Shin-devigged closing price), games weighted once; roi = profit per $1",
+"priceBands": [
+"+150 longer",
+"+100..+150",
+"-150..-100",
+"-150 shorter"
+],
+"cells": {
+"*|*|*": {
+"games": 341,
+"bets": 2266,
+"clv": -0.00469,
+"clvSe": 0.00162,
+"roi": -0.05317,
+"roiSe": 0.03959,
+"btGames": 2826,
+"btClv": -0.02055,
+"btZ": -18.34
+},
+"*|*|*|+100..+150": {
+"games": 302,
+"bets": 1606,
+"clv": -0.0026,
+"clvSe": 0.00203,
+"roi": -0.0008,
+"roiSe": 0.04543,
+"btGames": 2699,
+"btClv": -0.01989,
+"btZ": -19.95
+},
+"*|*|*|+150 longer": {
+"games": 66,
+"bets": 90,
+"clv": 0.01066,
+"clvSe": 0.00894,
+"roi": -0.07399,
+"roiSe": 0.21765,
+"btGames": 1643,
+"btClv": -0.02529,
+"btZ": -12.86
+},
+"*|*|*|-150 shorter": {
+"games": 32,
+"bets": 55,
+"clv": -0.00477,
+"clvSe": 0.01172,
+"roi": -0.15878,
+"roiSe": 0.13894,
+"btGames": 1025,
+"btClv": -0.01109,
+"btZ": -5.71
+},
+"*|*|*|-150..-100": {
+"games": 206,
+"bets": 515,
+"clv": -0.01542,
+"clvSe": 0.00386,
+"roi": -0.13981,
+"roiSe": 0.0595,
+"btGames": 2089,
+"btClv": -0.01183,
+"btZ": -8.83
+},
+"*|moneyline|dog": {
+"games": 54,
+"bets": 67,
+"clv": 0.00169,
+"clvSe": 0.0103,
+"roi": -0.06704,
+"roiSe": 0.20126,
+"btGames": 707,
+"btClv": -0.01146,
+"btZ": -2.73
+},
+"*|moneyline|dog|+100..+150": {
+"games": 38,
+"bets": 49,
+"clv": -0.00069,
+"clvSe": 0.01199,
+"roi": 0.00323,
+"roiSe": 0.21536,
+"btGames": 434,
+"btClv": -0.01485,
+"btZ": -2.85
+},
+"*|moneyline|dog|+150 longer": {
+"btGames": 301,
+"btClv": -0.00398,
+"btZ": -0.54
+},
+"*|moneyline|fav": {
+"games": 53,
+"bets": 71,
+"clv": -0.01786,
+"clvSe": 0.01319,
+"roi": -0.02338,
+"roiSe": 0.1379,
+"btGames": 463,
+"btClv": 0.0018,
+"btZ": 0.37
+},
+"*|moneyline|fav|-150 shorter": {
+"btGames": 126,
+"btClv": -0.00732,
+"btZ": -0.67
+},
+"*|moneyline|fav|-150..-100": {
+"games": 40,
+"bets": 53,
+"clv": -0.02492,
+"clvSe": 0.0153,
+"roi": -0.11444,
+"roiSe": 0.1675,
+"btGames": 342,
+"btClv": 0.00446,
+"btZ": 0.86
+},
+"*|period|over": {
+"games": 31,
+"bets": 63,
+"clv": -0.00957,
+"clvSe": 0.00756,
+"roi": -0.4198,
+"roiSe": 0.16385
+},
+"*|period|over|+100..+150": {
+"games": 24,
+"bets": 43,
+"clv": -0.0108,
+"clvSe": 0.00853,
+"roi": -0.38132,
+"roiSe": 0.19496
+},
+"*|prop|over": {
+"games": 58,
+"bets": 171,
+"clv": 0.01634,
+"clvSe": 0.00935,
+"roi": -0.00947,
+"roiSe": 0.12619,
+"btGames": 1172,
+"btClv": -0.02366,
+"btZ": -22.12
+},
+"*|prop|over|+100..+150": {
+"games": 49,
+"bets": 127,
+"clv": 0.01364,
+"clvSe": 0.01037,
+"roi": -0.03359,
+"roiSe": 0.13318,
+"btGames": 1082,
+"btClv": -0.02376,
+"btZ": -16.06
+},
+"*|prop|over|+150 longer": {
+"btGames": 782,
+"btClv": -0.03372,
+"btZ": -14.18
+},
+"*|prop|over|-150 shorter": {
+"btGames": 245,
+"btClv": -0.01641,
+"btZ": -5.34
+},
+"*|prop|over|-150..-100": {
+"btGames": 976,
+"btClv": -0.01629,
+"btZ": -12.05
+},
+"*|prop|under": {
+"games": 72,
+"bets": 356,
+"clv": -0.00415,
+"clvSe": 0.00874,
+"roi": 0.02738,
+"roiSe": 0.10596,
+"btGames": 1140,
+"btClv": -0.00758,
+"btZ": -7.04
+},
+"*|prop|under|+100..+150": {
+"games": 65,
+"bets": 276,
+"clv": 0.00624,
+"clvSe": 0.00662,
+"roi": -0.02607,
+"roiSe": 0.12031,
+"btGames": 991,
+"btClv": -0.00932,
+"btZ": -6.42
+},
+"*|prop|under|+150 longer": {
+"btGames": 433,
+"btClv": -0.01448,
+"btZ": -3.65
+},
+"*|prop|under|-150 shorter": {
+"btGames": 411,
+"btClv": 0.00733,
+"btZ": 4.54
+},
+"*|prop|under|-150..-100": {
+"games": 31,
+"bets": 61,
+"clv": -0.0596,
+"clvSe": 0.02561,
+"roi": 0.06742,
+"roiSe": 0.16817,
+"btGames": 890,
+"btClv": -0.00159,
+"btZ": -1.02
+},
+"*|spread|dog": {
+"games": 175,
+"bets": 453,
+"clv": -0.00908,
+"clvSe": 0.00353,
+"roi": 0.01058,
+"roiSe": 0.06988,
+"btGames": 1447,
+"btClv": -0.01742,
+"btZ": -10.68
+},
+"*|spread|dog|+100..+150": {
+"games": 172,
+"bets": 430,
+"clv": -0.00986,
+"clvSe": 0.00364,
+"roi": 0.02548,
+"roiSe": 0.07062,
+"btGames": 1306,
+"btClv": -0.01857,
+"btZ": -10.64
+},
+"*|spread|dog|+150 longer": {
+"btGames": 423,
+"btClv": -0.01276,
+"btZ": -4.21
+},
+"*|spread|fav": {
+"games": 83,
+"bets": 136,
+"clv": -0.01338,
+"clvSe": 0.00578,
+"roi": -0.24646,
+"roiSe": 0.09604,
+"btGames": 771,
+"btClv": -0.00866,
+"btZ": -4.27
+},
+"*|spread|fav|-150 shorter": {
+"btGames": 188,
+"btClv": -0.00468,
+"btZ": -1.37
+},
+"*|spread|fav|-150..-100": {
+"games": 75,
+"bets": 120,
+"clv": -0.01458,
+"clvSe": 0.00627,
+"roi": -0.22344,
+"roiSe": 0.10387,
+"btGames": 677,
+"btClv": -0.00772,
+"btZ": -2.94
+},
+"*|team_total|over": {
+"games": 78,
+"bets": 123,
+"clv": 0.00952,
+"clvSe": 0.00445,
+"roi": 0.24698,
+"roiSe": 0.11246
+},
+"*|team_total|over|+100..+150": {
+"games": 64,
+"bets": 93,
+"clv": 0.0084,
+"clvSe": 0.00557,
+"roi": 0.32492,
+"roiSe": 0.13107
+},
+"*|team_total|over|-150..-100": {
+"games": 20,
+"bets": 24,
+"clv": 0.01649,
+"clvSe": 0.00802,
+"roi": -0.01346,
+"roiSe": 0.21017
+},
+"*|team_total|under": {
+"games": 71,
+"bets": 112,
+"clv": -0.00185,
+"clvSe": 0.00356,
+"roi": -0.06708,
+"roiSe": 0.11267
+},
+"*|team_total|under|+100..+150": {
+"games": 57,
+"bets": 84,
+"clv": -0.00623,
+"clvSe": 0.00404,
+"roi": -0.07163,
+"roiSe": 0.13312
+},
+"*|team_total|under|-150..-100": {
+"games": 24,
+"bets": 28,
+"clv": 0.01004,
+"clvSe": 0.00636,
+"roi": 0.07055,
+"roiSe": 0.19392
+},
+"*|total|over": {
+"games": 135,
+"bets": 358,
+"clv": -0.00013,
+"clvSe": 0.00439,
+"roi": -0.1553,
+"roiSe": 0.08786,
+"btGames": 1869,
+"btClv": -0.00568,
+"btZ": -3.04
+},
+"*|total|over|+100..+150": {
+"games": 119,
+"bets": 246,
+"clv": 0.00343,
+"clvSe": 0.00502,
+"roi": -0.09021,
+"roiSe": 0.09741,
+"btGames": 1580,
+"btClv": -0.0053,
+"btZ": -2.51
+},
+"*|total|over|+150 longer": {
+"btGames": 373,
+"btClv": -0.01673,
+"btZ": -4.48
+},
+"*|total|over|-150 shorter": {
+"btGames": 105,
+"btClv": -0.0315,
+"btZ": -2.74
+},
+"*|total|over|-150..-100": {
+"games": 52,
+"bets": 100,
+"clv": -0.01086,
+"clvSe": 0.00705,
+"roi": -0.21179,
+"roiSe": 0.13364,
+"btGames": 718,
+"btClv": 0.0031,
+"btZ": 0.68
+},
+"*|total|under": {
+"games": 140,
+"bets": 296,
+"clv": -0.00876,
+"clvSe": 0.0032,
+"roi": -0.02149,
+"roiSe": 0.09113,
+"btGames": 1725,
+"btClv": -0.01729,
+"btZ": -10.4
+},
+"*|total|under|+100..+150": {
+"games": 119,
+"bets": 216,
+"clv": -0.01177,
+"clvSe": 0.0036,
+"roi": 0.04304,
+"roiSe": 0.10087,
+"btGames": 1487,
+"btClv": -0.01634,
+"btZ": -8.86
+},
+"*|total|under|+150 longer": {
+"btGames": 391,
+"btClv": -0.03037,
+"btZ": -7.47
+},
+"*|total|under|-150 shorter": {
+"btGames": 300,
+"btClv": -0.02918,
+"btZ": -6.13
+},
+"*|total|under|-150..-100": {
+"games": 43,
+"bets": 65,
+"clv": -0.01399,
+"clvSe": 0.0077,
+"roi": -0.19785,
+"roiSe": 0.14596,
+"btGames": 746,
+"btClv": -0.02019,
+"btZ": -7.59
+},
+"MLB|moneyline|dog": {
+"btGames": 184,
+"btClv": -0.0067,
+"btZ": -2.11
+},
+"MLB|moneyline|dog|+100..+150": {
+"btGames": 155,
+"btClv": -0.00903,
+"btZ": -2.59
+},
+"MLB|moneyline|dog|+150 longer": {
+"btGames": 32,
+"btClv": 0.00334,
+"btZ": 0.47
+},
+"MLB|moneyline|fav": {
+"btGames": 155,
+"btClv": 0.00172,
+"btZ": 0.6
+},
+"MLB|moneyline|fav|-150..-100": {
+"btGames": 142,
+"btClv": 0.00156,
+"btZ": 0.5
+},
+"MLB|prop|over": {
+"btGames": 809,
+"btClv": -0.0209,
+"btZ": -19.14
+},
+"MLB|prop|over|+100..+150": {
+"btGames": 730,
+"btClv": -0.02159,
+"btZ": -13.38
+},
+"MLB|prop|over|+150 longer": {
+"btGames": 514,
+"btClv": -0.0291,
+"btZ": -11.3
+},
+"MLB|prop|over|-150 shorter": {
+"btGames": 178,
+"btClv": -0.01449,
+"btZ": -3.88
+},
+"MLB|prop|over|-150..-100": {
+"btGames": 644,
+"btClv": -0.01512,
+"btZ": -9.36
+},
+"MLB|prop|under": {
+"btGames": 785,
+"btClv": -0.00588,
+"btZ": -4.57
+},
+"MLB|prop|under|+100..+150": {
+"btGames": 685,
+"btClv": -0.0062,
+"btZ": -3.55
+},
+"MLB|prop|under|+150 longer": {
+"btGames": 309,
+"btClv": -0.01407,
+"btZ": -3.28
+},
+"MLB|prop|under|-150 shorter": {
+"btGames": 265,
+"btClv": 0.00689,
+"btZ": 3.94
+},
+"MLB|prop|under|-150..-100": {
+"btGames": 584,
+"btClv": -0.00058,
+"btZ": -0.3
+},
+"MLB|spread|dog": {
+"btGames": 129,
+"btClv": -0.00509,
+"btZ": -1.66
+},
+"MLB|spread|dog|+100..+150": {
+"btGames": 74,
+"btClv": -0.00059,
+"btZ": -0.22
+},
+"MLB|spread|dog|+150 longer": {
+"btGames": 61,
+"btClv": -0.00995,
+"btZ": -1.76
+},
+"MLB|spread|fav": {
+"btGames": 107,
+"btClv": -0.00065,
+"btZ": -0.23
+},
+"MLB|spread|fav|-150 shorter": {
+"btGames": 29,
+"btClv": 0.00493,
+"btZ": 1.01
+},
+"MLB|spread|fav|-150..-100": {
+"btGames": 80,
+"btClv": -0.00329,
+"btZ": -0.96
+},
+"MLB|total|over": {
+"btGames": 494,
+"btClv": -0.01006,
+"btZ": -4.17
+},
+"MLB|total|over|+100..+150": {
+"btGames": 390,
+"btClv": -0.00989,
+"btZ": -3.21
+},
+"MLB|total|over|+150 longer": {
+"btGames": 180,
+"btClv": -0.02304,
+"btZ": -6.66
+},
+"MLB|total|over|-150 shorter": {
+"btGames": 30,
+"btClv": -0.00539,
+"btZ": -1.07
+},
+"MLB|total|over|-150..-100": {
+"btGames": 150,
+"btClv": -0.01287,
+"btZ": -4.0
+},
+"MLB|total|under": {
+"btGames": 432,
+"btClv": -0.00159,
+"btZ": -0.66
+},
+"MLB|total|under|+100..+150": {
+"btGames": 314,
+"btClv": -0.00185,
+"btZ": -0.68
+},
+"MLB|total|under|+150 longer": {
+"btGames": 124,
+"btClv": -0.01598,
+"btZ": -4.73
+},
+"MLB|total|under|-150 shorter": {
+"btGames": 55,
+"btClv": -0.01982,
+"btZ": -1.11
+},
+"MLB|total|under|-150..-100": {
+"btGames": 159,
+"btClv": 0.00206,
+"btZ": 0.42
+},
+"MMA|moneyline|dog": {
+"btGames": 28,
+"btClv": -0.04865,
+"btZ": -0.64
+},
+"MMA|moneyline|fav": {
+"btGames": 24,
+"btClv": -0.02745,
+"btZ": -0.49
+},
+"NBA|moneyline|dog": {
+"btGames": 42,
+"btClv": 0.00443,
+"btZ": 0.28
+},
+"NBA|moneyline|dog|+100..+150": {
+"btGames": 24,
+"btClv": 0.02341,
+"btZ": 0.67
+},
+"NBA|moneyline|dog|+150 longer": {
+"btGames": 23,
+"btClv": -0.01723,
+"btZ": -0.81
+},
+"NBA|moneyline|fav": {
+"btGames": 31,
+"btClv": -0.02576,
+"btZ": -1.39
+},
+"NBA|spread|dog": {
+"games": 35,
+"bets": 105,
+"clv": -0.02446,
+"clvSe": 0.01302,
+"roi": -0.12865,
+"roiSe": 0.14779,
+"btGames": 71,
+"btClv": -0.02532,
+"btZ": -3.54
+},
+"NBA|spread|dog|+100..+150": {
+"games": 35,
+"bets": 104,
+"clv": -0.02422,
+"clvSe": 0.01303,
+"roi": -0.12865,
+"roiSe": 0.14779,
+"btGames": 70,
+"btClv": -0.02487,
+"btZ": -3.4
+},
+"NBA|spread|dog|+150 longer": {
+"btGames": 32,
+"btClv": -0.04815,
+"btZ": -3.73
+},
+"NBA|spread|fav": {
+"btGames": 47,
+"btClv": -0.01313,
+"btZ": -0.76
+},
+"NBA|spread|fav|-150..-100": {
+"btGames": 47,
+"btClv": -0.01345,
+"btZ": -0.78
+},
+"NBA|total|over": {
+"games": 26,
+"bets": 77,
+"clv": 0.00129,
+"clvSe": 0.01113,
+"roi": -0.26743,
+"roiSe": 0.18916,
+"btGames": 50,
+"btClv": 0.01217,
+"btZ": 1.28
+},
+"NBA|total|over|+100..+150": {
+"games": 20,
+"bets": 42,
+"clv": 0.01472,
+"clvSe": 0.01638,
+"roi": -0.22724,
+"roiSe": 0.22742,
+"btGames": 47,
+"btClv": 0.00943,
+"btZ": 0.92
+},
+"NBA|total|over|-150..-100": {
+"btGames": 20,
+"btClv": 0.0227,
+"btZ": 1.94
+},
+"NBA|total|under": {
+"games": 24,
+"bets": 58,
+"clv": -0.01214,
+"clvSe": 0.00851,
+"roi": -0.03803,
+"roiSe": 0.22349,
+"btGames": 63,
+"btClv": -0.03371,
+"btZ": -4.63
+},
+"NBA|total|under|+100..+150": {
+"games": 20,
+"bets": 39,
+"clv": -0.01563,
+"clvSe": 0.00946,
+"roi": 0.17069,
+"roiSe": 0.24329,
+"btGames": 63,
+"btClv": -0.03365,
+"btZ": -4.58
+},
+"NCAAF|moneyline|dog": {
+"btGames": 119,
+"btClv": 0.00843,
+"btZ": 1.52
+},
+"NCAAF|moneyline|dog|+100..+150": {
+"btGames": 56,
+"btClv": -0.0161,
+"btZ": -2.44
+},
+"NCAAF|moneyline|dog|+150 longer": {
+"btGames": 69,
+"btClv": 0.02837,
+"btZ": 3.6
+},
+"NCAAF|moneyline|fav": {
+"btGames": 76,
+"btClv": -0.0041,
+"btZ": -0.75
+},
+"NCAAF|moneyline|fav|-150 shorter": {
+"btGames": 40,
+"btClv": -0.01014,
+"btZ": -1.17
+},
+"NCAAF|moneyline|fav|-150..-100": {
+"btGames": 37,
+"btClv": -0.00085,
+"btZ": -0.12
+},
+"NCAAF|spread|dog": {
+"games": 94,
+"bets": 269,
+"clv": -0.00522,
+"clvSe": 0.00392,
+"roi": 0.11624,
+"roiSe": 0.09207,
+"btGames": 669,
+"btClv": -0.02432,
+"btZ": -11.74
+},
+"NCAAF|spread|dog|+100..+150": {
+"games": 91,
+"bets": 252,
+"clv": -0.00537,
+"clvSe": 0.00411,
+"roi": 0.11546,
+"roiSe": 0.09191,
+"btGames": 663,
+"btClv": -0.02347,
+"btZ": -11.63
+},
+"NCAAF|spread|dog|+150 longer": {
+"btGames": 150,
+"btClv": -0.02008,
+"btZ": -3.74
+},
+"NCAAF|spread|fav": {
+"games": 45,
+"bets": 75,
+"clv": -0.00619,
+"clvSe": 0.00674,
+"roi": -0.1708,
+"roiSe": 0.13555,
+"btGames": 347,
+"btClv": -0.01253,
+"btZ": -4.88
+},
+"NCAAF|spread|fav|-150 shorter": {
+"btGames": 74,
+"btClv": -0.00079,
+"btZ": -0.13
+},
+"NCAAF|spread|fav|-150..-100": {
+"games": 42,
+"bets": 68,
+"clv": -0.00839,
+"clvSe": 0.0069,
+"roi": -0.15288,
+"roiSe": 0.14096,
+"btGames": 327,
+"btClv": -0.01074,
+"btZ": -2.7
+},
+"NCAAF|team_total|over": {
+"games": 34,
+"bets": 65,
+"clv": 0.00605,
+"clvSe": 0.00711,
+"roi": 0.3306,
+"roiSe": 0.16339
+},
+"NCAAF|team_total|over|+100..+150": {
+"games": 30,
+"bets": 51,
+"clv": 0.00289,
+"clvSe": 0.00859,
+"roi": 0.39686,
+"roiSe": 0.18329
+},
+"NCAAF|team_total|under": {
+"games": 23,
+"bets": 35,
+"clv": -0.00532,
+"clvSe": 0.00838,
+"roi": -0.09641,
+"roiSe": 0.2035
+},
+"NCAAF|total|over": {
+"games": 80,
+"bets": 237,
+"clv": 0.00264,
+"clvSe": 0.00584,
+"roi": -0.04182,
+"roiSe": 0.11761,
+"btGames": 603,
+"btClv": -0.00806,
+"btZ": -1.87
+},
+"NCAAF|total|over|+100..+150": {
+"games": 75,
+"bets": 172,
+"clv": 0.00462,
+"clvSe": 0.00605,
+"roi": 0.00498,
+"roiSe": 0.12525,
+"btGames": 511,
+"btClv": -0.00865,
+"btZ": -1.96
+},
+"NCAAF|total|over|+150 longer": {
+"btGames": 98,
+"btClv": -0.00924,
+"btZ": -0.78
+},
+"NCAAF|total|over|-150 shorter": {
+"btGames": 53,
+"btClv": -0.06482,
+"btZ": -3.4
+},
+"NCAAF|total|over|-150..-100": {
+"games": 33,
+"bets": 62,
+"clv": -0.016,
+"clvSe": 0.0098,
+"roi": -0.2217,
+"roiSe": 0.16907,
+"btGames": 322,
+"btClv": 0.01403,
+"btZ": 1.58
+},
+"NCAAF|total|under": {
+"games": 79,
+"bets": 172,
+"clv": -0.00902,
+"clvSe": 0.00473,
+"roi": -0.00103,
+"roiSe": 0.1198,
+"btGames": 596,
+"btClv": -0.02803,
+"btZ": -11.66
+},
+"NCAAF|total|under|+100..+150": {
+"games": 69,
+"bets": 128,
+"clv": -0.01241,
+"clvSe": 0.00512,
+"roi": 0.01068,
+"roiSe": 0.13128,
+"btGames": 559,
+"btClv": -0.02409,
+"btZ": -9.77
+},
+"NCAAF|total|under|+150 longer": {
+"btGames": 112,
+"btClv": -0.06051,
+"btZ": -5.14
+},
+"NCAAF|total|under|-150 shorter": {
+"btGames": 180,
+"btClv": -0.03974,
+"btZ": -7.11
+},
+"NCAAF|total|under|-150..-100": {
+"games": 24,
+"bets": 40,
+"clv": -0.0233,
+"clvSe": 0.01058,
+"roi": -0.19726,
+"roiSe": 0.19807,
+"btGames": 365,
+"btClv": -0.03068,
+"btZ": -8.11
+},
+"NFL|moneyline|dog": {
+"btGames": 34,
+"btClv": -0.00016,
+"btZ": -0.02
+},
+"NFL|moneyline|dog|+100..+150": {
+"btGames": 24,
+"btClv": -0.00417,
+"btZ": -0.35
+},
+"NFL|moneyline|fav": {
+"btGames": 30,
+"btClv": -0.01943,
+"btZ": -2.18
+},
+"NFL|moneyline|fav|-150..-100": {
+"btGames": 22,
+"btClv": -0.01995,
+"btZ": -1.68
+},
+"NFL|prop|over": {
+"btGames": 62,
+"btClv": -0.04357,
+"btZ": -14.21
+},
+"NFL|prop|over|+100..+150": {
+"btGames": 62,
+"btClv": -0.04798,
+"btZ": -13.18
+},
+"NFL|prop|over|+150 longer": {
+"btGames": 56,
+"btClv": -0.05157,
+"btZ": -5.62
+},
+"NFL|prop|over|-150 shorter": {
+"btGames": 21,
+"btClv": -0.0153,
+"btZ": -2.15
+},
+"NFL|prop|over|-150..-100": {
+"btGames": 62,
+"btClv": -0.01931,
+"btZ": -7.28
+},
+"NFL|prop|under": {
+"btGames": 62,
+"btClv": -0.03413,
+"btZ": -8.38
+},
+"NFL|prop|under|+100..+150": {
+"btGames": 62,
+"btClv": -0.03949,
+"btZ": -8.09
+},
+"NFL|prop|under|+150 longer": {
+"btGames": 33,
+"btClv": -0.03147,
+"btZ": -1.97
+},
+"NFL|prop|under|-150 shorter": {
+"btGames": 38,
+"btClv": 0.00241,
+"btZ": 0.35
+},
+"NFL|prop|under|-150..-100": {
+"btGames": 60,
+"btClv": -0.013,
+"btZ": -3.93
+},
+"NFL|spread|dog": {
+"btGames": 120,
+"btClv": -0.00822,
+"btZ": -3.36
+},
+"NFL|spread|dog|+100..+150": {
+"btGames": 117,
+"btClv": -0.00748,
+"btZ": -2.87
+},
+"NFL|spread|dog|+150 longer": {
+"btGames": 45,
+"btClv": -0.00661,
+"btZ": -1.42
+},
+"NFL|spread|fav": {
+"btGames": 92,
+"btClv": -0.00173,
+"btZ": -0.44
+},
+"NFL|spread|fav|-150 shorter": {
+"btGames": 68,
+"btClv": -0.00459,
+"btZ": -1.65
+},
+"NFL|spread|fav|-150..-100": {
+"btGames": 59,
+"btClv": 0.00027,
+"btZ": 0.04
+},
+"NFL|total|over": {
+"btGames": 120,
+"btClv": 0.00825,
+"btZ": 1.26
+},
+"NFL|total|over|+100..+150": {
+"btGames": 102,
+"btClv": 0.00934,
+"btZ": 0.94
+},
+"NFL|total|over|+150 longer": {
+"btGames": 31,
+"btClv": -0.01942,
+"btZ": -1.89
+},
+"NFL|total|over|-150..-100": {
+"btGames": 83,
+"btClv": 0.01886,
+"btZ": 1.12
+},
+"NFL|total|under": {
+"btGames": 117,
+"btClv": -0.01926,
+"btZ": -5.33
+},
+"NFL|total|under|+100..+150": {
+"btGames": 105,
+"btClv": -0.0121,
+"btZ": -2.89
+},
+"NFL|total|under|+150 longer": {
+"btGames": 66,
+"btClv": -0.03558,
+"btZ": -7.25
+},
+"NFL|total|under|-150 shorter": {
+"btGames": 24,
+"btClv": -0.00514,
+"btZ": -1.07
+},
+"NFL|total|under|-150..-100": {
+"btGames": 64,
+"btClv": -0.01868,
+"btZ": -2.19
+},
+"NHL|moneyline|dog": {
+"btGames": 49,
+"btClv": -0.00581,
+"btZ": -1.36
+},
+"NHL|moneyline|dog|+100..+150": {
+"btGames": 38,
+"btClv": -0.00482,
+"btZ": -0.98
+},
+"NHL|moneyline|fav": {
+"btGames": 42,
+"btClv": -0.0063,
+"btZ": -1.4
+},
+"NHL|moneyline|fav|-150..-100": {
+"btGames": 37,
+"btClv": -0.00857,
+"btZ": -1.73
+},
+"NHL|prop|over": {
+"games": 24,
+"bets": 54,
+"clv": 0.02009,
+"clvSe": 0.01158,
+"roi": -0.08016,
+"roiSe": 0.20299,
+"btGames": 162,
+"btClv": -0.01911,
+"btZ": -8.95
+},
+"NHL|prop|over|+100..+150": {
+"btGames": 152,
+"btClv": -0.01682,
+"btZ": -6.27
+},
+"NHL|prop|over|+150 longer": {
+"btGames": 130,
+"btClv": -0.0298,
+"btZ": -5.85
+},
+"NHL|prop|over|-150 shorter": {
+"btGames": 25,
+"btClv": -0.0158,
+"btZ": -2.14
+},
+"NHL|prop|over|-150..-100": {
+"btGames": 144,
+"btClv": -0.01183,
+"btZ": -5.76
+},
+"NHL|prop|under": {
+"games": 36,
+"bets": 66,
+"clv": 0.01961,
+"clvSe": 0.00924,
+"roi": 0.07471,
+"roiSe": 0.22725,
+"btGames": 155,
+"btClv": 0.00225,
+"btZ": 0.86
+},
+"NHL|prop|under|+100..+150": {
+"games": 30,
+"bets": 43,
+"clv": 0.02935,
+"clvSe": 0.01019,
+"roi": 0.04034,
+"roiSe": 0.27607,
+"btGames": 110,
+"btClv": -0.00143,
+"btZ": -0.32
+},
+"NHL|prop|under|+150 longer": {
+"btGames": 50,
+"btClv": -0.00936,
+"btZ": -1.12
+},
+"NHL|prop|under|-150 shorter": {
+"btGames": 87,
+"btClv": 0.01498,
+"btZ": 3.63
+},
+"NHL|prop|under|-150..-100": {
+"btGames": 117,
+"btClv": 0.00594,
+"btZ": 1.87
+},
+"NHL|spread|dog": {
+"btGames": 61,
+"btClv": 0.02038,
+"btZ": 2.24
+},
+"NHL|spread|dog|+150 longer": {
+"btGames": 56,
+"btClv": 0.01993,
+"btZ": 1.98
+},
+"NHL|team_total|over": {
+"games": 26,
+"bets": 35,
+"clv": 0.00887,
+"clvSe": 0.00607,
+"roi": 0.21294,
+"roiSe": 0.20419
+},
+"NHL|team_total|under": {
+"games": 29,
+"bets": 49,
+"clv": 0.00342,
+"clvSe": 0.00491,
+"roi": -0.22346,
+"roiSe": 0.16245
+},
+"NHL|team_total|under|+100..+150": {
+"games": 22,
+"bets": 35,
+"clv": -0.00381,
+"clvSe": 0.00557,
+"roi": -0.09986,
+"roiSe": 0.20584
+},
+"NHL|total|over": {
+"btGames": 75,
+"btClv": -0.00673,
+"btZ": -1.89
+},
+"NHL|total|over|+100..+150": {
+"btGames": 51,
+"btClv": -0.00556,
+"btZ": -1.77
+},
+"NHL|total|over|+150 longer": {
+"btGames": 32,
+"btClv": -0.0122,
+"btZ": -1.69
+},
+"NHL|total|under": {
+"btGames": 130,
+"btClv": -0.0095,
+"btZ": -4.81
+},
+"NHL|total|under|+100..+150": {
+"btGames": 108,
+"btClv": -0.00902,
+"btZ": -3.33
+},
+"NHL|total|under|+150 longer": {
+"btGames": 20,
+"btClv": -0.01739,
+"btZ": -3.43
+},
+"NHL|total|under|-150 shorter": {
+"btGames": 36,
+"btClv": -0.00729,
+"btZ": -3.12
+},
+"NHL|total|under|-150..-100": {
+"btGames": 63,
+"btClv": -0.00695,
+"btZ": -1.96
+},
+"TENNIS|moneyline|dog": {
+"games": 35,
+"bets": 45,
+"clv": -0.00322,
+"clvSe": 0.00705,
+"roi": -0.08175,
+"roiSe": 0.2998,
+"btGames": 157,
+"btClv": -0.01222,
+"btZ": -2.41
+},
+"TENNIS|moneyline|dog|+100..+150": {
+"games": 25,
+"bets": 33,
+"clv": 0.00079,
+"clvSe": 0.00766,
+"roi": -0.1126,
+"roiSe": 0.2962,
+"btGames": 80,
+"btClv": -0.01105,
+"btZ": -1.54
+},
+"TENNIS|moneyline|dog|+150 longer": {
+"btGames": 84,
+"btClv": -0.01561,
+"btZ": -2.29
+},
+"TENNIS|moneyline|fav": {
+"btGames": 80,
+"btClv": 0.00243,
+"btZ": 0.7
+},
+"TENNIS|moneyline|fav|-150 shorter": {
+"btGames": 24,
+"btClv": -0.00218,
+"btZ": -0.46
+},
+"TENNIS|moneyline|fav|-150..-100": {
+"btGames": 56,
+"btClv": 0.0044,
+"btZ": 0.98
+},
+"TENNIS|spread|dog": {
+"games": 32,
+"bets": 45,
+"clv": -0.00688,
+"clvSe": 0.00389,
+"roi": -0.12411,
+"roiSe": 0.20328,
+"btGames": 267,
+"btClv": -0.01207,
+"btZ": -3.9
+},
+"TENNIS|spread|dog|+100..+150": {
+"games": 32,
+"bets": 45,
+"clv": -0.00688,
+"clvSe": 0.00389,
+"roi": -0.12411,
+"roiSe": 0.20328,
+"btGames": 237,
+"btClv": -0.01101,
+"btZ": -2.93
+},
+"TENNIS|spread|dog|+150 longer": {
+"btGames": 74,
+"btClv": -0.01471,
+"btZ": -2.41
+},
+"TENNIS|spread|fav": {
+"btGames": 102,
+"btClv": -0.01727,
+"btZ": -3.31
+},
+"TENNIS|spread|fav|-150..-100": {
+"btGames": 92,
+"btClv": -0.01274,
+"btZ": -3.11
+},
+"TENNIS|total|over": {
+"btGames": 406,
+"btClv": -0.01017,
+"btZ": -4.81
+},
+"TENNIS|total|over|+100..+150": {
+"btGames": 358,
+"btClv": -0.00892,
+"btZ": -3.7
+},
+"TENNIS|total|over|-150..-100": {
+"btGames": 105,
+"btClv": -0.02255,
+"btZ": -7.36
+},
+"TENNIS|total|under": {
+"btGames": 267,
+"btClv": -0.01391,
+"btZ": -5.31
+},
+"TENNIS|total|under|+100..+150": {
+"btGames": 220,
+"btClv": -0.01351,
+"btZ": -4.59
+},
+"TENNIS|total|under|+150 longer": {
+"btGames": 61,
+"btClv": -0.00542,
+"btZ": -0.57
+},
+"TENNIS|total|under|-150..-100": {
+"btGames": 52,
+"btClv": -0.01067,
+"btZ": -1.38
+},
+"WNBA|moneyline|dog": {
+"btGames": 94,
+"btClv": -0.04778,
+"btZ": -2.99
+},
+"WNBA|moneyline|dog|+100..+150": {
+"btGames": 42,
+"btClv": -0.06839,
+"btZ": -1.98
+},
+"WNBA|moneyline|dog|+150 longer": {
+"btGames": 56,
+"btClv": -0.02759,
+"btZ": -3.51
+},
+"WNBA|moneyline|fav": {
+"btGames": 25,
+"btClv": 0.11961,
+"btZ": 2.08
+},
+"WNBA|prop|over": {
+"btGames": 123,
+"btClv": -0.03027,
+"btZ": -5.09
+},
+"WNBA|prop|over|+100..+150": {
+"btGames": 122,
+"btClv": -0.02507,
+"btZ": -3.33
+},
+"WNBA|prop|over|+150 longer": {
+"btGames": 66,
+"btClv": -0.03844,
+"btZ": -2.84
+},
+"WNBA|prop|over|-150..-100": {
+"btGames": 110,
+"btClv": -0.02328,
+"btZ": -3.56
+},
+"WNBA|prop|under": {
+"btGames": 122,
+"btClv": -0.01858,
+"btZ": -5.46
+},
+"WNBA|prop|under|+100..+150": {
+"btGames": 118,
+"btClv": -0.01993,
+"btZ": -5.1
+},
+"WNBA|prop|under|+150 longer": {
+"btGames": 30,
+"btClv": -0.0087,
+"btZ": -0.36
+},
+"WNBA|prop|under|-150..-100": {
+"btGames": 113,
+"btClv": -0.0097,
+"btZ": -1.69
+},
+"WNBA|spread|dog": {
+"btGames": 130,
+"btClv": -0.02708,
+"btZ": -2.48
+},
+"WNBA|spread|dog|+100..+150": {
+"btGames": 130,
+"btClv": -0.02824,
+"btZ": -2.51
+},
+"WNBA|spread|fav": {
+"btGames": 65,
+"btClv": 0.00326,
+"btZ": 0.31
+},
+"WNBA|spread|fav|-150..-100": {
+"btGames": 64,
+"btClv": 0.00445,
+"btZ": 0.42
+},
+"WNBA|total|over": {
+"btGames": 121,
+"btClv": 0.01855,
+"btZ": 1.49
+},
+"WNBA|total|over|+100..+150": {
+"btGames": 121,
+"btClv": 0.01647,
+"btZ": 1.27
+},
+"WNBA|total|over|-150..-100": {
+"btGames": 25,
+"btClv": -0.00665,
+"btZ": -0.63
+},
+"WNBA|total|under": {
+"btGames": 120,
+"btClv": -0.02586,
+"btZ": -1.56
+},
+"WNBA|total|under|+100..+150": {
+"btGames": 118,
+"btClv": -0.02468,
+"btZ": -1.48
+},
+"WNBA|total|under|-150..-100": {
+"btGames": 25,
+"btClv": -0.05886,
+"btZ": -1.72
+}
+}
+}
