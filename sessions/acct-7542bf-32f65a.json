@@ -8,8 +8,8 @@
  "branch": "ccr-305d3f7a-i2z8ja",
  "head": "6ba9c7de46b643b3ecb414846dc86da240551e64",
  "since": 1792805068,
- "beat": 1792805503,
- "beatIso": "2026-10-24T01:31:43Z",
+ "beat": 1792805743,
+ "beatIso": "2026-10-24T01:35:43Z",
  "done": "SR1-2: verified the cut-off session's SR weights against review-digest run 40047913906 (CLV/star +0.77 vs ST1 +0.50, ROI/star +6.2 vs +5.0, 4-5\u2605 +1.83% CLV +2.81% ROI); SR section in star_rating_review, LEVERS, CHANGES (revert rule), export READ ME; BetRatingTest+AutoBetStarsTest green",
  "next": "SR3: full suite (bash tools/test.sh), ship.sh v1.0.67 with SR + OK3 (SharpAPI reconcile fix), release.yml, record-release, engine reset (engine_set.py --reset), tell Tj"
 }
