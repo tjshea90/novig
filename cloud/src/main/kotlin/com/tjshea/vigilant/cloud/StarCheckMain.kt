@@ -200,7 +200,7 @@ object StarCheck {
         gameSlope(rated.filter { it.clv != null }.map { Triple(it.event, stars.getValue(it), it.clv!!) })?.let { (b, t) -> out += String.format(Locale.US, "  CLV per star, rated lines, over games: %+.2f points (t %.1f)", b * 100, t) }
         gameSlope(rated.filter { it.clv != null && it.sharpClose }.map { Triple(it.event, stars.getValue(it), it.clv!!) })?.let { (b, t) -> out += String.format(Locale.US, "  sharp CLV per star, rated lines, over games: %+.2f points (t %.1f)", b * 100, t) }
         gameSlope(rated.filter { it.settled && it.profit != null }.map { Triple(it.event, stars.getValue(it), it.profit!!) })?.let { (b, t) -> out += String.format(Locale.US, "  ROI per star, rated lines, over games: %+.2f points (t %.1f)", b * 100, t) }
-        out += table("Why no trusted edge", ls.filter { stars.getValue(it) < BetRating.MIN }, { l -> when { l.ev < BetRating.THIN_EV -> "edge under 0.5%"; l.ev > BetRating.MAX_TRUSTED_EV -> "edge over 25%"; else -> "sharp book against" } })
+        out += table("Why no trusted edge", ls.filter { stars.getValue(it) < BetRating.MIN }, { l -> when { l.ev < BetRating.THIN_EV -> "edge under 0.5%"; l.ev > BetRating.MAX_TRUSTED_EV -> "edge over 25%"; l.sharp == false -> "sharp book against"; else -> "under 1.5%, one or two books" } })
         out += "== Ratings side by side (S5: per star over games on the rated 1-5★ lines; sharp CLV for each half. A better rating has larger, steadier positive slopes) =="
         out += variantLines(ls, profile)
         out += "== Each input of the rating on its own =="
