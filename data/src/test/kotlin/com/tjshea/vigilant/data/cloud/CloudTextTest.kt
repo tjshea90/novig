@@ -45,7 +45,7 @@ class CloudTextTest {
         val silent = CloudText.view(st(beat = 300), 0, now)
         assertEquals(CloudText.Level.BAD, silent.level); assertTrue(silent.headline.contains("silent for 5m 00s"))
         val off = CloudText.view(st(idle = true), 0, now)
-        assertEquals(CloudText.Level.WARN, off.level); assertTrue(off.headline.contains("switched off"))
+        assertEquals(CloudText.Level.WARN, off.level); assertTrue(off.headline.contains("stopped or restarting"))
         assertNotEquals(CloudText.Level.GOOD, CloudText.view(null, 0, now, "no GitHub token saved").level)
     }
 
