@@ -114,24 +114,19 @@ class AutoBetStarsTest {
         val won = ProfitProfile.typePointsOf("NFL", "Game totals", "Over 45.5", 1_000_000L, 0L)
         assertTrue("a losing type takes points off ($lost)", lost <= 0.0)
         assertTrue("points stay in range", lost >= -ProfitProfile.TYPE_POINTS && won <= ProfitProfile.TYPE_POINTS)
-        // SR (2026-10-24): the type points count at BetRating.CURRENT.typeScale (half) in the support score; S6's stars come from the edge, so they move the support stars only
-        // (the history's type points did not predict the close out of sample: research/star_rating_sb_2026-10-24.md).
+        // SR (2026-10-24): the type points count at BetRating.CURRENT.typeScale (half), so they move the points by exactly that and a typical bet's stars with them.
         val base = BetRating.Inputs(5, 5, 0.03, true, false, 0.01)
         val scale = BetRating.CURRENT.typeScale
         assertEquals(-15.0 * scale, BetRating.rate(base.copy(typePoints = -15.0)).points - BetRating.rate(base).points, 1e-9)
-        assertTrue(BetRating.rate(base.copy(typePoints = -15.0)).support < BetRating.rate(base).support)
-        assertTrue(BetRating.rate(base.copy(typePoints = 15.0)).support >= BetRating.rate(base).support)
-        assertEquals(BetRating.rate(base).stars, BetRating.rate(base.copy(typePoints = -15.0)).stars, 0.0)
+        assertTrue(BetRating.rate(base.copy(typePoints = -15.0)).stars < BetRating.rate(base).stars)
+        assertTrue(BetRating.rate(base.copy(typePoints = 15.0)).stars >= BetRating.rate(base).stars)
     }
 
     @Test
-    fun `two small books are at most three stars, and lead time moves the points (S6)`() {
-        // S6 (SB, 2026-10-24) replaced ST1's "two small books with no sharp book at most 2" with: two companies at most 3, and under +1.5% from them no trusted edge (two-book lines at
-        // 3%+ edges made +8.9% ROI over 139 settled; under 1.5% they lost 39%). The support stars keep ST1's rule.
+    fun `two small books with no sharp book are at most two stars, and lead time moves the points (ST1)`() {
         val two = BetRating.Inputs(2, 2, 0.06, sharpAgrees = false, sharpAgainst = false, spread = 0.005)
-        assertEquals(3.0, BetRating.rate(two).stars, 0.0)
-        assertTrue(BetRating.rate(two).support <= 2.0)
-        assertEquals(BetRating.NONE, BetRating.rate(two.copy(ev = 0.012)).stars, 0.0)
+        assertTrue(BetRating.rate(two).stars <= 2.0)
+        assertTrue(BetRating.rate(two.copy(sharpAgrees = true)).stars > 2.0)
         assertTrue(BetRating.leadPoints(120) > BetRating.leadPoints(3000))
     }
 }

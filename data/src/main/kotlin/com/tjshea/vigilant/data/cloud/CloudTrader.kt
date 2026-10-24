@@ -254,7 +254,7 @@ class CloudTrader(
             val sized = CloudKelly.stake(
                 CloudKelly.Inputs(
                     fair = fair, cost = q.cost, cash = cash, atRisk = risk, gameAtRisk = gameRisk, dayStartEquity = ledger.dayStartEquity,
-                    fairAgeMs = o.fairAsOfMs?.let { (now - it).coerceAtLeast(0L) }, agreeing = a.agreeing, sharpAgrees = a.sharpAgrees, stars = o.rating?.support,
+                    fairAgeMs = o.fairAsOfMs?.let { (now - it).coerceAtLeast(0L) }, agreeing = a.agreeing, sharpAgrees = a.sharpAgrees, stars = o.rating?.stars,
                     kelly = s.gates.cloudKelly, betCap = s.gates.cloudBetCap, gameCap = s.gates.cloudGameCap, walletUse = s.gates.cloudWalletUse, dayStop = s.gates.cloudDayStop,
                 ),
             )

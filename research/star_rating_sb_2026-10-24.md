@@ -12,7 +12,7 @@ Tj, verbatim: "Since the sample size is small  can't you use some of the apis fe
 3. **The S5 stars (v1.0.68: SR's support-heavy points) do not order the bets**: sharp CLV per star over games on the 3,481 rated lines with inputs -0.12 (t -0.2); on the phone's lines alone they run backwards (ROI per star -12, t -1.5). Stars from the edge alone: +0.43 (t 1.0), ROI +6.1 (t 1.5), positive in both halves; on the phone's lines +0.80 and ROI +12.4.
 4. **Rules tested and rejected:** a thin-market haircut on the edge (CLV per star about 0, ROI -6), the old company caps on the ladder including "two small books with no sharp book at most 2" (cut the slope to +0.15: two-book lines at 3%+ edges made +8.9% ROI over 139 settled), the type-of-bet history points (not predictive for the third time).
 
-## The change (S6, v1.0.69)
+## The proposed change (S6; parked on branch sx-s6-wip, superseded by SX: see research/star_rating_sx_2026-10-24.md)
 Stars from the edge (the profit), support where the data and the definition need it:
 - **0 = no trusted edge**: under +0.5% or over +25% EV, a sharp book against (S5), and now **an edge under +1.5% from one or two companies**.
 - **The edge sets the stars**: +0.5-1% = 1, +1-1.5% = 1½, +1.5-2% = 2, +2-2.5% = 2½, +2.5-3% = 3, +3-4% = 3½, +4-5% = 4, +5-6% = 4½, +6% and more = 5 (full marks at 6%, as the edge score always had).
