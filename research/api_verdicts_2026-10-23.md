@@ -20,7 +20,7 @@ Tj: "Look at all the available apis and how well they respond, their freshness, 
 | BoltOdds | 1,404 when it works | 8 | <1 s | 0.9 | **87%** (Free/Trial keys refused) |
 | ParlayAPI | 724 | 2 | 5 min | 1.5 | 13% (503s) |
 | SX Bet | 634 | 0 | <1 s | | 0% |
-| The Odds API (21 free keys) | 0 | 0 | 1.5 min | 5.9 | all keys spent to 1 Nov |
+| The Odds API (21 free keys) | 0 | 0 | 1.5 min | 5.9 | 3 keys spent, 3 more at 1 credit; 5,082 of 10,500 credits left to 1 Nov (corrected 2026-10-24: first written as "all spent", a misreading of one key) |
 | Unabated (free) | 0 | 0 | **16.6 h** | **9.0** | off most scans |
 | PinnWire (18 free keys) | 0 | 0 | | | spent by midday; SharpAPI's Pinnacle covers it |
 | pinnapi | 0 | 0 | | | **key refused (403)** |
@@ -43,7 +43,7 @@ Tj: "Look at all the available apis and how well they respond, their freshness, 
 **Turn off / remove (free, add nothing):**
 - **Unabated**: 16.6-hour-old quotes, 9 points off Pinnacle, 0 lines in 3 days (and the 10-17 review). Switch off for good.
 - **pinnapi**: its key is refused (403). Remove it.
-- **The Odds API**: 21 free keys spent for the month, 0 lines in 3 days, 5.9 points off Pinnacle. Switch off; nothing is lost.
+- **The Odds API**: 0 lines in 3 days and 5.9 points off Pinnacle, although 5,082 of its 10,500 monthly credits are left (15 of 21 keys have credits; corrected 2026-10-24, it was first written as "all spent"). It feeds nothing because it is last in line: a better feed always answers first. Keep it as a free standby or switch it off; either way nothing is lost.
 - **PinnWire, Pinnodds REST on GitHub, OddsPapi Free**: free and harmless as backups (PinnWire only fills Pinnacle where SharpAPI has none; OddsPapi Free gives closes). Keep switched on, expect little. If you pay Pinnodds for the phone's live feed, take its REST key off GitHub so the engine does not spend the account's daily allowance.
 
 **Consider buying: nothing yet.** The engine has made about $3 a day (+$25 on $409 at risk) on a ~$265 wallet. The data already bought costs several hundred dollars a month (PropLine, SGO, BoltOdds, ParlayAPI, Pinnodds, and SharpAPI if kept). An API pays for itself only if it adds profit of its monthly price; at a 2% realised edge, $577/mo needs roughly $1,000 a day of extra stakes. What holds profit back today is volume (79% of auto-bet looks held by the 6-hour trap guard; bids fill about 1 in 1,000 postings) and bankroll, not missing prices. Revisit buying only when the wallet and daily stakes are much larger.
