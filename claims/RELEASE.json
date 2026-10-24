@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/15e29e",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "15e29e",
+ "note": "CH82+CH81: engine restart reads 'stopped or restarting' not 'switched off'; Diagnostics logs every 'nobody was selling' bet (NOFILL: list age, price, depth, fair age)",
+ "since": 1792863675,
+ "beat": 1792863675
+}
