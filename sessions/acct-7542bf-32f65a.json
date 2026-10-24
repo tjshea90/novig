@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "67fb5137da36ad9d89459aa42fb97b64032dbeb8",
+ "head": "a67a96c731c8fd907b77739d2ca42b8dc4c11bc4",
  "since": 1792809425,
- "beat": 1792825143,
- "beatIso": "2026-10-24T06:59:03Z",
- "done": "pre-ship: SX: stars are the bet type's proof at Novig (CLV against Novig's own close of Vigilant/CNO graded lines + point-in-time backtest); 0 = no trusted edge incl. types losing on both sources, 1 = +EV unproven, up to 5 = proven at 99%; weekly star-evidence refresh",
- "next": "ship.sh gates and releases this"
+ "beat": 1792825173,
+ "beatIso": "2026-10-24T06:59:33Z",
+ "done": "pre-release: SX: stars are the bet type's proof at Novig (CLV against Novig's own close of Vigilant/CNO graded lines + point-in-time backtest); 0 = no trusted edge incl. types losing on both sources, 1 = +EV unproven, up to 5 = proven at 99%; weekly star-evidence refresh (versionCode 411, v1.0.71)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.71), then run: bash tools/record-release.sh v1.0.71 411 \"SX: stars are the bet type's proof at Novig (CLV against Novig's own close of Vigilant/CNO graded lines + point-in-time backtest); 0 = no trusted edge incl. types losing on both sources, 1 = +EV unproven, up to 5 = proven at 99%; weekly star-evidence refresh\""
 }
