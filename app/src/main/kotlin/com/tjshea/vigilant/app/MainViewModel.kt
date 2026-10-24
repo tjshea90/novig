@@ -508,7 +508,7 @@ data class UiState(
             .filter { livePick(it, now).ev > 0.0 && !negativeSeenAt(it.row, now) }
 
     /** The Bet sheet found [row] not +EV in the last minute, and no price read since says it is back. */
-    private fun negativeSeenAt(row: CnoRow, now: Long): Boolean {
+    internal fun negativeSeenAt(row: CnoRow, now: Long): Boolean {
         val key = com.tjshea.vigilant.app.MiniWindow.cnoKey(row)
         val at = negativeSeen[key] ?: return false
         val live = livePrice(row, now)

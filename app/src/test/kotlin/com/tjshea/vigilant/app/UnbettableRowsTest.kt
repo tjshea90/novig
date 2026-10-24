@@ -41,4 +41,16 @@ class UnbettableRowsTest {
         val moved = reread.copy(deadPrice = mapOf(row.key to row.quote!!.cost + 0.02))
         assertTrue("another price: back", moved.feedAt(found + 6_000L).any { it.key == row.key })
     }
+
+    @Test
+    fun `a CNO row nobody sold at stays off while Novig's price read still shows the same price`() {
+        val row = com.tjshea.vigilant.data.cno.CnoRow(0.05, event = "E", market = "M", bet = "B", odds = 110, book = "Novig", gameUrl = "https://x/g?side_id=1")
+        val key = MiniWindow.cnoKey(row)
+        val found = now - 120_000L
+        fun live(american: Int, at: Long) = mapOf(row.key to com.tjshea.vigilant.data.cno.LivePrice(american, 50.0, 0.05, at, "m", "o"))
+        val base = SampleScan.state().copy(settings = SampleScan.state().settings.copy(cnoLivePrices = true), negativeSeen = mapOf(key to found), deadPrice = mapOf(key to costOf(110)))
+        assertTrue("same price read again, long after the minute: still off", base.copy(novigLive = live(110, now - 1_000L)).negativeSeenAt(row, now))
+        assertFalse("another price: back", base.copy(novigLive = live(115, now - 1_000L)).negativeSeenAt(row, now))
+        assertFalse("after 30 minutes: back", base.copy(negativeSeen = mapOf(key to now - DEAD_PRICE_MS - 1_000L), novigLive = live(110, now - 1_000L)).negativeSeenAt(row, now))
+    }
 }
