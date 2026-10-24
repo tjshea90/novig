@@ -7,5 +7,5 @@
  "nonce": "15e29e",
  "note": "CH80: the +EV list no longer empties at each engine scan start: rows the new scan has not re-read yet stay listed with their own stamps (found from the phone's FEEDHIDE log)",
  "since": 1792865575,
- "beat": 1792865844
+ "beat": 1792866195
 }
