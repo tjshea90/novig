@@ -964,3 +964,16 @@ If any adjustments to the star rating system are warranted, do them and release 
 ```
 Since the sample size is small  can't you use some of the apis features of historical odds and clv and results
 ```
+
+## 2026-10-24T02:56:20Z
+```
+Do a full, through audit of the current star rating system and logic. You must consider available historical odds, clv, and results from the apis which offer them. Use the API keys in the GitHub engine to call for historical data if needed. Use all the data already saved in GitHub including saved scans from vigilant and cno, in addition to the historical data the apis provide. The more data and analysis the better. 
+
+Build a star rating system based on solid data from all the sources including apis historical data and GitHub saved scans and novig historical data (novig offers historical pricing I think). The star system must be logical and accurate.
+
+1 star means the bet is still positive EV but low confidence/support from history
+
+5 Star means the bet is a type that is proven profitable from data and is not held back by safeguards against bad bets. 
+
+You have full discretion to make the star system as logical and accurate as possible, using thorough research and analysis from different sources. You may search online if needed, use all available apis with my keys, and access all GitHub saved scans and data. Do not finish with a low confidence system. Finish and ship a build with a highly logical and accurate Star rating system based on real research and data. This may be the edge ladder you already mentioned, or a different system
+```
