@@ -6365,3 +6365,6 @@ CH78 (Tj chat 06:55 UTC 2026-10-24): "a lot of no one was selling at that price,
 - [x] TR1 (research/trends_2026-10-24.md; scripts research/trends_2026-10-24/) test trend signals out of sample on PropLine's resolved archive (907k graded props, Apr-Oct): player's recent hit rate vs the line, line vs the player's recent average, opening-to-close move; judged by ROI at Novig's close price and CLV, game-clustered, later months held out
 - [x] TR2 write the verdict to research/ (dated .md) + NOTES/LEVERS line; answer Tj in chat
 - [ ] TR3 build into the engine only what survives the held-out months (as a star/edge input or a filter), with a test. 2026-10-24: nothing survived the class B bar (gap tilt CI touches 0); revisit as a bid-desk tilt after SB2b
+
+CH80 (Tj chat 16:28 UTC 2026-10-24): "+ev tab ... bets disappear but then the same ones at the same price come back shortly, still +EV with sellers."
+- [ ] CH80a leading theory: feedAt hides rows whose fair age passes Freshness.maxAgeMs (engine fair median 222 s, max 512 s, Pinnacle silent) until the next list refreshes them; other suspect requoteDuringScan/goneSeen. Add a hidden-reason counter (fairIsOld / priceStale / goneSeen / staleLive) to Diagnostics so the cause is read from data; then fix. Do NOT loosen the age cut-off without his word.
