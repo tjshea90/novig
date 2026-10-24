@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aylgas",
- "head": "46bb15631c56f4472860e2c3193ac62d7e049866",
+ "head": "edea0e6c8b279443071d6015696a7dc8544fcde2",
  "since": 1792816772,
- "beat": 1792816840,
- "beatIso": "2026-10-24T04:40:40Z",
- "done": "",
- "next": ""
+ "beat": 1792816862,
+ "beatIso": "2026-10-24T04:41:02Z",
+ "done": "pre-ship: 1xBet under any feed spelling (1xbet/onexbet) is one company, not two agreeing books",
+ "next": "ship.sh gates and releases this"
 }
