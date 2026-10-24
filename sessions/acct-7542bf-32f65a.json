@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "0ced35d7ef7de28cf45e95a24868da4d25577c58",
+ "head": "f2e2fc4c59491a6f61e43f31c183a3aed77d0b1e",
  "since": 1792809425,
- "beat": 1792823264,
- "beatIso": "2026-10-24T06:27:44Z",
+ "beat": 1792823499,
+ "beatIso": "2026-10-24T06:31:39Z",
  "done": "SX findings 4-5: Novig's own close is the yardstick (ROI = 0.82 x CLV_novig); outside-books edges show negative CLV vs Novig close in the backtest; but the backtest's type table fails validation on real Vigilant/CNO lines, so not shipped. Streaming Novig public trades 10-12..10-22 for the real lines' markets",
  "next": "join trades -> Novig close (last pregame trades) per real line, grade real lines on CLV_novig by every input, design stars from what orders them, validate halves"
 }
