@@ -485,7 +485,10 @@ class CloudEngine(
                 lastPublishedAt = now
                 partial.getAndSet(null)?.let { r ->
                     val rows = withFar(r.feed(filterSettings), now)
-                    val feed = CloudFeed(now, cfg.rev, r.stats, rows)
+                    // The list keeps the rows this scan has not read yet (their last stamps are honest) instead of emptying at every scan's start; trading and the bid desk still get only what the scan read.
+                    val readNow = r.freshSinceMs?.let { since -> r.opportunities.filter { (it.bookFetchedAtMs ?: 0L) >= since }.mapTo(HashSet()) { it.outcome.outcomeId } }.orEmpty()
+                    val shownRows = FeedOrder.sort(CloudLanes.carryUnread(rows, lastPublished?.rows.orEmpty(), readNow, now), filterSettings.feedSort)
+                    val feed = CloudFeed(now, cfg.rev, r.stats, shownRows)
                     onFeed(rows, now)
                     lastPublished = feed; lastAges = CloudCurrency.of(rows, now)
                     lastResult = r
