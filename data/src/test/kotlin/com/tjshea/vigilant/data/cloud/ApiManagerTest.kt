@@ -210,4 +210,40 @@ class ApiManagerTest {
         val body = h.sayBodies.single()
         assertTrue(body, body.contains("allows only a few connections at once") && body.contains("nothing was switched off"))
     }
+
+    /** Tj, 2026-10-24: "The GitHub engine shouldn't keep resetting on boltodds errors because there are a lot of them". */
+    @Test
+    fun `a failing BoltOdds never asks for a fresh runner, and is switched off after half an hour instead`() = runBlocking {
+        val f = Fake(); val h = Hooked(); val m = manager(f, h)
+        f.map["sgo"] = line("sgo", true)
+        f.map["boltodds"] = line("boltodds", false, streak = 1, kind = "refused", message = "Free plan cannot access API")
+        m.turn()
+        for (i in 2..40) {
+            now += 60_000L
+            f.map["boltodds"] = line("boltodds", false, streak = i, kind = "refused", atMs = now, message = "Free plan cannot access API")
+            m.turn()
+        }
+        assertTrue("no runner was replaced for BoltOdds", h.swaps.isEmpty())
+        assertEquals(listOf("boltodds"), h.offs)
+        assertFalse(ApiManager.IMPORTANT.contains("boltodds"))
+    }
+
+    @Test
+    fun `a feed the provider refuses for the key's plan is switched off once, with one message saying what fixes it, and no runner is replaced`() = runBlocking {
+        val f = Fake(); val h = Hooked(); val m = manager(f, h)
+        f.map["boltodds"] = line("boltodds", true)
+        h.silent = listOf(DashboardModel.SilentFeed("bolt", 5, "BoltOdds: the lines socket is not connected (BoltOdds refused the key (Free plan cannot access API))"))
+        m.turn()
+        assertTrue("not at once: a passing refusal gets twenty minutes", h.offs.isEmpty())
+        now += 21 * 60_000L; f.map["boltodds"] = line("boltodds", true)
+        m.turn(); now += 60_000L; m.turn()
+        assertEquals(listOf("boltodds"), h.offs)
+        assertTrue(h.swaps.isEmpty() && h.restarts.isEmpty())
+        val body = h.sayBodies.single()
+        assertTrue(body, body.contains("switched BoltOdds OFF") && body.contains("a plan that includes its API"))
+        assertEquals("off", m.fixes().single().state)
+        // The connection limit is still a passing fault: waited out, never switched off.
+        assertTrue(ApiManager.keyRefused("BoltOdds refused the key (Free plan cannot access API)"))
+        assertFalse(ApiManager.keyRefused("BoltOdds: the lines socket is not connected (BoltOdds refused the key (Too many concurrent connections.))"))
+    }
 }
