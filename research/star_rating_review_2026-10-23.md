@@ -29,6 +29,24 @@ The table above is every +EV LINE the engine's scan saw (59% of them under +2% E
    - What IS confirmed: the edge term's shape (CLV rises to 6-12%, lines over 12% lose: -28% ROI), small-book caps (1 company -26% ROI, 2 companies -13%, 3-4 companies +4%), agreement (100% agree: CLV +1.1%, ≤50%: ROI -17%).
 4. **No weight is changed today.** ROUTINE.md's class B gates (two digests, 200+ settled, an interval that excludes zero, 25% steps, one change a day) are not met by any single input, and ST1 changed the rating today.
 
+## SR: the weights changed (Tj, 2026-10-24: "If your findings warrant revising the star rating method, do it now"; v1.0.67)
+Six principled weightings (a part the data does not confirm made smaller, the parts it confirms made larger; never a fitted search) re-scored by the daily star check on the same 1,968 graded +EV lines (review-digest 2026-10-24, run 40047913906, "Weights side by side"). Slopes per star, all lines (t), then the first and second half of the period:
+
+| Weights | CLV/star | early | late | ROI/star | early | late | 4-5★ CLV · ROI | <2.5★ CLV · ROI |
+| :- | -: | -: | -: | -: | -: | -: | :- | :- |
+| ST1 (v1.0.64-66): coverage 20, agree 20, edge 25, sharp 25, consensus 10, type ×1 | +0.50 (1.0) | +0.54 | +0.12 | +4.99 (1.2) | +5.88 | -5.75 | +1.11% · -0.81% (246 lines) | +0.47% · -14.98% |
+| type ×0.5 | +0.63 (1.2) | +0.70 | +0.12 | +5.11 (1.3) | +5.90 | -4.59 | +1.69% · -3.26% | +0.60% · -13.20% |
+| no type | +0.87 (1.7) | +1.00 | -0.05 | +4.60 (1.2) | +5.49 | -5.57 | +1.04% · -2.46% | -0.76% · -8.65% |
+| sharp 15, edge 30, agree 25 | +0.73 (1.4) | +0.74 | +0.57 | +5.87 (1.4) | +6.58 | -2.63 | +2.00% · +0.47% | +0.51% · -14.60% |
+| **SR: sharp 15, edge 30, agree 25, type ×0.5** | **+0.77 (1.5)** | **+0.86** | +0.16 | **+6.20 (1.5)** | **+6.93** | -2.43 | **+1.83% · +2.81%** (286 lines) | +0.33% · -11.18% |
+| sharp 15, edge 30, agree 25, no type | +0.91 (1.8) | +1.02 | +0.20 | +5.94 (1.5) | +6.45 | -0.74 | +1.46% · -0.19% | +0.39% · -10.40% |
+
+**Chosen: SR.** It beats ST1 on every column but the late half's CLV (equal), has the steepest ROI slope and the only top group (4-5★) that beat the close AND made money, and keeps half of the history's type points instead of throwing out a signal that is unconfirmed rather than disproven ("no type" has the steeper CLV slope, +0.91 vs +0.77, but a weaker ROI slope and a losing top group; the gap is well inside the noise). Moving the sharp book's 10 points to the edge (+5) and agreement (+5) follows the inputs the data confirms (section Verdict, 3). Every t is under 2: this is the better of the measured choices, not a proven one. The late half (the last days, few graded yet) is flat for every variant.
+
+**What the stars mean now:** coverage 20, agreement 25, edge 30 (full at 6-12%, falling above), sharp book 15 (agrees full, none priced a third, against none and a 2½★ ceiling), consensus 10, plus half the type-of-bet and lead points; the same curve and ceilings (company counts, 2★ for two small books, 3★ under +2% EV, 1★ at no edge).
+
+**Revert rule:** `BetRating.CURRENT = Weights.ST1` (one line). Revert if, over the next two digests with 300+ newly closed lines, SR's CLV/star falls below ST1's in the same table (both are scored every day), or its 4-5★ group's CLV goes below zero. Next step if it holds: refit `profit_profile.json` from Tj's bets AND the engine's graded lines (`tools/profit-profile.py`) and put the type points back to full only if the refit holds out of sample.
+
 ## The rule for the next change (LEVERS.md: star rating)
 The digest prints the check every day. Change a weight only when two digests agree and the interval excludes zero:
 - the type-points "+0.5..5" group with CLV below zero → cut `ProfitProfile.TYPE_POINTS` 15 → 11.25 (one 25% step), or better, refit `profit_profile.json` from Tj's bets AND the engine's graded lines together (`tools/profit-profile.py`, a far larger sample);
