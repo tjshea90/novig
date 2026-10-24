@@ -907,3 +907,8 @@ Review the stars rating system for rating bets and make sure it is sound and bas
 
 Look at all the available apis and how well they respond, their freshness, features, and contributions to the app and GitHub engine, and tell me which ones to continue, which ones are bad or not needed, which ones to consider buying, etc. Make sure this is based on sufficient data and history
 ```
+
+## 2026-10-24T00:05:15Z
+```
+I'm getting a lot of boltodds errors, see what can be done. Maybe just turn it off. The GitHub engine shouldn't keep resetting on boltodds errors because there are a lot of them
+```
