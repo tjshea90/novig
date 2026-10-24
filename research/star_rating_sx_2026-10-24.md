@@ -39,3 +39,19 @@ Every row by Novig's price: +400 or longer ROI -15.1% ±6.9 while CLV against Pi
 
 ## Finding 5: the backtest's type verdicts did NOT carry over to Vigilant's own lines (so they are not shipped)
 Each real +EV line (engine + phone study, 10,428 lines, never seen by the table) rated by the backtest's type table: "losing type" ROI -0.56% ±6.09 (3,875 settled) vs "not losing" -7.51% ±9.24 (822); 4-5 stars (80 lines) -25%. No separation. The production signal (many more books, Novig's real book) differs from PropLine's captured prices, so a table from the backtest cannot rate it. Next: the real lines on the validated yardstick, CLV against Novig's own close from Novig's public trade archive (data.novig.com, every trade by outcome id), for thousands of lines.
+
+## Finding 6: Vigilant's and CNO's own lines on Novig's close (tools/novig_trade_close.py)
+Novig's public trade archive (every trade by outcome id, 2026-10-12..22, 2.8 million trades in the lines' markets) gives each real line Novig's own close (mean of the last 10 pregame trades, the last one within 3 h): 10,342 lines. Trusted +EV lines: CLV against Novig's close -0.47% ±0.32 over 341 games (the backtest's signal: -2%); the floors' lines -1.87% ±0.96. No type with 100+ games beats Novig's close yet (best: game-total Overs at +100..+150, +0.34% ±0.98); favourites at -150..-100 lose on both sources (-1.54% ±0.76; backtest -1.18%, z -8.8). Stated edge, companies, agreement and a sharp book agreeing do not order the lines on this yardstick.
+**Out of sample:** a table built on 2026-10-13..17 rated 2026-10-18..23: its no-trusted-edge lines CLV -3.02% ±2.47, ROI -17.1%; its 1-star lines +0.25% ±0.60, ROI -6.9%.
+
+## The star system that ships (SX, v1.0.69)
+- **0 = no trusted edge**: under +0.5% or over +25% EV, a sharp book against, an edge under +1.5% from one or two companies, or a TYPE that loses at Novig on both sources (its real lines' CLV against Novig's close below -0.5% even at the upper 95% bound, and the backtest agreeing).
+- **1 = +EV against the books, not proven at Novig** (Tj's "positive EV but low confidence/support from history"): most bets today.
+- **1½ to 5 = the type's proof at Novig**: z of its real lines' CLV against Novig's close, a half star at each of 0.5, 1, 1.32, 1.64 (90%), 1.81, 1.96 (95%), 2.33, 2.58 (99%) = 5; 4 stars need +0.5% CLV, 5 need +1% (a taker gives up about 2% against Novig's close on average); a backtest that says the type loses holds it at 2.
+- **Safeguards hold the top back** (Tj's "not held back by safeguards"): one company at most 2, two at most 3, three at most 4, an edge over 12% at most 4.
+- Type = sport, kind, side (over / under, else favourite / underdog), price band (+150 longer, +100..+150, -150..-100, -150 shorter); the most specific cell with 100+ games of real lines answers.
+- The engine's stake sizing reads the old support stars (`Rating.support`), unchanged; the star-minimum auto-bet now takes only proven types (none today: the minimum is off on the engine).
+- **The table grows**: `.github/workflows/star-evidence.yml` (Mondays, and on demand) re-grades every engine and phone line on Novig's trade archive and publishes a new `star_evidence.json` with a summary (Release `star-evidence`); a session ships it. Stars rise only as types prove themselves.
+
+## What this means for betting (for Tj)
+Taking Novig's price on a line the outside books call +EV has not, on any of the evidence, beaten Novig's own market: the backtest -2% CLV and -2.5..-7% ROI, the real lines about -0.5% CLV and -3% ROI, Tj's by-hand bets -5.6%. The bids (maker orders: engine +5.4%, phone +1.1%) are where the record is positive. Until a type earns 2+ stars, treat a 1-star bet as unproven and size it small.

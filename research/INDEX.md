@@ -8,7 +8,7 @@ CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a 
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
-| 2026-10-24 | `star_rating_sx_2026-10-24.md` | SX: the star system built on all the history (2026-10-24, in progress: findings are added as they come) - Tj, verbatim (TASKS.md SX): "Build a star rating system based on solid data from all the sources including apis historica... | CODE |
+| 2026-10-24 | `star_rating_sx_2026-10-24.md` | SX: the star system built on all the history (2026-10-24, in progress: findings are added as they come) - Tj, verbatim (TASKS.md SX): "Build a star rating system based on solid data from all the sources including apis historica... | APPLIED LEVER CODE |
 | 2026-10-24 | `star_rating_sb_2026-10-24.md` | SB: the stars on a bigger sample (2026-10-24) - Tj, verbatim: "Since the sample size is small  can't you use some of the apis features of historical odds and clv and results" | CODE |
 | 2026-10-24 | `star_rating_s5_2026-10-24.md` | S5: is the 1-5 star scale sound for betting by hand? (2026-10-24) - Tj, verbatim: "Do another check of the bet star rating system. I will be using it heavily to make bets. Its accuracy is very important. Make sure the 1 star to... | APPLIED LEVER |
 | 2026-10-24 | `propline_streaming_consolidation_2026-10-24.md` | Can PropLine's Streaming tier replace other APIs? (Tj, 2026-10-24, screenshot of PropLine's pricing: Streaming $79/mo) - Tj: "If I consolidate my budget into this propline plan in the screenshot, can it replace a lot of my othe... | IDLE |
