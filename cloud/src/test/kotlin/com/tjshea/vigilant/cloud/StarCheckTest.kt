@@ -57,6 +57,8 @@ class StarCheckTest {
         val withOld = StarCheck.report(StarCheck.parse(sequenceOf(head, old) + rows.asSequence()), profile = null)
         assertTrue(withOld, withOld.contains("30 +EV lines") && withOld.contains("Left out: 1 lines"))
         assertEquals("Other", StarCheck.kindLabel("SOMETHING"))
+        // Every variant is scored, on all lines and on each half.
+        assertTrue(text, text.contains("Weights side by side") && StarCheck.VARIANTS.all { text.contains(it.first) })
     }
 
     @Test

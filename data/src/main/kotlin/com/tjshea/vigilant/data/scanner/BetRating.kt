@@ -37,6 +37,27 @@ object BetRating {
         val typePoints: Double = 0.0,
     )
 
+    /**
+     * How many of the 100 points each part is worth, and how much of the type-of-bet points counts ([typeScale]). [CURRENT] is what the app rates with; the daily star check (cloud/StarCheckMain.kt)
+     * scores other weights beside it on the engine's graded lines, so a change of weights is chosen on data (SR, Tj 2026-10-24: "If your findings warrant revising the star rating method, do it now").
+     */
+    data class Weights(
+        val coverage: Double = 20.0,
+        val agreement: Double = 20.0,
+        val edge: Double = 25.0,
+        val sharp: Double = 25.0,
+        val consensus: Double = 10.0,
+        val typeScale: Double = 1.0,
+    ) {
+        companion object {
+            /** ST1 (v1.0.64): the weights before SR. */
+            val ST1 = Weights()
+        }
+    }
+
+    /** The weights the app rates with. */
+    val CURRENT: Weights = Weights.ST1
+
     /** A rating: [stars] in half steps from 1.0 to 5.0, and the [points] it came from. */
     data class Rating(val stars: Double, val points: Double) {
         /** "3½" or "4"; the glyphs are [glyphs]. */
@@ -63,7 +84,7 @@ object BetRating {
         else -> -4.0
     }
 
-    fun rate(i: Inputs): Rating {
+    fun rate(i: Inputs, w: Weights = CURRENT): Rating {
         val books = i.books.coerceAtLeast(0)
         val coverage = when (books) { 0 -> 0.0; 1 -> 0.1; 2 -> 0.45; 3 -> 0.7; 4 -> 0.88; else -> 1.0 }
         val agree = if (books == 0) 0.0 else i.agreeing?.let { it.coerceIn(0, books).toDouble() / books } ?: 0.6
@@ -74,7 +95,7 @@ object BetRating {
             else -> 0.3
         }
         val tight = i.spread?.let { ((0.05 - it) / 0.04).coerceIn(0.0, 1.0) } ?: 0.5
-        val points = 20 * coverage + 20 * agree + 25 * edge + 25 * sharp + 10 * tight + i.typePoints
+        val points = w.coverage * coverage + w.agreement * agree + w.edge * edge + w.sharp * sharp + w.consensus * tight + w.typeScale * i.typePoints
         var stars = 1.0 + 4.0 * (points / 100.0).coerceIn(0.0, 1.0).pow(1.5)
         stars = minOf(stars, ceiling(books, i.sharpAgainst))
         // Two companies and no sharp book among them = two small names agreeing with each other (Tj, 2026-10-23): at most 2 stars (research/star_rating_2026-10-23.md: <=2 books closed -1.7 points worse, t -1.7).
