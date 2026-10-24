@@ -156,18 +156,19 @@ object BetRating {
         val support = roundHalf(supportStars(points, books, i))
         val doubt = doubtOf(i.ev, i.sharpAgainst) ?: if (scale == Scale.S6) thinMarketDoubt(books, i.ev) else null
         if (doubt != null) return Rating(NONE, points, doubt, support)
+        // SX: the record of bets of this type at this edge (null: no type, no table, or no cell with the games: SX then rates as S6, by the edge alone).
+        val cell = if (scale == Scale.SX) i.type?.let { t -> StarEvidence.shipped?.lookup(t, i.ev) } else null
         val stars = when (scale) {
             // The smallest real edges make the least (S5): under +1% at most 1 star.
             Scale.S5 -> if (i.ev < MIN_EV_FOR_TWO_STARS - 1e-12) MIN else support
             // An edge over 12% is often a stale or mismatched quote (the edge score has always fallen there; too few graded lines to say more): rated, but not top.
             Scale.S6 -> s6Stars(i.ev, books)
-            Scale.SX -> {
-                val cell = i.type?.let { t -> StarEvidence.shipped?.lookup(t, i.ev) } ?: return Rating(roundHalf(s6Stars(i.ev, books)), points, null, support)
+            Scale.SX -> if (cell == null) s6Stars(i.ev, books) else {
                 losingDoubt(cell)?.let { return Rating(NONE, points, it, support, cell) }
                 minOf(proofStars(cell), breadthCeiling(books), if (i.ev > SUSPECT_EV) 4.0 else MAX)
             }
         }
-        return Rating(roundHalf(stars), points, null, support, if (scale == Scale.SX) i.type?.let { t -> StarEvidence.shipped?.lookup(t, i.ev) } else null)
+        return Rating(roundHalf(stars), points, null, support, cell)
     }
 
     private fun s6Stars(ev: Double, books: Int): Double = minOf(edgeStars(ev), breadthCeiling(books), if (ev > SUSPECT_EV) 4.0 else MAX)
