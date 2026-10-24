@@ -6312,3 +6312,8 @@ Analyze the current star system; make ONE rating that combines all factors, remo
 - [ ] SR2 change BetRating/ProfitProfile only where the comparison supports it, with tests; CHANGES.md (class: Tj direct) + revert rule
 - [ ] SR3 full suite, release, engine reset, tell Tj what changed and what the stars now mean
 
+## PS: PropLine Streaming as the consolidated feed (Tj, 2026-10-24, typed prompt, verbatim)
+"If I consolidate my budget into this propline plan in the screenshot, can it replace a lot of my other apis? Consider the sports books it offers and its features and accuracy. Is it a good purchase?" (answered: research/propline_streaming_consolidation_2026-10-24.md)
+- [ ] PS1 once a Streaming Lite+ key is on GitHub: engine WebSocket client for PropLine `line_movement` (+ `resolution`), merged into the PropLine board (like SharpApiStream), socket switch + status line + tests; then measure PropLine's p90 age vs SharpAPI/SGO for a week
+- [ ] PS2 two-week overlap: lines only SGO prices and SGO vs PropLine closes; drop SGO if the loss is small
+
