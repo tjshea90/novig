@@ -11,7 +11,7 @@ then scores the bet against Pinnacle's devigged CLOSE (the archive's closing pri
 
 Output: lines.csv.gz (one row per outcome and lead with EV at or above -2% on either fair) and SUMMARY.txt. Nothing is ordered; nothing is sent anywhere but PropLine.
 
-  python3 -I tools/star_backtest.py run ARCHIVE_DIR OUTDIR [--events N] [--sports a,b] [--books a,b]
+  python3 -I tools/star_backtest.py run ARCHIVE_DIR OUTDIR [--events N] [--sports a,b] [--books a,b] [--shard i/n]
   python3 -I tools/star_backtest.py selftest
 Keys: PROPLINE_API_KEY (the Pro one is found by tools/propline.py's plan check).
 """
@@ -198,7 +198,7 @@ def summarize(rows):
     return "\n".join(lines) + "\n"
 
 
-def cmd_run(archive_dir, outdir, n_events, sports, books):
+def cmd_run(archive_dir, outdir, n_events, sports, books, shard=(0, 1)):
     keys = pl.keys_from_env()
     key, plan = pl.need_paid(keys) if keys else (None, None)
     if key is None:
@@ -209,8 +209,10 @@ def cmd_run(archive_dir, outdir, n_events, sports, books):
     now = datetime.datetime.now(datetime.timezone.utc).timestamp()
     cut = now - 88 * 86400                      # Pro's history depth is 90 days
     order = sorted(((k, v) for k, v in games.items() if (ts(next(iter(v.values()))["commence_time"]) or 0) > cut), key=lambda kv: -(ts(next(iter(kv[1].values()))["commence_time"]) or 0))[:n_events]
-    print("%d games in the archive, %d inside the history window, reading %d" % (len(games), sum(1 for v in games.values() if (ts(next(iter(v.values()))["commence_time"]) or 0) > cut), len(order)), flush=True)
-    path = os.path.join(outdir, "lines.csv.gz")
+    order = [kv for j, kv in enumerate(order) if j % shard[1] == shard[0]]     # shard i of n: every n-th game, so the shards run side by side
+    print("%d games in the archive, %d inside the history window, reading %d (shard %d of %d)" % (len(games), sum(1 for v in games.values() if (ts(next(iter(v.values()))["commence_time"]) or 0) > cut), len(order), shard[0], shard[1]), flush=True)
+    tag = "" if shard[1] == 1 else "-%d" % shard[0]
+    path = os.path.join(outdir, "lines%s.csv.gz" % tag)
     allrows, calls = [], 0
     with gzip.open(path, "wt", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=COLS)
@@ -237,7 +239,7 @@ def cmd_run(archive_dir, outdir, n_events, sports, books):
             if i % 50 == 0:
                 print("%d/%d games, %d calls, %d rows" % (i, len(order), calls, len(allrows)), flush=True)
     s = summarize(allrows)
-    open(os.path.join(outdir, "SUMMARY.txt"), "w").write(s + "\n%d history calls\n" % calls)
+    open(os.path.join(outdir, "SUMMARY%s.txt" % tag), "w").write(s + "\n%d history calls\n" % calls)
     print(s)
     return 0
 
@@ -281,5 +283,6 @@ if __name__ == "__main__":
         n = int(a[a.index("--events") + 1]) if "--events" in a else 1500
         sp = set(a[a.index("--sports") + 1].split(",")) if "--sports" in a else None
         bk = a[a.index("--books") + 1].split(",") if "--books" in a else US_BOOKS
-        sys.exit(cmd_run(a[1], a[2], n, sp, bk))
+        sh = tuple(int(v) for v in a[a.index("--shard") + 1].split("/")) if "--shard" in a else (0, 1)
+        sys.exit(cmd_run(a[1], a[2], n, sp, bk, sh))
     print(__doc__)

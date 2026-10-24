@@ -21,6 +21,10 @@ jobs:
   run:
     runs-on: ubuntu-latest
     timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,8 +41,8 @@ jobs:
           for TAG in $(gh release list --limit 200 --json tagName --jq '.[].tagName' | grep '^propline-archive-' || true); do
             gh release download "$TAG" --pattern 'resolved-*.csv.gz' --dir "arch/$TAG" --clobber 2>/dev/null || true
           done
-          python3 -I tools/star_backtest.py run arch out --events "$EVENTS"
+          python3 -I tools/star_backtest.py run arch out --events "$EVENTS" --shard "${{ matrix.shard }}/4"
           day=$(date -u +%F)
           tag="star-backtest-$day"
-          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "Star backtest $day" --notes "Point-in-time backtest for the star rating (tools/star_backtest.py). Never delete."
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "Star backtest $day" --notes "Point-in-time backtest for the star rating (tools/star_backtest.py), one lines-<shard>.csv.gz per shard. Never delete." || true
           gh release upload "$tag" out/* --clobber
