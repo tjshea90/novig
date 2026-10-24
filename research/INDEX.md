@@ -4,10 +4,11 @@ Every study in `research/`, newest first, and how it is USED. Tuning levers and 
 Statuses: APPLIED (a change in `research/review/CHANGES.md` cites it), LEVER (on LEVERS.md), CLOSED (verdict and disposition on LEVERS.md), WATCH (an open TASKS.md item waits on its number),
 CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a sample, marked in its first lines), IDLE (cited nowhere: act on it or mark it).
 
-120 entries; 5 idle: api_audit_report_2026-10-22.html, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, propline_streaming_consolidation_2026-10-24.md
+121 entries; 5 idle: api_audit_report_2026-10-22.html, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, propline_streaming_consolidation_2026-10-24.md
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
+| 2026-10-24 | `star_rating_s5_2026-10-24.md` | S5: is the 1-5 star scale sound for betting by hand? (2026-10-24) - Tj, verbatim: "Do another check of the bet star rating system. I will be using it heavily to make bets. Its accuracy is very important. Make sure the 1 star to... | APPLIED LEVER CODE |
 | 2026-10-24 | `propline_streaming_consolidation_2026-10-24.md` | Can PropLine's Streaming tier replace other APIs? (Tj, 2026-10-24, screenshot of PropLine's pricing: Streaming $79/mo) - Tj: "If I consolidate my budget into this propline plan in the screenshot, can it replace a lot of my othe... | IDLE |
 | 2026-10-23 | `star_rating_review_2026-10-23.md` | Is the star rating sound and based on good data? (FX3, Tj 2026-10-23, acct-27a37e tj Gmail) - Tj: "Review the stars rating system for rating bets and make sure it is sound and based on good data." | APPLIED LEVER CODE |
 | 2026-10-23 | `star_rating_2026-10-23.md` | One star rating, fitted to the data (ST1, Tj 2026-10-23, chat t1792793515523-b161) - `BetRating` stays 1-5 stars in half steps; it is now ONE score of six parts (coverage 20, agreement 20, edge 25, sharp book 25, consensus 10, ... | LEVER CODE |
