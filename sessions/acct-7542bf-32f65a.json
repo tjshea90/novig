@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "5281628deafd1e95b88a32b2dbdc48b3ae01088d",
+ "head": "21652811535167a7ab77c93ef05160435bf5f3a3",
  "since": 1792809425,
- "beat": 1792811341,
- "beatIso": "2026-10-24T03:09:01Z",
- "done": "SX finding 1 written (research/star_rating_sx_2026-10-24.md): at the close Novig is as sharp as Pinnacle; +EV-vs-Pinnacle at close loses; CLV yardstick must blend Novig's close",
- "next": "read star-study trial (20 games), then dispatch 2000; multibook export; point-in-time analysis by type and lead"
+ "beat": 1792811396,
+ "beatIso": "2026-10-24T03:09:56Z",
+ "done": "SX: star_backtest also keeps Novig's devigged close and the blended close (clv_mix)",
+ "next": "read star-study trial, dispatch 2000"
 }
