@@ -8,8 +8,8 @@
  "branch": "ccr-305d3f7a-i2z8ja",
  "head": "3aa9a80efa47f81dc6294281ee5aba55f508fb51",
  "since": 1792809425,
- "beat": 1792812566,
- "beatIso": "2026-10-24T03:29:26Z",
+ "beat": 1792814234,
+ "beatIso": "2026-10-24T03:57:14Z",
  "done": "SX code WIP: BetRating Scale.SX (proofStars from StarEvidence z, losing types no trusted edge, breadth/suspect caps), BetType passed from Pricing/CnoBooks/StarCheck; CURRENT_SCALE kept S5 until the data decides",
  "next": "when star-study run 40057261152 finishes: analyse, build star_evidence.json, tune, validate on engine+phone lines"
 }
