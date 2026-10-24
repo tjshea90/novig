@@ -6308,8 +6308,8 @@ Analyze the current star system; make ONE rating that combines all factors, remo
 
 ## SR: revise the star rating if the findings warrant it (Tj, 2026-10-24, typed prompt, verbatim)
 "If your findings warrant revising the star rating method, do it now"
-- [ ] SR1 compare the shipped rating with candidate revisions on the engine's graded lines (StarCheck variants, early vs late halves): type points (not confirmed out of sample), sharp-book weight (no CLV/ROI lift), edge/agreement (confirmed)
-- [ ] SR2 change BetRating/ProfitProfile only where the comparison supports it, with tests; CHANGES.md (class: Tj direct) + revert rule
+- [x] SR1 (review-digest 2026-10-24, run 40047913906, "Weights side by side"; research/star_rating_review_2026-10-23.md "SR") compare the shipped rating with candidate revisions on the engine's graded lines (StarCheck variants, early vs late halves): type points (not confirmed out of sample), sharp-book weight (no CLV/ROI lift), edge/agreement (confirmed)
+- [x] SR2 (BetRating.CURRENT = Weights.SR: sharp 15, edge 30, agree 25, type x0.5; BetRatingTest SR test, AutoBetStarsTest; CHANGES.md + revert rule) change BetRating/ProfitProfile only where the comparison supports it, with tests; CHANGES.md (class: Tj direct) + revert rule
 - [ ] SR3 full suite, release, engine reset, tell Tj what changed and what the stars now mean
 
 ## PS: PropLine Streaming as the consolidated feed (Tj, 2026-10-24, typed prompt, verbatim)
