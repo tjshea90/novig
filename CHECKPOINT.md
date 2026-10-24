@@ -1,13 +1,13 @@
-# CHECKPOINT 4113 — read me first, then TASKS.md
+# CHECKPOINT 4114 — read me first, then TASKS.md
 
-**Written:** 2026-10-24T07:07:08Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-ycfjb5` · **builds on:** `b4083ae70` (this checkpoint is the commit after it)
+**Written:** 2026-10-24T11:26:36Z · **tests:** all 9 fast checks green
+**Branch:** `claude/keen-keller-q634ce` · **builds on:** `03a62e532` (this checkpoint is the commit after it)
 
 ## Just done
-CH78: app suite green on this code
+WATCH 2026-10-24: engine healthy, no action
 
 ## Do this next
-main should land it; then CH78b
+next slot per rotation
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ main should land it; then CH78b
 
 ## Last ten checkpoints
 ```
+  03a62e532 ckpt 4113: CH78: app suite green on this code
   cfc4a1516 ckpt 4112: v1.0.71 (SX stars) released and recorded; engine reset
   d15fdd2fb ckpt 4112: CH78: CNO rows keep the dead-price memory (tests pass)
   a67a96c73 ckpt 4111: pre-release: SX: stars are the bet type's proof at Novig (CLV against Novig
@@ -25,8 +26,4 @@ main should land it; then CH78b
   14afb9504 ckpt 4108: PL-OA: PropLine book accuracy report read and written up
   398215421 ckpt 4107: propline accuracy task: try each comma-separated key
   43909e77f ckpt 4106: propline.yml task accuracy (PL-OA)
-  cfe7f1b9d ckpt 4105: PropLine openapi saved, task PL-OA written
 ```
-
-(2 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
