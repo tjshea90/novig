@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-ycfjb5",
- "head": "528accfa03b5960e48908ddc9ed9a79e79479616",
+ "head": "3982154212fcc87f12a29c22074f3c391761dc73",
  "since": 1792818666,
- "beat": 1792823103,
- "beatIso": "2026-10-24T06:25:03Z",
- "done": "propline.yml task accuracy (PL-OA)",
- "next": "dispatch propline.yml task=accuracy on main after it lands, read release propline-samples files"
+ "beat": 1792823146,
+ "beatIso": "2026-10-24T06:25:46Z",
+ "done": "propline accuracy task: try each comma-separated key",
+ "next": "re-dispatch task=accuracy, read release files"
 }
