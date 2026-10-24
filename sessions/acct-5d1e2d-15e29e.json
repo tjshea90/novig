@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-fnde3y",
- "head": "6a0b22771f56a5c9c7e387c4e8e33ae2f01d2194",
+ "head": "79f54531a99f1c081c9adec10ac16c0d713d4a13",
  "since": 1792818666,
- "beat": 1792873159,
- "beatIso": "2026-10-24T20:19:19Z",
- "done": "CH85 diagnostics review answered",
- "next": "CH85a stop bids.json.gz 404 polling; check digest for early-bet rule"
+ "beat": 1792873199,
+ "beatIso": "2026-10-24T20:19:59Z",
+ "done": "answered disappearing-bets: still happening after 1.0.77",
+ "next": "CH80a investigate FEEDHIDE bulk (feedAt fair-age, requoteListed)"
 }
