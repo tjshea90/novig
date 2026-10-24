@@ -140,7 +140,7 @@ class CloudSources(
     fun sharpApiOn(s: ScanSettings): Boolean = s.gates.useSharpApi && has(CloudKeys.SHARPAPI) && !sharpApiClient.down()
 
     /** SharpAPI's state in words (the engine's log, Diagnostics). */
-    fun sharpApiNote(): String = "SharpAPI: " + sharpApiClient.health() + " · stream " + sharpApiStream.health() + " (${sharpApiFeed.streamRows} rows pushed, ${sharpApiFeed.streamMissed} unplaced) · game state ${sharpApiScores.live()} live · held " + sharpApiFeed.describe() + " · " + sharpApiFeed.deltaCalls + " delta reads, " + sharpApiFeed.reloads + " whole reads" + (sharpApiFeed.lastNote?.let { " · $it" } ?: "")
+    fun sharpApiNote(): String = "SharpAPI: " + sharpApiClient.health() + " · stream " + sharpApiStream.health() + " (${sharpApiFeed.streamRows} rows pushed, ${sharpApiFeed.streamMissed} unplaced) · game state ${sharpApiScores.live()} live · held " + sharpApiFeed.describe() + " · " + sharpApiFeed.deltaCalls + " delta reads, " + sharpApiFeed.reloads + " whole reads, " + sharpApiFeed.skippedWindows + " windows the stream covered" + (sharpApiFeed.lastNote?.let { " · $it" } ?: "")
 
     private val sxbet = com.tjshea.vigilant.data.reference.SxBetClient(http, json, { keys(CloudKeys.SXBET).firstOrNull().orEmpty() }, usage, socketOn = { sxSocketWanted }, scope = scope)
     /**

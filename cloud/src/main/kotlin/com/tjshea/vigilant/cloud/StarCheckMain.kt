@@ -83,8 +83,43 @@ object StarCheck {
     fun typePoints(l: Line, profile: ProfitProfile? = ProfitProfile.shipped): Double =
         (profile?.typePoints(l.league, kindLabel(l.kind), l.selection, l.minToStart) ?: 0.0) + BetRating.leadPoints(l.minToStart)
 
-    fun rated(l: Line, profile: ProfitProfile? = ProfitProfile.shipped): BetRating.Rating =
-        BetRating.rate(BetRating.Inputs(l.books, l.agreeing, l.ev, sharpAgrees = l.sharp == true, sharpAgainst = l.sharp == false, spread = l.spread, typePoints = typePoints(l, profile)))
+    fun rated(l: Line, profile: ProfitProfile? = ProfitProfile.shipped, w: BetRating.Weights = BetRating.CURRENT): BetRating.Rating =
+        BetRating.rate(BetRating.Inputs(l.books, l.agreeing, l.ev, sharpAgrees = l.sharp == true, sharpAgainst = l.sharp == false, spread = l.spread, typePoints = typePoints(l, profile)), w)
+
+    /**
+     * Weights scored beside the app's own every day (SR, 2026-10-24): each one principled (a part the data does not confirm made smaller, the parts it confirms made larger), never a fitted search, so a
+     * difference between them is evidence and not a tuning artefact. Judge a variant on BOTH halves of the period.
+     */
+    val VARIANTS: List<Pair<String, BetRating.Weights>> = listOf(
+        "ST1 (v1.0.64-66)" to BetRating.Weights.ST1,
+        "type x0.5" to BetRating.Weights.ST1.copy(typeScale = 0.5),
+        "no type" to BetRating.Weights.ST1.copy(typeScale = 0.0),
+        "sharp 15, edge 30, agree 25" to BetRating.Weights(agreement = 25.0, edge = 30.0, sharp = 15.0),
+        "SR (v1.0.67): sharp 15, edge 30, agree 25, type x0.5" to BetRating.Weights.SR,
+        "sharp 15, edge 30, agree 25, no type" to BetRating.Weights(agreement = 25.0, edge = 30.0, sharp = 15.0, typeScale = 0.0),
+    )
+
+    private fun coarse(s: Double) = when { s < 2.0 -> "1-1.5"; s < 3.0 -> "2-2.5"; s < 4.0 -> "3-3.5"; else -> "4-5" }
+
+    /** One line per variant: CLV and ROI per star (all lines, then each half), and the top and bottom groups' CLV and ROI. */
+    internal fun variantLines(ls: List<Line>, profile: ProfitProfile?): List<String> {
+        val days = ls.map { it.day }.filter { it.isNotEmpty() }.distinct().sorted()
+        val early = days.take(days.size / 2).toSet()
+        fun per(xs: List<Pair<Double, Double>>) = slope(xs)?.let { (b, t) -> String.format(Locale.US, "%+.2f (t %.1f)", b * 100, t) } ?: "-"
+        return VARIANTS.map { (name, w) ->
+            val st = ls.associateWith { rated(it, profile, w).stars }
+            fun clv(sub: List<Line>) = per(sub.filter { it.clv != null }.map { st.getValue(it) to it.clv!! })
+            fun roi(sub: List<Line>) = per(sub.filter { it.settled && it.profit != null }.map { st.getValue(it) to it.profit!! })
+            val e = ls.filter { it.day in early }
+            val l = ls.filter { it.day !in early }
+            val top = ls.filter { st.getValue(it) >= 4.0 }
+            val low = ls.filter { st.getValue(it) < 2.5 }
+            fun grp(g: List<Line>) = stat(g.filter { it.clv != null }.map { it.event to it.clv!! }).let { c ->
+                stat(g.filter { it.settled && it.profit != null }.map { it.event to it.profit!! }).let { r -> "${g.size} lines CLV ${pct(c.mean)} (${c.n}) ROI ${pct(r.mean)} (${r.n})" }
+            }
+            "  ${name.padEnd(40)} CLV/star ${clv(ls)} early ${clv(e)} late ${clv(l)} · ROI/star ${roi(ls)} early ${roi(e)} late ${roi(l)} · 4-5★ ${grp(top)} · <2.5★ ${grp(low)}"
+        }
+    }
 
     /** Mean and 95% half-width of [values], each game weighted once ([games]: the game of each value). */
     data class Stat(val n: Int, val games: Int, val mean: Double?, val half: Double?)
@@ -151,6 +186,8 @@ object StarCheck {
         out += table("Stars now, by period (stability)", ls, { val s = stars.getValue(it); (if (it.day in firstHalf) "early " else "late ") + when { s < 2.5 -> "<2.5"; s < 3.5 -> "2.5-3"; else -> "3.5+" } })
         slope(ls.filter { it.clv != null }.map { stars.getValue(it) to it.clv!! })?.let { (b, t) -> out += String.format(Locale.US, "  CLV per star: %+.2f points (t %.1f, bets as the unit)", b * 100, t) }
         slope(ls.filter { it.settled && it.profit != null }.map { stars.getValue(it) to it.profit!! })?.let { (b, t) -> out += String.format(Locale.US, "  ROI per star: %+.2f points (t %.1f, bets as the unit)", b * 100, t) }
+        out += "== Weights side by side (SR: CLV and ROI points per star, all lines then each half; then the top and bottom groups. A better rating has larger, steadier positive slopes) =="
+        out += variantLines(ls, profile)
         out += "== Each input of the rating on its own =="
         out += table("Companies pricing both sides", ls, { when (it.books) { 0 -> "0"; 1 -> "1"; 2 -> "2"; 3 -> "3"; 4 -> "4"; in 5..7 -> "5-7"; else -> "8+" } })
         out += table("Share of them saying +EV", ls, { l -> l.agreeing?.takeIf { l.books > 0 }?.let { val s = it.toDouble() / l.books; when { s <= 0.5 -> "<=50%"; s < 0.75 -> "50-75%"; s < 1.0 -> "75-99%"; else -> "100%" } } ?: "unknown" })

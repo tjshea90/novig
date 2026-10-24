@@ -79,7 +79,15 @@ class SharpApiFeed(
     private val clock: () -> Long = System::currentTimeMillis,
     private val log: (String) -> Unit = {},
 ) {
-    private class LeagueState(@Volatile var since: String? = null, @Volatile var loadedAtMs: Long = 0L, @Volatile var polledAtMs: Long = 0L, @Volatile var askedAtMs: Long = 0L, @Volatile var soonestMs: Long = Long.MAX_VALUE, @Volatile var live: Boolean = false)
+    private class LeagueState(
+        @Volatile var since: String? = null, @Volatile var loadedAtMs: Long = 0L, @Volatile var polledAtMs: Long = 0L, @Volatile var askedAtMs: Long = 0L, @Volatile var soonestMs: Long = Long.MAX_VALUE, @Volatile var live: Boolean = false,
+        /** The reconcile window while the stream covers the league: halved each time one could not be drained, so the next ones fit the delta's paging reach. */
+        @Volatile var reconcileMs: Long = RECONCILE_MS,
+    )
+
+    /** Reconcile windows passed over (not read whole) because the stream covered them: the hourly note. */
+    @Volatile var skippedWindows = 0L
+        private set
 
     private val rows = ConcurrentHashMap<String, SaRow>()
 
@@ -264,14 +272,14 @@ class SharpApiFeed(
                     if (now - st.askedAtMs > IDLE_MS) { drop(league); continue }
                     if (st.since == null) continue
                     val hot = st.soonestMs - now < HOT_HOURS * 3_600_000L
-                    val every = when { streamCovers(league, now) -> RECONCILE_MS; st.live -> LIVE_EVERY_MS; hot -> HOT_EVERY_MS; else -> COLD_EVERY_MS }
+                    val every = when { streamCovers(league, now) -> st.reconcileMs; st.live -> LIVE_EVERY_MS; hot -> HOT_EVERY_MS; else -> COLD_EVERY_MS }
                     if (now - maxOf(st.polledAtMs, st.loadedAtMs) < every) continue
                     // One coroutine a league: a slow NFL delta must not hold tennis' 1 s turn (2026-10-22: tennis stores read 18 to 115 s old behind the serial loop).
                     if (!polling_.add(league)) continue
                     launch {
                         try {
                             val ok = try { deltaStep(league) } catch (e: CancellationException) { throw e } catch (e: SharpApiException) { lastNote = "$league delta: ${e.message}"; true }
-                            if (!ok) { log("SharpAPI: $league's changes were too many to page; reading it again whole"); load(league) }
+                            if (!ok) undrained(league)
                         } finally { polling_.remove(league) }
                     }
                 }
@@ -281,6 +289,29 @@ class SharpApiFeed(
     }
 
     private val polling_ = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    /**
+     * A delta window for [league] that could not be drained (the docs: offset at most 500 at 500 rows a page, so about 1,000 changes a window). Without the stream the league is read whole, as before. While the
+     * stream covers it, the stream already delivered those changes: the watermark moves to now, the league's reconcile window is halved so the next ones fit, and it is read whole only every [STREAM_RELOAD_MS]
+     * (FX, 2026-10-24: a 60 s reconcile window over NBA, NFL or college football never fit, so each of them was read whole, 50,000-95,000 rows, about once a minute: 562,855 calls in a day).
+     */
+    internal suspend fun undrained(league: String) {
+        val st = leagues[league] ?: return
+        val now = clock()
+        if (streamCovers(league, now) && now - st.loadedAtMs < STREAM_RELOAD_MS) {
+            st.since = java.time.Instant.ofEpochMilli(now - WATERMARK_SKEW_MS).toString()
+            st.polledAtMs = now
+            skippedWindows++
+            val shorter = maxOf(MIN_RECONCILE_MS, st.reconcileMs / 2)
+            if (shorter != st.reconcileMs) {
+                st.reconcileMs = shorter
+                log("SharpAPI: $league's ${st.reconcileMs * 2 / 1000} s reconcile window was too big to page while the stream is live: passed over, next windows ${shorter / 1000} s")
+            }
+            return
+        }
+        log("SharpAPI: $league's changes were too many to page; reading it again whole")
+        load(league)
+    }
 
     fun stopPolling() { poller?.cancel(); poller = null }
 
@@ -323,6 +354,12 @@ class SharpApiFeed(
         const val HOT_EVERY_MS = 2_000L
         /** While the stream is live and covers a league, its REST delta is only a reconcile (rows the compact pushes could not place, anything missed). */
         const val RECONCILE_MS = 60_000L
+        /** The shortest reconcile window a league that keeps overflowing is brought down to. */
+        const val MIN_RECONCILE_MS = 5_000L
+        /** While the stream is live a league is still read whole this often, in case a push was missed. */
+        const val STREAM_RELOAD_MS = 15 * 60_000L
+        /** The new watermark after a passed-over window is this far behind the engine's clock (clock skew; the stream covered these seconds anyway). */
+        const val WATERMARK_SKEW_MS = 5_000L
         /** The stream counts as live while it spoke (a frame or the 30 s heartbeat) this recently. */
         const val STREAM_ALIVE_MS = 75_000L
         /** A league with games in play (the live feed's): its changes every second. */
