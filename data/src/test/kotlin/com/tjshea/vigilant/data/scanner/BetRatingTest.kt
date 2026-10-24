@@ -18,7 +18,7 @@ class BetRatingTest {
 
     @Test fun `a thin weak bet is low and a middling one lands in the middle`() {
         assertTrue(rate(2, 2, 0.01) <= 2.0)
-        assertTrue(rate(1, 1, 0.02) <= 1.5)
+        assertTrue(rate(1, 1, 0.02) <= 2.0)
         val mid = rate(4, 3, 0.03)
         assertTrue("middling bet was $mid", mid in 2.5..3.5)
     }
@@ -35,7 +35,8 @@ class BetRatingTest {
         assertTrue(pts(4, 3, 0.03, sharp = true, spread = 0.02) > base)  // a sharp book agrees
         assertTrue(pts(4, 3, 0.03, spread = 0.005) > base)          // tighter consensus
         assertTrue(pts(4, 3, 0.03, against = true, spread = 0.02) < base) // a sharp book against
-        assertTrue(rate(4, 3, 0.03, sharp = true, spread = 0.02) > rate(4, 3, 0.03, spread = 0.02))
+        // S6: the stars follow the edge; a sharp book against takes them away.
+        assertTrue(rate(4, 3, 0.05, spread = 0.02) > rate(4, 3, 0.03, spread = 0.02))
         assertTrue(rate(4, 3, 0.03, against = true, spread = 0.02) < rate(4, 3, 0.03, spread = 0.02))
     }
 
@@ -55,8 +56,9 @@ class BetRatingTest {
     @Test fun `ratings come in half steps from one to five with their words`() {
         var s = 0
         for (b in 0..8) for (a in 0..b) for (ev in listOf(0.0, 0.005, 0.02, 0.04, 0.07, 0.15, 0.3)) for (sh in listOf(false, true)) {
-            val r = rate(b, a, ev, sh)
-            assertTrue(r in 1.0..5.0 || (r == BetRating.NONE && (ev < BetRating.THIN_EV || ev > BetRating.MAX_TRUSTED_EV)))
+            val full = BetRating.rate(BetRating.Inputs(b, a, ev, sh, false, null))
+            val r = full.stars
+            assertTrue(r in 1.0..5.0 || (r == BetRating.NONE && full.doubt != null))
             assertEquals(r, Math.round(r * 2) / 2.0, 0.0)
             s++
         }
@@ -84,10 +86,11 @@ class BetRatingTest {
     }
 
     @Test
-    fun `under 2 percent EV a bet is at most 3 stars, however well the books agree`() {
+    fun `under 2 percent EV a bet is at most 2 stars, however well the books agree`() {
         val strong = BetRating.Inputs(books = 5, agreeing = 5, ev = 0.019, sharpAgrees = true, sharpAgainst = false, spread = 0.005)
-        assertEquals(3.0, BetRating.rate(strong).stars, 1e-9)
-        assertTrue("the same bet at +2% keeps its rating", BetRating.rate(strong.copy(ev = 0.02)).stars >= 3.5)
+        assertEquals(2.0, BetRating.rate(strong).stars, 1e-9)
+        assertEquals("the same bet at +2% is 2½ (S6: the edge sets the stars)", 2.5, BetRating.rate(strong.copy(ev = 0.02)).stars, 1e-9)
+        assertEquals("S5's curve rated it 3", 3.0, BetRating.rate(strong, scale = BetRating.Scale.S5).stars, 1e-9)
         assertEquals("no edge has no stars (S5)", BetRating.NONE, BetRating.rate(strong.copy(ev = 0.0)).stars, 1e-9)
         // A bet already under 3 stars is untouched.
         val weak = BetRating.Inputs(books = 2, agreeing = 1, ev = 0.01, sharpAgrees = false, sharpAgainst = false)
@@ -132,5 +135,34 @@ class BetRatingTest {
         ScanSettings.AUTO_BET_STARS_CHOICES.filter { it > 0.0 }.forEach { min ->
             assertNotNull(AutoBet.starsReason(AutoBet.rules(ScanSettings(vigGuards = ScanGuards(autoBetMinStars = min))), BetRating.NONE))
         }
+    }
+
+    /** S6 (SB, Tj 2026-10-24): the edge sets the stars, the top needs breadth, a small edge from one or two books is not trusted; the support score is kept for the engine's sizing. */
+    @Test
+    fun `S6 stars follow the edge under breadth ceilings, and thin small edges are not trusted`() {
+        assertEquals(BetRating.Scale.S6, BetRating.CURRENT_SCALE)
+        val wide = BetRating.Inputs(books = 6, agreeing = 6, ev = 0.0, sharpAgrees = true, sharpAgainst = false, spread = 0.005)
+        val ladder = listOf(0.005 to 1.0, 0.012 to 1.5, 0.017 to 2.0, 0.022 to 2.5, 0.027 to 3.0, 0.035 to 3.5, 0.045 to 4.0, 0.055 to 4.5, 0.06 to 5.0, 0.12 to 5.0, 0.15 to 4.0, 0.25 to 4.0)
+        for ((ev, stars) in ladder) assertEquals("ev $ev", stars, BetRating.rate(wide.copy(ev = ev)).stars, 0.0)
+        // The edge alone moves the stars: the support inputs move only the support score.
+        val thin = wide.copy(ev = 0.035, agreeing = 3, sharpAgrees = false, spread = 0.03)
+        assertEquals(3.5, BetRating.rate(thin).stars, 0.0)
+        assertTrue(BetRating.rate(thin).points < BetRating.rate(wide.copy(ev = 0.035)).points)
+        // Breadth: one company at most 2, two at most 3, three at most 4, four or more up to 5.
+        assertEquals(2.0, BetRating.rate(wide.copy(books = 1, agreeing = 1, ev = 0.08)).stars, 0.0)
+        assertEquals(3.0, BetRating.rate(wide.copy(books = 2, agreeing = 2, ev = 0.08)).stars, 0.0)
+        assertEquals(4.0, BetRating.rate(wide.copy(books = 3, agreeing = 3, ev = 0.08)).stars, 0.0)
+        assertEquals(5.0, BetRating.rate(wide.copy(books = 4, agreeing = 4, ev = 0.08)).stars, 0.0)
+        // A small edge from one or two companies has no trusted edge; from three it does.
+        for (b in 0..2) {
+            val r = BetRating.rate(wide.copy(books = b, agreeing = b, ev = 0.0149))
+            assertEquals("books $b", BetRating.NONE, r.stars, 0.0)
+            assertTrue(r.doubt!!.contains("1.5%"))
+        }
+        assertEquals(2.0, BetRating.rate(wide.copy(books = 2, agreeing = 2, ev = 0.015)).stars, 0.0)
+        assertEquals(1.5, BetRating.rate(wide.copy(books = 3, agreeing = 3, ev = 0.0149)).stars, 0.0)
+        // The support stars are S5's curve (what CloudKelly sizes from), floors or not.
+        for (ev in listOf(0.012, 0.03, 0.08)) assertEquals(BetRating.rate(wide.copy(ev = ev), scale = BetRating.Scale.S5).stars, BetRating.rate(wide.copy(ev = ev)).support, 0.0)
+        assertTrue(BetRating.rate(wide.copy(sharpAgrees = false, sharpAgainst = true, ev = 0.04)).support in 1.0..2.5)
     }
 }

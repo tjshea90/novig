@@ -86,34 +86,22 @@ object StarCheck {
     fun typePoints(l: Line, profile: ProfitProfile? = ProfitProfile.shipped): Double =
         (profile?.typePoints(l.league, kindLabel(l.kind), l.selection, l.minToStart) ?: 0.0) + BetRating.leadPoints(l.minToStart)
 
-    fun rated(l: Line, profile: ProfitProfile? = ProfitProfile.shipped, w: BetRating.Weights = BetRating.CURRENT): BetRating.Rating =
-        BetRating.rate(BetRating.Inputs(l.books, l.agreeing, l.ev, sharpAgrees = l.sharp == true, sharpAgainst = l.sharp == false, spread = l.spread, typePoints = typePoints(l, profile)), w)
+    fun rated(l: Line, profile: ProfitProfile? = ProfitProfile.shipped, w: BetRating.Weights = BetRating.CURRENT, scale: BetRating.Scale = BetRating.CURRENT_SCALE): BetRating.Rating =
+        BetRating.rate(BetRating.Inputs(l.books, l.agreeing, l.ev, sharpAgrees = l.sharp == true, sharpAgainst = l.sharp == false, spread = l.spread, typePoints = typePoints(l, profile)), w, scale)
 
     /**
      * Ratings scored beside the app's own every day (SR, S5 2026-10-24): each one principled (a part the data does not confirm made smaller, the parts it confirms made larger), never a fitted search, so a
      * difference between them is evidence and not a tuning artefact. Judge a variant on BOTH halves of the period, on the rated (1-5★) lines, over games. All of them keep the no-trusted-edge floor.
      */
     val VARIANTS: List<Pair<String, (Line, ProfitProfile?) -> Double>> = listOf(
-        "ST1 (v1.0.64-66)" to { l, p -> rated(l, p, BetRating.Weights.ST1).stars },
-        "SR (v1.0.67+): sharp 15, edge 30, agree 25, type x0.5" to { l, p -> rated(l, p, BetRating.Weights.SR).stars },
-        "SR, no type" to { l, p -> rated(l, p, BetRating.Weights.SR.copy(typeScale = 0.0)).stars },
-        "edge 40, cover 15, agree 20, sharp 15" to { l, p -> rated(l, p, BetRating.Weights(coverage = 15.0, agreement = 20.0, edge = 40.0, sharp = 15.0, typeScale = 0.5)).stars },
-        "edge ladder (stars from the edge alone)" to { l, p -> edgeLadder(l, p) },
-        "edge ladder, company caps" to { l, p -> edgeLadder(l, p, caps = true) },
+        "S6 (v1.0.69+): edge ladder, breadth ceilings" to { l, p -> rated(l, p).stars },
+        "S5 (v1.0.68): SR support curve + floor" to { l, p -> rated(l, p, BetRating.Weights.SR, BetRating.Scale.S5).stars },
+        "ST1 support curve + floor" to { l, p -> rated(l, p, BetRating.Weights.ST1, BetRating.Scale.S5).stars },
+        "edge ladder, no ceilings" to { l, p -> edgeLadder(l, p) },
     )
 
-    /**
-     * Stars from the edge alone (S5's alternative): +0.5-1% = 1, then a half star each half point to 3% and each point to 6% (5 stars), after the same no-trusted-edge floor; with [caps], the
-     * shipped company ceilings (one company 1½, two 3 or 2 with no sharp book, three 4). On 2026-10-24 it ordered the rated lines best of all without caps and no better than SR with them.
-     */
-    internal fun edgeLadder(l: Line, profile: ProfitProfile?, caps: Boolean = false): Double {
-        val r = rated(l, profile)
-        if (!r.trusted) return BetRating.NONE
-        val ladder = listOf(0.01 to 1.0, 0.015 to 1.5, 0.02 to 2.0, 0.025 to 2.5, 0.03 to 3.0, 0.04 to 3.5, 0.05 to 4.0, 0.06 to 4.5).firstOrNull { l.ev < it.first }?.second ?: BetRating.MAX
-        if (!caps) return ladder
-        val cap = when { l.books < 2 -> 1.5; l.books == 2 -> if (l.sharp == null) 2.0 else 3.0; l.books == 3 -> 4.0; else -> BetRating.MAX }
-        return minOf(ladder, cap)
-    }
+    /** Stars from the edge alone after S6's no-trusted-edge floor, without the breadth ceilings (SB: the best ordering of the rated lines before the ceilings Tj's "good support" asks for). */
+    internal fun edgeLadder(l: Line, profile: ProfitProfile?): Double = if (!rated(l, profile).trusted) BetRating.NONE else BetRating.edgeStars(l.ev)
 
     private fun coarse(s: Double) = when { s < BetRating.MIN -> "0 no trusted edge"; s < 2.0 -> "1-1.5"; s < 3.0 -> "2-2.5"; s < 4.0 -> "3-3.5"; else -> "4-5" }
 
@@ -212,7 +200,7 @@ object StarCheck {
         gameSlope(rated.filter { it.clv != null }.map { Triple(it.event, stars.getValue(it), it.clv!!) })?.let { (b, t) -> out += String.format(Locale.US, "  CLV per star, rated lines, over games: %+.2f points (t %.1f)", b * 100, t) }
         gameSlope(rated.filter { it.clv != null && it.sharpClose }.map { Triple(it.event, stars.getValue(it), it.clv!!) })?.let { (b, t) -> out += String.format(Locale.US, "  sharp CLV per star, rated lines, over games: %+.2f points (t %.1f)", b * 100, t) }
         gameSlope(rated.filter { it.settled && it.profit != null }.map { Triple(it.event, stars.getValue(it), it.profit!!) })?.let { (b, t) -> out += String.format(Locale.US, "  ROI per star, rated lines, over games: %+.2f points (t %.1f)", b * 100, t) }
-        out += table("Why no trusted edge", ls.filter { stars.getValue(it) < BetRating.MIN }, { l -> when { l.ev < BetRating.THIN_EV -> "edge under 0.5%"; l.ev > BetRating.MAX_TRUSTED_EV -> "edge over 25%"; else -> "sharp book against" } })
+        out += table("Why no trusted edge", ls.filter { stars.getValue(it) < BetRating.MIN }, { l -> when { l.ev < BetRating.THIN_EV -> "edge under 0.5%"; l.ev > BetRating.MAX_TRUSTED_EV -> "edge over 25%"; l.sharp == false -> "sharp book against"; else -> "under 1.5%, one or two books" } })
         out += "== Ratings side by side (S5: per star over games on the rated 1-5★ lines; sharp CLV for each half. A better rating has larger, steadier positive slopes) =="
         out += variantLines(ls, profile)
         out += "== Each input of the rating on its own =="
