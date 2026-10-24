@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "15e29e",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/optimistic-curie-0irsxn",
  "head": "b5115a07e65fcd60d8f249c648cae2f9631a0dd4",
  "since": 1792818666,
- "beat": 1792884066,
- "beatIso": "2026-10-24T23:21:06Z",
+ "beat": 1792884080,
+ "beatIso": "2026-10-24T23:21:20Z",
  "done": "answered list-disappears chat",
  "next": "CH80a/CH86"
 }
