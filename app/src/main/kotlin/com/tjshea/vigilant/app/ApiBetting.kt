@@ -767,7 +767,7 @@ class ApiBettingController(
                         "${result.javaClass.simpleName} ${target.selection.take(40)} (${target.league}, ${target.source}${if (target.live) ", live" else ""}${if (target.auto) ", auto" else ""}): " +
                             "listed cost ${row?.quote?.cost?.let { "%.3f".format(it) }}, ask read ${ageMs?.let { it / 1000 }}s before the order, fair age ${row?.fairAsOfMs?.let { (t - it) / 1000 }}s, " +
                             "ev ${row?.quote?.evPercent?.let { "%.1f".format(it * 100) }}%, depth ${row?.ladder?.firstOrNull()?.let { "${it.price} x${it.contracts}" }}, starts in ${(target.startsTs - t) / 60_000}min, " +
-                            "partial book ${row?.ladder?.size ?: 0} level(s)",
+                            "ladder ${row?.ladder?.size ?: 0} level(s) when listed",
                     )
                 }
                 target.placedKey?.let { k ->
