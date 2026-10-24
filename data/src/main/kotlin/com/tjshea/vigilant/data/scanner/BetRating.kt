@@ -80,7 +80,7 @@ object BetRating {
     enum class Scale { S5, S6, SX }
 
     /** The scale the app rates with (SB, Tj 2026-10-24). Revert: [Scale.S5]. */
-    val CURRENT_SCALE: Scale = Scale.S5
+    val CURRENT_SCALE: Scale = Scale.SX
 
     /** Over this EV (to [MAX_TRUSTED_EV]) S6 rates a bet at most 4 stars: an edge that large is often stale or mismatched. */
     const val SUSPECT_EV = 0.12
