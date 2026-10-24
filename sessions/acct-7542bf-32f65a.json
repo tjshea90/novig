@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "f5271a75c2669e9486a5c5350aa9e46e77facc8d",
+ "head": "3aa9a80efa47f81dc6294281ee5aba55f508fb51",
  "since": 1792809425,
- "beat": 1792811750,
- "beatIso": "2026-10-24T03:15:50Z",
- "done": "SX: StarEvidence loader + BetType, star_table.py, design written before the data (research/star_rating_sx_2026-10-24.md)",
- "next": "when star-study run 40057261152 finishes: download star-backtest-2026-10-24 lines.csv.gz, run scratch analyze.py (finding 2: point-in-time by lead/kind/edge, CLVmix calibration vs ROI), build star_evidence.json, implement Scale.SX in BetRating, validate on engine+phone lines"
+ "beat": 1792811953,
+ "beatIso": "2026-10-24T03:19:13Z",
+ "done": "SX code WIP: BetRating Scale.SX (proofStars from StarEvidence z, losing types no trusted edge, breadth/suspect caps), BetType passed from Pricing/CnoBooks/StarCheck; CURRENT_SCALE kept S5 until the data decides",
+ "next": "when star-study run 40057261152 finishes: analyse, build star_evidence.json, tune, validate on engine+phone lines"
 }
