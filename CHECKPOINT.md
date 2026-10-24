@@ -1,13 +1,13 @@
-# CHECKPOINT 4149 — read me first, then TASKS.md
+# CHECKPOINT 4150 — read me first, then TASKS.md
 
-**Written:** 2026-10-24T21:33:32Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-8fhzvg` · **builds on:** `aab4a5cda` (this checkpoint is the commit after it)
+**Written:** 2026-10-24T21:35:37Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-8fhzvg` · **builds on:** `f22565f4b` (this checkpoint is the commit after it)
 
 ## Just done
-answered socket+repeat-bets chat; logged CH86
+answered repeat-guard chat; CH86b
 
 ## Do this next
-CH86: compare Novig orders vs phone/engine logs
+CH86: find path of extra orders
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ CH86: compare Novig orders vs phone/engine logs
 
 ## Last ten checkpoints
 ```
+  f22565f4b ckpt 4149: answered socket+repeat-bets chat; logged CH86
   008d574e5 ckpt 4148: pre-release: CH81i: order-end timing + NOFILL kept in the report; the phone
   ab0f4aa87 ckpt 4147: pre-ship: CH81i: order-end timing + NOFILL kept in the report; the phone st
   588b9c78b ckpt 4146: order-end diagnostics, NOFILL warn, bids 404 backoff
@@ -26,5 +27,4 @@ CH86: compare Novig orders vs phone/engine logs
   64787ff66 ckpt 4142: CH81e screenshot answered
   194d34888 ckpt 4141: CH81a: Tj saw bets return
   c662e3319 ckpt 4140: CH80d evidence recorded
-  79f54531a ckpt 4139: answered disappearing-bets: still happening after 1.0.77
 ```
