@@ -112,6 +112,9 @@ data class ReportUi(val title: String, val text: String, val busy: Boolean = fal
 
 const val DEAD_PRICE_MS = 30 * 60_000L
 
+/** The cost of $1 of payout at an American price: how [UiState.deadPrice] holds a CNO row's price. */
+internal fun costOf(american: Int): Double = if (american > 0) 100.0 / (100.0 + american) else -american / (100.0 - american)
+
 data class UiState(
     /** The Diagnostics / Grading check report being shown, if any (Tj, 2026-09-29). */
     val report: ReportUi? = null,
@@ -506,8 +509,15 @@ data class UiState(
 
     /** The Bet sheet found [row] not +EV in the last minute, and no price read since says it is back. */
     private fun negativeSeenAt(row: CnoRow, now: Long): Boolean {
-        val at = negativeSeen[com.tjshea.vigilant.app.MiniWindow.cnoKey(row)] ?: return false
-        return now - at < NEGATIVE_SEEN_MS && (livePrice(row, now)?.atMs ?: 0L) <= at
+        val key = com.tjshea.vigilant.app.MiniWindow.cnoKey(row)
+        val at = negativeSeen[key] ?: return false
+        val live = livePrice(row, now)
+        if (now - at < NEGATIVE_SEEN_MS && (live?.atMs ?: 0L) <= at) return true
+        // Nobody was selling at that price (Tj, 2026-10-24: "they still come back into the scanned results"): a newer read of the very same price is the same phantom ask, off for up to DEAD_PRICE_MS.
+        val dead = deadPrice[key] ?: return false
+        if (now - at >= DEAD_PRICE_MS) return false
+        val american = live?.american ?: return true
+        return kotlin.math.abs(costOf(american) - dead) < 1e-6
     }
 
     /**
