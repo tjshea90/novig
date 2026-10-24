@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "c1a4220bdf4bc0f622763b29f769afc3fcde384e",
+ "head": "fc85b89f5484fd924c1901ad4fa6165b854952a3",
  "since": 1792797865,
- "beat": 1792800802,
- "beatIso": "2026-10-24T00:13:22Z",
- "done": "pre-release: FX full tests: Kalshi bid cancels fixed (V2 needs the market), Kalshi lane re-reads before judging, SharpAPI/SX streams reconnect on a server close, digest shows the engine's graded days + star check + API value, tab bar and Settings text fixes (versionCode 406, v1.0.66)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.66), then run: bash tools/record-release.sh v1.0.66 406 \"FX full tests: Kalshi bid cancels fixed (V2 needs the market), Kalshi lane re-reads before judging, SharpAPI/SX streams reconnect on a server close, digest shows the engine's graded days + star check + API value, tab bar and Settings text fixes\""
+ "beat": 1792800838,
+ "beatIso": "2026-10-24T00:13:58Z",
+ "done": "BX done: BoltOdds no longer earns runner swaps (out of ApiManager.IMPORTANT); a feed refused for its key/plan is switched off once after 20 min with one message; BoltOdds off on the engine (Tj had switched it off at 20:05 ET). Full suite 4,205 green. v1.0.66 release building.",
+ "next": "confirm v1.0.66 Release, record-release.sh, engine --reset so the Kalshi/stream/BoltOdds fixes run, tell Tj"
 }
