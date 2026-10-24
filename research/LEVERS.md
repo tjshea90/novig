@@ -27,6 +27,7 @@ Moves already made are in `research/review/CHANGES.md`; the open ones are TASKS.
 ## Closed
 Studies whose verdict is taken and where nothing is left to tune. Disposition after the dash. A closed study is reopened only if its number changes.
 
+- `research/trends_2026-10-24.md` - player recent form vs the line is ~1 pt beyond Novig's close, below prop taker vig; steam does not repeat; not built (revisit as a bid tilt after SB2b).
 - `research/copy_sharps_2026-10-13.md` - copying sharp Novig traders is not possible and did not pay; following the sharp books is what Vigilant already does.
 - `research/odds_api_net_2026-10-13.md` - The Odds API's Pinnacle is polled every 60-120 s, worse than PinnWire/pinnapi; do not buy a bigger plan.
 - `research/propline_vs_parlayapi_pregame_2026-10-12.md` - keep both on the chain (ApiChain sleeps the lower); PropLine upgrade came first (now Pro).
