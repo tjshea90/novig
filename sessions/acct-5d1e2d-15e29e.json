@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-8fhzvg",
- "head": "6e9ccd66f90c0d3a52ca94d04ee4c8fd85a7fcfe",
+ "head": "a74254bb4e3ceaff795e6bdcd652a35b02798bae",
  "since": 1792818666,
- "beat": 1792878049,
- "beatIso": "2026-10-24T21:40:49Z",
- "done": "RepeatGuard test pinned to explicit $100; 18 pass",
- "next": "full test gate, ship; CH86 extra-order path"
+ "beat": 1792878151,
+ "beatIso": "2026-10-24T21:42:31Z",
+ "done": "answered list-disappears chat",
+ "next": "CH80a/CH86"
 }
