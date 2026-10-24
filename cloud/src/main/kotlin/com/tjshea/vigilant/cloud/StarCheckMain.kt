@@ -23,6 +23,8 @@ object StarCheck {
         val books: Int, val agreeing: Int?, val sharp: Boolean?, val spread: Double?, val loggedStars: Double?, val status: String, val profit: Double?, val clv: Double?, val shown: Boolean,
         /** False when the line was logged before the engine recorded the rating's inputs (no companies, no fair books): re-rating it would only rate the missing data. */
         val recorded: Boolean = true,
+        /** The close is a sharp book's (Pinnacle or Circa, S5): the honest yardstick. Novig's own last trades and soft books' closes are weaker. */
+        val sharpClose: Boolean = false,
     ) {
         val settled: Boolean get() = status == "WON" || status == "LOST" || status == "PUSH"
     }
@@ -72,6 +74,7 @@ object StarCheck {
                 sharp = sharp, spread = c.f("fair_spread").toDoubleOrNull(), loggedStars = c.f("stars").toDoubleOrNull(), status = c.f("status"),
                 profit = c.f("profit_units").toDoubleOrNull(), clv = c.f("clv").toDoubleOrNull(), shown = c.f("shown") == "1",
                 recorded = two != null || (c.f("n_fair_books").toIntOrNull() ?: 0) > 0,
+                sharpClose = c.f("close_via").let { "Pinnacle" in it || "Circa" in it },
             )
         }
         return out
@@ -87,37 +90,56 @@ object StarCheck {
         BetRating.rate(BetRating.Inputs(l.books, l.agreeing, l.ev, sharpAgrees = l.sharp == true, sharpAgainst = l.sharp == false, spread = l.spread, typePoints = typePoints(l, profile)), w)
 
     /**
-     * Weights scored beside the app's own every day (SR, 2026-10-24): each one principled (a part the data does not confirm made smaller, the parts it confirms made larger), never a fitted search, so a
-     * difference between them is evidence and not a tuning artefact. Judge a variant on BOTH halves of the period.
+     * Ratings scored beside the app's own every day (SR, S5 2026-10-24): each one principled (a part the data does not confirm made smaller, the parts it confirms made larger), never a fitted search, so a
+     * difference between them is evidence and not a tuning artefact. Judge a variant on BOTH halves of the period, on the rated (1-5★) lines, over games. All of them keep the no-trusted-edge floor.
      */
-    val VARIANTS: List<Pair<String, BetRating.Weights>> = listOf(
-        "ST1 (v1.0.64-66)" to BetRating.Weights.ST1,
-        "type x0.5" to BetRating.Weights.ST1.copy(typeScale = 0.5),
-        "no type" to BetRating.Weights.ST1.copy(typeScale = 0.0),
-        "sharp 15, edge 30, agree 25" to BetRating.Weights(agreement = 25.0, edge = 30.0, sharp = 15.0),
-        "SR (v1.0.67): sharp 15, edge 30, agree 25, type x0.5" to BetRating.Weights.SR,
-        "sharp 15, edge 30, agree 25, no type" to BetRating.Weights(agreement = 25.0, edge = 30.0, sharp = 15.0, typeScale = 0.0),
+    val VARIANTS: List<Pair<String, (Line, ProfitProfile?) -> Double>> = listOf(
+        "ST1 (v1.0.64-66)" to { l, p -> rated(l, p, BetRating.Weights.ST1).stars },
+        "SR (v1.0.67+): sharp 15, edge 30, agree 25, type x0.5" to { l, p -> rated(l, p, BetRating.Weights.SR).stars },
+        "SR, no type" to { l, p -> rated(l, p, BetRating.Weights.SR.copy(typeScale = 0.0)).stars },
+        "edge 40, cover 15, agree 20, sharp 15" to { l, p -> rated(l, p, BetRating.Weights(coverage = 15.0, agreement = 20.0, edge = 40.0, sharp = 15.0, typeScale = 0.5)).stars },
+        "edge ladder (stars from the edge alone)" to { l, p -> edgeLadder(l, p) },
+        "edge ladder, company caps" to { l, p -> edgeLadder(l, p, caps = true) },
     )
 
-    private fun coarse(s: Double) = when { s < 2.0 -> "1-1.5"; s < 3.0 -> "2-2.5"; s < 4.0 -> "3-3.5"; else -> "4-5" }
+    /**
+     * Stars from the edge alone (S5's alternative): +0.5-1% = 1, then a half star each half point to 3% and each point to 6% (5 stars), after the same no-trusted-edge floor; with [caps], the
+     * shipped company ceilings (one company 1½, two 3 or 2 with no sharp book, three 4). On 2026-10-24 it ordered the rated lines best of all without caps and no better than SR with them.
+     */
+    internal fun edgeLadder(l: Line, profile: ProfitProfile?, caps: Boolean = false): Double {
+        val r = rated(l, profile)
+        if (!r.trusted) return BetRating.NONE
+        val ladder = listOf(0.01 to 1.0, 0.015 to 1.5, 0.02 to 2.0, 0.025 to 2.5, 0.03 to 3.0, 0.04 to 3.5, 0.05 to 4.0, 0.06 to 4.5).firstOrNull { l.ev < it.first }?.second ?: BetRating.MAX
+        if (!caps) return ladder
+        val cap = when { l.books < 2 -> 1.5; l.books == 2 -> if (l.sharp == null) 2.0 else 3.0; l.books == 3 -> 4.0; else -> BetRating.MAX }
+        return minOf(ladder, cap)
+    }
 
-    /** One line per variant: CLV and ROI per star (all lines, then each half), and the top and bottom groups' CLV and ROI. */
+    private fun coarse(s: Double) = when { s < BetRating.MIN -> "0 no trusted edge"; s < 2.0 -> "1-1.5"; s < 3.0 -> "2-2.5"; s < 4.0 -> "3-3.5"; else -> "4-5" }
+
+    /** Least-squares slope of the outcome on the stars over GAMES (each game's lines averaged first: lines of one game move together), with its t; null under 10 games. */
+    internal fun gameSlope(pairs: List<Triple<String, Double, Double>>): Pair<Double, Double>? =
+        slope(pairs.groupBy { it.first }.values.map { g -> g.map { it.second }.average() to g.map { it.third }.average() })
+
+    /**
+     * One line per variant (S5): CLV per star over games on the RATED (1-5★) lines, against every close and against sharp closes only, ROI per star, each half for the sharp-close CLV, and the
+     * top (4-5★) and bottom (1-1½★) groups. The no-trusted-edge lines are left out of the slopes: sorting them to the bottom is easy, the question is whether the stars order the real bets.
+     */
     internal fun variantLines(ls: List<Line>, profile: ProfitProfile?): List<String> {
         val days = ls.map { it.day }.filter { it.isNotEmpty() }.distinct().sorted()
         val early = days.take(days.size / 2).toSet()
-        fun per(xs: List<Pair<Double, Double>>) = slope(xs)?.let { (b, t) -> String.format(Locale.US, "%+.2f (t %.1f)", b * 100, t) } ?: "-"
-        return VARIANTS.map { (name, w) ->
-            val st = ls.associateWith { rated(it, profile, w).stars }
-            fun clv(sub: List<Line>) = per(sub.filter { it.clv != null }.map { st.getValue(it) to it.clv!! })
-            fun roi(sub: List<Line>) = per(sub.filter { it.settled && it.profit != null }.map { st.getValue(it) to it.profit!! })
-            val e = ls.filter { it.day in early }
-            val l = ls.filter { it.day !in early }
-            val top = ls.filter { st.getValue(it) >= 4.0 }
-            val low = ls.filter { st.getValue(it) < 2.5 }
-            fun grp(g: List<Line>) = stat(g.filter { it.clv != null }.map { it.event to it.clv!! }).let { c ->
-                stat(g.filter { it.settled && it.profit != null }.map { it.event to it.profit!! }).let { r -> "${g.size} lines CLV ${pct(c.mean)} (${c.n}) ROI ${pct(r.mean)} (${r.n})" }
+        fun per(p: Pair<Double, Double>?) = p?.let { (b, t) -> String.format(Locale.US, "%+.2f (t %.1f)", b * 100, t) } ?: "-"
+        return VARIANTS.map { (name, rater) ->
+            val st = ls.associateWith { rater(it, profile) }
+            val rated = ls.filter { st.getValue(it) >= BetRating.MIN }
+            fun clv(sub: List<Line>, sharpOnly: Boolean = false) = per(gameSlope(sub.filter { it.clv != null && (!sharpOnly || it.sharpClose) }.map { Triple(it.event, st.getValue(it), it.clv!!) }))
+            fun roi(sub: List<Line>) = per(gameSlope(sub.filter { it.settled && it.profit != null }.map { Triple(it.event, st.getValue(it), it.profit!!) }))
+            val top = rated.filter { st.getValue(it) >= 4.0 }
+            val low = rated.filter { st.getValue(it) < 2.0 }
+            fun grp(g: List<Line>) = stat(g.filter { it.clv != null && it.sharpClose }.map { it.event to it.clv!! }).let { c ->
+                stat(g.filter { it.settled && it.profit != null }.map { it.event to it.profit!! }).let { r -> "${g.size} lines sharp CLV ${pct(c.mean)} (${c.n}) ROI ${pct(r.mean)} (${r.n})" }
             }
-            "  ${name.padEnd(40)} CLV/star ${clv(ls)} early ${clv(e)} late ${clv(l)} · ROI/star ${roi(ls)} early ${roi(e)} late ${roi(l)} · 4-5★ ${grp(top)} · <2.5★ ${grp(low)}"
+            "  ${name.padEnd(40)} CLV/star ${clv(rated)} · sharp CLV/star ${clv(rated, true)} early ${clv(rated.filter { it.day in early }, true)} late ${clv(rated.filter { it.day !in early }, true)} · ROI/star ${roi(rated)} · 4-5★ ${grp(top)} · 1-1½★ ${grp(low)}"
         }
     }
 
@@ -137,11 +159,12 @@ object StarCheck {
 
     private fun row(label: String, ls: List<Line>): String {
         val clv = stat(ls.filter { it.clv != null }.map { it.event to it.clv!! })
+        val sharp = stat(ls.filter { it.clv != null && it.sharpClose }.map { it.event to it.clv!! })
         val roi = stat(ls.filter { it.settled && it.profit != null }.map { it.event to it.profit!! })
         val settled = ls.filter { it.settled && it.status != "PUSH" }
         val win = if (settled.isEmpty()) "-" else "${Math.round(100.0 * settled.count { it.status == "WON" } / settled.size)}%"
-        return String.format(Locale.US, "  %-26s %6d · CLV %5d bets %4d games %8s %7s · results %5d bets %4d games ROI %8s %7s · win %s",
-            label.take(26), ls.size, clv.n, clv.games, pct(clv.mean), pm(clv.half), roi.n, roi.games, pct(roi.mean), pm(roi.half), win)
+        return String.format(Locale.US, "  %-26s %6d · CLV %5d bets %4d games %8s %7s · sharp CLV %4d bets %4d games %8s %7s · results %5d bets %4d games ROI %8s %7s · win %s",
+            label.take(26), ls.size, clv.n, clv.games, pct(clv.mean), pm(clv.half), sharp.n, sharp.games, pct(sharp.mean), pm(sharp.half), roi.n, roi.games, pct(roi.mean), pm(roi.half), win)
     }
 
     private fun table(title: String, ls: List<Line>, key: (Line) -> String?, order: Comparator<String> = naturalOrder()): List<String> =
@@ -169,24 +192,28 @@ object StarCheck {
         val out = ArrayList<String>()
         out += "STAR RATING CHECK (cloud/StarCheckMain.kt) · ${ls.size} +EV lines the engine saw, game days ${days.firstOrNull() ?: "?"} to ${days.lastOrNull() ?: "?"} (${days.size} days) · " +
             "${ls.count { it.clv != null }} with a close · ${ls.count { it.settled }} settled"
-        out += "Each line re-rated with the rating the app ships now (history points from profit_profile.json as of ${profile?.asOf ?: "?"}, lead points, the small-book cap). CLV = close_fair / cost - 1 (positive = beat the close);"
+        out += "Each line re-rated with the rating the app ships now (history points from profit_profile.json as of ${profile?.asOf ?: "?"}, lead points, the small-book cap, the no-trusted-edge floor). CLV = close_fair / cost - 1 (positive = beat the close);"
+        out += "sharp CLV = against a Pinnacle or Circa close only (the honest yardstick; the rest close on Novig's own last trades or a soft book). A sound rating: 0 (no trusted edge) loses to the close, every star level beats it, and more stars beat it by more;"
         out += "ROI per \$1 at the first price. ± is a 95% interval over GAMES (a game's lines averaged first). A sound rating gives more CLV and more ROI as the stars rise; intervals that overlap do not differ."
         out += "The history points were fitted to Tj's own bets (out of sample here); the lead points and the small-book cap were fitted to these lines (in sample)."
         if (missing.isNotEmpty()) out += "Left out: ${missing.size} lines logged before the engine recorded the rating's inputs (companies, agreement): " + row("not recordable", missing).trim()
         val halfOrder = Comparator<String> { a, b -> (a.toDoubleOrNull() ?: 0.0).compareTo(b.toDoubleOrNull() ?: 0.0) }
         out += table("Stars now (re-rated)", ls, { String.format(Locale.US, "%.1f", stars.getValue(it)) }, halfOrder)
-        out += table("Stars now, coarse", ls, { val s = stars.getValue(it); when { s < 2.0 -> "1-1.5"; s < 3.0 -> "2-2.5"; s < 4.0 -> "3-3.5"; else -> "4-5" } })
-        out += table("Stars now, the lines the list showed", ls.filter { it.shown }, { val s = stars.getValue(it); when { s < 2.0 -> "1-1.5"; s < 3.0 -> "2-2.5"; s < 4.0 -> "3-3.5"; else -> "4-5" } })
+        out += table("Stars now, coarse", ls, { coarse(stars.getValue(it)) })
+        out += table("Stars now, the lines the list showed", ls.filter { it.shown }, { coarse(stars.getValue(it)) })
         out += table("Stars as logged (the rating of the day)", ls, { it.loggedStars?.let { s -> String.format(Locale.US, "%.1f", s) } ?: "not logged" }, halfOrder)
         out += table("Stars now vs as logged, the same lines (logged -> now)", ls.filter { it.loggedStars != null }, { l ->
             val old = l.loggedStars!!; val now = stars.getValue(l)
             when { now > old + 0.25 -> "raised"; now < old - 0.25 -> "lowered"; else -> "same" }
         })
         val firstHalf = days.take(days.size / 2).toSet()
-        out += table("Stars now, by period (stability)", ls, { val s = stars.getValue(it); (if (it.day in firstHalf) "early " else "late ") + when { s < 2.5 -> "<2.5"; s < 3.5 -> "2.5-3"; else -> "3.5+" } })
-        slope(ls.filter { it.clv != null }.map { stars.getValue(it) to it.clv!! })?.let { (b, t) -> out += String.format(Locale.US, "  CLV per star: %+.2f points (t %.1f, bets as the unit)", b * 100, t) }
-        slope(ls.filter { it.settled && it.profit != null }.map { stars.getValue(it) to it.profit!! })?.let { (b, t) -> out += String.format(Locale.US, "  ROI per star: %+.2f points (t %.1f, bets as the unit)", b * 100, t) }
-        out += "== Weights side by side (SR: CLV and ROI points per star, all lines then each half; then the top and bottom groups. A better rating has larger, steadier positive slopes) =="
+        out += table("Stars now, by period (stability)", ls, { val s = stars.getValue(it); (if (it.day in firstHalf) "early " else "late ") + when { s < BetRating.MIN -> "0"; s < 2.5 -> "1-2"; s < 3.5 -> "2.5-3"; else -> "3.5+" } })
+        val rated = ls.filter { stars.getValue(it) >= BetRating.MIN }
+        gameSlope(rated.filter { it.clv != null }.map { Triple(it.event, stars.getValue(it), it.clv!!) })?.let { (b, t) -> out += String.format(Locale.US, "  CLV per star, rated lines, over games: %+.2f points (t %.1f)", b * 100, t) }
+        gameSlope(rated.filter { it.clv != null && it.sharpClose }.map { Triple(it.event, stars.getValue(it), it.clv!!) })?.let { (b, t) -> out += String.format(Locale.US, "  sharp CLV per star, rated lines, over games: %+.2f points (t %.1f)", b * 100, t) }
+        gameSlope(rated.filter { it.settled && it.profit != null }.map { Triple(it.event, stars.getValue(it), it.profit!!) })?.let { (b, t) -> out += String.format(Locale.US, "  ROI per star, rated lines, over games: %+.2f points (t %.1f)", b * 100, t) }
+        out += table("Why no trusted edge", ls.filter { stars.getValue(it) < BetRating.MIN }, { l -> when { l.ev < BetRating.THIN_EV -> "edge under 0.5%"; l.ev > BetRating.MAX_TRUSTED_EV -> "edge over 25%"; else -> "sharp book against" } })
+        out += "== Ratings side by side (S5: per star over games on the rated 1-5★ lines; sharp CLV for each half. A better rating has larger, steadier positive slopes) =="
         out += variantLines(ls, profile)
         out += "== Each input of the rating on its own =="
         out += table("Companies pricing both sides", ls, { when (it.books) { 0 -> "0"; 1 -> "1"; 2 -> "2"; 3 -> "3"; 4 -> "4"; in 5..7 -> "5-7"; else -> "8+" } })
