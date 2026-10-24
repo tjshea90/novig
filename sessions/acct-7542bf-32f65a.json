@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "bfdcd336dc0504bc1669099d4544b7101f54b97d",
+ "head": "7617623f240e18ec79ab54e44453f5792cd0804f",
  "since": 1792809425,
- "beat": 1792818637,
- "beatIso": "2026-10-24T05:10:37Z",
- "done": "SX: star-study split into 4 parallel shards (one 4000-game job would near the 5 h cap and upload nothing)",
- "next": "dispatch star-study events=4000 (4 shards), read lines-0..3.csv.gz from star-backtest-2026-10-24"
+ "beat": 1792818776,
+ "beatIso": "2026-10-24T05:12:56Z",
+ "done": "SX finding 2 (multiplicative devig): +EV Novig lines lost ROI -5..-6% at every edge (469k rows, 3288 games); favourites held, prop Overs/dogs lost. star_backtest now also computes the app's WORST_CASE devig + raw prices; rerun dispatched",
+ "next": "read star-backtest rerun (ev_wc), choose close devig by calibration, then build table"
 }
