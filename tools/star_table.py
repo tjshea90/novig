@@ -158,11 +158,12 @@ def selftest():
         w = csv.DictWriter(f, fieldnames=["event_id", "sport", "kind", "side", "cost", "ev_wc", "close_nov_raw", "close_nov_raw_opp"])
         w.writeheader()
         for g in range(25):
-            w.writerow({"event_id": "e%d" % g, "sport": "basketball_nba", "kind": "total", "side": "Under", "cost": "0.52", "ev_wc": "0.02", "close_nov_raw": "0.5", "close_nov_raw_opp": "0.53"})
+            w.writerow({"event_id": "e%d" % g, "sport": "basketball_nba", "kind": "total", "side": "Under", "cost": "0.52", "ev_wc": "0.02", "close_nov_raw": "%.3f" % (0.5 + 0.002 * (g % 3)), "close_nov_raw_opp": "0.53"})
     doc = build(os.path.join(d, "o.json"), [rp], [bp])
     c = doc["cells"]["NBA|total|under|-150..-100"]
     assert c["games"] == 30 and abs(c["clv"] + 0.015) < 1e-9 and c["roi"] == -1.0 and c["btGames"] == 25        # the 40% row is outside the trusted window
-    assert abs(c["btClv"] - round(devig_all(0.5, 0.53)[3] / 0.52 - 1, 5)) < 1e-9
+    want = sum(devig_all(0.5 + 0.002 * (g % 3), 0.53)[3] / 0.52 - 1 for g in range(25)) / 25
+    assert abs(c["btClv"] - round(want, 5)) < 1e-9
     assert keys("NBA", "prop", "under", "-150 shorter")[0] == "NBA|prop|under|-150 shorter" and keys("x", "a", "b", "c")[-1] == "*|*|*"
     assert side_of("Joe Under 1.5", 0.7) == "under" and side_of("Lakers -3.5", 0.55) == "fav" and sport_of("ATP Paris") == "TENNIS" and sport_of("MLS (USA)") == "*"
     print("star table selftest ok")
