@@ -6352,3 +6352,7 @@ State when this was written: S6 (edge ladder + breadth ceilings + thin-market fl
 - [ ] SX6 full suite, release, engine reset, tell Tj what each star means and the evidence
 
 - [~] PL-OA (accuracy report done: research/propline_book_accuracy_2026-10-24.md) PropLine openapi.json (Tj, chat 2026-10-24 05:56): spec saved research/propline/openapi_2026-10-24.json; evaluate unused endpoints (books/accuracy, coverage/history, freshness, injuries/history, projections, sgp, dfs/payouts) for star rating / CLV; build the useful ones
+
+CH78 (Tj chat 06:55 UTC 2026-10-24): "a lot of no one was selling at that price, then they still come back into the scanned results" -- the CNO list returned the row within seconds (60 s hold, then any newer live read). Fixed in code: CNO rows keep CH75 dead-price memory (MainViewModel.negativeSeenAt, costOf; UnbettableRowsTest). Release with the next version.
+- [x] CH78 CNO rows stay off while the live read shows the same dead price (30 min)
+- [ ] CH78b why orders find nobody selling so often (IOC at the shown ask): study failed NotFilled orders vs book depth/age in phone-data trades
