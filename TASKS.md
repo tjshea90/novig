@@ -6391,3 +6391,4 @@ CH83 (NOT a write-behind: money records; archive of old settled records, test on
 
 - [ ] CH86 (Tj 21:31 chat): UAPB-FAMU Over 55.5 shows 7 Novig orders (\$6.88) but phone logged 1 tap (\$1.38); UND-SDAK Under 57.5 3 orders (\$5.62) vs 1 logged (\$1.79). Find source (partial fills vs repeat bets vs engine bids); if ours, RepeatGuard gap. Also confirm socket order path used (v1.0.78 report).
 - [ ] CH86b (Tj 21:34): "the repeat guard has to safeguard against this. there shouldn't be so many bets on the same event": find which path made the extra Novig orders; hard cap per side/game incl. bid fills; ask whether hand taps block.
+- [x] CH86c repeat cap 2 bets/$3 set via engine_set (live), default+chip in code (unreleased, run RepeatGuard tests before ship).
