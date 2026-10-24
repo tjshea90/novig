@@ -6330,3 +6330,10 @@ Analyze the current star system; make ONE rating that combines all factors, remo
 - [x] S5b (broken: thin <0.5%, over-25% and sharp-against lines rated 1½-3★ lose to the close; above the floor no weighting orders the rated lines, |t|<1) check the scale against Tj's definition: every level +EV (CLV >= 0 at 1 star), each level better than the one below (monotone), 5 stars clearly best with support; name every level/input that breaks it
 - [x] S5c (BetRating.NONE + doubtOf, 1★ under 1%, StarRating shows "☆ no trusted edge", StarCheck sharp closes/games/6 ratings; BetRatingTest S5 test; CHANGES.md + revert) adjust what the data warrants (rating, ceilings, what is listed at all), tests, CHANGES.md + revert rule, research/ write-up
 - [x] S5d (full suite 4,208 green; v1.0.68 released and recorded; engine reset 02:11Z) full suite, release, engine reset, tell Tj plainly what each star now means and how sure the data is
+
+## SB: a bigger sample for the stars from the APIs' history (Tj, 2026-10-24, typed prompt, verbatim)
+"Since the sample size is small  can't you use some of the apis features of historical odds and clv and results"
+- [ ] SB1 inventory: which saved archives (phone study journals, Tj's bets, propline-archive, sharpapi-closing, lab-archive) and which API history features (SGO open/close per book, OddsPapi historical, PropLine exports/clv, SharpAPI closing) give a line's books at bet time + a sharp close + a result; cost of each
+- [ ] SB2 re-rate every saved line that carries the rating's inputs (free, no API calls) and add it to the star check
+- [ ] SB3 a GitHub workflow that rebuilds past games' multi-book odds from the APIs' history (keys stay in secrets), rates each +EV line, joins the sharp close and the result, archives the dataset (Release) and prints the check
+- [ ] SB4 read the bigger sample; change the stars only if it warrants; tests, release, tell Tj
