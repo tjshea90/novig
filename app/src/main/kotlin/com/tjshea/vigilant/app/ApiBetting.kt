@@ -756,7 +756,13 @@ class ApiBettingController(
             // "Nobody was selling at that price any more" and the like (Tj, 2026-10-23): the row leaves the scanned list now and returns only when a newer price read lists it again.
             if (unbettableResult(result)) {
                 val t = clock()
-                target.placedKey?.let { k -> state.update { it.copy(negativeSeen = it.negativeSeen.filterValues { at -> t - at < 6 * 3_600_000L } + (k to t)) } }
+                target.placedKey?.let { k ->
+                    state.update { st ->
+                        val dead = (result as? PlaceResult.NotFilled)?.let { st.feed.firstOrNull { o -> o.key == k }?.quote?.cost }
+                        st.copy(negativeSeen = st.negativeSeen.filterValues { at -> t - at < 6 * 3_600_000L } + (k to t),
+                            deadPrice = if (dead != null) st.deadPrice + (k to dead) else st.deadPrice - k)
+                    }
+                }
             }
             if (result is PlaceResult.Placed) {
                 withContext(NonCancellable) {

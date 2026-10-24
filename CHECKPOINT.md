@@ -1,19 +1,18 @@
 # CHECKPOINT 4094 — read me first, then TASKS.md
 
-**Written:** 2026-10-24T02:50:26Z · **tests:** 1 RED: test_research_index.sh (8 green)
-**Branch:** `ccr-305d3f7a-i2z8ja` · **builds on:** `fcbf16b67` (this checkpoint is the commit after it)
+**Written:** 2026-10-24T02:49:43Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-o6nryz` · **builds on:** `3a35a84af` (this checkpoint is the commit after it)
 
 ## Just done
-SB1-2: phone study (8,384 +EV lines) + engine lines re-rated: edge predicts sharp CLV monotone in both; S5 support-heavy stars do not order bets (-0.12/star); S6 design chosen (edge ladder, thin small edges no trusted edge, breadth caps); research/star_rating_sb_2026-10-24.md
+CH75: dead price remembered after NotFilled; test green
 
 ## Do this next
-implement S6 in BetRating (ladder, thin floor, breadth caps, Rating.support for CloudKelly), StarCheck variants, tests, full suite, v1.0.69; then SB3 workflow for API history
+full suite, then release with next batch; tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-    ?? research/star_rating_sb_2026-10-24.md
 
 ## Last ten checkpoints
 ```
@@ -29,5 +28,5 @@ implement S6 in BetRating (ladder, thin floor, breadth caps, Rating.support for 
   9c7198ea1 ckpt 4084: Corrected The Odds API claim (Tj's screenshot): 5,082 of 10,500 credits lef
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

@@ -110,6 +110,8 @@ data class NovigUi(
 /** A report Tj can read, copy and paste (Settings › Diagnostics & about, Grading check): [busy] while it's being put together. */
 data class ReportUi(val title: String, val text: String, val busy: Boolean = false)
 
+const val DEAD_PRICE_MS = 30 * 60_000L
+
 data class UiState(
     /** The Diagnostics / Grading check report being shown, if any (Tj, 2026-09-29). */
     val report: ReportUi? = null,
@@ -201,6 +203,8 @@ data class UiState(
     val novigLive: Map<String, com.tjshea.vigilant.data.cno.LivePrice> = emptyMap(),
     /** Bets (their list key) the Bet sheet just found not +EV at Novig's price, and when: they leave the lists at once, until a newer price read says otherwise (Tj, 2026-10-14). */
     val negativeSeen: Map<String, Long> = emptyMap(),
+    /** The price (cost per $1 payout) a row had when an order found nobody selling at it (Tj, 2026-10-24): while a newer read still lists that same price the row stays off, for up to [DEAD_PRICE_MS]. */
+    val deadPrice: Map<String, Double> = emptyMap(),
     /**
      * Every bet Tj already has (✓ placed or ✕ removed in the widget or CNO tab, or tracked from a
      * card), from either scanner: hidden from every list ([PlacedIndex]). Rebuilt when those change.
@@ -299,7 +303,12 @@ data class UiState(
     private fun goneSeen(o: Opportunity, now: Long): Boolean {
         val at = negativeSeen[o.key] ?: return false
         // Until a price read newer than the finding lists it again (Tj, 2026-10-23: "only return it to the scanned list if it becomes bettable"); the entry itself is forgotten after six hours.
-        return now - at < 6 * 3_600_000L && (o.bookFetchedAtMs ?: 0L) <= at
+        if (now - at >= 6 * 3_600_000L) return false
+        if ((o.bookFetchedAtMs ?: 0L) <= at) return true
+        // A newer read that still shows the very price nobody sold at is the same phantom ask (Tj, 2026-10-24): it returns only at another price, or after DEAD_PRICE_MS.
+        val dead = deadPrice[o.key] ?: return false
+        val cost = o.quote?.cost ?: return false
+        return kotlin.math.abs(cost - dead) < 1e-6 && now - at < DEAD_PRICE_MS
     }
 
     /**

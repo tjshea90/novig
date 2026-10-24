@@ -29,4 +29,16 @@ class UnbettableRowsTest {
         assertFalse("a limit the user set is not the bet's fault", UNBETTABLE_WORDS.containsMatchIn("That's over your \$10 limit per bet (Settings)."))
         assertFalse(UNBETTABLE_WORDS.containsMatchIn("Pick an amount to bet."))
     }
+
+    @Test
+    fun `after nobody sold at a price, a newer read that shows the same price keeps the row off until the price changes`() {
+        val s = SampleScan.state()
+        val row = s.feedAt(now).first { it.bookFetchedAtMs != null && it.quote != null }
+        val found = (row.bookFetchedAtMs ?: now) + 1_000L
+        val reread = s.copy(negativeSeen = mapOf(row.key to found), deadPrice = mapOf(row.key to row.quote!!.cost),
+            feed = s.feed.map { if (it.key == row.key) it.copy(bookFetchedAtMs = found + 5_000L) else it })
+        assertFalse("same price again: still off", reread.feedAt(found + 6_000L).any { it.key == row.key })
+        val moved = reread.copy(deadPrice = mapOf(row.key to row.quote!!.cost + 0.02))
+        assertTrue("another price: back", moved.feedAt(found + 6_000L).any { it.key == row.key })
+    }
 }
