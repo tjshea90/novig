@@ -591,7 +591,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** Betting through Novig's API: setup, money, the Bet sheet ([ApiBettingController]). */
     val api = ApiBettingController(c, _state, viewModelScope, _toasts, onRestored = { ids -> recheck(ids, quiet = true) })
 
-    init { watchFeedHides() }
+    init { watchFeedHides(); watchDiagnosticsUpload() }
 
     init {
         // The real-time live lane (Tj, 2026-10-11): its rows and status reach the screen as the engine publishes them, the feed rebuilt off the main thread, at most a few times a second.
@@ -2240,6 +2240,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val answered = withContext(Dispatchers.IO) { runCatching { c.parlayAccount.refresh(force = true) }.getOrDefault(0) }
             if (answered > 0 && _state.value.report?.title == "Diagnostics") buildDiagnostics()
+        }
+    }
+
+    /** Every 20 minutes (and once at the start) the full report goes to `phone-data/phone/diag/` while a token is saved and history saving is on, so a session can read what the phone logged without Tj sending anything. */
+    private fun watchDiagnosticsUpload() {
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(60_000L)
+            while (true) {
+                val st = _state.value
+                if (st.settings.cloudSave) runCatching {
+                    val inputs = gatherDiag()
+                    val text = withContext(Dispatchers.Default) { DiagnosticsFile.build(st.copy(usage = c.mergedUsage(), cloudUsage = c.cloudUsageBook(), cloudUsageAtMs = c.cloudUsage.value?.at ?: 0L), diagnosticsExtras(inputs), System.currentTimeMillis()) }
+                    withContext(Dispatchers.IO) { c.cloud.saveDiagnostics(text) }
+                }
+                kotlinx.coroutines.delay(20 * 60_000L)
+            }
         }
     }
 

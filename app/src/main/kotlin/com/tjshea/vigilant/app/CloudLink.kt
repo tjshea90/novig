@@ -948,6 +948,14 @@ class CloudLink(private val c: AppContainer) {
         return line
     }
 
+    /** Saves the whole Diagnostics report as `phone/diag/diag-latest.txt.gz` on `phone-data`, so Claude reads it from GitHub (Tj, 2026-10-24: "there is no option to send the file"). Null when sent, else why not. */
+    suspend fun saveDiagnostics(text: String): String? {
+        if (!hasToken()) return "no token"
+        val gz = withContext(Dispatchers.IO) { java.io.ByteArrayOutputStream().also { o -> GZIPOutputStream(o).use { g -> g.write(text.toByteArray()) } }.toByteArray() }
+        if (gz.size > MAX_FILE_BYTES) return "report too big"
+        return client.putFile(CloudClient.DATA_BRANCH, "phone/diag/diag-latest.txt.gz", gz, "diagnostics ${java.time.Instant.now()}")
+    }
+
     private fun gzip(f: File): ByteArray {
         val out = java.io.ByteArrayOutputStream()
         GZIPOutputStream(out).use { g -> f.inputStream().use { it.copyTo(g) } }
