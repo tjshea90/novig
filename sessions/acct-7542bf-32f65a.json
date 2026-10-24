@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "6ba9c7de46b643b3ecb414846dc86da240551e64",
+ "head": "81e2270b7cc05b1506bdbdd8f7516cd58d5c085b",
  "since": 1792805068,
- "beat": 1792805743,
- "beatIso": "2026-10-24T01:35:43Z",
- "done": "SR1-2: verified the cut-off session's SR weights against review-digest run 40047913906 (CLV/star +0.77 vs ST1 +0.50, ROI/star +6.2 vs +5.0, 4-5\u2605 +1.83% CLV +2.81% ROI); SR section in star_rating_review, LEVERS, CHANGES (revert rule), export READ ME; BetRatingTest+AutoBetStarsTest green",
- "next": "SR3: full suite (bash tools/test.sh), ship.sh v1.0.67 with SR + OK3 (SharpAPI reconcile fix), release.yml, record-release, engine reset (engine_set.py --reset), tell Tj"
+ "beat": 1792805779,
+ "beatIso": "2026-10-24T01:36:19Z",
+ "done": "pre-ship: SR: star rating re-weighted (sharp book 25->15, edge 25->30, agreement 20->25, type-of-bet points at half; CLV/star +0.50->+0.77, ROI/star +5.0->+6.2 on 1,968 graded engine lines); OK3: SharpAPI no longer re-reads NBA/NFL/NCAAF whole every minute while its stream is live",
+ "next": "ship.sh gates and releases this"
 }
