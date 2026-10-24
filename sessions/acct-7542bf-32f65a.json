@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "44e0db3c49a9c94131c83830950e7bdac775a6b4",
+ "head": "e415600a220c0897ffe509cd32c932d28fd5679f",
  "since": 1792827790,
- "beat": 1792858272,
- "beatIso": "2026-10-24T16:11:12Z",
- "done": "",
- "next": ""
+ "beat": 1792858323,
+ "beatIso": "2026-10-24T16:12:03Z",
+ "done": "TR: Tj's stats/trends request written into TASKS.md",
+ "next": "TR1: test trend signals on the PropLine archive in scratch/sx/pl"
 }
