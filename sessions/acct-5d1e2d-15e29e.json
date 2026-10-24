@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "63103c5930b8be8a45bbc63e0e90d24385a62b15",
+ "head": "43a34d40645631f25b133e3670380d32218f6975",
  "since": 1792818666,
- "beat": 1792861527,
- "beatIso": "2026-10-24T17:05:27Z",
- "done": "pre-release: CH80: why a listed bet hides is logged (FEEDHIDE); CNO dead-price memory; Kalshi engine lane lists when its switch is OFF (versionCode 412, v1.0.72)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.72), then run: bash tools/record-release.sh v1.0.72 412 \"CH80: why a listed bet hides is logged (FEEDHIDE); CNO dead-price memory; Kalshi engine lane lists when its switch is OFF\""
+ "beat": 1792861562,
+ "beatIso": "2026-10-24T17:06:02Z",
+ "done": "CH81 written; engine reset for Kalshi",
+ "next": "CH81b verify kalshi rows; CH81a; CH81c"
 }
