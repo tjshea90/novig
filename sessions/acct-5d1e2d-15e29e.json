@@ -6,10 +6,10 @@
  "kind": "routine",
  "task": "rotation",
  "branch": "claude/optimistic-curie-0irsxn",
- "head": "b5115a07e65fcd60d8f249c648cae2f9631a0dd4",
+ "head": "97468674a36c302036029f27a0af6fe783d7ec40",
  "since": 1792818666,
- "beat": 1792884094,
- "beatIso": "2026-10-24T23:21:34Z",
- "done": "answered list-disappears chat",
- "next": "CH80a/CH86"
+ "beat": 1792884217,
+ "beatIso": "2026-10-24T23:23:37Z",
+ "done": "ENGINEER: CH86 traced; extras are likely unfilled IOC retries (research/ch86_extra_orders_2026-10-24.md)",
+ "next": "read v1.0.78 diag NOFILL list per outcome to confirm; consider attempt counter in Bet sheet"
 }
