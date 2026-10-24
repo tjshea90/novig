@@ -24,7 +24,7 @@ US_BOOKS = ["draftkings", "fanduel", "betmgm", "williamhill_us", "espnbet", "bov
 SHARP_WEIGHT = 0.7
 CLOSE_MAX_MIN = 90
 COLS = ["event_id", "sport", "start_utc", "lead_h", "market", "kind", "player", "side", "line", "novig_american", "cost", "ev_pin", "ev_blend", "pin_fair", "blend_fair",
-        "books", "agreeing", "sharp_agrees", "spread", "close_fair", "clv", "result", "profit"]
+        "books", "agreeing", "sharp_agrees", "spread", "close_fair", "clv", "novig_close_fair", "mix_close_fair", "clv_mix", "result", "profit"]
 
 
 def prob(a):
@@ -81,14 +81,17 @@ def opp_point(market, point):
 def load_archive(archive_dir, sports):
     """-> rows of Novig (resolved, two-way) by game, and Pinnacle's devig-ready closes."""
     games, pin_close = {}, {}
-    for f in glob.glob(os.path.join(archive_dir, "**", "resolved-*-pinnacle*.csv.gz"), recursive=True):
+    for f in glob.glob(os.path.join(archive_dir, "**", "resolved-*-pinnacle*.csv.gz"), recursive=True) + glob.glob(os.path.join(archive_dir, "**", "resolved-*-novig*.csv.gz"), recursive=True):
+        book = "novig" if "-novig" in os.path.basename(f) else "pinnacle"
         for r in csv.DictReader(gzip.open(f, "rt")):
             if r["player_name"].startswith("(Water") or not r["closing_price"]:
                 continue
             c, s0 = ts(r["closing_at"]), ts(r["commence_time"])
             if c is None or s0 is None or (s0 - c) / 60 > CLOSE_MAX_MIN or c > s0 + 60:
                 continue
-            pin_close[(r["event_id"], r["market"], r["player_name"], pt(r["closing_point"] or r["line"]), r["outcome_name"])] = prob(r["closing_price"])
+            # SX finding 1: at the close Novig is as sharp as Pinnacle, so both closes are kept (keyed by book: "pinnacle" closes stay under the old 5-tuple key)
+            k = (r["event_id"], r["market"], r["player_name"], pt(r["closing_point"] or r["line"]), r["outcome_name"])
+            pin_close[k if book == "pinnacle" else ("novig",) + k] = prob(r["closing_price"])
     for f in glob.glob(os.path.join(archive_dir, "**", "resolved-*-novig*.csv.gz"), recursive=True):
         sport = os.path.basename(f).split("-")[1]
         if sports and sport not in sports:
@@ -101,10 +104,11 @@ def load_archive(archive_dir, sports):
     return games, pin_close
 
 
-def close_fair(pin_close, eid, market, player, point, side, opp):
-    a = pin_close.get((eid, market, player, point, side))
-    b = pin_close.get((eid, market, player, opp_point(market, point), opp))
-    return None if a is None or b is None else a / (a + b)
+def close_fair(pin_close, eid, market, player, point, side, opp, book="pinnacle"):
+    pre = () if book == "pinnacle" else (book,)
+    a = pin_close.get(pre + (eid, market, player, point, side))
+    b = pin_close.get(pre + (eid, market, player, opp_point(market, point), opp))
+    return None if a is None or b is None or not 0.9 < a + b < 1.25 else a / (a + b)
 
 
 def evaluate(sport, eid, start, rows, hist, pin_close, books):
@@ -118,6 +122,8 @@ def evaluate(sport, eid, start, rows, hist, pin_close, books):
         if opp is None:
             continue
         cf = close_fair(pin_close, eid, m, p, point, side, opp)
+        nf = close_fair(pin_close, eid, m, p, point, side, opp, "novig")
+        mix = (cf + nf) / 2 if cf is not None and nf is not None else None
         win = r["resolution"] == "won"
         for L in LEADS_H:
             t = start - L * 3600
@@ -157,7 +163,9 @@ def evaluate(sport, eid, start, rows, hist, pin_close, books):
                 "novig_american": nv["price"], "cost": round(cost, 5), "ev_pin": "" if ev_pin is None else round(ev_pin, 5), "ev_blend": round(ev_blend, 5),
                 "pin_fair": "" if pin_f is None else round(pin_f, 5), "blend_fair": round(blend, 5), "books": len(fairs), "agreeing": agreeing,
                 "sharp_agrees": "" if ev_pin is None else (1 if ev_pin > 0 else 0), "spread": "" if spread is None else round(spread, 5),
-                "close_fair": "" if cf is None else round(cf, 5), "clv": "" if cf is None else round(cf / cost - 1, 5), "result": "won" if win else "lost",
+                "close_fair": "" if cf is None else round(cf, 5), "clv": "" if cf is None else round(cf / cost - 1, 5),
+                "novig_close_fair": "" if nf is None else round(nf, 5), "mix_close_fair": "" if mix is None else round(mix, 5), "clv_mix": "" if mix is None else round(mix / cost - 1, 5),
+                "result": "won" if win else "lost",
                 "profit": round(d - 1, 5) if win else -1.0,
             })
     return out
@@ -246,7 +254,8 @@ def selftest():
     hist = {"novig": {("totals", "", "Over"): [{"recorded_at": "2026-10-10T11:00:00Z", "price": 110, "point": 5.5}], ("totals", "", "Under"): [{"recorded_at": "2026-10-10T11:00:00Z", "price": -130, "point": 5.5}]},
             "pinnacle": {("totals", "", "Over"): [{"recorded_at": "2026-10-10T10:00:00Z", "price": -105, "point": 5.5}], ("totals", "", "Under"): [{"recorded_at": "2026-10-10T10:00:00Z", "price": -115, "point": 5.5}]},
             "draftkings": {("totals", "", "Over"): [{"recorded_at": "2026-10-10T09:00:00Z", "price": -110, "point": 5.5}], ("totals", "", "Under"): [{"recorded_at": "2026-10-10T09:00:00Z", "price": -110, "point": 5.5}]}}
-    pin_close = {("e", "totals", "", 5.5, "Over"): prob(-120), ("e", "totals", "", 5.5, "Under"): prob(100)}
+    pin_close = {("e", "totals", "", 5.5, "Over"): prob(-120), ("e", "totals", "", 5.5, "Under"): prob(100),
+                 ("novig", "e", "totals", "", 5.5, "Over"): prob(-110), ("novig", "e", "totals", "", 5.5, "Under"): prob(-110)}
     got = evaluate("x", "e", start, rows, hist, pin_close, ["draftkings"])
     over1 = [g for g in got if g["side"] == "Over" and g["lead_h"] == 1][0]
     pa, pb = prob(-105), prob(-115)
@@ -255,6 +264,7 @@ def selftest():
     assert abs(over1["blend_fair"] - round(0.7 * pf + 0.3 * 0.5, 5)) < 1e-9
     cf = prob(-120) / (prob(-120) + prob(100))
     assert abs(over1["clv"] - round(cf / prob(110) - 1, 5)) < 1e-9 and over1["profit"] == round(1 / prob(110) - 1, 5)
+    assert abs(over1["novig_close_fair"] - 0.5) < 1e-9 and abs(over1["clv_mix"] - round(((cf + 0.5) / 2) / prob(110) - 1, 5)) < 1e-9
     assert not [g for g in got if g["lead_h"] == 3]          # Novig had no price 3 h out
     body = {"bookmakers": [{"key": "novig", "markets": [{"key": "totals", "outcomes": [{"name": "Over", "snapshots": [{"price": 100}]}]}]}]}
     assert parse_history(body) == {"novig": {("totals", "", "Over"): [{"price": 100}]}}

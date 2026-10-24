@@ -1,22 +1,23 @@
-# CHECKPOINT 4099 — read me first, then TASKS.md
+# CHECKPOINT 4100 — read me first, then TASKS.md
 
-**Written:** 2026-10-24T03:09:01Z · **tests:** 1 RED: test_research_index.sh (8 green)
-**Branch:** `ccr-305d3f7a-i2z8ja` · **builds on:** `cd0d7f208` (this checkpoint is the commit after it)
+**Written:** 2026-10-24T03:09:56Z · **tests:** 1 RED: test_research_index.sh (8 green)
+**Branch:** `ccr-305d3f7a-i2z8ja` · **builds on:** `5281628de` (this checkpoint is the commit after it)
 
 ## Just done
-SX finding 1 written (research/star_rating_sx_2026-10-24.md): at the close Novig is as sharp as Pinnacle; +EV-vs-Pinnacle at close loses; CLV yardstick must blend Novig's close
+SX: star_backtest also keeps Novig's devigged close and the blended close (clv_mix)
 
 ## Do this next
-read star-study trial (20 games), then dispatch 2000; multibook export; point-in-time analysis by type and lead
+read star-study trial, dispatch 2000
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-    ?? research/star_rating_sx_2026-10-24.md
+     M tools/star_backtest.py
 
 ## Last ten checkpoints
 ```
+  5281628de ckpt 4099: SX finding 1 written (research/star_rating_sx_2026-10-24.md): at the close 
   cd0d7f208 ckpt 4098: SX: research index rebuilt; star tools landing
   8597c1116 ckpt 4097: SX: landing the star tools
   4ecfa8fdf ckpt 4096: SX1-2: inventory (engine-dataset, phone study, propline-archive 907k graded
@@ -26,5 +27,4 @@ read star-study trial (20 games), then dispatch 2000; multibook export; point-in
   230599af4 ckpt 4093: S5 done: v1.0.68 released and recorded (no-trusted-edge floor, 1 star under
   a79976d1e ckpt 4092: pre-release: S5: star scale fixed at the bottom: 0 = no trusted edge (EV un
   8b0c5e816 ckpt 4091: pre-ship: S5: star scale fixed at the bottom: 0 = no trusted edge (EV under
-  8f5d90a9b ckpt 4090: S5a-c: star scale checked on the engine's 20,840 graded lines; 0 = no trust
 ```
