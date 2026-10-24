@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "3cfba3ef34e11dc194f08524eb6923999de7c09d",
+ "head": "6d84a658e786431849e9991d7cb3c4b60de3437a",
  "since": 1792818666,
- "beat": 1792862769,
- "beatIso": "2026-10-24T17:26:09Z",
- "done": "v1.0.73 on main, release building; CH82 noted",
- "next": "release record; verify kalshi rows + SX counts; CH82 wording"
+ "beat": 1792862891,
+ "beatIso": "2026-10-24T17:28:11Z",
+ "done": "v1.0.73 released+recorded; CH82 wording: stopped or restarting (tests green, unreleased)",
+ "next": "ship 1.0.74 with next batch; reset engine to run MatchHealth; read SX counts from scan note"
 }
