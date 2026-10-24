@@ -213,7 +213,7 @@ def cmd_run(archive_dir, outdir, n_events, sports, books):
             hist = {}
             for j in range(0, len(mkts), 40):
                 st_, h, data = pl.request("/v1/sports/%s/events/%s/odds/history" % (sport, eid), key,
-                                          {"markets": ",".join(mkts[j:j + 40]), "bookmakers": ",".join(["novig", "pinnacle"] + books), "changes_only": "true", "relative_from": "-26h", "relative_to": "0"})
+                                          {"markets": ",".join(mkts[j:j + 40]), "bookmakers": ",".join(["novig", "pinnacle"] + books), "changes_only": "true", "relative_from": "-8d", "relative_to": "0"})
                 calls += 1
                 if st_ == 429:
                     print("429 after %d calls: stopping" % calls)

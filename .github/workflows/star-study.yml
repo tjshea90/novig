@@ -1,0 +1,44 @@
+name: Star study (point-in-time backtest)
+
+# SX (Tj, 2026-10-24: "Build a star rating system based on solid data from all the sources including apis historical data"): rebuilds what Vigilant would have seen at each
+# lead time for archived games (PropLine price history of Novig, Pinnacle and the US books) and scores it on Pinnacle's close and the result. Output: Release star-backtest-<day>
+# (lines.csv.gz + SUMMARY.txt), never deleted. Uses PROPLINE_API_KEY (a few thousand of the Pro key's 25,000 daily requests); places nothing.
+on:
+  workflow_dispatch:
+    inputs:
+      events:
+        description: "games to read (one or two history calls each)"
+        default: "2000"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: star-study
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Backtest
+        env:
+          PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          EVENTS: ${{ github.event.inputs.events || '2000' }}
+        run: |
+          set -u
+          python3 -I tools/star_backtest.py selftest
+          mkdir -p arch
+          for TAG in $(gh release list --limit 200 --json tagName --jq '.[].tagName' | grep '^propline-archive-' || true); do
+            gh release download "$TAG" --pattern 'resolved-*.csv.gz' --dir "arch/$TAG" --clobber 2>/dev/null || true
+          done
+          python3 -I tools/star_backtest.py run arch out --events "$EVENTS"
+          day=$(date -u +%F)
+          tag="star-backtest-$day"
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "Star backtest $day" --notes "Point-in-time backtest for the star rating (tools/star_backtest.py). Never delete."
+          gh release upload "$tag" out/* --clobber
