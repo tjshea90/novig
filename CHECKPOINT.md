@@ -1,23 +1,23 @@
-# CHECKPOINT 4116 — read me first, then TASKS.md
+# CHECKPOINT 4117 — read me first, then TASKS.md
 
-**Written:** 2026-10-24T16:16:10Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-305d3f7a-i2z8ja` · **builds on:** `cb725c4a0` (this checkpoint is the commit after it)
+**Written:** 2026-10-24T16:20:37Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-hj14wp` · **builds on:** `76dcbe7bd` (this checkpoint is the commit after it)
 
 ## Just done
-TR1-TR2: stats/trends study (research/trends_2026-10-24.md): recent form ~1pt beyond close, not a profit system; not built
+CH79: Kalshi engine lane scans+lists when switch OFF (orders still need Paper/Live)
 
 ## Do this next
-SB2b: grade the bids on Novig's close; TR3 revisit after
+engine restart to pick up; confirm kalshi rows appear
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M research/INDEX.md
-     M research/LEVERS.md
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  e9b40b39e ckpt 4116: TR1-TR2: stats/trends study (research/trends_2026-10-24.md): recent form ~1
   e415600a2 ckpt 4115: TR: Tj's stats/trends request written into TASKS.md
   ecceb13df ckpt 4114: WATCH 2026-10-24: engine healthy, no action
   03a62e532 ckpt 4113: CH78: app suite green on this code
@@ -27,8 +27,7 @@ SB2b: grade the bids on Novig's close; TR3 revisit after
   67fb5137d ckpt 4110: pre-ship: SX: stars are the bet type's proof at Novig (CLV against Novig's 
   6a94c9011 ckpt 4109: SX5 done: Scale.SX shipped in code (type's proof at Novig from star_evidenc
   0ced35d7e ckpt 4108: SX findings 4-5: Novig's own close is the yardstick (ROI = 0.82 x CLV_novig
-  14afb9504 ckpt 4108: PL-OA: PropLine book accuracy report read and written up
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
