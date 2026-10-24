@@ -154,7 +154,7 @@ object BetRating {
         val tight = i.spread?.let { ((0.05 - it) / 0.04).coerceIn(0.0, 1.0) } ?: 0.5
         val points = w.coverage * coverage + w.agreement * agree + w.edge * edge + w.sharp * sharp + w.consensus * tight + w.typeScale * i.typePoints
         val support = roundHalf(supportStars(points, books, i))
-        val doubt = doubtOf(i.ev, i.sharpAgainst) ?: if (scale == Scale.S6) thinMarketDoubt(books, i.ev) else null
+        val doubt = doubtOf(i.ev, i.sharpAgainst) ?: if (scale != Scale.S5) thinMarketDoubt(books, i.ev) else null
         if (doubt != null) return Rating(NONE, points, doubt, support)
         // SX: the record of bets of this type at Novig (null: no type, no table, or no cell with the games: the bet is then unproven, 1 star).
         val cell = if (scale == Scale.SX) i.type?.let { t -> evidence?.lookup(t) } else null
