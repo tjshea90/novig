@@ -1234,6 +1234,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
                 for ((k, o) in nowShown) if (k !in shown && shown.isNotEmpty()) c.eventLog.count("feed.show.back")
+                if (shown.size >= 4 && nowShown.size * 2 < shown.size) {
+                    val res = st.result
+                    c.eventLog.warn("FEEDHIDE", "bulk: ${shown.size} listed bets -> ${nowShown.size}; the feed holds ${rows.size}; result computed ${res?.computedAtMs?.let { (now - it) / 1000 }}s ago; scanning=${st.status.scanning}; cloudDrives=${st.settings.cloudDrives}")
+                }
                 shown = nowShown
             }
         }
