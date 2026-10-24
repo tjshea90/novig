@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "70fcf78284ef91411ea51234f922252b1b383f2b",
+ "head": "88138eab6834985b80a8172e268b08c85a2fd716",
  "since": 1792818666,
- "beat": 1792863291,
- "beatIso": "2026-10-24T17:34:51Z",
- "done": "CH83 scoped: archive not write-behind",
- "next": "CH83a with real history file test; ship 1.0.74 (CH82 wording) when batch ready"
+ "beat": 1792863390,
+ "beatIso": "2026-10-24T17:36:30Z",
+ "done": "CH80b candidate cause noted (requoteListed partial books)",
+ "next": "wait for Tj's FEEDHIDE diagnostics; then fix; CH83a archive; ship 1.0.74"
 }
