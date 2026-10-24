@@ -44,6 +44,8 @@ object BetRating {
         val spread: Double? = null,
         /** Points (of 100) for the TYPE of bet from the history ([ProfitProfile.typePoints]): negative for a type that has lost, positive for one that has won. */
         val typePoints: Double = 0.0,
+        /** The bet's type for the evidence table ([StarEvidence], [Scale.SX]); null = unknown (SX then falls back to [Scale.S6]). */
+        val type: BetType? = null,
     )
 
     /**
@@ -75,10 +77,10 @@ object BetRating {
     val CURRENT: Weights = Weights.SR
 
     /** How points become stars: [S5] (v1.0.68: the support curve, with the no-trusted-edge floor) or [S6] (v1.0.69: the edge ladder with breadth ceilings). The star check scores both every day. */
-    enum class Scale { S5, S6 }
+    enum class Scale { S5, S6, SX }
 
     /** The scale the app rates with (SB, Tj 2026-10-24). Revert: [Scale.S5]. */
-    val CURRENT_SCALE: Scale = Scale.S6
+    val CURRENT_SCALE: Scale = Scale.S5
 
     /** Over this EV (to [MAX_TRUSTED_EV]) S6 rates a bet at most 4 stars: an edge that large is often stale or mismatched. */
     const val SUSPECT_EV = 0.12
@@ -90,7 +92,7 @@ object BetRating {
      * A rating: [stars] in half steps from 1.0 to 5.0 (or [NONE] with the [doubt] that put it there), the support [points], and the [support] stars those points make on the old curve
      * (what the engine's stake sizing reads).
      */
-    data class Rating(val stars: Double, val points: Double, val doubt: String? = null, val support: Double = stars) {
+    data class Rating(val stars: Double, val points: Double, val doubt: String? = null, val support: Double = stars, val evidence: StarEvidence.Cell? = null) {
         /** "3½" or "4"; the glyphs are [glyphs]. */
         val label: String get() = BetRating.label(stars)
         val glyphs: String get() = BetRating.glyphs(stars)
@@ -158,10 +160,42 @@ object BetRating {
             // The smallest real edges make the least (S5): under +1% at most 1 star.
             Scale.S5 -> if (i.ev < MIN_EV_FOR_TWO_STARS - 1e-12) MIN else support
             // An edge over 12% is often a stale or mismatched quote (the edge score has always fallen there; too few graded lines to say more): rated, but not top.
-            Scale.S6 -> minOf(edgeStars(i.ev), breadthCeiling(books), if (i.ev > SUSPECT_EV) 4.0 else MAX)
+            Scale.S6 -> s6Stars(i.ev, books)
+            Scale.SX -> {
+                val cell = i.type?.let { t -> StarEvidence.shipped?.lookup(t, i.ev) } ?: return Rating(roundHalf(s6Stars(i.ev, books)), points, null, support)
+                losingDoubt(cell)?.let { return Rating(NONE, points, it, support, cell) }
+                minOf(proofStars(cell), breadthCeiling(books), if (i.ev > SUSPECT_EV) 4.0 else MAX)
+            }
         }
-        return Rating(roundHalf(stars), points, null, support)
+        return Rating(roundHalf(stars), points, null, support, if (scale == Scale.SX) i.type?.let { t -> StarEvidence.shipped?.lookup(t, i.ev) } else null)
     }
+
+    private fun s6Stars(ev: Double, books: Int): Double = minOf(edgeStars(ev), breadthCeiling(books), if (ev > SUSPECT_EV) 4.0 else MAX)
+
+    /**
+     * SX: the stars a type's record earns ([StarEvidence.Cell.z], the CLV against the blended close in standard errors): under 0.5 = 1 (+EV, unproven), then a half star at each of
+     * z 0.5, 1, 1.32, 1.64 (90%), 1.81, 1.96 (95%), 2.33, 2.58 (99%) = 5. Four stars and up also need a mean CLV worth having ([MIN_CLV_FOR_FOUR], [MIN_CLV_FOR_FIVE]).
+     */
+    fun proofStars(cell: StarEvidence.Cell): Double {
+        val z = cell.z
+        var stars = Z_STEPS.count { z >= it } * 0.5 + 1.0
+        if (cell.clv < MIN_CLV_FOR_FIVE) stars = minOf(stars, 4.5)
+        if (cell.clv < MIN_CLV_FOR_FOUR) stars = minOf(stars, 3.5)
+        return stars.coerceIn(MIN, MAX)
+    }
+
+    /** SX: a type the history shows LOSING has no trusted edge: CLV below zero by [LOSING_Z] standard errors, or a ROI whose upper 95% bound is under zero. */
+    private fun losingDoubt(cell: StarEvidence.Cell): String? = when {
+        cell.z <= -LOSING_Z -> "bets like this lost to the close (${pct(cell.clv)} over ${cell.games} games)"
+        cell.roi != null && cell.roiSe != null && cell.roi + 1.96 * cell.roiSe < 0.0 -> "bets like this lost money (${pct(cell.roi)} over ${cell.games} games)"
+        else -> null
+    }
+
+    /** SX's z steps: each one passed adds half a star to 1 (eight steps: 5 stars at 2.58, 99% one-sided). */
+    val Z_STEPS = listOf(0.5, 1.0, 1.32, 1.64, 1.81, 1.96, 2.33, 2.58)
+    const val MIN_CLV_FOR_FOUR = 0.01
+    const val MIN_CLV_FOR_FIVE = 0.02
+    const val LOSING_Z = 1.64
 
     /** The old curve's stars from the support points, under its ceilings (v1.0.67's stars): [Rating.support]. */
     private fun supportStars(points: Double, books: Int, i: Inputs): Double {
