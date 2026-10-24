@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "e415600a220c0897ffe509cd32c932d28fd5679f",
+ "head": "0b1b360332aceafb530d9e4c97244e1e5618add7",
  "since": 1792818666,
- "beat": 1792858516,
- "beatIso": "2026-10-24T16:15:16Z",
+ "beat": 1792858802,
+ "beatIso": "2026-10-24T16:20:02Z",
  "done": "CH78: app suite green on this code",
  "next": "main should land it; then CH78b"
 }
