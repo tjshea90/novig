@@ -946,3 +946,8 @@ And why is it spending on multiple keys at the same time? This looks like waste
 ```
 Your usage is about to run out. Checkpoint and save progress
 ```
+
+## 2026-10-24T01:31:18Z
+```
+This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
+```
