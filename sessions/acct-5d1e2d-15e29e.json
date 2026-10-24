@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-8fhzvg",
- "head": "5accb503591d7e19a53f11829238c514bade2e79",
+ "head": "6e9ccd66f90c0d3a52ca94d04ee4c8fd85a7fcfe",
  "since": 1792818666,
- "beat": 1792877995,
- "beatIso": "2026-10-24T21:39:55Z",
- "done": "repeat guard 2/$3 set; default changed",
- "next": "CH86 find extra-order path; run RepeatGuard tests, ship"
+ "beat": 1792878049,
+ "beatIso": "2026-10-24T21:40:49Z",
+ "done": "RepeatGuard test pinned to explicit $100; 18 pass",
+ "next": "full test gate, ship; CH86 extra-order path"
 }
