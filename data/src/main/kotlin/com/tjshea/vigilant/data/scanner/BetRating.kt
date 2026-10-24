@@ -156,16 +156,18 @@ object BetRating {
         val support = roundHalf(supportStars(points, books, i))
         val doubt = doubtOf(i.ev, i.sharpAgainst) ?: if (scale == Scale.S6) thinMarketDoubt(books, i.ev) else null
         if (doubt != null) return Rating(NONE, points, doubt, support)
-        // SX: the record of bets of this type at this edge (null: no type, no table, or no cell with the games: SX then rates as S6, by the edge alone).
-        val cell = if (scale == Scale.SX) i.type?.let { t -> StarEvidence.shipped?.lookup(t, i.ev) } else null
+        // SX: the record of bets of this type at Novig (null: no type, no table, or no cell with the games: the bet is then unproven, 1 star).
+        val cell = if (scale == Scale.SX) i.type?.let { t -> StarEvidence.shipped?.lookup(t) } else null
         val stars = when (scale) {
             // The smallest real edges make the least (S5): under +1% at most 1 star.
             Scale.S5 -> if (i.ev < MIN_EV_FOR_TWO_STARS - 1e-12) MIN else support
             // An edge over 12% is often a stale or mismatched quote (the edge score has always fallen there; too few graded lines to say more): rated, but not top.
             Scale.S6 -> s6Stars(i.ev, books)
-            Scale.SX -> if (cell == null) s6Stars(i.ev, books) else {
+            Scale.SX -> if (cell == null) MIN else {
                 losingDoubt(cell)?.let { return Rating(NONE, points, it, support, cell) }
-                minOf(proofStars(cell), breadthCeiling(books), if (i.ev > SUSPECT_EV) 4.0 else MAX)
+                // The backtest saying this type LOSES to Novig's close holds a real record back to 2 stars until the real lines outweigh it.
+                val proof = if ((cell.btZ ?: 0.0) <= -LOSING_Z) minOf(proofStars(cell), 2.0) else proofStars(cell)
+                minOf(proof, breadthCeiling(books), if (i.ev > SUSPECT_EV) 4.0 else MAX)
             }
         }
         return Rating(roundHalf(stars), points, null, support, cell)
@@ -174,8 +176,9 @@ object BetRating {
     private fun s6Stars(ev: Double, books: Int): Double = minOf(edgeStars(ev), breadthCeiling(books), if (ev > SUSPECT_EV) 4.0 else MAX)
 
     /**
-     * SX: the stars a type's record earns ([StarEvidence.Cell.z], the CLV against the blended close in standard errors): under 0.5 = 1 (+EV, unproven), then a half star at each of
-     * z 0.5, 1, 1.32, 1.64 (90%), 1.81, 1.96 (95%), 2.33, 2.58 (99%) = 5. Four stars and up also need a mean CLV worth having ([MIN_CLV_FOR_FOUR], [MIN_CLV_FOR_FIVE]).
+     * SX: the stars a type's record earns at Novig ([StarEvidence.Cell.z]: its real lines' CLV against Novig's own close, in standard errors): under 0.5 = 1 (+EV against the books, not
+     * proven at Novig), then a half star at each of z 0.5, 1, 1.32, 1.64 (90%), 1.81, 1.96 (95%), 2.33, 2.58 (99%) = 5. Four stars and up also need a CLV worth having
+     * ([MIN_CLV_FOR_FOUR], [MIN_CLV_FOR_FIVE]: against Novig's own close, where a taker on average gives up about 2%).
      */
     fun proofStars(cell: StarEvidence.Cell): Double {
         val z = cell.z
@@ -185,18 +188,20 @@ object BetRating {
         return stars.coerceIn(MIN, MAX)
     }
 
-    /** SX: a type the history shows LOSING has no trusted edge: CLV below zero by [LOSING_Z] standard errors, or a ROI whose upper 95% bound is under zero. */
-    private fun losingDoubt(cell: StarEvidence.Cell): String? = when {
-        cell.z <= -LOSING_Z -> "bets like this lost to the close (${pct(cell.clv)} over ${cell.games} games)"
-        cell.roi != null && cell.roiSe != null && cell.roi + 1.96 * cell.roiSe < 0.0 -> "bets like this lost money (${pct(cell.roi)} over ${cell.games} games)"
-        else -> null
-    }
+    /**
+     * SX: a type that LOSES at Novig has no trusted edge: its real lines' CLV against Novig's close below [LOSING_CLV] even at its upper 95% bound, and the backtest not saying otherwise
+     * (it agrees, or has no such type). Both sources agree today on game-total Unders and favourites at -150..-100 (research/star_rating_sx_2026-10-24.md).
+     */
+    private fun losingDoubt(cell: StarEvidence.Cell): String? =
+        if (cell.upper < LOSING_CLV && (cell.btZ == null || cell.btZ <= -LOSING_Z)) "bets like this lost to Novig's close (${pct(cell.clv)} over ${cell.games} games)" else null
 
     /** SX's z steps: each one passed adds half a star to 1 (eight steps: 5 stars at 2.58, 99% one-sided). */
     val Z_STEPS = listOf(0.5, 1.0, 1.32, 1.64, 1.81, 1.96, 2.33, 2.58)
-    const val MIN_CLV_FOR_FOUR = 0.01
-    const val MIN_CLV_FOR_FIVE = 0.02
+    const val MIN_CLV_FOR_FOUR = 0.005
+    const val MIN_CLV_FOR_FIVE = 0.01
     const val LOSING_Z = 1.64
+    /** A type loses when even the upper 95% bound of its CLV against Novig's close is below this (half a point: more than rounding). */
+    const val LOSING_CLV = -0.005
 
     /** The old curve's stars from the support points, under its ceilings (v1.0.67's stars): [Rating.support]. */
     private fun supportStars(points: Double, books: Int, i: Inputs): Double {
