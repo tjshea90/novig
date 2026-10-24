@@ -143,6 +143,21 @@ def build(out, real_paths, backtest_paths):
     return doc
 
 
+def summary(new_path, old_path=None):
+    """The cells with 100+ real games, and what changed against the shipped table (for the weekly workflow's report)."""
+    new = json.load(open(new_path))["cells"]
+    old = json.load(open(old_path))["cells"] if old_path and os.path.exists(old_path) else {}
+    out = ["cells with 100+ games of real lines (CLV against Novig's close; z; the backtest's z):"]
+    for k, c in sorted(new.items(), key=lambda kv: -(kv[1]["clv"] / kv[1]["clvSe"]) if kv[1].get("games", 0) >= 100 and kv[1].get("clvSe") else 0):
+        if c.get("games", 0) < 100 or not c.get("clvSe"):
+            continue
+        o = old.get(k, {})
+        was = (" (was %+.2f%% over %d)" % (100 * o["clv"], o["games"])) if o.get("games") else " (new)"
+        out.append("  %-36s %4d games  CLV %+.2f%% ±%.2f  z %+.2f  backtest z %s%s" % (k, c["games"], 100 * c["clv"], 196 * c["clvSe"], c["clv"] / c["clvSe"], c.get("btZ"), was))
+    print("\n".join(out))
+    return 0
+
+
 def selftest():
     import tempfile
     d = tempfile.mkdtemp()
@@ -174,6 +189,8 @@ if __name__ == "__main__":
     a = sys.argv[1:]
     if not a or a[0] == "selftest":
         sys.exit(selftest())
+    if a[0] == "summary" and len(a) >= 2:
+        sys.exit(summary(a[1], a[2] if len(a) > 2 else None))
     if a[0] == "build" and len(a) >= 2:
         def opt(name):
             if name not in a:

@@ -1,0 +1,47 @@
+name: Star evidence (rebuild the star rating's table)
+
+# SX (Tj, 2026-10-24: "5 Star means the bet is a type that is proven profitable from data"): every week, re-grade every +EV line Vigilant and CNO listed (the engine dataset and the
+# phone's scan study) against Novig's OWN close from Novig's public trade archive (tools/novig_trade_close.py), rebuild data/src/main/resources/star_evidence.json with the
+# backtest's verdicts (tools/star_table.py), and publish it with a summary in the Release star-evidence. A session ships a new table (BetRating reads it; stars rise as types prove
+# themselves). Needs no key; places nothing.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 10 * * 1"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: star-evidence
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -u
+          python3 -I tools/novig_trade_close.py selftest
+          python3 -I tools/star_table.py selftest
+          python3 -I tools/lines_dataset.py selftest
+          mkdir -p eng study phonelines bt out
+          gh release download engine-dataset -p 'lines-*.csv.gz' -D eng --clobber
+          git fetch --depth 1 origin phone-data
+          for f in $(git ls-tree -r --name-only FETCH_HEAD | grep '^phone/study/study-.*\.jsonl\.gz$'); do git show "FETCH_HEAD:$f" | gunzip > "study/$(basename "$f" .gz)"; done
+          python3 -I tools/lines_dataset.py lines study phonelines
+          for f in phonelines/lines-*.csv.gz; do mv "$f" "phonelines/phone-$(basename "$f" | sed 's/^lines-//')"; done
+          tag=$(gh release list --limit 200 --json tagName --jq '.[].tagName' | grep '^star-backtest-' | sort | tail -1)
+          gh release download "$tag" -p 'lines-*.csv.gz' -D bt --clobber
+          python3 -I tools/novig_trade_close.py run out/real_novig_close.csv.gz eng phonelines
+          python3 -I tools/star_table.py build out/star_evidence.json --real out/real_novig_close.csv.gz --backtest bt/lines-*.csv.gz | tee out/SUMMARY.txt
+          python3 -I tools/star_table.py summary out/star_evidence.json data/src/main/resources/star_evidence.json | tee -a out/SUMMARY.txt
+          gh release view star-evidence >/dev/null 2>&1 || gh release create star-evidence --title "Star evidence" --notes "The star rating's evidence table rebuilt weekly (tools/star_table.py). Ship star_evidence.json into data/src/main/resources/ to use it."
+          gh release upload star-evidence out/star_evidence.json out/SUMMARY.txt out/real_novig_close.csv.gz --clobber
