@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "042944b648387716263e52071a9cdcfeea48f316",
+ "head": "f44754c14296fc4538061848d0e424ae59463e80",
  "since": 1792818666,
- "beat": 1792861956,
- "beatIso": "2026-10-24T17:12:36Z",
- "done": "CH81 written; engine reset for Kalshi",
- "next": "CH81b verify kalshi rows; CH81a; CH81c"
+ "beat": 1792862081,
+ "beatIso": "2026-10-24T17:14:41Z",
+ "done": "pre-ship: CH81: dead prices stay off the +EV list (1c band, 2 h, refused bets too); engine scan note counts exchange lines and flags books far from the others (match check)",
+ "next": "ship.sh gates and releases this"
 }
