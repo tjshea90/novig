@@ -6323,3 +6323,10 @@ Analyze the current star system; make ONE rating that combines all factors, remo
 - [x] OK2 explained: each key is paced to its own daily share (OddsFeed.ODDS_API reserve 20, CreditPace), so all keys spend a little a day; same total, no credit lost (all reset Nov 1). Engine spend 2026-10-23: americanfootball_ncaaf 234 credits / 120 calls (gap fills), other leagues free /events calls.
 - [x] OK3 real waste found beside it: SharpAPI's 60 s reconcile window never fit the delta's paging (about 1,000 rows), so NBA/NFL/NCAAF were read whole (50,000-95,000 rows, ~480 calls each) about once a minute: 562,855 calls a day. Fix: SharpApiFeed.undrained passes an undrainable window over while the stream covers the league (window halves, whole read every 15 min); SharpApiTest
 
+
+## S5: the 1-5 star scale must be sound for betting by hand (Tj, 2026-10-24, typed prompt, verbatim)
+"Do another check of the bet star rating system. I will be using it heavily to make bets. Its accuracy is very important. Make sure the 1 star to 5 Star scale for bets is sound and logical and based on solid data, with 5 Star bets being excellent, profitable bets with good support and 1 star bets still being positive ev, but less support and less profitable" / "If any adjustments to the star rating system are warranted, do them and release the update next"
+- [ ] S5a data: the engine's graded lines (engine-dataset lines-*.csv.gz, what the digest's star check reads) + Tj's own bets with stars (phone-data), here; level by level CLV (first) and ROI, by game
+- [ ] S5b check the scale against Tj's definition: every level +EV (CLV >= 0 at 1 star), each level better than the one below (monotone), 5 stars clearly best with support; name every level/input that breaks it
+- [ ] S5c adjust what the data warrants (rating, ceilings, what is listed at all), tests, CHANGES.md + revert rule, research/ write-up
+- [ ] S5d full suite, release, engine reset, tell Tj plainly what each star now means and how sure the data is
