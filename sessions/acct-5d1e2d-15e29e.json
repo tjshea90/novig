@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "c27122c3f5bce5151ab4fbf437b38c5a19de2882",
+ "head": "45ac45990eee9e7e59fcbec0d84453ad5bb29d08",
  "since": 1792818666,
- "beat": 1792863943,
- "beatIso": "2026-10-24T17:45:43Z",
- "done": "pre-release: CH82+CH81: engine restart reads 'stopped or restarting' not 'switched off'; Diagnostics logs every 'nobody was selling' bet (NOFILL: list age, price, depth, fair age) (versionCode 414, v1.0.74)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.74), then run: bash tools/record-release.sh v1.0.74 414 \"CH82+CH81: engine restart reads 'stopped or restarting' not 'switched off'; Diagnostics logs every 'nobody was selling' bet (NOFILL: list age, price, depth, fair age)\""
+ "beat": 1792864111,
+ "beatIso": "2026-10-24T17:48:31Z",
+ "done": "pre-ship: The phone saves its full Diagnostics report to GitHub every 20 min (phone-data/phone/diag) so Claude reads the FEEDHIDE/NOFILL logs without Tj sending a file",
+ "next": "ship.sh gates and releases this"
 }
