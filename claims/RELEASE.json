@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-27a37e/22bccb",
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "22bccb",
+ "note": "FX full tests: Kalshi bid cancels fixed (V2 needs the market), Kalshi lane re-reads before judging, SharpAPI/SX streams reconnect on a server close, digest shows the engine's graded days + star check + API value, tab bar and Settings text fixes",
+ "since": 1792800302,
+ "beat": 1792800302
+}
