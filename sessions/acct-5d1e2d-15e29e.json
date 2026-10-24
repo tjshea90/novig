@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aylgas",
- "head": "edea0e6c8b279443071d6015696a7dc8544fcde2",
+ "head": "49c19f9e10296af1a516a3c5f4d33b5d410ba0b4",
  "since": 1792816772,
- "beat": 1792817062,
- "beatIso": "2026-10-24T04:44:22Z",
- "done": "pre-ship: 1xBet under any feed spelling (1xbet/onexbet) is one company, not two agreeing books",
- "next": "ship.sh gates and releases this"
+ "beat": 1792817139,
+ "beatIso": "2026-10-24T04:45:39Z",
+ "done": "pre-release: 1xBet under any feed spelling (1xbet/onexbet) is one company, not two agreeing books (versionCode 410, v1.0.70)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.70), then run: bash tools/record-release.sh v1.0.70 410 \"1xBet under any feed spelling (1xbet/onexbet) is one company, not two agreeing books\""
 }
