@@ -36,10 +36,16 @@ object MatchHealth {
         return rows.values.filter { it.compared >= 20 }.sortedByDescending { it.off.toDouble() / it.compared }
     }
 
-    /** The worst few books as a note line, or empty when nothing was compared. */
+    /** The worst few books as a note line, then how many lines the exchanges priced at all (SX Bet, Kalshi, Polymarket: Tj asked why SX never shows), or empty when nothing was compared. */
     fun text(opps: Collection<Opportunity>, top: Int = 5): String {
-        val worst = of(opps).filter { it.off > 0 }.take(top)
-        if (worst.isEmpty()) return ""
-        return "match check (book far from the others' median, share of lines): " + worst.joinToString(" · ") { "${it.book} ${it.off}/${it.compared}" + (it.examples.firstOrNull()?.let { e -> " e.g. $e" } ?: "") }
+        val all = of(opps)
+        val worst = all.filter { it.off > 0 }.take(top)
+        val cover = all.filter { r -> EXCHANGES.any { r.book.contains(it, ignoreCase = true) } }
+        val lines = ArrayList<String>()
+        if (worst.isNotEmpty()) lines += "match check (book far from the others' median, share of lines): " + worst.joinToString(" · ") { "${it.book} ${it.off}/${it.compared}" + (it.examples.firstOrNull()?.let { e -> " e.g. $e" } ?: "") }
+        if (cover.isNotEmpty()) lines += "exchange lines compared: " + cover.joinToString(" · ") { "${it.book} ${it.compared}" }
+        return lines.joinToString("; ")
     }
+
+    private val EXCHANGES = listOf("sx", "kalshi", "polymarket")
 }
