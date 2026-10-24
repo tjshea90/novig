@@ -5,11 +5,11 @@
  "nonce": "15e29e",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-o6nryz",
- "head": "26f7b3f430b9ce5c7cb7cbb68d5d3dfb6a87f270",
+ "branch": "claude/optimistic-curie-aylgas",
+ "head": "fc68f7bc6ee534a57599a8f54bac2cefef9ac804",
  "since": 1792806926,
- "beat": 1792811755,
- "beatIso": "2026-10-24T03:15:55Z",
+ "beat": 1792815046,
+ "beatIso": "2026-10-24T04:10:46Z",
  "done": "CH75: dead price remembered after NotFilled; test green",
  "next": "full suite, then release with next batch; tell Tj"
 }
