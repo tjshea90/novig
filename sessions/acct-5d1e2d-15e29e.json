@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-fnde3y",
  "head": "ab0f4aa8751eaca46fd565f2dc79edbeb161585d",
  "since": 1792818666,
- "beat": 1792875774,
- "beatIso": "2026-10-24T21:02:54Z",
+ "beat": 1792875778,
+ "beatIso": "2026-10-24T21:02:58Z",
  "done": "pre-ship: CH81i: order-end timing + NOFILL kept in the report; the phone stops asking for a missing bids file",
  "next": "ship.sh gates and releases this"
 }
