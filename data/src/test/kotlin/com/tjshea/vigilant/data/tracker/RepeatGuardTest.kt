@@ -42,7 +42,7 @@ class RepeatGuardTest {
         assertTrue(why, "other line" in why)
         assertNull(RepeatGuard.check(Rules(maxBets = 2, maxLines = 2), held, "m35", "sac35", 2.0, 4.0, family = f))
         // The same line again is the old same-side rule, not this one; no family known = never counted; another team is fine.
-        assertNull(RepeatGuard.check(Rules(maxBets = 2, maxLines = 1), held, "m65", "sac65", 2.0, 4.0, family = f))
+        assertNull(RepeatGuard.check(Rules(maxBets = 2, maxDollars = 100.0, maxLines = 1), held, "m65", "sac65", 2.0, 4.0, family = f))
         assertNull(RepeatGuard.check(Rules(maxBets = 2, maxLines = 1), held, "m35", "sac35", 2.0, 4.0))
         assertNull(RepeatGuard.check(Rules(maxBets = 2, maxLines = 1), held, "mp", "por", 2.0, 4.0, family = fam("Portland Trail Blazers -6.5")))
     }
