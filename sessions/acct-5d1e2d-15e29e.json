@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-8fhzvg",
- "head": "fb3694e9ff1e33a38600887c9ca540b503a88f06",
+ "head": "5accb503591d7e19a53f11829238c514bade2e79",
  "since": 1792818666,
- "beat": 1792877944,
- "beatIso": "2026-10-24T21:39:04Z",
- "done": "answered repeat-guard chat; CH86b",
- "next": "CH86: find path of extra orders"
+ "beat": 1792877995,
+ "beatIso": "2026-10-24T21:39:55Z",
+ "done": "repeat guard 2/$3 set; default changed",
+ "next": "CH86 find extra-order path; run RepeatGuard tests, ship"
 }
