@@ -6349,10 +6349,14 @@ State when this was written: S6 (edge ladder + breadth ceilings + thin-market fl
 - [x] SX3 (star-backtest-2026-10-24 Release; real_novig_close in star-evidence Release) one table of every observed Novig line: type (league, kind, side, odds band, lead), stated edge, books, sharp close CLV, result; time-split validation
 - [x] SX4 (findings 2-6) the type track record: CLV and ROI per type with shrinkage and intervals; which types are proven profitable, which lose
 - [x] SX5 (BetRating Scale.SX, StarEvidence, star_evidence.json, StarEvidenceTest, StarCheck SX variant) the star system (1 = +EV, history unproven; 5 = proven profitable type, no safeguard holding it back), as data (a shipped table) + code + tests + star check variant; audit write-up
-- [ ] SX6 full suite, release, engine reset, tell Tj what each star means and the evidence
+- [x] SX6 (full suite 4,217 green; v1.0.71 released, recorded; engine reset) full suite, release, engine reset, tell Tj what each star means and the evidence
 
 - [~] PL-OA (accuracy report done: research/propline_book_accuracy_2026-10-24.md) PropLine openapi.json (Tj, chat 2026-10-24 05:56): spec saved research/propline/openapi_2026-10-24.json; evaluate unused endpoints (books/accuracy, coverage/history, freshness, injuries/history, projections, sgp, dfs/payouts) for star rating / CLV; build the useful ones
 
 CH78 (Tj chat 06:55 UTC 2026-10-24): "a lot of no one was selling at that price, then they still come back into the scanned results" -- the CNO list returned the row within seconds (60 s hold, then any newer live read). Fixed in code: CNO rows keep CH75 dead-price memory (MainViewModel.negativeSeenAt, costOf; UnbettableRowsTest). Release with the next version.
 - [x] CH78 CNO rows stay off while the live read shows the same dead price (30 min)
 - [ ] CH78b why orders find nobody selling so often (IOC at the shown ask): study failed NotFilled orders vs book depth/age in phone-data trades
+## SB2: bids only? (Tj, 2026-10-24, typed prompt, verbatim)
+"Based on this, do you recommend continuing with bids only and stopping bets?"
+- [ ] SB2a answered in chat: stop by-hand taker bets; engine taker auto-bet to PAPER pending Tj's yes (it keeps measuring, no data lost: every scanned line is graded whether bet or not); keep bids
+- [ ] SB2b grade the BIDS on the same yardstick (fill price vs Novig's own close via the trade archive) before calling them proven
