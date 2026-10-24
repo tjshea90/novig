@@ -1,13 +1,13 @@
-# CHECKPOINT 4126 — read me first, then TASKS.md
+# CHECKPOINT 4127 — read me first, then TASKS.md
 
-**Written:** 2026-10-24T17:33:52Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-hj14wp` · **builds on:** `6d84a658e` (this checkpoint is the commit after it)
+**Written:** 2026-10-24T17:34:51Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-hj14wp` · **builds on:** `92ec17a42` (this checkpoint is the commit after it)
 
 ## Just done
-CH83 written; diagnostics paste triaged
+CH83 scoped: archive not write-behind
 
 ## Do this next
-CH83a: split bets.json hot/archive
+CH83a with real history file test; ship 1.0.74 (CH82 wording) when batch ready
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ CH83a: split bets.json hot/archive
 
 ## Last ten checkpoints
 ```
+  92ec17a42 ckpt 4126: CH83 written; diagnostics paste triaged
   6d84a658e ckpt 4125: v1.0.73 released+recorded; CH82 wording: stopped or restarting (tests green
   a17f0b62b ckpt 4124: v1.0.73 on main, release building; CH82 noted
   93b9c38bd ckpt 4124: ANALYST 2026-10-24 skipped (under gate), watch ok
@@ -26,5 +27,4 @@ CH83a: split bets.json hot/archive
   fe3e6557f ckpt 4120: pre-release: CH80: why a listed bet hides is logged (FEEDHIDE); CNO dead-pr
   c8f7f557c ckpt 4119: pre-ship: CH80: why a listed bet hides is logged (FEEDHIDE); CNO dead-price
   b81d895b6 ckpt 4118: CH80 written (flicker in +EV list); replied to Tj
-  ca7d0f37b ckpt 4117: CH79: Kalshi engine lane scans+lists when switch OFF (orders still need Pap
 ```
