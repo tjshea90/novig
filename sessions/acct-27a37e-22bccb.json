@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "fa7239519b636f13560ccf276cfd8d81b264ddfa",
+ "head": "9ea3e9716e2cbd6a41aa9c5a5bf6fc790c53ca5c",
  "since": 1792801733,
- "beat": 1792804467,
- "beatIso": "2026-10-24T01:14:27Z",
+ "beat": 1792804735,
+ "beatIso": "2026-10-24T01:18:55Z",
  "done": "OK1-3: The Odds API credits corrected/explained (per-key daily pace, no credit lost); SharpAPI whole-league re-reads every minute fixed (undrained windows passed over while the stream is live; SharpApiTest)",
  "next": "SR: read Weights side by side from review-digest (run 40047913906), decide, then full suite + release + engine reset for SR + OK3"
 }
