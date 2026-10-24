@@ -46,7 +46,7 @@ class CloudScannerTest {
         assertTrue(b.errors.single().contains("first scan"))
         // an engine that is switched off says that instead
         val off = CloudLatest().also { it.status = st.copy(idle = true) }
-        assertTrue(CloudScanner(off, clock = { now }).scan(ScanSettings(), emptyList(), emptySet(), {}, {}).errors.single().contains("switched off"))
+        assertTrue(CloudScanner(off, clock = { now }).scan(ScanSettings(), emptyList(), emptySet(), {}, {}).errors.single().contains("stopped or restarting"))
     }
 
     @Test
