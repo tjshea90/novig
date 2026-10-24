@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "cb725c4a076369d0372e91f84a6d60bab6f92f8d",
+ "head": "e9b40b39e0965ebb32597efb1357a32464961982",
  "since": 1792827790,
- "beat": 1792858535,
- "beatIso": "2026-10-24T16:15:35Z",
- "done": "TR: Tj's stats/trends request written into TASKS.md",
- "next": "TR1: test trend signals on the PropLine archive in scratch/sx/pl"
+ "beat": 1792858570,
+ "beatIso": "2026-10-24T16:16:10Z",
+ "done": "TR1-TR2: stats/trends study (research/trends_2026-10-24.md): recent form ~1pt beyond close, not a profit system; not built",
+ "next": "SB2b: grade the bids on Novig's close; TR3 revisit after"
 }
