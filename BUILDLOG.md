@@ -413,3 +413,4 @@ day that changes.
 | v1.0.72 | code 412 | 2026-10-24T16:50Z | CH80: why a listed bet hides is logged (FEEDHIDE); CNO dead-price memory; Kalshi engine lane lists when its switch is OFF
 | v1.0.73 | code 413 | 2026-10-24T17:26Z | CH81: dead prices stay off the +EV list (1c band, 2 h, refused bets too); engine scan note counts exchange lines and flags books far from the others (match check)
 | v1.0.74 | code 414 | 2026-10-24T17:52Z | CH82+CH81: engine restart reads 'stopped or restarting' not 'switched off'; Diagnostics logs every 'nobody was selling' bet (NOFILL: list age, price, depth, fair age)
+| v1.0.75 | code 415 | 2026-10-24T17:58Z | The phone saves its full Diagnostics report to GitHub every 20 min (phone-data/phone/diag) so Claude reads the FEEDHIDE/NOFILL logs without Tj sending a file
