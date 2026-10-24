@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "36ca68d83d5642bfe77eba0044ea173461815e9e",
+ "head": "67fb5137da36ad9d89459aa42fb97b64032dbeb8",
  "since": 1792809425,
- "beat": 1792824896,
- "beatIso": "2026-10-24T06:54:56Z",
- "done": "SX5 done: Scale.SX shipped in code (type's proof at Novig from star_evidence.json; floors + losing types 0; safeguards cap top); validated out of sample; star-evidence.yml weekly refresh; docs",
- "next": "SX6: CLAUDE.md section, full suite, version 409/1.0.69, ship.sh, release.yml, record, engine reset, message Tj"
+ "beat": 1792824959,
+ "beatIso": "2026-10-24T06:55:59Z",
+ "done": "pre-ship: SX: stars are the bet type's proof at Novig (CLV against Novig's own close of Vigilant/CNO graded lines + point-in-time backtest); 0 = no trusted edge incl. types losing on both sources, 1 = +EV unproven, up to 5 = proven at 99%; weekly star-evidence refresh",
+ "next": "ship.sh gates and releases this"
 }
