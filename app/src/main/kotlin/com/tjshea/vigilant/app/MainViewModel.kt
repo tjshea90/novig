@@ -110,7 +110,10 @@ data class NovigUi(
 /** A report Tj can read, copy and paste (Settings › Diagnostics & about, Grading check): [busy] while it's being put together. */
 data class ReportUi(val title: String, val text: String, val busy: Boolean = false)
 
-const val DEAD_PRICE_MS = 30 * 60_000L
+const val DEAD_PRICE_MS = 2 * 3_600_000L
+
+/** A newer read within this much (cost per $1 of payout, one cent) of the price nobody sold at is still that phantom ask (Tj, 2026-10-24: priced nobody sells at kept returning). */
+const val DEAD_PRICE_BAND = 0.01
 
 /** The cost of $1 of payout at an American price: how [UiState.deadPrice] holds a CNO row's price. */
 internal fun costOf(american: Int): Double = if (american > 0) 100.0 / (100.0 + american) else -american / (100.0 - american)
@@ -323,7 +326,7 @@ data class UiState(
         // A newer read that still shows the very price nobody sold at is the same phantom ask (Tj, 2026-10-24): it returns only at another price, or after DEAD_PRICE_MS.
         val dead = deadPrice[o.key] ?: return false
         val cost = o.quote?.cost ?: return false
-        return kotlin.math.abs(cost - dead) < 1e-6 && now - at < DEAD_PRICE_MS
+        return kotlin.math.abs(cost - dead) <= DEAD_PRICE_BAND && now - at < DEAD_PRICE_MS
     }
 
     /**

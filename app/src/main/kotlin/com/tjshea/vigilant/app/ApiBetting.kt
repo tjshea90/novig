@@ -758,7 +758,7 @@ class ApiBettingController(
                 val t = clock()
                 target.placedKey?.let { k ->
                     state.update { st ->
-                        val dead = (result as? PlaceResult.NotFilled)?.let { st.feed.firstOrNull { o -> o.key == k }?.quote?.cost ?: st.novigLive[k.removePrefix("cno:")]?.american?.let { a -> costOf(a) } }
+                        val dead = result.takeIf { it is PlaceResult.NotFilled || it is PlaceResult.Refused }?.let { st.feed.firstOrNull { o -> o.key == k }?.quote?.cost ?: st.novigLive[k.removePrefix("cno:")]?.american?.let { a -> costOf(a) } }
                         st.copy(negativeSeen = st.negativeSeen.filterValues { at -> t - at < 6 * 3_600_000L } + (k to t),
                             deadPrice = if (dead != null) st.deadPrice + (k to dead) else st.deadPrice - k)
                     }
