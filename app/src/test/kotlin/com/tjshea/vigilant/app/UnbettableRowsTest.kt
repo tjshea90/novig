@@ -39,6 +39,8 @@ class UnbettableRowsTest {
             feed = s.feed.map { if (it.key == row.key) it.copy(bookFetchedAtMs = found + 5_000L) else it })
         assertFalse("same price again: still off", reread.feedAt(found + 6_000L).any { it.key == row.key })
         val moved = reread.copy(deadPrice = mapOf(row.key to row.quote!!.cost + 0.02))
+        val jitter = reread.copy(deadPrice = mapOf(row.key to row.quote!!.cost + 0.005))
+        assertFalse("half a cent away is the same phantom ask", jitter.feedAt(found + 6_000L).any { it.key == row.key })
         assertTrue("another price: back", moved.feedAt(found + 6_000L).any { it.key == row.key })
     }
 

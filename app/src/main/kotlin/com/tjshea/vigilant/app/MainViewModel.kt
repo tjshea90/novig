@@ -532,7 +532,7 @@ data class UiState(
         val dead = deadPrice[key] ?: return false
         if (now - at >= DEAD_PRICE_MS) return false
         val american = live?.american ?: return true
-        return kotlin.math.abs(costOf(american) - dead) < 1e-6
+        return kotlin.math.abs(costOf(american) - dead) <= DEAD_PRICE_BAND
     }
 
     /**
