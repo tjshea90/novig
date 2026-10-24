@@ -8,8 +8,8 @@
  "branch": "ccr-305d3f7a-i2z8ja",
  "head": "67fb5137da36ad9d89459aa42fb97b64032dbeb8",
  "since": 1792809425,
- "beat": 1792824959,
- "beatIso": "2026-10-24T06:55:59Z",
+ "beat": 1792824965,
+ "beatIso": "2026-10-24T06:56:05Z",
  "done": "pre-ship: SX: stars are the bet type's proof at Novig (CLV against Novig's own close of Vigilant/CNO graded lines + point-in-time backtest); 0 = no trusted edge incl. types losing on both sources, 1 = +EV unproven, up to 5 = proven at 99%; weekly star-evidence refresh",
  "next": "ship.sh gates and releases this"
 }
