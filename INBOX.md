@@ -921,3 +921,8 @@ You said :
 
 So basically all of my bets are negative roi? 
 ```
+
+## 2026-10-24T00:57:38Z
+```
+If your findings warrant revising the star rating method, do it now
+```
