@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "c8f7f557ce023fd6e4abfe3a03efd3fde8713ddd",
+ "head": "fe3e6557f7319fc3afdc1116917c7871f3d82658",
  "since": 1792818666,
- "beat": 1792860147,
- "beatIso": "2026-10-24T16:42:27Z",
- "done": "pre-ship: CH80: why a listed bet hides is logged (FEEDHIDE); CNO dead-price memory; Kalshi engine lane lists when its switch is OFF",
- "next": "ship.sh gates and releases this"
+ "beat": 1792860179,
+ "beatIso": "2026-10-24T16:42:59Z",
+ "done": "pre-release: CH80: why a listed bet hides is logged (FEEDHIDE); CNO dead-price memory; Kalshi engine lane lists when its switch is OFF (versionCode 412, v1.0.72)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.72), then run: bash tools/record-release.sh v1.0.72 412 \"CH80: why a listed bet hides is logged (FEEDHIDE); CNO dead-price memory; Kalshi engine lane lists when its switch is OFF\""
 }
