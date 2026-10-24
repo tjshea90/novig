@@ -1,13 +1,13 @@
-# CHECKPOINT 4152 — read me first, then TASKS.md
+# CHECKPOINT 4153 — read me first, then TASKS.md
 
-**Written:** 2026-10-24T23:24:11Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-0irsxn` · **builds on:** `97468674a` (this checkpoint is the commit after it)
+**Written:** 2026-10-24T23:43:19Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-db7n0m` · **builds on:** `c1818f250` (this checkpoint is the commit after it)
 
 ## Just done
-ENGINEER 2026-10-24 done
+chat: answered propline/chat-lag/profit (CH87)
 
 ## Do this next
-CH86 confirm via diag; continue backlog
+CH87a: why chat wake was slow; CH87b: verify profit card vs ledger
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ CH86 confirm via diag; continue backlog
 
 ## Last ten checkpoints
 ```
+  26a74408c ckpt 4152: ENGINEER 2026-10-24 done
   97468674a ckpt 4151: ENGINEER: CH86 traced; extras are likely unfilled IOC retries (research/ch8
   b5115a07e ckpt 4150: answered repeat-guard chat; CH86b
   f22565f4b ckpt 4149: answered socket+repeat-bets chat; logged CH86
@@ -25,5 +26,7 @@ CH86 confirm via diag; continue backlog
   47d4fe5a7 ckpt 4145: CH81h CNO misses too
   24aeaacbe ckpt 4144: CH85a bids.json.gz 404 polling stopped (unreleased); disappearing-bets anal
   0bd55e13f ckpt 4143: CH81f logged
-  64787ff66 ckpt 4142: CH81e screenshot answered
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
