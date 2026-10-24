@@ -160,7 +160,7 @@ class CloudKalshiLaneTest {
     }
 
     @Test
-    fun `LIVE without the key on GitHub is paper, and OFF does nothing at all`() = runTest {
+    fun `LIVE without the key on GitHub is paper, and OFF scans and lists but orders nothing`() = runTest {
         val noKey = FakeClient(now)
         val out = HashMap<String, String>()
         lane(KalshiAutoMode.LIVE, noKey, out, key = false).runOnce(novigScan(), phone)
@@ -170,5 +170,6 @@ class CloudKalshiLaneTest {
         lane(KalshiAutoMode.OFF, off, out2).runOnce(novigScan(), phone)
         assertTrue(off.buys.isEmpty())
         assertEquals(KalshiAutoMode.OFF, KalshiEngineStatus.parse(out2[KalshiEngineStatus.FILE]!!)!!.mode)
+        assertTrue(out2.containsKey("kalshi-feed.json"))
     }
 }
