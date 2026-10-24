@@ -411,3 +411,4 @@ day that changes.
 | v1.0.70 | code 410 | 2026-10-24T04:52Z | 1xBet under any feed spelling is one company, not two agreeing books
 | v1.0.71 | code 411 | 2026-10-24T07:05Z | SX: stars are the bet type's proof at Novig (CLV against Novig's own close of Vigilant/CNO graded lines + point-in-time backtest); 0 = no trusted edge incl. types losing on both sources, 1 = +EV unproven, up to 5 = proven at 99%; weekly star-evidence refresh
 | v1.0.72 | code 412 | 2026-10-24T16:50Z | CH80: why a listed bet hides is logged (FEEDHIDE); CNO dead-price memory; Kalshi engine lane lists when its switch is OFF
+| v1.0.73 | code 413 | 2026-10-24T17:26Z | CH81: dead prices stay off the +EV list (1c band, 2 h, refused bets too); engine scan note counts exchange lines and flags books far from the others (match check)
