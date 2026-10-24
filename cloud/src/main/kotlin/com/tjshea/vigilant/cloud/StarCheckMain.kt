@@ -202,6 +202,12 @@ object StarCheck {
         return out.joinToString("\n") + "\n"
     }
 
+    /** One CSV row per recorded +EV line: its id, the history and lead points the scanners add today, and its stars under [BetRating.CURRENT] (S5: for analysis outside Kotlin). */
+    fun dump(lines: List<Line>, profile: ProfitProfile? = ProfitProfile.shipped): String =
+        "id,type_points,stars_now\n" + lines.distinctBy { it.id }.filter { it.recorded }.joinToString("") { l ->
+            String.format(Locale.US, "%s,%.4f,%.1f\n", l.id, typePoints(l, profile), rated(l, profile).stars)
+        }
+
     /** Every `lines-*.csv(.gz)` under [dir]. */
     fun read(dir: File): List<Line> = dir.walkTopDown().filter { it.isFile && it.name.startsWith("lines-") && (it.name.endsWith(".csv.gz") || it.name.endsWith(".csv")) }.sortedBy { it.name }
         .flatMap { f ->
@@ -211,8 +217,10 @@ object StarCheck {
 }
 
 fun main(args: Array<String>) {
-    if (args.size < 2) { System.err.println("usage: starcheck <dir of lines-*.csv.gz> <output file>"); return }
-    val text = StarCheck.report(StarCheck.read(File(args[0])))
+    if (args.size < 2) { System.err.println("usage: starcheck <dir of lines-*.csv.gz> <output file> [<per-line csv>]"); return }
+    val lines = StarCheck.read(File(args[0]))
+    val text = StarCheck.report(lines)
+    args.getOrNull(2)?.let { File(it).apply { parentFile?.mkdirs() }.writeText(StarCheck.dump(lines)) }
     File(args[1]).apply { parentFile?.mkdirs() }.writeText(text)
     println("star check: ${text.lines().size} lines -> ${args[1]}")
 }
