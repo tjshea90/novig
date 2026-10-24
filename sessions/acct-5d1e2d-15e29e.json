@@ -5,11 +5,11 @@
  "nonce": "15e29e",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-fnde3y",
+ "branch": "claude/optimistic-curie-8fhzvg",
  "head": "aab4a5cda7a69e2de3334f6200233b77e5e4361a",
  "since": 1792818666,
- "beat": 1792877196,
- "beatIso": "2026-10-24T21:26:36Z",
+ "beat": 1792877513,
+ "beatIso": "2026-10-24T21:31:53Z",
  "done": "pre-release: CH81i: order-end timing + NOFILL kept in the report; the phone stops asking for a missing bids file (versionCode 418, v1.0.78)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.78), then run: bash tools/record-release.sh v1.0.78 418 \"CH81i: order-end timing + NOFILL kept in the report; the phone stops asking for a missing bids file\""
 }
