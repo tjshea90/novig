@@ -959,3 +959,8 @@ Do another check of the bet star rating system. I will be using it heavily to ma
 ```
 If any adjustments to the star rating system are warranted, do them and release the update next
 ```
+
+## 2026-10-24T02:40:02Z
+```
+Since the sample size is small  can't you use some of the apis features of historical odds and clv and results
+```
