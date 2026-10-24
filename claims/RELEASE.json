@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-7542bf/32f65a",
+ "label": "acct-7542bf",
+ "name": "tj outlook",
+ "nonce": "32f65a",
+ "note": "SR: star rating re-weighted (sharp book 25->15, edge 25->30, agreement 20->25, type-of-bet points at half; CLV/star +0.50->+0.77, ROI/star +5.0->+6.2 on 1,968 graded engine lines); OK3: SharpAPI no longer re-reads NBA/NFL/NCAAF whole every minute while its stream is live",
+ "since": 1792805784,
+ "beat": 1792805784
+}

@@ -8,8 +8,8 @@
  "branch": "ccr-305d3f7a-i2z8ja",
  "head": "81e2270b7cc05b1506bdbdd8f7516cd58d5c085b",
  "since": 1792805068,
- "beat": 1792805779,
- "beatIso": "2026-10-24T01:36:19Z",
+ "beat": 1792805784,
+ "beatIso": "2026-10-24T01:36:24Z",
  "done": "pre-ship: SR: star rating re-weighted (sharp book 25->15, edge 25->30, agreement 20->25, type-of-bet points at half; CLV/star +0.50->+0.77, ROI/star +5.0->+6.2 on 1,968 graded engine lines); OK3: SharpAPI no longer re-reads NBA/NFL/NCAAF whole every minute while its stream is live",
  "next": "ship.sh gates and releases this"
 }
