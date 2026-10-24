@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-ycfjb5",
- "head": "14afb9504ef9bba6bc99eeda8847eb4e4416047b",
+ "head": "a1f863ff9ab533fd9be62bb157c931d2401f744e",
  "since": 1792818666,
- "beat": 1792824900,
- "beatIso": "2026-10-24T06:55:00Z",
+ "beat": 1792825345,
+ "beatIso": "2026-10-24T07:02:25Z",
  "done": "PL-OA: PropLine book accuracy report read and written up",
  "next": "feed per-sport book skill into SX star/weight study; coverage + injuries history"
 }
