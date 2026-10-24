@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "7b1da61ba0bea2b63b3520ac7ba93a69a7338e37",
+ "head": "aeaf05212b48f031eefbe6d5e522affb3f6366e3",
  "since": 1792818666,
- "beat": 1792866195,
- "beatIso": "2026-10-24T18:23:15Z",
+ "beat": 1792866383,
+ "beatIso": "2026-10-24T18:26:23Z",
  "done": "pre-release: CH80: the +EV list no longer empties at each engine scan start: rows the new scan has not re-read yet stay listed with their own stamps (found from the phone's FEEDHIDE log) (versionCode 417, v1.0.77)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.77), then run: bash tools/record-release.sh v1.0.77 417 \"CH80: the +EV list no longer empties at each engine scan start: rows the new scan has not re-read yet stay listed with their own stamps (found from the phone's FEEDHIDE log)\""
 }
