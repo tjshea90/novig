@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "8f5d90a9ba710d92a4a33b6043b0fa0301e2ed5a",
+ "head": "c77af2b8fa2e5b5c75689c9d7babf01e83a13c38",
  "since": 1792805068,
- "beat": 1792807408,
- "beatIso": "2026-10-24T02:03:28Z",
+ "beat": 1792807648,
+ "beatIso": "2026-10-24T02:07:28Z",
  "done": "S5a-c: star scale checked on the engine's 20,840 graded lines; 0 = no trusted edge (EV <0.5% / >25% / sharp against: these lost to the close), 1\u2605 under 1%; SR weights kept (no weighting orders rated lines, |t|<1); StarCheck judges sharp closes over games; research/star_rating_s5_2026-10-24.md",
  "next": "S5d: full suite (bash tools/test.sh), bump 408/1.0.68, ship.sh, release.yml, record-release, engine reset, tell Tj what each star means"
 }
