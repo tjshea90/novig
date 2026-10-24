@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-fnde3y",
  "head": "24aeaacbe24e27af970bed2658f5d8246ce29967",
  "since": 1792818666,
- "beat": 1792874639,
- "beatIso": "2026-10-24T20:43:59Z",
+ "beat": 1792874946,
+ "beatIso": "2026-10-24T20:49:06Z",
  "done": "CH85a bids.json.gz 404 polling stopped (unreleased); disappearing-bets analysis told to Tj",
  "next": "CH81g ask-presence log, then ship batch"
 }
