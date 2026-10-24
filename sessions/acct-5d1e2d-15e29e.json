@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-fnde3y",
- "head": "47d4fe5a73e65549f2ec2c335944724c23b4c833",
+ "head": "588b9c78bbe1adc69f1a1a519e58e0c755da155e",
  "since": 1792818666,
- "beat": 1792875342,
- "beatIso": "2026-10-24T20:55:42Z",
- "done": "CH81h CNO misses too",
- "next": "analyse NOFILL in next phone/diag"
+ "beat": 1792875470,
+ "beatIso": "2026-10-24T20:57:50Z",
+ "done": "order-end diagnostics, NOFILL warn, bids 404 backoff",
+ "next": "ship v1.0.78 then read next phone/diag"
 }
