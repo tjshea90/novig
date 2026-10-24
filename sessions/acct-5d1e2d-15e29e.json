@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-o6nryz",
  "head": "df67812b8a45bd4aadab1c9a5aed43ad9f93dfd4",
  "since": 1792806926,
- "beat": 1792810184,
- "beatIso": "2026-10-24T02:49:44Z",
+ "beat": 1792810457,
+ "beatIso": "2026-10-24T02:54:17Z",
  "done": "CH75: dead price remembered after NotFilled; test green",
  "next": "full suite, then release with next batch; tell Tj"
 }
