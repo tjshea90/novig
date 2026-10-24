@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "3aa9a80efa47f81dc6294281ee5aba55f508fb51",
+ "head": "bfdcd336dc0504bc1669099d4544b7101f54b97d",
  "since": 1792809425,
- "beat": 1792814234,
- "beatIso": "2026-10-24T03:57:14Z",
- "done": "SX code WIP: BetRating Scale.SX (proofStars from StarEvidence z, losing types no trusted edge, breadth/suspect caps), BetType passed from Pricing/CnoBooks/StarCheck; CURRENT_SCALE kept S5 until the data decides",
- "next": "when star-study run 40057261152 finishes: analyse, build star_evidence.json, tune, validate on engine+phone lines"
+ "beat": 1792814292,
+ "beatIso": "2026-10-24T03:58:12Z",
+ "done": "SX: star-study split into 4 parallel shards (one 4000-game job would near the 5 h cap and upload nothing)",
+ "next": "dispatch star-study events=4000 (4 shards), read lines-0..3.csv.gz from star-backtest-2026-10-24"
 }
