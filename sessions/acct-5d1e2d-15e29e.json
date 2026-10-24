@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "01aa6bb992832daefdef4fafe34d1779b6447c54",
+ "head": "148cdc6ad930dac3b7f1f3d629df3c0d47a2bc4c",
  "since": 1792818666,
- "beat": 1792865380,
- "beatIso": "2026-10-24T18:09:40Z",
- "done": "pre-release: After the Diagnostics report is saved to GitHub the phone clears its logs (only after a successful save); hourly copies kept on GitHub (versionCode 416, v1.0.76)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.76), then run: bash tools/record-release.sh v1.0.76 416 \"After the Diagnostics report is saved to GitHub the phone clears its logs (only after a successful save); hourly copies kept on GitHub\""
+ "beat": 1792865570,
+ "beatIso": "2026-10-24T18:12:50Z",
+ "done": "pre-ship: CH80: the +EV list no longer empties at each engine scan start: rows the new scan has not re-read yet stay listed with their own stamps (found from the phone's FEEDHIDE log)",
+ "next": "ship.sh gates and releases this"
 }
