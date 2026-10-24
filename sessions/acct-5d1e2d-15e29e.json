@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-hj14wp",
  "head": "ca7d0f37b36cd90d15b46ed7c427f19f672a4b70",
  "since": 1792818666,
- "beat": 1792859202,
- "beatIso": "2026-10-24T16:26:42Z",
+ "beat": 1792859382,
+ "beatIso": "2026-10-24T16:29:42Z",
  "done": "CH79: Kalshi engine lane scans+lists when switch OFF (orders still need Paper/Live)",
  "next": "engine restart to pick up; confirm kalshi rows appear"
 }
