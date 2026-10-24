@@ -414,3 +414,4 @@ day that changes.
 | v1.0.73 | code 413 | 2026-10-24T17:26Z | CH81: dead prices stay off the +EV list (1c band, 2 h, refused bets too); engine scan note counts exchange lines and flags books far from the others (match check)
 | v1.0.74 | code 414 | 2026-10-24T17:52Z | CH82+CH81: engine restart reads 'stopped or restarting' not 'switched off'; Diagnostics logs every 'nobody was selling' bet (NOFILL: list age, price, depth, fair age)
 | v1.0.75 | code 415 | 2026-10-24T17:58Z | The phone saves its full Diagnostics report to GitHub every 20 min (phone-data/phone/diag) so Claude reads the FEEDHIDE/NOFILL logs without Tj sending a file
+| v1.0.76 | code 416 | 2026-10-24T18:09Z | After the Diagnostics report is saved to GitHub the phone clears its logs (only after a successful save); hourly copies kept on GitHub
