@@ -6360,3 +6360,8 @@ CH78 (Tj chat 06:55 UTC 2026-10-24): "a lot of no one was selling at that price,
 "Based on this, do you recommend continuing with bids only and stopping bets?"
 - [ ] SB2a answered in chat: stop by-hand taker bets; engine taker auto-bet to PAPER pending Tj's yes (it keeps measuring, no data lost: every scanned line is graded whether bet or not); keep bids
 - [ ] SB2b grade the BIDS on the same yardstick (fill price vs Novig's own close via the trade archive) before calling them proven
+## TR: stats and trends beyond CLV/EV (Tj, 2026-10-24, typed prompt, verbatim)
+"Can we get any valuable information from the historical data from research online or from the apis besides clv and EV? Maybe make a system that finds profitable bets based on stats or trends?"
+- [ ] TR1 test trend signals out of sample on PropLine's resolved archive (907k graded props, Apr-Oct): player's recent hit rate vs the line, line vs the player's recent average, opening-to-close move; judged by ROI at Novig's close price and CLV, game-clustered, later months held out
+- [ ] TR2 write the verdict to research/ (dated .md) + NOTES/LEVERS line; answer Tj in chat
+- [ ] TR3 build into the engine only what survives the held-out months (as a star/edge input or a filter), with a test
