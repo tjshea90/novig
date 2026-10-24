@@ -6337,3 +6337,6 @@ Analyze the current star system; make ONE rating that combines all factors, remo
 - [ ] SB2 re-rate every saved line that carries the rating's inputs (free, no API calls) and add it to the star check
 - [ ] SB3 a GitHub workflow that rebuilds past games' multi-book odds from the APIs' history (keys stay in secrets), rates each +EV line, joins the sharp close and the result, archives the dataset (Release) and prints the check
 - [ ] SB4 read the bigger sample; change the stars only if it warrants; tests, release, tell Tj
+
+CH75 (Tj chat 02:42 UTC 2026-10-24): "no one was selling at that price anymore" errors; the bet comes back on the next read with the same dead price. Never relist unless there is liquidity at that price again.
+- [x] CH75 NotFilled remembers the dead price (UiState.deadPrice); a newer read at the same price stays off up to 30 min (MainViewModel.goneSeen; UnbettableRowsTest)
