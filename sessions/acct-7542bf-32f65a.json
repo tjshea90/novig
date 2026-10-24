@@ -8,8 +8,8 @@
  "branch": "ccr-305d3f7a-i2z8ja",
  "head": "8b0c5e8160d66d9857e5f66b28dab5f29cfb8505",
  "since": 1792805068,
- "beat": 1792807688,
- "beatIso": "2026-10-24T02:08:08Z",
+ "beat": 1792807693,
+ "beatIso": "2026-10-24T02:08:13Z",
  "done": "pre-ship: S5: star scale fixed at the bottom: 0 = no trusted edge (EV under 0.5% or over 25%, or a sharp book against: these lost to the close), under 1% EV = 1 star; every rated level (1-5) beat the close; star check judges on Pinnacle/Circa closes over games",
  "next": "ship.sh gates and releases this"
 }
