@@ -1007,3 +1007,8 @@ So is the result of this research that there is no good bets?
 ```
 Based on this, do you recommend continuing with bids only and stopping bets?
 ```
+
+## 2026-10-24T16:09:18Z
+```
+Can we get any valuable information from the historical data from research online or from the apis besides clv and EV? Maybe make a system that finds profitable bets based on stats or trends?
+```
