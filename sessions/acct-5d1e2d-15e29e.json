@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "89aa892f4ba5153d43a0fde685960e6029a8a11c",
+ "head": "01aa6bb992832daefdef4fafe34d1779b6447c54",
  "since": 1792818666,
- "beat": 1792864961,
- "beatIso": "2026-10-24T18:02:41Z",
+ "beat": 1792865380,
+ "beatIso": "2026-10-24T18:09:40Z",
  "done": "pre-release: After the Diagnostics report is saved to GitHub the phone clears its logs (only after a successful save); hourly copies kept on GitHub (versionCode 416, v1.0.76)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.76), then run: bash tools/record-release.sh v1.0.76 416 \"After the Diagnostics report is saved to GitHub the phone clears its logs (only after a successful save); hourly copies kept on GitHub\""
 }
