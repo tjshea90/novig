@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "2a7ed9e768e015f2fdf2adedb1817c0e20a696f4",
+ "head": "3a831c1daff5fb898b7066c571b8cbcd84c70f99",
  "since": 1792805068,
- "beat": 1792806315,
- "beatIso": "2026-10-24T01:45:15Z",
+ "beat": 1792806443,
+ "beatIso": "2026-10-24T01:47:23Z",
  "done": "v1.0.67 gated (full suite 4,207 green) and on main; release.yml triggered",
  "next": "confirm the v1.0.67 Release (get_release_by_tag), record-release.sh v1.0.67 407, engine reset (engine_set.py --reset) so the engine runs SR + OK3, tick SR3, tell Tj"
 }
