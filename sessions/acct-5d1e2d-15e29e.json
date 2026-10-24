@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-ycfjb5",
- "head": "d15fdd2fbaaa2b7fba217b98d4df1313553cfcb3",
+ "head": "03a62e53221498252037b6e00b7fc7517f9ed37c",
  "since": 1792818666,
- "beat": 1792825588,
- "beatIso": "2026-10-24T07:06:28Z",
- "done": "CH78: CNO rows keep the dead-price memory (tests pass)",
- "next": "release with the SX build; CH78b study why NotFilled is frequent"
+ "beat": 1792825628,
+ "beatIso": "2026-10-24T07:07:08Z",
+ "done": "CH78: app suite green on this code",
+ "next": "main should land it; then CH78b"
 }
