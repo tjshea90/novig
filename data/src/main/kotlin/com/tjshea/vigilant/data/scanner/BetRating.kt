@@ -141,7 +141,7 @@ object BetRating {
         else -> -4.0
     }
 
-    fun rate(i: Inputs, w: Weights = CURRENT, scale: Scale = CURRENT_SCALE): Rating {
+    fun rate(i: Inputs, w: Weights = CURRENT, scale: Scale = CURRENT_SCALE, evidence: StarEvidence.Table? = StarEvidence.shipped): Rating {
         val books = i.books.coerceAtLeast(0)
         val coverage = when (books) { 0 -> 0.0; 1 -> 0.1; 2 -> 0.45; 3 -> 0.7; 4 -> 0.88; else -> 1.0 }
         val agree = if (books == 0) 0.0 else i.agreeing?.let { it.coerceIn(0, books).toDouble() / books } ?: 0.6
@@ -157,7 +157,7 @@ object BetRating {
         val doubt = doubtOf(i.ev, i.sharpAgainst) ?: if (scale == Scale.S6) thinMarketDoubt(books, i.ev) else null
         if (doubt != null) return Rating(NONE, points, doubt, support)
         // SX: the record of bets of this type at Novig (null: no type, no table, or no cell with the games: the bet is then unproven, 1 star).
-        val cell = if (scale == Scale.SX) i.type?.let { t -> StarEvidence.shipped?.lookup(t) } else null
+        val cell = if (scale == Scale.SX) i.type?.let { t -> evidence?.lookup(t) } else null
         val stars = when (scale) {
             // The smallest real edges make the least (S5): under +1% at most 1 star.
             Scale.S5 -> if (i.ev < MIN_EV_FOR_TWO_STARS - 1e-12) MIN else support

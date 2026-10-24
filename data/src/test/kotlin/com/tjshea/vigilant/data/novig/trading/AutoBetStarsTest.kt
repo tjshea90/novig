@@ -129,7 +129,7 @@ class AutoBetStarsTest {
         // S6 (SB, 2026-10-24) replaced ST1's "two small books with no sharp book at most 2" with: two companies at most 3, and under +1.5% from them no trusted edge (two-book lines at
         // 3%+ edges made +8.9% ROI over 139 settled; under 1.5% they lost 39%). The support stars keep ST1's rule.
         val two = BetRating.Inputs(2, 2, 0.06, sharpAgrees = false, sharpAgainst = false, spread = 0.005)
-        assertEquals(3.0, BetRating.rate(two).stars, 0.0)
+        assertEquals(3.0, BetRating.rate(two, scale = BetRating.Scale.S6).stars, 0.0)
         assertTrue(BetRating.rate(two).support <= 2.0)
         assertEquals(BetRating.NONE, BetRating.rate(two.copy(ev = 0.012)).stars, 0.0)
         assertTrue(BetRating.leadPoints(120) > BetRating.leadPoints(3000))
