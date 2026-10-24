@@ -6,29 +6,29 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 
 /**
- * The 1-5 star rating of a +EV bet (Tj, 2026-10-11): how much to TRUST the edge and how much it is likely to make. Every rated bet (1 to 5 stars) is +EV on the evidence; a 1-star bet is one
- * with a small edge or thin support, a 5-star one has a large edge that many books back (S5, Tj 2026-10-24: "5 Star bets being excellent, profitable bets with good support and 1 star bets
+ * The 1-5 star rating of a +EV bet (Tj, 2026-10-11): how much the bet is likely to make, and whether enough of the market backs it. Every rated bet (1 to 5 stars) is +EV on the evidence; a
+ * 1-star bet has a small edge, a 5-star one a large edge that four or more companies price (Tj, 2026-10-24: "5 Star bets being excellent, profitable bets with good support and 1 star bets
  * still being positive ev, but less support and less profitable"). A line whose edge the data does not trust gets [NONE] (0, "no trusted edge") instead of a star: see [doubtOf].
- * One rating for both scanners, from the same five facts about a bet, all worked out the same way (RESEARCH.md §131):
  *
+ * **The scale ([Scale.S6], since v1.0.69; research/star_rating_sb_2026-10-24.md).** On 10,428 graded +EV lines (the engine's and the phone's scan study) the stated edge was the one input that
+ * predicted the sharp close, and monotonically (Pinnacle/Circa CLV +0.2% under +0.5% EV, about +1% at 0.5-3%, +3% at 3-6%, more above), while the support inputs (companies, a sharp book
+ * agreeing, consensus, the history's type points) did not, in either sample. So:
+ *  1. **The edge sets the stars** ([edgeStars]): +0.5-1% = 1, +1-1.5% = 1½, +1.5-2% = 2, +2-2.5% = 2½, +2.5-3% = 3, +3-4% = 3½, +4-5% = 4, +5-6% = 4½, +6% and more = 5.
+ *  2. **The top needs breadth** ([breadthCeiling]): one company pricing both sides at most 2 stars, two at most 3, three at most 4; 5 stars take four or more.
+ *  3. **No trusted edge**: under +0.5% EV (noise: those lines lost to the close), over +25% (usually a stale or mismatched quote), a sharp book for the market saying it is not +EV, or an edge
+ *     under +1.5% from one or two companies (such lines lost about 40% ROI; from four companies up the same small edges beat the close).
+ * Re-rated that way, sharp CLV per level was 0 = -0.0%, 1-1½ = +1.4%, 2-2½ = +1.6%, 3-3½ = +3.1%, 4-4½ = +2.9%, 5 = +3.4%.
+ *
+ * **The support score** ([Rating.points], [Rating.support]) is the five facts weighted as before, kept for the bet sheet, ordering ties and the engine's stake sizing ([com.tjshea.vigilant.data.cloud.CloudKelly]
+ * reads [Rating.support], so the sizing did not change with the scale):
  *  1. **Coverage** (20 points): how many companies price BOTH sides of the line (sister sites count once). A fair line from one book is that book's opinion; five is a market.
- *  2. **Agreement** (25; 20 before SR): the share of those companies that, each on its own devigged worst case, make the price +EV.
- *  3. **Edge** (30; 25 before SR): the EV at the price you would pay (taker fee included). 0% scores nothing, 6%+ is full marks; above 12% the score falls again, because an edge that large on a
- *     priced market is usually a stale or mismatched quote, not a gift.
- *  4. **Sharp book** (15; 25 before SR): a sharp book for the market prices both sides and says +EV (full), none prices it (a third of the points: unproven, not disproven), or one says it is NOT +EV (none).
+ *  2. **Agreement** (25): the share of those companies that, each on its own devigged worst case, make the price +EV.
+ *  3. **Edge** (30): the EV at the price you would pay (taker fee included). 0% scores nothing, 6%+ is full marks; above 12% the score falls again.
+ *  4. **Sharp book** (15): a sharp book for the market prices both sides and says +EV (full), none prices it (a third of the points), or one says it is NOT +EV (none).
  *  5. **Consensus** (10): how tightly the books' own fair chances sit together (standard deviation: 1 point or less is full, 5 or more nothing; unknown is half).
- *
- * 6. **Type of bet** (-7.5 to +7.5 since SR; ±15 in ST1, Tj 2026-10-23): what the history says about this kind of bet (league, kind, over/under, lead time), shrunk by sample size ([ProfitProfile.typePoints]).
- *
- * The weights are [Weights]; [CURRENT] is SR's (Tj, 2026-10-24), chosen on the engine's graded lines by the daily star check, which keeps scoring the alternatives beside it.
- *
- * The points total 0-100 (plus or minus the type points, kept in 0-100) and become stars on a curve, `1 + 4 * (points/100)^1.5`, so the top half stars take real evidence while a middling bet lands in the middle. Then ceilings that
- * evidence alone cannot be argued past: under two pricing companies at most 1½ stars, two at most 3, three at most 4. A bet under +2% EV is at most 3 stars (Tj, 2026-10-11: 3½ and up need a real edge),
- * under +1% at most 1 star (S5: the smallest edges make the least). Rounded to the nearest half star.
- *
- * **No trusted edge** (S5, [NONE]): under +0.5% EV, over +25%, or a sharp book for the market saying it is not +EV. On the engine's 2,880 graded +EV lines (research/star_rating_s5_2026-10-24.md)
- * the 440 under +0.5% lost to the close (CLV -2.1% / -0.4%, ROI -14% / -18%), the 105 over +25% lost (ROI -27%; mostly two-book props: a stale or mismatched quote) and the sharp book's "no" is
- * the sharpest price there is; every star level from 1 up beat the close.
+ *  6. **Type of bet** (-7.5 to +7.5): what the history says about this kind of bet ([ProfitProfile.typePoints]).
+ * Those points become the support stars on a curve, `1 + 4 * (points/100)^1.5`, under the old ceilings (under two companies 1½, two 3 or 2 with no sharp book, three 4, a sharp book against 2½,
+ * under +2% EV 3): the v1.0.67 stars, and [Scale.S5]'s with its floor.
  */
 object BetRating {
 
@@ -70,11 +70,23 @@ object BetRating {
         }
     }
 
-    /** The weights the app rates with. */
+    /** The weights of the support score. */
     val CURRENT: Weights = Weights.SR
 
-    /** A rating: [stars] in half steps from 1.0 to 5.0 (or [NONE] with the [doubt] that put it there), and the [points] it came from. */
-    data class Rating(val stars: Double, val points: Double, val doubt: String? = null) {
+    /** How points become stars: [S5] (v1.0.68: the support curve, with the no-trusted-edge floor) or [S6] (v1.0.69: the edge ladder with breadth ceilings). The star check scores both every day. */
+    enum class Scale { S5, S6 }
+
+    /** The scale the app rates with (SB, Tj 2026-10-24). Revert: [Scale.S5]. */
+    val CURRENT_SCALE: Scale = Scale.S6
+
+    /** Under this EV, an edge priced by one or two companies only is not trusted (S6): such lines lost about 40% ROI. */
+    const val THIN_MARKET_EV = 0.015
+
+    /**
+     * A rating: [stars] in half steps from 1.0 to 5.0 (or [NONE] with the [doubt] that put it there), the support [points], and the [support] stars those points make on the old curve
+     * (what the engine's stake sizing reads).
+     */
+    data class Rating(val stars: Double, val points: Double, val doubt: String? = null, val support: Double = stars) {
         /** "3½" or "4"; the glyphs are [glyphs]. */
         val label: String get() = BetRating.label(stars)
         val glyphs: String get() = BetRating.glyphs(stars)
@@ -123,7 +135,7 @@ object BetRating {
         else -> -4.0
     }
 
-    fun rate(i: Inputs, w: Weights = CURRENT): Rating {
+    fun rate(i: Inputs, w: Weights = CURRENT, scale: Scale = CURRENT_SCALE): Rating {
         val books = i.books.coerceAtLeast(0)
         val coverage = when (books) { 0 -> 0.0; 1 -> 0.1; 2 -> 0.45; 3 -> 0.7; 4 -> 0.88; else -> 1.0 }
         val agree = if (books == 0) 0.0 else i.agreeing?.let { it.coerceIn(0, books).toDouble() / books } ?: 0.6
@@ -135,17 +147,54 @@ object BetRating {
         }
         val tight = i.spread?.let { ((0.05 - it) / 0.04).coerceIn(0.0, 1.0) } ?: 0.5
         val points = w.coverage * coverage + w.agreement * agree + w.edge * edge + w.sharp * sharp + w.consensus * tight + w.typeScale * i.typePoints
-        doubtOf(i.ev, i.sharpAgainst)?.let { return Rating(NONE, points, it) }
+        val support = roundHalf(supportStars(points, books, i))
+        val doubt = doubtOf(i.ev, i.sharpAgainst) ?: if (scale == Scale.S6) thinMarketDoubt(books, i.ev) else null
+        if (doubt != null) return Rating(NONE, points, doubt, support)
+        val stars = when (scale) {
+            // The smallest real edges make the least (S5): under +1% at most 1 star.
+            Scale.S5 -> if (i.ev < MIN_EV_FOR_TWO_STARS - 1e-12) MIN else support
+            Scale.S6 -> minOf(edgeStars(i.ev), breadthCeiling(books))
+        }
+        return Rating(roundHalf(stars), points, null, support)
+    }
+
+    /** The old curve's stars from the support points, under its ceilings (v1.0.67's stars): [Rating.support]. */
+    private fun supportStars(points: Double, books: Int, i: Inputs): Double {
         var stars = 1.0 + 4.0 * (points / 100.0).coerceIn(0.0, 1.0).pow(1.5)
         stars = minOf(stars, ceiling(books))
-        // Two companies and no sharp book among them = two small names agreeing with each other (Tj, 2026-10-23): at most 2 stars (research/star_rating_2026-10-23.md: <=2 books closed -1.7 points worse, t -1.7).
+        if (i.sharpAgainst) stars = minOf(stars, 2.5)
+        // Two companies and no sharp book among them = two small names agreeing with each other (Tj, 2026-10-23): at most 2 stars.
         if (books in 1..2 && !i.sharpAgrees && !i.sharpAgainst) stars = minOf(stars, MAX_STARS_SMALL_BOOKS)
         // 3½ stars and up take a real edge (Tj, 2026-10-11): under +2% EV at the price you would pay, a bet is at most 3 stars however well the books agree.
         if (i.ev < MIN_EV_FOR_HIGH_STARS - 1e-12) stars = minOf(stars, MAX_STARS_UNDER_MIN_EV)
-        // The smallest real edges make the least (S5): under +1% at most 1 star.
-        if (i.ev < MIN_EV_FOR_TWO_STARS - 1e-12) stars = MIN
-        return Rating(roundHalf(stars), points)
+        if (i.ev <= 0.0) stars = MIN
+        return stars
     }
+
+    /** S6's stars from the edge alone (full marks at 6%, as the edge score has): the profit side of the rating. */
+    fun edgeStars(ev: Double): Double = when {
+        ev < 0.01 -> 1.0
+        ev < 0.015 -> 1.5
+        ev < 0.02 -> 2.0
+        ev < 0.025 -> 2.5
+        ev < 0.03 -> 3.0
+        ev < 0.04 -> 3.5
+        ev < 0.05 -> 4.0
+        ev < 0.06 -> 4.5
+        else -> MAX
+    }
+
+    /** S6's support ceiling: how many companies price both sides. One at most 2 stars, two at most 3, three at most 4; 5 stars take four or more. */
+    fun breadthCeiling(books: Int): Double = when {
+        books <= 1 -> 2.0
+        books == 2 -> 3.0
+        books == 3 -> 4.0
+        else -> MAX
+    }
+
+    /** S6: a small edge from one or two companies is noise (research/star_rating_sb_2026-10-24.md: one company at +0.5-1.5% ROI -45%, two -39%). */
+    private fun thinMarketDoubt(books: Int, ev: Double): String? =
+        if (books <= 2 && ev < THIN_MARKET_EV - 1e-12) "an edge under ${pct(THIN_MARKET_EV)} from ${if (books <= 1) "one book" else "two books"} is noise (such lines lost)" else null
 
     /** The edge's share of its points: a straight climb to full at 6%, level to 12%, then back down to half at 25% and under (a too-good price is suspect). */
     internal fun edgeScore(ev: Double): Double = when {
