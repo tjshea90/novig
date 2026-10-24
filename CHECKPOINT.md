@@ -1,13 +1,13 @@
-# CHECKPOINT 4140 — read me first, then TASKS.md
+# CHECKPOINT 4141 — read me first, then TASKS.md
 
-**Written:** 2026-10-24T20:20:52Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-fnde3y` · **builds on:** `79f54531a` (this checkpoint is the commit after it)
+**Written:** 2026-10-24T20:22:14Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-fnde3y` · **builds on:** `c662e3319` (this checkpoint is the commit after it)
 
 ## Just done
-CH80d evidence recorded
+CH81a: Tj saw bets return
 
 ## Do this next
-CH80d fix requote of partial books
+read NOFILL in next phone/diag
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ CH80d fix requote of partial books
 
 ## Last ten checkpoints
 ```
+  c662e3319 ckpt 4140: CH80d evidence recorded
   79f54531a ckpt 4139: answered disappearing-bets: still happening after 1.0.77
   6a0b22771 ckpt 4138: CH85 diagnostics review answered
   f94488d04 ckpt 4137: CH80 fixed in engine (v1.0.77, released, engine reset); Tj pausing the nofi
@@ -26,5 +27,4 @@ CH80d fix requote of partial books
   f42da88fd ckpt 4133: pre-ship: After the Diagnostics report is saved to GitHub the phone clears 
   04c7f1a26 ckpt 4132: pre-release: The phone saves its full Diagnostics report to GitHub every 20
   45ac45990 ckpt 4131: pre-ship: The phone saves its full Diagnostics report to GitHub every 20 mi
-  c27122c3f ckpt 4130: pre-release: CH82+CH81: engine restart reads 'stopped or restarting' not 's
 ```
