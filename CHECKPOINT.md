@@ -1,13 +1,13 @@
-# CHECKPOINT 4143 — read me first, then TASKS.md
+# CHECKPOINT 4144 — read me first, then TASKS.md
 
-**Written:** 2026-10-24T20:29:32Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-fnde3y` · **builds on:** `64787ff66` (this checkpoint is the commit after it)
+**Written:** 2026-10-24T20:40:54Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-fnde3y` · **builds on:** `6ddc6d43e` (this checkpoint is the commit after it)
 
 ## Just done
-CH81f logged
+CH85a bids.json.gz 404 polling stopped (unreleased); disappearing-bets analysis told to Tj
 
 ## Do this next
-read next phone/diag NOFILL after 20:34 UTC
+CH81g ask-presence log, then ship batch
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ read next phone/diag NOFILL after 20:34 UTC
 
 ## Last ten checkpoints
 ```
+  0bd55e13f ckpt 4143: CH81f logged
   64787ff66 ckpt 4142: CH81e screenshot answered
   194d34888 ckpt 4141: CH81a: Tj saw bets return
   c662e3319 ckpt 4140: CH80d evidence recorded
@@ -26,5 +27,7 @@ read next phone/diag NOFILL after 20:34 UTC
   7b1da61ba ckpt 4136: pre-release: CH80: the +EV list no longer empties at each engine scan start
   148cdc6ad ckpt 4135: pre-ship: CH80: the +EV list no longer empties at each engine scan start: r
   89aa892f4 ckpt 4134: pre-release: After the Diagnostics report is saved to GitHub the phone clea
-  f42da88fd ckpt 4133: pre-ship: After the Diagnostics report is saved to GitHub the phone clears 
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
