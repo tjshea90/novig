@@ -6317,3 +6317,9 @@ Analyze the current star system; make ONE rating that combines all factors, remo
 - [ ] PS1 once a Streaming Lite+ key is on GitHub: engine WebSocket client for PropLine `line_movement` (+ `resolution`), merged into the PropLine board (like SharpApiStream), socket switch + status line + tests; then measure PropLine's p90 age vs SharpAPI/SGO for a week
 - [ ] PS2 two-week overlap: lines only SGO prices and SGO vs PropLine closes; drop SGO if the loss is small
 
+## OK: The Odds API keys spent in parallel (Tj, 2026-10-24, screenshot of Settings > APIs & keys, verbatim)
+"Why did you say all of my the odds api keys are spent?" / "And why is it spending on multiple keys at the same time? This looks like waste"
+- [x] OK1 corrected: 5,082 of 10,500 credits left (3 keys spent, 3 at 1); docs fixed (api_verdicts, full_test)
+- [x] OK2 explained: each key is paced to its own daily share (OddsFeed.ODDS_API reserve 20, CreditPace), so all keys spend a little a day; same total, no credit lost (all reset Nov 1). Engine spend 2026-10-23: americanfootball_ncaaf 234 credits / 120 calls (gap fills), other leagues free /events calls.
+- [x] OK3 real waste found beside it: SharpAPI's 60 s reconcile window never fit the delta's paging (about 1,000 rows), so NBA/NFL/NCAAF were read whole (50,000-95,000 rows, ~480 calls each) about once a minute: 562,855 calls a day. Fix: SharpApiFeed.undrained passes an undrainable window over while the stream covers the league (window halves, whole read every 15 min); SharpApiTest
+
