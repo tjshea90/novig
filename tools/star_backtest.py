@@ -15,7 +15,7 @@ Output: lines.csv.gz (one row per outcome and lead with EV at or above -2% on ei
   python3 -I tools/star_backtest.py selftest
 Keys: PROPLINE_API_KEY (the Pro one is found by tools/propline.py's plan check).
 """
-import csv, datetime, glob, gzip, os, statistics as st, sys
+import csv, datetime, glob, gzip, math, os, statistics as st, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import propline as pl
 
@@ -24,7 +24,43 @@ US_BOOKS = ["draftkings", "fanduel", "betmgm", "williamhill_us", "espnbet", "bov
 SHARP_WEIGHT = 0.7
 CLOSE_MAX_MIN = 90
 COLS = ["event_id", "sport", "start_utc", "lead_h", "market", "kind", "player", "side", "line", "novig_american", "cost", "ev_pin", "ev_blend", "pin_fair", "blend_fair",
-        "books", "agreeing", "sharp_agrees", "spread", "close_fair", "clv", "novig_close_fair", "mix_close_fair", "clv_mix", "result", "profit"]
+        "books", "agreeing", "sharp_agrees", "spread", "close_fair", "clv", "novig_close_fair", "mix_close_fair", "clv_mix", "result", "profit",
+        # SX rerun: the app's own devig (the lowest of four methods per side, Devig.worstCase) and the raw two-sided prices, so any devig can be re-done in the analysis
+        "ev_wc", "ev_pin_wc", "agreeing_wc", "pin_raw", "pin_raw_opp", "close_pin_raw", "close_pin_raw_opp", "close_nov_raw", "close_nov_raw_opp"]
+
+
+def devig_all(pa, pb):
+    """[multiplicative, additive, power, shin] fair of side a from raw implied probabilities pa, pb (engine/Devig.kt)."""
+    s = pa + pb
+    mult = pa / s
+    add = pa - (s - 1) / 2
+    lo, hi = 1.0, 2.0
+    while pa ** hi + pb ** hi > 1 and hi < 1e6:
+        hi *= 2
+    for _ in range(80):
+        mid = (lo + hi) / 2
+        if pa ** mid + pb ** mid > 1:
+            lo = mid
+        else:
+            hi = mid
+    k = (lo + hi) / 2
+    powr = pa ** k
+    def at(z):
+        return [(math.sqrt(z * z + 4 * (1 - z) * r * r / s) - z) / (2 * (1 - z)) for r in (pa, pb)]
+    zl, zh = 0.0, 1 - 1e-9
+    for _ in range(80):
+        zm = (zl + zh) / 2
+        if sum(at(zm)) > 1:
+            zl = zm
+        else:
+            zh = zm
+    shin = at((zl + zh) / 2)[0]
+    return [mult, add, powr, shin]
+
+
+def worst(pa, pb):
+    """The app's WORST_CASE fair for side a: the lowest of the four methods."""
+    return min(devig_all(pa, pb)) if pa + pb >= 1.0 else pa / (pa + pb)
 
 
 def prob(a):
@@ -133,7 +169,7 @@ def evaluate(sport, eid, start, rows, hist, pin_close, books):
             cost = prob(nv["price"])
             if not 0.01 < cost < 0.99:
                 continue
-            fairs, pin_f = {}, None
+            fairs, pin_f, wcs, raw = {}, None, {}, {}
             for bk in ["pinnacle"] + books:
                 a = last_before(hist.get(bk, {}).get((m, p, side)), t, point)
                 b = last_before(hist.get(bk, {}).get((m, p, opp)), t, opp_point(m, point))
@@ -143,6 +179,8 @@ def evaluate(sport, eid, start, rows, hist, pin_close, books):
                 if pa + pb < 0.9 or pa + pb > 1.25:
                     continue                      # one side stale or mismatched
                 fairs[bk] = pa / (pa + pb)
+                wcs[bk] = worst(pa, pb)
+                raw[bk] = (pa, pb)
             pin_f = fairs.get("pinnacle")
             if not fairs:
                 continue
@@ -156,6 +194,16 @@ def evaluate(sport, eid, start, rows, hist, pin_close, books):
             if max(ev_blend, ev_pin if ev_pin is not None else -1) < -0.02:
                 continue
             agreeing = sum(1 for v in fairs.values() if v / cost - 1 > 0)
+            pin_wc = wcs.get("pinnacle")
+            others_wc = [v for k, v in wcs.items() if k != "pinnacle"]
+            blend_wc = (SHARP_WEIGHT * pin_wc + (1 - SHARP_WEIGHT) * st.mean(others_wc) if others_wc else pin_wc) if pin_wc is not None else st.mean(others_wc)
+            def raw_close(book):
+                pre = () if book == "pinnacle" else (book,)
+                a = pin_close.get(pre + (eid, m, p, point, side))
+                b = pin_close.get(pre + (eid, m, p, opp_point(m, point), opp))
+                return (a, b) if a is not None and b is not None else (None, None)
+            cpa, cpb = raw_close("pinnacle")
+            cna, cnb = raw_close("novig")
             spread = st.pstdev(list(fairs.values())) if len(fairs) >= 2 else None
             d = 1 / cost
             out.append({
@@ -167,6 +215,11 @@ def evaluate(sport, eid, start, rows, hist, pin_close, books):
                 "novig_close_fair": "" if nf is None else round(nf, 5), "mix_close_fair": "" if mix is None else round(mix, 5), "clv_mix": "" if mix is None else round(mix / cost - 1, 5),
                 "result": "won" if win else "lost",
                 "profit": round(d - 1, 5) if win else -1.0,
+                "ev_wc": round(blend_wc / cost - 1, 5), "ev_pin_wc": "" if pin_wc is None else round(pin_wc / cost - 1, 5),
+                "agreeing_wc": sum(1 for v in wcs.values() if v / cost - 1 > 0),
+                "pin_raw": "" if "pinnacle" not in raw else round(raw["pinnacle"][0], 5), "pin_raw_opp": "" if "pinnacle" not in raw else round(raw["pinnacle"][1], 5),
+                "close_pin_raw": "" if cpa is None else round(cpa, 5), "close_pin_raw_opp": "" if cpb is None else round(cpb, 5),
+                "close_nov_raw": "" if cna is None else round(cna, 5), "close_nov_raw_opp": "" if cnb is None else round(cnb, 5),
             })
     return out
 
@@ -271,6 +324,9 @@ def selftest():
     body = {"bookmakers": [{"key": "novig", "markets": [{"key": "totals", "outcomes": [{"name": "Over", "snapshots": [{"price": 100}]}]}]}]}
     assert parse_history(body) == {"novig": {("totals", "", "Over"): [{"price": 100}]}}
     assert "STAR BACKTEST" in summarize(got)
+    f4 = devig_all(prob(-105), prob(-115))
+    assert abs(sum(devig_all(0.55, 0.5)[:1]) - 0.55 / 1.05) < 1e-12 and all(0 < v < 1 for v in f4)
+    assert abs(over1["ev_pin_wc"] - round(min(f4) / prob(110) - 1, 5)) < 1e-9 and over1["ev_wc"] <= over1["ev_blend"] + 1e-9
     print("star backtest selftest ok")
     return 0
 
