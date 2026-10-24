@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "99767065224748a3674b0053d15dab859abbe4d3",
+ "head": "4ecfa8fdf5877ae9ac9cf60086fb88f559dc2f54",
  "since": 1792809425,
- "beat": 1792811032,
- "beatIso": "2026-10-24T03:03:52Z",
- "done": "SX request written (full star audit on all history); S6 coded+tests green but unreleased",
- "next": "SX1 inventory saved sources + API history routes"
+ "beat": 1792811090,
+ "beatIso": "2026-10-24T03:04:50Z",
+ "done": "SX1-2: inventory (engine-dataset, phone study, propline-archive 907k graded outcomes Apr 20-Oct 23 Novig+Pinnacle open/close+result, Novig public trade archive, cloud-archive 506 MB); propline.yml multibook task running; tools/star_backtest.py + star-study.yml (point-in-time PropLine history backtest) written; S6 code parked on sx-s6-wip",
+ "next": "land on main, dispatch star-study.yml events=20 trial, then 2000; analyse propline archive Novig vs Pinnacle by type meanwhile"
 }
