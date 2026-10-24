@@ -4,10 +4,12 @@ Every study in `research/`, newest first, and how it is USED. Tuning levers and 
 Statuses: APPLIED (a change in `research/review/CHANGES.md` cites it), LEVER (on LEVERS.md), CLOSED (verdict and disposition on LEVERS.md), WATCH (an open TASKS.md item waits on its number),
 CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a sample, marked in its first lines), IDLE (cited nowhere: act on it or mark it).
 
-124 entries; 6 idle: api_audit_report_2026-10-22.html, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md
+126 entries; 6 idle: api_audit_report_2026-10-22.html, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
+| 2026-10-24 | `trends_2026-10-24/` | (no title) | CLOSED |
+| 2026-10-24 | `trends_2026-10-24.md` | Stats and trends beyond CLV/EV: do they find profitable bets? (TR, 2026-10-24) - Tj: "Can we get any valuable information from the historical data ... besides clv and EV? Maybe make a system that finds profitable bets based on ... | CLOSED |
 | 2026-10-24 | `star_rating_sx_2026-10-24.md` | SX: the star system built on all the history (2026-10-24, in progress: findings are added as they come) - Tj, verbatim (TASKS.md SX): "Build a star rating system based on solid data from all the sources including apis historica... | APPLIED LEVER CODE |
 | 2026-10-24 | `star_rating_sb_2026-10-24.md` | SB: the stars on a bigger sample (2026-10-24) - Tj, verbatim: "Since the sample size is small  can't you use some of the apis features of historical odds and clv and results" | CODE |
 | 2026-10-24 | `star_rating_s5_2026-10-24.md` | S5: is the 1-5 star scale sound for betting by hand? (2026-10-24) - Tj, verbatim: "Do another check of the bet star rating system. I will be using it heavily to make bets. Its accuracy is very important. Make sure the 1 star to... | APPLIED LEVER |
