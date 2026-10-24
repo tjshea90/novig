@@ -104,7 +104,7 @@ def selftest():
             w.writerow({"event_id": "g%d" % g, "sport": "basketball_nba", "lead_h": "3", "kind": "prop", "side": "Over", "cost": "0.5", "ev_blend": "0.025", "clv_mix": "%.3f" % (0.02 + (g % 2) * 0.01), "profit": "1" if g % 2 else "-1"})
             w.writerow({"event_id": "g%d" % g, "sport": "basketball_nba", "lead_h": "3", "kind": "prop", "side": "Over", "cost": "0.5", "ev_blend": "0.3", "clv_mix": "0", "profit": "-1"})
     doc = build([p], os.path.join(d, "o.json"))
-    c = doc["cells"]["NBA|prop|over|1-3h|2-3"]
+    c = doc["cells"]["NBA|prop|over|3-6h|2-3"]
     assert c["games"] == 40 and abs(c["clv"] - 0.025) < 1e-9 and c["clvSe"] > 0 and abs(c["roi"]) < 1e-9
     assert "*|*|*|*|2-3" in doc["cells"] and not any(k.endswith("|12-25") for k in doc["cells"])   # the 30% row is outside every band
     assert keys("NBA", "prop", "over", "1-3h", "2-3")[0] == "NBA|prop|over|1-3h|2-3" and band(0.0049, EV_BANDS) is None and band(0.25, EV_BANDS) == "12-25"
