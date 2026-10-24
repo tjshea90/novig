@@ -790,6 +790,7 @@ class CloudEngine(
         r.result?.opportunities?.mapNotNull { it.evPercent }?.takeIf { it.isNotEmpty() }?.let { evs ->
             append("EV spread of ${evs.size} priced lines: +EV ${evs.count { it > 0 }} · 0 to -2% ${evs.count { it <= 0 && it > -0.02 }} · -2 to -5% ${evs.count { it <= -0.02 && it > -0.05 }} · -5 to -10% ${evs.count { it <= -0.05 && it > -0.10 }} · below -10% ${evs.count { it <= -0.10 }}; ")
         }
+        r.result?.opportunities?.let { com.tjshea.vigilant.data.scanner.MatchHealth.text(it) }?.takeIf { it.isNotEmpty() }?.let { append(it).append("; ") }
         r.timing?.let { t -> append(com.tjshea.vigilant.data.scanner.ScanTiming.text(t, r.booksFetched + r.booksNotModified, r.booksViaKey, r.booksViaPush)).append("; ") }
         append("Novig books: ${r.booksFetched} read, ${r.booksNotModified} unchanged, ${r.booksFromCache} from cache, ${r.booksTooLate} left out as too late")
         r.retryAfterSeconds?.let { append("; Novig asked us to slow down ${it}s") }
