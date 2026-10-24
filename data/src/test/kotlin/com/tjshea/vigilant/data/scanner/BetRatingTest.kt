@@ -142,7 +142,7 @@ class BetRatingTest {
     fun `S6 stars follow the edge under breadth ceilings, and thin small edges are not trusted`() {
         assertEquals(BetRating.Scale.S6, BetRating.CURRENT_SCALE)
         val wide = BetRating.Inputs(books = 6, agreeing = 6, ev = 0.0, sharpAgrees = true, sharpAgainst = false, spread = 0.005)
-        val ladder = listOf(0.005 to 1.0, 0.012 to 1.5, 0.017 to 2.0, 0.022 to 2.5, 0.027 to 3.0, 0.035 to 3.5, 0.045 to 4.0, 0.055 to 4.5, 0.06 to 5.0, 0.15 to 5.0, 0.25 to 5.0)
+        val ladder = listOf(0.005 to 1.0, 0.012 to 1.5, 0.017 to 2.0, 0.022 to 2.5, 0.027 to 3.0, 0.035 to 3.5, 0.045 to 4.0, 0.055 to 4.5, 0.06 to 5.0, 0.12 to 5.0, 0.15 to 4.0, 0.25 to 4.0)
         for ((ev, stars) in ladder) assertEquals("ev $ev", stars, BetRating.rate(wide.copy(ev = ev)).stars, 0.0)
         // The edge alone moves the stars: the support inputs move only the support score.
         val thin = wide.copy(ev = 0.035, agreeing = 3, sharpAgrees = false, spread = 0.03)
@@ -159,7 +159,7 @@ class BetRatingTest {
             assertEquals("books $b", BetRating.NONE, r.stars, 0.0)
             assertTrue(r.doubt!!.contains("1.5%"))
         }
-        assertEquals(1.5, BetRating.rate(wide.copy(books = 2, agreeing = 2, ev = 0.015)).stars, 0.0)
+        assertEquals(2.0, BetRating.rate(wide.copy(books = 2, agreeing = 2, ev = 0.015)).stars, 0.0)
         assertEquals(1.5, BetRating.rate(wide.copy(books = 3, agreeing = 3, ev = 0.0149)).stars, 0.0)
         // The support stars are S5's curve (what CloudKelly sizes from), floors or not.
         for (ev in listOf(0.012, 0.03, 0.08)) assertEquals(BetRating.rate(wide.copy(ev = ev), scale = BetRating.Scale.S5).stars, BetRating.rate(wide.copy(ev = ev)).support, 0.0)

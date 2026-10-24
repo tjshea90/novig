@@ -14,7 +14,8 @@ import kotlin.math.sqrt
  * predicted the sharp close, and monotonically (Pinnacle/Circa CLV +0.2% under +0.5% EV, about +1% at 0.5-3%, +3% at 3-6%, more above), while the support inputs (companies, a sharp book
  * agreeing, consensus, the history's type points) did not, in either sample. So:
  *  1. **The edge sets the stars** ([edgeStars]): +0.5-1% = 1, +1-1.5% = 1½, +1.5-2% = 2, +2-2.5% = 2½, +2.5-3% = 3, +3-4% = 3½, +4-5% = 4, +5-6% = 4½, +6% and more = 5.
- *  2. **The top needs breadth** ([breadthCeiling]): one company pricing both sides at most 2 stars, two at most 3, three at most 4; 5 stars take four or more.
+ *  2. **The top needs breadth** ([breadthCeiling]): one company pricing both sides at most 2 stars, two at most 3, three at most 4; 5 stars take four or more. An edge over +12% is at most
+ *     4 stars ([SUSPECT_EV]: often a stale or mismatched quote).
  *  3. **No trusted edge**: under +0.5% EV (noise: those lines lost to the close), over +25% (usually a stale or mismatched quote), a sharp book for the market saying it is not +EV, or an edge
  *     under +1.5% from one or two companies (such lines lost about 40% ROI; from four companies up the same small edges beat the close).
  * Re-rated that way, sharp CLV per level was 0 = -0.0%, 1-1½ = +1.4%, 2-2½ = +1.6%, 3-3½ = +3.1%, 4-4½ = +2.9%, 5 = +3.4%.
@@ -78,6 +79,9 @@ object BetRating {
 
     /** The scale the app rates with (SB, Tj 2026-10-24). Revert: [Scale.S5]. */
     val CURRENT_SCALE: Scale = Scale.S6
+
+    /** Over this EV (to [MAX_TRUSTED_EV]) S6 rates a bet at most 4 stars: an edge that large is often stale or mismatched. */
+    const val SUSPECT_EV = 0.12
 
     /** Under this EV, an edge priced by one or two companies only is not trusted (S6): such lines lost about 40% ROI. */
     const val THIN_MARKET_EV = 0.015
@@ -153,7 +157,8 @@ object BetRating {
         val stars = when (scale) {
             // The smallest real edges make the least (S5): under +1% at most 1 star.
             Scale.S5 -> if (i.ev < MIN_EV_FOR_TWO_STARS - 1e-12) MIN else support
-            Scale.S6 -> minOf(edgeStars(i.ev), breadthCeiling(books))
+            // An edge over 12% is often a stale or mismatched quote (the edge score has always fallen there; too few graded lines to say more): rated, but not top.
+            Scale.S6 -> minOf(edgeStars(i.ev), breadthCeiling(books), if (i.ev > SUSPECT_EV) 4.0 else MAX)
         }
         return Rating(roundHalf(stars), points, null, support)
     }
