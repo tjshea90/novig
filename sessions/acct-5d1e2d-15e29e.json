@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-fnde3y",
- "head": "f94488d044f656e0eb612df166a6a5b9e7134614",
+ "head": "6a0b22771f56a5c9c7e387c4e8e33ae2f01d2194",
  "since": 1792818666,
- "beat": 1792871754,
- "beatIso": "2026-10-24T19:55:54Z",
- "done": "CH80 fixed in engine (v1.0.77, released, engine reset); Tj pausing the nofill study until wallet money",
- "next": "read next phone/diag report for feed.hide.bulk ~0; NOFILL lines when bets tried; CH83a; CH82 idle cause"
+ "beat": 1792871840,
+ "beatIso": "2026-10-24T19:57:20Z",
+ "done": "CH85 diagnostics review answered",
+ "next": "CH85a stop bids.json.gz 404 polling; check digest for early-bet rule"
 }
