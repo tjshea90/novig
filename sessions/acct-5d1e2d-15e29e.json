@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-aylgas",
- "head": "552f56908566e8054c2a1bf0bdbe0b2f7cc97146",
+ "head": "a4865bf81d1cfd7fdd05de234aea8dc06353f7fd",
  "since": 1792806926,
- "beat": 1792815621,
- "beatIso": "2026-10-24T04:20:21Z",
+ "beat": 1792816021,
+ "beatIso": "2026-10-24T04:27:01Z",
  "done": "pre-release: CH75: a bet nobody is selling stays off the list until there is liquidity at that price again (versionCode 409, v1.0.69)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.69), then run: bash tools/record-release.sh v1.0.69 409 \"CH75: a bet nobody is selling stays off the list until there is liquidity at that price again\""
 }
