@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "8e828381fb28861b2328ad7a2463f72e65450653",
+ "head": "40c94935b079c827317ea120ec891c63bdc9dc0d",
  "since": 1792797865,
- "beat": 1792799962,
- "beatIso": "2026-10-23T23:59:22Z",
- "done": "FX2/FX3: star check rerun read (recorded lines only: ROI rises with stars, CLV/ROI slope +0.5/+5.0 pts per star, t~1; type points and sharp component not confirmed out of sample); API value table over 501 scans x 3 days read",
- "next": "full regression floor (running), then write research/full_test, star_rating_review, api_verdicts; CHANGES.md; ship"
+ "beat": 1792800142,
+ "beatIso": "2026-10-24T00:02:22Z",
+ "done": "FX3/FX4 written: research/star_rating_review_2026-10-23.md, research/api_verdicts_2026-10-23.md, research/full_test_2026-10-23.md; CHANGES.md + LEVERS.md (star lever trigger) + FX6 task",
+ "next": "floor result -> tick FX1-FX4, ship.sh, release.yml, record-release.sh; land on main + engine reset (Kalshi cancel fix live)"
 }
