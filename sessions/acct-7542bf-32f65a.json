@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "a79976d1e5f639a6fe3e4a83e75b24db95ee2880",
+ "head": "230599af4c1c4a8a7f6045b54b068cfe668de626",
  "since": 1792805068,
- "beat": 1792808279,
- "beatIso": "2026-10-24T02:17:59Z",
- "done": "pre-release: S5: star scale fixed at the bottom: 0 = no trusted edge (EV under 0.5% or over 25%, or a sharp book against: these lost to the close), under 1% EV = 1 star; every rated level (1-5) beat the close; star check judges on Pinnacle/Circa closes over games (versionCode 408, v1.0.68)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.68), then run: bash tools/record-release.sh v1.0.68 408 \"S5: star scale fixed at the bottom: 0 = no trusted edge (EV under 0.5% or over 25%, or a sharp book against: these lost to the close), under 1% EV = 1 star; every rated level (1-5) beat the close; star check judges on Pinnacle/Circa closes over games\""
+ "beat": 1792808317,
+ "beatIso": "2026-10-24T02:18:37Z",
+ "done": "S5 done: v1.0.68 released and recorded (no-trusted-edge floor, 1 star under 1%, star check on sharp closes over games); engine reset onto it",
+ "next": "watch the digest's STAR RATING CHECK (sharp CLV per star, rated lines) for two digests; switch to the edge ladder only by the LEVERS.md rule; FX6 (API attribution per line) next"
 }
