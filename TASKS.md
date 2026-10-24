@@ -6300,3 +6300,9 @@ Analyze the current star system; make ONE rating that combines all factors, remo
 - [ ] FX5 full regression (exit code AND output), ship.sh, release.yml, record-release.sh, link to Tj
 - [ ] FX6 record which API supplied each book behind a line's fair (AtBet/study journal + tools/lines_dataset.py column), so the API review can rank APIs by the CLV of the lines they priced (research/api_verdicts_2026-10-23.md: today only coverage/freshness can be judged)
 
+## BX: BoltOdds errors reset the engine (Tj, 2026-10-24, typed prompt, verbatim)
+"I'm getting a lot of boltodds errors, see what can be done. Maybe just turn it off. The GitHub engine shouldn't keep resetting on boltodds errors because there are a lot of them"
+- [ ] BX1 find what the BoltOdds errors are (keys on GitHub Free/Trial: "Free plan cannot access API") and every place they reset/replace the engine (ApiManager IMPORTANT ladder End.API, socket refusals)
+- [ ] BX2 no runner swap for BoltOdds, and none for any refused key (a new runner cannot fix a key's plan); tests
+- [ ] BX3 switch BoltOdds off on the engine (engine_set.py, logged in CHANGES.md) until a key that works is on GitHub; tell Tj how to turn it back on
+
