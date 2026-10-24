@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "2a12df44ccd277253d46fd3a5f3d22f4c2d921bb",
+ "head": "f42da88fd1286260507c55b8dcee4e645132193c",
  "since": 1792818666,
- "beat": 1792864723,
- "beatIso": "2026-10-24T17:58:43Z",
- "done": "pre-release: The phone saves its full Diagnostics report to GitHub every 20 min (phone-data/phone/diag) so Claude reads the FEEDHIDE/NOFILL logs without Tj sending a file (versionCode 415, v1.0.75)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.75), then run: bash tools/record-release.sh v1.0.75 415 \"The phone saves its full Diagnostics report to GitHub every 20 min (phone-data/phone/diag) so Claude reads the FEEDHIDE/NOFILL logs without Tj sending a file\""
+ "beat": 1792864752,
+ "beatIso": "2026-10-24T17:59:12Z",
+ "done": "pre-ship: After the Diagnostics report is saved to GitHub the phone clears its logs (only after a successful save); hourly copies kept on GitHub",
+ "next": "ship.sh gates and releases this"
 }
