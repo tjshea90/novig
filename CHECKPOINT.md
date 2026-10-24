@@ -1,10 +1,10 @@
-# CHECKPOINT 4100 — read me first, then TASKS.md
+# CHECKPOINT 4101 — read me first, then TASKS.md
 
-**Written:** 2026-10-24T03:09:56Z · **tests:** 1 RED: test_research_index.sh (8 green)
-**Branch:** `ccr-305d3f7a-i2z8ja` · **builds on:** `5281628de` (this checkpoint is the commit after it)
+**Written:** 2026-10-24T03:10:36Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-305d3f7a-i2z8ja` · **builds on:** `216528115` (this checkpoint is the commit after it)
 
 ## Just done
-SX: star_backtest also keeps Novig's devigged close and the blended close (clv_mix)
+SX: index rebuilt
 
 ## Do this next
 read star-study trial, dispatch 2000
@@ -13,10 +13,11 @@ read star-study trial, dispatch 2000
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M tools/star_backtest.py
+     M research/INDEX.md
 
 ## Last ten checkpoints
 ```
+  216528115 ckpt 4100: SX: star_backtest also keeps Novig's devigged close and the blended close (
   5281628de ckpt 4099: SX finding 1 written (research/star_rating_sx_2026-10-24.md): at the close 
   cd0d7f208 ckpt 4098: SX: research index rebuilt; star tools landing
   8597c1116 ckpt 4097: SX: landing the star tools
@@ -26,5 +27,4 @@ read star-study trial, dispatch 2000
   df67812b8 ckpt 4094: CH75: dead price remembered after NotFilled; test green
   230599af4 ckpt 4093: S5 done: v1.0.68 released and recorded (no-trusted-edge floor, 1 star under
   a79976d1e ckpt 4092: pre-release: S5: star scale fixed at the bottom: 0 = no trusted edge (EV un
-  8b0c5e816 ckpt 4091: pre-ship: S5: star scale fixed at the bottom: 0 = no trusted edge (EV under
 ```

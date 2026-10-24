@@ -4,10 +4,11 @@ Every study in `research/`, newest first, and how it is USED. Tuning levers and 
 Statuses: APPLIED (a change in `research/review/CHANGES.md` cites it), LEVER (on LEVERS.md), CLOSED (verdict and disposition on LEVERS.md), WATCH (an open TASKS.md item waits on its number),
 CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a sample, marked in its first lines), IDLE (cited nowhere: act on it or mark it).
 
-122 entries; 6 idle: api_audit_report_2026-10-22.html, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, propline_streaming_consolidation_2026-10-24.md, star_rating_sb_2026-10-24.md
+123 entries; 7 idle: api_audit_report_2026-10-22.html, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, propline_streaming_consolidation_2026-10-24.md, star_rating_sb_2026-10-24.md, star_rating_sx_2026-10-24.md
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
+| 2026-10-24 | `star_rating_sx_2026-10-24.md` | SX: the star system built on all the history (2026-10-24, in progress: findings are added as they come) - Tj, verbatim (TASKS.md SX): "Build a star rating system based on solid data from all the sources including apis historica... | IDLE |
 | 2026-10-24 | `star_rating_sb_2026-10-24.md` | SB: the stars on a bigger sample (2026-10-24) - Tj, verbatim: "Since the sample size is small  can't you use some of the apis features of historical odds and clv and results" | IDLE |
 | 2026-10-24 | `star_rating_s5_2026-10-24.md` | S5: is the 1-5 star scale sound for betting by hand? (2026-10-24) - Tj, verbatim: "Do another check of the bet star rating system. I will be using it heavily to make bets. Its accuracy is very important. Make sure the 1 star to... | APPLIED LEVER CODE |
 | 2026-10-24 | `propline_streaming_consolidation_2026-10-24.md` | Can PropLine's Streaming tier replace other APIs? (Tj, 2026-10-24, screenshot of PropLine's pricing: Streaming $79/mo) - Tj: "If I consolidate my budget into this propline plan in the screenshot, can it replace a lot of my othe... | IDLE |
