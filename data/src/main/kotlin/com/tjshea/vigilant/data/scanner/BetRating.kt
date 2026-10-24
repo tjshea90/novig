@@ -6,8 +6,10 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 
 /**
- * The 1-5 star rating of a +EV bet (Tj, 2026-10-11): how much to TRUST the edge, not whether it is an edge. A 1-star bet can still be +EV; it is one whose edge rests on thin or
- * contradictory evidence. One rating for both scanners, from the same five facts about a bet, all worked out the same way (RESEARCH.md §131):
+ * The 1-5 star rating of a +EV bet (Tj, 2026-10-11): how much to TRUST the edge and how much it is likely to make. Every rated bet (1 to 5 stars) is +EV on the evidence; a 1-star bet is one
+ * with a small edge or thin support, a 5-star one has a large edge that many books back (S5, Tj 2026-10-24: "5 Star bets being excellent, profitable bets with good support and 1 star bets
+ * still being positive ev, but less support and less profitable"). A line whose edge the data does not trust gets [NONE] (0, "no trusted edge") instead of a star: see [doubtOf].
+ * One rating for both scanners, from the same five facts about a bet, all worked out the same way (RESEARCH.md §131):
  *
  *  1. **Coverage** (20 points): how many companies price BOTH sides of the line (sister sites count once). A fair line from one book is that book's opinion; five is a market.
  *  2. **Agreement** (25; 20 before SR): the share of those companies that, each on its own devigged worst case, make the price +EV.
@@ -21,8 +23,12 @@ import kotlin.math.sqrt
  * The weights are [Weights]; [CURRENT] is SR's (Tj, 2026-10-24), chosen on the engine's graded lines by the daily star check, which keeps scoring the alternatives beside it.
  *
  * The points total 0-100 (plus or minus the type points, kept in 0-100) and become stars on a curve, `1 + 4 * (points/100)^1.5`, so the top half stars take real evidence while a middling bet lands in the middle. Then ceilings that
- * evidence alone cannot be argued past: under two pricing companies at most 1½ stars, two at most 3, three at most 4; a sharp book against it at most 2½; and no edge at all is 1. A bet under +2% EV is at most 3 stars (Tj, 2026-10-11: 3½ and up need a real edge).
- * Rounded to the nearest half star.
+ * evidence alone cannot be argued past: under two pricing companies at most 1½ stars, two at most 3, three at most 4. A bet under +2% EV is at most 3 stars (Tj, 2026-10-11: 3½ and up need a real edge),
+ * under +1% at most 1 star (S5: the smallest edges make the least). Rounded to the nearest half star.
+ *
+ * **No trusted edge** (S5, [NONE]): under +0.5% EV, over +25%, or a sharp book for the market saying it is not +EV. On the engine's 2,880 graded +EV lines (research/star_rating_s5_2026-10-24.md)
+ * the 440 under +0.5% lost to the close (CLV -2.1% / -0.4%, ROI -14% / -18%), the 98 over +30% lost (ROI -27%; mostly two-book props: a stale or mismatched quote) and the sharp book's "no" is
+ * the sharpest price there is; every star level from 1 up beat the close.
  */
 object BetRating {
 
@@ -67,15 +73,39 @@ object BetRating {
     /** The weights the app rates with. */
     val CURRENT: Weights = Weights.SR
 
-    /** A rating: [stars] in half steps from 1.0 to 5.0, and the [points] it came from. */
-    data class Rating(val stars: Double, val points: Double) {
+    /** A rating: [stars] in half steps from 1.0 to 5.0 (or [NONE] with the [doubt] that put it there), and the [points] it came from. */
+    data class Rating(val stars: Double, val points: Double, val doubt: String? = null) {
         /** "3½" or "4"; the glyphs are [glyphs]. */
         val label: String get() = BetRating.label(stars)
         val glyphs: String get() = BetRating.glyphs(stars)
+        /** A 1-5 star bet: +EV on the evidence. False = no trusted edge ([doubt] says why). */
+        val trusted: Boolean get() = stars >= MIN
     }
+
+    /** Why the data does not trust this edge, or null when it does (S5): the line is then [NONE] whatever its other inputs say. */
+    fun doubtOf(ev: Double, sharpAgainst: Boolean): String? = when {
+        ev < THIN_EV -> "an edge under ${pct(THIN_EV)} is noise (such lines lost to the close)"
+        ev > MAX_TRUSTED_EV -> "an edge over ${pct(MAX_TRUSTED_EV)} is usually a stale or mismatched price"
+        sharpAgainst -> "a sharp book's own price says it is not +EV"
+        else -> null
+    }
+
+    private fun pct(v: Double) = String.format(Locale.US, "%.1f%%", v * 100).replace(".0%", "%")
 
     const val MIN = 1.0
     const val MAX = 5.0
+
+    /** "No trusted edge" (S5): the rating of a line the data says is not reliably +EV ([doubtOf]); shown as no stars, and under every star minimum. */
+    const val NONE = 0.0
+
+    /** Under this EV (a fraction) an edge is noise: the engine's lines under +0.5% lost to the close (S5). The auto-bet's own read floor is the same ([com.tjshea.vigilant.data.novig.trading.AutoBet.MIN_EV_FLOOR]). */
+    const val THIN_EV = 0.005
+
+    /** Over this EV an edge is not believed: usually a stale or mismatched quote (S5; the feed's default cap, [ScanSettings.maxEvPercent]). */
+    const val MAX_TRUSTED_EV = 0.25
+
+    /** Under this EV a bet is at most 1 star: a real edge, but the smallest (S5). */
+    const val MIN_EV_FOR_TWO_STARS = 0.01
 
     /** The least EV (a fraction: 0.02 = 2%) a bet needs to be rated 3½ stars or better, and the most it can have under it (Tj, 2026-10-11). */
     const val MIN_EV_FOR_HIGH_STARS = 0.02
@@ -105,13 +135,15 @@ object BetRating {
         }
         val tight = i.spread?.let { ((0.05 - it) / 0.04).coerceIn(0.0, 1.0) } ?: 0.5
         val points = w.coverage * coverage + w.agreement * agree + w.edge * edge + w.sharp * sharp + w.consensus * tight + w.typeScale * i.typePoints
+        doubtOf(i.ev, i.sharpAgainst)?.let { return Rating(NONE, points, it) }
         var stars = 1.0 + 4.0 * (points / 100.0).coerceIn(0.0, 1.0).pow(1.5)
-        stars = minOf(stars, ceiling(books, i.sharpAgainst))
+        stars = minOf(stars, ceiling(books))
         // Two companies and no sharp book among them = two small names agreeing with each other (Tj, 2026-10-23): at most 2 stars (research/star_rating_2026-10-23.md: <=2 books closed -1.7 points worse, t -1.7).
         if (books in 1..2 && !i.sharpAgrees && !i.sharpAgainst) stars = minOf(stars, MAX_STARS_SMALL_BOOKS)
         // 3½ stars and up take a real edge (Tj, 2026-10-11): under +2% EV at the price you would pay, a bet is at most 3 stars however well the books agree.
         if (i.ev < MIN_EV_FOR_HIGH_STARS - 1e-12) stars = minOf(stars, MAX_STARS_UNDER_MIN_EV)
-        if (i.ev <= 0.0) stars = MIN
+        // The smallest real edges make the least (S5): under +1% at most 1 star.
+        if (i.ev < MIN_EV_FOR_TWO_STARS - 1e-12) stars = MIN
         return Rating(roundHalf(stars), points)
     }
 
@@ -124,14 +156,11 @@ object BetRating {
         else -> 0.5
     }
 
-    private fun ceiling(books: Int, sharpAgainst: Boolean): Double {
-        val byBooks = when {
-            books < 2 -> 1.5
-            books == 2 -> 3.0
-            books == 3 -> 4.0
-            else -> MAX
-        }
-        return if (sharpAgainst) minOf(byBooks, 2.5) else byBooks
+    private fun ceiling(books: Int): Double = when {
+        books < 2 -> 1.5
+        books == 2 -> 3.0
+        books == 3 -> 4.0
+        else -> MAX
     }
 
     fun roundHalf(stars: Double): Double = (Math.round(stars.coerceIn(MIN, MAX) * 2.0) / 2.0)
@@ -142,8 +171,8 @@ object BetRating {
         return if (abs(stars - whole) > 0.25) "$whole½" else "$whole"
     }
 
-    /** "★★★½": a star for each whole one and a ½ for the half. */
-    fun glyphs(stars: Double): String = "★".repeat(stars.toInt()) + if (abs(stars - stars.toInt()) > 0.25) "½" else ""
+    /** "★★★½": a star for each whole one and a ½ for the half; "☆" for [NONE]. */
+    fun glyphs(stars: Double): String = if (stars < MIN) "☆" else "★".repeat(stars.toInt()) + if (abs(stars - stars.toInt()) > 0.25) "½" else ""
 
     /** The standard deviation of [values] (null under two of them). */
     fun spreadOf(values: List<Double>): Double? {
