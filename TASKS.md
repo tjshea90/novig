@@ -6306,3 +6306,9 @@ Analyze the current star system; make ONE rating that combines all factors, remo
 - [x] BX2 (ApiManager: BoltOdds out of IMPORTANT; a feed refused for the key/plan is switched off once after 20 min with one message; ApiManagerTest) no runner swap for BoltOdds, and none for any refused key (a new runner cannot fix a key's plan); tests
 - [x] BX3 (Tj had switched it off on the phone at 20:05 ET; engine_set confirmed gates.useBoltOdds=false) switch BoltOdds off on the engine (engine_set.py, logged in CHANGES.md) until a key that works is on GitHub; tell Tj how to turn it back on
 
+## SR: revise the star rating if the findings warrant it (Tj, 2026-10-24, typed prompt, verbatim)
+"If your findings warrant revising the star rating method, do it now"
+- [ ] SR1 compare the shipped rating with candidate revisions on the engine's graded lines (StarCheck variants, early vs late halves): type points (not confirmed out of sample), sharp-book weight (no CLV/ROI lift), edge/agreement (confirmed)
+- [ ] SR2 change BetRating/ProfitProfile only where the comparison supports it, with tests; CHANGES.md (class: Tj direct) + revert rule
+- [ ] SR3 full suite, release, engine reset, tell Tj what changed and what the stars now mean
+
