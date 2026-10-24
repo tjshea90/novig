@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "5bd1c4cfb563c1ea8a7afe0cc24048bd5b71797b",
+ "head": "d3587a45a6d050a47bc9e69a3bb477776f836b02",
  "since": 1792809425,
- "beat": 1792822891,
- "beatIso": "2026-10-24T06:21:31Z",
+ "beat": 1792823104,
+ "beatIso": "2026-10-24T06:25:04Z",
  "done": "SX findings 2-3 written (point-in-time multiplicative edge lost; favourite-longshot bias; multiplicative close miscalibrated on longshots)",
  "next": "read rerun (ev_wc + raw closes): calibrate close devig on results, then table + stars"
 }
