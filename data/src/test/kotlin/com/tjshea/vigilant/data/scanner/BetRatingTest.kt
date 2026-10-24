@@ -92,4 +92,20 @@ class BetRatingTest {
         val weak = BetRating.Inputs(books = 2, agreeing = 1, ev = 0.01, sharpAgrees = false, sharpAgainst = false)
         assertTrue(BetRating.rate(weak).stars <= 3.0)
     }
+
+    @Test
+    fun `SR is the shipped weighting, its parts total 100, and ST1 can still be scored beside it`() {
+        val w = BetRating.CURRENT
+        assertEquals(BetRating.Weights.SR, w)
+        assertEquals(100.0, w.coverage + w.agreement + w.edge + w.sharp + w.consensus, 1e-9)
+        assertEquals(100.0, BetRating.Weights.ST1.let { it.coverage + it.agreement + it.edge + it.sharp + it.consensus }, 1e-9)
+        assertEquals(15.0, w.sharp, 0.0); assertEquals(30.0, w.edge, 0.0); assertEquals(25.0, w.agreement, 0.0); assertEquals(0.5, w.typeScale, 0.0)
+        // A sharp book agreeing is worth (15 - 0.3 x 15) points over none pricing it under SR, (25 - 0.3 x 25) under ST1.
+        val none = BetRating.Inputs(5, 4, 0.04, sharpAgrees = false, sharpAgainst = false, spread = 0.02)
+        val sharp = none.copy(sharpAgrees = true)
+        assertEquals(10.5, BetRating.rate(sharp).points - BetRating.rate(none).points, 1e-9)
+        assertEquals(17.5, BetRating.rate(sharp, BetRating.Weights.ST1).points - BetRating.rate(none, BetRating.Weights.ST1).points, 1e-9)
+        // The edge now carries more: +1 point of EV (under 6%) is worth 5 points under SR, 4.17 under ST1.
+        assertEquals(5.0, BetRating.rate(none.copy(ev = 0.05)).points - BetRating.rate(none).points, 1e-9)
+    }
 }
