@@ -4,7 +4,7 @@
   python3 tools/propline.py plans                      which key is the paid one (X-Daily-Limit of each) and what it unlocks
   python3 tools/propline.py probe OUTDIR               one call to every Pro endpoint on a real recent event; saves the answers (keyless) so the app's parsers can be checked against real shapes
   python3 tools/propline.py steam OUTDIR               line movement + steam signals for every game in the next 24 h (JSON lines)
-  python3 tools/propline.py archive OUTDIR [--days N]  the resolved-prop archive: GET /v1/exports/resolved-props per sport (gzip CSV), the free accuracy/coverage reports; files for a Release
+  python3 tools/propline.py archive OUTDIR [--days N] [--books a,b] [--sports x,y]  the resolved-prop archive: GET /v1/exports/resolved-props per sport (gzip CSV), the free accuracy/coverage reports; files for a Release
   python3 tools/propline.py selftest
 
 Keys come from the environment variable PROPLINE_API_KEY (several keys: comma, space or newline separated; the phone's "send keys to GitHub" writes this secret). The key used is the one whose own
@@ -370,7 +370,7 @@ def cmd_speed(outdir):
     return 0
 
 
-def cmd_archive(outdir, days):
+def cmd_archive(outdir, days, books=None, sports=None):
     keys = keys_from_env()
     key, p = need_paid(keys) if keys else (None, None)
     if key is None or (p["limit"] or 0) < 25_000:
@@ -382,8 +382,8 @@ def cmd_archive(outdir, days):
     until = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     made = []
     stop = False
-    for sp in SPORTS_ARCHIVE:
-        for book in BOOKS_ARCHIVE:
+    for sp in (sports or SPORTS_ARCHIVE):
+        for book in (books or BOOKS_ARCHIVE):
             name = "resolved-%s-%s-%s_%s.csv.gz" % (sp, book, since[:10], until[:10])
             dest = os.path.join(outdir, name)
             st, h, err = download("/v1/exports/resolved-props", key, {"sport": sp, "bookmaker": book, "since": since, "until": until}, dest)
@@ -450,5 +450,8 @@ if __name__ == "__main__":
         d = 3
         if "--days" in a:
             d = int(a[a.index("--days") + 1])
-        sys.exit(cmd_archive(a[1] if len(a) > 1 and not a[1].startswith("--") else "out/propline-archive", d))
+        # SX (2026-10-24): --books / --sports pull other books' resolved props (open + close + result) for the star study; the daily archive keeps Novig and Pinnacle.
+        bk = a[a.index("--books") + 1].split(",") if "--books" in a else None
+        sp = a[a.index("--sports") + 1].split(",") if "--sports" in a else None
+        sys.exit(cmd_archive(a[1] if len(a) > 1 and not a[1].startswith("--") else "out/propline-archive", d, bk, sp))
     print(__doc__)
