@@ -6350,3 +6350,5 @@ State when this was written: S6 (edge ladder + breadth ceilings + thin-market fl
 - [ ] SX4 the type track record: CLV and ROI per type with shrinkage and intervals; which types are proven profitable, which lose
 - [ ] SX5 the star system (1 = +EV, history unproven; 5 = proven profitable type, no safeguard holding it back), as data (a shipped table) + code + tests + star check variant; audit write-up
 - [ ] SX6 full suite, release, engine reset, tell Tj what each star means and the evidence
+
+- [ ] PL-OA PropLine openapi.json (Tj, chat 2026-10-24 05:56): spec saved research/propline/openapi_2026-10-24.json; evaluate unused endpoints (books/accuracy, coverage/history, freshness, injuries/history, projections, sgp, dfs/payouts) for star rating / CLV; build the useful ones
