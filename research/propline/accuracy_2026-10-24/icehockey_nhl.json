@@ -1,1 +1,0 @@
-{"detail":{"error":"missing_api_key","message":"Missing API key. Pass via X-API-Key header or apiKey query param.","signup_url":"https://prop-line.com/","docs_url":"https://prop-line.com/docs#authentication"}}
