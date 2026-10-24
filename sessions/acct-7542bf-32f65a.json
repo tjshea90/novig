@@ -8,8 +8,8 @@
  "branch": "ccr-305d3f7a-i2z8ja",
  "head": "bfdcd336dc0504bc1669099d4544b7101f54b97d",
  "since": 1792809425,
- "beat": 1792814292,
- "beatIso": "2026-10-24T03:58:12Z",
+ "beat": 1792818637,
+ "beatIso": "2026-10-24T05:10:37Z",
  "done": "SX: star-study split into 4 parallel shards (one 4000-game job would near the 5 h cap and upload nothing)",
  "next": "dispatch star-study events=4000 (4 shards), read lines-0..3.csv.gz from star-backtest-2026-10-24"
 }
