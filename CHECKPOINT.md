@@ -1,22 +1,23 @@
-# CHECKPOINT 4098 — read me first, then TASKS.md
+# CHECKPOINT 4099 — read me first, then TASKS.md
 
-**Written:** 2026-10-24T03:06:08Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-305d3f7a-i2z8ja` · **builds on:** `8597c1116` (this checkpoint is the commit after it)
+**Written:** 2026-10-24T03:09:01Z · **tests:** 1 RED: test_research_index.sh (8 green)
+**Branch:** `ccr-305d3f7a-i2z8ja` · **builds on:** `cd0d7f208` (this checkpoint is the commit after it)
 
 ## Just done
-SX: research index rebuilt; star tools landing
+SX finding 1 written (research/star_rating_sx_2026-10-24.md): at the close Novig is as sharp as Pinnacle; +EV-vs-Pinnacle at close loses; CLV yardstick must blend Novig's close
 
 ## Do this next
-dispatch star-study trial
+read star-study trial (20 games), then dispatch 2000; multibook export; point-in-time analysis by type and lead
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M research/INDEX.md
+    ?? research/star_rating_sx_2026-10-24.md
 
 ## Last ten checkpoints
 ```
+  cd0d7f208 ckpt 4098: SX: research index rebuilt; star tools landing
   8597c1116 ckpt 4097: SX: landing the star tools
   4ecfa8fdf ckpt 4096: SX1-2: inventory (engine-dataset, phone study, propline-archive 907k graded
   07674710b ckpt 4095: SX request written (full star audit on all history); S6 coded+tests green b
@@ -26,5 +27,4 @@ dispatch star-study trial
   a79976d1e ckpt 4092: pre-release: S5: star scale fixed at the bottom: 0 = no trusted edge (EV un
   8b0c5e816 ckpt 4091: pre-ship: S5: star scale fixed at the bottom: 0 = no trusted edge (EV under
   8f5d90a9b ckpt 4090: S5a-c: star scale checked on the engine's 20,840 graded lines; 0 = no trust
-  f0ac263e3 ckpt 4089: v1.0.67 gated (full suite 4,207 green) and on main; release.yml triggered
 ```
