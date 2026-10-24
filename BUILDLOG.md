@@ -415,3 +415,4 @@ day that changes.
 | v1.0.74 | code 414 | 2026-10-24T17:52Z | CH82+CH81: engine restart reads 'stopped or restarting' not 'switched off'; Diagnostics logs every 'nobody was selling' bet (NOFILL: list age, price, depth, fair age)
 | v1.0.75 | code 415 | 2026-10-24T17:58Z | The phone saves its full Diagnostics report to GitHub every 20 min (phone-data/phone/diag) so Claude reads the FEEDHIDE/NOFILL logs without Tj sending a file
 | v1.0.76 | code 416 | 2026-10-24T18:09Z | After the Diagnostics report is saved to GitHub the phone clears its logs (only after a successful save); hourly copies kept on GitHub
+| v1.0.77 | code 417 | 2026-10-24T18:24Z | CH80: the +EV list no longer empties at each engine scan start: rows the new scan has not re-read yet stay listed with their own stamps
