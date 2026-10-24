@@ -111,7 +111,9 @@ class CloudKalshiLane(
         val now = clock()
         val ec = readConfig()
         lastConfig = ec
-        if (ec == null || ec.mode == KalshiAutoMode.OFF) {
+        // OFF is "orders nothing", not "looks at nothing" (Tj, 2026-10-24: "why do I need auto bet turned on just to see what is available?"): with a config on file the lane still scans and lists, and only
+        // the auto-bet, the bids and real orders wait for PAPER or LIVE.
+        if (ec == null) {
             if (bidsUp) { bidRunner.stop("the engine's Kalshi switch is off"); bidsUp = false }
             if (last.mode != KalshiAutoMode.OFF || last.note.isEmpty()) {
                 last = KalshiEngineStatus(atMs = now, mode = KalshiAutoMode.OFF, rev = ec?.rev ?: 0L, note = "off (the phone's Kalshi tab › Setup › GitHub engine)", keyOnGitHub = hasKey())
@@ -119,7 +121,8 @@ class CloudKalshiLane(
             }
             return
         }
-        val cfg = ec.config
+        val cfg = if (ec.mode == KalshiAutoMode.OFF) ec.config.copy(autoMode = KalshiAutoMode.OFF, scan = ec.config.scan.copy(maker = false)) else ec.config
+        if (ec.mode == KalshiAutoMode.OFF && bidsUp) { bidRunner.stop("the engine's Kalshi switch is off"); bidsUp = false }
         // STOP ALL is Tj's alone and stops this lane too: every bid comes down and nothing is bet.
         if (phone.killed) {
             if (bidsUp) { bidRunner.stop("STOP ALL"); bidsUp = false }
