@@ -405,3 +405,4 @@ day that changes.
 | v1.0.64 | code 404 | 2026-10-23T22:36Z | ST1: one combined star rating (type of bet, lead time, small-book cap); history stars removed
 | v1.0.65 | code 405 | 2026-10-23T23:03Z | ST2: sort fix on merged Novig+Kalshi list, CNO sort buttons
 | v1.0.66 | code 406 | 2026-10-24T00:21Z | FX full tests: Kalshi bid cancels fixed (V2 needs the market), Kalshi lane re-reads before judging, SharpAPI/SX streams reconnect on a server close, digest shows the engine's graded days + star check + API value, tab bar and Settings text fixes
+| v1.0.67 | code 407 | 2026-10-24T01:47Z | SR: star rating re-weighted (sharp book 25->15, edge 25->30, agreement 20->25, type-of-bet points at half; CLV/star +0.50->+0.77, ROI/star +5.0->+6.2 on 1,968 graded engine lines); OK3: SharpAPI no longer re-reads NBA/NFL/NCAAF whole every minute while its stream is live
