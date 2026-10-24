@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "c3314c18776a6116307dbccfc895d41efcdefbf3",
+ "head": "918d506c9ef4cffd4fc9a71e2180b0cdecfa228e",
  "since": 1792797865,
- "beat": 1792801285,
- "beatIso": "2026-10-24T00:21:25Z",
- "done": "BX done: BoltOdds no longer earns runner swaps (out of ApiManager.IMPORTANT); a feed refused for its key/plan is switched off once after 20 min with one message; BoltOdds off on the engine (Tj had switched it off at 20:05 ET). Full suite 4,205 green. v1.0.66 release building.",
- "next": "confirm v1.0.66 Release, record-release.sh, engine --reset so the Kalshi/stream/BoltOdds fixes run, tell Tj"
+ "beat": 1792801317,
+ "beatIso": "2026-10-24T00:21:57Z",
+ "done": "v1.0.66 released and recorded; engine on the new main (run 345): Kalshi cancel fix, Kalshi re-read, stream reconnects, BoltOdds never a runner swap; FX and BX done",
+ "next": "watch the new run's log for 'SharpAPI stream: closed' codes and Kalshi bid cancels; FX6 (API attribution per line) next"
 }
