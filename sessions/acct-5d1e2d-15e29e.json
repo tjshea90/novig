@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "6d84a658e786431849e9991d7cb3c4b60de3437a",
+ "head": "92ec17a42b305d9cb8f62959884c523cc240bab1",
  "since": 1792818666,
- "beat": 1792863179,
- "beatIso": "2026-10-24T17:32:59Z",
- "done": "v1.0.73 released+recorded; CH82 wording: stopped or restarting (tests green, unreleased)",
- "next": "ship 1.0.74 with next batch; reset engine to run MatchHealth; read SX counts from scan note"
+ "beat": 1792863232,
+ "beatIso": "2026-10-24T17:33:52Z",
+ "done": "CH83 written; diagnostics paste triaged",
+ "next": "CH83a: split bets.json hot/archive"
 }
