@@ -2,6 +2,7 @@ package com.tjshea.vigilant.data.cloud
 
 import com.tjshea.vigilant.data.reference.ReferenceSource
 import com.tjshea.vigilant.data.scanner.ApiChain
+import com.tjshea.vigilant.data.scanner.FeedOrder
 import com.tjshea.vigilant.data.scanner.LiveOnlyMode
 import com.tjshea.vigilant.data.scanner.OddsScanner
 import com.tjshea.vigilant.data.scanner.Opportunity
@@ -490,7 +491,7 @@ class CloudEngine(
                     val shownRows = FeedOrder.sort(CloudLanes.carryUnread(rows, lastPublished?.rows.orEmpty(), readNow, now), filterSettings.feedSort)
                     val feed = CloudFeed(now, cfg.rev, r.stats, shownRows)
                     onFeed(rows, now)
-                    lastPublished = feed; lastAges = CloudCurrency.of(rows, now)
+                    lastPublished = feed; lastAges = CloudCurrency.of(shownRows, now)
                     lastResult = r
                     // The bid desk's candidates ride with the list, at most every [bidsEveryMs] (before the status, so it says what was sent).
                     if (now - lastBidsAt >= bidsEveryMs) { lastBidsAt = now; if (withTimeoutOrNull(WATCH_STEP_MS) { sendBids(r, cfg.rev, latest, now) } == null) log("watch loop: the bid candidates took over ${WATCH_STEP_MS / 1000}s: skipped this round") }

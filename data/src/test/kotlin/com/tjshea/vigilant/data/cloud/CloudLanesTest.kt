@@ -45,4 +45,15 @@ class CloudLanesTest {
         assertEquals(listOf("o-a", "o-b", "o-c", "o-d"), merged.map { it.outcome.outcomeId })
         assertTrue(CloudLanes.reachMs(now) > now + FarLane.NEAR_HOURS * h)
     }
+
+    @Test
+    fun `a scan that has not read a listed row yet does not take it off the list`() {
+        val a = row("a", 3); val b = row("b", 3); val c = row("c", 3)
+        val oldRead = row("d", 3).let { it.copy(bookFetchedAtMs = now - CloudLanes.CARRY_MAX_MS - 1) }
+        val started = row("e", -1)
+        // the new scan has read and listed "a", read "b" and found it no longer listed; "c" it has not reached; "d" was read too long ago; "e" has started
+        val out = CloudLanes.carryUnread(listOf(a), listOf(a, b, c, oldRead, started), setOf("o-a", "o-b"), now)
+        assertEquals(listOf("o-a", "o-c"), out.map { it.outcome.outcomeId })
+        assertEquals(listOf(a), CloudLanes.carryUnread(listOf(a), emptyList(), emptySet(), now))
+    }
 }
