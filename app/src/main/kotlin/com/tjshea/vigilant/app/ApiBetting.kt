@@ -762,7 +762,8 @@ class ApiBettingController(
                     val row = target.placedKey?.let { k -> st0.feed.firstOrNull { o -> o.key == k } }
                     val ageMs = row?.bookFetchedAtMs?.let { t - it }
                     c.eventLog.count("nofill.${if (target.auto) "auto" else "hand"}.${if (st0.settings.cloudDrives) "cloudList" else "phoneList"}")
-                    c.eventLog.info(
+                    // A warning, so the report keeps it (the timeline's plain events are only the newest 250 and the bet timings pushed these out).
+                    c.eventLog.warn(
                         "NOFILL",
                         "${result.javaClass.simpleName} ${target.selection.take(40)} (${target.league}, ${target.source}${if (target.live) ", live" else ""}${if (target.auto) ", auto" else ""}): " +
                             "listed cost ${row?.quote?.cost?.let { "%.3f".format(it) }}, ask read ${ageMs?.let { it / 1000 }}s before the order, fair age ${row?.fairAsOfMs?.let { (t - it) / 1000 }}s, " +
