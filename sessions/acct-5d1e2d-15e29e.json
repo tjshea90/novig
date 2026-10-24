@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "0b1b360332aceafb530d9e4c97244e1e5618add7",
+ "head": "ca7d0f37b36cd90d15b46ed7c427f19f672a4b70",
  "since": 1792818666,
- "beat": 1792858802,
- "beatIso": "2026-10-24T16:20:02Z",
- "done": "CH78: app suite green on this code",
- "next": "main should land it; then CH78b"
+ "beat": 1792858837,
+ "beatIso": "2026-10-24T16:20:37Z",
+ "done": "CH79: Kalshi engine lane scans+lists when switch OFF (orders still need Paper/Live)",
+ "next": "engine restart to pick up; confirm kalshi rows appear"
 }
