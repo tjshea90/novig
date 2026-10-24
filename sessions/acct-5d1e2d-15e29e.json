@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-hj14wp",
  "head": "8589e8341d9cece335297d4bf3fcf93775e39c9e",
  "since": 1792818666,
- "beat": 1792863675,
- "beatIso": "2026-10-24T17:41:15Z",
+ "beat": 1792863911,
+ "beatIso": "2026-10-24T17:45:11Z",
  "done": "pre-ship: CH82+CH81: engine restart reads 'stopped or restarting' not 'switched off'; Diagnostics logs every 'nobody was selling' bet (NOFILL: list age, price, depth, fair age)",
  "next": "ship.sh gates and releases this"
 }
