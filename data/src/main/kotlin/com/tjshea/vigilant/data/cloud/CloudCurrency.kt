@@ -38,7 +38,7 @@ object CloudText {
     fun view(st: CloudStatus?, requestedAtMs: Long, now: Long, why: String? = null): View {
         if (st == null) return View(if (why != null) Level.BAD else Level.INFO, why?.let { "Cloud scan: $it" } ?: "Cloud scan: waiting for the GitHub engine to answer", null, requestedAtMs > 0L)
         val beat = ((now - st.heartbeatMs) / 1000L).coerceAtLeast(0L)
-        if (st.idle) return View(Level.WARN, "Cloud scan: the GitHub engine is switched off", "Turn Scan on GitHub on again (Settings › Cloud scan).", false)
+        if (st.idle) return View(Level.WARN, "Cloud scan: the GitHub engine is stopped or restarting", "Its last word was \"idle\": the switch is off, it is outside its hours, or a new run is starting (a restart takes up to a few minutes). If your switch is on, it starts by itself; Settings › Cloud scan › Start the engine now asks for it.", false)
         if (beat > 120L) return View(Level.BAD, "Cloud scan: the engine has been silent for ${dur(beat)}", "The list below is the last one it published. Tap Scan to ask GitHub to start it again.", requestedAtMs > 0L && st.lastScanForRefreshAtMs < requestedAtMs)
         val listAge = if (st.computedAtMs > 0L) ((now - st.computedAtMs) / 1000L).coerceAtLeast(0L) else -1L
         val pending = requestedAtMs > 0L && st.lastScanForRefreshAtMs < requestedAtMs
@@ -102,7 +102,7 @@ object CloudFreshness {
         val listAge = st?.takeIf { it.computedAtMs > 0L }?.let { ((now - it.computedAtMs) / 1000L).coerceAtLeast(0L) }
         val engine = when {
             st == null -> why ?: "the engine has not answered yet"
-            st.idle -> "the engine is switched off"
+            st.idle -> "the engine is stopped or restarting"
             beat!! > 120L -> "the engine has been silent for ${CloudText.dur(beat)}"
             else -> "the engine reported ${CloudText.dur(beat)} ago"
         } + (listAge?.let { "; its last list went out ${CloudText.dur(it)} ago" } ?: "")

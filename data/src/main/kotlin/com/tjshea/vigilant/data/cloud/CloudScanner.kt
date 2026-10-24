@@ -51,7 +51,7 @@ class CloudScanner(
                     when {
                         latest.why != null -> "Cloud scan: no list has arrived from the GitHub engine yet (${latest.why})"
                         running -> "Cloud scan: the GitHub engine is running its first scan (${(clock() - st!!.startedAtMs) / 60_000L} min so far). A league is listed only when every feed has answered it, so with many leagues, props and days ahead the first list takes several minutes; later lists update every 20 s."
-                        st != null && st.idle -> "Cloud scan: the GitHub engine is switched off (it stops when the switch is off); turn Scan on GitHub on again"
+                        st != null && st.idle -> "Cloud scan: the GitHub engine is stopped or restarting (switch off, outside its hours, or a new run starting); with the switch on it starts by itself"
                         else -> "Cloud scan: no list has arrived from the GitHub engine yet (waiting for it to start; Settings › Cloud scan › Start the engine now)"
                     },
                 )
