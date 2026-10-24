@@ -45,6 +45,8 @@ object BookCompany {
         group("sporttrade", "sporttrade", "st")
         group("pinnacle", "pinnacle", "pinnaclesports", "pn")
         group("circa", "circa", "circasports", "cs")
+        // 1xBet: PropLine/SharpAPI send it as "onexbet", SGO and others as "1xbet" (Tj, 2026-10-24, a screenshot: "1xBet" and "1xbet" counted as 2 of 2 books agreeing).
+        group("1xbet", "1xbet", "onexbet", "1xbetcom")
     }
 
     /** Companies whose members are exchanges, so a book of the same group is not folded into them. */
