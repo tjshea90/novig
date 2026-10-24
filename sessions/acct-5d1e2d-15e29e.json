@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "aeaf05212b48f031eefbe6d5e522affb3f6366e3",
+ "head": "f94488d044f656e0eb612df166a6a5b9e7134614",
  "since": 1792818666,
- "beat": 1792866383,
- "beatIso": "2026-10-24T18:26:23Z",
- "done": "pre-release: CH80: the +EV list no longer empties at each engine scan start: rows the new scan has not re-read yet stay listed with their own stamps (found from the phone's FEEDHIDE log) (versionCode 417, v1.0.77)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.77), then run: bash tools/record-release.sh v1.0.77 417 \"CH80: the +EV list no longer empties at each engine scan start: rows the new scan has not re-read yet stay listed with their own stamps (found from the phone's FEEDHIDE log)\""
+ "beat": 1792866538,
+ "beatIso": "2026-10-24T18:28:58Z",
+ "done": "CH80 fixed in engine (v1.0.77, released, engine reset); Tj pausing the nofill study until wallet money",
+ "next": "read next phone/diag report for feed.hide.bulk ~0; NOFILL lines when bets tried; CH83a; CH82 idle cause"
 }
