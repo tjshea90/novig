@@ -404,3 +404,4 @@ day that changes.
 | v1.0.63 | code 403 | 2026-10-23T16:07Z | CH74: Bids tab controls the GitHub engine's bids: Recommend + Post on the engine, restart button, 15 s settings batching
 | v1.0.64 | code 404 | 2026-10-23T22:36Z | ST1: one combined star rating (type of bet, lead time, small-book cap); history stars removed
 | v1.0.65 | code 405 | 2026-10-23T23:03Z | ST2: sort fix on merged Novig+Kalshi list, CNO sort buttons
+| v1.0.66 | code 406 | 2026-10-24T00:21Z | FX full tests: Kalshi bid cancels fixed (V2 needs the market), Kalshi lane re-reads before judging, SharpAPI/SX streams reconnect on a server close, digest shows the engine's graded days + star check + API value, tab bar and Settings text fixes
