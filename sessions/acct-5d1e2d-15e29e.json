@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-hj14wp",
  "head": "c8f7f557ce023fd6e4abfe3a03efd3fde8713ddd",
  "since": 1792818666,
- "beat": 1792859958,
- "beatIso": "2026-10-24T16:39:18Z",
+ "beat": 1792859963,
+ "beatIso": "2026-10-24T16:39:23Z",
  "done": "pre-ship: CH80: why a listed bet hides is logged (FEEDHIDE); CNO dead-price memory; Kalshi engine lane lists when its switch is OFF",
  "next": "ship.sh gates and releases this"
 }
