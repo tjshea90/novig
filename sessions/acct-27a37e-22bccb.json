@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "9c7198ea15a1aae3db98acfc6af9689100108359",
+ "head": "10304cee894a5820a61bc9f553fb0070788dcab0",
  "since": 1792801733,
- "beat": 1792804050,
- "beatIso": "2026-10-24T01:07:30Z",
+ "beat": 1792804233,
+ "beatIso": "2026-10-24T01:10:33Z",
  "done": "Corrected The Odds API claim (Tj's screenshot): 5,082 of 10,500 credits left, 3 keys spent, 3 at 1 credit; it fed 0 lines because it is last in line, not for lack of credits (api_verdicts, full_test docs). PropLine Streaming answered: research/propline_streaming_consolidation_2026-10-24.md, PS1/PS2 tasks",
  "next": "SR: read 'Weights side by side' from the running digest (run 40047913906), adopt only a variant better on both halves"
 }
