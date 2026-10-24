@@ -1316,7 +1316,7 @@ private fun ColumnScope.BettingTab(
             Text("Most bets or bids on one side", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
             ChoiceChips(listOf(1, 2, 3, 5, 0), s.gates.repeatMaxBets, { if (it == 0) "No limit" else it.toString() }) { v -> onUpdate { it.copy(gates = it.gates.copy(repeatMaxBets = v)) } }
             Text("Most dollars on one side", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-            ChoiceChips(listOf(25.0, 50.0, 100.0, 250.0, 0.0), s.gates.repeatMaxDollars, { if (it == 0.0) "No limit" else "$" + it.toInt() }) { v -> onUpdate { it.copy(gates = it.gates.copy(repeatMaxDollars = v)) } }
+            ChoiceChips(listOf(3.0, 10.0, 25.0, 100.0, 0.0), s.gates.repeatMaxDollars, { if (it == 0.0) "No limit" else "$" + it.toInt() }) { v -> onUpdate { it.copy(gates = it.gates.copy(repeatMaxDollars = v)) } }
             Text("Most other lines of the same team or player in one game", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
             Text("A team at +6.5 and +3.5, or a player's over at 4.5 and 5.5, win and lose together. At 1 the auto-bet takes one line of a team's spread (or a player's side) per game; bids are not limited by this.", style = MaterialTheme.typography.bodySmall)
             ChoiceChips(listOf(1, 2, 3, 0), s.gates.repeatMaxLines, { if (it == 0) "No limit" else it.toString() }) { v -> onUpdate { it.copy(gates = it.gates.copy(repeatMaxLines = v)) } }

@@ -126,7 +126,7 @@ object RepeatGuard {
     const val MIN_LOCKED_PROFIT = 0.001
 
     const val DEFAULT_MAX_BETS = 2
-    const val DEFAULT_MAX_DOLLARS = 100.0
+    const val DEFAULT_MAX_DOLLARS = 3.0
     const val DEFAULT_MAX_LINES = 1
     const val DEFAULT_MAX_GAME_BETS = 6
     const val DEFAULT_MAX_FAMILY_DOLLARS = 12.0
