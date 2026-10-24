@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-aylgas",
  "head": "fc68f7bc6ee534a57599a8f54bac2cefef9ac804",
  "since": 1792806926,
- "beat": 1792815046,
- "beatIso": "2026-10-24T04:10:46Z",
+ "beat": 1792815105,
+ "beatIso": "2026-10-24T04:11:45Z",
  "done": "CH75: dead price remembered after NotFilled; test green",
  "next": "full suite, then release with next batch; tell Tj"
 }
