@@ -756,6 +756,20 @@ class ApiBettingController(
             // "Nobody was selling at that price any more" and the like (Tj, 2026-10-23): the row leaves the scanned list now and returns only when a newer price read lists it again.
             if (unbettableResult(result)) {
                 val t = clock()
+                // Why so many "nobody was selling" (Tj, 2026-10-24): what the list row looked like when the order went out, for Diagnostics (cat NOFILL) and a counter by source.
+                runCatching {
+                    val st0 = state.value
+                    val row = target.placedKey?.let { k -> st0.feed.firstOrNull { o -> o.key == k } }
+                    val ageMs = row?.bookFetchedAtMs?.let { t - it }
+                    c.eventLog.count("nofill.${if (target.auto) "auto" else "hand"}.${if (st0.settings.cloudDrives) "cloudList" else "phoneList"}")
+                    c.eventLog.info(
+                        "NOFILL",
+                        "${result.javaClass.simpleName} ${target.selection.take(40)} (${target.league}, ${target.source}${if (target.live) ", live" else ""}${if (target.auto) ", auto" else ""}): " +
+                            "listed cost ${row?.quote?.cost?.let { "%.3f".format(it) }}, ask read ${ageMs?.let { it / 1000 }}s before the order, fair age ${row?.fairAsOfMs?.let { (t - it) / 1000 }}s, " +
+                            "ev ${row?.quote?.evPercent?.let { "%.1f".format(it * 100) }}%, depth ${row?.ladder?.firstOrNull()?.let { "${it.price} x${it.contracts}" }}, starts in ${(target.startsTs - t) / 60_000}min, " +
+                            "partial book ${row?.ladder?.size ?: 0} level(s)",
+                    )
+                }
                 target.placedKey?.let { k ->
                     state.update { st ->
                         val dead = result.takeIf { it is PlaceResult.NotFilled || it is PlaceResult.Refused }?.let { st.feed.firstOrNull { o -> o.key == k }?.quote?.cost ?: st.novigLive[k.removePrefix("cno:")]?.american?.let { a -> costOf(a) } }
