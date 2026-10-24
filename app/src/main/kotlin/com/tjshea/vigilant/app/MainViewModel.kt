@@ -296,8 +296,20 @@ data class UiState(
      * RESEARCH.md §24), and only games starting within [ScanSettings.startsWithinHours]. Every screen
      * that offers Vigilant's bets shows this, not [feed].
      */
-    fun feedAt(now: Long): List<Opportunity> =
-        feed.filter { !it.fairIsOld(now) && !priceStale(it, now) && settings.startsInWindow(it.event.startsTs, now) && !staleLive(it, now) && !goneSeen(it, now) }
+    fun feedAt(now: Long): List<Opportunity> = feed.filter { hideReason(it, now) == null }
+
+    /**
+     * Why the main list leaves [o] out at [now], or null when it shows (the same checks, in the same order, that [feedAt] has always made). Logged by [MainViewModel.watchFeedHides] so a bet that
+     * vanishes and returns can be explained from the file (Tj, 2026-10-24: "figure out why it is happening and if the bets are based on stale odds").
+     */
+    fun hideReason(o: Opportunity, now: Long): String? = when {
+        o.fairIsOld(now) -> "fairOld"
+        priceStale(o, now) -> "novigPriceOld"
+        !settings.startsInWindow(o.event.startsTs, now) -> "outsideWindow"
+        staleLive(o, now) -> "gameStarted"
+        goneSeen(o, now) -> "slipFoundGone"
+        else -> null
+    }
 
     /**
      * The bet slip found this row's listed price no longer on offer or no longer +EV (Tj, 2026-10-22: "automatically remove these bets from the scanned list immediately"): it leaves the list now and
@@ -1193,6 +1205,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     else -> "Rechecked ${report.read} price${if (report.read == 1) "" else "s"}"
                 },
             )
+        }
+    }
+
+    /** Names every bet that leaves the main +EV list, with the check that hid it and the ages behind it, in the flight recorder (cat FEEDHIDE) and as counters `feed.hide.<reason>`. */
+    private fun watchFeedHides() {
+        viewModelScope.launch(Dispatchers.Default) {
+            var shown = emptyMap<String, Opportunity>()
+            while (true) {
+                kotlinx.coroutines.delay(5_000L)
+                val st = _state.value
+                val now = System.currentTimeMillis()
+                val rows = st.feed
+                val nowShown = HashMap<String, Opportunity>()
+                for (o in rows) if (st.hideReason(o, now) == null) nowShown[o.key] = o
+                val byKey = rows.associateBy { it.key }
+                var n = 0
+                for ((k, o) in shown) {
+                    if (k in nowShown) continue
+                    val cur = byKey[k]
+                    val why = if (cur == null) "leftFeed" else st.hideReason(cur, now) ?: continue
+                    c.eventLog.count("feed.hide.$why")
+                    if (n++ < 6) {
+                        val x = cur ?: o
+                        c.eventLog.info("FEEDHIDE", "$why: ${x.selection.take(40)} (${x.event.league}) fair age ${x.fairAsOfMs?.let { (now - it) / 1000 }}s, Novig read ${x.bookFetchedAtMs?.let { (now - it) / 1000 }}s ago, starts in ${(x.event.startsTs - now) / 60_000}min, ev ${x.evPercent?.let { "%.1f".format(it) }}%")
+                    }
+                }
+                for ((k, o) in nowShown) if (k !in shown && shown.isNotEmpty()) c.eventLog.count("feed.show.back")
+                shown = nowShown
+            }
         }
     }
 
