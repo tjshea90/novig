@@ -6373,3 +6373,4 @@ CH81 (Tj chat 17:05 UTC 2026-10-24): "1) in the +EV scanner, prices no one is se
 - [ ] CH81a +EV list: a price nobody sold at comes back (CH75 goneSeen/deadPrice); find the path that re-lists it (engine list rows carry bookFetchedAtMs newer than the finding?) and fix + test
 - [~] CH81b Kalshi bets: engine reset 17:1x UTC to run the OFF-scans code (v1.0.72); verify kalshi-status.json lists rows, then that the phone's +EV Kalshi chip shows them
 - [ ] CH81c audit matching of SX Bet and every other API's lines/props (teams, start, line, side, player/prop names) from the engine's unmatched/left-out counts and the dataset; fix mismatches
+- [~] CH81 execution (17:2x UTC): v1.0.73 = dead-price band 1c + 2 h + Refused path records dead price (UnbettableRowsTest); MatchHealth scan-note line (match check + exchange lines compared); then verify Kalshi rows (monitor) and SX counts from the next scan note.
