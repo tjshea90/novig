@@ -73,13 +73,15 @@ jobs:
             accuracy)
               # PL-OA (2026-10-24): free-tier reports from the OpenAPI spec: which books price props closest to the result, per-book freshness, odds-history coverage, injury changes.
               mkdir -p out/accuracy
+              # the secret holds several keys, comma separated: ask with each until one is accepted
+              pl() { for k in $(echo "$PROPLINE_API_KEY" | tr ',' ' '); do curl -sS -m 60 -H "X-API-Key: $k" "$1" -o "$2" || true; grep -q '"invalid_api_key"' "$2" || break; done; }
               for s in basketball_nba baseball_mlb icehockey_nhl americanfootball_nfl; do
-                curl -sS -m 60 -H "X-API-Key: $PROPLINE_API_KEY" "https://api.prop-line.com/v1/books/accuracy?sport=$s&days=90" -o "out/accuracy/accuracy-$s.json" || true
-                curl -sS -m 60 -H "X-API-Key: $PROPLINE_API_KEY" "https://api.prop-line.com/v1/coverage/history?sport=$s" -o "out/accuracy/coverage-$s.json" || true
-                curl -sS -m 60 -H "X-API-Key: $PROPLINE_API_KEY" "https://api.prop-line.com/v1/sports/$s/injuries/history?days=30" -o "out/accuracy/injuries-$s.json" || true
+                pl "https://api.prop-line.com/v1/books/accuracy?sport=$s&days=90" "out/accuracy/accuracy-$s.json"
+                pl "https://api.prop-line.com/v1/coverage/history?sport=$s" "out/accuracy/coverage-$s.json"
+                pl "https://api.prop-line.com/v1/sports/$s/injuries/history?days=30" "out/accuracy/injuries-$s.json"
               done
               curl -sS -m 60 "https://api.prop-line.com/v1/freshness" -o out/accuracy/freshness.json || true
-              curl -sS -m 60 -H "X-API-Key: $PROPLINE_API_KEY" "https://api.prop-line.com/v1/markets/hit-rates?days=90" -o out/accuracy/hit-rates.json || true
+              pl "https://api.prop-line.com/v1/markets/hit-rates?days=90" out/accuracy/hit-rates.json
               gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine Pro samples (keyless)" --notes "Real answers of PropLine endpoints, keyless."
               gh release upload propline-samples out/accuracy/* --clobber ;;
             clv) bash tools/propline_clv_job.sh ;;

@@ -1,22 +1,30 @@
-# CHECKPOINT 4106 — read me first, then TASKS.md
+# CHECKPOINT 4107 — read me first, then TASKS.md
 
-**Written:** 2026-10-24T06:13:37Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-ycfjb5` · **builds on:** `08addef04` (this checkpoint is the commit after it)
+**Written:** 2026-10-24T06:25:46Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-ycfjb5` · **builds on:** `528accfa0` (this checkpoint is the commit after it)
 
 ## Just done
-propline.yml task accuracy (PL-OA)
+propline accuracy task: try each comma-separated key
 
 ## Do this next
-dispatch propline.yml task=accuracy on main after it lands, read release propline-samples files
+re-dispatch task=accuracy, read release files
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M .github/workflows/propline.yml
      M CHECKPOINT.md
+     D research/propline/reports_2026-10-24/accuracy-americanfootball_nfl.json
+     D research/propline/reports_2026-10-24/accuracy-baseball_mlb.json
+     D research/propline/reports_2026-10-24/accuracy-basketball_nba.json
+     D research/propline/reports_2026-10-24/accuracy-icehockey_nhl.json
+     D research/propline/reports_2026-10-24/coverage-basketball_nba.json
+     D research/propline/reports_2026-10-24/hit-rates.json
+     D research/propline/reports_2026-10-24/injuries-basketball_nba.json
 
 ## Last ten checkpoints
 ```
+  43909e77f ckpt 4106: propline.yml task accuracy (PL-OA)
   cfe7f1b9d ckpt 4105: PropLine openapi saved, task PL-OA written
   49c19f9e1 ckpt 4104: pre-release: 1xBet under any feed spelling (1xbet/onexbet) is one company, 
   edea0e6c8 ckpt 4103: pre-ship: 1xBet under any feed spelling (1xbet/onexbet) is one company, not
@@ -26,8 +34,7 @@ dispatch propline.yml task=accuracy on main after it lands, read release proplin
   5281628de ckpt 4099: SX finding 1 written (research/star_rating_sx_2026-10-24.md): at the close 
   cd0d7f208 ckpt 4098: SX: research index rebuilt; star tools landing
   8597c1116 ckpt 4097: SX: landing the star tools
-  4ecfa8fdf ckpt 4096: SX1-2: inventory (engine-dataset, phone study, propline-archive 907k graded
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
