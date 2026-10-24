@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "27b505acd63ee558b864660df2ef38631f83eb4c",
+ "head": "c3289d3bfc5633867d315235890d5e327a439d69",
  "since": 1792801733,
- "beat": 1792803725,
- "beatIso": "2026-10-24T01:02:05Z",
+ "beat": 1792803979,
+ "beatIso": "2026-10-24T01:06:19Z",
  "done": "SR1: BetRating.Weights (CURRENT = ST1, unchanged behaviour) + StarCheck scores 6 principled weight variants (type x1/x0.5/x0, sharp 25 vs 15 with edge 30/agree 25) on all lines and each half; cloud+BetRating tests green",
  "next": "dispatch review-digest.yml on this branch, read 'Weights side by side', adopt only a variant better on both halves"
 }
