@@ -129,7 +129,7 @@ class BetRatingTest {
         assertNull(BetRating.rate(strong).doubt)
         // Every star minimum the auto-bet offers refuses a line with no trusted edge.
         ScanSettings.AUTO_BET_STARS_CHOICES.filter { it > 0.0 }.forEach { min ->
-            assertNotNull(AutoBet.starsReason(AutoBet.rules(ScanSettings(autoBetMinStars = min)), BetRating.NONE))
+            assertNotNull(AutoBet.starsReason(AutoBet.rules(ScanSettings(vigGuards = ScanGuards(autoBetMinStars = min))), BetRating.NONE))
         }
     }
 }
