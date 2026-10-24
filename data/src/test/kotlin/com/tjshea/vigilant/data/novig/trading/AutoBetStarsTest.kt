@@ -114,12 +114,14 @@ class AutoBetStarsTest {
         val won = ProfitProfile.typePointsOf("NFL", "Game totals", "Over 45.5", 1_000_000L, 0L)
         assertTrue("a losing type takes points off ($lost)", lost <= 0.0)
         assertTrue("points stay in range", lost >= -ProfitProfile.TYPE_POINTS && won <= ProfitProfile.TYPE_POINTS)
-        // SR (2026-10-24): the type points count at BetRating.CURRENT.typeScale (half), so they move the points by exactly that and a typical bet's stars with them.
+        // SR (2026-10-24): the type points count at BetRating.CURRENT.typeScale (half) in the support score; S6's stars come from the edge, so they move the support stars only
+        // (the history's type points did not predict the close out of sample: research/star_rating_sb_2026-10-24.md).
         val base = BetRating.Inputs(5, 5, 0.03, true, false, 0.01)
         val scale = BetRating.CURRENT.typeScale
         assertEquals(-15.0 * scale, BetRating.rate(base.copy(typePoints = -15.0)).points - BetRating.rate(base).points, 1e-9)
-        assertTrue(BetRating.rate(base.copy(typePoints = -15.0)).stars < BetRating.rate(base).stars)
-        assertTrue(BetRating.rate(base.copy(typePoints = 15.0)).stars >= BetRating.rate(base).stars)
+        assertTrue(BetRating.rate(base.copy(typePoints = -15.0)).support < BetRating.rate(base).support)
+        assertTrue(BetRating.rate(base.copy(typePoints = 15.0)).support >= BetRating.rate(base).support)
+        assertEquals(BetRating.rate(base).stars, BetRating.rate(base.copy(typePoints = -15.0)).stars, 0.0)
     }
 
     @Test
