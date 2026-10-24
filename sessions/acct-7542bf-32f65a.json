@@ -8,8 +8,8 @@
  "branch": "ccr-305d3f7a-i2z8ja",
  "head": "f0ac263e3673a828944736012895b8e0978ef841",
  "since": 1792805068,
- "beat": 1792806010,
- "beatIso": "2026-10-24T01:40:10Z",
+ "beat": 1792806257,
+ "beatIso": "2026-10-24T01:44:17Z",
  "done": "v1.0.67 gated (full suite 4,207 green) and on main; release.yml triggered",
  "next": "confirm the v1.0.67 Release (get_release_by_tag), record-release.sh v1.0.67 407, engine reset (engine_set.py --reset) so the engine runs SR + OK3, tick SR3, tell Tj"
 }
