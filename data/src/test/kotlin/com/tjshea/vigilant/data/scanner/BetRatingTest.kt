@@ -45,17 +45,18 @@ class BetRatingTest {
         assertTrue(rate(8, 8, 0.08, sharp = true, against = true, spread = 0.0) <= 2.5)
     }
 
-    @Test fun `a huge edge is doubted and no edge is one star`() {
-        assertTrue(rate(6, 6, 0.40, sharp = true, spread = 0.01) < rate(6, 6, 0.08, sharp = true, spread = 0.01))
-        assertEquals(1.0, rate(6, 6, 0.0, sharp = true, spread = 0.0), 0.0)
-        assertEquals(1.0, rate(6, 6, -0.02, sharp = true, spread = 0.0), 0.0)
+    @Test fun `a huge edge is doubted and no edge has no stars`() {
+        assertTrue(rate(6, 6, 0.20, sharp = true, spread = 0.01) < rate(6, 6, 0.08, sharp = true, spread = 0.01))
+        assertEquals(BetRating.NONE, rate(6, 6, 0.40, sharp = true, spread = 0.01), 0.0)
+        assertEquals(BetRating.NONE, rate(6, 6, 0.0, sharp = true, spread = 0.0), 0.0)
+        assertEquals(BetRating.NONE, rate(6, 6, -0.02, sharp = true, spread = 0.0), 0.0)
     }
 
     @Test fun `ratings come in half steps from one to five with their words`() {
         var s = 0
         for (b in 0..8) for (a in 0..b) for (ev in listOf(0.0, 0.005, 0.02, 0.04, 0.07, 0.15, 0.3)) for (sh in listOf(false, true)) {
             val r = rate(b, a, ev, sh)
-            assertTrue(r in 1.0..5.0)
+            assertTrue(r in 1.0..5.0 || (r == BetRating.NONE && (ev < BetRating.THIN_EV || ev > BetRating.MAX_TRUSTED_EV)))
             assertEquals(r, Math.round(r * 2) / 2.0, 0.0)
             s++
         }
