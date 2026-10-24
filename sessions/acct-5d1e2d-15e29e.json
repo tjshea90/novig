@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "15e29e",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-0irsxn",
+ "head": "26a74408cfce507d5671642bb79eda0f00c28560",
+ "since": 1792884251,
+ "beat": 1792884251,
+ "beatIso": "2026-10-24T23:24:11Z",
+ "done": "ENGINEER 2026-10-24 done",
+ "next": "CH86 confirm via diag; continue backlog"
+}
