@@ -5,7 +5,7 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "15e29e",
- "note": "CH82+CH81: engine restart reads 'stopped or restarting' not 'switched off'; Diagnostics logs every 'nobody was selling' bet (NOFILL: list age, price, depth, fair age)",
+ "note": "The phone saves its full Diagnostics report to GitHub every 20 min (phone-data/phone/diag) so Claude reads the FEEDHIDE/NOFILL logs without Tj sending a file",
  "since": 1792863675,
- "beat": 1792864111
+ "beat": 1792864117
 }

@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-hj14wp",
  "head": "45ac45990eee9e7e59fcbec0d84453ad5bb29d08",
  "since": 1792818666,
- "beat": 1792864111,
- "beatIso": "2026-10-24T17:48:31Z",
+ "beat": 1792864117,
+ "beatIso": "2026-10-24T17:48:37Z",
  "done": "pre-ship: The phone saves its full Diagnostics report to GitHub every 20 min (phone-data/phone/diag) so Claude reads the FEEDHIDE/NOFILL logs without Tj sending a file",
  "next": "ship.sh gates and releases this"
 }
