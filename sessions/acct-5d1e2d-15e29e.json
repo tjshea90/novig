@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "f44754c14296fc4538061848d0e424ae59463e80",
+ "head": "00a0160943bf2811973086c3317d267534f761e2",
  "since": 1792818666,
- "beat": 1792862322,
- "beatIso": "2026-10-24T17:18:42Z",
- "done": "pre-ship: CH81: dead prices stay off the +EV list (1c band, 2 h, refused bets too); engine scan note counts exchange lines and flags books far from the others (match check)",
- "next": "ship.sh gates and releases this"
+ "beat": 1792862351,
+ "beatIso": "2026-10-24T17:19:11Z",
+ "done": "pre-release: CH81: dead prices stay off the +EV list (1c band, 2 h, refused bets too); engine scan note counts exchange lines and flags books far from the others (match check) (versionCode 413, v1.0.73)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.73), then run: bash tools/record-release.sh v1.0.73 413 \"CH81: dead prices stay off the +EV list (1c band, 2 h, refused bets too); engine scan note counts exchange lines and flags books far from the others (match check)\""
 }
