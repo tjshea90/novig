@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-ycfjb5",
- "head": "cfe7f1b9de17ddc27ff66370bf37a359aab930bd",
+ "head": "43909e77fccf34e7ec26e5d289e10f8e19a3f531",
  "since": 1792818666,
- "beat": 1792822328,
- "beatIso": "2026-10-24T06:12:08Z",
- "done": "PropLine openapi saved, task PL-OA written",
- "next": "evaluate unused PropLine endpoints (PL-OA in TASKS.md)"
+ "beat": 1792822417,
+ "beatIso": "2026-10-24T06:13:37Z",
+ "done": "propline.yml task accuracy (PL-OA)",
+ "next": "dispatch propline.yml task=accuracy on main after it lands, read release propline-samples files"
 }
