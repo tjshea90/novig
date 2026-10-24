@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-ycfjb5",
  "head": "d15fdd2fbaaa2b7fba217b98d4df1313553cfcb3",
  "since": 1792818666,
- "beat": 1792825388,
- "beatIso": "2026-10-24T07:03:08Z",
+ "beat": 1792825588,
+ "beatIso": "2026-10-24T07:06:28Z",
  "done": "CH78: CNO rows keep the dead-price memory (tests pass)",
  "next": "release with the SX build; CH78b study why NotFilled is frequent"
 }
