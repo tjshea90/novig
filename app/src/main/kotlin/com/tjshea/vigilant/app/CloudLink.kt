@@ -953,6 +953,9 @@ class CloudLink(private val c: AppContainer) {
         if (!hasToken()) return "no token"
         val gz = withContext(Dispatchers.IO) { java.io.ByteArrayOutputStream().also { o -> GZIPOutputStream(o).use { g -> g.write(text.toByteArray()) } }.toByteArray() }
         if (gz.size > MAX_FILE_BYTES) return "report too big"
+        // The hourly copy keeps what the next reset clears (the file is emptied on the phone after each save, Tj 2026-10-24); the latest copy is what a session opens first.
+        val hour = java.time.Instant.now().toString().take(13).replace(':', '-')
+        client.putFile(CloudClient.DATA_BRANCH, "phone/diag/diag-$hour.txt.gz", gz, "diagnostics $hour")?.let { return it }
         return client.putFile(CloudClient.DATA_BRANCH, "phone/diag/diag-latest.txt.gz", gz, "diagnostics ${java.time.Instant.now()}")
     }
 

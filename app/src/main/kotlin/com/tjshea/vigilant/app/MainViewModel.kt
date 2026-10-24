@@ -2252,7 +2252,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (st.settings.cloudSave) runCatching {
                     val inputs = gatherDiag()
                     val text = withContext(Dispatchers.Default) { DiagnosticsFile.build(st.copy(usage = c.mergedUsage(), cloudUsage = c.cloudUsageBook(), cloudUsageAtMs = c.cloudUsage.value?.at ?: 0L), diagnosticsExtras(inputs), System.currentTimeMillis()) }
-                    withContext(Dispatchers.IO) { c.cloud.saveDiagnostics(text) }
+                    val why = withContext(Dispatchers.IO) { c.cloud.saveDiagnostics(text) }
+                    // Saved: the logs on the phone start again from empty so the file never grows (Tj, 2026-10-24). Only the logs; the bets, settings, keys, scan study and recorders' day files are untouched, and the report's "since the previous report" snapshots stay.
+                    if (why == null) withContext(Dispatchers.IO) {
+                        runCatching {
+                            c.eventLog.reset(); c.netStats.reset(); c.problems.clear(); c.cycleLog.reset(); c.perf.clear(); c.frames.clear()
+                            c.eventLog.info("DIAG", "report saved to GitHub and the phone's logs started again from empty")
+                            c.eventLog.flush(force = true)
+                        }
+                    } else c.eventLog.warn("DIAG", "report not saved to GitHub, logs kept: $why")
                 }
                 kotlinx.coroutines.delay(20 * 60_000L)
             }
