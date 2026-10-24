@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-hj14wp",
  "head": "f44754c14296fc4538061848d0e424ae59463e80",
  "since": 1792818666,
- "beat": 1792862086,
- "beatIso": "2026-10-24T17:14:46Z",
+ "beat": 1792862322,
+ "beatIso": "2026-10-24T17:18:42Z",
  "done": "pre-ship: CH81: dead prices stay off the +EV list (1c band, 2 h, refused bets too); engine scan note counts exchange lines and flags books far from the others (match check)",
  "next": "ship.sh gates and releases this"
 }
