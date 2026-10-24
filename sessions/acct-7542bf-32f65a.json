@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-305d3f7a-i2z8ja",
- "head": "4567b1e3b204d13c2c78ae30265a4aa0586fa491",
+ "head": "f0ac263e3673a828944736012895b8e0978ef841",
  "since": 1792805068,
- "beat": 1792805968,
- "beatIso": "2026-10-24T01:39:28Z",
- "done": "pre-release: SR: star rating re-weighted (sharp book 25->15, edge 25->30, agreement 20->25, type-of-bet points at half; CLV/star +0.50->+0.77, ROI/star +5.0->+6.2 on 1,968 graded engine lines); OK3: SharpAPI no longer re-reads NBA/NFL/NCAAF whole every minute while its stream is live (versionCode 407, v1.0.67)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.67), then run: bash tools/record-release.sh v1.0.67 407 \"SR: star rating re-weighted (sharp book 25->15, edge 25->30, agreement 20->25, type-of-bet points at half; CLV/star +0.50->+0.77, ROI/star +5.0->+6.2 on 1,968 graded engine lines); OK3: SharpAPI no longer re-reads NBA/NFL/NCAAF whole every minute while its stream is live\""
+ "beat": 1792806010,
+ "beatIso": "2026-10-24T01:40:10Z",
+ "done": "v1.0.67 gated (full suite 4,207 green) and on main; release.yml triggered",
+ "next": "confirm the v1.0.67 Release (get_release_by_tag), record-release.sh v1.0.67 407, engine reset (engine_set.py --reset) so the engine runs SR + OK3, tick SR3, tell Tj"
 }
