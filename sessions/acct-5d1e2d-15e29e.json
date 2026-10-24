@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-hj14wp",
- "head": "88138eab6834985b80a8172e268b08c85a2fd716",
+ "head": "8589e8341d9cece335297d4bf3fcf93775e39c9e",
  "since": 1792818666,
- "beat": 1792863605,
- "beatIso": "2026-10-24T17:40:05Z",
- "done": "CH80b candidate cause noted (requoteListed partial books)",
- "next": "wait for Tj's FEEDHIDE diagnostics; then fix; CH83a archive; ship 1.0.74"
+ "beat": 1792863669,
+ "beatIso": "2026-10-24T17:41:09Z",
+ "done": "pre-ship: CH82+CH81: engine restart reads 'stopped or restarting' not 'switched off'; Diagnostics logs every 'nobody was selling' bet (NOFILL: list age, price, depth, fair age)",
+ "next": "ship.sh gates and releases this"
 }
