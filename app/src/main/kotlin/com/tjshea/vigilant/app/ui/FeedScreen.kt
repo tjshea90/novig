@@ -790,11 +790,19 @@ internal val SharpStarColor = androidx.compose.ui.graphics.Color(0xFFF5B301)
 
 /**
  * The bet's 1-5 star rating, "★★★½ 3.5" (Tj, 2026-10-11): how much to trust the edge ([com.tjshea.vigilant.data.scanner.BetRating]). Gold; the number after it is the exact half-star value.
- * Nothing while the bet has no rating.
+ * Nothing while the bet has no rating. A line the data does not trust (S5: [com.tjshea.vigilant.data.scanner.BetRating.NONE]) shows "☆ no trusted edge", and on the sheet ([large]) why.
  */
 @Composable
 fun StarRating(rating: com.tjshea.vigilant.data.scanner.BetRating.Rating?, modifier: Modifier = Modifier, large: Boolean = false, adjusted: Double? = null) {
     if (rating == null) return
+    if (!rating.trusted) {
+        Text(
+            "☆ no trusted edge" + (rating.doubt?.takeIf { large }?.let { ": $it" } ?: ""),
+            style = if (large) MaterialTheme.typography.bodySmall else MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = if (large) 2 else 1, softWrap = large, modifier = modifier.testTag("starRating"),
+        )
+        return
+    }
     androidx.compose.foundation.layout.Row(modifier.testTag("starRating"), verticalAlignment = Alignment.CenterVertically) {
         Text(
             rating.glyphs, color = SharpStarColor, fontWeight = FontWeight.Bold,
