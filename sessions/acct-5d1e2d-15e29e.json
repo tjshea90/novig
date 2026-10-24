@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "15e29e",
- "kind": "routine",
+ "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-4m9t5k",
- "head": "b5115a07e65fcd60d8f249c648cae2f9631a0dd4",
+ "branch": "claude/optimistic-curie-db7n0m",
+ "head": "26a74408cfce507d5671642bb79eda0f00c28560",
  "since": 1792884251,
- "beat": 1792884402,
- "beatIso": "2026-10-24T23:26:42Z",
+ "beat": 1792885284,
+ "beatIso": "2026-10-24T23:41:24Z",
  "done": "ENGINEER 2026-10-24 done",
  "next": "CH86 confirm via diag; continue backlog"
 }
