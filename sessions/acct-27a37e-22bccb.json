@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f7c47823-ez8xwu",
- "head": "2c466ddbb5a2279ddea860c556dcc759e8a70a99",
+ "head": "2b53d0fe351b637b61bc0fea53396de188c05ec1",
  "since": 1792797865,
- "beat": 1792800336,
- "beatIso": "2026-10-24T00:05:36Z",
- "done": "FX3/FX4 written: research/star_rating_review_2026-10-23.md, research/api_verdicts_2026-10-23.md, research/full_test_2026-10-23.md; CHANGES.md + LEVERS.md (star lever trigger) + FX6 task",
- "next": "floor result -> tick FX1-FX4, ship.sh, release.yml, record-release.sh; land on main + engine reset (Kalshi cancel fix live)"
+ "beat": 1792800461,
+ "beatIso": "2026-10-24T00:07:41Z",
+ "done": "pre-release: FX full tests: Kalshi bid cancels fixed (V2 needs the market), Kalshi lane re-reads before judging, SharpAPI/SX streams reconnect on a server close, digest shows the engine's graded days + star check + API value, tab bar and Settings text fixes (versionCode 406, v1.0.66)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.66), then run: bash tools/record-release.sh v1.0.66 406 \"FX full tests: Kalshi bid cancels fixed (V2 needs the market), Kalshi lane re-reads before judging, SharpAPI/SX streams reconnect on a server close, digest shows the engine's graded days + star check + API value, tab bar and Settings text fixes\""
 }
