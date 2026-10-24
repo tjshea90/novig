@@ -140,4 +140,9 @@ class BookCompanyTest {
         assertEquals(BookCompany.of("ladbrokes"), BookCompany.of("bwin"))
         assertNotEquals(BookCompany.of("bwin"), BookCompany.of("fanduel"))
     }
+
+    @Test
+    fun `1xBet under any feed's spelling is one company`() {
+        assertEquals(1, listOf("1xBet", "1xbet", "onexbet", "OneXBet").map(BookCompany::of).toSet().size)
+    }
 }
