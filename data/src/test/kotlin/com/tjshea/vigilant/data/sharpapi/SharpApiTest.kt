@@ -169,6 +169,44 @@ class SharpApiTest {
         }
     }
 
+    /** FX, 2026-10-24: a 60 s reconcile window over a big league never fit the delta's paging, so with the stream live each big league was read whole about once a minute (562,855 calls a day). */
+    @Test
+    fun `a window too big to page is passed over while the stream covers the league, and read whole without the stream or after fifteen minutes`() = runBlocking {
+        val server = MockWebServer()
+        var wholeReads = 0
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                if (request.requestUrl!!.encodedPath == "/api/v1/odds") wholeReads++
+                return MockResponse().setBody(page(listOf(json("a", 1.5)), null, "2026-10-25T20:00:00Z"))
+            }
+        }
+        server.start()
+        try {
+            var t = 1_800_000_000_000L
+            val client = SharpApiClient(OkHttpClient(), Json { ignoreUnknownKeys = true }, { "sk_test_FAKE" }, baseUrl = server.url("/api/v1").toString().trimEnd('/'))
+            val feed = SharpApiFeed(client, clock = { t })
+            assertTrue(feed.ensure("ncaaf"))
+            assertEquals(1, wholeReads)
+            // The stream is live and covers the league: passed over, the window halves, nothing read whole.
+            feed.streamLeagues = setOf("ncaaf"); feed.streamHeardAtMs = t
+            t += 60_000L; feed.streamHeardAtMs = t
+            feed.undrained("ncaaf")
+            assertEquals(1, wholeReads)
+            assertEquals(1L, feed.skippedWindows)
+            // Fifteen minutes after the last whole read it is read whole again, stream or not.
+            t += SharpApiFeed.STREAM_RELOAD_MS; feed.streamHeardAtMs = t
+            feed.undrained("ncaaf")
+            assertEquals(2, wholeReads)
+            // Without the stream an undrainable window is read whole at once, as before.
+            feed.streamLeagues = emptySet()
+            t += 60_000L
+            feed.undrained("ncaaf")
+            assertEquals(3, wholeReads)
+        } finally {
+            server.shutdown()
+        }
+    }
+
     @Test
     fun `a refused key stops every call, a 429 rests them`() = runBlocking {
         val server = MockWebServer()
