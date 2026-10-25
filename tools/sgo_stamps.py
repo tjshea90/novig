@@ -28,7 +28,8 @@ PL_SPORT = {"NFL": "americanfootball_nfl", "NCAAF": "americanfootball_ncaaf", "N
 
 
 def get(url, headers):
-    req = urllib.request.Request(url, headers=dict(headers, Accept="application/json"))
+    # SGO's Cloudflare refuses Python's default User-Agent (error 1010, 2026-10-25); the engine's OkHttp is let through.
+    req = urllib.request.Request(url, headers=dict(headers, Accept="application/json", **{"User-Agent": "okhttp/4.12.0"}))
     try:
         with urllib.request.urlopen(req, timeout=90) as r:
             return r.status, json.loads(r.read() or b"null")
