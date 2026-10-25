@@ -8,8 +8,8 @@
  "branch": "ccr-be05497a-18skm3",
  "head": "57b1594aa2aedfb35a68ac85b658463d1ba1fb7f",
  "since": 1792915284,
- "beat": 1792949144,
- "beatIso": "2026-10-25T17:25:44Z",
+ "beat": 1792949432,
+ "beatIso": "2026-10-25T17:30:32Z",
  "done": "PX: QuoteCensus (per-feed counts where fair-odds quotes are lost) logged after each scan report",
  "next": "reset engine, read the census in engine-log, fix the stage that loses PropLine NFL quotes; then PX7 stream-only books"
 }
