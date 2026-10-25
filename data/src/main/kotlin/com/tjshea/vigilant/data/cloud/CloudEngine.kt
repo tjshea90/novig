@@ -659,7 +659,7 @@ class CloudEngine(
         sendBids(result, cfg.rev, latest, done)
         sendTrades(freshForTrading(rows, latest, done), latest, done)
         runCatching { onResult(result, forCloud(latest)) }.onFailure { if (it is CancellationException) throw it; log("scan study failed: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
-        problem = publish(if (own) feed else lastPublished, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = lastScanMs))
+        problem = publish(if (own) feed else null, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = lastScanMs))
         log("pass $passes: ${rows.size} bets listed of ${result.stats.outcomesWithFair} priced, ${lastScanMs / 1000}s" + (problem?.let { ", publish problem: $it" } ?: ""))
         if (bids != null) deskPass(latest)
         false
