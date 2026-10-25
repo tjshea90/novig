@@ -433,11 +433,15 @@ class PropLineClient(
         fun books(referenceBooks: List<String>): List<String> =
             referenceBooks.map { TO_PROPLINE[it] ?: it }.filter { it !in EXCLUDED && it in KNOWN }.distinct()
 
-        /** PropLine's sportsbooks and exchanges that can price a fair line (its bookmaker list, 2026-09-27). */
+        /**
+         * PropLine's sportsbooks and exchanges that can price a fair line (its bookmaker list, 2026-09-27), plus the sharp books its 2026-10-24 list carries that Vigilant had not asked it for: SBOBET,
+         * BookMaker.eu and Betfair Exchange (all three on the sharp-book list), and theScore Bet. The ~70 European/Latin American/African books (pregame soccer and main lines, several on one odds
+         * provider each) and the sweepstakes books are left out until their desks are known ([com.tjshea.vigilant.engine.BookCompany]: books on one provider must never be counted twice).
+         */
         private val KNOWN = setOf(
             "pinnacle", "draftkings", "fanduel", "betmgm", "fanatics", "betrivers", "hardrock", "bovada",
             "betonlineag", "lowvig", "betus", "unibet", "onexbet", "marathon", "fliff", "betway",
-            "matchbook", "smarkets",
+            "matchbook", "smarkets", "sbobet", "bookmaker_eu", "betfair_ex", "thescorebet",
         )
 
         fun marketsFor(families: Collection<MarketFamily>): List<String> = buildList {
