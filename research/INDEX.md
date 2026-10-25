@@ -4,11 +4,11 @@ Every study in `research/`, newest first, and how it is USED. Tuning levers and 
 Statuses: APPLIED (a change in `research/review/CHANGES.md` cites it), LEVER (on LEVERS.md), CLOSED (verdict and disposition on LEVERS.md), WATCH (an open TASKS.md item waits on its number),
 CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a sample, marked in its first lines), IDLE (cited nowhere: act on it or mark it).
 
-135 entries; 9 idle: api_audit_report_2026-10-22.html, api_docs_review_2026-10-25.md, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, parlayapi_business_2026-10-25, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md, px_books_per_bet_2026-10-25.md
+135 entries; 8 idle: api_audit_report_2026-10-22.html, api_docs_review_2026-10-25.md, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, parlayapi_business_2026-10-25, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
-| 2026-10-25 | `px_books_per_bet_2026-10-25.md` | Why bets showed 1 book and no ParlayAPI odds; old fair odds (PX, Tj 2026-10-25 ~17:00-18:00 UTC) - Tj: "Investigate why I don't see any parlayapi provided odds in the scanned list and why many results only have 1 book behind th... | IDLE |
+| 2026-10-25 | `px_books_per_bet_2026-10-25.md` | Why bets showed 1 book and no ParlayAPI odds; old fair odds (PX, Tj 2026-10-25 ~17:00-18:00 UTC) - Tj: "Investigate why I don't see any parlayapi provided odds in the scanned list and why many results only have 1 book behind th... | LEVER |
 | 2026-10-25 | `propline_parlay_audit_2026-10-25.md` | PropLine + ParlayAPI streams: the audit (PS1-PS12, Tj 2026-10-25 ~14:25 UTC) - Tj: "Audit the two new streaming sockets - propline and parlayapi" (nine points, verbatim in INBOX.md), then "https://parlay-api.com/cookbook" and "... | APPLIED LEVER |
 | 2026-10-25 | `propline_coverage_2026-10-25.md` | Why most listed bets show only a few books (PS2, Tj 2026-10-25) - Tj: "even though they offer dozens of sports books odds, most of my scanned results only show odds for a few sports books. Is this a matching issue?" | APPLIED LEVER CODE |
 | 2026-10-25 | `parlayapi_business_2026-10-25/` | (no title) | IDLE |
