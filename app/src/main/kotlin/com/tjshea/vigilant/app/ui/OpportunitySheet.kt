@@ -341,10 +341,18 @@ fun FairOddsTable(o: Opportunity) {
                 Text("Hold", Modifier.width(46.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             HorizontalDivider()
-            fair.perBook.sortedByDescending { it.isSharp }.forEach { b ->
+            val cost = o.quote?.cost
+            val ordered = androidx.compose.runtime.remember(fair, idx) { BookOrder.sorted(fair.perBook, idx) }
+            ordered.forEach { b ->
                 val used = b.book.bookTitle in fair.booksUsed
+                val disagrees = BookOrder.disagrees(b, idx, cost)
                 val color = if (used) Color.Unspecified else MaterialTheme.colorScheme.onSurfaceVariant
-                Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    Modifier.fillMaxWidth()
+                        .then(if (disagrees) Modifier.background(Edge.colors.negative.copy(alpha = 0.14f)) else Modifier)
+                        .padding(vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Column(Modifier.weight(1f)) {
                         Text(
                             b.book.bookTitle + if (b.isSharp) "  ★" else "",
@@ -353,6 +361,8 @@ fun FairOddsTable(o: Opportunity) {
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.bodyMedium,
                         )
+                        // PX11b (Tj 2026-10-25: "Highlight any books which disagree that the bet is positive EV"): this book's own no-vig chance for the side is at or under what the bet costs.
+                        if (disagrees) Text("says not +EV", color = Edge.colors.negative, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                         // How old this book's quote is and which feed sent it (PB20, Tj 2026-10-25): green fresh, yellow medium, red stale; a quote past the stale limit is never in this table.
                         QuoteAge.label(b.book, now)?.let { (text, level) ->
                             Text(text, color = QuoteAge.color(level), style = MaterialTheme.typography.labelSmall, maxLines = 1)
@@ -386,11 +396,28 @@ fun FairOddsTable(o: Opportunity) {
                 }
             }
             Text(
-                "★ sharp book (in the table) · one book a company · under each book: its quote's age and the feed that sent it (green under 1 min, yellow under 3, red older; over the stale limit a quote is left out of the fair odds) · greyed rows weren't used for this line's fair price · amber rows looked wrong next to the rest of the market",
+                "best odds for this side first · red rows: by that book's own no-vig odds the bet is not +EV · ★ sharp book (in the table) · one book a company · under each book: its quote's age and the feed that sent it (green under 1 min, yellow under 3, red older; over the stale limit a quote is left out of the fair odds) · greyed rows weren't used for this line's fair price · amber rows looked wrong next to the rest of the market",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
             )
+    }
+}
+
+/**
+ * PX11b (Tj 2026-10-25: "puts the odds from different sports books in order from the best odds for the same side as the scanned bet to the worst odds at the bottom for the same side. Highlight any
+ * books which disagree that the bet is positive EV"): the order of the bet sheet's book table, and which books disagree. Pure.
+ */
+object BookOrder {
+    /** Best decimal odds for the bet's side ([idx]) first; ties and books without that side by sharp book first. No side known: sharp books first, as before. */
+    fun sorted(perBook: List<com.tjshea.vigilant.engine.BookFair>, idx: Int?): List<com.tjshea.vigilant.engine.BookFair> =
+        if (idx == null) perBook.sortedByDescending { it.isSharp }
+        else perBook.sortedWith(compareByDescending<com.tjshea.vigilant.engine.BookFair> { it.book.decimalOdds.getOrNull(idx) ?: 0.0 }.thenByDescending { it.isSharp })
+
+    /** By [b]'s own no-vig chance for the side, the bet at [cost] (Novig's price with its fee) is not +EV. */
+    fun disagrees(b: com.tjshea.vigilant.engine.BookFair, idx: Int?, cost: Double?): Boolean {
+        val p = idx?.let { b.fairProbabilities.getOrNull(it) } ?: return false
+        return cost != null && cost > 0.0 && p <= cost
     }
 }
 
