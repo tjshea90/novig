@@ -23,7 +23,20 @@ STAT_KEYS = {  # Novig market title (lower, letters only) -> PropLine market key
     "steals": "player_steals", "blocks": "player_blocks", "shotsongoal": "player_shots_on_goal", "saves": "goalie_saves", "goals": "player_goals",
     "hits": "batter_hits", "totalbases": "batter_total_bases", "pitcherstrikeouts": "pitcher_strikeouts", "strikeouts": "pitcher_strikeouts", "rbis": "batter_rbis", "homeruns": "batter_home_runs",
     "passingyards": "player_pass_yds", "rushingyards": "player_rush_yds", "receivingyards": "player_reception_yds", "receptions": "player_receptions", "passingtouchdowns": "player_pass_tds",
+    # PS3 (2026-10-25): the labels the phone's and the engine's bets carry that the grader could not map (PropLine's market keys from its docs)
+    "rushingattempts": "player_rush_attempts", "passingattempts": "player_pass_attempts", "passingcompletions": "player_pass_completions", "pitcherouts": "pitcher_outs", "outs": "pitcher_outs",
+    "hitsrunsrbis": "batter_hits_runs_rbis", "tacklesassists": "player_tackles_assists", "longestrush": "player_rush_longest", "longestreception": "player_reception_longest",
+    "longestcompletion": "player_longest_completion", "passinginterceptions": "player_pass_interceptions", "interceptions": "player_pass_interceptions", "rushingreceivingyards": "player_rush_reception_yds",
+    "passingrushingyards": "player_pass_rush_yds", "goaliesaves": "goalie_saves", "blockedshots": "player_blocked_shots", "powerplaypoints": "player_power_play_points", "runs": "batter_runs",
+    "earnedruns": "pitcher_earned_runs", "hitsallowed": "pitcher_hits_allowed", "walks": "batter_walks", "pitcherwalks": "pitcher_walks", "stolenbases": "batter_stolen_bases", "singles": "batter_singles",
+    "doubles": "batter_doubles", "turnovers": "player_turnovers", "tackles": "player_tackles", "sacks": "player_sacks", "solotackles": "player_solo_tackles",
 }
+
+
+def stat_key(label):
+    """A market label -> PropLine's prop key: Novig's title ("Player Receiving Yards", "Tackles + Assists", "PITCHER_OUTS"), with "player"/"batter" words and symbols ignored."""
+    words = [w for w in norm((label or "").replace("_", " ")) if w not in ("player", "batter")]
+    return STAT_KEYS.get("".join(words)) or STAT_KEYS.get("".join(norm((label or "").replace("_", " "))))
 
 
 def norm(s):
@@ -161,7 +174,7 @@ def parse_bet(row):
         if mm:
             return ("totals", "", mm.group(1).strip(), "", mm.group(2), num(m.group(2))), None
     if kind == "PROP":
-        key = STAT_KEYS.get("".join(norm(market)))
+        key = stat_key(market)
         mm = re.match(r"^(.*)\s+(Over|Under)\s+([0-9.]+)$", sel)
         if key and mm:
             return (key, "", "", mm.group(1).strip(), mm.group(2), num(mm.group(3))), None

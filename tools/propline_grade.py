@@ -73,11 +73,11 @@ def leg(b):
     m = re.match(r"^(.*?)\s+([0-9.]+)\s+([A-Z_]+)$", market)
     s2 = re.match(r"^(Over|Under)\s+([0-9.]+)$", sel)
     if m and s2:
-        key = STAT_KEYS.get("".join(norm(m.group(3).replace("_", " "))))
+        key = stat_key(m.group(3))
         return ((key, m.group(1).strip(), s2.group(1), float(s2.group(2))), None) if key else (None, "prop stat not mapped (%s)" % m.group(3))
     m = re.match(r"^(.*?)\s+(Over|Under)\s+([0-9.]+)$", sel)
     if m and "total" not in low:
-        key = STAT_KEYS.get("".join(norm(market)))
+        key = stat_key(market)
         if not key:
             return None, "prop stat not mapped (%s)" % market
         return (key, m.group(1).strip(), m.group(2), float(m.group(3))), None
@@ -116,7 +116,10 @@ def pin_event(b, games):
 
 def body_of(b, event_id, sport, lg):
     key, sel, side, point = lg
-    x = {"ref": b["ref"], "sport_key": sport, "event_id": event_id, "market": key, "bookmaker": "novig", "selection": sel, "price": int(b["american"]), "stake": round(float(b["stake"] or 0), 2)}
+    # event_id is an integer in PropLine's schema (a string id was refused with 422 for every batch, 2026-10-25)
+    x = {"ref": b["ref"], "sport_key": sport, "event_id": int(event_id), "market": key, "bookmaker": "novig", "selection": sel, "price": int(round(float(b["american"]))), "stake": round(float(b["stake"] or 0), 2)}
+    if b.get("period"):
+        x["period"] = b["period"]
     if side:
         x["side"] = side
     if point is not None:
@@ -139,6 +142,9 @@ def call(path, key, params=None, body=None, retries=3):
             if e.code in (429, 503) and i < retries:
                 time.sleep(min(float(e.headers.get("Retry-After") or 2), 30) + 0.5)
                 continue
+            if e.code == 422 and not getattr(call, "told", False):
+                call.told = True
+                print("422 from %s: %s" % (path, e.read()[:600].decode("utf-8", "replace")))
             return e.code, None
         except (urllib.error.URLError, TimeoutError, ConnectionError):
             if i < retries:
