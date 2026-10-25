@@ -39,9 +39,19 @@ object Freshness {
     /** The guard in SGO Pro mode ([ScanSettings.sgoMaxAgeMinutes]; 10 minutes unless Tj picks longer): a quote older than this is dropped, for every game. */
     @Volatile var sgoMaxAgeMs: Long = FAR_OFF_AGE_MS
 
-    /** How old a quote on a game starting at [startsAtMs] may be at [now]; unknown start = the strict limit. */
-    fun maxAgeMs(startsAtMs: Long?, now: Long): Long =
-        if (sgoMode) sgoMaxAgeMs else if (startsAtMs != null && startsAtMs - now > FAR_OFF_MS) FAR_OFF_AGE_MS else MAX_QUOTE_AGE_MS
+    /**
+     * The feeds [sgoMode] is for: SportsGameOdds refreshes pregame prices about every 5 minutes, so ITS quotes are 3-7 minutes old when read (feed ids `sgo`, `sgo-props`). Every other feed keeps the plain limit
+     * whatever the switch says (PX9, Tj 2026-10-25: "Why are the odds this stale if they are streamed?": with SGO Pro on, the engine let PropLine's and ParlayAPI's quotes up to 15 minutes old price a line,
+     * median 9 minutes behind a listed bet's fair odds, because the relaxed limit was one global number; Tj's own words of 2026-10-09 were "match what sgo offers without dropping bets").
+     */
+    fun slowFeed(source: String?): Boolean = source != null && source.startsWith("sgo")
+
+    /**
+     * How old a quote on a game starting at [startsAtMs] may be at [now]; unknown start = the strict limit. In [sgoMode] SportsGameOdds' quotes ([slowFeed]) and callers that name no [source] (the whole
+     * fair, a bid's life: it may hold SGO's) get [sgoMaxAgeMs]; a named fast feed keeps the plain 5 minutes (10 for a game over 3 hours away).
+     */
+    fun maxAgeMs(startsAtMs: Long?, now: Long, source: String? = null): Long =
+        if (sgoMode && (source == null || slowFeed(source))) sgoMaxAgeMs else if (startsAtMs != null && startsAtMs - now > FAR_OFF_MS) FAR_OFF_AGE_MS else MAX_QUOTE_AGE_MS
 
     /**
      * How long a bet a scan shows keeps being shown, at least: a scan prices only with quotes that are this far
@@ -83,5 +93,5 @@ object Freshness {
     }
 
     /** Whether a quote the feed last saw at [seenAtMs], on a game starting at [startsAtMs], is still fresh at [now]; unknown counts as fresh. */
-    fun fresh(seenAtMs: Long?, now: Long, startsAtMs: Long? = null): Boolean = seenAtMs == null || now - seenAtMs <= maxAgeMs(startsAtMs, now)
+    fun fresh(seenAtMs: Long?, now: Long, startsAtMs: Long? = null, source: String? = null): Boolean = seenAtMs == null || now - seenAtMs <= maxAgeMs(startsAtMs, now, source)
 }

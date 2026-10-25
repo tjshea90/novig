@@ -27,5 +27,5 @@ object QuoteCensus {
             .joinToString(" · ") { (stage, v) -> "$stage " + v.sortedByDescending { it.second }.take(14).joinToString(",") { "${it.first} ${it.second}" } }
     }
 
-    private val ORDER = listOf("sent", "tooOld", "atLine", "staleBesideFresh", "devigLeftOut", "priced", "crossSame", "crossDiff")
+    private val ORDER = listOf("sent", "tooOld", "atLine", "staleBesideFresh", "devigLeftOut", "priced", "crossSame", "crossDiff", "crossDiffBook", "crossDiffBp")
 }

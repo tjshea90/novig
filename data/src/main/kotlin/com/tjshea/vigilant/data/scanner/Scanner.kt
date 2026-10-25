@@ -1342,7 +1342,7 @@ class Scanner(
             // each quote carries a time (seenBy).
             // A game left with no fresh line is dropped, as if the feed hadn't answered: Novig's board still lists it, unpriced.
             val fresh = if (!youngFairOnly) snap else snap.copy(
-                events = snap.events.map { e -> e.copy(markets = e.markets.filter { Freshness.fresh(it.lastUpdateMs, fairAsOf + headroomMs, e.commenceMs.takeIf { e.etDate == null }) }) }
+                events = snap.events.map { e -> e.copy(markets = e.markets.filter { Freshness.fresh(it.lastUpdateMs, fairAsOf + headroomMs, e.commenceMs.takeIf { e.etDate == null }, it.source ?: snap.provider.ifEmpty { null }) }) }
                     .filter { it.markets.isNotEmpty() },
             )
             if (youngFairOnly) {

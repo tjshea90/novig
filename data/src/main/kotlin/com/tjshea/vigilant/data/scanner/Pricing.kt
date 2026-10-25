@@ -506,6 +506,11 @@ object Pricing {
             val gap = pa.lastUpdateMs!! - pl.lastUpdateMs!!
             val older = when { gap < 20_000L -> "within 20s"; gap < 60_000L -> "20-60s older"; gap < 180_000L -> "1-3 min older"; else -> "3+ min older" }
             QuoteCensus.add(if (same) "crossSame" else "crossDiff", "${if (pl.bookKey in PUSH_BOOKS) "push" else "polled"}/$older")
+            if (!same) {
+                // Which books differ and by how much (basis points of implied chance, summed: divide by the crossDiff count).
+                QuoteCensus.add("crossDiffBook", "${pl.bookKey} $older")
+                QuoteCensus.add("crossDiffBp", if (pl.bookKey in PUSH_BOOKS) "push" else "polled", sides.maxOf { (a, b) -> kotlin.math.abs(1.0 / a.decimalOdds - 1.0 / b.decimalOdds) * 10_000.0 }.toInt())
+            }
         }
     }
 
