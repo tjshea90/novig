@@ -1218,3 +1218,8 @@ https://parlay-api.com/cookbook
 ```
 Also make sure both parlayapi and propline are both logically used together and both are used to their full ability but don't interfere with each other. They should compliment each other
 ```
+
+## 2026-10-25T16:57:03Z
+```
+Investigate why I don't see any parlayapi provided odds in the scanned list and why many results only have 1 book behind the fair odds for alternate markets that are popular and available at many books
+```
