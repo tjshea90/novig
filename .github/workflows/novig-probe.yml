@@ -1,0 +1,35 @@
+name: Novig orders probe (PX11a)
+
+# Novig's own record of the Vigilant subaccount's orders that ended unfilled (cloud/OrdersProbeMain.kt), read with the engine's trading::read key: why a taker order was "not filled".
+# GET requests only; account, subaccount and user ids are left out of the log.
+on:
+  workflow_dispatch:
+    inputs:
+      statuses:
+        description: "order statuses, space-separated (REJECTED CANCELED when empty)"
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: novig-probe
+  cancel-in-progress: false
+
+jobs:
+  orders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Orders
+        env:
+          NOVIG_READ_KEY_ID: ${{ secrets.NOVIG_READ_KEY_ID }}
+          NOVIG_READ_KEY_PEM: ${{ secrets.NOVIG_READ_KEY_PEM }}
+          STATUSES: ${{ github.event.inputs.statuses }}
+        run: ./gradlew :cloud:ordersprobe --no-daemon --console=plain --args="$STATUSES" 2>&1 | tail -n 400

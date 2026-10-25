@@ -45,6 +45,12 @@ tasks.register<JavaExec>("starcheck") {
     jvmArgs("-Xmx4g")
 }
 
+// PX11a: Novig's record of the subaccount's rejected and canceled orders (OrdersProbeMain.kt), read-only with the engine's read key: run by .github/workflows/novig-probe.yml.
+tasks.register<JavaExec>("ordersprobe") {
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.tjshea.vigilant.cloud.OrdersProbeMainKt")
+}
+
 // The daily grader of the engine's scan study (GradeMain.kt): `./gradlew :cloud:grade --args="--journal DIR --new DIR [--trades FILE --results FILE]"`, run by .github/workflows/engine-grade.yml.
 tasks.register<JavaExec>("grade") {
     classpath = sourceSets["main"].runtimeClasspath
