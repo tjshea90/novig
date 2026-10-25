@@ -8,8 +8,8 @@
  "branch": "ccr-be05497a-18skm3",
  "head": "5bd951e41c17222003b95c0a22d0f20e238f4049",
  "since": 1792915284,
- "beat": 1792942557,
- "beatIso": "2026-10-25T15:35:57Z",
+ "beat": 1792943857,
+ "beatIso": "2026-10-25T15:57:37Z",
  "done": "v1.0.83 released + recorded; engine reset: ParlayAPI overlay now live (501 moved, 40 polls); grader re-dispatched with 5-game batches",
  "next": "read propline-grade result at 15:35 check-in; then PB8 settings walk, PB12 steam study, PS2b/PS9b"
 }
