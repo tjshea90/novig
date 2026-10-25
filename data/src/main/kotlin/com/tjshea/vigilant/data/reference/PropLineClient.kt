@@ -437,6 +437,17 @@ class PropLineClient(
             referenceBooks.map { TO_PROPLINE[it] ?: it }.filter { it !in EXCLUDED && it in KNOWN }.distinct()
 
         /**
+         * PS2 (Tj, 2026-10-25: "even though they offer dozens of sports books odds, most of my scanned results only show odds for a few sports books"): books PropLine prices the US leagues with (24-81 of
+         * the ~85 NFL/NCAAF/NBA/NHL games on 2026-10-25, research/propline_coverage_2026-10-25.md) whose trading desk is documented: Heritage, TAB (Tabcorp), Tipico, Winamax, Betclic and Betano/Stoiximan
+         * trade their own lines; Paddy Power (Flutter), LiveScore Bet and Superbet (Kambi), Ladbrokes AU and SuperSport (Entain) and Betway ZA (Super Group) join their company's group in
+         * [com.tjshea.vigilant.engine.BookCompany], so they fill a line the group's other books lack and are never counted twice. The rest of PropLine's list stays out until its desk is known.
+         */
+        private val ADDED_2026_10_25 = setOf(
+            "heritage", "tab_au", "tipico", "winamax", "betclic_pt", "stoiximan",
+            "paddypower", "livescorebet", "superbet_ro", "superbet_pl", "ladbrokes_au", "supersport", "betway_za",
+        )
+
+        /**
          * PropLine's sportsbooks and exchanges that can price a fair line (its bookmaker list, 2026-09-27), plus the sharp books its 2026-10-24 list carries that Vigilant had not asked it for: SBOBET,
          * BookMaker.eu and Betfair Exchange (all three on the sharp-book list), and theScore Bet. The ~70 European/Latin American/African books (pregame soccer and main lines, several on one odds
          * provider each) and the sweepstakes books are left out until their desks are known ([com.tjshea.vigilant.engine.BookCompany]: books on one provider must never be counted twice).
@@ -447,16 +458,6 @@ class PropLineClient(
             "matchbook", "smarkets", "sbobet", "bookmaker_eu", "betfair_ex", "thescorebet",
         ) + ADDED_2026_10_25
 
-        /**
-         * PS2 (Tj, 2026-10-25: "even though they offer dozens of sports books odds, most of my scanned results only show odds for a few sports books"): books PropLine prices the US leagues with (24-81 of
-         * the ~85 NFL/NCAAF/NBA/NHL games on 2026-10-25, research/propline_coverage_2026-10-25.md) whose trading desk is documented: Heritage, TAB (Tabcorp), Tipico, Winamax, Betclic and Betano/Stoiximan
-         * trade their own lines; Paddy Power (Flutter), LiveScore Bet and Superbet (Kambi), Ladbrokes AU and SuperSport (Entain) and Betway ZA (Super Group) join their company's group in
-         * [com.tjshea.vigilant.engine.BookCompany], so they fill a line the group's other books lack and are never counted twice. The rest of PropLine's list stays out until its desk is known.
-         */
-        private val ADDED_2026_10_25 = setOf(
-            "heritage", "tab_au", "tipico", "winamax", "betclic_pt", "stoiximan",
-            "paddypower", "livescorebet", "superbet_ro", "superbet_pl", "ladbrokes_au", "supersport", "betway_za",
-        )
 
         fun marketsFor(families: Collection<MarketFamily>): List<String> = buildList {
             if (MarketFamily.MONEYLINE in families) add("h2h")
