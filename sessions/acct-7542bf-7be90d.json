@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "452894c6da5f97dc4484a496ec6dd94a20f27bf8",
+ "head": "c633774aaee30eb353e84be722ae9ddfa502e13e",
  "since": 1792915284,
- "beat": 1792960899,
- "beatIso": "2026-10-25T20:41:39Z",
+ "beat": 1792961113,
+ "beatIso": "2026-10-25T20:45:13Z",
  "done": "PX9f: found every PropLine source answering HTTP 400 on the engine since PX9c (69-book bookmakers list); merged tj Gmail's unlanded census/list_audit edits; propline.yml bookparam probe dispatched on branch",
  "next": "read the bookparam run's log, fix PropLineClient's bookmakers request to the rule it shows, tools/test.sh, land, engine_set --reset, list_audit"
 }
