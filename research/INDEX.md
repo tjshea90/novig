@@ -8,8 +8,8 @@ CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a 
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
-| 2026-10-25 | `propline_parlay_audit_2026-10-25.md` | PropLine + ParlayAPI streams: the audit (PS1-PS12, Tj 2026-10-25 ~14:25 UTC) - Tj: "Audit the two new streaming sockets - propline and parlayapi" (nine points, verbatim in INBOX.md), then "https://parlay-api.com/cookbook" and "... | APPLIED |
-| 2026-10-25 | `propline_coverage_2026-10-25.md` | Why most listed bets show only a few books (PS2, Tj 2026-10-25) - Tj: "even though they offer dozens of sports books odds, most of my scanned results only show odds for a few sports books. Is this a matching issue?" | APPLIED CODE |
+| 2026-10-25 | `propline_parlay_audit_2026-10-25.md` | PropLine + ParlayAPI streams: the audit (PS1-PS12, Tj 2026-10-25 ~14:25 UTC) - Tj: "Audit the two new streaming sockets - propline and parlayapi" (nine points, verbatim in INBOX.md), then "https://parlay-api.com/cookbook" and "... | APPLIED LEVER |
+| 2026-10-25 | `propline_coverage_2026-10-25.md` | Why most listed bets show only a few books (PS2, Tj 2026-10-25) - Tj: "even though they offer dozens of sports books odds, most of my scanned results only show odds for a few sports books. Is this a matching issue?" | APPLIED LEVER CODE |
 | 2026-10-25 | `parlayapi_business_2026-10-25/` | (no title) | IDLE |
 | 2026-10-25 | `api_recovery_2026-10-25.md` | What the dropped and downgraded APIs gave, and where it comes from now (PB17, Tj 2026-10-25) - Tj, 2026-10-25: "make sure all functions and features that were provided by apis which have since been paused or discontinued can be... | CODE |
 | 2026-10-25 | `api_docs_review_2026-10-25.md` | API docs re-review, 2026-10-25 (PSL NR1/PR1/FR1; Tj: "do another thorough research of novig docs ... parlayapi ... kalshi, polymarket, sx bet, and ESPN") - Method: `api-docs.yml` (free GitHub runner, keyless) mirrored every pro... | IDLE |
