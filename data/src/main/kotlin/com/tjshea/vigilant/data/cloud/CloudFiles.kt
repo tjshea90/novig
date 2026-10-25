@@ -219,6 +219,13 @@ data class CloudStatus(
     val propLineFresh: List<com.tjshea.vigilant.data.reference.PropLineFreshness.Row> = emptyList(),
     val propLineFreshAtMs: Long = 0L,
     val propLineStream: String = "",
+    /**
+     * Novig's mark of the engine subaccount's open positions (`GET /v3/portfolio/pnl`, 2026-10-23): what settling them at their last trades would pay, and what they cost; -1 = not read. Cash plus the
+     * value is the net liquidation value; value minus cost the unrealized profit or loss. Read at [walletPnlAtMs].
+     */
+    val walletPositionsValue: Double = -1.0,
+    val walletPositionsCost: Double = -1.0,
+    val walletPnlAtMs: Long = 0L,
 ) {
     /** The engine's live lane is running now and its heartbeat is recent: the phone's own live tail lane stands down. */
     fun liveLive(now: Long): Boolean = liveActive && heartbeatMs > 0 && now - heartbeatMs < DESK_STALE_MS

@@ -267,6 +267,18 @@ fun main(args: Array<String>) = runBlocking {
             CloudNovigPort(tc, tradeKeyId, { traderRef?.ledger?.entries?.filter { !it.note.startsWith("bid") }?.mapTo(HashSet()) { it.id } ?: emptySet() }, log = log::invoke)
         }
     } else null
+    // Novig's own mark-to-market of the open positions (GET /v3/portfolio/pnl, changelog 2026-10-23): every 5 minutes with the trading key (account throttle, 1 token), into the status for the phone's Money page.
+    val walletPnl = java.util.concurrent.atomic.AtomicReference<Pair<Long, NovigTradingClient.Pnl>?>(null)
+    tradingClient?.let { tc ->
+        scope.launch {
+            delay(60_000L)
+            while (isActive) {
+                if (novigKeyed?.addressRefused(System.currentTimeMillis()) != true) runCatching { tc.pnl() }.onSuccess { p -> if (p != null) walletPnl.set(System.currentTimeMillis() to p) }
+                    .onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("Novig pnl read failed: ${e.message?.take(120)}") }
+                delay(5 * 60_000L)
+            }
+        }
+    }
     log("trading: ${if (tradePort != null) "the trading key is present (orders possible only if the phone's switch says live)" else "no trading key: paper only"}")
     val trader = CloudTrader(unavailable = { o, now -> sources.unavailable(o, now) }, port = tradePort).also { traderRef = it }
     // The API audit's research journals (AF6/AF7/AF9): Kalshi live data, SharpAPI splits, Novig's own closes of the engine's sides. Read-only, archived with the other journals.
@@ -577,7 +589,13 @@ fun main(args: Array<String>) = runBlocking {
         socketLines = { sources.socketLines(com.tjshea.vigilant.data.cloud.CloudEngine.forCloud(latestSettings.get() ?: com.tjshea.vigilant.data.scanner.ScanSettings())) },
         socketStates = { sources.socketStates(com.tjshea.vigilant.data.cloud.CloudEngine.forCloud(latestSettings.get() ?: com.tjshea.vigilant.data.scanner.ScanSettings())) },
         applySockets = { sources.applySockets(it) },
-        propLineFresh = { Triple(propLineFreshShown(sources, latestSettings.get()), sources.propLineFreshness.readAtMs, sources.propLineNote()) },
+        decorate = { st ->
+            val p = walletPnl.get()
+            st.copy(
+                propLineFresh = propLineFreshShown(sources, latestSettings.get()), propLineFreshAtMs = sources.propLineFreshness.readAtMs, propLineStream = sources.propLineNote().take(600),
+                walletPositionsValue = p?.second?.value ?: -1.0, walletPositionsCost = p?.second?.basis ?: -1.0, walletPnlAtMs = p?.first ?: 0L,
+            )
+        },
         novigAddress = { novigKeyed?.addressWords(System.currentTimeMillis(), addressWatch?.count ?: 0) ?: "not tested (no Novig key on GitHub: public routes only)" },
         addressWatch = addressWatch,
         addressBlocked = { novigKeyed?.addressRefused(System.currentTimeMillis()) == true },

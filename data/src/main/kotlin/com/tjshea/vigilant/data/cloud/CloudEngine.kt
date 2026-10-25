@@ -94,8 +94,8 @@ class CloudEngine(
     private val socketLines: () -> List<String> = { emptyList() },
     /** Each socket's state for the phone's Live dashboard (TCL122-4). */
     private val socketStates: () -> List<SocketState> = { emptyList() },
-    /** PropLine's per-book freshness and its stream in words, for the status (PSL): (rows, read time, stream line). */
-    private val propLineFresh: () -> Triple<List<com.tjshea.vigilant.data.reference.PropLineFreshness.Row>, Long, String> = { Triple(emptyList(), 0L, "") },
+    /** Fields the job adds to every status it builds (PSL: PropLine's per-book freshness and its stream; Novig's marked-to-market wallet). A failure leaves the status as it was. */
+    private val decorate: (CloudStatus) -> CloudStatus = { it },
     /** Opens or closes the runner's sockets to match the settings (the closing part of [sources]), called every live pass. */
     private val applySockets: (ScanSettings) -> Unit = {},
     /** Ends the job early when Novig refuses this runner's address, so the workflow draws another ([AddressWatch]); null = never. */
@@ -653,7 +653,7 @@ class CloudEngine(
             sockets = runCatching { socketLines() }.getOrDefault(emptyList()),
             liveStats = if (!idle) liveStatus?.stats else null, socketStates = runCatching { socketStates() }.getOrDefault(emptyList()),
             resting = governor.resting(clock()).map { r -> "${ApiToggles.name(r.id)} until ${java.time.Instant.ofEpochMilli(r.untilMs).atZone(java.time.ZoneOffset.UTC).toLocalTime().withSecond(0).withNano(0)} UTC: ${r.reason}" },
-        ).let { st -> runCatching(propLineFresh).getOrNull()?.let { (rows, at, line) -> st.copy(propLineFresh = rows, propLineFreshAtMs = at, propLineStream = line.take(600)) } ?: st }
+        ).let { st -> runCatching { decorate(st) }.getOrDefault(st) }
     }
 
     /**
