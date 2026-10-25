@@ -8,8 +8,8 @@
  "branch": "ccr-e58c5a58-3qyzld",
  "head": "cddc690ee4e0fa49e410cbffba513e694d7ad30a",
  "since": 1792964177,
- "beat": 1792966590,
- "beatIso": "2026-10-25T22:16:30Z",
+ "beat": 1792966849,
+ "beatIso": "2026-10-25T22:20:49Z",
  "done": "PX10 findings recorded (Pinnacle census numbers, migration gap); v1.0.84 release building",
  "next": "confirm v1.0.84 Release, record-release.sh, send Tj the link; next session PX10f (SGO-only Pinnacle lines by kind) and PX10g (ParlayAPI Pinnacle ages near/far)"
 }
