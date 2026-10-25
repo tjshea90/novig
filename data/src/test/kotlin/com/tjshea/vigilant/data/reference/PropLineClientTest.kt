@@ -7,6 +7,7 @@ import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.novig.NovigEvent
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.NovigOutcome
+import com.tjshea.vigilant.data.scanner.ApiGates
 import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
