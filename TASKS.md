@@ -6517,6 +6517,6 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 
 ## PR1 (Tj 2026-10-25 ~23:5x UTC, typed prompt)
 "When I pull to refresh in the engine window, I don't think it needs to read the apis every time, make it refresh only the engine data such as status, active bets/bids, health, etc. and a separate button on the apis tab to refresh api status and meters"
-- [ ] PR1a Engine pull to refresh: engine data only (status, list, trades, desk, messages, health); no API key tests, no per-API usage reads, no engine API check request
-- [ ] PR1b APIs tab: a Refresh button that tests the keys, reads each API's own meters and asks the engine to check every API now
+- [x] PR1a [MainViewModel.refreshEngine: CloudLink.refreshNow() only; EngineRefreshUiTest] Engine pull to refresh: engine data only (status, list, trades, desk, messages, health); no API key tests, no per-API usage reads, no engine API check request
+- [x] PR1b [RefreshApisButton on Engine › APIs -> MainViewModel.refreshApis (refreshNow(apis=true) + checkApisFromPhone); EngineRefreshUiTest] APIs tab: a Refresh button that tests the keys, reads each API's own meters and asks the engine to check every API now
 - [ ] PR1c tests, ship in the next APK, tell Tj
