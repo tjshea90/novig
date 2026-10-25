@@ -1213,3 +1213,8 @@ After these are done, complete everything you noted for tasks.md and release eve
 ```
 https://parlay-api.com/cookbook
 ```
+
+## 2026-10-25T14:32:28Z
+```
+Also make sure both parlayapi and propline are both logically used together and both are used to their full ability but don't interfere with each other. They should compliment each other
+```
