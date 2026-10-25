@@ -8,8 +8,8 @@
  "branch": "ccr-be05497a-18skm3",
  "head": "de808660b9f2649e1219ad846977232c51268edf",
  "since": 1792915284,
- "beat": 1792920897,
- "beatIso": "2026-10-25T09:34:57Z",
+ "beat": 1792921511,
+ "beatIso": "2026-10-25T09:45:11Z",
  "done": "restart button fix: engine honours a reset mid-scan and never loses it; phone keeps Claude's newer resetAtMs/checkApisAt (CloudEngineTest); full suite green",
  "next": "measure odds ages on run 376 and answer Tj; then reset once more for the restart fix"
 }
