@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "f62f33d0c3a79c5ac224d9358f5009e7067f65a6",
+ "head": "5a82f1a63d5ca86514e07dbba222c5a8c4ff9a2c",
  "since": 1792915284,
- "beat": 1792939929,
- "beatIso": "2026-10-25T14:52:09Z",
- "done": "PS1 hot streams + PB21b cross-check + PS4 PropLine re-read 90s; PS5/PS6 verdict: batching is webhook-only, WS cap 2 used, extra subscriptions add nothing new",
- "next": "PS7-PS9/PS11 docs reviews (recipes, accuracy, webhook page, ParlayAPI cookbook); read propline-grade Release; then full suite + ship v1.0.83"
+ "beat": 1792940007,
+ "beatIso": "2026-10-25T14:53:27Z",
+ "done": "PS9a PropLine 1st-half source propline_1h (PropLinePeriodTest); PB21b cross-check limited to aggregator copies",
+ "next": "PS11 ParlayAPI cookbook review; PS7 accuracy page; then full suite + ship v1.0.83"
 }
