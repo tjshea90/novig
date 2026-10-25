@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "fe4d2b5f333197fd192d2c9019e0349fddc85d4b",
+ "head": "f860b95053ba94bd2769eed1f02276ce3f2c579f",
  "since": 1792915284,
- "beat": 1792938825,
- "beatIso": "2026-10-25T14:33:45Z",
- "done": "PS written into TASKS.md (Tj's stream audit prompt)",
- "next": "PS: read PropLine streaming docs (batched delivery, connections), measure book coverage in the live list"
+ "beat": 1792938855,
+ "beatIso": "2026-10-25T14:34:15Z",
+ "done": "PS2 coverage probe (native keys) dispatched; PS3 tools/propline_grade.py written (selftest ok), not yet in a workflow",
+ "next": "read propline-samples coverage.md; add propline.yml task grade and run it; then PS5/PS6 webhooks, PS7-PS9/PS11 docs review, PB21b tandem cross-check, ship v1.0.83"
 }
