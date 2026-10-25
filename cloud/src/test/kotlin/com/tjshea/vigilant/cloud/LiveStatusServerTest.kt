@@ -20,6 +20,24 @@ class LiveStatusServerTest {
         return code to body
     }
 
+    /** PB16 (Tj, 2026-10-25): the newest published list, the same bytes `feed.json.gz` holds, at the token's `/feed` path; nothing before the first list. */
+    @Test
+    fun `serves the newest list at its feed path`() {
+        var bytes: ByteArray? = null
+        val s = LiveStatusServer(token, { CloudStatus(runId = "r3") }, feed = { bytes })
+        val port = s.start()
+        try {
+            assertEquals(404, get("http://127.0.0.1:$port/s/$token/feed").first)
+            val feed = com.tjshea.vigilant.data.cloud.CloudFeed(42L, 7L, com.tjshea.vigilant.data.scanner.ScanStats(1, 1, 1, 1, 0), emptyList())
+            bytes = com.tjshea.vigilant.data.cloud.CloudFeed.encode(feed)
+            val c = URL("http://127.0.0.1:$port/s/$token/feed").openConnection() as HttpURLConnection
+            assertEquals(200, c.responseCode)
+            val back = com.tjshea.vigilant.data.cloud.CloudFeed.decode(c.inputStream.readBytes())!!
+            assertEquals(42L, back.computedAtMs)
+            assertEquals(404, get("http://127.0.0.1:$port/s/wrong/feed").first)
+        } finally { s.stop() }
+    }
+
     @Test
     fun `serves the current status at its token path and nothing else`() {
         var beat = 1L
