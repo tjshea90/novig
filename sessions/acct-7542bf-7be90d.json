@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "b63c4ff47fcc44dabbc05a297fd3bc7cf265d75d",
+ "head": "445aac267ff6cbec9b7f9c114d63ec49b6b984a5",
  "since": 1792915284,
- "beat": 1792917997,
- "beatIso": "2026-10-25T08:46:37Z",
- "done": "pre-ship: v1.0.82 PB: real-time list (PropLine + ParlayAPI Business streams + Novig socket every 3 s), ParlayAPI Business odds stream and 15 books, NBA props, phone rests in background, engine 24/7, list over the tunnel, per-book quote ages on the Bet sheet",
- "next": "ship.sh gates and releases this"
+ "beat": 1792918026,
+ "beatIso": "2026-10-25T08:47:06Z",
+ "done": "pre-release: v1.0.82 PB: real-time list (PropLine + ParlayAPI Business streams + Novig socket every 3 s), ParlayAPI Business odds stream and 15 books, NBA props, phone rests in background, engine 24/7, list over the tunnel, per-book quote ages on the Bet sheet (versionCode 422, v1.0.82)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.82), then run: bash tools/record-release.sh v1.0.82 422 \"v1.0.82 PB: real-time list (PropLine + ParlayAPI Business streams + Novig socket every 3 s), ParlayAPI Business odds stream and 15 books, NBA props, phone rests in background, engine 24/7, list over the tunnel, per-book quote ages on the Bet sheet\""
 }
