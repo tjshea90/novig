@@ -163,7 +163,7 @@ def call(path, key, params=None, body=None, retries=3):
         if body is not None:
             req.add_header("Content-Type", "application/json")
         try:
-            with urllib.request.urlopen(req, timeout=120) as r:
+            with urllib.request.urlopen(req, timeout=90) as r:
                 return r.status, json.loads(r.read() or b"null")
         except urllib.error.HTTPError as e:
             if e.code in (429, 502, 503, 504) and i < retries:
@@ -281,8 +281,22 @@ def run(bets_dir, trades, outdir):
                 todo.append((r, body_of(b, eid, sport, lg)))
         r["why"] = why or ""
         rows.append(r)
-    for chunk in batches(todo):
-        st, res = call("/clv/grade", key, body=[x for _, x in chunk])
+    # One bet first, timed: how long PropLine takes to grade decides the batch size (2026-10-25: 25-game batches 504'd, 5-game ones ran 35 min with no answer)
+    if todo:
+        t0 = time.time()
+        st, res = call("/clv/grade", key, body=[todo[0][1]], retries=0)
+        print("probe: one bet graded in %.1f s, HTTP %s: %s" % (time.time() - t0, st, json.dumps(res)[:400] if res else ""), flush=True)
+    failed_in_row, t_all = 0, time.time()
+    chunks = batches(todo)
+    for n, chunk in enumerate(chunks):
+        if failed_in_row >= 5:
+            for r, _ in chunk:
+                r["why"] = "not asked (PropLine failed 5 batches in a row)"
+            continue
+        t0 = time.time()
+        st, res = call("/clv/grade", key, body=[x for _, x in chunk], retries=1)
+        failed_in_row = 0 if st == 200 else failed_in_row + 1
+        print("batch %d/%d: %d bets, HTTP %s, %.1f s (%.0f s in all)" % (n + 1, len(chunks), len(chunk), st, time.time() - t0, time.time() - t_all), flush=True)
         got = {x.get("ref"): x for x in (res or {}).get("bets", [])}
         for r, x in chunk:
             g = got.get(x["ref"])
