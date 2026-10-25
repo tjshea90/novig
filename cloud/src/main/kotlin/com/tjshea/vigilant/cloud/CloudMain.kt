@@ -333,7 +333,7 @@ fun main(args: Array<String>) = runBlocking {
                 val entries = trader.ledger.entries
                 val known = HashMap(com.tjshea.vigilant.data.cloud.TradePositions.knownQty(entries))
                 val ledgerBids = com.tjshea.vigilant.data.cloud.TradePositions.knownQty(entries.filter { it.note.startsWith("bid") })
-                for ((key, filled) in deskStore.all().filter { it.filled > 0 }.groupBy { it.outcomeId + "|" + it.marketId }.mapValues { (_, v) -> v.sumOf { it.filled.toLong() } }) {
+                for ((key, filled) in deskStore.all().filter { it.filled > 0 }.groupBy { it.outcomeId + "|" + it.marketId }.mapValues { (_, v) -> v.sumOf { it.filled } }) {
                     val more = filled - (ledgerBids[key] ?: 0L)
                     if (more > 0L) known[key] = (known[key] ?: 0L) + more
                 }

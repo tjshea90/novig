@@ -480,7 +480,8 @@ class AppContainer(val app: Application) {
             events = ::orderEvents, warm = { orderSocket?.warm() },
             profit = { if (settingsStore.flow.value?.gates?.profitProven == true) com.tjshea.vigilant.data.scanner.ProfitProfile.shipped else null },
                 repeatRules = { (settingsStore.flow.value ?: ScanSettings()).gates.repeatRules() },
-                restingPositions = { com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(makerStore.all()) },
+                restingPositions = { com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(makerStore.all()) + enginePositions() },
+                engineOrderIds = ::engineOrderIds,
         )
             .also { autoPlacerCache = t to it }
     }
@@ -873,8 +874,21 @@ class AppContainer(val app: Application) {
             t, tracker, makerStore, lock = orderLock,
             // The live bids are post-only orders this desk has no record of; they are the live bid desk's, never strays.
             otherDesks = { (liveBidDesk.bidsNow() + lightBidDesk.bidsNow()).let { l -> com.tjshea.vigilant.data.novig.trading.maker.MakerDesk.OtherOrders(l.mapNotNull { it.orderId }.toSet(), l.map { it.clientId }.toSet()) } },
+            extraHeld = ::enginePositions, heldSkip = ::engineOrderIds,
         ).also { makerDeskCache = t to it }
     }
+
+    /**
+     * The GitHub engine's open bets and bid fills (trades.json) and its resting bids (desk.json) as repeat-guard positions, so every guard on the phone counts every desk's money
+     * (Tj, 2026-10-25: "must coordinate across both bets and bids"). As fresh as the last read of cloud-feed.
+     */
+    fun enginePositions(): List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> {
+        val u = cloud.ui.value
+        return com.tjshea.vigilant.data.cloud.TradePositions.of(u.trades?.entries.orEmpty()) + com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(u.desk?.bids.orEmpty())
+    }
+
+    /** The engine's order ids ([com.tjshea.vigilant.data.cloud.TradePositions.orderIds]): its fills imported into the Tracker are not counted a second time. */
+    fun engineOrderIds(): Set<String> = com.tjshea.vigilant.data.cloud.TradePositions.orderIds(cloud.ui.value.trades?.entries.orEmpty())
 
     /** Make orders: the passes and the Make tab's state ([MakerRunner]). */
     val maker: MakerRunner by lazy { MakerRunner(app, this) }
