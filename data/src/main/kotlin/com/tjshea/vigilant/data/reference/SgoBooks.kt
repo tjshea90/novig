@@ -14,6 +14,11 @@ object SgoBooks {
         "caesars" to "williamhill_us",
         "betonline" to "betonlineag",
         "mybookie" to "mybookieag",
+        // PX9 (Tj 2026-10-25: "matched correctly"): the same books under the keys PropLine, ParlayAPI and the sharp-book list use, so SGO's Bookmaker.eu is a sharp book and Betfair Exchange and Marathon
+        // are not counted a second time beside PropLine's.
+        "bookmakereu" to "bookmaker",
+        "betfairexchange" to "betfair_ex_eu",
+        "marathonbet" to "marathon",
     )
     private val FROM_APP = TO_APP.entries.associate { (k, v) -> v to k }
 
