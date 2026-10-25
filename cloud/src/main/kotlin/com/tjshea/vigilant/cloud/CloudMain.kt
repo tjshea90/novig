@@ -591,6 +591,9 @@ fun main(args: Array<String>) = runBlocking {
     }
     // The engine re-prices its list every 3 s on the streams (RealtimeList): a scan keeps every quote inside the plain age limit (PX, Freshness.continuous).
     com.tjshea.vigilant.data.scanner.Freshness.continuous = true
+    // PX9d (2026-10-25): SGO Pro's long age limit is SportsGameOdds' own; PropLine, ParlayAPI and every other feed keep the plain 5 minutes (10 past 3 h). The census on run 40232545799 measured the cost:
+    // near lines with 3+ companies 59,947 under the long limit vs 59,787 under the plain one (-0.3%), 8+ companies 37,529 vs 37,216 (research/review/CHANGES.md).
+    com.tjshea.vigilant.data.scanner.Freshness.plainFastFeeds = true
     val engine = CloudEngine(
         scanner = scanner, sources = sources::sources, config = { config.read().also { latestCfg.set(it) } }, apiChecks = { apiManager.lines() }, apiFixes = { apiManager.fixes() }, apiSwaps = { apiManager.swaps() }, apiSwapAtMs = { apiManager.swapAtMs() }, onCheckApis = { apiManager.recheckAll() },
         publish = { feed, status -> engineIdle.set(status.idle); if (feed != null) runCatching { liveFeedBytes.set(com.tjshea.vigilant.data.cloud.CloudFeed.encode(feed)) }; publisher.stage(feed, status) },
