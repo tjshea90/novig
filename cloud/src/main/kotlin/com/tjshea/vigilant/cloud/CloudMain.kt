@@ -561,6 +561,7 @@ fun main(args: Array<String>) = runBlocking {
         socketLines = { sources.socketLines(com.tjshea.vigilant.data.cloud.CloudEngine.forCloud(latestSettings.get() ?: com.tjshea.vigilant.data.scanner.ScanSettings())) },
         socketStates = { sources.socketStates(com.tjshea.vigilant.data.cloud.CloudEngine.forCloud(latestSettings.get() ?: com.tjshea.vigilant.data.scanner.ScanSettings())) },
         applySockets = { sources.applySockets(it) },
+        propLineFresh = { Triple(propLineFreshShown(sources, latestSettings.get()), sources.propLineFreshness.readAtMs, sources.propLineNote()) },
         novigAddress = { novigKeyed?.addressWords(System.currentTimeMillis(), addressWatch?.count ?: 0) ?: "not tested (no Novig key on GitHub: public routes only)" },
         addressWatch = addressWatch,
         addressBlocked = { novigKeyed?.addressRefused(System.currentTimeMillis()) == true },
