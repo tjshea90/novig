@@ -212,16 +212,18 @@ class PropLineClient(
     }
 
     /**
-     * One game's [markets] from [books] as PropLine sent it (a tapped bet's sheet reads it with one-sided books kept: [OtherBooks]); null when
-     * PropLine no longer lists the game. One request.
+     * One game's [markets] from [books] as PropLine sent it, one answer per part of at most [MAX_BOOKS] books (a tapped bet's sheet reads each with one-sided books kept: [OtherBooks]); empty when
+     * PropLine no longer lists the game.
      */
-    suspend fun eventRaw(sportKey: String, eventId: String, markets: List<String>, books: List<String>): String? {
+    suspend fun eventRaw(sportKey: String, eventId: String, markets: List<String>, books: List<String>): List<String> {
         require(markets.isNotEmpty()) { "No markets to ask for" }
-        return call(
-            "/sports/$sportKey/events/$eventId/odds",
-            listOf("markets" to markets.joinToString(","), "bookmakers" to books.distinct().joinToString(",")),
-            notFound = null,
-        ) { raw -> raw }.value
+        return bookParts(books).mapNotNull { part ->
+            call(
+                "/sports/$sportKey/events/$eventId/odds",
+                listOf("markets" to markets.joinToString(","), "bookmakers" to part.joinToString(",")),
+                notFound = null,
+            ) { raw -> raw }.value
+        }
     }
 
     /**
