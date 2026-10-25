@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-70c81990-qm4nt2",
- "head": "82290926fef0b632338824d22a99ff44485417b3",
+ "head": "5a31ee026ab3422a619f2e1dfd46c255a4f00353",
  "since": 1792889505,
- "beat": 1792892387,
- "beatIso": "2026-10-25T01:39:47Z",
- "done": "SG shipped as v1.0.80 (ship.sh green, on main); release.yml triggered; live cap set to $3 via engine_set; engine reset to run it",
- "next": "confirm Release v1.0.80 (get_release_by_tag), then bash tools/record-release.sh v1.0.80 420 \"SG: one money limit on similar bets...\"; tick SG5; tell Tj"
+ "beat": 1792892424,
+ "beatIso": "2026-10-25T01:40:24Z",
+ "done": "SG done: v1.0.80 released and recorded; cap $3 live; engine reset",
+ "next": "next: Tj's feedback on the similar-bets cap; watch engine log for 'repeat guard: similar-bets limit' counts in tradeNote"
 }
