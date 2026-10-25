@@ -62,6 +62,15 @@ interface OddsScanner {
 
     fun liveReprice(settings: ScanSettings, rows: List<Opportunity>, overlay: (com.tjshea.vigilant.data.reference.RefEvent, Long) -> com.tjshea.vigilant.data.reference.RefEvent): List<Opportunity> = rows
 
+    /**
+     * A function laid over every ParlayAPI game when the plan is built, before the age filter (PX9): ParlayAPI's REST board dates a book's quotes by the book's OLDEST price on the game ("both describe the OLDEST
+     * price in that block"), so Pinnacle's, with its alternate ladder, arrived 8 to 16 minutes old and lost to PropLine's or was cut, though ParlayAPI's own streams hold its prices to the second. The overlay
+     * (the streams' newer prices and confirmations, [com.tjshea.vigilant.data.parlay.ParlayLive.overlayEvent]) dates them as the streams do. Null: none (the phone).
+     */
+    var planOverlay: ((com.tjshea.vigilant.data.reference.RefEvent, Long) -> com.tjshea.vigilant.data.reference.RefEvent)?
+        get() = null
+        set(_) {}
+
     /** [held] priced against the reference game [scan] was priced from (the streams laid over it), under [held]'s own newer Novig price; null: not possible, keep [held] (PX9). */
     fun rebaseFair(settings: ScanSettings, held: Opportunity, scan: Opportunity, overlay: (com.tjshea.vigilant.data.reference.RefEvent, Long) -> com.tjshea.vigilant.data.reference.RefEvent): Opportunity? = null
 

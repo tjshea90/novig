@@ -947,6 +947,8 @@ class Scanner(
         }
     }
 
+    @Volatile override var planOverlay: ((RefEvent, Long) -> RefEvent)? = null
+
     /** [held] priced against the reference game [scan] was priced from, with the streams laid over it: the scan's fair under the held row's newer Novig price (PX9, [com.tjshea.vigilant.data.cloud.RealtimeList.adopt]). */
     override fun rebaseFair(requested: ScanSettings, held: Opportunity, scan: Opportunity, overlay: (RefEvent, Long) -> RefEvent): Opportunity? {
         val ref0 = scan.refEvent ?: return null
@@ -1335,7 +1337,10 @@ class Scanner(
             settings.propsPerGame, settings.maxBooksPerScan, settings.fillBudget, pinned, now / 60_000L, fairAsOf / 60_000L, headroomMs, settings.lowUsageScan,
         )
         plans[youngFairOnly]?.let { (key, plan) -> if (key == inputs) return plan }
-        val filtered = refs.map { snap ->
+        val overlay = planOverlay
+        val filtered = refs.map { snap0 ->
+            // ParlayAPI's streams date its quotes (PX9, [OddsScanner.planOverlay]) before the age filter below sees them.
+            val snap = if (youngFairOnly && overlay != null && snap0.provider.startsWith("parlay") && snap0.events.isNotEmpty()) snap0.copy(events = snap0.events.map { e -> runCatching { overlay(e, fairAsOf) }.getOrDefault(e) }) else snap0
             // Pricing: only book prices their feed saw in the last few minutes (RESEARCH.md §24). Reading
             // order may still lean on older ones; they never price.
             // How old depends on how far off the game is (Freshness.maxAgeMs; a date-only start counts as near);
