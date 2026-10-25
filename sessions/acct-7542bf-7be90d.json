@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "452e77ed02229b7b7308555e43a0c7965447c7bb",
+ "head": "ed1770795dbb6d6a66d8664464c1aae804d45992",
  "since": 1792915284,
- "beat": 1792939512,
- "beatIso": "2026-10-25T14:45:12Z",
+ "beat": 1792939692,
+ "beatIso": "2026-10-25T14:48:12Z",
  "done": "PS2 answered + fixed (13 PropLine books, same-desk groups, research/propline_coverage_2026-10-25.md); PS3 grade task wired + dispatched; propline_clv Novig grade lookup fixed; evbets job exit fixed",
  "next": "PS1/PS5/PS6: PropLineStream audit vs docs (subscriptions, filters, batched delivery via webhooks on the tunnel); read propline-grade Release"
 }
