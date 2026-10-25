@@ -30,3 +30,20 @@ Docs read: PropLine `research/propline/docs_2026-10-25/` (llms-full, recipes, sp
 - PB17b: ParlayAPI's hot stream as the LIVE (in-play) lane's Pinnacle source.
 - PS2b: pricing Novig's alternate numbers from a book's other number (a model; nothing measures its error yet).
 - PS9b: Kalshi ticker crosswalk from PropLine's `includeBookIds`.
+
+## Point 3 result: Tj's real bets graded by PropLine `/clv/grade` (run 40210139397, 2026-10-25 16:35 UTC; Release `propline-grade`)
+Grading was blocked by PropLine's 30 s gateway: one bet answers in ~3.5 s, a request of 6+ bets 504s; the grader now sends one bet a request, 8 at once (~28 min for 2,800 bets), and reuses final grades from the last run. "EV vs the de-vigged close" is the honest number (Pinnacle-led fair close); only games already started count.
+
+| who placed it | graded | beat the close | EV vs de-vigged close | CLV price vs price |
+| :- | -: | -: | -: | -: |
+| ALL | 2,762 | 64% | +1.19% | +3.67% |
+| engine bid | 578 | 66% | **+3.26%** | +4.84% |
+| phone auto bet | 451 | 64% | +1.42% | +3.90% |
+| phone auto bid | 313 | 77% | +0.58% | +4.11% |
+| hand bet | 1,212 | 61% | +0.23% | +3.12% |
+| hand (Novig app) bet | 106 | 59% | +2.02% | +3.60% |
+| engine bet | 89 | 51% | **-0.66%** | +1.47% |
+
+By kind: player props +1.20% (1,492 graded, 74% beat), spreads +2.04% (460), 1st halves +3.78% (120), game totals **-0.34%** (502), moneylines **-0.68%** (78). By league: NHL +2.63%, NBA +2.03%, NCAAF +1.40%, WNBA +0.85%, MLB +0.37%, NFL +0.05%.
+Not graded: team totals (573: the grader does not send them yet), games PropLine does not list (159), tennis/UFC/soccer (PropLine grades none of them).
+Reading (not yet a rule change: class B wants this with an interval and a second digest): the engine's bids beat the fair close by the most; the engine's own taker bets are the one group below zero; game totals and moneylines trail. Feeds research/LEVERS.md (CLV closes) and the next ANALYST run.
