@@ -27,4 +27,33 @@ class SgoFreshnessTest {
         assertFalse(Freshness.fresh(now - 10 * 60_000L - 1, now, soon))
         assertEquals(10 * 60_000L, Freshness.maxAgeMs(null, now))
     }
+
+    /** PX9 (Tj 2026-10-25, "Why are the odds this stale if they are streamed?"): the relaxed limit was SportsGameOdds'; PropLine's and ParlayAPI's quotes had it too, 15 minutes with Tj's setting. */
+    @Test fun on_only_sgo_quotes_get_the_long_limit_and_a_fast_feed_keeps_the_plain_one() {
+        Freshness.sgoMode = true
+        Freshness.sgoMaxAgeMs = 15 * 60_000L
+        val far = now + 5 * 3_600_000L
+        // SGO's own quotes: up to the guard, near or far.
+        assertTrue(Freshness.fresh(now - 12 * 60_000L, now, soon, "sgo"))
+        assertTrue(Freshness.fresh(now - 12 * 60_000L, now, soon, "sgo-props"))
+        assertFalse(Freshness.fresh(now - 16 * 60_000L, now, soon, "sgo"))
+        // A fast feed: 5 minutes near the start, 10 for a game over 3 hours away, whatever the switch says.
+        for (feed in listOf("propline", "propline_props", "propline_1h", "parlay", "parlay_props", "kalshi", "oddsapi")) {
+            assertTrue(feed, Freshness.fresh(now - 4 * 60_000L, now, soon, feed))
+            assertFalse(feed, Freshness.fresh(now - 6 * 60_000L, now, soon, feed))
+            assertTrue(feed, Freshness.fresh(now - 9 * 60_000L, now, far, feed))
+            assertFalse(feed, Freshness.fresh(now - 11 * 60_000L, now, far, feed))
+        }
+        // No source named (the whole fair, a bid's life: it may hold SGO's quotes): the switch's limit, as before.
+        assertTrue(Freshness.fresh(now - 12 * 60_000L, now, soon))
+        assertEquals(15 * 60_000L, Freshness.maxAgeMs(soon, now))
+        assertEquals(5 * 60_000L, Freshness.maxAgeMs(soon, now, "propline"))
+        Freshness.sgoMaxAgeMs = 10 * 60_000L
+    }
+
+    @Test fun off_a_named_feed_is_untouched() {
+        Freshness.sgoMode = false
+        assertEquals(5 * 60_000L, Freshness.maxAgeMs(soon, now, "sgo"))
+        assertEquals(5 * 60_000L, Freshness.maxAgeMs(soon, now, "propline"))
+    }
 }
