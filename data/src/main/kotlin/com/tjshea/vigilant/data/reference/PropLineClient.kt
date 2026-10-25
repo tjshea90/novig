@@ -64,6 +64,11 @@ class PropLineClient(
      * every game in the window instead of the free key's few (Tj, 2026-10-16, TCL56: "make vigilant take full advantage and use of this pro tier"). Null: the free key's pace, as before.
      */
     private val meter: com.tjshea.vigilant.data.keys.UsageMeter? = null,
+    /**
+     * PropLine's Streaming Lite stream (PSL, Tj 2026-10-25): every answer is asked with `includeBookIds` so each outcome carries PropLine's `outcome_id` (the id `line_movement` pushes carry), and what the
+     * engine holds is laid over by the socket's moves, pulls and scratches ([PropLineLive.overlay]). Null: no stream (the phone, or the socket off), the answers exactly as before.
+     */
+    private val live: PropLineLive? = null,
 ) : ReferenceSource {
 
     override val id = ID
