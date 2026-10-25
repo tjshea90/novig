@@ -8,8 +8,8 @@
  "branch": "ccr-3cb0aa53-b2tjli",
  "head": "4c8fb2f43a8eed8468080ca8aacb69738a0d9e77",
  "since": 1792970423,
- "beat": 1792971672,
- "beatIso": "2026-10-25T23:41:12Z",
+ "beat": 1792972194,
+ "beatIso": "2026-10-25T23:49:54Z",
  "done": "research index rebuilt; engine reset onto main (PX11f fix)",
  "next": "verify on the new run: Northwestern@Oregon priced with ParlayAPI US books; census atLine parlay up; then tell Tj"
 }
