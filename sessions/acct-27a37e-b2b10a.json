@@ -5,11 +5,11 @@
  "nonce": "b2b10a",
  "kind": "interactive",
  "task": "",
- "branch": "ccr-70c81990-qm4nt2",
- "head": "82290926fef0b632338824d22a99ff44485417b3",
+ "branch": "ccr-4e1a45fb-48ait4",
+ "head": "9cbfc56bda7e895391ec68cec47e968e7ab2bc13",
  "since": 1792889505,
- "beat": 1792891975,
- "beatIso": "2026-10-25T01:32:55Z",
+ "beat": 1792892166,
+ "beatIso": "2026-10-25T01:36:06Z",
  "done": "SG shipped as v1.0.80 (ship.sh green, on main); release.yml triggered; live cap set to $3 via engine_set; engine reset to run it",
  "next": "confirm Release v1.0.80 (get_release_by_tag), then bash tools/record-release.sh v1.0.80 420 \"SG: one money limit on similar bets...\"; tick SG5; tell Tj"
 }
