@@ -147,8 +147,6 @@ data class UiState(
     val parlayKeys: List<String> = emptyList(),
     val pinnoddsKeys: List<String> = emptyList(),
     val sgoKeys: List<String> = emptyList(),
-    val opKeys: List<String> = emptyList(),
-    val unKeys: List<String> = emptyList(),
     val sxKeys: List<String> = emptyList(),
     /** SharpAPI's keys (SHARPAPI.md, Tj 2026-10-21). */
     val sharpKeys: List<String> = emptyList(),
@@ -379,8 +377,6 @@ data class UiState(
         ApiProvider.PARLAY -> parlayKeys
         ApiProvider.PINNODDS -> pinnoddsKeys
         ApiProvider.SPORTSGAMEODDS -> sgoKeys
-        ApiProvider.ODDSPAPI -> opKeys
-        ApiProvider.UNABATED -> unKeys
         ApiProvider.SXBET -> sxKeys
         ApiProvider.SHARPAPI -> sharpKeys
         ApiProvider.BOLTODDS -> boltKeys
@@ -396,8 +392,6 @@ data class UiState(
         ApiProvider.PARLAY -> copy(parlayKeys = keys)
         ApiProvider.PINNODDS -> copy(pinnoddsKeys = keys)
         ApiProvider.SPORTSGAMEODDS -> copy(sgoKeys = keys)
-        ApiProvider.ODDSPAPI -> copy(opKeys = keys)
-        ApiProvider.UNABATED -> copy(unKeys = keys)
         ApiProvider.SXBET -> copy(sxKeys = keys)
         ApiProvider.SHARPAPI -> copy(sharpKeys = keys)
         ApiProvider.BOLTODDS -> copy(boltKeys = keys)
@@ -2571,32 +2565,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * Settings › OddsPapi › Test key: the key's books, the tournaments and markets it carries, one league's main lines and one game in depth, said in words; the raw answers are kept as a sample in
-     * Downloads/Vigilant (and shared when [share]) so the parser can be checked against what the key really returns (ODDSPAPI_API.md §8).
-     */
-    fun testOpKey(share: Boolean = false) {
-        _state.update { it.copy(opKeyBusy = true, opKeyNote = null, opKeyOk = null) }
-        viewModelScope.launch {
-            val r = withContext(Dispatchers.IO) {
-                runCatching { com.tjshea.vigilant.data.reference.OpKeyTest.run(c.opClient) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
-            }.getOrNull()
-            val error = if (r == null) "The test could not run." else null
-            if (r != null && r.sample.isNotEmpty()) {
-                val app = getApplication<Application>()
-                val info = runCatching { app.packageManager.getPackageInfo(app.packageName, 0) }.getOrNull()
-                val intent = withContext(Dispatchers.IO) {
-                    runCatching {
-                        val file = DiagnosticsShare.writeOpSample(app, DiagnosticsShare.OP_PREFIX + java.time.Instant.now().toString().replace(':', '-') + ".txt", r.summary + "\n\n----- raw answers -----\n" + r.sample.take(900_000))
-                        runCatching { DiagnosticsShare.saveToDownloads(app.contentResolver, file) }
-                        DiagnosticsShare.opIntent(app, file, info?.versionName ?: "?")
-                    }.getOrNull()
-                }
-                if (share && intent != null) shares.send(intent)
-            }
-            _state.update { it.copy(opKeyBusy = false, opKeyNote = r?.summary ?: error, opKeyOk = r?.ok == true) }
-        }
-    }
 
     /**
      * Settings › Unabated › Test key: the key's leagues and books, one straight board and one props board read as Vigilant would, said in words; the raw answers are kept as a sample in Downloads/Vigilant
@@ -2706,16 +2674,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun testUnabatedKey(share: Boolean = false) {
-        _state.update { it.copy(unKeyBusy = true, unKeyNote = null, unKeyOk = null) }
-        viewModelScope.launch {
-            val r = withContext(Dispatchers.IO) {
-                runCatching { com.tjshea.vigilant.data.reference.UnabatedKeyTest.run(c.unabatedClient, c.unabatedFeed) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
-            }.getOrNull()
-            if (r != null && r.sample.isNotEmpty()) sendSample(share, DiagnosticsShare.UN_PREFIX, "Unabated", r.summary, r.sample)
-            _state.update { it.copy(unKeyBusy = false, unKeyNote = r?.summary ?: "The test could not run.", unKeyOk = r?.ok == true) }
-        }
-    }
 
     /**
      * Settings › BoltOdds Pro › Test key (BOLTODDS_API.md §8): the sports and sportsbooks the key carries, which of them Vigilant prices with, the market names and what became of each, one small snapshot, the optional
@@ -3096,16 +3054,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     c.sgoClient.lastUsage?.let { add("limits at the last key test: $it") }
                 }
             }.getOrNull(),
-            opReport = runCatching {
-                val keys = keysFor(ApiProvider.ODDSPAPI).size
-                if (keys == 0 && !_state.value.settings.oddsPapi) null else buildList<String> {
-                    val st = _state.value.settings
-                    add("switch ${if (st.oddsPapi) "ON" else "off"} · $keys key${if (keys == 1) "" else "s"} · extra books ${if (st.opExtraBooks) "on" else "off"} · alternate lines ${if (st.opAltLines) "on" else "off"} · active now: ${c.opActive(st)}")
-                    add("health: ${c.opClient.health()}")
-                    c.opClient.lastRemaining?.let { add("rate limit left (last answer): $it") }
-                    c.opClient.lastReads.toSortedMap().forEach { (k, v) -> add("$k: $v") }
-                }
-            }.getOrNull(),
             streamReport = runCatching {
                 val g = state.value.settings.gates
                 val st = c.streamEngine.status.value
@@ -3200,17 +3148,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val st = _state.value.settings
                     add("switch ${if (st.gates.useBoltOdds) "ON" else "off"} · $keys key${if (keys == 1) "" else "s"} · every book ${if (st.gates.boltAllBooks) "on" else "off"} · active now: ${c.boltActive(st)}")
                     addAll(c.boltFeed.report())
-                }
-            }.getOrNull(),
-            unabatedReport = runCatching {
-                val keys = keysFor(ApiProvider.UNABATED).size
-                if (keys == 0 && !_state.value.settings.unabated) null else buildList<String> {
-                    val st = _state.value.settings
-                    add("switch ${if (st.unabated) "ON" else "off"} · $keys key${if (keys == 1) "" else "s"} · active now: ${c.unabatedActive(st)}")
-                    add("health: ${c.unabatedClient.health()}")
-                    c.unabatedClient.lastError?.let { add("last error: $it") }
-                    c.unabatedFeed.lastBackgroundError?.let { add("last background refresh error: $it") }
-                    c.unabatedClient.lastReads.toSortedMap().forEach { (k, v) -> add("$k: $v") }
                 }
             }.getOrNull(),
             op4Report = runCatching {

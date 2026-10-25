@@ -11,9 +11,7 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
 enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: QuotaPolicy?, val blurb: String, val usagePrompt: Boolean) {
     SGO("SportsGameOdds Pro", ApiProvider.SPORTSGAMEODDS, QuotaPolicy.SGO, "Odds, alternates, props, closes and scores from 80+ books", true),
     BOLTODDS("BoltOdds Pro", ApiProvider.BOLTODDS, QuotaPolicy.BOLTODDS, "Real-time odds from many sportsbooks over a WebSocket: lines, props and a snapshot (3 connections)", false),
-    ODDSPAPI("OddsPapi (v5)", ApiProvider.ODDSPAPI, QuotaPolicy.ODDSPAPI, "Pinnacle, Circa and US books with change times, props, CLV and scores (trial or contract key)", false),
     ODDSPAPI_FREE("OddsPapi Free (v4)", ApiProvider.ODDSPAPI_FREE, QuotaPolicy.ODDSPAPI_FREE, "Pinnacle and ~300 books: closing lines for CLV and fair odds for scans (10 requests a day by default; set it on its page)", true),
-    UNABATED("Unabated (free)", ApiProvider.UNABATED, QuotaPolicy.UNABATED, "DraftKings, FanDuel, MGM, Caesars, theScore, Fanatics lines and props; last in line", false),
     PARLAY("ParlayAPI", ApiProvider.PARLAY, QuotaPolicy.PARLAY, "Pinnacle and 30 books, props, injuries, closing lines", true),
     PROPLINE("PropLine", ApiProvider.PROPLINE, QuotaPolicy.PROPLINE, "30 books' lines and props", true),
     ODDS_API("The Odds API", ApiProvider.THE_ODDS_API, QuotaPolicy.ODDS_API, "Sportsbook lines and props", true),
@@ -29,9 +27,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
     fun isOn(s: ScanSettings): Boolean = when (this) {
         SGO -> s.sgoPro
         BOLTODDS -> s.gates.useBoltOdds
-        ODDSPAPI -> s.oddsPapi
         ODDSPAPI_FREE -> s.oddsPapiFree
-        UNABATED -> s.unabated
         PARLAY -> s.useParlay
         PROPLINE -> s.usePropLine
         ODDS_API -> s.useOddsApi
@@ -47,9 +43,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
     fun setOn(s: ScanSettings, on: Boolean): ScanSettings = when (this) {
         SGO -> s.copy(sgoPro = on)
         BOLTODDS -> s.copy(gates = s.gates.copy(useBoltOdds = on))
-        ODDSPAPI -> s.copy(oddsPapi = on)
         ODDSPAPI_FREE -> s.copy(oddsPapiFree = on)
-        UNABATED -> s.copy(unabated = on)
         PARLAY -> s.copy(useParlay = on)
         PROPLINE -> s.copy(usePropLine = on)
         ODDS_API -> s.copy(useOddsApi = on)
