@@ -6462,4 +6462,5 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [ ] PS7 https://prop-line.com/sportsbook-accuracy: does it help research (book sharpness weights)?
 - [ ] PS8 https://prop-line.com/sportsbook-webhook-api: is the engine using it correctly?
 - [ ] PS9 https://prop-line.com/recipes: which recipes can improve the app or engine; build them
+- [ ] PS11 (Tj 14:3x UTC) https://parlay-api.com/cookbook: review the recipes, use the ones that improve the app or engine
 - [ ] PS10 then finish the open PB items (PB8, PB12, PB17b, PB21b, PB22, PB23) and release everything in the next version (v1.0.83)
