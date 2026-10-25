@@ -291,6 +291,7 @@ private fun EngineMoneyCard(b: EngineBoard.Board, status: CloudStatus?, now: Lon
     Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.testTag("engineActivity")) {
         val wallet = status?.takeIf { it.walletCash >= 0.0 }
         if (wallet != null) Text("Wallet \$${"%.2f".format(java.util.Locale.US, wallet.walletCash)} cash · \$${"%.2f".format(java.util.Locale.US, wallet.walletEquity.coerceAtLeast(wallet.walletCash))} with open orders (read ${DashboardModel.ago(now - wallet.walletReadAtMs)})", style = MaterialTheme.typography.bodySmall)
+        DashboardModel.markedWallet(status, now)?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("walletMarked")) }
         val open = (b.bets?.open ?: 0) + (b.fills?.open ?: 0)
         val atRisk = (b.bets?.atRisk ?: 0.0) + (b.fills?.atRisk ?: 0.0)
         val today = (b.bets?.ordersToday ?: 0) + (b.fills?.ordersToday ?: 0)

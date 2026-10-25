@@ -173,6 +173,17 @@ object DashboardModel {
      * connections" for half an hour while its props socket and its REST check answered, so its card stayed green): words for the card, or null. Only feeds named in the engine's own alert count, so one bad answer
      * from a busy feed never colours a card.
      */
+    /**
+     * The open positions as Novig marks them at their last trades (`/v3/portfolio/pnl`, 2026-10-23), in words: what they would pay now against what they cost, and cash plus that value (the net
+     * liquidation value). Null until the engine has read it with the trading key.
+     */
+    fun markedWallet(st: CloudStatus?, now: Long): String? {
+        if (st == null || st.walletPnlAtMs <= 0L || st.walletPositionsValue < 0.0 || st.walletPositionsCost < 0.0) return null
+        val un = st.walletPositionsValue - st.walletPositionsCost
+        val liq = if (st.walletCash >= 0.0) String.format(java.util.Locale.US, " · cash + positions $%.2f", st.walletCash + st.walletPositionsValue) else ""
+        return String.format(java.util.Locale.US, "Open positions at their last trades $%.2f (cost $%.2f, %s$%.2f)", st.walletPositionsValue, st.walletPositionsCost, if (un >= 0) "+" else "-", kotlin.math.abs(un)) + liq + " (Novig's mark, ${ago(now - st.walletPnlAtMs)})"
+    }
+
     /** One row of the PropLine freshness table: the book, its words, and how worried to look. */
     data class FreshLine(val book: String, val text: String, val tone: Tone)
 
