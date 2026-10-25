@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "96731f2b866f2566c267f43d98478c45937b27c2",
+ "head": "18b768f729c7e785c0448d24f91b5c79d028d91f",
  "since": 1792915284,
- "beat": 1792919407,
- "beatIso": "2026-10-25T09:10:07Z",
+ "beat": 1792919653,
+ "beatIso": "2026-10-25T09:14:13Z",
  "done": "SSE streams (ParlayAPI odds + play-by-play) no longer cut by the shared client's 30 s call deadline (35 reconnects in 3 min; pbp reconnects cost 5 credits each); useParlay switched on (was off: engine priced from PropLine alone); v1.0.82 released",
  "next": "reset engine; answer Tj: why odds 7-10 min old (measure per-book ages in the live feed)"
 }
