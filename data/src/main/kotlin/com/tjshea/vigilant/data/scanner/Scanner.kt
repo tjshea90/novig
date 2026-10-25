@@ -1501,7 +1501,8 @@ class Scanner(
         val HOT_METERED = setOf("parlay")
         const val HOT_METERED_MS = 150_000L
         const val HOT_METERED_FAR_MS = 420_000L
-        val HOT_FEEDS = setOf("sgo", "sgo-props", "oddspapi", "oddspapi-props", "bolt", "bolt-props", "kalshi", "polymarket", "sxbet", "sharpapi")
+        // PropLine since Streaming Lite (PSL, 2026-10-25): 250,000 requests a day, and with its stream on an ask is mostly a memory read with the pushes laid over it, so the hot refresh carries them into pricing.
+        val HOT_FEEDS = setOf("sgo", "sgo-props", "oddspapi", "oddspapi-props", "bolt", "bolt-props", "kalshi", "polymarket", "sxbet", "sharpapi", "propline", "propline_props")
 
         /** A hot line this close to zero (or above it) has its Novig book read again by the hot refresh. */
         const val HOT_EV_FLOOR = -0.03
