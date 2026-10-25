@@ -8,8 +8,8 @@
  "branch": "ccr-be05497a-18skm3",
  "head": "b63c4ff47fcc44dabbc05a297fd3bc7cf265d75d",
  "since": 1792915284,
- "beat": 1792917786,
- "beatIso": "2026-10-25T08:43:06Z",
+ "beat": 1792917792,
+ "beatIso": "2026-10-25T08:43:12Z",
  "done": "pre-ship: v1.0.82 PB: real-time list (PropLine + ParlayAPI Business streams + Novig socket every 3 s), ParlayAPI Business odds stream and 15 books, NBA props, phone rests in background, engine 24/7, list over the tunnel, per-book quote ages on the Bet sheet",
  "next": "ship.sh gates and releases this"
 }
