@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "0cb2eaaae44b5ac77ab7752af3b40814945993fb",
+ "head": "fb46d05589b5bccc4a254aea9069e130b2363999",
  "since": 1792966905,
- "beat": 1792968536,
- "beatIso": "2026-10-25T22:48:56Z",
+ "beat": 1792968823,
+ "beatIso": "2026-10-25T22:53:43Z",
  "done": "PX11c bid study (keep the sharp veto: 0 fills against a sharp book, no-sharp not significant); PX11f written",
  "next": "PX11f: why the listed bet's books are all PropLine 4-13 min old and no ParlayAPI"
 }
