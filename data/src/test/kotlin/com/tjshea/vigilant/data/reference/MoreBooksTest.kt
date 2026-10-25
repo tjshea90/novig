@@ -60,4 +60,15 @@ class MoreBooksTest {
         // Every sharp-book choice in Settings › Fair odds has a name, not its key (FX, 2026-10-23: "circa" and "bookmaker" showed raw).
         for (key in com.tjshea.vigilant.engine.FairSettings.KNOWN_SHARP_CANDIDATES) assertTrue(key, TheOddsApiClient.bookTitle(key) != key || key == "bet365")
     }
+
+    /** PX9: the books PropLine is asked for with "every book" on (the engine's setting): the measured list is in, and the stream's book filter (PropLine allows 1,000 characters) still fits. */
+    @Test
+    fun `every book on asks PropLine for the measured books and the stream's filter stays under its 1,000 characters`() {
+        val all = PropLineClient.books(ScanSettings().let { it.copy(gates = it.gates.copy(propLineAllBooks = true)) })
+        assertTrue(all.containsAll(listOf("tonybet", "sts", "pamestoixima", "sportybet_ng", "rebet", "courtside", "jazzsports", "napoleon", "fortuna_cz", "fortuna_pl", "betika", "ladbrokes_be")))
+        // Never the exchanges, the DFS apps, or the books left out for a wide margin or old quotes.
+        assertFalse(all.any { it in listOf("novig", "kalshi", "polymarket", "prophetx", "prizepicks", "underdog", "placard", "solverde", "olybet", "teapuesto", "pmu", "bet9ja", "supabets", "sxbet") })
+        assertTrue("${all.joinToString(",").length} characters", all.joinToString(",").length <= 1_000)
+        assertEquals(all.size, all.toSet().size)
+    }
 }
