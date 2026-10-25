@@ -122,8 +122,8 @@ def pin_event(b, games):
     return None, "game not found at PropLine" if not hits else "two PropLine games match"
 
 
-def batches(todo, most_bets=500, most_events=25):
-    """/clv/grade takes at most 500 bets and 25 distinct events a request (its 422 says so): bets kept together by game, a new batch when either limit would be passed."""
+def batches(todo, most_bets=100, most_events=5):
+    """/clv/grade takes at most 500 bets and 25 distinct events a request (its 422 says so), but a full 25-game batch timed out at PropLine's gateway (504, 2026-10-25): batches of 5 games / 100 bets."""
     by = {}
     for item in todo:
         by.setdefault((item[1]["sport_key"], item[1]["event_id"]), []).append(item)
@@ -166,7 +166,7 @@ def call(path, key, params=None, body=None, retries=3):
             with urllib.request.urlopen(req, timeout=120) as r:
                 return r.status, json.loads(r.read() or b"null")
         except urllib.error.HTTPError as e:
-            if e.code in (429, 503) and i < retries:
+            if e.code in (429, 502, 503, 504) and i < retries:
                 time.sleep(min(float(e.headers.get("Retry-After") or 2), 30) + 0.5)
                 continue
             if e.code == 422 and not getattr(call, "told", False):
@@ -322,8 +322,8 @@ def selftest():
     assert leg({"market": "Points Rebounds Assists", "selection": "Kayla Thornton Over 13.5"})[0] == ("player_points_rebounds_assists", "Kayla Thornton", "Over", 13.5)
     assert leg({"market": "Moneyline", "selection": "Boston Celtics"})[0] == ("h2h", "Boston Celtics", None, None)
     g = [{"id": "7", "away_team": "Kent State Golden Flashes", "home_team": "Sacramento State Hornets", "_t": 1793413800}]
-    assert len(batches([(None, {"sport_key": "s", "event_id": i % 30}) for i in range(60)])) == 2
-    assert all(len({x["event_id"] for _, x in c}) <= 25 for c in batches([(None, {"sport_key": "s", "event_id": i}) for i in range(80)]))
+    assert len(batches([(None, {"sport_key": "s", "event_id": i % 30}) for i in range(60)], 500, 25)) == 2
+    assert all(len({x["event_id"] for _, x in c}) <= 5 for c in batches([(None, {"sport_key": "s", "event_id": i}) for i in range(80)]))
     assert team_of("Sacramento State", {"teams": ("Kent State", "Sacramento State")}) == "Sacramento State"
     assert leg({"market": "Total Bases", "selection": "Aaron Judge Over 1.5"})[0] == ("batter_total_bases", "Aaron Judge", "Over", 1.5)
     assert pin_event({"event": "Kent State @ Sacramento State", "startsMs": 1793413800000}, g) == ("7", None)
