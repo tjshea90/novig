@@ -1,22 +1,23 @@
-# CHECKPOINT 4217 — read me first, then TASKS.md
+# CHECKPOINT 4218 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T17:35:39Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-be05497a-18skm3` · **builds on:** `a24615af4` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T17:39:03Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-be05497a-18skm3` · **builds on:** `7d0b702eb` (this checkpoint is the commit after it)
 
 ## Just done
-PX census split by feed id + PropLine unconfirmed/uncovered quotes
+PX census v2 + SharpApiSourceTest shutdown fix
 
 ## Do this next
-reset engine, read census, fix
+reset engine, read census
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M data/src/main/kotlin/com/tjshea/vigilant/data/scanner/QuoteCensus.kt
+     M data/src/test/kotlin/com/tjshea/vigilant/data/sharpapi/SharpApiSourceTest.kt
 
 ## Last ten checkpoints
 ```
+  7d0b702eb ckpt 4217: PX census split by feed id + PropLine unconfirmed/uncovered quotes
   57b1594aa ckpt 4216: PX: QuoteCensus (per-feed counts where fair-odds quotes are lost) logged af
   29973aa85 ckpt 4215: ENGINEER 2026-10-25 watch + volume count, no change
   2e40a5012 ckpt 4214: PX1-PX5: PropLine stale-pull fix, ParlayAPI off the chain + alternates, Sha
@@ -26,8 +27,4 @@ reset engine, read census, fix
   5bd951e41 ckpt 4210: v1.0.83 released + recorded; engine reset: ParlayAPI overlay now live (501 
   3a0b2a12b ckpt 4209: pre-release: v1.0.83 PS: PropLine + ParlayAPI audit: ParlayAPI stream overl
   c353f654d ckpt 4208: pre-ship: v1.0.83 PS: PropLine + ParlayAPI audit: ParlayAPI stream overlay 
-  e02194fe6 ckpt 4207: PB17b ParlayLiveFeed (paper-gated) + PinnFrames shared; tests green; TASKS/
 ```
-
-(2 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)

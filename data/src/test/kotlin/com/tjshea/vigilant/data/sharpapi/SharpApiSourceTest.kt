@@ -16,7 +16,8 @@ import java.util.concurrent.TimeUnit
 class SharpApiSourceTest {
     private val server = MockWebServer()
 
-    @After fun done() = server.shutdown()
+    // The background read is still waiting on its slow answer when the test ends: shutting the server down may time out, which is not the test.
+    @After fun done() { runCatching { server.shutdown() } }
 
     @Test
     fun `a league read that takes minutes does not hold the scan`() = runBlocking {
