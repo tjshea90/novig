@@ -217,8 +217,8 @@ class OtherBooks(
         val listed = client.events(sport)
         val game = gameOf(listed.map { Triple(it.home, it.away, it.commenceMs) }, home, away, startsTs) ?: return emptyList()
         val event = listed.firstOrNull { sameGame(it.home, it.away, it.commenceMs, game) } ?: return emptyList()
-        val body = client.eventRaw(sport, event.id.removePrefix(PropLinePropsSource.PREFIX), markets, PropLineClient.DISPLAY_BOOKS) ?: return emptyList()
-        return eventLines(body, json, pick, markets.toSet(), american = true, source = PROPLINE, book = PropLineClient::bookKey)
+        val bodies = client.eventRaw(sport, event.id.removePrefix(PropLinePropsSource.PREFIX), markets, PropLineClient.DISPLAY_BOOKS)
+        return bodies.flatMap { eventLines(it, json, pick, markets.toSet(), american = true, source = PROPLINE, book = PropLineClient::bookKey) }
     }
 
     // ---- The Odds API: the game's odds for that market (about a credit), the last resort -------------------------------------------------------
