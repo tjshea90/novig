@@ -47,6 +47,11 @@ object BookCompany {
         group("circa", "circa", "circasports", "cs")
         // 1xBet: PropLine/SharpAPI send it as "onexbet", SGO and others as "1xbet" (Tj, 2026-10-24, a screenshot: "1xBet" and "1xbet" counted as 2 of 2 books agreeing).
         group("1xbet", "1xbet", "onexbet", "1xbetcom")
+        // Kaizen Gaming trades Betano and Stoiximan (its Greek/Cypriot brand) on one desk. Placard = Solverde and Marca Apuestas = Wplay quoted identical prices on 95% of 736 and 88% of 330 shared
+        // game-line quotes on PropLine (PS2, 2026-10-25, research/propline_coverage_2026-10-25.md: the measured 80%-of-100+ rule).
+        group("kaizen", "betano", "stoiximan")
+        group("placard", "placard", "solverde")
+        group("marcaapuestas", "marcaapuestas", "wplay")
     }
 
     /** Companies whose members are exchanges, so a book of the same group is not folded into them. */
