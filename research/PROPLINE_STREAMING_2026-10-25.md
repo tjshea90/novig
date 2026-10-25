@@ -106,3 +106,8 @@ soccer). Not carried: Circa, Caesars, bet365.
 | +EV push (`ev`) | journaled only: PropLine's +EV prop Overs lost in the 25,909-bet test (propline_vs_vigilant_2026-10-16.md); the sweep stays off (Tj 2026-10-17). |
 | Injuries | `/injuries` already asked before ParlayAPI's (PropLineInjuries). |
 | Freshness | built (PSL5). |
+
+## First live run (engine run 40170827925, 2026-10-25 06:57-07:14Z, 3 am ET, a quiet hour)
+Both sockets live within a minute (subscriptions made through the API; the dashboard had none). In ~15 minutes: line_movement 26,274, line_added 901,
+line_pulled 300, market_suspended 95, ev 62; 17,763 outcomes moved, 34,293 moves laid over held boards, 202k markets confirmed current by the heartbeat
+(107 book boards listed), 0 gaps. PropLine's queueing delay p50 1.6-3.0 s, network 29-39 ms. /v1/freshness: 22 of the engine's books in the status.
