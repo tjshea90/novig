@@ -77,4 +77,22 @@ class ParlayLiveTest {
         // A head-to-head "most threes" prop has no shape Vigilant prices: counted, never guessed.
         assertTrue(live().unread >= 1)
     }
+
+    @Test
+    fun `an unchanged price is current as of ParlayAPI's last poll while the stream has been connected since its stamp`() {
+        val l = live()
+        val m = market(LineKind.MONEYLINE, listOf(RefQuote(Side.HOME, 3.0, null), RefQuote(Side.AWAY, 1.4, null)), book = "fanduel")
+        val e = game(m)
+        // Not connected yet: nothing can be said.
+        assertSame(e, l.overlayEvent(e, now))
+        l.connected("basketball_nba", old - 1)
+        l.onHealth(Json.parseToJsonElement("""{"generated_at_ms": $now, "sources": [{"source": "fanduel", "poll_age_s": 4.5, "prices_stale": false}, {"source": "bovada", "poll_age_s": 3, "prices_stale": true}]}""") as JsonObject, now)
+        assertEquals(now - 4_500, l.overlayEvent(e, now).markets[0].lastUpdateMs)
+        // A book ParlayAPI calls stale is never confirmed.
+        val bov = game(market(LineKind.MONEYLINE, listOf(RefQuote(Side.HOME, 3.0, null), RefQuote(Side.AWAY, 1.4, null)), book = "bovada"))
+        assertSame(bov, l.overlayEvent(bov, now))
+        // A break in the stream since the quote's stamp: no confirmation.
+        l.disconnected("basketball_nba"); l.connected("basketball_nba", old + 1)
+        assertSame(e, l.overlayEvent(e, now))
+    }
 }
