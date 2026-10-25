@@ -189,26 +189,26 @@ class PropLineClient(
      */
     suspend fun bulkProps(sportKey: String, markets: List<String>, books: List<String>): Board {
         require(markets.isNotEmpty()) { "No markets to ask for" }
-        val ev = LinkedHashMap<String, RefEvent>()
-        val nv = LinkedHashMap<String, RefEvent>()
-        for (part in markets.chunked(CHUNK)) {
-            val b = call(
+        val boards = ArrayList<Board>()
+        for (part in markets.chunked(CHUNK)) for (bookPart in bookParts(asked(books))) {
+            boards += call(
                 "/sports/$sportKey/odds",
-                listOf("markets" to part.joinToString(","), "bookmakers" to asked(books).distinct().joinToString(",")) + idParams(),
+                listOf("markets" to part.joinToString(","), "bookmakers" to bookPart.joinToString(",")) + idParams(),
                 notFound = Board(emptyList(), emptyList()),
             ) { parseBoard(it, json, sportKey) }.value
-            for (e in b.events) ev[e.id] = ev[e.id]?.let { it.copy(markets = it.markets + e.markets) } ?: e
-            for (e in b.novig) nv[e.id] = nv[e.id]?.let { it.copy(markets = it.markets + e.markets) } ?: e
         }
-        return Board(ev.values.toList(), nv.values.toList())
+        return merge(boards)
     }
 
     private suspend fun eventBoardOnce(sportKey: String, eventId: String, markets: List<String>, books: List<String>): Board? {
-        return call(
-            "/sports/$sportKey/events/$eventId/odds",
-            listOf("markets" to markets.joinToString(","), "bookmakers" to asked(books).distinct().joinToString(",")) + idParams(),
-            notFound = null,
-        ) { raw -> parseEventBoard(raw, json, sportKey) }.value
+        val boards = bookParts(asked(books)).mapNotNull { part ->
+            call(
+                "/sports/$sportKey/events/$eventId/odds",
+                listOf("markets" to markets.joinToString(","), "bookmakers" to part.joinToString(",")) + idParams(),
+                notFound = null,
+            ) { raw -> parseEventBoard(raw, json, sportKey) }.value
+        }
+        return if (boards.isEmpty()) null else merge(boards)
     }
 
     /**
