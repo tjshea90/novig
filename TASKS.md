@@ -6422,3 +6422,19 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [x] PR1 (research/api_docs_review_2026-10-25.md: no change since 10-22) ParlayAPI Pro docs re-read; gaps fixed; PARLAY_API.md updated
 - [x] FR1 (research/api_docs_review_2026-10-25.md; Polymarket version fix, ExchangeClientsTest) Kalshi, Polymarket, SX Bet, ESPN feeds audited against their docs; gaps fixed; docs updated
 - [x] PSL9 (4,247 tests green; v1.0.81 code 421 released and recorded; engine reset) full suite, ship, release, engine reset, tell Tj
+
+## PB: API downgrades, ParlayAPI Business, 24/7, settings audit, battery (Tj, 2026-10-25 ~07:20 UTC, typed prompt, verbatim in INBOX.md)
+"sharpapi is now the free tier ... pinnodds is now permanently a free trial with no websocket ... remove unabated and oddspapiv5 ... keep boltodds turned off indefinitely ... if I toggle any API off ... as though it doesn't exist ... use all the sockets and full speed ... GitHub engine run 24/7 by default, with regular check-ins by Claude ... audit the settings ... type in a manual value ... vigilant app used a lot of battery ... minimal to 0 ... I have upgraded to parlayapi business ... full usage of the sse and/or websocket ... run 24/7 connected to parlayapi business and propline streaming lite" + "Is steam a valuable profit signal?"
+- [ ] PB1 SharpAPI free tier (12 req/min, 2 books): docs read, client paced to it, features the tier lacks (stream, delta, extras, many books) off; engine + app
+- [ ] PB2 Pinnodds free trial, no WebSocket: docs read, socket off, REST within the trial's limits; engine + app
+- [ ] PB3 remove Unabated and OddsPapi v5 from app + engine entirely (sources, settings, keys, probes, meters, docs)
+- [ ] PB4 BoltOdds off by default on engine and app, no calls while off, still switchable
+- [ ] PB5 an API toggled off is never called anywhere (audit every call path: scans, closes, grading, probes/ApiMonitor, usage reads, injuries, live lanes, sockets); test
+- [ ] PB6 every socket on and at full speed by default (defaults + Tj's live config)
+- [ ] PB7 engine 24/7 by default (cloudHours default off) + scheduled Claude maintenance/tuning check-ins
+- [ ] PB8 settings audit: simplify, remove contradictions, every chip/card number picker also takes a typed value
+- [ ] PB9 battery: app sleeps in the background; swiped closed = no loops, no sockets, no wake locks, no services; audit CPU/RAM/battery paths
+- [ ] PB10 ParlayAPI Business: docs (blog, openapi, versioning, best-practices, changelog, integrations, llms.txt, docs, websocket odds/live) saved + findings research/PARLAYAPI_BUSINESS_2026-10-25.md
+- [ ] PB11 ParlayAPI Business built: odds WebSocket/SSE on the engine laid over its boards, higher limits, books, grading/CLV, live odds + scores, freshness endpoints shown + stale filtered; 24/7 connected
+- [ ] PB12 PropLine line movement / steam / ev for the profit engine: is steam a profit signal? (study on journaled steam vs close)
+- [ ] PB13 full suite, ship, release, engine reset, tell Tj
