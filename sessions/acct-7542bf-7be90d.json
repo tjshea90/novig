@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "14947206f828301612ec30d9c79fc6fdeddde156",
+ "head": "a4c29748bcdbfd7dc58aae7576aacd984db43b9a",
  "since": 1792964177,
- "beat": 1792966136,
- "beatIso": "2026-10-25T22:08:56Z",
- "done": "PX10d/e: Pinnacle census in the quote census; ParlayLive booksHeld fixed; phone settings 3-way merge (CloudClaudeConfig.merge) wired + tested; full floor 4,213 green",
- "next": "land + reset; read pinnWin/pinnFeeds/pinnAge; then ship APK v1.0.84 (settings merge + PropLine split + PX9c books)"
+ "beat": 1792966177,
+ "beatIso": "2026-10-25T22:09:37Z",
+ "done": "pre-ship: v1.0.84 PX10: phone keeps a Claude session's settings change it has not adopted yet (3-way merge), PropLine asked in parts of 60 books (its limit), 34 more PropLine books, Pinnacle hosts obey their own switches",
+ "next": "ship.sh gates and releases this"
 }
