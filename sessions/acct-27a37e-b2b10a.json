@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "e47ea5ebe62845683a939ada2a5aaf49abc9cbe7",
+ "head": "256ec116fcdca7aa30bddced12fe19d35bc96a61",
  "since": 1792889505,
- "beat": 1792910067,
- "beatIso": "2026-10-25T06:34:27Z",
- "done": "PSL2-5 engine side: Streaming Lite pacing (25/s, 10 wide), 4 sharp books added (SBOBET, BookMaker, Betfair Ex, theScore), outcome ids, PropLineLive overlay + PropLineStream (2 sockets) + freshness reader, status fields, scratch guard; PropLineLiveTest",
- "next": "app: socket switch for PropLine (ApiEntry, LiveScreen, ApiSocketTogglesTest), freshness card; then NR1/PR1/FR1 reviews"
+ "beat": 1792910245,
+ "beatIso": "2026-10-25T06:37:25Z",
+ "done": "PSL app: PropLine socket switch (ApiEntry, Live tab), Engine > APIs freshness table + stream line; tests ApiSocketTogglesTest, PropLineLiveTest",
+ "next": "tools/propline.py export limits for Streaming Lite; then NR1 Novig docs review"
 }
