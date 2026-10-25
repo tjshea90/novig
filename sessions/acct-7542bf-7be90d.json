@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "5f074033180022e0ad5adf28fc58ad8e284990a2",
+ "head": "694adcf711163f668ac02ae6b9891653c1f938ae",
  "since": 1792966905,
- "beat": 1792968145,
- "beatIso": "2026-10-25T22:42:25Z",
- "done": "PX11a root cause + fix (FILLED orders whose fills were rate-limited were reported 'nobody was selling' and re-listed; phone + engine), PX11b book table sorted best-first with disagreeing books in red",
- "next": "confirm with novig-probe FILLED; full floor; then PX11c bids study (sharp veto vs many-book average), PX11d outlier audit, PX11e Pinnacle sources"
+ "beat": 1792968344,
+ "beatIso": "2026-10-25T22:45:44Z",
+ "done": "PX11c bid study (keep the sharp veto: 0 fills against a sharp book, no-sharp not significant); PX11f written",
+ "next": "PX11f: why the listed bet's books are all PropLine 4-13 min old and no ParlayAPI"
 }
