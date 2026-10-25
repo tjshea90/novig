@@ -280,6 +280,7 @@ class CloudLink(private val c: AppContainer) {
         scope.launch(Dispatchers.IO) {
             var etag: String? = null
             while (isActive) {
+                awake()
                 val s = c.settingsStore.flow.value
                 if (s == null || !s.cloudDrives || !hasToken()) { delay(IDLE_MS); continue }
                 // 3 s while a scan the phone asked for runs; 5 s with the app on screen; 20 s off screen (the background auto-scan and auto-bet still get a list well inside a scan's length, and a 304 is free).
@@ -308,6 +309,7 @@ class CloudLink(private val c: AppContainer) {
         scope.launch(Dispatchers.IO) {
             val live = okhttp3.OkHttpClient.Builder().connectTimeout(8, java.util.concurrent.TimeUnit.SECONDS).readTimeout(12, java.util.concurrent.TimeUnit.SECONDS).build()
             while (isActive) {
+                awake()
                 val s = c.settingsStore.flow.value
                 val url = latest.status?.liveUrl.orEmpty()
                 if (s == null || !s.cloudDrives || !hasToken() || !com.tjshea.vigilant.data.cloud.CloudLive.safeUrl(url)) { liveDirectAtMs = 0L; delay(5_000L); continue }
@@ -316,7 +318,7 @@ class CloudLink(private val c: AppContainer) {
                         if (!r.isSuccessful) return@use
                         val reader = com.tjshea.vigilant.data.cloud.CloudLive.SseReader()
                         val src = r.body!!.source()
-                        while (isActive && !src.exhausted()) {
+                        while (isActive && !src.exhausted() && !c.asleep.value) {
                             val line = src.readUtf8Line() ?: break
                             reader.feed(line)?.let { msg -> com.tjshea.vigilant.data.cloud.CloudStatus.parse(msg)?.let { st -> applyLive(st, s) } }
                         }
@@ -345,6 +347,7 @@ class CloudLink(private val c: AppContainer) {
         scope.launch(Dispatchers.IO) {
             runCatching { inbox.load() }
             while (isActive) {
+                awake()
                 if (hasToken()) {
                     runCatching { adoptClaudeConfig() }
                     runCatching { inbox.pollOverrides() }
@@ -359,11 +362,13 @@ class CloudLink(private val c: AppContainer) {
             runCatching { chat.load() }
             launch {
                 while (isActive) {
+                    awake()
                     val next = runCatching { chat.sendPending() }.getOrNull()
                     chat.napSender(next ?: CHAT_SEND_IDLE_MS)
                 }
             }
             while (isActive) {
+                awake()
                 runCatching { chat.poll() }.getOrNull()?.announce?.forEach { ChatAlerts.notify(c.app, it) }
                 chat.napReader(chat.pace(c.onScreen))
             }
@@ -379,6 +384,7 @@ class CloudLink(private val c: AppContainer) {
         scope.launch(Dispatchers.IO) {
             var lastPassFor = 0L
             while (isActive) {
+                awake()
                 val s = c.settingsStore.flow.value
                 if (s == null || !s.bidsFromCloud || !hasToken() || c.cloudBids.current == null) { delay(IDLE_MS); continue }
                 val read = runCatching { c.cloudBids.refresh(System.currentTimeMillis(), BIDS_READS_PER_ROUND) }.getOrDefault(0)
@@ -394,6 +400,7 @@ class CloudLink(private val c: AppContainer) {
         scope.launch(Dispatchers.IO) {
             var etag: String? = null
             while (isActive) {
+                awake()
                 if (hasToken()) when (val p = client.fetchUsage(etag)) {
                     is CloudClient.Poll.Fresh -> { etag = p.etag; c.cloudUsage.value = p.value }
                     else -> {}
@@ -405,6 +412,7 @@ class CloudLink(private val c: AppContainer) {
         scope.launch(Dispatchers.IO) {
             var etag: String? = null
             while (isActive) {
+                awake()
                 if (hasToken()) when (val p = client.fetchTrades(etag)) {
                     is CloudClient.Poll.Fresh -> { etag = p.etag; _ui.update { it.copy(trades = p.value, tradesReadAtMs = System.currentTimeMillis()) } }
                     is CloudClient.Poll.NotModified -> _ui.update { it.copy(tradesReadAtMs = System.currentTimeMillis()) }
@@ -417,6 +425,7 @@ class CloudLink(private val c: AppContainer) {
         scope.launch(Dispatchers.IO) {
             var etag: String? = null
             while (isActive) {
+                awake()
                 if (hasToken()) when (val p = client.fetchDesk(etag)) {
                     is CloudClient.Poll.Fresh -> { etag = p.etag; _ui.update { it.copy(desk = p.value, deskReadAtMs = System.currentTimeMillis()) } }
                     is CloudClient.Poll.NotModified -> _ui.update { it.copy(deskReadAtMs = System.currentTimeMillis()) }
@@ -429,6 +438,7 @@ class CloudLink(private val c: AppContainer) {
         scope.launch(Dispatchers.IO) {
             delay(150_000L)
             while (isActive) {
+                awake()
                 if (hasToken() && (c.settingsStore.flow.value?.cloudSave != false)) runCatching { saveHistory() }
                 delay(SAVE_EVERY_MS)
             }
@@ -438,7 +448,10 @@ class CloudLink(private val c: AppContainer) {
     /** Every loop that waits is woken by this; a missed wake only means the loop looks a few seconds later. */
     private val wake = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
-    private suspend fun nap(ms: Long) { kotlinx.coroutines.withTimeoutOrNull(ms) { wake.first() } }
+    private suspend fun nap(ms: Long) { kotlinx.coroutines.withTimeoutOrNull(ms) { wake.first() }; awake() }
+
+    /** While the app sleeps ([AppContainer.asleep], PB9) every loop here waits without a timer, a request or a connection; opening the app wakes them. */
+    private suspend fun awake() = PhoneSleep.awake(c.asleep)
 
     /**
      * Opening the app syncs everything at once (Tj, 2026-10-16: "when I open the android app, I want it to automatically sync to whatever GitHub is currently doing including all the status and bets"): the engine's
