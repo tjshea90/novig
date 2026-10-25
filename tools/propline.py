@@ -574,6 +574,8 @@ def cmd_altprobe(outdir, sports=("football_nfl", "football_ncaaf")):
         st, _, data = request("/v1/sports/%s/odds" % sp, keys[i], {"markets": "spreads,totals", "bookmakers": ",".join(OURS + ["novig"]), "includeBookIds": "true"})
         events = j(data)
         events = events if isinstance(events, list) else (events or {}).get("data") or []
+        with gzip.open(os.path.join(outdir, "board-%s.json.gz" % sp), "wb") as f:   # the raw answer (no key in it), to replay the engine's parser on
+            f.write(data or b"")
         r = alt_stats(events, time.time())
         out[sp] = r
         ls = r["lines"]
