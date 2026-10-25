@@ -264,8 +264,11 @@ class PropLineClient(
         return Plan(limit, best.used, PropLineAccount.tierOf(limit))
     }
 
-    /** Requests a second the plan allows us to use: half the sustained rate (Hobby 10, Pro 20 a second; free 5). */
-    private fun intervalMs(): Long = plan()?.let { if (it.limit >= 25_000) 100L else 150L } ?: minIntervalMs
+    /** Requests a second the plan allows us to use: about two thirds of the sustained rate (Streaming Lite 35 a second: 25; Pro 20: 10; Hobby 10: 6.7; free 5: 4). */
+    private fun intervalMs(): Long = plan()?.let { if (it.limit >= 250_000) 40L else if (it.limit >= 25_000) 100L else 150L } ?: minIntervalMs
+
+    /** How many games' props are read at once: PropLine allows 20 requests in flight a key and advises a pool of 8-10 (2026-10-24 docs); the free key one at a time. */
+    fun width(): Int = plan()?.let { if (it.limit >= 250_000) 10 else 6 } ?: 1
 
     /**
      * Whether a paid key has room for a consumer taking up to [share] of the plan, now: what the key has used today is at or under the share of the day's requests that the engine's working hours have
