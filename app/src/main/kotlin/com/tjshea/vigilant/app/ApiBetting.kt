@@ -720,6 +720,8 @@ class ApiBettingController(
         state.update { it.copy(betSheet = sheet.copy(placing = true)) }
         betJob?.cancel()
         // Not betJob: opening the next bet cancels that, and this one must be followed to its end whatever the sheet does.
+        // The list row as it was when the order went out (PX11a, 2026-10-25: read after the order the row was already off the list, so every NOFILL line said "null").
+        val listedRow = target.placedKey?.let { k -> state.value.feed.firstOrNull { o -> o.key == k } }
         scope.launch {
             // The bet leaves the lists the moment the sheet closes (Tj, 2026-10-13); it comes back only if the order did not go through ([restoreAfterMiss]).
             var sentAt = 0L
@@ -760,7 +762,7 @@ class ApiBettingController(
                 // Why so many "nobody was selling" (Tj, 2026-10-24): what the list row looked like when the order went out, for Diagnostics (cat NOFILL) and a counter by source.
                 runCatching {
                     val st0 = state.value
-                    val row = target.placedKey?.let { k -> st0.feed.firstOrNull { o -> o.key == k } }
+                    val row = listedRow ?: target.placedKey?.let { k -> st0.feed.firstOrNull { o -> o.key == k } }
                     val ageMs = row?.bookFetchedAtMs?.let { t - it }
                     c.eventLog.count("nofill.${if (target.auto) "auto" else "hand"}.${if (st0.settings.cloudDrives) "cloudList" else "phoneList"}")
                     // A warning, so the report keeps it (the timeline's plain events are only the newest 250 and the bet timings pushed these out).
@@ -769,7 +771,8 @@ class ApiBettingController(
                         "${result.javaClass.simpleName} ${target.selection.take(40)} (${target.league}, ${target.source}${if (target.live) ", live" else ""}${if (target.auto) ", auto" else ""}): " +
                             "listed cost ${row?.quote?.cost?.let { "%.3f".format(it) }}, ask read ${ageMs?.let { it / 1000 }}s before the order, fair age ${row?.fairAsOfMs?.let { (t - it) / 1000 }}s, " +
                             "ev ${row?.quote?.evPercent?.let { "%.1f".format(it * 100) }}%, depth ${row?.ladder?.firstOrNull()?.let { "${it.price} x${it.contracts}" }}, starts in ${(target.startsTs - t) / 60_000}min, " +
-                            "ladder ${row?.ladder?.size ?: 0} level(s) when listed",
+                            "ladder ${row?.ladder?.size ?: 0} level(s) when listed; the sheet: limit ${"%.3f".format(plan.limitPrice)}, best ${"%.3f".format(plan.bestPrice)}, ${plan.contracts} contracts, " +
+                            "order sent ${if (sentAt > 0L) "${(t - sentAt) / 1000}s" else "never"} before this",
                     )
                 }
                 target.placedKey?.let { k ->
