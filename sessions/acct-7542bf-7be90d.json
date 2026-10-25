@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "db950e0e815b4baff8b98805c29945db1074260c",
+ "head": "97020c23c8885532ed1e0fcebf3fa2953d47a4db",
  "since": 1792915284,
- "beat": 1792947420,
- "beatIso": "2026-10-25T16:57:00Z",
+ "beat": 1792947611,
+ "beatIso": "2026-10-25T17:00:11Z",
  "done": "PS3 done: 2,762 real bets graded by PropLine /clv/grade (all +1.19% EV vs de-vigged close; engine bids +3.26%, engine bets -0.66%; totals/ML trail); numbers in research/propline_parlay_audit_2026-10-25.md",
  "next": "PB8 settings walk, PB12 steam study; team totals in the grader; next ANALYST to weigh engine-bet vs bid CLV"
 }
