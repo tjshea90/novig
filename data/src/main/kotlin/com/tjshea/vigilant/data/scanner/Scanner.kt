@@ -7,6 +7,7 @@ import com.tjshea.vigilant.data.novig.NovigEvent
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.NovigSource
 import com.tjshea.vigilant.data.reference.PartialReferenceException
+import com.tjshea.vigilant.data.reference.RefEvent
 import com.tjshea.vigilant.data.reference.RefSnapshot
 import com.tjshea.vigilant.data.reference.ReferenceException
 import com.tjshea.vigilant.data.reference.ReferenceSource
