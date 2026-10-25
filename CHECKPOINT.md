@@ -1,23 +1,22 @@
-# CHECKPOINT 4222 — read me first, then TASKS.md
+# CHECKPOINT 4223 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T17:59:24Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-be05497a-18skm3` · **builds on:** `39f01d546` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T18:37:25Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-27fee639-d3opru` · **builds on:** `bf1f66c58` (this checkpoint is the commit after it)
 
 ## Just done
-PX study linked in LEVERS
+PX8: ParlayAPI stream skips period rows + counts unread by market; parlay.py gameprobe task (one game: every book/number/age)
 
 ## Do this next
-PB8/PB12
+dispatch gameprobe, read it; then explain tool for fair-odds fates; tests; ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M research/INDEX.md
-     M research/LEVERS.md
 
 ## Last ten checkpoints
 ```
+  b20bd61f3 ckpt 4222: PX study linked in LEVERS
   39f01d546 ckpt 4221: PX done: books per bet median 5 (from 1-2), ParlayAPI pricing, scans unfroz
   4b75311ae ckpt 4220: PX7a: engine keeps quotes inside the plain 5-min limit (no 2-min headroom, 
   1a1f1c5cd ckpt 4219: PX census v2 + SharpApiSourceTest shutdown fix (full suite green)
@@ -27,5 +26,7 @@ PB8/PB12
   29973aa85 ckpt 4215: ENGINEER 2026-10-25 watch + volume count, no change
   2e40a5012 ckpt 4214: PX1-PX5: PropLine stale-pull fix, ParlayAPI off the chain + alternates, Sha
   ca7cfcdd1 ckpt 4213: PX: PropLine stale-pull overlay fix (PropLineLiveTest), ParlayAPI off the c
-  db950e0e8 ckpt 4212: PS3 done: 2,762 real bets graded by PropLine /clv/grade (all +1.19% EV vs d
 ```
+
+(5 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
