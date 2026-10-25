@@ -494,7 +494,8 @@ class PropLineClient(
             else -> null
         }
 
-        internal fun bookKey(propLineKey: String) = FROM_PROPLINE[propLineKey] ?: propLineKey
+        /** A PropLine book key in the app's words (BookMaker.eu is `bookmaker`, theScore Bet `espnbet`, ...). */
+        fun bookKey(propLineKey: String): String = FROM_PROPLINE[propLineKey] ?: propLineKey
     }
 }
 
