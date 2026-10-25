@@ -106,7 +106,7 @@ class PropLineClient(
         val readAt = clock()
         val answer = call(
             "/sports/$sport/odds",
-            listOf("markets" to markets.joinToString(","), "bookmakers" to asked(books).joinToString(",")) + idParams() + ageParams(),
+            listOf("markets" to markets.joinToString(","), "bookmakers" to asked(books).joinToString(",")) + idParams(),
             notFound = Board(emptyList(), emptyList()),
         ) { parseBoard(it, json, sport) }
         remember(sport, answer.value.events)
