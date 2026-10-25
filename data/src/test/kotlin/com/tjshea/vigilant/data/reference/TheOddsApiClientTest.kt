@@ -251,7 +251,7 @@ class TheOddsApiClientTest {
 
     /** Tj, 2026-10-20: "default to using the best key (the pro tier)": whatever order the keys were typed in, the biggest paid plan is asked first, free keys last. */
     @Test
-    fun `ParlayAPI scans use the Pro key before a Starter key and a free key, whatever order they were typed in`() = runTest {
+    fun `ParlayAPI scans use the Business key before a Pro, a Starter and a free key, whatever order they were typed in`() = runTest {
         val store = JsonFileStore(java.io.File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() })
         val month = QuotaPolicy.PARLAY.periodStart(System.currentTimeMillis())
         store.update {
@@ -259,16 +259,22 @@ class TheOddsApiClientTest {
                 "free" to com.tjshea.vigilant.data.keys.KeyUsage(periodStart = month, used = 0, remaining = 1_000, limit = 1_000),
                 "starter" to com.tjshea.vigilant.data.keys.KeyUsage(periodStart = month, used = 100, remaining = 19_900, limit = 20_000),
                 "pro" to com.tjshea.vigilant.data.keys.KeyUsage(periodStart = month, used = 100, remaining = 99_900, limit = 100_000),
+                // PB18 (Tj, 2026-10-25: "Make sure the GitHub engine defaults to the parlayapi business plan key and stays connected to that one"): the Business plan's million goes first.
+                "business" to com.tjshea.vigilant.data.keys.KeyUsage(periodStart = month, used = 58_361, remaining = 941_639, limit = 1_000_000),
             ))))
         }
         val c = TheOddsApiClient(
             httpClient = OkHttpClient(),
-            pool = KeyPool(QuotaPolicy.PARLAY, { listOf("free", "starter", "pro") }, UsageMeter(store)),
+            pool = KeyPool(QuotaPolicy.PARLAY, { listOf("free", "starter", "pro", "business") }, UsageMeter(store)),
             json = json, baseUrl = server.url("/v1").toString().trimEnd('/'), clock = { 42L }, minIntervalMs = 0, feed = OddsFeed.PARLAY,
         )
         server.enqueue(MockResponse().setBody(Fixtures.oddsApi))
         assertFalse(c.fetch("americanfootball_nfl", listOf("pinnacle")).events.isEmpty())
-        assertEquals("pro", server.takeRequest().getHeader("X-API-Key"))
+        assertEquals("business", server.takeRequest().getHeader("X-API-Key"))
+        // and stays on it, call after call
+        server.enqueue(MockResponse().setBody(Fixtures.oddsApi))
+        c.fetch("basketball_nba", listOf("pinnacle"))
+        assertEquals("business", server.takeRequest().getHeader("X-API-Key"))
     }
 
     /** A free key reaches back 48 hours: a call asking for more is that call's fault (HTTP 403 HISTORICAL_LIMIT), never the key's. */
