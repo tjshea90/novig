@@ -6450,3 +6450,16 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [ ] PB22 (Tj 09:2x UTC) "I tried the button in the app to restart the GitHub engine twice but it didn't work": engine side fixed and live (reset honoured within 3 s mid-scan, never lost: CloudEngineTest); phone side (keeps Claude's newer resetAtMs) is in code, ships with v1.0.83
 - [ ] PB23 verify on the engine log: "ParlayAPI odds stream: ... N books' polls known, M confirmed unchanged" is > 0 (source-health poll confirmations); if still 0, debug ParlayStream.healthLoop
 - [ ] PB13 [v1.0.82 released 08:5x UTC + engine reset; later engine-only fixes landed on main and are running (run 40181523769); v1.0.83 still owed for the phone bits: CloudLink reset keep, PB8 typed boxes/background-scan hint, 24/7 hours text] full suite, ship, release, engine reset, tell Tj
+
+## PS: audit the PropLine and ParlayAPI streams (Tj, 2026-10-25 ~14:25 UTC, typed prompt, verbatim in INBOX.md)
+"Audit the two new streaming sockets- propline and parlayapi ... After these are done, complete everything you noted for tasks.md and release everything in the next version"
+- [ ] PS1 both sockets used at full speed and ability per their docs
+- [ ] PS2 why do scanned bets show odds from only a few books when the feeds carry dozens? matching? fix
+- [ ] PS3 is the engine using PropLine's grade endpoint (/clv/grade) to grade Tj's actual bets against the close? if not, build it
+- [ ] PS4 use both plans' usage freely wherever it helps speed or accuracy (limits far above use)
+- [ ] PS5 PropLine batched delivery (docs): use it if it helps
+- [ ] PS6 more PropLine WebSockets: use them where they help
+- [ ] PS7 https://prop-line.com/sportsbook-accuracy: does it help research (book sharpness weights)?
+- [ ] PS8 https://prop-line.com/sportsbook-webhook-api: is the engine using it correctly?
+- [ ] PS9 https://prop-line.com/recipes: which recipes can improve the app or engine; build them
+- [ ] PS10 then finish the open PB items (PB8, PB12, PB17b, PB21b, PB22, PB23) and release everything in the next version (v1.0.83)
