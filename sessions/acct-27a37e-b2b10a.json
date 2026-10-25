@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-27fee639-d3opru",
- "head": "ce7255d131c1de8681d7c4a05a57891041be1dc6",
+ "head": "62b41ec73a15e70e98f7a23696f06f11835be587",
  "since": 1792912591,
- "beat": 1792954112,
- "beatIso": "2026-10-25T18:48:32Z",
+ "beat": 1792954297,
+ "beatIso": "2026-10-25T18:51:37Z",
  "done": "PX8: ParlayAPI stream skips period rows + counts unread by market; parlay.py gameprobe task (one game: every book/number/age)",
  "next": "dispatch gameprobe, read it; then explain tool for fair-odds fates; tests; ship"
 }
