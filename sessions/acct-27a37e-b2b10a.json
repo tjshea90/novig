@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "b377194be6faeb829db75777b390167eca0f70d1",
+ "head": "c295792a18ad50cbb569b4f86480508ec6356595",
  "since": 1792889505,
- "beat": 1792910336,
- "beatIso": "2026-10-25T06:38:56Z",
+ "beat": 1792910518,
+ "beatIso": "2026-10-25T06:41:58Z",
  "done": "PSL docs + TASKS ticks; PSL7 accuracy update written",
  "next": "read api-docs CHANGES.md (run triggered on main) for Novig/ParlayAPI/Kalshi/Polymarket/SX diffs"
 }
