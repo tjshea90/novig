@@ -121,19 +121,11 @@ object ProfitText {
 
     private fun bets(n: Int) = "$n open bet" + if (n == 1) "" else "s"
 
-    /** The all-time figure's sum: what the wallet holds and what was put in; or, with no wallet figure, the settled bets it is taken from. */
-    fun allTimeHow(book: SlateProfit.Book, w: WalletMoneyUi, now: Long): String {
-        val m = w.money
-        if (m != null) {
-            // Money moved out and back in again nets out (Tj, 2026-10-19: "also takes out withdrawals because sometimes I moved money back and forth").
-            val moves = if (m.takenOut > 0.005) "${Format.money(m.putIn)} put in minus ${Format.money(m.takenOut)} taken out" else "nothing taken out"
-            return "Vigilant wallet ${Format.money(m.value)}: ${Format.money(m.cash)} cash + ${Format.money(m.openCost)} in ${bets(m.openBets)}, minus the ${Format.money(m.netIn)} you put in ($moves, " +
-                "from Novig's record of money moved in and out). Open bets count at what they cost until they settle. Read ${Format.age(m.atMs, now)}."
-        }
-        val why = w.note?.let { " $it" } ?: ""
-        return if (book.settled == 0) "No settled bets yet.$why"
-        else "From the ${book.settled} settled bets: ${Format.money(book.settledStaked)} staked, ${Format.money(book.returned)} paid back.$why"
-    }
+    /** The all-time figure's sum (Tj, 2026-10-25: winnings on final bets and bids minus their cost; no wallet, deposits or withdrawals; open bets left out). */
+    fun allTimeHow(book: SlateProfit.Book, w: WalletMoneyUi, now: Long): String =
+        if (book.settled == 0) "No settled bets yet."
+        else "From the ${book.settled} bets and bids with a final result: ${Format.money(book.settledStaked)} cost, ${Format.money(book.returned)} paid back. Deposits and withdrawals are not used; " +
+            "${bets(book.open)} not final yet (${Format.money(book.openStaked)} at stake) are left out."
 
     /** Today's games in one line of numbers: $0.00 and why before a result, what is open after. */
     fun today(day: SlateProfit.Day, isToday: Boolean = true): String = when {
@@ -200,7 +192,7 @@ fun ProfitChartCard(bets: List<TrackedBet>, period: TrackerPeriod, wallet: Walle
             SlateProfit.later(book, now)?.let { Text(ProfitText.later(it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitLater")) }
             Text(
                 "A day is the day of its games (Eastern, 5 am to 5 am, so a late game stays on the night it began). Its profit is what its settled bets paid back minus what they cost; the days count the bets " +
-                    "shown here, while the all-time figure is the wallet's real money (fees and maker credits included).",
+                    "shown here, the all-time figure is the same sum over every day.",
                 style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -209,9 +201,8 @@ fun ProfitChartCard(bets: List<TrackedBet>, period: TrackerPeriod, wallet: Walle
 
 @Composable
 private fun AllTime(book: SlateProfit.Book, wallet: WalletMoneyUi, now: Long) {
-    val m = wallet.money
-    val profit = m?.profit ?: book.profit
-    val pct = if (m != null) m.pct else book.pct
+    val profit = book.profit
+    val pct = book.pct
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
         Column(Modifier.weight(1f)) {
             Text("All-time profit", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
@@ -219,13 +210,10 @@ private fun AllTime(book: SlateProfit.Book, wallet: WalletMoneyUi, now: Long) {
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(pct?.let(ProfitText::pct) ?: "—", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = moneyColor(profit))
-            Text(if (m != null) "on ${Format.money(m.netIn)} put in" else "on ${Format.money(book.settledStaked)} staked", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("on ${Format.money(book.settledStaked)} staked", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
     Text(ProfitText.allTimeHow(book, wallet, now), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitAllTimeHow"))
-    if (m != null && book.settled > 0) {
-        Text("The settled bets shown here: ${ProfitText.pl(book.profit)} on ${Format.money(book.settledStaked)} staked.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
 }
 
 /** Today's games: their numbers, and their running profit from the first game to the last result (or now). */
