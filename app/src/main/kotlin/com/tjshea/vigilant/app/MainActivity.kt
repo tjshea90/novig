@@ -197,7 +197,13 @@ class MainActivity : ComponentActivity() {
                 } else {
                     // Remembered: LocalOpenNovig is a static local, and a new value redraws everything under it.
                     val openNovigLocal: (String?) -> Unit = remember { { link -> openNovig(link) } }
-                    val heldPositions = remember(state.bets, state.cloudUi.trades) { com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(state.bets) + com.tjshea.vigilant.data.cloud.TradePositions.of(state.cloudUi.trades?.entries.orEmpty()) }
+                    // Everything held, whoever placed it (Tj, 2026-10-25): the Tracker's bets (the engine's fills counted from its own ledger, not twice), the engine's bets and resting bids, this phone's bids.
+                    val phoneBids by vm.makerBids.collectAsStateWithLifecycle()
+                    val heldPositions = remember(state.bets, state.cloudUi.trades, state.cloudUi.desk, phoneBids) {
+                        val engine = state.cloudUi.trades?.entries.orEmpty()
+                        com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(state.bets, com.tjshea.vigilant.data.cloud.TradePositions.orderIds(engine)) + com.tjshea.vigilant.data.cloud.TradePositions.of(engine) +
+                            com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(state.cloudUi.desk?.bids.orEmpty()) + com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(phoneBids.orEmpty())
+                    }
                     CompositionLocalProvider(com.tjshea.vigilant.app.ui.LocalHeldPositions provides heldPositions, LocalOpenNovig provides openNovigLocal, com.tjshea.vigilant.app.ui.LocalRefreshStep provides (if (state.cloudUi.refreshing) state.cloudUi.refreshStep else "")) {
                         VigilantRoot(
                             state, vm,
