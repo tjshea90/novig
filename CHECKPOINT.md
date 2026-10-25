@@ -1,22 +1,22 @@
-# CHECKPOINT 4157 — read me first, then TASKS.md
+# CHECKPOINT 4158 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T00:36:38Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-64p1kh` · **builds on:** `9d94fe4b8` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T00:39:33Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-64p1kh` · **builds on:** `df409822f` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: All-time profit = winnings on final bets and bids minus their cost (no wallet or deposits), by slate day
+pre-release: All-time profit = winnings on final bets and bids minus their cost (no wallet or deposits), by slate day (versionCode 419, v1.0.79)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.79), then run: bash tools/record-release.sh v1.0.79 419 "All-time profit = winnings on final bets and bids minus their cost (no wallet or deposits), by slate day"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  df409822f ckpt 4157: pre-ship: All-time profit = winnings on final bets and bids minus their cos
   9d94fe4b8 ckpt 4156: pre-ship: All-time profit = winnings on final bets and bids minus their cos
   fecb13665 ckpt 4155: chat: answered ledger-profit method
   affbeeada ckpt 4154: chat: replied to profit screenshots
@@ -26,5 +26,4 @@ ship.sh gates and releases this
   b5115a07e ckpt 4150: answered repeat-guard chat; CH86b
   f22565f4b ckpt 4149: answered socket+repeat-bets chat; logged CH86
   008d574e5 ckpt 4148: pre-release: CH81i: order-end timing + NOFILL kept in the report; the phone
-  ab0f4aa87 ckpt 4147: pre-ship: CH81i: order-end timing + NOFILL kept in the report; the phone st
 ```
