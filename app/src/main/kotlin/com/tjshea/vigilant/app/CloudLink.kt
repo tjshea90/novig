@@ -137,7 +137,7 @@ class CloudLink(private val c: AppContainer) {
     @Volatile private var checkApisAt = 0L
     /** The Bids tab's presses for the engine's desk, newest last; each is sent with every config write for 10 minutes (the engine serves each id once and drops stale ones) ([CloudConfig.bidRequests]). */
     @Volatile private var bidRequests: List<BidRequest> = emptyList()
-    private var feedFetchedFor = 0L
+    @Volatile private var feedFetchedFor = 0L
     private var bidsFetchedFor = 0L
     private var evFetchedFor = 0L
     private var cnoFetchedFor = 0L
