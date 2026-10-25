@@ -5,11 +5,11 @@
  "nonce": "15e29e",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-64p1kh",
- "head": "a51e819e4317c0dfdd6a7f10cf360d5e9711aba7",
+ "branch": "claude/optimistic-curie-xp8w6z",
+ "head": "5a31ee026ab3422a619f2e1dfd46c255a4f00353",
  "since": 1792884251,
- "beat": 1792889125,
- "beatIso": "2026-10-25T00:45:25Z",
+ "beat": 1792893522,
+ "beatIso": "2026-10-25T01:58:42Z",
  "done": "pre-release: All-time profit = winnings on final bets and bids minus their cost (no wallet or deposits), by slate day (versionCode 419, v1.0.79)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.79), then run: bash tools/record-release.sh v1.0.79 419 \"All-time profit = winnings on final bets and bids minus their cost (no wallet or deposits), by slate day\""
 }
