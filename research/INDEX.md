@@ -4,13 +4,14 @@ Every study in `research/`, newest first, and how it is USED. Tuning levers and 
 Statuses: APPLIED (a change in `research/review/CHANGES.md` cites it), LEVER (on LEVERS.md), CLOSED (verdict and disposition on LEVERS.md), WATCH (an open TASKS.md item waits on its number),
 CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a sample, marked in its first lines), IDLE (cited nowhere: act on it or mark it).
 
-135 entries; 8 idle: api_audit_report_2026-10-22.html, api_docs_review_2026-10-25.md, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, parlayapi_business_2026-10-25, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md
+136 entries; 8 idle: api_audit_report_2026-10-22.html, api_docs_review_2026-10-25.md, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, parlayapi_business_2026-10-25, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
 | 2026-10-25 | `px_books_per_bet_2026-10-25.md` | Why bets showed 1 book and no ParlayAPI odds; old fair odds (PX, Tj 2026-10-25 ~17:00-18:00 UTC) - Tj: "Investigate why I don't see any parlayapi provided odds in the scanned list and why many results only have 1 book behind th... | LEVER |
 | 2026-10-25 | `propline_parlay_audit_2026-10-25.md` | PropLine + ParlayAPI streams: the audit (PS1-PS12, Tj 2026-10-25 ~14:25 UTC) - Tj: "Audit the two new streaming sockets - propline and parlayapi" (nine points, verbatim in INBOX.md), then "https://parlay-api.com/cookbook" and "... | APPLIED LEVER |
 | 2026-10-25 | `propline_coverage_2026-10-25.md` | Why most listed bets show only a few books (PS2, Tj 2026-10-25) - Tj: "even though they offer dozens of sports books odds, most of my scanned results only show odds for a few sports books. Is this a matching issue?" | APPLIED LEVER CODE |
+| 2026-10-25 | `propline_books_2026-10-25.md` | More books behind each bet, matched and counted once (PX9, Tj 2026-10-25) - Tj: "Make sure odds come from as many books as possible and are matched correctly. You may need to consult the docs ... figure out how to get odds for ... | APPLIED LEVER CODE |
 | 2026-10-25 | `parlayapi_business_2026-10-25/` | (no title) | IDLE |
 | 2026-10-25 | `api_recovery_2026-10-25.md` | What the dropped and downgraded APIs gave, and where it comes from now (PB17, Tj 2026-10-25) - Tj, 2026-10-25: "make sure all functions and features that were provided by apis which have since been paused or discontinued can be... | CODE |
 | 2026-10-25 | `api_docs_review_2026-10-25.md` | API docs re-review, 2026-10-25 (PSL NR1/PR1/FR1; Tj: "do another thorough research of novig docs ... parlayapi ... kalshi, polymarket, sx bet, and ESPN") - Method: `api-docs.yml` (free GitHub runner, keyless) mirrored every pro... | IDLE |
@@ -139,7 +140,7 @@ CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a 
 | 2026-10-03 | `external_report_2026-10-03_clv_ev.md` | Beating CLV, Finding True +EV, and Avoiding Trap Bets - **Compiled:** 2026-10-03 · **Purpose:** reference document for building a +EV betting app (taking and making bets/bids) and maximizing profit on the Novig prediction market. | CODE |
 |  | `v0701_partial/` | (no title) | CODE |
 |  | `sharpapi/` | (no title) | APPLIED LEVER WATCH CODE |
-|  | `sgo/` | (no title) | WATCH CODE |
+|  | `sgo/` | (no title) | APPLIED WATCH CODE |
 |  | `propline/` | (no title) | APPLIED LEVER CLOSED WATCH CODE |
 |  | `live_leadlag.py` | (no title) | CODE |
 |  | `design/` | (no title) | APPLIED WATCH CODE |
