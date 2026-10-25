@@ -168,7 +168,7 @@ class TheOddsApiClient(
 
     /** An /odds answer: on ParlayAPI's tennis tours, one event per singles match with set and games lines told apart ([ParlayTennis]). */
     private fun parseOdds(raw: String, sportKey: String): List<RefEvent> {
-        val events = parseEvents(raw, json, seenByBook = feed == OddsFeed.PARLAY)
+        val events = parseEvents(raw, json, seenByBook = feed == OddsFeed.PARLAY).let { if (feed == OddsFeed.PARLAY) it.map(com.tjshea.vigilant.data.parlay.ParlayLive::tag) else it }
         if (feed != OddsFeed.PARLAY || !sportKey.startsWith(TENNIS_PREFIX)) return events
         val gapHours = com.tjshea.vigilant.data.scanner.Leagues.ALL.firstOrNull { it.oddsApiSportKey == sportKey }?.maxStartGapHours ?: 24
         return ParlayTennis.normalize(events, gapHours * 3_600_000L)
@@ -203,7 +203,7 @@ class TheOddsApiClient(
             cost = markets.size,
             what = "$sportKey event $eventId",
             notFound = null,
-            parse = { parseEvent(it, json, seenByBook = feed == OddsFeed.PARLAY) },
+            parse = { parseEvent(it, json, seenByBook = feed == OddsFeed.PARLAY).let { e -> if (feed == OddsFeed.PARLAY) com.tjshea.vigilant.data.parlay.ParlayLive.tag(e) else e } },
             // Only a fallback: the x-requests-last header is the real charge.
             charged = { e -> e?.markets?.mapNotNull { it.stat }?.distinct()?.size ?: 0 },
         )

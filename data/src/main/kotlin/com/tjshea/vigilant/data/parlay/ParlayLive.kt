@@ -129,7 +129,9 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
         val markets = e.markets.map { m ->
             if (m.source?.startsWith("parlay") != true || m.period != 0) return@map m
             val subject = if (m.kind == LineKind.PLAYER_PROP) m.subject?.let(PlayerNames::key) else m.subject
-            val found = m.quotes.map { q -> prices[sideKey(game, m.bookKey, m.kind, subject, m.stat, q.side, q.point)] }
+            // The key the quote was tagged with when ParlayAPI's board was read ([tag]): the merged game takes its names and orientation from the first feed that matched it (Kalshi's "Brooklyn",
+            // a flipped home and away), so a key rebuilt from it here missed nearly every quote (PB23, 2026-10-25: "0 markets moved onto the boards" over a whole run).
+            val found = m.quotes.map { q -> prices[q.feedOutcomeId?.takeIf { it.startsWith(TAG) }?.substring(TAG.length) ?: sideKey(game, m.bookKey, m.kind, subject, m.stat, q.side, q.point)] }
             if (found.any { it == null }) return@map confirm(e.sportKey, m, now)?.also { changed = true } ?: m
             val confirmed = found.minOf { it!!.confirmedAtMs }
             if (confirmed <= (m.lastUpdateMs ?: 0L)) return@map m
@@ -173,6 +175,23 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
         const val POLL_MAX_MS = 5 * 60_000L
 
         fun gameKey(home: String, away: String) = norm(home) + "|" + norm(away)
+
+        /** Marks ParlayAPI's tagged quotes ([RefQuote.feedOutcomeId]; PropLine's carry its own outcome ids). */
+        const val TAG = "pa|"
+
+        /**
+         * [e] (one ParlayAPI board game, in ParlayAPI's own team names and orientation) with every full-game quote tagged by the key its stream rows are held under ([onRow]), so [overlayEvent] finds
+         * it after the scan has merged the game with other feeds' (renamed, perhaps flipped).
+         */
+        fun tag(e: RefEvent): RefEvent {
+            val game = gameKey(e.home, e.away)
+            return e.copy(markets = e.markets.map { m ->
+                if (m.period != 0) m else {
+                    val subject = if (m.kind == LineKind.PLAYER_PROP) m.subject?.let(PlayerNames::key) else m.subject
+                    m.copy(quotes = m.quotes.map { q -> q.copy(feedOutcomeId = TAG + sideKey(game, m.bookKey, m.kind, subject, m.stat, q.side, q.point)) })
+                }
+            })
+        }
 
         private fun norm(team: String) = team.lowercase().filter { it.isLetterOrDigit() }
 

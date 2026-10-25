@@ -74,7 +74,7 @@ class ParlayPropsSource(
         injuries?.record(sport, hurt, asked = unreported)
         // A player whose books straddle a page boundary comes back in two parts: one game, all its lines.
         val merged = events.groupBy { it.id }.values.map { parts -> parts.first().copy(markets = parts.flatMap { it.markets }) }
-        val snap = RefSnapshot(sport, merged, System.currentTimeMillis(), remaining, used, id)
+        val snap = RefSnapshot(sport, merged.map(com.tjshea.vigilant.data.parlay.ParlayLive::tag), System.currentTimeMillis(), remaining, used, id)
         return client.quality?.let { ParlaySourceQuality.without(snap, it.unsafeBooks()) } ?: snap
     }
 }
