@@ -1,10 +1,10 @@
-# CHECKPOINT 4218 — read me first, then TASKS.md
+# CHECKPOINT 4219 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T17:39:03Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-be05497a-18skm3` · **builds on:** `7d0b702eb` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T17:43:55Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-be05497a-18skm3` · **builds on:** `d5e872588` (this checkpoint is the commit after it)
 
 ## Just done
-PX census v2 + SharpApiSourceTest shutdown fix
+PX census v2 + SharpApiSourceTest shutdown fix (full suite green)
 
 ## Do this next
 reset engine, read census
@@ -13,10 +13,10 @@ reset engine, read census
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M data/src/test/kotlin/com/tjshea/vigilant/data/sharpapi/SharpApiSourceTest.kt
 
 ## Last ten checkpoints
 ```
+  d5e872588 ckpt 4218: PX census v2 + SharpApiSourceTest shutdown fix
   7d0b702eb ckpt 4217: PX census split by feed id + PropLine unconfirmed/uncovered quotes
   57b1594aa ckpt 4216: PX: QuoteCensus (per-feed counts where fair-odds quotes are lost) logged af
   29973aa85 ckpt 4215: ENGINEER 2026-10-25 watch + volume count, no change
@@ -26,5 +26,4 @@ reset engine, read census
   4ef0a7c24 ckpt 4211: propline_grade root cause: 6+ bets per request outlast PropLine's 30 s gate
   5bd951e41 ckpt 4210: v1.0.83 released + recorded; engine reset: ParlayAPI overlay now live (501 
   3a0b2a12b ckpt 4209: pre-release: v1.0.83 PS: PropLine + ParlayAPI audit: ParlayAPI stream overl
-  c353f654d ckpt 4208: pre-ship: v1.0.83 PS: PropLine + ParlayAPI audit: ParlayAPI stream overlay 
 ```
