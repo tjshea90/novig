@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "b5febc1c01d0fbafc5577c2f72d105ac85349318",
+ "head": "14947206f828301612ec30d9c79fc6fdeddde156",
  "since": 1792964177,
- "beat": 1792966101,
- "beatIso": "2026-10-25T22:08:21Z",
- "done": "PX10a/c: Pinnodds free logged + switched off; Pinnacle hosts obey their own switches (CloudPinnacleHostsTest); ParlayAPI alternates no longer skipped for Pinnodds; PinnWire secret retired on the engine; full floor 4,210 green",
- "next": "land + engine reset; then PX10d: read PARLAYAPI_BUSINESS / PROPLINE_STREAMING docs + probe both keys' plans, stream connections and coverage"
+ "beat": 1792966136,
+ "beatIso": "2026-10-25T22:08:56Z",
+ "done": "PX10d/e: Pinnacle census in the quote census; ParlayLive booksHeld fixed; phone settings 3-way merge (CloudClaudeConfig.merge) wired + tested; full floor 4,213 green",
+ "next": "land + reset; read pinnWin/pinnFeeds/pinnAge; then ship APK v1.0.84 (settings merge + PropLine split + PX9c books)"
 }
