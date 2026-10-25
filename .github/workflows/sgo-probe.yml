@@ -1,0 +1,38 @@
+name: SGO probe (PX9h)
+
+# What SportsGameOdds' lastUpdatedAt means (tools/sgo_stamps.py): SGO's main lines read twice a few minutes apart, and its push-book prices against PropLine's push-fed copy. Read-only; the report is
+# printed in the log. Keys stay in secrets (Tj, 2026-10-25: "full permission to use the apis directly with my API keys ... to figure out ... freshness of odds, and accuracy").
+on:
+  workflow_dispatch:
+    inputs:
+      leagues:
+        description: "SGO league IDs, comma-separated (NFL,NCAAF when empty)"
+        default: ""
+      gap:
+        description: "seconds between the two reads"
+        default: "120"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sgo-probe
+  cancel-in-progress: false
+
+jobs:
+  stamps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: SGO stamps
+        env:
+          SGO_API_KEY: ${{ secrets.SGO_API_KEY }}
+          PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
+          LEAGUES: ${{ github.event.inputs.leagues }}
+          GAP: ${{ github.event.inputs.gap }}
+        run: |
+          python3 -I tools/sgo_stamps.py selftest
+          python3 -I tools/sgo_stamps.py run out/sgo "$LEAGUES" "$GAP"
