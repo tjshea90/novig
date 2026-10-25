@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "5a82f1a63d5ca86514e07dbba222c5a8c4ff9a2c",
+ "head": "2e339a38e326ac7774e84785566bcd0955ba63ab",
  "since": 1792915284,
- "beat": 1792940007,
- "beatIso": "2026-10-25T14:53:27Z",
+ "beat": 1792940200,
+ "beatIso": "2026-10-25T14:56:40Z",
  "done": "PS9a PropLine 1st-half source propline_1h (PropLinePeriodTest); PB21b cross-check limited to aggregator copies",
  "next": "PS11 ParlayAPI cookbook review; PS7 accuracy page; then full suite + ship v1.0.83"
 }
