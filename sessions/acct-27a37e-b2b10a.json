@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "9333357ba714b8d6fef9347e3c17b33c7aea6154",
+ "head": "7e05ea878929a1e974318f7d86dd9f3894bdb89f",
  "since": 1792889505,
- "beat": 1792910704,
- "beatIso": "2026-10-25T06:45:04Z",
- "done": "NR1 part: Novig /v3/portfolio/pnl read by engine every 5 min (status walletPositionsValue/Cost, Engine Money line; PortfolioPnlTest); PropLine hot only while its stream is live (ReferenceSource.hotNow; HotRefreshTest)",
- "next": "NOVIG_API.md \u00a730 (per-subaccount throttles, pnl); then Kalshi/Polymarket/SX/ParlayAPI doc diffs"
+ "beat": 1792910875,
+ "beatIso": "2026-10-25T06:47:55Z",
+ "done": "NR1/PR1/FR1 done (api docs mirror run, Polymarket version fix, Novig per-subaccount throttles documented)",
+ "next": "full test suite, ship, release, engine reset, tell Tj"
 }
