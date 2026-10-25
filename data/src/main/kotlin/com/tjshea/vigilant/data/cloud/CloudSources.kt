@@ -15,16 +15,12 @@ import com.tjshea.vigilant.data.reference.KalshiClient
 import com.tjshea.vigilant.data.reference.OddsApiPropsSource
 import com.tjshea.vigilant.data.reference.OddsFeed
 import com.tjshea.vigilant.data.reference.OddsPapi4Client
-import com.tjshea.vigilant.data.reference.OddsPapiClient
-import com.tjshea.vigilant.data.reference.OddsPapiFeed
 import com.tjshea.vigilant.data.reference.Op4Budget
 import com.tjshea.vigilant.data.reference.Op4Catalog
 import com.tjshea.vigilant.data.reference.Op4Feed
 import com.tjshea.vigilant.data.reference.Op4GamesSource
 import com.tjshea.vigilant.data.reference.Op4PropsSource
 import com.tjshea.vigilant.data.reference.Op4Store
-import com.tjshea.vigilant.data.reference.OpGamesSource
-import com.tjshea.vigilant.data.reference.OpPropsSource
 import com.tjshea.vigilant.data.reference.ParlayInjuries
 import com.tjshea.vigilant.data.reference.ParlayPeriodSource
 import com.tjshea.vigilant.data.reference.ParlayPropsSource
@@ -39,10 +35,6 @@ import com.tjshea.vigilant.data.reference.SgoGamesSource
 import com.tjshea.vigilant.data.reference.SgoPropsSource
 import com.tjshea.vigilant.data.reference.SportsGameOddsClient
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
-import com.tjshea.vigilant.data.reference.UnabatedClient
-import com.tjshea.vigilant.data.reference.UnabatedFeed
-import com.tjshea.vigilant.data.reference.UnabatedGamesSource
-import com.tjshea.vigilant.data.reference.UnabatedPropsSource
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlinx.coroutines.CoroutineScope
@@ -80,15 +72,7 @@ class CloudSources(
     private val sgoGames = SgoGamesSource(sgoClient)
     private val sgoProps = SgoPropsSource(sgoClient, injuries = injuries)
 
-    private val opClient = OddsPapiClient(http, KeyPool(QuotaPolicy.ODDSPAPI, { keys(CloudKeys.ODDSPAPI) }, usage))
-    private val opFeed = OddsPapiFeed(opClient)
-    private val opGames = OpGamesSource(opFeed)
-    private val opProps = OpPropsSource(opFeed)
 
-    private val unabatedClient = UnabatedClient(http, { keys(CloudKeys.UNABATED) }, usage)
-    private val unabatedFeed = UnabatedFeed(unabatedClient, scope)
-    private val unabatedGames = UnabatedGamesSource(unabatedFeed)
-    private val unabatedProps = UnabatedPropsSource(unabatedFeed)
 
     private val op4Client = OddsPapi4Client(http, KeyPool(QuotaPolicy.ODDSPAPI_FREE, { keys(CloudKeys.ODDSPAPI_FREE) }, usage), { keys(CloudKeys.ODDSPAPI_FREE) })
     private val op4Budget = Op4Budget(op4Client)
@@ -215,8 +199,6 @@ class CloudSources(
     fun restartApi(id: String) {
         when (id) {
             "sgo" -> sgoClient.restart()
-            "oddspapi" -> opClient.restart()
-            "unabated" -> unabatedClient.restart()
             "boltodds" -> boltClient.restart()
             "sxbet" -> sxbet.restart()
             "sharpapi" -> sharpApiClient.restart()
@@ -284,7 +266,6 @@ class CloudSources(
     private fun has(name: String) = keys(name).isNotEmpty()
 
     fun sgoActive(s: ScanSettings) = s.sgoPro && has(CloudKeys.SGO) && !sgoClient.down()
-    fun opActive(s: ScanSettings) = s.oddsPapi && has(CloudKeys.ODDSPAPI) && !opClient.down()
     fun boltActive(s: ScanSettings) = s.gates.useBoltOdds && has(CloudKeys.BOLT)
     /** BoltOdds' soft-book average as Live light's second opinion on a moneyline (the phone's `confirm`); null while BoltOdds or its socket is off. */
     fun liveConfirm(s: ScanSettings): com.tjshea.vigilant.data.novig.lab.LiveConfirm? {
@@ -353,12 +334,11 @@ class CloudSources(
 
     @Volatile private var sxSocketWanted = false
 
-    fun unabatedActive(s: ScanSettings) = s.unabated && has(CloudKeys.UNABATED) && !unabatedClient.down()
     fun op4Active(s: ScanSettings) = s.oddsPapiFree && s.gates.op4Fair > 0 && has(CloudKeys.ODDSPAPI_FREE)
 
     private fun propsOf(s: ScanSettings, props: ReferenceSource): List<ReferenceSource> = if (MarketFamily.PLAYER_PROPS in s.families) listOf(props) else emptyList()
 
-    /** The flat-rate feeds that are on, SGO first, Unabated last; then the rest. Same order as the phone's list. */
+    /** The flat-rate feeds that are on, SGO first; then the rest. Same order as the phone's list. (Unabated and OddsPapi v5 were removed for good: Tj, 2026-10-25, PB3.) */
     /** The sockets the settings want, the others closed at once: nothing is held open or sent while a switch (or the GitHub / Phone live switch, [CloudEngine.forCloud]) says no. */
     fun applySockets(s: ScanSettings) {
         if (!boltActive(s) || !s.gates.boltSocket) boltFeed.close()
@@ -387,13 +367,11 @@ class CloudSources(
         pinnWireWanted = s.usePinnacle && s.gates.usePinnwire
         val front = buildList {
             if (sgoActive(s)) { add(sgoGames); addAll(propsOf(s, sgoProps)) }
-            if (opActive(s)) { add(opGames); addAll(propsOf(s, opProps)) }
             // BoltOdds: read from the sockets' boards, which costs nothing, so it is asked for every league it carries beside every other API that is on (as on the phone).
             if (boltActive(s)) { add(boltGames); addAll(propsOf(s, boltProps)) }
             if (op4Active(s)) { add(op4Games); addAll(propsOf(s, op4Props)) }
         }
-        val last = buildList { if (unabatedActive(s)) { add(unabatedGames); addAll(propsOf(s, unabatedProps)) } }
-        return front + base(s) + last
+        return front + base(s)
     }
 
     /**
@@ -480,9 +458,7 @@ class CloudSources(
 /** The repository secrets the engine reads (each may hold several keys, separated by commas, spaces or newlines). */
 object CloudKeys {
     const val SGO = "SGO_API_KEY"
-    const val ODDSPAPI = "ODDSPAPI_API_KEY"
     const val ODDSPAPI_FREE = "ODDSPAPI_FREE_API_KEY"
-    const val UNABATED = "UNABATED_API_KEY"
     const val SXBET = "SXBET_API_KEY"
     /** SharpAPI's key (Tj, 2026-10-21: the Sharp plan trial). Read only; it carries no trading. */
     const val SHARPAPI = "SHARPAPI_API_KEY"
@@ -525,12 +501,12 @@ object CloudKeys {
 
     /** The secret holding each meter's keys (the dashboard needs the keys' order to say which one is active). A policy with no secret here has no key on GitHub. */
     fun envFor(policyId: String): String? = when (policyId) {
-        "sgo" -> SGO; "oddspapi" -> ODDSPAPI; "oddspapi_free" -> ODDSPAPI_FREE; "unabated" -> UNABATED; "pinnwire" -> PINNWIRE; "pinnacle" -> PINNAPI; "pinnodds" -> PINNODDS
+        "sgo" -> SGO; "oddspapi_free" -> ODDSPAPI_FREE; "pinnwire" -> PINNWIRE; "pinnacle" -> PINNAPI; "pinnodds" -> PINNODDS
         "propline" -> PROPLINE; "oddsapi" -> ODDS_API; "parlay" -> PARLAY; "boltodds" -> BOLT; "sxbet" -> SXBET; "sharpapi" -> SHARPAPI
         else -> null
     }
 
-    val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, SXBET, SHARPAPI, PINNWIRE, PINNAPI, PINNODDS, PROPLINE, ODDS_API, PARLAY, BOLT)
+    val ALL = listOf(SGO, ODDSPAPI_FREE, SXBET, SHARPAPI, PINNWIRE, PINNAPI, PINNODDS, PROPLINE, ODDS_API, PARLAY, BOLT)
 
     /**
      * Which of the phone's keys go to which repository secret (the app sends them: Settings › Cloud scan › Send my API keys to GitHub; Tj, 2026-10-14). **Pinnodds is never in it** (its socket allows one
@@ -539,9 +515,7 @@ object CloudKeys {
      */
     val BY_PROVIDER: Map<com.tjshea.vigilant.data.keys.ApiProvider, String> = mapOf(
         com.tjshea.vigilant.data.keys.ApiProvider.SPORTSGAMEODDS to SGO,
-        com.tjshea.vigilant.data.keys.ApiProvider.ODDSPAPI to ODDSPAPI,
         com.tjshea.vigilant.data.keys.ApiProvider.ODDSPAPI_FREE to ODDSPAPI_FREE,
-        com.tjshea.vigilant.data.keys.ApiProvider.UNABATED to UNABATED,
         com.tjshea.vigilant.data.keys.ApiProvider.PINNWIRE to PINNWIRE,
         com.tjshea.vigilant.data.keys.ApiProvider.PINNAPI to PINNAPI,
         com.tjshea.vigilant.data.keys.ApiProvider.PROPLINE to PROPLINE,
