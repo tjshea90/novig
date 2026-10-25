@@ -45,8 +45,6 @@ fun providerFor(policy: QuotaPolicy): ApiProvider? = when (policy.id) {
     QuotaPolicy.PROPLINE.id -> ApiProvider.PROPLINE
     QuotaPolicy.PARLAY.id -> ApiProvider.PARLAY
     QuotaPolicy.SGO.id -> ApiProvider.SPORTSGAMEODDS
-    QuotaPolicy.ODDSPAPI.id -> ApiProvider.ODDSPAPI
-    QuotaPolicy.UNABATED.id -> ApiProvider.UNABATED
     QuotaPolicy.BOLTODDS.id -> ApiProvider.BOLTODDS
     QuotaPolicy.ODDSPAPI_FREE.id -> ApiProvider.ODDSPAPI_FREE
     else -> null
@@ -66,8 +64,6 @@ fun meterViews(state: UiState, now: Long): List<ProviderView> =
     // SportsGameOdds' card appears only once there is a key or the switch is on: with the feature unused the page is exactly what it was.
     QuotaPolicy.ALL.filter { AppBook.isNovig || it.id != QuotaPolicy.NOVIG.id }
         .filter { it.id != QuotaPolicy.SGO.id || state.sgoKeys.isNotEmpty() || state.settings.sgoPro }
-        .filter { it.id != QuotaPolicy.ODDSPAPI.id || state.opKeys.isNotEmpty() || state.settings.oddsPapi }
-        .filter { it.id != QuotaPolicy.UNABATED.id || state.unKeys.isNotEmpty() || state.settings.unabated }
         .filter { it.id != QuotaPolicy.BOLTODDS.id || state.boltKeys.isNotEmpty() || state.settings.gates.useBoltOdds }
         .filter { it.id != QuotaPolicy.ODDSPAPI_FREE.id || state.op4Keys.isNotEmpty() || state.settings.oddsPapiFree }
         .map { p -> UsageViews.build(p, keysFor(state, p), state.usage.providers[p.id], now, if (p.id == QuotaPolicy.PARLAY.id) PARLAY_PACE else null) }

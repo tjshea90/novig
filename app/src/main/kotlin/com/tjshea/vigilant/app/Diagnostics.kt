@@ -258,14 +258,12 @@ object Diagnostics {
         x.liveBidReport?.let { r -> o.appendLine(); o.append(r) }
         x.feedRace?.let { lines -> o.appendLine(); o.appendLine("== LIVE FEED TEST (which free feed shows a score or odds move before Novig's price; no orders; RESEARCH.md §106) =="); lines.forEach { o.appendLine(it) } }
         x.sgoReport?.let { lines -> o.appendLine(); o.appendLine("== SPORTSGAMEODDS PRO (SPORTSGAMEODDS_API.md) =="); lines.forEach { o.appendLine(it) } }
-        x.opReport?.let { lines -> o.appendLine(); o.appendLine("== ODDSPAPI (ODDSPAPI_API.md) =="); lines.forEach { o.appendLine(it) } }
         x.socketReport?.let { lines -> o.appendLine(); o.appendLine("== SOCKETS (Settings › APIs › Sockets: on = kept open for real-time prices; off with the API on = read by request) =="); lines.forEach { o.appendLine(it) } }
         x.calibrationReport?.let { lines -> o.appendLine(); o.appendLine("== FAIR CALIBRATION (is the fair line honest? win rate vs fair and close) =="); lines.forEach { o.appendLine(it) } }
         x.walletReport?.let { lines -> o.appendLine(); o.appendLine("== WALLET DEPLOYMENT (Bids › Keep the wallet working) =="); lines.forEach { o.appendLine(it) } }
         x.cloudEngineReport?.let { lines -> o.appendLine(); o.appendLine("== GITHUB ENGINE (its own heartbeat on the cloud-feed branch) =="); lines.forEach { o.appendLine(it) } }
         x.cloudBidsReport?.let { lines -> o.appendLine(); o.appendLine("== BIDS FROM GITHUB (the engine's candidate lines + this phone's Novig books) =="); lines.forEach { o.appendLine(it) } }
         x.boltReport?.let { lines -> o.appendLine(); o.appendLine("== BOLTODDS PRO (BOLTODDS_API.md) =="); lines.forEach { o.appendLine(it) } }
-        x.unabatedReport?.let { lines -> o.appendLine(); o.appendLine("== UNABATED FREE (UNABATED_API.md) =="); lines.forEach { o.appendLine(it) } }
         x.op4Report?.let { lines -> o.appendLine(); o.appendLine("== ODDSPAPI FREE v4 (ODDSPAPI_API.md addendum) =="); lines.forEach { o.appendLine(it) } }
         x.labReport?.let { lines -> o.appendLine(); o.appendLine("== PAPER LAB (ladder covers, late-game tail strikes, alternate lines; no orders; RESEARCH.md §120.6) =="); lines.forEach { o.appendLine(it) } }
         MakerStats.line(x.makerBids, now)?.let { o.appendLine("  $it") }

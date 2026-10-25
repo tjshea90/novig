@@ -41,8 +41,6 @@ object SettingsIndex {
         Entry("Use SportsGameOdds Pro", SettingsPage.SGO, "One paid feed for odds, props, closing lines and results, read alongside every other API you have on", "sportsgameodds sgo pro odds api feed key paid replace", novig),
         Entry("Add a SportsGameOdds key", SettingsPage.SGO, "Add, order and test your SportsGameOdds keys", "sportsgameodds sgo key api rotate test", novig),
         // OddsPapi (Tj, 2026-10-09)
-        Entry("Use OddsPapi", SettingsPage.ODDSPAPI, "A second paid feed for odds, props, closing lines and results, read alongside every other API you have on", "oddspapi odds papi 55-tech api feed key paid replace clv closing", novig),
-        Entry("Add an OddsPapi key", SettingsPage.ODDSPAPI, "Add, order and test your OddsPapi keys", "oddspapi odds papi key api rotate test trial", novig),
         // Every API in one place (Tj, 2026-10-11)
         Entry("Turn APIs on and off", SettingsPage.APIS, "One switch per API: an API that is off is never called anywhere", "api apis switch toggle on off enable disable pinnwire pinnapi propline parlay odds sgo oddspapi unabated kalshi polymarket pinnodds", novig),
                 Entry("Test active APIs", SettingsPage.APIS, "Tests the combination the switches make and reads one league through each source", "test combination active apis all", novig),
@@ -59,8 +57,6 @@ object SettingsIndex {
         // Unabated Free and OddsPapi Free v4 (Tj, 2026-10-11)
         Entry("Use SX Bet", SettingsPage.SXBET, "Switch SX Bet on or off; save a read-only SX Bet API key", "sx bet sxbet exchange sharp key api", novig),
         Entry("Use SharpAPI", SettingsPage.SHARPAPI, "Switch SharpAPI on or off; save your SharpAPI key", "sharpapi sharp api pinnacle circa bookmaker betfair prophetx key", novig),
-        Entry("Use Unabated (free)", SettingsPage.UNABATED, "Free lines and props from DraftKings, FanDuel, MGM, Caesars and more; fills in what the other feeds miss", "unabated free api feed key draftkings fanduel mgm caesars fallback", novig),
-        Entry("Add an Unabated key", SettingsPage.UNABATED, "Add, order and test your Unabated key", "unabated key api test free", novig),
         Entry("Use OddsPapi Free (v4)", SettingsPage.ODDSPAPI_FREE, "Your free OddsPapi key: Pinnacle closing lines for CLV from free historical odds", "oddspapi free v4 key api clv closing pinnacle historical", novig),
         Entry("Add an OddsPapi Free (v4) key", SettingsPage.ODDSPAPI_FREE, "Add and test the free-plan OddsPapi key (a v5 key goes under OddsPapi)", "oddspapi free v4 key api test", novig),
         // Research (Tj, 2026-10-09)

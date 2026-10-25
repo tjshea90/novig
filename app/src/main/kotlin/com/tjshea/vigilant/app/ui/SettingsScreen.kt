@@ -163,13 +163,11 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     KALSHI("Kalshi", "Exchange prices, free to read; your API key adds a real-time socket and a bigger read budget", SettingsGroup.FIND),
 
     /** OddsPapi v5: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). A page of [APIS]. */
-    ODDSPAPI("OddsPapi", "v5 (a trial or contract key): a second paid feed for odds, props, closing lines (CLV for any bet) and results, read alongside every other API you have on", SettingsGroup.FIND),
 
     /** Unabated's FREE API: soft-book lines and props at no credit cost, the last source in line (Tj, 2026-10-11). A page of [APIS]. */
     SXBET("SX Bet", "An exchange read as a sharp source: public markets, free read-only key for the prices", SettingsGroup.FIND),
     /** SharpAPI's Sharp plan (Tj, 2026-10-21; SHARPAPI.md): 25 books incl. Pinnacle, Circa, Bookmaker, Betfair, ProphetX, kept current on the GitHub engine. A page of [APIS]. */
     SHARPAPI("SharpAPI", "Sharp plan: Pinnacle, Circa, Bookmaker, Betfair, ProphetX and more, kept current on GitHub every 2 seconds", SettingsGroup.FIND),
-    UNABATED("Unabated (free)", "Free lines and props from DraftKings, FanDuel, MGM, Caesars and more; fills in what the other feeds miss", SettingsGroup.FIND),
 
     /** OddsPapi's FREE v4 plan: Pinnacle closing lines for CLV from free historical odds (Tj, 2026-10-11). A page of [APIS]. */
     ODDSPAPI_FREE("OddsPapi Free (v4)", "Your free OddsPapi key: Pinnacle closing lines for CLV, spending almost none of its monthly requests", SettingsGroup.FIND),
@@ -208,7 +206,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** The page this one belongs to, or null for a page on the Settings home list: the APIs' own pages and their usage details open from APIs & keys and go back to it. */
     val parent: SettingsPage?
         get() = when (this) {
-            SGO, BOLTODDS, KALSHI, SXBET, SHARPAPI, ODDSPAPI, UNABATED, ODDSPAPI_FREE, PINNACLE, PROPLINE, PARLAY, ODDS_API, USAGE -> APIS
+            SGO, BOLTODDS, KALSHI, SXBET, SHARPAPI, ODDSPAPI_FREE, PINNACLE, PROPLINE, PARLAY, ODDS_API, USAGE -> APIS
             else -> null
         }
 
@@ -216,7 +214,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     fun shownIn(s: ScanSettings): Boolean = when (this) {
         CNO -> s.cnoOn
         FEED, FAIR -> s.vigilantOn
-        ALERTS, RESEARCH, SGO, BOLTODDS, KALSHI, SXBET, SHARPAPI, ODDSPAPI, UNABATED, ODDSPAPI_FREE -> AppBook.isNovig
+        ALERTS, RESEARCH, SGO, BOLTODDS, KALSHI, SXBET, SHARPAPI, ODDSPAPI_FREE -> AppBook.isNovig
         APIS -> true
         // Central sections of their own since 2026-10-16 (the Engine and Claude tabs): not Settings pages any more.
         DASHBOARD, CHAT, MESSAGES -> false
@@ -296,11 +294,6 @@ object SettingsSummary {
                 s.sgoPro -> "On: ${state.sgoKeys.size} key${if (state.sgoKeys.size == 1) "" else "s"}, read alongside every other API that is on"
                 else -> "Off (key saved)"
             }
-            SettingsPage.ODDSPAPI -> when {
-                state.opKeys.isEmpty() -> "No key saved"
-                s.oddsPapi -> "On: ${state.opKeys.size} key${if (state.opKeys.size == 1) "" else "s"}, read alongside every other API that is on"
-                else -> "Off (key saved)"
-            }
             SettingsPage.APIS -> {
                 val on = com.tjshea.vigilant.app.ApiEntry.active(s).size
                 val keys = com.tjshea.vigilant.data.keys.ApiProvider.entries.sumOf { state.keysOf(it).size }
@@ -329,11 +322,6 @@ object SettingsSummary {
             SettingsPage.SHARPAPI -> when {
                 state.sharpKeys.isEmpty() -> "No key saved"
                 s.gates.useSharpApi -> "On: Pinnacle, Circa and 23 more books"
-                else -> "Off (key saved)"
-            }
-            SettingsPage.UNABATED -> when {
-                state.unKeys.isEmpty() -> "No key saved"
-                s.unabated -> "On: free lines and props, last in line"
                 else -> "Off (key saved)"
             }
             SettingsPage.ODDSPAPI_FREE -> when {
@@ -476,7 +464,6 @@ fun SettingsScreen(
                 SettingsPage.LIVEBIDS -> LiveBidPage(state, reportActions, onUpdate)
                 SettingsPage.RESEARCH -> ResearchPage(state, reportActions, onUpdate)
                 SettingsPage.SGO -> SgoPage(state, keys, reportActions, onUpdate)
-                SettingsPage.ODDSPAPI -> OddsPapiPage(state, keys, reportActions, onUpdate)
                 SettingsPage.APIS -> ApisPage(state, reportActions, onUpdate, onOpenPage = go)
                 SettingsPage.PINNACLE -> PinnaclePage(state, keys, onUpdate)
                 SettingsPage.PROPLINE -> PropLinePage(state, keys, onUpdate)
@@ -484,7 +471,6 @@ fun SettingsScreen(
                 SettingsPage.ODDS_API -> OddsApiPage(state, keys, onUpdate)
                 SettingsPage.SXBET -> SxBetPage(state, keys, onUpdate)
                 SettingsPage.SHARPAPI -> SharpApiPage(state, keys, onUpdate)
-                SettingsPage.UNABATED -> UnabatedPage(state, keys, reportActions, onUpdate)
                 SettingsPage.BOLTODDS -> BoltOddsPage(state, keys, reportActions, onUpdate)
                 SettingsPage.KALSHI -> KalshiPage(state, reportActions, onUpdate)
                 SettingsPage.ODDSPAPI_FREE -> OddsPapiFreePage(state, keys, reportActions, onUpdate)
@@ -1499,32 +1485,6 @@ private fun ColumnScope.SgoPage(state: UiState, keys: KeyActions, reportActions:
  * switch. On, the scan, bids, open-bet pricing, closing lines (CLV for any bet) and grading read OddsPapi too, beside every other API that is on (none rests for it). Off: it is never called.
  */
 @Composable
-private fun ColumnScope.OddsPapiPage(state: UiState, keys: KeyActions, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
-    val s = state.settings
-    Intro(com.tjshea.vigilant.app.OpText.INTRO)
-    KeyListEditor(ApiProvider.ODDSPAPI, state.opKeys, keys, "Add an OddsPapi key")
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
-        Button(onClick = { reportActions.onTestOpKey(false) }, enabled = state.opKeys.isNotEmpty() && !state.opKeyBusy, modifier = Modifier.testTag("opTestKey")) {
-            Text(if (state.opKeyBusy) "Testing…" else "Test key")
-        }
-        androidx.compose.material3.OutlinedButton(onClick = { reportActions.onTestOpKey(true) }, enabled = state.opKeys.isNotEmpty() && !state.opKeyBusy, modifier = Modifier.testTag("opShareSample")) {
-            Text("Test and share sample")
-        }
-    }
-    state.opKeyNote?.let {
-        Text(
-            it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("opKeyNote"),
-            color = if (state.opKeyOk == true) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
-        )
-    }
-    SwitchRow(com.tjshea.vigilant.app.OpText.SWITCH_TITLE, com.tjshea.vigilant.app.OpText.switchSub(state.opKeys.isNotEmpty()), s.oddsPapi, tag = "oddsPapiSwitch") { v -> onUpdate { it.copy(oddsPapi = v) } }
-    if (s.oddsPapi) {
-        SwitchRow("Extra books: Circa, SuperBook, bet365", "Price the fair line with them too (each must show both sides and be fresh, like every book).", s.opExtraBooks, tag = "opExtraSwitch") { v -> onUpdate { it.copy(opExtraBooks = v) } }
-        SwitchRow("Every book for the fair average", "Price the fair line with every book OddsPapi carries, not just the books picked in Settings: each is devigged on its own and averaged (Market average / Blend), regional clones of one operator count once, and wide-margin or stale books are still left out. Heavier replies.", s.gates.opAllBooks, tag = "opAllBooksSwitch") { v -> onUpdate { it.copy(gates = it.gates.copy(opAllBooks = v)) } }
-        SwitchRow("Alternate lines", "Read every game in depth for each book's alternate spreads and totals (one request a game). Off: the main lines of a whole league come in one request.", s.opAltLines, tag = "opAltSwitch") { v -> onUpdate { it.copy(opAltLines = v) } }
-        Hint(com.tjshea.vigilant.app.OpText.REPLACES)
-    }
-}
 
 /**
  * Settings › Cloud scan (Tj, 2026-10-14): "use the phone only to set the settings and retrieve the scanned results. GitHub will provide all the power." The scan runs in a GitHub Actions job
@@ -1733,27 +1693,6 @@ private fun ColumnScope.BoltOddsPage(state: UiState, keys: KeyActions, reportAct
  * line and prices only the lines no better feed sent. Off: the app as it was.
  */
 @Composable
-private fun ColumnScope.UnabatedPage(state: UiState, keys: KeyActions, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
-    val s = state.settings
-    Intro(com.tjshea.vigilant.app.UnabatedText.INTRO)
-    KeyListEditor(ApiProvider.UNABATED, state.unKeys, keys, "Add an Unabated key")
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
-        Button(onClick = { reportActions.onTestUnabatedKey(false) }, enabled = state.unKeys.isNotEmpty() && !state.unKeyBusy, modifier = Modifier.testTag("unTestKey")) {
-            Text(if (state.unKeyBusy) "Testing…" else "Test key")
-        }
-        androidx.compose.material3.OutlinedButton(onClick = { reportActions.onTestUnabatedKey(true) }, enabled = state.unKeys.isNotEmpty() && !state.unKeyBusy, modifier = Modifier.testTag("unShareSample")) {
-            Text("Test and share sample")
-        }
-    }
-    state.unKeyNote?.let {
-        Text(
-            it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("unKeyNote"),
-            color = if (state.unKeyOk == true) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
-        )
-    }
-    SwitchRow(com.tjshea.vigilant.app.UnabatedText.SWITCH_TITLE, com.tjshea.vigilant.app.UnabatedText.switchSub(state.unKeys.isNotEmpty()), s.unabated, tag = "unabatedSwitch") { v -> onUpdate { it.copy(unabated = v) } }
-    if (s.unabated) Hint(com.tjshea.vigilant.app.UnabatedText.NOTES)
-}
 
 /**
  * Settings › SX Bet (Tj, 2026-10-18; SXBET_API.md): the read-only API key (scope "Market data: read" only, made at sx.bet > Account > API) and the one switch. On, SX Bet's exchange odds join the sharp books;

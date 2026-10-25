@@ -53,7 +53,7 @@ private const val DASHBOARD_URL = "https://github.com/tjshea90/novig/blob/cloud-
 @Composable
 fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Modifier = Modifier, section: EngineSection? = null, kalshi: com.tjshea.vigilant.app.kalshi.KalshiMoney? = null, onTestApi: (String) -> Unit = {}, onRetryApi: (String) -> Unit = {}) {
     val now = rememberNow(1_000)
-    val meters = remember(state.usage, state.cloudUsage, state.settings.sgoPro, state.settings.oddsPapi, state.settings.unabated, state.settings.gates.useBoltOdds, state.settings.oddsPapiFree, now / 30_000L) {
+    val meters = remember(state.usage, state.cloudUsage, state.settings.sgoPro, state.settings.gates.useBoltOdds, state.settings.oddsPapiFree, now / 30_000L) {
         meterViews(state, now)
     }
     val u = state.cloudUi

@@ -101,9 +101,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         get() = when (this) {
             SGO -> com.tjshea.vigilant.app.ui.SettingsPage.SGO
             BOLTODDS -> com.tjshea.vigilant.app.ui.SettingsPage.BOLTODDS
-            ODDSPAPI -> com.tjshea.vigilant.app.ui.SettingsPage.ODDSPAPI
             ODDSPAPI_FREE -> com.tjshea.vigilant.app.ui.SettingsPage.ODDSPAPI_FREE
-            UNABATED -> com.tjshea.vigilant.app.ui.SettingsPage.UNABATED
             PARLAY -> com.tjshea.vigilant.app.ui.SettingsPage.PARLAY
             PROPLINE -> com.tjshea.vigilant.app.ui.SettingsPage.PROPLINE
             ODDS_API -> com.tjshea.vigilant.app.ui.SettingsPage.ODDS_API
