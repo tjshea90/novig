@@ -857,7 +857,7 @@ internal data class PlMarket(
                 else -> return@mapNotNull null
             }
             val point = o.point ?: if (yesNo) 0.5 else return@mapNotNull null
-            Leg(player, point, over, PropLineClient.decimal(o.price) ?: return@mapNotNull null, PropLineClient.ms(o.last_seen_at), o.book_outcome_id?.takeIf { it.isNotBlank() })
+            Leg(player, point, over, PropLineClient.decimal(o.price) ?: return@mapNotNull null, PropLineClient.ms(o.last_seen_at), o.book_outcome_id?.takeIf { it.isNotBlank() }, o.outcomeId)
         }
         return legs.groupBy { PlayerNames.key(it.player) to it.point }.values.mapNotNull { group ->
             val over = group.singleOrNull { it.over } ?: return@mapNotNull null
