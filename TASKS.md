@@ -6407,3 +6407,4 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [x] SG5 (v1.0.80 released; live cap $3 set by engine_set.py; engine reset) setting in Settings (Bids/Auto-bet repeat guard), engine mirrored (CloudScanKey), live value set with engine_set.py; CHANGES.md line; ship + release.
 
 - [ ] CH88 (Tj 01:57 UTC 2026-10-25): bids thousands: find the rule holding back bid volume (desk deskNote, similar-bets $3 cap, books-agree), loosen only what data supports; answered in chat what bids are priced from.
+- [ ] CH89 (Tj 02:10 UTC): Stats card: realized ROI/CLV of Tj's settled bets by star (with error bars) to check the SX star scale against his own history; do NOT map stars to his raw ROI (noise).
