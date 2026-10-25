@@ -99,6 +99,28 @@ class Archive:
             self.novig[self.gkey(r) + (r["outcome_name"],)] = {
                 "close": num(r.get("closing_price")), "price": num(r.get("price_american")), "resolution": r.get("resolution"), "actual": r.get("actual_value"), "line": num(r.get("line"))}
 
+    def novig_row(self, eid, market, team, player, point, outcome):
+        """Novig's own row for one side (its close and its grade), found by event, market, team, player, number and side: never through Pinnacle's market label, which differs between books
+        (PS3 2026-10-25: matching through it left every PropLine +EV bet ungraded)."""
+        if self._nov_by is None:
+            self._nov_by = defaultdict(list)
+            for k, v in self.novig.items():
+                self._nov_by[(k[0], k[1])].append((k, v))
+        want = abs(point) if (market == "spreads" and point is not None) else point
+        for k, v in self._nov_by.get((eid, market), []):
+            if team and not same_team(k[3], team):
+                continue
+            if player and not same_team(k[4], player):
+                continue
+            if market == "totals" and bool(k[3]) != bool(team):
+                continue
+            cp = num(k[5])
+            if want is not None and (cp is None or abs(cp - want) > 1e-9):
+                continue
+            if k[6].lower() == outcome.lower() or same_team(k[6], outcome):
+                return v
+        return None
+
     def load(self, paths):
         for p in paths:
             for r in read_csv(p):
@@ -169,6 +191,10 @@ def grade_bet(arch, row):
         out["pl_status"] = why
         return out
     out["pl_event_id"] = eid
+    nov = arch.novig_row(eid, market, team, player, point, outcome)
+    if nov:
+        out["pl_resolution"] = nov.get("resolution") or ""
+        out["pl_actual"] = nov.get("actual") or ""
     # the PropLine groups of this event and market
     cands = [k for k in arch.pinn if k[0] == eid and k[1] == market and (not team or same_team(k[3], team)) and (not player or same_team(k[4], player)) and (market != "totals" or bool(k[3]) == bool(team))]
     if market == "h2h":
@@ -215,19 +241,12 @@ def grade_bet(arch, row):
     if cost:
         out["pl_close_fair"] = round(fair[side], 5)
         out["clv_pinn"] = round(fair[side] / cost - 1, 5)
-    nov = None
-    for k, v in arch.novig.items():
-        if k[:6] == pick[:5] + (pick[5],) and (k[6].lower() == outcome.lower() or same_team(k[6], outcome)):
-            nov = v
-            break
     if nov and nov["close"] is not None:
         out["pl_novig_close_price"] = nov["close"]
         ncost = implied(nov["close"])
         out["pl_novig_close_cost"] = round(ncost, 5)
         if cost:
             out["beat_novig_close"] = 1 if cost < ncost else 0
-        out["pl_resolution"] = nov.get("resolution") or ""
-        out["pl_actual"] = nov.get("actual") or ""
     return out
 
 
