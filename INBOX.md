@@ -1208,3 +1208,8 @@ Audit the two new streaming sockets- propline and parlayapi.
 
 After these are done, complete everything you noted for tasks.md and release everything in the next version
 ```
+
+## 2026-10-25T14:28:07Z
+```
+https://parlay-api.com/cookbook
+```
