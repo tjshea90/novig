@@ -671,6 +671,12 @@ fun OpportunityCard(
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             LosingTypeBanner(losingTypeOf(o))
+            // The red X (Tj, 2026-10-25): this side, or a bet just like it, is already held by anyone (you, the engine, a bid).
+            if (venue == null) {
+                val held = LocalHeldPositions.current
+                val cap = settings.gates.repeatMaxFamilyDollars
+                HeldStrip(remember(o.key, held, cap) { heldShortOf(held, o, if (settings.gates.repeatGuard) cap else 0.0) })
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 EvBadge(q.evPercent)
                 Spacer(Modifier.width(8.dp))
@@ -925,9 +931,29 @@ fun LosingTypeBanner(reason: String?, modifier: Modifier = Modifier, title: Stri
 /** What this phone holds as positions, for the bet slip's red X: the Tracker's open bets, the engine's open orders and resting bids (Tj, 2026-10-22). */
 val LocalHeldPositions = androidx.compose.runtime.staticCompositionLocalOf<List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos>> { emptyList() }
 
-/** Why [o] is already held (the same side, or another line of its team, player or prop in this game); null when it is not. */
-fun heldWhyOf(held: List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos>, o: Opportunity): String? =
-    com.tjshea.vigilant.data.tracker.RepeatGuard.heldWhy(held, o.outcome.outcomeId, com.tjshea.vigilant.data.tracker.RepeatGuard.family(o.event.description, o.event.startsTs, o.marketLabel, o.selection))
+/** Why [o] is already held (the same side, or a bet just like it in this game, by anyone), with what is left under the similar-bets limit [cap]; null when it is not. */
+fun heldWhyOf(held: List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos>, o: Opportunity, cap: Double = 0.0): String? =
+    com.tjshea.vigilant.data.tracker.RepeatGuard.heldWhy(held, o.outcome.outcomeId, com.tjshea.vigilant.data.tracker.RepeatGuard.family(o.event.description, o.event.startsTs, o.marketLabel, o.selection), cap)
+
+/** The card's one-line form of [heldWhyOf]. */
+fun heldShortOf(held: List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos>, o: Opportunity, cap: Double = 0.0): String? =
+    com.tjshea.vigilant.data.tracker.RepeatGuard.heldShort(held, o.outcome.outcomeId, com.tjshea.vigilant.data.tracker.RepeatGuard.family(o.event.description, o.event.startsTs, o.marketLabel, o.selection), cap)
+
+/** A +EV card's red X: one line saying it (or a bet just like it) is already held. Nothing when [text] is null. */
+@Composable
+fun HeldStrip(text: String?) {
+    if (text == null) return
+    Row(
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp).testTag("heldStrip"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(20.dp).background(MaterialTheme.colorScheme.error, CircleShape), contentAlignment = Alignment.Center) {
+            Icon(Icons.Filled.Close, contentDescription = "Already held", tint = MaterialTheme.colorScheme.onError, modifier = Modifier.size(15.dp))
+        }
+        Spacer(Modifier.width(8.dp))
+        Text(text, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    }
+}
 
 /** The warning for an Opportunity / a CNO row / a PropLine line (null = this type has not lost). */
 fun losingTypeOf(o: Opportunity): String? = com.tjshea.vigilant.data.scanner.ProfitProfile.losingType(o.league.novigName, com.tjshea.vigilant.data.scanner.BetKind.of(o.marketLabel, o.selection).label, o.selection)

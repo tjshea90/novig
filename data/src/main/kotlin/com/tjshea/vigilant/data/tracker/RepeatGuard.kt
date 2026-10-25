@@ -115,6 +115,21 @@ object RepeatGuard {
         return "Already held on $what${labels(similar)}: $whom.$left"
     }
 
+    /** [heldWhy] in one short line for a card: "Already held: $2.38 (you 2, engine bids) · limit $3: $0.62 left". */
+    fun heldShort(held: List<Pos>, outcomeId: String, family: String, cap: Double = 0.0): String? {
+        if (outcomeId.isBlank()) return null
+        val similar = held.filter { it.outcomeId == outcomeId || (family.isNotBlank() && it.family == family) }
+        if (similar.isEmpty()) return null
+        val dollars = similar.sumOf { it.dollars }
+        val whom = buildList {
+            similar.filter { it.who == Who.HAND }.sumOf { it.count }.let { if (it > 0) add("you $it") else if (similar.any { p -> p.who == Who.HAND }) add("you") }
+            similar.filter { it.who == Who.AUTO }.sumOf { it.count }.let { if (it > 0) add("engine $it") }
+            if (similar.any { it.who == Who.BID }) add("bids")
+        }.joinToString(", ")
+        val left = if (cap > 0.0) " · limit ${money(cap)}: ${if (dollars >= cap - EPS) "reached" else "${money(cap - dollars)} left"}" else ""
+        return "Already held${if (similar.none { it.outcomeId == outcomeId }) " (a bet just like it)" else ""}: ${money(dollars)} ($whom)$left"
+    }
+
     /** Whether a BET (Tj's by hand, or an automatic one) is held on [outcomeId] or on one just like it ([family]): then no bid goes up there and a resting one comes down. */
     fun betHeld(held: List<Pos>, outcomeId: String, family: String): Boolean =
         held.any { it.who != Who.BID && (it.outcomeId == outcomeId || (family.isNotBlank() && it.family == family)) }

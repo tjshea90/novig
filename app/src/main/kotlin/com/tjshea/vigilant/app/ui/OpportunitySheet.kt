@@ -108,7 +108,7 @@ fun OpportunityDetail(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                LosingTypeBanner(heldWhyOf(LocalHeldPositions.current, o), Modifier.padding(bottom = 8.dp), title = "ALREADY HELD: do not repeat this bet", tag = "alreadyHeldBanner")
+                LosingTypeBanner(heldWhyOf(LocalHeldPositions.current, o, if (settings.gates.repeatGuard) settings.gates.repeatMaxFamilyDollars else 0.0), Modifier.padding(bottom = 8.dp), title = "ALREADY HELD: this or a bet just like it", tag = "alreadyHeldBanner")
                 LosingTypeBanner(losingTypeOf(o), Modifier.padding(bottom = 8.dp))
                 Text(o.selection, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 StarRating(o.rating, large = true, adjusted = adjustedStarsOf(settings, o, System.currentTimeMillis()))
