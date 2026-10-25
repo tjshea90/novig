@@ -329,7 +329,15 @@ fun main(args: Array<String>) = runBlocking {
             cancelStrays = false, newClientId = com.tjshea.vigilant.data.novig.trading.maker.MakerDesk::engineClientId, keepEndedMs = 20 * 60_000L,
             extraHeld = {
                 // Bid fills are mirrored into the ledger (onFills), so its keys cover the desk's own bets.
-                com.tjshea.vigilant.data.cloud.TradePositions.of(trader.ledger.entries.filter { !it.note.startsWith("bid") }) + accountHeld.extraBeyond(com.tjshea.vigilant.data.cloud.TradePositions.knownQty(trader.ledger.entries))
+                // What Novig holds beyond the ledger is Tj's (by hand); a fill the desk has that the ledger does not mirror yet is the desk's, not his.
+                val entries = trader.ledger.entries
+                val known = HashMap(com.tjshea.vigilant.data.cloud.TradePositions.knownQty(entries))
+                val ledgerBids = com.tjshea.vigilant.data.cloud.TradePositions.knownQty(entries.filter { it.note.startsWith("bid") })
+                for ((key, filled) in deskStore.all().filter { it.filled > 0 }.groupBy { it.outcomeId + "|" + it.marketId }.mapValues { (_, v) -> v.sumOf { it.filled.toLong() } }) {
+                    val more = filled - (ledgerBids[key] ?: 0L)
+                    if (more > 0L) known[key] = (known[key] ?: 0L) + more
+                }
+                com.tjshea.vigilant.data.cloud.TradePositions.of(entries.filter { !it.note.startsWith("bid") }) + accountHeld.extraBeyond(known)
             },
         )
         com.tjshea.vigilant.data.cloud.CloudBidRunner(

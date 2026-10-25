@@ -247,7 +247,9 @@ class MakerDesk(
     /** How long an ended bid that never filled stays in the store ([MakerStore.KEEP_MS] unless set): the engine's desk keeps them only a few minutes so the document it rewrites stays small. */
     private val keepEndedMs: Long = MakerStore.KEEP_MS,
     /** Positions held elsewhere (the engine's auto-bet and live buys, from its ledger, which survives a restart) that the repeat guard counts beside this desk's own bets and bids. */
-    private val extraHeld: () -> List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = { emptyList() },
+    private val extraHeld: suspend () -> List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = { emptyList() },
+    /** Order ids of fills this desk's tracker holds that [extraHeld] already counts (the phone imports the engine's fills): left out of the tracker's side so nothing counts twice. */
+    private val heldSkip: () -> Set<String> = { emptySet() },
 ) {
     /** The ids of the orders another desk placed: [orderIds] by Novig's id, [clientIds] by the id they were sent with (an order whose answer never came has only that one). */
     data class OtherOrders(val orderIds: Set<String>, val clientIds: Set<String>) {
@@ -379,7 +381,7 @@ class MakerDesk(
             wanted = decisions.filterIsInstance<MakerDecision.Post>(), resting = resting, rules = rules, now = now,
             skips = decisions.filterIsInstance<MakerDecision.Skip>().associate { it.line.outcomeId to it.why }, stopAll = stopAll, budget = budget,
             repost = autoPost, partial = partial, reachUntilMs = reachUntilMs, heldItems = GameExposure.items(bets) + GameExposure.bidItems(others), onTheWay = comingDown(allBids),
-            held = if (rules.repeat != null) com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(bets) + com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(others) + runCatching(extraHeld).getOrDefault(emptyList()) else emptyList(),
+            held = if (rules.repeat != null) com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(bets, heldSkip()) + com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(others) + extraHeldNow() else emptyList(),
         )
         val noReplace = HashSet<String>()
         val cancelled = withContext(NonCancellable) { runCancels(actions.cancels, problems, fills, noReplace) }
@@ -602,6 +604,15 @@ class MakerDesk(
     }
 
     /** The bids resting on Novig as the plan sees them (a bid with no order id yet isn't one: it's in the budget as up, but nothing can cancel it). */
+    /** [extraHeld], or nothing when it fails (a guard never stops the desk). */
+    private suspend fun extraHeldNow(): List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = try {
+        extraHeld()
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (_: Exception) {
+        emptyList()
+    }
+
     private fun restingOf(bids: List<MakerBid>): List<RestingBid> = bids.filter { it.resting && it.orderId != null }.map(::restingBid)
 
     /** Bids whose cancel is in flight: still on Novig's book until it confirms ([MakerPlan.plan]'s onTheWay: no new bid goes up that would trade with one). */
