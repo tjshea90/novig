@@ -1105,3 +1105,63 @@ Make the following changes in addition to the original prompt:
 8) audit the settings in the app. Some seem confusing to me. Simplify them where possible. Make sure settings do not contradict with each other. Anywhere there are cards to select numbers or values, allow me to also type in a manual value for maximum customization. 
 9) I left my phone on overnight with the screen locked, and vigilant app used a lot of battery. Make it so the app properly sleeps once it has been in the background a while. If I swipe it closed and don't have it open, the GitHub engine should still run the system by itself, as the phone app is only a monitor and control center. Therefore, audit the battery, ram, and CPU usage when I swipe the app closed. It should be minimal to 0. I want no battery or CPU or RAM wasted when the app isn't open. Put the app to sleep.
 ```
+
+## 2026-10-25T08:04:51Z
+```
+Another Claude account already started and almost finished the following prompts and attached screenshots. Read them and see if you can continue and finish where the other Claude session was interrupted by usage. Also check for new prompts that weren't sent to the other Claude account and finish those tasks also: 
+
+I have upgraded to parlayapi business. It uses the same key already on GitHub, but includes additional features and limits sse and websocket. Review the following docs thoroughly: 
+
+https://parlay-api.com/blog/building-betting-agent-claude-2026-05-19
+
+https://parlay-api.com/openapi.json
+
+https://parlay-api.com/docs/versioning
+
+https://parlay-api.com/docs/best-practices
+
+https://parlay-api.com/changelog
+
+https://parlay-api.com/integrations
+
+https://parlay-api.com/llms.txt
+
+https://parlay-api.com/docs
+
+https://parlay-api.com/docs#websocket-odds
+
+https://parlay-api.com/docs#websocket-live
+
+I am paying for the business plan, and I want the GitHub engine, Claude , and the android app to take full advantage of all the features, speed, and accuracy, including full usage of the sse and/or websocket. I want the GitHub engine to run 24/7 connected to parlayapi business and propline streaming lite. 
+
+1) thoroughly review and research the docs and llms file for parlayapi, especially the business tier and streaming capabilities.
+2) implement all the additional features, changes, upgrades, and higher limits and functions in the app and GitHub engine. This should include features, speed, correct commands and prompts, grading features, clv features, all available sports books offered, live odds and scores, etc. implement the bookmaker freshness endpoints and show in the app and engine how fresh the odds are and filter out stale odds 
+3) make full use of the added limits, sse and/or websocket. 
+
+
+Make sure to do this entire prompt which I sent earlier: 
+
+Make the following changes in addition to the original prompt: 
+
+1) sharpapi is now the free tier, 12 requests per minute, 2 books. Make the app and GitHub engine use what the sharpapi free tier offers according to the sharpapi docs. This will require downgrading features and limits 
+2) pinnodds is now permanently a free trial with no websocket. Downgrade the API usage to fit what it offers on the free trial tier according to the pinnodds docs. 
+3) remove unabated and oddspapiv5 from the app and GitHub engine entirely. Do not waste any usage on them, I will not subscribe to them. 
+4) keep boltodds turned off indefinitely and don't waste usage on it by the GitHub engine or app. Keep it available to turn on in case I get it in the future. 
+5) make sure if I toggle any API off, the GitHub engine and app totally ignore it and do not try to call or use it at all. They should not waste any usage on an API toggled off. It should be as though it doesn't exist.
+
+6) use all the sockets and full speed of the sockets by default for the freshest odds and prices.
+7) make the GitHub engine run 24/7 by default, with regular check-ins by Claude for maintenance and tuning.
+8) audit the settings in the app. Some seem confusing to me. Simplify them where possible. Make sure settings do not contradict with each other. Anywhere there are cards to select numbers or values, allow me to also type in a manual value for maximum customization. 
+9) I left my phone on overnight with the screen locked, and vigilant app used a lot of battery. Make it so the app properly sleeps once it has been in the background a while. If I swipe it closed and don't have it open, the GitHub engine should still run the system by itself, as the phone app is only a monitor and control center. Therefore, audit the battery, ram, and CPU usage when I swipe the app closed. It should be minimal to 0. I want no battery or CPU or RAM wasted when the app isn't open. Put the app to sleep.
+
+Make sure the GitHub engine defaults to the parlayapi business plan key and stays connected to that one 
+
+currently, the vigilant scanner only does periodic scans. consider if this should be upgraded for constant, real time scanning utilizing the full power and speed of both propline and parlayapi sockets, comparing those fresh odds to novigs bbo socket fresh prices in real time with low latency. for example, instead of scheduled scans, the scanner system would constantly keep real time data 24/7 and post positive EV bets immediately when found. also, this could fix the bets disappearing in the scanned list problem by simply keeping positive EV bets in the scanned results until the real time feeds from the books say it is no longer positive EV, or the real time novig socket says it is no longer available at the listed price. basically, all bets listed in the scanner should be real time information.
+
+also, make sure the auto bet and bid system take full advantage of all of the sockets for adapting to real time line and price changes and altering or cancelling bids according to the freshest fair odds and movements and auto betting favorable odds as quickly as possible if the odds lag the fresh line movements from the socket from other books (steam), especially sharp book steam 
+
+review the screenshot attached. why are the fair odds 9 minutes old if it is using the sockets? and why is my phone asking novig for the current price every 15 seconds? can't the GitHub engine do this in real time over the socket? and if not I'm real time  shouldn't the GitHub engine do it instead of my phone anyway?
+finally, consider the delay from scanned bets and other information found on GitHub engine to the time GitHub data and scanned bets reaches my phone. it is a significant delay? is there a better way for a more real time connection with low latency between my phone and the GitHub engine
+
+make sure all functions and features that were provided by apis which have since been paused or discontinued can be recovered as much as possible from the features offered by the apis I still have, included but not limited to, grading and results, clv studies, sports book coverage, etc. propline and parlayapi offer most or all of these features. I have paid plans for both apis, use them to their full benefit.
+```
