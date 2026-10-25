@@ -8,7 +8,8 @@ git fetch -q --depth 1 origin phone-data cloud-feed || exit 1
 mkdir -p in/bets out/grade
 for f in $(git ls-tree --name-only origin/phone-data phone/bets/ | grep '/bets-.*\.jsonl$'); do git show "origin/phone-data:$f" > "in/bets/$(basename "$f")"; done
 git show origin/cloud-feed:trades.json > in/trades.json 2>/dev/null || echo '{}' > in/trades.json
-python3 -I tools/propline_grade.py run --bets in/bets --trades in/trades.json --out out/grade || exit 1
+gh release download propline-grade -p graded.csv.gz -D in --clobber >/dev/null 2>&1 || true
+python3 -I tools/propline_grade.py run --bets in/bets --trades in/trades.json --out out/grade --previous in/graded.csv.gz || exit 1
 if [ -f out/grade/SUMMARY.md ]; then
   gh release view propline-grade >/dev/null 2>&1 || gh release create propline-grade --title "Real bets graded by PropLine's closing line" --notes "Tj's hand bets, the phone's auto-bets and the engine's bets and bids, graded by PropLine POST /v1/clv/grade (tools/propline_grade.py). Replaced each run."
   gh release upload propline-grade out/grade/* --clobber

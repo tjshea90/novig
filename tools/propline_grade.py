@@ -234,7 +234,26 @@ FIELDS = ["ref", "who", "league", "kind", "event", "market", "selection", "ameri
           "closing_fair_prob", "clv_pct", "ev_vs_close_pct", "beat_close", "resolution"]
 
 
-def run(bets_dir, trades, outdir):
+GRADE_FIELDS = ("matched", "closing_price", "closing_point", "closing_is_final", "fair_source", "closing_fair_prob", "clv_pct", "ev_vs_close_pct", "beat_close", "resolution")
+
+# PropLine allows 20 requests in flight a key; 8 leaves room for the engine's own reads.
+PARALLEL = 8
+
+
+def previous(path):
+    """An earlier run's graded.csv.gz -> {ref: row} for the bets graded on a FINAL close (those never change)."""
+    out = {}
+    try:
+        with gzip.open(path, "rt", newline="") as f:
+            for r in csv.DictReader(f):
+                if r.get("matched") == "True" and r.get("closing_is_final") == "True":
+                    out[r["ref"]] = r
+    except (OSError, EOFError, csv.Error):
+        pass
+    return out
+
+
+def run(bets_dir, trades, outdir, prev=None):
     keys = [k for k in re.split(r"[\s,;]+", os.environ.get("PROPLINE_API_KEY", "")) if k]
     if not keys:
         print("no PropLine key")
@@ -281,32 +300,41 @@ def run(bets_dir, trades, outdir):
                 todo.append((r, body_of(b, eid, sport, lg)))
         r["why"] = why or ""
         rows.append(r)
-    # One bet first, timed: how long PropLine takes to grade decides the batch size (2026-10-25: 25-game batches 504'd, 5-game ones ran 35 min with no answer)
-    if todo:
-        t0 = time.time()
-        st, res = call("/clv/grade", key, body=[todo[0][1]], retries=0)
-        print("probe: one bet graded in %.1f s, HTTP %s: %s" % (time.time() - t0, st, json.dumps(res)[:400] if res else ""), flush=True)
-    failed_in_row, t_all = 0, time.time()
-    chunks = batches(todo)
-    for n, chunk in enumerate(chunks):
-        if failed_in_row >= 5:
-            for r, _ in chunk:
-                r["why"] = "not asked (PropLine failed 5 batches in a row)"
-            continue
-        t0 = time.time()
-        st, res = call("/clv/grade", key, body=[x for _, x in chunk], retries=1)
-        failed_in_row = 0 if st == 200 else failed_in_row + 1
-        print("batch %d/%d: %d bets, HTTP %s, %.1f s (%.0f s in all)" % (n + 1, len(chunks), len(chunk), st, time.time() - t0, time.time() - t_all), flush=True)
-        got = {x.get("ref"): x for x in (res or {}).get("bets", [])}
-        for r, x in chunk:
-            g = got.get(x["ref"])
-            if not g:
-                r["why"] = "no answer (HTTP %s)" % st
-                continue
-            for f in ("matched", "closing_price", "closing_point", "closing_is_final", "fair_source", "closing_fair_prob", "clv_pct", "ev_vs_close_pct", "beat_close", "resolution"):
-                r[f] = "" if g.get(f) is None else str(g.get(f))
-            if not g.get("matched"):
-                r["why"] = "PropLine: %s" % g.get("unmatched_reason")
+    # One bet per request, several at once: one bet grades in ~3.5 s, but 6+ bets in one request outlast PropLine's ~30 s gateway (504 on every batch, 2026-10-25). A bet already graded on a
+    # final close by an earlier run ([previous]) is not asked again.
+    done = previous(prev) if prev else {}
+    ask = []
+    for r, x in todo:
+        old = done.get(x["ref"])
+        if old:
+            r.update({f: old.get(f, "") for f in GRADE_FIELDS})
+            r["why"] = old.get("why", "")
+        else:
+            ask.append((r, x))
+    print("asking PropLine for %d bets (%d already graded on a final close)" % (len(ask), len(todo) - len(ask)), flush=True)
+    t_all, failed = time.time(), [0]
+
+    def one(item):
+        r, x = item
+        if failed[0] >= 25:
+            r["why"] = "not asked (PropLine failed 25 requests in a row)"
+            return
+        st, res = call("/clv/grade", key, body=[x], retries=1)
+        failed[0] = 0 if st == 200 else failed[0] + 1
+        g = next(iter((res or {}).get("bets", [])), None)
+        if not g:
+            r["why"] = "no answer (HTTP %s)" % st
+            return
+        for f in GRADE_FIELDS:
+            r[f] = "" if g.get(f) is None else str(g.get(f))
+        if not g.get("matched"):
+            r["why"] = "PropLine: %s" % g.get("unmatched_reason")
+
+    import concurrent.futures
+    with concurrent.futures.ThreadPoolExecutor(max_workers=PARALLEL) as pool:
+        for n, _ in enumerate(pool.map(one, ask)):
+            if (n + 1) % 200 == 0:
+                print("graded %d/%d in %.0f s" % (n + 1, len(ask), time.time() - t_all), flush=True)
     os.makedirs(outdir, exist_ok=True)
     with gzip.open(os.path.join(outdir, "graded.csv.gz"), "wt", newline="") as f:
         w = csv.DictWriter(f, FIELDS, extrasaction="ignore")
@@ -358,5 +386,5 @@ if __name__ == "__main__":
     if a[0] == "run":
         def opt(n, d=None):
             return a[a.index(n) + 1] if n in a else d
-        sys.exit(run(opt("--bets"), opt("--trades"), opt("--out", "out/propline-grade")))
+        sys.exit(run(opt("--bets"), opt("--trades"), opt("--out", "out/propline-grade"), opt("--previous")))
     print(__doc__)
