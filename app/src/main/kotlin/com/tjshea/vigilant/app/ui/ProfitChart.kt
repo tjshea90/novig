@@ -123,7 +123,7 @@ object ProfitText {
 
     /** The all-time figure's sum: what the wallet holds and what was put in; or, with no wallet figure, the settled bets it is taken from. */
     fun allTimeHow(book: SlateProfit.Book, w: WalletMoneyUi, now: Long): String {
-        val m = w.money
+        val m: WalletMoney? = null // Tj, 2026-10-25 (CH87c): all-time profit is the settled bets' payouts minus their cost; deposits and withdrawals are not used.
         if (m != null) {
             // Money moved out and back in again nets out (Tj, 2026-10-19: "also takes out withdrawals because sometimes I moved money back and forth").
             val moves = if (m.takenOut > 0.005) "${Format.money(m.putIn)} put in minus ${Format.money(m.takenOut)} taken out" else "nothing taken out"
@@ -209,7 +209,7 @@ fun ProfitChartCard(bets: List<TrackedBet>, period: TrackerPeriod, wallet: Walle
 
 @Composable
 private fun AllTime(book: SlateProfit.Book, wallet: WalletMoneyUi, now: Long) {
-    val m = wallet.money
+    val m: WalletMoney? = null // CH87c: settled bets only, no wallet or deposit figures
     val profit = m?.profit ?: book.profit
     val pct = if (m != null) m.pct else book.pct
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
