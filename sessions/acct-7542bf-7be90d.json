@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "3becc8d30918c7a48da9cba474b26b71c379f618",
+ "head": "5f2f75fdb97cd35bc4aedb5c53979d5213db52ee",
  "since": 1792915284,
- "beat": 1792917489,
- "beatIso": "2026-10-25T08:38:09Z",
+ "beat": 1792917677,
+ "beatIso": "2026-10-25T08:41:17Z",
  "done": "PB14 bid desk lines re-made from real-time prices every 15 s; PB17 ParlayAPI Pinnacle closes first in engine grader (engine-grade.yml PARLAY_API_KEY) + research/api_recovery_2026-10-25.md; PB8 typed Other for Starts within / Books agree / PropLine +EV edge+odds; full suite green before these",
  "next": "full suite on current code; tick PB11/PB14-PB16/PB19/PB8 partial; ship.sh, release, engine reset"
 }
