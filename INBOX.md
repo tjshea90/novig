@@ -1045,3 +1045,63 @@ I am paying for the streaming lite tier, and I want the GitHub engine, Claude , 
 6) do another thorough review of parlayapi docs for my pro plan. Make sure the app and GitHub engine use it to its full advantage. This should include features, speed, correct commands and prompts, grading features, clv features, all available sports books offered, live odds and scores, etc.
 7) do thorough reviews of kalshi, polynarket, sx bet, and ESPN feeds. Make sure they are being used correctly with the right commands and prompts and used as efficiently as possible for best speed.
 ```
+
+## 2026-10-25T07:16:10Z
+```
+Make the following changes in addition to the original prompt: 
+
+1) sharpapi is now the free tier, 12 requests per minute, 2 books. Make the app and GitHub engine use what the sharpapi free tier offers according to the sharpapi docs. This will require downgrading features and limits 
+2) pinnodds is now permanently a free trial with no websocket. Downgrade the API usage to fit what it offers on the free trial tier according to the pinnodds docs. 
+3) remove unabated and oddspapiv5 from the app and GitHub engine entirely. Do not waste any usage on them, I will not subscribe to them. 
+4) keep boltodds turned off indefinitely and don't waste usage on it by the GitHub engine or app. Keep it available to turn on in case I get it in the future. 
+5) make sure if I toggle any API off, the GitHub engine and app totally ignore it and do not try to call or use it at all. They should not waste any usage on an API toggled off. It should be as though it doesn't exist.
+
+6) use all the sockets and full speed of the sockets by default for the freshest odds and prices.
+7) make the GitHub engine run 24/7 by default, with regular check-ins by Claude for maintenance and tuning.
+8) audit the settings in the app. Some seem confusing to me. Simplify them where possible. Make sure settings do not contradict with each other. Anywhere there are cards to select numbers or values, allow me to also type in a manual value for maximum customization. 
+9) I left my phone on overnight with the screen locked, and vigilant app used a lot of battery. Make it so the app properly sleeps once it has been in the background a while. If I swipe it closed and don't have it open, the GitHub engine should still run the system by itself, as the phone app is only a monitor and control center. Therefore, audit the battery, ram, and CPU usage when I swipe the app closed. It should be minimal to 0. I want no battery or CPU or RAM wasted when the app isn't open. Put the app to sleep.
+Those are the propline screenshots
+Consider how the app or GitHub engine can use data on line movement, steam, and ev from propline for more accurate information and helping the profit engine. Is steam a valuable profit signal?
+I have upgraded to parlayapi business. It uses the same key already on GitHub, but includes additional features and limits sse and websocket. Review the following docs thoroughly: 
+
+https://parlay-api.com/blog/building-betting-agent-claude-2026-05-19
+
+https://parlay-api.com/openapi.json
+
+https://parlay-api.com/docs/versioning
+
+https://parlay-api.com/docs/best-practices
+
+https://parlay-api.com/changelog
+
+https://parlay-api.com/integrations
+
+https://parlay-api.com/llms.txt
+
+https://parlay-api.com/docs
+
+https://parlay-api.com/docs#websocket-odds
+
+https://parlay-api.com/docs#websocket-live
+
+I am paying for the business plan, and I want the GitHub engine, Claude , and the android app to take full advantage of all the features, speed, and accuracy, including full usage of the sse and/or websocket. I want the GitHub engine to run 24/7 connected to parlayapi business and propline streaming lite. 
+
+1) thoroughly review and research the docs and llms file for parlayapi, especially the business tier and streaming capabilities.
+2) implement all the additional features, changes, upgrades, and higher limits and functions in the app and GitHub engine. This should include features, speed, correct commands and prompts, grading features, clv features, all available sports books offered, live odds and scores, etc. implement the bookmaker freshness endpoints and show in the app and engine how fresh the odds are and filter out stale odds 
+3) make full use of the added limits, sse and/or websocket. 
+
+Make sure to do this entire prompt which I sent earlier: 
+
+Make the following changes in addition to the original prompt: 
+
+1) sharpapi is now the free tier, 12 requests per minute, 2 books. Make the app and GitHub engine use what the sharpapi free tier offers according to the sharpapi docs. This will require downgrading features and limits 
+2) pinnodds is now permanently a free trial with no websocket. Downgrade the API usage to fit what it offers on the free trial tier according to the pinnodds docs. 
+3) remove unabated and oddspapiv5 from the app and GitHub engine entirely. Do not waste any usage on them, I will not subscribe to them. 
+4) keep boltodds turned off indefinitely and don't waste usage on it by the GitHub engine or app. Keep it available to turn on in case I get it in the future. 
+5) make sure if I toggle any API off, the GitHub engine and app totally ignore it and do not try to call or use it at all. They should not waste any usage on an API toggled off. It should be as though it doesn't exist.
+
+6) use all the sockets and full speed of the sockets by default for the freshest odds and prices.
+7) make the GitHub engine run 24/7 by default, with regular check-ins by Claude for maintenance and tuning.
+8) audit the settings in the app. Some seem confusing to me. Simplify them where possible. Make sure settings do not contradict with each other. Anywhere there are cards to select numbers or values, allow me to also type in a manual value for maximum customization. 
+9) I left my phone on overnight with the screen locked, and vigilant app used a lot of battery. Make it so the app properly sleeps once it has been in the background a while. If I swipe it closed and don't have it open, the GitHub engine should still run the system by itself, as the phone app is only a monitor and control center. Therefore, audit the battery, ram, and CPU usage when I swipe the app closed. It should be minimal to 0. I want no battery or CPU or RAM wasted when the app isn't open. Put the app to sleep.
+```
