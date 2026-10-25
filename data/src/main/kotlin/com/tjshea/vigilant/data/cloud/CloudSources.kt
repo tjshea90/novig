@@ -359,6 +359,7 @@ class CloudSources(
         kalshiSocketWanted = s.useKalshi && s.gates.kalshiSocket && kalshiSigner != null
         if (!kalshiSocketWanted) kalshiStream.close()
         if (!s.gates.useSharpApi || !s.gates.sharpApiSocket) sharpApiStream.close("socket off")
+        if (!propLineOn(s) || !s.gates.propLineSocket) propLineStream.close("socket off")
     }
 
     /** Every socket this engine holds is closed cleanly (job end, cancel, hours over): a socket left half-open counts against BoltOdds' 3 connections until its server times it out (BC3). */
