@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "31c8ce7ce6daa85d1e79832a1735c5b839b4b216",
+ "head": "3081884d71b1919bb708f3f9e3a77c9d307ba3a8",
  "since": 1792966905,
- "beat": 1792967062,
- "beatIso": "2026-10-25T22:24:22Z",
- "done": "v1.0.84 released + recorded; phone adopted Pinnodds off (its own copy now says so); PX10a/c/e done, PX10d measured",
- "next": "PX10f: SGO-only Pinnacle lines by kind/league, ask PropLine/ParlayAPI for them; PX10g: ParlayAPI Pinnacle ages near/far; Tj to delete PINNWIRE_API_KEY in repo Settings > Secrets"
+ "beat": 1792967086,
+ "beatIso": "2026-10-25T22:24:46Z",
+ "done": "PX11 written into TASKS.md (5 parts)",
+ "next": "PX11a: find where 'no one was selling at that price' comes from and what the engine/phone data say"
 }
