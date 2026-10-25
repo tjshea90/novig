@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "c633774aaee30eb353e84be722ae9ddfa502e13e",
+ "head": "3834ba95965c4e1a5bcc4796a7a220801969033c",
  "since": 1792915284,
- "beat": 1792961113,
- "beatIso": "2026-10-25T20:45:13Z",
- "done": "PX9f: found every PropLine source answering HTTP 400 on the engine since PX9c (69-book bookmakers list); merged tj Gmail's unlanded census/list_audit edits; propline.yml bookparam probe dispatched on branch",
- "next": "read the bookparam run's log, fix PropLineClient's bookmakers request to the rule it shows, tools/test.sh, land, engine_set --reset, list_audit"
+ "beat": 1792961182,
+ "beatIso": "2026-10-25T20:46:22Z",
+ "done": "PX9f fixed: PropLine's 60-bookmaker limit found by the bookparam probe; requests split into even parts and merged per game (PropLineClientTest); CHANGES.md logged",
+ "next": "when tools/test.sh (full) is green: push.sh lands on main, engine_set.py --reset, then list_audit.py to confirm PropLine quotes are back (PX9g)"
 }
