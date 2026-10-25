@@ -1305,3 +1305,8 @@ Then figure out how to get fresh odds for as many pinnacle odds as possible, inc
 
 The problem is I won't always have sgo because it is expensive, so I need a cheap or free source or sources for as many pinnacle odds as possible and as fresh as possible. Maybe research cheap apis with fresh Pinnacle odds, or pinnacle scrapers
 ```
+
+## 2026-10-25T22:44:35Z
+```
+Are the odds really this old? It is a socket. Is it configured correctly? Shouldn't there be some parlayapi results?
+```
