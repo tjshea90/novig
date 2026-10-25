@@ -8,8 +8,8 @@
  "branch": "ccr-e58c5a58-3qyzld",
  "head": "77ff56ab002461809503b57e73017e8682f271d3",
  "since": 1792915284,
- "beat": 1792962239,
- "beatIso": "2026-10-25T21:03:59Z",
+ "beat": 1792962543,
+ "beatIso": "2026-10-25T21:09:03Z",
  "done": "PX9h: SGO lastUpdatedAt measured = last read (ages true; SGO NCAAF ~5 min cycle, its push-book copies stale 72% vs PropLine's); recorded",
  "next": "list_audit on the run after the 21:03 reset (PX9d live); tell Tj"
 }
