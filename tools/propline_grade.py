@@ -14,7 +14,7 @@ Out: `graded.csv.gz` (one row per bet, ours + PropLine's) and `SUMMARY.md` (over
 import csv, gzip, io, json, os, re, sys, time, datetime, urllib.parse, urllib.request, urllib.error
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from propline_clv import STAT_KEYS, norm, same_team  # noqa: E402
+from propline_clv import STAT_KEYS, norm, same_team, stat_key  # noqa: E402
 
 BASE = "https://api.prop-line.com/v1"
 SPORT = {"NBA": "basketball_nba", "NHL": "hockey_nhl", "NFL": "football_nfl", "NCAAF": "football_ncaaf", "MLB": "baseball_mlb", "WNBA": "basketball_wnba", "NCAAB": "basketball_ncaab"}
@@ -65,8 +65,14 @@ def leg(b):
     """A bet -> (market key, selection, side, point) in /clv/grade's words, or (None, why). Full-game lines and the mapped prop stats; periods and team totals are not sent."""
     market, sel = b["market"], b["selection"].strip()
     low = market.lower()
-    if re.search(r"\b(1h|2h|1st|2nd|first|half|quarter|q[1-4]|period|inning|f5|set)\b", low):
-        return None, "period market (%s)" % market
+    if re.search(r"\b(1h|2h|1st|2nd|first|half|quarter|q[1-4]|period|inning|innings|f5|set)\b", low):
+        # PropLine grades a part of the game too (its `period` codes): a 1st half and baseball's first five innings, the parts Novig lists (PS3, 2026-10-25)
+        code = "f5" if re.search(r"\b(f5|first 5|1st 5|five innings)\b", low) else "h1" if re.search(r"\b(1h|1st half|first half)\b", low) else None
+        if not code:
+            return None, "period market (%s)" % market
+        b["period"] = code
+        market = re.sub(r"(?i)\b(1h|1st half|first half|f5|first 5 innings|1st 5 innings|first five innings)\b", "", market).strip()
+        low = market.lower()
     if "team total" in low or "team_total" in low:
         return None, "team total"
     # Novig's own label of an imported fill: "Joel Embiid 23.5 POINTS" with selection "Under 23.5"
@@ -155,7 +161,7 @@ def call(path, key, params=None, body=None, retries=3):
 
 
 def games_of(sport, key):
-    out = []
+    out, seen = [], set()
     for path, params in (("/sports/%s/scores" % sport, {"daysFrom": 30}), ("/sports/%s/events" % sport, None)):
         st, body = call(path, key, params)
         for g in body if isinstance(body, list) else []:
@@ -163,6 +169,9 @@ def games_of(sport, key):
                 g["_t"] = datetime.datetime.fromisoformat(g["commence_time"].replace("Z", "+00:00")).timestamp()
             except (KeyError, ValueError, AttributeError):
                 continue
+            if g.get("id") in seen:   # /scores and /events both list an upcoming game: once is enough (else "two PropLine games match")
+                continue
+            seen.add(g.get("id"))
             out.append(g)
     return out
 
@@ -285,7 +294,11 @@ def selftest():
     assert leg({"market": "CIT +17.5", "selection": "CIT +17.5", "teams": ("The Citadel", "Clemson")})[0] == ("spreads", "The Citadel", None, 17.5)
     assert leg({"market": "Team Total", "selection": "New Jersey Devils Over 3.5"})[0] is None
     assert leg({"market": "Total", "selection": "Over 44.5"})[0] == ("totals", "Over", "Over", 44.5)
-    assert leg({"market": "1H Total", "selection": "Over 22.5"})[0] is None
+    b1 = {"market": "1H Total", "selection": "Over 22.5"}
+    assert leg(b1)[0] == ("totals", "Over", "Over", 22.5) and b1["period"] == "h1"
+    assert leg({"market": "2nd Half Total", "selection": "Over 22.5"})[0] is None
+    assert leg({"market": "Player Receiving Yards", "selection": "Puka Nacua Over 80.5"})[0] == ("player_reception_yds", "Puka Nacua", "Over", 80.5)
+    assert leg({"market": "Tackles + Assists", "selection": "Fred Warner Over 7.5"})[0] == ("player_tackles_assists", "Fred Warner", "Over", 7.5)
     assert leg({"market": "Points Rebounds Assists", "selection": "Kayla Thornton Over 13.5"})[0] == ("player_points_rebounds_assists", "Kayla Thornton", "Over", 13.5)
     assert leg({"market": "Moneyline", "selection": "Boston Celtics"})[0] == ("h2h", "Boston Celtics", None, None)
     g = [{"id": "7", "away_team": "Kent State Golden Flashes", "home_team": "Sacramento State Hornets", "_t": 1793413800}]
