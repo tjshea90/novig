@@ -320,12 +320,7 @@ object Pricing {
             val outcomes = ArrayList<Opportunity>(pm.outcomes.size)
             for (po in pm.outcomes) {
                 val ladder = ladders[po.outcome.outcomeId].orEmpty()
-                val p = fair?.let { probabilityFor(po.target, pm.lineKey, it) }?.let { raw ->
-                    // Thin soft-book fairs far from the start run high (ThinEarlyHaircut): cut before anything reads the chance.
-                    val thin = if (settings.thinEarlyHaircut) (raw - ThinEarlyHaircut.points(pm.league.novigName, pm.lineKey?.stat, fair.booksUsed.size, (pm.event.startsTs - now) / 3_600_000.0)).coerceAtLeast(0.0) else raw
-                    // Player-prop fairs run high, Overs most (PropHaircut): the history's Overs won 39.7% against a 49.4% fair.
-                    if (settings.propHaircut) (thin - PropHaircut.points(BetKind.of(pm.label, po.selection), po.selection)).coerceAtLeast(0.0) else thin
-                }
+                val p = fair?.let { chance(po.target, pm.lineKey, it, pm.league.novigName, pm.event.startsTs, pm.label, po.selection, settings, now) }
                 val quote = if (p != null && ladder.isNotEmpty()) EvMath.quote(p, ladder.first().price, fee, live) else null
                 val depth = if (p != null && ladder.isNotEmpty()) EvMath.positiveDepth(ladder, p, fee, live) else null
                 val stake = if (quote != null && quote.evPercent > 0) {
@@ -379,6 +374,39 @@ object Pricing {
                 laterGames = plan.laterGames,
             ),
             computedAtMs = now,
+        )
+    }
+
+    /** The fair chance of [target] on [key]'s line, with the haircuts every price takes (one rule for [price] and [refair]). */
+    fun chance(target: OutcomeTarget, key: LineKey, fair: FairLine, league: String, startsTs: Long, label: String, selection: String, settings: ScanSettings, now: Long): Double? =
+        probabilityFor(target, key, fair)?.let { raw ->
+            // Thin soft-book fairs far from the start run high (ThinEarlyHaircut): cut before anything reads the chance.
+            val thin = if (settings.thinEarlyHaircut) (raw - ThinEarlyHaircut.points(league, key.stat, fair.booksUsed.size, (startsTs - now) / 3_600_000.0)).coerceAtLeast(0.0) else raw
+            // Player-prop fairs run high, Overs most (PropHaircut): the history's Overs won 39.7% against a 49.4% fair.
+            if (settings.propHaircut) (thin - PropHaircut.points(BetKind.of(label, selection), selection)).coerceAtLeast(0.0) else thin
+        }
+
+    /**
+     * [o] with its fair odds worked out again from [ref] (its game's boards with the live streams laid over them, PB19: "all bets listed in the scanner should be real time information"), priced at the Novig
+     * ladder it already holds; [requote] then moves it to a newer Novig book. The same arithmetic as [price] for one outcome. A line no book prices any more has no fair (and so no EV: it leaves the list).
+     */
+    fun refair(o: Opportunity, ref: RefEvent, settings: ScanSettings, now: Long): Opportunity {
+        val key = o.lineKey ?: return o
+        val target = o.target ?: return o
+        val prices = bookPrices(ref, key, settings.gates.freshestWins).let { all ->
+            if (settings.lowUsageScan) all.filter { b -> b.lastUpdateMs != null && Freshness.fresh(b.lastUpdateMs, now, ref.commenceMs) } else all
+        }
+        val fair = FairValue.compute(prices, settings.fairSettings())
+        val p = fair?.let { chance(target, key, it, o.league.novigName, o.event.startsTs, o.marketLabel, o.selection, settings, now) }
+        val fee = o.market.fee
+        val ladder = o.ladder
+        val live = o.event.isLive
+        val quote = if (p != null && fee != null && ladder.isNotEmpty()) EvMath.quote(p, ladder.first().price, fee, live) else null
+        val depth = if (p != null && fee != null && ladder.isNotEmpty()) EvMath.positiveDepth(ladder, p, fee, live) else null
+        val stake = if (quote != null && quote.evPercent > 0) EvMath.suggestedStake(quote, settings.bankroll, settings.kellyMultiplier, depth?.dollarCost, (o.event.startsTs - now) / 3_600_000.0) else null
+        return o.copy(
+            fair = fair, fairProbability = p, quote = quote, depth = depth, suggestedStake = stake,
+            fairUpdatedMs = fair?.usedUpdates?.first, fairAsOfMs = fair?.usedUpdates?.second, refEvent = ref,
         )
     }
 
