@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "d9d5e617e78c30aa49348dc9996bcaccd19148dc",
+ "head": "9382cffb9fdc3c1ad150de9937e0bff60ced74a1",
  "since": 1792915284,
- "beat": 1792919962,
- "beatIso": "2026-10-25T09:19:22Z",
+ "beat": 1792920330,
+ "beatIso": "2026-10-25T09:25:30Z",
  "done": "odds-age fix: stale books left out beside fresh ones (FreshFirstTest), ParlayAPI unchanged prices confirmed by its poll times (ParlayLiveTest), listed bets pinned on Novig's feed; full suite green",
  "next": "reset engine; measure per-book ages in the live list after ~5 min; answer Tj"
 }
