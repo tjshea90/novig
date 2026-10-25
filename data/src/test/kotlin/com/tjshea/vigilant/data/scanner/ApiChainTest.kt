@@ -132,4 +132,21 @@ class ApiChainTest {
         assertTrue(ApiChain.needed("parlay", nfl, ScanSettings(), gap))
         ApiChain.reset()
     }
+
+    /** PX (2026-10-25): on a Business key ParlayAPI is off the chains, asked beside PropLine for every league; the rest of the chain is unchanged. */
+    @Test
+    fun `feeds taken off the chain are always asked and wait for nobody`() {
+        ApiChain.reset()
+        val covered = ctx()
+        val on = listOf("propline", "parlay", "parlay_props", "propline_props")
+        assertEquals(listOf("propline"), ApiChain.better("parlay", on))
+        ApiChain.alwaysAsked = setOf("parlay", "parlay_1h", "parlay_props")
+        assertEquals(null, ApiChain.kindOf("parlay"))
+        assertTrue(ApiChain.better("parlay", on).isEmpty())
+        assertTrue(ApiChain.better("parlay_props", on).isEmpty())
+        assertTrue(ApiChain.needed("parlay", nfl, ScanSettings(), covered))
+        assertEquals(ApiChain.Kind.LINES, ApiChain.kindOf("propline"))
+        ApiChain.reset()
+        assertEquals(ApiChain.Kind.LINES, ApiChain.kindOf("parlay"))
+    }
 }
