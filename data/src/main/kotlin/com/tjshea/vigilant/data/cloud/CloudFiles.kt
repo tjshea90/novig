@@ -212,6 +212,13 @@ data class CloudStatus(
     /** The live lane in numbers and each socket's state, for the phone's Live dashboard (Tj, 2026-10-18, TCL122-4: "stats and status on all the sockets ... real time graphs"). */
     val liveStats: LiveStats? = null,
     val socketStates: List<SocketState> = emptyList(),
+    /**
+     * PropLine's own freshness of each book (`/v1/freshness`, PSL, Tj 2026-10-25: "show in the app and engine how fresh the odds are"): seconds since PropLine last wrote the book's game lines and its
+     * props, PropLine's stale flag, read at [propLineFreshAtMs]. Only the books the engine prices with and Novig. [propLineStream]: the push stream in words.
+     */
+    val propLineFresh: List<com.tjshea.vigilant.data.reference.PropLineFreshness.Row> = emptyList(),
+    val propLineFreshAtMs: Long = 0L,
+    val propLineStream: String = "",
 ) {
     /** The engine's live lane is running now and its heartbeat is recent: the phone's own live tail lane stands down. */
     fun liveLive(now: Long): Boolean = liveActive && heartbeatMs > 0 && now - heartbeatMs < DESK_STALE_MS
