@@ -9,6 +9,9 @@ import com.tjshea.vigilant.data.reference.Op4Store
 import com.tjshea.vigilant.data.reference.OddsPapi4Client
 import com.tjshea.vigilant.data.reference.OpBooks
 import com.tjshea.vigilant.data.reference.OpMarkets
+import com.tjshea.vigilant.data.reference.OpClass
+import com.tjshea.vigilant.data.reference.LineKind
+import com.tjshea.vigilant.data.reference.RefBookMarket
 import com.tjshea.vigilant.data.reference.OpParser
 import com.tjshea.vigilant.data.scanner.League
 import com.tjshea.vigilant.data.scanner.Leagues
