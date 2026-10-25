@@ -1,22 +1,23 @@
-# CHECKPOINT 4214 — read me first, then TASKS.md
+# CHECKPOINT 4215 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T17:15:23Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-be05497a-18skm3` · **builds on:** `40c347179` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T17:22:49Z · **tests:** all 9 fast checks green
+**Branch:** `claude/wizardly-meitner-n6vgp8` · **builds on:** `2e40a5012` (this checkpoint is the commit after it)
 
 ## Just done
-PX1-PX5: PropLine stale-pull fix, ParlayAPI off the chain + alternates, SharpAPI non-blocking and off; full suite green 4,193
+ENGINEER 2026-10-25 watch + volume count, no change
 
 ## Do this next
-engine reset; PX6 Pinnacle coverage from PropLine + ParlayAPI (main/alt/1H/props)
+PX6 Pinnacle coverage (tj outlook); CH86 needs diag NOFILL list
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  2e40a5012 ckpt 4214: PX1-PX5: PropLine stale-pull fix, ParlayAPI off the chain + alternates, Sha
   ca7cfcdd1 ckpt 4213: PX: PropLine stale-pull overlay fix (PropLineLiveTest), ParlayAPI off the c
   db950e0e8 ckpt 4212: PS3 done: 2,762 real bets graded by PropLine /clv/grade (all +1.19% EV vs d
   4ef0a7c24 ckpt 4211: propline_grade root cause: 6+ bets per request outlast PropLine's 30 s gate
@@ -26,8 +27,4 @@ engine reset; PX6 Pinnacle coverage from PropLine + ParlayAPI (main/alt/1H/props
   e02194fe6 ckpt 4207: PB17b ParlayLiveFeed (paper-gated) + PinnFrames shared; tests green; TASKS/
   e0a1e8c59 ckpt 4206: PS1-PS12 written up (research/propline_parlay_audit_2026-10-25.md, CHANGES.
   73f465f45 ckpt 4205: PB23 root cause fixed: ParlayAPI quotes tagged at parse so the stream overl
-  5a82f1a63 ckpt 4204: PS9a PropLine 1st-half source propline_1h (PropLinePeriodTest); PB21b cross
 ```
-
-(6 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
