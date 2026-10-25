@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-27fee639-d3opru",
- "head": "0274da69bef5ff3b2c74393db3ee5ec9895da584",
+ "head": "92b5123b0a0d4e3b8956de07352e5c90417b72b3",
  "since": 1792912591,
- "beat": 1792957002,
- "beatIso": "2026-10-25T19:36:42Z",
- "done": "PX9 shipped to main + engine reset (run 40223571078); NBA/NHL/MLB altprobe: PropLine median 11 books at Novig's alternate numbers (NBA 502 lines, NHL 86), 19/18 on mains; ParlayAPI NBA/NFL alternates + 1H = Pinnacle alone",
- "next": "when run 40223571078 publishes: read engine-log for 'list quality', 'heartbeat:', quote census crossSame/crossDiff (push vs polled); decide PX9b (date push-book quotes current) and PX9c; tell Tj the numbers"
+ "beat": 1792957027,
+ "beatIso": "2026-10-25T19:37:07Z",
+ "done": "PX9c: 34 more PropLine books (measured), Superbet/Napoleon + Fortuna groups, duplicate keys across SGO/PropLine, ParlayAPI streams date quotes before the age filter, ParlayAPI team totals, held rows age-checked, full scans every 6 min; census/diagnostics; bookstudy/bookprobe/list_audit tools (4,206 tests green on the final tree)",
+ "next": "reset engine, then monitor with tools/list_audit.py + engine-log (list quality, quote census linesNow/linesPlain, crossDiff samples, heartbeat, push books); decide plainFastFeeds and push-book dating from the census"
 }
