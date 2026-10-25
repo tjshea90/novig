@@ -49,7 +49,7 @@ object Freshness {
      * (Tj, 2026-09-28: "found several positive EV bets while scanning but they quickly disappeared"). Rechecks
      * and re-pricing keep the plain limit: they judge a scan's bets already shown.
      */
-    val MIN_SHOWN_MS: Long get() = if (sgoMode) 60_000L else 2 * 60_000L   // SGO Pro mode: 1 minute (its prices are already 3-7 minutes old when read)
+    val MIN_SHOWN_MS: Long get() = if (continuous) 0L else if (sgoMode) 60_000L else 2 * 60_000L   // SGO Pro mode: 1 minute (its prices are already 3-7 minutes old when read)
 
     /** The longest any feed's answer is re-used instead of asked again, so it's still fresh through a scan. */
     const val MAX_REUSE_MS = 2 * 60_000L
@@ -58,7 +58,14 @@ object Freshness {
     const val FRESH_MS = 2 * 60_000L
 
     /** Beside fresh quotes, a quote older than this is left out of the fair odds ([freshFirst]). */
-    const val STALE_BESIDE_FRESH_MS = 3 * 60_000L
+    val STALE_BESIDE_FRESH_MS: Long get() = if (continuous) MAX_QUOTE_AGE_MS else 3 * 60_000L
+
+    /**
+     * The GitHub engine re-prices its list every 3 s on the streams (RealtimeList): a bet is re-judged continuously, so a scan need not keep [MIN_SHOWN_MS] in hand (it shrank the 5-minute limit to 3), and
+     * beside fresh quotes a book is left out only past the plain [MAX_QUOTE_AGE_MS] (PX, Tj 2026-10-25: "All scanned bets should have as many books for the fair odds as possible": PropLine re-reads a
+     * book every 60-190 s, so the 3-minute rules dropped about a third of its quotes, measured by [QuoteCensus]). Set by the engine; the phone keeps the old rules.
+     */
+    @Volatile var continuous: Boolean = false
 
     /**
      * The books a line's fair odds are worked out from, the stale ones left out when fresh ones price it (Tj, 2026-10-25, PB20: "If the odds are very stale, do not use them at all for the fair odds
