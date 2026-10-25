@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "835ab9fd2e0d2ff765b824ced530cab6b1edf25f",
+ "head": "cddc690ee4e0fa49e410cbffba513e694d7ad30a",
  "since": 1792964177,
- "beat": 1792966379,
- "beatIso": "2026-10-25T22:12:59Z",
- "done": "pre-release: v1.0.84 PX10: phone keeps a Claude session's settings change it has not adopted yet (3-way merge), PropLine asked in parts of 60 books (its limit), 34 more PropLine books, Pinnacle hosts obey their own switches (versionCode 424, v1.0.84)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.84), then run: bash tools/record-release.sh v1.0.84 424 \"v1.0.84 PX10: phone keeps a Claude session's settings change it has not adopted yet (3-way merge), PropLine asked in parts of 60 books (its limit), 34 more PropLine books, Pinnacle hosts obey their own switches\""
+ "beat": 1792966590,
+ "beatIso": "2026-10-25T22:16:30Z",
+ "done": "PX10 findings recorded (Pinnacle census numbers, migration gap); v1.0.84 release building",
+ "next": "confirm v1.0.84 Release, record-release.sh, send Tj the link; next session PX10f (SGO-only Pinnacle lines by kind) and PX10g (ParlayAPI Pinnacle ages near/far)"
 }
