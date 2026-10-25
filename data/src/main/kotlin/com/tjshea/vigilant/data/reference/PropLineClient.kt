@@ -827,7 +827,7 @@ internal data class PlMarket(
                     else -> return emptyList()
                 }
             }
-            RefQuote(side, PropLineClient.decimal(o.price) ?: return emptyList(), o.point, o.book_outcome_id?.takeIf { it.isNotBlank() })
+            RefQuote(side, PropLineClient.decimal(o.price) ?: return emptyList(), o.point, o.book_outcome_id?.takeIf { it.isNotBlank() }, feedOutcomeId = o.outcomeId)
         }
         if (quotes.map { it.side }.toSet().size != 2) return emptyList()
         if (kind != LineKind.MONEYLINE && quotes.any { it.point == null }) return emptyList()
