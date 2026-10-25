@@ -289,7 +289,8 @@ class CloudSources(
     val parlayOddsStream = com.tjshea.vigilant.data.parlay.ParlayStream(http, json, {
         keys(CloudKeys.PARLAY).filter { (parlayAccount.last[it]?.limit ?: 0) > 100_000 }.maxByOrNull { parlayAccount.last[it]?.limit ?: 0 }
     }, parlayLive, scope, log = { line -> println(line) })
-    fun parlayStreamNote(): String = "ParlayAPI odds stream: " + parlayOddsStream.health()
+    fun parlayStreamNote(): String = "ParlayAPI odds stream: " + parlayOddsStream.health() +
+        " · cross-check (two feeds quoting one book 3+ points apart at the same time): ${com.tjshea.vigilant.data.scanner.Pricing.crossDropped.get()} book lines left out"
 
     /**
      * One game with every live stream laid over it, for the engine's real-time list (PB19, [com.tjshea.vigilant.data.cloud.RealtimeList]): PropLine's pushes over PropLine's quotes, ParlayAPI's over
