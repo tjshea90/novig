@@ -1248,3 +1248,8 @@ Use as many sports books as possible for all markets including alternate lines f
 ```
 Propline website says Pinnacle is fresh
 ```
+
+## 2026-10-25T18:29:31Z
+```
+Make sure both propline and parlayapi are successfully feeding the scanner with fresh odds from both sockets. Work on matching up as many books as possible in the scanner so each bet has as many books behind the fair odds as possible
+```
