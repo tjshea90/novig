@@ -10,6 +10,7 @@ import com.tjshea.vigilant.data.scanner.ScanProgress
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.BetSlider
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.scanner.ScanStats
 import com.tjshea.vigilant.data.scanner.ScannerMode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
