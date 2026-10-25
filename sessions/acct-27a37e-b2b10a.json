@@ -5,11 +5,11 @@
  "nonce": "b2b10a",
  "kind": "interactive",
  "task": "",
- "branch": "ccr-70c81990-qm4nt2",
+ "branch": "ccr-0ba2ecf2-nyafk7",
  "head": "4e9cddac5a32b106aef89eb2dc32a6562419f5e7",
  "since": 1792889505,
- "beat": 1792898132,
- "beatIso": "2026-10-25T03:15:32Z",
+ "beat": 1792907484,
+ "beatIso": "2026-10-25T05:51:24Z",
  "done": "SG done: v1.0.80 released and recorded; cap $3 live; engine reset",
  "next": "next: Tj's feedback on the similar-bets cap; watch engine log for 'repeat guard: similar-bets limit' counts in tradeNote"
 }
