@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "0432ef7c0e89c1777e8586d526922c45080ffc5e",
+ "head": "ca7cfcdd1f986e265f095dc5263a3c8d54ab56d3",
  "since": 1792915284,
- "beat": 1792948035,
- "beatIso": "2026-10-25T17:07:15Z",
- "done": "PS3 done: 2,762 real bets graded by PropLine /clv/grade (all +1.19% EV vs de-vigged close; engine bids +3.26%, engine bets -0.66%; totals/ML trail); numbers in research/propline_parlay_audit_2026-10-25.md",
- "next": "PB8 settings walk, PB12 steam study; team totals in the grader; next ANALYST to weigh engine-bet vs bid CLV"
+ "beat": 1792948085,
+ "beatIso": "2026-10-25T17:08:05Z",
+ "done": "PX: PropLine stale-pull overlay fix (PropLineLiveTest), ParlayAPI off the chain on Business (ApiChainTest), ParlayAPI alternates on; full suite green",
+ "next": "engine reset; verify books per alt line + parlay sources in feed; answer Tj's odds-age screenshot"
 }
