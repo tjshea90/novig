@@ -1,0 +1,843 @@
+Recipes — PropLine API
+PL
+PropLineDocs+EVResultsFreshnessStatusPricingDashboardGet API Key
+
+cookbook
+Recipes
+Task-oriented examples for the PropLine API. Each recipe maps a real question (“find +EV plays for tonight,” “track CLV on a placed bet,” “scan for arbitrage”) to working code. Most recipes use the Python SDK; curl equivalents work the same way.
+Install: pip install propline (Python) or npm install propline (Node). Get an API key at prop-line.com.
+
++EVResolution & CLVArbitrageLine shoppingPeriod marketsPlayer historyWebhooksFuturesBulk exportNative book idsScores, stats & opsCross-book +EV
+No-vig fair lines from a sharp anchor (Pinnacle preferred, Bovada fallback), then EV% computed for every other book at the same line. PropLine derives this server-side; the-odds-api and most competitors leave it as a client-side exercise.
+01Find tonight's top +EV plays for one event
+Pro
+Which prices on this event are mispriced relative to the sharp consensus?
+GET /v1/sports/{sport}/events/{id}/ev
+python
+from propline import PropLine
+
+client = PropLine(api_key="YOUR_KEY")
+ev = client.get_event_ev("baseball_mlb", event_id=12345)
+
+for line in ev["lines"]:
+    plus = sorted(
+        (o for o in line["outcomes"] if o["is_plus_ev"]),
+        key=lambda o: -o["ev_pct"],
+    )
+    if plus:
+        print(f"{line['description']} {line['point']}")
+        for o in plus[:3]:
+            print(f"  {o['book_title']:<12} {o['name']:<8} {o['price']:+5}  EV {o['ev_pct']:+.2f}%")
+
+02Slate-wide +EV scan across every event tonight
+Pro
+Show every +EV play across the whole MLB slate, sorted by EV%.
+GET /v1/sports/{sport}/events  →  /v1/sports/{sport}/events/{id}/ev
+python
+events = client.list_events("baseball_mlb")
+plays = []
+for e in events:
+    ev = client.get_event_ev("baseball_mlb", e["id"])
+    for line in ev["lines"]:
+        for o in line["outcomes"]:
+            if o["is_plus_ev"]:
+                plays.append((o["ev_pct"], e, line, o))
+
+plays.sort(reverse=True, key=lambda p: p[0])
+for ev_pct, e, line, o in plays[:25]:
+    print(f"{e['home_team']} vs {e['away_team']:<25} "
+          f"{line['description']:<25} {o['book_title']:<10} "
+          f"{o['name']:<8} {o['price']:+5}  EV {ev_pct:+.2f}%")
+
+03Filter +EV plays to your books
+Pro
+I only have accounts at DraftKings and FanDuel — show only those.
+GET /v1/sports/{sport}/events/{id}/ev
+python
+MY_BOOKS = {"draftkings", "fanduel"}
+ev = client.get_event_ev("baseball_mlb", event_id=12345)
+
+for line in ev["lines"]:
+    keep = [o for o in line["outcomes"]
+            if o["book"] in MY_BOOKS and o["is_plus_ev"]]
+    for o in keep:
+        print(f"{line['description']:<30} {o['book']:<12} "
+              f"{o['name']:<8} {o['price']:+5}  EV {o['ev_pct']:+.2f}%")
+
+04Line-shop a bet you've already decided on
+Pro
+I'm betting Cole Over 6.5 Ks — which book pays the most right now?
+GET /v1/sports/{sport}/events/{id}/best-line
+python
+bl = client.get_event_best_line(
+    "baseball_mlb", event_id=12345,
+    markets="pitcher_strikeouts",
+    bookmakers="draftkings,fanduel,bovada",  # only books I hold
+)
+
+for line in bl["lines"]:
+    if line["description"] == "Gerrit Cole" and line["point"] == 6.5:
+        over = line["sides"]["Over"]
+        print(f"best: {over['best']['book_title']} {over['best']['price']:+}")
+        for p in over["all_prices"]:
+            print(f"  {p['book_title']:<12} {p['price']:+5}  (updated {p['last_update']})")
+
+Resolution & CLV tracking
+PropLine grades every prop against real box scores after games close — strikeouts, hits, points, etc. Combined with snapshot history, this lets you compute closing-line value (CLV) for any bet you've placed.
+04Did my pick win, lose, or push?
+Pro
+Look up the resolution and the actual stat for one prop.
+GET /v1/sports/{sport}/events/{id}/results
+python
+results = client.get_event_results("baseball_mlb", event_id=5885)
+for market in results["markets"]:
+    if market["key"] != "pitcher_strikeouts": continue
+    for o in market["outcomes"]:
+        print(f"{o['description']} {o['name']} {market['line']}: "
+              f"{o['resolution']} (actual {o['actual_value']})")
+# Bryan Woo Over 6.5: lost (actual 6.0)
+# Bryan Woo Under 6.5: won (actual 6.0)
+
+05Compute CLV for a placed bet
+Pro
+I bet Over 6.5 strikeouts at -110 two hours before first pitch. How did I do vs the open and the close?
+GET /v1/sports/{sport}/events/{id}/odds/closing
+python
+closing = client.get_odds_closing(
+    "baseball_mlb", event_id=5885, markets=["pitcher_strikeouts"]
+)
+# One call returns BOTH ends: the first and last pre-game snapshot
+# per (book, market, outcome).
+for book in closing["bookmakers"]:
+    for m in book["markets"]:
+        for o in m["outcomes"]:
+            if o["description"] != "Bryan Woo" or o["name"] != "Over": continue
+            print(f"{book['key']}: opened {o['opening_price']} @ {o['opening_point']}"
+                  f" -> closed {o['price']} @ {o['point']} ({o['closing_at']})")
+            # Compare to your entry: -110 -> closing -130 = +CLV.
+            # On spreads/totals check the POINT too: 6.5 -> 7.0 against you
+            # is a losing bet even if the price improved.
+
+05aGrade a whole betting log against the close
+Pro
+Am I actually beating the closing line? Here are the 200 bets I placed last month.
+POST /v1/clv/grade
+python
+res = client.grade_clv([
+    {"ref": "b1", "sport_key": "baseball_mlb", "event_id": 150791,
+     "market": "batter_hits_runs_rbis", "bookmaker": "lowvig",
+     "selection": "Drake Baldwin", "side": "Under", "point": 0.5,
+     "price": 145, "stake": 1},
+    # ... up to 500 bets per request
+])
+
+s = res["summary"]
+print(f"beat the close on {s['beat_close_pct']}% of bets")
+print(f"avg CLV {s['avg_clv_pct']:+.2f}%  "
+      f"vs de-vigged close {s['avg_ev_vs_close_pct']:+.2f}%  "
+      f"{s['profit_units']:+.2f}u")
+
+for b in res["bets"]:
+    if not b["matched"]:
+        # Fail-closed: never a guess. Fix the input and re-send.
+        print(f"{b['ref']}: {b['unmatched_reason']}")
+        continue
+    print(f"{b['ref']}: took {b['price']} vs close {b['closing_price']} "
+          f"-> {b['ev_vs_close_pct']:+.2f}% vs {b['fair_source']} "
+          f"-> {b['resolution']}")
+
+# READ ev_vs_close_pct, NOT clv_pct. clv_pct is price-vs-price and
+# vig-blind, so it flatters a bet on the juicy side of a wide market.
+# ev_vs_close_pct scores you against the DE-VIGGED close. On one real
+# bet the two came out +6.52% and +0.08%.
+#
+# fair_source is the SHARPEST book quoting that line at close, not the
+# book you bet at — de-vigging your own book always reads negative,
+# because you paid its hold.
+
+05bLast 30 minutes of line movement
+Pro
+How did this line move in the half-hour before tip? I want to see sharp action only.
+GET /v1/sports/{sport}/events/{id}/odds/history
+python
+# relative_from/relative_to are offsets from commence_time.
+# changes_only=true collapses adjacent identical snapshots.
+hist = client.get_odds_history(
+    "baseball_mlb",
+    event_id=5885,
+    markets=["pitcher_strikeouts"],
+    relative_from="-30m",
+    relative_to="0",
+    changes_only=True,
+)
+for book in hist["bookmakers"]:
+    for m in book["markets"]:
+        for o in m["outcomes"]:
+            if o["description"] != "Bryan Woo" or o["name"] != "Over": continue
+            for s in o["snapshots"]:
+                print(f"{book['key']:<10} {s['recorded_at']}  "
+                      f"{s['price']:+5}  line={s['point']}")
+
+05cDownsampled snapshots for a backtest
+Pro
+I want one snapshot per minute for the 3 hours before the game, not the raw 90s firehose.
+GET /v1/sports/{sport}/events/{id}/odds/history
+python
+hist = client.get_odds_history(
+    "baseball_mlb",
+    event_id=5885,
+    markets=["pitcher_strikeouts"],
+    relative_from="-3h",
+    relative_to="0",
+    interval="1m",        # 30s | 1m | 5m | 15m | 30m | 1h
+)
+# Each bucket holds the LATEST snapshot in that minute. Stable spacing for
+# moving averages / volatility windows / replay against your trade times.
+
+06Hit rate by market type
+
+What % of Over plays on pitcher_strikeouts hit, league-wide last 30 days?
+GET /v1/markets/hit-rates?days=30
+python
+import httpx
+r = httpx.get(
+    "https://api.prop-line.com/v1/markets/hit-rates",
+    params={"days": 30, "apiKey": "YOUR_KEY"},
+)
+for row in r.json()["markets"]:
+    if row["key"] == "pitcher_strikeouts":
+        print(f"Over hit rate (30d): {row['won']}/{row['total']} "
+              f"({100*row['won']/row['total']:.1f}%)")
+
+Arbitrage scanning
+When one book offers Over +120 and another Under +110 on the same line, both sides cover. PropLine returns every book's price on the same canonical (event, market, line), so the scan is just a comparison.
+07Two-way arbitrage on Over/Under props
+
+Find player props where Over and Under at different books guarantee a profit.
+GET /v1/sports/{sport}/events/{id}/odds
+python
+def implied(price):
+    return 100 / (price + 100) if price > 0 else -price / (-price + 100)
+
+odds = client.get_odds("baseball_mlb", event_id=12345,
+                       markets=["pitcher_strikeouts"])
+# Group by (player, line) across books
+by_key = {}
+for book in odds["bookmakers"]:
+    for m in book["markets"]:
+        for o in m["outcomes"]:
+            key = (o["description"], o["point"], o["name"])
+            by_key.setdefault(key, []).append((book["key"], o["price"]))
+
+# Find Over/Under pairs where best Over + best Under < 1.0 implied
+for (player, line, _), entries in by_key.items():
+    pass  # see propline-arb-finder repo for full implementation
+
+Reference implementation: proplineapi/propline-arb-finder.
+
+08Cross-book moneyline arbs
+
+Two-way (h2h) game-line arbitrage scan.
+GET /v1/sports/{sport}/odds?markets=h2h
+python
+odds = client.get_odds("baseball_mlb", markets="h2h")
+for ev in odds:
+    by_team = {}  # team_name -> list of (book, price)
+    for book in ev["bookmakers"]:
+        for o in book["markets"][0]["outcomes"]:
+            by_team.setdefault(o["name"], []).append((book["key"], o["price"]))
+    if len(by_team) != 2: continue
+    teamA, teamB = list(by_team.keys())
+    bestA = max(by_team[teamA], key=lambda x: x[1])
+    bestB = max(by_team[teamB], key=lambda x: x[1])
+    impl = implied(bestA[1]) + implied(bestB[1])
+    if impl < 1.0:
+        print(f"{ev['home_team']} vs {ev['away_team']}: "
+              f"{bestA[0]} {teamA} {bestA[1]:+}  +  "
+              f"{bestB[0]} {teamB} {bestB[1]:+}  ({100*(1-impl):.2f}% edge)")
+
+Line shopping
+Cross-book best prices for the same prop. Useful both for bettors picking the best venue and for builders surfacing savings to end users.
+09Best Over price across books for one player
+
+Where can I get the best price on Bryan Woo Over 6.5 strikeouts?
+GET /v1/sports/{sport}/events/{id}/odds
+python
+odds = client.get_odds("baseball_mlb", event_id=12345,
+                       markets=["pitcher_strikeouts"])
+best = []
+for book in odds["bookmakers"]:
+    for m in book["markets"]:
+        for o in m["outcomes"]:
+            if o["description"] == "Bryan Woo" \
+               and o["name"] == "Over" and o["point"] == 6.5:
+                best.append((book["key"], o["price"]))
+
+best.sort(key=lambda x: -x[1])
+for book, price in best:
+    print(f"{book:<12} {price:+}")
+
+10Spot reduced-juice props
+
+Find pitcher_strikeouts O/U pairs where the combined juice is under 5%.
+GET /v1/sports/{sport}/odds
+python
+odds = client.get_odds("baseball_mlb", markets=["pitcher_strikeouts"])
+for ev in odds:
+    for book in ev["bookmakers"]:
+        for m in book["markets"]:
+            pairs = {}  # (player, line) -> {Over: price, Under: price}
+            for o in m["outcomes"]:
+                k = (o["description"], o["point"])
+                pairs.setdefault(k, {})[o["name"]] = o["price"]
+            for (player, line), sides in pairs.items():
+                if "Over" in sides and "Under" in sides:
+                    juice = (implied(sides["Over"])
+                             + implied(sides["Under"]) - 1) * 100
+                    if juice < 5:
+                        print(f"{book['key']:<12} {player:<25} {line}: "
+                              f"O {sides['Over']:+} / U {sides['Under']:+} "
+                              f"  juice {juice:.2f}%")
+
+11Compare DFS lines vs sportsbooks, skipping boosts
+
+Which Underdog picks differ from the sportsbook line — without false signals from boosted specials?
+GET /v1/sports/{sport}/events/{id}/odds
+python
+odds = client.get_odds("basketball_nba", event_id=12345,
+                       markets=["player_points"])
+
+# Sportsbook consensus line per (player, side)
+book_line = {}
+for book in odds["bookmakers"]:
+    if book["key"] in ("prizepicks", "underdog"):
+        continue
+    for m in book["markets"]:
+        for o in m["outcomes"]:
+            book_line.setdefault((o["description"], o["name"]), []).append(o["point"])
+
+# Underdog picks — payout_multiplier flags a boost/discount.
+# A non-null multiplier means the payout is scaled, so the "edge"
+# isn't a clean line difference — skip it.
+for book in odds["bookmakers"]:
+    if book["key"] != "underdog":
+        continue
+    for m in book["markets"]:
+        for o in m["outcomes"]:
+            if o.get("payout_multiplier") is not None:
+                continue  # boosted special — not a fair line comparison
+            lines = book_line.get((o["description"], o["name"]))
+            if lines and o["point"] != max(set(lines), key=lines.count):
+                print(f"{o['description']:<22} {o['name']:<5} "
+                      f"UD {o['point']} vs book {max(set(lines), key=lines.count)}")
+
+Period markets
+Filter any odds endpoint to game-period markets (1st quarter, 1st half, 1st period, first-5-innings, etc.) with ?period=. Omit it and you get full-game only — exactly the same response shape as before. The-odds-api charges credit multiples for these as separate markets; PropLine returns them through the same endpoint with a single query param.
+19First-quarter NBA totals across every book
+
+Which book has the highest Over on the 1Q total for this game?
+GET /v1/sports/{sport}/events/{id}/odds?period=q1
+python
+odds = client.get_odds(
+    "basketball_nba",
+    event_id=12345,
+    markets=["totals"],
+    period="q1",   # q1|q2|q3|q4 | h1|h2 | p1|p2|p3 | i1..i9 | f3|f5|f7
+)
+for book in odds["bookmakers"]:
+    for m in book["markets"]:
+        # m["period"] == "q1"; full-game rows would be omitted entirely.
+        # m["team"] is None on the GAME total and the team's name on a
+        # team total - both ride the 'totals' key, so skip the team rows
+        # or you will compare a 27.5 game line against a 13.5 team line.
+        if m["team"] is not None:
+            continue
+        for o in m["outcomes"]:
+            print(f"{book['key']:<12} {o['name']:<6} {o['point']}  {o['price']:+}")
+
+20MLB first-5-innings (F5) lines
+
+What's the F5 moneyline, run-line, and total? F5 takes the bullpen out of the equation.
+GET /v1/sports/{sport}/events/{id}/odds?period=f5
+python
+odds = client.get_odds(
+    "baseball_mlb",
+    event_id=5885,
+    markets=["h2h", "spreads", "totals"],
+    period="f5",
+)
+for book in odds["bookmakers"]:
+    for m in book["markets"]:
+        line = f"@ {m['outcomes'][0]['point']}" if m["outcomes"][0].get("point") is not None else ""
+        prices = "  ".join(f"{o['name']} {o['price']:+}" for o in m["outcomes"])
+        print(f"{book['key']:<12} {m['key']:<8} {line:<6} {prices}")
+
+21First-half vs full-game total: is the 2H priced sharp?
+
+If 1H total < full_total/2, the market expects more scoring late — useful for live overs.
+GET /v1/sports/{sport}/events/{id}/odds?period=h1  |  (omitted)
+python
+# Two requests: full game (default) vs first half.
+full = client.get_odds("basketball_nba", event_id=12345, markets=["totals"])
+half = client.get_odds("basketball_nba", event_id=12345, markets=["totals"], period="h1")
+
+def avg_total(payload):
+    pts = [o["point"] for b in payload["bookmakers"]
+           for m in b["markets"] for o in m["outcomes"]
+           if o.get("point") is not None]
+    return sum(pts) / len(pts) if pts else None
+
+f, h = avg_total(full), avg_total(half)
+if f and h:
+    implied_2h = f - h
+    print(f"Full {f:.1f}  |  1H {h:.1f}  |  implied 2H {implied_2h:.1f}  "
+          f"({'2H over-weighted' if implied_2h > h else '1H over-weighted'})")
+
+22Multiple periods in one call
+
+Pull q1 and q2 lines together for a half-by-half view.
+GET /v1/sports/{sport}/events/{id}/odds?period=q1,q2
+python
+odds = client.get_odds(
+    "basketball_nba", event_id=12345,
+    markets=["totals"],
+    period=["q1", "q2"],   # SDK accepts list or "q1,q2"
+)
+# Each market row carries a "period" field so you can bucket client-side.
+for book in odds["bookmakers"]:
+    for m in book["markets"]:
+        for o in m["outcomes"]:
+            print(f"{book['key']:<12} {m['period']:<3} {o['name']} {o['point']} {o['price']:+}")
+
+Player prop history & hit rates
+Backtest strategies player-by-player using past resolved props with full snapshot history.
+11Hit rate for one player on one market
+Pro
+Did Bryan Woo cover his strikeout Over in his last 10 starts?
+GET /v1/sports/{sport}/players/{name}/history
+python
+hist = client.get_player_history(
+    "baseball_mlb", "Bryan Woo",
+    market="pitcher_strikeouts", limit=10
+)
+won = sum(1 for e in hist["entries"] if e["over_result"] == "won")
+print(f"Bryan Woo Over (last {len(hist['entries'])}): "
+      f"{won}/{len(hist['entries'])} ({100*won/len(hist['entries']):.0f}%)")
+for e in hist["entries"]:
+    print(f"  {e['commence_time'][:10]} {e['bookmaker_title']} "
+          f"line {e['line']} actual {e['actual_value']} → "
+          f"Over {e['over_result']}")
+
+12Filter player history to one book
+Pro
+Show only DraftKings lines for backtest fidelity.
+GET /v1/sports/{sport}/players/{name}/history?bookmaker=
+python
+hist = client.get_player_history(
+    "baseball_mlb", "Bryan Woo",
+    market="pitcher_strikeouts",
+    bookmaker="draftkings",
+    limit=20,
+)
+
+12bHit-rate trends across every market for a player
+Pro
+What are Aaron Judge's L5 / L10 / L20 over rates, and is he on a streak?
+GET /v1/sports/{sport}/players/{name}/trends
+python
+# One call returns aggregated splits for every market the
+# player has graded history in — no per-game math on your end.
+trends = client.get_player_trends("baseball_mlb", "Aaron Judge")
+for m in trends["markets"]:
+    l10 = m["last_10"]
+    streak = m["current_streak"]
+    if not l10:
+        continue
+    print(f"{m['market']:24} L10 {l10['over']}/{l10['over']+l10['under']} "
+          f"({l10['over_pct']}% over)  avg {m['avg_actual']}  "
+          f"line {m['recent_line']}  "
+          f"streak {streak['result']}×{streak['length']}" if streak else "")
+
+# Narrow to a single market with ?market=
+hr = client.get_player_trends(
+    "baseball_mlb", "Aaron Judge", market="batter_home_runs"
+)
+
+# PrizePicks flavor: compute the trend against the goblin line only,
+# to see if the easier line behaves differently than the standard one.
+gob = client.get_player_trends(
+    "baseball_mlb", "Aaron Judge", dfs_odds_type="goblin"
+)
+
+12cDetect repricing lag in a single /odds call
+Pro
+Has Pinnacle moved on a prop while PrizePicks hasn't caught up yet?
+GET /v1/sports/{sport}/events/{id}/odds
+python
+# Each outcome carries last_change_at — OUR observed time of its last
+# price move, populated for every book (incl. Pinnacle + PrizePicks),
+# unlike book_updated_at (the book's own publish-time, Bovada-only).
+# So the whole stale-vs-disagreeing check is one /odds call per event —
+# no per-event /odds/history call needed.
+odds = client.get_odds(
+    "baseball_mlb", event_id=12345, markets="pitcher_strikeouts"
+)
+
+def changed_at(book):
+    for b in odds["bookmakers"]:
+        if b["key"] != book:
+            continue
+        for m in b["markets"]:
+            for o in m["outcomes"]:
+                if o["description"] == "Bryan Woo" and o["name"] == "Over":
+                    return o["last_change_at"]
+    return None
+
+pin = changed_at("pinnacle")
+pp = changed_at("prizepicks")
+# Pinnacle moved more recently than PrizePicks last changed → PP lagging.
+if pin and pp and pin > pp:
+    print("PrizePicks is lagging Pinnacle's last move — potential edge")
+
+Webhooks (push)
+Streaming tier subscribers get line-movement, resolution, steam and market-suspension events pushed to their endpoint as soon as PropLine ingests them — HMAC-signed, with retry on failure.
+13Subscribe to line moves on one player
+Streaming
+Alert me whenever Aaron Judge's home-run prop ticks at any book.
+POST /v1/webhooks
+python
+client.create_webhook({
+    "url": "https://your-server.com/propline",
+    "events": ["line_movement"],
+    "filter_sport_key": "baseball_mlb",
+    "filter_player_name": "Aaron Judge",
+    "filter_market_key": "batter_home_runs",
+    "min_price_change_pct": 1.0,
+})
+# Returns the secret ONCE — store it for HMAC verification.
+
+14Verify webhook signatures
+Streaming
+Confirm an incoming POST is really from PropLine and not a spoof.
+X-PropLine-Signature header
+python
+from propline import PropLine
+
+# In your webhook handler, after reading the raw body bytes:
+ok = PropLine.verify_signature(
+    secret=WEBHOOK_SECRET,
+    timestamp=request.headers["X-PropLine-Timestamp"],
+    body=request.body,
+    signature=request.headers["X-PropLine-Signature"],
+)
+if not ok:
+    return 401
+
+15Push line moves into Discord
+Streaming
+Skip the bot — embed the alerts natively in a Discord channel.
+POST /v1/webhooks (format=discord)
+python
+client.create_webhook({
+    "url": "https://discord.com/api/webhooks/.../...",
+    "events": ["line_movement", "resolution"],
+    "format": "discord",
+    "filter_sport_key": "baseball_mlb",
+    "min_price_change_pct": 5.0,
+})
+
+Walkthrough: /discord-webhooks.
+
+15bKnow the moment a book pulls a market
+Streaming
+Stop trading a contract when my fair-value reference disappears — or catch a late scratch before the rest of the market does.
+POST /v1/webhooks (events=market_suspended)
+python
+# Every drop — right if you price off ONE book and need to
+# know the instant its number vanishes.
+client.create_webhook({
+    "url": "https://your-server.com/propline",
+    "events": ["market_suspended"],
+    "filter_sport_key": "baseball_mlb",
+})
+
+# Only corroborated drops — 3+ books pulling the same player on
+# the same event is a late scratch, minutes before it's announced.
+client.create_webhook({
+    "url": "https://your-server.com/propline",
+    "events": ["market_suspended"],
+    "filter_sport_key": "baseball_mlb",
+    "min_books_agreeing": 3,
+})
+
+# One delivery per (book, event, player) — a scratched batter is ONE
+# event carrying every key the book pulled:
+#   payload["subject"]         -> "Willson Contreras"
+#   payload["markets"]         -> [{"key": "batter_hits", "last_price": [...]}, ...]
+#   payload["books_agreeing"]  -> 7
+#   payload["reason"]          -> "off_the_board" | "no_offers" (exchange)
+
+Pull-side twin: every market in /odds carries suspended_at, on every tier. Fires pregame only; the last 30 minutes before kickoff are excluded (every book tears its prop board down then).
+
+Futures
+Season-long markets — championship winner, MVP, division winner. Polled hourly.
+16World Series winner odds, sorted by favorite
+
+Who's the favorite to win the World Series?
+GET /v1/sports/baseball_mlb/futures
+python
+futures = client.get_futures("baseball_mlb")
+for event in futures:
+    if "World Series" not in event["title"]: continue
+    for m in event["markets"]:
+        if m["key"] != "world_series_winner": continue
+        sorted_odds = sorted(m["outcomes"], key=lambda o: o["price"])
+        for o in sorted_odds[:10]:
+            print(f"  {o['name']:<25} {o['price']:+5}")
+
+Bulk export & backtesting
+Stream the full resolved-prop dataset as CSV — one row per (event, market, bookmaker, outcome) with line, price, resolution, and actual value. Pro tier; tier-gated lookback (90 days on Pro, 365 on Streaming, unlimited on Enterprise). The-odds-api doesn't offer this since they don't grade props.
+17Historical backfill: resolved props + opening/closing lines as CSV
+Pro
+Pull a CSV I can backtest a model against — with the opening and closing line per row.
+GET /v1/exports/resolved-props
+bash
+curl -s "https://api.prop-line.com/v1/exports/resolved-props?\
+sport=baseball_mlb&market=pitcher_strikeouts&apiKey=YOUR_KEY" \
+  -o mlb-strikeouts.csv
+
+# Every row carries both ends of the move alongside the graded result:
+#   opening_price / opening_point / opening_at  (first line in the 14d
+#                                                before first pitch)
+#   closing_price / closing_point / closing_at  (last line at/before it)
+# A complete CLV/backtest dataset in one download — no per-event calls.
+
+# Or in Python (streams to disk):
+client.export_resolved_props(
+    sport="baseball_mlb",
+    market="pitcher_strikeouts",
+    out_path="./mlb-strikeouts.csv",
+)
+
+18Full line-movement history (open-to-close) as CSV
+Pro
+Give me every recorded line, every book, across the whole archive — not just the close.
+GET /v1/exports/odds-history
+bash
+# Backfill-pass / Enterprise only. Page month-by-month — a full
+# archive runs to gigabytes per sport.
+curl -s "https://api.prop-line.com/v1/exports/odds-history?\
+sport=baseball_mlb&since=2026-04-01T00:00:00Z&until=2026-05-01T00:00:00Z&apiKey=YOUR_KEY" \
+  -o mlb-line-history-apr.csv
+
+# One row per (outcome, snapshot): every price + line we recorded,
+# per book, including period markets. No subscription tier can pull
+# this in bulk — Pro/Streaming get per-event /odds/history only.
+
+# Or in Python (streams to disk):
+client.export_odds_history(
+    sport="baseball_mlb",
+    since="2026-04-01T00:00:00Z",
+    until="2026-05-01T00:00:00Z",
+    out_path="./mlb-line-history-apr.csv",
+)
+
+19Quick CSV preview before committing
+
+What does the data look like? No auth required.
+GET /v1/exports/sample
+bash
+curl -s https://api.prop-line.com/v1/exports/sample | head -3
+# event_id,sport_key,commence_time,home_team,away_team,...,customer_token
+# 5885,baseball_mlb,2026-04-19...,Seattle Mariners,...,public-sample
+
+Note: every export carries a customer_token column tying it to your API key — see the redistribution terms.
+
+Joining onto a book's own data
+Already pulling a book's native API — most often Kalshi — and want our cross-book context next to it? includeBookIds=true gives you each book's own event and selection ids so you can join on ids instead of fuzzy-matching team names, players and lines.
+20Match Kalshi contract tickers to our lines
+
+I have Kalshi market tickers. Give me every other book's price on the same leg.
+GET /v1/sports/{sport}/events/{id}/odds?includeBookIds=true
+python
+# Build {kalshi_ticker -> our (market, outcome)} for one event,
+# then read across to every other book on the same leg.
+event = client.get_event_odds(
+    "baseball_mlb", event_id,
+    markets="h2h,pitcher_strikeouts",
+    includeBookIds=True,
+)
+
+by_ticker = {}
+for book in event["bookmakers"]:
+    if book["key"] != "kalshi":
+        continue
+    print("kalshi event ticker:", book["book_event_id"])
+    for m in book["markets"]:
+        for o in m["outcomes"]:
+            by_ticker[o["book_outcome_id"]] = (m["key"], o["name"], o["description"])
+
+# Now price the same legs everywhere else.
+for book in event["bookmakers"]:
+    if book["key"] == "kalshi":
+        continue
+    for m in book["markets"]:
+        for o in m["outcomes"]:
+            leg = (m["key"], o["name"], o["description"])
+            if leg in by_ticker.values():
+                print(f"{book['key']:<12} {leg[1]:<22} {o['price']:+5}")
+
+A two-sided market shares one book_outcome_id across both legs — a Kalshi contract is binary, so Over and Under are its YES and NO sides. The id is the contract; the outcome's name is the side.
+
+21Keep a stable mapping to your own book ids
+
+I store rows keyed by DraftKings' event id. How do I line those up with PropLine events?
+GET /v1/sports/{sport}/odds?includeBookIds=true
+python
+# One call gives you the whole slate's id crosswalk.
+crosswalk = {}   # (book, book_event_id) -> propline event id
+for event in client.get_odds("baseball_mlb", markets="h2h", includeBookIds=True):
+    for book in event["bookmakers"]:
+        if book["book_event_id"]:
+            crosswalk[(book["key"], book["book_event_id"])] = event["id"]
+
+print(crosswalk[("draftkings", "28821994")])
+
+Books without a stable public id return null. One caveat: TAB AU's match ids are name-derived rather than per-fixture, so pair theirs with the date rather than using it alone.
+
+Scores, stats & running it in production
+The endpoints that keep a live integration honest — discovering what a game actually carries before you pull it, grading against raw box scores, and knowing when a book has gone quiet.
+22Find out what a game carries before pulling the whole board
+
+A busy MLB game has 100+ markets across 116 books. How do I fetch only what I need?
+GET /v1/sports/{sport}/events/{id}/markets
+python
+# One cheap call lists the market keys on this event, with outcome counts.
+markets = client.get_markets("baseball_mlb", event_id=12649)
+for m in markets:
+    print(f"{m['key']}: {m['outcomes_count']} outcomes")
+# pitcher_strikeouts: 46 outcomes
+# batter_total_bases: 88 outcomes
+# h2h: 38 outcomes
+
+# Now pull only the ones you model.
+wanted = [m["key"] for m in markets if m["key"].startswith("pitcher_")]
+odds = client.get_odds("baseball_mlb", event_id=12649, markets=",".join(wanted))
+
+Full-game markets only, so the counts match a default markets= pull. Period markets need ?period=.
+
+23Grade a prop yourself against the raw box score
+
+I have my own lines from a book you don't carry. Can I still use your resolution data?
+GET /v1/sports/{sport}/events/{id}/stats
+python
+# /stats is book-agnostic: raw box-score values, no line attached.
+stats = client.get_stats("baseball_mlb", event_id=12649)
+
+by_player = {p["name"]: p["stats"] for p in stats["players"]}
+
+my_bets = [("Tarik Skubal", "strikeouts", 6.5, "Over")]
+for player, stat, line, side in my_bets:
+    actual = by_player.get(player, {}).get(stat)
+    if actual is None:
+        print(f"{player}: no stat yet"); continue
+    won = actual > line if side == "Over" else actual < line
+    print(f"{player} {stat} {actual} vs {line} {side}: "
+          f"{'push' if actual == line else 'won' if won else 'lost'}")
+
+Free tier. During in-progress games in the major US sports these refresh roughly every 90s with cumulative partial values — treat them as partial until /scores reports the event final.
+
+24Alert when a book you depend on goes quiet
+
+Half my model is Pinnacle. How do I notice when Pinnacle stops updating?
+GET /v1/freshness
+python
+import requests
+
+# No API key needed for this one.
+data = requests.get("https://api.prop-line.com/v1/freshness").json()
+
+for book in data["bookmakers"]:
+    if book["key"] != "pinnacle":
+        continue
+    classes = book["market_classes"]
+    # The class split is the point: a prop board can go dark behind
+    # perfectly fresh game lines, and the top-level number hides it.
+    for name, c in classes.items():
+        if c["staleness_seconds"] > 900:
+            print(f"ALERT pinnacle {name} stale: {c['staleness_seconds']}s")
+
+Top-level staleness_seconds is time since the last write on any market for the book, so it is optimistic per-event — check the per-class numbers. Human-readable version at /freshness.
+
+25Price a bet at a book PropLine doesn't carry
+Pro
+Caesars is offering -105. Is that +EV? You don't have Caesars.
+GET /v1/sports/{sport}/events/{id}/ev/calc
+python
+# Same no-vig fair anchor as /ev, scored against a price you supply.
+r = client.calc_event_ev(
+    "baseball_mlb", event_id=12649,
+    market="pitcher_strikeouts",
+    name="Over",                 # team name for h2h/spreads
+    point=6.5,
+    description="Tarik Skubal",  # omit for game lines
+    price=-105,                  # American odds at YOUR book
+)
+print(r["fair_source"], r["fair_prob"], r["ev_pct"], r["is_plus_ev"])
+# pinnacle 0.5432 6.05 True
+
+Full-game markets only. A tuple with no fair-anchored line returns 404 listing the outcome names that do exist. There is a UI at /ev-calculator.
+
+26Check whether a DFS slip beats the sportsbook price
+
+PrizePicks pays 3x on a 3-leg Power play. What hit rate do I need?
+GET /v1/dfs/payouts
+python
+# Breakeven per-leg win probability for every play type and leg count.
+payouts = client.get_dfs_payouts(leg_win_prob=0.58)
+for play in payouts["plays"]:
+    print(play["play_type"],                      # "power" | "flex"
+          play["legs"],
+          play["all_correct_multiplier"],
+          round(play["breakeven_leg_win_prob"], 4),
+          play["expected_return"],                # per $1, only with leg_win_prob
+          play["is_plus_ev"])
+# power 3 5.0   0.5848 0.9756 False   <- 58% isn't enough for a 3-leg Power
+# power 4 10.0  0.5623 1.1316 True
+# flex  4 5.0   0.5689 1.0575 True
+
+Free tier. Read the disclaimer field — these are the standard published payouts (per-pick demon/goblin modifiers are not in the PrizePicks feed) and breakeven assumes independent legs.
+
+27Team totals vs the game total
+
+How many goals does the book expect from THIS team — and how do I stop that line polluting my game-total comparison?
+GET /v1/sports/{sport}/events/{id}/odds?markets=totals
+python
+odds = client.get_odds("soccer_epl", event_id=154640, markets=["totals"])
+
+for book in odds["bookmakers"]:
+    for m in book["markets"]:
+        # team is None on the GAME total, and the canonical team name on a
+        # team total. Both ride the 'totals' key, so (key, point) alone
+        # cannot tell them apart.
+        label = m["team"] or "GAME"
+        for o in m["outcomes"]:
+            print(f"{book['key']:<10} {label:<20} {o['name']:<6} "
+                  f"{o['point']}  {o['price']:+}")
+
+# betus      GAME                 Over   3.0  +105
+# betus      Ipswich Town         Over   0.5  -152   <- team total
+# bovada     GAME                 Over   0.5  -6500  <- game total, same point
+# bovada     Ipswich Town         Over   0.5  -145
+
+Those two 0.5 rows are different bets, which is why team exists. It matches the event's home_team / away_team exactly, so you never parse a book's wording, and it is always null outside totals. Present on odds, odds history, closing lines and movement.
+
+Want one we don't cover?
+Email support@prop-line.com with the question and we'll add it (and likely answer you in code). Recipes are intentionally short and copy-paste-able; larger reference implementations live as standalone repos under github.com/proplineapi.
+
+PL
+PropLine
+DocumentationDevelopersRecipesAPI Reference+EV playsWebhook APIDiscord webhooksProp resolutionPricing comparisonMarkets A–ZOdds API by sportsbookFor AI agentsWorld Cup odds APITennis odds APIPlayer trendsSharp odds APIClosing odds (CLV)Book accuracyGoogle SheetsExchanges vs booksExchange APIHistorical BackfillSwitch from the-odds-apivs the-odds-apiDraftKings APIAboutContactSupportStatusFreshnessAPI versioningTermsPrivacy
+PropLine Reviews
+© 2026 PropLine. All rights reserved.
+

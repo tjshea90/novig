@@ -1,0 +1,1938 @@
+PropLine API Docs — Player Props & Odds API (Free Key)
+PL
+PropLineDocs+EVResultsFreshnessStatusPricingDashboardGet API Key
+
+Resources
+Recipes →EV calculator →API Reference →
+Quick StartAuthenticationVersioning & DeprecationBookmakersEndpointsList SportsList EventsGet OddsPlayer PropsLine HistoryClosing LinesGrade Bets (CLV)Same Game ParlayPeriod MarketsScoresMLB Grand SalamiNHL Daily Goals TotalProp ResultsCross-book +EVMarket ProjectionsBest LinePlayer SearchPlayer HistoryGame Log & H2HPlayer TrendsPlayer StatsGame ContextLine Movement & SteamFuturesAvailable Markets (Event)Webhooks (Push)Bulk ExportDFS PayoutsMarket Hit RatesData FreshnessMarketsResolution CoverageTimestamps & GuaranteesEvent Identity & OrientationErrorsAPI Documentation
+Everything you need to integrate PropLine into your app.
+Building with an AI assistant? Pre-load the full PropLine reference into your model of choice:
+Open in ChatGPTOpen in ClaudeOpen in PerplexityView llms-full.txt
+
+Quick Start
+Get up and running in 30 seconds:
+Get your API key from the signup form
+Make your first request:
+curl "https://api.prop-line.com/v1/sports?apiKey=YOUR_API_KEY"
+
+Polling many games? Use one call per sport.
+Don't loop over games. Bulk odds returns every game in a sport in one request, live games included (each has live: true), with any markets you ask for, player props too. One request instead of one per game, and it is faster on big slates. Use the per-event endpoint only when you need a single game.
+curl "https://api.prop-line.com/v1/sports/basketball_nba/odds?markets=h2h,spreads,totals,player_points&apiKey=YOUR_API_KEY"
+
+Or skip the curl boilerplate — PropLine ships official SDKs and tools for every common workflow:
+Python SDK
+pip install proplinePyPI · GitHub
+
+Node / TS SDK
+npm install proplinenpm · GitHub
+
+CLI new
+npm install -g propline-cliTables in your terminal — GitHub
+
+MCP server
+npx -y propline-mcpClaude Desktop / Code · GitHub
+
+Authentication
+Pass your API key via query parameter or header:
+# Query parameter
+curl "https://api.prop-line.com/v1/sports?apiKey=YOUR_API_KEY"
+
+# Header
+curl -H "X-API-Key: YOUR_API_KEY" "https://api.prop-line.com/v1/sports"
+
+Tracking your usage
+Every authenticated response carries your live quota state in headers — no separate call or dashboard visit needed:
+X-Daily-Limit: 1000        # your tier's daily request cap
+X-Daily-Used: 563          # requests used today (including this one)
+X-Daily-Remaining: 437     # requests left before the cap
+X-Daily-Reset: 1785542400  # unix seconds when the quota resets (00:00 UTC)
+
+The same numbers are on the dashboard, with history. Quotas reset at 00:00 UTC — a hard reset, not a rolling window.
+Standard rate-limit headers
+The same quota is also published in the IETF RateLimit-* form and the de-facto X-RateLimit-* form, so a generic HTTP client or an AI agent can self-throttle without knowing anything PropLine-specific:
+RateLimit-Limit: 5000
+RateLimit-Remaining: 4437
+RateLimit-Reset: 30840        # SECONDS until reset (per the RFC)
+RateLimit-Policy: 5000;w=86400
+
+X-RateLimit-Limit: 5000
+X-RateLimit-Remaining: 4437
+X-RateLimit-Reset: 1785542400 # unix timestamp
+
+Note the two Reset spellings differ on purpose: the RFC header is a delta in seconds, the X- header is an absolute timestamp. Unauthenticated /v1/* responses advertise the free-tier policy only — remaining is unknowable without a key. The quota headers ride every authenticated response, 4xx errors included (a 400 or 404 still tells you what is left); a 401 for an invalid key carries none, since there is no quota to report.
+Both kinds of 429 (daily cap and per-second burst) carry Retry-After in seconds. Honour it instead of retrying immediately.
+Concurrency & burst limits
+The daily quota is the long-term cap. Two shorter-term limits sit in front of it, both scoped to your API key — so one caller can never starve another, and you can only ever throttle yourself.
+Concurrency. Up to 20 requests in flight at once per key. Past that you get 503 with Retry-After: 1. If you are fanning out across events, bound your own pool at 8–10 — that leaves headroom and is well past the point where more parallelism stops helping.
+Burst. A token bucket per key: it holds the burst below, and refills at the sustained rate. So you can fire the full burst instantly, then keep going indefinitely at the sustained rate. Over it you get 429 with error: "burst_limit_exceeded" and Retry-After.
+TierBurstSustainedDaily
+Free105 / sec1,000
+Hobby2010 / sec5,000
+Pro5020 / sec25,000
+Streaming Lite10035 / sec250,000
+Streaming20050 / sec1,000,000
+EnterpriseNo burst limiterContract
+
+Webhook and WebSocket deliveries are push, not pull — they are metered by none of the three limits above.
+Before you parallelise, check you need to. Bulk /v1/sports/{sport}/odds?markets=… returns every event on the slate in a single call, so a 15-game MLB night is 1 request rather than 15. Only the per-event endpoints (/ev, /odds/history) need fanning out at all — and /ev is cached 45 seconds server-side, so re-polling one event faster than that returns the same body.
+Versioning & deprecation
+The API version is the first path segment (/v1/). New fields, books, markets and endpoints land inside v1 continuously — so ignore unknown fields, and never assume the bookmakers array holds an exact set of books. Removals and renames ship as a new version path, never in place.
+Anything deprecated keeps serving for at least 12 months and carries RFC 8594 Deprecation and Sunset headers for the whole window, so an automated client can detect it without polling a page. Full policy: versioning & deprecation.
+Bookmakers
+Every odds response returns a bookmakers array so you can compare lines across books in a single request. Iterate the array to line-shop between sources.
+KeyBookCoverage
+bovadaBovadaAll 71 sports — game lines + full player props
+draftkingsDraftKingsMLB, NBA, NHL, NFL, NCAAF, tennis + 9 soccer leagues — game lines + player props (NFL/NCAAF game lines now, player props at preseason; tennis includes match lines, total sets/aces + per-player aces and games-won props across active ATP/WTA tournaments)
+fanduelFanDuelMLB, NBA, NHL, NFL, NCAAF + 9 soccer leagues — game lines + player props (NFL/NCAAF game lines now; player props at preseason)
+betmgmBetMGMMLB, NBA, 17 soccer leagues — game lines + MLB player props (pitcher/batter). NJ skin (www.nj.betmgm.com)
+betriversBetRiversMLB, NBA, NHL, 6 soccer leagues — full prop suite incl. NHL Player Points tiers, NBA double/triple-double YES, soccer To Score or Assist
+pinnaclePinnacleMLB (game lines + props), NBA/NHL/NFL + 30 soccer leagues (game lines, goalie saves) — sharpest US-facing book
+unibetUnibetMLB/NBA/NHL + 6 soccer leagues — game lines; NBA + NHL + soccer player props (points, rebounds, assists, threes, steals, blocks, PRA, shots on goal, goalscorer, cards, BTTS, total corners)
+onexbet1xBetMLB, NBA, WNBA, NHL + 13 soccer leagues — game lines (h2h, spreads, totals)
+tab_auTAB (Australia)MLB, NBA, WNBA, NHL + 13 soccer leagues — game lines (h2h, spreads, totals). Australia's largest licensed wagering operator.
+prizepicksPrizePicks (DFS)MLB, NBA, NHL, 30 soccer leagues, tennis, UFC — player projections at synthetic +100/+100 even-money pricing (DFS payouts scale with parlay correct-count)
+underdogUnderdog Fantasy (DFS)MLB, NBA, NHL, tennis, UFC + 9 soccer leagues — player props with real two-way American prices (e.g. -113/+101) and an optional payout multiplier on boosted picks
+kalshiKalshi (event-contract exchange)MLB, WNBA, NFL, NCAAF, NBA, NHL, tennis, UFC, boxing, golf, cricket, AFL, NRL, esports + 26 soccer leagues — game lines (h2h, spreads, totals, team totals, partial-game and quarter/half lines) plus player props: MLB batter/pitcher O/U at every strike Kalshi lists (hits, total bases, RBIs, H+R+RBI, strikeouts, outs, stolen bases) and a home-run milestone ladder, WNBA points/rebounds/assists/threes O/U, NFL yardage/receptions/pass-TD O/U and anytime / first / 2+ TD, NFL team totals (full game and 1st half), NFL winning margin, NFL + NCAAF half-time/full-time, La Liga + EPL total and team corners, La Liga anytime / first goalscorer, WTA 125 and ATP Challenger match winners, UFC fight goes the distance, golf winner (incl. DP World Tour), make-cut and top 5 / 10 / 20. CFTC-regulated US exchange; each contract's YES ask is the Over price and its NO ask the Under, converted to American odds
+polymarketPolymarket (prediction-market exchange)MLB, NBA, NHL + 13 soccer leagues — game-line h2h, multi-line totals, and spreads (US sports bundle all three; soccer is 3-way h2h re-assembled from binary YES/NO markets). Prices are the takeable price on the CLOB: YES at the best ask, NO at one minus the best bid (since 8 October 2026; earlier prices, including history, are the book midpoint)
+polymarket_usPolymarket US (CFTC-regulated US exchange)NFL, NCAAF, MLB, WNBA, NBA, UFC, tennis + 13 soccer leagues — moneyline, alt spread and total ladders, team totals, NFL 1st-half and Q1-Q3 lines, MLB first-5 totals, both teams to score, go the distance; player props on NFL (yardage, receptions, pass TDs/completions/INTs, anytime / 2+ / first TD), MLB (hits, total bases, RBIs, H+R+RBI, strikeouts, outs, hits and earned runs allowed, home-run milestones) and soccer goalscorers. A separate order book from offshore Polymarket; each side is its own takeable ask
+heritageHeritage Sports (offshore sportsbook)NFL, NCAAF, MLB, NBA, WNBA, NCAAB, NHL, UFC, boxing + 29 soccer leagues — moneyline (soccer 3-way + draw no bet), spread and total ladders around the main line, team totals. Pregame only
+jazzsportsJazz Sports (offshore sportsbook)NFL, NCAAF, MLB, NBA, WNBA, NCAAB, NHL, UFC, boxing + 29 soccer leagues — moneyline (soccer 3-way + draw no bet), spread and total ladders around the main line, team totals. Pregame only
+youwagerYouWager (offshore sportsbook)NFL, NCAAF, CFL, MLB, NBA, WNBA, NHL, UFC, tennis + 4 soccer competitions — moneyline (soccer 3-way), spread, total, team totals, 1st-half / 1st-quarter / 1st-period lines. Pregame only
+eurobetEurobet (Italian sportsbook)26 soccer leagues incl. Serie A, Premier League, La Liga, Bundesliga, Ligue 1, MLS and the UEFA cups — 1X2, over/under ladder, both teams to score, double chance, draw no bet, correct score, 1st-half 1X2 and over/under, corners. Tennis singles — match winner, set 1 winner, games total and handicap. Pregame only
+admiralbetAdmiralBet (Italian sportsbook)28 soccer leagues incl. Serie A, Premier League, La Liga, the UEFA cups and Copa Libertadores — 1X2, over/under ladder, both teams to score, double chance, draw no bet, correct score, 1st-half 1X2 and over/under, corners, cards. Tennis singles — match winner, games total and handicap. Pregame only
+snaiSnai (Italian sportsbook)28 soccer leagues incl. Serie A, Premier League, La Liga, the UEFA cups and Copa Libertadores — 1X2, over/under 0.5 to 7.5 goals, both teams to score, double chance, draw no bet, correct score, 1st-half 1X2 and over/under, corners. Tennis singles — match winner, set winners, games total and handicap. Pregame only
+winamaxWinamax (French sportsbook)29 soccer leagues — 1X2, over/under, both teams to score, double chance, draw no bet — plus NFL / MLB / NBA / WNBA moneylines. Pregame only
+betclicBetclic (French sportsbook)30 soccer leagues — 1X2, over/under ladder, both teams to score, double chance. Pregame only
+pmuPMU (French sportsbook)30 soccer leagues — 1X2, over/under, both teams to score, double chance, draw no bet — plus NBA / NFL / NHL game lines. Pregame only
+genybetGenybet (French sportsbook)29 soccer leagues — 1X2, over/under, both teams to score, double chance. Pregame only
+ladbrokesLadbrokes (UK sportsbook)29 soccer leagues — 1X2, over/under ladder, both teams to score, draw no bet. Pregame only
+tipicoTipico (German sportsbook)30 soccer leagues — 1X2, over/under, both teams to score, double chance, draw no bet — plus NBA / WNBA / NFL game lines and NHL moneyline. Pregame only
+merkurbetsMerkurbets (German sportsbook)29 soccer leagues — 1X2, over/under 0.5-6.5, both teams to score, double chance, draw no bet. Pregame only
+codereCodere (Spanish sportsbook)29 soccer leagues — 1X2, over/under ladder, both teams to score, double chance — plus NBA / WNBA game lines. Pregame only
+tonybetTonyBet (Canadian sportsbook)NHL / NFL / NCAAF / CFL / NBA / WNBA / MLB game lines with alt lines, plus 29 soccer leagues — 1X2, over/under, both teams to score, double chance, draw no bet. Pregame only
+bet99Bet99 (Canadian sportsbook)NHL / NFL / NCAAF / CFL / NBA / WNBA / MLB game lines with alt lines and team totals, plus 30 soccer leagues — 1X2, over/under, both teams to score, double chance, draw no bet. Pregame only
+paddypowerPaddy Power (UK/Irish sportsbook)29 soccer leagues — 1X2, over/under, both teams to score, double chance, draw no bet — plus NFL / NBA / MLB game lines and NHL moneyline. Pregame only
+livescorebetLiveScore Bet (UK sportsbook)27 soccer leagues — 1X2, over/under, both teams to score, double chance, draw no bet — plus NFL / NCAAF / NBA / WNBA / MLB game lines and NHL puck line. Pregame only
+sbobetSBOBET (Asian sportsbook)22 soccer leagues (1X2, Asian handicap and goal lines on whole / half lines, first-half lines) plus NFL / NCAAF / NBA / MLB moneyline, handicap and total. Lists games about 1-5 days ahead. Pregame only
+bookmaker_euBookMaker.eu (offshore sportsbook)NFL / NCAAF / CFL / NBA / WNBA / NHL / MLB + 24 soccer leagues — main moneyline, spread and total. Pregame only
+strendusStrendus (Mexican sportsbook)29 soccer leagues plus NFL / NCAAF / NBA / MLB / NHL / tennis / UFC game lines. Pregame only
+wplayWplay (Colombian sportsbook)27 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL game lines. Pregame only
+coderemxCodere MX (Mexican sportsbook)27 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL game lines. Pregame only
+placardPlacard (Portuguese sportsbook)28 soccer leagues plus NFL / NCAAF / NBA / MLB / NHL game lines. Pregame only
+solverdeSolverde (Portuguese sportsbook)28 soccer leagues plus NBA / MLB game lines. Pregame only
+sportiumSportium (Spanish sportsbook)28 soccer leagues plus NFL / NCAAF / NBA / MLB / NHL game lines. Pregame only
+marcaapuestasMarca Apuestas (Spanish sportsbook)28 soccer leagues plus NFL / NCAAF / NBA / MLB / NHL game lines. Pregame only
+betclic_ptBetclic PT (Portuguese sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL game lines. Pregame only
+danskespilDanske Spil (Danish sportsbook)29 soccer leagues plus NFL / NCAAF / NBA / NCAAB / WNBA / MLB / NHL game lines. Pregame only
+veikkausVeikkaus (Finnish sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / NCAAB / MLB / NHL game lines. Pregame only
+sazkaSazka (Czech sportsbook)28 soccer leagues plus NBA / NCAAB / WNBA / MLB / NHL game lines. Pregame only
+pamestoiximaPame Stoixima (Greek sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / NCAAB / WNBA / MLB / NHL game lines. Pregame only
+bet25Bet25 (Danish sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / MLB / NHL game lines. Pregame only
+norsktippingNorsk Tipping (Norwegian sportsbook)25 soccer leagues plus NFL / NCAAF / NBA / MLB / NHL / tennis game lines. Pregame only
+totoTOTO (Dutch sportsbook)30 soccer leagues plus NFL / NBA / MLB / NHL / tennis game lines. Pregame only
+ladbrokes_beLadbrokes BE (Belgian sportsbook)29 soccer leagues plus NBA / tennis game lines. Pregame only
+superbet_roSuperbet RO (Romanian sportsbook)30 soccer leagues plus NFL / NBA / WNBA / MLB / NHL / tennis game lines. Pregame only
+napoleonNapoleon Games (Belgian sportsbook)25 soccer leagues plus NBA / WNBA / MLB / tennis game lines. Pregame only
+superbet_plSuperbet PL (Polish sportsbook)28 soccer leagues plus NFL / NBA / WNBA / MLB / NHL / tennis game lines. Pregame only
+stoiximanStoiximan (Greek sportsbook)12 soccer leagues plus NFL / NBA / MLB / NHL game lines. Pregame only
+stsSTS (Polish sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL game lines. Pregame only
+synotSynot Tip (Czech sportsbook)29 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL game lines. Pregame only
+ladbrokes_auLadbrokes AU (Australian sportsbook)NFL / NCAAF / NBA / WNBA / MLB / NHL / CFL / AFL / NRL game lines. Pregame only
+playupPlayUp (Australian sportsbook)28 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL / AFL / NRL game lines. Pregame only
+betathomebet-at-home (Maltese sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / NCAAB / WNBA / MLB / NHL game lines. Pregame only
+fortuna_czFortuna CZ (Czech sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL game lines. Pregame only
+fortuna_plFortuna PL (Polish sportsbook)30 soccer leagues plus NBA / WNBA / NHL game lines. Pregame only
+admiralbet_deAdmiralBet DE (German sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / MLB / NHL / tennis game lines. Pregame only
+starsportsStar Sports (UK sportsbook)26 soccer leagues plus NFL / NCAAF / NBA / MLB / NHL / tennis game lines. Pregame only
+lvbetLV BET (Polish sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / MLB / NHL game lines. Pregame only
+totalbetTotalbet (Polish sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / MLB / NHL game lines. Pregame only
+palmerbetPalmerbet (Australian sportsbook)26 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL / AFL / NRL / tennis game lines. Pregame only
+betr_auBetr AU (Australian sportsbook)28 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL / NRL / tennis game lines. Pregame only
+netbet_roNetBet RO (Romanian sportsbook)27 soccer leagues plus NFL / NCAAF / NBA / MLB / NHL game lines. Pregame only
+novibetNovibet (Greek sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL / tennis / UFC game lines. Pregame only
+thescorebettheScore Bet (Ontario sportsbook)21 soccer leagues plus NFL / NCAAF / NBA / NCAAB / WNBA / MLB / NHL / CFL / tennis / UFC — game lines, alt lines, team totals and periods, plus player props on football / MLB / NHL / soccer. Pregame only
+playalbertaPlayAlberta (Canadian sportsbook)29 soccer leagues plus NFL / NCAAF / NBA / MLB / NHL / CFL / tennis / UFC game lines. Pregame only
+topsportTopSport (Lithuanian sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL game lines. Pregame only
+olybetOlyBet (French sportsbook)29 soccer leagues plus NFL / NBA / MLB / NHL game lines. Pregame only
+supersportSuperSport (Croatian sportsbook)29 soccer leagues plus NFL / NBA / WNBA / MLB / NHL game lines. Pregame only
+maxbetMaxBet (Serbian sportsbook)25 soccer leagues plus tennis game lines. Pregame only
+soccerbetSoccerbet (Serbian sportsbook)23 soccer leagues plus NBA / tennis game lines. Pregame only
+merkurxbetMerkurXtip (Serbian sportsbook)29 soccer leagues plus NBA / tennis game lines. Pregame only
+pskPSK (Croatian sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / WNBA game lines. Pregame only
+sportybet_ngSportyBet NG (Nigerian sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL / CFL / tennis game lines. Pregame only
+playnowPlayNow (Canadian sportsbook)29 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL / CFL game lines. Pregame only
+miseojeuMise-o-jeu (Canadian sportsbook)28 soccer leagues plus NFL / NCAAF / NBA / NCAAB / WNBA / MLB / NHL / CFL game lines. Pregame only
+jouezsportJouez Sport (Swiss sportsbook)28 soccer leagues plus NFL / NBA / MLB / NHL / CFL game lines. Pregame only
+mozzartMozzart Bet (Serbian sportsbook)28 soccer leagues plus NBA game lines. Pregame only
+germaniaGermania Sport (Croatian sportsbook)28 soccer leagues plus NBA game lines. Pregame only
+meridianbetMeridianbet (Serbian sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB game lines. Pregame only
+sportnaSportna loterija (Slovenian sportsbook)25 soccer leagues plus NBA / NHL game lines. Pregame only
+teapuestoTe Apuesto (Peruvian sportsbook)29 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL game lines. Pregame only
+bet9jaBet9ja (Nigerian sportsbook)29 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL game lines. Pregame only
+betikaBetika (Kenyan sportsbook)29 soccer leagues plus NFL / NBA / WNBA / MLB / NHL game lines. Pregame only
+sportpesaSportPesa (Kenyan sportsbook)29 soccer leagues. Pregame only
+tippmixTippmix (Hungarian sportsbook)26 soccer leagues plus NFL / NBA / MLB / NHL game lines. Pregame only
+tipp3tipp3 (Austrian sportsbook)19 soccer leagues plus NFL / NBA / NHL game lines. Pregame only
+supabetsSupabets (South African sportsbook)29 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL game lines. Pregame only
+betway_zaBetway ZA (South African sportsbook)30 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL game lines. Pregame only
+hollywoodbetsHollywoodbets (South African sportsbook)22 soccer leagues. Pregame only
+thrillzzThrillzz (sweepstakes sportsbook)NFL, NCAAF, CFL, NBA, WNBA, MLB, NHL, UFC, boxing, tennis + 20 soccer competitions — moneyline (soccer 3-way), spread and total with alt ladders around the main line. Pregame only
+sportzinoSportzino (sweepstakes sportsbook)NFL, NCAAF, CFL, MLB, NBA, WNBA, NHL, UFC, boxing + 30 soccer leagues — main moneyline, spread and total per game (soccer: 3-way result, draw no bet, total). Pregame only. Prices from the Altenar platform
+sxbetSX Bet (P2P exchange, crypto/USDC)MLB, NBA, WNBA, NHL, NFL, NCAAF, UFC + soccer (incl. UEFA Nations League, MLS, Argentina) — moneyline, spread and total ladders near the main line, 1st-half and quarter/period lines, MLB first-5 totals, soccer 3-way result. Pregame only. Best taker price on each side; `liquidity` is the USDC a taker can stake at that price
+betfair_exBetfair Exchange (UK back/lay exchange)25 soccer leagues (match odds, half-time result, goal totals, Asian handicap, both teams to score, draw no bet) plus NFL / NCAAF / CFL / NBA / WNBA / EuroLeague / MLB moneyline, handicap and total lines, NHL moneyline, tennis, UFC and boxing match odds. Pregame only. Best back price per runner; `liquidity` is the USD a backer can stake at that price
+betdaqBetdaq (UK/IE back/lay exchange; retired 2026-10-22, closed)25 soccer leagues (match odds, goal totals, Asian handicap, both teams to score, draw no bet) plus NFL / NCAAF / CFL / NBA / WNBA / EuroLeague / NHL / MLB winner, handicap and total lines (overtime included). Pregame only. Best back price; `liquidity` is the USD a backer can stake at that price
+matchbookMatchbook (back/lay exchange)MLB, NBA, NHL + 17 soccer leagues + tennis + boxing — game lines (h2h, totals, spreads). Best back price per runner; no size (liquidity is null).
+smarketsSmarkets (back/lay exchange)MLB, NBA, NHL + 13 soccer leagues — Match Winner + alt-total + alt-handicap lines. UK exchange with best back price per contract; no size (liquidity is null).
+novigNovig (P2P exchange)MLB, NBA, WNBA, NHL + 13 soccer leagues — deepest per-event surface (MLB ~40 markets/event w/ full batter & pitcher prop suite, NBA ~140 markets/event incl. DOUBLE_DOUBLE / TRIPLE_DOUBLE, NHL player goals + saves). US peer-to-peer exchange; `last` field is implied probability converted to American odds.
+prophetxProphetX (P2P exchange)MLB, NFL, WNBA, NBA, NHL, NCAAF, UFC + soccer — game lines, period lines (1st 5 innings, 1st inning, 1st half), team totals, and the full player-prop suite (MLB batter & pitcher props; NBA/WNBA points, rebounds, assists, threes + combos). US peer-to-peer exchange; we publish the best takeable price on each side of the order book.
+betusBetUSMLB, NBA, WNBA, NHL, NFL (incl. preseason), NCAAF, CFL, UFC + 10 soccer leagues — game lines (h2h incl. 3-way soccer, spreads, totals, team totals; total rounds on UFC) + props: MLB pitcher outs, soccer anytime goalscorer / BTTS / double chance / correct score, UFC fight-to-go-the-distance + round betting. Offshore US-facing sportsbook.
+betonlineagBetOnline.agMLB, NBA, WNBA, NHL, NFL, NCAAF, CFL, UFC, boxing + 24 soccer leagues — game lines (h2h incl. 3-way soccer, spreads, totals; total rounds on fights) + props: MLB pitcher strikeouts / outs + batter H+R+RBI, soccer BTTS / double chance / draw no bet / correct score, UFC fight-to-go-the-distance + round betting. Offshore US-facing sportsbook.
+lowvigLowVig.agSame coverage as BetOnline.ag (same platform and fixtures) at reduced-juice prices — e.g. -108/-108 where BetOnline shows -110/-110.
+fanaticsFanaticsMLB, NBA, WNBA, NHL, NFL (incl. preseason), NCAAF, UFC, boxing, tennis + EPL, La Liga, Serie A, Ligue 1, MLS — game lines (h2h, spreads, totals, team totals, first 3/5/7-innings periods; total rounds and fight-to-go-the-distance on fights) + props: MLB batter hits / home runs / RBIs / runs / total bases / H+R+RBI + pitcher strikeouts, NBA & WNBA points / rebounds / assists / threes and every combo, soccer anytime + first goalscorer / score-or-assist / BTTS / double chance / correct score. Full US sportsbook; deep alt-line ladders.
+hardrockHard Rock BetMLB, NBA, WNBA, NHL, NFL, NCAAF, CFL, UFC, boxing + 24 soccer leagues — game lines (h2h, spreads, totals, team totals, halves / quarters / periods / innings incl. first 3/5 innings; total rounds and fight-to-go-the-distance on fights) + props: NFL & NCAAF passing / rushing / receiving yards, receptions, pass TDs, interceptions, longest completion / reception, kicking, anytime / first / last TD; MLB hits, total bases, RBIs, H+R+RBI, singles, runs, doubles, walks, stolen bases, home runs, pitcher strikeouts; soccer anytime / 2+ / 3+ goalscorer, score-or-assist, assists, shots, draw no bet, BTTS, total corners. Full US sportsbook; every alt line is its own row.
+
+More books are actively being added. You don't need to specify a bookmaker in requests — every response includes every book that carries lines for the requested market.
+Timestamps & Data Guarantees
+For CLV tracking, line-movement analysis, and any time-sensitive modeling, the meaning of every timestamp matters as much as the timestamp itself. This section lays out exactly what each field represents, what we guarantee, and where the underlying book APIs limit what's possible.
+Two timestamps per snapshot
+Every snapshot in /odds/history can carry up to two timestamps. On /odds the current outcome carries the same pair as last_change_at (the recorded_at of its latest snapshot) and book_updated_at:
+recorded_at (system-seen) — when our scraper observed and persisted this odds. Always populated. Sub-second wall-clock precision relative to our database.
+book_updated_at (book-published) — when the book itself reports this odds was last set. Populated only for books that expose a publish-time signal in their API. Today that's Bovada (per-event lastModified); BetRivers, DraftKings, FanDuel, PrizePicks, Underdog, Kalshi, and Polymarket all return null.
+last_change_at (our observed last move) — when PropLine last saw this price change. Unlike book_updated_at (the book's own publish-time, Bovada-only) this is populated for every book — Pinnacle and PrizePicks included — because we derive it ourselves. We only advance it when price_american actually moves, so it is a true "this line last changed at T" signal. Compare it across books on a single /odds call to detect repricing lag — e.g. Pinnacle just moved but a slower book's last_change_at is older, meaning it hasn't caught up yet — without a separate /odds/history call per event. It is also the relist signal: /odds never serves two generations of a relisted board at once (withdrawn selections leave the response, the staler side of a self-contradicting ladder is withheld, judged by this timestamp, and a PrizePicks projection id is served at one line per side — the older sighting of an id that moved lines is withheld) — and on the record endpoints, which keep every generation, a relist shows up as a sharp last_change_at break between adjacent rungs. A "main line" flag or a line count cannot carry that signal: some books flag every rung main, and DraftKings legitimately serves two live main lines on every MLB run line.
+last_seen_at (our observed last sighting) — the last delivery this outcome appeared in, i.e. the book still had it on the board at that poll whether or not the price moved. Populated for every book. For an outcome present in its market's latest delivery it equals the market's last_update; an older value means the book has stopped sending this selection while still sending the market (a withdrawal in progress — it leaves the response entirely once that gap passes ~2 minutes, on every book). Because that window is short, a selection a book suspends briefly in play can leave the response and come back; while it was gone it was off the board, or had no resting offer on an exchange, so it was not takeable either way. Consumer rule: an outcome whose last_seen_at is older than its market's last_update missed the latest delivery — treat it as unavailable. Read last_change_at for "when did the price move" and this for "when was it last offered". On /odds only; the record endpoints keep every generation.
+book_version (market version counter) — a monotonic integer the book bumps on every market update. Today only Pinnacle exposes one (`market.version`); other books return null. Captured at the moment of the snapshot/price change — comparing versions across two snapshots tells you how many distinct market updates the book recorded between them, even if only some changed the visible price.
+payout_multiplier (DFS boost/discount) — the payout scaling factor on a daily-fantasy pick. Populated only for Underdog Fantasy, where every outcome carries a value; null means the book is not Underdog. The quoted price already includes it — it is Underdog's own American price for that leg, so do not apply the multiplier again. The multiplier is Underdog's pick'em scaling relative to a standard pick (1.0): the favoured side of a line carries a value below 1 (e.g. 0.81 on a −176 Over) and the other side above 1 (e.g. 1.17 on a +129 Under). These are ordinary two-way prices, vigged like the 1.0 lines, and can be compared with sportsbook prices as-is — filtering to 1.0 drops about half of Underdog's board. (/best-line and /ev currently use only the 1.0 lines.)
+dfs_odds_type (PrizePicks flavor) — PrizePicks posts up to three flavors of the same player prop: standard (the true market line), goblin (easier line, lower payout) and demon (harder line, higher payout). null for every traditional sportsbook. Filter to standard to get PrizePicks's market line; goblin/demon arrive as their own per-line markets (e.g. Points (demon 27.5)) so they never overwrite the standard line. PrizePicks publishes no numeric multiplier for these, so only the flavor is surfaced. The same dfs_odds_type field is present on /results (for DFS calibration audits), /odds/history, /odds/closing, and /movement.
+line_gap (PrizePicks goblin/demon line delta) — the signed difference between a goblin/demon line and that player+stat's standard line (point − standard_point): positive on a harder demon line, negative on an easier goblin line. null unless the outcome is a PrizePicks goblin/demon with a standard counterpart on the slate. Since PrizePicks publishes no numeric per-pick multiplier, the flavor + this line gap are the modelable signals for fitting per-pick payout adjustments.
+liquidity (stake limit / exchange resting size) — the dollars a bettor can actually stake at the quoted price. Populated for exchange books that publish resting-offer size — ProphetX, Novig, and since 2026-09-22 Kalshi, Polymarket and Polymarket US (top of book: contracts or shares resting at the best ask × that price, i.e. what a taker spends to clear the level; on Polymarket US it is refreshed on a rotating budget — every game line, plus player props for games in play or starting within 6 hours — so a size there can be a few minutes old and a further-out prop carries none yet — read its liquidity_updated_at) — and, since 2026-09-10, for Pinnacle, where it is the book's posted max risk stake on that market (its own cap on what one bettor can risk at the price); null — and, since 2026-10-12, Smarkets (the back stake at the best offer, converted from GBP at Smarkets' own USD rate) and Matchbook (the best back price's available amount); null for every other book, and for an exchange quote whose size the feed omitted (never coerced to 0). On a peer-to-peer exchange the best price is often a thin dangling offer with only a few dollars behind it, so filter or discount rows where liquidity is small before treating the price as bettable. Present on both /odds endpoints and on every price row of /best-line (where a thin exchange quote often wins the best slot on price alone). Refreshed every poll cycle independently of price movement. Exchange size changes do not appear in /odds/history; a Pinnacle limit change does — it writes its own snapshot row (price and point repeat, liquidity moves), and /odds/closing carries opening_liquidity beside liquidity, so a limit raise can be lined up against the line move around it. Neither fires line_movement webhooks. Pair it with liquidity_updated_at — the exchange's OWN timestamp for the resting order behind that size (for Novig, when the backing order last changed). For ProphetX it is when ProphetX last placed or modified that order, NOT when we last read it: we re-read every ProphetX rung each poll cycle (a few minutes; that read is last_seen_at), but an order that sits untouched keeps its original timestamp, so on a quiet book most rungs read old (measured 2026-09-25 over ~20,000 served rungs: median age 67 minutes, p90 about 6 hours, 83% older than 20 minutes). ProphetX also does not continuously re-publish resting size, so an old order's amount can lag what its app shows until something happens to it; Novig's and Polymarket's size is re-read from the live order book every cycle (Novig game lines every cycle; Novig player props from its public order book on a rotating budget (games starting within 2 hours re-read about every 15 minutes, later and in-play games about every 45), and only while that book still matches the served price, otherwise null. For Novig, a null size WITH a timestamp means we read the book at that time and nothing backed the served price; a null size with a null timestamp means we have not read that book yet. Polymarket carries the book's own timestamp (a timestamp with a null size means we read the book at that time and it had no resting ask on that side, so nothing was takeable at the served price). Kalshi's REST feed publishes size with no book timestamp, so since 2026-09-25 its liquidity_updated_at is the time on Kalshi's own push update that published exactly that price and size (MLB, NBA, NHL, WNBA, NFL, NCAAF and tennis), and otherwise (since 2026-10-12) the time we last read Kalshi's order book and it showed exactly that price and size — an observation time, not the order's age — and null when neither applies). Matchbook carries the runner's own last price-update time; Smarkets publishes no book time, so its stamp is when we read the quote (anonymous Smarkets quotes are delayed by Smarkets). Drop or discount sizes whose backing order is older than your threshold — without the timestamp the number is untestable.
+depth (order-book levels past the best price, opt-in) — pass includeDepth=true on either /odds endpoint and every outcome carries the further levels of the book, best-first, each {price, size} — American odds and the dollars a taker can spend at that level, at prices strictly worse than the served price (whose own size is liquidity). Levels per book: Polymarket — the whole ask ladder beyond the best ask, up to 50 levels, re-read about every 2 minutes; Polymarket US — the whole side, up to 50 levels, from the same rotating book read as its liquidity; Kalshi — up to 50 levels from a budgeted order-book read (game lines first, soonest games first, games within 7 days), served only while that read is under 3 minutes old and its best level equals the served price (otherwise []); ProphetX — its feed carries the top three price levels per side, so at most two depth levels; liquidity plus the depth sizes is everything ProphetX publishes to partners, not its whole book; [] for every other book or an empty ladder. Refreshed with liquidity and never in /odds/history. Omitted from the response unless requested.
+player_id (stable cross-book player id) — join the SAME player across books without name matching. It is the league's own permanent id, namespaced: mlb:592450 (MLBAM), nba:/wnba: (CDN personId), nhl: (playerId), and espn:8439 (ESPN athlete id — soccer, NFL, NCAAF). A real league id rather than a name-hash, so it distinguishes two players with the same name, is stable across trades and seasons, and cross-references to the league's own API. Present on player-prop markets only (always null on game lines and futures), unconditional (no query param), on both /odds endpoints and /results. It is null whenever we do not have a confirmed, unambiguous id — and never guessed, because a wrong join is worse than a missed one: a sport with no stable-id stats feed (tennis, golf, UFC, cricket, esports… — null forever), a player who has never graded, a book spelling that diverges from the league's (“Elmer Rodríguez” gets the id, “Elmer Rodriguez Cruz” stays null), or a name two players share. Coverage warms as games grade after launch.
+side (home / away / draw) — which side of the event a team-named leg is on: home, away or draw. Set on h2h and spread legs (and any other market whose outcome name is one of the event's teams), resolved against home_team/away_team by the same rule that orders outcomes home-first. Use it when a market has only ONE leg — an exchange often quotes just the side with a resting offer, and a one-legged market cannot be oriented by position. null on Over/Under/Yes/No legs, player props, and any book spelling we cannot match to either team. Unconditional, on both /odds endpoints.
+both_teams_to_score_points (threshold in point) — Bovada's NFL “Both teams to score N or more points?” ladder is one market per threshold with bare Yes/No legs; the threshold is in the market description and, on /odds, in point on both legs (e.g. 10).
+GET /v1/dfs/payouts (DFS payout schedule + breakeven) — PrizePicks Power/Flex entry payout schedule (2–6 legs) plus the per-leg breakeven win probability for each play. Add ?leg_win_prob=0.58 to also get expected_return and is_plus_ev per play — turning a slip into the hit rate it actually needs to clear. Free reference math; standard published payouts only (demon/goblin per-pick modifiers aren't in PrizePicks's feed — see the disclaimer field).
+The gap between the two — when populated on both sides — is your scraper-side latency for that book. We don't fabricatebook_updated_atfor books that don't expose it, because a fake value would be indistinguishable from a real one to your model.
+Sequence preservation
+Snapshots are stored with a monotonic recorded_at per outcome and read back in time order via the (outcome_id, recorded_at) index. Within an outcome, you will not see line movements out of order. Across outcomes within the same event, ordering is consistent because all markets ingested in a single poll cycle share that cycle's transaction commit time as their lower bound.
+Snapshots are full states, not deltas
+Every snapshot is a complete record of the price/point at that moment — never a delta against a prior snapshot. You can replay any subset of an outcome's history without needing other snapshots for context. Snapshots are written only on change: if a poll cycle returns the same price + point as the prior one, no new row is created. This keeps storage tight without losing information.
+Latency: push books vs polled books
+Five books are ingested from their own real-time push feeds. The figures below were measured with MLB in play on 2 September 2026, from the book's own timestamp to when we receive the update:
+DraftKings — p50 0.1s, p90 0.8s
+FanDuel — p50 1.1s, p90 1.9s
+Fanatics — p50 0.8s, p90 1.7s
+Kalshi — p50 0.8s, p90 1.8s
+Polymarket — p50 0.1s, p90 1.2s
+Writing the change to our database comes after that, and it is not instant: it usually adds a few seconds, and more under load or when the write waits on the same book's poll (measured on tennis on 8 October 2026: receipt p50 0.1s for Polymarket and 0.5s for Kalshi, writes 2-16s behind). line_movement fires when the write lands, so a webhook or socket subscriber sees the receipt latency above plus that write time — seconds, not tenths of a second. Game lines, alt lines and player props all ride those feeds, on the same event and market ids as every other book.
+Polling cadence & missed ticks (the other 111 books)
+The remaining books are polled: we sweep each sport's books on a deadline-paced cycle. Any line move within a single cycle is collapsed into one snapshot at our next observation — we cannot recover intra-poll micro-moves the book may have flashed and reverted.
+Pre-game multi-book sweep: 60 seconds on most sports. The cycle is max(60s, sweep time), so on the widest slates it is longer — MLB across 26 books measures ~90 seconds.
+Live in-progress movement: 30 seconds target. Same rule — the cycle is max(30s, sweep time), and the live sweep across every in-play book measures ~40 seconds per book on a full MLB slate (60s on the slowest books).
+Long-cycle low-volume sports: 60s sweep, less frequent per book
+For most CLV and steam-detection workflows this is sufficient — the books themselves don't change pre-game lines faster than every 30–60 seconds in calm windows, and our ~40s live cadence covers most in-play movement. See /freshness for live per-book staleness. Webhooks remove the polling delay on top of that — we push the moment a change is ingested, so you learn about it without waiting for your next request — but on a polled book they cannot beat the capture cadence itself: the floor for seeing a move there is one scrape cycle. On the five push books above, the floor is the ~1s feed.
+Normalization vs raw
+Prices pass through unchanged from the book — American odds are what the book quoted, decimal odds are computed deterministically from the American value. The fields we normalize across books arestructural, not numeric: team names, market keys, player names. The raw forms aren't exposed because the structural normalization is what makes cross-book comparison meaningful in the first place; if you need a specific book's raw shape, hit that book's feed directly.
+Event IDs can change
+The same fixture is often posted by different sportsbooks under different team-name spellings (“Paris Saint-Germain” vs “Paris St-G” vs “PSG”). We continuously merge those duplicates into one canonical event, which means an event_id you cached can be superseded by the id it was merged into.
+Requests for a merged id are resolved automatically — you get the canonical event back with a 200, and the id in the response body is the canonical one. If you store event ids, update what you have to the returned id rather than re-sending the old one indefinitely.
+A 404 on an id that previously worked means the same thing — re-fetch the event from /v1/sports/{sport}/events and use the current id. This matters most for long-running pollers: an id that no longer resolves will never start returning results on its own, so treat a persistent 404 as “re-discover the event” rather than “keep waiting.”
+Uptime & status
+Live uptime and incident history are public on the status page, on every tier including free. UptimeRobot polls api.prop-line.com/health every 5 minutes from infrastructure independent of ours, so the page stays reachable when the API is not.
+Published uptime is not an SLA. A contractual availability guarantee with a financial remedy is an Enterprise term. On the self-serve tiers we publish the measurements continuously instead, so you can judge reliability from the record rather than a promise. Per-bookmaker data staleness is a separate signal — see Data Freshness.
+Event Identity & Team Orientation
+One fixture is one id, across every bookmaker. Books disagree about a great deal — how they spell a club, what time they say kickoff is, and, on some feeds, which side is at home — so this section states exactly which parts of an event are stable and which can legitimately change under a stable id. (Ids themselves are covered under Event IDs can change — an id you cached keeps resolving after a merge, but it then returns the surviving row's spelling and start time.)
+Team names and start times can change
+home_team and away_team are display names, not identifiers — do not key on them. They can be corrected (a short form replaced by the full club name, an accent restored) and they change on a merge. commence_time tracks the book's own scheduled start and moves when the fixture is re-timed. Note that each bookmaker block carries its book's OWN spelling in its outcome names, which is frequently not the event-level spelling. To join our rows onto a book's native feed, use ?includeBookIds=true and match on ids rather than names.
+Orientation is normalized once, at the event level
+home_team / away_team on the event is the single source of truth for which side is at home, and it applies to every bookmaker in the response. Individual books do not each get their own orientation: exchanges such as Kalshi and Polymarket publish no home/away signal at all, and some sportsbook feeds list the home side first, so we resolve one orientation per fixture and confirm it against the league's own scores feed once the game is played.
+Outcome order is deterministic
+Within a market, outcomes are returned in a fixed order that is a function of the data, never of storage:
+Team markets (h2h, spreads, draw-no-bet…) — home first, then away, then Draw. This matches the-odds-api's convention.
+Player and total markets — grouped by subject (the player), with Over/Yes before Under/No.
+Reading a price by position is therefore safe. Matching by outcome name is safe too, but remember the name is the book's spelling.
+Endpoints
+Base URL: https://api.prop-line.com/v1
+MethodEndpointDescription
+GET/sportsList available sports
+GET/sports/{sport}/eventsList upcoming events
+GET/sports/{sport}/oddsBulk odds (game lines)
+GET/sports/{sport}/events/{id}/oddsEvent odds + player props
+GET/sports/{sport}/events/{id}/odds/historyHistorical line movement — period filters, downsample, change-only (Hobby+)
+GET/sports/{sport}/events/{id}/odds/closingOpening + closing line per (book, market, outcome) — CLV helper (Hobby+)
+POST/sports/{sport}/events/{id}/sgpSame-game parlay priced at the book’s own correlated odds — FanDuel, DraftKings, BetOnline, LowVig, BetRivers, Unibet, BetMGM (Hobby+); batch up to 25 slips; optional hold
+GET/sports/{sport}/events/{id}/sgp/legsEvery outcome each book’s SGP pricer can take, with the book_outcome_id to send (alt lines included; prices Hobby+)
+GET/sports/{sport}/scoresGame scores & status
+GET/sports/baseball_mlb/grand-salamiSynthetic daily Grand Salami (total runs + per-book line)
+GET/sports/hockey_nhl/daily-goals-totalSynthetic daily NHL goals total (total goals + per-book line)
+GET/sports/{sport}/events/{id}/resultsResolved prop outcomes (Hobby+)
+GET/sports/{sport}/players?search=Player search: stable player_id + every known spelling (Free)
+GET/sports/{sport}/players/{name}/historyPlayer prop history with resolution (Hobby+)
+GET/sports/{sport}/players/{name}/trendsPlayer hit-rate trends (L5/L10/L20/L50) (Hobby+)
+GET/sports/{sport}/events/{id}/evCross-book +EV with no-vig fair lines (Hobby+)
+GET/sports/{sport}/events/{id}/best-lineBest price per (market, player, line) across all books (Hobby+)
+GET/sports/{sport}/futuresFutures markets — championship winner, MVP, etc.
+GET/sports/{sport}/events/{id}/statsRaw player/team stats from box scores
+GET/sports/{sport}/events/{id}/contextScores, stats and market list for one event in a single call
+GET/sports/{sport}/events/{id}/movementLine movement + cross-book steam detection (Hobby+)
+GET/sports/{sport}/events/{id}/marketsMarket keys available on one event — cheap discovery before a full odds pull
+GET/sports/{sport}/events/{id}/ev/calcInteractive +EV calculator — your own price/stake against our fair line (Hobby+)
+GET/dfs/payoutsDFS Power/Flex payout schedule + per-leg breakeven win probability
+GET/markets/hit-ratesPer-market daily graded-Over counts over the last N days (free)
+GET/markets/resolution-summaryGraded-prop volume per sport/market over the last N days (free)
+GET/freshnessPer-book data-freshness report, split game lines vs props (free)
+GET/exports/resolved-propsBulk CSV export of resolved props + closing lines (Pro)
+GET/exports/odds-historyBulk CSV of the full line-movement tick history (Backfill / Enterprise)
+GET/exports/sampleFree public CSV sample — last 7 days MLB K props
+POST/webhooksCreate a push subscription — returns the signing secret once (Streaming)
+GET/webhooksList subscriptions (secret masked) (Streaming)
+PATCH/webhooks/{id}Update filters, URL or active flag (Streaming)
+DELETE/webhooks/{id}Remove a subscription (Streaming)
+POST/webhooks/{id}/testEnqueue a test payload (Streaming)
+GET/webhooks/{id}/deliveriesLast 50 delivery attempts with status + response code (Streaming)
+GET/webhooks/{id}/replayRe-read missed events from a cursor (Streaming)
+WS/streamStream events over a websocket (Streaming Lite+)
+
+List Sports
+GET /v1/sports
+
+Returns all available sports with their current status.
+Response:
+[
+  {
+    "key": "baseball_mlb",
+    "title": "MLB",
+    "active": true
+  }
+]
+
+Migrating from the-odds-api?
+Their sport key names work as aliases, so you only need to change the base URL — americanfootball_nfl, icehockey_nhl, soccer_spain_la_liga, mma_mixed_martial_arts and the rest resolve to our equivalents automatically.
+Aliases exist only where the competition is genuinely the same. Where it isn't, you get a 404 that explains why rather than a silently-different feed — tennis_atp, for example, because PropLine covers tennis under a single tennis key spanning ATP, WTA and ITF/Challenger together.
+{
+  "error": "unknown_sport",
+  "message": "Sport 'tennis_atp' is not available on PropLine.",
+  "reason": "PropLine covers tennis under the single key 'tennis', which includes ATP, WTA and ITF/Challenger matches together...",
+  "not_equivalent": true,
+  "did_you_mean": ["tennis"],
+  "sports_url": "https://api.prop-line.com/v1/sports"
+}
+
+List Events
+GET /v1/sports/{sport_key}/events
+
+Returns upcoming events for a sport. No odds included (use the odds endpoint for that).
+Response:
+[
+  {
+    "id": "10",
+    "sport_key": "baseball_mlb",
+    "home_team": "Colorado Rockies",
+    "away_team": "Philadelphia Phillies",
+    "commence_time": "2026-04-05T19:10:00Z",
+    "home_team_key": "rockies",
+    "away_team_key": "phillies",
+    "home_team_id": "mlb:115",
+    "away_team_id": "mlb:143",
+    "home_team_logo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_500,f_png,q_auto/v1/team/115/logo/spot/current",
+    "away_team_logo_url": "https://img.mlbstatic.com/mlb-photos/image/upload/w_500,f_png,q_auto/v1/team/143/logo/spot/current",
+    "espn_event_id": null,
+    "mlb_game_pk": 824784,
+    "merged_from_event_ids": ["7", "9"]
+  }
+]
+
+home_team_key / away_team_key
+A stable, permanent join key per team. Team names are display strings — books spell them differently and the shown spelling can change — so if you store data per team, key it on these instead. Every spelling of a club resolves to the same key ("St Mirren FC", "St. Mirren" and "St Mirren Fc" are all st_mirren), and a key is never renamed once published.
+Null when we can't identify the team with certainty (individual sports like tennis and golf, and a small tail of team sports) — fall back to the name there. Present on /events, both /odds endpoints and /scores.
+home_team_id / away_team_id
+The league's own permanent team id, namespaced by source — mlb:147 (MLBAM), espn.soccer:363, espn.nfl:12. Use home_team_key to key data inside PropLine; use this to join PropLine rows against external datasets keyed on the same league ids. Sourced from the stats feeds we grade against, never guessed — null where no confirmed id exists (individual sports, and team sports without a results feed).
+home_team_logo_url / away_team_logo_url
+A public PNG logo image for the team, on the league's own CDN (MLB, WNBA) or ESPN's (NBA, NHL, NFL, college, soccer). Built from home_team_id, so it is null exactly when the id is null. Covers MLB, NBA, WNBA, NHL, NFL, NCAAF, NCAAB and soccer.
+espn_event_id
+ESPN's own id for the fixture, on /events and /scores. We already match each fixture to an ESPN scoreboard row while the game is on; this is that id, kept. Join on it to read score and clock straight from ESPN — which refreshes faster than our 90-second loop — while taking odds from us, instead of re-deriving the match from team names and kickoff. Set for soccer and football. Null for MLB, NBA, NHL and WNBA, whose live scores come from each league's own API and whose ids are not ESPN's, and null for tennis, where what we match is a competition rather than a fixture. Never invented.
+mlb_game_pk
+MLB's own game id (gamePk) from the MLB Stats API, on /events and /scores. MLB only. It is the safe way to tell a doubleheader's two games apart. We match each event to at most one MLB game and each game to at most one event: same two teams and either the same start time, or the only game of that pair within 8 hours, with no other event of ours near it. A matched event's commence_time is then set to MLB's own start time. It is null when that is not certain: two candidate games, two of our events near one game, or a postponed or cancelled listing (MLB reuses a postponed game's gamePk for its makeup). A game MLB lists with a TBD start gets its gamePk but keeps our time. An MLB event with no MLB listing near its time (a game MLB moved to another day) drops off the list endpoints and shows status: "cancelled" on /scores.
+is_outright
+true when the event is a tournament or outright listing (a tennis, golf, racing or cycling winner market, e.g. "WTA Seoul") rather than a head-to-head fixture. These rows have no away side: away_team is an empty string and home_team names the tournament. On /events and both /odds endpoints; filter on it to keep only matchups.
+Team names
+On MLB, NBA, WNBA, NHL and NFL, home_team / away_team are the franchise's full name ("Boston Bruins", never "BOS Bruins" or               "Bruins") on every endpoint, webhook payload and CSV export. Other sports carry the spelling of the book that first listed the event. Key on home_team_key, not the name.
+tournament / tour
+Tennis only, on /events, both /odds endpoints and /scores. Our one tennis key carries every tour, so these say which competition a match belongs to. tournament is the competition name as the first book to name it wrote it (e.g. "ATP Chengdu", "ITF M25 Pardubice") — a book's own spelling, not normalized. tour is one of ATP, WTA, Challenger (ATP Challenger Tour), ITF, UTR, Exhibition or Team (Davis Cup, Billie Jean King Cup, Laver Cup, United Cup). WTA 125 events are WTA; doubles are not a separate tour — the tournament name says so. Both are set once and never change. Null when no book named the competition.
+tier / qualifying / doubles
+Tennis only, on /events. Use these, not tour or the tournament name, to filter. tier is one of atp, wta (main tours, Grand Slams included), wta125, challenger, itf, utr, exhibition or team. It reads every book's name for the event and the most specific wins, so a WTA 125 one book calls "WTA Suzhou" still reads wta125. qualifying is true when any book files the match in a qualifying draw, false when books named the competition and none did, null when none named it. doubles is true for a doubles match. Main-tour main-draw singles: tier in (atp, wta) and qualifying == false and doubles == false. All three are null on other sports.
+Esports uses the same two fields: tour is the game (CS2, Valorant, League of Legends, Dota 2, ...) and tournament the competition. A finished esports match on /scores carries maps won as its score (e.g. 2-1). Null on every other sport.
+merged_from_event_ids
+When we discover that two of our rows are the same fixture we merge them into one, and the retired ids keep resolving (see Event IDs can change). This field is the other direction: it lists the ids that were merged INTO this event, so a client holding a stored id can reconcile it from the response it was already fetching rather than re-requesting every saved id one at a time.
+Present on /events and both /odds endpoints, always — no flag to set. Omitted (null) for the large majority of events, which have never been merged. Ids are strings, matching id.
+Get Odds (Bulk)
+GET /v1/sports/{sport_key}/odds?markets=h2h,spreads,totals
+    &bookmakers=draftkings,fanduel    # optional — omit for all books
+    &includeLinks=true                # optional — event-page URLs per book
+    &includeBookIds=true              # optional — each book's own event/selection ids
+    &includeDepth=true                # optional — exchange order-book levels past the best price
+    &max_age=60                       # optional — drop markets not delivered in the last 60s
+    &includePregameOnly=true          # optional — keep frozen books on games in progress
+    &includeRestricted=true           # optional — PrizePicks over-only Unders, flagged
+
+Returns odds for all upcoming events. Use the markets parameter to filter by market type (comma-separated). The optional bookmakers parameter (comma-separated book keys, same name as the-odds-api) restricts the response to specific books. Pass includeLinks=true (same name as the-odds-api) to add a link field on each bookmaker block — that book's public event-page URL, so your UI can click out to the book. Links ship for Bovada, DraftKings, FanDuel, BetMGM, Kalshi, Polymarket, Smarkets, ProphetX and Novig; other books return null. The same flag also adds an app_link — a mobile app-open deep link that opens the book's native app on that fixture (app-store fallback otherwise), vs link which is the desktop web page. ProphetX and Courtside (a courtside:// link; Courtside is app-only, so it has no web link); null for other books.
+Pass includeBookIds=true to get each book's own identifiers alongside our canonical ones: book_event_id on every bookmaker block and book_outcome_id on every outcome. This is the join key if you already hold a book's data — most commonly Kalshi, where you get the event ticker and the per-contract market ticker (e.g. KXMLBGAME-26AUG08NYYBOS-NYY) — so you can match on ids instead of fuzzing team names, player names and lines. Books that don't publish a stable id return null. The same flag also adds outcome_id on every outcome — our canonical outcome row id, the value line_movement and resolution webhooks carry — so a push delivery joins onto exactly one REST row with no name, side or line matching. It is globally unique across books and sides and stable across price and point changes for the same (market, side, player); books whose alt ladders put the line in the market description (PrizePicks goblin/demon, ProphetX, Fanatics, Marathon) get a new market — and a new id — when that line moves.
+On PrizePicks, book_outcome_id is the projection id — the token a populated entry URL is built from. The direction and line are appended separately, and multiple picks are comma-separated: app.prizepicks.com/board?projections=14306846-o-23.5. Use -o- for the Over outcome and -u- for the Under, with the outcome's own point as the line.
+On DraftKings Pick6, passincludeLinks=trueand the Pick6 block'slinkis the game's slate page with its pick group already in it. Add the outcomes'book_outcome_idvalues, comma-separated, to load them:pick6.draftkings.com/?sport=NHL&pickGroup=155085&picks=161587529. Underdog has no public URL that loads picks, so its ids are a join key only.
+FanDuel outcomes also carry book_outcome_id_ontario: the same selection on FanDuel Ontario, as marketId:selectionId. FanDuel Ontario has the same events, selections and prices as the US site, but different market ids, so an Ontario slip needs this id. The field is left out when we have not matched the market yet (new in-play markets can take a few minutes).
+Note that a two-sided market can share one book_outcome_id across both legs: a Kalshi contract is binary, so the Over and Under are the YES and NO sides of the same contract, and a PrizePicks projection is one pick whose direction lives in the URL rather than the id. The id identifies the contract or projection; the outcome's name tells you which side.
+That is not uniform across books, so don't assume it either way. Underdog, Sleeper and Dabble ship the Over and Under as separate objects with separate ids, so each leg carries its own. Group a pair by (market, player, point) rather than by book_outcome_id.
+Player Props (Per Event)
+GET /v1/sports/{sport_key}/events/{event_id}/odds
+    ?markets=pitcher_strikeouts,batter_hits,batter_home_runs
+    &bookmakers=draftkings    # optional — omit for all books
+    &max_age=60               # optional — drop markets not delivered in the last 60s
+    &includePregameOnly=true  # optional — keep frozen books on a game in progress
+    &includeRestricted=true   # optional — PrizePicks over-only Unders, flagged
+
+Polling a whole slate? Use bulk odds instead: it takes the same markets (props too) and returns every game in the sport, live ones included, in one call. If a key fetches several games of one sport here in a few minutes, responses carry an X-PropLine-Hint header saying so. If a market key you asked for is not in the reply (misspelled, or not offered), both odds endpoints add an X-PropLine-Missing-Markets header naming it.
+This is the primary endpoint for player props. Pass one or more prop market keys via the markets parameter. Filter to specific books with bookmakers — also supported on /odds/history, /odds/closing and /movement. Add includeLinks=true for per-book event-page URLs (also on /best-line, where each price row carries the link — the click-out for “go bet this”). Add includeBookIds=true for each book's own event and selection ids (see Get Odds) — the fastest way to join prop legs onto Kalshi contract tickers.
+Response:
+{
+  "id": "10",
+  "sport_key": "baseball_mlb",
+  "home_team": "Colorado Rockies",
+  "away_team": "Philadelphia Phillies",
+  "commence_time": "2026-04-05T19:10:00Z",
+  "bookmakers": [
+    {
+      "key": "bovada",
+      "title": "Bovada",
+      "markets": [{
+        "key": "pitcher_strikeouts",
+        "last_update": "2026-04-05T18:46:30Z",
+        "outcomes": [
+          { "name": "Over",  "description": "Zack Wheeler",
+            "price": -130, "point": 6.5 },
+          { "name": "Under", "description": "Zack Wheeler",
+            "price": 100,  "point": 6.5 }
+        ]
+      }]
+    },
+    {
+      "key": "draftkings",
+      "title": "DraftKings",
+      "markets": [{
+        "key": "pitcher_strikeouts",
+        "last_update": "2026-04-05T18:46:42Z",
+        "outcomes": [
+          { "name": "Over",  "description": "Zack Wheeler",
+            "price": -125, "point": 6.5 },
+          { "name": "Under", "description": "Zack Wheeler",
+            "price": 105,  "point": 6.5 }
+        ]
+      }]
+    },
+    {
+      "key": "fanduel",
+      "title": "FanDuel",
+      "markets": [{
+        "key": "pitcher_strikeouts",
+        "last_update": "2026-04-05T18:46:38Z",
+        "outcomes": [
+          { "name": "Over",  "description": "Zack Wheeler",
+            "price": -135, "point": 6.5 },
+          { "name": "Under", "description": "Zack Wheeler",
+            "price": 110,  "point": 6.5 }
+        ]
+      }]
+    },
+    {
+      "key": "pinnacle",
+      "title": "Pinnacle",
+      "markets": [{
+        "key": "pitcher_strikeouts",
+        "last_update": "2026-04-05T18:46:45Z",
+        "outcomes": [
+          { "name": "Over",  "description": "Zack Wheeler",
+            "price": -128, "point": 6.5 },
+          { "name": "Under", "description": "Zack Wheeler",
+            "price": 108,  "point": 6.5 }
+        ]
+      }]
+    },
+    {
+      "key": "prizepicks",
+      "title": "PrizePicks",
+      "markets": [{
+        "key": "pitcher_strikeouts",
+        "last_update": "2026-04-05T18:46:50Z",
+        "outcomes": [
+          // DFS projection — synthetic +100 pricing on both sides.
+          // Payout scales with parlay correct-count, not per-pick odds.
+          { "name": "Over",  "description": "Zack Wheeler",
+            "price": 100, "point": 6.5 },
+          { "name": "Under", "description": "Zack Wheeler",
+            "price": 100, "point": 6.5 }
+        ]
+      }]
+    },
+    {
+      "key": "underdog",
+      "title": "Underdog Fantasy",
+      "markets": [{
+        "key": "pitcher_strikeouts",
+        // The book's own name for this market row.
+        "description": "Strikeouts",
+        // Which team this market is scoped to, or null for a game market.
+        // On a `totals` market this is what separates the GAME total
+        // (team: null) from a TEAM total (team: "Arsenal") — both ride the
+        // `totals` key. Always null outside `totals`.
+        "team": null,
+        "last_update": "2026-04-05T18:46:52Z",
+        // Null while the market is on the board. Set the moment the book
+        // pulls it pregame (late scratch, a dropped market type) — the
+        // outcomes are then the last quoted legs, not a live price. Clears
+        // when the book lists it again. Push version: the market_suspended
+        // webhook (Streaming).
+        "suspended_at": null,
+        // "main" | "alternate" | "milestone". milestone = an N+ rung
+        // ("3+ Strikeouts", batter_2plus_hits, "To Record 175+ Pass
+        // Yards"). Among one book's rows of a line market for one player or
+        // team, exactly one is main — the book's own primary row where it
+        // labels one ("Spread" beside "Spread Alternate (...)", PrizePicks
+        // standard vs goblin/demon, ProphetX's own featured line), else
+        // the most balanced pair. Every
+        // other line is alternate. h2h / yes-no / outrights: main. On a
+        // row holding several players at one line (Kalshi, Polymarket US)
+        // each outcome also carries its own line_type.
+        "line_type": "main",
+        "outcomes": [
+          // Real two-way DFS prices. Every Underdog outcome carries a
+          // payout_multiplier, and the price ALREADY includes it — it is
+          // Underdog's own American price for the leg. Do not apply it again.
+          { "name": "Over",  "description": "Zack Wheeler",
+            "price": -135, "point": 6.5, "payout_multiplier": 0.86 },
+          { "name": "Under", "description": "Zack Wheeler",
+            "price": 110,  "point": 6.5, "payout_multiplier": 1.1 }
+        ]
+      }]
+    }
+  ]
+}
+
+Historical Line Movement (Hobby+)
+GET /v1/sports/{sport_key}/events/{event_id}/odds/history
+    ?markets=pitcher_strikeouts        # default h2h,spreads,totals
+    &relative_from=-3h                 # 3h before commence_time
+    &relative_to=0                     # commence_time itself
+    &interval=1m                       # one snapshot per minute per outcome
+    &changes_only=true                 # drop unchanged buckets
+
+Full snapshot history per outcome. Paid tiers get the raw stream; free tier sees market structure with redacted: true and a count of available snapshots. Each market row carries line_type (main / alternate / milestone), classified on the row's current outcomes.
+Period-historical query params
+All optional. Combine to scope, downsample, and de-noise — the same data you'd post-process today, computed server-side in one call.
+from, to — absolute ISO timestamps. Bound the snapshot window directly.
+relative_from, relative_to — offsets relative to commence_time. Forms: -3h, -30m, -90s, 0. Mutually exclusive with the absolute counterpart.
+interval — downsample to one snapshot per bucket. One of 30s, 1m, 5m, 15m, 30m, 1h. We pick the last snapshot in each bucket.
+changes_only — when true, drop rows whose (price, point, liquidity) matches the previous row. The opening line is always kept, and so is a Pinnacle row where only the stake limit moved.
+Tier-gated depth by event age: Hobby = 30 days, Pro = 90 days, Streaming Lite = 180 days, Streaming = 365 days, Enterprise = unlimited. Older events return the redacted shape with an upgrade_url.
+Opening & Closing Lines / CLV (Hobby+)
+GET /v1/sports/{sport_key}/events/{event_id}/odds/closing
+    ?markets=h2h,spreads,totals,pitcher_strikeouts
+
+Both ends of the move in one call. Closing is the last snapshot per outcome at or before commence_time — the canonical line CLV-tracking tools measure against. opening_* is the first snapshot we hold for the outcome, however far before kickoff the book posted it. Optional opening_window=<days> limits that lookback (14 matches the resolved-props export). One call replaces the “fetch full history → find the first and last pre-game rows” pattern.
+Response:
+{
+  "id": "5885",
+  "sport_key": "baseball_mlb",
+  "home_team": "Seattle Mariners",
+  "away_team": "Texas Rangers",
+  "commence_time": "2026-04-19T20:10:00Z",
+  "bookmakers": [
+    {
+      "key": "draftkings",
+      "title": "DraftKings",
+      "markets": [
+        {
+          "key": "pitcher_strikeouts",
+          "description": "Pitcher Strikeouts",
+          "line_type": "main",
+          "outcomes": [
+            {
+              "name": "Over",
+              "description": "Bryan Woo",
+              "price": 116,
+              "point": 6.5,
+              "closing_at": "2026-04-19T20:08:14Z",
+              "closing_age_seconds": 106,
+              "is_stale": false,
+              "opening_price": 104,
+              "opening_point": 6.5,
+              "opening_at": "2026-04-17T13:02:51Z",
+              "opening_age_seconds": 198429,
+              "book_updated_at": null,
+              "book_version": null,
+              "liquidity": null,
+              "opening_liquidity": null
+            },
+            {
+              "name": "Under",
+              "description": "Bryan Woo",
+              "price": -148,
+              "point": 6.5,
+              "closing_at": "2026-04-19T20:08:14Z",
+              "opening_price": -128,
+              "opening_point": 6.5,
+              "opening_at": "2026-04-17T13:02:51Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+closing_at is the recorded_at of the snapshot we picked — useful for confirming the data point came from right before tip rather than hours earlier. Same per-tier event-age cap as /odds/history.
+opening_age_seconds is how long before kickoff we first recorded the outcome. Read it before trusting an open: our archive starts April 2026, so for any book/sport we began polling after a line was posted, opening_* means first observed by us, not the book’s true open. A value of minutes rather than hours or days is the tell.
+Grade Your Bets vs the Close (Hobby+)
+POST /v1/clv/grade
+Content-Type: application/json
+
+[
+  {"ref": "b1", "sport_key": "baseball_mlb", "event_id": 150791,
+   "market": "batter_hits_runs_rbis", "bookmaker": "lowvig",
+   "selection": "Drake Baldwin", "side": "Under", "point": 0.5,
+   "price": 145, "stake": 1}
+]
+
+Send the bets you actually placed; get each back with its closing line, the de-vigged closing fair probability, CLV, and the graded result. Closing line value is the only durable proxy for whether a bettor has edge — did the price you took beat the number the market settled on? Stateless: nothing is stored.
+Response:
+{
+  "summary": {
+    "bets": 1, "matched": 1, "unmatched": 0, "graded": 1, "pending": 0,
+    "avg_clv_pct": 6.52, "avg_ev_vs_close_pct": 0.08,
+    "beat_close_pct": 100.0, "profit_units": -1.0
+  },
+  "bets": [
+    {
+      "ref": "b1",
+      "matched": true,
+      "unmatched_reason": null,
+      "closing_price": 130,
+      "closing_point": 0.5,
+      "closing_at": "2026-08-21T20:09:12Z",
+      "closing_is_stale": false,
+      "closing_is_final": true,
+      "fair_source": "pinnacle",
+      "closing_fair_prob": 0.4085,
+      "clv_pct": 6.52,
+      "ev_vs_close_pct": 0.08,
+      "beat_close": true,
+      "resolution": "lost",
+      "actual_value": 1.0
+    }
+  ]
+}
+
+Two CLV numbers, deliberately. clv_pct is price-vs-price — familiar and quotable, but vig-blind, so it flatters a bet taken on the juicy side of a wide market. ev_vs_close_pct scores your price against the de-vigged close and is the honest one: a -110 taken into a -105/-115 close beat the price but not the fair line, and only the second number says so.
+The de-vig uses the sharpest book quoting that line at close (Pinnacle first, then Polymarket / Kalshi / Bovada / Smarkets, falling back to your own book), reported as fair_source. Pass ?devig=shin to remove that vig with Shin's method instead of the multiplicative default (same vocabulary as /ev; the response echoes devig_method). De-vigging the book you bet at always returns a negative number — you paid its hold — which says nothing about whether you found value.
+Matching is fail-closed. A bet we cannot pin to exactly one stored outcome returns matched: false with an unmatched_reason rather than a guess — a confident wrong match would report a real-looking CLV for a different bet. Lines match by equality, never nearest-value.
+Bets on events that have not started carry closing_is_final: false and are excluded from the summary averages — a pre-kickoff “closing” price is just the latest price. Max 500 bets per request. Free tier sees the full structure with every number nulled.
+Same Game Parlay Pricing (Hobby+)
+POST /v1/sports/baseball_mlb/events/150791/sgp
+Content-Type: application/json
+
+{
+  "bookmaker": "fanduel",
+  "legs": [
+    {"market": "h2h", "name": "St. Louis Cardinals"},
+    {"market": "totals", "name": "Over", "point": 7.5},
+    {"market": "batter_1plus_hits", "name": "Freddie Freeman",
+     "description": "Freddie Freeman"}
+  ]
+}
+
+Send two to ten legs from one event and get back the book’s own correlated price for that exact slip — the number a FanDuel customer would be offered for it at that moment, not a model of it. Beside it: the independent product of the live single-leg prices and the ratio between the two, so the correlation the book is charging (or paying) for is a number you can read.
+Response:
+{
+  "id": "150791",
+  "sport_key": "baseball_mlb",
+  "home_team": "Los Angeles Dodgers",
+  "away_team": "St. Louis Cardinals",
+  "bookmaker": "fanduel",
+  "quoted": true,
+  "sgp_price": 592,
+  "sgp_price_decimal": 6.9205,
+  "independent_price": 322,
+  "independent_price_decimal": 4.2231,
+  "correlation_factor": 1.6387,
+  "priced_at": "2026-09-02T18:41:07Z",
+  "legs": [
+    {"index": 0, "market": "h2h", "name": "St. Louis Cardinals", "description": "",
+     "point": null, "period": null, "team": null, "book_outcome_id": "717.184106545:50291",
+     "price": 205, "book_price": 205, "accepted": true, "failure_code": null},
+    {"index": 1, "market": "batter_1plus_hits", "name": "Freddie Freeman",
+     "description": "Freddie Freeman", "point": null, "period": null, "team": null,
+     "book_outcome_id": "717.184289530:10885578",
+     "price": -260, "book_price": -260, "accepted": true, "failure_code": null}
+  ],
+  "redacted": false
+}
+
+Legs are named the way /odds names them — market key, outcome name, description, point and (for period markets) period — so a leg is a copy-paste from an odds response. book_outcome_id from ?includeBookIds=true is accepted as a shortcut and overrides the other fields. For a team total set team to the team as /odds serves it in the market’s team field; a totals leg with no team matches the game total only, so the two never collide. Each leg in the response carries its team (null for the game total).
+Matching is fail-closed. A leg that does not pin to exactly one stored outcome at that book is a 422 naming the leg (leg_unmatched) — an Over with no point on an event carrying two total lines is refused, not guessed. A slip the book will not offer as a same-game parlay comes back quoted: false with the refused legs flagged by the book’s own failure_code.
+Selection ids go stale at kickoff. DraftKings re-issues its selection ids when an event moves to the in-play board, so a book_outcome_id read pregame stops existing the moment the game starts. That is a 422 legs_not_at_book, not an outage — re-read the ids from /odds?includeBookIds=true and send the slip again rather than retrying it unchanged. A 503 book_unavailable is the one that means the book’s pricer did not answer.
+Shop the correlation. Send "bookmaker": "all" and every supported book is quoted on the same legs in one call: the response carries quotes (one full single-book response per book that answered), errors (each book that could not price the slip, with the status and detail its own call would have returned) and best_bookmaker — the quoted book paying the most, which on identical legs is the book charging the smallest correlation reduction.
+Every priced call is a live request to the book, so quotes for an identical slip are shared for 15 seconds. Seven books today: fanduel (its own betslip pricer), draftkings (its SGP widget’s pricer; legs are named by the selection id includeBookIds serves, and the independent price is the product of our stored DraftKings single prices), betrivers / unibet (Kambi’s bet builder; legs are named by the Kambi outcome id, priced the same way as DraftKings), betmgm (its own bet-builder pricer; the id is {marketId}:{optionId}), and betonlineag / lowvig (the Sportcast engine both brands embed, so those two return the same builder price). For the two Chico books the leg is matched against the book’s own SGP board, which is wider than the game feed we store, so a leg can price there even when it has no stored single price — independent_price is then null. On those two books book_outcome_id is Sportcast’s settlement id (MatchWinner_Home, MatchOverUnder_TotalRuns_Over_8.5), served on their game lines by /odds?includeBookIds=true and accepted on a leg. Free tier sees the matched legs with every price nulled and never triggers a call to the book.
+The portable prop leg (one leg set for every book). Books store the same prop three ways: a two-way O/U at N−0.5 (batter_hits / Over / player / 0.5), an N+ rung on the same primary key (pitcher_strikeouts / 2+ Strikeouts / player), and a per-threshold YES key (batter_2plus_hits with the player as name, or Yes + player). “Over 0.5 hits”, “1+ Hits” and “to record a hit” are one bet, so a leg in any of those forms matches whichever form the book carries. The form to send under bookmaker=all is the primary key + N+ as the outcome name + player in description ({"market": "batter_hits", "name": "2+", "description": "Ben Malgeri"}), which is also the only way to name a Chico leg that /odds never lists for those books. Only the leading N+ is read; the stat noun after it is ignored. Not bridged, by design: Under / No (on betonlineag / lowvig a 422, the board is YES-only) and integer lines. A book that does not carry the rung still answers 422 — the bridge never invents a bet.
+Alt lines. A leg can carry any line the book lists, not only its main one: alt spreads and alt totals (NBA, NFL, NCAAF, MLB, NHL) and every N+ player rung we store (on NBA FanDuel’s whole alt ladder, so Over 24.5 points pins to its 25+ rung). To see exactly what each book can price, read the leg list below and send its ids.
+Every leg a book can price:
+GET /v1/sports/basketball_nba/events/139523/sgp/legs?bookmakers=fanduel,draftkings&markets=totals,player_assists
+
+{
+  "id": "139523", "sport_key": "basketball_nba",
+  "bookmakers": [
+    {"bookmaker": "fanduel", "supported": true, "reason": null,
+     "legs": [
+       {"market": "totals", "name": "Over", "description": "", "point": 229.5,
+        "period": null, "team": null, "book_outcome_id": "717.190091210:1",
+        "price": -120},
+       ...]},
+    ...],
+  "leg_count": 412, "truncated": false, "redacted": false
+}
+
+One row per outcome the book’s SGP pricer can take (it carries the native id the pricer needs), with the book_outcome_id to send as a leg. Suspended and withdrawn outcomes are left out. bookmakers and markets filter it; a book that does not price SGPs for the sport says so in reason. Cached 10s. Hobby+ gets prices; free gets the same legs with price null.
+Many slips in one call:
+POST /v1/sports/basketball_nba/events/139523/sgp
+{
+  "bookmaker": "fanduel",
+  "slips": [
+    {"legs": [{"market": "player_assists", "name": "10+ Assists", "description": "Fred VanVleet"},
+              {"market": "totals", "name": "Over", "point": 229.5}]},
+    {"bookmaker": "draftkings",
+     "legs": [{"book_outcome_id": "0QA361481846#2251221966_13L42648Q11495474364Q20"},
+              {"market": "spreads", "name": "HOU Rockets", "point": -2.5}]}
+  ]
+}
+
+{"id": "139523", "results": [
+  {"index": 0, "bookmaker": "fanduel", "status": 200, "quote": {...}},
+  {"index": 1, "bookmaker": "draftkings", "status": 422,
+   "error": "leg_unmatched", "detail": {...}}
+]}
+
+Up to 25 slips per call, each with an optional bookmaker (default: the request’s). Each result carries the status the single-slip call would have returned; one slip failing never fails the request. Send legs or slips, not both. Two batch calls at once per key; a third gets 429.
+Hold. Add "include_hold": true and we also price the complement slip: the last leg that has an opposite side flipped (Over↔Under, Yes↔No, the other team; an N+ rung becomes Under N−0.5 where the book lists it). The slip and its complement together cover “the rest of the legs hit”, so hold = (1/sgp + 1/complement) ÷ (1/rest) − 1, where rest is the other legs’ own price at that book. complement carries the flipped leg and its price. Costs one more book call per quote (two when the rest is itself a parlay), so it is off by default.
+Period Markets
+Markets bucketed by game period — 1st quarter spread, 2nd half total, 1st period puck line, 6th inning run line. Every odds endpoint accepts an optional period query param. Omitted = full game (default; backwards-compatible). Pass canonical codes or all to opt in.
+# Last 30 min of 1st-half spread movement before tip
+GET /v1/sports/basketball_nba/events/{event_id}/odds/history
+    ?markets=spreads&period=h1&relative_from=-30m
+
+# Closing line for the 1st-quarter total
+GET /v1/sports/basketball_nba/events/{event_id}/odds/closing
+    ?markets=totals&period=q1
+
+# Every period (quarters + halves + full game) in one response
+GET /v1/sports/basketball_nba/events/{event_id}/odds?period=all
+
+Canonical period codes
+CodeMeaningApplies to
+q1, q2, q3, q4QuartersNBA, WNBA, NCAAB, NFL, NCAAF
+h1, h2HalvesBasketball, football, soccer
+p1, p2, p3PeriodsNHL
+i1 … i9InningsMLB
+f3, f5, f7First N inningsMLB
+map1 … map7MapsEsports (per-map game lines + total_kills / kills_handicap / odd_even_total_kills / first_team_to_n_kills)
+s1 … s5SetsTennis, volleyball (per-set h2h / spreads / totals)
+g1 … g7GamesTable tennis, badminton (per-game h2h / spreads / totals)
+
+Every market row in the response carries a period field (string or null for full game), so consumers can branch on it without re-parsing the URL.
+Coverage today: Bovada, DraftKings, FanDuel, and Pinnacle all carry period markets across NBA / NHL / MLB / soccer / NFL / NCAAF.
+Grading: period game lines (h2h, spreads, totals, team totals) grade in /results off that period's score on MLB, NBA, WNBA, NHL, NFL, NCAAF and soccer. Football q4 excludes overtime. Football 2nd-half markets stay ungraded on games that go to overtime, because books disagree on whether OT counts. Period player props are not graded.
+Game Scores
+GET /v1/sports/{sport_key}/scores?days_from=3
+
+Returns game scores and status for recent events. Free tier. Use days_from to control how many days back to include (default: 3).
+Response:
+[
+  {
+    "id": "16",
+    "sport_key": "baseball_mlb",
+    "home_team": "Detroit Tigers",
+    "away_team": "St. Louis Cardinals",
+    "commence_time": "2026-04-05T23:20:00Z",
+    "status": "final",
+    "home_score": 3,
+    "away_score": 5
+  }
+]
+
+status is one of upcoming, in_progress, final, postponed, cancelled or expired. expired means the event started 12h+ ago (6 days for golf, racing, cycling and cricket), no result feed has graded it, and no book has priced it in play for 2h or delivered any market for 30 min — typical for ITF / Challenger tennis, table tennis and esports, which no scores feed covers. Treat it as closed. It is not a settlement: if a result arrives later, the row reads final. The same status appears on /stats and /results.
+MLB Grand Salami
+GET /v1/sports/baseball_mlb/grand-salami?date=2026-05-22
+
+Synthetic daily Grand Salami for MLB — total runs scored across every game on a given US Eastern date (the slate), plus each book's implied Grand Salami line (sum of their primary game totals). No retail book quotes this as a single market, so cross-book historical data isn't available elsewhere. Free tier. Default date is today (US Eastern).
+Response:
+{
+  "sport_key": "baseball_mlb",
+  "date": "2026-05-22",
+  "games_total": 15,
+  "games_completed": 15,
+  "games_in_progress": 0,
+  "games_upcoming": 0,
+  "actual_total_runs": 142,
+  "bookmakers": [
+    { "key": "bovada", "title": "Bovada", "games_priced": 15, "line": 134.5, "result": "over" },
+    { "key": "draftkings", "title": "DraftKings", "games_priced": 15, "line": 135.0, "result": "over" },
+    { "key": "pinnacle", "title": "Pinnacle", "games_priced": 15, "line": 133.5, "result": "over" }
+  ]
+}
+
+NHL Daily Goals Total
+GET /v1/sports/hockey_nhl/daily-goals-total?date=2026-05-24
+
+Synthetic daily goals total for NHL — total goals scored (incl. OT/SO) across every NHL game on a given US Eastern date, plus each book's implied Daily Goals Total line (sum of their primary game totals). Hockey's equivalent of the MLB Grand Salami; no retail book quotes it as a single market. Free tier. Default date is today (US Eastern).
+Response:
+{
+  "sport_key": "hockey_nhl",
+  "date": "2026-05-24",
+  "games_total": 4,
+  "games_completed": 4,
+  "games_in_progress": 0,
+  "games_upcoming": 0,
+  "actual_total_goals": 23,
+  "bookmakers": [
+    { "key": "bovada", "title": "Bovada", "games_priced": 4, "line": 24.5, "result": "under" },
+    { "key": "draftkings", "title": "DraftKings", "games_priced": 4, "line": 24.0, "result": "under" },
+    { "key": "pinnacle", "title": "Pinnacle", "games_priced": 4, "line": 24.5, "result": "under" }
+  ]
+}
+
+Prop Results (Hobby+)
+GET /v1/sports/{sport_key}/events/{event_id}/results
+    ?markets=pitcher_strikeouts,batter_hits&bookmakers=draftkings
+
+Both filters are optional. bookmakers takes comma-separated book keys (omitted = all books) and keeps the response small when you only need one book — an unfiltered MLB game can run several MB. Returns resolved prop outcomes with actual player stats. Hobby+ (all paid tiers). Each outcome includes whether it won, lost, or pushed, plus the actual stat value.
+Response — one flat row per (player, stat):
+{
+  "id": "16",
+  "sport_key": "baseball_mlb",
+  "home_team": "Detroit Tigers",
+  "away_team": "St. Louis Cardinals",
+  "status": "final",
+  "home_score": 3,
+  "away_score": 5,
+  "bookmakers": [{
+    "key": "bovada",
+    "title": "Bovada",
+    "markets": [{
+      "key": "pitcher_strikeouts",
+      "description": "Total Strikeouts - Tarik Skubal (DET)",
+      "period": null,
+      "team": null,
+      "outcomes": [
+        {
+          "name": "Over",
+          "description": "Tarik Skubal (DET)",
+          "price": -150,
+          "point": 6.5,
+          "resolution": "won",
+          "actual_value": 7.0,
+          "resolved_at": "2026-04-06T03:15:00Z"
+        },
+        {
+          "name": "Under",
+          "description": "Tarik Skubal (DET)",
+          "price": 120,
+          "point": 6.5,
+          "resolution": "lost",
+          "actual_value": 7.0,
+          "resolved_at": "2026-04-06T03:15:00Z"
+        }
+      ]
+    }]
+  }]
+}
+
+Resolution values: won, lost, push, void (player scratched)
+Each market carries period (null = full game; same codes as /odds) and team: on a totals market it names the team for a team total and is null for the game total, the same value /odds serves.
+Cross-book +EV (Hobby+)
+GET /v1/sports/{sport_key}/events/{event_id}/ev
+    ?markets=pitcher_strikeouts,batter_hits   # optional
+    &bookmakers=draftkings,fanduel            # optional
+    &devig=shin                               # optional: multiplicative (default) | shin
+    &fair_source=pinnacle                     # optional: pinnacle|polymarket|kalshi|bovada|smarkets, comma list = order, or consensus
+    &max_age=300                              # optional: drop prices not delivered in the last N seconds
+
+For each (market, player, line) on an event, derives a no-vig fair line from a sharp anchor (Pinnacle preferred, Bovada fallback) and returns the expected value (EV%) for every other book's price at the same line. Outcomes are sorted with +EV plays floated to the top. Hobby+ (all paid tiers). PrizePicks is excluded — its synthetic +100/+100 prices aren't payout odds.
+bookmakers narrows the prices to the books you hold accounts at (the-odds-api-compatible, same as on the odds endpoints). It never narrows the anchor. bookmakers=draftkings still returns DraftKings EV% measured against Pinnacle — that comparison is the point of the endpoint. Lines where none of your books quote a price are omitted.
+fair_source=consensus uses the median no-vig price of every book with a clean, fresh two-sided market (3+ books; books sharing one feed count once) instead of a single sharp book. Each line then lists the books used in fair_books. It is opt-in; the default anchor is the one our backtest is measured on.
+Every price carries last_update — when that book last delivered the market. Stale prices are the most common source of false +EV; max_age=300 drops any price older than 5 minutes. The fair line is unaffected.
+Which book anchored a line is never hidden. Every line carries fair_source naming the book the no-vig price came from, and the response carries fair_source_default with the full fallback order. The anchor is chosen per line, so one response routinely mixes several — read fair_source per line rather than assuming Pinnacle anchored all of them.
+devig picks how the anchor's vig is removed. multiplicative (default) divides each implied probability by the booksum, spreading the overround evenly across the legs. shin solves Shin's insider-trading model, which loads the overround onto the longshot and corrects the favourite-longshot bias. The two agree on a -110/-110 total and diverge on a +600 anytime scorer, where multiplicative overstates the longshot. The response echoes the method as devig_method. The default is the only method our +EV backtest is measured on.
+Response:
+{
+  "id": "12345",
+  "sport_key": "baseball_mlb",
+  "home_team": "Yankees",
+  "away_team": "Red Sox",
+  "commence_time": "2026-04-25T23:05:00Z",
+  "fair_source_default": "pinnacle → polymarket → kalshi → bovada (first available per market)",
+  "devig_method": "multiplicative",
+  "lines": [
+    {
+      "market_key": "pitcher_strikeouts",
+      "description": "Gerrit Cole",
+      "point": 6.5,
+      "fair_source": "pinnacle",
+      "fair_probs": { "Over": 0.52, "Under": 0.48 },
+      "outcomes": [
+        { "book": "fanduel", "book_title": "FanDuel",
+          "name": "Over", "price": 110, "ev_pct": 9.20,
+          "is_plus_ev": true },
+        { "book": "draftkings", "book_title": "DraftKings",
+          "name": "Over", "price": -105, "ev_pct": 1.30,
+          "is_plus_ev": true },
+        { "book": "pinnacle", "book_title": "Pinnacle",
+          "name": "Over", "price": -110, "ev_pct": -3.80,
+          "is_plus_ev": false }
+      ]
+    }
+  ]
+}
+
+Lines without sharp-anchor coverage on this event (or single-tier YES markets like “10+ Strikeouts” that can't be no-vig fair-derived from one price) are dropped from the response.
+Score your own price against the same fair line:
+GET /v1/sports/{sport_key}/events/{event_id}/ev/calc
+    ?market=pitcher_strikeouts
+    &name=Over                    # team name for h2h/spreads; Over/Under otherwise
+    &point=6.5                    # line; omit for h2h
+    &description=Tarik Skubal     # player name; omit for game lines
+    &price=-105                   # American odds at YOUR book
+
+{
+  "market": "pitcher_strikeouts",
+  "name": "Over",
+  "point": 6.5,
+  "description": "Tarik Skubal",
+  "price": -105,
+  "fair_source": "pinnacle",
+  "fair_prob": 0.5432,
+  "implied_prob": 0.5122,
+  "ev_pct": 6.05,
+  "is_plus_ev": true
+}
+
+Same Pinnacle-preferred no-vig anchor as /ev, scored against a price you supply instead of the books we carry — for a number quoted at a book we don't poll (Caesars, Hard Rock, bet365…). Full-game markets only. A (market, point, name) tuple with no fair-anchored line returns 404 listing the outcome names that do exist. There is a UI at /ev-calculator.
+Market-Implied Projections (Hobby+)
+GET /v1/sports/{sport_key}/events/{event_id}/projections
+    ?markets=player_pass_yds,player_receptions   # optional
+
+One row per (market, player): the statistical value the betting market collectively implies — the line where the no-vig probability of Over crosses 50%, taken as the median across contributing sportsbooks. Built for validating your own projections against the live market. Hobby+ (all paid tiers). Free tier sees the structure with values redacted.
+These are market-implied values, not forecasts — pure arithmetic over sportsbook prices (the same de-vig math as /ev). DFS pick'em pricing is excluded; only genuine two-way Over/Under pairs contribute. Where a book posts a ladder of two-way alt lines, the 50% crossing is interpolated; a single line contributes the line with a bounded juice-skew nudge.
+Response:
+{
+  "id": "25070",
+  "sport_key": "football_nfl",
+  "home_team": "Seattle Seahawks",
+  "away_team": "New England Patriots",
+  "commence_time": "2026-09-10T00:20:00Z",
+  "method": "market-implied: per book, the line where the no-vig P(over) crosses 50% ...",
+  "projections": [
+    { "market_key": "player_pass_yds", "player": "Drake Maye",
+      "player_id": "espn:4431452",
+      "projected_value": 246.9, "consensus_over_prob": 0.512,
+      "books_contributing": 4,
+      "last_update": "2026-08-27T14:59:02Z" },
+    { "market_key": "player_receptions", "player": "Jaxon Smith-Njigba",
+      "player_id": "espn:4430878",
+      "projected_value": 6.4, "consensus_over_prob": 0.487,
+      "books_contributing": 3,
+      "last_update": "2026-08-27T14:58:41Z" }
+  ]
+}
+
+player_id is the same stable cross-book id served on /odds prop outcomes (null until the player has graded at least once). Players are grouped by player_id when known, else by exact-normalized name with a book's team tag stripped ("Bubba Chandler (PIT)" = "Bubba Chandler"); a divergent spelling with no shared player_id appears as a separate row with fewer contributing books rather than a guessed merge.
+Best Line — Cross-book Line Shopping (Hobby+)
+GET /v1/sports/{sport_key}/events/{event_id}/best-line
+    ?markets=pitcher_strikeouts,h2h      # optional
+    &bookmakers=draftkings,fanduel,bovada  # optional — shop only your books
+
+The companion to /ev: once you've decided what to bet, this tells you which book pays the most. For every (market, player, line) tuple on the event, returns the single best American price across every comparable book, plus an all_prices array sorted best-first (one row per book) so you can render runner-ups without a second request. Hobby+ (all paid tiers) for prices. Free tier sees the full structure — every line, side, book identity, and the best-first ranking — with prices nulled and redacted: true. DFS pick'em books (PrizePicks, Sleeper, Dabble, ParlayPlay, DraftKings Pick6) are excluded — their quotes aren't independently bettable payouts; Underdog is included only at its clean two-way lines.
+Response:
+{
+  "id": "12345",
+  "sport_key": "baseball_mlb",
+  "home_team": "Yankees",
+  "away_team": "Red Sox",
+  "commence_time": "2026-07-19T23:05:00Z",
+  "books_considered": ["bovada", "draftkings", "fanduel", "pinnacle"],
+  "lines": [
+    {
+      "market_key": "pitcher_strikeouts",
+      "description": "Gerrit Cole",
+      "point": 6.5,
+      "sides": {
+        "Over": {
+          "best": { "book": "fanduel", "book_title": "FanDuel",
+                    "price": 110, "last_update": "2026-07-19T21:04:11Z",
+                    "line_type": "alternate" },
+          "all_prices": [
+            { "book": "fanduel", "book_title": "FanDuel", "price": 110,
+              "last_update": "2026-07-19T21:04:11Z", "line_type": "alternate" },
+            { "book": "draftkings", "book_title": "DraftKings", "price": -105,
+              "last_update": "2026-07-19T21:03:58Z", "line_type": "main" },
+            { "book": "bovada", "book_title": "Bovada", "price": -115,
+              "last_update": "2026-07-19T21:04:02Z", "line_type": "main" }
+          ]
+        },
+        "Under": { "...": "same shape" }
+      }
+    }
+  ]
+}
+
+Books quoting a different line land in separate entries — FanDuel's Cole 6.5 isn't directly comparable to DK's 7.5. Each price carries last_update so you can discount quotes from a book that went stale mid-slate, and line_type (main / alternate / milestone) so you can tell a book's main line from an alt or N+ rung. Full-game markets only.
+Player Search (Free)
+GET /v1/sports/{sport_key}/players
+    ?search=witt   # required — 2+ characters, case- and accent-insensitive
+    &limit=25      # optional — 1..100, default 25
+
+Look up a player's stable player_id and every spelling the books use for him. Free tier. Books disagree on names (“Bobby Witt” vs “Bobby Witt Jr.”); this index is built from graded box scores, so every spelling listed has been proven against a real stat line for that player.
+Response:
+{
+  "sport_key": "baseball_mlb",
+  "search": "witt",
+  "players": [
+    {
+      "player_id": "mlb:677951",
+      "name": "Bobby Witt Jr.",
+      "known_names": ["bobby witt", "bobby witt jr"]
+    }
+  ]
+}
+
+Pass the player_id as the {player_name} segment of /history and /trends (e.g. /players/mlb:677951/trends) to key on the player rather than one spelling.
+Player Prop History (Hobby+)
+GET /v1/sports/{sport_key}/players/{player_name}/history
+    ?market=pitcher_strikeouts
+    &bookmaker=draftkings   # optional
+    &main_line_only=true    # optional — each book's main line per game only
+    &limit=20               # default 20, max 100
+
+Returns a player's recent resolved props for a given market — line, Over/Under prices, and whether each side won or lost. Hobby+ (all paid tiers) for resolution data. Free tier sees event structure with redacted: true.
+Response:
+{
+  "player_name": "Bryan Woo",
+  "player_id": "mlb:693433",
+  "sport_key": "baseball_mlb",
+  "market": "pitcher_strikeouts",
+  "entries": [
+    {
+      "event_id": "5885",
+      "commence_time": "2026-04-19T20:10:00Z",
+      "home_team": "Seattle Mariners",
+      "away_team": "Texas Rangers",
+      "bookmaker": "draftkings",
+      "bookmaker_title": "DraftKings",
+      "line": 6.5,
+      "is_main_line": true,
+      "line_moved_in_play": false,
+      "over_price": 116,
+      "under_price": -148,
+      "actual_value": 6.0,
+      "over_result": "lost",
+      "under_result": "won",
+      "resolved_at": "2026-04-19T23:18:45Z",
+      "redacted": false
+    }
+  ]
+}
+
+One entry per (event, bookmaker, line). Name match is case-insensitive, and a name is expanded to every spelling we have proven for that player — Bobby Witt and Bobby Witt Jr. return the same full history. The path segment may also be a player_id from Player Search. player_id is null when the name is unknown or shared by two players (it is never expanded onto a namesake).
+Most books post an alternate ladder beside the main line, so a game can carry several entries per book. is_main_line marks the line that book priced closest to even on both sides, among lines that stood at kickoff; line_moved_in_play marks a quote re-priced after kickoff (an in-play line, never marked main). main_line_only=true keeps one main-line entry per book per game. limit counts entries.
+Player Game Log & H2H
+GET /v1/sports/{sport_key}/players/{player_name}/games
+    ?limit=20            # optional — 1..100, default 20
+    ?opponent=Red Sox    # optional — head-to-head; team name or abbreviation
+    ?stat_type=hits,rbis # optional — comma-separated, omit for all
+    ?season=2026         # optional — "2026" (MLB/WNBA/NFL/NCAAF) or "2025-26" (NBA/NHL/NCAAB)
+    ?season_type=regular # optional — preseason | regular | play_in | postseason | cup_final
+    ?before=2026-08-01T00:00:00Z  # optional — page back; pass next_before
+
+A player's recent games with every raw box-score stat per game — one call instead of one request per event. Build L5 / L10 / L20, season splits, charts and head-to-head from the raw rows. Free tier.
+This is the raw-stat archive, not graded-prop history. It covers every game we hold a box score for, including games no sportsbook posted a market on — so unlike a window built from /history or /trends, a "last 10 games" here is genuinely the last 10 games. It carries no line, price or grade; use /trends for hit rates against a posted line.
+Response:
+{
+  "player_name": "Aaron Judge",
+  "sport_key": "baseball_mlb",
+  "opponent": "Boston Red Sox",
+  "games": [
+    {
+      "event_id": "31882",
+      "commence_time": "2026-04-23T22:10:00Z",
+      "status": "final",
+      "home_team": "Boston Red Sox",
+      "away_team": "New York Yankees",
+      "home_score": 3,
+      "away_score": 5,
+      "team_abbr": "NYY",
+      "player_team": "New York Yankees",
+      "opponent": "Boston Red Sox",
+      "is_home": false,
+      "season": "2026",
+      "season_type": "regular",
+      "stats": {
+        "hits": 1.0,
+        "total_bases": 1.0,
+        "walks": 1.0,
+        "rbis": 1.0,
+        "home_runs": 0.0,
+        "at_bats": 3.0
+      }
+    }
+  ],
+  "next_before": "2026-04-23T22:10:00Z"
+}
+
+Paging and seasons. One call returns up to 100 games. When a page is full, next_before is set — pass it as ?before= for the next, older page; it is null on the last page. Each game carries season and season_type from the league's own calendar (MLB, NBA, WNBA, NHL, NFL, NCAAF, NCAAB; null for other sports), and ?season= / ?season_type=regular filter on them — e.g. drop preseason games from an L10. The archive starts April 2026 (WNBA mid-May 2026).
+opponent= accepts a full name, a nickname or an abbreviation ("Boston Red Sox", "Red Sox", "BOS"), and the limit applies after the filter — so ?opponent=BOS&limit=10 is the last 10 meetings, not the Boston games among the last 10 games. H2H is not capped to the current season; it reaches as far back as the archive holds.
+player_team, opponent and is_home are null when the player's side can't be identified from the box score's team abbreviation, and always for individual sports (tennis, golf, UFC) which have no home side. They are left null rather than guessed — a wrong home/away flag would corrupt every split built on it. Stat names are per-sport; see Player Stats.
+Player Hit-Rate Trends (Hobby+)
+GET /v1/sports/{sport_key}/players/{player_name}/trends
+    ?market=batter_home_runs   # optional — omit for every market
+    ?dfs_odds_type=goblin      # optional — PrizePicks flavor: standard | goblin | demon
+
+The “did X go over in N of his last M games?” surface. For every market the player has graded history in, returns over/under/push splits across the last 5 / 10 / 20 / 50 graded games, the current streak, average actual stat, and the most recent line. The verdict each game compares the player's real stat (book-agnostic) against one reference book's posted line; pushes are excluded from over_pct. Built entirely on PropLine's prop resolution — no other odds API offers this. Hobby+ (all paid tiers) for the rates; free tier sees the market list + graded-game counts with rates redacted.
+Response:
+{
+  "player_name": "Aaron Judge",
+  "player_id": "mlb:592450",
+  "sport_key": "baseball_mlb",
+  "markets": [
+    {
+      "market": "batter_total_bases",
+      "games_graded": 50,
+      "reference_bookmaker": "bovada",
+      "reference_bookmaker_title": "Bovada",
+      "recent_line": 1.5,
+      "avg_actual": 2.02,
+      "last_5":  { "window": 5,  "games": 5,  "over": 2, "under": 3, "push": 0, "over_pct": 40.0 },
+      "last_10": { "window": 10, "games": 10, "over": 3, "under": 7, "push": 0, "over_pct": 30.0 },
+      "last_20": { "window": 20, "games": 20, "over": 9, "under": 11,"push": 0, "over_pct": 45.0 },
+      "last_50": { "window": 50, "games": 50, "over": 24,"under": 26,"push": 0, "over_pct": 48.0 },
+      "current_streak": { "result": "under", "length": 2 },
+      "last_game": {
+        "event_id": "12649",
+        "commence_time": "2026-05-29T23:05:00Z",
+        "line": 1.5,
+        "actual_value": 1.0,
+        "result": "under"
+      },
+      "redacted": false
+    }
+  ]
+}
+
+Markets are sorted most-active first. A window is only returned once enough games exist to make it meaningful (e.g. last_20 needs 11+ graded games), otherwise it's null.
+The reference line each game is the reference book's main pregame line — never an alternate-ladder rung and never a line re-priced in play. A game where every book only has in-play lines is left ungraded. Every market reaches back the same 50 graded games whether or not market= is set. {player_name} accepts a name (expanded to every known spelling) or a player_id, same as /history.
+Add ?dfs_odds_type=standard|goblin|demon to compute the trend against that PrizePicks flavor's line only — e.g. compare a player's goblin-line hit-rate against his standard-line trend. Omit it for the default cross-book behavior. The response echoes the filter back as a top-level dfs_odds_type. PrizePicks flavor tagging began 2026-06-16, so per-flavor trends only have depth from that date forward.
+Resolution Coverage (Free)
+GET /v1/markets/resolution-summary
+    ?days=30   # 1-90, default 30
+
+Aggregated counts only — the factual volume of player props we've graded against real box scores over the window. Free tier. A coverage proof, not a profitability claim: the-odds-api grades nothing, and OddsJam only grades single bets on request — neither ships a pre-graded dataset like this.
+Response:
+{
+  "days": 30,
+  "total_graded": 712043,
+  "total_settled": 698811,
+  "events_graded": 4120,
+  "sports_covered": 33,
+  "by_sport": [
+    { "sport_key": "baseball_mlb", "title": "MLB",
+      "graded": 386415, "events": 383 }
+  ],
+  "top_markets": [
+    { "market_key": "batter_total_bases", "graded": 48210 }
+  ]
+}
+
+total_graded includes voids; total_settled is won/lost/push only. top_markets is capped at 12.
+Futures Markets
+GET /v1/sports/{sport_key}/futures
+
+Season-long markets — World Series winner, NBA championship, Stanley Cup, league MVP, division winners, etc. One entry per (futures event, book, market), with every team or player priced. Free tier. Polled hourly.
+Response:
+[
+  {
+    "id": "12345",
+    "sport_key": "baseball_mlb",
+    "title": "World Series 2026",
+    "commence_time": "2026-10-31T00:00:00Z",
+    "markets": [
+      {
+        "key": "world_series_winner",
+        "description": "World Series Winner",
+        "bookmaker": "bovada",
+        "bookmaker_title": "Bovada",
+        "last_update": "2026-04-27T15:30:51Z",
+        "book_updated_at": "2026-04-27T15:14:11Z",
+        "outcomes": [
+          { "name": "Los Angeles Dodgers", "price": 180, "price_decimal": 2.8 },
+          { "name": "New York Yankees", "price": 725, "price_decimal": 8.25 },
+          { "name": "Seattle Mariners", "price": 1200, "price_decimal": 13.0 }
+        ]
+      },
+      {
+        "key": "regular_season_wins",
+        "description": "Seattle Mariners Total Regular Season Wins",
+        "bookmaker": "pinnacle",
+        "bookmaker_title": "Pinnacle",
+        "last_update": "2026-09-28T15:30:51Z",
+        "book_updated_at": "2026-09-28T15:14:11Z",
+        "outcomes": [
+          { "name": "Over", "description": "Seattle Mariners", "point": 85.5,
+            "price": -110, "price_decimal": 1.91,
+            "resolution": "won", "actual_value": 90.0,
+            "settled_at": "2026-09-30T09:12:04Z" },
+          { "name": "Under", "description": "Seattle Mariners", "point": 85.5,
+            "price": -110, "price_decimal": 1.91,
+            "resolution": "lost", "actual_value": 90.0,
+            "settled_at": "2026-09-30T09:12:04Z" }
+        ]
+      }
+    ]
+  }
+]
+
+Available sports: MLB, NBA, NHL, NFL, NCAAB, NCAAF. Market keys are slugified from the book's description with year suffixes dropped, so they're stable across seasons — world_series_winner, stanley_cup_winner, nba_mvp. Filter client-side on market.key to find the one you want.
+Settlement. The futures a final regular-season table decides — team win totals, division winners and the conference #1 seed on NFL, NBA and MLB — settle in the weeks after that regular season ends. Those outcomes gain resolution (won/lost/push), actual_value (the figure settled against — a team's season wins for a win total, 1/0 for a yes-style outright) and settled_at.
+Everything else stays unsettled and those three fields arenull. A championship, a pennant or a conference title is not in any standings table, and awards (MVP, Coach of the Year) are published by no free feed — we would rather leave those honestly ungraded than guess. College-football win totals are excluded for a specific reason: the available feed's win count includes the conference championship game, which the books' markets exclude.
+Optional ?bookmakers= (comma-separated book keys, e.g. bookmakers=bovada,draftkings) narrows the per-book market rows — same the-odds-api-compatible filter as every odds endpoint: omitted returns all books, unknown keys match nothing. A futures event left with no matching market is dropped.
+Player Stats
+GET /v1/sports/{sport_key}/events/{event_id}/stats
+
+Returns raw player and team stats from official box scores. This data is book-agnostic — use it to resolve props from any sportsbook, build your own models, or power research dashboards. Free tier.
+Live during games (all major US sports): for in-progress MLB and WNBA games today — plus NFL, NCAAF, NBA, and NHL as their seasons start — stats update roughly every 90 seconds with cumulative in-game values — a strikeout or a hit shows up within about a minute and a half of it happening. When status is in_progress, treat the numbers as partial; once it flips to final, they are the official box score. Other sports populate stats when the game completes.
+Response — one flat row per (player, stat):
+{
+  "id": "16",
+  "sport_key": "baseball_mlb",
+  "home_team": "Detroit Tigers",
+  "away_team": "St. Louis Cardinals",
+  "status": "final",
+  "home_score": 3,
+  "away_score": 5,
+  "commence_time": "2026-04-05T17:10:00Z",
+  "stats": [
+    { "player_name": "Tarik Skubal", "team_abbr": "DET", "stat_type": "strikeouts", "stat_value": 7 },
+    { "player_name": "Tarik Skubal", "team_abbr": "DET", "stat_type": "earned_runs", "stat_value": 2 },
+    { "player_name": "Masyn Winn", "team_abbr": "STL", "stat_type": "hits", "stat_value": 2 },
+    { "player_name": "Masyn Winn", "team_abbr": "STL", "stat_type": "home_runs", "stat_value": 1 }
+  ]
+}
+
+Stats are sourced from official league APIs (MLB, NBA, NHL, NCAAB, ESPN) and are available once a game reaches final status. Use this endpoint alongside odds from any sportsbook to build your own prop resolution engine.
+Which stats each sport returns
+Pass ?stat_type=hits,home_runs to narrow the response to the stats you need (comma-separated, omit for all). The stat names below are the complete vocabulary per sport.
+This list is wider than our market list. We store a stat whenever the box score carries it, not only when a sportsbook prices it — so several of these have no betting market anywhere and are still returned. NFL passing_completions and tennis sets_won are examples. Don't infer what we store from what we quote.
+Sportstat_type values
+MLBhits, total_bases, singles, doubles, triples, home_runs, runs, rbis, walks, stolen_bases, at_bats, hits_runs_rbis, batter_strikeouts · pitching: strikeouts, earned_runs, hits_allowed, outs, pitcher_started (1 = started, 0 = relieved)
+NBA · WNBA · NCAABpoints, rebounds, assists, threes, steals, blocks, turnovers, points_rebounds, points_assists, rebounds_assists, points_rebounds_assists, minutes
+NHLgoals, points_nhl, shots_on_goal, blocked_shots, power_play_points, saves
+NFL · NCAAFpassing_yards, passing_tds, passing_attempts, passing_completions, interceptions, longest_completion, rushing_yards, rushing_tds, rushing_attempts, longest_rush, receiving_yards, receiving_tds, receptions, longest_reception, pass_rush_yds, rush_reception_yds, anytime_td, first_td, sacks, fumbles, fumbles_lost, fumbles_recovered, field_goals_made, field_goals_attempted, longest_field_goal, extra_points_made, extra_points_attempted, kicking_points
+Soccer (all leagues)goals, assists, shots, shots_on_target, yellow_cards, red_cards, cards, first_goal, fouls_committed, fouls_suffered, offsides, saves, shots_faced, goals_conceded, own_goals · team: corners
+Tennistotal_games, sets_won, set_1_games … set_5_games · serve detail (thinner coverage): aces, dblfaults, breakpts, breakpts_w, tiebreaks, tiebreaks_w, games_w, sets_w, matches_w, plus opp_* mirrors
+Golfstrokes, score, total_score, birdies, eagles, pars, bogeys_ow, holes, rank, golf_position, golf_made_cut, tournament_winner
+UFCsignificant_strikes, takedowns, fight_winner, fight_method, fight_round, completed_rounds, went_distance
+Esports (CS2)kills_map_1, kills_maps_1_2, kills_maps_1_2_3, headshots_map_1, headshots_maps_1_2, headshots_maps_1_2_3
+
+Team rows also carry per-period scores as period_{code}_home / period_{code}_away — for example period_q1_home, period_i3_away, period_f5_home — using the same period codes as the ?period= odds filter.
+Coverage depth varies by how long we have carried a sport. Our box-score archive starts April 2026, so MLB, WNBA, tennis, soccer and golf hold a full season while NBA, NHL and NFL begin accumulating at their 2026-27 openers.
+Available Markets (Per Event)
+GET /v1/sports/{sport_key}/events/{event_id}/markets
+
+Which market keys this event actually has, and how many outcomes sit under each. Cheap discovery before a full odds pull: a busy MLB game carries 100+ markets across 116 books, and asking this first lets you request only the markets= you care about instead of downloading the whole board.
+[
+  { "key": "batter_home_runs", "outcomes_count": 54 },
+  { "key": "h2h", "outcomes_count": 38 },
+  { "key": "pitcher_strikeouts", "outcomes_count": 46 },
+  { "key": "spreads", "outcomes_count": 40 },
+  { "key": "totals", "outcomes_count": 44 }
+]
+
+Full-game markets only. This lists the offerings we have stored for the event. /odds additionally withholds prices a book has withdrawn or stopped delivering, so a count here can be higher than the outcomes /odds?markets= returns — use /odds for what is live right now. Period markets are excluded — reach them with ?period=.
+Game Context
+GET /v1/sports/{sport_key}/events/{event_id}/context
+
+The conditions a game is played under — for MLB, the probable starting pitchers and their throwing hand (platoon-split context for every batter prop), whether the lineup is confirmed, the home-plate umpire, and first-pitch weather at outdoor (or open-roof) venues. For NFL & NCAAF, the venue and kickoff weather (wind and cold drive passing, kicking, and totals). The same context is also embedded in the /results response, so every graded prop carries the conditions it settled against — something no other odds API offers. Free tier.
+Response:
+{
+  "event_id": "16",
+  "sport_key": "baseball_mlb",
+  "home_team": "Detroit Tigers",
+  "away_team": "Seattle Mariners",
+  "commence_time": "2026-06-06T17:10:00Z",
+  "venue": "Comerica Park",
+  "roof_type": "Open",
+  "is_indoor": false,
+  "home_probable_pitcher": "Keider Montero",
+  "away_probable_pitcher": "Bryce Miller",
+  "home_probable_pitcher_hand": "R",
+  "away_probable_pitcher_hand": "R",
+  "lineup_confirmed": true,
+  "home_plate_umpire": "Chris Segal",
+  "weather": {
+    "temperature_f": 82.7,
+    "wind_speed_mph": 7.4,
+    "wind_direction": "WNW",
+    "precip_probability_pct": 10,
+    "conditions": "Light drizzle"
+  },
+  "updated_at": "2026-06-06T15:40:00Z"
+}
+
+Returns 404 when no context is on file yet (before the context loop has reached the event, or for sports without a context source). Indoor / domed venues return weather: null with is_indoor: true.
+Line Movement & Steam (Hobby+)
+GET /v1/sports/{sport_key}/events/{event_id}/movement
+    ?markets=h2h,spreads,totals    # optional, comma-separated
+    &period=q1                     # optional game-period filter
+    &since=-6h                     # optional: measure from here (ISO time or -30m/-6h/-2d)
+    &includeBookIds=true           # optional: add each book's book_outcome_id
+
+Line movement derived from our snapshot tick history. For each (book, market, outcome) it returns the opening line, the latest line, and the implied-probability / point shift between them. The top-level steam array flags outcomes that multiple books moved in the same direction — the classic sharp-money signal, computed across all 116 books we poll. Because we own the tick history, this is something pull-only odds APIs can't produce. Hobby+ full; free tier redacted.
+Response:
+{
+  "id": "37464",
+  "sport_key": "baseball_mlb",
+  "home_team": "Texas Rangers",
+  "away_team": "Cleveland Guardians",
+  "steam": [
+    {
+      "market": "totals",
+      "name": "Over",
+      "team": null,
+      "open_point": 8.5,
+      "latest_point": 8.5,
+      "books_quoting": 9,
+      "books_moved": 6,
+      "consensus_direction": "shortening",
+      "avg_prob_shift": 0.041,
+      "consensus_point_shift": 0.5,
+      "steam_score": 24.6
+    }
+  ],
+  "bookmakers": [
+    {
+      "key": "pinnacle",
+      "title": "Pinnacle",
+      "markets": [
+        {
+          "key": "totals",
+          "outcomes": [
+            {
+              "name": "Over",
+              "outcome_id": 4815162,
+              "open_price": -105, "open_point": 8.5, "open_at": "2026-06-05T22:00:00Z",
+              "latest_price": -130, "latest_point": 9.0, "latest_at": "2026-06-06T23:10:00Z",
+              "prob_shift": 0.054, "point_shift": 0.5,
+              "direction": "shortening", "num_snapshots": 42
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+prob_shift is the signed implied-probability change (open → latest); positive means the book shortened the outcome (money moved toward it). steam_score is a 0–100 composite of how many books agreed and how far they moved. Steam comes in two flavors: price steam (consensus_direction = shortening/lengthening) when books move the price at a stable line, and point steam (point_up/point_down) when books move the line/number itself the same way (e.g. a total 8.5 → 9 or a run line +1.5 → −1.5) — common on totals and spreads, where sharp money moves the number rather than the price. The two are disjoint: a moved line has prob_shift = null (and per-book direction = line_moved), so it can't double-count. For point steam avg_prob_shift is 0 and the magnitude is in consensus_point_shift. PrizePicks is excluded from steam (synthetic DFS pricing).
+Every steam row names its line: price steam is computed per line, so open_point = latest_point = that line (alt lines are separate rows); point steam reports the movers' median opening and latest line. A team total carries team and never merges with the game total. Team outcomes group on the event's own team name, so every book's spelling ("PIT Steelers", "Steelers")        lands in one row. An exchange's (Kalshi, Polymarket, Polymarket US, Novig, ProphetX, Matchbook, Smarkets) opening quote counts toward steam only when it sits within 10 implied-probability points of the sportsbooks' opening consensus for that line — an exchange's first quote is often a resting placeholder. By default the opening is each line's first quote in the 14 days before kickoff; pass since (an ISO time, or -6h / -30m / -2d) to measure from the price each outcome was holding at that moment instead. Every outcome carries outcome_id (the same id as /odds and line_movement webhooks), plus book_outcome_id with includeBookIds=true.
+Webhooks — Push Delivery (Streaming)
+The push half of the API. Instead of polling, subscribe a URL and we POST to it when a line moves, a prop grades, the steam detector fires, or a book pulls a market. Every delivery is HMAC-signed and retried with exponential backoff (10s → 30s → 2m → 10m → 30m → 1h, six attempts). Streaming Lite ($39, 5 hooks) and Streaming ($79, 10 hooks).
+A steam delivery is one per market move (market, period, team, player, and the side the market moved toward, moved_toward): a total going up is one event toward the Over, not an Over and an Under. It fires again only when the move's steam score climbs into a higher band than any it has alerted at; that re-fire carries continuation: true, the same move_id, alert_seq, first_detected_at, the first alert's first_point/first_price and the shift since then (cumulative_point_shift, cumulative_prob_shift at an unchanged line). A reversal is a new move_id. Every line of the move rides in its lines array (each with point, open/latest point and price, books, books_moved and steam_score), and the top-level fields describe the strongest line.
+A line_movement payload's previous and current objects carry price_american, point, liquidity and liquidity_updated_at (same meaning as on /odds; null for books that publish no size), on webhooks and the websocket alike. A size change with no price or line move sends nothing — read size changes from /odds.
+Create a subscription:
+POST /v1/webhooks
+X-API-Key: YOUR_KEY
+Content-Type: application/json
+
+{
+  "url": "https://your-app.com/hooks/propline",
+  "events": ["line_movement", "resolution", "steam", "market_suspended"],
+  "filter_sport_key": "baseball_mlb,football_nfl", # optional, comma-separated sports
+  "filter_market_key": "pitcher_strikeouts", # optional, comma-separated markets
+  "filter_player_name": "Skubal",            # optional, substring
+  "filter_bookmaker_key": "draftkings,fanduel", # optional, comma-separated books
+  "filter_event_id": 12649,                  # optional
+  "min_price_change_pct": 5,                 # line_movement only
+  "min_steam_score": 25,                     # steam only, 0-100
+  "steam_props": true,                       # steam only: add player-prop steam (default false)
+  "min_books_agreeing": 3,                   # market_suspended only
+  "min_ev_pct": 1,                           # ev only (default 1)
+  "max_ev_pct": 10,                          # ev only (default no cap)
+  "ev_fair_source": "consensus",             # ev only: same values as /ev ?fair_source=
+  "format": "json",                          # or "discord"
+  "batch_max": 100                           # optional: batched delivery (see below)
+}
+
+The response carries the signing secret in full — this is the only time it is ever shown; every later read masks it. Filters are AND-ed, and at least one is required below Enterprise (a filter-less firehose is an Enterprise contract). The three list filters (sport, market and bookmaker keys) each take up to 1,000 characters — enough for every soccer league in one subscription. There are no wildcards. filter_bookmaker_key takes comma-separated book keys — the same vocabulary as the ?bookmakers= query param — and applies to line_movement, resolution and market_suspended; steam is a cross-book consensus signal with no single book, so it is unaffected. A three-book filter on a sport-wide line_movement subscription typically cuts delivery volume ~85%. Set format: "discord" to have us rewrite the payload as a Discord embed — see Discord webhooks.
+Batched delivery (batch_max):
+# With "batch_max": 100, up to 100 events arrive in ONE signed POST:
+{
+  "batch": true,
+  "event_type": "line_movement",
+  "count": 3,
+  "events": [
+    {"delivery_id": 25901221, "data": { ...exactly the per-event payload... }},
+    {"delivery_id": 25901222, "data": { ... }},
+    {"delivery_id": 25901223, "data": { ... }}
+  ]
+}
+# Headers: X-PropLine-Batch: 3, X-PropLine-Event as usual, and the
+# signature covers the whole envelope with the same HMAC scheme.
+# Dedupe on the delivery_id INSIDE each element.
+
+Strongly recommended for high-volume subscriptions (sport-wide line_movement can exceed 1,000 events/min during a full slate). One POST per event means your endpoint's response time caps your delivery rate — an endpoint answering in 2s simply cannot receive 1,000 individual POSTs a minute, and events queue behind each other. With batching, delivery latency is your response time, full stop. Events within a batch are ordered oldest-first and only batch with others of the same event type. Set batch_max (1–500) at create time or via PATCH; 0 switches back to per-event. JSON format only — Discord subscriptions always deliver per-event. When your queue is short, batches are naturally small or single-event.
+Auto-pause: a webhook whose endpoint fails every delivery for several days straight is paused automatically (active: false, paused_reason: "auto_failure") and the account owner is emailed a one-click re-enable link. Re-enable any time via the link, the dashboard, or PATCH /v1/webhooks/{id} with {"active": true}. Deliveries resume with new events; the paused period is not replayed. A brief outage never triggers this — only days of 100% failure.
+ev — a book is pricing a bet above the no-vig fair line:
+{
+  "event_type": "ev",
+  "sport_key": "baseball_mlb",
+  "event": {"id": 138811, "home_team": "New York Yankees",
+            "away_team": "Boston Red Sox", "commence_time": "2026-09-30T23:05:00+00:00"},
+  "market_key": "totals",
+  "player_name": null,                     # the player for a prop
+  "outcome_name": "Over",
+  "point": 8.5,
+  "bookmaker_key": "lowvig",
+  "bookmaker_title": "LowVig.ag",
+  "price": 110,
+  "price_updated_at": "2026-09-30T19:58:12+00:00",
+  "fair_prob": 0.5,
+  "fair_price": -100,
+  "ev_pct": 5.0,
+  "fair_source": "pinnacle",
+  "fair_books": null,
+  "devig_method": "multiplicative",
+  "timestamp": "2026-09-30T20:00:05+00:00"
+}
+
+The push version of /ev. Every ~2 minutes we run the same math over pregame events starting in the next 24 hours and push each price whose EV% sits between min_ev_pct (default 1) and max_ev_pct. Only prices the book delivered in the last 5 minutes count, so a line the book has pulled or stopped moving is never pushed. Each subscription hears a given price once; if the book re-prices and it is still in range, you hear it again. Combine with filter_bookmaker_key to watch only your books. A very large EV% is usually a stale or mismatched line — a cap around 10% is a sensible start. ev_fair_source picks the fair line, with the same values as /ev?fair_source= (e.g. consensus); unset uses the /ev default. This is an analytical signal, not a promise of profit.
+steam_props (steam only, default false) adds player-prop steam to a subscription that takes steam. Set it on create or with PATCH. Prop steam covers NFL, NCAAF, NBA, NHL, MLB and WNBA, counts price moves at a stable line only, leaves out DFS pick'em books, and is checked every 5 minutes for games starting in the next 24 hours. Props move far more than game lines (around 170 prop steam events per NFL game on a Sunday), so pair it with min_steam_score or filter_market_key (e.g. player_pass_yds,player_rush_yds) if that is too many. The payload is the same steam event, with the player in player_name.
+market_suspended — a book took a market off the board:
+{
+  "event_type": "market_suspended",
+  "sport_key": "baseball_mlb",
+  "event": {"id": 138811, "home_team": "Pittsburgh Pirates",
+            "away_team": "Boston Red Sox", "commence_time": "2026-08-16T17:35:00+00:00"},
+  "bookmaker_key": "draftkings",
+  "bookmaker_title": "DraftKings",
+  "subject": "Willson Contreras",          # the player; null for a game line
+  "reason": "off_the_board",               # or "no_offers" on an exchange
+  "markets": [
+    {"key": "batter_hits", "description": "Willson Contreras Hits O/U", "period": null,
+     "last_seen": "2026-08-16T14:03:45+00:00",
+     "last_price": [{"name": "Over", "price": -115, "point": 0.5},
+                    {"name": "Under", "price": -105, "point": 0.5}]},
+    {"key": "batter_total_bases", ...}     # every key the book pulled for this player
+  ],
+  "books_agreeing": 7,                     # books that dropped the same subject
+  "books": ["betmgm", "betrivers", "draftkings", "novig", "pinnacle", "prophetx", "underdog"],
+  "suspended_at": "2026-08-16T14:07:30+00:00"
+}
+
+Fires pregame only, once per (book, event, player) withdrawal — one late scratch is one delivery, not one per market key. It is detected by absence: a market the book delivered on the last cycle and did not deliver on the next two, while the rest of that event's board kept flowing. Line moves, alt-ladder reshuffles, a fetch we skipped, and the last 30 minutes before kickoff (when every book tears its prop board down) are all filtered out. books_agreeing is how many books have pulled the same subject on the same event; set min_books_agreeing on the subscription to hear only corroborated drops (3+ is a late scratch), or leave it unset to hear every one — if you price off one book, its single-book drop is the one you care about. There is no restore event: when the market comes back the existing line_movement fires on the returning price, and suspended_at on the market in /odds clears. That same field is the pull-side view of this signal on every tier.
+line_added / line_pulled — a line appeared on, or left, a book's board (opt-in; for keeping a local board from the stream):
+{
+  "event_type": "line_pulled",              # or "line_added"
+  "sport_key": "football_nfl",
+  "event": {"id": 32633, "home_team": "Buffalo Bills", "away_team": "Miami Dolphins",
+            "commence_time": "2026-10-12T17:00:00+00:00"},
+  "bookmaker_key": "pinnacle",
+  "market_id": 4555201234, "market_key": "spreads", "market_description": "Spread -2.5",
+  "period": null,
+  "outcome_id": 13261133999, "book_outcome_id": null, "player_id": null,
+  "player_name": null, "outcome_name": "Buffalo Bills",
+  "previous": {"price_american": -110, "point": -2.5, "liquidity": 4000, ...},
+  "current": null,                          # line_added: previous null, current set
+  "reason": "market_stale_vs_sibling",
+  "last_seen_at": "2026-10-12T16:41:05+00:00",
+  "timestamp": "2026-10-12T16:46:20+00:00"
+}
+
+Same ids and fields as line_movement, so one code path applies all three. line_added fires when a book posts a new line on an event it already prices (reason: "new") — a book's first board on an event is not sent line by line — and when a pulled line comes back (reason: "returned"). line_pulled fires once when /odds stops serving a line: the book delivered the market without it for over 2 minutes (outcome_unseen), kept delivering the market's siblings without it (market_stale_vs_sibling; 5 minutes on Pinnacle, Hard Rock and ProphetX, 6 hours elsewhere), or pulled it from its slot (market_withdrawn). Pulls usually reach you within a minute of that point. Subscribe to both, plus line_movement, to mirror the board. Same filters as line_movement (min_price_change_pct does not apply).
+availability — a selection was suspended or reopened in play (beta: FanDuel: NFL, NCAAF, MLB, NBA, WNBA, NHL and soccer):
+{
+  "event_type": "availability",
+  "kind": "selections",          # or "feed_status" (see below)
+  "sport_key": "soccer_epl",
+  "event": {"id": 204994, "home_team": "Arsenal", "away_team": "Chelsea",
+            "commence_time": "2026-10-04T14:00:00+00:00"},
+  "bookmaker_key": "fanduel",
+  "selections": [
+    {"outcome_id": 91234567, "book_outcome_id": "924.12345678:58805",
+     "market_key": "h2h", "name": "Arsenal", "point": null,
+     "state": "open", "previous_state": "suspended",   # a same-price reopen
+     "price": -140, "inplay": true,
+     "version": 1830412, "changed_at": "2026-10-04T14:31:07+00:00"}
+  ]
+}
+
+Fires on every open/suspended change of a selection, including a reopen at an unchanged price and a single suspended selection inside an open market — read from FanDuel's own push feed, about 1-3 seconds after FanDuel. One delivery per event per change, listing the selections that changed. version only goes up; ignore any selection whose version is not higher than the one you hold. Pull side, same data (Streaming and Enterprise): POST /v1/availability/check with up to 500 outcome_ids returns each selection's state, version and a current flag; GET /v1/availability/snapshot?event_id= returns every state for an event to resync after a reconnect; GET /v1/availability/health reports, per sport, whether the FanDuel socket is connected and subscribed. FanDuel sends nothing for an open market whose price is not moving, so open with current: true means the feed is healthy and FanDuel's last word was open. Treat current: false as unavailable. A selection also reads current: false (reason change_pending) from about a second after we receive a FanDuel change on its market until that change is saved, so a pending suspension or price move stops acceptance before it is stored. The same stream also carries kind: "feed_status" messages whenever a sport's feed turns degraded or recovers (with current, degraded_reasons and a version from the same sequence). Pause acceptance on a degraded message; recovered is sent only after the feed has reconnected and re-read its whole board.
+A related but different staleness signal: pregame_only on each bookmaker block in /odds is true when the event is live and that book does not price it in play — the prices shown are its last pregame quote and will not move again until the game ends. This is the case suspended_at cannot show you: a withdrawal is detected by a market going missing from a poll, and a book with no in-play feed is never polled for the fixture once it starts, so nothing goes missing. Since 2026-10-12 those books are left out of a game in progress by default; pass includePregameOnly=true to get them back, flagged. DFS books always stay, because their pregame line is the number the bet settles against. To drop any price that has gone quiet, pass max_age=N (seconds) on either /odds endpoint: markets the book has not delivered in the last N seconds are removed.
+PrizePicks marks some projections over-only. By default the leg it excludes (the Under) is left out. Pass includeRestricted=true on either /odds endpoint to get it; every PrizePicks outcome then carries allowed_wager_types (over or under_or_over, PrizePicks' own value). A side not in that value may still be available in some states. Webhooks never fire for it.
+Managing subscriptions:
+GET    /v1/webhooks                  # list (secret masked)
+GET    /v1/webhooks/{id}             # one subscription
+PATCH  /v1/webhooks/{id}             # change url / events / filters / active
+DELETE /v1/webhooks/{id}             # remove
+POST   /v1/webhooks/{id}/test        # enqueue a test payload
+GET    /v1/webhooks/{id}/deliveries  # recent attempts + response codes
+       ?limit=50                     # up to 200 per page
+       &before_id={id}               # page backwards: pass the smallest id
+                                     # from the previous page
+GET    /v1/webhooks/{id}/replay      # re-read missed events, oldest-first
+       ?since_seq=4180               # your last processed X-PropLine-Sequence
+       &limit=100                    # up to 500 per page
+
+/deliveries is the debugging surface — it returns the status, HTTP response code, attempt count and full payload of each recent delivery, so a failing integration is diagnosable without contacting us. Pages are newest-first; a page shorter than limit is the last one. Test deliveries are prioritised ahead of the live queue.
+Catching up after an outage
+If your endpoint goes down, those deliveries are gone — and nothing used to tell you that you had missed any, so a quiet stream and a broken one looked identical. This is how you tell them apart and get the missing events back.
+Every delivery carries X-PropLine-Sequence — a counter that is monotonic within your subscription. Store the highest one you have processed. Do not use X-PropLine-Delivery for this: that id is global across every subscription, so gaps in it are other customers’ traffic and say nothing about your own stream.
+After downtime, read forward from that cursor. Events come back oldest-first (the opposite of /deliveries) so you can replay them in order. Page by passing next_seq back as since_seq while has_more is true.
+GET /v1/webhooks/12/replay?since_seq=4180
+
+{
+  "webhook_id": 12,
+  "since_seq": 4180,
+  "events": [
+    { "seq": 4181,
+      "delivery_id": 99312,
+      "event_type": "line_movement",
+      "created_at": "2026-08-31T14:02:11Z",
+      "data": { } }
+  ],
+  "next_seq": 4181,
+  "has_more": false,
+  "oldest_available_seq": 3902,
+  "latest_seq": 4181,
+  "truncated": false
+}
+
+truncated: true is the field that matters: it means events after your cursor have already aged out and are gone, so you should resync from the REST endpoints rather than assume you are current. Without it, a short list would be indistinguishable from “nothing to catch up on”. Replay is bounded by delivery retention — 2 days, and at most 5,000 deliveries per subscription. latest_seq is not subject to retention, so latest_seq - next_seq is an honest “how far behind am I” even when the rows themselves are gone. Sequence numbers always increase and never repeat, but are not guaranteed to be dense — treat a skipped number as normal, and read truncated for actual loss. Neither /replay nor /deliveries counts against your daily quota.
+Websocket streaming
+If your system already speaks websockets, or you simply can’t host a public HTTPS endpoint, connect a socket instead of receiving POSTs. Same events, same filters, same sequence numbers — a stream and a webhook are the same subscription with a different transport, so they cannot deliver you different things.
+How fast an event reaches the socket depends on the book. On DraftKings, FanDuel, Fanatics, Kalshi and Polymarket we ingest the book's own push feed, so a line move is pushed to you about a second after the book makes it (measured p50 0.1–1.1s, p90 ≤2s per book in play — see latency). On the other 111 books detection is bounded by our polling cycle, roughly 30–45s per book in play and 60–90s pre-match. Treat the five push books as a real-time feed and the polled books as a 30–90s one.
+Create the subscription with transport: "websocket" (no url — there is nowhere to POST), then connect and authenticate:
+POST /v1/webhooks
+{ "transport": "websocket",
+  "events": ["line_movement"],
+  "filter_sport_key": "baseball_mlb" }        → { "id": 12, ... }
+
+# then, over the socket:
+wss://ws.prop-line.com/v1/stream
+
+→ {"type":"auth","api_key":"YOUR_KEY","webhook_id":12,"since_seq":4180}
+← {"type":"ready","webhook_id":12,"latest_seq":4213,"truncated":false}
+← {"type":"event","seq":4181,"event_type":"line_movement",
+   "created_at":"…","sent_at":"…","data":{...}}
+← {"type":"event","seq":4182,...}
+← {"type":"ping"}
+← {"type":"heartbeat","at":"…","books":[{"bookmaker_key":"draftkings",
+   "sport_key":"football_nfl","pregame_read_at":"…",
+   "read_age_seconds":41.2,"reread_seconds":96.0,"events":30}]}
+
+The stream only sends changes, so silence alone can't tell "price unchanged" from "feed down". A heartbeat frame arrives on connect and every 25s, listing each book and sport your subscription covers. pregame_read_at is when that book's last pre-match board read started; reread_seconds is the gap between its last two reads. While read_age_seconds stays near reread_seconds, we are still reading that book and no event means no change. Dropped selections arrive as line_pulled once missing about 2 minutes. Per selection, last_seen_at on /odds stays the authority.
+Two timestamps ride every event frame: created_at is when our ingest recorded the change and sent_at is when the frame left our socket, so you can separate our queueing delay from your transport delay.
+Send since_seq to resume exactly where you left off — it is the same cursor /replay uses, so a reconnect never silently skips an event. Websocket seq values come from one counter shared by all websocket streams: they always increase but can jump by more than 1 between your events (a gap is not a loss), and one event can carry the same delivery_id on two of your subscriptions, so dedupe per subscription on seq. The ready frame carries the same truncated flag: true means events after your cursor aged out of retention and are gone, so resync from REST rather than assume you are current. A websocket subscription keeps the last 30 minutes of events for resume, and a database failover can clear that buffer (you then see truncated: true).
+Concurrent connections are capped per plan — Streaming Lite 2, Streaming 5. Delivered events do not count against your daily request quota, exactly as webhook deliveries don’t. Refusals close the socket with a distinct code: 4401 bad key, 4403 tier or paused, 4404 no such subscription on your account, 4429 at your connection limit. Expect a ping every 25s; reconnect with your last seq if it stops. A client that stops reading is buffered (up to 5,000 frames) without slowing anyone else; if the buffer stays full for 2 minutes the socket closes with 4008 — reconnect with your last seq and nothing is lost.
+line_movement and resolution payloads carry the same DFS pricing signals as /odds outcomes: market_description (for DFS alt markets this holds the flavor + line, e.g. Rebounds (demon 12.5)), dfs_odds_type (PrizePicks standard / goblin / demon; null for traditional books) and payout_multiplier (Underdog's per-leg multiplier, already included in the price; PrizePicks publishes no numeric multiplier — the flavor is the signal). So a webhook consumer can tell a goblin/demon variant from the standard line without a REST join. Both payloads also carry the REST join identifiers: outcome_id (our canonical outcome row id — the same value /odds?includeBookIds=true returns, so a delivery pins to exactly one REST row), book_outcome_id (the book's own selection id; null when it publishes none) and player_id (the stable league id, same lookup as /odds; null when unconfirmed — never guessed). In batched deliveries they sit inside each element's data.
+Verifying a delivery:
+X-PropLine-Event      line_movement | line_added | line_pulled | resolution | steam | market_suspended | ev | availability | test
+X-PropLine-Timestamp  unix seconds
+X-PropLine-Signature  hex(HMAC-SHA256(secret, f"{timestamp}." + raw_body))
+X-PropLine-Delivery   delivery row id — use as your dedupe key
+
+import hmac, hashlib
+
+def verify(secret: str, timestamp: str, raw_body: bytes, signature: str) -> bool:
+    expected = hmac.new(
+        secret.encode(),
+        f"{timestamp}.".encode() + raw_body,
+        hashlib.sha256,
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+Sign over the raw body, not a re-serialised dict — key order would differ. Both SDKs ship this as a helper (verify_signature / PropLine.verifySignature). Discord-format hooks are unsigned — Discord does not verify them.
+Bulk Data Export (Pro)
+Want the archive without a subscription? The one-time $99 Historical Backfill pass grants a 7-day full-archive pull on any tier: a trailing 2-year lookback, uncapped export calls, and the only access to /exports/odds-history — the raw tick-by-tick line-movement firehose, which no subscription tier can pull.
+
+GET /v1/exports/resolved-props
+    ?sport=baseball_mlb
+    &market=pitcher_strikeouts    # optional
+    &bookmaker=draftkings         # optional
+    &since=2026-04-01T00:00:00Z   # optional, ISO datetime
+    &until=2026-04-30T23:59:59Z   # optional, ISO datetime
+
+Streams every resolved prop outcome as a CSV download — ideal for backtesting, model training, and statistical research. Pro tier only. One row per (event, market, bookmaker, outcome) with the line, price, resolution (won/lost/push/void), and actual stat value — plus the opening and closing line on every row, so a full CLV study is one download rather than one history call per event. PropLine is the only API that offers this — other odds APIs don't resolve props.
+Sample row:
+event_id,sport_key,commence_time,home_team,away_team,home_score,away_score,market,bookmaker,player_name,outcome_name,line,price_american,price_decimal,resolution,actual_value,resolved_at,closing_price,closing_at,dfs_odds_type,closing_point,opening_price,opening_point,opening_at,payout_multiplier,outcome_id,player_id,market_description,team,customer_token
+5885,baseball_mlb,2026-04-19T20:10:00+00:00,Seattle Mariners,Texas Rangers,3,2,pitcher_strikeouts,draftkings,Bryan Woo,Over,6.5,116,2.16,lost,6.0,2026-04-19T23:18:45Z,110,2026-04-19T20:08:12Z,,6.5,104,6.5,2026-04-17T13:02:51Z,,8812345,mlb_693433,Bryan Woo Strikeouts O/U,,xxxxxxxxxxxx
+
+opening_price/opening_point/opening_at are the first snapshot in the 14 days before kickoff; closing_point is the line that went with closing_price.payout_multiplier is Underdog's per-leg multiplier (1.0 = standard pick; already included in the price; blank for every other book). outcome_id is our stable id for the priced selection — the same value /odds?includeBookIds=true, /odds/history, /odds/closing and webhook payloads carry — so a graded row joins back to its live and historical prices by id, never by name; player_id matches /odds and /results. Both points matter on spreads and totals, where the number moves as much as the price (−3 −110 → −3.5 −105) — note this is distinct from line, which is the outcome’s own current point. Blank when we recorded no pre-game snapshot for that outcome.
+New columns are always appended immediately before customer_token, so positional parsers written against an earlier column set keep working.
+dfs_odds_type marks the PrizePicks projection tier — standard (the true market line), goblin, or demon. It's blank for every traditional sportsbook.
+Response is text/csv with Content-Disposition: attachment, so curl -O saves straight to a file. Full-season exports can be tens of megabytes — the stream writes as it goes.
+Historical depth by tier:
+Pro — last 90 days of resolved outcomes
+Streaming Lite — last 180 days
+Streaming — last 365 days
+Enterprise — full archive, no lookback cap
+The effective floor is reflected in the X-PropLine-Export-Window-Start response header. A since value older than your tier's window is silently clamped to the floor. Need deeper history for backtesting? support@prop-line.com.
+Coverage note: the archive begins April 2026 (PropLine's launch) and depth varies by sport — a sport's graded history starts when its games are played on our watch. NFL & NCAAF player-prop grading begins with the 2026 season (September) — no NFL games have been played since launch, so there are no graded NFL rows yet, though live NFL odds are flowing today. Every export response states the sport's boundary in-band: the X-PropLine-Archive-Starts header carries the earliest date we hold for that sport (none if the sport has no data yet), and if your requested window ends before the archive begins, an X-PropLine-Archive-Notice header says outright that the export will be empty — check those two headers before assuming a thin file is a bug.
+Daily call cap by tier:
+Pro — 50 export calls per day
+Streaming Lite — 100 export calls per day
+Streaming — 200 export calls per day
+Enterprise — uncapped
+The cap counts whole calls, not rows — and sport is required, so a multi-sport pull is one call per sport. The most efficient pattern is one call per sport over the widest date range you need; slicing into smaller date ranges burns more calls for the same data. The cap and remaining budget are surfaced on every successful response in the X-PropLine-Export-Daily-Cap and X-PropLine-Export-Daily-Remaining response headers — read those instead of waiting for a 429. Quotas reset at 00:00 UTC (a hard reset, not a rolling window). A nightly per-sport reload across our entire catalog fits comfortably under the Pro cap; if your workflow needs more, that is the Enterprise conversation.
+Exports run at most 2 downloads at once per API key. A third concurrent request gets 429 export_concurrency_limit with Retry-After: 30, so run sport/month pulls one or two at a time. Exports may also return 429 export_concurrency_limit (with "scope": "global") when the service is already running its maximum number of exports for all customers; retry after 30 seconds. A 429 is always sent before the download starts, never partway through a file.
+Watermarking:
+Every row carries a stable customer_token derived from your API key — the same value across all your exports, distinct from any other customer's. The same value is also returned in the X-PropLine-Customer-Token response header. Bulk redistribution of exported data is prohibited under our terms of service; the watermark is how we trace leaks back to their source.
+Canary rows:
+Every export also appends two synthetic rows whose team and player-name fields begin with the literal prefix (Watermark). The 8-hex token in player_name is HMAC-derived from your API key and the ISO week, so any leaked CSV remains attributable even after the customer_token column is stripped. They appear at the tail of the stream and are easy to filter:
+-- Drop canary rows in SQL or pandas
+WHERE player_name NOT LIKE '(Watermark)%'
+
+Canary rows do not affect any aggregate statistic that excludes them. Full mechanism is disclosed in our watermarking terms.
+Full line-movement history (backfill / Enterprise):
+GET /v1/exports/odds-history
+    ?sport=baseball_mlb
+    &market=pitcher_strikeouts    # optional
+    &bookmaker=draftkings         # optional
+    &since=2026-04-01T00:00:00Z   # optional, ISO datetime (recorded_at)
+    &until=2026-05-01T00:00:00Z   # optional, ISO datetime (recorded_at)
+
+Streams the raw odds tick history — every recorded snapshot (price + line, per book, including period markets), one row per (outcome, snapshot) — not just the closing line. This is the bulk firehose that no subscription tier can pull: Pro and Streaming get per-event /odds/history, but the bulk export is exclusive to the one-time Historical Backfill pass and Enterprise. The pass covers a trailing 2-year lookback (Enterprise unbounded); uncapped calls. Same customer_token watermark + canary rows as the resolved-props export.
+Columns:
+event_id,sport_key,commence_time,home_team,away_team,market,period,bookmaker,player_name,outcome_name,recorded_at,price_american,price_decimal,point,book_updated_at,dfs_odds_type,liquidity,market_description,team,customer_token
+
+totals holds the game total, each team's total and every alt-line rung. team names the team a team total belongs to (blank = game total); market_description is the book's own market name (alt rungs read e.g. "Alternate Total Points (line 44.5)"); period is blank for full game. Filter on all three before averaging lines.
+A full archive runs to gigabytes per sport — page month by month with since/until so each download stays manageable.
+Free sample (no API key):
+GET /v1/exports/sample
+# Returns the last 7 days of MLB pitcher_strikeouts props as CSV.
+# Up to 1000 rows. No auth required.
+
+The sample endpoint is open to everyone — useful for evaluating the data shape before upgrading.
+DFS Payouts (Free)
+GET /v1/dfs/payouts
+    ?platform=prizepicks       # only prizepicks today
+    &leg_win_prob=0.58         # optional
+
+The PrizePicks Power and Flex payout schedule (2–6 legs) with the per-leg breakeven win probability for each play — the hit rate you need before an entry is worth taking. Pass ?leg_win_prob= and every play also returns expected_return (per $1) and is_plus_ev at that rate. Pair it with /best-line to see whether a DFS slip beats the sportsbook price on the same legs.
+Read the disclaimer field on the response: these are the standard published payouts (per-pick demon/goblin modifiers are not in the PrizePicks feed), and breakeven assumes independent legs.
+Market Hit Rates (Free)
+GET /v1/markets/hit-rates
+    ?days=28                   # 1-60, default 28
+    &bookmaker=bovada          # default bovada
+
+Per-market daily counts of graded Over outcomes over the look-back window — how often each market type actually went Over, straight off resolved props. Useful as a sanity baseline for a model, and as a calibration check on a book's lines.
+{
+  "days": 28,
+  "bookmaker": "bovada",
+  "markets": {
+    "pitcher_strikeouts": [
+      { "date": "2026-07-13", "total": 14, "won": 6 },
+      { "date": "2026-07-14", "total": 18, "won": 10 }
+    ],
+    "batter_total_bases": [ ... ]
+  }
+}
+
+total excludes voids; won is the subset where the actual stat beat the line. Counts only — no individual props — so this is free-tier.
+History Coverage per Book (Free)
+GET /v1/coverage/history?sport=baseball_mlb
+
+When each bookmaker's odds history starts in our archive, per sport. Books were added at different times, so a backtest that needs a given book should start at that book's date. Dates are event kickoff dates (UTC); props_start covers every non-game-line market (same split as /v1/freshness). Refreshed every ~6 hours. Any API key, including free.
+{
+  "sport_key": "baseball_mlb",
+  "bookmakers": [
+    { "key": "bovada", "title": "Bovada", "history_start": "2026-04-05",
+      "game_lines_start": "2026-04-05", "props_start": "2026-04-05",
+      "latest_event": "2026-09-27", "events": 2333, "retired": false },
+    { "key": "fanatics", "title": "Fanatics", "history_start": "2026-08-25",
+      "game_lines_start": "2026-08-25", "props_start": "2026-08-25",
+      "latest_event": "2026-09-29", "events": 456, "retired": false }
+  ]
+}
+
+Golf Round History (Free)
+GET /v1/golf/players/{player}/rounds?tour=pga&limit=20
+GET /v1/golf/tournaments?tour=liv&season=2026
+
+Every completed round for every golfer in the field, by tour, back to 2024. tour takes one or more of pga, dp_world, liv, lpga, korn_ferry, champions (omit for all). Rounds are newest first with strokes, score to par and hole counts (eagles, birdies, pars, bogeys, double bogeys or worse), plus last-5/10/20 averages. A round in progress is never included. Hole counts are null where the source publishes only the round score (DP World Tour, LPGA, some LIV rounds). player is a name (case and accents ignored) or the ESPN athlete id in the response. /golf/tournaments lists what we hold. Source: ESPN, updated every 6 hours. Any API key, including free.
+{
+  "player_name": "Scottie Scheffler", "player_id": "9478",
+  "tours": ["pga"],
+  "rounds": [
+    { "tour": "pga", "tournament": "Tour Championship", "round": 4,
+      "round_date": "2026-08-30", "strokes": 66, "to_par": -4, "holes": 18,
+      "eagles": 0, "birdies": 6, "pars": 10, "bogeys": 2,
+      "double_bogeys_or_worse": 0 }
+  ],
+  "summary": {
+    "last_5":  { "rounds": 5,  "avg_strokes": 67.4, "avg_to_par": -2.8, "avg_birdies": 5.2, "avg_bogeys": 1.6 },
+    "last_10": { "rounds": 10, "avg_strokes": 67.9, ... },
+    "last_20": { "rounds": 20, "avg_strokes": 68.3, ... }
+  }
+}
+
+Injury Reports (Free)
+GET /v1/sports/{sport}/injuries?team=KC&status=out,questionable
+GET /v1/sports/{sport}/injuries/history?days=7&player=mahomes
+
+The current injury report for NFL, NCAAF, NBA, WNBA, NHL, MLB and men's and women's college basketball: each listed player with status, injury, expected return and when the current status began. status_code is one of out, out_first_half, doubtful, questionable, probable, game_time_decision, day_to_day, injured_list, suspended, other. /history lists every status change we saw (up to 90 days, newest first); new_status is null when the player came off the report. Line it up with /odds/history to see how prices moved on a ruling. player_id matches the one on odds outcomes. Source: ESPN, refreshed every 10 minutes. College football and basketball also come from the conferences' official availability reports (SEC, ACC, Big Ten, Big 12, MAC, American; conference games only; football posted from three days before kickoff, basketball the night before): those rows carry source: "conference_report" and an espn_athlete_id and team abbreviation matched off the school's ESPN roster (null when no single roster player matches). Any API key, including free.
+{
+  "sport": "football_nfl", "count": 295,
+  "players": [
+    { "player_name": "Carson Beck", "player_id": "espn:4430841",
+      "espn_athlete_id": "4430841", "team": "Arizona Cardinals", "team_abbr": "ARI",
+      "position": "QB", "status": "Out", "status_code": "out",
+      "injury_type": "Coach's Decision", "body_part": "Other", "detail": null,
+      "side": null, "expected_return": "2026-10-25",
+      "status_since": "2026-10-18T19:00:12Z", "source_updated_at": "2026-10-18T18:45:00Z" }
+  ]
+}
+
+Event ID Crosswalk (Free)
+GET /v1/sports/{sport}/ids
+GET /v1/sports/football_nfl/ids
+
+Every id we hold for each event in one call: ours, ESPN's, MLB's gamePk, league team ids, ids merged into the event, and each sportsbook's own event id and event-page link. Use it to join PropLine rows to any other feed without matching team names. Events from 3 days ago to 30 days ahead. Cached 5 minutes. Any API key, including free.
+[
+  {
+    "id": "32655",
+    "commence_time": "2026-09-27T17:00:00Z",
+    "home_team": "Pittsburgh Steelers", "away_team": "Cincinnati Bengals",
+    "home_team_id": "espn.nfl:23", "away_team_id": "espn.nfl:4",
+    "espn_event_id": "401772880", "mlb_game_pk": null,
+    "merged_from_event_ids": null,
+    "books": {
+      "draftkings": { "event_id": "33168071", "link": "https://sportsbook.draftkings.com/event/33168071" },
+      "kalshi": { "event_id": "KXNFLGAME-26SEP27CINPIT", "link": "https://kalshi.com/..." },
+      "pinnacle": { "event_id": "1612345678", "link": null }
+    }
+  }
+]
+
+Sportsbook Accuracy Report (Free)
+GET /v1/books/accuracy?days=30&sport=baseball_mlb
+
+Which books price player props closest to the result. Every book's closing two-way prop price is de-vigged and scored (Brier) against the box score and against the average of the other books on the same line (3+ books required). skill_bp above zero means closer to the result than the market; verdict is beats_market / trails_market only when the 95% range excludes zero, else in_line. days 7-120 (default 30); sport optional. DFS apps excluded; exchange margins exclude trading fees. A pricing report, not a profit claim. Any API key, including free.
+{
+  "days": 30,
+  "total_props": 412330,
+  "books": [
+    { "key": "kalshi", "title": "Kalshi", "props": 43939, "brier": 0.1754,
+      "consensus_brier": 0.1758, "skill_bp": 4.0, "skill_ci95_bp": [1.7, 6.2],
+      "verdict": "beats_market", "margin_pct": 3.41 }
+  ],
+  "by_sport": { "baseball_mlb": [ ... ] },
+  "by_market": { "batter_hits": [ ... ] }
+}
+
+Data Freshness (Free, no auth)
+GET /v1/freshness
+
+Per-bookmaker staleness across every book we carry, split into game lines vs props. Poll it to decide whether a book is worth reading right now, or to alert your own system when a book you depend on goes quiet. No API key required.
+{
+  "as_of": "2026-08-09T18:22:04Z",
+  "stale_threshold_seconds": 900,
+  "bookmakers": [
+    {
+      "key": "pinnacle",
+      "market_count": 41208,
+      "latest_update": "2026-08-09T18:21:47Z",
+      "staleness_seconds": 17,
+      "is_stale": false,
+      "worst_staleness_seconds": 3820,
+      "suspended_market_count": 24,
+      "market_classes": {
+        "game_lines": { "market_count": 9140, "latest_update": "...", "staleness_seconds": 17,
+                        "active_market_count": 480, "oldest_market_update": "...",
+                        "worst_staleness_seconds": 95, "suspended_market_count": 0 },
+        "props":      { "market_count": 32068, "latest_update": "...", "staleness_seconds": 44,
+                        "active_market_count": 2210, "oldest_market_update": "...",
+                        "worst_staleness_seconds": 3820, "suspended_market_count": 24 }
+      }
+    }
+  ]
+}
+
+The split matters: a book's prop board can go dark behind perfectly fresh game lines, and a single top-level number hides that. Top-level staleness_seconds is time since the most recent write on any market for the book, so it is optimistic per-event. worst_staleness_seconds is the pessimistic twin: the age of the oldest non-suspended market on the active board (events from 6h ago to 48h out), so a single silently-stale market is visible without walking every event. Markets the book has withdrawn are excluded from it — they are flagged with suspended_at on /odds and counted here as suspended_market_count instead, because a flagged withdrawal is not a capture hole. Same data as the human-readable /freshness page.
+Available Markets
+Player-prop outcome shapes. Every player-prop outcome is one of three shapes. (1) Two-way Over/Under: name isOver/Under (or Yes/No), player indescription, line in point. (2) N+ milestone rung:name starts with a number and a plus (3+ Total Bases), player indescription, point null; a YES bet on reaching N. (3) YES-only player list: name is the player, point null; a YES bet at the threshold the key states (batter_4plus_hits = 4+) or, on a plain key, 1+ (Bovada “to record a Run” on batter_runs). Rule:point set = shape 1; else a leading N+ in name = shape 2; else shape 3. Shapes 2 and 3 have no opposite leg, and the same bet can arrive in different shapes from different books.
+DFS tennis match totals. On PrizePicks, Underdog, Sleeper, Dabble and ParlayPlay, total_games /total_sets / total_tiebreaks name a player but settle on the whole match figure. Each player's row is a separate pick on the same number, so the two rows can carry different lines and prices. Sportsbooks quote these keys once, with an empty description.
+DFS prices are not bettable singles. Dabble's two sides are its own zero-margin per-pick prices (they sum to ~100% implied, e.g. Over -120 / Under +120); they set that pick's share of an entry payout and show Dabble's lean, not the market's. Sleeper's price is its per-pick multiplier; PrizePicks is shown at +100 both sides. DFS pick'em books are excluded from /ev and /best-line.
+Market KeyDescriptionSport
+h2hMoneylineAll
+spreadsPoint Spread / Run LineAll
+totalsOver/Under (Game Total)All
+pitcher_strikeoutsPitcher Total StrikeoutsMLB
+pitcher_earned_runsPitcher Earned Runs AllowedMLB
+pitcher_hits_allowedPitcher Hits AllowedMLB
+pitcher_walksPitcher Walks AllowedMLB
+batter_hitsBatter Total Hits (Over/Under)MLB
+batter_home_runsBatter Home Runs — anytime HR YES; N+ milestone rungs ("1+ Home Runs", "2+ Home Runs") from DraftKings / Kalshi / Fanatics ride this same key with the rung in the outcome name and no pointMLB
+batter_rbisBatter RBIs (Over/Under)MLB
+batter_total_basesBatter Total BasesMLB
+batter_stolen_basesBatter Stolen BasesMLB
+batter_walksBatter WalksMLB
+batter_singlesBatter SinglesMLB
+batter_doublesBatter DoublesMLB
+batter_runsBatter Runs ScoredMLB
+pitcher_outsPitcher Outs (Innings Proxy)MLB
+batter_1plus_hitsPlayer to Record 1+ HitsMLB
+batter_2plus_hitsPlayer to Record 2+ HitsMLB
+batter_3plus_hitsPlayer to Record 3+ HitsMLB
+batter_4plus_hitsPlayer to Record 4+ HitsMLB
+batter_2plus_home_runsPlayer to Hit 2+ Home RunsMLB
+batter_1plus_rbisPlayer to Record 1+ RBIsMLB
+batter_2plus_rbisPlayer to Record 2+ RBIsMLB
+batter_3plus_rbisPlayer to Record 3+ RBIsMLB
+player_pointsPlayer Total PointsNBA
+player_reboundsPlayer ReboundsNBA
+player_assistsPlayer AssistsNBA
+player_threesPlayer Three-Pointers MadeNBA
+player_stealsPlayer StealsNBA
+player_blocksPlayer BlocksNBA
+player_blocks_stealsPlayer Steals + BlocksNBA / WNBA
+player_turnoversPlayer TurnoversNBA
+player_points_rebounds_assistsPoints + Rebounds + AssistsNBA
+player_double_doublePlayer Double-DoubleNBA
+player_first_basketFirst Basket (first points, free throws count)NBA / WNBA
+player_first_field_goalFirst Field Goal Scorer (free throws excluded)NBA / WNBA
+team_first_basketTeam to Score First (free throws count)NBA / WNBA
+team_first_field_goalTeam to Score the First Field GoalNBA / WNBA
+team_first_basket_scorerEach Team's First Basket Scorer (free throws count; one market per team)NBA / WNBA
+team_first_field_goal_scorerEach Team's First Field Goal Scorer (free throws excluded; one market per team)NBA / WNBA
+player_goalsPlayer GoalsNHL
+player_shots_on_goalPlayer Shots on GoalNHL
+goalie_savesGoalie SavesNHL
+player_blocked_shotsPlayer Blocked ShotsNHL
+player_pass_ydsPassing YardsNFL / NCAAF
+player_pass_tdsPassing TouchdownsNFL / NCAAF
+player_pass_interceptionsInterceptions ThrownNFL / NCAAF
+player_pass_completionsPass CompletionsNFL / NCAAF
+player_pass_attemptsPass AttemptsNFL / NCAAF
+player_longest_completionLongest CompletionNFL / NCAAF
+player_rush_ydsRushing YardsNFL / NCAAF
+player_rush_tdsRushing TouchdownsNFL / NCAAF
+player_rush_attemptsRush AttemptsNFL / NCAAF
+player_rush_longestLongest RushNFL / NCAAF
+player_reception_ydsReceiving YardsNFL / NCAAF
+player_receptionsReceptionsNFL / NCAAF
+player_reception_tdsReceiving TouchdownsNFL / NCAAF
+player_reception_longestLongest ReceptionNFL / NCAAF
+player_pass_rush_ydsPassing + Rushing Yards (combo)NFL / NCAAF
+player_rush_reception_ydsRushing + Receiving Yards (combo)NFL / NCAAF
+player_anytime_tdAnytime Touchdown ScorerNFL / NCAAF
+player_1st_tdFirst Touchdown ScorerNFL / NCAAF
+player_2plus_tdPlayer to Score 2+ TouchdownsNFL / NCAAF
+player_3plus_tdPlayer to Score 3+ TouchdownsNFL / NCAAF
+player_sacksDefensive Sacks MadeNFL / NCAAF
+player_field_goals_madeField Goals MadeNFL / NCAAF
+player_extra_points_madeExtra Points MadeNFL / NCAAF
+player_kicking_pointsKicking PointsNFL / NCAAF
+player_fumbles_lostFumbles LostNFL / NCAAF
+player_solo_tacklesSolo TacklesNFL
+player_tackles_assistsTackles + Assists (combined)NFL
+player_assistsAssisted TacklesNFL
+player_defensive_interceptionsInterceptions Caught (defence)NFL
+player_last_tdLast Touchdown ScorerNFL
+anytime_goal_scorerAnytime Goal ScorerSoccer
+first_goal_scorerFirst Goal ScorerSoccer
+both_teams_to_scoreBoth Teams to ScoreSoccer
+double_chanceDouble ChanceSoccer
+draw_no_betDraw No BetSoccer
+european_handicapEuropean Handicap (3-way: Home / Draw / Away at a whole-goal line; point = the home line on every leg)Soccer
+corners_european_handicapCorners European Handicap (3-way on corners; point = the home line on every leg)Soccer
+correct_scoreCorrect ScoreSoccer
+first_team_to_scoreFirst Team to Score (team / team / "No Goals")Soccer
+result_total_goalsResult & Total Goals combo ("Leeds & Over 2.5", "Draw & Under 2.5"; one market per line)Soccer
+double_chance_total_goalsDouble Chance & Total Goals combo ("Leeds/Draw & Over 1.5")Soccer
+result_bttsResult & Both Teams to Score ("Leeds & Yes")Soccer
+double_chance_bttsDouble Chance & Both Teams to Score ("Leeds/Draw & Yes")Soccer
+btts_total_goalsBoth Teams to Score & Total Goals ("Yes & Over 2.5")Soccer
+total_cornersTotal Corners (O/U)Soccer
+corners_spreadCorners Handicap (team spread on corner count)Soccer
+team_cornersTeam Corners O/U (per-team corner total)Soccer
+total_cardsTotal CardsSoccer
+team_cardsTeam Cards O/U (per-team card total)Soccer
+2plus_goalsPlayer to Score 2+ GoalsSoccer
+player_assistsPlayer to Assist a GoalSoccer
+player_2plus_assistsPlayer to Assist 2+ GoalsSoccer
+player_cardsPlayer to Be Shown a CardSoccer
+goal_or_assistPlayer to Score or AssistSoccer
+player_specialsPlayer Specials: player + team combo bets; the leg text is the outcome name, the player is the description (odds only, not graded)Soccer
+player_tacklesPlayer Tackles ladder ("2+ Tackles"; odds only, not graded)Soccer
+overtimeWill the Game Go to OvertimeWNBA / NFL
+winning_marginWinning Margin (bucketed, e.g. "Detroit Lions by 7-14 points"; buckets vary by book)NFL / NCAAF
+half_time_full_timeHalf Time / Full Time (e.g. "Buffalo Bills - Detroit Lions", "Draw - Draw")NFL / NCAAF / Soccer
+total_roundsTotal RoundsUFC / Boxing
+fight_distanceFight Goes the DistanceUFC / Boxing
+round_bettingRound BettingUFC
+fight_winnerFight WinnerBoxing
+fight_outcomeFight Outcome (KO/TKO/Decision)Boxing
+
+Alt lines included: Player prop markets include alternate lines automatically. Query pitcher_strikeouts to get both the primary Over/Under line and alt lines (3+, 5+, 6+ strikeouts etc.) in a single response. Alt spreads, alt totals, and team totals are also included.
+Read the market team field to tell them apart: a team total rides the same totals key as the game total, so a single book can return three totals markets on one soccer match — e.g. "Total" at 2.5 plus "Team Total - Independiente del Valle" at 1.5 and "Team Total - Deportes Tolima" at 0.5. Every book words that string differently, which is why team exists: it carries the canonical event team name (matching home_team / away_team exactly) and is null on the game total, so you never have to parse a book's wording. It is on /odds, /odds/history, /odds/closing and /movement, and is always null outside totals. Alt lines each get their own market row, with the line in the description — Bovada writes "Total Goals O/U (line 3.5)" and "Spread (Fulham -0.5)", Pinnacle "Total 3.25". Within one row, every outcome always shares one line.
+
+Error Codes
+StatusDescription
+401Missing or invalid API key
+403Endpoint requires a paid tier
+404Sport or event not found. On an event id that previously worked, this usually means the event was merged into a canonical duplicate — re-fetch from /events and use the current id. See Event IDs can change.
+429Daily quota exceeded, or per-key burst limit hit
+500Internal server error
+
+Structured error bodies
+Gated and throttled responses return detail as a JSON object with a stable error code your code (or your AI agent) can branch on, plus the URL that unlocks the feature — missing_api_key, invalid_api_key, upgrade_required (with required_tier + upgrade_url), burst_limit_exceeded (with retry_after_seconds), and daily_limit_exceeded (with a pre-filled one-click upgrade URL).
+{
+  "detail": {
+    "error": "upgrade_required",
+    "message": "Prop resolution is a paid feature — start at $9/mo Hobby. Upgrade at https://prop-line.com/pricing",
+    "required_tier": "hobby",
+    "upgrade_url": "https://prop-line.com/pricing",
+    "docs_url": "https://prop-line.com/docs"
+  }
+}
+
+The X-Daily-Limit / X-Daily-Used / X-Daily-Remaining / X-Daily-Reset headers from the Authentication section appear on every authenticated response, so you can see the cap coming; daily-cap 429s additionally carry Retry-After (reset is unix seconds at the top of the next UTC day) — back off until the reset instead of retrying. Free-tier calls to paid analytical endpoints don't 403 at all: they return 200 with the structure intact, values redacted, and an upgrade_url in the body.
+
+Per-market reference pages
+All markets, every sport →
+One page per market: the live line across every book, the request that returns it, and recent outcomes graded against the official box score. Ranked by settled volume; generated from the data.
+NBA totals odds odds API · 138,334 graded
+NBA player points prop odds API · 113,559 graded
+NBA point spread odds odds API · 90,536 graded
+NBA player rebounds prop odds API · 73,991 graded
+NCAAF totals odds odds API · 62,531 graded
+NCAAF point spread odds odds API · 50,396 graded
+NHL shots on goal prop odds API · 49,754 graded
+Tennis totals odds odds API · 47,448 graded
+NHL player goals prop odds API · 46,828 graded
+NCAAF first touchdown scorer odds odds API · 46,042 graded
+NHL goal totals odds odds API · 36,441 graded
+NHL player points prop odds API · 34,746 graded
+Tennis point spread odds odds API · 34,743 graded
+UEFA Champions League goal totals odds odds API · 27,074 graded
+UEFA Europa League goal totals odds odds API · 24,419 graded
+NCAAF receiving yards prop odds API · 23,274 graded
+UEFA Conference League goal totals odds odds API · 23,210 graded
+J1 League goal totals odds odds API · 14,626 graded
+
+PL
+PropLine
+DocumentationDevelopersRecipesAPI Reference+EV playsWebhook APIDiscord webhooksProp resolutionPricing comparisonMarkets A–ZOdds API by sportsbookFor AI agentsWorld Cup odds APITennis odds APIPlayer trendsSharp odds APIClosing odds (CLV)Book accuracyGoogle SheetsExchanges vs booksExchange APIHistorical BackfillSwitch from the-odds-apivs the-odds-apiDraftKings APIAboutContactSupportStatusFreshnessAPI versioningTermsPrivacy
+PropLine Reviews
+© 2026 PropLine. All rights reserved.
+

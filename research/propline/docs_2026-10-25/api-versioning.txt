@@ -1,0 +1,43 @@
+API versioning and deprecation policy — PropLine
+PL
+PropLineDocs+EVResultsFreshnessStatusPricingDashboardGet API Key
+
+Versioning & deprecation policy
+Current version: v1. In force since April 2026. No endpoint has been deprecated to date.
+How the API is versioned
+The version is the first path segment, and it is required on every call:
+https://api.prop-line.com/v1/sports/baseball_mlb/odds
+There is no version header, no date-pinning scheme and no implicit "latest". A URL you write today keeps meaning the same thing.
+
+What can change inside v1
+These land continuously and are not breaking. A client must tolerate them:
+New fields on an existing response object.
+New bookmakers inside the bookmakers array, new market keys, new sports, and new sport-key aliases.
+New optional query parameters and new endpoints.
+New values in an open-ended enum-like field (a new bookmaker_key, a new market key).
+Practical rule: ignore unknown fields, and do not assert that an array contains an exact set of books. A parser that rejects unexpected keys will break on a routine coverage addition — that is the change we ship most often.
+
+What counts as breaking
+Removing or renaming a field, endpoint or query parameter; changing a field's type or units; changing the meaning of an existing market key; or changing default behaviour in a way an existing caller would notice. Breaking changes ship as a new version path (/v2/) — never inside /v1/.
+One field is deliberately excluded from that guarantee and is documented as such: home_team and away_team are display names, not identifiers. They are corrected over time and change when two rows merge. Key on id.
+
+Deprecation notice period
+When a version or endpoint is deprecated, it keeps serving for at least 12 months from the announcement. During that window:
+Every response from the affected endpoint carries RFC 8594 headers — Deprecation with the date it was declared, Sunset with the date it stops serving, and a Link header with rel="deprecation" pointing at the migration notes.
+Every account that has called the endpoint in the previous 30 days is emailed at announcement, and again 30 days before the sunset date.
+The replacement ships and is documented before the clock starts, so there is never a window with no supported path.
+Deprecation: Wed, 01 Jul 2026 00:00:00 GMT
+Sunset: Thu, 01 Jul 2027 00:00:00 GMT
+Link: <https://prop-line.com/api-versioning>; rel="deprecation"
+An automated client can watch for those two headers and alert without polling this page. Nothing currently sets them.
+
+If something breaks anyway
+Report it to support@prop-line.com with the request URL and roughly when you saw it. An unannounced breaking change inside /v1 is a bug on our side and gets rolled back or fixed, not defended.
+Live status is at /status; per-book data freshness at /freshness.
+
+PL
+PropLine
+DocumentationDevelopersRecipesAPI Reference+EV playsWebhook APIDiscord webhooksProp resolutionPricing comparisonMarkets A–ZOdds API by sportsbookFor AI agentsWorld Cup odds APITennis odds APIPlayer trendsSharp odds APIClosing odds (CLV)Book accuracyGoogle SheetsExchanges vs booksExchange APIHistorical BackfillSwitch from the-odds-apivs the-odds-apiDraftKings APIAboutContactSupportStatusFreshnessAPI versioningTermsPrivacy
+PropLine Reviews
+© 2026 PropLine. All rights reserved.
+
