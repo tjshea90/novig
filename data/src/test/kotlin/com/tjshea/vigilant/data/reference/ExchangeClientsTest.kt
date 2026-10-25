@@ -153,6 +153,11 @@ class ExchangeClientsTest {
         // V2 markets name their outcomes by positionIds (an array).
         val v2 = PolymarketClient.parseMarkets("""[{"id":"9","outcomes":"[\"A\", \"B\"]","positionIds":["p1","p2"]}]""", json).single()
         assertEquals("p1", PolymarketClient.firstToken(v2, json))
+        // FR1 (2026-10-25 docs): the id field is chosen by `version`, even when both are present.
+        val both = PolymarketClient.parseMarkets("""[{"id":"9","outcomes":"[\"A\", \"B\"]","version":"v2","clobTokenIds":"[\"c1\",\"c2\"]","positionIds":["p1","p2"]}]""", json).single()
+        assertEquals("p1", PolymarketClient.firstToken(both, json))
+        val v1 = PolymarketClient.parseMarkets("""[{"id":"9","outcomes":"[\"A\", \"B\"]","version":"v1","clobTokenIds":"[\"c1\",\"c2\"]","positionIds":["p1","p2"]}]""", json).single()
+        assertEquals("c1", PolymarketClient.firstToken(v1, json))
     }
 
     @Test
