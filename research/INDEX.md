@@ -4,10 +4,11 @@ Every study in `research/`, newest first, and how it is USED. Tuning levers and 
 Statuses: APPLIED (a change in `research/review/CHANGES.md` cites it), LEVER (on LEVERS.md), CLOSED (verdict and disposition on LEVERS.md), WATCH (an open TASKS.md item waits on its number),
 CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a sample, marked in its first lines), IDLE (cited nowhere: act on it or mark it).
 
-127 entries; 6 idle: api_audit_report_2026-10-22.html, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md
+128 entries; 6 idle: api_audit_report_2026-10-22.html, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
+| 2026-10-25 | `PROPLINE_STREAMING_2026-10-25.md` | PropLine Streaming Lite: what it gives and how Vigilant uses it (Tj, 2026-10-25, PSL) - Tj upgraded the PropLine key on GitHub (`PROPLINE_API_KEY`) to **Streaming Lite** ($39/mo). Docs saved verbatim | CODE |
 | 2026-10-24 | `trends_2026-10-24/` | (no title) | CLOSED |
 | 2026-10-24 | `trends_2026-10-24.md` | Stats and trends beyond CLV/EV: do they find profitable bets? (TR, 2026-10-24) - Tj: "Can we get any valuable information from the historical data ... besides clv and EV? Maybe make a system that finds profitable bets based on ... | CLOSED |
 | 2026-10-24 | `star_rating_sx_2026-10-24.md` | SX: the star system built on all the history (2026-10-24, in progress: findings are added as they come) - Tj, verbatim (TASKS.md SX): "Build a star rating system based on solid data from all the sources including apis historica... | APPLIED LEVER CODE |
