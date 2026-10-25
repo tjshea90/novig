@@ -728,19 +728,32 @@ class CloudLink(private val c: AppContainer) {
     suspend fun adoptClaudeConfig(): Boolean = pushMutex.withLock {
         if (!hasToken()) return@withLock false
         val remote = client.readFile(CloudClient.CONFIG_BRANCH, "settings.json")?.let { CloudConfig.parse(it) } ?: return@withLock false
-        // A request a Claude session made on GitHub (a new runner, an API check) is kept in this phone's next write, never written back over with an older time (2026-10-25: a reset was erased 26 s later).
-        if (remote.resetAtMs > resetRequestedAt) resetRequestedAt = remote.resetAtMs
-        if (remote.checkApisAtMs > checkApisAt) checkApisAt = remote.checkApisAtMs
         val local = c.settingsStore.flow.value ?: return@withLock false
-        val next = CloudClaudeConfig.adopt(remote, local) ?: return@withLock false
-        runCatching { c.settingsStore.update { next } }.onFailure { return@withLock false }
-        c.eventLog.info("CLOUD", "settings changed from GitHub by ${remote.device}")
+        if (takeClaude(remote, local) == null) return@withLock false
         lastPushedKey = null
         true
     }
 
-    private suspend fun pushLocked(s: ScanSettings, force: Boolean) {
+    /** The settings this phone last pushed: the base of [CloudClaudeConfig.merge], so a session's change and the phone's own since then are both kept (PX10e). */
+    private val pushedBase = File(c.app.filesDir, "cloud_pushed_settings.json")
+    private fun loadBase(): ScanSettings? = runCatching { c.json.decodeFromString(ScanSettings.serializer(), pushedBase.readText()) }.getOrNull()
+
+    /** A Claude write [remote] merged into [local] and stored (its reset and API-check requests kept); the merged settings, or null when [remote] is not a Claude write or changes nothing. */
+    private suspend fun takeClaude(remote: CloudConfig, local: ScanSettings): ScanSettings? {
+        // A request a Claude session made on GitHub (a new runner, an API check) is kept in this phone's next write, never written back over with an older time (2026-10-25: a reset was erased 26 s later).
+        if (remote.resetAtMs > resetRequestedAt) resetRequestedAt = remote.resetAtMs
+        if (remote.checkApisAtMs > checkApisAt) checkApisAt = remote.checkApisAtMs
+        val next = CloudClaudeConfig.merge(loadBase(), remote, local, c.json) ?: return null
+        runCatching { c.settingsStore.update { next } }.onFailure { return null }
+        c.eventLog.info("CLOUD", "settings changed from GitHub by ${remote.device}")
+        return next
+    }
+
+    private suspend fun pushLocked(given: ScanSettings, force: Boolean) {
         if (!hasToken()) return
+        // A session's change on GitHub this phone has not adopted yet is merged in first, so this push never writes it back over (PX10e, 2026-10-25: a pull to refresh two minutes after a session
+        // switched Pinnodds off pushed the phone's whole settings with it still on).
+        val s = client.readFile(CloudClient.CONFIG_BRANCH, "settings.json")?.let { CloudConfig.parse(it) }?.let { remote -> takeClaude(remote, given) } ?: given
         val wanted = s.cloudDrives
         if (lastWanted == null) lastWanted = runCatching { wantedFile.readText() == "1" }.getOrNull()
         if (lastWanted == true && !wanted) runCatching { offPending.writeText("1") }
@@ -754,6 +767,7 @@ class CloudLink(private val c: AppContainer) {
         loadManual()
         val why = client.writeConfig(CloudConfig(rev = rev, on = wanted, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt, manualRunUntilMs = manualRunUntil, manualStopUntilMs = manualStopUntil, resetAtMs = resetRequestedAt, propLineRefreshAtMs = propLineRequestedAt, retryApi = retryApiId, retryApiAtMs = retryApiAt, checkApisAtMs = checkApisAt, bidRequests = bidRequests.filter { System.currentTimeMillis() - it.atMs < 10 * 60_000L }))
         if (why == null) {
+            runCatching { pushedBase.writeText(c.json.encodeToString(ScanSettings.serializer(), s)) }
             if (wanted) runCatching { sendKeys(auto = true) }
             lastPushedKey = key; lastRev = rev
             if (!wanted) runCatching { offPending.delete() }
