@@ -307,7 +307,8 @@ object Pricing {
                 val used = f?.perBook?.map { it.book }?.toSet().orEmpty()
                 prices.groupBy { it.source }.forEach { (src, l) -> QuoteCensus.add("devigLeftOut", src, l.count { it !in used }); QuoteCensus.add("priced", src, l.count { it in used }) }
                 // Books [com.tjshea.vigilant.engine.BadOdds] dropped as outliers or inverted, by sharp book or soft (PX9: with dozens of soft books the median is theirs, and a sharp book that moves first on news looks like an outlier).
-                f?.excluded?.forEach { b -> QuoteCensus.add("badOdds", if (b.bookKey in fairSettings.sharpBooks) "SHARP ${b.bookKey}" else "soft") }
+                // PX11d (Tj 2026-10-25: "Do an audit to see if any book consistently posts outlier odds"): which book, so a day of logs names a book that is out of line again and again.
+                f?.excluded?.forEach { b -> QuoteCensus.add("badOdds", if (b.bookKey in fairSettings.sharpBooks) "SHARP ${b.bookKey}" else "soft"); QuoteCensus.add("badOddsBook", b.bookKey) }
             }
         }
 
