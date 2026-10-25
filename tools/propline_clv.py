@@ -71,6 +71,7 @@ class Archive:
         self.pinn = defaultdict(dict)         # group key -> {outcome_name: closing price}
         self.novig = {}                       # group key + (outcome_name,) -> row summary
         self.by_sport = defaultdict(list)     # sport -> [event_id]
+        self._nov_by = None                   # (event_id, market) -> [(novig key, row)], built on first use
 
     @staticmethod
     def gkey(r):
@@ -115,6 +116,8 @@ class Archive:
             if market == "totals" and bool(k[3]) != bool(team):
                 continue
             cp = num(k[5])
+            if cp is None and v.get("line") is not None:
+                cp = abs(v["line"]) if market == "spreads" else v["line"]
             if want is not None and (cp is None or abs(cp - want) > 1e-9):
                 continue
             if k[6].lower() == outcome.lower() or same_team(k[6], outcome):
