@@ -24,7 +24,7 @@ object QuoteCensus {
         counts.clear()
         if (snap.isEmpty()) return "quote census: nothing counted"
         return "quote census: " + snap.entries.groupBy({ it.key.substringBefore('|') }, { it.key.substringAfter('|') to it.value }).entries.sortedBy { ORDER.indexOf(it.key).let { i -> if (i < 0) 99 else i } }
-            .joinToString(" · ") { (stage, v) -> "$stage " + v.sortedByDescending { it.second }.joinToString(",") { "${it.first} ${it.second}" } }
+            .joinToString(" · ") { (stage, v) -> "$stage " + v.sortedByDescending { it.second }.take(14).joinToString(",") { "${it.first} ${it.second}" } }
     }
 
     private val ORDER = listOf("sent", "tooOld", "atLine", "staleBesideFresh", "devigLeftOut", "priced")
