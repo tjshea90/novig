@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "e7e91dfcb73c17e4a6aa3f18c381b51c38c4dca9",
+ "head": "945ee7e29f13e9dc8aca52b97279081e7668cb94",
  "since": 1792964177,
- "beat": 1792964437,
- "beatIso": "2026-10-25T21:40:37Z",
- "done": "",
- "next": ""
+ "beat": 1792964473,
+ "beatIso": "2026-10-25T21:41:13Z",
+ "done": "PX10 written into TASKS.md (Tj's 4-part API migration request)",
+ "next": "PX10a Pinnodds free log + socket off; PX10c PinnWire secret delete + switch off; PX10d probe ParlayAPI/PropLine plans and streams"
 }
