@@ -332,6 +332,7 @@ fun FairOddsTable(o: Opportunity) {
                 )
             }
             val idx = o.referenceIndex
+            val now = androidx.compose.runtime.remember(o) { System.currentTimeMillis() }
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                 Text("Book", Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("This side", Modifier.width(60.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -344,14 +345,19 @@ fun FairOddsTable(o: Opportunity) {
                 val used = b.book.bookTitle in fair.booksUsed
                 val color = if (used) Color.Unspecified else MaterialTheme.colorScheme.onSurfaceVariant
                 Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        b.book.bookTitle + if (b.isSharp) "  ★" else "",
-                        Modifier.weight(1f),
-                        color = color,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            b.book.bookTitle + if (b.isSharp) "  ★" else "",
+                            color = color,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        // How old this book's quote is and which feed sent it (PB20, Tj 2026-10-25): green fresh, yellow medium, red stale; a quote past the stale limit is never in this table.
+                        QuoteAge.label(b.book, now)?.let { (text, level) ->
+                            Text(text, color = QuoteAge.color(level), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        }
+                    }
                     // Both sides of the bet, as CNO's book table shows them (Tj, 2026-10-11): this bet's odds, then the other side's.
                     Text(
                         BookSides.thisSide(b.book.decimalOdds, idx) ?: "—",
@@ -380,10 +386,47 @@ fun FairOddsTable(o: Opportunity) {
                 }
             }
             Text(
-                "★ sharp book (in the table) · one book a company · greyed rows weren't used for this line's fair price · amber rows looked wrong next to the rest of the market",
+                "★ sharp book (in the table) · one book a company · under each book: its quote's age and the feed that sent it (green under 1 min, yellow under 3, red older; over the stale limit a quote is left out of the fair odds) · greyed rows weren't used for this line's fair price · amber rows looked wrong next to the rest of the market",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
             )
+    }
+}
+
+/** The bet sheet's age column (PB20): how old one book's quote is, by its feed's own stamp (ParlayAPI's and PropLine's freshness words are laid into that stamp), and who sent it. */
+object QuoteAge {
+    enum class Level { FRESH, MEDIUM, STALE }
+
+    const val FRESH_MS = 60_000L
+    const val MEDIUM_MS = 3 * 60_000L
+
+    fun level(ageMs: Long): Level = when { ageMs <= FRESH_MS -> Level.FRESH; ageMs <= MEDIUM_MS -> Level.MEDIUM; else -> Level.STALE }
+
+    /** "4s · PropLine", or null when the quote has no stamp and no feed. */
+    fun label(b: com.tjshea.vigilant.engine.BookPrices, now: Long): Pair<String, Level>? {
+        val feed = b.source?.let(::feedName)
+        val at = b.lastUpdateMs ?: return feed?.let { it to Level.MEDIUM }
+        val age = (now - at).coerceAtLeast(0L)
+        return (Format.ageShort(age) + (feed?.let { " · $it" } ?: "")) to level(age)
+    }
+
+    @Composable
+    fun color(l: Level): Color = when (l) { Level.FRESH -> Edge.colors.positive; Level.MEDIUM -> Edge.colors.warning; Level.STALE -> MaterialTheme.colorScheme.error }
+
+    /** A source id in words (the ids the scanner gives each feed). */
+    fun feedName(id: String): String = when {
+        id.startsWith("parlay") -> "ParlayAPI"
+        id.startsWith("propline") -> "PropLine"
+        id.startsWith("sgo") -> "SportsGameOdds"
+        id.startsWith("oddspapi") -> "OddsPapi"
+        id.startsWith("oddsapi") -> "The Odds API"
+        id.startsWith("sharpapi") -> "SharpAPI"
+        id.startsWith("pinn") || id == "pinnacle" -> "Pinnacle"
+        id.startsWith("bolt") -> "BoltOdds"
+        id.startsWith("kalshi") -> "Kalshi"
+        id.startsWith("poly") -> "Polymarket"
+        id.startsWith("sx") -> "SX Bet"
+        else -> id
     }
 }
