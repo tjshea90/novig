@@ -121,6 +121,8 @@ fun main(args: Array<String>) = runBlocking {
             null -> {}
         }
     }
+    // The settings of the scan in progress, for the PropLine +EV sweep below (it follows the phone's leagues).
+    val latestSettings = java.util.concurrent.atomic.AtomicReference<com.tjshea.vigilant.data.scanner.ScanSettings?>(null)
     // ParlayAPI's plan per key, read now and hourly (free): an upgraded key is found and used before the free ones.
     scope.launch {
         while (isActive) {
@@ -140,8 +142,6 @@ fun main(args: Array<String>) = runBlocking {
             delay(60 * 60_000L)
         }
     }
-    // The settings of the scan in progress, for the PropLine +EV sweep below (it follows the phone's leagues).
-    val latestSettings = java.util.concurrent.atomic.AtomicReference<com.tjshea.vigilant.data.scanner.ScanSettings?>(null)
     // Every line the last finished scan priced (not only the listed ones): the PropLine +EV rows are matched to them so the phone can open the Bet sheet on the same Novig bet.
     val latestPriced = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.scanner.Opportunity>>(emptyList())
     // Novig markets Vigilant had no fair odds for (a ladder, no quote): PropLine's +EV rows on them get a Bet button priced from PropLine's own fair (TCL88).
