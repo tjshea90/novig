@@ -30,7 +30,7 @@ class LevelSlidersTest {
         for (l in levels) {
             val n = BidSlider.apply(s, l)
             assertTrue(n.makerMargin >= BidSlider.MIN_MARGIN - 1e-12)
-            assertTrue(n.makerMinBooks >= 2 && n.makerSharpVeto && n.makerAnchorSharp && n.makerGuard)
+            assertTrue(n.makerMinBooks >= BidSlider.MIN_AGREEING && n.makerSharpVeto && n.makerAnchorSharp && n.makerGuard)
             assertTrue(n.trapBidHours >= 12)
             assertTrue(n.scanWindowHours >= n.trapBidHours && n.bookPropWindowHours >= n.trapBidHours)
         }

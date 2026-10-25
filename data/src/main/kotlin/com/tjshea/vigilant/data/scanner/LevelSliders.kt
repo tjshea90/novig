@@ -63,7 +63,9 @@ object BidSlider {
     fun horizonHours(level: Int): Int = Levels.curve(level, listOf(1 to 12.0, 50 to 18.0, 100 to HORIZON_MAX_HOURS.toDouble())).roundToInt()
     const val HORIZON_MAX_HOURS = 24
 
-    fun minBooks(level: Int): Int = when { level <= 15 -> 5; level <= 35 -> 4; level <= 60 -> 3; else -> 2 }
+    /** Never under [MIN_AGREEING] (PX11c, Tj 2026-10-25: "All bids should be based on at least 3 agreeing books with relatively fresh odds that the bid is positive ev, preferably with more books agreeing"). */
+    const val MIN_AGREEING = 3
+    fun minBooks(level: Int): Int = when { level <= 15 -> 5; level <= 35 -> 4; else -> MIN_AGREEING }
     /** Never unlimited and never past [LONGEST_ODDS] (RESEARCH.md §8.1, §16.2, §69: buys under 20¢ lose to the favorite-longshot bias and a longshot's fair is the least reliable; the bids' own +140 was Tj's rule, 2026-10-05). */
     const val LONGEST_ODDS = 200
     fun maxOdds(level: Int): Int = when { level <= 20 -> 120; level <= 45 -> 140; level <= 60 -> 150; level <= 80 -> 175; else -> LONGEST_ODDS }
