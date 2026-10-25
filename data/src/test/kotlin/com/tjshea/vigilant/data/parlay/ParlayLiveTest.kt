@@ -109,4 +109,31 @@ class ParlayLiveTest {
         l.disconnected("basketball_nba"); l.connected("basketball_nba", old + 1)
         assertSame(e, l.overlayEvent(e, now))
     }
+
+    private fun row(extra: String) = json.parseToJsonElement(
+        """{"bookmaker":"bovada","home_team":"Utah Jazz","away_team":"Los Angeles Lakers","sport_key":"basketball_nba","last_update":1792916303232,"kind":"game","market_key":"totals","line":238.0,"over_price":-110,"under_price":-110$extra}""",
+    ) as JsonObject
+
+    /** PX8: a row of a part of the game is never held under the full game's key (its 1st-half total at 119.5 would overwrite the game's 238), and a game total some books send as a "prop" is read. */
+    @Test
+    fun `rows of a part of the game are left out, and a game total sent as a prop with the matchup as its player is read`() {
+        val l = ParlayLive { now }
+        l.onRow("basketball_nba", row(""", "period_key": "1H" """), now)
+        l.onRow("basketball_nba", row(""", "period_key": 1 """), now)
+        l.onRow("basketball_nba", row(""", "pinnacle": {"market": {"period": 3}} """), now)
+        l.onRow("basketball_nba", row(""", "period_key": "Q2" """), now)
+        assertEquals(0, l.size())
+        assertEquals(4L, l.unread)
+        l.onRow("basketball_nba", row(""", "period_key": 0 """), now)
+        assertEquals(2, l.size())
+        // Bovada's and Fliff's game totals: kind "prop", the matchup as the "player".
+        val b = ParlayLive { now }
+        b.onRow("basketball_nba", row(""", "kind": "prop", "player": "Los Angeles Lakers @ Utah Jazz" """), now)
+        assertEquals(2, b.size())
+        // A real player's total (kind prop, a person) is a prop and is not mistaken for the game.
+        val c = ParlayLive { now }
+        c.onRow("basketball_nba", row(""", "kind": "prop", "player": "LeBron James", "market_key": "player_points" """), now)
+        assertEquals(2, c.size())
+        assertTrue(c.describe(now).contains("sides held"))
+    }
 }
