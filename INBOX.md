@@ -1180,3 +1180,8 @@ If possible, for every single scanned bet inside the scanner, when I press on th
 ```
 Also figure out how to best use both parlayapi and propline simultaneously. Since both have sockets, maybe use them to check each other's odds accuracy and fill in gaps in sports book coverage. Come up with the best way to use both apis in tandem for maximum speed and accuracy while using the full benefit and features of both paid plans.
 ```
+
+## 2026-10-25T09:06:03Z
+```
+Why are the odds 7-10 minutes old if they are streaming?
+```
