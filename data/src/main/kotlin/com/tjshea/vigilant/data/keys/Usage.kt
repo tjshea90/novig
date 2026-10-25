@@ -108,7 +108,7 @@ data class QuotaPolicy(
         )
         val PROPLINE = QuotaPolicy(
             "propline", "PropLine", "requests", keyed = true, period = QuotaPeriod.DAY_UTC, defaultLimit = 1000, paidFirstAbove = 1000,
-            rule = "Free 1,000 requests a day per key (burst 10, 5 a second); Hobby 5,000; Pro 25,000 (burst 50, 20 a second); reset at midnight UTC; the plan is each key's own X-Daily-Limit and a paid key goes first. 1 per league per scan for game lines, 1 per game for props; /ev, /odds/closing, /results and the exports are paid features.",
+            rule = "Free 1,000 requests a day per key (burst 10, 5 a second); Hobby 5,000; Pro 25,000 (burst 50, 20 a second); Streaming Lite 250,000 (burst 100, 35 a second, 2 WebSockets whose pushes are not metered); reset at midnight UTC; the plan is each key's own X-Daily-Limit and a paid key goes first. 1 per league per scan for game lines, 1 per game for props; /ev, /odds/closing, /results and the exports are paid features.",
         )
         val PARLAY = QuotaPolicy(
             "parlay", "ParlayAPI", "credits", keyed = true, period = QuotaPeriod.MONTH_UTC, defaultLimit = 1000,
