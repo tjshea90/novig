@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-3cb0aa53-b2tjli",
- "head": "c232681115eb27a8ac2dc655aa1cb2536c0830e4",
+ "head": "44717fce06c61acc30353746467011eb0072c219",
  "since": 1792970423,
- "beat": 1792970670,
- "beatIso": "2026-10-25T23:24:30Z",
- "done": "",
- "next": ""
+ "beat": 1792970752,
+ "beatIso": "2026-10-25T23:25:52Z",
+ "done": "PX11f: gameprobe lists ParlayAPI's events of one game (hypothesis: ParlayAPI splits a game into 2 events by team spelling; matcher takes 1 per feed)",
+ "next": "dispatch parlay.yml gameprobe Oregon/Northwestern; if split confirmed, fix Planner.matchOne to attach a feed's extra events of the same game"
 }
