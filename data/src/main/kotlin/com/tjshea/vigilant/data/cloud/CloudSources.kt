@@ -368,6 +368,7 @@ class CloudSources(
         runCatching { sxbet.stream?.close() }
         runCatching { kalshiStream.close() }
         runCatching { sharpApiStream.close("job ending") }
+        runCatching { propLineStream.close("job ending") }
         // OkHttp sends a close frame from its own writer thread after close() returns; the JVM ends right after this call, so give the frames a moment
         // to leave (AF, 2026-10-22: the next job's BoltOdds props socket was refused "Too many concurrent connections" by the old job's half-open ones).
         if (flushMs > 0) runCatching { Thread.sleep(flushMs) }
