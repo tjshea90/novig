@@ -66,6 +66,20 @@ class ParlayLiveTest {
         assertEquals(1.0 + 100.0 / 167, moved.quotes[1].decimalOdds, 1e-9)
     }
 
+    /** PB23 (2026-10-25): a whole run moved nothing, because the merged game is named and oriented by the first feed that matched it. The quotes' tags, made from ParlayAPI's own board, still find the stream. */
+    @Test
+    fun `a game renamed and flipped by the merge still takes the stream's prices`() {
+        val board = ParlayLive.tag(game(market(LineKind.MONEYLINE, listOf(RefQuote(Side.HOME, 3.0, null), RefQuote(Side.AWAY, 1.4, null)))))
+        val merged = board.flipped().copy(home = "Indiana", away = "Brooklyn")
+        val ml = live().overlayEvent(merged, now).markets[0]
+        // Flipped: HOME is now Indiana, whose stream price is -265.
+        assertEquals(1.0 + 100.0 / 265, ml.quotes.first { it.side == Side.HOME }.decimalOdds, 1e-9)
+        assertEquals(3.24, ml.quotes.first { it.side == Side.AWAY }.decimalOdds, 1e-9)
+        // Untagged, the same merged game finds nothing.
+        val untagged = game(market(LineKind.MONEYLINE, listOf(RefQuote(Side.HOME, 3.0, null), RefQuote(Side.AWAY, 1.4, null)))).flipped().copy(home = "Indiana", away = "Brooklyn")
+        assertEquals(1.4, live().overlayEvent(untagged, now).markets[0].quotes.first { it.side == Side.HOME }.decimalOdds, 1e-9)
+    }
+
     @Test
     fun `team totals and player props match by team side and player name`() {
         val tt = market(LineKind.TEAM_TOTAL, listOf(RefQuote(Side.OVER, 1.9, 117.5), RefQuote(Side.UNDER, 1.9, 117.5)), subject = RefBookMarket.AWAY)
