@@ -107,11 +107,14 @@ class PropLineClient(
         // Novig rides along in the same request (no extra cost): its prices order the scan's own
         // Novig reads, and are kept apart from the books that make the fair line.
         val readAt = clock()
-        val answer = call(
-            "/sports/$sport/odds",
-            listOf("markets" to markets.joinToString(","), "bookmakers" to asked(books).joinToString(",")) + idParams(),
-            notFound = Board(emptyList(), emptyList()),
-        ) { parseBoard(it, json, sport) }
+        val parts = bookParts(asked(books)).map { part ->
+            call(
+                "/sports/$sport/odds",
+                listOf("markets" to markets.joinToString(","), "bookmakers" to part.joinToString(",")) + idParams(),
+                notFound = Board(emptyList(), emptyList()),
+            ) { parseBoard(it, json, sport) }
+        }
+        val answer = Answer(merge(parts.map { it.value }), parts.last().remaining, parts.last().used)
         remember(sport, answer.value.events)
         if (live != null) leagueBoards["$sport|$ask"] = readAt to answer
         val events = live?.overlay(answer.value.events, readAt, clock()) ?: answer.value.events
