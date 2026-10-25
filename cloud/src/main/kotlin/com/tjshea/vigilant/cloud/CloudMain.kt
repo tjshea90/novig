@@ -189,6 +189,22 @@ fun main(args: Array<String>) = runBlocking {
             delay(5 * 60_000L)
         }
     }
+    // PropLine Streaming Lite (PSL, Tj 2026-10-25): every steam, grade and +EV-at-Novig push journaled for the studies (propline-push-<day>, archived with the other journals), and PropLine's own
+    // per-book freshness read every minute (free, no key): shown in the status, and a book PropLine has stopped writing for a class is left out of that class's PropLine quotes.
+    val pushJournal = DayJournal(File(out, "cloud"), "propline-push", com.tjshea.vigilant.data.reference.PlPushRow.serializer()) { it.atMs }
+    sources.propLineStream.tap = { type, sport, data, at -> runCatching { pushJournal.append(com.tjshea.vigilant.data.reference.PlPushRow(at, type, sport, data)) } }
+    scope.launch {
+        var loggedAt = 0L
+        while (isActive) {
+            val s = latestSettings.get()
+            if (s != null && sources.propLineOn(s)) {
+                sources.propLineFreshness.refresh()?.let { rows -> sources.propLineLive.staleBooks = sources.propLineFreshness.outages(rows) }
+                val now = System.currentTimeMillis()
+                if (now - loggedAt >= 15 * 60_000L) { loggedAt = now; log(sources.propLineNote()) }
+            } else sources.propLineLive.staleBooks = emptyMap()
+            delay(com.tjshea.vigilant.data.reference.PropLineFreshness.EVERY_MS)
+        }
+    }
     if (PROPLINE_EV_SWEEP) scope.launch {
         delay(90_000L)
         // The first sweep waits for the first scan (up to 8 min): Bet slips are built from what the scan holds, and a sweep before it has none (2026-10-17: a restart's first sweep had no Bet buttons).
