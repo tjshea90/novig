@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "6d837b8bd084f94c42d40c520811e357e2be912e",
+ "head": "4ef0a7c243ebcf229e4c33a446914c80a53df82a",
  "since": 1792915284,
- "beat": 1792944372,
- "beatIso": "2026-10-25T16:06:12Z",
- "done": "v1.0.83 released + recorded; engine reset: ParlayAPI overlay now live (501 moved, 40 polls); grader re-dispatched with 5-game batches",
- "next": "read propline-grade result at 15:35 check-in; then PB8 settings walk, PB12 steam study, PS2b/PS9b"
+ "beat": 1792944447,
+ "beatIso": "2026-10-25T16:07:27Z",
+ "done": "propline_grade root cause: 6+ bets per request outlast PropLine's 30 s gateway (1 bet = 3.5 s, 200); now 1 bet/request, 8 in flight, final grades reused; run dispatched",
+ "next": "16:33 check-in: read SUMMARY.md, add numbers to research/propline_parlay_audit_2026-10-25.md point 3, tell Tj; then PB8, PB12"
 }
