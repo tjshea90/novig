@@ -1258,3 +1258,9 @@ Make sure both propline and parlayapi are successfully feeding the scanner with 
 ```
 Why are the odds this stale if they are streamed? Why is there no parlayapi?
 ```
+
+## 2026-10-25T19:06:26Z
+```
+Make sure odds come from as many books as possible and are matched correctly. You may need to consult the docs
+Keep working and analyzing this until you figure out how to get odds for many books matching on the bets and both propline and parlayapi streams feeding fresh odds. When you are confident it is working, restart the engine and monitor the scanned bets for many sources, correct mapping, and fresh odds
+```
