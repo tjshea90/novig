@@ -1,13 +1,13 @@
-# CHECKPOINT 4193 — read me first, then TASKS.md
+# CHECKPOINT 4194 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T08:47:06Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-be05497a-18skm3` · **builds on:** `b63c4ff47` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T08:47:57Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-be05497a-18skm3` · **builds on:** `445aac267` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v1.0.82 PB: real-time list (PropLine + ParlayAPI Business streams + Novig socket every 3 s), ParlayAPI Business odds stream and 15 books, NBA props, phone rests in background, engine 24/7, list over the tunnel, per-book quote ages on the Bet sheet (versionCode 422, v1.0.82)
+v1.0.82 gated+pushed to main (4,146 tests green); release.yml run 40178016051 started; engine reset asked (resetAtMs 1792918047564) so the new runner runs the real-time list + ParlayAPI stream
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.82), then run: bash tools/record-release.sh v1.0.82 422 "v1.0.82 PB: real-time list (PropLine + ParlayAPI Business streams + Novig socket every 3 s), ParlayAPI Business odds stream and 15 books, NBA props, phone rests in background, engine 24/7, list over the tunnel, per-book quote ages on the Bet sheet"
+confirm release, record-release.sh v1.0.82 422; read engine log for 'real-time list:' and 'Engine ParlayAPI:' + status fairAgeMedianS; then PB8 audit, PB12 steam study, PB17b, PB21b
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  445aac267 ckpt 4193: pre-release: v1.0.82 PB: real-time list (PropLine + ParlayAPI Business stre
   b63c4ff47 ckpt 4192: pre-ship: v1.0.82 PB: real-time list (PropLine + ParlayAPI Business streams
   971e60854 ckpt 4191: pre-ship: v1.0.82 PB: real-time list (PropLine + ParlayAPI Business streams
   3becc8d30 ckpt 4190: PB14 bid desk lines re-made from real-time prices every 15 s; PB17 ParlayAP
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   b73a5cff5 ckpt 4186: PB: merged tj Gmail's PhoneSleep WIP; streamprobe frames saved (research/pa
   ed57aa38f ckpt 4185: research index rebuilt (ParlayAPI Business docs folder)
   51f196e04 ckpt 4184: retry landing
-  db6acb778 ckpt 4183: tests green: PB2-PB5 + engine hourly loop fix
 ```
