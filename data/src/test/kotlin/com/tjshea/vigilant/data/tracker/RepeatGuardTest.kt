@@ -115,10 +115,10 @@ class RepeatGuardTest {
     @Test fun `the red X says why a side is held, the same side or another line of its team player or prop`() {
         val fam = RepeatGuard.family("Phoenix Suns @ Portland Trail Blazers", 1_000L, "Three Pointers Made", "Khaman Maluach Under 0.5")
         val held = listOf(RepeatGuard.Pos("m1", "under-0.5", 2.69, 4.76, count = 1, family = fam))
-        assertTrue(RepeatGuard.heldWhy(held, "under-0.5", fam)!!.startsWith("You already hold this same side"))
+        assertTrue(RepeatGuard.heldWhy(held, "under-0.5", fam)!!.startsWith("Already held on this same side"))
         val otherLine = RepeatGuard.family("Phoenix Suns @ Portland Trail Blazers", 1_000L, "Three Pointers Made", "Khaman Maluach Under 1.5")
         assertEquals(fam, otherLine)
-        assertTrue(RepeatGuard.heldWhy(held, "under-1.5", otherLine)!!.contains("another line"))
+        assertTrue(RepeatGuard.heldWhy(held, "under-1.5", otherLine)!!.contains("a bet just like it"))
         assertNull("another player is not held", RepeatGuard.heldWhy(held, "x", RepeatGuard.family("Phoenix Suns @ Portland Trail Blazers", 1_000L, "Three Pointers Made", "Devin Booker Under 2.5")))
         assertNull(RepeatGuard.heldWhy(emptyList(), "under-0.5", fam))
         // the other side of the same market is a hedge, not a repeat
@@ -137,6 +137,74 @@ class RepeatGuardTest {
         assertNull("another game is free", RepeatGuard.check(rules, held, "m4", "o4", 2.0, 4.0, family = "c @ d|7|w|total"))
         val two = held.take(2)
         assertNull(RepeatGuard.check(rules, two, "m4", "o4", 2.0, 4.0, family = g + "w|total"))
-        assertTrue("12 on one team passes 10", RepeatGuard.check(rules, listOf(RepeatGuard.Pos("m1", "o1", 8.0, 16.0, family = g + "x|total")), "m5", "o5", 4.0, 8.0, family = g + "x|total")!!.contains("limit on one of them"))
+        assertTrue("12 on one team passes 10", RepeatGuard.check(rules, listOf(RepeatGuard.Pos("m1", "o1", 8.0, 16.0, family = g + "x|total")), "m5", "o5", 4.0, 8.0, family = g + "x|total")!!.contains("limit on similar bets"))
+    }
+
+    // ---- Similar bets together, whoever placed them (Tj, 2026-10-25) ----
+
+    private val g = "Syracuse @ North Carolina"
+    private fun over(line: String, dollars: Double, who: RepeatGuard.Who, market: String = "SYR @ UNC t$line") =
+        Pos("m$line", "o$line", dollars, dollars * 2, count = if (who == RepeatGuard.Who.BID) 0 else 1, family = RepeatGuard.family(g, start, market, "Over $line"), who = who, label = "Over $line")
+    private val capped = Rules(maxBets = 2, maxDollars = 100.0, maxLines = 1, maxFamilyDollars = 3.0)
+    private val totalOver = RepeatGuard.family(g, start, "Total", "Over 50.5")
+
+    @Test fun `the dollar limit counts every line of the game's over together, bets and bids, whoever placed them`() {
+        val held = listOf(over("49.5", 1.20, RepeatGuard.Who.HAND), over("52.5", 0.90, RepeatGuard.Who.AUTO), over("51.5", 0.50, RepeatGuard.Who.BID))
+        // $2.60 held: $0.40 more fits, $0.50 does not (an automatic bet; the engine's own and a bid's are its own kind)
+        val heldAuto = held.filter { it.who != RepeatGuard.Who.HAND }
+        assertNull(RepeatGuard.check(capped, heldAuto + Pos("x", "y", 1.20, 2.4, family = "other|1|total|over"), "m50.5", "o50.5", 1.60, 3.2, family = totalOver, who = RepeatGuard.Who.AUTO))
+        val why = RepeatGuard.check(capped, held, "m50.5", "o50.5", 0.50, 1.0, family = totalOver, who = RepeatGuard.Who.HAND)!!
+        assertTrue(why, "limit on similar bets" in why && "$2.60" in why)
+        assertNull(RepeatGuard.check(capped, held, "m50.5", "o50.5", 0.40, 0.8, family = totalOver, who = RepeatGuard.Who.HAND))
+        assertEquals(0.40, RepeatGuard.room(capped, held, "o50.5", totalOver)!!, 1e-9)
+    }
+
+    @Test fun `many small bets are fine under the dollar limit, the counts give way to it`() {
+        val held = List(5) { i -> over("4${i}.5", 0.30, RepeatGuard.Who.AUTO).copy(outcomeId = "o", marketId = "m") }
+        // 5 bets on one side and other lines: past maxBets 2 and maxLines 1, but $1.50 + $0.30 is under $3
+        assertNull(RepeatGuard.check(capped, held, "m", "o", 0.30, 0.6, family = totalOver))
+        // with the dollar limit off the counts are back
+        assertNotNull(RepeatGuard.check(capped.copy(maxFamilyDollars = 0.0), held, "m", "o", 0.30, 0.6, family = totalOver))
+    }
+
+    @Test fun `no bid on what you or the engine bet, and the engine never bets what you bet by hand`() {
+        val hand = listOf(over("49.5", 0.80, RepeatGuard.Who.HAND))
+        val engine = listOf(over("49.5", 0.80, RepeatGuard.Who.AUTO))
+        val bid = listOf(over("49.5", 0.80, RepeatGuard.Who.BID))
+        assertTrue(RepeatGuard.check(capped, hand, "m50.5", "o50.5", 0.5, 1.0, family = totalOver, who = RepeatGuard.Who.BID)!!.startsWith("You already bet"))
+        assertTrue(RepeatGuard.check(capped, engine, "m50.5", "o50.5", 0.5, 1.0, family = totalOver, who = RepeatGuard.Who.BID)!!.startsWith("The engine already bet"))
+        assertTrue(RepeatGuard.check(capped, hand, "m50.5", "o50.5", 0.5, 1.0, family = totalOver, who = RepeatGuard.Who.AUTO)!!.contains("the engine does not bet"))
+        // the engine adds to its own bets and to bids, and bids to bids, while under the limit
+        assertNull(RepeatGuard.check(capped, engine, "m50.5", "o50.5", 0.5, 1.0, family = totalOver, who = RepeatGuard.Who.AUTO))
+        assertNull(RepeatGuard.check(capped, bid, "m50.5", "o50.5", 0.5, 1.0, family = totalOver, who = RepeatGuard.Who.AUTO))
+        assertNull(RepeatGuard.check(capped, bid, "m50.5", "o50.5", 0.5, 1.0, family = totalOver, who = RepeatGuard.Who.BID))
+        // the Under is not the same bet
+        val under = RepeatGuard.family(g, start, "Total", "Under 50.5")
+        assertNull(RepeatGuard.check(capped, hand, "m51.5", "u51.5", 0.5, 1.0, family = under, who = RepeatGuard.Who.BID))
+        assertTrue(RepeatGuard.betHeld(hand, "o50.5", totalOver))
+        assertTrue(!RepeatGuard.betHeld(bid, "o50.5", totalOver))
+    }
+
+    @Test fun `a bet by hand is only measured, never refused for whoever holds it`() {
+        val engine = listOf(over("49.5", 0.80, RepeatGuard.Who.AUTO), over("50.5", 0.50, RepeatGuard.Who.BID))
+        assertNull(RepeatGuard.check(capped, engine, "m51.5", "o51.5", 0.5, 1.0, family = totalOver, who = RepeatGuard.Who.HAND))
+    }
+
+    @Test fun `the red X says who holds what and what the limit leaves`() {
+        val held = listOf(over("49.5", 1.20, RepeatGuard.Who.HAND), over("52.5", 0.90, RepeatGuard.Who.AUTO), over("51.5", 0.50, RepeatGuard.Who.BID))
+        val why = RepeatGuard.heldWhy(held, "o50.5", totalOver, 3.0)!!
+        assertTrue(why, "a bet just like it" in why && "by you" in why && "by the engine" in why && "as bids" in why && "$0.40 left" in why && "Over 49.5" in why)
+        val short = RepeatGuard.heldShort(held, "o50.5", totalOver, 3.0)!!
+        assertTrue(short, short.startsWith("Already held (a bet just like it): $2.60") && "you 1" in short && "engine 1" in short && "bids" in short)
+        assertTrue(RepeatGuard.heldShort(held + over("50.5", 0.5, RepeatGuard.Who.HAND), "o50.5", totalOver, 3.0)!!.contains("reached"))
+        assertNull(RepeatGuard.heldShort(held, "u", RepeatGuard.family(g, start, "Total", "Under 50.5"), 3.0))
+    }
+
+    @Test fun `the tracker's bets say who placed them and the engine's own fills are not counted twice`() {
+        val hand = tracked("h", 100L).copy(orderId = "oh")
+        val auto = tracked("a", 100L).copy(auto = true, orderId = "oa")
+        val engineFill = tracked("e", 100L).copy(imported = true, orderId = "engine-1")
+        val held = RepeatGuard.fromBets(listOf(hand, auto, engineFill), skipOrderIds = setOf("engine-1"))
+        assertEquals(listOf(RepeatGuard.Who.HAND, RepeatGuard.Who.AUTO), held.map { it.who })
     }
 }
