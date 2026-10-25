@@ -297,7 +297,7 @@ object Pricing {
             }
             ref.markets.filter { key.matches(it) }.let { atLine ->
                 atLine.groupBy { it.source }.forEach { (src, l) -> QuoteCensus.add("atLine", src, l.size) }
-                crossCensus(atLine, near = ref.commenceMs - now <= Freshness.FAR_OFF_MS)
+                crossCensus(atLine, near = ref.commenceMs - now <= Freshness.FAR_OFF_MS, label = "${ref.away} @ ${ref.home} ${key.kind} ${key.line ?: ""}${if (key.period != 0) " p${key.period}" else ""}${key.subject?.let { " $it" } ?: ""}", now = now)
             }
             val prices = Freshness.freshFirst(all, now, { b -> b.lastUpdateMs }, { b -> b.bookKey in fairSettings.sharpBooks })
             if (Freshness.sgoMode) linesCensus(prices, now, ref.commenceMs)
@@ -513,7 +513,7 @@ object Pricing {
      * (its polls and stream confirm a book within ~30 s), and whether PropLine ingests the book by push or polls it. A PropLine quote that is minutes older than ParlayAPI's yet always agrees is current, whatever
      * its stamp says; one that disagrees is stale. Counted in [QuoteCensus] (`crossSame` / `crossDiff`, "push|polled/how much older").
      */
-    private fun crossCensus(atLine: List<com.tjshea.vigilant.data.reference.RefBookMarket>, near: Boolean) {
+    private fun crossCensus(atLine: List<com.tjshea.vigilant.data.reference.RefBookMarket>, near: Boolean, label: String, now: Long) {
         if (atLine.size < 2) return
         for (g in atLine.groupBy { it.bookKey }.values) {
             if (g.size < 2) continue
@@ -530,7 +530,13 @@ object Pricing {
             if (!same) {
                 // Which books differ and by how much (basis points of implied chance, summed: divide by the crossDiff count).
                 QuoteCensus.add("crossDiffBook", "${pl.bookKey} ${if (near) "near" else "far"}")
-                QuoteCensus.add("crossDiffBp", kind, sides.maxOf { (a, b) -> kotlin.math.abs(1.0 / a.decimalOdds - 1.0 / b.decimalOdds) * 10_000.0 }.toInt())
+                val bp = sides.maxOf { (a, b) -> kotlin.math.abs(1.0 / a.decimalOdds - 1.0 / b.decimalOdds) * 10_000.0 }.toInt()
+                QuoteCensus.add("crossDiffBp", kind, bp)
+                // Worked examples of the big ones (a point or more of chance), near games only: the two prices and how old each is.
+                if (near && bp >= 100) {
+                    fun age(m: com.tjshea.vigilant.data.reference.RefBookMarket) = ((now - (m.lastUpdateMs ?: now)) / 1000L).toString() + "s"
+                    QuoteCensus.sample("crossDiff", "${pl.bookKey} $label ${sides.first().first.side}: ${pl.source} ${"%.3f".format(sides.first().first.decimalOdds)}@${sides.first().first.point ?: ""} ${age(pl)} vs ${pa.source} ${"%.3f".format(sides.first().second.decimalOdds)}@${sides.first().second.point ?: ""} ${age(pa)} (${bp / 100.0} pts)")
+                }
             }
         }
     }
