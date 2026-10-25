@@ -26,15 +26,15 @@ def american(p):
     return round(-100 * p / (1 - p)) if p >= 0.5 else round(100 * (1 - p) / p)
 
 
-def bets_from_phone(rows):
-    """phone/bets rows -> common bets. A row the engine placed (origin engine) is left to the ledger, so nothing is graded twice."""
+def bets_from_phone(rows, ledger_ids=frozenset()):
+    """phone/bets rows -> common bets. A fill the engine's ledger already holds (the phone imports every fill on the account) is left to the ledger, so nothing is graded twice."""
     out = []
     for r in rows:
-        if r.get("origin") == "engine" or r.get("scanner") == "engine":
+        if r.get("origin") == "engine" or (r.get("marketId"), r.get("outcomeId")) in ledger_ids:
             continue
-        who = ("hand " if r.get("how") == "manual" else "phone auto ") + ("bid" if r.get("made") == "bid" else "bet")
+        who = ("hand (Novig app) " if r.get("origin") == "imported" else "hand " if r.get("how") == "manual" else "phone auto ") + ("bid" if r.get("made") == "bid" else "bet")
         out.append({"ref": "p:" + str(r.get("id")), "who": who, "league": r.get("league"), "event": r.get("event") or "", "startsMs": r.get("startsMs"), "market": r.get("market") or "",
-                    "kind": r.get("kind") or "", "selection": r.get("selection") or "", "american": r.get("odds"), "stake": r.get("paid") or r.get("stake") or 0, "result": r.get("result")})
+                    "kind": r.get("kind") or "", "selection": r.get("selection") or "", "american": r.get("odds"), "stake": r.get("paid") or r.get("stake") or 0, "result": r.get("result"), "teams": teams(r.get("event") or "")})
     return out
 
 
@@ -45,8 +45,20 @@ def bets_from_ledger(entries):
             continue
         who = "engine " + ("bid" if (e.get("note") or "").startswith("bid") else "bet")
         out.append({"ref": "e:" + str(e.get("id")), "who": who, "league": e.get("league"), "event": e.get("event") or "", "startsMs": e.get("startsTs"), "market": e.get("marketLabel") or "",
-                    "kind": e.get("kind") or "", "selection": e.get("selection") or "", "american": american(e["avgPrice"]), "stake": e.get("cost") or 0, "result": e.get("status")})
+                    "kind": e.get("kind") or "", "selection": e.get("selection") or "", "american": american(e["avgPrice"]), "stake": e.get("cost") or 0, "result": e.get("status"), "teams": teams(e.get("event") or "")})
     return out
+
+
+def team_of(name, b):
+    """A side as the bet names it ('Sacramento State', or Novig's 'CHA') -> the event's full team name; None when not exactly one team fits."""
+    away, home = b.get("teams") or (None, None)
+    if not away:
+        return name
+    hits = [t for t in (away, home) if same_team(name, t)]
+    if not hits and re.fullmatch(r"[A-Z]{2,5}", name):
+        ab = name.lower()
+        hits = [t for t in (away, home) if "".join(w for w in norm(t) if w != "the").startswith(ab) or "".join(w[0] for w in norm(t)) == ab]
+    return hits[0] if len(hits) == 1 else None
 
 
 def leg(b):
@@ -55,22 +67,29 @@ def leg(b):
     low = market.lower()
     if re.search(r"\b(1h|2h|1st|2nd|first|half|quarter|q[1-4]|period|inning|f5|set)\b", low):
         return None, "period market (%s)" % market
+    if "team total" in low or "team_total" in low:
+        return None, "team total"
+    # Novig's own label of an imported fill: "Joel Embiid 23.5 POINTS" with selection "Under 23.5"
+    m = re.match(r"^(.*?)\s+([0-9.]+)\s+([A-Z_]+)$", market)
+    s2 = re.match(r"^(Over|Under)\s+([0-9.]+)$", sel)
+    if m and s2:
+        key = STAT_KEYS.get("".join(norm(m.group(3).replace("_", " "))))
+        return ((key, m.group(1).strip(), s2.group(1), float(s2.group(2))), None) if key else (None, "prop stat not mapped (%s)" % m.group(3))
     m = re.match(r"^(.*?)\s+(Over|Under)\s+([0-9.]+)$", sel)
-    if m and "total" not in low and market.lower() not in ("total", "totals"):
+    if m and "total" not in low:
         key = STAT_KEYS.get("".join(norm(market)))
         if not key:
             return None, "prop stat not mapped (%s)" % market
         return (key, m.group(1).strip(), m.group(2), float(m.group(3))), None
-    m = re.match(r"^(Over|Under)\s+([0-9.]+)$", sel)
-    if m and ("total" in low):
-        if "team" in low:
-            return None, "team total"
-        return ("totals", m.group(1), m.group(1), float(m.group(2))), None
+    if s2 and ("total" in low or re.search(r"\bt\d", low)):
+        return ("totals", s2.group(1), s2.group(1), float(s2.group(2))), None
     m = re.match(r"^(.*?)\s*([+-]\d+(?:\.\d+)?)$", sel)
-    if m and ("spread" in low or "handicap" in low or "run line" in low or "puck line" in low):
-        return ("spreads", m.group(1).strip(), None, float(m.group(2))), None
+    if m and ("spread" in low or "handicap" in low or "run line" in low or "puck line" in low or b.get("kind") == "Spreads" or re.fullmatch(r"[A-Z]{2,5} [+-][0-9.]+", market)):
+        team = team_of(m.group(1).strip(), b)
+        return (("spreads", team, None, float(m.group(2))), None) if team else (None, "team not named (%s)" % sel)
     if "moneyline" in low or "winner" in low or low in ("ml", "h2h", "match winner"):
-        return ("h2h", sel, None, None), None
+        team = team_of(sel, b)
+        return (("h2h", team, None, None), None) if team else (None, "team not named (%s)" % sel)
     return None, "market not mapped (%s)" % market
 
 
@@ -207,7 +226,8 @@ def run(bets_dir, trades, outdir):
     if trades and os.path.isfile(trades):
         d = json.load(open(trades))
         ledger = d.get("entries", []) if isinstance(d, dict) else d
-    bets = bets_from_phone(phone) + bets_from_ledger(ledger)
+    ids = frozenset((e.get("marketId"), e.get("outcomeId")) for e in ledger)
+    bets = bets_from_phone(phone, ids) + bets_from_ledger(ledger)
     print("bets: %d from the phone, %d from the engine's ledger" % (len(bets) - len(bets_from_ledger(ledger)), len(bets_from_ledger(ledger))))
     games = {}
     rows, todo = [], []
@@ -251,6 +271,11 @@ def run(bets_dir, trades, outdir):
 def selftest():
     assert american(0.5) == -100 and american(0.4) == 150 and american(0.6) == -150
     assert leg({"market": "Spread", "selection": "Sacramento State +9.5"})[0] == ("spreads", "Sacramento State", None, 9.5)
+    assert leg({"market": "Joel Embiid 23.5 POINTS", "selection": "Under 23.5"})[0] == ("player_points", "Joel Embiid", "Under", 23.5)
+    assert leg({"market": "MIA @ CHA t229.5", "selection": "Under 229.5"})[0] == ("totals", "Under", "Under", 229.5)
+    assert leg({"market": "CHA +1.5", "selection": "CHA +1.5", "teams": ("Miami Heat", "Charlotte Hornets")})[0] == ("spreads", "Charlotte Hornets", None, 1.5)
+    assert leg({"market": "CIT +17.5", "selection": "CIT +17.5", "teams": ("The Citadel", "Clemson")})[0] == ("spreads", "The Citadel", None, 17.5)
+    assert leg({"market": "Team Total", "selection": "New Jersey Devils Over 3.5"})[0] is None
     assert leg({"market": "Total", "selection": "Over 44.5"})[0] == ("totals", "Over", "Over", 44.5)
     assert leg({"market": "1H Total", "selection": "Over 22.5"})[0] is None
     assert leg({"market": "Points Rebounds Assists", "selection": "Kayla Thornton Over 13.5"})[0] == ("player_points_rebounds_assists", "Kayla Thornton", "Over", 13.5)
@@ -259,6 +284,7 @@ def selftest():
     assert pin_event({"event": "Kent State @ Sacramento State", "startsMs": 1793413800000}, g) == ("7", None)
     assert pin_event({"event": "Kent State @ Sacramento State", "startsMs": 1793413800000 + 86400000}, g)[0] is None
     assert bets_from_phone([{"id": "a", "origin": "engine"}, {"id": "b", "how": "manual", "made": "bet", "odds": 108, "market": "Spread", "selection": "X +1.5"}])[0]["who"] == "hand bet"
+    assert bets_from_phone([{"id": "c", "origin": "imported", "marketId": "m", "outcomeId": "o"}], frozenset({("m", "o")})) == []
     assert bets_from_ledger([{"id": "x", "mode": "LIVE", "avgPrice": 0.485, "note": "bid filled"}])[0]["who"] == "engine bid"
     print("propline_grade selftest ok")
     return 0
