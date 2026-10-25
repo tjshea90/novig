@@ -130,7 +130,9 @@ class ParlayStream(
             val k = key()
             if (!k.isNullOrBlank()) runCatching {
                 withContext(Dispatchers.IO) {
-                    http.newCall(Request.Builder().url("$baseUrl/v1/meta/source-health").header("X-API-Key", k).build()).execute().use { r ->
+                    // Every source's figures: a big answer, given a minute rather than the shared client's 30 s.
+                    http.newBuilder().callTimeout(60, TimeUnit.SECONDS).readTimeout(60, TimeUnit.SECONDS).build()
+                        .newCall(Request.Builder().url("$baseUrl/v1/meta/source-health").header("X-API-Key", k).build()).execute().use { r ->
                         if (!r.isSuccessful) throw IOException("HTTP ${r.code}")
                         val o = json.parseToJsonElement(r.body!!.string()) as? JsonObject ?: throw IOException("not an object")
                         live.onHealth(o)
