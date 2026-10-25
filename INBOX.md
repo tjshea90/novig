@@ -1105,3 +1105,10 @@ Make the following changes in addition to the original prompt:
 8) audit the settings in the app. Some seem confusing to me. Simplify them where possible. Make sure settings do not contradict with each other. Anywhere there are cards to select numbers or values, allow me to also type in a manual value for maximum customization. 
 9) I left my phone on overnight with the screen locked, and vigilant app used a lot of battery. Make it so the app properly sleeps once it has been in the background a while. If I swipe it closed and don't have it open, the GitHub engine should still run the system by itself, as the phone app is only a monitor and control center. Therefore, audit the battery, ram, and CPU usage when I swipe the app closed. It should be minimal to 0. I want no battery or CPU or RAM wasted when the app isn't open. Put the app to sleep.
 ```
+
+## 2026-10-25T07:57:59Z
+```
+Make sure the GitHub engine defaults to the parlayapi business plan key and stays connected to that one 
+At the next available opportunity, stop all work and save all progress to GitHub and checkpoint. Save all progress, my prompts verbatim which are not completed, a summary of work to do , and a clean handoff to the next Claude account. Assume the next Claude account will have no context and still need to finish the jobs you started with no progress loss and full understanding of what has been finished and what needs to be done. There should be a seamless handoff to the next Claude account. The reason is your usage is running out. Save and checkpoint as soon as possible
+Confirm you read the last prompt right now
+```
