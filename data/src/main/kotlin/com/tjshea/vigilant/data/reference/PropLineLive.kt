@@ -154,6 +154,24 @@ class PropLineLive(private val clock: () -> Long = System::currentTimeMillis) {
         }
     }
 
+    /**
+     * One game as the engine's live lane holds it (PB19): every PropLine quote in [e] (its [RefBookMarket.source] is PropLine's) with the pushes since ITS OWN stamp laid over it, and dated by the heartbeat
+     * while the socket has covered it since; the other feeds' quotes are left as they are. A quote with no stamp is taken as read [KEEP_MS] ago.
+     */
+    fun overlayEvent(e: RefEvent, now: Long = clock()): RefEvent {
+        if (since == 0L && moves.isEmpty()) return e
+        val stale = staleBooks
+        var changed = false
+        val markets = e.markets.mapNotNull { m ->
+            if (m.source?.startsWith("propline") != true) return@mapNotNull m
+            val readAt = m.lastUpdateMs ?: (now - KEEP_MS)
+            val out = market(e, m, readAt, now, covers(readAt, now), stale)
+            if (out !== m) changed = true
+            out
+        }
+        return if (changed) e.copy(markets = markets) else e
+    }
+
     private fun market(e: RefEvent, m: RefBookMarket, readAtMs: Long, now: Long, cover: Boolean, stale: Map<String, Pair<Boolean, Boolean>>): RefBookMarket? {
         val prop = m.kind == LineKind.PLAYER_PROP
         stale[m.bookKey]?.let { (lines, props) -> if (if (prop) props else lines) return null }
