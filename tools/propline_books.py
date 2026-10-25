@@ -108,8 +108,14 @@ def stats(lines, ours=()):
         if len(by) >= 5:
             for bk, (p, margin, age, pa, pb, alt) in by.items():
                 others = [v[0] for k, v in by.items() if k != bk]
-                d = abs(p - statistics.median(others)) * 100.0
-                r = per.setdefault(bk, {"n": 0, "games": set(), "margin": [], "dev": [], "age": [], "alt": 0})
+                med = statistics.median(others)
+                d = abs(p - med) * 100.0
+                r = per.setdefault(bk, {"n": 0, "games": set(), "margin": [], "dev": [], "age": [], "alt": 0, "flip": 0, "worst": []})
+                # a side mix-up looks like the mirror image of the market (its chance is the market's other side) while far from the market itself
+                if d > 3.0 and abs(p - (1.0 - med)) * 100.0 < 1.5:
+                    r["flip"] += 1
+                if d > 6.0:
+                    r["worst"].append((d, key, p, med, pa, pb))
                 r["n"] += 1
                 r["games"].add((key[0], key[1]))
                 r["margin"].append(margin)
@@ -128,7 +134,7 @@ def stats(lines, ours=()):
     for bk, r in per.items():
         rows.append({"book": bk, "ours": bk in ours, "lines": r["n"], "games": len(r["games"]), "margin": median(r["margin"]), "mad": sum(r["dev"]) / len(r["dev"]),
                      "within1": sum(1 for d in r["dev"] if d <= 1.0) / len(r["dev"]), "age_p50": median(r["age"]), "age_p90": (sorted(r["age"])[int(len(r["age"]) * 0.9)] if r["age"] else None),
-                     "alt_share": r["alt"] / r["n"]})
+                     "alt_share": r["alt"] / r["n"], "flip": r["flip"] / r["n"], "worst": sorted(r["worst"], reverse=True)[:4]})
     pairs = [{"a": a, "b": b, "n": n, "ident": same / n, "track": track / n} for (a, b), (n, same, track) in pair.items() if n >= 150]
     return sorted(rows, key=lambda r: -r["lines"]), sorted(pairs, key=lambda p: -p["track"])
 
@@ -156,10 +162,15 @@ def clusters(pairs, threshold=0.8):
 def report(rows, pairs, now_label):
     out = ["# PropLine books: coverage, quality and independence (PX9, %s)" % now_label, ""]
     out.append("## Per book (lines posted by 5+ books; deviation = how far its no-vig chance is from the other books' median, in points of chance)")
-    out.append("book | ours | lines | games | margin | mean dev | within 1 pt | age p50/p90 s | alt share")
+    out.append("book | ours | lines | games | margin | mean dev | within 1 pt | age p50/p90 s | alt share | side-flip suspects")
     for r in rows:
-        out.append("%s | %s | %d | %d | %.1f%% | %.2f | %.0f%% | %s/%s | %.0f%%" % (r["book"], "yes" if r["ours"] else "NO", r["lines"], r["games"], (r["margin"] or 0) * 100, r["mad"], r["within1"] * 100,
-                                                                                    "-" if r["age_p50"] is None else int(r["age_p50"]), "-" if r["age_p90"] is None else int(r["age_p90"]), r["alt_share"] * 100))
+        out.append("%s | %s | %d | %d | %.1f%% | %.2f | %.0f%% | %s/%s | %.0f%% | %.1f%%" % (r["book"], "yes" if r["ours"] else "NO", r["lines"], r["games"], (r["margin"] or 0) * 100, r["mad"], r["within1"] * 100,
+                                                                                         "-" if r["age_p50"] is None else int(r["age_p50"]), "-" if r["age_p90"] is None else int(r["age_p90"]), r["alt_share"] * 100, r["flip"] * 100))
+    out += ["", "## The worst lines (6+ points from the other books' median) of the books with a mean deviation over 1.5: sport, game id, market, line, book chance vs market chance, the book's two prices"]
+    for r in rows:
+        if r["mad"] > 1.5 and r["worst"]:
+            for d, key, p, med, pa, pb in r["worst"]:
+                out.append("%s: %s %s %s %s: %.0f%% vs market %.0f%% (%s / %s)" % (r["book"], key[0], str(key[1])[:8], key[2], key[3], p * 100, med * 100, pa, pb))
     out += ["", "## Each book's closest partners (share of 150+ shared lines where the two no-vig chances agree within 0.2 points): who may share its desk"]
     best = {}
     for p in pairs:
