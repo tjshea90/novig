@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "4b75311ae31998cb60b334e733b7b34533b538e2",
+ "head": "39f01d54635f5d02c61db8e3a6f5109b0b6c14fa",
  "since": 1792915284,
- "beat": 1792951068,
- "beatIso": "2026-10-25T17:57:48Z",
- "done": "PX7a: engine keeps quotes inside the plain 5-min limit (no 2-min headroom, fresh-first at 5 min): Freshness.continuous (FreshFirstTest)",
- "next": "reset engine, compare census and books per listed bet; then PX7b stream-only books/rungs from ParlayAPI"
+ "beat": 1792951129,
+ "beatIso": "2026-10-25T17:58:49Z",
+ "done": "PX done: books per bet median 5 (from 1-2), ParlayAPI pricing, scans unfrozen; research/px_books_per_bet_2026-10-25.md",
+ "next": "PX4: ship app? (engine-only changes landed; app unchanged except none) - tell Tj; next PB8/PB12"
 }
