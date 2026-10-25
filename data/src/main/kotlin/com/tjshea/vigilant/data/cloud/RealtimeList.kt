@@ -56,12 +56,17 @@ class RealtimeList(
         for (o in result.opportunities) {
             if (result.waitingFor.isNotEmpty() && ScanResult.waitKey(o.league.novigName, o.kind == LineKind.PLAYER_PROP) in result.waitingFor) { skippedWaiting++; continue }
             val old = next[o.key]
+            if (old == null) { if (keep(o, now)) next[o.key] = o; continue }
             val row = when {
-                old == null || newer(o, old) -> o
+                // The scan read this side's Novig book no earlier than the held row did: its row is the newest word on both halves, and if it is out of reach the side goes.
+                (o.bookFetchedAtMs ?: 0L) >= (old.bookFetchedAtMs ?: 0L) -> o
+                // Read earlier than the held row's live price, but from as many feeds: its fair under the held row's price.
                 rebase != null && o.refEvent != null && old.refEvent !== o.refEvent && feedsOf(o) >= feedsOf(old) -> { rebased++; runCatching { rebase(old, o) }.getOrNull() ?: old }
+                // A fresher fair with nothing to put it under the newer price: kept only while it is within reach (it could not say more than that before).
+                (o.fairAsOfMs ?: 0L) > (old.fairAsOfMs ?: 0L) -> if (keep(o, now)) o else old
                 else -> old
             }
-            if (keep(row, now)) next[o.key] = row else if (old != null) next.remove(o.key)
+            if (keep(row, now)) next[o.key] = row else next.remove(o.key)
         }
         held = trim(next)
         watched = held.size
