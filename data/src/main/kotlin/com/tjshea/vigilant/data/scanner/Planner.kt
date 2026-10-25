@@ -360,7 +360,7 @@ object Planner {
         }
         // A second listing of a matched game: the best Novig game for each event left over, when that game's first match starts with it.
         for (c in ranked) {
-            if (c.ref.id in usedRefs) continue
+            if (c.ref.id in usedRefs || c.score < MIN_EXTRA_SIMILARITY) continue
             val list = result[c.event.eventId] ?: continue
             if (abs(list.first().first.commenceMs - c.ref.commenceMs) > SAME_GAME_START_MS) continue
             list += c.ref to c.swapped
