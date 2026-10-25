@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "a059fd65a1ac3fdf3fa231656bc69ae455303764",
+ "head": "04896ff5ba1ef8024982b1bc5714d8817c1394ea",
  "since": 1792915284,
- "beat": 1792917262,
- "beatIso": "2026-10-25T08:34:22Z",
+ "beat": 1792917448,
+ "beatIso": "2026-10-25T08:37:28Z",
  "done": "PB11/PB19/PB15/PB16 built (not yet full-suite tested): ParlayLive+ParlayStream (Business SSE, gate parlaySocket), RealtimeList + Scanner.liveReprice + Pricing.refair (engine re-prices watched sides every 3 s from PropLine+ParlayAPI pushes and Novig socket, publishes, trades), status.realtimeAtMs (phone skips its 15 s requote), live server /feed (phone reads list over tunnel); ParlayAPI REST books 10->15; NBA props mapped",
  "next": "run :data:test :cloud:test :app:testDebugUnitTest; fix; then full suite, ship"
 }
