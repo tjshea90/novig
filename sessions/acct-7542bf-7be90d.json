@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-3cb0aa53-b2tjli",
- "head": "bd1607f29e002f9b95861fc0d29580d35bae9b34",
+ "head": "82a2aad46f821e04eeeba201911236c4df0e9b89",
  "since": 1792970423,
- "beat": 1792971048,
- "beatIso": "2026-10-25T23:30:48Z",
- "done": "PX11f: gameprobe lists ParlayAPI's events of one game (hypothesis: ParlayAPI splits a game into 2 events by team spelling; matcher takes 1 per feed)",
- "next": "dispatch parlay.yml gameprobe Oregon/Northwestern; if split confirmed, fix Planner.matchOne to attach a feed's extra events of the same game"
+ "beat": 1792971109,
+ "beatIso": "2026-10-25T23:31:49Z",
+ "done": "PX11f root cause + fix: ParlayAPI's split events (two spellings of one game) now both match; PlannerPricingTest",
+ "next": "full tools/test.sh, land on main, engine reset (engine_set.py --reset), check feed row Northwestern@Oregon has parlay books; tell Tj"
 }
