@@ -63,7 +63,7 @@ object Op4Parser {
     /** The error `code` of a failure body (`REQUEST_LIMIT_EXCEEDED`…). */
     fun errorCode(body: String): String? = Regex("\"code\"\\s*:\\s*\"([A-Za-z_]{1,60})\"").find(body)?.groupValues?.get(1)
 
-    fun iso(s: String?): Long? = UnabatedParser.iso(s)
+    fun iso(s: String?): Long? = s?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() ?: runCatching { java.time.OffsetDateTime.parse(it).toInstant().toEpochMilli() }.getOrNull() }
 
     fun account(raw: String): Op4Account {
         val root = parse(raw).obj() ?: throw ReferenceException("OddsPapi: no account in the reply")

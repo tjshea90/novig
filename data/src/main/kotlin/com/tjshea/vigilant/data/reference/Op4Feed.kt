@@ -41,7 +41,7 @@ object Op4Odds {
         val status = head.lng("statusId")?.toInt() ?: 0
         val header = OpFixture(
             id, head.lng("sportId")?.toInt(), head.lng("tournamentId"), head.str("tournamentName").orEmpty(), head.str("categoryName").orEmpty(),
-            UnabatedParser.iso(head.str("trueStartTime")) ?: UnabatedParser.iso(head.str("startTime")), status, status == 1, head.lng("participant1Id"),
+            Op4Parser.iso(head.str("trueStartTime")) ?: Op4Parser.iso(head.str("startTime")), status, status == 1, head.lng("participant1Id"),
             head.str("participant1Name").orEmpty(), head.str("participant2Name").orEmpty(), (head["externalProviders"].obj())?.str("pinnacleId"), emptyMap(), emptyMap(), emptyList(),
         )
         val books = top.firstOrNull { it.first == "bookmakerOdds" }?.second?.let { JsonSplit.members(it) }.orEmpty()
@@ -62,7 +62,7 @@ object Op4Odds {
                     p.str("playerName")?.let { if (pid != 0L) names[pid] = it }
                     prices += OpPrice(
                         slug, outcomeId.toLongOrNull() ?: return@forEach, pid, p.dbl("price"), p.bool("active") ?: true, marketActive, p.bool("mainLine") ?: false,
-                        marketId.toLongOrNull(), p.dbl("limit"), UnabatedParser.iso(p.str("changedAt")), UnabatedParser.iso(p.str("bookmakerChangedAt")),
+                        marketId.toLongOrNull(), p.dbl("limit"), Op4Parser.iso(p.str("changedAt")), Op4Parser.iso(p.str("bookmakerChangedAt")),
                     )
                 }
             }
