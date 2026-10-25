@@ -698,7 +698,7 @@ class CloudEngine(
             ackedRefreshAtMs = handledRefresh, scanRefreshAtMs = scanForRefresh, lastScanStartedAtMs = lastScanStartedAt, lastScanEndedAtMs = lastScanEndedAt, lastScanForRefreshAtMs = lastScanForRefresh,
             novigAgeMedianS = lastAges.novigMedianS, novigAgeMaxS = lastAges.novigMaxS, fairAgeMedianS = lastAges.fairMedianS, fairAgeMaxS = lastAges.fairMaxS,
             pricedConfigRev = pricedRev, settingsPending = settingsPending, scanNote = scanNote, bidsAtMs = bidsAt, bidsCount = bidsCount,
-            novigRoute = runCatching(novigRoute).getOrDefault(""), novigAddress = runCatching(novigAddress).getOrDefault(""), liveUrl = runCatching(liveUrl).getOrDefault(""), ranking = runCatching { scanner.sourceRanking() }.getOrNull().orEmpty().take(1_500),
+            novigRoute = runCatching(novigRoute).getOrDefault(""), novigAddress = runCatching(novigAddress).getOrDefault(""), liveUrl = runCatching(liveUrl).getOrDefault(""), realtimeAtMs = realtime.lastPassAtMs, realtimeWatched = realtime.watched, ranking = runCatching { scanner.sourceRanking() }.getOrNull().orEmpty().take(1_500),
             addressHandovers = addressWatch?.count ?: 0, addressHandoverAtMs = addressWatch?.atMs ?: 0L,
             tradeMode = tradeStatus?.mode.orEmpty(), tradeNote = tradeStatus?.note.orEmpty().take(400), tradeStopped = tradeStatus?.stopped.orEmpty().take(200), tradesAtMs = tradeStatus?.changedAtMs ?: 0L,
             walletSleep = walletSleep, walletCheckedAtMs = walletCheckedAt, walletCash = walletCash ?: -1.0, walletEquity = walletEquity ?: -1.0, walletReadAtMs = walletReadAt,

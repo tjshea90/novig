@@ -59,10 +59,13 @@ object CloudText {
             append("List published ${dur(listAge)} ago, ${st.rows} bets")
             if (st.novigAgeMedianS >= 0) append(" · Novig prices: median ${dur(st.novigAgeMedianS + sinceList)}, oldest ${dur(st.novigAgeMaxS + sinceList)}")
             if (st.fairAgeMedianS >= 0) append(" · fair odds: median ${dur(st.fairAgeMedianS + sinceList)}, oldest ${dur(st.fairAgeMaxS + sinceList)}")
-            append(" · this phone re-reads the listed bets' Novig prices every 15 s")
+            // PB15: with the engine's real-time list running, the engine itself re-prices every listed bet every few seconds from the live feeds and Novig's socket; the phone does not.
+            if (realtime(st, now)) append(" · the engine re-prices the ${st.realtimeWatched} bets in reach of +EV every ${RealtimeList.EVERY_MS / 1000} s from the live feeds and Novig's socket")
+            else append(" · this phone re-reads the listed bets' Novig prices every 15 s")
         }
         val level = when {
             listAge < 0 -> Level.INFO
+            realtime(st, now) && listAge <= 90L -> Level.GOOD
             pending || st.scanning -> if (listAge <= 90L) Level.INFO else Level.WARN
             listAge <= 90L && (st.novigAgeMedianS < 0 || st.novigAgeMedianS + sinceList <= 180L) -> Level.GOOD
             else -> Level.WARN
