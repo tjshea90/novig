@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "2e40a5012db9e7096839dd54121cee5f93be3c90",
+ "head": "0f4a8ea45dfd5f19e9d0299d1f43984e1751c860",
  "since": 1792915284,
- "beat": 1792948523,
- "beatIso": "2026-10-25T17:15:23Z",
+ "beat": 1792948704,
+ "beatIso": "2026-10-25T17:18:24Z",
  "done": "PX1-PX5: PropLine stale-pull fix, ParlayAPI off the chain + alternates, SharpAPI non-blocking and off; full suite green 4,193",
  "next": "engine reset; PX6 Pinnacle coverage from PropLine + ParlayAPI (main/alt/1H/props)"
 }
