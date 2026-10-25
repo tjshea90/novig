@@ -139,6 +139,20 @@ class PropLineLiveTest {
         assertEquals(mapOf("bookmaker" to (true to false), "betus" to (true to false)), f.outages(rows))
     }
 
+    @Test fun theDashboardListsStaleBooksFirst() {
+        val st = com.tjshea.vigilant.data.cloud.CloudStatus(propLineFresh = listOf(
+            PropLineFreshness.Row("pinnacle", 0, 3), PropLineFreshness.Row("bookmaker", 4000, null, linesStale = true), PropLineFreshness.Row("fanduel", 20, 600),
+        ))
+        val lines = com.tjshea.vigilant.data.cloud.DashboardModel.propLineFresh(st, now)
+        assertEquals(com.tjshea.vigilant.data.cloud.DashboardModel.Tone.BAD, lines[0].tone)
+        assertTrue(lines[0].text.contains("STALE"))
+        assertEquals(com.tjshea.vigilant.data.cloud.DashboardModel.Tone.WARN, lines[1].tone)
+        assertEquals("game lines 0s · props 3s", lines[2].text)
+        // The status file carries the rows (the phone reads them back).
+        val back = com.tjshea.vigilant.data.cloud.CloudStatus.parse(com.tjshea.vigilant.data.cloud.CloudStatus.text(st))!!
+        assertEquals(st.propLineFresh, back.propLineFresh)
+    }
+
     @Test fun streamFramesFollowTheDocs() {
         val lv = PropLineLive { now }
         val st = PropLineStream(OkHttpClient(), json, { "k" }, lv, CoroutineScope(Dispatchers.Unconfined), clock = { now })
