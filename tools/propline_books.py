@@ -160,6 +160,14 @@ def report(rows, pairs, now_label):
     for r in rows:
         out.append("%s | %s | %d | %d | %.1f%% | %.2f | %.0f%% | %s/%s | %.0f%%" % (r["book"], "yes" if r["ours"] else "NO", r["lines"], r["games"], (r["margin"] or 0) * 100, r["mad"], r["within1"] * 100,
                                                                                     "-" if r["age_p50"] is None else int(r["age_p50"]), "-" if r["age_p90"] is None else int(r["age_p90"]), r["alt_share"] * 100))
+    out += ["", "## Each book's closest partners (share of 150+ shared lines where the two no-vig chances agree within 0.2 points): who may share its desk"]
+    best = {}
+    for p in pairs:
+        best.setdefault(p["a"], []).append((p["track"], p["b"], p["n"]))
+        best.setdefault(p["b"], []).append((p["track"], p["a"], p["n"]))
+    for r in rows:
+        top = sorted(best.get(r["book"], []), reverse=True)[:3]
+        out.append("%s: %s" % (r["book"], ", ".join("%s %.0f%% (%d)" % (b, t * 100, n) for t, b, n in top) or "no partner with 150+ shared lines"))
     out += ["", "## Pairs that track each other (no-vig chance within 0.2 points on 70%+ of 150+ shared lines; identical = same two prices)"]
     for p in pairs:
         if p["track"] >= 0.7:
