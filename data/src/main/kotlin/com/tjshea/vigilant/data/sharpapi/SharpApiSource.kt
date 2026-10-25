@@ -5,6 +5,7 @@ import com.tjshea.vigilant.data.reference.RefSnapshot
 import com.tjshea.vigilant.data.reference.ReferenceSource
 import com.tjshea.vigilant.data.scanner.League
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import kotlinx.coroutines.launch
 
 /**
  * SharpAPI as a fair-odds source (SHARPAPI.md §4): the league's rows from [feed]'s copy of the store, every book Tj picked on SharpAPI's dashboard but the ones [SharpApiBooks.EXCLUDED] leaves out, turned into
