@@ -44,19 +44,9 @@ enum class ApiProvider(val storageKey: String, val displayName: String) {
     SPORTSGAMEODDS("sportsgameodds", "SportsGameOdds"),
 
     /**
-     * oddspapi.io v5 (ODDSPAPI_API.md): sharp and US books (Pinnacle, Circa, DraftKings, FanDuel…) with each price's own change time, alternates, props, per-book freshness, a CLV endpoint for any bet, history
-     * and settlement. Trial or contract by email to contact@55-tech.com; 10 odds requests a second, 100 other requests a minute.
-     */
-    ODDSPAPI("oddspapi", "OddsPapi"),
-
-    /**
-     * oddspapi.io **v4** (ODDSPAPI_API.md addendum 2026-10-11): the self-serve FREE plan Tj holds (api.oddspapi.io, key as ?apiKey=, a small monthly request allowance, free unmetered historical odds). A different
-     * product from [ODDSPAPI] (v5, B2B trial): its own key, client and switch.
+     * oddspapi.io **v4** (ODDSPAPI_API.md addendum 2026-10-11): the self-serve FREE plan Tj holds (api.oddspapi.io, key as ?apiKey=, a small monthly request allowance, free unmetered historical odds). (The v5 integration was removed, Tj 2026-10-25.)
      */
     ODDSPAPI_FREE("oddspapi_free", "OddsPapi Free (v4)"),
-
-    /** unabated.com Data API, Free tier (UNABATED_API.md): DraftKings, FanDuel, MGM, Caesars, theScore, Fanatics, Novig, Kalshi, Polymarket and the DFS apps, 15 s delayed, one odds request per 5 s. */
-    UNABATED("unabated", "Unabated"),
 
     /**
      * boltodds.com Pro (BOLTODDS_API.md, Tj 2026-10-12): real-time odds from every sportsbook over a WebSocket (3 connections), with the snapshot, `get_info`/`get_games`/`get_markets` and `get_parlays`.

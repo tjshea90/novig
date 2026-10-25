@@ -118,14 +118,6 @@ data class QuotaPolicy(
             "sgo", "SportsGameOdds", "requests", keyed = true, period = QuotaPeriod.DAY_UTC, perMinute = 270,
             rule = "Pro: 300 requests a minute (Vigilant keeps to 270), unlimited events a month (a request is billed per game it returns, not per market or book). Several keys are tried in order; a key at its limit rests until the minute rolls. Free (Amateur) keys: 10 requests a minute and 2,500 events a month, with 10-minute-old odds: Vigilant refuses a quote that old, so only Rookie and up are of use.",
         )
-        val ODDSPAPI = QuotaPolicy(
-            "oddspapi", "OddsPapi", "requests", keyed = true, period = QuotaPeriod.DAY_UTC,
-            rule = "v5 (v5.oddspapi.io), by trial or contract: odds endpoints 10 requests a second, every other endpoint 100 a minute, per key (Vigilant spaces its calls under both). The trial's own request quota is not published: a key that answers 429 rests until its Retry-After. Several keys are tried in order. The self-serve v4 keys (api.oddspapi.io) are a different product and are not used.",
-        )
-        val UNABATED = QuotaPolicy(
-            "unabated", "Unabated", "requests", keyed = true, period = QuotaPeriod.DAY_UTC,
-            rule = "Free API: ONE odds request every 5 seconds per key, shared by every odds endpoint (Vigilant spaces them 5.2 s apart through one gate), data delayed at least 15 seconds. No monthly quota is published; a 429 or 503 carries Retry-After. Discovery calls (leagues, bet types, books, teams) do not use the odds interval.",
-        )
         val BOLTODDS = QuotaPolicy(
             "boltodds", "BoltOdds", "requests", keyed = true, period = QuotaPeriod.DAY_UTC,
             rule = "Pro: the odds arrive over a WebSocket (3 connections at once, 12 new connections a minute per IP); the GET endpoints (get_info, get_games, get_markets, get_parlays) 12 a minute per IP, 3 in quick succession; the snapshot (the initial state, asked once per connection) 6 a minute per IP and a per-key daily token quota BoltOdds does not publish. Vigilant keeps under all of them. A refused key rests; several keys are tried in order.",
@@ -148,7 +140,7 @@ data class QuotaPolicy(
             rule = "Sharp plan: 1,000 requests a minute, no daily cap (the count resets at 00:00 UTC), 25 books picked on SharpAPI's dashboard, Pinnacle included, no data delay. The engine keeps a copy of the odds and polls the changes every 2 seconds (under 900 a minute).",
         )
 
-        val ALL = listOf(SGO, BOLTODDS, ODDSPAPI, ODDSPAPI_FREE, UNABATED, PINNWIRE, PINNAPI, PROPLINE, PARLAY, ODDS_API, NOVIG, POLYMARKET, KALSHI, SXBET, SHARPAPI)
+        val ALL = listOf(SGO, BOLTODDS, ODDSPAPI_FREE, PINNWIRE, PINNAPI, PROPLINE, PARLAY, ODDS_API, NOVIG, POLYMARKET, KALSHI, SXBET, SHARPAPI)
     }
 }
 
