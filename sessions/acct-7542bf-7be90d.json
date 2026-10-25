@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "0ee3b7e6e2d0f2718cf2ea40aedfe1ff7eec19ef",
+ "head": "71e25af0fb67634de8df61b4cbaf8506c9e12c14",
  "since": 1792915284,
- "beat": 1792916108,
- "beatIso": "2026-10-25T08:15:08Z",
- "done": "PB: merged tj Gmail's PhoneSleep WIP; streamprobe frames saved (research/parlayapi_business_2026-10-25/streamprobe, e-mail scrubbed, parlay.py now strips it); PB14-PB19 written from Tj's later prompts",
- "next": "PB9 finish battery sleep (services, wake lock, alarms), then PB18/PB7/PB6, then PB11 SSE"
+ "beat": 1792916187,
+ "beatIso": "2026-10-25T08:16:27Z",
+ "done": "PB9 phone rests (ScanSettings.phoneRests/phoneAutoScan: no auto-scan service/wake lock while the engine scans+trades; PhoneRestsTest); PB20 bet sheet age+feed per book (BookPrices.source, CloudCodec 's', QuoteAge; QuoteAgeTest, CloudCodecTest); PB18 test (Business key first); PB7 24/7 default (ScanSettings.cloudHours=false, engine_alarm default + selftest)",
+ "next": "run TheOddsApiClientTest + CloudEngineTest; PB7 routines; PB11 ParlayAPI SSE engine client"
 }
