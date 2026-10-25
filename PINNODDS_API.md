@@ -1,5 +1,6 @@
 # PINNODDS_API — pinnodds.com (Pinnacle's live push feed), as verified 2026-10-08
 
+> **2026-10-25 (PX10a): Tj has only the FREE plan now** ("I no longer have pinnodds streaming. It is only the free version"): no WebSocket, 100 REST requests a day. `gates.usePinnodds` and `pinnLive` switched off; no session work on Pinnodds unless he buys a paid plan again.
 Tj, 2026-10-08: "I was given a 3 day trial of pinnodds.com websocket … research and implement a live betting feature in vigilant". This file is the permanent memory of what the API is, the rules
 it sets, what was measured on its real socket, and how Vigilant uses it. Canonical docs: **https://pinnodds.com/llms-full.txt** (plain text, ~65 KB; the HTML at /docs renders the same). Where the
 docs and the running API disagree, the running API wins (the docs say so). **Never commit a Pinnodds key** (this repo is public; the key lives in the app's key store and in a gitignored `.env`).

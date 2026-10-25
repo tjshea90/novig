@@ -54,6 +54,8 @@ What that means in practice:
 
 ## Pinnodds: the APP uses it; Claude's sessions never open its API (Tj, 2026-10-09, clarified)
 
+**Since 2026-10-25 Tj has only Pinnodds' FREE plan (verbatim: "I no longer have pinnodds streaming. It is only the free version. Log this and don't waste to much future usage on it.")**: no WebSocket (the socket answers `403 plan_lacks_ws`) and 100 REST requests a day. `gates.usePinnodds` and the phone's Pinnodds live lane (`pinnLive`) were switched off that day (`engine_set.py`, CHANGES.md). Spend no session time on Pinnodds work unless Tj buys a paid plan again; Pinnacle comes from PropLine, ParlayAPI and the public sources (see "API migration" below).
+
 **Standing instruction from Tj (2026-10-09, verbatim):** "Stop using the pinnodds API", and then, to clear up what he meant: "When I told you stop using pinnodds I meant I didn't want Claude to use the API because I was using it at that time and it only allows one connection. I still want to use it in the app".
 - **No session uses it:** no connection to `pinnodds.com` (the account allows ONE WebSocket, and a second connection evicts the app's), no key, no recorder (`tools/research/pinn_*.py`, `pinnodds_tape.py`), no scheduled trigger or workflow that does. Reading its public docs is fine.
 - **The app uses it as built:** `Dormant.PINNODDS` is false. Settings › Pinnodds live (key, Test key, the live feed's paper and real-bet switches, limits), the live engine, the paper lab's Pinnacle alternate lines and the feed race all work. With SGO Pro on, its REST Pinnacle board
@@ -92,6 +94,13 @@ What it means, every session, before the work:
 ## An API that is toggled on is used for any data; one that is toggled off is never called (Tj, 2026-10-11, permanent)
 
 **Refined by Tj (2026-10-11, later the same day, verbatim):** "if I have multiple apis toggled on, I still want it to be efficient and if data overlaps, only pull from the best API and let the others sleep. Only use additional apis for extra information that they carry that others don't or if the best api doesn't respond or runs out of usage, it automatically goes to the next best API for the odds". So "on" means ELIGIBLE: `scanner/ApiChain.kt` (RESEARCH.md §134) asks the best aggregator feed first and a lower one only for a league no better feed answered (failure, no credits, held back), for a game whose data the better feeds left out, or for an extra book Tj switched on; otherwise it stands by and spends nothing. A new feed goes on the chain in `ApiChain` (and `Scanner.SOURCE_ORDER`) with a test in `ApiChainTest`.
+
+## API migration: ParlayAPI and PropLine are the two majors (Tj, 2026-10-25, PX10, permanent)
+
+**Standing instruction from Tj (2026-10-25, verbatim):** "my plan is to migrate to parlayapi and propline as my two major apis, both with streaming, plus the free sockets for the kalshi, sx bet, novig, and the free polymarket." and "I deleted the pinnwire keys delete them on GitHub too. Use the best source of any public source, propline, or parlayapi for the best Pinnacle freshest odds and use them in combination if needed for coverage of markets".
+- **The two majors:** ParlayAPI and PropLine, each with its stream; beside them only the free feeds: Kalshi's, SX Bet's and Novig's sockets and Polymarket. The other paid APIs (SGO, OddsPapi, BoltOdds, SharpAPI, The Odds API, Unabated, PinnWire, pinnapi, Pinnodds) may lapse: every feature must keep working on the two majors alone, and new work goes into them first.
+- **Pinnacle** is book `pinnacle` from whichever of PropLine, ParlayAPI and the public sources quotes it freshest (`freshestWins`), the others filling the markets it lacks. PinnWire's keys are deleted: its secret is retired on the engine (`CloudKeys.RETIRED`, not passed by cloud-scan.yml), and a Pinnacle host is called only while its own switch is on (`CloudPinnacleHostsTest`).
+- **Limits to respect:** PropLine refuses more than 60 `bookmakers` keys a request (`PropLineClient.bookParts`), its stream filter takes 1,000 characters, and its plan caps concurrent socket connections (Streaming Lite 2, Streaming 5); ParlayAPI's limits are in PARLAY_API.md.
 
 ## Books on one odds provider are one company (Tj, 2026-10-11, permanent)
 
