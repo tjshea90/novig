@@ -133,6 +133,13 @@ class CloudEngine(
     private val live: EngineLive? = null,
     /** How often the bid desk runs between scans' lists (it reads fills, moves and posts bids on the lines it holds). */
     private val deskEveryMs: Long = 25_000L,
+    /**
+     * The live streams laid over one game's boards (PropLine's and ParlayAPI's pushes, [CloudSources.overlay]); null = no real-time list, the list is the scans' alone. With it, [RealtimeList] prices the
+     * watched sides again every [RealtimeList.EVERY_MS] from memory and becomes the published list (PB19).
+     */
+    private val liveOverlay: ((com.tjshea.vigilant.data.reference.RefEvent, Long) -> com.tjshea.vigilant.data.reference.RefEvent)? = null,
+    /** The real-time list is published at most this often (the branch's own [Publisher.MIN_GAP_MS] guard is 8 s; the live status socket carries the rest). */
+    private val realtimePublishMs: Long = 10_000L,
 ) {
     /** What the engine's trading says about itself in the heartbeat. */
     data class TradeStatus(val mode: String, val note: String, val stopped: String, val changedAtMs: Long, val cash: Double? = null, val equity: Double? = null)
@@ -216,6 +223,15 @@ class CloudEngine(
     /** The feeds the engine's watch found silent for several scans in a row, each with its own reason ([FeedWatch]): the API manager's word on an API whose check passes but one of whose feeds does not answer. */
     fun silentFeeds(): List<DashboardModel.SilentFeed> = DashboardModel.silentFeeds(feedAlerts, feedLines)
     @Volatile private var lastPublished: CloudFeed? = null
+    /** The real-time list (PB19) and the settings it is priced and filtered under (the running scan's). */
+    val realtime = RealtimeList()
+    @Volatile private var realtimePricing: ScanSettings? = null
+    @Volatile private var realtimeFilter: ScanSettings? = null
+    @Volatile private var realtimePublishedAt = 0L
+    @Volatile private var realtimeTradedAt = 0L
+    @Volatile private var realtimeSig = 0
+    /** The real-time list is what the phone sees: it has run within the last few passes. */
+    private fun realtimeOn(now: Long = clock()): Boolean = liveOverlay != null && realtime.passes > 0 && now - realtime.lastPassAtMs < 4 * RealtimeList.EVERY_MS
     @Volatile private var lastAges = CloudCurrency.UNKNOWN
     @Volatile private var tradeStatus: TradeStatus? = null
     /** The trading wallet's cash and equity as last read (a trading pass or the wallet probe), for the phone's wallet line; null = never read. */
@@ -232,11 +248,13 @@ class CloudEngine(
     suspend fun run(untilMs: Long, startedAtMs: Long = clock()): End = kotlinx.coroutines.coroutineScope {
         val desk = if (bids != null) launch { deskLoop() } else null
         val liveJob = if (live != null) launch { liveLoop() } else null
+        val realtimeJob = if (liveOverlay != null) launch { realtimeLoop() } else null
         try {
             runLoop(untilMs, startedAtMs)
         } finally {
             desk?.cancel()
             liveJob?.cancel()
+            realtimeJob?.cancel()
             if (live != null) kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { runCatching { live.stop("the engine is ending") } }
             // Whatever ends the job (time, the phone's switch, the engine's hours, a refused address), the bids the engine has up come down: nothing rests on Novig for a desk that is no longer watching.
             if (bids != null) kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { deskDown("the engine is ending", force = true) }
@@ -285,6 +303,40 @@ class CloudEngine(
                 continue
             }
             liveStatus = try { l.pass(s, clock()) } catch (e: CancellationException) { throw e } catch (e: Exception) { log("live lane failed: ${e.javaClass.simpleName}: ${e.message?.take(120)}"); null }
+        }
+    }
+
+    /**
+     * The real-time list (PB19): every [RealtimeList.EVERY_MS], the watched sides priced again from memory (the streams' pushes, Novig's socket) under the running scan's settings, during scans too. A changed
+     * list is published at most every [realtimePublishMs] and handed to the trader at once when a side turned +EV (steam: a fair line moved and Novig did not), else every 15 s.
+     */
+    private suspend fun realtimeLoop() {
+        val overlay = liveOverlay ?: return
+        while (currentScopeActive()) {
+            pause(RealtimeList.EVERY_MS)
+            val s = phoneSettings ?: continue
+            val pricing = realtimePricing ?: continue
+            val filter = realtimeFilter ?: continue
+            if (!s.cloudDrives || !manualOpen(s) || manualStopped() || addressBlocked()) continue
+            val now = clock()
+            val before = realtime.turnedPositive
+            val rows = try {
+                realtime.pass(filter, now) { scanner.liveReprice(pricing, it, overlay) }
+            } catch (e: CancellationException) { throw e } catch (e: Exception) { log("real-time list failed: ${e.javaClass.simpleName}: ${e.message?.take(120)}"); continue }
+            val sig = rows.fold(rows.size) { h, o -> h * 31 + o.key.hashCode() + Math.round((o.evPercent ?: 0.0) * 10).toInt() }
+            if (sig != realtimeSig && now - realtimePublishedAt >= realtimePublishMs) {
+                realtimeSig = sig
+                realtimePublishedAt = now
+                val feed = CloudFeed(now, lastPublished?.configRev ?: pricedRev, lastPublished?.stats ?: ScanStats(0, 0, 0, 0, 0), rows)
+                onFeed(rows, now)
+                lastPublished = feed; lastAges = CloudCurrency.of(rows, now)
+                val args = lastStatusArgs
+                problem = publish(feed, if (args != null) status(args.rev, args.startedAtMs, args.untilMs, args.names, args.idle) else status(feed.configRev, now, now, emptyList(), idle = false))
+            }
+            if (rows.isNotEmpty() && (realtime.turnedPositive > before || now - realtimeTradedAt >= 15_000L)) {
+                realtimeTradedAt = now
+                sendTrades(withTimeoutOrNull(WATCH_STEP_MS) { freshForTrading(rows, s, now) } ?: rows, s, now)
+            }
         }
     }
 
@@ -431,6 +483,7 @@ class CloudEngine(
         var fetchChangeSince = 0L
         val scanKey = CloudScanKey.scanKey(cfg0.settings)
         var filterSettings = scanSettings
+        realtimePricing = scanSettings; realtimeFilter = scanSettings
         pricedRev = cfg0.rev
         settingsPending = false
         val partial = AtomicReference<ScanResult?>(null)
@@ -487,19 +540,21 @@ class CloudEngine(
             if (now - lastPublishedAt >= partialEveryMs) {
                 lastPublishedAt = now
                 partial.getAndSet(null)?.let { r ->
+                    if (liveOverlay != null) realtime.adopt(r, now)
                     val rows = withFar(r.feed(filterSettings), now)
                     // The list keeps the rows this scan has not read yet (their last stamps are honest) instead of emptying at every scan's start; trading and the bid desk still get only what the scan read.
                     val readNow = r.freshSinceMs?.let { since -> r.opportunities.filter { (it.bookFetchedAtMs ?: 0L) >= since }.mapTo(HashSet()) { it.outcome.outcomeId } }.orEmpty()
                     val shownRows = FeedOrder.sort(CloudLanes.carryUnread(rows, lastPublished?.rows.orEmpty(), readNow, now), filterSettings.feedSort)
                     val feed = CloudFeed(now, cfg.rev, r.stats, shownRows)
-                    onFeed(rows, now)
-                    lastPublished = feed; lastAges = CloudCurrency.of(shownRows, now)
+                    // The real-time list, when it runs, is the published list (it holds these rows at newer prices); the scan's partial goes out only without it.
+                    val own = !realtimeOn(now)
+                    if (own) { onFeed(rows, now); lastPublished = feed; lastAges = CloudCurrency.of(shownRows, now) }
                     lastResult = r
                     // The bid desk's candidates ride with the list, at most every [bidsEveryMs] (before the status, so it says what was sent).
                     if (now - lastBidsAt >= bidsEveryMs) { lastBidsAt = now; if (withTimeoutOrNull(WATCH_STEP_MS) { sendBids(r, cfg.rev, latest, now) } == null) log("watch loop: the bid candidates took over ${WATCH_STEP_MS / 1000}s: skipped this round") }
                     // The mid-scan passes re-read the stale books too (2026-10-16: 64 of 79 listed bets were refused as "no Novig price read in the last 3 minutes" because only the end-of-scan pass did; a scan takes 5+ minutes).
                     sendTrades(withTimeoutOrNull(WATCH_STEP_MS) { freshForTrading(rows, latest, now) } ?: rows.also { log("watch loop: the re-read before judging took over ${WATCH_STEP_MS / 1000}s: the stale prices are refused") }, latest, now)
-                    problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = now - t0))
+                    problem = publish(if (own) feed else null, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = now - t0))
                     lastStatusAt = now
                 }
             }
@@ -542,6 +597,7 @@ class CloudEngine(
                         else -> if (newer.rev != cfg.rev) {
                             cfg = cfg.copy(rev = newer.rev)
                             filterSettings = CloudScanKey.withFilters(scanSettings, newer.settings)
+                            realtimeFilter = filterSettings
                             settingsPending = CloudScanKey.scanKey(newer.settings) != scanKey
                             latest = newer.settings
                             phoneSettings = newer.settings
@@ -593,16 +649,17 @@ class CloudEngine(
         val rows = withFar(ownRows, done)
         if (nearReachMs == null) { lastFullAtMs = done; lastFullKey = fetchKey.toString(); lastFullRows = ownRows }
         val feed = CloudFeed(done, cfg.rev, result.stats, rows)
+        if (liveOverlay != null) { realtime.adopt(result, done); log(realtime.describe()) }
+        val own = !realtimeOn(done)
         passes++
         lastRows = rows.size
         lastScanMs = done - t0
         lastScanStartedAt = t0; lastScanEndedAt = done; lastScanForRefresh = scanForRefresh
-        lastPublished = feed; lastAges = CloudCurrency.of(rows, done)
-        onFeed(rows, done)
+        if (own) { lastPublished = feed; lastAges = CloudCurrency.of(rows, done); onFeed(rows, done) }
         sendBids(result, cfg.rev, latest, done)
         sendTrades(freshForTrading(rows, latest, done), latest, done)
         runCatching { onResult(result, forCloud(latest)) }.onFailure { if (it is CancellationException) throw it; log("scan study failed: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
-        problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = lastScanMs))
+        problem = publish(if (own) feed else lastPublished, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = lastScanMs))
         log("pass $passes: ${rows.size} bets listed of ${result.stats.outcomesWithFair} priced, ${lastScanMs / 1000}s" + (problem?.let { ", publish problem: $it" } ?: ""))
         if (bids != null) deskPass(latest)
         false
