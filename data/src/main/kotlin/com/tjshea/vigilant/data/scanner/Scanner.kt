@@ -1360,7 +1360,7 @@ class Scanner(
      */
     private suspend fun hotFair(ordered: List<ReferenceSource>, leagues: List<League>, settings: ScanSettings, pump: BookPump) {
         val everyMs = settings.vigGuards.hotEverySeconds.coerceIn(10, 600) * 1_000L
-        val feeds = ordered.filter { it.id in HOT_FEEDS || it.id in HOT_METERED }
+        val feeds = ordered.filter { it.id in HOT_FEEDS || it.id in HOT_METERED || it.hotNow() }
         if (feeds.isEmpty()) return
         var meteredAt = 0L
         var meteredFarAt = 0L
@@ -1501,8 +1501,7 @@ class Scanner(
         val HOT_METERED = setOf("parlay")
         const val HOT_METERED_MS = 150_000L
         const val HOT_METERED_FAR_MS = 420_000L
-        // PropLine since Streaming Lite (PSL, 2026-10-25): 250,000 requests a day, and with its stream on an ask is mostly a memory read with the pushes laid over it, so the hot refresh carries them into pricing.
-        val HOT_FEEDS = setOf("sgo", "sgo-props", "oddspapi", "oddspapi-props", "bolt", "bolt-props", "kalshi", "polymarket", "sxbet", "sharpapi", "propline", "propline_props")
+        val HOT_FEEDS = setOf("sgo", "sgo-props", "oddspapi", "oddspapi-props", "bolt", "bolt-props", "kalshi", "polymarket", "sxbet", "sharpapi")
 
         /** A hot line this close to zero (or above it) has its Novig book read again by the hot refresh. */
         const val HOT_EV_FLOOR = -0.03

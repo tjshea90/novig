@@ -167,6 +167,12 @@ interface ReferenceSource {
     /** How long a fetched snapshot may be re-used instead of calling again. 0 = fetch on every scan. */
     fun reuseMs(settings: ScanSettings): Long = 0L
 
+    /**
+     * Whether the hot refresh may ask this feed again right now although it is not on [com.tjshea.vigilant.data.scanner.Scanner.HOT_FEEDS]: a metered feed whose ask is, at this moment, a memory read with a push
+     * stream laid over it (PropLine with its Streaming socket live, PSL). Default no.
+     */
+    fun hotNow(): Boolean = false
+
     suspend fun odds(league: League, settings: ScanSettings): RefSnapshot
 
     /**

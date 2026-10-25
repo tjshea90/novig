@@ -83,6 +83,9 @@ class PropLineClient(
     /** With the stream live, every scan asks (the answer comes from memory while the last read is young, [odds]); else PropLine's own minute-or-so refresh. */
     override fun reuseMs(settings: ScanSettings): Long = if (live?.live() == true) 0L else REUSE_MS
 
+    /** With the stream live an ask is mostly a memory read (the pushes laid over the last board), so the hot refresh carries the pushes into pricing; never on a key without a stream. */
+    override fun hotNow(): Boolean = live?.live() == true
+
     /** The last league boards read (sport -> read time, answer), laid over by the stream while it is live. */
     private val leagueBoards = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, Answer<Board>>>()
 
@@ -516,6 +519,9 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
     override val extraPropTypes: Set<String> get() = PropLineProps.STATS
 
     override fun supports(league: League) = PropLineProps.marketsFor(league.oddsApiSportKey).isNotEmpty()
+
+    /** Held games are laid over by the stream on every ask (only games past their re-use window are bought), so the hot refresh may ask while the stream is live. */
+    override fun hotNow(): Boolean = client.hotNow()
 
     /** A game's props, bought at [atMs] with request [ask]; [novig] = Novig's own prices from the same reply. */
     private data class Bought(val novigEventId: String, val ref: RefEvent, val atMs: Long, val ask: String, val novig: RefEvent? = null)
