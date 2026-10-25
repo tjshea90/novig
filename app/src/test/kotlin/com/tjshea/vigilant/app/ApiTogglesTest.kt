@@ -165,11 +165,11 @@ class ApiTogglesTest {
         )
         assertTrue(low.lowUsageNow)
         val scan = c.referenceSources(low, scan = true).map { it.id }.toSet()
-        for (id in listOf("sgo", "sgo-props", "oddspapi", "oddspapi-props", "oddspapi_free", "unabated")) assertTrue("$id in low-usage scan $scan", id in scan)
+        for (id in listOf("sgo", "sgo-props", "oddspapi_free")) assertTrue("$id in low-usage scan $scan", id in scan)
         // the metered game-line boards are not asked for a scan that only needs the picked books' props
         assertFalse("oddsapi in $scan", "oddsapi" in scan)
         // and with SGO and OddsPapi off the flat-rate ones are gone from it
-        val noFlat = c.referenceSources(low.copy(sgoPro = false, oddsPapi = false, oddsPapiFree = false, unabated = false), scan = true).map { it.id }.toSet()
+        val noFlat = c.referenceSources(low.copy(sgoPro = false, oddsPapiFree = false), scan = true).map { it.id }.toSet()
         assertTrue(noFlat.toString(), noFlat.none { it.startsWith("sgo") || it.startsWith("oddspapi") || it.startsWith("unabated") })
     }
 }

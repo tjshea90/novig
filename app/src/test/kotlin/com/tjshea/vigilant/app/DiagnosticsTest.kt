@@ -406,16 +406,16 @@ class DiagnosticsTest {
         val base = SampleScan.state()
         val usage = UsageBook(
             mapOf(
-                "oddspapi" to ProviderUsage(keys = mapOf("key-ff45" to KeyUsage(refused = true, lastNote = "HTTP 401 invalid_api_key"))),
+                "sgo" to ProviderUsage(keys = mapOf("key-ff45" to KeyUsage(refused = true, lastNote = "HTTP 401 invalid_api_key"))),
                 "oddsapi" to ProviderUsage(keys = mapOf("key-old" to KeyUsage(refused = true, lastNote = "HTTP 401"))),
             ),
         )
-        // OddsPapi (v5) has no key saved any more; The Odds API is switched off: the leftovers in the meter say nothing.
-        val gone = HealthChecks.of(base.copy(usage = usage, opKeys = emptyList(), oddsApiKeys = listOf("key-old"), settings = base.settings.copy(oddsPapi = true, useOddsApi = false)), extras, now)
-        assertTrue(gone.toString(), gone.none { it.area == "API OddsPapi" || it.area == "API The Odds API" })
+        // SportsGameOdds has no key saved any more; The Odds API is switched off: the leftovers in the meter say nothing.
+        val gone = HealthChecks.of(base.copy(usage = usage, sgoKeys = emptyList(), oddsApiKeys = listOf("key-old"), settings = base.settings.copy(sgoPro = true, useOddsApi = false)), extras, now)
+        assertTrue(gone.toString(), gone.none { it.area == "API SportsGameOdds" || it.area == "API The Odds API" })
         // The same refusal on a key that is saved and an API that is on is still a FAIL.
-        val live = HealthChecks.of(base.copy(usage = usage, opKeys = listOf("key-ff45"), settings = base.settings.copy(oddsPapi = true)), extras, now)
-        assertEquals(HealthChecks.Level.FAIL, live.first { it.area == "API OddsPapi" }.level)
+        val live = HealthChecks.of(base.copy(usage = usage, sgoKeys = listOf("key-ff45"), settings = base.settings.copy(sgoPro = true)), extras, now)
+        assertEquals(HealthChecks.Level.FAIL, live.first { it.area == "API SportsGameOdds" }.level)
     }
 
     /** A bet placed [hoursBefore] h before a start 2 h ago, at 50¢, whose close was [closeRatio] times its price: CLV = closeRatio − 1; EV when bet +3%. */
