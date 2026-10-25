@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "ae46c11a3eee5264bf697a73767127b9565021e6",
+ "head": "a059fd65a1ac3fdf3fa231656bc69ae455303764",
  "since": 1792915284,
- "beat": 1792917072,
- "beatIso": "2026-10-25T08:31:12Z",
- "done": "ticked PB1-4, PB7, PB9, PB18, PB20 with their tests; streamprobe re-run (whole frames + shapes + REST board) dispatched on this branch",
- "next": "read the probe's shapes; build ParlayLive (SSE store) + ParlayStream (engine) laid over ParlayAPI's boards; engine stream pass"
+ "beat": 1792917262,
+ "beatIso": "2026-10-25T08:34:22Z",
+ "done": "PB11/PB19/PB15/PB16 built (not yet full-suite tested): ParlayLive+ParlayStream (Business SSE, gate parlaySocket), RealtimeList + Scanner.liveReprice + Pricing.refair (engine re-prices watched sides every 3 s from PropLine+ParlayAPI pushes and Novig socket, publishes, trades), status.realtimeAtMs (phone skips its 15 s requote), live server /feed (phone reads list over tunnel); ParlayAPI REST books 10->15; NBA props mapped",
+ "next": "run :data:test :cloud:test :app:testDebugUnitTest; fix; then full suite, ship"
 }
