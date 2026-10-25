@@ -1164,4 +1164,9 @@ review the screenshot attached. why are the fair odds 9 minutes old if it is usi
 finally, consider the delay from scanned bets and other information found on GitHub engine to the time GitHub data and scanned bets reaches my phone. it is a significant delay? is there a better way for a more real time connection with low latency between my phone and the GitHub engine
 
 make sure all functions and features that were provided by apis which have since been paused or discontinued can be recovered as much as possible from the features offered by the apis I still have, included but not limited to, grading and results, clv studies, sports book coverage, etc. propline and parlayapi offer most or all of these features. I have paid plans for both apis, use them to their full benefit.
+## 2026-10-25T07:57:59Z
+```
+Make sure the GitHub engine defaults to the parlayapi business plan key and stays connected to that one 
+At the next available opportunity, stop all work and save all progress to GitHub and checkpoint. Save all progress, my prompts verbatim which are not completed, a summary of work to do , and a clean handoff to the next Claude account. Assume the next Claude account will have no context and still need to finish the jobs you started with no progress loss and full understanding of what has been finished and what needs to be done. There should be a seamless handoff to the next Claude account. The reason is your usage is running out. Save and checkpoint as soon as possible
+Confirm you read the last prompt right now
 ```

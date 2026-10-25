@@ -1,5 +1,8 @@
 package com.tjshea.vigilant.app
 
+import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.flow.stateIn
+
 import android.app.Application
 import com.tjshea.vigilant.app.data.EncryptedApiKeyStore
 import com.tjshea.vigilant.app.data.KeystoreSecretBox
@@ -756,6 +759,17 @@ class AppContainer(val app: Application) {
 
     /** [onScreen] as a flow: what reads only while Tj is looking (ParlayAPI's movers) waits on it instead of waking on a timer. */
     val screen = kotlinx.coroutines.flow.MutableStateFlow(false)
+
+    /**
+     * The app sleeps (Tj, 2026-10-25, PB9: "Make it so the app properly sleeps once it has been in the background a while ... the GitHub engine should still run the system by itself, as the phone app is only a
+     * monitor and control center ... I want no battery or CPU or RAM wasted when the app isn't open"): true once Vigilant has been off screen for [PhoneSleep.AFTER_MS] while the GitHub engine is the scan
+     * ([ScanSettings.cloudDrives]). Every phone loop that reads GitHub or Novig waits on it ([PhoneSleep.awake]); opening the app wakes them all at once.
+     */
+    val asleep: kotlinx.coroutines.flow.StateFlow<Boolean> by lazy {
+        kotlinx.coroutines.flow.combine(screen, settingsStore.flow) { on, s -> on to (s?.cloudDrives == true) }
+            .transformLatest { (on, drives) -> if (on || !drives) emit(false) else { emit(false); kotlinx.coroutines.delay(PhoneSleep.AFTER_MS); emit(true) } }
+            .stateIn(appScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, false)
+    }
 
     /** Bets a push alert went out for (alerts.json), so each bet alerts once (Tj, 2026-09-28). */
     val alertLog = AlertLog(JsonFileStore(File(app.filesDir, "alerts.json"), AlertBook.serializer(), { AlertBook() }, json))
