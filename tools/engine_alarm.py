@@ -308,12 +308,13 @@ def selftest():
     assert not healthy({"heartbeatMs": beat, "scanning": True, "progressChangedAtMs": beat - 11 * 60_000}, beat)[0]
     assert healthy({"heartbeatMs": beat, "scanning": True, "progressChangedAtMs": beat - 60_000}, beat)[0]
     # the keeper's moves: a healthy engine is left alone, a silent one is checked, the night is slept through to 08:00:05, the job hands over at 340 min, STOP stops
-    on = {"on": True}
+    on = {"on": True, "settings": {"gates": {"cloudHours": True}}}   # the old 08:00-01:00 window, switched on by hand
     noon = ms(2026, 10, 19, 12, 0)
     assert step(noon, noon, on, {"heartbeatMs": noon - 20_000})[:2] == ("sleep", CHECK_MS)
     assert step(noon, noon, on, {"heartbeatMs": noon - 30 * 60_000})[0] == "check"
     assert step(noon, noon, on, {})[0] == "check"
     night = ms(2026, 10, 20, 2, 0)
+    assert step(night, night, {"on": True}, {})[0] == "check"                                     # PB7: 24/7 by default, the night is watched like the day
     assert step(night, night, on, {}) == ("sleep", OUTSIDE_NAP_MS, step(night, night, on, {})[2])
     late = ms(2026, 10, 20, 7, 55)
     assert step(late, late - 60_000, on, {})[:2] == ("sleep", 5 * 60_000 + LATE_MS)              # wakes at 08:00:05 ...
