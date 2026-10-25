@@ -300,6 +300,7 @@ object Pricing {
                 crossCensus(atLine, near = ref.commenceMs - now <= Freshness.FAR_OFF_MS)
             }
             val prices = Freshness.freshFirst(all, now, { b -> b.lastUpdateMs }, { b -> b.bookKey in fairSettings.sharpBooks })
+            if (Freshness.sgoMode) linesCensus(prices, now, ref.commenceMs)
             if (prices.size < all.size) (all - prices.toSet()).groupBy { it.source }.forEach { (src, l) -> QuoteCensus.add("staleBesideFresh", src, l.size) }
             FairValue.compute(prices, fairSettings).also { f ->
                 val used = f?.perBook?.map { it.book }?.toSet().orEmpty()
@@ -485,6 +486,24 @@ object Pricing {
 
     /** A book left out of a line because two feeds quoted it at the same time [CROSS_CHECK_POINTS] or more apart ([chosenMarkets]); counted for the status. */
     val crossDropped = java.util.concurrent.atomic.AtomicLong()
+
+    /**
+     * PX9 (Tj 2026-10-25: "Why are the odds this stale if they are streamed?"): how many companies stand behind each line under the limit in force and under the plain one for fast feeds ([Freshness.plainFastFeeds]),
+     * near games (within 3 hours of the start) and far ones apart. The engine logs it with the quote census: the plain limit is turned on only when it leaves lines well covered.
+     */
+    private fun linesCensus(prices: List<BookPrices>, now: Long, commenceMs: Long) {
+        fun bucket(n: Int) = when { n <= 0 -> "0"; n == 1 -> "1"; n == 2 -> "2"; n <= 4 -> "3-4"; n <= 7 -> "5-7"; else -> "8+" }
+        fun companies(l: List<BookPrices>) = l.distinctBy { com.tjshea.vigilant.engine.BookCompany.of(it.bookKey) }.size
+        val plain = prices.filter { b -> b.lastUpdateMs == null || now - b.lastUpdateMs!! <= plainLimit(commenceMs, now, b.source) }
+        val where = if (commenceMs - now <= Freshness.FAR_OFF_MS) "near" else "far"
+        QuoteCensus.add("linesNow", "$where/${bucket(companies(prices))}")
+        QuoteCensus.add("linesPlain", "$where/${bucket(companies(plain))}")
+    }
+
+    /** [Freshness.maxAgeMs] with the plain limit for every feed but SportsGameOdds' (what [Freshness.plainFastFeeds] would make it). */
+    private fun plainLimit(commenceMs: Long, now: Long, source: String?): Long =
+        if (Freshness.slowFeed(source)) Freshness.sgoMaxAgeMs else if (commenceMs - now > Freshness.FAR_OFF_MS) Freshness.FAR_OFF_AGE_MS else Freshness.MAX_QUOTE_AGE_MS
+
 
     /** The books PropLine ingests from their own push feeds (its docs: "treat the five push books as a real-time feed and the polled books as a 30-90s one"; Kalshi and Polymarket have feeds of their own here). */
     private val PUSH_BOOKS = setOf("draftkings", "fanduel", "fanatics")

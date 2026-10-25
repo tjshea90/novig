@@ -11,7 +11,7 @@ class SgoFreshnessTest {
     private val now = 1_000_000_000L
     private val soon = now + 60 * 60_000L
 
-    @After fun reset() { Freshness.sgoMode = false }
+    @After fun reset() { Freshness.sgoMode = false; Freshness.plainFastFeeds = false; Freshness.sgoMaxAgeMs = 10 * 60_000L }
 
     @Test fun off_a_near_game_keeps_the_five_minute_limit() {
         Freshness.sgoMode = false
@@ -31,6 +31,7 @@ class SgoFreshnessTest {
     /** PX9 (Tj 2026-10-25, "Why are the odds this stale if they are streamed?"): the relaxed limit was SportsGameOdds'; PropLine's and ParlayAPI's quotes had it too, 15 minutes with Tj's setting. */
     @Test fun on_only_sgo_quotes_get_the_long_limit_and_a_fast_feed_keeps_the_plain_one() {
         Freshness.sgoMode = true
+        Freshness.plainFastFeeds = true
         Freshness.sgoMaxAgeMs = 15 * 60_000L
         val far = now + 5 * 3_600_000L
         // SGO's own quotes: up to the guard, near or far.
@@ -48,7 +49,14 @@ class SgoFreshnessTest {
         assertTrue(Freshness.fresh(now - 12 * 60_000L, now, soon))
         assertEquals(15 * 60_000L, Freshness.maxAgeMs(soon, now))
         assertEquals(5 * 60_000L, Freshness.maxAgeMs(soon, now, "propline"))
-        Freshness.sgoMaxAgeMs = 10 * 60_000L
+    }
+
+    /** Until the census has said what the plain limit costs, the switch is off and a named fast feed keeps the long limit exactly as before. */
+    @Test fun the_plain_limit_for_fast_feeds_is_off_by_default() {
+        Freshness.sgoMode = true
+        Freshness.sgoMaxAgeMs = 15 * 60_000L
+        assertEquals(15 * 60_000L, Freshness.maxAgeMs(soon, now, "propline"))
+        assertTrue(Freshness.fresh(now - 12 * 60_000L, now, soon, "propline"))
     }
 
     @Test fun off_a_named_feed_is_untouched() {

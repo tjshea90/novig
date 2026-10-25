@@ -51,7 +51,14 @@ object Freshness {
      * fair, a bid's life: it may hold SGO's) get [sgoMaxAgeMs]; a named fast feed keeps the plain 5 minutes (10 for a game over 3 hours away).
      */
     fun maxAgeMs(startsAtMs: Long?, now: Long, source: String? = null): Long =
-        if (sgoMode && (source == null || slowFeed(source))) sgoMaxAgeMs else if (startsAtMs != null && startsAtMs - now > FAR_OFF_MS) FAR_OFF_AGE_MS else MAX_QUOTE_AGE_MS
+        if (sgoMode && (source == null || slowFeed(source) || !plainFastFeeds)) sgoMaxAgeMs else if (startsAtMs != null && startsAtMs - now > FAR_OFF_MS) FAR_OFF_AGE_MS else MAX_QUOTE_AGE_MS
+
+    /**
+     * Whether [sgoMode]'s long limit is SportsGameOdds' alone (a named fast feed keeps the plain one, [maxAgeMs]). OFF until the engine's census says what it costs (PX9d: PropLine's NFL boards are read every
+     * ~276 s, NCAAF, MLB and WNBA every 600 s, so about half of a football line's PropLine quotes are over 5 minutes old at any moment, and the plain limit would leave them out of near games): `Pricing`
+     * counts, per line, the books behind it under both limits (`linesNow` / `linesPlain` in the quote census) before this is turned on.
+     */
+    @Volatile var plainFastFeeds: Boolean = false
 
     /**
      * How long a bet a scan shows keeps being shown, at least: a scan prices only with quotes that are this far
