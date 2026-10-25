@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "a35541a9a926d55b00485c09150365e1167c2fd0",
+ "head": "24ed75397698e3c11b07e18cad7f66349bee3a9f",
  "since": 1792912591,
- "beat": 1792914555,
- "beatIso": "2026-10-25T07:49:15Z",
- "done": "PB2 Pinnodds trial: one board every 15 min (~96/day); PB4/PB5: hourly account reads + grader honour switches; workflow secrets for removed APIs dropped",
- "next": "PB10 ParlayAPI Business docs from api-docs mirror"
+ "beat": 1792914656,
+ "beatIso": "2026-10-25T07:50:56Z",
+ "done": "PB10: ParlayAPI Business docs saved (research/parlayapi_business_2026-10-25/); parlay.py streamprobe task (odds/hot/drop SSE + freshness routes, keyless)",
+ "next": "trigger parlay.yml streamprobe on main; read frames; build engine SSE client"
 }
