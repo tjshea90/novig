@@ -80,22 +80,49 @@ class PropLineClient(
     /**
      * PropLine's own pregame refresh is about a minute: scans closer together than this re-use the last board.
      */
-    override fun reuseMs(settings: ScanSettings): Long = REUSE_MS
+    /** With the stream live, every scan asks (the answer comes from memory while the last read is young, [odds]); else PropLine's own minute-or-so refresh. */
+    override fun reuseMs(settings: ScanSettings): Long = if (live?.live() == true) 0L else REUSE_MS
+
+    /** The last league boards read (sport -> read time, answer), laid over by the stream while it is live. */
+    private val leagueBoards = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, Answer<Board>>>()
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val markets = marketsFor(settings.families)
         val books = books(settings)
-        if (markets.isEmpty() || books.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
+        val sport = league.oddsApiSportKey
+        if (markets.isEmpty() || books.isEmpty()) return RefSnapshot(sport, emptyList(), clock(), provider = ID)
+        val ask = "$markets|$books"
+        // With the stream live and continuous since the last read, that read stays current (each move, pull and scratch is laid over it): read again only every [STREAM_REREAD_MS] (new games, new
+        // books, a game's first board, which the stream does not send line by line) or when the stream says a line was added.
+        live?.let { lv ->
+            val have = leagueBoards["$sport|$ask"]
+            if (have != null && lv.covers(have.first, clock()) && clock() - have.first < STREAM_REREAD_MS && !lv.addedSince(sport, have.first)) {
+                val b = have.second
+                return RefSnapshot(sport, lv.overlay(b.value.events, have.first, clock()), clock(), b.remaining, b.used, ID, novig = b.value.novig)
+            }
+        }
         // Novig rides along in the same request (no extra cost): its prices order the scan's own
         // Novig reads, and are kept apart from the books that make the fair line.
+        val readAt = clock()
         val answer = call(
-            "/sports/${league.oddsApiSportKey}/odds",
-            listOf("markets" to markets.joinToString(","), "bookmakers" to asked(books).joinToString(",")) + idParams(),
+            "/sports/$sport/odds",
+            listOf("markets" to markets.joinToString(","), "bookmakers" to asked(books).joinToString(",")) + idParams() + ageParams(),
             notFound = Board(emptyList(), emptyList()),
-        ) { parseBoard(it, json, league.oddsApiSportKey) }
-        remember(league.oddsApiSportKey, answer.value.events)
-        return RefSnapshot(league.oddsApiSportKey, answer.value.events, clock(), answer.remaining, answer.used, ID, novig = answer.value.novig)
+        ) { parseBoard(it, json, sport) }
+        remember(sport, answer.value.events)
+        if (live != null) leagueBoards["$sport|$ask"] = readAt to answer
+        val events = live?.overlay(answer.value.events, readAt, clock()) ?: answer.value.events
+        return RefSnapshot(sport, events, clock(), answer.remaining, answer.used, ID, novig = answer.value.novig)
     }
+
+    /** The stream laid over [events] read at [readAtMs] (the props source's held boards); unchanged without a stream. */
+    fun overlay(events: List<RefEvent>, readAtMs: Long): List<RefEvent> = live?.overlay(events, readAtMs, clock()) ?: events
+
+    /** Whether the stream keeps a read made at [readAtMs] current now. */
+    fun streamCovers(readAtMs: Long): Boolean = live?.covers(readAtMs, clock()) == true
+
+    /** PropLine's server-side age cut (`max_age`, 2026-10-24 docs): markets a book has not delivered in [MAX_AGE_S] never come back at all (they could never price: [com.tjshea.vigilant.data.scanner.Freshness]). Engine only. */
+    private fun ageParams(): List<Pair<String, String>> = if (live != null) listOf("max_age" to MAX_AGE_S.toString()) else emptyList()
 
     /**
      * The league's upcoming games (PropLine's ids, teams, start times): the last board's when it's
