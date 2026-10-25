@@ -186,7 +186,7 @@ class PlannerPricingTest {
         val t = Fixtures.START_MS
         val novig = listOf(NovigEvent("n", "FOOTBALL", "NCAAF", "OPEN_PREGAME", "Northwestern @ Oregon", t))
         fun total(book: String, over: Double) = RefBookMarket(book, book, LineKind.TOTAL, listOf(RefQuote(Side.OVER, over, 49.5), RefQuote(Side.UNDER, 1.9, 49.5)), now)
-        val short = RefEvent("pa1", "americanfootball_ncaaf", t, home = "Oregon", away = "Northwestern", markets = listOf(total("pinnacle", 1.95)))
+        val short = RefEvent("pa1", "americanfootball_ncaaf", t, home = "Oregon", away = "Northwestern (#20)", markets = listOf(total("pinnacle", 1.95)))
         val long = RefEvent("pa2", "americanfootball_ncaaf", t, home = "Oregon Ducks", away = "Northwestern Wildcats", markets = listOf(total("draftkings", 1.91), total("fanduel", 1.9)))
         val m = Planner.matchEvents(novig, mapOf("parlay" to RefSnapshot("americanfootball_ncaaf", listOf(short, long), now, provider = "parlay"))).single()
         assertEquals(setOf("pa1", "pa2"), m.refEvent!!.id.split("+").toSet())
