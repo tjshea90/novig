@@ -15,10 +15,10 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe | speed | archive | backfill | multibook | clv | grade | timing | evbets | accuracy | coverage | altprobe"
+        description: "plans | probe | speed | archive | backfill | multibook | clv | grade | timing | evbets | accuracy | coverage | altprobe | bookstudy"
         default: "plans"
       sports:
-        description: "altprobe: comma-separated PropLine sport keys (football_nfl,football_ncaaf when empty), e.g. basketball_nba,hockey_nhl"
+        description: "altprobe, bookstudy: comma-separated PropLine sport keys (football_nfl,football_ncaaf when empty), e.g. basketball_nba,hockey_nhl"
         default: ""
   schedule:
     - cron: "37 9 * * *"
@@ -97,6 +97,12 @@ jobs:
             proppin)
               python3 -I tools/propline.py proppin out/proppin
               gh release upload propline-samples out/proppin/* --clobber ;;
+            bookstudy)
+              # PX9 (2026-10-25): every PropLine book's coverage, quality and independence on the scanned leagues (tools/propline_books.py); the report is printed in the log and kept in the propline-samples Release.
+              python3 -I tools/propline_books.py selftest
+              python3 -I tools/propline_books.py run out/books $(echo "${{ github.event.inputs.sports }}" | tr ',' ' ')
+              gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine samples (keyless)" --notes "Real answers of PropLine endpoints, keyless."
+              gh release upload propline-samples out/books/* --clobber ;;
             altprobe)
               # PX (2026-10-25): Novig's alternate spread/total rungs vs the books Vigilant reads at the same number, with ages and market shapes.
               python3 -I tools/propline.py altprobe out/altprobe "${{ github.event.inputs.sports }}"
