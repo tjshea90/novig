@@ -76,6 +76,9 @@ def collect(boards, now):
     lines = {}
     for sport, events in boards:
         for e in events:
+            start = ts(e.get("commence_time"))
+            if start is not None and start <= now:
+                continue   # a game under way: its prices move with the score, so a slow book looks wrong next to a fast one (the first study's "worst lines" were all in-play games)
             for b in e.get("bookmakers") or []:
                 bk = b.get("key")
                 if not bk or bk in NOT_BOOKS:

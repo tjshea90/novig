@@ -474,7 +474,7 @@ class PropLineClient(
          * PlayAlberta, Codere MX) and SX Bet (its own source here).
          */
         private val ADDED_2026_10_25_MEASURED = setOf(
-            "tonybet", "courtside", "sts", "pamestoixima", "sportybet_ng", "rebet", "jazzsports", "sportzino", "bet25", "thrillzz", "bet99", "fortuna_cz", "totalbet", "sportium", "psk", "danskespil",
+            "tonybet", "sts", "pamestoixima", "sportybet_ng", "rebet", "sportzino", "bet25", "thrillzz", "bet99", "fortuna_cz", "totalbet", "sportium", "psk", "danskespil",
             "miseojeu", "napoleon", "fortuna_pl", "playnow", "veikkaus", "admiralbet_de", "synot", "betr_au", "ladbrokes_be", "novibet", "sazka", "strendus", "soccerbet", "betika", "norsktipping",
             "starsports", "toto", "playup", "lvbet", "netbet_ro",
         )

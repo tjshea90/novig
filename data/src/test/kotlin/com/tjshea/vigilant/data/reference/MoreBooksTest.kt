@@ -65,9 +65,9 @@ class MoreBooksTest {
     @Test
     fun `every book on asks PropLine for the measured books and the stream's filter stays under its 1,000 characters`() {
         val all = PropLineClient.books(ScanSettings().let { it.copy(gates = it.gates.copy(propLineAllBooks = true)) })
-        assertTrue(all.containsAll(listOf("tonybet", "sts", "pamestoixima", "sportybet_ng", "rebet", "courtside", "jazzsports", "napoleon", "fortuna_cz", "fortuna_pl", "betika", "ladbrokes_be")))
+        assertTrue(all.containsAll(listOf("tonybet", "sts", "pamestoixima", "sportybet_ng", "rebet", "napoleon", "fortuna_cz", "fortuna_pl", "betika", "ladbrokes_be")))
         // Never the exchanges, the DFS apps, or the books left out for a wide margin or old quotes.
-        assertFalse(all.any { it in listOf("novig", "kalshi", "polymarket", "prophetx", "prizepicks", "underdog", "placard", "solverde", "olybet", "teapuesto", "pmu", "bet9ja", "supabets", "sxbet") })
+        assertFalse(all.any { it in listOf("novig", "kalshi", "polymarket", "prophetx", "prizepicks", "underdog", "placard", "solverde", "olybet", "teapuesto", "pmu", "bet9ja", "supabets", "sxbet", "courtside", "jazzsports") })
         assertTrue("${all.joinToString(",").length} characters", all.joinToString(",").length <= 1_000)
         assertEquals(all.size, all.toSet().size)
     }
