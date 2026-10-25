@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "58bf568f3a4774e5f9bfaf2f1ad230fd6905020e",
+ "head": "a35541a9a926d55b00485c09150365e1167c2fd0",
  "since": 1792912591,
- "beat": 1792914381,
- "beatIso": "2026-10-25T07:46:21Z",
- "done": "PB3: Unabated + OddsPapi v5 removed from app and engine (clients, sources, closes, scores, probes, toggles, pages, keys); full suite green",
- "next": "PB3 workflow secrets + docs; PB4 BoltOdds off; PB2 Pinnodds trial"
+ "beat": 1792914555,
+ "beatIso": "2026-10-25T07:49:15Z",
+ "done": "PB2 Pinnodds trial: one board every 15 min (~96/day); PB4/PB5: hourly account reads + grader honour switches; workflow secrets for removed APIs dropped",
+ "next": "PB10 ParlayAPI Business docs from api-docs mirror"
 }
