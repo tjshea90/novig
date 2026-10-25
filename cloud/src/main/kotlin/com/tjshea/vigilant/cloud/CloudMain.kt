@@ -670,6 +670,12 @@ fun main(args: Array<String>) = runBlocking {
  */
 private const val PROPLINE_EV_SWEEP = false
 
+/** PropLine's freshness rows for the status: the books the engine prices PropLine's lines with, and Novig (PSL). */
+private fun propLineFreshShown(sources: CloudSources, s: com.tjshea.vigilant.data.scanner.ScanSettings?): List<com.tjshea.vigilant.data.reference.PropLineFreshness.Row> {
+    val books = s?.let { com.tjshea.vigilant.data.reference.PropLineClient.books(it).map(com.tjshea.vigilant.data.reference.PropLineClient::bookKey).toSet() + "novig" } ?: return emptyList()
+    return sources.propLineFreshness.last.filter { it.book in books }.sortedBy { it.book }
+}
+
 private const val END_WATCHDOG_MS = 90_000L
 
 /** The loop watchdog: no turn of the engine's loops for this long (after [STALL_GRACE_MS] of a job) means a stall. */
