@@ -4,6 +4,7 @@ import com.tjshea.vigilant.data.novig.NovigEvent
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.NovigOutcome
 import com.tjshea.vigilant.data.reference.LineKind
+import com.tjshea.vigilant.data.reference.RefEvent
 import com.tjshea.vigilant.data.reference.Side
 import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.LineKey
@@ -68,6 +69,59 @@ class RealtimeListTest {
         assertEquals(listOf(0.52), r.pass(settings, now) { it }.map { it.fairProbability })
         // Once the game has started it is not a pregame bet: no longer watched.
         r.adopt(result(), start + 1)
+        assertEquals(0, r.watched)
+    }
+
+    private fun ref(id: String) = RefEvent(id, "basketball_nba", start, "New York Knicks", "Boston Celtics", emptyList())
+
+    private fun waiting(vararg o: Opportunity) = result(*o).copy(freshSinceMs = now - 30_000, waitingFor = setOf(ScanResult.waitKey("NBA", props = false), ScanResult.waitKey("NBA", props = true)))
+
+    /** PX9: GB@DET's spread was listed with Kalshi alone beside the same game's 1st-half total priced by 7 feeds: a partial scan's league still waiting for a fair source was adopted. */
+    @Test
+    fun `a league still waiting for a fair-odds source is not adopted from a partial scan, and its rows come once it has answered`() {
+        val r = RealtimeList()
+        val partial = side("a", 0.52).copy(refEvent = ref("kalshi:K1"))
+        r.adopt(waiting(partial), now)
+        assertEquals(0, r.watched)
+        assertEquals(1L, r.skippedWaiting)
+        // The scan finishes: every source answered, the row is priced from all of them.
+        val full = side("a", 0.51).copy(refEvent = ref("kalshi:K1+pl:9+pl:9+parlay:P"))
+        r.adopt(result(full), now)
+        assertEquals(listOf(0.51), r.pass(settings, now) { it }.map { it.fairProbability })
+    }
+
+    /** The finished scan's fuller fair puts the side out of reach: the row is gone, not left priced on the thinner fair it had. */
+    @Test
+    fun `a newer scan row that is out of reach takes the held row with it`() {
+        val r = RealtimeList()
+        r.adopt(result(side("a", 0.52, read = now - 60_000)), now)
+        assertEquals(1, r.watched)
+        r.adopt(result(side("a", 0.40, read = now - 5_000)), now)
+        assertEquals(0, r.watched)
+        assertTrue(r.pass(settings, now) { it }.isEmpty())
+    }
+
+    /** A scan row read earlier than the held row's live Novig price but matched to at least as many feeds gives the held row its fair; one matched to fewer feeds does not. */
+    @Test
+    fun `a scan that matched as many feeds gives the held row its fair even when its Novig read is older, a poorer one does not`() {
+        val r = RealtimeList()
+        val held = side("a", 0.52, read = now - 2_000).copy(refEvent = ref("kalshi:K1"))
+        r.adopt(result(held), now)
+        val seen = ArrayList<Pair<Double?, Double?>>()
+        val rebase: (Opportunity, Opportunity) -> Opportunity? = { h, s -> seen += h.fairProbability to s.fairProbability; h.copy(fairProbability = s.fairProbability, quote = EvQuote(s.fairProbability!!, 0.49, 0.0075), refEvent = s.refEvent) }
+        // Read earlier (older book) but from 3 feeds against the held row's 1: its fair applies, here 0.53.
+        val richer = side("a", 0.53, read = now - 90_000).copy(refEvent = ref("kalshi:K1+pl:9+parlay:P"), fairAsOfMs = now - 90_000)
+        r.adopt(result(richer), now, rebase)
+        assertEquals(listOf(0.52 to 0.53), seen)
+        assertEquals(listOf(0.53), r.pass(settings, now) { it }.map { it.fairProbability })
+        assertEquals(1L, r.rebased)
+        // A later scan that lost a feed (1 against the held 3) does not undo it.
+        val poorer = side("a", 0.45, read = now - 80_000).copy(refEvent = ref("kalshi:K1"), fairAsOfMs = now - 80_000)
+        r.adopt(result(poorer), now, rebase)
+        assertEquals(listOf(0.53), r.pass(settings, now) { it }.map { it.fairProbability })
+        // And a rebased fair that leaves reach drops the row.
+        val out = side("a", 0.40, read = now - 70_000).copy(refEvent = ref("kalshi:K1+pl:9+parlay:P+sx:S"), fairAsOfMs = now - 70_000)
+        r.adopt(result(out), now, rebase)
         assertEquals(0, r.watched)
     }
 }
