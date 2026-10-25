@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-3cb0aa53-b2tjli",
- "head": "82a2aad46f821e04eeeba201911236c4df0e9b89",
+ "head": "088c27c54fdcc8a70c9c3a1ee886d44db28c8eb2",
  "since": 1792970423,
- "beat": 1792971109,
- "beatIso": "2026-10-25T23:31:49Z",
- "done": "PX11f root cause + fix: ParlayAPI's split events (two spellings of one game) now both match; PlannerPricingTest",
- "next": "full tools/test.sh, land on main, engine reset (engine_set.py --reset), check feed row Northwestern@Oregon has parlay books; tell Tj"
+ "beat": 1792971197,
+ "beatIso": "2026-10-25T23:33:17Z",
+ "done": "PX11c: bid slider never asks fewer than 3 agreeing books (BidSlider.MIN_AGREEING; was 2 above level 60); LevelSlidersTest",
+ "next": "full tools/test.sh, land on main, engine reset, verify Northwestern@Oregon row has parlay books; tell Tj"
 }
