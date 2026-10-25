@@ -54,7 +54,9 @@ def team_of(name, b):
     away, home = b.get("teams") or (None, None)
     if not away:
         return name
-    hits = [t for t in (away, home) if same_team(name, t)]
+    # Exact first, then one name's words inside the other's; the last-word rule (same_team) only when that leaves nothing: "Sacramento State" must not match "Kent State"
+    hits = [t for t in (away, home) if norm(name) == norm(t)] or [t for t in (away, home) if set(norm(name)) <= set(norm(t)) or set(norm(t)) <= set(norm(name))] \
+        or [t for t in (away, home) if same_team(name, t)]
     if not hits and re.fullmatch(r"[A-Z]{2,5}", name):
         ab = name.lower()
         hits = [t for t in (away, home) if "".join(w for w in norm(t) if w != "the").startswith(ab) or "".join(w[0] for w in norm(t)) == ab]
@@ -82,7 +84,7 @@ def leg(b):
         key = stat_key(m.group(3))
         return ((key, m.group(1).strip(), s2.group(1), float(s2.group(2))), None) if key else (None, "prop stat not mapped (%s)" % m.group(3))
     m = re.match(r"^(.*?)\s+(Over|Under)\s+([0-9.]+)$", sel)
-    if m and "total" not in low:
+    if m and ("total" not in low or stat_key(market)):
         key = stat_key(market)
         if not key:
             return None, "prop stat not mapped (%s)" % market
@@ -118,6 +120,25 @@ def pin_event(b, games):
     if len(hits) == 1:
         return hits[0]["id"], None
     return None, "game not found at PropLine" if not hits else "two PropLine games match"
+
+
+def batches(todo, most_bets=500, most_events=25):
+    """/clv/grade takes at most 500 bets and 25 distinct events a request (its 422 says so): bets kept together by game, a new batch when either limit would be passed."""
+    by = {}
+    for item in todo:
+        by.setdefault((item[1]["sport_key"], item[1]["event_id"]), []).append(item)
+    out, cur, events = [], [], 0
+    for group in by.values():
+        for i in range(0, len(group), most_bets):
+            part = group[i:i + most_bets]
+            if cur and (events + 1 > most_events or len(cur) + len(part) > most_bets):
+                out.append(cur)
+                cur, events = [], 0
+            cur += part
+            events += 1
+    if cur:
+        out.append(cur)
+    return out
 
 
 def body_of(b, event_id, sport, lg):
@@ -260,8 +281,7 @@ def run(bets_dir, trades, outdir):
                 todo.append((r, body_of(b, eid, sport, lg)))
         r["why"] = why or ""
         rows.append(r)
-    for i in range(0, len(todo), 500):
-        chunk = todo[i:i + 500]
+    for chunk in batches(todo):
         st, res = call("/clv/grade", key, body=[x for _, x in chunk])
         got = {x.get("ref"): x for x in (res or {}).get("bets", [])}
         for r, x in chunk:
@@ -302,6 +322,10 @@ def selftest():
     assert leg({"market": "Points Rebounds Assists", "selection": "Kayla Thornton Over 13.5"})[0] == ("player_points_rebounds_assists", "Kayla Thornton", "Over", 13.5)
     assert leg({"market": "Moneyline", "selection": "Boston Celtics"})[0] == ("h2h", "Boston Celtics", None, None)
     g = [{"id": "7", "away_team": "Kent State Golden Flashes", "home_team": "Sacramento State Hornets", "_t": 1793413800}]
+    assert len(batches([(None, {"sport_key": "s", "event_id": i % 30}) for i in range(60)])) == 2
+    assert all(len({x["event_id"] for _, x in c}) <= 25 for c in batches([(None, {"sport_key": "s", "event_id": i}) for i in range(80)]))
+    assert team_of("Sacramento State", {"teams": ("Kent State", "Sacramento State")}) == "Sacramento State"
+    assert leg({"market": "Total Bases", "selection": "Aaron Judge Over 1.5"})[0] == ("batter_total_bases", "Aaron Judge", "Over", 1.5)
     assert pin_event({"event": "Kent State @ Sacramento State", "startsMs": 1793413800000}, g) == ("7", None)
     assert pin_event({"event": "Kent State @ Sacramento State", "startsMs": 1793413800000 + 86400000}, g)[0] is None
     assert bets_from_phone([{"id": "a", "origin": "engine"}, {"id": "b", "how": "manual", "made": "bet", "odds": 108, "market": "Spread", "selection": "X +1.5"}])[0]["who"] == "hand bet"

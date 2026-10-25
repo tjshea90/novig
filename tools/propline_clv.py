@@ -30,6 +30,9 @@ STAT_KEYS = {  # Novig market title (lower, letters only) -> PropLine market key
     "passingrushingyards": "player_pass_rush_yds", "goaliesaves": "goalie_saves", "blockedshots": "player_blocked_shots", "powerplaypoints": "player_power_play_points", "runs": "batter_runs",
     "earnedruns": "pitcher_earned_runs", "hitsallowed": "pitcher_hits_allowed", "walks": "batter_walks", "pitcherwalks": "pitcher_walks", "stolenbases": "batter_stolen_bases", "singles": "batter_singles",
     "doubles": "batter_doubles", "turnovers": "player_turnovers", "tackles": "player_tackles", "sacks": "player_sacks", "solotackles": "player_solo_tackles",
+    "outsrecorded": "pitcher_outs", "pitchingstrikeouts": "pitcher_strikeouts", "interceptionsthrown": "player_pass_interceptions", "battingwalks": "batter_walks", "walksallowed": "pitcher_walks",
+    "earnedrunsallowed": "pitcher_earned_runs", "battingstrikeouts": "batter_strikeouts", "longestpass": "player_longest_completion", "fieldgoalsmade": "player_field_goals_made",
+    "kickingpoints": "player_kicking_points", "rushingandreceivingyards": "player_rush_reception_yds",
 }
 
 
