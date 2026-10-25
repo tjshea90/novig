@@ -1,6 +1,9 @@
 package com.tjshea.vigilant.data.cloud
 
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 
 /**
  * A Claude session may change any setting or switch of the app and the engine, except STOP ALL (Tj, 2026-10-18, TCL113: "any Claude session to be able to change and toggle on and off any setting and any switch
