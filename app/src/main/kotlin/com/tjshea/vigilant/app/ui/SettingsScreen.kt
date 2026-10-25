@@ -2094,6 +2094,12 @@ private fun ColumnScope.BackgroundScanSection(s: ScanSettings, onUpdate: ((ScanS
     val context = androidx.compose.ui.platform.LocalContext.current
     val on = BackgroundScan.on(s)
     SectionTitle("Background scan")
+    // PB8/PB9 (Tj, 2026-10-25: settings must not contradict each other; "the phone app is only a monitor and control center"): with the GitHub engine scanning and trading, the phone's background scan
+    // does not run, so its interval and keep-awake are not offered (they would do nothing). They come back when the cloud scan or the engine's trading is turned off.
+    if (s.phoneRests) {
+        Hint("The GitHub engine scans and places the bets around the clock, so this phone runs nothing in the background and uses no battery while Vigilant is closed. Turn the cloud scan or the engine's trading off to use the phone's own background scan.")
+        return
+    }
     SwitchRow(
         "Keep scanning in the background",
         "Keeps reading for new bets every few seconds or minutes with Vigilant closed or the phone locked: that's what sends alerts and runs auto-bet.",
