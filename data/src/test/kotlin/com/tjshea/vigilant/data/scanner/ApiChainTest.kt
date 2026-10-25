@@ -27,11 +27,11 @@ class ApiChainTest {
 
     @Test
     fun `a feed waits for the better feeds that are on, the best waits for none, and exchanges are not on a chain`() {
-        val on = listOf("kalshi", "sgo", "oddspapi", "parlay", "unabated", "sgo-props", "oddspapi-props")
+        val on = listOf("kalshi", "sgo", "oddspapi_free", "parlay", "oddsapi", "sgo-props", "oddspapi_free-props")
         assertEquals(emptyList<String>(), ApiChain.better("sgo", on))
-        assertEquals(listOf("sgo"), ApiChain.better("oddspapi", on))
-        assertEquals(listOf("sgo", "oddspapi", "parlay"), ApiChain.better("unabated", on))
-        assertEquals(listOf("sgo-props"), ApiChain.better("oddspapi-props", on))
+        assertEquals(listOf("sgo"), ApiChain.better("oddspapi_free", on))
+        assertEquals(listOf("sgo", "oddspapi_free", "parlay"), ApiChain.better("oddsapi", on))
+        assertEquals(listOf("sgo-props"), ApiChain.better("oddspapi_free-props", on))
         assertEquals("a feed that is off is not waited for", listOf("sgo"), ApiChain.better("parlay", listOf("sgo", "parlay")))
         assertEquals(emptyList<String>(), ApiChain.better("kalshi", on))
         assertNull(ApiChain.kindOf("polymarket"))
@@ -39,16 +39,16 @@ class ApiChainTest {
 
     @Test
     fun `when the better feeds gave the league's lines the next best sleeps`() {
-        assertFalse(ApiChain.needed("oddspapi", nfl, ScanSettings(), ctx()))
-        assertFalse(ApiChain.needed("unabated", nfl, ScanSettings(), ctx()))
+        assertFalse(ApiChain.needed("oddspapi_free", nfl, ScanSettings(), ctx()))
+        assertFalse(ApiChain.needed("oddsapi", nfl, ScanSettings(), ctx()))
     }
 
     @Test
     fun `API study mode asks every feed that is on even when the better ones answered`() {
         val study = ScanSettings(gates = ApiGates(askAllSources = true))
-        assertTrue(ApiChain.needed("oddspapi", nfl, study, ctx()))
-        assertTrue(ApiChain.needed("unabated", nfl, study, ctx()))
-        assertFalse("off by default", ApiChain.needed("unabated", nfl, ScanSettings(), ctx()))
+        assertTrue(ApiChain.needed("oddspapi_free", nfl, study, ctx()))
+        assertTrue(ApiChain.needed("oddsapi", nfl, study, ctx()))
+        assertFalse("off by default", ApiChain.needed("oddsapi", nfl, ScanSettings(), ctx()))
     }
 
     @Test
@@ -75,14 +75,14 @@ class ApiChainTest {
             val stale = SourceScore.Measure("sgo", 500, 380_000L, 1.0, 50, now)
             ApiChain.measures = mapOf("propline" to fresh, "sgo" to stale)
             assertEquals("propline", ApiChain.order()[0].first())
-            assertEquals(listOf("propline"), ApiChain.better("oddspapi", listOf("propline", "sgo", "oddspapi")).take(1))
+            assertEquals(listOf("propline"), ApiChain.better("oddspapi_free", listOf("propline", "sgo", "oddspapi_free")).take(1))
             // unabated has no measurement: auditioned once...
-            assertTrue(ApiChain.needed("unabated", nfl, ScanSettings(), ctx()))
+            assertTrue(ApiChain.needed("oddsapi", nfl, ScanSettings(), ctx()))
             // ...and not asked again at once.
-            assertFalse(ApiChain.needed("unabated", nfl, ScanSettings(), ctx()))
+            assertFalse(ApiChain.needed("oddsapi", nfl, ScanSettings(), ctx()))
             // With the switch off nothing is auditioned.
             ApiChain.reset(); ApiChain.measures = mapOf("propline" to fresh)
-            assertFalse(ApiChain.needed("unabated", nfl, ScanSettings(gates = ApiGates(rankByMeasure = false)), ctx()))
+            assertFalse(ApiChain.needed("oddsapi", nfl, ScanSettings(gates = ApiGates(rankByMeasure = false)), ctx()))
         } finally {
             ApiChain.reset()
         }
@@ -90,31 +90,31 @@ class ApiChainTest {
 
     @Test
     fun `when no better feed answered the league (failed, out of credits, held back) the next best takes over`() {
-        assertTrue(ApiChain.needed("oddspapi", nfl, ScanSettings(), ctx(answered = false)))
+        assertTrue(ApiChain.needed("oddspapi_free", nfl, ScanSettings(), ctx(answered = false)))
     }
 
     @Test
     fun `a game the better feeds left without lines is filled by the next best`() {
-        assertTrue(ApiChain.needed("oddspapi", nfl, ScanSettings(), ctx(covered = null)))
-        assertTrue(ApiChain.needed("oddspapi", nfl, ScanSettings(), ctx(covered = setOf("PROP:RECEPTIONS"))))
+        assertTrue(ApiChain.needed("oddspapi_free", nfl, ScanSettings(), ctx(covered = null)))
+        assertTrue(ApiChain.needed("oddspapi_free", nfl, ScanSettings(), ctx(covered = setOf("PROP:RECEPTIONS"))))
         // Nothing on Novig to price: nothing to ask for.
-        assertFalse(ApiChain.needed("oddspapi", nfl, ScanSettings(), ctx(covered = null, events = emptyList())))
+        assertFalse(ApiChain.needed("oddspapi_free", nfl, ScanSettings(), ctx(covered = null, events = emptyList())))
     }
 
     @Test
     fun `player props are asked of the next best only for a game with props on Novig and none priced`() {
         val props = listOf(market("MONEY"), market(PropStats.NOVIG_TYPES.first(), "prop"))
-        assertTrue(ApiChain.needed("oddspapi-props", nfl, ScanSettings(), ctx(covered = setOf("MONEYLINE:0"), markets = props)))
-        assertFalse(ApiChain.needed("oddspapi-props", nfl, ScanSettings(), ctx(covered = setOf("PROP:RECEPTIONS"), markets = props)))
-        assertFalse("no props listed on Novig: nothing to price", ApiChain.needed("oddspapi-props", nfl, ScanSettings(), ctx(covered = setOf("MONEYLINE:0"))))
+        assertTrue(ApiChain.needed("oddspapi_free-props", nfl, ScanSettings(), ctx(covered = setOf("MONEYLINE:0"), markets = props)))
+        assertFalse(ApiChain.needed("oddspapi_free-props", nfl, ScanSettings(), ctx(covered = setOf("PROP:RECEPTIONS"), markets = props)))
+        assertFalse("no props listed on Novig: nothing to price", ApiChain.needed("oddspapi_free-props", nfl, ScanSettings(), ctx(covered = setOf("MONEYLINE:0"))))
     }
 
     @Test
     fun `a book only the lower feed carries and Tj has on is an extra that is asked for, once the better feeds sent it it is not`() {
-        val s = ScanSettings(oddsPapi = true, opExtraBooks = true)
-        assertTrue(ApiChain.needed("oddspapi", nfl, s, ctx(books = setOf("draftkings"))))
-        assertFalse(ApiChain.needed("oddspapi", nfl, s, ctx(books = setOf("draftkings", "circa", "superbook", "bet365"))))
-        assertFalse("switch off: no extra", ApiChain.needed("oddspapi", nfl, s.copy(opExtraBooks = false), ctx(books = setOf("draftkings"))))
+        val s = ScanSettings(oddsPapiFree = true, opExtraBooks = true)
+        assertTrue(ApiChain.needed("oddspapi_free", nfl, s, ctx(books = setOf("draftkings"))))
+        assertFalse(ApiChain.needed("oddspapi_free", nfl, s, ctx(books = setOf("draftkings", "circa", "superbook", "bet365"))))
+        assertFalse("switch off: no extra", ApiChain.needed("oddspapi_free", nfl, s.copy(opExtraBooks = false), ctx(books = setOf("draftkings"))))
     }
 
     @Test
@@ -128,8 +128,8 @@ class ApiChainTest {
         assertTrue("every better feed failed: always asked", ApiChain.needed("oddsapi", nfl, ScanSettings(), ctx(answered = false)))
         assertTrue("and again", ApiChain.needed("oddsapi", nfl, ScanSettings(), ctx(answered = false)))
         // A flat-rate feed is not held back this way.
-        assertTrue(ApiChain.needed("oddspapi", nfl, ScanSettings(), gap))
-        assertTrue(ApiChain.needed("oddspapi", nfl, ScanSettings(), gap))
+        assertTrue(ApiChain.needed("oddspapi_free", nfl, ScanSettings(), gap))
+        assertTrue(ApiChain.needed("oddspapi_free", nfl, ScanSettings(), gap))
         ApiChain.reset()
     }
 }

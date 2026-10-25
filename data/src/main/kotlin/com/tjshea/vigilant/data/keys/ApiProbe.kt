@@ -40,7 +40,6 @@ class ApiProbe(
         val propLine: String = "https://api.prop-line.com/v1",
         val sgo: String = "https://api.sportsgameodds.com/v2",
         val op4: String = "https://api.oddspapi.io",
-        val unabated: String = "https://data.unabated.com",
         val sxbet: String = "https://api.sx.bet",
         val sharpapi: String = "https://api.sharpapi.io/api/v1",
         val bolt: String = "https://spro.agency/api",

@@ -43,7 +43,7 @@ class ApiProbeTest {
     private val probe by lazy { ApiProbe(
         OkHttpClient(), meter, null, { clockMs },
         ApiProbe.Hosts(
-            oddsApi = base("odds"), propLine = base("pl"), sgo = base("sgo"), op5 = base("op5"), op4 = base("op4"), unabated = base("un"), bolt = base("bolt"), pinnodds = base("pinnodds"),
+            oddsApi = base("odds"), propLine = base("pl"), sgo = base("sgo"), op4 = base("op4"), bolt = base("bolt"), pinnodds = base("pinnodds"),
             pinnwire = base("wire"), pinnapi = base("pinnapi"), kalshi = base("kalshi"), polymarket = base("poly"),
         ),
     ) }
