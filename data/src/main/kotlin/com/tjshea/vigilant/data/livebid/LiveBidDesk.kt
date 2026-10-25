@@ -530,10 +530,10 @@ class LiveBidDesk(
         val rules = repeat() ?: return null
         val pos = ArrayList(held)
         val day = ApiBetPlacer.localMidnight(now)
-        if (!cfg.real) bids.values.filter { it.postedAtMs >= day && it.filled > 0 }.mapTo(pos) { com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(it.marketId, it.outcomeId, it.paid, it.filled * EvMath.CONTRACT_PAYOUT_DOLLARS) }
+        if (!cfg.real) bids.values.filter { it.postedAtMs >= day && it.filled > 0 }.mapTo(pos) { com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(it.marketId, it.outcomeId, it.paid, it.filled * EvMath.CONTRACT_PAYOUT_DOLLARS, who = com.tjshea.vigilant.data.tracker.RepeatGuard.Who.BID) }
         bids.values.filter { it.active && it.clientId != replacing?.clientId && it.clientId !in replaced && it.restingDollars > 0.0 }
-            .mapTo(pos) { com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(it.marketId, it.outcomeId, it.restingDollars, (it.contracts - it.filled).coerceAtLeast(0) * EvMath.CONTRACT_PAYOUT_DOLLARS, count = 0) }
-        return com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules, pos, w.marketId, w.outcomeId, cost, contracts * EvMath.CONTRACT_PAYOUT_DOLLARS)
+            .mapTo(pos) { com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(it.marketId, it.outcomeId, it.restingDollars, (it.contracts - it.filled).coerceAtLeast(0) * EvMath.CONTRACT_PAYOUT_DOLLARS, count = 0, who = com.tjshea.vigilant.data.tracker.RepeatGuard.Who.BID) }
+        return com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules, pos, w.marketId, w.outcomeId, cost, contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, who = com.tjshea.vigilant.data.tracker.RepeatGuard.Who.BID)
     }
 
     /** Why a bid costing [cost] must not go up, or null. Inside [mu]. Every bid not yet over counts as if it fills. */

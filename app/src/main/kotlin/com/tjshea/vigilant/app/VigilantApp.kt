@@ -1777,7 +1777,7 @@ class AppContainer(val app: Application) {
             repeat = { settingsStore.flow.value?.gates?.repeatRules() },
             held = {
                 com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(tracker.all()) + com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(makerStore.all()) +
-                    liveBidDesk.bidsNow().filter { it.active && it.restingDollars > 0.0 }.map { com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(it.marketId, it.outcomeId, it.restingDollars, (it.contracts - it.filled).coerceAtLeast(0) * com.tjshea.vigilant.engine.EvMath.CONTRACT_PAYOUT_DOLLARS, count = 0) }
+                    liveBidDesk.bidsNow().filter { it.active && it.restingDollars > 0.0 }.map { com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(it.marketId, it.outcomeId, it.restingDollars, (it.contracts - it.filled).coerceAtLeast(0) * com.tjshea.vigilant.engine.EvMath.CONTRACT_PAYOUT_DOLLARS, count = 0, who = com.tjshea.vigilant.data.tracker.RepeatGuard.Who.BID) }
             },
         )
     }
