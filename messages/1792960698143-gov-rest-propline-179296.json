@@ -1,0 +1,1 @@
+{"id":"gov-rest-propline-1792960698143","at":1792960698143,"from":"engine","kind":"info","title":"Resting PropLine to save usage","body":"It answered but none of its lines matched a Novig game for 6 scans in a row (it only slowed the scan), so the engine scans without it for 1 h, then asks it once more (strike 1 of 3).","priority":0,"action":null}
