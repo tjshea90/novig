@@ -84,7 +84,7 @@ class RealtimeList(
     }
 
     /** One line for the engine's log and status. */
-    fun describe(): String = "real-time list: $watched sides watched (within ${nearPoints.toInt()} pts of +EV), $passes passes, last ${lastPassMs} ms; $turnedPositive turned +EV between scans, $dropped left the list"
+    fun describe(): String = "real-time list: $watched sides watched (within ${Math.round(nearPoints * 100)} pts of +EV), $passes passes, last ${lastPassMs} ms; $turnedPositive turned +EV between scans, $dropped left the list"
 
     /** Pregame, priced, not started, and within reach of +EV. */
     private fun keep(o: Opportunity, now: Long): Boolean =
@@ -99,8 +99,8 @@ class RealtimeList(
         if (m.size <= maxRows) m else m.values.sortedByDescending { it.evPercent ?: Double.NEGATIVE_INFINITY }.take(maxRows).associateBy { it.key }
 
     companion object {
-        /** Sides this far below +EV are watched: a move of a few points (steam) makes them bets. */
-        const val NEAR_POINTS = 4.0
+        /** Sides this far below +EV are watched (EV is a fraction: 0.04 = 4 points): a move of a few points (steam) makes them bets. */
+        const val NEAR_POINTS = 0.04
         /** At most this many sides are re-priced a pass (a pass is a few milliseconds of arithmetic per thousand). */
         const val MAX_ROWS = 6_000
         /** How often a pass runs. */
