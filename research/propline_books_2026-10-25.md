@@ -14,11 +14,11 @@ including alternate lines ... not double counting same companies or same odds pr
 - **PropLine's own read cadence** (heartbeat, engine log 19:04 UTC): NBA every 61 s, NHL 73 s, NFL 276 s, NCAAF / MLB / WNBA 600 s. Football quotes from PropLine are minutes old by construction; nothing on our side speeds that.
 
 ## Decisions (CHANGES.md PX9, each with its revert rule)
-1. **36 more PropLine books** (`PropLineClient.ADDED_2026_10_25_MEASURED`): Tonybet, Courtside, STS, Pamestoixima, SportyBet NG, Rebet, Jazz Sports, Sportzino, Bet25, Thrillzz, Bet99, Fortuna CZ/PL, Totalbet, Sportium, PSK,
+1. **34 more PropLine books** (`PropLineClient.ADDED_2026_10_25_MEASURED`): Tonybet, STS, Pamestoixima, SportyBet NG, Rebet, Sportzino, Bet25, Thrillzz, Bet99, Fortuna CZ/PL, Totalbet, Sportium, PSK,
    Danske Spil, Mise-o-jeu, Napoleon, PlayNow, Veikkaus, Admiralbet DE, Synot, Betr AU, Ladbrokes BE, Novibet, Sazka, Strendus, Soccerbet, Betika, Norsk Tipping, Star Sports, Toto, PlayUp, LVBet, NetBet RO. Each posts 100-2,000
    lines on the scanned leagues, mean distance from the market 0.4-1.3 points (DraftKings 1.2, FanDuel 1.5), margin 4-10%, median quote age under 5 minutes. Not added: margin over 10% (Placard, Solverde, Olybet, Jouez Sport,
-   PMU, Teapuesto), median quote over 5 minutes old (Bet9ja, SupaBets, Marca Apuestas, Wplay, Meridianbet, Betathome, PalmerBet, PlayAlberta, Codere MX), SX Bet (its own source). 71 books in all; the stream's filter is 646 characters
-   (limit 1,000).
+   PMU, Teapuesto), median quote over 5 minutes old (Bet9ja, SupaBets, Marca Apuestas, Wplay, Meridianbet, Betathome, PalmerBet, PlayAlberta, Codere MX), SX Bet (its own source). 69 books in all; the stream's filter is about 625 characters
+   (limit 1,000). Courtside and Jazz Sports (each 52% with DraftKings) were left out as likely clones of one desk.
 2. **Companies** (`engine/BookCompany`): Superbet PL, Superbet RO and Napoleon are ONE desk (80-83% of 550-920 shared lines) and **not Kambi's** (under 25% with every Kambi book; the earlier grouping followed Kambi's
    announcement for tennis): moved out of the Kambi group. Fortuna CZ and PL are one operator (71% of 498). A book that tracks nothing above 77% stays its own company (the 80% rule of 2026-10-11). The regional cluster
    Betika / SportyBet / Tonybet / Meridianbet / Betway ZA / Pamestoixima tracks at 73-77% (a common upstream feed is likely, not proven): counted as separate books until a pair crosses 80%.
