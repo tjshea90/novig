@@ -1315,3 +1315,8 @@ Are the odds really this old? It is a socket. Is it configured correctly? Should
 ```
 Resume work from the checkpoint 
 ```
+
+## 2026-10-25T23:49:57Z
+```
+When I pull to refresh in the engine window, I don't think it needs to read the apis every time, make it refresh only the engine data such as status, active bets/bids, health, etc. and a separate button on the apis tab to refresh api status and meters
+```
