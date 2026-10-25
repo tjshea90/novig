@@ -4,10 +4,11 @@ Every study in `research/`, newest first, and how it is USED. Tuning levers and 
 Statuses: APPLIED (a change in `research/review/CHANGES.md` cites it), LEVER (on LEVERS.md), CLOSED (verdict and disposition on LEVERS.md), WATCH (an open TASKS.md item waits on its number),
 CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a sample, marked in its first lines), IDLE (cited nowhere: act on it or mark it).
 
-129 entries; 7 idle: api_audit_report_2026-10-22.html, api_docs_review_2026-10-25.md, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md
+130 entries; 8 idle: api_audit_report_2026-10-22.html, api_docs_review_2026-10-25.md, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, parlayapi_business_2026-10-25, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
+| 2026-10-25 | `parlayapi_business_2026-10-25/` | (no title) | IDLE |
 | 2026-10-25 | `api_docs_review_2026-10-25.md` | API docs re-review, 2026-10-25 (PSL NR1/PR1/FR1; Tj: "do another thorough research of novig docs ... parlayapi ... kalshi, polymarket, sx bet, and ESPN") - Method: `api-docs.yml` (free GitHub runner, keyless) mirrored every pro... | IDLE |
 | 2026-10-25 | `PROPLINE_STREAMING_2026-10-25.md` | PropLine Streaming Lite: what it gives and how Vigilant uses it (Tj, 2026-10-25, PSL) - Tj upgraded the PropLine key on GitHub (`PROPLINE_API_KEY`) to **Streaming Lite** ($39/mo). Docs saved verbatim | APPLIED CODE |
 | 2026-10-24 | `trends_2026-10-24/` | (no title) | CLOSED |
