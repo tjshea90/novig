@@ -415,7 +415,7 @@ object Pricing {
      * later feed's quote is newer by more than [FRESHER_BY_MS]; a quote with no time never replaces one.
      */
     fun bookPrices(ref: RefEvent, key: LineKey, freshest: Boolean = true): List<BookPrices> =
-        chosenMarkets(ref, key, freshest).map { (m, odds) -> BookPrices(m.bookKey, m.bookTitle, odds, m.lastUpdateMs) }
+        chosenMarkets(ref, key, freshest).map { (m, odds) -> BookPrices(m.bookKey, m.bookTitle, odds, m.lastUpdateMs, m.source) }
 
     /** The quotes [bookPrices] uses for [key], each with its odds in [LineKey.sides] order: one per book, the freshest feed's where two sent it ([freshest]). */
     fun chosenMarkets(ref: RefEvent, key: LineKey, freshest: Boolean = true): List<Pair<com.tjshea.vigilant.data.reference.RefBookMarket, List<Double>>> {

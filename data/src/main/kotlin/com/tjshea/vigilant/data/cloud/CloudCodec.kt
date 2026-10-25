@@ -195,10 +195,10 @@ object CloudCodec {
     private fun bookFair(j: JsonObject) = BookFair(book(j.obj("b")), j["fp"]!!.jsonArray.map { it.num()!! }, j.dbl("h")!!, j["sh"]?.let { (it as? JsonPrimitive)?.booleanOrNull } ?: false)
 
     private fun book(b: BookPrices) = buildJsonObject {
-        put("k", b.bookKey); put("t", b.bookTitle); put("o", doubles(b.decimalOdds)); b.lastUpdateMs?.let { put("u", it) }
+        put("k", b.bookKey); put("t", b.bookTitle); put("o", doubles(b.decimalOdds)); b.lastUpdateMs?.let { put("u", it) }; b.source?.let { put("s", it) }
     }
 
-    private fun book(j: JsonObject) = BookPrices(j.str("k"), j.str("t"), j["o"]!!.jsonArray.map { it.num()!! }, j.lng("u"))
+    private fun book(j: JsonObject) = BookPrices(j.str("k"), j.str("t"), j["o"]!!.jsonArray.map { it.num()!! }, j.lng("u"), (j["s"] as? JsonPrimitive)?.contentOrNull)
 
     internal fun doubles(l: List<Double>) = buildJsonArray { l.forEach { add(JsonPrimitive(it)) } }
     internal fun strings(l: List<String>) = buildJsonArray { l.forEach { add(JsonPrimitive(it)) } }

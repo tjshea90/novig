@@ -79,6 +79,8 @@ data class BookPrices(
     val bookTitle: String,
     val decimalOdds: List<Double>,
     val lastUpdateMs: Long? = null,
+    /** Which feed sent this book's quote (its source id, e.g. `parlay`, `propline`), for the bet sheet's age column (PB20); null when not known. */
+    val source: String? = null,
 )
 
 /** One book, devigged on its own. [hold] is its margin (sum of implied probabilities − 1). */
