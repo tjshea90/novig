@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "39f01d54635f5d02c61db8e3a6f5109b0b6c14fa",
+ "head": "b20bd61f3fc827c3390a4adfa657df85dcc1bf45",
  "since": 1792915284,
- "beat": 1792951129,
- "beatIso": "2026-10-25T17:58:49Z",
- "done": "PX done: books per bet median 5 (from 1-2), ParlayAPI pricing, scans unfrozen; research/px_books_per_bet_2026-10-25.md",
- "next": "PX4: ship app? (engine-only changes landed; app unchanged except none) - tell Tj; next PB8/PB12"
+ "beat": 1792951165,
+ "beatIso": "2026-10-25T17:59:25Z",
+ "done": "PX study linked in LEVERS",
+ "next": "PB8/PB12"
 }
