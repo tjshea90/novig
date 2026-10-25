@@ -80,6 +80,8 @@ class ApiBetPlacer(
     private val repeatRules: () -> com.tjshea.vigilant.data.tracker.RepeatGuard.Rules? = { null },
     /** What Vigilant's resting bids would hold if they filled, for the guard (they count toward the other-side test, not toward the count of bets). */
     private val restingPositions: suspend () -> List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = { emptyList() },
+    /** The GitHub engine's own order ids: its fills imported into the Tracker are counted from its ledger (in [restingPositions]), not twice. */
+    private val engineOrderIds: () -> Set<String> = { emptySet() },
 ) {
 
     /** What [stake] would do now: the confirm sheet's numbers. Reads the book; sends nothing. [limitsOverride]: the auto-bet's own limits. */
@@ -131,8 +133,9 @@ class ApiBetPlacer(
         val rules = repeatRules() ?: return result
         val ready = result as? PlanResult.Ready ?: return result
         val p = ready.plan
-        val held = com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(all) + restingPositions() + pending.map { it.pos }
-        val why = com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules, held, target.market.marketId, target.outcomeId, p.expectedCost, p.payout, target.market.outcomes.map { it.outcomeId }, com.tjshea.vigilant.data.tracker.RepeatGuard.family(target.eventName, target.startsTs, target.marketLabel, target.selection)) ?: return result
+        val held = com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(all, engineOrderIds()) + restingPositions() + pending.map { it.pos }
+        val who = if (limits.manual) com.tjshea.vigilant.data.tracker.RepeatGuard.Who.HAND else com.tjshea.vigilant.data.tracker.RepeatGuard.Who.AUTO
+        val why = com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules, held, target.market.marketId, target.outcomeId, p.expectedCost, p.payout, target.market.outcomes.map { it.outcomeId }, com.tjshea.vigilant.data.tracker.RepeatGuard.family(target.eventName, target.startsTs, target.marketLabel, target.selection), who) ?: return result
         return if (limits.manual) PlanResult.Ready(p.copy(note = listOfNotNull(p.note, "Heads up: $why You can still place it.").joinToString(" ")))
         else PlanResult.Refused("Not bet: $why")
     }
