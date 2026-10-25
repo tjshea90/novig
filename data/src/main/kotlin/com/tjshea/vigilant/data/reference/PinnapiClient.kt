@@ -146,7 +146,7 @@ class PinnapiClient(
         throw ReferenceException(problem ?: "No Pinnacle key. Add a free PinnWire or pinnapi key in Settings.")
     }
 
-    @Volatile private var firstReadAtMs = 0L
+    @Volatile private var firstReadAtMs = Long.MIN_VALUE / 2
 
     /** Reads with `sport_id=all` (for Diagnostics: one request standing in for a scan's sports). */
     @Volatile var allSportReads = 0
