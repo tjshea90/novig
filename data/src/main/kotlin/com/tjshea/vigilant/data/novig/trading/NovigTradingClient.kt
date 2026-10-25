@@ -274,6 +274,24 @@ open class NovigTradingClient(
     }
 
     /**
+     * The open positions marked to their markets' last trades (`GET /v3/portfolio/pnl`, Novig changelog 2026-10-23): `basis` (what they cost, less any payout already received for holding both
+     * outcomes) and `value` (what settling at `last` would pay; a position with no trade yet counts at cost), summed over EVERY open position whatever the page size, so one row is asked for. Cash plus
+     * value is the subaccount's net liquidation value; value minus basis its unrealized PnL. Throttle `account`, 1 token. Null when Novig sent no sums.
+     */
+    open suspend fun pnl(): Pnl? {
+        val o = json.parseToJsonElement(signer.call("GET", "/v3/portfolio/pnl", "limit=1")) as? kotlinx.serialization.json.JsonObject ?: return null
+        fun d(k: String) = (o[k] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toDoubleOrNull()
+        val basis = d("basis") ?: return null
+        val value = d("value") ?: return null
+        return Pnl(basis, value)
+    }
+
+    /** [pnl]'s sums, dollars. */
+    data class Pnl(val basis: Double, val value: Double) {
+        val unrealized: Double get() = value - basis
+    }
+
+    /**
      * Ledger rows of [kind] (every kind when null) for [subaccountKeyId] in ([startsAfterMs], [startsBeforeMs]) (both exclusive; the 2026-10-12 docs call them bounds on the row's time, older pages
      * on the event's scheduled start), paged until [maxRows].
      */
