@@ -115,6 +115,10 @@ object RepeatGuard {
         return "Already held on $what${labels(similar)}: $whom.$left"
     }
 
+    /** Whether a BET (Tj's by hand, or an automatic one) is held on [outcomeId] or on one just like it ([family]): then no bid goes up there and a resting one comes down. */
+    fun betHeld(held: List<Pos>, outcomeId: String, family: String): Boolean =
+        held.any { it.who != Who.BID && (it.outcomeId == outcomeId || (family.isNotBlank() && it.family == family)) }
+
     /** What may still go on [family] (and the side [outcomeId]) under the similar-bets limit; null when there is no limit to go by. */
     fun room(rules: Rules?, held: List<Pos>, outcomeId: String, family: String): Double? {
         if (rules == null || rules.maxFamilyDollars <= 0.0 || family.isBlank()) return null

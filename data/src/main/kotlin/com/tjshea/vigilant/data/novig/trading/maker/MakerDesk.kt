@@ -611,6 +611,7 @@ class MakerDesk(
         it.orderId!!, it.marketId, it.outcomeId, it.price, (it.contracts - it.filled).coerceAtLeast(0), it.filled, it.expiresAtMs,
         auto = it.auto, evAtFair = it.evAtFair, leads = it.bestBidAtPost.let { b -> b == null || b < it.price - 1e-9 }, obscure = it.obscure,
         game = GameRef(it.eventId, it.eventName, it.startsTs, it.league),
+        family = com.tjshea.vigilant.data.tracker.RepeatGuard.family(it.eventName, it.startsTs, it.marketLabel, it.selection), label = it.selection,
     )
 
     /**

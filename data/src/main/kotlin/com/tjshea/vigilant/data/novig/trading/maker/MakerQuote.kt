@@ -829,6 +829,9 @@ data class RestingBid(
     val obscure: Boolean = false,
     /** The game it is on, for the per-game limit ([MakerRules.maxPerGame]); null = not known (it counts toward no game). */
     val game: GameRef? = null,
+    /** What it rides on with bets just like it ([com.tjshea.vigilant.data.tracker.RepeatGuard.family]), and its selection in words; "" = not known. */
+    val family: String = "",
+    val label: String = "",
 ) {
     val restingDollars: Double get() = remaining * price * EvMath.CONTRACT_PAYOUT_DOLLARS
 
@@ -926,6 +929,8 @@ object MakerPlan {
                 // Belt and braces (Tj, 2026-10-12: every resting bid is re-checked against each scan and comes down the moment it is not +EV): a bid priced at or over the fair this pass worked out
                 // (the anchor when a sharp book lowered it) has no edge left, whatever else says it can stay.
                 r.price >= (w.anchorFair ?: w.line.fair ?: 1.0) - 1e-9 -> "No longer +EV: its price is at or over the fair"
+                // A bet on it or on one just like it arrived since it went up (by hand or by the engine): the bid comes down (Tj, 2026-10-25: no bids on what is already bet).
+                rules.repeat != null && com.tjshea.vigilant.data.tracker.RepeatGuard.betHeld(held, r.outcomeId, r.family.ifBlank { com.tjshea.vigilant.data.tracker.RepeatGuard.family(w.line.eventName, w.line.startsTs, w.line.marketLabel, w.line.selection) }) -> BET_HELD
                 else -> null
             }
             if (why == null) {
@@ -990,7 +995,11 @@ object MakerPlan {
         class Room(var bids: Int, var dollars: Double, var spend: Double, var games: List<GameExposure.Item>, var pos: List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos>,
             var gameBids: Map<String, Int> = emptyMap(), var gameDollars: Map<String, Double> = emptyMap())
         // The repeat guard's picture: Tj's open bets, and every bid that stays up as if it filled (it adds to the other-side test but not to the count of bets).
-        val keptPos = if (rules.repeat != null) held + kept.map { com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(it.marketId, it.outcomeId, it.restingDollars, it.remaining * EvMath.CONTRACT_PAYOUT_DOLLARS, count = 0) } else emptyList()
+        val keptPos = if (rules.repeat != null) held + kept.map {
+            com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(it.marketId, it.outcomeId, it.restingDollars, it.remaining * EvMath.CONTRACT_PAYOUT_DOLLARS, count = 0,
+                family = it.family.ifBlank { byOutcome[it.outcomeId]?.line?.let { l -> com.tjshea.vigilant.data.tracker.RepeatGuard.family(l.eventName, l.startsTs, l.marketLabel, l.selection) }.orEmpty() },
+                who = com.tjshea.vigilant.data.tracker.RepeatGuard.Who.BID, label = it.label)
+        } else emptyList()
         val state = Room(bids, dollars, spend, onGames, keptPos, BidSpread.bidsPerGame(kept), BidSpread.dollarsPerGame(kept))
         /** Why [w] can't go up in [r] (the most bids, the pass's own limit when [passCapped], the most dollars, the per-game limit, the wallet), or null. */
         fun capacity(w: MakerDecision.Post, r: Room, passCapped: Boolean): String? = when {
@@ -1001,13 +1010,14 @@ object MakerPlan {
                 GAME_REACHED.format(money(rules.maxPerGame))
             rules.perGameBids > 0 && (r.gameBids[w.line.market.eventId] ?: 0) >= rules.perGameBids -> GAME_BIDS_REACHED.format(rules.perGameBids)
             rules.perGameBidDollars > 0.0 && (r.gameDollars[w.line.market.eventId] ?: 0.0) + w.cost > rules.perGameBidDollars + 1e-9 -> GAME_BID_DOLLARS_REACHED.format(money(rules.perGameBidDollars))
-            rules.repeat != null && com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules.repeat, r.pos, w.line.marketId, w.line.outcomeId, w.cost, w.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, w.line.market.outcomes.map { it.outcomeId }, com.tjshea.vigilant.data.tracker.RepeatGuard.family(w.line.eventName, w.line.startsTs, w.line.marketLabel, w.line.selection)) != null -> REPEAT_GUARD
+            rules.repeat != null && com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules.repeat, r.pos, w.line.marketId, w.line.outcomeId, w.cost, w.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, w.line.market.outcomes.map { it.outcomeId }, com.tjshea.vigilant.data.tracker.RepeatGuard.family(w.line.eventName, w.line.startsTs, w.line.marketLabel, w.line.selection), com.tjshea.vigilant.data.tracker.RepeatGuard.Who.BID) != null -> REPEAT_GUARD
             w.cost > r.spend + (freed[w.line.outcomeId] ?: 0.0) + 1e-9 -> BUDGET_REACHED
             else -> null
         }
         fun take(w: MakerDecision.Post, r: Room) {
             if (rules.maxPerGame > 0.0) r.games = r.games + w.gameItem
-            if (rules.repeat != null) r.pos = r.pos + com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(w.line.marketId, w.line.outcomeId, w.cost, w.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, count = 0)
+            if (rules.repeat != null) r.pos = r.pos + com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(w.line.marketId, w.line.outcomeId, w.cost, w.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, count = 0,
+                family = com.tjshea.vigilant.data.tracker.RepeatGuard.family(w.line.eventName, w.line.startsTs, w.line.marketLabel, w.line.selection), who = com.tjshea.vigilant.data.tracker.RepeatGuard.Who.BID, label = w.line.selection)
             r.bids++
             r.gameBids = r.gameBids + (w.line.market.eventId to ((r.gameBids[w.line.market.eventId] ?: 0) + 1))
             r.gameDollars = r.gameDollars + (w.line.market.eventId to ((r.gameDollars[w.line.market.eventId] ?: 0.0) + w.cost))
@@ -1136,7 +1146,8 @@ object MakerPlan {
     const val MAX_BIDS_REACHED = "the most bids up at once (%d) is reached"
     const val MAX_DOLLARS_REACHED = "the most dollars up at once (%s) is reached"
     const val BUDGET_REACHED = "the wallet (or today's limit for API bets) can't cover it beside the bids already up"
-    const val REPEAT_GUARD = "the repeat guard holds it back: this side is already bet or bid to your limit, or the other side of its market is held and both sides would not be a sure profit"
+    const val REPEAT_GUARD = "the repeat guard holds it back: this side or bets just like it are already bet or bid to your limits, or the other side of its market is held and both sides would not be a sure profit"
+    const val BET_HELD = "You or the engine bet this or a bet just like it: no bid on top of it"
     const val GAME_REACHED = "the most at risk on one game (%s) is reached"
     const val GAME_BIDS_REACHED = "the most bids on one game (%d) is reached"
     const val GAME_BID_DOLLARS_REACHED = "the most bid dollars on one game (%s) is reached"
