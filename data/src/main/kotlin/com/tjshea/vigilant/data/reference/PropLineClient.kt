@@ -256,6 +256,18 @@ class PropLineClient(
     /** The books a call asks for: the picked books, and Novig's relay unless it's off. */
     private fun asked(books: List<String>): List<String> = if (relayNovig) books + NOVIG else books
 
+    /** One answer of a request split by [bookParts]: each game's markets from every part together (the parts ask different books, so nothing is counted twice). */
+    private fun merge(boards: List<Board>): Board {
+        if (boards.size == 1) return boards.single()
+        val ev = LinkedHashMap<String, RefEvent>()
+        val nv = LinkedHashMap<String, RefEvent>()
+        for (b in boards) {
+            for (e in b.events) ev[e.id] = ev[e.id]?.let { it.copy(markets = it.markets + e.markets) } ?: e
+            for (e in b.novig) nv[e.id] = nv[e.id]?.let { it.copy(markets = it.markets + e.markets) } ?: e
+        }
+        return Board(ev.values.toList(), nv.values.toList())
+    }
+
     /** The book-id and event-page parameters, only when [bookIds] is on. */
     private fun idParams(): List<Pair<String, String>> = when {
         bookIds -> listOf("includeBookIds" to "true", "includeLinks" to "true")
