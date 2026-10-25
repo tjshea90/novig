@@ -1528,6 +1528,8 @@ data class ApiGates(
     val sxLiveReal: Boolean = false,
     /** Real orders on SharpAPI's Pinnacle live price ([PinnFeedChoice.SHARPAPI], Tj 2026-10-21, SA); off = paper only until its paper results are read. */
     val sharpApiLiveReal: Boolean = false,
+    /** Real orders on ParlayAPI's Pinnacle live price ([PinnFeedChoice.PARLAY], PB17b, 2026-10-25); off = paper only until its paper results are read. */
+    val parlayLiveReal: Boolean = false,
 ) {
     /** The guard's rules for the placers, or null with the guard switched off. */
     fun repeatRules(): com.tjshea.vigilant.data.tracker.RepeatGuard.Rules? =

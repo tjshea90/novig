@@ -347,6 +347,13 @@ class CloudSources(
         return com.tjshea.vigilant.data.sharpapi.SharpApiLiveFeed(sharpApiFeed, { com.tjshea.vigilant.data.sharpapi.SharpApiLiveFeed.leaguesFor(settings()) }, sink, scope)
     }
 
+    /** The live lane's feed on ParlayAPI's Pinnacle (PB17b): its odds and hot streams' held prices, or null with ParlayAPI or its socket off or no key. */
+    fun parlayLiveFeed(settings: () -> ScanSettings, sink: (String, Long) -> Unit, scope: kotlinx.coroutines.CoroutineScope): com.tjshea.vigilant.data.parlay.ParlayLiveFeed? {
+        val s = settings()
+        if (!s.useParlay || !s.gates.parlaySocket || !has(CloudKeys.PARLAY)) return null
+        return com.tjshea.vigilant.data.parlay.ParlayLiveFeed(parlayLive, { com.tjshea.vigilant.data.sharpapi.SharpApiLiveFeed.leaguesFor(settings()) }, sink, scope)
+    }
+
     /** SX Bet's socket (null without a scope): the engine hangs its research recorder on it. */
     val sxStream: com.tjshea.vigilant.data.sxbet.SxBetStream? get() = sxbet.stream
 

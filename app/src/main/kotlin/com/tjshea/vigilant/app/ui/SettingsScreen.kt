@@ -2581,6 +2581,14 @@ private fun PinnFeedChooser(state: UiState, onUpdate: ((ScanSettings) -> ScanSet
             g.sharpApiLiveReal, tag = "sharpApiLiveReal",
         ) { v -> onUpdate { it.copy(gates = it.gates.copy(sharpApiLiveReal = v)) } }
     }
+    if (w.parlay) {
+        val g = state.settings.gates
+        SwitchRow(
+            "Allow REAL orders on ParlayAPI's Pinnacle",
+            "Off (the default) = it decides, journals and follows up but sends nothing, and real live bets and bids stay paper whatever their own switches say. It is Pinnacle's price from ParlayAPI's hot stream on the GitHub engine: read the paper results first.",
+            g.parlayLiveReal, tag = "parlayLiveReal",
+        ) { v -> onUpdate { it.copy(gates = it.gates.copy(parlayLiveReal = v)) } }
+    }
     SwitchRow("Compare the website feed with the socket", "Runs the free website feed beside the Pinnodds socket and times every price version against it (it drives nothing). Needs the socket on.", w.compare && !w.website, tag = "pinnCompare") { v -> set { it.copy(compare = v) } }
     Text("Website feed pace: a pause between polls of each live game", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

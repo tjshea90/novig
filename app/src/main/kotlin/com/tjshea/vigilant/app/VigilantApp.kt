@@ -1726,6 +1726,7 @@ class AppContainer(val app: Application) {
             s.pinnWebsite.bolt && !s.gates.boltLiveReal -> "the soft-book average is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             s.pinnWebsite.sx && !s.gates.sxLiveReal -> "the SX Bet exchange mid is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             s.pinnWebsite.sharpApi && !s.gates.sharpApiLiveReal -> "SharpAPI's Pinnacle is paper-only until you allow real orders on it (Settings › Pinnodds live)"
+            s.pinnWebsite.parlay && !s.gates.parlayLiveReal -> "ParlayAPI's Pinnacle is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             trading == null -> "no betting key connected"
             wallet == null -> "wallet not read yet"
             wallet < stake * 1.2 -> "wallet too low"
@@ -1946,6 +1947,7 @@ class AppContainer(val app: Application) {
             s.liveBidReal && s.pinnWebsite.website -> "the free Pinnacle website feed is minutes old (cached): real live bids need the Pinnodds socket"
             s.liveBidReal && s.pinnWebsite.sx && !s.gates.sxLiveReal -> "the SX Bet exchange mid is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             s.liveBidReal && s.pinnWebsite.sharpApi && !s.gates.sharpApiLiveReal -> "SharpAPI's Pinnacle is paper-only until you allow real orders on it (Settings › Pinnodds live)"
+            s.liveBidReal && s.pinnWebsite.parlay && !s.gates.parlayLiveReal -> "ParlayAPI's Pinnacle is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             s.liveBidReal && s.pinnWebsite.bolt && !s.gates.boltLiveReal -> "the soft-book average is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             else -> null
         }
@@ -2082,6 +2084,13 @@ class AppContainer(val app: Application) {
         val website = s.pinnWebsite.noPinnKey
         // The engine reads its feed when it starts: a changed choice restarts it.
         if (pinnRunner.running && pinnRunWebsite != null && pinnRunFeed != s.pinnWebsite.feed) pinnRunner.stop("switching the live price feed")
+        if (s.pinnWebsite.parlay) {
+            // ParlayAPI's streams are held by the GitHub engine alone (the phone is the monitor): on the phone this feed has nothing to read.
+            if (pinnRunner.running) pinnRunner.stop("ParlayAPI's Pinnacle runs on the GitHub engine only.")
+            liveScan.clear("ParlayAPI's Pinnacle live feed runs on the GitHub engine: set live to GitHub (Live tab), or pick another feed for the phone (Settings › Pinnodds live).")
+            LiveFeedService.stop(app)
+            return
+        }
         if (s.pinnWebsite.bolt && (!boltActive(s) || !s.gates.boltSocket)) {
             if (pinnRunner.running) pinnRunner.stop(if (!s.gates.boltSocket) "BoltOdds' socket is switched off (Settings › APIs)." else "BoltOdds is not on (Settings › APIs & keys).")
             liveScan.clear("Live games from the soft-book average need BoltOdds switched on with a key (Settings › APIs & keys).")

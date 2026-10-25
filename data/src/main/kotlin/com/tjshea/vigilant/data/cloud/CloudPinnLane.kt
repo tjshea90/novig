@@ -219,6 +219,7 @@ class CloudPinnLane(
         /** The real-orders gate of the feed the engine is on (SX Bet's own, else the soft-book average's). */
         fun feedReal(s: ScanSettings) = when {
             s.pinnWebsite.sharpApi -> s.gates.sharpApiLiveReal
+            s.pinnWebsite.parlay -> s.gates.parlayLiveReal
             s.pinnWebsite.sx -> s.gates.sxLiveReal
             else -> s.gates.boltLiveReal
         }

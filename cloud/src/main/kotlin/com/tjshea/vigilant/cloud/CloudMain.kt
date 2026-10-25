@@ -406,6 +406,7 @@ fun main(args: Array<String>) = runBlocking {
             when {
                 settings().pinnWebsite.sharpApi -> sources.sharpApiLiveFeed(settings, sink, scope) ?: sources.boltLiveFeed(settings, sink, scope, rules)
                 settings().pinnWebsite.sx -> sources.sxLiveFeed(settings, sink, scope) ?: sources.boltLiveFeed(settings, sink, scope, rules)
+                settings().pinnWebsite.parlay -> sources.parlayLiveFeed(settings, sink, scope) ?: sources.boltLiveFeed(settings, sink, scope, rules)
                 else -> sources.boltLiveFeed(settings, sink, scope, rules)
             }
         },
