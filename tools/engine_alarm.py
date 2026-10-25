@@ -58,7 +58,7 @@ def in_hours(now_ms, cfg=None):
     cfg = cfg or {}
     if now_ms < int(cfg.get("manualStopUntilMs", 0) or 0):
         return False
-    if not bool(cfg.get("settings", {}).get("gates", {}).get("cloudHours", True)):
+    if not bool(cfg.get("settings", {}).get("gates", {}).get("cloudHours", False)):
         return True
     if now_ms < int(cfg.get("manualRunUntilMs", 0) or 0):
         return True
