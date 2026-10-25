@@ -14,7 +14,7 @@ class ApiSocketTogglesTest {
     private val withSockets = ApiEntry.entries.filter { it.hasSocket }
 
     @Test fun `exactly the APIs with a websocket have a socket switch`() {
-        assertEquals(setOf(ApiEntry.BOLTODDS, ApiEntry.PINNODDS, ApiEntry.KALSHI, ApiEntry.SXBET, ApiEntry.SHARPAPI, ApiEntry.PROPLINE), withSockets.toSet())
+        assertEquals(setOf(ApiEntry.BOLTODDS, ApiEntry.PINNODDS, ApiEntry.KALSHI, ApiEntry.SXBET, ApiEntry.SHARPAPI, ApiEntry.PROPLINE, ApiEntry.PARLAY), withSockets.toSet())
         ApiEntry.entries.filter { !it.hasSocket }.forEach { assertFalse("${it.name} has no socket", it.socketOn(ScanSettings())) }
     }
 
