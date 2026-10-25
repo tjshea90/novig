@@ -235,8 +235,12 @@ def cmd_streamprobe(outdir, sport="icehockey_nhl"):
                        ("book_freshness_pinnacle.json", "/v1/bookmakers/pinnacle/freshness"), ("book_freshness_fanduel.json", "/v1/bookmakers/fanduel/freshness"),
                        ("pinnacle_coverage.json", "/v1/pinnacle-coverage"), ("usage.json", "/v1/usage")]:
         st, h, data = request(path, key)
+        body = j(data)
+        if isinstance(body, dict):  # a public Release: never the account's e-mail or key fingerprint
+            for k in ("email", "api_key_fingerprint", "user_id", "account_id"):
+                body.pop(k, None)
         with open(os.path.join(outdir, name), "w") as f:
-            json.dump({"status": st, "credits_last": h.get("x-requests-last"), "body": trim(j(data), 12) if j(data) is not None else data[:2000].decode("utf8", "replace")}, f, indent=1)
+            json.dump({"status": st, "credits_last": h.get("x-requests-last"), "body": trim(body, 12) if body is not None else data[:2000].decode("utf8", "replace")}, f, indent=1)
         print("%s: HTTP %s" % (name, st))
     return 0
 
