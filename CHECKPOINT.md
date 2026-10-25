@@ -1,13 +1,13 @@
-# CHECKPOINT 4155 — read me first, then TASKS.md
+# CHECKPOINT 4156 — read me first, then TASKS.md
 
-**Written:** 2026-10-24T23:51:17Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-db7n0m` · **builds on:** `affbeeada` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T00:09:10Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-db7n0m` · **builds on:** `34f0085cd` (this checkpoint is the commit after it)
 
 ## Just done
-chat: answered ledger-profit method
+CH87c all-time profit = settled bets only
 
 ## Do this next
-CH87b/c implement ledger-based all-time profit
+check other graphs exclude non-final; ship in next release; CH87a wake lag
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ CH87b/c implement ledger-based all-time profit
 
 ## Last ten checkpoints
 ```
+  fecb13665 ckpt 4155: chat: answered ledger-profit method
   affbeeada ckpt 4154: chat: replied to profit screenshots
   d80033b3b ckpt 4153: chat: answered propline/chat-lag/profit (CH87)
   26a74408c ckpt 4152: ENGINEER 2026-10-24 done
@@ -26,5 +27,7 @@ CH87b/c implement ledger-based all-time profit
   008d574e5 ckpt 4148: pre-release: CH81i: order-end timing + NOFILL kept in the report; the phone
   ab0f4aa87 ckpt 4147: pre-ship: CH81i: order-end timing + NOFILL kept in the report; the phone st
   588b9c78b ckpt 4146: order-end diagnostics, NOFILL warn, bids 404 backoff
-  47d4fe5a7 ckpt 4145: CH81h CNO misses too
 ```
+
+(3 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
