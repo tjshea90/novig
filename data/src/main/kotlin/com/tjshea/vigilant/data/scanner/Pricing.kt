@@ -295,6 +295,7 @@ object Pricing {
             val all = bookPrices(ref, key, settings.gates.freshestWins).let { all ->
                 if (settings.lowUsageScan) all.filter { b -> b.lastUpdateMs != null && Freshness.fresh(b.lastUpdateMs, now, ref.commenceMs) } else all
             }
+            ref.markets.filter { key.matches(it) }.groupBy { it.source }.forEach { (src, l) -> QuoteCensus.add("atLine", src, l.size) }
             val prices = Freshness.freshFirst(all, now, { b -> b.lastUpdateMs }, { b -> b.bookKey in fairSettings.sharpBooks })
             if (prices.size < all.size) (all - prices.toSet()).groupBy { it.source }.forEach { (src, l) -> QuoteCensus.add("staleBesideFresh", src, l.size) }
             FairValue.compute(prices, fairSettings).also { f ->
