@@ -86,7 +86,8 @@ class ParlayStream(
     private suspend fun connect(sport: String, apiKey: String) = withContext(Dispatchers.IO) {
         val url = "$baseUrl/v1/sse/odds/$sport?kinds=game,prop&heartbeat_s=5&max_age_s=600&limit=1000"
         val req = Request.Builder().url(url).header("X-API-Key", apiKey).header("Accept", "text/event-stream").build()
-        val call = http.newBuilder().readTimeout(SILENT_READ_MS, TimeUnit.MILLISECONDS).build().newCall(req)
+        // A stream is one call that never ends: no whole-call deadline (the shared client's cut every stream after 30 s, 35 reconnects in 3 minutes on the first runner), only the silent-read one.
+        val call = http.newBuilder().callTimeout(0, TimeUnit.MILLISECONDS).readTimeout(SILENT_READ_MS, TimeUnit.MILLISECONDS).build().newCall(req)
         val cancel = coroutineContext[Job]?.invokeOnCompletion { call.cancel() }
         try {
             call.execute().use { resp ->
