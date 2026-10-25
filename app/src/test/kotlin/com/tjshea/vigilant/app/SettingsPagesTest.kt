@@ -342,8 +342,6 @@ class SettingsPagesTest {
     }
 
     @Test
-
-    @Test
     fun `the APIs page has a switch and a small Test button for every API, and Test active APIs`() {
         var settings by mutableStateOf(SampleScan.state().settings)
         val tested = ArrayList<com.tjshea.vigilant.app.ApiEntry>()
@@ -403,8 +401,6 @@ class SettingsPagesTest {
             }
         }
     }
-
-    @Test
 
     @Test
     fun `the Fair odds page has the wide-quote switch, on by default`() {
