@@ -1,13 +1,13 @@
-# CHECKPOINT 4192 — read me first, then TASKS.md
+# CHECKPOINT 4193 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T08:43:06Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-be05497a-18skm3` · **builds on:** `4ce3511ef` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T08:47:06Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-be05497a-18skm3` · **builds on:** `b63c4ff47` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v1.0.82 PB: real-time list (PropLine + ParlayAPI Business streams + Novig socket every 3 s), ParlayAPI Business odds stream and 15 books, NBA props, phone rests in background, engine 24/7, list over the tunnel, per-book quote ages on the Bet sheet
+pre-release: v1.0.82 PB: real-time list (PropLine + ParlayAPI Business streams + Novig socket every 3 s), ParlayAPI Business odds stream and 15 books, NBA props, phone rests in background, engine 24/7, list over the tunnel, per-book quote ages on the Bet sheet (versionCode 422, v1.0.82)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.82), then run: bash tools/record-release.sh v1.0.82 422 "v1.0.82 PB: real-time list (PropLine + ParlayAPI Business streams + Novig socket every 3 s), ParlayAPI Business odds stream and 15 books, NBA props, phone rests in background, engine 24/7, list over the tunnel, per-book quote ages on the Bet sheet"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ ship.sh gates and releases this
 
 ## Last ten checkpoints
 ```
+  b63c4ff47 ckpt 4192: pre-ship: v1.0.82 PB: real-time list (PropLine + ParlayAPI Business streams
   971e60854 ckpt 4191: pre-ship: v1.0.82 PB: real-time list (PropLine + ParlayAPI Business streams
   3becc8d30 ckpt 4190: PB14 bid desk lines re-made from real-time prices every 15 s; PB17 ParlayAP
   a059fd65a ckpt 4189: PB11/PB19/PB15/PB16 built (not yet full-suite tested): ParlayLive+ParlayStr
@@ -25,8 +26,4 @@ ship.sh gates and releases this
   ed57aa38f ckpt 4185: research index rebuilt (ParlayAPI Business docs folder)
   51f196e04 ckpt 4184: retry landing
   db6acb778 ckpt 4183: tests green: PB2-PB5 + engine hourly loop fix
-  8c2336acb ckpt 4182: tests green on PB2-PB5 + streamprobe
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
