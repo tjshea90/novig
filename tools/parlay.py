@@ -426,6 +426,48 @@ def cmd_gameprobe(outdir, sport="americanfootball_nfl", home="Cardinals", away="
     return 0
 
 
+def cmd_bookprobe(outdir, sports=("basketball_nba", "americanfootball_nfl", "icehockey_nhl")):
+    """PX9 (Tj 2026-10-25: "odds from as many books as possible"): the books ParlayAPI lists (/v1/bookmakers?all=true, free) and, per league, every book that quotes a full-game line on the board with
+    no `bookmakers=` filter (regions us,us2,eu,uk,au), with its line count and quote age: the books Vigilant's 15-book request leaves out. About 12 credits a league."""
+    keys = keys_from_env()
+    best = max(keys, key=lambda k: rank(usage_of(k)), default=None)
+    if not best:
+        print("no key")
+        return 0
+    os.makedirs(outdir, exist_ok=True)
+    L = ["# ParlayAPI books (PX9, %s)" % time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()), ""]
+    st, _, data = request("/v1/bookmakers", best, {"all": "true"})
+    reg = j(data)
+    rows = reg if isinstance(reg, list) else (reg or {}).get("bookmakers") or (reg or {}).get("data") or []
+    L.append("## /v1/bookmakers?all=true (HTTP %s, %d entries)" % (st, len(rows)))
+    for r in rows:
+        if isinstance(r, dict):
+            L.append("- %s | %s | status %s | %s" % (r.get("key"), r.get("title") or r.get("name"), r.get("status"), (r.get("note") or r.get("merged_into") or "")[:80]))
+    now = time.time() * 1000
+    for sp in sports:
+        st2, _, d2 = request("/v1/sports/%s/odds" % sp, best, {"regions": "us,us2,eu,uk,au", "markets": "h2h,spreads,totals", "oddsFormat": "american"})
+        ev = j(d2) if st2 == 200 else None
+        ev = ev if isinstance(ev, list) else []
+        per = {}
+        for e in ev:
+            for b in e.get("bookmakers") or []:
+                at = _ms(b.get("last_update_ms") or b.get("last_update"))
+                r = per.setdefault(b.get("key"), {"lines": 0, "games": set(), "ages": []})
+                r["games"].add(e.get("id"))
+                if at is not None:
+                    r["ages"].append((now - at) / 1000.0)
+                for m in b.get("markets") or []:
+                    r["lines"] += len(m.get("outcomes") or [])
+        L += ["", "## %s (HTTP %s, %d games): book | games | outcomes | age p50 s" % (sp, st2, len(ev))]
+        for k, r in sorted(per.items(), key=lambda kv: -kv[1]["lines"]):
+            ages = sorted(r["ages"])
+            L.append("- %s | %d | %d | %s" % (k, len(r["games"]), r["lines"], int(ages[len(ages) // 2]) if ages else "-"))
+    with open(os.path.join(outdir, "bookprobe.md"), "w") as f:
+        f.write("\n".join(L) + "\n")
+    print("\n".join(L))
+    return 0
+
+
 def selftest():
     assert keys_from_env({"PARLAY_API_KEY": "a, b;c\nd"}) == ["a", "b", "c", "d"]
     assert keys_from_env({}) == []
@@ -456,6 +498,8 @@ if __name__ == "__main__":
         sys.exit(cmd_streamprobe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay", sys.argv[3] if len(sys.argv) > 3 else "icehockey_nhl"))
     if c == "pinprobe":
         sys.exit(cmd_pinprobe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay"))
+    if c == "bookprobe":
+        sys.exit(cmd_bookprobe(*(sys.argv[2:3] if len(sys.argv) > 2 else ["out/parlay"])))
     if c == "gameprobe":
         sys.exit(cmd_gameprobe(*(sys.argv[2:6] if len(sys.argv) > 2 else ["out/parlay"])))
     if c == "probe":

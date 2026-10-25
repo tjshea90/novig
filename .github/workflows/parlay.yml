@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe | listen | arbscan | streamprobe | pinprobe | gameprobe"
+        description: "plans | probe | listen | arbscan | streamprobe | pinprobe | gameprobe | bookprobe"
         default: "plans"
       sport:
         description: "gameprobe: the sport key"
@@ -68,6 +68,11 @@ jobs:
               python3 -I tools/parlay.py gameprobe out/parlay "${{ github.event.inputs.sport }}" "${{ github.event.inputs.home }}" "${{ github.event.inputs.away }}"
               gh release view parlay-samples >/dev/null 2>&1 || gh release create parlay-samples --title "ParlayAPI samples (keyless)" --notes "Real answers, trimmed."
               gh release upload parlay-samples out/parlay/gameprobe.md --clobber ;;
+            bookprobe)
+              # PX9 (2026-10-25): every book ParlayAPI lists, and every book that quotes a full-game line in NBA/NFL/NHL with no bookmaker filter.
+              python3 -I tools/parlay.py bookprobe out/parlay
+              gh release view parlay-samples >/dev/null 2>&1 || gh release create parlay-samples --title "ParlayAPI samples (keyless)" --notes "Real answers, trimmed."
+              gh release upload parlay-samples out/parlay/bookprobe.md --clobber ;;
             arbscan)
               python3 -I tools/parlay.py arbscan out/parlay
               if [ -f out/parlay/arbscan.json ]; then
