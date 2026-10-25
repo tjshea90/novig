@@ -27,6 +27,28 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
     data class Price(val decimal: Double, val confirmedAtMs: Long, val heardAtMs: Long)
 
     private val prices = ConcurrentHashMap<String, Price>()
+    /** When each league's stream has been connected without a break since (0 = not connected): a price unchanged since then has not moved. */
+    private val connectedSince = ConcurrentHashMap<String, Long>()
+    /** When ParlayAPI last polled each book (the app's key), and whether it calls the book's prices stale, from `/v1/meta/source-health`. */
+    @Volatile var polls: Map<String, Pair<Long, Boolean>> = emptyMap()
+    @Volatile var confirmed = 0L
+        private set
+
+    fun connected(sport: String, now: Long = clock()) { connectedSince.putIfAbsent(sport, now); heard(now) }
+    fun disconnected(sport: String) { connectedSince.remove(sport) }
+
+    /** One `/v1/meta/source-health` answer: each source's last poll ([now] minus `poll_age_s`) and `prices_stale`. */
+    fun onHealth(body: JsonObject, now: Long = clock()) {
+        val at = body.num("generated_at_ms")?.toLong() ?: now
+        val out = HashMap<String, Pair<Long, Boolean>>()
+        for (e in (body["sources"] as? kotlinx.serialization.json.JsonArray).orEmpty()) {
+            val o = e as? JsonObject ?: continue
+            val book = TheOddsApiClient.canonicalBook(o.str("source") ?: continue)
+            val age = o.num("poll_age_s") ?: o.num("age_s") ?: continue
+            out[book] = (at - (age * 1000).toLong()) to (o["prices_stale"].let { it is JsonPrimitive && it.content == "true" })
+        }
+        if (out.isNotEmpty()) polls = out
+    }
 
     @Volatile var rows = 0L
         private set
@@ -108,7 +130,7 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
             if (m.source?.startsWith("parlay") != true || m.period != 0) return@map m
             val subject = if (m.kind == LineKind.PLAYER_PROP) m.subject?.let(PlayerNames::key) else m.subject
             val found = m.quotes.map { q -> prices[sideKey(game, m.bookKey, m.kind, subject, m.stat, q.side, q.point)] }
-            if (found.any { it == null }) return@map m
+            if (found.any { it == null }) return@map confirm(e.sportKey, m, now)?.also { changed = true } ?: m
             val confirmed = found.minOf { it!!.confirmedAtMs }
             if (confirmed <= (m.lastUpdateMs ?: 0L)) return@map m
             changed = true
@@ -116,6 +138,20 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
             m.copy(quotes = m.quotes.mapIndexed { i, q -> q.copy(decimalOdds = found[i]!!.decimal) }, lastUpdateMs = confirmed)
         }
         return if (changed) e.copy(markets = markets) else e
+    }
+
+    /**
+     * A quote the stream has said nothing about since its stamp, while the league's stream was connected the whole time: the price has not moved (the stream pushes every move), so it is current as of
+     * ParlayAPI's last poll of the book (unless ParlayAPI calls that book's prices stale). Null when that cannot be said.
+     */
+    private fun confirm(sport: String, m: RefBookMarket, now: Long): RefBookMarket? {
+        val stamp = m.lastUpdateMs ?: return null
+        val since = connectedSince[sport] ?: return null
+        if (since > stamp || !live(now)) return null
+        val (polled, stale) = polls[m.bookKey] ?: return null
+        if (stale || polled <= stamp || now - polled > POLL_MAX_MS) return null
+        confirmed++
+        return m.copy(lastUpdateMs = minOf(polled, now))
     }
 
     private var prunedAt = 0L
@@ -126,13 +162,15 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
     }
 
     fun describe(now: Long = clock()): String =
-        "${prices.size} sides held from $rows rows (${applied} markets moved onto the boards, $unread rows of shapes not priced), last frame ${if (lastFrameMs == 0L) "never" else "${(now - lastFrameMs) / 1000}s ago"}"
+        "${prices.size} sides held from $rows rows (${applied} markets moved onto the boards, $confirmed confirmed unchanged at ParlayAPI's last poll, ${polls.size} books' polls known, $unread rows of shapes not priced), last frame ${if (lastFrameMs == 0L) "never" else "${(now - lastFrameMs) / 1000}s ago"}"
 
     companion object {
         /** The stream sends a heartbeat every 5 s: past this it is taken for dead. */
         const val SILENT_MS = 30_000L
         /** A side not heard of for this long is forgotten (the stream drops a game line older than 10 minutes itself). */
         const val KEEP_MS = 30 * 60_000L
+        /** A poll older than this confirms nothing (ParlayAPI polls a live book every few seconds to a minute). */
+        const val POLL_MAX_MS = 5 * 60_000L
 
         fun gameKey(home: String, away: String) = norm(home) + "|" + norm(away)
 

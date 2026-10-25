@@ -47,10 +47,11 @@ class ParlayStream(
         if (!on || key().isNullOrBlank()) { close(); return }
         for (s in jobs.keys - sports) jobs.remove(s)?.cancel()
         for (s in sports) if (jobs[s]?.isActive != true) jobs[s] = scope.launch(Dispatchers.IO) { run(s) }
+        if (health?.isActive != true && jobs.isNotEmpty()) health = scope.launch(Dispatchers.IO) { healthLoop() }
     }
 
     @Synchronized
-    fun close() { jobs.values.forEach { it.cancel() }; jobs.clear() }
+    fun close() { jobs.values.forEach { it.cancel() }; jobs.clear(); health?.cancel(); health = null }
 
     fun health(now: Long = clock()): String = when {
         jobs.isEmpty() -> "off"
@@ -93,7 +94,7 @@ class ParlayStream(
             call.execute().use { resp ->
                 if (!resp.isSuccessful) throw Refused(resp.code)
                 connects++
-                live.heard()
+                live.connected(sport)
                 val src = (resp.body ?: throw IOException("empty body")).source()
                 val data = StringBuilder()
                 while (true) {
@@ -107,9 +108,26 @@ class ParlayStream(
                 }
             }
         } finally {
+            live.disconnected(sport)
             cancel?.dispose()
         }
     }
+
+    /** ParlayAPI's per-book poll times (`/v1/meta/source-health`, no credits), every [HEALTH_EVERY_MS] while a stream is wanted: what confirms an unchanged price ([ParlayLive.onHealth]). */
+    private suspend fun healthLoop() {
+        while (scope.isActive && jobs.isNotEmpty()) {
+            val k = key()
+            if (!k.isNullOrBlank()) runCatching {
+                withContext(Dispatchers.IO) {
+                    http.newCall(Request.Builder().url("$baseUrl/v1/meta/source-health").header("X-API-Key", k).build()).execute().use { r ->
+                        if (r.isSuccessful) (json.parseToJsonElement(r.body!!.string()) as? JsonObject)?.let { live.onHealth(it) }
+                    }
+                }
+            }
+            delay(HEALTH_EVERY_MS)
+        }
+    }
+    private var health: Job? = null
 
     /** One complete SSE message: rows of `initial_state` / `odds_update` into the store; heartbeats and status frames keep it marked alive. */
     internal fun accept(sport: String, data: String) {
@@ -128,5 +146,7 @@ class ParlayStream(
         const val STABLE_MS = 60_000L
         /** Heartbeats come every 5 s: a read waiting this long means the connection is dead. */
         const val SILENT_READ_MS = 45_000L
+        /** ParlayAPI's book poll times are read this often (a free `/meta` route). */
+        const val HEALTH_EVERY_MS = 30_000L
     }
 }
