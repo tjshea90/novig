@@ -6467,3 +6467,10 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [x] PS11 (Tj 14:3x UTC) https://parlay-api.com/cookbook: review the recipes, use the ones that improve the app or engine (saved research/parlayapi_business_2026-10-25/cookbook.txt; audit doc)
 - [x] PS12 (Tj 14:32 UTC) "make sure both parlayapi and propline are both logically used together ... compliment each other": fill gaps, freshest wins, cross-check (PB21b), no cross-feed overlay (audit doc)
 - [x] PS10 (v1.0.83 released 15:19 UTC; PB8 walk and PB12 steam study carried on below) then finish the open PB items (PB8, PB12, PB17b, PB21b, PB22, PB23) and release everything in the next version (v1.0.83)
+
+## PX: no ParlayAPI odds in the list; alternates priced by 1 book (Tj, 2026-10-25 ~17:0x UTC, typed prompt, verbatim in INBOX.md)
+"Investigate why I don't see any parlayapi provided odds in the scanned list and why many results only have 1 book behind the fair odds for alternate markets that are popular and available at many books"
+- [ ] PX1 measure: which feeds price the listed rows (fair books by source) and how many books price alternate numbers vs main lines
+- [ ] PX2 find why ParlayAPI's quotes do not reach the list; fix
+- [ ] PX3 find why alternate lines get 1 book when many books post them; fix
+- [ ] PX4 tests, ship, engine reset, tell Tj
