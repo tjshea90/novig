@@ -8,8 +8,8 @@
  "branch": "ccr-cfd54eb0-3h0vnn",
  "head": "8fe49550b43bc79d796df3570870e60003498a9b",
  "since": 1792889505,
- "beat": 1792911123,
- "beatIso": "2026-10-25T06:52:03Z",
+ "beat": 1792911128,
+ "beatIso": "2026-10-25T06:52:08Z",
  "done": "pre-ship: PropLine Streaming Lite: engine WebSockets (moves, pulls, scratches, heartbeat freshness), 4 sharp books, per-book freshness on Engine > APIs, Novig marked PnL, Polymarket V2 id fix",
  "next": "ship.sh gates and releases this"
 }
