@@ -653,7 +653,7 @@ class CloudEngine(
             sockets = runCatching { socketLines() }.getOrDefault(emptyList()),
             liveStats = if (!idle) liveStatus?.stats else null, socketStates = runCatching { socketStates() }.getOrDefault(emptyList()),
             resting = governor.resting(clock()).map { r -> "${ApiToggles.name(r.id)} until ${java.time.Instant.ofEpochMilli(r.untilMs).atZone(java.time.ZoneOffset.UTC).toLocalTime().withSecond(0).withNano(0)} UTC: ${r.reason}" },
-        )
+        ).let { st -> runCatching(propLineFresh).getOrNull()?.let { (rows, at, line) -> st.copy(propLineFresh = rows, propLineFreshAtMs = at, propLineStream = line.take(600)) } ?: st }
     }
 
     /**
