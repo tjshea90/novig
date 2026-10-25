@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "15e29e",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-11lab4",
+ "head": "13eb830d582b236e33332f7fdf26ecfcb0aaefd3",
+ "since": 1792970557,
+ "beat": 1792970557,
+ "beatIso": "2026-10-25T23:22:37Z",
+ "done": "WATCH 2026-10-25 ok, no changes",
+ "next": "PX11f feed census, PX11d outlier audit, PX11e Pinnacle without SGO"
+}
