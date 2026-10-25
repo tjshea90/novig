@@ -71,6 +71,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         SXBET -> s.gates.sxSocket
         SHARPAPI -> s.gates.sharpApiSocket
         PROPLINE -> s.gates.propLineSocket
+        PARLAY -> s.gates.parlaySocket
         else -> false
     }
 
@@ -81,6 +82,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         SXBET -> s.copy(gates = s.gates.copy(sxSocket = on))
         SHARPAPI -> s.copy(gates = s.gates.copy(sharpApiSocket = on))
         PROPLINE -> s.copy(gates = s.gates.copy(propLineSocket = on))
+        PARLAY -> s.copy(gates = s.gates.copy(parlaySocket = on))
         else -> s
     }
 

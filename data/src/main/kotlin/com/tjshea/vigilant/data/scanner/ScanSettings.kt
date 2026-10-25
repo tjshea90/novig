@@ -1426,6 +1426,11 @@ data class ApiGates(
      * for research. Only the engine opens it (2 connections on the plan); off = the REST reads every couple of minutes, as before. Needs a Streaming key on GitHub.
      */
     val propLineSocket: Boolean = true,
+    /**
+     * ParlayAPI's Business odds stream (PB11, Tj 2026-10-25): every book's price moves pushed to the engine within seconds (`/v1/sse/odds`), laid over its ParlayAPI boards for the real-time list. Only the
+     * engine opens it; streams are not credit-charged; off = the REST boards alone, as before. Needs a Business (or bigger) key on GitHub.
+     */
+    val parlaySocket: Boolean = true,
     /** SX Bet: keep its WebSocket (best-odds and live-score channels) open and read books from it; off = the REST read every scan. Only matters while [useSxBet] is on. */
     val sxSocket: Boolean = true,
     /** BoltOdds: price the fair line with every sportsbook it lists (not only the picked ones). */

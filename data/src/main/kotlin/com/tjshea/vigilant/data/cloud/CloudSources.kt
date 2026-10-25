@@ -154,6 +154,7 @@ class CloudSources(
             add("Engine Kalshi: " + (if (kalshiSigner == null) "no key on GitHub (public reads)" else "socket ${if (kalshiSocketWanted) "ON" else "OFF"} · ${if (kalshiStream.live) "live" else "not live"} · ${kalshiStream.subscribedCount} of ${kalshiStream.wantedCount} markets"))
             val sx = sxbet.stream
             add("Engine SharpAPI: " + (if (!s.gates.useSharpApi) "API off" else if (!has(CloudKeys.SHARPAPI)) "no key on GitHub" else "socket ${if (s.gates.sharpApiSocket) "ON" else "OFF"} · ${sharpApiStream.health(now)} · game state ${sharpApiScores.live()} live"))
+            add("Engine ParlayAPI: " + (if (!s.useParlay) "API off" else if (!has(CloudKeys.PARLAY)) "no key on GitHub" else "socket ${if (s.gates.parlaySocket) "ON" else "OFF"} · ${parlayOddsStream.health(now)}"))
             add("Engine PropLine: " + (if (!s.usePropLine) "API off" else if (!has(CloudKeys.PROPLINE)) "no key on GitHub" else if (propLineAccount.streamingKey() == null) "no Streaming key read yet" else "socket ${if (s.gates.propLineSocket) "ON" else "OFF"} · ${propLineStream.health(now)}"))
             add("Engine SX Bet: " + (if (!s.gates.useSxBet) "API off" else if (sx == null) "socket ${if (sxSocketWanted) "ON" else "OFF"} · no connection yet (opens with the first live game or scan)" else "socket ${if (sxSocketWanted) "ON" else "OFF"} · ${sx.health()} · last push ${ago(sx.lastMessageMs)} · ${sx.fixtureStatus.values.count { it == 2 }} games in play"))
         }
@@ -170,6 +171,7 @@ class CloudSources(
             SocketState("SharpAPI", s.gates.useSharpApi && s.gates.sharpApiSocket && has(CloudKeys.SHARPAPI), sharpApiStream.live, sharpApiStream.lastFrameMs, if (!s.gates.useSharpApi) "API off" else if (!has(CloudKeys.SHARPAPI)) "no key on GitHub" else "${sharpApiScores.live()} games' live state · ${sharpApiStream.health()}"),
             SocketState("PropLine", propLineOn(s) && s.gates.propLineSocket && propLineAccount.streamingKey() != null, propLineStream.live(), propLineLive.lastFrameMs,
                 if (!s.usePropLine) "API off" else if (!has(CloudKeys.PROPLINE)) "no key on GitHub" else if (propLineAccount.streamingKey() == null) "no Streaming key read yet" else propLineLive.describe()),
+            SocketState("ParlayAPI", s.useParlay && s.gates.parlaySocket && has(CloudKeys.PARLAY), parlayLive.live(), parlayLive.lastFrameMs, if (!s.useParlay) "API off" else if (!has(CloudKeys.PARLAY)) "no key on GitHub" else parlayLive.describe()),
             SocketState("SX Bet", sxSocketWanted, sx?.live == true, sx?.lastMessageMs ?: 0L, if (!s.gates.useSxBet) "API off" else if (sx == null) "no read key on GitHub" else "${sx.fixtureStatus.values.count { it == 2 }} games in play"),
         )
     }
@@ -282,6 +284,20 @@ class CloudSources(
 
     /** ParlayAPI's live play-by-play stream (CH47, Tj 2026-10-20: the default score source, ESPN the fallback) while ParlayAPI is on and a key of a Starter-or-bigger plan exists: the biggest plan's key opens it. */
     val parlayStream: com.tjshea.vigilant.data.parlay.ParlayPbpStream get() = parlayPbp
+    /** ParlayAPI's Business odds stream (PB11): every book's moves, laid over its boards by the real-time list ([overlay]). The biggest plan's key opens it. */
+    val parlayLive = com.tjshea.vigilant.data.parlay.ParlayLive()
+    val parlayOddsStream = com.tjshea.vigilant.data.parlay.ParlayStream(http, json, {
+        keys(CloudKeys.PARLAY).filter { (parlayAccount.last[it]?.limit ?: 0) > 100_000 }.maxByOrNull { parlayAccount.last[it]?.limit ?: 0 }
+    }, parlayLive, scope, log = { line -> println(line) })
+    fun parlayStreamNote(): String = "ParlayAPI odds stream: " + parlayOddsStream.health()
+
+    /**
+     * One game with every live stream laid over it, for the engine's real-time list (PB19, [com.tjshea.vigilant.data.cloud.RealtimeList]): PropLine's pushes over PropLine's quotes, ParlayAPI's over
+     * ParlayAPI's; where both carry a book, the fresher wins in the pricing (PB21).
+     */
+    fun overlay(e: com.tjshea.vigilant.data.reference.RefEvent, now: Long): com.tjshea.vigilant.data.reference.RefEvent =
+        parlayLive.overlayEvent(propLineLive.overlayEvent(e, now), now)
+
     private val parlayPbp = com.tjshea.vigilant.data.parlay.ParlayPbpStream(http, scope, key = {
         keys(CloudKeys.PARLAY).filter { (parlayAccount.last[it]?.limit ?: 0) > 1_000 }.maxByOrNull { parlayAccount.last[it]?.limit ?: 0 }
     }, onNote = { line -> println(line) })
@@ -348,6 +364,7 @@ class CloudSources(
         if (!kalshiSocketWanted) kalshiStream.close()
         if (!s.gates.useSharpApi || !s.gates.sharpApiSocket) sharpApiStream.close("socket off")
         if (!propLineOn(s) || !s.gates.propLineSocket) propLineStream.close("socket off")
+        if (!s.useParlay || !s.gates.parlaySocket) parlayOddsStream.close()
     }
 
     /** Every socket this engine holds is closed cleanly (job end, cancel, hours over): a socket left half-open counts against BoltOdds' 3 connections until its server times it out (BC3). */
@@ -357,6 +374,7 @@ class CloudSources(
         runCatching { kalshiStream.close() }
         runCatching { sharpApiStream.close("job ending") }
         runCatching { propLineStream.close("job ending") }
+        runCatching { parlayOddsStream.close() }
         // OkHttp sends a close frame from its own writer thread after close() returns; the JVM ends right after this call, so give the frames a moment
         // to leave (AF, 2026-10-22: the next job's BoltOdds props socket was refused "Too many concurrent connections" by the old job's half-open ones).
         if (flushMs > 0) runCatching { Thread.sleep(flushMs) }
@@ -446,7 +464,9 @@ class CloudSources(
             add(parlayOdds)
             if (s.useBookProps) add(parlayProps)
             add(parlayHalves)
-        }
+            // The Business odds stream for every picked league ParlayAPI carries (PB11): free to hold, laid over the boards by the real-time list.
+            parlayOddsStream.want(s.gates.parlaySocket, s.selectedLeagues.filter { parlayOdds.supports(it) }.map { it.oddsApiSportKey }.toSet())
+        } else parlayOddsStream.close()
     }
 
     companion object {

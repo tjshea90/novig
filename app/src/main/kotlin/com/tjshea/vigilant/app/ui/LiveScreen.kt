@@ -94,6 +94,7 @@ fun LiveScreen(
             LiveSwitch("SX Bet", "The sharp exchange's live prices and scores (needs your SX Bet read-only key).", s.gates.sxSocket, "liveSocketSx") { v -> onUpdate { it.copy(gates = it.gates.copy(sxSocket = v)) } }
             LiveSwitch("SharpAPI", "Odds and game state pushed to the engine: Pinnacle and 24 more books, and the live score (needs your SharpAPI key on GitHub).", s.gates.sharpApiSocket, "liveSocketSharp") { v -> onUpdate { it.copy(gates = it.gates.copy(sharpApiSocket = v)) } }
             LiveSwitch("PropLine", "Price moves, pulled lines and late scratches from 25+ books pushed to the engine within seconds, round the clock (needs your Streaming Lite key on GitHub).", s.gates.propLineSocket, "liveSocketPropLine") { v -> onUpdate { it.copy(gates = it.gates.copy(propLineSocket = v)) } }
+            LiveSwitch("ParlayAPI", "Every book's price moves (Pinnacle, Bookmaker, DraftKings, FanDuel and 11 more) pushed to the engine within seconds, round the clock (needs your Business key on GitHub).", s.gates.parlaySocket, "liveSocketParlay") { v -> onUpdate { it.copy(gates = it.gates.copy(parlaySocket = v)) } }
             if (!s.liveOnGitHub) LiveSwitch("Pinnodds", "Pinnacle's live push feed. Needs a Pinnodds subscription; leave it off if you have none.", s.gates.pinnSocket, "liveSocketPinn") { v -> onUpdate { it.copy(gates = it.gates.copy(pinnSocket = v)) } }
 
             SectionTitle("Live games in the feed")
