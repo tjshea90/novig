@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "1a1f1c5cdd107bf45ed9a02585cd189916700449",
+ "head": "3f1dadf0219871f246645e33b3bc5189751f5702",
  "since": 1792915284,
- "beat": 1792950486,
- "beatIso": "2026-10-25T17:48:06Z",
+ "beat": 1792950771,
+ "beatIso": "2026-10-25T17:52:51Z",
  "done": "PX census v2 + SharpApiSourceTest shutdown fix (full suite green)",
  "next": "reset engine, read census"
 }
