@@ -8,12 +8,14 @@ name: PropLine Pro (Tj, 2026-10-16)
 #   backfill archive over the whole 90 days Pro can reach (run once when the key arrives)
 #   clv      closing-line value of every bet the engine saw (Release `engine-dataset` lines-*.csv.gz) against PropLine's archive (Pinnacle's devigged close, Novig's own close, the grade): tools/propline_clv.py
 #            -> Release `propline-clv` (propline-clv.csv.gz + propline-clv.md, replaced each run)
+#   grade    Tj's REAL bets and bids (phone-data hand/phone bets + the engine's trades.json) graded against the close by PropLine's own POST /v1/clv/grade (PS3, Tj 2026-10-25)
+#            -> Release `propline-grade` (graded.csv.gz + SUMMARY.md, replaced each run; runs daily after the archive)
 # The schedule runs `archive` daily (window: the last 3 days, so a late grade is never missed; rows repeat across days, join on outcome_id).
 on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe | speed | archive | backfill | multibook | clv | timing | evbets | accuracy"
+        description: "plans | probe | speed | archive | backfill | multibook | clv | grade | timing | evbets | accuracy | coverage"
         default: "plans"
   schedule:
     - cron: "37 9 * * *"
@@ -90,6 +92,7 @@ jobs:
               gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine samples (keyless)" --notes "Real answers of PropLine endpoints, keyless."
               gh release upload propline-samples out/coverage/* --clobber ;;
             clv) bash tools/propline_clv_job.sh ;;
+            grade) bash tools/propline_grade_job.sh ;;
             evbets) bash tools/propline_evbets_job.sh ;;
             timing)
               # Timing study (TCL68): Novig's price at 72..1 h before the start against Pinnacle's close and the real result; needs the archive Release's CSVs.
@@ -105,6 +108,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash tools/propline_clv_job.sh
+      - name: Real bets graded against the close by PropLine (PS3)
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.task == 'archive' }}
+        env:
+          PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: bash tools/propline_grade_job.sh || echo "grade job failed (not fatal)"
       - name: PropLine +EV bets graded and reported (TCL75)
         if: ${{ github.event_name == 'schedule' || github.event.inputs.task == 'archive' || github.event.inputs.task == 'backfill' || github.event.inputs.task == 'evbets' }}
         env:
