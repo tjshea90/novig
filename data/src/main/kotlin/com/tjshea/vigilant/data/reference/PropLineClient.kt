@@ -439,6 +439,21 @@ class PropLineClient(
         /** The most prop markets one request asks for with a paid key. */
         const val CHUNK = 6
 
+        /**
+         * The most book keys PropLine takes in one `bookmakers` parameter. PX9e (2026-10-25): when PX9c asked for 69 books + Novig, every PropLine request on the engine answered HTTP 400 "Too many
+         * `bookmakers` keys: at most 60 per request. Split the request into several calls." (`propline.yml` task `bookparam` on the key: 60 keys -> 200, 65 -> 400), so PropLine fed the scan nothing
+         * from 19:37 to the fix. Its docs (llms-full) do not state this limit.
+         */
+        const val MAX_BOOKS = 60
+
+        /** [books] (distinct) in as few parts of at most [MAX_BOOKS] as PropLine takes, of even size (70 -> 35 + 35, not 60 + 10); one empty part when there are none, so a call is still made. */
+        fun bookParts(books: List<String>): List<List<String>> {
+            val all = books.distinct()
+            if (all.size <= MAX_BOOKS) return listOf(all)
+            val n = (all.size + MAX_BOOKS - 1) / MAX_BOOKS
+            return all.chunked((all.size + n - 1) / n)
+        }
+
         /** A timeout or a 502/503/504 is tried again this many times. */
         const val RETRIES = 2
 
