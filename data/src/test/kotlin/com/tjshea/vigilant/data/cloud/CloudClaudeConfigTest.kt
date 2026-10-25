@@ -51,13 +51,13 @@ class CloudClaudeConfigTest {
 
     @Test
     fun `on a clash the phone's tap wins, and stop all stays the phone's`() {
-        val claude = CloudConfig(device = "claude:x", settings = base.copy(usePinnacle = true, killed = true, gates = base.gates.copy(usePinnodds = false)))
-        val phone = base.copy(usePinnacle = false, gates = base.gates.copy(usePinnodds = true, useSxBet = !base.gates.useSxBet), killed = false)
-        val changed = base.copy(usePinnacle = true)
-        val next = CloudClaudeConfig.merge(changed, claude.copy(settings = claude.settings.copy(usePinnacle = false)), phone.copy(usePinnacle = true), json)!!
-        assertTrue("both changed usePinnacle: the phone's value", next.usePinnacle)
+        val was = base.copy(propLineGamesPerScan = 10)
+        val claude = CloudConfig(device = "claude:x", settings = was.copy(propLineGamesPerScan = 20, killed = true, gates = was.gates.copy(usePinnodds = false)))
+        val phone = was.copy(propLineGamesPerScan = 30, gates = was.gates.copy(useSxBet = !was.gates.useSxBet))
+        val next = CloudClaudeConfig.merge(was, claude, phone, json)!!
+        assertEquals("both changed it: the phone's value", 30, next.propLineGamesPerScan)
         assertFalse("only the session changed usePinnodds", next.gates.usePinnodds)
-        assertEquals("only the phone changed useSxBet", !base.gates.useSxBet, next.gates.useSxBet)
+        assertEquals("only the phone changed useSxBet", !was.gates.useSxBet, next.gates.useSxBet)
         assertFalse("stop all is never taken from a session", next.killed)
     }
 
