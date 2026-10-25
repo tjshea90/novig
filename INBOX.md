@@ -1190,3 +1190,21 @@ Why are the odds 7-10 minutes old if they are streaming?
 ```
 I tried the button in the app to restart the GitHub engine twice but it didn't work
 ```
+
+## 2026-10-25T14:24:53Z
+```
+Audit the two new streaming sockets- propline and parlayapi. 
+
+
+1) make sure they are used to their full speed and ability based on the docs
+2) figure out why, even though they offer dozens of sports books odds, most of my scanned results only show odds for a few sports books. Is this a matching issue? 
+3) is the engine using the propline grade endpoint to grade my actual bets against the close? This looks interesting. 
+4) the propline and parlayapi tiers I have have more usage and limits than I will ever use. Make sure the GitHub engine uses usage freely and liberally for anything that can benefit the system, whether speed or accuracy or anything else.
+5) make sure propline is using batched delivery from its docs if this is helpful
+6) I have room for a lot more websockets on propline. Freely use them if they can help in any way
+7) https://prop-line.com/sportsbook-accuracy see if this helps any research
+8) https://prop-line.com/sportsbook-webhook-api review that the engine is using this correctly
+9) https://prop-line.com/recipes review these recipes and figure out which ones can be used and which ones can improve the app or GitHub engine
+
+After these are done, complete everything you noted for tasks.md and release everything in the next version
+```
