@@ -5,11 +5,11 @@
  "nonce": "b2b10a",
  "kind": "interactive",
  "task": "",
- "branch": "ccr-70c81990-qm4nt2",
+ "branch": "ccr-4e1a45fb-48ait4",
  "head": "ccc6f804723b44168ec6b14cdc09f9c5a4436c4a",
  "since": 1792889505,
- "beat": 1792891923,
- "beatIso": "2026-10-25T01:32:03Z",
+ "beat": 1792891969,
+ "beatIso": "2026-10-25T01:32:49Z",
  "done": "pre-release: SG: one money limit on similar bets (same game total at any line, a team's side, a player's over/under), counting your bets, the engine's bets and every bid together; no bids on what is already bet, the engine never bets what you bet by hand, red X on cards and the Bet sheet (versionCode 420, v1.0.80)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.80), then run: bash tools/record-release.sh v1.0.80 420 \"SG: one money limit on similar bets (same game total at any line, a team's side, a player's over/under), counting your bets, the engine's bets and every bid together; no bids on what is already bet, the engine never bets what you bet by hand, red X on cards and the Bet sheet\""
 }
