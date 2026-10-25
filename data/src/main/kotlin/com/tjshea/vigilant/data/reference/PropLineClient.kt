@@ -408,7 +408,9 @@ class PropLineClient(
         private const val LIST_REUSE_MS = 5 * 60_000L
 
         /** PropLine's book keys where they differ from The Odds API's. */
-        private val TO_PROPLINE = mapOf("hardrockbet" to "hardrock")
+        // BookMaker.eu, Betfair Exchange and theScore Bet under the names the rest of the app uses for them (SharpAPI's and The Odds API's), so the sharp-book list and the company groups mean the same
+        // book whichever feed sent it (theScore is Penn's desk, one company with ESPN Bet: BookCompany).
+        private val TO_PROPLINE = mapOf("hardrockbet" to "hardrock", "bookmaker" to "bookmaker_eu", "betfair_ex_eu" to "betfair_ex", "espnbet" to "thescorebet")
         private val FROM_PROPLINE = TO_PROPLINE.entries.associate { (k, v) -> v to k }
 
         /** Books PropLine lists that never feed a fair line here (see the class comment). */
