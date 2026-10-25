@@ -4,12 +4,14 @@ Every study in `research/`, newest first, and how it is USED. Tuning levers and 
 Statuses: APPLIED (a change in `research/review/CHANGES.md` cites it), LEVER (on LEVERS.md), CLOSED (verdict and disposition on LEVERS.md), WATCH (an open TASKS.md item waits on its number),
 CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a sample, marked in its first lines), IDLE (cited nowhere: act on it or mark it).
 
-132 entries; 8 idle: api_audit_report_2026-10-22.html, api_docs_review_2026-10-25.md, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, parlayapi_business_2026-10-25, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md
+134 entries; 8 idle: api_audit_report_2026-10-22.html, api_docs_review_2026-10-25.md, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, parlayapi_business_2026-10-25, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
+| 2026-10-25 | `propline_parlay_audit_2026-10-25.md` | PropLine + ParlayAPI streams: the audit (PS1-PS12, Tj 2026-10-25 ~14:25 UTC) - Tj: "Audit the two new streaming sockets - propline and parlayapi" (nine points, verbatim in INBOX.md), then "https://parlay-api.com/cookbook" and "... | APPLIED |
+| 2026-10-25 | `propline_coverage_2026-10-25.md` | Why most listed bets show only a few books (PS2, Tj 2026-10-25) - Tj: "even though they offer dozens of sports books odds, most of my scanned results only show odds for a few sports books. Is this a matching issue?" | APPLIED CODE |
 | 2026-10-25 | `parlayapi_business_2026-10-25/` | (no title) | IDLE |
-| 2026-10-25 | `api_recovery_2026-10-25.md` | What the dropped and downgraded APIs gave, and where it comes from now (PB17, Tj 2026-10-25) - Tj, 2026-10-25: "make sure all functions and features that were provided by apis which have since been paused or discontinued can be... | WATCH |
+| 2026-10-25 | `api_recovery_2026-10-25.md` | What the dropped and downgraded APIs gave, and where it comes from now (PB17, Tj 2026-10-25) - Tj, 2026-10-25: "make sure all functions and features that were provided by apis which have since been paused or discontinued can be... | CODE |
 | 2026-10-25 | `api_docs_review_2026-10-25.md` | API docs re-review, 2026-10-25 (PSL NR1/PR1/FR1; Tj: "do another thorough research of novig docs ... parlayapi ... kalshi, polymarket, sx bet, and ESPN") - Method: `api-docs.yml` (free GitHub runner, keyless) mirrored every pro... | IDLE |
 | 2026-10-25 | `PROPLINE_STREAMING_2026-10-25.md` | PropLine Streaming Lite: what it gives and how Vigilant uses it (Tj, 2026-10-25, PSL) - Tj upgraded the PropLine key on GitHub (`PROPLINE_API_KEY`) to **Streaming Lite** ($39/mo). Docs saved verbatim | APPLIED CODE |
 | 2026-10-25 | `PARLAYAPI_BUSINESS_2026-10-25.md` | ParlayAPI Business: what the plan gives and how Vigilant uses it (PB10-PB11, PB15-PB16, PB19, PB21; Tj 2026-10-25) - Docs saved verbatim in `research/parlayapi_business_2026-10-25/` (llms.txt, llms-full.txt, openapi.json, docs,... | CODE |
