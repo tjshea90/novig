@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "de808660b9f2649e1219ad846977232c51268edf",
+ "head": "e936a14b82f6b9987cd5ca1657cbba9b7f90eb8c",
  "since": 1792915284,
- "beat": 1792921511,
- "beatIso": "2026-10-25T09:45:11Z",
- "done": "restart button fix: engine honours a reset mid-scan and never loses it; phone keeps Claude's newer resetAtMs/checkApisAt (CloudEngineTest); full suite green",
- "next": "measure odds ages on run 376 and answer Tj; then reset once more for the restart fix"
+ "beat": 1792921557,
+ "beatIso": "2026-10-25T09:45:57Z",
+ "done": "Answered Tj's odds-age question with measurements; engine run 40181523769 runs all fixes (real-time list, ParlayAPI stream steady 6 connections, stale books out, listed bets pinned, mid-scan reset)",
+ "next": "PB23 check poll confirmations in engine log; PB8 settings audit rest; ship v1.0.83 (phone bits); PB12 steam study; PB17b /sse/hot live lane; PB21b cross-check"
 }
