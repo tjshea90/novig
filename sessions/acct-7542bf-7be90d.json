@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "1bcad85bb15f6b34ffafd4c4fb6325daac078cf7",
+ "head": "2fc4404b5588797c2ed9dca4faf7233705b167b3",
  "since": 1792964177,
- "beat": 1792965004,
- "beatIso": "2026-10-25T21:50:04Z",
- "done": "PX10 written into TASKS.md (Tj's 4-part API migration request)",
- "next": "PX10a Pinnodds free log + socket off; PX10c PinnWire secret delete + switch off; PX10d probe ParlayAPI/PropLine plans and streams"
+ "beat": 1792965038,
+ "beatIso": "2026-10-25T21:50:38Z",
+ "done": "PX10a/c: Pinnodds free logged + switched off; Pinnacle hosts obey their own switches (CloudPinnacleHostsTest); ParlayAPI alternates no longer skipped for Pinnodds; PinnWire secret retired on the engine; full floor 4,210 green",
+ "next": "land + engine reset; then PX10d: read PARLAYAPI_BUSINESS / PROPLINE_STREAMING docs + probe both keys' plans, stream connections and coverage"
 }
