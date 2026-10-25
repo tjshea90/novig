@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-27fee639-d3opru",
- "head": "62b41ec73a15e70e98f7a23696f06f11835be587",
+ "head": "91eb83777ef06c646ec9c0abe168ce0658275ac9",
  "since": 1792912591,
- "beat": 1792954297,
- "beatIso": "2026-10-25T18:51:37Z",
- "done": "PX8: ParlayAPI stream skips period rows + counts unread by market; parlay.py gameprobe task (one game: every book/number/age)",
- "next": "dispatch gameprobe, read it; then explain tool for fair-odds fates; tests; ship"
+ "beat": 1792954489,
+ "beatIso": "2026-10-25T18:54:49Z",
+ "done": "PX9: real-time list no longer adopts partial-scan rows of leagues still waiting for a fair source (Kalshi-alone rows), removes held rows a newer scan puts out of reach, rebases held rows onto a richer scan's fair; ParlayLive period guard; PropLine heartbeat/list-quality/cross-census diagnostics (4198 tests green)",
+ "next": "land on main (check), engine reset, read engine-log: list quality, heartbeat, crossSame/crossDiff; then PX9b decision on push books; tell Tj"
 }
