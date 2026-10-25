@@ -229,7 +229,6 @@ class CloudTrader(
             val info = describeOutcome?.invoke(p.outcomeId)
             if (p.qty <= 0L) null else AcctPos(p.marketId, p.outcomeId, p.cost, p.qty, info?.eventId, info?.let { RepeatGuard.family(it.eventName, it.startsTs, it.marketLabel, it.selection) }.orEmpty(), info?.selection.orEmpty())
         } else emptyList()
-        val acctKeys = acct.mapTo(HashSet()) { it.outcomeId + "|" + it.marketId }
         val day = Instant.ofEpochMilli(now).atZone(ZONE).toLocalDate().toString()
         if (ledger.dayKey != day) ledger = ledger.copy(dayKey = day, dayStartEquity = equity, stopped = if (live) ledger.stopped else "")
         if (cash < AutoBet.SLEEP_BELOW) return Report(mode, cash = cash, equity = equity, stopped = "the wallet has ${money(cash)}, under ${money(AutoBet.SLEEP_BELOW)}")
@@ -262,11 +261,10 @@ class CloudTrader(
                 is CloudKelly.Stake.Skip -> { skip(sized.reason); if (sized.reason.contains("loss stop") || sized.reason.contains("wallet-use")) break else continue }
                 is CloudKelly.Stake.Amount -> sized
             }
-            val fill = walk(o, fair, fee, stake.dollars, rules.readEv)
-            if (fill == null) { skip("less than one contract at a positive edge"); continue }
-            if (repeat != null) {
+            // Who holds what (Tj, 2026-10-25): the engine's own bets and bid fills from its ledger, the desk's bids, and whatever else Novig says the account holds is Tj's, by hand.
+            val family = RepeatGuard.family(o.eventName, o.event.startsTs, o.marketLabel, o.selection)
+            val held = if (repeat == null) emptyList() else {
                 val bidIds = extraHeld.mapTo(HashSet()) { it.outcomeId + "|" + it.marketId }
-                // Who holds what (Tj, 2026-10-25): the engine's own bets and bid fills from its ledger, the desk's bids, and whatever else Novig says the account holds is Tj's, by hand.
                 val openEntries = ledger.entries.filter { open(it, now) }
                 val mine = openEntries.filter { !(it.note.startsWith("bid") && it.outcomeId + "|" + it.marketId in bidIds) }.map {
                     RepeatGuard.Pos(it.marketId, it.outcomeId, it.cost, it.payout, family = RepeatGuard.family(it.event, it.startsTs, it.marketLabel, it.selection), who = if (it.note.startsWith("bid")) RepeatGuard.Who.BID else RepeatGuard.Who.AUTO, label = it.selection)
@@ -276,8 +274,14 @@ class CloudTrader(
                     val left = a.qty - (known[a.outcomeId + "|" + a.marketId] ?: 0L)
                     if (left <= 0L) null else RepeatGuard.Pos(a.marketId, a.outcomeId, a.dollars * left / a.qty, left * EvMath.CONTRACT_PAYOUT_DOLLARS, family = a.family, who = RepeatGuard.Who.HAND, label = a.label)
                 }
-                val held = mine + byHand + extraHeld
-                val family = RepeatGuard.family(o.eventName, o.event.startsTs, o.marketLabel, o.selection)
+                mine + byHand + extraHeld
+            }
+            // Under the similar-bets limit the stake shrinks to what is left of it rather than the bet being lost whole.
+            val dollars = RepeatGuard.room(repeat, held, o.outcome.outcomeId, family)?.let { minOf(it, stake.dollars) } ?: stake.dollars
+            if (dollars < MIN_STAKE) { skip("repeat guard: similar-bets limit"); continue }
+            val fill = walk(o, fair, fee, dollars, rules.readEv)
+            if (fill == null) { skip("less than one contract at a positive edge"); continue }
+            if (repeat != null) {
                 RepeatGuard.check(repeat, held, o.market.marketId, o.outcome.outcomeId, fill.cost, fill.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, o.market.outcomes.map { it.outcomeId }, family)
                     ?.let { skip(if ("already bet" in it) "repeat guard: a similar bet is held" else if ("similar bets" in it) "repeat guard: similar-bets limit" else "repeat guard"); continue }
             }
