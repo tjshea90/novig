@@ -456,14 +456,34 @@ object Pricing {
             }
         if (!freshest) return all.distinctBy { it.first.bookKey }
         val chosen = LinkedHashMap<String, Pair<com.tjshea.vigilant.data.reference.RefBookMarket, List<Double>>>()
+        var doubted: MutableSet<String>? = null
         for (b in all) {
             val have = chosen[b.first.bookKey]
             val mine = b.first.lastUpdateMs
             val theirs = have?.first?.lastUpdateMs
             val newer = mine != null && theirs != null && mine - theirs > FRESHER_BY_MS
+            // Two feeds dated within FRESHER_BY_MS of each other quote one book 3+ points apart: one of them has the wrong line (a mapping or a stale copy), and nothing says which (PB21b).
+            if (have != null && mine != null && theirs != null && kotlin.math.abs(mine - theirs) <= FRESHER_BY_MS && disagree(have.second, b.second)) {
+                (doubted ?: HashSet<String>().also { doubted = it }) += b.first.bookKey
+            }
             if (have == null || newer) chosen[b.first.bookKey] = b
         }
-        return chosen.values.toList()
+        val out = doubted?.let { d -> crossDropped.addAndGet(d.size.toLong()); chosen.filterKeys { it !in d } } ?: chosen
+        return out.values.toList()
+    }
+
+    /** A book left out of a line because two feeds quoted it at the same time [CROSS_CHECK_POINTS] or more apart ([chosenMarkets]); counted for the status. */
+    val crossDropped = java.util.concurrent.atomic.AtomicLong()
+
+    /** PB21b (Tj, 2026-10-25: "use them to check each other's odds accuracy"): two same-time quotes of one book this far apart in no-vig chance (first side) are not both right. */
+    const val CROSS_CHECK_POINTS = 0.03
+
+    private fun disagree(a: List<Double>, b: List<Double>): Boolean {
+        if (a.size != b.size || a.isEmpty()) return false
+        fun first(o: List<Double>): Double? { val inv = o.map { if (it > 1.0) 1.0 / it else return null }; return inv[0] / inv.sum() }
+        val x = first(a) ?: return false
+        val y = first(b) ?: return false
+        return kotlin.math.abs(x - y) >= CROSS_CHECK_POINTS
     }
 
     fun probabilityFor(target: OutcomeTarget, key: LineKey, fair: FairLine): Double? = when (target) {
