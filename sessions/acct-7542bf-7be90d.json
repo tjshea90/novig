@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "9382cffb9fdc3c1ad150de9937e0bff60ced74a1",
+ "head": "de808660b9f2649e1219ad846977232c51268edf",
  "since": 1792915284,
- "beat": 1792920330,
- "beatIso": "2026-10-25T09:25:30Z",
- "done": "odds-age fix: stale books left out beside fresh ones (FreshFirstTest), ParlayAPI unchanged prices confirmed by its poll times (ParlayLiveTest), listed bets pinned on Novig's feed; full suite green",
- "next": "reset engine; measure per-book ages in the live list after ~5 min; answer Tj"
+ "beat": 1792920368,
+ "beatIso": "2026-10-25T09:26:08Z",
+ "done": "restart button fix: engine honours a reset mid-scan and never loses it; phone keeps Claude's newer resetAtMs/checkApisAt (CloudEngineTest); full suite green",
+ "next": "measure odds ages on run 376 and answer Tj; then reset once more for the restart fix"
 }
