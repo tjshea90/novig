@@ -15,13 +15,13 @@ class KalshiMirrorTest {
     fun `the fair-odds side is Novig's and the money side is Kalshi's own`() {
         val kalshi = KalshiConfig().forScan().copy(autoBet = true, autoBetMinEv = 0.05, apiMaxStake = 3.0, maker = true, leagues = setOf("NHL"))
         val novig = ScanSettings(
-            sgoPro = true, oddsPapi = true, usePropLine = false, referenceBooks = listOf("pinnacle", "circa"), sharpBooks = setOf("circa"), devigMethod = DevigMethod.POWER,
+            sgoPro = true, usePropLine = false, referenceBooks = listOf("pinnacle", "circa"), sharpBooks = setOf("circa"), devigMethod = DevigMethod.POWER,
             autoBet = true, autoBetMinEv = 0.01, apiMaxStake = 99.0, maker = false, leagues = setOf("NFL"), autoBetStake = AutoBetStake.HALF_KELLY, useKalshi = true,
             gates = ScanSettings().gates.copy(cloudTrading = CloudTradeMode.LIVE, useBoltOdds = true, op4Fair = 77),
         )
         val m = KalshiMirror.fairOdds(kalshi, novig)
         // Fair-odds side: Novig's.
-        assertTrue(m.sgoPro && m.oddsPapi && !m.usePropLine)
+        assertTrue(m.sgoPro && !m.usePropLine)
         assertEquals(listOf("pinnacle", "circa"), m.referenceBooks)
         assertEquals(setOf("circa"), m.sharpBooks)
         assertEquals(DevigMethod.POWER, m.devigMethod)

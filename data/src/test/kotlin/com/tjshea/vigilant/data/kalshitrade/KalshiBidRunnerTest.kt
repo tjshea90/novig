@@ -60,7 +60,7 @@ class KalshiBidRunnerTest {
 
     private val settings = ScanSettings(
         leagues = setOf("NFL"), fairSource = FairSource.SHARP, devigMethod = DevigMethod.MULTIPLICATIVE, sharpBooks = setOf("pinnacle", "circa"), minBooks = 1,
-        usePolymarket = false, useKalshi = false, useOddsApi = false, sgoPro = false, oddsPapi = true,
+        usePolymarket = false, useKalshi = false, useOddsApi = false, sgoPro = false,
         maker = true, makerKinds = BetKind.entries.toSet(), trapEarlyHours = 0, trapFirstListed = false, sharpAutoBet = SharpMode.OFF, apiMaxPerDay = 100.0, apiMaxPerGame = 0.0,
         makerMargin = 0.03, makerStake = 5.0,
     )

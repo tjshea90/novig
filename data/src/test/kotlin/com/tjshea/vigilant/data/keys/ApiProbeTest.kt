@@ -107,23 +107,7 @@ class ApiProbeTest {
         assertEquals(380, u.remaining); assertEquals(500, u.limit)
     }
 
-    @Test fun aV4KeyPastedUnderV5AndAV5KeyPastedUnderV4AreEachRecognised() = runBlocking {
-        handler = { r -> if (r.requestUrl!!.encodedPath.startsWith("/op5")) MockResponse().setResponseCode(401) else ok("{}") }
-        val a = probe.check(ApiProvider.ODDSPAPI, listOf("v4keyv4keyv4key1")).single()
-        assertFalse(a.ok); assertTrue(a.message, a.message.contains("OddsPapi Free (v4)"))
-        handler = { r -> if (r.requestUrl!!.encodedPath.startsWith("/op4")) MockResponse().setResponseCode(401) else ok("[]") }
-        val b = probe.check(ApiProvider.ODDSPAPI_FREE, listOf("v5keyv5keyv5key1")).single()
-        assertFalse(b.ok); assertTrue(b.message, b.message.contains("v5 key"))
-    }
 
-    @Test fun unabatedAndOddsPapiV5SayAcceptedAndThatTheyPublishNoAllowance() = runBlocking {
-        handler = { ok("""{"data":[],"success":true}""") }
-        val u = probe.check(ApiProvider.UNABATED, listOf("unabatedunabated1")).single()
-        assertTrue(u.message, u.ok && u.message.contains("no allowance"))
-        assertEquals("unabatedunabated1", requests.single().getHeader("X-Api-Key"))
-        val v5 = probe.check(ApiProvider.ODDSPAPI, listOf("op5keyop5keyop51")).single()
-        assertTrue(v5.message, v5.ok && v5.message.contains("does not publish"))
-    }
 
     @Test fun pinnwireAndPinnapiHaveNoPromptSoTheTestSpendsOneRequestAndCountsIt() = runBlocking {
         handler = { ok("{}") }

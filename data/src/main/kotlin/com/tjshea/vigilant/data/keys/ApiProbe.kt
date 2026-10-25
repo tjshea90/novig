@@ -21,7 +21,6 @@ import kotlinx.coroutines.sync.withPermit
  *  - SportsGameOdds: `GET /v2/account/usage` (limits per interval and what is used).
  *  - ParlayAPI: `GET /v1/usage` (else `/v1/meta/api-key-check`) through [ParlayAccount].
  *  - OddsPapi v4 (free): `GET /v4/account` (unmetered): request_limit, request_count, valid_until.
- *  - OddsPapi v5: `GET /bookmakers` (accepted or not; v5 publishes no allowance, only per-second rate limits).
  *  - Unabated: `GET /league` (accepted or not; Free has no allowance, only one odds request per 5 s per key).
  *  - Pinnodds: `GET /panel/api/me` (plan, expiry, today's use).
  *  - PinnWire / pinnapi: no free prompt and no usage headers; the test makes ONE real request (it counts) and only the app's own count is shown.
@@ -40,7 +39,6 @@ class ApiProbe(
         val oddsApi: String = "https://api.the-odds-api.com/v4",
         val propLine: String = "https://api.prop-line.com/v1",
         val sgo: String = "https://api.sportsgameodds.com/v2",
-        val op5: String = "https://v5.oddspapi.io/en",
         val op4: String = "https://api.oddspapi.io",
         val unabated: String = "https://data.unabated.com",
         val sxbet: String = "https://api.sx.bet",
@@ -204,8 +202,7 @@ class ApiProbe(
             when {
                 r.code == 401 || r.code == 403 -> {
                     meter.recordBalance(QuotaPolicy.ODDSPAPI_FREE, key, null, inactive = true)
-                    val v5 = runCatching { get("${hosts.op5}/bookmakers", listOf("X-API-Key" to key)).isSuccessful }.getOrDefault(false)
-                    false to (refused(r.code) + if (v5) " It is a v5 key: paste it under OddsPapi (v5)." else "")
+                    false to refused(r.code)
                 }
                 !r.isSuccessful -> false to "Answered HTTP ${r.code}."
                 else -> {

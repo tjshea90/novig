@@ -71,7 +71,7 @@ class CloudKalshiLaneTest {
 
     private val phone = ScanSettings(
         leagues = setOf("NFL"), fairSource = FairSource.SHARP, devigMethod = DevigMethod.MULTIPLICATIVE, sharpBooks = setOf("pinnacle", "circa"), minBooks = 1,
-        oddsPapi = true, usePolymarket = false, useOddsApi = false, sgoPro = false,
+        usePolymarket = false, useOddsApi = false, sgoPro = false,
     )
 
     private class FakeClient(val now: Long) : KalshiTradingClient(OkHttpClient(), Json, { null }) {
