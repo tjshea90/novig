@@ -290,6 +290,7 @@ fun FeedScreen(
                     )
                 }
                 item(key = "viewFilter") {
+                    var agreeTyping by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
                     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         // A FlowRow: seven chips did not fit a phone's width and "All agree" was clipped to "Al" (Tj, 2026-10-16, twice).
                         @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
@@ -305,7 +306,13 @@ fun FeedScreen(
                                 selected = viewFilter.allMustAgree, onClick = { setViewFilter(viewFilter.copy(allMustAgree = !viewFilter.allMustAgree)) },
                                 label = { Text("All agree", maxLines = 1) }, modifier = Modifier.testTag("agreeAll"),
                             )
+                            // More than 4 books can be typed (PB8).
+                            FilterChip(
+                                selected = viewFilter.minAgreeing > 4, onClick = { agreeTyping = !agreeTyping },
+                                label = { Text(if (viewFilter.minAgreeing > 4) "${viewFilter.minAgreeing}" else "Other", maxLines = 1) }, modifier = Modifier.testTag("agreeOther"),
+                            )
                         }
+                        if (agreeTyping) TypedIntField(NumberSpecs.count("books that agree", 1, 30), viewFilter.minAgreeing, "agreeField") { n -> setViewFilter(viewFilter.copy(minAgreeing = n)) }
                         if (viewFilter.active) Text(
                             "Showing only bets where " + (if (viewFilter.allMustAgree) "every book that prices both sides" else "at least ${viewFilter.minAgreeing} books") +
                                 (if (viewFilter.allMustAgree && viewFilter.minAgreeing > 0) " and at least ${viewFilter.minAgreeing}" else "") + " say +EV. This only changes this screen, not the GitHub engine.",
@@ -857,6 +864,11 @@ private const val FAIR_AGING_MS = 3 * 60_000L
  */
 @Composable
 internal fun StartsWithinRow(hours: Int, onPick: (Int) -> Unit) {
+    // Any number of hours can be typed too (PB8, Tj 2026-10-25: "Anywhere there are cards to select numbers or values, allow me to also type in a manual value"): "Other" opens the box; a typed value
+    // that is not one of the choices shows in its place.
+    var typing by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    val custom = hours > 0 && hours !in ScanSettings.STARTS_WITHIN_CHOICES
+    Column {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             "Starts within",
@@ -877,6 +889,16 @@ internal fun StartsWithinRow(hours: Int, onPick: (Int) -> Unit) {
                     maxLines = 1, softWrap = false, color = if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+        TextButton(
+            onClick = { typing = !typing },
+            modifier = Modifier.weight(1.2f).semantics { selected = custom }.testTag("startsWithinOther"),
+            contentPadding = PaddingValues(horizontal = 2.dp),
+        ) {
+            Text(if (custom) startsWithinLabel(hours) else "Other", style = MaterialTheme.typography.labelMedium, fontWeight = if (custom) FontWeight.Bold else FontWeight.Normal,
+                maxLines = 1, softWrap = false, color = if (custom) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+    if (typing) TypedIntField(NumberSpecs.time("hours", 1, 24 * 14), hours, "startsWithinField") { onPick(it) }
     }
 }
 
