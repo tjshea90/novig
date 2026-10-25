@@ -1,21 +1,23 @@
-# CHECKPOINT 4225 — read me first, then TASKS.md
+# CHECKPOINT 4226 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T18:56:39Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-27fee639-d3opru` · **builds on:** `dca73212a` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T18:58:14Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-27fee639-d3opru` · **builds on:** `dce25e0c2` (this checkpoint is the commit after it)
 
 ## Just done
-PX9: propline.yml altprobe takes sports (NBA/NHL/MLB probe of books at Novig's alternate numbers); ParlayAPI NBA gameprobe: alternates Pinnacle alone, main spreads split across 3 numbers
+PX9 shipped to main + engine reset (run 40223571078); NBA/NHL/MLB altprobe: PropLine median 11 books at Novig's alternate numbers (NBA 502 lines, NHL 86), 19/18 on mains; ParlayAPI NBA/NFL alternates + 1H = Pinnacle alone
 
 ## Do this next
-dispatch altprobe for basketball_nba,hockey_nhl,baseball_mlb; read the new engine's list quality / heartbeat / census; PX9b
+when run 40223571078 publishes: read engine-log for 'list quality', 'heartbeat:', quote census crossSame/crossDiff (push vs polled); decide PX9b (date push-book quotes current) and PX9c; tell Tj the numbers
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  dce25e0c2 ckpt 4225: PX9: propline.yml altprobe takes sports (NBA/NHL/MLB probe of books at Novi
   91eb83777 ckpt 4224: PX9: real-time list no longer adopts partial-scan rows of leagues still wai
   be57f4981 ckpt 4223: PX8: ParlayAPI stream skips period rows + counts unread by market; parlay.p
   b20bd61f3 ckpt 4222: PX study linked in LEVERS
@@ -25,8 +27,4 @@ dispatch altprobe for basketball_nba,hockey_nhl,baseball_mlb; read the new engin
   d5e872588 ckpt 4218: PX census v2 + SharpApiSourceTest shutdown fix
   7d0b702eb ckpt 4217: PX census split by feed id + PropLine unconfirmed/uncovered quotes
   57b1594aa ckpt 4216: PX: QuoteCensus (per-feed counts where fair-odds quotes are lost) logged af
-  29973aa85 ckpt 4215: ENGINEER 2026-10-25 watch + volume count, no change
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
