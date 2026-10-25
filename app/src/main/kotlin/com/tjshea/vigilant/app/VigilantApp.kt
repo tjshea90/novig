@@ -2229,7 +2229,7 @@ class AppContainer(val app: Application) {
      * it"): ParlayAPI and PropLine side by side, The Odds API last, each only while it's on with a key, and none while Vigilant's scanner is
      * asleep (CNO only). Display only: never a fair line.
      */
-    val otherBooks = com.tjshea.vigilant.data.reference.OtherBooks(parlayOdds, propLine, oddsApi, json, on = { otherBookSources(currentSettings()) }, sgo = sgoClient, op = { league -> opFeed.read(league, currentSettings().let { it.copy(families = it.families + com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS) }).props })
+    val otherBooks = com.tjshea.vigilant.data.reference.OtherBooks(parlayOdds, propLine, oddsApi, json, on = { otherBookSources(currentSettings()) }, sgo = sgoClient)
 
     /**
      * Which APIs a tapped bet's other-books sheet asks: every one that is switched on and keyed, none that is off (Tj, 2026-10-11): SportsGameOdds Pro and OddsPapi no longer stand in for the other three.
