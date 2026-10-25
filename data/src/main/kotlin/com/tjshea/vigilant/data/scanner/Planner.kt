@@ -288,8 +288,8 @@ object Planner {
             val league = Leagues.byNovigName(leagueName) ?: continue
             for (snap in references) {
                 if (snap.sportKey != league.oddsApiSportKey) continue
-                for ((eventId, pair) in matchOne(league, leagueEvents, snap.events)) {
-                    found.getOrPut(eventId) { ArrayList() } += Found(pair.first, pair.second, snap.provider.ifEmpty { "reference" })
+                for ((eventId, pairs) in matchOne(league, leagueEvents, snap.events)) {
+                    for (pair in pairs) found.getOrPut(eventId) { ArrayList() } += Found(pair.first, pair.second, snap.provider.ifEmpty { "reference" })
                 }
             }
         }
