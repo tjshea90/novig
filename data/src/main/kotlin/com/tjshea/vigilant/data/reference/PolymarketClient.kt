@@ -123,14 +123,22 @@ class PolymarketClient(
         /** Tokens per `POST /books`. */
         const val BOOKS_CHUNK = 100
 
-        /** A market's first outcome token: `clobTokenIds` (a JSON array encoded as a string) or, for a Protocol V2 market, `positionIds`. */
+        /**
+         * A market's first outcome token: `clobTokenIds` (a JSON array encoded as a string) or, for a Protocol V2 market, `positionIds`. Polymarket's V2 migration guide (2026-10-25 docs): "Choose the ID
+         * field by `version`, even when both fields are present" (`"v2"` = `positionIds`, `"v1"` = `clobTokenIds`); a market that names no version keeps the old order (clobTokenIds first).
+         */
         internal fun firstToken(m: MarketDto, json: Json): String? {
-            val raw = m.clobTokenIds ?: when (val p = m.positionIds) {
-                is kotlinx.serialization.json.JsonArray -> return (p.firstOrNull() as? kotlinx.serialization.json.JsonPrimitive)?.content?.takeIf { it.isNotBlank() }
-                is kotlinx.serialization.json.JsonPrimitive -> p.content.takeIf { p !is kotlinx.serialization.json.JsonNull }
+            fun positions(): String? = when (val p = m.positionIds) {
+                is kotlinx.serialization.json.JsonArray -> (p.firstOrNull() as? kotlinx.serialization.json.JsonPrimitive)?.content?.takeIf { it.isNotBlank() }
+                is kotlinx.serialization.json.JsonPrimitive -> if (p is kotlinx.serialization.json.JsonNull) null else p.content.let { c -> runCatching { json.decodeFromString(ListSerializer(String.serializer()), c).firstOrNull() }.getOrNull() ?: c }.takeIf { it.isNotBlank() }
                 else -> null
-            } ?: return null
-            return runCatching { json.decodeFromString(ListSerializer(String.serializer()), raw).firstOrNull() }.getOrNull()?.takeIf { it.isNotBlank() }
+            }
+            fun clob(): String? = m.clobTokenIds?.let { raw -> runCatching { json.decodeFromString(ListSerializer(String.serializer()), raw).firstOrNull() }.getOrNull()?.takeIf { it.isNotBlank() } }
+            return when (m.version?.lowercase()) {
+                "v2" -> positions()
+                "v1" -> clob()
+                else -> clob() ?: positions()
+            }
         }
 
         /** `POST /books`' answer: token -> (best bid, best ask), each side's best level whatever order the levels come in. */
@@ -271,5 +279,7 @@ class PolymarketClient(
         val clobTokenIds: String? = null,
         /** A Protocol V2 market's outcome ids (Gamma, 2026-10 docs): an array, or an array encoded as a string. */
         val positionIds: kotlinx.serialization.json.JsonElement? = null,
+        /** `"v1"` (ConditionalTokens, ids in [clobTokenIds]) or `"v2"` (Protocol V2, ids in [positionIds]): which field holds the trading ids. */
+        val version: String? = null,
     )
 }
