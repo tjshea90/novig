@@ -127,13 +127,16 @@ class PropLineClient(
      */
     suspend fun periodOdds(sport: String, period: String, books: List<String>): Answer<List<RefEvent>> {
         val readAt = clock()
-        val answer = call(
-            "/sports/$sport/odds",
-            listOf("markets" to "spreads,totals", "period" to period, "bookmakers" to books.joinToString(",")) + idParams(),
-            notFound = Board(emptyList(), emptyList()),
-        ) { parseBoard(it, json, sport, period) }
-        val events = live?.overlay(answer.value.events, readAt, clock()) ?: answer.value.events
-        return Answer(events.filter { it.markets.isNotEmpty() }, answer.remaining, answer.used)
+        val parts = bookParts(books).map { part ->
+            call(
+                "/sports/$sport/odds",
+                listOf("markets" to "spreads,totals", "period" to period, "bookmakers" to part.joinToString(",")) + idParams(),
+                notFound = Board(emptyList(), emptyList()),
+            ) { parseBoard(it, json, sport, period) }
+        }
+        val board = merge(parts.map { it.value })
+        val events = live?.overlay(board.events, readAt, clock()) ?: board.events
+        return Answer(events.filter { it.markets.isNotEmpty() }, parts.last().remaining, parts.last().used)
     }
 
     /** The stream laid over [events] read at [readAtMs] (the props source's held boards); unchanged without a stream. */
