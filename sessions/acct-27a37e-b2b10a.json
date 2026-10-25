@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-27fee639-d3opru",
- "head": "4536bd2f6ddc458454bcfb8d2bfb7144bbb570b0",
+ "head": "34602594dceeb4ba9fa22b1a0b0e9aa3f5af74b0",
  "since": 1792912591,
- "beat": 1792956251,
- "beatIso": "2026-10-25T19:24:11Z",
+ "beat": 1792956432,
+ "beatIso": "2026-10-25T19:27:12Z",
  "done": "PX9 shipped to main + engine reset (run 40223571078); NBA/NHL/MLB altprobe: PropLine median 11 books at Novig's alternate numbers (NBA 502 lines, NHL 86), 19/18 on mains; ParlayAPI NBA/NFL alternates + 1H = Pinnacle alone",
  "next": "when run 40223571078 publishes: read engine-log for 'list quality', 'heartbeat:', quote census crossSame/crossDiff (push vs polled); decide PX9b (date push-book quotes current) and PX9c; tell Tj the numbers"
 }
