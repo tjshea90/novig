@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "a94c61bca20e5de208ebaf4bcf1e20f105f768e2",
+ "head": "48c084dd2cc0c12b56cb931fd63d8bba53a235be",
  "since": 1792915284,
- "beat": 1792962030,
- "beatIso": "2026-10-25T21:00:30Z",
- "done": "PX9f landed + engine reset 20:48 UTC; PX9h SGO lastUpdatedAt probe (sgo-probe.yml, tools/sgo_stamps.py) written",
- "next": "dispatch sgo-probe.yml on main, read its report; list_audit on the new engine run (PropLine back?)"
+ "beat": 1792962091,
+ "beatIso": "2026-10-25T21:01:31Z",
+ "done": "PX9d plainFastFeeds on the engine (full floor green, 4,208); list_audit knows the haircuts; research/feed_freshness_docs_2026-10-25.md",
+ "next": "engine reset onto PX9d; read sgo-probe run (SGO lastUpdatedAt meaning) and list_audit on the new run"
 }
