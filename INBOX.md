@@ -1170,3 +1170,8 @@ Make sure the GitHub engine defaults to the parlayapi business plan key and stay
 At the next available opportunity, stop all work and save all progress to GitHub and checkpoint. Save all progress, my prompts verbatim which are not completed, a summary of work to do , and a clean handoff to the next Claude account. Assume the next Claude account will have no context and still need to finish the jobs you started with no progress loss and full understanding of what has been finished and what needs to be done. There should be a seamless handoff to the next Claude account. The reason is your usage is running out. Save and checkpoint as soon as possible
 Confirm you read the last prompt right now
 ```
+
+## 2026-10-25T08:12:08Z
+```
+If possible, for every single scanned bet inside the scanner, when I press on the bet and it shows the odds from other sports books, include a freshness time next to each sports book, read directly from either parlayapi freshness endpoint or propline freshness endpoint, whichever one provided the odds. For example, if propline freshness endpoint says draftkings odds are 4 seconds old, and a scanned bet used propline for its draftkings quote, put 4s next to that quote. Put very fresh odds in green, medium fresh odds in yellow, and stale odds in red. If the odds are very stale, do not use them at all for the fair odds calculation. Only implement this feature if it doesn't slow anything down or break anything. 
+```
