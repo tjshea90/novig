@@ -92,3 +92,17 @@ soccer). Not carried: Circa, Caesars, bet365.
 - Not built and why: webhooks (a runner has no public URL); `availability` (FanDuel in play: the engine bets pregame);
   `/v1/availability/*` (Streaming tier, not Lite); SGP pricing (Novig has no SGP); max_age (its cut is on
   `last_update`, and an unmoved line must not be dropped).
+
+## PSL6: the other features, used or not, and why
+| Feature | Status |
+|:--|:--|
+| Grading (`/results`, `resolution` push) | The app grades on ESPN/MLB/SGO box scores (PropLineScores is a fallback source); every Novig `resolution` push is now journaled (`propline-push-*`) so the grader can be checked against PropLine's grade. |
+| CLV (`/odds/closing`, `/clv/grade`) | `tools/propline_clv.py` + `propline.yml` (Pinnacle's devigged close and Novig's own close per engine line). New: `closing_last_seen_at` / the new `is_stale` meaning (a line pulled > 10 min before kickoff) - to be read by propline_clv next time it is touched. |
+| Resolved-prop archive | `propline.yml` archive: Streaming Lite allows 180 days and 100 export calls a day (Pro 90 / 50). |
+| All books | four sharp books added (above); the rest wait on their odds providers. |
+| Live odds | `pregame_only` books are left out of live games by default; the engine's PropLine reads are pregame. The live lane keeps its own sources (SX, Kalshi, SharpAPI, ParlayAPI PBP). |
+| Live scores | `/scores` (free) already used by PropLineScores; PropLine refreshes box scores ~90 s ("not for play-by-play"): not a live-lane source. |
+| Steam | `steam` push (props too, score >= 40) journaled for a CLV study (`propline-push-*`, join on market/player/point) before any rule uses it. |
+| +EV push (`ev`) | journaled only: PropLine's +EV prop Overs lost in the 25,909-bet test (propline_vs_vigilant_2026-10-16.md); the sweep stays off (Tj 2026-10-17). |
+| Injuries | `/injuries` already asked before ParlayAPI's (PropLineInjuries). |
+| Freshness | built (PSL5). |
