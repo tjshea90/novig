@@ -125,16 +125,17 @@ fun main(args: Array<String>) = runBlocking {
     scope.launch {
         while (isActive) {
             if (novigKeyed?.addressRefused(System.currentTimeMillis()) == true) { delay(15_000L); continue }
-            runCatching { sources.refreshParlayAccounts() }
-            log("ParlayAPI plans: " + sources.parlayPlans())
-            runCatching { sources.refreshPropLineAccounts() }
-            log("PropLine plans: " + sources.propLinePlans())
-            log(sources.boltPlanNote())
-            runCatching { sources.refreshPinnWireAccounts() }
-            log("PinnWire accounts: " + sources.pinnWirePlans())
-            log("Spend: " + sources.spendNotes())
-            runCatching { sources.refreshSharpApiUsage() }
-            log(sources.sharpApiNote())
+            // An API switched off is never called, its account read included (Tj, 2026-10-25, PB5: "as though it doesn't exist"). Before the first settings arrive nothing is read.
+            val s = latestSettings.get()
+            if (s != null) {
+                if (s.useParlay) { runCatching { sources.refreshParlayAccounts() }; log("ParlayAPI plans: " + sources.parlayPlans()) }
+                if (s.usePropLine) { runCatching { sources.refreshPropLineAccounts() }; log("PropLine plans: " + sources.propLinePlans()) }
+                if (sources.boltActive(s)) log(sources.boltPlanNote())
+                runCatching { sources.refreshPinnWireAccounts() }
+                if (s.usePinnacle && s.gates.usePinnwire) log("PinnWire accounts: " + sources.pinnWirePlans())
+                log("Spend: " + sources.spendNotes())
+                if (s.gates.useSharpApi) { runCatching { sources.refreshSharpApiUsage() }; log(sources.sharpApiNote()) }
+            }
             delay(60 * 60_000L)
         }
     }
