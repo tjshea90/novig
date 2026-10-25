@@ -152,62 +152,14 @@ class SharpApiLiveFeed(
 
     private fun idOf(key: String): Long = (key.hashCode().toLong() and 0x7fffffffL) + ID_BASE
 
-    private fun keyOf(m: RefBookMarket): String? = when (m.kind) {
-        LineKind.MONEYLINE -> "s;0;m"
-        LineKind.SPREAD -> m.line?.let { "s;0;s;$it" }
-        LineKind.TOTAL -> m.line?.let { "s;0;ou;$it" }
-        else -> null
-    }
+    private fun keyOf(m: RefBookMarket): String? = com.tjshea.vigilant.data.pinnodds.PinnFrames.keyOf(m)
 
-    private fun typeOf(k: String) = when {
-        k.endsWith(";m") -> "moneyline"
-        ";s;" in k -> "spread"
-        else -> "total"
-    }
+    private fun frame(id: Long, league: League?, home: String?, away: String?, startMs: Long?, markets: List<JsonObject>): JsonObject =
+        com.tjshea.vigilant.data.pinnodds.PinnFrames.frame("sharpapi/ld", id, league, home, away, startMs, markets)
 
-    private fun frame(id: Long, league: League?, home: String?, away: String?, startMs: Long?, markets: List<JsonObject>): JsonObject {
-        if (league == null && markets.isEmpty()) return JsonObject(emptyMap())
-        return buildJsonObject {
-            put("type", "live")
-            put("sport_id", league?.pinnacleSportId ?: 0)
-            put("topic", "sharpapi/ld")
-            put("rec", buildJsonObject {
-                put("id", id)
-                put("isLive", true)
-                put("units", if (league?.tennis == true) "Sets" else "Regular")
-                if (league != null && home != null && away != null) {
-                    startMs?.takeIf { it > 0 }?.let { put("startTime", java.time.Instant.ofEpochMilli(it).toString()) }
-                    put("league", buildJsonObject { put("name", league.novigName) })
-                    put("participants", buildJsonArray {
-                        add(buildJsonObject { put("name", home); put("alignment", "home") })
-                        add(buildJsonObject { put("name", away); put("alignment", "away") })
-                    })
-                }
-                put("markets", JsonArray(markets))
-            })
-        }
-    }
+    private fun closed(key: String, v: Long): JsonObject = com.tjshea.vigilant.data.pinnodds.PinnFrames.closed(key, v)
 
-    private fun closed(key: String, v: Long): JsonObject = buildJsonObject {
-        put("key", key); put("status", "closed"); put("type", typeOf(key)); put("period", 0); put("version", v)
-    }
-
-    private fun market(key: String, m: RefBookMarket, v: Long): JsonObject = buildJsonObject {
-        put("key", key)
-        put("status", "open")
-        put("type", typeOf(key))
-        put("period", 0)
-        put("version", v)
-        put("isAlternate", false)
-        put("limits", buildJsonArray { add(buildJsonObject { put("amount", LIMIT) }) })
-        put("prices", buildJsonArray {
-            for (q in m.quotes) add(buildJsonObject {
-                put("designation", when (q.side) { Side.HOME -> "home"; Side.AWAY -> "away"; Side.OVER -> "over"; Side.UNDER -> "under" })
-                put("price", BoltLiveConsensus.american(1.0 / q.decimalOdds))
-                if (q.point != null) put("points", q.point) else put("points", JsonNull)
-            })
-        })
-    }
+    private fun market(key: String, m: RefBookMarket, v: Long): JsonObject = com.tjshea.vigilant.data.pinnodds.PinnFrames.market(key, m, v, LIMIT)
 
     companion object {
         /** The leagues the live lane reads: the picked ones, plus tennis whenever live tennis is wanted (Tj, 2026-10-22: the app's league list had no ATP/WTA, and the phone's copy of the settings kept taking them out). */
