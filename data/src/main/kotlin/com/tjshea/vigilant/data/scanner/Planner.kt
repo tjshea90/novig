@@ -316,8 +316,14 @@ object Planner {
         return out
     }
 
-    /** Novig event id → (matched reference event, whether home/away are reversed), for one feed. */
-    private fun matchOne(league: League, leagueEvents: List<NovigEvent>, refs: List<RefEvent>): Map<String, Pair<RefEvent, Boolean>> {
+    /**
+     * Novig event id → its matched reference events (each with whether home/away are reversed), for one feed: the best one first, then any other event of the same feed that is the same game.
+     *
+     * PX11f (Tj 2026-10-25: "Shouldn't there be some parlayapi results?"): ParlayAPI lists one game as several events, one per spelling of the teams (Northwestern @ Oregon for Pinnacle, Bovada and
+     * ProphetX; Northwestern Wildcats @ Oregon Ducks for bet365, BetMGM, BetRivers, Caesars, DraftKings, FanDuel and Parx). One event per feed left the US books' quotes, seconds old, out of the fair.
+     * An event no Novig game took joins the game it matches when it starts within [SAME_GAME_START_MS] of that game's first match (a doubleheader's second game starts hours later).
+     */
+    private fun matchOne(league: League, leagueEvents: List<NovigEvent>, refs: List<RefEvent>): Map<String, List<Pair<RefEvent, Boolean>>> {
         data class Candidate(val event: NovigEvent, val ref: RefEvent, val score: Double, val closeness: Double, val swapped: Boolean, val gap: Long)
 
         val maxGap = league.maxStartGapHours * 3_600_000L
