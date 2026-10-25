@@ -85,9 +85,13 @@ class CloudNovigPort(
             }
         }
         var fills = readFills(orderId)
-        if (fills.isEmpty() && order?.status == "FILLED") { pause(1_000L); fills = readFills(orderId) }
+        // What Novig's own record says filled (PX11a, 2026-10-25: a FILLED order whose fills could not be read for Novig's rate limit was taken as "nobody was selling"; REJECTED = nothing filled).
+        val filled = order?.status == "FILLED" || (order?.status != "REJECTED" && order != null && order.remaining < order.qty)
+        val waitedFrom = clock()
+        while (fills.isEmpty() && filled && clock() - waitedFrom < 8_000L) { pause(1_500L); fills = readFills(orderId) }
         if (fills.isEmpty()) {
-            return if (order?.terminal == true) CloudOrderPort.Placed.Missed("nothing filled: nobody was selling at that price any more")
+            return if (filled) CloudOrderPort.Placed.Unconfirmed("Novig filled the order ($orderId, status ${order?.status}) but its fills could not be read: kept as at risk, not sent again")
+            else if (order?.terminal == true) CloudOrderPort.Placed.Missed("nothing filled: nobody was selling at that price any more")
             else CloudOrderPort.Placed.Unconfirmed("Novig took the order ($orderId) but had not finished it after ${ORDER_WAIT_MS / 1000}s (last seen: $seen): kept as at risk, not sent again")
         }
         val qty = fills.sumOf { it.qty }
