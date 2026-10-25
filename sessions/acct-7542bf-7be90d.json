@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "7d0b702eb4740b677cc2e7bff22966f4813a9102",
+ "head": "d5e8725880676bf6110377c4194ce8b6d0a34b28",
  "since": 1792915284,
- "beat": 1792949739,
- "beatIso": "2026-10-25T17:35:39Z",
- "done": "PX census split by feed id + PropLine unconfirmed/uncovered quotes",
- "next": "reset engine, read census, fix"
+ "beat": 1792949943,
+ "beatIso": "2026-10-25T17:39:03Z",
+ "done": "PX census v2 + SharpApiSourceTest shutdown fix",
+ "next": "reset engine, read census"
 }
