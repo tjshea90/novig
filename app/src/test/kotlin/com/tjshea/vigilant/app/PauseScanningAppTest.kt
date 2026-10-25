@@ -81,12 +81,12 @@ class PauseScanningAppTest {
         assertTrue(vm.contains("state.map(::cnoReadsHeld).distinctUntilChanged().collect { cnoWatch.hold(it) }"))
         assertTrue(vm.contains("internal fun cnoReadsHeld(s: UiState): Boolean = !s.loaded || s.settings.paused || s.checkingOdds"))
         val service = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt").readText()
-        assertTrue(service.contains("container.settingsStore.flow.filterNotNull().map { Plan(it.activeAutoScan, it.autoScanSeconds, KeepAwake.active(it)) }"))
-        assertTrue(service.contains("app.container.currentSettings().activeAutoScan != AutoScanMode.OFF"))
+        assertTrue(service.contains("container.settingsStore.flow.filterNotNull().map { Plan(it.phoneAutoScan, it.autoScanSeconds, KeepAwake.active(it)) }"))
+        assertTrue(service.contains("app.container.currentSettings().phoneAutoScan != AutoScanMode.OFF"))
         val cycle = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
-        assertTrue(cycle.contains("if (settings.activeAutoScan == AutoScanMode.OFF) return false"))
+        assertTrue(cycle.contains("if (settings.phoneAutoScan == AutoScanMode.OFF) return false"))
         val activity = File("src/main/kotlin/com/tjshea/vigilant/app/MainActivity.kt").readText()
-        // Paused is part of activeAutoScan (OFF while paused), so the same line also stops the service when the scanner choice leaves nothing to read.
+        // Paused is part of activeAutoScan and so of phoneAutoScan (OFF while paused, and while the GitHub engine scans and trades: PB9, PhoneRestsTest), so the same line also stops the service when the scanner choice leaves nothing to read.
         assertTrue(activity.contains("mode != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF && active == com.tjshea.vigilant.data.scanner.AutoScanMode.OFF"))
         // A scan stopped by a pause isn't reported as done.
         val scan = File("src/main/kotlin/com/tjshea/vigilant/app/ScanService.kt").readText()
