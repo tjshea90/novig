@@ -475,7 +475,7 @@ def cmd_coverage(outdir, sports=("football_nfl", "football_ncaaf", "basketball_n
     os.makedirs(outdir, exist_ok=True)
     boards = []
     for sp in sports:
-        st, _, data = request("/sports/%s/odds" % sp, key, {"markets": "h2h,spreads,totals"})
+        st, _, data = request("/v1/sports/%s/odds" % sp, key, {"markets": "h2h,spreads,totals"})
         body = j(data)
         events = body if isinstance(body, list) else (body or {}).get("data") or []
         print("%s: HTTP %s, %d games" % (sp, st, len(events)))
