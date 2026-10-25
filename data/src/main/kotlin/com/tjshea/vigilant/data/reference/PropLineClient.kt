@@ -121,9 +121,6 @@ class PropLineClient(
     /** Whether the stream keeps a read made at [readAtMs] current now. */
     fun streamCovers(readAtMs: Long): Boolean = live?.covers(readAtMs, clock()) == true
 
-    /** PropLine's server-side age cut (`max_age`, 2026-10-24 docs): markets a book has not delivered in [MAX_AGE_S] never come back at all (they could never price: [com.tjshea.vigilant.data.scanner.Freshness]). Engine only. */
-    private fun ageParams(): List<Pair<String, String>> = if (live != null) listOf("max_age" to MAX_AGE_S.toString()) else emptyList()
-
     /**
      * The league's upcoming games (PropLine's ids, teams, start times): the last board's when it's
      * recent, else one request to `/events`.
