@@ -63,6 +63,12 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
     /** Rows by kind that could not be read (a shape Vigilant does not price): counted, never guessed at. */
     @Volatile var unread = 0L
         private set
+    /** [unread] by `kind|market_key`, for the status line: which shapes the stream sends that are not priced (PX8). */
+    private val unreadBy = ConcurrentHashMap<String, java.util.concurrent.atomic.AtomicLong>()
+    private fun skip(r: JsonObject) {
+        unread++
+        unreadBy.getOrPut("${r.str("kind") ?: "?"}|${r.str("market_key") ?: "?"}") { java.util.concurrent.atomic.AtomicLong() }.incrementAndGet()
+    }
 
     fun heard(now: Long = clock()) { lastFrameMs = now }
 
@@ -81,6 +87,9 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
         if (r["available"].let { it is JsonPrimitive && it.content == "false" }) return
         val at = listOfNotNull(r.num("last_update"), r.num("last_observed_ms"), r.num("collector_seen_ms")).maxOrNull()?.toLong() ?: return
         val market = r.str("market_key") ?: return
+        // A row of a period (1st half, a quarter) is never held under the full game's key (PX8): only the full game is laid over.
+        val period = r.num("period_key") ?: ((r["pinnacle"] as? JsonObject)?.get("market") as? JsonObject)?.num("period")
+        if (period != null && period != 0.0) { skip(r); return }
         val game = gameKey(home, away)
         r.str("commence_time")?.let { t -> runCatching { java.time.Instant.parse(t).toEpochMilli() }.getOrNull() }?.let { games[game] = Game(sport, home, away, it) }
         fun put(kind: LineKind, subject: String?, stat: String?, side: Side, point: Double?, american: Double?) {
@@ -100,7 +109,8 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
                 val side = sideOf(team, home, away) ?: return
                 put(LineKind.SPREAD, null, null, side, r.num("line") ?: return, r.num("price") ?: r.num("over_price"))
             }
-            market == "totals" && (r.str("kind") == "game" || player == null || player.equals("Total", true)) -> {
+            // Some books' game totals come as kind "prop" with the matchup as the player ("Los Angeles Lakers @ Utah Jazz", "DET Pistons vs PHI 76ers": Bovada, Fliff; PX8).
+            market == "totals" && (r.str("kind") == "game" || player == null || player.equals("Total", true) || matchup(player, home, away)) -> {
                 val line = r.num("line") ?: r.num("total") ?: return
                 put(LineKind.TOTAL, null, null, Side.OVER, line, r.num("over_price"))
                 put(LineKind.TOTAL, null, null, Side.UNDER, line, r.num("under_price"))
@@ -113,12 +123,12 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
                 put(LineKind.TEAM_TOTAL, subject, null, Side.UNDER, line, r.num("under_price"))
             }
             r.str("kind") == "prop" && player != null -> {
-                val stat = ParlayMarkets.statOf(sport, market, r.str("market")) ?: run { unread++; return }
+                val stat = ParlayMarkets.statOf(sport, market, r.str("market")) ?: run { skip(r); return }
                 val line = r.num("line") ?: return
                 put(LineKind.PLAYER_PROP, PlayerNames.key(player), stat, Side.OVER, line, r.num("over_price"))
                 put(LineKind.PLAYER_PROP, PlayerNames.key(player), stat, Side.UNDER, line, r.num("under_price"))
             }
-            else -> unread++
+            else -> skip(r)
         }
     }
 
@@ -199,7 +209,7 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
     }
 
     fun describe(now: Long = clock()): String =
-        "${prices.size} sides held from $rows rows (${applied} markets moved onto the boards, $confirmed confirmed unchanged at ParlayAPI's last poll, ${polls.size} books' polls known, $unread rows of shapes not priced), last frame ${if (lastFrameMs == 0L) "never" else "${(now - lastFrameMs) / 1000}s ago"}"
+        "${prices.size} sides held from $rows rows (${applied} markets moved onto the boards, $confirmed confirmed unchanged at ParlayAPI's last poll, ${polls.size} books' polls known, $unread rows of shapes not priced${unreadBy.entries.sortedByDescending { it.value.get() }.take(5).takeIf { it.isNotEmpty() }?.joinToString(", ", ": ") { "${it.key} ${it.value.get()}" } ?: ""}), last frame ${if (lastFrameMs == 0L) "never" else "${(now - lastFrameMs) / 1000}s ago"}"
 
     companion object {
         /** The stream sends a heartbeat every 5 s: past this it is taken for dead. */
@@ -235,6 +245,9 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
         }
 
         private fun norm(team: String) = team.lowercase().filter { it.isLetterOrDigit() }
+
+        /** A row's "player" that names the game itself: both teams. */
+        private fun matchup(player: String, home: String, away: String): Boolean = norm(player).let { p -> norm(home).let { it.isNotEmpty() && it in p } && norm(away).let { it.isNotEmpty() && it in p } }
 
         private fun sideOf(team: String, home: String, away: String): Side? = when (norm(team)) {
             norm(home) -> Side.HOME
