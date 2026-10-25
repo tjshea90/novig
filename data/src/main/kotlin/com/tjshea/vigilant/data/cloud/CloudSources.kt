@@ -470,6 +470,11 @@ class CloudSources(
             add(oddsApi)
             if (s.useBookProps) add(bookProps)
         }
+        // PX: a Business key (a million credits a month, the streams) is asked beside PropLine for every league, never asleep behind it; its alternates are always asked (the Pinnacle feed they
+        // once deferred to has no keys left).
+        val business = s.useParlay && has(CloudKeys.PARLAY) && keys(CloudKeys.PARLAY).any { (parlayAccount.last[it]?.limit ?: 0) >= BUSINESS_CREDITS }
+        com.tjshea.vigilant.data.scanner.ApiChain.alwaysAsked = if (business) PARLAY_FEEDS else emptySet()
+        if (business) parlayOdds.alternates = true
         if (s.useParlay && has(CloudKeys.PARLAY)) {
             add(parlayOdds)
             if (s.useBookProps) add(parlayProps)

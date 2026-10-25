@@ -35,6 +35,13 @@ object ApiChain {
     /** Providers (switch ids' meter ids, e.g. "parlay") Tj pays for, and the paid monthly ones whose credits are ahead of the calendar ([com.tjshea.vigilant.data.cloud.ApiScorecard]); set by the engine. */
     @Volatile var paidProviders: Set<String> = emptySet()
     @Volatile var surplusProviders: Set<String> = emptySet()
+
+    /**
+     * Feeds taken off the chains: asked whenever they are on, beside the best one, never put to sleep by it. Set by the engine for ParlayAPI while its key is a Business plan (PX, Tj 2026-10-25:
+     * "Investigate why I don't see any parlayapi provided odds in the scanned list"; PB21/PS12: "both are used to their full ability ... They should compliment each other"): asleep behind PropLine,
+     * ParlayAPI priced none of the listed bets. Its credits are paced to the month by [com.tjshea.vigilant.data.keys.CreditPace] all the same.
+     */
+    @Volatile var alwaysAsked: Set<String> = emptySet()
     private val surplusAsked = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
     /** A surplus provider is asked as a second opinion for a league at most this often. */
@@ -46,7 +53,7 @@ object ApiChain {
     private val auditioned = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
     /** A new scanner starts from the shipped order. */
-    fun reset() { measures = emptyMap(); auditioned.clear(); scarceAsked.clear(); surplusAsked.clear(); paidProviders = emptySet(); surplusProviders = emptySet() }
+    fun reset() { measures = emptyMap(); auditioned.clear(); scarceAsked.clear(); surplusAsked.clear(); paidProviders = emptySet(); surplusProviders = emptySet(); alwaysAsked = emptySet() }
 
     /** When a scarce feed (small monthly allowance, [SourceScore.SCARCE]) was last asked for a league to fill a gap or add an extra book, so it is not asked again every scan for the same gap. */
     private val scarceAsked = java.util.concurrent.ConcurrentHashMap<String, Long>()
@@ -58,8 +65,10 @@ object ApiChain {
     private val CHAINS: List<List<Pair<String, Kind>>>
         get() {
             val m = measures
-            if (m.isEmpty()) return STATIC_CHAINS
-            return STATIC_CHAINS.map { chain ->
+            val off = alwaysAsked
+            val chains = if (off.isEmpty()) STATIC_CHAINS else STATIC_CHAINS.map { c -> c.filter { it.first !in off } }
+            if (m.isEmpty()) return chains
+            return chains.map { chain ->
                 val kinds = chain.toMap()
                 SourceScore.rank(chain.map { it.first }, m, chain.map { it.first }.filter { providerOf(it) in paidProviders }.toSet()).map { it to kinds.getValue(it) }
             }
