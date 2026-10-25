@@ -68,7 +68,8 @@ class PinnoddsFirstTest {
         assertEquals(1, server.requestCount)
     }
 
-    @Test fun its_board_is_reused_only_fifteen_seconds() = runBlocking {
+    /** The free trial (PB2, 2026-10-25): 100 requests a day, so one board read every 15 minutes at most, and that board is used meanwhile. */
+    @Test fun the_trial_reads_one_board_every_fifteen_minutes_and_keeps_it_meanwhile() = runBlocking {
         server.enqueue(MockResponse().setBody(board)); server.enqueue(MockResponse().setBody(board))
         var now = 1_000L
         val m = meter()
@@ -76,6 +77,9 @@ class PinnoddsFirstTest {
         c.odds(nfl, settings); c.odds(nfl, settings)
         assertEquals(1, server.requestCount)
         now += 16_000L
+        c.odds(nfl, settings)
+        assertEquals("16 s on: still the same board, nothing spent", 1, server.requestCount)
+        now += PinnapiClient.FIRST_TRIAL_GAP_MS
         c.odds(nfl, settings)
         assertEquals(2, server.requestCount)
     }
