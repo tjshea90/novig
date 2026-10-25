@@ -927,6 +927,23 @@ class Scanner(
         }
     }
 
+    override fun liveReprice(requested: ScanSettings, rows: List<Opportunity>, overlay: (RefEvent, Long) -> RefEvent): List<Opportunity> {
+        if (rows.isEmpty()) return rows
+        val settings = requested.effective(forBets = betsOnly)
+        val now = clock()
+        val top = novig.pushedTop(rows.mapTo(HashSet()) { it.market.marketId })
+        val games = HashMap<String, RefEvent>()
+        return rows.map { o ->
+            val ref0 = o.refEvent
+            val refaired = if (ref0 == null) o else {
+                val r = games.getOrPut(ref0.id) { runCatching { overlay(ref0, now) }.getOrDefault(ref0) }
+                if (r === ref0) o else Pricing.refair(o, r, settings, now)
+            }
+            val b = top[o.market.marketId]
+            if (b != null && (o.bookFetchedAtMs == null || b.fetchedAtMs >= o.bookFetchedAtMs)) Pricing.requote(refaired, b, settings, now) else refaired
+        }
+    }
+
     override fun streamReady(): Boolean = catalog != null
 
     @Volatile private var streamTimings: String? = null

@@ -52,6 +52,13 @@ interface OddsScanner {
      */
     suspend fun requoteListed(settings: ScanSettings, rows: List<Opportunity>): List<Opportunity> = emptyList()
 
+    /**
+     * The engine's real-time list (PB19, [com.tjshea.vigilant.data.cloud.RealtimeList]): [rows] priced again from memory only, without the scan's lock (a scan may be running): each game's boards through
+     * [overlay] (the live streams' pushes) and each side's fair odds worked out again ([Pricing.refair]), then Novig's price from the socket's held book where it is newer ([Pricing.requote]). Nothing is
+     * requested from any API or from Novig.
+     */
+    fun liveReprice(settings: ScanSettings, rows: List<Opportunity>, overlay: (com.tjshea.vigilant.data.reference.RefEvent, Long) -> com.tjshea.vigilant.data.reference.RefEvent): List<Opportunity> = rows
+
     /** Re-price what's already fetched under new settings. No network. Null before the first scan. */
     suspend fun reprice(settings: ScanSettings): ScanResult?
 
