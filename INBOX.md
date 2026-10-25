@@ -1175,3 +1175,8 @@ Confirm you read the last prompt right now
 ```
 If possible, for every single scanned bet inside the scanner, when I press on the bet and it shows the odds from other sports books, include a freshness time next to each sports book, read directly from either parlayapi freshness endpoint or propline freshness endpoint, whichever one provided the odds. For example, if propline freshness endpoint says draftkings odds are 4 seconds old, and a scanned bet used propline for its draftkings quote, put 4s next to that quote. Put very fresh odds in green, medium fresh odds in yellow, and stale odds in red. If the odds are very stale, do not use them at all for the fair odds calculation. Only implement this feature if it doesn't slow anything down or break anything. 
 ```
+
+## 2026-10-25T08:14:37Z
+```
+Also figure out how to best use both parlayapi and propline simultaneously. Since both have sockets, maybe use them to check each other's odds accuracy and fill in gaps in sports book coverage. Come up with the best way to use both apis in tandem for maximum speed and accuracy while using the full benefit and features of both paid plans.
+```
