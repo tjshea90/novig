@@ -417,3 +417,4 @@ day that changes.
 | v1.0.76 | code 416 | 2026-10-24T18:09Z | After the Diagnostics report is saved to GitHub the phone clears its logs (only after a successful save); hourly copies kept on GitHub
 | v1.0.77 | code 417 | 2026-10-24T18:24Z | CH80: the +EV list no longer empties at each engine scan start: rows the new scan has not re-read yet stay listed with their own stamps
 | v1.0.78 | code 418 | 2026-10-24T21:12Z | CH81i: order-end timing + NOFILL kept in the report; the phone stops asking for a missing bids file
+| v1.0.79 | code 419 | 2026-10-25T00:45Z | All-time profit = winnings on final bets and bids minus their cost (no wallet or deposits), by slate day
