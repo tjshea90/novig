@@ -463,7 +463,9 @@ object Pricing {
             val theirs = have?.first?.lastUpdateMs
             val newer = mine != null && theirs != null && mine - theirs > FRESHER_BY_MS
             // Two feeds dated within FRESHER_BY_MS of each other quote one book 3+ points apart: one of them has the wrong line (a mapping or a stale copy), and nothing says which (PB21b).
-            if (have != null && mine != null && theirs != null && kotlin.math.abs(mine - theirs) <= FRESHER_BY_MS && disagree(have.second, b.second)) {
+            // Only two aggregators' copies are weighed against each other: a book's own feed (Pinnacle's hosts, the exchanges) is the book itself.
+            if (have != null && mine != null && theirs != null && kotlin.math.abs(mine - theirs) <= FRESHER_BY_MS && aggregator(have.first.source) && aggregator(b.first.source) &&
+                disagree(have.second, b.second)) {
                 (doubted ?: HashSet<String>().also { doubted = it }) += b.first.bookKey
             }
             if (have == null || newer) chosen[b.first.bookKey] = b
@@ -477,6 +479,11 @@ object Pricing {
 
     /** PB21b (Tj, 2026-10-25: "use them to check each other's odds accuracy"): two same-time quotes of one book this far apart in no-vig chance (first side) are not both right. */
     const val CROSS_CHECK_POINTS = 0.03
+
+    /** Feeds that copy many books' prices (PropLine, ParlayAPI, SGO, The Odds API, SharpAPI, BoltOdds, OddsPapi): the ones [chosenMarkets] checks against each other. */
+    private val AGGREGATORS = listOf("propline", "parlay", "sgo", "oddsapi", "sharpapi", "bolt", "oddspapi", "unabated")
+
+    private fun aggregator(source: String?): Boolean = source != null && AGGREGATORS.any { source.startsWith(it) }
 
     private fun disagree(a: List<Double>, b: List<Double>): Boolean {
         if (a.size != b.size || a.isEmpty()) return false
