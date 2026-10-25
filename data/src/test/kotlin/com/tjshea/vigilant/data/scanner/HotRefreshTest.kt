@@ -120,7 +120,7 @@ class HotRefreshTest {
         Scanner(novig, clock = clock, elapsed = { currentTime }).scan(settings(hot = true), listOf(kalshi, parlay), emptySet(), {}, {})
         assertTrue("kalshi is on the hot list", kalshi.asked.size >= 2)
         assertEquals("ParlayAPI is asked once, as in any scan", 1, parlay.asked.size)
-        assertTrue("Scanner.HOT_FEEDS holds no credit-metered feed", Scanner.HOT_FEEDS.none { it in setOf("parlay", "parlay_props", "parlay_1h", "oddsapi", "oddsapi_props", "propline", "propline_props", "pinnacle", "oddspapi_free") })
+        assertTrue("Scanner.HOT_FEEDS holds no credit-metered feed", Scanner.HOT_FEEDS.none { it in setOf("parlay", "parlay_props", "parlay_1h", "oddsapi", "oddsapi_props", "propline", "propline_props", "propline_1h", "pinnacle", "oddspapi_free") })
     }
 
     @Test

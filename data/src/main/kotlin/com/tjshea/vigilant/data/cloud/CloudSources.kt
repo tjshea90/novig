@@ -233,6 +233,7 @@ class CloudSources(
     val propLineLive = com.tjshea.vigilant.data.reference.PropLineLive()
     private val propLine = PropLineClient(http, KeyPool(QuotaPolicy.PROPLINE, { keys(CloudKeys.PROPLINE) }, usage), json, relayNovig = true, bookIds = false, meter = usage, live = propLineLive)
     private val propLineProps = PropLinePropsSource(propLine)
+    private val propLineHalves = com.tjshea.vigilant.data.reference.PropLinePeriodSource(propLine)
     @Volatile private var propLineInjuriesOn = false
     /** PropLine's free injury report, asked before ParlayAPI's 1-credit one (AF, 2026-10-22). */
     private val propLineInjuries = com.tjshea.vigilant.data.reference.PropLineInjuries(propLine, injuries, json, active = { propLineInjuriesOn })
@@ -453,6 +454,7 @@ class CloudSources(
         if (s.usePropLine && has(CloudKeys.PROPLINE)) {
             add(propLine)
             if (s.useBookProps) add(propLineProps)
+            add(propLineHalves)
             // The stream covers the picked leagues PropLine carries and the books it prices them with (PSL).
             val sports = s.selectedLeagues.map { it.oddsApiSportKey }.filter { it in PropLineClient.SPORTS }.toSet()
             propLineStream.want(s.gates.propLineSocket, sports, PropLineClient.books(s).toSet())

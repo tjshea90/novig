@@ -1123,6 +1123,7 @@ data class ScanSettings(
             if (useParlay && useBookProps) add("parlay_props")
             if (usePropLine) add("propline")
             if (usePropLine && useBookProps) add("propline_props")
+            if (usePropLine) add("propline_1h")
             // SGO Pro prices through its own two sources (SPORTSGAMEODDS_API.md §5); off, this set is exactly what it was.
             if (sgoPro) { add("sgo"); add("sgo-props") }
             // BoltOdds Pro: its own two sources (BOLTODDS_API.md §7); off, this set is exactly what it was.

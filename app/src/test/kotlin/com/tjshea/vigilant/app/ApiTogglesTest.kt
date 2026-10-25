@@ -51,7 +51,7 @@ class ApiTogglesTest {
         ApiEntry.ODDSPAPI_FREE to setOf("oddspapi_free", "oddspapi_free-props"),
         ApiEntry.BOLTODDS to setOf("bolt", "bolt-props"),
         ApiEntry.PARLAY to setOf("parlay", "parlay_1h", "parlay_props"),
-        ApiEntry.PROPLINE to setOf("propline", "propline_props"),
+        ApiEntry.PROPLINE to setOf("propline", "propline_props", "propline_1h"),
         ApiEntry.ODDS_API to setOf("oddsapi", "oddsapi_props"),
         ApiEntry.KALSHI to setOf("kalshi"),
         ApiEntry.POLYMARKET to setOf("polymarket"),

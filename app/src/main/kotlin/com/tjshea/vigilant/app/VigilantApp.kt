@@ -2237,6 +2237,7 @@ class AppContainer(val app: Application) {
         pinnacle.lastHost?.let { "$it, ${(now - pinnacle.lastBoardAtMs) / 1000L}s old when read" } ?: "no board read yet"
 
     private val propLineProps = PropLinePropsSource(propLine)
+    private val propLineHalves = com.tjshea.vigilant.data.reference.PropLinePeriodSource(propLine)
 
     /**
      * Every other sportsbook's odds for a tapped ParlayAPI pick (Tj, 2026-09-30: "always see other sports books odds for any bet when I click on
@@ -2351,6 +2352,7 @@ class AppContainer(val app: Application) {
         if (settings.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty()) {
             add(propLine)
             if (settings.useBookProps) add(propLineProps)
+            add(propLineHalves)
         }
         if (settings.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty()) {
             add(oddsApi)
