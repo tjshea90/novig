@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "f41f817033d0461e86aeba89eebca8dd0cb89f11",
+ "head": "3a21a18bca2f343c365170b5db89e060e7c86a42",
  "since": 1792915284,
- "beat": 1792938357,
- "beatIso": "2026-10-25T14:25:57Z",
+ "beat": 1792938538,
+ "beatIso": "2026-10-25T14:28:58Z",
  "done": "PS written into TASKS.md (Tj's stream audit prompt)",
  "next": "PS: read PropLine streaming docs (batched delivery, connections), measure book coverage in the live list"
 }
