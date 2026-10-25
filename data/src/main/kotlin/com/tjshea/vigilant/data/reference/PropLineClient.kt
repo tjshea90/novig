@@ -118,6 +118,21 @@ class PropLineClient(
         return RefSnapshot(sport, events, clock(), answer.remaining, answer.used, ID, novig = answer.value.novig)
     }
 
+    /**
+     * One league's spreads and totals for one part of the game ([period]: PropLine's `h1`, `f5` ...), every fair-line book's, each market marked period 1 ([PropLinePeriodSource]); the stream's moves laid
+     * over it like the full-game board's (its outcome ids are the same kind).
+     */
+    suspend fun periodOdds(sport: String, period: String, books: List<String>): Answer<List<RefEvent>> {
+        val readAt = clock()
+        val answer = call(
+            "/sports/$sport/odds",
+            listOf("markets" to "spreads,totals", "period" to period, "bookmakers" to books.joinToString(",")) + idParams(),
+            notFound = Board(emptyList(), emptyList()),
+        ) { parseBoard(it, json, sport, period) }
+        val events = live?.overlay(answer.value.events, readAt, clock()) ?: answer.value.events
+        return Answer(events.filter { it.markets.isNotEmpty() }, answer.remaining, answer.used)
+    }
+
     /** The stream laid over [events] read at [readAtMs] (the props source's held boards); unchanged without a stream. */
     fun overlay(events: List<RefEvent>, readAtMs: Long): List<RefEvent> = live?.overlay(events, readAtMs, clock()) ?: events
 
@@ -475,17 +490,17 @@ class PropLineClient(
         fun parseEvents(raw: String, json: Json, sportKey: String): List<RefEvent> = parseBoard(raw, json, sportKey).events
 
         /** A league board, read once: the books' games, and Novig's prices for them apart. */
-        fun parseBoard(raw: String, json: Json, sportKey: String): Board {
+        fun parseBoard(raw: String, json: Json, sportKey: String, period: String? = null): Board {
             val lenient = lenient(json)
             // One game at a time, never the whole board as a tree (about eight times the JSON's size; PropLine's answers average 4 MB: Tj, 2026-10-10, heap 91%).
             com.tjshea.vigilant.data.JsonSplit.elements(raw)?.let { split ->
                 val events = ArrayList<PlEvent>(split.size)
                 for (i in 0 until split.size) runCatching { lenient.decodeFromString(PlEvent.serializer(), split.element(i)) }.getOrNull()?.let { events += it }
-                return Board(events.mapNotNull { it.toDomain(sportKey) }, events.mapNotNull { it.novigDomain(sportKey) })
+                return Board(events.mapNotNull { it.toDomain(sportKey, period) }, if (period != null) emptyList() else events.mapNotNull { it.novigDomain(sportKey) })
             }
             val items = lenient.parseToJsonElement(raw) as? kotlinx.serialization.json.JsonArray ?: return Board(emptyList(), emptyList())
             val events = items.mapNotNull { e -> runCatching { lenient.decodeFromJsonElement(PlEvent.serializer(), e) }.getOrNull() }
-            return Board(events.mapNotNull { it.toDomain(sportKey) }, events.mapNotNull { it.novigDomain(sportKey) })
+            return Board(events.mapNotNull { it.toDomain(sportKey, period) }, if (period != null) emptyList() else events.mapNotNull { it.novigDomain(sportKey) })
         }
 
         fun parseEvent(raw: String, json: Json, sportKey: String): RefEvent? = parseEventBoard(raw, json, sportKey).events.singleOrNull()
@@ -775,12 +790,12 @@ internal data class PlEvent(
     val bookmakers: List<PlBook?>? = null,
 ) {
     /** The game with the fair-line books' quotes (never Novig, the exchanges read directly, or DFS). */
-    fun toDomain(sportKey: String): RefEvent? = domain(sportKey) { it !in PropLineClient.EXCLUDED }
+    fun toDomain(sportKey: String, period: String? = null): RefEvent? = domain(sportKey, period) { it !in PropLineClient.EXCLUDED }
 
     /** The same game with Novig's quotes only; null when PropLine had none for it. */
     fun novigDomain(sportKey: String): RefEvent? = domain(sportKey) { it == PropLineClient.NOVIG }?.takeIf { it.markets.isNotEmpty() }
 
-    private fun domain(sportKey: String, keep: (String) -> Boolean): RefEvent? {
+    private fun domain(sportKey: String, period: String? = null, keep: (String) -> Boolean): RefEvent? {
         val id = id?.takeIf { it.isNotBlank() } ?: return null
         val home = home_team?.takeIf { it.isNotBlank() } ?: return null
         val away = away_team?.takeIf { it.isNotBlank() } ?: return null
@@ -788,7 +803,7 @@ internal data class PlEvent(
         val start = PropLineClient.ms(commence_time) ?: return null
         val markets = bookmakers.orEmpty().filterNotNull()
             .filter { b -> b.key?.let(keep) == true }
-            .flatMap { b -> b.markets.orEmpty().filterNotNull().flatMap { it.toDomain(b, home, away) } }
+            .flatMap { b -> b.markets.orEmpty().filterNotNull().flatMap { it.toDomain(b, home, away, period) } }
         return RefEvent(PropLinePropsSource.PREFIX + id, sportKey, start, home = home, away = away, markets = markets)
     }
 }
@@ -814,18 +829,18 @@ internal data class PlMarket(
     val suspended_at: String? = null,
     val outcomes: List<PlOutcome?>? = null,
 ) {
-    fun toDomain(book: PlBook, home: String, away: String): List<RefBookMarket> {
+    fun toDomain(book: PlBook, home: String, away: String, wantPeriod: String? = null): List<RefBookMarket> {
         val key = key ?: return emptyList()
         val bookKeyRaw = book.key ?: return emptyList()
         val outcomes = outcomes.orEmpty().filterNotNull().filter { it.name != null }
         // Pulled by the book, or a period line (only full games are asked for).
-        if (suspended_at != null || period != null) return emptyList()
+        if (suspended_at != null || !period.equals(wantPeriod, ignoreCase = true)) return emptyList()
         val updated = PropLineClient.ms(last_update ?: book.last_update)
         // An outcome the book stopped sending while still sending its market was withdrawn.
         val live = outcomes.filter { o -> val seen = PropLineClient.ms(o.last_seen_at); seen == null || updated == null || seen >= updated }
         val bookKey = PropLineClient.bookKey(bookKeyRaw)
         val title = TheOddsApiClient.KNOWN_BOOKMAKERS[bookKey] ?: book.title?.takeIf { it.isNotBlank() } ?: bookKey
-        PropLineProps.MARKETS[key]?.let { stat -> return props(live, bookKey, title, updated, stat, book) }
+        PropLineProps.MARKETS[key]?.let { stat -> return if (wantPeriod != null) emptyList() else props(live, bookKey, title, updated, stat, book) }
         val kind = when (key) {
             "h2h" -> LineKind.MONEYLINE
             "spreads" -> LineKind.SPREAD
@@ -856,7 +871,7 @@ internal data class PlMarket(
         }
         if (quotes.map { it.side }.toSet().size != 2) return emptyList()
         if (kind != LineKind.MONEYLINE && quotes.any { it.point == null }) return emptyList()
-        return listOf(RefBookMarket(bookKey, title, kind, quotes, seen(live) ?: updated, subject = subject, bookEventId = book.book_event_id?.takeIf { it.isNotBlank() }, link = book.link?.takeIf { it.isNotBlank() }))
+        return listOf(RefBookMarket(bookKey, title, kind, quotes, seen(live) ?: updated, subject = subject, period = if (wantPeriod == null) 0 else 1, bookEventId = book.book_event_id?.takeIf { it.isNotBlank() }, link = book.link?.takeIf { it.isNotBlank() }))
     }
 
     /**
@@ -911,4 +926,47 @@ internal data class PlOutcome(
     val outcome_id: kotlinx.serialization.json.JsonPrimitive? = null,
 ) {
     val outcomeId: String? get() = outcome_id?.takeIf { it !is kotlinx.serialization.json.JsonNull }?.content?.takeIf { it.isNotBlank() }
+}
+
+/**
+ * More books' 1st-half (and baseball's first-5-innings) lines from PropLine (PS9, Tj 2026-10-25, PropLine's recipes: "?period=h1"): Novig's `SPREAD_1H` / `TOTAL_1H` markets were priced by a median of ONE
+ * book (the engine's study, 2026-10-24: ParlayAPI's period lines carry a handful of books), PropLine's `period=` board carries every book it reads. Beside ParlayAPI's 1st-half source, never instead
+ * (not on an [com.tjshea.vigilant.data.scanner.ApiChain]): where both send a book the fresher quote wins and two same-time quotes far apart leave it out ([com.tjshea.vigilant.data.scanner.Pricing.chosenMarkets]).
+ * One request a league, asked only while Novig lists a 1st-half line in it.
+ */
+class PropLinePeriodSource(private val client: PropLineClient) : ReferenceSource {
+    override val id = ID
+    override val displayName = "PropLine 1st half"
+    override val metered = true
+    override val needsCatalog = true
+
+    override fun supports(league: League): Boolean = league.oddsApiSportKey in PERIODS
+
+    override fun reuseMs(settings: ScanSettings): Long = PropLineClient.REUSE_MS
+
+    override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot = odds(league, settings, ScanContext())
+
+    override suspend fun odds(league: League, settings: ScanSettings, context: ScanContext): RefSnapshot {
+        val sport = league.oddsApiSportKey
+        val skipped = RefSnapshot(sport, emptyList(), System.currentTimeMillis(), provider = id, skipped = true)
+        val period = PERIODS[sport] ?: return skipped
+        if (com.tjshea.vigilant.data.scanner.MarketFamily.FIRST_HALF !in settings.families) return skipped
+        val events = context.novigEvents.filter { it.league == league.novigName }.mapTo(HashSet()) { it.eventId }
+        if (context.novigMarkets.none { it.eventId in events && it.marketType in ParlayPeriodSource.NOVIG_TYPES }) return skipped
+        val books = PropLineClient.books(settings)
+        if (books.isEmpty()) return skipped
+        val answer = client.periodOdds(sport, period, books)
+        return RefSnapshot(sport, answer.value, System.currentTimeMillis(), answer.remaining, answer.used, id)
+    }
+
+    companion object {
+        const val ID = "propline_1h"
+
+        /** PropLine's period code for the part of the game Novig's `_1H` markets are, by sport (the same parts as [ParlayPeriodSource.PERIODS]). */
+        val PERIODS = mapOf(
+            "americanfootball_nfl" to "h1", "americanfootball_ncaaf" to "h1",
+            "basketball_nba" to "h1", "basketball_wnba" to "h1", "basketball_ncaab" to "h1",
+            "baseball_mlb" to "f5",
+        )
+    }
 }
