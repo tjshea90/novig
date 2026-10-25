@@ -200,6 +200,15 @@ private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: L
             Text("Which APIs worked on the last scan appears after the engine's next scan (it has to finish one on the new version).", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Text("Pull down: the engine checks every API right now and this phone tests the same keys itself; each light weighs both, the scans, and the usage figures.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        // PropLine's own freshness of each book (PSL): how long since PropLine last wrote its game lines and props, and the push stream's state.
+        val fresh = remember(status, now / 20_000L) { DashboardModel.propLineFresh(status, now) }
+        if (fresh.isNotEmpty() || !status?.propLineStream.isNullOrBlank()) {
+            SectionHeader("PropLine: how fresh each book is" + (status?.propLineFreshAtMs?.takeIf { it > 0 }?.let { " (read ${((now - it) / 1000L).coerceAtLeast(0)}s ago)" }.orEmpty()))
+            fresh.forEach { f -> InfoLine(f.book, f.text, f.tone) }
+            status?.propLineStream?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("propLineStreamLine")) }
+            Text("A book PropLine stops writing for 30 minutes is left out of the fair odds for that kind of line; every quote is also dropped by its own age.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
