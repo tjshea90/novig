@@ -108,6 +108,9 @@ jobs:
               python3 -I tools/propline.py altprobe out/altprobe "${{ github.event.inputs.sports }}"
               gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine samples (keyless)" --notes "Real answers of PropLine endpoints, keyless."
               gh release upload propline-samples out/altprobe/* --clobber ;;
+            bookparam)
+              # PX9e (2026-10-25): which bookmakers list PropLine refuses with HTTP 400 (the engine's whole list, the old one, the new books, growing counts); printed in the log.
+              python3 -I tools/propline.py bookparam out/bookparam "$(echo "${{ github.event.inputs.sports }}" | cut -d, -f1)" ;;
             clv) bash tools/propline_clv_job.sh ;;
             grade) bash tools/propline_grade_job.sh ;;
             evbets) bash tools/propline_evbets_job.sh ;;
