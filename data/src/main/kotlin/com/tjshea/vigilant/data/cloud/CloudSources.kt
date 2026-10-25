@@ -118,7 +118,8 @@ class CloudSources(
 
     /** The game state by REST while the stream does not carry it (every few seconds while a lane may want scores); a 403 (no add-on) stops it for the job. */
     suspend fun refreshSharpApiGameState(s: ScanSettings) {
-        if (gameStateRefused || !sharpApiOn(s) || (sharpApiStream.live && !sharpApiStream.gamestateRefused)) return
+        // The Free tier's 12 requests a minute cannot afford a game-state read every few seconds (PB1).
+        if (gameStateRefused || !sharpApiOn(s) || sharpApiClient.lite() || (sharpApiStream.live && !sharpApiStream.gamestateRefused)) return
         try {
             sharpApiScores.applyRest(sharpApiClient.get("/gamestate", listOf("is_live" to "true")))
         } catch (e: com.tjshea.vigilant.data.sharpapi.SharpApiException) {
@@ -138,6 +139,9 @@ class CloudSources(
     }
 
     fun sharpApiOn(s: ScanSettings): Boolean = s.gates.useSharpApi && has(CloudKeys.SHARPAPI) && !sharpApiClient.down()
+
+    /** SharpAPI on a paid plan: the closings and +EV extras, the live feed and game state are asked for only then (the Free tier's 12 a minute go to the odds, PB1). */
+    fun sharpApiPaid(s: ScanSettings): Boolean = sharpApiOn(s) && !sharpApiClient.lite()
 
     /** SharpAPI's state in words (the engine's log, Diagnostics). */
     fun sharpApiNote(): String = "SharpAPI: " + sharpApiClient.health() + " · stream " + sharpApiStream.health() + " (${sharpApiFeed.streamRows} rows pushed, ${sharpApiFeed.streamMissed} unplaced) · game state ${sharpApiScores.live()} live · held " + sharpApiFeed.describe() + " · " + sharpApiFeed.deltaCalls + " delta reads, " + sharpApiFeed.reloads + " whole reads, " + sharpApiFeed.skippedWindows + " windows the stream covered" + (sharpApiFeed.lastNote?.let { " · $it" } ?: "")
@@ -338,7 +342,8 @@ class CloudSources(
 
     /** The live lane's feed on SharpAPI's Pinnacle (SA), or null without a key or with the switch off. */
     fun sharpApiLiveFeed(settings: () -> ScanSettings, sink: (String, Long) -> Unit, scope: kotlinx.coroutines.CoroutineScope): com.tjshea.vigilant.data.sharpapi.SharpApiLiveFeed? {
-        if (!settings().gates.useSharpApi || !has(CloudKeys.SHARPAPI)) return null
+        // Free tier: 60 s delayed data is no live price (PB1).
+        if (!settings().gates.useSharpApi || !has(CloudKeys.SHARPAPI) || sharpApiClient.lite()) return null
         sharpApiFeed.startPolling(scope)
         return com.tjshea.vigilant.data.sharpapi.SharpApiLiveFeed(sharpApiFeed, { com.tjshea.vigilant.data.sharpapi.SharpApiLiveFeed.leaguesFor(settings()) }, sink, scope)
     }
@@ -444,7 +449,8 @@ class CloudSources(
             sharpApiFeed.startPolling(scope)
             // The stream carries the leagues the store holds plus the picked ones (a new league's first rows come from its REST read).
             val slugs = sharpApiFeed.heldLeagues() + s.leagues.mapNotNull { com.tjshea.vigilant.data.sharpapi.SharpApiBooks.leagueSlugOf(it) }
-            sharpApiStream.want(s.gates.sharpApiSocket, slugs)
+            // The stream is a paid add-on; the Free tier has none (PB1).
+            sharpApiStream.want(s.gates.sharpApiSocket && !sharpApiClient.lite(), slugs)
         } else { sharpApiFeed.stopPolling(); sharpApiStream.close("SharpAPI off") }
         if (s.useKalshi) add(kalshi)
         if (s.usePropLine && has(CloudKeys.PROPLINE)) {

@@ -171,7 +171,7 @@ fun main(args: Array<String>) = runBlocking {
         while (isActive) {
             val s = latestSettings.get()
             val now = System.currentTimeMillis()
-            if (s != null && sources.sharpApiOn(s)) {
+            if (s != null && sources.sharpApiPaid(s)) {
                 // Closings: games that started 15 min to 47 h ago and were not captured yet (at most 30 a pass, 1 request each).
                 for (e in sources.sharpApiFeed.eventsStarted(now - 47 * 3_600_000L, now - 15 * 60_000L).filter { it.eventId !in closed }.take(30)) {
                     runCatching { com.tjshea.vigilant.data.sharpapi.SharpApiExtras.closings(sources.sharpApiClient, e.eventId, now) }.onSuccess { rows ->
