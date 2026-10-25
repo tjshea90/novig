@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "6b9ef6543cf50f31ab85b5f586fea66deb12ae1b",
+ "head": "99b57535f7e9760e64ab0cde3dcc1590dac4a0bb",
  "since": 1792912591,
- "beat": 1792912611,
- "beatIso": "2026-10-25T07:16:51Z",
- "done": "PB: Tj's downgrade/ParlayAPI Business/settings/battery request written into TASKS.md",
- "next": "PB10 fetch ParlayAPI docs via api-docs mirror + WebFetch; PB3/PB4/PB1/PB2 downgrades"
+ "beat": 1792912644,
+ "beatIso": "2026-10-25T07:17:24Z",
+ "done": "api-docs mirror: ParlayAPI blog/changelog/integrations/versioning + PropLine pages added to seeds",
+ "next": "trigger api-docs.yml once main has it"
 }
