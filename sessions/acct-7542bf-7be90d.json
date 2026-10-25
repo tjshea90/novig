@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "a1fc0e8f712e5f6f3491ee382b973b5e03aaeeb1",
+ "head": "57b1594aa2aedfb35a68ac85b658463d1ba1fb7f",
  "since": 1792915284,
- "beat": 1792949116,
- "beatIso": "2026-10-25T17:25:16Z",
- "done": "PX1-PX5: PropLine stale-pull fix, ParlayAPI off the chain + alternates, SharpAPI non-blocking and off; full suite green 4,193",
- "next": "engine reset; PX6 Pinnacle coverage from PropLine + ParlayAPI (main/alt/1H/props)"
+ "beat": 1792949144,
+ "beatIso": "2026-10-25T17:25:44Z",
+ "done": "PX: QuoteCensus (per-feed counts where fair-odds quotes are lost) logged after each scan report",
+ "next": "reset engine, read the census in engine-log, fix the stage that loses PropLine NFL quotes; then PX7 stream-only books"
 }
