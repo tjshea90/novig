@@ -1,22 +1,23 @@
-# CHECKPOINT 4245 — read me first, then TASKS.md
+# CHECKPOINT 4246 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T22:24:46Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-e58c5a58-3qyzld` · **builds on:** `31c8ce7ce` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T22:33:13Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-e58c5a58-3qyzld` · **builds on:** `f5c8e91a4` (this checkpoint is the commit after it)
 
 ## Just done
-PX11 written into TASKS.md (5 parts)
+PX11a: novig-probe.yml + cloud/OrdersProbeMain.kt (Novig's record of rejected/canceled orders, read key, ids left out); NOFILL diagnostic reads the row after it was removed (all nulls): fix next
 
 ## Do this next
-PX11a: find where 'no one was selling at that price' comes from and what the engine/phone data say
+dispatch novig-probe.yml on main, read why the 4 hand orders at 21:40-41 UTC were rejected
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M cloud/src/main/kotlin/com/tjshea/vigilant/cloud/OrdersProbeMain.kt
 
 ## Last ten checkpoints
 ```
+  3081884d7 ckpt 4245: PX11 written into TASKS.md (5 parts)
   4aa23e7c5 ckpt 4244: v1.0.84 released + recorded; phone adopted Pinnodds off (its own copy now s
   cddc690ee ckpt 4243: PX10 findings recorded (Pinnacle census numbers, migration gap); v1.0.84 re
   835ab9fd2 ckpt 4242: pre-release: v1.0.84 PX10: phone keeps a Claude session's settings change i
@@ -26,8 +27,7 @@ PX11a: find where 'no one was selling at that price' comes from and what the eng
   945ee7e29 ckpt 4238: PX10 written into TASKS.md (Tj's 4-part API migration request)
   80d060bf3 ckpt 4237: PX9 resumed and finished for today: PropLine 60-book fix live (run 40234294
   10d1333e9 ckpt 4236: PX9d reverted (thinner fairs on the listed bets); cloud tests green
-  77ff56ab0 ckpt 4235: PX9h: SGO lastUpdatedAt measured = last read (ages true; SGO NCAAF ~5 min c
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

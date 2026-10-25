@@ -23,7 +23,7 @@ fun main(args: Array<String>) = runBlocking {
     if (id.isEmpty() || pem.isEmpty()) { println("no Novig read key in this job's secrets"); return@runBlocking }
     val json = Json { ignoreUnknownKeys = true }
     val novig = NovigSignedClient(OkHttpClient(), json, PemSigningKey(id, pem))
-    for (status in args.toList().ifEmpty { listOf("REJECTED", "CANCELED") }) {
+    for (status in args.filter { it.isNotBlank() }.ifEmpty { listOf("REJECTED", "CANCELED") }) {
         val raw = runCatching { novig.call("GET", "/v3/orders", rawQuery = "status=$status&limit=100") }.getOrElse { e -> println("$status: ${e.javaClass.simpleName} ${e.message?.take(160)}"); continue }
         val root = json.parseToJsonElement(raw)
         val orders = (root as? JsonArray) ?: ((root as? JsonObject)?.values?.firstOrNull { it is JsonArray } as? JsonArray) ?: JsonArray(emptyList())
