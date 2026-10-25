@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-70c81990-qm4nt2",
- "head": "978e7c35417fcccf0981c1c9a5cde1fe26be0e90",
+ "head": "d75a2a1f4839e175dea376d8c689df54402365d1",
  "since": 1792889505,
- "beat": 1792890778,
- "beatIso": "2026-10-25T01:12:58Z",
+ "beat": 1792890963,
+ "beatIso": "2026-10-25T01:16:03Z",
  "done": "SG: Tj's similar-bets cap request written into TASKS.md (root cause found: family keys carry the total's line / differ by source)",
  "next": "SG1: rewrite RepeatGuard.family as a source-independent similarity key + test"
 }
