@@ -13,7 +13,7 @@ if ls in/ev/*.jsonl.gz >/dev/null 2>&1 && ls in/arch/*.csv.gz >/dev/null 2>&1; t
   git config --global user.name "github-actions[bot]"; git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
   python3 -I tools/propline_ev_bets.py run --journals in/ev/*.jsonl.gz --archive in/arch/*.csv.gz --out out/evbets.csv.gz --summary out/evbets.md --state out/reported.json --notify
   gh release upload propline-ev-bets out/evbets.csv.gz out/evbets.md --clobber
-  [ -f out/reported.json ] && gh release upload propline-ev-bets out/reported.json --clobber
+  if [ -f out/reported.json ]; then gh release upload propline-ev-bets out/reported.json --clobber; fi
 else
   echo "no journals or no archive yet"
 fi
