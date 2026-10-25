@@ -1115,14 +1115,10 @@ data class ScanSettings(
             if (usePropLine && useBookProps) add("propline_props")
             // SGO Pro prices through its own two sources (SPORTSGAMEODDS_API.md §5); off, this set is exactly what it was.
             if (sgoPro) { add("sgo"); add("sgo-props") }
-            // OddsPapi prices through its own two sources (ODDSPAPI_API.md §6); off, this set is exactly what it was.
-            if (oddsPapi) { add("oddspapi"); add("oddspapi-props") }
             // BoltOdds Pro: its own two sources (BOLTODDS_API.md §7); off, this set is exactly what it was.
             if (gates.useBoltOdds) { add("bolt"); add("bolt-props") }
             if (gates.useSxBet) add("sxbet")
             if (gates.useSharpApi) add("sharpapi")
-            // Unabated Free: its own two sources, last in the order (UNABATED_API.md §3); off, this set is exactly what it was.
-            if (unabated) { add("unabated"); add("unabated-props") }
             // OddsPapi Free (v4) reads whole games for the fair average only when Tj gives it a daily request figure; with 0 it is closing lines only.
             if (oddsPapiFree && gates.op4Fair > 0) { add("oddspapi_free"); add("oddspapi_free-props") }
         }
