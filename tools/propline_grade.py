@@ -34,7 +34,7 @@ def bets_from_phone(rows, ledger_ids=frozenset()):
             continue
         who = ("hand (Novig app) " if r.get("origin") == "imported" else "hand " if r.get("how") == "manual" else "phone auto ") + ("bid" if r.get("made") == "bid" else "bet")
         out.append({"ref": "p:" + str(r.get("id")), "who": who, "league": r.get("league"), "event": r.get("event") or "", "startsMs": r.get("startsMs"), "market": r.get("market") or "",
-                    "kind": r.get("kind") or "", "selection": r.get("selection") or "", "american": r.get("odds"), "stake": r.get("paid") or r.get("stake") or 0, "result": r.get("result"), "teams": teams(r.get("event") or "")})
+                    "kind": r.get("kind") or "", "selection": r.get("selection") or "", "american": r.get("odds") if r.get("odds") is not None else (american(r["cost"]) if r.get("cost") else None), "stake": r.get("paid") or r.get("stake") or 0, "result": r.get("result"), "teams": teams(r.get("event") or "")})
     return out
 
 
@@ -235,6 +235,8 @@ def run(bets_dir, trades, outdir):
         r = dict(b)
         sport = SPORT.get(b.get("league") or "")
         lg, why = leg(b) if sport else (None, "league not graded by PropLine (%s)" % b.get("league"))
+        if lg and b.get("american") is None:
+            lg, why = None, "no price recorded"
         if lg:
             if sport not in games:
                 games[sport] = games_of(sport, key)
@@ -285,6 +287,8 @@ def selftest():
     assert pin_event({"event": "Kent State @ Sacramento State", "startsMs": 1793413800000 + 86400000}, g)[0] is None
     assert bets_from_phone([{"id": "a", "origin": "engine"}, {"id": "b", "how": "manual", "made": "bet", "odds": 108, "market": "Spread", "selection": "X +1.5"}])[0]["who"] == "hand bet"
     assert bets_from_phone([{"id": "c", "origin": "imported", "marketId": "m", "outcomeId": "o"}], frozenset({("m", "o")})) == []
+    assert bets_from_phone([{"id": "d", "how": "manual", "cost": 0.4, "market": "Total", "selection": "Over 44.5"}])[0]["american"] == 150
+    assert bets_from_phone([{"id": "e", "how": "manual", "market": "Total", "selection": "Over 44.5"}])[0]["american"] is None
     assert bets_from_ledger([{"id": "x", "mode": "LIVE", "avgPrice": 0.485, "note": "bid filled"}])[0]["who"] == "engine bid"
     print("propline_grade selftest ok")
     return 0
