@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "c8d7de20666d03143ebb8867012b199dcc338831",
+ "head": "21133d783d5dc1555b92251a82cd263d934a489c",
  "since": 1792915284,
- "beat": 1792962123,
- "beatIso": "2026-10-25T21:02:03Z",
- "done": "retry",
- "next": "land"
+ "beat": 1792962164,
+ "beatIso": "2026-10-25T21:02:44Z",
+ "done": "research index + LEVERS link for feed_freshness_docs",
+ "next": "engine reset onto PX9d; read sgo-probe run; list_audit"
 }
