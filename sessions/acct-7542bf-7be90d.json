@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "48c084dd2cc0c12b56cb931fd63d8bba53a235be",
+ "head": "c8d7de20666d03143ebb8867012b199dcc338831",
  "since": 1792915284,
- "beat": 1792962091,
- "beatIso": "2026-10-25T21:01:31Z",
- "done": "PX9d plainFastFeeds on the engine (full floor green, 4,208); list_audit knows the haircuts; research/feed_freshness_docs_2026-10-25.md",
- "next": "engine reset onto PX9d; read sgo-probe run (SGO lastUpdatedAt meaning) and list_audit on the new run"
+ "beat": 1792962123,
+ "beatIso": "2026-10-25T21:02:03Z",
+ "done": "retry",
+ "next": "land"
 }
