@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-3cb0aa53-b2tjli",
- "head": "76fc04638084646e684c9cc77e45499430011aa3",
+ "head": "4c8fb2f43a8eed8468080ca8aacb69738a0d9e77",
  "since": 1792970423,
- "beat": 1792971626,
- "beatIso": "2026-10-25T23:40:26Z",
- "done": "PX11f/c/d: ParlayAPI split-event fix, bid 3-book floor, per-book outlier census; full suite 4221 green",
- "next": "engine reset onto main; after first scans check Northwestern@Oregon row has parlay books and census atLine parlay rises; tell Tj; then PX11d audit from badOddsBook after a day, PX11e Pinnacle sources"
+ "beat": 1792971672,
+ "beatIso": "2026-10-25T23:41:12Z",
+ "done": "research index rebuilt; engine reset onto main (PX11f fix)",
+ "next": "verify on the new run: Northwestern@Oregon priced with ParlayAPI US books; census atLine parlay up; then tell Tj"
 }
