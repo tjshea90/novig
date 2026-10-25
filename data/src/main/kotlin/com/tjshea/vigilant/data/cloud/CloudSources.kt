@@ -166,6 +166,7 @@ class CloudSources(
             add("Engine Kalshi: " + (if (kalshiSigner == null) "no key on GitHub (public reads)" else "socket ${if (kalshiSocketWanted) "ON" else "OFF"} · ${if (kalshiStream.live) "live" else "not live"} · ${kalshiStream.subscribedCount} of ${kalshiStream.wantedCount} markets"))
             val sx = sxbet.stream
             add("Engine SharpAPI: " + (if (!s.gates.useSharpApi) "API off" else if (!has(CloudKeys.SHARPAPI)) "no key on GitHub" else "socket ${if (s.gates.sharpApiSocket) "ON" else "OFF"} · ${sharpApiStream.health(now)} · game state ${sharpApiScores.live()} live"))
+            add("Engine PropLine: " + (if (!s.usePropLine) "API off" else if (!has(CloudKeys.PROPLINE)) "no key on GitHub" else if (propLineAccount.streamingKey() == null) "no Streaming key read yet" else "socket ${if (s.gates.propLineSocket) "ON" else "OFF"} · ${propLineStream.health(now)}"))
             add("Engine SX Bet: " + (if (!s.gates.useSxBet) "API off" else if (sx == null) "socket ${if (sxSocketWanted) "ON" else "OFF"} · no connection yet (opens with the first live game or scan)" else "socket ${if (sxSocketWanted) "ON" else "OFF"} · ${sx.health()} · last push ${ago(sx.lastMessageMs)} · ${sx.fixtureStatus.values.count { it == 2 }} games in play"))
         }
     }
