@@ -142,22 +142,14 @@ class ProfitChartTest {
     }
 
     @Test
-    fun `the wallet's real money heads the card, open bets at cost, deposits from Novig's record`() {
+    fun `the all-time figure is the settled bets only, whatever the wallet says (CH87c)`() {
+        // Tj, 2026-10-25: "forget the wallet deposits and withdrawals completely ... bets and bids that are not final should not be included".
         val m = WalletProfit.Money(198.63, 42.55, 12, 230.0, 0.0, 2, now - 120_000L)
         show(tenDays, TrackerPeriod.DAYS_7, WalletMoneyUi(m))
-        compose.onNodeWithTag("profitAllTime").assertTextEquals("+\$11.18")
-        compose.onNodeWithTag("profitAllTimeHow").assertTextContains("Vigilant wallet \$241.18: \$198.63 cash + \$42.55 in 12 open bets, minus the \$230.00 you put in (nothing taken out", substring = true)
-        compose.onNodeWithText("on \$230.00 put in").assertExists()
-        compose.onNodeWithText("The settled bets shown here: \$0.00 on \$10.00 staked.").assertExists()
-    }
-
-    @Test
-    fun `money taken out is subtracted from what was put in, and the card says so`() {
-        // Tj, 2026-10-19: "Make sure the wallet figure also takes out withdrawals because sometimes I moved money back and forth".
-        val m = WalletProfit.Money(198.63, 42.55, 12, 250.0, 20.0, 3, now - 120_000L)
-        show(tenDays, TrackerPeriod.TODAY, WalletMoneyUi(m))
-        compose.onNodeWithTag("profitAllTime").assertTextEquals("+\$11.18")
-        compose.onNodeWithTag("profitAllTimeHow").assertTextContains("minus the \$230.00 you put in (\$250.00 put in minus \$20.00 taken out", substring = true)
+        compose.onNodeWithTag("profitAllTime").assertTextEquals("\$0.00")
+        compose.onNodeWithTag("profitAllTimeHow").assertTextContains("settled bets", substring = true)
+        compose.onNodeWithText("on \$10.00 staked").assertExists()
+        compose.onNodeWithText("on \$230.00 put in").assertDoesNotExist()
     }
 
     @Test
