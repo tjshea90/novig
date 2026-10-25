@@ -294,7 +294,7 @@ object Pricing {
             // and a book with no stamp is not known to be current (RESEARCH.md §92). Everywhere else the oldest quote only dates the whole line ([Opportunity.fairIsOld]).
             val prices = bookPrices(ref, key, settings.gates.freshestWins).let { all ->
                 if (settings.lowUsageScan) all.filter { b -> b.lastUpdateMs != null && Freshness.fresh(b.lastUpdateMs, now, ref.commenceMs) } else all
-            }
+            }.let { Freshness.freshFirst(it, now, { b -> b.lastUpdateMs }, { b -> b.bookKey in fairSettings.sharpBooks }) }
             FairValue.compute(prices, fairSettings)
         }
 
@@ -393,10 +393,11 @@ object Pricing {
     fun refair(o: Opportunity, ref: RefEvent, settings: ScanSettings, now: Long): Opportunity {
         val key = o.lineKey ?: return o
         val target = o.target ?: return o
+        val fs = settings.fairSettings()
         val prices = bookPrices(ref, key, settings.gates.freshestWins).let { all ->
             if (settings.lowUsageScan) all.filter { b -> b.lastUpdateMs != null && Freshness.fresh(b.lastUpdateMs, now, ref.commenceMs) } else all
-        }
-        val fair = FairValue.compute(prices, settings.fairSettings())
+        }.let { Freshness.freshFirst(it, now, { b -> b.lastUpdateMs }, { b -> b.bookKey in fs.sharpBooks }) }
+        val fair = FairValue.compute(prices, fs)
         val p = fair?.let { chance(target, key, it, o.league.novigName, o.event.startsTs, o.marketLabel, o.selection, settings, now) }
         val fee = o.market.fee
         val ladder = o.ladder

@@ -54,6 +54,27 @@ object Freshness {
     /** The longest any feed's answer is re-used instead of asked again, so it's still fresh through a scan. */
     const val MAX_REUSE_MS = 2 * 60_000L
 
+    /** A quote this fresh counts as current for [freshFirst]. */
+    const val FRESH_MS = 2 * 60_000L
+
+    /** Beside fresh quotes, a quote older than this is left out of the fair odds ([freshFirst]). */
+    const val STALE_BESIDE_FRESH_MS = 3 * 60_000L
+
+    /**
+     * The books a line's fair odds are worked out from, the stale ones left out when fresh ones price it (Tj, 2026-10-25, PB20: "If the odds are very stale, do not use them at all for the fair odds
+     * calculation"; "Why are the odds 7-10 minutes old if they are streaming?": one slow book of ten dated the whole line). With two or more books quoted within [FRESH_MS], a book older than
+     * [STALE_BESIDE_FRESH_MS] is dropped, except a sharp book while no other sharp book is fresh (the sharp anchor is never lost to a soft book's speed). A book with no stamp is kept.
+     */
+    fun <T> freshFirst(books: List<T>, now: Long, stamp: (T) -> Long?, sharp: (T) -> Boolean): List<T> {
+        val fresh = books.filter { b -> stamp(b)?.let { now - it <= FRESH_MS } == true }
+        if (fresh.size < 2) return books
+        val freshSharp = fresh.any(sharp)
+        return books.filter { b ->
+            val at = stamp(b) ?: return@filter true
+            now - at <= STALE_BESIDE_FRESH_MS || (sharp(b) && !freshSharp)
+        }
+    }
+
     /** Whether a quote the feed last saw at [seenAtMs], on a game starting at [startsAtMs], is still fresh at [now]; unknown counts as fresh. */
     fun fresh(seenAtMs: Long?, now: Long, startsAtMs: Long? = null): Boolean = seenAtMs == null || now - seenAtMs <= maxAgeMs(startsAtMs, now)
 }
