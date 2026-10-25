@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "ce79b1bc4d4413fa391e63c21efa64bc53cd92c4",
+ "head": "452e77ed02229b7b7308555e43a0c7965447c7bb",
  "since": 1792915284,
- "beat": 1792939457,
- "beatIso": "2026-10-25T14:44:17Z",
- "done": "PS2 coverage probe (native keys) dispatched; PS3 tools/propline_grade.py written (selftest ok), not yet in a workflow",
- "next": "read propline-samples coverage.md; add propline.yml task grade and run it; then PS5/PS6 webhooks, PS7-PS9/PS11 docs review, PB21b tandem cross-check, ship v1.0.83"
+ "beat": 1792939512,
+ "beatIso": "2026-10-25T14:45:12Z",
+ "done": "PS2 answered + fixed (13 PropLine books, same-desk groups, research/propline_coverage_2026-10-25.md); PS3 grade task wired + dispatched; propline_clv Novig grade lookup fixed; evbets job exit fixed",
+ "next": "PS1/PS5/PS6: PropLineStream audit vs docs (subscriptions, filters, batched delivery via webhooks on the tunnel); read propline-grade Release"
 }
