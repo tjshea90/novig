@@ -49,6 +49,11 @@ jobs:
                 gh release view parlay-samples >/dev/null 2>&1 || gh release create parlay-samples --title "ParlayAPI samples (keyless)" --notes "Real answers, trimmed."
                 gh release upload parlay-samples out/parlay-stream/* --clobber
               fi ;;
+            pinprobe)
+              # PX6 (2026-10-25): Pinnacle's coverage of Novig's lines and props at ParlayAPI.
+              python3 -I tools/parlay.py pinprobe out/parlay
+              gh release view parlay-samples >/dev/null 2>&1 || gh release create parlay-samples --title "ParlayAPI samples (keyless)" --notes "Real answers, trimmed."
+              gh release upload parlay-samples out/parlay/pinprobe.md --clobber ;;
             arbscan)
               python3 -I tools/parlay.py arbscan out/parlay
               if [ -f out/parlay/arbscan.json ]; then

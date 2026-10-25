@@ -7,7 +7,7 @@ Runs on GitHub (.github/workflows/parlay.yml) with the PARLAY_API_KEY secret (se
            so the app's parsers are checked against REAL shapes (SSE play-by-play frames included: a 20 s listen on the live PBP stream)
 Costs of a probe (docs): arbitrage 10 a sport, inplay/arbs 5, live 3, live/points 1, book_latency 5, source-health 1, period_markets 2, sse 5: about 60 credits.
 """
-import json
+import datetime, json
 import os
 import re
 import sys
@@ -300,11 +300,88 @@ def cmd_arbscan(outdir):
     return 0
 
 
+def _ms(x):
+    if isinstance(x, (int, float)):
+        return float(x) if x > 1e12 else float(x) * 1000
+    try:
+        return datetime.datetime.fromisoformat(str(x).replace("Z", "+00:00")).timestamp() * 1000
+    except (TypeError, ValueError):
+        return None
+
+
+def pin_lines(events, now_ms):
+    """PX6 (Tj 2026-10-25: "get the most odds from Pinnacle including props using both propline and parlayapi"): an /odds answer (Odds-API shape, Pinnacle + Novig, main and alternate
+    markets) -> per Novig spread/total rung whether Pinnacle posts the same number, and Pinnacle's quote age."""
+    out = []
+    for e in events:
+        rungs = {}
+        for b in e.get("bookmakers") or []:
+            bk = b.get("key")
+            at = _ms(b.get("last_update_ms") or b.get("last_update"))
+            for m in b.get("markets") or []:
+                mk = (m.get("key") or "").replace("alternate_", "")
+                if mk not in ("spreads", "totals"):
+                    continue
+                for o in m.get("outcomes") or []:
+                    if o.get("point") is None:
+                        continue
+                    if mk == "spreads" and o.get("name") != e.get("home_team"):
+                        continue
+                    if mk == "totals" and (o.get("name") or "").lower() != "over":
+                        continue
+                    rungs.setdefault((mk, float(o["point"])), {})[bk] = None if at is None else (now_ms - at) / 1000.0
+        for (mk, pt), by in rungs.items():
+            if "novig" in by:
+                out.append({"game": "%s @ %s" % (e.get("away_team"), e.get("home_team")), "market": mk, "point": pt, "pinnacle": "pinnacle" in by, "pin_age": by.get("pinnacle")})
+    return out
+
+
+def cmd_pinprobe(outdir, sports=("americanfootball_nfl", "americanfootball_ncaaf", "basketball_nba", "icehockey_nhl")):
+    """PX6: Pinnacle's coverage of Novig's game lines (main + alternates) and props at ParlayAPI, on the biggest key; ~5 credits a league for lines, 3 for props."""
+    keys = keys_from_env()
+    best = max(keys, key=lambda k: rank(usage_of(k)), default=None)
+    if not best:
+        print("no key")
+        return 0
+    os.makedirs(outdir, exist_ok=True)
+    L = ["# Pinnacle at ParlayAPI vs Novig's lines (PX6, %s)" % time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()), ""]
+    for sp in sports:
+        st, _, data = request("/v1/sports/%s/odds" % sp, best, {"bookmakers": "pinnacle,novig", "markets": "spreads,totals,alternate_spreads,alternate_totals", "oddsFormat": "american"})
+        ev = j(data) if st == 200 else None
+        ev = ev if isinstance(ev, list) else []
+        ls = pin_lines(ev, time.time() * 1000)
+        ages = sorted(x["pin_age"] for x in ls if x["pinnacle"] and x["pin_age"] is not None)
+        L.append("- %s game lines (HTTP %s, %d games): Novig rungs %d, Pinnacle at the same number %d; Pinnacle age p50 %s s" % (
+            sp, st, len(ev), len(ls), sum(1 for x in ls if x["pinnacle"]), int(ages[len(ages) // 2]) if ages else "-"))
+        st2, _, data2 = request("/v1/sports/%s/props" % sp, best, {"bookmakers": "pinnacle,novig", "oddsFormat": "american", "limit": "10000"})
+        pr = j(data2) if st2 == 200 else None
+        rows = pr if isinstance(pr, list) else ((pr or {}).get("data") or (pr or {}).get("props") or []) if isinstance(pr, dict) else []
+        nov, pin = set(), set()
+        for r in rows:
+            if not isinstance(r, dict):
+                continue
+            k = (r.get("event_id") or r.get("game_id"), (r.get("player") or r.get("player_name") or "").lower(), r.get("market_key") or r.get("market"), r.get("line") or r.get("point"))
+            (nov if r.get("bookmaker") == "novig" else pin if r.get("bookmaker") == "pinnacle" else set()).add(k)
+        L.append("  props (HTTP %s, %d rows): Novig prop lines %d, Pinnacle at the same player/stat/number %d; Pinnacle prop lines %d%s" % (
+            st2, len(rows), len(nov), len(nov & pin), len(pin), "" if rows else " (" + str(data2[:200]) + ")"))
+        if rows and not nov:
+            L.append("  first row: %s" % json.dumps(rows[0])[:400])
+    with open(os.path.join(outdir, "pinprobe.md"), "w") as f:
+        f.write("\n".join(L) + "\n")
+    print("\n".join(L))
+    return 0
+
+
 def selftest():
     assert keys_from_env({"PARLAY_API_KEY": "a, b;c\nd"}) == ["a", "b", "c", "d"]
     assert keys_from_env({}) == []
     assert trim({"a": [1, 2, 3, 4, 5]}) == {"a": [1, 2, 3, "... 2 more"]}
     assert rank({"total": 100000}) > rank({"total": 20000}) > rank({})
+    ev = [{"home_team": "H", "away_team": "A", "bookmakers": [
+        {"key": "novig", "last_update_ms": 1792000000000, "markets": [{"key": "alternate_spreads", "outcomes": [{"name": "H", "point": -4.5, "price": -110}, {"name": "A", "point": 4.5, "price": -110}]}]},
+        {"key": "pinnacle", "last_update_ms": 1792000000000, "markets": [{"key": "alternate_spreads", "outcomes": [{"name": "H", "point": -4.5, "price": -105}, {"name": "A", "point": 4.5, "price": -115}]}]}]}]
+    pl = pin_lines(ev, 1792000060000)
+    assert pl == [{"game": "A @ H", "market": "spreads", "point": -4.5, "pinnacle": True, "pin_age": 60.0}], pl
     print("parlay.py selftest ok")
     return 0
 
@@ -321,6 +398,8 @@ if __name__ == "__main__":
         sys.exit(cmd_listen(sys.argv[2] if len(sys.argv) > 2 else "out/parlay", sys.argv[3] if len(sys.argv) > 3 else "tennis"))
     if c == "streamprobe":
         sys.exit(cmd_streamprobe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay", sys.argv[3] if len(sys.argv) > 3 else "icehockey_nhl"))
+    if c == "pinprobe":
+        sys.exit(cmd_pinprobe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay"))
     if c == "probe":
         sys.exit(cmd_probe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay"))
     print("usage: parlay.py plans | probe [dir] | listen [dir] [sport] | selftest")
