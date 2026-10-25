@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "93bb13",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-n6vgp8",
+ "head": "29973aa855f2dad9c7fe614114d7ff5fa8055445",
+ "since": 1792948970,
+ "beat": 1792948970,
+ "beatIso": "2026-10-25T17:22:50Z",
+ "done": "ENGINEER 2026-10-25 watch + volume count, no change",
+ "next": "PX6 Pinnacle coverage (tj outlook); CH86 needs diag NOFILL list"
+}
