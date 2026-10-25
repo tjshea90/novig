@@ -522,30 +522,7 @@ class AppContainer(val app: Application) {
     val sgoCloses = com.tjshea.vigilant.data.tracker.SgoCloses(sgoClient, { keyStore.current(ApiProvider.SPORTSGAMEODDS).isNotEmpty() })
     val sgoScores = com.tjshea.vigilant.data.tracker.SgoScores(sgoClient, { keyStore.current(ApiProvider.SPORTSGAMEODDS).isNotEmpty() })
 
-    /**
-     * OddsPapi v5 (Tj, 2026-10-09; ODDSPAPI_API.md): its client, rotated across Tj's keys like every provider's, and the one shared read the games source and the props source take their share of.
-     * Used only while [opActive].
-     */
-    val opClient = com.tjshea.vigilant.data.reference.OddsPapiClient(http, KeyPool(QuotaPolicy.ODDSPAPI, { keyStore.current(ApiProvider.ODDSPAPI) }, usage))
-    val opFeed = com.tjshea.vigilant.data.reference.OddsPapiFeed(opClient)
-    val opGames = com.tjshea.vigilant.data.reference.OpGamesSource(opFeed)
-    val opProps = com.tjshea.vigilant.data.reference.OpPropsSource(opFeed)
 
-    /** OddsPapi is on, a key is saved and it is answering: the scan, bids and open-bet pricing read it, beside every other API that is on. */
-    fun opActive(s: ScanSettings): Boolean = AppBook.isNovig && s.oddsPapi && keyStore.current(ApiProvider.ODDSPAPI).isNotEmpty() && !opClient.down()
-
-    /** Closing lines (CLV for any bet, graded or not) and final scores from OddsPapi: asked only while it is switched on (see [syncOp]). */
-    val opCloses = com.tjshea.vigilant.data.tracker.OpCloses(opClient, opFeed, { keyStore.current(ApiProvider.ODDSPAPI).isNotEmpty() })
-    val opScores = com.tjshea.vigilant.data.tracker.OpScores(opClient, opFeed, { keyStore.current(ApiProvider.ODDSPAPI).isNotEmpty() })
-
-    /**
-     * Unabated Free (Tj, 2026-10-11; UNABATED_API.md): DraftKings, FanDuel, MGM, Caesars, theScore and Fanatics' lines and props at no credit cost. Its client keeps every odds call 5.2 s apart; its feed serves cached boards
-     * and refreshes them in the background, so a scan never waits behind it. It is the LAST source ([com.tjshea.vigilant.data.scanner.Scanner.SOURCE_ORDER]), so it prices only what no better feed sent. Used only while [unabatedActive].
-     */
-    val unabatedClient = com.tjshea.vigilant.data.reference.UnabatedClient(http, { keyStore.current(ApiProvider.UNABATED) }, usage)
-    val unabatedFeed = com.tjshea.vigilant.data.reference.UnabatedFeed(unabatedClient, appScope)
-    val unabatedGames = com.tjshea.vigilant.data.reference.UnabatedGamesSource(unabatedFeed)
-    val unabatedProps = com.tjshea.vigilant.data.reference.UnabatedPropsSource(unabatedFeed)
 
     /**
      * BoltOdds Pro (Tj, 2026-10-12; BOLTODDS_API.md): the odds websocket as a fair-line source. The client rotates Tj's keys; the feed owns the two sockets (lines, props) and their boards and opens them only while a scan
@@ -559,8 +536,6 @@ class AppContainer(val app: Application) {
     /** BoltOdds is on and a key is saved (the sockets answer for themselves: a read throws the reason when they cannot connect). */
     fun boltActive(s: ScanSettings): Boolean = AppBook.isNovig && s.gates.useBoltOdds && keyStore.current(ApiProvider.BOLTODDS).isNotEmpty()
 
-    /** Unabated is on, a key is saved and it is answering. */
-    fun unabatedActive(s: ScanSettings): Boolean = AppBook.isNovig && s.unabated && keyStore.current(ApiProvider.UNABATED).isNotEmpty() && !unabatedClient.down()
 
     /**
      * OddsPapi Free (v4; ODDSPAPI_API.md addendum 2026-10-11): Tj's free key, a different product from the v5 [opClient]. Its small monthly allowance is spent only on finding a bet's game and the market list
@@ -582,9 +557,6 @@ class AppContainer(val app: Application) {
     /** Follows Settings: the closes and scores read OddsPapi only while its switch is on. Safe to call on every settings change; off, nothing is asked. */
     fun syncOp(s: ScanSettings) {
         com.tjshea.vigilant.engine.WideQuotes.enabled = s.ignoreWideQuotes
-        val on = AppBook.isNovig && s.oddsPapi
-        opCloses.enabled = on
-        opScores.enabled = on
         op4Closes.enabled = AppBook.isNovig && s.oddsPapiFree
     }
 
@@ -627,8 +599,8 @@ class AppContainer(val app: Application) {
 
     val freeScores = FreeScores(http, json)
 
-    /** OddsPapi's final scores first while it is on ([syncOp]), then SportsGameOdds' while Pro is on ([syncSgo]), the free feeds behind them (and for a prop's box score). */
-    val scores: com.tjshea.vigilant.data.tracker.ScoreSource = com.tjshea.vigilant.data.tracker.ChainedScores(opScores, com.tjshea.vigilant.data.tracker.ChainedScores(sgoScores, com.tjshea.vigilant.data.tracker.ChainedScores(freeScores, propScores)))
+    /** SportsGameOdds' final scores first while Pro is on ([syncSgo]), the free feeds behind them (and for a prop's box score). */
+    val scores: com.tjshea.vigilant.data.tracker.ScoreSource = com.tjshea.vigilant.data.tracker.ChainedScores(sgoScores, com.tjshea.vigilant.data.tracker.ChainedScores(freeScores, propScores))
     val settler = BetSettler(tracker, scores, leaveApiBets = { trading != null })
 
     /**
@@ -653,7 +625,7 @@ class AppContainer(val app: Application) {
 
     /** Pinnacle's closes from ParlayAPI (RESEARCH.md §43): asked first when ParlayAPI is on and Tj has a key; nothing otherwise. */
     val parlayCloses = com.tjshea.vigilant.data.tracker.ParlayCloses(http, parlayPool, json, historyDays = { parlayAccount.historyDays() })
-    private val closeSources = listOf<com.tjshea.vigilant.data.tracker.CloseSource>(sgoCloses, opCloses, op4Closes, parlayCloses, espnCloses, novigCloses)
+    private val closeSources = listOf<com.tjshea.vigilant.data.tracker.CloseSource>(sgoCloses, op4Closes, parlayCloses, espnCloses, novigCloses)
     val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, closeSources)
 
     /** The Tracker's close sources in the order they are asked (a test pins it): SGO, OddsPapi v5, OddsPapi Free, ParlayAPI, ESPN, Novig. */
@@ -686,7 +658,7 @@ class AppContainer(val app: Application) {
     }
 
     private val studyCloses = listOf<com.tjshea.vigilant.data.tracker.CloseSource>(
-        sgoCloses, opCloses, com.tjshea.vigilant.data.study.GuardedCloses(parlayCloses) { parlayCreditsPlentiful() }, espnCloses, novigCloses,
+        sgoCloses, com.tjshea.vigilant.data.study.GuardedCloses(parlayCloses) { parlayCreditsPlentiful() }, espnCloses, novigCloses,
     )
 
     /**
@@ -1602,8 +1574,7 @@ class AppContainer(val app: Application) {
             return com.tjshea.vigilant.data.novig.lab.SgoAltQuotes.quotes(match, swapped)
         }
         val sgo = if (sgoActive(s)) quotesOf("sgo", com.tjshea.vigilant.data.reference.SgoBooks.supports(league)) { sgoGames.odds(league, s.copy(includeLive = true)) } else emptyList()
-        val op = if (opActive(s)) quotesOf("op", com.tjshea.vigilant.data.reference.OpBooks.supports(league)) { opGames.odds(league, s.copy(includeLive = true, opAltLines = true)) } else emptyList()
-        return pinn + sgo + op
+        return pinn + sgo
     }
 
     /** The paper bid lab's files (RESEARCH.md §122): the paper bids when they went up and what happened to them. */
@@ -2269,7 +2240,6 @@ class AppContainer(val app: Application) {
         propLine = s.vigilantOn && s.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty(),
         oddsApi = s.vigilantOn && s.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty(),
         sgo = s.vigilantOn && sgoActive(s),
-        op = s.vigilantOn && opActive(s),
     )
 
     /**
@@ -2328,18 +2298,15 @@ class AppContainer(val app: Application) {
     }
 
     /**
-     * The flat-rate feeds that are on, in the order they price: SportsGameOdds Pro, OddsPapi, OddsPapi Free (v4), then Unabated Free last ([unabatedLast]). They are asked for every league and every kind of data they carry whatever
+     * The flat-rate feeds that are on, in the order they price: SportsGameOdds Pro, BoltOdds, OddsPapi Free (v4). (OddsPapi v5 and Unabated were removed for good: Tj, 2026-10-25.) They are asked for every league and every kind of data they carry whatever
      * else is on: nothing rests for them and they rest for nothing (Tj, 2026-10-11: "all apis can be used at any time for any data as long as I have them toggled on, and if any are toggled off, they are not used or called at all").
      */
     private fun flatRateSources(settings: ScanSettings): List<ReferenceSource> =
         (if (sgoActive(settings)) listOf<ReferenceSource>(sgoGames) + propsOf(settings, sgoProps) else emptyList()) +
-            (if (opActive(settings)) listOf<ReferenceSource>(opGames) + propsOf(settings, opProps) else emptyList()) +
             // BoltOdds Pro (Tj, 2026-10-12): read from the sockets' boards, which costs nothing, so it is asked for every league it carries beside every other API that is on.
             (if (boltActive(settings)) listOf<ReferenceSource>(boltGames) + propsOf(settings, boltProps) else emptyList()) +
             // OddsPapi Free (v4) reads whole games (every book) within Tj's daily figure.
-            (if (op4FairActive(settings)) listOf<ReferenceSource>(op4Games) + propsOf(settings, op4Props) else emptyList()) +
-            // Unabated Free (Tj, 2026-10-11): last in line. Pricing keeps the earlier source's quote for a book both send, so it prices only the gaps and covers a feed that is spent or down.
-            (if (unabatedActive(settings)) listOf<ReferenceSource>(unabatedGames) + propsOf(settings, unabatedProps) else emptyList())
+            (if (op4FairActive(settings)) listOf<ReferenceSource>(op4Games) + propsOf(settings, op4Props) else emptyList())
 
     private fun propsOf(settings: ScanSettings, props: ReferenceSource): List<ReferenceSource> =
         if (com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS in settings.families) listOf(props) else emptyList()
@@ -2349,10 +2316,7 @@ class AppContainer(val app: Application) {
      * Unabated last. A feed that is off is not in the list at all, so it is never called; a feed that is on never rests because another one is.
      */
     private fun allReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> {
-        val flat = flatRateSources(settings)
-        val front = flat.filter { it.id != unabatedGames.id && it.id != unabatedProps.id }
-        val last = flat.filter { it.id == unabatedGames.id || it.id == unabatedProps.id }
-        return front + baseReferenceSources(settings, background, scan) + last
+        return flatRateSources(settings) + baseReferenceSources(settings, background, scan)
     }
 
     internal fun baseReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> = buildList {
