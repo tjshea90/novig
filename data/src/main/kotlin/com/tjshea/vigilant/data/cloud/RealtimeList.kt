@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.cloud
 
+import com.tjshea.vigilant.data.reference.LineKind
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -40,20 +41,40 @@ class RealtimeList(
     /**
      * A scan's result (partial or final): its sides within reach are watched. A side the scan read (its Novig book or fair is no older than the held one) replaces the held one; a held side the scan has not
      * reached yet stays with the newer price this list gave it.
+     *
+     * PX9 (Tj 2026-10-25, "many results only have 1 book behind the fair odds"; GB@DET's spread listed with Kalshi alone beside the same game's 1st-half total priced by 7 feeds): a league whose fair-odds
+     * sources have not all answered ([ScanResult.waitingFor]) is priced from the first to answer, and the scan's own list and the bid desk hide it for that reason; this list took it, and it stayed whenever
+     * the finished scan's fuller fair put the side more than [nearPoints] below +EV (a row out of reach was ignored, never removed). Now: such leagues are skipped until they are complete, a scan row that is
+     * newer or out of reach takes the held row out with it, and a scan row that matched as many feeds as the held one but was read earlier still gives the held row its fair ([rebase]: the scan's boards under the
+     * held row's newer Novig price; null keeps the held row).
      */
     @Synchronized
-    fun adopt(result: ScanResult, now: Long) {
+    fun adopt(result: ScanResult, now: Long, rebase: ((held: Opportunity, scan: Opportunity) -> Opportunity?)? = null) {
         stats = result.stats
         val next = HashMap<String, Opportunity>(held.size + 256)
         for ((k, o) in held) if (keep(o, now)) next[k] = o
         for (o in result.opportunities) {
-            if (!keep(o, now)) continue
+            if (result.waitingFor.isNotEmpty() && ScanResult.waitKey(o.league.novigName, o.kind == LineKind.PLAYER_PROP) in result.waitingFor) { skippedWaiting++; continue }
             val old = next[o.key]
-            if (old == null || newer(o, old)) next[o.key] = o
+            val row = when {
+                old == null || newer(o, old) -> o
+                rebase != null && o.refEvent != null && old.refEvent !== o.refEvent && feedsOf(o) >= feedsOf(old) -> { rebased++; runCatching { rebase(old, o) }.getOrNull() ?: old }
+                else -> old
+            }
+            if (keep(row, now)) next[o.key] = row else if (old != null) next.remove(o.key)
         }
         held = trim(next)
         watched = held.size
     }
+
+    /** Sides of partial scans left out because their league was still waiting for a fair-odds source, and held rows given a later scan's fair ([adopt]). */
+    @Volatile var skippedWaiting = 0L
+        private set
+    @Volatile var rebased = 0L
+        private set
+
+    /** How many feeds' games the row's fair came from (a merged game's id joins the ids of every feed that matched it). */
+    private fun feedsOf(o: Opportunity): Int = o.refEvent?.id?.count { it == '+' } ?: 0
 
     /** One pass: every held side priced again by [reprice]; returns the list as [settings] filter it. */
     fun pass(settings: ScanSettings, now: Long, reprice: (List<Opportunity>) -> List<Opportunity>): List<Opportunity> {
@@ -87,7 +108,7 @@ class RealtimeList(
     @Synchronized fun current(): Map<String, Opportunity> = held
 
     /** One line for the engine's log and status. */
-    fun describe(): String = "real-time list: $watched sides watched (within ${Math.round(nearPoints * 100)} pts of +EV), $passes passes, last ${lastPassMs} ms; $turnedPositive turned +EV between scans, $dropped left the list"
+    fun describe(): String = "real-time list: $watched sides watched (within ${Math.round(nearPoints * 100)} pts of +EV), $passes passes, last ${lastPassMs} ms; $turnedPositive turned +EV between scans, $dropped left the list; $skippedWaiting partial-scan sides left out (a fair source still to answer), $rebased held sides given a later scan's fair"
 
     /** Pregame, priced, not started, and within reach of +EV. */
     private fun keep(o: Opportunity, now: Long): Boolean =
