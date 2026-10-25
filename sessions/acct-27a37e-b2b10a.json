@@ -5,11 +5,11 @@
  "nonce": "b2b10a",
  "kind": "interactive",
  "task": "",
- "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "ed57aa38f170c8eca90c3701dd46fdbcca4b4082",
+ "branch": "ccr-27fee639-d3opru",
+ "head": "b20bd61f3fc827c3390a4adfa657df85dcc1bf45",
  "since": 1792912591,
- "beat": 1792914967,
- "beatIso": "2026-10-25T07:56:07Z",
+ "beat": 1792952916,
+ "beatIso": "2026-10-25T18:28:36Z",
  "done": "research index rebuilt (ParlayAPI Business docs folder)",
  "next": "trigger parlay.yml streamprobe"
 }
