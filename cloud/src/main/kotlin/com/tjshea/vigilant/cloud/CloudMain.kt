@@ -593,7 +593,7 @@ fun main(args: Array<String>) = runBlocking {
         prepare = { s -> latestSettings.set(s); novigKeyed?.configure(s) },
         novigRoute = { novigKeyed?.route(System.currentTimeMillis()) ?: CloudNovig.PUBLIC_ONLY },
         scanDiagnostics = {
-            novigKeyed?.feedReport().orEmpty() + listOf(sources.sxDiagnostics(), sources.parlayPbpNote(), sources.parlayStreamNote(), sources.propLineNote()) +
+            novigKeyed?.feedReport().orEmpty() + listOf(sources.sxDiagnostics(), sources.parlayPbpNote(), sources.parlayStreamNote()) +
                 // SharpAPI's last reads only while it is switched on: a switched-off API is as though it did not exist (PB5).
                 (if (latestSettings.get()?.gates?.useSharpApi == true) listOf("SharpAPI reads: " + sources.sharpApi.lastReads.entries.joinToString(", ") { "${it.key} ${it.value}" }) + sources.sharpApi.lastCensus.entries.map { "SharpAPI ${it.key}: ${it.value}" } else emptyList())
         },
