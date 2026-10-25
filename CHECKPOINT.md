@@ -1,22 +1,23 @@
-# CHECKPOINT 4240 — read me first, then TASKS.md
+# CHECKPOINT 4241 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T22:08:56Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-e58c5a58-3qyzld` · **builds on:** `b5febc1c0` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T22:09:37Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-e58c5a58-3qyzld` · **builds on:** `14947206f` (this checkpoint is the commit after it)
 
 ## Just done
-PX10d/e: Pinnacle census in the quote census; ParlayLive booksHeld fixed; phone settings 3-way merge (CloudClaudeConfig.merge) wired + tested; full floor 4,213 green
+pre-ship: v1.0.84 PX10: phone keeps a Claude session's settings change it has not adopted yet (3-way merge), PropLine asked in parts of 60 books (its limit), 34 more PropLine books, Pinnacle hosts obey their own switches
 
 ## Do this next
-land + reset; read pinnWin/pinnFeeds/pinnAge; then ship APK v1.0.84 (settings merge + PropLine split + PX9c books)
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  14947206f ckpt 4240: PX10d/e: Pinnacle census in the quote census; ParlayLive booksHeld fixed; p
   2fc4404b5 ckpt 4239: PX10a/c: Pinnodds free logged + switched off; Pinnacle hosts obey their own
   945ee7e29 ckpt 4238: PX10 written into TASKS.md (Tj's 4-part API migration request)
   80d060bf3 ckpt 4237: PX9 resumed and finished for today: PropLine 60-book fix live (run 40234294
@@ -26,8 +27,4 @@ land + reset; read pinnWin/pinnFeeds/pinnAge; then ship APK v1.0.84 (settings me
   c8d7de206 ckpt 4233: retry
   48c084dd2 ckpt 4232: PX9d plainFastFeeds on the engine (full floor green, 4,208); list_audit kno
   f26ae860d ckpt 4231: PX9f landed + engine reset 20:48 UTC; PX9h SGO lastUpdatedAt probe (sgo-pro
-  3834ba959 ckpt 4230: PX9f fixed: PropLine's 60-bookmaker limit found by the bookparam probe; req
 ```
-
-(8 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
