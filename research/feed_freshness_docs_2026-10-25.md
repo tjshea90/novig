@@ -46,3 +46,20 @@ Keys stay in GitHub secrets; every keyed measurement below ran on Actions (`prop
 - No DUPLICATE-COMPANY (one company counted twice) on the listed bets after the new books.
 - crossDiff (one book, two feeds, same line, different price): push books far 88,938, polled near 18,068 a scan. The fresher stamp wins a book (`freshestWins`), so which stamp SGO's is (section 4) decides
   whether SGO's copy of a push book is ever the one used.
+
+## 6. PX10 (Tj ~21:2x UTC): the migration to ParlayAPI + PropLine, Pinnacle from every source
+
+- **Pinnodds is the free plan now** (no socket, 100 REST a day): `usePinnodds` and `pinnLive` off. Counting its key as "a Pinnacle feed is on" had (a) let a failing Pinnodds board fall through to PinnWire although
+  PinnWire was switched off, and (b) stopped the engine buying ParlayAPI's alternates and halves. Fixed (`CloudPinnacleHostsTest`); ParlayAPI's matched lines a scan went 22 -> 141, its quotes 5,567 -> 13,727.
+- **PinnWire's secret** is retired on the engine (`CloudKeys.RETIRED`); the stored copy needs Tj (a session cannot reach the secrets API through this environment's proxy: 403).
+- **A session's settings change was undone by the phone** (21:46 Pinnodds off; 21:48 a pull to refresh pushed the phone's whole settings before its once-a-minute adoption): `CloudClaudeConfig.merge`, a 3-way merge
+  on the phone, ships in v1.0.84.
+- **Pinnacle census** (`pinnWin` / `pinnFeeds` / `pinnAge` in the quote census; one scan, run after 22:0x UTC, ~69,000 lines Pinnacle prices):
+  - used: SGO 25,256 (games 18,704 + props 6,552), PropLine 25,876 (12,423 + 12,630 props + 823 1H), ParlayAPI 15,249 (11,725 + 3,055 props + 469 1H), none (every copy too old) 2,343.
+  - only one feed quotes Pinnacle on the line: SGO 14,507 (11,846 games + 2,661 props), ParlayAPI 9,715, PropLine 4,134 (2,817 + 1,317 props). So every feed adds Pinnacle coverage the others lack,
+    and the freshest copy wins where they overlap.
+  - age of the copy used: PropLine mostly under 5 min (793 under 30 s); ParlayAPI 5,302 under 5 min vs 5,998 over (its REST quotes are dated by its per-book verification; far games are re-verified less often:
+    split near/far next); SGO 7,900 under 5 min vs 10,804 over.
+- **For the migration:** the 14,507 lines a scan where SGO is the only Pinnacle source are the gap to close before SGO lapses: next, count them by kind (main / alternate / prop / period) and ask PropLine
+  and ParlayAPI for those markets (PX10f).
+- **Sockets:** PropLine at its plan's 2 (board + signals; the Streaming plan allows 5); ParlayAPI's odds + hot stream per scanned sport, 16 streams, no cap published; its NCAAF hot stream is closed by ParlayAPI after ~12 s (not a hot league) and retried with back-off, harmless.
