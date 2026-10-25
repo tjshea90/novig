@@ -29,6 +29,9 @@ object CloudCurrency {
  * published age plus the time since the list went out).
  */
 object CloudText {
+    /** The engine's real-time list ran within the last 20 s (PB15/PB19): it re-prices the listed bets itself, so the phone's own 15 s re-read is not needed. */
+    fun realtime(st: CloudStatus?, now: Long): Boolean = st != null && st.realtimeAtMs > 0L && now - st.realtimeAtMs < 20_000L
+
     enum class Level { GOOD, INFO, WARN, BAD }
 
     data class View(val level: Level, val headline: String, val detail: String?, /** The scan the phone asked for is running or waiting: the Scan button shows busy. */ val busy: Boolean)

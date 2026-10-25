@@ -1163,6 +1163,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // Cloud scan (Tj, 2026-10-15 review): this phone holds no scan plan to re-check against (the GitHub engine made the list), so the listed rows are re-priced from Novig's newest books over the phone's own
         // connection, with GitHub's fair odds kept: the way the list stays honest every 15 s and the Recheck button works. A stale fair is the engine's to refresh (it scans all the time; Scan asks for one now).
         if (current.settings.cloudDrives) {
+            // PB15 (Tj, 2026-10-25: "why is my phone asking novig for the current price every 15 seconds? can't the GitHub engine do this in real time over the socket?"): while the engine's real-time list
+            // runs it re-prices every listed bet every 3 s from the live feeds and its Novig socket, so the quiet 15 s re-read stays off; the Recheck button still reads.
+            if (quiet && com.tjshea.vigilant.data.cloud.CloudText.realtime(current.cloudUi.status, System.currentTimeMillis())) return
             if (!current.settings.paused) requoteDuringScan(marketIds, toast = !quiet)
             return
         }
