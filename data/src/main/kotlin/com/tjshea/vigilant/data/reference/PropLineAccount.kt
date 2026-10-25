@@ -64,8 +64,13 @@ class PropLineAccount(
         }
     }
 
+    /** The key on a Streaming plan (250,000 a day or more) that last answered, best plan first: the one PropLine's push stream authenticates with (PSL). Null without one. */
+    fun streamingKey(): String? = last.entries.filter { it.value.valid && (it.value.limit ?: 0) >= STREAMING_LIMIT }.maxByOrNull { it.value.limit ?: 0 }?.key
+
     companion object {
         const val REFRESH_MS = 50 * 60_000L
+        /** Streaming Lite's daily requests: the smallest plan with WebSocket and webhook push. */
+        const val STREAMING_LIMIT = 250_000
         const val FREE_LIMIT = 1_000
 
         /** PropLine's plan for a daily limit (docs, 2026-10-16). Unknown figures say the number. */
