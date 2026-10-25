@@ -115,6 +115,8 @@ class PinnapiClient(
         val order = (listOfNotNull(first()) + hosts).let { all -> if (props) all.sortedByDescending { it.props } else all }
         for (host in order) {
             if (!host.enabled() || host.pool.keyCount() == 0) continue
+            // Pinnodds is a free trial for good (Tj, 2026-10-25, PB2): 100 REST requests a day, no SSE or socket. One board read every [FIRST_TRIAL_GAP_MS] at most (about 96 a day), the other hosts carry the rest.
+            if (host.name == FIRST_NAME) { if (clock() - firstReadAtMs < FIRST_TRIAL_GAP_MS) continue; firstReadAtMs = clock() }
             val events = try {
                 if (host.allSports) {
                     // Every sport Vigilant prices in one request: each is kept as its own board for the leagues asked next.
@@ -143,6 +145,8 @@ class PinnapiClient(
         }
         throw ReferenceException(problem ?: "No Pinnacle key. Add a free PinnWire or pinnapi key in Settings.")
     }
+
+    @Volatile private var firstReadAtMs = 0L
 
     /** Reads with `sport_id=all` (for Diagnostics: one request standing in for a scan's sports). */
     @Volatile var allSportReads = 0
