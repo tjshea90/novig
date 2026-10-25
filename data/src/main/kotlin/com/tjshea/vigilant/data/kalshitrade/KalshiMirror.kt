@@ -13,7 +13,7 @@ object KalshiMirror {
         if (novig == null) return kalshi.copy(useKalshi = false)
         return kalshi.copy(
             useKalshi = false,
-            sgoPro = novig.sgoPro, oddsPapi = novig.oddsPapi, unabated = novig.unabated, oddsPapiFree = novig.oddsPapiFree,
+            sgoPro = novig.sgoPro, oddsPapiFree = novig.oddsPapiFree,
             usePinnacle = novig.usePinnacle, usePolymarket = novig.usePolymarket, useOddsApi = novig.useOddsApi, useParlay = novig.useParlay,
             usePropLine = novig.usePropLine, useBookProps = novig.useBookProps,
             referenceBooks = novig.referenceBooks, fairSource = novig.fairSource, devigMethod = novig.devigMethod, sharpBooks = novig.sharpBooks,

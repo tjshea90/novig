@@ -8,15 +8,13 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
  */
 object ApiToggles {
     /** The ids the engine may ask to switch: the odds feeds (never Novig, never the trading switches). Pinnodds and Kalshi's socket stay the phone's own. */
-    val IDS = listOf("sgo", "boltodds", "oddspapi", "oddspapi_free", "unabated", "parlay", "propline", "odds_api", "pinnwire", "pinnapi", "kalshi", "polymarket", "sxbet", "sharpapi")
+    val IDS = listOf("sgo", "boltodds", "oddspapi_free", "parlay", "propline", "odds_api", "pinnwire", "pinnapi", "kalshi", "polymarket", "sxbet", "sharpapi")
 
     /** The meter ([com.tjshea.vigilant.data.keys.QuotaPolicy]) of a switch id, for the usage ledger and the feeds' answers; null for a keyless API. */
     fun policy(id: String): com.tjshea.vigilant.data.keys.QuotaPolicy? = when (id) {
         "sgo" -> com.tjshea.vigilant.data.keys.QuotaPolicy.SGO
         "boltodds" -> com.tjshea.vigilant.data.keys.QuotaPolicy.BOLTODDS
-        "oddspapi" -> com.tjshea.vigilant.data.keys.QuotaPolicy.ODDSPAPI
         "oddspapi_free" -> com.tjshea.vigilant.data.keys.QuotaPolicy.ODDSPAPI_FREE
-        "unabated" -> com.tjshea.vigilant.data.keys.QuotaPolicy.UNABATED
         "parlay" -> com.tjshea.vigilant.data.keys.QuotaPolicy.PARLAY
         "propline" -> com.tjshea.vigilant.data.keys.QuotaPolicy.PROPLINE
         "odds_api" -> com.tjshea.vigilant.data.keys.QuotaPolicy.ODDS_API
@@ -36,9 +34,7 @@ object ApiToggles {
     fun isOn(s: ScanSettings, id: String): Boolean? = when (id) {
         "sgo" -> s.sgoPro
         "boltodds" -> s.gates.useBoltOdds
-        "oddspapi" -> s.oddsPapi
         "oddspapi_free" -> s.oddsPapiFree
-        "unabated" -> s.unabated
         "parlay" -> s.useParlay
         "propline" -> s.usePropLine
         "odds_api" -> s.useOddsApi
@@ -56,9 +52,7 @@ object ApiToggles {
     fun setOn(s: ScanSettings, id: String, on: Boolean): ScanSettings = when (id) {
         "sgo" -> s.copy(sgoPro = on)
         "boltodds" -> s.copy(gates = s.gates.copy(useBoltOdds = on))
-        "oddspapi" -> s.copy(oddsPapi = on)
         "oddspapi_free" -> s.copy(oddsPapiFree = on)
-        "unabated" -> s.copy(unabated = on)
         "parlay" -> s.copy(useParlay = on)
         "propline" -> s.copy(usePropLine = on)
         "odds_api" -> s.copy(useOddsApi = on)

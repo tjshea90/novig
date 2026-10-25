@@ -131,9 +131,7 @@ class ApiProbe(
         ApiProvider.PROPLINE -> QuotaPolicy.PROPLINE
         ApiProvider.PARLAY -> QuotaPolicy.PARLAY
         ApiProvider.SPORTSGAMEODDS -> QuotaPolicy.SGO
-        ApiProvider.ODDSPAPI -> QuotaPolicy.ODDSPAPI
         ApiProvider.ODDSPAPI_FREE -> QuotaPolicy.ODDSPAPI_FREE
-        ApiProvider.UNABATED -> QuotaPolicy.UNABATED
         ApiProvider.BOLTODDS -> QuotaPolicy.BOLTODDS
         ApiProvider.SXBET -> QuotaPolicy.SXBET
         ApiProvider.SHARPAPI -> QuotaPolicy.SHARPAPI
@@ -217,19 +215,6 @@ class ApiProbe(
                 }
             }
         }
-        ApiProvider.ODDSPAPI -> {
-            val r = get("${hosts.op5}/bookmakers", listOf("X-API-Key" to key, "Accept" to "application/json"))
-            when {
-                r.code == 401 || r.code == 403 -> {
-                    meter.recordBalance(QuotaPolicy.ODDSPAPI, key, null, inactive = true)
-                    val v4 = runCatching { get("${hosts.op4}/v4/account?apiKey=$key", emptyList()).isSuccessful }.getOrDefault(false)
-                    false to (refused(r.code) + if (v4) " It is a v4 (free) key: paste it under OddsPapi Free (v4)." else "")
-                }
-                r.code == 429 -> true to "Accepted, rate limited for the moment (HTTP 429)."
-                r.isSuccessful -> true to "Active and accepted · OddsPapi v5 does not publish a request allowance${r.headers["X-RateLimit-Remaining"]?.let { " (rate limit left now: $it)" } ?: ""}."
-                else -> false to "Answered HTTP ${r.code}."
-            }
-        }
         ApiProvider.SXBET -> {
             // The WebSocket token route accepts any valid key and is the cheapest read that proves the key (30 a minute); it carries no usage figure.
             val r = get("${hosts.sxbet}/user/realtime-token-v3/api-key", listOf("x-sx-api-key" to key, "Accept" to "application/json"))
@@ -260,15 +245,6 @@ class ApiProbe(
                     val pinnacle = if (tier == "sharp" || tier == "enterprise") "Pinnacle included" else "no Pinnacle on this tier (Sharp needed)"
                     true to "Active and accepted · ${tier ?: "?"} tier, ${rpm ?: "?"} requests a minute, up to ${books ?: "?"} books, $pinnacle" + (today?.let { " · $it requests today" } ?: "") + "."
                 }
-                else -> false to "Answered HTTP ${r.code}."
-            }
-        }
-        ApiProvider.UNABATED -> {
-            val r = get("${hosts.unabated}/league", listOf("X-Api-Key" to key, "Accept" to "application/json"))
-            when {
-                r.code == 401 -> { meter.recordBalance(QuotaPolicy.UNABATED, key, null, inactive = true); false to refused(401, "(Free access can be revoked)") }
-                r.code == 403 -> false to refused(403)
-                r.isSuccessful -> true to "Active and accepted · Unabated Free has no allowance, only one odds request per 5 s per key."
                 else -> false to "Answered HTTP ${r.code}."
             }
         }
