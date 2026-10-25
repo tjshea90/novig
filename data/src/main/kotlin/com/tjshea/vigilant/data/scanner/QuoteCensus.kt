@@ -13,7 +13,7 @@ object QuoteCensus {
 
     fun add(stage: String, feed: String?, n: Int = 1) {
         if (n <= 0) return
-        counts.getOrPut("$stage|${feed?.substringBefore('-')?.removeSuffix("_props") ?: "?"}") { AtomicLong() }.addAndGet(n.toLong())
+        counts.getOrPut("$stage|${feed ?: "?"}") { AtomicLong() }.addAndGet(n.toLong())
     }
 
     fun snapshot(): Map<String, Long> = counts.mapValues { it.value.get() }
