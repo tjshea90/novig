@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "50833f24057f37afe776bf95f4fcf6707de17df9",
+ "head": "4c2d0d04cbf667ba341be004843dfe9ef766ad6c",
  "since": 1792915284,
- "beat": 1792916706,
- "beatIso": "2026-10-25T08:25:06Z",
+ "beat": 1792916887,
+ "beatIso": "2026-10-25T08:28:07Z",
  "done": "ticked PB1-4, PB7, PB9, PB18, PB20 with their tests; streamprobe re-run (whole frames + shapes + REST board) dispatched on this branch",
  "next": "read the probe's shapes; build ParlayLive (SSE store) + ParlayStream (engine) laid over ParlayAPI's boards; engine stream pass"
 }
