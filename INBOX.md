@@ -1228,3 +1228,8 @@ Investigate why I don't see any parlayapi provided odds in the scanned list and 
 ```
 Why are these odds so old if they are from a socket?
 ```
+
+## 2026-10-25T17:10:53Z
+```
+Propline and parlayapi probably provide Pinnacle. Sharpapi may not be needed
+```
