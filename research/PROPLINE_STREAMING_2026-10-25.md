@@ -66,5 +66,29 @@ Exchange), plus offshore `heritage`, `jazzsports`, `youwager`, Canadian `thescor
 sweepstakes `rebet`, `courtside`, `sportzino`, `thrillzz`, and ~70 European/LatAm/African books (pregame, mostly
 soccer). Not carried: Circa, Caesars, bet365.
 
-## How Vigilant uses it (built 2026-10-25, see TASKS.md PSL)
-See the PSL items in TASKS.md for what was built, with the tests that prove it.
+## How Vigilant uses it (built 2026-10-25, TASKS.md PSL)
+- **Pacing** (`PropLineClient`): a Streaming key (X-Daily-Limit >= 250,000) is paced at 25 requests a second (Lite
+  sustains 35) and reads 10 games' props at once (PropLine's advice: a pool of 8-10; 20 in flight is the cap).
+- **Books**: SBOBET, BookMaker.eu (`bookmaker`), Betfair Exchange (`betfair_ex_eu`) and theScore Bet (`espnbet`) added
+  to the books PropLine is asked for, under the app's names, so the sharp list and BookCompany groups apply. The
+  European/LatAm/African and sweepstakes books stay out until their odds providers are known (one-company rule).
+- **Stream** (`PropLineStream`, engine only, switch `gates.propLineSocket`, default on, Settings > APIs and the Live
+  tab): both connections. BOARD = line_movement + line_added + line_pulled + market_suspended for the scanned sports
+  and the fair-line books; SIGNALS = steam (props too, score >= 40) + resolution + ev at Novig (1-15%). Subscriptions
+  found by event set and reused; Tj's own dashboard subscriptions are never touched. Resume by `since_seq`.
+- **Overlay** (`PropLineLive`): moves matched by `outcome_id` (boards asked with `includeBookIds`), pulled lines and
+  scratched players' markets removed, a market of a book the heartbeat says is still being read is current as of
+  that read while the socket covered the board's read without a gap. With the stream live a league board is re-read
+  every 3 min (or at once after a `line_added`), every scan and the 45 s hot refresh read from memory with the pushes
+  laid over (`Scanner.HOT_FEEDS` now has propline + propline_props).
+- **Late scratches**: 3+ books pulling a player's props on his game (within 6 h) makes that player's props
+  unavailable to the engine's bets and bids (`CloudSources.unavailable`).
+- **Freshness** (`PropLineFreshness`): `/v1/freshness` every minute; table in `status.json` (`propLineFresh`) and on
+  Engine > APIs ("PropLine: how fresh each book is"); a class PropLine flags stale (its threshold is 1,800 s) for 15 min
+  or more is left out of that book's PropLine quotes. Each quote's own age check is unchanged.
+- **Research**: every steam/resolution/ev push to `propline-push-<day>.jsonl` (cloud-archive Releases).
+- **24/7**: the engine already runs round the clock (`gates.cloudHours` off); the stream opens with each job.
+- Tests: `PropLineLiveTest`, `ApiSocketTogglesTest`, `MoreBooksTest`, `OddsApiFallbackTest`.
+- Not built and why: webhooks (a runner has no public URL); `availability` (FanDuel in play: the engine bets pregame);
+  `/v1/availability/*` (Streaming tier, not Lite); SGP pricing (Novig has no SGP); max_age (its cut is on
+  `last_update`, and an unmoved line must not be dropped).
