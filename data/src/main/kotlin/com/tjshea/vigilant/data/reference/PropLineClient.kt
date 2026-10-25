@@ -848,7 +848,7 @@ internal data class PlMarket(
      */
     private fun props(live: List<PlOutcome>, bookKey: String, title: String, updated: Long?, stat: String, book: PlBook): List<RefBookMarket> {
         val yesNo = this.key in PropLineProps.YES_NO
-        data class Leg(val player: String, val point: Double, val over: Boolean, val price: Double, val seen: Long?, val id: String? = null)
+        data class Leg(val player: String, val point: Double, val over: Boolean, val price: Double, val seen: Long?, val id: String? = null, val feedId: String? = null)
         val legs = live.mapNotNull { o ->
             val player = o.description?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
             val over = when (o.name.orEmpty().trim().lowercase()) {
