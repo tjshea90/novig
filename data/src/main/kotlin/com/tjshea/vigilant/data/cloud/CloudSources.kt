@@ -393,6 +393,8 @@ class CloudSources(
      * [com.tjshea.vigilant.data.novig.trading.maker.MakerLines] gets the same answer from the app's index; the candidate lines are made here, so the engine asks.
      */
     fun unavailable(o: com.tjshea.vigilant.data.scanner.Opportunity, now: Long): String? = PlayerOut.forOpportunity(injuries.book.value, o, now)
+        // A late scratch PropLine's stream heard (3+ books pulled the player's props on his game, PSL), minutes before a report lists it.
+        ?: o.lineKey?.subject?.takeIf { o.kind == com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP }?.let { p -> propLineLive.scratched(o.league.oddsApiSportKey, p, now) }
 
     /**
      * Asks ParlayAPI's injury list about the prop players of [result]'s priced lines that no report covers yet: one read a sport at most every [ParlayInjuries.REUSE_MS], only while ParlayAPI is on with a key
