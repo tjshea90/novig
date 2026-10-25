@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "57b1594aa2aedfb35a68ac85b658463d1ba1fb7f",
+ "head": "7d0b702eb4740b677cc2e7bff22966f4813a9102",
  "since": 1792915284,
- "beat": 1792949432,
- "beatIso": "2026-10-25T17:30:32Z",
- "done": "PX: QuoteCensus (per-feed counts where fair-odds quotes are lost) logged after each scan report",
- "next": "reset engine, read the census in engine-log, fix the stage that loses PropLine NFL quotes; then PX7 stream-only books"
+ "beat": 1792949739,
+ "beatIso": "2026-10-25T17:35:39Z",
+ "done": "PX census split by feed id + PropLine unconfirmed/uncovered quotes",
+ "next": "reset engine, read census, fix"
 }
