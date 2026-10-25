@@ -32,4 +32,7 @@ jobs:
           NOVIG_READ_KEY_ID: ${{ secrets.NOVIG_READ_KEY_ID }}
           NOVIG_READ_KEY_PEM: ${{ secrets.NOVIG_READ_KEY_PEM }}
           STATUSES: ${{ github.event.inputs.statuses }}
-        run: ./gradlew :cloud:ordersprobe --no-daemon --console=plain --args="$STATUSES" 2>&1 | tail -n 400
+        run: |
+          set -o pipefail
+          # Gradle refuses an empty --args: the default statuses are passed when none are given.
+          ./gradlew :cloud:ordersprobe --no-daemon --console=plain --args="${STATUSES:-REJECTED CANCELED}" 2>&1 | tail -n 400
