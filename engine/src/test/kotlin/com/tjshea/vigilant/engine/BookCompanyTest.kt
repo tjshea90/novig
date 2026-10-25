@@ -121,7 +121,7 @@ class BookCompanyTest {
     /** Tj, 2026-10-11: "6 of 6 books agree" on Casper Ruud +0.5, all at +100 / -134: six owners, one Kambi trading desk. */
     @Test
     fun `books on Kambi's one trading desk are one company whoever owns them`() {
-        val desk = listOf("Bally Bet", "betparx", "casumo", "grosvenor", "tabtouch", "unibet", "betrivers", "sugarhouse", "Unibet (US)", "coolbet", "superbet", "livescorebet", "virginbet", "leovegas", "unibet_nl", "betrivers_ca")
+        val desk = listOf("Bally Bet", "betparx", "casumo", "grosvenor", "tabtouch", "unibet", "betrivers", "sugarhouse", "Unibet (US)", "coolbet", "livescorebet", "virginbet", "leovegas", "unibet_nl", "betrivers_ca")
         assertEquals(1, desk.map { BookCompany.of(it) }.distinct().size)
         // Other operators stay apart.
         assertNotEquals(BookCompany.of("unibet"), BookCompany.of("draftkings"))
@@ -151,7 +151,11 @@ class BookCompanyTest {
     fun `PropLine's added books join their company's group`() {
         assertEquals(BookCompany.of("fanduel"), BookCompany.of("paddypower"))
         assertEquals(BookCompany.of("betrivers"), BookCompany.of("livescorebet"))
-        assertEquals(BookCompany.of("betrivers"), BookCompany.of("superbet_ro"))
+        // Superbet is its own desk (measured 2026-10-25: 83% with itself and Napoleon, under 25% with every Kambi book), not Kambi's.
+        assertNotEquals(BookCompany.of("betrivers"), BookCompany.of("superbet_ro"))
+        assertEquals(BookCompany.of("superbet_pl"), BookCompany.of("superbet_ro"))
+        assertEquals(BookCompany.of("superbet_pl"), BookCompany.of("napoleon"))
+        assertEquals(BookCompany.of("fortuna_cz"), BookCompany.of("fortuna_pl"))
         assertEquals(BookCompany.of("betmgm"), BookCompany.of("ladbrokes_au"))
         assertEquals(BookCompany.of("betway"), BookCompany.of("betway_za"))
         assertEquals(BookCompany.of("betano"), BookCompany.of("stoiximan"))

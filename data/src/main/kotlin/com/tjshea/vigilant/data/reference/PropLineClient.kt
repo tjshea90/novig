@@ -464,6 +464,22 @@ class PropLineClient(
         )
 
         /**
+         * PX9 (Tj 2026-10-25: "Use as many sports books as possible for all markets including alternate lines ... not double counting same companies or same odds providers. This may need matching"): the books
+         * PropLine prices the US leagues with that the PS2 list left out "until their desks are known" (research/propline_books_2026-10-25.md). `tools/propline_books.py` measured every one of PropLine's ~100
+         * books on 2026-10-25 over NBA, NHL, NFL, NCAAF and MLB (about 12,000 two-way lines, alternates included): how many lines each posts, how far its no-vig chance sits from the other books' median (mean
+         * under 1.3 points for all of these: as close as DraftKings or FanDuel), its margin (under 10%), its quote age (median under 5 minutes), and which other book it tracks (the same no-vig chance within 0.2
+         * points on 150+ shared lines: 97-100% for BetRivers / Unibet / LiveScore Bet (Kambi), BetOnline / LowVig, Placard / Solverde, 80-83% for Superbet PL / Superbet RO / Napoleon, and no pair above 77%
+         * among these). Each is its own desk under the 80% rule, except the two groups [com.tjshea.vigilant.engine.BookCompany] now names: Superbet with Napoleon, Fortuna CZ with Fortuna PL. Left out: books over
+         * 10% margin (Placard, Solverde, Olybet, Jouez Sport, PMU, Teapuesto), books whose median quote is over 5 minutes old (Bet9ja, SupaBets, Marca Apuestas, Wplay, Meridianbet, Betathome, PalmerBet,
+         * PlayAlberta, Codere MX) and SX Bet (its own source here).
+         */
+        private val ADDED_2026_10_25_MEASURED = setOf(
+            "tonybet", "courtside", "sts", "pamestoixima", "sportybet_ng", "rebet", "jazzsports", "sportzino", "bet25", "thrillzz", "bet99", "fortuna_cz", "totalbet", "sportium", "psk", "danskespil",
+            "miseojeu", "napoleon", "fortuna_pl", "playnow", "veikkaus", "admiralbet_de", "synot", "betr_au", "ladbrokes_be", "novibet", "sazka", "strendus", "soccerbet", "betika", "norsktipping",
+            "starsports", "toto", "playup", "lvbet", "netbet_ro",
+        )
+
+        /**
          * PropLine's sportsbooks and exchanges that can price a fair line (its bookmaker list, 2026-09-27), plus the sharp books its 2026-10-24 list carries that Vigilant had not asked it for: SBOBET,
          * BookMaker.eu and Betfair Exchange (all three on the sharp-book list), and theScore Bet. The ~70 European/Latin American/African books (pregame soccer and main lines, several on one odds
          * provider each) and the sweepstakes books are left out until their desks are known ([com.tjshea.vigilant.engine.BookCompany]: books on one provider must never be counted twice).
@@ -472,7 +488,7 @@ class PropLineClient(
             "pinnacle", "draftkings", "fanduel", "betmgm", "fanatics", "betrivers", "hardrock", "bovada",
             "betonlineag", "lowvig", "betus", "unibet", "onexbet", "marathon", "fliff", "betway",
             "matchbook", "smarkets", "sbobet", "bookmaker_eu", "betfair_ex", "thescorebet",
-        ) + ADDED_2026_10_25
+        ) + ADDED_2026_10_25 + ADDED_2026_10_25_MEASURED
 
         fun marketsFor(families: Collection<MarketFamily>): List<String> = buildList {
             if (MarketFamily.MONEYLINE in families) add("h2h")

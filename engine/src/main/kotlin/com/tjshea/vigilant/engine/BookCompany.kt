@@ -29,9 +29,14 @@ object BookCompany {
         group(
             "kambi", "betrivers", "sugarhouse", "playsugarhouse", "rivers", "rushbet", "betparx", "parx", "ballybet", "bally", "unibet", "unibetus", "unibeteu", "unibetuk", "unibetau", "unibetnl", "maria", "mariacasino", "32red",
             "casumo", "grosvenor", "grosvenorsport", "grosvenorcasinos", "enracha", "yosports", "tabtouch", "rwwa", "livescorebet", "livescore", "virginbet", "betuk", "expekt", "leovegas", "svenskaspel", "atg", "betplay",
-            // Odds Feed+ clients take Kambi's traded odds as their own line (Kambi, 2025): Coolbet, Superbet (and Kindred/FDJ's Unibet, above).
-            "coolbet", "superbet",
+            // Odds Feed+ clients take Kambi's traded odds as their own line (Kambi, 2025): Coolbet (and Kindred/FDJ's Unibet, above). Superbet was here too, on Kambi's announcement; measured on PropLine's US-league
+            // lines (2026-10-25, tools/propline_books.py, 900+ shared lines each) Superbet PL and RO track each other (83%) and Napoleon (80%) and no Kambi book above 25%, so it is its own desk (below).
+            "coolbet",
         )
+        // Superbet's own desk: Superbet PL and RO and Napoleon (Superbet Group's Belgian brand) quote the same no-vig chance within 0.2 points on 80-83% of 550-920 shared lines.
+        group("superbet", "superbet", "napoleon", "napoleonsports", "napoleongames")
+        // Fortuna Entertainment Group's Czech and Polish books (71% of 498 shared lines, one operator).
+        group("fortuna", "fortuna", "fortunacz", "fortunapl", "fortunask", "fortunahr", "fortunaro")
         group("penn", "espnbet", "espn", "barstool", "barstoolsportsbook", "thescore", "thescorebet", "scorebet")
         group("fanatics", "fanatics", "fanaticssportsbook", "pointsbet", "pointsbetus")
         group("hardrock", "hardrock", "hardrockbet", "hr")
