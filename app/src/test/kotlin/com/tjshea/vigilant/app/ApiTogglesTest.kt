@@ -28,7 +28,7 @@ class ApiTogglesTest {
     /** Every API on. */
     private fun everything() = ScanSettings(
         leagues = setOf("NFL", "ATP"), usePinnacle = true, usePolymarket = true, useKalshi = true, usePropLine = true, useParlay = true, useOddsApi = true,
-        sgoPro = true, oddsPapi = true, oddsPapiFree = true, unabated = true, gates = com.tjshea.vigilant.data.scanner.ApiGates(useBoltOdds = true, useSxBet = true),
+        sgoPro = true, oddsPapiFree = true, gates = com.tjshea.vigilant.data.scanner.ApiGates(useBoltOdds = true, useSxBet = true),
     )
 
     private suspend fun allKeys(c: AppContainer) {
@@ -39,9 +39,7 @@ class ApiTogglesTest {
         c.keyStore.setKeys(ApiProvider.THE_ODDS_API, listOf("oa"))
         c.keyStore.setKeys(ApiProvider.PARLAY, listOf("pa"))
         c.keyStore.setKeys(ApiProvider.SPORTSGAMEODDS, listOf("sgo"))
-        c.keyStore.setKeys(ApiProvider.ODDSPAPI, listOf("op"))
         c.keyStore.setKeys(ApiProvider.ODDSPAPI_FREE, listOf("op4"))
-        c.keyStore.setKeys(ApiProvider.UNABATED, listOf("un"))
         c.keyStore.setKeys(ApiProvider.BOLTODDS, listOf("bolt"))
         c.keyStore.setKeys(ApiProvider.SXBET, listOf("sx"))
         c.keyStore.setKeys(ApiProvider.SHARPAPI, listOf("sk_test_FAKE"))
@@ -50,9 +48,7 @@ class ApiTogglesTest {
     /** The source ids each API contributes (Pinnacle's three hosts share one source). */
     private val idsOf: Map<ApiEntry, Set<String>> = mapOf(
         ApiEntry.SGO to setOf("sgo", "sgo-props"),
-        ApiEntry.ODDSPAPI to setOf("oddspapi", "oddspapi-props"),
         ApiEntry.ODDSPAPI_FREE to setOf("oddspapi_free", "oddspapi_free-props"),
-        ApiEntry.UNABATED to setOf("unabated", "unabated-props"),
         ApiEntry.BOLTODDS to setOf("bolt", "bolt-props"),
         ApiEntry.PARLAY to setOf("parlay", "parlay_1h", "parlay_props"),
         ApiEntry.PROPLINE to setOf("propline", "propline_props"),
@@ -110,7 +106,7 @@ class ApiTogglesTest {
         assertTrue(pinnacle(none.copy(gates = none.gates.copy(usePinnwire = true))))
         assertTrue(pinnacle(none.copy(gates = none.gates.copy(usePinnapi = true))))
         // Pinnodds needs neither SportsGameOdds Pro nor OddsPapi on
-        val onlyPinnodds = none.copy(gates = none.gates.copy(usePinnodds = true), sgoPro = false, oddsPapi = false)
+        val onlyPinnodds = none.copy(gates = none.gates.copy(usePinnodds = true), sgoPro = false)
         assertTrue(c.pinnoddsActive(onlyPinnodds))
         assertTrue(pinnacle(onlyPinnodds))
         // switching it on from Settings › APIs also turns the Pinnacle boards on
@@ -128,11 +124,11 @@ class ApiTogglesTest {
         val off = ApiEntry.entries.fold(all) { acc, e -> e.setOn(acc, false) }.copy(usePinnacle = false)
         val ids = c.referenceSources(off).map { it.id }
         assertEquals("only what has no key and is off: nothing", emptyList<String>(), ids)
-        assertFalse(c.sgoActive(off) || c.opActive(off) || c.unabatedActive(off) || c.op4FairActive(off) || c.pinnoddsActive(off) || c.boltActive(off))
+        assertFalse(c.sgoActive(off) || c.op4FairActive(off) || c.pinnoddsActive(off) || c.boltActive(off))
         // switches on, keys gone: still nothing that needs a key
         for (p in ApiProvider.entries) c.keyStore.setKeys(p, emptyList())
         val keyless = c.referenceSources(all).map { it.id }.toSet()
-        for (e in listOf(ApiEntry.SGO, ApiEntry.ODDSPAPI, ApiEntry.ODDSPAPI_FREE, ApiEntry.UNABATED, ApiEntry.BOLTODDS, ApiEntry.PARLAY, ApiEntry.PROPLINE, ApiEntry.ODDS_API)) assertTrue("$e without a key", idsOf.getValue(e).none { it in keyless })
+        for (e in listOf(ApiEntry.SGO, ApiEntry.ODDSPAPI_FREE, ApiEntry.BOLTODDS, ApiEntry.PARLAY, ApiEntry.PROPLINE, ApiEntry.ODDS_API)) assertTrue("$e without a key", idsOf.getValue(e).none { it in keyless })
         assertFalse("pinnacle without any key", "pinnacle" in keyless)
         assertTrue("the keyless exchanges stay", "kalshi" in keyless && "polymarket" in keyless)
     }
@@ -149,14 +145,13 @@ class ApiTogglesTest {
         allKeys(c)
         val all = everything()
         val on = c.otherBookSources(all)
-        assertTrue(on.parlay && on.propLine && on.oddsApi && on.sgo && on.op)
+        assertTrue(on.parlay && on.propLine && on.oddsApi && on.sgo)
         assertFalse(c.otherBookSources(all.copy(useParlay = false)).parlay)
         assertFalse(c.otherBookSources(all.copy(usePropLine = false)).propLine)
         assertFalse(c.otherBookSources(all.copy(useOddsApi = false)).oddsApi)
         assertFalse(c.otherBookSources(all.copy(sgoPro = false)).sgo)
-        assertFalse(c.otherBookSources(all.copy(oddsPapi = false)).op)
         // each one's being on never switches another off
-        val sgoOnly = c.otherBookSources(all.copy(useParlay = true, usePropLine = true, useOddsApi = true, oddsPapi = false))
+        val sgoOnly = c.otherBookSources(all.copy(useParlay = true, usePropLine = true, useOddsApi = true))
         assertTrue(sgoOnly.sgo && sgoOnly.parlay && sgoOnly.propLine && sgoOnly.oddsApi)
     }
 
