@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "c295792a18ad50cbb569b4f86480508ec6356595",
+ "head": "9333357ba714b8d6fef9347e3c17b33c7aea6154",
  "since": 1792889505,
- "beat": 1792910518,
- "beatIso": "2026-10-25T06:41:58Z",
- "done": "PSL docs + TASKS ticks; PSL7 accuracy update written",
- "next": "read api-docs CHANGES.md (run triggered on main) for Novig/ParlayAPI/Kalshi/Polymarket/SX diffs"
+ "beat": 1792910704,
+ "beatIso": "2026-10-25T06:45:04Z",
+ "done": "NR1 part: Novig /v3/portfolio/pnl read by engine every 5 min (status walletPositionsValue/Cost, Engine Money line; PortfolioPnlTest); PropLine hot only while its stream is live (ReferenceSource.hotNow; HotRefreshTest)",
+ "next": "NOVIG_API.md \u00a730 (per-subaccount throttles, pnl); then Kalshi/Polymarket/SX/ParlayAPI doc diffs"
 }
