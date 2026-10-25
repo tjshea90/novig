@@ -1516,7 +1516,7 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
         s.cloudScan, tag = "cloudScanSwitch", enabled = u.hasToken,
     ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudScan = v, cloudTrading = if (v) it.gates.cloudTrading else com.tjshea.vigilant.data.scanner.CloudTradeMode.OFF)) } }
     SwitchRow(
-        "Only 8 am to 1 am Eastern", "GitHub's engine starts by itself at 8:00 and stops at 1:00 the next morning America/New_York every day (daylight saving included). Off: it runs round the clock.",
+        "Only 8 am to 1 am Eastern", "Off (default): GitHub's engine runs round the clock, 24/7. On: it starts by itself at 8:00 and stops at 1:00 the next morning America/New_York every day (daylight saving included).",
         s.cloudHours, tag = "cloudHoursSwitch", enabled = u.hasToken,
     ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudHours = v)) } }
     if (s.cloudScan && !s.cloudDrives) {
