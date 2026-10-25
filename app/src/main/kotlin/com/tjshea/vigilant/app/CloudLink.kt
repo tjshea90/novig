@@ -320,7 +320,7 @@ class CloudLink(private val c: AppContainer) {
                         val src = r.body!!.source()
                         while (isActive && !src.exhausted() && !c.asleep.value) {
                             val line = src.readUtf8Line() ?: break
-                            reader.feed(line)?.let { msg -> com.tjshea.vigilant.data.cloud.CloudStatus.parse(msg)?.let { st -> applyLive(st, s); if (st.computedAtMs > feedFetchedFor) fetchLiveFeed(live, url) } }
+                            reader.feed(line)?.let { msg -> com.tjshea.vigilant.data.cloud.CloudStatus.parse(msg)?.let { st -> applyLive(st, s); if (maxOf(st.computedAtMs, st.liveFeedAtMs) > feedFetchedFor) fetchLiveFeed(live, url) } }
                         }
                     }
                 }

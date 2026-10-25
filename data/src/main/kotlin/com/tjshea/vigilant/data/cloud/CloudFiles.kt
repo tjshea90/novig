@@ -149,6 +149,8 @@ data class CloudStatus(
     /** The real-time list's last pass (PB19, [RealtimeList]): 0 = none; while it is recent the engine re-prices the listed bets every few seconds and the phone need not. And how many sides it watches. */
     val realtimeAtMs: Long = 0L,
     val realtimeWatched: Int = 0,
+    /** When the newest real-time list was handed to the live status server's `/feed` (PB16): newer than [computedAtMs] means the tunnel has a list GitHub does not have yet. */
+    val liveFeedAtMs: Long = 0L,
     /** The order the engine asks its APIs in, best first, with what each was measured to deliver (p90 age of its quotes by the books' own stamps, distance from Pinnacle): [com.tjshea.vigilant.data.scanner.SourceScore]. Empty before the first measurement. */
     val ranking: String = "",
     val bidsBytes: Int = 0,

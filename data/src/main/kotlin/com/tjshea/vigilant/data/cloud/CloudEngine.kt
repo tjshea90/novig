@@ -234,6 +234,7 @@ class CloudEngine(
     @Volatile private var realtimeTradedAt = 0L
     @Volatile private var realtimeSig = 0
     @Volatile private var realtimeBidsAt = 0L
+    @Volatile private var liveFeedAt = 0L
     /** The newest scan result (partial or final): the bid desk's lines are made from it with the real-time list's newer prices laid in (PB14). */
     @Volatile private var lastScanResult: ScanResult? = null
     /** The real-time list is what the phone sees: it has run within the last few passes. */
@@ -332,7 +333,7 @@ class CloudEngine(
             val sig = rows.fold(rows.size) { h, o -> h * 31 + o.key.hashCode() + Math.round((o.evPercent ?: 0.0) * 10).toInt() }
             if (sig != realtimeSig) {
                 val feed = CloudFeed(now, lastPublished?.configRev ?: pricedRev, lastPublished?.stats ?: ScanStats(0, 0, 0, 0, 0), rows)
-                runCatching { liveFeedSink(feed) }
+                runCatching { liveFeedSink(feed); liveFeedAt = now }
             }
             if (sig != realtimeSig && now - realtimePublishedAt >= realtimePublishMs) {
                 realtimeSig = sig
@@ -716,7 +717,7 @@ class CloudEngine(
             ackedRefreshAtMs = handledRefresh, scanRefreshAtMs = scanForRefresh, lastScanStartedAtMs = lastScanStartedAt, lastScanEndedAtMs = lastScanEndedAt, lastScanForRefreshAtMs = lastScanForRefresh,
             novigAgeMedianS = lastAges.novigMedianS, novigAgeMaxS = lastAges.novigMaxS, fairAgeMedianS = lastAges.fairMedianS, fairAgeMaxS = lastAges.fairMaxS,
             pricedConfigRev = pricedRev, settingsPending = settingsPending, scanNote = scanNote, bidsAtMs = bidsAt, bidsCount = bidsCount,
-            novigRoute = runCatching(novigRoute).getOrDefault(""), novigAddress = runCatching(novigAddress).getOrDefault(""), liveUrl = runCatching(liveUrl).getOrDefault(""), realtimeAtMs = realtime.lastPassAtMs, realtimeWatched = realtime.watched, ranking = runCatching { scanner.sourceRanking() }.getOrNull().orEmpty().take(1_500),
+            novigRoute = runCatching(novigRoute).getOrDefault(""), novigAddress = runCatching(novigAddress).getOrDefault(""), liveUrl = runCatching(liveUrl).getOrDefault(""), realtimeAtMs = realtime.lastPassAtMs, realtimeWatched = realtime.watched, liveFeedAtMs = liveFeedAt, ranking = runCatching { scanner.sourceRanking() }.getOrNull().orEmpty().take(1_500),
             addressHandovers = addressWatch?.count ?: 0, addressHandoverAtMs = addressWatch?.atMs ?: 0L,
             tradeMode = tradeStatus?.mode.orEmpty(), tradeNote = tradeStatus?.note.orEmpty().take(400), tradeStopped = tradeStatus?.stopped.orEmpty().take(200), tradesAtMs = tradeStatus?.changedAtMs ?: 0L,
             walletSleep = walletSleep, walletCheckedAtMs = walletCheckedAt, walletCash = walletCash ?: -1.0, walletEquity = walletEquity ?: -1.0, walletReadAtMs = walletReadAt,
