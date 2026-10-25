@@ -258,7 +258,6 @@ class CloudEngine(
     suspend fun run(untilMs: Long, startedAtMs: Long = clock()): End = kotlinx.coroutines.coroutineScope {
         val desk = if (bids != null) launch { deskLoop() } else null
         val liveJob = if (live != null) launch { liveLoop() } else null
-        if (liveOverlay != null) com.tjshea.vigilant.data.scanner.Freshness.continuous = true
         val realtimeJob = if (liveOverlay != null) launch { realtimeLoop() } else null
         try {
             runLoop(untilMs, startedAtMs)
