@@ -1233,3 +1233,8 @@ Why are these odds so old if they are from a socket?
 ```
 Propline and parlayapi probably provide Pinnacle. Sharpapi may not be needed
 ```
+
+## 2026-10-25T17:14:42Z
+```
+Use propline Pinnacle. It says it is 0 seconds old. Figure out how to get the most odds from Pinnacle including props using both propline and parlayapi
+```
