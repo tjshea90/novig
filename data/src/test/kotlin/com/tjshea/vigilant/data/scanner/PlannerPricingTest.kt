@@ -180,6 +180,35 @@ class PlannerPricingTest {
         assertEquals("r2", m["n2"])
     }
 
+    /** PX11f: ParlayAPI's board at 22:46 UTC 2026-10-25 listed Northwestern @ Oregon twice, Pinnacle's spelling and the US books' (tools/parlay.py gameprobe). */
+    @Test
+    fun `a feed's second listing of one game joins it, so its books price the line`() {
+        val t = Fixtures.START_MS
+        val novig = listOf(NovigEvent("n", "FOOTBALL", "NCAAF", "OPEN_PREGAME", "Northwestern @ Oregon", t))
+        fun total(book: String, over: Double) = RefBookMarket(book, book, LineKind.TOTAL, listOf(RefQuote(Side.OVER, over, 49.5), RefQuote(Side.UNDER, 1.9, 49.5)), now)
+        val short = RefEvent("pa1", "americanfootball_ncaaf", t, home = "Oregon", away = "Northwestern", markets = listOf(total("pinnacle", 1.95)))
+        val long = RefEvent("pa2", "americanfootball_ncaaf", t, home = "Oregon Ducks", away = "Northwestern Wildcats", markets = listOf(total("draftkings", 1.91), total("fanduel", 1.9)))
+        val m = Planner.matchEvents(novig, mapOf("parlay" to RefSnapshot("americanfootball_ncaaf", listOf(short, long), now, provider = "parlay"))).single()
+        assertEquals(setOf("pa1", "pa2"), m.refEvent!!.id.split("+").toSet())
+        assertEquals(setOf("pinnacle", "draftkings", "fanduel"), Pricing.bookPrices(m.refEvent!!, LineKey(m.refEvent!!.id, LineKind.TOTAL, 49.5)).map { it.bookKey }.toSet())
+    }
+
+    @Test
+    fun `another game at the same time is never taken as a second listing`() {
+        val t = Fixtures.START_MS
+        // Novig lists Texas @ Oklahoma alone; the feed also has Texas Tech @ Oklahoma State in the same slot.
+        val novig = listOf(NovigEvent("n1", "FOOTBALL", "NCAAF", "OPEN_PREGAME", "Texas @ Oklahoma", t))
+        val refs = mapOf("americanfootball_ncaaf" to RefSnapshot("americanfootball_ncaaf", listOf(
+            ref("r2", "americanfootball_ncaaf", "Texas Tech Red Raiders", "Oklahoma State Cowboys", t),
+            ref("r1", "americanfootball_ncaaf", "Texas Longhorns", "Oklahoma Sooners", t),
+        ), now))
+        assertEquals("r1", Planner.matchEvents(novig, refs).single().refEvent?.id)
+        // Nor the same teams' next game, a doubleheader's second start.
+        val mlb = listOf(NovigEvent("g1", "BASEBALL", "MLB", "OPEN_PREGAME", "Chicago Cubs @ Boston Red Sox", t))
+        val two = mapOf("baseball_mlb" to RefSnapshot("baseball_mlb", listOf(ref("a", "baseball_mlb", "Chicago Cubs", "Boston Red Sox", t), ref("b", "baseball_mlb", "Chicago Cubs", "Boston Red Sox", t + 4 * 3_600_000L)), now))
+        assertEquals("a", Planner.matchEvents(mlb, two).single().refEvent?.id)
+    }
+
     @Test
     fun `a missing game is never matched to a different game that shares only city names`() {
         val t = Fixtures.START_MS
