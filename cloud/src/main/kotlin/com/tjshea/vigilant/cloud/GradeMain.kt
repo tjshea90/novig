@@ -69,6 +69,16 @@ private suspend fun gradeMain(args: Array<String>) {
         val pl = com.tjshea.vigilant.data.reference.PropLineClient(http, KeyPool(QuotaPolicy.PROPLINE, { plKeys }, usage), json, relayNovig = false, meter = usage)
         scores = ChainedScores(scores, com.tjshea.vigilant.data.tracker.PropLineScores(pl, { true }, json).also { it.enabled = true })
     }
+    // ParlayAPI's Pinnacle closes (PB17, Tj 2026-10-25: "make sure all functions and features that were provided by apis which have since been paused or discontinued can be recovered ... clv studies"):
+    // the sharpest close there is, asked FIRST, as the phone's Tracker does; the Business plan's credits cover it many times over. Only while ParlayAPI is switched on.
+    val parlayKeys = if (on("useParlay")) CloudKeys.fromEnv(CloudKeys.PARLAY) else emptyList()
+    if (parlayKeys.isNotEmpty()) {
+        val usage = UsageMeter(JsonFileStore(File(journalDir.parentFile ?: File("."), "grade-usage-parlay.json"), UsageBook.serializer(), { UsageBook() }, json))
+        val account = com.tjshea.vigilant.data.reference.ParlayAccount(http, { parlayKeys }, usage, json)
+        runCatching { account.refresh(force = true) }
+        closes.add(0, com.tjshea.vigilant.data.tracker.ParlayCloses(http, KeyPool(QuotaPolicy.PARLAY, { parlayKeys }, usage), json, historyDays = { account.historyDays() }).also { it.enabled = true })
+        println("grade: ParlayAPI's Pinnacle closes asked first (${account.historyDays()} days back)")
+    }
     closes += EspnCloses(http, json)
     closes += NovigTradeCloses(http, json)
 
