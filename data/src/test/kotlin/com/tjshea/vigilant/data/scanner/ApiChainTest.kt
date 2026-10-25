@@ -76,13 +76,13 @@ class ApiChainTest {
             ApiChain.measures = mapOf("propline" to fresh, "sgo" to stale)
             assertEquals("propline", ApiChain.order()[0].first())
             assertEquals(listOf("propline"), ApiChain.better("oddspapi_free", listOf("propline", "sgo", "oddspapi_free")).take(1))
-            // unabated has no measurement: auditioned once...
-            assertTrue(ApiChain.needed("oddsapi", nfl, ScanSettings(), ctx()))
+            // parlay has no measurement: auditioned once...
+            assertTrue(ApiChain.needed("parlay", nfl, ScanSettings(), ctx()))
             // ...and not asked again at once.
-            assertFalse(ApiChain.needed("oddsapi", nfl, ScanSettings(), ctx()))
+            assertFalse(ApiChain.needed("parlay", nfl, ScanSettings(), ctx()))
             // With the switch off nothing is auditioned.
             ApiChain.reset(); ApiChain.measures = mapOf("propline" to fresh)
-            assertFalse(ApiChain.needed("oddsapi", nfl, ScanSettings(gates = ApiGates(rankByMeasure = false)), ctx()))
+            assertFalse(ApiChain.needed("parlay", nfl, ScanSettings(gates = ApiGates(rankByMeasure = false)), ctx()))
         } finally {
             ApiChain.reset()
         }
@@ -95,10 +95,10 @@ class ApiChainTest {
 
     @Test
     fun `a game the better feeds left without lines is filled by the next best`() {
-        assertTrue(ApiChain.needed("oddspapi_free", nfl, ScanSettings(), ctx(covered = null)))
-        assertTrue(ApiChain.needed("oddspapi_free", nfl, ScanSettings(), ctx(covered = setOf("PROP:RECEPTIONS"))))
+        assertTrue(ApiChain.needed("parlay", nfl, ScanSettings(), ctx(covered = null)))
+        assertTrue(ApiChain.needed("parlay", nfl, ScanSettings(), ctx(covered = setOf("PROP:RECEPTIONS"))))
         // Nothing on Novig to price: nothing to ask for.
-        assertFalse(ApiChain.needed("oddspapi_free", nfl, ScanSettings(), ctx(covered = null, events = emptyList())))
+        assertFalse(ApiChain.needed("parlay", nfl, ScanSettings(), ctx(covered = null, events = emptyList())))
     }
 
     @Test
@@ -128,8 +128,8 @@ class ApiChainTest {
         assertTrue("every better feed failed: always asked", ApiChain.needed("oddsapi", nfl, ScanSettings(), ctx(answered = false)))
         assertTrue("and again", ApiChain.needed("oddsapi", nfl, ScanSettings(), ctx(answered = false)))
         // A flat-rate feed is not held back this way.
-        assertTrue(ApiChain.needed("oddspapi_free", nfl, ScanSettings(), gap))
-        assertTrue(ApiChain.needed("oddspapi_free", nfl, ScanSettings(), gap))
+        assertTrue(ApiChain.needed("parlay", nfl, ScanSettings(), gap))
+        assertTrue(ApiChain.needed("parlay", nfl, ScanSettings(), gap))
         ApiChain.reset()
     }
 }
