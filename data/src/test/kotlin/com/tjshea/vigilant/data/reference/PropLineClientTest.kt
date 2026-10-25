@@ -223,7 +223,7 @@ class PropLineClientTest {
 
     @Test
     fun `nothing is asked when no picked book is on PropLine`() = runTest {
-        val snap = client().odds(nfl, ScanSettings(referenceBooks = listOf("williamhill_us", "espnbet")))
+        val snap = client().odds(nfl, ScanSettings(referenceBooks = listOf("williamhill_us", "mybookieag")))
         assertTrue(snap.events.isEmpty())
         assertTrue(requests.isEmpty())
     }

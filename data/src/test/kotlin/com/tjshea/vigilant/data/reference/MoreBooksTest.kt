@@ -15,9 +15,9 @@ import org.junit.Test
 class MoreBooksTest {
 
     @Test
-    fun `PropLine reads ten independent books by default, Hard Rock, Bovada and Fliff among them, LowVig not`() {
+    fun `PropLine reads eleven independent books by default, Hard Rock, Bovada, Fliff and theScore among them, LowVig not`() {
         assertEquals(
-            listOf("pinnacle", "betonlineag", "draftkings", "fanduel", "betmgm", "betrivers", "hardrock", "bovada", "fliff", "fanatics"),
+            listOf("pinnacle", "betonlineag", "draftkings", "fanduel", "betmgm", "betrivers", "hardrock", "bovada", "fliff", "fanatics", "thescorebet"),
             PropLineClient.books(ScanSettings().referenceBooks),
         )
         assertFalse("lowvig" in ScanSettings().referenceBooks)
