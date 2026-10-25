@@ -6443,4 +6443,5 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [ ] PB17 (Tj 07:16 UTC) recover what paused/dropped APIs gave (grading/results, CLV studies, book coverage) from PropLine + ParlayAPI; list each feature and its new source
 - [ ] PB18 (Tj 07:58 UTC) engine defaults to the ParlayAPI BUSINESS key and stays on it (KeyPool: the key whose /v1/usage tier is business first, always; status shows it)
 - [ ] PB19 (Tj 08:04 UTC) real-time scanning: consider replacing periodic scans with a 24/7 live board fed by the PropLine + ParlayAPI sockets against Novig's bbo socket, +EV posted at once, a listed bet kept until a live feed says it is no longer +EV or Novig's socket says the price is gone (fixes bets vanishing from the list); decide, build, explain
+- [ ] PB20 (Tj 08:3x UTC) the Bet sheet's other-books list: an age next to each book's quote (from ParlayAPI's or PropLine's freshness word, whichever sent that quote), green fresh / yellow medium / red stale; a very stale quote is left out of the fair odds. Only if it slows nothing and breaks nothing
 - [ ] PB13 full suite, ship, release, engine reset, tell Tj
