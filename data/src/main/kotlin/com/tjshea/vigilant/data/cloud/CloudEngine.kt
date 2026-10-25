@@ -226,6 +226,9 @@ class CloudEngine(
     /** The feeds the engine's watch found silent for several scans in a row, each with its own reason ([FeedWatch]): the API manager's word on an API whose check passes but one of whose feeds does not answer. */
     fun silentFeeds(): List<DashboardModel.SilentFeed> = DashboardModel.silentFeeds(feedAlerts, feedLines)
     @Volatile private var lastPublished: CloudFeed? = null
+    /** The reset request (a new runner) the job began with, and whether a newer one was seen (Tj, 2026-10-25: "I tried the button in the app to restart the GitHub engine twice but it didn't work": it waited for a 9-minute scan to end, and a phone settings write could erase it first). */
+    @Volatile private var resetBaseline = -1L
+    @Volatile private var resetPending = false
     /** The real-time list (PB19) and the settings it is priced and filtered under (the running scan's). */
     val realtime = RealtimeList()
     @Volatile private var realtimePricing: ScanSettings? = null
@@ -380,7 +383,6 @@ class CloudEngine(
         var offSince = 0L
         var lastCfg: CloudConfig? = null
         var lastBeat = 0L
-        var resetBaseline = -1L
         while (currentScopeActive() && clock() < untilMs) {
             tickMs = clock()
             val cfg = runCatching { readConfig() }.getOrNull() ?: lastCfg
@@ -391,7 +393,7 @@ class CloudEngine(
             serveBidRequests(cfg)
             if (cfg != null) {
                 if (resetBaseline < 0L) resetBaseline = cfg.resetAtMs
-                if (cfg.resetAtMs > resetBaseline) {
+                if (resetPending || cfg.resetAtMs > resetBaseline) {
                     log("reset requested from the phone: ending so a new runner starts")
                     problem = publish(null, status(cfg.rev, startedAtMs, untilMs, emptyList(), idle = true))
                     return End.RESET
@@ -589,6 +591,13 @@ class CloudEngine(
                 val newer = runCatching { readConfig() }.getOrNull()
                 // What the phone asks for out of band (a PropLine sweep, a manual Run or Stop) is seen at once, not only between scans (2026-10-17: a pull to refresh sat unanswered through a whole scan).
                 newer?.let { manualCfg = it }
+                // A new runner was asked for: the scan stops now (not at its end, minutes away) and the job ends as RESET; remembered, so a settings write that clears the field cannot lose it.
+                if (newer != null && resetBaseline >= 0L && newer.resetAtMs > resetBaseline) {
+                    resetPending = true
+                    restartReason = "a new runner was asked for"
+                    job.cancel(CancellationException(restartReason))
+                    break
+                }
                 serveCheckRequest(newer)
                 serveBidRequests(newer)
                 newer?.takeIf { it.retryApiAtMs > retrySeenMs }?.let { r ->

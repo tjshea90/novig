@@ -728,6 +728,9 @@ class CloudLink(private val c: AppContainer) {
     suspend fun adoptClaudeConfig(): Boolean = pushMutex.withLock {
         if (!hasToken()) return@withLock false
         val remote = client.readFile(CloudClient.CONFIG_BRANCH, "settings.json")?.let { CloudConfig.parse(it) } ?: return@withLock false
+        // A request a Claude session made on GitHub (a new runner, an API check) is kept in this phone's next write, never written back over with an older time (2026-10-25: a reset was erased 26 s later).
+        if (remote.resetAtMs > resetRequestedAt) resetRequestedAt = remote.resetAtMs
+        if (remote.checkApisAtMs > checkApisAt) checkApisAt = remote.checkApisAtMs
         val local = c.settingsStore.flow.value ?: return@withLock false
         val next = CloudClaudeConfig.adopt(remote, local) ?: return@withLock false
         runCatching { c.settingsStore.update { next } }.onFailure { return@withLock false }
