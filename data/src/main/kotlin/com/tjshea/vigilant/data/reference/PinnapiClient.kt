@@ -107,7 +107,7 @@ class PinnapiClient(
     }
 
     private suspend fun boardFor(sport: Int, props: Boolean, share: Long = shareMs): Board {
-        fun young(b: Board?) = b?.takeIf { clock() - it.fetchedAtMs < (if (it.host == FIRST_NAME) minOf(share, FIRST_SHARE_MS) else share) }
+        fun young(b: Board?) = b?.takeIf { clock() - it.fetchedAtMs < (if (it.host == FIRST_NAME) FIRST_TRIAL_GAP_MS else share) }
         // A board read with specials holds the game lines too.
         (young(boards[sport to props]) ?: if (!props) young(boards[sport to true]) else null)?.let { return it }
         var problem: String? = null
@@ -221,6 +221,12 @@ class PinnapiClient(
         /** The host name of Pinnodds' board, and how long one is re-used (it is fresh to the second: a scan every two minutes asks again). */
         const val FIRST_NAME = "Pinnodds"
         const val FIRST_SHARE_MS = 15_000L
+
+        /**
+         * Pinnodds' free trial (100 REST requests a day, 20 a minute, no SSE or WebSocket; its docs' rate-limit table, 2026-10-25): at most one board read this often, and a board is kept as long
+         * (each quote is still judged by its own age: [com.tjshea.vigilant.data.scanner.Freshness]).
+         */
+        const val FIRST_TRIAL_GAP_MS = 15 * 60_000L
 
         fun pinnapi(pool: KeyPool, baseUrl: String = PINNAPI_URL, enabled: () -> Boolean = { true }) = Host("pinnapi", pool, baseUrl, "x-portal-apikey", props = false, enabled = enabled)
         fun pinnwire(pool: KeyPool, baseUrl: String = PINNWIRE_URL, enabled: () -> Boolean = { true }) = Host("PinnWire", pool, baseUrl, "x-api-key", props = true, enabled = enabled, allSports = true)
