@@ -8,8 +8,8 @@
  "branch": "ccr-be05497a-18skm3",
  "head": "1a1f1c5cdd107bf45ed9a02585cd189916700449",
  "since": 1792915284,
- "beat": 1792950235,
- "beatIso": "2026-10-25T17:43:55Z",
+ "beat": 1792950486,
+ "beatIso": "2026-10-25T17:48:06Z",
  "done": "PX census v2 + SharpApiSourceTest shutdown fix (full suite green)",
  "next": "reset engine, read census"
 }
