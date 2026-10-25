@@ -558,7 +558,7 @@ class TheOddsApiClient(
          */
         fun canonicalBook(key: String): String = PARLAY_BOOK_KEYS[key] ?: key
 
-        private val PARLAY_BOOK_KEYS = mapOf("caesars" to "williamhill_us", "betonline" to "betonlineag", "hardrock" to "hardrockbet")
+        private val PARLAY_BOOK_KEYS = mapOf("caesars" to "williamhill_us", "betonline" to "betonlineag", "hardrock" to "hardrockbet", "bookmaker_eu" to "bookmaker", "parx" to "betparx")
 
         /**
          * [seenByBook]: date each quote by when the feed last saw its BOOK, not by its market's own `last_update`. ParlayAPI's market stamp is
@@ -760,7 +760,9 @@ enum class OddsFeed(
     /** Its own ten books (its keys differ from The Odds API's for some): the sharp ones first, the Settings picker doesn't apply. */
     PARLAY(
         "parlay", "parlay_props", "ParlayAPI", "https://parlay-api.com/v1",
-        listOf("pinnacle", "prophetx", "betonline", "bet365", "bovada", "draftkings", "fanduel", "caesars", "betmgm", "fanatics"),
+        // Every sharp and US book ParlayAPI carries (PB11, Tj 2026-10-25: "all available sports books offered"; its /v1/bookmakers): 15 books cost two region-equivalents a market instead of one, well inside the
+        // Business plan's 1,000,000 credits a month. Not here: Novig itself (never its own fair), Kalshi and Polymarket (their own feeds), the DFS apps (pick'em payouts, not prices), the non-US books.
+        listOf("pinnacle", "bookmaker_eu", "prophetx", "betonline", "bet365", "bovada", "draftkings", "fanduel", "caesars", "betmgm", "fanatics", "betrivers", "hardrock", "fliff", "parx"),
         reserve = 300,
         freeLimit = 1_000,
     ),
