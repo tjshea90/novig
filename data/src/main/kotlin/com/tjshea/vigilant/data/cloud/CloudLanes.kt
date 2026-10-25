@@ -10,9 +10,16 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
  * old, not 13) until [FarLane.FAR_EVERY_MS] has passed since the last full one, then a full scan again. The list the quick scan publishes carries the last full scan's rows for the games past its reach, each with its own stamps (honest ages). Pure.
  */
 object CloudLanes {
-    /** Whether the scan about to start is the quick one: a full scan finished less than [FarLane.FAR_EVERY_MS] ago under the same fetch settings, and the window reaches past the quick scan's hours. */
+    /**
+     * The longest between two full scans on the engine (PX9, Tj 2026-10-25, "Why are the odds this stale?": the games past the quick scan's reach (2-10 days out) were re-read only by the full scan, every 15 minutes
+     * ([FarLane.FAR_EVERY_MS], set when a full scan took 8 minutes on the phone's public route), so a listed far game's fair odds were up to 25 minutes old: 15 between scans plus PropLine's own 10-minute read gap for
+     * college football. On the engine's key and stream a full scan takes about two minutes, and the boards it reads are re-used inside their own windows, so a full one every [FULL_EVERY_MS] costs no more API credits.
+     */
+    const val FULL_EVERY_MS = 6 * 60_000L
+
+    /** Whether the scan about to start is the quick one: a full scan finished less than [FULL_EVERY_MS] ago under the same fetch settings, and the window reaches past the quick scan's hours. */
     fun nearOnly(s: ScanSettings, now: Long, lastFullAtMs: Long, fullKey: String?, key: String): Boolean =
-        lastFullAtMs > 0L && fullKey == key && now - lastFullAtMs < FarLane.FAR_EVERY_MS && s.daysAhead.coerceAtLeast(1) * 24 > FarLane.NEAR_HOURS
+        lastFullAtMs > 0L && fullKey == key && now - lastFullAtMs < FULL_EVERY_MS && s.daysAhead.coerceAtLeast(1) * 24 > FarLane.NEAR_HOURS
 
     /** The last start a quick scan begun at [now] judges; a bid on a game past it is left alone, not taken down ([com.tjshea.vigilant.data.novig.trading.maker.MakerPlan]'s reach). */
     fun reachMs(now: Long): Long = now + (FarLane.NEAR_HOURS + 6) * 3_600_000L

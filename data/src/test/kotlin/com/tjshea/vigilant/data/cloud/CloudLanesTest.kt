@@ -29,11 +29,12 @@ class CloudLanesTest {
     }
 
     @Test
-    fun `a quick scan follows a full one for fifteen minutes, then a full one again`() {
+    fun `a quick scan follows a full one for six minutes, then a full one again`() {
         val s = ScanSettings(daysAhead = 7)
         assertFalse("no full scan yet", CloudLanes.nearOnly(s, now, 0L, null, "k"))
         assertTrue(CloudLanes.nearOnly(s, now, now - 60_000L, "k", "k"))
-        assertFalse("fifteen minutes on, a full scan", CloudLanes.nearOnly(s, now, now - FarLane.FAR_EVERY_MS - 1, "k", "k"))
+        assertTrue(CloudLanes.nearOnly(s, now, now - CloudLanes.FULL_EVERY_MS + 1, "k", "k"))
+        assertFalse("six minutes on, a full scan", CloudLanes.nearOnly(s, now, now - CloudLanes.FULL_EVERY_MS - 1, "k", "k"))
         assertFalse("changed fetch settings start over with a full scan", CloudLanes.nearOnly(s, now, now - 60_000L, "old", "k"))
     }
 

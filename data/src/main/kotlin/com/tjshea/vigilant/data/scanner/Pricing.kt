@@ -422,6 +422,18 @@ object Pricing {
     }
 
     /**
+     * [ref] without the quotes that have aged past their limit by [now] ([Freshness.fresh], by each quote's own feed). The scan's plan keeps only young quotes, but a row the engine's real-time list holds
+     * keeps the game it was priced from, and nothing took a quote out of it as it aged: far games' rows (read only by the full scan) showed fair odds 17 to 25 minutes old (PX9, Tj 2026-10-25: "Why are the
+     * odds this stale?"). Returns [ref] itself when nothing has aged out.
+     */
+    fun dropOld(ref: RefEvent, now: Long): RefEvent {
+        val commence = ref.commenceMs.takeIf { ref.etDate == null }
+        var aged = false
+        val kept = ref.markets.filter { m -> Freshness.fresh(m.lastUpdateMs, now, commence, m.source).also { if (!it) aged = true } }
+        return if (aged) ref.copy(markets = kept) else ref
+    }
+
+    /**
      * [o] priced again against a newer Novig [book] with the fair it already carries (Tj, 2026-10-14: a listed bet at +125 was +113 and -3.7% EV on Novig while a long scan held the list). Pure: the same
      * arithmetic as [price] for one outcome, no scan state. A market Novig has closed or put in play has nothing to bet pregame, so its quote goes.
      */

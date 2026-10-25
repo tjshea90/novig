@@ -939,7 +939,7 @@ class Scanner(
         return rows.map { o ->
             val ref0 = o.refEvent
             val refaired = if (ref0 == null) o else {
-                val r = games.getOrPut(ref0.id) { runCatching { overlay(ref0, now) }.getOrDefault(ref0) }
+                val r = games.getOrPut(ref0.id) { Pricing.dropOld(runCatching { overlay(ref0, now) }.getOrDefault(ref0), now) }
                 if (r === ref0) o else Pricing.refair(o, r, settings, now)
             }
             val b = top[o.market.marketId]
