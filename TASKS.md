@@ -6444,23 +6444,26 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [x] PB18 (TheOddsApiClientTest Business-key case: biggest plan first and kept) (Tj 07:58 UTC) engine defaults to the ParlayAPI BUSINESS key and stays on it (KeyPool: the key whose /v1/usage tier is business first, always; status shows it)
 - [x] PB19 (RealtimeListTest; Scanner.liveReprice, Pricing.refair, PropLineLive.overlayEvent, ParlayLive.overlayEvent, CloudEngine.realtimeLoop: watched sides within 4 pts of +EV re-priced every 3 s, during scans too) (Tj 08:04 UTC) real-time scanning: consider replacing periodic scans with a 24/7 live board fed by the PropLine + ParlayAPI sockets against Novig's bbo socket, +EV posted at once, a listed bet kept until a live feed says it is no longer +EV or Novig's socket says the price is gone (fixes bets vanishing from the list); decide, build, explain
 - [x] PB20 (QuoteAgeTest, CloudCodecTest; BookPrices.source, FairOddsTable age chip; quotes past Freshness.maxAgeMs were already out of the fair) (Tj 08:3x UTC) the Bet sheet's other-books list: an age next to each book's quote (from ParlayAPI's or PropLine's freshness word, whichever sent that quote), green fresh / yellow medium / red stale; a very stale quote is left out of the fair odds. Only if it slows nothing and breaks nothing
-- [ ] PB21 (Tj 08:2x UTC) ParlayAPI + PropLine in tandem: both sockets at once, each checks the other's odds (a book both carry: agree = confirmed fresh, disagree = the fresher stamp wins / flagged), each fills the other's book and market gaps; designed for speed + accuracy using both paid plans fully
+- [x] PB21 (audit doc PS12) (Tj 08:2x UTC) ParlayAPI + PropLine in tandem: both sockets at once, each checks the other's odds (a book both carry: agree = confirmed fresh, disagree = the fresher stamp wins / flagged), each fills the other's book and market gaps; designed for speed + accuracy using both paid plans fully
 - [ ] PB17b ParlayAPI `/v1/sse/hot` (Pinnacle + FanDuel sub-3 s) as the live lane's Pinnacle source, replacing Pinnodds' socket (research/api_recovery_2026-10-25.md)
-- [ ] PB21b tandem cross-check: where PropLine and ParlayAPI both carry a book's line with fresh stamps and differ by 3+ points of probability, drop it from that fair and count it in the status
+- [x] PB21b (FreshestWinsTest) tandem cross-check: where PropLine and ParlayAPI both carry a book's line with fresh stamps and differ by 3+ points of probability, drop it from that fair and count it in the status
 - [ ] PB22 (Tj 09:2x UTC) "I tried the button in the app to restart the GitHub engine twice but it didn't work": engine side fixed and live (reset honoured within 3 s mid-scan, never lost: CloudEngineTest); phone side (keeps Claude's newer resetAtMs) is in code, ships with v1.0.83
 - [ ] PB23 verify on the engine log: "ParlayAPI odds stream: ... N books' polls known, M confirmed unchanged" is > 0 (source-health poll confirmations); if still 0, debug ParlayStream.healthLoop
 - [ ] PB13 [v1.0.82 released 08:5x UTC + engine reset; later engine-only fixes landed on main and are running (run 40181523769); v1.0.83 still owed for the phone bits: CloudLink reset keep, PB8 typed boxes/background-scan hint, 24/7 hours text] full suite, ship, release, engine reset, tell Tj
 
 ## PS: audit the PropLine and ParlayAPI streams (Tj, 2026-10-25 ~14:25 UTC, typed prompt, verbatim in INBOX.md)
 "Audit the two new streaming sockets- propline and parlayapi ... After these are done, complete everything you noted for tasks.md and release everything in the next version"
-- [ ] PS1 both sockets used at full speed and ability per their docs
-- [ ] PS2 why do scanned bets show odds from only a few books when the feeds carry dozens? matching? fix
-- [ ] PS3 is the engine using PropLine's grade endpoint (/clv/grade) to grade Tj's actual bets against the close? if not, build it
-- [ ] PS4 use both plans' usage freely wherever it helps speed or accuracy (limits far above use)
-- [ ] PS5 PropLine batched delivery (docs): use it if it helps
-- [ ] PS6 more PropLine WebSockets: use them where they help
-- [ ] PS7 https://prop-line.com/sportsbook-accuracy: does it help research (book sharpness weights)?
-- [ ] PS8 https://prop-line.com/sportsbook-webhook-api: is the engine using it correctly?
-- [ ] PS9 https://prop-line.com/recipes: which recipes can improve the app or engine; build them
-- [ ] PS11 (Tj 14:3x UTC) https://parlay-api.com/cookbook: review the recipes, use the ones that improve the app or engine
+- [x] PS1 both sockets used at full speed and ability per their docs (ParlayAPI overlay root cause fixed: quotes tagged at parse, ParlayLiveTest; /sse/hot per sport, ParlayStreamTest; PropLine re-read 90 s; research/propline_parlay_audit_2026-10-25.md)
+- [x] PS2 why do scanned bets show odds from only a few books when the feeds carry dozens? matching? fix (not a matching bug: Novig's alt numbers + PropLine allow-list; 13 books added, same-desk pairs grouped: research/propline_coverage_2026-10-25.md, BookCompanyTest)
+- [ ] PS2b price Novig's alternate numbers from a book's other number (push/half-point model) once its error can be measured
+- [x] PS3 is the engine using PropLine's grade endpoint (/clv/grade) to grade Tj's actual bets against the close? if not, build it (tools/propline_grade.py selftest, propline.yml task grade daily, Release propline-grade)
+- [x] PS4 use both plans' usage freely wherever it helps speed or accuracy (hot streams, 90 s re-reads, 1st-half boards, daily grading; audit doc)
+- [x] PS5 PropLine batched delivery (docs): use it if it helps (webhook-only; the socket transport has no per-event round trip: nothing to gain, audit doc)
+- [x] PS6 more PropLine WebSockets: use them where they help (Lite caps 2 sockets, both used and carrying every event type the engine reads; audit doc)
+- [x] PS7 https://prop-line.com/sportsbook-accuracy: does it help research (book sharpness weights)? (research/propline_book_accuracy_2026-10-24.md update: many-book average beats any book on props)
+- [x] PS8 https://prop-line.com/sportsbook-webhook-api: is the engine using it correctly? (page 404; checked against llms-full Webhooks: correct)
+- [x] PS9 https://prop-line.com/recipes: which recipes can improve the app or engine; build them (period=h1/f5: PropLinePeriodSource, PropLinePeriodTest; rest mapped in the audit doc)
+- [ ] PS9b Kalshi ticker crosswalk from PropLine includeBookIds for the Kalshi venue's matching
+- [x] PS11 (Tj 14:3x UTC) https://parlay-api.com/cookbook: review the recipes, use the ones that improve the app or engine (saved research/parlayapi_business_2026-10-25/cookbook.txt; audit doc)
+- [x] PS12 (Tj 14:32 UTC) "make sure both parlayapi and propline are both logically used together ... compliment each other": fill gaps, freshest wins, cross-check (PB21b), no cross-feed overlay (audit doc)
 - [ ] PS10 then finish the open PB items (PB8, PB12, PB17b, PB21b, PB22, PB23) and release everything in the next version (v1.0.83)
