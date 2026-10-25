@@ -406,6 +406,11 @@ def cmd_gameprobe(outdir, sport="americanfootball_nfl", home="Cardinals", away="
     ev = ev if isinstance(ev, list) else []
     view = game_view(ev, now, home, away)
     L.append("## /odds (HTTP %s, %d games, game found: %s)" % (st, len(ev), bool(view)))
+    # PX11f: ParlayAPI may list one game as several events (one per spelling of the teams); each is a separate match for the scanner.
+    for e in ev:
+        if home.lower() in (e.get("home_team") or "").lower() and away.lower() in (e.get("away_team") or "").lower():
+            L.append("- event %s: %s @ %s at %s, books %s" % (str(e.get("id"))[:12], e.get("away_team"), e.get("home_team"), e.get("commence_time"),
+                                                         ",".join(sorted(b.get("key") or "?" for b in e.get("bookmakers") or []))))
     for (mk, pt, side), by in sorted(view.items(), key=lambda kv: (str(kv[0][0]), kv[0][1] if kv[0][1] is not None else 0, str(kv[0][2]))):
         if mk in ("h2h",) or side in ("Over", "Away") or mk in ("spreads", "alternate_spreads"):
             L.append("- %s %s %s: %d books: %s" % (mk, pt, side, len(by), ", ".join("%s %ss" % (b, a) for b, a in sorted(by.items()))))
