@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 /** The home: what the GitHub engine is doing, live from GitHub (state, readings, APIs, bets, bids, trends). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EngineScreen(state: com.tjshea.vigilant.app.UiState, onOpenCloudSettings: () -> Unit, onRefresh: () -> Unit = {}, onReset: () -> Unit = {}, onTestApi: (String) -> Unit = {}, onRetryApi: (String) -> Unit = {}, kalshi: com.tjshea.vigilant.app.kalshi.KalshiMoney? = null) {
+fun EngineScreen(state: com.tjshea.vigilant.app.UiState, onOpenCloudSettings: () -> Unit, onRefresh: () -> Unit = {}, onRefreshApis: () -> Unit = {}, onReset: () -> Unit = {}, onTestApi: (String) -> Unit = {}, onRetryApi: (String) -> Unit = {}, kalshi: com.tjshea.vigilant.app.kalshi.KalshiMoney? = null) {
     var section by rememberSaveable { mutableStateOf(EngineSection.OVERVIEW) }
     Scaffold(topBar = { TopAppBar(title = { Text("Engine", fontWeight = FontWeight.Bold) }) }) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
@@ -43,16 +43,26 @@ fun EngineScreen(state: com.tjshea.vigilant.app.UiState, onOpenCloudSettings: ()
                     SegmentedButton(selected = section == x, onClick = { section = x }, shape = SegmentedButtonDefaults.itemShape(i, EngineSection.entries.size), modifier = Modifier.testTag("engineSection-${x.name}")) { Text(x.label, maxLines = 1) }
                 }
             }
-            // Pull down for a TRUE refresh (TCL122-3): every engine file and every API's own usage figure is read now; the arrow stays until the reads have answered.
-            VigilantPullToRefresh(busy = state.cloudUi.refreshing || state.usageBusy, onRefresh = onRefresh, modifier = Modifier.fillMaxSize()) {
+            // Pull down for a TRUE refresh of the engine's own data (TCL122-3; PR1, Tj 2026-10-25: "I don't think it needs to read the apis every time, make it refresh only the engine data such as status,
+            // active bets/bids, health, etc."): every file the engine publishes is read now; the arrow stays until the reads have answered. The APIs are checked only by the APIs view's own button.
+            VigilantPullToRefresh(busy = state.cloudUi.refreshing, onRefresh = onRefresh, modifier = Modifier.fillMaxSize()) {
                 // Each view keeps its own scroll, so switching views opens at the top.
                 val scroll = androidx.compose.runtime.key(section) { rememberScrollState() }
                 Column(Modifier.fillMaxSize().verticalScroll(scroll).padding(horizontal = 16.dp, vertical = 8.dp).testTag("engineScreen")) {
+                    if (section == EngineSection.APIS) RefreshApisButton(busy = state.apiBusy.isNotEmpty() || state.cloudUi.refreshStep == com.tjshea.vigilant.app.CloudLink.API_CHECK_STEP, onRefreshApis)
                     DashboardPage(state, onOpenCloudSettings, section = section, kalshi = kalshi, onTestApi = onTestApi, onRetryApi = onRetryApi)
                     if (section == EngineSection.OVERVIEW) ResetEngineButton(onReset)
                 }
             }
         }
+    }
+}
+
+/** The APIs view's refresh (PR1, Tj 2026-10-25: "a separate button on the apis tab to refresh api status and meters"): this phone tests every key that is on, reads each API's own meter, and the engine checks every API now. */
+@Composable
+fun RefreshApisButton(busy: Boolean, onRefreshApis: () -> Unit) {
+    androidx.compose.material3.FilledTonalButton(onClick = onRefreshApis, enabled = !busy, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp).testTag("refreshApis")) {
+        Text(if (busy) "Checking every API…" else "Refresh API status and meters")
     }
 }
 

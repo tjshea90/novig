@@ -2612,10 +2612,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun startCloud() { viewModelScope.launch(Dispatchers.IO) { c.cloud.startEngine() } }
     /** Run now outside the engine's hours / stop until the next scheduled opening (Tj, 2026-10-17): the schedule is untouched ([com.tjshea.vigilant.data.cloud.CloudManual]). */
     fun runCloudOutsideHours() { viewModelScope.launch(Dispatchers.IO) { c.cloud.runOutsideHours() } }
-    /** Pull to refresh on the Engine tab: every cloud loop reads at once. */
-    /** Pull to refresh on the Engine tab (TCL122-3): every file the engine publishes is read now, and every API's own usage figure with it. */
-    fun refreshEngine() {
-        // The engine checks every API now (the pull waits for it, bounded) and this phone tests the same keys itself, so each card has fresh evidence from both sides (XO1).
+    /** Pull to refresh on the Engine tab (TCL122-3; PR1, Tj 2026-10-25: "refresh only the engine data such as status, active bets/bids, health"): every file the engine publishes is read now; no API is called. */
+    fun refreshEngine() { viewModelScope.launch(Dispatchers.IO) { c.cloud.refreshNow() } }
+
+    /** Engine › APIs' Refresh button (PR1: "a separate button on the apis tab to refresh api status and meters"). */
+    fun refreshApis() {
+        // The engine checks every API now (bounded wait) and this phone tests the same keys itself, so each card has fresh evidence from both sides (XO1).
         viewModelScope.launch(Dispatchers.IO) { c.cloud.refreshNow(apis = true) }
         // That check is also every usage prompt's read (the meters are filled from it), so the older refreshUsage() read is not made a second time; ParlayAPI's usage chart is the Settings page's own refresh.
         viewModelScope.launch(Dispatchers.IO) { runCatching { checkApisFromPhone() } }

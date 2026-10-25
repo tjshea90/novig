@@ -620,7 +620,7 @@ class CloudLink(private val c: AppContainer) {
             runCatching { got(within { client.pollStatus(null) })?.let { st -> if (s != null) onStatus(st, s) else latest.status = st; latest.statusOkAtMs = System.currentTimeMillis() } }
             // On the Engine tab the pull also makes the engine check every API (XO1): the cards must show what is true now, not what the last 5-minute check said. Only while an engine is running; bounded.
             if (apis && latest.status?.let { com.tjshea.vigilant.data.cloud.DashboardModel.running(it, System.currentTimeMillis()) } == true) {
-                step("Asking the engine to check every API")
+                step(API_CHECK_STEP)
                 val asked = runCatching { requestApiCheck() }.getOrNull()
                 if (asked != null) {
                     val deadline = asked + 25_000L
