@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "8fe49550b43bc79d796df3570870e60003498a9b",
+ "head": "5ea52564f85de499a0f33b67ffadf6ec9931ed3c",
  "since": 1792889505,
- "beat": 1792911128,
- "beatIso": "2026-10-25T06:52:08Z",
- "done": "pre-ship: PropLine Streaming Lite: engine WebSockets (moves, pulls, scratches, heartbeat freshness), 4 sharp books, per-book freshness on Engine > APIs, Novig marked PnL, Polymarket V2 id fix",
- "next": "ship.sh gates and releases this"
+ "beat": 1792911263,
+ "beatIso": "2026-10-25T06:54:23Z",
+ "done": "pre-release: PropLine Streaming Lite: engine WebSockets (moves, pulls, scratches, heartbeat freshness), 4 sharp books, per-book freshness on Engine > APIs, Novig marked PnL, Polymarket V2 id fix (versionCode 421, v1.0.81)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.81), then run: bash tools/record-release.sh v1.0.81 421 \"PropLine Streaming Lite: engine WebSockets (moves, pulls, scratches, heartbeat freshness), 4 sharp books, per-book freshness on Engine > APIs, Novig marked PnL, Polymarket V2 id fix\""
 }
