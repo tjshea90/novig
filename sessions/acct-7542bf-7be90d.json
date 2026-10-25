@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "e02194fe69f2e56afd6b304485a337c2d71094f9",
+ "head": "c353f654ddcecbb016bff8a2fa750e3ba59f3c40",
  "since": 1792915284,
- "beat": 1792941028,
- "beatIso": "2026-10-25T15:10:28Z",
- "done": "PB17b ParlayLiveFeed (paper-gated) + PinnFrames shared; tests green; TASKS/CHANGES updated",
- "next": "full suite, then ship v1.0.83 (ship.sh, release.yml, record-release), engine reset, tell Tj"
+ "beat": 1792941095,
+ "beatIso": "2026-10-25T15:11:35Z",
+ "done": "pre-ship: v1.0.83 PS: PropLine + ParlayAPI audit: ParlayAPI stream overlay fixed (quotes tagged at parse), ParlayAPI hot streams, PropLine/ParlayAPI cross-check, 13 more PropLine books, PropLine 1st halves, ParlayAPI Pinnacle live feed (paper), real bets graded by PropLine /clv/grade, restart button keep",
+ "next": "ship.sh gates and releases this"
 }
