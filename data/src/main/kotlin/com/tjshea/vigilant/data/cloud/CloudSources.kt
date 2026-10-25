@@ -180,6 +180,8 @@ class CloudSources(
             SocketState("BoltOdds props", bolt, if (boltFeed.oneSocket) boltFeed.lines.live else boltFeed.props.live, if (boltFeed.oneSocket) boltFeed.lines.lastFrameMs else boltFeed.props.lastFrameMs, if (boltFeed.oneSocket) "one-connection plan: shares the lines socket" else ""),
             SocketState("Kalshi", kalshiSocketWanted, kalshiStream.live, kalshiStream.lastFrameMs, if (kalshiSigner == null) "no key on GitHub (public reads)" else "${kalshiStream.subscribedCount} of ${kalshiStream.wantedCount} markets"),
             SocketState("SharpAPI", s.gates.useSharpApi && s.gates.sharpApiSocket && has(CloudKeys.SHARPAPI), sharpApiStream.live, sharpApiStream.lastFrameMs, if (!s.gates.useSharpApi) "API off" else if (!has(CloudKeys.SHARPAPI)) "no key on GitHub" else "${sharpApiScores.live()} games' live state · ${sharpApiStream.health()}"),
+            SocketState("PropLine", propLineOn(s) && s.gates.propLineSocket && propLineAccount.streamingKey() != null, propLineStream.live(), propLineLive.lastFrameMs,
+                if (!s.usePropLine) "API off" else if (!has(CloudKeys.PROPLINE)) "no key on GitHub" else if (propLineAccount.streamingKey() == null) "no Streaming key read yet" else propLineLive.describe()),
             SocketState("SX Bet", sxSocketWanted, sx?.live == true, sx?.lastMessageMs ?: 0L, if (!s.gates.useSxBet) "API off" else if (sx == null) "no read key on GitHub" else "${sx.fixtureStatus.values.count { it == 2 }} games in play"),
         )
     }
