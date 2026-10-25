@@ -8,8 +8,8 @@
  "branch": "ccr-27fee639-d3opru",
  "head": "be57f49818c6da912316dee63bb98dfe037e0d61",
  "since": 1792912591,
- "beat": 1792953655,
- "beatIso": "2026-10-25T18:40:55Z",
+ "beat": 1792953845,
+ "beatIso": "2026-10-25T18:44:05Z",
  "done": "PX8: ParlayAPI stream skips period rows + counts unread by market; parlay.py gameprobe task (one game: every book/number/age)",
  "next": "dispatch gameprobe, read it; then explain tool for fair-odds fates; tests; ship"
 }
