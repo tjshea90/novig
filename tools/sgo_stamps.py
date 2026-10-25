@@ -11,6 +11,7 @@ Two measurements, on Tj's SGO key (secret SGO_API_KEY) and PropLine key (PROPLIN
      push-fed price although its stamp is minutes old = the price is current and the stamp is "last changed".
   python3 tools/sgo_stamps.py run OUTDIR [NFL,NCAAF] [GAP]     python3 tools/sgo_stamps.py selftest
 """
+import calendar
 import json
 import os
 import sys
