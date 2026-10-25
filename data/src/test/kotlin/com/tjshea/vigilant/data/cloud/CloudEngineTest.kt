@@ -203,6 +203,22 @@ class CloudEngineTest {
         assertEquals(CloudEngine.End.RESET, withTimeout(5_000) { job.await() })
     }
 
+    /** Tj, 2026-10-25: "I tried the button in the app to restart the GitHub engine twice but it didn't work" (it waited for a 534-second scan to end; a settings write could also clear the field first). */
+    @Test
+    fun `a reset asked for during a long scan ends the job at once, even if the field is cleared again`() = runBlocking {
+        val scanner = FakeScanner { _, _, _ -> delay(60_000); report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val cfg = java.util.concurrent.atomic.AtomicReference(on.copy(resetAtMs = 5_000L))
+        val e = engine(scanner, { cfg.get() }, published)
+        val job = GlobalScope.async { e.run(untilMs = System.currentTimeMillis() + 120_000) }
+        delay(300)
+        cfg.set(cfg.get().copy(resetAtMs = 6_000L))
+        delay(1_500)
+        // The phone's next settings write puts its own (older) value back: the request is not lost.
+        cfg.set(cfg.get().copy(resetAtMs = 0L))
+        assertEquals(CloudEngine.End.RESET, withTimeout(15_000) { job.await() })
+    }
+
     @Test
     fun `a PropLine refresh asked for on the phone reaches the engine from the config it already reads`() = runBlocking {
         val scanner = FakeScanner { _, _, _ -> report(result("a")) }
