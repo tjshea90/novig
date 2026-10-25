@@ -8,8 +8,8 @@
  "branch": "ccr-27fee639-d3opru",
  "head": "284c99fc55764fd82b63b532d85974358803efb6",
  "since": 1792912591,
- "beat": 1792953102,
- "beatIso": "2026-10-25T18:31:42Z",
+ "beat": 1792953173,
+ "beatIso": "2026-10-25T18:32:53Z",
  "done": "research index rebuilt (ParlayAPI Business docs folder)",
  "next": "trigger parlay.yml streamprobe"
 }
