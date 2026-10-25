@@ -39,6 +39,9 @@ GROUPS = {
     "kaizen": {"stoiximan", "betano"},
 }
 SIDE_INDEX = {"HOME": 0, "AWAY": 1, "OVER": 0, "UNDER": 1, "YES": 0, "NO": 1}
+# The cuts Pricing takes off a side's fair chance on purpose, so a row's fair can sit this far under its fair line's side without a mix-up: none, PropHaircut (Under 0.03, Over 0.07),
+# ThinEarlyHaircut (0.025, NHL shots on goal) and both together.
+CUTS = (0.0, 0.03, 0.07, 0.025, 0.055, 0.095)
 
 
 def load(path=None):
