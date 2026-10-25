@@ -209,7 +209,7 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
 
     /** The books the stream holds sides for, most first (PX9: which books it carries beyond the 15 asked of the REST board). */
     fun booksHeld(top: Int = 14): String =
-        prices.keys.groupingBy { it.split('|').getOrElse(1) { "?" } }.eachCount().entries.sortedByDescending { it.value }.take(top).joinToString(", ") { "${it.key} ${it.value}" }
+        prices.keys.groupingBy { it.split('|').getOrElse(2) { "?" } }.eachCount().entries.sortedByDescending { it.value }.take(top).joinToString(", ") { "${it.key} ${it.value}" }
 
     fun describe(now: Long = clock()): String =
         "${prices.size} sides held from $rows rows (${applied} markets moved onto the boards, $confirmed confirmed unchanged at ParlayAPI's last poll, ${polls.size} books' polls known, $unread rows of shapes not priced${unreadBy.entries.sortedByDescending { it.value.get() }.take(5).takeIf { it.isNotEmpty() }?.joinToString(", ", ": ") { "${it.key} ${it.value.get()}" } ?: ""}), last frame ${if (lastFrameMs == 0L) "never" else "${(now - lastFrameMs) / 1000}s ago"} · books held: ${booksHeld()}"
