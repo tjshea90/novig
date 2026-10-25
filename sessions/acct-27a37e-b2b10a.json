@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-70c81990-qm4nt2",
- "head": "3ee735561294b86542013a5389c97fa489a23e07",
+ "head": "556fdda82c87abcd64918cc95ef99b57480dc2b0",
  "since": 1792889505,
- "beat": 1792891747,
- "beatIso": "2026-10-25T01:29:07Z",
+ "beat": 1792891782,
+ "beatIso": "2026-10-25T01:29:42Z",
  "done": "SG1-SG4 code: SimilarBets key, RepeatGuard who/cap/room/heldShort, engine trader+desk+phone placer/desk/red X wired; RepeatGuardTest+SimilarBetsTest green (27)",
  "next": "run full tools/test.sh; fix fallout (MakerTest, CloudTraderTest, CloudBidRunnerTest); then CHANGES.md + engine_set repeatMaxFamilyDollars=3 + ship"
 }

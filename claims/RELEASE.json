@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-27a37e/b2b10a",
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "b2b10a",
+ "note": "SG: one money limit on similar bets (same game total at any line, a team's side, a player's over/under), counting your bets, the engine's bets and every bid together; no bids on what is already bet, the engine never bets what you bet by hand, red X on cards and the Bet sheet",
+ "since": 1792891782,
+ "beat": 1792891782
+}
