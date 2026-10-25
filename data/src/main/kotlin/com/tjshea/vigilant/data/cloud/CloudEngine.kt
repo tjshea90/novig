@@ -94,6 +94,8 @@ class CloudEngine(
     private val socketLines: () -> List<String> = { emptyList() },
     /** Each socket's state for the phone's Live dashboard (TCL122-4). */
     private val socketStates: () -> List<SocketState> = { emptyList() },
+    /** PropLine's per-book freshness and its stream in words, for the status (PSL): (rows, read time, stream line). */
+    private val propLineFresh: () -> Triple<List<com.tjshea.vigilant.data.reference.PropLineFreshness.Row>, Long, String> = { Triple(emptyList(), 0L, "") },
     /** Opens or closes the runner's sockets to match the settings (the closing part of [sources]), called every live pass. */
     private val applySockets: (ScanSettings) -> Unit = {},
     /** Ends the job early when Novig refuses this runner's address, so the workflow draws another ([AddressWatch]); null = never. */
