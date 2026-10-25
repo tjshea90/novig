@@ -462,6 +462,20 @@ def cmd_bookprobe(outdir, sports=("basketball_nba", "americanfootball_nfl", "ice
         for k, r in sorted(per.items(), key=lambda kv: -kv[1]["lines"]):
             ages = sorted(r["ages"])
             L.append("- %s | %d | %d | %s" % (k, len(r["games"]), r["lines"], int(ages[len(ages) // 2]) if ages else "-"))
+    # Team totals are not on /odds ("served by /props?markets=team_totals"): who quotes them, and the row shape.
+    for sp in sports:
+        st3, _, d3 = request("/v1/sports/%s/props" % sp, best, {"markets": "team_totals", "oddsFormat": "american", "limit": "2000"})
+        b3 = j(d3) if st3 == 200 else None
+        rows3 = b3 if isinstance(b3, list) else ((b3 or {}).get("data") or (b3 or {}).get("props") or []) if isinstance(b3, dict) else []
+        per = {}
+        for r in rows3:
+            if isinstance(r, dict):
+                per[r.get("bookmaker")] = per.get(r.get("bookmaker"), 0) + 1
+        L += ["", "## %s team_totals via /props (HTTP %s, %d rows): %s" % (sp, st3, len(rows3), ", ".join("%s %d" % kv for kv in sorted(per.items(), key=lambda kv: -kv[1])))]
+        if rows3 and isinstance(rows3[0], dict):
+            L.append("first row: " + json.dumps(rows3[0])[:900])
+        elif not rows3:
+            L.append("answer: " + (d3[:300].decode("utf-8", "replace") if d3 else ""))
     with open(os.path.join(outdir, "bookprobe.md"), "w") as f:
         f.write("\n".join(L) + "\n")
     print("\n".join(L))
