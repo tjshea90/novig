@@ -221,13 +221,16 @@ class CloudSources(
     private val pinnacle = PinnapiClient(
         http, json,
         listOf(
-            PinnapiClient.pinnwire(KeyPool(QuotaPolicy.PINNWIRE, { keys(CloudKeys.PINNWIRE) }, usage)),
-            PinnapiClient.pinnapi(KeyPool(QuotaPolicy.PINNAPI, { keys(CloudKeys.PINNAPI) }, usage)),
+            // Each host only while its own switch is on (PX10c, 2026-10-25: with Pinnodds on, a failing Pinnodds board fell through to PinnWire although PinnWire was switched off: "All 18 PinnWire keys are used up").
+            PinnapiClient.pinnwire(KeyPool(QuotaPolicy.PINNWIRE, { keys(CloudKeys.PINNWIRE) }, usage), enabled = { pinnWireOn }),
+            PinnapiClient.pinnapi(KeyPool(QuotaPolicy.PINNAPI, { keys(CloudKeys.PINNAPI) }, usage), enabled = { pinnapiOn }),
         ),
         // Pinnodds' REST board first when its key is on GitHub and its switch is on (as on the phone); PinnWire carries on if it fails.
         first = { if (pinnoddsOn && has(CloudKeys.PINNODDS)) pinnoddsHost else null },
     )
     @Volatile private var pinnoddsOn = false
+    @Volatile private var pinnWireOn = false
+    @Volatile private var pinnapiOn = false
     private val pinnoddsHost = PinnapiClient.pinnodds(KeyPool(QuotaPolicy.PINNODDS, { keys(CloudKeys.PINNODDS) }, usage))
     /** What PropLine's push stream has said (PSL, Tj 2026-10-25), laid over the PropLine boards; empty (and the boards as read) while the stream is off. */
     val propLineLive = com.tjshea.vigilant.data.reference.PropLineLive()
@@ -440,6 +443,8 @@ class CloudSources(
 
     private fun base(s: ScanSettings): List<ReferenceSource> = buildList {
         pinnoddsOn = s.gates.usePinnodds
+        pinnWireOn = s.gates.usePinnwire
+        pinnapiOn = s.gates.usePinnapi
         val pinnacleOn = s.usePinnacle && ((s.gates.usePinnodds && has(CloudKeys.PINNODDS)) || (s.gates.usePinnwire && has(CloudKeys.PINNWIRE)) || (s.gates.usePinnapi && has(CloudKeys.PINNAPI)))
         if (pinnacleOn) add(pinnacle)
         // ParlayAPI's alternate lines are Pinnacle's: bought only when PinnWire/pinnapi aren't sending them (as on the phone).
