@@ -188,8 +188,8 @@ def cmd_listen(outdir, sport="tennis", wait_min=40, seconds=120):
     return 0
 
 
-def listen_url(key, path, params, seconds, out, max_lines=400):
-    """Any SSE route for [seconds]: the raw frames (each cut to 4,000 chars), at most [max_lines]. The key goes in the header, never in the saved file."""
+def listen_url(key, path, params, seconds, out, max_lines=400, cut=4000):
+    """Any SSE route for [seconds]: the raw frames (each cut to [cut] chars; None = whole), at most [max_lines]. The key goes in the header, never in the saved file."""
     req = urllib.request.Request(BASE + path + (("?" + urllib.parse.urlencode(params)) if params else ""))
     req.add_header("X-API-Key", key)
     req.add_header("Accept", "text/event-stream")
@@ -204,7 +204,7 @@ def listen_url(key, path, params, seconds, out, max_lines=400):
                     break
                 t = raw.decode("utf8", "replace").rstrip()
                 if t:
-                    lines.append(t[:4000])
+                    lines.append(t[:cut] if cut else t)
     except urllib.error.HTTPError as e:
         lines.append("HTTP %s %s" % (e.code, e.read()[:500].decode("utf8", "replace")))
     except Exception as e:
@@ -229,8 +229,26 @@ def cmd_streamprobe(outdir, sport="icehockey_nhl"):
         ("sse_hot_%s.txt" % sport, "/v1/sse/hot/%s" % sport, {"kinds": "game", "limit": 50, "heartbeat_s": 5}),
         ("sse_drop_%s.txt" % sport, "/v1/odds-drop/%s" % sport, {"threshold": 10, "heartbeat_s": 5}),
     ]:
-        n = len(listen_url(key, path, params, 60, os.path.join(outdir, name)))
-        print("%s: %d lines" % (name, n))
+        got = listen_url(key, path, params, 60, os.path.join(outdir, name), max_lines=120, cut=None)
+        print("%s: %d lines" % (name, len(got)))
+        # One whole row of every (book, kind, market) shape the stream sent, for the engine's parser (PB11).
+        shapes = {}
+        for t in got:
+            if not t.startswith("data: "):
+                continue
+            try:
+                d = json.loads(t[6:], strict=False)
+            except ValueError:
+                continue
+            for r in d.get("data") or []:
+                if isinstance(r, dict):
+                    shapes.setdefault("%s|%s|%s" % (r.get("bookmaker"), r.get("kind"), r.get("market_key")), r)
+        with open(os.path.join(outdir, name.replace(".txt", "_shapes.json")), "w") as f:
+            json.dump(shapes, f, indent=1)
+    # The REST board for the same sport (3 credits), to match the stream's event ids and rows to the boards the scan reads.
+    st, h, data = request("/v1/sports/%s/odds" % sport, key, {"markets": "h2h,spreads,totals", "oddsFormat": "american", "regions": "us", "includeLinks": "false"})
+    with open(os.path.join(outdir, "rest_odds_%s.json" % sport), "w") as f:
+        json.dump({"status": st, "body": trim(j(data), 3) if j(data) is not None else data[:2000].decode("utf8", "replace")}, f, indent=1)
     for name, path in [("source_health_%s.json" % sport, "/v1/sports/%s/live/source-health" % sport), ("meta_source_health.json", "/v1/meta/source-health"),
                        ("book_freshness_pinnacle.json", "/v1/bookmakers/pinnacle/freshness"), ("book_freshness_fanduel.json", "/v1/bookmakers/fanduel/freshness"),
                        ("pinnacle_coverage.json", "/v1/pinnacle-coverage"), ("usage.json", "/v1/usage")]:
