@@ -24,7 +24,9 @@ class CloudKeysTest {
         // every secret the phone sends is one the engine reads, and the workflow passes it
         assertEquals(CloudKeys.ALL.toSet() - CloudKeys.SET_BY_HAND, CloudKeys.BY_PROVIDER.values.toSet())
         val wf = java.io.File("../.github/workflows/cloud-scan.yml").takeIf { it.exists() } ?: java.io.File(".github/workflows/cloud-scan.yml")
-        if (wf.exists()) (CloudKeys.ALL + CloudKeys.NOVIG + CloudKeys.TRADE).forEach { n -> assertTrue("cloud-scan.yml passes $n", wf.readText().contains("$n: \${{ secrets.$n }}")) }
+        if (wf.exists()) (CloudKeys.ALL - CloudKeys.RETIRED + CloudKeys.NOVIG + CloudKeys.TRADE).forEach { n -> assertTrue("cloud-scan.yml passes $n", wf.readText().contains("$n: \${{ secrets.$n }}")) }
+        // a retired secret (PX10c: PinnWire) is not passed, so a copy left in the repository's secrets is never read
+        if (wf.exists()) CloudKeys.RETIRED.forEach { n -> assertTrue("cloud-scan.yml does not pass $n", !wf.readText().contains("secrets.$n")) }
     }
 
     @Test

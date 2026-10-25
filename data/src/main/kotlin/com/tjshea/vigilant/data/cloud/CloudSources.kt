@@ -555,6 +555,12 @@ object CloudKeys {
     val ALL = listOf(SGO, ODDSPAPI_FREE, SXBET, SHARPAPI, PINNWIRE, PINNAPI, PINNODDS, PROPLINE, ODDS_API, PARLAY, BOLT)
 
     /**
+     * Secrets the engine's workflow no longer passes, so a copy left in the repository's secrets is never read (PX10c, Tj 2026-10-25: "I deleted the pinnwire keys delete them on GitHub too"; a session
+     * cannot delete a secret, and the phone only ever writes them): PinnWire. The code stays for a key Tj may buy again; to bring one back, take it out of here and put its line back in cloud-scan.yml.
+     */
+    val RETIRED = setOf(PINNWIRE)
+
+    /**
      * Which of the phone's keys go to which repository secret (the app sends them: Settings › Cloud scan › Send my API keys to GitHub; Tj, 2026-10-14). **Pinnodds is never in it** (its socket allows one
      * connection and a second one evicts the app's), and neither is Kalshi's private key (it can trade; it is not an [com.tjshea.vigilant.data.keys.ApiProvider]). A new provider must be added here or left out on purpose
      * (`CloudKeysTest` fails until it is one or the other).
