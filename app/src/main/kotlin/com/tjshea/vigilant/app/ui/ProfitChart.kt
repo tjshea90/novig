@@ -123,7 +123,7 @@ object ProfitText {
 
     /** The all-time figure's sum: what the wallet holds and what was put in; or, with no wallet figure, the settled bets it is taken from. */
     fun allTimeHow(book: SlateProfit.Book, w: WalletMoneyUi, now: Long): String {
-        val m: WalletMoney? = null // Tj, 2026-10-25 (CH87c): all-time profit is the settled bets' payouts minus their cost; deposits and withdrawals are not used.
+        val m: WalletProfit.Money? = null // Tj, 2026-10-25 (CH87c): all-time profit is the settled bets' payouts minus their cost; deposits and withdrawals are not used.
         if (m != null) {
             // Money moved out and back in again nets out (Tj, 2026-10-19: "also takes out withdrawals because sometimes I moved money back and forth").
             val moves = if (m.takenOut > 0.005) "${Format.money(m.putIn)} put in minus ${Format.money(m.takenOut)} taken out" else "nothing taken out"
@@ -199,8 +199,8 @@ fun ProfitChartCard(bets: List<TrackedBet>, period: TrackerPeriod, wallet: Walle
             }
             SlateProfit.later(book, now)?.let { Text(ProfitText.later(it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitLater")) }
             Text(
-                "A day is the day of its games (Eastern, 5 am to 5 am, so a late game stays on the night it began). Its profit is what its settled bets paid back minus what they cost; the days count the bets " +
-                    "shown here, while the all-time figure is the wallet's real money (fees and maker credits included).",
+                "A day is the day of its games (Eastern, 5 am to 5 am, so a late game stays on the night it began). Its profit is what its settled bets paid back minus what they cost; bets without a final result are left out, and so is the wallet (deposits and withdrawals) " +
+                    "everywhere: the all-time figure is the same sum over every settled bet and bid.",
                 style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -209,7 +209,7 @@ fun ProfitChartCard(bets: List<TrackedBet>, period: TrackerPeriod, wallet: Walle
 
 @Composable
 private fun AllTime(book: SlateProfit.Book, wallet: WalletMoneyUi, now: Long) {
-    val m: WalletMoney? = null // CH87c: settled bets only, no wallet or deposit figures
+    val m: WalletProfit.Money? = null // CH87c: settled bets only, no wallet or deposit figures
     val profit = m?.profit ?: book.profit
     val pct = if (m != null) m.pct else book.pct
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
