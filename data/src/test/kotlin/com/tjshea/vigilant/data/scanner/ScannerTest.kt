@@ -451,21 +451,21 @@ class ScannerTest {
     @Test
     fun `with two aggregators on and the same books, only the best is asked and the other sleeps`() = runTest {
         val log = java.util.Collections.synchronizedList(ArrayList<String>())
-        val r = Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(FakeAggregator("oddspapi", log), FakeAggregator("sgo", log)))
+        val r = Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(FakeAggregator("oddspapi_free", log), FakeAggregator("sgo", log)))
         assertEquals(listOf("sgo"), log)
-        assertEquals(1, r.sources.single { it.id == "oddspapi" }.standingBy)
-        assertEquals(0, r.sources.single { it.id == "oddspapi" }.fetched)
+        assertEquals(1, r.sources.single { it.id == "oddspapi_free" }.standingBy)
+        assertEquals(0, r.sources.single { it.id == "oddspapi_free" }.fetched)
         assertTrue(r.result!!.opportunities.isNotEmpty())
     }
 
     @Test
     fun `when the best aggregator does not answer or is out of credits the next best is asked for the odds`() = runTest {
         val log = java.util.Collections.synchronizedList(ArrayList<String>())
-        val r = Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(FakeAggregator("oddspapi", log), FakeAggregator("sgo", log, fail = true), FakeAggregator("unabated", log)))
+        val r = Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(FakeAggregator("oddspapi_free", log), FakeAggregator("sgo", log, fail = true), FakeAggregator("oddsapi", log)))
         // SGO fails; OddsPapi takes over; Unabated (below both) finds the league answered and sleeps.
-        assertEquals(listOf("sgo", "oddspapi"), log)
-        assertEquals(1, r.sources.single { it.id == "oddspapi" }.fetched)
-        assertEquals(1, r.sources.single { it.id == "unabated" }.standingBy)
+        assertEquals(listOf("sgo", "oddspapi_free"), log)
+        assertEquals(1, r.sources.single { it.id == "oddspapi_free" }.fetched)
+        assertEquals(1, r.sources.single { it.id == "oddsapi" }.standingBy)
         assertTrue(r.result!!.opportunities.isNotEmpty())
     }
 

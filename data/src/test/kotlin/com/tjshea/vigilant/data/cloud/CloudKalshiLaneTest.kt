@@ -64,14 +64,14 @@ class CloudKalshiLaneTest {
 
     private fun sources() = listOf(
         Fake("pinnacle", "Pinnacle", RefSnapshot(nfl.oddsApiSportKey, listOf(ev("p", "pinnacle", 0.435, 0.575)), now, provider = "pinnacle")),
-        Fake("oddspapi", "Circa", RefSnapshot(nfl.oddsApiSportKey, listOf(ev("c", "circa", 0.436, 0.574)), now, provider = "oddspapi")),
+        Fake("oddspapi_free", "Circa", RefSnapshot(nfl.oddsApiSportKey, listOf(ev("c", "circa", 0.436, 0.574)), now, provider = "oddspapi_free")),
     )
 
     private val venue = Fake(KalshiClient.VENUE_ID, "Kalshi", RefSnapshot(nfl.oddsApiSportKey, listOf(ev("kalshi:26OCT25BALDAL", "kalshi", 0.40, 0.62, ids = true)), now, provider = KalshiClient.VENUE_ID))
 
     private val phone = ScanSettings(
         leagues = setOf("NFL"), fairSource = FairSource.SHARP, devigMethod = DevigMethod.MULTIPLICATIVE, sharpBooks = setOf("pinnacle", "circa"), minBooks = 1,
-        usePolymarket = false, useOddsApi = false, sgoPro = false,
+        usePolymarket = false, useOddsApi = false, sgoPro = false, oddsPapiFree = true,
     )
 
     private class FakeClient(val now: Long) : KalshiTradingClient(OkHttpClient(), Json, { null }) {

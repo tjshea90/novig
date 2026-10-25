@@ -53,13 +53,13 @@ class KalshiAutoBettorTest {
     // Two sharp books agree the Ravens are 43.5%; Kalshi sells them at 40c.
     private fun sources() = listOf(
         Fake("pinnacle", "Pinnacle", RefSnapshot(nfl.oddsApiSportKey, listOf(ev("p", "pinnacle", 0.435, 0.575)), now, provider = "pinnacle")),
-        Fake("oddspapi", "Circa", RefSnapshot(nfl.oddsApiSportKey, listOf(ev("c", "circa", 0.436, 0.574)), now, provider = "oddspapi")),
+        Fake("oddspapi_free", "Circa", RefSnapshot(nfl.oddsApiSportKey, listOf(ev("c", "circa", 0.436, 0.574)), now, provider = "oddspapi_free")),
         Fake(KalshiClient.VENUE_ID, "Kalshi", RefSnapshot(nfl.oddsApiSportKey, listOf(ev("kalshi:26OCT25BALDAL", "kalshi", 0.40, 0.62, ids = true)), now, provider = KalshiClient.VENUE_ID)),
     )
 
     private val settings = ScanSettings(
         leagues = setOf("NFL"), fairSource = FairSource.SHARP, devigMethod = DevigMethod.MULTIPLICATIVE, sharpBooks = setOf("pinnacle", "circa"), minBooks = 1,
-        usePolymarket = false, useKalshi = false, useOddsApi = false, sgoPro = false,
+        usePolymarket = false, useKalshi = false, useOddsApi = false, sgoPro = false, oddsPapiFree = true,
         autoBet = true, autoBetMinEv = 0.02, autoBetBooks = 2, autoBetTwoSided = 2, autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 10.0, autoBetMaxStake = 10.0,
         trapEarlyHours = 0, trapFirstListed = false, sharpAutoBet = SharpMode.OFF, apiMaxPerDay = 100.0, apiMaxPerGame = 0.0,
     )
