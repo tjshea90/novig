@@ -952,7 +952,7 @@ class Scanner(
         val ref0 = scan.refEvent ?: return null
         val settings = requested.effective(forBets = betsOnly)
         val now = clock()
-        return Pricing.refair(held, runCatching { overlay(ref0, now) }.getOrDefault(ref0), settings, now)
+        return Pricing.refair(held, Pricing.dropOld(runCatching { overlay(ref0, now) }.getOrDefault(ref0), now), settings, now)
     }
 
     override fun streamReady(): Boolean = catalog != null
