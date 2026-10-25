@@ -34,7 +34,7 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
     @Volatile var confirmed = 0L
         private set
 
-    fun connected(sport: String, now: Long = clock()) { connectedSince.putIfAbsent(sport, now); heard(now) }
+    fun connected(sport: String, since: Long = clock()) { connectedSince.putIfAbsent(sport, since); heard() }
     fun disconnected(sport: String) { connectedSince.remove(sport) }
 
     /** One `/v1/meta/source-health` answer: each source's last poll ([now] minus `poll_age_s`) and `prices_stale`. */
