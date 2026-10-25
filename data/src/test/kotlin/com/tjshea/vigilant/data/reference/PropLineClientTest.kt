@@ -108,6 +108,43 @@ class PropLineClientTest {
      {"id":"777","sport_key":"football_nfl","home_team":"NFC North Winner","away_team":"","commence_time":"${iso(start)}","is_outright":true,"bookmakers":[]}]
     """.trimIndent()
 
+    /** PropLine's real rule (PX9e, `propline.yml` bookparam 2026-10-25): more than 60 `bookmakers` keys is HTTP 400; else a moneyline from each asked book PropLine carries for game 555. */
+    private fun likePropLine(r: RecordedRequest): MockResponse {
+        val asked = r.requestUrl!!.queryParameter("bookmakers").orEmpty().split(",").filter { it.isNotEmpty() }
+        if (asked.size > 60) return MockResponse().setResponseCode(400).setBody("""{"detail":"Too many `bookmakers` keys: at most 60 per request. Split the request into several calls."}""")
+        val books = asked.filter { it in setOf("pinnacle", "draftkings", "tonybet", "veikkaus", "novig") }.joinToString(",") { k ->
+            """{"key":"$k","title":"$k","last_update":"$upd","markets":[{"key":"h2h","last_update":"$upd","outcomes":[
+                {"name":"Dallas Cowboys","description":"","price":-150,"point":null,"side":"home"},{"name":"Baltimore Ravens","description":"","price":130,"point":null,"side":"away"}]}]}"""
+        }
+        return ok("""[{"id":"555","sport_key":"football_nfl","home_team":"Dallas Cowboys","away_team":"Baltimore Ravens","commence_time":"${iso(start)}","is_outright":false,"bookmakers":[$books]}]""")
+    }
+
+    @Test
+    fun `every book is asked for in parts PropLine takes and each game's books come back together`() = runTest {
+        routes["/v1/sports/americanfootball_nfl/odds"] = { likePropLine(requests.last()) }
+        val all = ScanSettings(gates = ApiGates(propLineAllBooks = true))
+        assertTrue("the engine's list is over PropLine's 60", PropLineClient.books(all).size + 1 > PropLineClient.MAX_BOOKS)
+
+        val snap = client().odds(nfl, all)
+
+        val asked = requests.map { it.requestUrl!!.queryParameter("bookmakers")!!.split(",") }
+        assertEquals(2, asked.size)
+        assertTrue(asked.all { it.size <= PropLineClient.MAX_BOOKS })
+        assertEquals("every book once, Novig once", (PropLineClient.books(all) + "novig").sorted(), asked.flatten().sorted())
+        val e = snap.events.single()
+        assertEquals(setOf("pinnacle", "draftkings", "tonybet", "veikkaus"), e.markets.map { it.bookKey }.toSet())
+        assertEquals(listOf("novig"), snap.novig.single().markets.map { it.bookKey }.distinct())
+    }
+
+    @Test
+    fun `book parts are even, at most PropLine's 60, and one part when it fits`() {
+        assertEquals(listOf(35, 35), PropLineClient.bookParts((1..70).map { "b$it" }).map { it.size })
+        assertEquals(listOf(60), PropLineClient.bookParts((1..60).map { "b$it" }).map { it.size })
+        assertEquals(listOf(41, 41, 40), PropLineClient.bookParts((1..122).map { "b$it" }).map { it.size })
+        assertEquals(listOf(2), PropLineClient.bookParts(listOf("a", "b", "a")).map { it.size })
+        assertEquals(listOf(emptyList<String>()), PropLineClient.bookParts(emptyList()))
+    }
+
     @Test
     fun `a league's board parses every book's lines and drops pulled, withdrawn and non-book prices`() = runTest {
         routes["/v1/sports/americanfootball_nfl/odds"] = { ok(board) }
