@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-64p1kh",
- "head": "3bd026440e383c794fc338a3a081e87077e2d5a3",
+ "head": "b20f6d7d744532da4a2f7f6e7153da3b8aea0072",
  "since": 1792884251,
- "beat": 1792887959,
- "beatIso": "2026-10-25T00:25:59Z",
+ "beat": 1792888271,
+ "beatIso": "2026-10-25T00:31:11Z",
  "done": "CH87c all-time profit = settled bets only",
  "next": "check other graphs exclude non-final; ship in next release; CH87a wake lag"
 }
