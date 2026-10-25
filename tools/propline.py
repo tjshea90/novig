@@ -464,7 +464,7 @@ def coverage_stats(boards):
     return {"games": {b: len(v) for b, v in games.items()}, "novig_lines": novig_lines, "same_desk": same_desk}
 
 
-def cmd_coverage(outdir, sports=("americanfootball_nfl", "americanfootball_ncaaf", "basketball_nba", "icehockey_nhl")):
+def cmd_coverage(outdir, sports=("football_nfl", "football_ncaaf", "basketball_nba", "hockey_nhl")):
     """PS2: every book's game lines for the scanned leagues (no `bookmakers=`: all of them), measured by [coverage_stats]; a handful of requests of the paid key's 250,000 a day."""
     keys = keys_from_env()
     i, _ = best_key(keys, [plan_of(k) for k in keys])
