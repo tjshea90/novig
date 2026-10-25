@@ -87,9 +87,8 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
         if (r["available"].let { it is JsonPrimitive && it.content == "false" }) return
         val at = listOfNotNull(r.num("last_update"), r.num("last_observed_ms"), r.num("collector_seen_ms")).maxOrNull()?.toLong() ?: return
         val market = r.str("market_key") ?: return
-        // A row of a period (1st half, a quarter) is never held under the full game's key (PX8): only the full game is laid over.
-        val period = r.num("period_key") ?: ((r["pinnacle"] as? JsonObject)?.get("market") as? JsonObject)?.num("period")
-        if (period != null && period != 0.0) { skip(r); return }
+        // A row of a part of the game (1st half, a quarter, F5) is never held under the full game's key (PX8): only the full game is laid over.
+        if (partOfGame(r)) { skip(r); return }
         val game = gameKey(home, away)
         r.str("commence_time")?.let { t -> runCatching { java.time.Instant.parse(t).toEpochMilli() }.getOrNull() }?.let { games[game] = Game(sport, home, away, it) }
         fun put(kind: LineKind, subject: String?, stat: String?, side: Side, point: Double?, american: Double?) {
@@ -245,6 +244,16 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
         }
 
         private fun norm(team: String) = team.lowercase().filter { it.isLetterOrDigit() }
+
+        private val PART = Regex("^(1H|2H|H1|H2|F\\d+|P\\d|Q\\d|\\dQ|\\d(ST|ND|RD|TH).*|HALF.*|QUARTER.*|PERIOD.*|INNING.*)$", RegexOption.IGNORE_CASE)
+
+        /** The row is for a part of the game: a `period_key` that is not 0 (a number, or a label like "1H" or "Q2"), or Pinnacle's own `market.period` not 0. */
+        internal fun partOfGame(r: JsonObject): Boolean {
+            val pin = ((r["pinnacle"] as? JsonObject)?.get("market") as? JsonObject)?.num("period")
+            if (pin != null && pin != 0.0) return true
+            val key = r.str("period_key") ?: return false
+            return key.toDoubleOrNull()?.let { it != 0.0 } ?: PART.matches(key.trim())
+        }
 
         /** A row's "player" that names the game itself: both teams. */
         private fun matchup(player: String, home: String, away: String): Boolean = norm(player).let { p -> norm(home).let { it.isNotEmpty() && it in p } && norm(away).let { it.isNotEmpty() && it in p } }
