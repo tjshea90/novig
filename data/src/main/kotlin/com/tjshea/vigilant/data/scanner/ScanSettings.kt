@@ -1381,8 +1381,8 @@ data class ApiGates(
     /** Cloud scan on / history saving to GitHub on (see [ScanSettings.cloudScan]). */
     val cloudScan: Boolean = false,
     val cloudSave: Boolean = true,
-    /** The GitHub engine works only 08:00-01:00 America/New_York ([com.tjshea.vigilant.data.cloud.EngineHours]), Tj 2026-10-15; off = round the clock. */
-    val cloudHours: Boolean = true,
+    /** The GitHub engine works only 08:00-01:00 America/New_York ([com.tjshea.vigilant.data.cloud.EngineHours]) while on; off = round the clock, the default since PB7 (Tj, 2026-10-25: "make the GitHub engine run 24/7 by default"). */
+    val cloudHours: Boolean = false,
     /**
      * What the GitHub engine does with the bets it lists (Tj, 2026-10-15, TCL20d): OFF = nothing, PAPER = decides and sizes them with the auto-bet's rules and writes the orders it would have sent to a ledger,
      * LIVE = sends them with the Vigilant subaccount's trading key. Set only on the phone ([com.tjshea.vigilant.data.cloud.CloudTrader]); the sizing numbers below are [com.tjshea.vigilant.data.cloud.CloudKelly]'s.
