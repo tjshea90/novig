@@ -308,6 +308,10 @@ object HealthChecks {
             add(Check(Level.OK, "Background auto-scan", "off", look = "Settings › Scanning › Background scan (no +EV alerts while Vigilant is closed)"))
             return
         }
+        if (set.phoneRests) {
+            add(Check(Level.OK, "Background auto-scan", "the phone rests: the GitHub engine scans and trades while Vigilant is closed (no service, no wake lock)"))
+            return
+        }
         if (set.activeAutoScan == AutoScanMode.OFF) {
             add(Check(Level.WARN, "Background auto-scan", "set to ${set.autoScan.displayName} but runs nothing: ${Diagnostics.runsText(set)}", look = "the scanner choice or Pause"))
             return

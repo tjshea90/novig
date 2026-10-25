@@ -1003,6 +1003,16 @@ data class ScanSettings(
     val activeAutoScan: AutoScanMode get() = if (autoScansCno || autoScansVigilant) autoScan else AutoScanMode.OFF
 
     /**
+     * The phone rests (PB9, Tj 2026-10-25: "If I swipe it closed and don't have it open, the GitHub engine should still run the system by itself, as the phone app is only a monitor and control center ...
+     * I want no battery or CPU or RAM wasted when the app isn't open"): the GitHub engine scans ([cloudDrives]) and places the bets ([ApiGates.cloudTrading] not OFF), so a background cycle on the phone
+     * has nothing of its own to do. No auto-scan service, no wake lock, no alarm: Android may freeze the app; opening it wakes everything ([com.tjshea.vigilant.app.PhoneSleep]).
+     */
+    val phoneRests: Boolean get() = cloudDrives && !killed && gates.cloudTrading != CloudTradeMode.OFF
+
+    /** What the phone's background auto-scan actually runs: [activeAutoScan], or nothing while [phoneRests]. */
+    val phoneAutoScan: AutoScanMode get() = if (phoneRests) AutoScanMode.OFF else activeAutoScan
+
+    /**
      * A background cycle reads CrazyNinjaOdds' list: auto-scan is on CNO or Both, scanning isn't paused and the CNO scanner is on. The scanner
      * choice is the master switch (Tj, 2026-09-29: "if I have cno only turned on in the settings … it doesn't scan vigilant in the background and
      * waste api usage"): on Vigilant only, CNO is asleep in the background as it is in the app.

@@ -1614,7 +1614,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (!before.paused && next.paused) { c.runner.stop(); c.autoScan.interrupt() }
         // Resumed: background auto-scan starts again at once, from the widget too (Android lets an app showing an
         // overlay start it); from the app, MainActivity starts it as well, which is harmless.
-        if (before.activeAutoScan == com.tjshea.vigilant.data.scanner.AutoScanMode.OFF && next.activeAutoScan != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF && !AutoScanService.running) {
+        if (before.phoneAutoScan == com.tjshea.vigilant.data.scanner.AutoScanMode.OFF && next.phoneAutoScan != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF && !AutoScanService.running) {
             AutoScanService.start(getApplication())
         }
         if (next.leagues.isNotEmpty()) {
@@ -3344,7 +3344,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // skipped runs now rather than a whole interval from now.
                 c.focus.end()
                 c.autoScan.resumed()
-                if (_state.value.settings.activeAutoScan != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF) runCatching { AutoScanService.start(getApplication()) }
+                if (_state.value.settings.phoneAutoScan != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF) runCatching { AutoScanService.start(getApplication()) }
             }
             // What the round cost each API and how it went, for Settings › Diagnostics & about.
             report?.let { r ->

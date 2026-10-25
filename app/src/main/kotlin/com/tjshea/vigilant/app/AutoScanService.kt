@@ -159,7 +159,7 @@ class AutoScanService : Service() {
             }
         }
         combine(
-            container.settingsStore.flow.filterNotNull().map { Plan(it.activeAutoScan, it.autoScanSeconds, KeepAwake.active(it)) }.distinctUntilChanged(),
+            container.settingsStore.flow.filterNotNull().map { Plan(it.phoneAutoScan, it.autoScanSeconds, KeepAwake.active(it)) }.distinctUntilChanged(),
             container.autoScan.status,
         ) { next, status -> next to status }
             .collect { (next, status) ->
@@ -627,7 +627,7 @@ class AutoScanReceiver : BroadcastReceiver() {
             // A phone restart switches auto-bet and background auto-scan off before anything can bet (Tj, 2026-10-02 16:05Z); an update
             // keeps them, and starts what was on ([LaunchReset]).
             runCatching { LaunchReset.afterRestart(app, Boot.now(app)) }
-            if (app.container.currentSettings().activeAutoScan != AutoScanMode.OFF) AutoScanService.start(app)
+            if (app.container.currentSettings().phoneAutoScan != AutoScanMode.OFF) AutoScanService.start(app)
         }
 
         private var bridge: PowerManager.WakeLock? = null

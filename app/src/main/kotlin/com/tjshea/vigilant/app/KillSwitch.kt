@@ -107,7 +107,7 @@ object KillSwitch {
         runCatching { c.killMarker.set(false) }
         val next = c.settingsStore.update { it.copy(killed = false, killedAtMs = null) }
         runCatching { c.eventLog.info("KILL", "kill switch OFF ($by)") }
-        if (next.activeAutoScan != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF && !AutoScanService.running) runCatching { AutoScanService.start(app) }
+        if (next.phoneAutoScan != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF && !AutoScanService.running) runCatching { AutoScanService.start(app) }
         next
     }
 

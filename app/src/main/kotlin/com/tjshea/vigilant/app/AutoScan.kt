@@ -268,7 +268,7 @@ class AutoScanner(
     private suspend fun cycleBody(forceVigilant: Boolean): Boolean {
         run {
             val settings = c.currentSettings()
-            if (settings.activeAutoScan == AutoScanMode.OFF) return false
+            if (settings.phoneAutoScan == AutoScanMode.OFF) return false
             // Check odds now has CNO's pace, the APIs and the phone to itself (Tj, 2026-10-01): no CNO read, no auto-bet and no scan from this cycle, and
             // the schedule goes on (the next one is armed as ever; the check's end starts one). Nothing is lost that the check doesn't read itself.
             if (c.focus.active(clock())) {

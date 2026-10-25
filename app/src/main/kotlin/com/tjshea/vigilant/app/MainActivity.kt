@@ -147,7 +147,7 @@ class MainActivity : ComponentActivity() {
         // stopped it; switching it off stops it. Alerts need notifications: asked when it's turned on.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                vm.state.map { Triple(it.loaded, it.settings.autoScan, it.settings.activeAutoScan) }.distinctUntilChanged().collect { (loaded, mode, active) ->
+                vm.state.map { Triple(it.loaded, it.settings.autoScan, it.settings.phoneAutoScan) }.distinctUntilChanged().collect { (loaded, mode, active) ->
                     if (!loaded) return@collect
                     val prefs = getSharedPreferences("ui", MODE_PRIVATE)
                     if (mode != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF && active == com.tjshea.vigilant.data.scanner.AutoScanMode.OFF) {

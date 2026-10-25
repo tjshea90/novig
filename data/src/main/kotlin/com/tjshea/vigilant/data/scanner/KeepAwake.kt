@@ -21,7 +21,7 @@ object KeepAwake {
 
     /** Whether the service holds the CPU awake and drives the cycles itself: the switch is on, background scanning runs, and cycles are closer than Doze lets an alarm be. */
     fun active(s: ScanSettings): Boolean =
-        s.autoScanKeepAwake && s.activeAutoScan != AutoScanMode.OFF && s.autoScanSeconds < ALARM_ONLY_BELOW_SECONDS
+        s.autoScanKeepAwake && s.phoneAutoScan != AutoScanMode.OFF && s.autoScanSeconds < ALARM_ONLY_BELOW_SECONDS
 
     /** The safety alarm is never closer than this: a stalled loop is noticed after three intervals, but not under three minutes (a Vigilant scan runs ~2). */
     const val WATCHDOG_MIN_MS = 3 * 60_000L
