@@ -107,7 +107,8 @@ class ParlayPbpStream(
 
     private suspend fun connect(sport: String, apiKey: String) = withContext(Dispatchers.IO) {
         val req = Request.Builder().url("$baseUrl/v1/sports/$sport/live/sse").header("X-API-Key", apiKey).header("Accept", "text/event-stream").build()
-        val call = http.newBuilder().readTimeout(0, TimeUnit.MILLISECONDS).build().newCall(req)
+        // No whole-call deadline either: the shared client's 30 s one ended every stream after 30 s, and each new connection costs 5 credits (found 2026-10-25 with the odds stream, PB11).
+        val call = http.newBuilder().callTimeout(0, TimeUnit.MILLISECONDS).readTimeout(0, TimeUnit.MILLISECONDS).build().newCall(req)
         val cancel = coroutineContext[Job]?.invokeOnCompletion { call.cancel() }
         try {
             call.execute().use { resp ->
