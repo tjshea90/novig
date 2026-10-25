@@ -95,6 +95,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
             KALSHI -> "On (needs your Kalshi key): a socket pushes every price change, so scans read Kalshi without asking it. Off: the signed or public REST read every scan."
             SHARPAPI -> "On (needs the stream add-on): the GitHub engine keeps SharpAPI's WebSocket open, so every price change and live score is pushed to it. Off: the engine asks for the changes every 1-2 seconds. The phone never opens it (one stream per key)."
             PROPLINE -> "On (needs a Streaming Lite key on GitHub): the GitHub engine keeps PropLine's two WebSockets open, so every price move, pulled line and late scratch is pushed to it within seconds, and steam, grades and +EV at Novig are saved for study. Off: the engine reads PropLine every couple of minutes. The phone never opens them (2 connections on the plan)."
+            PARLAY -> "On (needs a Business key on GitHub): the GitHub engine keeps ParlayAPI's odds stream open for every picked league, so every book's price move reaches it within seconds and the listed bets are priced again at once; streams use no credits. Off: the engine reads ParlayAPI's boards by request. The phone never opens it."
             else -> ""
         }
 
