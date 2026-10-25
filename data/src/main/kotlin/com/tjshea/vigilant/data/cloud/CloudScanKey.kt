@@ -19,7 +19,7 @@ object CloudScanKey {
     enum class Kind { FETCH, PRICING, FILTER, BIDS, PHONE }
 
     private val fetch = setOf(
-        "leagues", "families", "daysAhead", "sgoPro", "sgoExtraBooks", "sgoAltLines", "oddsPapi", "opExtraBooks", "opAltLines", "unabated", "oddsPapiFree",
+        "leagues", "families", "daysAhead", "sgoPro", "sgoExtraBooks", "sgoAltLines", "opExtraBooks", "oddsPapiFree",
         "usePinnacle", "usePolymarket", "useKalshi", "useOddsApi", "useParlay", "usePropLine", "oddsApiReuseMinutes", "staleReferenceMinutes",
         "linesPerGame", "propsPerGame", "maxBooksPerScan", "fillBudget", "useBookProps", "bookPropSet", "bookPropCreditsPerScan", "bookPropHours", "propLineGamesPerScan", "bookPropReuseMinutes",
         // bids on, and low-usage bids, change the scan's own profile (`ScanSettings.effective`) and whether candidate lines are made at all

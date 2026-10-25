@@ -49,7 +49,7 @@ object ApiScorecard {
     const val PAID_ABOVE = 1000
 
     /** Providers that are a subscription whatever their meter says (flat-rate, no free tier). */
-    private val FLAT_PAID = setOf("sgo", "boltodds", "oddspapi")
+    private val FLAT_PAID = setOf("sgo", "boltodds")
 
     private val history = HashMap<String, ArrayDeque<Boolean>>()
 

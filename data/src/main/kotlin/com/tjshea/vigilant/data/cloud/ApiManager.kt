@@ -213,7 +213,7 @@ class ApiManager(
          * never recover, switched off. BoltOdds is not among them (Tj, 2026-10-24: "The GitHub engine shouldn't keep resetting on boltodds errors because there are a lot of them"): it carries no sharp book,
          * its refusals are about its keys' plan and its connection limit, which a new runner does not change, and a cancelled runner leaves its sockets half-open, which makes the refusals worse.
          */
-        val IMPORTANT = setOf("sgo", "parlay", "propline", "pinnwire", "pinnapi", "oddspapi", "sxbet", "sharpapi")
+        val IMPORTANT = setOf("sgo", "parlay", "propline", "pinnwire", "pinnapi", "sxbet", "sharpapi")
 
         /** A silent feed whose provider refused the key itself or its plan (BoltOdds: "Free plan cannot access API"): nothing on the engine can fix it, only a key on another plan. */
         private val KEY_REFUSED = Regex("refused the key \\((?!too many concurrent)|plan cannot access|invalid api token|key (was )?refused|not (included|available) (in|on) (your|this) plan", RegexOption.IGNORE_CASE)
