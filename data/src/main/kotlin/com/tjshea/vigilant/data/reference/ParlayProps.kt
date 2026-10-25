@@ -44,10 +44,11 @@ class ParlayPropsSource(
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val sport = league.oddsApiSportKey
-        if (MarketFamily.PLAYER_PROPS !in settings.families) return RefSnapshot(sport, emptyList(), System.currentTimeMillis(), provider = id)
+        if (MarketFamily.PLAYER_PROPS !in settings.families && MarketFamily.TEAM_TOTAL !in settings.families) return RefSnapshot(sport, emptyList(), System.currentTimeMillis(), provider = id)
         // One flat price whatever is asked: every stat Vigilant prices for the sport (the market filter also keeps the books'
         // milestone ladders and alternates from crowding the reply: measured 2026-09-30, one call held every two-sided line).
-        val markets = PropStats.parlayMarkets(sport).map { it.first }.distinct()
+        // Team totals ride the same call and the same 3 credits (PX9): `/props?markets=team_totals` is where ParlayAPI serves them.
+        val markets = PropStats.parlayMarkets(sport).map { it.first }.distinct() + "team_totals"
         val events = ArrayList<RefEvent>()
         val hurt = ArrayList<Injury>()
         val unreported = HashSet<String>()
@@ -119,6 +120,36 @@ object ParlayProps {
         else -> null
     }
 
+    /** A team-total row's game ([event id], [Game]-like triple of commence, home, away) and its quote, or null when it is not a full-game two-way total of one of the game's two teams. */
+    internal data class TeamTotalRow(val commence: Long, val home: String, val away: String)
+
+    internal fun teamTotal(r: JsonObject, now: Long): Triple<String, TeamTotalRow, RefBookMarket>? {
+        val period = r.str("period")
+        if (period != null && !period.equals("FULL", true)) return null
+        val team = (r.str("player") ?: r.str("team") ?: r.str("player_name"))?.trim() ?: return null
+        val line = r.num("line") ?: r.num("point") ?: return null
+        val over = decimal(r.num("over_price")) ?: return null
+        val under = decimal(r.num("under_price")) ?: return null
+        val book = TheOddsApiClient.canonicalBook(r.str("bookmaker") ?: r.str("source") ?: return null)
+        val eventId = r.str("event_id") ?: r.str("eventId") ?: r.str("id") ?: return null
+        val home = r.str("home_team") ?: return null
+        val away = r.str("away_team") ?: return null
+        val commence = r.str("commence_time")?.let { TheOddsApiClient.parseIsoMs(it) } ?: return null
+        // The books spell a team their own way ("UTA Jazz"): the closer of the game's two names, and clearly closer.
+        val toHome = com.tjshea.vigilant.data.match.TeamMatcher.similarity(team, home)
+        val toAway = com.tjshea.vigilant.data.match.TeamMatcher.similarity(team, away)
+        val subject = when {
+            toHome >= 0.5 && toHome - toAway >= 0.2 -> RefBookMarket.HOME
+            toAway >= 0.5 && toAway - toHome >= 0.2 -> RefBookMarket.AWAY
+            else -> return null
+        }
+        val seen = r.num("age_seconds")?.let { now - (it * 1000).toLong() } ?: r.str("last_update")?.let { TheOddsApiClient.parseIsoMs(it) } ?: r.num("last_update_ms")?.toLong()
+        return Triple(
+            eventId, TeamTotalRow(commence, home, away),
+            RefBookMarket(book, TheOddsApiClient.bookTitle(book), LineKind.TEAM_TOTAL, listOf(RefQuote(Side.OVER, over, line), RefQuote(Side.UNDER, under, line)), seen, subject = subject),
+        )
+    }
+
     /**
      * A `/props` answer: the rows (a list, or `{props|data|rows: [...]}`), one per book per player per line, into games. A row needs its game
      * (`event_id`, teams, start), player, a market Vigilant prices, a line and both sides' prices; a first-quarter or first-half line
@@ -134,6 +165,12 @@ object ParlayProps {
         val injuries = LinkedHashMap<String, Injury>()
         val unreported = LinkedHashSet<String>()
         for (r in rows) {
+            // A team's total (`team_totals`, served only here: not on /odds): a game line of Novig's TEAM_TOTAL kind, not a player's prop (PX9: ParlayAPI's Pinnacle, with its whole ladder, and DraftKings priced
+            // none of the engine's team totals; the row's "player" is the team as that book spells it, "UTA Jazz" for DraftKings).
+            if (r.str("market_key") == "team_totals") {
+                teamTotal(r, now)?.let { (id, g, market) -> games.getOrPut(id) { Game(id, g.commence, g.home, g.away) }.markets += market }
+                continue
+            }
             // Every row names its player's injury status (null: none reported), whatever its market or period.
             (r.str("player") ?: r.str("player_name"))?.trim()?.let { p ->
                 val key = p + "|" + (r.str("home_team") ?: "")
