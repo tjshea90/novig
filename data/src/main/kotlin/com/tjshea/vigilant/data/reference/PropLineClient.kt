@@ -357,6 +357,12 @@ class PropLineClient(
 
         const val REUSE_MS = 2 * 60_000L
 
+        /**
+         * With the stream live, a board read is kept current by its moves and read again only this often: for new games, new books and a game's first board (PropLine sends those whole on `/odds`, never
+         * line by line). Streaming Lite's 250,000 requests a day cover a few-minute re-read of every league and game many times over.
+         */
+        const val STREAM_REREAD_MS = 5 * 60_000L
+
         /** The shares of the day's pace the consumers may reach (the rest is headroom for game lines, rechecks, other books and research). */
         // Tj, 2026-10-17: "propline can use 25000 requests per day. it isn't getting anywhere near that. vigilant can use it liberally": props ran out of their 70% share at 3.6k used by 03:00Z and fell back to the small cap.
         const val PROPS_SHARE = 0.95
