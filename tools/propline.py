@@ -599,6 +599,56 @@ def cmd_altprobe(outdir, sports=("football_nfl", "football_ncaaf")):
     return 0
 
 
+PROP_KEYS = {
+    "football_nfl": "player_pass_yds,player_rush_yds,player_reception_yds,player_receptions,player_pass_tds,player_pass_attempts,player_pass_completions,player_rush_attempts",
+    "basketball_nba": "player_points,player_rebounds,player_assists,player_threes,player_points_rebounds_assists",
+    "hockey_nhl": "player_shots_on_goal,player_points,player_assists,goalie_saves",
+}
+
+
+def prop_pin(events, now):
+    """PX6: per Novig prop rung (player, stat, number), whether Pinnacle posts the same rung at PropLine, and Pinnacle's quote age."""
+    nov, pin, ages = set(), {}, []
+    for e in events:
+        for b in e.get("bookmakers") or []:
+            bk = b.get("key")
+            for m in b.get("markets") or []:
+                for o in m.get("outcomes") or []:
+                    if (o.get("name") or "").lower() != "over" or o.get("point") is None:
+                        continue
+                    k = (e.get("id"), m.get("key"), (o.get("description") or "").lower(), float(o["point"]))
+                    if bk == "novig":
+                        nov.add(k)
+                    elif bk == "pinnacle":
+                        t = _ts(o.get("last_seen_at"))
+                        pin[k] = None if t is None else now - t
+    for k in nov & set(pin):
+        if pin[k] is not None:
+            ages.append(pin[k])
+    ages.sort()
+    return {"novig": len(nov), "pinnacle": len(pin), "same": len(nov & set(pin)), "age_p50": int(ages[len(ages) // 2]) if ages else None}
+
+
+def cmd_proppin(outdir):
+    keys = keys_from_env()
+    i, _ = best_key(keys, [plan_of(k) for k in keys])
+    if i is None:
+        print("no usable key")
+        return 0
+    os.makedirs(outdir, exist_ok=True)
+    L = ["# Pinnacle props at PropLine vs Novig's prop lines (PX6, %s)" % time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()), ""]
+    for sp, mk in PROP_KEYS.items():
+        st, _, data = request("/v1/sports/%s/odds" % sp, keys[i], {"markets": mk, "bookmakers": "pinnacle,novig"})
+        ev = j(data)
+        ev = ev if isinstance(ev, list) else (ev or {}).get("data") or []
+        r = prop_pin(ev, time.time())
+        L.append("- %s (HTTP %s, %d games): Novig prop rungs %d, Pinnacle prop rungs %d, Pinnacle at Novig's number %d, Pinnacle age p50 %s s" % (sp, st, len(ev), r["novig"], r["pinnacle"], r["same"], r["age_p50"]))
+    with open(os.path.join(outdir, "proppin.md"), "w") as f:
+        f.write("\n".join(L) + "\n")
+    print("\n".join(L))
+    return 0
+
+
 def selftest():
     assert tier_of(1000) == "free" and tier_of(5000) == "hobby" and tier_of(25000) == "pro" and tier_of(250000) == "streaming-lite" and tier_of(None) == "?"
     assert keys_from_env({"PROPLINE_API_KEY": "a, b\nc  d;e"}) == ["a", "b", "c", "d", "e"] and keys_from_env({}) == []
@@ -633,6 +683,8 @@ if __name__ == "__main__":
         sys.exit(cmd_steam(a[1] if len(a) > 1 else "out/propline-steam"))
     if a[0] == "coverage":
         sys.exit(cmd_coverage(a[1] if len(a) > 1 else "out/propline-coverage"))
+    if a[0] == "proppin":
+        sys.exit(cmd_proppin(a[1] if len(a) > 1 else "out/propline-proppin"))
     if a[0] == "altprobe":
         sys.exit(cmd_altprobe(a[1] if len(a) > 1 else "out/propline-altprobe"))
     if a[0] == "speed":
