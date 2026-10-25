@@ -1,13 +1,13 @@
-# CHECKPOINT 4194 — read me first, then TASKS.md
+# CHECKPOINT 4195 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T08:47:57Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-be05497a-18skm3` · **builds on:** `445aac267` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T09:06:40Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-be05497a-18skm3` · **builds on:** `9801c8814` (this checkpoint is the commit after it)
 
 ## Just done
-v1.0.82 gated+pushed to main (4,146 tests green); release.yml run 40178016051 started; engine reset asked (resetAtMs 1792918047564) so the new runner runs the real-time list + ParlayAPI stream
+SSE streams (ParlayAPI odds + play-by-play) no longer cut by the shared client's 30 s call deadline (35 reconnects in 3 min; pbp reconnects cost 5 credits each); useParlay switched on (was off: engine priced from PropLine alone); v1.0.82 released
 
 ## Do this next
-confirm release, record-release.sh v1.0.82 422; read engine log for 'real-time list:' and 'Engine ParlayAPI:' + status fairAgeMedianS; then PB8 audit, PB12 steam study, PB17b, PB21b
+reset engine; answer Tj: why odds 7-10 min old (measure per-book ages in the live feed)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ confirm release, record-release.sh v1.0.82 422; read engine log for 'real-time l
 
 ## Last ten checkpoints
 ```
+  c4a6c5b4d ckpt 4194: v1.0.82 gated+pushed to main (4,146 tests green); release.yml run 401780160
   445aac267 ckpt 4193: pre-release: v1.0.82 PB: real-time list (PropLine + ParlayAPI Business stre
   b63c4ff47 ckpt 4192: pre-ship: v1.0.82 PB: real-time list (PropLine + ParlayAPI Business streams
   971e60854 ckpt 4191: pre-ship: v1.0.82 PB: real-time list (PropLine + ParlayAPI Business streams
@@ -25,5 +26,7 @@ confirm release, record-release.sh v1.0.82 422; read engine log for 'real-time l
   71e25af0f ckpt 4187: PB9 phone rests (ScanSettings.phoneRests/phoneAutoScan: no auto-scan servic
   b73a5cff5 ckpt 4186: PB: merged tj Gmail's PhoneSleep WIP; streamprobe frames saved (research/pa
   ed57aa38f ckpt 4185: research index rebuilt (ParlayAPI Business docs folder)
-  51f196e04 ckpt 4184: retry landing
 ```
+
+(4 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
