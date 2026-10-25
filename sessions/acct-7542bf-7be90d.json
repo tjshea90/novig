@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "ca7cfcdd1f986e265f095dc5263a3c8d54ab56d3",
+ "head": "fbda3aef0cf247ae325c5df680bbb32904c0574f",
  "since": 1792915284,
- "beat": 1792948085,
- "beatIso": "2026-10-25T17:08:05Z",
+ "beat": 1792948475,
+ "beatIso": "2026-10-25T17:14:35Z",
  "done": "PX: PropLine stale-pull overlay fix (PropLineLiveTest), ParlayAPI off the chain on Business (ApiChainTest), ParlayAPI alternates on; full suite green",
  "next": "engine reset; verify books per alt line + parlay sources in feed; answer Tj's odds-age screenshot"
 }
