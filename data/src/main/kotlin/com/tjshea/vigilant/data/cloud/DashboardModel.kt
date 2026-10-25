@@ -173,6 +173,25 @@ object DashboardModel {
      * connections" for half an hour while its props socket and its REST check answered, so its card stayed green): words for the card, or null. Only feeds named in the engine's own alert count, so one bad answer
      * from a busy feed never colours a card.
      */
+    /** One row of the PropLine freshness table: the book, its words, and how worried to look. */
+    data class FreshLine(val book: String, val text: String, val tone: Tone)
+
+    /**
+     * PropLine's freshness of each book the engine prices with (PSL, Tj 2026-10-25: "show in the app and engine how fresh the odds are and filter out stale odds"): game lines and props, seconds since
+     * PropLine last wrote each, worst first. Red = PropLine calls it stale (the engine then leaves that class out once it lasts [com.tjshea.vigilant.data.reference.PropLineLive.OUTAGE_S]), yellow = over 5 minutes.
+     */
+    fun propLineFresh(st: CloudStatus?, now: Long): List<FreshLine> {
+        val rows = st?.propLineFresh.orEmpty()
+        if (rows.isEmpty()) return emptyList()
+        fun age(s: Int?) = when { s == null -> "none"; s < 120 -> "${s}s"; s < 7_200 -> "${s / 60} min"; else -> "${s / 3_600} h" }
+        return rows.map { r ->
+            val worst = maxOf(r.linesAgeS ?: 0, r.propsAgeS ?: 0)
+            val tone = when { r.linesStale || r.propsStale -> Tone.BAD; worst > 300 -> Tone.WARN; else -> Tone.GOOD }
+            val title = com.tjshea.vigilant.data.reference.TheOddsApiClient.bookTitle(r.book)
+            FreshLine(title, "game lines ${age(r.linesAgeS)} · props ${age(r.propsAgeS)}" + (if (r.linesStale || r.propsStale) " · STALE on PropLine" else "") + (if (r.suspended > 0) " · ${r.suspended} pulled" else ""), tone)
+        }.sortedWith(compareBy<FreshLine> { it.tone != Tone.BAD }.thenBy { it.tone != Tone.WARN }.thenBy { it.book })
+    }
+
     fun feedProblem(st: CloudStatus?, providerId: String): String? =
         st?.let { silentFeeds(it.feedAlerts, it.feedReport).firstOrNull { f -> CloudDashboard.providerOf(f.feedId) == providerId }?.words }
 
