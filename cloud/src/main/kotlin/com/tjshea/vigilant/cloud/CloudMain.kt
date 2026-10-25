@@ -202,7 +202,7 @@ fun main(args: Array<String>) = runBlocking {
             if (s != null && sources.propLineOn(s)) {
                 sources.propLineFreshness.refresh()?.let { rows -> sources.propLineLive.staleBooks = sources.propLineFreshness.outages(rows) }
                 val now = System.currentTimeMillis()
-                if (now - loggedAt >= 15 * 60_000L) { loggedAt = now; log(sources.propLineNote()) }
+                if (now - loggedAt >= 5 * 60_000L) { loggedAt = now; log(sources.propLineNote()) }
             } else sources.propLineLive.staleBooks = emptyMap()
             delay(com.tjshea.vigilant.data.reference.PropLineFreshness.EVERY_MS)
         }

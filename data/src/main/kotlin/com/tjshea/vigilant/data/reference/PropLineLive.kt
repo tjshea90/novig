@@ -225,6 +225,20 @@ class PropLineLive(private val clock: () -> Long = System::currentTimeMillis) {
         "${moves.size} outcomes moved (${applied} laid over, ${pulls} pulled), ${reads.size} book boards on the heartbeat, ${scratchedPlayers.values.count { it.books >= MIN_BOOKS && now - it.atMs <= SCRATCH_MS }} players scratched, ${confirmed} markets confirmed current, ${gaps} gaps" +
             (staleBooks.filterValues { it.first || it.second }.keys.takeIf { it.isNotEmpty() }?.let { " · stale on PropLine: ${it.sorted().joinToString(",")}" } ?: "")
 
+    /**
+     * The heartbeat in words, per sport (PX9, Tj 2026-10-25: "why are the odds this stale if they are streamed"): how many book boards it lists, how old PropLine's last read of them is (that read is the newest a
+     * quote can be dated to when nothing moved), how often it reads them, and how many the confirm rule does not trust (no entry, a silent heartbeat, or a read older than twice its usual gap).
+     */
+    fun heartbeatNote(now: Long = clock()): String {
+        if (reads.isEmpty()) return "heartbeat: no book boards listed"
+        return "heartbeat: " + reads.entries.groupBy { it.key.substringAfter('|') }.entries.sortedBy { it.key }.joinToString(" · ") { (sport, l) ->
+            val ages = l.map { ((now - it.value.readAtMs) / 1000L).coerceAtLeast(0L) }.sorted()
+            val gaps = l.map { it.value.rereadS.toLong() }.sorted()
+            val untrusted = l.count { confirmedAt(it.key.substringBefore('|'), sport, now) == null }
+            "${sport.substringAfter('_')} ${l.size} books, last read ${ages[ages.size / 2]}s ago (oldest ${ages.last()}s), reread every ${gaps[gaps.size / 2]}s, $untrusted not trusted"
+        }
+    }
+
     /** Each book's last heartbeat read, for the status: book -> seconds since PropLine last started reading it (the oldest sport). */
     fun readAges(now: Long = clock()): Map<String, Int> =
         reads.entries.groupBy { it.key.substringBefore('|') }.mapValues { (_, v) -> v.maxOf { ((now - it.value.readAtMs) / 1000L).toInt().coerceAtLeast(0) } }

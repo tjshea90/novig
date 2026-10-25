@@ -244,7 +244,7 @@ class CloudSources(
     /** PropLine's per-book freshness (`/v1/freshness`, free, no key): read every minute by the engine while PropLine is on. */
     val propLineFreshness = com.tjshea.vigilant.data.reference.PropLineFreshness(http, json)
     fun propLineOn(s: ScanSettings) = s.usePropLine && has(CloudKeys.PROPLINE)
-    fun propLineNote(): String = "PropLine stream: " + propLineStream.health() + " · " + propLineStream.counts.entries.sortedBy { it.key }.joinToString(", ") { "${it.key} ${it.value}" }.ifBlank { "no events yet" } + " · " + propLineLive.describe()
+    fun propLineNote(): String = "PropLine stream: " + propLineStream.health() + " · " + propLineStream.counts.entries.sortedBy { it.key }.joinToString(", ") { "${it.key} ${it.value}" }.ifBlank { "no events yet" } + " · " + propLineLive.describe() + " · " + propLineLive.heartbeatNote()
     /** The BoltOdds key the sockets use: its plan and open connections (`/api/odds/user`, free), and whether the feed runs in one-connection mode (CH76). */
     suspend fun boltPlanNote(): String {
         if (!has(CloudKeys.BOLT)) return "BoltOdds: no key"
