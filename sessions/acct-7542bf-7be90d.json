@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "f26ae860d5310bee659b580b49c6848454a303af",
+ "head": "a94c61bca20e5de208ebaf4bcf1e20f105f768e2",
  "since": 1792915284,
- "beat": 1792961731,
- "beatIso": "2026-10-25T20:55:31Z",
+ "beat": 1792962030,
+ "beatIso": "2026-10-25T21:00:30Z",
  "done": "PX9f landed + engine reset 20:48 UTC; PX9h SGO lastUpdatedAt probe (sgo-probe.yml, tools/sgo_stamps.py) written",
  "next": "dispatch sgo-probe.yml on main, read its report; list_audit on the new engine run (PropLine back?)"
 }
