@@ -412,7 +412,7 @@ object QuoteAge {
     }
 
     @Composable
-    fun color(l: Level): Color = when (l) { Level.FRESH -> Edge.colors.positive; Level.MEDIUM -> Edge.colors.warning; Level.STALE -> MaterialTheme.colorScheme.error }
+    fun color(l: Level): Color = when (l) { Level.FRESH -> Edge.colors.positive; Level.MEDIUM -> Edge.colors.warning; Level.STALE -> Edge.colors.negative }
 
     /** A source id in words (the ids the scanner gives each feed). */
     fun feedName(id: String): String = when {
