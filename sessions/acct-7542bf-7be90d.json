@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "e0a1e8c59cafaaaf4156edcad2c180c6da29418c",
+ "head": "6c3aa3c2a33624a602193dad3654dd91dd835fb5",
  "since": 1792915284,
- "beat": 1792940469,
- "beatIso": "2026-10-25T15:01:09Z",
+ "beat": 1792940651,
+ "beatIso": "2026-10-25T15:04:11Z",
  "done": "PS1-PS12 written up (research/propline_parlay_audit_2026-10-25.md, CHANGES.md, TASKS ticked); full suite running in background",
  "next": "PB17b: ParlayAPI hot stream as the live lane's Pinnacle feed (like SharpApiLiveFeed); read propline-grade; ship v1.0.83"
 }
