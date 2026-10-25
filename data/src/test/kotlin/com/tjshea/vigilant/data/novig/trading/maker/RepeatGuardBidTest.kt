@@ -41,8 +41,9 @@ class RepeatGuardBidTest {
         val p = plan(listOf(post("m1-over", 0.45)), held)
         assertTrue(p.places.isEmpty())
         assertEquals(mapOf(MakerPlan.REPEAT_GUARD to 1), p.waiting)
-        // One bet before: it may go up.
-        assertEquals(1, plan(listOf(post("m1-over", 0.45)), held.take(1)).places.size)
+        // One bid filled before: another may go up. A BET held there (by hand or by the engine) gets no bid on top (Tj, 2026-10-25).
+        assertEquals(1, plan(listOf(post("m1-over", 0.45)), held.take(1).map { it.copy(who = RepeatGuard.Who.BID) }).places.size)
+        assertTrue(plan(listOf(post("m1-over", 0.45)), held.take(1)).places.isEmpty())
     }
 
     @Test

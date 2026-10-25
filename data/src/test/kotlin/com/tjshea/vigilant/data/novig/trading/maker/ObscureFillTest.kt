@@ -38,7 +38,8 @@ class ObscureFillTest {
     private val small = "LONGEST_RECEPTION"
 
     private fun rules(f: (ScanSettings) -> ScanSettings = { it }, g: (MakerRules) -> MakerRules = { it }) =
-        g(MakerRules.of(f(ScanSettings(makerFocus = BidFocus.QUICK_LIKELY))).copy(stakeMode = AutoBetStake.CUSTOM, customStake = 5.0, maxStake = 10.0))
+        // Every line here is the same player's over: the similar-bets dollar limit is off so these tests see the wallet rules alone (RepeatGuardTest covers it).
+        g(MakerRules.of(f(ScanSettings(makerFocus = BidFocus.QUICK_LIKELY))).let { it.copy(stakeMode = AutoBetStake.CUSTOM, customStake = 5.0, maxStake = 10.0, repeat = it.repeat?.copy(maxFamilyDollars = 0.0)) })
 
     private fun decide(l: MakerLine, r: MakerRules = rules()) = MakerQuote.decide(l, r, now)
 
