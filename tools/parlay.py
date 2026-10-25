@@ -188,6 +188,59 @@ def cmd_listen(outdir, sport="tennis", wait_min=40, seconds=120):
     return 0
 
 
+def listen_url(key, path, params, seconds, out, max_lines=400):
+    """Any SSE route for [seconds]: the raw frames (each cut to 4,000 chars), at most [max_lines]. The key goes in the header, never in the saved file."""
+    req = urllib.request.Request(BASE + path + (("?" + urllib.parse.urlencode(params)) if params else ""))
+    req.add_header("X-API-Key", key)
+    req.add_header("Accept", "text/event-stream")
+    lines = []
+    end = time.time() + seconds
+    try:
+        with urllib.request.urlopen(req, timeout=seconds + 15) as r:
+            lines.append("HTTP %s content-type %s" % (r.status, r.headers.get("content-type")))
+            while time.time() < end and len(lines) < max_lines:
+                raw = r.readline()
+                if not raw:
+                    break
+                t = raw.decode("utf8", "replace").rstrip()
+                if t:
+                    lines.append(t[:4000])
+    except urllib.error.HTTPError as e:
+        lines.append("HTTP %s %s" % (e.code, e.read()[:500].decode("utf8", "replace")))
+    except Exception as e:
+        lines.append("ended: %s" % type(e).__name__)
+    with open(out, "w") as f:
+        f.write("\n".join(lines).replace(key, "<key>") + "\n")
+    return lines
+
+
+def cmd_streamprobe(outdir, sport="icehockey_nhl"):
+    """Business tier (PB10, Tj 2026-10-25): the odds SSE, the hot SSE and the line-move SSE for [sport] (60 s each), and the freshness routes, saved keyless so the engine's stream parser is built on real frames."""
+    keys = keys_from_env()
+    ranked = sorted(((usage_of(k), k) for k in keys), key=lambda t: -rank(t[0]))
+    if not ranked or ranked[0][0].get("status") != 200:
+        print("no usable key")
+        return 0
+    u, key = ranked[0]
+    print("biggest key: tier %s, %s/%s credits left" % (u.get("tier"), u.get("remaining"), u.get("total")))
+    os.makedirs(outdir, exist_ok=True)
+    for name, path, params in [
+        ("sse_odds_%s.txt" % sport, "/v1/sse/odds/%s" % sport, {"kinds": "game,prop", "limit": 50, "heartbeat_s": 5}),
+        ("sse_hot_%s.txt" % sport, "/v1/sse/hot/%s" % sport, {"kinds": "game", "limit": 50, "heartbeat_s": 5}),
+        ("sse_drop_%s.txt" % sport, "/v1/odds-drop/%s" % sport, {"threshold": 10, "heartbeat_s": 5}),
+    ]:
+        n = len(listen_url(key, path, params, 60, os.path.join(outdir, name)))
+        print("%s: %d lines" % (name, n))
+    for name, path in [("source_health_%s.json" % sport, "/v1/sports/%s/live/source-health" % sport), ("meta_source_health.json", "/v1/meta/source-health"),
+                       ("book_freshness_pinnacle.json", "/v1/bookmakers/pinnacle/freshness"), ("book_freshness_fanduel.json", "/v1/bookmakers/fanduel/freshness"),
+                       ("pinnacle_coverage.json", "/v1/pinnacle-coverage"), ("usage.json", "/v1/usage")]:
+        st, h, data = request(path, key)
+        with open(os.path.join(outdir, name), "w") as f:
+            json.dump({"status": st, "credits_last": h.get("x-requests-last"), "body": trim(j(data), 12) if j(data) is not None else data[:2000].decode("utf8", "replace")}, f, indent=1)
+        print("%s: HTTP %s" % (name, st))
+    return 0
+
+
 def cmd_arbscan(outdir):
     """Does ParlayAPI's arb feed ever pair the two venues Tj can bet (Novig and Kalshi)? Counts the book pairs of the pregame /arbitrage (200 per sport) and of /inplay/arbs; ~70 credits."""
     keys = keys_from_env()
@@ -244,6 +297,8 @@ if __name__ == "__main__":
         sys.exit(cmd_arbscan(sys.argv[2] if len(sys.argv) > 2 else "out/parlay"))
     if c == "listen":
         sys.exit(cmd_listen(sys.argv[2] if len(sys.argv) > 2 else "out/parlay", sys.argv[3] if len(sys.argv) > 3 else "tennis"))
+    if c == "streamprobe":
+        sys.exit(cmd_streamprobe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay", sys.argv[3] if len(sys.argv) > 3 else "icehockey_nhl"))
     if c == "probe":
         sys.exit(cmd_probe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay"))
     print("usage: parlay.py plans | probe [dir] | listen [dir] [sport] | selftest")
