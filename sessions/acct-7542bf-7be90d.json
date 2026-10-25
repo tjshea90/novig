@@ -8,8 +8,8 @@
  "branch": "ccr-be05497a-18skm3",
  "head": "4ef0a7c243ebcf229e4c33a446914c80a53df82a",
  "since": 1792915284,
- "beat": 1792945980,
- "beatIso": "2026-10-25T16:33:00Z",
+ "beat": 1792946386,
+ "beatIso": "2026-10-25T16:39:46Z",
  "done": "propline_grade root cause: 6+ bets per request outlast PropLine's 30 s gateway (1 bet = 3.5 s, 200); now 1 bet/request, 8 in flight, final grades reused; run dispatched",
  "next": "16:33 check-in: read SUMMARY.md, add numbers to research/propline_parlay_audit_2026-10-25.md point 3, tell Tj; then PB8, PB12"
 }
