@@ -6421,4 +6421,4 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [x] NR1 (NOVIG_API.md §30; PortfolioPnlTest) Novig docs re-read (socket, bbo, orders over socket, changes since NOVIG_API.md §26-27); fix gaps in app/engine; NOVIG_API.md updated
 - [x] PR1 (research/api_docs_review_2026-10-25.md: no change since 10-22) ParlayAPI Pro docs re-read; gaps fixed; PARLAY_API.md updated
 - [x] FR1 (research/api_docs_review_2026-10-25.md; Polymarket version fix, ExchangeClientsTest) Kalshi, Polymarket, SX Bet, ESPN feeds audited against their docs; gaps fixed; docs updated
-- [ ] PSL9 full suite, ship, release, engine reset, tell Tj
+- [x] PSL9 (4,247 tests green; v1.0.81 code 421 released and recorded; engine reset) full suite, ship, release, engine reset, tell Tj
