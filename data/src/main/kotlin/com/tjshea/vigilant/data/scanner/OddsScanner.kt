@@ -62,6 +62,9 @@ interface OddsScanner {
 
     fun liveReprice(settings: ScanSettings, rows: List<Opportunity>, overlay: (com.tjshea.vigilant.data.reference.RefEvent, Long) -> com.tjshea.vigilant.data.reference.RefEvent): List<Opportunity> = rows
 
+    /** [held] priced against the reference game [scan] was priced from (the streams laid over it), under [held]'s own newer Novig price; null: not possible, keep [held] (PX9). */
+    fun rebaseFair(settings: ScanSettings, held: Opportunity, scan: Opportunity, overlay: (com.tjshea.vigilant.data.reference.RefEvent, Long) -> com.tjshea.vigilant.data.reference.RefEvent): Opportunity? = null
+
     /** Re-price what's already fetched under new settings. No network. Null before the first scan. */
     suspend fun reprice(settings: ScanSettings): ScanResult?
 

@@ -241,6 +241,13 @@ class CloudEngine(
     /** The newest scan result (partial or final): the bid desk's lines are made from it with the real-time list's newer prices laid in (PB14). */
     @Volatile private var lastScanResult: ScanResult? = null
     /** The real-time list is what the phone sees: it has run within the last few passes. */
+    /** A scan's result into the real-time list; a held side the scan read earlier than its own newer Novig price still gets the scan's fair (PX9). */
+    private fun adoptRealtime(r: ScanResult, now: Long) {
+        val pricing = realtimePricing
+        val overlay = liveOverlay
+        realtime.adopt(r, now, if (pricing != null && overlay != null) { held, scan -> scanner.rebaseFair(pricing, held, scan, overlay) } else null)
+    }
+
     private fun realtimeOn(now: Long = clock()): Boolean = liveOverlay != null && realtime.passes > 0 && now - realtime.lastPassAtMs < 4 * RealtimeList.EVERY_MS
     @Volatile private var lastAges = CloudCurrency.UNKNOWN
     @Volatile private var tradeStatus: TradeStatus? = null
@@ -562,7 +569,7 @@ class CloudEngine(
             if (now - lastPublishedAt >= partialEveryMs) {
                 lastPublishedAt = now
                 partial.getAndSet(null)?.let { r ->
-                    if (liveOverlay != null) realtime.adopt(r, now)
+                    if (liveOverlay != null) adoptRealtime(r, now)
                     lastScanResult = r
                     val rows = withFar(r.feed(filterSettings), now)
                     // The list keeps the rows this scan has not read yet (their last stamps are honest) instead of emptying at every scan's start; trading and the bid desk still get only what the scan read.
@@ -680,7 +687,7 @@ class CloudEngine(
         val rows = withFar(ownRows, done)
         if (nearReachMs == null) { lastFullAtMs = done; lastFullKey = fetchKey.toString(); lastFullRows = ownRows }
         val feed = CloudFeed(done, cfg.rev, result.stats, rows)
-        if (liveOverlay != null) { realtime.adopt(result, done); log(realtime.describe()) }
+        if (liveOverlay != null) { adoptRealtime(result, done); log(realtime.describe()) }
         lastScanResult = result
         val own = !realtimeOn(done)
         passes++
