@@ -6407,3 +6407,18 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [x] SG5 (v1.0.80 released; live cap $3 set by engine_set.py; engine reset) setting in Settings (Bids/Auto-bet repeat guard), engine mirrored (CloudScanKey), live value set with engine_set.py; CHANGES.md line; ship + release.
 
 - [ ] CH88 (Tj 01:57 UTC 2026-10-25): bids thousands: find the rule holding back bid volume (desk deskNote, similar-bets $3 cap, books-agree), loosen only what data supports; answered in chat what bids are priced from.
+
+## PSL: PropLine Streaming Lite, full use; re-review Novig, ParlayAPI, Kalshi, Polymarket, SX Bet, ESPN (Tj, 2026-10-25 06:10 UTC, typed prompt, verbatim in INBOX.md)
+"I have upgraded to propline streaming lite. It uses the same key already on GitHub, but includes additional features and limits, webhook, and websocket ... I want the GitHub engine, Claude, and the android app to take full advantage of all the features, speed, and accuracy, including full usage of the webhooks and/or websocket. I want the GitHub engine to run 24/7 connected to propline streaming lite." (supersedes PS1)
+- [ ] PSL1 docs: recipes, api-versioning, openapi.json, docs, llms-full.txt, sportsbook-accuracy saved verbatim to research/propline/docs_2026-10-25/; findings (Streaming Lite limits, WebSocket/webhook protocol, events, freshness endpoints, new endpoints vs 2026-10-16) in research/PROPLINE_STREAMING_2026-10-25.md
+- [ ] PSL2 limits: Streaming Lite plan read from X-Daily-Limit (250,000/day, burst 100 / sustained 35 a second) in PropLineAccount/QuotaPolicy/PropLineClient pacing; engine uses the room (more games, faster refresh)
+- [ ] PSL3 engine WebSocket client (PropLineStream): auth, subscriptions, since_seq replay, gap detection, line_movement/resolution/suspended events merged into the PropLine board; switch gates.proplineSocket; status line; tests on recorded frames
+- [ ] PSL4 engine runs the PropLine socket 24/7 (outside the betting hours too: a keeper job or the engine idling with the socket) with the archive of every event to Releases
+- [ ] PSL5 bookmaker freshness endpoints: read per book, published in status.json, stale books filtered out of the fair; shown in the app (Engine › APIs / Diagnostics)
+- [ ] PSL6 every other new feature found in PSL1 (grading, CLV, books, live odds and scores) built or written down with why
+- [ ] PSL7 sportsbook-accuracy page: book weights / sharp lists checked against it (LEVER, class B)
+- [ ] PSL8 Tj's PropLine dashboard screenshots: none arrived with the message; ask once, advise from the docs
+- [ ] NR1 Novig docs re-read (socket, bbo, orders over socket, changes since NOVIG_API.md §26-27); fix gaps in app/engine; NOVIG_API.md updated
+- [ ] PR1 ParlayAPI Pro docs re-read; gaps fixed; PARLAY_API.md updated
+- [ ] FR1 Kalshi, Polymarket, SX Bet, ESPN feeds audited against their docs; gaps fixed; docs updated
+- [ ] PSL9 full suite, ship, release, engine reset, tell Tj
