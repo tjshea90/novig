@@ -1,13 +1,13 @@
-# CHECKPOINT 4230 — read me first, then TASKS.md
+# CHECKPOINT 4231 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T20:46:22Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-e58c5a58-3qyzld` · **builds on:** `60bccbac9` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T20:52:25Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-e58c5a58-3qyzld` · **builds on:** `49496177c` (this checkpoint is the commit after it)
 
 ## Just done
-PX9f fixed: PropLine's 60-bookmaker limit found by the bookparam probe; requests split into even parts and merged per game (PropLineClientTest); CHANGES.md logged
+PX9f landed + engine reset 20:48 UTC; PX9h SGO lastUpdatedAt probe (sgo-probe.yml, tools/sgo_stamps.py) written
 
 ## Do this next
-when tools/test.sh (full) is green: push.sh lands on main, engine_set.py --reset, then list_audit.py to confirm PropLine quotes are back (PX9g)
+dispatch sgo-probe.yml on main, read its report; list_audit on the new engine run (PropLine back?)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ when tools/test.sh (full) is green: push.sh lands on main, engine_set.py --reset
 
 ## Last ten checkpoints
 ```
+  3834ba959 ckpt 4230: PX9f fixed: PropLine's 60-bookmaker limit found by the bookparam probe; req
   452894c6d ckpt 4229: PX9f: found every PropLine source answering HTTP 400 on the engine since PX
   184068b3d ckpt 4228: research index rebuilt (propline_books study); PX9c landing
   92b5123b0 ckpt 4227: PX9c: 34 more PropLine books (measured), Superbet/Napoleon + Fortuna groups
@@ -25,5 +26,5 @@ when tools/test.sh (full) is green: push.sh lands on main, engine_set.py --reset
   be57f4981 ckpt 4223: PX8: ParlayAPI stream skips period rows + counts unread by market; parlay.p
 ```
 
-(11 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
