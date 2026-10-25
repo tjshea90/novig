@@ -51,6 +51,10 @@ jobs:
         run: |
           if git fetch -q --depth=1 origin cloud-feed 2>/dev/null && git show FETCH_HEAD:trades.json > trades.json 2>/dev/null; then echo "trades.json: $(wc -c < trades.json) bytes"; else echo '{}' > trades.json; echo "no trades.json yet"; fi
 
+      - name: The phone's API switches (cloud-config settings.json; an API switched off is never called, PB5)
+        run: |
+          if git fetch -q --depth=1 origin cloud-config 2>/dev/null && git show FETCH_HEAD:settings.json > settings.json 2>/dev/null; then echo "settings.json: $(wc -c < settings.json) bytes"; else echo '{}' > settings.json; echo "no settings yet: paid APIs stay unasked"; fi
+
       - name: Grade
         env:
           SGO_API_KEY: ${{ secrets.SGO_API_KEY }}
@@ -58,7 +62,7 @@ jobs:
         run: |
           set -o pipefail
           ls journal/*.jsonl >/dev/null 2>&1 || { echo "no study journal yet: nothing to grade"; mkdir -p newgrades; exit 0; }
-          ./gradlew :cloud:grade --no-daemon --console=plain --args="--journal $PWD/journal --new $PWD/newgrades --trades $PWD/trades.json --results $PWD/trade-results.json" 2>&1 | tail -n 60
+          ./gradlew :cloud:grade --no-daemon --console=plain --args="--settings $PWD/settings.json --journal $PWD/journal --new $PWD/newgrades --trades $PWD/trades.json --results $PWD/trade-results.json" 2>&1 | tail -n 60
 
       - name: Keep what the grader added (the engine-grades Release; nothing is rewritten)
         run: |

@@ -33,6 +33,7 @@ import java.io.File
  *   --new DIR       receives `grades-<day>.jsonl`: the lines this run added
  *   --trades FILE   the engine's `trades.json` (optional)
  *   --results FILE  writes the settled orders here (`trade-results.json`) when --trades is given
+ *   --settings FILE the phone's `settings.json` from cloud-config: SportsGameOdds and PropLine are asked only while their switches are on there (PB5); without it, neither is
  *
  * Free sources only unless `SGO_API_KEY` is present (SportsGameOdds' scores and closes are flat-rate on the Pro plan). It places no order and holds no trading key.
  */
@@ -48,7 +49,13 @@ private suspend fun gradeMain(args: Array<String>) {
 
     var scores: ScoreSource = FreeScores(http, json)
     val closes = ArrayList<CloseSource>()
-    val sgoKeys = CloudKeys.fromEnv(CloudKeys.SGO)
+    // An API switched off on the phone is never called, here too (Tj, 2026-10-25, PB5): its switch is read from the settings the engine runs on; no settings file = off.
+    val switches = v("--settings")?.let { f -> runCatching { json.parseToJsonElement(File(f).readText()) }.getOrNull() } as? kotlinx.serialization.json.JsonObject
+    fun on(name: String): Boolean {
+        val st = (switches?.get("settings") as? kotlinx.serialization.json.JsonObject) ?: switches ?: return false
+        return (st[name] as? kotlinx.serialization.json.JsonPrimitive)?.content == "true"
+    }
+    val sgoKeys = if (on("sgoPro")) CloudKeys.fromEnv(CloudKeys.SGO) else emptyList()
     if (sgoKeys.isNotEmpty()) {
         val usage = UsageMeter(JsonFileStore(File(journalDir.parentFile ?: File("."), "grade-usage.json"), UsageBook.serializer(), { UsageBook() }, json))
         val client = SportsGameOddsClient(http, KeyPool(QuotaPolicy.SGO, { sgoKeys }, usage), json)
@@ -56,7 +63,7 @@ private suspend fun gradeMain(args: Array<String>) {
         scores = ChainedScores(sgoScores, scores)
         closes += SgoCloses(client, { true }).also { it.enabled = true }
     }
-    val plKeys = CloudKeys.fromEnv(CloudKeys.PROPLINE)
+    val plKeys = if (on("usePropLine")) CloudKeys.fromEnv(CloudKeys.PROPLINE) else emptyList()
     if (plKeys.isNotEmpty()) {
         val usage = UsageMeter(JsonFileStore(File(journalDir.parentFile ?: File("."), "grade-usage-pl.json"), UsageBook.serializer(), { UsageBook() }, json))
         val pl = com.tjshea.vigilant.data.reference.PropLineClient(http, KeyPool(QuotaPolicy.PROPLINE, { plKeys }, usage), json, relayNovig = false, meter = usage)
