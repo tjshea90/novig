@@ -83,6 +83,9 @@ class RealtimeList(
         return list
     }
 
+    /** The watched sides at their newest prices, by [Opportunity.key]. */
+    @Synchronized fun current(): Map<String, Opportunity> = held
+
     /** One line for the engine's log and status. */
     fun describe(): String = "real-time list: $watched sides watched (within ${Math.round(nearPoints * 100)} pts of +EV), $passes passes, last ${lastPassMs} ms; $turnedPositive turned +EV between scans, $dropped left the list"
 

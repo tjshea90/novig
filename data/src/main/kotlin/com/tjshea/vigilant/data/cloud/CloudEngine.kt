@@ -231,6 +231,9 @@ class CloudEngine(
     @Volatile private var realtimePublishedAt = 0L
     @Volatile private var realtimeTradedAt = 0L
     @Volatile private var realtimeSig = 0
+    @Volatile private var realtimeBidsAt = 0L
+    /** The newest scan result (partial or final): the bid desk's lines are made from it with the real-time list's newer prices laid in (PB14). */
+    @Volatile private var lastScanResult: ScanResult? = null
     /** The real-time list is what the phone sees: it has run within the last few passes. */
     private fun realtimeOn(now: Long = clock()): Boolean = liveOverlay != null && realtime.passes > 0 && now - realtime.lastPassAtMs < 4 * RealtimeList.EVERY_MS
     @Volatile private var lastAges = CloudCurrency.UNKNOWN
@@ -333,6 +336,13 @@ class CloudEngine(
                 lastPublished = feed; lastAges = CloudCurrency.of(rows, now)
                 val args = lastStatusArgs
                 problem = publish(feed, if (args != null) status(args.rev, args.startedAtMs, args.untilMs, args.names, args.idle) else status(feed.configRev, now, now, emptyList(), idle = false))
+            }
+            // The bid desk re-prices on the newest fair odds (PB14, Tj 2026-10-25: "altering or cancelling bids according to the freshest fair odds and movements"): its lines are the last scan's, with every
+            // watched side at the real-time price, sent every [REALTIME_BIDS_MS] instead of only when a scan publishes.
+            lastScanResult?.takeIf { now - realtimeBidsAt >= REALTIME_BIDS_MS && realtime.watched > 0 }?.let { r ->
+                realtimeBidsAt = now
+                val held = realtime.current()
+                withTimeoutOrNull(WATCH_STEP_MS) { sendBids(r.copy(opportunities = r.opportunities.map { held[it.key] ?: it }, computedAtMs = now), lastPublished?.configRev ?: pricedRev, s, now) }
             }
             if (rows.isNotEmpty() && (realtime.turnedPositive > before || now - realtimeTradedAt >= 15_000L)) {
                 realtimeTradedAt = now
@@ -542,6 +552,7 @@ class CloudEngine(
                 lastPublishedAt = now
                 partial.getAndSet(null)?.let { r ->
                     if (liveOverlay != null) realtime.adopt(r, now)
+                    lastScanResult = r
                     val rows = withFar(r.feed(filterSettings), now)
                     // The list keeps the rows this scan has not read yet (their last stamps are honest) instead of emptying at every scan's start; trading and the bid desk still get only what the scan read.
                     val readNow = r.freshSinceMs?.let { since -> r.opportunities.filter { (it.bookFetchedAtMs ?: 0L) >= since }.mapTo(HashSet()) { it.outcome.outcomeId } }.orEmpty()
@@ -651,6 +662,7 @@ class CloudEngine(
         if (nearReachMs == null) { lastFullAtMs = done; lastFullKey = fetchKey.toString(); lastFullRows = ownRows }
         val feed = CloudFeed(done, cfg.rev, result.stats, rows)
         if (liveOverlay != null) { realtime.adopt(result, done); log(realtime.describe()) }
+        lastScanResult = result
         val own = !realtimeOn(done)
         passes++
         lastRows = rows.size
@@ -869,6 +881,8 @@ class CloudEngine(
         const val LIVE_EVERY_MS = 3_000L
         /** A read-only step of the watch loop (the bid candidates, the re-read before judging) that takes longer is dropped for this round: 2026-10-17 a hung step froze the loop's tick and the stall watchdog restarted a healthy engine every 7.5 min. */
         const val WATCH_STEP_MS = 60_000L
+        /** The bid desk's lines are re-made from the real-time prices this often (PB14). */
+        const val REALTIME_BIDS_MS = 15_000L
         const val PROGRESS_RESTART_GAP_MS = 300_000L
         /** The trading wallet below this (Tj, 2026-10-15: "any amount under 50 cents") puts the engine to sleep; it is read again this often. */
         const val WALLET_MIN = 0.50
