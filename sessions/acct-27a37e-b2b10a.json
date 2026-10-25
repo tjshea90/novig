@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-27fee639-d3opru",
- "head": "91eb83777ef06c646ec9c0abe168ce0658275ac9",
+ "head": "dce25e0c231db0e4fbea3ee55ded4d51e4e1d5e8",
  "since": 1792912591,
- "beat": 1792954489,
- "beatIso": "2026-10-25T18:54:49Z",
- "done": "PX9: real-time list no longer adopts partial-scan rows of leagues still waiting for a fair source (Kalshi-alone rows), removes held rows a newer scan puts out of reach, rebases held rows onto a richer scan's fair; ParlayLive period guard; PropLine heartbeat/list-quality/cross-census diagnostics (4198 tests green)",
- "next": "land on main (check), engine reset, read engine-log: list quality, heartbeat, crossSame/crossDiff; then PX9b decision on push books; tell Tj"
+ "beat": 1792954599,
+ "beatIso": "2026-10-25T18:56:39Z",
+ "done": "PX9: propline.yml altprobe takes sports (NBA/NHL/MLB probe of books at Novig's alternate numbers); ParlayAPI NBA gameprobe: alternates Pinnacle alone, main spreads split across 3 numbers",
+ "next": "dispatch altprobe for basketball_nba,hockey_nhl,baseball_mlb; read the new engine's list quality / heartbeat / census; PX9b"
 }
