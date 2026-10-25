@@ -374,6 +374,9 @@ class CloudTrader(
         const val MIN_LEAD_MS = 60_000L
         const val FRESH_PRICE_MS = 3 * 60_000L
         const val MAX_PER_PASS = 10
+
+        /** Less than this left under the similar-bets limit is not worth an order. */
+        const val MIN_STAKE = 0.05
         /** Open entries stop counting as money at risk this long after the game started (a grader settles them for good). */
         const val EXPOSURE_AFTER_START_MS = 3L * 3_600_000L
         /** Bumped when the decision rules change, so a new rule's decision has a new client id. */
