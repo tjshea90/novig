@@ -54,7 +54,7 @@ def next_open(now_ms):
 
 
 def in_hours(now_ms, cfg=None):
-    """The engine's hours as cloud-scan.yml's gate reads them: 08:00 to 01:00 ET, unless the phone turned the window off (gates.cloudHours), a manual Run opened it or a manual Stop holds it."""
+    """The engine's hours as cloud-scan.yml's gate reads them: round the clock (PB7, Tj 2026-10-25: 24/7 by default); 08:00 to 01:00 ET only while the phone's window is on (gates.cloudHours), a manual Run opened it or a manual Stop holds it."""
     cfg = cfg or {}
     if now_ms < int(cfg.get("manualStopUntilMs", 0) or 0):
         return False
@@ -285,9 +285,12 @@ def selftest():
     # the dead-man STOP starts nothing
     assert plan(ms(2026, 10, 19, 7, 59), stopped=True)[0] == "stop"
     # the hours, as the gate reads them
-    assert in_hours(ms(2026, 10, 19, 8, 0)) and in_hours(ms(2026, 10, 20, 0, 59)) and not in_hours(ms(2026, 10, 20, 1, 0)) and not in_hours(ms(2026, 10, 19, 7, 59))
+    win = {"settings": {"gates": {"cloudHours": True}}}
+    assert in_hours(ms(2026, 10, 19, 8, 0), win) and in_hours(ms(2026, 10, 20, 0, 59), win) and not in_hours(ms(2026, 10, 20, 1, 0), win) and not in_hours(ms(2026, 10, 19, 7, 59), win)
     assert in_hours(ms(2026, 10, 19, 3, 0), {"settings": {"gates": {"cloudHours": False}}})
-    assert in_hours(ms(2026, 10, 19, 3, 0), {"manualRunUntilMs": ms(2026, 10, 19, 4, 0)})
+    # PB7 (Tj, 2026-10-25: "make the GitHub engine run 24/7 by default"): no window unless the phone switched one on
+    assert in_hours(ms(2026, 10, 19, 3, 0)) and in_hours(ms(2026, 10, 19, 3, 0), {})
+    assert in_hours(ms(2026, 10, 19, 3, 0), dict(win, manualRunUntilMs=ms(2026, 10, 19, 4, 0)))
     assert not in_hours(ms(2026, 10, 19, 12, 0), {"manualStopUntilMs": ms(2026, 10, 20, 8, 0)})
     # the phone's switch as the gate reads it (TCL81): an off lasts until the next 08:00 ET, never after STOP ALL or a removed token
     off_9pm = {"on": False, "rev": ms(2026, 10, 19, 21, 0), "device": "phone"}
