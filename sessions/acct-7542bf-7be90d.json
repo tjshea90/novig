@@ -8,8 +8,8 @@
  "branch": "ccr-be05497a-18skm3",
  "head": "5dc9fa76b31f3093db3dc8a7be20b95a20d6f0fb",
  "since": 1792915284,
- "beat": 1792936760,
- "beatIso": "2026-10-25T13:59:20Z",
+ "beat": 1792937110,
+ "beatIso": "2026-10-25T14:05:10Z",
  "done": "Answered Tj's odds-age question with measurements; engine run 40181523769 runs all fixes (real-time list, ParlayAPI stream steady 6 connections, stale books out, listed bets pinned, mid-scan reset)",
  "next": "PB23 check poll confirmations in engine log; PB8 settings audit rest; ship v1.0.83 (phone bits); PB12 steam study; PB17b /sse/hot live lane; PB21b cross-check"
 }
