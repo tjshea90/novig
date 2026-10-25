@@ -52,6 +52,16 @@ object Format {
         }
     }
 
+    /** An age in a few characters: "4s", "2m 10s", "1h 5m" (the bet sheet's per-book column, PB20). */
+    fun ageShort(ms: Long): String {
+        val s = (ms / 1000).coerceAtLeast(0)
+        return when {
+            s < 60 -> "${s}s"
+            s < 3600 -> "${s / 60}m" + (if (s % 60 != 0L && s < 600) " ${s % 60}s" else "")
+            else -> "${s / 3600}h ${(s % 3600) / 60}m"
+        }
+    }
+
     fun kellyLabel(multiplier: Double): String = when (multiplier) {
         0.125 -> "⅛ Kelly"
         0.25 -> "¼ Kelly"
