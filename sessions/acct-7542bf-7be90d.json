@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "21133d783d5dc1555b92251a82cd263d934a489c",
+ "head": "77ff56ab002461809503b57e73017e8682f271d3",
  "since": 1792915284,
- "beat": 1792962164,
- "beatIso": "2026-10-25T21:02:44Z",
- "done": "research index + LEVERS link for feed_freshness_docs",
- "next": "engine reset onto PX9d; read sgo-probe run; list_audit"
+ "beat": 1792962239,
+ "beatIso": "2026-10-25T21:03:59Z",
+ "done": "PX9h: SGO lastUpdatedAt measured = last read (ages true; SGO NCAAF ~5 min cycle, its push-book copies stale 72% vs PropLine's); recorded",
+ "next": "list_audit on the run after the 21:03 reset (PX9d live); tell Tj"
 }
