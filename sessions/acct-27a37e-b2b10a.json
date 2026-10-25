@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "a4180969047ff9bca2efde9d5fa8c3a4a9c33151",
+ "head": "f9ad998eb339c6bc2546201c2befdc256bc12dac",
  "since": 1792912591,
- "beat": 1792914104,
- "beatIso": "2026-10-25T07:41:44Z",
+ "beat": 1792914354,
+ "beatIso": "2026-10-25T07:45:54Z",
  "done": "PB1 SharpAPI Free tier: plan read from X-RateLimit-Limit, 6 s spacing, game lines only, 60 s polls, data delay dated, no stream/game state/live feed/extras/splits; SharpApiFreeTierTest",
  "next": "PB3 remove Unabated + OddsPapi v5"
 }
