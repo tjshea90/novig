@@ -35,9 +35,9 @@ class SharpApiSource(
         val now = clock()
         val slug = SharpApiBooks.leagueSlug(league)
         if (slug == null || client.down(now)) return RefSnapshot(league.oddsApiSportKey, emptyList(), now, provider = ID)
-        if (client.lite()) {
+        if (client.rateLimit == null || client.lite()) {
             // The Free tier (12 requests a minute) reads a league whole in minutes, and the scan waited for it: every scan stopped at "Fair odds 68/74" and was cut after 150-270 s, so the list and its
-            // fair odds were 5-12 minutes old (Tj, 2026-10-25: "Why are these odds so old if they are from a socket?"). The store is brought up to date in the background; the scan takes what it holds.
+            // fair odds were 5-12 minutes old (Tj, 2026-10-25: "Why are these odds so old if they are from a socket?"). The store is brought up to date in the background; the scan takes what it holds. Before the first answer says which plan the key is, the same.
             if (inFlight.add(slug)) background.launch { try { feed.ensure(slug) } catch (e: Exception) { if (e is kotlinx.coroutines.CancellationException) throw e } finally { inFlight.remove(slug) } }
         } else if (!feed.ensure(slug)) {
             feed.lastNote?.let { lastReads[league.novigName] = it }
