@@ -6466,4 +6466,4 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [ ] PS9b Kalshi ticker crosswalk from PropLine includeBookIds for the Kalshi venue's matching
 - [x] PS11 (Tj 14:3x UTC) https://parlay-api.com/cookbook: review the recipes, use the ones that improve the app or engine (saved research/parlayapi_business_2026-10-25/cookbook.txt; audit doc)
 - [x] PS12 (Tj 14:32 UTC) "make sure both parlayapi and propline are both logically used together ... compliment each other": fill gaps, freshest wins, cross-check (PB21b), no cross-feed overlay (audit doc)
-- [ ] PS10 then finish the open PB items (PB8, PB12, PB17b, PB21b, PB22, PB23) and release everything in the next version (v1.0.83)
+- [x] PS10 (v1.0.83 released 15:19 UTC; PB8 walk and PB12 steam study carried on below) then finish the open PB items (PB8, PB12, PB17b, PB21b, PB22, PB23) and release everything in the next version (v1.0.83)

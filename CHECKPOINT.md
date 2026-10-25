@@ -1,21 +1,23 @@
-# CHECKPOINT 4209 — read me first, then TASKS.md
+# CHECKPOINT 4210 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T15:12:36Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-be05497a-18skm3` · **builds on:** `c353f654d` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T15:23:14Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-be05497a-18skm3` · **builds on:** `025a5895c` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v1.0.83 PS: PropLine + ParlayAPI audit: ParlayAPI stream overlay fixed (quotes tagged at parse), ParlayAPI hot streams, PropLine/ParlayAPI cross-check, 13 more PropLine books, PropLine 1st halves, ParlayAPI Pinnacle live feed (paper), real bets graded by PropLine /clv/grade, restart button keep (versionCode 423, v1.0.83)
+v1.0.83 released + recorded; engine reset: ParlayAPI overlay now live (501 moved, 40 polls); grader re-dispatched with 5-game batches
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.83), then run: bash tools/record-release.sh v1.0.83 423 "v1.0.83 PS: PropLine + ParlayAPI audit: ParlayAPI stream overlay fixed (quotes tagged at parse), ParlayAPI hot streams, PropLine/ParlayAPI cross-check, 13 more PropLine books, PropLine 1st halves, ParlayAPI Pinnacle live feed (paper), real bets graded by PropLine /clv/grade, restart button keep"
+read propline-grade result at 15:35 check-in; then PB8 settings walk, PB12 steam study, PS2b/PS9b
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  3a0b2a12b ckpt 4209: pre-release: v1.0.83 PS: PropLine + ParlayAPI audit: ParlayAPI stream overl
   c353f654d ckpt 4208: pre-ship: v1.0.83 PS: PropLine + ParlayAPI audit: ParlayAPI stream overlay 
   e02194fe6 ckpt 4207: PB17b ParlayLiveFeed (paper-gated) + PinnFrames shared; tests green; TASKS/
   e0a1e8c59 ckpt 4206: PS1-PS12 written up (research/propline_parlay_audit_2026-10-25.md, CHANGES.
@@ -25,5 +27,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   452e77ed0 ckpt 4202: PS2 answered + fixed (13 PropLine books, same-desk groups, research/proplin
   f860b9505 ckpt 4201: PS2 coverage probe (native keys) dispatched; PS3 tools/propline_grade.py wr
   f41f81703 ckpt 4200: PS written into TASKS.md (Tj's stream audit prompt)
-  5dc9fa76b ckpt 4199: ANALYST 2026-10-25 skipped under gate, WATCH ok
 ```
