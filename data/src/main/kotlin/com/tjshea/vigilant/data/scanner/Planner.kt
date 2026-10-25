@@ -113,6 +113,12 @@ object Planner {
      */
     private const val MIN_EVENT_SIMILARITY = 1.5
 
+    /** A feed's second listing of a game already matched ([matchOne]) must name both teams this well: it is taken beside the first, never instead of a better one. */
+    private const val MIN_EXTRA_SIMILARITY = 1.8
+
+    /** A feed's second listing of a game starts within this of its first ([matchOne]). */
+    const val SAME_GAME_START_MS = 15 * 60_000L
+
     /** How many days before Novig's date a date-only tennis listing may be and still be the same match, put off ([sameStart]). */
     const val TENNIS_DELAY_DAYS = 3L
     /**
