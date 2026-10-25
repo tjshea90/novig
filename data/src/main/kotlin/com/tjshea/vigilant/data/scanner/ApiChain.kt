@@ -25,8 +25,8 @@ object ApiChain {
      * measured seconds behind their latest change (research/api_freshness_2026-10-12.md) and a free key allows 1,000 requests a day. It leads the chains only as the STARTING order: [measures] re-rank by the
      * p90 age each feed really delivered (a feed that proves staler drops below, ties keep this order), and a feed out of requests falls to the next.
      */
-    private val LINES_CHAIN = listOf("propline" to Kind.LINES, "sgo" to Kind.LINES, "oddspapi" to Kind.LINES, "oddspapi_free" to Kind.LINES, "parlay" to Kind.LINES, "parlay_1h" to Kind.PERIODS, "oddsapi" to Kind.LINES, "unabated" to Kind.LINES)
-    private val PROPS_CHAIN = listOf("propline_props", "sgo-props", "oddspapi-props", "oddspapi_free-props", "parlay_props", "oddsapi_props", "unabated-props").map { it to Kind.PROPS }
+    private val LINES_CHAIN = listOf("propline" to Kind.LINES, "sgo" to Kind.LINES, "oddspapi_free" to Kind.LINES, "parlay" to Kind.LINES, "parlay_1h" to Kind.PERIODS, "oddsapi" to Kind.LINES)
+    private val PROPS_CHAIN = listOf("propline_props", "sgo-props", "oddspapi_free-props", "parlay_props", "oddsapi_props").map { it to Kind.PROPS }
     private val STATIC_CHAINS = listOf(LINES_CHAIN, PROPS_CHAIN)
 
     /** What each feed was last measured to deliver ([SourceScore]); empty = the shipped order. Set by the scanner after each scan while [ApiGates.rankByMeasure] is on. */
@@ -84,7 +84,7 @@ object ApiChain {
     /** Books [sourceId] carries beyond the common ones, when Tj switched them on (SGO's and OddsPapi's Circa, SuperBook, bet365). */
     fun extraBooks(sourceId: String, settings: ScanSettings): Set<String> = when (sourceId) {
         "sgo", "sgo-props" -> if (settings.sgoPro && settings.sgoExtraBooks) SgoBooks.EXTRA.toSet() else emptySet()
-        "oddspapi", "oddspapi-props", "oddspapi_free", "oddspapi_free-props" -> if (settings.oddsPapi && settings.opExtraBooks) OpBooks.EXTRA.toSet() else emptySet()
+        "oddspapi_free", "oddspapi_free-props" -> if (settings.oddsPapiFree && settings.opExtraBooks) OpBooks.EXTRA.toSet() else emptySet()
         else -> emptySet()
     }
 

@@ -1501,7 +1501,7 @@ class Scanner(
         val HOT_METERED = setOf("parlay")
         const val HOT_METERED_MS = 150_000L
         const val HOT_METERED_FAR_MS = 420_000L
-        val HOT_FEEDS = setOf("sgo", "sgo-props", "oddspapi", "oddspapi-props", "bolt", "bolt-props", "kalshi", "polymarket", "sxbet", "sharpapi")
+        val HOT_FEEDS = setOf("sgo", "sgo-props", "bolt", "bolt-props", "kalshi", "polymarket", "sxbet", "sharpapi")
 
         /** A hot line this close to zero (or above it) has its Novig book read again by the hot refresh. */
         const val HOT_EV_FLOOR = -0.03
