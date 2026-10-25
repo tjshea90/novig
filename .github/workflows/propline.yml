@@ -15,8 +15,11 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe | speed | archive | backfill | multibook | clv | grade | timing | evbets | accuracy | coverage"
+        description: "plans | probe | speed | archive | backfill | multibook | clv | grade | timing | evbets | accuracy | coverage | altprobe"
         default: "plans"
+      sports:
+        description: "altprobe: comma-separated PropLine sport keys (football_nfl,football_ncaaf when empty), e.g. basketball_nba,hockey_nhl"
+        default: ""
   schedule:
     - cron: "37 9 * * *"
 
@@ -96,7 +99,7 @@ jobs:
               gh release upload propline-samples out/proppin/* --clobber ;;
             altprobe)
               # PX (2026-10-25): Novig's alternate spread/total rungs vs the books Vigilant reads at the same number, with ages and market shapes.
-              python3 -I tools/propline.py altprobe out/altprobe
+              python3 -I tools/propline.py altprobe out/altprobe "${{ github.event.inputs.sports }}"
               gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine samples (keyless)" --notes "Real answers of PropLine endpoints, keyless."
               gh release upload propline-samples out/altprobe/* --clobber ;;
             clv) bash tools/propline_clv_job.sh ;;
