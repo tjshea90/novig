@@ -20,7 +20,8 @@ import java.util.concurrent.TimeUnit
 
 /**
  * ParlayAPI's Business odds stream on the engine (PB11, Tj 2026-10-25: "I want the GitHub engine to run 24/7 connected to parlayapi business ... full usage of the sse and/or websocket";
- * research/PARLAYAPI_BUSINESS_2026-10-25.md §2): one `GET /v1/sse/odds/{sport}` per scanned sport (`kinds=game,prop`, the key in the X-API-Key header, never in a URL), every row into [live].
+ * research/PARLAYAPI_BUSINESS_2026-10-25.md §2): one `GET /v1/sse/odds/{sport}` per scanned sport (`kinds=game,prop`, the key in the X-API-Key header, never in a URL), every row into [live]; beside it
+ * `GET /v1/sse/hot/{sport}` (PS1, 2026-10-25: the same rows from ParlayAPI's fast-cadence books, Pinnacle and FanDuel, sub-3 s), into the same store, where the newer confirmation of a side wins.
  * Streams are tier-gated, not credit-charged: holding them costs nothing. A refused tier (402, or 401/403) stops that key until it changes; any other end reconnects after 1, 2, 4 ... 30 s
  * (ParlayAPI's advice), back to 1 s after a connection that lasted a minute.
  */
@@ -37,6 +38,8 @@ class ParlayStream(
 ) {
     private val jobs = ConcurrentHashMap<String, Job>()
     @Volatile private var refusedKey: String? = null
+    /** The hot route refused this key (a plan or connection cap): the odds streams carry on alone. */
+    @Volatile private var hotRefusedKey: String? = null
     @Volatile var connects = 0L
         private set
     private val lastEnd = ConcurrentHashMap<String, String>()
@@ -45,8 +48,11 @@ class ParlayStream(
     @Synchronized
     fun want(on: Boolean, sports: Set<String>) {
         if (!on || key().isNullOrBlank()) { close(); return }
-        for (s in jobs.keys - sports) jobs.remove(s)?.cancel()
-        for (s in sports) if (jobs[s]?.isActive != true) jobs[s] = scope.launch(Dispatchers.IO) { run(s) }
+        val hot = hotRefusedKey == null || hotRefusedKey != key()
+        val routes = sports.map { ODDS to it } + (if (hot) sports.map { HOT to it } else emptyList())
+        val names = routes.associateBy { (r, s) -> "$r|$s" }
+        for (n in jobs.keys - names.keys) jobs.remove(n)?.cancel()
+        for ((n, rs) in names) if (jobs[n]?.isActive != true) jobs[n] = scope.launch(Dispatchers.IO) { run(rs.first, rs.second) }
         if (health?.isActive != true && jobs.isNotEmpty()) health = scope.launch(Dispatchers.IO) { healthLoop() }
     }
 
@@ -56,26 +62,30 @@ class ParlayStream(
     fun health(now: Long = clock()): String = when {
         jobs.isEmpty() -> "off"
         refusedKey != null && refusedKey == key() -> "the key's plan has no streams (Business and up)"
-        else -> "${jobs.size} sports (${jobs.keys.sorted().joinToString(",")}), $connects connections, " + (if (live.live(now)) "live" else "silent") +
+        else -> jobs.keys.groupBy({ it.substringBefore('|') }, { it.substringAfter('|') }).entries.sortedBy { it.key }.joinToString(" + ") { (r, ss) -> "$r ${ss.sorted().joinToString(",")}" } +
+            (if (hotRefusedKey != null && hotRefusedKey == key()) " (hot route refused)" else "") + ", $connects connections, " + (if (live.live(now)) "live" else "silent") +
             (lastEnd.entries.takeIf { it.isNotEmpty() }?.joinToString(prefix = " · last end: ") { "${it.key} ${it.value}" } ?: "") + " · " + live.describe(now)
     }
 
-    private suspend fun run(sport: String) {
+    private suspend fun run(route: String, sport: String) {
         var wait = BACKOFF_MS
+        val name = if (route == ODDS) sport else "$route:$sport"
         while (scope.isActive) {
             val k = key()
             if (k.isNullOrBlank() || k == refusedKey) { delay(60_000L); continue }
+            if (route == HOT && k == hotRefusedKey) return
             val opened = clock()
             try {
-                connect(sport, k)
-                lastEnd[sport] = "closed by ParlayAPI after ${(clock() - opened) / 1000}s"
+                connect(route, sport, k)
+                lastEnd[name] = "closed by ParlayAPI after ${(clock() - opened) / 1000}s"
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Refused) {
-                lastEnd[sport] = "HTTP ${e.code}"
+                lastEnd[name] = "HTTP ${e.code}"
+                if (route == HOT && (e.code == 401 || e.code == 402 || e.code == 403 || e.code == 429)) { hotRefusedKey = k; log("ParlayAPI hot stream $sport refused (HTTP ${e.code}): the odds streams carry on alone"); return }
                 if (e.code == 401 || e.code == 402 || e.code == 403) { refusedKey = k; log("ParlayAPI stream $sport refused (HTTP ${e.code}): the key's plan has no streams; waiting for another key"); continue }
             } catch (e: Exception) {
-                lastEnd[sport] = "${e.javaClass.simpleName}: ${e.message?.take(80)}"
+                lastEnd[name] = "${e.javaClass.simpleName}: ${e.message?.take(80)}"
             }
             wait = if (clock() - opened >= STABLE_MS) BACKOFF_MS else minOf(wait * 2, MAX_BACKOFF_MS)
             delay(wait)
@@ -84,8 +94,8 @@ class ParlayStream(
 
     class Refused(val code: Int) : IOException("HTTP $code")
 
-    private suspend fun connect(sport: String, apiKey: String) = withContext(Dispatchers.IO) {
-        val url = "$baseUrl/v1/sse/odds/$sport?kinds=game,prop&heartbeat_s=5&max_age_s=600&limit=1000"
+    private suspend fun connect(route: String, sport: String, apiKey: String) = withContext(Dispatchers.IO) {
+        val url = "$baseUrl/v1/sse/$route/$sport?kinds=game,prop&heartbeat_s=5&max_age_s=600&limit=1000"
         val req = Request.Builder().url(url).header("X-API-Key", apiKey).header("Accept", "text/event-stream").build()
         // A stream is one call that never ends: no whole-call deadline (the shared client's cut every stream after 30 s, 35 reconnects in 3 minutes on the first runner), only the silent-read one.
         val call = http.newBuilder().callTimeout(0, TimeUnit.MILLISECONDS).readTimeout(SILENT_READ_MS, TimeUnit.MILLISECONDS).build().newCall(req)
@@ -94,7 +104,8 @@ class ParlayStream(
             call.execute().use { resp ->
                 if (!resp.isSuccessful) throw Refused(resp.code)
                 connects++
-                live.connected(sport)
+                // Only the odds stream carries every book: "connected since" (what confirms an unchanged price) is its alone.
+                if (route == ODDS) live.connected(sport) else live.heard()
                 val src = (resp.body ?: throw IOException("empty body")).source()
                 val data = StringBuilder()
                 while (true) {
@@ -108,7 +119,7 @@ class ParlayStream(
                 }
             }
         } finally {
-            live.disconnected(sport)
+            if (route == ODDS) live.disconnected(sport)
             cancel?.dispose()
         }
     }
@@ -140,6 +151,9 @@ class ParlayStream(
     }
 
     companion object {
+        /** The routes under `/v1/sse/`: every book's rows, and the fast-cadence books' (Pinnacle, FanDuel). */
+        const val ODDS = "odds"
+        const val HOT = "hot"
         const val BACKOFF_MS = 1_000L
         const val MAX_BACKOFF_MS = 30_000L
         /** A connection that lasted this long was a good one: the next wait starts again at [BACKOFF_MS]. */
