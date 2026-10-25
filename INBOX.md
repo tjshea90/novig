@@ -1264,3 +1264,8 @@ Why are the odds this stale if they are streamed? Why is there no parlayapi?
 Make sure odds come from as many books as possible and are matched correctly. You may need to consult the docs
 Keep working and analyzing this until you figure out how to get odds for many books matching on the bets and both propline and parlayapi streams feeding fresh odds. When you are confident it is working, restart the engine and monitor the scanned bets for many sources, correct mapping, and fresh odds
 ```
+
+## 2026-10-25T20:35:41Z
+```
+This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
+```
