@@ -20,6 +20,24 @@ import time
 
 EXCHANGES = {"kalshi", "polymarket", "sxbet", "novig", "prophetx", "matchbook", "smarkets", "betfair_ex", "betfair_ex_eu"}
 SLOW = ("sgo",)
+# The main desks of engine/BookCompany, to catch one company counted twice in a bet's fair (a key a feed spells differently, a book missing from a group).
+GROUPS = {
+    "kambi": {"betrivers", "unibet", "livescorebet", "betparx", "parx", "ballybet", "coolbet", "sugarhouse", "rushbet"},
+    "entain": {"betmgm", "ladbrokes", "ladbrokes_au", "ladbrokes_be", "coral", "bwin", "supersport", "sportingbet"},
+    "flutter": {"fanduel", "paddypower", "betfair_sportsbook", "sportsbet", "skybet"},
+    "superbet": {"superbet", "superbet_pl", "superbet_ro", "napoleon"},
+    "fortuna": {"fortuna_cz", "fortuna_pl"},
+    "digitalgaming": {"betonlineag", "lowvig", "sportsbetting_ag"},
+    "supergroup": {"betway", "betway_za"},
+    "penn": {"espnbet", "thescorebet"},
+    "caesars": {"williamhill_us", "caesars"},
+    "hardrock": {"hardrockbet", "hardrock"},
+    "bookmaker": {"bookmaker", "bookmaker_eu", "bookmakereu"},
+    "marathon": {"marathon", "marathonbet"},
+    "betfair": {"betfair_ex", "betfair_ex_eu", "betfairexchange"},
+    "1xbet": {"1xbet", "onexbet"},
+    "kaizen": {"stoiximan", "betano"},
+}
 SIDE_INDEX = {"HOME": 0, "AWAY": 1, "OVER": 0, "UNDER": 1, "YES": 0, "NO": 1}
 
 
@@ -54,6 +72,10 @@ def audit(feed, now_ms=None):
             b = p.get("b") or {}
             if b.get("u") and not str(b.get("s") or "").startswith(SLOW) and (at - b["u"]) / 1000.0 > limit:
                 problems.append("STALE(%s %s %ds)" % (b.get("k"), b.get("s"), (at - b["u"]) / 1000))
+        for g, members in GROUPS.items():
+            hit = [k for k in books if k in members]
+            if len(hit) > 1:
+                problems.append("DUPLICATE-COMPANY(%s: %s)" % (g, "+".join(hit)))
         idx = SIDE_INDEX.get(r.get("tg"))
         fp = r.get("fp")
         if idx is not None and fp is not None and f.get("p") and idx < len(f["p"]) and abs(f["p"][idx] - fp) > 1e-6:

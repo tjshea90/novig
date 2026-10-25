@@ -1268,4 +1268,7 @@ Keep working and analyzing this until you figure out how to get odds for many bo
 ## 2026-10-25T20:36:59Z
 ```
 Can you resume the work from this other Claude account without losing progress it made?
+## 2026-10-25T20:35:41Z
+```
+This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
 ```

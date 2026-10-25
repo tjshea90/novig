@@ -305,6 +305,8 @@ object Pricing {
             FairValue.compute(prices, fairSettings).also { f ->
                 val used = f?.perBook?.map { it.book }?.toSet().orEmpty()
                 prices.groupBy { it.source }.forEach { (src, l) -> QuoteCensus.add("devigLeftOut", src, l.count { it !in used }); QuoteCensus.add("priced", src, l.count { it in used }) }
+                // Books [com.tjshea.vigilant.engine.BadOdds] dropped as outliers or inverted, by sharp book or soft (PX9: with dozens of soft books the median is theirs, and a sharp book that moves first on news looks like an outlier).
+                f?.excluded?.forEach { b -> QuoteCensus.add("badOdds", if (b.bookKey in fairSettings.sharpBooks) "SHARP ${b.bookKey}" else "soft") }
             }
         }
 
