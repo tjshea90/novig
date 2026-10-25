@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "99b57535f7e9760e64ab0cde3dcc1590dac4a0bb",
+ "head": "07177718700e36c9a309b88ea13f6c5afb428c1f",
  "since": 1792912591,
- "beat": 1792912644,
- "beatIso": "2026-10-25T07:17:24Z",
- "done": "api-docs mirror: ParlayAPI blog/changelog/integrations/versioning + PropLine pages added to seeds",
- "next": "trigger api-docs.yml once main has it"
+ "beat": 1792912845,
+ "beatIso": "2026-10-25T07:20:45Z",
+ "done": "PB1 SharpAPI Free tier: plan read from X-RateLimit-Limit, 6 s spacing, game lines only, 60 s polls, data delay dated, no stream/game state/live feed/extras/splits; SharpApiFreeTierTest",
+ "next": "PB3 remove Unabated + OddsPapi v5"
 }
