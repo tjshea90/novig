@@ -26,6 +26,8 @@ data class RefQuote(
     val bookOutcomeId: String? = null,
     /** Contracts available at this price, when the venue publishes it (Kalshi's venue read; null everywhere else). */
     val size: Double? = null,
+    /** The feed's own id for this selection, where a push stream names selections by it (PropLine's `outcome_id`, [PropLineLive]); null everywhere else. */
+    val feedOutcomeId: String? = null,
 )
 
 /** One book's quote for one market of one event. */
