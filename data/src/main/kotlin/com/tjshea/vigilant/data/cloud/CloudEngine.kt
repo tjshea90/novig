@@ -141,6 +141,8 @@ class CloudEngine(
     private val liveOverlay: ((com.tjshea.vigilant.data.reference.RefEvent, Long) -> com.tjshea.vigilant.data.reference.RefEvent)? = null,
     /** The real-time list is published at most this often (the branch's own [Publisher.MIN_GAP_MS] guard is 8 s; the live status socket carries the rest). */
     private val realtimePublishMs: Long = 10_000L,
+    /** Every changed real-time list at once, for the live status server's `/feed` (the phone reads it there within seconds; GitHub's copy follows at [realtimePublishMs]). */
+    private val liveFeedSink: (CloudFeed) -> Unit = {},
 ) {
     /** What the engine's trading says about itself in the heartbeat. */
     data class TradeStatus(val mode: String, val note: String, val stopped: String, val changedAtMs: Long, val cash: Double? = null, val equity: Double? = null)
@@ -328,6 +330,10 @@ class CloudEngine(
                 realtime.pass(filter, now) { scanner.liveReprice(pricing, it, overlay) }
             } catch (e: CancellationException) { throw e } catch (e: Exception) { log("real-time list failed: ${e.javaClass.simpleName}: ${e.message?.take(120)}"); continue }
             val sig = rows.fold(rows.size) { h, o -> h * 31 + o.key.hashCode() + Math.round((o.evPercent ?: 0.0) * 10).toInt() }
+            if (sig != realtimeSig) {
+                val feed = CloudFeed(now, lastPublished?.configRev ?: pricedRev, lastPublished?.stats ?: ScanStats(0, 0, 0, 0, 0), rows)
+                runCatching { liveFeedSink(feed) }
+            }
             if (sig != realtimeSig && now - realtimePublishedAt >= realtimePublishMs) {
                 realtimeSig = sig
                 realtimePublishedAt = now

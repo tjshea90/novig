@@ -601,6 +601,7 @@ fun main(args: Array<String>) = runBlocking {
         },
         // The real-time list (PB19): PropLine's and ParlayAPI's pushes laid over each watched game, every 3 s.
         liveOverlay = { e, now -> sources.overlay(e, now) },
+        liveFeedSink = { f -> liveFeedBytes.set(com.tjshea.vigilant.data.cloud.CloudFeed.encode(f)) },
         liveUrl = { liveUrlRef.get() },
         socketLines = { sources.socketLines(com.tjshea.vigilant.data.cloud.CloudEngine.forCloud(latestSettings.get() ?: com.tjshea.vigilant.data.scanner.ScanSettings())) },
         socketStates = { sources.socketStates(com.tjshea.vigilant.data.cloud.CloudEngine.forCloud(latestSettings.get() ?: com.tjshea.vigilant.data.scanner.ScanSettings())) },
