@@ -28,7 +28,7 @@ object SimilarBets {
         if (sel.isBlank()) return null
         val mkt = market.trim()
         val teams = Picks.sides(eventName)
-        val ou = OVER_UNDER.find(sel) ?: if (NUMBER.find(sel) != null && sel.contains("total", true)) null else null
+        val ou = OVER_UNDER.find(sel)
         if (ou != null) {
             val way = ou.value.lowercase()
             var name = clean(sel.replace(OVER_UNDER, " ").replace(NUMBER, " ").replace(Regex("""\btotal\b""", RegexOption.IGNORE_CASE), " "))
