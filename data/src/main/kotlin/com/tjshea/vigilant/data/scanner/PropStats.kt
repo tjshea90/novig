@@ -93,6 +93,15 @@ object PropStats {
             "player_points_rebounds_assists" to "POINTS_REBOUNDS_ASSISTS",
             "player_double_double" to "DOUBLE_DOUBLE",
         ),
+        // The NBA (PB11, 2026-10-25: its props were never mapped, so ParlayAPI's NBA board, Pinnacle's props in it, was never priced): the same Novig stats as the WNBA.
+        "basketball_nba" to listOf(
+            "player_points" to "POINTS",
+            "player_rebounds" to "REBOUNDS",
+            "player_assists" to "ASSISTS",
+            "player_threes" to "THREE_POINTERS_MADE",
+            "player_points_rebounds_assists" to "POINTS_REBOUNDS_ASSISTS",
+            "player_double_double" to "DOUBLE_DOUBLE",
+        ),
     )
 
     /** The Odds API prop market keys that price a Novig stat in a sport (a closing-line lookup's markets). */
