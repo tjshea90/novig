@@ -64,7 +64,7 @@ class ParlayStream(
         refusedKey != null && refusedKey == key() -> "the key's plan has no streams (Business and up)"
         else -> jobs.keys.groupBy({ it.substringBefore('|') }, { it.substringAfter('|') }).entries.sortedBy { it.key }.joinToString(" + ") { (r, ss) -> "$r ${ss.sorted().joinToString(",")}" } +
             (if (hotRefusedKey != null && hotRefusedKey == key()) " (hot route refused)" else "") + ", $connects connections, " + (if (live.live(now)) "live" else "silent") +
-            (lastEnd.entries.takeIf { it.isNotEmpty() }?.joinToString(prefix = " · last end: ") { "${it.key} ${it.value}" } ?: "") + " · " + live.describe(now)
+            (lastEnd.entries.takeIf { it.isNotEmpty() }?.joinToString(prefix = " · last end: ") { "${it.key} ${it.value}" } ?: "") + " · source health: $healthNote · " + live.describe(now)
     }
 
     private suspend fun run(route: String, sport: String) {
@@ -131,14 +131,26 @@ class ParlayStream(
             if (!k.isNullOrBlank()) runCatching {
                 withContext(Dispatchers.IO) {
                     http.newCall(Request.Builder().url("$baseUrl/v1/meta/source-health").header("X-API-Key", k).build()).execute().use { r ->
-                        if (r.isSuccessful) (json.parseToJsonElement(r.body!!.string()) as? JsonObject)?.let { live.onHealth(it) }
+                        if (!r.isSuccessful) throw IOException("HTTP ${r.code}")
+                        val o = json.parseToJsonElement(r.body!!.string()) as? JsonObject ?: throw IOException("not an object")
+                        live.onHealth(o)
+                        if (live.polls.isEmpty()) throw IOException("no source read (keys: ${o.keys.take(8)})")
                     }
                 }
+                healthNote = "ok, ${live.polls.size} books"
+            }.onFailure { e ->
+                // PB23 (2026-10-25): the polls were never known and nothing said why.
+                val why = "${e.javaClass.simpleName}: ${e.message?.take(120)}"
+                if (healthNote != why) log("ParlayAPI source-health: $why")
+                healthNote = why
             }
             delay(HEALTH_EVERY_MS)
         }
     }
     private var health: Job? = null
+    /** The last source-health read: "ok, N books" or why it failed. */
+    @Volatile var healthNote: String = "not read yet"
+        private set
 
     /** One complete SSE message: rows of `initial_state` / `odds_update` into the store; heartbeats and status frames keep it marked alive. */
     internal fun accept(sport: String, data: String) {
