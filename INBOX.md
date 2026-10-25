@@ -1253,3 +1253,8 @@ Propline website says Pinnacle is fresh
 ```
 Make sure both propline and parlayapi are successfully feeding the scanner with fresh odds from both sockets. Work on matching up as many books as possible in the scanner so each bet has as many books behind the fair odds as possible
 ```
+
+## 2026-10-25T18:33:23Z
+```
+Why are the odds this stale if they are streamed? Why is there no parlayapi?
+```
