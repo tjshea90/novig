@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "f0c6a6de87e06c10d878cd7231072d52402dc60a",
+ "head": "6b9ef6543cf50f31ab85b5f586fea66deb12ae1b",
  "since": 1792912591,
- "beat": 1792912591,
- "beatIso": "2026-10-25T07:16:31Z",
- "done": "",
- "next": ""
+ "beat": 1792912611,
+ "beatIso": "2026-10-25T07:16:51Z",
+ "done": "PB: Tj's downgrade/ParlayAPI Business/settings/battery request written into TASKS.md",
+ "next": "PB10 fetch ParlayAPI docs via api-docs mirror + WebFetch; PB3/PB4/PB1/PB2 downgrades"
 }
