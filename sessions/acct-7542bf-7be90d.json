@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "2e339a38e326ac7774e84785566bcd0955ba63ab",
+ "head": "73f465f45f1e41d9f56f8397ea48b18f1dde446d",
  "since": 1792915284,
- "beat": 1792940200,
- "beatIso": "2026-10-25T14:56:40Z",
- "done": "PS9a PropLine 1st-half source propline_1h (PropLinePeriodTest); PB21b cross-check limited to aggregator copies",
- "next": "PS11 ParlayAPI cookbook review; PS7 accuracy page; then full suite + ship v1.0.83"
+ "beat": 1792940273,
+ "beatIso": "2026-10-25T14:57:53Z",
+ "done": "PB23 root cause fixed: ParlayAPI quotes tagged at parse so the stream overlay finds them after merge/flip (ParlayLiveTest); source-health failures logged, 60 s timeout",
+ "next": "write research/propline_parlay_audit_2026-10-25.md + CHANGES.md + TASKS ticks; read propline-grade; full suite; ship v1.0.83"
 }
