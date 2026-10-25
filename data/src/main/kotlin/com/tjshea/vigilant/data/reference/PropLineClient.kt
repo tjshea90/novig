@@ -882,4 +882,8 @@ internal data class PlOutcome(
     val side: String? = null,
     /** Only with `includeBookIds`: the book's own id for this selection. */
     val book_outcome_id: String? = null,
-)
+    /** Only with `includeBookIds`: PropLine's own id for this selection, the one its pushes carry (a number; read as text). */
+    val outcome_id: kotlinx.serialization.json.JsonPrimitive? = null,
+) {
+    val outcomeId: String? get() = outcome_id?.takeIf { it !is kotlinx.serialization.json.JsonNull }?.content?.takeIf { it.isNotBlank() }
+}
