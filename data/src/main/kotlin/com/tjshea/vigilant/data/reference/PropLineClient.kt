@@ -458,7 +458,6 @@ class PropLineClient(
             "matchbook", "smarkets", "sbobet", "bookmaker_eu", "betfair_ex", "thescorebet",
         ) + ADDED_2026_10_25
 
-
         fun marketsFor(families: Collection<MarketFamily>): List<String> = buildList {
             if (MarketFamily.MONEYLINE in families) add("h2h")
             if (MarketFamily.SPREAD in families) add("spreads")
