@@ -599,6 +599,43 @@ def cmd_altprobe(outdir, sports=("football_nfl", "football_ncaaf")):
     return 0
 
 
+def engine_books(src="data/src/main/kotlin/com/tjshea/vigilant/data/reference/PropLineClient.kt"):
+    """The engine's PropLine book list, read from the Kotlin source (KNOWN + its additions, less EXCLUDED), sorted as `books(settings)` sends it: (old PS2 list, PX9c additions)."""
+    import re
+    text = open(src).read()
+
+    def grab(name):
+        m = re.search(r"val " + name + r" = setOf\((.*?)\)", text, re.S)
+        return re.findall(r'"([^"]+)"', m.group(1)) if m else []
+    ex = set(grab("EXCLUDED"))
+    old = sorted(set(grab("KNOWN") + grab("ADDED_2026_10_25")) - ex)
+    new = sorted(set(grab("ADDED_2026_10_25_MEASURED")) - ex - set(old))
+    return old, new
+
+
+def cmd_bookparam(outdir, sport="basketball_nba"):
+    """PX9e (2026-10-25): every PropLine source on the engine answered HTTP 400 after PX9c grew `bookmakers` from 35 books to 69. Asks one league board with the engine's list whole, the old list, the new
+    books alone and growing counts, and records each status and error body, to find the rule (a count cap, a length cap or one key) without guessing."""
+    keys = keys_from_env()
+    i, _ = best_key(keys, [plan_of(k) for k in keys])
+    if i is None:
+        print("no usable key")
+        return 0
+    os.makedirs(outdir, exist_ok=True)
+    old, new = engine_books()
+    full = sorted(set(old + new)) + ["novig"]
+    tries = [("engine list", full), ("old list", old + ["novig"]), ("new books alone", new)]
+    tries += [("first %d" % n, full[:n]) for n in (40, 45, 50, 51, 55, 60, 65) if n < len(full)]
+    L = ["# PropLine bookmakers parameter (PX9e, %s, %s)" % (time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()), sport), ""]
+    for name, books in tries:
+        st, _, data = request("/v1/sports/%s/odds" % sport, keys[i], {"markets": "h2h", "bookmakers": ",".join(books)}, retries=1)
+        L.append("- %s: %d books, %d chars -> HTTP %s %s" % (name, len(books), len(",".join(books)), st, "" if st == 200 else (data or b"")[:300].decode("utf-8", "replace")))
+    with open(os.path.join(outdir, "bookparam.md"), "w") as f:
+        f.write("\n".join(L) + "\n")
+    print("\n".join(L))
+    return 0
+
+
 PROP_KEYS = {
     "football_nfl": "player_pass_yds,player_rush_yds,player_reception_yds,player_receptions,player_pass_tds,player_pass_attempts,player_pass_completions,player_rush_attempts",
     "basketball_nba": "player_points,player_rebounds,player_assists,player_threes,player_points_rebounds_assists",
