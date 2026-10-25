@@ -379,6 +379,9 @@ class ApiBettingTest {
         var postResponse: MockResponse? = null,
         var listedOrders: Map<String, String> = emptyMap(),
         var qty: Long = 400,
+        /** HTTP code for the fills read (PX11a: 429 while Novig limits the account's reads), with how many such answers before the real one (-1 = always). */
+        var fillsCode: Int = 200,
+        var fillsRefusals: Int = -1,
     )
 
     private fun novig(s: Scenario) {
@@ -399,7 +402,7 @@ class ApiBettingTest {
                     path == "/v3/orders/o1" -> MockResponse().setBody(
                         """{"orderId":"o1","clientId":"c","marketId":"mkt","outcomeId":"A","price":"0.465","qty":${s.qty},"remaining":0,"tif":"IOC","status":"${s.orderStatus}","createdTs":1800000000000}""",
                     )
-                    path.startsWith("/v3/portfolio/fills") -> MockResponse().setBody(s.fills)
+                    path.startsWith("/v3/portfolio/fills") -> if (s.fillsCode != 200 && s.fillsRefusals != 0) { if (s.fillsRefusals > 0) s.fillsRefusals--; MockResponse().setResponseCode(s.fillsCode).setHeader("Retry-After", "1").setBody("""{"code":"RATE_LIMITED"}""") } else MockResponse().setBody(s.fills)
                     path.startsWith("/v3/orders?") -> {
                         val status = Regex("status=([A-Z]+)").find(path)!!.groupValues[1]
                         MockResponse().setBody(s.listedOrders[status] ?: """{"items":[]}""")
@@ -539,6 +542,24 @@ class ApiBettingTest {
         val r = placer(t).place(target(), 10.0, confirmedLimit = 0.465) as PlaceResult.Placed
         assertEquals(100L, r.bet.contracts)
         assertEquals(300L, r.unfilledContracts)
+    }
+
+    @Test
+    fun `a filled order whose fills cannot be read is never called not filled, and stays placed`() = runBlocking {
+        // PX11a (2026-10-25): Novig said FILLED while it answered every fill read with 429.
+        novig(Scenario(orderStatus = "FILLED", fillsCode = 429))
+        val r = placer(tracker()).place(target(), 10.0, confirmedLimit = 0.465)
+        assertTrue(r.toString(), r is PlaceResult.Unconfirmed)
+        assertTrue((r as PlaceResult.Unconfirmed).toString(), r.toString().contains("FILLED"))
+    }
+
+    @Test
+    fun `a filled order's fills read after a few refused reads are tracked as the bet`() = runBlocking {
+        novig(Scenario(orderStatus = "FILLED", fillsCode = 429, fillsRefusals = 3))
+        val t = tracker()
+        val r = placer(t).place(target(), 10.0, confirmedLimit = 0.465)
+        assertTrue(r.toString(), r is PlaceResult.Placed)
+        assertEquals(1, t.all().size)
     }
 
     @Test

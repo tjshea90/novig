@@ -350,13 +350,21 @@ class ApiBetPlacer(
         // Why a bet takes seconds, or misses (Tj, 2026-10-24: orders ended after 5.7 s where pregame used to take 94 ms): what the last read said and how long the order ran.
         timing("order end: ${clock() - started} ms after the order was sent, last read: $seen, push ${if (feed != null) "live" else "off"}, terminal ${order?.terminal == true}")
         var fills = readFills(orderId)
-        if (fills.isEmpty() && order?.status == "FILLED") {
-            // The order says filled and its fills haven't shown yet.
-            pause(1_000)
+        // What Novig's own record of the order says filled (PX11a, 2026-10-25: four hand bets in a row were told "nobody was selling" while Novig was answering this account's fill reads with 429; none of
+        // them was among Novig's REJECTED orders: the order said FILLED and the fills could not be read, and the row came back to the list to be bet again).
+        val filledQty = order?.let { (it.qty - it.remaining).coerceAtLeast(0L) } ?: 0L
+        val filled = order?.status == "FILLED" || filledQty > 0L
+        val waitedFrom = clock()
+        while (fills.isEmpty() && filled && clock() - waitedFrom < FILLS_WAIT_MS) {
+            // The order filled and its fills haven't been read yet (not shown yet, or the read was refused for the rate): a little longer.
+            pause(FILLS_RETRY_MS)
             fills = readFills(orderId)
         }
         if (fills.isEmpty()) {
             return when {
+                filled -> PlaceResult.Unconfirmed(
+                    "Novig FILLED this order ($filledQty contracts) but its fills could not be read yet (Novig is limiting how fast this account reads): the bet is placed. It stays off the list; Sync with Novig in the Tracker in a minute to record it.",
+                )
                 order?.terminal == true -> PlaceResult.NotFilled("Nobody was selling at that price any more (Novig ended the order with nothing filled): no bet was placed and no money moved.")
                 else -> PlaceResult.Unconfirmed(
                     "Novig took the order but hadn't finished it after ${ORDER_WAIT_MS / 1000} seconds (last seen: $seen). Nothing is assumed: Sync with Novig in the Tracker in a minute.",
@@ -415,6 +423,7 @@ class ApiBetPlacer(
 
         /** A lock this close to the start is worked out as if in-game (the fee is charged by the time it fills: NOVIG_API.md §8). */
         const val LIVE_MARGIN_MS = 2 * 60_000L
+        /** How long a filled order's fills are looked for after it ended, and how often (PX11a: a rate-limited read is tried again, never taken as "nothing filled"). */        const val FILLS_WAIT_MS = 8_000L        const val FILLS_RETRY_MS = 1_500L
         const val POLL_MS = 400L
 
         /** How long the first read of a just-placed order waits for the stream to say it ended, and how long a read that is behind a pushed end waits before asking again. */
