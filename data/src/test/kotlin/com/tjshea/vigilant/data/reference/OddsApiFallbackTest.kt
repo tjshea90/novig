@@ -113,7 +113,9 @@ class OddsApiFallbackTest {
     @Test
     fun `PropLine's carried books are the ones its board can return`() {
         assertTrue(PropLineClient.carries("pinnacle") && PropLineClient.carries("draftkings") && PropLineClient.carries("hardrockbet"))
-        assertFalse(PropLineClient.carries("williamhill_us") || PropLineClient.carries("espnbet") || PropLineClient.carries("betfair_ex_eu"))
+        assertFalse(PropLineClient.carries("williamhill_us") || PropLineClient.carries("mybookieag") || PropLineClient.carries("circa"))
+        // PSL (2026-10-25): PropLine's list has theScore Bet (ESPN Bet's desk), Betfair Exchange, BookMaker.eu and SBOBET under the app's own names.
+        assertTrue(PropLineClient.carries("espnbet") && PropLineClient.carries("betfair_ex_eu") && PropLineClient.carries("bookmaker") && PropLineClient.carries("sbobet"))
         assertFalse(PropLineClient.carries("novig") || PropLineClient.carries("kalshi"))
     }
 
