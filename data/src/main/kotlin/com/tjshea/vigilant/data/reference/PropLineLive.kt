@@ -180,7 +180,9 @@ class PropLineLive(private val clock: () -> Long = System::currentTimeMillis) {
         var changed = false
         val quotes = m.quotes.map { q ->
             val mv = q.feedOutcomeId?.let { moves[it] }
-            if (mv == null || !(cover || mv.atMs > readAtMs)) q
+            // Only a push newer than the board it is laid over (less a little for PropLine's own answer lag): an older one is already in that board. A rung pulled once and back on the board at the
+            // next read used to be dropped for 20 minutes whenever the socket had stayed up (PX, 2026-10-25: NFL alternates priced by 1-6 books where PropLine carried 13-20 of ours).
+            if (mv == null || mv.atMs <= readAtMs - READ_LAG_MS) q
             else {
                 if (mv.pulled) return null
                 changed = true
@@ -228,6 +230,8 @@ class PropLineLive(private val clock: () -> Long = System::currentTimeMillis) {
         const val SILENT_MS = 70_000L
         /** Moves are kept this long (a board is read again well within it). */
         const val KEEP_MS = 20 * 60_000L
+        /** A push this much older than a board read may still be missing from it (PropLine's bulk answers can be a few seconds behind its stream): it is laid over all the same. */
+        const val READ_LAG_MS = 30_000L
         /** A scratch is believed this long. */
         const val SCRATCH_MS = 6 * 3_600_000L
         /** A scratch heard up to this long before a read still takes the read's markets out (a read can be served from PropLine's cache of a few seconds). */

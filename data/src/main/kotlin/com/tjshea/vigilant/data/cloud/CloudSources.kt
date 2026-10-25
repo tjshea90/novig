@@ -487,6 +487,10 @@ class CloudSources(
     companion object {
         /** How long [closeSockets] waits for the close frames to leave before the job ends. */
         const val CLOSE_FLUSH_MS = 1_500L
+        /** A ParlayAPI key with this monthly allowance or more is a Business plan (1,000,000 credits and the streams). */
+        const val BUSINESS_CREDITS = 1_000_000
+        /** ParlayAPI's feeds taken off the chains on a Business key (PX). */
+        val PARLAY_FEEDS = setOf("parlay", "parlay_1h", "parlay_props")
     }
 }
 
