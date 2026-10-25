@@ -67,6 +67,9 @@ def audit(feed, now_ms=None):
             b = p.get("b") or {}
             s = b.get("s") or "?"
             out["feeds"][s] = out["feeds"].get(s, 0) + 1
+            out.setdefault("by_book", {})[b.get("k")] = out.setdefault("by_book", {}).get(b.get("k"), 0) + 1
+            if p.get("sh"):
+                out.setdefault("sharp", {})[(b.get("k"), s)] = out.setdefault("sharp", {}).get((b.get("k"), s), 0) + 1
             if b.get("u"):
                 out["ages"].setdefault(s, []).append((at - b["u"]) / 1000.0)
         out["companies"][len(pb)] = out["companies"].get(len(pb), 0) + 1
@@ -83,6 +86,13 @@ def show(out):
     for s, a in sorted(out["ages"].items()):
         a = sorted(a)
         print("  age %-14s n=%-3d median %4ds  p90 %4ds  max %4ds" % (s, len(a), a[len(a) // 2], a[int(len(a) * 0.9)], a[-1]))
+    if out.get("by_book"):
+        print("books (quotes behind the listed bets): " + ", ".join("%s %d" % kv for kv in sorted(out["by_book"].items(), key=lambda kv: -kv[1])[:30]))
+        print("sharp books by feed: " + (", ".join("%s/%s %d" % (k[0], k[1], v) for k, v in sorted(out["sharp"].items(), key=lambda kv: -kv[1])) or "none"))
+        kinds = {}
+        for r in out["rows"]:
+            kinds.setdefault(r["kind"], []).append(r["n"])
+        print("companies per bet by kind: " + ", ".join("%s %s" % (k, "/".join(str(x) for x in sorted(v))) for k, v in sorted(kinds.items())))
     bad = [r for r in out["rows"] if r["problems"]]
     print("bets with problems: %d of %d" % (len(bad), n))
     for r in out["rows"]:
