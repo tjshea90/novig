@@ -29,3 +29,14 @@ Listed bets at 18:00 UTC: median **5** books (was 1-2), PropLine and ParlayAPI b
 ## Open
 - PX7b: ParlayAPI's stream-only books are non-US books with unknown desks (kept out); nothing to add until a desk is documented.
 - PS2b: Novig's alternate numbers no book posts (NCAAF) stay thin unless priced from another number (a model).
+
+## PX8/PX9 (same evening, after Tj's screenshot: DEN@ARI 1st-half total Over 22.5, six books, all PropLine, 3-6 min old, no ParlayAPI)
+- The row is `TOTAL_1H` priced by `propline_1h` alone. `parlay.yml gameprobe` (new, one game, every book and number with ages) on DEN@ARI at 18:37 UTC: ParlayAPI's REST `/odds` main spread (-4.5, 11 books) and total (43.5, 12 books) are priced by 11-14 books about 0-20 s old,
+  but its **alternate spreads/totals carry Pinnacle alone** (252 s old) and its **`/live/period_markets` 1H is Pinnacle alone** (77 s old). So for 1st-half and alternate lines PropLine is the only source of more books; ParlayAPI adds only Pinnacle there, and loses that book to PropLine's
+  confirmed stamp when PropLine's is fresher.
+- Why PropLine's quotes show minutes: its docs say five books are pushed (DraftKings, FanDuel, Fanatics, Kalshi, Polymarket) and "the other 25 books are polled, 60-90 s pre-match" and that a price with no `line_movement` has not changed. An unchanged price can only be dated to PropLine's last
+  READ of the book (`pregame_read_at`, the heartbeat), which for NFL books today is 40-280 s ago (the row: Betway 44 s, DraftKings 104, Theory: reread gaps of 100-200 s on a Sunday slate). The new heartbeat log line gives the real numbers per sport; the new cross census tells whether PropLine's old
+  stamps on the push books are still the same price ParlayAPI sees (then they may be dated as current).
+- **A real bug found beside it** (the "1 book behind the fair" rows): `RealtimeList.adopt` took the rows of a partial scan whose league was still waiting for a fair-odds source (`ScanResult.waitingFor`). GB@DET's spread (Kalshi alone) and the same game's 1st-half total (7 feeds) were listed together;
+  the Kalshi-only row's merged game id `kalshi:...` had no other feed. 5 of the 20 listed rows at 18:55 UTC were Kalshi-only. Fixed in `RealtimeList.adopt` (CHANGES.md PX9).
+
