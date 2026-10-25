@@ -1290,3 +1290,18 @@ Shouldn't you review the docs thoroughly for mapping and matching bets and figur
 3) I deleted the pinnwire keys  delete them on GitHub too. Use the best source of any public source, propline, or parlayapi for the best Pinnacle freshest odds and use them in combination if needed for coverage of markets
 4) use the API keys for both parlayapi and propline and test how to improve them for the GitHub engine and app. Use more socket connections if needed within the limits.
 ```
+
+## 2026-10-25T22:23:52Z
+```
+I'm getting a lot of "no one was selling at that price" errors again. Investigate. 
+
+Then, make it so when I press on a bet from the scanned list, it puts the odds from different sports books in order from the best odds for the same side as the scanned bet to the worst odds at the bottom for the same side. Highlight any books which disagree that the bet is positive EV (which would be near the top of the list). 
+
+Make sure the auto bids engine uses the full advantage of all of the many books pricing odds, and uses the fresh odds when placing bids for the best accuracy. All bids should be based on at least 3 agreeing books with relatively fresh odds that the bid is positive ev, preferably with more books agreeing. If a sharp book disagrees that the bid would be positive ev, do not post it, or bid under the devigged sharp book--- Unless the data shows that bidding under the fair odds of the average of many books is more profitable than a sharp book veto method. If this is true, do not make the sharp book veto, use the many books average devigged for the fair odds.
+
+Make sure the engine and scans never count odds which are outliers and clearly out of sync with the average of other books. It should not include this outlier in its calculations at all. Do an audit to see if any book consistently posts outlier odds,  and if so, consider it a mismatch on mapping and exclude this book from all future scans and API requests (if possible).
+
+Then figure out how to get fresh odds for as many pinnacle odds as possible, including alternate lines and markets. This may be from free sources, parlayapi, propline, any other API I have, or any combination of multiple sources and apis to achieve maximum coverage and freshness of Pinnacle odds.
+
+The problem is I won't always have sgo because it is expensive, so I need a cheap or free source or sources for as many pinnacle odds as possible and as fresh as possible. Maybe research cheap apis with fresh Pinnacle odds, or pinnacle scrapers
+```
