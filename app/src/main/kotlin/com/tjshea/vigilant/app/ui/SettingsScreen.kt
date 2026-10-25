@@ -1481,12 +1481,6 @@ private fun ColumnScope.SgoPage(state: UiState, keys: KeyActions, reportActions:
 }
 
 /**
- * Settings › OddsPapi (Tj, 2026-10-09; ODDSPAPI_API.md): the key list (rotated like every provider's), a Test key that says what the key really carries and saves a sample for Claude, and the one
- * switch. On, the scan, bids, open-bet pricing, closing lines (CLV for any bet) and grading read OddsPapi too, beside every other API that is on (none rests for it). Off: it is never called.
- */
-@Composable
-
-/**
  * Settings › Cloud scan (Tj, 2026-10-14): "use the phone only to set the settings and retrieve the scanned results. GitHub will provide all the power." The scan runs in a GitHub Actions job
  * (`cloud-scan.yml`) under THESE settings; this phone reads its list. The same GitHub token also saves every bet, bid and the scan study's days to the repository's `phone-data` branch, so Claude can
  * analyse them. The token is sealed in this phone's secure storage and only ever sent to api.github.com.
@@ -1687,12 +1681,6 @@ private fun ColumnScope.BoltOddsPage(state: UiState, keys: KeyActions, reportAct
     SwitchRow(com.tjshea.vigilant.app.BoltOddsText.ALL_BOOKS_TITLE, com.tjshea.vigilant.app.BoltOddsText.ALL_BOOKS_SUB, s.gates.boltAllBooks, tag = "boltAllBooks") { v -> onUpdate { it.copy(gates = it.gates.copy(boltAllBooks = v)) } }
     if (s.gates.useBoltOdds) Hint(com.tjshea.vigilant.app.BoltOddsText.NOTES)
 }
-
-/**
- * Settings › Unabated (free) (Tj, 2026-10-11; UNABATED_API.md): the key list, a Test key that says what the Free key carries and saves a sample for Claude, and the one switch. On, Unabated joins the scan LAST in
- * line and prices only the lines no better feed sent. Off: the app as it was.
- */
-@Composable
 
 /**
  * Settings › SX Bet (Tj, 2026-10-18; SXBET_API.md): the read-only API key (scope "Market data: read" only, made at sx.bet > Account > API) and the one switch. On, SX Bet's exchange odds join the sharp books;

@@ -2566,10 +2566,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
 
-    /**
-     * Settings › Unabated › Test key: the key's leagues and books, one straight board and one props board read as Vigilant would, said in words; the raw answers are kept as a sample in Downloads/Vigilant
-     * (and shared when [share]) so the parser can be checked against what the key really returns (UNABATED_API.md §4). Two odds requests, about ten seconds (the Free interval).
-     */
     /** Kalshi's saved key checked beside its public reach (Settings › APIs › Test): one line per outcome; nothing for any other API or without a key. */
     private suspend fun kalshiKeyChecks(entry: ApiEntry): List<com.tjshea.vigilant.data.keys.ApiProbe.Check> {
         if (entry != ApiEntry.KALSHI) return emptyList()
