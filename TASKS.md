@@ -6415,10 +6415,10 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [x] PSL3 (PropLineStream + PropLineLive; PropLineLiveTest) engine WebSocket client (PropLineStream): auth, subscriptions, since_seq replay, gap detection, line_movement/resolution/suspended events merged into the PropLine board; switch gates.proplineSocket; status line; tests on recorded frames
 - [x] PSL4 (gates.cloudHours already off on cloud-config = round the clock; stream opens each job, resumes by seq) engine runs the PropLine socket 24/7 (outside the betting hours too: a keeper job or the engine idling with the socket) with the archive of every event to Releases
 - [x] PSL5 (PropLineFreshness, status.propLineFresh, Engine > APIs table; PropLineLiveTest) bookmaker freshness endpoints: read per book, published in status.json, stale books filtered out of the fair; shown in the app (Engine › APIs / Diagnostics)
-- [ ] PSL6 every other new feature found in PSL1 (grading, CLV, books, live odds and scores) built or written down with why
-- [ ] PSL7 sportsbook-accuracy page: book weights / sharp lists checked against it (LEVER, class B)
+- [x] PSL6 (research/PROPLINE_STREAMING_2026-10-25.md PSL6 table) every other new feature found in PSL1 (grading, CLV, books, live odds and scores) built or written down with why
+- [x] PSL7 (research/propline_book_accuracy_2026-10-24.md update; not applied, class B) sportsbook-accuracy page: book weights / sharp lists checked against it (LEVER, class B)
 - [x] PSL8 screenshots arrived 06:5x UTC: no webhook to make by hand (engine makes its own websocket subscriptions); answered
-- [ ] NR1 Novig docs re-read (socket, bbo, orders over socket, changes since NOVIG_API.md §26-27); fix gaps in app/engine; NOVIG_API.md updated
-- [ ] PR1 ParlayAPI Pro docs re-read; gaps fixed; PARLAY_API.md updated
-- [ ] FR1 Kalshi, Polymarket, SX Bet, ESPN feeds audited against their docs; gaps fixed; docs updated
+- [x] NR1 (NOVIG_API.md §30; PortfolioPnlTest) Novig docs re-read (socket, bbo, orders over socket, changes since NOVIG_API.md §26-27); fix gaps in app/engine; NOVIG_API.md updated
+- [x] PR1 (research/api_docs_review_2026-10-25.md: no change since 10-22) ParlayAPI Pro docs re-read; gaps fixed; PARLAY_API.md updated
+- [x] FR1 (research/api_docs_review_2026-10-25.md; Polymarket version fix, ExchangeClientsTest) Kalshi, Polymarket, SX Bet, ESPN feeds audited against their docs; gaps fixed; docs updated
 - [ ] PSL9 full suite, ship, release, engine reset, tell Tj

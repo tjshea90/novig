@@ -1,0 +1,12 @@
+# API docs re-review, 2026-10-25 (PSL NR1/PR1/FR1; Tj: "do another thorough research of novig docs ... parlayapi ... kalshi, polymarket, sx bet, and ESPN")
+
+Method: `api-docs.yml` (free GitHub runner, keyless) mirrored every provider's docs verbatim to the `api-docs` branch (run 40169775322, snap/2026-10-25); each page was diffed against snap/2026-10-22 with link-format noise removed. PropLine is in research/PROPLINE_STREAMING_2026-10-25.md.
+
+| API | What changed since 2026-10-22 | What Vigilant does now |
+|:--|:--|:--|
+| **Novig** | (1) Throttles per SUBACCOUNT, not per key (2026-10-22): the engine's read key shares the phone's buckets. (2) `GET /v3/portfolio/pnl` (2026-10-23): positions marked at last trade. Socket/bbo/book/lifecycle/private pages: no behaviour change (link rewrites). | (1) NOVIG_API.md §30 + CLAUDE.md corrected; no phone read path may assume a separate engine budget. (2) Engine reads pnl every 5 min, Engine > Money shows "open positions at their last trades ... cash + positions" (PortfolioPnlTest). bbo/compression/keep-open/canary all live on the engine (log 06:19Z). |
+| **ParlayAPI (Pro)** | No material change (docs.html identical after stripping markup). | As reviewed 2026-10-20 (PARLAY_API.md §10): Pro key first, live PBP SSE for scores (5 credits a connection), alternates only when Pinnacle's own feed is off, injuries after PropLine's free report. Nothing new to build. |
+| **Kalshi** | Balance endpoint has its own 1/s bucket (Basic); `clock` on orderbook messages (same across connections); `GET /portfolio/orders` takes 100 event tickers; milestone `details.status` can be stale (prefer live_data). | Nothing breaks: Vigilant reads markets/orderbooks and the socket; balance is read on demand, not polled. No change needed. |
+| **Polymarket** | Protocol V2 guide: "choose the ID field by `version`, even when both fields are present" (`v2` = `positionIds`, `v1` = `clobTokenIds`). The rest is PolyBolt price feeds (crypto/forex), data-api v2 analytics. | **Fixed:** `PolymarketClient.firstToken` now picks by `version` (it took `clobTokenIds` first). Test: ExchangeClientsTest. |
+| **SX Bet** | No material change (v3 live since Aug 26; pages identical after link normalising). | Already v3: `x-sx-api-key`, `/orders-v3/odds/best`, `best_odds_v3:global`, realtime token v3. Read-only key, never trades. |
+| **ESPN** | Unofficial, no docs. | site.api.espn.com scoreboard (`dates=`, college `groups=80/81` + `limit=400`, NCAAB `groups=50`) and summary; correct as used. |
