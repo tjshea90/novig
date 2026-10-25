@@ -103,7 +103,7 @@ class OddsApiFallbackTest {
 
     @Test
     fun `a book picked as sharp that only The Odds API carries keeps it asked`() = runTest {
-        val s = settings.copy(referenceBooks = settings.referenceBooks + "betfair_ex_eu", sharpBooks = settings.sharpBooks + "betfair_ex_eu")
+        val s = settings.copy(referenceBooks = settings.referenceBooks + "mybookieag", sharpBooks = settings.sharpBooks + "mybookieag")
         assertTrue(client().needed(nfl, s, after(bothCovered)))
         // Caesars (a soft book PropLine lacks) doesn't: it's in the defaults and would keep it asked every scan.
         assertTrue("williamhill_us" in settings.referenceBooks)
