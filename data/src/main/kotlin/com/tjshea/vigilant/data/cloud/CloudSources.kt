@@ -247,6 +247,12 @@ class CloudSources(
     private val propLineInjuries = com.tjshea.vigilant.data.reference.PropLineInjuries(propLine, injuries, json, active = { propLineInjuriesOn })
     /** PropLine's plan per key from its quota headers (Tj, 2026-10-16, TCL56): the paid key is found and used first ([KeyPool]). The engine asks hourly. */
     private val propLineAccount = com.tjshea.vigilant.data.reference.PropLineAccount(http, { keys(CloudKeys.PROPLINE) }, usage)
+    /** PropLine's two Streaming Lite WebSockets (PSL): the board (moves, pulls, scratches) and the signals (steam, grades, +EV at Novig). Only the engine opens them; the phone never does. */
+    val propLineStream = com.tjshea.vigilant.data.reference.PropLineStream(http, json, { propLineAccount.streamingKey() }, propLineLive, scope, log = { line -> println(line) })
+    /** PropLine's per-book freshness (`/v1/freshness`, free, no key): read every minute by the engine while PropLine is on. */
+    val propLineFreshness = com.tjshea.vigilant.data.reference.PropLineFreshness(http, json)
+    fun propLineOn(s: ScanSettings) = s.usePropLine && has(CloudKeys.PROPLINE)
+    fun propLineNote(): String = "PropLine stream: " + propLineStream.health() + " · " + propLineStream.counts.entries.sortedBy { it.key }.joinToString(", ") { "${it.key} ${it.value}" }.ifBlank { "no events yet" } + " · " + propLineLive.describe()
     /** The BoltOdds key the sockets use: its plan and open connections (`/api/odds/user`, free), and whether the feed runs in one-connection mode (CH76). */
     suspend fun boltPlanNote(): String {
         if (!has(CloudKeys.BOLT)) return "BoltOdds: no key"
