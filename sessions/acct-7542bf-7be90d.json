@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "73f465f45f1e41d9f56f8397ea48b18f1dde446d",
+ "head": "e0a1e8c59cafaaaf4156edcad2c180c6da29418c",
  "since": 1792915284,
- "beat": 1792940273,
- "beatIso": "2026-10-25T14:57:53Z",
- "done": "PB23 root cause fixed: ParlayAPI quotes tagged at parse so the stream overlay finds them after merge/flip (ParlayLiveTest); source-health failures logged, 60 s timeout",
- "next": "write research/propline_parlay_audit_2026-10-25.md + CHANGES.md + TASKS ticks; read propline-grade; full suite; ship v1.0.83"
+ "beat": 1792940469,
+ "beatIso": "2026-10-25T15:01:09Z",
+ "done": "PS1-PS12 written up (research/propline_parlay_audit_2026-10-25.md, CHANGES.md, TASKS ticked); full suite running in background",
+ "next": "PB17b: ParlayAPI hot stream as the live lane's Pinnacle feed (like SharpApiLiveFeed); read propline-grade; ship v1.0.83"
 }
