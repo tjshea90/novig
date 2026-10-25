@@ -88,7 +88,8 @@ class ApiBettingControllerTest {
             if (slowMs > 0) kotlinx.coroutines.delay(slowMs)
             return "order-1"
         }
-        override suspend fun order(orderId: String) = NovigOrder(orderId, null, "", last!!.first, last!!.second, last!!.third, 0, "IOC", status, 1)
+        // As Novig answers (PX11a probe, 2026-10-25: all 200 unfilled REJECTED/CANCELED orders carry remaining = qty): only a FILLED order has nothing remaining.
+        override suspend fun order(orderId: String) = NovigOrder(orderId, null, "", last!!.first, last!!.second, last!!.third, if (status == "FILLED") 0 else last!!.third, "IOC", status, 1)
         override suspend fun fills(orderId: String?, limit: Int) = listOfNotNull(fillsFor(last!!.third, last!!.second))
         override suspend fun balance(subaccountKeyId: String): Double {
             if (walletMs > 0) kotlinx.coroutines.delay(walletMs)
