@@ -725,6 +725,8 @@ if __name__ == "__main__":
     if a[0] == "altprobe":
         # PX9: the sports are a third argument ("basketball_nba,hockey_nhl"); none = football's two
         sys.exit(cmd_altprobe(a[1] if len(a) > 1 else "out/propline-altprobe", tuple(x for x in a[2].split(",") if x) if len(a) > 2 and a[2] else ("football_nfl", "football_ncaaf")))
+    if a[0] == "bookparam":
+        sys.exit(cmd_bookparam(a[1] if len(a) > 1 else "out/propline-bookparam", a[2] if len(a) > 2 and a[2] else "basketball_nba"))
     if a[0] == "speed":
         sys.exit(cmd_speed(a[1] if len(a) > 1 else "out/propline-speed"))
     if a[0] == "archive":
