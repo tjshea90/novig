@@ -23,6 +23,10 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 
+/** One `steam` / `resolution` / `ev` push as the engine journals it (`propline-push-<day>`): when it reached us, its type and sport, and PropLine's payload as sent. */
+@kotlinx.serialization.Serializable
+data class PlPushRow(val atMs: Long, val type: String, val sport: String, val data: String)
+
 /**
  * PropLine's push stream on the engine (PSL, Tj 2026-10-25: "I want the GitHub engine to run 24/7 connected to propline streaming lite ... make full use of the added limits, webhook and/or websocket.
  * It allows multiple connections"). research/PROPLINE_STREAMING_2026-10-25.md has the protocol from the docs.
