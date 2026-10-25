@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "256ec116fcdca7aa30bddced12fe19d35bc96a61",
+ "head": "b377194be6faeb829db75777b390167eca0f70d1",
  "since": 1792889505,
- "beat": 1792910245,
- "beatIso": "2026-10-25T06:37:25Z",
- "done": "PSL app: PropLine socket switch (ApiEntry, Live tab), Engine > APIs freshness table + stream line; tests ApiSocketTogglesTest, PropLineLiveTest",
- "next": "tools/propline.py export limits for Streaming Lite; then NR1 Novig docs review"
+ "beat": 1792910336,
+ "beatIso": "2026-10-25T06:38:56Z",
+ "done": "PSL docs + TASKS ticks; PSL7 accuracy update written",
+ "next": "read api-docs CHANGES.md (run triggered on main) for Novig/ParlayAPI/Kalshi/Polymarket/SX diffs"
 }
