@@ -1223,3 +1223,8 @@ Also make sure both parlayapi and propline are both logically used together and 
 ```
 Investigate why I don't see any parlayapi provided odds in the scanned list and why many results only have 1 book behind the fair odds for alternate markets that are popular and available at many books
 ```
+
+## 2026-10-25T17:07:22Z
+```
+Why are these odds so old if they are from a socket?
+```
