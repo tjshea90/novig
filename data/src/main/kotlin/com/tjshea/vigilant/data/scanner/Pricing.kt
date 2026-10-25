@@ -301,6 +301,7 @@ object Pricing {
             }
             val prices = Freshness.freshFirst(all, now, { b -> b.lastUpdateMs }, { b -> b.bookKey in fairSettings.sharpBooks })
             if (Freshness.sgoMode) linesCensus(prices, now, ref.commenceMs)
+            pinnacleCensus(atLine = ref.markets.filter { key.matches(it) && it.bookKey == PINNACLE }, chosen = prices.firstOrNull { it.bookKey == PINNACLE }?.source, now = now)
             if (prices.size < all.size) (all - prices.toSet()).groupBy { it.source }.forEach { (src, l) -> QuoteCensus.add("staleBesideFresh", src, l.size) }
             FairValue.compute(prices, fairSettings).also { f ->
                 val used = f?.perBook?.map { it.book }?.toSet().orEmpty()
@@ -527,6 +528,21 @@ object Pricing {
      * (its polls and stream confirm a book within ~30 s), and whether PropLine ingests the book by push or polls it. A PropLine quote that is minutes older than ParlayAPI's yet always agrees is current, whatever
      * its stamp says; one that disagrees is stale. Counted in [QuoteCensus] (`crossSame` / `crossDiff`, "push|polled/how much older").
      */
+    private const val PINNACLE = "pinnacle"
+
+    /**
+     * PX10d (Tj 2026-10-25: "Use the best source of any public source, propline, or parlayapi for the best Pinnacle freshest odds and use them in combination if needed for coverage of markets"): per line
+     * Pinnacle prices, which feed's Pinnacle quote was used (`pinnWin`, `none` = every copy too old), which feeds quoted it (`pinnFeeds`: one alone is coverage only that feed gives) and how old the used one
+     * was (`pinnAge`). The engine logs it with the quote census.
+     */
+    private fun pinnacleCensus(atLine: List<com.tjshea.vigilant.data.reference.RefBookMarket>, chosen: String?, now: Long) {
+        if (atLine.isEmpty()) return
+        QuoteCensus.add("pinnWin", chosen ?: "none")
+        QuoteCensus.add("pinnFeeds", atLine.mapNotNull { it.source }.distinct().sorted().joinToString("+"))
+        val age = atLine.firstOrNull { it.source == chosen }?.lastUpdateMs?.let { (now - it) / 1000 } ?: return
+        QuoteCensus.add("pinnAge", "$chosen ${when { age < 30 -> "<30s"; age < 120 -> "<2m"; age < 300 -> "<5m"; else -> "5m+" }}")
+    }
+
     private fun crossCensus(atLine: List<com.tjshea.vigilant.data.reference.RefBookMarket>, near: Boolean, label: String, now: Long) {
         if (atLine.size < 2) return
         for (g in atLine.groupBy { it.bookKey }.values) {
