@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-27fee639-d3opru",
- "head": "92b5123b0a0d4e3b8956de07352e5c90417b72b3",
+ "head": "184068b3de283981e07083a00e9f5635bb22591c",
  "since": 1792912591,
- "beat": 1792957027,
- "beatIso": "2026-10-25T19:37:07Z",
- "done": "PX9c: 34 more PropLine books (measured), Superbet/Napoleon + Fortuna groups, duplicate keys across SGO/PropLine, ParlayAPI streams date quotes before the age filter, ParlayAPI team totals, held rows age-checked, full scans every 6 min; census/diagnostics; bookstudy/bookprobe/list_audit tools (4,206 tests green on the final tree)",
- "next": "reset engine, then monitor with tools/list_audit.py + engine-log (list quality, quote census linesNow/linesPlain, crossDiff samples, heartbeat, push books); decide plainFastFeeds and push-book dating from the census"
+ "beat": 1792957059,
+ "beatIso": "2026-10-25T19:37:39Z",
+ "done": "research index rebuilt (propline_books study); PX9c landing",
+ "next": "land on main; reset engine; monitor"
 }
