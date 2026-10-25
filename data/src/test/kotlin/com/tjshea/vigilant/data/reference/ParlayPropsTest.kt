@@ -159,4 +159,31 @@ class ParlayPropsTest {
         assertNull(ParlayProps.decimal(null))
         assertFalse(ParlayProps.BOOKS.contains("novig"))
     }
+
+    /** PX9: real rows of ParlayAPI's `/props?markets=team_totals` (2026-10-25): the "player" is the team as the book spells it, and only these rows carry Pinnacle's team totals and DraftKings'. */
+    @Test
+    fun `team totals rows become the game's TEAM_TOTAL lines, the team named however the book spells it`() {
+        fun tt(book: String, team: String, line: Double, over: Int, under: Int, period: String = "FULL") =
+            """{"event_id":"ev1","sport_key":"basketball_nba","commence_time":"2026-10-25T21:10:00Z","home_team":"Utah Jazz","away_team":"Los Angeles Lakers","bookmaker":"$book","player":"$team","market_key":"team_totals","period":"$period","market":"Team Total Points","line":$line,"over_price":$over,"under_price":$under,"age_seconds":600.0}"""
+        val body = """[
+            ${tt("draftkings", "UTA Jazz", 115.5, -102, -118)},
+            ${tt("pinnacle", "Los Angeles Lakers", 118.5, -108, -108)},
+            ${tt("pinnacle", "Los Angeles Lakers", 118.5, -108, -108, period = "1H")},
+            ${tt("pinnacle", "Orlando Magic", 110.5, -108, -108)},
+            ${row("pinnacle", "LeBron James", "player_points", 24.5, -115, -105)}
+        ]"""
+        val page = ParlayProps.parse(body, json, "basketball_nba", now)
+        val game = page.events.single { it.markets.isNotEmpty() }
+        val teams = game.markets.filter { it.kind == LineKind.TEAM_TOTAL }
+        // DraftKings' "UTA Jazz" is the home team; Pinnacle's "Los Angeles Lakers" the away one; a first half and a team that is not in the game are left out.
+        assertEquals(2, teams.size)
+        val dk = teams.first { it.bookKey == "draftkings" }
+        assertEquals(RefBookMarket.HOME, dk.subject)
+        assertEquals(115.5, dk.line!!, 0.0)
+        assertEquals(now - 600_000, dk.lastUpdateMs)
+        assertEquals(setOf(Side.OVER, Side.UNDER), dk.quotes.map { it.side }.toSet())
+        assertEquals(RefBookMarket.AWAY, teams.first { it.bookKey == "pinnacle" }.subject)
+        // A team is no player: no injury report was made of it.
+        assertTrue(page.unreported.none { it.contains("Jazz") || it.contains("Lakers") })
+    }
 }
