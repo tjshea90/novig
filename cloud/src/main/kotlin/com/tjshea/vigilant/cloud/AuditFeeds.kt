@@ -70,7 +70,7 @@ object AuditFeeds {
             delay(180_000L)
             while (isActive) {
                 val s = settings()
-                if (s != null && sources.sharpApiOn(s)) {
+                if (s != null && sources.sharpApiPaid(s)) {
                     try {
                         val rows = SharpApiSplits.all(sources.sharpApiClient, System.currentTimeMillis())
                         if (rows.isNotEmpty()) splitsJournal.appendAll(rows)
