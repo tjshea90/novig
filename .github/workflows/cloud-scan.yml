@@ -7,7 +7,7 @@ name: Cloud scan (Vigilant engine on GitHub)
 #   - the phone's switch is the master: settings.json "on": false => the gate step ends the run in seconds (no Java, no Gradle, no API call), and a running engine idles and ends itself;
 #   - a job is capped at 6 h, so each run hands over to the next one (a self-dispatch at the end) and a 15-minute schedule is only the backstop (it starts an engine only when none is running); one engine at a time (concurrency group on the engine job);
 #   - every pass's changed rows (the EDGE LOG) are gzipped to the `cloud-archive-YYYY-MM-DD` Release every 20 minutes and at the end (permanent, never delete), for Claude to analyse.
-# Repository secrets used (all optional; an API is used only if its switch is on in the phone's settings AND its secret exists): SGO_API_KEY, ODDSPAPI_API_KEY, ODDSPAPI_FREE_API_KEY, UNABATED_API_KEY,
+# Repository secrets used (all optional; an API is used only if its switch is on in the phone's settings AND its secret exists): SGO_API_KEY, ODDSPAPI_FREE_API_KEY,
 # PINNWIRE_API_KEY, PINNAPI_API_KEY, PROPLINE_API_KEY, ODDS_API_KEY, PARLAY_API_KEY, BOLTODDS_API_KEY (several keys: comma separated), and (Tj, 2026-10-15) the engine's own Novig READ-ONLY key: NOVIG_READ_KEY_ID + NOVIG_READ_KEY_PEM
 # (a `trading::read` key minted for the engine: it cannot trade or move money). NEVER put Pinnodds, Kalshi's private key, Novig's trading key or its management key here (a socket that one connection owns, or a key that can trade, stays on the phone).
 on:
@@ -120,9 +120,7 @@ jobs:
       - name: Engine
         env:
           SGO_API_KEY: ${{ secrets.SGO_API_KEY }}
-          ODDSPAPI_API_KEY: ${{ secrets.ODDSPAPI_API_KEY }}
           ODDSPAPI_FREE_API_KEY: ${{ secrets.ODDSPAPI_FREE_API_KEY }}
-          UNABATED_API_KEY: ${{ secrets.UNABATED_API_KEY }}
           SXBET_API_KEY: ${{ secrets.SXBET_API_KEY }}
           SHARPAPI_API_KEY: ${{ secrets.SHARPAPI_API_KEY }}
           PINNWIRE_API_KEY: ${{ secrets.PINNWIRE_API_KEY }}
