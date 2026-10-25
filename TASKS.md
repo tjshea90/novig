@@ -6474,3 +6474,5 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [ ] PX2 find why ParlayAPI's quotes do not reach the list; fix
 - [ ] PX3 find why alternate lines get 1 book when many books post them; fix
 - [ ] PX4 tests, ship, engine reset, tell Tj
+- [x] PX5 (Tj 17:1x UTC) "Why are these odds so old if they are from a socket?": SharpAPI Free froze every scan at the fair-odds stage (cut after 150-270 s, list 5-12 min old); SharpApiSource no longer waits (SharpApiSourceTest), SharpAPI switched off on Tj's word ("Sharpapi may not be needed")
+- [ ] PX6 (Tj 17:2x UTC) "Use propline Pinnacle. It says it is 0 seconds old. Figure out how to get the most odds from Pinnacle including props using both propline and parlayapi": measure Pinnacle's share of priced lines by kind (main, alternate, 1st half, props) from each feed; close the gaps
