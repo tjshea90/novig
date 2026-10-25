@@ -5,11 +5,11 @@
  "nonce": "15e29e",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-db7n0m",
- "head": "d43324dbbcfd6f535de754e615a22faaf14962c2",
+ "branch": "claude/optimistic-curie-64p1kh",
+ "head": "fecb13665e1904799564029f24ea289481ccaa56",
  "since": 1792884251,
- "beat": 1792886950,
- "beatIso": "2026-10-25T00:09:10Z",
+ "beat": 1792887278,
+ "beatIso": "2026-10-25T00:14:38Z",
  "done": "CH87c all-time profit = settled bets only",
  "next": "check other graphs exclude non-final; ship in next release; CH87a wake lag"
 }
