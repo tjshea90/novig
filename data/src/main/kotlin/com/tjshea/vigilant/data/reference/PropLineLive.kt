@@ -78,9 +78,15 @@ class PropLineLive(private val clock: () -> Long = System::currentTimeMillis) {
 
     fun heard(now: Long = clock()) { lastFrameMs = now }
 
+    /** When PropLine last pushed any change for a book in a sport ("book|sport" -> time): a push book that is still pushing is being read live, whatever its last full read says (PX9). */
+    private val lastEvent = ConcurrentHashMap<String, Long>()
+
     /** One `line_movement` / `line_added` / `line_pulled` payload. */
     fun onLine(type: String, d: JsonObject, now: Long = clock()) {
         heard(now)
+        val evBook = d.str("bookmaker_key")?.let(PropLineClient::bookKey)
+        val evSport = d.str("sport_key")?.let(::oddsApiSport)
+        if (evBook != null && evSport != null) lastEvent["$evBook|$evSport"] = now
         val id = d.str("outcome_id") ?: return
         when (type) {
             "line_pulled" -> { moves[id] = Move(null, null, now, pulled = true); pulls++ }
@@ -224,6 +230,13 @@ class PropLineLive(private val clock: () -> Long = System::currentTimeMillis) {
     fun describe(now: Long = clock()): String =
         "${moves.size} outcomes moved (${applied} laid over, ${pulls} pulled), ${reads.size} book boards on the heartbeat, ${scratchedPlayers.values.count { it.books >= MIN_BOOKS && now - it.atMs <= SCRATCH_MS }} players scratched, ${confirmed} markets confirmed current, ${gaps} gaps" +
             (staleBooks.filterValues { it.first || it.second }.keys.takeIf { it.isNotEmpty() }?.let { " · stale on PropLine: ${it.sorted().joinToString(",")}" } ?: "")
+
+    /** How long ago PropLine last pushed a change for each of the push books (DraftKings, FanDuel, Fanatics) in each sport, for the log: silence on a busy slate would mean the push feed is not live. */
+    fun pushNote(now: Long = clock()): String {
+        val push = setOf("draftkings", "fanduel", "fanatics")
+        val rows = lastEvent.entries.filter { it.key.substringBefore('|') in push }.sortedBy { it.key }
+        return if (rows.isEmpty()) "push books: no change heard yet" else "push books last change: " + rows.joinToString(", ") { "${it.key.replace('|', ' ').replace("americanfootball_", "").replace("basketball_", "").replace("icehockey_", "").replace("baseball_", "")} ${(now - it.value) / 1000}s" }
+    }
 
     /**
      * The heartbeat in words, per sport (PX9, Tj 2026-10-25: "why are the odds this stale if they are streamed"): how many book boards it lists, how old PropLine's last read of them is (that read is the newest a
