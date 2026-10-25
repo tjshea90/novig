@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-xp8w6z",
  "head": "a675e5a6a4b1648913ccebf2ff35d65aa9b7bf5e",
  "since": 1792884251,
- "beat": 1792894308,
- "beatIso": "2026-10-25T02:11:48Z",
+ "beat": 1792895340,
+ "beatIso": "2026-10-25T02:29:00Z",
  "done": "CH81: diagnosed NOFILL (kickoff taps), slow bets (order end poll, push off, fills 429), FEEDHIDE; added order-end read trail",
  "next": "next: CH81 kickoff guard + who calls fills during taps + why Novig live feed not connected; CH89 stars card"
 }
