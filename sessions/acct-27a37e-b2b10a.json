@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "8c2336acbb121a10871b36d71933f157fa6cce4c",
+ "head": "db6acb7785c008bf490a62664e1f25788978f69e",
  "since": 1792912591,
- "beat": 1792914862,
- "beatIso": "2026-10-25T07:54:22Z",
- "done": "tests green on PB2-PB5 + streamprobe",
+ "beat": 1792914912,
+ "beatIso": "2026-10-25T07:55:12Z",
+ "done": "tests green: PB2-PB5 + engine hourly loop fix",
  "next": "trigger parlay.yml streamprobe"
 }
