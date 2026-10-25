@@ -1,13 +1,13 @@
-# CHECKPOINT 4203 — read me first, then TASKS.md
+# CHECKPOINT 4204 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T14:48:54Z · **tests:** 1 RED: test_research_index.sh (8 green)
-**Branch:** `ccr-be05497a-18skm3` · **builds on:** `afff46184` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T14:53:26Z · **tests:** 1 RED: test_research_index.sh (8 green)
+**Branch:** `ccr-be05497a-18skm3` · **builds on:** `1f520a4de` (this checkpoint is the commit after it)
 
 ## Just done
-PS1 hot streams + PB21b cross-check + PS4 PropLine re-read 90s; PS5/PS6 verdict: batching is webhook-only, WS cap 2 used, extra subscriptions add nothing new
+PS9a PropLine 1st-half source propline_1h (PropLinePeriodTest); PB21b cross-check limited to aggregator copies
 
 ## Do this next
-PS7-PS9/PS11 docs reviews (recipes, accuracy, webhook page, ParlayAPI cookbook); read propline-grade Release; then full suite + ship v1.0.83
+PS11 ParlayAPI cookbook review; PS7 accuracy page; then full suite + ship v1.0.83
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ PS7-PS9/PS11 docs reviews (recipes, accuracy, webhook page, ParlayAPI cookbook);
 
 ## Last ten checkpoints
 ```
+  686633040 ckpt 4203: PS1 hot streams + PB21b cross-check + PS4 PropLine re-read 90s; PS5/PS6 ver
   452e77ed0 ckpt 4202: PS2 answered + fixed (13 PropLine books, same-desk groups, research/proplin
   f860b9505 ckpt 4201: PS2 coverage probe (native keys) dispatched; PS3 tools/propline_grade.py wr
   f41f81703 ckpt 4200: PS written into TASKS.md (Tj's stream audit prompt)
@@ -25,8 +26,7 @@ PS7-PS9/PS11 docs reviews (recipes, accuracy, webhook page, ParlayAPI cookbook);
   d9d5e617e ckpt 4196: odds-age fix: stale books left out beside fresh ones (FreshFirstTest), Parl
   2ad3720fb ckpt 4195: SSE streams (ParlayAPI odds + play-by-play) no longer cut by the shared cli
   c4a6c5b4d ckpt 4194: v1.0.82 gated+pushed to main (4,146 tests green); release.yml run 401780160
-  445aac267 ckpt 4193: pre-release: v1.0.82 PB: real-time list (PropLine + ParlayAPI Business stre
 ```
 
-(5 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
