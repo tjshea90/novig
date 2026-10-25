@@ -312,17 +312,21 @@ class ApiBetPlacer(
         var order: NovigOrder? = null
         var seen = "never read"
         val started = clock()
+        // Every read of the order with its answer and how long the read took, so a slow end shows whether Novig held the order open or our reads were slow (Tj, 2026-10-25, CH81).
+        val trail = ArrayList<String>()
         // The private stream says when the order ended: a short look for that first (an IOC is over in milliseconds), so the first read of it by request already finds it ended.
         val feed = events()?.takeIf { it.live }
         feed?.awaitEnd(orderId, FIRST_PUSH_WAIT_MS)
         try {
             while (clock() - started < ORDER_WAIT_MS) {
+                val readAt = clock()
                 order = try {
-                    trading.order(orderId).also { seen = it?.let { o -> "status ${o.status}, ${o.remaining} of ${o.qty} left" } ?: "Novig says it has no such order" }
+                    trading.order(orderId).also { seen = it?.let { o -> "status ${o.status}, ${o.remaining} of ${o.qty} left" } ?: "Novig says it has no such order"; trail += "${it?.status ?: "none"}@${readAt - started}+${clock() - readAt}" }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     seen = "reading it failed: " + ((e as? com.tjshea.vigilant.data.novig.signing.NovigApiException)?.let { "${it.status} ${it.code ?: ""}".trim() } ?: e.javaClass.simpleName)
+                    trail += "err@${readAt - started}+${clock() - readAt}"
                     null
                 }
                 if (order?.terminal == true) break
@@ -348,7 +352,7 @@ class ApiBetPlacer(
             }
         }
         // Why a bet takes seconds, or misses (Tj, 2026-10-24: orders ended after 5.7 s where pregame used to take 94 ms): what the last read said and how long the order ran.
-        timing("order end: ${clock() - started} ms after the order was sent, last read: $seen, push ${if (feed != null) "live" else "off"}, terminal ${order?.terminal == true}")
+        timing("order end: ${clock() - started} ms after the order was sent, last read: $seen, push ${if (feed != null) "live" else "off"}, terminal ${order?.terminal == true}, reads status@ms-since-send+read-ms [${trail.take(12).joinToString(" ")}${if (trail.size > 12) " … ${trail.size} reads" else ""}]")
         var fills = readFills(orderId)
         if (fills.isEmpty() && order?.status == "FILLED") {
             // The order says filled and its fills haven't shown yet.
