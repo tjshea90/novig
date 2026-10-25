@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "a4c29748bcdbfd7dc58aae7576aacd984db43b9a",
+ "head": "835ab9fd2e0d2ff765b824ced530cab6b1edf25f",
  "since": 1792964177,
- "beat": 1792966182,
- "beatIso": "2026-10-25T22:09:42Z",
- "done": "pre-ship: v1.0.84 PX10: phone keeps a Claude session's settings change it has not adopted yet (3-way merge), PropLine asked in parts of 60 books (its limit), 34 more PropLine books, Pinnacle hosts obey their own switches",
- "next": "ship.sh gates and releases this"
+ "beat": 1792966379,
+ "beatIso": "2026-10-25T22:12:59Z",
+ "done": "pre-release: v1.0.84 PX10: phone keeps a Claude session's settings change it has not adopted yet (3-way merge), PropLine asked in parts of 60 books (its limit), 34 more PropLine books, Pinnacle hosts obey their own switches (versionCode 424, v1.0.84)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.84), then run: bash tools/record-release.sh v1.0.84 424 \"v1.0.84 PX10: phone keeps a Claude session's settings change it has not adopted yet (3-way merge), PropLine asked in parts of 60 books (its limit), 34 more PropLine books, Pinnacle hosts obey their own switches\""
 }
