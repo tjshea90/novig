@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "2660223fac0ef9a34489715e1426e4fe70262950",
+ "head": "c347d59c6a7c9ed3bc52237bda0509dfafc5ec99",
  "since": 1792915284,
- "beat": 1792918957,
- "beatIso": "2026-10-25T09:02:37Z",
+ "beat": 1792919157,
+ "beatIso": "2026-10-25T09:05:57Z",
  "done": "v1.0.82 gated+pushed to main (4,146 tests green); release.yml run 40178016051 started; engine reset asked (resetAtMs 1792918047564) so the new runner runs the real-time list + ParlayAPI stream",
  "next": "confirm release, record-release.sh v1.0.82 422; read engine log for 'real-time list:' and 'Engine ParlayAPI:' + status fairAgeMedianS; then PB8 audit, PB12 steam study, PB17b, PB21b"
 }
