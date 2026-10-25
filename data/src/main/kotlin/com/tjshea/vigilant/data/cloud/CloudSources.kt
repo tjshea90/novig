@@ -238,7 +238,9 @@ class CloudSources(
     )
     @Volatile private var pinnoddsOn = false
     private val pinnoddsHost = PinnapiClient.pinnodds(KeyPool(QuotaPolicy.PINNODDS, { keys(CloudKeys.PINNODDS) }, usage))
-    private val propLine = PropLineClient(http, KeyPool(QuotaPolicy.PROPLINE, { keys(CloudKeys.PROPLINE) }, usage), json, relayNovig = true, bookIds = false, meter = usage)
+    /** What PropLine's push stream has said (PSL, Tj 2026-10-25), laid over the PropLine boards; empty (and the boards as read) while the stream is off. */
+    val propLineLive = com.tjshea.vigilant.data.reference.PropLineLive()
+    private val propLine = PropLineClient(http, KeyPool(QuotaPolicy.PROPLINE, { keys(CloudKeys.PROPLINE) }, usage), json, relayNovig = true, bookIds = false, meter = usage, live = propLineLive)
     private val propLineProps = PropLinePropsSource(propLine)
     @Volatile private var propLineInjuriesOn = false
     /** PropLine's free injury report, asked before ParlayAPI's 1-credit one (AF, 2026-10-22). */
