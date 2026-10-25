@@ -57,6 +57,9 @@ interface OddsScanner {
      * [overlay] (the live streams' pushes) and each side's fair odds worked out again ([Pricing.refair]), then Novig's price from the socket's held book where it is newer ([Pricing.requote]). Nothing is
      * requested from any API or from Novig.
      */
+    /** The listed bets' markets kept pushed on Novig's feed (PB19). */
+    fun pinListed(marketIds: Collection<String>) {}
+
     fun liveReprice(settings: ScanSettings, rows: List<Opportunity>, overlay: (com.tjshea.vigilant.data.reference.RefEvent, Long) -> com.tjshea.vigilant.data.reference.RefEvent): List<Opportunity> = rows
 
     /** Re-price what's already fetched under new settings. No network. Null before the first scan. */

@@ -55,6 +55,9 @@ interface NovigSource {
     /** Opens the live feed (if this source has one) without changing what it watches: its throttle refills while a scan's plan fills in. */
     fun openFeed() {}
 
+    /** The listed bets' markets held on the live feed's full book whatever the scan watches (the engine's real-time list, PB19): their price stays pushed, never a scan old. Nothing by default. */
+    fun pinListed(marketIds: Collection<String>) {}
+
     /** Books among [marketIds] this source holds current right now, with no request. None by default. COMPLETE books only (a full ladder); see [pushedTop]. */
     fun pushed(marketIds: Collection<String>): Map<String, NovigBook> = emptyMap()
 
@@ -250,6 +253,10 @@ class NovigPublicClient(
 
     override fun openFeed() {
         liveStream()?.open()
+    }
+
+    override fun pinListed(marketIds: Collection<String>) {
+        (liveStream() as? com.tjshea.vigilant.data.novig.stream.NovigStream)?.pin(LISTED_OWNER, marketIds.distinct().take(MAX_LISTED_PINS))
     }
 
     override fun pushed(marketIds: Collection<String>): Map<String, NovigBook> =
@@ -798,6 +805,10 @@ class NovigPublicClient(
         runCatching { json.decodeFromString(ErrorDto.serializer(), body).code }.getOrNull()
 
     companion object {
+        /** The real-time list's pin on the live feed (one owner of its own beside the live lanes'). */
+        private val LISTED_OWNER = Any()
+        /** At most this many listed markets pinned on the full book (the list is a few dozen bets). */
+        const val MAX_LISTED_PINS = 80
         /**
          * A query value as sent and as signed: everything but `A-Z a-z 0-9 - . _ ~` as `%XX` (NOVIG-V3's
          * canonical form, so the URL and the signature agree; an opaque `after` cursor may hold `+` or `/`).

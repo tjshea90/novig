@@ -330,6 +330,8 @@ class CloudEngine(
             val rows = try {
                 realtime.pass(filter, now) { scanner.liveReprice(pricing, it, overlay) }
             } catch (e: CancellationException) { throw e } catch (e: Exception) { log("real-time list failed: ${e.javaClass.simpleName}: ${e.message?.take(120)}"); continue }
+            // The listed bets stay pushed on Novig's feed whatever the scan watches (2026-10-25: 5 of 12 listed rows carried an 8-minute-old Novig price, their markets not held on the feed).
+            runCatching { scanner.pinListed(rows.map { it.market.marketId }) }
             val sig = rows.fold(rows.size) { h, o -> h * 31 + o.key.hashCode() + Math.round((o.evPercent ?: 0.0) * 10).toInt() }
             if (sig != realtimeSig) {
                 val feed = CloudFeed(now, lastPublished?.configRev ?: pricedRev, lastPublished?.stats ?: ScanStats(0, 0, 0, 0, 0), rows)

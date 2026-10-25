@@ -928,6 +928,8 @@ class Scanner(
         }
     }
 
+    override fun pinListed(marketIds: Collection<String>) = novig.pinListed(marketIds)
+
     override fun liveReprice(requested: ScanSettings, rows: List<Opportunity>, overlay: (RefEvent, Long) -> RefEvent): List<Opportunity> {
         if (rows.isEmpty()) return rows
         val settings = requested.effective(forBets = betsOnly)
