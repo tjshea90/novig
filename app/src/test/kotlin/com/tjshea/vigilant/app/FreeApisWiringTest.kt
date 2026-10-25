@@ -48,7 +48,7 @@ class FreeApisWiringTest {
 
     @Test
     fun `Unabated and OddsPapi v5 are gone from every list`() {
-        assertFalse(ApiProvider.entries.any { it.id == "unabated" || it.id == "oddspapi" })
+        assertFalse(ApiProvider.entries.any { it.storageKey == "unabated" || it.storageKey == "oddspapi" })
         assertFalse(ApiEntry.entries.any { it.name == "UNABATED" || it.name == "ODDSPAPI" })
         assertFalse(com.tjshea.vigilant.app.ui.SettingsPage.entries.any { it.name == "UNABATED" || it.name == "ODDSPAPI" })
         assertFalse(com.tjshea.vigilant.data.keys.QuotaPolicy.ALL.any { it.id == "unabated" || it.id == "oddspapi" })
