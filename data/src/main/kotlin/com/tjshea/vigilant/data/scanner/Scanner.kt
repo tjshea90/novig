@@ -1337,6 +1337,11 @@ class Scanner(
                 events = snap.events.map { e -> e.copy(markets = e.markets.filter { Freshness.fresh(it.lastUpdateMs, fairAsOf + headroomMs, e.commenceMs.takeIf { e.etDate == null }) }) }
                     .filter { it.markets.isNotEmpty() },
             )
+            if (youngFairOnly) {
+                val sent = snap.events.sumOf { it.markets.size }
+                QuoteCensus.add("sent", snap.provider, sent)
+                QuoteCensus.add("tooOld", snap.provider, sent - fresh.events.sumOf { it.markets.size })
+            }
             if (fresh.provider !in PICKED_BOOK_FEEDS || (fresh.provider.startsWith("propline") && settings.gates.propLineAllBooks)) fresh
             else fresh.copy(events = fresh.events.map { e -> e.copy(markets = e.markets.filter { it.bookKey in books }) })
         }

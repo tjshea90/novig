@@ -292,10 +292,15 @@ object Pricing {
             val ref = refById[key.refEventId] ?: return@getOrPut null
             // Low-usage bids: a book's quote past the freshness limit is left out BEFORE the devig, so a stale third book can't spoil a line two fresh sharp books price,
             // and a book with no stamp is not known to be current (RESEARCH.md §92). Everywhere else the oldest quote only dates the whole line ([Opportunity.fairIsOld]).
-            val prices = bookPrices(ref, key, settings.gates.freshestWins).let { all ->
+            val all = bookPrices(ref, key, settings.gates.freshestWins).let { all ->
                 if (settings.lowUsageScan) all.filter { b -> b.lastUpdateMs != null && Freshness.fresh(b.lastUpdateMs, now, ref.commenceMs) } else all
-            }.let { Freshness.freshFirst(it, now, { b -> b.lastUpdateMs }, { b -> b.bookKey in fairSettings.sharpBooks }) }
-            FairValue.compute(prices, fairSettings)
+            }
+            val prices = Freshness.freshFirst(all, now, { b -> b.lastUpdateMs }, { b -> b.bookKey in fairSettings.sharpBooks })
+            if (prices.size < all.size) (all - prices.toSet()).groupBy { it.source }.forEach { (src, l) -> QuoteCensus.add("staleBesideFresh", src, l.size) }
+            FairValue.compute(prices, fairSettings).also { f ->
+                val used = f?.perBook?.map { it.book }?.toSet().orEmpty()
+                prices.groupBy { it.source }.forEach { (src, l) -> QuoteCensus.add("devigLeftOut", src, l.count { it !in used }); QuoteCensus.add("priced", src, l.count { it in used }) }
+            }
         }
 
         val kept = memo?.pricedFor(plan, fairSettings)

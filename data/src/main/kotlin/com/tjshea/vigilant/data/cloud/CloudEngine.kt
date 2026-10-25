@@ -660,6 +660,7 @@ class CloudEngine(
         novigWatch.observe(report.errors, clock())?.let { ev -> novigOutage(ev) }
         scanNote = describe(report)
         log("scan report: $scanNote")
+        log(com.tjshea.vigilant.data.scanner.QuoteCensus.describeAndReset())
         runCatching(scanDiagnostics).getOrDefault(emptyList()).takeIf { it.isNotEmpty() }?.let { log("scan diagnostics: " + it.joinToString(" | ").take(6000)) }
         feedLines = report.sources.map { FeedLine(it.id, it.name, it.fetched, it.reused, it.matched, it.standingBy, it.skipped, it.error?.take(120), it.heldBack?.take(120)) }
         for (f in feedLines) if (f.fetched + f.reused > 0) for (id in ApiManager.switchIdsOfFeed(f.id)) answeredAtMs[id] = clock()
