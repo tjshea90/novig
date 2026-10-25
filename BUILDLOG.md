@@ -418,3 +418,4 @@ day that changes.
 | v1.0.77 | code 417 | 2026-10-24T18:24Z | CH80: the +EV list no longer empties at each engine scan start: rows the new scan has not re-read yet stay listed with their own stamps
 | v1.0.78 | code 418 | 2026-10-24T21:12Z | CH81i: order-end timing + NOFILL kept in the report; the phone stops asking for a missing bids file
 | v1.0.79 | code 419 | 2026-10-25T00:45Z | All-time profit = winnings on final bets and bids minus their cost (no wallet or deposits), by slate day
+| v1.0.80 | code 420 | 2026-10-25T01:39Z | SG: one money limit on similar bets (same game total at any line, a team's side, a player's over/under), counting your bets, the engine's bets and every bid together; no bids on what is already bet, the engine never bets what you bet by hand, red X on cards and the Bet sheet
