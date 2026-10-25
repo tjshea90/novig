@@ -1313,6 +1313,15 @@ private fun ColumnScope.BettingTab(
             s.gates.repeatGuard, tag = "repeatGuardSwitch",
         ) { v -> onUpdate { it.copy(gates = it.gates.copy(repeatGuard = v)) } }
         if (s.gates.repeatGuard) {
+            Text("Most money on one bet, similar bets together", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+            Text(
+                "Bets and bids on the same thing count together, whoever placed them (you by hand, the engine, your bids, the engine's bids; a resting bid as if it filled): the game's total over (or under) at any line and half, " +
+                    "a team's spread at any line with its moneyline, a team's total, a player's over (or under). Over 49.5 and Over 50.5 of one game are one bet here. Many small bets are fine while they add up to no more than this. " +
+                    "Bids never go up on what you or the engine already bet, and the engine never bets what you bet by hand. Your own bets are only warned (the red X). Now ${if (s.gates.repeatMaxFamilyDollars <= 0.0) "no limit" else "$" + String.format(java.util.Locale.US, "%.2f", s.gates.repeatMaxFamilyDollars)}.",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            ChoiceChips(listOf(1.0, 2.0, 3.0, 5.0, 10.0, 25.0, 0.0), s.gates.repeatMaxFamilyDollars, { if (it == 0.0) "No limit" else "$" + it.toInt() }) { v -> onUpdate { it.copy(gates = it.gates.copy(repeatMaxFamilyDollars = v)) } }
+            if (s.gates.repeatMaxFamilyDollars > 0.0) Text("With this limit on, the two counts below are not used: the dollars decide.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
             Text("Most bets or bids on one side", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
             ChoiceChips(listOf(1, 2, 3, 5, 0), s.gates.repeatMaxBets, { if (it == 0) "No limit" else it.toString() }) { v -> onUpdate { it.copy(gates = it.gates.copy(repeatMaxBets = v)) } }
             Text("Most dollars on one side", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
