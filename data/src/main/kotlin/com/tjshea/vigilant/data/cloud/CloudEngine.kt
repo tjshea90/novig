@@ -248,6 +248,18 @@ class CloudEngine(
         realtime.adopt(r, now, if (pricing != null && overlay != null) { held, scan -> scanner.rebaseFair(pricing, held, scan, overlay) } else null)
     }
 
+    private var listQualityAt = 0L
+
+    /** Once a minute: how many books stand behind the listed bets' fair odds, and how many feeds the thin ones matched (PX9: a bet priced by 1 book beside a game other feeds cover is a row from a partial scan). */
+    private fun logListQuality(rows: List<Opportunity>, now: Long) {
+        if (now - listQualityAt < 60_000L || rows.isEmpty()) return
+        listQualityAt = now
+        val n = rows.map { it.fair?.booksUsed?.size ?: 0 }
+        fun c(lo: Int, hi: Int) = n.count { it in lo..hi }
+        val thin = rows.filter { (it.fair?.booksUsed?.size ?: 0) <= 1 }.groupingBy { (it.refEvent?.id?.count { ch -> ch == '+' } ?: 0) + 1 }.eachCount()
+        log("list quality: ${rows.size} listed · books behind the fair: 1 ${c(0, 1)} · 2 ${c(2, 2)} · 3-4 ${c(3, 4)} · 5+ ${c(5, 999)} · the 1-book ones matched ${thin.entries.sortedBy { it.key }.joinToString(", ") { "${it.value} with ${it.key} feeds" }.ifBlank { "-" }}")
+    }
+
     private fun realtimeOn(now: Long = clock()): Boolean = liveOverlay != null && realtime.passes > 0 && now - realtime.lastPassAtMs < 4 * RealtimeList.EVERY_MS
     @Volatile private var lastAges = CloudCurrency.UNKNOWN
     @Volatile private var tradeStatus: TradeStatus? = null
@@ -342,6 +354,7 @@ class CloudEngine(
             } catch (e: CancellationException) { throw e } catch (e: Exception) { log("real-time list failed: ${e.javaClass.simpleName}: ${e.message?.take(120)}"); continue }
             // The listed bets stay pushed on Novig's feed whatever the scan watches (2026-10-25: 5 of 12 listed rows carried an 8-minute-old Novig price, their markets not held on the feed).
             runCatching { scanner.pinListed(rows.map { it.market.marketId }) }
+            logListQuality(rows, now)
             val sig = rows.fold(rows.size) { h, o -> h * 31 + o.key.hashCode() + Math.round((o.evPercent ?: 0.0) * 10).toInt() }
             if (sig != realtimeSig) {
                 val feed = CloudFeed(now, lastPublished?.configRev ?: pricedRev, lastPublished?.stats ?: ScanStats(0, 0, 0, 0, 0), rows)
