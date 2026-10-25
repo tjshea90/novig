@@ -1,21 +1,23 @@
-# CHECKPOINT 4255 — read me first, then TASKS.md
+# CHECKPOINT 4256 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T23:25:52Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-3cb0aa53-b2tjli` · **builds on:** `77ccfe639` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T23:31:49Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-3cb0aa53-b2tjli` · **builds on:** `ba798dc20` (this checkpoint is the commit after it)
 
 ## Just done
-PX11f: gameprobe lists ParlayAPI's events of one game (hypothesis: ParlayAPI splits a game into 2 events by team spelling; matcher takes 1 per feed)
+PX11f root cause + fix: ParlayAPI's split events (two spellings of one game) now both match; PlannerPricingTest
 
 ## Do this next
-dispatch parlay.yml gameprobe Oregon/Northwestern; if split confirmed, fix Planner.matchOne to attach a feed's extra events of the same game
+full tools/test.sh, land on main, engine reset (engine_set.py --reset), check feed row Northwestern@Oregon has parlay books; tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  44717fce0 ckpt 4255: PX11f: gameprobe lists ParlayAPI's events of one game (hypothesis: ParlayAP
   13eb830d5 ckpt 4254: WATCH 2026-10-25 ok, no changes
   66d520be3 ckpt 4253: v1.0.85 released + recorded; engine reset onto the order-port fix
   0e6753355 ckpt 4252: pre-release: v1.0.85 PX11: a filled order whose fills Novig would not let u
@@ -25,8 +27,7 @@ dispatch parlay.yml gameprobe Oregon/Northwestern; if split confirmed, fix Plann
   5f0740331 ckpt 4248: PX11a root cause + fix (FILLED orders whose fills were rate-limited were re
   6a646d461 ckpt 4247: PX11a: novig-probe.yml passes default statuses (Gradle refuses empty --args
   3e9157ea2 ckpt 4246: PX11a: novig-probe.yml + cloud/OrdersProbeMain.kt (Novig's record of reject
-  3081884d7 ckpt 4245: PX11 written into TASKS.md (5 parts)
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(7 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
