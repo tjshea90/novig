@@ -55,7 +55,7 @@ SX Bet exposes a full REST API with access to markets, orderbooks, order managem
 
 ## Ready to start?
 
-> **[Quickstart](/developers/quickstart.md)**
+> **[Quickstart](https://docs.sx.bet/developers/quickstart.md)**
 >
 > Follow our step-by-step quickstart to fetch markets, read the orderbook, and place your first order.
 

@@ -97,7 +97,7 @@ On the futures schedule, it earns \$0.7500.
 > We decide whether an event is live at match time. A `WHEN_LIVE` market charges fills on the live side of a `GOLIVE`, not the pregame side.
 
 Every `GOLIVE` voids every resting order, and the live window can open more than once.
-See [Event lifecycle](/api/concepts/event-lifecycle.md#event-states).
+See [Event lifecycle](https://docs.novig.com/api/concepts/event-lifecycle.md#event-states).
 
 ## Where to read fees
 
@@ -107,7 +107,7 @@ See [Event lifecycle](/api/concepts/event-lifecycle.md#event-states).
 * The private stream's `fill` event carries no fee.
 
 A fee rounds half up to the millicent, the same way as a balance.
-See [Monetary representations](/api/concepts/money.md).
+See [Monetary representations](https://docs.novig.com/api/concepts/money.md).
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

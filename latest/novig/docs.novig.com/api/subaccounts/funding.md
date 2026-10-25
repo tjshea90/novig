@@ -16,7 +16,7 @@ A transfer moves money between your cash wallet and one subaccount.
 Send a transfer with your `management` key.
 Read one with a `management` or `management::read` key.
 
-Both routes spend one token from the `account` [throttle](/api/throttling.md).
+Both routes spend one token from the `account` [throttle](https://docs.novig.com/api/throttling.md).
 
 > [!WARNING]
 >

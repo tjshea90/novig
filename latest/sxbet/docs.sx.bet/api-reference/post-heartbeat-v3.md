@@ -41,7 +41,7 @@
 > [!NOTE]
 >
 > **You need a deployed proxy first.** If your proxy is not yet deployed the call returns
-> `400 INVALID_PROXY`. Deploy it with [`POST /user/deploy-proxy`](/api-reference/post-user-deploy-proxy).
+> `400 INVALID_PROXY`. Deploy it with [`POST /user/deploy-proxy`](https://docs.sx.bet/api-reference/post-user-deploy-proxy).
 
 
 ## OpenAPI

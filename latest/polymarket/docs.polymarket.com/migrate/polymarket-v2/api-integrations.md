@@ -37,7 +37,7 @@ as `<ASSET_ID>` below.
 **2. Approve V2 Trading**
 
 V2 orders settle through ExchangeV3. Use the Polygon addresses for
-ExchangeV3, pUSD, and PositionManager from [Contract Addresses](/resources/contracts.md).
+ExchangeV3, pUSD, and PositionManager from [Contract Addresses](https://docs.polymarket.com/resources/contracts.md).
 Grant these approvals from the maker (the EOA or smart wallet holding the
 funds) and wait for confirmation:
 

@@ -8,7 +8,7 @@
 
 Subscribe to best odds changes across all order books. A publication goes out whenever a market's top of book changes on either side — a new best price, a size change at the best price, or the best level disappearing.
 
-This channel has no history, so a subscriber receives nothing until the next change anywhere in the system. Seed from [`GET /orders-v3/odds/best`](/api-reference/get-best-odds-v3) on every connect and treat this channel as updates on top of that snapshot.
+This channel has no history, so a subscriber receives nothing until the next change anywhere in the system. Seed from [`GET /orders-v3/odds/best`](https://docs.sx.bet/api-reference/get-best-odds-v3) on every connect and treat this channel as updates on top of that snapshot.
 
 **CHANNEL NAME**
 
@@ -23,10 +23,10 @@ One market per publication, as a single object.
 | marketHash | string | The market whose top of book changed |
 | outcomeOne | object or `null` | Best maker level on outcome one. `null` when that side is empty |
 | outcomeTwo | object or `null` | Best maker level on outcome two. `null` when that side is empty |
-| outcomeOne.percentageOdds | string | The odds the `maker` receives in the sx.bet protocol format. To convert to implied odds divide by 10^20. To get taker implied odds: `takerOdds = 1 - percentageOdds / 10^20`. See [unit conversions](/developers/unit-conversions.md). |
-| outcomeOne.size | string | Aggregate maker size at that level, in base units. See [unit conversions](/developers/unit-conversions.md). |
+| outcomeOne.percentageOdds | string | The odds the `maker` receives in the sx.bet protocol format. To convert to implied odds divide by 10^20. To get taker implied odds: `takerOdds = 1 - percentageOdds / 10^20`. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
+| outcomeOne.size | string | Aggregate maker size at that level, in base units. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
 
-This is exactly one element of the `bestOdds` array that [`GET /orders-v3/odds/best`](/api-reference/get-best-odds-v3) returns.
+This is exactly one element of the `bestOdds` array that [`GET /orders-v3/odds/best`](https://docs.sx.bet/api-reference/get-best-odds-v3) returns.
 
 ***
 

@@ -6,19 +6,19 @@
 
 > Get a snapshot of the order book for markets on an event.
 
-`GET /orderbook-v3/snapshot/event` returns the **aggregated** book for markets on a single event. It requires an [API key](/api-reference/api-key.md).
+`GET /orderbook-v3/snapshot/event` returns the **aggregated** book for markets on a single event. It requires an [API key](https://docs.sx.bet/api-reference/api-key.md).
 
 > [!TIP]
 >
 > Use this to re-seed state for the realtime
-> [`orderbook_v3_event:{eventId}`](/api-reference/channel-orderbook-v3-event) channel after a
+> [`orderbook_v3_event:{eventId}`](https://docs.sx.bet/api-reference/channel-orderbook-v3-event) channel after a
 > `recovered: false` publication — page until `nextKey` is omitted, instead of hitting the
-> single-market [snapshot](/api-reference/get-market-orderbook-snapshot.md) once per market.
+> single-market [snapshot](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot.md) once per market.
 
 > [!WARNING]
 >
 > Use `showTakerPerspective` for display only. `percentageOdds` is from the perspective of the maker. [Read the order
-> book](/developers/order-book.md#convert-a-level-into-what-you-can-bet) walks the conversion through.
+> book](https://docs.sx.bet/developers/order-book.md#convert-a-level-into-what-you-can-bet) walks the conversion through.
 
 
 ## OpenAPI

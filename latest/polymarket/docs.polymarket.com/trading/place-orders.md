@@ -8,7 +8,7 @@
 
 Place a market order to trade against available liquidity immediately, or use a limit order to specify a price and wait for a match.
 
-Before placing an order, choose an outcome and confirm that the market is [accepting orders](/market-data/market-details.md#market-status). The examples below assume you already have a market object. To find or fetch one, see [Discover Markets](/market-data/discover-markets.md).
+Before placing an order, choose an outcome and confirm that the market is [accepting orders](https://docs.polymarket.com/market-data/market-details.md#market-status). The examples below assume you already have a market object. To find or fetch one, see [Discover Markets](https://docs.polymarket.com/market-data/discover-markets.md).
 
 **TypeScript**
 
@@ -258,7 +258,7 @@ meets `min_order_size`. Use the tick size to select the required precision:
 >
 > If your integration stores `tick_size` for later orders, listen for the
 > `tick_size_change` event on the [market
-> stream](/market-data/realtime-data.md#market-stream) and replace the stored value
+> stream](https://docs.polymarket.com/market-data/realtime-data.md#market-stream) and replace the stored value
 > when it changes. The CLOB rejects an order whose price does not conform to the
 > market's current tick size.
 
@@ -584,7 +584,7 @@ For GTD, set `expiration` to a Unix timestamp in seconds before signing and
 submitting the request.
 
 Using the signer address and CLOB API credentials from [API
-Authentication](/getting-started/api.md#authentication), create a fresh
+Authentication](https://docs.polymarket.com/getting-started/api.md#authentication), create a fresh
 `<clob_request_timestamp>` and generate `<clob_l2_signature>` from the exact
 serialized body sent over the wire:
 
@@ -728,7 +728,7 @@ immediately instead of resting on the book. Use a market order when execution
 matters more than setting an exact price.
 
 Read the market's [trading
-constraints](/market-data/market-details.md#trading-constraints) before deciding
+constraints](https://docs.polymarket.com/market-data/market-details.md#trading-constraints) before deciding
 how much to buy or sell.
 
 ### Place a Market Order
@@ -842,9 +842,9 @@ A `delayed` response is accepted but has not matched yet. Its
 `makingAmount` and `takingAmount` are `"0"`, and its `tradeIds` and
 `transactionsHashes` are empty because no fills exist yet. Treat it as a
 pending order rather than a fill, and use [real-time order
-updates](/trading/realtime-order-updates.md) to follow its outcome. To identify
+updates](https://docs.polymarket.com/trading/realtime-order-updates.md) to follow its outcome. To identify
 markets with this behavior before placing an order, read
-[`market.trading.secondsDelay`](/market-data/market-details#market-timing).
+[`market.trading.secondsDelay`](https://docs.polymarket.com/market-data/market-details#market-timing).
 
 A market order never rests on the book: any amount that cannot fill is
 canceled. A rejected order returns `ok: false` with a code and message.
@@ -969,9 +969,9 @@ A `delayed` response is accepted but has not matched yet. Its
 `making_amount` and `taking_amount` are `0`, and its `trade_ids` and
 `transactions_hashes` are empty because no fills exist yet. Treat it as a
 pending order rather than a fill, and use [real-time order
-updates](/trading/realtime-order-updates.md) to follow its outcome. To identify
+updates](https://docs.polymarket.com/trading/realtime-order-updates.md) to follow its outcome. To identify
 markets with this behavior before placing an order, read
-[`market.trading.seconds_delay`](/market-data/market-details#market-timing).
+[`market.trading.seconds_delay`](https://docs.polymarket.com/market-data/market-details#market-timing).
 
 A market order never rests on the book: any amount that cannot fill is
 canceled. A rejected order returns `ok=False` with a code and message.
@@ -1112,7 +1112,7 @@ curl -X POST "https://clob.polymarket.com/order" \
 ```
 
 Using the signer address and CLOB API credentials from [API
-Authentication](/getting-started/api.md#authentication), create a fresh
+Authentication](https://docs.polymarket.com/getting-started/api.md#authentication), create a fresh
 `<clob_request_timestamp>` and generate `<clob_l2_signature>` from the exact
 serialized body sent over the wire:
 
@@ -1163,15 +1163,15 @@ When `status` is `"delayed"`, the order is accepted but matching has not
 happened yet. `makingAmount` and `takingAmount` may be empty, and
 `tradeIDs` and `transactionsHashes` are empty because no fills exist yet.
 Treat the order as pending and use [real-time order
-updates](/trading/realtime-order-updates.md) to follow its outcome. To identify
+updates](https://docs.polymarket.com/trading/realtime-order-updates.md) to follow its outcome. To identify
 markets with this behavior before submitting, read
-[`secondsDelay`](/market-data/market-details#market-timing).
+[`secondsDelay`](https://docs.polymarket.com/market-data/market-details#market-timing).
 
 ### Cap Market Buy Spending
 
 A market BUY's amount is the pre-fee USD notional. Applicable [platform
-fees](/market-data/market-details.md#trading-fees) and [builder taker
-fees](/programs/builders/fees.md) are charged on top. Set an all-in spending limit
+fees](https://docs.polymarket.com/market-data/market-details.md#trading-fees) and [builder taker
+fees](https://docs.polymarket.com/programs/builders/fees.md) are charged on top. Set an all-in spending limit
 when the complete cost must remain within a fixed budget.
 
 **TypeScript**
@@ -1501,7 +1501,7 @@ curl -X POST "https://clob.polymarket.com/orders" \
 ```
 
 Using the signer address and CLOB API credentials from [API
-Authentication](/getting-started/api.md#authentication), create a fresh
+Authentication](https://docs.polymarket.com/getting-started/api.md#authentication), create a fresh
 `<clob_request_timestamp>` and generate `<clob_l2_signature>` from the exact
 serialized array sent over the wire:
 
@@ -1546,7 +1546,7 @@ failure.
 
 ## Builder Attribution
 
-As part of the [Builder Program](/programs/builders/overview.md), attach your
+As part of the [Builder Program](https://docs.polymarket.com/programs/builders/overview.md), attach your
 builder code to orders so matched trades are credited to your builder profile.
 The code is a 32-byte hex string that identifies your profile.
 

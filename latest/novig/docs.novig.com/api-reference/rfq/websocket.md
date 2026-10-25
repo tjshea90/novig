@@ -11,7 +11,7 @@ You keep one connection open. We push each quote round to you, and you answer on
 
 A quote round is the auction for one RFQ (request for quote). Every registered pricer can quote on it.
 
-The socket replaces the HTTP server that [webhooks](/api-reference/rfq/webhooks.md) need.
+The socket replaces the HTTP server that [webhooks](https://docs.novig.com/api-reference/rfq/webhooks.md) need.
 You need no TLS certificate, no public hostname, and no signature checks. You authenticate once, when you connect.
 
 The timing is the same as for webhooks. Each auction lasts 3 seconds.
@@ -26,7 +26,7 @@ If you don't answer in time, we reject the trade.
 | QA | `wss://api-qa.novig.us/rfq/ws` |
 
 Send your OAuth 2.0 access token as a bearer token on the upgrade request.
-It's the same market-maker token the REST API uses. See [Authentication](/api-reference/authentication.md).
+It's the same market-maker token the REST API uses. See [Authentication](https://docs.novig.com/api-reference/authentication.md).
 
 ```http theme={"dark"}
 Authorization: Bearer YOUR_ACCESS_TOKEN
@@ -41,7 +41,7 @@ We refuse the upgrade if your trader has no pricer registration.
 Register once with `POST /rfq/pricer` and the body `{}`. A socket-only pricer needs no webhook and gets no shared secret.
 
 The registration outlives every connection, so you don't register again when you reconnect.
-See [Registration](/api-reference/rfq/registration.md).
+See [Registration](https://docs.novig.com/api-reference/rfq/registration.md).
 
 ### Why the upgrade fails
 
@@ -280,7 +280,7 @@ You get a channel's events after you subscribe to it.
 >
 > **data.outcome\_ids** `array of UUID strings` *required*
 >
-> The legs, in the order the taker asked for them. `GET /rfq/executions` sorts the same legs by outcome ID. See [Universe model](/api/concepts/universe-model.md#outcome).
+> The legs, in the order the taker asked for them. `GET /rfq/executions` sorts the same legs by outcome ID. See [Universe model](https://docs.novig.com/api/concepts/universe-model.md#outcome).
 >
 > **data.expires\_at** `ISO-8601 string` *required*
 >
@@ -598,12 +598,13 @@ You get a channel's events after you subscribe to it.
 >
 > **data.reason** `string` *required*
 >
-> `below_min_wager` or `unbacked`. Each reason adds one field with the number you must beat.
+> `below_min_wager`, `unbacked`, or `own_rfq`. The first two add one field with the number you must beat.
 >
 > | `reason` | Extra field | Means |
 > | - | - | - |
 > | `below_min_wager` | `min_wager` | Your `max_wager` is below the round's minimum stake |
 > | `unbacked` | `required_collateral` | Your free balance doesn't cover the collateral |
+> | `own_rfq` | none | You requested this round, so you can't fill it |
 >
 > The round's minimum stake is the taker's minimum or ours, whichever is higher.
 
@@ -834,7 +835,7 @@ We answer a message we can't handle with an `error` frame.
 | `INVALID_QUOTE` | A quote term is out of range. `message` names the term |
 | `RFQ_CLOSED` | The auction already closed, so we dropped the quote |
 | `RFQ_UNKNOWN` | We hold no round for that `rfq_id`, so we dropped the quote. Either the round never opened, or it closed more than a minute ago. A quote that arrives within a minute of the close gets `RFQ_CLOSED` instead |
-| `FORBIDDEN` | You have no active pricer registration, or you're restricted or [locked out](/api-reference/rfq/confirm-rate.md) |
+| `FORBIDDEN` | You have no active pricer registration, or you're restricted or [locked out](https://docs.novig.com/api-reference/rfq/confirm-rate.md) |
 | `RATE_LIMITED` | Too many actions. Retry later |
 | `NO_CONFIRM_WINDOW` | No last look is open for that quote, so we dropped the answer |
 | `CONFIRM_ALREADY_DECIDED` | The last look already has an answer, so we dropped this one |
@@ -877,7 +878,7 @@ There's no JSON ping message and no idle timeout. A connection that answers ever
 > Subscribe again after every reconnect. Subscriptions belong to the connection, so a new one gets no events until you subscribe.
 
 We don't replay or backfill. A new connection starts at the live edge, so you lose anything we sent while you were away.
-Get missed executions from the [executions listing](/api-reference/rfq/executions.md).
+Get missed executions from the [executions listing](https://docs.novig.com/api-reference/rfq/executions.md).
 
 We close a connection without a status code, so don't read meaning into the close frame. Reconnect with backoff, then subscribe again.
 
@@ -900,7 +901,7 @@ A round your webhook won is confirmed over HTTP. A round your socket won arrives
 Handle confirms on both legs, or run only one.
 
 To make the socket your only path, leave out `webhookUrl` on your first registration.
-On an existing registration, leaving it out keeps your webhook. See [Registration](/api-reference/rfq/registration.md).
+On an existing registration, leaving it out keeps your webhook. See [Registration](https://docs.novig.com/api-reference/rfq/registration.md).
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

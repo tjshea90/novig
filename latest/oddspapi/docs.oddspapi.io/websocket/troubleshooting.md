@@ -48,7 +48,7 @@ You must decode both.
 
 ## 3b) zstd Decoding Problems
 
-With `receiveType: "zstd"` or `"zstd-dict"` (see [Compression](/websocket/compression.md)):
+With `receiveType: "zstd"` or `"zstd-dict"` (see [Compression](https://docs.oddspapi.io/websocket/compression.md)):
 
 * **Decompression fails / garbage output** — on `"zstd-dict"` you decompressed without the right
   dictionary. Read the `dictId` from each binary frame and use the matching dictionary; `dictId = 0`
@@ -118,7 +118,7 @@ This is normal during a release or node rebalance — **not** an error.
 * Reconnect immediately on this message; don't wait for the socket to close.
 * Expect `snapshot_required` with reason `server_restarted` on the next resume (new replica = new
   `serverEpoch`). Re-fetch a REST snapshot and continue.
-* See [Resume & Replay](/websocket/resume-replay.md#server-initiated-reconnect-on-release).
+* See [Resume & Replay](https://docs.oddspapi.io/websocket/resume-replay.md#server-initiated-reconnect-on-release).
 
 ***
 

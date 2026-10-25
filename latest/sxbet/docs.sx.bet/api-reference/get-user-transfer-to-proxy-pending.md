@@ -7,16 +7,16 @@
 > List open deposits to your proxy wallet by session id.
 
 `GET /user/transfer-to-proxy/pending` returns the `sessionIds` of every deposit started by
-[`POST /user/transfer-to-proxy`](/api-reference/post-user-transfer-to-proxy) that is still open,
+[`POST /user/transfer-to-proxy`](https://docs.sx.bet/api-reference/post-user-transfer-to-proxy) that is still open,
 newest first. For the outcome of one deposit, poll
-[`GET /user/transfer-to-proxy/status`](/api-reference/get-user-transfer-to-proxy-status)
+[`GET /user/transfer-to-proxy/status`](https://docs.sx.bet/api-reference/get-user-transfer-to-proxy-status)
 with that id.
 
 > [!WARNING]
 >
 > **An empty `sessionIds` list does not mean the deposit succeeded.** It clears on success and on
 > failure alike. Use status for `SUCCESS` / `FAILED`, then confirm the amount with
-> [`GET /user/balance-v3`](/api-reference/get-user-balance-v3) if you need the balance.
+> [`GET /user/balance-v3`](https://docs.sx.bet/api-reference/get-user-balance-v3) if you need the balance.
 
 
 ## OpenAPI

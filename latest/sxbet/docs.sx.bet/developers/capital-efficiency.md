@@ -39,10 +39,10 @@ recalculates and refunds the full 200 USDC on the second fill.
 
 Refunds are reported as fields on rows you already read, not through a dedicated endpoint or channel:
 
-* **Per bet** — `ceRefundAmount` on [`GET /trades-v3`](/api-reference/get-trades-v3).
-* **Per fill** — `ceRefundAmount` on [`GET /fills-v3`](/api-reference/get-fills-v3).
+* **Per bet** — `ceRefundAmount` on [`GET /trades-v3`](https://docs.sx.bet/api-reference/get-trades-v3).
+* **Per fill** — `ceRefundAmount` on [`GET /fills-v3`](https://docs.sx.bet/api-reference/get-fills-v3).
 * **Realtime** — the affected rows are republished on the
-  [trades](/api-reference/channel-trades-v3.md) and [fills](/api-reference/channel-fills-v3.md) channels with
+  [trades](https://docs.sx.bet/api-reference/channel-trades-v3.md) and [fills](https://docs.sx.bet/api-reference/channel-fills-v3.md) channels with
   new `ceRefundAmount` values and a fresh `updatedAt`. There is no separate "refund happened" event.
 
 `ceRefundAmount` is **post-fee** — the amount you actually received. `ceRefundFeeAmount` is the fee
@@ -72,24 +72,24 @@ your gross payout* at settlement, not what you received. P\&L uses the received 
 > [!WARNING]
 >
 > **Do not add refunds on top of a figure that already includes them.** The `pnl` field on
-> [`GET /positions-v3?status=SETTLED`](/api-reference/get-positions-v3) is
+> [`GET /positions-v3?status=SETTLED`](https://docs.sx.bet/api-reference/get-positions-v3) is
 > `settleReturnAmount + ceRefundAmount − totalStake`, with the refund already in it.
 
 ## Related
 
-> **[Reconciling fills](/developers/which-grain.md#fills)**
+> **[Reconciling fills](https://docs.sx.bet/developers/which-grain.md#fills)**
 >
 > Where to find the refund on each leg.
 
-> **[Tracking positions](/developers/which-grain.md#positions)**
+> **[Tracking positions](https://docs.sx.bet/developers/which-grain.md#positions)**
 >
 > Netted exposure — the same idea, read-only.
 
-> **[Parlays](/developers/parlays.md)**
+> **[Parlays](https://docs.sx.bet/developers/parlays.md)**
 >
 > The other meaning of `ceRefundAmount`.
 
-> **[Quarter-line markets](/developers/quarter-line-markets.md)**
+> **[Quarter-line markets](https://docs.sx.bet/developers/quarter-line-markets.md)**
 >
 > Why one bet produces two refund calculations.
 

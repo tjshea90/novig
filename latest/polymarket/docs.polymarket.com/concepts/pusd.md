@@ -36,7 +36,7 @@ pUSD is a standard ERC-20 wrapper that represents a USDC claim. Wrapping and unw
 
 pUSD is designed to function within Polymarket. There are no current plans to list it on external exchanges.
 
-See the [Contracts](/resources/contracts.md) page for all collateral-related contract addresses.
+See the [Contracts](https://docs.polymarket.com/resources/contracts.md) page for all collateral-related contract addresses.
 
 ***
 
@@ -153,11 +153,11 @@ function unwrap(address _asset, address _to, uint256 _amount) external
 
 ## Next steps
 
-> **[Contracts](/resources/contracts.md)**
+> **[Contracts](https://docs.polymarket.com/resources/contracts.md)**
 >
 > All Polymarket contract addresses and audits
 
-> **[Bridge](/trading/bridge/deposit.md)**
+> **[Bridge](https://docs.polymarket.com/trading/bridge/deposit.md)**
 >
 > Deposit from other chains — auto-wraps to pUSD
 

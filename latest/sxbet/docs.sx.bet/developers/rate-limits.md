@@ -142,11 +142,11 @@ Subscriptions do not use your request budget.
 
 ## Related
 
-> **[Real-time data](/developers/realtime-overview.md)**
+> **[Real-time data](https://docs.sx.bet/developers/realtime-overview.md)**
 >
 > Setting up a channel, and what it sends.
 
-> **[API key permissions](/developers/api-key-permissions.md)**
+> **[API key permissions](https://docs.sx.bet/developers/api-key-permissions.md)**
 >
 > Scopes you can grant a key, and the routes each one allows.
 

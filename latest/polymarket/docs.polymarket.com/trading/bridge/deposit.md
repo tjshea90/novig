@@ -17,7 +17,7 @@ Polymarket uses **pUSD** (Polymarket USD) on Polygon as collateral for all tradi
 
 ## Create Bridge Addresses
 
-Generate unique bridge addresses linked to your Polymarket wallet. See [Create bridge addresses](/api-reference/bridge/create-bridge-addresses.md) for the full request and response schemas.
+Generate unique bridge addresses linked to your Polymarket wallet. See [Create bridge addresses](https://docs.polymarket.com/api-reference/bridge/create-bridge-addresses.md) for the full request and response schemas.
 
 > [!TIP]
 >
@@ -99,16 +99,16 @@ If you deposited the wrong token, use this tool to recover your funds:
 > [!WARNING]
 >
 > Sending unsupported tokens may cause **irrecoverable loss**. Always verify
-> your token is listed in [Supported Assets](/trading/bridge/supported-assets.md)
+> your token is listed in [Supported Assets](https://docs.polymarket.com/trading/bridge/supported-assets.md)
 > before depositing.
 
 ## Next Steps
 
-> **[Supported Assets](/trading/bridge/supported-assets.md)**
+> **[Supported Assets](https://docs.polymarket.com/trading/bridge/supported-assets.md)**
 >
 > See all supported chains and tokens with minimum amounts.
 
-> **[Check Status](/trading/bridge/status.md)**
+> **[Check Status](https://docs.polymarket.com/trading/bridge/status.md)**
 >
 > Track your deposit progress through completion.
 

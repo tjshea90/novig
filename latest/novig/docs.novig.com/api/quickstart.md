@@ -21,8 +21,8 @@ Run the five steps in order, in one script.
 ## Set up
 
 Create a management key on [Profile](https://paper.novig.com/Profile/ProfileScreen) → Settings → Novig API, on paper.novig.com.
-If you have no Paper account yet, [set one up](/api/environments.md#set-up-a-paper-account) first.
-[Get a key](/api/api-keys.md) walks you through it.
+If you have no Paper account yet, [set one up](https://docs.novig.com/api/environments.md#set-up-a-paper-account) first.
+[Get a key](https://docs.novig.com/api/api-keys.md) walks you through it.
 
 Then point the samples at Paper and at your key:
 
@@ -42,7 +42,7 @@ Save this helper as `novig.py` or `novig.mjs`.
 Its `call` function signs a request, sends it, and returns the parsed reply.
 
 The signature covers `NOVIG-V3`, the timestamp, the method, the path, the query, and a hash of the body.
-[Sign a request](/api/signing.md) explains each rule.
+[Sign a request](https://docs.novig.com/api/signing.md) explains each rule.
 
 ```python Python theme={"dark"}
 import base64, hashlib, json, os, time
@@ -105,9 +105,9 @@ export async function call(key, method, path, query = "", body) {
 }
 ```
 
-* Pass `query` in [canonical form](/api/signing.md#the-canonical-query): parameters sorted by name and percent-encoded.
+* Pass `query` in [canonical form](https://docs.novig.com/api/signing.md#the-canonical-query): parameters sorted by name and percent-encoded.
 * With a P-256 key, the Node signer works as is. In Python, sign with `private.sign(text.encode(), ECDSA(SHA256()))`.
-* For Rust, use the complete signer on [Sign a request](/api/signing.md#sign-in-rust).
+* For Rust, use the complete signer on [Sign a request](https://docs.novig.com/api/signing.md#sign-in-rust).
 
 ## 1. Test your signature
 
@@ -136,7 +136,7 @@ console.log(await call(management, "POST", "/v3/echo", "", body));
 Echo returns your body unchanged.
 A `200` means your host, key, clock, and signature are all correct.
 
-A `401` means one of them is wrong. [Troubleshooting](/api/troubleshooting) maps each error message to a fix.
+A `401` means one of them is wrong. [Troubleshooting](https://docs.novig.com/api/troubleshooting) maps each error message to a fix.
 
 ## 2. Open a subaccount
 
@@ -194,7 +194,7 @@ await call(management, "POST", path, "", {
 ```
 
 A `202` means we accepted the transfer, not that the money moved.
-Before you place an order, [check that its status](/api/subaccounts/funding.md#check-the-transfer-status) is `Applied`.
+Before you place an order, [check that its status](https://docs.novig.com/api/subaccounts/funding.md#check-the-transfer-status) is `Applied`.
 
 ## 4. Find a market
 
@@ -215,7 +215,7 @@ const outcome = items[0].outcomes[0].outcomeId;
 ```
 
 The catalog accepts only a `trading` or `trading::read` key.
-[Catalog](/api/catalog) lists every filter.
+[Catalog](https://docs.novig.com/api/catalog) lists every filter.
 
 ## 5. Place an order
 
@@ -238,15 +238,15 @@ console.log(placed.orderId);
 This order bids 10 contracts at `0.050`, which costs \$0.005.
 
 A `201` means we accepted the order, not that it's on the book.
-The order rests when the `open` event arrives on the [private stream](/api/streaming/private.md).
+The order rests when the `open` event arrives on the [private stream](https://docs.novig.com/api/streaming/private.md).
 
 ## Next
 
 | Page | Covers |
 | - | - |
-| [Private stream](/api/streaming/private.md) | Watch the order rest, fill, and cancel |
-| [Orders](/api/execution/orders) | Cancel, batch, and time in force |
-| [Throttling](/api/throttling.md) | Pace your requests |
+| [Private stream](https://docs.novig.com/api/streaming/private.md) | Watch the order rest, fill, and cancel |
+| [Orders](https://docs.novig.com/api/execution/orders) | Cancel, batch, and time in force |
+| [Throttling](https://docs.novig.com/api/throttling.md) | Pace your requests |
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

@@ -389,7 +389,7 @@ paths:
 
             path = f"/v3/account/subaccounts/{SUB}"
             query = ""
-            body = b"""{
+            body = rb"""{
               "label": "desk-2"
             }"""
 
@@ -423,7 +423,7 @@ paths:
 
             const path = `/v3/account/subaccounts/${SUB}`;
             const query = "";
-            const body = `{
+            const body = String.raw`{
               "label": "desk-2"
             }`;
 

@@ -7,7 +7,7 @@
 > Signers, threshold, and the pending transaction on your proxy's Safe.
 
 `GET /user/multisig/{safeAddress}/info` is the state of the Safe on your proxy.
-`safeAddress` is `multisigSafeAddress` from [`GET /user/proxy`](/api-reference/get-user-proxy).
+`safeAddress` is `multisigSafeAddress` from [`GET /user/proxy`](https://docs.sx.bet/api-reference/get-user-proxy).
 
 A Safe holds at most one pending transaction.
 

@@ -1063,6 +1063,22 @@ Source: https://docs.novig.com/api-reference/changelog
 
 This changelog is specific to our API users and LPs
 
+**October 23, 2026 - Unrealized PnL on Open Positions**
+
+**`GET /v3/portfolio/pnl` values your open positions at the last trade.** Each position carries `cost` and `last`, the price of the outcome's last trade. The response sums `basis`, what your positions cost, and `value`, what they would pay at those prices. Your cash plus `value` is your net liquidation value, and your unrealized PnL is `value` minus `basis`.
+
+If you hold both outcomes of a market, we pay part of the payout to your cash right away. The sums leave that part out, so it isn't counted twice. A position on an outcome that hasn't traded yet counts at its cost.
+
+You can narrow the read by `event` or `market`, and page it with `limit` and `after`. The sums cover every market your filter matches, not only the page.
+
+The read covers open markets only. Once a market closes, its positions move to `GET /v3/history/positions` until it settles. See [Orders](/api/execution/orders).
+
+**October 22, 2026 - Throttles Apply per Subaccount**
+
+**Throttles now apply per subaccount, not per key.** A subaccount's `trading` key and all of its `trading::read` keys draw from the same throttles, so adding a key no longer adds capacity.
+
+A management key still has its own throttles. See [Throttling](/api/throttling#keys-that-share-throttles).
+
 **October 22, 2026 - Boxing, NBA Combo Ladders, NBA Futures, and Live First Halves**
 
 **Boxing.** Every boxing match lists the same markets as UFC: `MONEY`, `TOTAL`, `GO_THE_DISTANCE`, `VICTORY_BY_KO_KTO_OR_DQ`, `VICTORY_BY_DECISION`, and `DRAW`.
@@ -1287,6 +1303,24 @@ Source: https://docs.novig.com/api-reference/execution/get-your-resting-orders
 | **Cost** | `1 /request` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-info">304</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
+
+
+
+# Get your unrealized PnL
+Source: https://docs.novig.com/api-reference/execution/get-your-unrealized-pnl
+
+/api-reference/spec-files/openapi-v3.json get /v3/portfolio/pnl
+| | |
+| --- | --- |
+| **Key** | `any` |
+| **Throttle** | `account` |
+| **Cost** | `1 /request` |
+| **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
+| **Idempotent** | `true` |
+
+Marks each open position's market to its last trade, net of any payout you
+already received for holding both outcomes, and sums basis and value over every
+match. Unrealized PnL is `value − basis`. Positions page by outcome id.
 
 
 
@@ -3165,12 +3199,13 @@ You get a channel's events after you subscribe to it.
 >
 > **data.reason** `string` *required*
 >
-> `below_min_wager` or `unbacked`. Each reason adds one field with the number you must beat.
+> `below_min_wager`, `unbacked`, or `own_rfq`. The first two add one field with the number you must beat.
 >
 > | `reason` | Extra field | Means |
 > | - | - | - |
 > | `below_min_wager` | `min_wager` | Your `max_wager` is below the round's minimum stake |
 > | `unbacked` | `required_collateral` | Your free balance doesn't cover the collateral |
+> | `own_rfq` | none | You requested this round, so you can't fill it |
 >
 > The round's minimum stake is the taker's minimum or ours, whichever is higher.
 
@@ -3649,6 +3684,7 @@ The route that opens a subaccount also creates its `trading` key.
 A subaccount has one live `trading` key.
 After you revoke it, `POST /v3/account/subaccounts/{keyId}/keys` creates its replacement.
 The same route creates `trading::read` keys beside it, up to 128 live per trader across every subaccount.
+Every key on a subaccount shares the subaccount's [throttles](/api/throttling#keys-that-share-throttles).
 
 ### Why keys work this way
 
@@ -3943,6 +3979,8 @@ Each market carries its schedule in `fee`:
 `makerCredit` is the maker's share of the taker's fee on the same fill.
 
 ![Taker fee against execution price for 10,000 contracts: a symmetric arc peaking at \$1.50 on both the game and futures schedules](https://mintcdn.com/novig/H6ansc67CUSqe8sv/images/fee-curve.svg?fit=max\&auto=format\&n=H6ansc67CUSqe8sv\&q=85\&s=1025f0e8889171a3d663efe74ec45dc1)
+
+The fee peaks at P = 0.50 and falls to zero at the ends. A price of 0.30 costs the same as 0.70.
 
 ## Which schedule a market is on
 
@@ -6120,7 +6158,7 @@ Source: https://docs.novig.com/api/throttling
 How we limit your request rate, and how to pace your requests.
 
 We limit how fast you can send requests, in two places.
-Our servers throttle each API key, and an edge filter in front of them limits each IP address.
+Our servers throttle each subaccount and each management key, and an edge filter in front of them limits each IP address.
 
 ## Limits on our servers
 
@@ -6160,6 +6198,20 @@ Refill
 The `history` bucket meters the record reads: fills, transactions, settled orders, and the history routes. Each such read costs a base plus one token per page of rows, so a larger page spends more. `GET /v3/limits` reports every bucket's numbers.
 
 `GET /v3/limits`, `GET /v3/time`, and `GET /v3/exchange/status` spend no tokens.
+
+### Keys that share throttles
+
+Each subaccount has one set of throttles, and every key on it spends from that set.
+A management key has a set of its own.
+
+| Key | Spends the throttles of |
+| - | - |
+| `trading` | Its subaccount |
+| `trading::read` | Its subaccount |
+| `management` | The key |
+| `management::read` | The key |
+
+A second `trading::read` key on a subaccount doesn't raise its limits.
 
 ## Websocket subscriptions
 
@@ -6210,7 +6262,7 @@ Retry-After: 3
 ```
 
 * Wait `Retry-After` seconds before you retry. Retrying sooner hits the same empty throttle.
-* Split your work across keys. The throttle counts per key, not per connection.
+* Don't create keys to raise a limit. Every key on a subaccount shares its throttles.
 * Handle a `429` even if you model the throttles. Our servers share token counts with each other gradually, so your model is never exact.
 
 

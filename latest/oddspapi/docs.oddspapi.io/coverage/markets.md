@@ -6,7 +6,7 @@
 
 > What markets OddsPapi covers: market types, period scoping, Asian and European handicaps, totals, player props, and how to discover the full market map per sport via GET /markets.
 
-Markets are not a fixed list per sport — they are generated from a deterministic decomposition, so the same bet resolves to the same identifiers everywhere. This page covers what exists and how to enumerate it; the mechanics are in [Markets and outcomes](/api-reference/concepts.md#markets-and-outcomes).
+Markets are not a fixed list per sport — they are generated from a deterministic decomposition, so the same bet resolves to the same identifiers everywhere. This page covers what exists and how to enumerate it; the mechanics are in [Markets and outcomes](https://docs.oddspapi.io/api-reference/concepts.md#markets-and-outcomes).
 
 ***
 
@@ -56,7 +56,7 @@ This is not the full map — new types are appended as coverage grows, and what 
 
 Markets are scoped to a segment via `period`, using one shared vocabulary across all sports: `fulltime`, `result`, `overtime`, `penalties`, numbered periods `p1`…`p12`, combined segments (`p1+p2`, `fulltime+overtime`, …), and sub-period keys for games within a set (`p1g1`…`p5g13`, `currentgame`).
 
-What a period *means* depends on the sport — `p1` is a half in soccer, a quarter in NBA basketball, a set in tennis, a map in esports. Use the fixture's `expectedPeriods` and `periodLength` to interpret it. Full list in [Enumerations → period](/api-reference/enumerations.md#period); for which sports actually offer `fulltime` as a distinct period and which only have `result`, see [Periods per sport](/guides/periods.md).
+What a period *means* depends on the sport — `p1` is a half in soccer, a quarter in NBA basketball, a set in tennis, a map in esports. Use the fixture's `expectedPeriods` and `periodLength` to interpret it. Full list in [Enumerations → period](https://docs.oddspapi.io/api-reference/enumerations.md#period); for which sports actually offer `fulltime` as a distinct period and which only have `result`, see [Periods per sport](https://docs.oddspapi.io/guides/periods.md).
 
 ***
 
@@ -101,7 +101,7 @@ curl 'https://v5.oddspapi.io/en/markets?outcomeIds=114&apiKey=YOUR_KEY'
 }
 ```
 
-`marketName` / `marketNameShort` follow the request's [language prefix](/api-reference/concepts.md#language-prefix) and are for display only — branch on `marketId`, `outcomeId`, `marketType`, and `period`.
+`marketName` / `marketNameShort` follow the request's [language prefix](https://docs.oddspapi.io/api-reference/concepts.md#language-prefix) and are for display only — branch on `marketId`, `outcomeId`, `marketType`, and `period`.
 
 ***
 
@@ -117,7 +117,7 @@ curl 'https://v5.oddspapi.io/en/markets?outcomeIds=114&apiKey=YOUR_KEY'
 
 ## Settlement
 
-Grading follows the same coordinates. Asian quarter lines settle as `HALFWIN` / `HALFLOSS` alongside `WIN` / `LOSE` / `PUSH`, and grading is done on the bookmaker-independent selection key `{fixtureId}:{outcomeId}:{playerId}`. See [Enumerations → settlementStatus](/api-reference/enumerations.md#settlementstatus) and [Powering a sportsbook](/guides/sportsbook.md).
+Grading follows the same coordinates. Asian quarter lines settle as `HALFWIN` / `HALFLOSS` alongside `WIN` / `LOSE` / `PUSH`, and grading is done on the bookmaker-independent selection key `{fixtureId}:{outcomeId}:{playerId}`. See [Enumerations → settlementStatus](https://docs.oddspapi.io/api-reference/enumerations.md#settlementstatus) and [Powering a sportsbook](https://docs.oddspapi.io/guides/sportsbook.md).
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

@@ -34,7 +34,7 @@ The odds channel delivers **conflated state** on a fixed **\~10 ms batching wind
 
 What is *not* delivered: intermediate ticks superseded within the same window. Treat every message as a **state update**, not a ledger.
 
-> Need every price move or the closing line? For full tick-level movement use [Historical Odds](/api-reference/concepts.md#historical-odds-and-clv) and for opening/closing prices use [CLV](/api-reference/concepts.md#historical-odds-and-clv).
+> Need every price move or the closing line? For full tick-level movement use [Historical Odds](https://docs.oddspapi.io/api-reference/concepts.md#historical-odds-and-clv) and for opening/closing prices use [CLV](https://docs.oddspapi.io/api-reference/concepts.md#historical-odds-and-clv).
 
 ***
 
@@ -85,7 +85,7 @@ Each update carries the full delivery chain:
 | t2 | `ts` (message envelope) | When the gateway sent the message |
 | t3 | — | Client receipt — measure it on your side |
 
-`changedAt − bookmakerChangedAt` is the observation delay for that update. Per-bookmaker freshness bounds are published on [`GET /bookmakers`](/api-reference/common/get-bookmakers) — see [Latency and freshness](/api-reference/reliability.md#latency-and-freshness).
+`changedAt − bookmakerChangedAt` is the observation delay for that update. Per-bookmaker freshness bounds are published on [`GET /bookmakers`](https://docs.oddspapi.io/api-reference/common/get-bookmakers) — see [Latency and freshness](https://docs.oddspapi.io/api-reference/reliability.md#latency-and-freshness).
 
 ***
 
@@ -95,7 +95,7 @@ Each update carries the full delivery chain:
 
 `limit` and the `meta` ladders bound different things: `limit` bounds a single order, the ladder bounds the fill. On a traditional book `limit` is the only size signal there is; on an exchange you have both and they constrain you independently.
 
-See [sharp-line trading & CLV](/guides/sharp-line-trading.md) for using limits together with per-book delay, main-line filtering, and closing line value.
+See [sharp-line trading & CLV](https://docs.oddspapi.io/guides/sharp-line-trading.md) for using limits together with per-book delay, main-line filtering, and closing line value.
 
 ***
 
@@ -149,7 +149,7 @@ Treat `meta` as additive and preserve keys you do not recognise.
 > (rungs of `{ price, size }` only — no `cents` or `limit`), plus `tradedVolume`, `betDelay`
 > and, on handicap markets, `bookmakerHandicap`.
 
-See [building on prediction markets & exchanges](/guides/prediction-markets.md) for reading the ladders, deriving top-of-book, and routing orders back to the venue with `bookmakerMarketId` / `bookmakerOutcomeId`.
+See [building on prediction markets & exchanges](https://docs.oddspapi.io/guides/prediction-markets.md) for reading the ladders, deriving top-of-book, and routing orders back to the venue with `bookmakerMarketId` / `bookmakerOutcomeId`.
 
 ***
 
@@ -270,7 +270,7 @@ See [building on prediction markets & exchanges](/guides/prediction-markets.md) 
 * Treat `active=false` or `marketActive=false` as **hard stops**
 * Preserve unknown fields in `meta` to remain forward-compatible
 
-End-to-end patterns built on this channel: [prediction markets & exchanges](/guides/prediction-markets.md), [sharp-line trading & CLV](/guides/sharp-line-trading.md), [running a second feed](/guides/second-feed.md), and [powering a sportsbook](/guides/sportsbook.md).
+End-to-end patterns built on this channel: [prediction markets & exchanges](https://docs.oddspapi.io/guides/prediction-markets.md), [sharp-line trading & CLV](https://docs.oddspapi.io/guides/sharp-line-trading.md), [running a second feed](https://docs.oddspapi.io/guides/second-feed.md), and [powering a sportsbook](https://docs.oddspapi.io/guides/sportsbook.md).
 
 ***
 

@@ -32,7 +32,7 @@ For the full list including community SDKs, see the [Centrifugo client SDK docs]
 
 ## Connect
 
-Fetch a token using your API key, then instantiate and connect the Centrifuge client. You only need one client instance — all channel subscriptions are multiplexed over the single connection. If you need more than 512 subscriptions, create additional client instances (each connection supports up to 512 channels). See [Limits](/developers/realtime-reference.md#global-limits) for details.
+Fetch a token using your API key, then instantiate and connect the Centrifuge client. You only need one client instance — all channel subscriptions are multiplexed over the single connection. If you need more than 512 subscriptions, create additional client instances (each connection supports up to 512 channels). See [Limits](https://docs.sx.bet/developers/realtime-reference.md#global-limits) for details.
 
 ```javascript JavaScript theme={null}
 import { Centrifuge } from "centrifuge";
@@ -126,7 +126,7 @@ asyncio.run(main())
 
 > [!TIP]
 >
-> Pass `recoverable: true` on channels whose namespace has history to get at-least-once delivery across reconnects. You do not need `positioned: true` — requesting recovery grants a stream position. See [Namespace history capabilities](/developers/realtime-reference.md#history-and-recovery-per-namespace) for which channels support this, and [Recovery & reliability](/developers/realtime-reliability.md) for how to handle recovery outcomes.
+> Pass `recoverable: true` on channels whose namespace has history to get at-least-once delivery across reconnects. You do not need `positioned: true` — requesting recovery grants a stream position. See [Namespace history capabilities](https://docs.sx.bet/developers/realtime-reference.md#history-and-recovery-per-namespace) for which channels support this, and [Recovery & reliability](https://docs.sx.bet/developers/realtime-reliability.md) for how to handle recovery outcomes.
 
 Each publication event exposes a `ctx` object with the following structure:
 
@@ -141,7 +141,7 @@ Each publication event exposes a `ctx` object with the following structure:
 }
 ```
 
-`ctx.data` is the channel payload documented on each channel's reference page. `ctx.tags.messageId` is a UUID present on every publication — use it to deduplicate messages (see [Recovery & reliability → Dedup](/developers/realtime-reliability.md#dedup)).
+`ctx.data` is the channel payload documented on each channel's reference page. `ctx.tags.messageId` is a UUID present on every publication — use it to deduplicate messages (see [Recovery & reliability → Dedup](https://docs.sx.bet/developers/realtime-reliability.md#dedup)).
 
 ## Snapshot + subscribe pattern
 
@@ -156,7 +156,7 @@ first publication arrives":
 
 On reconnects, the same `subscribed` handler fires — check `wasRecovering` and `recovered` to decide
 whether you need to re-seed (see
-[Recovery & reliability](/developers/realtime-reliability.md)).
+[Recovery & reliability](https://docs.sx.bet/developers/realtime-reliability.md)).
 
 ```javascript JavaScript theme={null}
 const sub = client.newSubscription(`orderbook_v3:${marketHash}`);

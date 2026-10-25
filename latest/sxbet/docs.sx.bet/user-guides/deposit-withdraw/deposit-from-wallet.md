@@ -29,11 +29,11 @@ Your transaction should be complete within a few seconds! You're all set to star
 
 ![](https://mintcdn.com/sxbet-9c561d83/nTchO44e8z9Jwtov/public/user-guides/deposit_wallet_success.png?fit=max\&auto=format\&n=nTchO44e8z9Jwtov\&q=85\&s=9513bfffd44d613f345e13c591b87a02)
 
-> **[Place Your First Bet](/user-guides/trading/market-orders.md)**
+> **[Place Your First Bet](https://docs.sx.bet/user-guides/trading/market-orders.md)**
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Reading the Order Book](/user-guides/trading/order-book.md)**
+> **[Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)**
 >
 > Learn how to find odds and navigate the live order book.
 

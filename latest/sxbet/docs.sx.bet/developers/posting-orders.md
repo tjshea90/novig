@@ -7,7 +7,7 @@
 > How to construct, sign, and submit orders to the SX Bet orderbook.
 
 Every order — resting quote or immediate bet — goes through
-[`POST /orders-v3`](/api-reference/post-orders-v3). The field-by-field reference lives on the
+[`POST /orders-v3`](https://docs.sx.bet/api-reference/post-orders-v3). The field-by-field reference lives on the
 endpoint page.
 
 ## Prerequisites
@@ -15,26 +15,26 @@ endpoint page.
 > [!WARNING]
 >
 > **A deployed, funded proxy is required before any OBv3 order** — `POST /orders-v3` rejects with
-> `400 PROXY_NOT_DEPLOYED` until then. See [Deploy a proxy wallet](/api-reference/post-user-deploy-proxy.md).
+> `400 PROXY_NOT_DEPLOYED` until then. See [Deploy a proxy wallet](https://docs.sx.bet/api-reference/post-user-deploy-proxy.md).
 
 You also need your API key, sent as `x-sx-api-key`. See
-[Authentication](/developers/authentication.md) and [API key](/api-reference/api-key.md).
+[Authentication](https://docs.sx.bet/developers/authentication.md) and [API key](https://docs.sx.bet/api-reference/api-key.md).
 
 ## Steps
 
-1. [**`GET /metadata/obv3`**](/api-reference/get-metadata-obv3) — chain id, Escrow address, active token, ladder step, size limits.
+1. [**`GET /metadata/obv3`**](https://docs.sx.bet/api-reference/get-metadata-obv3) — chain id, Escrow address, active token, ladder step, size limits.
 2. **Round your odds down onto the ladder** — a multiple of `oddsLadderStepSize × 10^15`. See
-   [Odds rounding](/developers/odds-rounding.md).
+   [Odds rounding](https://docs.sx.bet/developers/odds-rounding.md).
 3. **Choose a `timeInForce`** — `GTC` to rest, `IOC`/`FOK` to execute now. See
-   [Time in force](/developers/time-in-force.md).
-4. Sign the eight-field [EIP-712 `Order` struct](/api-reference/eip712-order-signing).
-5. [**`POST /orders-v3`**](/api-reference/post-orders-v3) — expect **`200`** and a per-order result carrying `SUBMITTED`, the server-assigned `commandId`, and your `clientOrderId` / `externalUserId` if you set them.
-6. Watch your [`account:orders_v3`](/api-reference/channel-orders-v3) stream for the transition instead of polling. Or set [`waitForOutcome: true`](/api-reference/post-orders-v3) to have the call wait and return each order's terminal `outcome` inline.
+   [Time in force](https://docs.sx.bet/developers/time-in-force.md).
+4. Sign the eight-field [EIP-712 `Order` struct](https://docs.sx.bet/api-reference/eip712-order-signing).
+5. [**`POST /orders-v3`**](https://docs.sx.bet/api-reference/post-orders-v3) — expect **`200`** and a per-order result carrying `SUBMITTED`, the server-assigned `commandId`, and your `clientOrderId` / `externalUserId` if you set them.
+6. Watch your [`account:orders_v3`](https://docs.sx.bet/api-reference/channel-orders-v3) stream for the transition instead of polling. Or set [`waitForOutcome: true`](https://docs.sx.bet/api-reference/post-orders-v3) to have the call wait and return each order's terminal `outcome` inline.
 
 > [!NOTE]
 >
 > **Posting an order does not lock capital**, regardless of `timeInForce`. Funds are only escrowed when
-> the order **matches** — see [Risk limits](/developers/risk-limits.md).
+> the order **matches** — see [Risk limits](https://docs.sx.bet/developers/risk-limits.md).
 
 ## Posting a GTC order end to end
 
@@ -257,7 +257,7 @@ ACTIVE after 1s:
 
 `postOnly: true` on a `GTC` order makes it add liquidity only — if it would cross the book on arrival
 it is cancelled with `inactiveReason: "POST_ONLY_WOULD_CROSS"` instead of matching. See
-[Time in force](/developers/time-in-force.md#post-only).
+[Time in force](https://docs.sx.bet/developers/time-in-force.md#post-only).
 
 ```javascript JavaScript theme={null}
 await fetch(`${API}/orders-v3`, authed({
@@ -269,7 +269,7 @@ await fetch(`${API}/orders-v3`, authed({
 ## Batching
 
 `POST /orders-v3` takes an array of up to `limits.maxCreateOrders` orders (currently **10**), one
-shared `maker` per batch — the full field rules are on [Create orders](/api-reference/post-orders-v3.md).
+shared `maker` per batch — the full field rules are on [Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md).
 
 * **One maker per request.** Every order in the batch must carry the same `maker`. Mixed makers are
   a `400`.
@@ -288,27 +288,27 @@ There is no amend. To move a price: cancel, then post a new order.
 
 ## Related
 
-> **[Create orders](/api-reference/post-orders-v3.md)**
+> **[Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)**
 >
 > Every field, every validation rule.
 
-> **[Taking liquidity](/developers/taking-liquidity.md)**
+> **[Taking liquidity](https://docs.sx.bet/developers/taking-liquidity.md)**
 >
 > The same signing and submission path, from the taker's side.
 
-> **[Time in force](/developers/time-in-force.md)**
+> **[Time in force](https://docs.sx.bet/developers/time-in-force.md)**
 >
 > Choosing between GTC, IOC and FOK.
 
-> **[Tracking your orders](/developers/my-orders.md)**
+> **[Tracking your orders](https://docs.sx.bet/developers/my-orders.md)**
 >
 > Reading your own orders back, and what the API will not tell you.
 
-> **[Market making](/developers/market-making.md)**
+> **[Market making](https://docs.sx.bet/developers/market-making.md)**
 >
 > Quoting, exposure and re-quote loops.
 
-> **[External user id](/developers/external-user-id.md)**
+> **[External user id](https://docs.sx.bet/developers/external-user-id.md)**
 >
 > Tag orders when one SX account places bets for many people.
 

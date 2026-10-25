@@ -64,7 +64,7 @@ Market data on SX Bet is organized in a hierarchy. Understanding this structure 
 
 A market row carries no odds — prices live at the book level, not on the market. The two pricing
 routes are not interchangeable. The snapshot gives full depth for one market. Best odds gives the top
-of book for up to a hundred. See [Active markets](/api-reference/get-markets-active.md).
+of book for up to a hundred. See [Active markets](https://docs.sx.bet/api-reference/get-markets-active.md).
 
 ## Try it yourself
 
@@ -276,7 +276,7 @@ A market represents a single binary outcome you can bet on — for example, "Ove
 
 Every market on SX Bet is identified by a unique `marketHash`, which is used throughout the API to fetch orderbooks, post orders, and query trades.
 
-> **[Fetching markets](/developers/fetch-markets.md)**
+> **[Fetching markets](https://docs.sx.bet/developers/fetch-markets.md)**
 >
 > Querying active markets from the API.
 

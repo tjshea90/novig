@@ -39,7 +39,7 @@ resting on market A outcome 1, a further order there is capped at \$400. Anythin
 ## Capital is not locked until a match
 
 Posting an order does **not** move any funds into escrow, regardless of its
-[`timeInForce`](/developers/time-in-force). Capital is locked only when an order **matches** — the
+[`timeInForce`](https://docs.sx.bet/developers/time-in-force). Capital is locked only when an order **matches** — the
 moment a taker fills your resting quote, or your own order crosses the book.
 
 ## Scale-down when your exposure exceeds your balance
@@ -55,7 +55,7 @@ Cancellation is **worst-odds-first, across all your markets**:
    within budget are left untouched.
 
 Orders removed this way become `INACTIVE` with `inactiveReason: INSUFFICIENT_BALANCE`. Watch your
-[`account:orders_v3`](/api-reference/channel-orders-v3) stream to react.
+[`account:orders_v3`](https://docs.sx.bet/api-reference/channel-orders-v3) stream to react.
 
 ## Takers work differently
 
@@ -67,19 +67,19 @@ error.
 
 ## Related
 
-> **[Market making](/developers/market-making.md)**
+> **[Market making](https://docs.sx.bet/developers/market-making.md)**
 >
 > Quoting, exposure, and the re-quote loop.
 
-> **[Posting orders](/developers/posting-orders.md)**
+> **[Posting orders](https://docs.sx.bet/developers/posting-orders.md)**
 >
 > Build, sign, and submit an order.
 
-> **[Capital efficiency](/developers/capital-efficiency.md)**
+> **[Capital efficiency](https://docs.sx.bet/developers/capital-efficiency.md)**
 >
 > How offsetting positions release escrow at fill time.
 
-> **[Time in force](/developers/time-in-force.md)**
+> **[Time in force](https://docs.sx.bet/developers/time-in-force.md)**
 >
 > GTC rests; IOC and FOK execute now.
 

@@ -20,7 +20,7 @@ We receive only the public half of each keypair.
 | Trading | `trading` | One subaccount | Yes | No | 1 per subaccount |
 
 * The management key opens, funds, and labels subaccounts. It also creates and revokes keys.
-* The management key [reads every wallet](/api/concepts/account-model.md#read-every-wallet-with-a-management-key): orders, fills, and positions.
+* The management key [reads every wallet](https://docs.novig.com/api/concepts/account-model.md#read-every-wallet-with-a-management-key): orders, fills, and positions.
 * A trading key places and cancels orders. It also streams the order book and your fills.
 * Any key reads the catalog and market history.
 * You create the management key on [Profile → Settings → Novig API](#create-your-management-key).
@@ -147,6 +147,7 @@ The route that opens a subaccount also creates its `trading` key.
 A subaccount has one live `trading` key.
 After you revoke it, `POST /v3/account/subaccounts/{keyId}/keys` creates its replacement.
 The same route creates `trading::read` keys beside it, up to 128 live per trader across every subaccount.
+Every key on a subaccount shares the subaccount's [throttles](https://docs.novig.com/api/throttling.md#keys-that-share-throttles).
 
 ### Why keys work this way
 
@@ -182,7 +183,7 @@ A failed check blocks the key until a check passes again.
 If the check failed only because it couldn't confirm the location, the last pass from the past 3 days still counts.
 
 Some failures name their cause: `GEOLOCATION_OUT_OF_BOUNDARY`, `GEOLOCATION_BLOCKED_NETWORK`, or `GEOLOCATION_BLOCKED_SOFTWARE`.
-[451](/api/errors.md#451-geolocation-unavailable) gives the fix for each.
+[451](https://docs.novig.com/api/errors.md#451-geolocation-unavailable) gives the fix for each.
 
 To pass the companion window check, open the Novig app so your device geolocates.
 

@@ -104,11 +104,11 @@ When matched, `1 pUSD` of collateral creates a complete set through the market's
 > buyers and sellers of any amount. However, large orders may move the price
 > significantly. Always check orderbook depth before trading in size.
 
-> **[Positions & Tokens](/concepts/positions-tokens.md)**
+> **[Positions & Tokens](https://docs.polymarket.com/concepts/positions-tokens.md)**
 >
 > Learn about outcome tokens and how positions work.
 
-> **[Order Lifecycle](/concepts/order-lifecycle.md)**
+> **[Order Lifecycle](https://docs.polymarket.com/concepts/order-lifecycle.md)**
 >
 > Understand what happens from order placement to settlement.
 

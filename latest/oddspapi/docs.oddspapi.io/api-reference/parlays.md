@@ -18,7 +18,7 @@ already know — they only **add** a section.
 
 For the workflow around these endpoints — choosing between them, keeping a live
 slip priced, degrading when a leg suspends — see [Building a
-betslip](/guides/parlays.md).
+betslip](https://docs.oddspapi.io/guides/parlays.md).
 
 ***
 
@@ -216,7 +216,7 @@ gets that bookmaker no entry at all, and is named in `missingOddsIds`.
 | `GET /fixtures/odds/sgp` | **10 requests / second** |
 
 Both sit in the odds bucket with the rest of the odds surface. See [Rate
-Limits](/api-reference/rate-limits.md).
+Limits](https://docs.oddspapi.io/api-reference/rate-limits.md).
 
 ***
 

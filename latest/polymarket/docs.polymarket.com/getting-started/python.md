@@ -17,7 +17,7 @@ Polymarket integrations.
 >
 > Install `polymarket-client` from PyPI.
 
-See the [SDK Changelog](/changelog/sdks.md#python) for recent Python releases.
+See the [SDK Changelog](https://docs.polymarket.com/changelog/sdks.md#python) for recent Python releases.
 
 ## Quickstart
 
@@ -239,7 +239,7 @@ with SecureClient.create(
     ...
 ```
 
-Continue to [Wallets and Authentication](/trading/wallets-auth.md) to configure the
+Continue to [Wallets and Authentication](https://docs.polymarket.com/trading/wallets-auth.md) to configure the
 account wallet and gasless transactions.
 
 ## Realtime Subscriptions
@@ -304,9 +304,9 @@ async with await client.subscribe(
 ```
 
 Narrow `event.topic` before handling a specific event shape. The examples show
-a few streams; see [Real-Time Data](/market-data/realtime-data.md),
-[Real-Time Order Updates](/trading/realtime-order-updates.md), and
-[Perps Realtime Updates](/perps/realtime-updates.md) for feed-specific options.
+a few streams; see [Real-Time Data](https://docs.polymarket.com/market-data/realtime-data.md),
+[Real-Time Order Updates](https://docs.polymarket.com/trading/realtime-order-updates.md), and
+[Perps Realtime Updates](https://docs.polymarket.com/perps/realtime-updates.md) for feed-specific options.
 
 ## DataFrames and Jupyter
 
@@ -347,19 +347,19 @@ page.items[0]
 
 ## Next Steps
 
-> **[Read Market Data](/market-data/overview.md)**
+> **[Read Market Data](https://docs.polymarket.com/market-data/overview.md)**
 >
 > Discover markets and work with prices, order books, and historical data.
 
-> **[Subscribe to Real-Time Updates](/market-data/realtime-data.md)**
+> **[Subscribe to Real-Time Updates](https://docs.polymarket.com/market-data/realtime-data.md)**
 >
 > Stream market and account updates as they happen.
 
-> **[Place Your First Order](/trading/quickstart.md)**
+> **[Place Your First Order](https://docs.polymarket.com/trading/quickstart.md)**
 >
 > Set up an account and complete your first authenticated trade.
 
-> **[Use Session Keys](/trading/session-keys.md)**
+> **[Use Session Keys](https://docs.polymarket.com/trading/session-keys.md)**
 >
 > Grant scoped, time-limited Deposit Wallet access to a separate signer.
 

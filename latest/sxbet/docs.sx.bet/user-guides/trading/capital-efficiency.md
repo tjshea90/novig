@@ -110,11 +110,11 @@ If you're quoting both sides of a market, capital efficiency means you don't nee
 * Deploy larger position sizes with the same bankroll
 * Scale your activity without repeated deposits or manual capital management
 
-> **[Market Orders](/user-guides/trading/market-orders.md)**
+> **[Market Orders](https://docs.sx.bet/user-guides/trading/market-orders.md)**
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Fees](/user-guides/trading/fees.md)**
+> **[Fees](https://docs.sx.bet/user-guides/trading/fees.md)**
 >
 > Understand the SX Bet fee structure, including 0% on single bets.
 

@@ -96,7 +96,7 @@
 
 ### `0.11.0`
 
-* Added authenticated PolyBolt crypto, 60-second TWAP, and equity price streams through `SecureClient.subscribe(...)`, with history snapshots, exact decimal prices, shared connections, and automatic reconnects. Use `prices.crypto`, `prices.crypto.twap`, or `prices.equity`; crypto symbols must be canonical USD pairs such as `btcusd`. Rejections expose a machine-readable `RequestRejectedError.code`. Event sequence numbers are scoped to each channel and connection and reset on reconnect. Legacy price topics remain deprecated, with removal planned one month after this release. Migrating Binance prices changes USDT quotes to USD; 30-second TWAP has no replacement. See the [SDK migration guide](/migrate/rtds-to-polybolt.md#migrate-sdks-to-polybolt).
+* Added authenticated PolyBolt crypto, 60-second TWAP, and equity price streams through `SecureClient.subscribe(...)`, with history snapshots, exact decimal prices, shared connections, and automatic reconnects. Use `prices.crypto`, `prices.crypto.twap`, or `prices.equity`; crypto symbols must be canonical USD pairs such as `btcusd`. Rejections expose a machine-readable `RequestRejectedError.code`. Event sequence numbers are scoped to each channel and connection and reset on reconnect. Legacy price topics remain deprecated, with removal planned one month after this release. Migrating Binance prices changes USDT quotes to USD; 30-second TWAP has no replacement. See the [SDK migration guide](https://docs.polymarket.com/migrate/rtds-to-polybolt.md#migrate-sdks-to-polybolt).
 
 Given an authenticated `SecureClient`, migrate a crypto subscription as follows:
 
@@ -256,7 +256,7 @@ const pages = client.listActivity({
 * Markets and events now expose their protocol through `version`, and markets expose Combo eligibility through `market.state.comboStatus`. Combo status values introduced after this release pass through as strings.
 * Secure account reads now reject invalid request values and `user: null` with `UserInputError` instead of silently selecting the wallet or throwing an untyped error.
 * Session Key authorization and revocation submissions now allow up to five minutes for relayer validation and broadcast.
-* Breaking change: `revokeSessionKey(...)` now resolves to `void` once the Session Key leaves the active registry. The backend continues canceling orders and finalizing the on-chain revocation asynchronously. See [Revoke a Session Key](/trading/session-keys.md#revoke-a-session-key).
+* Breaking change: `revokeSessionKey(...)` now resolves to `void` once the Session Key leaves the active registry. The backend continues canceling orders and finalizing the on-chain revocation asynchronously. See [Revoke a Session Key](https://docs.polymarket.com/trading/session-keys.md#revoke-a-session-key).
 
 ```diff theme={null}
 -const revocation = await secureClient.revokeSessionKey({
@@ -486,12 +486,12 @@ import {
 
 ### `0.1.0-beta.5`
 
-* Added `listComboMarkets` for fetching the Combo market catalog with typed bindings and SDK-owned pagination. See [Combos](/trading/combos/overview.md).
+* Added `listComboMarkets` for fetching the Combo market catalog with typed bindings and SDK-owned pagination. See [Combos](https://docs.polymarket.com/trading/combos/overview.md).
 * Parse RFQ quote rejections that use the `SUBMISSION_WINDOW_CLOSED` gateway error code.
 
 ### `0.1.0-beta.4`
 
-* Added Combos support for multi-leg RFQ positions. See [Combos](/trading/combos/overview.md).
+* Added Combos support for multi-leg RFQ positions. See [Combos](https://docs.polymarket.com/trading/combos/overview.md).
 * Reject whitespace-only search queries and trim leading or trailing search input.
 * `ConditionId` is now deprecated in favor of `CtfConditionId`; existing
   `ConditionId` exports remain available as deprecated aliases.
@@ -620,7 +620,7 @@ pnpm add @polymarket/client@beta
 
 ### `0.11.0`
 
-* Added authenticated PolyBolt crypto, 60-second TWAP, and equity price streams through `AsyncSecureClient.subscribe(...)`, with history snapshots, exact decimal prices, automatic reconnects, typed price events, and isolated filter rejections. Use `CryptoPriceSpec`, `CryptoTwapPriceSpec`, or `EquityPriceSpec` from `polymarket.streams`; crypto symbols must be canonical USD pairs such as `btcusd`, while equity prices use the instrument's quote currency. Legacy price specs remain deprecated. Migrating Binance prices changes USDT quotes to USD; 30-second TWAP has no replacement. See the [SDK migration guide](/migrate/rtds-to-polybolt.md#migrate-sdks-to-polybolt).
+* Added authenticated PolyBolt crypto, 60-second TWAP, and equity price streams through `AsyncSecureClient.subscribe(...)`, with history snapshots, exact decimal prices, automatic reconnects, typed price events, and isolated filter rejections. Use `CryptoPriceSpec`, `CryptoTwapPriceSpec`, or `EquityPriceSpec` from `polymarket.streams`; crypto symbols must be canonical USD pairs such as `btcusd`, while equity prices use the instrument's quote currency. Legacy price specs remain deprecated. Migrating Binance prices changes USDT quotes to USD; 30-second TWAP has no replacement. See the [SDK migration guide](https://docs.polymarket.com/migrate/rtds-to-polybolt.md#migrate-sdks-to-polybolt).
 
 Given an authenticated `AsyncSecureClient`, migrate a crypto subscription as follows:
 
@@ -763,7 +763,7 @@ pages = client.list_activity(
 
 * Markets and events now expose their protocol through `version`, and markets expose Combo eligibility through `market.state.combo_status`. Combo status values introduced after this release pass through as strings.
 * Team entries on event and team-list responses now preserve their `ordering` value.
-* Breaking change: `revoke_session_key(...)` now returns `None` once the Session Key leaves the active registry. The SDK retries transient registry reads, while the backend continues canceling orders and finalizing the on-chain revocation asynchronously. See [Revoke a Session Key](/trading/session-keys.md#revoke-a-session-key).
+* Breaking change: `revoke_session_key(...)` now returns `None` once the Session Key leaves the active registry. The SDK retries transient registry reads, while the backend continues canceling orders and finalizing the on-chain revocation asynchronously. See [Revoke a Session Key](https://docs.polymarket.com/trading/session-keys.md#revoke-a-session-key).
 
 ```diff theme={null}
 -transaction = await secure_client.revoke_session_key(
@@ -954,12 +954,12 @@ authorization = await secure_client.authorize_session_key(
 
 ### `0.1.0b6`
 
-* Added `list_combo_markets` for fetching the Combo market catalog with SDK pagination. See [Combos](/trading/combos/overview.md).
+* Added `list_combo_markets` for fetching the Combo market catalog with SDK pagination. See [Combos](https://docs.polymarket.com/trading/combos/overview.md).
 * Parse RFQ quote rejections that use the `SUBMISSION_WINDOW_CLOSED` gateway error code.
 
 ### `0.1.0b5`
 
-* Added Combos support for multi-leg RFQ positions. See [Combos](/trading/combos/overview.md).
+* Added Combos support for multi-leg RFQ positions. See [Combos](https://docs.polymarket.com/trading/combos/overview.md).
 * Added notebook-friendly model display for Jupyter workflows.
 * `ConditionId` is now deprecated in favor of `CtfConditionId`; existing
   `ConditionId` exports remain available as deprecated aliases.

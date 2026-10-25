@@ -12,7 +12,7 @@ resting bids and asks.
 
 The examples below assume you already have a market object from which to read
 the outcome IDs. To find or fetch one, see
-[**Discover Markets**](/market-data/discover-markets.md).
+[**Discover Markets**](https://docs.polymarket.com/market-data/discover-markets.md).
 
 **TypeScript**
 

@@ -28,14 +28,14 @@ The top row is the normal path. `DELAYED` pauses an event before or during the g
 
 The Fees column applies to a market whose `fee.charged` is `WHEN_LIVE`, which includes every game market.
 A futures event never reaches `OPEN_INGAME`, and its league sets its fee schedule.
-See [Which schedule a market is on](/api/concepts/fees.md#which-schedule-a-market-is-on).
+See [Which schedule a market is on](https://docs.novig.com/api/concepts/fees.md#which-schedule-a-market-is-on).
 
 ## Settlement
 
 When an event ends, we grade each of its markets.
 The grade sets the status of every outcome in the market at once.
-After a market closes, read its grade from [market history](/api/catalog#market-history).
-To collect new grades as they land, [fetch new settlements](/api/catalog#fetch-new-settlements) with `settledAfter`.
+After a market closes, read its grade from [market history](https://docs.novig.com/api/catalog#market-history).
+To collect new grades as they land, [fetch new settlements](https://docs.novig.com/api/catalog#fetch-new-settlements) with `settledAfter`.
 
 | Grade | Outcome status | A contract pays |
 | - | - | - |

@@ -8,7 +8,7 @@
 
 `GET /positions-v3` rolls your bets up **per market**. Ten bets on one market are one row here, with
 the exposure already netted: what you win if outcome one lands, what you lose if it does not, and the
-blended price you got on each side. [Tracking positions](/developers/which-grain.md#positions) covers what the roll-up
+blended price you got on each side. [Tracking positions](https://docs.sx.bet/developers/which-grain.md#positions) covers what the roll-up
 does and does not net.
 
 

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://js.stripe.com/v3/"></script>
+    <title>Pricing - BoltOdds | Real-time Sports Betting Data</title>
+    <meta name="description" content="Choose the perfect plan for your sports betting data needs. From free tier to enterprise solutions." />
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="./images/api_favicon.png" />
+    
+    <!-- Apple Touch Icon for iOS devices -->
+    <link rel="apple-touch-icon" sizes="180x180" href="./images/api_favicon.png" />
+    <!-- Open Graph meta tags -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Pricing - BoltOdds | Real-time Sports Betting Data" />
+    <meta property="og:description" content="Affordable pricing for real-time sports betting data and odds." />
+    <meta property="og:url" content="https://boltodds.com/pricing" />
+<!-- 
+    <script>
+        
+        const stripe = Stripe("pk_test_51RpKLyE8FRw9BL5ALYZepAy7u7KV9UChK4T2sIpgZYunVRWBLaOGUY6BcNq9A3kt9MilHlXJq0HjML0Xynkmwmcd00nfViJCWY")
+        document.addEventListener("DOMContentLoaded", async (e) =>{
+
+            const email = localStorage.getItem('email')
+            const emailDisplay = document.getElementById('user-email');
+            emailDisplay.textContent = email;
+
+            //to create manage billing section
+            const billingForm = document.getElementById('manage-billing-form')
+            billingForm.addEventListener('submit', async (e) =>{
+                e.preventDefault();
+
+                const session = await fetch("https://spro.agency/create-portal-session", {
+                    method:'POST',
+                    headers:{
+                        "Content-Type": 'application/json'
+                    
+                    },
+                    body: JSON.stringify({
+                        'email':email
+                    })
+                })
+
+                const response = await session.json();
+                window.location.href = response.url;
+                
+            })
+
+
+
+            //to create checkout session
+            const form = document.getElementById('payment-form') //upgrade plan button in user dropdown menu
+            const form2 = document.getElementById('payment-form2') //upgrade plan button on standard card
+            form.addEventListener('submit', async (e) =>{
+                e.preventDefault();
+
+                const session = await fetch("https://spro.agency/create-checkout-session", {
+                    method:'POST',
+                    headers:{
+                        "Content-Type": 'application/json'
+                    
+                    },
+                    body: JSON.stringify({
+                        'email':email
+                    })
+                }).then(r => r.json())
+
+                stripe.redirectToCheckout({
+                    sessionId:session.id
+                })
+            })
+
+            form2.addEventListener('submit', async (e) =>{
+                e.preventDefault();
+
+                const session = await fetch("https://spro.agency/create-checkout-session", {
+                    method:'POST',
+                    headers:{
+                        "Content-Type": 'application/json'
+                    
+                    },
+                    body: JSON.stringify({
+                        'email':email
+                    })
+                }).then(r => r.json())
+
+                stripe.redirectToCheckout({
+                    sessionId:session.id
+                })
+            })
+        })
+      </script> -->
+    
+    
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="nav-brand">
+                <a href='/' style='display:flex;align-items:center;gap:inherit;text-decoration:none;color:inherit;'>
+                    <img src="./images/api_favicon.png" alt="API Logo" class="logo" />
+                    <h3>BoltOdds</h3>
+                </a>
+            </div>
+
+
+            <div class="hamburger" id="hamburger">
+                ☰
+            </div>
+            <!-- <div class="nav-container"> -->
+
+            <nav class="nav-menu">
+                <a href='/'>Home</a>
+                <a href='/pricing'>Pricing</a>
+                <a href='/docs'>Documentation</a>
+                <a href='/contact'>Contact</a>
+                <a href="https://discord.gg/JTgtfJCv7f" target="_blank">
+                    Discord
+                </a>
+                <a href='/account' id='account'>Account</a>
+
+                <div class="account-buttons">
+                    <a class='btn-primary' href='/signup' id='signup'>Sign Up</a>
+                    <a class='btn-primary' href='/signin' id='login'>Login</a>
+                </div>
+                
+            </nav>
+
+        </div>
+    </header>
+
+
+    <!-- Hero Section -->
+    <section class="pricing-hero">
+        <div class="container">
+            <!-- <div class="hero-badge">
+                Simple, Transparent Pricing
+            </div> -->
+            <h1 class="hero-title">Choose Your Plan</h1>
+            <p class="hero-subtitle">
+                Get real-time sports betting data for a fraction of the price. 
+            </p>
+            
+            <!-- Billing cycle: monthly / 6 months / annual. data-cycle is what pricing.js sends as billingCycle -->
+            <div class="billing-cycle" id="billingCycle" role="radiogroup" aria-label="Billing cycle">
+                <button type="button" class="cycle-option" data-cycle="monthly" role="radio" aria-checked="false">Monthly</button>
+                <button type="button" class="cycle-option" data-cycle="semiannual" role="radio" aria-checked="false">
+                    6 Months <span class="discount-badge">Save 10%</span>
+                </button>
+                <button type="button" class="cycle-option active" data-cycle="annual" role="radio" aria-checked="true">
+                    Annual <span class="discount-badge">Save 20%</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    
+
+    <!-- Pricing Cards -->
+    <section class="pricing-section">
+        
+        <div class="container">
+            <button class="plan-button btn-primary join-pricing-plan" id="trial-button">Start 3-day Free Trial <br> <span class="sub-text">No Credit Card Required</span></button> <br>
+            <div class="pricing-grid">
+
+                <!-- Starter -->
+                <div class="pricing-card">
+                    <!-- <div class="popular-badge">Most Popular</div> -->
+                    <div class="plan-header">
+                        <h3 class="plan-name">Starter</h3>
+                        <p class="plan-description">For hobbyists and side projects</p>
+                        <div class="plan-price">
+                            <span class="currency">$</span>
+                            <span class="amount" data-monthly="149" data-semiannual="134" data-annual="119">119</span>
+                            <span class="period">/month</span>
+                        </div>
+                        <p class="billing-note annual-note">Billed annually at $1,428</p>
+                        <p class="billing-note semiannual-note" style="display: none;">Billed every 6 months at $804</p>
+                        <p class="billing-note monthly-note" style="display: none;">Billed monthly</p>
+                    </div>
+                    
+                    <div class="plan-features">
+                        <ul>
+                            <li><span class="checkmark">✓</span> Real-time sports betting odds data via WebSocket</li>
+                            <li><span class="checkmark">✓</span> Choose 1 sports league per connection</li>
+                            <li><span class="checkmark">✓</span> Choose 1 market per connection</li>
+                            <li><span class="checkmark">✓</span> 1 concurrent connection limit</li>
+                            <li><span class="crossmark">✗</span> Some sportsbooks not included</li>
+                        </ul>
+                    </div>
+                    
+                    <button class="plan-button btn-primary join-pricing-plan" id="join-now-button-starter">Join Now</button>
+                    <button class="plan-button btn-primary change-pricing-plan" id="current-plan-button-starter">Change Plan</button>
+                    <button class="plan-button btn-primary manage-pricing-plan" id="manage-plan-button-starter">Manage Plan</button>
+                </div>
+
+                <!-- Growth Plan -->
+                <div class="pricing-card">
+                    <!-- <div class="popular-badge">Most Popular</div> -->
+                    <div class="plan-header">
+                        <h3 class="plan-name">Growth</h3>
+                        <p class="plan-description">For those who need more depth or small startups</p>
+                        <div class="plan-price">
+                            <span class="currency">$</span>
+                            <span class="amount" data-monthly="349" data-semiannual="314" data-annual="279">279</span>
+                            <span class="period">/month</span>
+                        </div>
+                        <p class="billing-note annual-note">Billed annually at $3,348</p>
+                        <p class="billing-note semiannual-note" style="display: none;">Billed every 6 months at $1,884</p>
+                        <p class="billing-note monthly-note" style="display: none;">Billed monthly</p>
+                    </div>
+                    
+                    <div class="plan-features">
+                        <ul>
+                            <li><span class="checkmark">✓</span> Real-time sports betting odds data via WebSocket</li>
+                            <li><span class="checkmark">✓</span> Choose up to 3 sports leagues per connection</li>
+                            <li><span class="checkmark">✓</span> All markets</li>
+                            <li><span class="checkmark">✓</span> 1 concurrent connection limit</li>
+                            <li><span class="crossmark">✗</span> Some sportsbooks not included</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- <button class="plan-button btn-primary" id="trial-button">Start 14-day Free Trial</button> -->
+                    <button class="plan-button btn-primary join-pricing-plan" id="join-now-button-growth">Join Now</button>
+                    <button class="plan-button btn-primary change-pricing-plan" id="current-plan-button-growth">Change Plan</button>
+                    <button class="plan-button btn-primary manage-pricing-plan" id="manage-plan-button-growth">Manage Plan</button>
+                </div>
+
+                <!-- Pro Plan -->
+                <div class="pricing-card featured">
+                    <div class="popular-badge">Best Value</div>
+                    <div class="plan-header">
+                        <h3 class="plan-name">Pro</h3>
+                        <p class="plan-description">For serious bettors, developers, and growing startups</p>
+                        <div class="plan-price">
+                            <span class="currency">$</span>
+                            <span class="amount" data-monthly="599" data-semiannual="539" data-annual="479">479</span>
+                            <span class="period">/month</span>
+                        </div>
+                        <p class="billing-note annual-note">Billed annually at $5,748</p>
+                        <p class="billing-note semiannual-note" style="display: none;">Billed every 6 months at $3,234</p>
+                        <p class="billing-note monthly-note" style="display: none;">Billed monthly</p>
+                    </div>
+                    
+                    <div class="plan-features">
+                        <ul>
+                            <li><span class="checkmark">✓</span> Real-time sports betting odds data via WebSocket</li>
+                            <li><span class="checkmark">✓</span> All leagues</li>
+                            <li><span class="checkmark">✓</span> All markets</li>
+                            <li><span class="checkmark">✓</span> 3 concurrent connections limit</li>
+                            <li><span class="checkmark">✓</span> All sportsbooks</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- <button class="plan-button btn-primary" id="trial-button">Start 14-day Free Trial</button> -->
+                    <button class="plan-button btn-primary join-pricing-plan" id="join-now-button-pro">Join Now</button>
+                    <button class="plan-button btn-primary change-pricing-plan" id="current-plan-button-pro">Change Plan</button>
+                    <button class="plan-button btn-primary manage-pricing-plan" id="manage-plan-button-pro">Manage Plan</button>
+                </div>
+
+
+                <!-- Enterprise Plan -->
+                <div class="pricing-card">
+                    <div class="plan-header">
+                        <h3 class="plan-name">Enterprise</h3>
+                        <p class="plan-description">For teams and businesses that need a custom sports betting feed</p>
+                        <div class="plan-price">
+                            Please Contact
+                            <!-- <span class="currency">$</span>
+                            <span class="amount" data-monthly="499" data-annual="399">499</span>
+                            <span class="period">/month</span> -->
+                        </div>
+                        <!-- <p class="billing-note annual-note">Billed annually at $4,788</p> -->
+                        <!-- <p class="billing-note monthly-note">Billed monthly</p> -->
+                    </div>
+                    
+                    <div class="plan-features">
+                        <ul>
+                            <li> Everything on the Pro plan, plus...</li>
+                            <li><span class="checkmark">✓</span> Priority Support</li>
+                            <li><span class="checkmark">✓</span> Custom request limits</li>
+                            <li><span class="checkmark">✓</span> Custom number of concurrent connections</li>
+                            <li><span class="checkmark">✓</span> SGP Pricing Engine</li>
+                            <li><span class="checkmark">✓</span> Historical odds</li>
+                        </ul>
+                    </div>
+                    
+                    <a class='plan-button btn-secondary' href='/contact' id='custom-plan-button'>Let's Discuss</a>
+                </div>
+
+                <!-- PBP & LS -->
+                <div class="pricing-card-pbp">
+                    <div class="plan-header">
+                        <h3 class="plan-name">Live Play-by-Play and Scores API</h3>
+                        <p class="plan-description">Top of the line play-by-play and live scores data</p>
+                        <div class="plan-price">
+                            Please Contact
+                        </div>
+                    </div>
+                    
+                    <div class="plan-features">
+                        <ul>
+                            <li><span class="checkmark">✓</span> Play-by-play events</li>
+                            <li><span class="checkmark">✓</span> Live score updates</li>
+                            <li><span class="checkmark">✓</span> Live box scores</li>
+                            <li><span class="checkmark">✓</span> Live & historical fixtures, results & market settlement data</li>
+                            <li><span class="checkmark">✓</span> 30+ leagues covered</li>
+                        </ul>
+                    </div>
+                    
+                    <a class='plan-button btn-secondary2' href='/contact' id='custom-plan-button2'>Let's Discuss</a>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Frequently Asked Questions</h2>
+                <p>Everything you need to know about our pricing and plans</p>
+            </div>
+            
+            <div class="faq-grid">
+                <!-- <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span>What happens when I exceed my API limit?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>If you exceed your monthly API limit, your requests will be temporarily throttled. You can upgrade your plan at any time to increase your limits immediately.</p>
+                    </div>
+                </div> -->
+
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span>Can I cancel my plan at any time?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Yes! You can cancel your plan at anytime.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span>Do you offer custom plans?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Absolutely! For users with unique requirements, we offer custom plans with tailored pricing based on your needs. Reach out and let us know what you're looking for!</p>
+                    </div>
+                </div>
+
+                <!-- <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span>What payment methods do you accept?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and wire transfers for enterprise customers.</p>
+                    </div>
+                </div> -->
+
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span>Is there a setup fee?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>No setup fees, ever. You only pay for your chosen plan. Get started immediately with your API key upon signup.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFAQ(this)">
+                        <span>Do you offer a free trial?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Yes! We offer a 3-day free trial with access to almost all features. If you're not satisfied within those 3 days, you can cancel at anytime for any reason and will NOT be charged.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Get Started?</h2>
+                <p>Join the many developers who trust BoltOdds for their sports betting data needs.</p>
+                <div class="cta-buttons">
+                    <a class='btn-primary btn-large' href='/signup'>Start Free Trial</a>
+                    <a href="https://discord.gg/JTgtfJCv7f" class="btn-secondary btn-large">Join Discord</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- footer:start (from _templates/footer.html, run build_book_pages.py to update) -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="/" class="footer-logo">
+                        <img src="/images/api_favicon.png" alt="BoltOdds Logo" class="logo" />
+                        <h3>BoltOdds</h3>
+                    </a>
+                    <div class="footer-social">
+                        <a href="https://www.linkedin.com/company/boltodds/" target="_blank" rel="noopener" aria-label="BoltOdds on LinkedIn">
+                            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="footer-column">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="/pricing">Pricing</a></li>
+                        <li><a href="/docs">Documentation</a></li>
+                        <li><a href="/sportsbooks/">Sportsbook APIs</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-column">
+                    <h4>Account</h4>
+                    <ul>
+                        <li><a href="/signup">Sign Up</a></li>
+                        <li><a href="/signin">Login</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-column">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="/contact">Contact</a></li>
+                        <li><a href="https://discord.gg/JTgtfJCv7f" target="_blank" rel="noopener">Discord</a></li>
+                        <li><a href="mailto:support@boltodds.com">support@boltodds.com</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; <span id="year"></span> Spro Technologies Inc. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <!-- footer:end -->
+
+    <script>
+        document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+
+    <script src="pricing.js"></script>
+</body>
+</html>

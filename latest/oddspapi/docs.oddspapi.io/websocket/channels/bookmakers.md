@@ -87,7 +87,7 @@ When `staleOdds = true`, the connection between OddsPapi and this bookmaker has 
 * You should **immediately pause** any automated betting or arbitrage logic for this bookmaker
 * Treat all existing odds from this bookmaker as **unvalidated** until `staleOdds` returns to `false`
 
-The flag is always keyed **per fixture × bookmaker** and set deliberately — lost contact (block, maintenance, downtime), unusual inactivity across the book, or a fixture mismapping. The same `bookmakers` map is also carried on the REST responses (`/fixtures`, `/fixtures/odds`, and related endpoints), so snapshot and stream always agree on staleness. Causes, fan-out behavior, and treatment in full: [Bookmaker staleness](/api-reference/reliability.md#bookmaker-staleness-staleodds).
+The flag is always keyed **per fixture × bookmaker** and set deliberately — lost contact (block, maintenance, downtime), unusual inactivity across the book, or a fixture mismapping. The same `bookmakers` map is also carried on the REST responses (`/fixtures`, `/fixtures/odds`, and related endpoints), so snapshot and stream always agree on staleness. Causes, fan-out behavior, and treatment in full: [Bookmaker staleness](https://docs.oddspapi.io/api-reference/reliability.md#bookmaker-staleness-staleodds).
 
 Recovery is automatic: when contact with the bookmaker is restored the flag returns to `false`, and because every odds update is full latest state, the next updates re-validate your store on their own — there is nothing to replay or reconcile manually.
 

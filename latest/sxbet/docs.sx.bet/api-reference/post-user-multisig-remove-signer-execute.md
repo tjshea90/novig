@@ -7,7 +7,7 @@
 > Execute a prepared remove-signer transaction.
 
 `POST /user/multisig/remove-signer/execute` submits the signature for the transaction from
-[`POST /user/multisig/remove-signer/prepare`](/api-reference/post-user-multisig-remove-signer-prepare).
+[`POST /user/multisig/remove-signer/prepare`](https://docs.sx.bet/api-reference/post-user-multisig-remove-signer-prepare).
 
 
 ## OpenAPI

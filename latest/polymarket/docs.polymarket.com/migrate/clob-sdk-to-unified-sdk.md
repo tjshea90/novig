@@ -47,7 +47,7 @@ bun add @polymarket/client@latest viem
 > The unified SDK includes signer adapters for Viem, Privy, and Ethers v5, so
 > you can connect your wallet library without implementing CLOB-specific
 > signing. See [Wallet
-> Integrations](/getting-started/typescript.md#wallet-integrations) for setup
+> Integrations](https://docs.polymarket.com/getting-started/typescript.md#wallet-integrations) for setup
 > examples.
 
 ## Client and Wallet Setup
@@ -2040,7 +2040,7 @@ for _ in 0..10 {
 }
 ```
 
-See [Matching Engine Restarts](/trading/matching-engine.md) for the restart window,
+See [Matching Engine Restarts](https://docs.polymarket.com/trading/matching-engine.md) for the restart window,
 post-only period, and restricted-mode responses.
 
 

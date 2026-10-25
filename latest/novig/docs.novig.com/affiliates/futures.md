@@ -12,7 +12,7 @@ Novig offers futures markets for NBA, MLB, NHL, WNBA, Tennis, and special events
 A futures market settles on a season or a tournament, not a single game.
 
 You read futures from the same REST catalog as game markets.
-[Odds Screens](/affiliates/odds-screens.md) shows how to get a key, sign a request, and turn an order book into prices.
+[Odds Screens](https://docs.novig.com/affiliates/odds-screens.md) shows how to get a key, sign a request, and turn an order book into prices.
 
 ## Tell futures apart from game markets
 
@@ -84,7 +84,7 @@ To list game lines only, pass the game market types instead, like `marketType=MO
 ## How futures differ from game markets
 
 * **A futures event never goes live.** It never reaches `OPEN_INGAME`, so you can show its prices until the market closes.
-* **A futures market can carry a fee on every fill.** On an eligible league, `fee.charged` is `ALWAYS`, with a coefficient of `0.06` and a maker credit of `0.5`. See [Trading fees](/api/concepts/fees.md#which-schedule-a-market-is-on).
+* **A futures market can carry a fee on every fill.** On an eligible league, `fee.charged` is `ALWAYS`, with a coefficient of `0.06` and a maker credit of `0.5`. See [Trading fees](https://docs.novig.com/api/concepts/fees.md#which-schedule-a-market-is-on).
 * **Some futures events have no markets yet.** These are placeholders, so skip an event with no markets.
 
 ## Futures market shapes
@@ -118,7 +118,7 @@ A bid on one outcome shows as available liquidity on the opposite outcome.
 | BID on NO at 0.36, qty 45000 | Someone risks \$162 to win \$288 |
 | Available liquidity | Shows on YES at 0.64, \$288 to win \$162 |
 
-[Odds Screens](/affiliates/odds-screens.md) shows how to turn the book into displayable prices.
+[Odds Screens](https://docs.novig.com/affiliates/odds-screens.md) shows how to turn the book into displayable prices.
 
 ## Special events
 

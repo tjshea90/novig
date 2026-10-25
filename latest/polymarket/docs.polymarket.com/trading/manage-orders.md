@@ -13,7 +13,7 @@ longer want resting on the book.
 > [!NOTE]
 >
 > Clients authenticated with [Session
-> Keys](/trading/session-keys.md#session-key-considerations) can only fetch orders
+> Keys](https://docs.polymarket.com/trading/session-keys.md#session-key-considerations) can only fetch orders
 > and trades associated with those Session Keys. **Deposit Wallet Owners**
 > cannot fetch orders from authorized Session Keys.
 
@@ -146,7 +146,7 @@ can otherwise be `None`.
 **API**
 
 Fetch the order with an authenticated CLOB request. See [API
-Authentication](/getting-started/api.md#authentication) for the complete
+Authentication](https://docs.polymarket.com/getting-started/api.md#authentication) for the complete
 signing flow.
 
 ```bash theme={null}
@@ -214,7 +214,7 @@ type Order = {
 An `expiration` of `"0"` means the order is GTC and never expires on a
 timer.
 
-See the [order response reference](/api-reference/trade/get-single-order-by-id.md)
+See the [order response reference](https://docs.polymarket.com/api-reference/trade/get-single-order-by-id.md)
 for quantity units and statuses.
 
 ## List Open Orders
@@ -410,7 +410,7 @@ class OpenOrder:
 
 List open orders with an authenticated CLOB request, optionally filtering
 by `id`, `market`, or `asset_id`. See [API
-Authentication](/getting-started/api.md#authentication) for the complete
+Authentication](https://docs.polymarket.com/getting-started/api.md#authentication) for the complete
 signing flow.
 
 ```bash theme={null}
@@ -477,7 +477,7 @@ type Order = {
 ]
 ```
 
-See the [order response reference](/api-reference/trade/get-single-order-by-id.md)
+See the [order response reference](https://docs.polymarket.com/api-reference/trade/get-single-order-by-id.md)
 for quantity units and statuses.
 
 ## List Account Trades
@@ -708,7 +708,7 @@ class ClobTrade:
 
 List account trades with an authenticated CLOB request, optionally
 filtering by `id`, `market`, `asset_id`, `maker_address`, `after`, or
-`before`. See [API Authentication](/getting-started/api.md#authentication) for
+`before`. See [API Authentication](https://docs.polymarket.com/getting-started/api.md#authentication) for
 the complete signing flow.
 
 ```bash theme={null}
@@ -793,7 +793,7 @@ type Trade = {
 ]
 ```
 
-See [Trade Statuses](/concepts/order-lifecycle.md#trade-statuses) to follow each
+See [Trade Statuses](https://docs.polymarket.com/concepts/order-lifecycle.md#trade-statuses) to follow each
 trade's `status` through settlement.
 
 ## List Builder Trades
@@ -1079,7 +1079,7 @@ The response contains the matching trades and a cursor for the next page:
 Pass `next_cursor` back as the `next_cursor` query parameter to request the
 next page. The terminal cursor is `LTE=`.
 
-See [Builder Programs](/programs/builders/overview.md) to learn how attribution
+See [Builder Programs](https://docs.polymarket.com/programs/builders/overview.md) to learn how attribution
 works.
 
 ## Cancel Orders
@@ -1142,7 +1142,7 @@ result = await client.cancel_orders(
 **API**
 
 Cancel one order with an authenticated CLOB request. See [API
-Authentication](/getting-started/api.md#authentication) for the complete
+Authentication](https://docs.polymarket.com/getting-started/api.md#authentication) for the complete
 signing flow.
 
 ```bash theme={null}
@@ -1243,7 +1243,7 @@ The `market` argument takes the market's condition ID.
 **API**
 
 Cancel every open order for one outcome with an authenticated CLOB request.
-See [API Authentication](/getting-started/api.md#authentication) for the
+See [API Authentication](https://docs.polymarket.com/getting-started/api.md#authentication) for the
 complete signing flow.
 
 ```bash theme={null}
@@ -1333,7 +1333,7 @@ result = await client.cancel_all()
 **API**
 
 Cancel every open order with an authenticated CLOB request. See [API
-Authentication](/getting-started/api.md#authentication) for the complete
+Authentication](https://docs.polymarket.com/getting-started/api.md#authentication) for the complete
 signing flow.
 
 ```bash theme={null}
@@ -1528,7 +1528,7 @@ curl -X POST "https://clob.polymarket.com/v1/heartbeats" \
 ```
 
 Using the signer address and CLOB API credentials from [API
-Authentication](/getting-started/api.md#authentication), create a fresh
+Authentication](https://docs.polymarket.com/getting-started/api.md#authentication), create a fresh
 `<clob_request_timestamp>` and generate `<clob_l2_signature>` from the exact
 serialized body sent over the wire:
 
@@ -1683,7 +1683,7 @@ curl "https://clob.polymarket.com/auth/ban-status/closed-only" \
 ```
 
 Using the signer address and CLOB API credentials from [API
-Authentication](/getting-started/api.md#authentication), create a fresh
+Authentication](https://docs.polymarket.com/getting-started/api.md#authentication), create a fresh
 `<clob_request_timestamp>` and generate `<clob_l2_signature>` without a
 request body:
 
@@ -1713,7 +1713,7 @@ positions. New position-opening orders are rejected.
 ## Check Order Scoring
 
 An order scores when it is live on a market with [liquidity
-rewards](/programs/liquidity-rewards.md) and meets the market's minimum qualifying
+rewards](https://docs.polymarket.com/programs/liquidity-rewards.md) and meets the market's minimum qualifying
 size, maximum qualifying spread, and required live duration. Because
 eligibility changes as the order book moves, treat the result as a point-in-time
 check.
@@ -1801,7 +1801,7 @@ curl "https://clob.polymarket.com/order-scoring?order_id=<order_id>" \
 ```
 
 Using the signer address and CLOB API credentials from [API
-Authentication](/getting-started/api.md#authentication), create a fresh
+Authentication](https://docs.polymarket.com/getting-started/api.md#authentication), create a fresh
 `<clob_request_timestamp>` and generate `<clob_l2_signature>` without a
 request body. The `order_id` query parameter is not part of the signed path:
 
@@ -1822,7 +1822,7 @@ The response contains the order's current scoring status:
 ```
 
 See [Get Order Scoring
-Status](/api-reference/trade/get-order-scoring-status.md) for the complete
+Status](https://docs.polymarket.com/api-reference/trade/get-order-scoring-status.md) for the complete
 request and response schema.
 
 

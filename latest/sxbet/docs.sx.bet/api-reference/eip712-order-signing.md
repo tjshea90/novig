@@ -7,8 +7,8 @@
 > How to sign an order with your private key or an injected wallet.
 
 `POST /orders-v3` requires an EIP-712 signature over the eight-field `Order` struct. Read the domain
-from [`GET /metadata/obv3`](/api-reference/get-metadata-obv3). See
-[Posting orders](/developers/posting-orders.md).
+from [`GET /metadata/obv3`](https://docs.sx.bet/api-reference/get-metadata-obv3). See
+[Posting orders](https://docs.sx.bet/developers/posting-orders.md).
 
 ## Private key signing
 

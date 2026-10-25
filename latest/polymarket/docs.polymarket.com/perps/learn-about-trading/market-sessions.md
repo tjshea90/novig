@@ -12,7 +12,7 @@ categorization of these conditions.
 
 ## What Sessions Affect
 
-Sessions affect one thing: which set of external feeds is used to compute [Index Price](/perps/learn-about-trading/index-price.md) and the [C3 candidate in Mark Price](/perps/learn-about-trading/mark-price.md).
+Sessions affect one thing: which set of external feeds is used to compute [Index Price](https://docs.polymarket.com/perps/learn-about-trading/index-price.md) and the [C3 candidate in Mark Price](https://docs.polymarket.com/perps/learn-about-trading/mark-price.md).
 
 Each category can use its own feed set. For example, primary venue feeds may be
 used during regular hours and after-hours venue feeds may be used overnight. If

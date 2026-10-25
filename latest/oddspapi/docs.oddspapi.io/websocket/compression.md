@@ -207,9 +207,9 @@ asyncio.run(main())
 
 ## See also
 
-* [Auth & Filters](/websocket/auth.md) — full `login` field reference
-* [Resume & Replay](/websocket/resume-replay.md) — reconnecting and recovering missed data
-* [Troubleshooting](/websocket/troubleshooting.md) — zstd decoding issues
+* [Auth & Filters](https://docs.oddspapi.io/websocket/auth.md) — full `login` field reference
+* [Resume & Replay](https://docs.oddspapi.io/websocket/resume-replay.md) — reconnecting and recovering missed data
+* [Troubleshooting](https://docs.oddspapi.io/websocket/troubleshooting.md) — zstd decoding issues
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

@@ -8,7 +8,7 @@
 
 > [!NOTE]
 >
-> To retrieve odds for a particular market, you must query the orderbook separately — [`GET /orderbook-v3/snapshot/market`](/api-reference/get-market-orderbook-snapshot)
+> To retrieve odds for a particular market, you must query the orderbook separately — [`GET /orderbook-v3/snapshot/market`](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot)
 
 > [!NOTE]
 >

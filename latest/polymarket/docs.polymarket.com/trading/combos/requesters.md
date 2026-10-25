@@ -26,9 +26,9 @@ The production gateway is
 **1. Prepare the Trading Account**
 
 Create a Polymarket account, obtain its [CLOB API
-credentials](/getting-started/api.md#authentication), and fund the account wallet.
+credentials](https://docs.polymarket.com/getting-started/api.md#authentication), and fund the account wallet.
 Set up the wallet and trading approvals by following [Wallets and
-Authentication](/trading/wallets-auth.md).
+Authentication](https://docs.polymarket.com/trading/wallets-auth.md).
 
 Resolve the CLOB credential address, order signer, order maker, and signature
 type for the account's wallet:
@@ -229,7 +229,7 @@ The `builder` field must be the zero bytes32 value. A non-zero value is rejected
 with `BUILDER_ATTRIBUTION_NOT_ALLOWED`. This gateway does not support Builder
 attribution. Approved builders that need orders attributed to their Builder
 code must authenticate and submit them through the [Builder Gateway
-workflow](/trading/combos/builders.md#request-and-execute-a-quote) instead.
+workflow](https://docs.polymarket.com/trading/combos/builders.md#request-and-execute-a-quote) instead.
 
 Use the same wallet identity selected when creating the RFQ. The wallet type
 determines which payload to sign and how to encode `signed_order.signature`:

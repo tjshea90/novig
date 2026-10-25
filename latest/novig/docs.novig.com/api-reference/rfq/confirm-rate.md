@@ -7,7 +7,7 @@
 > How many last looks you must confirm, and what happens when you fall short.
 
 When your quote wins and the user accepts, we ask you to confirm the trade.
-That 1-second step is the last look. The [overview](/api-reference/rfq/overview.md) shows where it fits in a round.
+That 1-second step is the last look. The [overview](https://docs.novig.com/api-reference/rfq/overview.md) shows where it fits in a round.
 
 You must confirm at least 60% of your last looks.
 If you fall below that, we lock you out of RFQ quoting for 5 minutes.
@@ -31,7 +31,7 @@ If fewer than 60% of them are confirms, we lock you out.
 
 We refuse every quote, decline, and confirm you send.
 
-Over the [WebSocket](/api-reference/rfq/websocket.md), each one gets a `FORBIDDEN` error.
+Over the [WebSocket](https://docs.novig.com/api-reference/rfq/websocket.md), each one gets a `FORBIDDEN` error.
 Its `message` says when the lock ends and that your confirm rate caused it:
 
 ```json theme={"dark"}
@@ -46,7 +46,7 @@ Its `message` says when the lock ends and that your confirm rate caused it:
 }
 ```
 
-Over a [webhook](/api-reference/rfq/webhooks.md), we keep sending you RFQs but drop your quotes.
+Over a [webhook](https://docs.novig.com/api-reference/rfq/webhooks.md), we keep sending you RFQs but drop your quotes.
 Check `GET /rfq/pricer` to see the lock.
 
 The lock ends on its own after 5 minutes. You don't need to do anything to lift it.

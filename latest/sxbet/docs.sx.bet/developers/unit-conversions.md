@@ -69,7 +69,7 @@ A maker resting at 40% offers the taker a 60% price.
 ## Token amounts
 
 Amounts are integers in the token's smallest unit, as strings. Read the scale from
-[`GET /metadata/obv3`](/api-reference/get-metadata-obv3):
+[`GET /metadata/obv3`](https://docs.sx.bet/api-reference/get-metadata-obv3):
 
 ```json theme={null}
 {
@@ -84,7 +84,7 @@ Amounts are integers in the token's smallest unit, as strings. Read the scale fr
 
 | Token | Address | Decimals |
 | - | - | - |
-| USDC | `activeAsset.baseToken` from [`GET /metadata/obv3`](/api-reference/get-metadata-obv3) | 6 |
+| USDC | `activeAsset.baseToken` from [`GET /metadata/obv3`](https://docs.sx.bet/api-reference/get-metadata-obv3) | 6 |
 
 ```
 baseUnits    = nominal × 10^decimals

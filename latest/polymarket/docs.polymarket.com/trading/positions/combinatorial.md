@@ -69,15 +69,15 @@ realizes any resolved collateral value.
 
 ## Related Pages
 
-> **[CTF Overview](/trading/positions/how-positions-work.md)**
+> **[CTF Overview](https://docs.polymarket.com/trading/positions/how-positions-work.md)**
 >
 > Minimal overview of Conditional Tokens
 
-> **[Split Tokens](/trading/positions/manage.md#split-a-position)**
+> **[Split Tokens](https://docs.polymarket.com/trading/positions/manage.md#split-a-position)**
 >
 > Create YES and NO token pairs
 
-> **[Combos](/trading/combos/overview.md)**
+> **[Combos](https://docs.polymarket.com/trading/combos/overview.md)**
 >
 > Quote combinatorial positions through RFQ
 

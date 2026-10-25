@@ -8,13 +8,13 @@
 
 Market making means resting `GTC` orders on the book and managing what happens to them — earning the
 spread between the price you post and what a taker receives. The mechanics of posting are on
-[Posting orders](/developers/posting-orders.md).
+[Posting orders](https://docs.sx.bet/developers/posting-orders.md).
 
 ## Prerequisites
 
 > [!NOTE]
 >
-> Your proxy must be [deployed and funded](/developers/posting-orders.md#prerequisites) before
+> Your proxy must be [deployed and funded](https://docs.sx.bet/developers/posting-orders.md#prerequisites) before
 > `POST /orders-v3` accepts anything.
 
 ## Minimal example
@@ -30,23 +30,23 @@ spread between the price you post and what a taker receives. The mechanics of po
 
 ## Related
 
-> **[Posting orders](/developers/posting-orders.md)**
+> **[Posting orders](https://docs.sx.bet/developers/posting-orders.md)**
 >
 > Fields, signing, and the validation rules on create.
 
-> **[Cancelling orders](/developers/cancelling-orders.md)**
+> **[Cancelling orders](https://docs.sx.bet/developers/cancelling-orders.md)**
 >
 > Picking a cancel route, and confirming before you exit.
 
-> **[Tracking your orders](/developers/my-orders.md)**
+> **[Tracking your orders](https://docs.sx.bet/developers/my-orders.md)**
 >
 > The order row in full, and why a missing order has more than one explanation.
 
-> **[Odds rounding](/developers/odds-rounding.md)**
+> **[Odds rounding](https://docs.sx.bet/developers/odds-rounding.md)**
 >
 > Rounding a model price onto the odds ladder.
 
-> **[Market making parlays](/developers/market-making-parlays.md)**
+> **[Market making parlays](https://docs.sx.bet/developers/market-making-parlays.md)**
 >
 > Quoting parlay requests.
 

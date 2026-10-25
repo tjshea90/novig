@@ -9,7 +9,7 @@
 `POST /user/multisig/add-signer/prepare` builds the transaction that adds a signer for multisig actions.
 
 Sign `typedData` and submit it to
-[`POST /user/multisig/add-signer/execute`](/api-reference/post-user-multisig-add-signer-execute).
+[`POST /user/multisig/add-signer/execute`](https://docs.sx.bet/api-reference/post-user-multisig-add-signer-execute).
 
 
 ## OpenAPI

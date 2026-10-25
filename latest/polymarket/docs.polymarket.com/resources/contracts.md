@@ -82,7 +82,7 @@ These contracts own and exchange CTF outcome balances.
 
 The CLOB still checks pUSD and Conditional Tokens approvals for the Neg Risk
 Adapter on orders in CTF negative-risk markets. Grant them with the other
-[trading approvals](/trading/wallets-auth.md#set-up-trading-approvals). This Neg
+[trading approvals](https://docs.polymarket.com/trading/wallets-auth.md#set-up-trading-approvals). This Neg
 Risk Adapter (`0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296`) is a different
 contract from NegRiskCtfCollateralAdapter
 (`0xadA2005600Dec949baf300f4C6120000bDB6eAab`); approving
@@ -142,7 +142,7 @@ PositionManager. CTF-to-PositionManager migration is implemented by the
 BinaryModule and NegRiskModule addresses listed above. A condition or event must
 be registered by Polymarket before a holder can migrate its positions.
 
-See [Onchain Position Data](/resources/onchain-position-data.md) for the events and
+See [Onchain Position Data](https://docs.polymarket.com/resources/onchain-position-data.md) for the events and
 identifiers used to index redemptions and migrations.
 
 ## Security

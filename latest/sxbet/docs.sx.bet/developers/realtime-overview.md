@@ -16,7 +16,7 @@ Go, Dart, Swift, Java, and C#; the examples here use the JavaScript and Python o
 
 Rather than polling REST endpoints, subscribe to the channels relevant to your workflow. The
 recommended pattern for most use cases is: [fetch current state via REST, then subscribe to stay
-updated](/developers/realtime-initialization.md#snapshot-+-subscribe-pattern) — this avoids gaps
+updated](https://docs.sx.bet/developers/realtime-initialization.md#snapshot-+-subscribe-pattern) — this avoids gaps
 between your initial snapshot and the live feed.
 
 **1. Authenticate**
@@ -36,7 +36,7 @@ Create a subscription for each channel you need and attach a publication handler
 ## Getting started
 
 Install a client SDK, fetch a token, connect, and subscribe — see
-[Initialization](/developers/realtime-initialization.md).
+[Initialization](https://docs.sx.bet/developers/realtime-initialization.md).
 
 ***
 
@@ -44,18 +44,18 @@ Install a client SDK, fetch a token, connect, and subscribe — see
 
 | Channel | What you receive | Payload reference |
 | - | - | - |
-| `orderbook_v3:{marketHash}` | The full aggregated book for one market, on every change | [orderbook\_v3 →](/api-reference/channel-orderbook-v3.md) |
-| `orderbook_v3_event:{eventId}` | The same book bodies for every market on an event | [orderbook\_v3\_event →](/api-reference/channel-orderbook-v3-event.md) |
-| `best_odds_v3:global` | Top-of-book odds changes across all markets | [best\_odds\_v3 →](/api-reference/channel-best-odds-v3.md) |
-| `account:orders_v3_#{address}` | Your order state changes, and why an order ended | [orders\_v3 →](/api-reference/channel-orders-v3.md) |
-| `account:trades_v3_#{address}` | Your bets, at bet grain | [trades\_v3 →](/api-reference/channel-trades-v3.md) |
-| `account:fills_v3_#{address}` | Your individual fills | [fills\_v3 →](/api-reference/channel-fills-v3.md) |
-| `recent_trades_v3:global` | The anonymized public tape, one message per taker bet | [recent\_trades\_v3 →](/api-reference/channel-recent-trades-v3.md) |
-| `markets:global` | Market create, update, and settlement | [markets →](/api-reference/channel-markets.md) |
-| `main_line:global` | Which market is now an event's main line | [line changes →](/api-reference/channel-line-changes.md) |
-| `fixtures:global` | Fixture metadata updates | [fixtures →](/api-reference/channel-fixtures.md) |
-| `fixtures:live_scores` | Live match scores | [fixtures →](/api-reference/channel-fixtures.md) |
-| `parlay_markets:global` | Incoming parlay quote requests | [parlay requests →](/api-reference/channel-parlay-requests.md) |
+| `orderbook_v3:{marketHash}` | The full aggregated book for one market, on every change | [orderbook\_v3 →](https://docs.sx.bet/api-reference/channel-orderbook-v3.md) |
+| `orderbook_v3_event:{eventId}` | The same book bodies for every market on an event | [orderbook\_v3\_event →](https://docs.sx.bet/api-reference/channel-orderbook-v3-event.md) |
+| `best_odds_v3:global` | Top-of-book odds changes across all markets | [best\_odds\_v3 →](https://docs.sx.bet/api-reference/channel-best-odds-v3.md) |
+| `account:orders_v3_#{address}` | Your order state changes, and why an order ended | [orders\_v3 →](https://docs.sx.bet/api-reference/channel-orders-v3.md) |
+| `account:trades_v3_#{address}` | Your bets, at bet grain | [trades\_v3 →](https://docs.sx.bet/api-reference/channel-trades-v3.md) |
+| `account:fills_v3_#{address}` | Your individual fills | [fills\_v3 →](https://docs.sx.bet/api-reference/channel-fills-v3.md) |
+| `recent_trades_v3:global` | The anonymized public tape, one message per taker bet | [recent\_trades\_v3 →](https://docs.sx.bet/api-reference/channel-recent-trades-v3.md) |
+| `markets:global` | Market create, update, and settlement | [markets →](https://docs.sx.bet/api-reference/channel-markets.md) |
+| `main_line:global` | Which market is now an event's main line | [line changes →](https://docs.sx.bet/api-reference/channel-line-changes.md) |
+| `fixtures:global` | Fixture metadata updates | [fixtures →](https://docs.sx.bet/api-reference/channel-fixtures.md) |
+| `fixtures:live_scores` | Live match scores | [fixtures →](https://docs.sx.bet/api-reference/channel-fixtures.md) |
+| `parlay_markets:global` | Incoming parlay quote requests | [parlay requests →](https://docs.sx.bet/api-reference/channel-parlay-requests.md) |
 
 ### Subscribing to your own channels
 
@@ -100,7 +100,7 @@ asyncio.run(main())
 ## Recovery & reliability
 
 Recovery, history, deduplication, and the snapshot-plus-subscribe seed pattern live on the
-[Recovery & reliability](/developers/realtime-reliability.md) reference. In short: pass
+[Recovery & reliability](https://docs.sx.bet/developers/realtime-reliability.md) reference. In short: pass
 `recoverable: true` on channels whose namespace has history, then check `recovered` in the
 `subscribed` handler to decide whether to re-seed from REST.
 
@@ -298,7 +298,7 @@ async def watch_market(client, market_hash: str) -> None:
     await sub.subscribe()
 ```
 
-See [Book versioning](/developers/book-versioning.md#the-apply-rule) for the full apply rule.
+See [Book versioning](https://docs.sx.bet/developers/book-versioning.md#the-apply-rule) for the full apply rule.
 
 ### Monitor your active orders
 
@@ -382,7 +382,7 @@ await sub.subscribe()
 ```
 
 `GET /orders-v3` returns active orders only, so polling can tell you an order is gone but never why.
-See [Tracking your orders](/developers/my-orders.md).
+See [Tracking your orders](https://docs.sx.bet/developers/my-orders.md).
 
 ***
 
@@ -438,7 +438,7 @@ client = Client(WS_URL, get_token=fetch_token)
 
 If your realtime-token endpoint returns `401` or `403`, throw `UnauthorizedError` so the connection
 stops retrying and moves to terminal `disconnected`. For transient failures like `429` or `5xx`,
-throw a normal error so the SDK keeps retrying with backoff. See [Rate limits](/developers/rate-limits.md).
+throw a normal error so the SDK keeps retrying with backoff. See [Rate limits](https://docs.sx.bet/developers/rate-limits.md).
 
 The server may also issue a terminal auth disconnect such as code `3500` (`"invalid token"`). In
 that case, the client stops reconnecting automatically.
@@ -519,19 +519,19 @@ Keep handlers fast: receive the message and hand it off to a queue or async task
 
 ## Related
 
-> **[Market Making →](/developers/market-making.md)**
+> **[Market Making →](https://docs.sx.bet/developers/market-making.md)**
 >
 > Using `account:orders_v3` to monitor your open orders in real time.
 
-> **[Taking Liquidity →](/developers/taking-liquidity.md)**
+> **[Taking Liquidity →](https://docs.sx.bet/developers/taking-liquidity.md)**
 >
 > How to submit fills and monitor your trade history.
 
-> **[Initialization →](/developers/realtime-initialization.md)**
+> **[Initialization →](https://docs.sx.bet/developers/realtime-initialization.md)**
 >
 > Install, connect, and subscribe with the Centrifuge client.
 
-> **[Market Making Parlays →](/developers/market-making-parlays.md)**
+> **[Market Making Parlays →](https://docs.sx.bet/developers/market-making-parlays.md)**
 >
 > Responding to parlay quote requests via `parlay_markets:global`.
 

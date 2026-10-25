@@ -9,7 +9,7 @@
 > [!NOTE]
 >
 > This page carries the RFQ fee schedule. For straight and futures contracts on v3,
-> read [Trading fees](/api/concepts/fees.md), which prices each market from its own
+> read [Trading fees](https://docs.novig.com/api/concepts/fees.md), which prices each market from its own
 > `market.fee` object.
 
 > [!NOTE]
@@ -67,7 +67,7 @@ The last three rows are the sub-cent rule: \$7.425 is charged as \$7.425, not ro
 | Side | Fee |
 | - | - |
 | **Taker** | Pays the fee above. Debited from your balance at match time |
-| **Maker** | Pays **no fee**, and may earn a [Maker Credit](/maker-credit-program.md) on the same fill |
+| **Maker** | Pays **no fee**, and may earn a [Maker Credit](https://docs.novig.com/maker-credit-program.md) on the same fill |
 
 There is no maker fee, and no opt-in or contract is required to collect Maker Credits. Effective October 22, 2026, the Maker Credit is 25% of the taker fee actually collected on the trade. At the 0.06 live coefficient, that works out to:
 
@@ -75,11 +75,11 @@ $$
 \text{Maker credit} = \tfrac{1}{4}\,\text{Fee} = 0.015 \cdot P\,(1 - P) \cdot N
 $$
 
-See the [Maker Credit Program](/maker-credit-program.md) for the full terms, eligibility, and crediting schedule.
+See the [Maker Credit Program](https://docs.novig.com/maker-credit-program.md) for the full terms, eligibility, and crediting schedule.
 
 > [!WARNING]
 >
-> **Maker Credits are straights only. RFQ makes do not earn a Maker Credit.** Quoting an RFQ makes you the maker on a combination contract, and combination contracts are excluded from the Program — see [Eligible Markets and Scope](/maker-credit-program.md#2-eligible-markets-and-scope). No amount of RFQ volume accrues Maker Credits; only straight-contract makes matched in-game do.
+> **Maker Credits are straights only. RFQ makes do not earn a Maker Credit.** Quoting an RFQ makes you the maker on a combination contract, and combination contracts are excluded from the Program — see [Eligible Markets and Scope](https://docs.novig.com/maker-credit-program.md#2-eligible-markets-and-scope). No amount of RFQ volume accrues Maker Credits; only straight-contract makes matched in-game do.
 
 ## RFQ Trades
 
@@ -110,23 +110,23 @@ Two differences from the straight schedule worth calling out. The RFQ taker fee 
 
 Because the charge follows the event's status at the moment of the match, knowing whether an event is live is a fee question, not a cosmetic one. There are two ways to know:
 
-> **[WebSocket: the transitions](/api/streaming/lifecycle.md)**
+> **[WebSocket: the transitions](https://docs.novig.com/api/streaming/lifecycle.md)**
 >
 > The `lifecycle` channel publishes `GOLIVE` when a market enters live play and `UNLIVE` when it leaves. Fees begin on `GOLIVE` and stop on `UNLIVE`.
 
-> **[REST: the snapshot](/api/catalog)**
+> **[REST: the snapshot](https://docs.novig.com/api/catalog)**
 >
 > `GET /v3/catalog/events/{id}` returns the event's `status`. `OPEN_INGAME` is exactly the fee-charged condition. Use it to bootstrap on connect and after any reconnect.
 
 > [!NOTE]
 >
-> **The live window can open more than once.** A game that is delayed or suspended mid-play goes `OPEN_INGAME → DELAYED → OPEN_INGAME`, so fees switch on, off, and on again. Each `GOLIVE` also voids every order resting across that event's markets. Track the edges rather than assuming one live window per event — see [Event states](/api/concepts/event-lifecycle.md#event-states).
+> **The live window can open more than once.** A game that is delayed or suspended mid-play goes `OPEN_INGAME → DELAYED → OPEN_INGAME`, so fees switch on, off, and on again. Each `GOLIVE` also voids every order resting across that event's markets. Track the edges rather than assuming one live window per event — see [Event states](https://docs.novig.com/api/concepts/event-lifecycle.md#event-states).
 
 ## Reading Fees from the API
 
 Every fill on `GET /v3/portfolio/fills` reports what it cost you. A charged fill carries `fee`, the total debited from your wallet for that fill; it is absent on a fill that was not charged, so a maker fill or a non-live fill has no `fee` field. The ledger rows behind it — the collateral debit and, on a charged fill, the fee debit — are on `GET /v3/portfolio/transactions`.
 
-Real-time `fill` events on the [private stream](/api/streaming/private.md) do not carry a fee. Fetch the fill history.
+Real-time `fill` events on the [private stream](https://docs.novig.com/api/streaming/private.md) do not carry a fee. Fetch the fill history.
 
 ## Scope and Notes
 

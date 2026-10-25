@@ -15,8 +15,8 @@ You need a Polymarket account with pUSD available before you start. Create one a
 > [!NOTE]
 >
 > Building directly against the API? Start with [Authenticated
-> Sessions](/perps/authenticated-sessions.md), then use [Fund Your
-> Account](/perps/fund-your-account.md) and [Trading](/perps/trading.md).
+> Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md), then use [Fund Your
+> Account](https://docs.polymarket.com/perps/fund-your-account.md) and [Trading](https://docs.polymarket.com/perps/trading.md).
 
 **TypeScript**
 
@@ -39,7 +39,7 @@ yarn add @polymarket/client@latest viem
 > [!NOTE]
 >
 > This page uses Viem for wallet signing. See the [TypeScript tooling
-> guide](/getting-started/typescript.md#wallet-integrations) for other wallet library
+> guide](https://docs.polymarket.com/getting-started/typescript.md#wallet-integrations) for other wallet library
 > integrations.
 
 **2. Create a Secure Client**
@@ -83,7 +83,7 @@ await deposit.wait();
 
 `deposit.wait()` confirms that the chain transaction settled. Perps may take a
 moment to credit the account after that. See [Fund Your
-Account](/perps/fund-your-account.md) for the full funding workflow.
+Account](https://docs.polymarket.com/perps/fund-your-account.md) for the full funding workflow.
 
 **4. Open a Perps Session**
 
@@ -128,7 +128,7 @@ const order = await session.placeOrder({
 ```
 
 The returned order includes the accepted order state. See
-[Trading](/perps/trading.md) for direction, order behavior, cancellation, and state
+[Trading](https://docs.polymarket.com/perps/trading.md) for direction, order behavior, cancellation, and state
 reconciliation.
 
 **Python**
@@ -188,7 +188,7 @@ await deposit.wait()
 
 `deposit.wait()` confirms that the chain transaction settled. Perps may take a
 moment to credit the account after that. See [Fund Your
-Account](/perps/fund-your-account.md) for the full funding workflow.
+Account](https://docs.polymarket.com/perps/fund-your-account.md) for the full funding workflow.
 
 **4. Open a Perps Session**
 
@@ -231,7 +231,7 @@ result = await session.place_order(
 ```
 
 The returned order includes the accepted order state. See
-[Trading](/perps/trading.md) for direction, order behavior, cancellation, and state
+[Trading](https://docs.polymarket.com/perps/trading.md) for direction, order behavior, cancellation, and state
 reconciliation.
 
 

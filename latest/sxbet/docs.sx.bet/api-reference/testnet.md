@@ -20,7 +20,7 @@ the same way you would on mainnet.
 **2. Deploy and fund a proxy wallet**
 
 Every order settles from a proxy wallet, and a deployed proxy is mandatory before your first order. Then you must transfer USDC to the proxy wallet.
-The simplest way to do this is through the [toronto.sx.bet](https://toronto.sx.bet) UI, which does both for you. You can also do it programmatically with [`POST /user/deploy-proxy`](/api-reference/post-user-deploy-proxy) and [`POST /user/transfer-to-proxy`](/api-reference/post-user-transfer-to-proxy).
+The simplest way to do this is through the [toronto.sx.bet](https://toronto.sx.bet) UI, which does both for you. You can also do it programmatically with [`POST /user/deploy-proxy`](https://docs.sx.bet/api-reference/post-user-deploy-proxy) and [`POST /user/transfer-to-proxy`](https://docs.sx.bet/api-reference/post-user-transfer-to-proxy).
 
 **3. Get testnet funds**
 
@@ -28,7 +28,7 @@ Open a support chat on [sx.bet](https://sx.bet) to receive testnet USDC.
 
 **4. Get your API key**
 
-Go to your account page on [toronto.sx.bet](https://toronto.sx.bet) and generate an API key from the **API section**. Testnet keys are network-specific and won't work on mainnet. See [API keys](/api-reference/api-key.md).
+Go to your account page on [toronto.sx.bet](https://toronto.sx.bet) and generate an API key from the **API section**. Testnet keys are network-specific and won't work on mainnet. See [API keys](https://docs.sx.bet/api-reference/api-key.md).
 
 ## Configuration reference
 
@@ -52,12 +52,12 @@ Everything that differs between testnet and mainnet:
 When you're ready to go live:
 
 * [ ] Update your config to use mainnet values
-* [ ] Use your **mainnet** private key and API key — testnet keys won't work on mainnet. See [API keys](/api-reference/api-key.md)
+* [ ] Use your **mainnet** private key and API key — testnet keys won't work on mainnet. See [API keys](https://docs.sx.bet/api-reference/api-key.md)
 * [ ] Deploy a mainnet proxy wallet and fund it with USDC. A proxy deployed on Toronto does not exist on mainnet
-* [ ] Confirm your order signing domain uses `chainId` and `activeAsset.escrowAddress` from `/metadata/obv3`. See [EIP-712 order signing](/api-reference/eip712-order-signing.md)
+* [ ] Confirm your order signing domain uses `chainId` and `activeAsset.escrowAddress` from `/metadata/obv3`. See [EIP-712 order signing](https://docs.sx.bet/api-reference/eip712-order-signing.md)
 * [ ] Size orders against `limits.orderSizeMinimumBaseUnits`
-* [ ] Round odds with `oddsLadderStepSize` from metadata. See [Odds rounding](/developers/odds-rounding.md)
-* [ ] Point your realtime client at the mainnet WebSocket URL. See [Initialization → Connect](/developers/realtime-initialization.md#connect)
+* [ ] Round odds with `oddsLadderStepSize` from metadata. See [Odds rounding](https://docs.sx.bet/developers/odds-rounding.md)
+* [ ] Point your realtime client at the mainnet WebSocket URL. See [Initialization → Connect](https://docs.sx.bet/developers/realtime-initialization.md#connect)
 * [ ] Place one minimum-size order and cancel it before scaling up
 
 ## Common pitfalls
@@ -68,7 +68,7 @@ If orders come back with `Invalid OBv3 order EIP-712 signature`, check that your
 
 ### Wrong Escrow address
 
-`activeAsset.escrowAddress` is the EIP-712 domain's `verifyingContract` and differs per environment. Read it from [`GET /metadata/obv3`](/api-reference/get-metadata-obv3).
+`activeAsset.escrowAddress` is the EIP-712 domain's `verifyingContract` and differs per environment. Read it from [`GET /metadata/obv3`](https://docs.sx.bet/api-reference/get-metadata-obv3).
 
 ### Wrong token addresses
 
@@ -84,19 +84,19 @@ API keys are network-specific. Generate a separate key for each environment.
 
 ## Related
 
-> **[References →](/api-reference/references.md)**
+> **[References →](https://docs.sx.bet/api-reference/references.md)**
 >
 > Full list of addresses, URLs, and chain IDs.
 
-> **[Exchange metadata →](/api-reference/get-metadata-obv3.md)**
+> **[Exchange metadata →](https://docs.sx.bet/api-reference/get-metadata-obv3.md)**
 >
 > The runtime config every integration reads at startup.
 
-> **[Funding →](/developers/funding.md)**
+> **[Funding →](https://docs.sx.bet/developers/funding.md)**
 >
 > Move USDC into your proxy on either network.
 
-> **[Quickstart →](/developers/quickstart.md)**
+> **[Quickstart →](https://docs.sx.bet/developers/quickstart.md)**
 >
 > End-to-end guide from setup to first order.
 

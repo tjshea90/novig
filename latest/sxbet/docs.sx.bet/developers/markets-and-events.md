@@ -56,7 +56,7 @@ The meaning of these fields depends on the market type:
 
 ## Market types
 
-In addition to outcome names, each market has a `type` field. This numeric identifier tells you what kind of market it is. SX Bet supports over 30 market types — see the [full list on the Market Types page](/api-reference/market-types.md). A few common examples:
+In addition to outcome names, each market has a `type` field. This numeric identifier tells you what kind of market it is. SX Bet supports over 30 market types — see the [full list on the Market Types page](https://docs.sx.bet/api-reference/market-types.md). A few common examples:
 
 | `type` | Name | Description |
 | - | - | - |
@@ -91,7 +91,7 @@ The `mainLine` field indicates whether a market is currently the primary line fo
 
 The main line is the primary, most balanced line where both outcomes are closest to having an equal probability (50/50) — it shifts as the market moves.
 
-A market type either carries a line or it does not — see [Market types](/api-reference/market-types.md), the **Has lines** column.
+A market type either carries a line or it does not — see [Market types](https://docs.sx.bet/api-reference/market-types.md), the **Has lines** column.
 
 | | Line-bearing type (e.g. 28, Under/Over) | Line-free type (e.g. 274, Outright Winner) |
 | - | - | - |
@@ -107,7 +107,7 @@ A market type either carries a line or it does not — see [Market types](/api-r
 "isQuarterLineMarket": false
 ```
 
-A quarter-line market settles as a half-win or half-loss. See [Quarter-line markets](/developers/quarter-line-markets.md).
+A quarter-line market settles as a half-win or half-loss. See [Quarter-line markets](https://docs.sx.bet/developers/quarter-line-markets.md).
 
 ## Market status
 
@@ -126,7 +126,7 @@ Many markets support in-play (live) betting. The `liveEnabled` field indicates w
 { "liveEnabled": true }
 ```
 
-Live markets remain active while the game is in progress. Odds and liquidity can move quickly on live markets, so be mindful of [taking liquidity](/developers/taking-liquidity.md) and [betting delays](/developers/betting-delays.md) on live markets.
+Live markets remain active while the game is in progress. Odds and liquidity can move quickly on live markets, so be mindful of [taking liquidity](https://docs.sx.bet/developers/taking-liquidity.md) and [betting delays](https://docs.sx.bet/developers/betting-delays.md) on live markets.
 
 ## Full market object
 
@@ -184,23 +184,23 @@ Here's a complete market object for reference:
 | `group1` | Indicator to the client of how to display this market |
 | `group2` | Indicator to the client of how to display this market |
 
-A settled market additionally carries `reportedDate`, `outcome`, `teamOneScore` and `teamTwoScore` — see [Find markets](/api-reference/get-markets-find.md). A parlay market carries `legs` — see [Parlays](/developers/parlays.md).
+A settled market additionally carries `reportedDate`, `outcome`, `teamOneScore` and `teamTwoScore` — see [Find markets](https://docs.sx.bet/api-reference/get-markets-find.md). A parlay market carries `legs` — see [Parlays](https://docs.sx.bet/developers/parlays.md).
 
 ## Related
 
-> **[Overview](/developers/markets-overview.md)**
+> **[Overview](https://docs.sx.bet/developers/markets-overview.md)**
 >
 > The sport → league → event → market hierarchy, and how to traverse it.
 
-> **[Market types](/api-reference/market-types.md)**
+> **[Market types](https://docs.sx.bet/api-reference/market-types.md)**
 >
 > Every `type` id, its bet group, and whether it carries a line.
 
-> **[Fetching markets](/developers/fetch-markets.md)**
+> **[Fetching markets](https://docs.sx.bet/developers/fetch-markets.md)**
 >
 > Filters, pagination, and querying by sport, league, event or hash.
 
-> **[Quarter-line markets](/developers/quarter-line-markets.md)**
+> **[Quarter-line markets](https://docs.sx.bet/developers/quarter-line-markets.md)**
 >
 > What `isQuarterLineMarket` changes about settlement.
 

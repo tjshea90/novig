@@ -7,7 +7,7 @@
 > Submit your signature for a prepared withdrawal.
 
 `POST /user/multisig/withdraw/execute` submits the signature for the transaction from
-[`POST /user/multisig/withdraw/prepare`](/api-reference/post-user-multisig-withdraw-prepare).
+[`POST /user/multisig/withdraw/prepare`](https://docs.sx.bet/api-reference/post-user-multisig-withdraw-prepare).
 
 > [!WARNING]
 >

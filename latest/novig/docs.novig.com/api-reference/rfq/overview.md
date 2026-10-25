@@ -17,7 +17,7 @@ RFQs are opt-in. Registering doesn't change your order-book trading on `/nbx/v2`
 
 > [!NOTE]
 >
-> We send RFQs only for parlays of two or more legs. [Eligibility](/api-reference/rfq/eligibility.md) lists which legs can combine.
+> We send RFQs only for parlays of two or more legs. [Eligibility](https://docs.novig.com/api-reference/rfq/eligibility.md) lists which legs can combine.
 
 ## How a round works
 
@@ -45,7 +45,7 @@ When the user accepts, we ask you to confirm their actual stake at your price. Y
 
 **6. The parlay settles**
 
-The parlay settles as one position when its legs grade. [Settlement](/api-reference/rfq/settlement.md) explains the payout.
+The parlay settles as one position when its legs grade. [Settlement](https://docs.novig.com/api-reference/rfq/settlement.md) explains the payout.
 
 We drop an answer in these cases:
 
@@ -70,8 +70,8 @@ You can price over a WebSocket, over webhooks, or over both.
 
 | Transport | You run | We authenticate you with |
 | - | - | - |
-| [WebSocket](/api-reference/rfq/websocket.md) | One outbound connection | Your bearer token, once at connect |
-| [Webhooks](/api-reference/rfq/webhooks.md) | A public HTTPS service | A signature on each request |
+| [WebSocket](https://docs.novig.com/api-reference/rfq/websocket.md) | One outbound connection | Your bearer token, once at connect |
+| [Webhooks](https://docs.novig.com/api-reference/rfq/webhooks.md) | A public HTTPS service | A signature on each request |
 
 Both use the same 3-second auction and 1-second last look.
 Pick the WebSocket if you can't expose a public endpoint.
@@ -95,7 +95,7 @@ We add `/quote`, `/confirm`, and `/ping` to the base URL you register.
 The base can include a path, like `https://pricer.example.com/novig`.
 
 Each request carries an `X-Novig-Signature` header.
-[Webhook signing](/api-reference/rfq/signing.md) shows how to check it.
+[Webhook signing](https://docs.novig.com/api-reference/rfq/signing.md) shows how to check it.
 
 ## Get started
 
@@ -105,7 +105,7 @@ Every pricer registers first, with `POST /rfq/pricer`. Registration is self-serv
 * Register without a `webhookUrl` to use only the WebSocket.
 * Test your webhook with `POST /rfq/pricer/ping` before live traffic arrives.
 
-[Registration](/api-reference/rfq/registration.md) walks through each call.
+[Registration](https://docs.novig.com/api-reference/rfq/registration.md) walks through each call.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

@@ -22,7 +22,7 @@ Sign up at [sx.bet](https://sx.bet) and choose a username. Two ways in:
 * **Connect a wallet** — bring an existing wallet such as [MetaMask](https://metamask.io) or
   [Rabby](https://rabby.io).
 
-You end up with a public address and a private key. A proxy wallet is deployed for you when you log in to the site, or when you call [`POST /user/deploy-proxy`](/api-reference/post-user-deploy-proxy).
+You end up with a public address and a private key. A proxy wallet is deployed for you when you log in to the site, or when you call [`POST /user/deploy-proxy`](https://docs.sx.bet/api-reference/post-user-deploy-proxy).
 
 ## Non-custodial
 
@@ -44,39 +44,39 @@ If you signed up with email or Google, you can retrieve your private key from th
 
 ## Looking up your proxy
 
-[`GET /user/proxy`](/api-reference/get-user-proxy) returns your proxy address.
+[`GET /user/proxy`](https://docs.sx.bet/api-reference/get-user-proxy) returns your proxy address.
 
 > [!NOTE]
 >
 > To see deposits, withdrawals, and settlements on your account, call
-> [`GET /ledger-v3`](/api-reference/get-ledger-v3).
+> [`GET /ledger-v3`](https://docs.sx.bet/api-reference/get-ledger-v3).
 
 ## The Safe underneath
 
-Every deployed proxy has a Safe smart account automatically attached, reported as `multisigSafeAddress` on [`GET /user/proxy`](/api-reference/get-user-proxy). The Safe authorises withdrawal, transfers to another proxy, and signer changes. Read its state with [`GET /user/multisig/{safeAddress}/info`](/api-reference/get-user-multisig-info), and start a withdrawal with [`POST /user/multisig/withdraw/prepare`](/api-reference/post-user-multisig-withdraw-prepare).
+Every deployed proxy has a Safe smart account automatically attached, reported as `multisigSafeAddress` on [`GET /user/proxy`](https://docs.sx.bet/api-reference/get-user-proxy). The Safe authorises withdrawal, transfers to another proxy, and signer changes. Read its state with [`GET /user/multisig/{safeAddress}/info`](https://docs.sx.bet/api-reference/get-user-multisig-info), and start a withdrawal with [`POST /user/multisig/withdraw/prepare`](https://docs.sx.bet/api-reference/post-user-multisig-withdraw-prepare).
 
 <sub>Safe and Safe\{Core} are trademarks of the Safe Ecosystem Foundation, used here descriptively.
 SX Bet is not affiliated with or endorsed by Safe Global.</sub>
 
 ## Related
 
-> **[Deploy a proxy wallet](/api-reference/post-user-deploy-proxy.md)**
+> **[Deploy a proxy wallet](https://docs.sx.bet/api-reference/post-user-deploy-proxy.md)**
 >
 > The request, what a repeat call does, and the `200`.
 
-> **[Look up a proxy wallet](/api-reference/get-user-proxy.md)**
+> **[Look up a proxy wallet](https://docs.sx.bet/api-reference/get-user-proxy.md)**
 >
 > The predicted address, the `deployed` flag, and the Safe address.
 
-> **[Get your ledger](/api-reference/get-ledger-v3.md)**
+> **[Get your ledger](https://docs.sx.bet/api-reference/get-ledger-v3.md)**
 >
 > Every deposit, withdrawal, and settlement on your account.
 
-> **[Funding](/developers/funding.md)**
+> **[Funding](https://docs.sx.bet/developers/funding.md)**
 >
 > Moving USDC in with a permit, without paying gas.
 
-> **[Reading balances](/developers/balances-and-ledger.md)**
+> **[Reading balances](https://docs.sx.bet/developers/balances-and-ledger.md)**
 >
 > What you can actually spend, and why.
 

@@ -9,9 +9,9 @@
 Required in order to trade. This call is asynchronous and will complete in a few seconds.
 
 To check whether the deployment has completed, poll
-[`GET /user/proxy`](/api-reference/get-user-proxy) and wait for `deployed` to be `true`.
-Until then, [`POST /orders-v3`](/api-reference/post-orders-v3) and
-[`POST /user/transfer-to-proxy`](/developers/funding) reject with `PROXY_NOT_DEPLOYED`.
+[`GET /user/proxy`](https://docs.sx.bet/api-reference/get-user-proxy) and wait for `deployed` to be `true`.
+Until then, [`POST /orders-v3`](https://docs.sx.bet/api-reference/post-orders-v3) and
+[`POST /user/transfer-to-proxy`](https://docs.sx.bet/developers/funding) reject with `PROXY_NOT_DEPLOYED`.
 
 
 ## OpenAPI

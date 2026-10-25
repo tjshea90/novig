@@ -41,7 +41,7 @@ Withdraw pUSD from your Polymarket wallet to any supported chain and token. Fund
 
 ## Create Withdrawal Addresses
 
-Generate bridge addresses configured for your withdrawal destination. See [Create withdrawal addresses](/api-reference/bridge/create-withdrawal-addresses.md) for the full request and response schemas.
+Generate bridge addresses configured for your withdrawal destination. See [Create withdrawal addresses](https://docs.polymarket.com/api-reference/bridge/create-withdrawal-addresses.md) for the full request and response schemas.
 
 > [!TIP]
 >
@@ -117,11 +117,11 @@ Monitor progress using `/status/{address}`.
 
 ## Next Steps
 
-> **[Get a Quote](/trading/bridge/quote.md)**
+> **[Get a Quote](https://docs.polymarket.com/trading/bridge/quote.md)**
 >
 > Preview fees and estimated output before withdrawing.
 
-> **[Check Status](/trading/bridge/status.md)**
+> **[Check Status](https://docs.polymarket.com/trading/bridge/status.md)**
 >
 > Track your withdrawal progress.
 

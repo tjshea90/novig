@@ -10,7 +10,7 @@
 ladder exists to prevent diming — undercutting a resting quote by a meaninglessly small increment.
 
 Read the step size from `oddsLadderStepSize` on
-[`GET /metadata/obv3`](/api-reference/get-metadata-obv3).
+[`GET /metadata/obv3`](https://docs.sx.bet/api-reference/get-metadata-obv3).
 
 ## Units
 
@@ -162,19 +162,19 @@ curl -s https://api.sx.bet/metadata/obv3 | jq '.data.oddsLadderStepSize'
 ```
 
 Read it at startup alongside the rest of the bootstrap document, and derive `STEP` from it. See
-[Exchange metadata](/api-reference/get-metadata-obv3.md) for the other values.
+[Exchange metadata](https://docs.sx.bet/api-reference/get-metadata-obv3.md) for the other values.
 
 ## Related
 
-> **[Exchange metadata](/api-reference/get-metadata-obv3.md)**
+> **[Exchange metadata](https://docs.sx.bet/api-reference/get-metadata-obv3.md)**
 >
 > Where `oddsLadderStepSize` comes from.
 
-> **[Unit conversions](/developers/unit-conversions.md)**
+> **[Unit conversions](https://docs.sx.bet/developers/unit-conversions.md)**
 >
 > Implied/decimal/American odds, the 1e20 scale, base units, and time formats in one place.
 
-> **[Create orders](/api-reference/post-orders-v3.md)**
+> **[Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)**
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

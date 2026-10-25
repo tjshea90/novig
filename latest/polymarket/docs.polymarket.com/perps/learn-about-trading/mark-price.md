@@ -77,7 +77,7 @@ published:
 
 ## Fallback Summary
 
-Every input degrades gracefully to [Index Price](/perps/learn-about-trading/index-price.md).
+Every input degrades gracefully to [Index Price](https://docs.polymarket.com/perps/learn-about-trading/index-price.md).
 
 | Condition | Behavior |
 | - | - |

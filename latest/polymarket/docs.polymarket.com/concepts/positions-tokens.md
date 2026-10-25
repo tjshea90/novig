@@ -32,7 +32,7 @@ for CTF markets. Both represent Yes and No outcomes as ERC-1155 balances, and th
 balances have the same economic meaning to traders.
 
 The ledger determines which position identifiers and integration path apply.
-See the [Migrate to Polymarket Protocol V2 technical guide](/migrate/polymarket-v2/overview.md)
+See the [Migrate to Polymarket Protocol V2 technical guide](https://docs.polymarket.com/migrate/polymarket-v2/overview.md)
 for more technical details.
 
 ## Position Management
@@ -87,7 +87,7 @@ After a market resolves, exchange positions for pUSD according to the recorded p
 
 A binary market can resolve to a split payout instead of a full `$1` or `$0`, in which case each side redeems for its share. Negative-risk markets never split: exactly one outcome takes the full payout and every other outcome pays nothing.
 
-See [Manage Positions](/migrate/polymarket-v2/overview.md#manage-positions) for operations on both position systems.
+See [Manage Positions](https://docs.polymarket.com/migrate/polymarket-v2/overview.md#manage-positions) for operations on both position systems.
 
 ### Position Value
 

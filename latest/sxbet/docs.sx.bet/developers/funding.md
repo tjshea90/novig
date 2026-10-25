@@ -10,7 +10,7 @@ This page covers funding your proxy from **USDC you already hold in your EOA**. 
 
 **1. Read the active asset**
 
-[`GET /metadata/obv3`](/api-reference/get-metadata-obv3) gives you the token to fund with and the permit `spender`.
+[`GET /metadata/obv3`](https://docs.sx.bet/api-reference/get-metadata-obv3) gives you the token to fund with and the permit `spender`.
 
 **2. Sign a permit**
 
@@ -18,15 +18,15 @@ An EIP-2612 signature over `(owner, spender, value, nonce, deadline)`.
 
 **3. Submit it**
 
-[`POST /user/transfer-to-proxy`](/api-reference/post-user-transfer-to-proxy). Returns `200` with a
+[`POST /user/transfer-to-proxy`](https://docs.sx.bet/api-reference/post-user-transfer-to-proxy). Returns `200` with a
 `sessionId`.
 
 **4. Wait, then verify**
 
 Poll
-[`GET /user/transfer-to-proxy/status`](/api-reference/get-user-transfer-to-proxy-status)
+[`GET /user/transfer-to-proxy/status`](https://docs.sx.bet/api-reference/get-user-transfer-to-proxy-status)
 with the returned `sessionId` until `status` is `SUCCESS` or `FAILED`, then confirm the money in
-[`/user/balance-v3`](/api-reference/get-user-balance-v3).
+[`/user/balance-v3`](https://docs.sx.bet/api-reference/get-user-balance-v3).
 
 ## Working code
 
@@ -91,15 +91,15 @@ The permit path is `FROM_EOA` as appears on your ledger endpoint. Two other depo
 
 ## Related
 
-> **[Fund a proxy wallet](/api-reference/post-user-transfer-to-proxy.md)**
+> **[Fund a proxy wallet](https://docs.sx.bet/api-reference/post-user-transfer-to-proxy.md)**
 >
 > The request, the two warnings, and the `200`.
 
-> **[Reading balances](/developers/balances-and-ledger.md)**
+> **[Reading balances](https://docs.sx.bet/developers/balances-and-ledger.md)**
 >
 > Reading what actually arrived.
 
-> **[Accounts](/developers/accounts.md)**
+> **[Accounts](https://docs.sx.bet/developers/accounts.md)**
 >
 > Deploy the proxy first, and poll until it is live.
 

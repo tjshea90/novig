@@ -35,17 +35,17 @@ The orange line across the order book marks the **consensus line**. It is the fa
 
 Click any odds in the order book to open the bet slip pre-filled at that price. If you bet more than what's available at one price level, your order fills across several levels. Any remainder sits as an open limit order.
 
-> **[How to Place a Market Order](/user-guides/trading/market-orders.md)**
+> **[How to Place a Market Order](https://docs.sx.bet/user-guides/trading/market-orders.md)**
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[How to Place a Limit Order](/user-guides/trading/limit-orders.md)**
+> **[How to Place a Limit Order](https://docs.sx.bet/user-guides/trading/limit-orders.md)**
 >
 > Request your own odds and wait for someone to fill your order.
 
 ***
 
-> **[Want to fetch odds for many markets through the SX Bet API?](/developers/introduction.md)**
+> **[Want to fetch odds for many markets through the SX Bet API?](https://docs.sx.bet/developers/introduction.md)**
 >
 > Build on the SX Bet API to fetch odds programmatically. No API key needed.
 

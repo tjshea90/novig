@@ -18,7 +18,7 @@ Common questions about Polymarket Perps.
 >
 > Fetch the current product list, symbols, underlyings, reference feeds, and
 > leverage settings from [`GET
->       /v1/info/instruments`](/perps/market-data.md#fetch-instruments).
+>       /v1/info/instruments`](https://docs.polymarket.com/perps/market-data.md#fetch-instruments).
 
 > **Is the exchange on-chain or off-chain?**
 >
@@ -51,7 +51,7 @@ Common questions about Polymarket Perps.
 
 > **What order types are supported?**
 >
-> Limit and market-style orders are supported with GTC, IOC, and FOK time-in-force values. GTC orders can be tagged post-only, which rejects the order if it would take liquidity. Closing orders can be tagged reduce-only, which prevents the order from increasing exposure. See [Configure Order Behavior](/perps/trading.md#configure-order-behavior) and [Close a Position](/perps/trading.md#close-a-position).
+> Limit and market-style orders are supported with GTC, IOC, and FOK time-in-force values. GTC orders can be tagged post-only, which rejects the order if it would take liquidity. Closing orders can be tagged reduce-only, which prevents the order from increasing exposure. See [Configure Order Behavior](https://docs.polymarket.com/perps/trading.md#configure-order-behavior) and [Close a Position](https://docs.polymarket.com/perps/trading.md#close-a-position).
 
 > **Why was my order rejected when my balance looks fine?**
 >
@@ -65,7 +65,7 @@ Common questions about Polymarket Perps.
 
 > **What is self-trade prevention?**
 >
-> Self-trade prevention is on by default for every order and runs in CancelMaker mode: when a taker would match against a resting order on the same account, the conflicting resting maker is canceled and the taker continues matching against other makers. It is not an API setting. There is no way to turn it off or change its mode. Accounts that Polymarket has grouped as one entity count as the same account for this check. See [Self-Trade Prevention](/perps/learn-about-trading/self-trade-prevention.md).
+> Self-trade prevention is on by default for every order and runs in CancelMaker mode: when a taker would match against a resting order on the same account, the conflicting resting maker is canceled and the taker continues matching against other makers. It is not an API setting. There is no way to turn it off or change its mode. Accounts that Polymarket has grouped as one entity count as the same account for this check. See [Self-Trade Prevention](https://docs.polymarket.com/perps/learn-about-trading/self-trade-prevention.md).
 
 ## Pricing, Mark, Index, and Funding
 
@@ -75,7 +75,7 @@ Common questions about Polymarket Perps.
 > * Mark Price is the price the system uses for margin, PnL, liquidation, and funding.
 > * Last trade price is the price of the most recent fill on the local book. It is not used for margining.
 >
-> See [Prices](/perps/concepts.md#prices).
+> See [Prices](https://docs.polymarket.com/perps/concepts.md#prices).
 
 > **What happens to Mark when external feeds go down?**
 >
@@ -96,7 +96,7 @@ Common questions about Polymarket Perps.
 
 > **Can I see funding pressure between settlements?**
 >
-> Yes. A rolling 5-second premium sample and its implied 8-hour rate are published continuously through public market data. You can also read funding history with [`GET /v1/info/funding`](/perps/market-data#list-funding-history).
+> Yes. A rolling 5-second premium sample and its implied 8-hour rate are published continuously through public market data. You can also read funding history with [`GET /v1/info/funding`](https://docs.polymarket.com/perps/market-data#list-funding-history).
 
 ## Margin and Leverage
 
@@ -105,7 +105,7 @@ Common questions about Polymarket Perps.
 > * Isolated margin funds each position with a dedicated margin allocation. Liquidation only closes the affected position.
 > * Cross margin shares account collateral across all cross positions. Unrealized PnL on one position can offset margin on another, but a liquidation evaluates and can unwind the whole cross account.
 >
-> The web app opens new positions in isolated mode by default. Cross is opt-in through the API using leverage configuration, and only for instruments that allow it: some markets are isolated-only and reject cross margin. Instrument data shows which margin modes each market supports. See [Update Leverage](/perps/trading.md#update-leverage) and [Fetch Instruments](/perps/market-data.md#fetch-instruments).
+> The web app opens new positions in isolated mode by default. Cross is opt-in through the API using leverage configuration, and only for instruments that allow it: some markets are isolated-only and reject cross margin. Instrument data shows which margin modes each market supports. See [Update Leverage](https://docs.polymarket.com/perps/trading.md#update-leverage) and [Fetch Instruments](https://docs.polymarket.com/perps/market-data.md#fetch-instruments).
 
 > **What is the maximum leverage?**
 >
@@ -119,7 +119,7 @@ Common questions about Polymarket Perps.
 > initial margin rate on your entire position — the cap is not applied bracket
 > by bracket. Tiers affect initial margin only; the maintenance margin rate is
 > flat per market. Fetch live tier values from [`GET
->       /v1/info/instruments`](/perps/market-data.md#fetch-instruments).
+>       /v1/info/instruments`](https://docs.polymarket.com/perps/market-data.md#fetch-instruments).
 
 > **How is maintenance margin set?**
 >
@@ -148,14 +148,14 @@ Common questions about Polymarket Perps.
 > reservations and 10% of total open-position notional at Mark Price. Orders
 > awaiting risk checks also reserve margin. A \$100 position at 20x needs \$5
 > initial margin but a \$10 withdrawal reserve, excluding fees and other
-> obligations. See [Withdrawal Margin Requirements](/perps/learn-about-trading/margin.md#withdrawal-margin-requirements)
+> obligations. See [Withdrawal Margin Requirements](https://docs.polymarket.com/perps/learn-about-trading/margin.md#withdrawal-margin-requirements)
 > for the formula and example.
 
 ## Liquidation
 
 > **When am I liquidated?**
 >
-> Liquidation occurs when account equity falls below maintenance margin. Cross and isolated positions are checked independently: each isolated position has its own equity and maintenance margin, while cross uses the account's combined equity and combined maintenance margin. See [Margin and Liquidation](/perps/concepts.md#margin-and-liquidation).
+> Liquidation occurs when account equity falls below maintenance margin. Cross and isolated positions are checked independently: each isolated position has its own equity and maintenance margin, while cross uses the account's combined equity and combined maintenance margin. See [Margin and Liquidation](https://docs.polymarket.com/perps/concepts.md#margin-and-liquidation).
 
 > **Why does my liquidation price move when I haven't changed anything?**
 >
@@ -187,7 +187,7 @@ Common questions about Polymarket Perps.
 > FillFee = Notional * (MakerOrTakerRate + LiquidationFeeRate)
 > ```
 >
-> Fetch the live rate per instrument from [`GET /v1/info/instruments`](/perps/market-data#fetch-instruments).
+> Fetch the live rate per instrument from [`GET /v1/info/instruments`](https://docs.polymarket.com/perps/market-data#fetch-instruments).
 
 ## Fees
 
@@ -205,13 +205,13 @@ Common questions about Polymarket Perps.
 > | \$500M | 0.0250% | 0.0000% |
 > | \$1B | 0.0200% | -0.0050% |
 >
-> Fees are calculated per fill as `abs(Price * Quantity) * Rate`, denominated in the instrument's quote asset (pUSD). Only the top tier earns a maker rebate; lower tiers pay a positive maker fee. See [Fees](/perps/learn-about-trading/fees.md) and [Trading Fees](/perps/trading.md#trading-fees).
+> Fees are calculated per fill as `abs(Price * Quantity) * Rate`, denominated in the instrument's quote asset (pUSD). Only the top tier earns a maker rebate; lower tiers pay a positive maker fee. See [Fees](https://docs.polymarket.com/perps/learn-about-trading/fees.md) and [Trading Fees](https://docs.polymarket.com/perps/trading.md#trading-fees).
 
 ## API and Integration
 
 > **What's the difference between my main wallet and the proxy?**
 >
-> Your main wallet signs the one-time create-proxy request and never trades directly. The returned proxy address and secret are what you use day to day: the proxy private key signs trade requests, and the `(proxy, secret)` pair authenticates private REST and WebSocket reads. This isolates the trading key from the wallet that holds funds. See [Set Up Authentication](/perps/authenticated-sessions.md#set-up-authentication).
+> Your main wallet signs the one-time create-proxy request and never trades directly. The returned proxy address and secret are what you use day to day: the proxy private key signs trade requests, and the `(proxy, secret)` pair authenticates private REST and WebSocket reads. This isolates the trading key from the wallet that holds funds. See [Set Up Authentication](https://docs.polymarket.com/perps/authenticated-sessions.md#set-up-authentication).
 
 > **What address identifies my Perps account?**
 >
@@ -234,9 +234,9 @@ Common questions about Polymarket Perps.
 > the exchange. Both settle on Polygon. Deposits credit equity as soon as the
 > engine sees them. Withdrawals are signed off-chain and must satisfy the
 > [withdrawal margin
-> requirements](/perps/learn-about-trading/margin.md#withdrawal-margin-requirements),
+> requirements](https://docs.polymarket.com/perps/learn-about-trading/margin.md#withdrawal-margin-requirements),
 > including the 10% notional floor. See [Fund Your
-> Account](/perps/fund-your-account.md).
+> Account](https://docs.polymarket.com/perps/fund-your-account.md).
 
 > **Are there geographic restrictions on order placement?**
 >

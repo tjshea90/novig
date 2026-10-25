@@ -7,8 +7,8 @@
 > Submit a new order to the SX Bet orderbook.
 
 Making and taking are the same request
-with a different [`timeInForce`](/developers/time-in-force) — there is no separate fill endpoint.
-[EIP-712 order signing](/api-reference/eip712-order-signing.md) covers the eight signed fields and the
+with a different [`timeInForce`](https://docs.sx.bet/developers/time-in-force) — there is no separate fill endpoint.
+[EIP-712 order signing](https://docs.sx.bet/api-reference/eip712-order-signing.md) covers the eight signed fields and the
 domain.
 
 > [!WARNING]
@@ -20,7 +20,7 @@ domain.
 > **This endpoint is asynchronous by default.** A success response means the order was *submitted* to
 > the matching engine, not that it rested or matched. Each order comes back as `SUBMITTED` — the terminal
 > outcome (rested as `ACTIVE`, matched, or gone) arrives later on
-> [`account:orders_v3_#{address}`](/api-reference/channel-orders-v3). Subscribe to that channel before
+> [`account:orders_v3_#{address}`](https://docs.sx.bet/api-reference/channel-orders-v3). Subscribe to that channel before
 > you submit and treat it as the source of truth.
 
 > [!NOTE]
@@ -28,7 +28,7 @@ domain.
 > **Optional synchronous mode.** Set `waitForOutcome: true` to have the call wait up to `maxWaitTime` and return each accepted order's terminal matching `outcome` inline.
 >
 > `outcome` is the *matching* result, not on-chain finality. The funds are escrowed a moment later, when it reaches `LOCKED` on
-> [`account:trades_v3_#{address}`](/api-reference/channel-trades-v3). See [which status to act on](/developers/bet-lifecycle.md#which-status-to-act-on).
+> [`account:trades_v3_#{address}`](https://docs.sx.bet/api-reference/channel-trades-v3). See [which status to act on](https://docs.sx.bet/developers/bet-lifecycle.md#which-status-to-act-on).
 
 > [!NOTE]
 >
@@ -38,7 +38,7 @@ domain.
 > [!NOTE]
 >
 > **Posting an order does not lock capital**, regardless of `timeInForce`. Funds are escrowed only when
-> the order matches. See [Risk limits](/developers/risk-limits.md).
+> the order matches. See [Risk limits](https://docs.sx.bet/developers/risk-limits.md).
 
 
 ## OpenAPI

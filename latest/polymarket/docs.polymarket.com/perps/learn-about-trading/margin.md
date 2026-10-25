@@ -13,7 +13,7 @@ system a buffer to close positions before they become insolvent.
 Trading uses two thresholds. **Initial margin (IM)** is the collateral required to
 open or increase a position. **Maintenance margin (MM)** is the minimum
 collateral required to keep a position open. When equity drops below maintenance
-margin, the position is [liquidated](/perps/learn-about-trading/liquidation-mechanics.md).
+margin, the position is [liquidated](https://docs.polymarket.com/perps/learn-about-trading/liquidation-mechanics.md).
 
 ## Equity
 
@@ -32,7 +32,7 @@ Short PnL = PositionSize * (EntryPrice - Mark)
 ```
 
 Because equity depends on Mark Price, equity follows live mark updates. See
-[Mark Price](/perps/learn-about-trading/mark-price.md).
+[Mark Price](https://docs.polymarket.com/perps/learn-about-trading/mark-price.md).
 
 ## Margin Requirements
 
@@ -50,7 +50,7 @@ into a tier whose `max_leverage` is below your configured leverage is rejected
 with `invalid_leverage`, and you must lower your leverage setting first. Your
 configured leverage applies to your entire notional, not bracket by bracket.
 Fetch each market's tier schedule from
-[Market Data](/perps/market-data.md#fetch-instruments).
+[Market Data](https://docs.polymarket.com/perps/market-data.md#fetch-instruments).
 
 Maintenance margin uses a flat per-market rate, independent of position size,
 tier, and your leverage setting:
@@ -86,7 +86,7 @@ is retained when group defaults or membership change.
 
 Set your preferred leverage and margin mode after the instrument is listed and
 before placing your first order, using
-[Update Leverage](/perps/trading.md#update-leverage). Account configuration reads
+[Update Leverage](https://docs.polymarket.com/perps/trading.md#update-leverage). Account configuration reads
 report the resolved values; an update sets both values explicitly. Setting the
 current resolved pair explicitly preserves it against later group changes.
 
@@ -182,7 +182,7 @@ at 10x or below, initial margin already covers the floor.
 > withdrawal equity. `PendingOrderMargin` is the additional initial margin
 > reserved for orders still awaiting risk checks.
 >
-> Use the returned `withdrawable` value from [Get Portfolio](/api-reference/get-portfolio.md)
+> Use the returned `withdrawable` value from [Get Portfolio](https://docs.polymarket.com/api-reference/get-portfolio.md)
 > rather than subtracting initial margin from account equity. A withdrawal is
 > also limited by the balance of the asset being withdrawn and is checked again
 > when processed.

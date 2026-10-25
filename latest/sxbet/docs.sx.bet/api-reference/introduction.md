@@ -14,19 +14,19 @@ Fetch markets, read the book, post orders, and subscribe to real-time channels.
 
 ## Explore the API
 
-> **[Exchange metadata](/api-reference/get-metadata-obv3.md)**
+> **[Exchange metadata](https://docs.sx.bet/api-reference/get-metadata-obv3.md)**
 >
 > The one call every integration starts with: chain id, escrow, decimals, limits, odds ladder.
 
-> **[Create orders](/api-reference/post-orders-v3.md)**
+> **[Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)**
 >
 > Submit a signed order. `timeInForce` decides whether it rests or executes.
 
-> **[Channel and limit reference](/developers/realtime-reference.md)**
+> **[Channel and limit reference](https://docs.sx.bet/developers/realtime-reference.md)**
 >
 > Every channel, which namespace it lands in, and what it recovers.
 
-> **[Order book snapshot](/api-reference/get-market-orderbook-snapshot.md)**
+> **[Order book snapshot](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot.md)**
 >
 > The whole book for one market, and the REST seed a realtime subscription starts from.
 

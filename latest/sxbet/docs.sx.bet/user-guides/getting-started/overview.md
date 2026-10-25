@@ -24,15 +24,15 @@ Bet against other bettors — not the house. Better odds, open API, no limits.
 
 > **Open API Access**
 >
-> Power users and builders can access the full SX Bet API at no cost. See the [Developer Docs](/developers/introduction.md) for more.
+> Power users and builders can access the full SX Bet API at no cost. See the [Developer Docs](https://docs.sx.bet/developers/introduction.md) for more.
 
 ## Ready to Get Started?
 
-> **[How Does SX Bet Work?](/user-guides/getting-started/how-it-works.md)**
+> **[How Does SX Bet Work?](https://docs.sx.bet/user-guides/getting-started/how-it-works.md)**
 >
 > Learn how the peer-to-peer exchange model works.
 
-> **[Quickstart](/user-guides/getting-started/quickstart.md)**
+> **[Quickstart](https://docs.sx.bet/user-guides/getting-started/quickstart.md)**
 >
 > Sign up, fund your wallet, and place your first bet.
 

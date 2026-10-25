@@ -42,11 +42,11 @@ Glide, MoonPay and PayTrie charge a small transaction fee.
 
 For large bridges, the [Native Arbitrum Bridge](https://portal.arbitrum.io/bridge?destinationChain=sx\&sanitized=true\&sourceChain=ethereum\&token=0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48) is usually the most cost-effective option, with only standard gas.
 
-> **[Market Orders](/user-guides/trading/market-orders.md)**
+> **[Market Orders](https://docs.sx.bet/user-guides/trading/market-orders.md)**
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Limit Orders](/user-guides/trading/limit-orders.md)**
+> **[Limit Orders](https://docs.sx.bet/user-guides/trading/limit-orders.md)**
 >
 > Post your own odds and act as the bookmaker.
 

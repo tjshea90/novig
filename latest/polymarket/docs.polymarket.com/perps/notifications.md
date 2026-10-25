@@ -13,12 +13,12 @@ events that drive the notification bell in the Polymarket app.
 Read recent notifications to render the feed, then stream the live channel to
 keep it fresh. Mark notifications read as the user catches up. Notifications
 summarize activity for display. To reconcile order, fill, and position state,
-use [Reconcile Trade State](/perps/trading.md#reconcile-trade-state) instead.
+use [Reconcile Trade State](https://docs.polymarket.com/perps/trading.md#reconcile-trade-state) instead.
 
 > [!NOTE]
 >
 > Notifications require an [authenticated
-> session](/perps/authenticated-sessions.md).
+> session](https://docs.polymarket.com/perps/authenticated-sessions.md).
 
 ## Read Notifications
 
@@ -280,7 +280,7 @@ After subscribing, the stream emits notification data frames like this.
 ```
 
 Use `req: "unsub"` with the same `chs` value to unsubscribe. See [Authenticated
-Sessions](/perps/authenticated-sessions.md) for the authentication frame and
+Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md) for the authentication frame and
 connection lifecycle.
 
 ## Mark Notifications Read

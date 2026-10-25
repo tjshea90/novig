@@ -40,7 +40,7 @@ To place bets, you'll need **USDC** in your SX Bet wallet. There are several way
 4. Go to your exchange or wallet, click **Send**, paste your transfer address, and enter the amount you would like to deposit.
 5. Confirm the transfer. Your USDC will appear in your SX Bet wallet shortly.
 
-See the full guide: [Deposit by Transferring Crypto](/user-guides/deposit-withdraw/transfer-crypto.md)
+See the full guide: [Deposit by Transferring Crypto](https://docs.sx.bet/user-guides/deposit-withdraw/transfer-crypto.md)
 
 **3. Place a Bet**
 
@@ -55,15 +55,15 @@ Your bet is now live. You can track it on the [My Bets](https://sx.bet/my-bets) 
 
 ## What's Next?
 
-> **[Finding Markets](/user-guides/markets/finding-markets.md)**
+> **[Finding Markets](https://docs.sx.bet/user-guides/markets/finding-markets.md)**
 >
 > Browse sports, leagues, and bet types on SX Bet.
 
-> **[Market Orders (Taker)](/user-guides/trading/market-orders.md)**
+> **[Market Orders (Taker)](https://docs.sx.bet/user-guides/trading/market-orders.md)**
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Limit Orders (Maker)](/user-guides/trading/limit-orders.md)**
+> **[Limit Orders (Maker)](https://docs.sx.bet/user-guides/trading/limit-orders.md)**
 >
 > Request your own odds and wait for someone to fill your order.
 

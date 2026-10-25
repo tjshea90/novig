@@ -37,7 +37,7 @@ Score, stats, and market data are keyed by a **generic period vocabulary**, so t
 | Value | Meaning |
 | - | - |
 | `result` | The overall match score — the headline scoreline including everything played so far. |
-| `fulltime` | Regulation time only (excludes overtime and penalties). Not every sport has it — see [Periods per sport](/guides/periods.md). |
+| `fulltime` | Regulation time only (excludes overtime and penalties). Not every sport has it — see [Periods per sport](https://docs.oddspapi.io/guides/periods.md). |
 | `overtime` | Overtime / extra time segment only. |
 | `penalties` | Penalty shootout. **Current behavior:** carries the score *after* penalties (cumulative), not the shootout segment alone — this is inconsistent with the other whole-match keys and will change in a future release to be segment-only. |
 
@@ -105,7 +105,7 @@ For non-clean grades (`CANCELLED` / `UNDECIDED`) the settlement row carries a `r
 
 These vocabularies are **string sets that grow over time** — stable per value, but never exhaustive:
 
-* **`marketType`** — market kind (`1x2`, `totals`, `spreads`, `players-shots`, …). See [Concepts → Markets](/api-reference/concepts.md#markets-and-outcomes).
+* **`marketType`** — market kind (`1x2`, `totals`, `spreads`, `players-shots`, …). See [Concepts → Markets](https://docs.oddspapi.io/api-reference/concepts.md#markets-and-outcomes).
 * **`eventType`** — in-play action types on the events channel (`goal`, `card_yellow`, `corner_taken`, `substitution`, `var`, …).
 * **`statType`** — countable stat aggregates on the stats channel (`score`, `corners`, `cards`, `aces`, …).
 

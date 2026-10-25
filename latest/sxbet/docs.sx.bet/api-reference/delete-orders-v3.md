@@ -21,13 +21,13 @@
 > `cancelled` or `notCancelled`; any that do not report before the timeout come back in the
 > `unconfirmed` bucket. `unconfirmed` does **not** mean the cancel failed — the command was still
 > submitted and usually takes effect shortly after. Re-read
-> [`GET /orders-v3`](/api-reference/get-orders-v3) to confirm, rather than assuming either outcome.
+> [`GET /orders-v3`](https://docs.sx.bet/api-reference/get-orders-v3) to confirm, rather than assuming either outcome.
 
 > [!NOTE]
 >
 > **At most `limits.maxCancelOrders` ids per request (100 today).** Read the cap from
-> [`GET /metadata/obv3`](/api-reference/get-metadata-obv3); exceeding it is a `400`. To cancel every
-> order at once, use [`DELETE /orders-v3/all`](/api-reference/delete-orders-v3-all) instead of paging
+> [`GET /metadata/obv3`](https://docs.sx.bet/api-reference/get-metadata-obv3); exceeding it is a `400`. To cancel every
+> order at once, use [`DELETE /orders-v3/all`](https://docs.sx.bet/api-reference/delete-orders-v3-all) instead of paging
 > ids through this route.
 
 

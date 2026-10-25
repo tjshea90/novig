@@ -35,7 +35,7 @@ const client = await createSecureClient({
 > [!NOTE]
 >
 > This example uses Viem. See [Wallet
-> Integrations](/getting-started/typescript.md#wallet-integrations) to connect a
+> Integrations](https://docs.polymarket.com/getting-started/typescript.md#wallet-integrations) to connect a
 > signer from another supported wallet library.
 
 **Python**
@@ -56,7 +56,7 @@ client = await AsyncSecureClient.create(
 **2. Choose an Outcome**
 
 Then, fetch the market and select the outcome you want to buy. See
-[Market Data](/market-data/overview.md) to find a different market.
+[Market Data](https://docs.polymarket.com/market-data/overview.md) to find a different market.
 
 **TypeScript**
 
@@ -201,7 +201,7 @@ position_size = position.size  # Outcome shares held
 You placed your first market order on Polymarket.
 
 To let a separate signer place and cancel orders without using the owner key,
-continue to [Session Keys](/trading/session-keys.md).
+continue to [Session Keys](https://docs.polymarket.com/trading/session-keys.md).
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

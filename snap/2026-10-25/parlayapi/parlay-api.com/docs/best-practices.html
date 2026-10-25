@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ParlayAPI Best Practices: Production-Grade Integration Guide</title>
+<meta name="description" content="Production-grade best practices for integrating ParlayAPI. Auth, retries, rate-limit handling, idempotency, WebSocket reconnection, error taxonomy, observability, security. The shape every serious integration eventually needs.">
+<meta name="keywords" content="ParlayAPI best practices, sportsbook API production guide, API retry patterns, WebSocket reconnect, idempotency keys">
+<meta property="og:title" content="ParlayAPI Best Practices">
+<meta property="og:description" content="Production-grade integration guide: auth, retries, rate limits, idempotency, WebSocket, observability, security.">
+<meta property="og:url" content="https://parlay-api.com/docs/best-practices">
+<link rel="canonical" href="https://parlay-api.com/docs/best-practices">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:0; font-family:-apple-system,"Inter",sans-serif; background:#06060b; color:#e8e8f0; line-height:1.65; }
+  .nav { display:flex; align-items:center; justify-content:space-between; padding:16px 28px; border-bottom:1px solid #1e1e2e; }
+  .nav .logo { font-weight:800; font-size:1.15rem; color:#fff; text-decoration:none; }
+  .nav .logo span { color:#9b82fc; }
+  .nav a { color:#c4c4d4; margin-left:18px; text-decoration:none; }
+  .nav .cta { background:linear-gradient(135deg,#7c5cfc,#5a3fd4); color:#fff; padding:8px 18px; border-radius:8px; font-weight:600; }
+  .layout { display:grid; grid-template-columns:240px 1fr; gap:32px; max-width:1180px; margin:0 auto; padding:24px; }
+  @media (max-width:920px) { .layout { grid-template-columns:1fr; } .toc { display:none; } }
+  .toc { position:sticky; top:24px; align-self:start; font-size:0.9rem; }
+  .toc h3 { margin:8px 0 8px; color:#8a8f99; text-transform:uppercase; font-size:0.72rem; letter-spacing:0.05em; }
+  .toc a { display:block; color:#c4c4d4; padding:5px 0; text-decoration:none; border-left:2px solid transparent; padding-left:10px; }
+  .toc a:hover { color:#fff; border-left-color:#9b82fc; }
+  h1 { font-size:2rem; margin:8px 0 12px;
+       background:linear-gradient(135deg,#fff,#b8a3ff); -webkit-background-clip:text;
+       background-clip:text; -webkit-text-fill-color:transparent; }
+  h2 { font-size:1.3rem; color:#fff; margin:36px 0 8px; border-bottom:1px solid #1e1e2e; padding-bottom:6px; }
+  h3 { font-size:1.05rem; color:#c4c4d4; margin:22px 0 6px; }
+  p, li { color:#d8d8e8; }
+  .lead { color:#c4c4d4; font-size:1rem; margin:0 0 22px; max-width:720px; }
+  code { background:#0c0c14; border:1px solid #1e1e2e; padding:1px 6px; border-radius:4px;
+         font-family:JetBrains Mono,monospace; font-size:0.86em; color:#9b82fc; }
+  pre { background:#0a0a12; border:1px solid #1e1e2e; padding:12px 14px; border-radius:8px;
+        overflow-x:auto; font-size:0.84rem; color:#d8d8e8; }
+  pre code { background:transparent; border:none; padding:0; color:inherit; }
+  .callout { background:#14161c; border:1px solid #1f2330; border-radius:8px; padding:12px 16px; margin:18px 0; }
+  .callout strong { color:#fff; }
+  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:0.9rem; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid #1f2330; }
+  th { color:#8a8f99; font-weight:500; }
+  a { color:#9b82fc; }
+  footer { padding:30px 28px; border-top:1px solid #1e1e2e; color:#6e6e85; font-size:0.85rem; text-align:center; }
+</style>
+<meta property="og:image" content="https://parlay-api.com/static/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+ <script defer src="/_analytics/script.js" data-website-id="809cd530-a8a1-4e46-bfc2-a76f2ba0681a" data-host-url="/_analytics"></script>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="logo">Parlay<span>API</span></a>
+  <div>
+    <a href="/docs">Docs</a>
+    <a href="/try">Try</a>
+    <a href="/board">Board</a>
+    <a href="/changelog">Changelog</a>
+    <a href="/signup" class="cta">Get free key</a>
+  </div>
+</nav>
+
+<div class="layout">
+
+<aside class="toc">
+  <h3>Contents</h3>
+  <a href="#auth">Authentication</a>
+  <a href="#rate-limits">Rate limits + headers</a>
+  <a href="#retries">Retries + backoff</a>
+  <a href="#idempotency">Idempotency keys</a>
+  <a href="#errors">Error taxonomy</a>
+  <a href="#websocket">WebSocket reconnection</a>
+  <a href="#caching">Caching + ETags</a>
+  <a href="#observability">Observability</a>
+  <a href="#security">Security</a>
+  <a href="#cost">Cost management</a>
+  <a href="#degraded">Degraded-mode handling</a>
+  <a href="#sdk">SDK + tooling</a>
+</aside>
+
+<main>
+
+<h1>ParlayAPI best practices</h1>
+<p class="lead">
+  Production-grade integration patterns. Every section here came out of a real customer issue, a real outage, or a real support ticket. If your integration is going to run unattended, work through this list end-to-end.
+</p>
+
+<h2 id="auth">Authentication</h2>
+<ul>
+  <li>Pass your API key as <code>X-API-Key: &lt;key&gt;</code> (header) <strong>or</strong> <code>?apiKey=&lt;key&gt;</code> (query). Both are first-class; the header is preferred because query strings leak into logs.</li>
+  <li>One key per environment. Don't reuse production keys in development; the dashboard supports unlimited keys per account.</li>
+  <li>Rotate keys quarterly. The dashboard supports key rotation with a 24h overlap window.</li>
+  <li>Never bake keys into client-side JS shipped to browsers. If you need browser-side access, use a backend proxy with a per-user rate limit.</li>
+</ul>
+
+<h2 id="rate-limits">Rate limits and headers</h2>
+<p>Every response carries:</p>
+<table>
+<tr><th>Header</th><th>Meaning</th></tr>
+<tr><td><code>X-RateLimit-Limit</code></td><td>Credits allotted for the current period. Paid tiers return <code>unlimited</code>; free tier returns the per-second cap.</td></tr>
+<tr><td><code>X-RateLimit-Remaining</code></td><td>Credits remaining before the next period.</td></tr>
+<tr><td><code>X-RateLimit-Reset</code></td><td>Epoch seconds when the limit resets.</td></tr>
+<tr><td><code>Retry-After</code></td><td>Present only on 429 responses. Seconds to wait before retrying.</td></tr>
+</table>
+<p>
+  Paid tiers don't have a per-second rate limit; you're metered on monthly credits. Free tier is 60 req/s for anti-abuse during evaluation. <a href="/cost">Estimate your monthly burn</a> before committing.
+</p>
+
+<h2 id="retries">Retries and backoff</h2>
+<p>Retry only on these classes of failure:</p>
+<ul>
+  <li><code>connection_error</code> / <code>read_timeout</code>: network blip. Retry with capped exponential backoff (1s, 2s, 4s, 8s, cap 60s).</li>
+  <li><code>502</code>: gateway momentarily unhealthy. Retry once after 1s.</li>
+  <li><code>503</code> with <code>Retry-After</code>: explicit "wait then retry." Honor the header; don't poll faster.</li>
+  <li><code>429</code>: rate limited. Honor <code>Retry-After</code>.</li>
+</ul>
+<p>Do NOT retry on:</p>
+<ul>
+  <li><code>400</code> / <code>422</code>: your request is malformed. Retrying produces the same error.</li>
+  <li><code>401</code>: auth is wrong. Fix the key.</li>
+  <li><code>403</code> / <code>404</code>: permission or routing problem. Retrying makes it worse.</li>
+</ul>
+
+<p>Concrete Python pattern:</p>
+<pre><code>import httpx
+import time
+
+def fetch_with_retry(url, headers, max_attempts=5):
+    backoff = 1.0
+    for attempt in range(max_attempts):
+        try:
+            r = httpx.get(url, headers=headers, timeout=10.0)
+            if r.status_code == 429:
+                wait = int(r.headers.get("Retry-After", "60"))
+                time.sleep(wait)
+                continue
+            if r.status_code in (502, 503, 504):
+                time.sleep(backoff)
+                backoff = min(60.0, backoff * 2)
+                continue
+            return r
+        except (httpx.ConnectError, httpx.ReadTimeout):
+            time.sleep(backoff)
+            backoff = min(60.0, backoff * 2)
+    return None  # caller decides what to do</code></pre>
+
+<h2 id="idempotency">Idempotency keys</h2>
+<p>
+  All <code>POST</code>, <code>PUT</code>, <code>PATCH</code>, <code>DELETE</code> endpoints accept an <code>Idempotency-Key</code> header. Pass a per-request UUID; we cache the response by key for 24 hours. Replays return the original response with <code>X-Idempotency-Replay: true</code>.
+</p>
+<p>
+  Use cases: webhook deliveries that you retry on transient failure, CLV history grading that's expensive and you don't want billed twice, bet imports where the customer might double-click.
+</p>
+
+<h2 id="errors">Error taxonomy</h2>
+<p>
+  Every error response is structured: <code>{"error": "MACHINE_CODE", "message": "human readable", "request_id": "...", "docs_url": "..."}</code>. Log the <code>request_id</code> for every non-2xx; we use it to look up the exact request in our logs.
+</p>
+<p>
+  Full code list at <a href="/errors">/errors</a>.
+</p>
+
+<h2 id="websocket">WebSocket reconnection</h2>
+<p>The most common WebSocket bug we see: clients reconnect on every long quiet window instead of trusting the heartbeat.</p>
+<ul>
+  <li>The 5-second heartbeat is the liveness signal. If you're receiving heartbeats, your connection is healthy.</li>
+  <li>Each heartbeat carries <code>quiet_seconds</code> (time since last broadcast to you) and <code>upstream.worst_sla</code> (the worst SLA across all books). Long quiet + <code>worst_sla: ok</code> means the market is quiet; long quiet + <code>worst_sla in {"stale", "breach"}</code> means an upstream is having a moment.</li>
+  <li>Use a 30-second silent watchdog (no message of any kind for 30s) to force a reconnect.</li>
+  <li>Capped exponential backoff on reconnect: 1s, 2s, 4s, ... 60s cap.</li>
+</ul>
+<p>
+  Reference clients at <a href="/static/examples/ws_reference_client.py">examples/ws_reference_client.py</a> and <a href="/static/examples/ws_reference_client.js">.js</a>. Full cookbook at <a href="/static/docs/ws-reconnect-cookbook.md">the WebSocket reconnect cookbook</a>.
+</p>
+
+<h2 id="caching">Caching + ETags</h2>
+<p>
+  Metadata endpoints (<code>/v1/meta/*</code>, <code>/v1/sports</code>, <code>/v1/bookmakers</code>) carry <code>ETag</code> headers and honor <code>If-None-Match</code> for cheap 304 polling. Use this on dashboards and SDK boot logic.
+</p>
+<p>
+  Live odds endpoints have short server-side caches (5-15s depending on cadence) but no <code>ETag</code>; the data changes too often to make conditional polling useful. Build your own client-side cache keyed by <code>(sport_key, regions, markets)</code> with the same TTL.
+</p>
+
+<h2 id="observability">Observability</h2>
+<p>Every response carries:</p>
+<ul>
+  <li><code>X-Request-ID</code>: 32-hex per-request trace ID. Log this for every non-2xx; we use it to look up requests in our logs.</li>
+  <li><code>X-Response-Time</code>: server processing time in ms.</li>
+  <li><code>Server-Timing: total;dur=X, auth;dur=Y, handler;dur=Z</code>: time breakdown across the gateway, auth layer, and handler.</li>
+  <li><code>X-API-Version</code> + <code>X-API-Release-Date</code>: deploy identity.</li>
+</ul>
+<p>
+  Send <code>X-Request-Id: &lt;your-trace-id&gt;</code> to propagate your tracing ID through our logs. We honor W3C Trace Context (<code>traceparent</code> header) end-to-end.
+</p>
+
+<h2 id="security">Security</h2>
+<ul>
+  <li>API keys are bearer credentials. Treat them like passwords. Never commit them to git.</li>
+  <li>We publish a security disclosure policy at <a href="/.well-known/security.txt"><code>/.well-known/security.txt</code></a>.</li>
+  <li>Webhook payloads are signed: HMAC-SHA256 in <code>X-Parlay-Signature: t=&lt;ts&gt;,v1=&lt;hex&gt;</code>. Verify before processing. Reject on signature mismatch.</li>
+  <li>All endpoints serve over TLS 1.2+ only. We score A+ on SSL Labs.</li>
+</ul>
+
+<h2 id="cost">Cost management</h2>
+<ul>
+  <li><a href="/cost">/cost calculator</a>: pick endpoints + cadence, get monthly burn estimate.</li>
+  <li><code>POST /v1/meta/quote</code>: preview the cost of a single request without running it.</li>
+  <li><code>POST /v1/meta/batch-quote</code>: preview up to 500 requests in one call.</li>
+  <li><code>GET /v1/usage</code>: current period spend, broken down by endpoint family.</li>
+  <li>Burst alerts: configure a webhook to fire at 50% / 75% / 90% of monthly credits in your dashboard.</li>
+</ul>
+
+<h2 id="degraded">Degraded-mode handling</h2>
+<p>
+  Sportsbook ingestion is never 100% green. WAFs block, books rotate auth, networks blip. Build your integration assuming SOME source will be stale at any given moment.
+</p>
+<ul>
+  <li>Check <a href="/v1/meta/source-quality"><code>/v1/meta/source-quality</code></a> before betting on a specific book. <code>sla</code> tells you whether the source is reachable; <code>price_write_sla</code> tells archive-backed REST users whether priced rows are fresh. Treat <code>{"breach", "stale", "missing"}</code> as unsafe for live execution.</li>
+  <li>The WS heartbeat's <code>upstream.worst_sla</code> tells you the same thing in real time.</li>
+  <li>When the primary gateway fails over, you'll see <code>503</code> with <code>error: PRIMARY_TIER_UNAVAILABLE</code> on <code>/v1/*</code> routes. Retry with backoff; recovery is typically &lt;60s.</li>
+</ul>
+
+<h2 id="sdk">SDKs and tooling</h2>
+<ul>
+  <li><strong>Postman / Insomnia / Bruno:</strong> import <a href="/collections/postman.json"><code>/collections/postman.json</code></a>.</li>
+  <li><strong>OpenAPI 3:</strong> <a href="/openapi.json"><code>/openapi.json</code></a>. Drive Stainless, Speakeasy, or <code>openapi-generator</code> for typed SDKs in any language.</li>
+  <li><strong>AsyncAPI 3:</strong> <a href="/v1/asyncapi.json"><code>/v1/asyncapi.json</code></a> for the WebSocket and SSE surfaces.</li>
+  <li><strong>MCP server:</strong> <code>pip install parlayapi-mcp</code>. Native Claude Desktop / Cursor / Continue / Devin / Codex integration.</li>
+  <li><strong>Reference WS clients:</strong> <a href="/static/examples/ws_reference_client.py">Python</a> and <a href="/static/examples/ws_reference_client.js">JavaScript</a>.</li>
+  <li><strong>Source-quality alert relay:</strong> drop-in Python + JS receivers at <a href="https://github.com/JacobiusMakes/parlay-api-python/tree/main/examples">examples/source_quality_alert_relay.py</a>.</li>
+</ul>
+
+</main>
+</div>
+
+<footer>
+  ParlayAPI &middot; <a href="/docs">all docs</a> &middot; <a href="/changelog">changelog</a> &middot; <a href="/status">status</a>
+</footer>
+
+</body>
+</html>

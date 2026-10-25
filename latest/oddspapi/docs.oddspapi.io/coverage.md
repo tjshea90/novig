@@ -14,11 +14,11 @@ OddsPapi covers **60+ sports** plus prediction-market topics, each identified by
 
 Discover the live list programmatically via `GET /sports`. Identifiers are language-independent; `sportName` follows the request language prefix.
 
-> **[Bookmakers](/coverage/bookmakers.md)**
+> **[Bookmakers](https://docs.oddspapi.io/coverage/bookmakers.md)**
 >
 > Sharps, exchanges, and retail books — capabilities, freshness bounds, and status signals.
 
-> **[Markets](/coverage/markets.md)**
+> **[Markets](https://docs.oddspapi.io/coverage/markets.md)**
 >
 > Market types, lines, period scoping, and player props — and how to enumerate them.
 
@@ -26,13 +26,13 @@ Discover the live list programmatically via `GET /sports`. Identifiers are langu
 
 The feed aggregates **350+ bookmakers**, anchored on the books that matter for price discovery:
 
-* **Sharp trading books** — the core of the feed. The bookmakers that are most accurate in pricing and dominate global sports prediction (e.g. Pinnacle, Singbet, Circa Sports) — the books trading systems benchmark against, carried with [limits](/websocket/channels/odds.md#limits) and full delivery timestamps.
-* **Betting exchanges & prediction markets** — realtime prices with [orderbook depth](/websocket/channels/odds.md#advanced-metadata-meta) (`back` / `lay` ladders), e.g. Betfair and Polymarket.
+* **Sharp trading books** — the core of the feed. The bookmakers that are most accurate in pricing and dominate global sports prediction (e.g. Pinnacle, Singbet, Circa Sports) — the books trading systems benchmark against, carried with [limits](https://docs.oddspapi.io/websocket/channels/odds.md#limits) and full delivery timestamps.
+* **Betting exchanges & prediction markets** — realtime prices with [orderbook depth](https://docs.oddspapi.io/websocket/channels/odds.md#advanced-metadata-meta) (`back` / `lay` ladders), e.g. Betfair and Polymarket.
 * **European, US, and crypto sportsbooks** — broad retail coverage across regions (e.g. DraftKings, Stake).
 
-**Asian lines are first-class**: Asian handicap market types, quarter-line settlement (`HALFWIN` / `HALFLOSS` — see [Enumerations](/api-reference/enumerations.md)), and fiat + crypto exchange rates on the [currencies channel](/websocket/channels/currencies.md) for odds conversion.
+**Asian lines are first-class**: Asian handicap market types, quarter-line settlement (`HALFWIN` / `HALFLOSS` — see [Enumerations](https://docs.oddspapi.io/api-reference/enumerations.md)), and fiat + crypto exchange rates on the [currencies channel](https://docs.oddspapi.io/websocket/channels/currencies.md) for odds conversion.
 
-Discover the catalog available to your key via [`GET /bookmakers`](/api-reference/common/get-bookmakers), and see [Bookmaker coverage](/coverage/bookmakers.md) for per-book capabilities, freshness bounds, and status signals.
+Discover the catalog available to your key via [`GET /bookmakers`](https://docs.oddspapi.io/api-reference/common/get-bookmakers), and see [Bookmaker coverage](https://docs.oddspapi.io/coverage/bookmakers.md) for per-book capabilities, freshness bounds, and status signals.
 
 ## Coverage by sport
 
@@ -116,11 +116,11 @@ Discover the catalog available to your key via [`GET /bookmakers`](/api-referenc
 
 ## Notes
 
-* **Fixtures** are match- or event-level markets (a single game, bout, or match), streamed on the [`fixtures`](/websocket/channels/fixtures) and [`odds`](/websocket/channels/odds) channels.
-* **Futures** are outright / season-long or topic-level markets (league winner, tournament, election, etc.), streamed on the [`futures`](/websocket/channels/futures) and `oddsFutures` channels.
+* **Fixtures** are match- or event-level markets (a single game, bout, or match), streamed on the [`fixtures`](https://docs.oddspapi.io/websocket/channels/fixtures) and [`odds`](https://docs.oddspapi.io/websocket/channels/odds) channels.
+* **Futures** are outright / season-long or topic-level markets (league winner, tournament, election, etc.), streamed on the [`futures`](https://docs.oddspapi.io/websocket/channels/futures) and `oddsFutures` channels.
 * `sportId` **69–78** are **prediction-market topics** (politics, elections, finance, crypto, weather, …) — these exist only as futures/outright markets and feed the prediction-market and exchange use cases.
 * `sportId` **79–81** are **racing codes** (horse, greyhound, harness) — covered as **ante-post futures** (one future per ante-post market), not as per-race fixtures.
-* The `sportId` is the **first two digits** of downstream `marketId`, `outcomeId`, and `fixtureId` values — see [Core Concepts](/api-reference/concepts.md#id-structure).
+* The `sportId` is the **first two digits** of downstream `marketId`, `outcomeId`, and `fixtureId` values — see [Core Concepts](https://docs.oddspapi.io/api-reference/concepts.md#id-structure).
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

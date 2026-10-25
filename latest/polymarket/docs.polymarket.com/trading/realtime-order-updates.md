@@ -9,12 +9,12 @@
 Use real-time order updates to keep your view of a trading account current
 without polling. The user stream reports changes to the account's orders and
 the trades created when those orders match. For public order-book and market updates, see [Real-Time
-Data](/market-data/realtime-data.md).
+Data](https://docs.polymarket.com/market-data/realtime-data.md).
 
 > [!NOTE]
 >
 > Before subscribing, authenticate the account whose activity you want to
-> monitor. See [Wallets and Authentication](/trading/wallets-auth.md).
+> monitor. See [Wallets and Authentication](https://docs.polymarket.com/trading/wallets-auth.md).
 
 ## User Stream
 
@@ -341,7 +341,7 @@ wss://ws-subscriptions-clob.polymarket.com/ws/user
 
 Once connected, send a `user` subscription frame with the CLOB API
 credentials created through [API
-Authentication](/getting-started/api.md#authentication):
+Authentication](https://docs.polymarket.com/getting-started/api.md#authentication):
 
 ```json theme={null}
 {
@@ -498,7 +498,7 @@ confirmed.
 
 Real-time updates do not replace authoritative account reads or replay every
 change missed during a disconnection. After reconnecting, fetch the account's
-open orders and recent trades from [Manage Orders](/trading/manage-orders.md), then
+open orders and recent trades from [Manage Orders](https://docs.polymarket.com/trading/manage-orders.md), then
 resume applying new stream events from that refreshed state.
 
 

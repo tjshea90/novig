@@ -280,7 +280,7 @@ impl Query {
 A test vector is a sample request with its expected canonical string.
 Use them to check your signer.
 
-> **[signing-vectors.json](/api-reference/spec-files/signing-vectors.json)**
+> **[signing-vectors.json](https://docs.novig.com/api-reference/spec-files/signing-vectors.json)**
 >
 > 30 vectors and two test keypairs, for Ed25519 and P-256. They cover every case in the table below.
 
@@ -318,7 +318,7 @@ Echo doesn't return the canonical string.
 When echo returns `401`, sign a [test vector](#test-vectors) and diff your canonical string against its `string_to_sign`.
 The first byte that differs is the bug.
 
-For a full walkthrough, see [Quickstart](/api/quickstart.md).
+For a full walkthrough, see [Quickstart](https://docs.novig.com/api/quickstart.md).
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

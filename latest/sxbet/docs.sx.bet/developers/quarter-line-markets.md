@@ -68,8 +68,8 @@ point at different markets:
 
 | Grain | `marketHash` | Extra field |
 | - | - | - |
-| [Bet](/developers/which-grain.md#bets) | The **parent** — the `.25` / `.75` market you ordered against | none |
-| [Fill](/developers/which-grain.md#fills) | A **leg** — one of the surrounding whole/half lines | `quarterlineMarketHash` = the parent |
+| [Bet](https://docs.sx.bet/developers/which-grain.md#bets) | The **parent** — the `.25` / `.75` market you ordered against | none |
+| [Fill](https://docs.sx.bet/developers/which-grain.md#fills) | A **leg** — one of the surrounding whole/half lines | `quarterlineMarketHash` = the parent |
 
 ### Settlement
 

@@ -41,7 +41,7 @@ Perps accounts are funded through onchain collateral deposits.
 >
 > If you're building on Perps, delegated credentials let your app act for the
 > Perps account without using the owner key for every private action. See
-> [Authenticated Sessions](/perps/authenticated-sessions.md).
+> [Authenticated Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md).
 
 ## Prices
 
@@ -62,7 +62,7 @@ change an account's risk state or trigger liquidation by itself.
 Calculated prices are computed from external price feeds. The feed set can
 change with market sessions, such as regular hours, overnight trading, and
 weekends, while funding, margin, and liquidation rules stay the same around the
-clock. See [Market Sessions](/perps/learn-about-trading/market-sessions.md).
+clock. See [Market Sessions](https://docs.polymarket.com/perps/learn-about-trading/market-sessions.md).
 
 ## Orders And Fills
 

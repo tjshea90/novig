@@ -24,7 +24,7 @@ The program is designed to:
 >
 > Each incentivized market defines a minimum qualifying order size, maximum
 > qualifying spread, and reward allocation. See [Liquidity Reward
-> Settings](/market-data/market-details.md#liquidity-reward-settings) to read the
+> Settings](https://docs.polymarket.com/market-data/market-details.md#liquidity-reward-settings) to read the
 > current configuration for a market.
 
 ***
@@ -38,7 +38,7 @@ configuration before assuming that rewards are currently available.
 **TypeScript**
 
 Call `listRewardMarkets()` using an existing `PublicClient` named `client`.
-If needed, [create a public client](/getting-started/typescript.md#create-a-public-client).
+If needed, [create a public client](https://docs.polymarket.com/getting-started/typescript.md#create-a-public-client).
 The method is also available on `SecureClient`.
 
 ```ts theme={null}
@@ -80,7 +80,7 @@ bound. A supplied `orderBy` defaults to ascending order unless you set
 **Python**
 
 Call `list_reward_markets()` using an existing `AsyncPublicClient` named `client`.
-If needed, [create a public client](/getting-started/python.md#create-a-public-client).
+If needed, [create a public client](https://docs.polymarket.com/getting-started/python.md#create-a-public-client).
 The method is also available on `AsyncSecureClient`. The synchronous clients
 provide the same filters.
 
@@ -232,7 +232,7 @@ curl -G "https://clob.polymarket.com/rewards/user/total" \
   --data-urlencode "sponsored=true"
 ```
 
-Create fresh L2 headers using [API Authentication](/getting-started/api.md#authentication).
+Create fresh L2 headers using [API Authentication](https://docs.polymarket.com/getting-started/api.md#authentication).
 Sign the timestamp, `GET`, and `/rewards/user/total`, with no request body.
 
 Illustrative response:

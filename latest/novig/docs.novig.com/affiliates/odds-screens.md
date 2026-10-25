@@ -22,9 +22,9 @@ export NOVIG_HOST=https://api.novig.com
 The catalog accepts a `trading` or `trading::read` key, and you sign every request.
 A `trading::read` key can read but can't place orders, so it fits a read-only integration.
 
-* [Get a key](/api/api-keys.md) shows how to create each kind of key.
-* [Sign a request](/api/signing.md) explains the three signature headers in the examples below.
-* [Location checks](/api/api-keys.md#location-checks) explains why a signed route can return `451`.
+* [Get a key](https://docs.novig.com/api/api-keys.md) shows how to create each kind of key.
+* [Sign a request](https://docs.novig.com/api/signing.md) explains the three signature headers in the examples below.
+* [Location checks](https://docs.novig.com/api/api-keys.md#location-checks) explains why a signed route can return `451`.
 
 ## Routes
 
@@ -39,7 +39,7 @@ A `trading::read` key can read but can't place orders, so it fits a read-only in
 | `GET /v3/catalog/markets/{id}/book` | Resting orders by outcome |
 | `GET /v3/catalog/markets/{id}/trades` | Executions, newest first |
 
-Each route spends the `read` throttle. [Throttling](/api/throttling.md) explains how to pace your requests.
+Each route spends the `read` throttle. [Throttling](https://docs.novig.com/api/throttling.md) explains how to pace your requests.
 
 ## List a league's markets
 
@@ -100,7 +100,7 @@ curl -s "$NOVIG_HOST/v3/catalog/markets?league=NFL" \
 | `outcomes` | Each answer's `outcomeId` and `name` |
 
 To read the next page, pass the reply's `next` as `after`.
-[Catalog](/api/catalog#filters) lists every filter, including `marketType`, `startsAfter`, and `startsBefore`.
+[Catalog](https://docs.novig.com/api/catalog#filters) lists every filter, including `marketType`, `startsAfter`, and `startsBefore`.
 
 For each event's name, start time, and status, call `GET /v3/catalog/events?league=NFL` and match on `eventId`.
 
@@ -113,14 +113,14 @@ For each event's name, start time, and status, call `GET /v3/catalog/events?leag
 `GET /v3/catalog/participants?league=NFL` lists each event's competitors, like its home and away teams, and the players its markets are about.
 Each one lists the IDs of the markets about it, so you can match a market to your own feed without parsing `description`.
 
-[Participants](/api/catalog#participants) shows the reply.
+[Participants](https://docs.novig.com/api/catalog#participants) shows the reply.
 
 ## Show the main line
 
 A market family is the markets of one event and one market type about the same competitor or player, or about neither. They differ only by `strike`.
 
 `GET /v3/catalog/consensus?league=NFL` lists the main line of each family.
-[Consensus markets](/api/catalog#consensus-markets) shows the reply.
+[Consensus markets](https://docs.novig.com/api/catalog#consensus-markets) shows the reply.
 
 ## Read the order book
 
@@ -188,17 +188,17 @@ Using the book above:
 | Chiefs at `0.665` | Bills at `0.335` | 110 contracts |
 | Bills at `0.330` | Chiefs at `0.670` | 180 contracts |
 
-[Monetary representations](/api/concepts/money.md) explains prices, quantities, and the price grid.
+[Monetary representations](https://docs.novig.com/api/concepts/money.md) explains prices, quantities, and the price grid.
 
 > [!WARNING]
 >
 > The `outcomes` array has no fixed order. Find the other outcome by its `outcomeId`, never by its position.
 
 A three-way moneyline is three separate Yes / No markets, not one market with three outcomes.
-[Three-way moneylines](/api/concepts/universe-model.md#three-way-moneylines) explains how to read them.
+[Three-way moneylines](https://docs.novig.com/api/concepts/universe-model.md#three-way-moneylines) explains how to read them.
 
 When an event goes live, we void every resting order on its markets, so its books start empty in-game.
-[Event lifecycle](/api/concepts/event-lifecycle.md) lists each event status.
+[Event lifecycle](https://docs.novig.com/api/concepts/event-lifecycle.md) lists each event status.
 
 ## Show the last traded price
 
@@ -208,7 +208,7 @@ Each trade carries its `outcomeId`, `price`, `qty`, and `ts`.
 ## Get live updates
 
 Each book request spends from your `read` throttle.
-To follow prices live, subscribe to the [book channel](/api/streaming/book.md) on the websocket. It reports every change to a market's book.
+To follow prices live, subscribe to the [book channel](https://docs.novig.com/api/streaming/book.md) on the websocket. It reports every change to a market's book.
 
 The REST book's `seq` is the book's sequence number at that snapshot. The next `book` delta on the websocket follows it.
 

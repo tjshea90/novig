@@ -18,11 +18,11 @@ If you are in Canada, PayTrie allows you to sell USDC directly on SX Bet via e-T
 
 4. Once the transaction is complete, an Interac e-Transfer will be sent to your email.
 
-> **[Deposit via Interac](/user-guides/deposit-withdraw/interac.md)**
+> **[Deposit via Interac](https://docs.sx.bet/user-guides/deposit-withdraw/interac.md)**
 >
 > Fund your wallet again using Interac e-Transfer.
 
-> **[Maker Rewards](/user-guides/rewards/maker-rewards.md)**
+> **[Maker Rewards](https://docs.sx.bet/user-guides/rewards/maker-rewards.md)**
 >
 > Earn USDC by providing liquidity on SX Bet markets.
 

@@ -9,7 +9,7 @@
 > [!NOTE]
 >
 > Trading workflows require an [authenticated
-> session](/perps/authenticated-sessions.md).
+> session](https://docs.polymarket.com/perps/authenticated-sessions.md).
 
 Perps trading changes account exposure on an instrument. An order expresses what
 the account wants to do, but exposure only changes when the order fills.
@@ -35,7 +35,7 @@ orders. Use fills and portfolio state to confirm any exposure change.
 ## Start an Authenticated Session
 
 Open an authenticated session before reading private account state or submitting
-trading commands. See [Authenticated Sessions](/perps/authenticated-sessions.md) for
+trading commands. See [Authenticated Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md) for
 the full setup flow.
 
 **TypeScript**
@@ -1548,7 +1548,7 @@ already filled, so changing the total quantity to `7` leaves `3` resting.
 
 A rejected result does not change the live order, although separately processed
 fills or cancellations still can. See
-[Modify Order Errors](/perps/errors.md#modify-order-errors) for the complete
+[Modify Order Errors](https://docs.polymarket.com/perps/errors.md#modify-order-errors) for the complete
 rejection list.
 
 ### Resize a Partially Filled Order
@@ -2436,7 +2436,7 @@ report the resolved values; updates set explicit values.
 Switching margin mode requires no position and no open orders in that instrument,
 including orders awaiting risk approval or execution. Close the position and
 cancel all orders before switching. See
-[Default Leverage and Margin Mode](/perps/learn-about-trading/margin.md#default-leverage-and-margin-mode)
+[Default Leverage and Margin Mode](https://docs.polymarket.com/perps/learn-about-trading/margin.md#default-leverage-and-margin-mode)
 for how inherited settings apply.
 
 **TypeScript**
@@ -2896,7 +2896,7 @@ A positive value adds isolated margin; a negative value removes it. This
 workflow applies only to an open position using isolated margin.
 
 For allocation and removal constraints, see [Adjusting Isolated
-Margin](/perps/learn-about-trading/margin.md#adjusting-isolated-margin).
+Margin](https://docs.polymarket.com/perps/learn-about-trading/margin.md#adjusting-isolated-margin).
 
 ## Reconcile Trade State
 
@@ -3090,7 +3090,7 @@ curl "https://api.perpetuals.polymarket.com/v1/account/portfolio" \
 
 Then use the authenticated WebSocket session for live updates. Private WebSocket
 frames can include balances, orders, fills, portfolio, and TP/SL updates. See
-[Authenticated Sessions](/perps/authenticated-sessions.md) for the session
+[Authenticated Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md) for the session
 lifecycle.
 
 ```json Balance theme={null}
@@ -3311,9 +3311,9 @@ and taker trading fees. Fee rates are decimal strings, so `"0.0004"` means
 
 Default (`$0` tier) rates apply when an account has no tier assignment.
 The account's actual rate on each fill depends on its current fee tier. See
-[Fees](/perps/learn-about-trading/fees.md) for the tier table. Authenticated
+[Fees](https://docs.polymarket.com/perps/learn-about-trading/fees.md) for the tier table. Authenticated
 portfolio reads report the account's current tier; see
-[Portfolio](/perps/account-management.md#portfolio).
+[Portfolio](https://docs.polymarket.com/perps/account-management.md#portfolio).
 
 **TypeScript**
 
@@ -3418,7 +3418,7 @@ The response includes the full tier schedule alongside the default rates.
 > ```
 
 Use the perpetual schedule's `tiers[fee_tier]` entry with the `fee_tier` from
-your authenticated [portfolio](/perps/account-management.md#portfolio) to read
+your authenticated [portfolio](https://docs.polymarket.com/perps/account-management.md#portfolio) to read
 your account's maker and taker rates. The single perpetual schedule applies
 to every perpetual market, regardless of the entry's legacy `category` value.
 The flat `maker_fee_rate` and `taker_fee_rate` fields report default rates.

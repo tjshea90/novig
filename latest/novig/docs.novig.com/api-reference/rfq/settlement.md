@@ -60,7 +60,7 @@ If one leg voids at `0.5` and the others win, the user gets \$50 and you get \$5
 
 A loss always wins out over a void, because its `0` makes the product `0`.
 
-[`GET /rfq/executions`](/api-reference/rfq/executions) reports how each of your parlays settled.
+[`GET /rfq/executions`](https://docs.novig.com/api-reference/rfq/executions) reports how each of your parlays settled.
 
 > [!NOTE]
 >

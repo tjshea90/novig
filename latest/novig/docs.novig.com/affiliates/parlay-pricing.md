@@ -58,7 +58,7 @@ To use this endpoint, you'll need valid Novig outcome IDs. You can obtain these 
 1. **Catalog API** - List markets with `GET /v3/catalog/markets` to get outcome IDs
 2. **Deeplinking** - Extract outcome IDs from Novig deeplink URLs
 
-See the [Odds Screens](/affiliates/odds-screens.md) documentation for catalog request examples.
+See the [Odds Screens](https://docs.novig.com/affiliates/odds-screens.md) documentation for catalog request examples.
 
 ## Best Practices
 

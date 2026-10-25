@@ -94,7 +94,7 @@ account.
 
 The margin that leaves the trader's account with an absorption is recorded as a
 cash transfer, separate from fills, funding, and deposits. Retrieve it with
-[Get Account Backstop Transfers](/api-reference/get-account-backstop-transfers.md)
+[Get Account Backstop Transfers](https://docs.polymarket.com/api-reference/get-account-backstop-transfers.md)
 to reconcile balance changes after a backstop liquidation.
 
 The backstop only fires when the fund can take the position on and remain
@@ -149,7 +149,7 @@ quote balance.
 * The fill arrives on the WebSocket `fills` channel and in trade history with
   `adl: true`. The `liq` flag marks only the leg whose own position is being
   liquidated, so it stays `false` on the counterparty leg.
-* A `position_deleveraged` [notification](/perps/notifications.md) reports the
+* A `position_deleveraged` [notification](https://docs.polymarket.com/perps/notifications.md) reports the
   market, side, size closed, execution price, and realized PnL.
 
 ## Fees
@@ -162,7 +162,7 @@ FillFee = Notional * (MakerOrTakerRate + LiquidationFeeRate)
 ```
 
 Liquidation fee rates vary by market. If you're integrating Perps, read current
-values from [Market Data](/perps/market-data.md#fetch-instruments).
+values from [Market Data](https://docs.polymarket.com/perps/market-data.md#fetch-instruments).
 
 Auto-deleveraging fills bypass the order book and carry no fee for either side.
 

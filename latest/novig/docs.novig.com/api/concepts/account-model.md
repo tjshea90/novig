@@ -44,7 +44,7 @@ Each key has one scope, fixed when you create it.
 
 | Scope | Create it with |
 | - | - |
-| `management` | [Profile → Settings → Novig API](/api/api-keys.md#create-your-management-key) |
+| `management` | [Profile → Settings → Novig API](https://docs.novig.com/api/api-keys.md#create-your-management-key) |
 | `management::read` | `POST /v3/keys` |
 | `trading` | `POST /v3/account/subaccounts` |
 | `trading`, replacement | `POST /v3/account/subaccounts/{keyId}/keys` |

@@ -41,7 +41,7 @@ yarn add @polymarket/client@latest viem
 > [!NOTE]
 >
 > This page uses Viem for wallet signing. See the [TypeScript tooling
-> guide](/getting-started/typescript.md#wallet-integrations) for other wallet
+> guide](https://docs.polymarket.com/getting-started/typescript.md#wallet-integrations) for other wallet
 > library integrations.
 
 **2. Create a Secure Client**
@@ -209,7 +209,7 @@ https://combos-rfq-api.polymarket.com
 
 RFQ WebSocket authentication uses CLOB API credentials: API key, secret, and
 passphrase. If you need credentials, start with [Getting API
-Credentials](/getting-started/api.md#authentication).
+Credentials](https://docs.polymarket.com/getting-started/api.md#authentication).
 
 **3. Resolve Quoter Identity**
 
@@ -224,7 +224,7 @@ signature type that connects those two addresses.
 | Proxy Wallet | `1` Proxy | Authenticated signing address | Derived proxy wallet |
 | EOA | `0` EOA | EOA address | Same EOA address |
 
-For more detail, see [Wallets and Authentication](/trading/wallets-auth.md#wallet-types).
+For more detail, see [Wallets and Authentication](https://docs.polymarket.com/trading/wallets-auth.md#wallet-types).
 
 **4. Authenticate**
 
@@ -302,7 +302,7 @@ Use these contract addresses to build the approval calls.
 > [!NOTE]
 >
 > The following steps use the Deposit Wallet [gasless transaction
-> flow](/trading/wallets-auth.md#execute-gasless-transactions). If you are trading
+> flow](https://docs.polymarket.com/trading/wallets-auth.md#execute-gasless-transactions). If you are trading
 > with an EOA, submit the approvals directly from `maker_address`. For Safe or
 > Proxy Wallet flows, use an SDK.
 
@@ -486,7 +486,7 @@ request using collateral or inventory.
 | Buy YES | Buy NO at `1 - price` | Sell YES at `price` |
 | Sell YES | Buy YES at `price` | Sell NO at `1 - price` |
 
-See [Combinatorial Positions](/trading/positions/combinatorial.md) for more detail
+See [Combinatorial Positions](https://docs.polymarket.com/trading/positions/combinatorial.md) for more detail
 on the YES/NO position model.
 
 The diagram below shows the maker-side quote lifecycle, from receiving a quote
@@ -1765,7 +1765,7 @@ Use Combo position workflows to manage inventory throughout the quote lifecycle.
 > [!TIP]
 >
 > Quoting can leave pUSD locked across related Combo positions. Use [Collateral
-> Return](/trading/combos/collateral-return.md) to release available pUSD before
+> Return](https://docs.polymarket.com/trading/combos/collateral-return.md) to release available pUSD before
 > resolution while preserving unmatched exposure.
 
 ### List Combo Positions
@@ -2343,7 +2343,7 @@ collateral.
 >
 > Splitting and merging manage complementary inventory directly. When capital is
 > locked across related positions that cannot be merged as-is, use [Collateral
-> Return](/trading/combos/collateral-return.md).
+> Return](https://docs.polymarket.com/trading/combos/collateral-return.md).
 
 **TypeScript**
 

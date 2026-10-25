@@ -14,7 +14,7 @@
 | Fetch the order book or best odds; read your own orders, positions, trades, fills, or balances; subscribe to WebSocket channels; register a heartbeat | API key |
 | Place an order and account actions | API key + signature |
 
-Send the key as the `x-sx-api-key` header. Generate one from the API section of your account page on [sx.bet](https://sx.bet). See [API keys](/api-reference/api-key.md).
+Send the key as the `x-sx-api-key` header. Generate one from the API section of your account page on [sx.bet](https://sx.bet). See [API keys](https://docs.sx.bet/api-reference/api-key.md).
 
 ## Auth by route
 

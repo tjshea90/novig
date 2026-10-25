@@ -90,7 +90,7 @@ const client = await createSecureClient({
 > [!NOTE]
 >
 > This example uses Viem for wallet signing. See the [TypeScript tooling
-> guide](/getting-started/typescript.md#wallet-integrations) for other wallet
+> guide](https://docs.polymarket.com/getting-started/typescript.md#wallet-integrations) for other wallet
 > library integrations.
 
 **2. Open a Perps Session**
@@ -330,7 +330,7 @@ This example handles a few common session events. `order` and `fill` are the
 core trading updates, while `portfolio` provides periodic account-level snapshots
 for margin, equity, positions, and withdrawable balance.
 
-See [Reconcile Trade State](/perps/trading.md#reconcile-trade-state) for how to use
+See [Reconcile Trade State](https://docs.polymarket.com/perps/trading.md#reconcile-trade-state) for how to use
 these events to keep local trading state in sync.
 
 **2. Close the Session**
@@ -376,7 +376,7 @@ This example handles a few common session events. `order` and `fill` are the
 core trading updates, while `portfolio` provides periodic account-level snapshots
 for margin, equity, positions, and withdrawable balance.
 
-See [Reconcile Trade State](/perps/trading.md#reconcile-trade-state) for how to use
+See [Reconcile Trade State](https://docs.polymarket.com/perps/trading.md#reconcile-trade-state) for how to use
 these events to keep local trading state in sync.
 
 **2. Close the Session**

@@ -24,13 +24,13 @@ These errors can occur on **any authenticated endpoint**.
 
 `Unauthorized/Invalid api key` — Your API key is missing, expired, or invalid.
 Ensure you're sending all required [authentication
-headers](/getting-started/api.md#authentication).
+headers](https://docs.polymarket.com/getting-started/api.md#authentication).
 
 **401** `Unauthorized`
 
 `Invalid L1 Request headers` — Your L1 authentication headers (HMAC signature)
 are malformed or the signature doesn't match. See
-[Authentication](/getting-started/api.md#authentication).
+[Authentication](https://docs.polymarket.com/getting-started/api.md#authentication).
 
 **503** `Service Unavailable`
 
@@ -40,7 +40,7 @@ exchange is temporarily paused. No orders (including cancels) are accepted.
 **429** `Too Many Requests`
 
 `Too Many Requests` — You've exceeded the [rate
-limit](/api-reference/rate-limits.md). Back off and retry with exponential
+limit](https://docs.polymarket.com/api-reference/rate-limits.md). Back off and retry with exponential
 backoff.
 
 ***
@@ -253,7 +253,7 @@ would immediately match. Adjust the price so it rests on the book.
 
 `order {id} is invalid. Price ({price}) breaks minimum tick size rule: {tick}`
 — The order price doesn't align with the market's tick size. Use [`GET
-    /tick-size`](/api-reference/market-data/get-tick-size.md) to check the valid tick
+    /tick-size`](https://docs.polymarket.com/api-reference/market-data/get-tick-size.md) to check the valid tick
 size.
 
 **400** `Bad Request`
@@ -274,7 +274,7 @@ order size is below the market minimum.
 `not enough balance / allowance` — Insufficient pUSD balance or token
 allowance. Make sure the account holds enough pUSD and grant the trading
 approvals with [Set Up Trading
-Approvals](/trading/wallets-auth.md#set-up-trading-approvals). An allowance error
+Approvals](https://docs.polymarket.com/trading/wallets-auth.md#set-up-trading-approvals). An allowance error
 names one missing spender at a time. If it names the Neg Risk Adapter
 (`0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296`), the account wallet is missing
 the adapter approvals required for CTF negative-risk markets.
@@ -324,7 +324,7 @@ Internal matching engine errors that may surface during order execution.
 **425** `Too Early`
 
 The matching engine is restarting. Retry with exponential backoff. See
-[Matching Engine Restarts](/trading/matching-engine.md) for restart handling.
+[Matching Engine Restarts](https://docs.polymarket.com/trading/matching-engine.md) for restart handling.
 
 **500** `Internal Server Error`
 
@@ -625,7 +625,7 @@ type.
 | `400` | Bad Request | Invalid parameters, malformed payload, business logic violation |
 | `401` | Unauthorized | Missing or invalid API key, bad HMAC signature, expired timestamp |
 | `404` | Not Found | Market doesn't exist, order not found, outcome ID not recognized |
-| `425` | Too Early | Matching engine is restarting — retry with backoff. See [Matching Engine Restarts](/trading/matching-engine.md) |
+| `425` | Too Early | Matching engine is restarting — retry with backoff. See [Matching Engine Restarts](https://docs.polymarket.com/trading/matching-engine.md) |
 | `429` | Too Many Requests | Rate limit exceeded — implement exponential backoff |
 | `500` | Internal Server Error | Unexpected server error — retry with backoff |
 | `503` | Service Unavailable | Exchange paused, or order placement blocked by cancel-only / post-only mode |

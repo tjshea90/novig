@@ -12,7 +12,7 @@ Builder fees are flat percentages of trade notional, configured by each builder 
 
 > [!NOTE]
 >
-> New to the Builder Program? Start with [Builder Program](/programs/builders/overview.md). This page covers the fee layer specifically.
+> New to the Builder Program? Start with [Builder Program](https://docs.polymarket.com/programs/builders/overview.md). This page covers the fee layer specifically.
 
 ***
 
@@ -57,7 +57,7 @@ Configure two rates on your profile:
 **3. Copy Your Builder Code**
 
 Your profile is assigned a `bytes32` builder code. [Attach it to every order
-you submit](/trading/place-orders.md#builder-attribution).
+you submit](https://docs.polymarket.com/trading/place-orders.md#builder-attribution).
 
 ### Fee Rate Limits
 
@@ -109,7 +109,7 @@ The maker and taker sides of a single trade can have different builder codes and
 
 The account must have enough pUSD to cover the trade and all applicable
 platform and builder fees. For market buys, [set an all-in spending
-limit](/trading/place-orders.md#cap-market-buy-spending) so the order amount is
+limit](https://docs.polymarket.com/trading/place-orders.md#cap-market-buy-spending) so the order amount is
 adjusted for fees before signing.
 
 ***
@@ -118,7 +118,7 @@ adjusted for fees before signing.
 
 Builder attribution is part of the signed order. It works across CTF and Polymarket Protocol V2.
 
-For the signing workflow, see [Place a Limit Order](/trading/place-orders.md#place-a-limit-order).
+For the signing workflow, see [Place a Limit Order](https://docs.polymarket.com/trading/place-orders.md#place-a-limit-order).
 
 ### Signed Order Struct
 

@@ -45,8 +45,8 @@ fee recipient's internal ledger is debited by the same amount.
 > ends.
 
 If you're integrating Perps, read the current fee schedule from
-[Trading Fees](/perps/trading.md#trading-fees) and your account's current tier
-from the [portfolio](/perps/account-management.md#portfolio).
+[Trading Fees](https://docs.polymarket.com/perps/trading.md#trading-fees) and your account's current tier
+from the [portfolio](https://docs.polymarket.com/perps/account-management.md#portfolio).
 
 ## Fee Metrics
 
@@ -65,7 +65,7 @@ tier used to set fees.
 These metrics are cached by UTC day and may be stale by up to 24 hours.
 
 If you're integrating Perps, read account metrics from
-[Account Stats](/perps/account-management.md#account-stats).
+[Account Stats](https://docs.polymarket.com/perps/account-management.md#account-stats).
 
 ## Fee Accounting
 
@@ -83,7 +83,7 @@ internal ledger:
 Orders placed through an enabled builder can carry an additional trader-approved
 fee of up to 10 basis points. This fee is separate from the exchange schedule
 above. Use the total fee when displaying a trader's cost. See
-[Builder Attribution](/perps/builder-codes.md) for consent, saved order terms, and earnings.
+[Builder Attribution](https://docs.polymarket.com/perps/builder-codes.md) for consent, saved order terms, and earnings.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

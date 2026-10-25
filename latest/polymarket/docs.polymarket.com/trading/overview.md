@@ -38,20 +38,20 @@ Polygon and update your balances and positions.
 
 ## Start Trading
 
-> **[Place Your First Order](/trading/quickstart.md)**
+> **[Place Your First Order](https://docs.polymarket.com/trading/quickstart.md)**
 >
 > Complete the first authenticated trading workflow.
 
-> **[Wallets and Authentication](/trading/wallets-auth.md)**
+> **[Wallets and Authentication](https://docs.polymarket.com/trading/wallets-auth.md)**
 >
 > Connect a signer to the account wallet that holds funds and positions.
 
-> **[Order Lifecycle](/concepts/order-lifecycle.md)**
+> **[Order Lifecycle](https://docs.polymarket.com/concepts/order-lifecycle.md)**
 >
 > Understand how orders move from submission through fills, cancellation, or
 > expiration.
 
-> **[Session Keys](/trading/session-keys.md)**
+> **[Session Keys](https://docs.polymarket.com/trading/session-keys.md)**
 >
 > Give a separate signer scoped, time-limited Deposit Wallet access.
 

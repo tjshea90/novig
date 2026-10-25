@@ -6,7 +6,7 @@
 
 > Arm a dead-man switch that cancels your open orders if your process dies.
 
-[`POST /heartbeat/v3`](/api-reference/post-heartbeat-v3) registers a timer that is meant to cancel
+[`POST /heartbeat/v3`](https://docs.sx.bet/api-reference/post-heartbeat-v3) registers a timer that is meant to cancel
 your resting orders if you do not send a heartbeat in time by calling the same endpoint
 
 ## Arming and refreshing
@@ -40,26 +40,26 @@ Refresh inside the timeout window
 ## When it lapses
 
 Every open order is cancelled for your account. It has the same effect as
-[`DELETE /orders-v3/all`](/api-reference/delete-orders-v3-all). The cancels are asynchronous, so orders will be
+[`DELETE /orders-v3/all`](https://docs.sx.bet/api-reference/delete-orders-v3-all). The cancels are asynchronous, so orders will be
 cancelled shortly after with `inactiveReason: "HEARTBEAT_TIMEOUT"`.
 
 ## Stop the heartbeat
 
 To clear the heartbeat, call
-[`POST /heartbeat/v3`](/api-reference/post-heartbeat-v3) again with `timeoutSeconds: 0`. That
+[`POST /heartbeat/v3`](https://docs.sx.bet/api-reference/post-heartbeat-v3) again with `timeoutSeconds: 0`. That
 deactivates the timer.
 
 ## Related
 
-> **[Set heartbeat](/api-reference/post-heartbeat-v3.md)**
+> **[Set heartbeat](https://docs.sx.bet/api-reference/post-heartbeat-v3.md)**
 >
 > The `POST /heartbeat/v3` endpoint reference.
 
-> **[Cancelling orders](/developers/cancelling-orders.md)**
+> **[Cancelling orders](https://docs.sx.bet/developers/cancelling-orders.md)**
 >
 > The shutdown path that confirms each cancel.
 
-> **[Order lifecycle](/developers/order-lifecycle.md)**
+> **[Order lifecycle](https://docs.sx.bet/developers/order-lifecycle.md)**
 >
 > Every way an order leaves the book, and how to distinguish them.
 

@@ -12,7 +12,7 @@ Every channel runs over one websocket connection.
 | - | - |
 | Route | `GET /v3/ws` |
 | Key | `trading` or `trading::read` |
-| Throttle | [`stream`](/api/throttling) |
+| Throttle | [`stream`](https://docs.novig.com/api/throttling) |
 | Cost | `32 /request`, then `weight /pair` |
 | Reply | 101 |
 
@@ -86,7 +86,7 @@ To drop just one, unsubscribe `PRIVATE`, then subscribe to the channel you keep.
 
 ## Trade
 
-Three verbs place and cancel orders over the connection. They need a `trading` key; a `trading::read` key gets `SCOPE_INSUFFICIENT`. Payloads match the REST [orders](/api/execution/orders) bodies, and they debit the `place` and `cancel` throttles, not `stream`.
+Three verbs place and cancel orders over the connection. They need a `trading` key; a `trading::read` key gets `SCOPE_INSUFFICIENT`. Payloads match the REST [orders](https://docs.novig.com/api/execution/orders) bodies, and they debit the `place` and `cancel` throttles, not `stream`.
 
 `place` books a batch of orders, all or none, for 1 `place` token each. The ack is `placed`, one entry per accepted order.
 
@@ -241,7 +241,7 @@ Its first delta is `OPEN`, and its `book`, `bbo`, and `trades` channels start at
 | none | — | Answer every Ping |
 
 * `SLOW_CONSUMER` means a write to you stalled for 15 s.
-* A geolocation close means the companion check refused you while you were connected: your last device geolocation is missing, failed, named no region, or came from a restricted state. The reason is the [`451` code](/api/errors#451-geolocation-unavailable), such as `GEOLOCATION_OUT_OF_BOUNDARY`, `GEOLOCATION_BLOCKED_NETWORK`, or `GEOLOCATION_BLOCKED_SOFTWARE`. A stale geolocation never closes a socket.
+* A geolocation close means the companion check refused you while you were connected: your last device geolocation is missing, failed, named no region, or came from a restricted state. The reason is the [`451` code](https://docs.novig.com/api/errors#451-geolocation-unavailable), such as `GEOLOCATION_OUT_OF_BOUNDARY`, `GEOLOCATION_BLOCKED_NETWORK`, or `GEOLOCATION_BLOCKED_SOFTWARE`. A stale geolocation never closes a socket.
 * If you send no Pong between two of our Pings, we drop the connection without a close frame. Your client usually reports `1006`. We ping every 15 s.
 
 

@@ -12,9 +12,9 @@ keeping support for existing CTF markets.
 Before you start:
 
 * If you use a standalone CLOB SDK, complete the
-  [unified SDK migration](/migrate/clob-sdk-to-unified-sdk.md) first to update client setup.
+  [unified SDK migration](https://docs.polymarket.com/migrate/clob-sdk-to-unified-sdk.md) first to update client setup.
 * If upgrading from before 0.10.0 and using portfolio or history reads, also apply
-  the [Data API v2 migration](/migrate/data-api-v1-to-v2.md#sdk-migration-to-data-api-v2).
+  the [Data API v2 migration](https://docs.polymarket.com/migrate/data-api-v1-to-v2.md#sdk-migration-to-data-api-v2).
 
 **1. Upgrade the SDK**
 
@@ -63,7 +63,7 @@ poetry add polymarket-client@latest
 Keep calling `setupTradingApprovals()` on your `SecureClient`. It also
 approves the contracts required for Polymarket Protocol V2.
 Gasless wallets need a configured
-[Relayer or Builder API key](/trading/wallets-auth.md#set-up-trading-approvals).
+[Relayer or Builder API key](https://docs.polymarket.com/trading/wallets-auth.md#set-up-trading-approvals).
 
 ```ts theme={null}
 await client.setupTradingApprovals();
@@ -74,7 +74,7 @@ await client.setupTradingApprovals();
 Keep calling `setup_trading_approvals()` on your `AsyncSecureClient`.
 It also approves the contracts required for Polymarket Protocol V2.
 Gasless wallets need a configured
-[Relayer or Builder API key](/trading/wallets-auth.md#set-up-trading-approvals).
+[Relayer or Builder API key](https://docs.polymarket.com/trading/wallets-auth.md#set-up-trading-approvals).
 
 ```python theme={null}
 await client.setup_trading_approvals()

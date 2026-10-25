@@ -7,13 +7,13 @@
 > Transfer tokens from your wallet to your proxy wallet on SX Bet.
 
 `POST /user/transfer-to-proxy` moves tokens from your EOA into your proxy wallet. You authorise it with
-an **EIP-2612 permit** — a signature over `(owner, spender, value, nonce, deadline)`. [Funding](/developers/funding.md) walks the
+an **EIP-2612 permit** — a signature over `(owner, spender, value, nonce, deadline)`. [Funding](https://docs.sx.bet/developers/funding.md) walks the
 whole deposit end to end.
 
 > [!WARNING]
 >
 > A `200` means recorded, not completed. This is an asynchronous endpoint. Poll
-> [`GET /user/transfer-to-proxy/status`](/api-reference/get-user-transfer-to-proxy-status)
+> [`GET /user/transfer-to-proxy/status`](https://docs.sx.bet/api-reference/get-user-transfer-to-proxy-status)
 > with the returned `sessionId` until `status` is `SUCCESS` or `FAILED`.
 
 

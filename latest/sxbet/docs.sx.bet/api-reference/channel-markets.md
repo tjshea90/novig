@@ -18,7 +18,7 @@ Subscribe to all changes in markets on sx.bet. You will get updates when:
 
 **MESSAGE PAYLOAD FORMAT**
 
-See [the markets section](/api-reference/get-markets-active.md) for the format of the message.
+See [the markets section](https://docs.sx.bet/api-reference/get-markets-active.md) for the format of the message.
 
 ***
 

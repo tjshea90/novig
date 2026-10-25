@@ -42,7 +42,7 @@ On an `event:` subject, it also covers markets that open later.
 
 Taker fees switch on at `GOLIVE` only for a market whose `fee.charged` is `WHEN_LIVE`.
 An `ALWAYS` market charges fees in every phase.
-See [Trading fees](/api/concepts/fees.md).
+See [Trading fees](https://docs.novig.com/api/concepts/fees.md).
 
 This is one market that goes live twice:
 

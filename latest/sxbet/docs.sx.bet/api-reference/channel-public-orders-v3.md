@@ -8,13 +8,13 @@
 
 Subscribe to de-anonymized resting-order changes on one market.
 **Only orders whose maker placed them while de-anonymized are published here**. Seed from
-[`GET /orders-v3/public`](/api-reference/get-orders-v3-public).
+[`GET /orders-v3/public`](https://docs.sx.bet/api-reference/get-orders-v3-public).
 
 > [!NOTE]
 >
 > This is not a stream of the actual order book and it only shows a very small fraction of the total liquidity. Anonymized orders are omitted. To
-> recreate the actual book, subscribe to [order book updates](/api-reference/channel-orderbook-v3.md) and seed
-> from the [snapshot](/api-reference/get-market-orderbook-snapshot.md).
+> recreate the actual book, subscribe to [order book updates](https://docs.sx.bet/api-reference/channel-orderbook-v3.md) and seed
+> from the [snapshot](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot.md).
 
 **CHANNEL NAME FORMAT**
 
@@ -34,8 +34,8 @@ One order per message, wrapped in `order`. Use the `id` of an order and the `upd
 | marketHash | string | The market this order rests on |
 | userAddress | string | The maker's checksummed address. Every order on this channel carries one |
 | isBettingOutcomeOne | boolean | The outcome this order backs |
-| percentageOdds | string | The odds the maker receives in the sx.bet protocol format. To convert to implied odds divide by 10^20. To get taker implied odds: `takerOdds = 1 - percentageOdds / 10^20`. See [unit conversions](/developers/unit-conversions.md). |
-| totalBetSize | string | Total size of this order in base units. See [unit conversions](/developers/unit-conversions.md). |
+| percentageOdds | string | The odds the maker receives in the sx.bet protocol format. To convert to implied odds divide by 10^20. To get taker implied odds: `takerOdds = 1 - percentageOdds / 10^20`. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
+| totalBetSize | string | Total size of this order in base units. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
 | remainingSize | string | The unfilled portion still available to take. The filled amount is `totalBetSize - remainingSize` |
 | expiry | string | ISO 8601 timestamp after which this order is no longer valid |
 | status | string | `"ACTIVE"` if resting, `"INACTIVE"` if no longer resting. Remove the order from your book when it turns `INACTIVE` |

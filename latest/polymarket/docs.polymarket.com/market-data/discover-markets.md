@@ -493,7 +493,7 @@ Select events for the position system your integration handles.
 **TypeScript**
 
 Call `listEvents()` on an existing `PublicClient` or `SecureClient`.
-If needed, [create a Public Client](/getting-started/typescript.md#create-a-public-client) first.
+If needed, [create a Public Client](https://docs.polymarket.com/getting-started/typescript.md#create-a-public-client) first.
 
 ```ts theme={null}
 import { ProtocolVersion } from "@polymarket/client";
@@ -521,7 +521,7 @@ filter on subsequent pages. When resuming with `cursor`, pass the same
 
 Call `list_events()` on an existing `AsyncPublicClient` or
 `AsyncSecureClient`. If needed,
-[create a Public Client](/getting-started/python.md#create-a-public-client) first.
+[create a Public Client](https://docs.polymarket.com/getting-started/python.md#create-a-public-client) first.
 Sync clients expose the same option.
 
 ```python theme={null}
@@ -855,7 +855,7 @@ On `GET /markets` and `GET /markets/keyset`, omitted `closed` and `closed=false`
 
 `closed=any` without an identifier, including a request with only `tag_id`, returns HTTP 422. An invalid `closed` value also returns HTTP 422.
 
-After you choose a market, continue to [Market Details](/market-data/market-details.md)
+After you choose a market, continue to [Market Details](https://docs.polymarket.com/market-data/market-details.md)
 to select its outcome IDs and trading fields.
 
 ### Find Markets by Oracle Request
@@ -1625,7 +1625,7 @@ value is `"home"`, `"away"`, or `null`.
 >
 > Home and away assignments can change after markets are created, especially
 > when games are rescheduled or moved. If you plan to submit quotes in Combos,
-> check [Common Footguns](/trading/combos/market-makers.md#common-footguns).
+> check [Common Footguns](https://docs.polymarket.com/trading/combos/market-makers.md#common-footguns).
 
 ### List Teams
 

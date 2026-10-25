@@ -51,15 +51,15 @@ A bet that does not lock ends at `FAILED`, and no funds moved.
 
 A **quarter-line** bet needs more care. The parent's `outcome` carries direction only, so `outcome`
 alone does not tell you whether the bet half-won or fully won. See
-[Quarter-line markets](/developers/quarter-line-markets.md).
+[Quarter-line markets](https://docs.sx.bet/developers/quarter-line-markets.md).
 
 ## Related
 
-> **[Order lifecycle](/developers/order-lifecycle.md)**
+> **[Order lifecycle](https://docs.sx.bet/developers/order-lifecycle.md)**
 >
 > The order state machine.
 
-> **[Which grain?](/developers/which-grain.md)**
+> **[Which grain?](https://docs.sx.bet/developers/which-grain.md)**
 >
 > Bet, leg, or position — which endpoint answers your question.
 

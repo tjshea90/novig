@@ -25,7 +25,7 @@ X-Novig-Signature = hex(BLAKE3_keyed_hash(shared_secret_bytes, raw_body_bytes))
 | Message | The raw bytes of the request body |
 | Output | 32 bytes, as 64 lowercase hex characters |
 
-Your shared secret comes from the `POST /rfq/pricer` response. [Registration](/api-reference/rfq/registration.md#your-shared-secret) explains it.
+Your shared secret comes from the `POST /rfq/pricer` response. [Registration](https://docs.novig.com/api-reference/rfq/registration.md#your-shared-secret) explains it.
 
 > [!WARNING]
 >
@@ -83,7 +83,7 @@ A 2xx tells the sender you accepted the request.
 
 ## Test your check
 
-Call [`POST /rfq/pricer/ping`](/api-reference/rfq/registration#test-your-webhook).
+Call [`POST /rfq/pricer/ping`](https://docs.novig.com/api-reference/rfq/registration#test-your-webhook).
 We send a real signed request to your `/ping` handler and report how you answered.
 Run it before any live RFQ depends on your check.
 

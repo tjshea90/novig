@@ -6,7 +6,7 @@
 
 > Read whether your betting activity is published.
 
-Reads your own privacy setting. See [Change privacy setting](/api-reference/post-user-privacy-v3.md) for what the setting does and does
+Reads your own privacy setting. See [Change privacy setting](https://docs.sx.bet/api-reference/post-user-privacy-v3.md) for what the setting does and does
 not apply to.
 
 

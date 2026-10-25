@@ -30,11 +30,11 @@ Click "Build a Parlay" and make your selections. Click "Request parlay" and ente
 
 ### Place Your Parlay, Your Way
 
-> **[Market Orders](/user-guides/trading/market-orders.md)**
+> **[Market Orders](https://docs.sx.bet/user-guides/trading/market-orders.md)**
 >
 > Place a standard single-leg bet at the best available odds.
 
-> **[Fees](/user-guides/trading/fees.md)**
+> **[Fees](https://docs.sx.bet/user-guides/trading/fees.md)**
 >
 > Understand the 5% winning parlay fee and single-bet fee structure.
 

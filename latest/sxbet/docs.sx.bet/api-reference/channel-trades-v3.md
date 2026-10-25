@@ -6,14 +6,14 @@
 
 > Subscribe to real-time updates for your own trades
 
-Subscribe to your own bets at bet grain — one row per bet you placed, whatever number of makers filled it. For one message per match instead, use [`account:fills_v3_#{address}`](/api-reference/channel-fills-v3). You will receive updates when a bet is matched, locks, fails, or settles.
+Subscribe to your own bets at bet grain — one row per bet you placed, whatever number of makers filled it. For one message per match instead, use [`account:fills_v3_#{address}`](https://docs.sx.bet/api-reference/channel-fills-v3). You will receive updates when a bet is matched, locks, fails, or settles.
 
 > [!NOTE]
 >
 > **The first message for a new bet is `MATCHED`, which comes before the on-chain lock.** A second
 > message follows once the funds are escrowed (`LOCKED`) or the escrow fails (`FAILED`). Act on
 > `MATCHED` for speed, or wait for `LOCKED` in certain situations — see
-> [which status to act on](/developers/bet-lifecycle.md#which-status-to-act-on).
+> [which status to act on](https://docs.sx.bet/developers/bet-lifecycle.md#which-status-to-act-on).
 
 **CHANNEL NAME FORMAT**
 
@@ -23,7 +23,7 @@ For example: `account:trades_v3_#0xbcc6D643e4159A75ED1dB4e13330230B82F2AEe5`. Th
 
 | Name | Type | Description |
 | - | - | - |
-| address | string | Your checksummed address. It must equal your realtime token's `sub` — see [subscribing to your own channels](/developers/realtime-overview.md#subscribing-to-your-own-channels) |
+| address | string | Your checksummed address. It must equal your realtime token's `sub` — see [subscribing to your own channels](https://docs.sx.bet/developers/realtime-overview.md#subscribing-to-your-own-channels) |
 
 **MESSAGE PAYLOAD FORMAT**
 
@@ -38,17 +38,17 @@ One bet per message, wrapped in `trade`. Every message carries the whole current
 | isBettingOutcomeOne | boolean | The side you backed |
 | isMaker | boolean | Which side of the book you were on. `true` when you were the maker — your order rested and was filled; `false` when you were the taker |
 | isParlay | boolean | `true` when `marketHash` is a parlay parent |
-| totalStake | string | The amount risked, in base units. See [unit conversions](/developers/unit-conversions.md). |
+| totalStake | string | The amount risked, in base units. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
 | totalReturn | string | Gross payout if it wins, stake included |
 | netTotalReturn | string | `totalReturn` less the projected settlement payout fee — what you would actually be paid. |
-| weightedAverageOdds | string | The odds in the sx.bet protocol format, blended across the bet's fills. To convert to implied odds divide by 10^20. See [unit conversions](/developers/unit-conversions.md). |
-| ceRefundAmount | string | Capital-efficiency refund on this bet. See [capital efficiency](/developers/capital-efficiency.md) |
+| weightedAverageOdds | string | The odds in the sx.bet protocol format, blended across the bet's fills. To convert to implied odds divide by 10^20. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
+| ceRefundAmount | string | Capital-efficiency refund on this bet. See [capital efficiency](https://docs.sx.bet/developers/capital-efficiency.md) |
 | ceRefundFeeAmount | string | The fee taken on that refund |
 | usedBetCredits | boolean | Whether bet credits paid for it |
 | fillCount | number | How many fills make up this bet. A number, while every amount is a string |
-| status | string | `"MATCHED"`, `"LOCKED"`, `"FAILED"` or `"SETTLED"`. See [bet lifecycle](/developers/bet-lifecycle.md) |
-| ownOrderIds | string\[] | Order ids of your own orders behind this bet — the same values as `id` on order rows and `orderId` from [`POST /orders-v3`](/api-reference/post-orders-v3). These are not `clientOrderId`s. |
-| externalUserId | string | Optional partner tag from the order that produced this bet, present only when set. See [External user id](/developers/external-user-id.md) |
+| status | string | `"MATCHED"`, `"LOCKED"`, `"FAILED"` or `"SETTLED"`. See [bet lifecycle](https://docs.sx.bet/developers/bet-lifecycle.md) |
+| ownOrderIds | string\[] | Order ids of your own orders behind this bet — the same values as `id` on order rows and `orderId` from [`POST /orders-v3`](https://docs.sx.bet/api-reference/post-orders-v3). These are not `clientOrderId`s. |
+| externalUserId | string | Optional partner tag from the order that produced this bet, present only when set. See [External user id](https://docs.sx.bet/developers/external-user-id.md) |
 | betTime | string | ISO timestamp for when the bet was placed |
 | gameTime | string | ISO timestamp for kickoff |
 | createdAt | string | ISO timestamp for when the row was created |

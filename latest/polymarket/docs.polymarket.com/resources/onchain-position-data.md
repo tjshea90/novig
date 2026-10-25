@@ -16,8 +16,8 @@ as a leg in a PositionManager workflow.
 | `"v2"` | Polymarket V2 | Outcome `positionId` | PositionManager | `"3"` |
 | `"v1"` | CTF | Outcome `tokenId` | Conditional Tokens | `"2"` |
 
-See [Discover Markets](/market-data/discover-markets.md) for the discovery
-workflow and [Contracts](/resources/contracts.md) for Polygon addresses.
+See [Discover Markets](https://docs.polymarket.com/market-data/discover-markets.md) for the discovery
+workflow and [Contracts](https://docs.polymarket.com/resources/contracts.md) for Polygon addresses.
 
 ## CTF
 

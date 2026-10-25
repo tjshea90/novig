@@ -10,7 +10,7 @@
 `threshold` is the number of signatures required for a withdrawal after the old signer is removed.
 
 Sign `typedData` and submit it to
-[`POST /user/multisig/remove-signer/execute`](/api-reference/post-user-multisig-remove-signer-execute).
+[`POST /user/multisig/remove-signer/execute`](https://docs.sx.bet/api-reference/post-user-multisig-remove-signer-execute).
 
 
 ## OpenAPI

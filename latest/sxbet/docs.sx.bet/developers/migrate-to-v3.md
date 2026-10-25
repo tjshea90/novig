@@ -8,7 +8,7 @@
 
 This guide is for developers with a **working V2 client**.
 
-For the reasoning behind the changes, see [Improvements](/developers/new-in-v3.md). For a new integration, start at [Quickstart](/developers/quickstart.md).
+For the reasoning behind the changes, see [Improvements](https://docs.sx.bet/developers/new-in-v3.md). For a new integration, start at [Quickstart](https://docs.sx.bet/developers/quickstart.md).
 
 ## What's fundamentally different
 
@@ -23,8 +23,8 @@ Five changes underlie the rest of this guide:
 
 ## What has not changed
 
-* `percentageOdds` is still implied probability × 10^20; `totalBetSize` is still your stake in base-token units (USDC = 6 decimals). See [Unit conversions](/developers/unit-conversions.md).
-* The odds ladder is still enforced (default step 0.125%). Read `oddsLadderStepSize` from `GET /metadata/obv3`. See [Odds rounding](/developers/odds-rounding.md).
+* `percentageOdds` is still implied probability × 10^20; `totalBetSize` is still your stake in base-token units (USDC = 6 decimals). See [Unit conversions](https://docs.sx.bet/developers/unit-conversions.md).
+* The odds ladder is still enforced (default step 0.125%). Read `oddsLadderStepSize` from `GET /metadata/obv3`. See [Odds rounding](https://docs.sx.bet/developers/odds-rounding.md).
 * Resting orders are still quoted in the maker frame; taker implied probability = 1 − maker probability. (`showTakerPerspective=true` on the orderbook snapshot does the inversion for you.)
 * You still sign with your EOA private key, and maker is still your EOA address.
 * Market discovery is unchanged: `GET /markets/active`, `GET /markets/find`, and the sports / leagues / fixtures endpoints and shapes.
@@ -36,7 +36,7 @@ Five changes underlie the rest of this guide:
 
 **1. Set up the account: deploy and fund a proxy wallet**
 
-Deploy a proxy your account owns and move USDC into it — see [Accounts](/developers/accounts.md). Easiest way is just login to [sx.bet](https://sx.bet) and go through the wizard.
+Deploy a proxy your account owns and move USDC into it — see [Accounts](https://docs.sx.bet/developers/accounts.md). Easiest way is just login to [sx.bet](https://sx.bet) and go through the wizard.
 
 Prefer to stay in code? The whole flow is API-first too (all with the `x-sx-api-key` header):
 
@@ -56,7 +56,7 @@ Already live on V2? Your trading capital currently sits in your EOA under V2's m
 
 **2. Get a new API key**
 
-Create a **new** API key — your existing V2 key will not work. Log in at [sx.bet](https://sx.bet), open **Account → Overview**, generate a key, and send it in the `x-sx-api-key` header on every authenticated request. See [API Keys](/api-reference/api-key.md).
+Create a **new** API key — your existing V2 key will not work. Log in at [sx.bet](https://sx.bet), open **Account → Overview**, generate a key, and send it in the `x-sx-api-key` header on every authenticated request. See [API Keys](https://docs.sx.bet/api-reference/api-key.md).
 
 > [!WARNING]
 >
@@ -64,11 +64,11 @@ Create a **new** API key — your existing V2 key will not work. Log in at [sx.b
 
 **3. Use POST /orders-v3 for posting orders and fills**
 
-* There is no longer a separate endpoint for fills. The endpoint is [`POST /orders-v3`](/api-reference/post-orders-v3) `timeInForce` is new and required and the signature has changed. `timeInForce` implies if your order will rest or not.
-* If you're a market maker, use `GTC`. If you're a taker, use `IOC`. See [Time in force](/developers/time-in-force.md).
+* There is no longer a separate endpoint for fills. The endpoint is [`POST /orders-v3`](https://docs.sx.bet/api-reference/post-orders-v3) `timeInForce` is new and required and the signature has changed. `timeInForce` implies if your order will rest or not.
+* If you're a market maker, use `GTC`. If you're a taker, use `IOC`. See [Time in force](https://docs.sx.bet/developers/time-in-force.md).
 * The signing of the order has also changed. See the example below.
 * The old `apiExpiry` field was eliminated and merged into just a single `expiry` field. In V3 `expiry` is a real unix epoch timestamp in seconds (not milliseconds) inside the signature, and it is mandatory — it must be in the future, and `0` is rejected. There is no never-expires order. Because it is signed, changing an order’s TTL means re-signing. V2’s constant `2209006800` is gone — do not send it.
-* The V2 slippage vocabulary is also gone — there are no `desiredOdds` or `oddsSlippage` fields, and no `ODDS_STALE` error. `percentageOdds` is the worst price you will accept; the engine matches at that price or better. See [Odds](/developers/odds.md).
+* The V2 slippage vocabulary is also gone — there are no `desiredOdds` or `oddsSlippage` fields, and no `ODDS_STALE` error. `percentageOdds` is the worst price you will accept; the engine matches at that price or better. See [Odds](https://docs.sx.bet/developers/odds.md).
 * **This endpoint, by default, is now asynchronous, meaning that the outcome of your order (filled / partially filled / cancelled) is not known immediately**. Use `waitForOutcome` to keep the old synchronous behaviour. This applies to both orders that will match, clear, or rest.
 
 Field-by-field, what changed on the order body from V2 (`POST /orders/new` and `POST /orders/fill/v2`) to V3 (`POST /orders-v3`):
@@ -184,7 +184,7 @@ The top-level `status` (`SUBMITTED`/`FAILED`) is the accept/reject of your submi
 
 Worked example — the two frames: you post GTC with `percentageOdds = "52500000000000000000"` (52.5% — your implied probability on your own outcome). A taker who wants the other outcome sees your level as 47.5% under `showTakerPerspective=true` and submits their own order with `percentageOdds = "47500000000000000000"` as their worst acceptable price.
 
-Full new signing guide: [EIP-712 order signing](/api-reference/eip712-order-signing.md).
+Full new signing guide: [EIP-712 order signing](https://docs.sx.bet/api-reference/eip712-order-signing.md).
 
 **4. Taking liquidity**
 
@@ -325,11 +325,11 @@ requests.delete(f"{API}/orders-v3/all",   headers=auth)
 }
 ```
 
-Cancel-by-id waits for the engine and reports per order; cancel-by-event and cancel-all are asynchronous and only confirm the job was published. See [Cancelling orders](/developers/cancelling-orders.md).
+Cancel-by-id waits for the engine and reports per order; cancel-by-event and cancel-all are asynchronous and only confirm the job was published. See [Cancelling orders](https://docs.sx.bet/developers/cancelling-orders.md).
 
 **6. Re-arm your heartbeat (dead-man switch)**
 
-Endpoint renamed: V2 `POST /heartbeat` → V3 [`POST /heartbeat/v3`](/api-reference/post-heartbeat-v3). V2's `requestor` field is gone (the timer is keyed to your API key's account):
+Endpoint renamed: V2 `POST /heartbeat` → V3 [`POST /heartbeat/v3`](https://docs.sx.bet/api-reference/post-heartbeat-v3). V2's `requestor` field is gone (the timer is keyed to your API key's account):
 
 ```http theme={null}
 POST /heartbeat/v3        x-sx-api-key: $SX_API_KEY
@@ -338,7 +338,7 @@ POST /heartbeat/v3        x-sx-api-key: $SX_API_KEY
 
 Semantics are unchanged: miss the window and every open order is cancelled, arriving on the `account:orders_v3` channel as `inactiveReason: "HEARTBEAT_TIMEOUT"`. Refresh well inside the window (e.g. every 20s on a 60s timeout).
 
-To disarm, call the same endpoint with `timeoutSeconds: 0` — that clears an armed timer. There is no separate cancel route; V2's `POST /heartbeat/cancel` has no V3 successor. See [Heartbeat](/developers/heartbeat.md).
+To disarm, call the same endpoint with `timeoutSeconds: 0` — that clears an armed timer. There is no separate cancel route; V2's `POST /heartbeat/cancel` has no V3 successor. See [Heartbeat](https://docs.sx.bet/developers/heartbeat.md).
 
 **7. Realtime changes**
 
@@ -350,14 +350,14 @@ The token route: point it at `GET /user/realtime-token-v3/api-key` (V2 used `GET
 
 | Purpose | V2 | V3 | Page |
 | - | - | - | - |
-| Market depth (per market) | `order_book:market_{marketHash}` | `orderbook_v3:{marketHash}` | [→](/api-reference/channel-orderbook-v3.md) |
-| Market depth (per event) | `order_book:event_{sportXeventId}` | `orderbook_v3_event:{eventId}` | [→](/api-reference/channel-orderbook-v3-event.md) |
-| Best odds | `best_odds:global` | `best_odds_v3:global` | [→](/api-reference/channel-best-odds-v3.md) |
-| My open orders | `active_orders:{address}` | `account:orders_v3_#{address}` | [→](/api-reference/channel-orders-v3.md) |
-| My bets | `account:#{address}`, `type: "consolidated_trades"` | `account:trades_v3_#{address}` | [→](/api-reference/channel-trades-v3.md) |
-| My fills | - | `account:fills_v3_#{address}` | [→](/api-reference/channel-fills-v3.md) |
-| Public tape | `recent_trades:global` | `recent_trades_v3:global` | [→](/api-reference/channel-recent-trades-v3.md) |
-| Parlay RFQs | `parlay_markets:global` | `parlay_markets:global` (unchanged) | [→](/api-reference/channel-parlay-requests.md) |
+| Market depth (per market) | `order_book:market_{marketHash}` | `orderbook_v3:{marketHash}` | [→](https://docs.sx.bet/api-reference/channel-orderbook-v3.md) |
+| Market depth (per event) | `order_book:event_{sportXeventId}` | `orderbook_v3_event:{eventId}` | [→](https://docs.sx.bet/api-reference/channel-orderbook-v3-event.md) |
+| Best odds | `best_odds:global` | `best_odds_v3:global` | [→](https://docs.sx.bet/api-reference/channel-best-odds-v3.md) |
+| My open orders | `active_orders:{address}` | `account:orders_v3_#{address}` | [→](https://docs.sx.bet/api-reference/channel-orders-v3.md) |
+| My bets | `account:#{address}`, `type: "consolidated_trades"` | `account:trades_v3_#{address}` | [→](https://docs.sx.bet/api-reference/channel-trades-v3.md) |
+| My fills | - | `account:fills_v3_#{address}` | [→](https://docs.sx.bet/api-reference/channel-fills-v3.md) |
+| Public tape | `recent_trades:global` | `recent_trades_v3:global` | [→](https://docs.sx.bet/api-reference/channel-recent-trades-v3.md) |
+| Parlay RFQs | `parlay_markets:global` | `parlay_markets:global` (unchanged) | [→](https://docs.sx.bet/api-reference/channel-parlay-requests.md) |
 
 `fixtures:*`, `markets:global` and `main_line:global` are unchanged.
 
@@ -365,20 +365,20 @@ The order book channels are more than a rename — they no longer stream individ
 
 > [!NOTE]
 >
-> Delivery is at-least-once, so a message can be replayed. De-duplicate on the client using the `messageId` in `ctx.tags` — drop any publication whose `messageId` you have already seen. See [Realtime reliability](/developers/realtime-reliability.md).
+> Delivery is at-least-once, so a message can be replayed. De-duplicate on the client using the `messageId` in `ctx.tags` — drop any publication whose `messageId` you have already seen. See [Realtime reliability](https://docs.sx.bet/developers/realtime-reliability.md).
 >
-> The orderbook channels ([`orderbook_v3`](/api-reference/channel-orderbook-v3) and [`orderbook_v3_event`](/api-reference/channel-orderbook-v3-event)) are the exception: use their `version` field to order and de-duplicate updates within a market — apply a publication only when its `version` is strictly greater than the one you hold. See [Book versioning](/developers/book-versioning.md).
+> The orderbook channels ([`orderbook_v3`](https://docs.sx.bet/api-reference/channel-orderbook-v3) and [`orderbook_v3_event`](https://docs.sx.bet/api-reference/channel-orderbook-v3-event)) are the exception: use their `version` field to order and de-duplicate updates within a market — apply a publication only when its `version` is strictly greater than the one you hold. See [Book versioning](https://docs.sx.bet/developers/book-versioning.md).
 
-Full reference: [Real-time data](/developers/realtime-overview.md).
+Full reference: [Real-time data](https://docs.sx.bet/developers/realtime-overview.md).
 
 **8. Re-model the order book feed**
 
-In V2, [`order_book:market_{marketHash}`](/api-reference/channel-orderbook-v3) published a stream of **individual order rows/deltas** you merged into a local book. In V3, [`orderbook_v3:{marketHash}`](/api-reference/channel-orderbook-v3) (and [`orderbook_v3_event:{eventId}`](/api-reference/channel-orderbook-v3-event)) publish the **entire resting book on every update, aggregated by price into anonymous levels**.
+In V2, [`order_book:market_{marketHash}`](https://docs.sx.bet/api-reference/channel-orderbook-v3) published a stream of **individual order rows/deltas** you merged into a local book. In V3, [`orderbook_v3:{marketHash}`](https://docs.sx.bet/api-reference/channel-orderbook-v3) (and [`orderbook_v3_event:{eventId}`](https://docs.sx.bet/api-reference/channel-orderbook-v3-event)) publish the **entire resting book on every update, aggregated by price into anonymous levels**.
 
-* **No per-order identity.** Levels carry only `percentageOdds` and aggregate `size`. Your own orders still arrive individually on [`account:orders_v3_#{address}`](/api-reference/channel-orders-v3).
+* **No per-order identity.** Levels carry only `percentageOdds` and aggregate `size`. Your own orders still arrive individually on [`account:orders_v3_#{address}`](https://docs.sx.bet/api-reference/channel-orders-v3).
 * **Replace, don't merge.** V2 required upsert/remove by `orderHash`; every V3 publication is the complete book for that market.
-* **Version-gate instead of `updateTime`.** Each publication carries a `version` (a single monotonic string). Apply a message only when its `version` is strictly greater than the one you hold for that market. See [Book versioning](/developers/book-versioning.md).
-* **Sides are explicit.** Levels are split into `outcomeOne` / `outcomeTwo` (always the maker frame), replacing V2's per-row `isMakerBettingOutcomeOne`. There is no `showTakerPerspective` on this channel (unlike [`GET /orderbook-v3/snapshot/market`](/api-reference/get-market-orderbook-snapshot)); invert yourself with `takerOdds = 1 − percentageOdds / 10^20`.
+* **Version-gate instead of `updateTime`.** Each publication carries a `version` (a single monotonic string). Apply a message only when its `version` is strictly greater than the one you hold for that market. See [Book versioning](https://docs.sx.bet/developers/book-versioning.md).
+* **Sides are explicit.** Levels are split into `outcomeOne` / `outcomeTwo` (always the maker frame), replacing V2's per-row `isMakerBettingOutcomeOne`. There is no `showTakerPerspective` on this channel (unlike [`GET /orderbook-v3/snapshot/market`](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot)); invert yourself with `takerOdds = 1 − percentageOdds / 10^20`.
 
 Before/after payloads:
 
@@ -410,7 +410,7 @@ Before/after payloads:
 }
 ```
 
-Subscribe first, then seed from REST inside the `subscribed` handler, and run both the snapshot and every publication through the same version rule so ordering never depends on timing. When the channel replays the book from history (`recovered: true`), skip the seed entirely. Full pattern: [Seeding and subscribing to the order book](/developers/odds.md#seeding-and-subscribing-realtime-to-the-order-book).
+Subscribe first, then seed from REST inside the `subscribed` handler, and run both the snapshot and every publication through the same version rule so ordering never depends on timing. When the channel replays the book from history (`recovered: true`), skip the seed entirely. Full pattern: [Seeding and subscribing to the order book](https://docs.sx.bet/developers/odds.md#seeding-and-subscribing-realtime-to-the-order-book).
 
 ```javascript JavaScript theme={null}
 const API = "https://api.sx.bet";  // testnet: https://api.toronto.sx.bet
@@ -476,13 +476,13 @@ sub = client.new_subscription(
 await sub.subscribe()
 ```
 
-Full reference: [Order book updates](/api-reference/channel-orderbook-v3.md) and [Event order book updates](/api-reference/channel-orderbook-v3-event.md).
+Full reference: [Order book updates](https://docs.sx.bet/api-reference/channel-orderbook-v3.md) and [Event order book updates](https://docs.sx.bet/api-reference/channel-orderbook-v3-event.md).
 
 **9. Parlay RFQ market makers**
 
 Nothing changes about how you hear requests: subscribe to `parlay_markets:global` exactly as in V2.
 
-What changes is how you respond. Price the request, then post your quote to [`POST /orders-v3`](/api-reference/post-orders-v3) with `timeInForce: "GTC"` against the parlay `marketHash`, signed the new way (see the posting step above). Every order needs a real `expiry` (a future unix epoch timestamp in seconds); for a parlay it must be no later than the parlay market's own expiry. Full walkthrough: [Market making parlays](/developers/market-making-parlays.md).
+What changes is how you respond. Price the request, then post your quote to [`POST /orders-v3`](https://docs.sx.bet/api-reference/post-orders-v3) with `timeInForce: "GTC"` against the parlay `marketHash`, signed the new way (see the posting step above). Every order needs a real `expiry` (a future unix epoch timestamp in seconds); for a parlay it must be no later than the parlay market's own expiry. Full walkthrough: [Market making parlays](https://docs.sx.bet/developers/market-making-parlays.md).
 
 **10. Adjust query endpoints**
 
@@ -490,12 +490,12 @@ We have renamed the data types to more intuitive names, and adjusted the endpoin
 
 | You want | V3 endpoint | Grain | Old |
 | - | - | - | - |
-| One row per bet | [`GET /trades-v3`](/api-reference/get-trades-v3) | bet | consolidated\_trades |
-| One row per matched leg | [`GET /fills-v3`](/api-reference/get-fills-v3) | fill | trades |
-| Net exposure per market | [`GET /positions-v3`](/api-reference/get-positions-v3) | position | consolidated\_trades (grouped) |
-| Your resting orders | [`GET /orders-v3`](/api-reference/get-orders-v3) | active orders only | - |
+| One row per bet | [`GET /trades-v3`](https://docs.sx.bet/api-reference/get-trades-v3) | bet | consolidated\_trades |
+| One row per matched leg | [`GET /fills-v3`](https://docs.sx.bet/api-reference/get-fills-v3) | fill | trades |
+| Net exposure per market | [`GET /positions-v3`](https://docs.sx.bet/api-reference/get-positions-v3) | position | consolidated\_trades (grouped) |
+| Your resting orders | [`GET /orders-v3`](https://docs.sx.bet/api-reference/get-orders-v3) | active orders only | - |
 
-See [Grain types](/developers/which-grain.md).
+See [Grain types](https://docs.sx.bet/developers/which-grain.md).
 
 Three changes apply across all four:
 
@@ -519,7 +519,7 @@ There is no refund endpoint or refund channel in V3. Capital-efficiency refunds 
 
 | V2 | V3 |
 | - | - |
-| `GET /trades/portfolio/refunds` | `ceRefundAmount` / `ceRefundFeeAmount` on [`GET /fills-v3`](/api-reference/get-fills-v3) and [`GET /trades-v3`](/api-reference/get-trades-v3) |
+| `GET /trades/portfolio/refunds` | `ceRefundAmount` / `ceRefundFeeAmount` on [`GET /fills-v3`](https://docs.sx.bet/api-reference/get-fills-v3) and [`GET /trades-v3`](https://docs.sx.bet/api-reference/get-trades-v3) |
 | `ce_refunds:{address}` channel | Read the fields off the `account:fills_v3_#{address}` / `account:trades_v3_#{address}` publications |
 | `marketHasRefunds` flag | No successor — test `ceRefundAmount > 0` |
 
@@ -533,7 +533,7 @@ There is no refund endpoint or refund channel in V3. Capital-efficiency refunds 
 | `ACTIVE` | Resting on the book, in whole or in part. |
 | `INACTIVE` | No longer resting. `inactiveReason` says why. |
 
-`FILLED` is an `inactiveReason`, not a status: a fully filled order is `status: "INACTIVE"` with `inactiveReason: "FILLED"`. See [Order lifecycle](/developers/order-lifecycle.md).
+`FILLED` is an `inactiveReason`, not a status: a fully filled order is `status: "INACTIVE"` with `inactiveReason: "FILLED"`. See [Order lifecycle](https://docs.sx.bet/developers/order-lifecycle.md).
 
 **Bet status** — `MATCHED → LOCKED → SETTLED`, or `MATCHED → FAILED`:
 
@@ -544,7 +544,7 @@ There is no refund endpoint or refund channel in V3. Capital-efficiency refunds 
 | `SETTLED` | The fixture is graded and the outcome is recorded in `settlement`. |
 | `FAILED` | The on-chain lock did not succeed. No funds moved. |
 
-See [Bet lifecycle](/developers/bet-lifecycle.md).
+See [Bet lifecycle](https://docs.sx.bet/developers/bet-lifecycle.md).
 
 ***
 
@@ -552,28 +552,28 @@ See [Bet lifecycle](/developers/bet-lifecycle.md).
 
 | Action | V2 | V3 | Page |
 | - | - | - | - |
-| Exchange metadata | `GET /metadata` | `GET /metadata/obv3` | [→](/api-reference/get-metadata-obv3.md) |
-| Deploy proxy wallet | — | `POST /user/deploy-proxy` | [→](/api-reference/post-user-deploy-proxy.md) |
-| Look up proxy address | — | `GET /user/proxy` | [→](/api-reference/get-user-proxy.md) |
-| Fund proxy | — | `POST /user/transfer-to-proxy` | [→](/developers/funding.md) |
-| Balances | — | `GET /user/balance-v3` | [→](/api-reference/get-user-balance-v3.md) |
-| Fees | `GET /metadata` (`oracleFees`, global) | `GET /user/fees-v3` (per account) | [→](/api-reference/get-user-fees-v3.md) |
-| Withdraw | — | `POST /user/multisig/withdraw/prepare` | [→](/api-reference/post-user-multisig-withdraw-prepare.md) |
-| Create order | `POST /orders/new` | `POST /orders-v3` | [→](/api-reference/post-orders-v3.md) |
-| Take liquidity | `POST /orders/fill/v2` | `POST /orders-v3` with `IOC` / `FOK` | [→](/developers/taking-liquidity.md) |
-| Enable betting | `POST /orders/approve` | — (fund the proxy) | [→](/developers/funding.md) |
-| List my open orders | `GET /orders?maker=…` | `GET /orders-v3` | [→](/api-reference/get-orders-v3.md) |
-| Get one order by id | `GET /orders?orderHashes=…` | `GET /orders-v3/{orderId}` | [→](/api-reference/get-order-v3.md) |
-| Market order book | `GET /orders?marketHashes=…` | `GET /orderbook-v3/snapshot/market?marketHash=…` | [→](/api-reference/get-market-orderbook-snapshot.md) |
-| Best odds | `GET /orders/odds/best` | `GET /orders-v3/odds/best` | [→](/api-reference/get-best-odds-v3.md) |
-| Cancel by id | `POST /orders/cancel/v2` | `DELETE /orders-v3` | [→](/api-reference/delete-orders-v3.md) |
-| Cancel by market | — | `DELETE /orders-v3/market` | [→](/api-reference/delete-orders-v3-market.md) |
-| Cancel by event | `POST /orders/cancel/event` | `DELETE /orders-v3/event` | [→](/api-reference/delete-orders-v3-event.md) |
-| Cancel all | `POST /orders/cancel/all` | `DELETE /orders-v3/all` | [→](/api-reference/delete-orders-v3-all.md) |
-| Register / cancel heartbeat | `POST /heartbeat` | `POST /heartbeat/v3` (cancel = `timeoutSeconds: 0`) | [→](/developers/heartbeat.md) |
-| Fill-grain history | `GET /trades` | `GET /fills-v3` | [→](/api-reference/get-fills-v3.md) |
-| Bet-grain history | `GET /trades/consolidated` | `GET /trades-v3` | [→](/api-reference/get-trades-v3.md) |
-| Get one bet by id | — | `GET /trades-v3/{tradeId}` | [→](/api-reference/get-trade-v3.md) |
+| Exchange metadata | `GET /metadata` | `GET /metadata/obv3` | [→](https://docs.sx.bet/api-reference/get-metadata-obv3.md) |
+| Deploy proxy wallet | — | `POST /user/deploy-proxy` | [→](https://docs.sx.bet/api-reference/post-user-deploy-proxy.md) |
+| Look up proxy address | — | `GET /user/proxy` | [→](https://docs.sx.bet/api-reference/get-user-proxy.md) |
+| Fund proxy | — | `POST /user/transfer-to-proxy` | [→](https://docs.sx.bet/developers/funding.md) |
+| Balances | — | `GET /user/balance-v3` | [→](https://docs.sx.bet/api-reference/get-user-balance-v3.md) |
+| Fees | `GET /metadata` (`oracleFees`, global) | `GET /user/fees-v3` (per account) | [→](https://docs.sx.bet/api-reference/get-user-fees-v3.md) |
+| Withdraw | — | `POST /user/multisig/withdraw/prepare` | [→](https://docs.sx.bet/api-reference/post-user-multisig-withdraw-prepare.md) |
+| Create order | `POST /orders/new` | `POST /orders-v3` | [→](https://docs.sx.bet/api-reference/post-orders-v3.md) |
+| Take liquidity | `POST /orders/fill/v2` | `POST /orders-v3` with `IOC` / `FOK` | [→](https://docs.sx.bet/developers/taking-liquidity.md) |
+| Enable betting | `POST /orders/approve` | — (fund the proxy) | [→](https://docs.sx.bet/developers/funding.md) |
+| List my open orders | `GET /orders?maker=…` | `GET /orders-v3` | [→](https://docs.sx.bet/api-reference/get-orders-v3.md) |
+| Get one order by id | `GET /orders?orderHashes=…` | `GET /orders-v3/{orderId}` | [→](https://docs.sx.bet/api-reference/get-order-v3.md) |
+| Market order book | `GET /orders?marketHashes=…` | `GET /orderbook-v3/snapshot/market?marketHash=…` | [→](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot.md) |
+| Best odds | `GET /orders/odds/best` | `GET /orders-v3/odds/best` | [→](https://docs.sx.bet/api-reference/get-best-odds-v3.md) |
+| Cancel by id | `POST /orders/cancel/v2` | `DELETE /orders-v3` | [→](https://docs.sx.bet/api-reference/delete-orders-v3.md) |
+| Cancel by market | — | `DELETE /orders-v3/market` | [→](https://docs.sx.bet/api-reference/delete-orders-v3-market.md) |
+| Cancel by event | `POST /orders/cancel/event` | `DELETE /orders-v3/event` | [→](https://docs.sx.bet/api-reference/delete-orders-v3-event.md) |
+| Cancel all | `POST /orders/cancel/all` | `DELETE /orders-v3/all` | [→](https://docs.sx.bet/api-reference/delete-orders-v3-all.md) |
+| Register / cancel heartbeat | `POST /heartbeat` | `POST /heartbeat/v3` (cancel = `timeoutSeconds: 0`) | [→](https://docs.sx.bet/developers/heartbeat.md) |
+| Fill-grain history | `GET /trades` | `GET /fills-v3` | [→](https://docs.sx.bet/api-reference/get-fills-v3.md) |
+| Bet-grain history | `GET /trades/consolidated` | `GET /trades-v3` | [→](https://docs.sx.bet/api-reference/get-trades-v3.md) |
+| Get one bet by id | — | `GET /trades-v3/{tradeId}` | [→](https://docs.sx.bet/api-reference/get-trade-v3.md) |
 
 ## Rate limits have changed
 
@@ -591,7 +591,7 @@ V2 limited endpoint *groups* (all `POST /orders/*` shared 5,500/min; all `GET /t
 | `POST /heartbeat/v3` | 600 / 60s | |
 | `GET /fills-v3` · `GET /positions-v3` | 300 / 60s each | |
 
-Full list, response headers, and the global bucket: [Rate limits](/developers/rate-limits.md).
+Full list, response headers, and the global bucket: [Rate limits](https://docs.sx.bet/developers/rate-limits.md).
 
 ## Migration checklist
 
@@ -607,11 +607,11 @@ Run it on testnet ([api.toronto.sx.bet](https://api.toronto.sx.bet)) first.
 * [ ] Point accounting at `/trades-v3` / `/fills-v3` / `/positions-v3`; remap `orderHash` / `fillHash` ids; switch pagination to `perPage` + `nextKey`.
 * [ ] Arm `POST /heartbeat/v3` and let it lapse once on testnet to watch `HEARTBEAT_TIMEOUT` cancel your orders.
 
-> **[Improvements](/developers/new-in-v3.md)**
+> **[Improvements](https://docs.sx.bet/developers/new-in-v3.md)**
 >
 > What changed in V3.
 
-> **[Quickstart](/developers/quickstart.md)**
+> **[Quickstart](https://docs.sx.bet/developers/quickstart.md)**
 >
 > The full V3 flow, metadata to placed bet.
 

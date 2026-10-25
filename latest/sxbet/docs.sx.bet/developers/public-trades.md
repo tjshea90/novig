@@ -12,8 +12,8 @@ Two ways to fetch:
 
 | | |
 | - | - |
-| [`GET /trades-v3/public`](/api-reference/get-trades-v3-public) | Paginated history, filtered by market |
-| [`recent_trades_v3:global`](/api-reference/channel-recent-trades-v3) | Realtime |
+| [`GET /trades-v3/public`](https://docs.sx.bet/api-reference/get-trades-v3-public) | Paginated history, filtered by market |
+| [`recent_trades_v3:global`](https://docs.sx.bet/api-reference/channel-recent-trades-v3) | Realtime |
 
 ## Read the tape for a market
 
@@ -43,19 +43,19 @@ Seed from REST on connect, then apply channel messages.
 
 ## Related
 
-> **[Get public trades](/api-reference/get-trades-v3-public.md)**
+> **[Get public trades](https://docs.sx.bet/api-reference/get-trades-v3-public.md)**
 >
 > Core trade fields plus optional market metadata, and what the API holds back.
 
-> **[Recent trades channel](/api-reference/channel-recent-trades-v3.md)**
+> **[Recent trades channel](https://docs.sx.bet/api-reference/channel-recent-trades-v3.md)**
 >
 > The same data, in realtime.
 
-> **[The order book](/developers/order-book.md)**
+> **[The order book](https://docs.sx.bet/developers/order-book.md)**
 >
 > What people will trade at, versus what they already traded at.
 
-> **[Reading your bets](/developers/which-grain.md#bets)**
+> **[Reading your bets](https://docs.sx.bet/developers/which-grain.md#bets)**
 >
 > The authenticated view — full bet grain, including identity and settlement.
 

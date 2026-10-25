@@ -12,7 +12,7 @@ traders and integrations perform over time.
 ## Market Activity
 
 The examples below assume you already have a market object. To find or fetch
-one, see [**Discover Markets**](/market-data/discover-markets.md).
+one, see [**Discover Markets**](https://docs.polymarket.com/market-data/discover-markets.md).
 
 **TypeScript**
 
@@ -648,7 +648,7 @@ Check a market's resolution progress.
 **TypeScript**
 
 Call `fetchResolutions()` on an existing `PublicClient` or `SecureClient`.
-If needed, [create a Public Client](/getting-started/typescript.md#create-a-public-client) first.
+If needed, [create a Public Client](https://docs.polymarket.com/getting-started/typescript.md#create-a-public-client) first.
 
 ```ts theme={null}
 const resolutions = await client.fetchResolutions({
@@ -699,7 +699,7 @@ from `@polymarket/client` to interpret the estimate:
 **Python**
 
 Call `get_resolutions()` on an existing `AsyncPublicClient` or `AsyncSecureClient`.
-If needed, [create a Public Client](/getting-started/python.md#create-a-public-client) first.
+If needed, [create a Public Client](https://docs.polymarket.com/getting-started/python.md#create-a-public-client) first.
 
 ```python theme={null}
 resolutions = await client.get_resolutions(condition_ids=[condition_id])
@@ -807,7 +807,7 @@ one read.
 **TypeScript**
 
 Call `fetchTokenReferences()` on an existing `PublicClient` or `SecureClient`.
-If needed, [create a Public Client](/getting-started/typescript.md#create-a-public-client) first.
+If needed, [create a Public Client](https://docs.polymarket.com/getting-started/typescript.md#create-a-public-client) first.
 
 ```ts theme={null}
 const assetId =
@@ -864,7 +864,7 @@ paginated. Unknown asset IDs are omitted.
 
 Call `get_token_references()` on an existing `AsyncPublicClient` or
 `AsyncSecureClient`. If needed,
-[create a Public Client](/getting-started/python.md#create-a-public-client) first.
+[create a Public Client](https://docs.polymarket.com/getting-started/python.md#create-a-public-client) first.
 Sync clients expose the same method.
 
 ```python theme={null}

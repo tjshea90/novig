@@ -6,7 +6,7 @@
 
 > Betting delays added to guard against toxic flow.
 
-Read `data.bettingDelay` from [`GET /metadata/obv3`](/api-reference/get-metadata-obv3). Every value is milliseconds.
+Read `data.bettingDelay` from [`GET /metadata/obv3`](https://docs.sx.bet/api-reference/get-metadata-obv3). Every value is milliseconds.
 
 A delay applies only to an order that takes resting liquidity. An order that only adds liquidity is
 accepted immediately and goes `ACTIVE` without waiting.

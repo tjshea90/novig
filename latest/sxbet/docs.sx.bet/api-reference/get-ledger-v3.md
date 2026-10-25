@@ -14,7 +14,7 @@
 | `WITHDRAWAL` | Money out |
 | `SETTLEMENT` | A bet settled |
 | `PAYOUT` | Winnings paid |
-| `REFUND` | Money returned — including [capital-efficiency](/developers/capital-efficiency.md) refunds |
+| `REFUND` | Money returned — including [capital-efficiency](https://docs.sx.bet/developers/capital-efficiency.md) refunds |
 | `ADJUSTMENT` | A manual or corrective movement |
 
 **`eventStatus`** — `PENDING`, `SUCCESS`, `FAILED`.

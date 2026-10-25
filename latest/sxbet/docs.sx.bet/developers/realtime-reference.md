@@ -18,22 +18,22 @@
 
 | Channel | Carries |
 | - | - |
-| [`orderbook_v3:{marketHash}`](/api-reference/channel-orderbook-v3) | The full aggregated book for one market |
-| [`orderbook_v3_event:{eventId}`](/api-reference/channel-orderbook-v3-event) | The same bodies, for every market in an event |
-| [`best_odds_v3:global`](/api-reference/channel-best-odds-v3) | Top-of-book changes across all markets |
-| [`recent_trades_v3:global`](/api-reference/channel-recent-trades-v3) | The anonymized public tape |
-| [`markets:global`](/api-reference/channel-markets) | Market create and update |
-| [`main_line:global`](/api-reference/channel-line-changes) | Main-line changes |
-| [`fixtures:global`](/api-reference/channel-fixtures) · `fixtures:live_scores` | Fixture metadata and live scores |
-| [`parlay_markets:global`](/api-reference/channel-parlay-requests) | Parlay quote requests |
+| [`orderbook_v3:{marketHash}`](https://docs.sx.bet/api-reference/channel-orderbook-v3) | The full aggregated book for one market |
+| [`orderbook_v3_event:{eventId}`](https://docs.sx.bet/api-reference/channel-orderbook-v3-event) | The same bodies, for every market in an event |
+| [`best_odds_v3:global`](https://docs.sx.bet/api-reference/channel-best-odds-v3) | Top-of-book changes across all markets |
+| [`recent_trades_v3:global`](https://docs.sx.bet/api-reference/channel-recent-trades-v3) | The anonymized public tape |
+| [`markets:global`](https://docs.sx.bet/api-reference/channel-markets) | Market create and update |
+| [`main_line:global`](https://docs.sx.bet/api-reference/channel-line-changes) | Main-line changes |
+| [`fixtures:global`](https://docs.sx.bet/api-reference/channel-fixtures) · `fixtures:live_scores` | Fixture metadata and live scores |
+| [`parlay_markets:global`](https://docs.sx.bet/api-reference/channel-parlay-requests) | Parlay quote requests |
 
 **Account** — scoped to you, and only reachable with a matching token:
 
 | Channel | Carries |
 | - | - |
-| [`account:orders_v3_#{address}`](/api-reference/channel-orders-v3) | Your order state changes |
-| [`account:trades_v3_#{address}`](/api-reference/channel-trades-v3) | Your bets |
-| [`account:fills_v3_#{address}`](/api-reference/channel-fills-v3) | Your individual fills |
+| [`account:orders_v3_#{address}`](https://docs.sx.bet/api-reference/channel-orders-v3) | Your order state changes |
+| [`account:trades_v3_#{address}`](https://docs.sx.bet/api-reference/channel-trades-v3) | Your bets |
+| [`account:fills_v3_#{address}`](https://docs.sx.bet/api-reference/channel-fills-v3) | Your individual fills |
 
 ## History and recovery, per namespace
 

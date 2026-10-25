@@ -7,7 +7,7 @@
 > Get the outcome of a proxy deposit by session id.
 
 `GET /user/transfer-to-proxy/status` returns `PENDING`, `SUCCESS`, or `FAILED` for one deposit
-started by [`POST /user/transfer-to-proxy`](/api-reference/post-user-transfer-to-proxy).
+started by [`POST /user/transfer-to-proxy`](https://docs.sx.bet/api-reference/post-user-transfer-to-proxy).
 Pass the `sessionId` from that submit response.
 
 

@@ -48,11 +48,11 @@ We'll walk through these steps using Coinbase, but you'll find most crypto excha
 
 That's it! Now you have your funds back in fiat currency.
 
-> **[Deposit Crypto](/user-guides/deposit-withdraw/transfer-crypto.md)**
+> **[Deposit Crypto](https://docs.sx.bet/user-guides/deposit-withdraw/transfer-crypto.md)**
 >
 > Fund your wallet again when you're ready to bet.
 
-> **[Maker Rewards](/user-guides/rewards/maker-rewards.md)**
+> **[Maker Rewards](https://docs.sx.bet/user-guides/rewards/maker-rewards.md)**
 >
 > Earn USDC by providing liquidity on SX Bet markets.
 

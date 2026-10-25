@@ -6,6 +6,22 @@
 
 > This changelog is specific to our API users and LPs
 
+**October 23, 2026 - Unrealized PnL on Open Positions**
+
+**`GET /v3/portfolio/pnl` values your open positions at the last trade.** Each position carries `cost` and `last`, the price of the outcome's last trade. The response sums `basis`, what your positions cost, and `value`, what they would pay at those prices. Your cash plus `value` is your net liquidation value, and your unrealized PnL is `value` minus `basis`.
+
+If you hold both outcomes of a market, we pay part of the payout to your cash right away. The sums leave that part out, so it isn't counted twice. A position on an outcome that hasn't traded yet counts at its cost.
+
+You can narrow the read by `event` or `market`, and page it with `limit` and `after`. The sums cover every market your filter matches, not only the page.
+
+The read covers open markets only. Once a market closes, its positions move to `GET /v3/history/positions` until it settles. See [Orders](https://docs.novig.com/api/execution/orders).
+
+**October 22, 2026 - Throttles Apply per Subaccount**
+
+**Throttles now apply per subaccount, not per key.** A subaccount's `trading` key and all of its `trading::read` keys draw from the same throttles, so adding a key no longer adds capacity.
+
+A management key still has its own throttles. See [Throttling](https://docs.novig.com/api/throttling.md#keys-that-share-throttles).
+
 **October 22, 2026 - Boxing, NBA Combo Ladders, NBA Futures, and Live First Halves**
 
 **Boxing.** Every boxing match lists the same markets as UFC: `MONEY`, `TOTAL`, `GO_THE_DISTANCE`, `VICTORY_BY_KO_KTO_OR_DQ`, `VICTORY_BY_DECISION`, and `DRAW`.
@@ -24,33 +40,33 @@ These go live with our production release on October 22. If your client filters 
 
 **On Thursday, October 22, 2026, the Maker Credit drops on every straight contract.** On live trading in every sport, it falls from 50% to 25% of the taker fee. On eligible futures it falls from 70% to 50%. Eligible futures are the futures in NFL, NCAAF, MLB, NBA, WNBA and NHL. A series winner market is not eligible.
 
-The taker fee doesn't change. Each market's `fee.makerCredit` carries the new rate from the release. See [Trading fees](/api/concepts/fees.md) and the [Maker Credit Program](/maker-credit-program.md).
+The taker fee doesn't change. Each market's `fee.makerCredit` carries the new rate from the release. See [Trading fees](https://docs.novig.com/api/concepts/fees.md) and the [Maker Credit Program](https://docs.novig.com/maker-credit-program.md).
 
 **October 21, 2026 - Maker Fill IDs in Trade History**
 
-**A row from `GET /v3/history/trades` now carries `makeIds`.** It lists the `tradeId` of each tape print for the trade, one for each resting order, oldest first. Each print already carries the row's `tradeId` as `takeId`, so you can join the two from either side. See [Trade history](/api/catalog#trade-history).
+**A row from `GET /v3/history/trades` now carries `makeIds`.** It lists the `tradeId` of each tape print for the trade, one for each resting order, oldest first. Each print already carries the row's `tradeId` as `takeId`, so you can join the two from either side. See [Trade history](https://docs.novig.com/api/catalog#trade-history).
 
 **October 21, 2026 - Join the Tape to Trade History**
 
 **A trade on the `trades` channel and from `GET /v3/catalog/markets/{id}/trades` now carries `takeId`.** It matches `tradeId` in `GET /v3/history/trades`, so you can match each tape print to its history row.
 
-The two report one trade from opposite sides. The tape prints the resting side, once for each resting order. History has one row from the taker's side, with the taker's outcome and average price. See [Tape](/api/streaming/tape.md).
+The two report one trade from opposite sides. The tape prints the resting side, once for each resting order. History has one row from the taker's side, with the taker's outcome and average price. See [Tape](https://docs.novig.com/api/streaming/tape.md).
 
 **October 21, 2026 - Taker Flag on the Private Stream**
 
-**A `fill` event on the private `orders` channel now carries `taker`.** It is `true` when your order took liquidity and `false` when it rested. It matches `taker` from `GET /v3/portfolio/fills`. See [Private stream](/api/streaming/private.md).
+**A `fill` event on the private `orders` channel now carries `taker`.** It is `true` when your order took liquidity and `false` when it rested. It matches `taker` from `GET /v3/portfolio/fills`. See [Private stream](https://docs.novig.com/api/streaming/private.md).
 
 **October 20, 2026 - Filter v2 Fills by Market**
 
 **`GET /nbx/v2/emm/fills/all` now takes `marketId`.** It lists only your fills on that market, whatever their dates.
 
-A `beg` and `end` window can catch only part of a market whose fills span weeks. `marketId` returns every fill you have on the market, and it combines with every other filter. See [Get all my fills](/deprecated/api-reference/positions/get-all-my-fills.md).
+A `beg` and `end` window can catch only part of a market whose fills span weeks. `marketId` returns every fill you have on the market, and it combines with every other filter. See [Get all my fills](https://docs.novig.com/deprecated/api-reference/positions/get-all-my-fills.md).
 
 **October 20, 2026 - Fill IDs on the Private Stream**
 
-**A `fill` event on the private `orders` channel now carries `fillId`.** It matches the `fillId` from `GET /v3/portfolio/fills`, so you can match a stream fill to its REST row. Two fills of the same size on one order have different IDs. See [Private stream](/api/streaming/private.md).
+**A `fill` event on the private `orders` channel now carries `fillId`.** It matches the `fillId` from `GET /v3/portfolio/fills`, so you can match a stream fill to its REST row. Two fills of the same size on one order have different IDs. See [Private stream](https://docs.novig.com/api/streaming/private.md).
 
-**A `trades` channel trade carries `tradeId` and `outcomeId`.** The docs showed `outcome` and no ID, but the wire hasn't changed. `tradeId` is the `fillId` of the resting order's fill. See [Tape](/api/streaming/tape.md).
+**A `trades` channel trade carries `tradeId` and `outcomeId`.** The docs showed `outcome` and no ID, but the wire hasn't changed. `tradeId` is the `fillId` of the resting order's fill. See [Tape](https://docs.novig.com/api/streaming/tape.md).
 
 **October 20, 2026 - Market Data**
 
@@ -74,7 +90,7 @@ A `beg` and `end` window can catch only part of a market whose fills span weeks.
 
 To get recent batches, set `replay` on `subscribe` or `snapshot`, from 0 to 64. A value outside that range returns `TRADE_REPLAY_OUT_OF_RANGE`.
 
-If you recover a small gap from the snapshot, send `"replay": 64` to keep the old behavior. See [Tape](/api/streaming/tape.md#gaps).
+If you recover a small gap from the snapshot, send `"replay": 64` to keep the old behavior. See [Tape](https://docs.novig.com/api/streaming/tape.md#gaps).
 
 **October 17, 2026 - Open Order Cost Is Always 0**
 
@@ -88,11 +104,11 @@ To total your resting orders, list them with `GET /nbx/v2/emm/orders/all?status=
 
 **`GET /rfq/executions` no longer takes `offset`.** A request that sends `offset` now returns `400 Bad Request`.
 
-Page with `after` instead. Pass the `rfq_id` of the last execution you read, and the next page starts after it. `after` reaches any depth, and a deep page takes as long as the first one. See [Executions](/api-reference/rfq/executions.md#page-through-your-history).
+Page with `after` instead. Pass the `rfq_id` of the last execution you read, and the next page starts after it. `after` reaches any depth, and a deep page takes as long as the first one. See [Executions](https://docs.novig.com/api-reference/rfq/executions.md#page-through-your-history).
 
 **October 15, 2026 - Live Taker Fee Rises to 0.06**
 
-On Thursday, October 15, 2026, the live taker fee coefficient will rise from `0.03` to `0.06` on every straight contract, including NFL. The fee is still charged only while the event is in-game, and pregame trading stays free. The Maker Credit stays at 50% of the taker fee, so makers earn twice as much per in-game fill. See [Trading fees](/api/concepts/fees.md) and the [Maker Credit Program](/maker-credit-program.md).
+On Thursday, October 15, 2026, the live taker fee coefficient will rise from `0.03` to `0.06` on every straight contract, including NFL. The fee is still charged only while the event is in-game, and pregame trading stays free. The Maker Credit stays at 50% of the taker fee, so makers earn twice as much per in-game fill. See [Trading fees](https://docs.novig.com/api/concepts/fees.md) and the [Maker Credit Program](https://docs.novig.com/maker-credit-program.md).
 
 **October 14, 2026 - Soccer Team Totals and 1H Totals**
 

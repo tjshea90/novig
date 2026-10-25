@@ -83,7 +83,7 @@ untouched, they just start carrying the new `outcomeId`s.
 ### 🔁 Changed
 
 * **24 `marketType` values are renamed for cross-sport consistency**, affecting **222** markets in Ice Hockey, Soccer and Cricket. The singular prefixes `player-`, `spread-` and `total-` become the plural `players-`, `spreads-` and `totals-` already used everywhere else.
-* **`period` changes on 74 markets.** **28 move from `fulltime` to `result`** across 26 sports that have no scoring phase after regulation, so the two values were names for one number — see [Periods per sport](/guides/periods.md). The other **46 had a blank `period` and are now populated**. `marketId`s are unchanged throughout.
+* **`period` changes on 74 markets.** **28 move from `fulltime` to `result`** across 26 sports that have no scoring phase after regulation, so the two values were names for one number — see [Periods per sport](https://docs.oddspapi.io/guides/periods.md). The other **46 had a blank `period` and are now populated**. `marketId`s are unchanged throughout.
 * **No market has an empty `period` any more.** If you special-cased the blank, drop that branch.
 
 > **All 74 period changes**
@@ -159,10 +159,10 @@ untouched, they just start carrying the new `outcomeId`s.
 
 ### ✨ Added
 
-* **`GET /{lang}/fixtures/odds/parlay`** — price an accumulator from a list of `oddsIds`, across fixtures and sports. See [Parlays & SGP](/api-reference/parlays.md).
+* **`GET /{lang}/fixtures/odds/parlay`** — price an accumulator from a list of `oddsIds`, across fixtures and sports. See [Parlays & SGP](https://docs.oddspapi.io/api-reference/parlays.md).
 * **`GET /{lang}/fixtures/odds/sgp`** — price a **correlated** same-game parlay, quoted by the bookmaker. `price` carries the correlation, `singlesPrice` the naive product.
 * **`missingOddsIds`** on both new endpoints — names the requested legs that could not be found, so an empty section is never ambiguous.
-* **`X-API-Key` header authentication** on every endpoint, alongside the `apiKey` query parameter. Send one or the other. See [Authentication](/api-reference/authentication.md).
+* **`X-API-Key` header authentication** on every endpoint, alongside the `apiKey` query parameter. Send one or the other. See [Authentication](https://docs.oddspapi.io/api-reference/authentication.md).
 
 ***
 
@@ -170,7 +170,7 @@ untouched, they just start carrying the new `outcomeId`s.
 
 ### ✨ Added
 
-* **WebSocket `receiveType: "zstd"` — dictless compression.** Opt-in zstd egress with **no dictionary handling**: every data frame is a standalone dictless zstd frame (`dictId 0`), decoded in one line (`zstd.decompress(frame)` → JSON). \~5–6× smaller than JSON on `odds` — the simplest way to cut bandwidth. See [Compression](/websocket/compression.md).
+* **WebSocket `receiveType: "zstd"` — dictless compression.** Opt-in zstd egress with **no dictionary handling**: every data frame is a standalone dictless zstd frame (`dictId 0`), decoded in one line (`zstd.decompress(frame)` → JSON). \~5–6× smaller than JSON on `odds` — the simplest way to cut bandwidth. See [Compression](https://docs.oddspapi.io/websocket/compression.md).
 * **WebSocket `receiveType: "zstd-dict"` — trained dictionaries.** Maximum ratio (\~7–9× on `odds`) using per-channel dictionaries the server pushes as `dict` control frames at connect.
 
 ### 🔁 Changed

@@ -6,7 +6,7 @@
 
 > Understand your balances and ledger on SX Bet.
 
-[`GET /user/balance-v3`](/api-reference/get-user-balance-v3) describes the balances of your account. The four amounts, and what each is for:
+[`GET /user/balance-v3`](https://docs.sx.bet/api-reference/get-user-balance-v3) describes the balances of your account. The four amounts, and what each is for:
 
 | Field | Meaning |
 | - | - |
@@ -32,11 +32,11 @@ const spendable = row
 
 ## Related
 
-> **[Get your balance](/api-reference/get-user-balance-v3.md)**
+> **[Get your balance](https://docs.sx.bet/api-reference/get-user-balance-v3.md)**
 >
 > Every field, and what an empty array means.
 
-> **[Funding](/developers/funding.md)**
+> **[Funding](https://docs.sx.bet/developers/funding.md)**
 >
 > Getting money in, and confirming it arrived.
 

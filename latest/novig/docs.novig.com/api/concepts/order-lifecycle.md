@@ -6,7 +6,7 @@
 
 > The five order statuses, and the events that move an order between them.
 
-Every status change arrives as an event on the [private stream](/api/streaming/private.md).
+Every status change arrives as an event on the [private stream](https://docs.novig.com/api/streaming/private.md).
 The status you read over REST is a snapshot of the same state.
 
 Order states: PENDING leads to OPEN, FILLED, CANCELED, or REJECTED. OPEN loops on a partial fill and leads to FILLED or CANCELED.

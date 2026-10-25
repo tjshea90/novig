@@ -57,7 +57,7 @@ All updates share a common envelope:
 * `ts` – UTC timestamp (milliseconds)
 * `entryId` – cursor for replay/resume
 
-> `entryId` is not guaranteed to be contiguous. See [Resume & Replay](/websocket/resume-replay.md) for full explanation.
+> `entryId` is not guaranteed to be contiguous. See [Resume & Replay](https://docs.oddspapi.io/websocket/resume-replay.md) for full explanation.
 
 ***
 
@@ -68,7 +68,7 @@ Control at login using `receiveType`.
 * `"json"` (default) — all messages arrive as UTF-8 JSON
 * `"binary"` — data frames use MessagePack; control frames remain JSON
 * `"zstd"` — dictless zstd-compressed JSON (\~5–6× smaller on `odds`); decode in one line, no dictionary handling. Control frames remain JSON.
-* `"zstd-dict"` — zstd with trained per-channel dictionaries (\~7–9× on `odds`); the server pushes the dictionaries at connect. Self-describing per-frame, no per-channel logic. See [Compression](/websocket/compression.md).
+* `"zstd-dict"` — zstd with trained per-channel dictionaries (\~7–9× on `odds`); the server pushes the dictionaries at connect. Self-describing per-frame, no per-channel logic. See [Compression](https://docs.oddspapi.io/websocket/compression.md).
 
 **Tip for clients:**
 
@@ -100,7 +100,7 @@ const obj = typeof raw === "string"
 * Use filters (`sportIds`, `bookmakers`) to reduce noise
 * `odds` should be treated as **latest state**, not a tick ledger
 
-> Need full price movement or closing line value? Use the REST [Historical Odds & CLV](/api-reference/concepts.md#historical-odds-and-clv) endpoints.
+> Need full price movement or closing line value? Use the REST [Historical Odds & CLV](https://docs.oddspapi.io/api-reference/concepts.md#historical-odds-and-clv) endpoints.
 
 ***
 
@@ -110,7 +110,7 @@ const obj = typeof raw === "string"
 | - | - |
 | Concurrent connections | Enforced per `apiKey` group (max: 5). See error `4003`. |
 | Backpressure | If your client can’t keep up, connection is closed (`4002`). |
-| Replay window | See `resumeWindowMs` in [Resume & Replay](/websocket/resume-replay.md) |
+| Replay window | See `resumeWindowMs` in [Resume & Replay](https://docs.oddspapi.io/websocket/resume-replay.md) |
 | Message rate | Not explicitly limited, but filters are recommended for performance |
 
 ***

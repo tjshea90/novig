@@ -70,7 +70,7 @@ What each grade pays, for a 100 stake at 2.00:
 | `CANCELLED` | Market voided — stake returned | 100 |
 | `UNDECIDED` | Not gradable yet — carries a `reason` | — |
 
-The vocabulary is defined in [Enumerations → settlementStatus](/api-reference/enumerations.md#settlementstatus); new enum values are appended, never repurposed, so treat unknown grades as "hold", not as errors.
+The vocabulary is defined in [Enumerations → settlementStatus](https://docs.oddspapi.io/api-reference/enumerations.md#settlementstatus); new enum values are appended, never repurposed, so treat unknown grades as "hold", not as errors.
 
 ***
 
@@ -81,7 +81,7 @@ An Asian quarter line is two bets in one — Over 2.25 is half your stake on Ove
 * **Over 2.25, match ends with 2 goals** — the Over 2.0 half pushes, the Over 2.5 half loses → `HALFLOSS`. A 100 stake gets 50 back.
 * **Under 2.25, match ends with 2 goals** — the Under 2.0 half pushes, the Under 2.5 half wins → `HALFWIN`. A 100 stake at 1.90 returns 50 + 50 × 1.90 = **145**.
 
-Each quarter line is its own `marketId` like every other line value, so Over 2.25 and Over 2.5 never mix in one market. See [sharp-line trading](/guides/sharp-line-trading.md) for pricing these markets and [Market coverage](/coverage/markets.md) for where they appear.
+Each quarter line is its own `marketId` like every other line value, so Over 2.25 and Over 2.5 never mix in one market. See [sharp-line trading](https://docs.oddspapi.io/guides/sharp-line-trading.md) for pricing these markets and [Market coverage](https://docs.oddspapi.io/coverage/markets.md) for where they appear.
 
 ***
 
@@ -89,7 +89,7 @@ Each quarter line is its own `marketId` like every other line value, so Over 2.2
 
 Period markets — first-half totals, first-set winner, race to a score — grade against the per-period score rows (`p1`, `p2`, …), not against the full-time `result`. The `periods` array on each settlement row names which rows were used.
 
-Interpret periods against the sport's structure: `p1` is a half in soccer, a quarter in NBA basketball, a set in tennis — `expectedPeriods` and `periodLength` on the fixture tell you which, and the full key vocabulary (including combined segments like `fulltime+overtime` and tennis sub-period keys) is in [Enumerations → period](/api-reference/enumerations.md#period).
+Interpret periods against the sport's structure: `p1` is a half in soccer, a quarter in NBA basketball, a set in tennis — `expectedPeriods` and `periodLength` on the fixture tell you which, and the full key vocabulary (including combined segments like `fulltime+overtime` and tennis sub-period keys) is in [Enumerations → period](https://docs.oddspapi.io/api-reference/enumerations.md#period).
 
 ***
 
@@ -115,7 +115,7 @@ Treat both as explicit states in your settlement queue rather than retry-until-s
 * **Grades land on frozen IDs.** The `marketId` / `outcomeId` you priced is the one that comes back graded — no name matching, no per-book translation, no remapping when a book renames a market.
 * **Quarter lines settle exactly.** `HALFWIN` / `HALFLOSS` are explicit grades with the split-stake math above — never rounded to the nearest full grade.
 * **Nothing disappears silently.** Ungradable rows come back `UNDECIDED` with a `reason`; voids come back `CANCELLED` with a `reason`. Every bet in your queue reaches a terminal, explained state.
-* **The pipeline closes on one key.** The same `oddsId` addresses the live price, its [history and closing line](/api-reference/concepts.md#historical-odds-and-clv), and — minus the bookmaker segment — its grade.
+* **The pipeline closes on one key.** The same `oddsId` addresses the live price, its [history and closing line](https://docs.oddspapi.io/api-reference/concepts.md#historical-odds-and-clv), and — minus the bookmaker segment — its grade.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

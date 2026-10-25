@@ -12,7 +12,7 @@ Whether you're looking to scale up your trading operations with SX, integrate ou
 
 Please don't hesitate to reach out and tell us about what you're building — we'll figure out the best way to support your team.
 
-> **[Account models](/developers/account-models.md)**
+> **[Account models](https://docs.sx.bet/developers/account-models.md)**
 >
 > The two ways to represent your site's users on SX.bet.
 

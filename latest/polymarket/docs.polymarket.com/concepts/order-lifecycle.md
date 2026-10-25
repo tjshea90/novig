@@ -138,11 +138,11 @@ Before placing orders, ensure:
 
 ## Next Steps
 
-> **[Resolution](/concepts/resolution.md)**
+> **[Resolution](https://docs.polymarket.com/concepts/resolution.md)**
 >
 > Learn how markets are resolved and winning positions redeemed.
 
-> **[Trading Guide](/trading/quickstart.md)**
+> **[Trading Guide](https://docs.polymarket.com/trading/quickstart.md)**
 >
 > Start placing orders with our step-by-step guide.
 

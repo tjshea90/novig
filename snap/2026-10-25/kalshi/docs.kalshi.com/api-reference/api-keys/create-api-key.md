@@ -1,0 +1,217 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.kalshi.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Create API Key
+
+>  Endpoint for creating a new API key with a user-provided public key.  This endpoint allows users with Premier or Market Maker API usage levels to create API keys by providing their own RSA or Ed25519 public key in PEM format. The platform will use this public key to verify signatures on API requests: RSA-PSS with SHA-256 for RSA keys, Ed25519 for Ed25519 keys.
+
+
+
+## OpenAPI
+
+````yaml /openapi.yaml post /api_keys
+openapi: 3.0.0
+info:
+  title: Kalshi Trade API Manual Endpoints
+  version: 3.34.0
+  description: >-
+    Manually defined OpenAPI spec for endpoints being migrated to spec-first
+    approach
+servers:
+  - url: https://external-api.kalshi.com/trade-api/v2
+    description: Production Trade API server
+  - url: https://api.elections.kalshi.com/trade-api/v2
+    description: Production shared API server, also supported
+  - url: https://external-api.demo.kalshi.co/trade-api/v2
+    description: Demo Trade API server
+  - url: https://demo-api.kalshi.co/trade-api/v2
+    description: Demo shared API server, also supported
+security: []
+tags:
+  - name: api-keys
+    description: API key management endpoints
+  - name: orders
+    description: Order management endpoints
+  - name: order-groups
+    description: Order group management endpoints
+  - name: portfolio
+    description: Portfolio and balance information endpoints
+  - name: communications
+    description: Request-for-quote (RFQ) endpoints
+  - name: multivariate
+    description: Multivariate event collection endpoints
+  - name: exchange
+    description: Exchange status and information endpoints
+  - name: live-data
+    description: Live data endpoints
+  - name: markets
+    description: Market data endpoints
+  - name: milestone
+    description: Milestone endpoints
+  - name: search
+    description: Search and filtering endpoints
+  - name: incentive-programs
+    description: Incentive program endpoints
+  - name: fcm
+    description: FCM member specific endpoints
+  - name: events
+    description: Event endpoints
+  - name: structured-targets
+    description: Structured targets endpoints
+paths:
+  /api_keys:
+    post:
+      tags:
+        - api-keys
+      summary: Create API Key
+      description: ' Endpoint for creating a new API key with a user-provided public key.  This endpoint allows users with Premier or Market Maker API usage levels to create API keys by providing their own RSA or Ed25519 public key in PEM format. The platform will use this public key to verify signatures on API requests: RSA-PSS with SHA-256 for RSA keys, Ed25519 for Ed25519 keys.'
+      operationId: CreateApiKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApiKeyRequest'
+      responses:
+        '201':
+          description: API key created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateApiKeyResponse'
+        '400':
+          description: Bad request - invalid input
+        '401':
+          description: Unauthorized
+        '403':
+          description: >-
+            Forbidden - insufficient API usage level, or fcm_subtrader_id from a
+            non-FCM caller
+        '409':
+          description: >-
+            Conflict - the bound FCM subtrader is not yet visible in the
+            credential registry; retry after the subtrader create propagates
+        '500':
+          description: Internal server error
+      security:
+        - kalshiAccessKey: []
+          kalshiAccessSignature: []
+          kalshiAccessTimestamp: []
+components:
+  schemas:
+    CreateApiKeyRequest:
+      type: object
+      required:
+        - name
+        - public_key
+      properties:
+        name:
+          type: string
+          description: Name for the API key. This helps identify the key's purpose
+        public_key:
+          type: string
+          description: >-
+            RSA or Ed25519 public key in PEM format (`-----BEGIN PUBLIC
+            KEY-----`). This will be used to verify signatures on API requests -
+            RSA-PSS with SHA-256 for RSA keys, Ed25519 for Ed25519 keys
+        scopes:
+          type: array
+          description: >-
+            List of scopes to grant to the API key. If the broad `write` parent
+            scope is included, `read` must also be included. Child scopes may be
+            granted without the broad parent scope. Defaults to full access
+            (`read`, `write`) if not provided.
+          items:
+            $ref: '#/components/schemas/ApiKeyScope'
+        subaccount:
+          type: integer
+          minimum: 0
+          maximum: 63
+          description: >-
+            If set, restricts the API key to a single sub-account (0-63) that
+            you own. A restricted key may only read and trade on that
+            sub-account; it cannot act on other sub-accounts, transfer funds
+            between sub-accounts, or create sub-accounts. Omit to leave the key
+            unrestricted. Mutually exclusive with fcm_subtrader_id.
+        fcm_subtrader_id:
+          type: string
+          description: >-
+            FCM members only. If set, binds the API key to a single FCM
+            subtrader that you own, spelled {your_user_id}_{suffix} with a
+            suffix of 1-16 case-sensitive ASCII alphanumeric characters. The
+            subtrader must already exist. A bound key is the institution's
+            trading credential for that subtrader - FIX order-entry and
+            market-data sessions, plus margin WebSocket sessions scoped to the
+            subtrader's own data - and is denied on every REST endpoint,
+            including key management. Mutually exclusive with subaccount.
+    CreateApiKeyResponse:
+      type: object
+      required:
+        - api_key_id
+      properties:
+        api_key_id:
+          type: string
+          description: Unique identifier for the newly created API key
+        warning:
+          type: string
+          nullable: true
+          description: >-
+            Present only when the minted key is bound to an FCM subtrader that
+            is missing a per-subtrader risk control - the initial-margin cap
+            (margin lane) or the event-contract daily cap. The mint still
+            succeeds; the warning names each missing control - an event-contract
+            subtrader without a daily cap has its event-contract orders rejected
+            until one is set, while a margin subtrader without an initial-margin
+            cap is bounded only by firm-level risk limits.
+    ApiKeyScope:
+      type: string
+      enum:
+        - read
+        - write
+        - read::block_trade_accept
+        - read::portfolio_balance
+        - write::trade
+        - write::transfer
+        - write::fcm_risk
+        - write::block_trade_accept
+      x-enum-varnames:
+        - ApiKeyScopeRead
+        - ApiKeyScopeWrite
+        - ApiKeyScopeReadBlockTradeAccept
+        - ApiKeyScopeReadPortfolioBalance
+        - ApiKeyScopeWriteTrade
+        - ApiKeyScopeWriteTransfer
+        - ApiKeyScopeWriteFCMRisk
+        - ApiKeyScopeWriteBlockTradeAccept
+      description: >-
+        Scope granted to an API key. Parent scopes grant broad access; for
+        example, `read` grants all read endpoints and `write` grants all write
+        endpoints. Child scopes such as `read::block_trade_accept`,
+        `read::portfolio_balance`, `write::trade`, `write::transfer`,
+        `write::fcm_risk` (FCM subtrader creation, trading blocks, daily premium
+        caps, and margin caps), and `write::block_trade_accept` grant only their
+        specific endpoint group and can be granted without the parent scope.
+  securitySchemes:
+    kalshiAccessKey:
+      type: apiKey
+      in: header
+      name: KALSHI-ACCESS-KEY
+      description: Your API key ID
+    kalshiAccessSignature:
+      type: apiKey
+      in: header
+      name: KALSHI-ACCESS-SIGNATURE
+      description: >-
+        Base64 signature of the pre-sign text (timestamp + method + path) made
+        with the API key's algorithm - RSA-PSS with SHA-256 for RSA keys,
+        Ed25519 for Ed25519 keys
+    kalshiAccessTimestamp:
+      type: apiKey
+      in: header
+      name: KALSHI-ACCESS-TIMESTAMP
+      description: Request timestamp in milliseconds
+
+````
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

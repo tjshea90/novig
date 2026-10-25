@@ -12,7 +12,7 @@ Sharp books are the reference the rest of the market prices against. Trading on 
 
 ## Price is not enough — take the size with it
 
-Outcomes on the [`odds`](/websocket/channels/odds) channel can carry `limit`: a normalized size at that price. It is not universal — on a sample of 702,544 live quotes it was present on 27 of 203 venues (17.8% of quotes). Pinnacle, BookMaker.eu, Sharp.ag, Novig, ProphetX, Betfair Exchange, Polymarket and Kalshi carry it on effectively every row; bet365, DraftKings and BetOnline.ag carry it on none. Treat it as a per-book capability you check, not a field you can assume.
+Outcomes on the [`odds`](https://docs.oddspapi.io/websocket/channels/odds) channel can carry `limit`: a normalized size at that price. It is not universal — on a sample of 702,544 live quotes it was present on 27 of 203 venues (17.8% of quotes). Pinnacle, BookMaker.eu, Sharp.ag, Novig, ProphetX, Betfair Exchange, Polymarket and Kalshi carry it on effectively every row; bet365, DraftKings and BetOnline.ag carry it on none. Treat it as a per-book capability you check, not a field you can assume.
 
 ```json theme={null}
 {
@@ -37,7 +37,7 @@ On a traditional sharp book there is no ladder, and `limit` is the whole answer:
 
 Where you have depth, **price the fill at the volume-weighted average, not at the touch.** Walk the ladder to your target size and use the resulting average; beyond the first level the top-of-book price is a number you will not get. Sizing off the touch is what turns a modelled edge into a realised loss on exactly the trades you most wanted.
 
-Walk `limit`, not `size`. A prediction-market rung is `{ price, cents, size, limit }`: `size` counts shares at the venue and `limit` is the stake those shares represent (`limit == size × cents`, exact on all 3,044 rungs sampled). Summing `size` gives a number in the wrong unit. ProphetX omits `size` entirely, so `limit` is also the only field present everywhere. Worked example in [Prediction markets](/guides/prediction-markets.md#building-a-cross-venue-view).
+Walk `limit`, not `size`. A prediction-market rung is `{ price, cents, size, limit }`: `size` counts shares at the venue and `limit` is the stake those shares represent (`limit == size × cents`, exact on all 3,044 rungs sampled). Summing `size` gives a number in the wrong unit. ProphetX omits `size` entirely, so `limit` is also the only field present everywhere. Worked example in [Prediction markets](https://docs.oddspapi.io/guides/prediction-markets.md#building-a-cross-venue-view).
 
 Depth is also **per venue, never aggregate.** Summing ladders across books gives a total you cannot trade against, because one venue's order does not fill against another's resting liquidity. Model executable size per book, then compare at the selection level.
 
@@ -45,7 +45,7 @@ Depth is also **per venue, never aggregate.** Summing ladders across books gives
 
 Limit changes arrive as ordinary odds updates on the same `oddsId`, so a book tightening size shows up in the same stream as a price move — often **earlier**, and often more informative. A sharp book that holds its price and halves its limit has told you something the price alone has not.
 
-Log limit history alongside price history if you want to use this. The REST [historical odds](/api-reference/concepts.md#historical-odds-and-clv) endpoints carry the same rows, so the sequence is reconstructable after the fact as well as observable live.
+Log limit history alongside price history if you want to use this. The REST [historical odds](https://docs.oddspapi.io/api-reference/concepts.md#historical-odds-and-clv) endpoints carry the same rows, so the sequence is reconstructable after the fact as well as observable live.
 
 ***
 
@@ -60,9 +60,9 @@ Four timestamps travel with the data, so the delay is something you verify rathe
 | t2 | `ts` (envelope) | When the gateway sent the message |
 | t3 | — | Your receipt |
 
-`changedAt − bookmakerChangedAt` is the observation delay for that update. Per-book bounds are published on [`GET /bookmakers`](/api-reference/common/get-bookmakers) (`maxDelayLiveInSec`, `maxDelayPregameInSec`, `maxDelayPregameMainInSec`), and representative rolling p50s per book are in [Latency and freshness](/api-reference/reliability.md#latency-and-freshness).
+`changedAt − bookmakerChangedAt` is the observation delay for that update. Per-book bounds are published on [`GET /bookmakers`](https://docs.oddspapi.io/api-reference/common/get-bookmakers) (`maxDelayLiveInSec`, `maxDelayPregameInSec`, `maxDelayPregameMainInSec`), and representative rolling p50s per book are in [Latency and freshness](https://docs.oddspapi.io/api-reference/reliability.md#latency-and-freshness).
 
-Two things worth wiring in early: log t0–t3 per fill so you can attribute a bad fill to the right hop, and [deploy near the gateway](/api-reference/concepts.md#server-location-matters) — the last hop is the only one you control.
+Two things worth wiring in early: log t0–t3 per fill so you can attribute a bad fill to the right hop, and [deploy near the gateway](https://docs.oddspapi.io/api-reference/concepts.md#server-location-matters) — the last hop is the only one you control.
 
 ***
 
@@ -70,7 +70,7 @@ Two things worth wiring in early: log t0–t3 per fill so you can attribute a ba
 
 | Signal | Channel | Meaning |
 | - | - | - |
-| `staleOdds` | [`bookmakers`](/websocket/channels/bookmakers) | Connection to that book degraded — freshness no longer guaranteed |
+| `staleOdds` | [`bookmakers`](https://docs.oddspapi.io/websocket/channels/bookmakers) | Connection to that book degraded — freshness no longer guaranteed |
 | `suspended` | `bookmakers` | The book's odds are suspended |
 | `marketActive: false` | `odds` | The whole market is down |
 | `active: false` | `odds` | That outcome is unavailable |
@@ -85,7 +85,7 @@ Also watch `participantsRotated` on the `bookmakers` channel: a book whose home/
 
 * `mainLine` marks the book's main line for a market, so you can follow the headline price without subscribing to every alternate line.
 * `GET /fixtures/odds/main` returns main lines only for snapshots.
-* `since` filters (epoch **milliseconds**) on the odds endpoints let you backfill only what moved. See [Timestamps](/api-reference/concepts.md#timestamps-seconds-vs-milliseconds).
+* `since` filters (epoch **milliseconds**) on the odds endpoints let you backfill only what moved. See [Timestamps](https://docs.oddspapi.io/api-reference/concepts.md#timestamps-seconds-vs-milliseconds).
 
 Remember that each line value is its own `marketId` — "Over 2.5" and "Over 3.5" are separate markets, not two outcomes of one. Group by `marketId` for overround and normalization.
 
@@ -93,9 +93,9 @@ Remember that each line value is its own `marketId` — "Over 2.5" and "Over 3.5
 
 ## Asian lines
 
-Asian handicaps and quarter lines are first-class: `marketType` `spreads` with the line in `handicap` (e.g. `-0.25`), and settlement returns `HALFWIN` / `HALFLOSS` for split-stake grading alongside `WIN` / `LOSE` / `PUSH`. See [Enumerations → settlementStatus](/api-reference/enumerations.md#settlementstatus).
+Asian handicaps and quarter lines are first-class: `marketType` `spreads` with the line in `handicap` (e.g. `-0.25`), and settlement returns `HALFWIN` / `HALFLOSS` for split-stake grading alongside `WIN` / `LOSE` / `PUSH`. See [Enumerations → settlementStatus](https://docs.oddspapi.io/api-reference/enumerations.md#settlementstatus).
 
-For books quoting in crypto or non-USD fiat, the [`currencies`](/websocket/channels/currencies) channel carries fiat and crypto rates against USD for stake and limit conversion.
+For books quoting in crypto or non-USD fiat, the [`currencies`](https://docs.oddspapi.io/websocket/channels/currencies) channel carries fiat and crypto rates against USD for stake and limit conversion.
 
 ***
 

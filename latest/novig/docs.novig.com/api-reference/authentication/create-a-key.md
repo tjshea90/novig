@@ -396,7 +396,7 @@ paths:
 
             path = "/v3/keys"
             query = ""
-            body = b"""{
+            body = rb"""{
               "algorithm": "Ed25519",
               "name": "management",
               "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\n-----END PUBLIC KEY-----\n"
@@ -431,7 +431,7 @@ paths:
 
             const path = "/v3/keys";
             const query = "";
-            const body = `{
+            const body = String.raw`{
               "algorithm": "Ed25519",
               "name": "management",
               "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\n-----END PUBLIC KEY-----\n"

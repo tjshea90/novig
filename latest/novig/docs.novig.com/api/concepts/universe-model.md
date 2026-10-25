@@ -48,7 +48,7 @@ An event is one game, and its markets settle on it.
 | Field | Meaning |
 | - | - |
 | `sport` `league` | Names from the two fixed lists |
-| `status` | Where the event is in its [lifecycle](/api/concepts/event-lifecycle.md) |
+| `status` | Where the event is in its [lifecycle](https://docs.novig.com/api/concepts/event-lifecycle.md) |
 | `startsTs` | Scheduled start, in Unix milliseconds |
 | `description` | Display text. Don't parse it |
 

@@ -1,6 +1,6 @@
 # PropLine — Complete API Reference for LLMs
 
-Last updated: 2026-10-22
+Last updated: 2026-10-24
 
 This is the full PropLine API reference, designed to give an AI assistant everything it needs to write working code against the PropLine API. Paste this URL (`https://prop-line.com/llms-full.txt`) into ChatGPT, Claude, or any LLM and ask it to help you build.
 
@@ -159,6 +159,7 @@ Both odds endpoints accept an optional `includeBookIds=true` parameter (PropLine
 
 - `book_event_id` on every bookmaker block — that book's event identifier.
 - `book_outcome_id` on every outcome — that book's selection/contract identifier.
+- `book_outcome_id_ontario` on FanDuel outcomes — the same selection on FanDuel Ontario (`marketId:selectionId`). Ontario has the same events, selection ids and prices as the US site but different market ids, so build Ontario slips from this one. Left out until we have matched the market (new in-play markets can take a few minutes).
 - `outcome_id` on every outcome — PropLine's own canonical outcome row id, the same value `line_movement` / `resolution` webhooks carry, so a push delivery joins onto exactly one REST row.
 
 Kalshi ships both: the event ticker (e.g. `KXMLBGAME-26AUG08NYYBOS`) and the per-contract market ticker (e.g. `KXMLBGAME-26AUG08NYYBOS-NYY`). This is the leg-level join key for anyone already pulling Kalshi's own API. PrizePicks ships both too: its game id and, per outcome, its **projection id** — the token a populated entry URL is built from (`app.prizepicks.com/board?projections={book_outcome_id}-o-{point}`, `-u-` for Under, comma-separated for multiple picks). Underdog, Sleeper and Dabble ship both as well (Underdog's option id, Sleeper's `line_id`, Dabble's selection id). On PrizePicks two further rules keep those ids usable: an outcome is only returned for a DIRECTION PrizePicks currently permits on that projection (`allowed_wager_types` — an over-only projection returns no Under leg by default; pass `includeRestricted=true` on either /odds endpoint to get it, with `allowed_wager_types` (`over` / `under_or_over`) on every PrizePicks outcome, since in some states PrizePicks does take the Under; webhooks never fire for such a leg), and a projection missing from the book's latest successful board is withheld at once rather than served at its last price, so a projection id you receive is one that was on the board as of our last poll. A grace period applies only when the poll itself fails, where the board's state is genuinely unknown. Still a polling feed and not a live mirror: a projection retired since our last poll can appear until the next one. Event ids also ship for Bovada, DraftKings, FanDuel, BetMGM, Pinnacle, Polymarket, Smarkets, Novig, Matchbook, Sleeper, Dabble, ReBet, 1xBet, TAB AU and the Kambi books (BetRivers, Unibet). Books that don't publish a stable id return `null`. Available on every tier including Free. DraftKings Pick6: with `includeLinks=true` the Pick6 `link` is `pick6.draftkings.com/?sport={SPORT}&pickGroup={id}`; append `&picks=` plus the outcomes' `book_outcome_id` values, comma-separated, to load those picks (the same shape as Pick6's own share links). Underdog has no public URL that loads picks; its ids are a join key only.
@@ -1002,6 +1003,19 @@ Auto-pause: a webhook whose endpoint fails every delivery for several days strai
 | `soccer_scottish_premiership` | Scottish Premiership |
 | `soccer_saudi_pro` | Saudi Pro League |
 | `soccer_uefa_nations_league` | UEFA Nations League (national teams) |
+| `soccer_spain_segunda_division` | Segunda División / LaLiga 2 (Spain) |
+| `soccer_italy_serie_b` | Serie B (Italy) |
+| `soccer_england_league2` | League Two (England) |
+| `soccer_japan_j2_league` | J2 League (Japan; odds only, not graded) |
+| `soccer_netherlands_eerste_divisie` | Eerste Divisie (Netherlands) |
+| `basketball_euroleague` | EuroLeague (odds only) |
+| `basketball_spain_acb` | Liga ACB (Spain; odds only) |
+| `basketball_italy_lega_a` | Lega Basket Serie A (Italy; odds only) |
+| `basketball_germany_bbl` | Basketball Bundesliga (Germany; odds only) |
+| `basketball_france_lnb` | LNB Élite (France; odds only) |
+| `basketball_turkey_bsl` | Basketbol Süper Ligi (Turkey; odds only) |
+| `basketball_greece_basket_league` | Greek Basket League (odds only) |
+| `basketball_finland_korisliiga` | Korisliiga (Finland; odds only) |
 
 ## Market keys
 
@@ -1330,7 +1344,7 @@ outright markets — `tournament_winner` (race/stage winner),
 | `prophetx` | ProphetX | Betting exchange (P2P) |
 | `sxbet` | SX Bet | Betting exchange (P2P, crypto/USDC; game lines + halves/quarters, pregame only; `liquidity` = USDC a taker can stake at the price) |
 | `betfair_ex` | Betfair Exchange | Betting exchange (UK back/lay; soccer + US game lines, tennis/UFC/boxing match odds, pregame only; `liquidity` = USD a backer can stake at the price) |
-| `betdaq` | Betdaq | Betting exchange (UK/IE back/lay; soccer + US game lines, pregame only; `liquidity` = USD a backer can stake at the price) |
+| `betdaq` | Betdaq | Retired 2026-10-22 (exchange closed 2026-10-21). Archived rows only, for past events |
 | `sbobet` | SBOBET | Asian sportsbook (soccer 1X2 + Asian handicap/goal lines incl. first half, US game lines; games ~1-5 days out; pregame only) |
 | `bookmaker_eu` | BookMaker.eu | Offshore sportsbook (US + soccer main moneyline, spread, total; pregame only) |
 | `betus` | BetUS | Sportsbook (offshore, US-facing) |

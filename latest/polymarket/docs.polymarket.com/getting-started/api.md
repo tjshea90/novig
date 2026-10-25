@@ -26,7 +26,7 @@ Each API serves a distinct part of an integration.
 >
 > Read prices and order books, then place and manage orders.
 
-> **[Data API](/api-reference/data-api/overview.md)**
+> **[Data API](https://docs.polymarket.com/api-reference/data-api/overview.md)**
 >
 > **`https://data-api.polymarket.com`**
 >
@@ -42,25 +42,25 @@ Each API serves a distinct part of an integration.
 
 **WebSocket APIs**
 
-> **[CLOB Market Channel](/api-reference/wss/market.md)**
+> **[CLOB Market Channel](https://docs.polymarket.com/api-reference/wss/market.md)**
 >
 > **`wss://ws-subscriptions-clob.polymarket.com/ws/market`**
 >
 > Follow public order book, price, and market lifecycle updates.
 
-> **[CLOB User Channel](/api-reference/wss/user.md)**
+> **[CLOB User Channel](https://docs.polymarket.com/api-reference/wss/user.md)**
 >
 > **`wss://ws-subscriptions-clob.polymarket.com/ws/user`**
 >
 > Follow authenticated order and trade updates for an account.
 
-> **[RTDS](/market-data/realtime-data.md)**
+> **[RTDS](https://docs.polymarket.com/market-data/realtime-data.md)**
 >
 > **`wss://ws-live-data.polymarket.com`**
 >
 > Stream public reference prices, comments, and trade activity.
 
-> **[Sports WebSocket](/api-reference/wss/sports.md)**
+> **[Sports WebSocket](https://docs.polymarket.com/api-reference/wss/sports.md)**
 >
 > **`wss://sports-api.polymarket.com/ws`**
 >
@@ -246,15 +246,15 @@ L2-authenticated CLOB requests use the same five headers:
 
 ## Next Steps
 
-> **[Read Market Data](/market-data/overview.md)**
+> **[Read Market Data](https://docs.polymarket.com/market-data/overview.md)**
 >
 > Discover markets and work with prices, order books, and historical data.
 
-> **[Subscribe to Real-Time Updates](/market-data/realtime-data.md)**
+> **[Subscribe to Real-Time Updates](https://docs.polymarket.com/market-data/realtime-data.md)**
 >
 > Stream market and account updates as they happen.
 
-> **[Place Your First Order](/trading/quickstart.md)**
+> **[Place Your First Order](https://docs.polymarket.com/trading/quickstart.md)**
 >
 > Set up an account and complete your first authenticated trade.
 

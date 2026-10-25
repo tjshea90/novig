@@ -69,10 +69,10 @@
 | 42 | 2nd Period Winner | false | Who will win the 2nd period | — | false |
 
 **Quarter-line eligible** marks the types that can be split into quarter lines: 2, 3, 28. See
-[Quarter-line markets](/developers/quarter-line-markets.md).
+[Quarter-line markets](https://docs.sx.bet/developers/quarter-line-markets.md).
 
 **Player props** (e.g. type 995) have one market per player. On the
-[market object](/developers/markets-and-events.md#full-market-object), the player is named in
+[market object](https://docs.sx.bet/developers/markets-and-events.md#full-market-object), the player is named in
 `outcomeOneName` / `outcomeTwoName` (`"Kalif Raymond - Yes"` / `"Kalif Raymond - No"`) and in
 `marketMeta`, a JSON-encoded string whose `player` object holds the player's `name`, `id` and
 `participantId`. `participantId` matches the market's `participantOneId` or `participantTwoId`,
@@ -82,8 +82,8 @@ identifying the player's team.
 
 A **bet group** is a set of market types presented together. It is the scope that matters for two
 things: the `betGroup` filter on
-[`GET /markets/active`](/api-reference/get-markets-active), and the market grouping used by
-[capital efficiency](/developers/capital-efficiency.md) — positions offset within a group, not across
+[`GET /markets/active`](https://docs.sx.bet/api-reference/get-markets-active), and the market grouping used by
+[capital efficiency](https://docs.sx.bet/developers/capital-efficiency.md) — positions offset within a group, not across
 groups.
 
 | Bet group | Label | Market types |

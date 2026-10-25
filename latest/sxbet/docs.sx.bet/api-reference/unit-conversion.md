@@ -13,7 +13,7 @@ issues. For example, 100 USDC is stored as `100 * 10^6 = 100000000`.
 
 | Token | Address | Decimals |
 | - | - | - |
-| USDC | See [`GET /metadata/obv3`](/api-reference/get-metadata-obv3) (`activeAsset.baseToken`) | 6 |
+| USDC | See [`GET /metadata/obv3`](https://docs.sx.bet/api-reference/get-metadata-obv3) (`activeAsset.baseToken`) | 6 |
 
 To convert from a nominal amount (such as 100 USDC) to the integer amount used in the API:
 
@@ -40,7 +40,7 @@ To convert from implied probability to decimal odds, take the inverse. For examp
 ## Bookmaker odds
 
 `percentageOdds` is always from the **market maker's** perspective. Odds shown on sx.bet in the order
-book are what the **taker** receives. See [Order book](/developers/order-book.md).
+book are what the **taker** receives. See [Order book](https://docs.sx.bet/developers/order-book.md).
 
 Suppose a maker is betting outcome one (`isMakerBettingOutcomeOne = true`) and receiving implied odds
 of `704552840724436400000 / 10^20 = 0.704552841`. The taker is betting *outcome two* and receiving
@@ -48,7 +48,7 @@ implied odds of `1 - 0.704552841 = 0.295447159`. That displays under the second 
 `29.5%` implied, or `1 / 0.295447159 ≈ 3.3847` decimal.
 
 For BigInt-safe helpers, time encodings, and more worked examples, see
-[Unit conversions](/developers/unit-conversions.md).
+[Unit conversions](https://docs.sx.bet/developers/unit-conversions.md).
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

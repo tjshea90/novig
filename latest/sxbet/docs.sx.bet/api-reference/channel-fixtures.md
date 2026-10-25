@@ -118,7 +118,7 @@ Subscribe to fixture state changes across all events.
 | Name | Type | Description |
 | - | - | - |
 | sportXeventId | string | The event ID for this update |
-| status | number | The fixture status. See [fixture statuses](/api-reference/fixture-statuses.md) |
+| status | number | The fixture status. See [fixture statuses](https://docs.sx.bet/api-reference/fixture-statuses.md) |
 
 If a status change means you need the affected markets, look them up by event ID.
 

@@ -56,15 +56,15 @@ cases include:
 
 ## Next Steps
 
-> **[Concepts](/perps/concepts.md)**
+> **[Concepts](https://docs.polymarket.com/perps/concepts.md)**
 >
 > Learn the shared terms used across Perps docs.
 
-> **[Learn About Trading](/perps/learn-about-trading/overview.md)**
+> **[Learn About Trading](https://docs.polymarket.com/perps/learn-about-trading/overview.md)**
 >
 > Understand the market mechanics behind Perps.
 
-> **[Place Your First Trade](/perps/place-your-first-trade.md)**
+> **[Place Your First Trade](https://docs.polymarket.com/perps/place-your-first-trade.md)**
 >
 > Build a first end-to-end Perps trading flow.
 

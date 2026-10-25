@@ -10,7 +10,7 @@
 
 | | **Positions** | **Bets** | **Fills** |
 | - | - | - | - |
-| Route | [`GET /positions-v3`](/api-reference/get-positions-v3) | [`GET /trades-v3`](/api-reference/get-trades-v3) | [`GET /fills-v3`](/api-reference/get-fills-v3) |
+| Route | [`GET /positions-v3`](https://docs.sx.bet/api-reference/get-positions-v3) | [`GET /trades-v3`](https://docs.sx.bet/api-reference/get-trades-v3) | [`GET /fills-v3`](https://docs.sx.bet/api-reference/get-fills-v3) |
 | A row is | one **market** | one **bet** you placed | one **match** against one counterparty |
 | Answers | *What am I exposed to?* | *What did I bet?* | *What did I get filled at?* |
 | Key | `marketHash` | `tradeId` | `matchId` |
@@ -83,26 +83,26 @@ Each grain has a channel, and they carry the same shapes as the REST rows:
 
 | Grain | Channel |
 | - | - |
-| Bets | [`account:trades_v3_#{address}`](/api-reference/channel-trades-v3) |
-| Fills | [`account:fills_v3_#{address}`](/api-reference/channel-fills-v3) |
+| Bets | [`account:trades_v3_#{address}`](https://docs.sx.bet/api-reference/channel-trades-v3) |
+| Fills | [`account:fills_v3_#{address}`](https://docs.sx.bet/api-reference/channel-fills-v3) |
 | Positions | **None** — positions are a derived roll-up, so re-call the route |
-| Public tape | [`recent_trades_v3`](/api-reference/channel-recent-trades-v3) |
+| Public tape | [`recent_trades_v3`](https://docs.sx.bet/api-reference/channel-recent-trades-v3) |
 
 ## Related
 
-> **[Get your bets](/api-reference/get-trades-v3.md)**
+> **[Get your bets](https://docs.sx.bet/api-reference/get-trades-v3.md)**
 >
 > The bet row in full and its filters.
 
-> **[Get your fills](/api-reference/get-fills-v3.md)**
+> **[Get your fills](https://docs.sx.bet/api-reference/get-fills-v3.md)**
 >
 > The fill row, its four ids, and the sort order.
 
-> **[Get your positions](/api-reference/get-positions-v3.md)**
+> **[Get your positions](https://docs.sx.bet/api-reference/get-positions-v3.md)**
 >
 > Every field, the required-status rule, and realised PnL.
 
-> **[Tracking your orders](/developers/my-orders.md)**
+> **[Tracking your orders](https://docs.sx.bet/developers/my-orders.md)**
 >
 > Keeping a live view of what is resting on the book.
 

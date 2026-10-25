@@ -24,7 +24,7 @@ All API requests go to:
 https://api.sx.bet
 ```
 
-Use `https://api.toronto.sx.bet` for testnet. See [Testnet & Mainnet](/developers/testnet-and-mainnet.md).
+Use `https://api.toronto.sx.bet` for testnet. See [Testnet & Mainnet](https://docs.sx.bet/developers/testnet-and-mainnet.md).
 
 ## Install dependencies
 
@@ -65,8 +65,8 @@ curl "https://api.sx.bet/user/proxy" -H "x-sx-api-key: $SX_API_KEY"
 
 Once the proxy is deployed, fund it with USDC. Easiest path: deposit in the [sx.bet](https://sx.bet) UI.
 Programmatically, transfer from your EOA (`FROM_EOA`) with an EIP-2612 permit via
-[`POST /user/transfer-to-proxy`](/api-reference/post-user-transfer-to-proxy) — full flow in
-[Funding](/developers/funding.md).
+[`POST /user/transfer-to-proxy`](https://docs.sx.bet/api-reference/post-user-transfer-to-proxy) — full flow in
+[Funding](https://docs.sx.bet/developers/funding.md).
 
 Confirm a spendable balance:
 
@@ -76,7 +76,7 @@ curl "https://api.sx.bet/user/balance-v3" -H "x-sx-api-key: $SX_API_KEY"
 
 **3. Fetch a market**
 
-Fetch active markets with [`GET /markets/active`](/api-reference/get-markets-active) to find one you want to bet on. Copy the `marketHash` — you'll need it in the next steps.
+Fetch active markets with [`GET /markets/active`](https://docs.sx.bet/api-reference/get-markets-active) to find one you want to bet on. Copy the `marketHash` — you'll need it in the next steps.
 
 ```bash cURL theme={null}
 curl "https://api.sx.bet/markets/active?onlyMainLine=true"
@@ -172,9 +172,9 @@ for (const [label, levels] of [["outcome 1", book.outcomeOne], ["outcome 2", boo
 
 **5. Place a bet**
 
-Sign an order for the market from step 3 at the price from step 4, and submit it with [`timeInForce: "FOK"`](/developers/time-in-force) — fill completely and immediately, or nothing happens. Contract addresses and the chain id come from `GET /metadata/obv3`.
+Sign an order for the market from step 3 at the price from step 4, and submit it with [`timeInForce: "FOK"`](https://docs.sx.bet/developers/time-in-force) — fill completely and immediately, or nothing happens. Contract addresses and the chain id come from `GET /metadata/obv3`.
 
-The order id *is* the EIP-712 digest of what you signed, see [EIP-712 order signing](/api-reference/eip712-order-signing.md).
+The order id *is* the EIP-712 digest of what you signed, see [EIP-712 order signing](https://docs.sx.bet/api-reference/eip712-order-signing.md).
 
 ```python Python theme={null}
 import os
@@ -318,7 +318,7 @@ console.log("digest matches:", result.data.orders[0].orderId === orderId);
 
 Watch your order and the market in real time over a single WebSocket connection. Subscribe to two channels: `orderbook_v3:{marketHash}` is public and streams the complete resting book on every change, while `account:orders_v3_#{address}` is authenticated and pushes each of your own orders as it rests, fills, or goes inactive.
 
-Fetch a realtime JWT from [`GET /user/realtime-token-v3/api-key`](/developers/realtime-initialization#connect). The account channel suffix must equal your token's `sub`, which is your **user address** — the account that signs orders (the `maker` from step 5), **not** the proxy wallet that holds the funds. Using the proxy address here silently returns nothing. See [Real-time data](/developers/realtime-overview.md), [Order Book Updates](/api-reference/channel-orderbook-v3.md), and [Active Order Updates](/api-reference/channel-orders-v3.md).
+Fetch a realtime JWT from [`GET /user/realtime-token-v3/api-key`](https://docs.sx.bet/developers/realtime-initialization#connect). The account channel suffix must equal your token's `sub`, which is your **user address** — the account that signs orders (the `maker` from step 5), **not** the proxy wallet that holds the funds. Using the proxy address here silently returns nothing. See [Real-time data](https://docs.sx.bet/developers/realtime-overview.md), [Order Book Updates](https://docs.sx.bet/api-reference/channel-orderbook-v3.md), and [Active Order Updates](https://docs.sx.bet/api-reference/channel-orders-v3.md).
 
 ```python Python theme={null}
 import asyncio
@@ -414,13 +414,13 @@ client
   .subscribe();
 ```
 
-Order book levels are always the maker frame. Convert to the price you'd pay with `takerOdds = 1 - percentageOdds / 10^20`. See [unit conversions](/developers/unit-conversions.md).
+Order book levels are always the maker frame. Convert to the price you'd pay with `takerOdds = 1 - percentageOdds / 10^20`. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md).
 
-> **[The exchange model](/developers/exchange-model.md)**
+> **[The exchange model](https://docs.sx.bet/developers/exchange-model.md)**
 >
 > How the exchange and orderbook work, in depth.
 
-> **[Taking liquidity](/developers/taking-liquidity.md)**
+> **[Taking liquidity](https://docs.sx.bet/developers/taking-liquidity.md)**
 >
 > Signing and submitting orders that execute immediately.
 

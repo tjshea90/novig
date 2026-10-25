@@ -18,7 +18,7 @@ before replacing position calls.
 **1. Use PositionManager for V2 Positions**
 
 Configure PositionManager and Router using their
-[Polygon Contract Addresses](/resources/contracts.md).
+[Polygon Contract Addresses](https://docs.polymarket.com/resources/contracts.md).
 
 Use PositionManager for V2 balances and transfers, with `uint256`
 position IDs. Retain CTF token IDs for V1 markets.
@@ -87,7 +87,7 @@ PositionManager's `getPayout`.
 For BUY orders, approve ExchangeV3 to spend pUSD, including fees. For SELL
 orders, approve ExchangeV3 as a PositionManager operator. Sign V2 orders
 against ExchangeV3 with EIP-712 domain version `"3"`; see the
-[API Migration Guide](/migrate/polymarket-v2/api-integrations.md).
+[API Migration Guide](https://docs.polymarket.com/migrate/polymarket-v2/api-integrations.md).
 
 ## Enable V2 Automatic Redemption
 

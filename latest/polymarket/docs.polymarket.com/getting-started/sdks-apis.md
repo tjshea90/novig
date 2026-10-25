@@ -10,23 +10,23 @@ Choose the interface that best fits your application. Use an SDK for a unified,
 typed integration, or work with the APIs directly when you need lower-level
 control.
 
-> **[TypeScript SDK](/getting-started/typescript.md)**
+> **[TypeScript SDK](https://docs.polymarket.com/getting-started/typescript.md)**
 >
 > Build services, bots, scripts, and applications with `@polymarket/client`.
 
-> **[Python SDK](/getting-started/python.md)**
+> **[Python SDK](https://docs.polymarket.com/getting-started/python.md)**
 >
 > Build services, notebooks, scripts, and data workflows with
 > `polymarket-client`.
 
-> **[API](/getting-started/api.md)**
+> **[API](https://docs.polymarket.com/getting-started/api.md)**
 >
 > Build directly against Polymarket REST APIs and WebSocket streams.
 
 > [!NOTE]
 >
 > A unified Rust SDK is in development. For now, see the [Rust migration
-> guide](/migrate/clob-sdk-to-unified-sdk.md#rust).
+> guide](https://docs.polymarket.com/migrate/clob-sdk-to-unified-sdk.md#rust).
 
 ## Compare Options
 
@@ -42,7 +42,7 @@ control.
 ## Existing Integrations
 
 Already using an earlier Polymarket SDK? Follow the [SDK migration
-guide](/migrate/clob-sdk-to-unified-sdk.md) to update your integration.
+guide](https://docs.polymarket.com/migrate/clob-sdk-to-unified-sdk.md) to update your integration.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

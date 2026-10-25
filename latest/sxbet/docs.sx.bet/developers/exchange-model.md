@@ -39,7 +39,7 @@ Escrow pays the winning side automatically
 
 ## Next
 
-> **[The Order Book →](/developers/order-book.md)**
+> **[The Order Book →](https://docs.sx.bet/developers/order-book.md)**
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

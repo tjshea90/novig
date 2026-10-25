@@ -10,8 +10,8 @@
 
 Place orders with signed REST requests. Watch the order book and your fills on one websocket.
 
-[Quickstart](/api/quickstart.md)
-[OpenAPI 3.1](/api-reference/spec-files/openapi-v3.json)
+[Quickstart](https://docs.novig.com/api/quickstart.md)
+[OpenAPI 3.1](https://docs.novig.com/api-reference/spec-files/openapi-v3.json)
 
 ## Start
 
@@ -37,9 +37,9 @@ Your management key opens a subaccount, registers its trading key, and funds it.
 
 ***
 
-Find a market in the [catalog](/api/catalog), place an [order](/api/execution/orders), and follow it on the [private stream](/api/streaming/private.md).
+Find a market in the [catalog](https://docs.novig.com/api/catalog), place an [order](https://docs.novig.com/api/execution/orders), and follow it on the [private stream](https://docs.novig.com/api/streaming/private.md).
 
-Hostnames for each environment are on [Environments](/api/environments.md). The full API is in the [OpenAPI document](/api-reference/spec-files/openapi-v3.json).
+Hostnames for each environment are on [Environments](https://docs.novig.com/api/environments.md). The full API is in the [OpenAPI document](https://docs.novig.com/api-reference/spec-files/openapi-v3.json).
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

@@ -62,12 +62,12 @@ code.
 **2. Attach Your Builder Code**
 
 Attach your builder code to every order you submit. See [Builder
-Attribution](/trading/place-orders.md#builder-attribution).
+Attribution](https://docs.polymarket.com/trading/place-orders.md#builder-attribution).
 
 **3. Enable Gasless Transactions**
 
 Use the Polymarket relayer to deploy wallets and [execute gasless
-transactions](/trading/wallets-auth.md#execute-gasless-transactions).
+transactions](https://docs.polymarket.com/trading/wallets-auth.md#execute-gasless-transactions).
 
 **4. Track Performance**
 
@@ -80,20 +80,20 @@ Allow up to **24 hours** for matched volume to appear on the leaderboard.
 
 ## Next Steps
 
-> **[Create New Accounts](/trading/wallets-auth.md#create-new-accounts)**
+> **[Create New Accounts](https://docs.polymarket.com/trading/wallets-auth.md#create-new-accounts)**
 >
 > Create a builder account and the credentials used to provision accounts for
 > your users.
 
-> **[Understand Tiers](/programs/builders/tiers.md)**
+> **[Understand Tiers](https://docs.polymarket.com/programs/builders/tiers.md)**
 >
 > Learn about rate limits and how to upgrade.
 
-> **[Attribute Orders](/trading/place-orders.md#builder-attribution)**
+> **[Attribute Orders](https://docs.polymarket.com/trading/place-orders.md#builder-attribution)**
 >
 > Configure your client to credit trades to your account.
 
-> **[Execute Gasless Transactions](/trading/wallets-auth.md#execute-gasless-transactions)**
+> **[Execute Gasless Transactions](https://docs.polymarket.com/trading/wallets-auth.md#execute-gasless-transactions)**
 >
 > Approve tokens, transfer funds, and manage positions without paying gas.
 

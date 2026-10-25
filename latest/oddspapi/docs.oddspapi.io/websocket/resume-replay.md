@@ -13,7 +13,7 @@ The replay window (`resumeWindowMs`, e.g. `60000`) is **not** a fragile time lim
 1. **Within the window** — reconnect and replay missed updates from your cursor with **no gaps**. This covers the overwhelming majority of real-world disconnects (network blips, redeploys), which resolve in seconds.
 2. **Outside the window** — the gateway emits `snapshot_required` and you restore full, current state with a **single fast REST snapshot**. This is an explicit, deterministic path, not an error.
 
-The window is intentionally short because for realtime trading the right recovery for a long gap is a **fresh snapshot of the current market**, not a slow replay of stale prices. Worst case is one REST call — bounded and predictable, never an open-ended outage. See [Reliability & Operations](/api-reference/reliability.md).
+The window is intentionally short because for realtime trading the right recovery for a long gap is a **fresh snapshot of the current market**, not a slow replay of stale prices. Worst case is one REST call — bounded and predictable, never an open-ended outage. See [Reliability & Operations](https://docs.oddspapi.io/api-reference/reliability.md).
 
 ***
 

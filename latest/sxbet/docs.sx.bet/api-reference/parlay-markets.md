@@ -6,13 +6,13 @@
 
 > How parlay (multi-leg) markets work on SX Bet
 
-Bettors can request a custom parlay on [SX.Bet](https://sx.bet) by selecting multiple markets. When they submit a parlay request, a message is sent via Websocket (See [this link](/api-reference/channel-parlay-requests.md) for more details on the request). The parlay market is created with a 60-second expiry, and makers can submit orders to it until then.
+Bettors can request a custom parlay on [SX.Bet](https://sx.bet) by selecting multiple markets. When they submit a parlay request, a message is sent via Websocket (See [this link](https://docs.sx.bet/api-reference/channel-parlay-requests.md) for more details on the request). The parlay market is created with a 60-second expiry, and makers can submit orders to it until then.
 
-Market makers can use the payload data from the Parlay Request to submit an [order](/api-reference/post-orders-v3.md).
+Market makers can use the payload data from the Parlay Request to submit an [order](https://docs.sx.bet/api-reference/post-orders-v3.md).
 
 Bettors can choose which order to take, and take it by posting a `FOK` or `IOC` order like any other non-parlay order.
 
-Market makers can [cancel](/api-reference/delete-orders-v3.md) orders like any other non-parlay order.
+Market makers can [cancel](https://docs.sx.bet/api-reference/delete-orders-v3.md) orders like any other non-parlay order.
 
 > [!NOTE]
 >

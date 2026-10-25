@@ -43,7 +43,7 @@ Identifiers (`sportId`, `fixtureId`, etc.) are language-independent.
 * Belongs to exactly one tournament.
 * Discover via `/seasons`.
 
-> See the full [Sports Coverage](/coverage.md) table for every `sportId` and whether it's available as fixtures, futures, or both.
+> See the full [Sports Coverage](https://docs.oddspapi.io/coverage.md) table for every `sportId` and whether it's available as fixtures, futures, or both.
 
 ***
 
@@ -78,8 +78,8 @@ Fixture:     Arsenal vs Chelsea      (fixtureId=id1000001770366972)
   └── Players: squads per participant        (player prop markets)
 ```
 
-* The fixture object carries the schedule and state: `startTime` (epoch seconds), `statusId`, `participant1Id` / `participant2Id`, `seasonId`, venue — see the [`fixtures` channel](/websocket/channels/fixtures) and REST reference for full schemas.
-* **Scores are per period**, keyed `result`, `p1`, `p2`, … — the `result` row is the authoritative final/current score; period rows let you settle period markets. See the [`scores` channel](/websocket/channels/scores).
+* The fixture object carries the schedule and state: `startTime` (epoch seconds), `statusId`, `participant1Id` / `participant2Id`, `seasonId`, venue — see the [`fixtures` channel](https://docs.oddspapi.io/websocket/channels/fixtures) and REST reference for full schemas.
+* **Scores are per period**, keyed `result`, `p1`, `p2`, … — the `result` row is the authoritative final/current score; period rows let you settle period markets. See the [`scores` channel](https://docs.oddspapi.io/websocket/channels/scores).
 * Odds attach to fixtures via the [odds identifiers](#odds-identifiers) below — one price per `{fixtureId}:{bookmaker}:{outcomeId}:{playerId}`.
 
 ### How Futures Work (Prediction Markets)
@@ -121,7 +121,7 @@ Future:      Winner market                   (futureId=pm69884729315669001)
 So soccer's Winner market is `10001` and the Politics Prediction market is `69002`. Position `002` is `topscorer` for sports and `prediction` for the non-sports bands — the two never collide, because no sport carries both.
 
 * Futures odds are keyed `{futureId}:{bookmaker}:{futureOutcomeId}:{participantId}` — see [Future odds IDs](#future-odds-ids).
-* Non-sports topics (politics, elections, finance, crypto, weather, …) are modeled as sports with `sportId` 69+ and exist as **futures only**; racing codes (79–81) are ante-post futures. See [Sports Coverage](/coverage.md) for the exact bands.
+* Non-sports topics (politics, elections, finance, crypto, weather, …) are modeled as sports with `sportId` 69+ and exist as **futures only**; racing codes (79–81) are ante-post futures. See [Sports Coverage](https://docs.oddspapi.io/coverage.md) for the exact bands.
 
 ***
 
@@ -131,7 +131,7 @@ So soccer's Winner market is `10001` and the Politics Prediction market is `6900
 >
 > **TL;DR** — Every selection follows a fixed hierarchy: `marketType → period → handicap → side`, all baked into the `outcomeId` — so the same bet always resolves to the same `marketId` / `outcomeId`, addressed by coordinates rather than bookmaker name strings. The one part *not* in `outcomeId` is the player, carried by `playerId`. All outcomes of a market share its `marketId`, which equals the market's first `outcomeId`.
 
-For which market types, lines, periods, and player props are actually carried, see [market coverage](/coverage/markets.md).
+For which market types, lines, periods, and player props are actually carried, see [market coverage](https://docs.oddspapi.io/coverage/markets.md).
 
 ### How markets decompose (the deterministic hierarchy)
 
@@ -276,7 +276,7 @@ Where:
 
 From the `fixtureId` alone you can infer the sport and tournament — handy for logging and cross-system correlation.
 
-To correlate with a fixture ID from another system, use the `externalProviders` block on the [fixtures channel](/websocket/channels/fixtures.md) or the mapping endpoints — see [running OddsPapi as a second feed](/guides/second-feed.md).
+To correlate with a fixture ID from another system, use the `externalProviders` block on the [fixtures channel](https://docs.oddspapi.io/websocket/channels/fixtures.md) or the mapping endpoints — see [running OddsPapi as a second feed](https://docs.oddspapi.io/guides/second-feed.md).
 
 ***
 
@@ -299,11 +299,11 @@ Where:
 
 This encodes sport, season, and the market question — one future per (season, question).
 
-Tournament is a **field on the future**, not a segment of the ID. Read it from `tournament.tournamentId` on the [`futures`](/websocket/channels/futures) payload; keeping it out of the ID is what lets the `futureId` stay stable when a provider re-parents a season under a different tournament.
+Tournament is a **field on the future**, not a segment of the ID. Read it from `tournament.tournamentId` on the [`futures`](https://docs.oddspapi.io/websocket/channels/futures) payload; keeping it out of the ID is what lets the `futureId` stay stable when a provider re-parents a season under a different tournament.
 
 ### Future markets and outcomes
 
-A future market is a **question kind** — "Who wins the Premier League?", "Who is top scorer?", "Will X happen by Y?" — not a stat template. One market is reused by every future that asks it, and is identified by `market.marketId` on the [`futures`](/websocket/channels/futures) payload: the same 5-digit `futureMarketId` carried in the `futureId` tail.
+A future market is a **question kind** — "Who wins the Premier League?", "Who is top scorer?", "Will X happen by Y?" — not a stat template. One market is reused by every future that asks it, and is identified by `market.marketId` on the [`futures`](https://docs.oddspapi.io/websocket/channels/futures) payload: the same 5-digit `futureMarketId` carried in the `futureId` tail.
 
 Markets come in two shapes:
 
@@ -343,7 +343,7 @@ This combination uniquely defines **one price**.
 
 Drop the `bookmaker` and you have the **selection** itself — `{fixtureId}:{outcomeId}:{playerId}` — the bookmaker-independent key for grading / settlement, since a selection wins or loses the same way everywhere. No `marketId` is needed; the `outcomeId` already encodes the market.
 
-Selection keys are what make cross-book and cross-feed comparison cheap — see [running OddsPapi as a second feed](/guides/second-feed.md) for joining to an existing feed on them.
+Selection keys are what make cross-book and cross-feed comparison cheap — see [running OddsPapi as a second feed](https://docs.oddspapi.io/guides/second-feed.md) for joining to an existing feed on them.
 
 ### Future odds IDs
 
@@ -436,13 +436,13 @@ Connecting before you snapshot is what makes the handover gapless: changes durin
 
 ### Rate limits
 
-See [Rate Limits](/api-reference/rate-limits.md) for headers, per-endpoint limits, and 429 backoff handling.
+See [Rate Limits](https://docs.oddspapi.io/api-reference/rate-limits.md) for headers, per-endpoint limits, and 429 backoff handling.
 
 ***
 
 ## Historical odds and CLV
 
-The realtime WebSocket `odds` and `oddsFutures` channels deliver **latest state** on a fixed \~10 ms batching window — ticks superseded within a window are collapsed to the newest value (no state is lost), so the stream is not a tick ledger. See [delivery semantics](/websocket/channels/odds.md#delivery-semantics).
+The realtime WebSocket `odds` and `oddsFutures` channels deliver **latest state** on a fixed \~10 ms batching window — ticks superseded within a window are collapsed to the newest value (no state is lost), so the stream is not a tick ledger. See [delivery semantics](https://docs.oddspapi.io/websocket/channels/odds.md#delivery-semantics).
 
 > Use the live stream to **trade**, and the REST history endpoints to **measure** — CLV models, fill auditing, and backtests.
 
@@ -459,7 +459,7 @@ When you need the **full price movement** of an outcome, or its **opening vs clo
 * **Fill auditing** — reconcile traded prices with the recorded timeline to detect slippage.
 * **Backtesting** — replay the full historical timeline to test strategies against real line movement.
 
-See the **API → Reference** section for full request parameters, response schemas, and an interactive playground for each of these endpoints. For the trading workflow around these — limits, per-book delay, main-line filtering, and grading — see [sharp-line trading & CLV](/guides/sharp-line-trading.md).
+See the **API → Reference** section for full request parameters, response schemas, and an interactive playground for each of these endpoints. For the trading workflow around these — limits, per-book delay, main-line filtering, and grading — see [sharp-line trading & CLV](https://docs.oddspapi.io/guides/sharp-line-trading.md).
 
 ***
 

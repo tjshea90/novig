@@ -8,7 +8,7 @@
 
 Market making across venues needs four things at once: prices, depth, the identifiers to send an order back, and an honest answer to "is this quote still real?". All four arrive on the same row, so adding a venue is a filter change rather than an integration project.
 
-This guide covers the trading decisions on top of that stream. Payload schemas live on the [`odds`](/websocket/channels/odds) channel page.
+This guide covers the trading decisions on top of that stream. Payload schemas live on the [`odds`](https://docs.oddspapi.io/websocket/channels/odds) channel page.
 
 ***
 
@@ -23,7 +23,7 @@ This guide covers the trading decisions on top of that stream. Payload schemas l
 | `bookmakerChangedAt` / `changedAt` | Venue's change stamp (t0), and when we observed it (t1) |
 | `active` / `marketActive` | Hard stops — do not quote against a false |
 
-No secondary lookup, and one parsing branch rather than one per venue: `polymarket`, `polymarket.us`, `kalshi` and `prophetx` share the same ladder shape, and the first `back` entry is top of book and matches `price`. `betfair-ex` is the exception — it uses legacy `availableToBack` / `availableToLay` keys. Shape detail in [Advanced metadata](/websocket/channels/odds.md#advanced-metadata-meta).
+No secondary lookup, and one parsing branch rather than one per venue: `polymarket`, `polymarket.us`, `kalshi` and `prophetx` share the same ladder shape, and the first `back` entry is top of book and matches `price`. `betfair-ex` is the exception — it uses legacy `availableToBack` / `availableToLay` keys. Shape detail in [Advanced metadata](https://docs.oddspapi.io/websocket/channels/odds.md#advanced-metadata-meta).
 
 ***
 
@@ -56,13 +56,13 @@ Three things that bite:
 
 * **A crossed book is a signal, not an opportunity.** If best `back` on one venue exceeds best `lay` on another, check `changedAt` on both sides. A genuine cross closes in milliseconds; a persistent one means a side stopped updating.
 * **Depth is per venue, never aggregate.** You cannot fill one venue's order against another's queue. Model executable size per venue, then aggregate the *outcomes*, not the books.
-* **`limit` is a stake in the venue's base currency; `size` is a count of shares.** Compare depth on `limit`, and convert through the [`currencies`](/websocket/channels/currencies) channel before comparing across crypto venues, or the same exposure reads as two different numbers.
+* **`limit` is a stake in the venue's base currency; `size` is a count of shares.** Compare depth on `limit`, and convert through the [`currencies`](https://docs.oddspapi.io/websocket/channels/currencies) channel before comparing across crypto venues, or the same exposure reads as two different numbers.
 
 ***
 
 ## Sizing: `limit` and depth do different jobs
 
-* **`limit`** on an exchange or prediction market is depth at the touch — the same value as `meta.back[0].limit`, not a cap on your order. (On a traditional book it *is* a cap; see [Limits](/websocket/channels/odds.md#limits).)
+* **`limit`** on an exchange or prediction market is depth at the touch — the same value as `meta.back[0].limit`, not a cap on your order. (On a traditional book it *is* a cap; see [Limits](https://docs.oddspapi.io/websocket/channels/odds.md#limits).)
 * **The ladder** bounds the fill — what rests behind the touch, and what it costs to clear a size.
 
 Walk the ladder to your target and price the fill at the volume-weighted average, not at the touch:
@@ -81,7 +81,7 @@ Walk the ladder to your target and price the fill at the volume-weighted average
 
 Walk `limit`, not `size`: `size` counts shares at the venue, `limit` is the stake those shares represent (`size × cents`). 3,120.19 of stake rests on this ladder, so a target of 1,228.61 fills 308.25 at 3.333 and 920.36 at 3.226 — an average of **3.253**, not the 3.333 on screen. Note the quote's own `limit` (308.25) is just the top rung: it is the depth at the touch, not a cap on your order.
 
-Limit cuts arrive as ordinary odds updates on the same `oddsId` and are often the earlier signal. Full treatment, including traditional books where `limit` is the only size signal there is, in [sharp-line trading & CLV](/guides/sharp-line-trading.md#limit-and-depth-answer-different-questions).
+Limit cuts arrive as ordinary odds updates on the same `oddsId` and are often the earlier signal. Full treatment, including traditional books where `limit` is the only size signal there is, in [sharp-line trading & CLV](https://docs.oddspapi.io/guides/sharp-line-trading.md#limit-and-depth-answer-different-questions).
 
 ***
 
@@ -93,8 +93,8 @@ Freshness is a separate question from value, and the expensive one to get wrong.
 | - | - | - |
 | `active` | `odds` | This selection is not currently available |
 | `marketActive` | `odds` | The whole market is down — every selection under it is untradeable |
-| `suspended` | [`bookmakers`](/websocket/channels/bookmakers) | The venue has suspended this fixture |
-| `staleOdds` | [`bookmakers`](/websocket/channels/bookmakers) | **Our connection to the venue was lost.** Freshness is no longer guaranteed |
+| `suspended` | [`bookmakers`](https://docs.oddspapi.io/websocket/channels/bookmakers) | The venue has suspended this fixture |
+| `staleOdds` | [`bookmakers`](https://docs.oddspapi.io/websocket/channels/bookmakers) | **Our connection to the venue was lost.** Freshness is no longer guaranteed |
 
 Two of them arrive on a different channel than the price, which is what makes the failure mode look like this — a quote that is immaculate and untradeable at the same time:
 
@@ -106,9 +106,9 @@ Two of them arrive on a different channel than the price, which is what makes th
 { "bookmaker": "polymarket", "hasOdds": true, "suspended": false, "staleOdds": true }
 ```
 
-`staleOdds` is the one people miss, because nothing about the last price you received looks wrong — the prices you hold may have moved at the venue with no way for us to tell you. Pull your quotes rather than re-price them, until it flips back to `false`. See [Critical fields for automated trading](/websocket/channels/bookmakers.md#critical-fields-for-automated-trading).
+`staleOdds` is the one people miss, because nothing about the last price you received looks wrong — the prices you hold may have moved at the venue with no way for us to tell you. Pull your quotes rather than re-price them, until it flips back to `false`. See [Critical fields for automated trading](https://docs.oddspapi.io/websocket/channels/bookmakers.md#critical-fields-for-automated-trading).
 
-Add a fifth gate of your own — an age check against the bound the book publishes in `maxDelayLiveInSec` / `maxDelayPregameInSec` on `GET /bookmakers`. A quiet venue and a broken venue look identical for the first few seconds. See [Status signals](/coverage/bookmakers.md#status-signals). Evaluate all five as one predicate on every update, not on a timer.
+Add a fifth gate of your own — an age check against the bound the book publishes in `maxDelayLiveInSec` / `maxDelayPregameInSec` on `GET /bookmakers`. A quiet venue and a broken venue look identical for the first few seconds. See [Status signals](https://docs.oddspapi.io/coverage/bookmakers.md#status-signals). Evaluate all five as one predicate on every update, not on a timer.
 
 > [!NOTE]
 >
@@ -124,7 +124,7 @@ Your reaction time is four segments, and you control one:
 | - | - | - |
 | Venue → our observation | `changedAt − bookmakerChangedAt` | published per book |
 | Conflation | fixed \~10 ms batching window; newest value always lands | bounded by design |
-| Gateway → you | `your receipt − ts` | **you** — see [Server location](/api-reference/concepts.md#server-location-matters) |
+| Gateway → you | `your receipt − ts` | **you** — see [Server location](https://docs.oddspapi.io/api-reference/concepts.md#server-location-matters) |
 | Decision + order round-trip | your own clock | you |
 
 Every message carries the first three stamps, so the split is measurable per venue rather than something you take on trust:
@@ -136,7 +136,7 @@ Every message carries the first three stamps, so the split is measurable per ven
                                         t3  your receipt — the one segment you move
 ```
 
-Uniform quoting policy across venues is therefore wrong: a 0.05 s venue and a \~1 s venue justify different spreads on the same underlying, and the numbers to parameterize that are [published](/api-reference/reliability.md#latency-and-freshness) rather than inferred. If a venue re-prices faster than your loop closes, quote behind it or size smaller — do not chase its touch.
+Uniform quoting policy across venues is therefore wrong: a 0.05 s venue and a \~1 s venue justify different spreads on the same underlying, and the numbers to parameterize that are [published](https://docs.oddspapi.io/api-reference/reliability.md#latency-and-freshness) rather than inferred. If a venue re-prices faster than your loop closes, quote behind it or size smaller — do not chase its touch.
 
 ***
 
@@ -149,7 +149,7 @@ The worst state is quoting from a book you believe is current and is not. So: **
 * **Outside it** — the gateway emits `snapshot_required`; restore with one REST snapshot. A designed path with a bounded worst case, not an error.
 * **Changed `serverEpoch`** — old cursors are meaningless; re-snapshot instead of resuming.
 
-Mechanics in [Resume & Replay](/websocket/resume-replay.md). Keep a "last known good" timestamp per venue and let it gate quoting independently of whether your socket is up — a live socket with a frozen venue behind it is the failure that actually costs money.
+Mechanics in [Resume & Replay](https://docs.oddspapi.io/websocket/resume-replay.md). Keep a "last known good" timestamp per venue and let it gate quoting independently of whether your socket is up — a live socket with a frozen venue behind it is the failure that actually costs money.
 
 ***
 
@@ -166,7 +166,7 @@ Venue-native IDs ride on the price itself, so the moment you decide is not the m
 
 Those last two are Polymarket's own market and selection identifiers, already in hand: the order is `bookmakerOutcomeId` at `price`, staked at no more than `limit`.
 
-At fixture level, `GET /fixtures/mapping` resolves both directions — `fixtureIds` in for venue IDs, `bookmakerFixtureIds` in to go back. The [`bookmakers`](/websocket/channels/bookmakers) channel also carries `bookmakerFixtureId` and `fixturePath`, so a manual desk can open the venue's own page.
+At fixture level, `GET /fixtures/mapping` resolves both directions — `fixtureIds` in for venue IDs, `bookmakerFixtureIds` in to go back. The [`bookmakers`](https://docs.oddspapi.io/websocket/channels/bookmakers) channel also carries `bookmakerFixtureId` and `fixturePath`, so a manual desk can open the venue's own page.
 
 ***
 
@@ -179,13 +179,13 @@ Normalize within each venue, then combine across them. Two weightings the data s
 * **By size** — real depth and a high `limit` is a stronger observation than a token amount at the same price.
 * **By delay** — a measured sub-100 ms venue and a multi-second one are not equally current.
 
-For fill auditing, backtests, and closing lines, the REST [historical odds and CLV](/api-reference/concepts.md#historical-odds-and-clv) endpoints share the same `oddsId` key as the live stream, so decisions and their audit trail join without a translation step.
+For fill auditing, backtests, and closing lines, the REST [historical odds and CLV](https://docs.oddspapi.io/api-reference/concepts.md#historical-odds-and-clv) endpoints share the same `oddsId` key as the live stream, so decisions and their audit trail join without a translation step.
 
 ***
 
 ## Non-sports markets are futures
 
-Politics, elections, finance, crypto, and weather are sports with `sportId` 69+ and exist as **futures only** — one future per outright market, on the [`futures`](/websocket/channels/futures) and [`oddsFutures`](/websocket/channels/oddsFutures) channels, with the same delivery semantics and the same orderbook `meta`. Everything above applies unchanged.
+Politics, elections, finance, crypto, and weather are sports with `sportId` 69+ and exist as **futures only** — one future per outright market, on the [`futures`](https://docs.oddspapi.io/websocket/channels/futures) and [`oddsFutures`](https://docs.oddspapi.io/websocket/channels/oddsFutures) channels, with the same delivery semantics and the same orderbook `meta`. Everything above applies unchanged.
 
 ```
 {futureId}:{bookmaker}:{futureOutcomeId}:{participantId}
@@ -198,7 +198,7 @@ Politics, elections, finance, crypto, and weather are sports with `sportId` 69+ 
 | Participant-keyed | `winner`, `topscorer`, `relegation`, `mvp` | `0` — sentinel, no outcome rows exist | the participant you back |
 | Decomposed | `prediction` Yes / No, season totals Over / Under | a real id per side per line | the side, plus the participant the line is about |
 
-One decomposed future market spans many lines, and unlike fixture markets the handicap sits on the **outcome**, not on the market. Read both from the explicit fields rather than splitting `oddsId` — see [Future odds IDs](/api-reference/concepts.md#future-odds-ids) and [How Futures Work](/api-reference/concepts.md#how-futures-work-prediction-markets).
+One decomposed future market spans many lines, and unlike fixture markets the handicap sits on the **outcome**, not on the market. Read both from the explicit fields rather than splitting `oddsId` — see [Future odds IDs](https://docs.oddspapi.io/api-reference/concepts.md#future-odds-ids) and [How Futures Work](https://docs.oddspapi.io/api-reference/concepts.md#how-futures-work-prediction-markets).
 
 ***
 
@@ -224,7 +224,7 @@ Evaluate the quoting predicate on every update, per venue, before anything downs
 
 Handle `reconnect` and `snapshot_required` as designed paths.
 
-Filter at login — `sportIds`, `tournamentIds`, and `bookmakers` cut volume far more effectively than client-side filtering — and prefer `receiveType: "zstd"` on `odds` at scale ([Compression](/websocket/compression.md)). Login shapes and a worked client are on the [`odds`](/websocket/channels/odds) page and in the [Quickstart](/quickstart.md).
+Filter at login — `sportIds`, `tournamentIds`, and `bookmakers` cut volume far more effectively than client-side filtering — and prefer `receiveType: "zstd"` on `odds` at scale ([Compression](https://docs.oddspapi.io/websocket/compression.md)). Login shapes and a worked client are on the [`odds`](https://docs.oddspapi.io/websocket/channels/odds) page and in the [Quickstart](https://docs.oddspapi.io/quickstart.md).
 
 ***
 

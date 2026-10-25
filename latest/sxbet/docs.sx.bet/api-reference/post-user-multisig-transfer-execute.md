@@ -7,7 +7,7 @@
 > Submit your signature for a prepared transfer between proxies.
 
 `POST /user/multisig/transfer/execute` submits the signature for the transaction from
-[`POST /user/multisig/transfer/prepare`](/api-reference/post-user-multisig-transfer-prepare).
+[`POST /user/multisig/transfer/prepare`](https://docs.sx.bet/api-reference/post-user-multisig-transfer-prepare).
 
 > [!WARNING]
 >

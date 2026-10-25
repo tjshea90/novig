@@ -7,7 +7,7 @@
 > Open a subaccount and its trading key. List subaccounts, read a balance, and change a label.
 
 A subaccount is a separate wallet with its own balance, positions, orders, and trading key.
-[Account model](/api/concepts/account-model.md) explains how subaccounts and keys fit together.
+[Account model](https://docs.novig.com/api/concepts/account-model.md) explains how subaccounts and keys fit together.
 
 | Route | Reply |
 | - | - |
@@ -16,7 +16,7 @@ A subaccount is a separate wallet with its own balance, positions, orders, and t
 | `GET /v3/account/subaccounts/{keyId}/balance` | 200 |
 | `PATCH /v3/account/subaccounts/{keyId}` | 200 404 |
 
-All four routes count against the `account` [throttle](/api/throttling.md).
+All four routes count against the `account` [throttle](https://docs.novig.com/api/throttling.md).
 
 ## Open a subaccount
 

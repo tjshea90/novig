@@ -7,7 +7,7 @@
 > Execute a prepared add-signer transaction.
 
 `POST /user/multisig/add-signer/execute` submits the signature for the transaction from
-[`POST /user/multisig/add-signer/prepare`](/api-reference/post-user-multisig-add-signer-prepare).
+[`POST /user/multisig/add-signer/prepare`](https://docs.sx.bet/api-reference/post-user-multisig-add-signer-prepare).
 `signerAddress` must be the authenticated address.
 
 

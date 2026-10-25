@@ -43,7 +43,7 @@ your accounting.
 **TypeScript**
 
 Call `fetchCurrentRebates()` using an existing `PublicClient` named `client`.
-If needed, [create a public client](/getting-started/typescript.md#create-a-public-client).
+If needed, [create a public client](https://docs.polymarket.com/getting-started/typescript.md#create-a-public-client).
 The method is also available on `SecureClient`.
 
 ```ts theme={null}
@@ -65,7 +65,7 @@ an empty array when the maker has no rebates for the requested date.
 **Python**
 
 Call `get_current_rebates()` using an existing `AsyncPublicClient` named `client`.
-If needed, [create a public client](/getting-started/python.md#create-a-public-client).
+If needed, [create a public client](https://docs.polymarket.com/getting-started/python.md#create-a-public-client).
 The method is also available on `AsyncSecureClient`. The synchronous clients
 provide the same method.
 
@@ -196,7 +196,7 @@ Taker fees are calculated in pUSD and vary based on the share price. The fee amo
 
 ### Fee Tables (100 Shares)
 
-For detailed fee tables for each market category, see the [Fees](/trading/fees.md) page.
+For detailed fee tables for each market category, see the [Fees](https://docs.polymarket.com/trading/fees.md) page.
 
 ### Fee Precision
 
@@ -209,7 +209,7 @@ Fees are rounded to 5 decimal places. The smallest fee charged is 0.00001 pUSD. 
 The following market categories have taker fees enabled and are eligible for maker rebates: Crypto, Sports, Finance, Politics, Economics, Culture, Weather, Tech, Mentions, and Other / General.
 
 To confirm whether fees apply to a specific market, see [Trading
-Fees](/market-data/market-details.md#trading-fees) in Market Details.
+Fees](https://docs.polymarket.com/market-data/market-details.md#trading-fees) in Market Details.
 
 ***
 

@@ -17,7 +17,7 @@ hit belongs to the same party. Every order submitted through the API runs in
 **CancelMaker** mode: the conflicting resting order is canceled and the taker
 keeps matching against the rest of the book. The canceled resting order is
 reported with status `stp_cancelled`, the same status you see in the order
-tables under [Trading](/perps/trading.md).
+tables under [Trading](https://docs.polymarket.com/perps/trading.md).
 
 The engine also implements **CancelTaker** and **CancelBoth** modes, which are
 used internally by the exchange and are not available to API orders.
@@ -50,12 +50,12 @@ strictly per account. Two things do follow group membership besides STP:
 * **Default leverage and margin mode.** A group can carry defaults that apply to
   any member with no explicit per-instrument setting, including future listings.
   Your own explicit settings always take precedence. See
-  [Margin](/perps/learn-about-trading/margin.md).
+  [Margin](https://docs.polymarket.com/perps/learn-about-trading/margin.md).
 * **Internal transfers between members.** A trading key registered to one
   member can move collateral to another member of the same group, without the
   owner key. Owner keys are never restricted by groups, and withdrawals always
   require the owner key. See
-  [Transfer Between Your Accounts](/perps/fund-your-account.md#transfer-between-your-accounts).
+  [Transfer Between Your Accounts](https://docs.polymarket.com/perps/fund-your-account.md#transfer-between-your-accounts).
 
 When Polymarket changes a group's membership, orders that were being matched
 at that instant are re-evaluated by the engine against the new membership

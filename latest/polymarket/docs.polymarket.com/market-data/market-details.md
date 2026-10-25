@@ -11,7 +11,7 @@ outcomes, it describes the market's current state and provides the information
 an integration needs to read prices, follow activity, or trade.
 
 The examples below assume you already have a market object. To find or fetch
-one, see [Discover Markets](/market-data/discover-markets.md).
+one, see [Discover Markets](https://docs.polymarket.com/market-data/discover-markets.md).
 
 **TypeScript**
 
@@ -214,7 +214,7 @@ Market status tells you whether a market is currently available for trading.
 Check it before relying on live prices or submitting an order, since a market
 may exist before its order book opens and remain discoverable after it closes.
 It also indicates whether the market belongs to a [negative-risk
-group](/concepts/negative-risk.md), where only one of several mutually exclusive
+group](https://docs.polymarket.com/concepts/negative-risk.md), where only one of several mutually exclusive
 markets can resolve YES.
 
 **TypeScript**
@@ -332,7 +332,7 @@ Where:
 | `active` | boolean | Market is deployed and not archived. |
 | `closed` | boolean | Market has resolved or been closed, so no further trading is possible. |
 | `acceptingOrders` | boolean | Order book is open for new limit and market orders. |
-| `negRisk` | boolean | Market belongs to a [negative-risk group](/concepts/negative-risk.md). |
+| `negRisk` | boolean | Market belongs to a [negative-risk group](https://docs.polymarket.com/concepts/negative-risk.md). |
 | `restricted` | boolean | Market is geo-restricted for some jurisdictions. |
 | `archived` | boolean | Market is archived and read-only: no trading, no resolution updates. |
 
@@ -389,7 +389,7 @@ An event uses augmented negative risk when both fields are `true`:
 }
 ```
 
-See [Augmented Negative Risk](/concepts/negative-risk.md#augmented-negative-risk)
+See [Augmented Negative Risk](https://docs.polymarket.com/concepts/negative-risk.md#augmented-negative-risk)
 for how named outcomes, placeholders, and Other behave.
 
 ## Trading Constraints
@@ -615,7 +615,7 @@ Where:
 Liquidity reward settings determine which resting orders can qualify for
 incentives and how much funding is available. An order must meet the market's
 minimum qualifying size and remain within its maximum qualifying spread. See
-[Liquidity Rewards](/programs/liquidity-rewards.md) for the scoring methodology.
+[Liquidity Rewards](https://docs.polymarket.com/programs/liquidity-rewards.md) for the scoring methodology.
 
 **TypeScript**
 
@@ -880,7 +880,7 @@ Where:
 | `gameStartTime` | string | Scheduled start time of the underlying game for a sports market. |
 | `secondsDelay` | integer | Delay, in seconds, before a newly placed marketable order can match. |
 
-See [Place Orders](/trading/place-orders.md#place-a-market-order) for the
+See [Place Orders](https://docs.polymarket.com/trading/place-orders.md#place-a-market-order) for the
 implications of trading on a market with a configured delay.
 
 ## Liquidity and Activity

@@ -24,15 +24,15 @@ Tokens. Market discovery provides the identifiers required by each workflow.
 
 Both systems expose the same basic position lifecycle.
 
-> **[Split](/trading/positions/manage.md#split-a-position)**
+> **[Split](https://docs.polymarket.com/trading/positions/manage.md#split-a-position)**
 >
 > Convert pUSD into a YES and NO token pair.
 
-> **[Merge](/trading/positions/manage.md#merge-positions)**
+> **[Merge](https://docs.polymarket.com/trading/positions/manage.md#merge-positions)**
 >
 > Convert a YES and NO token pair back into pUSD.
 
-> **[Redeem](/trading/positions/manage.md#redeem-resolved-positions)**
+> **[Redeem](https://docs.polymarket.com/trading/positions/manage.md#redeem-resolved-positions)**
 >
 > Exchange resolved outcome tokens for their payout.
 
@@ -128,19 +128,19 @@ Router. A merge or redemption requires PositionManager approval for the Router.
 Negative-risk events link several outcomes so a NO position can be converted
 into the complementary YES positions. The two systems implement that behavior
 through different contracts. See [Negative Risk
-Markets](/concepts/negative-risk.md) for the event model.
+Markets](https://docs.polymarket.com/concepts/negative-risk.md) for the event model.
 
 Combos use PositionManager and the CombinatorialModule. Each leg is a
 Polymarket Protocol V2 Position ID from the BinaryModule or NegRiskModule. The
 resulting Combo is still a binary-shaped YES and NO pair, which allows it to use
 Exchange v3.
 
-See [Combinatorial Positions](/trading/positions/combinatorial.md) for the Combo
+See [Combinatorial Positions](https://docs.polymarket.com/trading/positions/combinatorial.md) for the Combo
 position model.
 
 ## Contract Addresses
 
-See [Contracts](/resources/contracts.md) for Polymarket's current smart contract
+See [Contracts](https://docs.polymarket.com/resources/contracts.md) for Polymarket's current smart contract
 addresses on Polygon.
 
 

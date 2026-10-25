@@ -42,11 +42,11 @@ Matching is **price-time priority**. A taker consumes the best opposing price fi
 
 `percentageOdds` on a new order must be on the ladder or the order will be rejected.
 
-[Odds rounding](/developers/odds-rounding.md) has the full rules
+[Odds rounding](https://docs.sx.bet/developers/odds-rounding.md) has the full rules
 
 ## Fetching the book
 
-| | [`GET /orderbook-v3/snapshot/market`](/api-reference/get-market-orderbook-snapshot) | [`GET /orders-v3/odds/best`](/api-reference/get-best-odds-v3) |
+| | [`GET /orderbook-v3/snapshot/market`](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot) | [`GET /orders-v3/odds/best`](https://docs.sx.bet/api-reference/get-best-odds-v3) |
 | - | - | - |
 | Markets per call | **1** | up to **100** hashes, or **5** leagues |
 | Levels per side | **all** | **1** (top of book) |
@@ -190,7 +190,7 @@ bet outcomeOne: [{"price":"53250000000000000000","cumulative":"1139037"},
 ## Staying up to date
 
 Polling the snapshot works, but the book changes on every match, cancel and expiry. The channel
-[`orderbook_v3:{marketHash}`](/api-reference/channel-orderbook-v3) sends immediate real-time updates. It carries the **same book and the
+[`orderbook_v3:{marketHash}`](https://docs.sx.bet/api-reference/channel-orderbook-v3) sends immediate real-time updates. It carries the **same book and the
 same version** the snapshot route serves, and the exchange publishes one message per book change.
 
 ```json theme={null}
@@ -216,24 +216,24 @@ overwrite both arrays.
 
 The channel is always from the **maker's perspective**
 
-The full seed-and-subscribe order is on [Real-time](/developers/realtime-overview.md). The version
-comparison is on [Book versioning](/developers/book-versioning.md#the-apply-rule).
+The full seed-and-subscribe order is on [Real-time](https://docs.sx.bet/developers/realtime-overview.md). The version
+comparison is on [Book versioning](https://docs.sx.bet/developers/book-versioning.md#the-apply-rule).
 
 ## Related
 
-> **[Posting orders](/developers/posting-orders.md)**
+> **[Posting orders](https://docs.sx.bet/developers/posting-orders.md)**
 >
 > Sign and submit an order onto the book.
 
-> **[Fetching odds](/developers/odds.md)**
+> **[Fetching odds](https://docs.sx.bet/developers/odds.md)**
 >
 > Scanning many markets, and getting a live client its first snapshot.
 
-> **[Book versioning](/developers/book-versioning.md)**
+> **[Book versioning](https://docs.sx.bet/developers/book-versioning.md)**
 >
 > Applying live updates in the right order.
 
-> **[Time in force](/developers/time-in-force.md)**
+> **[Time in force](https://docs.sx.bet/developers/time-in-force.md)**
 >
 > GTC, IOC, FOK — and what happens when there is not enough depth.
 

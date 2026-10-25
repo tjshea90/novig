@@ -27,13 +27,13 @@ Each instrument also includes details that shape how it trades:
 > [!NOTE]
 >
 > Market parameters can change as markets evolve. Builders should read live
-> instrument details from [Market Data](/perps/market-data.md#fetch-instruments)
+> instrument details from [Market Data](https://docs.polymarket.com/perps/market-data.md#fetch-instruments)
 > before submitting orders.
 
 ## Price Feeds
 
 Each market tracks an underlying market through external price feeds. Those
-feeds drive the [Index Price](/perps/learn-about-trading/index-price.md), and the Index Price helps anchor the [Mark Price](/perps/learn-about-trading/mark-price.md).
+feeds drive the [Index Price](https://docs.polymarket.com/perps/learn-about-trading/index-price.md), and the Index Price helps anchor the [Mark Price](https://docs.polymarket.com/perps/learn-about-trading/mark-price.md).
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

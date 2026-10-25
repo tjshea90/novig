@@ -7,15 +7,15 @@
 > Check whether a proxy wallet deployment is still pending.
 
 `GET /user/pending-deploy-proxy` is one half of confirming a deployment started by
-[`POST /user/deploy-proxy`](/api-reference/post-user-deploy-proxy).
+[`POST /user/deploy-proxy`](https://docs.sx.bet/api-reference/post-user-deploy-proxy).
 
 > [!WARNING]
 >
 > **`pending: false` does not mean the deployment succeeded.** It goes false on success and on failure
 > alike, because the query behind it selects only rows still marked `PENDING`. Read `deployed` on
-> [`GET /user/proxy`](/api-reference/get-user-proxy) alongside it: `pending: false` with
+> [`GET /user/proxy`](https://docs.sx.bet/api-reference/get-user-proxy) alongside it: `pending: false` with
 > `deployed: false` means the deployment failed and should be retried. [Proxy
-> wallet](/developers/accounts.md#waiting-for-deployment) has the poll loop.
+> wallet](https://docs.sx.bet/developers/accounts.md#waiting-for-deployment) has the poll loop.
 
 
 ## OpenAPI

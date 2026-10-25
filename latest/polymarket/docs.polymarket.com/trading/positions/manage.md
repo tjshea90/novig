@@ -56,7 +56,7 @@ const client = await createSecureClient({
 ```
 
 See [Wallets and
-Authentication](/trading/wallets-auth.md#execute-gasless-transactions) for the
+Authentication](https://docs.polymarket.com/trading/wallets-auth.md#execute-gasless-transactions) for the
 complete wallet setup and Relayer authorization flow.
 
 **Python**
@@ -99,12 +99,12 @@ The synchronous `SecureClient` provides the same methods and supports both
 API key types.
 
 See [Wallets and
-Authentication](/trading/wallets-auth.md#execute-gasless-transactions) for the
+Authentication](https://docs.polymarket.com/trading/wallets-auth.md#execute-gasless-transactions) for the
 complete wallet setup and Relayer authorization flow.
 
 **API**
 
-Use a deployed Deposit Wallet and its owner signer to submit position calls through the Relayer. Complete [wallet setup and Relayer authorization](/trading/wallets-auth.md#execute-gasless-transactions), then set the request credentials:
+Use a deployed Deposit Wallet and its owner signer to submit position calls through the Relayer. Complete [wallet setup and Relayer authorization](https://docs.polymarket.com/trading/wallets-auth.md#execute-gasless-transactions), then set the request credentials:
 
 ```bash theme={null}
 RELAYER_API_KEY="<relayer_api_key>"
@@ -273,7 +273,7 @@ curl -X POST "https://relayer-v2.polymarket.com/submit" \
 }'
 ```
 
-See [Execute Gasless Transactions](/trading/wallets-auth.md#execute-gasless-transactions) for nonce creation, wallet-batch signing, and confirmation. Wait for `STATE_CONFIRMED` before using the new balances.
+See [Execute Gasless Transactions](https://docs.polymarket.com/trading/wallets-auth.md#execute-gasless-transactions) for nonce creation, wallet-batch signing, and confirmation. Wait for `STATE_CONFIRMED` before using the new balances.
 
 **Solidity**
 
@@ -451,7 +451,7 @@ curl -X POST "https://relayer-v2.polymarket.com/submit" \
 }'
 ```
 
-See [Execute Gasless Transactions](/trading/wallets-auth.md#execute-gasless-transactions) for nonce creation, wallet-batch signing, and confirmation. Wait for `STATE_CONFIRMED` before using the new balances.
+See [Execute Gasless Transactions](https://docs.polymarket.com/trading/wallets-auth.md#execute-gasless-transactions) for nonce creation, wallet-batch signing, and confirmation. Wait for `STATE_CONFIRMED` before using the new balances.
 
 **Solidity**
 
@@ -670,7 +670,7 @@ curl -X POST "https://relayer-v2.polymarket.com/submit" \
 }'
 ```
 
-See [Execute Gasless Transactions](/trading/wallets-auth.md#execute-gasless-transactions) for nonce creation, wallet-batch signing, and confirmation. Wait for `STATE_CONFIRMED` before using the new balances.
+See [Execute Gasless Transactions](https://docs.polymarket.com/trading/wallets-auth.md#execute-gasless-transactions) for nonce creation, wallet-batch signing, and confirmation. Wait for `STATE_CONFIRMED` before using the new balances.
 
 **Solidity**
 

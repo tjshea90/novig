@@ -53,12 +53,12 @@ Connect and send a `login` message immediately:
 | `futureIds` | `string[]` | Specific futures (future-scoped channels). |
 | `bookmakers` | `string[]` | Only receive these bookmakers (bookmaker-gated). |
 | `lang` | `string` | Translations (`en`, `de`, `fr`, etc.). |
-| `receiveType` | `string` | `"json"` (default) \| `"binary"` (MessagePack) \| `"zstd"` (dictless compressed JSON) \| `"zstd-dict"` (compressed JSON with trained dictionaries). See [Compression](/websocket/compression.md). |
+| `receiveType` | `string` | `"json"` (default) \| `"binary"` (MessagePack) \| `"zstd"` (dictless compressed JSON) \| `"zstd-dict"` (compressed JSON with trained dictionaries). See [Compression](https://docs.oddspapi.io/websocket/compression.md). |
 | `clientName` | `string` | Optional debug/metrics tag. |
 | `serverEpoch` | `string` | For resume. |
 | `lastSeenId` | `object` | `{ "<channel>": "<entryId>" }` for resume. |
 
-> IDs like `fixtureId` and `futureId` are structured but should be treated as opaque in your logic. See [Concepts](/api-reference/concepts.md).
+> IDs like `fixtureId` and `futureId` are structured but should be treated as opaque in your logic. See [Concepts](https://docs.oddspapi.io/api-reference/concepts.md).
 
 ***
 

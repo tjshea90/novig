@@ -21,7 +21,7 @@ Index Price can use feeds from external sources such as:
 ## Feed Selection
 
 The system selects different feeds based on the current market session so it can
-use the most accurate feed set for each market. See [Market Sessions](/perps/learn-about-trading/market-sessions.md).
+use the most accurate feed set for each market. See [Market Sessions](https://docs.polymarket.com/perps/learn-about-trading/market-sessions.md).
 
 ## Aggregation
 
@@ -29,7 +29,7 @@ Index Price is computed as a weighted average across the selected feeds after
 dropping stale prices and filtering outliers. This prevents any single stale or
 anomalous feed from moving the Index.
 
-The same aggregation approach is used to build the [C3 candidate in Mark Price](/perps/learn-about-trading/mark-price.md),
+The same aggregation approach is used to build the [C3 candidate in Mark Price](https://docs.polymarket.com/perps/learn-about-trading/mark-price.md),
 using a separate mark feed set.
 
 

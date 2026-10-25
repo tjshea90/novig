@@ -65,45 +65,45 @@ print(markets)
 
 ## Start building
 
-> **[Quickstart](/developers/quickstart.md)**
+> **[Quickstart](https://docs.sx.bet/developers/quickstart.md)**
 >
 > Sign in, deploy and fund a proxy, read the book, place your first order.
 
-> **[API Reference](/api-reference/introduction.md)**
+> **[API Reference](https://docs.sx.bet/api-reference/introduction.md)**
 >
 > Full endpoint reference with request and response schemas.
 
-> **[Real-time data](/developers/realtime-overview.md)**
+> **[Real-time data](https://docs.sx.bet/developers/realtime-overview.md)**
 >
 > Subscribe to books, your own orders, and the public trade feed over one WebSocket.
 
-> **[What can you build?](/developers/what-can-you-build.md)**
+> **[What can you build?](https://docs.sx.bet/developers/what-can-you-build.md)**
 >
 > Trading bots, custom frontends, analytics tools, and more.
 
 ## Explore the platform
 
-> **[Accounts](/developers/accounts.md)**
+> **[Accounts](https://docs.sx.bet/developers/accounts.md)**
 >
 > Signing in with a wallet, and signing orders.
 
-> **[The exchange model](/developers/exchange-model.md)**
+> **[The exchange model](https://docs.sx.bet/developers/exchange-model.md)**
 >
 > Everyone posts an order. The engine decides the aggressor afterwards.
 
-> **[Markets and events](/developers/markets-and-events.md)**
+> **[Markets and events](https://docs.sx.bet/developers/markets-and-events.md)**
 >
 > How markets nest, and the identifiers you query by.
 
-> **[The order book](/developers/order-book.md)**
+> **[The order book](https://docs.sx.bet/developers/order-book.md)**
 >
 > Which side a resting level is liquidity for, and who set the price.
 
-> **[Market making](/developers/market-making.md)**
+> **[Market making](https://docs.sx.bet/developers/market-making.md)**
 >
 > Post quotes, manage them, and cancel by event.
 
-> **[Taking liquidity](/developers/taking-liquidity.md)**
+> **[Taking liquidity](https://docs.sx.bet/developers/taking-liquidity.md)**
 >
 > Take a resting price with an IOC or FOK order.
 

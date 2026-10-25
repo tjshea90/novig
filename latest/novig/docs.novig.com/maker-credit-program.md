@@ -49,7 +49,7 @@ An event is in-game when its status is `OPEN_INGAME`.
 
 The `lifecycle` WebSocket channel publishes an `EVENT_GOLIVE` tick when an event enters live play, and an `EVENT_UNLIVE` tick when it leaves.
 `GET /nbx/v2/emm/events/{eventId}` returns the status directly.
-The [Market Lifecycle Channel](/api-reference/WSS/lifecycle-channel.md) page documents both.
+The [Market Lifecycle Channel](https://docs.novig.com/api-reference/WSS/lifecycle-channel.md) page documents both.
 
 Once an event goes live, it does not return to pregame.
 
@@ -101,7 +101,7 @@ Two terms differ from the Program above.
 
 **The taker coefficient is 0.06, charged on every fill.**
 A futures market has no single event in progress, so we charge the taker fee on every fill, not only during live play.
-The [RFQ schedule](/fees.md#rfq-trades) works the same way.
+The [RFQ schedule](https://docs.novig.com/fees.md#rfq-trades) works the same way.
 The formula doesn't change:
 
 ```
@@ -125,7 +125,7 @@ That covers eligibility, the exclusion of Combination Contracts, the seven-day c
 > [!NOTE]
 >
 > Rates can change by Notice, so read the rate from `feeCoefficient` on each charged fill from `GET /nbx/v2/emm/fills/all`.
-> Don't hardcode a rate. See [Reading Fees from the API](/fees.md#reading-fees-from-the-api).
+> Don't hardcode a rate. See [Reading Fees from the API](https://docs.novig.com/fees.md#reading-fees-from-the-api).
 
 ## Terms and conditions
 
@@ -199,7 +199,7 @@ Taker Fee    = 0.06 × P × (1 − P) × Contracts
 Maker Credit = 0.03 × P × (1 − P) × Contracts
 ```
 
-These formulas, and the fee schedule generally, may be updated from time to time and are available at [Trading Fees](/fees.md).
+These formulas, and the fee schedule generally, may be updated from time to time and are available at [Trading Fees](https://docs.novig.com/fees.md).
 
 ### 5. Crediting and Adjustments
 

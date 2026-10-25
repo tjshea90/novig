@@ -1,0 +1,75 @@
+# BoltOdds
+
+> BoltOdds is a real-time sports betting odds API. One WebSocket connection streams normalized odds from 40+ sportsbooks, exchanges and prediction markets (main lines, alternate lines and player props, pregame and live), plus live scores and play-by-play data. It is built for developers, bettors and companies building betting models, odds screens, arbitrage and +EV tools.
+
+## What it provides
+
+- Real-time odds over WebSocket (`wss://spro.agency/api`): changes are pushed as individual `line_update` messages in one consistent JSON format across every book, so the same code works for all of them.
+- Coverage: main markets (moneylines, spreads, totals), alternate spreads and totals, and player props, pregame and in-game.
+- Snapshot endpoint (`GET /api/snapshot`) for the full current state of your subscription, then deltas over the WebSocket.
+- Filters by sportsbook, league, game and market.
+- Deep links to the sportsbook bet slip on supported books.
+- Live scores and play-by-play feeds, including 20 frames-per-second ball and player tracking for the NBA and soccer.
+- Parlay pricing engine and parlay deep links.
+
+## Sportsbooks, exchanges and prediction markets
+
+DraftKings, FanDuel, BetMGM, Caesars, Bet365, Fanatics, Hard Rock Bet, BetRivers, theScore Bet, Circa Sports, BookMaker, JustBet, Betcris, Bovada, BetOnline, LowVig, SportsBetting.ag, Stake, Bet105, Bet99, Sports Interaction, bwin, PartySports, LeoVegas, NorthStar Bets, 888sport, Bally Bet, PlayNow, Mise-o-jeu, Play Fallsview, PokerStars, TonyBet, Neobet, Ozoon, Thunderpick, Kalshi, Polymarket, ProphetX, NoVig, DraftKings Predictions, FanDuel Predicts, and a sharp consensus line (Pro plan).
+
+## Sports and leagues
+
+NFL, NCAAF, CFL, NBA, WNBA, NCAAB, EuroLeague and international basketball, NHL, college and European hockey, MLB, NPB, KBO, EPL, La Liga, Bundesliga, Serie A, Ligue 1, Champions League, Europa League, MLS, Liga MX and other soccer leagues, tennis, table tennis, UFC, boxing, golf, Formula 1, NASCAR, IndyCar and esports (CS2, League of Legends, Dota 2, Valorant, Call of Duty, Rainbow Six, Overwatch, Rocket League).
+
+## Plans
+
+- Starter: 1 league and 1 market per connection, 1 connection.
+- Growth: up to 3 leagues per connection, all markets, 1 connection.
+- Pro: all leagues, all markets, all sportsbooks, 3 concurrent connections.
+- Enterprise / custom plans available.
+- Free trial: 3 days, no credit card required.
+- Plans start at $119/month billed annually. Current pricing: https://boltodds.com/pricing
+
+## Pages
+
+- [Home](https://boltodds.com/): overview of the BoltOdds sports betting odds API
+- [Documentation](https://boltodds.com/docs): connecting, subscription filters, message format, endpoints, rate limits, play-by-play and live scores
+- [Pricing](https://boltodds.com/pricing): plans and free trial
+- [Sportsbook APIs](https://boltodds.com/sportsbooks/): every sportsbook we cover, one page per book
+- [Circa Sportsbook API](https://boltodds.com/sportsbooks/circa): real-time Circa odds
+- [Bet365 Sportsbook API](https://boltodds.com/sportsbooks/bet365): real-time Bet365 odds
+- [BookMaker Sportsbook API](https://boltodds.com/sportsbooks/bookmaker): real-time BookMaker odds
+- [FanDuel Sportsbook API](https://boltodds.com/sportsbooks/fanduel): real-time FanDuel odds
+- [DraftKings Sportsbook API](https://boltodds.com/sportsbooks/draftkings): real-time DraftKings odds
+- [BetMGM Sportsbook API](https://boltodds.com/sportsbooks/betmgm): real-time BetMGM odds
+- [Caesars Sportsbook API](https://boltodds.com/sportsbooks/caesars): real-time Caesars odds
+- [Fanatics Sportsbook API](https://boltodds.com/sportsbooks/fanatics): real-time Fanatics odds
+- [theScore Bet Sportsbook API](https://boltodds.com/sportsbooks/thescore): real-time theScore Bet odds
+- [Bovada Sportsbook API](https://boltodds.com/sportsbooks/bovada): real-time Bovada odds
+- [Stake Sportsbook API](https://boltodds.com/sportsbooks/stake): real-time Stake odds
+- [Bet105 Sportsbook API](https://boltodds.com/sportsbooks/bet105): real-time Bet105 odds
+- [NoVig Sportsbook API](https://boltodds.com/sportsbooks/novig): real-time NoVig odds
+- [Bet99 Sportsbook API](https://boltodds.com/sportsbooks/bet99): real-time Bet99 odds
+- [BetRivers Sportsbook API](https://boltodds.com/sportsbooks/betrivers): real-time BetRivers odds
+- [Sports Interaction Sportsbook API](https://boltodds.com/sportsbooks/sportsinteraction): real-time Sports Interaction odds
+- [PartySports Sportsbook API](https://boltodds.com/sportsbooks/partysports): real-time PartySports odds
+- [Bwin Sportsbook API](https://boltodds.com/sportsbooks/bwin): real-time Bwin odds
+- [Play Fallsview Sportsbook API](https://boltodds.com/sportsbooks/playfallsview): real-time Play Fallsview odds
+- [LeoVegas Sportsbook API](https://boltodds.com/sportsbooks/leovegas): real-time LeoVegas odds
+- [NorthStar Bets Sportsbook API](https://boltodds.com/sportsbooks/northstar): real-time NorthStar Bets odds
+- [888sport Sportsbook API](https://boltodds.com/sportsbooks/888): real-time 888sport odds
+- [Bally Bet Sportsbook API](https://boltodds.com/sportsbooks/ballybet): real-time Bally Bet odds
+- [PlayNow Sportsbook API](https://boltodds.com/sportsbooks/playnow): real-time PlayNow odds
+- [Mise-o-jeu Sportsbook API](https://boltodds.com/sportsbooks/miseojeu): real-time Mise-o-jeu odds
+- [Hard Rock Bet Sportsbook API](https://boltodds.com/sportsbooks/hardrock): real-time Hard Rock Bet odds
+- [BetOnline Sportsbook API](https://boltodds.com/sportsbooks/betonline): real-time BetOnline odds
+- [LowVig Sportsbook API](https://boltodds.com/sportsbooks/lowvig): real-time LowVig odds
+- [SportsBetting.ag Sportsbook API](https://boltodds.com/sportsbooks/sportsbettingag): real-time SportsBetting.ag odds
+- [JustBet Sportsbook API](https://boltodds.com/sportsbooks/justbet): real-time JustBet odds
+- [Betcris Sportsbook API](https://boltodds.com/sportsbooks/betcris): real-time Betcris odds
+- [Polymarket Sportsbook API](https://boltodds.com/sportsbooks/polymarket): real-time Polymarket odds
+- [Kalshi Sportsbook API](https://boltodds.com/sportsbooks/kalshi): real-time Kalshi odds
+- [ProphetX Sportsbook API](https://boltodds.com/sportsbooks/prophetx): real-time ProphetX odds
+- [Neobet Sportsbook API](https://boltodds.com/sportsbooks/neobet): real-time Neobet odds
+- [Thunderpick Sportsbook API](https://boltodds.com/sportsbooks/thunderpick): real-time Thunderpick odds
+- [Ozoon Sportsbook API](https://boltodds.com/sportsbooks/ozoon): real-time Ozoon odds
+- [Contact](https://boltodds.com/contact): support@boltodds.com

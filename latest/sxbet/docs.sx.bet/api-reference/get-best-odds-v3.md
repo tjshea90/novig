@@ -7,13 +7,13 @@
 > Get the best available odds for a set of markets on the SX Bet exchange.
 
 `GET /orders-v3/odds/best` returns the **best level on each side** for a set of markets. It requires
-an [API key](/api-reference/api-key.md). For every level on a single market, use
-[`GET /orderbook-v3/snapshot/market`](/api-reference/get-market-orderbook-snapshot) — both read the top of the same
+an [API key](https://docs.sx.bet/api-reference/api-key.md). For every level on a single market, use
+[`GET /orderbook-v3/snapshot/market`](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot) — both read the top of the same
 book.
 
 > [!TIP]
 >
-> Prefer the realtime [`best_odds_v3:global`](/api-reference/channel-best-odds-v3) channel over
+> Prefer the realtime [`best_odds_v3:global`](https://docs.sx.bet/api-reference/channel-best-odds-v3) channel over
 > polling this endpoint. Use this route once to seed state, then apply stream publications.
 
 > [!NOTE]

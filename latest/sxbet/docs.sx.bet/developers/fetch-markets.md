@@ -6,7 +6,7 @@
 
 > Query active sports markets from the SX Bet API.
 
-All active markets are available from [`GET /markets/active`](/api-reference/get-markets-active). You can filter by sport, league, event, market type, and more. To look up a specific market by hash, use [`GET /markets/find`](/api-reference/get-markets-find).
+All active markets are available from [`GET /markets/active`](https://docs.sx.bet/api-reference/get-markets-active). You can filter by sport, league, event, market type, and more. To look up a specific market by hash, use [`GET /markets/find`](https://docs.sx.bet/api-reference/get-markets-find).
 
 ***
 
@@ -19,7 +19,7 @@ Pass one or more `sportIds` to scope results to a particular sport.
 curl "https://api.sx.bet/markets/active?sportIds=1,4"
 ```
 
-Use [`GET /sports`](/api-reference/get-sports) to get a full list of sport IDs and their labels.
+Use [`GET /sports`](https://docs.sx.bet/api-reference/get-sports) to get a full list of sport IDs and their labels.
 
 ***
 
@@ -32,7 +32,7 @@ Pass a `leagueId` to get all active markets in a specific league.
 curl "https://api.sx.bet/markets/active?leagueId=29"
 ```
 
-Use [`GET /leagues/active`](/api-reference/get-leagues-active) to get a full list of active league IDs.
+Use [`GET /leagues/active`](https://docs.sx.bet/api-reference/get-leagues-active) to get a full list of active league IDs.
 
 ***
 
@@ -50,25 +50,25 @@ This returns every market type available for that single game — moneylines, sp
 
 ## Find fixtures by team name
 
-If you do not already have an `eventId`, use [`GET /search`](/api-reference/search) to look up active fixtures by team name. Pass a `query` between 3 and 100 characters. The match is case-insensitive, and it supports partial names. Results are limited to 8 active fixtures, ordered by `gameTime`.
+If you do not already have an `eventId`, use [`GET /search`](https://docs.sx.bet/api-reference/search) to look up active fixtures by team name. Pass a `query` between 3 and 100 characters. The match is case-insensitive, and it supports partial names. Results are limited to 8 active fixtures, ordered by `gameTime`.
 
 ```bash theme={null}
 curl "https://api.sx.bet/search?query=mia"
 ```
 
-Each result includes the `eventId`, scheduled `gameTime`, both team names, and a `type` array of available market type IDs for that fixture. Pass the `eventId` to [`GET /markets/active`](/api-reference/get-markets-active) to fetch markets for that fixture.
+Each result includes the `eventId`, scheduled `gameTime`, both team names, and a `type` array of available market type IDs for that fixture. Pass the `eventId` to [`GET /markets/active`](https://docs.sx.bet/api-reference/get-markets-active) to fetch markets for that fixture.
 
 ***
 
 ## Fetch a specific market by marketHash
 
-If you have a `marketHash`, use [`GET /markets/find`](/api-reference/get-markets-find) to retrieve it directly. You can pass up to 30 hashes in a single request.
+If you have a `marketHash`, use [`GET /markets/find`](https://docs.sx.bet/api-reference/get-markets-find) to retrieve it directly. You can pass up to 30 hashes in a single request.
 
 ```bash theme={null}
 curl "https://api.sx.bet/markets/find?marketHashes=0x024902...dd7667b,0x1c8f12...bcbc83"
 ```
 
-[`GET /markets/find`](/api-reference/get-markets-find) also returns settled markets, so it is useful for looking up historical results.
+[`GET /markets/find`](https://docs.sx.bet/api-reference/get-markets-find) also returns settled markets, so it is useful for looking up historical results.
 
 ***
 
@@ -109,13 +109,13 @@ Common market types:
 | `3` | Asian Handicap (spread) |
 | `2` | Under/Over (totals) |
 
-See the full list on the [Market Types](/api-reference/market-types.md) page.
+See the full list on the [Market Types](https://docs.sx.bet/api-reference/market-types.md) page.
 
 ***
 
 ## Pagination
 
-[`GET /markets/active`](/api-reference/get-markets-active) uses cursor-based pagination. Each response includes a `nextKey`. Pass it as `paginationKey` in your next request. The maximum `pageSize` is 100, which is also the default.
+[`GET /markets/active`](https://docs.sx.bet/api-reference/get-markets-active) uses cursor-based pagination. Each response includes a `nextKey`. Pass it as `paginationKey` in your next request. The maximum `pageSize` is 100, which is also the default.
 
 > [!WARNING]
 >
@@ -129,19 +129,19 @@ ignored and you get a default-sized page, never an error.
 
 ## Real-time market updates
 
-Rather than poll [`GET /markets/active`](/api-reference/get-markets-active), subscribe to a channel and receive market changes as they happen. Three channels are relevant to markets:
+Rather than poll [`GET /markets/active`](https://docs.sx.bet/api-reference/get-markets-active), subscribe to a channel and receive market changes as they happen. Three channels are relevant to markets:
 
 | Channel | What you receive |
 | - | - |
-| [`markets:global`](/api-reference/channel-markets) | A market's metadata changing — created, or moved between `ACTIVE` and `INACTIVE` |
-| [`main_line:global`](/api-reference/channel-line-changes) | Main line shifts on markets whose type carries a line |
-| [`fixtures:live_scores`](/api-reference/channel-fixtures) | Live scores for **every** event — there is no per-event filter |
+| [`markets:global`](https://docs.sx.bet/api-reference/channel-markets) | A market's metadata changing — created, or moved between `ACTIVE` and `INACTIVE` |
+| [`main_line:global`](https://docs.sx.bet/api-reference/channel-line-changes) | Main line shifts on markets whose type carries a line |
+| [`fixtures:live_scores`](https://docs.sx.bet/api-reference/channel-fixtures) | Live scores for **every** event — there is no per-event filter |
 
 > [!NOTE]
 >
 > **None of the three keeps history**, so a change you miss while disconnected is gone. Seed from REST
 > on connect. Also, `markets:global` publishes an **array**, while `fixtures` publishes a bare object.
-> See [Real-time data](/developers/realtime-overview.md).
+> See [Real-time data](https://docs.sx.bet/developers/realtime-overview.md).
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

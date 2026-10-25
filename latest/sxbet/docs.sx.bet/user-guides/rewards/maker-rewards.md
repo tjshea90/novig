@@ -100,11 +100,11 @@ You'll need a small amount of SX Token to cover network gas fees. If you don't h
 >
 > If the market is included in the Maker Rewards but you don't see an orange line on the order book, you will not collect points by placing a limit order. Refresh the page or check the market later — sometimes it can take time for the Global Line to update. If the issue persists, message our support team.
 
-> **[Limit Orders (Maker)](/user-guides/trading/limit-orders.md)**
+> **[Limit Orders (Maker)](https://docs.sx.bet/user-guides/trading/limit-orders.md)**
 >
 > Post your own odds and earn the spread as a market maker.
 
-> **[Reading the Order Book](/user-guides/trading/order-book.md)**
+> **[Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)**
 >
 > Learn how to read the order book and find the global consensus line.
 

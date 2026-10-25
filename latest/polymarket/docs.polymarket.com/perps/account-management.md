@@ -12,7 +12,7 @@ health, trading history, and performance.
 > [!NOTE]
 >
 > Owner account reads use an [authenticated
-> session](/perps/authenticated-sessions.md). Position snapshots also support
+> session](https://docs.polymarket.com/perps/authenticated-sessions.md). Position snapshots also support
 > public reads.
 
 ## Review Account Health
@@ -291,14 +291,14 @@ orders, after existing positions, open orders, and any orders, isolated-margin
 additions, withdrawals, or transfers still being processed.
 
 `fee_tier` is the account's current fee tier: a zero-based index into the
-`tiers` of the fee schedule from [Trading Fees](/perps/trading.md#trading-fees).
+`tiers` of the fee schedule from [Trading Fees](https://docs.polymarket.com/perps/trading.md#trading-fees).
 Accounts without a current tier assignment report `0`.
 
 ### Account Stats
 
 Use account stats to review trailing 7-day trading activity such as volume and
 maker share. Stats are cached by UTC day and may be stale by up to 24 hours. See
-[Fee Metrics](/perps/learn-about-trading/fees.md#fee-metrics) for what each metric
+[Fee Metrics](https://docs.polymarket.com/perps/learn-about-trading/fees.md#fee-metrics) for what each metric
 means.
 
 **TypeScript**
@@ -1087,7 +1087,7 @@ indefinitely.
 ## Reconcile Funding and Transfers
 
 Funding, deposits, and withdrawals explain collateral changes that did not come
-from order fills. Use [Fund Your Account](/perps/fund-your-account.md) for deposit
+from order fills. Use [Fund Your Account](https://docs.polymarket.com/perps/fund-your-account.md) for deposit
 and withdrawal submission workflows.
 
 ### Funding Payments

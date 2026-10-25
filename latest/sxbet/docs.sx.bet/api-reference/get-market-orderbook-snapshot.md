@@ -6,24 +6,24 @@
 
 > Get a snapshot of the order book for a market on SX Bet. Requires an API key.
 
-`GET /orderbook-v3/snapshot/market` returns the **aggregated** book for a **single** market. It requires an [API key](/api-reference/api-key.md).
+`GET /orderbook-v3/snapshot/market` returns the **aggregated** book for a **single** market. It requires an [API key](https://docs.sx.bet/api-reference/api-key.md).
 
 > [!TIP]
 >
-> Prefer the realtime [`orderbook_v3:{marketHash}`](/api-reference/channel-orderbook-v3) channel over
+> Prefer the realtime [`orderbook_v3:{marketHash}`](https://docs.sx.bet/api-reference/channel-orderbook-v3) channel over
 > polling this endpoint. Use the snapshot once to bootstrap state, then apply stream publications.
 
 > [!TIP]
 >
 > Subscribed to a very high number of markets? Seed from
-> [`GET /orderbook-v3/snapshot/event`](/api-reference/get-event-orderbook-snapshot) and follow
-> [`orderbook_v3_event:{eventId}`](/api-reference/channel-orderbook-v3-event) instead of one snapshot
+> [`GET /orderbook-v3/snapshot/event`](https://docs.sx.bet/api-reference/get-event-orderbook-snapshot) and follow
+> [`orderbook_v3_event:{eventId}`](https://docs.sx.bet/api-reference/channel-orderbook-v3-event) instead of one snapshot
 > and one channel per market.
 
 > [!WARNING]
 >
 > Use `showTakerPerspective` for display only. `percentageOdds` is from the perspective of the maker. [Read the order
-> book](/developers/order-book.md#convert-a-level-into-what-you-can-bet) walks the conversion through.
+> book](https://docs.sx.bet/developers/order-book.md#convert-a-level-into-what-you-can-bet) walks the conversion through.
 
 
 ## OpenAPI

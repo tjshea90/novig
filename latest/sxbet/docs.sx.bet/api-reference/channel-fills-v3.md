@@ -6,14 +6,14 @@
 
 > Subscribe to real-time updates for your own fills
 
-Subscribe to your own matches at fill grain — one row per match between your order and a counterparty's. A bet filled by three makers produces three messages here and one on [`account:trades_v3_#{address}`](/api-reference/channel-trades-v3).
+Subscribe to your own matches at fill grain — one row per match between your order and a counterparty's. A bet filled by three makers produces three messages here and one on [`account:trades_v3_#{address}`](https://docs.sx.bet/api-reference/channel-trades-v3).
 
 > [!NOTE]
 >
 > **The first message for a new fill is `MATCHED`, which comes before the on-chain lock**. A
 > second message follows once the funds are escrowed (`LOCKED`) or the
 > lock fails (`FAILED`). Act on `MATCHED` for speed, or wait for `LOCKED` if a revised bet would cost
-> you — see [which status to act on](/developers/bet-lifecycle.md#which-status-to-act-on).
+> you — see [which status to act on](https://docs.sx.bet/developers/bet-lifecycle.md#which-status-to-act-on).
 
 **CHANNEL NAME FORMAT**
 
@@ -23,7 +23,7 @@ For example: `account:fills_v3_#0xbcc6D643e4159A75ED1dB4e13330230B82F2AEe5`. The
 
 | Name | Type | Description |
 | - | - | - |
-| address | string | Your checksummed address. It must equal your realtime token's `sub` — see [subscribing to your own channels](/developers/realtime-overview.md#subscribing-to-your-own-channels) |
+| address | string | Your checksummed address. It must equal your realtime token's `sub` — see [subscribing to your own channels](https://docs.sx.bet/developers/realtime-overview.md#subscribing-to-your-own-channels) |
 
 **MESSAGE PAYLOAD FORMAT**
 
@@ -40,19 +40,19 @@ One fill per message, wrapped in `fill`. Quarter-line legs each get their own me
 | isParlay | boolean | `true` when `marketHash` is a parlay parent |
 | userAddress | string | Your user address, checksummed |
 | wallet | string | Your proxy address |
-| fillAmount | string | Your stake in this fill, in base units. See [unit conversions](/developers/unit-conversions.md). |
-| fillOdds | string | The odds this fill got, in the sx.bet protocol format. To convert to implied odds divide by 10^20. See [unit conversions](/developers/unit-conversions.md). |
+| fillAmount | string | Your stake in this fill, in base units. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
+| fillOdds | string | The odds this fill got, in the sx.bet protocol format. To convert to implied odds divide by 10^20. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
 | returnAmount | string | Gross return for this fill if it wins, stake included |
 | netReturnAmount | string | `returnAmount` less the projected settlement payout fee. |
 | isBettingOutcomeOne | boolean | The side you backed |
-| status | string | `"MATCHED"`, `"LOCKED"`, `"FAILED"` or `"SETTLED"`. See [bet lifecycle](/developers/bet-lifecycle.md) |
+| status | string | `"MATCHED"`, `"LOCKED"`, `"FAILED"` or `"SETTLED"`. See [bet lifecycle](https://docs.sx.bet/developers/bet-lifecycle.md) |
 | isMaker | boolean | Which side of the match this fill was on. `true` on the maker side — your order was the resting one; `false` on the taker side |
 | txHash | string or `null` | The on-chain lock transaction. `null` until it lands |
-| ceRefundAmount | string | Capital-efficiency refund on this fill. See [capital efficiency](/developers/capital-efficiency.md) |
+| ceRefundAmount | string | Capital-efficiency refund on this fill. See [capital efficiency](https://docs.sx.bet/developers/capital-efficiency.md) |
 | ceRefundFeeAmount | string | The fee taken on that refund |
 | usedBetCredits | boolean | Whether bet credits paid for it |
-| clientOrderId | string | Your own tag from the order that produced this fill, present only when set — the maker's tag on maker rows, the taker's on taker rows. See [client order id](/developers/client-order-id.md) |
-| externalUserId | string | Optional partner tag from the order that produced this fill, present only when set — the maker's tag on maker rows, the taker's on taker rows. See [External user id](/developers/external-user-id.md) |
+| clientOrderId | string | Your own tag from the order that produced this fill, present only when set — the maker's tag on maker rows, the taker's on taker rows. See [client order id](https://docs.sx.bet/developers/client-order-id.md) |
+| externalUserId | string | Optional partner tag from the order that produced this fill, present only when set — the maker's tag on maker rows, the taker's on taker rows. See [External user id](https://docs.sx.bet/developers/external-user-id.md) |
 | createdAt | string | ISO timestamp for when the row was created |
 | updatedAt | string | ISO timestamp for the last modification of this row |
 | settlement | object or `null` | `null` until the fill is `"SETTLED"`. A different shape from the bet-grain block — it carries `settleTxHash`, has no `settleDate`, and its `settleFeeAmount` is nullable. Do not share a parser between the two |

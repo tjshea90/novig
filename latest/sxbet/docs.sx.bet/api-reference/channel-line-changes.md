@@ -6,7 +6,7 @@
 
 > Subscribe to real-time line changes
 
-Subscribe to all line changes. Messages are sent for particular combinations of event IDs and market types. Note that only market types with lines will have updates sent. See [the market types section](/api-reference/market-types.md) for details on which types have lines.
+Subscribe to all line changes. Messages are sent for particular combinations of event IDs and market types. Note that only market types with lines will have updates sent. See [the market types section](https://docs.sx.bet/api-reference/market-types.md) for details on which types have lines.
 
 **CHANNEL NAME**
 

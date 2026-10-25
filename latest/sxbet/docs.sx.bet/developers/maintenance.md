@@ -11,7 +11,7 @@ your job.
 
 ## What you receive
 
-The cancels arrive on [`account:orders_v3_#{address}`](/api-reference/channel-orders-v3), one
+The cancels arrive on [`account:orders_v3_#{address}`](https://docs.sx.bet/api-reference/channel-orders-v3), one
 message per order, with `status: "INACTIVE"` and `inactiveReason: "SYSTEM"`.
 
 ```json theme={null}

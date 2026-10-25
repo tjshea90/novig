@@ -17,7 +17,7 @@ discovery, and absorb trading flow as market conditions change.
 > [!NOTE]
 >
 > Building a product that routes orders for its users? See the [Builder
-> Program](/programs/builders/overview.md). This page is for traders providing
+> Program](https://docs.polymarket.com/programs/builders/overview.md). This page is for traders providing
 > liquidity from their own account.
 
 ## Set Up for Market Making
@@ -28,18 +28,18 @@ Complete these account-level requirements before quoting a market.
 
 Create or connect the wallet that will hold funds, positions, and orders,
 then authenticate the integration. See [Wallets and
-Authentication](/trading/wallets-auth.md) for the supported workflows.
+Authentication](https://docs.polymarket.com/trading/wallets-auth.md) for the supported workflows.
 
 **2. Fund the Wallet**
 
 The wallet needs pUSD on Polygon before it can trade. To deposit another
 supported asset or transfer funds from another network, use the
-[Bridge](/trading/bridge/deposit.md).
+[Bridge](https://docs.polymarket.com/trading/bridge/deposit.md).
 
 **3. Set Up Trading Approvals**
 
 Authorize the contracts required to trade outcomes and manage positions. See
-[Set Up Trading Approvals](/trading/wallets-auth.md#set-up-trading-approvals).
+[Set Up Trading Approvals](https://docs.polymarket.com/trading/wallets-auth.md#set-up-trading-approvals).
 
 ## Quote and Manage Orders
 
@@ -56,7 +56,7 @@ selling YES at `0.52`.
 
 Before submitting a quote, confirm that the market is accepting orders and
 validate its current minimum price increment and minimum order size. See
-[Market Details](/market-data/market-details.md) for these constraints.
+[Market Details](https://docs.polymarket.com/market-data/market-details.md) for these constraints.
 
 ### Choose Order Types
 
@@ -70,16 +70,16 @@ Choose the order type according to what the strategy needs to accomplish:
 | Fill-and-Kill (FAK) | Fills the available amount immediately and cancels the remainder | Rebalance immediately while allowing a partial fill |
 
 GTC and GTD are the primary order types for passive market making. Add the
-[post-only option](/trading/place-orders.md#post-only-orders) when an order must
+[post-only option](https://docs.polymarket.com/trading/place-orders.md#post-only-orders) when an order must
 add liquidity rather than execute immediately. FAK and FOK are the execution
 types used by market orders for immediate rebalancing.
 
 ### Submit and Maintain Orders
 
-Submit related price levels as a [batch](/trading/place-orders.md#post-a-batch-of-orders)
+Submit related price levels as a [batch](https://docs.polymarket.com/trading/place-orders.md#post-a-batch-of-orders)
 to reduce submission latency. Each order is evaluated independently, so check
 every result rather than treating the batch as a single success or failure. See
-[Place Orders](/trading/place-orders.md) for the complete order workflows.
+[Place Orders](https://docs.polymarket.com/trading/place-orders.md) for the complete order workflows.
 
 Once submitted, the quotes become orders resting on the book. Orders cannot be
 edited in place, so changing a quote means canceling the existing order and
@@ -88,11 +88,11 @@ submitting a replacement:
 * Cancel and replace open orders when fair value, inventory, or market
   constraints change.
 * Keep the local book current with [real-time market
-  data](/market-data/realtime-data.md#market-stream).
+  data](https://docs.polymarket.com/market-data/realtime-data.md#market-stream).
 * Monitor fills and order changes through [Real-Time Order
-  Updates](/trading/realtime-order-updates.md).
+  Updates](https://docs.polymarket.com/trading/realtime-order-updates.md).
 * After reconnecting, [fetch open orders and recent
-  trades](/trading/manage-orders.md) before resuming the strategy.
+  trades](https://docs.polymarket.com/trading/manage-orders.md) before resuming the strategy.
 
 ## Manage Inventory
 
@@ -103,7 +103,7 @@ inventory must be part of every pricing and sizing decision.
 Buy orders use available pUSD, while sell orders require the corresponding
 outcome tokens. Splitting pUSD creates a complete set of outcome tokens.
 Merging a complete set returns pUSD, and redeeming a winning position releases
-its value after resolution. See [Manage Positions](/trading/positions/manage.md)
+its value after resolution. See [Manage Positions](https://docs.polymarket.com/trading/positions/manage.md)
 for these workflows.
 
 ### Inventory Strategies
@@ -115,7 +115,7 @@ for these workflows.
 | When exiting | Cancel the market's remaining orders, merge any complete sets that are no longer needed, and retain or reduce the remaining directional exposure deliberately. |
 | After resolution | Confirm that the market has resolved, redeem winning positions, and return the released capital to the strategy. |
 
-Multi-outcome events use [negative-risk markets](/concepts/negative-risk.md), which
+Multi-outcome events use [negative-risk markets](https://docs.polymarket.com/concepts/negative-risk.md), which
 change how complete sets are created and merged. Account for the market type
 when planning inventory operations.
 
@@ -137,9 +137,9 @@ Use these practices to keep quotes current and limit avoidable execution risk.
 ### Latency
 
 * **Batch orders**: Submit related quotes in a [single
-  request](/trading/place-orders.md#post-a-batch-of-orders).
+  request](https://docs.polymarket.com/trading/place-orders.md#post-a-batch-of-orders).
 * **Use real-time data**: Subscribe to [market
-  updates](/market-data/realtime-data.md#market-stream) instead of polling.
+  updates](https://docs.polymarket.com/market-data/realtime-data.md#market-stream) instead of polling.
 
 ### Risk Controls
 
@@ -148,22 +148,22 @@ Use these practices to keep quotes current and limit avoidable execution risk.
 * **Use price guards**: Validate prices against the book midpoint and reject
   outliers.
 * **Add a kill switch**: [Cancel all open
-  orders](/trading/manage-orders.md#cancel-all-orders) when errors or position
+  orders](https://docs.polymarket.com/trading/manage-orders.md#cancel-all-orders) when errors or position
   limits require the strategy to stop.
 * **Monitor fills**: Subscribe to [real-time order
-  updates](/trading/realtime-order-updates.md) to track executions.
+  updates](https://docs.polymarket.com/trading/realtime-order-updates.md) to track executions.
 
 ## Programs and Incentives
 
 In addition to the spread captured through executions, qualifying
 market-making activity may earn incentives through two separate programs.
 
-> **[Liquidity Rewards](/programs/liquidity-rewards.md)**
+> **[Liquidity Rewards](https://docs.polymarket.com/programs/liquidity-rewards.md)**
 >
 > Earn rewards by maintaining qualifying resting liquidity in incentivized
 > markets.
 
-> **[Maker Rebates](/programs/maker-rebates.md)**
+> **[Maker Rebates](https://docs.polymarket.com/programs/maker-rebates.md)**
 >
 > Earn rebates when maker liquidity executes in eligible fee-enabled markets.
 

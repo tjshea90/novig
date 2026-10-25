@@ -24,7 +24,7 @@ liquidity only: if it would cross the book on arrival it is cancelled with
 `inactiveReason: "POST_ONLY_WOULD_CROSS"` instead of matching. An order that does not cross rests as
 usual.
 
-Because it can never take, no [betting delay](/developers/betting-delays.md) applies.
+Because it can never take, no [betting delay](https://docs.sx.bet/developers/betting-delays.md) applies.
 
 ## Which one to use
 
@@ -40,19 +40,19 @@ Because it can never take, no [betting delay](/developers/betting-delays.md) app
 
 ## Related
 
-> **[Posting orders](/developers/posting-orders.md)**
+> **[Posting orders](https://docs.sx.bet/developers/posting-orders.md)**
 >
 > Build, sign and submit an order of any type.
 
-> **[Taking liquidity](/developers/taking-liquidity.md)**
+> **[Taking liquidity](https://docs.sx.bet/developers/taking-liquidity.md)**
 >
 > The immediate-execution path, end to end.
 
-> **[Order lifecycle](/developers/order-lifecycle.md)**
+> **[Order lifecycle](https://docs.sx.bet/developers/order-lifecycle.md)**
 >
 > `PENDING`, `ACTIVE`, `INACTIVE`, and every terminal reason.
 
-> **[Tracking your orders](/developers/my-orders.md)**
+> **[Tracking your orders](https://docs.sx.bet/developers/my-orders.md)**
 >
 > `timeInForce` and `postOnly` are write-only — tag them in your own store when you post.
 

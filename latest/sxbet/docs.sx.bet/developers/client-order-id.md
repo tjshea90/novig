@@ -7,15 +7,15 @@
 > Attach your own id to an order so you can reconcile it across HTTP and realtime.
 
 `clientOrderId` is an optional tag you attach to an order on
-[`POST /orders-v3`](/api-reference/post-orders-v3). It is your own value, echoed back to you on the
+[`POST /orders-v3`](https://docs.sx.bet/api-reference/post-orders-v3). It is your own value, echoed back to you on the
 create response, the order row, the orders channel, and in the fills grain.
 `clientOrderId` has no effect on funds, fees, or matching.
 
 ## Why it is useful
 
-You do not know an order's id until [`POST /orders-v3`](/api-reference/post-orders-v3) responds. That makes correlation awkward when
+You do not know an order's id until [`POST /orders-v3`](https://docs.sx.bet/api-reference/post-orders-v3) responds. That makes correlation awkward when
 the pieces of one order's lifecycle arrive on different paths: the HTTP response, and then separate
-publications on [`account:orders_v3_#{address}`](/api-reference/channel-orders-v3). A `clientOrderId`
+publications on [`account:orders_v3_#{address}`](https://docs.sx.bet/api-reference/channel-orders-v3). A `clientOrderId`
 is a value you choose *before* you submit, so you can stitch those messages together against your own
 records the moment each one lands, rather than waiting on the id.
 
@@ -41,19 +41,19 @@ The safe rule is to treat each `clientOrderId` as single-use. Generate a fresh v
 
 `clientOrderId` is echoed on the **order** grain:
 
-* [`POST /orders-v3`](/api-reference/post-orders-v3) — the `200` body's `orders` array echoes your
+* [`POST /orders-v3`](https://docs.sx.bet/api-reference/post-orders-v3) — the `200` body's `orders` array echoes your
   `clientOrderId` on each result when you set one, alongside `orderId`, `status`, and `commandId`.
-* [`GET /orders-v3`](/api-reference/get-orders-v3) — each order row carries `clientOrderId` when set.
-* [`GET /orders-v3/client/{clientOrderId}`](/api-reference/get-order-v3-by-client-id) — look up one of
+* [`GET /orders-v3`](https://docs.sx.bet/api-reference/get-orders-v3) — each order row carries `clientOrderId` when set.
+* [`GET /orders-v3/client/{clientOrderId}`](https://docs.sx.bet/api-reference/get-order-v3-by-client-id) — look up one of
   your orders (any status) by the tag you set.
-* [`account:orders_v3_#{address}`](/api-reference/channel-orders-v3) — each publication carries it too
+* [`account:orders_v3_#{address}`](https://docs.sx.bet/api-reference/channel-orders-v3) — each publication carries it too
   when set.
 
 It is also echoed on the **fill** grain, so you can trace a fill straight back to the order that
 produced it:
 
-* [`GET /fills-v3`](/api-reference/get-fills-v3) and
-  [`account:fills_v3_#{address}`](/api-reference/channel-fills-v3) — each [fill](/developers/which-grain.md#fills)
+* [`GET /fills-v3`](https://docs.sx.bet/api-reference/get-fills-v3) and
+  [`account:fills_v3_#{address}`](https://docs.sx.bet/api-reference/channel-fills-v3) — each [fill](https://docs.sx.bet/developers/which-grain.md#fills)
   carries the `clientOrderId` of the order on that side (the maker's tag on maker rows, the taker's on
   taker rows) when that order carried a tag; otherwise the field is omitted.
 
@@ -80,27 +80,27 @@ await fetch(`${API}/orders-v3`, authed({
 
 ## Related
 
-> **[Posting orders](/developers/posting-orders.md)**
+> **[Posting orders](https://docs.sx.bet/developers/posting-orders.md)**
 >
 > The submit flow this field rides on.
 
-> **[Time in force](/developers/time-in-force.md)**
+> **[Time in force](https://docs.sx.bet/developers/time-in-force.md)**
 >
 > The other write-only field worth recording against your tag.
 
-> **[Tracking your orders](/developers/my-orders.md)**
+> **[Tracking your orders](https://docs.sx.bet/developers/my-orders.md)**
 >
 > Keep a local store keyed by an id you control.
 
-> **[Get an order by client ID](/api-reference/get-order-v3-by-client-id.md)**
+> **[Get an order by client ID](https://docs.sx.bet/api-reference/get-order-v3-by-client-id.md)**
 >
 > Look up one of your orders by the tag you set.
 
-> **[EIP-712 order signing](/api-reference/eip712-order-signing.md)**
+> **[EIP-712 order signing](https://docs.sx.bet/api-reference/eip712-order-signing.md)**
 >
 > Why the order id is a digest, not a server-assigned value.
 
-> **[External user id](/developers/external-user-id.md)**
+> **[External user id](https://docs.sx.bet/developers/external-user-id.md)**
 >
 > A per-person tag when one SX account places orders for many people.
 

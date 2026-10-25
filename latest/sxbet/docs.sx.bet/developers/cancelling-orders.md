@@ -12,10 +12,10 @@ body can tell you differs by route:
 
 | Route | Scope | Does the response body confirm the order is off the book? |
 | - | - | - |
-| [`DELETE /orders-v3`](/api-reference/delete-orders-v3) | ids you name, up to 100 | **Yes** — waits for the matching engine, reports per order |
-| [`DELETE /orders-v3/market`](/api-reference/delete-orders-v3-market) | every open order on one market | **No** — confirms only that a cancel command was accepted |
-| [`DELETE /orders-v3/event`](/api-reference/delete-orders-v3-event) | every open order on one event | **No** — confirms only that a cancel command was accepted |
-| [`DELETE /orders-v3/all`](/api-reference/delete-orders-v3-all) | every open order you have | **No** — confirms only that a cancel command was accepted |
+| [`DELETE /orders-v3`](https://docs.sx.bet/api-reference/delete-orders-v3) | ids you name, up to 100 | **Yes** — waits for the matching engine, reports per order |
+| [`DELETE /orders-v3/market`](https://docs.sx.bet/api-reference/delete-orders-v3-market) | every open order on one market | **No** — confirms only that a cancel command was accepted |
+| [`DELETE /orders-v3/event`](https://docs.sx.bet/api-reference/delete-orders-v3-event) | every open order on one event | **No** — confirms only that a cancel command was accepted |
+| [`DELETE /orders-v3/all`](https://docs.sx.bet/api-reference/delete-orders-v3-all) | every open order you have | **No** — confirms only that a cancel command was accepted |
 
 ## Cancelling asynchronously
 
@@ -45,23 +45,23 @@ For the asynchronous endpoints, the direct signal is the `account:orders_v3_#{ad
 matching engine removes your order, you get an update with `status: "INACTIVE"` and
 `inactiveReason: "USER_REQUESTED"`.
 
-See [Real-time data](/developers/realtime-overview.md) and [Tracking your orders](/developers/my-orders.md).
+See [Real-time data](https://docs.sx.bet/developers/realtime-overview.md) and [Tracking your orders](https://docs.sx.bet/developers/my-orders.md).
 
 ## Cancels from elsewhere
 
-Orders sometime leave the book without you cancelling them, and `inactiveReason` says why. See [the full table](/developers/order-lifecycle.md#the-inactivereason-values)
+Orders sometime leave the book without you cancelling them, and `inactiveReason` says why. See [the full table](https://docs.sx.bet/developers/order-lifecycle.md#the-inactivereason-values)
 
 ## Related
 
-> **[Cancel orders by id](/api-reference/delete-orders-v3.md)**
+> **[Cancel orders by id](https://docs.sx.bet/api-reference/delete-orders-v3.md)**
 
-> **[Cancel all orders](/api-reference/delete-orders-v3-all.md)**
+> **[Cancel all orders](https://docs.sx.bet/api-reference/delete-orders-v3-all.md)**
 
-> **[Cancel orders by market](/api-reference/delete-orders-v3-market.md)**
+> **[Cancel orders by market](https://docs.sx.bet/api-reference/delete-orders-v3-market.md)**
 
-> **[Cancel orders by event](/api-reference/delete-orders-v3-event.md)**
+> **[Cancel orders by event](https://docs.sx.bet/api-reference/delete-orders-v3-event.md)**
 
-> **[Heartbeat](/developers/heartbeat.md)**
+> **[Heartbeat](https://docs.sx.bet/developers/heartbeat.md)**
 >
 > Arming the switch that cancels for you when your process stops.
 

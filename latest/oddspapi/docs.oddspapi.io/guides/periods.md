@@ -9,7 +9,7 @@
 Every market and every score line carries a `period`. The vocabulary is generic
 and shared across all sports — `result`, `fulltime`, `p1`, `p1+p2`,
 `fulltime+overtime`, `p1g6`, and 200-odd more. [Enumerations →
-period](/api-reference/enumerations.md#period) is the reference list.
+period](https://docs.oddspapi.io/api-reference/enumerations.md#period) is the reference list.
 
 This guide answers the question the reference list does not: **which periods a
 given sport actually has, and why `fulltime` exists for soccer but not for MMA.**
@@ -26,7 +26,7 @@ given sport actually has, and why `fulltime` exists for soccer but not for MMA.*
 `result` is never withheld and never derived. If you only ever consume one
 whole-match period, consume `result`.
 
-From [2026-10-05](/changelog/index.md) every market carries a non-empty `period`.
+From [2026-10-05](https://docs.oddspapi.io/changelog/index.md) every market carries a non-empty `period`.
 Before that date a blank value is possible on a handful of markets.
 
 ***
@@ -107,7 +107,7 @@ penalties after 1–1 is carried as a 1–1 `fulltime` and a shootout-inclusive
 
 This is also why the `penalties` *score* period is cumulative today rather than
 segment-only — see the note in
-[Enumerations → period](/api-reference/enumerations.md#period).
+[Enumerations → period](https://docs.oddspapi.io/api-reference/enumerations.md#period).
 
 ***
 
@@ -149,7 +149,7 @@ whole-match market — an empty `fulltime` bucket is not a gap.
 
 `marketId` is sticky: it never changes for a market and never gets reused.
 `marketType` and `period` are descriptive and can be corrected — as they
-are on [2026-10-05](/changelog/index.md), when 26 sports move their `1x2` from
+are on [2026-10-05](https://docs.oddspapi.io/changelog/index.md), when 26 sports move their `1x2` from
 `fulltime` to `result` under exactly the rule above. Clients keyed on
 `marketId` see nothing; clients keyed on `marketType` × `period` have to
 regroup.
@@ -162,19 +162,19 @@ rather than rejecting them.
 
 ## Related
 
-> **[Enumerations → period](/api-reference/enumerations.md#period)**
+> **[Enumerations → period](https://docs.oddspapi.io/api-reference/enumerations.md#period)**
 >
 > The full reference list of period values.
 
-> **[Market coverage](/coverage/markets.md)**
+> **[Market coverage](https://docs.oddspapi.io/coverage/markets.md)**
 >
 > Which market types exist per sport, and how they are scoped.
 
-> **[Parlays & SGP](/api-reference/parlays.md)**
+> **[Parlays & SGP](https://docs.oddspapi.io/api-reference/parlays.md)**
 >
 > Combining legs across periods and fixtures.
 
-> **[Changelog](/changelog/index.md)**
+> **[Changelog](https://docs.oddspapi.io/changelog/index.md)**
 >
 > Registry changes, including period corrections.
 

@@ -7,9 +7,9 @@
 > Look up one of your bets by its opaque tradeId.
 
 `GET /trades-v3/{tradeId}` returns **one bet** (BET grain) belonging to the authenticated account —
-the same row shape as [`GET /trades-v3`](/api-reference/get-trades-v3).
+the same row shape as [`GET /trades-v3`](https://docs.sx.bet/api-reference/get-trades-v3).
 
-Use it to join fills via [`GET /fills-v3?tradeId=…`](/api-reference/get-fills-v3).
+Use it to join fills via [`GET /fills-v3?tradeId=…`](https://docs.sx.bet/api-reference/get-fills-v3).
 
 > [!NOTE]
 >

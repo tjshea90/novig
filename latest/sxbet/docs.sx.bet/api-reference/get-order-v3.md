@@ -7,17 +7,17 @@
 > Look up one of your orders by its signed order ID — any status.
 
 `GET /orders-v3/{orderId}` returns **one order** belonging to the authenticated account.
-Unlike [`GET /orders-v3`](/api-reference/get-orders-v3), this is **not** limited to orders
+Unlike [`GET /orders-v3`](https://docs.sx.bet/api-reference/get-orders-v3), this is **not** limited to orders
 resting on the book — filled, cancelled, and expired orders are returned with `status: "INACTIVE"`.
 
 Pass the signed order ID: the same value as `id` on order rows and `orderId` from
-[`POST /orders-v3`](/api-reference/post-orders-v3).
+[`POST /orders-v3`](https://docs.sx.bet/api-reference/post-orders-v3).
 
 > [!NOTE]
 >
 > An order stays retrievable for about 10–20 minutes after it becomes `INACTIVE`. After that, it
 > returns **404**, the same as an id that never existed or belongs to another account. To keep an
-> order's final state, record it from the [orders channel](/api-reference/channel-orders-v3.md) when it
+> order's final state, record it from the [orders channel](https://docs.sx.bet/api-reference/channel-orders-v3.md) when it
 > arrives.
 
 

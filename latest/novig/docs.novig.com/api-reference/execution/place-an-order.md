@@ -453,7 +453,7 @@ paths:
 
             path = "/v3/orders"
             query = ""
-            body = b"""{
+            body = rb"""{
               "clientId": "0b3f5f20-9c1b-4d6e-8f3a-5c2d1e7b4a90",
               "outcomeId": "3f2504e0-4f89-11d3-9a0c-0305e82c3301",
               "price": "0.665",
@@ -490,7 +490,7 @@ paths:
 
             const path = "/v3/orders";
             const query = "";
-            const body = `{
+            const body = String.raw`{
               "clientId": "0b3f5f20-9c1b-4d6e-8f3a-5c2d1e7b4a90",
               "outcomeId": "3f2504e0-4f89-11d3-9a0c-0305e82c3301",
               "price": "0.665",

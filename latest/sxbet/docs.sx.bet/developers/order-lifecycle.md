@@ -43,21 +43,21 @@ An order becomes `INACTIVE` if it is filled or cancelled. `inactiveReason` tells
 | `EXPIRED` | The order's `expiry` passed. |
 | `NO_LIQUIDITY` | An IOC found no compatible liquidity, or an FOK could not fill completely. |
 | `INSUFFICIENT_BALANCE` | A balance check failed at match time — on **either** the maker or the taker side. |
-| `EVENT_LIFECYCLE` | The fixture moved into a [state that sweeps resting orders](/api-reference/fixture-statuses.md#which-statuses-sweep-your-resting-orders) — in progress, finished, or cancelled. **Includes kickoff.** |
+| `EVENT_LIFECYCLE` | The fixture moved into a [state that sweeps resting orders](https://docs.sx.bet/api-reference/fixture-statuses.md#which-statuses-sweep-your-resting-orders) — in progress, finished, or cancelled. **Includes kickoff.** |
 | `MARKET_HALTED` | An operator explicitly halted the market. |
-| `HEARTBEAT_TIMEOUT` | Your [heartbeat](/developers/heartbeat.md) lapsed. Sweeps **every** open order on your account. |
-| `POST_ONLY_WOULD_CROSS` | A [`postOnly`](/developers/time-in-force#post-only) order would have crossed the book on arrival, so it was cancelled instead of matching. |
+| `HEARTBEAT_TIMEOUT` | Your [heartbeat](https://docs.sx.bet/developers/heartbeat.md) lapsed. Sweeps **every** open order on your account. |
+| `POST_ONLY_WOULD_CROSS` | A [`postOnly`](https://docs.sx.bet/developers/time-in-force#post-only) order would have crossed the book on arrival, so it was cancelled instead of matching. |
 | `SYSTEM` | The exchange cancelled the order. Covers several distinct internal causes. |
 
 ## Related
 
-> **[Bet lifecycle](/developers/bet-lifecycle.md)**
+> **[Bet lifecycle](https://docs.sx.bet/developers/bet-lifecycle.md)**
 >
 > What happens after a fill.
 
-> **[Tracking your orders](/developers/my-orders.md)**
+> **[Tracking your orders](https://docs.sx.bet/developers/my-orders.md)**
 
-> **[Time in force](/developers/time-in-force.md)**
+> **[Time in force](https://docs.sx.bet/developers/time-in-force.md)**
 >
 > Order types
 

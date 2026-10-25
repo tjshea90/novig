@@ -409,7 +409,7 @@ paths:
 
             path = "/v3/orders/batch"
             query = ""
-            body = b"""{
+            body = rb"""{
               "orderIds": [
                 "7c9e6679-7425-40de-944b-e07fc1f90ae7",
                 "1b4e28ba-2fa1-11d2-883f-0016d3cca427"
@@ -445,7 +445,7 @@ paths:
 
             const path = "/v3/orders/batch";
             const query = "";
-            const body = `{
+            const body = String.raw`{
               "orderIds": [
                 "7c9e6679-7425-40de-944b-e07fc1f90ae7",
                 "1b4e28ba-2fa1-11d2-883f-0016d3cca427"

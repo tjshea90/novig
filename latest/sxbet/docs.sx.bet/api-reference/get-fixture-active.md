@@ -8,7 +8,7 @@
 
 > [!NOTE]
 >
-> This endpoint only returns fixtures that have a status of either 1, 2, 6, 7, 8, or 9. See the [fixture statuses](/api-reference/get-fixture-status.md) page for more details.
+> This endpoint only returns fixtures that have a status of either 1, 2, 6, 7, 8, or 9. See the [fixture statuses](https://docs.sx.bet/api-reference/get-fixture-status.md) page for more details.
 
 
 ## OpenAPI

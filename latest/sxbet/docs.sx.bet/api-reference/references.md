@@ -38,15 +38,15 @@
 | `activeAsset.baseToken` | the `baseToken` field of every order |
 | `activeAsset.escrowAddress` | equals `domain.verifyingContract` |
 | `activeAsset.decimals` | converting whole tokens to base units |
-| `transferToProxyExecutorAddress` | EIP-2612 permit `spender` for [transfer-to-proxy](/api-reference/post-user-transfer-to-proxy.md) |
+| `transferToProxyExecutorAddress` | EIP-2612 permit `spender` for [transfer-to-proxy](https://docs.sx.bet/api-reference/post-user-transfer-to-proxy.md) |
 | `oddsLadderStepSize` | rounding `percentageOdds` onto the ladder |
 | `limits.orderSizeMinimumBaseUnits` | the floor for `totalBetSize` |
 | `limits.minRestingOrderSizeBaseUnits` | dust floor — a partial-fill remainder below this is discarded and the order closes `FILLED` |
 | `limits.maxCreateOrders`, `limits.maxCancelOrders` | batch sizes for create and cancel |
-| `bettingDelay` | resolve the per-order delay — field-by-field on [Betting delays](/developers/betting-delays.md) |
+| `bettingDelay` | resolve the per-order delay — field-by-field on [Betting delays](https://docs.sx.bet/developers/betting-delays.md) |
 
 Field-by-field detail, the mixed string/number types, and the values that differ by environment are on
-[Exchange metadata](/api-reference/get-metadata-obv3.md).
+[Exchange metadata](https://docs.sx.bet/api-reference/get-metadata-obv3.md).
 
 ## Versions of dependencies
 

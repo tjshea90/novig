@@ -34,19 +34,19 @@ Choose the integration level that fits your needs:
 
 Display Novig prices on your platform using our REST catalog and order book. Perfect for price comparison sites and sports data platforms.
 
-[Learn more about Odds Screens](/affiliates/odds-screens.md)
+[Learn more about Odds Screens](https://docs.novig.com/affiliates/odds-screens.md)
 
 **2. Deeplinking**
 
 Direct users from your platform into the Novig app with pre-populated order slips. Supports both mobile and web deeplinks.
 
-[Learn more about Deeplinking](/affiliates/deeplinking.md)
+[Learn more about Deeplinking](https://docs.novig.com/affiliates/deeplinking.md)
 
 **3. Parlay Pricing**
 
 Query real-time Novig parlay prices directly within your UI to show users what they'd get on Novig.
 
-[Learn more about Parlay Pricing](/affiliates/parlay-pricing.md)
+[Learn more about Parlay Pricing](https://docs.novig.com/affiliates/parlay-pricing.md)
 
 ## Getting Started
 

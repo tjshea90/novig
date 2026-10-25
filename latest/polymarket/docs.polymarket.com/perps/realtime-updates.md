@@ -12,7 +12,7 @@ statistics change.
 > [!NOTE]
 >
 > Private order, fill, and account-state reconciliation is covered in [Reconcile
-> Trade State](/perps/trading.md#reconcile-trade-state).
+> Trade State](https://docs.polymarket.com/perps/trading.md#reconcile-trade-state).
 
 Start with the stream that matches the view you are building. Subscribe to the
 updates you need, read events while the view is active, then stop the stream when

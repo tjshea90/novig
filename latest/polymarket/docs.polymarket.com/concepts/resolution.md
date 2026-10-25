@@ -104,7 +104,7 @@ Clarifications:
 
 **Disputed resolution**: 4-6 days total
 
-See [Resolution Contracts](/resources/contracts.md#resolution-contracts) for UMA contract addresses.
+See [Resolution Contracts](https://docs.polymarket.com/resources/contracts.md#resolution-contracts) for UMA contract addresses.
 
 ## Chainlink TWAP–Resolved Up-Down Markets
 
@@ -128,7 +128,7 @@ Once a market resolves:
 
 * [UMA Oracle Portal](https://oracle.uma.xyz/) — View and interact with proposals
 * [UMA Documentation](https://docs.uma.xyz/) — Learn more about the Optimistic Oracle
-* [Chainlink TWAP Prices](/market-data/chainlink-twap.md) — Learn how to access Chainlink-computed TWAP prices
+* [Chainlink TWAP Prices](https://docs.polymarket.com/market-data/chainlink-twap.md) — Learn how to access Chainlink-computed TWAP prices
 * [Chainlink TWAP Documentation](https://chain.link/article/twap-and-vwap-pricing-mechanisms) — Learn how time-weighted average pricing works
 * [Polymarket Discord](https://discord.com/invite/polymarket) — Discuss resolutions and request clarifications
 

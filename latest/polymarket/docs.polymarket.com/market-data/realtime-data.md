@@ -9,7 +9,7 @@
 Use Polymarket's real-time feeds to react as market conditions and related data
 change. They keep the public market data your application depends on current
 without repeated polling. For authenticated order and trade updates, see
-[Real-Time Order Updates](/trading/realtime-order-updates.md).
+[Real-Time Order Updates](https://docs.polymarket.com/trading/realtime-order-updates.md).
 
 ## Market Stream
 
@@ -1105,9 +1105,9 @@ Stream crypto, equity, and time-weighted average reference prices through Polyma
 >
 > Reference price subscriptions require authentication.
 > Existing RTDS integrations should follow the [migration
-> guide](/migrate/rtds-to-polybolt.md).
+> guide](https://docs.polymarket.com/migrate/rtds-to-polybolt.md).
 
-Use lowercase symbols. See the [PolyBolt overview](/api-reference/live-data/overview.md#supported-symbols) for crypto and TWAP lists, and the equity catalog below for equity symbols.
+Use lowercase symbols. See the [PolyBolt overview](https://docs.polymarket.com/api-reference/live-data/overview.md#supported-symbols) for crypto and TWAP lists, and the equity catalog below for equity symbols.
 
 ### Historical Snapshot
 
@@ -1119,7 +1119,7 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 
 **TypeScript**
 
-Call `client.subscribe` with an authenticated `SecureClient` from `@polymarket/client` 0.11.0 or later. See [Wallet Integrations](/getting-started/typescript.md#wallet-integrations) to create the client.
+Call `client.subscribe` with an authenticated `SecureClient` from `@polymarket/client` 0.11.0 or later. See [Wallet Integrations](https://docs.polymarket.com/getting-started/typescript.md#wallet-integrations) to create the client.
 
 ```ts theme={null}
 const stream = await client.subscribe([
@@ -1219,7 +1219,7 @@ For live prices only, skip events whose `type` is `"subscribe"`.
 
 **Python**
 
-Call `client.subscribe` with an authenticated `AsyncSecureClient` from `polymarket-client` 0.11.0 or later. Complete [Secure Client setup](/getting-started/python.md#secure-client) first, and run this example inside an async function.
+Call `client.subscribe` with an authenticated `AsyncSecureClient` from `polymarket-client` 0.11.0 or later. Complete [Secure Client setup](https://docs.polymarket.com/getting-started/python.md#secure-client) first, and run this example inside an async function.
 
 ```python theme={null}
 from polymarket.streams import CryptoPriceSpec
@@ -1309,7 +1309,7 @@ wss://ws-live-v2.polymarket.com/ws
 
 **2. Authenticate**
 
-Send your [CLOB API credentials](/getting-started/api.md#authentication) on the open connection:
+Send your [CLOB API credentials](https://docs.polymarket.com/getting-started/api.md#authentication) on the open connection:
 
 ```json theme={null}
 {
@@ -1712,7 +1712,7 @@ status at batch level:
 }
 ```
 
-See the [PolyBolt overview](/api-reference/live-data/overview.md#read-the-market-status)
+See the [PolyBolt overview](https://docs.polymarket.com/api-reference/live-data/overview.md#read-the-market-status)
 for the wire contract and provider behavior.
 
 A spot status change can repeat the last price and its timestamp. The update is

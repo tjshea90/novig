@@ -11,10 +11,10 @@
 > [!NOTE]
 >
 > This is not the order book and it only shows a very small fraction of the total liquidity. Anonymized orders are omitted. To
-> recreate the actual book, subscribe to [order book updates](/api-reference/channel-orderbook-v3.md) and seed
-> from the [snapshot](/api-reference/get-market-orderbook-snapshot.md).
+> recreate the actual book, subscribe to [order book updates](https://docs.sx.bet/api-reference/channel-orderbook-v3.md) and seed
+> from the [snapshot](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot.md).
 
-For a live view of de-anonymized orders, subscribe to [de-anonymized order updates](/api-reference/channel-public-orders-v3.md) and seed
+For a live view of de-anonymized orders, subscribe to [de-anonymized order updates](https://docs.sx.bet/api-reference/channel-public-orders-v3.md) and seed
 from this route.
 
 

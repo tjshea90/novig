@@ -14,7 +14,7 @@ Subscribe to trade updates on the exchange. A row carries `userAddress` and `use
 
 **MESSAGE PAYLOAD FORMAT**
 
-The body is `{"trade": {…}}` — note the wrapper. The inner object is the same one [`GET /trades-v3/public`](/api-reference/get-trades-v3-public) returns.
+The body is `{"trade": {…}}` — note the wrapper. The inner object is the same one [`GET /trades-v3/public`](https://docs.sx.bet/api-reference/get-trades-v3-public) returns.
 
 | Name | Type | Description |
 | - | - | - |
@@ -22,15 +22,15 @@ The body is `{"trade": {…}}` — note the wrapper. The inner object is the sam
 | marketHash | string | The market. For a parlay or quarter-line bet, the parent market |
 | isBettingOutcomeOne | boolean | The side the taker backed |
 | isParlay | boolean | `true` for a parlay bet |
-| totalStake | string | The stake in base units. See [unit conversions](/developers/unit-conversions.md). |
+| totalStake | string | The stake in base units. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
 | totalReturn | string | Total payout if the bet wins, stake included |
-| weightedAverageOdds | string | The odds in the sx.bet protocol format, blended across the bet's fills, from the bettor's perspective. To convert to implied odds divide by 10^20. See [unit conversions](/developers/unit-conversions.md). |
+| weightedAverageOdds | string | The odds in the sx.bet protocol format, blended across the bet's fills, from the bettor's perspective. To convert to implied odds divide by 10^20. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
 | betTime | string | ISO timestamp for when the bet was placed |
 | gameTime | string | ISO timestamp for kickoff |
 | outcomeLabel | string (optional) | Label for the side that was backed — outcome one when `isBettingOutcomeOne` is true, otherwise outcome two. Absent when market metadata cannot be resolved (e.g. some parlay parents) |
 | teamOneName | string (optional) | Team one display name. Absent when market metadata cannot be resolved |
 | teamTwoName | string (optional) | Team two display name. Absent when market metadata cannot be resolved |
-| type | number (optional) | Market type id. See [Market types](/api-reference/market-types.md). Absent when market metadata cannot be resolved |
+| type | number (optional) | Market type id. See [Market types](https://docs.sx.bet/api-reference/market-types.md). Absent when market metadata cannot be resolved |
 | leagueLabel | string (optional) | League display name. Absent when market metadata cannot be resolved |
 | sportId | number (optional) | Sport id. Absent when market metadata cannot be resolved |
 | eventId | string (optional) | Prefixed event id (e.g. `L12003787`). Absent when market metadata cannot be resolved |

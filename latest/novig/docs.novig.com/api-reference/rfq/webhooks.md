@@ -8,9 +8,9 @@
 
 > [!NOTE]
 >
-> Webhooks are one of two ways to price RFQs. The [maker WebSocket](/api-reference/rfq/websocket.md) carries the same rounds over one outbound connection, with no public endpoint and no signature to check.
+> Webhooks are one of two ways to price RFQs. The [maker WebSocket](https://docs.novig.com/api-reference/rfq/websocket.md) carries the same rounds over one outbound connection, with no public endpoint and no signature to check.
 
-Your pricer serves three endpoints under the base URL you [register](/api-reference/rfq/registration.md).
+Your pricer serves three endpoints under the base URL you [register](https://docs.novig.com/api-reference/rfq/registration.md).
 We call them, and you answer.
 
 | Endpoint | When we call it | Time to answer |
@@ -20,7 +20,7 @@ We call them, and you answer.
 | `POST {webhook_url}/ping` | When you ask for a ping | 3 seconds |
 
 Every request has a JSON body and an `X-Novig-Signature` header.
-Check the signature before you trust the body. [Webhook signing](/api-reference/rfq/signing.md) shows how.
+Check the signature before you trust the body. [Webhook signing](https://docs.novig.com/api-reference/rfq/signing.md) shows how.
 
 ## Quote an RFQ
 
@@ -49,7 +49,7 @@ You answer with a price and the largest stake you'll take at that price.
 | `min_wager` | string, optional | The smallest stake the taker wants covered |
 
 We send the same `rfq_id` again on `/confirm`.
-[Universe model](/api/concepts/universe-model.md#outcome) explains outcome IDs.
+[Universe model](https://docs.novig.com/api/concepts/universe-model.md#outcome) explains outcome IDs.
 `GET /rfq/executions` returns the same IDs sorted by outcome ID, not in request order.
 
 We leave out `min_wager` when the taker didn't set one.
@@ -159,7 +159,7 @@ When you reject, we write nothing and the parlay is rejected.
 
 ## Answer a ping
 
-We call `/ping` only when you call [`POST /rfq/pricer/ping`](/api-reference/rfq/registration#test-your-webhook).
+We call `/ping` only when you call [`POST /rfq/pricer/ping`](https://docs.novig.com/api-reference/rfq/registration#test-your-webhook).
 It checks that we can reach you and that your signature check works.
 It isn't part of trading and carries no quote.
 A 2xx answer also restarts a [paused webhook](#keep-your-webhook-active).
@@ -184,7 +184,7 @@ Check the signature exactly as you do on `/quote` and `/confirm`.
 
 Return any 2xx status. No body is required.
 
-We report your status as `ok` and `status` in the [ping result](/api-reference/rfq/registration.md#test-your-webhook).
+We report your status as `ok` and `status` in the [ping result](https://docs.novig.com/api-reference/rfq/registration.md#test-your-webhook).
 A non-2xx status, a rejected signature, or an unreachable host all show up as a failed ping.
 
 ## Keep your webhook active
@@ -199,7 +199,7 @@ Your webhook counts as active each time it answers one of these:
 
 An error, a timeout, or an invalid body doesn't count.
 
-To get RFQs on a paused webhook again, call [`POST /rfq/pricer/ping`](/api-reference/rfq/registration#test-your-webhook).
+To get RFQs on a paused webhook again, call [`POST /rfq/pricer/ping`](https://docs.novig.com/api-reference/rfq/registration#test-your-webhook).
 When the result has `ok: true`, RFQs reach your webhook again within a minute.
 
 ## Types and encoding

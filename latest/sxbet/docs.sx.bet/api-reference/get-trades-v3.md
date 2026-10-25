@@ -8,10 +8,10 @@
 
 `GET /trades-v3` returns **one row per bet**: everything that resulted from a single order you
 submitted. An order that matched against four resting orders is one row here with `fillCount: 4`.
-The individual matches are on [`GET /fills-v3`](/api-reference/get-fills-v3).
+The individual matches are on [`GET /fills-v3`](https://docs.sx.bet/api-reference/get-fills-v3).
 
 `tradeId` identifies the bet — filter fills by that value, and look up one bet with
-[`GET /trades-v3/{tradeId}`](/api-reference/get-trade-v3). `ownOrderIds` joins the other way: the
+[`GET /trades-v3/{tradeId}`](https://docs.sx.bet/api-reference/get-trade-v3). `ownOrderIds` joins the other way: the
 `orderId`s of your orders, not `clientOrderId`.
 
 

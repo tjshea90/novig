@@ -8,9 +8,9 @@
 
 ## Download
 
-* **Docs index:** [`/llms.txt`](/llms.txt)
-* **Full docs bundle:** [`/llms-full.txt`](/llms-full.txt)
-* **OpenAPI (REST reference):** [`/api-reference/openapi.json`](/api-reference/openapi.json)
+* **Docs index:** [`/llms.txt`](https://docs.oddspapi.io/llms.txt)
+* **Full docs bundle:** [`/llms-full.txt`](https://docs.oddspapi.io/llms-full.txt)
+* **OpenAPI (REST reference):** [`/api-reference/openapi.json`](https://docs.oddspapi.io/api-reference/openapi.json)
 
 ## Recommended usage
 

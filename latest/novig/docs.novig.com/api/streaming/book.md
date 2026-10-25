@@ -7,7 +7,7 @@
 > Every order-book change on a market.
 
 The `book` channel reports every change to a market's order book.
-It costs 16 tokens per market and includes [`lifecycle`](/api/streaming/lifecycle).
+It costs 16 tokens per market and includes [`lifecycle`](https://docs.novig.com/api/streaming/lifecycle).
 
 Each outcome has its own ladder, a list of resting orders by price.
 The two ladders show one market from opposite ends.
@@ -90,8 +90,8 @@ The `add` keeps the same price and queue position.
 
 ## Go-live and your own orders
 
-* At go-live, you get a `remove` with `reason: "cancel"` for each resting order, then `GOLIVE`. See [Event states](/api/concepts/event-lifecycle.md#event-states).
-* Your own orders appear here like any other order. Match them on the [private stream](/api/streaming/private.md).
+* At go-live, you get a `remove` with `reason: "cancel"` for each resting order, then `GOLIVE`. See [Event states](https://docs.novig.com/api/concepts/event-lifecycle.md#event-states).
+* Your own orders appear here like any other order. Match them on the [private stream](https://docs.novig.com/api/streaming/private.md).
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

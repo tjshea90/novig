@@ -121,16 +121,16 @@ We accept a timestamp within ±30 s of our clock, so check your clock too.
 
 `api key has been revoked` means you revoked the key less than 60 seconds ago.
 
-For `signature verification failed`, sign a [test vector](/api/signing.md#test-vectors). Diff your canonical string against its `string_to_sign`.
+For `signature verification failed`, sign a [test vector](https://docs.novig.com/api/signing.md#test-vectors). Diff your canonical string against its `string_to_sign`.
 
 If you still get a `401`, find your symptom below.
 
-* **A 401 on every call.** A header, the clock, the key, or the canonical string is wrong. Read `message`, then sign a published vector and diff your string against it on [Sign a request](/api/signing.md).
+* **A 401 on every call.** A header, the clock, the key, or the canonical string is wrong. Read `message`, then sign a published vector and diff your string against it on [Sign a request](https://docs.novig.com/api/signing.md).
 * **`GET` works, but `POST` fails.** Without `Content-Type: application/json`, the server hashed zero bytes. Send that header on every request with a body.
 * **Every `POST` fails, and the body looks right.** Your client re-serialized the JSON after you hashed it. Send the exact bytes you hashed.
 * **Every path fails.** You signed the URL, or dropped the mount prefix. Sign the path only, with the mount prefix included.
-* **A P-256 signature never verifies.** You sent a raw `r‖s` signature. Send DER instead, as [Algorithms](/api/signing.md#algorithms) describes.
-* **`api key not found`, but the key exists.** You're on the wrong environment, since a key works only in its own. Check the host on [Environments](/api/environments.md).
+* **A P-256 signature never verifies.** You sent a raw `r‖s` signature. Send DER instead, as [Algorithms](https://docs.novig.com/api/signing.md#algorithms) describes.
+* **`api key not found`, but the key exists.** You're on the wrong environment, since a key works only in its own. Check the host on [Environments](https://docs.novig.com/api/environments.md).
 
 ## `403` Forbidden
 
@@ -139,7 +139,7 @@ If you still get a `401`, find your symptom below.
 | `api key scope is insufficient for this route` | Check the key's scope |
 | `The account must complete KYC verification before it trades.` | Finish KYC |
 
-A scope error means the key has the wrong family or level. See [scopes](/api/concepts/account-model.md#scopes).
+A scope error means the key has the wrong family or level. See [scopes](https://docs.novig.com/api/concepts/account-model.md#scopes).
 
 KYC is our identity check. You need it to create a key, to open or fund a subaccount, or to place an order. Cancels still work without it.
 
@@ -158,7 +158,7 @@ An ID that belongs to another trader gets the same reply.
 
 A declined transfer is not an error.
 The route answers `202`, and the transfer then reads `status: "Rejected"`.
-See [Funding](/api/subaccounts/funding.md#check-the-transfer-status).
+See [Funding](https://docs.novig.com/api/subaccounts/funding.md#check-the-transfer-status).
 
 ## `413` Content Too Large
 
@@ -208,7 +208,7 @@ To check whether trading is paused, call `GET /v3/exchange/status`.
 
 `RATE_LIMIT_EXCEEDED` means you sent requests too fast.
 Wait `Retry-After` seconds before you retry.
-See [Throttling](/api/throttling.md#error-response).
+See [Throttling](https://docs.novig.com/api/throttling.md#error-response).
 
 ## `451` Geolocation Unavailable
 
@@ -274,7 +274,7 @@ A body that doesn't parse answers `INVALID_BODY`. Its `message` names the field 
 
 * 403 `KYC_REQUIRED` applies to placing only. The key holder's KYC lapsed after the key was created, so finish verification in the app.
 * 423 means `SELF_EXCLUDED`, `EMPLOYEE_ACCOUNT`, `LIQUIDATION_ONLY`, or a lock with no `code`. See [`423`](#423-locked).
-* A `reject` from the matching engine isn't an HTTP error. It arrives on the [private stream](/api/streaming/private.md) after the 201.
+* A `reject` from the matching engine isn't an HTTP error. It arrives on the [private stream](https://docs.novig.com/api/streaming/private.md) after the 201.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

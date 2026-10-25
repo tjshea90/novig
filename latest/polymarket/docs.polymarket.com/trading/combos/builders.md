@@ -33,7 +33,7 @@ builder identity must request and accept each quote.
 
 Choose 2–50 unique, mutually compatible underlying market position IDs as the
 legs. These are outcome position IDs from
-[Combo-enabled markets](/trading/combos/market-makers.md#get-combo-markets), not
+[Combo-enabled markets](https://docs.polymarket.com/trading/combos/market-makers.md#get-combo-markets), not
 CLOB token IDs or the derived Combo position IDs. Contradictory legs cannot form
 a Combo. A BUY request sets the maximum collateral budget, including fees. A
 SELL request specifies the number of Combo shares to sell.
@@ -44,7 +44,7 @@ Use `requestComboQuote()` on a TypeScript `SecureClient` to request, accept, and
 track a Combo quote.
 
 Don't have the TypeScript SDK installed? Start with the
-[TypeScript SDK guide's wallet integrations](/getting-started/typescript.md#wallet-integrations),
+[TypeScript SDK guide's wallet integrations](https://docs.polymarket.com/getting-started/typescript.md#wallet-integrations),
 then come back.
 
 **1. Create a Custodial Client**
@@ -144,7 +144,7 @@ Use `request_combo_quote()` on `AsyncSecureClient` to request, accept, and track
 a Combo quote. The synchronous `SecureClient` exposes the same methods.
 
 Don't have the Python SDK installed? Start with the
-[Python SDK guide](/getting-started/python.md), then come back.
+[Python SDK guide](https://docs.polymarket.com/getting-started/python.md), then come back.
 
 **1. Configure Custodial Credentials**
 
@@ -355,7 +355,7 @@ sets. Use Polygon chain ID `137` and Exchange v3 contract
 `0xe3333700cA9d93003F00f0F71f8515005F6c00Aa` for the EIP-712 domain.
 
 Deposit Wallets use `signatureType: 3` and an ERC-7739-wrapped signature. See
-[Authorize the Quote](/trading/combos/market-makers.md#authorize-the-quote) for the
+[Authorize the Quote](https://docs.polymarket.com/trading/combos/market-makers.md#authorize-the-quote) for the
 Exchange v3 order types and wallet-specific signing paths.
 
 ```http theme={null}
@@ -459,7 +459,7 @@ Use `remoteBuilderSigning()` with a TypeScript `SecureClient` so the connected
 wallet authorizes account actions while your server keeps the Builder API secret.
 
 Start with a connected Viem `WalletClient` and the user's Deposit Wallet
-address. See the [TypeScript wallet integrations](/getting-started/typescript.md#wallet-integrations)
+address. See the [TypeScript wallet integrations](https://docs.polymarket.com/getting-started/typescript.md#wallet-integrations)
 if you have not configured the account signer yet.
 
 ### Set Up Remote Builder Signing
@@ -513,7 +513,7 @@ authentication, pass the token through the `headers` option on
 `remoteBuilderSigning()`.
 
 Use a Deposit Wallet already associated with the user. To provision a new
-account first, follow [Create New Accounts](/trading/wallets-auth.md#create-new-accounts).
+account first, follow [Create New Accounts](https://docs.polymarket.com/trading/wallets-auth.md#create-new-accounts).
 
 The signing response gives the browser the Builder key identifier, passphrase,
 timestamp, and a signature scoped to that request. The Builder secret never
@@ -668,11 +668,11 @@ the failure category:
 
 ## Next Steps
 
-> **[Collateral Return](/trading/combos/collateral-return.md)**
+> **[Collateral Return](https://docs.polymarket.com/trading/combos/collateral-return.md)**
 >
 > Release pUSD from compatible Combo positions before resolution.
 
-> **[Discover Combo Markets](/trading/combos/market-makers.md#get-combo-markets)**
+> **[Discover Combo Markets](https://docs.polymarket.com/trading/combos/market-makers.md#get-combo-markets)**
 >
 > Find eligible markets and their leg position IDs.
 

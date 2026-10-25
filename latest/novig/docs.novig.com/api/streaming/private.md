@@ -23,7 +23,7 @@ Each channel covers only the subaccount of the key that signed the handshake.
 }
 ```
 
-To follow an order from start to finish, see [Track order state](/api/concepts/order-lifecycle.md#track-order-state).
+To follow an order from start to finish, see [Track order state](https://docs.novig.com/api/concepts/order-lifecycle.md#track-order-state).
 
 ## Snapshot
 

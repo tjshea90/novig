@@ -59,7 +59,7 @@ Given a `SecureClient` and a selected `assetId`, catch `RequestRejectedError` an
 `restriction` field. The SDK does not retry automatically.
 
 Don't have the TypeScript SDK installed? Start with the [TypeScript SDK
-guide](/getting-started/typescript.md), then come back.
+guide](https://docs.polymarket.com/getting-started/typescript.md), then come back.
 
 ```typescript TypeScript theme={null} theme={null}
 import {
@@ -116,7 +116,7 @@ Given an `AsyncSecureClient` and a selected `asset_id`, catch `RequestRejectedEr
 and neither client retries automatically.
 
 Don't have the Python SDK installed? Start with the [Python SDK
-guide](/getting-started/python.md), then come back.
+guide](https://docs.polymarket.com/getting-started/python.md), then come back.
 
 ```python Python theme={null} theme={null}
 import asyncio

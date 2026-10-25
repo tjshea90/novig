@@ -6,7 +6,7 @@
 
 > A workflow guide for multi-leg betting on OddsPapi: choosing between the parlay and SGP endpoints, keeping a live slip priced, comparing bookmakers, and degrading gracefully when a leg suspends.
 
-[Parlays & SGP](/api-reference/parlays.md) is the field-by-field reference for the
+[Parlays & SGP](https://docs.oddspapi.io/api-reference/parlays.md) is the field-by-field reference for the
 two multi-leg endpoints. This guide is the other half: **how to wire them into a
 betslip that stays correct while a user is still building it.**
 
@@ -125,7 +125,7 @@ That third row is the one that surprises people: every leg was found on our
 side, but the bookmaker's own pricing service could not resolve the parlay. The
 section is empty and nothing is reported as missing, because nothing *was*
 missing. Read [suspended vs missing
-legs](/api-reference/parlays.md#suspended-vs-missing-legs) for the full
+legs](https://docs.oddspapi.io/api-reference/parlays.md#suspended-vs-missing-legs) for the full
 `inactiveReason` list.
 
 The `odds` section is never filtered for you — inactive legs come back
@@ -138,7 +138,7 @@ having it vanish from the slip.
 
 Legs from different periods of the same fixture combine normally — a `fulltime`
 1X2 and a `p1` totals line are two legs like any other. If you are building
-market groupings to select from, read [Periods per sport](/guides/periods.md)
+market groupings to select from, read [Periods per sport](https://docs.oddspapi.io/guides/periods.md)
 first: whether a sport even offers `fulltime` depends on its structure, and
 assuming it does is the most common source of empty market buckets.
 
@@ -146,19 +146,19 @@ assuming it does is the most common source of empty market buckets.
 
 ## Related
 
-> **[Parlays & SGP reference](/api-reference/parlays.md)**
+> **[Parlays & SGP reference](https://docs.oddspapi.io/api-reference/parlays.md)**
 >
 > Every field, error and `inactiveReason`.
 
-> **[Rate limits](/api-reference/rate-limits.md)**
+> **[Rate limits](https://docs.oddspapi.io/api-reference/rate-limits.md)**
 >
 > Authoritative per-endpoint budgets.
 
-> **[Periods per sport](/guides/periods.md)**
+> **[Periods per sport](https://docs.oddspapi.io/guides/periods.md)**
 >
 > Which periods exist where, and why.
 
-> **[Powering a sportsbook](/guides/sportsbook.md)**
+> **[Powering a sportsbook](https://docs.oddspapi.io/guides/sportsbook.md)**
 >
 > The full pipeline this slip sits inside.
 

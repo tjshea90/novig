@@ -8,9 +8,9 @@
 
 How to keep local state consistent across reconnects: enabling recovery, reading the `subscribed`
 outcome, deduplicating replayed messages, and fetching history. Per-namespace history settings are on
-[Channel and limit reference](/developers/realtime-reference.md#history-and-recovery-per-namespace); the
+[Channel and limit reference](https://docs.sx.bet/developers/realtime-reference.md#history-and-recovery-per-namespace); the
 snapshot-plus-subscribe seed pattern is on
-[Initialization](/developers/realtime-initialization.md#snapshot--subscribe-pattern).
+[Initialization](https://docs.sx.bet/developers/realtime-initialization.md#snapshot--subscribe-pattern).
 
 ## Enabling recovery
 
@@ -146,8 +146,8 @@ already seen.
 
 > [!NOTE]
 >
-> [`orderbook_v3`](/api-reference/channel-orderbook-v3) and
-> [`orderbook_v3_event`](/api-reference/channel-orderbook-v3-event) are the exception: their `version`
+> [`orderbook_v3`](https://docs.sx.bet/api-reference/channel-orderbook-v3) and
+> [`orderbook_v3_event`](https://docs.sx.bet/api-reference/channel-orderbook-v3-event) are the exception: their `version`
 > both **orders** and de-duplicates the book. Apply a publication only when its `version` is strictly
 > greater than the one you hold for that market — you do not need `messageId` there. See each
 > channel's reference.
@@ -186,17 +186,17 @@ has `data`, `offset`, `tags`, and `info` fields — access the payload via `pub.
 ### Limits
 
 History fetches are bounded by the per-namespace caps in
-[Channel and limit reference](/developers/realtime-reference.md#history-and-recovery-per-namespace) and the
+[Channel and limit reference](https://docs.sx.bet/developers/realtime-reference.md#history-and-recovery-per-namespace) and the
 global limit of 1,000 items per request. Calling `sub.history()` on a channel with no history
 enabled returns error code `108`. `orderbook_v3` keeps one message as a cache rather than a log, so
 the client is not granted history there.
 
 For the snapshot-plus-subscribe seed pattern, see
-[Initialization → Snapshot + subscribe pattern](/developers/realtime-initialization.md#snapshot--subscribe-pattern).
+[Initialization → Snapshot + subscribe pattern](https://docs.sx.bet/developers/realtime-initialization.md#snapshot--subscribe-pattern).
 
 ***
 
-> **[Real-time data →](/developers/realtime-overview.md)**
+> **[Real-time data →](https://docs.sx.bet/developers/realtime-overview.md)**
 >
 > The guide with full worked examples, channel reference, and common failures.
 

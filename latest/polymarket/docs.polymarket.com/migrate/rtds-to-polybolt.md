@@ -10,7 +10,7 @@ Move reference-price subscriptions to PolyBolt while keeping your event-driven p
 
 ## Migrate an API Integration
 
-Update the connection, authentication, and subscription frames. See the [Live Data Channel](/api-reference/wss/polybolt.md) for the full protocol.
+Update the connection, authentication, and subscription frames. See the [Live Data Channel](https://docs.polymarket.com/api-reference/wss/polybolt.md) for the full protocol.
 
 ### What Changes
 
@@ -47,11 +47,11 @@ Live price payloads contain `symbol`, `value`, `full_accuracy_value`,
 `timestamp`, and `source`, the vendor that produced the price. `price.crypto`
 and `price.equity` default to Chainlink wherever Chainlink serves the symbol;
 add `provider` to the filter to pin a specific vendor
-([Pin a Price Provider](/api-reference/live-data/overview.md#pin-a-price-provider)).
+([Pin a Price Provider](https://docs.polymarket.com/api-reference/live-data/overview.md#pin-a-price-provider)).
 Equity updates may also include `received_at` and `is_carried_forward`, and
 equity payloads carry `market_status` (`open`, `closed` or `unknown`), which
 legacy RTDS never sent
-([Read the Market Status](/api-reference/live-data/overview.md#read-the-market-status)).
+([Read the Market Status](https://docs.polymarket.com/api-reference/live-data/overview.md#read-the-market-status)).
 TWAP uses `window_seconds`. Prefer the exact decimal `full_accuracy_value` over the
 float `value`. Legacy TWAP frames used `window_s` and an E18 fixed-point
 price. Do not apply that E18 conversion to PolyBolt's decimal string.
@@ -83,7 +83,7 @@ price. Do not apply that E18 conversion to PolyBolt's decimal string.
 ## Comments Retirement
 
 The live comments stream is being retired without a replacement streaming channel.
-See [Comments](/market-data/realtime-data.md#comments) for supported comment-listing options.
+See [Comments](https://docs.polymarket.com/market-data/realtime-data.md#comments) for supported comment-listing options.
 
 ## Activity on RTDS
 
@@ -792,7 +792,7 @@ async with await client.subscribe(
 
 Updates may include `received_at` and `is_carried_forward`.
 
-Read [market status](/market-data/realtime-data.md#read-the-market-status) on snapshots and live updates to distinguish closed markets from stalled prices. Both SDKs expose this field from version 0.14.0.
+Read [market status](https://docs.polymarket.com/market-data/realtime-data.md#read-the-market-status) on snapshots and live updates to distinguish closed markets from stalled prices. Both SDKs expose this field from version 0.14.0.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

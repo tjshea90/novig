@@ -55,7 +55,7 @@ Store each environment's keypair in its own secret.
 
 1. Point `NOVIG_HOST` at the new host.
 2. Create a keypair in that environment.
-3. Re-run the [Quickstart](/api/quickstart.md) to test your signature.
+3. Re-run the [Quickstart](https://docs.novig.com/api/quickstart.md) to test your signature.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

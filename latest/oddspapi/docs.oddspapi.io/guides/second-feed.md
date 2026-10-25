@@ -14,7 +14,7 @@ OddsPapi publishes those mappings directly, so joining is a lookup rather than a
 
 ## Join on IDs, not on names
 
-The [`fixtures`](/websocket/channels/fixtures) channel carries an `externalProviders` object on every fixture:
+The [`fixtures`](https://docs.oddspapi.io/websocket/channels/fixtures) channel carries an `externalProviders` object on every fixture:
 
 | Field | Provider |
 | - | - |
@@ -48,7 +48,7 @@ curl 'https://v5.oddspapi.io/en/fixtures/mapping?fixtureIds=id1100013270505136&a
 curl 'https://v5.oddspapi.io/en/fixtures/mapping?bookmaker=pinnacle&bookmakerFixtureIds=1628488896&apiKey=YOUR_KEY'
 ```
 
-`GET /futures/mapping` does the same for outright markets. Per price, the [`odds`](/websocket/channels/odds) channel also carries `bookmakerMarketId` and `bookmakerOutcomeId`, and the [`bookmakers`](/websocket/channels/bookmakers) channel carries `bookmakerFixtureId` and `fixturePath`.
+`GET /futures/mapping` does the same for outright markets. Per price, the [`odds`](https://docs.oddspapi.io/websocket/channels/odds) channel also carries `bookmakerMarketId` and `bookmakerOutcomeId`, and the [`bookmakers`](https://docs.oddspapi.io/websocket/channels/bookmakers) channel carries `bookmakerFixtureId` and `fixturePath`.
 
 ***
 
@@ -68,7 +68,7 @@ To line up a selection against another feed's market model, decompose it into co
 marketType → period → handicap → side   [+ playerId]
 ```
 
-`marketType` (`1x2`, `totals`, `spreads`, …), `period` (`fulltime`, `p1`, …), and `handicap` (the line value) are all explicit on [`GET /markets`](/api-reference/common/get-markets). Every distinct line value is its own `marketId`, so "Over 2.5" and "Over 3.5" never collapse into one market. See [Markets and outcomes](/api-reference/concepts.md#markets-and-outcomes).
+`marketType` (`1x2`, `totals`, `spreads`, …), `period` (`fulltime`, `p1`, …), and `handicap` (the line value) are all explicit on [`GET /markets`](https://docs.oddspapi.io/api-reference/common/get-markets). Every distinct line value is its own `marketId`, so "Over 2.5" and "Over 3.5" never collapse into one market. See [Markets and outcomes](https://docs.oddspapi.io/api-reference/concepts.md#markets-and-outcomes).
 
 **1. Map the fixture**
 
@@ -92,8 +92,8 @@ Persist your key ↔ `{fixtureId}:{outcomeId}:{playerId}` so the mapping is done
 
 Cross-validation is only worth the second integration if you can tell which source wins. Two measurements, both available without instrumentation on our side:
 
-* **Observation delay** — `changedAt − bookmakerChangedAt` per update, against the equivalent timestamp on your other feed. Per-book bounds are published on [`GET /bookmakers`](/api-reference/common/get-bookmakers) as `maxDelayLiveInSec` / `maxDelayPregameInSec` / `maxDelayPregameMainInSec`, with representative p50s in [Latency and freshness](/api-reference/reliability.md#latency-and-freshness).
-* **Delivery hop** — envelope `ts` against your receipt time. This one depends on where you deploy; see [Server location](/api-reference/concepts.md#server-location-matters).
+* **Observation delay** — `changedAt − bookmakerChangedAt` per update, against the equivalent timestamp on your other feed. Per-book bounds are published on [`GET /bookmakers`](https://docs.oddspapi.io/api-reference/common/get-bookmakers) as `maxDelayLiveInSec` / `maxDelayPregameInSec` / `maxDelayPregameMainInSec`, with representative p50s in [Latency and freshness](https://docs.oddspapi.io/api-reference/reliability.md#latency-and-freshness).
+* **Delivery hop** — envelope `ts` against your receipt time. This one depends on where you deploy; see [Server location](https://docs.oddspapi.io/api-reference/concepts.md#server-location-matters).
 
 For an outcome-level verdict rather than a stopwatch, compare fills against the closing line using `GET /fixtures/odds/clv`. Same `oddsId` format as the live stream, so the join is free.
 
@@ -101,7 +101,7 @@ For an outcome-level verdict rather than a stopwatch, compare fills against the 
 
 ## What tends to be complementary
 
-Coverage overlap is rarely total, which is the point of running two. In practice OddsPapi adds sharp trading books, Asian lines and quarter-line settlement, exchange and prediction-market depth, and stake limits on close to every sharp book — alongside broad US and European retail coverage. See [Bookmaker coverage](/coverage/bookmakers.md) for the catalog shape and [`GET /bookmakers`](/api-reference/common/get-bookmakers) for what your key can see.
+Coverage overlap is rarely total, which is the point of running two. In practice OddsPapi adds sharp trading books, Asian lines and quarter-line settlement, exchange and prediction-market depth, and stake limits on close to every sharp book — alongside broad US and European retail coverage. See [Bookmaker coverage](https://docs.oddspapi.io/coverage/bookmakers.md) for the catalog shape and [`GET /bookmakers`](https://docs.oddspapi.io/api-reference/common/get-bookmakers) for what your key can see.
 
 ***
 
@@ -111,7 +111,7 @@ Coverage overlap is rarely total, which is the point of running two. In practice
 * [ ] Market model translated to `marketType` / `period` / `handicap` coordinates
 * [ ] Storage keyed by `oddsId`, with selection keys for cross-feed comparison
 * [ ] `staleOdds` and `suspended` wired into the same kill switch as your existing feed
-* [ ] `snapshot_required` handling and resume implemented ([Resume & Replay](/websocket/resume-replay.md))
+* [ ] `snapshot_required` handling and resume implemented ([Resume & Replay](https://docs.oddspapi.io/websocket/resume-replay.md))
 * [ ] Delay comparison running on both sources before you shift any weight
 
 ***

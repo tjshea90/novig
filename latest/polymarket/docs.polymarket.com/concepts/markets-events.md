@@ -6,7 +6,7 @@
 
 > Understanding the fundamental building blocks of Polymarket
 
-Every prediction on Polymarket is organized into **events** and **markets**. An event is the question or topic shown to users, while each market is a resolvable binary condition with Yes and No outcomes. See [Positions & Tokens](/concepts/positions-tokens.md) to learn how outcome balances are represented.
+Every prediction on Polymarket is organized into **events** and **markets**. An event is the question or topic shown to users, while each market is a resolvable binary condition with Yes and No outcomes. See [Positions & Tokens](https://docs.polymarket.com/concepts/positions-tokens.md) to learn how outcome balances are represented.
 
 ![](https://mintcdn.com/polymarket-292d1b1b/FOMte3ewbG-LVy3k/images/core-concepts/event-market.png?fit=max\&auto=format\&n=FOMte3ewbG-LVy3k\&q=85\&s=4c62bd08a405868307cdd6799b368ca5)
 
@@ -57,7 +57,7 @@ Event: Will Bitcoin reach $100,000 by December 2024?
 
 When an event contains two or more markets, it groups related binary questions under one event. Some multi-market events represent mutually exclusive outcomes.
 
-Polymarket links these mutually exclusive markets as a [negative-risk group](/concepts/negative-risk.md). Exactly one market in the group resolves Yes, while every other market resolves No.
+Polymarket links these mutually exclusive markets as a [negative-risk group](https://docs.polymarket.com/concepts/negative-risk.md). Exactly one market in the group resolves Yes, while every other market resolves No.
 
 ```
 Event: Who will win the 2024 Presidential Election?
@@ -91,11 +91,11 @@ Specifically for sports markets, outstanding limit orders are **automatically ca
 
 ## Next Steps
 
-> **[Prices & Orderbook](/concepts/prices-orderbook.md)**
+> **[Prices & Orderbook](https://docs.polymarket.com/concepts/prices-orderbook.md)**
 >
 > Learn how prices are determined and how the order book works.
 
-> **[Fetching Market Data](/market-data/overview.md)**
+> **[Fetching Market Data](https://docs.polymarket.com/market-data/overview.md)**
 >
 > Start querying markets and events from the API.
 

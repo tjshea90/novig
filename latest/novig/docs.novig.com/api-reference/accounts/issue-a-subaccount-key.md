@@ -421,7 +421,7 @@ paths:
 
             path = f"/v3/account/subaccounts/{SUB}/keys"
             query = ""
-            body = b"""{
+            body = rb"""{
               "algorithm": "Ed25519",
               "name": "desk-1-reader",
               "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\n-----END PUBLIC KEY-----\n",
@@ -458,7 +458,7 @@ paths:
 
             const path = `/v3/account/subaccounts/${SUB}/keys`;
             const query = "";
-            const body = `{
+            const body = String.raw`{
               "algorithm": "Ed25519",
               "name": "desk-1-reader",
               "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\n-----END PUBLIC KEY-----\n",

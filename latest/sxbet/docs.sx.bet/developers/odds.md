@@ -6,12 +6,12 @@
 
 > Read the order book and best odds over REST, then stream both in realtime.
 
-| | [`GET /orderbook-v3/snapshot/market`](/api-reference/get-market-orderbook-snapshot) | [`GET /orderbook-v3/snapshot/event`](/api-reference/get-event-orderbook-snapshot) | [`GET /orders-v3/odds/best`](/api-reference/get-best-odds-v3) |
+| | [`GET /orderbook-v3/snapshot/market`](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot) | [`GET /orderbook-v3/snapshot/event`](https://docs.sx.bet/api-reference/get-event-orderbook-snapshot) | [`GET /orders-v3/odds/best`](https://docs.sx.bet/api-reference/get-best-odds-v3) |
 | - | - | - | - |
 | Use it to | get the book for one event | get the book for every market in an event | scan a watchlist or a board |
 | Markets per call | **1** | **all** on one event | **100** hashes, or **5** leagues |
 | Levels per side | **all** | **all** | **1** — top of book |
-| Realtime | [`orderbook_v3:{marketHash}`](/api-reference/channel-orderbook-v3) | [`orderbook_v3_event:{eventId}`](/api-reference/channel-orderbook-v3-event) | [`best_odds_v3:global`](/api-reference/channel-best-odds-v3) |
+| Realtime | [`orderbook_v3:{marketHash}`](https://docs.sx.bet/api-reference/channel-orderbook-v3) | [`orderbook_v3_event:{eventId}`](https://docs.sx.bet/api-reference/channel-orderbook-v3-event) | [`best_odds_v3:global`](https://docs.sx.bet/api-reference/channel-best-odds-v3) |
 
 ## Fetching the order book
 
@@ -33,7 +33,7 @@ curl "https://api.sx.bet/orderbook-v3/snapshot/market?marketHash=0x5be2a55e4b7de
 ```
 
 `size` is the resting maker's stake, not what you can bet against it. To turn a level into taker
-capacity and price a bet across levels, see [The order book](/developers/order-book.md).
+capacity and price a bet across levels, see [The order book](https://docs.sx.bet/developers/order-book.md).
 
 ## Fetching best odds
 
@@ -94,13 +94,13 @@ A publication goes out only when a market's top of book **changes**.
 
 `orderbook_v3:{marketHash}` carries the same shape the
 snapshot serves, and each publication is a full replacement, not a delta. Subscribe first, then seed from REST, and run both the snapshot and every publication through
-the version [apply rule](/developers/book-versioning.md#the-apply-rule).
+the version [apply rule](https://docs.sx.bet/developers/book-versioning.md#the-apply-rule).
 
 > [!TIP]
 >
 > Watching many markets on the same events? Prefer
-> [`orderbook_v3_event:{eventId}`](/api-reference/channel-orderbook-v3-event) and seed from
-> [`GET /orderbook-v3/snapshot/event`](/api-reference/get-event-orderbook-snapshot).
+> [`orderbook_v3_event:{eventId}`](https://docs.sx.bet/api-reference/channel-orderbook-v3-event) and seed from
+> [`GET /orderbook-v3/snapshot/event`](https://docs.sx.bet/api-reference/get-event-orderbook-snapshot).
 
 ```javascript theme={null}
 const sub = client.newSubscription(`orderbook_v3:${marketHash}`);
@@ -126,19 +126,19 @@ sub.subscribe();
 
 ## Related
 
-> **[The order book](/developers/order-book.md)**
+> **[The order book](https://docs.sx.bet/developers/order-book.md)**
 >
 > Depth, sizing, and pricing a bet across levels.
 
-> **[Book versioning](/developers/book-versioning.md)**
+> **[Book versioning](https://docs.sx.bet/developers/book-versioning.md)**
 >
 > Applying live book updates in the right order.
 
-> **[Real-time data](/developers/realtime-overview.md)**
+> **[Real-time data](https://docs.sx.bet/developers/realtime-overview.md)**
 >
 > Tokens, snapshot + subscribe, and reconnect handling.
 
-> **[Best odds](/api-reference/get-best-odds-v3.md)**
+> **[Best odds](https://docs.sx.bet/api-reference/get-best-odds-v3.md)**
 >
 > Parameters, caps, and validation rules.
 

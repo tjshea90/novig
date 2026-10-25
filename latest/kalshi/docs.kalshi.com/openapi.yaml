@@ -1717,7 +1717,7 @@ paths:
     get:
       operationId: GetSubaccountBalances
       summary: Get All Subaccount Balances
-      description: 'Gets balances for all subaccounts including the primary account.'
+      description: "Gets balances for all subaccounts including the primary account. For an API key restricted to a subaccount, returns only that subaccount's balances across exchange indices."
       tags:
         - portfolio
       security:
@@ -2484,10 +2484,12 @@ paths:
         round robin. Each child is an ordinary RFQ on one combo market. Makers
         quote the whole batch, but each child is accepted from whichever maker
         quotes it best on your side, so the batch may fill from several makers.
-        Accepting fills every child or none, and each child then executes as its
-        own trade. Name each child's combo by its market ticker, or by its legs
-        to look up or create the combo in mve_collection_ticker. Every child is
-        sized the same way.
+        Accepting takes every child or none, and the children then execute
+        together as one fill-or-kill: every child trades, or none does. Name
+        each child's combo by its market ticker, or by its legs to look up or
+        create the combo in mve_collection_ticker. Every child is sized the same
+        way. rest_remainder must be false, and FCM members cannot create RFQ
+        batches yet (403 rfq_batch_unavailable).
       x-mint:
         content: |
           <Note>
@@ -2796,8 +2798,8 @@ paths:
       description: >-
         Confirm the children your batch quote won, all at once. Nothing executes
         until every winning maker of the batch has confirmed; the last
-        confirmation starts the execution timer for every child, and each child
-        executes as its own trade. If any winner misses the confirmation
+        confirmation starts the execution timer for every child, and the
+        children then execute together. If any winner misses the confirmation
         deadline, the whole batch closes without trading.
       tags:
         - communications
@@ -8816,7 +8818,7 @@ components:
           description: Timestamp when the RFQ batch was last updated (visible to the batch creator)
         close_reason:
           type: string
-          description: Why the RFQ batch closed, for example executed, partially executed, or cancelled (visible to the batch creator)
+          description: Why the RFQ batch closed, for example executed, execution failed, or cancelled. A batch closes partially executed only in the rare case that filling one child cancelled a maker order another child needed (visible to the batch creator)
           x-go-type-skip-optional-pointer: true
         client_batch_id:
           type: string
@@ -8903,7 +8905,7 @@ components:
           x-go-type-skip-optional-pointer: true
         rest_remainder:
           type: boolean
-          description: Whether to rest the remainder of each child RFQ after execution
+          description: Must be false. A batch executes as one fill-or-kill, so no child rests a remainder.
           default: false
           x-go-type-skip-optional-pointer: true
         replace_existing:
@@ -8925,7 +8927,7 @@ components:
           x-go-type-skip-optional-pointer: true
         subtrader_id:
           type: string
-          description: The subtrader to create the RFQ batch for (FCM members only)
+          description: The subtrader to create the RFQ batch for (FCM members only; FCM members cannot create RFQ batches yet)
           x-go-type-skip-optional-pointer: true
         subaccount:
           type: integer
@@ -8941,7 +8943,7 @@ components:
 
     RFQBatchQuoteStatus:
       type: string
-      description: Status of a batch quote. A partially_executed batch quote executed some children and failed others.
+      description: Status of a batch quote. A partially_executed batch quote executed some children and failed others, which happens only in the rare case that filling one child of the batch cancelled a maker order another child needed.
       enum: [open, accepted, confirmed, executed, partially_executed, cancelled]
 
     RFQBatchQuote:

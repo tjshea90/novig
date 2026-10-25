@@ -24,7 +24,7 @@ You can post orders to this market as you would for any other market using this 
 | marketHash | string | The parlay market associated with this request |
 | requestorId | string | An anonymized stable ID for the bettor who requested the parlay market |
 | baseToken | string | The token this request is denominated in |
-| requestSize | string | The size in baseTokens that the bettor is requesting. See [unit conversions](/developers/unit-conversions.md). May be absent. |
+| requestSize | string | The size in baseTokens that the bettor is requesting. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). May be absent. |
 | chainVersion | string | An internal classification copied from the legs. May be absent. |
 | legs | ParlayMarketLeg\[] | An array of legs that make up the parlay |
 

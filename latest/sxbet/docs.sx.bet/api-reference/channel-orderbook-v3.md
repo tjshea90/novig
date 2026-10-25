@@ -8,12 +8,12 @@
 
 Subscribe to changes in a particular order book. You will receive updates when orders are posted, cancelled, expire, or are filled. Every publication is the complete resting book for that market, not a delta — replace your state for that market rather than patching it.
 
-Each payload carries a `version` (see below). Apply a publication only when its `version` is strictly greater than the one you hold for that market — see [book versioning](/developers/book-versioning.md).
+Each payload carries a `version` (see below). Apply a publication only when its `version` is strictly greater than the one you hold for that market — see [book versioning](https://docs.sx.bet/developers/book-versioning.md).
 
 > [!TIP]
 >
 > Watching many markets on the same events? Subscribe to
-> [`orderbook_v3_event:{eventId}`](/api-reference/channel-orderbook-v3-event) instead.
+> [`orderbook_v3_event:{eventId}`](https://docs.sx.bet/api-reference/channel-orderbook-v3-event) instead.
 
 **CHANNEL NAME FORMAT**
 
@@ -29,7 +29,7 @@ Each payload carries a `version` (see below). Apply a publication only when its 
 | - | - | - |
 | marketHash | string | The market this book belongs to |
 | eventId | string | The event this market belongs to |
-| version | string | A single string that increases as the book changes. Apply an update only when it is strictly greater than the one you hold — see [book versioning](/developers/book-versioning.md) |
+| version | string | A single string that increases as the book changes. Apply an update only when it is strictly greater than the one you hold — see [book versioning](https://docs.sx.bet/developers/book-versioning.md) |
 | outcomeOne | `Level[]` | Resting levels on outcome one, sorted best first |
 | outcomeTwo | `Level[]` | Resting levels on outcome two, sorted best first |
 
@@ -37,10 +37,10 @@ Where a `Level` object looks like:
 
 | Name | Type | Description |
 | - | - | - |
-| percentageOdds | string | The odds the `maker` receives in the sx.bet protocol format. To convert to implied odds divide by 10^20. To get taker implied odds: `takerOdds = 1 - percentageOdds / 10^20`. See [unit conversions](/developers/unit-conversions.md). |
-| size | string | Aggregate remaining maker size at that level, in base units. See [unit conversions](/developers/unit-conversions.md). |
+| percentageOdds | string | The odds the `maker` receives in the sx.bet protocol format. To convert to implied odds divide by 10^20. To get taker implied odds: `takerOdds = 1 - percentageOdds / 10^20`. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
+| size | string | Aggregate remaining maker size at that level, in base units. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
 
-There is no `showTakerPerspective` parameter on this channel — levels are always the maker frame, unlike [`GET /orderbook-v3/snapshot/market`](/api-reference/get-market-orderbook-snapshot), which accepts it.
+There is no `showTakerPerspective` parameter on this channel — levels are always the maker frame, unlike [`GET /orderbook-v3/snapshot/market`](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot), which accepts it.
 
 ***
 

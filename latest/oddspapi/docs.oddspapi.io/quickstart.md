@@ -67,19 +67,19 @@ ws.run_forever()
 
 Everything hangs off one tree — Sport → Tournament → Season → **Fixture** (single match) or **Future** (outright / prediction market), with participants, per-period scores, and players underneath:
 
-> **[How Fixtures Work](/api-reference/concepts.md#how-fixtures-work-sports)**
+> **[How Fixtures Work](https://docs.oddspapi.io/api-reference/concepts.md#how-fixtures-work-sports)**
 >
 > A fixture is one match between two participants — schedule, status, per-period scores, and the odds keyed on it.
 
-> **[How Futures Work](/api-reference/concepts.md#how-futures-work-prediction-markets)**
+> **[How Futures Work](https://docs.oddspapi.io/api-reference/concepts.md#how-futures-work-prediction-markets)**
 >
 > A future is an outright market on a whole season or event — league winners, elections, prediction markets (sportId 69+).
 
 ## 4) Pick your build
 
-End-to-end guides for the four things clients most often build: [prediction markets & exchanges](/guides/prediction-markets.md), [sharp-line trading & CLV](/guides/sharp-line-trading.md), [running OddsPapi as a second feed](/guides/second-feed.md), and [powering a sportsbook](/guides/sportsbook.md).
+End-to-end guides for the four things clients most often build: [prediction markets & exchanges](https://docs.oddspapi.io/guides/prediction-markets.md), [sharp-line trading & CLV](https://docs.oddspapi.io/guides/sharp-line-trading.md), [running OddsPapi as a second feed](https://docs.oddspapi.io/guides/second-feed.md), and [powering a sportsbook](https://docs.oddspapi.io/guides/sportsbook.md).
 
-Checking whether the feed carries what you need? See [bookmaker coverage](/coverage/bookmakers.md) and [market coverage](/coverage/markets.md).
+Checking whether the feed carries what you need? See [bookmaker coverage](https://docs.oddspapi.io/coverage/bookmakers.md) and [market coverage](https://docs.oddspapi.io/coverage/markets.md).
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

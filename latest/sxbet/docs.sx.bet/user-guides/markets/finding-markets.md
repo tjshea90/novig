@@ -37,11 +37,11 @@ Alt lines let you shop for better odds by taking on more or less risk than the s
 
 ![](https://mintcdn.com/sxbet-9c561d83/nTchO44e8z9Jwtov/public/user-guides/alt_lines.png?fit=max\&auto=format\&n=nTchO44e8z9Jwtov\&q=85\&s=151d963036783d863fdfd013d7862f45)
 
-> **[Reading the Order Book](/user-guides/trading/order-book.md)**
+> **[Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)**
 >
 > Learn how to read odds and liquidity once you've found a market.
 
-> **[Market Orders (Taker)](/user-guides/trading/market-orders.md)**
+> **[Market Orders (Taker)](https://docs.sx.bet/user-guides/trading/market-orders.md)**
 >
 > Bet at the best available odds and get matched instantly.
 

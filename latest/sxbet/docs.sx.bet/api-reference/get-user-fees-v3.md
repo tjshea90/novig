@@ -7,7 +7,7 @@
 > Get the fee rates that apply to your account from the SX Bet API.
 
 `GET /user/fees-v3` returns the five fee rates that apply to your account. Rates are set per account.
-[Fees](/developers/fees.md) covers what each rate is charged on, and when.
+[Fees](https://docs.sx.bet/developers/fees.md) covers what each rate is charged on, and when.
 
 Every rate is a decimal fraction string: `"0.05"` is 5%, `"0.005"` is 0.5%.
 

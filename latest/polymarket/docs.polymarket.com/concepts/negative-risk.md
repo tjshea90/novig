@@ -40,7 +40,7 @@ This is capital-efficient because betting against one outcome is economically eq
 
 Neg risk markets use different contracts than standard markets:
 
-See [Contracts](/resources/contracts.md) for the contracts used by each position system.
+See [Contracts](https://docs.polymarket.com/resources/contracts.md) for the contracts used by each position system.
 
 ## Augmented Negative Risk
 
@@ -78,11 +78,11 @@ CTF uses the Neg Risk Adapter.
 
 ## Next Steps
 
-> **[Markets & Events](/concepts/markets-events.md)**
+> **[Markets & Events](https://docs.polymarket.com/concepts/markets-events.md)**
 >
 > Understand how multi-market events are structured.
 
-> **[Positions & Tokens](/concepts/positions-tokens.md)**
+> **[Positions & Tokens](https://docs.polymarket.com/concepts/positions-tokens.md)**
 >
 > Learn about position operations like split, merge, and redeem.
 

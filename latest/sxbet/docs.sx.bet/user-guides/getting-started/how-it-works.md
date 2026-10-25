@@ -22,7 +22,7 @@ Every bet on SX Bet involves two roles:
 >
 > Fills a maker's existing limit order from the orderbook with a market bet. This is like placing a bet on a traditional sportsbook.
 
-You don't need to choose one role — when you place a [**market order**](/user-guides/trading/market-orders.md) (betting at the best available odds), you're a taker. When you place a [**limit order**](/user-guides/trading/limit-orders.md) (requesting specific odds), you're a maker.
+You don't need to choose one role — when you place a [**market order**](https://docs.sx.bet/user-guides/trading/market-orders.md) (betting at the best available odds), you're a taker. When you place a [**limit order**](https://docs.sx.bet/user-guides/trading/limit-orders.md) (requesting specific odds), you're a maker.
 
 ## Your Wallet, Your Funds
 
@@ -48,15 +48,15 @@ All bets on SX Bet are placed using **USDC**, a stablecoin pegged 1:1 to the US 
 
 SX Bet also covers all gas (transaction) fees for betting, so there are no hidden costs.
 
-Learn more about [fees on SX Bet](/user-guides/trading/fees.md).
+Learn more about [fees on SX Bet](https://docs.sx.bet/user-guides/trading/fees.md).
 
 ## Next Steps
 
-> **[Quickstart](/user-guides/getting-started/quickstart.md)**
+> **[Quickstart](https://docs.sx.bet/user-guides/getting-started/quickstart.md)**
 >
 > Sign up, fund your wallet, and place your first bet.
 
-> **[Reading the Order Book](/user-guides/trading/order-book.md)**
+> **[Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)**
 >
 > Learn how to find odds and navigate the live order book.
 

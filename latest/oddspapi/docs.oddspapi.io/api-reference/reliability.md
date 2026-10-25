@@ -32,7 +32,7 @@ The platform is designed so that no single failure should interrupt your data fl
 
 * **WebSocket-first delivery** — a persistent gateway streams updates with minimal latency, avoiding the overhead and gaps of REST polling.
 * **REST + WebSocket redundancy** — REST snapshots and the realtime stream are independent paths to the same data. If the stream drops, REST keeps your state current.
-* **Resume & replay** — after a brief disconnect, clients resume from their last cursor and replay missed updates without a full refresh. See [Resume & Replay](/websocket/resume-replay.md).
+* **Resume & replay** — after a brief disconnect, clients resume from their last cursor and replay missed updates without a full refresh. See [Resume & Replay](https://docs.oddspapi.io/websocket/resume-replay.md).
 * **Deterministic recovery** — when replay isn't possible, the gateway emits `snapshot_required` so clients rebuild state from a fast REST snapshot. Recovery is an explicit, designed path — not an error state.
 
 ***
@@ -50,7 +50,7 @@ OddsPapi is built to compete on **measured end-to-end delay** — not throughput
 
 `changedAt − bookmakerChangedAt` gives the observation delay per update; comparing `ts` to your receipt time gives the delivery hop.
 
-Per-bookmaker freshness bounds are published on [`GET /bookmakers`](/api-reference/common/get-bookmakers): `maxDelayLiveInSec`, `maxDelayPregameInSec`, and `maxDelayPregameMainInSec` state the maximum expected refresh delay per delivery mode for each book — measured from observed vs. bookmaker change times (currently the rolling p50) where the book publishes usable timestamps, estimated otherwise.
+Per-bookmaker freshness bounds are published on [`GET /bookmakers`](https://docs.oddspapi.io/api-reference/common/get-bookmakers): `maxDelayLiveInSec`, `maxDelayPregameInSec`, and `maxDelayPregameMainInSec` state the maximum expected refresh delay per delivery mode for each book — measured from observed vs. bookmaker change times (currently the rolling p50) where the book publishes usable timestamps, estimated otherwise.
 
 Representative rolling p50 observation delays (live values per book on `GET /bookmakers`):
 
@@ -62,15 +62,15 @@ Representative rolling p50 observation delays (live values per book on `GET /boo
 | Pinnacle | 0.38 s | 0.38 s | measured |
 | Singbet | \~1 s | \~8 s | estimated |
 
-Downstream of observation, the internal pipeline adds \~30 ms (p50) to gateway egress; the delivery hop from `ts` to client receipt depends on where you deploy — as low as \~5 ms when colocated (see [server location guidance](/api-reference/concepts.md#server-location-matters)).
+Downstream of observation, the internal pipeline adds \~30 ms (p50) to gateway egress; the delivery hop from `ts` to client receipt depends on where you deploy — as low as \~5 ms when colocated (see [server location guidance](https://docs.oddspapi.io/api-reference/concepts.md#server-location-matters)).
 
-To verify these numbers yourself during a trial, see [evaluating the feed](/guides/evaluation.md); to benchmark them against a feed you already run, see [running OddsPapi as a second feed](/guides/second-feed.md); to trade on them, see [sharp-line trading & CLV](/guides/sharp-line-trading.md).
+To verify these numbers yourself during a trial, see [evaluating the feed](https://docs.oddspapi.io/guides/evaluation.md); to benchmark them against a feed you already run, see [running OddsPapi as a second feed](https://docs.oddspapi.io/guides/second-feed.md); to trade on them, see [sharp-line trading & CLV](https://docs.oddspapi.io/guides/sharp-line-trading.md).
 
 ***
 
 ## Bookmaker staleness: `staleOdds`
 
-Two different things can fail: the platform (gateway, your connection) and our link to each upstream bookmaker. `staleOdds` covers the second — the flag that says **this bookmaker's odds on this fixture can no longer be trusted**, even while everything else is healthy. Which is why a price can look immaculate and be untradeable at the same time — here in a REST snapshot (`GET /fixtures/odds`), where one response carries both maps; the [`bookmakers`](/websocket/channels/bookmakers) channel streams the same meta:
+Two different things can fail: the platform (gateway, your connection) and our link to each upstream bookmaker. `staleOdds` covers the second — the flag that says **this bookmaker's odds on this fixture can no longer be trusted**, even while everything else is healthy. Which is why a price can look immaculate and be untradeable at the same time — here in a REST snapshot (`GET /fixtures/odds`), where one response carries both maps; the [`bookmakers`](https://docs.oddspapi.io/websocket/channels/bookmakers) channel streams the same meta:
 
 ```json theme={null}
 {
@@ -133,7 +133,7 @@ Recovery is bounded and predictable rather than best-effort:
 * If your cursor falls outside that window, a single REST snapshot restores full state in one call.
 * Bookmaker connectivity is surfaced explicitly via the [`staleOdds` flag](#bookmaker-staleness-staleodds), so you always know when a price may no longer be current.
 
-This means worst-case recovery is a **fast, well-defined REST snapshot**, not an open-ended outage. See [Resume & Replay](/websocket/resume-replay.md) for the full recovery flow.
+This means worst-case recovery is a **fast, well-defined REST snapshot**, not an open-ended outage. See [Resume & Replay](https://docs.oddspapi.io/websocket/resume-replay.md) for the full recovery flow.
 
 ***
 
@@ -142,8 +142,8 @@ This means worst-case recovery is a **fast, well-defined REST snapshot**, not an
 OddsPapi gives you the signals to operate safely; your client should act on them:
 
 * Track the [`staleOdds` flag](#bookmaker-staleness-staleodds) per bookmaker before trading on a price.
-* Handle `snapshot_required` and reconnect logic (see the [Resume & Replay](/websocket/resume-replay.md) template).
-* Respect [rate limits](/api-reference/rate-limits.md) and [WebSocket connection limits](/websocket/overview.md); contact support to raise limits for distributed systems.
+* Handle `snapshot_required` and reconnect logic (see the [Resume & Replay](https://docs.oddspapi.io/websocket/resume-replay.md) template).
+* Respect [rate limits](https://docs.oddspapi.io/api-reference/rate-limits.md) and [WebSocket connection limits](https://docs.oddspapi.io/websocket/overview.md); contact support to raise limits for distributed systems.
 * Watch the status page for platform-level incidents.
 
 ***

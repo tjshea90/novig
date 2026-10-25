@@ -19,7 +19,7 @@ A Deposit Wallet is the default smart wallet for trading on Polymarket. Your wal
 | **Safe Wallet** | A legacy smart wallet created with an external signer such as MetaMask or Rabby Wallet. |
 
 A Deposit Wallet owner can give a separate signer scoped, time-limited trading
-access. See [Session Keys](/trading/session-keys.md) to authorize the signer and
+access. See [Session Keys](https://docs.polymarket.com/trading/session-keys.md) to authorize the signer and
 use its credentials.
 
 ## Connect Your Account
@@ -63,7 +63,7 @@ const client = await createSecureClient({
 > [!NOTE]
 >
 > This example uses Viem with a private key. See [Wallet
-> Integrations](/getting-started/typescript.md#wallet-integrations) to connect a
+> Integrations](https://docs.polymarket.com/getting-started/typescript.md#wallet-integrations) to connect a
 > signer from another supported wallet library.
 
 **2. Inspect the Account**
@@ -174,7 +174,7 @@ Authenticate with the CLOB and create L2 credentials.
 **1. Create an L1 Signature**
 
 First, create an L1 signature to attest to ownership of the signer
-address. See [API Authentication](/getting-started/api.md#authentication)
+address. See [API Authentication](https://docs.polymarket.com/getting-started/api.md#authentication)
 for the complete signing flow.
 
 ```json clobAuthTypedData theme={null}
@@ -285,7 +285,7 @@ const client = await createSecureClient({
 > [!NOTE]
 >
 > This example uses Viem with a private key. See [Wallet
-> Integrations](/getting-started/typescript.md#wallet-integrations) to connect a
+> Integrations](https://docs.polymarket.com/getting-started/typescript.md#wallet-integrations) to connect a
 > signer from another supported wallet library.
 
 **2. Inspect the Account**
@@ -475,7 +475,7 @@ Treat `STATE_FAILED` and `STATE_INVALID` as terminal failures.
 **4. Create an L1 Signature**
 
 Then, create an L1 signature to attest to ownership of the signer
-address. See [API Authentication](/getting-started/api.md#authentication)
+address. See [API Authentication](https://docs.polymarket.com/getting-started/api.md#authentication)
 for the complete signing flow.
 
 ```json clobAuthTypedData theme={null}
@@ -588,8 +588,8 @@ Use the method that matches the wallet action you want to perform:
 | Approve an ERC-1155 operator | `approveErc1155ForAll()` | Below |
 | Transfer ERC-20 tokens | `transferErc20()` | Below |
 | Set up trading approvals | `setupTradingApprovals()` | [Set Up Trading Approvals](#set-up-trading-approvals) |
-| Split, merge, or redeem tokens | Position lifecycle methods | [Manage Positions](/trading/positions/manage.md) |
-| Fund a Perps account | `depositToPerps()` | [Fund Your Account](/perps/fund-your-account.md) |
+| Split, merge, or redeem tokens | Position lifecycle methods | [Manage Positions](https://docs.polymarket.com/trading/positions/manage.md) |
+| Fund a Perps account | `depositToPerps()` | [Fund Your Account](https://docs.polymarket.com/perps/fund-your-account.md) |
 
 **Approve ERC-20 spending**
 
@@ -684,8 +684,8 @@ Use the method that matches the wallet action you want to perform:
 | Approve an ERC-1155 operator | `approve_erc1155_for_all()` | Below |
 | Transfer ERC-20 tokens | `transfer_erc20()` | Below |
 | Set up trading approvals | `setup_trading_approvals()` | [Set Up Trading Approvals](#set-up-trading-approvals) |
-| Split, merge, or redeem tokens | Position lifecycle methods | [Manage Positions](/trading/positions/manage.md) |
-| Fund a Perps account | `deposit_to_perps()` | [Fund Your Account](/perps/fund-your-account.md) |
+| Split, merge, or redeem tokens | Position lifecycle methods | [Manage Positions](https://docs.polymarket.com/trading/positions/manage.md) |
+| Fund a Perps account | `deposit_to_perps()` | [Fund Your Account](https://docs.polymarket.com/perps/fund-your-account.md) |
 
 **Approve ERC-20 spending**
 
@@ -1254,7 +1254,7 @@ curl -G "https://clob.polymarket.com/balance-allowance/update" \
 ```
 
 Using the signer address and CLOB API credentials from [API
-Authentication](/getting-started/api.md#authentication), create a fresh
+Authentication](https://docs.polymarket.com/getting-started/api.md#authentication), create a fresh
 `<clob_request_timestamp>` and generate `<clob_l2_signature>` without a request
 body. The query parameters are not part of the signed path:
 
@@ -1299,7 +1299,7 @@ beaconInitCodeHash = SoladyLibClone.initCodeHashERC1967BeaconProxy(beacon, args)
 depositWallet      = CREATE2(factory, salt, beaconInitCodeHash)
 ```
 
-See [Contract Addresses](/resources/contracts.md#wallet-factory-contracts) for the
+See [Contract Addresses](https://docs.polymarket.com/resources/contracts.md#wallet-factory-contracts) for the
 current Deposit Wallet factory and beacon.
 
 ### Set Up EOA Trading
@@ -1369,7 +1369,7 @@ See [Set Up Trading Approvals](#set-up-trading-approvals) for the required appro
 **2. Create an L1 Signature**
 
 Then, create an L1 signature to attest to ownership of the EOA. See [API
-Authentication](/getting-started/api.md#authentication) for the complete
+Authentication](https://docs.polymarket.com/getting-started/api.md#authentication) for the complete
 signing flow.
 
 ```json clobAuthTypedData theme={null}
@@ -1430,7 +1430,7 @@ Store the returned L2 credentials for authenticated requests and order placement
 }
 ```
 
-See [Place a Limit Order](/trading/place-orders.md#place-a-limit-order) for the
+See [Place a Limit Order](https://docs.polymarket.com/trading/place-orders.md#place-a-limit-order) for the
 complete direct API order flow.
 
 ### Remote Builder Signing

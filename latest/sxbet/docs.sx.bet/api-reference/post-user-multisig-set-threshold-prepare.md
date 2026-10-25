@@ -10,7 +10,7 @@
 signer confirmation threshold
 
 Sign `typedData` and submit it to
-[`POST /user/multisig/set-threshold/execute`](/api-reference/post-user-multisig-set-threshold-execute).
+[`POST /user/multisig/set-threshold/execute`](https://docs.sx.bet/api-reference/post-user-multisig-set-threshold-execute).
 
 
 ## OpenAPI

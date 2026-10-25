@@ -8,15 +8,15 @@
 
 `DELETE /orders-v3/market` submits a cancel command for every `PENDING` or `ACTIVE` order you hold on a
 single market, across both outcomes. For anything finer than a market — one side, one price level —
-name the ids on [`DELETE /orders-v3`](/api-reference/delete-orders-v3).
+name the ids on [`DELETE /orders-v3`](https://docs.sx.bet/api-reference/delete-orders-v3).
 
 > [!WARNING]
 >
 > **This is an asynchronous endpoint — a `200` means submitted, not cancelled.** The route publishes
 > cancel commands and returns without waiting for a response, so your orders are still on the
 > book when the response arrives. Confirm with
-> [`GET /orders-v3?marketHash=…`](/api-reference/get-orders-v3) or watch
-> [`account:orders_v3_#{address}`](/api-reference/channel-orders-v3) before acting on the result.
+> [`GET /orders-v3?marketHash=…`](https://docs.sx.bet/api-reference/get-orders-v3) or watch
+> [`account:orders_v3_#{address}`](https://docs.sx.bet/api-reference/channel-orders-v3) before acting on the result.
 
 
 ## OpenAPI

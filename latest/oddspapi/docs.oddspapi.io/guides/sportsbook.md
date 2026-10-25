@@ -22,7 +22,7 @@ Clients build entire betting products on OddsPapi, not just price displays. This
 
 **2. Load the schedule**
 
-`GET /fixtures`, `/fixtures/today`, `/fixtures/live` for snapshots, then the [`fixtures`](/websocket/channels/fixtures) channel for status and schedule changes.
+`GET /fixtures`, `/fixtures/today`, `/fixtures/live` for snapshots, then the [`fixtures`](https://docs.oddspapi.io/websocket/channels/fixtures) channel for status and schedule changes.
 
 **3. Model markets**
 
@@ -30,11 +30,11 @@ Clients build entire betting products on OddsPapi, not just price displays. This
 
 **4. Price it**
 
-The [`odds`](/websocket/channels/odds) channel for realtime updates, hydrated from `GET /fixtures/odds` (or `/fixtures/odds/main` for main lines only) once the stream is flowing — see Operating notes for the order.
+The [`odds`](https://docs.oddspapi.io/websocket/channels/odds) channel for realtime updates, hydrated from `GET /fixtures/odds` (or `/fixtures/odds/main` for main lines only) once the stream is flowing — see Operating notes for the order.
 
 **5. Run it in-play**
 
-[`scores`](/websocket/channels/scores) and [`clocks`](/websocket/channels/clocks) for live state, plus [`bookmakers`](/websocket/channels/bookmakers) for suspension and staleness.
+[`scores`](https://docs.oddspapi.io/websocket/channels/scores) and [`clocks`](https://docs.oddspapi.io/websocket/channels/clocks) for live state, plus [`bookmakers`](https://docs.oddspapi.io/websocket/channels/bookmakers) for suspension and staleness.
 
 **6. Settle**
 
@@ -74,7 +74,7 @@ That decomposition is baked into the `outcomeId`, which means the same bet alway
 }
 ```
 
-Use `marketName` / `marketNameShort` for display and `marketId` / `outcomeId` for logic. Full detail in [Markets and outcomes](/api-reference/concepts.md#markets-and-outcomes) and [Market coverage](/coverage/markets.md).
+Use `marketName` / `marketNameShort` for display and `marketId` / `outcomeId` for logic. Full detail in [Markets and outcomes](https://docs.oddspapi.io/api-reference/concepts.md#markets-and-outcomes) and [Market coverage](https://docs.oddspapi.io/coverage/markets.md).
 
 ***
 
@@ -82,7 +82,7 @@ Use `marketName` / `marketNameShort` for display and `marketId` / `outcomeId` fo
 
 All endpoints are prefixed with a language code (`/en/…`, `/de/…`, `/fr/…`), and the WebSocket takes `lang` at login. Translated fields — `sportName`, `marketName`, `statusName`, participant names — follow the prefix; identifiers never do. Build your UI on IDs and let names follow the user's locale.
 
-For crypto or multi-currency display, the [`currencies`](/websocket/channels/currencies) channel streams fiat and crypto rates against USD.
+For crypto or multi-currency display, the [`currencies`](https://docs.oddspapi.io/websocket/channels/currencies) channel streams fiat and crypto rates against USD.
 
 ***
 
@@ -93,7 +93,7 @@ For crypto or multi-currency display, the [`currencies`](/websocket/channels/cur
 * **`clocks`** carries `currentPeriod`, `currentTime`, `remainingTime`, and `stopped` for live display and for holding bets during stoppages.
 * **Suspension** comes from the `bookmakers` channel (`suspended`, `staleOdds`) and from `marketActive` / `active` on the odds themselves. Wire all of them into one "can this be bet right now" decision.
 
-Interpret periods against the sport's structure — `p1` is a half in soccer, a quarter in NBA basketball, a set in tennis. `expectedPeriods` and `periodLength` on the fixture tell you which. The vocabulary is shared across all sports and is append-only; see [Enumerations → period](/api-reference/enumerations.md#period).
+Interpret periods against the sport's structure — `p1` is a half in soccer, a quarter in NBA basketball, a set in tennis. `expectedPeriods` and `periodLength` on the fixture tell you which. The vocabulary is shared across all sports and is append-only; see [Enumerations → period](https://docs.oddspapi.io/api-reference/enumerations.md#period).
 
 ***
 
@@ -109,19 +109,19 @@ Interpret periods against the sport's structure — `p1` is a half in soccer, a 
 | `CANCELLED` | Market voided — stake returned |
 | `UNDECIDED` | Not gradable yet; carries a `reason` |
 
-Grade on the **selection** key — `{fixtureId}:{outcomeId}:{playerId}`, without the bookmaker — since a selection resolves identically regardless of who quoted it. Handle `UNDECIDED` and `CANCELLED` as explicit states in your settlement queue rather than retry-until-success. Full treatment — quarter-line math, period grading, and queue handling — in [Settlement & grading](/guides/settlement.md).
+Grade on the **selection** key — `{fixtureId}:{outcomeId}:{playerId}`, without the bookmaker — since a selection resolves identically regardless of who quoted it. Handle `UNDECIDED` and `CANCELLED` as explicit states in your settlement queue rather than retry-until-success. Full treatment — quarter-line math, period grading, and queue handling — in [Settlement & grading](https://docs.oddspapi.io/guides/settlement.md).
 
 ***
 
 ## Operating notes
 
-* **Connect first, then snapshot, then re-snapshot on signal.** Log in and start applying updates before you fetch the REST snapshot, and merge by newest `changedAt` per key — that overlap is what makes hydration gapless. `snapshot_required` means your cursor left the replay window; it is a designed path, not an error. See [Resume & Replay](/websocket/resume-replay.md).
+* **Connect first, then snapshot, then re-snapshot on signal.** Log in and start applying updates before you fetch the REST snapshot, and merge by newest `changedAt` per key — that overlap is what makes hydration gapless. `snapshot_required` means your cursor left the replay window; it is a designed path, not an error. See [Resume & Replay](https://docs.oddspapi.io/websocket/resume-replay.md).
 * **Filter at login.** `sportIds`, `tournamentIds`, and `bookmakers` cut message volume far more effectively than client-side filtering.
 * **Use `since` for backfills** rather than full refetches, and key storage by `oddsId` for clean dedup.
-* **Prefer `receiveType: "zstd"`** on `odds` at scale ([Compression](/websocket/compression.md)).
+* **Prefer `receiveType: "zstd"`** on `odds` at scale ([Compression](https://docs.oddspapi.io/websocket/compression.md)).
 * **New enum values are appended, never repurposed** — ignore values you do not recognize instead of failing.
 
-For pricing history, closing lines, and post-hoc analysis of your own book, see [Historical odds and CLV](/api-reference/concepts.md#historical-odds-and-clv).
+For pricing history, closing lines, and post-hoc analysis of your own book, see [Historical odds and CLV](https://docs.oddspapi.io/api-reference/concepts.md#historical-odds-and-clv).
 
 ***
 

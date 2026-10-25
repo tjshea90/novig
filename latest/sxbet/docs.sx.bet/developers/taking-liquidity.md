@@ -6,14 +6,14 @@
 
 > How to fill existing orders on the SX Bet orderbook as a taker.
 
-Taking liquidity is the same request as [posting an order](/developers/posting-orders.md). There is no separate endpoint. Submit a signed limit order to
-[`POST /orders-v3`](/api-reference/post-orders-v3) with `timeInForce: "IOC"` or `"FOK"`, and the order
+Taking liquidity is the same request as [posting an order](https://docs.sx.bet/developers/posting-orders.md). There is no separate endpoint. Submit a signed limit order to
+[`POST /orders-v3`](https://docs.sx.bet/api-reference/post-orders-v3) with `timeInForce: "IOC"` or `"FOK"`, and the order
 executes against the book immediately instead of resting on it.
 
 ## Prerequisites
 
 Same as posting: your proxy must be deployed and funded, and auth is an API key plus your signature.
-See [Prerequisites](/developers/posting-orders.md#prerequisites) on Posting orders.
+See [Prerequisites](https://docs.sx.bet/developers/posting-orders.md#prerequisites) on Posting orders.
 
 ## The price you submit
 
@@ -31,9 +31,9 @@ better, never worse.
    not at all.
 4. **Read the result from your trades and fills** — an `IOC`/`FOK` never rests.
 5. **Or listen on your account streams** — subscribe to
-   [`account:fills_v3_#{address}`](/api-reference/channel-fills-v3),
-   [`account:trades_v3_#{address}`](/api-reference/channel-trades-v3), or
-   [`account:orders_v3_#{address}`](/api-reference/channel-orders-v3) to have the same updates pushed to
+   [`account:fills_v3_#{address}`](https://docs.sx.bet/api-reference/channel-fills-v3),
+   [`account:trades_v3_#{address}`](https://docs.sx.bet/api-reference/channel-trades-v3), or
+   [`account:orders_v3_#{address}`](https://docs.sx.bet/api-reference/channel-orders-v3) to have the same updates pushed to
    you instead of polling.
 
 > [!WARNING]
@@ -190,7 +190,7 @@ for f in fills:
 ## Partial fills
 
 `IOC` discards whatever didn't match; `FOK` cancels entirely rather than executing partially — see
-[Time in force](/developers/time-in-force.md) for the full behavior table.
+[Time in force](https://docs.sx.bet/developers/time-in-force.md) for the full behavior table.
 
 An `IOC` that fills partially still reports `inactiveReason: "NO_LIQUIDITY"` on the order. That reason
 describes the discarded remainder. A `FOK` checks
@@ -198,31 +198,31 @@ fillable depth first and cancels entirely if the depth can't cover your size.
 
 ## Related
 
-> **[Posting orders](/developers/posting-orders.md)**
+> **[Posting orders](https://docs.sx.bet/developers/posting-orders.md)**
 >
 > The same signing and submission path, from the maker's side.
 
-> **[Market making](/developers/market-making.md)**
+> **[Market making](https://docs.sx.bet/developers/market-making.md)**
 >
 > The global notional budget aggressive orders are checked against.
 
-> **[Time in force](/developers/time-in-force.md)**
+> **[Time in force](https://docs.sx.bet/developers/time-in-force.md)**
 >
 > Why IOC and FOK are the only two immediate types.
 
-> **[Betting delays](/developers/betting-delays.md)**
+> **[Betting delays](https://docs.sx.bet/developers/betting-delays.md)**
 >
 > The wait an order takes on before it matches.
 
-> **[Create orders](/api-reference/post-orders-v3.md)**
+> **[Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)**
 >
 > Fields, validation rules and every error body.
 
-> **[Get orderbook snapshot](/api-reference/get-market-orderbook-snapshot.md)**
+> **[Get orderbook snapshot](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot.md)**
 >
 > Reading depth, and the prices from the taker's side.
 
-> **[Bet lifecycle](/developers/bet-lifecycle.md)**
+> **[Bet lifecycle](https://docs.sx.bet/developers/bet-lifecycle.md)**
 >
 > What happens to a bet after it matches.
 

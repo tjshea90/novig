@@ -47,7 +47,7 @@ Polymarket uses pUSD (Polymarket USD) as collateral. Every Yes/No pair is fully 
 
 Shares are represented as ERC-1155 tokens on Polygon. Depending on the market, they are recorded as [Gnosis Conditional Tokens](https://github.com/gnosis/conditional-tokens-contracts/) or Polymarket Protocol V2 positions. Both represent the same Yes and No shares.
 
-See [Positions & Tokens](/concepts/positions-tokens.md) for more details.
+See [Positions & Tokens](https://docs.polymarket.com/concepts/positions-tokens.md) for more details.
 
 ### Trading
 
@@ -72,7 +72,7 @@ When an event concludes, markets using the UMA Optimistic Oracle follow this res
 3. If disputed, UMA determines the correct resolution
 4. Once finalized, winning shares become redeemable for `$1 pUSD`
 
-Polymarket Protocol V2 markets can also use other resolution mechanisms. See [Resolution](/concepts/resolution.md) for more details.
+Polymarket Protocol V2 markets can also use other resolution mechanisms. See [Resolution](https://docs.polymarket.com/concepts/resolution.md) for more details.
 
 ## Why Blockchain
 
@@ -103,7 +103,7 @@ that account's current smart wallet type.
 ### Deployments
 
 Each smart-wallet user has their own wallet address. See
-[Contracts](/resources/contracts.md) for all deployed factory and trading contract
+[Contracts](https://docs.polymarket.com/resources/contracts.md) for all deployed factory and trading contract
 addresses on Polygon.
 
 ***
@@ -112,7 +112,7 @@ addresses on Polygon.
 
 Ready to start trading?
 
-> **[Trading Quickstart](/trading/quickstart.md)**
+> **[Trading Quickstart](https://docs.polymarket.com/trading/quickstart.md)**
 >
 > Set up your account and make your first trade.
 

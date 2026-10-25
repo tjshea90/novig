@@ -20,7 +20,7 @@ All of it has to happen before the parlay market expires, 60 seconds after creat
 
 ## Step 1: Connect to the parlay channel
 
-Subscribe to the [`parlay_markets:global` channel](/api-reference/channel-parlay-requests) to receive parlay requests in real time. You need a token from the [`GET /user/realtime-token-v3/api-key`](/developers/realtime-initialization#connect) endpoint.
+Subscribe to the [`parlay_markets:global` channel](https://docs.sx.bet/api-reference/channel-parlay-requests) to receive parlay requests in real time. You need a token from the [`GET /user/realtime-token-v3/api-key`](https://docs.sx.bet/developers/realtime-initialization#connect) endpoint.
 
 ```javascript JavaScript theme={null}
 import { Centrifuge } from "centrifuge";
@@ -111,12 +111,12 @@ Each incoming message contains the parlay's `marketHash`, the requested token an
 | - | - |
 | `marketHash` | The parlay market to post your order against — the **parent** |
 | `requestorId` | An **HMAC of the requesting address**, not the address itself |
-| `requestSize` | Requested size in base units (see [unit conversions](/developers/unit-conversions.md)) |
+| `requestSize` | Requested size in base units (see [unit conversions](https://docs.sx.bet/developers/unit-conversions.md)) |
 | `legs` | Array of individual markets and the outcomes the bettor selected |
 
 ## Step 3: Look up each leg
 
-Query each leg's market via [`GET /markets/find`](/api-reference/get-markets-find) to see what the bettor selected.
+Query each leg's market via [`GET /markets/find`](https://docs.sx.bet/api-reference/get-markets-find) to see what the bettor selected.
 
 ```javascript JavaScript theme={null}
 async function handleParlayRequest(parlayRequest) {
@@ -273,9 +273,9 @@ the signature. **The order's expiry must be no later than the parlay market's ex
 
 The signing code lives on the shared pages:
 
-> **[Create orders](/api-reference/post-orders-v3.md)**
+> **[Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)**
 
-> **[EIP-712 order signing](/api-reference/eip712-order-signing.md)**
+> **[EIP-712 order signing](https://docs.sx.bet/api-reference/eip712-order-signing.md)**
 >
 > The struct, the domain, and signing the digest.
 
@@ -283,27 +283,27 @@ Keep your order's `expiry` — a unix epoch timestamp in seconds — inside the 
 
 ## Step 6: Manage your orders
 
-Cancelling a parlay order is cancelling an order. Use [`DELETE /orders-v3`](/api-reference/delete-orders-v3) with the ids you want cancelled.
+Cancelling a parlay order is cancelling an order. Use [`DELETE /orders-v3`](https://docs.sx.bet/api-reference/delete-orders-v3) with the ids you want cancelled.
 
-> **[Cancelling orders](/developers/cancelling-orders.md)**
+> **[Cancelling orders](https://docs.sx.bet/developers/cancelling-orders.md)**
 >
 > Picking a route, confirming before you exit, and why a `200` is not enough.
 
 ## Related
 
-> **[Parlays](/developers/parlays.md)**
+> **[Parlays](https://docs.sx.bet/developers/parlays.md)**
 >
 > The RFQ flow.
 
-> **[Create orders](/api-reference/post-orders-v3.md)**
+> **[Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)**
 >
 > Posting new orders
 
-> **[EIP-712 order signing](/api-reference/eip712-order-signing.md)**
+> **[EIP-712 order signing](https://docs.sx.bet/api-reference/eip712-order-signing.md)**
 >
 > The eight-field struct every order shares.
 
-> **[Parlay requests channel](/api-reference/channel-parlay-requests.md)**
+> **[Parlay requests channel](https://docs.sx.bet/api-reference/channel-parlay-requests.md)**
 >
 > The message you subscribe to.
 

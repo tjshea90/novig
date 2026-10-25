@@ -30,7 +30,7 @@ zero, and stakes return.
 
 > [!NOTE]
 >
-> You bet in USDC from your [proxy wallet](/developers/accounts.md), a wallet the exchange deploys for you that only you control.
+> You bet in USDC from your [proxy wallet](https://docs.sx.bet/developers/accounts.md), a wallet the exchange deploys for you that only you control.
 
 ## Visibility
 
@@ -39,19 +39,19 @@ and balances are private to you.
 
 ## Related
 
-> **[The exchange model](/developers/exchange-model.md)**
+> **[The exchange model](https://docs.sx.bet/developers/exchange-model.md)**
 >
 > Why maker and taker are a classification, not a choice.
 
-> **[What can you build?](/developers/what-can-you-build.md)**
+> **[What can you build?](https://docs.sx.bet/developers/what-can-you-build.md)**
 >
 > What an orderbook exchange makes possible.
 
-> **[Quickstart](/developers/quickstart.md)**
+> **[Quickstart](https://docs.sx.bet/developers/quickstart.md)**
 >
 > A resting order in about twenty minutes.
 
-> **[Unit conversions](/developers/unit-conversions.md)**
+> **[Unit conversions](https://docs.sx.bet/developers/unit-conversions.md)**
 >
 > The scales, and which side a price is quoted from.
 

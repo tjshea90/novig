@@ -8,7 +8,7 @@
 
 The `trades` channel reports every execution on a market.
 It costs 4 tokens per market.
-It includes [`lifecycle`](/api/streaming/lifecycle), but not [`book`](/api/streaming/book).
+It includes [`lifecycle`](https://docs.novig.com/api/streaming/lifecycle), but not [`book`](https://docs.novig.com/api/streaming/book).
 
 ```json snapshot theme={"dark"}
 "trades": {
@@ -81,7 +81,7 @@ For trades across markets or in a time window, call `GET /v3/history/trades`. It
 ## Gaps
 
 * For a small gap, send `snapshot` with `replay` and take the batches after your last `seq`. You don't need to resync.
-* For a large gap, [resync](/api/streaming/connection.md#gaps) as usual.
+* For a large gap, [resync](https://docs.novig.com/api/streaming/connection.md#gaps) as usual.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

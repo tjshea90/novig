@@ -28,7 +28,7 @@ object. A documented miss is `data: null` or an empty list, never an error.
 rows. v2 pages with an opaque cursor: follow `pagination.next_cursor` until it
 is `null`, with no offset arithmetic to manage, and the feed routes stay
 consistent while new rows arrive. See
-[Paginate With Cursors](/api-reference/data-api/overview.md#paginate-with-cursors).
+[Paginate With Cursors](https://docs.polymarket.com/api-reference/data-api/overview.md#paginate-with-cursors).
 
 **Field casing.** v1 responses are `camelCase` (`proxyWallet`, `conditionId`).
 v2 responses are `snake_case` (`proxy_wallet`, `condition_id`). Request
@@ -101,8 +101,8 @@ retirement above. Keep calling its existing route.
 Data API v2 is supported starting with version `0.10.0` in both official SDKs:
 the TypeScript package `@polymarket/client` and the Python package
 `polymarket-client`. Review the
-[TypeScript SDK changelog](/changelog/sdks.md#typescript) or
-[Python SDK changelog](/changelog/sdks.md#python) for the breaking changes,
+[TypeScript SDK changelog](https://docs.polymarket.com/changelog/sdks.md#typescript) or
+[Python SDK changelog](https://docs.polymarket.com/changelog/sdks.md#python) for the breaking changes,
 renamed methods, response fields, and pagination behavior to update when
 migrating.
 

@@ -14,8 +14,8 @@ the authenticated address, across every market and event.
 > **This is an asynchronous endpoint — a `200` means submitted, not cancelled.** The route publishes
 > cancel commands and returns without waiting for a response, so your orders are still on the
 > book when the response arrives. Confirm with
-> [`GET /orders-v3?eventId=…`](/api-reference/get-orders-v3) or watch
-> [`account:orders_v3_#{address}`](/api-reference/channel-orders-v3) before acting on the result.
+> [`GET /orders-v3?eventId=…`](https://docs.sx.bet/api-reference/get-orders-v3) or watch
+> [`account:orders_v3_#{address}`](https://docs.sx.bet/api-reference/channel-orders-v3) before acting on the result.
 
 
 ## OpenAPI

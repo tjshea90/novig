@@ -15,7 +15,7 @@ Builder fee.
 
 ## Quickstart: Place an order with Builder Attribution
 
-Use the Trader's [funded Perps account](/perps/fund-your-account.md) and owner signer
+Use the Trader's [funded Perps account](https://docs.polymarket.com/perps/fund-your-account.md) and owner signer
 to approve the Builder fee once, then place attributed orders. Approval remains
 valid across sessions until revoked or replaced.
 
@@ -26,9 +26,9 @@ must be different accounts.
 
 Use `createSecureClient()` from `@polymarket/client` with the Trader's owner
 signer. This example uses Viem. See
-[Wallet Integrations](/getting-started/typescript.md#wallet-integrations) for other
+[Wallet Integrations](https://docs.polymarket.com/getting-started/typescript.md#wallet-integrations) for other
 signer providers. Set `builderAddress` to the Builder's EVM account address and
-`instrumentId` to the instrument selected in [Prepare a Trade](/perps/trading.md#prepare-a-trade).
+`instrumentId` to the instrument selected in [Prepare a Trade](https://docs.polymarket.com/perps/trading.md#prepare-a-trade).
 
 **1. Create a Secure Client**
 
@@ -170,7 +170,7 @@ should use its terms.
 Use `AsyncSecureClient` from `polymarket-client` and run the examples inside an async
 function. `builder_address` is your enabled Builder's account address.
 `instrument_id` identifies the instrument selected in
-[Prepare a Trade](/perps/trading.md#prepare-a-trade).
+[Prepare a Trade](https://docs.polymarket.com/perps/trading.md#prepare-a-trade).
 
 **1. Create a Secure Client**
 
@@ -307,8 +307,8 @@ should use its terms.
 
 Use the account owner's signer for fee approval and a trading proxy for orders.
 Set up proxy credentials through [Authenticated
-Sessions](/perps/authenticated-sessions.md#set-up-perps-access) first. The examples
-below use the same signing flow as [Place Orders](/perps/trading.md#place-orders).
+Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md#set-up-perps-access) first. The examples
+below use the same signing flow as [Place Orders](https://docs.polymarket.com/perps/trading.md#place-orders).
 
 **1. Read the Saved Approval**
 
@@ -533,7 +533,7 @@ a replacement.
 **7. Build the Order Operation**
 
 Choose an instrument, price, and quantity as shown in
-[Prepare a Trade](/perps/trading.md#prepare-a-trade). This example places an
+[Prepare a Trade](https://docs.polymarket.com/perps/trading.md#prepare-a-trade). This example places an
 immediate-or-cancel buy with a limit price of `65000` and the Builder fee
 approved above:
 
@@ -796,7 +796,7 @@ type OrderData = {
 Read `status`, `filled_quantity`, and `resting_quantity` to determine the
 execution outcome. Full order reads include the saved `builder` terms.
 If the snapshot is not available yet, retry the read or follow private order
-updates through [Authenticated Sessions](/perps/authenticated-sessions.md#session-lifecycle).
+updates through [Authenticated Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md#session-lifecycle).
 
 ## Trader Operations
 
@@ -1760,7 +1760,7 @@ are excluded. An ordinary trading counterparty can still pay its saved fee.
 | Account net PnL and main PnL leaderboard | Both fee components are already included. Do not subtract them again. |
 | Raw fill PnL and biggest-win rankings | Values remain before fees. |
 
-The [exchange fee schedule](/perps/learn-about-trading/fees.md) applies separately.
+The [exchange fee schedule](https://docs.polymarket.com/perps/learn-about-trading/fees.md) applies separately.
 Builder fees do not change exchange-fee arithmetic or the precision of fee rates.
 
 ## Builder Operations
@@ -1886,7 +1886,7 @@ above cannot read another account's earnings.
 Use `fetchBuilderEarningsSummary()` and `listBuilderEarnings()` on a
 `PerpsSession` opened by the Builder's `SecureClient`. Here, `builderSession`
 is that session, created through [Authenticated
-Sessions](/perps/authenticated-sessions.md#set-up-perps-access).
+Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md#set-up-perps-access).
 
 ```ts theme={null}
 import type { PerpsBuilderEarning } from "@polymarket/client";
@@ -2001,7 +2001,7 @@ the summary. To select a window, pass `start` and `end` as Unix milliseconds to
 Use `fetch_builder_earnings_summary()` and `list_builder_earnings()` on a
 `PerpsSession` opened by the Builder's `AsyncSecureClient`. Here,
 `builder_session` is that session, created through [Authenticated
-Sessions](/perps/authenticated-sessions.md#set-up-perps-access).
+Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md#set-up-perps-access).
 
 ```python theme={null}
 from polymarket.models.perps import PerpsBuilderEarning
@@ -2116,7 +2116,7 @@ deduplicate receipts. Each page also retains its `snapshot`, including empty pag
 
 **API**
 
-Get the Builder account's proxy address and secret through [Authenticated Sessions](/perps/authenticated-sessions.md#set-up-perps-access).
+Get the Builder account's proxy address and secret through [Authenticated Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md#set-up-perps-access).
 Fetch its earnings summary:
 
 ```bash Request theme={null}
@@ -2340,7 +2340,7 @@ and markets attributed to that account.
 
 Open a session with `includeBuilderFills: true` on the Builder's
 `SecureClient`. Here, `builderClient` authenticates the Builder account through
-[Authenticated Sessions](/perps/authenticated-sessions.md#set-up-perps-access).
+[Authenticated Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md#set-up-perps-access).
 
 ```ts theme={null}
 const builderSession = await builderClient.openPerpsSession({
@@ -2414,7 +2414,7 @@ Builder account.
 
 Open a session with `include_builder_fills=True` on the Builder's
 `AsyncSecureClient`. Here, `builder_client` authenticates the Builder account
-through [Authenticated Sessions](/perps/authenticated-sessions.md#set-up-perps-access).
+through [Authenticated Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md#set-up-perps-access).
 
 ```python theme={null}
 async with await builder_client.open_perps_session(include_builder_fills=True) as builder_session:
@@ -2523,7 +2523,7 @@ type AuthResponse = {
 ```
 
 Wait for the matching response with `data.status: "ok"` before subscribing.
-See [Session Lifecycle](/perps/authenticated-sessions.md#session-lifecycle) for
+See [Session Lifecycle](https://docs.polymarket.com/perps/authenticated-sessions.md#session-lifecycle) for
 connection keepalive and authentication errors.
 
 **2. Subscribe to Receipts**
@@ -2568,7 +2568,7 @@ type BuilderFillsSubscribeResponse = {
 
 Updates carry a `data` array with the same receipt fields and `earning_id`
 values as history, including zero-fee fills. The channel name cannot select
-another Builder's account. See [Builder Fills](/api-reference/wss/perps-builder-fills.md)
+another Builder's account. See [Builder Fills](https://docs.polymarket.com/api-reference/wss/perps-builder-fills.md)
 for the message schema. After a disconnect, authenticate and subscribe again.
 
 > **Output: BuilderFillsUpdate**

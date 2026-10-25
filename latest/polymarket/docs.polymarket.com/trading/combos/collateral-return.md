@@ -43,7 +43,7 @@ exact plan, wait for confirmation, and request another plan when more work
 remains.
 
 You need a Relayer API key. See [Connect Your
-Account](/trading/wallets-auth.md#connect-your-account) to create one before
+Account](https://docs.polymarket.com/trading/wallets-auth.md#connect-your-account) to create one before
 continuing.
 
 **TypeScript**
@@ -433,7 +433,7 @@ resulting onchain state.
 > flows, use an SDK or see the reference examples at the end of this tab.
 
 Before requesting a plan, ensure the wallet has the approvals below. Follow [Set
-Up Trading Approvals](/trading/wallets-auth.md#set-up-trading-approvals) to check,
+Up Trading Approvals](https://docs.polymarket.com/trading/wallets-auth.md#set-up-trading-approvals) to check,
 encode, and submit the required approval calls.
 
 | Asset | Contract to approve | Contract call |
@@ -1213,7 +1213,7 @@ removed.
 For example, complementary exposure to one underlying leg may unlock pUSD while
 the rest of each Combo remains open. Inspect the created positions before
 execution and include them in your normal [Combo position
-sync](/trading/combos/market-makers.md#list-combo-positions) after confirmation.
+sync](https://docs.polymarket.com/trading/combos/market-makers.md#list-combo-positions) after confirmation.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

@@ -16,11 +16,11 @@ For example: `account:orders_v3_#0xbcc6D643e4159A75ED1dB4e13330230B82F2AEe5`. Th
 
 | Name | Type | Description |
 | - | - | - |
-| address | string | Your checksummed address. It must equal your realtime token's `sub` — see [subscribing to your own channels](/developers/realtime-overview.md#subscribing-to-your-own-channels) |
+| address | string | Your checksummed address. It must equal your realtime token's `sub` — see [subscribing to your own channels](https://docs.sx.bet/developers/realtime-overview.md#subscribing-to-your-own-channels) |
 
 **MESSAGE PAYLOAD FORMAT**
 
-One order per message, wrapped in `order`, even when one engine command changed several of your orders. Those arrive as separate publications. The inner object is the same one [`GET /orders-v3`](/api-reference/get-orders-v3) returns in its `data.orders` array.
+One order per message, wrapped in `order`, even when one engine command changed several of your orders. Those arrive as separate publications. The inner object is the same one [`GET /orders-v3`](https://docs.sx.bet/api-reference/get-orders-v3) returns in its `data.orders` array.
 
 | Name | Type | Description |
 | - | - | - |
@@ -29,15 +29,15 @@ One order per message, wrapped in `order`, even when one engine command changed 
 | userAddress | string | Your user address, checksummed — the account that signed |
 | wallet | string | Your proxy address, which is what holds the funds |
 | isBettingOutcomeOne | boolean | The outcome this order backs. |
-| percentageOdds | string | The odds the order's owner receives in the sx.bet protocol format. To convert to implied odds divide by 10^20. To get taker implied odds: `takerOdds = 1 - percentageOdds / 10^20`. See [unit conversions](/developers/unit-conversions.md). |
-| totalBetSize | string | Total size of this order in base units. See [unit conversions](/developers/unit-conversions.md). |
+| percentageOdds | string | The odds the order's owner receives in the sx.bet protocol format. To convert to implied odds divide by 10^20. To get taker implied odds: `takerOdds = 1 - percentageOdds / 10^20`. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
+| totalBetSize | string | Total size of this order in base units. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
 | remainingSize | string | The unfilled portion of the original order size. The filled amount is `totalBetSize - remainingSize`. Use the `status` field to determine whether the remaining amount is still active. |
-| expiry | string | ISO 8601 timestamp after which this order is no longer valid. Note the asymmetry: you **send** `expiry` to [`POST /orders-v3`](/api-reference/post-orders-v3) as a unix epoch timestamp in seconds, and **read** it back here as an ISO 8601 string. |
+| expiry | string | ISO 8601 timestamp after which this order is no longer valid. Note the asymmetry: you **send** `expiry` to [`POST /orders-v3`](https://docs.sx.bet/api-reference/post-orders-v3) as a unix epoch timestamp in seconds, and **read** it back here as an ISO 8601 string. |
 | status | string | `"ACTIVE"` if resting, `"INACTIVE"` if no longer resting. |
-| inactiveReason | string or `null` | `null` while active; one of ten values when terminal. See [Order Lifecycle](/developers/order-lifecycle.md) |
+| inactiveReason | string or `null` | `null` while active; one of ten values when terminal. See [Order Lifecycle](https://docs.sx.bet/developers/order-lifecycle.md) |
 | eventId | string | The event related to this order |
 | clientOrderId | string | Your own tag, present only when you set one |
-| externalUserId | string | Optional partner tag, present only when you set one on [`POST /orders-v3`](/api-reference/post-orders-v3). See [External user id](/developers/external-user-id.md) |
+| externalUserId | string | Optional partner tag, present only when you set one on [`POST /orders-v3`](https://docs.sx.bet/api-reference/post-orders-v3). See [External user id](https://docs.sx.bet/developers/external-user-id.md) |
 | createdAt | string | ISO timestamp for when the order first rested |
 | updatedAt | string | ISO timestamp for when the change was committed. |
 

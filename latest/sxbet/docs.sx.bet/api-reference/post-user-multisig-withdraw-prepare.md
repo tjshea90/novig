@@ -8,7 +8,7 @@
 
 `POST /user/multisig/withdraw/prepare` builds the withdrawal. You sign `typedData` with your signer
 key, then submit that signature to
-[`POST /user/multisig/withdraw/execute`](/api-reference/post-user-multisig-withdraw-execute).
+[`POST /user/multisig/withdraw/execute`](https://docs.sx.bet/api-reference/post-user-multisig-withdraw-execute).
 
 > [!WARNING]
 >

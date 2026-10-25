@@ -6,9 +6,9 @@
 
 > Subscribe to real-time order book updates for every market on an event
 
-Subscribe to order book changes for every market on a single event. The payloads are identical to [`orderbook_v3:{marketHash}`](/api-reference/channel-orderbook-v3), including `marketHash` — this channel exists so that watching a whole event costs one channel instead of one per market.
+Subscribe to order book changes for every market on a single event. The payloads are identical to [`orderbook_v3:{marketHash}`](https://docs.sx.bet/api-reference/channel-orderbook-v3), including `marketHash` — this channel exists so that watching a whole event costs one channel instead of one per market.
 
-This namespace keeps the last 100 publications for 5 minutes, so pass `recoverable: true` to recover missed messages on reconnect. If a gap comes back `recovered: false`, re-seed from [`GET /orderbook-v3/snapshot/event`](/api-reference/get-event-orderbook-snapshot) — follow `nextKey` until it is omitted.
+This namespace keeps the last 100 publications for 5 minutes, so pass `recoverable: true` to recover missed messages on reconnect. If a gap comes back `recovered: false`, re-seed from [`GET /orderbook-v3/snapshot/event`](https://docs.sx.bet/api-reference/get-event-orderbook-snapshot) — follow `nextKey` until it is omitted.
 
 **CHANNEL NAME FORMAT**
 
@@ -20,7 +20,7 @@ This namespace keeps the last 100 publications for 5 minutes, so pass `recoverab
 
 **MESSAGE PAYLOAD FORMAT**
 
-Identical to [`orderbook_v3:{marketHash}`](/api-reference/channel-orderbook-v3), including the `version` field. `version` is per market, so key your state by `marketHash` and apply a publication only when its `version` is strictly greater than the one you hold for that market — see [book versioning](/developers/book-versioning.md).
+Identical to [`orderbook_v3:{marketHash}`](https://docs.sx.bet/api-reference/channel-orderbook-v3), including the `version` field. `version` is per market, so key your state by `marketHash` and apply a publication only when its `version` is strictly greater than the one you hold for that market — see [book versioning](https://docs.sx.bet/developers/book-versioning.md).
 
 ***
 

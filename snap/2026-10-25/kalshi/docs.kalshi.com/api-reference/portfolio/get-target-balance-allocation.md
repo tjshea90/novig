@@ -1,0 +1,190 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.kalshi.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Get Target Balance Allocation
+
+> Retrieves the caller's target balance allocation across exchange indexes.
+
+
+
+
+## OpenAPI
+
+````yaml /openapi.yaml get /portfolio/target_balance_allocation
+openapi: 3.0.0
+info:
+  title: Kalshi Trade API Manual Endpoints
+  version: 3.34.0
+  description: >-
+    Manually defined OpenAPI spec for endpoints being migrated to spec-first
+    approach
+servers:
+  - url: https://external-api.kalshi.com/trade-api/v2
+    description: Production Trade API server
+  - url: https://api.elections.kalshi.com/trade-api/v2
+    description: Production shared API server, also supported
+  - url: https://external-api.demo.kalshi.co/trade-api/v2
+    description: Demo Trade API server
+  - url: https://demo-api.kalshi.co/trade-api/v2
+    description: Demo shared API server, also supported
+security: []
+tags:
+  - name: api-keys
+    description: API key management endpoints
+  - name: orders
+    description: Order management endpoints
+  - name: order-groups
+    description: Order group management endpoints
+  - name: portfolio
+    description: Portfolio and balance information endpoints
+  - name: communications
+    description: Request-for-quote (RFQ) endpoints
+  - name: multivariate
+    description: Multivariate event collection endpoints
+  - name: exchange
+    description: Exchange status and information endpoints
+  - name: live-data
+    description: Live data endpoints
+  - name: markets
+    description: Market data endpoints
+  - name: milestone
+    description: Milestone endpoints
+  - name: search
+    description: Search and filtering endpoints
+  - name: incentive-programs
+    description: Incentive program endpoints
+  - name: fcm
+    description: FCM member specific endpoints
+  - name: events
+    description: Event endpoints
+  - name: structured-targets
+    description: Structured targets endpoints
+paths:
+  /portfolio/target_balance_allocation:
+    get:
+      tags:
+        - portfolio
+      summary: Get Target Balance Allocation
+      description: >
+        Retrieves the caller's target balance allocation across exchange
+        indexes.
+      operationId: GetTargetBalanceAllocation
+      responses:
+        '200':
+          description: Target balance allocation retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTargetBalanceAllocationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - kalshiAccessKey: []
+          kalshiAccessSignature: []
+          kalshiAccessTimestamp: []
+components:
+  schemas:
+    GetTargetBalanceAllocationResponse:
+      type: object
+      required:
+        - allocations
+        - resting_margin_reservation
+      properties:
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/TargetBalanceAllocation'
+        resting_margin_reservation:
+          $ref: '#/components/schemas/RestingMarginReservation'
+    TargetBalanceAllocation:
+      type: object
+      required:
+        - exchange_index
+        - percent
+      properties:
+        exchange_index:
+          type: integer
+          minimum: 0
+          description: Exchange index that receives this percentage of sweepable balance
+        percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Target percentage of sweepable balance for the exchange index
+    RestingMarginReservation:
+      type: string
+      enum:
+        - none
+        - max
+        - sum
+      x-enum-varnames:
+        - RestingMarginReservationNone
+        - RestingMarginReservationMax
+        - RestingMarginReservationSum
+      description: >
+        Collateral an automatic rebalance leaves behind for resting orders.
+        `none` reserves no
+
+        collateral for resting orders. `max` reserves the
+
+        largest single market-side commitment. `sum` reserves the summed margin
+        of every resting order.
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: string
+          description: Additional details about the error, if available
+  responses:
+    UnauthorizedError:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ForbiddenError:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  securitySchemes:
+    kalshiAccessKey:
+      type: apiKey
+      in: header
+      name: KALSHI-ACCESS-KEY
+      description: Your API key ID
+    kalshiAccessSignature:
+      type: apiKey
+      in: header
+      name: KALSHI-ACCESS-SIGNATURE
+      description: >-
+        Base64 signature of the pre-sign text (timestamp + method + path) made
+        with the API key's algorithm - RSA-PSS with SHA-256 for RSA keys,
+        Ed25519 for Ed25519 keys
+    kalshiAccessTimestamp:
+      type: apiKey
+      in: header
+      name: KALSHI-ACCESS-TIMESTAMP
+      description: Request timestamp in milliseconds
+
+````
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

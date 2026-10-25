@@ -9,7 +9,7 @@
 `GET /user/multisig/proxy/{proxyAddress}` reports whether an address is a registered proxy and
 whether that proxy is deployed. It does not return the owner.
 
-Use it before [`POST /user/multisig/transfer/prepare`](/api-reference/post-user-multisig-transfer-prepare)
+Use it before [`POST /user/multisig/transfer/prepare`](https://docs.sx.bet/api-reference/post-user-multisig-transfer-prepare)
 to check the recipient.
 
 

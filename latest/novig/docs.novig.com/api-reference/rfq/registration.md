@@ -10,12 +10,12 @@ You register your pricer yourself, with one call to `POST /rfq/pricer`.
 A pricer is the service that quotes RFQs for your LP account.
 
 Register before you price over either transport.
-The [WebSocket](/api-reference/rfq/websocket.md) refuses a connection from an account with no pricer, and the [webhook](/api-reference/rfq/webhooks.md) needs a registered URL.
+The [WebSocket](https://docs.novig.com/api-reference/rfq/websocket.md) refuses a connection from an account with no pricer, and the [webhook](https://docs.novig.com/api-reference/rfq/webhooks.md) needs a registered URL.
 
 | Call | What it does |
 | - | - |
 | `POST /rfq/pricer` | Registers your pricer or changes its webhook URL |
-| `GET /rfq/pricer` | Returns your registration and your [confirm rate](/api-reference/rfq/confirm-rate.md) |
+| `GET /rfq/pricer` | Returns your registration and your [confirm rate](https://docs.novig.com/api-reference/rfq/confirm-rate.md) |
 | `POST /rfq/pricer/ping` | Sends a signed test request to your webhook |
 
 ## Before you start
@@ -33,7 +33,7 @@ A pricer that uses only the WebSocket skips the second step. It needs no public 
 ## Authenticate with your access token
 
 All three calls take the OAuth 2.0 client-credentials token you use for the rest of the API.
-[Authentication](/api-reference/authentication.md) shows how to get one.
+[Authentication](https://docs.novig.com/api-reference/authentication.md) shows how to get one.
 
 ```bash theme={"dark"}
 Authorization: Bearer YOUR_ACCESS_TOKEN
@@ -144,7 +144,7 @@ Both `webhookUrl` and `sharedSecret` are `null` for a WebSocket-only pricer.
 ## Your shared secret
 
 The shared secret is the key we use to sign each webhook request.
-You use the same key to check the signature. [Webhook signing](/api-reference/rfq/signing.md) shows how.
+You use the same key to check the signature. [Webhook signing](https://docs.novig.com/api-reference/rfq/signing.md) shows how.
 
 We create the secret on the first call that sends a `webhookUrl`.
 It is 32 random bytes, sent as 64 lowercase hex characters.
@@ -185,14 +185,14 @@ curl "$NOVIG_HOST/rfq/pricer" \
 }
 ```
 
-`confirmStanding` and `lock` show where you stand against the [confirm rate](/api-reference/rfq/confirm-rate.md).
+`confirmStanding` and `lock` show where you stand against the [confirm rate](https://docs.novig.com/api-reference/rfq/confirm-rate.md).
 It returns `404` if you have no pricer yet.
 
 ## Test your webhook
 
 `POST /rfq/pricer/ping` sends a signed test request to `<webhookUrl>/ping` and tells you how your webhook answered.
 Use it to check that we can reach you and that your signature check works.
-A successful ping also restarts a [paused webhook](/api-reference/rfq/webhooks.md#keep-your-webhook-active).
+A successful ping also restarts a [paused webhook](https://docs.novig.com/api-reference/rfq/webhooks.md#keep-your-webhook-active).
 
 ```bash theme={"dark"}
 curl --request POST "$NOVIG_HOST/rfq/pricer/ping" \
@@ -201,12 +201,12 @@ curl --request POST "$NOVIG_HOST/rfq/pricer/ping" \
 
 A ping reaches a new registration right away.
 Live RFQs can take up to a minute to reach a new pricer or a changed URL.
-Registering again never restarts a [paused webhook](/api-reference/rfq/webhooks.md#keep-your-webhook-active), even with a new URL. Ping it to restart it.
+Registering again never restarts a [paused webhook](https://docs.novig.com/api-reference/rfq/webhooks.md#keep-your-webhook-active), even with a new URL. Ping it to restart it.
 
 A webhook you add to a WebSocket-only registration more than 7 days old starts paused.
 Ping it once to start it.
 
-Your side of the ping is the [`/ping` handler](/api-reference/rfq/webhooks).
+Your side of the ping is the [`/ping` handler](https://docs.novig.com/api-reference/rfq/webhooks).
 
 ### Response
 

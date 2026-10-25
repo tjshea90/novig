@@ -363,7 +363,7 @@ paths:
 
             path = "/v3/echo"
             query = ""
-            body = b"""{
+            body = rb"""{
               "hello": "world"
             }"""
 
@@ -396,7 +396,7 @@ paths:
 
             const path = "/v3/echo";
             const query = "";
-            const body = `{
+            const body = String.raw`{
               "hello": "world"
             }`;
 

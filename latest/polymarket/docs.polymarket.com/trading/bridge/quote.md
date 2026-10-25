@@ -36,7 +36,7 @@ curl -X POST https://bridge.polymarket.com/quote \
 
 ### Response
 
-The quote response includes an estimated output amount, a fee breakdown, and a `quoteId` you can log for your own records. To track the transfer itself once it's underway, poll [`/status`](/trading/bridge/status) with your bridge address.
+The quote response includes an estimated output amount, a fee breakdown, and a `quoteId` you can log for your own records. To track the transfer itself once it's underway, poll [`/status`](https://docs.polymarket.com/trading/bridge/status) with your bridge address.
 
 ```json theme={null}
 {
@@ -130,11 +130,11 @@ Total impact cost in USD
 
 ## Next Steps
 
-> **[Create Deposit](/trading/bridge/deposit.md)**
+> **[Create Deposit](https://docs.polymarket.com/trading/bridge/deposit.md)**
 >
 > Execute a deposit to Polymarket.
 
-> **[Withdraw](/trading/bridge/withdraw.md)**
+> **[Withdraw](https://docs.polymarket.com/trading/bridge/withdraw.md)**
 >
 > Withdraw from Polymarket to another chain.
 

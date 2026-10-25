@@ -408,7 +408,7 @@ paths:
 
             path = f"/v3/account/subaccounts/{SUB}/transfer"
             query = ""
-            body = b"""{
+            body = rb"""{
               "amount": "1234.50000",
               "clientTransferId": "fund-desk-1-0001",
               "direction": "fund"
@@ -444,7 +444,7 @@ paths:
 
             const path = `/v3/account/subaccounts/${SUB}/transfer`;
             const query = "";
-            const body = `{
+            const body = String.raw`{
               "amount": "1234.50000",
               "clientTransferId": "fund-desk-1-0001",
               "direction": "fund"

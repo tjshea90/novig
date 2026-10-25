@@ -100,7 +100,7 @@ try {
 
 Use `portfolio.withdrawable` to check collateral available for withdrawal and
 `deposits.items` to reconcile deposit history. The `withdrawable` value already
-accounts for the [10% notional reserve](/perps/learn-about-trading/margin.md#withdrawal-margin-requirements).
+accounts for the [10% notional reserve](https://docs.polymarket.com/perps/learn-about-trading/margin.md#withdrawal-margin-requirements).
 
 **Python**
 
@@ -184,7 +184,7 @@ finally:
 
 Use `portfolio.withdrawable` to check collateral available for withdrawal and
 `deposits.items` to reconcile deposit history. The `withdrawable` value already
-accounts for the [10% notional reserve](/perps/learn-about-trading/margin.md#withdrawal-margin-requirements).
+accounts for the [10% notional reserve](https://docs.polymarket.com/perps/learn-about-trading/margin.md#withdrawal-margin-requirements).
 
 **API**
 
@@ -400,7 +400,7 @@ settles. Treat `STATE_FAILED` and `STATE_INVALID` as terminal failures.
 Withdraw pUSD when the account has available collateral that should return to the
 authenticated wallet.
 
-Withdrawals must satisfy the [withdrawal margin requirements](/perps/learn-about-trading/margin.md#withdrawal-margin-requirements),
+Withdrawals must satisfy the [withdrawal margin requirements](https://docs.polymarket.com/perps/learn-about-trading/margin.md#withdrawal-margin-requirements),
 including the 10% reserve against open-position notional. Collateral available
 for trading can therefore exceed collateral available for withdrawal.
 
@@ -448,10 +448,10 @@ for await (const page of pages) {
 ```
 
 For what each status means, see
-[Withdrawals](/perps/account-management.md#withdrawals).
+[Withdrawals](https://docs.polymarket.com/perps/account-management.md#withdrawals).
 
 For more details on authenticated sessions, see [Authenticated
-Sessions](/perps/authenticated-sessions.md).
+Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md).
 
 **Python**
 
@@ -491,10 +491,10 @@ async for page in pages:
 ```
 
 For what each status means, see
-[Withdrawals](/perps/account-management.md#withdrawals).
+[Withdrawals](https://docs.polymarket.com/perps/account-management.md#withdrawals).
 
 For more details on authenticated sessions, see [Authenticated
-Sessions](/perps/authenticated-sessions.md).
+Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md).
 
 **API**
 
@@ -667,7 +667,7 @@ The `withdrawal_status` filter accepts `pending`, `confirmed`, `removed`, or
 `failed`.
 
 For more details on proxy credentials and private account-read headers, see
-[Authenticated Sessions](/perps/authenticated-sessions.md).
+[Authenticated Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md).
 
 ## Transfer Between Your Accounts
 
@@ -680,7 +680,7 @@ withdrawable collateral after accounting for pending withdrawals and transfers.
 **TypeScript**
 
 Use `client.transferPerpsCollateral()` on the owner-signed `SecureClient` from
-[Set Up Perps Access](/perps/authenticated-sessions.md#set-up-perps-access).
+[Set Up Perps Access](https://docs.polymarket.com/perps/authenticated-sessions.md#set-up-perps-access).
 
 ```ts theme={null}
 const transferId = await client.transferPerpsCollateral({
@@ -709,7 +709,7 @@ transfers are enabled for your deployment, a registered trading key can also sig
 | Signer | When it can sign |
 | - | - |
 | Owner key of the source account | Always, to any destination Perps account. |
-| Trading key (proxy) registered to the source account | When enabled and the source and destination belong to the same [account group](/perps/learn-about-trading/self-trade-prevention.md#account-groups). |
+| Trading key (proxy) registered to the source account | When enabled and the source and destination belong to the same [account group](https://docs.polymarket.com/perps/learn-about-trading/self-trade-prevention.md#account-groups). |
 
 The trading-key path lets a market maker running several grouped accounts
 rebalance collateral from the key its trading system already holds, without
@@ -905,10 +905,10 @@ group is current. This wait is capped at 500 ms.
 
 If a transfer request times out and you are unsure whether it was accepted,
 resend the exact original signed request. Do not generate a new signature,
-salt, or timestamp. See [Errors](/perps/errors.md).
+salt, or timestamp. See [Errors](https://docs.polymarket.com/perps/errors.md).
 
 Transfers and withdrawals still pending count against the
-[withdrawable amount](/perps/learn-about-trading/margin.md#withdrawal-margin-requirements).
+[withdrawable amount](https://docs.polymarket.com/perps/learn-about-trading/margin.md#withdrawal-margin-requirements).
 Each source account can have up to 10 transfers waiting to be processed.
 
 If submission times out or returns a server error, the transfer may still have
@@ -924,7 +924,7 @@ its recipient, amount, and direction with your intended transfer.
 **TypeScript**
 
 Use `session.listInternalTransfers()` with the authenticated session from
-[Set Up Perps Access](/perps/authenticated-sessions.md#set-up-perps-access).
+[Set Up Perps Access](https://docs.polymarket.com/perps/authenticated-sessions.md#set-up-perps-access).
 
 ```ts theme={null}
 const pages = session.listInternalTransfers();
@@ -955,7 +955,7 @@ if a full millisecond cannot be paged without skipping records.
 **Python**
 
 Use `session.list_internal_transfers()` with the authenticated session from
-[Set Up Perps Access](/perps/authenticated-sessions.md#set-up-perps-access).
+[Set Up Perps Access](https://docs.polymarket.com/perps/authenticated-sessions.md#set-up-perps-access).
 
 ```python theme={null}
 pages = session.list_internal_transfers()
@@ -985,7 +985,7 @@ records.
 **API**
 
 List settled transfers using the private account-read headers from
-[Authenticated Sessions](/perps/authenticated-sessions.md).
+[Authenticated Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md).
 
 ```bash theme={null}
 curl -G "https://api.perpetuals.polymarket.com/v1/account/internal-transfers" \
@@ -1029,7 +1029,7 @@ failed. Complete reconciliation before deciding whether to submit again.
 Use deposit and withdrawal history to reconcile collateral movements after your
 integration submits funding requests.
 
-See [Authenticated Sessions](/perps/authenticated-sessions.md) for how to create an
+See [Authenticated Sessions](https://docs.polymarket.com/perps/authenticated-sessions.md) for how to create an
 authenticated session for private account history reads.
 
 **TypeScript**

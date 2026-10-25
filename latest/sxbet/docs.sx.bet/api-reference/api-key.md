@@ -9,7 +9,7 @@
 An API key authenticates every request that is not public market data — orders, cancels, balances,
 trades, fills, positions, and funding. It is also required to fetch a realtime connection token and
 to register or cancel a heartbeat. Public market-data routes work without one. See
-[Authentication by route](/api-reference/auth-matrix.md) for the full list of authenticated vs unauthenticated routes
+[Authentication by route](https://docs.sx.bet/api-reference/auth-matrix.md) for the full list of authenticated vs unauthenticated routes
 
 ## Generating API Key
 
@@ -27,7 +27,7 @@ to register or cancel a heartbeat. Public market-data routes work without one. S
 > will be unauthorized if you generate a new key. Only one key can be active at a time.
 
 For Toronto testnet, generate the key on [toronto.sx.bet](https://toronto.sx.bet) — keys are
-per-environment. See [Environments](/developers/environments.md).
+per-environment. See [Environments](https://docs.sx.bet/developers/environments.md).
 
 ## Usage
 
@@ -38,7 +38,7 @@ curl --location --request GET 'https://api.sx.bet/user/realtime-token-v3/api-key
 
 Pass your API key in the `x-sx-api-key` header. The
 example above fetches a realtime token used to authenticate WebSocket connections. See
-[Initialization](/developers/realtime-initialization.md#connect).
+[Initialization](https://docs.sx.bet/developers/realtime-initialization.md#connect).
 
 Once your API key is generated, add it as an HTTP header named `x-sx-api-key` on every authenticated
 request.

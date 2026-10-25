@@ -7,13 +7,13 @@
 > Get your fill history from the SX Bet API.
 
 `GET /fills-v3` returns **one row per match**, each with its own amount, price and settlement. Where
-[`GET /trades-v3`](/api-reference/get-trades-v3) gives one row for a whole bet, this gives the
+[`GET /trades-v3`](https://docs.sx.bet/api-reference/get-trades-v3) gives one row for a whole bet, this gives the
 fills that made it up. A trade will have multiple fills that compose it.
 
 Narrow with `tradeId` (one bet) or `orderId` (the signed order id — same value as `id` on order rows
-and `orderId` from [`POST /orders-v3`](/api-reference/post-orders-v3)).
+and `orderId` from [`POST /orders-v3`](https://docs.sx.bet/api-reference/post-orders-v3)).
 
-`status` filters to one point in the [bet lifecycle](/developers/bet-lifecycle.md) — `MATCHED`,
+`status` filters to one point in the [bet lifecycle](https://docs.sx.bet/developers/bet-lifecycle.md) — `MATCHED`,
 `LOCKED`, `SETTLED` or `FAILED`. A bet that filled against several makers can have its fills in
 different states at once, so filtering here is per fill, not per bet: `status=LOCKED` on a bet with
 one locked and one still-matched fill returns just the locked one. Combine it with `tradeId` to see

@@ -6,7 +6,7 @@
 
 > Understanding trading fees on Polymarket
 
-Polymarket charges a small taker fee on certain markets. Fees are set by the protocol and applied at match time — you don't include fee information in your orders. These fees fund the [Maker Rebates Program](/programs/maker-rebates.md), which redistributes fees daily to market makers to incentivize deeper liquidity and tighter spreads. Takers can also earn a portion of fees back through the tiered [Taker Rebate Program](/programs/taker-rebates.md).
+Polymarket charges a small taker fee on certain markets. Fees are set by the protocol and applied at match time — you don't include fee information in your orders. These fees fund the [Maker Rebates Program](https://docs.polymarket.com/programs/maker-rebates.md), which redistributes fees daily to market makers to incentivize deeper liquidity and tighter spreads. Takers can also earn a portion of fees back through the tiered [Taker Rebate Program](https://docs.polymarket.com/programs/taker-rebates.md).
 
 **Geopolitical and world events markets are fee-free.** Polymarket does not charge fees or profit from trading activity on these markets. There are also no Polymarket fees to deposit or withdraw USDC (though intermediaries like Coinbase or MoonPay may charge their own fees).
 
@@ -23,7 +23,7 @@ fee = C × feeRate × p × (1 - p)
 ```
 
 Where **C** = number of shares traded and **p** = price of the shares. See
-[Market Details](/market-data/market-details.md#trading-fees) to read the fee
+[Market Details](https://docs.polymarket.com/market-data/market-details.md#trading-fees) to read the fee
 parameters for a market.
 
 > [!NOTE]

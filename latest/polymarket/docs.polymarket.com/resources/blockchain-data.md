@@ -6,16 +6,16 @@
 
 > Access Polymarket on-chain activity for data & analytics
 
-Polymarket data that lands on the blockchain, such as trades, balances, positions, and redeems, is available through various on-chain analytics platforms and blockchain data providers. Polymarket also provides its own APIs and WebSockets. See the [API Reference](/api-reference/predictions/overview.md) for more information.
+Polymarket data that lands on the blockchain, such as trades, balances, positions, and redeems, is available through various on-chain analytics platforms and blockchain data providers. Polymarket also provides its own APIs and WebSockets. See the [API Reference](https://docs.polymarket.com/api-reference/predictions/overview.md) for more information.
 
 Position data spans Conditional Tokens and PositionManager. Use [Onchain
-Position Data](/resources/onchain-position-data.md) to select the correct contracts,
+Position Data](https://docs.polymarket.com/resources/onchain-position-data.md) to select the correct contracts,
 identifiers, and events before building a query.
 
 > [!NOTE]
 >
 > Third-party schemas can lag contract upgrades. Check the indexed contract
-> addresses against the current [Contracts](/resources/contracts.md) page.
+> addresses against the current [Contracts](https://docs.polymarket.com/resources/contracts.md) page.
 
 The purpose of this page is to serve as a public good for Polymarket builders, researches, and analysts alike.
 

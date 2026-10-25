@@ -19,7 +19,7 @@ Two metrics, judged separately because they have different owners:
 | Observation delay | `changedAt − bookmakerChangedAt` | **Us**, per book — this is the number we publish |
 | Delivery hop | `your receipt − ts` | **You** — it depends on where you deploy |
 
-A slow reading on the second metric says nothing about the first; measure both before attributing anything. Both compare your clock to ours, so run NTP before trusting sub-100 ms readings. The full stamp chain is in [Latency and freshness](/api-reference/reliability.md#latency-and-freshness), and deployment placement in [Server location](/api-reference/concepts.md#server-location-matters).
+A slow reading on the second metric says nothing about the first; measure both before attributing anything. Both compare your clock to ours, so run NTP before trusting sub-100 ms readings. The full stamp chain is in [Latency and freshness](https://docs.oddspapi.io/api-reference/reliability.md#latency-and-freshness), and deployment placement in [Server location](https://docs.oddspapi.io/api-reference/concepts.md#server-location-matters).
 
 ***
 
@@ -27,7 +27,7 @@ A slow reading on the second metric says nothing about the first; measure both b
 
 **1. Scope it to what you trade**
 
-Log in with `sportIds`, `tournamentIds`, and `bookmakers` filters for the books and sports that will actually carry your volume. Subscribe to [`bookmakers`](/websocket/channels/bookmakers) alongside `odds` — you will want the staleness signal in the data you collect.
+Log in with `sportIds`, `tournamentIds`, and `bookmakers` filters for the books and sports that will actually carry your volume. Subscribe to [`bookmakers`](https://docs.oddspapi.io/websocket/channels/bookmakers) alongside `odds` — you will want the staleness signal in the data you collect.
 
 **2. Log raw, aggregate later**
 
@@ -35,7 +35,7 @@ Per update, record the bookmaker, `oddsId`, both deltas, and whether the fixture
 
 **3. Compare against what we publish**
 
-Per book: your measured p50 against the representative p50s in [Latency and freshness](/api-reference/reliability.md#latency-and-freshness), and your tail against the `maxDelayLiveInSec` / `maxDelayPregameInSec` bounds on [`GET /bookmakers`](/api-reference/common/get-bookmakers). Those bounds are the claim; hold us to them.
+Per book: your measured p50 against the representative p50s in [Latency and freshness](https://docs.oddspapi.io/api-reference/reliability.md#latency-and-freshness), and your tail against the `maxDelayLiveInSec` / `maxDelayPregameInSec` bounds on [`GET /bookmakers`](https://docs.oddspapi.io/api-reference/common/get-bookmakers). Those bounds are the claim; hold us to them.
 
 **4. Drill the failure paths**
 
@@ -43,7 +43,7 @@ Speed differences between feeds show up in outages more than in steady state —
 
 **5. Race it against your incumbent**
 
-Map fixtures once via `externalProviders`, compare on the selection key, and time both feeds on the same line moves — the mapping and method are in [running a second feed](/guides/second-feed.md#measure-which-feed-is-faster).
+Map fixtures once via `externalProviders`, compare on the selection key, and time both feeds on the same line moves — the mapping and method are in [running a second feed](https://docs.oddspapi.io/guides/second-feed.md#measure-which-feed-is-faster).
 
 ***
 
@@ -55,7 +55,7 @@ Steady-state latency is the easy part; recovery behavior is what actually differ
 * **Re-snapshot** — stay down past the replay window (`resumeWindowMs`) so the gateway emits `snapshot_required`, then time a full recovery: one REST snapshot, merged by newest `changedAt` per key. That timing is your worst-case bound — confirm it is one you can live with.
 * **Staleness accounting** — over the trial, count `staleOdds` episodes and their durations per book. Loss of upstream contact is reported explicitly rather than hidden; a feed that never shows staleness is not necessarily fresher, it may just not be telling you.
 
-Mechanics for the first two are in [Resume & Replay](/websocket/resume-replay.md); the flags are in [Status signals](/coverage/bookmakers.md#status-signals).
+Mechanics for the first two are in [Resume & Replay](https://docs.oddspapi.io/websocket/resume-replay.md); the flags are in [Status signals](https://docs.oddspapi.io/coverage/bookmakers.md#status-signals).
 
 ***
 
@@ -63,11 +63,11 @@ Mechanics for the first two are in [Resume & Replay](/websocket/resume-replay.md
 
 Verify coverage against your requirements list from live responses rather than a brochure:
 
-* **Books your key can see** — enumerate [`GET /bookmakers`](/api-reference/common/get-bookmakers); access is permissioned per key, so this is the authoritative list for *your* contract.
+* **Books your key can see** — enumerate [`GET /bookmakers`](https://docs.oddspapi.io/api-reference/common/get-bookmakers); access is permissioned per key, so this is the authoritative list for *your* contract.
 * **Markets per sport** — `GET /markets?sportId=…` returns every market and outcome you can be quoted on, line by line.
 * **Schedule depth** — pull `GET /fixtures` for a representative week in the competitions you need and diff it against your own required schedule.
 
-The catalog shape is described in [Coverage](/coverage.md), [Bookmaker coverage](/coverage/bookmakers.md), and [Market coverage](/coverage/markets.md).
+The catalog shape is described in [Coverage](https://docs.oddspapi.io/coverage.md), [Bookmaker coverage](https://docs.oddspapi.io/coverage/bookmakers.md), and [Market coverage](https://docs.oddspapi.io/coverage/markets.md).
 
 ***
 
@@ -82,7 +82,7 @@ Per-update stopwatch races answer "who saw it first"; closing line value answers
 }
 ```
 
-`GET /fixtures/odds/clv` returns the opening and closing price per `oddsId` — the same key as the live stream, so the join with your trial log is free. Beating the close on the lines you flagged during the trial is the evaluation result that survives contact with production. Method in [sharp-line trading & CLV](/guides/sharp-line-trading.md).
+`GET /fixtures/odds/clv` returns the opening and closing price per `oddsId` — the same key as the live stream, so the join with your trial log is free. Beating the close on the lines you flagged during the trial is the evaluation result that survives contact with production. Method in [sharp-line trading & CLV](https://docs.oddspapi.io/guides/sharp-line-trading.md).
 
 ***
 

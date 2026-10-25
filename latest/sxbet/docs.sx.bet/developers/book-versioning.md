@@ -18,8 +18,8 @@ It answers one question: **is this payload newer than the book I already hold?**
 > [!NOTE]
 >
 > `version` applies only to the orderbook channels —
-> [`orderbook_v3`](/api-reference/channel-orderbook-v3) and
-> [`orderbook_v3_event`](/api-reference/channel-orderbook-v3-event) — and the REST snapshot that
+> [`orderbook_v3`](https://docs.sx.bet/api-reference/channel-orderbook-v3) and
+> [`orderbook_v3_event`](https://docs.sx.bet/api-reference/channel-orderbook-v3-event) — and the REST snapshot that
 > seeds them.
 
 ## The apply rule
@@ -44,15 +44,15 @@ from the REST snapshot at startup, then apply only live publications that have a
 
 ## Related
 
-> **[Recovery & reliability](/developers/realtime-reliability.md)**
+> **[Recovery & reliability](https://docs.sx.bet/developers/realtime-reliability.md)**
 >
 > Recovery, ordering and deduplication across reconnects.
 
-> **[Get orderbook snapshot](/api-reference/get-market-orderbook-snapshot.md)**
+> **[Get orderbook snapshot](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot.md)**
 >
 > The REST seed that carries the same version.
 
-> **[Fetching odds](/developers/odds.md)**
+> **[Fetching odds](https://docs.sx.bet/developers/odds.md)**
 >
 > Seeding and subscribing to the book and best odds.
 

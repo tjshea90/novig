@@ -7,17 +7,17 @@
 > Look up one of your orders by the clientOrderId you set on submit — any status.
 
 `GET /orders-v3/client/{clientOrderId}` returns **one order** belonging to the authenticated account.
-Unlike [`GET /orders-v3`](/api-reference/get-orders-v3), this is **not** limited to orders
+Unlike [`GET /orders-v3`](https://docs.sx.bet/api-reference/get-orders-v3), this is **not** limited to orders
 resting on the book — filled, cancelled, and expired orders are returned with `status: "INACTIVE"`.
 
-Pass the `clientOrderId` you set on [`POST /orders-v3`](/api-reference/post-orders-v3). The tag is
-[unique per address](/developers/client-order-id.md#uniqueness), so this returns at most one row.
+Pass the `clientOrderId` you set on [`POST /orders-v3`](https://docs.sx.bet/api-reference/post-orders-v3). The tag is
+[unique per address](https://docs.sx.bet/developers/client-order-id.md#uniqueness), so this returns at most one row.
 
 > [!NOTE]
 >
 > An order stays retrievable for about 10–20 minutes after it becomes `INACTIVE`. After that, it
 > returns **404**, the same as a tag that was never set or belongs to another account. To keep an
-> order's final state, record it from the [orders channel](/api-reference/channel-orders-v3.md) when it
+> order's final state, record it from the [orders channel](https://docs.sx.bet/api-reference/channel-orders-v3.md) when it
 > arrives.
 
 

@@ -213,7 +213,7 @@ Your tier shows on your Polymarket profile and on the leaderboards. As you climb
 
 ## Notes
 
-* Only **taker** trades earn Weighted Volume and count toward your tier. Maker trades (resting orders that add liquidity) do not. Makers are rewarded separately through the [Maker Rebates Program](/programs/maker-rebates.md).
+* Only **taker** trades earn Weighted Volume and count toward your tier. Maker trades (resting orders that add liquidity) do not. Makers are rewarded separately through the [Maker Rebates Program](https://docs.polymarket.com/programs/maker-rebates.md).
 * Your rebate applies only to your trades going forward, starting the moment you reach a tier.
 * Some markets are free to trade, including Geopolitical and world events markets. These markets earn no Weighted Volume and no rebate.
 * Your tier is based on your **last 30 days** of Weighted Volume and is updated every day at midnight UTC.
@@ -230,7 +230,7 @@ Your tier shows on your Polymarket profile and on the leaderboards. As you climb
 >
 > No. Only taker trades earn Weighted Volume and count toward your tier.
 > Maker fills are rewarded separately through the
-> [Maker Rebates Program](/programs/maker-rebates.md).
+> [Maker Rebates Program](https://docs.polymarket.com/programs/maker-rebates.md).
 
 > **When does my rebate start applying**
 >

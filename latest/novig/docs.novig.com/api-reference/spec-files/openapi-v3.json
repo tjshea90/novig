@@ -3032,6 +3032,61 @@
         ],
         "description": "One page of a listing: the items in the listing's order, then the link to\nthe next page. Every paged route answers this shape."
       },
+      "Page_MarkedPosition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PageCursorResponse"
+          },
+          {
+            "properties": {
+              "items": {
+                "items": {
+                  "description": "An open position and the last trade on its outcome, the price it marks at.",
+                  "properties": {
+                    "cost": {
+                      "description": "Net dollars the wallet paid for them.",
+                      "example": "55",
+                      "type": "string"
+                    },
+                    "last": {
+                      "description": "Price of the market's latest trade on this outcome, the catalog's `last`.\nAbsent before the first trade.",
+                      "example": "0.6",
+                      "type": "string"
+                    },
+                    "marketId": {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "outcomeId": {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "qty": {
+                      "description": "Contracts held.",
+                      "format": "int32",
+                      "minimum": 0,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "marketId",
+                    "outcomeId",
+                    "qty",
+                    "cost"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "items"
+            ],
+            "type": "object"
+          }
+        ],
+        "description": "One page of a listing: the items in the listing's order, then the link to\nthe next page. Every paged route answers this shape."
+      },
       "Page_OpenMarketResponse": {
         "allOf": [
           {
@@ -4207,6 +4262,72 @@
           }
         ]
       },
+      "PerWalletResponse_Pnl": {
+        "description": "The response body of a personal read. A trading key or a session reads its own wallet, so the\nbody is bare. A management key reads many, each under the key id that addresses it.",
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Page_MarkedPosition"
+              },
+              {
+                "properties": {
+                  "basis": {
+                    "description": "What the matched positions cost, less any payout you already received for\nholding both outcomes of a market.",
+                    "example": "55",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "What settling every matched market at its `last` would still pay you. A\nposition without a `last` counts at its cost. Cash plus `value` is your\nnet liquidation value, and unrealized PnL is `value − basis`.",
+                    "example": "60",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "basis",
+                  "value"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "One page of positions in open markets, and sums over every market the\nfilter matches. A closed market's positions show in `/v3/history/positions`\nuntil it settles."
+          },
+          {
+            "additionalProperties": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Page_MarkedPosition"
+                },
+                {
+                  "properties": {
+                    "basis": {
+                      "description": "What the matched positions cost, less any payout you already received for\nholding both outcomes of a market.",
+                      "example": "55",
+                      "type": "string"
+                    },
+                    "value": {
+                      "description": "What settling every matched market at its `last` would still pay you. A\nposition without a `last` counts at its cost. Cash plus `value` is your\nnet liquidation value, and unrealized PnL is `value − basis`.",
+                      "example": "60",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "basis",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ],
+              "description": "One page of positions in open markets, and sums over every market the\nfilter matches. A closed market's positions show in `/v3/history/positions`\nuntil it settles."
+            },
+            "propertyNames": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "object"
+          }
+        ]
+      },
       "PerWalletResponse_PositionsSnapshot": {
         "description": "The response body of a personal read. A trading key or a session reads its own wallet, so the\nbody is bare. A management key reads many, each under the key id that addresses it.",
         "oneOf": [
@@ -4425,6 +4546,33 @@
           "marketIds"
         ],
         "type": "object"
+      },
+      "Pnl": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Page_MarkedPosition"
+          },
+          {
+            "properties": {
+              "basis": {
+                "description": "What the matched positions cost, less any payout you already received for\nholding both outcomes of a market.",
+                "example": "55",
+                "type": "string"
+              },
+              "value": {
+                "description": "What settling every matched market at its `last` would still pay you. A\nposition without a `last` counts at its cost. Cash plus `value` is your\nnet liquidation value, and unrealized PnL is `value − basis`.",
+                "example": "60",
+                "type": "string"
+              }
+            },
+            "required": [
+              "basis",
+              "value"
+            ],
+            "type": "object"
+          }
+        ],
+        "description": "One page of positions in open markets, and sums over every market the\nfilter matches. A closed market's positions show in `/v3/history/positions`\nuntil it settles."
       },
       "Position": {
         "description": "The contracts held and what they cost. Nothing here is derived.",
@@ -5760,11 +5908,11 @@
           },
           {
             "lang": "python",
-            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\"\nPEM = \"novig-api-key-mgmt-1.pem\"\n\npath = \"/v3/account/subaccounts\"\nquery = \"\"\nbody = b\"\"\"{\n  \"algorithm\": \"Ed25519\",\n  \"label\": \"desk-1\",\n  \"publicKey\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\\n-----END PUBLIC KEY-----\\n\"\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"POST\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"POST\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
+            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\"\nPEM = \"novig-api-key-mgmt-1.pem\"\n\npath = \"/v3/account/subaccounts\"\nquery = \"\"\nbody = rb\"\"\"{\n  \"algorithm\": \"Ed25519\",\n  \"label\": \"desk-1\",\n  \"publicKey\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\\n-----END PUBLIC KEY-----\\n\"\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"POST\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"POST\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
           },
           {
             "lang": "typescript",
-            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\";\nconst PEM = \"novig-api-key-mgmt-1.pem\";\n\nconst path = \"/v3/account/subaccounts\";\nconst query = \"\";\nconst body = `{\n  \"algorithm\": \"Ed25519\",\n  \"label\": \"desk-1\",\n  \"publicKey\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\\n-----END PUBLIC KEY-----\\n\"\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"POST\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"POST\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
+            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\";\nconst PEM = \"novig-api-key-mgmt-1.pem\";\n\nconst path = \"/v3/account/subaccounts\";\nconst query = \"\";\nconst body = String.raw`{\n  \"algorithm\": \"Ed25519\",\n  \"label\": \"desk-1\",\n  \"publicKey\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\\n-----END PUBLIC KEY-----\\n\"\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"POST\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"POST\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
           }
         ]
       }
@@ -5930,11 +6078,11 @@
           },
           {
             "lang": "python",
-            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\"\nPEM = \"novig-api-key-mgmt-1.pem\"\nSUB = \"b7c3a1e9-4d52-4a1f-9c8e-6f0a2b3d5e71\"\n\npath = f\"/v3/account/subaccounts/{SUB}\"\nquery = \"\"\nbody = b\"\"\"{\n  \"label\": \"desk-2\"\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"PATCH\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"PATCH\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
+            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\"\nPEM = \"novig-api-key-mgmt-1.pem\"\nSUB = \"b7c3a1e9-4d52-4a1f-9c8e-6f0a2b3d5e71\"\n\npath = f\"/v3/account/subaccounts/{SUB}\"\nquery = \"\"\nbody = rb\"\"\"{\n  \"label\": \"desk-2\"\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"PATCH\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"PATCH\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
           },
           {
             "lang": "typescript",
-            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\";\nconst PEM = \"novig-api-key-mgmt-1.pem\";\nconst SUB = \"b7c3a1e9-4d52-4a1f-9c8e-6f0a2b3d5e71\";\n\nconst path = `/v3/account/subaccounts/${SUB}`;\nconst query = \"\";\nconst body = `{\n  \"label\": \"desk-2\"\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"PATCH\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"PATCH\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
+            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\";\nconst PEM = \"novig-api-key-mgmt-1.pem\";\nconst SUB = \"b7c3a1e9-4d52-4a1f-9c8e-6f0a2b3d5e71\";\n\nconst path = `/v3/account/subaccounts/${SUB}`;\nconst query = \"\";\nconst body = String.raw`{\n  \"label\": \"desk-2\"\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"PATCH\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"PATCH\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
           }
         ]
       }
@@ -6274,11 +6422,11 @@
           },
           {
             "lang": "python",
-            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\"\nPEM = \"novig-api-key-mgmt-1.pem\"\nSUB = \"b7c3a1e9-4d52-4a1f-9c8e-6f0a2b3d5e71\"\n\npath = f\"/v3/account/subaccounts/{SUB}/keys\"\nquery = \"\"\nbody = b\"\"\"{\n  \"algorithm\": \"Ed25519\",\n  \"name\": \"desk-1-reader\",\n  \"publicKey\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\\n-----END PUBLIC KEY-----\\n\",\n  \"scope\": \"trading::read\"\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"POST\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"POST\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
+            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\"\nPEM = \"novig-api-key-mgmt-1.pem\"\nSUB = \"b7c3a1e9-4d52-4a1f-9c8e-6f0a2b3d5e71\"\n\npath = f\"/v3/account/subaccounts/{SUB}/keys\"\nquery = \"\"\nbody = rb\"\"\"{\n  \"algorithm\": \"Ed25519\",\n  \"name\": \"desk-1-reader\",\n  \"publicKey\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\\n-----END PUBLIC KEY-----\\n\",\n  \"scope\": \"trading::read\"\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"POST\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"POST\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
           },
           {
             "lang": "typescript",
-            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\";\nconst PEM = \"novig-api-key-mgmt-1.pem\";\nconst SUB = \"b7c3a1e9-4d52-4a1f-9c8e-6f0a2b3d5e71\";\n\nconst path = `/v3/account/subaccounts/${SUB}/keys`;\nconst query = \"\";\nconst body = `{\n  \"algorithm\": \"Ed25519\",\n  \"name\": \"desk-1-reader\",\n  \"publicKey\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\\n-----END PUBLIC KEY-----\\n\",\n  \"scope\": \"trading::read\"\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"POST\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"POST\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
+            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\";\nconst PEM = \"novig-api-key-mgmt-1.pem\";\nconst SUB = \"b7c3a1e9-4d52-4a1f-9c8e-6f0a2b3d5e71\";\n\nconst path = `/v3/account/subaccounts/${SUB}/keys`;\nconst query = \"\";\nconst body = String.raw`{\n  \"algorithm\": \"Ed25519\",\n  \"name\": \"desk-1-reader\",\n  \"publicKey\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\\n-----END PUBLIC KEY-----\\n\",\n  \"scope\": \"trading::read\"\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"POST\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"POST\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
           }
         ]
       }
@@ -6656,11 +6804,11 @@
           },
           {
             "lang": "python",
-            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\"\nPEM = \"novig-api-key-mgmt-1.pem\"\nSUB = \"b7c3a1e9-4d52-4a1f-9c8e-6f0a2b3d5e71\"\n\npath = f\"/v3/account/subaccounts/{SUB}/transfer\"\nquery = \"\"\nbody = b\"\"\"{\n  \"amount\": \"1234.50000\",\n  \"clientTransferId\": \"fund-desk-1-0001\",\n  \"direction\": \"fund\"\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"POST\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"POST\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
+            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\"\nPEM = \"novig-api-key-mgmt-1.pem\"\nSUB = \"b7c3a1e9-4d52-4a1f-9c8e-6f0a2b3d5e71\"\n\npath = f\"/v3/account/subaccounts/{SUB}/transfer\"\nquery = \"\"\nbody = rb\"\"\"{\n  \"amount\": \"1234.50000\",\n  \"clientTransferId\": \"fund-desk-1-0001\",\n  \"direction\": \"fund\"\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"POST\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"POST\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
           },
           {
             "lang": "typescript",
-            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\";\nconst PEM = \"novig-api-key-mgmt-1.pem\";\nconst SUB = \"b7c3a1e9-4d52-4a1f-9c8e-6f0a2b3d5e71\";\n\nconst path = `/v3/account/subaccounts/${SUB}/transfer`;\nconst query = \"\";\nconst body = `{\n  \"amount\": \"1234.50000\",\n  \"clientTransferId\": \"fund-desk-1-0001\",\n  \"direction\": \"fund\"\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"POST\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"POST\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
+            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\";\nconst PEM = \"novig-api-key-mgmt-1.pem\";\nconst SUB = \"b7c3a1e9-4d52-4a1f-9c8e-6f0a2b3d5e71\";\n\nconst path = `/v3/account/subaccounts/${SUB}/transfer`;\nconst query = \"\";\nconst body = String.raw`{\n  \"amount\": \"1234.50000\",\n  \"clientTransferId\": \"fund-desk-1-0001\",\n  \"direction\": \"fund\"\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"POST\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"POST\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
           }
         ]
       }
@@ -8912,11 +9060,11 @@
           },
           {
             "lang": "python",
-            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\"\nPEM = \"novig-api-key-mgmt-1.pem\"\n\npath = \"/v3/echo\"\nquery = \"\"\nbody = b\"\"\"{\n  \"hello\": \"world\"\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"POST\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"POST\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
+            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\"\nPEM = \"novig-api-key-mgmt-1.pem\"\n\npath = \"/v3/echo\"\nquery = \"\"\nbody = rb\"\"\"{\n  \"hello\": \"world\"\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"POST\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"POST\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
           },
           {
             "lang": "typescript",
-            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\";\nconst PEM = \"novig-api-key-mgmt-1.pem\";\n\nconst path = \"/v3/echo\";\nconst query = \"\";\nconst body = `{\n  \"hello\": \"world\"\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"POST\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"POST\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
+            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\";\nconst PEM = \"novig-api-key-mgmt-1.pem\";\n\nconst path = \"/v3/echo\";\nconst query = \"\";\nconst body = String.raw`{\n  \"hello\": \"world\"\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"POST\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"POST\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
           }
         ]
       }
@@ -10638,11 +10786,11 @@
           },
           {
             "lang": "python",
-            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\"\nPEM = \"novig-api-key-mgmt-1.pem\"\n\npath = \"/v3/keys\"\nquery = \"\"\nbody = b\"\"\"{\n  \"algorithm\": \"Ed25519\",\n  \"name\": \"management\",\n  \"publicKey\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\\n-----END PUBLIC KEY-----\\n\"\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"POST\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"POST\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
+            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\"\nPEM = \"novig-api-key-mgmt-1.pem\"\n\npath = \"/v3/keys\"\nquery = \"\"\nbody = rb\"\"\"{\n  \"algorithm\": \"Ed25519\",\n  \"name\": \"management\",\n  \"publicKey\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\\n-----END PUBLIC KEY-----\\n\"\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"POST\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"POST\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
           },
           {
             "lang": "typescript",
-            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\";\nconst PEM = \"novig-api-key-mgmt-1.pem\";\n\nconst path = \"/v3/keys\";\nconst query = \"\";\nconst body = `{\n  \"algorithm\": \"Ed25519\",\n  \"name\": \"management\",\n  \"publicKey\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\\n-----END PUBLIC KEY-----\\n\"\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"POST\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"POST\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
+            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\";\nconst PEM = \"novig-api-key-mgmt-1.pem\";\n\nconst path = \"/v3/keys\";\nconst query = \"\";\nconst body = String.raw`{\n  \"algorithm\": \"Ed25519\",\n  \"name\": \"management\",\n  \"publicKey\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAxgWNZGF7JgS1F3napw5Os55J+66imCjrzLMq/BEyOxM=\\n-----END PUBLIC KEY-----\\n\"\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"POST\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"POST\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
           }
         ]
       }
@@ -11630,11 +11778,11 @@
           },
           {
             "lang": "python",
-            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"8f14e45f-ceea-467a-9b1c-3f2a51c8d7e0\"\nPEM = \"desk-1.pem\"\n\npath = \"/v3/orders\"\nquery = \"\"\nbody = b\"\"\"{\n  \"clientId\": \"0b3f5f20-9c1b-4d6e-8f3a-5c2d1e7b4a90\",\n  \"outcomeId\": \"3f2504e0-4f89-11d3-9a0c-0305e82c3301\",\n  \"price\": \"0.665\",\n  \"qty\": 110,\n  \"tif\": \"GTC\"\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"POST\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"POST\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
+            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"8f14e45f-ceea-467a-9b1c-3f2a51c8d7e0\"\nPEM = \"desk-1.pem\"\n\npath = \"/v3/orders\"\nquery = \"\"\nbody = rb\"\"\"{\n  \"clientId\": \"0b3f5f20-9c1b-4d6e-8f3a-5c2d1e7b4a90\",\n  \"outcomeId\": \"3f2504e0-4f89-11d3-9a0c-0305e82c3301\",\n  \"price\": \"0.665\",\n  \"qty\": 110,\n  \"tif\": \"GTC\"\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"POST\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"POST\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
           },
           {
             "lang": "typescript",
-            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"8f14e45f-ceea-467a-9b1c-3f2a51c8d7e0\";\nconst PEM = \"desk-1.pem\";\n\nconst path = \"/v3/orders\";\nconst query = \"\";\nconst body = `{\n  \"clientId\": \"0b3f5f20-9c1b-4d6e-8f3a-5c2d1e7b4a90\",\n  \"outcomeId\": \"3f2504e0-4f89-11d3-9a0c-0305e82c3301\",\n  \"price\": \"0.665\",\n  \"qty\": 110,\n  \"tif\": \"GTC\"\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"POST\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"POST\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
+            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"8f14e45f-ceea-467a-9b1c-3f2a51c8d7e0\";\nconst PEM = \"desk-1.pem\";\n\nconst path = \"/v3/orders\";\nconst query = \"\";\nconst body = String.raw`{\n  \"clientId\": \"0b3f5f20-9c1b-4d6e-8f3a-5c2d1e7b4a90\",\n  \"outcomeId\": \"3f2504e0-4f89-11d3-9a0c-0305e82c3301\",\n  \"price\": \"0.665\",\n  \"qty\": 110,\n  \"tif\": \"GTC\"\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"POST\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"POST\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
           }
         ]
       }
@@ -11823,11 +11971,11 @@
           },
           {
             "lang": "python",
-            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"8f14e45f-ceea-467a-9b1c-3f2a51c8d7e0\"\nPEM = \"desk-1.pem\"\n\npath = \"/v3/orders/batch\"\nquery = \"\"\nbody = b\"\"\"{\n  \"orderIds\": [\n    \"7c9e6679-7425-40de-944b-e07fc1f90ae7\",\n    \"1b4e28ba-2fa1-11d2-883f-0016d3cca427\"\n  ]\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"DELETE\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"DELETE\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
+            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"8f14e45f-ceea-467a-9b1c-3f2a51c8d7e0\"\nPEM = \"desk-1.pem\"\n\npath = \"/v3/orders/batch\"\nquery = \"\"\nbody = rb\"\"\"{\n  \"orderIds\": [\n    \"7c9e6679-7425-40de-944b-e07fc1f90ae7\",\n    \"1b4e28ba-2fa1-11d2-883f-0016d3cca427\"\n  ]\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"DELETE\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"DELETE\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
           },
           {
             "lang": "typescript",
-            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"8f14e45f-ceea-467a-9b1c-3f2a51c8d7e0\";\nconst PEM = \"desk-1.pem\";\n\nconst path = \"/v3/orders/batch\";\nconst query = \"\";\nconst body = `{\n  \"orderIds\": [\n    \"7c9e6679-7425-40de-944b-e07fc1f90ae7\",\n    \"1b4e28ba-2fa1-11d2-883f-0016d3cca427\"\n  ]\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"DELETE\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"DELETE\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
+            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"8f14e45f-ceea-467a-9b1c-3f2a51c8d7e0\";\nconst PEM = \"desk-1.pem\";\n\nconst path = \"/v3/orders/batch\";\nconst query = \"\";\nconst body = String.raw`{\n  \"orderIds\": [\n    \"7c9e6679-7425-40de-944b-e07fc1f90ae7\",\n    \"1b4e28ba-2fa1-11d2-883f-0016d3cca427\"\n  ]\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"DELETE\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"DELETE\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
           }
         ]
       },
@@ -12047,11 +12195,11 @@
           },
           {
             "lang": "python",
-            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"8f14e45f-ceea-467a-9b1c-3f2a51c8d7e0\"\nPEM = \"desk-1.pem\"\n\npath = \"/v3/orders/batch\"\nquery = \"\"\nbody = b\"\"\"{\n  \"orders\": [\n    {\n      \"outcomeId\": \"3f2504e0-4f89-11d3-9a0c-0305e82c3301\",\n      \"price\": \"0.665\",\n      \"qty\": 110,\n      \"tif\": \"GTC\"\n    },\n    {\n      \"outcomeId\": \"3f2504e0-4f89-11d3-9a0c-0305e82c3302\",\n      \"price\": \"0.330\",\n      \"qty\": 50,\n      \"tif\": \"IOC\"\n    }\n  ]\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"POST\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"POST\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
+            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"8f14e45f-ceea-467a-9b1c-3f2a51c8d7e0\"\nPEM = \"desk-1.pem\"\n\npath = \"/v3/orders/batch\"\nquery = \"\"\nbody = rb\"\"\"{\n  \"orders\": [\n    {\n      \"outcomeId\": \"3f2504e0-4f89-11d3-9a0c-0305e82c3301\",\n      \"price\": \"0.665\",\n      \"qty\": 110,\n      \"tif\": \"GTC\"\n    },\n    {\n      \"outcomeId\": \"3f2504e0-4f89-11d3-9a0c-0305e82c3302\",\n      \"price\": \"0.330\",\n      \"qty\": 50,\n      \"tif\": \"IOC\"\n    }\n  ]\n}\"\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"POST\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n    \"Content-Type\": \"application/json\",\n}\nurl = f\"{HOST}{path}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"POST\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
           },
           {
             "lang": "typescript",
-            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"8f14e45f-ceea-467a-9b1c-3f2a51c8d7e0\";\nconst PEM = \"desk-1.pem\";\n\nconst path = \"/v3/orders/batch\";\nconst query = \"\";\nconst body = `{\n  \"orders\": [\n    {\n      \"outcomeId\": \"3f2504e0-4f89-11d3-9a0c-0305e82c3301\",\n      \"price\": \"0.665\",\n      \"qty\": 110,\n      \"tif\": \"GTC\"\n    },\n    {\n      \"outcomeId\": \"3f2504e0-4f89-11d3-9a0c-0305e82c3302\",\n      \"price\": \"0.330\",\n      \"qty\": 50,\n      \"tif\": \"IOC\"\n    }\n  ]\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"POST\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"POST\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
+            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"8f14e45f-ceea-467a-9b1c-3f2a51c8d7e0\";\nconst PEM = \"desk-1.pem\";\n\nconst path = \"/v3/orders/batch\";\nconst query = \"\";\nconst body = String.raw`{\n  \"orders\": [\n    {\n      \"outcomeId\": \"3f2504e0-4f89-11d3-9a0c-0305e82c3301\",\n      \"price\": \"0.665\",\n      \"qty\": 110,\n      \"tif\": \"GTC\"\n    },\n    {\n      \"outcomeId\": \"3f2504e0-4f89-11d3-9a0c-0305e82c3302\",\n      \"price\": \"0.330\",\n      \"qty\": 50,\n      \"tif\": \"IOC\"\n    }\n  ]\n}`;\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"POST\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n  \"Content-Type\": \"application/json\",\n};\nconst url = `${HOST}${path}`;\nconst r = await fetch(url, {\n  method: \"POST\",\n  headers,\n  body,\n});\nconsole.log(await r.text());\n"
           }
         ]
       }
@@ -12559,6 +12707,191 @@
           {
             "lang": "typescript",
             "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\";\nconst PEM = \"novig-api-key-mgmt-1.pem\";\n\nconst path = \"/v3/portfolio/fills\";\nconst query = \"limit=100\";\nconst body = \"\";\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"GET\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n};\nconst url = `${HOST}${path}?${query}`;\nconst r = await fetch(url, {\n  method: \"GET\",\n  headers,\n});\nconsole.log(await r.text());\n"
+          }
+        ]
+      }
+    },
+    "/v3/portfolio/pnl": {
+      "get": {
+        "description": "| | |\n| --- | --- |\n| **Key** | `any` |\n| **Throttle** | `account` |\n| **Cost** | `1 /request` |\n| **Answers** | <span class=\"st st-ok\">200</span> <span class=\"st st-warn\">400</span> <span class=\"st st-warn\">401</span> <span class=\"st st-warn\">403</span> <span class=\"st st-hold\">423</span> <span class=\"st st-hold\">429</span> <span class=\"st st-warn\">451</span> |\n| **Idempotent** | `true` |\n\nMarks each open position's market to its last trade, net of any payout you\nalready received for holding both outcomes, and sums basis and value over every\nmatch. Unrealized PnL is `value − basis`. Positions page by outcome id.",
+        "operationId": "getPortfolioPnl",
+        "parameters": [
+          {
+            "description": "Every market of one event.",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "One market. With `event`, the market must belong to that event.",
+            "in": "query",
+            "name": "market",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page size. Defaults to **500**, not the maximum. 1 to 5000. A value outside that range\nanswers `400`.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 500,
+              "format": "int32",
+              "maximum": 5000,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The `next` cursor from the previous page. Opaque.",
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The management key's own id reads the primary wallet. A subaccount key's id reads that\nsubaccount. Only a management key may pass it.",
+            "in": "query",
+            "name": "keyId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerWalletResponse_Pnl"
+                }
+              }
+            },
+            "description": "One page of positions, and the sums over every match."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "PAGE_LIMIT_OUT_OF_RANGE",
+                  "message": "Limit must be between 1 and 5000"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The request is malformed."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "SIGNATURE_REJECTED",
+                  "message": "signature verification failed"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The signature is absent or invalid, or the key is unknown, revoked, or expired."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "SCOPE_INSUFFICIENT",
+                  "message": "api key scope is insufficient for this route"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The key's scope does not grant this route."
+          },
+          "423": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "ACCOUNT_LOCKED",
+                  "message": "The account is locked out of trading."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The account is locked out of trading."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "RATE_LIMIT_EXCEEDED",
+                  "message": "Rate limit exceeded. Please wait before retrying."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The throttle is empty. Wait the number of seconds in `Retry-After`. Then retry."
+          },
+          "451": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "ANONYMIZED_NETWORK",
+                  "message": "The request came over a VPN, a proxy, or a Tor exit."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Geolocation refused the request: an anonymized network, a restricted region, or, for a placement, no device geolocation in the last 3 days."
+          }
+        },
+        "security": [
+          {
+            "keyId": [],
+            "signature": [],
+            "timestamp": []
+          }
+        ],
+        "summary": "Get your unrealized PnL",
+        "tags": [
+          "Execution"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "HOST=https://api.paper.novig.com\nKEY_ID=2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\nPEM=novig-api-key-mgmt-1.pem\n\nREQ_PATH=\"/v3/portfolio/pnl\"\nQUERY=\"limit=100\"\nBODY=''\nTS=$(date +%s000)\nHASH=$(printf %s \"$BODY\" \\\n  | openssl dgst -sha256 -r | cut -d\" \" -f1)\n\n# openssl signs a file, not a pipe. base64 -A never wraps.\nprintf 'NOVIG-V3\\n%s\\nGET\\n%s\\n%s\\n%s' \\\n  \"$TS\" \"$REQ_PATH\" \"$QUERY\" \"$HASH\" > canon.bin\nSIG=$(openssl pkeyutl -sign -rawin -inkey \"$PEM\" \\\n  -in canon.bin | openssl base64 -A)\n\ncurl -s -X GET \"$HOST$REQ_PATH${QUERY:+?$QUERY}\" \\\n  -H \"Novig-Key-Id: $KEY_ID\" \\\n  -H \"Novig-Timestamp: $TS\" \\\n  -H \"Novig-Signature: $SIG\"\n"
+          },
+          {
+            "lang": "rust",
+            "source": "use base64::prelude::*;\nuse ed25519_dalek::pkcs8::DecodePrivateKey;\nuse ed25519_dalek::{Signer, SigningKey};\nuse reqwest::blocking::{Client, Request};\nuse reqwest::{Method, Url};\nuse sha2::{Digest, Sha256};\nuse std::time::{SystemTime, UNIX_EPOCH};\n\nconst HOST: &str = \"https://api.paper.novig.com\";\nconst KEY_ID: &str =\n    \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\";\nconst PEM: &str = \"novig-api-key-mgmt-1.pem\";\n\nfn main() -> anyhow::Result<()> {\n    let key = Key::load(KEY_ID, PEM)?;\n    let client = Client::new();\n    let path = \"/v3/portfolio/pnl\";\n    let url = format!(\"{HOST}{path}?limit=100\");\n    let req = client\n        .get(url)\n        .build()?\n        .sign(&key)?;\n    println!(\"{}\", client.execute(req)?.text()?);\n    Ok(())\n}\n\n/// An API key: the id the server looks up, and the\n/// private half that signs.\nstruct Key {\n    id: &'static str,\n    signer: SigningKey,\n}\n\nimpl Key {\n    fn load(id: &'static str, pem: &str) -> anyhow::Result<Self> {\n        let signer =\n            SigningKey::read_pkcs8_pem_file(pem)?;\n        Ok(Self { id, signer })\n    }\n}\n\n/// Signs a built request over the method, path, query and\n/// body it will send, so the two can never disagree.\ntrait Sign: Sized {\n    fn sign(self, key: &Key) -> anyhow::Result<Self>;\n}\n\nimpl Sign for Request {\n    fn sign(mut self, key: &Key) -> anyhow::Result<Self> {\n        let ts = SystemTime::now()\n            .duration_since(UNIX_EPOCH)?\n            .as_millis()\n            .to_string();\n        let body = self.body().and_then(|b| b.as_bytes());\n        let body = body.unwrap_or_default();\n        let canon = Canonical::new(\n            &ts,\n            self.method(),\n            self.url(),\n            body,\n        );\n        let sig = key.signer.sign(canon.0.as_bytes());\n        let sig = BASE64_STANDARD.encode(sig.to_bytes());\n        let headers = self.headers_mut();\n        headers.insert(\"Novig-Key-Id\", key.id.parse()?);\n        headers.insert(\"Novig-Timestamp\", ts.parse()?);\n        headers.insert(\"Novig-Signature\", sig.parse()?);\n        Ok(self)\n    }\n}\n\n/// The six NOVIG-V3 lines, joined by LF.\nstruct Canonical(String);\n\nimpl Canonical {\n    fn new(\n        ts: &str,\n        method: &Method,\n        url: &Url,\n        body: &[u8],\n    ) -> Self {\n        let query =\n            Query::from(url.query().unwrap_or(\"\"));\n        let hash = format!(\"{:x}\", Sha256::digest(body));\n        let method = method.as_str();\n        let path = url.path();\n        let lines = [\n            \"NOVIG-V3\", ts, method, path, &query.0, &hash,\n        ];\n        Self(lines.join(\"\\n\"))\n    }\n}\n\n/// Each part decoded and re-encoded, then sorted by\n/// name and value.\nstruct Query(String);\n\nimpl From<&str> for Query {\n    fn from(raw: &str) -> Self {\n        let mut pairs = raw\n            .split('&')\n            .filter(|pair| !pair.is_empty())\n            .map(|pair| {\n                pair.split_once('=').unwrap_or((pair, \"\"))\n            })\n            .map(|(k, v)| {\n                (Self::encode(k), Self::encode(v))\n            })\n            .collect::<Vec<_>>();\n        pairs.sort();\n        let pairs =\n            pairs.iter().map(|(k, v)| format!(\"{k}={v}\"));\n        Self(pairs.collect::<Vec<_>>().join(\"&\"))\n    }\n}\n\nimpl Query {\n    fn encode(part: &str) -> String {\n        Self::decode(part)\n            .iter()\n            .map(|&b| match b {\n                b'-' | b'.' | b'_' | b'~' => {\n                    (b as char).to_string()\n                }\n                _ if b.is_ascii_alphanumeric() => {\n                    (b as char).to_string()\n                }\n                _ => format!(\"%{b:02X}\"),\n            })\n            .collect()\n    }\n\n    /// Only `%XX` decodes. A bare `+` stays a `+`.\n    fn decode(part: &str) -> Vec<u8> {\n        let raw = part.as_bytes();\n        let mut out = Vec::with_capacity(raw.len());\n        let mut i = 0;\n        while i < raw.len() {\n            let escape =\n                raw.get(i + 1..i + 3).and_then(Self::hex);\n            match (raw[i], escape) {\n                (b'%', Some(byte)) => {\n                    out.push(byte);\n                    i += 3;\n                }\n                (byte, _) => {\n                    out.push(byte);\n                    i += 1;\n                }\n            }\n        }\n        out\n    }\n\n    fn hex(pair: &[u8]) -> Option<u8> {\n        let hi = (pair[0] as char).to_digit(16)?;\n        let lo = (pair[1] as char).to_digit(16)?;\n        Some((hi * 16 + lo) as u8)\n    }\n}\n"
+          },
+          {
+            "lang": "python",
+            "source": "import base64, hashlib, time, urllib.request\nfrom cryptography.hazmat.primitives.serialization import (\n    load_pem_private_key)\n\nHOST = \"https://api.paper.novig.com\"\nKEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\"\nPEM = \"novig-api-key-mgmt-1.pem\"\n\npath = \"/v3/portfolio/pnl\"\nquery = \"limit=100\"\nbody = b\"\"\n\nts = str(int(time.time() * 1000))\ncanon = \"\\n\".join([\"NOVIG-V3\", ts, \"GET\", path, query,\n                   hashlib.sha256(body).hexdigest()])\nkey = load_pem_private_key(open(PEM, \"rb\").read(), None)\nheaders = {\n    \"Novig-Key-Id\": KEY_ID,\n    \"Novig-Timestamp\": ts,\n    \"Novig-Signature\": base64.b64encode(\n        key.sign(canon.encode())).decode(),\n}\nurl = f\"{HOST}{path}?{query}\"\nreq = urllib.request.Request(\n    url, data=body or None,\n    method=\"GET\", headers=headers)\nprint(urllib.request.urlopen(req).read().decode())\n"
+          },
+          {
+            "lang": "typescript",
+            "source": "import {\n  createHash, createPrivateKey, sign,\n} from \"node:crypto\";\nimport { readFileSync } from \"node:fs\";\n\nconst HOST = \"https://api.paper.novig.com\";\nconst KEY_ID = \"2c9a7e1d-5b3f-4e8a-a6d0-9f1b3c5e7a24\";\nconst PEM = \"novig-api-key-mgmt-1.pem\";\n\nconst path = \"/v3/portfolio/pnl\";\nconst query = \"limit=100\";\nconst body = \"\";\n\nconst ts = Date.now().toString();\nconst hash =\n  createHash(\"sha256\").update(body).digest(\"hex\");\nconst canon = [\n  \"NOVIG-V3\", ts, \"GET\", path, query, hash,\n].join(\"\\n\");\nconst key = createPrivateKey(readFileSync(PEM));\nconst headers: Record<string, string> = {\n  \"Novig-Key-Id\": KEY_ID,\n  \"Novig-Timestamp\": ts,\n  \"Novig-Signature\": sign(null, Buffer.from(canon), key)\n    .toString(\"base64\"),\n};\nconst url = `${HOST}${path}?${query}`;\nconst r = await fetch(url, {\n  method: \"GET\",\n  headers,\n});\nconsole.log(await r.text());\n"
           }
         ]
       }

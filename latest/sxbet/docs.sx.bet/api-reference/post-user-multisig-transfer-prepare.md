@@ -8,10 +8,10 @@
 
 `POST /user/multisig/transfer/prepare` builds a transfer from your proxy to another deployed proxy.
 Sign `typedData` and submit it to
-[`POST /user/multisig/transfer/execute`](/api-reference/post-user-multisig-transfer-execute).
+[`POST /user/multisig/transfer/execute`](https://docs.sx.bet/api-reference/post-user-multisig-transfer-execute).
 
 `toProxyWallet` must be a different registered, deployed proxy. Check it with
-[`GET /user/multisig/proxy/{proxyAddress}`](/api-reference/get-user-multisig-proxy).
+[`GET /user/multisig/proxy/{proxyAddress}`](https://docs.sx.bet/api-reference/get-user-multisig-proxy).
 
 > [!WARNING]
 >

@@ -7,7 +7,7 @@
 > Execute a prepared threshold change.
 
 `POST /user/multisig/set-threshold/execute` submits the signature for the transaction from
-[`POST /user/multisig/set-threshold/prepare`](/api-reference/post-user-multisig-set-threshold-prepare).
+[`POST /user/multisig/set-threshold/prepare`](https://docs.sx.bet/api-reference/post-user-multisig-set-threshold-prepare).
 
 
 ## OpenAPI

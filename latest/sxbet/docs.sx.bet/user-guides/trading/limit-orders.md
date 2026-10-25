@@ -36,7 +36,7 @@ You can see your offer pop up in the order book on the other side.
 
 ***
 
-> **[Want to offer odds programmatically?](/developers/introduction.md)**
+> **[Want to offer odds programmatically?](https://docs.sx.bet/developers/introduction.md)**
 >
 > Build on the SX Bet API to post limit orders at scale. No premium charges for API access.
 

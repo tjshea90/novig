@@ -13,7 +13,7 @@ funds.
 > [!NOTE]
 >
 > This page is about representing **your site's users**. If you are trading your own account, see
-> [Posting orders](/developers/posting-orders.md) and [Market making](/developers/market-making.md)
+> [Posting orders](https://docs.sx.bet/developers/posting-orders.md) and [Market making](https://docs.sx.bet/developers/market-making.md)
 > instead.
 
 ## Single account
@@ -22,16 +22,16 @@ funds.
 >
 > The simplest path, and the recommended one for most integrations.
 
-You create one SX.bet account, generate one [API key](/api-reference/api-key.md), and make every API
+You create one SX.bet account, generate one [API key](https://docs.sx.bet/api-reference/api-key.md), and make every API
 call from your backend with that key. Your single account represents all of your users.
 
-Tell your users' activity apart with [`externalUserId`](/developers/external-user-id): set it to
+Tell your users' activity apart with [`externalUserId`](https://docs.sx.bet/developers/external-user-id): set it to
 your own id for the person on each order, and the same value comes back on their orders, fills, and
 bets so you can attribute activity per user.
 
 You choose how funds are held: custody all user funds yourself, or delegate custody to SX.
 
-See [External user id](/developers/external-user-id.md) for how per-user attribution works.
+See [External user id](https://docs.sx.bet/developers/external-user-id.md) for how per-user attribution works.
 
 ## Whitelabel / skin
 
@@ -41,19 +41,19 @@ Each user on your app is their own SX.bet user, and your site is effectively a s
 > [!NOTE]
 >
 > More information on this model is coming shortly. Reach out through
-> [Work with us](/developers/work-with-us.md) if you are planning a whitelabel integration.
+> [Work with us](https://docs.sx.bet/developers/work-with-us.md) if you are planning a whitelabel integration.
 
 ## Related
 
-> **[External user id](/developers/external-user-id.md)**
+> **[External user id](https://docs.sx.bet/developers/external-user-id.md)**
 >
 > Attribute orders, fills, and bets to people on your platform.
 
-> **[API keys](/api-reference/api-key.md)**
+> **[API keys](https://docs.sx.bet/api-reference/api-key.md)**
 >
 > Generate and use the key your backend calls with.
 
-> **[Work with us](/developers/work-with-us.md)**
+> **[Work with us](https://docs.sx.bet/developers/work-with-us.md)**
 >
 > Building at scale or exploring a partnership.
 

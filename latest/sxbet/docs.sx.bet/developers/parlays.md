@@ -36,7 +36,7 @@ The fill executes like any other bet
 ## The request
 
 Makers receive this on the
-[`parlay_markets:global`](/api-reference/channel-parlay-requests) channel:
+[`parlay_markets:global`](https://docs.sx.bet/api-reference/channel-parlay-requests) channel:
 
 ```json theme={null}
 {
@@ -59,12 +59,12 @@ The top-level `marketHash` is the **parlay parent** — the market you post orde
 in `legs` names an underlying market and which side of it the parlay needs.
 
 The full field list (including the `requestorId` pseudonym) and looking up each leg via
-`GET /markets/find` are on [Market making parlays](/developers/market-making-parlays.md).
+`GET /markets/find` are on [Market making parlays](https://docs.sx.bet/developers/market-making-parlays.md).
 
 ## Betting a parlay
 
 You post an ordinary order on the parlay parent hash — nothing about signing is parlay-specific. See
-[Market making parlays](/developers/market-making-parlays.md) for the field-by-field walkthrough and
+[Market making parlays](https://docs.sx.bet/developers/market-making-parlays.md) for the field-by-field walkthrough and
 working code.
 
 **A parlay taker uses `FOK` or `IOC` orders**
@@ -79,7 +79,7 @@ parlay cannot win.
 
 ## Parlay early refunds
 
-Parlay bets are eligible for early [capital-efficiency](/developers/capital-efficiency.md) refunds — you
+Parlay bets are eligible for early [capital-efficiency](https://docs.sx.bet/developers/capital-efficiency.md) refunds — you
 can get the stake on a decided position back before the whole parlay has finished settling.
 
 A parlay can end one of a few ways: it wins, it loses, or it is voided if any leg comes back void. The
@@ -108,23 +108,23 @@ and the parlay finishes settling in the usual way.
 ## Fees
 
 Parlays use separate rates — `makerParlayPayoutFee` and `takerParlayPayoutFee` — at
-[`GET /user/fees-v3`](/api-reference/get-user-fees-v3).
+[`GET /user/fees-v3`](https://docs.sx.bet/api-reference/get-user-fees-v3).
 
 ## Related
 
-> **[Market making parlays](/developers/market-making-parlays.md)**
+> **[Market making parlays](https://docs.sx.bet/developers/market-making-parlays.md)**
 >
 > Listening, pricing and quoting before the parlay market expires.
 
-> **[Parlay requests channel](/api-reference/channel-parlay-requests.md)**
+> **[Parlay requests channel](https://docs.sx.bet/api-reference/channel-parlay-requests.md)**
 >
 > The request payload.
 
-> **[Parlay markets](/api-reference/parlay-markets.md)**
+> **[Parlay markets](https://docs.sx.bet/api-reference/parlay-markets.md)**
 >
 > The fields and behaviour of parlay markets.
 
-> **[Time in force](/developers/time-in-force.md)**
+> **[Time in force](https://docs.sx.bet/developers/time-in-force.md)**
 >
 > `GTC`, `IOC` and `FOK`, and which of them a parlay accepts.
 

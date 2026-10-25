@@ -110,11 +110,11 @@ Cursors are opaque. Never decode, edit, or build one yourself, never reuse a cur
 
 ## Next Steps
 
-> **[Create Deposit](/trading/bridge/deposit.md)**
+> **[Create Deposit](https://docs.polymarket.com/trading/bridge/deposit.md)**
 >
 > Generate bridge addresses for your wallet.
 
-> **[Supported Assets](/trading/bridge/supported-assets.md)**
+> **[Supported Assets](https://docs.polymarket.com/trading/bridge/supported-assets.md)**
 >
 > Check supported chains and minimum amounts.
 

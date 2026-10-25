@@ -69,11 +69,11 @@ Most L2 chains (Polygon, Arbitrum, Base, Optimism) have low minimums of \$2, whi
 
 ## Next Steps
 
-> **[Create Deposit](/trading/bridge/deposit.md)**
+> **[Create Deposit](https://docs.polymarket.com/trading/bridge/deposit.md)**
 >
 > Generate bridge addresses for your wallet.
 
-> **[Check Status](/trading/bridge/status.md)**
+> **[Check Status](https://docs.polymarket.com/trading/bridge/status.md)**
 >
 > Track your deposit progress.
 

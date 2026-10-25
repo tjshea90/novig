@@ -7,7 +7,7 @@
 > How we limit your request rate, and how to pace your requests.
 
 We limit how fast you can send requests, in two places.
-Our servers throttle each API key, and an edge filter in front of them limits each IP address.
+Our servers throttle each subaccount and each management key, and an edge filter in front of them limits each IP address.
 
 ## Limits on our servers
 
@@ -60,6 +60,20 @@ The `history` bucket meters the record reads: fills, transactions, settled order
 
 `GET /v3/limits`, `GET /v3/time`, and `GET /v3/exchange/status` spend no tokens.
 
+### Keys that share throttles
+
+Each subaccount has one set of throttles, and every key on it spends from that set.
+A management key has a set of its own.
+
+| Key | Spends the throttles of |
+| - | - |
+| `trading` | Its subaccount |
+| `trading::read` | Its subaccount |
+| `management` | The key |
+| `management::read` | The key |
+
+A second `trading::read` key on a subaccount doesn't raise its limits.
+
 ## Websocket subscriptions
 
 The `stream` bucket meters how fast you subscribe. A second limit caps how much you hold: a connection may watch up to  markets at once. An event counts as the markets it contains. A subscribe that would take you over that answers `SUBSCRIPTION_LIMIT_EXCEEDED`, and it subscribes to nothing. A `snapshot` that names more markets than the cap answers the same. Such a request also costs more than the `stream` bucket holds, so you get `RATE_LIMIT_EXCEEDED` until the bucket is full. `GET /v3/limits` reports the cap.
@@ -109,7 +123,7 @@ Retry-After: 3
 ```
 
 * Wait `Retry-After` seconds before you retry. Retrying sooner hits the same empty throttle.
-* Split your work across keys. The throttle counts per key, not per connection.
+* Don't create keys to raise a limit. Every key on a subaccount shares its throttles.
 * Handle a `429` even if you model the throttles. Our servers share token counts with each other gradually, so your model is never exact.
 
 

@@ -7,9 +7,9 @@
 > Reference of fixture statuses on SX Bet.
 
 A fixture's `status` is a number, returned by
-[`GET /fixture/active`](/api-reference/get-fixture-active) and
-[`GET /fixture/status`](/api-reference/get-fixture-status), and published on
-[`fixtures:global`](/api-reference/channel-fixtures).
+[`GET /fixture/active`](https://docs.sx.bet/api-reference/get-fixture-active) and
+[`GET /fixture/status`](https://docs.sx.bet/api-reference/get-fixture-status), and published on
+[`fixtures:global`](https://docs.sx.bet/api-reference/channel-fixtures).
 
 ## The nine statuses
 

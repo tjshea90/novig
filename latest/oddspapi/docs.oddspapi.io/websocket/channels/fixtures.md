@@ -83,7 +83,7 @@ This is the **anchor stream** used to map odds/scores to a real-world fixture.
 | `externalProviders.lsportsId` | `number \| null` | LSports ID |
 | `externalProviders.txoddsId` | `number \| null` | TXOdds ID |
 
-The `externalProviders` block is how you join OddsPapi to a feed you already run — see [running OddsPapi as a second feed](/guides/second-feed.md) for the mapping endpoints and cross-validation workflow.
+The `externalProviders` block is how you join OddsPapi to a feed you already run — see [running OddsPapi as a second feed](https://docs.oddspapi.io/guides/second-feed.md) for the mapping endpoints and cross-validation workflow.
 
 ***
 

@@ -22,12 +22,12 @@ None of these endpoints affects pricing, winner selection, or settlement.
 
 > [!NOTE]
 >
-> RFQ fills aren't in the order-book fills listing, [List fills](/api-reference/positions/get-all-my-fills.md). Only `GET /rfq/executions` lists the RFQs you won.
+> RFQ fills aren't in the order-book fills listing, [List fills](https://docs.novig.com/api-reference/positions/get-all-my-fills.md). Only `GET /rfq/executions` lists the RFQs you won.
 
 ## Authenticate
 
 All three endpoints take the OAuth 2.0 client-credentials token you use for the rest of the API.
-[Authentication](/api-reference/authentication.md) shows how to get one.
+[Authentication](https://docs.novig.com/api-reference/authentication.md) shows how to get one.
 Send it in the `Authorization` header as a bearer token.
 
 | Environment | Base URL |
@@ -46,7 +46,7 @@ export NOVIG_HOST=https://api.novig.com
 
 `GET /rfq/executions` returns the RFQs you priced and won, newest first.
 Your account must have a registered pricer, or the call returns `403`.
-[Registration](/api-reference/rfq/registration.md) shows how to register one.
+[Registration](https://docs.novig.com/api-reference/rfq/registration.md) shows how to register one.
 
 ```bash theme={"dark"}
 curl "$NOVIG_HOST/rfq/executions" \
@@ -134,7 +134,7 @@ We send money and prices as strings to keep their precision.
 `result` and `settled_at` appear only once `status` is `settled`.
 `fmv_value` appears only when `result` is `fmv`.
 `push` appears only on parlays that settled before August 20, 2026.
-[Settlement](/api-reference/rfq/settlement.md) explains each result.
+[Settlement](https://docs.novig.com/api-reference/rfq/settlement.md) explains each result.
 
 `outcome_ids` is sorted by ID, while the `rfq_created` event lists the legs in request order.
 Only this listing carries the legs. The feed leaves them out.
@@ -252,7 +252,7 @@ With no open parlays, you get `"0"` and `0`.
 | See how your executions settled | `GET /rfq/executions` |
 | Get a parlay's legs | `GET /rfq/executions` |
 | See your total collateral in open parlays | `GET /rfq/collateral` |
-| Reconcile order-book fills | [List fills](/api-reference/positions/get-all-my-fills.md) |
+| Reconcile order-book fills | [List fills](https://docs.novig.com/api-reference/positions/get-all-my-fills.md) |
 
 Most LPs keep the feed open for live prints.
 Then they call the listing now and then, and after any gap, to confirm they have every RFQ they won.

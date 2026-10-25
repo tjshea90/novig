@@ -12,7 +12,7 @@ While the [Glide bridge](https://sx.bet/wallet/bridge) offers no-fee deposits, w
 
 > [!NOTE]
 >
-> To withdraw through the native bridge, you must be using a browser-based wallet (e.g. MetaMask). If you signed up for SX Bet with email, you can import your email wallet to MetaMask. Follow the tutorial here to [import your wallet to MetaMask](/user-guides/faq/export-wallet-metamask.md).
+> To withdraw through the native bridge, you must be using a browser-based wallet (e.g. MetaMask). If you signed up for SX Bet with email, you can import your email wallet to MetaMask. Follow the tutorial here to [import your wallet to MetaMask](https://docs.sx.bet/user-guides/faq/export-wallet-metamask.md).
 
 1. Transfer funds from your betting wallet into your EOA on the [Account Page](https://sx.bet/account)
 
@@ -50,11 +50,11 @@ Enter the amount of USDC you would like to bridge, agree to the terms, and click
 
 Success!
 
-> **[Deposit Crypto](/user-guides/deposit-withdraw/transfer-crypto.md)**
+> **[Deposit Crypto](https://docs.sx.bet/user-guides/deposit-withdraw/transfer-crypto.md)**
 >
 > Fund your wallet when you're ready to bet again.
 
-> **[Fees](/user-guides/trading/fees.md)**
+> **[Fees](https://docs.sx.bet/user-guides/trading/fees.md)**
 >
 > Learn about trading fees, gas fees, and bridging costs.
 
