@@ -1,0 +1,84 @@
+{
+ "status": 200,
+ "credits_last": null,
+ "body": {
+  "as_of": "2026-10-25T08:00:35.105447+00:00",
+  "lookback_hours": 24,
+  "sport_count": 565,
+  "coverage": [
+   {
+    "sport_key": "soccer_spain_tercera_division",
+    "games_24h": 64,
+    "rows_24h": 996,
+    "latest_age_seconds": 1626
+   },
+   {
+    "sport_key": "tennis_wta",
+    "games_24h": 33,
+    "rows_24h": 249,
+    "latest_age_seconds": 229
+   },
+   {
+    "sport_key": "soccer_france_ligue_one",
+    "games_24h": 30,
+    "rows_24h": 197,
+    "latest_age_seconds": 845
+   },
+   {
+    "sport_key": "soccer_usa_mls",
+    "games_24h": 29,
+    "rows_24h": 873,
+    "latest_age_seconds": 790
+   },
+   {
+    "sport_key": "tennis_atp_challenger_seoul_qualifiers",
+    "games_24h": 29,
+    "rows_24h": 270,
+    "latest_age_seconds": 691
+   },
+   {
+    "sport_key": "soccer_italy_serie_a",
+    "games_24h": 27,
+    "rows_24h": 392,
+    "latest_age_seconds": 741
+   },
+   {
+    "sport_key": "soccer_italy_serie_d",
+    "games_24h": 27,
+    "rows_24h": 336,
+    "latest_age_seconds": 945
+   },
+   {
+    "sport_key": "golf_dp_world_genesis_championship_tournament",
+    "games_24h": 26,
+    "rows_24h": 112,
+    "latest_age_seconds": 1059
+   },
+   {
+    "sport_key": "soccer_epl",
+    "games_24h": 25,
+    "rows_24h": 455,
+    "latest_age_seconds": 873
+   },
+   {
+    "sport_key": "soccer_argentina_primera_nacional",
+    "games_24h": 25,
+    "rows_24h": 164,
+    "latest_age_seconds": 419
+   },
+   {
+    "sport_key": "soccer_portugal_campeonato_de_portugal_prio",
+    "games_24h": 25,
+    "rows_24h": 134,
+    "latest_age_seconds": 2248
+   },
+   {
+    "sport_key": "soccer_spain_la_liga",
+    "games_24h": 24,
+    "rows_24h": 399,
+    "latest_age_seconds": 849
+   },
+   "... 553 more"
+  ]
+ }
+}

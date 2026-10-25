@@ -1,0 +1,54 @@
+{
+ "status": 200,
+ "credits_last": null,
+ "body": {
+  "key": "fanduel",
+  "alias_resolved_from": null,
+  "is_live": true,
+  "live_game_lines": true,
+  "game_lines_lane": "both",
+  "live_props": true,
+  "live_period_markets": true,
+  "queried_at": "2026-10-25T08:00:28Z",
+  "archive_note": "historical_odds counts game lines only. Player prop history is stored separately in prop_closing_lines and is not measured by this response. An empty game-line archive does not establish a live feed outage.",
+  "prop_history_path": "/v1/historical/sports/{sport_key}/closing-odds?bookmakers=fanduel&markets={player_market_key}",
+  "tables": {
+   "odds_snapshots": {
+    "latest_iso": "2026-10-25T07:58:08Z",
+    "age_seconds": 140,
+    "rows_1h": 3982,
+    "rows_24h": 21358
+   },
+   "prop_snapshots": {
+    "latest_iso": "2026-10-25T08:00:22Z",
+    "age_seconds": 7,
+    "rows_1h": 108814,
+    "rows_24h": 686451
+   },
+   "prop_snapshots_game_lines": {
+    "latest_iso": "2026-10-25T07:59:34Z",
+    "age_seconds": 54,
+    "rows_15m": 8690,
+    "window_minutes": 15
+   },
+   "period_odds_snapshots": {
+    "latest_iso": "2026-10-25T07:57:22Z",
+    "age_seconds": 186,
+    "rows_1h": 36504,
+    "rows_24h": 236808
+   },
+   "period_odds_archive": {
+    "latest_iso": "2026-10-07T15:25:06Z",
+    "age_seconds": 1528522,
+    "rows_24h": 0,
+    "rows_total": 42195,
+    "matches_total": 79
+   },
+   "historical_odds": {
+    "latest_game_date": "2026-12-26",
+    "rows_total": 10480,
+    "sports_total": 30
+   }
+  }
+ }
+}

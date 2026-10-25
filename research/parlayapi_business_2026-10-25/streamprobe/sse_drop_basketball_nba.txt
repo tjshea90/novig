@@ -1,0 +1,5 @@
+HTTP 200 content-type text/event-stream; charset=utf-8
+data: {"type": "connected", "sport_key": "basketball_nba", "subscribed_sports": ["basketball_nba"], "subscribed_count": 1, "transport": "sse", "stream": "odds_drop", "threshold": 10, "direction": "both", "heartbeat_s": 5, "filters": {"event_id": null, "bookmakers": null, "markets": null}, "note": "Emits an event when any tracked price moves by >= threshold American-odds cents. First observation of each side is recorded silently (no emit until movement).", "warnings": null, "timestamp": 1792915121}
+data: {"type": "heartbeat", "timestamp": 1792915134, "tracked_sides": 77}
+data: {"type": "heartbeat", "timestamp": 1792915166, "tracked_sides": 449}
+data: {"type": "heartbeat", "timestamp": 1792915190, "tracked_sides": 461}

@@ -1,0 +1,54 @@
+{
+ "status": 200,
+ "credits_last": null,
+ "body": {
+  "key": "pinnacle",
+  "alias_resolved_from": null,
+  "is_live": true,
+  "live_game_lines": true,
+  "game_lines_lane": "both",
+  "live_props": true,
+  "live_period_markets": false,
+  "queried_at": "2026-10-25T08:00:31Z",
+  "archive_note": "historical_odds counts game lines only. Player prop history is stored separately in prop_closing_lines and is not measured by this response. An empty game-line archive does not establish a live feed outage.",
+  "prop_history_path": "/v1/historical/sports/{sport_key}/closing-odds?bookmakers=pinnacle&markets={player_market_key}",
+  "tables": {
+   "odds_snapshots": {
+    "latest_iso": "2026-10-25T07:59:36Z",
+    "age_seconds": 56,
+    "rows_1h": 4770,
+    "rows_24h": 32258
+   },
+   "prop_snapshots": {
+    "latest_iso": "2026-10-25T07:59:36Z",
+    "age_seconds": 56,
+    "rows_1h": 628368,
+    "rows_24h": 4147771
+   },
+   "prop_snapshots_game_lines": {
+    "latest_iso": "2026-10-25T07:59:35Z",
+    "age_seconds": 57,
+    "rows_15m": 44511,
+    "window_minutes": 15
+   },
+   "period_odds_snapshots": {
+    "latest_iso": "2026-10-25T07:49:09Z",
+    "age_seconds": 683,
+    "rows_1h": 22753,
+    "rows_24h": 148702
+   },
+   "period_odds_archive": {
+    "latest_iso": "2026-10-25T07:59:35Z",
+    "age_seconds": 57,
+    "rows_24h": 142952,
+    "rows_total": 3888155,
+    "matches_total": 52763
+   },
+   "historical_odds": {
+    "latest_game_date": "2026-12-12",
+    "rows_total": 318092,
+    "sports_total": 3286
+   }
+  }
+ }
+}

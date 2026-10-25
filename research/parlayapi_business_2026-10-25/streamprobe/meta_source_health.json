@@ -1,0 +1,476 @@
+{
+ "status": 200,
+ "credits_last": null,
+ "body": {
+  "generated_at_ms": 1792915230918,
+  "window_minutes": 10,
+  "archive_lookup_minutes": 30,
+  "source_count_total": 50,
+  "source_count_returned": 40,
+  "archive_source_count": 25,
+  "latest_state_source_count": 25,
+  "latest_state_only_source_count": 2,
+  "latest_state_only_sources": [
+   "betonline",
+   "betway_mz"
+  ],
+  "pulse_only_source_count": 23,
+  "pulse_only_sources": [
+   "atg",
+   "betrivers_ca",
+   "kalshi-crypto",
+   "paf",
+   "pmu",
+   "pointsbet",
+   "stake",
+   "sugarhouse",
+   "tipico",
+   "unibet",
+   "unibet_au",
+   "unibet_be",
+   "... 11 more"
+  ],
+  "counts": {
+   "ok": 48,
+   "degraded": 1,
+   "breach": 1,
+   "stale": 0,
+   "missing": 0
+  },
+  "price_write_counts": {
+   "ok": 18,
+   "degraded": 6,
+   "breach": 1,
+   "stale": 0,
+   "missing": 25
+  },
+  "price_write_page_worthy": [
+   "atg",
+   "betonline",
+   "betrivers_ca",
+   "betway_mz",
+   "kalshi",
+   "kalshi-crypto",
+   "paf",
+   "pmu",
+   "pointsbet",
+   "stake",
+   "sugarhouse",
+   "tipico",
+   "... 14 more"
+  ],
+  "price_write_sla_definition": "SLA classification using only the latest priced row written to the archive. It uses a 60s minimum tight threshold because unchanged archive rows are intentionally re-emitted on a slower cadence than source reachability pulses. The top-level sla may use poll pulses or Redis latest-state when a source is reachable but prices have not changed.",
+  "collector_lag_definition": "row timestamp to Redis latest-state write, in seconds. This isolates ParlayAPI pipeline lag from source polling cadence.",
+  "source_data_state_definition": {
+   "archive": "source has recent Postgres rows in this window",
+   "archive_and_latest_state": "source has recent Postgres rows plus Redis hot-lane telemetry",
+   "latest_state_only": "source is active in Redis hot-lane telemetry but has no recent archive rows in this window",
+   "pulse_only": "source poller is active but has no recent archive rows or Redis hot-lane telemetry in this window"
+  },
+  "sources": [
+   {
+    "source": "tenbet",
+    "latest_ms": 1792915127478,
+    "age_s": 103.4,
+    "freshness_signal": "pulse",
+    "poll_age_s": 103.4,
+    "latest_state_age_s": 136.8,
+    "latest_state_kind": "prop",
+    "latest_state_sport_key": "soccer_andorra_primera_division",
+    "source_data_state": "archive_and_latest_state",
+    "archive_row_age_s": 139.1,
+    "price_write_age_s": 139.1,
+    "price_write_sla": "degraded",
+    "prices_stale": false,
+    "rows_seen": 19211,
+    "table_rows": {
+     "prop_snapshots": 19211
+    },
+    "collector_lag_s": {
+     "samples": 4,
+     "p50_s": 0.133,
+     "p95_s": 0.228,
+     "p99_s": 0.228,
+     "max_s": 0.228
+    },
+    "sla": "degraded",
+    "quality_score": 82,
+    "recommended_reason": "freshness_recovery",
+    "recommended_interval_s": 5.322,
+    "thresholds_s": {
+     "tight": 90.0,
+     "stale": 1800.0
+    },
+    "price_write_thresholds_s": {
+     "tight": 90.0,
+     "slack": 300.0,
+     "stale": 1800.0
+    }
+   },
+   {
+    "source": "novig",
+    "latest_ms": 1792915196788,
+    "age_s": 34.1,
+    "freshness_signal": "pulse",
+    "poll_age_s": 34.1,
+    "latest_state_age_s": 69.0,
+    "latest_state_kind": "prop",
+    "latest_state_sport_key": "baseball_npb",
+    "source_data_state": "archive_and_latest_state",
+    "archive_row_age_s": 97.8,
+    "price_write_age_s": 97.8,
+    "price_write_sla": "degraded",
+    "prices_stale": false,
+    "rows_seen": 30135,
+    "table_rows": {
+     "prop_snapshots": 30135
+    },
+    "collector_lag_s": {
+     "samples": 11,
+     "p50_s": 37.117,
+     "p95_s": 39.847,
+     "p99_s": 39.847,
+     "max_s": 39.847
+    },
+    "sla": "breach",
+    "quality_score": 82,
+    "recommended_reason": "freshness_recovery",
+    "recommended_interval_s": 3.402,
+    "thresholds_s": {
+     "tight": 10.0,
+     "stale": 120.0
+    },
+    "price_write_thresholds_s": {
+     "tight": 60.0,
+     "slack": 120.0,
+     "stale": 300.0
+    }
+   },
+   {
+    "source": "betway_mz",
+    "latest_ms": 1792915222268,
+    "age_s": 8.7,
+    "freshness_signal": "pulse",
+    "poll_age_s": 8.7,
+    "latest_state_age_s": 41.6,
+    "latest_state_kind": "prop",
+    "latest_state_sport_key": "table_tennis_tt_cup",
+    "source_data_state": "latest_state_only",
+    "archive_row_age_s": null,
+    "price_write_age_s": null,
+    "price_write_sla": "missing",
+    "prices_stale": false,
+    "rows_seen": 0,
+    "table_rows": {},
+    "collector_lag_s": {
+     "samples": 8,
+     "p50_s": 10.316,
+     "p95_s": 11.932,
+     "p99_s": 11.932,
+     "max_s": 11.932
+    },
+    "sla": "ok",
+    "quality_score": 90,
+    "recommended_reason": "empty_relax",
+    "recommended_interval_s": 123.362,
+    "thresholds_s": {
+     "tight": 120.0,
+     "stale": 1800.0
+    },
+    "price_write_thresholds_s": {
+     "tight": 120.0,
+     "slack": 360.0,
+     "stale": 1800.0
+    }
+   },
+   {
+    "source": "betonline",
+    "latest_ms": 1792915222558,
+    "age_s": 8.4,
+    "freshness_signal": "pulse",
+    "poll_age_s": 8.4,
+    "latest_state_age_s": 41.5,
+    "latest_state_kind": "prop",
+    "latest_state_sport_key": "baseball_mlb",
+    "source_data_state": "latest_state_only",
+    "archive_row_age_s": null,
+    "price_write_age_s": null,
+    "price_write_sla": "missing",
+    "prices_stale": false,
+    "rows_seen": 0,
+    "table_rows": {},
+    "collector_lag_s": {
+     "samples": 10,
+     "p50_s": 1.421,
+     "p95_s": 1.524,
+     "p99_s": 1.524,
+     "max_s": 1.524
+    },
+    "sla": "ok",
+    "quality_score": 90,
+    "recommended_reason": "empty_relax",
+    "recommended_interval_s": 31.306,
+    "thresholds_s": {
+     "tight": 30.0,
+     "stale": 600.0
+    },
+    "price_write_thresholds_s": {
+     "tight": 60.0,
+     "slack": 120.0,
+     "stale": 600.0
+    }
+   },
+   {
+    "source": "atg",
+    "latest_ms": 1792915257468,
+    "age_s": -26.6,
+    "freshness_signal": "pulse",
+    "poll_age_s": -26.6,
+    "latest_state_age_s": null,
+    "latest_state_kind": null,
+    "latest_state_sport_key": null,
+    "source_data_state": "pulse_only",
+    "archive_row_age_s": null,
+    "price_write_age_s": null,
+    "price_write_sla": "missing",
+    "prices_stale": false,
+    "rows_seen": 0,
+    "table_rows": {},
+    "collector_lag_s": null,
+    "sla": "ok",
+    "quality_score": 90,
+    "recommended_reason": "empty_relax",
+    "recommended_interval_s": 95.165,
+    "thresholds_s": {
+     "tight": 90.0,
+     "stale": 1800.0
+    },
+    "price_write_thresholds_s": {
+     "tight": 90.0,
+     "slack": 300.0,
+     "stale": 1800.0
+    }
+   },
+   {
+    "source": "betrivers_ca",
+    "latest_ms": 1792915257468,
+    "age_s": -26.6,
+    "freshness_signal": "pulse",
+    "poll_age_s": -26.6,
+    "latest_state_age_s": null,
+    "latest_state_kind": null,
+    "latest_state_sport_key": null,
+    "source_data_state": "pulse_only",
+    "archive_row_age_s": null,
+    "price_write_age_s": null,
+    "price_write_sla": "missing",
+    "prices_stale": false,
+    "rows_seen": 0,
+    "table_rows": {},
+    "collector_lag_s": null,
+    "sla": "ok",
+    "quality_score": 90,
+    "recommended_reason": "empty_relax",
+    "recommended_interval_s": 83.577,
+    "thresholds_s": {
+     "tight": 90.0,
+     "stale": 1800.0
+    },
+    "price_write_thresholds_s": {
+     "tight": 90.0,
+     "slack": 300.0,
+     "stale": 1800.0
+    }
+   },
+   {
+    "source": "paf",
+    "latest_ms": 1792915257468,
+    "age_s": -26.6,
+    "freshness_signal": "pulse",
+    "poll_age_s": -26.6,
+    "latest_state_age_s": null,
+    "latest_state_kind": null,
+    "latest_state_sport_key": null,
+    "source_data_state": "pulse_only",
+    "archive_row_age_s": null,
+    "price_write_age_s": null,
+    "price_write_sla": "missing",
+    "prices_stale": false,
+    "rows_seen": 0,
+    "table_rows": {},
+    "collector_lag_s": null,
+    "sla": "ok",
+    "quality_score": 90,
+    "recommended_reason": "empty_relax",
+    "recommended_interval_s": 62.419,
+    "thresholds_s": {
+     "tight": 60.0,
+     "stale": 1800.0
+    },
+    "price_write_thresholds_s": {
+     "tight": 60.0,
+     "slack": 240.0,
+     "stale": 1800.0
+    }
+   },
+   {
+    "source": "pmu",
+    "latest_ms": 1792915257468,
+    "age_s": -26.6,
+    "freshness_signal": "pulse",
+    "poll_age_s": -26.6,
+    "latest_state_age_s": null,
+    "latest_state_kind": null,
+    "latest_state_sport_key": null,
+    "source_data_state": "pulse_only",
+    "archive_row_age_s": null,
+    "price_write_age_s": null,
+    "price_write_sla": "missing",
+    "prices_stale": false,
+    "rows_seen": 0,
+    "table_rows": {},
+    "collector_lag_s": null,
+    "sla": "ok",
+    "quality_score": 90,
+    "recommended_reason": "empty_relax",
+    "recommended_interval_s": 89.031,
+    "thresholds_s": {
+     "tight": 90.0,
+     "stale": 1800.0
+    },
+    "price_write_thresholds_s": {
+     "tight": 90.0,
+     "slack": 300.0,
+     "stale": 1800.0
+    }
+   },
+   {
+    "source": "unibet",
+    "latest_ms": 1792915257468,
+    "age_s": -26.6,
+    "freshness_signal": "pulse",
+    "poll_age_s": -26.6,
+    "latest_state_age_s": null,
+    "latest_state_kind": null,
+    "latest_state_sport_key": null,
+    "source_data_state": "pulse_only",
+    "archive_row_age_s": null,
+    "price_write_age_s": null,
+    "price_write_sla": "missing",
+    "prices_stale": false,
+    "rows_seen": 0,
+    "table_rows": {},
+    "collector_lag_s": null,
+    "sla": "ok",
+    "quality_score": 90,
+    "recommended_reason": "empty_relax",
+    "recommended_interval_s": 93.37,
+    "thresholds_s": {
+     "tight": 90.0,
+     "stale": 1800.0
+    },
+    "price_write_thresholds_s": {
+     "tight": 90.0,
+     "slack": 300.0,
+     "stale": 1800.0
+    }
+   },
+   {
+    "source": "unibet_au",
+    "latest_ms": 1792915257468,
+    "age_s": -26.6,
+    "freshness_signal": "pulse",
+    "poll_age_s": -26.6,
+    "latest_state_age_s": null,
+    "latest_state_kind": null,
+    "latest_state_sport_key": null,
+    "source_data_state": "pulse_only",
+    "archive_row_age_s": null,
+    "price_write_age_s": null,
+    "price_write_sla": "missing",
+    "prices_stale": false,
+    "rows_seen": 0,
+    "table_rows": {},
+    "collector_lag_s": null,
+    "sla": "ok",
+    "quality_score": 90,
+    "recommended_reason": "empty_relax",
+    "recommended_interval_s": 56.423,
+    "thresholds_s": {
+     "tight": 60.0,
+     "stale": 1800.0
+    },
+    "price_write_thresholds_s": {
+     "tight": 60.0,
+     "slack": 240.0,
+     "stale": 1800.0
+    }
+   },
+   {
+    "source": "unibet_be",
+    "latest_ms": 1792915257468,
+    "age_s": -26.6,
+    "freshness_signal": "pulse",
+    "poll_age_s": -26.6,
+    "latest_state_age_s": null,
+    "latest_state_kind": null,
+    "latest_state_sport_key": null,
+    "source_data_state": "pulse_only",
+    "archive_row_age_s": null,
+    "price_write_age_s": null,
+    "price_write_sla": "missing",
+    "prices_stale": false,
+    "rows_seen": 0,
+    "table_rows": {},
+    "collector_lag_s": null,
+    "sla": "ok",
+    "quality_score": 90,
+    "recommended_reason": "empty_relax",
+    "recommended_interval_s": 91.576,
+    "thresholds_s": {
+     "tight": 90.0,
+     "stale": 1800.0
+    },
+    "price_write_thresholds_s": {
+     "tight": 90.0,
+     "slack": 300.0,
+     "stale": 1800.0
+    }
+   },
+   {
+    "source": "unibet_de",
+    "latest_ms": 1792915257468,
+    "age_s": -26.6,
+    "freshness_signal": "pulse",
+    "poll_age_s": -26.6,
+    "latest_state_age_s": null,
+    "latest_state_kind": null,
+    "latest_state_sport_key": null,
+    "source_data_state": "pulse_only",
+    "archive_row_age_s": null,
+    "price_write_age_s": null,
+    "price_write_sla": "missing",
+    "prices_stale": false,
+    "rows_seen": 0,
+    "table_rows": {},
+    "collector_lag_s": null,
+    "sla": "ok",
+    "quality_score": 90,
+    "recommended_reason": "empty_relax",
+    "recommended_interval_s": 57.794,
+    "thresholds_s": {
+     "tight": 60.0,
+     "stale": 1800.0
+    },
+    "price_write_thresholds_s": {
+     "tight": 60.0,
+     "slack": 240.0,
+     "stale": 1800.0
+    }
+   },
+   "... 28 more"
+  ],
+  "archive_fetch_status": "ok",
+  "alias_of": "/v1/meta/source-quality"
+ }
+}

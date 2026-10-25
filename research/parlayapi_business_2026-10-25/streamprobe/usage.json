@@ -1,0 +1,22 @@
+{
+ "status": 200,
+ "credits_last": null,
+ "body": {
+  "credits_used": 58361,
+  "credits_granted": 0,
+  "credits_remaining": 941639,
+  "credits_total": 1000000,
+  "tier": "business",
+  "period_start": "2026-10-01T00:00:00+00:00",
+  "period_end": "2026-11-01T00:00:00+00:00",
+  "email": "tjshea90@outlook.com",
+  "plan": {
+   "tier": "business",
+   "name": "Business",
+   "monthly_price_usd": 40.0,
+   "credits_per_month": 1000000,
+   "rate_limit_per_sec": 10000
+  },
+  "api_key_fingerprint": "be6bb1fd...d087"
+ }
+}

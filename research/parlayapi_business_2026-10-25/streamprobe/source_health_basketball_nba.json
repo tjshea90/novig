@@ -1,0 +1,9 @@
+{
+ "status": 200,
+ "credits_last": null,
+ "body": {
+  "sport_key": "basketball_nba",
+  "count": 0,
+  "results": []
+ }
+}
