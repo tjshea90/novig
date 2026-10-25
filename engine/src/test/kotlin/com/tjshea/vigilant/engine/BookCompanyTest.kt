@@ -145,4 +145,18 @@ class BookCompanyTest {
     fun `1xBet under any feed's spelling is one company`() {
         assertEquals(1, listOf("1xBet", "1xbet", "onexbet", "OneXBet").map(BookCompany::of).toSet().size)
     }
+
+    /** PS2 (2026-10-25): PropLine's books added under their desks never count twice beside a book of the same group. */
+    @Test
+    fun `PropLine's added books join their company's group`() {
+        assertEquals(BookCompany.of("fanduel"), BookCompany.of("paddypower"))
+        assertEquals(BookCompany.of("betrivers"), BookCompany.of("livescorebet"))
+        assertEquals(BookCompany.of("betrivers"), BookCompany.of("superbet_ro"))
+        assertEquals(BookCompany.of("betmgm"), BookCompany.of("ladbrokes_au"))
+        assertEquals(BookCompany.of("betway"), BookCompany.of("betway_za"))
+        assertEquals(BookCompany.of("betano"), BookCompany.of("stoiximan"))
+        assertEquals(BookCompany.of("placard"), BookCompany.of("solverde"))
+        assertEquals(BookCompany.of("marcaapuestas"), BookCompany.of("wplay"))
+        assertEquals(6, listOf("heritage", "tab_au", "tipico", "winamax", "betclic_pt", "pinnacle").map(BookCompany::of).toSet().size)
+    }
 }
