@@ -1282,3 +1282,11 @@ I give Claude full permission to use the apis directly with my API keys and unli
 ```
 Shouldn't you review the docs thoroughly for mapping and matching bets and figuring out the freshness problem?
 ```
+
+## 2026-10-25T21:40:03Z
+```
+1) I no longer have pinnodds streaming. It is only the free version. Log this and don't waste to much future usage on it. 
+2) my plan is to migrate to parlayapi and propline as my two major apis, both with streaming, plus the free sockets for the kalshi, sx bet, novig, and the free polymarket.
+3) I deleted the pinnwire keys  delete them on GitHub too. Use the best source of any public source, propline, or parlayapi for the best Pinnacle freshest odds and use them in combination if needed for coverage of markets
+4) use the API keys for both parlayapi and propline and test how to improve them for the GitHub engine and app. Use more socket connections if needed within the limits.
+```
