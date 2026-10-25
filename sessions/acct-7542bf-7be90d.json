@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "ed57aa38f170c8eca90c3701dd46fdbcca4b4082",
+ "head": "b73a5cff5bf393157e6495501fbc2041f7d65dc1",
  "since": 1792915284,
- "beat": 1792915479,
- "beatIso": "2026-10-25T08:04:39Z",
- "done": "",
- "next": ""
+ "beat": 1792915685,
+ "beatIso": "2026-10-25T08:08:05Z",
+ "done": "PB: merged tj Gmail's PhoneSleep WIP; streamprobe frames saved (research/parlayapi_business_2026-10-25/streamprobe, e-mail scrubbed, parlay.py now strips it); PB14-PB19 written from Tj's later prompts",
+ "next": "PB9 finish battery sleep (services, wake lock, alarms), then PB18/PB7/PB6, then PB11 SSE"
 }
