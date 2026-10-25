@@ -69,6 +69,15 @@ class PropLineLiveTest {
         assertTrue(lv.overlay(listOf(game), readAt, now).single().markets.none { it.kind == LineKind.TOTAL })
     }
 
+    /** PX (2026-10-25): a pull from before the board read that still shows the rung is already in that board: the rung stays (it was back); a pull after the read takes it out. */
+    @Test fun aPullOlderThanTheReadLeavesTheRungThatCameBack() {
+        val lv = live()
+        lv.onLine("line_pulled", move("12", 0, null, "line_pulled"), readAt - 5 * 60_000L)
+        assertTrue(lv.overlay(listOf(game), readAt, now).single().markets.any { it.kind == LineKind.TOTAL })
+        lv.onLine("line_pulled", move("12", 0, null, "line_pulled"), readAt + 1_000L)
+        assertTrue(lv.overlay(listOf(game), readAt, now).single().markets.none { it.kind == LineKind.TOTAL })
+    }
+
     @Test fun theHeartbeatConfirmsAnUnmovedMarketOnlyWhileTheSocketCoversTheRead() {
         val lv = live()
         val readOfBook = now - 20_000L
