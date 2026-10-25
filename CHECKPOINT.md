@@ -1,22 +1,22 @@
-# CHECKPOINT 4171 — read me first, then TASKS.md
+# CHECKPOINT 4172 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T06:52:03Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-cfd54eb0-3h0vnn` · **builds on:** `7e05ea878` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T06:54:23Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-cfd54eb0-3h0vnn` · **builds on:** `8fe49550b` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: PropLine Streaming Lite: engine WebSockets (moves, pulls, scratches, heartbeat freshness), 4 sharp books, per-book freshness on Engine > APIs, Novig marked PnL, Polymarket V2 id fix
+pre-release: PropLine Streaming Lite: engine WebSockets (moves, pulls, scratches, heartbeat freshness), 4 sharp books, per-book freshness on Engine > APIs, Novig marked PnL, Polymarket V2 id fix (versionCode 421, v1.0.81)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.81), then run: bash tools/record-release.sh v1.0.81 421 "PropLine Streaming Lite: engine WebSockets (moves, pulls, scratches, heartbeat freshness), 4 sharp books, per-book freshness on Engine > APIs, Novig marked PnL, Polymarket V2 id fix"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  8fe49550b ckpt 4171: pre-ship: PropLine Streaming Lite: engine WebSockets (moves, pulls, scratch
   7e05ea878 ckpt 4170: NR1/PR1/FR1 done (api docs mirror run, Polymarket version fix, Novig per-su
   9333357ba ckpt 4169: NR1 part: Novig /v3/portfolio/pnl read by engine every 5 min (status wallet
   b377194be ckpt 4168: PSL docs + TASKS ticks; PSL7 accuracy update written
@@ -26,5 +26,4 @@ ship.sh gates and releases this
   9de3cf282 ckpt 4164: PSL: Tj's PropLine Streaming Lite + API re-review request written into TASK
   5a31ee026 ckpt 4163: SG done: v1.0.80 released and recorded; cap $3 live; engine reset
   82290926f ckpt 4162: SG shipped as v1.0.80 (ship.sh green, on main); release.yml triggered; live
-  ccc6f8047 ckpt 4161: pre-release: SG: one money limit on similar bets (same game total at any li
 ```
