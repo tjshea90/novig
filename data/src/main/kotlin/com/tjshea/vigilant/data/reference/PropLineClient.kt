@@ -604,7 +604,8 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
         }
         val ids = leagueEvents.mapTo(HashSet()) { it.eventId }
         val current = bought.values.filter { it.novigEventId in ids && it.ask == ask && now - it.atMs < PropLineClient.propsReuseMs(it.ref.commenceMs, now) }
-        val events = current.filter { it.ref.markets.isNotEmpty() }.map { it.ref }.distinctBy { it.id }
+        // Each game's board as read, with the stream's moves, pulls and scratches since its read laid over it (PSL; unchanged without the stream).
+        val events = current.filter { it.ref.markets.isNotEmpty() }.distinctBy { it.ref.id }.flatMap { b -> client.overlay(listOf(b.ref), b.atMs) }.filter { it.markets.isNotEmpty() }
         // Novig's own prices steer reads only while young: a game's props are re-used longer.
         val novig = current.filter { now - it.atMs <= NOVIG_MAX_AGE_MS }.mapNotNull { it.novig }.distinctBy { it.id }
         val snapshot = RefSnapshot(sport, events, now, provider = ID, novig = novig)
