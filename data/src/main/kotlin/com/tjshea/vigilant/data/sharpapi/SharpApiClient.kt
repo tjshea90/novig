@@ -5,6 +5,7 @@ import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.novig.RateGate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -52,6 +53,30 @@ class SharpApiClient(
         private set
     @Volatile var rateLimit: Int? = null
         private set
+    /** How far behind the data is on this plan (`X-Data-Delay`, seconds; the Free tier says 60): a row's delivery stamp is that much younger than the price. */
+    @Volatile var dataDelayMs: Long = 0L
+        private set
+
+    /**
+     * The Free tier (Tj, 2026-10-25: "sharpapi is now the free tier, 12 requests per minute, 2 books"): a minute limit under [LITE_BELOW], as SharpAPI's own `X-RateLimit-Limit` says. The store then reads game
+     * lines only, polls each league once a minute at most, and the stream, game state, live feed and Pro extras are not asked for ([SharpApiFeed], [com.tjshea.vigilant.data.cloud.CloudSources]).
+     */
+    fun lite(): Boolean = rateLimit?.let { it < LITE_BELOW } == true
+
+    private val spacing = kotlinx.coroutines.sync.Mutex()
+    @Volatile private var lastCallAt = 0L
+
+    /** On a small plan (or before the first answer says which plan) calls are spaced evenly under the minute's limit, two calls a minute kept spare. */
+    private suspend fun space() {
+        val limit = rateLimit
+        if (limit != null && limit >= LITE_BELOW) return
+        val gap = 60_000L / maxOf((limit ?: FREE_PER_MINUTE) - 2, 1)
+        spacing.withLock {
+            val wait = lastCallAt + gap - clock()
+            if (wait > 0) kotlinx.coroutines.delay(wait)
+            lastCallAt = clock()
+        }
+    }
 
     fun hasKey(): Boolean = key().isNotBlank()
 
@@ -80,6 +105,7 @@ class SharpApiClient(
         if (wait > 0) throw SharpApiException(429, "rate_limited", "resting after a 429 for ${wait / 1000}s", restUntil)
         val url = "$baseUrl$path".toHttpUrl().newBuilder().apply { params.forEach { (n, v) -> addQueryParameter(n, v) } }.build()
         slots.withPermit {
+            space()
             gate.acquire()
             val req = Request.Builder().url(url).header("X-API-Key", k).header("Accept", "application/json").build()
             calls++
@@ -92,6 +118,7 @@ class SharpApiClient(
             }
             headers["X-RateLimit-Remaining"]?.toIntOrNull()?.let { rateRemaining = it }
             headers["X-RateLimit-Limit"]?.toIntOrNull()?.let { rateLimit = it }
+            headers["X-Data-Delay"]?.trim()?.toDoubleOrNull()?.let { dataDelayMs = (it * 1000).toLong().coerceIn(0L, 3_600_000L) }
             usage?.let { runCatching { it.recordCall(QuotaPolicy.SHARPAPI, k, 1) } }
             if (code in 200..299) {
                 failures = 0
@@ -127,5 +154,9 @@ class SharpApiClient(
         /** The Sharp plan allows 1,000 a minute; 900 leaves room for a Test by hand and the account reads. */
         const val PER_MINUTE = 900
         const val IN_FLIGHT = 4
+        /** A plan allowing fewer requests a minute than this is the Free tier's kind ([lite]). */
+        const val LITE_BELOW = 100
+        /** The Free tier's requests a minute (SharpAPI's pricing, 2026-10-25), assumed until the first answer names the plan. */
+        const val FREE_PER_MINUTE = 12
     }
 }

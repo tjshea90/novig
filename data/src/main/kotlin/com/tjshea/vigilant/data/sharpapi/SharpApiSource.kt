@@ -37,7 +37,9 @@ class SharpApiSource(
             if (feed.freshAt(slug) == 0L) throw com.tjshea.vigilant.data.reference.ReferenceException("SharpAPI: ${feed.lastNote ?: client.lastError ?: "no answer"}")
         }
         val ctx = SharpApiConvert.Context(league, wanted = null, families = settings.families, includeLive = settings.includeLive, nowMs = clock())
-        val events = SharpApiConvert.events(feed.rows(slug), ctx)
+        // The Free tier's data is 60 s behind its delivery stamp (`X-Data-Delay`): each line is dated by when its price was, so the freshness rule judges the real age.
+        val delay = client.dataDelayMs
+        val events = SharpApiConvert.events(feed.rows(slug), ctx).let { evs -> if (delay <= 0L) evs else evs.map { e -> e.copy(markets = e.markets.map { m -> m.copy(lastUpdateMs = m.lastUpdateMs?.minus(delay)) }) } }
         lastCensus[league.novigName] = SharpApiConvert.census(feed.rows(slug), ctx)
         lastReads[league.novigName] = "${events.size} games, ${events.sumOf { it.markets.size }} lines from ${events.flatMap { e -> e.markets.map { it.bookKey } }.distinct().size} books"
         return RefSnapshot(league.oddsApiSportKey, events, feed.freshAt(slug).takeIf { it > 0 } ?: now, provider = ID)

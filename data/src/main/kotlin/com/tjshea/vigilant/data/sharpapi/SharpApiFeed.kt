@@ -200,7 +200,7 @@ class SharpApiFeed(
             var soonest = Long.MAX_VALUE
             var pages = 0
             do {
-                val params = mutableListOf("league" to league, "market" to MARKETS, "limit" to "200")
+                val params = mutableListOf("league" to league, "market" to markets(), "limit" to "200")
                 cursor?.let { params += "cursor" to it }
                 val page = client.get("/odds", params)
                 if (firstUpdated == null) firstUpdated = (page["updated_at"] as? JsonPrimitive)?.content
@@ -238,7 +238,7 @@ class SharpApiFeed(
         val since = st.since ?: return false
         var offset = 0
         while (true) {
-            val page = client.get("/odds/delta", listOf("since" to since, "league" to league, "market" to MARKETS, "limit" to "500", "offset" to offset.toString()))
+            val page = client.get("/odds/delta", listOf("since" to since, "league" to league, "market" to markets(), "limit" to "500", "offset" to offset.toString()))
             deltaCalls++
             for (e in page.arr("data")) (e as? JsonObject)?.let(SaRow::parse)?.let { put(league, it) }
             for (e in page.arr("removed")) ((e as? JsonObject)?.get("id") as? JsonPrimitive)?.content?.let { remove(league, it) }
@@ -272,7 +272,7 @@ class SharpApiFeed(
                     if (now - st.askedAtMs > IDLE_MS) { drop(league); continue }
                     if (st.since == null) continue
                     val hot = st.soonestMs - now < HOT_HOURS * 3_600_000L
-                    val every = when { streamCovers(league, now) -> st.reconcileMs; st.live -> LIVE_EVERY_MS; hot -> HOT_EVERY_MS; else -> COLD_EVERY_MS }
+                    val every = when { client.lite() -> LITE_EVERY_MS; streamCovers(league, now) -> st.reconcileMs; st.live -> LIVE_EVERY_MS; hot -> HOT_EVERY_MS; else -> COLD_EVERY_MS }
                     if (now - maxOf(st.polledAtMs, st.loadedAtMs) < every) continue
                     // One coroutine a league: a slow NFL delta must not hold tennis' 1 s turn (2026-10-22: tennis stores read 18 to 115 s old behind the serial loop).
                     if (!polling_.add(league)) continue
@@ -315,6 +315,8 @@ class SharpApiFeed(
 
     fun stopPolling() { poller?.cancel(); poller = null }
 
+    private fun markets(): String = if (client.lite()) MARKETS_LITE else MARKETS
+
     /** The live feed says [league] has games in play with prices: its changes are then read every [LIVE_EVERY_MS]. */
     fun markLive(league: String, live: Boolean) { leagues[league]?.live = live }
 
@@ -350,6 +352,10 @@ class SharpApiFeed(
     companion object {
         /** The markets Vigilant prices: moneylines, every spread and total (full game and periods, team totals inside `total`), and every `player_*` prop. */
         const val MARKETS = "moneyline,spread,total,props"
+        /** The Free tier's 12 requests a minute page game lines only (a league's props are dozens of pages). */
+        const val MARKETS_LITE = "moneyline,spread,total"
+        /** On the Free tier each league's changes are read at most once a minute (its data is 60 s behind anyway). */
+        const val LITE_EVERY_MS = 60_000L
         const val TICK_MS = 500L
         const val HOT_EVERY_MS = 2_000L
         /** While the stream is live and covers a league, its REST delta is only a reconcile (rows the compact pushes could not place, anything missed). */
