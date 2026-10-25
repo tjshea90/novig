@@ -5,11 +5,11 @@
  "nonce": "15e29e",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-f1izhg",
- "head": "4e9cddac5a32b106aef89eb2dc32a6562419f5e7",
+ "branch": "claude/optimistic-curie-11lab4",
+ "head": "66d520be3b91521bed05b6e5467373497982b005",
  "since": 1792884251,
- "beat": 1792899148,
- "beatIso": "2026-10-25T03:32:28Z",
+ "beat": 1792970485,
+ "beatIso": "2026-10-25T23:21:25Z",
  "done": "CH81: diagnosed NOFILL (kickoff taps), slow bets (order end poll, push off, fills 429), FEEDHIDE; added order-end read trail",
  "next": "next: CH81 kickoff guard + who calls fills during taps + why Novig live feed not connected; CH89 stars card"
 }
