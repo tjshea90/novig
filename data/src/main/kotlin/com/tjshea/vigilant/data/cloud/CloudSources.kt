@@ -447,9 +447,11 @@ class CloudSources(
         pinnapiOn = s.gates.usePinnapi
         val pinnacleOn = s.usePinnacle && ((s.gates.usePinnodds && has(CloudKeys.PINNODDS)) || (s.gates.usePinnwire && has(CloudKeys.PINNWIRE)) || (s.gates.usePinnapi && has(CloudKeys.PINNAPI)))
         if (pinnacleOn) add(pinnacle)
-        // ParlayAPI's alternate lines are Pinnacle's: bought only when PinnWire/pinnapi aren't sending them (as on the phone).
-        parlayOdds.alternates = !pinnacleOn
-        parlayHalves.pinnacleFeedOn = pinnacleOn
+        // ParlayAPI's alternate lines and halves are Pinnacle's: bought only when PinnWire/pinnapi are sending them instead (as on the phone). Pinnodds does not count (PX10, 2026-10-25: Tj's key is the free
+        // Trial, 100 REST requests a day and no socket, so it cannot carry a scan's Pinnacle board, and counting it left ParlayAPI's alternates unbought).
+        val pinnacleAlternates = s.usePinnacle && ((s.gates.usePinnwire && has(CloudKeys.PINNWIRE)) || (s.gates.usePinnapi && has(CloudKeys.PINNAPI)))
+        parlayOdds.alternates = !pinnacleAlternates
+        parlayHalves.pinnacleFeedOn = pinnacleAlternates
         if (s.usePolymarket) add(polymarket)
         // SX Bet: markets are public but prices need the read-only key; with the switch on and a key it prices beside the other exchanges.
         if (s.gates.useSxBet && has(CloudKeys.SXBET) && !sxbet.down()) add(sxbet)
