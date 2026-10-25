@@ -9,6 +9,7 @@ import com.tjshea.vigilant.data.reference.Side
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -58,9 +59,8 @@ class ParlayLiveTest {
         val l = live()
         assertSame(e, l.overlayEvent(e, now))
         // Once the other side is heard, the spread moves.
-        l.onRow("basketball_nba", (json.parseToJsonElement(rows[1].toString().replace("\"Indiana Pacers\", \"line\"", "x")) as JsonObject).let { r ->
-            JsonObject(r.toMutableMap().apply { put("team", kotlinx.serialization.json.JsonPrimitive("Brooklyn Nets")); put("line", kotlinx.serialization.json.JsonPrimitive(4.5)); put("price", kotlinx.serialization.json.JsonPrimitive(140)) })
-        }, now)
+        val other = JsonObject(rows[1].toMutableMap().apply { put("team", JsonPrimitive("Brooklyn Nets")); put("line", JsonPrimitive(4.5)); put("price", JsonPrimitive(140)) })
+        l.onRow("basketball_nba", other, now)
         val moved = l.overlayEvent(game(spread), now).markets[0]
         assertEquals(2.4, moved.quotes[0].decimalOdds, 1e-9)
         assertEquals(1.0 + 100.0 / 167, moved.quotes[1].decimalOdds, 1e-9)
