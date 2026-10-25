@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "3081884d71b1919bb708f3f9e3a77c9d307ba3a8",
+ "head": "3e9157ea2551ec051d087e036c7d8466cf68f9c6",
  "since": 1792966905,
- "beat": 1792967458,
- "beatIso": "2026-10-25T22:30:58Z",
- "done": "PX11 written into TASKS.md (5 parts)",
- "next": "PX11a: find where 'no one was selling at that price' comes from and what the engine/phone data say"
+ "beat": 1792967594,
+ "beatIso": "2026-10-25T22:33:14Z",
+ "done": "PX11a: novig-probe.yml + cloud/OrdersProbeMain.kt (Novig's record of rejected/canceled orders, read key, ids left out); NOFILL diagnostic reads the row after it was removed (all nulls): fix next",
+ "next": "dispatch novig-probe.yml on main, read why the 4 hand orders at 21:40-41 UTC were rejected"
 }
