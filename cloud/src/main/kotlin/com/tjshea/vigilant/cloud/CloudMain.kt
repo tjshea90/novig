@@ -127,7 +127,8 @@ fun main(args: Array<String>) = runBlocking {
             if (novigKeyed?.addressRefused(System.currentTimeMillis()) == true) { delay(15_000L); continue }
             // An API switched off is never called, its account read included (Tj, 2026-10-25, PB5: "as though it doesn't exist"). Before the first settings arrive nothing is read.
             val s = latestSettings.get()
-            if (s != null) {
+            if (s == null) { delay(5_000L); continue }
+            run {
                 if (s.useParlay) { runCatching { sources.refreshParlayAccounts() }; log("ParlayAPI plans: " + sources.parlayPlans()) }
                 if (s.usePropLine) { runCatching { sources.refreshPropLineAccounts() }; log("PropLine plans: " + sources.propLinePlans()) }
                 if (sources.boltActive(s)) log(sources.boltPlanNote())
