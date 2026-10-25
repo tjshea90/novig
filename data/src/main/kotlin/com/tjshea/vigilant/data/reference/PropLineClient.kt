@@ -231,8 +231,12 @@ class PropLineClient(
     private fun asked(books: List<String>): List<String> = if (relayNovig) books + NOVIG else books
 
     /** The book-id and event-page parameters, only when [bookIds] is on. */
-    private fun idParams(): List<Pair<String, String>> =
-        if (bookIds) listOf("includeBookIds" to "true", "includeLinks" to "true") else emptyList()
+    private fun idParams(): List<Pair<String, String>> = when {
+        bookIds -> listOf("includeBookIds" to "true", "includeLinks" to "true")
+        // The stream's moves are matched to the board by PropLine's own outcome id, which only comes with includeBookIds.
+        live != null -> listOf("includeBookIds" to "true")
+        else -> emptyList()
+    }
 
     /** One reply read once: the fair-line books' games, and the same games with Novig's prices only. */
     class Board(val events: List<RefEvent>, val novig: List<RefEvent>)
