@@ -33,7 +33,12 @@ Keys stay in GitHub secrets; every keyed measurement below ran on Actions (`prop
 - SGO's docs (sportsgameodds.com/docs/llms-full.txt, 2026-10-25) list `lastUpdatedAt` per book and alternate line but never say whether it is the last price change or SGO's last read;
   they say data "may not update more than every 30 seconds to 1 minute" by plan. SGO supplied 60 of 75 quotes behind the listed bets at a median 452 s.
 - `tools/sgo_stamps.py` (`sgo-probe.yml`) reads SGO's main lines twice 2 minutes apart (does the stamp move while the price holds?) and compares SGO's push-book prices with PropLine's push copy.
-  First run: SGO's Cloudflare refuses Python's default User-Agent (error 1010); fixed. Result: below when it lands.
+  First run: SGO's Cloudflare refuses Python's default User-Agent (error 1010); fixed.
+- RESULT (run 40233212030, 20:58-21:02 UTC): NCAAF 10,040 quotes read 121 s apart: price same + stamp MOVED 4,456, price changed + stamp moved 259, price changed + stamp same 0, both same 5,325.
+  So `lastUpdatedAt` is SGO's LAST READ of the book (it moves without a price change): SGO's ages are TRUE, not overstated. SGO re-reads NCAAF about every 5 minutes (stamp median 300 s, p90 343 s);
+  NFL 2,626 quotes, none re-read inside 2 minutes (median 405 s). SGO's DraftKings / FanDuel / Fanatics NFL prices differed from PropLine's push copy (under 2 min old) on 46 of 64 lines:
+  SGO's copies of the push books are really stale, and `freshestWins` correctly takes PropLine's. Nothing to change in how SGO is dated; whether SGO still needs its 15-minute window now that
+  PropLine carries 69 books is the next census question (one rule change a day: not today).
 
 ## 5. Matching
 
