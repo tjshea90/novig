@@ -353,7 +353,8 @@ class ApiBetPlacer(
         // What Novig's own record of the order says filled (PX11a, 2026-10-25: four hand bets in a row were told "nobody was selling" while Novig was answering this account's fill reads with 429; none of
         // them was among Novig's REJECTED orders: the order said FILLED and the fills could not be read, and the row came back to the list to be bet again).
         val filledQty = order?.let { (it.qty - it.remaining).coerceAtLeast(0L) } ?: 0L
-        val filled = order?.status == "FILLED" || filledQty > 0L
+        // REJECTED is Novig's word for an order that filled nothing (an unfilled IOC/FOK/PO, NOVIG_API.md; the probe of 2026-10-25 shows remaining = qty on every one).
+        val filled = order?.status == "FILLED" || (order?.status != "REJECTED" && filledQty > 0L)
         val waitedFrom = clock()
         while (fills.isEmpty() && filled && clock() - waitedFrom < FILLS_WAIT_MS) {
             // The order filled and its fills haven't been read yet (not shown yet, or the read was refused for the rate): a little longer.
