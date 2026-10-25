@@ -1243,3 +1243,8 @@ Use propline Pinnacle. It says it is 0 seconds old. Figure out how to get the mo
 ```
 Use as many sports books as possible for all markets including alternate lines from parlayapi and propline over their streaming. All scanned bets should have as many books for the fair odds as possible, but not double counting same companies or same odds providers. This may need matching
 ```
+
+## 2026-10-25T17:18:38Z
+```
+Propline website says Pinnacle is fresh
+```
