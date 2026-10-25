@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-3cb0aa53-b2tjli",
- "head": "63750cb1572e88879c12fb32f3a1e3a6b7e632b0",
+ "head": "76fc04638084646e684c9cc77e45499430011aa3",
  "since": 1792970423,
- "beat": 1792971593,
- "beatIso": "2026-10-25T23:39:53Z",
- "done": "PX11c: bid slider never asks fewer than 3 agreeing books (BidSlider.MIN_AGREEING; was 2 above level 60); LevelSlidersTest",
- "next": "full tools/test.sh, land on main, engine reset, verify Northwestern@Oregon row has parlay books; tell Tj"
+ "beat": 1792971626,
+ "beatIso": "2026-10-25T23:40:26Z",
+ "done": "PX11f/c/d: ParlayAPI split-event fix, bid 3-book floor, per-book outlier census; full suite 4221 green",
+ "next": "engine reset onto main; after first scans check Northwestern@Oregon row has parlay books and census atLine parlay rises; tell Tj; then PX11d audit from badOddsBook after a day, PX11e Pinnacle sources"
 }
