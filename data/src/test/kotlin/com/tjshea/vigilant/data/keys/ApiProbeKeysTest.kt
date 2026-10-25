@@ -39,7 +39,7 @@ class ApiProbeKeysTest {
     private fun probe(keys: List<String> = emptyList()): ApiProbe {
         val http = OkHttpClient()
         val parlay = ParlayAccount(http, { keys }, meter, base = base("parlay"), clock = { clockMs })
-        return ApiProbe(http, meter, parlay, { clockMs }, ApiProbe.Hosts(propLine = base("pl"), oddsApi = base("odds"), unabated = base("un")))
+        return ApiProbe(http, meter, parlay, { clockMs }, ApiProbe.Hosts(propLine = base("pl"), oddsApi = base("odds"))))
     }
     private val usageBody = """{"credits_remaining": 900, "credits_total": 1000, "credits_used": 100, "tier": "starter", "period_end": "2026-11-01T00:00:00Z"}"""
 
