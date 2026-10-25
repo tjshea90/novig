@@ -163,4 +163,16 @@ class BookCompanyTest {
         assertEquals(BookCompany.of("marcaapuestas"), BookCompany.of("wplay"))
         assertEquals(6, listOf("heritage", "tab_au", "tipico", "winamax", "betclic_pt", "pinnacle").map(BookCompany::of).toSet().size)
     }
+
+    /** PX9: the same book under two feeds' keys must not count twice once SGO and PropLine are both on. */
+    @Test
+    fun `one book under two feeds' keys is one company`() {
+        assertEquals(BookCompany.of("bookmaker"), BookCompany.of("bookmakereu"))
+        assertEquals(BookCompany.of("marathon"), BookCompany.of("marathonbet"))
+        assertEquals(BookCompany.of("betfair_ex_eu"), BookCompany.of("betfairexchange"))
+        assertEquals(BookCompany.of("betfair_ex"), BookCompany.of("betfair_ex_eu"))
+        assertEquals(BookCompany.of("prophetx"), BookCompany.of("prophetexchange"))
+        // An exchange is still never folded into a sportsbook of its group.
+        assertNotEquals(BookCompany.of("betfair_ex"), BookCompany.of("fanduel"))
+    }
 }

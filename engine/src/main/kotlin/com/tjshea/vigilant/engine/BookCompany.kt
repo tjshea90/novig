@@ -48,6 +48,9 @@ object BookCompany {
         group("windcreek", "windcreek", "windcreekbet")
         group("supergroup", "betway")
         group("sporttrade", "sporttrade", "st")
+        // The same book under two feeds' keys (PX9, Tj 2026-10-25: "matched correctly"): SGO's "bookmakereu" and "marathonbet" are PropLine's / the app's "bookmaker" and "marathon", and counted as two companies.
+        group("bookmaker", "bookmaker", "bookmakereu", "bookmakereuropean")
+        group("marathon", "marathon", "marathonbet")
         group("pinnacle", "pinnacle", "pinnaclesports", "pn")
         group("circa", "circa", "circasports", "cs")
         // 1xBet: PropLine/SharpAPI send it as "onexbet", SGO and others as "1xbet" (Tj, 2026-10-24, a screenshot: "1xBet" and "1xbet" counted as 2 of 2 books agreeing).
@@ -58,6 +61,9 @@ object BookCompany {
         group("placard", "placard", "solverde")
         group("marcaapuestas", "marcaapuestas", "wplay")
     }
+
+    /** One exchange under the keys the feeds give it: PropLine's "betfair_ex" (the app's "betfair_ex_eu"), SGO's "betfairexchange", The Odds API's "betfair_ex_eu": one company, not two. */
+    private val EXCHANGE_ALIAS: Map<String, String> = mapOf("betfairexeu" to "betfairexchange", "betfairex" to "betfairexchange", "prophetexchange" to "prophetx")
 
     /** Companies whose members are exchanges, so a book of the same group is not folded into them. */
     private val EXCHANGES = setOf("betfairexchange", "betfairexeu", "betfairex", "matchbook", "smarkets", "kalshi", "polymarket", "sxbet", "novig", "prophetx", "prophetexchange")
@@ -70,7 +76,7 @@ object BookCompany {
     fun of(key: String): String {
         val low = key.trim().lowercase()
         val whole = norm(low)
-        if (whole in EXCHANGES) return whole
+        if (whole in EXCHANGES) return EXCHANGE_ALIAS[whole] ?: whole
         PARENT[whole]?.let { return it }
         // "HR-FL", "bet365.de", "fanduel_nj": drop the state or country tag and try again.
         TAIL.find(low)?.let { m ->
