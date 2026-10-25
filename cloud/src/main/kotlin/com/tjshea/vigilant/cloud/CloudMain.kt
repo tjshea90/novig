@@ -273,9 +273,15 @@ fun main(args: Array<String>) = runBlocking {
         scope.launch {
             delay(60_000L)
             while (isActive) {
+                var wait = 5 * 60_000L
                 if (novigKeyed?.addressRefused(System.currentTimeMillis()) != true) runCatching { tc.pnl() }.onSuccess { p -> if (p != null) walletPnl.set(System.currentTimeMillis() to p) }
-                    .onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("Novig pnl read failed: ${e.message?.take(120)}") }
-                delay(5 * 60_000L)
+                    .onFailure { e ->
+                        if (e is kotlinx.coroutines.CancellationException) throw e
+                        // 2026-10-25: production answered 401 "Missing credentials" (the route's spec names only the paper host): asked again hourly, not every 5 minutes.
+                        wait = 60 * 60_000L
+                        log("Novig pnl read failed (asked again in an hour): ${e.message?.take(120)}")
+                    }
+                delay(wait)
             }
         }
     }
