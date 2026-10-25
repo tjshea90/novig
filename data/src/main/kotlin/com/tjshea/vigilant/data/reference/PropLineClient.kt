@@ -565,7 +565,7 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
                 }
                 val unread = if (bulk != null) emptyList() else matches
                 // A paid key reads several games at once (the client's own spacing still sets the pace, and PropLine allows 20 in flight); the free key one at a time, as before.
-                val width = if (client.plan() != null) 6 else 1
+                val width = client.width()
                 val gate = kotlinx.coroutines.sync.Semaphore(width)
                 val results: List<Triple<String, RefEvent, Result<PropLineClient.Board?>>> = kotlinx.coroutines.coroutineScope {
                     unread.sortedBy { it.event.startsTs }.mapNotNull { m ->
