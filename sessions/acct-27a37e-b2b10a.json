@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "18078e39603c1b4c1b63bc7dca711a2fe90d221f",
+ "head": "e47ea5ebe62845683a939ada2a5aaf49abc9cbe7",
  "since": 1792889505,
- "beat": 1792909943,
- "beatIso": "2026-10-25T06:32:23Z",
- "done": "PSL1 docs saved + findings file research/PROPLINE_STREAMING_2026-10-25.md",
- "next": "PSL2-5: plan pacing, books, freshness, PropLineStream"
+ "beat": 1792910067,
+ "beatIso": "2026-10-25T06:34:27Z",
+ "done": "PSL2-5 engine side: Streaming Lite pacing (25/s, 10 wide), 4 sharp books added (SBOBET, BookMaker, Betfair Ex, theScore), outcome ids, PropLineLive overlay + PropLineStream (2 sockets) + freshness reader, status fields, scratch guard; PropLineLiveTest",
+ "next": "app: socket switch for PropLine (ApiEntry, LiveScreen, ApiSocketTogglesTest), freshness card; then NR1/PR1/FR1 reviews"
 }
