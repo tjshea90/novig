@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "10d1333e9d85b779a6bcacdd21664dfb906b0ed0",
+ "head": "80d060bf353c729e05ad3c6a52233347b8e15df0",
  "since": 1792915284,
- "beat": 1792963100,
- "beatIso": "2026-10-25T21:18:20Z",
- "done": "PX9d reverted (thinner fairs on the listed bets); cloud tests green",
- "next": "engine reset onto the revert; list_audit; then PX9i census (one limit for every feed) on 2026-10-26"
+ "beat": 1792963135,
+ "beatIso": "2026-10-25T21:18:55Z",
+ "done": "PX9 resumed and finished for today: PropLine 60-book fix live (run 40234294057: 24-26 listed, 19-22 with 5+ companies, 0 one-book); PX9d tried and reverted; SGO stamps measured",
+ "next": "PX9i on 2026-10-26: add a linesStrict census (every feed incl. SGO at the plain limit), compare near lines at 3+ companies, decide one limit; PX9c ladder idea; PinnWire's 18 keys run out daily (check usage)"
 }
