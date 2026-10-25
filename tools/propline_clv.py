@@ -329,6 +329,17 @@ def selftest():
     g = grade_bet(arch, bet)
     assert g["pl_status"] == "ok" and abs(float(g["pl_close_fair"]) - 0.5) < 1e-9 and abs(float(g["clv_pinn"])) < 1e-9, g
     assert g["beat_novig_close"] == 1 and g["pl_resolution"] == "won", g       # novig closed at -108 (cost .519): 0.50 < .519
+    # Novig labels its markets differently from Pinnacle ("PHX -5.5"): its grade is still found (PS3, 2026-10-25)
+    a2 = Archive()
+    for r in [row("pinnacle", "Philadelphia 76ers", -110, -105), row("pinnacle", "Boston Celtics", -110, -115),
+              dict(row("novig", "Philadelphia 76ers", -108, -104), market_description="PHI -3.5", resolution="lost")]:
+        a2.add(r)
+    g = grade_bet(a2, bet)
+    assert g["pl_resolution"] == "lost" and g["beat_novig_close"] == 1, g
+    a3 = Archive()
+    a3.add(dict(row("novig", "Philadelphia 76ers", -108, -104), market_description="PHI -3.5", resolution="won"))
+    g = grade_bet(a3, bet)
+    assert g["pl_resolution"] == "won" and g["pl_status"].startswith("no Pinnacle close"), g   # graded even with no Pinnacle close
     tot = dict(bet, kind="TOTAL", market="Total", selection="Over 220.5", cost="0.50")
     g = grade_bet(arch, tot)
     assert g["pl_status"] == "ok" and abs(float(g["pl_close_fair"]) - 0.4892) < 1e-3 and abs(float(g["clv_pinn"]) + 0.0217) < 1e-3, g   # Over closed -105/-115: fair .4892 (cost .50: -2.2%)
