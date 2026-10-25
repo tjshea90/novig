@@ -143,7 +143,7 @@ class CloudTrader(
         }
     }
 
-    private data class AcctPos(val marketId: String, val outcomeId: String, val dollars: Double, val payout: Double, val eventId: String?, val family: String)
+    private data class AcctPos(val marketId: String, val outcomeId: String, val dollars: Double, val qty: Long, val eventId: String?, val family: String, val label: String)
 
     /** What one Novig outcome is (its event, start, market and selection), so a position the account holds can be put in its game and family; set by the engine from the scan. */
     data class OutcomeInfo(val eventId: String, val eventName: String, val startsTs: Long, val marketLabel: String, val selection: String)
@@ -227,7 +227,7 @@ class CloudTrader(
         // the same-team-lines rule, whoever placed it. A position the scan cannot describe is still counted by its market.
         val acct = if (live) port?.positions().orEmpty().mapNotNull { p ->
             val info = describeOutcome?.invoke(p.outcomeId)
-            if (p.qty <= 0L) null else AcctPos(p.marketId, p.outcomeId, p.cost, p.qty.toDouble(), info?.eventId, info?.let { RepeatGuard.family(it.eventName, it.startsTs, it.marketLabel, it.selection) }.orEmpty())
+            if (p.qty <= 0L) null else AcctPos(p.marketId, p.outcomeId, p.cost, p.qty, info?.eventId, info?.let { RepeatGuard.family(it.eventName, it.startsTs, it.marketLabel, it.selection) }.orEmpty(), info?.selection.orEmpty())
         } else emptyList()
         val acctKeys = acct.mapTo(HashSet()) { it.outcomeId + "|" + it.marketId }
         val day = Instant.ofEpochMilli(now).atZone(ZONE).toLocalDate().toString()
@@ -266,9 +266,20 @@ class CloudTrader(
             if (fill == null) { skip("less than one contract at a positive edge"); continue }
             if (repeat != null) {
                 val bidIds = extraHeld.mapTo(HashSet()) { it.outcomeId + "|" + it.marketId }
-                val held = acct.map { RepeatGuard.Pos(it.marketId, it.outcomeId, it.dollars, it.payout, family = it.family) } + ledger.entries.filter { open(it, now) && it.outcomeId + "|" + it.marketId !in acctKeys && !(it.note.startsWith("bid") && it.outcomeId + "|" + it.marketId in bidIds) }.map { RepeatGuard.Pos(it.marketId, it.outcomeId, it.cost, it.payout, family = RepeatGuard.family(it.event, it.startsTs, it.marketLabel, it.selection)) } + extraHeld
-                RepeatGuard.check(repeat, held, o.market.marketId, o.outcome.outcomeId, fill.cost, fill.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, o.market.outcomes.map { it.outcomeId }, RepeatGuard.family(o.eventName, o.event.startsTs, o.marketLabel, o.selection))
-                    ?.let { skip("repeat guard"); continue }
+                // Who holds what (Tj, 2026-10-25): the engine's own bets and bid fills from its ledger, the desk's bids, and whatever else Novig says the account holds is Tj's, by hand.
+                val openEntries = ledger.entries.filter { open(it, now) }
+                val mine = openEntries.filter { !(it.note.startsWith("bid") && it.outcomeId + "|" + it.marketId in bidIds) }.map {
+                    RepeatGuard.Pos(it.marketId, it.outcomeId, it.cost, it.payout, family = RepeatGuard.family(it.event, it.startsTs, it.marketLabel, it.selection), who = if (it.note.startsWith("bid")) RepeatGuard.Who.BID else RepeatGuard.Who.AUTO, label = it.selection)
+                }
+                val known = TradePositions.knownQty(openEntries)
+                val byHand = acct.mapNotNull { a ->
+                    val left = a.qty - (known[a.outcomeId + "|" + a.marketId] ?: 0L)
+                    if (left <= 0L) null else RepeatGuard.Pos(a.marketId, a.outcomeId, a.dollars * left / a.qty, left * EvMath.CONTRACT_PAYOUT_DOLLARS, family = a.family, who = RepeatGuard.Who.HAND, label = a.label)
+                }
+                val held = mine + byHand + extraHeld
+                val family = RepeatGuard.family(o.eventName, o.event.startsTs, o.marketLabel, o.selection)
+                RepeatGuard.check(repeat, held, o.market.marketId, o.outcome.outcomeId, fill.cost, fill.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, o.market.outcomes.map { it.outcomeId }, family)
+                    ?.let { skip(if ("already bet" in it) "repeat guard: a similar bet is held" else if ("similar bets" in it) "repeat guard: similar-bets limit" else "repeat guard"); continue }
             }
             var entry = TradeEntry(
                 id = id, atMs = now, mode = mode.name, marketId = o.market.marketId, outcomeId = o.outcome.outcomeId, eventId = o.market.eventId, event = o.eventName, league = o.league.novigName,
@@ -381,8 +392,16 @@ class CloudTrader(
 object TradePositions {
     fun of(entries: List<TradeEntry>, excludeLive: Boolean = false): List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> =
         entries.filter { (it.status == "OPEN" || it.status == "UNCONFIRMED") && it.contracts > 0 && !(excludeLive && it.mode == "LIVE") }.map { e ->
-            com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(e.marketId, e.outcomeId, e.cost + e.fee, e.payout, family = com.tjshea.vigilant.data.tracker.RepeatGuard.family(e.event, e.startsTs, e.marketLabel, e.selection))
+            com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(e.marketId, e.outcomeId, e.cost + e.fee, e.payout, family = com.tjshea.vigilant.data.tracker.RepeatGuard.family(e.event, e.startsTs, e.marketLabel, e.selection),
+                who = if (e.note.startsWith("bid")) com.tjshea.vigilant.data.tracker.RepeatGuard.Who.BID else com.tjshea.vigilant.data.tracker.RepeatGuard.Who.AUTO, label = e.selection)
         }
+
+    /** The contracts the ledger's open entries hold per "outcome|market", so what Novig's account holds beyond them is known to be someone else's ([AccountHeld.extraBeyond]). */
+    fun knownQty(entries: List<TradeEntry>): Map<String, Long> =
+        entries.filter { (it.status == "OPEN" || it.status == "UNCONFIRMED") && it.contracts > 0 }.groupBy { it.outcomeId + "|" + it.marketId }.mapValues { (_, v) -> v.sumOf { it.contracts } }
+
+    /** The order ids of the engine's own orders, so the phone does not count the same fill twice (once imported into its Tracker, once from the engine's ledger). */
+    fun orderIds(entries: List<TradeEntry>): Set<String> = entries.mapNotNullTo(HashSet()) { it.orderId?.takeIf { id -> id.isNotBlank() } }
 }
 
 /**
@@ -390,7 +409,7 @@ object TradePositions {
  * in the repeat guard after a restart (Tj, 2026-10-22, DV4). [extra] drops what the caller already counts (by "outcome|market"), so nothing is counted twice.
  */
 class AccountHeld(private val read: suspend () -> List<com.tjshea.vigilant.data.novig.trading.NovigPosition>?, private val describe: (String) -> CloudTrader.OutcomeInfo?) {
-    @Volatile private var snapshot: List<Pair<String, com.tjshea.vigilant.data.tracker.RepeatGuard.Pos>> = emptyList()
+    @Volatile private var snapshot: List<Triple<String, com.tjshea.vigilant.data.tracker.RepeatGuard.Pos, Long>> = emptyList()
 
     /** Reads again; a failed read keeps the last good snapshot. */
     suspend fun refresh() {
@@ -398,11 +417,20 @@ class AccountHeld(private val read: suspend () -> List<com.tjshea.vigilant.data.
         snapshot = rows.filter { it.qty > 0L }.map { p ->
             val i = describe(p.outcomeId)
             val fam = i?.let { com.tjshea.vigilant.data.tracker.RepeatGuard.family(it.eventName, it.startsTs, it.marketLabel, it.selection) }.orEmpty()
-            (p.outcomeId + "|" + p.marketId) to com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(p.marketId, p.outcomeId, p.cost, p.qty.toDouble(), family = fam)
+            // qty is in 1c contracts: what it pays is qty x $0.01 (it was counted as qty dollars before 2026-10-25, which overstated a hedge's payout 100 times).
+            Triple(p.outcomeId + "|" + p.marketId, com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(p.marketId, p.outcomeId, p.cost, p.qty * EvMath.CONTRACT_PAYOUT_DOLLARS, family = fam,
+                who = com.tjshea.vigilant.data.tracker.RepeatGuard.Who.HAND, label = i?.selection.orEmpty()), p.qty)
         }
     }
 
+    /** What the account holds on outcomes the caller does not count at all (by "outcome|market"): Tj's, by hand (or a phone desk's). */
     fun extra(counted: Set<String>): List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = snapshot.filter { it.first !in counted }.map { it.second }
+
+    /** What the account holds beyond the contracts the caller's ledger has on each outcome ([TradePositions.knownQty]): Tj's part of an outcome the engine also holds is counted too. */
+    fun extraBeyond(known: Map<String, Long>): List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = snapshot.mapNotNull { (key, p, qty) ->
+        val left = qty - (known[key] ?: 0L)
+        if (left <= 0L || qty <= 0L) null else p.copy(dollars = p.dollars * left / qty, payout = left * EvMath.CONTRACT_PAYOUT_DOLLARS)
+    }
 
     companion object { const val EVERY_MS = 20_000L }
 }

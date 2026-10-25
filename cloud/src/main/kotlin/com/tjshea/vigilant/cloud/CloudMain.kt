@@ -329,8 +329,7 @@ fun main(args: Array<String>) = runBlocking {
             cancelStrays = false, newClientId = com.tjshea.vigilant.data.novig.trading.maker.MakerDesk::engineClientId, keepEndedMs = 20 * 60_000L,
             extraHeld = {
                 // Bid fills are mirrored into the ledger (onFills), so its keys cover the desk's own bets.
-                val counted = trader.ledger.entries.mapTo(HashSet()) { it.outcomeId + "|" + it.marketId }
-                com.tjshea.vigilant.data.cloud.TradePositions.of(trader.ledger.entries.filter { !it.note.startsWith("bid") }) + accountHeld.extra(counted)
+                com.tjshea.vigilant.data.cloud.TradePositions.of(trader.ledger.entries.filter { !it.note.startsWith("bid") }) + accountHeld.extraBeyond(com.tjshea.vigilant.data.cloud.TradePositions.knownQty(trader.ledger.entries))
             },
         )
         com.tjshea.vigilant.data.cloud.CloudBidRunner(
@@ -385,7 +384,7 @@ fun main(args: Array<String>) = runBlocking {
             }.getOrNull()
         },
         tc = tradingClient, port = tradePort, dir = File(out, "live"), tracker = liveTracker, confirm = { s -> sources.liveConfirm(s) }, altScore = { s, l, h, a -> sources.altScore(s, l, h, a) },
-        onEntry = liveOnEntry, ledger = { trader.ledger.entries }, accountExtra = accountHeld::extra, tell = liveTell,
+        onEntry = liveOnEntry, ledger = { trader.ledger.entries }, accountExtra = accountHeld::extraBeyond, tell = liveTell,
         journalLine = { line -> runCatching { File(File(out, "cloud").also { it.mkdirs() }, "live-light-${java.time.LocalDate.now(java.time.ZoneId.of("America/New_York"))}-run$runId.jsonl").appendText(line + "\n") } },
         paperBook = paperBook,
         log = log::invoke,
