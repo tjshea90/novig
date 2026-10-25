@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "50ee0440733712f974103845980719d0b127f2b9",
+ "head": "f44501da65b27d9bdd7d3d0cec191cb7bc86ce35",
  "since": 1792889505,
- "beat": 1792909108,
- "beatIso": "2026-10-25T06:18:28Z",
- "done": "PSL: Tj's PropLine Streaming Lite + API re-review request written into TASKS.md",
- "next": "PSL1: fetch and save PropLine docs"
+ "beat": 1792909135,
+ "beatIso": "2026-10-25T06:18:55Z",
+ "done": "PSL1 docs saved + findings file research/PROPLINE_STREAMING_2026-10-25.md",
+ "next": "PSL2-5: plan pacing, books, freshness, PropLineStream"
 }
