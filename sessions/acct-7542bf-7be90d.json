@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-3cb0aa53-b2tjli",
- "head": "ad04d7944b3aea6d86a5867b58670edb8800e297",
+ "head": "3bf49b42afbe8aa6b5b41f94408e092ffa0ee1b2",
  "since": 1792970423,
- "beat": 1792972208,
- "beatIso": "2026-10-25T23:50:08Z",
- "done": "research index rebuilt; engine reset onto main (PX11f fix)",
- "next": "verify on the new run: Northwestern@Oregon priced with ParlayAPI US books; census atLine parlay up; then tell Tj"
+ "beat": 1792972362,
+ "beatIso": "2026-10-25T23:52:42Z",
+ "done": "PR1a/b: Engine pull refreshes engine data only; Engine \u203a APIs has its own Refresh API status and meters button (EngineRefreshUiTest)",
+ "next": "ship v1.0.86 (PR1 + PX11 phone-side), release.yml, record, tell Tj; check engine run 40245944083 for parlay books on Northwestern@Oregon"
 }
