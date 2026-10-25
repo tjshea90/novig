@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "28e1d98898876d9ffe3e3f56295a039c3f6a7df2",
+ "head": "caa38346a04dbc5f1f719a21a71dc84cc0a9918c",
  "since": 1792966905,
- "beat": 1792968862,
- "beatIso": "2026-10-25T22:54:22Z",
- "done": "PX11a/b/c done in code (fill misreport fixed phone+engine, NOFILL keeps the row, book table best-first with red disagreeing books, bid veto study); full floor 4,219 green",
- "next": "ship v1.0.85, engine reset; next session: PX11f per-bet feed census (why ParlayAPI's fresh copies are lost), PX11d outlier audit, PX11e Pinnacle sources"
+ "beat": 1792968894,
+ "beatIso": "2026-10-25T22:54:54Z",
+ "done": "pre-ship: v1.0.85 PX11: a filled order whose fills Novig would not let us read yet is no longer called 'nobody was selling' (nor put back on the list to be bet twice); the bet sheet lists books best odds first and marks in red the books whose own odds say the bet is not +EV",
+ "next": "ship.sh gates and releases this"
 }
