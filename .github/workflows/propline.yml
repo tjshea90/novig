@@ -84,6 +84,11 @@ jobs:
               pl "https://api.prop-line.com/v1/markets/hit-rates?days=90" out/accuracy/hit-rates.json
               gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine Pro samples (keyless)" --notes "Real answers of PropLine endpoints, keyless."
               gh release upload propline-samples out/accuracy/* --clobber ;;
+            coverage)
+              # PS2 (2026-10-25): which books price the scanned leagues, how many post Novig's own line numbers, and which books share one odds desk (identical prices).
+              python3 -I tools/propline.py coverage out/coverage
+              gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine samples (keyless)" --notes "Real answers of PropLine endpoints, keyless."
+              gh release upload propline-samples out/coverage/* --clobber ;;
             clv) bash tools/propline_clv_job.sh ;;
             evbets) bash tools/propline_evbets_job.sh ;;
             timing)
