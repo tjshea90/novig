@@ -423,7 +423,9 @@ class ApiBetPlacer(
 
         /** A lock this close to the start is worked out as if in-game (the fee is charged by the time it fills: NOVIG_API.md §8). */
         const val LIVE_MARGIN_MS = 2 * 60_000L
-        /** How long a filled order's fills are looked for after it ended, and how often (PX11a: a rate-limited read is tried again, never taken as "nothing filled"). */        const val FILLS_WAIT_MS = 8_000L        const val FILLS_RETRY_MS = 1_500L
+        /** How long a filled order's fills are looked for after it ended, and how often (PX11a: a rate-limited read is tried again, never taken as "nothing filled"). */
+        const val FILLS_WAIT_MS = 8_000L
+        const val FILLS_RETRY_MS = 1_500L
         const val POLL_MS = 400L
 
         /** How long the first read of a just-placed order waits for the stream to say it ended, and how long a read that is behind a pushed end waits before asking again. */
