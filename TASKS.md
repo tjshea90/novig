@@ -6437,4 +6437,10 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [ ] PB10 ParlayAPI Business: docs (blog, openapi, versioning, best-practices, changelog, integrations, llms.txt, docs, websocket odds/live) saved + findings research/PARLAYAPI_BUSINESS_2026-10-25.md
 - [ ] PB11 ParlayAPI Business built: odds WebSocket/SSE on the engine laid over its boards, higher limits, books, grading/CLV, live odds + scores, freshness endpoints shown + stale filtered; 24/7 connected
 - [ ] PB12 PropLine line movement / steam / ev for the profit engine: is steam a profit signal? (study on journaled steam vs close)
+- [ ] PB14 (Tj 07:16 UTC) auto-bet and bid desk run on the sockets: re-price/cancel bids on the freshest fair odds and moves; auto-bet a Novig price that lags a fresh move (steam), sharp-book steam first
+- [ ] PB15 (Tj 07:16 UTC, screenshot: "fair odds: median 9m 53s ... this phone re-reads the listed bets' Novig prices every 15 s") answer + fix: why fair odds are ~10 min old with sockets on; the engine (not the phone) keeps the listed bets' Novig prices current over its socket; phone stops its 15 s requote while the engine does it
+- [ ] PB16 (Tj 07:16 UTC) engine -> phone delay: measure it (scan found -> cloud-feed commit -> phone read); use a lower-latency path (the engine's live SSE `liveUrl`, pushes) where it helps; answer Tj
+- [ ] PB17 (Tj 07:16 UTC) recover what paused/dropped APIs gave (grading/results, CLV studies, book coverage) from PropLine + ParlayAPI; list each feature and its new source
+- [ ] PB18 (Tj 07:58 UTC) engine defaults to the ParlayAPI BUSINESS key and stays on it (KeyPool: the key whose /v1/usage tier is business first, always; status shows it)
+- [ ] PB19 (Tj 08:04 UTC) real-time scanning: consider replacing periodic scans with a 24/7 live board fed by the PropLine + ParlayAPI sockets against Novig's bbo socket, +EV posted at once, a listed bet kept until a live feed says it is no longer +EV or Novig's socket says the price is gone (fixes bets vanishing from the list); decide, build, explain
 - [ ] PB13 full suite, ship, release, engine reset, tell Tj
