@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "3f1dadf0219871f246645e33b3bc5189751f5702",
+ "head": "4b75311ae31998cb60b334e733b7b34533b538e2",
  "since": 1792915284,
- "beat": 1792950771,
- "beatIso": "2026-10-25T17:52:51Z",
- "done": "PX census v2 + SharpApiSourceTest shutdown fix (full suite green)",
- "next": "reset engine, read census"
+ "beat": 1792950803,
+ "beatIso": "2026-10-25T17:53:23Z",
+ "done": "PX7a: engine keeps quotes inside the plain 5-min limit (no 2-min headroom, fresh-first at 5 min): Freshness.continuous (FreshFirstTest)",
+ "next": "reset engine, compare census and books per listed bet; then PX7b stream-only books/rungs from ParlayAPI"
 }
