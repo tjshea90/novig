@@ -1429,6 +1429,11 @@ data class ApiGates(
     val useSharpApi: Boolean = true,
     /** SharpAPI's WebSocket (SS, Tj 2026-10-21: the stream add-on): odds and game state pushed to the engine; off = the REST delta every 1-2 s. Only the engine ever opens it (one stream per key). */
     val sharpApiSocket: Boolean = true,
+    /**
+     * PropLine's Streaming Lite WebSocket (PSL, Tj 2026-10-25): price moves, pulled lines and late scratches pushed to the engine and laid over its PropLine boards, plus steam, grades and +EV at Novig
+     * for research. Only the engine opens it (2 connections on the plan); off = the REST reads every couple of minutes, as before. Needs a Streaming key on GitHub.
+     */
+    val propLineSocket: Boolean = true,
     /** SX Bet: keep its WebSocket (best-odds and live-score channels) open and read books from it; off = the REST read every scan. Only matters while [useSxBet] is on. */
     val sxSocket: Boolean = true,
     /** BoltOdds: price the fair line with every sportsbook it lists (not only the picked ones). */
