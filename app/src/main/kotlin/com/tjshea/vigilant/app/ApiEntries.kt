@@ -68,7 +68,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
      * Whether the API has a WebSocket the app can keep open (Tj, 2026-10-13: "a toggle for socket on or off" for every API that has one). Socket on = the connection is kept for real-time prices; socket
      * off with the API still on = the regular requests; the API off = never called ([isOn]). Novig's own market feed has its switch beside these rows ([novigSocket]).
      */
-    val hasSocket: Boolean get() = this == BOLTODDS || this == PINNODDS || this == KALSHI || this == SXBET || this == SHARPAPI
+    val hasSocket: Boolean get() = this == BOLTODDS || this == PINNODDS || this == KALSHI || this == SXBET || this == SHARPAPI || this == PROPLINE
 
     fun socketOn(s: ScanSettings): Boolean = when (this) {
         BOLTODDS -> s.gates.boltSocket
@@ -76,6 +76,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         KALSHI -> s.gates.kalshiSocket
         SXBET -> s.gates.sxSocket
         SHARPAPI -> s.gates.sharpApiSocket
+        PROPLINE -> s.gates.propLineSocket
         else -> false
     }
 
@@ -85,6 +86,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         KALSHI -> s.copy(gates = s.gates.copy(kalshiSocket = on))
         SXBET -> s.copy(gates = s.gates.copy(sxSocket = on))
         SHARPAPI -> s.copy(gates = s.gates.copy(sharpApiSocket = on))
+        PROPLINE -> s.copy(gates = s.gates.copy(propLineSocket = on))
         else -> s
     }
 
@@ -96,6 +98,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
             SXBET -> "On (needs your SX Bet key): the best-odds and live-score channels push every change, so books are read from the socket. Off: the REST read every scan."
             KALSHI -> "On (needs your Kalshi key): a socket pushes every price change, so scans read Kalshi without asking it. Off: the signed or public REST read every scan."
             SHARPAPI -> "On (needs the stream add-on): the GitHub engine keeps SharpAPI's WebSocket open, so every price change and live score is pushed to it. Off: the engine asks for the changes every 1-2 seconds. The phone never opens it (one stream per key)."
+            PROPLINE -> "On (needs a Streaming Lite key on GitHub): the GitHub engine keeps PropLine's two WebSockets open, so every price move, pulled line and late scratch is pushed to it within seconds, and steam, grades and +EV at Novig are saved for study. Off: the engine reads PropLine every couple of minutes. The phone never opens them (2 connections on the plan)."
             else -> ""
         }
 
