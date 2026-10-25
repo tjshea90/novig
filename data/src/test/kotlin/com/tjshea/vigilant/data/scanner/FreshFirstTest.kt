@@ -21,4 +21,16 @@ class FreshFirstTest {
         assertEquals(listOf("fd", "dk", "pinnacle"), pick(B("fd", 60), B("dk", 90), B("pinnacle", 300, sharp = true)))
         assertEquals(listOf("fd", "dk", "circa"), pick(B("fd", 60), B("dk", 90), B("pinnacle", 300, sharp = true), B("circa", 30, sharp = true)))
     }
+
+    /** PX (2026-10-25): on the engine (the list re-priced every 3 s) a book is left out beside fresh ones only past the plain 5-minute limit, and a scan keeps no 2-minute headroom. */
+    @Test fun `on the engine a 4-minute-old book stays beside fresh ones`() {
+        try {
+            Freshness.continuous = true
+            assertEquals(listOf("fd", "dk", "hardrock"), pick(B("fd", 60), B("dk", 90), B("hardrock", 240)))
+            assertEquals(listOf("fd", "dk"), pick(B("fd", 60), B("dk", 90), B("bovada", 330)))
+            assertEquals(0L, Freshness.MIN_SHOWN_MS)
+        } finally {
+            Freshness.continuous = false
+        }
+    }
 }
