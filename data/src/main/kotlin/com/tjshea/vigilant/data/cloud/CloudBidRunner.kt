@@ -100,7 +100,7 @@ class CloudBidRunner(
     /** The resting and filled bids as positions for the trader's repeat guard (resting bids count as filled: they may fill any moment). */
     suspend fun positions(): List<RepeatGuard.Pos> = desk.bids().filter { it.active || it.filled > 0 }.map { b ->
         val n = if (b.active) maxOf(b.contracts, b.filled) else b.filled
-        RepeatGuard.Pos(b.marketId, b.outcomeId, n * b.price * EvMath.CONTRACT_PAYOUT_DOLLARS, n * EvMath.CONTRACT_PAYOUT_DOLLARS, family = RepeatGuard.family(b.eventName, b.startsTs, b.marketLabel, b.selection))
+        RepeatGuard.Pos(b.marketId, b.outcomeId, n * b.price * EvMath.CONTRACT_PAYOUT_DOLLARS, n * EvMath.CONTRACT_PAYOUT_DOLLARS, family = RepeatGuard.family(b.eventName, b.startsTs, b.marketLabel, b.selection), who = RepeatGuard.Who.BID, label = b.selection)
     }
 
     override suspend fun pass(s: ScanSettings, now: Long): BidStatus? {
