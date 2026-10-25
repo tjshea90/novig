@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "51f196e046cb929f9d6299f3d9d817cbbc047998",
+ "head": "ed57aa38f170c8eca90c3701dd46fdbcca4b4082",
  "since": 1792912591,
- "beat": 1792914938,
- "beatIso": "2026-10-25T07:55:38Z",
- "done": "retry landing",
+ "beat": 1792914967,
+ "beatIso": "2026-10-25T07:56:07Z",
+ "done": "research index rebuilt (ParlayAPI Business docs folder)",
  "next": "trigger parlay.yml streamprobe"
 }
