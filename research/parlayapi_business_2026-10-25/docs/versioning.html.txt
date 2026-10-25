@@ -1,0 +1,69 @@
+ 
+ ParlayAPI Versioning + Deprecation Policy 
+ Parlay API 
+ Docs 
+ Best Practices 
+ Changelog 
+ Get free key 
+ Versioning + deprecation policy
+ How we version the API, what counts as a breaking change, how long deprecation windows are, and how we communicate. Written policy so customers integrating us today can plan around our future moves.
+ Current version
+ The API is path-versioned at /v1 . Every public route lives under that prefix:
+ https://parlay-api.com/v1/sports/baseball_mlb/odds
+https://parlay-api.com/v1/meta/changelog
+https://parlay-api.com/v1/clv/history 
+ The platform release version is published on every response in the X-API-Version header (current: 3.2.0 ) and the X-API-Release-Date header.
+ What we call a breaking change
+ A change is breaking if it could plausibly break an existing integration written against the documented behavior. Specifically:
+ Removing an endpoint.
+ Removing or renaming a response field.
+ Removing or renaming a request parameter that's currently required.
+ Tightening the input validation on an existing endpoint such that previously-accepted requests now 400.
+ Changing the type of a response field (e.g. number to string).
+ Changing the semantic meaning of a field (e.g. "implied probability" returned as a fraction in one version and a percent in another).
+ Reducing the rate limit on a tier.
+ We will not make a breaking change to /v1 without a written deprecation notice, a migration path, and a fixed sunset date. See below.
+ What we DON'T call a breaking change
+ Adding a new endpoint.
+ Adding a new field to an existing response.
+ Adding a new optional request parameter.
+ Loosening input validation (accepting more shapes than before).
+ Fixing a bug. If your code depended on bugged behavior, please tell us so we can decide together; in practice we cap bug-fix rollbacks at one cycle.
+ Internal performance improvements that don't change the API surface.
+ Changing a sport_key (we use SPORT_KEY_ALIASES to keep old keys working; you don't need to migrate).
+ Adding a new bookmaker to an existing region or sport.
+ Increasing the rate limit on a tier.
+ Deprecation windows
+ Every breaking change goes through the same lifecycle:
+ Stage
+ Duration
+ What happens
+ Announce 
+ Day 0
+ Public changelog entry + Deprecation response header on the affected endpoint + email to affected customers (we identify them by API-key usage of the deprecated surface).
+ Soft deprecation 
+ 90 days minimum
+ Endpoint still works; response includes Deprecation: true header and Sunset: <rfc-1123 date> header. SDK changelog updated. New customers are nudged to the new shape.
+ Hard sunset 
+ After sunset date
+ Endpoint returns 410 Gone with a structured body pointing at the replacement. Or, where backward-compatible, the old shape continues working with the new behavior.
+ 90 days is a floor, not a ceiling. We've extended several deprecations to 180 days when a customer cohort needed more migration time. Enterprise contracts can negotiate longer; ask before you commit.
+ How we communicate deprecations
+ Changelog: entry tagged deprecation on /changelog on day 0.
+ Machine-readable feed: the deprecation appears in /v1/meta/changelog with tags: ["deprecation"] . SDK boot logic can poll for new deprecations.
+ Response headers: the deprecated endpoint returns Deprecation: true , Sunset: <rfc-1123> , and Link: <replacement-url>; rel="successor-version" .
+ Email: we email API-key holders whose recent usage included the deprecated surface. No spam; only deprecation notices for endpoints you've actually called in the last 30 days.
+ Status posts: we cross-post in r/parlayapi .
+ v1 stability commitment
+ The /v1 namespace is committed to backward compatibility through 2027. We don't plan to ship /v2 before then. If we do, /v1 will continue to work in parallel for at least 12 months after /v2 GA.
+ Internal experiments that we're not ready to commit to live under /v1/experimental/* and explicitly opt out of this stability commitment. The header X-Experimental: true appears on every response. Expect breakage there; don't build production integrations on experimental routes.
+ What's deprecated right now
+ Current deprecation list (always current; this section is generated from the live policy):
+ Nothing currently sunsetting. The last deprecation cycle ( ?event_ids= alias accepted alongside the canonical ?eventIds= ) ended at end-of-life on 2026-04-30; the alias is now permanent at no cost to the customer.
+ Suggested customer practices
+ Subscribe to the RSS feed or poll /v1/meta/changelog for tags: ["deprecation"] entries.
+ Check for Deprecation and Sunset response headers in your SDK error / warning layer. Surface them to your operators.
+ If you're on an enterprise tier and need longer windows than 90 days, raise it before procurement closes; we'll write it into the contract.
+ For long-lived integrations (1+ year), pin to X-API-Version in your logs so you can audit what version was running during any historical period.
+ The honest commitment. We've never sunset a v1 endpoint with less than 90 days notice. We don't plan to start. If a breaking change is unavoidable (security, legal scope, upstream restructure), the timeline shrinks but the communication doesn't; we'd ship a public runbook the same hour the change went live.
+ ParlayAPI · /docs/best-practices · /changelog · /security 

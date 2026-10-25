@@ -1,0 +1,116 @@
+ 
+ Integrations | ParlayAPI 
+ Parlay API 
+ Try 
+ Board 
+ Docs 
+ FAQ 
+ Get free key 
+ Integrations
+ Every way to plug ParlayAPI into your stack. Reference clients in eight languages, Postman/Bruno/Insomnia collections auto-generated from the OpenAPI spec, MCP server for Cursor & Claude, llms.txt for AI agents, embeddable widgets, status badges, and HMAC-signed webhooks. If you're missing one, open an issue .
+ API clients (8 languages)
+ Python stdlib only 
+ Production-grade single-file client. Capped exponential backoff, Retry-After, idempotency keys, typed exceptions. requests + dataclasses, nothing else.
+ View 
+ Quickstart 
+ JavaScript / Node zero deps 
+ Browser + Node 18+. Uses fetch (native everywhere now). Same retry semantics, same idempotency helper, same typed Error.
+ View 
+ Quickstart 
+ Go stdlib only 
+ Single .go file. context.Context throughout, net/http, encoding/json. No external dependencies.
+ View 
+ Quickstart 
+ Ruby stdlib only 
+ Ruby 3.0+. net/http + json + securerandom. Keyword args, raises ParlayAPI::Error.
+ View 
+ Quickstart 
+ Java stdlib only 
+ Java 17+. java.net.http only, no Jackson/Gson. Returns raw JSON strings; pipe into your preferred deserializer.
+ View 
+ Quickstart 
+ PHP no composer 
+ PHP 8.1+. Strict types, named-arg constructor, curl extension only. Typed ParlayException.
+ View 
+ Quickstart 
+ C# / .NET no nuget 
+ .NET 6+. System.Net.Http + System.Text.Json only. Builder, IDisposable, async-throughout, CancellationToken.
+ View 
+ Quickstart 
+ Rust async / tokio 
+ Rust 1.75+. tokio + reqwest + serde_json + thiserror. Async-throughout, typed Error enum, Builder pattern.
+ View 
+ Quickstart 
+ API tooling
+ OpenAPI 3.1 auto-generated 
+ Full machine-readable spec at /openapi.json. Generate clients in any language with openapi-generator-cli.
+ openapi-generator-cli generate \
+ -i https://parlay-api.com/openapi.json \
+ -g typescript-axios -o ./parlay-api-ts 
+ Download 
+ Swagger UI 
+ Redoc 
+ Postman 2.1 start here 
+ Curated collection: 30 requests in six folders, each with a written description and a pre-filled example. Thirteen of them run with no API key, no signup and no card, so you can import it and press Send before you have an account. Imports into Insomnia, Bruno, Hoppscotch and HTTPie too.
+ # In Postman: Import → Link →
+https://parlay-api.com/collections/ParlayAPI.postman_collection.json 
+ What is in it 
+ Download 
+ Postman 2.1 auto-generated 
+ The whole surface instead of a curated slice: every operation in the spec, one request each, rebuilt from /openapi.json on every deploy so it cannot go stale. No prose and no examples, which makes it the right import for code generation and the wrong one for a first look.
+ # In Postman: Import → Link →
+https://parlay-api.com/collections/postman.json 
+ Download 
+ Bruno / Insomnia via OpenAPI 
+ Both editors import OpenAPI 3.1 natively. Point them at /openapi.json. Bruno's bru-cli can also generate per-request .bru files into your repo.
+ bru import --type openapi \
+ --source https://parlay-api.com/openapi.json 
+ AI agent integrations
+ llms.txt AI discovery 
+ Single-fetch landing page for AI search engines and agent crawlers. Lists every public endpoint, blog post, reference client, and HTML page with one-line descriptions. Spec: llmstxt.org .
+ View llms.txt 
+ Claude / Cursor MCP server v0.3 
+ parlayapi-mcp wraps every endpoint as an MCP tool. Drop it into Claude Desktop or Cursor settings and let the agent fetch odds, score bets, find arbs, run +EV scans, etc. directly.
+ pip install parlayapi-mcp
+# claude_desktop_config.json:
+{ "mcpServers": {
+ "parlay-api": {
+ "command": "parlayapi-mcp",
+ "env": { "PARLAY_API_KEY": "pak_live_..." }
+ }
+} } 
+ PyPI 
+ Source 
+ Blog: building a betting agent recipes 
+ Four recipes for plugging a sportsbook into Claude: live-odds, EV scanning, bet logging with auto-CLV, and arb-alert subscriptions.
+ Read 
+ Live embeds
+ Arbs widget iframe 
+ Drop live cross-book arbitrage onto any site. 30s auto-refresh, sport selector, dark transparent theme. iframe-friendly CSP.
+ <iframe src="https://parlay-api.com/widget/arbs?sport=baseball_mlb"
+ width="100%" height="320" frameborder="0"></iframe> 
+ Widget gallery 
+ +EV widget iframe 
+ Live Pinnacle-anchored +EV plays.
+ <iframe src="https://parlay-api.com/widget/ev?sport=baseball_mlb"
+ width="100%" height="320" frameborder="0"></iframe> 
+ Middles widget iframe 
+ Live cross-book totals middles.
+ <iframe src="https://parlay-api.com/widget/middles?sport=americanfootball_nfl"
+ width="100%" height="320" frameborder="0"></iframe> 
+ Status badges SVG 
+ Shields.io-compatible SVG badges for README files and status pages. Show ParlayAPI's uptime, source count, or your own per-book SLA tier.
+ ![status](https://parlay-api.com/badge/uptime.svg)
+![sources](https://parlay-api.com/badge/sources.svg) 
+ Webhooks & events
+ HMAC-signed alert webhooks push 
+ Subscribe to source-quality breach alerts, edge-detection triggers, and odds-movement events. Every payload is HMAC-SHA256 signed; verify with your subscription secret.
+ Signature spec 
+ Slack/Discord relay 
+ WebSocket streaming scale tier+ 
+ wss://parlay-api.com/v1/ws, sub-second odds pushes with subscribe/unsubscribe per (sport, market, book). SSE fallback at /v1/sse/odds for HTTP-only clients.
+ Docs 
+ Python example 
+ What's missing?
+Want a Kotlin client, an Elixir wrapper, a Zapier integration, or first-class support for some niche editor? Open an issue at github.com/JacobiusMakes . We prioritize integrations that lower the time-to-first-call for new customers.
+ ParlayAPI · /docs · /docs/sdks · /widgets · /faq 

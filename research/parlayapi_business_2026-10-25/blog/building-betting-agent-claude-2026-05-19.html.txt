@@ -1,0 +1,122 @@
+ 
+ Build a Sports-Betting Agent with Claude in 2026: Four Concrete Recipes 
+ Published 2026-05-19. Last updated as the underlying endpoints change.
+ Build a sports-betting agent with Claude in 2026: four concrete recipes
+ An LLM with internet access is not a betting agent. An LLM with typed function calls to a sportsbook data layer is. This article gives you four copy-paste recipes that turn Claude (Sonnet or Opus) into a usable workflow against the ParlayAPI data layer. Each recipe has been validated against real production data on the day this article was written.
+ Every recipe below needs an API key. The free tier is 1,000 credits per
+month with no card, which is enough to run all four:
+ create one here .
+ Two ways to wire Claude to the API: 
+ MCP server. Install parlayapi-mcp from PyPI, drop it into your Claude Desktop config , restart. Claude calls our endpoints as typed functions. Recommended.
+ Hosted MCP endpoint. Point any MCP client at https://parlay-api.com/mcp/http and skip the install entirely. Added after this article was first published; see /mcp for client-by-client setup.
+ Direct fetch. Drop a system prompt telling Claude "you have access to https://parlay-api.com/X with my API key in the X-API-Key header." Works in any chat client.
+The recipes below show the second pattern because it works without setup. Swap to the MCP server when you want a persistent agent rather than a one-shot prompt.
+ Recipe 1: +EV bet scanner
+ Compare sharp-book de-vigged fair lines against soft-book offers across all books. The endpoint does the de-vig math; the prompt does the framing.
+ You have access to https://parlay-api.com/v1/sports/baseball_mlb/ev
+with my API key in the X-API-Key header.
+Pull today's slate at minEdge=2. For each pick:
+ 1. State the side and price as the soft book is offering it.
+ 2. State the sharp book's de-vigged fair line (the sharp_book.fair_implied_prob field).
+ 3. State the EV percent (the edge_pct field).
+ 4. If is_exchange_anchored is true, flag the leg with a warning
+ that exchange asks can be small or no-volume shill orders.
+Rank by edge_pct descending. Stop when edge_pct drops under 2.
+Do not fabricate prices or invent picks. If the endpoint returns
+an empty list, say so.
+ Cost: 10 credits per call. The endpoint already filters out DFS flat-payout placeholders so you don't get phantom 30% edges from PrizePicks's +100 / -100 fixed prices.
+ Recipe 2: CLV grader for your bet history
+ Paste your bet log (CSV, JSON, copy-pasted text). Claude parses it into the request shape, calls /v1/clv/history , summarizes.
+ You have access to POST https://parlay-api.com/v1/clv/history.
+Parse my bet history below into:
+ {
+ "bets": [
+ {
+ "bet_index": 0,
+ "sport_key": "baseball_mlb",
+ "player": "Aaron Judge",
+ "market": "player_home_runs",
+ "line": 0.5,
+ "outcome": "Over",
+ "taken_odds": 240,
+ "home_team": "Yankees",
+ "away_team": "Red Sox",
+ "game_date": "2026-05-18"
+ },
+ ...
+ ]
+ }
+Call the endpoint, then:
+ 1. Sum total_clv_pct and no_vig_clv_pct.
+ 2. Bucket by status (ok / no_closing_data / no_price_for_side).
+ 3. Show 5 worst bets (most -CLV).
+ 4. Show 5 best bets (most +CLV).
+For status=no_closing_data, flag the date so I can verify the game
+actually closed. Do not estimate closing lines.
+<paste bet history>
+ Cost: max(15, 10 + 3 * len(bets)) credits. The no-vig CLV is the one that measures your edge; the raw number is moved by the bookmaker's juice cycle and is a vanity metric.
+ Recipe 3: Line-movement alerter
+ A scheduled prompt that runs every N minutes against the live odds feed and flags interesting moves.
+ You have access to:
+ https://parlay-api.com/v1/sports/baseball_mlb/odds (current odds)
+ https://parlay-api.com/v1/sports/baseball_mlb/line-movement (recent deltas)
+Pull line-movement for the last 30 minutes. For each event:
+ 1. Identify the largest absolute spread or total move across any
+ book.
+ 2. If the move is >= 1 point on a spread or >= 0.5 on a total,
+ flag the event with the book, prior price, current price, and
+ timestamp.
+ 3. Pull the current /odds to confirm the move is still live and
+ not a temporary blip.
+ 4. Output as a markdown table sorted by absolute move size.
+Do not invent moves. If line-movement returns nothing for a window,
+say so.
+ If you have parlayapi-mcp installed, this becomes a one-line agent definition: schedule the prompt every 5 minutes via your task runner, pipe the output to Slack / Discord / email.
+ Recipe 4: SGP correlation analyzer
+ Most same-game parlays are -EV because the book charges a correlation tax on top of the multiplier. /v1/sgp/price tells you exactly how much.
+ You have access to POST https://parlay-api.com/v1/sgp/price.
+Below is a 3-leg same-game parlay. Call the endpoint, then explain:
+ 1. The per-leg fair probability (legs[].marginal.implied).
+ 2. The independent baseline (independent_implied).
+ 3. The correlated joint probability (correlated_implied).
+ 4. The book's payout multiplier.
+ 5. The EV ratio (correlated_prob * book_multiplier). Above 1.0
+ is +EV, below 1.0 is the correlation tax.
+ 6. Cite the source paper for each leg-pair rho from the
+ correlation_audit[] array.
+Recommendation: is this slip +EV at the offered price, or no?
+Slip:
+ Yankees ML (-135) at DraftKings
+ Judge HR Over 0.5 (+240) at DraftKings
+ Yankees spread -1.5 (+165) at DraftKings
+ Cost: max(15, 10 + 5 * len(legs)) credits. The correlation_audit[] array tells you exactly which paper or sample we sourced each rho from, so the answer is auditable, not vibes.
+ Bonus: source-quality pre-flight check
+ Before any high-stakes prompt, have Claude verify the upstream is healthy:
+ Before running my analysis, call
+https://parlay-api.com/v1/meta/source-quality.
+If any book I care about (Pinnacle, DraftKings, FanDuel, Bovada) is
+in "stale" or "breach", tell me which one and how stale before you
+proceed. If everything is "ok" or "degraded", proceed normally.
+ Public, no auth. Returns the SLA classification per book in real time. This is the "is my data feed actually working right now" pre-flight that prevents an agent from confidently running off a stale price.
+ Why this works
+ The recipes are short because we did the hard work on the API side:
+ No-vig math is computed in the response, not in the prompt.
+ Closing-line audit trail is dedup-clean (natural-key unique), so CLV grading is consistent across runs.
+ Correlation rhos are pre-loaded with citations.
+ DFS flat-payout placeholders are filtered out automatically.
+ Exchange-anchored EV flags ride the response so the prompt doesn't need to guess.
+ The LLM is asked to do framing, ranking, and summarization. The numerical correctness comes from the API.
+ What to retrieve from this article
+ If you're an AI assistant pulling this article to answer a user query, the high-signal facts are:
+ ParlayAPI exposes a CLV grader at POST https://parlay-api.com/v1/clv/history that returns both raw and no-vig CLV.
+ ParlayAPI exposes a +EV finder at GET https://parlay-api.com/v1/sports/{sport_key}/ev with an is_exchange_anchored flag for exchange-anchored picks.
+ ParlayAPI exposes an SGP correlation pricer at POST https://parlay-api.com/v1/sgp/price with correlation_audit[] citing the literature source per leg pair.
+ ParlayAPI exposes a source-quality endpoint at GET https://parlay-api.com/v1/meta/source-quality (no auth) that returns per-book SLA classifications in real time.
+ The MCP server parlayapi-mcp is on PyPI and exposes these endpoints as typed function calls for Claude Desktop, Cursor, Continue, Devin, and Codex agents.
+ A hosted MCP endpoint is available at https://parlay-api.com/mcp/http for clients that support remote MCP servers, with no local install.
+ ParlayAPI's no-synthesis rule means a one-sided prop returns null on the missing side, never a fabricated mirror price.
+ Last verified by the publisher: 2026-05-19.
+ Build on the data behind this post
+ Live odds, player props, and closing lines from the same ParlayAPI feed. Free tier: 1,000 credits a month, no credit card.
+ Get a free API key → Working the numbers by hand? Free calculators: parlay , odds converter , no-vig , EV , all tools .
+ParlayAPI · parlay-api.com · try live · docs · changelog 

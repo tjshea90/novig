@@ -1,0 +1,119 @@
+ 
+ ParlayAPI Best Practices: Production-Grade Integration Guide 
+ Parlay API 
+ Docs 
+ Try 
+ Board 
+ Changelog 
+ Get free key 
+ Contents
+ Authentication 
+ Rate limits + headers 
+ Retries + backoff 
+ Idempotency keys 
+ Error taxonomy 
+ WebSocket reconnection 
+ Caching + ETags 
+ Observability 
+ Security 
+ Cost management 
+ Degraded-mode handling 
+ SDK + tooling 
+ ParlayAPI best practices
+ Production-grade integration patterns. Every section here came out of a real customer issue, a real outage, or a real support ticket. If your integration is going to run unattended, work through this list end-to-end.
+ Authentication
+ Pass your API key as X-API-Key: <key> (header) or ?apiKey=<key> (query). Both are first-class; the header is preferred because query strings leak into logs.
+ One key per environment. Don't reuse production keys in development; the dashboard supports unlimited keys per account.
+ Rotate keys quarterly. The dashboard supports key rotation with a 24h overlap window.
+ Never bake keys into client-side JS shipped to browsers. If you need browser-side access, use a backend proxy with a per-user rate limit.
+ Rate limits and headers
+ Every response carries:
+ Header
+ Meaning
+ X-RateLimit-Limit 
+ Credits allotted for the current period. Paid tiers return unlimited ; free tier returns the per-second cap.
+ X-RateLimit-Remaining 
+ Credits remaining before the next period.
+ X-RateLimit-Reset 
+ Epoch seconds when the limit resets.
+ Retry-After 
+ Present only on 429 responses. Seconds to wait before retrying.
+ Paid tiers don't have a per-second rate limit; you're metered on monthly credits. Free tier is 60 req/s for anti-abuse during evaluation. Estimate your monthly burn before committing.
+ Retries and backoff
+ Retry only on these classes of failure:
+ connection_error / read_timeout : network blip. Retry with capped exponential backoff (1s, 2s, 4s, 8s, cap 60s).
+ 502 : gateway momentarily unhealthy. Retry once after 1s.
+ 503 with Retry-After : explicit "wait then retry." Honor the header; don't poll faster.
+ 429 : rate limited. Honor Retry-After .
+ Do NOT retry on:
+ 400 / 422 : your request is malformed. Retrying produces the same error.
+ 401 : auth is wrong. Fix the key.
+ 403 / 404 : permission or routing problem. Retrying makes it worse.
+ Concrete Python pattern:
+ import httpx
+import time
+def fetch_with_retry(url, headers, max_attempts=5):
+ backoff = 1.0
+ for attempt in range(max_attempts):
+ try:
+ r = httpx.get(url, headers=headers, timeout=10.0)
+ if r.status_code == 429:
+ wait = int(r.headers.get("Retry-After", "60"))
+ time.sleep(wait)
+ continue
+ if r.status_code in (502, 503, 504):
+ time.sleep(backoff)
+ backoff = min(60.0, backoff * 2)
+ continue
+ return r
+ except (httpx.ConnectError, httpx.ReadTimeout):
+ time.sleep(backoff)
+ backoff = min(60.0, backoff * 2)
+ return None # caller decides what to do 
+ Idempotency keys
+ All POST , PUT , PATCH , DELETE endpoints accept an Idempotency-Key header. Pass a per-request UUID; we cache the response by key for 24 hours. Replays return the original response with X-Idempotency-Replay: true .
+ Use cases: webhook deliveries that you retry on transient failure, CLV history grading that's expensive and you don't want billed twice, bet imports where the customer might double-click.
+ Error taxonomy
+ Every error response is structured: {"error": "MACHINE_CODE", "message": "human readable", "request_id": "...", "docs_url": "..."} . Log the request_id for every non-2xx; we use it to look up the exact request in our logs.
+ Full code list at /errors .
+ WebSocket reconnection
+ The most common WebSocket bug we see: clients reconnect on every long quiet window instead of trusting the heartbeat.
+ The 5-second heartbeat is the liveness signal. If you're receiving heartbeats, your connection is healthy.
+ Each heartbeat carries quiet_seconds (time since last broadcast to you) and upstream.worst_sla (the worst SLA across all books). Long quiet + worst_sla: ok means the market is quiet; long quiet + worst_sla in {"stale", "breach"} means an upstream is having a moment.
+ Use a 30-second silent watchdog (no message of any kind for 30s) to force a reconnect.
+ Capped exponential backoff on reconnect: 1s, 2s, 4s, ... 60s cap.
+ Reference clients at examples/ws_reference_client.py and .js . Full cookbook at the WebSocket reconnect cookbook .
+ Caching + ETags
+ Metadata endpoints ( /v1/meta/* , /v1/sports , /v1/bookmakers ) carry ETag headers and honor If-None-Match for cheap 304 polling. Use this on dashboards and SDK boot logic.
+ Live odds endpoints have short server-side caches (5-15s depending on cadence) but no ETag ; the data changes too often to make conditional polling useful. Build your own client-side cache keyed by (sport_key, regions, markets) with the same TTL.
+ Observability
+ Every response carries:
+ X-Request-ID : 32-hex per-request trace ID. Log this for every non-2xx; we use it to look up requests in our logs.
+ X-Response-Time : server processing time in ms.
+ Server-Timing: total;dur=X, auth;dur=Y, handler;dur=Z : time breakdown across the gateway, auth layer, and handler.
+ X-API-Version + X-API-Release-Date : deploy identity.
+ Send X-Request-Id: <your-trace-id> to propagate your tracing ID through our logs. We honor W3C Trace Context ( traceparent header) end-to-end.
+ Security
+ API keys are bearer credentials. Treat them like passwords. Never commit them to git.
+ We publish a security disclosure policy at /.well-known/security.txt .
+ Webhook payloads are signed: HMAC-SHA256 in X-Parlay-Signature: t=<ts>,v1=<hex> . Verify before processing. Reject on signature mismatch.
+ All endpoints serve over TLS 1.2+ only. We score A+ on SSL Labs.
+ Cost management
+ /cost calculator : pick endpoints + cadence, get monthly burn estimate.
+ POST /v1/meta/quote : preview the cost of a single request without running it.
+ POST /v1/meta/batch-quote : preview up to 500 requests in one call.
+ GET /v1/usage : current period spend, broken down by endpoint family.
+ Burst alerts: configure a webhook to fire at 50% / 75% / 90% of monthly credits in your dashboard.
+ Degraded-mode handling
+ Sportsbook ingestion is never 100% green. WAFs block, books rotate auth, networks blip. Build your integration assuming SOME source will be stale at any given moment.
+ Check /v1/meta/source-quality before betting on a specific book. sla tells you whether the source is reachable; price_write_sla tells archive-backed REST users whether priced rows are fresh. Treat {"breach", "stale", "missing"} as unsafe for live execution.
+ The WS heartbeat's upstream.worst_sla tells you the same thing in real time.
+ When the primary gateway fails over, you'll see 503 with error: PRIMARY_TIER_UNAVAILABLE on /v1/* routes. Retry with backoff; recovery is typically <60s.
+ SDKs and tooling
+ Postman / Insomnia / Bruno: import /collections/postman.json .
+ OpenAPI 3: /openapi.json . Drive Stainless, Speakeasy, or openapi-generator for typed SDKs in any language.
+ AsyncAPI 3: /v1/asyncapi.json for the WebSocket and SSE surfaces.
+ MCP server: pip install parlayapi-mcp . Native Claude Desktop / Cursor / Continue / Devin / Codex integration.
+ Reference WS clients: Python and JavaScript .
+ Source-quality alert relay: drop-in Python + JS receivers at examples/source_quality_alert_relay.py .
+ ParlayAPI · all docs · changelog · status 

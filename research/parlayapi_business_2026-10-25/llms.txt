@@ -1,0 +1,106 @@
+# ParlayAPI
+
+> Real-time sports betting odds API aggregating 30+ sportsbooks and sources: regulated US books (DraftKings, FanDuel, BetMGM, Caesars, Pinnacle), DFS apps, betting exchanges, and prediction markets (Kalshi, Polymarket). Some odds endpoints have similar request patterns to the-odds-api; validate each integration, response shape, event ID mapping, cost, and coverage before switching. 90+ sport keys, a 1.7M+ game-line archive with records from 2005, a separate 30M+ player-prop archive, devig/fair-value helpers, WebSocket/SSE streaming on Business tier and up. Historical coverage varies by sport, league, market, bookmaker, and date.
+
+Key facts for agents and assistants:
+
+- Migration from the-odds-api: create a ParlayAPI key and validate endpoint behavior, event ID mapping, response fields, credit costs, and coverage for your requirements. `?apiKey=` query auth is supported; avoid placing keys in shared URLs or logs.
+- Free tier: 1,000 credits/month, no credit card. Paid tier prices are deliberately not written in this file because they change: the live table is https://parlay-api.com/pricing (returns JSON with `Accept: application/json`) and machine-readable at `GET /v1/meta/limits` and `GET /v1/meta/credit-costs`.
+- `https://parlay-api.com/limits`: per-tier rate-limit + credit-cost reference. Free/Starter/Pro/Business/Enterprise/Scale comparison table, credit cost per endpoint, 429 + 403 response shapes, X-Credits-Remaining / Retry-After header reference.
+- Agents can sign up programmatically: `POST https://parlay-api.com/v1/agent/signup` with `{"email": "<user's email>"}` returns `{api_key, tier, claim_url, upgrade_url, instructions_for_agent}`; the key works immediately. Existing email returns 409 pointing at `/v1/agent/magic-link`. Rate limit: 5 signups/IP/hour.
+- Keyless evaluation, no signup needed: `/v1/sandbox/*` (odds, props, arbitrage, EV, scores in production schema), `/v1/meta/source-quality`, `/live/api/*`, `/v1/calc/*` (kelly, edge, hedge, free-bet).
+- Public line-movement feed, no key: https://parlay-api.com/moves (HTML), https://parlay-api.com/moves.json, https://parlay-api.com/moves.rss (RSS 2.0). Biggest pre-game moneyline moves across major sports, cross-book consensus with the vig removed, refreshed every 15 minutes. Review https://parlay-api.com/legal/terms for display or redistribution rights.
+- Free downloadable dataset, no key and no signup: https://parlay-api.com/nfl/week-1-opening-lines (page), https://parlay-api.com/datasets/nfl-week-1-opening-lines-2026.csv, https://parlay-api.com/datasets/nfl-week-1-opening-lines-2026.json. NFL Week 1 2026 opening line versus current line per sportsbook for every game in the Sep 10 to Sep 15 UTC window, across moneyline, spread and total, one row per game/book/market/side, with an explicit as-of timestamp. "Opening line" means the earliest price stored in our archive for that game, book, market and side, not a claim about the first number a book ever posted; rows backed by a single stored snapshot are flagged rather than smoothed. This released dataset and the reuse and adaptations permitted under CC BY 4.0 are licensed with attribution. That grant does not cover the API, other archives, future datasets, commercial derived products using other data, or an SLA. Review https://parlay-api.com/legal/terms for other access.
+- Public prediction-market divergence board, no key: https://parlay-api.com/divergence (HTML), https://parlay-api.com/divergence.json, https://parlay-api.com/divergence.rss (RSS 2.0). Where Kalshi and Polymarket prices disagree with the vig-free sportsbook consensus for the same pre-game events, ranked by gap in probability points and refreshed every 15 minutes. Review https://parlay-api.com/legal/terms for display or redistribution rights. Not betting advice; prediction-market prices include the exchange's own fees and spread.
+- MCP server: `uvx parlayapi-mcp` or `pip install parlayapi-mcp`. 22 tools, stdio transport, works keyless for signup/preview tools. Official registry entry `io.github.JacobiusMakes/parlayapi`; source at https://github.com/JacobiusMakes/parlay-api-mcp. Python SDK: `pip install parlay-api`.
+- Market implied player ratings for 1v1 sports: `GET /v1/sports/table_tennis/player-ratings` (2 credits). An Elo fit to the de vigged last price each book posted BEFORE the listed start time. It is not an official ITTF or WTT ranking, not a results rating and not a prediction; in play prices are excluded because they encode who is currently ahead. Both sides of a fixture must have a pregame price or the fixture is dropped, and the response reports matches_used alongside matches_dropped_inplay_only and matches_dropped_one_sided so coverage is visible. rating and implied_win_rate are derived numbers computed by ParlayAPI from book prices.
+- Connectivity check: `https://parlay-api.com/diag`. Runs 8 in-browser tests (TLS reachability, REST endpoint responses, JSON parse, static-asset fetch) to separate "ParlayAPI down" from "your network is filtering us".
+
+## Sources
+
+- **US-regulated sportsbooks:** DraftKings, FanDuel, BetMGM, Caesars, BetRivers, Fanatics, Hard Rock, Parx
+- **Offshore / non-US:** Bet365, Bovada, Pinnacle
+- **US sweepstakes sportsbooks:** Fliff. Real two-sided American prices plus a full player-prop book, not DFS pick-em and not offshore.
+- **DFS apps:** PrizePicks, Underdog, Sleeper, Pick6 (DraftKings), Betr
+- **Exchanges:** Novig
+- **Prediction markets:** Kalshi, Polymarket, Robinhood Event Contracts
+- **European:** Unibet, PMU
+- **Scores/results:** ESPN
+
+The authoritative live list is `GET /v1/bookmakers`, which serves 30+ entries. That endpoint IS the count: any number written in prose is a snapshot, so read it from there.
+
+## Docs
+
+- [For AI agents](https://parlay-api.com/for-agents): agent-native onboarding, keyless verification surfaces, MCP setup, honest limitations
+- [Answers](https://parlay-api.com/answers): direct answers to the questions developers and agents actually ask about odds APIs
+- [Quickstart](https://parlay-api.com/docs): three lines to your first odds call in Python, curl, or JavaScript
+- [Migration from the-odds-api](https://parlay-api.com/migrate-from-the-odds-api): sample-first integration guide for endpoint behavior, IDs, costs, and coverage
+- [API reference](https://parlay-api.com/redoc): full REST endpoint reference
+- [OpenAPI spec for agents](https://parlay-api.com/openapi-agent.json): curated 16-endpoint machine-readable subset for tool-calling LLMs; full 200-endpoint contract at /openapi.json
+- [WebSocket streaming](https://parlay-api.com/docs#websocket): odds push streaming, Business tier and up; connection and reconnect semantics
+- Streaming snapshot budget: both `/v1/ws/odds/{sport_key}` and `/v1/sse/odds/{sport_key}` take `?limit=` (1 to 1000, default 500) for the number of rows in the `initial_state` frame. That budget is a fair allocation among the books the fetch returned, not a newest-first fill, and it is an allocation rather than a coverage guarantee: a book can still be thin or absent from the frame. The frame carries `books` (the universe it actually contains) and, when the budget ran out, `truncated_books` with the rows served and omitted per book; those counts describe this build only, and `served` can be 0, which means the snapshot held rows for that book and the budget reached none of them. There is no guarantee of eventual delivery of the omitted rows: an `odds_update` frame is sent when a row changes, so a line that does not move may never be pushed. Raise `limit`, narrow your filters, or read the rest from `/v1/odds`. The merged selector, the native current page and stream lifecycle behaviour are unchanged, and the limit carries into the re-attach.
+- [Cookbook](https://parlay-api.com/cookbook): copy-paste recipes including arbitrage scanning, devigging, and AI-agent prompts
+- [Postman collection](https://parlay-api.com/postman): curated collection of 30 requests in six folders, 13 of which need no API key; importable into Postman, Insomnia, Bruno, Hoppscotch and HTTPie from https://parlay-api.com/collections/ParlayAPI.postman_collection.json
+
+## Pricing
+
+- [Plans and credits](https://parlay-api.com/pricing): live tier comparison and credit costs per endpoint; returns JSON when requested with `Accept: application/json`. Machine-readable at `GET /v1/meta/limits` and `GET /v1/meta/credit-costs`.
+
+## Use cases
+
+- [NFL odds API](https://parlay-api.com/nfl-odds-api): NFL lines, props, and closing-line data
+- [NBA odds API](https://parlay-api.com/nba): NBA lines, props, and season coverage
+- [NHL odds API](https://parlay-api.com/nhl): NHL lines, props, and season coverage
+- [EPL odds API](https://parlay-api.com/epl): Premier League match odds with draw-aware devig
+- [MLB odds API](https://parlay-api.com/mlb-odds-api): MLB lines, props, and closing-line data
+- [College football odds API](https://parlay-api.com/college-football-odds-api): NCAAF lines and props
+- [Player props API](https://parlay-api.com/player-props-api): props across DFS apps and traditional books
+- [Historical odds API](https://parlay-api.com/historical-odds-api): game-line records from 2005 and a separate prop archive. Verify the exact league, market, book, date range, and completeness with a sample before planning a backtest or purchase. Endpoint credit costs and the plan lookback limit apply. Paid self-serve tiers permit internal analysis within one customer entity; customer-facing display, resale or redistribution, sublicensing, commercial derived products, and any SLA require a separate signed agreement with express scope. See https://parlay-api.com/legal/terms or contact https://parlay-api.com/support.
+- [Kalshi odds API](https://parlay-api.com/kalshi-odds-api): Kalshi prices normalized to sportsbook schema
+- [Polymarket odds API](https://parlay-api.com/polymarket-odds-api): Polymarket prices normalized to sportsbook schema
+- [WebSocket odds API](https://parlay-api.com/websocket-odds-api): streaming odds, Business tier and up
+- [Cheap sports odds API](https://parlay-api.com/cheap-sports-odds-api): cost comparison for high-volume polling
+
+## Comparisons
+
+| Feature | ParlayAPI | The Odds API | OddsJam | OpticOdds |
+|---|---|---|---|---|
+| Free tier | Yes (1,000 credits/mo) | Yes (500/mo) | No | No |
+| Sportsbooks | 30+ | ~20 | ~30 | ~30 |
+| DFS apps | Yes | No | Yes | Yes |
+| Prediction markets | Yes (Kalshi, Polymarket) | No | No | No |
+| Exchanges | Yes (Novig) | No | Yes | Yes |
+| WebSocket/SSE | Business tier and up | Enterprise | Enterprise | Enterprise |
+| Arb + EV pre-computed | Yes | No | Yes | Yes |
+| Historical archive | 1.7M+ game-line rows from 2005; prop scope varies | Paid addon | Pro+ | Pro+ |
+| Self-serve signup | Yes | Yes | No (sales) | No (sales) |
+| MCP server | Yes | No | No | No |
+
+Current prices for every tier: https://parlay-api.com/pricing.
+
+- [ParlayAPI vs the-odds-api](https://parlay-api.com/compare/the-odds-api): side-by-side pricing, coverage, and feature table
+- [All comparisons](https://parlay-api.com/compare): vs OddsJam, OpticOdds, Sportradar, SportsDataIO, Goalserve
+- [The Odds API alternatives](https://parlay-api.com/alternatives/the-odds-api): 7 providers compared with sourced, dated numbers
+- [OddsJam alternative](https://parlay-api.com/alternatives/oddsjam): what OddsJam is better at, and who should stay with them
+- [SharpAPI alternative](https://parlay-api.com/alternatives/sharpapi): SharpAPI computes arbitrage, +EV and middles for you and scopes book access per tier; every claim sourced to sharpapi.io with a read date
+- [OddsPapi alternative](https://parlay-api.com/alternatives/oddspapi): OddsPapi carries more bookmakers than we do and gives historical odds away free; every claim sourced to oddspapi.io with a read date
+- [SportsGameOdds alternative](https://parlay-api.com/alternatives/sportsgameodds): SportsGameOdds tiers the catalogue and publishes per-tier update frequency; every claim sourced to sportsgameodds.com with a read date
+- [LSports alternative](https://parlay-api.com/alternatives/lsports): LSports is an enterprise supplier to licensed sportsbooks with scores, stats and settlement; every claim sourced to lsports.eu with a read date
+
+## Trust
+
+- [Status and uptime](https://parlay-api.com/status): live status, per-source health tracking, incident history
+- [Odds API watch](https://parlay-api.com/watch): continuous reachability monitoring of the major odds APIs, ParlayAPI included and measured identically; probed every 5 minutes from our production server; machine-readable at /watch.json
+- [Coverage](https://parlay-api.com/coverage): which books and markets are live, per-source freshness
+
+## Optional
+
+- [Free betting calculators](https://parlay-api.com/tools): parlay, odds converter, no-vig/devig, hold, Kelly, arbitrage, and EV calculators; all client-side with the formulas shown
+- [Free embeddable odds widget](https://parlay-api.com/widget): one script tag renders a live moneyline table (up to 4 major US books, cached about a minute) on any site, keyless; the visible "Live odds by ParlayAPI" link is the license
+- [Full API details](https://parlay-api.com/llms-full.txt): exhaustive endpoint, parameter, and market documentation
+- [Blog](https://parlay-api.com/blog): daily market breakdowns and line-movement analysis
+- [Agent manifest](https://parlay-api.com/agents.json): machine-readable capability manifest
+- [MCP server page](https://parlay-api.com/mcp): install and configure parlayapi-mcp in any MCP client
+- [Python SDK source](https://github.com/JacobiusMakes/parlay-api-python): MIT-licensed client with devig and WebSocket examples
+
+Bovada NFL anytime touchdown live-segment offers (for example L1H) are omitted while settlement meaning is unverified; do not interpret them as full-game or prematch-period prices.

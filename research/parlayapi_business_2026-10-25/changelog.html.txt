@@ -1,0 +1,306 @@
+ 
+ ParlayAPI Changelog: Recent Releases, Fixes, and Data Source Updates 
+ Parlay API 
+ Docs 
+ Pricing 
+ Changelog 
+ Get free key 
+ Changelog
+ Published product changes, parser fixes, source additions, and API behavior updates. Read the entries here or follow the RSS feed .
+ Tracking API changes? The JSON feed and RSS feed contain the published entries. For a compatibility question about your integration, email [email protected] .
+ September 2026
+ Complete game-line WebSocket baselines
+ 2026-09-17 
+ fix streaming 
+ An explicit WebSocket or SSE request that names bookmakers and requests kinds=game&markets=h2h,spreads,totals now receives the same complete current game-line board assembled for REST. A successful frame identifies itself with snapshot_scope="current_game_board" , snapshot_complete=true , and resume_mode="replace" . Broad and prop scopes remain bounded recent_rows samples.
+ The stream contract now states that since is a best-effort recent-observation filter rather than a lossless removal replay, and that diff applies only to later frames. The Python and JavaScript reference clients and reconnect cookbook are also available directly from the WebSocket docs.
+ Team-total market keys and team subjects
+ 2026-09-11 
+ docs fix 
+ team_totals is the current canonical key for one team's total. It is distinct from totals , the combined event total. Keep the participant, side, line, and any period information separate from the market-key mapping.
+ ProphetX's native team_total_runs and team_total_points markets normalize to team_totals . The team-subject fix deployed on September 8 resolves a source label to the exact fixture club and excludes labels that cannot be attributed uniquely. The REST serving guard deployed on September 11 also excludes anonymous team-total subjects.
+ This entry documents the current contract and those earlier deployments; it does not rename the key or promise that the schema can never change. The feeds above publish general API changes. The published versioning policy covers additions, breaking changes, and deprecation notices.
+ Retryable login and reset-link read failures
+ 2026-09-11 
+ fix 
+ If session storage is unavailable during login, the response is now 503 with Retry-After , and no session cookie is issued. A temporary failure while reading a password-reset token also returns 503 , preserves the token in the form, and does not report the link as expired or change the password. These responses are private and must not be cached.
+ Stable RSS entry identifiers
+ 2026-09-11 
+ fix 
+ An unchanged changelog entry now keeps the same RSS identifier across servers and restarts. The previous identifiers depended on the serving process, which could make an existing entry appear new. Moving to the stable identifier format may cause a feed reader to show older entries once during the transition; their publication dates are unchanged.
+ /v1/status tells one truth about a source
+ 2026-09-05 
+ fix transparency 
+ /v1/status could disagree with itself: data_freshness.all_sources_healthy read true beside books flagged healthy: false in live_odds_sources_1h , because four blocks each reached their own verdict about the same book in one payload. Every block now quotes ONE per-source verdict, judged on the freshest write that source made across the odds and prop tables inside the endpoint's own window, so stale_sources is exactly the complement of the healthy flags you receive and sla_by_source can only carry keys the arrays list.
+ What changed in the payload: healthy and sla_state are now properties of the SOURCE (a book fresh on odds and slow on props is healthy), and every row adds row_healthy / row_sla_state for that one table plus health_scope and source_latest_age_seconds so you can see which verdict came from where. data_freshness gains suppressed_sources , retired_sources and sources_without_rows ( null , never [] , when it could not be checked). No field was removed or renamed.
+ Note on sla : sla_by_source[book].sla on /v1/status is judged on rows written inside that endpoint's window. /v1/meta/source-quality judges a 10 minute window and falls back to poller pulses, so the two can differ for the same book, and did for 5 of 40 shared sources when this shipped. Each sla_by_source entry now republishes the other endpoint's answer as source_quality_sla / source_quality_age_s , and sla_basis in the payload states what each was judged on. When they disagree, sla is the one about rows you can actually query.
+ July 2026
+ Moneyline (h2h) consensus
+ 2026-07-23 
+ feature 
+ /v1/sports/{sport_key}/consensus now covers moneylines: pass markets=h2h for the per-side consensus price and implied probability across books ( market_key h2h , or h2h_3_way with a Draw side for soccer). Previously the consensus rollup covered player props and totals only.
+ Consistent market names
+ 2026-07-23 
+ fix 
+ The human-readable market name shown across /props, /middles, /consensus and /ev is now normalized to one clean, consistent label per market across every book, so the same market reads the same everywhere. The canonical market_key is unchanged.
+ Biggest-movers board ranks by probability shift
+ 2026-07-23 
+ feature fix 
+ /v1/meta/movers and the /movers board now rank line moves by implied-probability shift rather than raw cents, so a trivial wobble on a heavy favorite no longer outranks a genuine steam move, and a game carried under multiple sport-key aliases is shown once.
+ Live and In-Play Odds API landing page
+ 2026-07-23 
+ docs streaming 
+ New /live-odds-api page pulls the real-time story together: SSE + WebSocket streaming, sub-second cadence, /v1/inplay/arbs , in-game period markets, per-book latency, and play-by-play, with copy-paste curl/Python/JS examples.
+ Stronger /odds data quality
+ 2026-07-23 
+ odds data-quality 
+ Every outcome returned by /odds is guaranteed to carry a real, takeable price, two-way moneylines are checked for internal consistency, and soccer 3-way lines always include the draw. Cleaner inputs for your models, straight from the read path.
+ Faster family-key and off-season /odds
+ 2026-07-23 
+ performance 
+ Umbrella and tournament keys ( soccer , tennis , esports , golf ) now resolve their live child leagues in ~3 ms instead of ~1.8 s, and off-season /odds no longer times out. Replaced starts_with(sport_key, …) (which defeats the index) with index-bound range scans across the read path.
+ Player-prop middles + break-even ranking
+ 2026-07-22 
+ analytics 
+ /v1/sports/{sport_key}/middles rebuilt on the fast props path (24.8 s → ~1.9 s), now covering player-prop middles and full economics, ranked by break-even hit rate. Includes the /v1/calc/* pricing helpers.
+ Best Books leaderboard
+ 2026-07-22 
+ analytics 
+ /best-books ranks which book is posting the best price across sport, time window, a per-game picker, and bet type including player props. Consensus-outlier guarded, so every result is a real, takeable best price.
+ Consensus-outlier guards on arbitrage, EV and best-price
+ 2026-07-22 
+ reliability 
+ Arbitrage, EV and best-price surfaces validate every quote against its side's field median, with a two-way arb floor on top, so every opportunity we surface is one you can actually take.
+ May 2026
+ Historical match coverage endpoint + per-source hint header
+ 2026-05-19 
+ api historical transparency 
+ New endpoint GET /v1/historical/sports/{sport_key}/coverage?dateFrom=&dateTo= returns per-source row counts, first/last date, and priced-row counts for any sport over any window. 1 credit. Lets you pre-flight a source filter before burning credits on /matches : see at a glance that esports_cs2 has 15,379 HLTV rows but only 50 Pinnacle rows over a 16-month window.
+ Paired change: /v1/historical/sports/{sport_key}/matches now emits an X-Coverage-Hint response header when a source-filtered call returns far fewer rows than another source would. The hint names the better source and links to the coverage endpoint.
+ /v1/meta/api-key-check now exposes Stripe subscription state + last-request
+ 2026-05-19 
+ api billing 
+ The validate-without-charging endpoint now returns a subscription block (state, period_end_iso, stripe_subscription_id_prefix, stripe_customer_id_prefix) and a last_request_at_iso timestamp. Customers can self-diagnose the "I paid via Stripe but my key still says free" case: if subscription.state == "none" and tier == "free" , the Checkout email didn't link to the account. Lookup is live against Stripe; period_end is read from items[].current_period_end for Stripe API 2026-04-22 (dahlia) compatibility.
+ The-odds-api v4 alias now works for WebSocket, not just REST
+ 2026-05-19 
+ api compat 
+ The drop-in compatibility middleware rewrites /v4/* to /v1/* at the ASGI scope layer. It was only handling HTTP scope, so customers porting from TOA who tried wss://parlay-api.com/v4/ws/odds/{sport_key} got a silent 404. Now both http and websocket scopes are rewritten, so wss://parlay-api.com/v4/ws/odds/baseball_mlb?apiKey=YOUR_KEY returns HTTP/1.1 101 Switching Protocols like the /v1 path.
+ /dashboard/billing 500 fixed (4 customer reports)
+ 2026-05-19 
+ dashboard 
+ The self-serve upgrade page referenced a TierConfig field that no longer existed, so every visit since May 15 returned an Internal Server Error before rendering any upgrade buttons. Four open tickets traced to this exact path. Resolved.
+ Daily closing-line CSV downloads
+ 2026-05-19 
+ api historical 
+ GET /v1/historical/closing-lines.csv?date=YYYY-MM-DD returns a flat-file daily snapshot of closing lines from prop_closing_lines , cached 6h on the server. Filters: optional sport_key= and source= . 1 credit per request. Designed for backtesters who want a CSV instead of the JSON shape of /v1/sports/{sport_key}/closing-lines . The underlying table is now natural-key unique (post-dedup migration), so every row is the latest-snapshot archive for that prop close.
+ Source-quality timeline: /v1/status/history + /status/history (HTML)
+ 2026-05-19 
+ api transparency 
+ Pairs with the existing point-in-time /v1/status . JSON at /v1/status/history?window_s=86400 , rendered HTML at /status/history . Trailing 24h (configurable up to 7 days) per-source SLA classification timeline backed by a Redis ring buffer the collector samples every 30s. Public, no auth. Lets a customer answer "was the API healthy when my bot was running at 3am?" without contacting support.
+ Probable starting pitchers now on /v1/sports/baseball_mlb/odds
+ 2026-05-19 
+ api mlb 
+ Each MLB event in the /odds response now includes a probable_pitchers block when MLB Stats API has them on file: home/away pitcher name plus MLB canonical Person ID, venue, and game status. Pitcher prop bettors no longer need a second call to /v1/sports/baseball_mlb/probable-pitchers . Constant-time lookup against the existing hourly cache; zero DB cost.
+ commence_time on /v1/sports/{sport}/ev
+ 2026-05-19 
+ fix 
+ The EV-finder response now carries commence_time alongside game_date . Lets consumers distinguish "tonight late" (commence_time 03:00Z, game_date next day) from "tomorrow early" (commence_time 17:00Z, same UTC date), which the old game_date-only shape collapsed. Customer report: Educational_Act_5040.
+ WebSocket reference clients + reconnect cookbook
+ 2026-05-19 
+ docs websocket 
+ Two reference clients ( Python , JS ) demonstrate the silent-watchdog + capped exponential backoff + upstream-aware quiet handling pattern. Companion cookbook walks through frame shapes, the three causes of socket silence (connection dead vs market quiet vs upstream degraded), and common anti-patterns. Drops a copy-paste starting point for any new WebSocket integration.
+ ProphetX + Sporttrade SLA reclassified (exchange_slow)
+ 2026-05-19 
+ fix sla 
+ Their per-tournament guest API requires login + per-tournament event fetches per cycle. Empirical cycle time is 5 to 7 minutes against the public path, not the 10-30s shape the "exchange" SLA class assumes. Both reclassified into a new exchange_slow bucket (120/360/900s). /v1/meta/source-quality and /v1/meta/per-book-sla now reflect the operationally honest thresholds for those two sources.
+ prop_closing_lines storage reclaimed (17 GB to 1.36 GB)
+ 2026-05-19 
+ fix perf 
+ VACUUM FULL after the dedup migration (38.8M rows -> 2.97M) reclaimed 15.6 GB of disk in 15 seconds. The table no longer carries the bloat that was inflating closing-line lookups; expected p50 latency improvement on /v1/clv/* hot path is around 5x.
+ Public SLA visibility: /v1/meta/per-book-sla + sla_by_source on /v1/status
+ 2026-05-19 
+ api transparency 
+ GET /v1/meta/per-book-sla now publishes the freshness thresholds (tight_s / slack_s / stale_s) that classify every source as ok / degraded / breach / stale. Customers building on /v1/meta/source-quality no longer have to reverse-engineer what sla="degraded" means for a specific book. /v1/status also gained a sla_by_source map (per-source classification) and a poller_health block (Pinnacle WAF breaker state + Bovada 429 backoff state) so a customer asking "is the API healthy right now?" gets honest, granular signal instead of a single green/red bit.
+ WebSocket heartbeat now carries upstream freshness
+ 2026-05-19 
+ websocket 
+ The 5-second heartbeat frame on /v1/ws/odds-fast/{sport_key} now includes an upstream object summarizing source-quality SLAs across all books (worst SLA seen + counts). Two outcomes a customer can now distinguish without leaving the socket: a healthy connection during a quiet market (long quiet_seconds , upstream.worst_sla="ok") vs an active upstream issue (long quiet_seconds , upstream.worst_sla="stale"). Cheap (reads the in-process source-quality cache), so no added latency on the broadcast path.
+ Table tennis added as a first-class sport (Bovada coverage)
+ 2026-05-18 
+ sport bovada 
+ Table tennis is now a queryable sport_key on the main odds endpoints. Coverage comes from Bovada's public table-tennis lobby, which carries the full live + pre-match slate (typically 100+ events across TT Elite Series, Czech Liga Pro, and weekend internationals). Cadence is tuned for fast settlement: hot poller runs every 0.5s, with per-path 429 backoff so the WAF stays happy.
+ Endpoint: GET /v1/sports/table_tennis/odds 
+ Solo-h2h fallback for 1v1 sports: empty result lists are populated from the prop_snapshots pool so customers always see ML pricing when an event is live.
+ Optional: GET /v1/sports/table_tennis/player-ratings returns market-implied ELO ratings derived from de-vigged closing moneylines (deterministic, order-independent, reproducible).
+ Caesars player props (deep events) re-enabled via dedicated sidecar
+ 2026-05-18 
+ source caesars 
+ The Caesars deep-events ingest path was a no-op in production for several weeks because the collector image did not ship with the browser binary required to resolve their AWS WAF challenge. That work moved to a new parlayapi-sidecar-caesars-deep container that runs the public lobby and event pages in an anonymous headless browser. Parsed prop tuples flow back through a bounded Redis stream and into buffers.add_props . Caesars player props for NFL / NBA / MLB / NHL are back on the board.
+ Closing-line table bloat fixed: ~5x faster CLV lookups
+ 2026-05-18 
+ fix perf 
+ The prop_closing_lines archive table was carrying ~10x its real unique-key cardinality because the archival writer's ON CONFLICT clause had no unique constraint to fire against; every hourly cleanup pass appended a fresh row per natural key. A three-phase migration (online-safe natural-key index, batched window-function dedup, unique-constraint attach) plus a writer flip to ON CONFLICT (...) DO UPDATE ... WHERE snapshot_time > ... brings the table down to its real cardinality and changes its steady-state growth from ~50k rows/cleanup to near zero. Expected impact: ~5x faster p50 on the /v1/clv/* closing-line lookup path, ~9 GB freed.
+ parlayapi-mcp 0.2: keyless live previews, source quality, and OpenClaw install path
+ 2026-05-16 
+ mcp agents 
+ The public MCP server now supports no-key discovery tools for pricing, live sports, live search, the /live best-line preview, source quality, and per-book coverage gates. Paid odds tools still require an explicit API key. The package accepts both PARLAYAPI_KEY and PARLAY_API_KEY , and the MCP landing page now includes OpenClaw setup commands.
+ Removed per-second rate limits on all paid tiers
+ 2026-05-13 
+ policy 
+ Every paid tier (Starter through Scale) now has no documented rate limit. Burst at any rate your client wants. You are metered on monthly credits, not per-second throughput. Free trial keeps a 60 req/s cap purely for anti-abuse during evaluation. Pricing pages updated to reflect this.
+ Headers: x-ratelimit-limit now returns unlimited for paid tiers instead of a per-second number.
+ Internal safety: a single key cannot exceed ~10,000 req/s sustained without contacting support to shard traffic. That ceiling is for runaway-retry-loop protection, not a tier feature. If a paid key hits it, the 429 response says exactly that.
+ If you were throttling your client to stay under 500 req/s on Scale or 60 on Pro, you can remove that pacing.
+ parlay-api.com migrated off Cloudflare for the /v1/* path
+ 2026-05-13 
+ infra 
+ Cloudflare's free-tier DDoS protection was flagging /v1/sports zone-wide when our own internal probes burst at it. We moved the API ingress to a direct path with no CF in the request flow. No URL change for customers. Same hostname, same endpoints, same auth.
+ DDoS L7, Bot Fight Mode, BIC, and per-IP edge rate-limit no longer touch /v1/*
+ The previous "new hostname api.parlay-api.com" recommendation is moot: parlay-api.com itself is now CF-free. Both hostnames work identically.
+ Per-key app-layer rate limits also removed on paid tiers (see above)
+ See the post-mortem on Reddit if you care about the root cause.
+ New API hostname: api.parlay-api.com (recommended for trading bots and high-volume callers)
+ 2026-05-13 
+ infra action recommended 
+ If your client averages above ~30 requests per minute, switch your base URL from https://parlay-api.com to https://api.parlay-api.com . Same origin, same auth, same endpoints, but the request never touches Cloudflare's edge protections.
+ Why: Cloudflare's DDoS L7 layer fires on per-IP bursts to /v1/* and returns error code: 1027 for 10-30 min. Trader bots can hit this within an hour of normal use. The new hostname routes around Cloudflare entirely.
+ Both hostnames keep working: parlay-api.com still serves marketing, blog, docs, AND /v1/* for low-volume callers. api.parlay-api.com is the same API on a hostname with no CF bot/rate protections in the path. Switch only if you're seeing 1027 blocks.
+ What to change: exactly one line. BASE_URL = "https://api.parlay-api.com" . Auth header, endpoints, response shape are unchanged. Valid Let's Encrypt cert, auto-renewing, HTTP/2.
+ App-layer rate limits : as of 2026-05-13 (later in the day) we removed per-second rate limits from every paid tier. Free trial keeps a 60 req/s cap for anti-abuse. Burst at any rate, you're metered on monthly credits.
+ Iter-75 batch deploy: parlay fuzzy SGP, utility calculators, middles finder, sandbox completeness
+ 2026-05-13 
+ feature perf docs 
+ Comprehensive restart-batch deploy from the autonomous-test review loop. 11 fixes + 5 new endpoints, all shipped via zero-downtime rolling worker restart.
+ Parlay /v1/parlay/price : line_tolerance body param (default 0, max 5) for fuzzy SGP across books that quote different lines. Every leg now returns lines_available: {point: {book: decimal_price}} so callers see alt-line options without a separate /odds call.
+ Utility calculators (FREE, no credits): /v1/calc/kelly , /v1/calc/hedge , /v1/calc/edge , /v1/calc/free-bet . Accept American (-110, +150) or decimal (1.91, 2.5) odds. Math is consistent with /v1/clv's no-vig pair formula.
+ /v1/sports/{key}/middles (3 cr): cross-book spread/total middle finder. min_gap + min_books filters.
+ Sandbox completeness : 6 new sandbox endpoints (/arbitrage, /ev, /consensus, /futures, /scores, /events) so integrators can verify response-parsing for every major production endpoint without burning credits.
+ /v1/pinnacle-coverage cached 5 min with stale-while-revalidate to 1 hr. Was hitting 20s cold-call timeouts under status-page polling.
+ /live/api/search ?limit= param (default 25). Broad queries like q=mlb were timing out at trigram-index scan.
+ /live/api/sparkline 500 → 200 : SELECT/GROUP BY expression mismatch fixed.
+ /v1/sports/{key}/line-movement empty-result envelope : was returning bare []. Now returns count + filters + structured note explaining no-movement vs no-coverage vs malformed event_id.
+ /v1/usage ?by_endpoint=true : per-endpoint + per-group credit breakdown for the current period.
+ See the iter-75 summary doc for the full cumulative tally of the 89 fixes shipped during this loop (iter 017 → 073).
+ Kalshi crypto prediction markets: BTC / ETH / SOL with historical replay
+ 2026-05-13 
+ feature source 
+ Two new endpoints expose Kalshi crypto prediction-market prices, separated from the sports prediction-market surface because these markets trade 24/7 and have crypto-specific fields (price-ladder strikes, hourly resolution windows, no team / kickoff).
+ GET /v1/prediction-markets/crypto/{asset} : latest snapshot of every open Kalshi market for the asset (btc, eth, sol). Returns yes/no bid+ask, mid-market implied probability, volume, open interest. 1 credit.
+ GET /v1/historical/prediction-markets/crypto/{asset}?from=&to=&market_ticker= : tick-by-tick replay. Every poll snapshot is preserved (~5 s cadence per market), so a one-hour replay against a single ticker returns ~720 rows. 2 credits.
+ Filter by market_type : direction_15m , direction_1h , direction_daily , price_at_or_above , price_range , or all . Direction-binary markets (the headline "will BTC be higher in 15 min?" product) are surfaced when Kalshi lists them; the always-on coverage right now is Kalshi's hourly price ladders (KXBTC and KXBTCD families, $50 strike increments).
+ Behind the scenes: new crypto_market_snapshots table, new kalshi_crypto_poller collector task that discovers open markets every 5 min and polls each every 5 s. Historical retention matches everything else on the platform (append-only snapshot table).
+ WebSocket docs suite: 7 new pages + rewritten reference
+ 2026-05-13 
+ docs feature 
+ Full WebSocket documentation overhaul. The main reference at /docs/websocket is rewritten to match deployed reality (Business+ tier, push_mode coalesce envelope, three accepted auth forms, all four URL aliases). Seven new sub-pages cover the use cases customers actually have:
+ /docs/websocket/quickstart · 60-second copy-paste in Node, Python, browser
+ /docs/websocket/examples · Production-ready consumers in Node, Python (websockets + aiohttp), Go, Ruby, Java, PHP, C#, Elixir, Rust, plus React hook, Discord bot, Redis pubsub fan-out, Kafka bridge
+ /docs/websocket/player-props · NBA / MLB / NHL / WNBA / NFL prop streaming, full market-key matrix, filter-by-player pattern
+ /docs/websocket/edge-alerts · +EV alert system with Pinnacle-anchored no-vig math, Discord webhook delivery, stale-line guards, dedupe
+ /docs/websocket/troubleshooting · Every close code with the fix, curl smoke test, proxy / VPN / serverless gotchas
+ /docs/websocket/sse · Server-Sent Events deep-dive, same feed, plain HTTP, browser EventSource 
+ /docs/websocket/migration · Side-by-side mapping from OddsJam / OpticOdds / SharpAPI / The Odds API
+ Migration guide page (/from-the-odds-api) + OG images for social shares
+ 2026-05-07 
+ feature docs 
+ New /from-the-odds-api page: one-line code diff (you change a base URL, your code keeps working), endpoint compatibility table, sport-key reference, bookmaker key superset list, pricing comparison, honest "what to know" section. Aliased at /from-toa and /migrate-from-the-odds-api. Both /vs-toa and the migration page now ship 1200x630 OG images so Twitter/LinkedIn shares render properly.
+ Also synced /compare/odds-api with the latest /vs-toa numbers (was stuck at "22 sources vs 7," now correctly shows 26+).
+ parlayapi-mcp: standalone MCP server (8 tools, native Claude Desktop integration)
+ 2026-05-07 
+ feature 
+ Drop-in MCP server installable via uvx parlayapi-mcp or pip install parlayapi-mcp . Eight tools: signup (auth-less, returns API key + magic-link), checkout-link (Stripe upgrade URL), magic-link (passwordless login), list_sports, get_odds, get_props, best_line, account_info. Configure in claude_desktop_config.json or Cursor's .cursor/mcp.json with one block. Wheel + sdist build clean, ready for PyPI.
+ Agent-friendly signup endpoints: /v1/agent/signup, /v1/agent/magic-link, /v1/agent/checkout-link
+ 2026-05-07 
+ feature 
+ JSON-only signup that returns api_key plus a magic-link claim URL plus a Stripe checkout URL plus an instructions_for_agent string an LLM can relay to the user verbatim. Idempotent on email (existing accounts return only the login URL, never leak the api_key). Uses an auto-generated random password the user never sees; they access via magic links until they choose to set one. Rate-limited 5/IP/hour.
+ Designed so a Claude/GPT agent helping a user "build a betting bot with ParlayAPI" can complete signup in a single HTTP call, no form-fill, no email-verify gate before the first request.
+ Magic-link login (/auth/magic?sid=X) - passwordless dashboard access
+ 2026-05-07 
+ feature 
+ New route that consumes a server-issued session token from the URL, sets the cookie, redirects to the dashboard. Used by the agent-signup flow (claim URL is a magic link) and available standalone via /v1/agent/magic-link. Optional checkout_tier query param chains the redirect into Stripe Checkout for one-click upgrade.
+ baseball_mlb endpoint: three bug fixes from one Reddit DM
+ 2026-05-06 
+ fix 
+ Pinnacle and Bovada placeholder events: daily aggregate markets ("Home Runs (13 Games)" vs "Away Runs (13 Games)") were stored as fake events under baseball_mlb. Now filtered via SQL denylist on team-name patterns.
+ 335,338 futures props leaking into game-prop responses: the include_futures param on get_props() was declared but never applied in SQL. Underdog and FanDuel ingest season-long futures (Aaron Judge total HR for season, etc.) with empty home_team/away_team. Default is now strict; opt back in via ?include_futures=true .
+ DraftKings duplicate events merged: DraftKings uses a different team-name and time-zone convention than other US books, which could surface the same game as two events. They now normalize to one canonical event via the shared alias map with a one-day date fallback. Verified live: a 15-game slate returned 0 duplicates, every game merged across 6 to 7 books.
+ Operational: nightly Postgres backups, Docker auto-prune, watchdog rescue
+ 2026-05-06 
+ fix 
+ Automated nightly Postgres backups (atomic dump, gzip, 7-day rotation, with an off-box copy when available), a weekly Docker prune of dangling images and build cache, and a repaired watchdog that had been failing silently for weeks. Also added restart: unless-stopped to the postgres / redis / api containers so reboots don't take half the stack down.
+ MCP server published, AI-agent discovery surfaces shipped
+ 2026-05-01 
+ feature docs 
+ Shipped a stand-alone MCP server ( pip install parlayapi-mcp ) with 10 tools wrapping the API. Repo: github.com/JacobiusMakes/parlay-api-mcp . Public manifest at /mcp/manifest.json with copy-paste config for Claude Code, Cursor, Continue, Devin.
+ Also added /llms.txt , /llms-full.txt , /agents.json , /.well-known/ai-plugin.json for AI-agent discovery. Updated /sitemap.xml to auto-include blog and compare slugs. /robots.txt now explicitly allows GPTBot, ClaudeBot, anthropic-ai, PerplexityBot, Google-Extended.
+ Public no-auth try-it endpoint
+ 2026-05-01 
+ feature 
+ New /v1/try/{sport_key}/odds returns live moneyline data with no API key. Capped at 60 reqs/hour per IP via Redis, restricted to MLB, NBA, NFL, NHL, EPL, UFC. Landing page got a "Try it now" button that hits this endpoint inline.
+ Historical archive coverage page (1.156M rows, 263 sports, 17 sources)
+ 2026-05-01 
+ feature source 
+ New /historical-coverage public page rendering live coverage stats from /v1/historical/coverage (also public, no auth). Headline numbers: 1.156M rows, 263 sport_keys, 17 distinct sources, 99.6% score coverage, 267,173 games with 2+ sources, 137,200 with 5+ sources.
+ Added draftkings_espn as a second free historical source for US sports (NFL, NBA, MLB, NHL, NCAAF, NCAAB, WNBA, MLS) via the ESPN public scoreboard + summary endpoints. Independent of our live Pinnacle snapshot, so backtesters can cross-reference.
+ Soccer historical_odds gap closed (28 days, +122k rows)
+ 2026-05-01 
+ fix source 
+ Refreshed football-data.co.uk CSVs across all 37 leagues. Max game_date moved from 2026-04-03 to 2026-04-30 across soccer_* keys. New sources captured that weren't in the archive before: betmgm , pinnacle_close , bet365_close , betfair_exchange_close . Now refreshed weekly Tuesday 11:00 UTC.
+ Daily Pinnacle snapshot to historical_odds
+ 2026-05-01 
+ feature source 
+ New cron at 10:00 UTC daily promotes our live odds_snapshots (Pinnacle game-line moneylines across 200+ sport_keys) into historical_odds with both opening-line proxy ( pinnacle_open ) and closing-line proxy ( pinnacle ). Forward-going US-sport archive that grows automatically.
+ Welcome email on signup with quickstart code
+ 2026-05-01 
+ feature 
+ Every new signup now gets a same-second email with their actual API key embedded plus a 4-line curl quickstart. Solves the "dashboard might be flaky, did I get a real key?" pause many users had.
+ SMTP failover: Brevo primary, Gmail backup
+ 2026-05-01 
+ fix 
+ Hit Gmail's 500/day cap during a batch send. Switched primary outbound SMTP to Brevo (300/day free + auto-fallback to Gmail if Brevo fails). Tested via persistent SMTP+STARTTLS connection with 600ms pacing. No more truncated batch sends.
+ CRITICAL fix: 227 users had broken API keys, all rotated + apology bonus credits
+ 2026-05-01 
+ fix 
+ From 2026-04-17 onward, three of our key-creation paths stopped writing key_plaintext ; the dashboard was rendering the first 8 chars of the bcrypt hash instead of the actual key. Any code using what users saw on the dashboard returned 401. Fix: write key_plaintext on create, render plaintext on read, bulk-rotate every affected user's key, send apology email with the new key + 2,000 bonus credits each. 8 of the 227 affected users started using their new keys within 4 hours of the email landing.
+ Affiliate program: 25% recurring
+ 2026-04-30 
+ feature 
+ Affiliates earn 25% of every paid month from anyone they refer, recurring as long as that user stays paid. Eligible tiers: Starter, Pro, Business. Payouts processed monthly on the 1st via Stripe Connect.
+ Real /docs page (curated, separate from Swagger)
+ 2026-04-29 
+ docs 
+ Replaced the Swagger-only docs experience with a curated long-form quickstart at /docs , with full reference still at /docs/swagger and ReDoc at /redoc . Lots of code examples in cURL, Python, JavaScript.
+ Public live-stats dashboard
+ 2026-04-29 
+ feature 
+ New /live-stats page shows our actual live throughput, source health, and freshness in real time. No "trust us" required. Useful as a status surface while we build a proper status page.
+ Outbound webhooks (Pro+)
+ 2026-04-29 
+ feature 
+ Pro+ users can configure webhook endpoints that receive HMAC-SHA256-signed POSTs when arbs, +EV bets, or line moves cross thresholds you set. Stripe-style signing scheme.
+ Umami self-hosted analytics live at /_analytics
+ 2026-04-29 
+ feature 
+ Self-hosted Umami via /_analytics reverse proxy. No third-party scripts. Public dashboards stay private; we get acquisition / behavior data internally.
+ April 2026
+ WebSocket streaming (Pro+)
+ 2026-04-25 
+ feature 
+ wss://parlay-api.com/ws/odds/{sport_key} and wss://parlay-api.com/ws/live/{sport_key} push initial snapshot followed by change-detected diff frames. Sub-second updates. Auth: ?apiKey= on the connect URL.
+ Drop-in compatibility for the-odds-api.com (/v4 alias)
+ 2026-04-22 
+ feature 
+ If your code already targets the-odds-api's /v4/* URL pattern, change the host. Our /v4/* endpoints alias to /v1/* with the same JSON shape.
+ Prediction-market endpoints: Kalshi + Polymarket
+ 2026-04-20 
+ feature source 
+ /v1/prediction-markets/{sport_key} returns Kalshi event-contract and Polymarket prices in standard American/decimal odds format, normalized to the same schema as sportsbook prices. Cross-reference for prediction-market vs sportsbook arbitrage.
+ 21+ source aggregation: DraftKings, FanDuel, BetMGM, Caesars, BetRivers, Fanatics, Hard Rock, Pinnacle, Bet365, Bovada, BetWay, Betr, Fliff, ParlayPlay, PrizePicks, Underdog, Sleeper, Pick6, Novig, ProphetX, Kalshi, Polymarket
+ 2026-04-17 
+ source 
+ Public launch with 21 live sources covering moneyline / spread / total / player props / DFS / exchanges / prediction markets across 38+ sports. Updated every 30-60 seconds.
+ Initial release
+ 2026-04-15 
+ feature 
+ ParlayAPI v1.0. Free tier (1,000 req/mo), Starter $19, Pro $99, Business $499, Enterprise $2,499. REST + (later) WebSocket. Full pricing → 
+ parlay-api.com · Docs · Coverage · llms.txt 
