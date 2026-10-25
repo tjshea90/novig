@@ -39,7 +39,8 @@ class CloudNovigPortTest {
             return "ord-1"
         }
         override suspend fun order(orderId: String) = NovigOrder(orderId, null, "m", "o", 0.48, 100, 100 - fillQty, "IOC", status, 1)
-        override suspend fun fills(orderId: String?, limit: Int) = if (fillQty > 0) listOf(NovigFill("f", orderId ?: "", null, "m", "o", fillQty, fillQty * 0.48 * 0.01, true, 0.02, 1)) else emptyList()
+        var fillsRefused = false
+        override suspend fun fills(orderId: String?, limit: Int) = if (fillsRefused) throw com.tjshea.vigilant.data.novig.signing.NovigApiException(429, "RATE_LIMITED", null) else if (fillQty > 0) listOf(NovigFill("f", orderId ?: "", null, "m", "o", fillQty, fillQty * 0.48 * 0.01, true, 0.02, 1)) else emptyList()
         override suspend fun orders(status: String, limit: Int, outcomeId: String?) = stored.filter { it.status == status }
         override suspend fun cancelOrder(orderId: String): String? { cancelled += orderId; return "CANCELED" }
     }
@@ -66,6 +67,13 @@ class CloudNovigPortTest {
     fun `a partial fill reports only what filled`() = runBlocking {
         val f = Fake().apply { fillQty = 40 }
         assertEquals(40L, (port(f).place(entry(), 0.48) as CloudOrderPort.Placed.Filled).contracts)
+    }
+
+    @Test
+    fun `a filled order whose fills cannot be read is at risk, never a miss`() = runBlocking {
+        // PX11a (2026-10-25): Novig said FILLED while it refused the account's fill reads (429).
+        val f = Fake().apply { fillQty = 100; status = "FILLED"; fillsRefused = true }
+        assertTrue(port(f).place(entry(), 0.48) is CloudOrderPort.Placed.Unconfirmed)
     }
 
     @Test
