@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-be05497a-18skm3",
- "head": "3a0b2a12b98a7822d30f7655f39194d874f8375b",
+ "head": "5bd951e41c17222003b95c0a22d0f20e238f4049",
  "since": 1792915284,
- "beat": 1792941717,
- "beatIso": "2026-10-25T15:21:57Z",
- "done": "pre-release: v1.0.83 PS: PropLine + ParlayAPI audit: ParlayAPI stream overlay fixed (quotes tagged at parse), ParlayAPI hot streams, PropLine/ParlayAPI cross-check, 13 more PropLine books, PropLine 1st halves, ParlayAPI Pinnacle live feed (paper), real bets graded by PropLine /clv/grade, restart button keep (versionCode 423, v1.0.83)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.83), then run: bash tools/record-release.sh v1.0.83 423 \"v1.0.83 PS: PropLine + ParlayAPI audit: ParlayAPI stream overlay fixed (quotes tagged at parse), ParlayAPI hot streams, PropLine/ParlayAPI cross-check, 13 more PropLine books, PropLine 1st halves, ParlayAPI Pinnacle live feed (paper), real bets graded by PropLine /clv/grade, restart button keep\""
+ "beat": 1792941794,
+ "beatIso": "2026-10-25T15:23:14Z",
+ "done": "v1.0.83 released + recorded; engine reset: ParlayAPI overlay now live (501 moved, 40 polls); grader re-dispatched with 5-game batches",
+ "next": "read propline-grade result at 15:35 check-in; then PB8 settings walk, PB12 steam study, PS2b/PS9b"
 }
