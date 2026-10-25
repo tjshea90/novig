@@ -423,6 +423,85 @@ def cmd_archive(outdir, days, books=None, sports=None):
     return 0
 
 
+def coverage_stats(boards):
+    """[(sport, events)] -> what PS2 asks (Tj 2026-10-25: "even though they offer dozens of sports books odds, most of my scanned results only show odds for a few sports books. Is this a matching issue?"):
+    per book the games it prices, per Novig line how many books post that SAME number (the only quotes a fair line can use) against how many price the market at all, and every pair of books whose
+    prices are identical on 80%+ of 100+ shared quotes (the one-company rule's measured test: books on one odds desk count once)."""
+    games, quotes, novig_lines = {}, {}, []
+    for sport, events in boards:
+        for e in events:
+            eid = "%s:%s" % (sport, e.get("id"))
+            per_mkt = {}
+            for b in e.get("bookmakers") or []:
+                bk = b.get("key")
+                if not bk:
+                    continue
+                games.setdefault(bk, set()).add(eid)
+                for m in b.get("markets") or []:
+                    mk = m.get("key")
+                    if mk not in ("h2h", "spreads", "totals") or m.get("period") not in (None, "", "full", "FULL") or m.get("team"):
+                        continue
+                    for o in m.get("outcomes") or []:
+                        pr = o.get("price")
+                        if pr is None:
+                            continue
+                        q = (eid, mk, (o.get("name") or "").lower(), o.get("point"))
+                        quotes.setdefault(q, {})[bk] = pr
+                        per_mkt.setdefault((mk, o.get("point") if mk == "totals" else abs(o.get("point") or 0)), set()).add(bk)
+                        per_mkt.setdefault((mk, "any"), set()).add(bk)
+            for (mk, pt), books in per_mkt.items():
+                if pt != "any" and "novig" in books:
+                    novig_lines.append((sport, mk, len(books - {"novig"}), len(per_mkt.get((mk, "any"), set()) - {"novig"})))
+    pairs = {}
+    for q, by in quotes.items():
+        bks = sorted(by)
+        for i in range(len(bks)):
+            for k in range(i + 1, len(bks)):
+                c = pairs.setdefault((bks[i], bks[k]), [0, 0])
+                c[0] += 1
+                c[1] += by[bks[i]] == by[bks[k]]
+    same_desk = sorted(((a, b, n, same / n) for (a, b), (n, same) in pairs.items() if n >= 100 and same / n >= 0.8), key=lambda t: -t[3])
+    return {"games": {b: len(v) for b, v in games.items()}, "novig_lines": novig_lines, "same_desk": same_desk}
+
+
+def cmd_coverage(outdir, sports=("americanfootball_nfl", "americanfootball_ncaaf", "basketball_nba", "icehockey_nhl")):
+    """PS2: every book's game lines for the scanned leagues (no `bookmakers=`: all of them), measured by [coverage_stats]; a handful of requests of the paid key's 250,000 a day."""
+    keys = keys_from_env()
+    i, _ = best_key(keys, [plan_of(k) for k in keys])
+    if i is None:
+        print("no usable key")
+        return 0
+    key = keys[i]
+    os.makedirs(outdir, exist_ok=True)
+    boards = []
+    for sp in sports:
+        st, _, data = request("/sports/%s/odds" % sp, key, {"markets": "h2h,spreads,totals"})
+        body = j(data)
+        events = body if isinstance(body, list) else (body or {}).get("data") or []
+        print("%s: HTTP %s, %d games" % (sp, st, len(events)))
+        boards.append((sp, events))
+    r = coverage_stats(boards)
+    lines = ["# PropLine book coverage (PS2, %s)" % time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()), "", "## Games priced by each book (game lines, %s)" % ", ".join(sports), ""]
+    for b, n in sorted(r["games"].items(), key=lambda t: -t[1]):
+        lines.append("- %s: %d" % (b, n))
+    lines += ["", "## Novig's lines: books posting the SAME number vs books pricing that market at all", ""]
+    by = {}
+    for sp, mk, same, any_ in r["novig_lines"]:
+        by.setdefault((sp, mk), []).append((same, any_))
+    for (sp, mk), v in sorted(by.items()):
+        v.sort()
+        lines.append("- %s %s: %d Novig lines, books at the same number median %d (any number: median %d)" % (sp, mk, len(v), v[len(v) // 2][0], sorted(x[1] for x in v)[len(v) // 2]))
+    lines += ["", "## Pairs of books with identical prices on 80%+ of 100+ shared quotes (one odds desk)", ""]
+    for a, b, n, rate in r["same_desk"]:
+        lines.append("- %s = %s: %.0f%% of %d" % (a, b, rate * 100, n))
+    with open(os.path.join(outdir, "coverage.md"), "w") as f:
+        f.write("\n".join(lines) + "\n")
+    with open(os.path.join(outdir, "coverage.json"), "w") as f:
+        json.dump({"games": r["games"], "same_desk": r["same_desk"], "novig_lines": r["novig_lines"][:5000]}, f)
+    print("\n".join(lines[:80]))
+    return 0
+
+
 def selftest():
     assert tier_of(1000) == "free" and tier_of(5000) == "hobby" and tier_of(25000) == "pro" and tier_of(250000) == "streaming-lite" and tier_of(None) == "?"
     assert keys_from_env({"PROPLINE_API_KEY": "a, b\nc  d;e"}) == ["a", "b", "c", "d", "e"] and keys_from_env({}) == []
@@ -430,6 +509,11 @@ def selftest():
     assert best_key(["f", "p", "x"], plans)[0] == 1
     assert best_key(["x"], [{"status": 401, "limit": None}]) == (None, None)
     assert trim({"a": [1, 2, 3, 4, 5], "b": {"c": [[1, 2, 3, 4]]}}, 2) == {"a": [1, 2], "b": {"c": [[1, 2]]}}
+    ev = [{"id": 1, "bookmakers": [
+        {"key": k, "markets": [{"key": "totals", "outcomes": [{"name": "Over", "price": -110 if k != "c" else -105, "point": 44.5 if k != "d" else 45.5}, {"name": "Under", "price": -110, "point": 44.5 if k != "d" else 45.5}]}]}
+        for k in ("novig", "a", "b", "c", "d")]}]
+    cs = coverage_stats([("s", ev * 1)])
+    assert cs["games"]["a"] == 1 and ("s", "totals", 3, 4) in cs["novig_lines"]
     print("propline selftest ok")
     return 0
 
@@ -444,6 +528,8 @@ if __name__ == "__main__":
         sys.exit(cmd_probe(a[1] if len(a) > 1 else "out/propline-probe"))
     if a[0] == "steam":
         sys.exit(cmd_steam(a[1] if len(a) > 1 else "out/propline-steam"))
+    if a[0] == "coverage":
+        sys.exit(cmd_coverage(a[1] if len(a) > 1 else "out/propline-coverage"))
     if a[0] == "speed":
         sys.exit(cmd_speed(a[1] if len(a) > 1 else "out/propline-speed"))
     if a[0] == "archive":
