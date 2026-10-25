@@ -61,8 +61,9 @@ class RealtimeList(
         if (before.isEmpty()) return emptyList()
         val t0 = System.nanoTime()
         val repriced = reprice(before.values.toList())
-        val wasListed = listOf(before.values.toList(), settings).toSet().let { _ -> before.values.filter { listed(it, settings) }.mapTo(HashSet()) { it.key } }
-        val list = ScanResult(emptyList(), repriced, stats ?: ScanStats(0, 0, 0, 0, 0), now).feed(settings)
+        val st = stats ?: EMPTY
+        val wasListed = ScanResult(emptyList(), before.values.toList(), st, now).feed(settings).mapTo(HashSet()) { it.key }
+        val list = ScanResult(emptyList(), repriced, st, now).feed(settings)
         val nowListed = list.mapTo(HashSet()) { it.key }
         synchronized(this) {
             // A scan may have adopted newer rows while this pass ran: those win.
@@ -85,8 +86,6 @@ class RealtimeList(
     /** One line for the engine's log and status. */
     fun describe(): String = "real-time list: $watched sides watched (within ${nearPoints.toInt()} pts of +EV), $passes passes, last ${lastPassMs} ms; $turnedPositive turned +EV between scans, $dropped left the list"
 
-    private fun listed(o: Opportunity, s: ScanSettings) = ScanResult(emptyList(), listOf(o), ScanStats(0, 0, 0, 0, 0), 0L).feed(s).isNotEmpty()
-
     /** Pregame, priced, not started, and within reach of +EV. */
     private fun keep(o: Opportunity, now: Long): Boolean =
         !o.isLive && o.event.startsTs > now && o.fairProbability != null && (o.evPercent ?: Double.NEGATIVE_INFINITY) >= -nearPoints
@@ -106,5 +105,6 @@ class RealtimeList(
         const val MAX_ROWS = 6_000
         /** How often a pass runs. */
         const val EVERY_MS = 3_000L
+        private val EMPTY = ScanStats(0, 0, 0, 0, 0)
     }
 }
