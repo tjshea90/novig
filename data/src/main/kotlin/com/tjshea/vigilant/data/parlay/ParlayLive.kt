@@ -27,6 +27,10 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
     data class Price(val decimal: Double, val confirmedAtMs: Long, val heardAtMs: Long)
 
     private val prices = ConcurrentHashMap<String, Price>()
+
+    /** A game the stream spoke of, as ParlayAPI names it (for the live lane's feed, [ParlayLiveFeed]). */
+    data class Game(val sport: String, val home: String, val away: String, val commenceMs: Long)
+    private val games = ConcurrentHashMap<String, Game>()
     /** When each league's stream has been connected without a break since (0 = not connected): a price unchanged since then has not moved. */
     private val connectedSince = ConcurrentHashMap<String, Long>()
     /** When ParlayAPI last polled each book (the app's key), and whether it calls the book's prices stale, from `/v1/meta/source-health`. */
@@ -78,6 +82,7 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
         val at = listOfNotNull(r.num("last_update"), r.num("last_observed_ms"), r.num("collector_seen_ms")).maxOrNull()?.toLong() ?: return
         val market = r.str("market_key") ?: return
         val game = gameKey(home, away)
+        r.str("commence_time")?.let { t -> runCatching { java.time.Instant.parse(t).toEpochMilli() }.getOrNull() }?.let { games[game] = Game(sport, home, away, it) }
         fun put(kind: LineKind, subject: String?, stat: String?, side: Side, point: Double?, american: Double?) {
             val d = ParlayProps.decimal(american) ?: return
             val k = sideKey(game, book, kind, subject, stat, side, point)
@@ -161,6 +166,36 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
         if (now - prunedAt < 60_000L) return
         prunedAt = now
         prices.entries.removeIf { now - it.value.heardAtMs > KEEP_MS }
+        games.entries.removeIf { now - it.value.commenceMs > GAME_KEEP_MS }
+    }
+
+    /** Games of [sports] under way at [now] (started, under [IN_PLAY_MS] ago), by key. */
+    fun gamesInPlay(sports: Set<String>, now: Long = clock()): Map<String, Game> =
+        games.filter { (_, g) -> g.sport in sports && g.commenceMs <= now && now - g.commenceMs < IN_PLAY_MS }
+
+    /**
+     * [book]'s full-game moneyline, spreads and totals of one game ([gameKey]) as the stream holds them, each priced as of its last confirmation and only while that is within [maxAgeMs]
+     * (ParlayAPI itself drops a fast book's line frozen past ~150 s in a game under way): the live lane's Pinnacle lines (PB17b).
+     */
+    fun linesOf(game: String, book: String, now: Long = clock(), maxAgeMs: Long = LIVE_LINE_MS): List<RefBookMarket> {
+        val prefix = "$game|$book|"
+        val fresh = HashMap<String, Pair<Double, Long>>()
+        for ((k, p) in prices) if (k.startsWith(prefix) && now - p.confirmedAtMs <= maxAgeMs) fresh[k.substring(prefix.length)] = p.decimal to p.confirmedAtMs
+        fun side(kind: LineKind, side: Side, point: Double?) = fresh["$kind|||$side|${point?.let { "%.2f".format(java.util.Locale.ROOT, it) } ?: ""}"]
+        val out = ArrayList<RefBookMarket>()
+        fun add(kind: LineKind, a: Pair<Side, Double?>, b: Pair<Side, Double?>) {
+            val x = side(kind, a.first, a.second) ?: return
+            val y = side(kind, b.first, b.second) ?: return
+            out += RefBookMarket(book, book, kind, listOf(RefQuote(a.first, x.first, a.second), RefQuote(b.first, y.first, b.second)), minOf(x.second, y.second), source = "parlay")
+        }
+        add(LineKind.MONEYLINE, Side.HOME to null, Side.AWAY to null)
+        val points = fresh.keys.mapNotNull { k -> k.split('|').takeIf { it.size == 5 }?.let { (kind, _, _, s, pt) -> Triple(kind, s, pt.toDoubleOrNull()) } }
+        for ((kind, s, pt) in points) {
+            if (pt == null) continue
+            if (kind == LineKind.SPREAD.name && s == Side.HOME.name) add(LineKind.SPREAD, Side.HOME to pt, Side.AWAY to -pt)
+            if (kind == LineKind.TOTAL.name && s == Side.OVER.name) add(LineKind.TOTAL, Side.OVER to pt, Side.UNDER to pt)
+        }
+        return out
     }
 
     fun describe(now: Long = clock()): String =
@@ -173,6 +208,12 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
         const val KEEP_MS = 30 * 60_000L
         /** A poll older than this confirms nothing (ParlayAPI polls a live book every few seconds to a minute). */
         const val POLL_MAX_MS = 5 * 60_000L
+        /** A game is taken as under way for this long after its start. */
+        const val IN_PLAY_MS = 5 * 3_600_000L
+        /** A game is forgotten this long after its start. */
+        const val GAME_KEEP_MS = 8 * 3_600_000L
+        /** A line not confirmed for this long is not priced live (ParlayAPI drops a fast book's line frozen past ~150 s in a game under way). */
+        const val LIVE_LINE_MS = 150_000L
 
         fun gameKey(home: String, away: String) = norm(home) + "|" + norm(away)
 
