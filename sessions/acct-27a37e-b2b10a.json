@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-70c81990-qm4nt2",
- "head": "917df5a9a7aad7f5f1d8bc223536be95dd1a5122",
+ "head": "4b597670e53a94382f296514d6610f133738804d",
  "since": 1792889505,
- "beat": 1792891150,
- "beatIso": "2026-10-25T01:19:10Z",
- "done": "SG: Tj's similar-bets cap request written into TASKS.md (root cause found: family keys carry the total's line / differ by source)",
- "next": "SG1: rewrite RepeatGuard.family as a source-independent similarity key + test"
+ "beat": 1792891187,
+ "beatIso": "2026-10-25T01:19:47Z",
+ "done": "SG1-SG4 code: SimilarBets key, RepeatGuard who/cap/room/heldShort, engine trader+desk+phone placer/desk/red X wired; RepeatGuardTest+SimilarBetsTest green (27)",
+ "next": "run full tools/test.sh; fix fallout (MakerTest, CloudTraderTest, CloudBidRunnerTest); then CHANGES.md + engine_set repeatMaxFamilyDollars=3 + ship"
 }
