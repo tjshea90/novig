@@ -1,10 +1,10 @@
-# CHECKPOINT 4183 — read me first, then TASKS.md
+# CHECKPOINT 4184 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T07:55:12Z · **tests:** 1 RED: test_research_index.sh (8 green)
-**Branch:** `ccr-cfd54eb0-3h0vnn` · **builds on:** `d78cfa445` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T07:55:38Z · **tests:** 1 RED: test_research_index.sh (8 green)
+**Branch:** `ccr-cfd54eb0-3h0vnn` · **builds on:** `db6acb778` (this checkpoint is the commit after it)
 
 ## Just done
-tests green: PB2-PB5 + engine hourly loop fix
+retry landing
 
 ## Do this next
 trigger parlay.yml streamprobe
@@ -16,6 +16,7 @@ trigger parlay.yml streamprobe
 
 ## Last ten checkpoints
 ```
+  db6acb778 ckpt 4183: tests green: PB2-PB5 + engine hourly loop fix
   8c2336acb ckpt 4182: tests green on PB2-PB5 + streamprobe
   24ed75397 ckpt 4181: PB10: ParlayAPI Business docs saved (research/parlayapi_business_2026-10-25
   a35541a9a ckpt 4180: PB2 Pinnodds trial: one board every 15 min (~96/day); PB4/PB5: hourly accou
@@ -25,8 +26,4 @@ trigger parlay.yml streamprobe
   6b9ef6543 ckpt 4176: PB: Tj's downgrade/ParlayAPI Business/settings/battery request written into
   dbedd3059 ckpt 4175: first live PropLine stream run verified (26k moves/15 min, 0 gaps); Novig p
   079c4f5ae ckpt 4174: PSL9: v1.0.81 released + recorded
-  eae6dc6b3 ckpt 4173: v1.0.81 shipped (ship.sh green, on main), release.yml run 40170789987 build
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
