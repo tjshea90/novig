@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-3cb0aa53-b2tjli",
- "head": "088c27c54fdcc8a70c9c3a1ee886d44db28c8eb2",
+ "head": "63750cb1572e88879c12fb32f3a1e3a6b7e632b0",
  "since": 1792970423,
- "beat": 1792971197,
- "beatIso": "2026-10-25T23:33:17Z",
+ "beat": 1792971593,
+ "beatIso": "2026-10-25T23:39:53Z",
  "done": "PX11c: bid slider never asks fewer than 3 agreeing books (BidSlider.MIN_AGREEING; was 2 above level 60); LevelSlidersTest",
  "next": "full tools/test.sh, land on main, engine reset, verify Northwestern@Oregon row has parlay books; tell Tj"
 }
