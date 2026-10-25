@@ -8,8 +8,8 @@
  "branch": "ccr-cfd54eb0-3h0vnn",
  "head": "7e05ea878929a1e974318f7d86dd9f3894bdb89f",
  "since": 1792889505,
- "beat": 1792910875,
- "beatIso": "2026-10-25T06:47:55Z",
+ "beat": 1792911065,
+ "beatIso": "2026-10-25T06:51:05Z",
  "done": "NR1/PR1/FR1 done (api docs mirror run, Polymarket version fix, Novig per-subaccount throttles documented)",
  "next": "full test suite, ship, release, engine reset, tell Tj"
 }
