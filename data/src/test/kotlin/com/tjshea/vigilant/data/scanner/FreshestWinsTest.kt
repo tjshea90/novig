@@ -28,6 +28,14 @@ class FreshestWinsTest {
         assertEquals(1.90, Pricing.bookPrices(undated, key).single().decimalOdds[0], 1e-9)
     }
 
+    /** PB21b: PropLine and ParlayAPI quote one book at the same moment 3+ points apart: neither is trusted for that line; a move (one clearly newer) is not a disagreement. */
+    @Test fun `two same-time quotes of a book far apart leave the book out`() {
+        val apart = ref(ml("draftkings", 1.90, 2.00, 1_000_000L), ml("draftkings", 1.70, 2.25, 1_000_000L + 10_000L), ml("fanduel", 1.95, 1.95, 1_000_000L))
+        assertEquals(listOf("fanduel"), Pricing.bookPrices(apart, key).map { it.bookKey })
+        val moved = ref(ml("draftkings", 1.90, 2.00, 1_000_000L), ml("draftkings", 1.70, 2.25, 1_000_000L + 60_000L))
+        assertEquals(1.70, Pricing.bookPrices(moved, key).single().decimalOdds[0], 1e-9)
+    }
+
     @Test fun `switched off the first feed always wins`() {
         val r = ref(ml("draftkings", 1.90, 2.00, 1_000_000L), ml("draftkings", 1.80, 2.10, 1_000_000L + 60_000L))
         assertEquals(1.90, Pricing.bookPrices(r, key, freshest = false).single().decimalOdds[0], 1e-9)
