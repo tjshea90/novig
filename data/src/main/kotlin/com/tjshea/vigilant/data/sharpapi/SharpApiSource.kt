@@ -22,6 +22,9 @@ class SharpApiSource(
 
     override fun supports(league: League): Boolean = SharpApiBooks.leagueSlug(league) != null
 
+    private val background = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
+    private val inFlight: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+
     /** What each league last gave (Diagnostics, the engine's log). */
     val lastReads = java.util.concurrent.ConcurrentHashMap<String, String>()
 
@@ -32,7 +35,11 @@ class SharpApiSource(
         val now = clock()
         val slug = SharpApiBooks.leagueSlug(league)
         if (slug == null || client.down(now)) return RefSnapshot(league.oddsApiSportKey, emptyList(), now, provider = ID)
-        if (!feed.ensure(slug)) {
+        if (client.lite()) {
+            // The Free tier (12 requests a minute) reads a league whole in minutes, and the scan waited for it: every scan stopped at "Fair odds 68/74" and was cut after 150-270 s, so the list and its
+            // fair odds were 5-12 minutes old (Tj, 2026-10-25: "Why are these odds so old if they are from a socket?"). The store is brought up to date in the background; the scan takes what it holds.
+            if (inFlight.add(slug)) background.launch { try { feed.ensure(slug) } catch (e: Exception) { if (e is kotlinx.coroutines.CancellationException) throw e } finally { inFlight.remove(slug) } }
+        } else if (!feed.ensure(slug)) {
             feed.lastNote?.let { lastReads[league.novigName] = it }
             if (feed.freshAt(slug) == 0L) throw com.tjshea.vigilant.data.reference.ReferenceException("SharpAPI: ${feed.lastNote ?: client.lastError ?: "no answer"}")
         }
