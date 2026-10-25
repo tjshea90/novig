@@ -1,21 +1,23 @@
-# CHECKPOINT 4180 — read me first, then TASKS.md
+# CHECKPOINT 4181 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T07:49:15Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-cfd54eb0-3h0vnn` · **builds on:** `923bfe402` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T07:50:56Z · **tests:** 1 RED: test_research_index.sh (8 green)
+**Branch:** `ccr-cfd54eb0-3h0vnn` · **builds on:** `3a147e0c3` (this checkpoint is the commit after it)
 
 ## Just done
-PB2 Pinnodds trial: one board every 15 min (~96/day); PB4/PB5: hourly account reads + grader honour switches; workflow secrets for removed APIs dropped
+PB10: ParlayAPI Business docs saved (research/parlayapi_business_2026-10-25/); parlay.py streamprobe task (odds/hot/drop SSE + freshness routes, keyless)
 
 ## Do this next
-PB10 ParlayAPI Business docs from api-docs mirror
+trigger parlay.yml streamprobe on main; read frames; build engine SSE client
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
+     M .github/workflows/parlay.yml
      M CHECKPOINT.md
 
 ## Last ten checkpoints
 ```
+  a35541a9a ckpt 4180: PB2 Pinnodds trial: one board every 15 min (~96/day); PB4/PB5: hourly accou
   58bf568f3 ckpt 4179: PB3: Unabated + OddsPapi v5 removed from app and engine (clients, sources, 
   071777187 ckpt 4178: PB1 SharpAPI Free tier: plan read from X-RateLimit-Limit, 6 s spacing, game
   99b57535f ckpt 4177: api-docs mirror: ParlayAPI blog/changelog/integrations/versioning + PropLin
@@ -25,8 +27,7 @@ PB10 ParlayAPI Business docs from api-docs mirror
   eae6dc6b3 ckpt 4173: v1.0.81 shipped (ship.sh green, on main), release.yml run 40170789987 build
   5ea52564f ckpt 4172: pre-release: PropLine Streaming Lite: engine WebSockets (moves, pulls, scra
   8fe49550b ckpt 4171: pre-ship: PropLine Streaming Lite: engine WebSockets (moves, pulls, scratch
-  7e05ea878 ckpt 4170: NR1/PR1/FR1 done (api docs mirror run, Polymarket version fix, Novig per-su
 ```
 
-(8 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

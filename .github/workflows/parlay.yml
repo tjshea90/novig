@@ -44,7 +44,7 @@ jobs:
                 gh release upload parlay-samples out/parlay/* --clobber
               fi ;;
             streamprobe)
-              python3 -I tools/parlay.py streamprobe out/parlay-stream "${SPORT:-icehockey_nhl}"
+              python3 -I tools/parlay.py streamprobe out/parlay-stream "${SPORT:-basketball_nba}"
               if ls out/parlay-stream/* >/dev/null 2>&1; then
                 gh release view parlay-samples >/dev/null 2>&1 || gh release create parlay-samples --title "ParlayAPI samples (keyless)" --notes "Real answers, trimmed."
                 gh release upload parlay-samples out/parlay-stream/* --clobber
