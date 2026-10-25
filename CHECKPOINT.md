@@ -1,21 +1,23 @@
-# CHECKPOINT 4187 — read me first, then TASKS.md
+# CHECKPOINT 4188 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T08:16:27Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-be05497a-18skm3` · **builds on:** `186381fc3` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T08:18:54Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-be05497a-18skm3` · **builds on:** `96b0a7742` (this checkpoint is the commit after it)
 
 ## Just done
-PB9 phone rests (ScanSettings.phoneRests/phoneAutoScan: no auto-scan service/wake lock while the engine scans+trades; PhoneRestsTest); PB20 bet sheet age+feed per book (BookPrices.source, CloudCodec 's', QuoteAge; QuoteAgeTest, CloudCodecTest); PB18 test (Business key first); PB7 24/7 default (ScanSettings.cloudHours=false, engine_alarm default + selftest)
+ticked PB1-4, PB7, PB9, PB18, PB20 with their tests; streamprobe re-run (whole frames + shapes + REST board) dispatched on this branch
 
 ## Do this next
-run TheOddsApiClientTest + CloudEngineTest; PB7 routines; PB11 ParlayAPI SSE engine client
+read the probe's shapes; build ParlayLive (SSE store) + ParlayStream (engine) laid over ParlayAPI's boards; engine stream pass
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  71e25af0f ckpt 4187: PB9 phone rests (ScanSettings.phoneRests/phoneAutoScan: no auto-scan servic
   b73a5cff5 ckpt 4186: PB: merged tj Gmail's PhoneSleep WIP; streamprobe frames saved (research/pa
   ed57aa38f ckpt 4185: research index rebuilt (ParlayAPI Business docs folder)
   51f196e04 ckpt 4184: retry landing
@@ -26,5 +28,5 @@ run TheOddsApiClientTest + CloudEngineTest; PB7 routines; PB11 ParlayAPI SSE eng
   58bf568f3 ckpt 4179: PB3: Unabated + OddsPapi v5 removed from app and engine (clients, sources, 
 ```
 
-(17 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
