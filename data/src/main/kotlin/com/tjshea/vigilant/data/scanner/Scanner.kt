@@ -947,6 +947,14 @@ class Scanner(
         }
     }
 
+    /** [held] priced against the reference game [scan] was priced from, with the streams laid over it: the scan's fair under the held row's newer Novig price (PX9, [com.tjshea.vigilant.data.cloud.RealtimeList.adopt]). */
+    override fun rebaseFair(requested: ScanSettings, held: Opportunity, scan: Opportunity, overlay: (RefEvent, Long) -> RefEvent): Opportunity? {
+        val ref0 = scan.refEvent ?: return null
+        val settings = requested.effective(forBets = betsOnly)
+        val now = clock()
+        return Pricing.refair(held, runCatching { overlay(ref0, now) }.getOrDefault(ref0), settings, now)
+    }
+
     override fun streamReady(): Boolean = catalog != null
 
     @Volatile private var streamTimings: String? = null
