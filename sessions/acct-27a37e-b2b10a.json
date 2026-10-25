@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-cfd54eb0-3h0vnn",
- "head": "24ed75397698e3c11b07e18cad7f66349bee3a9f",
+ "head": "8c2336acbb121a10871b36d71933f157fa6cce4c",
  "since": 1792912591,
- "beat": 1792914656,
- "beatIso": "2026-10-25T07:50:56Z",
- "done": "PB10: ParlayAPI Business docs saved (research/parlayapi_business_2026-10-25/); parlay.py streamprobe task (odds/hot/drop SSE + freshness routes, keyless)",
- "next": "trigger parlay.yml streamprobe on main; read frames; build engine SSE client"
+ "beat": 1792914862,
+ "beatIso": "2026-10-25T07:54:22Z",
+ "done": "tests green on PB2-PB5 + streamprobe",
+ "next": "trigger parlay.yml streamprobe"
 }
