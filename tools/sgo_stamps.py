@@ -41,7 +41,7 @@ def ms(t):
     if isinstance(t, (int, float)):
         return float(t)
     try:
-        return time.mktime(time.strptime(t[:19], "%Y-%m-%dT%H:%M:%S")) * 1000 - time.timezone * 1000
+        return calendar.timegm(time.strptime(t[:19], "%Y-%m-%dT%H:%M:%S")) * 1000.0
     except ValueError:
         return None
 
