@@ -35,4 +35,36 @@ class CloudClaudeConfigTest {
         val killed = off.copy(killed = true)
         assertNull("STOP ALL still wins over a wanted-on engine: nothing is un-paused", CloudClaudeConfig.adopt(CloudConfig(on = true, device = "claude:x", settings = off), killed))
     }
+
+    // PX10e (2026-10-25): the phone's push must not undo a session's change it has not adopted yet, nor a session's write undo the phone's own tap.
+    private val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    private val base = ScanSettings(usePinnacle = true, gates = com.tjshea.vigilant.data.scanner.ApiGates(usePinnodds = true))
+
+    @Test
+    fun `a session's change and the phone's own change since its last push both survive`() {
+        val claude = CloudConfig(device = "claude:acct-7542bf", settings = base.copy(gates = base.gates.copy(usePinnodds = false)))
+        val phone = base.copy(usePinnacle = false)
+        val next = CloudClaudeConfig.merge(base, claude, phone, json)!!
+        assertFalse("the session's switch", next.gates.usePinnodds)
+        assertFalse("the phone's own tap", next.usePinnacle)
+    }
+
+    @Test
+    fun `on a clash the phone's tap wins, and stop all stays the phone's`() {
+        val claude = CloudConfig(device = "claude:x", settings = base.copy(usePinnacle = true, killed = true, gates = base.gates.copy(usePinnodds = false)))
+        val phone = base.copy(usePinnacle = false, gates = base.gates.copy(usePinnodds = true, useSxBet = !base.gates.useSxBet), killed = false)
+        val changed = base.copy(usePinnacle = true)
+        val next = CloudClaudeConfig.merge(changed, claude.copy(settings = claude.settings.copy(usePinnacle = false)), phone.copy(usePinnacle = true), json)!!
+        assertTrue("both changed usePinnacle: the phone's value", next.usePinnacle)
+        assertFalse("only the session changed usePinnodds", next.gates.usePinnodds)
+        assertEquals("only the phone changed useSxBet", !base.gates.useSxBet, next.gates.useSxBet)
+        assertFalse("stop all is never taken from a session", next.killed)
+    }
+
+    @Test
+    fun `without a base it is adopt, and a phone write is never merged`() {
+        val claude = CloudConfig(device = "claude:x", settings = base.copy(gates = base.gates.copy(usePinnodds = false)))
+        assertEquals(CloudClaudeConfig.adopt(claude, base), CloudClaudeConfig.merge(null, claude, base, json))
+        assertNull(CloudClaudeConfig.merge(base, claude.copy(device = "moto g - 2026"), base.copy(usePinnacle = false), json))
+    }
 }
