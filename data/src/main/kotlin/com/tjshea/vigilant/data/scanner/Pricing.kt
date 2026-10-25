@@ -295,7 +295,10 @@ object Pricing {
             val all = bookPrices(ref, key, settings.gates.freshestWins).let { all ->
                 if (settings.lowUsageScan) all.filter { b -> b.lastUpdateMs != null && Freshness.fresh(b.lastUpdateMs, now, ref.commenceMs) } else all
             }
-            ref.markets.filter { key.matches(it) }.groupBy { it.source }.forEach { (src, l) -> QuoteCensus.add("atLine", src, l.size) }
+            ref.markets.filter { key.matches(it) }.let { atLine ->
+                atLine.groupBy { it.source }.forEach { (src, l) -> QuoteCensus.add("atLine", src, l.size) }
+                crossCensus(atLine)
+            }
             val prices = Freshness.freshFirst(all, now, { b -> b.lastUpdateMs }, { b -> b.bookKey in fairSettings.sharpBooks })
             if (prices.size < all.size) (all - prices.toSet()).groupBy { it.source }.forEach { (src, l) -> QuoteCensus.add("staleBesideFresh", src, l.size) }
             FairValue.compute(prices, fairSettings).also { f ->
@@ -482,6 +485,29 @@ object Pricing {
 
     /** A book left out of a line because two feeds quoted it at the same time [CROSS_CHECK_POINTS] or more apart ([chosenMarkets]); counted for the status. */
     val crossDropped = java.util.concurrent.atomic.AtomicLong()
+
+    /** The books PropLine ingests from their own push feeds (its docs: "treat the five push books as a real-time feed and the polled books as a 30-90s one"; Kalshi and Polymarket have feeds of their own here). */
+    private val PUSH_BOOKS = setOf("draftkings", "fanduel", "fanatics")
+
+    /**
+     * PX9 (Tj 2026-10-25: "why are the odds this stale if they are streamed"): where PropLine and ParlayAPI both quote one book at one line, whether they say the same price, by how much fresher ParlayAPI's quote is
+     * (its polls and stream confirm a book within ~30 s), and whether PropLine ingests the book by push or polls it. A PropLine quote that is minutes older than ParlayAPI's yet always agrees is current, whatever
+     * its stamp says; one that disagrees is stale. Counted in [QuoteCensus] (`crossSame` / `crossDiff`, "push|polled/how much older").
+     */
+    private fun crossCensus(atLine: List<com.tjshea.vigilant.data.reference.RefBookMarket>) {
+        if (atLine.size < 2) return
+        for (g in atLine.groupBy { it.bookKey }.values) {
+            if (g.size < 2) continue
+            val pl = g.filter { it.source?.startsWith("propline") == true && it.lastUpdateMs != null }.minByOrNull { it.lastUpdateMs!! } ?: continue
+            val pa = g.filter { it.source?.startsWith("parlay") == true && it.lastUpdateMs != null }.maxByOrNull { it.lastUpdateMs!! } ?: continue
+            val sides = pl.quotes.mapNotNull { q -> pa.quotes.firstOrNull { it.side == q.side }?.let { q to it } }
+            if (sides.isEmpty()) continue
+            val same = sides.all { (a, b) -> kotlin.math.abs(a.decimalOdds - b.decimalOdds) < 0.0015 && (a.point == null || b.point == null || kotlin.math.abs(a.point!! - b.point!!) < 1e-9) }
+            val gap = pa.lastUpdateMs!! - pl.lastUpdateMs!!
+            val older = when { gap < 20_000L -> "within 20s"; gap < 60_000L -> "20-60s older"; gap < 180_000L -> "1-3 min older"; else -> "3+ min older" }
+            QuoteCensus.add(if (same) "crossSame" else "crossDiff", "${if (pl.bookKey in PUSH_BOOKS) "push" else "polled"}/$older")
+        }
+    }
 
     /** PB21b (Tj, 2026-10-25: "use them to check each other's odds accuracy"): two same-time quotes of one book this far apart in no-vig chance (first side) are not both right. */
     const val CROSS_CHECK_POINTS = 0.03
