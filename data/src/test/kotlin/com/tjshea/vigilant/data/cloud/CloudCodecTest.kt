@@ -36,7 +36,7 @@ class CloudCodecTest {
     private fun row(id: String = "o1", withExtras: Boolean = true): Opportunity {
         val event = NovigEvent("e1", "BASKETBALL", "NBA", NovigEvent.STATUS_PREGAME, "Boston Celtics @ New York Knicks", start)
         val market = NovigMarket("m1", "e1", "SPREAD", "OPEN", "Spread", start, MarketFee.GAME, listOf(NovigOutcome(id, "NYK -3.5", "TBD"), NovigOutcome("o2", "BOS +3.5", "TBD")), strike = -3.5)
-        val pin = BookPrices("pinnacle", "Pinnacle", listOf(1.91, 1.95), start - 60_000)
+        val pin = BookPrices("pinnacle", "Pinnacle", listOf(1.91, 1.95), start - 60_000, source = "parlay")
         val fair = FairLine(
             probabilities = listOf(0.52, 0.48), requestedSource = FairSource.BLEND, sourceUsed = FairSource.SHARP, method = DevigMethod.WORST_CASE,
             perBook = listOf(BookFair(pin, listOf(0.52, 0.48), 0.04, true)), sharpBooksUsed = listOf("Pinnacle"), averageBooksUsed = listOf("DraftKings"),
