@@ -1017,3 +1017,31 @@ Can we get any valuable information from the historical data from research onlin
 ```
 @"/root/.claude/uploads/e79e96e9-532e-5a10-9699-95a407259c64/ab499e97-screen-20261024-205102.mp4" Review the attached video. These are some of my open novig bets. Notice there are many bets on the same game and totals for a couple games. For example, the same game over the total has several bets and even more bets on over a different total. Basically, too much money and bets are going into essentially the same bet. Figure out how to make a better safeguard against this. The safeguard should look at: bets I hand placed, bids I hand placed, bets the engine placed, and bids the engine placed. It should not allow too many bets on essentially the same team or total or prop, unless there are many small bets that add up to a small amount of money. This includes bets and bids that are substantially similar, such as a game over a total of 49.5 and the same game over a total of 50.5. these are very similar bets and I don't want too much staked on identical or very similar bets. Figure out a smart, logical system to prevent this from happening. Make a setting where I can adjust the maximum total money wagered (including both bids and bets) on identical or substantially similar bets. Think of and implement the most logical way to do this. The goal is to diversify and not have too much money staked on one outcome or similar outcomes. To do this, the system should know not to post bids for the same or similar positions that either I hand bet or the engine auto bet. The engine shouldn't bet things I already hand bet. There should be a clear red x to warn me if I already bet or bid something identical or substantially similar or if the engine already did. Keep in mind this must coordinate across both bets and bids.
 ```
+
+## 2026-10-25T06:10:36Z
+```
+I have upgraded to propline streaming lite. It uses the same key already on GitHub, but includes additional features and limits, webhook, and websocket. Review the following docs thoroughly: 
+
+https://prop-line.com/recipes
+
+https://prop-line.com/api-versioning
+
+https://prop-line.com/openapi.json
+
+https://prop-line.com/docs
+
+https://prop-line.com/llms-full.txt
+
+https://prop-line.com/sportsbook-accuracy (this may help with weights on which books are sharp)
+
+
+I am paying for the streaming lite tier, and I want the GitHub engine, Claude , and the android app to take full advantage of all the features, speed, and accuracy, including full usage of the webhooks and/or websocket. I want the GitHub engine to run 24/7 connected to propline streaming lite. 
+
+1) thoroughly review and research the docs and llms file for propline, especially the streaming lite plan. 
+2) implement all the additional features, changes, upgrades, and higher limits and functions in the app and GitHub engine. This should include features, speed, correct commands and prompts, grading features, clv features, all available sports books offered, live odds and scores, etc. implement the bookmaker freshness endpoints and show in the app and engine how fresh the odds are and filter out stale odds 
+3) make full use of the added limits, webhook and/or websocket. It allows multiple connections. 
+4) review the attached screenshots of my propline dashboard and tell me if I should do anything on these settings. 
+5) do another thorough research of novig docs, especially the socket and bbo. Make sure the app and GitHub engine are taking full advantage of the speed and using the correct commands and usage of novig socket and bbo. Look for any changes in the docs and updates. Look for the best ways to place bids and bets through the API and socket.
+6) do another thorough review of parlayapi docs for my pro plan. Make sure the app and GitHub engine use it to its full advantage. This should include features, speed, correct commands and prompts, grading features, clv features, all available sports books offered, live odds and scores, etc.
+7) do thorough reviews of kalshi, polynarket, sx bet, and ESPN feeds. Make sure they are being used correctly with the right commands and prompts and used as efficiently as possible for best speed.
+```
