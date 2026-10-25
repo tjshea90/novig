@@ -864,7 +864,7 @@ internal data class PlMarket(
             val under = group.singleOrNull { !it.over } ?: return@mapNotNull null
             RefBookMarket(
                 bookKey, title, LineKind.PLAYER_PROP,
-                listOf(RefQuote(Side.OVER, over.price, over.point, over.id), RefQuote(Side.UNDER, under.price, under.point, under.id)),
+                listOf(RefQuote(Side.OVER, over.price, over.point, over.id, feedOutcomeId = over.feedId), RefQuote(Side.UNDER, under.price, under.point, under.id, feedOutcomeId = under.feedId)),
                 if (over.seen != null && under.seen != null) minOf(over.seen, under.seen) else updated, subject = over.player, stat = stat,
                 bookEventId = book.book_event_id?.takeIf { it.isNotBlank() }, link = book.link?.takeIf { it.isNotBlank() },
             )
