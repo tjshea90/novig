@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe | speed | archive | backfill | multibook | clv | grade | timing | evbets | accuracy | coverage | altprobe | bookstudy"
+        description: "plans | probe | speed | archive | backfill | multibook | clv | grade | timing | evbets | accuracy | coverage | altprobe | bookstudy | bookparam"
         default: "plans"
       sports:
         description: "altprobe, bookstudy: comma-separated PropLine sport keys (football_nfl,football_ncaaf when empty), e.g. basketball_nba,hockey_nhl"
