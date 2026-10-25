@@ -589,6 +589,8 @@ fun main(args: Array<String>) = runBlocking {
             delay(3_000L)
         }
     }
+    // The engine re-prices its list every 3 s on the streams (RealtimeList): a scan keeps every quote inside the plain age limit (PX, Freshness.continuous).
+    com.tjshea.vigilant.data.scanner.Freshness.continuous = true
     val engine = CloudEngine(
         scanner = scanner, sources = sources::sources, config = { config.read().also { latestCfg.set(it) } }, apiChecks = { apiManager.lines() }, apiFixes = { apiManager.fixes() }, apiSwaps = { apiManager.swaps() }, apiSwapAtMs = { apiManager.swapAtMs() }, onCheckApis = { apiManager.recheckAll() },
         publish = { feed, status -> engineIdle.set(status.idle); if (feed != null) runCatching { liveFeedBytes.set(com.tjshea.vigilant.data.cloud.CloudFeed.encode(feed)) }; publisher.stage(feed, status) },
