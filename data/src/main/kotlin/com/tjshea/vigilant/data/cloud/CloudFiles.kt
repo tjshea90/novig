@@ -146,6 +146,9 @@ data class CloudStatus(
     val novigAddress: String = "",
     /** Where the phone can read this run's CURRENT status straight from the engine ([CloudLive]); blank = no tunnel (the phone reads GitHub only). */
     val liveUrl: String = "",
+    /** The real-time list's last pass (PB19, [RealtimeList]): 0 = none; while it is recent the engine re-prices the listed bets every few seconds and the phone need not. And how many sides it watches. */
+    val realtimeAtMs: Long = 0L,
+    val realtimeWatched: Int = 0,
     /** The order the engine asks its APIs in, best first, with what each was measured to deliver (p90 age of its quotes by the books' own stamps, distance from Pinnacle): [com.tjshea.vigilant.data.scanner.SourceScore]. Empty before the first measurement. */
     val ranking: String = "",
     val bidsBytes: Int = 0,
