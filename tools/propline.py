@@ -502,6 +502,101 @@ def cmd_coverage(outdir, sports=("football_nfl", "football_ncaaf", "basketball_n
     return 0
 
 
+OURS = ["pinnacle", "draftkings", "fanduel", "betmgm", "fanatics", "betrivers", "hardrock", "bovada", "betonlineag", "lowvig", "betus", "unibet", "onexbet", "marathon", "fliff", "betway",
+        "matchbook", "smarkets", "sbobet", "bookmaker_eu", "betfair_ex", "thescorebet", "heritage", "tab_au", "tipico", "winamax", "betclic_pt", "stoiximan", "paddypower", "livescorebet",
+        "superbet_ro", "superbet_pl", "ladbrokes_au", "supersport", "betway_za"]  # PropLineClient.KNOWN (v1.0.83)
+
+
+def _ts(x):
+    try:
+        return datetime.datetime.fromisoformat(str(x).replace("Z", "+00:00")).timestamp()
+    except (TypeError, ValueError):
+        return None
+
+
+def alt_stats(events, now):
+    """PX (Tj 2026-10-25: "many results only have 1 book behind the fair odds for alternate markets that are popular and available at many books"): for every Novig spread/total rung, the
+    books of [OURS] posting the SAME number, how old each quote is (now - the older side's last_seen_at), whether the rung is the book's main line, and the market shapes the engine's parser
+    would drop (a market with other than 2 outcomes, a period or team market)."""
+    lines, shapes, ages = [], {}, {}
+    for e in events:
+        rungs = {}
+        for b in e.get("bookmakers") or []:
+            bk = b.get("key")
+            for m in b.get("markets") or []:
+                mk = m.get("key")
+                if mk not in ("spreads", "totals"):
+                    continue
+                outs = [o for o in m.get("outcomes") or [] if o.get("price") is not None]
+                shapes[(mk, len(outs), bool(m.get("period")), bool(m.get("team")))] = shapes.get((mk, len(outs), bool(m.get("period")), bool(m.get("team"))), 0) + 1
+                if len(outs) != 2 or m.get("period") or m.get("team"):
+                    continue
+                if mk == "spreads":
+                    h = [o for o in outs if o.get("side") == "home" or o.get("name") == e.get("home_team")]
+                    if not h or h[0].get("point") is None:
+                        continue
+                    key = (mk, float(h[0]["point"]))
+                else:
+                    if outs[0].get("point") is None:
+                        continue
+                    key = (mk, float(outs[0]["point"]))
+                seen = [_ts(o.get("last_seen_at")) for o in outs]
+                age = (now - min(seen)) if all(seen) else None
+                rungs.setdefault(key, {})[bk] = (age, m.get("line_type"))
+        for key, by in rungs.items():
+            if "novig" not in by:
+                continue
+            ours = {k: v for k, v in by.items() if k in OURS}
+            fresh5 = [k for k, (a, _) in ours.items() if a is not None and a <= 300]
+            fresh10 = [k for k, (a, _) in ours.items() if a is not None and a <= 600]
+            alt = by["novig"][1] == "alternate"
+            lines.append({"game": "%s @ %s" % (e.get("away_team"), e.get("home_team")), "market": key[0], "point": key[1], "novig_line_type": by["novig"][1], "ours": len(ours),
+                          "ours_fresh5": len(fresh5), "ours_fresh10": len(fresh10), "all_books": len(by) - 1,
+                          "detail": {k: [None if a is None else int(a), lt] for k, (a, lt) in sorted(ours.items())}})
+            for k, (a, _) in ours.items():
+                if a is not None:
+                    ages.setdefault(k, []).append(a)
+    return {"lines": lines, "shapes": {"%s outcomes=%d period=%s team=%s" % k: v for k, v in sorted(shapes.items())},
+            "book_age_p50": {k: sorted(v)[len(v) // 2] for k, v in sorted(ages.items())}}
+
+
+def cmd_altprobe(outdir, sports=("football_nfl", "football_ncaaf")):
+    """PX: the league boards the engine reads (its books + Novig, includeBookIds) measured by [alt_stats]."""
+    keys = keys_from_env()
+    i, _ = best_key(keys, [plan_of(k) for k in keys])
+    if i is None:
+        print("no usable key")
+        return 0
+    os.makedirs(outdir, exist_ok=True)
+    out = {}
+    L = ["# PropLine alternate lines vs Vigilant's books (PX, %s)" % time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()), ""]
+    for sp in sports:
+        st, _, data = request("/v1/sports/%s/odds" % sp, keys[i], {"markets": "spreads,totals", "bookmakers": ",".join(OURS + ["novig"]), "includeBookIds": "true"})
+        events = j(data)
+        events = events if isinstance(events, list) else (events or {}).get("data") or []
+        r = alt_stats(events, time.time())
+        out[sp] = r
+        ls = r["lines"]
+        def med(v):
+            v = sorted(v)
+            return v[len(v) // 2] if v else 0
+        for kind in ("main", "alternate"):
+            sel = [x for x in ls if (x["novig_line_type"] == "main") == (kind == "main")]
+            L.append("- %s %s Novig %s lines: %d; our books at the same number median %d (fresh 5 min %d, 10 min %d); all PropLine books %d" % (
+                sp, "", kind, len(sel), med([x["ours"] for x in sel]), med([x["ours_fresh5"] for x in sel]), med([x["ours_fresh10"] for x in sel]), med([x["all_books"] for x in sel])))
+        L.append("  market shapes: %s" % r["shapes"])
+        L.append("  p50 quote age by book (s): %s" % {k: int(v) for k, v in r["book_age_p50"].items()})
+        for x in sorted(ls, key=lambda x: x["ours"])[:12]:
+            L.append("  thin: %s %s %s (%s): ours %d, all %d, %s" % (x["game"], x["market"], x["point"], x["novig_line_type"], x["ours"], x["all_books"], x["detail"]))
+        print(sp, "HTTP", st, len(events), "games")
+    with open(os.path.join(outdir, "altprobe.md"), "w") as f:
+        f.write("\n".join(L) + "\n")
+    with open(os.path.join(outdir, "altprobe.json"), "w") as f:
+        json.dump(out, f)
+    print("\n".join(L))
+    return 0
+
+
 def selftest():
     assert tier_of(1000) == "free" and tier_of(5000) == "hobby" and tier_of(25000) == "pro" and tier_of(250000) == "streaming-lite" and tier_of(None) == "?"
     assert keys_from_env({"PROPLINE_API_KEY": "a, b\nc  d;e"}) == ["a", "b", "c", "d", "e"] and keys_from_env({}) == []
@@ -514,6 +609,12 @@ def selftest():
         for k in ("novig", "a", "b", "c", "d")]}]
     cs = coverage_stats([("s", ev * 1)])
     assert cs["games"]["a"] == 1 and ("s", "totals", 3, 4) in cs["novig_lines"]
+    ev2 = [{"home_team": "H", "away_team": "A", "bookmakers": [
+        {"key": k, "markets": [{"key": "spreads", "line_type": "alternate", "outcomes": [{"name": "H", "side": "home", "price": -110, "point": -4.5, "last_seen_at": "2026-10-25T16:00:00Z"},
+                                                                                     {"name": "A", "side": "away", "price": -110, "point": 4.5, "last_seen_at": "2026-10-25T16:00:00Z"}]}]}
+        for k in ("novig", "draftkings", "fanduel", "somebook")]}]
+    r2 = alt_stats(ev2, _ts("2026-10-25T16:02:00Z"))
+    assert r2["lines"][0]["ours"] == 2 and r2["lines"][0]["ours_fresh5"] == 2 and r2["lines"][0]["all_books"] == 3, r2
     print("propline selftest ok")
     return 0
 
@@ -530,6 +631,8 @@ if __name__ == "__main__":
         sys.exit(cmd_steam(a[1] if len(a) > 1 else "out/propline-steam"))
     if a[0] == "coverage":
         sys.exit(cmd_coverage(a[1] if len(a) > 1 else "out/propline-coverage"))
+    if a[0] == "altprobe":
+        sys.exit(cmd_altprobe(a[1] if len(a) > 1 else "out/propline-altprobe"))
     if a[0] == "speed":
         sys.exit(cmd_speed(a[1] if len(a) > 1 else "out/propline-speed"))
     if a[0] == "archive":

@@ -91,6 +91,11 @@ jobs:
               python3 -I tools/propline.py coverage out/coverage
               gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine samples (keyless)" --notes "Real answers of PropLine endpoints, keyless."
               gh release upload propline-samples out/coverage/* --clobber ;;
+            altprobe)
+              # PX (2026-10-25): Novig's alternate spread/total rungs vs the books Vigilant reads at the same number, with ages and market shapes.
+              python3 -I tools/propline.py altprobe out/altprobe
+              gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine samples (keyless)" --notes "Real answers of PropLine endpoints, keyless."
+              gh release upload propline-samples out/altprobe/* --clobber ;;
             clv) bash tools/propline_clv_job.sh ;;
             grade) bash tools/propline_grade_job.sh ;;
             evbets) bash tools/propline_evbets_job.sh ;;
