@@ -376,12 +376,6 @@ data class ScanSettings(
     /** SGO Pro: the odds-age guard in minutes (the app drops a quote older than this): 10 as Tj set it ([SGO_MAX_AGE_CHOICES]); SGO's props refresh about every 10 minutes, so a longer guard leaves fewer gaps between bids. */
     val sgoMaxAgeMinutes: Int = 10,
     /**
-     * OddsPapi v5 (Tj, 2026-10-09: "the next best api ... a toggle ... with it on use it to full power everywhere"; ODDSPAPI_API.md): sharp and US books with each price's own change time. While it is on (and
-     * a key is saved and answering) the scan, the bid desk, open-bet pricing, closing lines (CLV for any bet) and grading read it, and the feeds that sell the same thing (PinnWire/pinnapi, PropLine, The
-     * Odds API, ParlayAPI, and SGO's own sources when SGO Pro is off) rest for the leagues it carries; the free feeds and Pinnodds stay. Off by default; off, the app is exactly what it was.
-     */
-    val oddsPapi: Boolean = false,
-    /**
      * Leave a quote out of every fair line when its two sides add up to too much (a book above 12% hold, an exchange above 10%: [com.tjshea.vigilant.engine.WideQuotes]); Tj, 2026-10-09: ProphetX at
      * -140 / -113 on a total (11.4%) was counted as a view of the price. On by default.
      */
@@ -390,16 +384,8 @@ data class ScanSettings(
     val vigGuards: ScanGuards = ScanGuards(),
     /** OddsPapi: also price the fair line with the books Vigilant's list lacks (Circa, SuperBook, bet365: [com.tjshea.vigilant.data.reference.OpBooks.EXTRA]). */
     val opExtraBooks: Boolean = true,
-    /** OddsPapi: read every game in depth for its alternate lines (one request a game); off, the main lines of a whole tournament come in one request. */
-    val opAltLines: Boolean = true,
     /**
-     * Unabated Free API (Tj, 2026-10-11; UNABATED_API.md): DraftKings, FanDuel, MGM, Caesars, theScore and Fanatics' lines and props, 15 s delayed, one request per 5 s, no credits. On (and a key saved and
-     * answering) it joins the scan LAST in the source order, so it prices only the lines no better feed sent (a fallback by line), and nothing else rests for it. Off by default; off, the app is what it was.
-     */
-    val unabated: Boolean = false,
-    /**
-     * OddsPapi Free (v4, Tj's free key; ODDSPAPI_API.md addendum 2026-10-11): the Pinnacle closing line for CLV from its free historical odds, last in the close-source order. A different product from [oddsPapi]
-     * (v5, B2B trial). Off by default.
+     * OddsPapi Free (v4, Tj's free key; ODDSPAPI_API.md addendum 2026-10-11): the Pinnacle closing line for CLV from its free historical odds, last in the close-source order. (The v5 integration was removed, Tj 2026-10-25.) Off by default.
      */
     val oddsPapiFree: Boolean = false,
     /** The newer per-API switches and OddsPapi's every-book mode, in one group (a settings class this wide runs out of JVM argument slots: [ApiGates]). */
