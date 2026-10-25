@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-db7n0m",
- "head": "3a92b81de9bca09599c7db781f661048e5f4d5ad",
+ "head": "d43324dbbcfd6f535de754e615a22faaf14962c2",
  "since": 1792884251,
- "beat": 1792886878,
- "beatIso": "2026-10-25T00:07:58Z",
- "done": "chat: answered ledger-profit method",
- "next": "CH87b/c implement ledger-based all-time profit"
+ "beat": 1792886950,
+ "beatIso": "2026-10-25T00:09:10Z",
+ "done": "CH87c all-time profit = settled bets only",
+ "next": "check other graphs exclude non-final; ship in next release; CH87a wake lag"
 }
