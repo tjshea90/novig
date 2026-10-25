@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "0e67533551c4fd6e9cecb414f84af9e92f0b5027",
+ "head": "66d520be3b91521bed05b6e5467373497982b005",
  "since": 1792966905,
- "beat": 1792969531,
- "beatIso": "2026-10-25T23:05:31Z",
- "done": "pre-release: v1.0.85 PX11: a filled order whose fills Novig would not let us read yet is no longer called 'nobody was selling' (nor put back on the list to be bet twice); the bet sheet lists books best odds first and marks in red the books whose own odds say the bet is not +EV (versionCode 425, v1.0.85)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.85), then run: bash tools/record-release.sh v1.0.85 425 \"v1.0.85 PX11: a filled order whose fills Novig would not let us read yet is no longer called 'nobody was selling' (nor put back on the list to be bet twice); the bet sheet lists books best odds first and marks in red the books whose own odds say the bet is not +EV\""
+ "beat": 1792969573,
+ "beatIso": "2026-10-25T23:06:13Z",
+ "done": "v1.0.85 released + recorded; engine reset onto the order-port fix",
+ "next": "NEXT SESSION: PX11f per-listed-bet feed census in the engine (which feed's copy of each book at the line, its age, which won: why ParlayAPI's 0-5 s copies for Northwestern@Oregon Over 49.5 never reached the fair); PX11c check the 3-agreeing-books minimum in MakerQuote; PX11d outlier audit by book (badOdds per book over a day); PX11e Pinnacle without SGO (sources + research)"
 }
