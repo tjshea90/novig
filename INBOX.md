@@ -1017,18 +1017,3 @@ Can we get any valuable information from the historical data from research onlin
 ```
 @"/root/.claude/uploads/e79e96e9-532e-5a10-9699-95a407259c64/ab499e97-screen-20261024-205102.mp4" Review the attached video. These are some of my open novig bets. Notice there are many bets on the same game and totals for a couple games. For example, the same game over the total has several bets and even more bets on over a different total. Basically, too much money and bets are going into essentially the same bet. Figure out how to make a better safeguard against this. The safeguard should look at: bets I hand placed, bids I hand placed, bets the engine placed, and bids the engine placed. It should not allow too many bets on essentially the same team or total or prop, unless there are many small bets that add up to a small amount of money. This includes bets and bids that are substantially similar, such as a game over a total of 49.5 and the same game over a total of 50.5. these are very similar bets and I don't want too much staked on identical or very similar bets. Figure out a smart, logical system to prevent this from happening. Make a setting where I can adjust the maximum total money wagered (including both bids and bets) on identical or substantially similar bets. Think of and implement the most logical way to do this. The goal is to diversify and not have too much money staked on one outcome or similar outcomes. To do this, the system should know not to post bids for the same or similar positions that either I hand bet or the engine auto bet. The engine shouldn't bet things I already hand bet. There should be a clear red x to warn me if I already bet or bid something identical or substantially similar or if the engine already did. Keep in mind this must coordinate across both bets and bids.
 ```
-
-## 2026-10-25T01:33:30Z
-```
-Count all the tick marks in the scans and tell me how many there are.
-```
-
-## 2026-10-25T01:36:09Z
-```
-Send this to me in plain text for a reader with plain text only
-```
-
-## 2026-10-25T01:38:08Z
-```
-This shouldn't be on the repo. I sent it to the wrong chat. Delete it
-```
