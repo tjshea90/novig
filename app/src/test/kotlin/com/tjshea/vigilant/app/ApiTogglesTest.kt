@@ -72,7 +72,7 @@ class ApiTogglesTest {
         for ((entry, own) in idsOf) assertTrue("$entry (background): $own missing from $background", own.all { it in background })
         // for a league, every source that carries it is asked: nothing is left out for the leagues SGO or OddsPapi carry
         val forNfl = c.referenceSources(s).filter { it.supports(nfl) }.map { it.id }.toSet()
-        for (id in listOf("sgo", "oddspapi", "bolt", "parlay", "propline", "oddsapi", "kalshi", "polymarket", "pinnacle")) assertTrue("$id for the NFL in $forNfl", id in forNfl)
+        for (id in listOf("sgo", "oddspapi_free", "bolt", "parlay", "propline", "oddsapi", "kalshi", "polymarket", "pinnacle")) assertTrue("$id for the NFL in $forNfl", id in forNfl)
         val forAtp = c.referenceSources(s).filter { it.supports(atp) }.map { it.id }.toSet()
         for (id in listOf("sgo", "pinnacle", "kalshi", "parlay")) assertTrue("$id for tennis in $forAtp", id in forAtp)
     }
@@ -170,6 +170,6 @@ class ApiTogglesTest {
         assertFalse("oddsapi in $scan", "oddsapi" in scan)
         // and with SGO and OddsPapi off the flat-rate ones are gone from it
         val noFlat = c.referenceSources(low.copy(sgoPro = false, oddsPapiFree = false), scan = true).map { it.id }.toSet()
-        assertTrue(noFlat.toString(), noFlat.none { it.startsWith("sgo") || it.startsWith("oddspapi") || it.startsWith("unabated") })
+        assertTrue(noFlat.toString(), noFlat.none { it.startsWith("sgo") || it.startsWith("oddspapi") })
     }
 }

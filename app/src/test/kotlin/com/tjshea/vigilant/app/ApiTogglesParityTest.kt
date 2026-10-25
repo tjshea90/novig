@@ -10,9 +10,7 @@ class ApiTogglesParityTest {
     private val ids = mapOf(
         "SGO" to "sgo",
         "BOLTODDS" to "boltodds",
-        "ODDSPAPI" to "oddspapi",
         "ODDSPAPI_FREE" to "oddspapi_free",
-        "UNABATED" to "unabated",
         "PARLAY" to "parlay",
         "PROPLINE" to "propline",
         "ODDS_API" to "odds_api",
