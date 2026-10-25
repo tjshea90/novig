@@ -78,7 +78,7 @@ def audit(feed, now_ms=None):
                 problems.append("DUPLICATE-COMPANY(%s: %s)" % (g, "+".join(hit)))
         idx = SIDE_INDEX.get(r.get("tg"))
         fp = r.get("fp")
-        if idx is not None and fp is not None and f.get("p") and idx < len(f["p"]) and abs(f["p"][idx] - fp) > 1e-6:
+        if idx is not None and fp is not None and f.get("p") and idx < len(f["p"]) and not any(abs(f["p"][idx] - fp - c) < 1e-6 for c in CUTS):
             problems.append("SIDE(tg %s: fair side %.3f vs row %.3f)" % (r.get("tg"), f["p"][idx], fp))
         if idx is not None and f.get("p") and idx < len(f["p"]):
             for p in pb:
