@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "cf7d9463463caf0c73048de611534d458f3b3ddc",
+ "head": "17a59b5b0ea6b673972bea061dbb83627b794a5b",
  "since": 1792966905,
- "beat": 1792967912,
- "beatIso": "2026-10-25T22:38:32Z",
+ "beat": 1792968105,
+ "beatIso": "2026-10-25T22:41:45Z",
  "done": "PX11a: novig-probe.yml passes default statuses (Gradle refuses empty --args), pipefail; NOFILL keeps the tapped row + sheet limit/best/contracts (ApiBetting)",
  "next": "dispatch novig-probe.yml, read the rejected orders"
 }
