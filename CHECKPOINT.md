@@ -1,22 +1,22 @@
-# CHECKPOINT 4241 — read me first, then TASKS.md
+# CHECKPOINT 4242 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T22:09:37Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-e58c5a58-3qyzld` · **builds on:** `14947206f` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T22:12:59Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-e58c5a58-3qyzld` · **builds on:** `a4c29748b` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v1.0.84 PX10: phone keeps a Claude session's settings change it has not adopted yet (3-way merge), PropLine asked in parts of 60 books (its limit), 34 more PropLine books, Pinnacle hosts obey their own switches
+pre-release: v1.0.84 PX10: phone keeps a Claude session's settings change it has not adopted yet (3-way merge), PropLine asked in parts of 60 books (its limit), 34 more PropLine books, Pinnacle hosts obey their own switches (versionCode 424, v1.0.84)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.84), then run: bash tools/record-release.sh v1.0.84 424 "v1.0.84 PX10: phone keeps a Claude session's settings change it has not adopted yet (3-way merge), PropLine asked in parts of 60 books (its limit), 34 more PropLine books, Pinnacle hosts obey their own switches"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  a4c29748b ckpt 4241: pre-ship: v1.0.84 PX10: phone keeps a Claude session's settings change it h
   14947206f ckpt 4240: PX10d/e: Pinnacle census in the quote census; ParlayLive booksHeld fixed; p
   2fc4404b5 ckpt 4239: PX10a/c: Pinnodds free logged + switched off; Pinnacle hosts obey their own
   945ee7e29 ckpt 4238: PX10 written into TASKS.md (Tj's 4-part API migration request)
@@ -26,5 +26,4 @@ ship.sh gates and releases this
   21133d783 ckpt 4234: research index + LEVERS link for feed_freshness_docs
   c8d7de206 ckpt 4233: retry
   48c084dd2 ckpt 4232: PX9d plainFastFeeds on the engine (full floor green, 4,208); list_audit kno
-  f26ae860d ckpt 4231: PX9f landed + engine reset 20:48 UTC; PX9h SGO lastUpdatedAt probe (sgo-pro
 ```
