@@ -176,5 +176,6 @@ object RepeatGuard {
     const val DEFAULT_MAX_DOLLARS = 100.0
     const val DEFAULT_MAX_LINES = 1
     const val DEFAULT_MAX_GAME_BETS = 6
-    const val DEFAULT_MAX_FAMILY_DOLLARS = 12.0
+    /** The similar-bets limit (Tj, 2026-10-25: "not too much staked on identical or very similar bets"): a few dollars against a wallet of a few hundred, stakes about $1. */
+    const val DEFAULT_MAX_FAMILY_DOLLARS = 3.0
 }
