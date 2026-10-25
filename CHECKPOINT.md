@@ -1,13 +1,13 @@
-# CHECKPOINT 4232 — read me first, then TASKS.md
+# CHECKPOINT 4233 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T21:01:31Z · **tests:** 1 RED: test_research_index.sh (8 green)
-**Branch:** `ccr-e58c5a58-3qyzld` · **builds on:** `a94c61bca` (this checkpoint is the commit after it)
+**Written:** 2026-10-25T21:02:03Z · **tests:** 1 RED: test_research_index.sh (8 green)
+**Branch:** `ccr-e58c5a58-3qyzld` · **builds on:** `48c084dd2` (this checkpoint is the commit after it)
 
 ## Just done
-PX9d plainFastFeeds on the engine (full floor green, 4,208); list_audit knows the haircuts; research/feed_freshness_docs_2026-10-25.md
+retry
 
 ## Do this next
-engine reset onto PX9d; read sgo-probe run (SGO lastUpdatedAt meaning) and list_audit on the new run
+land
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ engine reset onto PX9d; read sgo-probe run (SGO lastUpdatedAt meaning) and list_
 
 ## Last ten checkpoints
 ```
+  48c084dd2 ckpt 4232: PX9d plainFastFeeds on the engine (full floor green, 4,208); list_audit kno
   f26ae860d ckpt 4231: PX9f landed + engine reset 20:48 UTC; PX9h SGO lastUpdatedAt probe (sgo-pro
   3834ba959 ckpt 4230: PX9f fixed: PropLine's 60-bookmaker limit found by the bookparam probe; req
   452894c6d ckpt 4229: PX9f: found every PropLine source answering HTTP 400 on the engine since PX
@@ -26,6 +27,3 @@ engine reset onto PX9d; read sgo-probe run (SGO lastUpdatedAt meaning) and list_
   91eb83777 ckpt 4224: PX9: real-time list no longer adopts partial-scan rows of leagues still wai
   be57f4981 ckpt 4223: PX8: ParlayAPI stream skips period rows + counts unread by market; parlay.p
 ```
-
-(7 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
