@@ -33,9 +33,23 @@ object QuoteCensus {
         val ex = samples.entries.sortedBy { it.key }.joinToString(" | ") { (k, v) -> "$k: " + v.joinToString("; ") }
         samples.clear()
         if (snap.isEmpty()) return "quote census: nothing counted"
-        return (if (ex.isEmpty()) "" else "quote census samples: $ex\n") + "quote census: " + snap.entries.groupBy({ it.key.substringBefore('|') }, { it.key.substringAfter('|') to it.value }).entries.sortedBy { ORDER.indexOf(it.key).let { i -> if (i < 0) 99 else i } }
-            .joinToString(" · ") { (stage, v) -> "$stage " + v.sortedByDescending { it.second }.take(14).joinToString(",") { "${it.first} ${it.second}" } }
+        val stages = snap.entries.groupBy({ it.key.substringBefore('|') }, { it.key.substringAfter('|') to it.value })
+        return (if (ex.isEmpty()) "" else "quote census samples: $ex\n") + "quote census: " + stages.entries.filter { it.key != BOOK_PRICED }.sortedBy { ORDER.indexOf(it.key).let { i -> if (i < 0) 99 else i } }
+            .joinToString(" · ") { (stage, v) -> "$stage " + v.sortedByDescending { it.second }.take(14).joinToString(",") { "${it.first} ${it.second}" } } +
+            outlierRates(stages[BOOK_OUT].orEmpty().toMap(), stages[BOOK_PRICED].orEmpty().toMap()).let { if (it.isEmpty()) "" else "\nbook outliers (out/(out+priced), books out 10+ times): $it" }
     }
+
+    /**
+     * PX11d (Tj 2026-10-25: "Do an audit to see if any book consistently posts outlier odds, and if so, consider it a mismatch on mapping"): each book's share of its lines that BadOdds left out, worst
+     * first. A book out on a large share again and again is mismatched, not merely early.
+     */
+    internal fun outlierRates(out: Map<String, Long>, priced: Map<String, Long>, minOut: Long = 10, top: Int = 20): String =
+        out.filter { it.value >= minOut }.map { (b, n) -> Triple(b, n, n.toDouble() / (n + (priced[b] ?: 0L))) }
+            .sortedByDescending { it.third }.take(top)
+            .joinToString(", ") { (b, n, r) -> "$b ${"%.1f".format(java.util.Locale.ROOT, r * 100)}% ($n of ${n + (priced[b] ?: 0L)})" }
+
+    const val BOOK_OUT = "badOddsBook"
+    const val BOOK_PRICED = "pricedBook"
 
     private const val SAMPLES = 6
 
