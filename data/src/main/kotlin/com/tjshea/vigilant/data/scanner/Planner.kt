@@ -350,11 +350,20 @@ object Planner {
                 candidates += Candidate(e, r, best, close, isSwapped, gap)
             }
         }
-        val result = HashMap<String, Pair<RefEvent, Boolean>>()
+        val ranked = candidates.sortedWith(compareByDescending<Candidate> { it.score }.thenByDescending { it.closeness }.thenBy { it.gap })
+        val result = HashMap<String, MutableList<Pair<RefEvent, Boolean>>>()
         val usedRefs = HashSet<String>()
-        for (c in candidates.sortedWith(compareByDescending<Candidate> { it.score }.thenByDescending { it.closeness }.thenBy { it.gap })) {
+        for (c in ranked) {
             if (c.event.eventId in result || c.ref.id in usedRefs) continue
-            result[c.event.eventId] = c.ref to c.swapped
+            result[c.event.eventId] = mutableListOf(c.ref to c.swapped)
+            usedRefs += c.ref.id
+        }
+        // A second listing of a matched game: the best Novig game for each event left over, when that game's first match starts with it.
+        for (c in ranked) {
+            if (c.ref.id in usedRefs) continue
+            val list = result[c.event.eventId] ?: continue
+            if (abs(list.first().first.commenceMs - c.ref.commenceMs) > SAME_GAME_START_MS) continue
+            list += c.ref to c.swapped
             usedRefs += c.ref.id
         }
         return result
