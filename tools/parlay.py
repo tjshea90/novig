@@ -372,6 +372,60 @@ def cmd_pinprobe(outdir, sports=("americanfootball_nfl", "americanfootball_ncaaf
     return 0
 
 
+def game_view(events, now_ms, home_sub, away_sub):
+    """PX8 (Tj 2026-10-25: "Why is there no parlayapi?"): one game of an /odds answer as {(market, point, side): {book: age_s}}, so the books at each number and how old each is can be read."""
+    out = {}
+    for e in events:
+        if home_sub.lower() not in (e.get("home_team") or "").lower() or away_sub.lower() not in (e.get("away_team") or "").lower():
+            continue
+        for b in e.get("bookmakers") or []:
+            at = _ms(b.get("last_update_ms") or b.get("last_update"))
+            for m in b.get("markets") or []:
+                for o in m.get("outcomes") or []:
+                    side = (o.get("name") or "")[:14]
+                    if m.get("key") in ("totals", "alternate_totals"):
+                        side = side if side in ("Over", "Under") else side
+                    k = (m.get("key"), o.get("point"), side)
+                    out.setdefault(k, {})[b.get("key")] = None if at is None else int((now_ms - at) / 1000)
+    return out
+
+
+def cmd_gameprobe(outdir, sport="americanfootball_nfl", home="Cardinals", away="Broncos"):
+    """PX8: every book ParlayAPI has for one game, by market and number (REST /odds with the alternates, and /live/period_markets for the half), with each quote's age. ~12 credits."""
+    keys = keys_from_env()
+    best = max(keys, key=lambda k: rank(usage_of(k)), default=None)
+    if not best:
+        print("no key")
+        return 0
+    os.makedirs(outdir, exist_ok=True)
+    books = "pinnacle,bookmaker_eu,prophetx,betonline,bet365,bovada,draftkings,fanduel,caesars,betmgm,fanatics,betrivers,hardrock,fliff,parx"
+    L = ["# ParlayAPI for %s @ %s (%s, PX8, %s)" % (away, home, sport, time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())), ""]
+    now = time.time() * 1000
+    st, hdr, data = request("/v1/sports/%s/odds" % sport, best, {"bookmakers": books, "markets": "h2h,spreads,totals,alternate_spreads,alternate_totals", "oddsFormat": "american"})
+    ev = j(data) if st == 200 else None
+    ev = ev if isinstance(ev, list) else []
+    view = game_view(ev, now, home, away)
+    L.append("## /odds (HTTP %s, %d games, game found: %s)" % (st, len(ev), bool(view)))
+    for (mk, pt, side), by in sorted(view.items(), key=lambda kv: (str(kv[0][0]), kv[0][1] if kv[0][1] is not None else 0, str(kv[0][2]))):
+        if mk in ("h2h",) or side in ("Over", "Away") or mk in ("spreads", "alternate_spreads"):
+            L.append("- %s %s %s: %d books: %s" % (mk, pt, side, len(by), ", ".join("%s %ss" % (b, a) for b, a in sorted(by.items()))))
+    st2, _, data2 = request("/v1/sports/%s/live/period_markets" % sport, best, {"period": "1H"})
+    d2 = j(data2) if st2 == 200 else None
+    rows = (d2.get("results") if isinstance(d2, dict) else d2) or []
+    rows = [r for r in rows if isinstance(r, dict) and home.lower() in (r.get("home_team") or "").lower() and away.lower() in (r.get("away_team") or "").lower()]
+    L += ["", "## /live/period_markets 1H (HTTP %s, %d rows for the game)" % (st2, len(rows))]
+    by = {}
+    for r in rows:
+        age = r.get("observed_age_seconds")
+        by.setdefault((r.get("market"), r.get("line"), r.get("side")), {})[r.get("source")] = None if age is None else int(age)
+    for k, v in sorted(by.items(), key=lambda kv: str(kv[0])):
+        L.append("- %s %s %s: %d books: %s" % (k[0], k[1], k[2], len(v), ", ".join("%s %ss" % (b, a) for b, a in sorted(v.items(), key=lambda x: str(x[0])))))
+    with open(os.path.join(outdir, "gameprobe.md"), "w") as f:
+        f.write("\n".join(L) + "\n")
+    print("\n".join(L))
+    return 0
+
+
 def selftest():
     assert keys_from_env({"PARLAY_API_KEY": "a, b;c\nd"}) == ["a", "b", "c", "d"]
     assert keys_from_env({}) == []
@@ -382,6 +436,8 @@ def selftest():
         {"key": "pinnacle", "last_update_ms": 1792000000000, "markets": [{"key": "alternate_spreads", "outcomes": [{"name": "H", "point": -4.5, "price": -105}, {"name": "A", "point": 4.5, "price": -115}]}]}]}]
     pl = pin_lines(ev, 1792000060000)
     assert pl == [{"game": "A @ H", "market": "spreads", "point": -4.5, "pinnacle": True, "pin_age": 60.0}], pl
+    gv = game_view([{"home_team": "Arizona Cardinals", "away_team": "Denver Broncos", "bookmakers": [{"key": "draftkings", "last_update_ms": 1792000000000, "markets": [{"key": "totals", "outcomes": [{"name": "Over", "point": 44.5, "price": -110}]}]}]}], 1792000030000, "Cardinals", "Broncos")
+    assert gv == {("totals", 44.5, "Over"): {"draftkings": 30}}, gv
     print("parlay.py selftest ok")
     return 0
 
@@ -400,6 +456,8 @@ if __name__ == "__main__":
         sys.exit(cmd_streamprobe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay", sys.argv[3] if len(sys.argv) > 3 else "icehockey_nhl"))
     if c == "pinprobe":
         sys.exit(cmd_pinprobe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay"))
+    if c == "gameprobe":
+        sys.exit(cmd_gameprobe(*(sys.argv[2:6] if len(sys.argv) > 2 else ["out/parlay"])))
     if c == "probe":
         sys.exit(cmd_probe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay"))
     print("usage: parlay.py plans | probe [dir] | listen [dir] [sport] | selftest")
