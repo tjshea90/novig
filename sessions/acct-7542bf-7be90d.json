@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-e58c5a58-3qyzld",
- "head": "2fc4404b5588797c2ed9dca4faf7233705b167b3",
+ "head": "03162108ac19f1d0fe365694ade5d95f2356ff34",
  "since": 1792964177,
- "beat": 1792965547,
- "beatIso": "2026-10-25T21:59:07Z",
+ "beat": 1792965737,
+ "beatIso": "2026-10-25T22:02:17Z",
  "done": "PX10a/c: Pinnodds free logged + switched off; Pinnacle hosts obey their own switches (CloudPinnacleHostsTest); ParlayAPI alternates no longer skipped for Pinnodds; PinnWire secret retired on the engine; full floor 4,210 green",
  "next": "land + engine reset; then PX10d: read PARLAYAPI_BUSINESS / PROPLINE_STREAMING docs + probe both keys' plans, stream connections and coverage"
 }
