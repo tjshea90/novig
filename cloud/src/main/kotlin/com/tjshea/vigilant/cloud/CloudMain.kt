@@ -462,7 +462,9 @@ fun main(args: Array<String>) = runBlocking {
     // goes into status.json as liveUrl. Read-only: the engine's current status and nothing else. Any failure leaves liveUrl blank and the phone reads GitHub as before.
     val liveToken = (1..3).joinToString("") { "%08x".format(java.security.SecureRandom().nextInt()) }
     val liveUrlRef = java.util.concurrent.atomic.AtomicReference("")
-    val liveServer = runCatching { LiveStatusServer(liveToken, { engineHolder.get()?.liveStatus() }).also { it.start(8787) } }.onFailure { log("live status server not started: ${it.message}") }.getOrNull()
+    // The newest list as published (PB16): the live server hands it to the phone the second it changes.
+    val liveFeedBytes = java.util.concurrent.atomic.AtomicReference<ByteArray?>(null)
+    val liveServer = runCatching { LiveStatusServer(liveToken, { engineHolder.get()?.liveStatus() }, feed = { liveFeedBytes.get() }).also { it.start(8787) } }.onFailure { log("live status server not started: ${it.message}") }.getOrNull()
     if (liveServer != null) scope.launch {
         while (isActive) {
             val tunnel = runCatching { File(out, "tunnel.log").readText() }.getOrNull()?.let { com.tjshea.vigilant.data.cloud.CloudLive.tunnelUrl(it) }
@@ -588,7 +590,7 @@ fun main(args: Array<String>) = runBlocking {
     }
     val engine = CloudEngine(
         scanner = scanner, sources = sources::sources, config = { config.read().also { latestCfg.set(it) } }, apiChecks = { apiManager.lines() }, apiFixes = { apiManager.fixes() }, apiSwaps = { apiManager.swaps() }, apiSwapAtMs = { apiManager.swapAtMs() }, onCheckApis = { apiManager.recheckAll() },
-        publish = { feed, status -> engineIdle.set(status.idle); publisher.stage(feed, status) },
+        publish = { feed, status -> engineIdle.set(status.idle); if (feed != null) runCatching { liveFeedBytes.set(com.tjshea.vigilant.data.cloud.CloudFeed.encode(feed)) }; publisher.stage(feed, status) },
         // The bid desk's candidate lines (Tj, 2026-10-15), only while the phone has Vigilant-priced bids on: the fair side of every bid decision is made here, the phone adds Novig's books and posts.
         prepare = { s -> latestSettings.set(s); novigKeyed?.configure(s) },
         novigRoute = { novigKeyed?.route(System.currentTimeMillis()) ?: CloudNovig.PUBLIC_ONLY },

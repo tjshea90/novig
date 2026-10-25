@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * The engine's live status for the phone (TCL80, Tj 2026-10-17: "tunnel yes"): a tiny read-only web server on the runner, bound to 127.0.0.1 and reached from outside only through the Cloudflare quick tunnel the workflow
  * starts ([CloudLive]). It serves ONE thing, the engine's current [CloudStatus] (the same public status the repo holds, rebuilt from memory every second), at `/s/<token>` (one reading) and `/s/<token>/stream`
- * (server-sent events, one reading a second). The token is random per run and part of the path; any other path is 404. It accepts no input, holds no key, serves no list and runs no command: the phone's controls
+ * (server-sent events, one reading a second), and since PB16 the newest published list at `/s/<token>/feed` (the bytes `feed.json.gz` on `cloud-feed` holds, public anyway). The token is random per run and part of the path; any other path is 404. It accepts no input, holds no key and runs no command: the phone's controls
  * stay on GitHub. At most [MAX_STREAMS] streams at once; a stream ends after [STREAM_MAX_MS] (the phone reconnects).
  */
 class LiveStatusServer(
@@ -20,6 +20,8 @@ class LiveStatusServer(
     private val status: () -> CloudStatus?,
     private val clock: () -> Long = System::currentTimeMillis,
     private val everyMs: Long = 1_000L,
+    /** The newest published list as `feed.json.gz` holds it (the same public bytes), or null before the first (PB16: the phone reads it here the second it changes instead of waiting on GitHub). */
+    private val feed: () -> ByteArray? = { null },
 ) {
     private var server: HttpServer? = null
     private val streams = AtomicInteger(0)
@@ -40,8 +42,16 @@ class LiveStatusServer(
     private fun handle(ex: HttpExchange) {
         val path = ex.requestURI.path.trimEnd('/')
         val base = "/s/$token"
-        if (ex.requestMethod != "GET" || (path != base && path != "$base/stream")) { reply(ex, 404, "not found"); return }
+        if (ex.requestMethod != "GET" || (path != base && path != "$base/stream" && path != "$base/feed")) { reply(ex, 404, "not found"); return }
         if (path == base) { reply(ex, 200, json()); return }
+        if (path == "$base/feed") {
+            val bytes = feed() ?: run { reply(ex, 404, "no list yet"); return }
+            ex.responseHeaders.add("Content-Type", "application/gzip")
+            ex.responseHeaders.add("Cache-Control", "no-store")
+            ex.sendResponseHeaders(200, bytes.size.toLong())
+            ex.responseBody.use { it.write(bytes) }
+            return
+        }
         if (streams.incrementAndGet() > MAX_STREAMS) { streams.decrementAndGet(); reply(ex, 429, "too many streams"); return }
         try {
             ex.responseHeaders.add("Content-Type", "text/event-stream")

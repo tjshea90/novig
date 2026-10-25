@@ -320,7 +320,7 @@ class CloudLink(private val c: AppContainer) {
                         val src = r.body!!.source()
                         while (isActive && !src.exhausted() && !c.asleep.value) {
                             val line = src.readUtf8Line() ?: break
-                            reader.feed(line)?.let { msg -> com.tjshea.vigilant.data.cloud.CloudStatus.parse(msg)?.let { st -> applyLive(st, s) } }
+                            reader.feed(line)?.let { msg -> com.tjshea.vigilant.data.cloud.CloudStatus.parse(msg)?.let { st -> applyLive(st, s); if (st.computedAtMs > feedFetchedFor) fetchLiveFeed(live, url) } }
                         }
                     }
                 }
@@ -654,6 +654,25 @@ class CloudLink(private val c: AppContainer) {
     }
 
     @Volatile private var liveDirectAtMs = 0L
+
+    /**
+     * The newest list straight from the engine over the tunnel (PB16, Tj 2026-10-25: "is there a better way for a more real time connection with low latency between my phone and the GitHub engine"): read
+     * the second the live status says a newer one was published, instead of waiting for GitHub's copy and the next poll. A failure leaves it to the GitHub read as before.
+     */
+    private fun fetchLiveFeed(http: okhttp3.OkHttpClient, url: String) {
+        runCatching {
+            http.newCall(okhttp3.Request.Builder().url("$url/feed").build()).execute().use { r ->
+                if (!r.isSuccessful) return@use
+                val f = r.body?.bytes()?.let(com.tjshea.vigilant.data.cloud.CloudFeed::decode) ?: return@use
+                if (f.computedAtMs <= feedFetchedFor) return@use
+                feedFetchedFor = f.computedAtMs
+                latest.put(f, System.currentTimeMillis())
+                c.adoptCloud()
+                liveFeedAtMs = System.currentTimeMillis()
+            }
+        }
+    }
+    @Volatile private var liveFeedAtMs = 0L
 
     /** A reading that arrived straight from the engine: it is the newest status there is. */
     private fun applyLive(st: com.tjshea.vigilant.data.cloud.CloudStatus, s: ScanSettings) {
