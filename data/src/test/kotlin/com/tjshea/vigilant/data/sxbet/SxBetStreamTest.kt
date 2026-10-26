@@ -80,7 +80,8 @@ class SxBetStreamTest {
         until { s.live }
         assertEquals("good", tokenRequests.first().headers["x-sx-api-key"])
         assertTrue(received.first().contains("\"tok123\""))
-        for (ch in SxBetStream.CHANNELS) assertTrue(ch, received.any { it.contains(ch) })
+        // the server reads the subscribe frames on its own thread: wait for them rather than race the live flag
+        for (ch in SxBetStream.CHANNELS) until { received.any { it.contains(ch) } }
         until { seeded.get() == 1 }
         s.close()
     }
