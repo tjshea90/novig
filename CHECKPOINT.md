@@ -1,21 +1,23 @@
-# CHECKPOINT 4278 — read me first, then TASKS.md
+# CHECKPOINT 4279 — read me first, then TASKS.md
 
-**Written:** 2026-10-26T02:19:34Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-db238840-epvfzh` · **builds on:** `e62e9602d` (this checkpoint is the commit after it)
+**Written:** 2026-10-26T02:20:55Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-db238840-epvfzh` · **builds on:** `e9fca7600` (this checkpoint is the commit after it)
 
 ## Just done
-TASKS triage: 143 stale items closed with reasons (shipped, Pinnodds ended, BoltOdds off, CNO/chat superseded, verified live); 212 open
+TASKS triage pass 2: 89 more closed with evidence
 
 ## Do this next
-triage the rest: build the buildable ones, list the ones that need Tj
+build: TCL94b FCS grading, TCL104 list jump, CH12, TCL52b chat keyboard, PX12b/PX10g/PX10d/PX9i; list needs-Tj items
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  e9fca7600 ckpt 4278: TASKS triage: 143 stale items closed with reasons (shipped, Pinnodds ended,
   8bc2699bf ckpt 4277: PX13c/PX11e: PropLine tennis built (PropLineTennis, from a real answer), SG
   206288359 ckpt 4276: pinnAgeNF census (PX10g near/far split) + shape tours
   b6167a5b6 ckpt 4275: PropLine tennis shape read (375 events, Pinnacle on 114, h2h/spreads/totals
@@ -25,8 +27,4 @@ triage the rest: build the buildable ones, list the ones that need Tj
   73e2cc751 ckpt 4271: PX14b measured: CLV 59%->83%, results open 23%->15%; Novig fallback settled
   256a93a15 ckpt 4270: dispatched engine-grade.yml + propline.yml clv on main (PX14b code landed)
   ae6a27287 ckpt 4269: PX14b: Novig's own close wired into the CLV job (propline_clv_job.sh: order
-  98e213980 ckpt 4268: PX14: results gap (23% open) fixed in code via Novig's own settlement (Grad
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
