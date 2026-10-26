@@ -319,12 +319,33 @@ fun main(args: Array<String>) = runBlocking {
             }
         }
     }
+    // PX14: the live orders the grader could not settle (most bid fills: the study never logged them, and a settled market leaves Novig's public catalog) settled from the subaccount's own ledger, as the
+    // phone's ApiSettler grades its API bets; the grader's next file carries them (TradeSettle.carried). Read with the trading key every 30 minutes, never while Novig refuses this runner's address.
+    suspend fun settleFromLedger() {
+        val tc = tradingClient ?: return
+        if (novigKeyed?.addressRefused(System.currentTimeMillis()) == true) return
+        val now = System.currentTimeMillis()
+        val due = trader.ledger.entries.filter { it.mode == "LIVE" && (it.status == "OPEN" || it.status == "UNCONFIRMED") && now - it.startsTs >= TradeSettle.ASK_AFTER_START_MS }
+        if (due.isEmpty()) return
+        try {
+            val slack = 12 * 3_600_000L
+            val rows = tc.ledger(tradeKeyId, "SETTLEMENT", due.minOf { it.startsTs } - slack, due.maxOf { it.startsTs } + slack, maxRows = 5_000)
+            val held = tc.positions()
+            val settled = TradeSettle.fromLedger(trader.ledger.entries, rows, held, now)
+            for (r in settled) trader.settle(r.id, r.status, r.pnl)
+            log("trades: ${settled.size} of ${due.size} open live orders settled from Novig's ledger (${rows.size} settlement rows read)")
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            log("trades: Novig's ledger not read: ${e.message?.take(120)}")
+        }
+    }
     val flusher = scope.launch {
         var usageAt = 0L
         while (isActive) {
             val now = System.currentTimeMillis()
             // The engine's API usage goes out with the list, at most every 30 s (keys by id, never in clear: [CloudUsage]).
-            if (now - resultsAt >= 30 * 60_000L) { resultsAt = now; applyTradeResults() }
+            if (now - resultsAt >= 30 * 60_000L) { resultsAt = now; applyTradeResults(); settleFromLedger() }
             if (now - usageAt >= 30_000L) { usageAt = now; runCatching { publisher.stageUsage(CloudUsage.encode(usage.flow.value, runId, now, allKeys), now) } }
             runCatching { publisher.flush() }
             delay(4_000L)
