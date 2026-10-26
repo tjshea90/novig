@@ -3,13 +3,13 @@
  "label": "acct-7542bf",
  "name": "tj outlook",
  "nonce": "e08fb5",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/keen-keller-gmmwmn",
  "head": "64af59682f96bdf9fc38c4cc7ce2f16ae98e2a0d",
  "since": 1792927365,
- "beat": 1793013949,
- "beatIso": "2026-10-26T11:25:49Z",
+ "beat": 1793013975,
+ "beatIso": "2026-10-26T11:26:15Z",
  "done": "ANALYST 2026-10-25 skipped under gate, WATCH ok",
  "next": "next ANALYST when 100+ new settled"
 }
