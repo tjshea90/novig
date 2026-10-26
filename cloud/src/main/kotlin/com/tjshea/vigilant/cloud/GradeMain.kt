@@ -123,10 +123,24 @@ private suspend fun gradeMain(args: Array<String>) {
                 val b = sb.bet
                 if (b.marketId.isNotBlank() && b.outcomeId.isNotBlank() && b.status != com.tjshea.vigilant.data.tracker.BetStatus.PENDING) byOutcome[b.marketId to b.outcomeId] = TradeSettle.Outcome(b.status, b.settleValue)
             }
-            val settled = TradeSettle.settle(ledger.entries) { m, o -> byOutcome[m to o] }
+            val studied = HashSet(byOutcome.keys)
+            // PX14: the orders the study never logged (most bid fills) are settled from Novig's own record of the outcome (its public market read, no key).
+            val ask = TradeSettle.askNovig(ledger.entries, { m, o -> (m to o) in studied }, System.currentTimeMillis())
+            var fromNovig = 0
+            var novigFailed = 0
+            if (ask.isNotEmpty()) {
+                val novig = com.tjshea.vigilant.data.novig.NovigPublicClient(okhttp3.OkHttpClient(), kotlinx.serialization.json.Json { ignoreUnknownKeys = true })
+                for (mid in ask.map { it.marketId }.distinct()) {
+                    val market = try { novig.market(mid) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { novigFailed++; null } ?: continue
+                    for (oc in market.outcomes) TradeSettle.fromNovig(oc.status)?.let { if (byOutcome.putIfAbsent(mid to oc.outcomeId, it) == null) fromNovig++ }
+                }
+            }
+            val now = byOutcome.keys
+            val settled = TradeSettle.settle(ledger.entries) { m, o -> byOutcome[m to o] } + TradeSettle.carried(ledger.entries) { m, o -> (m to o) in now }
             out.parentFile?.mkdirs()
             out.writeText(TradeSettle.File.text(TradeSettle.File(System.currentTimeMillis(), settled)))
-            println("grade: ${settled.size} of the engine's orders settled")
+            val open = ledger.entries.count { e -> System.currentTimeMillis() - e.startsTs >= TradeSettle.ASK_AFTER_START_MS && settled.none { it.id == e.id } }
+            println("grade: ${settled.size} of the engine's orders settled (${ask.size} asked of Novig's record, $fromNovig outcomes settled by it, $novigFailed reads failed); $open orders 3 h+ past their start still without a result")
         } else println("grade: no usable trades.json")
     }
 }
