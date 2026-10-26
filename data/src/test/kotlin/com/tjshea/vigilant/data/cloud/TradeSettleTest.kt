@@ -65,4 +65,32 @@ class TradeSettleTest {
         // a carried order that the study grades later is settled from the study, never twice
         assertTrue(TradeSettle.carried(rows) { _, _ -> true }.isEmpty())
     }
+
+    @Test
+    fun `the subaccount's ledger settles a live order the study missed (PX14)`() {
+        val h = 3_600_000L
+        val now = 100 * h
+        fun live(id: String, market: String, outcome: String = "o-$market", startsTs: Long = now - 8 * h, order: String? = "ord-$id") =
+            entry(id, market).copy(mode = "LIVE", outcomeId = outcome, startsTs = startsTs, orderId = order)
+        fun pay(ref: String, amount: Double) = com.tjshea.vigilant.data.novig.trading.LedgerRow("t-$ref-$amount", "SETTLEMENT", amount, ref, now)
+        val none = emptyList<com.tjshea.vigilant.data.novig.trading.NovigPosition>()
+        // 200 contracts win $2.00 on a $1.00 cost
+        assertEquals(listOf(TradeSettle.Settled("w", "WON", 1.0)), TradeSettle.fromLedger(listOf(live("w", "m1")), listOf(pay("m1", 2.0)), none, now))
+        assertEquals(listOf(TradeSettle.Settled("p", "PUSH", 0.0)), TradeSettle.fromLedger(listOf(live("p", "m1")), listOf(pay("m1", 1.0)), none, now))
+        // an odd payout is a fair value only when the row names this order; one naming the market may be the phone's order on it
+        assertEquals(listOf(TradeSettle.Settled("f", "FMV", -0.2)), TradeSettle.fromLedger(listOf(live("f", "m1")), listOf(pay("ord-f", 0.8)), none, now))
+        assertTrue(TradeSettle.fromLedger(listOf(live("f", "m1")), listOf(pay("m1", 0.8)), none, now).isEmpty())
+        // no payout and nothing held 6 h+ after the start: a loss; still held, too soon, or positions unread: nothing
+        assertEquals(listOf(TradeSettle.Settled("l", "LOST", -1.0)), TradeSettle.fromLedger(listOf(live("l", "m1")), emptyList(), none, now))
+        assertTrue(TradeSettle.fromLedger(listOf(live("l", "m1")), emptyList(), listOf(com.tjshea.vigilant.data.novig.trading.NovigPosition("m1", "o-m1", 200, 1.0)), now).isEmpty())
+        assertTrue(TradeSettle.fromLedger(listOf(live("l", "m1", startsTs = now - 4 * h)), emptyList(), none, now).isEmpty())
+        assertTrue(TradeSettle.fromLedger(listOf(live("l", "m1")), emptyList(), null, now).isEmpty())
+        // both sides held: told apart only by a payout that is exactly one side's win; silence is never a loss there
+        val a = live("a", "m2", "oa"); val b = live("b", "m2", "ob").copy(contracts = 300)
+        assertEquals(setOf(TradeSettle.Settled("a", "WON", 1.0), TradeSettle.Settled("b", "LOST", -1.0)), TradeSettle.fromLedger(listOf(a, b), listOf(pay("m2", 2.0)), none, now).toSet())
+        assertTrue(TradeSettle.fromLedger(listOf(a, b), emptyList(), none, now).isEmpty())
+        // paper orders and games under 3 h old are never asked
+        assertTrue(TradeSettle.fromLedger(listOf(entry("x", "m3").copy(startsTs = now - 8 * h)), listOf(pay("m3", 2.0)), none, now).isEmpty())
+        assertTrue(TradeSettle.fromLedger(listOf(live("y", "m3", startsTs = now - h)), listOf(pay("m3", 2.0)), none, now).isEmpty())
+    }
 }
