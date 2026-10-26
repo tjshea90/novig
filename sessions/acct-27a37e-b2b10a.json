@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "a605a6ee9047a3b3c298d7e75b9d7c8772127e0d",
+ "head": "54ca4dd73c43f4de8697ecbd068ca752f2a74507",
  "since": 1792912591,
- "beat": 1793041090,
- "beatIso": "2026-10-26T18:58:10Z",
- "done": "pre-ship: v1.0.88 A10: installs on Android 10 (minSdk 29) for Tj's ARMv7 tablet",
- "next": "ship.sh gates and releases this"
+ "beat": 1793041115,
+ "beatIso": "2026-10-26T18:58:35Z",
+ "done": "pre-release: v1.0.88 A10: installs on Android 10 (minSdk 29) for Tj's ARMv7 tablet (versionCode 428, v1.0.88)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.88), then run: bash tools/record-release.sh v1.0.88 428 \"v1.0.88 A10: installs on Android 10 (minSdk 29) for Tj's ARMv7 tablet\""
 }
