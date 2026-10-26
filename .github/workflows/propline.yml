@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe | speed | archive | backfill | multibook | clv | grade | timing | evbets | accuracy | coverage | altprobe | bookstudy | bookparam"
+        description: "plans | probe | speed | archive | backfill | multibook | clv | grade | timing | evbets | accuracy | coverage | altprobe | shape | bookstudy | bookparam"
         default: "plans"
       sports:
         description: "altprobe, bookstudy: comma-separated PropLine sport keys (football_nfl,football_ncaaf when empty), e.g. basketball_nba,hockey_nhl"
@@ -103,6 +103,9 @@ jobs:
               python3 -I tools/propline_books.py run out/books $(echo "${{ github.event.inputs.sports }}" | tr ',' ' ')
               gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine samples (keyless)" --notes "Real answers of PropLine endpoints, keyless."
               gh release upload propline-samples out/books/* --clobber ;;
+            shape)
+              # PX11e: one league's raw board shape in this log (sports = the PropLine sport key, e.g. tennis); markets fixed below
+              python3 -I tools/propline.py shape "${{ github.event.inputs.sports }}" "h2h,spreads,totals,team_totals,alternate_spreads,alternate_totals" ;;
             altprobe)
               # PX (2026-10-25): Novig's alternate spread/total rungs vs the books Vigilant reads at the same number, with ages and market shapes.
               python3 -I tools/propline.py altprobe out/altprobe "${{ github.event.inputs.sports }}"

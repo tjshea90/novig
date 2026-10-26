@@ -560,6 +560,39 @@ def alt_stats(events, now):
             "book_age_p50": {k: sorted(v)[len(v) // 2] for k, v in sorted(ages.items())}}
 
 
+def cmd_shape(sport, markets):
+    """PX11e: the SHAPE of one league's raw board, printed to the job log (no key, no prices kept): which books, which market keys with which period/team fields, outcome names and
+    points of a few games. A parser for a new league (tennis, 2026-10-26) is written from a real answer, never from the docs alone."""
+    keys = keys_from_env()
+    i, _ = best_key(keys, [plan_of(k) for k in keys])
+    if i is None:
+        print("no usable key")
+        return 0
+    st, _, data = request("/v1/sports/%s/odds" % sport, keys[i], {"markets": markets, "bookmakers": ",".join(OURS + ["novig"]), "includeBookIds": "true"})
+    events = j(data)
+    events = events if isinstance(events, list) else (events or {}).get("data") or []
+    print("HTTP", st, len(events), "events")
+    shapes, books, titles = {}, {}, {}
+    for e in events:
+        titles[e.get("sport_title") or e.get("sport_key") or "?"] = titles.get(e.get("sport_title") or e.get("sport_key") or "?", 0) + 1
+        for b in e.get("bookmakers") or []:
+            books[b.get("key")] = books.get(b.get("key"), 0) + 1
+            for m in b.get("markets") or []:
+                k = (m.get("key"), m.get("period"), bool(m.get("team")), len(m.get("outcomes") or []))
+                shapes[k] = shapes.get(k, 0) + 1
+    print("event keys:", sorted((events[0] if events else {}).keys()))
+    print("titles:", titles)
+    print("books:", sorted(books.items(), key=lambda x: -x[1]))
+    print("market shapes (key, period, team, outcomes):", sorted(shapes.items(), key=lambda x: -x[1])[:40])
+    for e in events[:3]:
+        print("EVENT", {k: e.get(k) for k in ("id", "sport_key", "sport_title", "home_team", "away_team", "commence_time")})
+        for b in (e.get("bookmakers") or [])[:2] + [b for b in e.get("bookmakers") or [] if b.get("key") == "pinnacle"]:
+            print("  BOOK", b.get("key"), sorted(k for k in b.keys() if k not in ("markets",)))
+            for m in (b.get("markets") or [])[:12]:
+                print("    MKT", {k: m.get(k) for k in m.keys() if k != "outcomes"}, [{k: o.get(k) for k in ("name", "description", "point")} for o in (m.get("outcomes") or [])[:3]])
+    return 0
+
+
 def cmd_altprobe(outdir, sports=("football_nfl", "football_ncaaf")):
     """PX: the league boards the engine reads (its books + Novig, includeBookIds) measured by [alt_stats]."""
     keys = keys_from_env()
@@ -722,6 +755,8 @@ if __name__ == "__main__":
         sys.exit(cmd_coverage(a[1] if len(a) > 1 else "out/propline-coverage"))
     if a[0] == "proppin":
         sys.exit(cmd_proppin(a[1] if len(a) > 1 else "out/propline-proppin"))
+    if a[0] == "shape":
+        sys.exit(cmd_shape(a[1], a[2] if len(a) > 2 and a[2] else "h2h,spreads,totals"))
     if a[0] == "altprobe":
         # PX9: the sports are a third argument ("basketball_nba,hockey_nhl"); none = football's two
         sys.exit(cmd_altprobe(a[1] if len(a) > 1 else "out/propline-altprobe", tuple(x for x in a[2].split(",") if x) if len(a) > 2 and a[2] else ("football_nfl", "football_ncaaf")))
