@@ -146,9 +146,12 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
             // The key the quote was tagged with when ParlayAPI's board was read ([tag]): the merged game takes its names and orientation from the first feed that matched it (Kalshi's "Brooklyn",
             // a flipped home and away), so a key rebuilt from it here missed nearly every quote (PB23, 2026-10-25: "0 markets moved onto the boards" over a whole run).
             val found = m.quotes.map { q -> prices[q.feedOutcomeId?.takeIf { it.startsWith(TAG) }?.substring(TAG.length) ?: sideKey(game, m.bookKey, m.kind, subject, m.stat, q.side, q.point)] }
-            if (found.any { it == null }) return@map confirm(e.sportKey, m, now)?.also { changed = true } ?: m
+            // PX10g: why ParlayAPI's Pinnacle copies stay 5+ minutes old (2026-10-26 census: 3,191 near games, 3,435 far), counted by what the overlay could do with each.
+            val pinn = m.bookKey == "pinnacle"
+            if (found.any { it == null }) return@map confirm(e.sportKey, m, now)?.also { changed = true; if (pinn) census("confirmed unchanged") } ?: m.also { if (pinn) census(if (found.all { it == null }) "not on the stream: ${confirmWhy(e.sportKey, m, now)}" else "one side on the stream") }
             val confirmed = found.minOf { it!!.confirmedAtMs }
-            if (confirmed <= (m.lastUpdateMs ?: 0L)) return@map m
+            if (confirmed <= (m.lastUpdateMs ?: 0L)) return@map m.also { if (pinn) census("stream copy no newer (${ageBand(now - confirmed)} old)") }
+            if (pinn) census("moved to the stream (${ageBand(now - confirmed)} old)")
             changed = true
             applied++
             m.copy(quotes = m.quotes.mapIndexed { i, q -> q.copy(decimalOdds = found[i]!!.decimal) }, lastUpdateMs = confirmed)
@@ -168,6 +171,20 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
         if (stale || polled <= stamp || now - polled > POLL_MAX_MS) return null
         confirmed++
         return m.copy(lastUpdateMs = minOf(polled, now))
+    }
+
+    private fun census(what: String) = com.tjshea.vigilant.data.scanner.QuoteCensus.add("parlayPinn", what)
+
+    private fun ageBand(ms: Long) = when { ms < 30_000L -> "<30s"; ms < 120_000L -> "<2m"; ms < 300_000L -> "<5m"; else -> "5m+" }
+
+    /** Why [confirm] could not vouch for an unchanged quote, in words (PX10g census). */
+    private fun confirmWhy(sport: String, m: RefBookMarket, now: Long): String {
+        val stamp = m.lastUpdateMs ?: return "no stamp"
+        val since = connectedSince[sport] ?: return "league stream not connected"
+        if (since > stamp) return "stream connected after the quote"
+        if (!live(now)) return "stream silent"
+        val (polled, stale) = polls[m.bookKey] ?: return "no poll health for the book"
+        return when { stale -> "ParlayAPI calls the book stale"; polled <= stamp -> "no poll since the quote"; now - polled > POLL_MAX_MS -> "last poll too old"; else -> "?" }
     }
 
     private var prunedAt = 0L
