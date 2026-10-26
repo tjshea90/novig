@@ -515,6 +515,9 @@ object Pricing {
         val where = if (commenceMs - now <= Freshness.FAR_OFF_MS) "near" else "far"
         QuoteCensus.add("linesNow", "$where/${bucket(companies(prices))}")
         QuoteCensus.add("linesPlain", "$where/${bucket(companies(plain))}")
+        // PX9i: SportsGameOdds held to the plain limit too (no 15-minute window for anyone): what SGO's longer window still buys now that PropLine's 69 books are back.
+        val strict = prices.filter { b -> b.lastUpdateMs == null || now - b.lastUpdateMs!! <= (if (commenceMs - now > Freshness.FAR_OFF_MS) Freshness.FAR_OFF_AGE_MS else Freshness.MAX_QUOTE_AGE_MS) }
+        QuoteCensus.add("linesStrict", "$where/${bucket(companies(strict))}")
     }
 
     /** [Freshness.maxAgeMs] with the plain limit for every feed but SportsGameOdds' (what [Freshness.plainFastFeeds] would make it). */
