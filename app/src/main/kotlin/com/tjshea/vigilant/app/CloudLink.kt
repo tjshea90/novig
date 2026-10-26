@@ -563,23 +563,24 @@ class CloudLink(private val c: AppContainer) {
     }
 
     /** The engine's CNO list (CK): kept for the CNO feed's source, which adopts it on its next read (one is asked now, so the tab shows it at once). */
-    private suspend fun fetchCno(s: ScanSettings) {
+    private suspend fun fetchCno(s: ScanSettings, announcedAtMs: Long) {
         when (val b = client.fetchCno()) {
             is CloudClient.Poll.Fresh -> {
                 cnoFetchedFor = b.value.atMs
                 c.cloudCnoLatest.put(b.value, System.currentTimeMillis())
                 if (c.cloudCnoOn()) runCatching { c.cno.refresh(com.tjshea.vigilant.data.cloud.CloudCno.viewOf(s), s.cnoFilters) }
             }
-            is CloudClient.Poll.Failed -> latest.why = b.why
+            // As with the bid candidates (CH85): a stamp whose file the branch does not hold is asked again only when the stamp changes.
+            is CloudClient.Poll.Failed -> { cnoFetchedFor = announcedAtMs; latest.why = b.why }
             else -> {}
         }
     }
 
     /** PropLine's +EV lines at Novig, for the +EV tab's PropLine screen. */
-    private suspend fun fetchPropLineEv() {
+    private suspend fun fetchPropLineEv(announcedAtMs: Long) {
         when (val b = client.fetchPropLineEv()) {
             is CloudClient.Poll.Fresh -> { evFetchedFor = b.value.atMs; _ui.update { it.copy(propLineEv = b.value) } }
-            is CloudClient.Poll.Failed -> latest.why = b.why
+            is CloudClient.Poll.Failed -> { evFetchedFor = announcedAtMs; latest.why = b.why }
             else -> {}
         }
     }
@@ -593,8 +594,8 @@ class CloudLink(private val c: AppContainer) {
         latest.why = null
         if (st.computedAtMs > 0L && st.computedAtMs != feedFetchedFor) fetch(st.computedAtMs)
         if (s.bidsFromCloud && st.bidsAtMs > 0L && st.bidsAtMs != bidsFetchedFor) fetchBids(st.bidsAtMs)
-        if (st.propLineEvAtMs > 0L && st.propLineEvAtMs != evFetchedFor) fetchPropLineEv()
-        if (st.cnoAtMs > 0L && st.cnoAtMs != cnoFetchedFor && com.tjshea.vigilant.data.cloud.CloudCno.wanted(s)) fetchCno(s)
+        if (st.propLineEvAtMs > 0L && st.propLineEvAtMs != evFetchedFor) fetchPropLineEv(st.propLineEvAtMs)
+        if (st.cnoAtMs > 0L && st.cnoAtMs != cnoFetchedFor && com.tjshea.vigilant.data.cloud.CloudCno.wanted(s)) fetchCno(s, st.cnoAtMs)
     }
 
     private val refreshMutex = kotlinx.coroutines.sync.Mutex()
