@@ -301,7 +301,13 @@ class CloudSources(
      * ParlayAPI's; where both carry a book, the fresher wins in the pricing (PB21).
      */
     fun overlay(e: com.tjshea.vigilant.data.reference.RefEvent, now: Long): com.tjshea.vigilant.data.reference.RefEvent =
-        parlayLive.overlayEvent(propLineLive.overlayEvent(e, now), now)
+        com.tjshea.vigilant.data.reference.KalshiRedate.overlay(parlayLive.overlayEvent(propLineLive.overlayEvent(e, now), now), now, kalshiView)
+
+    /** Kalshi's socket as [com.tjshea.vigilant.data.reference.KalshiRedate] reads it (PX13b): nothing is vouched for while the socket is down. */
+    private val kalshiView = object : com.tjshea.vigilant.data.reference.KalshiRedate.StreamView {
+        override fun trusted(ticker: String, readAtMs: Long) = kalshiStream.trusted(ticker, readAtMs)
+        override fun top(ticker: String) = kalshiStream.top(ticker)
+    }
 
     private val parlayPbp = com.tjshea.vigilant.data.parlay.ParlayPbpStream(http, scope, key = {
         keys(CloudKeys.PARLAY).filter { (parlayAccount.last[it]?.limit ?: 0) > 1_000 }.maxByOrNull { parlayAccount.last[it]?.limit ?: 0 }

@@ -576,7 +576,7 @@ class KalshiClient(
 
             // The venue read names each price's market and side (what an order is placed on) and the size at that price.
             fun rq(side: Side, decimal: Double, point: Double?, m: MarketDto, yes: Boolean): RefQuote =
-                if (!venue) RefQuote(side, decimal, point)
+                if (!venue) RefQuote(side, decimal, point, feedOutcomeId = KalshiRedate.tag(m.ticker, m.yes_bid_dollars, m.yes_ask_dollars))
                 else RefQuote(side, decimal, point, "${m.ticker}|${if (yes) "yes" else "no"}", (if (yes) m.yes_ask_size_fp else m.yes_bid_size_fp)?.toDoubleOrNull())
 
             fun sideOfCode(c: String): Side? = when {
