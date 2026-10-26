@@ -128,12 +128,21 @@ private suspend fun gradeMain(args: Array<String>) {
             val ask = TradeSettle.askNovig(ledger.entries, { m, o -> (m to o) in studied }, System.currentTimeMillis())
             var fromNovig = 0
             var novigFailed = 0
+            var novigGone = 0
+            val novigStatuses = HashMap<String, Int>()
             if (ask.isNotEmpty()) {
                 val novig = com.tjshea.vigilant.data.novig.NovigPublicClient(okhttp3.OkHttpClient(), kotlinx.serialization.json.Json { ignoreUnknownKeys = true })
                 for (mid in ask.map { it.marketId }.distinct()) {
-                    val market = try { novig.market(mid) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { novigFailed++; null } ?: continue
-                    for (oc in market.outcomes) TradeSettle.fromNovig(oc.status)?.let { if (byOutcome.putIfAbsent(mid to oc.outcomeId, it) == null) fromNovig++ }
+                    val market = try { novig.market(mid) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { novigFailed++; println("grade: Novig market $mid: ${e.message?.take(160)}"); null }
+                    if (market == null) { novigGone++; continue }
+                    novigStatuses.merge("market ${market.status}", 1, Int::plus)
+                    for (oc in market.outcomes) {
+                        novigStatuses.merge("outcome ${oc.status.take(12)}", 1, Int::plus)
+                        TradeSettle.fromNovig(oc.status)?.let { if (byOutcome.putIfAbsent(mid to oc.outcomeId, it) == null) fromNovig++ }
+                    }
                 }
+                // PX14: say why Novig's record settled what it did (gone = 404, the market no longer listed; the statuses it answered)
+                println("grade: Novig's record: ${ask.map { it.marketId }.distinct().size} markets asked, $novigGone gone, $novigFailed failed; statuses ${novigStatuses.entries.sortedByDescending { it.value }.take(12).joinToString { "${it.key}=${it.value}" }}")
             }
             val settled = TradeSettle.settle(ledger.entries) { m, o -> byOutcome[m to o] } + TradeSettle.carried(ledger.entries) { m, o -> (m to o) in byOutcome }
             out.parentFile?.mkdirs()
