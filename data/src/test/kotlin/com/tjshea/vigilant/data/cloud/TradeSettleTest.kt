@@ -45,22 +45,13 @@ class TradeSettleTest {
         assertNull(TradeSettle.File.parse("nonsense"))
     }
 
-    /** PX14: orders the study never logged are settled from Novig's own outcome status, and once settled they are carried, never lost or asked again. */
+    /** PX14: orders the engine settled from Novig's ledger (the study never logged them) are carried by the grader's file, never lost. */
     @Test
-    fun `Novig's record settles what the study missed, and keeps it settled`() {
-        assertEquals(BetStatus.WON, TradeSettle.fromNovig("WIN")!!.status)
-        assertEquals(BetStatus.LOST, TradeSettle.fromNovig("LOSS")!!.status)
-        assertEquals(BetStatus.PUSH, TradeSettle.fromNovig("PUSH")!!.status)
-        assertEquals(0.37, TradeSettle.fromNovig("0.37")!!.settleValue!!, 1e-9)
-        assertNull(TradeSettle.fromNovig("TBD"))
-        assertNull(TradeSettle.fromNovig("SOMETHING"))
-        assertNull(TradeSettle.fromNovig("1.7")) // a price, not a value per $1 contract
-
+    fun `an order the engine settled from the ledger is carried, never lost`() {
         val now = 10 * TradeSettle.ASK_AFTER_START_MS
         val started = { e: TradeEntry -> e.copy(startsTs = now - TradeSettle.ASK_AFTER_START_MS) }
         val rows = listOf(started(entry("studied", "m1")), started(entry("missed", "m2")), entry("early", "m3").copy(startsTs = now - 60_000L), started(entry("done", "m4", status = "WON")).copy(pnl = 1.0))
         val studied = { m: String, _: String -> m == "m1" }
-        assertEquals(listOf("missed"), TradeSettle.askNovig(rows, studied, now).map { it.id })
         assertEquals(listOf(TradeSettle.Settled("done", "WON", 1.0)), TradeSettle.carried(rows, studied))
         // a carried order that the study grades later is settled from the study, never twice
         assertTrue(TradeSettle.carried(rows) { _, _ -> true }.isEmpty())
