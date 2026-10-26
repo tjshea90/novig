@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-3cb0aa53-b2tjli",
- "head": "33cd0c5d5a1304e950d57e204c38d00a489958b2",
+ "head": "fe084774fee0827cc1ce8d17113962056ee24b5f",
  "since": 1792970423,
- "beat": 1792974074,
- "beatIso": "2026-10-26T00:21:14Z",
- "done": "PX13a answered (ParlayAPI carries 4 books on that game); PX13c census pinnSgoOnly (league/kind of lines whose Pinnacle is SGO-only)",
- "next": "full test.sh, land, reset engine; read pinnSgoOnly + far-row ages; tell Tj; then PX13b Kalshi socket re-dating in the real-time list, PX11e Pinnacle sources"
+ "beat": 1792974218,
+ "beatIso": "2026-10-26T00:23:38Z",
+ "done": "PX13b: Kalshi quotes kept current between scans while the socket vouches and the top is unchanged (KalshiRedate, KalshiRedateTest)",
+ "next": "full test.sh, land, reset engine; measure far-row ages, Kalshi age on rows, pinnSgoOnly census; reply to Tj (one message: v1.0.86 link, PX11f fix, PX12/PX13 findings + changes)"
 }
