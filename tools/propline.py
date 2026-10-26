@@ -582,6 +582,13 @@ def cmd_shape(sport, markets):
                 shapes[k] = shapes.get(k, 0) + 1
     print("event keys:", sorted((events[0] if events else {}).keys()))
     print("titles:", titles)
+    tours = {}
+    for e in events:
+        t = (str(e.get("tour")), str(e.get("tournament"))[:40])
+        tours[t] = tours.get(t, 0) + 1
+    print("tours (tour, tournament):", sorted(tours.items(), key=lambda x: -x[1])[:40])
+    print("doubles:", sum(1 for e in events if "/" in (e.get("home_team") or "") or "/" in (e.get("away_team") or "")), "pinnacle events by tour:",
+          {k: v for k, v in ((str(t), sum(1 for e in events if str(e.get("tour")) == str(t) and any(b.get("key") == "pinnacle" for b in e.get("bookmakers") or []))) for t in set(e.get("tour") for e in events))})
     print("books:", sorted(books.items(), key=lambda x: -x[1]))
     print("market shapes (key, period, team, outcomes):", sorted(shapes.items(), key=lambda x: -x[1])[:40])
     for e in events[:3]:
