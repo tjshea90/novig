@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "6dd8ece497772572ee09e5b790c1399932a5d773",
+ "head": "46638ec5bac490f1a30266fe4c68e5aa19425013",
  "since": 1792912591,
- "beat": 1792982498,
- "beatIso": "2026-10-26T02:41:38Z",
+ "beat": 1792982717,
+ "beatIso": "2026-10-26T02:45:17Z",
  "done": "TASKS triage pass 3: 27 more closed; 91 open",
  "next": "parlayPinn census -> fix; then remaining buildables"
 }
