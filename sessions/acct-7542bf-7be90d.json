@@ -8,8 +8,8 @@
  "branch": "ccr-3cb0aa53-b2tjli",
  "head": "fe084774fee0827cc1ce8d17113962056ee24b5f",
  "since": 1792970423,
- "beat": 1792974218,
- "beatIso": "2026-10-26T00:23:38Z",
+ "beat": 1792974419,
+ "beatIso": "2026-10-26T00:26:59Z",
  "done": "PX13b: Kalshi quotes kept current between scans while the socket vouches and the top is unchanged (KalshiRedate, KalshiRedateTest)",
  "next": "full test.sh, land, reset engine; measure far-row ages, Kalshi age on rows, pinnSgoOnly census; reply to Tj (one message: v1.0.86 link, PX11f fix, PX12/PX13 findings + changes)"
 }
