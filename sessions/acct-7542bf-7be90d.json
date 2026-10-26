@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-3cb0aa53-b2tjli",
- "head": "84ec1b9df7d8bd8628be8268147fd173b97e8b81",
+ "head": "5bdd6123f63dd646c671965a4345f1668b563f5c",
  "since": 1792970423,
- "beat": 1792972929,
- "beatIso": "2026-10-26T00:02:09Z",
+ "beat": 1792973210,
+ "beatIso": "2026-10-26T00:06:50Z",
  "done": "PX11d-2: census line 'book outliers' = each book's share left out by BadOdds (QuoteCensus.outlierRates, QuoteCensusTest)",
  "next": "full tools/test.sh then land; confirm v1.0.86 Release, record-release.sh, tell Tj; tomorrow read a day of 'book outliers' lines -> exclude a mapped-wrong book"
 }
