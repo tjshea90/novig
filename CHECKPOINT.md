@@ -1,13 +1,13 @@
-# CHECKPOINT 4264 — read me first, then TASKS.md
+# CHECKPOINT 4265 — read me first, then TASKS.md
 
-**Written:** 2026-10-26T00:07:43Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-3cb0aa53-b2tjli` · **builds on:** `8c6e43c0f` (this checkpoint is the commit after it)
+**Written:** 2026-10-26T00:12:38Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-3cb0aa53-b2tjli` · **builds on:** `3355ea94d` (this checkpoint is the commit after it)
 
 ## Just done
-PX12: full scan every 2 min, not 6 (far games' fair was 295 s old on every far row); CloudLanesTest
+PX12 landed on main, engine reset; PX12c answered (no socket contention)
 
 ## Do this next
-full test.sh, land, engine reset, measure far-row exchange ages (expect <=~3 min) and near fairAgeMedianS; tell Tj (v1.0.86 link + findings)
+after the new run's scans: far-row exchange ages <= ~3 min? near fairAgeMedianS? 'book outliers' line; then tell Tj with v1.0.86 link
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ full test.sh, land, engine reset, measure far-row exchange ages (expect <=~3 min
 
 ## Last ten checkpoints
 ```
+  29d2da2d3 ckpt 4264: PX12: full scan every 2 min, not 6 (far games' fair was 295 s old on every 
   84ec1b9df ckpt 4263: PX11d-2: census line 'book outliers' = each book's share left out by BadOdd
   51935d90a ckpt 4262: pre-release: v1.0.86 PR1 + PX11: Engine pull to refresh reads only the engi
   c3a33ddfc ckpt 4261: pre-ship: v1.0.86 PR1 + PX11: Engine pull to refresh reads only the engine'
@@ -25,8 +26,7 @@ full test.sh, land, engine reset, measure far-row exchange ages (expect <=~3 min
   088c27c54 ckpt 4257: PX11c: bid slider never asks fewer than 3 agreeing books (BidSlider.MIN_AGR
   82a2aad46 ckpt 4256: PX11f root cause + fix: ParlayAPI's split events (two spellings of one game
   44717fce0 ckpt 4255: PX11f: gameprobe lists ParlayAPI's events of one game (hypothesis: ParlayAP
-  13eb830d5 ckpt 4254: WATCH 2026-10-25 ok, no changes
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
