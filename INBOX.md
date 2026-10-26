@@ -1358,3 +1358,8 @@ Do everything else that is on the tasks list
 ```
 I lost the phone that was running vigilant. Can I install vigilant on my android 10 armv7 tablet and still access the accounts
 ```
+
+## 2026-10-26T18:48:05Z
+```
+Yes
+```
