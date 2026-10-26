@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "b36b880e7af6139305316260e66563cb98ade999",
+ "head": "6f1d850159e1107728bf9875a38ed509abc71218",
  "since": 1792912591,
- "beat": 1792983515,
- "beatIso": "2026-10-26T02:58:35Z",
- "done": "CH87c ledger profit (engine + Tracker card), linesStrict census; full test.sh green",
- "next": "engine reset; read ledger profit + parlayPinn + linesStrict; batch v1.0.87 (CH87c, CH85 CloudLink guard)"
+ "beat": 1792983536,
+ "beatIso": "2026-10-26T02:58:56Z",
+ "done": "PX10g fixed: ParlayAPI stream copies dated by its later poll of the book (ParlayLive.vouchedAt); CH86/86b closed (SG)",
+ "next": "engine reset; read pinnAge/parlayPinn/ledger profit/linesStrict; ship v1.0.87 (CH87c card, CH85 guard)"
 }
