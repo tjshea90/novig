@@ -53,5 +53,5 @@ object QuoteCensus {
 
     private const val SAMPLES = 6
 
-    private val ORDER = listOf("sent", "tooOld", "atLine", "staleBesideFresh", "devigLeftOut", "priced", "crossSame", "crossDiff", "crossDiffBook", "crossDiffBp", "linesNow", "linesPlain", "badOdds", "pinnWin", "pinnFeeds", "pinnAge", "pinnSgoOnly")
+    private val ORDER = listOf("sent", "tooOld", "atLine", "staleBesideFresh", "devigLeftOut", "priced", "crossSame", "crossDiff", "crossDiffBook", "crossDiffBp", "linesNow", "linesPlain", "badOdds", "pinnWin", "pinnFeeds", "pinnAge", "pinnAgeNF", "pinnSgoOnly")
 }
