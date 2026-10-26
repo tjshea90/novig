@@ -1,22 +1,22 @@
-# CHECKPOINT 4286 — read me first, then TASKS.md
+# CHECKPOINT 4287 — read me first, then TASKS.md
 
-**Written:** 2026-10-26T02:59:34Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-db238840-epvfzh` · **builds on:** `6f1d85015` (this checkpoint is the commit after it)
+**Written:** 2026-10-26T03:02:00Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-db238840-epvfzh` · **builds on:** `71cbd4366` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v1.0.87 CH87c + CH85: the Tracker card names Novig's own ledger profit of the Vigilant subaccount; the phone stops re-asking for an engine file that is not there (CNO, PropLine +EV)
+pre-release: v1.0.87 CH87c + CH85: the Tracker card names Novig's own ledger profit of the Vigilant subaccount; the phone stops re-asking for an engine file that is not there (CNO, PropLine +EV) (versionCode 427, v1.0.87)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.87), then run: bash tools/record-release.sh v1.0.87 427 "v1.0.87 CH87c + CH85: the Tracker card names Novig's own ledger profit of the Vigilant subaccount; the phone stops re-asking for an engine file that is not there (CNO, PropLine +EV)"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  71cbd4366 ckpt 4286: pre-ship: v1.0.87 CH87c + CH85: the Tracker card names Novig's own ledger p
   6f1d85015 ckpt 4285: PX10g fixed: ParlayAPI stream copies dated by its later poll of the book (P
   0587d0b47 ckpt 4284: CH87c ledger profit (engine + Tracker card), linesStrict census; full test.
   6dd8ece49 ckpt 4283: TASKS triage pass 3: 27 more closed; 91 open
@@ -26,5 +26,4 @@ ship.sh gates and releases this
   14f661893 ckpt 4279: TASKS triage pass 2: 89 more closed with evidence
   e9fca7600 ckpt 4278: TASKS triage: 143 stale items closed with reasons (shipped, Pinnodds ended,
   8bc2699bf ckpt 4277: PX13c/PX11e: PropLine tennis built (PropLineTennis, from a real answer), SG
-  206288359 ckpt 4276: pinnAgeNF census (PX10g near/far split) + shape tours
 ```
