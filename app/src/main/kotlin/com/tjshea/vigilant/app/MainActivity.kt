@@ -888,7 +888,7 @@ private fun VigilantRoot(
                     onCheckNovig = { vm.refreshNovigOnly(force = true) },
                     onRefresh = vm::refreshTracker,
                     refreshing = state.gradingBets || state.cloudUi.refreshing,
-                    walletMoney = com.tjshea.vigilant.app.ui.WalletMoneyUi(vm.walletMoney.collectAsStateWithLifecycle().value, vm.walletMoneyNote.collectAsStateWithLifecycle().value),
+                    walletMoney = com.tjshea.vigilant.app.ui.WalletMoneyUi(vm.walletMoney.collectAsStateWithLifecycle().value, vm.walletMoneyNote.collectAsStateWithLifecycle().value, state.cloudUi.status?.ledgerProfit, state.cloudUi.status?.ledgerOpenCost, state.cloudUi.status?.ledgerAtMs ?: 0L),
                     onWalletMoney = { vm.refreshWalletMoney() },
                     actions = com.tjshea.vigilant.app.ui.BetActions(
                         onReplace = onReplaceBet,

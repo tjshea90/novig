@@ -102,7 +102,14 @@ object ChartView {
 }
 
 /** The wallet's all-time figure as the profit card shows it ([WalletProfit.Money], null before a reading) and, when there is none, why. */
-data class WalletMoneyUi(val money: WalletProfit.Money? = null, val note: String? = null)
+data class WalletMoneyUi(
+    val money: WalletProfit.Money? = null,
+    val note: String? = null,
+    /** The engine subaccount's own ledger, as the engine read it (CH87c): null before a reading. */
+    val ledgerProfit: Double? = null,
+    val ledgerOpenCost: Double? = null,
+    val ledgerAtMs: Long = 0L,
+)
 
 /** The profit card's words, pure, for tests (Tj, 2026-10-19, PL: "should show 0 profit or loss ... so I know if I'm making or losing money"). */
 object ProfitText {
@@ -125,7 +132,17 @@ object ProfitText {
     fun allTimeHow(book: SlateProfit.Book, w: WalletMoneyUi, now: Long): String =
         if (book.settled == 0) "No settled bets yet."
         else "From the ${book.settled} bets and bids with a final result: ${Format.money(book.settledStaked)} cost, ${Format.money(book.returned)} paid back. Deposits and withdrawals are not used; " +
-            "${bets(book.open)} not final yet (${Format.money(book.openStaked)} at stake) are left out."
+            "${bets(book.open)} not final yet (${Format.money(book.openStaked)} at stake) are left out." + ledgerLine(w, now)
+
+    /**
+     * CH87c (Tj 2026-10-24: "all-time profit from the Vigilant subaccount ledger only ... show on the Tracker card"): Novig's own record of the Vigilant subaccount beside the bets' sum, so a gap between the
+     * two shows (bets the Tracker never saw, fees, maker credits). Empty before the engine has read it.
+     */
+    fun ledgerLine(w: WalletMoneyUi, now: Long): String {
+        val p = w.ledgerProfit ?: return ""
+        return " Novig's own ledger of the Vigilant subaccount: ${pl(p)} all time (every payout and maker credit less every stake and fee" +
+            (w.ledgerOpenCost?.takeIf { it > 0.005 }?.let { ", ${Format.money(it)} on open bets counted at cost" } ?: "") + "), read ${com.tjshea.vigilant.data.cloud.DashboardModel.ago(now - w.ledgerAtMs)}."
+    }
 
     /** Today's games in one line of numbers: $0.00 and why before a result, what is open after. */
     fun today(day: SlateProfit.Day, isToday: Boolean = true): String = when {
