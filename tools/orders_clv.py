@@ -11,7 +11,7 @@ The join is on Novig's outcome id. A bid fills at a price that is usually BETTER
 row (`(1 + clv) x cost`) over the order's price, minus 1. Written next to the order: which sources agreed (`clv_sources`, `clv_confirmed`), whether a sharp book was in the fair, the books that agreed, the lead
 time, and the result. Orders with no matching line or no close keep their row with the CLV blank (the summary counts them). Never a key; reads files only.
 """
-import argparse, csv, gzip, io, json, math, sys
+import argparse, csv, gzip, io, json, math, os, sys
 from collections import defaultdict
 
 
@@ -44,8 +44,9 @@ def clv_at(price, line_cost, clv):
     return (1.0 + clv) * line_cost / price - 1.0
 
 
-def rows(trades, lines):
-    """One dict per ledger entry, joined to its line row."""
+def rows(trades, lines, novig=None):
+    """One dict per ledger entry, joined to its line row; [novig]: outcome id -> Novig's own close (tools/novig_trade_close.py), for `clv_novig`."""
+    novig = novig or {}
     out = []
     for e in trades:
         bid = 1 if str(e.get("note") or "").startswith("bid") else 0
@@ -64,7 +65,11 @@ def rows(trades, lines):
             "fair": e.get("fair"), "ev_pct": e.get("evPercent"), "books": e.get("books"), "stars": e.get("stars"), "fair_age_s": e.get("fairAgeS"), "status": status, "pnl": pnl,
             "roi": round(pnl / cost, 4) if settled and pnl is not None and cost > 0 else None, "outcome_id": e.get("outcomeId"), "line_id": None,
             "sharp_in_fair": None, "books_agreeing": None, "clv_pinn": None, "clv_consensus": None, "clv_sources": None, "clv_n_sources": None, "clv_confirmed": None,
+            "clv_novig": None,
         }
+        nc = novig.get(e.get("outcomeId") or "")
+        if nc is not None and price:
+            row["clv_novig"] = round(nc / price - 1.0, 5)
         if ln:
             lc = num(ln.get("cost"))
             row["line_id"] = ln.get("id")
@@ -108,7 +113,7 @@ def group_table(data, keyf, minn=10):
         clv, roi = defaultdict(list), defaultdict(list)
         for r in g:
             game = (r["event"], r["starts_ms"])
-            c = r["clv_consensus"] if r["clv_consensus"] is not None else r["clv_pinn"]
+            c = best_clv(r)
             if c is not None:
                 clv[game].append(c)
             if r["roi"] is not None:
@@ -128,12 +133,21 @@ def group_table(data, keyf, minn=10):
     return lines
 
 
+def best_clv(r):
+    """The consensus close, else Pinnacle's, else Novig's own close (PX14: the only close for most props and alternate lines nobody else archives)."""
+    for k in ("clv_consensus", "clv_pinn", "clv_novig"):
+        if r.get(k) is not None:
+            return r[k]
+    return None
+
+
 def summary(data):
     pre = [r for r in data if r["kind"] != "live"]
     out = ["# CLV of the engine's own orders at their fill price (tools/orders_clv.py)", "",
-           "Orders: %d (%d bets, %d bid fills); %d joined to a line; %d have a close. CLV = the consensus close (PropLine's Pinnacle, SGO's Pinnacle and Circa, ESPN's DraftKings, Novig's trades) over the price the order was filled at, minus 1; the standard error counts games, not orders. Live orders (kind `live`) are left out of the tables: their closes are not pregame closes." % (
+           "Orders: %d (%d bets, %d bid fills); %d joined to a line; %d have a close (%d from the consensus, %d more from Novig's own close alone). CLV = the consensus close (PropLine's Pinnacle, SGO's Pinnacle and Circa, ESPN's DraftKings, Novig's trades), else Novig's own close (its last 10 trades before the start, tools/novig_trade_close.py), over the price the order was filled at, minus 1; the standard error counts games, not orders. Live orders (kind `live`) are left out of the tables: their closes are not pregame closes." % (
                len(data), sum(1 for r in data if not r["bid"]), sum(1 for r in data if r["bid"]), sum(1 for r in data if r["line_id"]),
-               sum(1 for r in data if r["clv_consensus"] is not None or r["clv_pinn"] is not None)), ""]
+               sum(1 for r in data if best_clv(r) is not None), sum(1 for r in data if r["clv_consensus"] is not None or r["clv_pinn"] is not None),
+               sum(1 for r in data if r["clv_consensus"] is None and r["clv_pinn"] is None and r["clv_novig"] is not None)), ""]
     head = ["| group | orders | with a close | mean CLV | t | beat the close | settled | ROI |", "|:--|--:|--:|--:|--:|--:|--:|--:|"]
     for title, keyf in (("bet or bid", lambda r: "bid fill" if r["bid"] else "auto bet"), ("kind", lambda r: r["kind"]), ("league", lambda r: r["league"]),
                         ("sharp book in the fair", lambda r: "sharp" if str(r["sharp_in_fair"]) in ("1", "1.0", "True") else "no sharp"),
@@ -146,7 +160,7 @@ def summary(data):
 def run(args):
     trades = json.load(open(args.trades))
     entries = trades.get("entries", trades) if isinstance(trades, dict) else trades
-    data = rows(entries, load_lines(args.clv))
+    data = rows(entries, load_lines(args.clv), load_novig(args.novig_close) if args.novig_close else None)
     cols = list(data[0].keys()) if data else []
     with gzip.open(args.out, "wt", newline="") as f:
         w = csv.DictWriter(f, fieldnames=cols)
@@ -155,7 +169,41 @@ def run(args):
             w.writerow(r)
     if args.summary:
         open(args.summary, "w").write(summary(data))
-    print("orders", len(data), "joined", sum(1 for r in data if r["line_id"]), "with a close", sum(1 for r in data if r["clv_consensus"] is not None or r["clv_pinn"] is not None))
+    print("orders", len(data), "joined", sum(1 for r in data if r["line_id"]), "with a close", sum(1 for r in data if best_clv(r) is not None), "of which Novig's close alone",
+          sum(1 for r in data if r["clv_consensus"] is None and r["clv_pinn"] is None and r["clv_novig"] is not None))
+    return 0
+
+
+def load_novig(path):
+    """outcome id -> Novig's own close, from tools/novig_trade_close.py's output."""
+    out = {}
+    with gzip.open(path, "rt", newline="") as f:
+        for r in csv.DictReader(f):
+            c = num(r.get("novig_close"))
+            if r.get("outcome_id") and c is not None:
+                out[r["outcome_id"]] = c
+    return out
+
+
+def write_lines(args):
+    """PX14: every order as a line tools/novig_trade_close.py reads (market, outcome, start, fill price), one per outcome, so each order gets Novig's own close."""
+    import datetime
+    trades = json.load(open(args.trades))
+    entries = trades.get("entries", trades) if isinstance(trades, dict) else trades
+    seen = set()
+    n = 0
+    os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
+    with gzip.open(args.out, "wt", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["market_id", "outcome_id", "starts_utc", "cost", "first_seen_utc"])
+        w.writeheader()
+        for e in entries:
+            oid, mid, st, price = e.get("outcomeId"), e.get("marketId"), e.get("startsTs"), num(e.get("avgPrice"))
+            if not oid or not mid or st is None or not price or oid in seen or e.get("kind") == "live":
+                continue
+            seen.add(oid)
+            w.writerow({"market_id": mid, "outcome_id": oid, "starts_utc": datetime.datetime.fromtimestamp(st / 1000, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "cost": price, "first_seen_utc": oid})
+            n += 1
+    print("lines", n, "->", args.out)
     return 0
 
 
@@ -183,6 +231,10 @@ def selftest():
     mu, se, n, g = cluster_mean({"g1": [0.01, 0.03], "g2": [0.02]})
     check("cluster mean", abs(mu - 0.02) < 1e-12 and n == 3 and g == 2 and se is not None)
     check("summary renders", "bid fill" in summary(r) and "CLV of the engine's own orders" in summary(r))
+    # PX14: Novig's own close fills an order nobody else closed, at its fill price
+    r2 = rows(trades, lines, {"nope": 0.55})
+    check("Novig's close where no other", r2[1]["clv_novig"] is not None and abs(r2[1]["clv_novig"] - (0.55 / 0.5 - 1)) < 1e-9 and best_clv(r2[1]) == r2[1]["clv_novig"])
+    check("the consensus first", best_clv(r2[0]) == r2[0]["clv_consensus"])
     return 0 if ok else 1
 
 
@@ -194,9 +246,13 @@ def main():
     r.add_argument("--clv", required=True)
     r.add_argument("--out", required=True)
     r.add_argument("--summary")
+    r.add_argument("--novig-close")
+    ln = sub.add_parser("lines")
+    ln.add_argument("--trades", required=True)
+    ln.add_argument("--out", required=True)
     sub.add_parser("selftest")
     a = ap.parse_args()
-    sys.exit(selftest() if a.cmd == "selftest" else run(a))
+    sys.exit(selftest() if a.cmd == "selftest" else write_lines(a) if a.cmd == "lines" else run(a))
 
 
 if __name__ == "__main__":
