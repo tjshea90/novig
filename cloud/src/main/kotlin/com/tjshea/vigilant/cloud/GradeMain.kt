@@ -135,11 +135,11 @@ private suspend fun gradeMain(args: Array<String>) {
                     for (oc in market.outcomes) TradeSettle.fromNovig(oc.status)?.let { if (byOutcome.putIfAbsent(mid to oc.outcomeId, it) == null) fromNovig++ }
                 }
             }
-            val now = byOutcome.keys
-            val settled = TradeSettle.settle(ledger.entries) { m, o -> byOutcome[m to o] } + TradeSettle.carried(ledger.entries) { m, o -> (m to o) in now }
+            val settled = TradeSettle.settle(ledger.entries) { m, o -> byOutcome[m to o] } + TradeSettle.carried(ledger.entries) { m, o -> (m to o) in byOutcome }
             out.parentFile?.mkdirs()
             out.writeText(TradeSettle.File.text(TradeSettle.File(System.currentTimeMillis(), settled)))
-            val open = ledger.entries.count { e -> System.currentTimeMillis() - e.startsTs >= TradeSettle.ASK_AFTER_START_MS && settled.none { it.id == e.id } }
+            val done = settled.mapTo(HashSet()) { it.id }
+            val open = ledger.entries.count { e -> System.currentTimeMillis() - e.startsTs >= TradeSettle.ASK_AFTER_START_MS && e.id !in done }
             println("grade: ${settled.size} of the engine's orders settled (${ask.size} asked of Novig's record, $fromNovig outcomes settled by it, $novigFailed reads failed); $open orders 3 h+ past their start still without a result")
         } else println("grade: no usable trades.json")
     }
