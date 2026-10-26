@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "2c730492096250b495e292644bfd814b80e5dba3",
+ "head": "0530736e635064fc3678ef1dadfa83d0b0b6dfac",
  "since": 1792912591,
- "beat": 1792983802,
- "beatIso": "2026-10-26T03:03:22Z",
- "done": "CH87b finding: ledger -57.29 all time agrees with wallet -61.15; Tracker settled sum +11 misses ~70 of losses",
- "next": "confirm v1.0.87 release, record-release, tell Tj; then CH87b join ledger fills to Tracker"
+ "beat": 1792983894,
+ "beatIso": "2026-10-26T03:04:54Z",
+ "done": "CH87b explained: Tracker includes Novig-app imported bets (+82, cash wallet); research/profit_by_origin_2026-10-26.md",
+ "next": "release check 03:14; reply to Tj"
 }
