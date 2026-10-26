@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "e9fca7600fbb8eaae77da474aed45f8e51646661",
+ "head": "14f661893181bfa7fcefda005bb5504220f7a477",
  "since": 1792912591,
- "beat": 1792981175,
- "beatIso": "2026-10-26T02:19:35Z",
- "done": "TASKS triage: 143 stale items closed with reasons (shipped, Pinnodds ended, BoltOdds off, CNO/chat superseded, verified live); 212 open",
- "next": "triage the rest: build the buildable ones, list the ones that need Tj"
+ "beat": 1792981255,
+ "beatIso": "2026-10-26T02:20:55Z",
+ "done": "TASKS triage pass 2: 89 more closed with evidence",
+ "next": "build: TCL94b FCS grading, TCL104 list jump, CH12, TCL52b chat keyboard, PX12b/PX10g/PX10d/PX9i; list needs-Tj items"
 }
