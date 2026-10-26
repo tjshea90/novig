@@ -8,8 +8,8 @@
  "branch": "ccr-db238840-epvfzh",
  "head": "256a93a15a58c467fbdd88104060cd0c6d5c53d6",
  "since": 1792912591,
- "beat": 1792975535,
- "beatIso": "2026-10-26T00:45:35Z",
+ "beat": 1792977130,
+ "beatIso": "2026-10-26T01:12:10Z",
  "done": "dispatched engine-grade.yml + propline.yml clv on main (PX14b code landed)",
  "next": "a send_later check-in (~01:10 UTC) reads both runs: count results + CLV coverage from engine-dataset orders-clv.md vs before (23% open, 59% with a close), tick PX14b, tell Tj"
 }
