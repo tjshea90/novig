@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-3cb0aa53-b2tjli",
- "head": "8bec7b301fcea801af6e7650d24745655d6a070f",
+ "head": "98e213980bcc988f0c5ebfd9779efb4bb5588a82",
  "since": 1792970423,
- "beat": 1792974605,
- "beatIso": "2026-10-26T00:30:05Z",
- "done": "PX13b: Kalshi quotes kept current between scans while the socket vouches and the top is unchanged (KalshiRedate, KalshiRedateTest)",
- "next": "full test.sh, land, reset engine; measure far-row ages, Kalshi age on rows, pinnSgoOnly census; reply to Tj (one message: v1.0.86 link, PX11f fix, PX12/PX13 findings + changes)"
+ "beat": 1792974750,
+ "beatIso": "2026-10-26T00:32:30Z",
+ "done": "PX14: results gap (23% open) fixed in code via Novig's own settlement (GradeMain/TradeSettle, tested); CLV gap (41% no close) half-built: orders_clv.py lines + --novig-close (selftest ok). PX11f/PX12/PX13 shipped (v1.0.86 released+recorded; engine on 2-min full scans + Kalshi re-dating)",
+ "next": "1) wire orders_clv lines + novig_trade_close into tools/propline_clv_job.sh (see TASKS PX14b next); 2) bash tools/test.sh, land, dispatch engine-grade.yml + propline.yml clv; 3) tell Tj: v1.0.86 link https://github.com/tjshea90/novig/releases/tag/v1.0.86, PX11f split-event fix confirmed live, PX12 cause (far games re-read every 6 min -> 2), PX12c no socket contention, PX13 ParlayAPI carries only 4 books on Chiefs@Broncos, Kalshi re-dating, outlier audit (worst book 0.6%, none to exclude), PX14 coverage numbers"
 }
