@@ -149,4 +149,16 @@ class ApiChainTest {
         ApiChain.reset()
         assertEquals(ApiChain.Kind.LINES, ApiChain.kindOf("parlay"))
     }
+
+    @Test
+    fun `SGO stays asked for tennis when a better feed answered it, for the game totals and set lines only it carries (PX11e)`() {
+        val atp = Leagues.ALL.first { it.oddsApiSportKey == "tennis_atp" }
+        val tennisCtx = ScanContext(
+            novigEvents = listOf(game.copy(league = atp.novigName)), novigMarkets = listOf(market("MONEY")), now = now,
+            covered = mapOf("ev1" to setOf("MONEYLINE:0", "SPREAD:0", "TOTAL:0")), firstAnswered = setOf(atp.novigName), coveredBooks = mapOf(atp.novigName to setOf("pinnacle")),
+        )
+        assertTrue(ApiChain.needed("sgo", atp, ScanSettings(), tennisCtx))
+        assertFalse("the rule is tennis's alone", ApiChain.needed("sgo", nfl, ScanSettings(), ctx()))
+        assertFalse("and SGO's alone", ApiChain.needed("oddsapi", atp, ScanSettings(), tennisCtx))
+    }
 }
