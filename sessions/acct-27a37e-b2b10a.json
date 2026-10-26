@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "3d791e0e0f6363c1c99f96132457b818fde70b08",
+ "head": "b6167a5b6df9ca8cd998e9c273af06d2d7a6e33d",
  "since": 1792912591,
- "beat": 1792980103,
- "beatIso": "2026-10-26T02:01:43Z",
- "done": "PX11e: propline.yml task 'shape' prints a league's raw board shape to the log (to build PropLine tennis from a real answer)",
- "next": "dispatch propline.yml task=shape sports=tennis on main; build PropLine tennis (SGO-only Pinnacle lines are mostly WTA/ATP)"
+ "beat": 1792980292,
+ "beatIso": "2026-10-26T02:04:52Z",
+ "done": "PropLine tennis shape read (375 events, Pinnacle on 114, h2h/spreads/totals only); shape task prints tours",
+ "next": "dispatch shape again for tour values, then build PropLine tennis (h2h, totals by size, non-Pinnacle spreads, Pinnacle spreads >2.5)"
 }
