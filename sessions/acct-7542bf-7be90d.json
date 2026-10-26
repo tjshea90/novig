@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-3cb0aa53-b2tjli",
- "head": "29d2da2d380dd73c0938dbeb6b64d634f008a742",
+ "head": "3355ea94d449af235f1b456b365b9d8bfbf4dd85",
  "since": 1792970423,
- "beat": 1792973263,
- "beatIso": "2026-10-26T00:07:43Z",
+ "beat": 1792973522,
+ "beatIso": "2026-10-26T00:12:02Z",
  "done": "PX12: full scan every 2 min, not 6 (far games' fair was 295 s old on every far row); CloudLanesTest",
  "next": "full test.sh, land, engine reset, measure far-row exchange ages (expect <=~3 min) and near fairAgeMedianS; tell Tj (v1.0.86 link + findings)"
 }
