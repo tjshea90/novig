@@ -476,7 +476,7 @@ class CloudSources(
             if (s.useBookProps) add(propLineProps)
             add(propLineHalves)
             // The stream covers the picked leagues PropLine carries and the books it prices them with (PSL).
-            val sports = s.selectedLeagues.map { it.oddsApiSportKey }.filter { it in PropLineClient.SPORTS }.toSet()
+            val sports = s.selectedLeagues.map { it.oddsApiSportKey }.filter { it in PropLineClient.SPORTS }.toSet() + (if (s.selectedLeagues.any { it.tennis }) setOf(com.tjshea.vigilant.data.reference.PropLineTennis.SPORT) else emptySet())
             propLineStream.want(s.gates.propLineSocket, sports, PropLineClient.books(s).toSet())
         } else propLineStream.close("PropLine off")
         if (s.useOddsApi && has(CloudKeys.ODDS_API)) {

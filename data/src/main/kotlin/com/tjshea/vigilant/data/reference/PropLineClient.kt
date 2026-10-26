@@ -75,7 +75,7 @@ class PropLineClient(
     override val displayName = "PropLine"
     override val metered = true
 
-    override fun supports(league: League) = league.oddsApiSportKey in SPORTS
+    override fun supports(league: League) = league.oddsApiSportKey in SPORTS || league.tennis
 
     /**
      * PropLine's own pregame refresh is about a minute: scans closer together than this re-use the last board.
@@ -107,9 +107,11 @@ class PropLineClient(
         // Novig rides along in the same request (no extra cost): its prices order the scan's own
         // Novig reads, and are kept apart from the books that make the fair line.
         val readAt = clock()
+        // Tennis is one PropLine key for every tour; the board is split by tour at parse ([PropLineTennis]).
+        val path = if (league.tennis) PropLineTennis.SPORT else sport
         val parts = bookParts(asked(books)).map { part ->
             call(
-                "/sports/$sport/odds",
+                "/sports/$path/odds",
                 listOf("markets" to markets.joinToString(","), "bookmakers" to part.joinToString(",")) + idParams(),
                 notFound = Board(emptyList(), emptyList()),
             ) { parseBoard(it, json, sport) }
@@ -839,6 +841,9 @@ internal data class PlEvent(
     val commence_time: String? = null,
     val is_outright: Boolean? = null,
     val bookmakers: List<PlBook?>? = null,
+    /** Tennis only: ATP, Challenger, WTA, ITF, UTR ([PropLineTennis.leagueOf]). */
+    val tour: String? = null,
+    val tournament: String? = null,
 ) {
     /** The game with the fair-line books' quotes (never Novig, the exchanges read directly, or DFS). */
     fun toDomain(sportKey: String, period: String? = null): RefEvent? = domain(sportKey, period) { it !in PropLineClient.EXCLUDED }
@@ -851,11 +856,14 @@ internal data class PlEvent(
         val home = home_team?.takeIf { it.isNotBlank() } ?: return null
         val away = away_team?.takeIf { it.isNotBlank() } ?: return null
         if (is_outright == true) return null
+        val tennis = sportKey.startsWith("tennis_")
+        if (tennis && PropLineTennis.leagueOf(tour, tournament) != sportKey) return null
         val start = PropLineClient.ms(commence_time) ?: return null
         val markets = bookmakers.orEmpty().filterNotNull()
             .filter { b -> b.key?.let(keep) == true }
             .flatMap { b -> b.markets.orEmpty().filterNotNull().flatMap { it.toDomain(b, home, away, period) } }
-        return RefEvent(PropLinePropsSource.PREFIX + id, sportKey, start, home = home, away = away, markets = markets)
+        val event = RefEvent(PropLinePropsSource.PREFIX + id, sportKey, start, home = home, away = away, markets = markets)
+        return if (tennis) PropLineTennis.normalize(event) else event
     }
 }
 
