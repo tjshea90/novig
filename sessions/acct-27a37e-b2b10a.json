@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "b661a1870d5fadae2541a3eee16e963fd95d1ed2",
+ "head": "e31656f408f9d0961f7aaaf3548ac9b9e2c5157a",
  "since": 1792912591,
- "beat": 1792982049,
- "beatIso": "2026-10-26T02:34:09Z",
- "done": "CH67 flaky test fixed, CH65b Kalshi list carried across jobs, CH85 404-loop guard for CNO/PropLine EV files; full test.sh green",
- "next": "read census after engine scan; next PX10g/PX12b/PX11d/PX9i, CH12, TCL104, TCL52b"
+ "beat": 1792982078,
+ "beatIso": "2026-10-26T02:34:38Z",
+ "done": "PX10g census parlayPinn (why ParlayAPI Pinnacle stays old); PX11c/PX11d/PX10f/PX11e closed with evidence; full test.sh green",
+ "next": "engine reset; read parlayPinn after a scan, fix the cause; then PX12b, PX10d, PX9i, CH12, TCL104, TCL52b"
 }
