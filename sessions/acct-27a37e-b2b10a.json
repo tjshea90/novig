@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "e31656f408f9d0961f7aaaf3548ac9b9e2c5157a",
+ "head": "ac63e3c85a391d98a3175471909ce36a27054d78",
  "since": 1792912591,
- "beat": 1792982078,
- "beatIso": "2026-10-26T02:34:38Z",
+ "beat": 1792982385,
+ "beatIso": "2026-10-26T02:39:45Z",
  "done": "PX10g census parlayPinn (why ParlayAPI Pinnacle stays old); PX11c/PX11d/PX10f/PX11e closed with evidence; full test.sh green",
  "next": "engine reset; read parlayPinn after a scan, fix the cause; then PX12b, PX10d, PX9i, CH12, TCL104, TCL52b"
 }
