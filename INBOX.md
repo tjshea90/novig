@@ -1320,3 +1320,8 @@ Resume work from the checkpoint
 ```
 When I pull to refresh in the engine window, I don't think it needs to read the apis every time, make it refresh only the engine data such as status, active bets/bids, health, etc. and a separate button on the apis tab to refresh api status and meters
 ```
+
+## 2026-10-26T00:02:46Z
+```
+Odds are still very slow. The streaming should be very fresh
+```
