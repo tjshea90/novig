@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-3cb0aa53-b2tjli",
- "head": "a6f817fa0b18d03418ac24f662197a93c8305f43",
+ "head": "53dd589e79bb564d53896139bc43341d5d330814",
  "since": 1792970423,
- "beat": 1792973558,
- "beatIso": "2026-10-26T00:12:38Z",
+ "beat": 1792973743,
+ "beatIso": "2026-10-26T00:15:43Z",
  "done": "PX12 landed on main, engine reset; PX12c answered (no socket contention)",
  "next": "after the new run's scans: far-row exchange ages <= ~3 min? near fairAgeMedianS? 'book outliers' line; then tell Tj with v1.0.86 link"
 }
