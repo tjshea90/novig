@@ -105,6 +105,8 @@ object AppExits {
 
     /** Android's record of how the process ended, newest first ([max] at most: the last day's, not only the newest 6, which in Tj's v0.70.1 file covered 5.8 of the 24 hours "App stability" judged). */
     fun recent(context: Context, max: Int = 30): List<Exit> {
+        // Android 11 keeps this record; on Android 10 (Tj's tablet, A10, 2026-10-26) there is none to read.
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R) return emptyList()
         val am = context.getSystemService(ActivityManager::class.java) ?: return emptyList()
         val infos = runCatching { am.getHistoricalProcessExitReasons(null, 0, max) }.getOrNull() ?: return emptyList()
         return infos.map { info ->

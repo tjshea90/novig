@@ -15,8 +15,8 @@ android {
     defaultConfig {
         // Permanent once picked (BRIEF.md's keystore rules) — never change this.
         applicationId = "com.tjshea.vigilant"
-        // minSdk 30: the target device (a Moto G 2026) will ship far newer than this, but there's
-        // no real cost to a bit of headroom for testing on whatever other device is on hand.
+        // minSdk 29 (Android 10) since v1.0.88 (A10, Tj 2026-10-26: his phone was lost, the app moves to an Android 10 ARMv7 tablet); Android 11+ calls are guarded
+        // (lint NewApi clean). Was 30: the target device (a Moto G 2026) ships far newer, headroom for whatever other device is on hand.
         minSdk = 29
         targetSdk = 36
         versionCode = 427
