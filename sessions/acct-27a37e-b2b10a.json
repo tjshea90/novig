@@ -8,8 +8,8 @@
  "branch": "ccr-db238840-epvfzh",
  "head": "54ca4dd73c43f4de8697ecbd068ca752f2a74507",
  "since": 1792912591,
- "beat": 1793041115,
- "beatIso": "2026-10-26T18:58:35Z",
+ "beat": 1793041476,
+ "beatIso": "2026-10-26T19:04:36Z",
  "done": "pre-release: v1.0.88 A10: installs on Android 10 (minSdk 29) for Tj's ARMv7 tablet (versionCode 428, v1.0.88)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.88), then run: bash tools/record-release.sh v1.0.88 428 \"v1.0.88 A10: installs on Android 10 (minSdk 29) for Tj's ARMv7 tablet\""
 }
