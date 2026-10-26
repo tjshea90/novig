@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "63c670539f5692e45690fb5c09186a2256ac88c2",
+ "head": "5c61a51cbb10a297534f18a0a03472c2213fb841",
  "since": 1792912591,
- "beat": 1792979638,
- "beatIso": "2026-10-26T01:53:58Z",
- "done": "PX14b: open orders settled by the engine from Novig's ledger (TradeSettle.fromLedger + CloudMain), public-catalog fallback removed (settled markets 404); full test.sh green",
- "next": "land, engine_set.py --reset, read engine-log 'settled from Novig's ledger' line, rerun engine-grade, tell Tj"
+ "beat": 1792979687,
+ "beatIso": "2026-10-26T01:54:47Z",
+ "done": "PX14b done: results open 23%->2.1% (engine settled 182/208 from Novig's ledger), CLV 59%->83%; engine-grade dispatched to carry them",
+ "next": "PX14 complete; next open items: PX11e Pinnacle without SGO, PX13c, PR1c"
 }
