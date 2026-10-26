@@ -67,4 +67,19 @@ class WalletProfitTest {
         assertEquals(5.0, WalletProfit.of(5.0, emptyList(), listOf(row("t", "TRANSFER_IN", 5.0), row("t", "TRANSFER_IN", 5.0)), 0L)!!.putIn, 1e-9)
         assertNull(WalletProfit.of(0.0, emptyList(), listOf(row("t", "TRANSFER_IN", 5.0), row("u", "TRANSFER_OUT", -5.0)), 0L)!!.pct)
     }
+
+    @Test
+    fun `the ledger's own profit counts payouts and credits less stakes and fees, open bets at cost, and needs no deposit (CH87c)`() {
+        val rows = listOf(
+            row("f1", "FILL", -10.00), row("f2", "FILL", -5.00), row("f3", "FILL", -4.00), row("fee", "FEE", -0.30),
+            row("s1", "SETTLEMENT", 18.00), row("mc", "MAKER_CREDIT", 0.10), row("t", "TRANSFER_IN", 500.0), row("s1", "SETTLEMENT", 18.00),
+        )
+        // f3's $4.00 is still open: neither won nor lost
+        val l = WalletProfit.fromLedger(rows, listOf(NovigPosition("m3", "o3", 800, 4.00)), 7L)!!
+        assertEquals("won 18 on 15 staked, less a 0.30 fee, plus a 0.10 credit; the transfer and the repeated row left out", 2.80, l.profit, 1e-9)
+        assertEquals(4.00, l.openCost, 1e-9)
+        assertEquals(6, l.rows)
+        assertTrue(l.detail.startsWith("FILL -19.00 (3)"))
+        assertNull("no fill read: no figure", WalletProfit.fromLedger(listOf(row("t", "TRANSFER_IN", 5.0)), emptyList(), 0L))
+    }
 }
