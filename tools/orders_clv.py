@@ -11,7 +11,7 @@ The join is on Novig's outcome id. A bid fills at a price that is usually BETTER
 row (`(1 + clv) x cost`) over the order's price, minus 1. Written next to the order: which sources agreed (`clv_sources`, `clv_confirmed`), whether a sharp book was in the fair, the books that agreed, the lead
 time, and the result. Orders with no matching line or no close keep their row with the CLV blank (the summary counts them). Never a key; reads files only.
 """
-import argparse, csv, gzip, io, json, math, sys
+import argparse, csv, gzip, io, json, math, os, sys
 from collections import defaultdict
 
 
