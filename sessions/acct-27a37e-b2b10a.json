@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "256a93a15a58c467fbdd88104060cd0c6d5c53d6",
+ "head": "73e2cc751ec3c8e939d300e464c4da261fdc0399",
  "since": 1792912591,
- "beat": 1792977130,
- "beatIso": "2026-10-26T01:12:10Z",
- "done": "dispatched engine-grade.yml + propline.yml clv on main (PX14b code landed)",
- "next": "a send_later check-in (~01:10 UTC) reads both runs: count results + CLV coverage from engine-dataset orders-clv.md vs before (23% open, 59% with a close), tick PX14b, tell Tj"
+ "beat": 1792977282,
+ "beatIso": "2026-10-26T01:14:42Z",
+ "done": "PX14b measured: CLV 59%->83%, results open 23%->15%; Novig fallback settled 0/200: added a diagnostic line to GradeMain",
+ "next": "dispatch engine-grade.yml, read 'grade: Novig's record:' line, fix why outcomes don't settle (gone=404? status strings?)"
 }
