@@ -1,13 +1,13 @@
-# CHECKPOINT 4263 — read me first, then TASKS.md
+# CHECKPOINT 4264 — read me first, then TASKS.md
 
-**Written:** 2026-10-25T23:57:46Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-3cb0aa53-b2tjli` · **builds on:** `2e2e64154` (this checkpoint is the commit after it)
+**Written:** 2026-10-26T00:07:43Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-3cb0aa53-b2tjli` · **builds on:** `8c6e43c0f` (this checkpoint is the commit after it)
 
 ## Just done
-PX11d-2: census line 'book outliers' = each book's share left out by BadOdds (QuoteCensus.outlierRates, QuoteCensusTest)
+PX12: full scan every 2 min, not 6 (far games' fair was 295 s old on every far row); CloudLanesTest
 
 ## Do this next
-full tools/test.sh then land; confirm v1.0.86 Release, record-release.sh, tell Tj; tomorrow read a day of 'book outliers' lines -> exclude a mapped-wrong book
+full test.sh, land, engine reset, measure far-row exchange ages (expect <=~3 min) and near fairAgeMedianS; tell Tj (v1.0.86 link + findings)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ full tools/test.sh then land; confirm v1.0.86 Release, record-release.sh, tell T
 
 ## Last ten checkpoints
 ```
+  84ec1b9df ckpt 4263: PX11d-2: census line 'book outliers' = each book's share left out by BadOdd
   51935d90a ckpt 4262: pre-release: v1.0.86 PR1 + PX11: Engine pull to refresh reads only the engi
   c3a33ddfc ckpt 4261: pre-ship: v1.0.86 PR1 + PX11: Engine pull to refresh reads only the engine'
   3bf49b42a ckpt 4260: PR1a/b: Engine pull refreshes engine data only; Engine › APIs has its own
@@ -25,8 +26,7 @@ full tools/test.sh then land; confirm v1.0.86 Release, record-release.sh, tell T
   82a2aad46 ckpt 4256: PX11f root cause + fix: ParlayAPI's split events (two spellings of one game
   44717fce0 ckpt 4255: PX11f: gameprobe lists ParlayAPI's events of one game (hypothesis: ParlayAP
   13eb830d5 ckpt 4254: WATCH 2026-10-25 ok, no changes
-  66d520be3 ckpt 4253: v1.0.85 released + recorded; engine reset onto the order-port fix
 ```
 
-(3 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
