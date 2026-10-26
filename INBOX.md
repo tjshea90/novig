@@ -1330,3 +1330,8 @@ Odds are still very slow. The streaming should be very fresh
 ```
 Could it be that the live betting is taking the socket away from pregame scanning?
 ```
+
+## 2026-10-26T00:14:39Z
+```
+Parlayapi looks fresh but only gives one book here. Why? The rest are slow, even kalshi which has its own socket. Also, I will soon not have the sgo api with socket, so the other apis need to fill in
+```
