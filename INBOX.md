@@ -1325,3 +1325,8 @@ When I pull to refresh in the engine window, I don't think it needs to read the 
 ```
 Odds are still very slow. The streaming should be very fresh
 ```
+
+## 2026-10-26T00:08:42Z
+```
+Could it be that the live betting is taking the socket away from pregame scanning?
+```
