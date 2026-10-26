@@ -6527,3 +6527,9 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [ ] PX12b fix what is found (re-date confirmed-unchanged quotes from live streams; or read the slow feeds faster), tests, engine, tell Tj
 # PX12c (Tj 2026-10-26 ~00:1x UTC): "Could it be that the live betting is taking the socket away from pregame scanning?"
 - [x] PX12c [no contention: Novig stream held 6334/6334 and ~2500/2500 asked per scan, allowance dips to 6-22 spare in a full scan's burst but refills 32/s, none refused; PropLine's 2 sockets = board + signals for every scanned game; ParlayAPI live lane reads the same store; Kalshi 1 socket all 8784 markets; BoltOdds is switched off (status says 'socket ON': wording)] check every shared socket (PropLine 2 of plan, ParlayAPI streams, Novig stream allowance, Kalshi, SX) for live-vs-pregame contention
+
+## PX13 (Tj 2026-10-26 00:12 UTC, typed, screenshot: same bet sheet; FanDuel 29 s ParlayAPI, everything else PropLine/SGO 4-11 min, Kalshi 5m59s)
+"Parlayapi looks fresh but only gives one book here. Why? The rest are slow, even kalshi which has its own socket. Also, I will soon not have the sgo api with socket, so the other apis need to fill in"
+- [ ] PX13a find the bet; why ParlayAPI gives one book on it
+- [ ] PX13b Kalshi's age on a listed row (socket-held price dated at the scan's read, not confirmed between scans)
+- [ ] PX13c SGO lapsing: what SGO alone supplies (books, Pinnacle lines) and what replaces it (= PX10f/PX11e)
