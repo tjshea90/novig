@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "73e2cc751ec3c8e939d300e464c4da261fdc0399",
+ "head": "821467af9a94d32f2235dcb7560080dcfae95621",
  "since": 1792912591,
- "beat": 1792978339,
- "beatIso": "2026-10-26T01:32:19Z",
+ "beat": 1792978521,
+ "beatIso": "2026-10-26T01:35:21Z",
  "done": "PX14b measured: CLV 59%->83%, results open 23%->15%; Novig fallback settled 0/200: added a diagnostic line to GradeMain",
  "next": "dispatch engine-grade.yml, read 'grade: Novig's record:' line, fix why outcomes don't settle (gone=404? status strings?)"
 }
