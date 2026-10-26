@@ -17,7 +17,7 @@ android {
         applicationId = "com.tjshea.vigilant"
         // minSdk 30: the target device (a Moto G 2026) will ship far newer than this, but there's
         // no real cost to a bit of headroom for testing on whatever other device is on hand.
-        minSdk = 30
+        minSdk = 29
         targetSdk = 36
         versionCode = 427
         versionName = "1.0.87"
