@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "71cbd436683e9597f5857029f5ff0f61533ef06f",
+ "head": "09ee05d1bee4dd4c910d6c2ea5f7ae40ac10f5d5",
  "since": 1792912591,
- "beat": 1792983579,
- "beatIso": "2026-10-26T02:59:39Z",
- "done": "pre-ship: v1.0.87 CH87c + CH85: the Tracker card names Novig's own ledger profit of the Vigilant subaccount; the phone stops re-asking for an engine file that is not there (CNO, PropLine +EV)",
- "next": "ship.sh gates and releases this"
+ "beat": 1792983720,
+ "beatIso": "2026-10-26T03:02:00Z",
+ "done": "pre-release: v1.0.87 CH87c + CH85: the Tracker card names Novig's own ledger profit of the Vigilant subaccount; the phone stops re-asking for an engine file that is not there (CNO, PropLine +EV) (versionCode 427, v1.0.87)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.87), then run: bash tools/record-release.sh v1.0.87 427 \"v1.0.87 CH87c + CH85: the Tracker card names Novig's own ledger profit of the Vigilant subaccount; the phone stops re-asking for an engine file that is not there (CNO, PropLine +EV)\""
 }
