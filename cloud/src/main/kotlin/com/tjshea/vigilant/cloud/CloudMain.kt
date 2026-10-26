@@ -498,6 +498,9 @@ fun main(args: Array<String>) = runBlocking {
     // PAPER or LIVE; it runs in a coroutine of its own after each finished scan and never delays the Novig list. The Kalshi key is the one the phone sent for the socket (KALSHI_KEY_ID / KALSHI_KEY_PEM).
     val kalshiDir = File(out, "kalshi").apply { mkdirs() }
     for (n in listOf("kalshi-bets.json", "kalshi-paper.json", "kalshi-maker.json")) runCatching { PreviousFeed.read(git, cfgDir, n) }.getOrNull()?.let { File(kalshiDir, n).writeText(it) }
+    // CH65b: the previous job's Kalshi list and status ride with the first push, so the minutes before this job's first Kalshi pass show the last good list (each row keeps its own stamps, and the
+    // phone's freshness rules judge them) instead of nothing; the lane's first pass replaces both.
+    for (n in listOf(com.tjshea.vigilant.data.cloud.CloudKalshiLane.FEED_FILE, com.tjshea.vigilant.data.kalshitrade.KalshiEngine.FILE)) runCatching { PreviousFeed.read(git, cfgDir, n) }.getOrNull()?.takeIf { it.isNotBlank() }?.let { publisher.stageExtra(n, it) }
     val kalshiLane = com.tjshea.vigilant.data.cloud.CloudKalshiLane(
         scope = scope,
         readConfig = { ghClient.readFile(com.tjshea.vigilant.data.kalshitrade.KalshiEngineConfig.BRANCH, com.tjshea.vigilant.data.kalshitrade.KalshiEngineConfig.FILE)?.let(com.tjshea.vigilant.data.kalshitrade.KalshiEngineConfig::parse) },
