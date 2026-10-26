@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "64af59682f96bdf9fc38c4cc7ce2f16ae98e2a0d",
+ "head": "2319235f8b2c3f4bfc417d7493d727336cec09d9",
  "since": 1792912591,
- "beat": 1792984531,
- "beatIso": "2026-10-26T03:15:31Z",
+ "beat": 1793040325,
+ "beatIso": "2026-10-26T18:45:25Z",
  "done": "v1.0.87 released + recorded; PX12b ticked (ParlayAPI Pinnacle 5m+ stream copies 18,581 -> 6,212)",
  "next": "86 open: most need Tj (keys/decisions), data to accumulate (XOW, TR3, PB12, PS2), or are live/tennis studies; next session: CH88 bid volume, CH87 chat wake, FX6, PX9i read"
 }
