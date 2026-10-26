@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "0587d0b473cb82fb17071cf7330c9e6f407bd3c2",
+ "head": "b36b880e7af6139305316260e66563cb98ade999",
  "since": 1792912591,
- "beat": 1792983176,
- "beatIso": "2026-10-26T02:52:56Z",
+ "beat": 1792983515,
+ "beatIso": "2026-10-26T02:58:35Z",
  "done": "CH87c ledger profit (engine + Tracker card), linesStrict census; full test.sh green",
  "next": "engine reset; read ledger profit + parlayPinn + linesStrict; batch v1.0.87 (CH87c, CH85 CloudLink guard)"
 }
