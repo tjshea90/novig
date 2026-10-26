@@ -8,8 +8,8 @@
  "branch": "ccr-db238840-epvfzh",
  "head": "a605a6ee9047a3b3c298d7e75b9d7c8772127e0d",
  "since": 1792912591,
- "beat": 1793040904,
- "beatIso": "2026-10-26T18:55:04Z",
+ "beat": 1793040913,
+ "beatIso": "2026-10-26T18:55:13Z",
  "done": "pre-ship: v1.0.88 A10: installs on Android 10 (minSdk 29) for Tj's ARMv7 tablet",
  "next": "ship.sh gates and releases this"
 }

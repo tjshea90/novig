@@ -5,7 +5,7 @@
  "label": "acct-27a37e",
  "name": "tj Gmail",
  "nonce": "b2b10a",
- "note": "",
+ "note": "v1.0.88 A10: installs on Android 10 (minSdk 29) for Tj's ARMv7 tablet",
  "since": 1793040880,
- "beat": 1793040904
+ "beat": 1793040913
 }
