@@ -133,14 +133,14 @@ MCP: https://pinnwire.com/mcp?key=YOUR_KEY</code></pre>
 <tr><td><code>x-api-key: YOUR_KEY</code></td><td>header — recommended</td></tr>
 <tr><td><code>?key=YOUR_KEY</code></td><td>query parameter — handy for curl and browsers</td></tr>
 </table>
-<p class="note">Failure → HTTP 401 <code>{"error":"invalid_key"}</code>. SSE needs a plan with drop alerts (Stream, Pro&nbsp;+&nbsp;Drops, Scale). WebSocket needs the WS add-on.</p>
+<p class="note">Failure → HTTP 401 <code>{"error":"invalid_key"}</code>. SSE needs a plan with drop alerts (Drops, Pro&nbsp;+&nbsp;Drops, Scale). WebSocket needs the WS add-on.</p>
 </section>
 
 <section id="limits">
 <h2>Rate limits</h2>
 <table>
 <tr><th>Plan</th><th>REST limit</th></tr>
-<tr><td>Trial · Stream</td><td>20/min, 100/day</td></tr>
+<tr><td>Trial · Drops</td><td>20/min, 100/day</td></tr>
 <tr><td>Demo key</td><td>10/min, 50/day</td></tr>
 <tr><td>Pro · Pro + Drops</td><td>10 req/s</td></tr>
 <tr><td>Scale</td><td>30 req/s</td></tr>
@@ -278,7 +278,7 @@ MCP: https://pinnwire.com/mcp?key=YOUR_KEY</code></pre>
 
 <section id="sse">
 <h2>SSE /odds-drop (live)</h2>
-<p>Push stream of live odds drops. One connection, sub-second from price move to your code. Plans: Stream, Pro&nbsp;+&nbsp;Drops, Scale.</p>
+<p>Push stream of live odds drops. One connection, sub-second from price move to your code. Plans: Drops, Pro&nbsp;+&nbsp;Drops, Scale.</p>
 <pre><code>curl -N "https://pinnwire.com/odds-drop?key=YOUR_KEY&amp;min_drop=5"
 
 data: {"type":"connected","id":"…"}
@@ -350,13 +350,13 @@ curl -N "https://pinnwire.com/odds-drop-prematch?key=YOUR_KEY&amp;recheck=30&amp
 <table>
 <tr><th>Plan</th><th>Price</th><th>REST</th><th>SSE drops</th><th>Raw WS</th></tr>
 <tr><td>Trial</td><td>$0</td><td>20/min, 100/day</td><td>—</td><td>—</td></tr>
-<tr><td>Stream</td><td>$89/mo</td><td>20/min, 100/day</td><td>✓</td><td>—</td></tr>
+<tr><td>Drops</td><td>$89/mo</td><td>20/min, 100/day</td><td>✓</td><td>—</td></tr>
 <tr><td>Pro</td><td>$89/mo</td><td>10 req/s</td><td>—</td><td>add-on</td></tr>
 <tr><td>Pro + Drops</td><td>$139/mo</td><td>10 req/s</td><td>✓</td><td>add-on</td></tr>
 <tr><td>Scale</td><td>$219/mo</td><td>30 req/s</td><td>✓</td><td>add-on</td></tr>
-<tr><td>Raw WebSocket</td><td>+$89/mo</td><td colspan="3">adds the real-time WebSocket on Pro, Pro&nbsp;+&nbsp;Drops and Scale (not on Trial or Stream)</td></tr>
+<tr><td>Raw WebSocket</td><td>+$89/mo</td><td colspan="3">adds the real-time WebSocket on Pro, Pro&nbsp;+&nbsp;Drops and Scale (not on Trial or Drops)</td></tr>
 </table>
-<p class="note">Every plan: all 13 sports, live + prematch, full line depth, specials. Buy directly at <a href="/#pricing">pinnwire.com/#pricing</a> (card checkout) — questions: <a href="/cdn-cgi/l/email-protection#cdbeaca1a8be8dbda4a3a3baa4bfa8e3aea2a0"><span class="__cf_email__" data-cfemail="6310020f061023130a0d0d140a11064d000c0e">[email&#160;protected]</span></a>.</p>
+<p class="note">Every plan: all 13 sports, live + prematch, full line depth, specials. Buy directly at <a href="/#pricing">pinnwire.com/#pricing</a> (card checkout) — questions: <a href="/cdn-cgi/l/email-protection#5625373a332516263f3838213f24337835393b"><span class="__cf_email__" data-cfemail="2251434e475162524b4c4c554b50470c414d4f">[email&#160;protected]</span></a>.</p>
 </section>
 
 </main>

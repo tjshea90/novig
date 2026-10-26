@@ -1230,6 +1230,19 @@ outright markets — `tournament_winner` (race/stage winner),
 `top_10_finish`, rider/team stage-count markets
 (`rider_to_win_1plus_stages` … `team_to_win_5plus_stages`).
 
+### Horse Racing
+`horse_racing` (added 2026-10-26), fixed odds only (no tote). One event per
+race: `home_team` is "{Venue} R{race number}" (e.g. "Southwell R7"),
+`away_team` is "" (`is_outright` true), `commence_time` is the off time.
+Runners are the outcomes (`name` = horse). Markets: `race_winner` (win)
+and `race_place` (place; the place terms are in the market description,
+"Place (top 3)", and books with different terms are separate rows). Ask
+for them explicitly: `markets=race_winner,race_place`. Books: TAB AU
+(Australian meetings plus TAB's international meetings) and Betfair
+Exchange (GB, IE, AU, US, FR, ZA; best back price + `liquidity`). Races
+within the next 24h, pregame only. A scratched runner is withdrawn from
+the board within ~2 minutes. Odds-only: races are not graded.
+
 ## Bookmaker keys
 
 | Key | Title | Type |

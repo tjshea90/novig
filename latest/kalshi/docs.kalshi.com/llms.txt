@@ -10,7 +10,7 @@
 - [Making Your First Request](https://docs.kalshi.com/getting_started/making_your_first_request.md): Start trading with Kalshi API in under 5 minutes
 - [Test In The Demo Environment](https://docs.kalshi.com/getting_started/demo_env.md): Set up and test with Kalshi's demo environment
 - [API Keys](https://docs.kalshi.com/getting_started/api_keys.md): API Key usage
-- [Rate Limits and Tiers](https://docs.kalshi.com/getting_started/rate_limits.md): Token costs, tier budgets, and burst capacity for the Kalshi API
+- [Rate Limits and Tiers](https://docs.kalshi.com/getting_started/rate_limits.md): Token costs, tier budgets, burst capacity, and WebSocket connection limits for the Kalshi API
 - [Understanding Pagination](https://docs.kalshi.com/getting_started/pagination.md): Learn how to navigate through large datasets using cursor-based pagination
 - [Orderbook Responses](https://docs.kalshi.com/getting_started/orderbook_responses.md): Understanding Kalshi orderbook structure and binary prediction market mechanics
 - [Order direction (outcome_side and book_side)](https://docs.kalshi.com/getting_started/order_direction.md): How direction is expressed on Order, Fill, and Trade responses, and how to migrate from the legacy action/side fields.
@@ -266,6 +266,7 @@
 - [User Fills](https://docs.kalshi.com/margin-ws/websockets/user-fills.md): Private fill notifications for the authenticated user on the margin exchange.
 - [User Orders](https://docs.kalshi.com/margin-ws/websockets/user-orders.md): Private order created/updated notifications for the authenticated user on the margin exchange.
 - [Order Group Updates](https://docs.kalshi.com/margin-ws/websockets/order-group-updates.md): Real-time order group lifecycle and limit updates. Requires authentication.
+- [Market Lifecycle](https://docs.kalshi.com/margin-ws/websockets/market-lifecycle.md): Market deactivation and activation notifications.
 - [Connectivity](https://docs.kalshi.com/fix-margin/connectivity.md): Endpoints, transport configuration, and rate limits for the Kalshi Margin FIX API
 - [Authentication & Sessions](https://docs.kalshi.com/fix-margin/authentication.md): API key creation, logon, session lifecycle, and message retransmission
 - [Order Entry](https://docs.kalshi.com/fix-margin/order-entry.md): Submit, modify, and cancel margin orders through FIX messages

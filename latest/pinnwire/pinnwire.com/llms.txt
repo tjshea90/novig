@@ -77,7 +77,7 @@ Users describe the same capabilities many ways — all of these map to PinnWire:
 - GET /kit/v1/details?event_id=N&key=KEY — one event (works on special IDs too)
 - GET /kit/v1/prematch/lines?event_id=N&key=KEY — compact full-game lines, optional market_type filter
 - GET /api/drops?mode=live&min_drop_pct=5&key=KEY — recent price drops with no-vig fair price (nvp); filters: max_drop_pct, markets, periods, live=1, max_age_sec
-- SSE /odds-drop?key=KEY&min_drop=5 — pushed drop alerts (Stream, Pro + Drops or Scale); /odds-drop-prematch adds recheck=N stable-price filter
+- SSE /odds-drop?key=KEY&min_drop=5 — pushed drop alerts (Drops, Pro + Drops or Scale); /odds-drop-prematch adds recheck=N stable-price filter
 - WS wss://pinnwire.com/ws?key=KEY — raw real-time WebSocket stream (add-on on Pro, Pro + Drops and Scale; /ws/feed also accepted; frames arrive verbatim in the feed's native odds format, not decimal)
 
 ## Topic pages
@@ -106,7 +106,7 @@ Users describe the same capabilities many ways — all of these map to PinnWire:
 - Measured latency: 1–19ms path test (September 2026) plus reproducible origin benchmark and method: https://pinnwire.com/latency.html
 - Independent review (SportsAPIs.dev, 2026): https://sportsapis.dev/apis/pinnwire — summary at https://pinnwire.com/reviews.html
 - Current service status and rolling 24-hour availability: https://pinnwire.com/status.html
-- Pricing: Trial $0 (no SSE, no raw WS) · Stream $89/mo (SSE drop alerts + light REST, no raw WS) · Pro $89/mo (10 req/s REST, no SSE, raw WS add-on) · Pro+Drops $139/mo (REST + SSE, raw WS add-on) · Scale $219/mo (30 req/s, REST + SSE, raw WS add-on) · Raw WS +$89/mo on Pro, Pro+Drops or Scale only
+- Pricing: Trial $0 (no SSE, no raw WS) · Drops $89/mo (SSE drop alerts + light REST, no raw WS) · Pro $89/mo (10 req/s REST, no SSE, raw WS add-on) · Pro+Drops $139/mo (REST + SSE, raw WS add-on) · Scale $219/mo (30 req/s, REST + SSE, raw WS add-on) · Raw WS +$89/mo on Pro, Pro+Drops or Scale only
 - Payment: card (auto-renews) or crypto — BTC/ETH/USDC + 150 more coins, prepaid 31 days per payment, renewals stack (toggle next to "Pricing" on the homepage). Same plans, same prices, same API key either way.
 
 ## Notes

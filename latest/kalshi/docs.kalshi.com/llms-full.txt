@@ -1300,6 +1300,8 @@ Source: https://docs.kalshi.com/api-reference/portfolio/intra-account-transfer
 /openapi.yaml post /portfolio/intra_exchange_instance_transfer
 Transfers funds within the same account.
 
+Subaccount-restricted API keys can only transfer between `event_contract` exchange indices, with `source_subaccount` and `destination_subaccount` both set to the key's subaccount.
+
 When `source_exchange_shard` and `destination_exchange_shard` are the same, Kalshi treats the request as a subaccount transfer. The returned transfer ID appears in the subaccount transfer history.
 
 Cross-exchange-index subaccount transfers run in up to three non-atomic steps. If a later step fails, completed steps are not undone, so funds may remain in the primary account on the source or destination exchange index.
@@ -1515,6 +1517,30 @@ Predictions and Margin exchanges. Use the entry tags to filter by API
 surface (`REST`, `WebSocket`, `FIX`) or exchange (`Predictions`, `Margin`).
 FIX API changes, previously tracked on a separate page, now live here under
 the `FIX` tag.
+
+**October 29, 2026**
+
+Direct members can now use subaccount-restricted API keys to move funds within
+that subaccount between exchange indices with `POST /portfolio/intra_exchange_instance_transfer`.
+
+**TBD**
+
+The `communications` WebSocket channel adds RFQ batch messages:
+`rfq_batch_created` and `rfq_batch_deleted` for all subscribers (only your
+own with `user_filter: "self"`), `rfq_batch_best_quotes` and
+`rfq_batch_executed` for the batch's requester, and `batch_quote_created`,
+`batch_quote_accepted` and `batch_quote_executed` for each maker.
+`quote_executed` carries `rfq_batch_id` for a batch child's trade. If your
+client doesn't handle these messages, ignore them; see
+[Forward compatibility](/websockets#forward-compatibility).
+
+**October 29, 2026**
+
+Margin market responses now carry `halt_sources`, listing why a market is
+halted and empty when it is not. An inactive market that has never opened
+carries `initial_setup`, while one halted for a corporate action carries
+`corporate_action`, so a halted market can be told apart from one that never
+launched.
 
 **October 29, 2026**
 
@@ -10468,7 +10494,7 @@ To run this example:
 # Rate Limits and Tiers
 Source: https://docs.kalshi.com/getting_started/rate_limits
 
-Token costs, tier budgets, and burst capacity for the Kalshi API
+Token costs, tier budgets, burst capacity, and WebSocket connection limits for the Kalshi API
 
 ## Token-based limits
 
@@ -10557,6 +10583,22 @@ Shard 0 uses the unscoped margin Write budget. API v1 and other operations, incl
 Check your perps tier and limits with [`GET /account/limits/perps`](/margin-rest/account/get-perps-account-api-limits), the perps counterpart of [`GET /account/limits`](/api-reference/account/get-account-api-limits).
 
 See the [Perps API](/margin) overview for the full perps surface.
+
+## WebSocket connection limits
+
+Predictions and Perps (Margin) WebSocket connections share a **per-user limit on concurrent open connections**.
+
+| Tier | Maximum concurrent connections |
+| - | - |
+| Basic | 200 |
+| Advanced | 200 |
+| Expert | 200 |
+| Premier | 500 |
+| Paragon | 750 |
+| Prime | 1,000 |
+| Prestige | 1,000 |
+
+When you reach the connection limit, new WebSocket handshakes return `429 Too Many Requests`.
 
 ## Tiers and budgets
 
@@ -10911,7 +10953,7 @@ every sub-user can act on all subaccounts, within their permissions.
 Sub-user permissions apply to the whole account, so you can't limit a sub-user
 to one subaccount. To confine trading to one subaccount, use an API key
 [restricted to that subaccount](/getting_started/subaccounts#restricted-api-keys):
-it can read and trade only that subaccount and can't transfer funds. Only the
+it can read and trade only that subaccount and can't transfer funds between subaccounts. Only the
 account owner can create API keys.
 
 | Goal | Use |
@@ -10962,7 +11004,7 @@ paginated.
 ## Restricted API keys
 
 When generating an API key you can restrict it to a single subaccount. A
-restricted key can only read and trade on that subaccount: order placement and
+restricted key can read and trade on that subaccount: order placement and
 management, portfolio reads (balance, positions, fills, settlements), order
 groups, and the full REST RFQ lifecycle — creating combo markets in
 multivariate event collections, creating and cancelling RFQs, posting,
@@ -10972,6 +11014,10 @@ subaccount is rejected.
 
 `GET /portfolio/subaccounts/balances` also accepts restricted keys. It returns
 only the key's locked subaccount, with separate balances per exchange index.
+To move funds between exchange indices, call
+`POST /portfolio/intra_exchange_instance_transfer` with `source_subaccount` and
+`destination_subaccount` both set to the key's subaccount. Transfers to or from
+margin are not allowed.
 
 On perps, a restricted key can place, amend, decrease, and cancel orders
 (including cancel-all), manage order groups, and manage cross-margin exit
@@ -10990,7 +11036,7 @@ subaccount, its `self_trade_prevention_type` decides the outcome:
 `taker_at_cross` cancels the restricted key's order, and `maker` cancels the
 resting order in the other subaccount.
 
-A restricted key cannot transfer funds, manage subaccounts or API keys, or
+A restricted key cannot transfer funds between subaccounts, manage subaccounts or API keys, or
 act on RFQs and quotes belonging to a different subaccount of the same
 account. Subaccount-scoped requests match rows created through the API with
 an explicit subaccount identity; RFQs created in the web app are not
@@ -11922,6 +11968,10 @@ WebSocket connections use the same API key authentication and signing path as be
 * For detailed CF Benchmarks channel usage (`cfbenchmarks_value`), see [CF Benchmarks Value Feed](/websockets/cfbenchmarks-value).
 * For real-time Pyth prices (`pyth_value`), see [Pyth Value Feed](/websockets/pyth-value).
 
+## Forward compatibility
+
+A channel can gain new message types, and a message new fields. Ignore any message `type` or field your client doesn't recognize instead of treating it as an error.
+
 
 # CF Benchmarks Value Feed
 Source: https://docs.kalshi.com/websockets/cfbenchmarks-value
@@ -12077,8 +12127,12 @@ Real-time Request for Quote (RFQ) and quote notifications. Requires authenticati
   - `shard_factor` (1-100) and `shard_key` (`0 <= key < shard_factor`)
 - RFQ events (RFQCreated, RFQDeleted) are sent for all users by default. Set `user_filter: "self"` to receive only RFQs you created. Omitted or empty `user_filter` keeps the default.
 - Quote events (QuoteCreated, QuoteAccepted, QuoteExecuted) are only sent if you created the quote OR you created the RFQ
+- RFQ batch events (RFQBatchCreated, RFQBatchDeleted) follow the RFQ event rules: sent for all users by default, or with `user_filter: "self"` only for RFQ batches you created. A batch's child RFQs are announced only inside RFQBatchCreated; each child trade still sends QuoteExecuted, with `rfq_batch_id` set. With sharding, every batch event is partitioned by `rfq_batch_id` instead of the market ticker, so a child's QuoteExecuted can arrive on another shard than its batch's events.
+- Each child of an RFQ batch fills at its best quote across makers, and the children execute together as one fill-or-kill: nothing trades unless every child can fill in full. In the rare case that filling one child cancels a maker order another child needed, the batch closes partially executed. Every maker's batch quote prices every child, and each child goes to the maker bidding best on the accepted side, so one batch can have several winning makers. A batch quote counts only for 30 seconds after it was last submitted; resending an unchanged bid within that time keeps its time priority.
+- RFQBatchBestQuotes and RFQBatchExecuted are only sent to the RFQ batch creator. RFQBatchBestQuotes carries the best bids across makers without identifying them; the batch creator never receives a maker's individual batch quote.
+- Batch quote events (BatchQuoteCreated, BatchQuoteAccepted, BatchQuoteExecuted) are only sent to the maker that created the batch quote. Each winning maker confirms the children it won, and nothing executes until every winning maker has confirmed.
 
-**Use case:** Tracking RFQs you create and quotes on your RFQs, or quotes you create on others' RFQs. Use QuoteExecuted to correlate fill messages with quotes via client_order_id.
+**Use case:** Tracking RFQs and RFQ batches you create and the quotes on them, or quotes and batch quotes you create on others'. Use QuoteExecuted to correlate fill messages with quotes via client_order_id.
 
 
 

@@ -90,7 +90,7 @@ Pass the key either way:
 
 Failure: HTTP 401 `{"error":"invalid_key"}`.
 
-SSE endpoints require a plan with SSE (Stream, Pro+Drops, or Scale). WebSocket requires the WS add-on flag on your key.
+SSE endpoints require a plan with SSE (Drops, Pro+Drops, or Scale). WebSocket requires the WS add-on flag on your key.
 
 ---
 
@@ -255,7 +255,7 @@ PinnWire is also an MCP server (Model Context Protocol) so AI clients can call i
 
 ### GET /odds-drop (live) · GET /odds-drop-prematch
 
-Server-Sent Events streams of odds drops as they happen. Auth: API key on an SSE plan (Stream, Pro+Drops, Scale). Not counted against your REST rate limit.
+Server-Sent Events streams of odds drops as they happen. Auth: API key on an SSE plan (Drops, Pro+Drops, Scale). Not counted against your REST rate limit.
 
     curl -N "https://pinnwire.com/odds-drop?key=$KEY&min_drop=5"
 
@@ -274,7 +274,7 @@ Volume note: prematch lines move slowly — a 90-second sample may surface zero 
 
 ## Real-time WebSocket (Add-on)
 
-Raw feed passthrough — every frame forwarded verbatim in a thin envelope, so `price` fields keep the feed's native odds format rather than the decimal form used on REST and SSE. Requires the WS add-on flag (+$89/mo on Pro, Pro + Drops and Scale — not available on Trial or Stream). NOT the drop alerts — this is the full state stream, much higher volume.
+Raw feed passthrough — every frame forwarded verbatim in a thin envelope, so `price` fields keep the feed's native odds format rather than the decimal form used on REST and SSE. Requires the WS add-on flag (+$89/mo on Pro, Pro + Drops and Scale — not available on Trial or Drops). NOT the drop alerts — this is the full state stream, much higher volume.
 
     wss://pinnwire.com/ws?key=YOUR_KEY        (also accepted: /ws/feed)
 
@@ -331,7 +331,7 @@ Golf is typically moneyline-only because Pinnacle generally does not publish spr
 | Plan | Price | REST | SSE drops | Raw WS |
 |---|---|---|---|---|
 | Trial | $0 | 20/min, 100/day | — | — |
-| Stream | $89/mo | 20/min, 100/day | ✅ | — |
+| Drops | $89/mo | 20/min, 100/day | ✅ | — |
 | Pro | $89/mo | 10 req/s | — | add-on |
 | Pro + Drops | $139/mo | 10 req/s | ✅ | add-on |
 | Scale | $219/mo | 30 req/s | ✅ | add-on |

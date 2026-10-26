@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ParlayAPI Changelog: Recent Releases, Fixes, and Data Source Updates</title>
+<meta name="description" content="Public changelog of every shipped feature, parser fix, source addition, and behavior change to ParlayAPI. Updated continuously.">
+<meta name="keywords" content="ParlayAPI changelog, parser fixes, data source updates, sports odds API release notes">
+<meta property="og:title" content="ParlayAPI Changelog">
+<meta property="og:description" content="Public changelog of every shipped feature, parser fix, and source update.">
+<meta property="og:url" content="https://parlay-api.com/changelog">
+<link rel="canonical" href="https://parlay-api.com/changelog">
+<link rel="alternate" type="application/rss+xml" title="ParlayAPI Changelog" href="https://parlay-api.com/changelog.rss">
+<style>
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin:0; padding:0; font-family:-apple-system,"Inter",sans-serif; background:#06060b; color:#e8e8f0; line-height:1.6; }
+.nav { display:flex; align-items:center; justify-content:space-between; padding:16px 28px; border-bottom:1px solid #1e1e2e; }
+.nav .logo { font-weight:800; font-size:1.15rem; color:#fff; text-decoration:none; }
+.nav .logo span { color:#9b82fc; }
+.nav a { color:#c4c4d4; margin-left:18px; text-decoration:none; }
+.nav .cta { background:linear-gradient(135deg,#7c5cfc,#5a3fd4); color:#fff; padding:8px 18px; border-radius:8px; font-weight:600; }
+.container { max-width:920px; margin:0 auto; padding:0 24px; }
+h1 { font-size:2.3rem; margin:48px 0 12px; line-height:1.2;
+     background:linear-gradient(135deg,#fff,#b8a3ff); -webkit-background-clip:text;
+     background-clip:text; -webkit-text-fill-color:transparent; }
+.lead { color:#c4c4d4; font-size:1.05rem; margin:0 0 32px; max-width:680px; }
+.lead a { color:#9b82fc; }
+.entry { background:#111119; border:1px solid #1e1e2e; border-radius:12px; padding:22px 26px; margin:18px 0; }
+.entry .head { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+.entry h2 { font-size:1.15rem; color:#fff; margin:0; font-weight:700; }
+.entry .date { color:#6e6e85; font-size:0.85rem; font-family:JetBrains Mono,monospace; }
+.tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+.tag { display:inline-block; background:#1e1e2e; color:#9b82fc; font-size:0.7rem; padding:3px 8px; border-radius:999px; font-family:JetBrains Mono,monospace; text-transform:uppercase; letter-spacing:0.04em; }
+.tag.feature { background:rgba(34,197,94,0.12); color:#22c55e; }
+.tag.fix { background:rgba(239,68,68,0.12); color:#ef4444; }
+.tag.source { background:rgba(124,92,252,0.18); color:#9b82fc; }
+.tag.parser { background:rgba(245,158,11,0.14); color:#f59e0b; }
+.tag.docs { background:rgba(59,130,246,0.14); color:#3b82f6; }
+.entry p { color:#c4c4d4; margin:8px 0 0; }
+.entry ul { color:#c4c4d4; margin:8px 0 0; padding-left:24px; }
+.entry ul li { margin:4px 0; }
+.entry code { background:#0c0c14; border:1px solid #1e1e2e; padding:1px 6px; border-radius:4px; font-family:JetBrains Mono,monospace; font-size:0.85em; color:#9b82fc; }
+.entry a { color:#9b82fc; text-decoration:none; }
+.entry a:hover { text-decoration:underline; }
+.month { font-size:1.1rem; color:#6e6e85; margin:36px 0 12px; padding-bottom:6px; border-bottom:1px solid #1e1e2e; font-family:JetBrains Mono,monospace; }
+footer { padding:30px 28px; border-top:1px solid #1e1e2e; color:#6e6e85; font-size:0.85rem; text-align:center; margin-top:60px; }
+.subscribe { background:#0c0c14; border:1px solid #1e1e2e; border-radius:10px; padding:14px 18px; margin:24px 0; color:#c4c4d4; font-size:0.92rem; }
+.subscribe a { color:#9b82fc; }
+</style>
+<meta property="og:image" content="https://parlay-api.com/static/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+ <script defer src="/_analytics/script.js" data-website-id="809cd530-a8a1-4e46-bfc2-a76f2ba0681a" data-host-url="/_analytics"></script>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="logo">Parlay<span>API</span></a>
+  <div>
+    <a href="/docs">Docs</a>
+    <a href="/pricing">Pricing</a>
+    <a href="/changelog">Changelog</a>
+    <a href="/signup" class="cta">Get free key</a>
+  </div>
+</nav>
+
+<div class="container">
+
+<h1>Changelog</h1>
+<p class="lead">Published product changes, parser fixes, source additions, and API behavior updates. Read the entries here or follow the <a href="/changelog.rss">RSS feed</a>.</p>
+
+<div class="subscribe">
+  <strong>Tracking API changes?</strong> The <a href="/v1/meta/changelog">JSON feed</a> and <a href="/changelog.rss">RSS feed</a> contain the published entries. For a compatibility question about your integration, email <a href="/cdn-cgi/l/email-protection#f685838686998482b68697849a978fdb97869fd895999b"><span class="__cf_email__" data-cfemail="cbb8bebbbba4b9bf8bbbaab9a7aab2e6aabba2e5a8a4a6">[email&#160;protected]</span></a>.
+</div>
+
+<div class="month">September 2026</div>
+
+<div class="entry">
+  <div class="head"><h2>Complete game-line WebSocket baselines</h2><span class="date">2026-09-17</span></div>
+  <div class="tags"><span class="tag fix">fix</span><span class="tag docs">streaming</span></div>
+  <p>An explicit WebSocket or SSE request that names bookmakers and requests <code>kinds=game&amp;markets=h2h,spreads,totals</code> now receives the same complete current game-line board assembled for REST. A successful frame identifies itself with <code>snapshot_scope="current_game_board"</code>, <code>snapshot_complete=true</code>, and <code>resume_mode="replace"</code>. Broad and prop scopes remain bounded <code>recent_rows</code> samples.</p>
+  <p>The stream contract now states that <code>since</code> is a best-effort recent-observation filter rather than a lossless removal replay, and that <code>diff</code> applies only to later frames. The Python and JavaScript reference clients and reconnect cookbook are also available directly from the WebSocket docs.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Team-total market keys and team subjects</h2><span class="date">2026-09-11</span></div>
+  <div class="tags"><span class="tag docs">docs</span><span class="tag fix">fix</span></div>
+  <p><code>team_totals</code> is the current canonical key for one team's total. It is distinct from <code>totals</code>, the combined event total. Keep the participant, side, line, and any period information separate from the market-key mapping.</p>
+  <p>ProphetX's native <code>team_total_runs</code> and <code>team_total_points</code> markets normalize to <code>team_totals</code>. The team-subject fix deployed on September 8 resolves a source label to the exact fixture club and excludes labels that cannot be attributed uniquely. The REST serving guard deployed on September 11 also excludes anonymous team-total subjects.</p>
+  <p>This entry documents the current contract and those earlier deployments; it does not rename the key or promise that the schema can never change. The feeds above publish general API changes. The <a href="/docs/versioning">published versioning policy</a> covers additions, breaking changes, and deprecation notices.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Retryable login and reset-link read failures</h2><span class="date">2026-09-11</span></div>
+  <div class="tags"><span class="tag fix">fix</span></div>
+  <p>If session storage is unavailable during login, the response is now <code>503</code> with <code>Retry-After</code>, and no session cookie is issued. A temporary failure while reading a password-reset token also returns <code>503</code>, preserves the token in the form, and does not report the link as expired or change the password. These responses are private and must not be cached.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Stable RSS entry identifiers</h2><span class="date">2026-09-11</span></div>
+  <div class="tags"><span class="tag fix">fix</span></div>
+  <p>An unchanged changelog entry now keeps the same RSS identifier across servers and restarts. The previous identifiers depended on the serving process, which could make an existing entry appear new. Moving to the stable identifier format may cause a feed reader to show older entries once during the transition; their publication dates are unchanged.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>/v1/status tells one truth about a source</h2><span class="date">2026-09-05</span></div>
+  <div class="tags"><span class="tag fix">fix</span><span class="tag docs">transparency</span></div>
+  <p><a href="/v1/status">/v1/status</a> could disagree with itself: <code>data_freshness.all_sources_healthy</code> read <code>true</code> beside books flagged <code>healthy: false</code> in <code>live_odds_sources_1h</code>, because four blocks each reached their own verdict about the same book in one payload. Every block now quotes ONE per-source verdict, judged on the freshest write that source made across the odds and prop tables inside the endpoint's own window, so <code>stale_sources</code> is exactly the complement of the <code>healthy</code> flags you receive and <code>sla_by_source</code> can only carry keys the arrays list.</p>
+  <p>What changed in the payload: <code>healthy</code> and <code>sla_state</code> are now properties of the SOURCE (a book fresh on odds and slow on props is healthy), and every row adds <code>row_healthy</code> / <code>row_sla_state</code> for that one table plus <code>health_scope</code> and <code>source_latest_age_seconds</code> so you can see which verdict came from where. <code>data_freshness</code> gains <code>suppressed_sources</code>, <code>retired_sources</code> and <code>sources_without_rows</code> (<code>null</code>, never <code>[]</code>, when it could not be checked). No field was removed or renamed.</p>
+  <p><strong>Note on <code>sla</code>:</strong> <code>sla_by_source[book].sla</code> on <a href="/v1/status">/v1/status</a> is judged on rows written inside that endpoint's window. <a href="/v1/meta/source-quality">/v1/meta/source-quality</a> judges a 10 minute window and falls back to poller pulses, so the two can differ for the same book, and did for 5 of 40 shared sources when this shipped. Each <code>sla_by_source</code> entry now republishes the other endpoint's answer as <code>source_quality_sla</code> / <code>source_quality_age_s</code>, and <code>sla_basis</code> in the payload states what each was judged on. When they disagree, <code>sla</code> is the one about rows you can actually query.</p>
+</div>
+
+<div class="month">July 2026</div>
+
+<div class="entry">
+  <div class="head"><h2>Moneyline (h2h) consensus</h2><span class="date">2026-07-23</span></div>
+  <div class="tags"><span class="tag feature">feature</span></div>
+  <p><a href="/docs#consensus">/v1/sports/{sport_key}/consensus</a> now covers moneylines: pass <code>markets=h2h</code> for the per-side consensus price and implied probability across books (<code>market_key</code> <code>h2h</code>, or <code>h2h_3_way</code> with a <code>Draw</code> side for soccer). Previously the consensus rollup covered player props and totals only.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Consistent market names</h2><span class="date">2026-07-23</span></div>
+  <div class="tags"><span class="tag fix">fix</span></div>
+  <p>The human-readable <code>market</code> name shown across <a href="/docs">/props, /middles, /consensus and /ev</a> is now normalized to one clean, consistent label per market across every book, so the same market reads the same everywhere. The canonical <code>market_key</code> is unchanged.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Biggest-movers board ranks by probability shift</h2><span class="date">2026-07-23</span></div>
+  <div class="tags"><span class="tag feature">feature</span><span class="tag fix">fix</span></div>
+  <p><a href="/v1/meta/movers">/v1/meta/movers</a> and the <a href="/movers">/movers</a> board now rank line moves by implied-probability shift rather than raw cents, so a trivial wobble on a heavy favorite no longer outranks a genuine steam move, and a game carried under multiple sport-key aliases is shown once.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Live and In-Play Odds API landing page</h2><span class="date">2026-07-23</span></div>
+  <div class="tags"><span class="tag docs">docs</span><span class="tag feature">streaming</span></div>
+  <p>New <a href="/live-odds-api">/live-odds-api</a> page pulls the real-time story together: SSE + WebSocket streaming, sub-second cadence, <code>/v1/inplay/arbs</code>, in-game period markets, per-book latency, and play-by-play, with copy-paste curl/Python/JS examples.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Stronger /odds data quality</h2><span class="date">2026-07-23</span></div>
+  <div class="tags"><span class="tag fix">odds</span><span class="tag fix">data-quality</span></div>
+  <p>Every outcome returned by <code>/odds</code> is guaranteed to carry a real, takeable price, two-way moneylines are checked for internal consistency, and soccer 3-way lines always include the draw. Cleaner inputs for your models, straight from the read path.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Faster family-key and off-season /odds</h2><span class="date">2026-07-23</span></div>
+  <div class="tags"><span class="tag fix">performance</span></div>
+  <p>Umbrella and tournament keys (<code>soccer</code>, <code>tennis</code>, <code>esports</code>, <code>golf</code>) now resolve their live child leagues in ~3&nbsp;ms instead of ~1.8&nbsp;s, and off-season <code>/odds</code> no longer times out. Replaced <code>starts_with(sport_key, …)</code> (which defeats the index) with index-bound range scans across the read path.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Player-prop middles + break-even ranking</h2><span class="date">2026-07-22</span></div>
+  <div class="tags"><span class="tag feature">analytics</span></div>
+  <p><code>/v1/sports/{sport_key}/middles</code> rebuilt on the fast props path (24.8&nbsp;s &rarr; ~1.9&nbsp;s), now covering player-prop middles and full economics, ranked by break-even hit rate. Includes the <code>/v1/calc/*</code> pricing helpers.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Best Books leaderboard</h2><span class="date">2026-07-22</span></div>
+  <div class="tags"><span class="tag feature">analytics</span></div>
+  <p><a href="/best-books">/best-books</a> ranks which book is posting the best price across sport, time window, a per-game picker, and bet type including player props. Consensus-outlier guarded, so every result is a real, takeable best price.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Consensus-outlier guards on arbitrage, EV and best-price</h2><span class="date">2026-07-22</span></div>
+  <div class="tags"><span class="tag fix">reliability</span></div>
+  <p>Arbitrage, EV and best-price surfaces validate every quote against its side's field median, with a two-way arb floor on top, so every opportunity we surface is one you can actually take.</p>
+</div>
+
+<div class="month">May 2026</div>
+
+<div class="entry">
+  <div class="head"><h2>Historical match coverage endpoint + per-source hint header</h2><span class="date">2026-05-19</span></div>
+  <div class="tags"><span class="tag feature">api</span><span class="tag feature">historical</span><span class="tag docs">transparency</span></div>
+  <p>New endpoint <code>GET /v1/historical/sports/{sport_key}/coverage?dateFrom=&amp;dateTo=</code> returns per-source row counts, first/last date, and priced-row counts for any sport over any window. 1 credit. Lets you pre-flight a source filter before burning credits on <code>/matches</code>: see at a glance that <code>esports_cs2</code> has 15,379 HLTV rows but only 50 Pinnacle rows over a 16-month window.</p>
+  <p>Paired change: <code>/v1/historical/sports/{sport_key}/matches</code> now emits an <code>X-Coverage-Hint</code> response header when a source-filtered call returns far fewer rows than another source would. The hint names the better source and links to the coverage endpoint.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>/v1/meta/api-key-check now exposes Stripe subscription state + last-request</h2><span class="date">2026-05-19</span></div>
+  <div class="tags"><span class="tag feature">api</span><span class="tag fix">billing</span></div>
+  <p>The validate-without-charging endpoint now returns a <code>subscription</code> block (state, period_end_iso, stripe_subscription_id_prefix, stripe_customer_id_prefix) and a <code>last_request_at_iso</code> timestamp. Customers can self-diagnose the "I paid via Stripe but my key still says free" case: if <code>subscription.state == "none"</code> and <code>tier == "free"</code>, the Checkout email didn't link to the account. Lookup is live against Stripe; period_end is read from <code>items[].current_period_end</code> for Stripe API 2026-04-22 (dahlia) compatibility.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>The-odds-api v4 alias now works for WebSocket, not just REST</h2><span class="date">2026-05-19</span></div>
+  <div class="tags"><span class="tag fix">api</span><span class="tag feature">compat</span></div>
+  <p>The drop-in compatibility middleware rewrites <code>/v4/*</code> to <code>/v1/*</code> at the ASGI scope layer. It was only handling HTTP scope, so customers porting from TOA who tried <code>wss://parlay-api.com/v4/ws/odds/{sport_key}</code> got a silent 404. Now both <code>http</code> and <code>websocket</code> scopes are rewritten, so <code>wss://parlay-api.com/v4/ws/odds/baseball_mlb?apiKey=YOUR_KEY</code> returns <code>HTTP/1.1 101 Switching Protocols</code> like the <code>/v1</code> path.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>/dashboard/billing 500 fixed (4 customer reports)</h2><span class="date">2026-05-19</span></div>
+  <div class="tags"><span class="tag fix">dashboard</span></div>
+  <p>The self-serve upgrade page referenced a TierConfig field that no longer existed, so every visit since May 15 returned an Internal Server Error before rendering any upgrade buttons. Four open tickets traced to this exact path. Resolved.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Daily closing-line CSV downloads</h2><span class="date">2026-05-19</span></div>
+  <div class="tags"><span class="tag feature">api</span><span class="tag feature">historical</span></div>
+  <p><code>GET /v1/historical/closing-lines.csv?date=YYYY-MM-DD</code> returns a flat-file daily snapshot of closing lines from <code>prop_closing_lines</code>, cached 6h on the server. Filters: optional <code>sport_key=</code> and <code>source=</code>. 1 credit per request. Designed for backtesters who want a CSV instead of the JSON shape of <code>/v1/sports/{sport_key}/closing-lines</code>. The underlying table is now natural-key unique (post-dedup migration), so every row is the latest-snapshot archive for that prop close.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Source-quality timeline: /v1/status/history + /status/history (HTML)</h2><span class="date">2026-05-19</span></div>
+  <div class="tags"><span class="tag feature">api</span><span class="tag docs">transparency</span></div>
+  <p>Pairs with the existing point-in-time <code>/v1/status</code>. JSON at <code>/v1/status/history?window_s=86400</code>, rendered HTML at <code>/status/history</code>. Trailing 24h (configurable up to 7 days) per-source SLA classification timeline backed by a Redis ring buffer the collector samples every 30s. Public, no auth. Lets a customer answer "was the API healthy when my bot was running at 3am?" without contacting support.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Probable starting pitchers now on /v1/sports/baseball_mlb/odds</h2><span class="date">2026-05-19</span></div>
+  <div class="tags"><span class="tag feature">api</span><span class="tag source">mlb</span></div>
+  <p>Each MLB event in the <code>/odds</code> response now includes a <code>probable_pitchers</code> block when MLB Stats API has them on file: home/away pitcher name plus MLB canonical Person ID, venue, and game status. Pitcher prop bettors no longer need a second call to <code>/v1/sports/baseball_mlb/probable-pitchers</code>. Constant-time lookup against the existing hourly cache; zero DB cost.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>commence_time on /v1/sports/{sport}/ev</h2><span class="date">2026-05-19</span></div>
+  <div class="tags"><span class="tag fix">fix</span></div>
+  <p>The EV-finder response now carries <code>commence_time</code> alongside <code>game_date</code>. Lets consumers distinguish "tonight late" (commence_time 03:00Z, game_date next day) from "tomorrow early" (commence_time 17:00Z, same UTC date), which the old game_date-only shape collapsed. Customer report: Educational_Act_5040.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>WebSocket reference clients + reconnect cookbook</h2><span class="date">2026-05-19</span></div>
+  <div class="tags"><span class="tag docs">docs</span><span class="tag feature">websocket</span></div>
+  <p>Two reference clients (<a href="https://github.com/JacobiusMakes/parlay-api-python/tree/main/examples">Python</a>, <a href="https://github.com/JacobiusMakes/parlay-api-js/tree/main/examples">JS</a>) demonstrate the silent-watchdog + capped exponential backoff + upstream-aware quiet handling pattern. Companion cookbook walks through frame shapes, the three causes of socket silence (connection dead vs market quiet vs upstream degraded), and common anti-patterns. Drops a copy-paste starting point for any new WebSocket integration.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>ProphetX + Sporttrade SLA reclassified (exchange_slow)</h2><span class="date">2026-05-19</span></div>
+  <div class="tags"><span class="tag fix">fix</span><span class="tag docs">sla</span></div>
+  <p>Their per-tournament guest API requires login + per-tournament event fetches per cycle. Empirical cycle time is 5 to 7 minutes against the public path, not the 10-30s shape the "exchange" SLA class assumes. Both reclassified into a new <code>exchange_slow</code> bucket (120/360/900s). <code>/v1/meta/source-quality</code> and <code>/v1/meta/per-book-sla</code> now reflect the operationally honest thresholds for those two sources.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>prop_closing_lines storage reclaimed (17 GB to 1.36 GB)</h2><span class="date">2026-05-19</span></div>
+  <div class="tags"><span class="tag fix">fix</span><span class="tag feature">perf</span></div>
+  <p>VACUUM FULL after the dedup migration (38.8M rows -> 2.97M) reclaimed 15.6 GB of disk in 15 seconds. The table no longer carries the bloat that was inflating closing-line lookups; expected p50 latency improvement on <code>/v1/clv/*</code> hot path is around 5x.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Public SLA visibility: /v1/meta/per-book-sla + sla_by_source on /v1/status</h2><span class="date">2026-05-19</span></div>
+  <div class="tags"><span class="tag feature">api</span><span class="tag docs">transparency</span></div>
+  <p><code>GET /v1/meta/per-book-sla</code> now publishes the freshness thresholds (tight_s / slack_s / stale_s) that classify every source as ok / degraded / breach / stale. Customers building on <code>/v1/meta/source-quality</code> no longer have to reverse-engineer what <code>sla="degraded"</code> means for a specific book. <code>/v1/status</code> also gained a <code>sla_by_source</code> map (per-source classification) and a <code>poller_health</code> block (Pinnacle WAF breaker state + Bovada 429 backoff state) so a customer asking "is the API healthy right now?" gets honest, granular signal instead of a single green/red bit.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>WebSocket heartbeat now carries upstream freshness</h2><span class="date">2026-05-19</span></div>
+  <div class="tags"><span class="tag feature">websocket</span></div>
+  <p>The 5-second heartbeat frame on <code>/v1/ws/odds-fast/{sport_key}</code> now includes an <code>upstream</code> object summarizing source-quality SLAs across all books (worst SLA seen + counts). Two outcomes a customer can now distinguish without leaving the socket: a healthy connection during a quiet market (long <code>quiet_seconds</code>, upstream.worst_sla="ok") vs an active upstream issue (long <code>quiet_seconds</code>, upstream.worst_sla="stale"). Cheap (reads the in-process source-quality cache), so no added latency on the broadcast path.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Table tennis added as a first-class sport (Bovada coverage)</h2><span class="date">2026-05-18</span></div>
+  <div class="tags"><span class="tag feature">sport</span><span class="tag source">bovada</span></div>
+  <p>Table tennis is now a queryable sport_key on the main odds endpoints. Coverage comes from Bovada's public table-tennis lobby, which carries the full live + pre-match slate (typically 100+ events across TT Elite Series, Czech Liga Pro, and weekend internationals). Cadence is tuned for fast settlement: hot poller runs every 0.5s, with per-path 429 backoff so the WAF stays happy.</p>
+  <ul style="color:#c4c4d4;margin:8px 0 8px 22px;">
+    <li>Endpoint: <code>GET /v1/sports/table_tennis/odds</code></li>
+    <li>Solo-h2h fallback for 1v1 sports: empty result lists are populated from the prop_snapshots pool so customers always see ML pricing when an event is live.</li>
+    <li>Optional: <code>GET /v1/sports/table_tennis/player-ratings</code> returns market-implied ELO ratings derived from de-vigged closing moneylines (deterministic, order-independent, reproducible).</li>
+  </ul>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Caesars player props (deep events) re-enabled via dedicated sidecar</h2><span class="date">2026-05-18</span></div>
+  <div class="tags"><span class="tag feature">source</span><span class="tag source">caesars</span></div>
+  <p>The Caesars deep-events ingest path was a no-op in production for several weeks because the collector image did not ship with the browser binary required to resolve their AWS WAF challenge. That work moved to a new <code>parlayapi-sidecar-caesars-deep</code> container that runs the public lobby and event pages in an anonymous headless browser. Parsed prop tuples flow back through a bounded Redis stream and into <code>buffers.add_props</code>. Caesars player props for NFL / NBA / MLB / NHL are back on the board.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Closing-line table bloat fixed: ~5x faster CLV lookups</h2><span class="date">2026-05-18</span></div>
+  <div class="tags"><span class="tag fix">fix</span><span class="tag feature">perf</span></div>
+  <p>The <code>prop_closing_lines</code> archive table was carrying ~10x its real unique-key cardinality because the archival writer's ON CONFLICT clause had no unique constraint to fire against; every hourly cleanup pass appended a fresh row per natural key. A three-phase migration (online-safe natural-key index, batched window-function dedup, unique-constraint attach) plus a writer flip to <code>ON CONFLICT (...) DO UPDATE ... WHERE snapshot_time &gt; ...</code> brings the table down to its real cardinality and changes its steady-state growth from ~50k rows/cleanup to near zero. Expected impact: ~5x faster p50 on the <code>/v1/clv/*</code> closing-line lookup path, ~9 GB freed.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>parlayapi-mcp 0.2: keyless live previews, source quality, and OpenClaw install path</h2><span class="date">2026-05-16</span></div>
+  <div class="tags"><span class="tag feature">mcp</span><span class="tag docs">agents</span></div>
+  <p>The public MCP server now supports no-key discovery tools for pricing, live sports, live search, the /live best-line preview, source quality, and per-book coverage gates. Paid odds tools still require an explicit API key. The package accepts both <code>PARLAYAPI_KEY</code> and <code>PARLAY_API_KEY</code>, and the MCP landing page now includes OpenClaw setup commands.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Removed per-second rate limits on all paid tiers</h2><span class="date">2026-05-13</span></div>
+  <div class="tags"><span class="tag feature">policy</span></div>
+  <p>Every paid tier (Starter through Scale) now has no documented rate limit. Burst at any rate your client wants. You are metered on monthly credits, not per-second throughput. Free trial keeps a 60 req/s cap purely for anti-abuse during evaluation. Pricing pages updated to reflect this.</p>
+  <ul style="color:#c4c4d4;margin:8px 0 8px 22px;">
+    <li>Headers: <code>x-ratelimit-limit</code> now returns <code>unlimited</code> for paid tiers instead of a per-second number.</li>
+    <li>Internal safety: a single key cannot exceed ~10,000 req/s sustained without contacting support to shard traffic. That ceiling is for runaway-retry-loop protection, not a tier feature. If a paid key hits it, the 429 response says exactly that.</li>
+    <li>If you were throttling your client to stay under 500 req/s on Scale or 60 on Pro, you can remove that pacing.</li>
+  </ul>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>parlay-api.com migrated off Cloudflare for the /v1/* path</h2><span class="date">2026-05-13</span></div>
+  <div class="tags"><span class="tag infra">infra</span></div>
+  <p>Cloudflare's free-tier DDoS protection was flagging /v1/sports zone-wide when our own internal probes burst at it. We moved the API ingress to a direct path with no CF in the request flow. <b>No URL change for customers.</b> Same hostname, same endpoints, same auth.</p>
+  <ul style="color:#c4c4d4;margin:8px 0 8px 22px;">
+    <li>DDoS L7, Bot Fight Mode, BIC, and per-IP edge rate-limit no longer touch /v1/*</li>
+    <li>The previous "new hostname api.parlay-api.com" recommendation is moot: parlay-api.com itself is now CF-free. Both hostnames work identically.</li>
+    <li>Per-key app-layer rate limits also removed on paid tiers (see above)</li>
+  </ul>
+  <p>See the <a href="https://www.reddit.com/r/sportsbook" style="color:#9b82fc">post-mortem on Reddit</a> if you care about the root cause.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>New API hostname: api.parlay-api.com (recommended for trading bots and high-volume callers)</h2><span class="date">2026-05-13</span></div>
+  <div class="tags"><span class="tag infra">infra</span><span class="tag breaking">action recommended</span></div>
+  <p>If your client averages above ~30 requests per minute, switch your base URL from <code>https://parlay-api.com</code> to <code>https://api.parlay-api.com</code>. Same origin, same auth, same endpoints, but the request never touches Cloudflare's edge protections.</p>
+  <ul style="color:#c4c4d4;margin:8px 0 8px 22px;">
+    <li><b>Why:</b> Cloudflare's DDoS L7 layer fires on per-IP bursts to <code>/v1/*</code> and returns <code>error code: 1027</code> for 10-30 min. Trader bots can hit this within an hour of normal use. The new hostname routes around Cloudflare entirely.</li>
+    <li><b>Both hostnames keep working:</b> <code>parlay-api.com</code> still serves marketing, blog, docs, AND <code>/v1/*</code> for low-volume callers. <code>api.parlay-api.com</code> is the same API on a hostname with no CF bot/rate protections in the path. Switch only if you're seeing 1027 blocks.</li>
+    <li><b>What to change:</b> exactly one line. <code>BASE_URL = "https://api.parlay-api.com"</code>. Auth header, endpoints, response shape are unchanged. Valid Let's Encrypt cert, auto-renewing, HTTP/2.</li>
+    <li><b>App-layer rate limits</b>: as of 2026-05-13 (later in the day) we removed per-second rate limits from every paid tier. Free trial keeps a 60 req/s cap for anti-abuse. Burst at any rate, you're metered on monthly credits.</li>
+  </ul>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Iter-75 batch deploy: parlay fuzzy SGP, utility calculators, middles finder, sandbox completeness</h2><span class="date">2026-05-13</span></div>
+  <div class="tags"><span class="tag feature">feature</span><span class="tag perf">perf</span><span class="tag docs">docs</span></div>
+  <p>Comprehensive restart-batch deploy from the autonomous-test review loop. 11 fixes + 5 new endpoints, all shipped via zero-downtime rolling worker restart.</p>
+  <ul style="color:#c4c4d4;margin:8px 0 8px 22px;">
+    <li><b>Parlay /v1/parlay/price</b>: <code>line_tolerance</code> body param (default 0, max 5) for fuzzy SGP across books that quote different lines. Every leg now returns <code>lines_available: {point: {book: decimal_price}}</code> so callers see alt-line options without a separate /odds call.</li>
+    <li><b>Utility calculators</b> (FREE, no credits): <a href="/openapi.json">/v1/calc/kelly</a>, <code>/v1/calc/hedge</code>, <code>/v1/calc/edge</code>, <code>/v1/calc/free-bet</code>. Accept American (-110, +150) or decimal (1.91, 2.5) odds. Math is consistent with /v1/clv's no-vig pair formula.</li>
+    <li><b>/v1/sports/{key}/middles</b> (3 cr): cross-book spread/total middle finder. <code>min_gap</code> + <code>min_books</code> filters.</li>
+    <li><b>Sandbox completeness</b>: 6 new sandbox endpoints (/arbitrage, /ev, /consensus, /futures, /scores, /events) so integrators can verify response-parsing for every major production endpoint without burning credits.</li>
+    <li><b>/v1/pinnacle-coverage cached 5 min</b> with stale-while-revalidate to 1 hr. Was hitting 20s cold-call timeouts under status-page polling.</li>
+    <li><b>/live/api/search ?limit=</b> param (default 25). Broad queries like q=mlb were timing out at trigram-index scan.</li>
+    <li><b>/live/api/sparkline 500 → 200</b>: SELECT/GROUP BY expression mismatch fixed.</li>
+    <li><b>/v1/sports/{key}/line-movement empty-result envelope</b>: was returning bare []. Now returns count + filters + structured note explaining no-movement vs no-coverage vs malformed event_id.</li>
+    <li><b>/v1/usage ?by_endpoint=true</b>: per-endpoint + per-group credit breakdown for the current period.</li>
+  </ul>
+  <p>See <a href="/AutonomousFindings/2026-05-13/ITER-75_DEPLOY_SUMMARY.md" style="color:#9b82fc">the iter-75 summary doc</a> for the full cumulative tally of the 89 fixes shipped during this loop (iter 017 → 073).</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Kalshi crypto prediction markets: BTC / ETH / SOL with historical replay</h2><span class="date">2026-05-13</span></div>
+  <div class="tags"><span class="tag feature">feature</span><span class="tag source">source</span></div>
+  <p>Two new endpoints expose Kalshi crypto prediction-market prices, separated from the sports prediction-market surface because these markets trade 24/7 and have crypto-specific fields (price-ladder strikes, hourly resolution windows, no team / kickoff).</p>
+  <ul style="color:#c4c4d4;margin:8px 0 8px 22px;">
+    <li><code>GET /v1/prediction-markets/crypto/{asset}</code>: latest snapshot of every open Kalshi market for the asset (btc, eth, sol). Returns yes/no bid+ask, mid-market implied probability, volume, open interest. 1 credit.</li>
+    <li><code>GET /v1/historical/prediction-markets/crypto/{asset}?from=&amp;to=&amp;market_ticker=</code>: tick-by-tick replay. Every poll snapshot is preserved (~5 s cadence per market), so a one-hour replay against a single ticker returns ~720 rows. 2 credits.</li>
+  </ul>
+  <p>Filter by <code>market_type</code>: <code>direction_15m</code>, <code>direction_1h</code>, <code>direction_daily</code>, <code>price_at_or_above</code>, <code>price_range</code>, or <code>all</code>. Direction-binary markets (the headline "will BTC be higher in 15 min?" product) are surfaced when Kalshi lists them; the always-on coverage right now is Kalshi's hourly price ladders (KXBTC and KXBTCD families, $50 strike increments).</p>
+  <p>Behind the scenes: new <code>crypto_market_snapshots</code> table, new <code>kalshi_crypto_poller</code> collector task that discovers open markets every 5 min and polls each every 5 s. Historical retention matches everything else on the platform (append-only snapshot table).</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>WebSocket docs suite: 7 new pages + rewritten reference</h2><span class="date">2026-05-13</span></div>
+  <div class="tags"><span class="tag docs">docs</span><span class="tag feature">feature</span></div>
+  <p>Full WebSocket documentation overhaul. The main reference at <a href="/docs/websocket">/docs/websocket</a> is rewritten to match deployed reality (Business+ tier, <code>push_mode</code> coalesce envelope, three accepted auth forms, all four URL aliases). Seven new sub-pages cover the use cases customers actually have:</p>
+  <ul style="color:#c4c4d4;margin:8px 0 8px 22px;">
+    <li><a href="/docs/websocket/quickstart">/docs/websocket/quickstart</a> · 60-second copy-paste in Node, Python, browser</li>
+    <li><a href="/docs/websocket/examples">/docs/websocket/examples</a> · Production-ready consumers in Node, Python (websockets + aiohttp), Go, Ruby, Java, PHP, C#, Elixir, Rust, plus React hook, Discord bot, Redis pubsub fan-out, Kafka bridge</li>
+    <li><a href="/docs/websocket/player-props">/docs/websocket/player-props</a> · NBA / MLB / NHL / WNBA / NFL prop streaming, full market-key matrix, filter-by-player pattern</li>
+    <li><a href="/docs/websocket/edge-alerts">/docs/websocket/edge-alerts</a> · +EV alert system with Pinnacle-anchored no-vig math, Discord webhook delivery, stale-line guards, dedupe</li>
+    <li><a href="/docs/websocket/troubleshooting">/docs/websocket/troubleshooting</a> · Every close code with the fix, curl smoke test, proxy / VPN / serverless gotchas</li>
+    <li><a href="/docs/websocket/sse">/docs/websocket/sse</a> · Server-Sent Events deep-dive, same feed, plain HTTP, browser <code>EventSource</code></li>
+    <li><a href="/docs/websocket/migration">/docs/websocket/migration</a> · Side-by-side mapping from OddsJam / OpticOdds / SharpAPI / The Odds API</li>
+  </ul>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Migration guide page (/from-the-odds-api) + OG images for social shares</h2><span class="date">2026-05-07</span></div>
+  <div class="tags"><span class="tag feature">feature</span><span class="tag docs">docs</span></div>
+  <p>New <a href="/from-the-odds-api">/from-the-odds-api</a> page: one-line code diff (you change a base URL, your code keeps working), endpoint compatibility table, sport-key reference, bookmaker key superset list, pricing comparison, honest "what to know" section. Aliased at /from-toa and /migrate-from-the-odds-api. Both <a href="/vs-toa">/vs-toa</a> and the migration page now ship 1200x630 OG images so Twitter/LinkedIn shares render properly.</p>
+  <p>Also synced <code>/compare/odds-api</code> with the latest /vs-toa numbers (was stuck at "22 sources vs 7," now correctly shows 26+).</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>parlayapi-mcp: standalone MCP server (8 tools, native Claude Desktop integration)</h2><span class="date">2026-05-07</span></div>
+  <div class="tags"><span class="tag feature">feature</span></div>
+  <p>Drop-in MCP server installable via <code>uvx parlayapi-mcp</code> or <code>pip install parlayapi-mcp</code>. Eight tools: signup (auth-less, returns API key + magic-link), checkout-link (Stripe upgrade URL), magic-link (passwordless login), list_sports, get_odds, get_props, best_line, account_info. Configure in <code>claude_desktop_config.json</code> or Cursor's <code>.cursor/mcp.json</code> with one block. Wheel + sdist build clean, ready for PyPI.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Agent-friendly signup endpoints: /v1/agent/signup, /v1/agent/magic-link, /v1/agent/checkout-link</h2><span class="date">2026-05-07</span></div>
+  <div class="tags"><span class="tag feature">feature</span></div>
+  <p>JSON-only signup that returns <code>api_key</code> plus a magic-link claim URL plus a Stripe checkout URL plus an <code>instructions_for_agent</code> string an LLM can relay to the user verbatim. Idempotent on email (existing accounts return only the login URL, never leak the api_key). Uses an auto-generated random password the user never sees; they access via magic links until they choose to set one. Rate-limited 5/IP/hour.</p>
+  <p>Designed so a Claude/GPT agent helping a user "build a betting bot with ParlayAPI" can complete signup in a single HTTP call, no form-fill, no email-verify gate before the first request.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Magic-link login (/auth/magic?sid=X) - passwordless dashboard access</h2><span class="date">2026-05-07</span></div>
+  <div class="tags"><span class="tag feature">feature</span></div>
+  <p>New route that consumes a server-issued session token from the URL, sets the cookie, redirects to the dashboard. Used by the agent-signup flow (claim URL is a magic link) and available standalone via /v1/agent/magic-link. Optional <code>checkout_tier</code> query param chains the redirect into Stripe Checkout for one-click upgrade.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>baseball_mlb endpoint: three bug fixes from one Reddit DM</h2><span class="date">2026-05-06</span></div>
+  <div class="tags"><span class="tag fix">fix</span></div>
+  <p><strong>Pinnacle and Bovada placeholder events:</strong> daily aggregate markets ("Home Runs (13 Games)" vs "Away Runs (13 Games)") were stored as fake events under baseball_mlb. Now filtered via SQL denylist on team-name patterns.</p>
+  <p><strong>335,338 futures props leaking into game-prop responses:</strong> the <code>include_futures</code> param on <code>get_props()</code> was declared but never applied in SQL. Underdog and FanDuel ingest season-long futures (Aaron Judge total HR for season, etc.) with empty home_team/away_team. Default is now strict; opt back in via <code>?include_futures=true</code>.</p>
+  <p><strong>DraftKings duplicate events merged:</strong> DraftKings uses a different team-name and time-zone convention than other US books, which could surface the same game as two events. They now normalize to one canonical event via the shared alias map with a one-day date fallback. Verified live: a 15-game slate returned 0 duplicates, every game merged across 6 to 7 books.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Operational: nightly Postgres backups, Docker auto-prune, watchdog rescue</h2><span class="date">2026-05-06</span></div>
+  <div class="tags"><span class="tag fix">fix</span></div>
+  <p>Automated nightly Postgres backups (atomic dump, gzip, 7-day rotation, with an off-box copy when available), a weekly Docker prune of dangling images and build cache, and a repaired watchdog that had been failing silently for weeks. Also added <code>restart: unless-stopped</code> to the postgres / redis / api containers so reboots don't take half the stack down.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>MCP server published, AI-agent discovery surfaces shipped</h2><span class="date">2026-05-01</span></div>
+  <div class="tags"><span class="tag feature">feature</span><span class="tag docs">docs</span></div>
+  <p>Shipped a stand-alone MCP server (<code>pip install parlayapi-mcp</code>) with 10 tools wrapping the API. Repo: <a href="https://github.com/JacobiusMakes/parlay-api-mcp">github.com/JacobiusMakes/parlay-api-mcp</a>. Public manifest at <code>/mcp/manifest.json</code> with copy-paste config for Claude Code, Cursor, Continue, Devin.</p>
+  <p>Also added <code>/llms.txt</code>, <code>/llms-full.txt</code>, <code>/agents.json</code>, <code>/.well-known/ai-plugin.json</code> for AI-agent discovery. Updated <code>/sitemap.xml</code> to auto-include blog and compare slugs. <code>/robots.txt</code> now explicitly allows GPTBot, ClaudeBot, anthropic-ai, PerplexityBot, Google-Extended.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Public no-auth try-it endpoint</h2><span class="date">2026-05-01</span></div>
+  <div class="tags"><span class="tag feature">feature</span></div>
+  <p>New <code>/v1/try/{sport_key}/odds</code> returns live moneyline data with no API key. Capped at 60 reqs/hour per IP via Redis, restricted to MLB, NBA, NFL, NHL, EPL, UFC. Landing page got a "Try it now" button that hits this endpoint inline.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Historical archive coverage page (1.156M rows, 263 sports, 17 sources)</h2><span class="date">2026-05-01</span></div>
+  <div class="tags"><span class="tag feature">feature</span><span class="tag source">source</span></div>
+  <p>New <code>/historical-coverage</code> public page rendering live coverage stats from <code>/v1/historical/coverage</code> (also public, no auth). Headline numbers: 1.156M rows, 263 sport_keys, 17 distinct sources, 99.6% score coverage, 267,173 games with 2+ sources, 137,200 with 5+ sources.</p>
+  <p>Added <code>draftkings_espn</code> as a second free historical source for US sports (NFL, NBA, MLB, NHL, NCAAF, NCAAB, WNBA, MLS) via the ESPN public scoreboard + summary endpoints. Independent of our live Pinnacle snapshot, so backtesters can cross-reference.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Soccer historical_odds gap closed (28 days, +122k rows)</h2><span class="date">2026-05-01</span></div>
+  <div class="tags"><span class="tag fix">fix</span><span class="tag source">source</span></div>
+  <p>Refreshed football-data.co.uk CSVs across all 37 leagues. Max <code>game_date</code> moved from 2026-04-03 to 2026-04-30 across <code>soccer_*</code> keys. New sources captured that weren't in the archive before: <code>betmgm</code>, <code>pinnacle_close</code>, <code>bet365_close</code>, <code>betfair_exchange_close</code>. Now refreshed weekly Tuesday 11:00 UTC.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Daily Pinnacle snapshot to historical_odds</h2><span class="date">2026-05-01</span></div>
+  <div class="tags"><span class="tag feature">feature</span><span class="tag source">source</span></div>
+  <p>New cron at 10:00 UTC daily promotes our live <code>odds_snapshots</code> (Pinnacle game-line moneylines across 200+ sport_keys) into <code>historical_odds</code> with both opening-line proxy (<code>pinnacle_open</code>) and closing-line proxy (<code>pinnacle</code>). Forward-going US-sport archive that grows automatically.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Welcome email on signup with quickstart code</h2><span class="date">2026-05-01</span></div>
+  <div class="tags"><span class="tag feature">feature</span></div>
+  <p>Every new signup now gets a same-second email with their actual API key embedded plus a 4-line curl quickstart. Solves the "dashboard might be flaky, did I get a real key?" pause many users had.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>SMTP failover: Brevo primary, Gmail backup</h2><span class="date">2026-05-01</span></div>
+  <div class="tags"><span class="tag fix">fix</span></div>
+  <p>Hit Gmail's 500/day cap during a batch send. Switched primary outbound SMTP to Brevo (300/day free + auto-fallback to Gmail if Brevo fails). Tested via persistent SMTP+STARTTLS connection with 600ms pacing. No more truncated batch sends.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>CRITICAL fix: 227 users had broken API keys, all rotated + apology bonus credits</h2><span class="date">2026-05-01</span></div>
+  <div class="tags"><span class="tag fix">fix</span></div>
+  <p>From 2026-04-17 onward, three of our key-creation paths stopped writing <code>key_plaintext</code>; the dashboard was rendering the first 8 chars of the bcrypt hash instead of the actual key. Any code using what users saw on the dashboard returned 401. Fix: write <code>key_plaintext</code> on create, render plaintext on read, bulk-rotate every affected user's key, send apology email with the new key + 2,000 bonus credits each. 8 of the 227 affected users started using their new keys within 4 hours of the email landing.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Affiliate program: 25% recurring</h2><span class="date">2026-04-30</span></div>
+  <div class="tags"><span class="tag feature">feature</span></div>
+  <p>Affiliates earn 25% of every paid month from anyone they refer, recurring as long as that user stays paid. Eligible tiers: Starter, Pro, Business. Payouts processed monthly on the 1st via Stripe Connect.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Real /docs page (curated, separate from Swagger)</h2><span class="date">2026-04-29</span></div>
+  <div class="tags"><span class="tag docs">docs</span></div>
+  <p>Replaced the Swagger-only docs experience with a curated long-form quickstart at <code>/docs</code>, with full reference still at <code>/docs/swagger</code> and ReDoc at <code>/redoc</code>. Lots of code examples in cURL, Python, JavaScript.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Public live-stats dashboard</h2><span class="date">2026-04-29</span></div>
+  <div class="tags"><span class="tag feature">feature</span></div>
+  <p>New <code>/live-stats</code> page shows our actual live throughput, source health, and freshness in real time. No "trust us" required. Useful as a status surface while we build a proper status page.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Outbound webhooks (Pro+)</h2><span class="date">2026-04-29</span></div>
+  <div class="tags"><span class="tag feature">feature</span></div>
+  <p>Pro+ users can configure webhook endpoints that receive HMAC-SHA256-signed POSTs when arbs, +EV bets, or line moves cross thresholds you set. Stripe-style signing scheme.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Umami self-hosted analytics live at /_analytics</h2><span class="date">2026-04-29</span></div>
+  <div class="tags"><span class="tag feature">feature</span></div>
+  <p>Self-hosted Umami via /_analytics reverse proxy. No third-party scripts. Public dashboards stay private; we get acquisition / behavior data internally.</p>
+</div>
+
+<div class="month">April 2026</div>
+
+<div class="entry">
+  <div class="head"><h2>WebSocket streaming (Pro+)</h2><span class="date">2026-04-25</span></div>
+  <div class="tags"><span class="tag feature">feature</span></div>
+  <p><code>wss://parlay-api.com/ws/odds/{sport_key}</code> and <code>wss://parlay-api.com/ws/live/{sport_key}</code> push initial snapshot followed by change-detected diff frames. Sub-second updates. Auth: <code>?apiKey=</code> on the connect URL.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Drop-in compatibility for the-odds-api.com (/v4 alias)</h2><span class="date">2026-04-22</span></div>
+  <div class="tags"><span class="tag feature">feature</span></div>
+  <p>If your code already targets the-odds-api's <code>/v4/*</code> URL pattern, change the host. Our <code>/v4/*</code> endpoints alias to <code>/v1/*</code> with the same JSON shape.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Prediction-market endpoints: Kalshi + Polymarket</h2><span class="date">2026-04-20</span></div>
+  <div class="tags"><span class="tag feature">feature</span><span class="tag source">source</span></div>
+  <p><code>/v1/prediction-markets/{sport_key}</code> returns Kalshi event-contract and Polymarket prices in standard American/decimal odds format, normalized to the same schema as sportsbook prices. Cross-reference for prediction-market vs sportsbook arbitrage.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>21+ source aggregation: DraftKings, FanDuel, BetMGM, Caesars, BetRivers, Fanatics, Hard Rock, Pinnacle, Bet365, Bovada, BetWay, Betr, Fliff, ParlayPlay, PrizePicks, Underdog, Sleeper, Pick6, Novig, ProphetX, Kalshi, Polymarket</h2><span class="date">2026-04-17</span></div>
+  <div class="tags"><span class="tag source">source</span></div>
+  <p>Public launch with 21 live sources covering moneyline / spread / total / player props / DFS / exchanges / prediction markets across 38+ sports. Updated every 30-60 seconds.</p>
+</div>
+
+<div class="entry">
+  <div class="head"><h2>Initial release</h2><span class="date">2026-04-15</span></div>
+  <div class="tags"><span class="tag feature">feature</span></div>
+  <p>ParlayAPI v1.0. Free tier (1,000 req/mo), Starter $19, Pro $99, Business $499, Enterprise $2,499. REST + (later) WebSocket. <a href="/pricing">Full pricing →</a></p>
+</div>
+
+</div>
+
+<footer>
+  <a href="/" style="color:#9b82fc">parlay-api.com</a> · <a href="/docs" style="color:#c4c4d4">Docs</a> · <a href="/historical-coverage" style="color:#c4c4d4">Coverage</a> · <a href="/llms.txt" style="color:#c4c4d4">llms.txt</a>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+</html>
