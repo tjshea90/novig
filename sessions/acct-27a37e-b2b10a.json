@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "0dee7e35b6397924860d880bbc08b561ed2a058c",
+ "head": "f2748c6c220ec7be0481c3dcad907a30ae29a64e",
  "since": 1792912591,
- "beat": 1792981676,
- "beatIso": "2026-10-26T02:27:56Z",
- "done": "TASKS triage pass 2: 89 more closed with evidence",
- "next": "build: TCL94b FCS grading, TCL104 list jump, CH12, TCL52b chat keyboard, PX12b/PX10g/PX10d/PX9i; list needs-Tj items"
+ "beat": 1792981709,
+ "beatIso": "2026-10-26T02:28:29Z",
+ "done": "CH67 flaky test fixed, CH65b Kalshi list carried across jobs, CH85 404-loop guard for CNO/PropLine EV files; full test.sh green",
+ "next": "read census after engine scan; next PX10g/PX12b/PX11d/PX9i, CH12, TCL104, TCL52b"
 }
