@@ -122,9 +122,9 @@ should never drift out of sync with each other):
 - **JDK 21**, **Gradle 8.14.3** (both confirmed already installed and
   working in this dev container), **AGP 8.13.2**, **Kotlin 2.3.10**.
 - **compileSdk = targetSdk = 36** (Android 16, per the platform decision
-  above). **minSdk = 30** — the target device will ship far newer, but
-  there's no real cost to a little headroom for testing on whatever other
-  device is on hand.
+  above). **minSdk = 29** (Android 10, since v1.0.88: Tj's phone was lost
+  on 2026-10-26 and the app moved to an Android 10 ARMv7 tablet) — every
+  Android 11+ call is guarded (`lintDebug` NewApi clean); keep it so.
 - **applicationId = `com.tjshea.vigilant`.** Permanent per the keystore
   rule above — never change this once a keystore is generated against it.
 - **Module layout:** `engine` (plain Kotlin/JVM — the devig/EV math, zero
