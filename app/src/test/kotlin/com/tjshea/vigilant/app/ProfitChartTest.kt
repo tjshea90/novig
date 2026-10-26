@@ -209,4 +209,12 @@ class ProfitChartTest {
         show(all, TrackerPeriod.YESTERDAY)
         compose.onNodeWithTag("profitChart").assertExists()
     }
+
+    @Test
+    fun `the card names Novig's own ledger figure once the engine has read it (CH87c)`() {
+        val now = 1_800_000_000_000L
+        assertEquals("", ProfitText.ledgerLine(com.tjshea.vigilant.app.ui.WalletMoneyUi(), now))
+        val line = ProfitText.ledgerLine(com.tjshea.vigilant.app.ui.WalletMoneyUi(ledgerProfit = -12.5, ledgerOpenCost = 40.0, ledgerAtMs = now - 120_000L), now)
+        assertTrue(line, line.contains("-\$12.50") && line.contains("\$40.00 on open bets counted at cost") && line.contains("ago"))
+    }
 }
