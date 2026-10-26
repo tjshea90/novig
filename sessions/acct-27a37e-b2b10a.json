@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "cecb34fe46882935ab9ad4c19b8ee75fd79aa47a",
+ "head": "8bc2699bfd488766359e32455790a841870b68c5",
  "since": 1792912591,
- "beat": 1792980996,
- "beatIso": "2026-10-26T02:16:36Z",
- "done": "pinnAgeNF census (PX10g near/far split) + shape tours",
- "next": "dispatch propline shape tennis; build PropLine tennis"
+ "beat": 1792981026,
+ "beatIso": "2026-10-26T02:17:06Z",
+ "done": "PX13c/PX11e: PropLine tennis built (PropLineTennis, from a real answer), SGO kept for tennis-only markets; pinnAgeNF census; full test.sh green",
+ "next": "engine_set.py --reset; read pinnFeeds/pinnSgoOnly/pinnAgeNF after a scan; then PX12b/PX10g/PX10d/PX9i and older items"
 }
