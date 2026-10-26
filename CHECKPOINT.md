@@ -1,13 +1,13 @@
-# CHECKPOINT 4271 — read me first, then TASKS.md
+# CHECKPOINT 4272 — read me first, then TASKS.md
 
-**Written:** 2026-10-26T01:14:42Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-db238840-epvfzh` · **builds on:** `7be014081` (this checkpoint is the commit after it)
+**Written:** 2026-10-26T01:40:01Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-db238840-epvfzh` · **builds on:** `6c33f04be` (this checkpoint is the commit after it)
 
 ## Just done
-PX14b measured: CLV 59%->83%, results open 23%->15%; Novig fallback settled 0/200: added a diagnostic line to GradeMain
+PX14b: open orders settled by the engine from Novig's ledger (TradeSettle.fromLedger + CloudMain), public-catalog fallback removed (settled markets 404); full test.sh green
 
 ## Do this next
-dispatch engine-grade.yml, read 'grade: Novig's record:' line, fix why outcomes don't settle (gone=404? status strings?)
+land, engine_set.py --reset, read engine-log 'settled from Novig's ledger' line, rerun engine-grade, tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ dispatch engine-grade.yml, read 'grade: Novig's record:' line, fix why outcomes 
 
 ## Last ten checkpoints
 ```
+  73e2cc751 ckpt 4271: PX14b measured: CLV 59%->83%, results open 23%->15%; Novig fallback settled
   256a93a15 ckpt 4270: dispatched engine-grade.yml + propline.yml clv on main (PX14b code landed)
   ae6a27287 ckpt 4269: PX14b: Novig's own close wired into the CLV job (propline_clv_job.sh: order
   98e213980 ckpt 4268: PX14: results gap (23% open) fixed in code via Novig's own settlement (Grad
@@ -26,8 +27,7 @@ dispatch engine-grade.yml, read 'grade: Novig's record:' line, fix why outcomes 
   29d2da2d3 ckpt 4264: PX12: full scan every 2 min, not 6 (far games' fair was 295 s old on every 
   84ec1b9df ckpt 4263: PX11d-2: census line 'book outliers' = each book's share left out by BadOdd
   51935d90a ckpt 4262: pre-release: v1.0.86 PR1 + PX11: Engine pull to refresh reads only the engi
-  c3a33ddfc ckpt 4261: pre-ship: v1.0.86 PR1 + PX11: Engine pull to refresh reads only the engine'
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(6 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
