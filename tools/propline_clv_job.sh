@@ -13,7 +13,11 @@ if ls in/lines/*.csv.gz >/dev/null 2>&1 && ls in/arch/*.csv.gz >/dev/null 2>&1; 
   # The engine's own orders (auto-bets and bid fills) at the price each was filled at, against the same closes (CH57, tools/orders_clv.py): Release engine-dataset, replaced each run.
   python3 -I tools/orders_clv.py selftest
   if gh api -H "Accept: application/vnd.github.raw" "repos/${GITHUB_REPOSITORY:-tjshea90/novig}/contents/trades.json?ref=cloud-feed" > in/trades.json 2>/dev/null && [ -s in/trades.json ]; then
-    python3 -I tools/orders_clv.py run --trades in/trades.json --clv out/propline-clv.csv.gz --out out/orders-clv.csv.gz --summary out/orders-clv.md && \
+    # PX14: Novig's own close for every order (the only close for most props and alternate lines), from data.novig.com's public trades.
+    nc=()
+    python3 -I tools/novig_trade_close.py selftest && python3 -I tools/orders_clv.py lines --trades in/trades.json --out in/olines/lines-orders.csv.gz && \
+      python3 -I tools/novig_trade_close.py run out/orders-novig-close.csv.gz in/olines && [ -s out/orders-novig-close.csv.gz ] && nc=(--novig-close out/orders-novig-close.csv.gz) || echo "no Novig closes for the orders"
+    python3 -I tools/orders_clv.py run --trades in/trades.json --clv out/propline-clv.csv.gz --out out/orders-clv.csv.gz --summary out/orders-clv.md "${nc[@]}" && \
       gh release upload engine-dataset out/orders-clv.csv.gz out/orders-clv.md --clobber || echo "orders clv not uploaded"
   else
     echo "no trades.json on cloud-feed"
