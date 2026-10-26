@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "1dbe6be7b7d911eb5c2e96dbee38a92839834c65",
+ "head": "a605a6ee9047a3b3c298d7e75b9d7c8772127e0d",
  "since": 1792912591,
- "beat": 1793040880,
- "beatIso": "2026-10-26T18:54:40Z",
- "done": "v1.0.87 released + recorded; PX12b ticked (ParlayAPI Pinnacle 5m+ stream copies 18,581 -> 6,212)",
- "next": "86 open: most need Tj (keys/decisions), data to accumulate (XOW, TR3, PB12, PS2), or are live/tennis studies; next session: CH88 bid volume, CH87 chat wake, FX6, PX9i read"
+ "beat": 1793040904,
+ "beatIso": "2026-10-26T18:55:04Z",
+ "done": "pre-ship: v1.0.88 A10: installs on Android 10 (minSdk 29) for Tj's ARMv7 tablet",
+ "next": "ship.sh gates and releases this"
 }
