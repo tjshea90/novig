@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "6f1d850159e1107728bf9875a38ed509abc71218",
+ "head": "71cbd436683e9597f5857029f5ff0f61533ef06f",
  "since": 1792912591,
- "beat": 1792983555,
- "beatIso": "2026-10-26T02:59:15Z",
- "done": "PX10g fixed: ParlayAPI stream copies dated by its later poll of the book (ParlayLive.vouchedAt); CH86/86b closed (SG)",
- "next": "engine reset; read pinnAge/parlayPinn/ledger profit/linesStrict; ship v1.0.87 (CH87c card, CH85 guard)"
+ "beat": 1792983574,
+ "beatIso": "2026-10-26T02:59:34Z",
+ "done": "pre-ship: v1.0.87 CH87c + CH85: the Tracker card names Novig's own ledger profit of the Vigilant subaccount; the phone stops re-asking for an engine file that is not there (CNO, PropLine +EV)",
+ "next": "ship.sh gates and releases this"
 }
