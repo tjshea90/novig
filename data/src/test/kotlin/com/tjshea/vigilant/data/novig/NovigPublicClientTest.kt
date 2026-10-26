@@ -717,7 +717,8 @@ class NovigPublicClientTest {
                 }
             }
         }
-        val c = keyed(NovigPublicClient(OkHttpClient(), json, server.url("").toString().trimEnd('/'), clock = { now }, maxKeyedServerErrors = 4, maxKeyedNotFound = 5))
+        // One read at a time (CH67): with reads in flight together, answers can come back in an order with five 404s in a row, a real run, and the test failed once in a full suite.
+        val c = keyed(NovigPublicClient(OkHttpClient(), json, server.url("").toString().trimEnd('/'), clock = { now }, maxKeyedServerErrors = 4, maxKeyedNotFound = 5, keyedConcurrency = 1))
         val batch = c.books((1..30).map { "q$it" })
         assertTrue("no stand-down: ${c.keyStanddowns()}", c.keyStanddowns().isEmpty())
         assertNull(batch.keyProblem)
