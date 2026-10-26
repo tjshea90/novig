@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "e0c919bb6a196bf22e4ff3447c3bd482c8615b57",
+ "head": "6dd8ece497772572ee09e5b790c1399932a5d773",
  "since": 1792912591,
- "beat": 1792982414,
- "beatIso": "2026-10-26T02:40:14Z",
- "done": "PX9i linesStrict census; TCL104/TCL52b/CH12 closed (stale, reopen on report)",
- "next": "read parlayPinn + linesStrict after engine scan (engine reset ~02:50); fix ParlayAPI Pinnacle re-dating cause"
+ "beat": 1792982498,
+ "beatIso": "2026-10-26T02:41:38Z",
+ "done": "TASKS triage pass 3: 27 more closed; 91 open",
+ "next": "parlayPinn census -> fix; then remaining buildables"
 }
