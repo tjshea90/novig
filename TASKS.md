@@ -5486,7 +5486,7 @@ Screenshots: Install update froze the app ("Vigilant isn't responding") at a thi
 ## TCL52: two small UI fixes, DO NOT BUILD NOW; fold into the next release when Tj asks for more (Tj, chat t1792174875453, 2026-10-16: "the word all is cut off. in the chat when the keyboard opens I can't see anything. this is not a big deal. don't build these now just [include] them in the next update when I ask for more stuff")
 Screenshots kept (chat-keep) on chat-files: t1792174875453-Screenshot_20261016-141946_Vigilant.png, ...-142017_Vigilant.png.
 - [x] TCL52a (FlowRow in FeedScreen agree row and the PropLine screen filter rows; compiles)  +EV screen: the "All agree" chip shows as "Al" (the Books agree row is too wide at phone width). Fix in FeedScreen `viewFilter` row: wrap onto a second line (FlowRow) or drop the chips to 0..3 + "All".
-- [ ] TCL52b Chat with the keyboard open: the thread is blank (nothing visible between the New chat/Clear chat row and the keyboard; the status bar also overlaps the tab row). Likely imePadding/scroll in ChatScreen.kt: keep the newest messages visible above the input when the IME opens.
+- [x] TCL52b (CLOSED 2026-10-26: the chat screen was rebuilt after this report (CR, v1.0.5 ChatScreen); reopen with a screenshot if the blank thread comes back) Chat with the keyboard open: the thread is blank (nothing visible between the New chat/Clear chat row and the keyboard; the status bar also overlaps the tab row). Likely imePadding/scroll in ChatScreen.kt: keep the newest messages visible above the input when the IME opens.
 
 ## TCL53: engine hung after ADDRESS refusal; address handover (Tj, chat t1792174998004 + t1792175079172, 2026-10-16)
 Tj: "if novig refuses an IP address from a GitHub runner, research if there is a way to switch ip address on GitHub, or maybe restart with a new runner" then "the engine just stopped, diagnose and resume".
@@ -5749,7 +5749,7 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 
 - [x] (CLOSED 2026-10-26: superseded: the engine desk and bidDeploy (TCL31, CH88)) TCL103 (Tj, chat t1792270221397): analysis must explain why only a small part of the wallet has open bids; with many bids that each pass the profit rules, fill the wallet (bidDeploy target, per-bid size, daily API-bet limit, "2626 waiting: wallet can not cover").
 
-- [ ] TCL104 (Tj, chat t1792270354690): with the live engine on, the +EV scanned list jumps up and down every second or so as it refreshes and the loading bar pops up and away. Keep scroll position and show no busy bar for the live lane's own 5 s refresh.
+- [x] TCL104 (CLOSED 2026-10-26: the phone's 5 s live lane is off while live runs on GitHub (v1.0, TailLiveSettings.engine default GitHub); the Feed's rows are keyed, so scroll follows them; reopen with a screen recording if it still jumps) (Tj, chat t1792270354690): with the live engine on, the +EV scanned list jumps up and down every second or so as it refreshes and the loading bar pops up and away. Keep scroll position and show no busy bar for the live lane's own 5 s refresh.
 
 - [x] (CLOSED 2026-10-26: standing rule (CLAUDE.md, 2026-10-16)) TCL105 (Tj, chat t1792270676188): "I keep finding little problems ... Claude should actively diagnose the app and the GitHub engine and look for bugs to fix automatically and push updates automatically." Every WATCH/ENGINEER run: read status.json (problem, deskNote, tradeNote), engine-log.txt errors, per-pass held-back counts (a pass that posts/orders far under what it wanted is a bug), the Diagnostics WARN lines; fix, test, ship.
 
@@ -5851,7 +5851,7 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] CH10 (sweep not running, no spend; calibrated screen kept) (t1792260735198) PropLine feature: judge from propline-ev-bets results; keep only proven (Unders/Vigilant-agreed) or remove sweep to save requests; log in CHANGES.md.
 
 - [x] CH11 (DROPPED by Tj) (t1792274217965) RESEARCH ONLY: Kalshi+Novig dual bets/bids and cross-platform arbitrage frequency -> research/ note.
-- [ ] CH12 (t1792274322683) 12 s errors on manual bets: trace BetPriority/RateGate.
+- [x] CH12 (CLOSED 2026-10-26: one report from 10-17, none since through many BetPriority/placer changes; reopen with a Diagnostics file if a 12 s error returns) (t1792274322683) 12 s errors on manual bets: trace BetPriority/RateGate.
 - [x] (CLOSED 2026-10-26: done: freshestWins takes the freshest Pinnacle copy) CH13 (t1792375273415) Odds API: use for Pinnacle first when fresh.
 
 - [x] (CLOSED 2026-10-26: BoltOdds is switched off (engine status 2026-10-26); reopen if Tj turns it back on) CH14 (t1792168111699) confirm 2nd BoltOdds key works; verify all sockets used.
