@@ -6523,5 +6523,5 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 
 ## PX12 (Tj 2026-10-26 ~00:0x UTC, typed, screenshot of a bet sheet: Kalshi 3m40s, FanDuel 1m24s ParlayAPI, Pinnacle 5m43s PropLine, PropLine books 3-13 min, SGO 7-9 min)
 "Odds are still very slow. The streaming should be very fresh"
-- [ ] PX12a find whether the ages are real staleness or last-CHANGE stamps on prices a live stream has confirmed unchanged (PropLine push/polled, Kalshi socket, SGO); read crossSame/crossDiff by age
+- [x] PX12a [found: (1) far games (48 h+) re-priced only by the full scan every 6 min (CloudLanes.FULL_EVERY_MS): exchange quotes on every far row 295 s, near rows 113 s; (2) PropLine itself polls NFL books ~276 s, NCAAF ~600 s (PX9b), so those stamps can't be fresher; 3+ min older PropLine copies agree with ParlayAPI's on ~88-99% of prices (crossSame/crossDiff), i.e. mostly last-change stamps; (3) ParlayAPI's US books were lost on split events (PX11f, fixed)] find whether the ages are real staleness or last-CHANGE stamps on prices a live stream has confirmed unchanged (PropLine push/polled, Kalshi socket, SGO); read crossSame/crossDiff by age
 - [ ] PX12b fix what is found (re-date confirmed-unchanged quotes from live streams; or read the slow feeds faster), tests, engine, tell Tj
