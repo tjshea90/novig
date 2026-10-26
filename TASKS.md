@@ -6541,4 +6541,4 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 
 ## A10 (Tj 2026-10-26, typed): "I lost the phone that was running vigilant. Can I install vigilant on my android 10 armv7 tablet and still access the accounts" -> "Yes" (build the Android 10 version)
 - [x] A10a [app minSdk 29; AppExits.recent guarded (Android 11's exit record); lintDebug NewApi 0] minSdk 30 -> 29 (Android 10) in every module; lint NewApi clean (guard or fall back each Android 11+ call)
-- [ ] A10b full tests, ship v1.0.88, release, tell Tj (plus: revoke the lost phone's GitHub token and Novig keys)
+- [x] A10b [v1.0.88 released 2026-10-26 19:03 UTC, recorded; Tj told] full tests, ship v1.0.88, release, tell Tj (plus: revoke the lost phone's GitHub token and Novig keys)
