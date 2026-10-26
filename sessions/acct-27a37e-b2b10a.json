@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "0530736e635064fc3678ef1dadfa83d0b0b6dfac",
+ "head": "ad0af68a0479d6a5c7a1092a8ecaabd022dee28b",
  "since": 1792912591,
- "beat": 1792983894,
- "beatIso": "2026-10-26T03:04:54Z",
- "done": "CH87b explained: Tracker includes Novig-app imported bets (+82, cash wallet); research/profit_by_origin_2026-10-26.md",
+ "beat": 1792983939,
+ "beatIso": "2026-10-26T03:05:39Z",
+ "done": "research index + LEVERS row for profit_by_origin",
  "next": "release check 03:14; reply to Tj"
 }
