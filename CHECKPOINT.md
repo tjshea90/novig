@@ -1,22 +1,22 @@
-# CHECKPOINT 4280 — read me first, then TASKS.md
+# CHECKPOINT 4281 — read me first, then TASKS.md
 
-**Written:** 2026-10-26T02:28:29Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-db238840-epvfzh` · **builds on:** `0dee7e35b` (this checkpoint is the commit after it)
+**Written:** 2026-10-26T02:34:38Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-db238840-epvfzh` · **builds on:** `b661a1870` (this checkpoint is the commit after it)
 
 ## Just done
-CH67 flaky test fixed, CH65b Kalshi list carried across jobs, CH85 404-loop guard for CNO/PropLine EV files; full test.sh green
+PX10g census parlayPinn (why ParlayAPI Pinnacle stays old); PX11c/PX11d/PX10f/PX11e closed with evidence; full test.sh green
 
 ## Do this next
-read census after engine scan; next PX10g/PX12b/PX11d/PX9i, CH12, TCL104, TCL52b
+engine reset; read parlayPinn after a scan, fix the cause; then PX12b, PX10d, PX9i, CH12, TCL104, TCL52b
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  f2748c6c2 ckpt 4280: CH67 flaky test fixed, CH65b Kalshi list carried across jobs, CH85 404-loop
   14f661893 ckpt 4279: TASKS triage pass 2: 89 more closed with evidence
   e9fca7600 ckpt 4278: TASKS triage: 143 stale items closed with reasons (shipped, Pinnodds ended,
   8bc2699bf ckpt 4277: PX13c/PX11e: PropLine tennis built (PropLineTennis, from a real answer), SG
@@ -26,8 +26,7 @@ read census after engine scan; next PX10g/PX12b/PX11d/PX9i, CH12, TCL104, TCL52b
   5c61a51cb ckpt 4273: PX14b done: results open 23%->2.1% (engine settled 182/208 from Novig's led
   63c670539 ckpt 4272: PX14b: open orders settled by the engine from Novig's ledger (TradeSettle.f
   73e2cc751 ckpt 4271: PX14b measured: CLV 59%->83%, results open 23%->15%; Novig fallback settled
-  256a93a15 ckpt 4270: dispatched engine-grade.yml + propline.yml clv on main (PX14b code landed)
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
