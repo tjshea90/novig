@@ -33,14 +33,14 @@ object KalshiRedate {
     /** [e] with every Kalshi quote the socket still vouches for dated [now]; the event itself when none changed. */
     fun overlay(e: RefEvent, now: Long, st: StreamView): RefEvent {
         var changed = false
-        val markets = e.markets.map { m ->
+        val markets = e.markets.map market@{ m ->
             val stamp = m.lastUpdateMs
-            if (m.bookKey != BOOK || stamp == null || stamp >= now) return@map m
-            val tags = m.quotes.map { parse(it.feedOutcomeId) ?: return@map m }
+            if (m.bookKey != BOOK || stamp == null || stamp >= now) return@market m
+            val tags = m.quotes.map { parse(it.feedOutcomeId) ?: return@market m }
             val current = tags.all { t ->
                 st.trusted(t.ticker, stamp) && st.top(t.ticker).let { top -> top == null || top.atMs <= stamp || (same(top.yesBid, t.yesBid) && same(top.yesAsk, t.yesAsk)) }
             }
-            if (!current) return@map m
+            if (!current) return@market m
             changed = true
             m.copy(lastUpdateMs = now)
         }
