@@ -111,6 +111,8 @@ object ApiChain {
         }
         // Study mode: every API that is on is asked, so the Source race can compare them on one scan.
         if (settings.gates.askAllSources) return true
+        // PX11e: tennis players' game totals and set lines come from SportsGameOdds alone (PropLine's and ParlayAPI's tennis are full-match moneylines, spreads and totals): extra information, so SGO is asked.
+        if (league.tennis && sourceId == "sgo") return true
         // No better feed answered this league: it failed, ran out of credits, was held back, or does not list it. The next best takes over.
         if (league.novigName !in context.firstAnswered) return true
         // A paid provider whose credits would expire unspent is a second opinion for the league now and then (TCL61).
