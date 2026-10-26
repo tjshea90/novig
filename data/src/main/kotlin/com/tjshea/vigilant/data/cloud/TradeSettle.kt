@@ -74,7 +74,10 @@ object TradeSettle {
         val out = ArrayList<Settled>()
         for ((marketId, group) in due.groupBy { it.marketId }) {
             val refs = group.mapNotNullTo(HashSet()) { it.orderId } + marketId
-            val paid = payouts.filter { it.kind == "SETTLEMENT" && it.ref in refs }.sumOf { it.amount }
+            val rows = payouts.filter { it.kind == "SETTLEMENT" && it.ref in refs }
+            val paid = rows.sumOf { it.amount }
+            // a row naming the market may be the phone's order on it too (one subaccount): an odd amount is read as a fair value only when every row names one of these orders
+            val ownRows = rows.all { it.ref != marketId }
             val sides = group.groupBy { it.outcomeId }
             fun win(es: List<TradeEntry>) = es.sumOf { it.payout }
             fun near(a: Double, b: Double) = kotlin.math.abs(a - b) <= LEDGER_TOLERANCE
@@ -85,8 +88,8 @@ object TradeSettle {
                     val status = when {
                         near(paid, w) -> "WON"
                         near(paid, cost) || near(paid, cost - group.sumOf { it.fee }) -> "PUSH"
-                        paid < w -> "FMV"
-                        else -> null // more than these entries can win: another order of the subaccount shares the market; left to the study
+                        paid < w && ownRows -> "FMV"
+                        else -> null // not these entries' win or cost: another order of the subaccount may share the market; left to the study
                     } ?: continue
                     for (e in group) out += when (status) {
                         "WON" -> Settled(e.id, "WON", round(e.payout - e.cost))
