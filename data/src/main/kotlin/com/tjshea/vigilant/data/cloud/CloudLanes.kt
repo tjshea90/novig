@@ -14,8 +14,10 @@ object CloudLanes {
      * The longest between two full scans on the engine (PX9, Tj 2026-10-25, "Why are the odds this stale?": the games past the quick scan's reach (2-10 days out) were re-read only by the full scan, every 15 minutes
      * ([FarLane.FAR_EVERY_MS], set when a full scan took 8 minutes on the phone's public route), so a listed far game's fair odds were up to 25 minutes old: 15 between scans plus PropLine's own 10-minute read gap for
      * college football. On the engine's key and stream a full scan takes about two minutes, and the boards it reads are re-used inside their own windows, so a full one every [FULL_EVERY_MS] costs no more API credits.
+     * PX12 (Tj 2026-10-26: "Odds are still very slow. The streaming should be very fresh"): every listed far game's exchange quotes were 295 s old at 00:0x UTC, the age of the last full scan, while a full scan
+     * took 50-70 s and a quick one 45-60 s: 2 minutes keeps the far games' fair about a third as old for a few seconds more per cycle.
      */
-    const val FULL_EVERY_MS = 6 * 60_000L
+    const val FULL_EVERY_MS = 2 * 60_000L
 
     /** Whether the scan about to start is the quick one: a full scan finished less than [FULL_EVERY_MS] ago under the same fetch settings, and the window reaches past the quick scan's hours. */
     fun nearOnly(s: ScanSettings, now: Long, lastFullAtMs: Long, fullKey: String?, key: String): Boolean =
