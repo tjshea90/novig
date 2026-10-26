@@ -110,6 +110,22 @@ class ParlayLiveTest {
         assertSame(e, l.overlayEvent(e, now))
     }
 
+    /** PX10g: the stream re-sends a row only when its price moves; while it has been connected since that move and ParlayAPI polled the book after it, the stream's copy is current as of the poll. */
+    @Test
+    fun `a stream copy unchanged since its last move is dated by ParlayAPI's later poll`() {
+        val e = game(market(LineKind.MONEYLINE, listOf(RefQuote(Side.HOME, 3.0, null), RefQuote(Side.AWAY, 1.4, null))))
+        val plain = live().overlayEvent(e, now).markets[0].lastUpdateMs!!
+        val l = live()
+        l.connected("basketball_nba", old - 1)
+        l.onHealth(Json.parseToJsonElement("""{"generated_at_ms": $now, "sources": [{"source": "pinnacle", "poll_age_s": 6, "prices_stale": false}]}""") as JsonObject, now)
+        assertEquals("the stream copy (dated $plain) is current as of the poll", now - 6_000, l.overlayEvent(e, now).markets[0].lastUpdateMs)
+        // connected only after the stream copy's stamp: no such claim
+        val late = live()
+        late.connected("basketball_nba", now - 1_000)
+        late.onHealth(Json.parseToJsonElement("""{"generated_at_ms": $now, "sources": [{"source": "pinnacle", "poll_age_s": 6, "prices_stale": false}]}""") as JsonObject, now)
+        assertEquals(plain, late.overlayEvent(e, now).markets[0].lastUpdateMs)
+    }
+
     private fun row(extra: String) = json.parseToJsonElement(
         """{"bookmaker":"bovada","home_team":"Utah Jazz","away_team":"Los Angeles Lakers","sport_key":"basketball_nba","last_update":1792916303232,"kind":"game","market_key":"totals","line":238.0,"over_price":-110,"under_price":-110$extra}""",
     ) as JsonObject

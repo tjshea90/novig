@@ -149,7 +149,9 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
             // PX10g: why ParlayAPI's Pinnacle copies stay 5+ minutes old (2026-10-26 census: 3,191 near games, 3,435 far), counted by what the overlay could do with each.
             val pinn = m.bookKey == "pinnacle"
             if (found.any { it == null }) return@map confirm(e.sportKey, m, now)?.also { changed = true; if (pinn) census("confirmed unchanged") } ?: m.also { if (pinn) census(if (found.all { it == null }) "not on the stream: ${confirmWhy(e.sportKey, m, now)}" else "one side on the stream") }
-            val confirmed = found.minOf { it!!.confirmedAtMs }
+            // PX10g (2026-10-26 census: the stream's own Pinnacle copy 5+ min old on 18,581 lines): a row is re-sent only when its price MOVES, so an unchanged line keeps its last move's stamp. With the
+            // league's stream unbroken since then and ParlayAPI polling the book after it, the price has not moved since: current as of that poll, as [confirm] says of a price the stream never sent.
+            val confirmed = found.minOf { it!!.confirmedAtMs }.let { at -> vouchedAt(e.sportKey, m.bookKey, at, now) ?: at }
             if (confirmed <= (m.lastUpdateMs ?: 0L)) return@map m.also { if (pinn) census("stream copy no newer (${ageBand(now - confirmed)} old)") }
             if (pinn) census("moved to the stream (${ageBand(now - confirmed)} old)")
             changed = true
@@ -171,6 +173,15 @@ class ParlayLive(private val clock: () -> Long = System::currentTimeMillis) {
         if (stale || polled <= stamp || now - polled > POLL_MAX_MS) return null
         confirmed++
         return m.copy(lastUpdateMs = minOf(polled, now))
+    }
+
+    /** When ParlayAPI last polled [book], if the [sport]'s stream has been connected without a break since [at] and that poll came after it (the book not called stale); else null. */
+    private fun vouchedAt(sport: String, book: String, at: Long, now: Long): Long? {
+        val since = connectedSince[sport] ?: return null
+        if (since > at || !live(now)) return null
+        val (polled, stale) = polls[book] ?: return null
+        if (stale || polled <= at || now - polled > POLL_MAX_MS) return null
+        return minOf(polled, now)
     }
 
     private fun census(what: String) = com.tjshea.vigilant.data.scanner.QuoteCensus.add("parlayPinn", what)
