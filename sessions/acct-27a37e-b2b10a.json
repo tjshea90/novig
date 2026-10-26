@@ -8,8 +8,8 @@
  "branch": "ccr-db238840-epvfzh",
  "head": "5c61a51cbb10a297534f18a0a03472c2213fb841",
  "since": 1792912591,
- "beat": 1792979687,
- "beatIso": "2026-10-26T01:54:47Z",
+ "beat": 1792979971,
+ "beatIso": "2026-10-26T01:59:31Z",
  "done": "PX14b done: results open 23%->2.1% (engine settled 182/208 from Novig's ledger), CLV 59%->83%; engine-grade dispatched to carry them",
  "next": "PX14 complete; next open items: PX11e Pinnacle without SGO, PX13c, PR1c"
 }
