@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-3cb0aa53-b2tjli",
- "head": "5bdd6123f63dd646c671965a4345f1668b563f5c",
+ "head": "29d2da2d380dd73c0938dbeb6b64d634f008a742",
  "since": 1792970423,
- "beat": 1792973210,
- "beatIso": "2026-10-26T00:06:50Z",
- "done": "PX11d-2: census line 'book outliers' = each book's share left out by BadOdds (QuoteCensus.outlierRates, QuoteCensusTest)",
- "next": "full tools/test.sh then land; confirm v1.0.86 Release, record-release.sh, tell Tj; tomorrow read a day of 'book outliers' lines -> exclude a mapped-wrong book"
+ "beat": 1792973263,
+ "beatIso": "2026-10-26T00:07:43Z",
+ "done": "PX12: full scan every 2 min, not 6 (far games' fair was 295 s old on every far row); CloudLanesTest",
+ "next": "full test.sh, land, engine reset, measure far-row exchange ages (expect <=~3 min) and near fairAgeMedianS; tell Tj (v1.0.86 link + findings)"
 }
