@@ -8,8 +8,8 @@
  "branch": "ccr-db238840-epvfzh",
  "head": "b6167a5b6df9ca8cd998e9c273af06d2d7a6e33d",
  "since": 1792912591,
- "beat": 1792980292,
- "beatIso": "2026-10-26T02:04:52Z",
+ "beat": 1792980535,
+ "beatIso": "2026-10-26T02:08:55Z",
  "done": "PropLine tennis shape read (375 events, Pinnacle on 114, h2h/spreads/totals only); shape task prints tours",
  "next": "dispatch shape again for tour values, then build PropLine tennis (h2h, totals by size, non-Pinnacle spreads, Pinnacle spreads >2.5)"
 }
