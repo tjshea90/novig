@@ -6520,3 +6520,8 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [x] PR1a [MainViewModel.refreshEngine: CloudLink.refreshNow() only; EngineRefreshUiTest] Engine pull to refresh: engine data only (status, list, trades, desk, messages, health); no API key tests, no per-API usage reads, no engine API check request
 - [x] PR1b [RefreshApisButton on Engine › APIs -> MainViewModel.refreshApis (refreshNow(apis=true) + checkApisFromPhone); EngineRefreshUiTest] APIs tab: a Refresh button that tests the keys, reads each API's own meters and asks the engine to check every API now
 - [ ] PR1c tests, ship in the next APK, tell Tj
+
+## PX12 (Tj 2026-10-26 ~00:0x UTC, typed, screenshot of a bet sheet: Kalshi 3m40s, FanDuel 1m24s ParlayAPI, Pinnacle 5m43s PropLine, PropLine books 3-13 min, SGO 7-9 min)
+"Odds are still very slow. The streaming should be very fresh"
+- [ ] PX12a find whether the ages are real staleness or last-CHANGE stamps on prices a live stream has confirmed unchanged (PropLine push/polled, Kalshi socket, SGO); read crossSame/crossDiff by age
+- [ ] PX12b fix what is found (re-date confirmed-unchanged quotes from live streams; or read the slow feeds faster), tests, engine, tell Tj
