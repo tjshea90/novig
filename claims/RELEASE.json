@@ -7,5 +7,5 @@
  "nonce": "7be90d",
  "note": "v1.0.86 PR1 + PX11: Engine pull to refresh reads only the engine's data, Engine > APIs has its own Refresh API status and meters button; ParlayAPI's second listing of a game (team names spelled two ways) now prices the line, so its US books' fresh quotes are no longer lost; bids never ask fewer than 3 agreeing books; per-book outlier counts",
  "since": 1792972405,
- "beat": 1792972666
+ "beat": 1792972929
 }
