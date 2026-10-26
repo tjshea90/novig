@@ -1335,3 +1335,8 @@ Could it be that the live betting is taking the socket away from pregame scannin
 ```
 Parlayapi looks fresh but only gives one book here. Why? The rest are slow, even kalshi which has its own socket. Also, I will soon not have the sgo api with socket, so the other apis need to fill in
 ```
+
+## 2026-10-26T00:27:02Z
+```
+Does the GitHub engine have an adequate system to get clv for my placed bets and bids, results for my placed bets and bids with vast majority or 100% of my bets and bids covered?
+```
