@@ -124,32 +124,14 @@ private suspend fun gradeMain(args: Array<String>) {
                 if (b.marketId.isNotBlank() && b.outcomeId.isNotBlank() && b.status != com.tjshea.vigilant.data.tracker.BetStatus.PENDING) byOutcome[b.marketId to b.outcomeId] = TradeSettle.Outcome(b.status, b.settleValue)
             }
             val studied = HashSet(byOutcome.keys)
-            // PX14: the orders the study never logged (most bid fills) are settled from Novig's own record of the outcome (its public market read, no key).
-            val ask = TradeSettle.askNovig(ledger.entries, { m, o -> (m to o) in studied }, System.currentTimeMillis())
-            var fromNovig = 0
-            var novigFailed = 0
-            var novigGone = 0
-            val novigStatuses = HashMap<String, Int>()
-            if (ask.isNotEmpty()) {
-                val novig = com.tjshea.vigilant.data.novig.NovigPublicClient(okhttp3.OkHttpClient(), kotlinx.serialization.json.Json { ignoreUnknownKeys = true })
-                for (mid in ask.map { it.marketId }.distinct()) {
-                    val market = try { novig.market(mid) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { novigFailed++; println("grade: Novig market $mid: ${e.message?.take(160)}"); null }
-                    if (market == null) { novigGone++; continue }
-                    novigStatuses.merge("market ${market.status}", 1, Int::plus)
-                    for (oc in market.outcomes) {
-                        novigStatuses.merge("outcome ${oc.status.take(12)}", 1, Int::plus)
-                        TradeSettle.fromNovig(oc.status)?.let { if (byOutcome.putIfAbsent(mid to oc.outcomeId, it) == null) fromNovig++ }
-                    }
-                }
-                // PX14: say why Novig's record settled what it did (gone = 404, the market no longer listed; the statuses it answered)
-                println("grade: Novig's record: ${ask.map { it.marketId }.distinct().size} markets asked, $novigGone gone, $novigFailed failed; statuses ${novigStatuses.entries.sortedByDescending { it.value }.take(12).joinToString { "${it.key}=${it.value}" }}")
-            }
+            // PX14: orders the study never logged (most bid fills) are settled by the engine from the subaccount's ledger (CloudMain settleFromLedger; a settled market leaves Novig's public catalog,
+            // so this keyless job cannot ask it) and carried here as the ledger has them.
             val settled = TradeSettle.settle(ledger.entries) { m, o -> byOutcome[m to o] } + TradeSettle.carried(ledger.entries) { m, o -> (m to o) in byOutcome }
             out.parentFile?.mkdirs()
             out.writeText(TradeSettle.File.text(TradeSettle.File(System.currentTimeMillis(), settled)))
             val done = settled.mapTo(HashSet()) { it.id }
             val open = ledger.entries.count { e -> System.currentTimeMillis() - e.startsTs >= TradeSettle.ASK_AFTER_START_MS && e.id !in done }
-            println("grade: ${settled.size} of the engine's orders settled (${ask.size} asked of Novig's record, $fromNovig outcomes settled by it, $novigFailed reads failed); $open orders 3 h+ past their start still without a result")
+            println("grade: ${settled.size} of the engine's orders settled; $open orders 3 h+ past their start still without a result")
         } else println("grade: no usable trades.json")
     }
 }
