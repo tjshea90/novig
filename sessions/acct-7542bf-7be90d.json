@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-3cb0aa53-b2tjli",
- "head": "53dd589e79bb564d53896139bc43341d5d330814",
+ "head": "33cd0c5d5a1304e950d57e204c38d00a489958b2",
  "since": 1792970423,
- "beat": 1792973743,
- "beatIso": "2026-10-26T00:15:43Z",
- "done": "PX12 landed on main, engine reset; PX12c answered (no socket contention)",
- "next": "after the new run's scans: far-row exchange ages <= ~3 min? near fairAgeMedianS? 'book outliers' line; then tell Tj with v1.0.86 link"
+ "beat": 1792973814,
+ "beatIso": "2026-10-26T00:16:54Z",
+ "done": "PX13a answered (ParlayAPI carries 4 books on that game); PX13c census pinnSgoOnly (league/kind of lines whose Pinnacle is SGO-only)",
+ "next": "full test.sh, land, reset engine; read pinnSgoOnly + far-row ages; tell Tj; then PX13b Kalshi socket re-dating in the real-time list, PX11e Pinnacle sources"
 }
