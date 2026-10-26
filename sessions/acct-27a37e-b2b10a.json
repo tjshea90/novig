@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-db238840-epvfzh",
- "head": "23b078ca2eeee21d752f5615f04446cdaf95a087",
+ "head": "0587d0b473cb82fb17071cf7330c9e6f407bd3c2",
  "since": 1792912591,
- "beat": 1792983147,
- "beatIso": "2026-10-26T02:52:27Z",
- "done": "TASKS triage pass 3: 27 more closed; 91 open",
- "next": "parlayPinn census -> fix; then remaining buildables"
+ "beat": 1792983176,
+ "beatIso": "2026-10-26T02:52:56Z",
+ "done": "CH87c ledger profit (engine + Tracker card), linesStrict census; full test.sh green",
+ "next": "engine reset; read ledger profit + parlayPinn + linesStrict; batch v1.0.87 (CH87c, CH85 CloudLink guard)"
 }
