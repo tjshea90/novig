@@ -8,8 +8,8 @@
  "branch": "ccr-db238840-epvfzh",
  "head": "63c670539f5692e45690fb5c09186a2256ac88c2",
  "since": 1792912591,
- "beat": 1792978801,
- "beatIso": "2026-10-26T01:40:01Z",
+ "beat": 1792979638,
+ "beatIso": "2026-10-26T01:53:58Z",
  "done": "PX14b: open orders settled by the engine from Novig's ledger (TradeSettle.fromLedger + CloudMain), public-catalog fallback removed (settled markets 404); full test.sh green",
  "next": "land, engine_set.py --reset, read engine-log 'settled from Novig's ledger' line, rerun engine-grade, tell Tj"
 }
