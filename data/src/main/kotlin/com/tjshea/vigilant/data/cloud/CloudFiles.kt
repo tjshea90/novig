@@ -231,6 +231,15 @@ data class CloudStatus(
     val walletPositionsValue: Double = -1.0,
     val walletPositionsCost: Double = -1.0,
     val walletPnlAtMs: Long = 0L,
+    /**
+     * The engine subaccount's all-time betting profit from its own ledger (CH87c, [com.tjshea.vigilant.data.tracker.WalletProfit.fromLedger]): payouts and credits less stakes and fees, open bets at
+     * cost; null = not read. [ledgerDetail]: each kind's net and count. Read at [ledgerAtMs] (every 30 minutes).
+     */
+    val ledgerProfit: Double? = null,
+    val ledgerOpenCost: Double? = null,
+    val ledgerRows: Int = 0,
+    val ledgerAtMs: Long = 0L,
+    val ledgerDetail: String = "",
 ) {
     /** The engine's live lane is running now and its heartbeat is recent: the phone's own live tail lane stands down. */
     fun liveLive(now: Long): Boolean = liveActive && heartbeatMs > 0 && now - heartbeatMs < DESK_STALE_MS

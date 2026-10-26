@@ -312,6 +312,19 @@ open class NovigTradingClient(
         }
     }
 
+    /**
+     * Every row of [subaccountKeyId]'s ledger that won or lost money ([BETTING]: fills, fees, maker credits, settlements, adjustments), all time, newest pages first up to [maxRows] per kind (CH87c, Tj
+     * 2026-10-24: "all-time profit from the Vigilant subaccount ledger only"). A kind this ledger refuses (400/404/422) reads as none; a fill or settlement it refuses throws.
+     */
+    open suspend fun bettingRows(subaccountKeyId: String, maxRows: Int = 20_000): List<LedgerRow> = BETTING.flatMap { kind ->
+        try {
+            ledgerRows(subaccountKeyId, kind, null, null, maxRows)
+        } catch (e: com.tjshea.vigilant.data.novig.signing.NovigApiException) {
+            if (kind in setOf("FILL", "SETTLEMENT") || e.status !in setOf(400, 404, 422)) throw e
+            emptyList()
+        }
+    }
+
     private suspend fun ledgerRows(subaccountKeyId: String, kind: String?, startsAfterMs: Long?, startsBeforeMs: Long?, maxRows: Int): List<LedgerRow> {
         val out = ArrayList<LedgerRow>()
         var cursor: String? = null
@@ -343,6 +356,8 @@ open class NovigTradingClient(
         const val MAX_ORDER_ROWS = 2_000
 
         /** The ledger kinds that move money into or out of a wallet instead of winning or losing it (the 2026-10-12 `TransactionKind` list; FILL, FEE, MAKER_CREDIT, SETTLEMENT and ADJUSTMENT are betting). */
+        /** The ledger kinds that win or lose money (the 2026-10-12 `TransactionKind` list less [MONEY_MOVES]). */
+        val BETTING = listOf("FILL", "FEE", "MAKER_CREDIT", "SETTLEMENT", "ADJUSTMENT")
         val MONEY_MOVES = listOf("TRANSFER_IN", "TRANSFER_OUT", "DEPOSIT", "WITHDRAWAL", "CREDIT", "CREDIT_RECLAIM", "FORWARDING")
         private val TRANSFERS = setOf("TRANSFER_IN", "TRANSFER_OUT")
 

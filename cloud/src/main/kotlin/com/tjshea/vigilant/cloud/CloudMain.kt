@@ -321,6 +321,7 @@ fun main(args: Array<String>) = runBlocking {
     }
     // PX14: the live orders the grader could not settle (most bid fills: the study never logged them, and a settled market leaves Novig's public catalog) settled from the subaccount's own ledger, as the
     // phone's ApiSettler grades its API bets; the grader's next file carries them (TradeSettle.carried). Read with the trading key every 30 minutes, never while Novig refuses this runner's address.
+    val ledgerProfit = java.util.concurrent.atomic.AtomicReference<com.tjshea.vigilant.data.tracker.WalletProfit.Ledger?>(null)
     suspend fun settleFromLedger() {
         val tc = tradingClient ?: return
         if (novigKeyed?.addressRefused(System.currentTimeMillis()) == true) return
@@ -332,6 +333,10 @@ fun main(args: Array<String>) = runBlocking {
             val rows = tc.ledger(tradeKeyId, "SETTLEMENT", due.minOf { it.startsTs } - slack, due.maxOf { it.startsTs } + slack, maxRows = 5_000)
             val held = tc.positions()
             val settled = TradeSettle.fromLedger(trader.ledger.entries, rows, held, now)
+            // CH87c: the all-time profit from the same ledger, for the phone's Tracker beside the wallet figure.
+            runCatching { com.tjshea.vigilant.data.tracker.WalletProfit.fromLedger(tc.bettingRows(tradeKeyId), held, now) }
+                .onSuccess { l -> if (l != null) { ledgerProfit.set(l); log("ledger profit: ${String.format(java.util.Locale.US, "%+.2f", l.profit)} (open at cost ${String.format(java.util.Locale.US, "%.2f", l.openCost)}; ${l.detail})") } }
+                .onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("ledger profit not read: ${e.message?.take(120)}") }
             for (r in settled) trader.settle(r.id, r.status, r.pnl)
             log("trades: ${settled.size} of ${due.size} open live orders settled from Novig's ledger (${rows.size} settlement rows read)")
         } catch (e: kotlinx.coroutines.CancellationException) {
@@ -638,6 +643,8 @@ fun main(args: Array<String>) = runBlocking {
             st.copy(
                 propLineFresh = propLineFreshShown(sources, latestSettings.get()), propLineFreshAtMs = sources.propLineFreshness.readAtMs, propLineStream = sources.propLineNote().take(600),
                 walletPositionsValue = p?.second?.value ?: -1.0, walletPositionsCost = p?.second?.basis ?: -1.0, walletPnlAtMs = p?.first ?: 0L,
+                ledgerProfit = ledgerProfit.get()?.profit, ledgerOpenCost = ledgerProfit.get()?.openCost, ledgerRows = ledgerProfit.get()?.rows ?: 0,
+                ledgerAtMs = ledgerProfit.get()?.atMs ?: 0L, ledgerDetail = ledgerProfit.get()?.detail.orEmpty().take(300),
             )
         },
         novigAddress = { novigKeyed?.addressWords(System.currentTimeMillis(), addressWatch?.count ?: 0) ?: "not tested (no Novig key on GitHub: public routes only)" },

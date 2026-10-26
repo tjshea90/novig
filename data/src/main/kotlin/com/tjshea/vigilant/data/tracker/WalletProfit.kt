@@ -57,4 +57,21 @@ object WalletProfit {
             rows.filter { it.amount > 0.0 }.sumOf { it.amount }, rows.filter { it.amount < 0.0 }.sumOf { -it.amount }, rows.size, atMs, detail,
         )
     }
+
+    /**
+     * CH87c (Tj 2026-10-24: "all-time profit from the Vigilant subaccount ledger only: (SETTLEMENT + MAKER_CREDIT) - (FILL + FEE) on closed markets, open bets separate"): the betting rows' signed sum is
+     * every payout and credit less every stake and fee, all time; the open positions' stakes are in it as money paid, so adding back what they cost leaves them neither won nor lost. Needs no deposit
+     * figure, so it cross-checks [of] (wallet now less money put in). Null with no fill read.
+     */
+    data class Ledger(val profit: Double, val betting: Double, val openCost: Double, val rows: Int, val atMs: Long, val detail: String)
+
+    fun fromLedger(rows: List<LedgerRow>, positions: List<NovigPosition>, atMs: Long): Ledger? {
+        val betting = rows.filter { it.kind in NovigTradingClient.BETTING && it.amount.isFinite() }.distinctBy { it.transactionId }
+        if (betting.none { it.kind == "FILL" }) return null
+        val sum = betting.sumOf { it.amount }
+        val open = openCost(positions)
+        val detail = betting.groupBy { it.kind }.entries.sortedBy { NovigTradingClient.BETTING.indexOf(it.key) }
+            .joinToString(", ") { (kind, list) -> String.format(Locale.US, "%s %+.2f (%d)", kind, list.sumOf { it.amount }, list.size) }
+        return Ledger(sum + open, sum, open, betting.size, atMs, detail)
+    }
 }
