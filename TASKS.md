@@ -6545,4 +6545,4 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 
 ## OFF1 (Tj 2026-10-27, typed): "...migrate ... to an android 10 go mt8168 tablet which is mostly offline. I want as much data as practicable cached for offline viewing ... especially my stats, current balance, profit/loss, etc. All up to date." -> "Yes" (build the offline snapshot)
 - [x] OFF1a [CloudClient.rawSink + CloudLink offline_copy/: status, orders, bids and API usage restored at start with the file's own age; list deliberately not restored; wallet figure (WalletMoney prefs), Tracker bets and the phone usage ledger were already stored on disk; test CloudClientTest "good status read is handed to the offline copy"] 
-- [ ] OFF1b full tests, ship, release, tell Tj
+- [x] OFF1b [v1.0.89 released + recorded 2026-10-27] full tests, ship, release, tell Tj
