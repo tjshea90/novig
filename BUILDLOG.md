@@ -427,3 +427,4 @@ day that changes.
 | v1.0.86 | code 426 | 2026-10-26T00:04Z | v1.0.86 PR1 + PX11: Engine pull to refresh reads only the engine's data, Engine > APIs has its own Refresh API status and meters button; ParlayAPI's second listing of a game (team names spelled two ways) now prices the line, so its US books' fresh quotes are no longer lost; bids never ask fewer than 3 agreeing books; per-book outlier counts
 | v1.0.87 | code 427 | 2026-10-26T03:14Z | v1.0.87 CH87c + CH85: the Tracker card names Novig's own ledger profit of the Vigilant subaccount; the phone stops re-asking for an engine file that is not there (CNO, PropLine +EV)
 | v1.0.88 | code 428 | 2026-10-26T19:08Z | v1.0.88 A10: installs on Android 10 (minSdk 29) for Tj's ARMv7 tablet
+| v1.0.89 | code 429 | 2026-10-27T19:16Z | v1.0.89 OFF1: offline copy of engine status, orders, bids and usage for the offline tablet
