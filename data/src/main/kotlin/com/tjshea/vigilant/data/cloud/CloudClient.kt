@@ -62,6 +62,11 @@ class CloudClient(
 
     private fun note(r: okhttp3.Response) { r.header("X-RateLimit-Remaining")?.toIntOrNull()?.let { rateRemaining = it } }
 
+    /** Offline copy (OFF1): every good read of a status, orders, bids or usage file is handed here as its raw text, so the app can show the last copy with no internet. Set once by the app. */
+    @Volatile var rawSink: ((name: String, text: String) -> Unit)? = null
+
+    private fun <T> keep(name: String, text: String, parse: (String) -> T?): T? = parse(text)?.also { if (text.isNotBlank()) runCatching { rawSink?.invoke(name, text) } }
+
     /** The engine's heartbeat, or [Poll.NotModified] when [etag] is still current. */
     suspend fun pollStatus(etag: String?): Poll<CloudStatus> = withContext(Dispatchers.IO) {
         if (!hasToken()) return@withContext Poll.Failed("no GitHub token saved")
@@ -72,7 +77,7 @@ class CloudClient(
                 note(r)
                 when {
                     r.code == 304 -> Poll.NotModified
-                    r.isSuccessful -> CloudStatus.parse(r.body?.string().orEmpty())?.let { Poll.Fresh(it, r.header("ETag")) } ?: Poll.Failed("the engine's status could not be read")
+                    r.isSuccessful -> keep("status.json", r.body?.string().orEmpty()) { CloudStatus.parse(it) }?.let { Poll.Fresh(it, r.header("ETag")) } ?: Poll.Failed("the engine's status could not be read")
                     else -> Poll.Failed(why(r.code, r.body?.string()), retryAfter(r))
                 }
             }
@@ -141,7 +146,7 @@ class CloudClient(
                 note(r)
                 when {
                     r.code == 304 -> Poll.NotModified
-                    r.isSuccessful -> CloudUsage.decode(r.body?.string().orEmpty())?.let { Poll.Fresh(it, r.header("ETag")) } ?: Poll.Failed("the engine's usage could not be read")
+                    r.isSuccessful -> keep("usage.json", r.body?.string().orEmpty()) { CloudUsage.decode(it) }?.let { Poll.Fresh(it, r.header("ETag")) } ?: Poll.Failed("the engine's usage could not be read")
                     else -> Poll.Failed(why(r.code, r.body?.string()), retryAfter(r))
                 }
             }
@@ -158,7 +163,7 @@ class CloudClient(
                 note(r)
                 when {
                     r.code == 304 -> Poll.NotModified
-                    r.isSuccessful -> DeskFile.parse(r.body?.string().orEmpty())?.let { Poll.Fresh(it, r.header("ETag")) } ?: Poll.Failed("the engine's bids could not be read")
+                    r.isSuccessful -> keep("desk.json", r.body?.string().orEmpty()) { DeskFile.parse(it) }?.let { Poll.Fresh(it, r.header("ETag")) } ?: Poll.Failed("the engine's bids could not be read")
                     r.code == 404 -> Poll.Fresh(DeskFile(), null)   // the engine has not bid yet
                     else -> Poll.Failed(why(r.code, r.body?.string()), retryAfter(r))
                 }
@@ -176,7 +181,7 @@ class CloudClient(
                 note(r)
                 when {
                     r.code == 304 -> Poll.NotModified
-                    r.isSuccessful -> TradeLedger.parse(r.body?.string().orEmpty())?.let { Poll.Fresh(it, r.header("ETag")) } ?: Poll.Failed("the engine's orders could not be read")
+                    r.isSuccessful -> keep("trades.json", r.body?.string().orEmpty()) { TradeLedger.parse(it) }?.let { Poll.Fresh(it, r.header("ETag")) } ?: Poll.Failed("the engine's orders could not be read")
                     r.code == 404 -> Poll.Fresh(TradeLedger(), null)   // the engine has not traded yet
                     else -> Poll.Failed(why(r.code, r.body?.string()), retryAfter(r))
                 }
