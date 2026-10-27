@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/friendly-fermi-qntp8t",
- "head": "eb8dd595a6ab94bb341cec4412d8e0bc386852e2",
+ "head": "34ff76bc898bc9b9f0ebe4e59b6b88ecbb03b425",
  "since": 1793072061,
- "beat": 1793127515,
- "beatIso": "2026-10-27T18:58:35Z",
- "done": "",
- "next": ""
+ "beat": 1793127620,
+ "beatIso": "2026-10-27T19:00:20Z",
+ "done": "OFF1a: offline copy of engine status/orders/bids/usage",
+ "next": "OFF1b: bash ship.sh, release.yml, record-release.sh, tell Tj"
 }
