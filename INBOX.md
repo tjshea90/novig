@@ -1368,3 +1368,8 @@ Yes
 ```
 I lost my phone that ran vigilant. Tell me step by step in  simple language how I can migrate this entire vigilant app and all of its features and functionality to an android 10 go mt8168 tablet which is mostly offline. I want as much data as practicable cached for offline viewing when I use the app with internet access, especially my stats, current balance, profit/loss, etc. All up to date.
 ```
+
+## 2026-10-27T18:53:24Z
+```
+Yes
+```
