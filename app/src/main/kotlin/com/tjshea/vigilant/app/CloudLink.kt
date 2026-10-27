@@ -97,7 +97,35 @@ class CloudLink(private val c: AppContainer) {
         val refreshNote: String = "",
     )
 
-    private val _ui = MutableStateFlow(Ui())
+    /**
+     * The offline copy (OFF1, Tj 2026-10-27: a mostly-offline tablet): the engine's status, orders, bids and API usage, as the last good read left them, are kept as files and put back at start-up, so the
+     * Engine tab, the orders and the meters show the last known numbers (with their true age, the file's own time) before and without any internet. The list itself is NOT restored: an old list must
+     * never reach the auto-bet or a bet sheet as if it were current.
+     */
+    private val offlineDir = File(c.app.filesDir, "offline_copy")
+    private fun saveRaw(name: String, text: String) {
+        runCatching {
+            offlineDir.mkdirs()
+            val tmp = File(offlineDir, "$name.tmp")
+            tmp.writeText(text)
+            if (!tmp.renameTo(File(offlineDir, name))) { File(offlineDir, name).writeText(text); tmp.delete() }
+        }
+    }
+    private fun <T> loadRaw(name: String, parse: (String) -> T?): Pair<T, Long>? = runCatching {
+        val f = File(offlineDir, name)
+        if (!f.isFile) return@runCatching null
+        parse(f.readText())?.let { it to f.lastModified() }
+    }.getOrNull()
+    private val offStatus = loadRaw("status.json") { com.tjshea.vigilant.data.cloud.CloudStatus.parse(it) }
+    private val offTrades = loadRaw("trades.json") { com.tjshea.vigilant.data.cloud.TradeLedger.parse(it) }
+    private val offDesk = loadRaw("desk.json") { com.tjshea.vigilant.data.cloud.DeskFile.parse(it) }
+    private val offUsage = loadRaw("usage.json") { com.tjshea.vigilant.data.cloud.CloudUsage.decode(it) }
+
+    private val _ui = MutableStateFlow(Ui(
+        status = offStatus?.first, statusOkAtMs = offStatus?.second ?: 0L,
+        trades = offTrades?.first, tradesReadAtMs = offTrades?.second ?: 0L,
+        desk = offDesk?.first, deskReadAtMs = offDesk?.second ?: 0L,
+    ))
     val ui: StateFlow<Ui> = _ui.asStateFlow()
 
     /** The dashboard's graphs (TCL24b): one point per scan the engine finished, kept on the phone (a day's worth) so the lines are there when the screen opens. */
@@ -114,7 +142,7 @@ class CloudLink(private val c: AppContainer) {
 
     private val store = JsonFileStore(File(c.app.filesDir, "cloud_token.json"), CloudToken.serializer(), { CloudToken() }, c.json)
     @Volatile private var tokenPlain: String? = null
-    private val client = CloudClient(c.http, { token() })
+    private val client = CloudClient(c.http, { token() }).also { it.rawSink = ::saveRaw }
     /** Claude's messages to Tj and the settings requests from the GitHub side (TCL28). */
     val inbox = CloudInbox(c, client)
     /** The app chat with Claude (CR, Tj 2026-10-19): the `chat` branch, a send queue that survives restarts, the phone's copy of the thread. */
