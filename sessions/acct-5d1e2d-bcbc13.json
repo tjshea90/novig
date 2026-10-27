@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "bcbc13",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-iclzy9",
+ "head": "b6d104c9f8ca77f5b4bf0796fe1e8c5e578bb7ef",
+ "since": 1793143363,
+ "beat": 1793143363,
+ "beatIso": "2026-10-27T23:22:43Z",
+ "done": "ENGINEER 2026-10-27 watch only, engine healthy, Novig maintenance lock, no change",
+ "next": "moneylines at n200; resume backlog"
+}
