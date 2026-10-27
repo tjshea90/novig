@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/friendly-fermi-qntp8t",
- "head": "34ff76bc898bc9b9f0ebe4e59b6b88ecbb03b425",
+ "head": "b26d538e4bf23151758c54aae31ef6327d5ae99a",
  "since": 1793072061,
- "beat": 1793127911,
- "beatIso": "2026-10-27T19:05:11Z",
- "done": "OFF1a: offline copy of engine status/orders/bids/usage",
- "next": "OFF1b: bash ship.sh, release.yml, record-release.sh, tell Tj"
+ "beat": 1793127955,
+ "beatIso": "2026-10-27T19:05:55Z",
+ "done": "pre-ship: v1.0.89 OFF1: offline copy of engine status, orders, bids and usage for the offline tablet",
+ "next": "ship.sh gates and releases this"
 }
