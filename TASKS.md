@@ -6542,3 +6542,7 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 ## A10 (Tj 2026-10-26, typed): "I lost the phone that was running vigilant. Can I install vigilant on my android 10 armv7 tablet and still access the accounts" -> "Yes" (build the Android 10 version)
 - [x] A10a [app minSdk 29; AppExits.recent guarded (Android 11's exit record); lintDebug NewApi 0] minSdk 30 -> 29 (Android 10) in every module; lint NewApi clean (guard or fall back each Android 11+ call)
 - [x] A10b [v1.0.88 released 2026-10-26 19:03 UTC, recorded; Tj told] full tests, ship v1.0.88, release, tell Tj (plus: revoke the lost phone's GitHub token and Novig keys)
+
+## OFF1 (Tj 2026-10-27, typed): "...migrate ... to an android 10 go mt8168 tablet which is mostly offline. I want as much data as practicable cached for offline viewing ... especially my stats, current balance, profit/loss, etc. All up to date." -> "Yes" (build the offline snapshot)
+- [x] OFF1a [CloudClient.rawSink + CloudLink offline_copy/: status, orders, bids and API usage restored at start with the file's own age; list deliberately not restored; wallet figure (WalletMoney prefs), Tracker bets and the phone usage ledger were already stored on disk; test CloudClientTest "good status read is handed to the offline copy"] 
+- [ ] OFF1b full tests, ship, release, tell Tj
