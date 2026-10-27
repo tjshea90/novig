@@ -8,8 +8,8 @@
  "branch": "claude/friendly-fermi-qntp8t",
  "head": "b26d538e4bf23151758c54aae31ef6327d5ae99a",
  "since": 1793072061,
- "beat": 1793127955,
- "beatIso": "2026-10-27T19:05:55Z",
+ "beat": 1793127962,
+ "beatIso": "2026-10-27T19:06:02Z",
  "done": "pre-ship: v1.0.89 OFF1: offline copy of engine status, orders, bids and usage for the offline tablet",
  "next": "ship.sh gates and releases this"
 }
