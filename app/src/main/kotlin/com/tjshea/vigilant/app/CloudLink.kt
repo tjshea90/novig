@@ -126,6 +126,10 @@ class CloudLink(private val c: AppContainer) {
         trades = offTrades?.first, tradesReadAtMs = offTrades?.second ?: 0L,
         desk = offDesk?.first, deskReadAtMs = offDesk?.second ?: 0L,
     ))
+    init {
+        offStatus?.let { (st, at) -> latest.status = st; latest.statusOkAtMs = at }
+        offUsage?.let { (u, _) -> if (c.cloudUsage.value == null) c.cloudUsage.value = u }
+    }
     val ui: StateFlow<Ui> = _ui.asStateFlow()
 
     /** The dashboard's graphs (TCL24b): one point per scan the engine finished, kept on the phone (a day's worth) so the lines are there when the screen opens. */
