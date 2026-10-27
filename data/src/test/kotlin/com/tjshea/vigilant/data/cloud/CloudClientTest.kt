@@ -36,6 +36,19 @@ class CloudClientTest {
     }
 
     @Test
+    fun `a good status read is handed to the offline copy as its text, a bad one is not`() = runBlocking {
+        val kept = mutableMapOf<String, String>()
+        val body = CloudStatus.text(CloudStatus(runId = "9", rows = 3, computedAtMs = 7))
+        server.enqueue(MockResponse().setBody(body))
+        server.enqueue(MockResponse().setBody("not json at all"))
+        val c = client().also { it.rawSink = { n, t -> kept[n] = t } }
+        assertTrue(c.pollStatus(null) is CloudClient.Poll.Fresh)
+        assertEquals(body, kept["status.json"])
+        assertTrue(c.pollStatus(null) is CloudClient.Poll.Failed)
+        assertEquals("a bad answer leaves the last good copy", body, kept["status.json"])
+    }
+
+    @Test
     fun `no token means no request`() = runBlocking {
         val p = client(token = null).pollStatus(null)
         assertTrue(p is CloudClient.Poll.Failed)
