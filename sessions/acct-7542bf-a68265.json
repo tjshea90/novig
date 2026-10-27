@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/friendly-fermi-qntp8t",
- "head": "910300bd7ac5fce304ef382d594162ea6d9a937c",
+ "head": "125aa3cb83e2f0fc98aa33ef55a0893336a9ae2b",
  "since": 1793072061,
- "beat": 1793128592,
- "beatIso": "2026-10-27T19:16:32Z",
- "done": "pre-release: v1.0.89 OFF1: offline copy of engine status, orders, bids and usage for the offline tablet (versionCode 429, v1.0.89)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.89), then run: bash tools/record-release.sh v1.0.89 429 \"v1.0.89 OFF1: offline copy of engine status, orders, bids and usage for the offline tablet\""
+ "beat": 1793128634,
+ "beatIso": "2026-10-27T19:17:14Z",
+ "done": "OFF1 done: v1.0.89 released",
+ "next": "nothing pending for OFF1; Tj installs v1.0.89 on the tablet"
 }
