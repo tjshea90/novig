@@ -1383,3 +1383,10 @@ Make the github engine send all the api keys to me, either in the vigilant app o
 ```
 I lost all of my api keys. But I just made a new novig pem, management, and full access api key. The old one is dead. How can I add this to my tablet and github engine without losing the other keys on the github engine because I think if I press send my api keys to github in the vigilant app, it will delete all of the keys already in github since there are none saved in my tablet vigilant app 
 ```
+
+## 2026-10-28T19:25:17Z
+```
+Go to Actions → "Export my keys (encrypted)" and tap Run workflow.
+
+I don't know how to find this 
+```
