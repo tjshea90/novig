@@ -1,0 +1,40 @@
+name: Export my keys (encrypted)
+
+# Tj, 2026-10-28 (KX1): "make the github engine send all the api keys to me ... so I can enter as many keys back into the app".
+# The repo is PUBLIC, so the file is encrypted: AES-256-GCM under a key from PBKDF2(secret KEYS_EXPORT_PASSPHRASE).
+# Set that secret first (Settings > Secrets and variables > Actions, 16+ characters). No keys are ever printed in clear.
+# Open the result with tools/keys_decrypt.html (offline) or `python3 -I tools/keys_export.py decrypt keys.enc.json`.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keys-export
+  cancel-in-progress: false
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Encrypt every secret
+        env:
+          ALL_SECRETS: ${{ toJSON(secrets) }}
+          PASSPHRASE: ${{ secrets.KEYS_EXPORT_PASSPHRASE }}
+        run: |
+          if [ -z "$PASSPHRASE" ]; then echo "Create the repository secret KEYS_EXPORT_PASSPHRASE (16+ characters) first."; exit 1; fi
+          python3 -m pip install -q cryptography
+          python3 -I tools/keys_export.py export keys.enc.json
+          {
+            echo '### Encrypted keys (safe to read: ciphertext only)'
+            echo 'Paste this into tools/keys_decrypt.html with your passphrase:'
+            echo '```'; cat keys.enc.json; echo; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keys-encrypted
+          path: keys.enc.json
+          retention-days: 1
