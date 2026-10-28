@@ -1,7 +1,7 @@
 package com.tjshea.vigilant.data.tracker
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import org.junit.Test
+import org.junit.Assert.assertEquals
 
 class BetHistoryImportTest {
     private fun line(id: String, result: String, outcome: String = "o1", placed: Long = 1_000_000L, contracts: Long = 100) =
