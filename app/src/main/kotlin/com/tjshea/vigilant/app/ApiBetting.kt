@@ -544,6 +544,28 @@ class ApiBettingController(
         }
     }
 
+    /** Restores settled bets and bid fills from a history file Tj picked (plain or gzipped JSON lines, the backup's format). Adds only what the Tracker lacks. */
+    fun importHistoryFile(bytes: ByteArray) {
+        scope.launch {
+            val msg = try {
+                withContext(Dispatchers.IO) {
+                    val raw = if (bytes.size > 2 && bytes[0] == 0x1f.toByte() && bytes[1] == 0x8b.toByte()) java.util.zip.GZIPInputStream(bytes.inputStream()).use { it.readBytes() } else bytes
+                    val rows = com.tjshea.vigilant.data.tracker.BetHistoryImport.parse(raw.decodeToString())
+                    if (rows.isEmpty()) return@withContext "That file has no bets in it. Pick the vigilant-history file."
+                    val fresh = com.tjshea.vigilant.data.tracker.BetHistoryImport.missing(rows, c.tracker.all())
+                    c.tracker.addAll(fresh)
+                    val bids = fresh.count { it.maker }
+                    "Imported ${fresh.size} settled bet${if (fresh.size == 1) "" else "s"} ($bids bid fill${if (bids == 1) "" else "s"}); ${rows.size - fresh.size} were already here or still open."
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                "Couldn't import that file: ${e.message ?: e.javaClass.simpleName}"
+            }
+            toasts.tryEmit(msg)
+        }
+    }
+
     // ---- the Bet sheet --------------------------------------------------------------------------------------------
 
     /** A new sheet for a bet whose Kelly stake is [kelly]: its amount (the wallet's remainder when that's less) and where it came from. */

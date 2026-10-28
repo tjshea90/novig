@@ -898,6 +898,7 @@ private fun VigilantRoot(
                         onPrice = vm::setPrice,
                         onSync = { vm.api.sync() },
                         onRestore = { vm.api.restoreHistory() },
+                        onImportFile = { vm.api.importHistoryFile(it) },
                         onLock = vm::lockIn,
                     ),
                 )
