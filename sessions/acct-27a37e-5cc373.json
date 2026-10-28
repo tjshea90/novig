@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f17ba379-0eynsd",
- "head": "29107ccc8944c5e85e6f861efe46d61645e31551",
+ "head": "fbecf50b97e4f980c79d0275baeb51bd6d66675e",
  "since": 1793230889,
- "beat": 1793231148,
- "beatIso": "2026-10-28T23:45:48Z",
- "done": "",
- "next": ""
+ "beat": 1793231179,
+ "beatIso": "2026-10-28T23:46:19Z",
+ "done": "pre-release: KX1b: bring API keys back from GitHub's encrypted export onto the tablet (versionCode 431, v1.0.91)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.91), then run: bash tools/record-release.sh v1.0.91 431 \"KX1b: bring API keys back from GitHub's encrypted export onto the tablet\""
 }
