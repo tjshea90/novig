@@ -1,0 +1,22 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vigilant keys decrypt</title>
+<style>body{font:16px system-ui;margin:16px;max-width:640px}textarea,input{width:100%;box-sizing:border-box;margin:6px 0;font:14px monospace}button{padding:10px 16px;font-size:16px}pre{white-space:pre-wrap;word-break:break-all}</style>
+<h2>Decrypt exported keys</h2>
+<p>Runs only in this page (nothing is sent anywhere). Paste the encrypted JSON from the run summary or <code>keys.enc.json</code>.</p>
+<textarea id="blob" rows="6" placeholder='{"v":1,...}'></textarea>
+<input id="pw" type="password" placeholder="KEYS_EXPORT_PASSPHRASE">
+<button id="go">Decrypt</button><pre id="out"></pre>
+<script>
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+document.getElementById('go').onclick=async()=>{
+ const o=document.getElementById('out');
+ try{
+  const j=JSON.parse(document.getElementById('blob').value);
+  const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(document.getElementById('pw').value),'PBKDF2',false,['deriveKey']);
+  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(j.salt),iterations:j.iter,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(j.iv),additionalData:new TextEncoder().encode('vigilant-keys-v1')},key,b64(j.ct));
+  const d=JSON.parse(new TextDecoder().decode(pt));
+  o.textContent=Object.keys(d).sort().map(k=>k+'='+d[k]).join('\n');
+ }catch(e){o.textContent='Could not decrypt: wrong passphrase or damaged text.'}
+};
+</script>

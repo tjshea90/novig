@@ -42,8 +42,8 @@ def collect(all_secrets_json: str) -> dict:
 
 
 def selftest():
-    items = collect(json.dumps({"A_KEY": "x", "github_token": "t", "KEYS_EXPORT_PASSPHRASE": "p", "EMPTY": "", "CLAUDE_FIRE_1": "z"}))
-    assert items == {"A_KEY": "x"}, items
+    items = collect(json.dumps({"A_KEY": "SECRETVALUE123", "github_token": "t", "KEYS_EXPORT_PASSPHRASE": "p", "EMPTY": "", "CLAUDE_FIRE_1": "z"}))
+    assert items == {"A_KEY": "SECRETVALUE123"}, items
     blob = seal(items, "correct horse battery")
     assert open_(blob, "correct horse battery") == items
     try:
@@ -54,7 +54,7 @@ def selftest():
         seal(items, "short"); raise AssertionError("short passphrase accepted")
     except SystemExit:
         pass
-    assert "x" not in json.dumps(blob)
+    assert "SECRETVALUE123" not in json.dumps(blob)
     print("keys_export selftest ok")
 
 
