@@ -6546,3 +6546,8 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 ## OFF1 (Tj 2026-10-27, typed): "...migrate ... to an android 10 go mt8168 tablet which is mostly offline. I want as much data as practicable cached for offline viewing ... especially my stats, current balance, profit/loss, etc. All up to date." -> "Yes" (build the offline snapshot)
 - [x] OFF1a [CloudClient.rawSink + CloudLink offline_copy/: status, orders, bids and API usage restored at start with the file's own age; list deliberately not restored; wallet figure (WalletMoney prefs), Tracker bets and the phone usage ledger were already stored on disk; test CloudClientTest "good status read is handed to the offline copy"] 
 - [x] OFF1b [v1.0.89 released + recorded 2026-10-27] full tests, ship, release, tell Tj
+
+## KX1 (Tj 2026-10-28, typed): "Make the github engine send all the api keys to me, either in the vigilant app or in a file so I can enter as many keys back into the app, including my novig and trading and private keys"
+- [x] Encrypted export: `.github/workflows/keys-export.yml` + `tools/keys_export.py` (AES-256-GCM, PBKDF2; passphrase = repo secret KEYS_EXPORT_PASSPHRASE) + `tools/keys_decrypt.html` (offline decrypt). Proved: `python3 -I tools/keys_export.py selftest`, Python-sealed file opened by WebCrypto. Public repo, so never plain.
+- [ ] Tj: create secret KEYS_EXPORT_PASSPHRASE, run the workflow, decrypt. The Novig MANAGEMENT key was never put on GitHub (rule), so it is not in the export: only what sits in Actions secrets (incl. NOVIG_TRADE_KEY_*, NOVIG_READ_KEY_*, KALSHI_KEY_*).
+- [ ] (optional) in-app import of the decrypted list.
