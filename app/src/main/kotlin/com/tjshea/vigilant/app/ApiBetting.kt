@@ -506,6 +506,44 @@ class ApiBettingController(
         }
     }
 
+    /**
+     * Restores the Tracker's settled bets and bid fills from the `phone-data` backup on GitHub (Tj, 2026-10-28: the old phone was lost, and Novig's fills only bring back open bets).
+     * Adds only what the Tracker lacks ([BetHistoryImport]); nothing is overwritten or deleted. Needs the saved GitHub token.
+     */
+    fun restoreHistory() {
+        val token = c.cloud.githubToken()
+        if (token == null) { toasts.tryEmit("Save the GitHub token first (Settings › Cloud scan)."); return }
+        scope.launch {
+            toasts.tryEmit("Restoring history from GitHub…")
+            val msg = try {
+                withContext(Dispatchers.IO) {
+                    val gh = com.tjshea.vigilant.data.cloud.CloudClient(c.http, { token })
+                    val names = when (val l = gh.listDir("phone-data", "phone/bets", null)) {
+                        is com.tjshea.vigilant.data.cloud.CloudClient.Poll.Fresh -> l.value.filter { it.startsWith("bets-") && it.endsWith(".jsonl") }.sorted()
+                        is com.tjshea.vigilant.data.cloud.CloudClient.Poll.Failed -> return@withContext "Couldn't read the backup: ${l.why}"
+                        else -> emptyList()
+                    }
+                    if (names.isEmpty()) return@withContext "No backup files were found on GitHub."
+                    val rows = ArrayList<com.tjshea.vigilant.data.tracker.BetHistory.Row>()
+                    var unread = 0
+                    for (n in names) {
+                        val t = gh.readFile("phone-data", "phone/bets/$n")
+                        if (t == null) unread++ else rows += com.tjshea.vigilant.data.tracker.BetHistoryImport.parse(t)
+                    }
+                    val fresh = com.tjshea.vigilant.data.tracker.BetHistoryImport.missing(rows, c.tracker.all())
+                    c.tracker.addAll(fresh)
+                    val bids = fresh.count { it.maker }
+                    "Restored ${fresh.size} settled bet${if (fresh.size == 1) "" else "s"} (${bids} bid fill${if (bids == 1) "" else "s"}) from ${names.size - unread} backup days" + if (unread > 0) "; $unread days could not be read, tap again." else "."
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                "Couldn't restore: ${e.message ?: e.javaClass.simpleName}"
+            }
+            toasts.tryEmit(msg)
+        }
+    }
+
     // ---- the Bet sheet --------------------------------------------------------------------------------------------
 
     /** A new sheet for a bet whose Kelly stake is [kelly]: its amount (the wallet's remainder when that's less) and where it came from. */

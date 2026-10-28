@@ -897,6 +897,7 @@ private fun VigilantRoot(
                         onRegrade = vm::regradeBet,
                         onPrice = vm::setPrice,
                         onSync = { vm.api.sync() },
+                        onRestore = { vm.api.restoreHistory() },
                         onLock = vm::lockIn,
                     ),
                 )
