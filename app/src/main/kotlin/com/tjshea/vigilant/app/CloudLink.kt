@@ -885,6 +885,35 @@ class CloudLink(private val c: AppContainer) {
         } else if (running && changed) " The running engine reads them the next time it starts (within 6 hours, or tap Start the engine now after switching it off and on)." else ""
     }
 
+    /**
+     * Brings the API keys back from the encrypted export on GitHub (Tj, 2026-10-28: "make it so the new version of vigilant can put my api keys from github onto my tablet"). GitHub keeps
+     * secrets write-only, so the "Export my keys (encrypted)" workflow wrote one AES-GCM file (branch `keys-export`); it is read here and opened with [passphrase] on this device. Only providers
+     * with no key saved yet are filled (nothing already here is replaced); Kalshi's key goes in sealed. Words only: no key is in the result. The Novig keys are not brought back here: use Enable betting.
+     */
+    suspend fun restoreKeys(passphrase: String): String = keysMutex.withLock {
+        fun say(m: String): String { _ui.update { it.copy(keysNote = m) }; return m }
+        if (!hasToken()) return@withLock say("Save the GitHub token first.")
+        val blob = client.readFile(com.tjshea.vigilant.data.cloud.KeysRestore.BRANCH, com.tjshea.vigilant.data.cloud.KeysRestore.PATH)
+            ?: return@withLock say("No encrypted export found. Run \"Export my keys (encrypted)\" in GitHub Actions first.")
+        val secrets = com.tjshea.vigilant.data.cloud.KeysRestore.decrypt(blob, passphrase.trim())
+            ?: return@withLock say("Wrong passphrase, or the file is damaged. Nothing was changed.")
+        val filled = ArrayList<String>()
+        for ((p, keys) in com.tjshea.vigilant.data.cloud.KeysRestore.providerKeys(secrets)) {
+            if (c.keyStore.current(p).any { it.isNotBlank() }) continue
+            c.keyStore.setKeys(p, keys)
+            filled += p.name.lowercase()
+        }
+        com.tjshea.vigilant.data.cloud.KeysRestore.kalshi(secrets)?.let { (id, pem) ->
+            if (c.kalshiKeyStore.flow.value?.complete != true) {
+                val sealed = c.sealSecret(pem)
+                c.kalshiKeyStore.update { com.tjshea.vigilant.data.kalshi.KalshiCredentials(id, sealed) }
+                filled += "kalshi"
+            }
+        }
+        c.eventLog.info("CLOUD", "keys brought back from GitHub for: ${filled.joinToString(", ").ifBlank { "nothing new" }}")
+        say(if (filled.isEmpty()) "Nothing new: every API in the export already has a key here." else "Brought back keys for ${filled.size}: ${filled.joinToString(", ")}. Check Settings › APIs, then Test.")
+    }
+
     private fun novigWords(e: Exception): String = when (e) {
         is com.tjshea.vigilant.data.novig.signing.NovigApiException -> "Novig refused (${e.status}${e.code?.let { " $it" }.orEmpty()})"
         else -> e.javaClass.simpleName + (e.message?.let { m -> ": " + m.take(80) } ?: "")
