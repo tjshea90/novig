@@ -319,13 +319,16 @@ fun NovigBettingSection(
     )
     Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         TextButton(onClick = actions.onSync, enabled = !betting.busy) { Text("Sync Tracker with Novig's fills") }
+        TextButton(onClick = actions.onDisable, enabled = !betting.busy) { Text("Turn betting off") }
+    }
+    // Tracker history (Tj, 2026-10-28): the backup on GitHub, or a history file Tj picks.
+    Column(Modifier.padding(top = 4.dp)) {
         TextButton(onClick = actions.onRestore) { Text("Restore settled bets and bids from the GitHub backup") }
         val histContext = LocalContext.current
         val histPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null) runCatching { histContext.contentResolver.openInputStream(uri)?.use { it.readBytes() } }.getOrNull()?.let(actions.onImportFile)
         }
         TextButton(onClick = { histPicker.launch(arrayOf("*/*")) }) { Text("Import a history file…") }
-        TextButton(onClick = actions.onDisable, enabled = !betting.busy) { Text("Turn betting off") }
     }
 }
 

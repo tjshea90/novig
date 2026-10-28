@@ -133,10 +133,6 @@ data class BetActions(
     val onPrice: (String, Int) -> Unit = { _, _ -> },
     /** Betting through the API is set up: add what Novig filled that the Tracker doesn't have. */
     val onSync: () -> Unit = {},
-    /** Bring back the settled bets and bid fills from the GitHub backup. */
-    val onRestore: () -> Unit = {},
-    /** Import a history file Tj picked (its bytes). */
-    val onImportFile: (ByteArray) -> Unit = {},
     /** Lock in a bet's profit (market id, the profit Tj confirmed): RESEARCH.md §67. */
     val onLock: (String, Double) -> Unit = { _, _ -> },
 )
@@ -481,12 +477,6 @@ fun TrackerScreen(
                                 if (state.betting.enabled) {
                                     TextButton(onClick = actions.onSync, contentPadding = PaddingValues(0.dp)) { Text("Sync with Novig's fills") }
                                 }
-                                TextButton(onClick = actions.onRestore, contentPadding = PaddingValues(0.dp)) { Text("Restore settled bets and bids from the GitHub backup") }
-                                val context = androidx.compose.ui.platform.LocalContext.current
-                                val picker = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
-                                    if (uri != null) runCatching { context.contentResolver.openInputStream(uri)?.use { it.readBytes() } }.getOrNull()?.let(actions.onImportFile)
-                                }
-                                TextButton(onClick = { picker.launch(arrayOf("*/*")) }, contentPadding = PaddingValues(0.dp)) { Text("Import a history file…") }
                             }
                         }
                     }
