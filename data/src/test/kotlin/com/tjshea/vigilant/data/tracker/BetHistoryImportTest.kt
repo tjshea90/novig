@@ -21,6 +21,6 @@ class BetHistoryImportTest {
         val have = BetHistoryImport.toTracked(BetHistory.json.decodeFromString<BetHistory.Row>(line("zzz", "won", "o2", placed = 1_000_000L + 60_000L)))!!.copy(id = "tablet-1")
         val got = BetHistoryImport.missing(rows, listOf(have))
         assertEquals(listOf("a1"), got.map { it.id })
-        assertEquals(emptyList(), BetHistoryImport.missing(rows, got + have).map { it.id })
+        assertEquals(emptyList<String>(), BetHistoryImport.missing(rows, got + have).map { it.id })
     }
 }
