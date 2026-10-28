@@ -1,0 +1,1 @@
+{"id":"stop-1793227386364","at":1793227386364,"from":"engine","kind":"alert","title":"The engine stopped ordering","body":"That key was revoked. Create a new one on novig.com → Profile → Settings → Novig API.","priority":1,"action":"CLOUD"}
