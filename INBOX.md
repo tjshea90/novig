@@ -1420,3 +1420,8 @@ Looks like it downloaded all open bets but no settled bets and bids
 ```
 Put everything in an easy step by step process. Put the saved bets and bids and results and profit history into a file or list of files I can download, send me the link to download, then in the vigilant app an easy import feature where I can select the history files 
 ```
+
+## 2026-10-28T23:39:42Z
+```
+If possible, make it so the new version of vigilant can put my api keys from github onto my tablet 
+```
