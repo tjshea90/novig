@@ -1390,3 +1390,8 @@ Go to Actions → "Export my keys (encrypted)" and tap Run workflow.
 
 I don't know how to find this 
 ```
+
+## 2026-10-28T19:39:15Z
+```
+Why isn't my vigilant app showing the bet button next to open in novig like it used to 
+```
