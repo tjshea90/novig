@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f17ba379-0eynsd",
- "head": "ab68ca0d94efb5fa6dd31c010e168b6c9b456b96",
+ "head": "48e940f488ab02814eae79a95382df389d7c511b",
  "since": 1793213430,
- "beat": 1793229802,
- "beatIso": "2026-10-28T23:23:22Z",
- "done": "",
- "next": ""
+ "beat": 1793229836,
+ "beatIso": "2026-10-28T23:23:56Z",
+ "done": "pre-release: HR1: restore settled bets and bids from the GitHub backup or a history file (versionCode 430, v1.0.90)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.90), then run: bash tools/record-release.sh v1.0.90 430 \"HR1: restore settled bets and bids from the GitHub backup or a history file\""
 }
