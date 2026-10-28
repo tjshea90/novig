@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "bcbc13",
- "kind": "routine",
+ "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-iclzy9",
- "head": "b6d104c9f8ca77f5b4bf0796fe1e8c5e578bb7ef",
+ "branch": "claude/optimistic-curie-gvyxhk",
+ "head": "39a02bbc33b2216fd22060acb204b4c66aeb0f47",
  "since": 1793143363,
- "beat": 1793143363,
- "beatIso": "2026-10-27T23:22:43Z",
+ "beat": 1793229667,
+ "beatIso": "2026-10-28T23:21:07Z",
  "done": "ENGINEER 2026-10-27 watch only, engine healthy, Novig maintenance lock, no change",
  "next": "moneylines at n200; resume backlog"
 }
