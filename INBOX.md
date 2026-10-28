@@ -1405,3 +1405,8 @@ And what do I do with the novig "private key"
 ```
 It gets stuck on this for a long time
 ```
+
+## 2026-10-28T22:44:47Z
+```
+I got bets to work but how do I get my tracker bet/bid history back
+```
