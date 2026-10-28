@@ -1,10 +1,10 @@
-# CHECKPOINT 4304 — read me first, then TASKS.md
+# CHECKPOINT 4305 — read me first, then TASKS.md
 
-**Written:** 2026-10-27T23:22:43Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-iclzy9` · **builds on:** `125aa3cb8` (this checkpoint is the commit after it)
+**Written:** 2026-10-28T11:25:59Z · **tests:** all 9 fast checks green
+**Branch:** `claude/keen-keller-ompkas` · **builds on:** `b6d104c9f` (this checkpoint is the commit after it)
 
 ## Just done
-ENGINEER 2026-10-27 watch only, engine healthy, Novig maintenance lock, no change
+ANALYST 2026-10-28 skipped by rule, engine healthy
 
 ## Do this next
 moneylines at n200; resume backlog
@@ -16,6 +16,7 @@ moneylines at n200; resume backlog
 
 ## Last ten checkpoints
 ```
+  b6d104c9f ckpt 4304: ENGINEER 2026-10-27 watch only, engine healthy, Novig maintenance lock, no 
   125aa3cb8 ckpt 4303: OFF1 done: v1.0.89 released
   910300bd7 ckpt 4302: pre-release: v1.0.89 OFF1: offline copy of engine status, orders, bids and 
   b26d538e4 ckpt 4301: pre-ship: v1.0.89 OFF1: offline copy of engine status, orders, bids and usa
@@ -25,5 +26,4 @@ moneylines at n200; resume backlog
   ff8339eda ckpt 4297: ANALYST 2026-10-26: digest read, no rule change, research card posted
   f5cb18298 ckpt 4296: A10 done: v1.0.88 (Android 10) released and recorded
   54ca4dd73 ckpt 4295: pre-release: v1.0.88 A10: installs on Android 10 (minSdk 29) for Tj's ARMv7
-  a605a6ee9 ckpt 4294: pre-ship: v1.0.88 A10: installs on Android 10 (minSdk 29) for Tj's ARMv7 ta
 ```
