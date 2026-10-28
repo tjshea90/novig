@@ -73,6 +73,8 @@ data class ReportActions(
     val onStopCloud: () -> Unit = {},
     val onSaveCloudNow: () -> Unit = {},
     val onSendCloudKeys: () -> Unit = {},
+    /** Bring the API keys back from GitHub's encrypted export, opened with the passphrase typed. */
+    val onRestoreCloudKeys: (String) -> Unit = {},
     val onSendNovigKey: () -> Unit = {},
     val onRemoveNovigKey: () -> Unit = {},
     val onSendTradeKey: () -> Unit = {},

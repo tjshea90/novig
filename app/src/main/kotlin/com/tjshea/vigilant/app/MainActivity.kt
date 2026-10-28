@@ -1008,6 +1008,7 @@ private fun VigilantRoot(
                         onStopCloud = { vm.stopCloudUntilNextOpening() },
                         onSaveCloudNow = { vm.saveCloudNow() },
                         onSendCloudKeys = { vm.sendCloudKeys() },
+                        onRestoreCloudKeys = { vm.restoreCloudKeys(it) },
                         onSendNovigKey = { vm.sendNovigKey() },
                         onRemoveNovigKey = { vm.removeNovigKey() },
                         onSendTradeKey = { vm.sendTradeKey() },

@@ -1552,6 +1552,17 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
         Button(onClick = reportActions.onSendCloudKeys, enabled = u.hasToken, modifier = Modifier.testTag("cloudSendKeys")) { Text("Send my API keys to GitHub") }
     }
     Hint("Every key saved on this phone for an API that is on, BoltOdds included, sealed here before it leaves (GitHub keeps secrets write-only). Pinnodds and Kalshi are never sent. Sent again by itself when a key changes while the scan is on GitHub.")
+    // The other way (Tj, 2026-10-28): keys come back from GitHub's encrypted export, opened here with the passphrase.
+    var restorePass by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    OutlinedTextField(
+        value = restorePass, onValueChange = { restorePass = it }, singleLine = true, label = { Text("Export passphrase") },
+        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+        modifier = Modifier.fillMaxWidth().padding(start = 8.dp, bottom = 4.dp).testTag("restoreKeysPass"),
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+        OutlinedButton(onClick = { reportActions.onRestoreCloudKeys(restorePass); restorePass = "" }, enabled = u.hasToken && restorePass.length >= 16, modifier = Modifier.testTag("cloudRestoreKeys")) { Text("Bring my API keys back from GitHub") }
+    }
+    Hint("Run \"Export my keys (encrypted)\" in GitHub Actions first (it needs the secret KEYS_EXPORT_PASSPHRASE). The keys are opened on this device; only APIs with no key here are filled. The Novig keys are not part of this: use Enable betting for those.")
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
         Button(onClick = reportActions.onSendNovigKey, enabled = u.hasToken, modifier = Modifier.testTag("cloudSendNovigKey")) { Text(if (u.novigKeyMadeAtMs > 0L) "Send my Novig key again" else "Send a Novig read-only key") }
         if (u.novigKeyMadeAtMs > 0L) OutlinedButton(onClick = reportActions.onRemoveNovigKey, enabled = u.hasToken, modifier = Modifier.testTag("cloudRemoveNovigKey")) { Text("Remove it") }

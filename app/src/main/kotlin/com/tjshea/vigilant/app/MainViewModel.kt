@@ -2644,6 +2644,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun resetEngine() { viewModelScope.launch(Dispatchers.IO) { c.cloud.resetEngine() } }
     fun stopCloudUntilNextOpening() { viewModelScope.launch(Dispatchers.IO) { c.cloud.stopUntilNextOpening() } }
     fun sendCloudKeys() { viewModelScope.launch(Dispatchers.IO) { c.cloud.sendKeys() } }
+    fun restoreCloudKeys(passphrase: String) { viewModelScope.launch(Dispatchers.IO) { c.cloud.restoreKeys(passphrase) } }
     fun sendNovigKey() { viewModelScope.launch(Dispatchers.IO) { c.cloud.sendNovigKey() } }
     fun removeNovigKey() { viewModelScope.launch(Dispatchers.IO) { c.cloud.removeNovigKey() } }
     fun sendTradeKey() { viewModelScope.launch(Dispatchers.IO) { c.cloud.sendTradeKey(); api.reloadConnection() } }
