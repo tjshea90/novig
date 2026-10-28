@@ -1032,6 +1032,8 @@ private fun VigilantRoot(
                         onDisable = vm.api::disable,
                         onRefreshBalance = { vm.api.refreshBalance() },
                         onSync = { vm.api.sync() },
+                        onRestore = { vm.api.restoreHistory() },
+                        onImportFile = { vm.api.importHistoryFile(it) },
                         onBackToBet = {
                             vm.api.backToBet()
                             tabName = betTab ?: tabName

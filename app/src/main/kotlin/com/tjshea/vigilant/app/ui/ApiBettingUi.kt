@@ -86,6 +86,8 @@ data class BettingActions(
     val onDisable: () -> Unit = {},
     val onRefreshBalance: () -> Unit = {},
     val onSync: () -> Unit = {},
+    val onRestore: () -> Unit = {},
+    val onImportFile: (ByteArray) -> Unit = {},
     /** The top-up banner's "Back to the bet" and its ✕. */
     val onBackToBet: () -> Unit = {},
     val onDismissTopUp: () -> Unit = {},
@@ -317,6 +319,12 @@ fun NovigBettingSection(
     )
     Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         TextButton(onClick = actions.onSync, enabled = !betting.busy) { Text("Sync Tracker with Novig's fills") }
+        TextButton(onClick = actions.onRestore) { Text("Restore settled bets and bids from the GitHub backup") }
+        val histContext = LocalContext.current
+        val histPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) runCatching { histContext.contentResolver.openInputStream(uri)?.use { it.readBytes() } }.getOrNull()?.let(actions.onImportFile)
+        }
+        TextButton(onClick = { histPicker.launch(arrayOf("*/*")) }) { Text("Import a history file…") }
         TextButton(onClick = actions.onDisable, enabled = !betting.busy) { Text("Turn betting off") }
     }
 }
