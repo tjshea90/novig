@@ -1395,3 +1395,8 @@ I don't know how to find this
 ```
 Why isn't my vigilant app showing the bet button next to open in novig like it used to 
 ```
+
+## 2026-10-28T19:39:59Z
+```
+And what do I do with the novig "private key" 
+```
