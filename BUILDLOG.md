@@ -428,3 +428,4 @@ day that changes.
 | v1.0.87 | code 427 | 2026-10-26T03:14Z | v1.0.87 CH87c + CH85: the Tracker card names Novig's own ledger profit of the Vigilant subaccount; the phone stops re-asking for an engine file that is not there (CNO, PropLine +EV)
 | v1.0.88 | code 428 | 2026-10-26T19:08Z | v1.0.88 A10: installs on Android 10 (minSdk 29) for Tj's ARMv7 tablet
 | v1.0.89 | code 429 | 2026-10-27T19:16Z | v1.0.89 OFF1: offline copy of engine status, orders, bids and usage for the offline tablet
+| v1.0.90 | code 430 | 2026-10-28T23:39Z | HR1: restore settled bets and bids from the GitHub backup or a history file
