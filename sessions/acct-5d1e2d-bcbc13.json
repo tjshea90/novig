@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "bcbc13",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-gvyxhk",
+ "head": "7017efa6e30cd1683d5864e6c5345194cdddb8d7",
+ "since": 1793229737,
+ "beat": 1793229737,
+ "beatIso": "2026-10-28T23:22:17Z",
+ "done": "WATCH 2026-10-28: engine alive, trading key rejected by Novig",
+ "next": "Tj must send new trading key; then confirm tradeStopped clears"
+}
