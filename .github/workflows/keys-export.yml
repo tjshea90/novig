@@ -33,6 +33,25 @@ jobs:
             echo 'Paste this into tools/keys_decrypt.html with your passphrase:'
             echo '```'; cat keys.enc.json; echo; echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish the encrypted file for the app (ciphertext only)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // The Vigilant app reads this one file (Settings > Cloud scan > Bring my API keys back) and opens it on the phone with the passphrase.
+            const fs = require('fs');
+            const content = fs.readFileSync('keys.enc.json').toString('base64');
+            const { owner, repo } = context.repo;
+            const base = (await github.rest.repos.get({ owner, repo })).data.default_branch;
+            let sha;
+            try { sha = (await github.rest.repos.getContent({ owner, repo, path: 'keys.enc.json', ref: 'keys-export' })).data.sha; }
+            catch (e) {
+              try { await github.rest.git.getRef({ owner, repo, ref: 'heads/keys-export' }); }
+              catch (e2) {
+                const head = (await github.rest.git.getRef({ owner, repo, ref: 'heads/' + base })).data.object.sha;
+                await github.rest.git.createRef({ owner, repo, ref: 'refs/heads/keys-export', sha: head });
+              }
+            }
+            await github.rest.repos.createOrUpdateFileContents({ owner, repo, path: 'keys.enc.json', branch: 'keys-export', message: 'encrypted keys export', content, sha });
       - uses: actions/upload-artifact@v4
         with:
           name: keys-encrypted
