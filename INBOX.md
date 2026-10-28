@@ -1373,3 +1373,8 @@ I lost my phone that ran vigilant. Tell me step by step in  simple language how 
 ```
 Yes
 ```
+
+## 2026-10-28T18:50:49Z
+```
+Make the github engine send all the api keys to me, either in the vigilant app or in a file so I can enter as many keys as possible back into the app, including my novig and trading and private keys 
+```
