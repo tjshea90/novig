@@ -1400,3 +1400,8 @@ Why isn't my vigilant app showing the bet button next to open in novig like it u
 ```
 And what do I do with the novig "private key" 
 ```
+
+## 2026-10-28T22:32:14Z
+```
+It gets stuck on this for a long time
+```
