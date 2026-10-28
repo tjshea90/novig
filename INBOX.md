@@ -1410,3 +1410,8 @@ It gets stuck on this for a long time
 ```
 I got bets to work but how do I get my tracker bet/bid history back
 ```
+
+## 2026-10-28T22:52:26Z
+```
+Looks like it downloaded all open bets but no settled bets and bids
+```
