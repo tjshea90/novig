@@ -1,13 +1,13 @@
-# CHECKPOINT 4311 — read me first, then TASKS.md
+# CHECKPOINT 4312 — read me first, then TASKS.md
 
-**Written:** 2026-10-29T03:15:29Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-f17ba379-0eynsd` · **builds on:** `936bf6644` (this checkpoint is the commit after it)
+**Written:** 2026-10-29T11:28:51Z · **tests:** all 9 fast checks green
+**Branch:** `claude/keen-keller-dxiuja` · **builds on:** `7c0c702b0` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: HR2: imported fair-value settlements keep their profit (all-time profit was understated by $132) (versionCode 432, v1.0.92)
+ENGINEER 2026-10-29 watch only, engine healthy, no change
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.92), then run: bash tools/record-release.sh v1.0.92 432 "HR2: imported fair-value settlements keep their profit (all-time profit was understated by $132)"
+moneylines at n200
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  5a0f22d1a ckpt 4311: pre-release: HR2: imported fair-value settlements keep their profit (all-ti
   586319a54 ckpt 4310: KX1/HR1 done: encrypted key export (keys-export.yml), history restore + fil
   fbecf50b9 ckpt 4309: pre-release: KX1b: bring API keys back from GitHub's encrypted export onto 
   48e940f48 ckpt 4308: pre-release: HR1: restore settled bets and bids from the GitHub backup or a
@@ -25,8 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   b6d104c9f ckpt 4304: ENGINEER 2026-10-27 watch only, engine healthy, Novig maintenance lock, no 
   125aa3cb8 ckpt 4303: OFF1 done: v1.0.89 released
   910300bd7 ckpt 4302: pre-release: v1.0.89 OFF1: offline copy of engine status, orders, bids and 
-  b26d538e4 ckpt 4301: pre-ship: v1.0.89 OFF1: offline copy of engine status, orders, bids and usa
 ```
-
-(2 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
