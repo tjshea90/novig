@@ -1425,3 +1425,8 @@ Put everything in an easy step by step process. Put the saved bets and bids and 
 ```
 If possible, make it so the new version of vigilant can put my api keys from github onto my tablet 
 ```
+
+## 2026-10-29T02:28:12Z
+```
+I sent the trading key using the button, but it says this
+```
