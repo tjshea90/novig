@@ -1435,3 +1435,8 @@ I sent the trading key using the button, but it says this
 ```
 Why is there no bet/bid history from Oct 26-27 when the engine was auto betting and bidding without my phone 
 ```
+
+## 2026-10-29T03:05:36Z
+```
+Make sure these numbers are correct because I thought before I lost my phone it said green profit all time
+```
