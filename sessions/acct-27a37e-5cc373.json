@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f17ba379-0eynsd",
- "head": "936bf66440edf29c91c424d9452d20e3670664d4",
+ "head": "5a0f22d1a63e7a6f2b340a08a73ae3f3ea1932f4",
  "since": 1793234943,
- "beat": 1793243699,
- "beatIso": "2026-10-29T03:14:59Z",
- "done": "KX1/HR1 done: encrypted key export (keys-export.yml), history restore + file import (v1.0.90), keys restore from GitHub (v1.0.91), engine restarted so it holds the new Novig read+trade keys, history file v2 with engine orders (research/history/vigilant-history-2026-10-29.jsonl.gz)",
- "next": "Tj to: create KEYS_EXPORT_PASSPHRASE + run keys-export, import history file. Open ideas: app should restart the engine after a trading-key send even inside the 10 min throttle (sent keys at 22:13 EDT missed the already-started run); in-app import of engine ledger (trades.json) for future gaps; Tracker-tab buttons for the import (layout tests failed when added to the open-bets summary)"
+ "beat": 1793243729,
+ "beatIso": "2026-10-29T03:15:29Z",
+ "done": "pre-release: HR2: imported fair-value settlements keep their profit (all-time profit was understated by $132) (versionCode 432, v1.0.92)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.92), then run: bash tools/record-release.sh v1.0.92 432 \"HR2: imported fair-value settlements keep their profit (all-time profit was understated by $132)\""
 }
