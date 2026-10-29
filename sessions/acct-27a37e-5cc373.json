@@ -8,8 +8,8 @@
  "branch": "ccr-f17ba379-0eynsd",
  "head": "586319a545318c8dc462491421a22261df17344c",
  "since": 1793234943,
- "beat": 1793241447,
- "beatIso": "2026-10-29T02:37:27Z",
+ "beat": 1793242796,
+ "beatIso": "2026-10-29T02:59:56Z",
  "done": "KX1/HR1 done: encrypted key export (keys-export.yml), history restore + file import (v1.0.90), keys restore from GitHub (v1.0.91), engine restarted so it holds the new Novig read+trade keys, history file v2 with engine orders (research/history/vigilant-history-2026-10-29.jsonl.gz)",
  "next": "Tj to: create KEYS_EXPORT_PASSPHRASE + run keys-export, import history file. Open ideas: app should restart the engine after a trading-key send even inside the 10 min throttle (sent keys at 22:13 EDT missed the already-started run); in-app import of engine ledger (trades.json) for future gaps; Tracker-tab buttons for the import (layout tests failed when added to the open-bets summary)"
 }
