@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "bcbc13",
- "kind": "routine",
+ "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-gvyxhk",
- "head": "7017efa6e30cd1683d5864e6c5345194cdddb8d7",
+ "branch": "claude/optimistic-curie-701y5o",
+ "head": "c875a5bed08c6a26c025df966f6ab7f09f4f0a8e",
  "since": 1793229737,
- "beat": 1793229737,
- "beatIso": "2026-10-28T23:22:17Z",
+ "beat": 1793297940,
+ "beatIso": "2026-10-29T18:19:00Z",
  "done": "WATCH 2026-10-28: engine alive, trading key rejected by Novig",
  "next": "Tj must send new trading key; then confirm tradeStopped clears"
 }
