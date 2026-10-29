@@ -23,4 +23,14 @@ class BetHistoryImportTest {
         assertEquals(listOf("a1"), got.map { it.id })
         assertEquals(emptyList<String>(), BetHistoryImport.missing(rows, got + have).map { it.id })
     }
+
+    @Test fun fairValueSettlementKeepsItsProfit() {
+        val r = BetHistoryImport.parse(line("f1", "fmv").replace("\"paid\"", "\"profit\":0.2,\"paid\"")).single()
+        val b = BetHistoryImport.toTracked(r)!!
+        assertEquals(0.2, b.profit!!, 1e-9)
+        val broken = b.copy(settleValue = null)
+        assertEquals(0.0, broken.profit!!, 1e-9)
+        val fix = BetHistoryImport.fmvRepairs(listOf(r), listOf(broken))
+        assertEquals(0.2, broken.copy(settleValue = fix.getValue(broken.id)).profit!!, 1e-9)
+    }
 }

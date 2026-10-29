@@ -885,6 +885,17 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
      * [bets] added as they are (new ids only), in one save. For the scan study's grading harness, which builds each bet itself ([cnoBet],
      * [opportunityBet]) and has many at a time; the Tracker's own ✓ and placed bets go through [logCno], [track] and [logApi].
      */
+    /** Gives FMV bets that lack one their settle value (by bet id); returns how many changed. See [BetHistoryImport.fmvRepairs]. */
+    suspend fun setSettleValues(values: Map<String, Double>): Int {
+        if (values.isEmpty()) return 0
+        var changed = 0
+        store.update { list ->
+            changed = 0
+            list.map { b -> values[b.id]?.takeIf { b.status == BetStatus.FMV && b.settleValue == null }?.let { changed++; b.copy(settleValue = it) } ?: b }
+        }
+        return changed
+    }
+
     suspend fun addAll(bets: List<TrackedBet>) {
         if (bets.isEmpty()) return
         store.update { list ->

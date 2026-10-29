@@ -34,7 +34,27 @@ object BetHistoryImport {
             source = if (cno) BetTracker.SOURCE_CNO else BetTracker.SOURCE_VIGILANT, american = r.odds,
             contracts = r.contracts, paid = r.paid, fee = r.fee, settledBy = r.settledBy, imported = true,
             gradeNote = r.gradeNote ?: "Restored from the GitHub backup", maker = r.made == "bid", lockFor = r.lockFor,
+            settleValue = settleValueOf(r),
         )
+    }
+
+    /**
+     * A fair-market-value settlement pays [BetStatus.FMV] `stake * (settleValue / cost - 1)`: the value per $1 contract that makes the recorded profit come out. Without it every FMV bet counts as zero profit
+     * (found 2026-10-29: 107 imported FMV bets hid +$132 of profit).
+     */
+    fun settleValueOf(r: BetHistory.Row): Double? =
+        if (status(r.result) == BetStatus.FMV && r.profit != null && r.stake > 0.0 && r.cost > 0.0) r.cost * (1.0 + r.profit / r.stake) else null
+
+    /** Settle values for FMV bets the Tracker already holds without one, from [rows] (matched by id). */
+    fun fmvRepairs(rows: List<BetHistory.Row>, have: List<TrackedBet>): Map<String, Double> {
+        val missing = have.filter { it.status == BetStatus.FMV && it.settleValue == null }.associateBy { it.id.take(8) }
+        if (missing.isEmpty()) return emptyMap()
+        val out = HashMap<String, Double>()
+        for (r in rows) {
+            val b = missing[r.id.take(8)] ?: continue
+            settleValueOf(r)?.let { out[b.id] = it }
+        }
+        return out
     }
 
     /** The bets [rows] would add to a Tracker that holds [have]; each at most once. */

@@ -532,8 +532,9 @@ class ApiBettingController(
                     }
                     val fresh = com.tjshea.vigilant.data.tracker.BetHistoryImport.missing(rows, c.tracker.all())
                     c.tracker.addAll(fresh)
+                    val repaired = c.tracker.setSettleValues(com.tjshea.vigilant.data.tracker.BetHistoryImport.fmvRepairs(rows, c.tracker.all()))
                     val bids = fresh.count { it.maker }
-                    "Restored ${fresh.size} settled bet${if (fresh.size == 1) "" else "s"} (${bids} bid fill${if (bids == 1) "" else "s"}) from ${names.size - unread} backup days" + if (unread > 0) "; $unread days could not be read, tap again." else "."
+                    "Restored ${fresh.size} settled bet${if (fresh.size == 1) "" else "s"} (${bids} bid fill${if (bids == 1) "" else "s"}) from ${names.size - unread} backup days" + (if (repaired > 0) "; fixed the profit of $repaired fair-value settlements" else "") + if (unread > 0) "; $unread days could not be read, tap again." else "."
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -554,8 +555,9 @@ class ApiBettingController(
                     if (rows.isEmpty()) return@withContext "That file has no bets in it. Pick the vigilant-history file."
                     val fresh = com.tjshea.vigilant.data.tracker.BetHistoryImport.missing(rows, c.tracker.all())
                     c.tracker.addAll(fresh)
+                    val repaired = c.tracker.setSettleValues(com.tjshea.vigilant.data.tracker.BetHistoryImport.fmvRepairs(rows, c.tracker.all()))
                     val bids = fresh.count { it.maker }
-                    "Imported ${fresh.size} settled bet${if (fresh.size == 1) "" else "s"} ($bids bid fill${if (bids == 1) "" else "s"}); ${rows.size - fresh.size} were already here or still open."
+                    "Imported ${fresh.size} settled bet${if (fresh.size == 1) "" else "s"} ($bids bid fill${if (bids == 1) "" else "s"}); ${rows.size - fresh.size} were already here or still open." + (if (repaired > 0) " Fixed the profit of $repaired fair-value settlements." else "")
                 }
             } catch (e: CancellationException) {
                 throw e
