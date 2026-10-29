@@ -1430,3 +1430,8 @@ If possible, make it so the new version of vigilant can put my api keys from git
 ```
 I sent the trading key using the button, but it says this
 ```
+
+## 2026-10-29T02:35:39Z
+```
+Why is there no bet/bid history from Oct 26-27 when the engine was auto betting and bidding without my phone 
+```
