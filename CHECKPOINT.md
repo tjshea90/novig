@@ -1,13 +1,13 @@
-# CHECKPOINT 4310 — read me first, then TASKS.md
+# CHECKPOINT 4311 — read me first, then TASKS.md
 
-**Written:** 2026-10-29T02:37:27Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-f17ba379-0eynsd` · **builds on:** `5987b75d2` (this checkpoint is the commit after it)
+**Written:** 2026-10-29T03:15:29Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-f17ba379-0eynsd` · **builds on:** `936bf6644` (this checkpoint is the commit after it)
 
 ## Just done
-KX1/HR1 done: encrypted key export (keys-export.yml), history restore + file import (v1.0.90), keys restore from GitHub (v1.0.91), engine restarted so it holds the new Novig read+trade keys, history file v2 with engine orders (research/history/vigilant-history-2026-10-29.jsonl.gz)
+pre-release: HR2: imported fair-value settlements keep their profit (all-time profit was understated by $132) (versionCode 432, v1.0.92)
 
 ## Do this next
-Tj to: create KEYS_EXPORT_PASSPHRASE + run keys-export, import history file. Open ideas: app should restart the engine after a trading-key send even inside the 10 min throttle (sent keys at 22:13 EDT missed the already-started run); in-app import of engine ledger (trades.json) for future gaps; Tracker-tab buttons for the import (layout tests failed when added to the open-bets summary)
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.92), then run: bash tools/record-release.sh v1.0.92 432 "HR2: imported fair-value settlements keep their profit (all-time profit was understated by $132)"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Tj to: create KEYS_EXPORT_PASSPHRASE + run keys-export, import history file. Ope
 
 ## Last ten checkpoints
 ```
+  586319a54 ckpt 4310: KX1/HR1 done: encrypted key export (keys-export.yml), history restore + fil
   fbecf50b9 ckpt 4309: pre-release: KX1b: bring API keys back from GitHub's encrypted export onto 
   48e940f48 ckpt 4308: pre-release: HR1: restore settled bets and bids from the GitHub backup or a
   7017efa6e ckpt 4307: WATCH 2026-10-28: engine alive, trading key rejected by Novig
@@ -25,8 +26,7 @@ Tj to: create KEYS_EXPORT_PASSPHRASE + run keys-export, import history file. Ope
   125aa3cb8 ckpt 4303: OFF1 done: v1.0.89 released
   910300bd7 ckpt 4302: pre-release: v1.0.89 OFF1: offline copy of engine status, orders, bids and 
   b26d538e4 ckpt 4301: pre-ship: v1.0.89 OFF1: offline copy of engine status, orders, bids and usa
-  34ff76bc8 ckpt 4300: OFF1a: offline copy of engine status/orders/bids/usage
 ```
 
-(3 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
