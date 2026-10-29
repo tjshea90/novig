@@ -1,13 +1,13 @@
-# CHECKPOINT 4314 — read me first, then TASKS.md
+# CHECKPOINT 4315 — read me first, then TASKS.md
 
-**Written:** 2026-10-29T18:49:56Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-701y5o` · **builds on:** `5bfb41e1f` (this checkpoint is the commit after it)
+**Written:** 2026-10-29T23:22:31Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-uil39t` · **builds on:** `d8c868126` (this checkpoint is the commit after it)
 
 ## Just done
-CHAT 2026-10-29: turned on propLine/parlay/sx/novig sockets (tablet defaults had them off); answered ParlayAPI plan question (only Starter key found)
+ANALYST 2026-10-29: no rule change, note + card posted
 
 ## Do this next
-await Tj: ParlayAPI dashboard plan; Kalshi key then gates.kalshiSocket=true; SX Bet key 403 scope
+next ANALYST: split engine-auto by kind, ATP at n200
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ await Tj: ParlayAPI dashboard plan; Kalshi key then gates.kalshiSocket=true; SX 
 
 ## Last ten checkpoints
 ```
+  23ba9fa98 ckpt 4314: CHAT 2026-10-29: turned on propLine/parlay/sx/novig sockets (tablet default
   c875a5bed ckpt 4313: WATCH 2026-10-29 engine healthy, no change
   0ab8edc90 ckpt 4312: ENGINEER 2026-10-29 watch only, engine healthy, no change
   5a0f22d1a ckpt 4311: pre-release: HR2: imported fair-value settlements keep their profit (all-ti
@@ -25,5 +26,7 @@ await Tj: ParlayAPI dashboard plan; Kalshi key then gates.kalshiSocket=true; SX 
   7017efa6e ckpt 4307: WATCH 2026-10-28: engine alive, trading key rejected by Novig
   e4376b04e ckpt 4306: ENGINEER 2026-10-28 watch only, engine healthy, no change
   26f9309b3 ckpt 4305: ANALYST 2026-10-28 skipped by rule, engine healthy
-  b6d104c9f ckpt 4304: ENGINEER 2026-10-27 watch only, engine healthy, Novig maintenance lock, no 
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
