@@ -430,3 +430,4 @@ day that changes.
 | v1.0.89 | code 429 | 2026-10-27T19:16Z | v1.0.89 OFF1: offline copy of engine status, orders, bids and usage for the offline tablet
 | v1.0.90 | code 430 | 2026-10-28T23:39Z | HR1: restore settled bets and bids from the GitHub backup or a history file
 | v1.0.91 | code 431 | 2026-10-28T23:58Z | KX1b: bring API keys back from GitHub's encrypted export onto the tablet
+| v1.0.92 | code 432 | 2026-10-29T03:27Z | HR2: imported fair-value settlements keep their profit
