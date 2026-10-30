@@ -1,23 +1,22 @@
-# CHECKPOINT 4324 — read me first, then TASKS.md
+# CHECKPOINT 4325 — read me first, then TASKS.md
 
-**Written:** 2026-10-30T21:04:17Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-230827ca-lcskn8` · **builds on:** `bc4163ace` (this checkpoint is the commit after it)
+**Written:** 2026-10-30T21:09:20Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-230827ca-lcskn8` · **builds on:** `214aa0f42` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: TK1: both devices can share one Novig trading key (save on one, use on the other)
+pre-release: TK1: both devices can share one Novig trading key (save on one, use on the other) (versionCode 435, v1.0.95)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.95), then run: bash tools/record-release.sh v1.0.95 435 "TK1: both devices can share one Novig trading key (save on one, use on the other)"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  214aa0f42 ckpt 4324: pre-ship: TK1: both devices can share one Novig trading key (save on one, u
   851a476f4 ckpt 4323: pre-release: KX1c: the Bring my API keys back result shows right under its 
   6b2227c21 ckpt 4322: pre-ship: KX1c: the Bring my API keys back result shows right under its but
   f2df0ddae ckpt 4321: ANALYST 2026-10-30 no change
@@ -27,8 +26,4 @@ ship.sh gates and releases this
   0d173b549 ckpt 4317: FB1: full encrypted backup/restore of the whole app incl. keys (FullBackup,
   0bef21369 ckpt 4315: ANALYST 2026-10-29: no rule change, note + card posted
   23ba9fa98 ckpt 4314: CHAT 2026-10-29: turned on propLine/parlay/sx/novig sockets (tablet default
-  c875a5bed ckpt 4313: WATCH 2026-10-29 engine healthy, no change
 ```
-
-(4 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
