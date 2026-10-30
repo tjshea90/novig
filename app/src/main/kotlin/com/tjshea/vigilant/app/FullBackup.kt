@@ -4,7 +4,6 @@ import android.app.Application
 import com.tjshea.vigilant.data.backup.BackupCipher
 import com.tjshea.vigilant.data.backup.SealedFiles
 import com.tjshea.vigilant.data.novig.signing.NovigConnection
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -68,35 +67,35 @@ object FullBackup {
         var bytes = 0L
         ZipOutputStream(BackupCipher.encryptingStream(out, passphrase)).use { zip ->
             zip.setLevel(6)
-            fun put(name: String, data: ByteArray) {
+            fun entry(name: String, data: ByteArray) {
                 zip.putNextEntry(ZipEntry(name)); zip.write(data); zip.closeEntry()
             }
             for (f in filesDir.walkTopDown().filter { it.isFile }.sortedBy { it.path }) {
                 val rel = f.relativeTo(filesDir).invariantSeparatorsPath
                 if (skip(rel)) continue
                 val data = runCatching { f.readBytes() }.getOrNull() ?: continue
-                val entry = if (SealedFiles.FIELDS.containsKey(rel)) {
+                val data2 = if (SealedFiles.FIELDS.containsKey(rel)) {
                     val text = data.decodeToString()
                     if (!SealedFiles.holdsSecret(rel, text)) data
                     else SealedFiles.open(rel, text) { c.openSecret(it) }?.also { secrets += SECRET_WORDS[rel] ?: rel }?.toByteArray()
                         ?: run { unreadable += SECRET_WORDS[rel] ?: rel; null }
                 } else data
-                if (entry == null) continue
-                put(FILES + rel, entry); files++; bytes += entry.size
+                if (data2 == null) continue
+                entry(FILES + rel, data2); files++; bytes += data2.size
             }
             val prefsDir = File(filesDir.parentFile, "shared_prefs")
             prefsDir.listFiles { x -> x.isFile && x.name.endsWith(".xml") }?.sortedBy { it.name }?.forEach { f ->
-                runCatching { f.readBytes() }.getOrNull()?.let { put(PREFS + f.name, it); files++; bytes += it.size }
+                runCatching { f.readBytes() }.getOrNull()?.let { entry(PREFS + f.name, it); files++; bytes += it.size }
             }
             c.novigConnection.load()?.let { n ->
-                put(CONNECTION, buildJsonObject {
+                entry(CONNECTION, buildJsonObject {
                     put("readKeyId", JsonPrimitive(n.readKeyId)); put("readAlias", JsonPrimitive(n.readAlias))
                     put("subaccountKeyId", JsonPrimitive(n.subaccountKeyId))
                     n.tradingKeyId?.let { put("tradingKeyId", JsonPrimitive(it)) }
                     n.tradingAlias?.let { put("tradingAlias", JsonPrimitive(it)) }
                 }.toString().toByteArray())
             }
-            put(MANIFEST, buildJsonObject {
+            entry(MANIFEST, buildJsonObject {
                 put("version", JsonPrimitive(VERSION)); put("createdAtMs", JsonPrimitive(System.currentTimeMillis()))
                 put("app", JsonPrimitive(BuildConfig.VERSION_NAME)); put("files", JsonPrimitive(files))
             }.toString().toByteArray())
@@ -159,7 +158,7 @@ object FullBackup {
     fun applyPending(app: Application) {
         val pending = File(app.filesDir, PENDING)
         if (!pending.isDirectory) return
-        runCatching {
+        val applied = runCatching {
             pending.walkTopDown().filter { it.isFile }.forEach { f ->
                 val rel = f.relativeTo(pending).invariantSeparatorsPath
                 when {
@@ -168,8 +167,9 @@ object FullBackup {
                 }
             }
             File(pending, CONNECTION).takeIf { it.isFile }?.let { restoreConnection(app, json.parseToJsonElement(it.readText()).jsonObject) }
-        }
-        pending.deleteRecursively()
+        }.isSuccess
+        // A failed apply keeps the staged files, so the next start tries again.
+        if (applied) pending.deleteRecursively()
     }
 
     private fun copy(from: File, to: File) {
@@ -194,7 +194,4 @@ object FullBackup {
         )
         runBlocking { com.tjshea.vigilant.app.data.NovigConnectionStore(app).save(conn) }
     }
-
-    /** First look at a backup file for a human: nothing but its size, to confirm the right file was picked. */
-    fun describe(bytes: Long): String = "${bytes / 1024} KB"
 }
