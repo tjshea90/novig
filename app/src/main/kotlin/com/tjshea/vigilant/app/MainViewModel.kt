@@ -1836,6 +1836,46 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Full backup (Tj, 2026-10-30): everything in the app, keys opened, in one passphrase-encrypted file at [uri] ([FullBackup]). The note says what went in; the file is Tj's to keep, it is never uploaded.
+     */
+    fun fullBackupTo(uri: android.net.Uri, passphrase: String) {
+        _state.update { it.copy(backupBusy = true, backupNote = null, backupOk = null) }
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) {
+                runCatching {
+                    val out = getApplication<Application>().contentResolver.openOutputStream(uri, "wt") ?: error("Android would not open that file")
+                    FullBackup.write(c, out, passphrase)
+                }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }
+            val note = r.fold({ it.note }, { "The backup was not written: ${it.message?.take(100) ?: it.javaClass.simpleName}." })
+            _state.update { it.copy(backupBusy = false, backupNote = note, backupOk = r.isSuccess) }
+            if (r.isSuccess) c.eventLog.info("BACKUP", "full backup written: ${r.getOrNull()?.files} files")
+        }
+    }
+
+    /** Opens a full backup into the staging folder; the app restarts itself a moment later to apply it (it must be applied before anything is opened). */
+    fun fullRestoreFrom(uri: android.net.Uri, passphrase: String) {
+        _state.update { it.copy(backupBusy = true, backupNote = null, backupOk = null) }
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) {
+                runCatching {
+                    val input = getApplication<Application>().contentResolver.openInputStream(uri) ?: error("Android would not open that file")
+                    input.use { FullBackup.stage(c, it, passphrase) }
+                }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }
+            val rep = r.getOrNull()
+            val note = rep?.note ?: "The backup was not read: ${r.exceptionOrNull()?.message?.take(100)}. Nothing was changed."
+            _state.update { it.copy(backupBusy = false, backupNote = note, backupOk = rep?.ok == true) }
+            if (rep?.ok == true) {
+                c.eventLog.info("BACKUP", "full backup staged: ${rep.files} files; restarting to apply")
+                _toasts.tryEmit("Backup opened. Vigilant closes now: open it again to finish.")
+                kotlinx.coroutines.delay(2_500)
+                kotlin.system.exitProcess(0)
+            }
+        }
+    }
+
     /** Adds the keys from an exported file to the ones already here. */
     fun importKeys(uri: android.net.Uri) {
         viewModelScope.launch {

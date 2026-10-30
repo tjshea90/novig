@@ -93,6 +93,8 @@ class VigilantApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // A restored full backup waits in restore_pending until now: applied before any store is opened, so nothing rewrites the files under it (FullBackup).
+        runCatching { FullBackup.applyPending(this) }
         // A crash's stack is kept before the process goes (Diagnostics' Recent problems, Tj 2026-09-30).
         AppExits.install(this)
         // A new process has no scan results (they live in memory): a "scan done" notification left
