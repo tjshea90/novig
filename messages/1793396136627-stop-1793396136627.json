@@ -1,0 +1,1 @@
+{"id":"stop-1793396136627","at":1793396136627,"from":"engine","kind":"alert","title":"The engine stopped ordering","body":"Novig needs its location check: open the Novig app for a moment so it can geolocate, then try again (Novig code GEOLOCATION_BLOCKED_SOFTWARE).","priority":1,"action":"CLOUD"}
