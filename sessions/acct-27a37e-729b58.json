@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "729b58",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-r2cem3",
+ "head": "f2df0ddaed4fdeab8b043dba7c51745c3ddbc5ba",
+ "since": 1793380949,
+ "beat": 1793380949,
+ "beatIso": "2026-10-30T17:22:29Z",
+ "done": "ANALYST 2026-10-30 no change",
+ "next": "WATCH ATP n250+, spreads"
+}
