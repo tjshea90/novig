@@ -1455,3 +1455,10 @@ Should I get all my api keys back first then make the backup
 ```
 Tell me step by step easily how to get my keys back on the tablet, then save all data and keys
 ```
+
+## 2026-10-30T18:55:15Z
+```
+Go to Settings › Cloud scan. Type the passphrase from step 3 and tap Bring my API keys back from GitHub.
+
+This didn't do anything
+```
