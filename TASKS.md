@@ -6558,3 +6558,7 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [x] FB1b `app/FullBackup` write/stage/applyPending (secrets opened in the file, sealed again by the target Keystore; restore staged and applied in `VigilantApp.onCreate` before any store opens) — `FullBackupTest`.
 - [x] FB1c Settings › Usage & keys › "Full backup" (passphrase twice, Make full backup, Restore with confirm, Secure Folder steps); cloud_trade_key/cloud_token added to the OS backup exclusions.
 - [ ] After release: Tj installs, makes a backup on the old install, restores in Secure Folder; then "Enable betting" reconnects the phone's hardware-held Novig read key (management key moves). Tj keeps the file private (public repo: never commit one).
+
+## TK1 (Tj 2026-10-30, typed): "Make it so both devices share the same trading key" (phone + tablet bet at different times; Novig allows ONE trading key per subaccount, a device without it revokes it)
+- [x] `data/backup/TradeKeyShare` + `app/TradeKeySharing` (export from the device holding the software trading key; import checks Novig with one signed echo, seals it with the device's Keystore, points the connection at it so Enable betting revokes nothing) + Settings › Usage & keys buttons — `TradeKeyShareTest`, `TradeKeySharingTest`.
+- [ ] Tj: on the device that bets, Cloud scan › Send trading key to GitHub (makes a shareable key), then Save trading key; on the other device Use the trading key.
