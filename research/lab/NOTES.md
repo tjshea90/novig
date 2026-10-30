@@ -70,3 +70,4 @@
 - 2026-10-24 TR: player recent form vs the line predicts results beyond Novig's close by ~1 pt (z 3.1/3.5 both halves) but is mostly priced by the close and is far below prop taker vig; steam does not repeat. Not built. research/trends_2026-10-24.md
 - 2026-10-26 ANALYST mirage: no change; moneylines leak (z -2.45, n117) waits for n200; team totals the proven type; research/review/2026-10-26.md
 - 2026-10-29 ANALYST: no change; engine-auto -5.2% z-2.04 (split by kind next), ATP n179 watch. research/review/2026-10-29.md
+- 2026-10-30 ANALYST: auto+bids n1996 ROI -0.2%; ATP -10.7% n218 (not significant), no rule change; research/review/2026-10-30.md
