@@ -8,8 +8,8 @@
  "branch": "ccr-230827ca-lcskn8",
  "head": "6553a4de81662ad538ff37539b408582e1507c1a",
  "since": 1793330959,
- "beat": 1793331885,
- "beatIso": "2026-10-30T03:44:45Z",
+ "beat": 1793331890,
+ "beatIso": "2026-10-30T03:44:50Z",
  "done": "pre-ship: FB1: full encrypted backup and restore of the whole app, keys included, for Samsung Secure Folder",
  "next": "ship.sh gates and releases this"
 }
