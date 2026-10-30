@@ -1445,3 +1445,8 @@ Make sure these numbers are correct because I thought before I lost my phone it 
 ```
 Make it so I can save a backup of all data in the vigilant app including all keys and all private keys and trading keys and data. I want a 100% mirror copy of this app and all data inside so I can easily transfer it to Samsung secure folder
 ```
+
+## 2026-10-30T18:34:46Z
+```
+Should I get all my api keys back first then make the backup
+```
