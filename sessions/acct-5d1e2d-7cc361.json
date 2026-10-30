@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-230827ca-lcskn8",
- "head": "2bdefafb71b9cc6edd3a9fe5169fb067428f60fe",
+ "head": "214aa0f42c444356b497daa0dd898d6c8b065fe5",
  "since": 1793330959,
- "beat": 1793394191,
- "beatIso": "2026-10-30T21:03:11Z",
- "done": "pre-release: KX1c: the Bring my API keys back result shows right under its button (versionCode 434, v1.0.94)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.94), then run: bash tools/record-release.sh v1.0.94 434 \"KX1c: the Bring my API keys back result shows right under its button\""
+ "beat": 1793394257,
+ "beatIso": "2026-10-30T21:04:17Z",
+ "done": "pre-ship: TK1: both devices can share one Novig trading key (save on one, use on the other)",
+ "next": "ship.sh gates and releases this"
 }
