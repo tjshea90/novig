@@ -893,6 +893,7 @@ class CloudLink(private val c: AppContainer) {
     suspend fun restoreKeys(passphrase: String): String = keysMutex.withLock {
         fun say(m: String): String { _ui.update { it.copy(keysNote = m) }; return m }
         if (!hasToken()) return@withLock say("Save the GitHub token first.")
+        say("Opening the export from GitHub…")
         val blob = client.readFile(com.tjshea.vigilant.data.cloud.KeysRestore.BRANCH, com.tjshea.vigilant.data.cloud.KeysRestore.PATH)
             ?: return@withLock say("No encrypted export found. Run \"Export my keys (encrypted)\" in GitHub Actions first.")
         val secrets = com.tjshea.vigilant.data.cloud.KeysRestore.decrypt(blob, passphrase.trim())

@@ -1611,6 +1611,8 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
         OutlinedButton(onClick = { reportActions.onRestoreCloudKeys(restorePass); restorePass = "" }, enabled = u.hasToken && restorePass.length >= 16, modifier = Modifier.testTag("cloudRestoreKeys")) { Text("Bring my API keys back from GitHub") }
     }
+    // The answer sits right under the buttons that cause it (Tj, 2026-10-30: "This didn't do anything": it was drawn far below, off screen).
+    u.keysNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudKeysNote")) }
     Hint("Run \"Export my keys (encrypted)\" in GitHub Actions first (it needs the secret KEYS_EXPORT_PASSPHRASE). The keys are opened on this device; only APIs with no key here are filled. The Novig keys are not part of this: use Enable betting for those.")
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
         Button(onClick = reportActions.onSendNovigKey, enabled = u.hasToken, modifier = Modifier.testTag("cloudSendNovigKey")) { Text(if (u.novigKeyMadeAtMs > 0L) "Send my Novig key again" else "Send a Novig read-only key") }
@@ -1635,7 +1637,6 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
         else if (u.tradeKeyOnGitHub) "The subaccount's trading key is on GitHub for the engine (made ${Format.age(u.tradeKeyMadeAtMs, keyNow)}). The engine orders with it only when Cloud trading is Paper or Live. Remove it to take that away."
         else "Gives the engine the ability to place orders by itself. Cloud trading stays Off until you switch it on; nothing is ordered by this button.",
     )
-    u.keysNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudKeysNote")) }
     u.status?.novigRoute?.takeIf { it.isNotBlank() && s.cloudScan }?.let { Text("GitHub reads Novig: $it", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudNovigRoute")) }
     // Which APIs are working on GitHub right now (TCL22d): the engine's own per-feed answers of its last scan, with the live status page on GitHub (also shows each key's usage meter) one tap away.
     u.status?.feedReport?.takeIf { it.isNotEmpty() && s.cloudScan }?.let { fr ->
