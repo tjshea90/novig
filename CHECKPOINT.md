@@ -1,13 +1,13 @@
-# CHECKPOINT 4325 — read me first, then TASKS.md
+# CHECKPOINT 4326 — read me first, then TASKS.md
 
-**Written:** 2026-10-30T21:09:20Z · **tests:** all 9 fast checks green
-**Branch:** `ccr-230827ca-lcskn8` · **builds on:** `214aa0f42` (this checkpoint is the commit after it)
+**Written:** 2026-10-30T23:22:14Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-a9npmo` · **builds on:** `e996969ab` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: TK1: both devices can share one Novig trading key (save on one, use on the other) (versionCode 435, v1.0.95)
+ENGINEER 2026-10-30: engine ordering blocked by Novig location check + refused read key; notified Tj; no change
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.95), then run: bash tools/record-release.sh v1.0.95 435 "TK1: both devices can share one Novig trading key (save on one, use on the other)"
+next: backlog once Tj reopens Novig and resends keys
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  918fa7d34 ckpt 4325: pre-release: TK1: both devices can share one Novig trading key (save on one
   214aa0f42 ckpt 4324: pre-ship: TK1: both devices can share one Novig trading key (save on one, u
   851a476f4 ckpt 4323: pre-release: KX1c: the Bring my API keys back result shows right under its 
   6b2227c21 ckpt 4322: pre-ship: KX1c: the Bring my API keys back result shows right under its but
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   6553a4de8 ckpt 4318: pre-ship: FB1: full encrypted backup and restore of the whole app, keys inc
   0d173b549 ckpt 4317: FB1: full encrypted backup/restore of the whole app incl. keys (FullBackup,
   0bef21369 ckpt 4315: ANALYST 2026-10-29: no rule change, note + card posted
-  23ba9fa98 ckpt 4314: CHAT 2026-10-29: turned on propLine/parlay/sx/novig sockets (tablet default
 ```
