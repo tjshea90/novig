@@ -8,8 +8,8 @@
  "branch": "ccr-230827ca-lcskn8",
  "head": "0d173b54960fe0b3f16f9993df8fd4cb08ee5cb7",
  "since": 1793330959,
- "beat": 1793331592,
- "beatIso": "2026-10-30T03:39:52Z",
+ "beat": 1793331839,
+ "beatIso": "2026-10-30T03:43:59Z",
  "done": "FB1: full encrypted backup/restore of the whole app incl. keys (FullBackup, BackupCipher, SealedFiles, Settings UI), tests green",
  "next": "run full test floor, bash ship.sh, trigger release.yml, record-release.sh, send Tj the link + Secure Folder steps"
 }
