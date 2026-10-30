@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "bcbc13",
- "kind": "routine",
+ "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-uil39t",
- "head": "0bef21369b55a146e4175fdcf0c23ef651166229",
+ "branch": "claude/optimistic-curie-a9npmo",
+ "head": "e996969abcfc55ee7d28135da47fe7f08d677275",
  "since": 1793316151,
- "beat": 1793316151,
- "beatIso": "2026-10-29T23:22:31Z",
+ "beat": 1793402463,
+ "beatIso": "2026-10-30T23:21:03Z",
  "done": "ANALYST 2026-10-29: no rule change, note + card posted",
  "next": "next ANALYST: split engine-auto by kind, ATP at n200"
 }
