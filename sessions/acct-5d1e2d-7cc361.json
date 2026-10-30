@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-230827ca-lcskn8",
- "head": "025fc5e381c28be51207a5129e0698a53b09d8fb",
+ "head": "6b2227c2142ecd2784bc93541a932988cd749e82",
  "since": 1793330959,
- "beat": 1793386513,
- "beatIso": "2026-10-30T18:55:13Z",
- "done": "pre-release: FB1: full encrypted backup and restore of the whole app, keys included, for Samsung Secure Folder (versionCode 433, v1.0.93)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.93), then run: bash tools/record-release.sh v1.0.93 433 \"FB1: full encrypted backup and restore of the whole app, keys included, for Samsung Secure Folder\""
+ "beat": 1793386603,
+ "beatIso": "2026-10-30T18:56:43Z",
+ "done": "pre-ship: KX1c: the Bring my API keys back result shows right under its button",
+ "next": "ship.sh gates and releases this"
 }
