@@ -1443,6 +1443,55 @@ private fun ColumnScope.UsageTab(state: UiState, keys: KeyActions) {
         OutlinedButton(onClick = { exporter.launch("vigilant-keys.json") }) { Text("Export keys") }
         OutlinedButton(onClick = { importer.launch(arrayOf("application/json", "text/plain", "*/*")) }) { Text("Import keys") }
     }
+    FullBackupSection(state, keys)
+}
+
+/**
+ * Full backup (Tj, 2026-10-30): the whole app in one passphrase-encrypted file, every key included, to move to another install such as Samsung's Secure Folder. Restore replaces what is on this install, so it asks twice.
+ */
+@Composable
+private fun ColumnScope.FullBackupSection(state: UiState, keys: KeyActions) {
+    var pass by remember { mutableStateOf("") }
+    var pass2 by remember { mutableStateOf("") }
+    var pendingRestore by remember { mutableStateOf<android.net.Uri?>(null) }
+    val backer = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri -> uri?.let { keys.fullBackupTo(it, pass); pass = ""; pass2 = "" } }
+    val restorer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> pendingRestore = uri }
+    SectionTitle("Full backup (a copy of the whole app)")
+    Hint(
+        "One file with everything: settings, bets, bids, history, every API key, the Novig management and trading keys, the Kalshi private key and the GitHub token. " +
+            "The keys are inside the file in readable form, locked only by the passphrase you type here, so choose a long one and keep the file somewhere private. It is never uploaded.",
+    )
+    OutlinedTextField(
+        value = pass, onValueChange = { pass = it }, label = { Text("Passphrase (at least 12 characters)") }, singleLine = true,
+        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp).testTag("backupPass"),
+    )
+    OutlinedTextField(
+        value = pass2, onValueChange = { pass2 = it }, label = { Text("Passphrase again (to make a backup)") }, singleLine = true,
+        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 4.dp).testTag("backupPass2"),
+    )
+    val stamp = remember { java.text.SimpleDateFormat("yyyyMMdd-HHmm", java.util.Locale.US).format(java.util.Date()) }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 4.dp)) {
+        Button(onClick = { backer.launch("vigilant-full-backup-$stamp.vgbk") }, enabled = pass.length >= 12 && pass == pass2 && !state.backupBusy, modifier = Modifier.testTag("backupMake")) {
+            Text(if (state.backupBusy) "Working…" else "Make full backup")
+        }
+        OutlinedButton(onClick = { restorer.launch(arrayOf("*/*")) }, enabled = pass.length >= 12 && !state.backupBusy, modifier = Modifier.testTag("backupRestore")) { Text("Restore from a backup") }
+    }
+    pendingRestore?.let { uri ->
+        Text("Restoring replaces this install's settings, bets, bids and keys with the backup's. Continue?", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+            Button(onClick = { keys.fullRestoreFrom(uri, pass); pendingRestore = null; pass = ""; pass2 = "" }, modifier = Modifier.testTag("backupRestoreYes")) { Text("Yes, restore") }
+            OutlinedButton(onClick = { pendingRestore = null }) { Text("Cancel") }
+        }
+    }
+    state.backupNote?.let {
+        Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("backupNote"), color = if (state.backupOk == false) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface)
+    }
+    Hint(
+        "Moving to Samsung Secure Folder: (1) make the backup here and save it in Downloads; (2) in Secure Folder, add the Vigilant app (Add apps, or install the same APK there); (3) in My Files, inside Secure Folder, use Add files to copy the backup in; " +
+            "(4) open Vigilant there, Settings › Usage & keys › Restore from a backup, pick the file, type the passphrase. It closes itself; open it again. " +
+            "One thing stays behind: the phone's own Novig read key is held in this phone's secure hardware, so the new install reconnects it with Enable betting (your management key moves, so no new key is needed). " +
+            "Do not run two copies with betting on at once: they would both place orders.",
+    )
 }
 
 /**
@@ -2511,6 +2560,9 @@ data class KeyActions(
     val importFrom: (android.net.Uri) -> Unit = {},
     /** Settings › API usage & keys opened: the providers that can say what's left (ParlayAPI) are asked, for free. */
     val onUsageShown: () -> Unit = {},
+    /** Full backup (FullBackup): write the whole app, keys opened, to the picked file under the passphrase / open one and apply it. */
+    val fullBackupTo: (android.net.Uri, String) -> Unit = { _, _ -> },
+    val fullRestoreFrom: (android.net.Uri, String) -> Unit = { _, _ -> },
 )
 
 /** A provider's keys in rotation order (key 1 is always tried first), with add, remove, reorder. */

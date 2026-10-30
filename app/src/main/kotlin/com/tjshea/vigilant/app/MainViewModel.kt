@@ -275,6 +275,10 @@ data class UiState(
     val chatProblem: String? = null,
     val kalshiKeyOk: Boolean? = null,
     val kalshiKeyBusy: Boolean = false,
+    /** Settings › Usage & keys › Full backup: busy, what happened in words, and whether it worked ([FullBackup]). */
+    val backupBusy: Boolean = false,
+    val backupNote: String? = null,
+    val backupOk: Boolean? = null,
     /** BoltOdds Pro: the Test key's answer, whether it passed, and that a test is running (it listens on a socket for about 15 s). */
     val boltKeyNote: String? = null,
     val boltKeyOk: Boolean? = null,

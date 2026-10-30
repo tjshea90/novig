@@ -978,6 +978,8 @@ private fun VigilantRoot(
                         moveUp = vm::moveKeyUp,
                         exportTo = vm::exportKeys,
                         importFrom = vm::importKeys,
+                        fullBackupTo = vm::fullBackupTo,
+                        fullRestoreFrom = vm::fullRestoreFrom,
                         onUsageShown = { vm.refreshBalances(history = true); vm.refreshUsage() },
                     ),
                     reportActions = com.tjshea.vigilant.app.ui.ReportActions(
