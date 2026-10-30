@@ -1440,3 +1440,8 @@ Why is there no bet/bid history from Oct 26-27 when the engine was auto betting 
 ```
 Make sure these numbers are correct because I thought before I lost my phone it said green profit all time
 ```
+
+## 2026-10-30T03:29:28Z
+```
+Make it so I can save a backup of all data in the vigilant app including all keys and all private keys and trading keys and data. I want a 100% mirror copy of this app and all data inside so I can easily transfer it to Samsung secure folder
+```
