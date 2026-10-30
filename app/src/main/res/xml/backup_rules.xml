@@ -11,6 +11,8 @@
         <exclude domain="file" path="novig_management_key.json" />
         <exclude domain="file" path="kalshi_key.json" />
         <exclude domain="file" path="cloud_novig_key.json" />
+        <exclude domain="file" path="cloud_trade_key.json" />
+        <exclude domain="file" path="cloud_token.json" />
         <exclude domain="file" path="cno.json" />
         <exclude domain="file" path="teams.json" />
         <exclude domain="file" path="cno_links.json" />

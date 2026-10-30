@@ -1,21 +1,27 @@
-# CHECKPOINT 4315 — read me first, then TASKS.md
+# CHECKPOINT 4317 — read me first, then TASKS.md
 
-**Written:** 2026-10-29T23:22:31Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-uil39t` · **builds on:** `d8c868126` (this checkpoint is the commit after it)
+**Written:** 2026-10-30T03:39:37Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-230827ca-lcskn8` · **builds on:** `1ff5e7c9c` (this checkpoint is the commit after it)
 
 ## Just done
-ANALYST 2026-10-29: no rule change, note + card posted
+FB1: full encrypted backup/restore of the whole app incl. keys (FullBackup, BackupCipher, SealedFiles, Settings UI), tests green
 
 ## Do this next
-next ANALYST: split engine-auto by kind, ATP at n200
+run full test floor, bash ship.sh, trigger release.yml, record-release.sh, send Tj the link + Secure Folder steps
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+     M app/src/main/res/xml/backup_rules.xml
+     M app/src/main/res/xml/data_extraction_rules.xml
+    ?? app/src/test/kotlin/com/tjshea/vigilant/app/FullBackupTest.kt
+    ?? data/src/test/kotlin/com/tjshea/vigilant/data/backup/
 
 ## Last ten checkpoints
 ```
+  0bef21369 ckpt 4315: ANALYST 2026-10-29: no rule change, note + card posted
   23ba9fa98 ckpt 4314: CHAT 2026-10-29: turned on propLine/parlay/sx/novig sockets (tablet default
   c875a5bed ckpt 4313: WATCH 2026-10-29 engine healthy, no change
   0ab8edc90 ckpt 4312: ENGINEER 2026-10-29 watch only, engine healthy, no change
@@ -24,9 +30,7 @@ next ANALYST: split engine-auto by kind, ATP at n200
   fbecf50b9 ckpt 4309: pre-release: KX1b: bring API keys back from GitHub's encrypted export onto 
   48e940f48 ckpt 4308: pre-release: HR1: restore settled bets and bids from the GitHub backup or a
   7017efa6e ckpt 4307: WATCH 2026-10-28: engine alive, trading key rejected by Novig
-  e4376b04e ckpt 4306: ENGINEER 2026-10-28 watch only, engine healthy, no change
-  26f9309b3 ckpt 4305: ANALYST 2026-10-28 skipped by rule, engine healthy
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(7 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

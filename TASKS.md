@@ -6551,3 +6551,10 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [x] Encrypted export: `.github/workflows/keys-export.yml` + `tools/keys_export.py` (AES-256-GCM, PBKDF2; passphrase = repo secret KEYS_EXPORT_PASSPHRASE) + `tools/keys_decrypt.html` (offline decrypt). Proved: `python3 -I tools/keys_export.py selftest`, Python-sealed file opened by WebCrypto. Public repo, so never plain.
 - [ ] Tj: create secret KEYS_EXPORT_PASSPHRASE, run the workflow, decrypt. The Novig MANAGEMENT key was never put on GitHub (rule), so it is not in the export: only what sits in Actions secrets (incl. NOVIG_TRADE_KEY_*, NOVIG_READ_KEY_*, KALSHI_KEY_*).
 - [ ] (optional) in-app import of the decrypted list.
+
+
+## FB1 (Tj 2026-10-30, typed): "Make it so I can save a backup of all data in the vigilant app including all keys and all private keys and trading keys and data. I want a 100% mirror copy of this app and all data inside so I can easily transfer it to Samsung secure folder"
+- [x] FB1a `data/backup/BackupCipher` (PBKDF2 210k + chunked streaming AES-GCM, tamper/cut-short safe) + `SealedFiles` (which files hold Keystore-sealed secrets) — `BackupCipherTest`, `SealedFilesTest`.
+- [x] FB1b `app/FullBackup` write/stage/applyPending (secrets opened in the file, sealed again by the target Keystore; restore staged and applied in `VigilantApp.onCreate` before any store opens) — `FullBackupTest`.
+- [x] FB1c Settings › Usage & keys › "Full backup" (passphrase twice, Make full backup, Restore with confirm, Secure Folder steps); cloud_trade_key/cloud_token added to the OS backup exclusions.
+- [ ] After release: Tj installs, makes a backup on the old install, restores in Secure Folder; then "Enable betting" reconnects the phone's hardware-held Novig read key (management key moves). Tj keeps the file private (public repo: never commit one).
