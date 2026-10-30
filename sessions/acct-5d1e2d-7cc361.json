@@ -8,8 +8,8 @@
  "branch": "ccr-230827ca-lcskn8",
  "head": "e996969abcfc55ee7d28135da47fe7f08d677275",
  "since": 1793330959,
- "beat": 1793394970,
- "beatIso": "2026-10-30T21:16:10Z",
+ "beat": 1793396012,
+ "beatIso": "2026-10-30T21:33:32Z",
  "done": "pre-release: TK1: both devices can share one Novig trading key (save on one, use on the other) (versionCode 435, v1.0.95)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.95), then run: bash tools/record-release.sh v1.0.95 435 \"TK1: both devices can share one Novig trading key (save on one, use on the other)\""
 }
