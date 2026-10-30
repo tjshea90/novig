@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "bcbc13",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-a9npmo",
+ "head": "243c096271f8137cd37c24c43570d8110adf37de",
+ "since": 1793402534,
+ "beat": 1793402534,
+ "beatIso": "2026-10-30T23:22:14Z",
+ "done": "ENGINEER 2026-10-30: engine ordering blocked by Novig location check + refused read key; notified Tj; no change",
+ "next": "next: backlog once Tj reopens Novig and resends keys"
+}
