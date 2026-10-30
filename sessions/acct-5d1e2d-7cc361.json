@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-230827ca-lcskn8",
- "head": "f92e81cb8377d0a42141bd0672bfb90761cda97f",
+ "head": "0d173b54960fe0b3f16f9993df8fd4cb08ee5cb7",
  "since": 1793330959,
- "beat": 1793331166,
- "beatIso": "2026-10-30T03:32:46Z",
- "done": "",
- "next": ""
+ "beat": 1793331578,
+ "beatIso": "2026-10-30T03:39:38Z",
+ "done": "FB1: full encrypted backup/restore of the whole app incl. keys (FullBackup, BackupCipher, SealedFiles, Settings UI), tests green",
+ "next": "run full test floor, bash ship.sh, trigger release.yml, record-release.sh, send Tj the link + Secure Folder steps"
 }
