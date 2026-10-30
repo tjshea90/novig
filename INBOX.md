@@ -1450,3 +1450,8 @@ Make it so I can save a backup of all data in the vigilant app including all key
 ```
 Should I get all my api keys back first then make the backup
 ```
+
+## 2026-10-30T18:42:01Z
+```
+Tell me step by step easily how to get my keys back on the tablet, then save all data and keys
+```
