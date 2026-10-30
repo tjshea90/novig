@@ -1462,3 +1462,8 @@ Go to Settings › Cloud scan. Type the passphrase from step 3 and tap Bring my 
 
 This didn't do anything
 ```
+
+## 2026-10-30T20:56:46Z
+```
+I want to place bets on both my phone and tablet using the navigation key at different times. Is this possible
+```
