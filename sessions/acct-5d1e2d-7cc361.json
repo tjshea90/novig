@@ -8,8 +8,8 @@
  "branch": "ccr-230827ca-lcskn8",
  "head": "214aa0f42c444356b497daa0dd898d6c8b065fe5",
  "since": 1793330959,
- "beat": 1793394257,
- "beatIso": "2026-10-30T21:04:17Z",
+ "beat": 1793394263,
+ "beatIso": "2026-10-30T21:04:23Z",
  "done": "pre-ship: TK1: both devices can share one Novig trading key (save on one, use on the other)",
  "next": "ship.sh gates and releases this"
 }
