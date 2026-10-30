@@ -433,3 +433,4 @@ day that changes.
 | v1.0.92 | code 432 | 2026-10-29T03:27Z | HR2: imported fair-value settlements keep their profit
 | v1.0.93 | code 433 | 2026-10-30T03:52Z | FB1: full encrypted backup and restore of the whole app, keys included, for Samsung Secure Folder
 | v1.0.94 | code 434 | 2026-10-30T19:09Z | KX1c: the Bring my API keys back result shows right under its button
+| v1.0.95 | code 435 | 2026-10-30T21:16Z | TK1: both devices can share one Novig trading key (save on one, use on the other)
