@@ -1,25 +1,23 @@
-# CHECKPOINT 4321 — read me first, then TASKS.md
+# CHECKPOINT 4322 — read me first, then TASKS.md
 
-**Written:** 2026-10-30T17:22:29Z · **tests:** all 9 fast checks green
-**Branch:** `claude/wizardly-meitner-r2cem3` · **builds on:** `0c343688c` (this checkpoint is the commit after it)
+**Written:** 2026-10-30T18:56:43Z · **tests:** all 9 fast checks green
+**Branch:** `ccr-230827ca-lcskn8` · **builds on:** `0da024a85` (this checkpoint is the commit after it)
 
 ## Just done
-ANALYST 2026-10-30 no change
+pre-ship: KX1c: the Bring my API keys back result shows right under its button
 
 ## Do this next
-WATCH ATP n250+, spreads
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M research/lab/NOTES.md
-     M research/review/CHANGES.md
-     M research/review/STATE.json
-    ?? research/review/2026-10-30.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  f2df0ddae ckpt 4321: ANALYST 2026-10-30 no change
   0c343688c ckpt 4320: WATCH 2026-10-30: engine healthy, no change
   c44bf658f ckpt 4319: pre-release: FB1: full encrypted backup and restore of the whole app, keys 
   6553a4de8 ckpt 4318: pre-ship: FB1: full encrypted backup and restore of the whole app, keys inc
@@ -29,5 +27,7 @@ WATCH ATP n250+, spreads
   c875a5bed ckpt 4313: WATCH 2026-10-29 engine healthy, no change
   0ab8edc90 ckpt 4312: ENGINEER 2026-10-29 watch only, engine healthy, no change
   5a0f22d1a ckpt 4311: pre-release: HR2: imported fair-value settlements keep their profit (all-ti
-  586319a54 ckpt 4310: KX1/HR1 done: encrypted key export (keys-export.yml), history restore + fil
 ```
+
+(4 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
