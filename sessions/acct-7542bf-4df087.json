@@ -3,13 +3,13 @@
  "label": "acct-7542bf",
  "name": "tj outlook",
  "nonce": "4df087",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/keen-keller-sfvdts",
  "head": "30706cc554114b4b1c2c56c914ba461ae6f2e09f",
  "since": 1793273331,
- "beat": 1793359431,
- "beatIso": "2026-10-30T11:23:51Z",
+ "beat": 1793359455,
+ "beatIso": "2026-10-30T11:24:15Z",
  "done": "ENGINEER 2026-10-29 watch only, engine healthy, no change",
  "next": "moneylines at n200"
 }
