@@ -29,7 +29,8 @@ class TradeKeySharingTest {
         }
     }
 
-    private val pem = "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIFAKEFAKEFAKE\n-----END PRIVATE KEY-----\n" // FAKE
+    /** A real (throwaway) P-256 key: the connection builds a signer from it. */
+    private val pem = com.tjshea.vigilant.data.cloud.CloudNovigKey.generate().first
     private val pass = "a long passphrase for the test"
 
     @Test
