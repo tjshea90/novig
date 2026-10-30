@@ -1467,3 +1467,8 @@ This didn't do anything
 ```
 I want to place bets on both my phone and tablet using the navigation key at different times. Is this possible
 ```
+
+## 2026-10-30T20:59:09Z
+```
+Make it so both devices share the same trading key
+```
