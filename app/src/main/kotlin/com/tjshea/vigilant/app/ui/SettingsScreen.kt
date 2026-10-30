@@ -1456,6 +1456,8 @@ private fun ColumnScope.FullBackupSection(state: UiState, keys: KeyActions) {
     var pendingRestore by remember { mutableStateOf<android.net.Uri?>(null) }
     val backer = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri -> uri?.let { keys.fullBackupTo(it, pass); pass = ""; pass2 = "" } }
     val restorer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> pendingRestore = uri }
+    val keySaver = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri -> uri?.let { keys.shareTradeKeyTo(it, pass); pass = ""; pass2 = "" } }
+    val keyTaker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { keys.useTradeKeyFrom(it, pass); pass = ""; pass2 = "" } }
     SectionTitle("Full backup (a copy of the whole app)")
     Hint(
         "One file with everything: settings, bets, bids, history, every API key, the Novig management and trading keys, the Kalshi private key and the GitHub token. " +
@@ -1482,6 +1484,15 @@ private fun ColumnScope.FullBackupSection(state: UiState, keys: KeyActions) {
             Button(onClick = { keys.fullRestoreFrom(uri, pass); pendingRestore = null; pass = ""; pass2 = "" }, modifier = Modifier.testTag("backupRestoreYes")) { Text("Yes, restore") }
             OutlinedButton(onClick = { pendingRestore = null }) { Text("Cancel") }
         }
+    }
+    SectionTitle("Bet from two devices (one shared trading key)")
+    Hint(
+        "Novig allows ONE trading key per account, and a device that does not hold it replaces it, which locks the other device out. To bet from both, give them the same key: " +
+            "on the device that bets, type a passphrase above (twice) and tap Save; on the other, type the same passphrase and tap Use. Novig checks the key before it is kept, and nothing is revoked.",
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+        OutlinedButton(onClick = { keySaver.launch("vigilant-trading-key.vgtk") }, enabled = pass.length >= 12 && pass == pass2 && !state.backupBusy, modifier = Modifier.testTag("tradeKeySave")) { Text("Save trading key for my other device") }
+        OutlinedButton(onClick = { keyTaker.launch(arrayOf("*/*")) }, enabled = pass.length >= 12 && !state.backupBusy, modifier = Modifier.testTag("tradeKeyUse")) { Text("Use the trading key from my other device") }
     }
     state.backupNote?.let {
         Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("backupNote"), color = if (state.backupOk == false) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface)
@@ -2564,6 +2575,9 @@ data class KeyActions(
     /** Full backup (FullBackup): write the whole app, keys opened, to the picked file under the passphrase / open one and apply it. */
     val fullBackupTo: (android.net.Uri, String) -> Unit = { _, _ -> },
     val fullRestoreFrom: (android.net.Uri, String) -> Unit = { _, _ -> },
+    /** Two devices, one trading key (TradeKeySharing). */
+    val shareTradeKeyTo: (android.net.Uri, String) -> Unit = { _, _ -> },
+    val useTradeKeyFrom: (android.net.Uri, String) -> Unit = { _, _ -> },
 )
 
 /** A provider's keys in rotation order (key 1 is always tried first), with add, remove, reorder. */

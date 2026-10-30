@@ -980,6 +980,8 @@ private fun VigilantRoot(
                         importFrom = vm::importKeys,
                         fullBackupTo = vm::fullBackupTo,
                         fullRestoreFrom = vm::fullRestoreFrom,
+                        shareTradeKeyTo = vm::shareTradeKeyTo,
+                        useTradeKeyFrom = vm::useTradeKeyFrom,
                         onUsageShown = { vm.refreshBalances(history = true); vm.refreshUsage() },
                     ),
                     reportActions = com.tjshea.vigilant.app.ui.ReportActions(

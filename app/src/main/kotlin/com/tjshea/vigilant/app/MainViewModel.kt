@@ -1880,6 +1880,36 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Two devices, one trading key ([TradeKeySharing]): saves this device's shareable trading key to [uri] under [passphrase]. */
+    fun shareTradeKeyTo(uri: android.net.Uri, passphrase: String) {
+        _state.update { it.copy(backupBusy = true, backupNote = null, backupOk = null) }
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) {
+                runCatching {
+                    val out = getApplication<Application>().contentResolver.openOutputStream(uri, "wt") ?: error("Android would not open that file")
+                    TradeKeySharing.export(c, out, passphrase)
+                }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }
+            val res = r.getOrNull() ?: TradeKeySharing.Result(false, "The file was not written: ${r.exceptionOrNull()?.message?.take(100)}.")
+            _state.update { it.copy(backupBusy = false, backupNote = res.note, backupOk = res.ok) }
+        }
+    }
+
+    /** Takes the trading key another device saved, after Novig accepts it ([TradeKeySharing.import]). */
+    fun useTradeKeyFrom(uri: android.net.Uri, passphrase: String) {
+        _state.update { it.copy(backupBusy = true, backupNote = null, backupOk = null) }
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) {
+                runCatching {
+                    val input = getApplication<Application>().contentResolver.openInputStream(uri) ?: error("Android would not open that file")
+                    TradeKeySharing.import(c, input, passphrase)
+                }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }
+            val res = r.getOrNull() ?: TradeKeySharing.Result(false, "The file was not read: ${r.exceptionOrNull()?.message?.take(100)}. Nothing was changed.")
+            _state.update { it.copy(backupBusy = false, backupNote = res.note, backupOk = res.ok) }
+        }
+    }
+
     /** Adds the keys from an exported file to the ones already here. */
     fun importKeys(uri: android.net.Uri) {
         viewModelScope.launch {
