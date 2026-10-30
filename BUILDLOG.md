@@ -431,3 +431,4 @@ day that changes.
 | v1.0.90 | code 430 | 2026-10-28T23:39Z | HR1: restore settled bets and bids from the GitHub backup or a history file
 | v1.0.91 | code 431 | 2026-10-28T23:58Z | KX1b: bring API keys back from GitHub's encrypted export onto the tablet
 | v1.0.92 | code 432 | 2026-10-29T03:27Z | HR2: imported fair-value settlements keep their profit
+| v1.0.93 | code 433 | 2026-10-30T03:52Z | FB1: full encrypted backup and restore of the whole app, keys included, for Samsung Secure Folder
