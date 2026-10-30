@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-230827ca-lcskn8",
- "head": "f2df0ddaed4fdeab8b043dba7c51745c3ddbc5ba",
+ "head": "e2a546b05e80595b74a0892450a0a2a1f9882351",
  "since": 1793330959,
- "beat": 1793385283,
- "beatIso": "2026-10-30T18:34:43Z",
+ "beat": 1793385718,
+ "beatIso": "2026-10-30T18:41:58Z",
  "done": "pre-release: FB1: full encrypted backup and restore of the whole app, keys included, for Samsung Secure Folder (versionCode 433, v1.0.93)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.93), then run: bash tools/record-release.sh v1.0.93 433 \"FB1: full encrypted backup and restore of the whole app, keys included, for Samsung Secure Folder\""
 }
