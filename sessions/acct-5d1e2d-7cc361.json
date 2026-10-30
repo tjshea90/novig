@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-230827ca-lcskn8",
- "head": "851a476f4e19dc01be3c827c316693f191f26f7f",
+ "head": "fff0f8f2797f1b6e9ba7cb4be59c1e67368b18e2",
  "since": 1793330959,
- "beat": 1793386961,
- "beatIso": "2026-10-30T19:02:41Z",
+ "beat": 1793387390,
+ "beatIso": "2026-10-30T19:09:50Z",
  "done": "pre-release: KX1c: the Bring my API keys back result shows right under its button (versionCode 434, v1.0.94)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.94), then run: bash tools/record-release.sh v1.0.94 434 \"KX1c: the Bring my API keys back result shows right under its button\""
 }
