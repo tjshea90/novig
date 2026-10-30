@@ -432,3 +432,4 @@ day that changes.
 | v1.0.91 | code 431 | 2026-10-28T23:58Z | KX1b: bring API keys back from GitHub's encrypted export onto the tablet
 | v1.0.92 | code 432 | 2026-10-29T03:27Z | HR2: imported fair-value settlements keep their profit
 | v1.0.93 | code 433 | 2026-10-30T03:52Z | FB1: full encrypted backup and restore of the whole app, keys included, for Samsung Secure Folder
+| v1.0.94 | code 434 | 2026-10-30T19:09Z | KX1c: the Bring my API keys back result shows right under its button
