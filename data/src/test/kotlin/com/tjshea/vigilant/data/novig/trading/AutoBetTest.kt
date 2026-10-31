@@ -417,4 +417,13 @@ class AutoBetTest {
         val order = listOf(0.05 to 0.012, 0.03 to null, 0.04 to 0.035).sortedByDescending { (shown, sharp) -> AutoBet.credibleEv(shown, sharp) }
         assertEquals(listOf(0.04 to 0.035, 0.03 to null, 0.05 to 0.012), order)
     }
+
+    @org.junit.Test
+    fun tennisNeedsSixBooksAllAgreeingAndFivePercent() {
+        assertNull(AutoBet.tennisReason("NBA", 0.01, 3, 1))
+        assertNull(AutoBet.tennisReason("ATP", 0.06, 6, 6))
+        kotlin.test.assertNotNull(AutoBet.tennisReason("ATP", 0.06, 5, 5))
+        kotlin.test.assertNotNull(AutoBet.tennisReason("WTA", 0.06, 8, 7))
+        kotlin.test.assertNotNull(AutoBet.tennisReason("WTA", 0.04, 6, 6))
+    }
 }
