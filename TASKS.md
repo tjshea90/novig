@@ -6565,3 +6565,5 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 
 ## ST1 (Tj 2026-10-31, typed): "I want it to show accurate information when I pull to refresh. It shouldn't show stale engine status"
 - [x] The engine publishes WHEN a trading stop was set (`tradeStoppedAtMs`); the Engine headline says how old it is, whether this runner's address was accepted since, and when ordering retries (`DashboardModel.tradeStoppedHeadline`, test in `DashboardModelTest`). Stop behaviour itself unchanged (a Novig location stand-down is class C).
+
+- [ ] SK1 (Tj chat 21:06 UTC 2026-10-31) "Make sure the engine always runs sockets that can help. Make sure it is matching odds for Propline and parlayapi". Seen live: Kalshi, SX Bet, ParlayAPI (211 conns), PropLine sockets live; BoltOdds lines/props NOT live; SharpAPI socket off; PropLine reports 11 conns vs streaming_lite cap 2 (close 4429); ParlayAPI hot streams 503/timeouts. Next: find why BoltOdds is not live, check PropLine connection cap, whether SharpAPI socket add-on still exists.
