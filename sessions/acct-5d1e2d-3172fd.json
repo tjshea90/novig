@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-fh3ywo",
- "head": "f3cf978f736b1a9e5fe14212eb6aa2c542ae14d0",
+ "head": "156d6039e986bd3468a6a75f611d6240fc2f30b0",
  "since": 1793415241,
- "beat": 1793420329,
- "beatIso": "2026-10-31T04:18:49Z",
- "done": "TENNIS tightened: taker 6+ books all agree 5% edge; bids 6 books (Tj chat); engine reset for new Novig read key but no key secret present",
- "next": "Check engine read-key status after Tj resends; full tests before landing on main"
+ "beat": 1793420355,
+ "beatIso": "2026-10-31T04:19:15Z",
+ "done": "tennis tightening: data tests green (2969)",
+ "next": "verify engine picks it up; check Novig read key after Tj resends"
 }
