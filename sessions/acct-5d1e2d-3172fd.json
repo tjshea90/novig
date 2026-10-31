@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-j99vdb",
- "head": "fc8f0af6312ac374e8532a9bee74bd5ead456875",
+ "head": "b093426f37b68c1fabcf8c180c8b91801469086e",
  "since": 1793415241,
- "beat": 1793429296,
- "beatIso": "2026-10-31T06:48:16Z",
+ "beat": 1793429521,
+ "beatIso": "2026-10-31T06:52:01Z",
  "done": "sharp book required for engine bets+bids; tennis tightening confirmed in code",
  "next": "verify engine picks up settings; watch order volume"
 }
