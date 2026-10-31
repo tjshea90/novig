@@ -153,11 +153,11 @@ class DashboardModelTest {
         val carried = st { copy(startedAtMs = now - 4 * 60_000, novigAddress = "accepted by Novig", tradeStopped = restricted, tradeStoppedAtMs = now - 9 * 60_000) }
         val h = DashboardModel.headline(carried, now)
         assertEquals("Paused: waiting to retry", h.title)
-        assertTrue(h.body, h.body.contains("PREVIOUS runner") && h.body.contains("9 min") && h.body.contains("about 21 min"))
+        assertTrue(h.detail, h.detail.contains("PREVIOUS runner") && h.detail.contains("9 min") && h.detail.contains("about 21 min"))
         // this runner's own refusal (set after it started, or its address not accepted) is a plain stop with its age
         val own = st { copy(startedAtMs = now - 20 * 60_000, novigAddress = "refused: RESTRICTED_NETWORK_REGION", tradeStopped = restricted, tradeStoppedAtMs = now - 2 * 60_000) }
         assertEquals("Trading stopped", DashboardModel.headline(own, now).title)
-        assertTrue(DashboardModel.headline(own, now).body.contains("about 28 min"))
+        assertTrue(DashboardModel.headline(own, now).detail.contains("about 28 min"))
         // the 30 minutes are over: no longer called stopped
         val over = st { copy(tradeStopped = restricted, tradeStoppedAtMs = now - 31 * 60_000) }
         assertEquals("Trading: retrying now", DashboardModel.headline(over, now).title)
