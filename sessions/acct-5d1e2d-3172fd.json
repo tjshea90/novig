@@ -5,11 +5,11 @@
  "nonce": "3172fd",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-x9nr2e",
+ "branch": "claude/optimistic-curie-ke71mw",
  "head": "67301e463d4770434722a76563affdba0f02e093",
  "since": 1793415241,
- "beat": 1793482681,
- "beatIso": "2026-10-31T21:38:01Z",
+ "beat": 1793488884,
+ "beatIso": "2026-10-31T23:21:24Z",
  "done": "MajorBooks rule: bets 2+/bids 1+ well-known books in fair; sharp requirement back to veto",
  "next": "ship so the engine runs it (push lands main; engine restarts on handover); check order volume"
 }
