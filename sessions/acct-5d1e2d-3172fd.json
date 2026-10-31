@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-j99vdb",
- "head": "156d6039e986bd3468a6a75f611d6240fc2f30b0",
+ "head": "ff6b05c4f74ded6e42adc6dc35488d5db968f64b",
  "since": 1793415241,
- "beat": 1793428559,
- "beatIso": "2026-10-31T06:35:59Z",
- "done": "tennis tightening: data tests green (2969)",
- "next": "verify engine picks it up; check Novig read key after Tj resends"
+ "beat": 1793428630,
+ "beatIso": "2026-10-31T06:37:10Z",
+ "done": "sharp book required for engine bets+bids; tennis tightening confirmed in code",
+ "next": "verify engine picks up settings; watch order volume"
 }
