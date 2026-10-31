@@ -1477,3 +1477,8 @@ Make it so both devices share the same trading key
 ```
 Troubleshoot why the github engine is not trading. I may have messed it up.  Tell me step by step how to fix everything
 ```
+
+## 2026-10-31T00:43:20Z
+```
+I think I need to make new novig keys.  It works on my phone but not github
+```
