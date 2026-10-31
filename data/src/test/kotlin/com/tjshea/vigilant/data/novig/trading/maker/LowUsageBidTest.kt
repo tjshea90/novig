@@ -215,7 +215,7 @@ class LowUsageBidTest {
         assertFalse(MarketPopularity.measuredObscure("NHL", "SHOTS_ON_GOAL"))
         assertFalse(MarketPopularity.measuredObscure("NBA", "POINTS"))
         // The usual bids don't skip them.
-        assertTrue(MakerQuote.decide(line(type = "ASSISTS", league = "NHL"), MakerRules.of(ScanSettings()).copy(kinds = setOf(BetKind.PROP)), now) is MakerDecision.Post)
+        assertTrue(MakerQuote.decide(line(type = "ASSISTS", league = "NHL"), MakerRules.of(ScanSettings()).copy(kinds = setOf(BetKind.PROP), minMajorBooks = 0), now) is MakerDecision.Post)
     }
 
     /** Tj, 2026-10-07: "in low api usage mode it is not filling any obscure props, it is hard set against this. The settings I choose should change whatever I want." */
