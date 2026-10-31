@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-230827ca-lcskn8",
- "head": "ed900e4341b6f2abe233474c209d98229e6bb50b",
+ "head": "3f358afef71a93f8840b03d0d40962ba333643cc",
  "since": 1793330959,
- "beat": 1793408609,
- "beatIso": "2026-10-31T01:03:29Z",
+ "beat": 1793408935,
+ "beatIso": "2026-10-31T01:08:55Z",
  "done": "pre-release: ST1: the Engine banner says how old a trading stop is and when it retries (versionCode 436, v1.0.96)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.96), then run: bash tools/record-release.sh v1.0.96 436 \"ST1: the Engine banner says how old a trading stop is and when it retries\""
 }
