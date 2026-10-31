@@ -64,10 +64,33 @@ object DashboardModel {
             beat >= SLOW_MS -> Headline("Engine quiet ${ago(beat).removeSuffix(" ago")}", Tone.WARN, "No word from the engine for ${ago(beat).removeSuffix(" ago")}. It is probably starting or busy; the watchdog restarts it if it stays silent.")
             stalled(st, now) -> Headline("Stalled", Tone.BAD, "The scan has not moved for ${ago(now - st.progressChangedAtMs).removeSuffix(" ago")} (${st.progressStep.ifBlank { "scanning" }}: ${st.progressDone} of ${st.progressTotal}). The GitHub watchdog restarts a stuck scan within minutes.")
             st.problem != null -> Headline("Problem", Tone.BAD, st.problem)
-            st.tradeStopped.isNotBlank() -> Headline("Trading stopped", Tone.WARN, st.tradeStopped)
+            st.tradeStopped.isNotBlank() -> tradeStoppedHeadline(st, now)
             st.walletSleep.isNotBlank() -> Headline("Sleeping: wallet empty", Tone.WARN, st.walletSleep)
             st.scanning -> Headline("Scanning", Tone.GOOD, st.progressStep.ifBlank { "starting" } + if (st.progressTotal > 0) " (${st.progressDone} of ${st.progressTotal})" else "")
             else -> Headline("Running", Tone.GOOD, if (st.lastScanEndedAtMs > 0) "last scan ended ${ago(now - st.lastScanEndedAtMs)}" else "waiting for the first scan")
+        }
+    }
+
+    /**
+     * "Trading stopped" with its AGE and what happens next (Tj, 2026-10-31: the banner kept saying the address was restricted after a new runner was accepted). A stop is held [CloudTrader.STOP_HOLD_MS] and carried
+     * from job to job, so it can be older than the runner that publishes it: say when it was set, whether this runner's address has been accepted since, and when the engine tries again.
+     */
+    fun tradeStoppedHeadline(st: CloudStatus, now: Long): Headline {
+        val setAt = st.tradeStoppedAtMs
+        if (setAt <= 0L) return Headline("Trading stopped", Tone.WARN, st.tradeStopped)
+        val retryAt = setAt + CloudTrader.STOP_HOLD_MS
+        val place = st.tradeStopped.contains("RESTRICTED_NETWORK_REGION") || st.tradeStopped.contains("ANONYMIZED_NETWORK")
+        val addressOk = st.novigAddress.startsWith("accepted")
+        val carried = setAt < st.startedAtMs
+        val left = ((retryAt - now) / 60_000L).coerceAtLeast(0L)
+        val since = "Set ${ago(now - setAt)}"
+        return when {
+            retryAt <= now -> Headline("Trading: retrying now", Tone.WARN, "$since: ${st.tradeStopped} The pause is over; the next trading pass tries again.")
+            place && addressOk && carried -> Headline(
+                "Paused: waiting to retry", Tone.WARN,
+                "$since, when the PREVIOUS runner's address was refused by Novig. This runner's address is accepted, so this is only the 30-minute safety pause: ordering tries again in about $left min.",
+            )
+            else -> Headline("Trading stopped", Tone.WARN, "$since: ${st.tradeStopped} The engine tries again in about $left min.")
         }
     }
 

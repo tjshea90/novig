@@ -169,6 +169,8 @@ data class CloudStatus(
     val tradeMode: String = "",
     val tradeNote: String = "",
     val tradeStopped: String = "",
+    /** When the stop was set (it is held [CloudTrader.STOP_HOLD_MS] and carried from job to job, so it can be older than this job: the phone says how old it is, not just that it exists). 0 = unknown. */
+    val tradeStoppedAtMs: Long = 0L,
     val tradesAtMs: Long = 0L,
     /** The wallet is under [CloudEngine.WALLET_MIN] and the engine trades live: it scans nothing and calls no feed, and only reads the balance every [CloudEngine.WALLET_EVERY_MS] (Tj, 2026-10-15). Empty = not asleep. */
     val walletSleep: String = "",

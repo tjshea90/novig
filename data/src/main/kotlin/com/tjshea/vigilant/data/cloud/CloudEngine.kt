@@ -145,7 +145,7 @@ class CloudEngine(
     private val liveFeedSink: (CloudFeed) -> Unit = {},
 ) {
     /** What the engine's trading says about itself in the heartbeat. */
-    data class TradeStatus(val mode: String, val note: String, val stopped: String, val changedAtMs: Long, val cash: Double? = null, val equity: Double? = null)
+    data class TradeStatus(val mode: String, val note: String, val stopped: String, val changedAtMs: Long, val cash: Double? = null, val equity: Double? = null, val stoppedAtMs: Long = 0L)
 
     /** TIME_UP: the job's time is over; IDLE: the phone switched the engine off; ADDRESS: Novig refused this runner's address, the next job is started at once; WINDOW: the engine's hours (08:00-01:00 Eastern, [EngineHours]) are over or not yet begun: no hand-over, the schedule starts the next engine when they open; RESET: the phone asked for a new runner; API: the API manager asked for a fresh runner because an important API is not answering ([ApiManager], XO1): the next job is started at once. */
     enum class End { TIME_UP, IDLE, ADDRESS, WINDOW, RESET, API }
@@ -752,7 +752,7 @@ class CloudEngine(
             pricedConfigRev = pricedRev, settingsPending = settingsPending, scanNote = scanNote, bidsAtMs = bidsAt, bidsCount = bidsCount,
             novigRoute = runCatching(novigRoute).getOrDefault(""), novigAddress = runCatching(novigAddress).getOrDefault(""), liveUrl = runCatching(liveUrl).getOrDefault(""), realtimeAtMs = realtime.lastPassAtMs, realtimeWatched = realtime.watched, liveFeedAtMs = liveFeedAt, ranking = runCatching { scanner.sourceRanking() }.getOrNull().orEmpty().take(1_500),
             addressHandovers = addressWatch?.count ?: 0, addressHandoverAtMs = addressWatch?.atMs ?: 0L,
-            tradeMode = tradeStatus?.mode.orEmpty(), tradeNote = tradeStatus?.note.orEmpty().take(400), tradeStopped = tradeStatus?.stopped.orEmpty().take(200), tradesAtMs = tradeStatus?.changedAtMs ?: 0L,
+            tradeMode = tradeStatus?.mode.orEmpty(), tradeNote = tradeStatus?.note.orEmpty().take(400), tradeStopped = tradeStatus?.stopped.orEmpty().take(200), tradeStoppedAtMs = if (tradeStatus?.stopped.isNullOrEmpty()) 0L else tradeStatus?.stoppedAtMs ?: 0L, tradesAtMs = tradeStatus?.changedAtMs ?: 0L,
             walletSleep = walletSleep, walletCheckedAtMs = walletCheckedAt, walletCash = walletCash ?: -1.0, walletEquity = walletEquity ?: -1.0, walletReadAtMs = walletReadAt,
             feedReport = feedLines, feedReportAtMs = feedLinesAt, feedAlerts = feedAlerts, apiChecks = runCatching(apiChecks).getOrDefault(emptyList()),
             advice = advice, apiCards = apiCards, governorOff = governor.askedOff().sorted(),

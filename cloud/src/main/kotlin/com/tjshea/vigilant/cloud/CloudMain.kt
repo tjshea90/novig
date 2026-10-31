@@ -674,7 +674,7 @@ fun main(args: Array<String>) = runBlocking {
                     lastStoppedSaid = stoppedNow
                     runCatching { postMessage(CloudMessages.Message("stop-$now", now, "engine", "alert", "The engine stopped ordering", stoppedNow.take(300), 1, "CLOUD")) }
                 } else if (stoppedNow.isBlank()) lastStoppedSaid = ""
-                CloudEngine.TradeStatus(mode.name.lowercase(), r.line(), r.stopped.ifEmpty { trader.ledger.stopped }, now, cash = r.cash, equity = r.equity)
+                CloudEngine.TradeStatus(mode.name.lowercase(), r.line(), r.stopped.ifEmpty { trader.ledger.stopped }, now, cash = r.cash, equity = r.equity, stoppedAtMs = trader.ledger.stoppedAtMs)
             }
         },
         // The wallet gate (Tj, 2026-10-15): only a LIVE engine with a trading key has a wallet to read; everything else is "not applicable" and never sleeps.
