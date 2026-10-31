@@ -1,10 +1,10 @@
-# CHECKPOINT 4335 — read me first, then TASKS.md
+# CHECKPOINT 4336 — read me first, then TASKS.md
 
-**Written:** 2026-10-31T17:27:52Z · **tests:** all 9 fast checks green
-**Branch:** `claude/wizardly-meitner-rby3ii` · **builds on:** `31322adae` (this checkpoint is the commit after it)
+**Written:** 2026-10-31T23:22:30Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-ke71mw` · **builds on:** `67301e463` (this checkpoint is the commit after it)
 
 ## Just done
-ENGINEER 2026-10-31 watch only: engine healthy, wallet fully deployed, no change
+WATCH 2026-10-31 engine healthy, BoltOdds off (plan refused)
 
 ## Do this next
 next digest with 100+ settled
@@ -16,6 +16,7 @@ next digest with 100+ settled
 
 ## Last ten checkpoints
 ```
+  e3f044262 ckpt 4335: ENGINEER 2026-10-31 watch only: engine healthy, wallet fully deployed, no c
   31322adae ckpt 4334: ANALYST 2026-10-31 skip rule: digest unchanged, engine healthy, no change
   b64c1acb5 ckpt 4333: MajorBooks rule: bets 2+/bids 1+ well-known books in fair; sharp requiremen
   ff6b05c4f ckpt 4332: sharp book required for engine bets+bids; tennis tightening confirmed in co
@@ -25,5 +26,7 @@ next digest with 100+ settled
   ed900e434 ckpt 4328: pre-release: ST1: the Engine banner says how old a trading stop is and when
   89235075c ckpt 4327: pre-ship: ST1: the Engine banner says how old a trading stop is and when it
   243c09627 ckpt 4326: ENGINEER 2026-10-30: engine ordering blocked by Novig location check + refu
-  918fa7d34 ckpt 4325: pre-release: TK1: both devices can share one Novig trading key (save on one
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
