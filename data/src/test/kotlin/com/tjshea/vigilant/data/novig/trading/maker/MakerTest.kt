@@ -2235,6 +2235,7 @@ class MakerTest {
         val d = desk(novig, tracker())
         val l = line("m1-over", fair = 0.52).copy(fairBooks = listOf("DraftKings", "ProphetX"), fairAsOfMs = now - 90_000L, fairNewestMs = now - 20_000L)
         val low = MakerRules.of(ScanSettings(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE)).copy(minMajorBooks = 0, stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM, customStake = 5.0, maxStake = 10.0)
+        println("DBG "+MakerQuote.decide(l.copy(books = 2, sharpFairs = listOf(0.52, 0.53), bookFairs = listOf(0.52, 0.53)), low, now))
         assertEquals(1, d.cycle(listOf(l.copy(books = 2, sharpFairs = listOf(0.52, 0.53), bookFairs = listOf(0.52, 0.53))), low, stop = null, maxPerDay = 50.0, wallet = 100.0).placed)
         val b = d.bids().single()
         assertEquals("LOW_USAGE", b.focus)
