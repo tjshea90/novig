@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-j99vdb",
  "head": "b64c1acb594a7c9995fb52395063c42efb404762",
  "since": 1793415241,
- "beat": 1793430619,
- "beatIso": "2026-10-31T07:10:19Z",
+ "beat": 1793432188,
+ "beatIso": "2026-10-31T07:36:28Z",
  "done": "MajorBooks rule: bets 2+/bids 1+ well-known books in fair; sharp requirement back to veto",
  "next": "ship so the engine runs it (push lands main; engine restarts on handover); check order volume"
 }
