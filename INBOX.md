@@ -1497,3 +1497,8 @@ I think it is restricted region again
 ```
 Why does it say this
 ```
+
+## 2026-10-31T00:55:18Z
+```
+I want it to show accurate information when I pull to refresh. It shouldn't show stale engine status
+```
