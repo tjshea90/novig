@@ -325,6 +325,7 @@ class CloudTrader(
         val a: Agreement.Count = o.agreement
         AutoBet.judgeVigilant(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection), a.twoSided, a.agreeing, AutoBet.isOverProp(o.marketLabel, o.selection))?.let { return it }
         if (!rules.byStars) AutoBet.tennisReason(o.league.novigName, q.evPercent, a.twoSided, a.agreeing)?.let { return it }
+        if (!rules.byStars) com.tjshea.vigilant.engine.MajorBooks.reason(com.tjshea.vigilant.engine.MajorBooks.count(o.fair?.perBook.orEmpty().map { it.book.bookKey }), com.tjshea.vigilant.engine.MajorBooks.MIN_FOR_BETS)?.let { return it }
         val stars = ProfitProfile.adjustedStars(s.gates.profitProven, o.rating?.stars, o.league.novigName, BetKind.of(o.marketLabel, o.selection).label, o.selection, o.evPercent, o.event.startsTs, now)
         AutoBet.starsReason(rules, stars, o.rating?.stars)?.let { return it }
         if (a.sharpAgainst) return "a sharp book prices both sides and says it isn't +EV at Novig's price"
