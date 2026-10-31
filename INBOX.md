@@ -1472,3 +1472,8 @@ I want to place bets on both my phone and tablet using the navigation key at dif
 ```
 Make it so both devices share the same trading key
 ```
+
+## 2026-10-31T00:35:44Z
+```
+Troubleshoot why the github engine is not trading. I may have messed it up.  Tell me step by step how to fix everything
+```
