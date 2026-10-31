@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "3172fd",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-ke71mw",
+ "head": "8377bf993657fc330ff65f0b5061a95d9f1c3208",
+ "since": 1793488950,
+ "beat": 1793488950,
+ "beatIso": "2026-10-31T23:22:30Z",
+ "done": "WATCH 2026-10-31 engine healthy, BoltOdds off (plan refused)",
+ "next": "next digest with 100+ settled"
+}
