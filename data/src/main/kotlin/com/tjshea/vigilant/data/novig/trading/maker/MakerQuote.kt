@@ -598,7 +598,7 @@ object MakerQuote {
         rules.profit?.judge(ProfitProfile.Instrument.BID, line.league, line.kind.label, line.selection, blend / price - 1.0, (line.startsTs - now) / 60_000L)?.blocked?.let { return skip("Not bid: $it") }
         if (line.kind in MakerRules.GAME_LINES && line.sharpFairs.isEmpty()) return skip("Game lines need a sharp book (Pinnacle, Circa …) in the fair")
         if (rules.requireSharp && line.sharpFairs.isEmpty()) return skip("No sharp book (Pinnacle, Circa, an exchange) prices this both ways, and a sharp book must agree (your setting)")
-        if (rules.minMajorBooks > 0 && line.fairBooks.isNotEmpty()) com.tjshea.vigilant.engine.MajorBooks.reason(com.tjshea.vigilant.engine.MajorBooks.count(line.fairBooks), rules.minMajorBooks)?.let { return skip("This bid "+it) }
+        if (rules.minMajorBooks > 0 && rules.lowUsageBooks.isEmpty() && line.fairBooks.isNotEmpty()) com.tjshea.vigilant.engine.MajorBooks.reason(com.tjshea.vigilant.engine.MajorBooks.count(line.fairBooks), rules.minMajorBooks)?.let { return skip("This bid "+it) }
         // Books agree: each one's own fair (worst case) must put this bid at +EV, at least [minBooks] of them (the auto-bet's "books agree").
         val agreeing = if (line.bookFairs.isEmpty()) line.books else line.bookFairs.count { it > price + 1e-9 }
         if (agreeing < rules.minBooks) return skip("Only $agreeing book${if (agreeing == 1) "" else "s"} price this bid +EV on their own (fewest: ${rules.minBooks})")
