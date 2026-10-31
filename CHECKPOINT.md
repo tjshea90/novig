@@ -1,13 +1,13 @@
-# CHECKPOINT 4332 — read me first, then TASKS.md
+# CHECKPOINT 4333 — read me first, then TASKS.md
 
-**Written:** 2026-10-31T06:37:10Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-j99vdb` · **builds on:** `156d6039e` (this checkpoint is the commit after it)
+**Written:** 2026-10-31T07:10:18Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-j99vdb` · **builds on:** `46ae43fa3` (this checkpoint is the commit after it)
 
 ## Just done
-sharp book required for engine bets+bids; tennis tightening confirmed in code
+MajorBooks rule: bets 2+/bids 1+ well-known books in fair; sharp requirement back to veto
 
 ## Do this next
-verify engine picks up settings; watch order volume
+ship so the engine runs it (push lands main; engine restarts on handover); check order volume
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ verify engine picks up settings; watch order volume
 
 ## Last ten checkpoints
 ```
+  ff6b05c4f ckpt 4332: sharp book required for engine bets+bids; tennis tightening confirmed in co
   156d6039e ckpt 4331: tennis tightening: data tests green (2969)
   a240ab01f ckpt 4330: TENNIS tightened: taker 6+ books all agree 5% edge; bids 6 books (Tj chat);
   af9e7c77f ckpt 4329: chat 10-31: loss analysis answered (ATP taker leak, bids profit); Novig rea
@@ -26,5 +27,7 @@ verify engine picks up settings; watch order volume
   918fa7d34 ckpt 4325: pre-release: TK1: both devices can share one Novig trading key (save on one
   214aa0f42 ckpt 4324: pre-ship: TK1: both devices can share one Novig trading key (save on one, u
   851a476f4 ckpt 4323: pre-release: KX1c: the Bring my API keys back result shows right under its 
-  6b2227c21 ckpt 4322: pre-ship: KX1c: the Bring my API keys back result shows right under its but
 ```
+
+(9 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
