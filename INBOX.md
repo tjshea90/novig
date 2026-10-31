@@ -1482,3 +1482,8 @@ Troubleshoot why the github engine is not trading. I may have messed it up.  Tel
 ```
 I think I need to make new novig keys.  It works on my phone but not github
 ```
+
+## 2026-10-31T00:45:30Z
+```
+Check if it is working
+```
