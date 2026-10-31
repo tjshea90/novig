@@ -422,8 +422,8 @@ class AutoBetTest {
     fun tennisNeedsSixBooksAllAgreeingAndFivePercent() {
         assertNull(AutoBet.tennisReason("NBA", 0.01, 3, 1))
         assertNull(AutoBet.tennisReason("ATP", 0.06, 6, 6))
-        kotlin.test.assertNotNull(AutoBet.tennisReason("ATP", 0.06, 5, 5))
-        kotlin.test.assertNotNull(AutoBet.tennisReason("WTA", 0.06, 8, 7))
-        kotlin.test.assertNotNull(AutoBet.tennisReason("WTA", 0.04, 6, 6))
+        assertTrue(AutoBet.tennisReason("ATP", 0.06, 5, 5) != null)
+        assertTrue(AutoBet.tennisReason("WTA", 0.06, 8, 7) != null)
+        assertTrue(AutoBet.tennisReason("WTA", 0.04, 6, 6) != null)
     }
 }
