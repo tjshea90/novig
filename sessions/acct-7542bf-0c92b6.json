@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-7542bf",
+ "name": "tj outlook",
+ "nonce": "0c92b6",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/keen-keller-doui40",
+ "head": "31322adae2cc5812dbe594b09a63438e0cef09d1",
+ "since": 1793446014,
+ "beat": 1793446014,
+ "beatIso": "2026-10-31T11:26:54Z",
+ "done": "ANALYST 2026-10-31 skip rule: digest unchanged, engine healthy, no change",
+ "next": "next digest with 100+ settled bets"
+}
