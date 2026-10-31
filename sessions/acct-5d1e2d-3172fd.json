@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-j99vdb",
- "head": "46ae43fa34c6198858c305c21d1240549dd60389",
+ "head": "b64c1acb594a7c9995fb52395063c42efb404762",
  "since": 1793415241,
- "beat": 1793430582,
- "beatIso": "2026-10-31T07:09:42Z",
- "done": "sharp book required for engine bets+bids; tennis tightening confirmed in code",
- "next": "verify engine picks up settings; watch order volume"
+ "beat": 1793430619,
+ "beatIso": "2026-10-31T07:10:19Z",
+ "done": "MajorBooks rule: bets 2+/bids 1+ well-known books in fair; sharp requirement back to veto",
+ "next": "ship so the engine runs it (push lands main; engine restarts on handover); check order volume"
 }
