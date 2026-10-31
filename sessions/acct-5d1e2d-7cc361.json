@@ -8,8 +8,8 @@
  "branch": "ccr-230827ca-lcskn8",
  "head": "89235075ca679e7f48bb08b8b01b644eb951e4d7",
  "since": 1793330959,
- "beat": 1793408305,
- "beatIso": "2026-10-31T00:58:25Z",
+ "beat": 1793408311,
+ "beatIso": "2026-10-31T00:58:31Z",
  "done": "pre-ship: ST1: the Engine banner says how old a trading stop is and when it retries",
  "next": "ship.sh gates and releases this"
 }
