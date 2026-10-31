@@ -16,7 +16,7 @@ import org.junit.Test
 
 /**
  * Tj, 2026-10-11: "for the bids it should still put up bids that are positive EV for tennis. Right now it won't put up a single bid even though I think it is finding tennis odds". His Diagnostics: Quick & likely
- * narrows bids to props and team totals and to lines five books price; tennis has Pinnacle alone. With the Tennis switch on, tennis lines are judged by the plain rules.
+ * narrows bids to props and team totals and to lines five books price; tennis needs 6 books (Tj, 2026-10-31) with Pinnacle among them. With the Tennis switch on, tennis lines are judged by the plain rules.
  */
 class TennisBidTest {
     private val now = 1_800_000_000_000L
@@ -28,7 +28,7 @@ class TennisBidTest {
             outcomes = listOf(NovigOutcome("o-a", "Player A", "TBD"), NovigOutcome("o-b", "Player B", "TBD")),
         ),
         outcomeId = "o-a", startsTs = start, league = league, eventName = "A @ B", marketLabel = marketType, selection = "Player A", kind = kind,
-        fair = fair, fairAsOfMs = now - 30_000, fairOld = false, books = books, fairBooks = listOf("Pinnacle"), bookFairs = listOf(fair), sharpFairs = listOf(fair),
+        fair = fair, fairAsOfMs = now - 30_000, fairOld = false, books = books, fairBooks = listOf("Pinnacle"), bookFairs = List(6) { fair }, sharpFairs = listOf(fair),
         offer = offer, bestBid = null, live = false, source = BetTracker.SOURCE_VIGILANT,
     )
 
