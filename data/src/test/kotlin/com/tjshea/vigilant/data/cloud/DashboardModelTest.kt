@@ -146,4 +146,22 @@ class DashboardModelTest {
         assertEquals("a feed with no error says no answer", "feed oddspapi_free-props silent for 3 scans: no answer", DashboardModel.feedProblem(st, "oddspapi_free"))
         assertNull(DashboardModel.feedProblem(null, "boltodds"))
     }
+
+    @Test
+    fun `a stop carried from the previous runner says how old it is and when it retries`() {
+        val restricted = "Novig places this network's internet address outside the states it serves (RESTRICTED_NETWORK_REGION)."
+        val carried = st { copy(startedAtMs = now - 4 * 60_000, novigAddress = "accepted by Novig", tradeStopped = restricted, tradeStoppedAtMs = now - 9 * 60_000) }
+        val h = DashboardModel.headline(carried, now)
+        assertEquals("Paused: waiting to retry", h.title)
+        assertTrue(h.body, h.body.contains("PREVIOUS runner") && h.body.contains("9 min") && h.body.contains("about 21 min"))
+        // this runner's own refusal (set after it started, or its address not accepted) is a plain stop with its age
+        val own = st { copy(startedAtMs = now - 20 * 60_000, novigAddress = "refused: RESTRICTED_NETWORK_REGION", tradeStopped = restricted, tradeStoppedAtMs = now - 2 * 60_000) }
+        assertEquals("Trading stopped", DashboardModel.headline(own, now).title)
+        assertTrue(DashboardModel.headline(own, now).body.contains("about 28 min"))
+        // the 30 minutes are over: no longer called stopped
+        val over = st { copy(tradeStopped = restricted, tradeStoppedAtMs = now - 31 * 60_000) }
+        assertEquals("Trading: retrying now", DashboardModel.headline(over, now).title)
+        // an older engine that publishes no stop time keeps the old words
+        assertEquals("Trading stopped", DashboardModel.headline(st { copy(tradeStopped = "x") }, now).title)
+    }
 }
