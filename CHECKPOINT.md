@@ -1,13 +1,13 @@
-# CHECKPOINT 4334 — read me first, then TASKS.md
+# CHECKPOINT 4335 — read me first, then TASKS.md
 
-**Written:** 2026-10-31T11:26:54Z · **tests:** all 9 fast checks green
-**Branch:** `claude/keen-keller-doui40` · **builds on:** `b64c1acb5` (this checkpoint is the commit after it)
+**Written:** 2026-10-31T17:27:52Z · **tests:** all 9 fast checks green
+**Branch:** `claude/wizardly-meitner-rby3ii` · **builds on:** `31322adae` (this checkpoint is the commit after it)
 
 ## Just done
-ANALYST 2026-10-31 skip rule: digest unchanged, engine healthy, no change
+ENGINEER 2026-10-31 watch only: engine healthy, wallet fully deployed, no change
 
 ## Do this next
-next digest with 100+ settled bets
+next digest with 100+ settled
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ next digest with 100+ settled bets
 
 ## Last ten checkpoints
 ```
+  31322adae ckpt 4334: ANALYST 2026-10-31 skip rule: digest unchanged, engine healthy, no change
   b64c1acb5 ckpt 4333: MajorBooks rule: bets 2+/bids 1+ well-known books in fair; sharp requiremen
   ff6b05c4f ckpt 4332: sharp book required for engine bets+bids; tennis tightening confirmed in co
   156d6039e ckpt 4331: tennis tightening: data tests green (2969)
@@ -25,5 +26,4 @@ next digest with 100+ settled bets
   89235075c ckpt 4327: pre-ship: ST1: the Engine banner says how old a trading stop is and when it
   243c09627 ckpt 4326: ENGINEER 2026-10-30: engine ordering blocked by Novig location check + refu
   918fa7d34 ckpt 4325: pre-release: TK1: both devices can share one Novig trading key (save on one
-  214aa0f42 ckpt 4324: pre-ship: TK1: both devices can share one Novig trading key (save on one, u
 ```
