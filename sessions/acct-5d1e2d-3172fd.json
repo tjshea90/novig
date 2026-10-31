@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-fh3ywo",
- "head": "3f358afef71a93f8840b03d0d40962ba333643cc",
+ "head": "af9e7c77f42364f81a304de83230197c9e514a1f",
  "since": 1793415241,
- "beat": 1793419259,
- "beatIso": "2026-10-31T04:00:59Z",
- "done": "",
- "next": ""
+ "beat": 1793419314,
+ "beatIso": "2026-10-31T04:01:54Z",
+ "done": "chat 10-31: loss analysis answered (ATP taker leak, bids profit); Novig read key 401 again",
+ "next": "At ATP n>=200 cut ATP taker; break down by fair books; check Novig read key after Tj resends"
 }
