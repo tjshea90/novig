@@ -1487,3 +1487,8 @@ I think I need to make new novig keys.  It works on my phone but not github
 ```
 Check if it is working
 ```
+
+## 2026-10-31T00:50:14Z
+```
+I think it is restricted region again
+```
