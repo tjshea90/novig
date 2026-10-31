@@ -6562,3 +6562,6 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 ## TK1 (Tj 2026-10-30, typed): "Make it so both devices share the same trading key" (phone + tablet bet at different times; Novig allows ONE trading key per subaccount, a device without it revokes it)
 - [x] `data/backup/TradeKeyShare` + `app/TradeKeySharing` (export from the device holding the software trading key; import checks Novig with one signed echo, seals it with the device's Keystore, points the connection at it so Enable betting revokes nothing) + Settings › Usage & keys buttons — `TradeKeyShareTest`, `TradeKeySharingTest`.
 - [ ] Tj: on the device that bets, Cloud scan › Send trading key to GitHub (makes a shareable key), then Save trading key; on the other device Use the trading key.
+
+## ST1 (Tj 2026-10-31, typed): "I want it to show accurate information when I pull to refresh. It shouldn't show stale engine status"
+- [x] The engine publishes WHEN a trading stop was set (`tradeStoppedAtMs`); the Engine headline says how old it is, whether this runner's address was accepted since, and when ordering retries (`DashboardModel.tradeStoppedHeadline`, test in `DashboardModelTest`). Stop behaviour itself unchanged (a Novig location stand-down is class C).
