@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-230827ca-lcskn8",
- "head": "07bcfad9a68ed917cec1fbca8cdfd81f17e92255",
+ "head": "5bb4b24295478f689e411bd122ac713f5374cae9",
  "since": 1793330959,
- "beat": 1793407397,
- "beatIso": "2026-10-31T00:43:17Z",
+ "beat": 1793407584,
+ "beatIso": "2026-10-31T00:46:24Z",
  "done": "pre-release: TK1: both devices can share one Novig trading key (save on one, use on the other) (versionCode 435, v1.0.95)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.95), then run: bash tools/record-release.sh v1.0.95 435 \"TK1: both devices can share one Novig trading key (save on one, use on the other)\""
 }
