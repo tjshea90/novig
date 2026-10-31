@@ -264,6 +264,18 @@ object AutoBet {
         return null
     }
 
+    /** Tennis taker bets lost 14% on 194 ATP bets (2026-10-31 study, Tj's word): the engine takes one only when 6+ books say +EV and every one that prices both sides agrees, at 5%+. */
+    const val TENNIS_MIN_BOOKS = 6
+    const val TENNIS_MIN_EV = 0.05
+
+    fun tennisReason(league: String, ev: Double, twoSided: Int, agreeing: Int): String? {
+        if (league != "ATP" && league != "WTA") return null
+        if (agreeing < TENNIS_MIN_BOOKS) return "tennis needs $TENNIS_MIN_BOOKS books saying +EV on their own (${books(agreeing)})"
+        if (agreeing < twoSided) return "tennis needs every book to agree (only $agreeing of $twoSided)"
+        if (ev < TENNIS_MIN_EV) return "tennis needs at least ${(TENNIS_MIN_EV * 100).toInt()}% edge"
+        return null
+    }
+
     /** The stake for a scan's bet at [quote] (see [stake]): the rule's amount, or Kelly on the quote's own fair and price, held to the per-bet maximum and the wallet. */
     fun scanStake(rules: Rules, quote: EvQuote, bankroll: Double, balance: Double, hoursToStart: Double? = null): Stake {
         if (balance < MIN_STAKE - 1e-9) return Stake.WalletEmpty

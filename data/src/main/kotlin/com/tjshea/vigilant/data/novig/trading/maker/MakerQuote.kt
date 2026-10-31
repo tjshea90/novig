@@ -181,6 +181,9 @@ data class MakerRules(
     companion object {
         val TENNIS_LEAGUES = setOf("ATP", "WTA")
 
+        /** Tennis bids need 6 books saying +EV on their own (Tj, 2026-10-31: tighten tennis; was 1). */
+        const val TENNIS_BID_MIN_BOOKS = 6
+
         /** [maxBehind]'s default: two ticks (1¢) of Novig's half-cent grid. */
         const val MAX_BEHIND = 0.01
 
@@ -207,7 +210,7 @@ data class MakerRules(
 
         /** The plain bid rules for tennis: Tj's own, game lines always on, one sharp book (Pinnacle) pricing both ways is enough, no popularity filters, whatever the focus. */
         private fun tennisRules(s: ScanSettings): MakerRules = base(s).copy(
-            kinds = s.makerKinds + GAME_LINES + BetKind.TEAM_TOTAL, minBooks = 1, requireSharp = true, quick = false, skipObscure = false, popularOnly = false, minLineBooks = 0,
+            kinds = s.makerKinds + GAME_LINES + BetKind.TEAM_TOTAL, minBooks = TENNIS_BID_MIN_BOOKS, requireSharp = true, quick = false, skipObscure = false, popularOnly = false, minLineBooks = 0,
             obscureFill = false, lowUsageBooks = emptySet(), focus = s.makerFocus.name,
         )
 
