@@ -222,9 +222,12 @@ class ApiSettler(
                 else -> return emptyMap<String, BetStatus>() to ""
             }
             val win = group.filter { it.outcomeId == winner }.sumOf { (it.contracts ?: 0L) * EvMath.CONTRACT_PAYOUT_DOLLARS }
-            if (kotlin.math.abs(marketPaid - win) > TOLERANCE) return emptyMap<String, BetStatus>() to ""
+            val fits = kotlin.math.abs(marketPaid - win) <= TOLERANCE
+            // Tj, 2026-11-01 (DET -7.5 stuck 3 days): a final score from the public feeds is proof on its own. A payout that fits neither side
+            // (a partial or netted row) no longer blocks it; the evidence says so.
             return sides.associateWith { if (it == winner) BetStatus.WON else BetStatus.LOST } to
-                "Novig paid ${money(marketPaid)} for the market (you hold both sides, so that fits either); the score feeds say which won: ${feed.evidence}"
+                (if (fits) "Novig paid ${money(marketPaid)} for the market (you hold both sides, so that fits either); the score feeds say which won: ${feed.evidence}"
+                else "Novig's payout row (${money(marketPaid)}) fits neither side, so the final score decides: ${feed.evidence}")
         }
         return emptyMap<String, BetStatus>() to ""
     }
