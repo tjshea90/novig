@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "3172fd",
- "kind": "routine",
+ "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-ke71mw",
+ "branch": "claude/optimistic-curie-ln6aq3",
  "head": "8377bf993657fc330ff65f0b5061a95d9f1c3208",
  "since": 1793488950,
- "beat": 1793488950,
- "beatIso": "2026-10-31T23:22:30Z",
+ "beat": 1793500788,
+ "beatIso": "2026-11-01T02:39:48Z",
  "done": "WATCH 2026-10-31 engine healthy, BoltOdds off (plan refused)",
  "next": "next digest with 100+ settled"
 }
