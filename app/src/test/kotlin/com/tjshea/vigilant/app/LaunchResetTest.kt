@@ -71,6 +71,18 @@ class LaunchResetTest {
     }
 
     @Test
+    fun `a restart leaves auto-bet and bids alone while the GitHub engine trades`() {
+        val engine = on.copy(maker = true, gates = on.gates.copy(cloudScan = true, cloudTrading = com.tjshea.vigilant.data.scanner.CloudTradeMode.LIVE))
+        val reset = LaunchReset.apply(engine)
+        assertTrue(reset.autoBet)
+        assertTrue(reset.maker)
+        assertEquals(AutoScanMode.OFF, reset.autoScan)
+        // Engine trading off: the old rule.
+        val off = LaunchReset.apply(engine.copy(gates = engine.gates.copy(cloudTrading = com.tjshea.vigilant.data.scanner.CloudTradeMode.OFF)))
+        assertFalse(off.maker); assertFalse(off.autoBet)
+    }
+
+    @Test
     fun `the note says what was on, and nothing when nothing was`() {
         assertEquals("Auto-bet and background auto-scan are off after the phone restarted. Switch them on in Settings when you want them.", LaunchReset.note(on))
         assertEquals("Auto-bet is off after the phone restarted. Switch it on in Settings when you want it.", LaunchReset.note(on.copy(autoScan = AutoScanMode.OFF)))
