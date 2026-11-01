@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-ln6aq3",
- "head": "30492e9acc16dbfe193380ea47a54f240feb485b",
+ "head": "ad045155ac2ca440e3b0933b549da27c671f3c1a",
  "since": 1793488950,
- "beat": 1793500992,
- "beatIso": "2026-11-01T02:43:12Z",
- "done": "WATCH 2026-10-31 engine healthy, BoltOdds off (plan refused)",
- "next": "next digest with 100+ settled"
+ "beat": 1793501155,
+ "beatIso": "2026-11-01T02:45:55Z",
+ "done": "chat 11-01: tracker stuck DET -7.5 bet diagnosed (hedged market, payout $0.02 fits neither side; guarded by ApiSettlerTest); no code change, offered net-payout grading",
+ "next": "if Tj says yes: grade both-sides markets from final score, split Novig net payout to winner"
 }
