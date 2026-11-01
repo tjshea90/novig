@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-ln6aq3",
  "head": "4f3cce88f1203a29764a665f618279afd19d6921",
  "since": 1793488950,
- "beat": 1793503099,
- "beatIso": "2026-11-01T03:18:19Z",
+ "beat": 1793503409,
+ "beatIso": "2026-11-01T03:23:29Z",
  "done": "fix 2 calendar-fragile tests (month-day budget on Nov 1)",
  "next": "ship.sh then release.yml"
 }
