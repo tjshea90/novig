@@ -135,9 +135,17 @@ private fun OverviewSection(status: CloudStatus?, now: Long, hoursOn: Boolean, l
         }
         val running = DashboardModel.running(status, now)
         val stale = if (running) "" else " (last run, not live)"
-        status?.takeIf { it.novigRoute.isNotBlank() }?.let { InfoLine("Novig", it.novigRoute + stale) }
-        status?.takeIf { it.novigAddress.isNotBlank() }?.let { InfoLine("Runner address", it.novigAddress + stale, if (running && it.novigAddress.startsWith("REFUSED")) Tone.WARN else Tone.NEUTRAL) }
-        status?.takeIf { it.tradeMode.isNotBlank() && it.tradeNote.isNotBlank() }?.let { InfoLine("Trading", it.tradeNote + stale, if (running && it.tradeStopped.isNotBlank()) Tone.WARN else Tone.NEUTRAL) }
+        // Tj, 2026-11-01: "never let stale information stay in this section". A line the engine repeats unchanged is dated by how long its words have been the same, so old text never reads as current.
+        val unchangedSince = remember { mutableMapOf<String, Pair<String, Long>>() }
+        fun same(key: String, text: String): String {
+            val seen = unchangedSince[key]
+            if (seen == null || seen.first != text) { unchangedSince[key] = text to now; return "" }
+            val age = now - seen.second
+            return if (running && age >= 120_000L) " (same words for ${DashboardModel.ago(age)})" else ""
+        }
+        status?.takeIf { it.novigRoute.isNotBlank() }?.let { InfoLine("Novig", it.novigRoute + stale + same("novig", it.novigRoute)) }
+        status?.takeIf { it.novigAddress.isNotBlank() }?.let { InfoLine("Runner address", it.novigAddress + stale + same("addr", it.novigAddress), if (running && it.novigAddress.startsWith("REFUSED")) Tone.WARN else Tone.NEUTRAL) }
+        status?.takeIf { it.tradeMode.isNotBlank() && it.tradeNote.isNotBlank() }?.let { InfoLine("Trading", it.tradeNote + stale + same("trade", it.tradeNote), if (running && it.tradeStopped.isNotBlank()) Tone.WARN else Tone.NEUTRAL) }
         status?.takeIf { it.tradeStopped.isNotBlank() }?.let { InfoLine("Stopped", it.tradeStopped + stale, if (running) Tone.WARN else Tone.NEUTRAL) }
 
         status?.advice?.takeIf { it.isNotEmpty() }?.let { adv ->
