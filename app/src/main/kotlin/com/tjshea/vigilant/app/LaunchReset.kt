@@ -25,10 +25,17 @@ import kotlin.math.abs
 object LaunchReset {
 
     /** [s] with the background things off (auto-bet, background auto-scan, auto-make); everything else (limits, criteria, the interval, the halt) kept as it was. */
-    fun apply(s: ScanSettings): ScanSettings = s.copy(autoBet = false, autoScan = AutoScanMode.OFF, maker = false)
+    fun apply(s: ScanSettings): ScanSettings =
+        // Tj, 2026-11-01 (chat): "make it so my phone no longer automatically turns off the github auto bid engine". The settings are mirrored to the engine, so a phone
+        // that restarted and switched auto-bet/auto-make off stopped the engine's own bids and bets. While the engine trades (not Off), those two switches are the engine's: left as they are.
+        if (engineTrades(s)) s.copy(autoScan = AutoScanMode.OFF) else s.copy(autoBet = false, autoScan = AutoScanMode.OFF, maker = false)
+
+    /** The GitHub engine is the one trading (cloud scan driving, engine trading Paper or Live, not killed): its switches are not the phone's to reset. */
+    private fun engineTrades(s: ScanSettings): Boolean = s.cloudDrives && !s.killed && s.gates.cloudTrading != com.tjshea.vigilant.data.scanner.CloudTradeMode.OFF
 
     /** What [apply] switches off in [s], in words for the note on screen; null when both were off already. */
     fun note(s: ScanSettings): String? {
+        if (engineTrades(s)) return if (s.autoScan != AutoScanMode.OFF) "Background auto-scan is off after the phone restarted. Switch it on in Settings when you want it." else null
         val bet = s.autoBet
         val scan = s.autoScan != AutoScanMode.OFF
         // Auto-make goes off with auto-bet (Tj, 2026-10-03: "auto make bets just the same way that auto bet already takes bets").
