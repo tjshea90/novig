@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-ln6aq3",
  "head": "208c124c4ea05c3e5765d04b5729de83f5c93659",
  "since": 1793488950,
- "beat": 1793502220,
- "beatIso": "2026-11-01T03:03:40Z",
+ "beat": 1793502222,
+ "beatIso": "2026-11-01T03:03:42Z",
  "done": "GR1: both-sides graded by final score + Novig net payout, ApiSettlerTest green",
  "next": "run full :data:test, ship with next release"
 }
