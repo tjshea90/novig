@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-5j7szv",
- "head": "34f52d764d0f8b6501f5eb114f3d0968b166c191",
+ "head": "cb3f2110f662a02293d0b38c4327f5c0c3a71085",
  "since": 1793488950,
- "beat": 1793523148,
- "beatIso": "2026-11-01T08:52:28Z",
+ "beat": 1793523678,
+ "beatIso": "2026-11-01T09:01:18Z",
  "done": "2026-11-01 chat research: bids +4.6%, taker totals/spreads leak n194, no change",
  "next": "at n>=200 cut engine taker non-tennis game totals+spreads (8+ books or stop)"
 }
