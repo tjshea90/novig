@@ -105,7 +105,8 @@ class ApiSettler(
                                     val v = both ?: bothSides(group, marketPaid).also { both = it }
                                     val status = v.first[bet.outcomeId]
                                     if (status != null) {
-                                        settle(changes, bet, status, null, v.second, now); settled++
+                                        val fmv = if (status == BetStatus.FMV) marketPaid / mine.sumOf { it.contracts ?: 0L }.coerceAtLeast(1L) else null
+                                        settle(changes, bet, status, fmv, v.second, now); settled++
                                     } else {
                                         note(changes, bet, "You hold both sides of this market and Novig's payout (${money(marketPaid)}) doesn't say which won: check it in the Novig app", now, manual = true); manual++
                                     }
@@ -225,9 +226,9 @@ class ApiSettler(
             val fits = kotlin.math.abs(marketPaid - win) <= TOLERANCE
             // Tj, 2026-11-01 (DET -7.5 stuck 3 days): a final score from the public feeds is proof on its own. A payout that fits neither side
             // (a partial or netted row) no longer blocks it; the evidence says so.
-            return sides.associateWith { if (it == winner) BetStatus.WON else BetStatus.LOST } to
+            return sides.associateWith { if (it == winner) (if (fits) BetStatus.WON else BetStatus.FMV) else BetStatus.LOST } to
                 (if (fits) "Novig paid ${money(marketPaid)} for the market (you hold both sides, so that fits either); the score feeds say which won: ${feed.evidence}"
-                else "Novig's payout row (${money(marketPaid)}) fits neither side, so the final score decides: ${feed.evidence}")
+                else "Novig's payout row (${money(marketPaid)}) fits neither side, so the final score decides the winner and the money is what Novig paid: ${feed.evidence}")
         }
         return emptyMap<String, BetStatus>() to ""
     }

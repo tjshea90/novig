@@ -219,7 +219,11 @@ class ApiSettlerTest {
         t4.logApi(target("a"), "o1", listOf(fill("o1")))
         t4.logApi(lockTarget, "o2", listOf(NovigFill("f-o2", "o2", null, "mkt", "B", 500, 2.5, true, 0.0, start - hour)))
         novig(ledger = listOf("mkt" to "4.70000"))
-        assertEquals(2, settler(t4) { b -> if (b.outcomeId == "A") BetGrader.Grade.Result(BetStatus.WON, "Final") else null }.run().manual)
+        // Not forced into a win: the final score names the winner, the money is what Novig paid (FMV), the other side loses.
+        assertEquals(0, settler(t4) { b -> if (b.outcomeId == "A") BetGrader.Grade.Result(BetStatus.WON, "Final") else null }.run().manual)
+        assertEquals(BetStatus.FMV, t4.all().single { it.orderId == "o1" }.status)
+        assertEquals(BetStatus.LOST, t4.all().single { it.orderId == "o2" }.status)
+        assertEquals(4.70 / 400, t4.all().single { it.orderId == "o1" }.settleValue!!, 1e-9)
     }
 
     @Test
