@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-stw5bf",
- "head": "cf12aeb2c84d56d23feb37cd9b9cdb4d21a70fdc",
+ "head": "b9de00901cd1bc665e813bf43bf6c2d242df3a5b",
  "since": 1793488950,
- "beat": 1793559467,
- "beatIso": "2026-11-01T18:57:47Z",
- "done": "LR1: restart no longer resets auto-bet/bids while engine trades",
- "next": "ship in next release batch"
+ "beat": 1793559504,
+ "beatIso": "2026-11-01T18:58:24Z",
+ "done": "pre-ship: LR1: a phone restart no longer switches off the GitHub engine's auto-bet and bids",
+ "next": "ship.sh gates and releases this"
 }
