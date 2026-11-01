@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/3172fd",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "3172fd",
+ "note": "LR1: a phone restart no longer switches off the GitHub engine's auto-bet and bids",
+ "since": 1793559509,
+ "beat": 1793559509
+}
