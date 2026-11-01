@@ -436,3 +436,4 @@ day that changes.
 | v1.0.95 | code 435 | 2026-10-30T21:16Z | TK1: both devices can share one Novig trading key (save on one, use on the other)
 | v1.0.96 | code 436 | 2026-10-31T01:08Z | ST1: the Engine banner says how old a trading stop is and when it retries
 | v1.0.97 | code 437 | 2026-11-01T03:39Z | Tracker: both-sides markets with an odd Novig payout grade from the final score (GR1)
+| v1.0.98 | code 438 | 2026-11-01T19:08Z | LR1: a phone restart no longer switches off the GitHub engine's auto-bet and bids
