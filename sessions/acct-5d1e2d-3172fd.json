@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-stw5bf",
  "head": "cf12aeb2c84d56d23feb37cd9b9cdb4d21a70fdc",
  "since": 1793488950,
- "beat": 1793559157,
- "beatIso": "2026-11-01T18:52:37Z",
+ "beat": 1793559181,
+ "beatIso": "2026-11-01T18:53:01Z",
  "done": "LR1: restart no longer resets auto-bet/bids while engine trades",
  "next": "ship in next release batch"
 }
