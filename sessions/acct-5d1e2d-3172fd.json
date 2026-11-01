@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-5j7szv",
  "head": "2bcc76c44b03bd71529bb75cca72c1662c38700d",
  "since": 1793488950,
- "beat": 1793523743,
- "beatIso": "2026-11-01T09:02:23Z",
+ "beat": 1793524307,
+ "beatIso": "2026-11-01T09:11:47Z",
  "done": "Engine tab: lines that repeat unchanged show 'same words for N min'; restarted engine for new Novig read key",
  "next": "check status.novigRoute shows key accepted; tell Tj which old keys are safe"
 }
