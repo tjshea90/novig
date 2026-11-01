@@ -65,7 +65,7 @@ class OddsApiPropsTest {
 
     @After fun tearDown() { server.shutdown() }
 
-    private val meter = UsageMeter(JsonFileStore(java.io.File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }))
+    private val meter = UsageMeter(JsonFileStore(java.io.File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }), clock = { now })
 
     private fun keyUsage() = meter.flow.value.providers.getValue(QuotaPolicy.ODDS_API.id).keys.getValue("test-key")
 
