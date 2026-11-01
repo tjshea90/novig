@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-ln6aq3",
- "head": "4f3cce88f1203a29764a665f618279afd19d6921",
+ "head": "4612a0fe8e345136faf8efa83aaa31ef6e516322",
  "since": 1793488950,
- "beat": 1793503409,
- "beatIso": "2026-11-01T03:23:29Z",
- "done": "fix 2 calendar-fragile tests (month-day budget on Nov 1)",
- "next": "ship.sh then release.yml"
+ "beat": 1793503442,
+ "beatIso": "2026-11-01T03:24:02Z",
+ "done": "pre-ship: Tracker: both-sides markets with an odd Novig payout grade from the final score (GR1)",
+ "next": "ship.sh gates and releases this"
 }
