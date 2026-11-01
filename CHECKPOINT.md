@@ -1,22 +1,22 @@
-# CHECKPOINT 4347 — read me first, then TASKS.md
+# CHECKPOINT 4348 — read me first, then TASKS.md
 
-**Written:** 2026-11-01T18:58:24Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-stw5bf` · **builds on:** `cf12aeb2c` (this checkpoint is the commit after it)
+**Written:** 2026-11-01T19:01:18Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-stw5bf` · **builds on:** `b9de00901` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: LR1: a phone restart no longer switches off the GitHub engine's auto-bet and bids
+pre-release: LR1: a phone restart no longer switches off the GitHub engine's auto-bet and bids (versionCode 438, v1.0.98)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.98), then run: bash tools/record-release.sh v1.0.98 438 "LR1: a phone restart no longer switches off the GitHub engine's auto-bet and bids"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  b9de00901 ckpt 4347: pre-ship: LR1: a phone restart no longer switches off the GitHub engine's a
   cf12aeb2c ckpt 4346: LR1: restart no longer resets auto-bet/bids while engine trades
   19af00dfd ckpt 4345: WATCH 2026-11-01 engine healthy, no change
   0891efb00 ckpt 4344: BD20 bids 20/game wallet 2000%
@@ -26,5 +26,4 @@ ship.sh gates and releases this
   4612a0fe8 ckpt 4340: pre-ship: Tracker: both-sides markets with an odd Novig payout grade from t
   4f3cce88f ckpt 4339: fix 2 calendar-fragile tests (month-day budget on Nov 1)
   208c124c4 ckpt 4338: GR1: both-sides graded by final score + Novig net payout, ApiSettlerTest gr
-  ad045155a ckpt 4337: chat 11-01: tracker stuck DET -7.5 bet diagnosed (hedged market, payout $0.
 ```
