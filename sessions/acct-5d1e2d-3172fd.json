@@ -5,11 +5,11 @@
  "nonce": "3172fd",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-ln6aq3",
- "head": "b0a7ffff2566bc315fd23ea87153042e08cc8d6b",
+ "branch": "claude/optimistic-curie-5j7szv",
+ "head": "291eb20110c9d87cad0a93a7ed00532f971b3c27",
  "since": 1793488950,
- "beat": 1793504379,
- "beatIso": "2026-11-01T03:39:39Z",
+ "beat": 1793522810,
+ "beatIso": "2026-11-01T08:46:50Z",
  "done": "pre-release: Tracker: both-sides markets with an odd Novig payout grade from the final score (GR1) (versionCode 437, v1.0.97)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.97), then run: bash tools/record-release.sh v1.0.97 437 \"Tracker: both-sides markets with an odd Novig payout grade from the final score (GR1)\""
 }
