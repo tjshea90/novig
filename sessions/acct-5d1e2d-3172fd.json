@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-stw5bf",
- "head": "bfce3924c44e11b4d99f0352869e49f14248c3be",
+ "head": "cf12aeb2c84d56d23feb37cd9b9cdb4d21a70fdc",
  "since": 1793488950,
- "beat": 1793558512,
- "beatIso": "2026-11-01T18:41:52Z",
- "done": "BD20 bids 20/game wallet 2000%",
- "next": "answer chat; Engine tab refresh freshness (ST1)"
+ "beat": 1793558539,
+ "beatIso": "2026-11-01T18:42:19Z",
+ "done": "LR1: restart no longer resets auto-bet/bids while engine trades",
+ "next": "ship in next release batch"
 }
