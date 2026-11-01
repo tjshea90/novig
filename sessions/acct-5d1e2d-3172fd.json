@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-ln6aq3",
  "head": "b0a7ffff2566bc315fd23ea87153042e08cc8d6b",
  "since": 1793488950,
- "beat": 1793503974,
- "beatIso": "2026-11-01T03:32:54Z",
+ "beat": 1793504379,
+ "beatIso": "2026-11-01T03:39:39Z",
  "done": "pre-release: Tracker: both-sides markets with an odd Novig payout grade from the final score (GR1) (versionCode 437, v1.0.97)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.97), then run: bash tools/record-release.sh v1.0.97 437 \"Tracker: both-sides markets with an odd Novig payout grade from the final score (GR1)\""
 }
