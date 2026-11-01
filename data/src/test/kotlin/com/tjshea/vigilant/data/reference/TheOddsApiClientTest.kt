@@ -260,7 +260,7 @@ class TheOddsApiClientTest {
                 "starter" to com.tjshea.vigilant.data.keys.KeyUsage(periodStart = month, used = 100, remaining = 19_900, limit = 20_000),
                 "pro" to com.tjshea.vigilant.data.keys.KeyUsage(periodStart = month, used = 100, remaining = 99_900, limit = 100_000),
                 // PB18 (Tj, 2026-10-25: "Make sure the GitHub engine defaults to the parlayapi business plan key and stays connected to that one"): the Business plan's million goes first.
-                "business" to com.tjshea.vigilant.data.keys.KeyUsage(periodStart = month, used = 58_361, remaining = 941_639, limit = 1_000_000),
+                "business" to com.tjshea.vigilant.data.keys.KeyUsage(periodStart = month, used = 1_000, remaining = 999_000, limit = 1_000_000),
             ))))
         }
         val c = TheOddsApiClient(
