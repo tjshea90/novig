@@ -1,13 +1,13 @@
-# CHECKPOINT 4336 — read me first, then TASKS.md
+# CHECKPOINT 4337 — read me first, then TASKS.md
 
-**Written:** 2026-10-31T23:22:30Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-ke71mw` · **builds on:** `67301e463` (this checkpoint is the commit after it)
+**Written:** 2026-11-01T02:45:55Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-ln6aq3` · **builds on:** `30492e9ac` (this checkpoint is the commit after it)
 
 ## Just done
-WATCH 2026-10-31 engine healthy, BoltOdds off (plan refused)
+chat 11-01: tracker stuck DET -7.5 bet diagnosed (hedged market, payout $0.02 fits neither side; guarded by ApiSettlerTest); no code change, offered net-payout grading
 
 ## Do this next
-next digest with 100+ settled
+if Tj says yes: grade both-sides markets from final score, split Novig net payout to winner
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ next digest with 100+ settled
 
 ## Last ten checkpoints
 ```
+  8377bf993 ckpt 4336: WATCH 2026-10-31 engine healthy, BoltOdds off (plan refused)
   e3f044262 ckpt 4335: ENGINEER 2026-10-31 watch only: engine healthy, wallet fully deployed, no c
   31322adae ckpt 4334: ANALYST 2026-10-31 skip rule: digest unchanged, engine healthy, no change
   b64c1acb5 ckpt 4333: MajorBooks rule: bets 2+/bids 1+ well-known books in fair; sharp requiremen
@@ -25,7 +26,6 @@ next digest with 100+ settled
   af9e7c77f ckpt 4329: chat 10-31: loss analysis answered (ATP taker leak, bids profit); Novig rea
   ed900e434 ckpt 4328: pre-release: ST1: the Engine banner says how old a trading stop is and when
   89235075c ckpt 4327: pre-ship: ST1: the Engine banner says how old a trading stop is and when it
-  243c09627 ckpt 4326: ENGINEER 2026-10-30: engine ordering blocked by Novig location check + refu
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the
