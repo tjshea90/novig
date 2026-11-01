@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-stw5bf",
  "head": "ebd2c9af602ffb6fbcd5c748a5602b980e0c1cf9",
  "since": 1793488950,
- "beat": 1793559678,
- "beatIso": "2026-11-01T19:01:18Z",
+ "beat": 1793560087,
+ "beatIso": "2026-11-01T19:08:07Z",
  "done": "pre-release: LR1: a phone restart no longer switches off the GitHub engine's auto-bet and bids (versionCode 438, v1.0.98)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.98), then run: bash tools/record-release.sh v1.0.98 438 \"LR1: a phone restart no longer switches off the GitHub engine's auto-bet and bids\""
 }
