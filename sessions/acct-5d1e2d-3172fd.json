@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-htf6em",
- "head": "0650f995de694780189f12f5dacf787afc126db6",
+ "head": "77749fdb4f04c48439079825673d221da5b8de94",
  "since": 1793578976,
- "beat": 1793642440,
- "beatIso": "2026-11-02T18:00:40Z",
- "done": "CB1 answered: NCAAB already enabled",
- "next": "verify NCAAB rows once priced"
+ "beat": 1793642530,
+ "beatIso": "2026-11-02T18:02:10Z",
+ "done": "PL1 investigated, replied",
+ "next": "PropLineLive.confirmedAt coverage for far games"
 }
