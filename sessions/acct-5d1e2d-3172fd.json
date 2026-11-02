@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-htf6em",
- "head": "d1224cbbfd3404aba1ed50afa66971ad1e895139",
+ "head": "156a65c85cb9ed899c0ca45de59ce848a49bf193",
  "since": 1793578976,
- "beat": 1793644041,
- "beatIso": "2026-11-02T18:27:21Z",
+ "beat": 1793644307,
+ "beatIso": "2026-11-02T18:31:47Z",
  "done": "v1.0.99 on main, engine reset",
  "next": "confirm trading resumes; trigger release.yml"
 }
