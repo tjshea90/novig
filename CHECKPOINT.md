@@ -1,13 +1,13 @@
-# CHECKPOINT 4359 — read me first, then TASKS.md
+# CHECKPOINT 4360 — read me first, then TASKS.md
 
-**Written:** 2026-11-02T18:47:51Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-htf6em` · **builds on:** `64db5659d` (this checkpoint is the commit after it)
+**Written:** 2026-11-02T18:49:30Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-htf6em` · **builds on:** `d3dcfc9ce` (this checkpoint is the commit after it)
 
 ## Just done
-BB1 answered: Bet buttons need phone trading key
+BB1 resolved by Tj
 
 ## Do this next
-wait for Tj's Settings screen
+SK1/PL1/FR1 NCAAF freshness
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ wait for Tj's Settings screen
 
 ## Last ten checkpoints
 ```
+  d3dcfc9ce ckpt 4359: BB1 answered: Bet buttons need phone trading key
   64db5659d ckpt 4358: BD21 verified: trading resumed on v1.0.99
   5877c6099 ckpt 4357: ANALYST 2026-11-02 13:20 skipped (no new digest)
   d1224cbbf ckpt 4357: v1.0.99 on main, engine reset
@@ -26,5 +27,4 @@ wait for Tj's Settings screen
   77749fdb4 ckpt 4353: PL1 investigated, replied
   0650f995d ckpt 4352: CB1 answered: NCAAB already enabled
   51a6bb76a ckpt 4351: answered chat: stale PropLine ages vs Novig socket
-  4b5e27071 ckpt 4350: WATCH 2026-11-02 engine healthy, no change
 ```
