@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-htf6em",
- "head": "4b5e27071d352a61117a3e02ad918510194184f3",
+ "head": "51a6bb76a075cce1df9408731ce3185d812f5107",
  "since": 1793578976,
- "beat": 1793642269,
- "beatIso": "2026-11-02T17:57:49Z",
- "done": "ANALYST 2026-11-02 skipped: no new digest, engine healthy",
- "next": "next digest: check taker totals/spreads n>=200 gate"
+ "beat": 1793642367,
+ "beatIso": "2026-11-02T17:59:27Z",
+ "done": "answered chat: stale PropLine ages vs Novig socket",
+ "next": "SK1/SK1b: PropLine stream state"
 }
