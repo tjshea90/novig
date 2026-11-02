@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "3172fd",
- "kind": "routine",
+ "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-2jrt6p",
+ "branch": "claude/optimistic-curie-kioe9n",
  "head": "67b83132bb67beb790c22985adc57525a9a61c23",
  "since": 1793578976,
- "beat": 1793578976,
- "beatIso": "2026-11-02T00:22:56Z",
+ "beat": 1793580794,
+ "beatIso": "2026-11-02T00:53:14Z",
  "done": "ANALYST 2026-11-02 skipped: no new digest, engine healthy",
  "next": "next digest: check taker totals/spreads n>=200 gate"
 }
