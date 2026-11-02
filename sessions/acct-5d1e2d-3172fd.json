@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-htf6em",
- "head": "9ac71b8659c200aa240c27c335244108d1fc6447",
+ "head": "e06de72bc31d7fba546c0ebd045a0796fd254684",
  "since": 1793578976,
- "beat": 1793645370,
- "beatIso": "2026-11-02T18:49:30Z",
- "done": "BB1 resolved by Tj",
- "next": "SK1/PL1/FR1 NCAAF freshness"
+ "beat": 1793645921,
+ "beatIso": "2026-11-02T18:58:41Z",
+ "done": "chat session end: BD21 shipped v1.0.99, BB1 fixed by Tj",
+ "next": "SK1/PL1/FR1: ParlayAPI ncaaf hot stream closes after 19s, PropLine rereads NCAAF/MLB/WNBA every 10-12 min; BoltOdds refused 3 keys (message on cloud-config)"
 }
