@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "2109bc",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-p6qsyz",
+ "head": "5877c60999f8dd8c34fac5c0f0d8a6407afa7834",
+ "since": 1793644050,
+ "beat": 1793644050,
+ "beatIso": "2026-11-02T18:27:30Z",
+ "done": "ANALYST 2026-11-02 13:20 skipped (no new digest)",
+ "next": "HB2 bid churn; taker totals cut at n>=200"
+}
