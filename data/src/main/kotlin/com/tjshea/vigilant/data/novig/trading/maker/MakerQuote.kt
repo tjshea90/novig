@@ -221,7 +221,7 @@ data class MakerRules(
         /** Volume mode's rules over the usual ones ([BidVolume]): thousands of bids, no start-time limit, the EV floors, the fair allowed to age a little longer while a bid rests. */
         private fun volumeOf(r: MakerRules): MakerRules = r.copy(
             volume = true, tiered = true, margin = BidVolume.SAFE_EV, maxBids = BidVolume.MAX_BIDS, maxDollars = Double.MAX_VALUE / 4, postsPerPass = BidVolume.POSTS_PER_PASS,
-            requoteSteps = maxOf(r.requoteSteps, BidVolume.REQUOTE_STEPS), stakeScale = r.stakeScale * BidVolume.STAKE_FACTOR, maxStake = r.maxStake,
+            requoteSteps = maxOf(r.requoteSteps, BidVolume.REQUOTE_STEPS),
             earlyHours = 0, requireSharp = false, farFairMaxAgeMs = maxOf(r.farFairMaxAgeMs, 30 * 60_000L), midFairMaxAgeMs = BidVolume.MID_FAIR_MAX_AGE_MS,
         )
 
@@ -779,7 +779,7 @@ object MakerQuote {
      * price and fair (`(fair − price) / (1 − price)`: makers pay no fee), a dollar, or the set amount. Null when Kelly has nothing to stake.
      */
     fun stake(fair: Double, price: Double, rules: MakerRules, hoursToStart: Double? = null): Double? {
-        val wanted = when (rules.stakeMode) {
+        val wanted = (if (rules.volume) BidVolume.STAKE_FACTOR else 1.0) * when (rules.stakeMode) {
             com.tjshea.vigilant.data.scanner.AutoBetStake.ONE_DOLLAR -> 1.0
             com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM -> rules.customStake
             else -> {
