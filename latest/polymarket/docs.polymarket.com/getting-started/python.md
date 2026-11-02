@@ -9,11 +9,11 @@
 The `polymarket-client` package is the official Python SDK for building
 Polymarket integrations.
 
-> **[GitHub](https://github.com/Polymarket/py-sdk/)**
+> [card] [GitHub](https://github.com/Polymarket/py-sdk/)
 >
 > View the Python SDK source.
 
-> **[PyPI Package](https://pypi.org/project/polymarket-client/)**
+> [card] [PyPI Package](https://pypi.org/project/polymarket-client/)
 >
 > Install `polymarket-client` from PyPI.
 
@@ -347,19 +347,19 @@ page.items[0]
 
 ## Next Steps
 
-> **[Read Market Data](https://docs.polymarket.com/market-data/overview.md)**
+> [card] [Read Market Data](https://docs.polymarket.com/market-data/overview.md)
 >
 > Discover markets and work with prices, order books, and historical data.
 
-> **[Subscribe to Real-Time Updates](https://docs.polymarket.com/market-data/realtime-data.md)**
+> [card] [Subscribe to Real-Time Updates](https://docs.polymarket.com/market-data/realtime-data.md)
 >
 > Stream market and account updates as they happen.
 
-> **[Place Your First Order](https://docs.polymarket.com/trading/quickstart.md)**
+> [card] [Place Your First Order](https://docs.polymarket.com/trading/quickstart.md)
 >
 > Set up an account and complete your first authenticated trade.
 
-> **[Use Session Keys](https://docs.polymarket.com/trading/session-keys.md)**
+> [card] [Use Session Keys](https://docs.polymarket.com/trading/session-keys.md)
 >
 > Grant scoped, time-limited Deposit Wallet access to a separate signer.
 

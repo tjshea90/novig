@@ -34,38 +34,38 @@ or price the whole thing with `/parlay` and accept the uncorrelated number.
 
 The two answers for the same two legs, side by side:
 
-**/parlay — a plain product**
+> [tab] /parlay — a plain product
+>
+> ```json theme={null}
+> "parlay": {
+>   "bet365": {
+>     "id1400003160574217:bet365:141:0,id1400003160574217:bet365:146:0": {
+>       "bookmaker": "bet365",
+>       "active": true,
+>       "price": 7.98,
+>       "singlesPrice": 7.98,
+>       "changedAt": 1766667441097
+>     }
+>   }
+> }
+> ```
 
-```json theme={null}
-"parlay": {
-  "bet365": {
-    "id1400003160574217:bet365:141:0,id1400003160574217:bet365:146:0": {
-      "bookmaker": "bet365",
-      "active": true,
-      "price": 7.98,
-      "singlesPrice": 7.98,
-      "changedAt": 1766667441097
-    }
-  }
-}
-```
-
-**/sgp — the bookmaker's quote**
-
-```json theme={null}
-"sgp": {
-  "bet365": {
-    "id1400003160574217:bet365:141:0,id1400003160574217:bet365:146:0": {
-      "bookmaker": "bet365",
-      "active": true,
-      "price": 6.5,
-      "singlesPrice": 7.98,
-      "changedAt": 1766667441097,
-      "betslip": "https://www.bet365.com/dl/sportsbookredirect?bs=..."
-    }
-  }
-}
-```
+> [tab] /sgp — the bookmaker's quote
+>
+> ```json theme={null}
+> "sgp": {
+>   "bet365": {
+>     "id1400003160574217:bet365:141:0,id1400003160574217:bet365:146:0": {
+>       "bookmaker": "bet365",
+>       "active": true,
+>       "price": 6.5,
+>       "singlesPrice": 7.98,
+>       "changedAt": 1766667441097,
+>       "betslip": "https://www.bet365.com/dl/sportsbookredirect?bs=..."
+>     }
+>   }
+> }
+> ```
 
 Same legs, same `parlayId`, two different prices. `singlesPrice` is the naive
 product in both; on `/sgp` the gap down to `price` is the correlation margin.
@@ -146,19 +146,19 @@ assuming it does is the most common source of empty market buckets.
 
 ## Related
 
-> **[Parlays & SGP reference](https://docs.oddspapi.io/api-reference/parlays.md)**
+> [card] [Parlays & SGP reference](https://docs.oddspapi.io/api-reference/parlays.md)
 >
 > Every field, error and `inactiveReason`.
 
-> **[Rate limits](https://docs.oddspapi.io/api-reference/rate-limits.md)**
+> [card] [Rate limits](https://docs.oddspapi.io/api-reference/rate-limits.md)
 >
 > Authoritative per-endpoint budgets.
 
-> **[Periods per sport](https://docs.oddspapi.io/guides/periods.md)**
+> [card] [Periods per sport](https://docs.oddspapi.io/guides/periods.md)
 >
 > Which periods exist where, and why.
 
-> **[Powering a sportsbook](https://docs.oddspapi.io/guides/sportsbook.md)**
+> [card] [Powering a sportsbook](https://docs.oddspapi.io/guides/sportsbook.md)
 >
 > The full pipeline this slip sits inside.
 

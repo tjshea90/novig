@@ -2,7 +2,7 @@
 
 ## Chinese
 
-- [Chinese / API 参考 (183 pages)](https://docs.polymarket.com/_llms/cn/api.txt): Documentation for Chinese / API 参考.
+- [Chinese / API 参考 (167 pages)](https://docs.polymarket.com/_llms/cn/api.txt): Documentation for Chinese / API 参考.
 
 ### 预测市场
 
@@ -84,7 +84,7 @@
 
 #### 迁移指南
 
-- [从 Data API v1 迁移到 v2](https://docs.polymarket.com/cn/migrate/data-api-v1-to-v2.md): 把集成从原有的 Data API 路由迁移到 v2 对应路由：路由映射、契约变化，以及哪些路由继续留在 v1。
+- [从 Data API v1 迁移到 v2](https://docs.polymarket.com/cn/migrate/data-api-v1-to-v2.md): 把集成从原有的 Data API 路由迁移到 v2 对应路由：路由映射、契约变化，以及会计快照的停用。
 - [从旧版 SDK 迁移到统一 SDK](https://docs.polymarket.com/cn/migrate/clob-sdk-to-unified-sdk.md): 将现有的 Polymarket 集成迁移到统一的 SDK。
 - [从 RTDS 迁移到 PolyBolt](https://docs.polymarket.com/cn/migrate/rtds-to-polybolt.md): 通过 TypeScript、Python SDK 或 WebSocket API 将价格订阅从 RTDS 迁移到 PolyBolt。
 
@@ -104,7 +104,6 @@
 - [combos-rfq-openapi](/api-spec/combos-rfq-openapi.yaml)
 - [perps-openapi](/api-spec/perps-openapi.json)
 - [bridge-openapi](/api-spec/bridge-openapi.yaml)
-- [data-openapi](/api-spec/data-openapi.yaml)
 
 ## AsyncAPI Specs
 

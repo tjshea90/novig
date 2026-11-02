@@ -166,7 +166,7 @@
               "type": "boolean",
               "default": false
             },
-            "description": "When true, adds a `link` field \u2014 the book's public event-page URL (plain navigation, no affiliate tagging) \u2014 per bookmaker block (odds endpoints) or per price row (/best-line). Links ship for Bovada, DraftKings, FanDuel, BetMGM, Kalshi, Polymarket, Smarkets, ProphetX, Novig and DraftKings Pick6; other books return null. Matches the-odds-api's includeLinks param. It also adds an `app_link` field (mobile app-open deep link; ProphetX and Courtside, null elsewhere)."
+            "description": "When true, adds a `link` field \u2014 the book's public event-page URL (plain navigation, no affiliate tagging) \u2014 per bookmaker block (odds endpoints) or per price row (/best-line). Links ship for Bovada, DraftKings, FanDuel, BetMGM, Kalshi, Polymarket, Smarkets, ProphetX, Novig, DraftKings Pick6 and BetRivers; other books return null. Matches the-odds-api's includeLinks param. It also adds an `app_link` field (mobile app-open deep link; ProphetX and Courtside, null elsewhere)."
           },
           {
             "name": "includeBookIds",
@@ -322,7 +322,7 @@
               "type": "boolean",
               "default": false
             },
-            "description": "When true, adds a `link` field \u2014 the book's public event-page URL (plain navigation, no affiliate tagging) \u2014 per bookmaker block (odds endpoints) or per price row (/best-line). Links ship for Bovada, DraftKings, FanDuel, BetMGM, Kalshi, Polymarket, Smarkets, ProphetX, Novig and DraftKings Pick6; other books return null. Matches the-odds-api's includeLinks param. It also adds an `app_link` field (mobile app-open deep link; ProphetX and Courtside, null elsewhere)."
+            "description": "When true, adds a `link` field \u2014 the book's public event-page URL (plain navigation, no affiliate tagging) \u2014 per bookmaker block (odds endpoints) or per price row (/best-line). Links ship for Bovada, DraftKings, FanDuel, BetMGM, Kalshi, Polymarket, Smarkets, ProphetX, Novig, DraftKings Pick6 and BetRivers; other books return null. Matches the-odds-api's includeLinks param. It also adds an `app_link` field (mobile app-open deep link; ProphetX and Courtside, null elsewhere)."
           },
           {
             "name": "includeBookIds",
@@ -471,7 +471,7 @@
           "Events & Odds"
         ],
         "summary": "Get Event Odds History",
-        "description": "Historical odds movement for a single event.\nPro / Streaming / Enterprise: full snapshot history.\nFree tier: redacted (shows structure and count).\n\nDepth is tier-gated by event age: Pro = events from the last 90 days, Streaming = 365 days, Enterprise = unlimited. Events older than the tier window return the redacted shape (empty snapshots + `upgrade_url`)\u00a0\u2014 same envelope as the free-tier redaction, so no schema fork.",
+        "description": "Historical odds movement for a single event.\nPro / Streaming / Enterprise: full snapshot history.\nFree tier: redacted (shows structure and count).\n\nDepth is tier-gated by event age: Pro = events from the last 90 days, Streaming = 365 days, Enterprise = unlimited. Events older than the tier window return the redacted shape (empty snapshots + `upgrade_url`)\u00a0\u2014 same envelope as the free-tier redaction, so no schema fork.\n\nDaily cap: `/odds/history`, `/odds/closing` and `/movement` together allow up to 1,000 distinct events per API key per UTC day (re-reads of an event already read today are free; Enterprise uncapped). Past it: 429 `history_event_limit` with `resets_at` and `Retry-After`.",
         "operationId": "get_event_odds_history_v1_sports__sport_key__events__event_id__odds_history_get",
         "security": [
           {
@@ -622,6 +622,9 @@
           },
           "404": {
             "description": "Not found. On an event id that previously worked, the event was likely merged into a canonical duplicate (the same fixture posted by multiple books under different team-name spellings). Merged ids resolve automatically and return the canonical event with a 200 \u2014 its `id` field is the id to store. A persistent 404 means re-fetch the event from /v1/sports/{sport}/events and use the current id."
+          },
+          "429": {
+            "description": "Daily distinct-event history cap reached (error `history_event_limit`)."
           }
         }
       }
@@ -632,7 +635,7 @@
           "Events & Odds"
         ],
         "summary": "Opening & closing lines (CLV)",
-        "description": "Opening and closing line per (book, market, outcome).\n\nClosing = the last snapshot at or before commence_time \u2014 the canonical line CLV-tracking tools measure against. Opening = the first snapshot we hold for the outcome, however far before kickoff the book posted it (use `opening_window` to limit the lookback). Returning both ends in one call is what makes this a complete CLV helper: on spreads and totals the point moves as much as the price (-3 -110 -> -3.5 -105), so `opening_point`/`point` matter as much as the prices.\n\nHobby+ gets full data; free tier is redacted (structure only). Same per-tier event-age cap as /odds/history.",
+        "description": "Opening and closing line per (book, market, outcome).\n\nClosing = the last snapshot at or before commence_time \u2014 the canonical line CLV-tracking tools measure against. Opening = the first snapshot we hold for the outcome, however far before kickoff the book posted it (use `opening_window` to limit the lookback). Returning both ends in one call is what makes this a complete CLV helper: on spreads and totals the point moves as much as the price (-3 -110 -> -3.5 -105), so `opening_point`/`point` matter as much as the prices.\n\nHobby+ gets full data; free tier is redacted (structure only). Same per-tier event-age cap as /odds/history.\n\nDaily cap: `/odds/history`, `/odds/closing` and `/movement` together allow up to 1,000 distinct events per API key per UTC day (re-reads of an event already read today are free; Enterprise uncapped). Past it: 429 `history_event_limit` with `resets_at` and `Retry-After`.",
         "operationId": "get_event_odds_closing_v1_sports__sport_key__events__event_id__odds_closing_get",
         "security": [
           {
@@ -726,6 +729,9 @@
           },
           "404": {
             "description": "Not found. On an event id that previously worked, the event was likely merged into a canonical duplicate (the same fixture posted by multiple books under different team-name spellings). Merged ids resolve automatically and return the canonical event with a 200 \u2014 its `id` field is the id to store. A persistent 404 means re-fetch the event from /v1/sports/{sport}/events and use the current id."
+          },
+          "429": {
+            "description": "Daily distinct-event history cap reached (error `history_event_limit`)."
           }
         }
       }
@@ -1244,7 +1250,7 @@
               "type": "boolean",
               "default": false
             },
-            "description": "When true, adds a `link` field \u2014 the book's public event-page URL (plain navigation, no affiliate tagging) \u2014 per bookmaker block (odds endpoints) or per price row (/best-line). Links ship for Bovada, DraftKings, FanDuel, BetMGM, Kalshi, Polymarket, Smarkets, ProphetX, Novig and DraftKings Pick6; other books return null. Matches the-odds-api's includeLinks param. It also adds an `app_link` field (mobile app-open deep link; ProphetX and Courtside, null elsewhere)."
+            "description": "When true, adds a `link` field \u2014 the book's public event-page URL (plain navigation, no affiliate tagging) \u2014 per bookmaker block (odds endpoints) or per price row (/best-line). Links ship for Bovada, DraftKings, FanDuel, BetMGM, Kalshi, Polymarket, Smarkets, ProphetX, Novig, DraftKings Pick6 and BetRivers; other books return null. Matches the-odds-api's includeLinks param. It also adds an `app_link` field (mobile app-open deep link; ProphetX and Courtside, null elsewhere)."
           }
         ],
         "responses": {
@@ -1531,7 +1537,7 @@
           "Odds"
         ],
         "summary": "Get Line Movement & Steam",
-        "description": "Line movement derived from the snapshot tick history. Per (book, market, outcome): opening line, latest line, and the implied-probability / point shift between them. The steam[] array flags outcomes multiple books moved in the same direction \u2014 the sharp-money signal, computed across all 116 books. Hobby+ full; free tier redacted.",
+        "description": "Line movement derived from the snapshot tick history. Per (book, market, outcome): opening line, latest line, and the implied-probability / point shift between them. The steam[] array flags outcomes multiple books moved in the same direction \u2014 the sharp-money signal, computed across all 116 books. Hobby+ full; free tier redacted.\n\nDaily cap: `/odds/history`, `/odds/closing` and `/movement` together allow up to 1,000 distinct events per API key per UTC day (re-reads of an event already read today are free; Enterprise uncapped). Past it: 429 `history_event_limit` with `resets_at` and `Retry-After`.",
         "operationId": "get_event_movement_v1_sports__sport_key__events__event_id__movement_get",
         "security": [
           {
@@ -1636,6 +1642,9 @@
           },
           "404": {
             "description": "Not found. On an event id that previously worked, the event was likely merged into a canonical duplicate (the same fixture posted by multiple books under different team-name spellings). Merged ids resolve automatically and return the canonical event with a 200 \u2014 its `id` field is the id to store. A persistent 404 means re-fetch the event from /v1/sports/{sport}/events and use the current id."
+          },
+          "429": {
+            "description": "Daily distinct-event history cap reached (error `history_event_limit`)."
           }
         }
       }
@@ -2170,7 +2179,7 @@
           "Exports"
         ],
         "summary": "Export Odds History",
-        "description": "Stream the full line-movement time-series as CSV \u2014 every recorded odds snapshot (price + line, per book, including period markets) for every outcome, not just the closing line. One row per (outcome, snapshot).\n\nThis is the raw tick history that no subscription tier can pull in bulk: Pro/Streaming get per-event `/odds/history` and the resolved-props export (closing line only), but the bulk snapshot firehose is exclusive to the one-time Historical Backfill pass and Enterprise. Backfill pass = trailing 2-year lookback (Enterprise unbounded); uncapped calls.\n\nA full all-sport, all-history pull is many GB \u2014 page month-by-month with `since`/`until` to keep any single request bounded.\n\nColumns: event_id, sport_key, commence_time, home_team, away_team, market, period, bookmaker, player_name, outcome_name, recorded_at, price_american, price_decimal, point, book_updated_at, dfs_odds_type, customer_token (dfs_odds_type = PrizePicks tier: standard / goblin / demon; blank for sportsbooks).\n\nArchive coverage is stated in-band on every response: the `X-PropLine-Archive-Starts` header carries the sport's earliest held date (`none` if the sport has no data yet), and `X-PropLine-Archive-Notice` is set when the requested window ends before the archive begins, meaning the export can only be empty.",
+        "description": "Stream the full line-movement time-series as CSV \u2014 every recorded odds snapshot (price + line, per book, including period markets) for every outcome, not just the closing line. One row per (outcome, snapshot).\n\nEnterprise only (since 2026-10-28; contact support@prop-line.com). Other tiers get per-event `/odds/history` and the resolved-props export, which carries the opening and closing line on every graded prop.\n\nA full all-sport, all-history pull is many GB \u2014 page month-by-month with `since`/`until` to keep any single request bounded.\n\nColumns: event_id, sport_key, commence_time, home_team, away_team, market, period, bookmaker, player_name, outcome_name, recorded_at, price_american, price_decimal, point, book_updated_at, dfs_odds_type, customer_token (dfs_odds_type = PrizePicks tier: standard / goblin / demon; blank for sportsbooks).\n\nArchive coverage is stated in-band on every response: the `X-PropLine-Archive-Starts` header carries the sport's earliest held date (`none` if the sport has no data yet), and `X-PropLine-Archive-Notice` is set when the requested window ends before the archive begins, meaning the export can only be empty.",
         "operationId": "export_odds_history_v1_exports_odds_history_get",
         "security": [
           {
@@ -2731,6 +2740,618 @@
         ]
       }
     },
+    "/v1/bets/settle": {
+      "post": {
+        "tags": [
+          "Events & Odds"
+        ],
+        "summary": "Settle placed bets (singles and parlays)",
+        "description": "POST the bets you placed and get each back won, lost, push, void, half_won or half_lost, with the stat it settled on and the payout.\n\nThe book and the line are free: a bet at a book we do not carry, or at an alt line no carried book posted, is graded by running our grader at that line (`source: computed`). A named `bookmaker` whose outcome we stored at that exact line uses its own grade (`source: stored`).\n\nFail-closed: a computed grade is returned only when our stored grades for that market reproduce themselves and agree; otherwise the leg is `unmatched` with a `reason`. `pending` = not graded yet.\n\nAsian quarter lines settle as two half-stakes. Parlays: any lost leg loses, pushed/voided legs drop out of the payout.\n\nLimits: 200 bets, 20 legs per parlay, 300 legs and 25 events per request. Stateless. Hobby+ full data; free tier sees the structure with results redacted.",
+        "operationId": "settleBets",
+        "security": [
+          {
+            "APIKeyHeader": []
+          },
+          {
+            "APIKeyQuery": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "ref": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Echoed back."
+                    },
+                    "stake": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "Defaults to 1.",
+                      "example": 10
+                    },
+                    "sport_key": {
+                      "type": "string",
+                      "example": "baseball_mlb"
+                    },
+                    "event_id": {
+                      "type": "integer",
+                      "example": 150791
+                    },
+                    "market": {
+                      "type": "string",
+                      "example": "totals"
+                    },
+                    "selection": {
+                      "type": "string",
+                      "description": "Player name for a prop, team name for a game line, Over/Under for a game total.",
+                      "example": "Over"
+                    },
+                    "side": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Over/Under/Yes/No for a two-way market.",
+                      "example": "Over"
+                    },
+                    "point": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "Your line. Quarter lines (2.75, -0.25) settle as two half-stakes.",
+                      "example": 7.75
+                    },
+                    "period": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Canonical period code (q1, h1, p1, f5). Omit for full game."
+                    },
+                    "team": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Scope a `totals` leg to one team's total. Without it, `totals` is the game total."
+                    },
+                    "bookmaker": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Optional. If we stored this book's outcome at this exact line, its own grade is used."
+                    },
+                    "price": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "American odds. For a parlay, the parlay price (used when every leg won)."
+                    },
+                    "legs": {
+                      "type": "array",
+                      "maxItems": 20,
+                      "nullable": true,
+                      "description": "Set for a parlay; the single-bet fields are then ignored.",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "sport_key",
+                          "event_id",
+                          "market",
+                          "selection"
+                        ],
+                        "properties": {
+                          "sport_key": {
+                            "type": "string",
+                            "example": "baseball_mlb"
+                          },
+                          "event_id": {
+                            "type": "integer",
+                            "example": 150791
+                          },
+                          "market": {
+                            "type": "string",
+                            "example": "totals"
+                          },
+                          "selection": {
+                            "type": "string",
+                            "description": "Player name for a prop, team name for a game line, Over/Under for a game total.",
+                            "example": "Over"
+                          },
+                          "side": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Over/Under/Yes/No for a two-way market.",
+                            "example": "Over"
+                          },
+                          "point": {
+                            "type": "number",
+                            "nullable": true,
+                            "description": "Your line. Quarter lines (2.75, -0.25) settle as two half-stakes.",
+                            "example": 7.75
+                          },
+                          "period": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Canonical period code (q1, h1, p1, f5). Omit for full game."
+                          },
+                          "team": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Scope a `totals` leg to one team's total. Without it, `totals` is the game total."
+                          },
+                          "bookmaker": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Optional. If we stored this book's outcome at this exact line, its own grade is used."
+                          },
+                          "price": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "American odds you took. Needed for the payout.",
+                            "example": -105
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Settled bets plus a summary.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "bets": {
+                          "type": "integer"
+                        },
+                        "settled": {
+                          "type": "integer"
+                        },
+                        "pending": {
+                          "type": "integer"
+                        },
+                        "unmatched": {
+                          "type": "integer"
+                        },
+                        "won": {
+                          "type": "integer"
+                        },
+                        "lost": {
+                          "type": "integer"
+                        },
+                        "push_or_void": {
+                          "type": "integer"
+                        },
+                        "staked": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "profit": {
+                          "type": "number",
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "bets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ref": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "result": {
+                            "type": "string",
+                            "enum": [
+                              "won",
+                              "lost",
+                              "push",
+                              "void",
+                              "half_won",
+                              "half_lost",
+                              "pending",
+                              "unmatched",
+                              "redacted"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "stake": {
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "price": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "payout": {
+                            "type": "number",
+                            "nullable": true,
+                            "description": "Returned, stake included."
+                          },
+                          "profit": {
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "parlay": {
+                            "type": "boolean"
+                          },
+                          "legs": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sport_key": {
+                                  "type": "string",
+                                  "example": "baseball_mlb"
+                                },
+                                "event_id": {
+                                  "type": "integer",
+                                  "example": 150791
+                                },
+                                "market": {
+                                  "type": "string",
+                                  "example": "totals"
+                                },
+                                "selection": {
+                                  "type": "string",
+                                  "description": "Player name for a prop, team name for a game line, Over/Under for a game total.",
+                                  "example": "Over"
+                                },
+                                "side": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "description": "Over/Under/Yes/No for a two-way market.",
+                                  "example": "Over"
+                                },
+                                "point": {
+                                  "type": "number",
+                                  "nullable": true,
+                                  "description": "Your line. Quarter lines (2.75, -0.25) settle as two half-stakes.",
+                                  "example": 7.75
+                                },
+                                "period": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "description": "Canonical period code (q1, h1, p1, f5). Omit for full game."
+                                },
+                                "team": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "description": "Scope a `totals` leg to one team's total. Without it, `totals` is the game total."
+                                },
+                                "bookmaker": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "description": "Optional. If we stored this book's outcome at this exact line, its own grade is used."
+                                },
+                                "price": {
+                                  "type": "integer",
+                                  "nullable": true,
+                                  "description": "American odds you took. Needed for the payout.",
+                                  "example": -105
+                                },
+                                "result": {
+                                  "type": "string",
+                                  "enum": [
+                                    "won",
+                                    "lost",
+                                    "push",
+                                    "void",
+                                    "half_won",
+                                    "half_lost",
+                                    "pending",
+                                    "unmatched",
+                                    "redacted"
+                                  ]
+                                },
+                                "reason": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "description": "Why a leg is unmatched: event_not_found, no_market_for_key, no_outcome_for_selection, ambiguous_selection, cannot_compute_at_line, invalid_bet."
+                                },
+                                "actual_value": {
+                                  "type": "number",
+                                  "nullable": true,
+                                  "description": "The stat or score the leg settled on."
+                                },
+                                "source": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "enum": [
+                                    "stored",
+                                    "computed"
+                                  ]
+                                },
+                                "outcome_id": {
+                                  "type": "integer",
+                                  "nullable": true
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "redacted": {
+                      "type": "boolean"
+                    },
+                    "upgrade_url": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Too many bets, legs or events in one request."
+          }
+        }
+      }
+    },
+    "/v1/parlay/price": {
+      "post": {
+        "tags": [
+          "Events & Odds"
+        ],
+        "summary": "Price a parlay across games",
+        "operationId": "priceParlay",
+        "security": [
+          {
+            "APIKeyHeader": []
+          },
+          {
+            "APIKeyQuery": []
+          }
+        ],
+        "description": "Fair price of any parlay (2-15 legs, any games) from the same no-vig lines /ev uses: each leg's fair price, best price and book; every book that prices all the legs (product of its leg prices) with EV%; and the EV% of the parlay price you pass. Assumes independent legs: legs on one event are flagged same_game (use /sgp for those). Full-game markets. Fail-closed per leg. Hobby+; free tier sees the structure with numbers nulled.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "legs"
+                ],
+                "properties": {
+                  "legs": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 15,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "sport_key",
+                        "event_id",
+                        "market",
+                        "selection"
+                      ],
+                      "properties": {
+                        "sport_key": {
+                          "type": "string",
+                          "example": "basketball_nba"
+                        },
+                        "event_id": {
+                          "type": "integer",
+                          "example": 287401
+                        },
+                        "market": {
+                          "type": "string",
+                          "example": "h2h"
+                        },
+                        "selection": {
+                          "type": "string",
+                          "description": "Team for h2h/spreads, player for a prop, Over/Under for a game total.",
+                          "example": "Detroit Pistons"
+                        },
+                        "side": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "point": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "team": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Scope a totals leg to one team's total."
+                        },
+                        "price": {
+                          "type": "integer",
+                          "nullable": true,
+                          "description": "Price you were offered for this leg."
+                        }
+                      }
+                    }
+                  },
+                  "price": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Parlay price you were offered.",
+                    "example": 500
+                  },
+                  "devig": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "multiplicative",
+                      "shin"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Priced parlay.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "priced": {
+                      "type": "boolean"
+                    },
+                    "reason": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "fair_prob": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "fair_price": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "best_legs_price": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "books": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "bookmaker": {
+                            "type": "string"
+                          },
+                          "price": {
+                            "type": "integer"
+                          },
+                          "ev_pct": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    },
+                    "offered_price": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "offered_ev_pct": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "same_game": {
+                      "type": "boolean"
+                    },
+                    "devig_method": {
+                      "type": "string"
+                    },
+                    "legs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "sport_key": {
+                            "type": "string",
+                            "example": "basketball_nba"
+                          },
+                          "event_id": {
+                            "type": "integer",
+                            "example": 287401
+                          },
+                          "market": {
+                            "type": "string",
+                            "example": "h2h"
+                          },
+                          "selection": {
+                            "type": "string",
+                            "description": "Team for h2h/spreads, player for a prop, Over/Under for a game total.",
+                            "example": "Detroit Pistons"
+                          },
+                          "side": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "point": {
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "team": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Scope a totals leg to one team's total."
+                          },
+                          "price": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Price you were offered for this leg."
+                          },
+                          "matched": {
+                            "type": "boolean"
+                          },
+                          "reason": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "fair_prob": {
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "fair_price": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "fair_source": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "best_price": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "best_book": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "ev_pct": {
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "same_game": {
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    },
+                    "redacted": {
+                      "type": "boolean"
+                    },
+                    "upgrade_url": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Wrong number of legs or events."
+          }
+        }
+      }
+    },
     "/v1/sports/{sport_key}/events/{event_id}/sgp": {
       "post": {
         "tags": [
@@ -3219,6 +3840,138 @@
         ]
       }
     },
+    "/v1/ids/lookup": {
+      "get": {
+        "tags": [
+          "Events & Odds"
+        ],
+        "summary": "Find an event by a book, ESPN or MLB id",
+        "operationId": "lookupIds",
+        "security": [
+          {
+            "APIKeyHeader": []
+          },
+          {
+            "APIKeyQuery": []
+          }
+        ],
+        "description": "Reverse id lookup: pass exactly one of book + book_event_id (a sportsbook's own event id), espn_event_id or mlb_game_pk, up to 50 comma-separated. Returns our events with the /sports/{sport}/ids crosswalk row plus sport_key, status, completed and scores, and the ids not found. Any date. Free tier. Or by names: sport + home + away + kickoff returns every event with those two teams (either order) within window_hours, closest first, with kickoff_delta_minutes and an ambiguous flag.",
+        "parameters": [
+          {
+            "name": "book",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "pinnacle"
+          },
+          {
+            "name": "book_event_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated, max 50. Needs book."
+          },
+          {
+            "name": "espn_event_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mlb_game_pk",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sport",
+            "in": "query",
+            "required": false,
+            "description": "Sport key, for a lookup by team names.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "home",
+            "in": "query",
+            "required": false,
+            "description": "One team's name (either side), with away + kickoff.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "away",
+            "in": "query",
+            "required": false,
+            "description": "The other team's name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kickoff",
+            "in": "query",
+            "required": false,
+            "description": "Kickoff time, ISO 8601 (UTC if no offset).",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "window_hours",
+            "in": "query",
+            "required": false,
+            "description": "Hours either side of kickoff to search (default 6, max 72).",
+            "schema": {
+              "type": "number",
+              "default": 6,
+              "maximum": 72
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matches and misses.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "not_found": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Bad or missing id arguments."
+          }
+        }
+      }
+    },
     "/v1/books/accuracy": {
       "get": {
         "tags": [
@@ -3505,6 +4258,156 @@
         ]
       }
     },
+    "/v1/coverage/markets": {
+      "get": {
+        "tags": [
+          "Status"
+        ],
+        "summary": "Markets each book is pricing, per sport",
+        "description": "For one sport, every market each bookmaker is pricing on the games in the next `days` days (and in play), with how many of those games carry it. Split into game lines and props. Only markets delivered in the last 6h count. Refreshed every ~10 min. Free tier.",
+        "operationId": "getMarketCoverage",
+        "parameters": [
+          {
+            "name": "sport",
+            "in": "query",
+            "required": true,
+            "description": "Sport key, e.g. football_nfl.",
+            "schema": {
+              "type": "string",
+              "example": "football_nfl"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "Games starting in the next N days (1-7).",
+            "schema": {
+              "type": "integer",
+              "default": 3,
+              "minimum": 1,
+              "maximum": 7
+            }
+          },
+          {
+            "name": "periods",
+            "in": "query",
+            "required": false,
+            "description": "Include quarter / half / inning markets.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Markets per bookmaker.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sport_key": {
+                      "type": "string"
+                    },
+                    "days": {
+                      "type": "integer"
+                    },
+                    "events": {
+                      "type": "integer"
+                    },
+                    "bookmakers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "events": {
+                            "type": "integer"
+                          },
+                          "prop_market_count": {
+                            "type": "integer"
+                          },
+                          "game_lines": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "market": {
+                                  "type": "string"
+                                },
+                                "period": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "events": {
+                                  "type": "integer"
+                                },
+                                "markets": {
+                                  "type": "integer"
+                                },
+                                "last_update": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                }
+                              }
+                            }
+                          },
+                          "props": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "market": {
+                                  "type": "string"
+                                },
+                                "period": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "events": {
+                                  "type": "integer"
+                                },
+                                "markets": {
+                                  "type": "integer"
+                                },
+                                "last_update": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown sport."
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          },
+          {
+            "APIKeyQuery": []
+          }
+        ]
+      }
+    },
     "/v1/freshness": {
       "get": {
         "tags": [
@@ -3696,7 +4599,8 @@
                 "regular",
                 "play_in",
                 "postseason",
-                "cup_final"
+                "cup_final",
+                "all_star"
               ]
             },
             "description": "Only games of this season type."
@@ -4284,6 +5188,251 @@
           }
         }
       }
+    },
+    "/v1/sports/{sport}/referees": {
+      "get": {
+        "tags": [
+          "Referees"
+        ],
+        "summary": "Referee card stats",
+        "description": "Soccer referees, Premier League + 31 other leagues (2025-26 on; PL 2024-25): graded matches, yellow / red cards per match, last match and next appointment. Referees from premierleague.com / FotMob, cards from the official box score. Free tier; cached 10 min.",
+        "operationId": "listReferees",
+        "parameters": [
+          {
+            "name": "sport",
+            "in": "path",
+            "required": true,
+            "description": "soccer_epl.",
+            "schema": {
+              "type": "string",
+              "example": "soccer_epl"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Referee name, case-insensitive substring.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "description": "Only matches on or after this date (YYYY-MM-DD).",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "required": false,
+            "description": "Only matches before this date (YYYY-MM-DD).",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Referees with card averages."
+          },
+          "404": {
+            "description": "Sport not covered."
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          },
+          {
+            "APIKeyQuery": []
+          }
+        ]
+      }
+    },
+    "/v1/sports/{sport}/referees/{name}/matches": {
+      "get": {
+        "tags": [
+          "Referees"
+        ],
+        "summary": "One referee's matches",
+        "description": "One referee's matches, newest first, with each team's yellow and red cards (null until graded). Upcoming appointments included. Free tier; cached 10 min.",
+        "operationId": "getRefereeMatches",
+        "parameters": [
+          {
+            "name": "sport",
+            "in": "path",
+            "required": true,
+            "description": "soccer_epl.",
+            "schema": {
+              "type": "string",
+              "example": "soccer_epl"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "description": "Referee name as /referees lists it.",
+            "schema": {
+              "type": "string",
+              "example": "Michael Salisbury"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "description": "Only matches on or after this date (YYYY-MM-DD).",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "required": false,
+            "description": "Only matches before this date (YYYY-MM-DD).",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "1-500, default 100.",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Referee summary and matches."
+          },
+          "404": {
+            "description": "Unknown referee or sport."
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          },
+          {
+            "APIKeyQuery": []
+          }
+        ]
+      }
+    },
+    "/v1/sports/{sport_key}/players/{player_name}/seasons": {
+      "get": {
+        "tags": [
+          "Players"
+        ],
+        "summary": "Player seasons",
+        "description": "Every season a player has games in, newest first, with game counts by season_type, plus loaded_seasons: every season the sport holds box scores for (a season outside it is not loaded, not empty). Name or player_id; a shared name returns 409 ambiguous_player. Free tier.",
+        "operationId": "get_player_seasons_v1_sports__sport_key__players__player_name__seasons_get",
+        "security": [
+          {
+            "APIKeyHeader": []
+          },
+          {
+            "APIKeyQuery": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sport_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "baseball_mlb"
+          },
+          {
+            "name": "player_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Aaron Judge",
+            "description": "Case-insensitive prefix match, accent-insensitive."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Player seasons",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "player_name": {
+                      "type": "string"
+                    },
+                    "player_id": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "sport_key": {
+                      "type": "string"
+                    },
+                    "seasons": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "season": {
+                            "type": "string"
+                          },
+                          "games": {
+                            "type": "integer"
+                          },
+                          "by_season_type": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "integer"
+                            }
+                          },
+                          "first_game": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "last_game": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    },
+                    "loaded_seasons": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ambiguous player name"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4403,6 +5552,11 @@
             ],
             "description": "MarketOut.line_type of the row this book's price came from (main, alternate or milestone N+ rung). Lets you keep only main-line prices when ranking books.",
             "nullable": true
+          },
+          "bet_link": {
+            "type": "string",
+            "nullable": true,
+            "description": "With includeLinks=true: DraftKings or BetMGM page that opens with this selection on the bet slip. Null for other books."
           }
         },
         "type": "object",
@@ -7381,6 +8535,11 @@
             "type": "string",
             "nullable": true,
             "description": "The opponent's code in this game's own box score, as of that season (OAK, SD, ARI)."
+          },
+          "mlb_game_pk": {
+            "type": "integer",
+            "nullable": true,
+            "description": "MLB Stats API gamePk for this game. MLB only; null on 2026 games graded before the id was stamped."
           }
         },
         "required": [

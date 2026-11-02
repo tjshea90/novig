@@ -106,7 +106,7 @@ You lose that trade, and nothing else happens.
 Return `204 No Content` to pass on an RFQ.
 We record a 204 as a deliberate pass.
 An error or a timeout also drops your quote, but it looks like a broken pricer.
-A 204 keeps your webhook active. After 7 days of only errors and timeouts, we [stop calling it](#keep-your-webhook-active).
+A 204 doesn't keep your webhook active. After 7 days without a quote, we [stop calling it](#keep-your-webhook-active).
 
 ## Confirm a trade
 
@@ -189,15 +189,15 @@ A non-2xx status, a rejected signature, or an unreachable host all show up as a 
 
 ## Keep your webhook active
 
-We stop sending RFQs to a webhook that hasn't answered for 7 days.
+We stop sending RFQs to a webhook that hasn't quoted for 7 days.
 Your registration stays, and the WebSocket isn't affected.
 
 Your webhook counts as active each time it answers one of these:
 
-* A `/quote` request, with a quote or a `204`.
+* A `/quote` request, with a quote.
 * A ping, with a 2xx status.
 
-An error, a timeout, or an invalid body doesn't count.
+A `204`, an error, a timeout, or an invalid body doesn't count.
 
 To get RFQs on a paused webhook again, call [`POST /rfq/pricer/ping`](https://docs.novig.com/api-reference/rfq/registration#test-your-webhook).
 When the result has `ok: true`, RFQs reach your webhook again within a minute.

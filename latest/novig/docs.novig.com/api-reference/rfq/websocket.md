@@ -110,7 +110,7 @@ We send decimal amounts like `price`, `max_wager`, and `wager` as JSON strings. 
 
 ## &#x20;Messages you send
 
-> **`subscribe`**
+> [accordion] `subscribe`
 >
 > Start getting a channel's events
 >
@@ -127,7 +127,7 @@ We send decimal amounts like `price`, `max_wager`, and `wager` as JSON strings. 
 >
 > `"rfq"` or `"quotes"`.
 
-> **`unsubscribe`**
+> [accordion] `unsubscribe`
 >
 > Stop getting a channel's events
 >
@@ -144,7 +144,7 @@ We send decimal amounts like `price`, `max_wager`, and `wager` as JSON strings. 
 >
 > `"rfq"` or `"quotes"`.
 
-> **`create_quote`**
+> [accordion] `create_quote`
 >
 > Quote an open round
 >
@@ -182,7 +182,7 @@ We send decimal amounts like `price`, `max_wager`, and `wager` as JSON strings. 
 > We drop a second quote for the same `rfq_id` and ack it with `quote_superseded`.
 > To change your price, wait for the next round.
 
-> **`decline`**
+> [accordion] `decline`
 >
 > Pass on an open round
 >
@@ -205,7 +205,7 @@ We send decimal amounts like `price`, `max_wager`, and `wager` as JSON strings. 
 >
 > A decline tells us you saw the round and passed. Silence looks the same as a pricer that is down or lagging.
 
-> **`confirm`**
+> [accordion] `confirm`
 >
 > Answer the last look on a quote you won
 >
@@ -244,7 +244,7 @@ We send decimal amounts like `price`, `max_wager`, and `wager` as JSON strings. 
 
 You get a channel's events after you subscribe to it.
 
-> **`rfq_created`**
+> [accordion] `rfq_created`
 >
 > A round opened (rfq channel)
 >
@@ -290,7 +290,7 @@ You get a channel's events after you subscribe to it.
 >
 > The smallest stake a quote must cover: the taker's minimum or our minimum of \$10.00, whichever is higher. We drop a quote whose `max_wager` is below it, with reason `below_min_wager`.
 
-> **`rfq_closed`**
+> [accordion] `rfq_closed`
 >
 > The auction closed (rfq channel)
 >
@@ -318,7 +318,7 @@ You get a channel's events after you subscribe to it.
 >
 > The round that closed.
 
-> **`rfq_executed`**
+> [accordion] `rfq_executed`
 >
 > A trade filled, with no counterparty named (rfq channel)
 >
@@ -361,7 +361,7 @@ You get a channel's events after you subscribe to it.
 >
 > When the trade filled.
 
-> **`quote_created`**
+> [accordion] `quote_created`
 >
 > We recorded your quote (quotes channel)
 >
@@ -399,7 +399,7 @@ You get a channel's events after you subscribe to it.
 >
 > Your pricer.
 
-> **`quote_accepted`**
+> [accordion] `quote_accepted`
 >
 > You won. Confirm within 1 second (quotes channel)
 >
@@ -452,7 +452,7 @@ You get a channel's events after you subscribe to it.
 >
 > The `quote_id` you sent on `create_quote`, or `null` if you sent none.
 
-> **`quote_executed`**
+> [accordion] `quote_executed`
 >
 > Your quote filled (quotes channel)
 >
@@ -505,7 +505,7 @@ You get a channel's events after you subscribe to it.
 >
 > When the trade filled.
 
-> **`quote_unfilled`**
+> [accordion] `quote_unfilled`
 >
 > Your confirmed quote won't fill (quotes channel)
 >
@@ -556,7 +556,7 @@ You get a channel's events after you subscribe to it.
 > | `pricer_insolvent` | Your balance didn't cover the collateral and fee |
 > | `both_insolvent` | Neither balance covered its side |
 
-> **`quote_dropped`**
+> [accordion] `quote_dropped`
 >
 > We dropped your quote for a reason you can fix (quotes channel)
 >
@@ -612,7 +612,7 @@ You get a channel's events after you subscribe to it.
 
 An ack confirms that we handled your message.
 
-> **`subscribed`**
+> [accordion] `subscribed`
 >
 > The subscription is active
 >
@@ -640,7 +640,7 @@ An ack confirms that we handled your message.
 >
 > `"rfq"` or `"quotes"`.
 
-> **`unsubscribed`**
+> [accordion] `unsubscribed`
 >
 > The subscription is removed
 >
@@ -668,7 +668,7 @@ An ack confirms that we handled your message.
 >
 > `"rfq"` or `"quotes"`.
 
-> **`quote_submitted`**
+> [accordion] `quote_submitted`
 >
 > Your quote entered the auction
 >
@@ -696,7 +696,7 @@ An ack confirms that we handled your message.
 >
 > The round your message named.
 
-> **`quote_superseded`**
+> [accordion] `quote_superseded`
 >
 > Your first quote stands. We dropped this one
 >
@@ -724,7 +724,7 @@ An ack confirms that we handled your message.
 >
 > The round your message named.
 
-> **`quote_declined`**
+> [accordion] `quote_declined`
 >
 > We recorded your pass
 >
@@ -752,7 +752,7 @@ An ack confirms that we handled your message.
 >
 > The round your message named.
 
-> **`confirm_recorded`**
+> [accordion] `confirm_recorded`
 >
 > We recorded your last-look answer
 >
@@ -789,7 +789,7 @@ An ack confirms that we handled your message.
 
 We answer a message we can't handle with an `error` frame.
 
-> **`error`**
+> [accordion] `error`
 >
 > Your message failed
 >

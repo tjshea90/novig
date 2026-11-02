@@ -84,19 +84,19 @@ API keys are network-specific. Generate a separate key for each environment.
 
 ## Related
 
-> **[References →](https://docs.sx.bet/api-reference/references.md)**
+> [card] [References →](https://docs.sx.bet/api-reference/references.md)
 >
 > Full list of addresses, URLs, and chain IDs.
 
-> **[Exchange metadata →](https://docs.sx.bet/api-reference/get-metadata-obv3.md)**
+> [card] [Exchange metadata →](https://docs.sx.bet/api-reference/get-metadata-obv3.md)
 >
 > The runtime config every integration reads at startup.
 
-> **[Funding →](https://docs.sx.bet/developers/funding.md)**
+> [card] [Funding →](https://docs.sx.bet/developers/funding.md)
 >
 > Move USDC into your proxy on either network.
 
-> **[Quickstart →](https://docs.sx.bet/developers/quickstart.md)**
+> [card] [Quickstart →](https://docs.sx.bet/developers/quickstart.md)
 >
 > End-to-end guide from setup to first order.
 

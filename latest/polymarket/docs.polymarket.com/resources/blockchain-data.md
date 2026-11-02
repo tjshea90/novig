@@ -51,19 +51,19 @@ Here are a few simple queries to get started:
 
 Third-party blockchain analytics platforms that aggregate and visualize Polymarket data:
 
-> **[Blockworks](https://blockworks.com/analytics/polymarket)**
+> [card] [Blockworks](https://blockworks.com/analytics/polymarket)
 
-> **[Artemis](https://app.artemisanalytics.com/asset/polymarket?from=assets)**
+> [card] [Artemis](https://app.artemisanalytics.com/asset/polymarket?from=assets)
 
-> **[Dune](https://dune.com/discover/content/popular?q=polymarket\&resource-type=dashboards)**
+> [card] [Dune](https://dune.com/discover/content/popular?q=polymarket\&resource-type=dashboards)
 
-> **[DeFiLlama](https://defillama.com/protocol/polymarket)**
+> [card] [DeFiLlama](https://defillama.com/protocol/polymarket)
 
-> **[The Block](https://www.theblock.co/data/decentralized-finance/prediction-markets-and-betting)**
+> [card] [The Block](https://www.theblock.co/data/decentralized-finance/prediction-markets-and-betting)
 
-> **[Token Terminal](https://tokenterminal.com/explorer/projects/polymarket)**
+> [card] [Token Terminal](https://tokenterminal.com/explorer/projects/polymarket)
 
-> **[Allium](https://predictions.allium.so)**
+> [card] [Allium](https://predictions.allium.so)
 
 ### Community Dashboards
 

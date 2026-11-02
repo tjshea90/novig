@@ -45,49 +45,49 @@ Each route spends the `read` throttle. [Throttling](https://docs.novig.com/api/t
 
 A market leaves the catalog when it closes, so the catalog lists only markets you can still trade.
 
-**Request**
+> [tab] Request
+>
+> ```bash theme={"dark"}
+> curl -s "$NOVIG_HOST/v3/catalog/markets?league=NFL" \
+>   -H "Novig-Key-Id: $TRADING_KEY_ID" \
+>   -H "Novig-Timestamp: $TS" \
+>   -H "Novig-Signature: $SIG"
+> ```
 
-```bash theme={"dark"}
-curl -s "$NOVIG_HOST/v3/catalog/markets?league=NFL" \
-  -H "Novig-Key-Id: $TRADING_KEY_ID" \
-  -H "Novig-Timestamp: $TS" \
-  -H "Novig-Signature: $SIG"
-```
-
-**200**
-
-```json theme={"dark"}
-{
-"items": [
-{
-  "marketId": "6f9619ff-…",
-  "eventId": "110e8400-…",
-  "marketType": "MONEY",
-  "status": "OPEN",
-  "description": "Kansas City Chiefs at Buffalo Bills — Moneyline",
-  "startsTs": 1758400800000,
-  "fee": {
-    "coefficient": "0.06",
-    "makerCredit": "0.25",
-    "charged": "WHEN_LIVE"
-  },
-  "outcomes": [
-    {
-      "outcomeId": "3f2504e0-…",
-      "name": "Kansas City Chiefs",
-      "status": "TBD"
-    },
-    {
-      "outcomeId": "5a1c9e73-…",
-      "name": "Buffalo Bills",
-      "status": "TBD"
-    }
-  ]
-}
-],
-"next": "eyJvIjoxNzU4NDAwODAwMDAwfQ"
-}
-```
+> [tab] 200
+>
+> ```json theme={"dark"}
+> {
+> "items": [
+> {
+>   "marketId": "6f9619ff-…",
+>   "eventId": "110e8400-…",
+>   "marketType": "MONEY",
+>   "status": "OPEN",
+>   "description": "Kansas City Chiefs at Buffalo Bills — Moneyline",
+>   "startsTs": 1758400800000,
+>   "fee": {
+>     "coefficient": "0.06",
+>     "makerCredit": "0.25",
+>     "charged": "WHEN_LIVE"
+>   },
+>   "outcomes": [
+>     {
+>       "outcomeId": "3f2504e0-…",
+>       "name": "Kansas City Chiefs",
+>       "status": "TBD"
+>     },
+>     {
+>       "outcomeId": "5a1c9e73-…",
+>       "name": "Buffalo Bills",
+>       "status": "TBD"
+>     }
+>   ]
+> }
+> ],
+> "next": "eyJvIjoxNzU4NDAwODAwMDAwfQ"
+> }
+> ```
 
 | Field | Meaning |
 | - | - |
@@ -124,44 +124,44 @@ A market family is the markets of one event and one market type about the same c
 
 ## Read the order book
 
-**Request**
+> [tab] Request
+>
+> ```bash theme={"dark"}
+> curl -s "$NOVIG_HOST/v3/catalog/markets/$MARKET_ID/book" \
+>   -H "Novig-Key-Id: $TRADING_KEY_ID" \
+>   -H "Novig-Timestamp: $TS" \
+>   -H "Novig-Signature: $SIG"
+> ```
 
-```bash theme={"dark"}
-curl -s "$NOVIG_HOST/v3/catalog/markets/$MARKET_ID/book" \
-  -H "Novig-Key-Id: $TRADING_KEY_ID" \
-  -H "Novig-Timestamp: $TS" \
-  -H "Novig-Signature: $SIG"
-```
-
-**200**
-
-```json theme={"dark"}
-{
-"marketId": "6f9619ff-…",
-"seq": 48120,
-"orders": {
-"3f2504e0-…": [
-  {
-    "orderId": "7c9e6679-…",
-    "price": "0.665",
-    "qty": 110
-  },
-  {
-    "orderId": "1b4e28ba-…",
-    "price": "0.660",
-    "qty": 250
-  }
-],
-"5a1c9e73-…": [
-  {
-    "orderId": "6ba7b810-…",
-    "price": "0.330",
-    "qty": 180
-  }
-]
-}
-}
-```
+> [tab] 200
+>
+> ```json theme={"dark"}
+> {
+> "marketId": "6f9619ff-…",
+> "seq": 48120,
+> "orders": {
+> "3f2504e0-…": [
+>   {
+>     "orderId": "7c9e6679-…",
+>     "price": "0.665",
+>     "qty": 110
+>   },
+>   {
+>     "orderId": "1b4e28ba-…",
+>     "price": "0.660",
+>     "qty": 250
+>   }
+> ],
+> "5a1c9e73-…": [
+>   {
+>     "orderId": "6ba7b810-…",
+>     "price": "0.330",
+>     "qty": 180
+>   }
+> ]
+> }
+> }
+> ```
 
 Each key in `orders` is an outcome ID.
 Each outcome's array lists the best price first. Within a price, it lists the earlier order first.

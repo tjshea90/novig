@@ -54,31 +54,31 @@ You'll need a small amount of SX Token to cover network gas fees. If you don't h
 
 ### FAQ
 
-> **What if my Limit Order does not get filled?**
+> [accordion] What if my Limit Order does not get filled?
 >
 > That's okay! Qualifying limit orders only earn points for the time your qualifying order remains open.
 
-> **What if I cancel my Limit Order?**
+> [accordion] What if I cancel my Limit Order?
 >
 > As long as your qualifying limit order is up long enough to accrue points, you keep your points and earn your share of the USDC reward pool.
 
-> **What Is the Global Line?**
+> [accordion] What Is the Global Line?
 >
 > The Global Line (orange line on the order book) represents the global consensus odds across major sportsbooks (like Pinnacle). To qualify, your order must offer better odds than this global line.
 
-> **Do I need to place a bet to earn rewards?**
+> [accordion] Do I need to place a bet to earn rewards?
 >
 > Technically, no. You don't need your bet to be matched to earn — you earn points for the time your qualifying order remains live. You stop earning points once your bet is matched or cancelled.
 
-> **Do I have to offer on both sides of the line?**
+> [accordion] Do I have to offer on both sides of the line?
 >
 > No.
 
-> **Are alt. lines included?**
+> [accordion] Are alt. lines included?
 >
 > No, not yet. Limit orders must be on the mainline.
 
-> **How do I place a limit order?**
+> [accordion] How do I place a limit order?
 >
 > Choose a market, and select "Limit Order" in the bet slip. When you place a limit order on SX Bet, you're setting the exact odds you want for your bet — instead of taking the current market price.
 >
@@ -96,15 +96,15 @@ You'll need a small amount of SX Token to cover network gas fees. If you don't h
 > * Meet the minimum offer requirement (typically \$100, varies by market).
 > * Place your limit order on the mainline (alt lines not yet eligible).
 
-> **What if there is no Global Line on the order book?**
+> [accordion] What if there is no Global Line on the order book?
 >
 > If the market is included in the Maker Rewards but you don't see an orange line on the order book, you will not collect points by placing a limit order. Refresh the page or check the market later — sometimes it can take time for the Global Line to update. If the issue persists, message our support team.
 
-> **[Limit Orders (Maker)](https://docs.sx.bet/user-guides/trading/limit-orders.md)**
+> [card] [Limit Orders (Maker)](https://docs.sx.bet/user-guides/trading/limit-orders.md)
 >
 > Post your own odds and earn the spread as a market maker.
 
-> **[Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)**
+> [card] [Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)
 >
 > Learn how to read the order book and find the global consensus line.
 

@@ -4,7 +4,7 @@
 
 # Sports Coverage - Fixtures & Futures by Sport
 
-> Coverage of the OddsPapi B2B odds API: 350+ bookmakers anchored on sharp trading books, plus 60+ sports and prediction-market topics with fixtures and futures availability per sportId.
+> Coverage of the OddsPapi B2B odds API: 200+ bookmakers anchored on sharp trading books, plus 60+ sports and prediction-market topics with fixtures and futures availability per sportId.
 
 OddsPapi covers **60+ sports** plus prediction-market topics, each identified by a numeric `sportId`. Every sport is available as **fixtures** (match-level markets), **futures** (outrights / season-long markets), or both.
 
@@ -14,17 +14,17 @@ OddsPapi covers **60+ sports** plus prediction-market topics, each identified by
 
 Discover the live list programmatically via `GET /sports`. Identifiers are language-independent; `sportName` follows the request language prefix.
 
-> **[Bookmakers](https://docs.oddspapi.io/coverage/bookmakers.md)**
+> [card] [Bookmakers](https://docs.oddspapi.io/coverage/bookmakers.md)
 >
 > Sharps, exchanges, and retail books — capabilities, freshness bounds, and status signals.
 
-> **[Markets](https://docs.oddspapi.io/coverage/markets.md)**
+> [card] [Markets](https://docs.oddspapi.io/coverage/markets.md)
 >
 > Market types, lines, period scoping, and player props — and how to enumerate them.
 
 ## Bookmaker coverage
 
-The feed aggregates **350+ bookmakers**, anchored on the books that matter for price discovery:
+The feed aggregates **200+ bookmakers**, anchored on the books that matter for price discovery:
 
 * **Sharp trading books** — the core of the feed. The bookmakers that are most accurate in pricing and dominate global sports prediction (e.g. Pinnacle, Singbet, Circa Sports) — the books trading systems benchmark against, carried with [limits](https://docs.oddspapi.io/websocket/channels/odds.md#limits) and full delivery timestamps.
 * **Betting exchanges & prediction markets** — realtime prices with [orderbook depth](https://docs.oddspapi.io/websocket/channels/odds.md#advanced-metadata-meta) (`back` / `lay` ladders), e.g. Betfair and Polymarket.

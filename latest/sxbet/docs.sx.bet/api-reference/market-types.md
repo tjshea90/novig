@@ -43,6 +43,9 @@
 | 281 | 1st 5 Innings Asian Handicap | true | Who will win the 1st five innings with handicap (no draw) | `first-five-innings` | false |
 | 1618 | 1st 5 Innings Winner-12 | false | Who will win in the 1st five innings | `first-five-innings` | false |
 | 995 | Anytime Touchdown Scorer | false | Will the player score a touchdown at any point in the game (Yes/No) | `player-props` | false |
+| 1196 | Under/Over Player Receiving Yards | true | Will the player's receiving yards be under/over a specific line | `player-props` | false |
+| 1200 | Under/Over Player Rushing Yards | true | Will the player's rushing yards be under/over a specific line | `player-props` | false |
+| 2400 | Under/Over Player Passing Yards | true | Will the player's passing yards be under/over a specific line | `player-props` | false |
 | 13371 | Map 1 Winner | false | Who will win map 1 | — | false |
 | 13372 | Map 2 Winner | false | Who will win map 2 | — | false |
 | 13373 | Map 3 Winner | false | Who will win map 3 | — | false |
@@ -99,7 +102,7 @@ groups.
 | `first-five-innings` | First Five Innings | 236, 281, 1618 |
 | `to-qualify` | To Qualify | 88 |
 | `1X2` | 1X2 | 1 |
-| `player-props` | Player Props | 995 |
+| `player-props` | Player Props | 995, 1196, 1200, 2400 |
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

@@ -153,11 +153,11 @@ function unwrap(address _asset, address _to, uint256 _amount) external
 
 ## Next steps
 
-> **[Contracts](https://docs.polymarket.com/resources/contracts.md)**
+> [card] [Contracts](https://docs.polymarket.com/resources/contracts.md)
 >
 > All Polymarket contract addresses and audits
 
-> **[Bridge](https://docs.polymarket.com/trading/bridge/deposit.md)**
+> [card] [Bridge](https://docs.polymarket.com/trading/bridge/deposit.md)
 >
 > Deposit from other chains — auto-wraps to pUSD
 

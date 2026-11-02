@@ -10,8 +10,8 @@
 
 ### Coverage
 
-- [Sports Coverage - Fixtures & Futures by Sport](https://docs.oddspapi.io/coverage.md): Coverage of the OddsPapi B2B odds API: 350+ bookmakers anchored on sharp trading books, plus 60+ sports and prediction-market topics with fixtures and futures availability per sportId.
-- [Bookmaker Coverage - Sharps, Exchanges & Retail Books](https://docs.oddspapi.io/coverage/bookmakers.md): What OddsPapi covers across 350+ bookmakers: sharp trading books, exchanges and prediction markets, and retail sportsbooks — with per-book capabilities, freshness bounds, and status signals.
+- [Sports Coverage - Fixtures & Futures by Sport](https://docs.oddspapi.io/coverage.md): Coverage of the OddsPapi B2B odds API: 200+ bookmakers anchored on sharp trading books, plus 60+ sports and prediction-market topics with fixtures and futures availability per sportId.
+- [Bookmaker Coverage - Sharps, Exchanges & Retail Books](https://docs.oddspapi.io/coverage/bookmakers.md): What OddsPapi covers across 200+ bookmakers: sharp trading books, exchanges and prediction markets, and retail sportsbooks — with per-book capabilities, freshness bounds, and status signals.
 - [Market Coverage - Market Types, Lines, Periods & Player Props](https://docs.oddspapi.io/coverage/markets.md): What markets OddsPapi covers: market types, period scoping, Asian and European handicaps, totals, player props, and how to discover the full market map per sport via GET /markets.
 
 ### Build with OddsPapi
@@ -22,6 +22,7 @@
 - [Powering a Sportsbook - Schedule, Prices, In-Play & Settlement](https://docs.oddspapi.io/guides/sportsbook.md): Build a full betting product on OddsPapi: discover sports and tournaments, load schedules, model markets and outcomes, stream prices and in-play state, and settle bets.
 - [Settlement & Grading - Per-Outcome Grades, Quarter Lines & Periods](https://docs.oddspapi.io/guides/settlement.md): Grade bets on OddsPapi: per-outcome settlement grades on frozen IDs, Asian quarter-line half-stake math, period-market grading, and handling UNDECIDED and CANCELLED.
 - [Evaluating OddsPapi - Measure Latency, Coverage & Recovery Yourself](https://docs.oddspapi.io/guides/evaluation.md): A trial protocol for OddsPapi: log per-book observation delay against the published numbers, drill the recovery paths, verify coverage from the API, and settle the speed question with CLV.
+- [Latency Methodology - How OddsPapi Measures Per-Book Delay](https://docs.oddspapi.io/guides/latency-methodology.md): How the published per-bookmaker delay numbers are produced: what is measured, what counts as measured vs. estimated, what the numbers exclude, and how to reproduce them.
 - [Periods per Sport - When fulltime and result Differ](https://docs.oddspapi.io/guides/periods.md): Understand the OddsPapi period vocabulary per sport: when fulltime is a distinct fact, when it collapses into result, and how to group markets by marketType and period without hard-coding assumptions.
 - [Parlays & SGP - Building a Betslip](https://docs.oddspapi.io/guides/parlays.md): A workflow guide for multi-leg betting on OddsPapi: choosing between the parlay and SGP endpoints, keeping a live slip priced, comparing bookmakers, and degrading gracefully when a leg suspends.
 
@@ -115,7 +116,7 @@
 - [Futures Channel - Season & Outright Markets](https://docs.oddspapi.io/websocket/channels/futures.md): Stream futures and outright betting markets via WebSocket. Season-long markets, tournament winners, championship odds with timing windows and provider mappings.
 - [Bookmakers Channel - Sportsbook Status & Metadata](https://docs.oddspapi.io/websocket/channels/bookmakers.md): Stream bookmaker status per fixture via WebSocket. Track which sportsbooks offer odds, detect stale/suspended markets, and monitor participant rotation flags.
 - [Bookmakers Futures Channel - Outright Market Status](https://docs.oddspapi.io/websocket/channels/bookmakersFutures.md): Stream bookmaker availability for futures markets via WebSocket. Monitor which sportsbooks offer outright and season-long betting odds.
-- [Odds Channel - Realtime Betting Odds Stream](https://docs.oddspapi.io/websocket/channels/odds.md): Low-latency realtime betting odds via WebSocket. Stream live odds aggregated from 350+ bookmakers. Decimal, fractional, American formats with orderbook depth.
+- [Odds Channel - Realtime Betting Odds Stream](https://docs.oddspapi.io/websocket/channels/odds.md): Low-latency realtime betting odds via WebSocket. Stream live odds aggregated from 200+ bookmakers. Decimal, fractional, American formats with orderbook depth.
 - [Scores Channel - Live Score Updates](https://docs.oddspapi.io/websocket/channels/scores.md): Stream realtime live scores via WebSocket. Period-by-period score updates for all sports including result, halftime, quarters, sets, and periods.
 - [Clocks Channel - Live Match Clock Updates](https://docs.oddspapi.io/websocket/channels/clocks.md): Stream realtime match clock updates via WebSocket. Period, remaining time, and stopped state for live fixtures.
 - [Currencies Channel - Exchange Rates & Crypto Prices](https://docs.oddspapi.io/websocket/channels/currencies.md): Stream realtime currency exchange rates via WebSocket. Fiat and cryptocurrency pricing data including BTC, ETH, and major tokens for odds conversion.
@@ -144,7 +145,7 @@
 
 ## Indexes
 
-- [Chinese (68 pages)](https://docs.oddspapi.io/_llms/zh.txt): Documentation for Chinese.
+- [Chinese (69 pages)](https://docs.oddspapi.io/_llms/zh.txt): Documentation for Chinese.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

@@ -104,11 +104,11 @@ If you deposited the wrong token, use this tool to recover your funds:
 
 ## Next Steps
 
-> **[Supported Assets](https://docs.polymarket.com/trading/bridge/supported-assets.md)**
+> [card] [Supported Assets](https://docs.polymarket.com/trading/bridge/supported-assets.md)
 >
 > See all supported chains and tokens with minimum amounts.
 
-> **[Check Status](https://docs.polymarket.com/trading/bridge/status.md)**
+> [card] [Check Status](https://docs.polymarket.com/trading/bridge/status.md)
 >
 > Track your deposit progress through completion.
 

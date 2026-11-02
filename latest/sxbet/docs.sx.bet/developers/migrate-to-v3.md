@@ -375,7 +375,7 @@ Full reference: [Real-time data](https://docs.sx.bet/developers/realtime-overvie
 
 In V2, [`order_book:market_{marketHash}`](https://docs.sx.bet/api-reference/channel-orderbook-v3) published a stream of **individual order rows/deltas** you merged into a local book. In V3, [`orderbook_v3:{marketHash}`](https://docs.sx.bet/api-reference/channel-orderbook-v3) (and [`orderbook_v3_event:{eventId}`](https://docs.sx.bet/api-reference/channel-orderbook-v3-event)) publish the **entire resting book on every update, aggregated by price into anonymous levels**.
 
-* **No per-order identity.** Levels carry only `percentageOdds` and aggregate `size`. Your own orders still arrive individually on [`account:orders_v3_#{address}`](https://docs.sx.bet/api-reference/channel-orders-v3).
+* **No per-order identity.** Levels carry `percentageOdds`, aggregate `size` and `newestOrderCreatedAtMs` (available November 9, 2026), but no order IDs or counts. Your own orders still arrive individually on [`account:orders_v3_#{address}`](https://docs.sx.bet/api-reference/channel-orders-v3).
 * **Replace, don't merge.** V2 required upsert/remove by `orderHash`; every V3 publication is the complete book for that market.
 * **Version-gate instead of `updateTime`.** Each publication carries a `version` (a single monotonic string). Apply a message only when its `version` is strictly greater than the one you hold for that market. See [Book versioning](https://docs.sx.bet/developers/book-versioning.md).
 * **Sides are explicit.** Levels are split into `outcomeOne` / `outcomeTwo` (always the maker frame), replacing V2's per-row `isMakerBettingOutcomeOne`. There is no `showTakerPerspective` on this channel (unlike [`GET /orderbook-v3/snapshot/market`](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot)); invert yourself with `takerOdds = 1 − percentageOdds / 10^20`.
@@ -607,11 +607,11 @@ Run it on testnet ([api.toronto.sx.bet](https://api.toronto.sx.bet)) first.
 * [ ] Point accounting at `/trades-v3` / `/fills-v3` / `/positions-v3`; remap `orderHash` / `fillHash` ids; switch pagination to `perPage` + `nextKey`.
 * [ ] Arm `POST /heartbeat/v3` and let it lapse once on testnet to watch `HEARTBEAT_TIMEOUT` cancel your orders.
 
-> **[Improvements](https://docs.sx.bet/developers/new-in-v3.md)**
+> [card] [Improvements](https://docs.sx.bet/developers/new-in-v3.md)
 >
 > What changed in V3.
 
-> **[Quickstart](https://docs.sx.bet/developers/quickstart.md)**
+> [card] [Quickstart](https://docs.sx.bet/developers/quickstart.md)
 >
 > The full V3 flow, metadata to placed bet.
 

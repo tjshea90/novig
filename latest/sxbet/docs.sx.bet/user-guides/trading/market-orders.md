@@ -50,11 +50,11 @@ For most pre-match bets, the default slippage is fine. For live/in-play markets 
 >
 > Higher slippage means you may receive worse odds than you selected. Only increase it when getting matched quickly matters more than getting the exact price.
 
-> **[Limit Orders (Maker)](https://docs.sx.bet/user-guides/trading/limit-orders.md)**
+> [card] [Limit Orders (Maker)](https://docs.sx.bet/user-guides/trading/limit-orders.md)
 >
 > Post your own odds and earn the spread as a market maker.
 
-> **[Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)**
+> [card] [Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)
 >
 > Learn how to read the order book to find available odds and liquidity.
 

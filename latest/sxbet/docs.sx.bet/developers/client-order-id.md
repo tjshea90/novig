@@ -80,27 +80,27 @@ await fetch(`${API}/orders-v3`, authed({
 
 ## Related
 
-> **[Posting orders](https://docs.sx.bet/developers/posting-orders.md)**
+> [card] [Posting orders](https://docs.sx.bet/developers/posting-orders.md)
 >
 > The submit flow this field rides on.
 
-> **[Time in force](https://docs.sx.bet/developers/time-in-force.md)**
+> [card] [Time in force](https://docs.sx.bet/developers/time-in-force.md)
 >
 > The other write-only field worth recording against your tag.
 
-> **[Tracking your orders](https://docs.sx.bet/developers/my-orders.md)**
+> [card] [Tracking your orders](https://docs.sx.bet/developers/my-orders.md)
 >
 > Keep a local store keyed by an id you control.
 
-> **[Get an order by client ID](https://docs.sx.bet/api-reference/get-order-v3-by-client-id.md)**
+> [card] [Get an order by client ID](https://docs.sx.bet/api-reference/get-order-v3-by-client-id.md)
 >
 > Look up one of your orders by the tag you set.
 
-> **[EIP-712 order signing](https://docs.sx.bet/api-reference/eip712-order-signing.md)**
+> [card] [EIP-712 order signing](https://docs.sx.bet/api-reference/eip712-order-signing.md)
 >
 > Why the order id is a digest, not a server-assigned value.
 
-> **[External user id](https://docs.sx.bet/developers/external-user-id.md)**
+> [card] [External user id](https://docs.sx.bet/developers/external-user-id.md)
 >
 > A per-person tag when one SX account places orders for many people.
 

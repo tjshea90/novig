@@ -112,11 +112,11 @@ addresses on Polygon.
 
 Ready to start trading?
 
-> **[Trading Quickstart](https://docs.polymarket.com/trading/quickstart.md)**
+> [card] [Trading Quickstart](https://docs.polymarket.com/trading/quickstart.md)
 >
 > Set up your account and make your first trade.
 
-> **[Explore Markets](https://polymarket.com)**
+> [card] [Explore Markets](https://polymarket.com)
 >
 > Browse active prediction markets on Polymarket.
 

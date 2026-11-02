@@ -33,27 +33,27 @@ looks it up by that tag instead.
 
 ## Related
 
-> **[Get your orders](https://docs.sx.bet/api-reference/get-orders-v3.md)**
+> [card] [Get your orders](https://docs.sx.bet/api-reference/get-orders-v3.md)
 >
 > Parameters, the fifteen-field row, and the available filters.
 
-> **[Get an order by ID](https://docs.sx.bet/api-reference/get-order-v3.md)**
+> [card] [Get an order by ID](https://docs.sx.bet/api-reference/get-order-v3.md)
 >
 > One order, any status.
 
-> **[Get an order by client ID](https://docs.sx.bet/api-reference/get-order-v3-by-client-id.md)**
+> [card] [Get an order by client ID](https://docs.sx.bet/api-reference/get-order-v3-by-client-id.md)
 >
 > One order, looked up by the tag you set.
 
-> **[account:orders\_v3](https://docs.sx.bet/api-reference/channel-orders-v3.md)**
+> [card] [account:orders\_v3](https://docs.sx.bet/api-reference/channel-orders-v3.md)
 >
 > Where terminal state actually comes from.
 
-> **[Order lifecycle](https://docs.sx.bet/developers/order-lifecycle.md)**
+> [card] [Order lifecycle](https://docs.sx.bet/developers/order-lifecycle.md)
 >
 > The three statuses, all ten terminal reasons, and the correct way to test for a fill.
 
-> **[Which grain?](https://docs.sx.bet/developers/which-grain.md)**
+> [card] [Which grain?](https://docs.sx.bet/developers/which-grain.md)
 >
 > Bets, fills and positions — picking between them.
 

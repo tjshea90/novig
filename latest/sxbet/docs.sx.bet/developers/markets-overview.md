@@ -179,7 +179,7 @@ rl.close();
 
 SX Bet covers a wide range of sports. Each sport is identified by a numeric `sportId`. Pass a `sportId` to other endpoints (such as `/leagues/active`) to filter results by sport.
 
-> **Full list of sports**
+> [accordion] Full list of sports
 >
 > | `sportId` | Sport |
 > | - | - |
@@ -276,7 +276,7 @@ A market represents a single binary outcome you can bet on — for example, "Ove
 
 Every market on SX Bet is identified by a unique `marketHash`, which is used throughout the API to fetch orderbooks, post orders, and query trades.
 
-> **[Fetching markets](https://docs.sx.bet/developers/fetch-markets.md)**
+> [card] [Fetching markets](https://docs.sx.bet/developers/fetch-markets.md)
 >
 > Querying active markets from the API.
 

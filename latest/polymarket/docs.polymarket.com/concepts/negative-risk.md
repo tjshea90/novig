@@ -78,11 +78,11 @@ CTF uses the Neg Risk Adapter.
 
 ## Next Steps
 
-> **[Markets & Events](https://docs.polymarket.com/concepts/markets-events.md)**
+> [card] [Markets & Events](https://docs.polymarket.com/concepts/markets-events.md)
 >
 > Understand how multi-market events are structured.
 
-> **[Positions & Tokens](https://docs.polymarket.com/concepts/positions-tokens.md)**
+> [card] [Positions & Tokens](https://docs.polymarket.com/concepts/positions-tokens.md)
 >
 > Learn about position operations like split, merge, and redeem.
 

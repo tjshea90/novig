@@ -24,15 +24,15 @@ Tokens. Market discovery provides the identifiers required by each workflow.
 
 Both systems expose the same basic position lifecycle.
 
-> **[Split](https://docs.polymarket.com/trading/positions/manage.md#split-a-position)**
+> [card] [Split](https://docs.polymarket.com/trading/positions/manage.md#split-a-position)
 >
 > Convert pUSD into a YES and NO token pair.
 
-> **[Merge](https://docs.polymarket.com/trading/positions/manage.md#merge-positions)**
+> [card] [Merge](https://docs.polymarket.com/trading/positions/manage.md#merge-positions)
 >
 > Convert a YES and NO token pair back into pUSD.
 
-> **[Redeem](https://docs.polymarket.com/trading/positions/manage.md#redeem-resolved-positions)**
+> [card] [Redeem](https://docs.polymarket.com/trading/positions/manage.md#redeem-resolved-positions)
 >
 > Exchange resolved outcome tokens for their payout.
 

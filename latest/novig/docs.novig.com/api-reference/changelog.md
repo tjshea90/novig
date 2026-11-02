@@ -6,6 +6,60 @@
 
 > This changelog is specific to our API users and LPs
 
+**October 29, 2026 - Participation Protection on NFL Player Props**
+
+**Protected NFL player props are coming, starting in QA on Thursday, October 29, 2026.** If the player records no snap in the third quarter, fourth quarter, or overtime, a protected market resolves at its pregame fair market price.
+
+Each protected market is a twin of a standard prop, with the same event, player, and `strike`. Its `marketType` ends in `_PROTECTED`, like `RECEIVING_YARDS_PROTECTED`. Fifteen NFL offense prop types get a twin.
+
+Protected markets trade pregame only, on their own order book. A parlay RFQ can include protected legs, but protection must cover every leg that could be protected. See [Participation Protection](https://docs.novig.com/api/concepts/participation-protection.md).
+
+**October 29, 2026 - Larger Request Bodies**
+
+**A request body can now be up to 64 KiB, up from 8 KiB.** A full batch of 256 orders now fits. A larger body still gets a `403` with an HTML page from our edge. See [Edge 403](https://docs.novig.com/api/errors.md#edge-403).
+
+**October 28, 2026 - Earn a Rate-Limit Tier**
+
+**Your subaccount now earns its rate-limit tier from its monthly volume.** Early each month, we set each subaccount's tier from its volume over the last calendar month, in Eastern time. Tier 1 takes \$100,000 of volume, and each tier above it takes 10 times more.
+
+**Each tier also raises how many orders you may keep open,** from 1,024 at Base to 16,384 at Tier 4. An order over the limit answers `OPEN_ORDER_LIMIT_EXCEEDED`, and `GET /v3/limits` now reports yours as `maxOpenOrders`.
+
+Tier 4 is now the top tier. See [Tiers](https://docs.novig.com/api/throttling.md#tiers).
+
+**October 28, 2026 - New Parlay Pricing Route**
+
+**`POST /nbx/v1/parlay/request/unauthenticated` is gone and answers `404`.** Parlay prices now come from `POST /rfq/v2/quote/unauthenticated`.
+
+Send `outcomeIds`, a list of outcome IDs. You get back one `price` and the time it expires. See [Parlay Pricing](https://docs.novig.com/affiliates/parlay-pricing.md).
+
+**October 28, 2026 - Only Quotes Keep an RFQ Webhook Active**
+
+**A `204` no longer keeps your RFQ webhook active.** We now stop sending RFQs to a webhook that hasn't returned a quote for 7 days. A `204` still passes on an RFQ, but it no longer counts toward the 7 days.
+
+To restart a paused webhook, call `POST /rfq/pricer/ping`. See [Keep your webhook active](https://docs.novig.com/api-reference/rfq/webhooks.md#keep-your-webhook-active).
+
+**October 27, 2026 - Geolocation Expiry**
+
+**`GET /v3/account/geolocation` tells you when your keys stop placing orders.** `expiresAt` is when your last device check expires. After that, a placement answers `451 GEOLOCATION_EXPIRED`.
+
+`code` is the `451` code a placement gets right now, or `null` while placements pass. The route answers even while the geolocation check refuses your other requests, and any key can call it.
+
+To refresh the check, open the Novig app in a permitted state. See [Get the geolocation status](https://docs.novig.com/api-reference/accounts/get-the-geolocation-status.md).
+
+**October 26, 2026 - Move from v2 to v3**
+
+**If you trade on v2, you can now move to v3.** [Move from v2 to v3](https://docs.novig.com/deprecated/migrate-to-v3.md) walks you through it, from registering a key with your v2 token to mapping each v2 route to its v3 match.
+
+You don't have to move, and v2 keeps working. You can also run both at once, for example quoting the order book on v3 and answering RFQs on v2.
+
+Check two limits first: v3 has lower rate limits today, and it has no RFQ routes. The guide covers both.
+
+**October 25, 2026 - Rate-Limit Tiers**
+
+**Each subaccount now has a rate-limit tier.** A higher tier multiplies every throttle. Every subaccount starts at Base, which keeps today's limits.
+
+`GET /v3/limits` now reports the limits of your subaccount's tier. See [Tiers](https://docs.novig.com/api/throttling.md#tiers).
+
 **October 23, 2026 - Unrealized PnL on Open Positions**
 
 **`GET /v3/portfolio/pnl` values your open positions at the last trade.** Each position carries `cost` and `last`, the price of the outcome's last trade. The response sums `basis`, what your positions cost, and `value`, what they would pay at those prices. Your cash plus `value` is your net liquidation value, and your unrealized PnL is `value` minus `basis`.

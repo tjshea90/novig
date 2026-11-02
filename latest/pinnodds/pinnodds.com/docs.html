@@ -4,13 +4,13 @@
 <script src="/ref-capture.js?v=20260928"></script>
 <meta charset="utf-8"/>
 <!-- Consent-gated tag loader: GA4 + Google Ads + Clarity + Meta live in /consent.js -->
-<script src="/consent.js" data-no-meta="1"></script>
+<script src="/consent.js?v=20261031" data-no-meta="1"></script>
 <link rel="icon" href="/favicon.ico" sizes="32x32">
 <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png">
 <link rel="apple-touch-icon" href="/logo.png">
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="color-scheme" content="dark"/>
-<meta name="theme-color" content="#0a0e14"/>
+<meta name="theme-color" content="#0C0C0E"/>
 <title>Pinnacle API Documentation — Odds, WebSocket &amp; SSE Reference</title>
 <meta name="description" content="Complete Pinnacle API documentation: live and prematch odds over REST, WebSocket and SSE, with copy-paste examples in Python, Node and cURL. Free key, no card, and a 3-day full demo on request."/>
 <meta name="robots" content="index, follow"/>
@@ -26,521 +26,128 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;650;700&family=Geist+Mono:wght@400;500;600;700&display=swap" as="style">
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;650;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;650;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=Martian+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/fl/floodlight.css?v=20261031">
+<script src="/fl/chrome.js?v=20261031" defer></script>
 <style>
 /* ============================================================
-   PINNODDS DOCS — "TRADING TERMINAL" design system
-   ground #0a0e14 · panels #10151d · hairlines #1c2530
-   up #34d399 · down #f87171 · signal #fbbf24 · muted #9aa7b8
+   DOCS — Floodlight page layer. Only what /fl/floodlight.css lacks.
+   Class names are the ones the markup + page script use (.endpoint, .verb,
+   .param-table, .codewrap/.copybtn, .tabs button.active, .tab-pane,
+   .tbl-scroll, aside a.active, details.mobile-toc), restyled not renamed.
    ============================================================ */
+
+/* legacy variable names still used by inline style="…var(--x)…" in the body */
 :root{
-  color-scheme:dark;
-  --bg:#0a0e14;
-  --bg-deep:#070a0f;
-  --panel:#10151d;
-  --panel2:#0d121a;
-  --panel-hi:#151c26;
-  --line:#1c2530;
-  --line-2:#26313f;
-  --up:#34d399;
-  --down:#f87171;
-  --sig:#fbbf24;
-  --muted:#9aa7b8;
-  --muted-2:#6c7a8c;
-  --text:#e8eef6;
+  --text:var(--fg); --border:var(--line); --first:var(--up); --gold:var(--up);
+  --sig:var(--accent); --danger:var(--bad); --panel2:#0F0F11; --panel-hi:#1A1A1D;
+}
+html{scroll-behavior:smooth}
+/* html already has scroll-padding-top:84px (floodlight); keep anchors just under the sticky nav */
+.prose [id],.endpoint{scroll-margin-top:12px}
 
-  /* aliases kept so inline style="…var(--x)…" in the body still resolves */
-  --border:#1c2530;
-  --accent:#34d399;
-  --first:#7dd3fc;
-  --warn:#fbbf24;
-  --danger:#f87171;
-  --gold:#fbbf24;
+.skip{position:absolute;left:-9999px;top:0;z-index:200;background:var(--accent);color:var(--accent-ink);font:500 12px var(--f-mono);padding:10px 16px;text-decoration:none;border-radius:8px}
+.skip:focus{left:8px;top:8px}
 
-  --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  --sans:"Geist",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+/* ---------- hero ---------- */
+.page-hero .lede{max-width:72ch}
+.quick-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+.quick-links a{display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line-2);background:rgba(12,12,14,.4);color:var(--fg);text-decoration:none;font-weight:600;font-size:14px;transition:border-color .2s var(--ease),background-color .2s var(--ease)}
+.quick-links a:hover{border-color:var(--fg);background:rgba(244,242,239,.05)}
+.quick-links a:first-child{background:var(--fg);color:var(--accent-ink);border-color:var(--fg)}
+.doc-status{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin-top:26px;font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+.doc-status b{color:var(--muted);font-weight:500}
+.doc-status .on{display:inline-flex;align-items:center;gap:8px;color:var(--up)}
 
-  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
-  --statusH:28px; --navH:54px;
-}
+/* ---------- sidebar (aside.toc) ---------- */
+.toc .brand{display:block;font:500 10.5px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);border-left:0;padding:0 0 0 10px;margin:0 0 6px}
+.toc .brand b{color:var(--accent);font-weight:500}
+.toc .toc-h{font:500 10.5px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--up);margin:22px 0 8px;padding-left:10px}
+.toc a.method{font-family:var(--f-mono);font-size:12px;overflow-wrap:anywhere}
+.toc a .verb{display:inline-block;min-width:30px;margin-right:6px;padding:0 4px;border:0;border-radius:4px;font:500 9.5px var(--f-mono);letter-spacing:.08em;color:var(--accent)}
+.toc a code{background:none;border:0;padding:0;color:var(--muted-2);font-size:11px}
+@media (min-width:1000px){.toc{scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}}
+@media (max-width:999px){aside.toc{display:none}}
 
-*,*::before,*::after{box-sizing:border-box}
-html{
-  -webkit-text-size-adjust:100%;
-  scroll-behavior:smooth;
-  scroll-padding-top:calc(var(--statusH) + var(--navH) + 16px);
-}
-body{
-  margin:0; background:var(--bg); color:var(--text);
-  font-family:var(--sans); font-size:15px; line-height:1.62;
-  font-variant-numeric:tabular-nums;
-  overflow-x:hidden;
-}
-img,svg{max-width:100%}
-h1,h2,h3,h4,h5{margin:0; font-weight:600; line-height:1.15; letter-spacing:-.01em}
-p{margin:0}
-::selection{background:rgba(251,191,36,.28); color:#fff}
-:focus-visible{outline:2px solid var(--sig); outline-offset:2px; border-radius:1px}
-a{color:var(--first); text-decoration:none}
-a:hover{text-decoration:underline}
-
-.skip{
-  position:absolute; left:-9999px; top:0; z-index:200; background:var(--sig); color:#0a0e14;
-  font-family:var(--mono); font-size:12px; padding:10px 16px; text-decoration:none;
-}
-.skip:focus{left:8px; top:8px}
-
-/* ============ STATUS BAR ============ */
-.statusbar{
-  position:sticky; top:0; z-index:60;
-  height:var(--statusH);
-  display:flex; align-items:center; gap:var(--s4);
-  padding:0 16px;
-  background:var(--bg-deep);
-  border-bottom:1px solid var(--line);
-  font-family:var(--mono); font-size:10.5px; letter-spacing:.11em;
-  color:var(--muted-2); text-transform:uppercase; white-space:nowrap;
-  overflow:hidden;
-}
-.statusbar b{color:var(--muted); font-weight:600}
-.statusbar .sep{width:1px;height:12px;background:var(--line);flex:none}
-.led{display:inline-flex; align-items:center; gap:7px; color:var(--up); font-weight:600}
-.led i{
-  width:7px;height:7px;border-radius:50%; background:var(--up); flex:none;
-  box-shadow:0 0 0 0 rgba(52,211,153,.6); animation:pulse 2.2s infinite;
-}
-@keyframes pulse{
-  0%{box-shadow:0 0 0 0 rgba(52,211,153,.55)}
-  70%{box-shadow:0 0 0 7px rgba(52,211,153,0)}
-  100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}
-}
-.sb-right{margin-left:auto; display:flex; align-items:center; gap:var(--s4)}
-@media (max-width:900px){ .sb-hide{display:none} }
-
-/* ============ NAV ============ */
-.nav{
-  position:sticky; top:var(--statusH); z-index:55;
-  height:var(--navH);
-  display:flex; align-items:center; gap:var(--s5);
-  padding:0 16px;
-  background:rgba(10,14,20,.88); backdrop-filter:blur(10px);
-  border-bottom:1px solid var(--line);
-}
-.logo{
-  display:flex; align-items:center; gap:10px; text-decoration:none;
-  font-family:var(--mono); font-size:17px; font-weight:700; letter-spacing:-.02em; color:#fff;
-}
-.logo:hover{text-decoration:none}
-.logo__mark{
-  width:22px;height:22px;flex:none;border:1px solid var(--line-2);
-  background:var(--panel); display:grid; place-items:center;
-}
-.logo__mark span{display:block;width:8px;height:8px;background:var(--up);box-shadow:0 0 9px rgba(52,211,153,.8)}
-.logo em{font-style:normal;color:var(--up)}
-.nav__links{display:flex;align-items:center;gap:var(--s5);margin-left:var(--s5)}
-.nav__links a{
-  font-family:var(--mono); font-size:12px; font-weight:500; letter-spacing:.09em;
-  text-transform:uppercase; color:var(--muted); text-decoration:none;
-  padding:6px 0; border-bottom:1px solid transparent; transition:color .15s, border-color .15s;
-}
-.nav__links a:hover{color:var(--text); border-bottom-color:var(--sig); text-decoration:none}
-.nav__links a[aria-current="page"]{color:var(--sig); border-bottom-color:var(--sig)}
-.nav__cta{margin-left:auto; display:flex; align-items:center; gap:var(--s3)}
-@media (max-width:1020px){ .nav__links{display:none} }
-@media (max-width:560px){ .nav__cta .key--ghost{display:none} }
-
-/* ---------- terminal key buttons ---------- */
-.key{
-  --k:#e8eef6;
-  display:inline-flex; align-items:center; justify-content:center; gap:9px;
-  font-family:var(--mono); font-size:12.5px; font-weight:600;
-  letter-spacing:.11em; text-transform:uppercase;
-  color:var(--k); text-decoration:none; cursor:pointer;
-  padding:12px 20px; border:1px solid var(--line-2);
-  background:linear-gradient(180deg,#182029 0%,#0f151d 100%);
-  box-shadow:0 2px 0 0 #05080c, inset 0 1px 0 0 rgba(255,255,255,.045);
-  transition:transform .1s ease, box-shadow .1s ease, border-color .16s ease, color .16s ease;
-}
-.key:hover{ border-color:#3d4c5e; color:#fff; text-decoration:none }
-.key:active{ transform:translateY(2px); box-shadow:0 0 0 0 #05080c }
-.key--primary{
-  --k:#0a0e14; border-color:#c9971b;
-  background:linear-gradient(180deg,#fcd34d 0%,#f5b91b 100%);
-  box-shadow:0 2px 0 0 #8a6608, inset 0 1px 0 0 rgba(255,255,255,.4);
-}
-.key--primary:hover{ border-color:#ffe08a; color:#0a0e14; background:linear-gradient(180deg,#ffdf7a 0%,#fbc42a 100%) }
-.key--ghost{ background:transparent; box-shadow:none; border-color:var(--line-2) }
-.key--ghost:hover{ background:rgba(255,255,255,.03) }
-.key--sm{ padding:8px 13px; font-size:11px }
-
-/* ============ SHELL ============ */
-.shell{
-  display:grid;
-  grid-template-columns:272px minmax(0,1fr);
-  align-items:start;
-}
-@media (max-width:1120px){ .shell{grid-template-columns:244px minmax(0,1fr)} }
-
-/* ============ SIDEBAR (terminal panel) ============ */
-aside{
-  position:sticky; top:calc(var(--statusH) + var(--navH));
-  height:calc(100vh - var(--statusH) - var(--navH));
-  overflow-y:auto; overscroll-behavior:contain;
-  border-right:1px solid var(--line);
-  background:var(--panel2);
-  padding:0 0 40px;
-  font-size:13px;
-  scrollbar-width:thin; scrollbar-color:#26313f transparent;
-}
-aside::-webkit-scrollbar{width:8px}
-aside::-webkit-scrollbar-thumb{background:#1c2530}
-aside::-webkit-scrollbar-thumb:hover{background:#26313f}
-
-aside .brand{
-  display:flex; align-items:center; gap:9px;
-  position:sticky; top:0; z-index:2;
-  min-height:34px; padding:8px 14px; margin:0 0 10px;
-  border-bottom:1px solid var(--line);
-  background:linear-gradient(180deg,#141b25 0%,#0e1420 100%);
-  font-family:var(--mono); font-size:10.5px; font-weight:600;
-  letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
-  text-decoration:none;
-}
-aside .brand::before{
-  content:""; width:7px; height:7px; flex:none;
-  border:1px solid rgba(52,211,153,.55); background:var(--up);
-  box-shadow:0 0 8px rgba(52,211,153,.85);
-}
-aside .brand:hover{color:var(--text); text-decoration:none}
-aside .brand b{color:var(--up); font-weight:600}
-
-aside .toc-h{
-  display:flex; align-items:center; gap:10px;
-  font-family:var(--mono); font-size:9.5px; font-weight:600;
-  letter-spacing:.2em; text-transform:uppercase; color:var(--sig);
-  margin:20px 14px 8px;
-}
-aside .toc-h::after{content:""; flex:1; height:1px; background:var(--line)}
-
-aside a{
-  display:block; padding:5px 14px 5px 13px;
-  color:var(--muted); font-size:13px; line-height:1.4;
-  border-left:1px solid transparent;
-  transition:color .14s, background .14s, border-color .14s;
-}
-aside a:hover{background:var(--panel-hi); color:var(--text); text-decoration:none}
-aside a.method{font-family:var(--mono); font-size:11.5px; letter-spacing:.01em}
-aside a.active{
-  color:var(--text); background:var(--panel-hi);
-  border-left-color:var(--sig);
-}
-aside a .verb{
-  display:inline-block; min-width:30px;
-  font-family:var(--mono); font-size:9.5px; font-weight:700;
-  letter-spacing:.12em; color:var(--up); margin-right:8px;
-  background:none; padding:0;
-}
-aside a .verb.post{color:var(--sig)}
-aside a .verb.sse{color:var(--sig)}
-aside a code{background:none; border:0; padding:0; color:var(--muted-2); font-size:11px}
-
-/* mobile TOC */
+/* mobile contents */
 details.mobile-toc{display:none}
-@media (max-width:900px){
-  .shell{grid-template-columns:minmax(0,1fr)}
-  aside{display:none}
-  details.mobile-toc{
-    display:block; margin:0 0 20px;
-    border:1px solid var(--line); background:var(--panel);
-  }
-  details.mobile-toc summary{
-    list-style:none; cursor:pointer;
-    display:flex; align-items:center; gap:10px;
-    padding:11px 14px; border-bottom:1px solid transparent;
-    font-family:var(--mono); font-size:10.5px; font-weight:600;
-    letter-spacing:.18em; text-transform:uppercase; color:var(--muted);
-    background:linear-gradient(180deg,#141b25 0%,#0e1420 100%);
-  }
+@media (max-width:999px){
+  details.mobile-toc{display:block;margin:0 0 28px;border:1px solid var(--line);border-radius:var(--r-md);background:#131315}
+  details.mobile-toc summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;min-height:48px;padding:0 16px;font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
   details.mobile-toc summary::-webkit-details-marker{display:none}
-  details.mobile-toc summary::before{content:">"; color:var(--sig); font-weight:700; transition:transform .2s ease}
-  details.mobile-toc[open] summary{border-bottom-color:var(--line)}
-  details.mobile-toc[open] summary::before{transform:rotate(90deg); color:var(--up)}
-  details.mobile-toc summary::after{content:none}
-  details.mobile-toc nav{padding:10px 14px 14px; display:flex; flex-direction:column; gap:2px}
-  details.mobile-toc nav a{
-    font-family:var(--mono); font-size:12px; color:var(--muted);
-    padding:5px 0; text-decoration:none;
-  }
-  details.mobile-toc nav a:hover{color:var(--sig); text-decoration:none}
+  details.mobile-toc summary::before{content:"+";color:var(--accent);font-size:14px;transition:transform .2s var(--ease)}
+  details.mobile-toc[open] summary::before{transform:rotate(45deg)}
+  details.mobile-toc[open] summary{border-bottom:1px solid var(--line)}
+  details.mobile-toc nav{display:flex;flex-direction:column;padding:8px 16px 14px}
+  details.mobile-toc nav a{font:500 12.5px var(--f-mono);color:var(--muted);text-decoration:none;padding:8px 0}
+  details.mobile-toc nav a:hover{color:var(--fg)}
 }
 
-/* ============ MAIN / PROSE ============ */
-main{
-  padding:40px 44px 96px; max-width:940px; min-width:0;
-}
-@media (max-width:1120px){ main{padding:34px 30px 80px} }
-@media (max-width:700px){ main{padding:24px 16px 64px} }
+/* ---------- content ---------- */
+main.prose{max-width:920px;min-width:0;font-size:16px;line-height:1.7}
+.prose h2{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.prose h3{font-size:clamp(17px,1.6vw,20px)}
+.prose h4{font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--up);margin:28px 0 10px}
+.prose h5{font:500 13px var(--f-mono);color:var(--muted);margin:20px 0 8px}
+.prose p,.prose ul,.prose ol{color:#D3D0CC}
+.prose ul,.prose ol{margin-bottom:16px}
+.prose li{margin:4px 0}
+.prose h2 code,.prose h3 code,.prose h5 code{font-size:.8em}
+.prose em,.prose i{color:var(--muted)}
 
-main h1{
-  font-family:var(--mono); font-size:clamp(26px,3.2vw,34px);
-  letter-spacing:-.03em; margin:0 0 10px;
-}
-main > p:first-of-type{color:var(--muted); max-width:70ch}
-
-main h2{
-  display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap;
-  font-family:var(--mono); font-size:20px; font-weight:600; letter-spacing:-.01em;
-  margin:52px 0 16px; padding-bottom:12px;
-  border-bottom:1px solid var(--line);
-}
-main h2::before{
-  content:""; width:16px; height:1px; flex:none; background:var(--sig); opacity:.8;
-}
-main h3{
-  font-family:var(--mono); font-size:15.5px; font-weight:600;
-  margin:30px 0 10px; color:var(--text);
-}
-main h4{
-  font-family:var(--mono); font-size:11px; font-weight:600;
-  letter-spacing:.18em; text-transform:uppercase; color:var(--sig);
-  margin:24px 0 10px;
-}
-main h5{font-family:var(--mono); color:var(--muted)}
-
-main p{color:var(--muted); line-height:1.7; font-size:14.5px; max-width:74ch}
-main p + p{margin-top:10px}
-main ul, main ol{color:var(--muted); line-height:1.7; font-size:14.5px; max-width:74ch}
-main ul{padding-left:20px}
-main li{margin:4px 0}
-main li::marker{color:var(--muted-2)}
-main b, main strong{color:var(--text); font-weight:600}
-main em, main i{color:var(--muted)}
-main a{color:var(--first)}
-main a:hover{color:#a5e2ff}
-
-main code{
-  font-family:var(--mono); font-size:12.6px;
-  color:var(--sig); background:rgba(251,191,36,.07);
-  border:1px solid rgba(251,191,36,.16);
-  padding:1px 5px; border-radius:0;
-  word-break:break-word;
-}
-main pre code{background:none; border:0; padding:0; color:inherit; font-size:inherit}
-main h2 code, main h3 code, main h5 code{font-size:.9em}
-
-/* quick links row */
-.quick-links{display:flex; gap:10px; margin:22px 0 8px; flex-wrap:wrap}
-.quick-links a{
-  font-family:var(--mono); font-size:11px; font-weight:600;
-  letter-spacing:.11em; text-transform:uppercase;
-  color:var(--text); text-decoration:none;
-  padding:9px 14px; border:1px solid var(--line-2);
-  background:linear-gradient(180deg,#182029 0%,#0f151d 100%);
-  box-shadow:0 2px 0 0 #05080c, inset 0 1px 0 0 rgba(255,255,255,.045);
-  transition:border-color .16s, color .16s;
-}
-.quick-links a:hover{border-color:#3d4c5e; color:#fff; text-decoration:none}
-
-/* ============ ENDPOINT = TERMINAL WINDOW ============ */
-.endpoint{
-  position:relative;
-  background:var(--panel);
-  border:1px solid var(--line);
-  margin:20px 0 28px;
-  transition:border-color .18s ease, box-shadow .18s ease;
-}
-.endpoint::after{
-  content:""; position:absolute; inset:-1px; pointer-events:none;
-  background:
-    linear-gradient(var(--line-2),var(--line-2)) left top/9px 1px no-repeat,
-    linear-gradient(var(--line-2),var(--line-2)) left top/1px 9px no-repeat,
-    linear-gradient(var(--line-2),var(--line-2)) right bottom/9px 1px no-repeat,
-    linear-gradient(var(--line-2),var(--line-2)) right bottom/1px 9px no-repeat;
-  opacity:.9;
-}
-.endpoint:hover{border-color:#33404f; box-shadow:0 0 0 1px rgba(251,191,36,.08), 0 18px 44px -30px rgba(0,0,0,.9)}
-.endpoint-head{
-  display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap;
-  min-height:34px; padding:8px 14px;
-  border-bottom:1px solid var(--line);
-  background:linear-gradient(180deg,#141b25 0%,#0e1420 100%);
-  font-family:var(--mono); font-size:13px;
-}
-.verb{
-  font-family:var(--mono); font-size:9.5px; font-weight:700;
-  letter-spacing:.16em; text-transform:uppercase;
-  padding:3px 8px; border-radius:0; border:1px solid transparent;
-}
-.verb.get{color:var(--up); background:rgba(52,211,153,.10); border-color:rgba(52,211,153,.35)}
-.verb.post{color:var(--sig); background:rgba(251,191,36,.10); border-color:rgba(251,191,36,.38)}
-.verb.sse{color:var(--sig); background:rgba(251,191,36,.10); border-color:rgba(251,191,36,.38)}
-.path{
-  font-family:var(--mono); font-size:12.5px; font-weight:600;
-  letter-spacing:.02em; color:var(--text); word-break:break-all;
-}
-.auth-pill{
-  margin-left:auto; font-family:var(--mono); font-size:9px; font-weight:600;
-  letter-spacing:.14em; text-transform:uppercase;
-  padding:3px 8px; border:1px solid var(--line-2); border-radius:0; white-space:nowrap;
-}
-.auth-pill.key{color:var(--up); border-color:rgba(52,211,153,.32); background:rgba(52,211,153,.07)}
-.auth-pill.pub{color:var(--muted-2); background:rgba(255,255,255,.02)}
+/* endpoint card */
+.endpoint{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--depth);margin:24px 0 36px}
+.endpoint::before{content:"";position:absolute;left:24px;right:24px;top:-1px;height:1px;background:var(--rim);pointer-events:none}
+.endpoint-head{display:flex;align-items:center;flex-wrap:wrap;gap:10px 12px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.path{font:500 13.5px var(--f-mono);color:var(--fg);overflow-wrap:anywhere}
+.verb{display:inline-flex;align-items:center;font:500 10.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted)}
+.verb.get{color:var(--accent);background:var(--accent-soft);border-color:rgba(255,107,26,.4)}
+.verb.post,.verb.sse{color:var(--up);background:rgba(255,179,138,.08);border-color:rgba(255,179,138,.35)}
+.auth-pill{margin-left:auto;font:500 10.5px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted);white-space:nowrap}
+.auth-pill.key{color:var(--ok);border-color:rgba(127,214,155,.4)}
+.auth-pill.pub{color:var(--muted-2)}
 .auth-pill + .auth-pill{margin-left:0}
-.endpoint-body{padding:18px 18px 20px}
-.endpoint-body > p{font-size:14px}
-@media (max-width:640px){ .endpoint-body{padding:14px} }
+.endpoint-body{padding:20px 22px 22px}
+.endpoint-body > p{font-size:15px}
+.endpoint-body > :last-child{margin-bottom:0}
+@media (max-width:640px){.endpoint-head{padding:12px 14px}.endpoint-body{padding:16px 14px}.auth-pill{margin-left:0}}
 
-/* ============ CODE PANES ============ */
-.codewrap{position:relative; margin:10px 0 0}
-pre{
-  margin:0; padding:16px 18px; overflow-x:auto;
-  background:var(--bg-deep);
-  border:1px solid var(--line);
-  border-radius:0;
-  box-shadow:inset 0 1px 0 0 rgba(255,255,255,.02);
-  font-family:var(--mono); font-size:12.4px; line-height:1.72; color:#cbd6e4;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:thin; scrollbar-color:#26313f transparent;
-}
-pre::-webkit-scrollbar{height:8px}
-pre::-webkit-scrollbar-thumb{background:#1c2530}
-pre .c{color:var(--muted-2)}
-pre .k{color:#c084fc}
-pre .s{color:var(--up)}
-pre .n{color:#7dd3fc}
-.copybtn{
-  position:absolute; top:7px; right:7px; z-index:3;
-  font-family:var(--mono); font-size:9px; font-weight:600;
-  letter-spacing:.16em; text-transform:uppercase;
-  color:var(--muted-2); background:#10151d;
-  border:1px solid var(--line-2); padding:4px 8px; cursor:pointer;
-  opacity:0; transition:opacity .15s, color .15s, border-color .15s;
-}
-.codewrap:hover .copybtn, .copybtn:focus-visible{opacity:1}
-.copybtn:hover{color:var(--sig); border-color:rgba(251,191,36,.45)}
-.copybtn.done{color:var(--up); border-color:rgba(52,211,153,.5); opacity:1}
+/* code panes (JS wraps each main pre in .codewrap + .copybtn) */
+.codewrap{position:relative;margin:12px 0 18px}
+.prose .codewrap pre{margin:0;font-size:12.5px}
+.copybtn{position:absolute;top:8px;right:8px;z-index:3;font:500 11px var(--f-mono);color:var(--muted);background:#0F0F11;border:1px solid var(--line);border-radius:8px;padding:5px 10px;min-height:30px;cursor:pointer;transition:opacity .15s,color .15s,border-color .15s}
+@media (hover:hover){.copybtn{opacity:0}.codewrap:hover .copybtn,.copybtn:focus-visible{opacity:1}}
+.copybtn:hover{color:var(--fg);border-color:var(--line-2)}
+.copybtn.done{color:var(--ok);border-color:rgba(127,214,155,.5);opacity:1}
+pre{scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
 
-/* ============ TABS ============ */
-.tabs{
-  display:flex; flex-wrap:wrap; gap:0;
-  margin:16px 0 0; padding:0; width:auto;
-  background:none; border:0; border-radius:0;
-}
-.tabs button{
-  font-family:var(--mono); font-size:10px; font-weight:600;
-  letter-spacing:.14em; text-transform:uppercase;
-  padding:6px 12px; margin:0 -1px -1px 0;
-  border:1px solid var(--line); border-radius:0;
-  background:var(--panel2); color:var(--muted-2);
-  cursor:pointer; transition:.15s;
-}
-.tabs button:hover:not(.active){color:var(--text); border-color:var(--line-2)}
-.tabs button.active{background:var(--sig); border-color:var(--sig); color:#0a0e14; font-weight:700}
+/* tabs (plain buttons; JS toggles .active) */
+.prose .tabs{margin:18px 0 0;flex-wrap:nowrap}
+.tabs button{font:500 12px var(--f-mono);color:var(--muted);background:transparent;border:0;border-bottom:2px solid transparent;padding:10px 12px;margin-bottom:-1px;cursor:pointer;white-space:nowrap;min-height:40px;transition:color .15s}
+.tabs button:hover{color:var(--fg)}
+.tabs button.active{color:var(--fg);border-bottom-color:var(--accent)}
 .tab-pane{display:none}
 .tab-pane.active{display:block}
-.tab-pane .codewrap{margin-top:0}
-.tabs + .tab-pane .codewrap pre, .tab-pane pre{border-top-color:var(--line)}
+.tab-pane .codewrap{margin-top:10px}
 
-/* ============ TABLES = DATA GRID ============ */
-.tbl-scroll{
-  overflow-x:auto; -webkit-overflow-scrolling:touch;
-  margin:10px 0 16px; border:1px solid var(--line); background:var(--panel);
-  scrollbar-width:thin; scrollbar-color:#26313f transparent;
-}
-.tbl-scroll::-webkit-scrollbar{height:8px}
-.tbl-scroll::-webkit-scrollbar-thumb{background:#1c2530}
-main table, .param-table{
-  width:100%; border-collapse:collapse; margin:0;
-  font-size:13px; font-variant-numeric:tabular-nums;
-}
-main table th, .param-table th{
-  text-align:left; vertical-align:bottom;
-  padding:8px 12px; white-space:nowrap;
-  font-family:var(--mono); font-size:9.5px; font-weight:600;
-  letter-spacing:.16em; text-transform:uppercase; color:var(--muted-2);
-  background:var(--panel2); border-bottom:1px solid var(--line);
-}
-main table td, .param-table td{
-  padding:9px 12px; vertical-align:top;
-  border-bottom:1px solid rgba(28,37,48,.75);
-  color:var(--muted); line-height:1.6;
-}
-main table tbody tr:last-child td{border-bottom:0}
-main table tbody tr{transition:background .14s ease}
-main table tbody tr:hover td{background:rgba(255,255,255,.022)}
-main table td.name, .param-table td.name{
-  font-family:var(--mono); font-size:12px; font-weight:600;
-  color:var(--up); white-space:nowrap;
-}
-main table td.type, .param-table td.type{
-  font-family:var(--mono); font-size:11.5px; color:var(--muted-2); white-space:nowrap;
-}
-main table td.desc, .param-table td.desc{color:var(--muted); white-space:normal; min-width:220px}
-.param-table .req{
-  font-family:var(--mono); font-size:8.5px; font-weight:700;
-  letter-spacing:.14em; text-transform:uppercase;
-  color:var(--down); margin-left:6px;
-}
+/* tables (JS wraps each main table in .tbl-scroll) */
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:12px 0 20px;border:1px solid var(--line);border-radius:var(--r-md);background:#111113;scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
+.prose .tbl-scroll table{display:table;margin:0;font-size:14px}
+.prose td{color:#D3D0CC;line-height:1.6}
+.prose tbody tr:last-child td{border-bottom:0}
+.prose tbody tr:hover td{background:rgba(255,226,204,.025)}
+.param-table td.name{font:500 12.5px var(--f-mono);color:var(--fg);white-space:nowrap}
+.param-table td.type,.prose td.type{font:400 12px var(--f-mono);color:var(--muted-2);white-space:nowrap}
+.param-table td.desc{min-width:220px}
+.param-table .req{font:500 9.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--bad);margin-left:6px}
 
-/* ============ CALLOUTS ============ */
-.callout{
-  background:rgba(125,211,252,.06);
-  border:1px solid var(--line); border-left:3px solid var(--first);
-  border-radius:0; padding:12px 16px; margin:16px 0;
-  font-size:13.6px; line-height:1.68; color:var(--muted); max-width:82ch;
-}
-.callout b{color:var(--first)}
-.callout.warn{background:rgba(251,191,36,.07); border-left-color:var(--sig)}
-.callout.warn b{color:var(--sig)}
-.callout code{font-size:12.2px}
+/* callouts: plain .callout was the info style in the old sheet */
+.prose .callout{margin:16px 0;font-size:14.5px;line-height:1.65;color:#D3D0CC;border-left-color:var(--up);background:rgba(255,179,138,.05)}
+.prose .callout.warn{border-left-color:var(--warn);background:rgba(255,194,102,.06)}
+.prose .callout b{color:var(--fg)}
+.prose .callout code{font-size:12.5px}
 
-/* ============ FOOTER ============ */
-.docfoot{
-  border-top:1px solid var(--line); background:var(--bg-deep);
-  padding:22px 16px;
-  display:flex; flex-wrap:wrap; align-items:center; gap:12px 28px;
-  font-family:var(--mono); font-size:10.5px; letter-spacing:.12em;
-  text-transform:uppercase; color:var(--muted-2);
-}
-.docfoot a{color:var(--muted-2); text-decoration:none}
-.docfoot a:hover{color:var(--sig); text-decoration:none}
-.docfoot .right{margin-left:auto; display:flex; flex-wrap:wrap; gap:20px}
-
-@media (prefers-reduced-motion: reduce){
-  *,*::before,*::after{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important}
-  html{scroll-behavior:auto}
-}
-
-/* ============ MOBILE NAV (hamburger + drawer) ============ */
-.nav__toggle-box{display:none}
-.nav__toggle{
-  display:none; flex-direction:column; justify-content:center; gap:5px;
-  width:48px; height:48px; padding:12px; margin-left:auto; cursor:pointer;
-  border:1px solid var(--line); background:var(--panel);
-}
-.nav__toggle span{display:block; height:2px; background:var(--text); transition:transform .18s, opacity .18s}
-@media (max-width:1020px){ .nav__toggle{display:flex} }
-.drawer{
-  position:fixed; inset:0; top:0; z-index:200;
-  background:rgba(10,14,20,.98);
-  display:none; overflow-y:auto; padding:80px 16px 40px;
-}
-body.drawer-open{overflow:hidden}
-body.drawer-open .drawer{display:block}
-.drawer a{
-  display:flex; align-items:center; gap:14px;
-  min-height:54px; padding:0 14px; margin-bottom:4px;
-  font-family:var(--mono); font-size:15px; font-weight:600;
-  letter-spacing:.08em; text-transform:uppercase; color:var(--text); text-decoration:none;
-  border:1px solid var(--line); background:var(--panel);
-}
-.drawer a i{font-style:normal; font-size:11px; color:var(--up); letter-spacing:.14em}
-.nav__toggle-box:checked + .nav__toggle span:nth-child(1){transform:translateY(7px) rotate(45deg)}
-.nav__toggle-box:checked + .nav__toggle span:nth-child(2){opacity:0}
-.nav__toggle-box:checked + .nav__toggle span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
-@media (max-width:640px){ .key{min-height:44px} }
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
 </style>
 <script>/* first-touch acquisition capture - see landing.html for the commented version */(function(){try{if(localStorage.getItem("po_acq"))return;var q=new URLSearchParams(location.search),src=null;if(q.get("utm_source")){src=q.get("utm_source")+(q.get("utm_medium")?" / "+q.get("utm_medium"):"")+(q.get("utm_campaign")?" / "+q.get("utm_campaign"):"");}else if(q.get("gclid")){src="google / cpc";}else if(q.get("fbclid")){src="facebook / paid";}else if(document.referrer){try{src=new URL(document.referrer).hostname.replace(/^www\./,"");}catch(e){src="unknown"}if(src===location.hostname.replace(/^www\./,""))src=null;}else{src="direct";}if(src)localStorage.setItem("po_acq",JSON.stringify({s:String(src).slice(0,80),lp:location.pathname.slice(0,24),ts:Date.now()}).slice(0,120));}catch(e){}})();</script>
 </head>
@@ -548,53 +155,55 @@ body.drawer-open .drawer{display:block}
 
 <a class="skip" href="#intro">Skip to content</a>
 
-<div class="statusbar" role="status" aria-label="Service status">
-  <span class="led"><i></i>FEED LIVE</span>
-  <span class="sep"></span>
-  <span class="sb-hide">SESSION <b id="clock">00:00:00</b> UTC</span>
-  <span class="sep sb-hide"></span>
-  <span class="sb-hide">DOC <b>API REFERENCE</b></span>
-  <div class="sb-right">
-    <span class="sb-hide">TRANSPORT <b>REST / SSE / WS</b></span>
-    <span class="sep sb-hide"></span>
-    <span>BASE <b>pinnodds.com</b></span>
-    <span class="sep"></span>
-    <span>V1</span>
+<!-- HEADER -->
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="pinnodds home">
+      <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="12" width="4" height="9" rx="1.5" fill="#F4F2EF"/><rect x="10" y="7" width="4" height="14" rx="1.5" fill="#FF6B1A"/><rect x="17" y="3" width="4" height="18" rx="1.5" fill="#F4F2EF"/></svg>
+      pinnodds
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/docs" aria-current="page">Docs</a><a href="/pinnacle-api-pricing">Pricing</a><a href="/pinnacle-odds">Live odds</a><a href="/pinnacle-odds-dropper">Odds drops</a><a href="/blog">Blog</a>
+    </nav>
+    <div class="nav-right">
+      <a class="login" href="/panel">Login</a>
+      <a class="btn btn-white btn-sm" href="/#free-key">Get free key</a>
+      <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
   </div>
-</div>
+  <div class="wrap mobile-menu" id="mobileMenu">
+    <a href="/docs">Docs</a><a href="/pinnacle-api-pricing">Pricing</a><a href="/pinnacle-odds">Live odds</a><a href="/pinnacle-odds-dropper">Odds drops</a><a href="/blog">Blog</a><a href="/panel">Login</a>
+  </div>
+</header>
+<!-- /HEADER -->
 
-<nav class="nav">
-  <a class="logo" href="/" aria-label="pinnodds home">
-    <span class="logo__mark" aria-hidden="true"><span></span></span>
-    pinn<em>odds</em>
-  </a>
-  <div class="nav__links">
-    <a href="/">Home</a>
-    <a href="/docs" aria-current="page">Docs</a>
-    <a href="/blog">Blog</a>
-    <a href="/panel">Panel</a>
-    <a href="/cdn-cgi/l/email-protection#93fafdf5fcd3e3fafdfdfcf7f7e0bdf0fcfe">Support</a>
-  </div>
-  <div class="nav__cta">
-    <a class="key key--ghost key--sm" href="/panel">Dashboard</a>
-    <a class="key key--primary key--sm" href="/">Get free trial key</a>
-      <input type="checkbox" id="navT" class="nav__toggle-box" aria-hidden="true">
-    <label for="navT" class="nav__toggle" aria-label="Open menu" role="button" tabindex="0">
-      <span></span><span></span><span></span>
-    </label>
-  </div>
-</nav>
-<div class="drawer" id="navDrawer" aria-label="Site navigation">
-    <a href="/"><i>01</i>Home</a>
-    <a href="#top"><i>02</i>Docs top</a>
-    <a href="/blog"><i>03</i>Blog</a>
-    <a href="/panel"><i>04</i>Panel</a>
-    <a href="/pinnacle-websocket-api"><i>05</i>WebSocket API</a>
-    <a href="/cdn-cgi/l/email-protection#d7beb9b1b897a7beb9b9b8b3b3a4f9b4b8ba"><i>06</i>Support</a>
-</div>
+<section class="page-hero">
+<div class="wrap">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><span>Docs</span></nav>
+<p class="kick">API reference · v1</p>
+<h1>Pinnacle API Documentation</h1>
+<p class="lede">Live and prematch odds from Pinnacle, plus a real-time dropping-odds engine — delivered over a REST API that mirrors popular third-party formats, with optional Server-Sent Events streams for push-based clients. Underlying live feed is MQTT WebSocket; each update is forwarded about 5 ms after it reaches us, and a client in Europe typically has it about 35 ms later.</p>
 
-<div class="shell">
-<aside>
+<div class="quick-links">
+  <a href="/">← Landing</a>
+  <a href="/panel">Dashboard</a>
+  <a href="#markets">Jump to /markets</a>
+  <a href="#specials">Player props &amp; specials</a>
+</div>
+<div class="doc-status" role="status" aria-label="Service status">
+  <span class="on"><span class="live-dot"></span>Feed live</span>
+  <span>Session <b id="clock">00:00:00</b> UTC</span>
+  <span>Transport <b>REST / SSE / WS</b></span>
+  <span>Base <b>pinnodds.com</b></span>
+  <span>V1</span>
+</div>
+</div>
+</section>
+
+<div class="wrap docs">
+<aside class="toc" aria-label="Documentation contents">
   <a class="brand" href="/">Pinnacle<b>Odds</b>API</a>
 
   <div class="toc-h">Getting started</div>
@@ -611,20 +220,20 @@ body.drawer-open .drawer{display:block}
   <a class="method" href="#prematch-fixtures"><span class="verb">GET</span>/kit/v1/prematch/fixtures</a>
   <a class="method" href="#prematch-markets"><span class="verb">GET</span>/kit/v1/prematch/markets</a>
   <a class="method" href="#prematch-lines"><span class="verb">GET</span>/kit/v1/prematch/lines</a>
-  <a class="method" href="#specials"><span class="verb" style="background:#3a2a0e; color:#fbbf24">NEW</span>Player props &amp; specials</a>
+  <a class="method" href="#specials"><span class="verb" style="background:rgba(255,107,26,.14); color:var(--accent)">NEW</span>Player props &amp; specials</a>
 
   <div class="toc-h">Dropping odds</div>
   <a class="method" href="#api-drops"><span class="verb">GET</span>/api/drops</a>
   <a class="method" href="#sse-live"><span class="verb">SSE</span>/odds-drop</a>
   <a class="method" href="#sse-prematch"><span class="verb">SSE</span>/odds-drop-prematch</a>
-  <a class="method" href="#ws-feed"><span class="verb" style="background:#0e4d2a; color:#4ade80">WS</span>/ws/feed <span style="color:#fbbf24; font-size:10px">$99/mo add-on</span></a>
+  <a class="method" href="#ws-feed"><span class="verb" style="background:rgba(127,214,155,.12); color:var(--ok)">WS</span>/ws/feed <span style="color:var(--accent); font-size:10px">$99/mo add-on</span></a>
   <a class="method" href="#prematch-recheck" style="padding-left: 20px; font-size: 11px">↳ <code>?recheck=N</code> stable filter</a>
 
   <div class="toc-h">Services</div>
-  <a class="method" href="#sportsmeld"><span class="verb" style="background:#3a2a0e; color:#fbbf24">NEW</span>SportsMeld matching <span style="color:#fbbf24; font-size:10px">free trial</span></a>
+  <a class="method" href="#sportsmeld"><span class="verb" style="background:rgba(255,107,26,.14); color:var(--accent)">NEW</span>SportsMeld matching <span style="color:var(--accent); font-size:10px">free trial</span></a>
 
   <div class="toc-h">AI assistants</div>
-  <a class="method" href="#mcp"><span class="verb" style="background:#1e3a5f; color:#93c5fd">MCP</span>mcp.pinnodds.com <span style="color:#fbbf24; font-size:10px">new</span></a>
+  <a class="method" href="#mcp"><span class="verb" style="background:rgba(255,179,138,.10); color:var(--up)">MCP</span>mcp.pinnodds.com <span style="color:var(--accent); font-size:10px">new</span></a>
 
   <div class="toc-h">Status</div>
   <a class="method" href="#health"><span class="verb">GET</span>/health</a>
@@ -639,7 +248,7 @@ body.drawer-open .drawer{display:block}
   <a href="#affiliate">Affiliate program</a>
 </aside>
 
-<main>
+<main class="prose">
 
 <details class="mobile-toc">
   <summary>Contents</summary>
@@ -666,15 +275,6 @@ body.drawer-open .drawer{display:block}
   </nav>
 </details>
 
-<h1>Pinnacle API Documentation</h1>
-<p style="font-size: 16px;">Live and prematch odds from Pinnacle, plus a real-time dropping-odds engine — delivered over a REST API that mirrors popular third-party formats, with optional Server-Sent Events streams for push-based clients. Underlying live feed is MQTT WebSocket so updates arrive within ~200 ms.</p>
-
-<div class="quick-links">
-  <a href="/">← Landing</a>
-  <a href="/panel">Dashboard</a>
-  <a href="#markets">Jump to /markets</a>
-  <a href="#specials">Player props &amp; specials</a>
-</div>
 
 <!-- ─────────────────── Intro ─────────────────── -->
 <h2 id="intro">Introduction</h2>
@@ -685,7 +285,7 @@ body.drawer-open .drawer{display:block}
   <b>Drop-in compatibility.</b> The <code>/kit/v1/*</code> endpoints mirror the shape of common third-party Pinnacle API formats. Swap the base URL + key in your existing client and it should just work.
 </div>
 
-<div class="callout" style="background: rgba(74,222,128,.06); border-left-color: var(--accent);">
+<div class="callout" style="background: rgba(255,107,26,.06); border-left-color: var(--accent);">
   <b style="color: var(--accent);">Integrating with an AI assistant?</b> Point Cursor / Claude / ChatGPT at <a href="/llms-full.txt"><code>/llms-full.txt</code></a> — full API reference in one plain-text fetch, optimized for LLM context windows. The shorter <a href="/llms.txt"><code>/llms.txt</code></a> index is auto-discovered by tools that probe the root.
 </div>
 
@@ -864,7 +464,7 @@ $data = json_decode($body, <span class="k">true</span>);</pre>
 
 <!-- ─────────────────── PREMATCH ODDS ─────────────────── -->
 <h2>Prematch odds</h2>
-<p>Pinnacle's prematch lines for upcoming fixtures. Prices are pushed as Pinnacle publishes them (MQTT <code>/pre</code>), and a separate REST poller re-reads the full board about every 15 s for fixtures that appear or disappear. Stored independently from the live feed — querying it never starves the live snapshot.</p>
+<p>Pinnacle's prematch lines for upcoming fixtures. Prices are pushed as Pinnacle publishes them (MQTT <code>/pre</code>), and a separate REST poller re-reads the full board every 25–45 s for fixtures that appear or disappear (the cycle waits for Pinnacle to build its soccer board, which takes 10–45 s on their side). A fixture leaves this board as soon as it has kicked off and its live listing exists — its prices from then on, including later maps in esports, are on <code>event_type=live</code>. Stored independently from the live feed — querying it never starves the live snapshot.</p>
 
 <div class="callout">
   <b>When to use which.</b> Use <code>/kit/v1/markets</code> for in-play prices, <code>/kit/v1/prematch/fixtures</code> for upcoming-event lines. The two surfaces share the same sport IDs and event-object shape so client code can branch on a single field.
@@ -1225,7 +825,7 @@ curl_close($ch);
   <div class="endpoint-body">
     <p>Server-Sent Events stream of <b>live</b> drops as they happen. One TCP connection, push-based — no polling. <b>Available on the Stream, Pro + SSE, and Scale plans.</b> During your first 3 days every new key can connect (the signup demo includes the WebSocket feed). After that, trial keys and Pro (REST-only) cannot connect.</p>
     <div class="callout warn" style="margin: 12px 0">
-      <b>⚠ One SSE connection per account.</b> Opening a second SSE connection with the same key evicts the first. EventSource auto-reconnect after a network blip works fine (the dying old socket gets reaped before the new one registers). If you genuinely need two or more independent connections — e.g. prod + staging, or fan-out across multiple servers — email <a href="/cdn-cgi/l/email-protection#3d54535b527d4d5453535259594e135e5250"><span class="__cf_email__" data-cfemail="cea7a0a8a18ebea7a0a0a1aaaabde0ada1a3">[email&#160;protected]</span></a> and we'll issue a second account on the same plan at no extra cost. The cap itself stays at one connection per key — it's how we detect keys being shared or resold — so extra connections come as extra keys.
+      <b>⚠ One SSE connection per account.</b> Opening a second SSE connection with the same key evicts the first. EventSource auto-reconnect after a network blip works fine (the dying old socket gets reaped before the new one registers). If you genuinely need two or more independent connections — e.g. prod + staging, or fan-out across multiple servers — each one needs its own account on its own paid plan: one account, one key. The cap stays at one connection per key — it's how we detect keys being shared or resold — and second keys are never issued free.
     </div>
     <p><b>Two auth methods accepted</b> (use either):</p>
     <table class="param-table">
@@ -1447,16 +1047,16 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
 
 <div class="endpoint" id="ws-feed">
   <div class="endpoint-head">
-    <span class="verb get" style="background:#0e4d2a; color:#4ade80">WS</span>
+    <span class="verb get" style="background:rgba(127,214,155,.12); color:var(--ok)">WS</span>
     <span class="path">/ws/feed</span>
     <span class="auth-pill key">API key</span>
-    <span class="auth-pill" style="background:#3a2a0a; color:#fbbf24">$99/mo add-on</span>
+    <span class="auth-pill" style="background:rgba(255,107,26,.14); color:var(--accent)">$99/mo add-on</span>
   </div>
   <div class="endpoint-body">
     <p>
       Forwards <b>raw Pinnacle frames</b> to your client — not drops, not derived metrics. Live MQTT messages and prematch REST responses delivered byte-identical to what we receive ourselves, wrapped in a thin envelope. Power-user feature for customers who want to rebuild Pinnacle's full state machine on their side.
     </p>
-    <p style="background:#1f2a36; padding:10px 14px; border-radius:6px; border-left:3px solid #fbbf24; font-size:13px">
+    <p style="background:rgba(255,194,102,.06); padding:10px 14px; border-radius:6px; border-left:3px solid var(--warn); font-size:13px">
       <b>This is NOT the same as <code>/odds-drop</code> SSE.</b> SSE delivers our filtered drop alerts (every detected drop by default &mdash; the engine floor is ~0.99%; narrow it with <code>?min_drop=</code>). This WS delivers <i>every</i> Pinnacle frame including market open/close/settle signals. Output volume is much higher.
     </p>
 
@@ -1542,7 +1142,7 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
 { <span class="k">"type"</span>: <span class="s">"ping"</span>, <span class="k">"ts"</span>: <span class="n">1779200030000</span>, <span class="k">"buffered_max_bytes"</span>: <span class="n">0</span> }</pre>
 
     <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0"><b>Fidelity contract.</b> <code>events</code>, <code>rec</code>, and <code>data</code> are never transformed. We only add envelope fields (<code>type</code>, <code>stream</code>, <code>sport_id</code>, <code>topic</code>, <code>op</code>, <code>ts</code>). Your code can reuse a Pinnacle parser unchanged.</p>
-    <div style="border-left: 3px solid var(--accent); background: rgba(52,211,153,.06); padding: 12px 16px; margin: 14px 0; border-radius: 4px">
+    <div style="border-left: 3px solid var(--accent); background: rgba(255,107,26,.06); padding: 12px 16px; margin: 14px 0; border-radius: 4px">
       <p style="margin: 0 0 8px; font-size: 13px"><b><code>prematch_membership</code> — use this to track the set.</b></p>
       <p style="margin: 0 0 8px; font-size: 13px; color: var(--muted)">
         MQTT <code>/pre</code> is a <b>price</b> channel. It carries updates for matchups already in your set and is
@@ -1568,7 +1168,7 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
     </div>
     <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0"><b>Frame flow on firehose subs.</b> <code>live</code>, <code>prematch_matchups</code> and <code>prematch_markets</code> frames all flow on <code>sport_ids</code> subscriptions exactly the same way they do on <code>event_ids</code> subscriptions. There's no event-id-only mode &mdash; the filter is identical, only the criterion (whole sport vs. specific ids) changes.</p>
 
-    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--accent); background:rgba(74,222,128,0.08); border-radius:6px; font-size:14px;">
+    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--accent); background:rgba(255,107,26,.06); border-radius:6px; font-size:14px;">
       <b>Live channels: <code>ld</code> vs <code>dz</code>.</b> Pinnacle runs <b>two update channels for every live match</b>, and both arrive on your one WebSocket. Which channel a <code>live</code> frame came from is the last segment of its <code>topic</code> &mdash; e.g. <code>matchups/reg/sp/29/live/<b>ld</b></code>:
       <ul style="margin:8px 0 6px 0; padding-left:18px; line-height:1.6">
         <li><code>ld</code> &mdash; <b>live_delay</b>, the primary channel (~85% of updates). This is <b>the current price</b> &mdash; the same line pinnacle.com shows. Treat it as your source of truth.</li>
@@ -1579,7 +1179,7 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
       <b>Key your price/book on <code>ld</code>; use <code>dz</code> as a volatility/suspension signal, not a second price.</b> Merging both channels into one book makes the price appear to &ldquo;spike and revert&rdquo; &mdash; that&rsquo;s the two channels interleaving, not a line move and not out-of-order delivery (each single market&rsquo;s stream is strictly ordered; verify with <code>rec.version</code> per <code>event_id</code>+channel). This split is <b>live only</b> &mdash; prematch has no danger_zone.
     </div>
 
-    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--gold); background:rgba(212,175,55,0.08); border-radius:6px; font-size:14px;">
+    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--gold); background:rgba(255,179,138,.06); border-radius:6px; font-size:14px;">
       <b>One fixture can have several matchup ids &mdash; key by <code>event_id</code>, not by teams.</b> Pinnacle issues a live match as a <b>parent matchup plus re-issued/related child matchups</b>, all sharing the same <code>rec.parentId</code> and the same team names. The <b>same market</b> (identical market <code>key</code>, e.g. <code>s;0;s;-1.5</code>) can therefore appear under two different <code>event_id</code>s at the same time &mdash; one live, one stale/closing &mdash; with different prices.
       <ul style="margin:8px 0 6px 0; padding-left:18px; line-height:1.6">
         <li><b>Key your book by <code>rec.id</code> (the matchup/event id) + market <code>key</code></b> &mdash; never by team names or <code>parentId</code>. If you merge markets across matchup ids, the two ids&rsquo; prices interleave and the market appears to <b>&ldquo;spike and revert&rdquo;</b> even though each individual matchup&rsquo;s stream is perfectly stable and strictly ordered. That&rsquo;s an assembly artifact, not a line move &mdash; pinnacle.com and our REST <code>/kit</code> endpoints don&rsquo;t show it because they collapse to one canonical matchup per fixture.</li>
@@ -1588,7 +1188,7 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
       If you need the pre-collapsed &ldquo;one row per fixture&rdquo; view instead of the raw multi-matchup stream, use the REST snapshot endpoints (<code>/kit/v1/markets</code>) which already do this.
     </div>
 
-    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--gold); background:rgba(212,175,55,0.08); border-radius:6px; font-size:14px;">
+    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--gold); background:rgba(255,179,138,.06); border-radius:6px; font-size:14px;">
       <b>Two version fields &mdash; use <code>markets[i].version</code> for change-detection, NOT <code>rec.version</code>.</b> A live record carries a top-level <code>rec.version</code> AND a per-market <code>markets[i].version</code>, and they behave differently:
       <ul style="margin:8px 0 6px 0; padding-left:18px; line-height:1.6">
         <li><code>rec.version</code> is a coarse record/board stamp. <b>Pinnacle freezes it for the whole match once a fixture is in-play</b> &mdash; it does <b>not</b> increment when a price changes. Keying dedup or ordering on it will make live prices look like they &ldquo;change under a frozen version&rdquo; and cause you to <b>drop real price updates</b>.</li>
@@ -1597,7 +1197,7 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
       So if you see the moneyline move while <code>rec.version</code> stays constant, that is <b>not</b> a re-published/stale frame &mdash; check <code>markets[i].version</code>, which will have advanced. A spike-then-revert whose intermediate frame has a <b>higher</b> market version is a genuine transient Pinnacle reprice (relayed verbatim), not a replay.
     </div>
 
-    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid #f59e0b; background:rgba(245,158,11,0.08); border-radius:6px; font-size:14px;">
+    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--warn); background:rgba(255,194,102,.06); border-radius:6px; font-size:14px;">
       <b>One connection per account.</b> The limit is keyed on the <b>account</b> &mdash; not on the API key,
       and not on the source IP. Two processes on the same account collide even from different machines.
       (SSE is a separate slot; you can run SSE and WebSocket at the same time.)
@@ -1632,7 +1232,7 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
       as retryable: reconnect immediately, no cooldown needed.
     </div>
 
-    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--first); background:rgba(96,165,250,0.08); border-radius:6px; font-size:14px;">
+    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--first); background:rgba(255,179,138,.05); border-radius:6px; font-size:14px;">
       <b>Compression is a tradeoff &mdash; choose deliberately.</b>
       <code>permessage-deflate</code> is negotiated per connection, so <b>your client decides</b>.
       <br><br>
@@ -1666,7 +1266,7 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
       Same URL, same JSON either way &mdash; decompression is transparent.
     </div>
 
-    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--first); background:rgba(96,165,250,0.08); border-radius:6px; font-size:14px;">
+    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--first); background:rgba(255,179,138,.05); border-radius:6px; font-size:14px;">
       <b>Maximum message size &mdash; set your client limit to 8 MB.</b> It's a ceiling, not an allocation,
       so it costs nothing and absorbs future sport or specials expansion. <b>2 MB</b> is the smallest we'd
       advise. Current measured maxima (uncompressed, 5-minute capture, soccer&nbsp;+&nbsp;tennis):
@@ -1846,7 +1446,7 @@ $ws-&gt;send(json_encode([
     <table style="width: 100%; margin: 0 0 14px">
       <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
       <tbody>
-        <tr><td class="name">type</td><td class="type">string</td><td class="desc"><code>prematch_matchups</code> = response from <code>/sports/{sid}/matchups</code>. The full per-sport matchup list, sent once per board poll cycle (currently about every 15 s). Prematch price changes arrive sooner, the moment Pinnacle pushes them, as <code>prematch_ws</code> frames. <b>Includes both prematch and live entries</b> — filter by <code>data[i].isLive === false</code> if you want strict prematch.<br><code>prematch_markets</code> = response from <code>/matchups/{id}/markets/related/straight</code>. Fired only when Pinnacle bumped <code>matchup.version</code>, so roughly the events that had market activity in the last cycle.</td></tr>
+        <tr><td class="name">type</td><td class="type">string</td><td class="desc"><code>prematch_matchups</code> = response from <code>/sports/{sid}/matchups</code>. The full per-sport matchup list, sent once per board poll cycle (currently every 25–45 s). Prematch price changes arrive sooner, the moment Pinnacle pushes them, as <code>prematch_ws</code> frames. <b>Includes both prematch and live entries</b> — filter by <code>data[i].isLive === false</code> if you want strict prematch.<br><code>prematch_markets</code> = response from <code>/matchups/{id}/markets/related/straight</code>. Fired only when Pinnacle bumped <code>matchup.version</code>, so roughly the events that had market activity in the last cycle.</td></tr>
         <tr><td class="name">data</td><td class="type">array</td><td class="desc">For <code>prematch_matchups</code>: array of full matchup records (event metadata). For <code>prematch_markets</code>: array of market objects scoped to one matchup.<br><b>This is the authoritative current snapshot from Pinnacle</b> — any market in your local store that's NOT in this list has been closed by Pinnacle. Drop it. <b>For a large sport (e.g. soccer) this frame is split into several chunks</b> tagged <code>seq</code>/<code>final</code> (same as the subscribe snapshot); when chunked, the authoritative set is the <b>union across the whole chunk group</b> — accumulate until <code>final: true</code> before dropping anything.</td></tr>
         <tr><td class="name">matchup_id</td><td class="type">int</td><td class="desc">(prematch_markets only) The matchup this markets array belongs to.</td></tr>
         <tr><td class="name">mode</td><td class="type">string?</td><td class="desc">Present only when MQTT is down and we fell back to live REST polling. Value: <code>"rest_fallback"</code>. Frame shape is otherwise identical, so customers usually ignore this field.</td></tr>
@@ -1911,7 +1511,7 @@ $ws-&gt;send(json_encode([
 </div>
 
 <!-- ─────────────────── SPORTSMELD ─────────────────── -->
-<h2 id="sportsmeld">SportsMeld — team &amp; event matching <span style="font-size:12px; color:#fbbf24; font-weight:600; letter-spacing:.06em; text-transform:uppercase; margin-left:8px">Free 30-day trial</span></h2>
+<h2 id="sportsmeld">SportsMeld — team &amp; event matching <span style="font-size:12px; color:var(--accent); font-weight:600; letter-spacing:.06em; text-transform:uppercase; margin-left:8px">Free 30-day trial</span></h2>
 
 <div class="endpoint">
   <div class="endpoint-body">
@@ -1963,7 +1563,7 @@ $ws-&gt;send(json_encode([
 </div>
 
 <!-- ─────────────────── MCP ─────────────────── -->
-<h2 id="mcp">MCP server <span style="font-size:12px; color:#93c5fd; font-weight:600; letter-spacing:.06em; text-transform:uppercase; margin-left:8px">Claude · Cursor · Codex · VS Code</span></h2>
+<h2 id="mcp">MCP server <span style="font-size:12px; color:var(--up); font-weight:600; letter-spacing:.06em; text-transform:uppercase; margin-left:8px">Claude · Cursor · Codex · VS Code</span></h2>
 <p>
   pinnodds ships a remote <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">Model Context Protocol</a> server so an AI assistant can query
   Pinnacle odds with your existing API key. Add one URL to your client and ask in plain language: <i>&ldquo;which Premier League games are live and what are the totals?&rdquo;</i>,
@@ -1971,7 +1571,7 @@ $ws-&gt;send(json_encode([
 </p>
 <div class="endpoint" id="mcp-endpoint">
   <div class="endpoint-head">
-    <span class="verb" style="background:#1e3a5f; color:#93c5fd">MCP</span>
+    <span class="verb" style="background:rgba(255,179,138,.10); color:var(--up)">MCP</span>
     <span class="path">https://mcp.pinnodds.com/mcp</span>
     <span class="auth-pill key">Bearer API key</span>
   </div>
@@ -2076,7 +1676,7 @@ bearer_token_env_var = <span class="s">"PINNODDS_KEY"</span></pre>
       A Trial key has 100 requests per day; a long analysis session will hit that. When the server answers <code>rate_limited</code>, it also stops calling upstream until the window resets.
       Streams (SSE, WebSocket) are not exposed over MCP &mdash; use them directly.
     </div>
-    <p style="color: var(--muted); font-size: 13px; margin-top:12px">Also listed in the <a href="https://registry.modelcontextprotocol.io" target="_blank" rel="noopener">official MCP registry</a> as <code>com.pinnodds/odds</code>. Questions: <a href="/cdn-cgi/l/email-protection#0c65626a634c7c6562626368687f226f6361"><span class="__cf_email__" data-cfemail="ef86818980af9f868181808b8b9cc18c8082">[email&#160;protected]</span></a>.</p>
+    <p style="color: var(--muted); font-size: 13px; margin-top:12px">Also listed in the <a href="https://registry.modelcontextprotocol.io" target="_blank" rel="noopener">official MCP registry</a> as <code>com.pinnodds/odds</code>. Questions: <a href="/cdn-cgi/l/email-protection#1970777f765969707777767d7d6a377a7674"><span class="__cf_email__" data-cfemail="137a7d757c53637a7d7d7c7777603d707c7e">[email&#160;protected]</span></a>.</p>
   </div>
 </div>
 
@@ -2116,7 +1716,7 @@ bearer_token_env_var = <span class="s">"PINNODDS_KEY"</span></pre>
   }
 }</pre>
     <p style="margin-top:14px"><b>Alerting on this endpoint</b></p>
-    <ul style="color:#7a8697; font-size:13px; line-height:1.8">
+    <ul style="color:var(--muted-2); font-size:13px; line-height:1.8">
       <li><code>status</code> covers the live feed only. A prematch problem never changes it — watch <code>prematch.status</code> separately.</li>
       <li><code>live_write_age_ms</code> and <code>prematch.write_age_ms</code> are the freshness numbers to alert on. Both normally sit well under a second.</li>
       <li><code>prematch.status: "unreachable"</code> means the health check itself could not reach the prematch service. Prematch data may still be fine; treat it as "unknown", not "down".</li>
@@ -2229,6 +1829,7 @@ bearer_token_env_var = <span class="s">"PINNODDS_KEY"</span></pre>
   <ul style="margin:10px 0 0; padding-left:18px; line-height:1.9">
     <li><b>Top level</b> (<code>last</code> / <code>last_call</code>, next to <code>sport_id</code>) is our store's sequence number. It only moves forward, and it is the value you pass to <code>since=</code>.</li>
     <li><b>Inside each event</b>, <code>last</code> is the Unix second at which we rendered the response. It is the <i>same value for every event in the payload</i> and says nothing about when that event's odds moved. Don't compute freshness from it.</li>
+    <li><b><code>updated_at</code></b> (inside each event) is what you want for freshness: epoch <b>milliseconds</b> of the last time that event's markets changed — a price, a line added or removed, or a status. Pinnacle re-sending the same prices does not move it. After one of our restarts it starts from the moment we first saw the event again, so treat it as &ldquo;unchanged since at least&rdquo;.</li>
   </ul>
 </div>
 
@@ -2250,7 +1851,7 @@ bearer_token_env_var = <span class="s">"PINNODDS_KEY"</span></pre>
 <span class="c"># -&gt; x-data-board: live</span>
 <span class="c"># -&gt; x-data-status: fresh</span>
 <span class="c"># -&gt; x-data-age-ms: 0</span></pre>
-<ul style="color:#7a8697; font-size:13px; line-height:1.8; margin-top:14px">
+<ul style="color:var(--muted-2); font-size:13px; line-height:1.8; margin-top:14px">
   <li><b>Set your own tolerance.</b> Below the withholding threshold you still receive the last known prices, which is usually what you want — a quiet market is not a broken one. If your strategy needs tighter limits, compare <code>X-Data-Age-Ms</code> against your own number and skip the cycle yourself.</li>
   <li><b>The <code>last</code> field in the body is NOT a data age.</b> It is our serve cursor and is identical for every event in a response. Use the headers for freshness and <code>last</code> for deltas — they answer different questions.</li>
   <li><b>REST only.</b> The SSE and WebSocket streams do not currently carry this signal. On a push stream, silence is the signal: poll <a href="#health"><code>/health</code></a> alongside it, which turns <code>degraded</code> with a reason such as <code>no live write for 900s</code>.</li>
@@ -2264,13 +1865,13 @@ bearer_token_env_var = <span class="s">"PINNODDS_KEY"</span></pre>
 curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
   "https://pinnodds.com/kit/v1/prematch/fixtures?sport_id=<span class="n">1</span>&amp;since=<span class="n">50352786</span>"
 <span class="c"># -&gt; { "last": 50353005, "events": [ ...7 events that changed... ] }</span></pre>
-<ul style="color:#7a8697; font-size:13px; line-height:1.8; margin-top:14px">
+<ul style="color:var(--muted-2); font-size:13px; line-height:1.8; margin-top:14px">
   <li><b>Feed quiet</b> — <code>last</code> does not advance between polls. <code>X-Data-Age-Ms</code> above answers this directly; if you want a second source, <a href="#health"><code>/health</code></a> carries <code>live_write_age_ms</code> and <code>prematch.write_age_ms</code>, which tell you <i>which</i> feed is quiet.</li>
   <li><b>Event unchanged</b> — <code>last</code> advances but the event is absent from the <code>since=</code> response. Its prices genuinely have not moved. Keep your cached copy.</li>
   <li><b>Event gone</b> — it stops appearing in a full (no <code>since=</code>) response. Pinnacle has pulled it, or it has kicked off and moved to the live feed.</li>
   <li>Always carry the <code>last</code> from the response you just received. Don't reuse an older one or substitute a wall-clock timestamp.</li>
 </ul>
-<p style="color:#7a8697; font-size:13px">If you need a real timestamp per price change, use <a href="#api-drops"><code>/api/drops</code></a>. Every drop carries its own <code>ts</code> (epoch ms) and <code>age_s</code>.</p>
+<p style="color:var(--muted-2); font-size:13px">If you need a real timestamp per price change, use <a href="#api-drops"><code>/api/drops</code></a>. Every drop carries its own <code>ts</code> (epoch ms) and <code>age_s</code>.</p>
 
 <h2 id="live-state">Live state object</h2>
 <p>Live events include a <code>state</code> object with in-game state passed through from Pinnacle. Field names are sport-specific and are NOT renamed by us. <code>state</code> is <code>null</code> on prematch events.</p>
@@ -2321,7 +1922,7 @@ curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
     <tr><td class="name">Commission</td><td class="desc"><b>30%</b> of every USD payment your referrals make. Compounds across renewals and upgrades — not a one-time bounty.</td></tr>
     <tr><td class="name">Attribution</td><td class="desc">A signup is attributed if the visitor lands on pinnodds.com with your <code>?ref=</code> parameter and then signs up + verifies email in the same browser session. We don't use cross-device cookies — straight session-based attribution.</td></tr>
     <tr><td class="name">Tracking</td><td class="desc">Your panel shows a live list of every signup attributed to you, whether they're on a paid plan, and how much you've earned (unpaid + paid out).</td></tr>
-    <tr><td class="name">Payouts</td><td class="desc">Processed manually. Once your unpaid balance reaches <b>$50+</b> we'll reach out to arrange transfer (crypto, bank transfer, or PayPal — whichever you prefer). Faster payouts are available on request — email <a href="/cdn-cgi/l/email-protection#432a2d252c03332a2d2d2c2727306d202c2e"><span class="__cf_email__" data-cfemail="365f58505976465f5858595252451855595b">[email&#160;protected]</span></a>.</td></tr>
+    <tr><td class="name">Payouts</td><td class="desc">Processed manually. Once your unpaid balance reaches <b>$50+</b> we'll reach out to arrange transfer (crypto, bank transfer, or PayPal — whichever you prefer). Faster payouts are available on request — email <a href="/cdn-cgi/l/email-protection#83eaede5ecc3f3eaededece7e7f0ade0ecee"><span class="__cf_email__" data-cfemail="93fafdf5fcd3e3fafdfdfcf7f7e0bdf0fcfe">[email&#160;protected]</span></a>.</td></tr>
     <tr><td class="name">Self-referral</td><td class="desc">Blocked. You can't sign up via your own link.</td></tr>
     <tr><td class="name">Refunds</td><td class="desc">If a referred customer's payment is refunded by us (rare), the corresponding commission is voided. We don't claw back already-paid commissions for routine churn — only for actual refunds.</td></tr>
   </tbody>
@@ -2330,33 +1931,30 @@ curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
 <p style="color: var(--muted); font-size: 13px; margin-top: 10px"><b>Privacy:</b> in your panel, referred users' emails are masked (e.g. <code>j***@gmail.com</code>) so you can recognize friends you invited without exposing full addresses if you screenshot the dashboard. Admins see unmasked emails in our internal tooling.</p>
 
 <div class="callout warn" style="margin-top: 40px">
-  <b>Need something we don't have?</b> Historical archives, custom rate above 30 req/sec, or a market we don't surface yet — email <a href="/cdn-cgi/l/email-protection#533a3d353c13233a3d3d3c3737207d303c3e"><span class="__cf_email__" data-cfemail="4d24232b220d3d2423232229293e632e2220">[email&#160;protected]</span></a> and tell us what you need.
+  <b>Need something we don't have?</b> Historical archives, custom rate above 30 req/sec, or a market we don't surface yet — email <a href="/cdn-cgi/l/email-protection#422b2c242d02322b2c2c2d2626316c212d2f"><span class="__cf_email__" data-cfemail="20494e464f6050494e4e4f4444530e434f4d">[email&#160;protected]</span></a> and tell us what you need.
 </div>
 
 </main>
 </div>
 
-<footer class="docfoot">
-  <span>&copy; <span id="yr">2026</span> PINNODDS</span>
-  <span>DATA SERVICE ONLY &middot; NOT A BOOKMAKER</span>
-  <span>NOT AFFILIATED WITH PINNACLE</span>
-  <span class="right">
-    <a href="/">Home</a>
-    <a href="/pinnacle-odds-api">Pinnacle API</a>
-    <a href="/pinnacle-api-pricing">Pricing</a>
-    <a href="/the-odds-api-alternative">vs The Odds API</a>
-    <a href="/sharpapi-alternative">vs SharpAPI</a>
-    <a href="/docs">Docs</a>
-    <a href="/blog">Blog</a>
-    <a href="/panel">Panel</a>
-    <a href="/about">About</a>
-    <a href="/terms">Terms</a>
-    <a href="/privacy">Privacy</a>
-    <a href="/cookies">Cookies</a>
-    <a href="#" onclick="window.pinnConsent&&pinnConsent.open();return false">Cookie settings</a>
-    <a href="/cdn-cgi/l/email-protection#e28b8c848da2928b8c8c8d868691cc818d8f"><span class="__cf_email__" data-cfemail="d4bdbab2bb94a4bdbababbb0b0a7fab7bbb9">[email&#160;protected]</span></a>
-  </span>
+<!-- FOOTER -->
+<footer class="site">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fbrand">
+        <a class="brand" href="/"><svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="12" width="4" height="9" rx="1.5" fill="#F4F2EF"/><rect x="10" y="7" width="4" height="14" rx="1.5" fill="#FF6B1A"/><rect x="17" y="3" width="4" height="18" rx="1.5" fill="#F4F2EF"/></svg>pinnodds</a>
+        <p>Independent real-time Pinnacle odds API. REST, SSE and raw WebSocket.</p>
+      </div>
+      <div><h4>Product</h4><ul><li><a href="/pinnacle-odds-api">Pinnacle API</a></li><li><a href="/pinnacle-websocket-api">WebSocket API</a></li><li><a href="/mcp">MCP server</a></li><li><a href="/panel">Dashboard</a></li><li><a href="/pinnacle-api-pricing">Pricing</a></li><li><a href="/docs#affiliate">Affiliate 30%</a></li></ul></div>
+      <div><h4>Pinnacle odds</h4><ul><li><a href="/pinnacle-odds">All sports live board</a></li><li><a href="/pinnacle-odds/nfl">NFL · NBA · MLB · NHL</a></li><li><a href="/pinnacle-odds/soccer">Soccer · Tennis</a></li><li><a href="/pinnacle-odds-dropper">Odds dropper</a></li></ul></div>
+      <div><h4>Developers</h4><ul><li><a href="/docs">Docs</a></li><li><a href="/blog">Blog</a></li><li><a href="https://www.npmjs.com/package/pinnodds">npm</a></li><li><a href="https://pypi.org/project/pinnodds/">PyPI</a></li><li><a href="https://github.com/Pinnodds/pinnodds-sdk">GitHub</a></li><li><a href="https://rapidapi.com/">RapidAPI</a></li></ul></div>
+      <div><h4>Compare</h4><ul><li><a href="/the-odds-api-alternative">vs The Odds API</a></li><li><a href="/sharpapi-alternative">vs SharpAPI</a></li><li><a href="/sportsgameodds-alternative">vs SportsGameOdds</a></li><li><a href="/opticodds-alternative">vs OpticOdds</a></li></ul></div>
+      <div><h4>Contact</h4><ul><li><a href="https://t.me/ArbitrageXpro">Telegram @ArbitrageXpro</a></li><li><a href="/cdn-cgi/l/email-protection#0960676f664979606767666d6d7a276a6664"><span class="__cf_email__" data-cfemail="ec85828a83ac9c8582828388889fc28f8381">[email&#160;protected]</span></a></li><li><a href="/about">About</a></li><li><a href="/terms">Terms</a> · <a href="/privacy">Privacy</a></li><li><a href="/cookies">Cookies</a></li></ul></div>
+    </div>
+    <div class="legal"><span>Not affiliated with, endorsed by, or connected to Pinnacle.</span><span>18+ · Data service only, not a bookmaker.</span><span>&copy; <span id="yr">2026</span> pinnodds · <a href="#" onclick="window.pinnConsent&&pinnConsent.open();return false">Cookie settings</a></span></div>
+  </div>
 </footer>
+<!-- /FOOTER -->
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 (function(){

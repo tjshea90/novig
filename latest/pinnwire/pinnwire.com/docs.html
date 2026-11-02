@@ -155,6 +155,7 @@ MCP: https://pinnwire.com/mcp?key=YOUR_KEY</code></pre>
 <tr><td>401</td><td><code>invalid_key</code></td><td>Key missing or unknown</td></tr>
 <tr><td>403</td><td><code>plan_lacks_sse</code></td><td>SSE endpoint on a plan without drop alerts</td></tr>
 <tr><td>429</td><td><code>rate_limited</code></td><td>Per-key rate limit exceeded</td></tr>
+<tr><td>429 · WS 1013</td><td><code>reconnect_rate_limited</code></td><td>Too many new connections from one key — wait <code>retry_after_s</code></td></tr>
 <tr><td>400</td><td><code>sport_id required</code> · <code>bad_market_type</code></td><td>Bad or missing parameter</td></tr>
 <tr><td>404</td><td><code>not_found</code></td><td>Unknown event_id or path</td></tr>
 <tr><td>WS 1008</td><td>invalid key / plan lacks ws</td><td>JSON error frame, then close</td></tr>
@@ -311,7 +312,8 @@ curl -N "https://pinnwire.com/odds-drop-prematch?key=YOUR_KEY&amp;recheck=30&amp
 <tr><td>1001</td><td><code>evicted by newer connection</code></td><td>One connection per key — a second one evicts the first</td></tr>
 <tr><td>1001</td><td><code>stale</code></td><td>No pong for ~75 s</td></tr>
 <tr><td>1008</td><td><code>no subscribe</code> / invalid key / plan lacks ws</td><td>Fix and reconnect</td></tr>
-<tr><td>1011</td><td><code>deregistered: slow_consumer</code></td><td>Client fell &gt;32 MB behind — reconnect immediately</td></tr>
+<tr><td>1011</td><td><code>deregistered: slow_consumer</code></td><td>Client fell &gt;32 MB behind — read faster or subscribe to less, then reconnect with backoff</td></tr>
+<tr><td>1013</td><td><code>reconnect rate limited</code></td><td>Reconnect loop: more than 6 new connections in a few minutes or 50 a day (SSE: 30 / 250). Wait <code>retry_after_s</code> from the error frame; an open connection is never touched</td></tr>
 </table>
 <p class="note">Compression: <code>permessage-deflate</code> is negotiated per connection — your client decides. ~5× smaller frames (helps thin/long-haul links), but adds a latency tail during update bursts. Far from the server → enable; fat stable pipe → off. Node <code>ws</code>: <code>{perMessageDeflate: true}</code>; Python websockets: on by default; browsers: automatic.</p>
 <p class="note">Errors: <code>{"type":"error","code":"invalid_subscribe"|"event_id_cap"}</code>. Merge rules: key your book by <code>rec.id</code> + market key (<code>m.key</code>, else <code>type|period|side|points</code>) — never team names. Dedupe on <code>markets[i].version</code>, not <code>rec.version</code>. <code>m.status</code> present and not <code>"open"</code> closes a market — guard on presence (<code>m.status != null</code>), because an absent <code>status</code> is not a close, and apply the close before the version dedupe so a close cannot be discarded as an unchanged re-send. These merge rules are for the raw WebSocket; REST returns the book already merged, where a closed market is absent from <code>markets[]</code>. Live topic channel <code>ld</code> is the real price; <code>dz</code> is a volatility signal, not a second price. Reconnects re-sync from the snapshot — server keeps no session state.</p>
@@ -356,7 +358,7 @@ curl -N "https://pinnwire.com/odds-drop-prematch?key=YOUR_KEY&amp;recheck=30&amp
 <tr><td>Scale</td><td>$219/mo</td><td>30 req/s</td><td>✓</td><td>add-on</td></tr>
 <tr><td>Raw WebSocket</td><td>+$89/mo</td><td colspan="3">adds the real-time WebSocket on Pro, Pro&nbsp;+&nbsp;Drops and Scale (not on Trial or Drops)</td></tr>
 </table>
-<p class="note">Every plan: all 13 sports, live + prematch, full line depth, specials. Buy directly at <a href="/#pricing">pinnwire.com/#pricing</a> (card checkout) — questions: <a href="/cdn-cgi/l/email-protection#5625373a332516263f3838213f24337835393b"><span class="__cf_email__" data-cfemail="2251434e475162524b4c4c554b50470c414d4f">[email&#160;protected]</span></a>.</p>
+<p class="note">Every plan: all 13 sports, live + prematch, full line depth, specials. Buy directly at <a href="/#pricing">pinnwire.com/#pricing</a> (card checkout) — questions: <a href="/cdn-cgi/l/email-protection#f48795989187b4849d9a9a839d8691da979b99"><span class="__cf_email__" data-cfemail="cebdafa2abbd8ebea7a0a0b9a7bcabe0ada1a3">[email&#160;protected]</span></a>.</p>
 </section>
 
 </main>

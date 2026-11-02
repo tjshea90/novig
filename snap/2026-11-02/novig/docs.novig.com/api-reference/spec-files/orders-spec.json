@@ -1,0 +1,472 @@
+{
+    "openapi": "3.1.0",
+    "servers": [
+        {
+            "url": "https://api.novig.com/nbx/v2",
+            "description": "Production API"
+        }
+    ],
+    "paths": {
+        "/emm/orders/place": {
+            "post": {
+                "operationId": "placeSingleOrder",
+                "summary": "Place order",
+                "description": "Place an order into the matching engine queue, conditional on validation. A successful response indicates that the order was placed in the queue, but does **not** guarantee that it will be filled or placed on the order book.\nTo reliably ensure that an order has been executed, consume messages from the matching tape to reconstruct the order book and other stateful structures.\n> **Note:** If an order placed wash trades against an order from the same user, both orders will wash fill each other and effectively be cancelled.\n\n**Rate limit:** 20 requests per second.",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OrderRequestDto" } } }
+                },
+                "responses": { "201": { "description": "Order placed successfully" }, "400": { "description": "Bad request" } },
+                "tags": ["Orders"],
+                "x-code-samples": [
+                    {
+                        "lang": "bash",
+                        "label": "cURL Example",
+                        "source": "curl -X POST \"$API/emm/orders/place\" \\\n  -H \"Authorization: Bearer $TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"outcomeId\": \"123e4567-e89b-12d3-a456-426614174000\",\n    \"price\": 0.125,\n    \"qty\": 4200,\n    \"currency\": \"COIN\",\n    \"tif\": \"GTC\"\n}'"
+                    }
+                ]
+            }
+        },
+        "/emm/orders/batch": {
+            "post": {
+                "operationId": "placeMultipleOrders",
+                "summary": "Place order batch",
+                "description": "Submit multiple orders (maximum 256) at once to be processed in a batch. This operation does not make guarantees about the successful execution of all orders, it only places each in the matching engine queue.\n\n**Rate limit:** 20 requests per second.",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": { "type": "array", "items": { "$ref": "#/components/schemas/OrderRequestDto" } }
+                        }
+                    }
+                },
+                "responses": { "201": { "description": "Orders placed successfully" }, "400": { "description": "Bad request" } },
+                "tags": ["Orders"]
+            },
+            "delete": {
+                "operationId": "cancelMultipleOrders",
+                "summary": "Cancel order batch",
+                "description": "Cancel multiple orders (maximum 256) by their IDs. The orders must belong to the trader associated with the API key. This operation is idempotent, but does not make guarantees about reaching the matching engine before the orders are filled.\nTo reliably ensure that orders have been cancelled, consume messages from the matching tape to reconstruct the order book and other stateful structures.\n> **Note:** A successful response indicates that the cancellation requests were sent to the queue, but does **not** guarantee that the orders will be cancelled.\n\n**Rate limit:** 1,000 requests per second.",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "description": "The server-generated UUID of the order to be cancelled",
+                                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cancellation requests sent to the queue.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": { "$ref": "#/components/schemas/OrderResponseDto" }
+                                }
+                            }
+                        }
+                    },
+                    "400": { "description": "Bad request" }
+                },
+                "tags": ["Orders"],
+                "x-code-samples": [
+                    {
+                        "lang": "bash",
+                        "label": "cURL Example",
+                        "source": "curl -X POST \"localhost:80/nbx/v2/emm/orders/batch\" \\\n  -H \"Authorization: Bearer $TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '[\n    {\"outcomeId\": \"6bee554c-d5ee-4ada-b283-112746883542\", \"price\": 0.35, \"qty\": 100, \"currency\": \"COIN\", \"tif\": \"GTC\"},\n    {\"outcomeId\": \"8d18ea33-2953-469f-a5c9-d407d333529d\", \"price\": 0.25, \"qty\": 200, \"currency\": \"COIN\",\"tif\": \"GTC\"},\n    {\"outcomeId\": \"b130bfbf-ea68-4b37-9fec-e911ebaf36d9\", \"price\": 0.15, \"qty\": 300, \"currency\": \"COIN\",  \"tif\": \"GTC\"}\n]'"
+                    }
+                ]
+            }
+        },
+        "/emm/orders/{orderId}": {
+            "delete": {
+                "operationId": "cancelSingleOrder",
+                "summary": "Cancel order",
+                "description": "Cancel a specific order by its unique identifier. The order must belong to the trader associated with the API key. This operation is idempotent, but does not make guarantees about reaching the matching engine before the order is filled.\nTo reliably ensure that an order has been cancelled, consume messages from the matching tape to reconstruct the order book and other stateful structures.\n> **Note:** A successful response indicates that the cancellation request was sent to the queue, but does **not** guarantee that the order will be cancelled.\n\n**Rate limit:** 1,000 requests per second.",
+                "parameters": [
+                    {
+                        "name": "orderId",
+                        "required": true,
+                        "in": "path",
+                        "description": "The server-generated UUID of the order to be cancelled",
+                        "schema": { "type": "string" }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order cancelled successfully.",
+                        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OrderResponseDto" } } }
+                    },
+                    "400": { "description": "Bad request" }
+                },
+                "tags": ["Orders"]
+            },
+            "get": {
+                "operationId": "getSingleOrder",
+                "summary": "Get order",
+                "description": "Fetch details of a specific order using its unique identifier.\n\n**Rate limit:** 100 requests per second.",
+                "parameters": [
+                    {
+                        "name": "orderId",
+                        "required": true,
+                        "in": "path",
+                        "description": "The server-generated UUID of the order to retrieve",
+                        "schema": { "type": "string" }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order retrieved successfully.",
+                        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OrderResponseDto" } } }
+                    },
+                    "400": { "description": "Bad request" }
+                },
+                "tags": ["Orders"]
+            }
+        },
+        "/emm/kill": {
+            "delete": {
+                "operationId": "cancelAllOrders",
+                "summary": "Cancel all orders",
+                "description": "Cancel all active orders for the user, satisfying the provided parameters. This operation is idempotent, but does not make guarantees about reaching the matching engine before the orders are filled.\n\n**Rate limit:** 1 request per 30 seconds.",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Cancellation requests sent to the queue.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/OrderResponseDto" } }
+                            }
+                        }
+                    },
+                    "400": { "description": "Bad request" }
+                },
+                "tags": ["Orders"]
+            }
+        },
+        "/emm/orders/all": {
+            "get": {
+                "operationId": "getAllOrders",
+                "summary": "Get all my orders",
+                "description": "Get a list of all orders associated with the user, satisfying the provided parameters. Results are limited to a maximum of 1024 items per request (default 100).\n\n**Rate limit:** 16 requests/second burst, 256 requests/minute sustained.",
+                "parameters": [
+                    {
+                        "name": "currency",
+                        "in": "query",
+                        "description": "Currency of the order",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": ["CASH", "COIN"]
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Status of the order",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of orders to return (max 1024, default 100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 1024,
+                            "default": 100
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Offset of the orders to return",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "beg",
+                        "in": "query",
+                        "description": "Beginning timestamp for filtering orders (UTC)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "end",
+                        "in": "query",
+                        "description": "End timestamp for filtering orders (UTC)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "marketStatus",
+                        "in": "query",
+                        "description": "Market status of the order",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": ["OPEN", "CLOSED", "SETTLED"]
+                        }
+                    },
+                    {
+                        "name": "outcomeStatus",
+                        "in": "query",
+                        "description": "Outcome status of the order",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": ["TBD", "WIN", "LOSS", "PUSH"]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved all orders for the user",
+                        "content": {
+                            "application/json": {
+                                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/OrderResponseDto" } }
+                            }
+                        }
+                    },
+                    "400": { "description": "Bad request" }
+                },
+                "tags": ["Orders"]
+            }
+        },
+        "/emm/orders/event/{eventId}": {
+            "delete": {
+                "operationId": "cancelOrderByEventId",
+                "summary": "Cancel order by event ID",
+                "description": "Cancel all orders associated with an event ID. The orders must belong to the trader associated with the API key. Note that a 200 does not necessarily mean the orders are successfully cancelled, only that the request was received.\n\n**Rate limit:** 1,000 requests per second.",
+                "parameters": [
+                    {
+                        "name": "eventId",
+                        "required": true,
+                        "in": "path",
+                        "description": "The server-generated UUID of the event",
+                        "schema": { "type": "string" }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order cancellation request sent to the queue.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/OrderResponseDto" } }
+                            }
+                        }
+                    },
+                    "400": { "description": "Bad request" }
+                },
+                "tags": ["Orders"]
+            }
+        },
+        "/emm/orders/market/{marketId}": {
+            "delete": {
+                "operationId": "cancelOrderByMarketId",
+                "summary": "Cancel order by market ID",
+                "description": "Cancel all orders associated with a market ID. The orders must belong to the trader associated with the API key. Note that a 200 does not necessarily mean the orders are successfully cancelled, only that the request was received.\n\n**Rate limit:** 1,000 requests per second.",
+                "parameters": [
+                    {
+                        "name": "marketId",
+                        "required": true,
+                        "in": "path",
+                        "description": "The server-generated UUID of the market",
+                        "schema": { "type": "string" }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order cancellation request sent to the queue.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/OrderResponseDto" } }
+                            }
+                        }
+                    },
+                    "400": { "description": "Bad request" }
+                },
+                "tags": ["Orders"]
+            }
+        },
+        "/emm/orders/outcome/{outcomeId}": {
+            "delete": {
+                "operationId": "cancelOrderByOutcomeId",
+                "summary": "Cancel order by outcome ID",
+                "description": "Cancel all orders associated with an outcome ID. The orders must belong to the trader associated with the API key. Note that a 200 does not necessarily mean the orders are successfully cancelled, only that the request was received.\n\n**Rate limit:** 1,000 requests per second.",
+                "parameters": [
+                    {
+                        "name": "outcomeId",
+                        "required": true,
+                        "in": "path",
+                        "description": "The server-generated UUID of the outcome",
+                        "schema": { "type": "string" }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order cancellation request sent to the queue.",
+                        "content": {
+                            "application/json": {
+                                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/OrderResponseDto" } }
+                            }
+                        }
+                    },
+                    "400": { "description": "Bad request" }
+                },
+                "tags": ["Orders"]
+            }
+        }
+    },
+    "info": {
+        "title": "NBX Orders API",
+        "description": "## Orders API\n\nThe Orders API allows you to place, cancel, and query orders on the NBX platform.\n\n### Authentication\n\nThe NBX API uses [**OAuth 2.0 Client Credentials**](https://auth0.com/docs/get-started/authentication-and-authorization-flow/client-credentials-flow) with JSON Web Tokens (JWT).\n\n1. **Obtain Credentials:** Request your client ID and secret from Novig.\n2. **Request an Access Token:** Send a POST request to the OAuth endpoint. For example:\n```bash\ncurl \n  --request POST \n  --url https://auth.novig.us/oauth/token \n  --header \"Content-Type: application/json\" \n  --data '{ \n    \"audience\"      : \"https://api.novig.us\", \n    \"grant_type\"    : \"client_credentials\", \n    \"client_id\"     : \"YOUR_CLIENT_ID\", \n    \"client_secret\" : \"YOUR_CLIENT_SECRET\" \n  }'\n```\n3. **Use the Token:** Include the token in your requests by setting the HTTP header:\n```bash\nAuthorization: Bearer YOUR_ACCESS_TOKEN\n```\n\n> **Note:** For integration in the QA environment, you'll need to use different endpoints:\n> - **Issuer:** `https://auth-qa.novig.us`\n> - **Audience:** `https://api-qa.novig.us`\n> - **API Base URL:** `https://api-qa.novig.us`",
+        "version": "0.0.44",
+        "contact": {
+            "name": "Contact",
+            "url": "https://novig.com",
+            "email": "tech@novig.com"
+        }
+    },
+    "tags": [
+        {
+            "name": "Orders",
+            "description": "Endpoints for managing orders and trades"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "bearer": {
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "type": "http"
+            }
+        },
+        "schemas": {
+            "OrderRequestDto": {
+                "type": "object",
+                "properties": {
+                    "outcomeId": {
+                        "type": "string",
+                        "description": "The server-generated UUID of the outcome for which the order will increase exposure",
+                        "example": "123e4567-e89b-12d3-a456-426614174000"
+                    },
+                    "price": {
+                        "type": "number",
+                        "description": "The price of the order in decimal probability, up to 3 decimal places",
+                        "example": 0.667
+                    },
+                    "qty": {
+                        "type": "number",
+                        "description": "The number of minimal currency units for the order. Note that this must be a positive integer. For CASH orders, 1 unit = 0.01 Novig Cash (e.g., 100 units = 1.00 Cash). For COIN orders, 1 unit = 1 Novig Coin",
+                        "example": 110
+                    },
+                    "currency": {
+                        "type": "string",
+                        "description": "Denomination of the order, i.e. `CASH` or `COIN`",
+                        "example": "`CASH`"
+                    },
+                    "tif": {
+                        "type": "string",
+                        "description": "`GTC`, `GTT`, `IOC`, `FOK`, or `PO` (default is `GTC`). `PO` (post only) rejects the order instead of matching it immediately as a taker, so it only ever rests as a maker order.",
+                        "example": "`GTC`"
+                    },
+                    "ttl": {
+                        "type": "number",
+                        "description": "Time to live for the order (milliseconds) after which the order will be automatically canceled if not totally filled. Required under `GTT` time-in-force; optional under `PO`, where it self-expires if provided and otherwise rests until canceled",
+                        "example": 2400
+                    },
+                    "flags": {
+                        "type": "string",
+                        "description": "Custom 8-character string field for storing trader-specified flags or metadata about the order",
+                        "example": "ABC12345",
+                        "maxLength": 8
+                    }
+                },
+                "required": ["outcomeId", "price", "qty", "currency", "tif"]
+            },
+            "OrderResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "The unique identifier of the order",
+                        "example": "123e4567-e89b-12d3-a456-426614174002"
+                    },
+                    "outcomeId": {
+                        "type": "string",
+                        "description": "The ID of the outcome associated with this order",
+                        "example": "123e4567-e89b-12d3-a456-426614174000"
+                    },
+                    "marketId": {
+                        "type": "string",
+                        "description": "The ID of the market associated with this order",
+                        "example": "123e4567-e89b-12d3-a456-426614174003"
+                    },
+                    "price": {
+                        "type": "number",
+                        "description": "The limit price at which the order is placed",
+                        "example": 0.125
+                    },
+                    "qty": {
+                        "type": "number",
+                        "description": "The remaining quantity of the order, denominated in Minimum Currency Units",
+                        "example": 4200
+                    },
+                    "originalQty": {
+                        "type": "number",
+                        "description": "The original quantity of the order, denominated in Minimum Currency Units",
+                        "example": 4200
+                    },
+                    "currency": {
+                        "type": "string",
+                        "description": "The currency in which the order is denominated",
+                        "example": "COIN"
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "description": "The timestamp when the order was placed",
+                        "example": "2023-10-05T12:00:00Z"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "The current status of the order",
+                        "example": "FILLED"
+                    },
+                    "flags": {
+                        "type": "string",
+                        "description": "The trader-specified metadata associated with the order",
+                        "example": "ABC12345"
+                    }
+                }
+            }
+        }
+    },
+    "security": [
+        {
+            "bearer": []
+        }
+    ]
+}

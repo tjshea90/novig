@@ -51,15 +51,15 @@ deactivates the timer.
 
 ## Related
 
-> **[Set heartbeat](https://docs.sx.bet/api-reference/post-heartbeat-v3.md)**
+> [card] [Set heartbeat](https://docs.sx.bet/api-reference/post-heartbeat-v3.md)
 >
 > The `POST /heartbeat/v3` endpoint reference.
 
-> **[Cancelling orders](https://docs.sx.bet/developers/cancelling-orders.md)**
+> [card] [Cancelling orders](https://docs.sx.bet/developers/cancelling-orders.md)
 >
 > The shutdown path that confirms each cancel.
 
-> **[Order lifecycle](https://docs.sx.bet/developers/order-lifecycle.md)**
+> [card] [Order lifecycle](https://docs.sx.bet/developers/order-lifecycle.md)
 >
 > Every way an order leaves the book, and how to distinguish them.
 

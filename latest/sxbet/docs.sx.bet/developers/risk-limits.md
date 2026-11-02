@@ -67,19 +67,19 @@ error.
 
 ## Related
 
-> **[Market making](https://docs.sx.bet/developers/market-making.md)**
+> [card] [Market making](https://docs.sx.bet/developers/market-making.md)
 >
 > Quoting, exposure, and the re-quote loop.
 
-> **[Posting orders](https://docs.sx.bet/developers/posting-orders.md)**
+> [card] [Posting orders](https://docs.sx.bet/developers/posting-orders.md)
 >
 > Build, sign, and submit an order.
 
-> **[Capital efficiency](https://docs.sx.bet/developers/capital-efficiency.md)**
+> [card] [Capital efficiency](https://docs.sx.bet/developers/capital-efficiency.md)
 >
 > How offsetting positions release escrow at fill time.
 
-> **[Time in force](https://docs.sx.bet/developers/time-in-force.md)**
+> [card] [Time in force](https://docs.sx.bet/developers/time-in-force.md)
 >
 > GTC rests; IOC and FOK execute now.
 

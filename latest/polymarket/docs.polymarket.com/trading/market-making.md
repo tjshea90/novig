@@ -158,12 +158,12 @@ Use these practices to keep quotes current and limit avoidable execution risk.
 In addition to the spread captured through executions, qualifying
 market-making activity may earn incentives through two separate programs.
 
-> **[Liquidity Rewards](https://docs.polymarket.com/programs/liquidity-rewards.md)**
+> [card] [Liquidity Rewards](https://docs.polymarket.com/programs/liquidity-rewards.md)
 >
 > Earn rewards by maintaining qualifying resting liquidity in incentivized
 > markets.
 
-> **[Maker Rebates](https://docs.polymarket.com/programs/maker-rebates.md)**
+> [card] [Maker Rebates](https://docs.polymarket.com/programs/maker-rebates.md)
 >
 > Earn rebates when maker liquidity executes in eligible fee-enabled markets.
 

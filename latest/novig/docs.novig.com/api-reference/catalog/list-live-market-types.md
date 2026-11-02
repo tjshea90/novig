@@ -109,6 +109,10 @@ paths:
                   - TEAM_TOTAL
                   - POINTS
                   - REBOUNDS
+                  - POINTS_REBOUNDS_ASSISTS
+                  - POINTS_ASSISTS
+                  - POINTS_REBOUNDS
+                  - REBOUNDS_ASSISTS
                   - ASSISTS
               schema:
                 additionalProperties:

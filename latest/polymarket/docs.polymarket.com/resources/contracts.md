@@ -9,11 +9,11 @@
 These contracts are deployed on Polygon mainnet with chain ID `137`. Use the
 proxy address when a contract has separate proxy and implementation addresses.
 
-> **[CTF Exchange V2](https://github.com/Polymarket/ctf-exchange-v2)**
+> [card] [CTF Exchange V2](https://github.com/Polymarket/ctf-exchange-v2)
 >
 > Order matching and settlement for CTF markets.
 
-> **[Polymarket V2 contracts](https://github.com/Polymarket/polymarket-v2-external)**
+> [card] [Polymarket V2 contracts](https://github.com/Polymarket/polymarket-v2-external)
 >
 > Position tokens, modules, oracles, and audits for V2 markets.
 

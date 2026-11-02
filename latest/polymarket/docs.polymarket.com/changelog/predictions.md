@@ -6,6 +6,13 @@
 
 > Important changes to Polymarket prediction markets, including the CLOB, APIs, web application, and mobile applications.
 
+**Nov 2, 2026**
+
+Data API v1 retirement
+
+* **Data API v1 retires on November 2, 2026**: the legacy Data API reference has been removed. Follow the [v1 to v2 migration guide](https://docs.polymarket.com/migrate/data-api-v1-to-v2.md) for route mappings, response changes, and cursor pagination.
+* **Accounting snapshots retire too**: `GET /v1/accounting/snapshot` has no V2 replacement for its ZIP/CSV export. Remove calls to this route rather than changing its version prefix.
+
 **Oct 21, 2026**
 
 PolyBolt: seven new forex pairs on price.equity

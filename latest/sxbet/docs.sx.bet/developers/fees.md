@@ -50,15 +50,15 @@ A `null` rate means nothing is charged for that category — treat it as `0`.
 
 ## Related
 
-> **[Get your fees](https://docs.sx.bet/api-reference/get-user-fees-v3.md)**
+> [card] [Get your fees](https://docs.sx.bet/api-reference/get-user-fees-v3.md)
 >
 > The endpoint, every field, and what `null` means.
 
-> **[Capital efficiency](https://docs.sx.bet/developers/capital-efficiency.md)**
+> [card] [Capital efficiency](https://docs.sx.bet/developers/capital-efficiency.md)
 >
 > Where the refund fee applies, and how refunds are tracked.
 
-> **[Reading balances](https://docs.sx.bet/developers/balances-and-ledger.md)**
+> [card] [Reading balances](https://docs.sx.bet/developers/balances-and-ledger.md)
 >
 > What you can spend, and what settlement pays out.
 

@@ -62,16 +62,16 @@ curl -G "https://gamma-api.polymarket.com/markets/keyset" \
 Learn how Polymarket works, explore the concepts behind markets and
 trading, or choose how to integrate.
 
-> **[Polymarket 101](https://docs.polymarket.com/polymarket-101.md)**
+> [card] [Polymarket 101](https://docs.polymarket.com/polymarket-101.md)
 >
 > Learn how prediction markets work and how to use Polymarket.
 
-> **[Core Concepts](https://docs.polymarket.com/concepts/markets-events.md)**
+> [card] [Core Concepts](https://docs.polymarket.com/concepts/markets-events.md)
 >
 > Understand markets and events, prices and order books, positions,
 > orders, and resolution.
 
-> **[SDKs & APIs](https://docs.polymarket.com/getting-started/sdks-apis)**
+> [card] [SDKs & APIs](https://docs.polymarket.com/getting-started/sdks-apis)
 >
 > Choose the integration approach that best fits your application.
 

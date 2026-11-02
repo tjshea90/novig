@@ -46,25 +46,25 @@ Then send the public key in the body:
 * `algorithm` must match the key material.
 * `expiresAt` must be strictly in the future.
 
-**Request**
+> [tab] Request
+>
+> ```json theme={"dark"}
+> {
+>   "label": "desk-1",
+>   "publicKey": "-----BEGIN PUBLIC KEY-----\n…\n-----END PUBLIC KEY-----\n",
+>   "algorithm": "Ed25519"
+> }
+> ```
 
-```json theme={"dark"}
-{
-  "label": "desk-1",
-  "publicKey": "-----BEGIN PUBLIC KEY-----\n…\n-----END PUBLIC KEY-----\n",
-  "algorithm": "Ed25519"
-}
-```
-
-**201**
-
-```json theme={"dark"}
-{
-  "keyId": "8f14e45f-…",
-  "label": "desk-1",
-  "balance": "0.00000"
-}
-```
+> [tab] 201
+>
+> ```json theme={"dark"}
+> {
+>   "keyId": "8f14e45f-…",
+>   "label": "desk-1",
+>   "balance": "0.00000"
+> }
+> ```
 
 The `keyId` identifies the trading key.
 It's also the subaccount's address. Store it beside `desk-1.pem`.

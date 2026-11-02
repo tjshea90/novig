@@ -84,84 +84,84 @@ Within a batch, an order's `fill` events come before its `open`, `cancel`, or `r
 }
 ```
 
-**open**
+> [tab] open
+>
+> ```json theme={"dark"}
+> {
+>   "kind": "open",
+>   "orderId": "7c9e6679-…",
+>   "clientId": "0b3f5f20-…",
+>   "marketId": "6f9619ff-…",
+>   "outcomeId": "3f2504e0-…",
+>   "price": "0.665",
+>   "qty": 110,
+>   "tif": "GTC"
+> }
+> ```
+>
+> The order rests. **This event, not the `201`, confirms that the order rests.**
+>
+> `qty` is the resting quantity.
+>
+> `clientId` appears only when the placement sent one.
+> An order with an expiry also carries `expiresAt`, in Unix milliseconds.
 
-```json theme={"dark"}
-{
-  "kind": "open",
-  "orderId": "7c9e6679-…",
-  "clientId": "0b3f5f20-…",
-  "marketId": "6f9619ff-…",
-  "outcomeId": "3f2504e0-…",
-  "price": "0.665",
-  "qty": 110,
-  "tif": "GTC"
-}
-```
+> [tab] fill
+>
+> ```json theme={"dark"}
+> {
+>   "kind": "fill",
+>   "fillId": "1e6a2f94-…",
+>   "orderId": "7c9e6679-…",
+>   "clientId": "0b3f5f20-…",
+>   "outcomeId": "3f2504e0-…",
+>   "price": "0.670",
+>   "qty": 40,
+>   "remaining": 70,
+>   "taker": true
+> }
+> ```
+>
+> `fillId` matches the `fillId` from `GET /v3/portfolio/fills`.
+> Two fills on one order always have different IDs, even at the same quantity.
+>
+> `taker` is `true` when your order took liquidity and `false` when it rested.
+> It matches `taker` from `GET /v3/portfolio/fills`.
+>
+> `price` is the traded price. It can be better than your limit.
+>
+> `remaining: 0` means the order is `FILLED`.
+>
+> This event carries no fee.
+>
+> A self-match, where your order trades with your own order, also sends a `fill` here. The `trades` channel omits it.
 
-The order rests. **This event, not the `201`, confirms that the order rests.**
+> [tab] cancel
+>
+> ```json theme={"dark"}
+> {
+>   "kind": "cancel",
+>   "orderId": "7c9e6679-…",
+>   "reason": "GO_LIVE"
+> }
+> ```
+>
+> The event carries `reason` only when the engine states one: `GO_LIVE`, `MARKET_CLOSED`, `SETTLED`, or `NEUTRALIZED`.
+>
+> A cancel by you, by expiry, or by an admin carries no `reason`.
 
-`qty` is the resting quantity.
-
-`clientId` appears only when the placement sent one.
-An order with an expiry also carries `expiresAt`, in Unix milliseconds.
-
-**fill**
-
-```json theme={"dark"}
-{
-  "kind": "fill",
-  "fillId": "1e6a2f94-…",
-  "orderId": "7c9e6679-…",
-  "clientId": "0b3f5f20-…",
-  "outcomeId": "3f2504e0-…",
-  "price": "0.670",
-  "qty": 40,
-  "remaining": 70,
-  "taker": true
-}
-```
-
-`fillId` matches the `fillId` from `GET /v3/portfolio/fills`.
-Two fills on one order always have different IDs, even at the same quantity.
-
-`taker` is `true` when your order took liquidity and `false` when it rested.
-It matches `taker` from `GET /v3/portfolio/fills`.
-
-`price` is the traded price. It can be better than your limit.
-
-`remaining: 0` means the order is `FILLED`.
-
-This event carries no fee.
-
-A self-match, where your order trades with your own order, also sends a `fill` here. The `trades` channel omits it.
-
-**cancel**
-
-```json theme={"dark"}
-{
-  "kind": "cancel",
-  "orderId": "7c9e6679-…",
-  "reason": "GO_LIVE"
-}
-```
-
-The event carries `reason` only when the engine states one: `GO_LIVE`, `MARKET_CLOSED`, `SETTLED`, or `NEUTRALIZED`.
-
-A cancel by you, by expiry, or by an admin carries no `reason`.
-
-**reject**
-
-```json theme={"dark"}
-{
-  "kind": "reject",
-  "orderId": "7c9e6679-…"
-}
-```
-
-We accepted the order, then refused it. **No HTTP status reports this refusal.**
-
-An unfilled `IOC`, `FOK`, or `PO` order also arrives as `reject`.
+> [tab] reject
+>
+> ```json theme={"dark"}
+> {
+>   "kind": "reject",
+>   "orderId": "7c9e6679-…"
+> }
+> ```
+>
+> We accepted the order, then refused it. **No HTTP status reports this refusal.**
+>
+> An unfilled `IOC`, `FOK`, or `PO` order also arrives as `reject`.
 
 ## Positions
 

@@ -144,6 +144,12 @@ When a user places an order with your `builderCode` attached:
 
 Collected builder fees are distributed to the wallet associated with your builder profile.
 
+### Payout Schedule
+
+Builder fees are paid out daily. Each payout covers the builder fees earned during the previous UTC day.
+
+The minimum builder fee payout is **\$0.10**. If your builder fees for a UTC day total less than this amount, no payout is sent for that day.
+
 ***
 
 ## Program Policies

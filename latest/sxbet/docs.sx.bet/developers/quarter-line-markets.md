@@ -8,7 +8,7 @@
 
 Soccer markets on SX Bet support quarter lines — Asian handicap and Asian totals in `.25` increments (for example `-1.25`, `+0.75`, `Over 2.75`).
 
-> **Example quarter-line market**
+> [accordion] Example quarter-line market
 >
 > ```json theme={null}
 > {

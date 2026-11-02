@@ -44,7 +44,7 @@ The Builder Program uses a tiered system to manage rate limits while rewarding h
 
 ## Unverified
 
-> **100 Relay transactions/day**
+> [card] 100 Relay transactions/day
 >
 > The default tier for all new builders. Start immediately with no approval
 > required.
@@ -66,7 +66,7 @@ The Builder Program uses a tiered system to manage rate limits while rewarding h
 
 ## Verified
 
-> **10,000 Relay transactions/day**
+> [card] 10,000 Relay transactions/day
 >
 > For builders who need higher throughput. Requires manual approval.
 
@@ -92,7 +92,7 @@ Contact us at [builder@polymarket.com](mailto:builder@polymarket.com) with:
 
 ## Partner
 
-> **Unlimited Relay transactions/day**
+> [card] Unlimited Relay transactions/day
 >
 > Enterprise tier for high-volume integrations and strategic partners.
 
@@ -130,23 +130,23 @@ days.
 
 Ready to upgrade or have questions?
 
-> **[builder@polymarket.com](mailto:builder@polymarket.com)**
+> [card] [builder@polymarket.com](mailto:builder@polymarket.com)
 >
 > Email us with your Builder API Key and use case details.
 
 ## FAQ
 
-> **How do I know if I am verified**
+> [accordion] How do I know if I am verified
 >
 > Verification is displayed in your [Builder Profile](https://polymarket.com/settings?tab=builder) settings.
 
-> **What happens if I exceed my daily limit**
+> [accordion] What happens if I exceed my daily limit
 >
 > Relayer requests beyond your daily limit will be rate-limited and return an
 > error. Consider upgrading to Verified or Partner tier if you're hitting
 > limits.
 
-> **What if I just need more daily Relay transaction limits for my own wallet**
+> [accordion] What if I just need more daily Relay transaction limits for my own wallet
 >
 > If you're not routing orders for other users (wallets), you can get unlimited
 > daily Relay transactions by obtaining a [Relayer API key](https://polymarket.com/settings?tab=api-keys).

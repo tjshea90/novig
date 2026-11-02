@@ -63,9 +63,8 @@ paths:
       summary: Cancel orders on an event
       description: >-
         Cancels open orders on one event for the credential's address, across
-        every market on that event and both outcomes. Loop while `hasMore` is
-        true. Submission is asynchronous — a 200 does not mean the orders are
-        off the book.
+        every market on that event and both outcomes. Submission is asynchronous
+        — a 200 does not mean the orders are off the book.
       operationId: cancelOrdersV3Event
       parameters:
         - name: eventId
@@ -95,11 +94,6 @@ paths:
                         description: >-
                           A cancel command for this order reached the orderbook.
                           This is not confirmation that it is off the book.
-                      hasMore:
-                        type: boolean
-                        description: >-
-                          True when open orders remain beyond this batch; call
-                          again. Loop until false.
               example:
                 status: success
                 data:
@@ -107,7 +101,6 @@ paths:
                     - orderId: >-
                         0x49a35fd509c430cb5e65d3892d9adfb69b6be30ef724bb208ae6ae718f062f9b
                       commandId: 5305bad0-e0ee-4e2e-b2ea-197131b03c8b
-                  hasMore: false
         '400':
           description: ''
           content:

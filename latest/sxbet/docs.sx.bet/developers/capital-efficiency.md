@@ -77,19 +77,19 @@ your gross payout* at settlement, not what you received. P\&L uses the received 
 
 ## Related
 
-> **[Reconciling fills](https://docs.sx.bet/developers/which-grain.md#fills)**
+> [card] [Reconciling fills](https://docs.sx.bet/developers/which-grain.md#fills)
 >
 > Where to find the refund on each leg.
 
-> **[Tracking positions](https://docs.sx.bet/developers/which-grain.md#positions)**
+> [card] [Tracking positions](https://docs.sx.bet/developers/which-grain.md#positions)
 >
 > Netted exposure — the same idea, read-only.
 
-> **[Parlays](https://docs.sx.bet/developers/parlays.md)**
+> [card] [Parlays](https://docs.sx.bet/developers/parlays.md)
 >
 > The other meaning of `ceRefundAmount`.
 
-> **[Quarter-line markets](https://docs.sx.bet/developers/quarter-line-markets.md)**
+> [card] [Quarter-line markets](https://docs.sx.bet/developers/quarter-line-markets.md)
 >
 > Why one bet produces two refund calculations.
 

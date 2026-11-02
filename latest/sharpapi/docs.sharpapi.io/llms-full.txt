@@ -93,7 +93,6 @@ Three methods, in priority order:
 | GET /account | Yes | Yes | Yes | Yes | Yes |
 | GET /account/usage | Yes | Yes | Yes | Yes | Yes |
 | GET /account/keys | Yes | Yes | Yes | Yes | Yes |
-| CSV Export | No | No | Yes | Yes | Yes |
 | Priority Support | No | No | No | Yes | Yes |
 | SLA | No | No | No | No | Yes |
 
@@ -1128,6 +1127,42 @@ Returns public betting split data (handle % and ticket %) from sportsbooks that 
 
 **Data sources**: DraftKings, Circa Sports (public handle and ticket percentages) and BetMGM (ticket percentage only, derived from its own public bet-percentage field; intermittent — the `handle_pct` object is present on BetMGM rows but its members are `null`). These three are the only splits sources — the set is fixed and does not grow with the number of sportsbooks on a plan. Rows whose sources all post identical numbers are merged into a single row labelled `sportsbook: consensus`, a synthetic label rather than a book. `/splits/history` is written from the DraftKings and Circa feed only.
 
+**Response** (one row per event per source; `pagination` omitted):
+```json
+{
+  "data": [
+    {
+      "event_id": "mlb_guardians_orioles_2026-04-16",
+      "sportsbook": "draftkings",
+      "away_team": "Baltimore Orioles",
+      "home_team": "Cleveland Guardians",
+      "spread": {
+        "away_line": -1.5,
+        "home_line": 1.5,
+        "away_odds": -1.5,
+        "home_odds": 1.5,
+        "handle_pct": { "away": 0.22, "home": 0.78 },
+        "bets_pct": { "away": 0.20, "home": 0.80 }
+      },
+      "total": {
+        "line": 8,
+        "handle_pct": { "over": 0.53, "under": 0.47 },
+        "bets_pct": { "over": 0.57, "under": 0.43 }
+      },
+      "moneyline": {
+        "away_odds": 104,
+        "home_odds": -126,
+        "handle_pct": { "away": 0.28, "home": 0.72 },
+        "bets_pct": { "away": 0.33, "home": 0.67 }
+      },
+      "fetched_at": "2026-04-16T19:25:28.363825+00:00"
+    }
+  ]
+}
+```
+
+**Spread**: `spread.away_line` / `spread.home_line` are the spread line (the handicap, e.g. `-1.5` / `+1.5`). `spread.away_odds` / `spread.home_odds` carry the same value as a legacy alias: they are the line, never a price. No splits source publishes a spread price, so there is no spread price on this endpoint. Both pairs are `null` when the source has posted no spread line, and absent on a `betmgm` row with no spread line. `moneyline.away_odds` / `moneyline.home_odds` are American odds.
+
 ---
 
 ## API Reference: Live Game State
@@ -1206,6 +1241,7 @@ Server-Sent Events (SSE) stream for real-time odds updates.
 - `odds:update` — Changed odds for one sportsbook: `{odds, count, book, partial}`. Rows are compact deltas (`id` plus the fields that can change); merge each into the row you hold by `id`. A row for an `id` you do not already hold arrives in full — store it as a new row
 - `odds:removed` — Odds a sportsbook pulled: `{ids, count, book}`; delete them
 - `odds:locked` — Market suspended/closed: the suspended rows with `is_active: false`, same envelope as `odds:update`. Supplementary — the same rows also arrive in `odds:update`
+- `book:status` — A sportsbook stopped (`state: "down"`) or resumed (`"up"`) serving odds: `{type, book, state, since}`. Tells a dark book apart from its markets closing, which both arrive as `odds:removed`. Best-effort and never replayed; `currently_serving` on `GET /api/v1/sportsbooks` is the authoritative state
 - `ev:detected` — New +EV opportunity, or an updated version of one already sent (same `id`) — upsert by `id`
 - `ev:expired` — +EV opportunity no longer available
 - `arb:detected` — New arbitrage opportunity, or an updated version of one already sent (same `id`)
@@ -1409,14 +1445,14 @@ Hosted MCP (Model Context Protocol) server at `https://mcp.sharpapi.io/mcp`. Con
 Desktop, Claude Code, or any MCP-compatible client and query odds directly instead of pasting
 API responses into a chat. Setup per client: https://docs.sharpapi.io/en/sdks/mcp/
 
-17 read-only tools, each authenticating with the caller's own API key. Each tool dispatches to
+Read-only tools, each authenticating with the caller's own API key. Each tool dispatches to
 the same handler as its REST counterpart, so the per-tier book limits and feature gates that
 apply to the REST API apply identically to an assistant's queries.
 
 - Reference data (all tiers): `get_sports`, `get_leagues`, `get_sportsbooks`, `get_markets`
 - Odds and events (all tiers): `get_events`, `get_odds`, `get_odds_delta`, `get_best_odds`, `compare_odds`
 - Closing lines (Pro+): `get_closing_lines`
-- Futures (Enterprise): `get_futures_odds`, `compare_futures_lines`
+- Futures (Enterprise): `get_futures`, `get_futures_odds`, `compare_futures_lines`
 - Opportunities: `find_arbitrage` (Hobby+), `find_ev_opportunities`, `find_middles` and `find_low_hold` (Pro+)
 - Account (all tiers): `get_account_info`
 

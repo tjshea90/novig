@@ -4,9 +4,9 @@
 
 # Bookmaker Coverage - Sharps, Exchanges & Retail Books
 
-> What OddsPapi covers across 350+ bookmakers: sharp trading books, exchanges and prediction markets, and retail sportsbooks — with per-book capabilities, freshness bounds, and status signals.
+> What OddsPapi covers across 200+ bookmakers: sharp trading books, exchanges and prediction markets, and retail sportsbooks — with per-book capabilities, freshness bounds, and status signals.
 
-OddsPapi aggregates **350+ bookmakers**, anchored on the books that matter for price discovery rather than optimized for a headline count. The catalog available to you is determined by your key — query [`GET /bookmakers`](https://docs.oddspapi.io/api-reference/common/get-bookmakers) for the live list.
+OddsPapi aggregates **200+ bookmakers**, anchored on the books that matter for price discovery rather than optimized for a headline count. The catalog available to you is determined by your key — query [`GET /bookmakers`](https://docs.oddspapi.io/api-reference/common/get-bookmakers) for the live list.
 
 ***
 

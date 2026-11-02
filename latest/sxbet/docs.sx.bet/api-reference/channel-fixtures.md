@@ -14,6 +14,12 @@ Two channels carry fixture-related data. Subscribe to one or both depending on y
 
 Subscribe to live score updates across all active events.
 
+> [!WARNING]
+>
+> **Live scores come from a third-party provider and are provided as-is — use them at your own risk.**
+> Data can be delayed, incomplete, inconsistent or briefly unavailable, and we do not guarantee how
+> any field is populated or which values it can take.
+
 **CHANNEL NAME**
 
 `fixtures:live_scores`

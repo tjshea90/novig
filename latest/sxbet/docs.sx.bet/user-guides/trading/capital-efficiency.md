@@ -53,7 +53,7 @@ Once your bet is filled, only your net worst-case loss remains locked. Your free
 
 ![](https://mintcdn.com/sxbet-9c561d83/nTchO44e8z9Jwtov/public/user-guides/refund.png?fit=max\&auto=format\&n=nTchO44e8z9Jwtov\&q=85\&s=538ce4dce45bbc9a675e2ee29229b726)
 
-> **Example: Exit to Lock in a Profit**
+> [accordion] Example: Exit to Lock in a Profit
 >
 > **Pre-match odds: Team A @ 2.10 | Team B @ 1.85**
 >
@@ -72,7 +72,7 @@ Once your bet is filled, only your net worst-case loss remains locked. Your free
 >
 > 5. Your \$165.62 is now free to use on another bet — before the original match even finishes.
 
-> **Example: Exit to Minimize a Loss**
+> [accordion] Example: Exit to Minimize a Loss
 >
 > **Pre-match odds: Team A @ 2.10 | Team B @ 1.85**
 >
@@ -110,11 +110,11 @@ If you're quoting both sides of a market, capital efficiency means you don't nee
 * Deploy larger position sizes with the same bankroll
 * Scale your activity without repeated deposits or manual capital management
 
-> **[Market Orders](https://docs.sx.bet/user-guides/trading/market-orders.md)**
+> [card] [Market Orders](https://docs.sx.bet/user-guides/trading/market-orders.md)
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Fees](https://docs.sx.bet/user-guides/trading/fees.md)**
+> [card] [Fees](https://docs.sx.bet/user-guides/trading/fees.md)
 >
 > Understand the SX Bet fee structure, including 0% on single bets.
 

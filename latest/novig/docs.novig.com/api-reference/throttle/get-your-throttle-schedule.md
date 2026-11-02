@@ -95,6 +95,7 @@ paths:
                 history:
                   capacity: 512
                   refillPerSec: 4
+                maxOpenOrders: 1024
                 maxWatchedMarkets: 8192
                 place:
                   capacity: 256
@@ -417,8 +418,8 @@ components:
   schemas:
     LimitsResponse:
       description: |-
-        The rate-limit schedule: one `BucketLimit` per bucket. The schedule is
-        static.
+        Your rate-limit schedule: one `BucketLimit` per bucket. A trading key
+        reports the limits of its subaccount's tier.
       properties:
         account:
           $ref: '#/components/schemas/BucketLimit'
@@ -434,6 +435,11 @@ components:
 
             settled orders. Each read costs a base plus one token per page of
             rows.
+        maxOpenOrders:
+          description: The most orders your subaccount may keep open at once.
+          format: int32
+          minimum: 0
+          type: integer
         maxWatchedMarkets:
           description: >-
             The most markets one websocket connection may watch at once. An
@@ -464,6 +470,7 @@ components:
         - stream
         - history
         - maxWatchedMarkets
+        - maxOpenOrders
       type: object
     ErrorBody:
       description: Every error on the surface carries this body.

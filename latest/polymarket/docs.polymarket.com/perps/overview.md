@@ -17,27 +17,27 @@ A Perps trade starts as an order in the order book. When it fills, it becomes a
 position whose value changes as the tracked market moves, until the trader closes
 it or the system closes it because the account can no longer support the risk.
 
-> **Prices**
+> [card] Prices
 >
 > A Perps market has a traded price from the order book and reference prices
 > used by the system. The index price tracks the underlying asset, while the
 > mark price is used for account equity, margin checks, and liquidation risk.
 
-> **Trading Positions**
+> [card] Trading Positions
 >
 > Trading a Perps market creates or changes a position. A long position benefits
 > when the tracked asset rises, and a short position benefits when it falls.
 > Orders trade through the order book; fills update the account's position,
 > balance, and history.
 
-> **Margin And Liquidation**
+> [card] Margin And Liquidation
 >
 > Perps require collateral to support open positions. That collateral is the
 > account's margin: the buffer that covers losses while a position is open. If
 > account equity falls too far relative to the required margin, the position can
 > be liquidated to close exposure.
 
-> **Funding Payments**
+> [card] Funding Payments
 >
 > Funding payments keep the contract price close to the index price. When a
 > market trades above its index price, long positions generally pay short
@@ -56,15 +56,15 @@ cases include:
 
 ## Next Steps
 
-> **[Concepts](https://docs.polymarket.com/perps/concepts.md)**
+> [card] [Concepts](https://docs.polymarket.com/perps/concepts.md)
 >
 > Learn the shared terms used across Perps docs.
 
-> **[Learn About Trading](https://docs.polymarket.com/perps/learn-about-trading/overview.md)**
+> [card] [Learn About Trading](https://docs.polymarket.com/perps/learn-about-trading/overview.md)
 >
 > Understand the market mechanics behind Perps.
 
-> **[Place Your First Trade](https://docs.polymarket.com/perps/place-your-first-trade.md)**
+> [card] [Place Your First Trade](https://docs.polymarket.com/perps/place-your-first-trade.md)
 >
 > Build a first end-to-end Perps trading flow.
 

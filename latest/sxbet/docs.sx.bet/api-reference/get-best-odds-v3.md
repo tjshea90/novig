@@ -152,14 +152,14 @@ components:
           description: The resulting market for the given best odds query
         outcomeOne:
           allOf:
-            - $ref: '#/components/schemas/OrderbookLevel'
+            - $ref: '#/components/schemas/BestOddsLevel'
           nullable: true
           description: >-
             Best level on outcome one, or `null` when that side has no resting
             orders.
         outcomeTwo:
           allOf:
-            - $ref: '#/components/schemas/OrderbookLevel'
+            - $ref: '#/components/schemas/BestOddsLevel'
           nullable: true
           description: >-
             Best level on outcome two, or `null` when that side has no resting
@@ -195,7 +195,7 @@ components:
         statusCode:
           type: integer
           example: 401
-    OrderbookLevel:
+    BestOddsLevel:
       type: object
       properties:
         percentageOdds:

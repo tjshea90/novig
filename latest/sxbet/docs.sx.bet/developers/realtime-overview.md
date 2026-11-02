@@ -54,7 +54,7 @@ Install a client SDK, fetch a token, connect, and subscribe — see
 | `markets:global` | Market create, update, and settlement | [markets →](https://docs.sx.bet/api-reference/channel-markets.md) |
 | `main_line:global` | Which market is now an event's main line | [line changes →](https://docs.sx.bet/api-reference/channel-line-changes.md) |
 | `fixtures:global` | Fixture metadata updates | [fixtures →](https://docs.sx.bet/api-reference/channel-fixtures.md) |
-| `fixtures:live_scores` | Live match scores | [fixtures →](https://docs.sx.bet/api-reference/channel-fixtures.md) |
+| `fixtures:live_scores` | Live match scores (third-party data, provided as-is) | [fixtures →](https://docs.sx.bet/api-reference/channel-fixtures.md) |
 | `parlay_markets:global` | Incoming parlay quote requests | [parlay requests →](https://docs.sx.bet/api-reference/channel-parlay-requests.md) |
 
 ### Subscribing to your own channels
@@ -519,19 +519,19 @@ Keep handlers fast: receive the message and hand it off to a queue or async task
 
 ## Related
 
-> **[Market Making →](https://docs.sx.bet/developers/market-making.md)**
+> [card] [Market Making →](https://docs.sx.bet/developers/market-making.md)
 >
 > Using `account:orders_v3` to monitor your open orders in real time.
 
-> **[Taking Liquidity →](https://docs.sx.bet/developers/taking-liquidity.md)**
+> [card] [Taking Liquidity →](https://docs.sx.bet/developers/taking-liquidity.md)
 >
 > How to submit fills and monitor your trade history.
 
-> **[Initialization →](https://docs.sx.bet/developers/realtime-initialization.md)**
+> [card] [Initialization →](https://docs.sx.bet/developers/realtime-initialization.md)
 >
 > Install, connect, and subscribe with the Centrifuge client.
 
-> **[Market Making Parlays →](https://docs.sx.bet/developers/market-making-parlays.md)**
+> [card] [Market Making Parlays →](https://docs.sx.bet/developers/market-making-parlays.md)
 >
 > Responding to parlay quote requests via `parlay_markets:global`.
 

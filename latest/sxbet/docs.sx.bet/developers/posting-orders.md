@@ -288,27 +288,27 @@ There is no amend. To move a price: cancel, then post a new order.
 
 ## Related
 
-> **[Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)**
+> [card] [Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)
 >
 > Every field, every validation rule.
 
-> **[Taking liquidity](https://docs.sx.bet/developers/taking-liquidity.md)**
+> [card] [Taking liquidity](https://docs.sx.bet/developers/taking-liquidity.md)
 >
 > The same signing and submission path, from the taker's side.
 
-> **[Time in force](https://docs.sx.bet/developers/time-in-force.md)**
+> [card] [Time in force](https://docs.sx.bet/developers/time-in-force.md)
 >
 > Choosing between GTC, IOC and FOK.
 
-> **[Tracking your orders](https://docs.sx.bet/developers/my-orders.md)**
+> [card] [Tracking your orders](https://docs.sx.bet/developers/my-orders.md)
 >
 > Reading your own orders back, and what the API will not tell you.
 
-> **[Market making](https://docs.sx.bet/developers/market-making.md)**
+> [card] [Market making](https://docs.sx.bet/developers/market-making.md)
 >
 > Quoting, exposure and re-quote loops.
 
-> **[External user id](https://docs.sx.bet/developers/external-user-id.md)**
+> [card] [External user id](https://docs.sx.bet/developers/external-user-id.md)
 >
 > Tag orders when one SX account places bets for many people.
 

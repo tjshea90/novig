@@ -415,7 +415,7 @@ for ev in SSEClient(URL):
         print(drop["sport"], drop["home"], "→", drop["from_price"], "→", drop["to_price"])
 ```
 
-**Per-user cap:** 1 connection per paid customer per endpoint. Opening a 2nd connection from the same key on the same endpoint evicts the previous one (reconnect-friendly — EventSource auto-reconnect after a network blip works cleanly because the dying old socket is reaped before the new one registers). `/odds-drop` (live) and `/odds-drop-prematch` are counted independently, so you can run one live + one prematch in parallel under the default cap. Need more independent connections (prod + staging, multi-server fan-out, etc.)? Email info@pinnodds.com and we will issue a SECOND ACCOUNT on the same plan at no extra cost. The per-key cap is never raised — one connection per key is how key sharing and resale get detected — so additional connections are always additional keys.
+**Per-user cap:** 1 connection per paid customer per endpoint. Opening a 2nd connection from the same key on the same endpoint evicts the previous one (reconnect-friendly — EventSource auto-reconnect after a network blip works cleanly because the dying old socket is reaped before the new one registers). `/odds-drop` (live) and `/odds-drop-prematch` are counted independently, so you can run one live + one prematch in parallel under the default cap. Need more independent connections (prod + staging, multi-server fan-out, etc.)? Each one needs its own account on its own paid plan: one account, one key. The per-key cap is never raised and second keys are never issued free — one connection per key is how key sharing and resale get detected.
 
 **Optional `min_drop` parameter** (both `/odds-drop` and `/odds-drop-prematch`): pass `?min_drop=N` to override the default 5% drop threshold for that connection. Accepts integer or decimal percent. Floor is **1%** — values below are clamped to 1. No upper cap. Per-connection — other customers are unaffected.
 
@@ -935,7 +935,7 @@ Not all periods are present for every event. Iterate keys defensively.
 
 Quarterly and semi-annual variants exist with 12–24% discounts. Get current SKUs and prices live at https://pinnodds.com/panel/api/plans (returns JSON).
 
-Billing: crypto only (USDT-TRC20, BTC, ETH, TRX, etc.) via NowPayments. No card, no auto-renewal — when your plan expires you re-subscribe manually.
+Billing: card via Stripe (a subscription that renews automatically; cancel any time from the panel in one click) or crypto via NowPayments (BTC, ETH, USDT-TRC20, TRX and more; one-off payment, no auto-renewal — re-subscribe when the plan ends).
 
 ---
 
@@ -1061,12 +1061,13 @@ There are TWO different fields named `last`, and NEITHER is a data age:
 
 - **Top level** (`last` / `last_call`, alongside `sport_id`) is the store sequence number. It only moves forward and it is the value you pass to `since=`.
 - **Inside each event**, `last` is the Unix second at which we rendered the response. It is identical for every event in the payload and says nothing about when that event's odds moved. Do not compute freshness from it.
+- **`updated_at`** (inside each event) is the freshness field: epoch milliseconds of the last change to that event's markets (a price, a line added or removed, or a status). Pinnacle re-sending identical prices does not move it. After one of our restarts it starts from the moment we first saw the event again ("unchanged since at least").
 
 As a secondary signal, detect staleness from the top-level cursor:
 
 - **Feed quiet** — `last` does not advance between polls. `X-Data-Age-Ms` answers this directly; `/health` (`live_write_age_ms`, `prematch.write_age_ms`) says which feed is quiet.
 - **Event unchanged** — `last` advances but the event is absent from the `since=` response. Its prices genuinely have not moved; keep your cached copy.
-- **Event gone** — it stops appearing in a full (no `since=`) response. Pinnacle pulled it, or it kicked off and moved to the live feed.
+- **Event gone** — it stops appearing in a full (no `since=`) response. Pinnacle pulled it, or it kicked off and moved to the live feed. A started fixture is removed from `event_type=prematch` as soon as its live listing exists; the prematch board is re-read every 25–45 s.
 
 If you need a real timestamp per price change, use `/api/drops`: every drop carries its own `ts` (epoch ms) and `age_s`.
 

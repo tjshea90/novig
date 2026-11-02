@@ -166,15 +166,15 @@ Read it at startup alongside the rest of the bootstrap document, and derive `STE
 
 ## Related
 
-> **[Exchange metadata](https://docs.sx.bet/api-reference/get-metadata-obv3.md)**
+> [card] [Exchange metadata](https://docs.sx.bet/api-reference/get-metadata-obv3.md)
 >
 > Where `oddsLadderStepSize` comes from.
 
-> **[Unit conversions](https://docs.sx.bet/developers/unit-conversions.md)**
+> [card] [Unit conversions](https://docs.sx.bet/developers/unit-conversions.md)
 >
 > Implied/decimal/American odds, the 1e20 scale, base units, and time formats in one place.
 
-> **[Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)**
+> [card] [Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

@@ -1604,10 +1604,11 @@ Replace `YOUR_API_KEY` with your actual API key in the examples below:
   <Tab value="Javascript">
     ```js
     // This example uses fetch() but you can use any HTTP library
-    fetch("https://api.sportsgameodds.com/v2/sports/", {// [!code focus]
-      method: "GET", // [!code focus]
-      headers: { "X-Api-Key": "YOUR_API_KEY" }, // [!code focus]
-    }) // [!code focus]
+    // [!code focus:4]
+    fetch("https://api.sportsgameodds.com/v2/sports/", {
+      method: "GET",
+      headers: { "X-Api-Key": "YOUR_API_KEY" },
+    })
       .then((response) => response.json())
       .then((data) => console.log(data))
       .catch((error) => console.error(error));
@@ -2074,7 +2075,7 @@ You'll get a response like this:
       },
       "links": {
         "bookmakers": {
-          "espnbet": "https://espnbet.com/sport/football/organization/united-states/competition/nfl/event/2c83a542-357e-4e78-8efe-58129cb8cd37",
+          "espnbet": "https://sportsbook.thescore.bet/sport/football/organization/united-states/competition/nfl/event/2c83a542-357e-4e78-8efe-58129cb8cd37",
           "draftkings": "https://sportsbook.draftkings.com/event/32225621",
           "nordicbet": "https://www.nordicbet.com/en/sportsbook/american-football/nfl/nfl/houston-texans-buffalo-bills"
           // ...more deeplinks
@@ -3296,7 +3297,7 @@ This will return a response that looks something like this:
         "secondaryContrast": "#007A33",
         "primary": "#007A33"
       }
-    },
+    }
     // ...
     // Up to 30 objects may be returned in this object. If there are more available
     // then you'll see a nextCursor property you can use to fetch the next
@@ -3439,7 +3440,7 @@ This will return a response that looks something like this:
       },
       "leagueID": "NBA",
       "teamID": "WARRIORS_NBA"
-    },
+    }
     // ...
     // Up to 30 objects may be returned in this object. If there are more available
     // then you'll see a nextCursor property you can use to fetch the next
@@ -3745,6 +3746,8 @@ Real-time updates contain only the `eventID` of changed events:
 
 You then fetch full event details using the `/v2/events` endpoint with the `eventIDs` parameter.
 
+Updates are batched: each message lists the events that changed over the last few seconds, at most 10 eventIDs per message (more changes arrive as several messages). A new subscription starts receiving updates within a few seconds.
+
 ## Complete Example: NFL Game Tracker [#complete-example-nfl-game-tracker]
 
 This example demonstrates a production-ready implementation for tracking NFL games:
@@ -3907,10 +3910,10 @@ Monitor all currently live games across all sports:
 
 ```js
 axios.get("https://api.sportsgameodds.com/v2/stream/events", {
-  headers: { 'x-api-key': API_KEY },
+  headers: { "x-api-key": API_KEY },
   params: {
-    feed: 'events:live'
-  }
+    feed: "events:live",
+  },
 });
 ```
 
@@ -3920,11 +3923,11 @@ Monitor upcoming games for a specific league:
 
 ```js
 axios.get("https://api.sportsgameodds.com/v2/stream/events", {
-  headers: { 'x-api-key': API_KEY },
+  headers: { "x-api-key": API_KEY },
   params: {
-    feed: 'events:upcoming',
-    leagueID: 'NFL'
-  }
+    feed: "events:upcoming",
+    leagueID: "NFL",
+  },
 });
 ```
 
@@ -3934,11 +3937,11 @@ Track updates for one specific event:
 
 ```js
 axios.get("https://api.sportsgameodds.com/v2/stream/events", {
-  headers: { 'x-api-key': API_KEY },
+  headers: { "x-api-key": API_KEY },
   params: {
-    feed: 'events:byid',
-    eventID: 'DENVER_NUGGETS_VS_MIAMI_HEAT_2024-05-20T00:30:00Z_NBA'
-  }
+    feed: "events:byid",
+    eventID: "DENVER_NUGGETS_VS_MIAMI_HEAT_2024-05-20T00:30:00Z_NBA",
+  },
 });
 ```
 
@@ -3950,14 +3953,14 @@ You'll want to be mindful of the connection state and handle errors and disconne
 const pusher = new Pusher(pusherKey, pusherOptions);
 
 // Monitor connection state
-pusher.connection.bind('state_change', (states) => {
-  console.log('Connection state:', states.current);
+pusher.connection.bind("state_change", (states) => {
+  console.log("Connection state:", states.current);
   // States: connecting, connected, unavailable, failed, disconnected
 });
 
 // Handle connection errors
-pusher.connection.bind('error', (error) => {
-  console.error('Connection error:', error);
+pusher.connection.bind("error", (error) => {
+  console.error("Connection error:", error);
   // Implement reconnection logic if needed
 });
 
@@ -4213,7 +4216,11 @@ URL: https://sportsgameodds.com/docs/data-types/bookmakers
 Each `bookmakerID` corresponds to a sportbook, daily fantasy site, or betting platform.
 
 <Callout type="info">
-  Some data (used for testing or consensus calculations) isn't attributable and is assigned a bookmakerID of `unknown`.
+  Some data (used for testing or consensus calculations) isn't attributable and is assigned a bookmakerID of 
+
+  `unknown`
+
+  .
 </Callout>
 
 Coverage details, plan availability and request examples for each book are on the [bookmakers index](/bookmakers).

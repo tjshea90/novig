@@ -101,7 +101,7 @@ For books quoting in crypto or non-USD fiat, the [`currencies`](https://docs.odd
 
 ## Grade yourself against the close
 
-Trade on the stream, measure on REST. The live channels deliver conflated state on a fixed \~10 ms window — the newest value always arrives, but superseded intermediate ticks do not, so the stream is not a tick ledger. For full movement and opening/closing prices:
+Trade on the stream, measure on REST. The live channels deliver conflated state on a fixed \~6 ms window — the newest value always arrives, but superseded intermediate ticks do not, so the stream is not a tick ledger. For full movement and opening/closing prices:
 
 | Purpose | Fixtures | Futures |
 | - | - | - |
@@ -133,7 +133,7 @@ A desk that logs CLV per book and per latency bucket usually learns where its ed
 ## What you can rely on
 
 * **Delay is published per book, and measured.** `maxDelayLiveInSec` / `maxDelayPregameInSec` / `maxDelayPregameMainInSec` come from observed-vs-bookmaker timestamps where a book publishes usable ones, and are labelled as estimates where it does not. The four-stamp chain means you can check those numbers against your own clock instead of taking them on faith.
-* **Nothing is dropped.** Updates are conflated on a fixed \~10 ms window and the newest value always lands — the stream is latest-state, not a lossy sample. When you need every tick, the REST history endpoints have them.
+* **Nothing is dropped.** Updates are conflated on a fixed \~6 ms window and the newest value always lands — the stream is latest-state, not a lossy sample. When you need every tick, the REST history endpoints have them.
 * **IDs stay addressable across seasons.** The market taxonomy is append-only — new `marketType` values appear as coverage grows and existing ones never change meaning — and the same coordinates always resolve to the same `marketId` / `outcomeId`. A backtest written against last season's data still addresses the same selections today.
 
 

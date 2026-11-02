@@ -19,17 +19,17 @@ parameter**. Both are accepted on every endpoint — pick one. Prefer the header
 query strings land in proxy, CDN and browser history logs. The query parameter
 stays supported indefinitely.
 
-**Header (recommended)**
+> [tab] Header (recommended)
+>
+> ```bash theme={null}
+> curl -H 'X-API-Key: YOUR_KEY' 'https://v5.oddspapi.io/en/bookmakers'
+> ```
 
-```bash theme={null}
-curl -H 'X-API-Key: YOUR_KEY' 'https://v5.oddspapi.io/en/bookmakers'
-```
-
-**Query parameter**
-
-```bash theme={null}
-curl 'https://v5.oddspapi.io/en/bookmakers?apiKey=YOUR_KEY'
-```
+> [tab] Query parameter
+>
+> ```bash theme={null}
+> curl 'https://v5.oddspapi.io/en/bookmakers?apiKey=YOUR_KEY'
+> ```
 
 > [!WARNING]
 >

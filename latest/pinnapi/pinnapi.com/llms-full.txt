@@ -502,6 +502,21 @@ Both directions exchange JSON-encoded text frames.
 
 **Per-stream cap**: 200 event_ids per connection per stream (live and prematch counted independently). Subscribing past the cap returns `{type:"error", code:"event_id_cap", ...}` and the request is rejected wholesale. Auto-cleanup: when an event is removed from our store (`op: "del"`), the hub silently drops it from all subs' event_id sets — you don't need to send unsubscribe yourself.
 
+**Specials (`"include_specials": true`)**: add it to a subscribe message to also receive special markets (Player/Team Props, Exact Scores, Winning Margin, futures) for the streams and sports or event_ids in that message. They arrive as `type:"specials"` frames carrying the same rows that `GET /kit/v1/markets?include_specials=1` returns (decimal prices, `parent_id` → main match, `special_markets`), so the REST specials parser works unchanged. Sport subscriptions get every special of the sport, futures included; event_id subscriptions get the specials whose `parent_id` is one of those events. Sending it again with sports already subscribed just turns specials on for them. It stays on until the socket closes. Specials refresh every few seconds (a price move reaches you within about 7 s), which is slower than the core `live` frames. Some child rows (corners, bookings) also arrive in the core frames under the same event_id. No plan change is needed beyond the WebSocket add-on.
+
+```jsonc
+// One snapshot per (stream, sport_id) within ~1-2 s of subscribing...
+{ "type": "specials", "stream": "prematch", "sport_id": 1, "op": "snapshot", "ts": 1779200001000,
+  "data": [ /* every special row, same shape as REST */ ] }
+// (event_id subscriptions: same frame plus "event_ids": [...], filtered to those matches)
+// ...then only rows whose prices or details changed (replace by event_id)...
+{ "type": "specials", "stream": "prematch", "sport_id": 1, "op": "upd", "ts": 1779200006000,
+  "data": [ /* changed rows */ ] }
+// ...and specials that closed (drop them).
+{ "type": "specials", "stream": "prematch", "sport_id": 1, "op": "del", "ts": 1779200006000,
+  "event_ids": [1638922791] }
+```
+
 **Server → client (immediately on subscribe):**
 
 ```jsonc
@@ -545,7 +560,7 @@ Both directions exchange JSON-encoded text frames.
 { "type": "subscribed",   "stream": "live",     "event_ids": [1631005165] }
 { "type": "unsubscribed", "stream": "prematch", "sport_id": 3 }
 { "type": "unsubscribed", "stream": "prematch", "event_ids": [1631005165] }
-{ "type": "error", "code": "unauthorized" | "plan_lacks_ws" | "invalid_subscribe" | "event_id_cap" }
+{ "type": "error", "code": "unauthorized" | "plan_lacks_ws" | "invalid_subscribe" | "event_id_cap" | "specials_unavailable" }
 ```
 
 **Fidelity contract:** `events`, `rec`, and `data` are never transformed. We only add the envelope fields (`type`, `stream`, `sport_id`, `topic`, `op`, `ts`). Your code can reuse a Pinnacle parser unchanged.
@@ -559,7 +574,7 @@ Pinnacle pushes incremental updates over MQTT. The `op` field, the `topic`, and 
 | Field | Meaning |
 |---|---|
 | `op` | `"add"` = new event or new markets appeared. `"upd"` = incremental change (typically just changed markets — merge by composite key, don't replace the whole list). `"del"` = event removed by Pinnacle (kicked off, settled, voided) — drop your local copy. |
-| `topic` | Source MQTT topic. Format: `matchups/reg/sp/{arcadia_sid}/live/{ld|dz|both}` for live, `matchups/.../pre` for prematch. `ld` = "line drawing" (main markets: moneyline, 1X2, primary spread/total). `dz` = "draft zone" (alternative spreads and totals). `both` = combined push. `matchups/spc/...` (instead of `reg`) = "special" matchup (props, futures). |
+| `topic` | Source MQTT topic. Format: `matchups/reg/sp/{arcadia_sid}/live/{ld|dz|both}` for live, `matchups/.../pre` for prematch. `ld` = "line drawing" (main markets: moneyline, 1X2, primary spread/total). `dz` = "draft zone" (alternative spreads and totals). `both` = combined push. Special markets (props, futures) are not in these frames; subscribe with `"include_specials": true` to get them as `type:"specials"` frames. |
 | `rec.id` | Pinnacle matchup ID. Stable across the event's lifetime. |
 | `rec.markets` | May be a SUBSET on `op:"upd"` — Pinnacle only sends what changed. **Merge by composite key** (`m.key` if present, otherwise `type|period|side|points`). A market with `m.status !== "open"` is a CLOSE signal: drop it from your local list, do not merge it back as if still active. |
 | `rec.periods` | Per-period status. `periods[n].status === "closed"` or `"settled"` implicitly closes ALL markets for that period — drop those locally too, even if they weren't listed in `markets`. |

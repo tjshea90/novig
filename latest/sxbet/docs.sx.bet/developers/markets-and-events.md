@@ -188,19 +188,19 @@ A settled market additionally carries `reportedDate`, `outcome`, `teamOneScore` 
 
 ## Related
 
-> **[Overview](https://docs.sx.bet/developers/markets-overview.md)**
+> [card] [Overview](https://docs.sx.bet/developers/markets-overview.md)
 >
 > The sport → league → event → market hierarchy, and how to traverse it.
 
-> **[Market types](https://docs.sx.bet/api-reference/market-types.md)**
+> [card] [Market types](https://docs.sx.bet/api-reference/market-types.md)
 >
 > Every `type` id, its bet group, and whether it carries a line.
 
-> **[Fetching markets](https://docs.sx.bet/developers/fetch-markets.md)**
+> [card] [Fetching markets](https://docs.sx.bet/developers/fetch-markets.md)
 >
 > Filters, pagination, and querying by sport, league, event or hash.
 
-> **[Quarter-line markets](https://docs.sx.bet/developers/quarter-line-markets.md)**
+> [card] [Quarter-line markets](https://docs.sx.bet/developers/quarter-line-markets.md)
 >
 > What `isQuarterLineMarket` changes about settlement.
 

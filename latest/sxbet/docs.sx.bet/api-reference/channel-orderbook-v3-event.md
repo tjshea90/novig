@@ -20,7 +20,7 @@ This namespace keeps the last 100 publications for 5 minutes, so pass `recoverab
 
 **MESSAGE PAYLOAD FORMAT**
 
-Identical to [`orderbook_v3:{marketHash}`](https://docs.sx.bet/api-reference/channel-orderbook-v3), including the `version` field. `version` is per market, so key your state by `marketHash` and apply a publication only when its `version` is strictly greater than the one you hold for that market — see [book versioning](https://docs.sx.bet/developers/book-versioning.md).
+Identical to [`orderbook_v3:{marketHash}`](https://docs.sx.bet/api-reference/channel-orderbook-v3), including the `version` field and `newestOrderCreatedAtMs` on each level (available November 9, 2026). `version` is per market, so key your state by `marketHash` and apply a publication only when its `version` is strictly greater than the one you hold for that market — see [book versioning](https://docs.sx.bet/developers/book-versioning.md).
 
 ***
 
@@ -66,7 +66,7 @@ The above returns JSON structured like this:
   "marketHash": "0xbf06c6379c922d8118612d1d7493b20f6df6929437fbf6022904327f9516a2eb",
   "eventId": "L13058397",
   "version": "00100000000000010015000",
-  "outcomeOne": [{ "percentageOdds": "40000000000000000000", "size": "1000000" }],
+  "outcomeOne": [{ "percentageOdds": "40000000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182400123 }],
   "outcomeTwo": []
 }
 ```

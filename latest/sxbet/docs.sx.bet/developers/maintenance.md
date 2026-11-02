@@ -7,7 +7,9 @@
 > What happens to your resting orders during a maintenance window or matching engine restart.
 
 During maintenance or matching engine restart, **every resting order** is cancelled and reposting is
-your job.
+your job. New orders can briefly fail until the matching engine is back up. A failed order still
+returns `200`, with `status: "FAILED"` on that order, so check each order's `status` before treating
+it as placed.
 
 ## What you receive
 

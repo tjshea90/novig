@@ -55,6 +55,9 @@ The array order **is** the queue.
 
 Each key in `orders` is an outcome ID.
 
+An outcome with no resting orders has no key.
+Treat a catalog outcome missing from `orders` as an empty book at the snapshot's `seq`.
+
 ## Delta
 
 ```json theme={"dark"}

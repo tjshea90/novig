@@ -123,7 +123,7 @@ Your reaction time is four segments, and you control one:
 | Segment | Measure it as | Who controls it |
 | - | - | - |
 | Venue → our observation | `changedAt − bookmakerChangedAt` | published per book |
-| Conflation | fixed \~10 ms batching window; newest value always lands | bounded by design |
+| Conflation | fixed \~6 ms batching window; newest value always lands | bounded by design |
 | Gateway → you | `your receipt − ts` | **you** — see [Server location](https://docs.oddspapi.io/api-reference/concepts.md#server-location-matters) |
 | Decision + order round-trip | your own clock | you |
 

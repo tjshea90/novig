@@ -82,41 +82,41 @@ You refer a new trader. From their very first trade and through every tier up to
 
 ## FAQ
 
-> **Who can earn referral rewards**
+> [accordion] Who can earn referral rewards
 >
 > Any Polymarket user with at least \$10,000 in lifetime trading volume. You
 > can share links before reaching the threshold, but rewards only begin once
 > you cross it.
 
-> **What is the difference between direct and indirect referrals**
+> [accordion] What is the difference between direct and indirect referrals
 >
 > A direct referral is someone you personally refer. An indirect referral is
 > someone referred by one of your referrals. You earn 10% of net fees from
 > direct referrals and 5% from indirect referrals.
 
-> **What does net fees mean**
+> [accordion] What does net fees mean
 >
 > Net fees are what Polymarket keeps after the referred user's own tier
 > rebate. Your referral reward is a percentage of that net amount.
 
-> **When do my referral rewards stop**
+> [accordion] When do my referral rewards stop
 >
 > Rewards on a referral start with their first trade and end at whichever of
 > these comes first: the referral reaches the Platinum tier, or 30 days from
 > their sign-up.
 
-> **When am I paid**
+> [accordion] When am I paid
 >
 > Rewards are paid once a day at midnight UTC in pUSD, directly to your
 > account.
 
-> **What is not allowed**
+> [accordion] What is not allowed
 >
 > Self-referrals, referring accounts you control, and inauthentic trading are
 > not allowed. Polymarket may disqualify referrals and claw back rewards for
 > activity that breaks the Terms of Service.
 
-> **Are third-party integrations using omnibus wallets eligible**
+> [accordion] Are third-party integrations using omnibus wallets eligible
 >
 > No. Third-party integrations using omnibus wallets are not eligible for the
 > Referral Program.

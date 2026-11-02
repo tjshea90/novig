@@ -43,29 +43,29 @@ your application needs.
 If you are new to Polymarket market data, start with [Discover
 Markets](https://docs.polymarket.com/market-data/discover-markets.md).
 
-> **[Discover Markets](https://docs.polymarket.com/market-data/discover-markets.md)**
+> [card] [Discover Markets](https://docs.polymarket.com/market-data/discover-markets.md)
 >
 > Find the events and markets your application cares about.
 
-> **[Get Market Details](https://docs.polymarket.com/market-data/market-details.md)**
+> [card] [Get Market Details](https://docs.polymarket.com/market-data/market-details.md)
 >
 > Understand a market's outcomes, status, trading constraints, fees, and other
 > properties.
 
-> **[Prices and Order Books](https://docs.polymarket.com/market-data/prices-order-books.md)**
+> [card] [Prices and Order Books](https://docs.polymarket.com/market-data/prices-order-books.md)
 >
 > Understand current pricing and liquidity, or inspect how prices have
 > changed.
 
-> **[Analytics](https://docs.polymarket.com/market-data/public-analytics.md)**
+> [card] [Analytics](https://docs.polymarket.com/market-data/public-analytics.md)
 >
 > Analyze market activity and compare trader and builder performance.
 
-> **[Real-Time Data](https://docs.polymarket.com/market-data/realtime-data.md)**
+> [card] [Real-Time Data](https://docs.polymarket.com/market-data/realtime-data.md)
 >
 > Keep your application current as markets and related data change.
 
-> **[Chainlink TWAP Prices](https://docs.polymarket.com/market-data/realtime-data.md#twap-prices)**
+> [card] [Chainlink TWAP Prices](https://docs.polymarket.com/market-data/realtime-data.md#twap-prices)
 >
 > Stream Chainlink-computed 60-second time-weighted crypto prices.
 

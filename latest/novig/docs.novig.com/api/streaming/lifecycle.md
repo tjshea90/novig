@@ -4,7 +4,7 @@
 
 # Lifecycle
 
-> Market status transitions, and the two that void your orders.
+> Market status transitions, and the one that voids your orders.
 
 The `lifecycle` channel reports each change to a market's status.
 It costs 1 token per market, and `trades`, `bbo`, and `book` include it.
@@ -21,24 +21,31 @@ On an `event:` subject, it also covers markets that open later.
 ```json delta theme={"dark"}
 "lifecycle": {
   "seq": 13,
-  "deltas": ["GOLIVE"]
+  "deltas": [
+    {
+      "kind": "GOLIVE",
+      "status": "OPEN"
+    }
+  ]
 }
 ```
+
+Each delta names the transition in `kind` and the market's status after it in `status`.
 
 | Transition | Means | Status after |
 | - | - | - |
 | `OPEN` | Accepting orders | `OPEN` |
 | `CLOSE` | Stopped accepting orders | `CLOSED` |
 | `GRADE` | Graded, payouts determined | `SETTLED` |
-| `START` | The event started | — |
-| `END` | The event ended | — |
-| `GOLIVE` | Live | — |
-| `UNLIVE` | Left live play | — |
+| `START` | The event started | Unchanged |
+| `END` | The event ended | Unchanged |
+| `GOLIVE` | Live | Unchanged |
+| `UNLIVE` | Left live play | Unchanged |
 
 ## Live play and your orders
 
 * `GOLIVE` voids every resting order and turns taker fees on.
-* `UNLIVE` drains the book again and turns taker fees off.
+* `UNLIVE` cancels nothing and turns taker fees off.
 
 Taker fees switch on at `GOLIVE` only for a market whose `fee.charged` is `WHEN_LIVE`.
 An `ALWAYS` market charges fees in every phase.
@@ -51,8 +58,11 @@ This is one market that goes live twice:
 | Pregame | Orders rest |
 | `GOLIVE` | Orders voided, taker fees on |
 | In play | Orders rest |
-| `UNLIVE` | Book drained, taker fees off |
+| `UNLIVE` | Orders rest, taker fees off |
 | `GOLIVE` | Orders voided, taker fees on |
+
+`UNLIVE` doesn't mean the event is over.
+Wait for `END` and `CLOSE` before you treat the market as finished.
 
 > [!WARNING]
 >

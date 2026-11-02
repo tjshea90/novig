@@ -135,7 +135,7 @@ Rather than poll [`GET /markets/active`](https://docs.sx.bet/api-reference/get-m
 | - | - |
 | [`markets:global`](https://docs.sx.bet/api-reference/channel-markets) | A market's metadata changing — created, or moved between `ACTIVE` and `INACTIVE` |
 | [`main_line:global`](https://docs.sx.bet/api-reference/channel-line-changes) | Main line shifts on markets whose type carries a line |
-| [`fixtures:live_scores`](https://docs.sx.bet/api-reference/channel-fixtures) | Live scores for **every** event — there is no per-event filter |
+| [`fixtures:live_scores`](https://docs.sx.bet/api-reference/channel-fixtures) | Live scores for **every** event — there is no per-event filter. Third-party data, provided as-is |
 
 > [!NOTE]
 >

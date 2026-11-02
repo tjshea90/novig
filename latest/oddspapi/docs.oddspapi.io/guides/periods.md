@@ -52,14 +52,14 @@ deliberately excludes what comes after, and that exclusion is the product.
 This is the common mistake. The question is about **a scoring phase after the
 boundary**, not about clocks.
 
-> **Baseball — no clock, but fulltime exists**
+> [accordion] Baseball — no clock, but fulltime exists
 >
 > Baseball has no timer. It still has a defined end of regulation — nine
 > innings — and extra innings after it that add runs. So `fulltime` (through
 > nine) and `result` (including extras) are different numbers, and both are
 > published.
 
-> **MMA and boxing — bounded rounds, but no fulltime**
+> [accordion] MMA and boxing — bounded rounds, but no fulltime
 >
 > A bout has a fixed round count, so it looks time-bounded. But nothing after
 > the final round adds to the score: the judges' decision *names a winner*, it
@@ -67,7 +67,7 @@ boundary**, not about clocks.
 > the result. Publishing `fulltime` there would be a second label for one
 > number, so MMA and boxing markets sit on `result` only.
 
-> **Tennis, snooker, darts — the match ends when it ends**
+> [accordion] Tennis, snooker, darts — the match ends when it ends
 >
 > Play-to-target sports have no regulation cutoff at all. There is no moment
 > where the score is provisional and a later phase might move it — the match
@@ -162,19 +162,19 @@ rather than rejecting them.
 
 ## Related
 
-> **[Enumerations → period](https://docs.oddspapi.io/api-reference/enumerations.md#period)**
+> [card] [Enumerations → period](https://docs.oddspapi.io/api-reference/enumerations.md#period)
 >
 > The full reference list of period values.
 
-> **[Market coverage](https://docs.oddspapi.io/coverage/markets.md)**
+> [card] [Market coverage](https://docs.oddspapi.io/coverage/markets.md)
 >
 > Which market types exist per sport, and how they are scoped.
 
-> **[Parlays & SGP](https://docs.oddspapi.io/api-reference/parlays.md)**
+> [card] [Parlays & SGP](https://docs.oddspapi.io/api-reference/parlays.md)
 >
 > Combining legs across periods and fixtures.
 
-> **[Changelog](https://docs.oddspapi.io/changelog/index.md)**
+> [card] [Changelog](https://docs.oddspapi.io/changelog/index.md)
 >
 > Registry changes, including period corrections.
 

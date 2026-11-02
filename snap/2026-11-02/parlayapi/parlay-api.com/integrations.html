@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Integrations | ParlayAPI</title>
+<meta name="description" content="Every way to plug ParlayAPI into your stack: Postman / Bruno / Insomnia collections, Cursor &amp; Claude MCP server, OpenAPI client generators, llms.txt for AI agents, embeddable widgets, status badges, HMAC webhooks, and more.">
+<meta name="keywords" content="parlay api integrations, sportsbook api postman, claude mcp sports betting, openapi generator sportsbook, llms.txt ai discovery">
+<meta property="og:title" content="Integrations | ParlayAPI">
+<meta property="og:description" content="Postman, Bruno, Cursor MCP, llms.txt, widgets, badges, webhooks, and more.">
+<meta property="og:url" content="https://parlay-api.com/integrations">
+<link rel="canonical" href="https://parlay-api.com/integrations">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:0; font-family:-apple-system,"Inter",sans-serif; background:#06060b; color:#e8e8f0; line-height:1.6; }
+  .nav { display:flex; align-items:center; justify-content:space-between; padding:16px 28px; border-bottom:1px solid #1e1e2e; }
+  .nav .logo { font-weight:800; font-size:1.15rem; color:#fff; text-decoration:none; }
+  .nav .logo span { color:#9b82fc; }
+  .nav a { color:#c4c4d4; margin-left:18px; text-decoration:none; }
+  .nav .cta { background:linear-gradient(135deg,#7c5cfc,#5a3fd4); color:#fff; padding:8px 18px; border-radius:8px; font-weight:600; }
+  .container { max-width:1100px; margin:0 auto; padding:0 24px 60px; }
+  h1 { font-size:2.0rem; margin:28px 0 6px;
+       background:linear-gradient(135deg,#fff,#b8a3ff); -webkit-background-clip:text;
+       background-clip:text; -webkit-text-fill-color:transparent; }
+  .lead { color:#c4c4d4; font-size:0.95rem; margin:0 0 28px; max-width:780px; }
+  .lead a { color:#9b82fc; }
+  h2 { margin-top:40px; color:#b8a3ff; font-size:1.05rem; text-transform:uppercase; letter-spacing:0.06em; border-bottom:1px solid #1e1e2e; padding-bottom:8px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:14px; margin-top:14px; }
+  .card { background:#0c0c14; border:1px solid #1e1e2e; border-radius:10px; padding:16px 18px; display:flex; flex-direction:column; min-height:180px; }
+  .card h3 { margin:0 0 6px; color:#fff; font-size:1.0rem; display:flex; align-items:center; gap:8px; }
+  .card .tag { display:inline-block; padding:2px 7px; background:#15161e; color:#9b82fc; border-radius:4px; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.04em; }
+  .card .desc { color:#c4c4d4; font-size:0.9rem; margin:4px 0 12px; flex:1; }
+  .card .actions { display:flex; gap:10px; flex-wrap:wrap; }
+  .card .actions a { background:#15161e; border:1px solid #2a2c3a; color:#9b82fc; padding:6px 12px; border-radius:6px; font-size:0.84rem; text-decoration:none; }
+  .card .actions a:hover { background:#1d1e2c; }
+  pre { background:#0a0a12; border:1px solid #1e1e2e; border-radius:6px; padding:10px 12px; overflow-x:auto; font-size:0.78rem; color:#d8d8e8; margin:8px 0 0; }
+  pre code { font-family:"Menlo",monospace; color:#c4c4d4; }
+  a { color:#9b82fc; }
+  footer { padding:30px 28px; border-top:1px solid #1e1e2e; color:#6e6e85; font-size:0.85rem; text-align:center; }
+</style>
+<meta property="og:image" content="https://parlay-api.com/static/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+ <script defer src="/_analytics/script.js" data-website-id="809cd530-a8a1-4e46-bfc2-a76f2ba0681a" data-host-url="/_analytics"></script>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="logo">Parlay<span>API</span></a>
+  <div>
+    <a href="/try">Try</a>
+    <a href="/board">Board</a>
+    <a href="/docs">Docs</a>
+    <a href="/faq">FAQ</a>
+    <a href="/signup" class="cta">Get free key</a>
+  </div>
+</nav>
+
+<div class="container">
+<h1>Integrations</h1>
+<p class="lead">
+  Every way to plug ParlayAPI into your stack. Reference clients in eight languages, Postman/Bruno/Insomnia collections auto-generated from the OpenAPI spec, MCP server for Cursor &amp; Claude, llms.txt for AI agents, embeddable widgets, status badges, and HMAC-signed webhooks. If you're missing one, <a href="https://github.com/JacobiusMakes">open an issue</a>.
+</p>
+
+<h2>API clients (8 languages)</h2>
+
+<div class="grid">
+
+<div class="card">
+  <h3>Python <span class="tag">stdlib only</span></h3>
+  <p class="desc">Production-grade single-file client. Capped exponential backoff, Retry-After, idempotency keys, typed exceptions. requests + dataclasses, nothing else.</p>
+  <div class="actions">
+    <a href="https://github.com/JacobiusMakes/parlay-api-python/tree/main/examples">View</a>
+    <a href="/docs/sdks#python">Quickstart</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3>JavaScript / Node <span class="tag">zero deps</span></h3>
+  <p class="desc">Browser + Node 18+. Uses fetch (native everywhere now). Same retry semantics, same idempotency helper, same typed Error.</p>
+  <div class="actions">
+    <a href="https://github.com/JacobiusMakes/parlay-api-js/tree/main/examples">View</a>
+    <a href="/docs/sdks#javascript">Quickstart</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Go <span class="tag">stdlib only</span></h3>
+  <p class="desc">Single .go file. context.Context throughout, net/http, encoding/json. No external dependencies.</p>
+  <div class="actions">
+    <a href="https://github.com/JacobiusMakes">View</a>
+    <a href="/docs/sdks#go">Quickstart</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Ruby <span class="tag">stdlib only</span></h3>
+  <p class="desc">Ruby 3.0+. net/http + json + securerandom. Keyword args, raises ParlayAPI::Error.</p>
+  <div class="actions">
+    <a href="https://github.com/JacobiusMakes">View</a>
+    <a href="/docs/sdks#ruby">Quickstart</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Java <span class="tag">stdlib only</span></h3>
+  <p class="desc">Java 17+. java.net.http only, no Jackson/Gson. Returns raw JSON strings; pipe into your preferred deserializer.</p>
+  <div class="actions">
+    <a href="https://github.com/JacobiusMakes">View</a>
+    <a href="/docs/sdks#java">Quickstart</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3>PHP <span class="tag">no composer</span></h3>
+  <p class="desc">PHP 8.1+. Strict types, named-arg constructor, curl extension only. Typed ParlayException.</p>
+  <div class="actions">
+    <a href="https://github.com/JacobiusMakes">View</a>
+    <a href="/docs/sdks#php">Quickstart</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3>C# / .NET <span class="tag">no nuget</span></h3>
+  <p class="desc">.NET 6+. System.Net.Http + System.Text.Json only. Builder, IDisposable, async-throughout, CancellationToken.</p>
+  <div class="actions">
+    <a href="https://github.com/JacobiusMakes">View</a>
+    <a href="/docs/sdks#csharp">Quickstart</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Rust <span class="tag">async / tokio</span></h3>
+  <p class="desc">Rust 1.75+. tokio + reqwest + serde_json + thiserror. Async-throughout, typed Error enum, Builder pattern.</p>
+  <div class="actions">
+    <a href="https://github.com/JacobiusMakes">View</a>
+    <a href="/docs/sdks#rust">Quickstart</a>
+  </div>
+</div>
+
+</div>
+
+<h2>API tooling</h2>
+
+<div class="grid">
+
+<div class="card">
+  <h3>OpenAPI 3.1 <span class="tag">auto-generated</span></h3>
+  <p class="desc">Full machine-readable spec at /openapi.json. Generate clients in any language with openapi-generator-cli.</p>
+  <pre><code>openapi-generator-cli generate \
+  -i https://parlay-api.com/openapi.json \
+  -g typescript-axios -o ./parlay-api-ts</code></pre>
+  <div class="actions">
+    <a href="/openapi.json">Download</a>
+    <a href="/docs">Swagger UI</a>
+    <a href="/redoc">Redoc</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Postman 2.1 <span class="tag">start here</span></h3>
+  <p class="desc">Curated collection: 30 requests in six folders, each with a written description and a pre-filled example. Thirteen of them run with no API key, no signup and no card, so you can import it and press Send before you have an account. Imports into Insomnia, Bruno, Hoppscotch and HTTPie too.</p>
+  <pre><code># In Postman: Import → Link →
+https://parlay-api.com/collections/ParlayAPI.postman_collection.json</code></pre>
+  <div class="actions">
+    <a href="/postman">What is in it</a>
+    <a href="/collections/ParlayAPI.postman_collection.json">Download</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Postman 2.1 <span class="tag">auto-generated</span></h3>
+  <p class="desc">The whole surface instead of a curated slice: every operation in the spec, one request each, rebuilt from /openapi.json on every deploy so it cannot go stale. No prose and no examples, which makes it the right import for code generation and the wrong one for a first look.</p>
+  <pre><code># In Postman: Import → Link →
+https://parlay-api.com/collections/postman.json</code></pre>
+  <div class="actions">
+    <a href="/collections/postman.json">Download</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Bruno / Insomnia <span class="tag">via OpenAPI</span></h3>
+  <p class="desc">Both editors import OpenAPI 3.1 natively. Point them at /openapi.json. Bruno's bru-cli can also generate per-request .bru files into your repo.</p>
+  <pre><code>bru import --type openapi \
+  --source https://parlay-api.com/openapi.json</code></pre>
+</div>
+
+</div>
+
+<h2>AI agent integrations</h2>
+
+<div class="grid">
+
+<div class="card">
+  <h3>llms.txt <span class="tag">AI discovery</span></h3>
+  <p class="desc">Single-fetch landing page for AI search engines and agent crawlers. Lists every public endpoint, blog post, reference client, and HTML page with one-line descriptions. Spec: <a href="https://llmstxt.org">llmstxt.org</a>.</p>
+  <div class="actions">
+    <a href="/llms.txt">View llms.txt</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Claude / Cursor MCP server <span class="tag">v0.3</span></h3>
+  <p class="desc">parlayapi-mcp wraps every endpoint as an MCP tool. Drop it into Claude Desktop or Cursor settings and let the agent fetch odds, score bets, find arbs, run +EV scans, etc. directly.</p>
+  <pre><code>pip install parlayapi-mcp
+# claude_desktop_config.json:
+{ "mcpServers": {
+    "parlay-api": {
+      "command": "parlayapi-mcp",
+      "env": { "PARLAY_API_KEY": "pak_live_..." }
+    }
+} }</code></pre>
+  <div class="actions">
+    <a href="https://pypi.org/project/parlayapi-mcp/">PyPI</a>
+    <a href="https://github.com/JacobiusMakes/parlay-api-mcp">Source</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Blog: building a betting agent <span class="tag">recipes</span></h3>
+  <p class="desc">Four recipes for plugging a sportsbook into Claude: live-odds, EV scanning, bet logging with auto-CLV, and arb-alert subscriptions.</p>
+  <div class="actions">
+    <a href="/blog/building-betting-agent-claude-2026-05-19">Read</a>
+  </div>
+</div>
+
+</div>
+
+<h2>Live embeds</h2>
+
+<div class="grid">
+
+<div class="card">
+  <h3>Arbs widget <span class="tag">iframe</span></h3>
+  <p class="desc">Drop live cross-book arbitrage onto any site. 30s auto-refresh, sport selector, dark transparent theme. iframe-friendly CSP.</p>
+  <pre><code>&lt;iframe src="https://parlay-api.com/widget/arbs?sport=baseball_mlb"
+        width="100%" height="320" frameborder="0"&gt;&lt;/iframe&gt;</code></pre>
+  <div class="actions">
+    <a href="/widgets">Widget gallery</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3>+EV widget <span class="tag">iframe</span></h3>
+  <p class="desc">Live Pinnacle-anchored +EV plays.</p>
+  <pre><code>&lt;iframe src="https://parlay-api.com/widget/ev?sport=baseball_mlb"
+        width="100%" height="320" frameborder="0"&gt;&lt;/iframe&gt;</code></pre>
+</div>
+
+<div class="card">
+  <h3>Middles widget <span class="tag">iframe</span></h3>
+  <p class="desc">Live cross-book totals middles.</p>
+  <pre><code>&lt;iframe src="https://parlay-api.com/widget/middles?sport=americanfootball_nfl"
+        width="100%" height="320" frameborder="0"&gt;&lt;/iframe&gt;</code></pre>
+</div>
+
+<div class="card">
+  <h3>Status badges <span class="tag">SVG</span></h3>
+  <p class="desc">Shields.io-compatible SVG badges for README files and status pages. Show ParlayAPI's uptime, source count, or your own per-book SLA tier.</p>
+  <pre><code>![status](https://parlay-api.com/badge/uptime.svg)
+![sources](https://parlay-api.com/badge/sources.svg)</code></pre>
+</div>
+
+</div>
+
+<h2>Webhooks &amp; events</h2>
+
+<div class="grid">
+
+<div class="card">
+  <h3>HMAC-signed alert webhooks <span class="tag">push</span></h3>
+  <p class="desc">Subscribe to source-quality breach alerts, edge-detection triggers, and odds-movement events. Every payload is HMAC-SHA256 signed; verify with your subscription secret.</p>
+  <div class="actions">
+    <a href="/docs/best-practices">Signature spec</a>
+    <a href="https://github.com/JacobiusMakes/parlay-api-python/tree/main/examples">Slack/Discord relay</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3>WebSocket streaming <span class="tag">scale tier+</span></h3>
+  <p class="desc">wss://parlay-api.com/v1/ws, sub-second odds pushes with subscribe/unsubscribe per (sport, market, book). SSE fallback at /v1/sse/odds for HTTP-only clients.</p>
+  <div class="actions">
+    <a href="/docs/websocket">Docs</a>
+    <a href="https://github.com/JacobiusMakes/parlay-api-python/tree/main/examples">Python example</a>
+  </div>
+</div>
+
+</div>
+
+<h2>What's missing?</h2>
+
+<p style="color:#c4c4d4;font-size:0.95rem;">
+Want a Kotlin client, an Elixir wrapper, a Zapier integration, or first-class support for some niche editor? Open an issue at <a href="https://github.com/JacobiusMakes">github.com/JacobiusMakes</a>. We prioritize integrations that lower the time-to-first-call for new customers.
+</p>
+
+</div>
+
+<footer>
+  ParlayAPI &middot; <a href="/docs">/docs</a> &middot; <a href="/docs/sdks">/docs/sdks</a> &middot; <a href="/widgets">/widgets</a> &middot; <a href="/faq">/faq</a>
+</footer>
+
+</body>
+</html>

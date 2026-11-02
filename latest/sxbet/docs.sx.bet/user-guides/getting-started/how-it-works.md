@@ -14,11 +14,11 @@ This peer-to-peer model means better odds, because you're not paying a bookmaker
 
 Every bet on SX Bet involves two roles:
 
-> **Maker (Limit Order)**
+> [card] Maker (Limit Order)
 >
 > Posts a limit order to the order book – this order sits open until it is cancelled or filled.
 
-> **Taker (Market Order)**
+> [card] Taker (Market Order)
 >
 > Fills a maker's existing limit order from the orderbook with a market bet. This is like placing a bet on a traditional sportsbook.
 
@@ -52,11 +52,11 @@ Learn more about [fees on SX Bet](https://docs.sx.bet/user-guides/trading/fees.m
 
 ## Next Steps
 
-> **[Quickstart](https://docs.sx.bet/user-guides/getting-started/quickstart.md)**
+> [card] [Quickstart](https://docs.sx.bet/user-guides/getting-started/quickstart.md)
 >
 > Sign up, fund your wallet, and place your first bet.
 
-> **[Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)**
+> [card] [Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)
 >
 > Learn how to find odds and navigate the live order book.
 

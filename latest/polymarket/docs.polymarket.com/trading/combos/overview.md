@@ -70,11 +70,11 @@ sequenceDiagram
 Integrate Combos into market maker systems or builder apps that request
 executable prices for users.
 
-> **[Market Makers](https://docs.polymarket.com/trading/combos/market-makers.md)**
+> [card] [Market Makers](https://docs.polymarket.com/trading/combos/market-makers.md)
 >
 > Build a market maker integration for pricing and executing Combos.
 
-> **[Builders](https://docs.polymarket.com/trading/combos/builders.md)**
+> [card] [Builders](https://docs.polymarket.com/trading/combos/builders.md)
 >
 > Request Combo quotes and execute accepted trades for users.
 

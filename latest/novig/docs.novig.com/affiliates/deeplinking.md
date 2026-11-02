@@ -76,11 +76,11 @@ novigapp://events/<outcome_id>,<outcome_id>,<outcome_id>/<partner_id>?referralCo
 
 ## Best Practices
 
-> **Always Include Partner ID**
+> [card] Always Include Partner ID
 >
 > Ensures all trading activity is properly attributed to your partnership.
 
-> **Include Referral Code**
+> [card] Include Referral Code
 >
 > Append `?referralCode=YOUR_CODE` to credit new sign-ups to your partnership.
 

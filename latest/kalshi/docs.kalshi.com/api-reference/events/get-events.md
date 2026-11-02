@@ -377,6 +377,7 @@ components:
         details:
           type: object
           additionalProperties: true
+          x-go-type: json.RawMessage
           description: >-
             Additional details about the milestone. `details.status`, when
             present, is maintained by a periodic background job. It lags the
@@ -458,7 +459,10 @@ components:
           description: Shortened title for the yes side of this market
         no_sub_title:
           type: string
-          description: Shortened title for the no side of this market
+          deprecated: true
+          description: >
+            Deprecated. Use `yes_sub_title` instead. Equal to `yes_sub_title` on
+            every market created since September 2024.
         created_time:
           type: string
           format: date-time
@@ -652,6 +656,8 @@ components:
           type: object
           nullable: true
           x-omitempty: true
+          x-go-type: json.RawMessage
+          x-go-type-skip-optional-pointer: true
           description: Expiration value for each target that leads to a YES settlement
         rules_primary:
           type: string

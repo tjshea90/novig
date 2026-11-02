@@ -53,15 +53,15 @@ Orders sometime leave the book without you cancelling them, and `inactiveReason`
 
 ## Related
 
-> **[Cancel orders by id](https://docs.sx.bet/api-reference/delete-orders-v3.md)**
+> [card] [Cancel orders by id](https://docs.sx.bet/api-reference/delete-orders-v3.md)
 
-> **[Cancel all orders](https://docs.sx.bet/api-reference/delete-orders-v3-all.md)**
+> [card] [Cancel all orders](https://docs.sx.bet/api-reference/delete-orders-v3-all.md)
 
-> **[Cancel orders by market](https://docs.sx.bet/api-reference/delete-orders-v3-market.md)**
+> [card] [Cancel orders by market](https://docs.sx.bet/api-reference/delete-orders-v3-market.md)
 
-> **[Cancel orders by event](https://docs.sx.bet/api-reference/delete-orders-v3-event.md)**
+> [card] [Cancel orders by event](https://docs.sx.bet/api-reference/delete-orders-v3-event.md)
 
-> **[Heartbeat](https://docs.sx.bet/developers/heartbeat.md)**
+> [card] [Heartbeat](https://docs.sx.bet/developers/heartbeat.md)
 >
 > Arming the switch that cancels for you when your process stops.
 

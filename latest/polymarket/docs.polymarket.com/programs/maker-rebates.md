@@ -40,86 +40,86 @@ Rebates are paid daily in pUSD, directly to your wallet. A minimum accrued rebat
 Read a maker's rebate amounts for a calendar day to reconcile the program with
 your accounting.
 
-**TypeScript**
+> [tab] TypeScript
+>
+> Call `fetchCurrentRebates()` using an existing `PublicClient` named `client`.
+> If needed, [create a public client](https://docs.polymarket.com/getting-started/typescript.md#create-a-public-client).
+> The method is also available on `SecureClient`.
+>
+> ```ts theme={null}
+> const rebates = await client.fetchCurrentRebates({
+>   date: "2026-10-06",
+>   makerAddress: "0xFeA4cB3dD4ca7CefD3368653B7D6FF9BcDFca604",
+> });
+>
+> for (const rebate of rebates) {
+>   console.log(rebate.conditionId, rebate.rebatedFeesUsdc);
+> }
+> ```
+>
+> Each `RebatedFee` includes `date`, `conditionId`, `assetAddress`,
+> `makerAddress`, and `rebatedFeesUsdc`. The amount is an exact USDC decimal string.
+> Keep it as a string or use a decimal library for accounting. The method returns
+> an empty array when the maker has no rebates for the requested date.
 
-Call `fetchCurrentRebates()` using an existing `PublicClient` named `client`.
-If needed, [create a public client](https://docs.polymarket.com/getting-started/typescript.md#create-a-public-client).
-The method is also available on `SecureClient`.
+> [tab] Python
+>
+> Call `get_current_rebates()` using an existing `AsyncPublicClient` named `client`.
+> If needed, [create a public client](https://docs.polymarket.com/getting-started/python.md#create-a-public-client).
+> The method is also available on `AsyncSecureClient`. The synchronous clients
+> provide the same method.
+>
+> ```python theme={null}
+> rebates = await client.get_current_rebates(
+>     date="2026-10-06",
+>     maker_address="0xFeA4cB3dD4ca7CefD3368653B7D6FF9BcDFca604",
+> )
+>
+> for rebate in rebates:
+>     print(rebate.condition_id, rebate.rebated_fees_usdc)
+> ```
+>
+> Each `RebatedFee` includes `date`, `condition_id`, `asset_address`,
+> `maker_address`, and `rebated_fees_usdc`. The date is a `datetime.date` and the
+> USDC amount is a `Decimal`. The method returns an empty tuple when the maker
+> has no rebates for the requested date.
 
-```ts theme={null}
-const rebates = await client.fetchCurrentRebates({
-  date: "2026-10-06",
-  makerAddress: "0xFeA4cB3dD4ca7CefD3368653B7D6FF9BcDFca604",
-});
-
-for (const rebate of rebates) {
-  console.log(rebate.conditionId, rebate.rebatedFeesUsdc);
-}
-```
-
-Each `RebatedFee` includes `date`, `conditionId`, `assetAddress`,
-`makerAddress`, and `rebatedFeesUsdc`. The amount is an exact USDC decimal string.
-Keep it as a string or use a decimal library for accounting. The method returns
-an empty array when the maker has no rebates for the requested date.
-
-**Python**
-
-Call `get_current_rebates()` using an existing `AsyncPublicClient` named `client`.
-If needed, [create a public client](https://docs.polymarket.com/getting-started/python.md#create-a-public-client).
-The method is also available on `AsyncSecureClient`. The synchronous clients
-provide the same method.
-
-```python theme={null}
-rebates = await client.get_current_rebates(
-    date="2026-10-06",
-    maker_address="0xFeA4cB3dD4ca7CefD3368653B7D6FF9BcDFca604",
-)
-
-for rebate in rebates:
-    print(rebate.condition_id, rebate.rebated_fees_usdc)
-```
-
-Each `RebatedFee` includes `date`, `condition_id`, `asset_address`,
-`maker_address`, and `rebated_fees_usdc`. The date is a `datetime.date` and the
-USDC amount is a `Decimal`. The method returns an empty tuple when the maker
-has no rebates for the requested date.
-
-**API**
-
-Request a date and the nonzero maker address without authentication.
-
-```bash theme={null}
-curl -G "https://clob.polymarket.com/rebates/current" \
-  --data-urlencode "date=2026-10-06" \
-  --data-urlencode "maker_address=0xFeA4cB3dD4ca7CefD3368653B7D6FF9BcDFca604"
-```
-
-Illustrative response:
-
-> **Output: Maker Rebates**
+> [tab] API
+>
+> Request a date and the nonzero maker address without authentication.
+>
+> ```bash theme={null}
+> curl -G "https://clob.polymarket.com/rebates/current" \
+>   --data-urlencode "date=2026-10-06" \
+>   --data-urlencode "maker_address=0xFeA4cB3dD4ca7CefD3368653B7D6FF9BcDFca604"
+> ```
+>
+> Illustrative response:
+>
+> > [accordion] Output: Maker Rebates
+> >
+> > ```json theme={null}
+> > [
+> >   {
+> >     "date": "2026-10-06",
+> >     "condition_id": "0x747dc809fb79e1b05be09c42d6179459a58de2ef3e40f02484a4e1260f741f75",
+> >     "asset_address": "0x9c4E1703476E875070EE25b56A58B008CFb8FA78",
+> >     "maker_address": "0xFeA4cB3dD4ca7CefD3368653B7D6FF9BcDFca604",
+> >     "rebated_fees_usdc": "1.599840"
+> >   }
+> > ]
+> > ```
+>
+> For a maker with no rows, the response is:
 >
 > ```json theme={null}
-> [
->   {
->     "date": "2026-10-06",
->     "condition_id": "0x747dc809fb79e1b05be09c42d6179459a58de2ef3e40f02484a4e1260f741f75",
->     "asset_address": "0x9c4E1703476E875070EE25b56A58B008CFb8FA78",
->     "maker_address": "0xFeA4cB3dD4ca7CefD3368653B7D6FF9BcDFca604",
->     "rebated_fees_usdc": "1.599840"
->   }
-> ]
+> null
 > ```
-
-For a maker with no rows, the response is:
-
-```json theme={null}
-null
-```
-
-The response is an array when rebates exist, or `null` when there are no rows.
-Each entry contains `date`, `condition_id`,
-`asset_address`, `maker_address`, and `rebated_fees_usdc`, an exact USDC decimal
-string. This read is not paginated.
+>
+> The response is an array when rebates exist, or `null` when there are no rows.
+> Each entry contains `date`, `condition_id`,
+> `asset_address`, `maker_address`, and `rebated_fees_usdc`, an exact USDC decimal
+> string. This read is not paginated.
 
 Use a valid `YYYY-MM-DD` calendar date and the maker's nonzero EVM address.
 The requested date is not restricted to today.
@@ -215,27 +215,27 @@ Fees](https://docs.polymarket.com/market-data/market-details.md#trading-fees) in
 
 ## FAQ
 
-> **How do I qualify for maker rebates**
+> [accordion] How do I qualify for maker rebates
 >
 > Place orders that add liquidity to the book and get filled (i.e., your
 > liquidity is taken by another trader).
 
-> **When are rebates paid**
+> [accordion] When are rebates paid
 >
 > Daily, in pUSD. You must accrue at least \$1 in rebates before a payout is issued.
 
-> **How are rebates calculated**
+> [accordion] How are rebates calculated
 >
 > Rebates are proportional to your share of executed maker liquidity in each
 > eligible market. Totals are calculated per market, so you only compete with
 > other makers in the same market.
 
-> **Where does the rebate pool come from**
+> [accordion] Where does the rebate pool come from
 >
 > Taker fees collected in eligible markets are allocated to the maker rebate
 > pool and distributed daily.
 
-> **Which markets have fees enabled**
+> [accordion] Which markets have fees enabled
 >
 > Crypto, Sports, Finance, Politics, Economics, Culture, Weather, Tech, Mentions, and Other / General markets.
 

@@ -43,19 +43,19 @@ Seed from REST on connect, then apply channel messages.
 
 ## Related
 
-> **[Get public trades](https://docs.sx.bet/api-reference/get-trades-v3-public.md)**
+> [card] [Get public trades](https://docs.sx.bet/api-reference/get-trades-v3-public.md)
 >
 > Core trade fields plus optional market metadata, and what the API holds back.
 
-> **[Recent trades channel](https://docs.sx.bet/api-reference/channel-recent-trades-v3.md)**
+> [card] [Recent trades channel](https://docs.sx.bet/api-reference/channel-recent-trades-v3.md)
 >
 > The same data, in realtime.
 
-> **[The order book](https://docs.sx.bet/developers/order-book.md)**
+> [card] [The order book](https://docs.sx.bet/developers/order-book.md)
 >
 > What people will trade at, versus what they already traded at.
 
-> **[Reading your bets](https://docs.sx.bet/developers/which-grain.md#bets)**
+> [card] [Reading your bets](https://docs.sx.bet/developers/which-grain.md#bets)
 >
 > The authenticated view — full bet grain, including identity and settlement.
 

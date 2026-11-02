@@ -193,6 +193,14 @@ components:
           type: string
           format: date-time
           description: Timestamp when the RFQ was last updated
+        rfq_batch_id:
+          type: string
+          description: >-
+            Identifier of the RFQ batch this RFQ is a child of. Omitted for an
+            RFQ outside a batch. A child can be quoted like a single RFQ, with
+            the differences described in [Request for
+            Quote](/getting_started/rfqs#rfq-batch-children).
+          x-go-type-skip-optional-pointer: true
     ErrorResponse:
       type: object
       properties:

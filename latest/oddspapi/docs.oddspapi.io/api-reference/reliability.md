@@ -18,7 +18,7 @@ OddsPapi is built for teams that trade on the feed, so reliability is a first-cl
 
 Real-time platform status, ongoing incidents, and historical uptime are published on our status page:
 
-> **[OddsPapi Status Page](https://oddspapi-v5.instatus.com)**
+> [card] [OddsPapi Status Page](https://oddspapi-v5.instatus.com)
 >
 > Live availability, incident reports, and uptime history — subscribe for updates.
 
@@ -59,12 +59,14 @@ Representative rolling p50 observation delays (live values per book on `GET /boo
 | Polymarket | 0.05 s | 0.05 s | measured |
 | Betfair Exchange | 0.10 s | 0.10 s | measured |
 | BC.Game | 0.25 s | 0.50 s | measured |
+| DraftKings | 0.28 s | 0.28 s | measured |
 | Pinnacle | 0.38 s | 0.38 s | measured |
+| FanDuel | \~0.5 s | \~2 s | estimated |
 | Singbet | \~1 s | \~8 s | estimated |
 
-Downstream of observation, the internal pipeline adds \~30 ms (p50) to gateway egress; the delivery hop from `ts` to client receipt depends on where you deploy — as low as \~5 ms when colocated (see [server location guidance](https://docs.oddspapi.io/api-reference/concepts.md#server-location-matters)).
+Downstream of observation, the internal pipeline adds \~20 ms (p50) to gateway egress; the delivery hop from `ts` to client receipt depends on where you deploy — as low as \~5 ms when colocated (see [server location guidance](https://docs.oddspapi.io/api-reference/concepts.md#server-location-matters)).
 
-To verify these numbers yourself during a trial, see [evaluating the feed](https://docs.oddspapi.io/guides/evaluation.md); to benchmark them against a feed you already run, see [running OddsPapi as a second feed](https://docs.oddspapi.io/guides/second-feed.md); to trade on them, see [sharp-line trading & CLV](https://docs.oddspapi.io/guides/sharp-line-trading.md).
+How these numbers are produced — and why they exclude the delivery hop — is in the [latency methodology](https://docs.oddspapi.io/guides/latency-methodology.md). To verify them yourself during a trial, see [evaluating the feed](https://docs.oddspapi.io/guides/evaluation.md); to benchmark them against a feed you already run, see [running OddsPapi as a second feed](https://docs.oddspapi.io/guides/second-feed.md); to trade on them, see [sharp-line trading & CLV](https://docs.oddspapi.io/guides/sharp-line-trading.md).
 
 ***
 

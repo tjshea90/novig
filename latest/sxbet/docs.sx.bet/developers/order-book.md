@@ -12,14 +12,14 @@ total stake resting at it:
 ```json theme={null}
 {
   "outcomeOne": [
-    { "percentageOdds": "52000000000000000000", "size": "2000000" },
-    { "percentageOdds": "51500000000000000000", "size": "1000000" },
-    { "percentageOdds": "50000000000000000000", "size": "3000000" }
+    { "percentageOdds": "52000000000000000000", "size": "2000000", "newestOrderCreatedAtMs": 1794182400123 },
+    { "percentageOdds": "51500000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182391870 },
+    { "percentageOdds": "50000000000000000000", "size": "3000000", "newestOrderCreatedAtMs": 1794182254412 }
   ],
   "outcomeTwo": [
-    { "percentageOdds": "46750000000000000000", "size": "1000000" },
-    { "percentageOdds": "46000000000000000000", "size": "3000000" },
-    { "percentageOdds": "42000000000000000000", "size": "1000000" }
+    { "percentageOdds": "46750000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182398541 },
+    { "percentageOdds": "46000000000000000000", "size": "3000000", "newestOrderCreatedAtMs": 1794182337065 },
+    { "percentageOdds": "42000000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182102998 }
   ]
 }
 ```
@@ -27,6 +27,8 @@ total stake resting at it:
 * **`percentageOdds` is implied probability scaled by 10<sup>20</sup>** — `"52000000000000000000"` is 52.000%.
 * **`size` is stake in base units** — USDC has 6 decimals, so `"2000000"` is 2 USDC. It is **the resting
   party's** stake, not the amount you can bet against it.
+* **`newestOrderCreatedAtMs` is when the newest remaining order at this level was posted**, in Unix
+  milliseconds. Set before any betting delay. Optional; available November 9, 2026.
 
 Note that the side here is the side the resting order is betting. So if you were to match, you would be betting the opposite.
 
@@ -198,15 +200,15 @@ same version** the snapshot route serves, and the exchange publishes one message
   "marketHash": "0x5be2a55e4b7dec1cec1b75af93b3fdef178ec1473866da95b3c68c1d4c99d4fd",
   "version": "00100000000000002209000",
   "outcomeOne": [
-    { "percentageOdds": "52500000000000000000", "size": "1000000" },
-    { "percentageOdds": "52000000000000000000", "size": "2000000" },
-    { "percentageOdds": "51500000000000000000", "size": "1000000" },
-    { "percentageOdds": "50000000000000000000", "size": "3000000" }
+    { "percentageOdds": "52500000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182405310 },
+    { "percentageOdds": "52000000000000000000", "size": "2000000", "newestOrderCreatedAtMs": 1794182400123 },
+    { "percentageOdds": "51500000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182391870 },
+    { "percentageOdds": "50000000000000000000", "size": "3000000", "newestOrderCreatedAtMs": 1794182254412 }
   ],
   "outcomeTwo": [
-    { "percentageOdds": "46750000000000000000", "size": "1000000" },
-    { "percentageOdds": "46000000000000000000", "size": "3000000" },
-    { "percentageOdds": "42000000000000000000", "size": "1000000" }
+    { "percentageOdds": "46750000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182398541 },
+    { "percentageOdds": "46000000000000000000", "size": "3000000", "newestOrderCreatedAtMs": 1794182337065 },
+    { "percentageOdds": "42000000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182102998 }
   ]
 }
 ```
@@ -221,19 +223,19 @@ comparison is on [Book versioning](https://docs.sx.bet/developers/book-versionin
 
 ## Related
 
-> **[Posting orders](https://docs.sx.bet/developers/posting-orders.md)**
+> [card] [Posting orders](https://docs.sx.bet/developers/posting-orders.md)
 >
 > Sign and submit an order onto the book.
 
-> **[Fetching odds](https://docs.sx.bet/developers/odds.md)**
+> [card] [Fetching odds](https://docs.sx.bet/developers/odds.md)
 >
 > Scanning many markets, and getting a live client its first snapshot.
 
-> **[Book versioning](https://docs.sx.bet/developers/book-versioning.md)**
+> [card] [Book versioning](https://docs.sx.bet/developers/book-versioning.md)
 >
 > Applying live updates in the right order.
 
-> **[Time in force](https://docs.sx.bet/developers/time-in-force.md)**
+> [card] [Time in force](https://docs.sx.bet/developers/time-in-force.md)
 >
 > GTC, IOC, FOK — and what happens when there is not enough depth.
 

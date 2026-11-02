@@ -18,11 +18,11 @@ Welcome to the Novig Affiliate Integration documentation. This guide provides al
 
 As a Novig affiliate partner, you'll receive:
 
-> **Partner ID**
+> [card] Partner ID
 >
 > A unique identifier used for tracking all trading activity from your users.
 
-> **Referral Code**
+> [card] Referral Code
 >
 > A unique referral code for tracking first-time purchasers and new sign-ups.
 
@@ -30,23 +30,23 @@ As a Novig affiliate partner, you'll receive:
 
 Choose the integration level that fits your needs:
 
-**1. Odds Screens**
+**1. Parlay Pricing**
+
+Show what a parlay would pay on Novig inside your UI. You send the legs and get back one live price.
+
+[Learn more about Parlay Pricing](https://docs.novig.com/affiliates/parlay-pricing.md)
+
+**2. Odds Screens**
 
 Display Novig prices on your platform using our REST catalog and order book. Perfect for price comparison sites and sports data platforms.
 
 [Learn more about Odds Screens](https://docs.novig.com/affiliates/odds-screens.md)
 
-**2. Deeplinking**
+**3. Deeplinking**
 
 Direct users from your platform into the Novig app with pre-populated order slips. Supports both mobile and web deeplinks.
 
 [Learn more about Deeplinking](https://docs.novig.com/affiliates/deeplinking.md)
-
-**3. Parlay Pricing**
-
-Query real-time Novig parlay prices directly within your UI to show users what they'd get on Novig.
-
-[Learn more about Parlay Pricing](https://docs.novig.com/affiliates/parlay-pricing.md)
 
 ## Getting Started
 

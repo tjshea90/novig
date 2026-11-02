@@ -34,30 +34,30 @@ Both routes spend one token from the `account` [throttle](https://docs.novig.com
 * `amount` is a positive decimal with at most 5 places. We never round it.
 * `clientTransferId` is your idempotency key, up to 64 characters and unique per trader. Send one.
 
-**Request**
+> [tab] Request
+>
+> ```json theme={"dark"}
+> {
+>   "direction": "fund",
+>   "amount": "250.00000",
+>   "clientTransferId": "desk-1-topup-2026-09-09-a"
+> }
+> ```
 
-```json theme={"dark"}
-{
-  "direction": "fund",
-  "amount": "250.00000",
-  "clientTransferId": "desk-1-topup-2026-09-09-a"
-}
-```
-
-**202**
-
-```json theme={"dark"}
-{
-  "transferId": "c4a71f30-…",
-  "status": "Requested",
-  "direction": "fund",
-  "amount": "250.00000",
-  "actualBalance": null,
-  "clientTransferId": "desk-1-topup-2026-09-09-a",
-  "createdAt": "2026-09-09T14:22:03.118Z",
-  "updatedAt": "2026-09-09T14:22:03.118Z"
-}
-```
+> [tab] 202
+>
+> ```json theme={"dark"}
+> {
+>   "transferId": "c4a71f30-…",
+>   "status": "Requested",
+>   "direction": "fund",
+>   "amount": "250.00000",
+>   "actualBalance": null,
+>   "clientTransferId": "desk-1-topup-2026-09-09-a",
+>   "createdAt": "2026-09-09T14:22:03.118Z",
+>   "updatedAt": "2026-09-09T14:22:03.118Z"
+> }
+> ```
 
 ## Retry a transfer
 

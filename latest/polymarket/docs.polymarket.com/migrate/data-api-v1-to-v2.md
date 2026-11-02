@@ -4,19 +4,18 @@
 
 # Migrate from Data API v1 to v2
 
-> Move an integration from the original Data API routes to their v2 counterparts: the route mapping, the contract changes, and what stays on v1.
+> Move an integration from the original Data API routes to their v2 counterparts: the route mapping, the contract changes, and the accounting snapshot retirement.
 
 Data API v2 replaces the original per-route contracts with one shared contract
 across every read. You can migrate one call site at a time, but new
 integrations should start on v2 directly.
 
-Both versions are served at `https://data-api.polymarket.com`, with v2 routes
-under the `/v2` prefix.
+Use `https://data-api.polymarket.com` with the `/v2` prefix for v2 routes.
 
 > [!WARNING]
 >
-> **Data API v1 is retired on October 24, 2026.** Move your integration to the
-> v2 routes in the mapping below before then.
+> **Data API v1 retires on November 2, 2026.** Move your integration to the
+> v2 routes in the mapping below.
 
 ## What Changed
 
@@ -91,10 +90,12 @@ v2 adds these reads. User stats also covers the existing traded-market count:
 | `GET /v2/tokens` | Token lookup by token id or condition |
 | `GET /v2/status` | Data freshness |
 
-## Staying on v1
+## Accounting Snapshot Retirement
 
-`GET /v1/accounting/snapshot` has no v2 counterpart and is not part of the
-retirement above. Keep calling its existing route.
+`GET /v1/accounting/snapshot` retires with Data API v1 on November 2, 2026.
+There is no v2 counterpart for its ZIP archive of CSVs. Remove calls to this
+route; the v2 portfolio, position, and activity reads are not an equivalent
+accounting export.
 
 ## SDK Migration to Data API V2
 

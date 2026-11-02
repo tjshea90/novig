@@ -10,11 +10,11 @@ A **builder** is a person, group, or organization that routes orders from users 
 
 ## Program Benefits
 
-> **Gasless Transactions**
+> [card] Gasless Transactions
 >
 > All onchain operations are gas-free through our relayer
 
-> **Order Attribution**
+> [card] Order Attribution
 >
 > Get credit for orders and compete for grants on the Builder Leaderboard
 
@@ -80,20 +80,20 @@ Allow up to **24 hours** for matched volume to appear on the leaderboard.
 
 ## Next Steps
 
-> **[Create New Accounts](https://docs.polymarket.com/trading/wallets-auth.md#create-new-accounts)**
+> [card] [Create New Accounts](https://docs.polymarket.com/trading/wallets-auth.md#create-new-accounts)
 >
 > Create a builder account and the credentials used to provision accounts for
 > your users.
 
-> **[Understand Tiers](https://docs.polymarket.com/programs/builders/tiers.md)**
+> [card] [Understand Tiers](https://docs.polymarket.com/programs/builders/tiers.md)
 >
 > Learn about rate limits and how to upgrade.
 
-> **[Attribute Orders](https://docs.polymarket.com/trading/place-orders.md#builder-attribution)**
+> [card] [Attribute Orders](https://docs.polymarket.com/trading/place-orders.md#builder-attribution)
 >
 > Configure your client to credit trades to your account.
 
-> **[Execute Gasless Transactions](https://docs.polymarket.com/trading/wallets-auth.md#execute-gasless-transactions)**
+> [card] [Execute Gasless Transactions](https://docs.polymarket.com/trading/wallets-auth.md#execute-gasless-transactions)
 >
 > Approve tokens, transfer funds, and manage positions without paying gas.
 

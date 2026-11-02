@@ -34,30 +34,30 @@ We'll run through these steps using Coinbase, but you'll find most crypto exchan
 
 ### FAQ
 
-> **Is a new transfer (deposit) address generated for each deposit?**
+> [accordion] Is a new transfer (deposit) address generated for each deposit?
 >
 > Yes — a fresh transfer address is generated each time you deposit. Sending funds to the address you were provided for a previous deposit will cause a delay in your deposit. Only transfer your funds to the deposit address provided for this specific session.
 
-> **Are there fees on deposits?**
+> [accordion] Are there fees on deposits?
 >
 > No — deposits made with Native USDC have 0% fees. Deposits made with any other token (e.g. BTC, ETH, USDT) are subject to a 0.33% fee. If you're unsure how to get Native USDC, open a support chat on [SX Bet](https://sx.bet).
 
-> **Which tokens can I deposit?**
+> [accordion] Which tokens can I deposit?
 >
 > We support deposits with 100+ tokens across 10+ blockchain networks. To see the full list of supported tokens:
 >
 > 1. Select **Deposit** > **Deposit from anywhere**
 > 2. Use the dropdown menu to browse available tokens and chains.
 
-> **My deposit is taking longer than expected**
+> [accordion] My deposit is taking longer than expected
 >
 > If your deposit is taking longer than expected, please open a support chat on [SX Bet](https://sx.bet/) or contact our payments provider (Glide) directly by emailing [support@paywithglide.xyz](mailto:support@paywithglide.xyz).
 
-> **[Place Your First Bet](https://docs.sx.bet/user-guides/trading/market-orders.md)**
+> [card] [Place Your First Bet](https://docs.sx.bet/user-guides/trading/market-orders.md)
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)**
+> [card] [Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)
 >
 > Learn how to find odds and navigate the live order book.
 

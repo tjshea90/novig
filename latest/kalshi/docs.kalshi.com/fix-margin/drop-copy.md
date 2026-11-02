@@ -14,7 +14,9 @@
 >
 > Historical execution-report replay through EventResendRequest (35=U1) requires allowlisting for your user account on both `KalshiNR` and `KalshiDC` sessions. Contact [institutional@kalshi.com](mailto:institutional@kalshi.com) to request access. Requests from accounts that are not allowlisted are rejected with EventResendReject (35=U3), reason `5` (NOT\_ENABLED). Allowlisting does not backfill earlier events.
 
-Lookback window is limited to the last 3 hours. Only ExecutionReport (35=8) messages are returned. Rejects and pending orders (ExecID `"-1;-1"`) are excluded.
+Execution reports are retained for 24 hours. Requests for execution reports 24 hours old or older are best effort and may be rejected. Only ExecutionReport (35=8) messages are returned. Rejects and pending orders (ExecID `"-1;-1"`) are excluded.
+
+The 24-hour period includes maintenance periods. Requests for unavailable history are rejected with `EventResendReject` (35=U3), reason `3`.
 
 > [!NOTE]
 >
@@ -24,10 +26,12 @@ Lookback window is limited to the last 3 hours. Only ExecutionReport (35=8) mess
 
 Request execution reports within a specified ExecID range.
 
+Pass ExecIDs exactly as received. Each request replays one ExecID sequence, identified by `LastMkt` (tag 30), so `BeginExecID` and `EndExecID` must come from the same sequence. After a disconnect, send one request per sequence.
+
 | Tag | Name | Description | Required |
 | - | - | - | - |
 | 21001 | BeginExecID | Starting ExecID (inclusive) | Yes |
-| 21002 | EndExecID | Ending ExecID (inclusive). Defaults to latest ExecID if omitted. | No |
+| 21002 | EndExecID | Ending ExecID (inclusive). Defaults to the latest ExecID on the same sequence if omitted. | No |
 
 **Example:**
 
@@ -38,6 +42,8 @@ Request execution reports within a specified ExecID range.
 ## EventResendComplete (35=U2)
 
 Sent after all requested events have been resent.
+
+A valid range with no matching execution reports for your account completes with `ResendEventCount=0`.
 
 | Tag | Name | Description | Required |
 | - | - | - | - |
@@ -51,7 +57,7 @@ Sent when a resend request cannot be fulfilled.
 | Tag | Name | Description | Required |
 | - | - | - | - |
 | 45 | RefSeqNum | MsgSeqNum of the EventResendRequest | Yes |
-| 21004 | EventResendRejectReason | Rejection code: `1`=Too many resend requests, `2`=Server error, `3`=BeginExecID too small (outside window), `4`=EndExecID too large, `5`=User not allowlisted for historical replay | Yes |
+| 21004 | EventResendRejectReason | Rejection code: `1`=Too many resend requests, `2`=Server error, `3`=BeginExecID too small (requested history unavailable), `4`=EndExecID too large, `5`=User not allowlisted for historical replay | Yes |
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

@@ -114,11 +114,11 @@ Routes with no authentication, such as `GET /markets/active`, are not listed her
 
 ## Related
 
-> **[Rate limits](https://docs.sx.bet/developers/rate-limits.md)**
+> [card] [Rate limits](https://docs.sx.bet/developers/rate-limits.md)
 >
 > Request budgets for each route.
 
-> **[API keys](https://docs.sx.bet/api-reference/api-key.md)**
+> [card] [API keys](https://docs.sx.bet/api-reference/api-key.md)
 >
 > Generate a key and send it on a request.
 

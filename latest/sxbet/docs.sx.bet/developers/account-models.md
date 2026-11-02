@@ -45,15 +45,15 @@ Each user on your app is their own SX.bet user, and your site is effectively a s
 
 ## Related
 
-> **[External user id](https://docs.sx.bet/developers/external-user-id.md)**
+> [card] [External user id](https://docs.sx.bet/developers/external-user-id.md)
 >
 > Attribute orders, fills, and bets to people on your platform.
 
-> **[API keys](https://docs.sx.bet/api-reference/api-key.md)**
+> [card] [API keys](https://docs.sx.bet/api-reference/api-key.md)
 >
 > Generate and use the key your backend calls with.
 
-> **[Work with us](https://docs.sx.bet/developers/work-with-us.md)**
+> [card] [Work with us](https://docs.sx.bet/developers/work-with-us.md)
 >
 > Building at scale or exploring a partnership.
 

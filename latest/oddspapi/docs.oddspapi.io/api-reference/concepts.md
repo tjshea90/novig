@@ -152,7 +152,7 @@ So "total goals over 2.5, full time" always lands on the same `marketId` / `outc
 
 > **Key rule:** because every line value gets its **own** `marketId`, "Over 2.5" and "Over 3.5" are *different* markets — not two outcomes of one market. Within a single `marketId`, the outcomes are only the **sides** of that exact line (e.g. `Over 2.5` + `Under 2.5`).
 
-> **Worked example — soccer (sportId 10)**
+> [accordion] Worked example — soccer (sportId 10)
 >
 > A representative slice of the real soccer market map. Each `marketId` equals its first `outcomeId`, and each line value is its own market:
 >
@@ -400,13 +400,11 @@ All **odds-update times** are integer epoch milliseconds — for fixtures and fu
 
 To achieve the lowest latency for realtime updates:
 
-* The **fastest delivery regions** are Central Europe (recommended) and US East.
-* For best performance, deploy your backend **in the same datacenters we use**, such as:
-  * [Netcup](https://www.netcup.com/en/?ref=294017)
-  * [Hetzner](https://www.hetzner.com/cloud)
-* If you're building **prediction markets or models sensitive to latency**, consider:
-  * Deploying in **Austria (AT)** via Netcup, or
-  * Using **AWS eu-west-1** (Ireland)
+* Our main infrastructure runs in **Germany** and **US East** — the fastest delivery regions.
+* For best performance, deploy your backend **in the same datacenters we use**: [Hetzner](https://www.hetzner.com/cloud), central Germany.
+* On AWS, use:
+  * **eu-central-1** (Frankfurt) — preferred, or
+  * **eu-west-1** (Ireland) — e.g. for prediction-market work near Polymarket
 
 > ⚡ Servers colocated near our streaming infrastructure receive updates faster and with fewer hops.
 
@@ -442,7 +440,7 @@ See [Rate Limits](https://docs.oddspapi.io/api-reference/rate-limits.md) for hea
 
 ## Historical odds and CLV
 
-The realtime WebSocket `odds` and `oddsFutures` channels deliver **latest state** on a fixed \~10 ms batching window — ticks superseded within a window are collapsed to the newest value (no state is lost), so the stream is not a tick ledger. See [delivery semantics](https://docs.oddspapi.io/websocket/channels/odds.md#delivery-semantics).
+The realtime WebSocket `odds` and `oddsFutures` channels deliver **latest state** on a fixed \~6 ms batching window — ticks superseded within a window are collapsed to the newest value (no state is lost), so the stream is not a tick ledger. See [delivery semantics](https://docs.oddspapi.io/websocket/channels/odds.md#delivery-semantics).
 
 > Use the live stream to **trade**, and the REST history endpoints to **measure** — CLV models, fill auditing, and backtests.
 

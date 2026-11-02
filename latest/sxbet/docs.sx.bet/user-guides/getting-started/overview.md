@@ -14,25 +14,25 @@ Bet against other bettors — not the house. Better odds, open API, no limits.
 
 ## Why Bettors Choose SX Bet
 
-> **Great Odds & Liquidity**
+> [card] Great Odds & Liquidity
 >
 > Because odds are set by the market, you'll find better prices than traditional sportsbooks. A competitive marketplace means tighter lines and more value.
 
-> **No Limits**
+> [card] No Limits
 >
 > There are no account limits on SX Bet. Users are never restricted, banned, or charged premiums for winning — you are free to bet as much as you want on any market.
 
-> **Open API Access**
+> [card] Open API Access
 >
 > Power users and builders can access the full SX Bet API at no cost. See the [Developer Docs](https://docs.sx.bet/developers/introduction.md) for more.
 
 ## Ready to Get Started?
 
-> **[How Does SX Bet Work?](https://docs.sx.bet/user-guides/getting-started/how-it-works.md)**
+> [card] [How Does SX Bet Work?](https://docs.sx.bet/user-guides/getting-started/how-it-works.md)
 >
 > Learn how the peer-to-peer exchange model works.
 
-> **[Quickstart](https://docs.sx.bet/user-guides/getting-started/quickstart.md)**
+> [card] [Quickstart](https://docs.sx.bet/user-guides/getting-started/quickstart.md)
 >
 > Sign up, fund your wallet, and place your first bet.
 

@@ -250,25 +250,6 @@
 - [获取交易状态](https://docs.polymarket.com/cn/api-reference/bridge/get-transaction-status.md): Returns the deposits and withdrawals seen at a bridge address, newest first. Responses are cursor-paginated: each request returns one page plus a `nextCursor`. To read the full history, pass each `nextCursor` back as `cursor` until it comes back null. To track only recent activity, keep requesting t…
 - [创建提现地址](https://docs.polymarket.com/cn/api-reference/bridge/create-withdrawal-addresses.md)
 
-### 数据 API v1（旧版）
-
-- [获取用户当前仓位](https://docs.polymarket.com/cn/api-reference/core/get-current-positions-for-a-user.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/positions`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [获取用户已关闭的仓位](https://docs.polymarket.com/cn/api-reference/core/get-closed-positions-for-a-user.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/positions?status=CLOSED`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [获取市场仓位](https://docs.polymarket.com/cn/api-reference/core/get-positions-for-a-market.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/positions`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [获取用户或市场的交易](https://docs.polymarket.com/cn/api-reference/core/get-trades-for-a-user-or-markets.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/trades`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [获取用户活动](https://docs.polymarket.com/cn/api-reference/core/get-user-activity.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/activity`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [获取用户仓位总价值](https://docs.polymarket.com/cn/api-reference/core/get-total-value-of-a-users-positions.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/value`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [获取用户交易过的市场总数](https://docs.polymarket.com/cn/api-reference/misc/get-total-markets-a-user-has-traded.md)
-- [下载账户快照（CSV ZIP）](https://docs.polymarket.com/cn/api-reference/misc/download-an-accounting-snapshot-zip-of-csvs.md)
-- [获取市场主要持仓者](https://docs.polymarket.com/cn/api-reference/core/get-top-holders-for-markets.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/holders`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [获取未平仓量](https://docs.polymarket.com/cn/api-reference/misc/get-open-interest.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/oi`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [获取事件实时交易量](https://docs.polymarket.com/cn/api-reference/misc/get-live-volume-for-an-event.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/live-volume`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [获取交易者排行榜](https://docs.polymarket.com/cn/api-reference/core/get-trader-leaderboard-rankings.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/leaderboard`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [获取 Builder 汇总排行榜](https://docs.polymarket.com/cn/api-reference/builders/get-aggregated-builder-leaderboard.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/builders/leaderboard`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [获取 Builder 每日交易量时间序列](https://docs.polymarket.com/cn/api-reference/builders/get-daily-builder-volume-time-series.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/builders/volume`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [获取用户组合仓位](https://docs.polymarket.com/cn/api-reference/core/get-user-combo-positions.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/positions/combos`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2). Combinatorial (multi-market) positions held by a user, with per-leg breakdown. Also available at /v1/data/user/{address}/positions/combos (address from the path).…
-- [获取用户组合活动](https://docs.polymarket.com/cn/api-reference/core/get-user-combo-activity.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/activity/combos`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2). Combo lifecycle and redeem events (split / merge / convert / compress / wrap / unwrap / redeem) for a user, with per-leg breakdown. The combo counterpart to /activ…
-
 ## OpenAPI Specs
 
 - [clob-openapi](/api-spec/clob-openapi.yaml)
@@ -278,7 +259,6 @@
 - [combos-rfq-openapi](/api-spec/combos-rfq-openapi.yaml)
 - [perps-openapi](/api-spec/perps-openapi.json)
 - [bridge-openapi](/api-spec/bridge-openapi.yaml)
-- [data-openapi](/api-spec/data-openapi.yaml)
 
 ## AsyncAPI Specs
 

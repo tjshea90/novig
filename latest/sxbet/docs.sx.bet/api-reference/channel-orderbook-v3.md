@@ -39,6 +39,7 @@ Where a `Level` object looks like:
 | - | - | - |
 | percentageOdds | string | The odds the `maker` receives in the sx.bet protocol format. To convert to implied odds divide by 10^20. To get taker implied odds: `takerOdds = 1 - percentageOdds / 10^20`. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
 | size | string | Aggregate remaining maker size at that level, in base units. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md). |
+| newestOrderCreatedAtMs | number (optional) | When the newest remaining order at this level was posted, in Unix milliseconds. Set before any betting delay. Available November 9, 2026. |
 
 There is no `showTakerPerspective` parameter on this channel — levels are always the maker frame, unlike [`GET /orderbook-v3/snapshot/market`](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot), which accepts it.
 
@@ -86,7 +87,7 @@ The above returns JSON structured like this:
   "marketHash": "0xbf06c6379c922d8118612d1d7493b20f6df6929437fbf6022904327f9516a2eb",
   "eventId": "L13058397",
   "version": "00100000000000010015000",
-  "outcomeOne": [{ "percentageOdds": "40000000000000000000", "size": "1000000" }],
+  "outcomeOne": [{ "percentageOdds": "40000000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182400123 }],
   "outcomeTwo": []
 }
 ```

@@ -416,11 +416,11 @@ client
 
 Order book levels are always the maker frame. Convert to the price you'd pay with `takerOdds = 1 - percentageOdds / 10^20`. See [unit conversions](https://docs.sx.bet/developers/unit-conversions.md).
 
-> **[The exchange model](https://docs.sx.bet/developers/exchange-model.md)**
+> [card] [The exchange model](https://docs.sx.bet/developers/exchange-model.md)
 >
 > How the exchange and orderbook work, in depth.
 
-> **[Taking liquidity](https://docs.sx.bet/developers/taking-liquidity.md)**
+> [card] [Taking liquidity](https://docs.sx.bet/developers/taking-liquidity.md)
 >
 > Signing and submitting orders that execute immediately.
 

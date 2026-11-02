@@ -6,29 +6,29 @@
 
 > Sport-specific rules that govern how bets are settled on SX Bet.
 
-> **[Soccer](https://help.sx.bet/en/articles/5090654-soccer-betting-rules)**
+> [card] [Soccer](https://help.sx.bet/en/articles/5090654-soccer-betting-rules)
 
-> **[Tennis](https://help.sx.bet/en/articles/5090684-tennis-betting-rules)**
+> [card] [Tennis](https://help.sx.bet/en/articles/5090684-tennis-betting-rules)
 
-> **[American Football](https://help.sx.bet/en/articles/5090593-american-football-betting-rules)**
+> [card] [American Football](https://help.sx.bet/en/articles/5090593-american-football-betting-rules)
 
-> **[Baseball](https://help.sx.bet/en/articles/5090616-baseball-betting-rules)**
+> [card] [Baseball](https://help.sx.bet/en/articles/5090616-baseball-betting-rules)
 
-> **[Hockey](https://help.sx.bet/en/articles/5090642-hockey-betting-rules)**
+> [card] [Hockey](https://help.sx.bet/en/articles/5090642-hockey-betting-rules)
 
-> **[Basketball](https://help.sx.bet/en/articles/5090617-basketball-betting-rules)**
+> [card] [Basketball](https://help.sx.bet/en/articles/5090617-basketball-betting-rules)
 
-> **[Esports](https://help.sx.bet/en/articles/5090630-esports-betting-rules)**
+> [card] [Esports](https://help.sx.bet/en/articles/5090630-esports-betting-rules)
 
-> **[Parlays](https://help.sx.bet/en/articles/6233471-parlay-betting-rules)**
+> [card] [Parlays](https://help.sx.bet/en/articles/6233471-parlay-betting-rules)
 
-> **[Cricket](https://help.sx.bet/en/articles/5090623-cricket-betting-rules)**
+> [card] [Cricket](https://help.sx.bet/en/articles/5090623-cricket-betting-rules)
 
-> **[Golf](https://help.sx.bet/en/articles/5090631-golf-betting-rules)**
+> [card] [Golf](https://help.sx.bet/en/articles/5090631-golf-betting-rules)
 
-> **[Rugby](https://help.sx.bet/en/articles/5090650-rugby-betting-rules)**
+> [card] [Rugby](https://help.sx.bet/en/articles/5090650-rugby-betting-rules)
 
-> **[MMA](https://help.sx.bet/en/articles/5090646-mma-betting-rules)**
+> [card] [MMA](https://help.sx.bet/en/articles/5090646-mma-betting-rules)
 
 ## Other
 

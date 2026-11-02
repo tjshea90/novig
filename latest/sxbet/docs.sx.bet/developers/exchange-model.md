@@ -15,11 +15,11 @@ bet — every bet is matched peer-to-peer between two users.
 
 Every matched bet involves two roles:
 
-> **Maker**
+> [card] Maker
 >
 > Rests on the orderbook. Specifies an outcome, stake, and desired odds, and sits open until it's matched.
 
-> **Taker**
+> [card] Taker
 >
 > Matches an existing resting order immediately, in full or in part.
 
@@ -39,7 +39,7 @@ Escrow pays the winning side automatically
 
 ## Next
 
-> **[The Order Book →](https://docs.sx.bet/developers/order-book.md)**
+> [card] [The Order Book →](https://docs.sx.bet/developers/order-book.md)
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

@@ -160,6 +160,7 @@ paths:
                       outcomeOne:
                         - percentageOdds: '50000000000000000000'
                           size: '1000000'
+                          newestOrderCreatedAtMs: 1794182400123
                       outcomeTwo: []
                       version: '00100000000000008914000'
         '400':
@@ -207,6 +208,13 @@ components:
         size:
           type: string
           description: Aggregated MAKER stake at this level.
+        newestOrderCreatedAtMs:
+          type: integer
+          format: int64
+          description: >-
+            When the newest remaining order at this level was posted, in Unix
+            milliseconds. Set before any betting delay. Optional; available
+            November 9, 2026.
     OrderbookVersion:
       type: string
       description: >-

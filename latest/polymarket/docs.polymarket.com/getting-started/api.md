@@ -11,60 +11,60 @@ Each API serves a distinct part of an integration.
 
 ## Integration Surfaces
 
-**REST APIs**
+> [tab] REST APIs
+>
+> > [card] Gamma API
+> >
+> > **`https://gamma-api.polymarket.com`**
+> >
+> > Discover events and markets, and retrieve the metadata needed to work with
+> > them.
+>
+> > [card] CLOB API
+> >
+> > **`https://clob.polymarket.com`**
+> >
+> > Read prices and order books, then place and manage orders.
+>
+> > [card] [Data API](https://docs.polymarket.com/api-reference/data-api/overview.md)
+> >
+> > **`https://data-api.polymarket.com`**
+> >
+> > Analyze positions, activity, and market participation with cursor
+> > pagination and a shared response envelope.
+>
+> > [card] Relayer API
+> >
+> > **`https://relayer-v2.polymarket.com`**
+> >
+> > Submit wallet transactions without requiring the account to hold POL for
+> > gas.
 
-> **Gamma API**
+> [tab] WebSocket APIs
 >
-> **`https://gamma-api.polymarket.com`**
+> > [card] [CLOB Market Channel](https://docs.polymarket.com/api-reference/wss/market.md)
+> >
+> > **`wss://ws-subscriptions-clob.polymarket.com/ws/market`**
+> >
+> > Follow public order book, price, and market lifecycle updates.
 >
-> Discover events and markets, and retrieve the metadata needed to work with
-> them.
-
-> **CLOB API**
+> > [card] [CLOB User Channel](https://docs.polymarket.com/api-reference/wss/user.md)
+> >
+> > **`wss://ws-subscriptions-clob.polymarket.com/ws/user`**
+> >
+> > Follow authenticated order and trade updates for an account.
 >
-> **`https://clob.polymarket.com`**
+> > [card] [RTDS](https://docs.polymarket.com/market-data/realtime-data.md)
+> >
+> > **`wss://ws-live-data.polymarket.com`**
+> >
+> > Stream public reference prices, comments, and trade activity.
 >
-> Read prices and order books, then place and manage orders.
-
-> **[Data API](https://docs.polymarket.com/api-reference/data-api/overview.md)**
->
-> **`https://data-api.polymarket.com`**
->
-> Analyze positions, activity, and market participation with cursor
-> pagination and a shared response envelope.
-
-> **Relayer API**
->
-> **`https://relayer-v2.polymarket.com`**
->
-> Submit wallet transactions without requiring the account to hold POL for
-> gas.
-
-**WebSocket APIs**
-
-> **[CLOB Market Channel](https://docs.polymarket.com/api-reference/wss/market.md)**
->
-> **`wss://ws-subscriptions-clob.polymarket.com/ws/market`**
->
-> Follow public order book, price, and market lifecycle updates.
-
-> **[CLOB User Channel](https://docs.polymarket.com/api-reference/wss/user.md)**
->
-> **`wss://ws-subscriptions-clob.polymarket.com/ws/user`**
->
-> Follow authenticated order and trade updates for an account.
-
-> **[RTDS](https://docs.polymarket.com/market-data/realtime-data.md)**
->
-> **`wss://ws-live-data.polymarket.com`**
->
-> Stream public reference prices, comments, and trade activity.
-
-> **[Sports WebSocket](https://docs.polymarket.com/api-reference/wss/sports.md)**
->
-> **`wss://sports-api.polymarket.com/ws`**
->
-> Follow public live game status and scores.
+> > [card] [Sports WebSocket](https://docs.polymarket.com/api-reference/wss/sports.md)
+> >
+> > **`wss://sports-api.polymarket.com/ws`**
+> >
+> > Follow public live game status and scores.
 
 ## When to Use the API
 
@@ -246,15 +246,15 @@ L2-authenticated CLOB requests use the same five headers:
 
 ## Next Steps
 
-> **[Read Market Data](https://docs.polymarket.com/market-data/overview.md)**
+> [card] [Read Market Data](https://docs.polymarket.com/market-data/overview.md)
 >
 > Discover markets and work with prices, order books, and historical data.
 
-> **[Subscribe to Real-Time Updates](https://docs.polymarket.com/market-data/realtime-data.md)**
+> [card] [Subscribe to Real-Time Updates](https://docs.polymarket.com/market-data/realtime-data.md)
 >
 > Stream market and account updates as they happen.
 
-> **[Place Your First Order](https://docs.polymarket.com/trading/quickstart.md)**
+> [card] [Place Your First Order](https://docs.polymarket.com/trading/quickstart.md)
 >
 > Set up an account and complete your first authenticated trade.
 

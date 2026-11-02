@@ -14,6 +14,7 @@ Our servers throttle each subaccount and each management key, and an edge filter
 Each throttle is a bucket of tokens.
 A request spends tokens from its bucket.
 The bucket holds up to its capacity, which is your burst, and refills at its refill rate, in tokens per second.
+These are the limits at the Base [tier](#tiers).
 
 Throttle
 Burst
@@ -56,7 +57,7 @@ Refill
 
 4 Hz
 
-The `history` bucket meters the record reads: fills, transactions, settled orders, and the history routes. Each such read costs a base plus one token per page of rows, so a larger page spends more. `GET /v3/limits` reports every bucket's numbers.
+The `history` bucket meters the record reads: fills, transactions, settled orders, and the history routes. Each such read costs a base plus one token per page of rows, so a larger page spends more. `GET /v3/limits` reports your numbers for every bucket.
 
 `GET /v3/limits`, `GET /v3/time`, and `GET /v3/exchange/status` spend no tokens.
 
@@ -74,6 +75,34 @@ A management key has a set of its own.
 
 A second `trading::read` key on a subaccount doesn't raise its limits.
 
+### Tiers
+
+Each subaccount has a tier, and a higher tier raises its limits.
+A tier multiplies both the capacity and the refill rate of every throttle.
+A tier also sets how many orders your subaccount may keep open at once.
+An order that would take you over that cap answers `OPEN_ORDER_LIMIT_EXCEEDED`.
+The cap on watched markets is the same at every tier.
+
+<table>
+  <thead>
+    <tr><th>Tier</th><th>Monthly volume</th><th>Multiplier</th><th>Open orders</th></tr>
+  </thead>
+
+  <tbody>
+    {RATE_LIMIT_TIERS.map((tier) => <tr key={tier.name}><td>{tier.name}</td><td>${tier.monthlyVolume.toLocaleString("en-US")}</td><td>{tier.multiplier}×</td><td>{tier.maxOpenOrders.toLocaleString("en-US")}</td></tr>)}
+  </tbody>
+</table>
+
+Your subaccount earns its tier from its volume over the last calendar month, in Eastern time.
+Early each month, we move each subaccount to the tier that volume reaches, so a tier can go down as well as up.
+
+Volume is the full payout of every contract your subaccount traded, so 100 contracts count as \$1.
+A wash, where your order trades against another of yours, doesn't count, and neither does a voided trade.
+
+A new subaccount starts at Base.
+A management key is always at Base.
+`GET /v3/limits` reports the limits of your subaccount's tier.
+
 ## Websocket subscriptions
 
 The `stream` bucket meters how fast you subscribe. A second limit caps how much you hold: a connection may watch up to  markets at once. An event counts as the markets it contains. A subscribe that would take you over that answers `SUBSCRIPTION_LIMIT_EXCEEDED`, and it subscribes to nothing. A `snapshot` that names more markets than the cap answers the same. Such a request also costs more than the `stream` bucket holds, so you get `RATE_LIMIT_EXCEEDED` until the bucket is full. `GET /v3/limits` reports the cap.
@@ -88,7 +117,7 @@ It checks every request on every route before the request reaches them.
 | Check | Limit | Counted per |
 | - | - | - |
 | Request rate | {EDGE_REQUESTS_PER_MINUTE.toLocaleString("en-US")} a minute | IP address |
-| Body size | 8 KiB | Request |
+| Body size | 64 KiB | Request |
 
 > [!WARNING]
 >

@@ -14,11 +14,11 @@
 
 Bet credits allow you to place bets without using your own funds. If you win, you keep the winnings, but not the original bet amount.
 
-> **[Market Orders](https://docs.sx.bet/user-guides/trading/market-orders.md)**
+> [card] [Market Orders](https://docs.sx.bet/user-guides/trading/market-orders.md)
 >
 > Place bets at the best available odds.
 
-> **[Tournaments](https://docs.sx.bet/user-guides/rewards/tournaments.md)**
+> [card] [Tournaments](https://docs.sx.bet/user-guides/rewards/tournaments.md)
 >
 > Compete for prizes in SX Bet tournaments.
 

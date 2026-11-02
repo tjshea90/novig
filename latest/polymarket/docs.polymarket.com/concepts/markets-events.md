@@ -91,11 +91,11 @@ Specifically for sports markets, outstanding limit orders are **automatically ca
 
 ## Next Steps
 
-> **[Prices & Orderbook](https://docs.polymarket.com/concepts/prices-orderbook.md)**
+> [card] [Prices & Orderbook](https://docs.polymarket.com/concepts/prices-orderbook.md)
 >
 > Learn how prices are determined and how the order book works.
 
-> **[Fetching Market Data](https://docs.polymarket.com/market-data/overview.md)**
+> [card] [Fetching Market Data](https://docs.polymarket.com/market-data/overview.md)
 >
 > Start querying markets and events from the API.
 

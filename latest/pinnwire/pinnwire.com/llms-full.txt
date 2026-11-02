@@ -297,7 +297,8 @@ Close codes:
 | 1001 | evicted by newer connection | one connection per key — a second evicts the first |
 | 1001 | stale | no pong for ~75 s |
 | 1008 | no subscribe / invalid key / plan lacks ws | fix and reconnect |
-| 1011 | deregistered: slow_consumer | you fell >32 MB behind — reconnect immediately (match on the `deregistered: ` prefix) |
+| 1011 | deregistered: slow_consumer | you fell >32 MB behind — read faster or subscribe to less, then reconnect with backoff (match on the `deregistered: ` prefix) |
+| 1013 | reconnect rate limited | reconnect loop: more than 6 new connections in a few minutes or 50 a day (SSE: 30 / 250) — wait `retry_after_s` from the error frame; an open connection is never touched |
 
 Discovery pattern: subscribe to a sport, grep the snapshot for the events you care about, unsubscribe the sport, subscribe to those event_ids — narrows bandwidth to exactly your matches.
 
@@ -348,6 +349,7 @@ Over the limit → HTTP 429 with a `Retry-After` header and body `{"error":"rate
 | 401 | invalid_key | Key missing or unknown |
 | 403 | plan_lacks_sse | SSE endpoint on a plan without SSE |
 | 429 | rate_limited | Per-key rate limit exceeded |
+| 429 / WS 1013 | reconnect_rate_limited | Too many new connections from one key — wait `retry_after_s` (SSE also sends `Retry-After`) |
 | 400 | sport_id required / bad_market_type | Bad or missing parameter |
 | 404 | not_found | Unknown event_id or path |
 | 502 / 503 | np_error / not_configured | Crypto checkout provider failure or temporary unavailability |

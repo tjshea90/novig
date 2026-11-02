@@ -91,15 +91,15 @@ The permit path is `FROM_EOA` as appears on your ledger endpoint. Two other depo
 
 ## Related
 
-> **[Fund a proxy wallet](https://docs.sx.bet/api-reference/post-user-transfer-to-proxy.md)**
+> [card] [Fund a proxy wallet](https://docs.sx.bet/api-reference/post-user-transfer-to-proxy.md)
 >
 > The request, the two warnings, and the `200`.
 
-> **[Reading balances](https://docs.sx.bet/developers/balances-and-ledger.md)**
+> [card] [Reading balances](https://docs.sx.bet/developers/balances-and-ledger.md)
 >
 > Reading what actually arrived.
 
-> **[Accounts](https://docs.sx.bet/developers/accounts.md)**
+> [card] [Accounts](https://docs.sx.bet/developers/accounts.md)
 >
 > Deploy the proxy first, and poll until it is live.
 

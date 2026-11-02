@@ -30,27 +30,27 @@ const forUser = data.trades.filter((t) => t.externalUserId === platformUserId);
 
 ## Related
 
-> **[Posting orders](https://docs.sx.bet/developers/posting-orders.md)**
+> [card] [Posting orders](https://docs.sx.bet/developers/posting-orders.md)
 >
 > The submit flow this field rides on.
 
-> **[Client order id](https://docs.sx.bet/developers/client-order-id.md)**
+> [card] [Client order id](https://docs.sx.bet/developers/client-order-id.md)
 >
 > A per-order tag. Unique, charset-restricted, and absent from the bet grain.
 
-> **[Bet grains](https://docs.sx.bet/developers/which-grain.md)**
+> [card] [Bet grains](https://docs.sx.bet/developers/which-grain.md)
 >
 > Bets, fills, and positions — which row to read for a per-user history.
 
-> **[Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)**
+> [card] [Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)
 >
 > Every field, every validation rule.
 
-> **[Account models](https://docs.sx.bet/developers/account-models.md)**
+> [card] [Account models](https://docs.sx.bet/developers/account-models.md)
 >
 > The two ways to represent your site's users on SX.bet.
 
-> **[Work with us](https://docs.sx.bet/developers/work-with-us.md)**
+> [card] [Work with us](https://docs.sx.bet/developers/work-with-us.md)
 >
 > Building at scale or exploring a partnership.
 

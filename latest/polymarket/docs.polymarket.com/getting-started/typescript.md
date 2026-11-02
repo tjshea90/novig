@@ -10,11 +10,11 @@ The `@polymarket/client` NPM package is the official TypeScript SDK for building
 With this SDK client you can fetch market data, subscribe to real-time data,
 submit orders, redeem positions and many other actions.
 
-> **[GitHub](https://github.com/Polymarket/ts-sdk)**
+> [card] [GitHub](https://github.com/Polymarket/ts-sdk)
 >
 > View the TypeScript SDK source.
 
-> **[NPM Package](https://www.npmjs.com/package/@polymarket/client)**
+> [card] [NPM Package](https://www.npmjs.com/package/@polymarket/client)
 >
 > Install `@polymarket/client@latest`.
 
@@ -170,125 +170,125 @@ Create a `SecureClient` when your integration needs to trade or access account
 data. Pass the signer adapter for your wallet library to
 `createSecureClient()`.
 
-**Viem**
+> [tab] Viem
+>
+> Install the Viem adapter alongside the SDK.
+>
+> ```bash npm theme={null}
+> npm install @polymarket/client@latest viem
+> ```
+>
+> ```bash bun theme={null}
+> bun add @polymarket/client@latest viem
+> ```
+>
+> ```bash pnpm theme={null}
+> pnpm add @polymarket/client@latest viem
+> ```
+>
+> ```bash yarn theme={null}
+> yarn add @polymarket/client@latest viem
+> ```
+>
+> Create the signer directly from a private key:
+>
+> ```ts theme={null}
+> import { createSecureClient } from "@polymarket/client";
+> import { privateKey } from "@polymarket/client/viem";
+>
+> const client = await createSecureClient({
+>   signer: privateKey(process.env.POLYMARKET_PRIVATE_KEY),
+> });
+> ```
+>
+> If your application already has a Viem `WalletClient` instance, adapt it with
+> `signerFrom()`:
+>
+> ```ts theme={null}
+> import { createSecureClient } from "@polymarket/client";
+> import { signerFrom } from "@polymarket/client/viem";
+>
+> const client = await createSecureClient({
+>   signer: signerFrom(walletClient),
+> });
+> ```
 
-Install the Viem adapter alongside the SDK.
+> [tab] Privy
+>
+> Install the Privy adapter and server SDK alongside the Polymarket SDK.
+>
+> ```bash npm theme={null}
+> npm install @polymarket/client@latest @privy-io/node
+> ```
+>
+> ```bash bun theme={null}
+> bun add @polymarket/client@latest @privy-io/node
+> ```
+>
+> ```bash pnpm theme={null}
+> pnpm add @polymarket/client@latest @privy-io/node
+> ```
+>
+> ```bash yarn theme={null}
+> yarn add @polymarket/client@latest @privy-io/node
+> ```
+>
+> Create the signer from your Privy client and wallet ID:
+>
+> ```ts theme={null}
+> import { createSecureClient } from "@polymarket/client";
+> import { signerFrom } from "@polymarket/client/privy";
+> import { PrivyClient } from "@privy-io/node";
+>
+> const privy = new PrivyClient({
+>   appId: process.env.PRIVY_APP_ID!,
+>   appSecret: process.env.PRIVY_APP_SECRET!,
+> });
+>
+> const client = await createSecureClient({
+>   signer: signerFrom({
+>     privy,
+>     walletId: process.env.PRIVY_WALLET_ID!,
+>   }),
+> });
+> ```
 
-```bash npm theme={null}
-npm install @polymarket/client@latest viem
-```
-
-```bash bun theme={null}
-bun add @polymarket/client@latest viem
-```
-
-```bash pnpm theme={null}
-pnpm add @polymarket/client@latest viem
-```
-
-```bash yarn theme={null}
-yarn add @polymarket/client@latest viem
-```
-
-Create the signer directly from a private key:
-
-```ts theme={null}
-import { createSecureClient } from "@polymarket/client";
-import { privateKey } from "@polymarket/client/viem";
-
-const client = await createSecureClient({
-  signer: privateKey(process.env.POLYMARKET_PRIVATE_KEY),
-});
-```
-
-If your application already has a Viem `WalletClient` instance, adapt it with
-`signerFrom()`:
-
-```ts theme={null}
-import { createSecureClient } from "@polymarket/client";
-import { signerFrom } from "@polymarket/client/viem";
-
-const client = await createSecureClient({
-  signer: signerFrom(walletClient),
-});
-```
-
-**Privy**
-
-Install the Privy adapter and server SDK alongside the Polymarket SDK.
-
-```bash npm theme={null}
-npm install @polymarket/client@latest @privy-io/node
-```
-
-```bash bun theme={null}
-bun add @polymarket/client@latest @privy-io/node
-```
-
-```bash pnpm theme={null}
-pnpm add @polymarket/client@latest @privy-io/node
-```
-
-```bash yarn theme={null}
-yarn add @polymarket/client@latest @privy-io/node
-```
-
-Create the signer from your Privy client and wallet ID:
-
-```ts theme={null}
-import { createSecureClient } from "@polymarket/client";
-import { signerFrom } from "@polymarket/client/privy";
-import { PrivyClient } from "@privy-io/node";
-
-const privy = new PrivyClient({
-  appId: process.env.PRIVY_APP_ID!,
-  appSecret: process.env.PRIVY_APP_SECRET!,
-});
-
-const client = await createSecureClient({
-  signer: signerFrom({
-    privy,
-    walletId: process.env.PRIVY_WALLET_ID!,
-  }),
-});
-```
-
-**Ethers v5**
-
-Install the Ethers v5 adapter and its aliased dependency alongside the SDK.
-
-```bash npm theme={null}
-npm install @polymarket/client@latest ethers-v5@npm:ethers@^5.8.0
-```
-
-```bash bun theme={null}
-bun add @polymarket/client@latest ethers-v5@npm:ethers@^5.8.0
-```
-
-```bash pnpm theme={null}
-pnpm add @polymarket/client@latest ethers-v5@npm:ethers@^5.8.0
-```
-
-```bash yarn theme={null}
-yarn add @polymarket/client@latest ethers-v5@npm:ethers@^5.8.0
-```
-
-Create the signer from an Ethers v5 wallet:
-
-```ts theme={null}
-import { createSecureClient } from "@polymarket/client";
-import { signerFrom } from "@polymarket/client/ethers-v5";
-import { ethers } from "ethers-v5";
-
-const provider = new ethers.providers.JsonRpcProvider(
-  process.env.POLYGON_RPC_URL,
-);
-const wallet = new ethers.Wallet(process.env.POLYMARKET_PRIVATE_KEY!, provider);
-
-const client = await createSecureClient({
-  signer: signerFrom(wallet),
-});
-```
+> [tab] Ethers v5
+>
+> Install the Ethers v5 adapter and its aliased dependency alongside the SDK.
+>
+> ```bash npm theme={null}
+> npm install @polymarket/client@latest ethers-v5@npm:ethers@^5.8.0
+> ```
+>
+> ```bash bun theme={null}
+> bun add @polymarket/client@latest ethers-v5@npm:ethers@^5.8.0
+> ```
+>
+> ```bash pnpm theme={null}
+> pnpm add @polymarket/client@latest ethers-v5@npm:ethers@^5.8.0
+> ```
+>
+> ```bash yarn theme={null}
+> yarn add @polymarket/client@latest ethers-v5@npm:ethers@^5.8.0
+> ```
+>
+> Create the signer from an Ethers v5 wallet:
+>
+> ```ts theme={null}
+> import { createSecureClient } from "@polymarket/client";
+> import { signerFrom } from "@polymarket/client/ethers-v5";
+> import { ethers } from "ethers-v5";
+>
+> const provider = new ethers.providers.JsonRpcProvider(
+>   process.env.POLYGON_RPC_URL,
+> );
+> const wallet = new ethers.Wallet(process.env.POLYMARKET_PRIVATE_KEY!, provider);
+>
+> const client = await createSecureClient({
+>   signer: signerFrom(wallet),
+> });
+> ```
 
 Continue to [Wallets and Authentication](https://docs.polymarket.com/trading/wallets-auth.md) to configure the
 account wallet and gasless transactions.
@@ -356,19 +356,19 @@ a few streams; see
 
 ## Next Steps
 
-> **[Read Market Data](https://docs.polymarket.com/market-data/overview.md)**
+> [card] [Read Market Data](https://docs.polymarket.com/market-data/overview.md)
 >
 > Discover markets and work with prices, order books, and historical data.
 
-> **[Subscribe to Real-Time Updates](https://docs.polymarket.com/market-data/realtime-data.md)**
+> [card] [Subscribe to Real-Time Updates](https://docs.polymarket.com/market-data/realtime-data.md)
 >
 > Stream market and account updates as they happen.
 
-> **[Place Your First Order](https://docs.polymarket.com/trading/quickstart.md)**
+> [card] [Place Your First Order](https://docs.polymarket.com/trading/quickstart.md)
 >
 > Set up an account and complete your first authenticated trade.
 
-> **[Use Session Keys](https://docs.polymarket.com/trading/session-keys.md)**
+> [card] [Use Session Keys](https://docs.polymarket.com/trading/session-keys.md)
 >
 > Grant scoped, time-limited Deposit Wallet access to a separate signer.
 

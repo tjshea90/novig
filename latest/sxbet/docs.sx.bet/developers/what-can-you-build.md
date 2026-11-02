@@ -8,7 +8,7 @@
 
 SX Bet exposes a full REST API with access to markets, orderbooks, order management, and trade history. This opens up a wide range of possible applications — from fully automated trading systems to custom frontends and analytics tools.
 
-> **Trading Bots & Automated Strategies**
+> [card] Trading Bots & Automated Strategies
 >
 > The most common use case.
 >
@@ -17,7 +17,7 @@ SX Bet exposes a full REST API with access to markets, orderbooks, order managem
 > * **Model-driven betting** — feed your own predictive models into automated order placement
 > * **Closing positions** — hedge or exit existing positions programmatically
 
-> **Custom Frontends**
+> [card] Custom Frontends
 >
 > Build your own interface on top of SX Bet's liquidity:
 >
@@ -26,7 +26,7 @@ SX Bet exposes a full REST API with access to markets, orderbooks, order managem
 > * Social/community betting platforms
 > * White-label sportsbook interfaces
 
-> **Analytics & Research Tools**
+> [card] Analytics & Research Tools
 >
 > The open orderbook and trade history make SX Bet a deep data source:
 >
@@ -36,26 +36,26 @@ SX Bet exposes a full REST API with access to markets, orderbooks, order managem
 
 ## What you'll need
 
-> **An account**
+> [card] An account
 >
 > Login to sx.bet and create an account
 
-> **API access**
+> [card] API access
 >
 > Market data and the public tape need no credentials. The order book, and anything about your own
 > activity — orders, bets, positions, balance — needs your API key.
 
-> **USDC**
+> [card] USDC
 >
 > Orders are denominated in USDC, in integer base units — `"1000000"` is 1.00 USDC.
 
-> **Python or JS**
+> [card] Python or JS
 >
 > All guides and samples in this hub use Python and JavaScript. The API is REST, so any language works.
 
 ## Ready to start?
 
-> **[Quickstart](https://docs.sx.bet/developers/quickstart.md)**
+> [card] [Quickstart](https://docs.sx.bet/developers/quickstart.md)
 >
 > Follow our step-by-step quickstart to fetch markets, read the orderbook, and place your first order.
 

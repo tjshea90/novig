@@ -68,6 +68,10 @@ An empty selection gets `EMPTY_SELECTION`.
 
 An `events` selection also covers markets that open later.
 
+`subscribe` and `snapshot` apply all or nothing.
+One market we can't find refuses the whole request with `MARKET_NOT_FOUND`, and one event with `EVENT_NOT_FOUND`.
+The error doesn't name the subject, so check your IDs against the catalog before a large request.
+
 `unsubscribe` takes a list of subject strings instead.
 
 ```json theme={"dark"}

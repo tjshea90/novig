@@ -130,11 +130,11 @@ Total impact cost in USD
 
 ## Next Steps
 
-> **[Create Deposit](https://docs.polymarket.com/trading/bridge/deposit.md)**
+> [card] [Create Deposit](https://docs.polymarket.com/trading/bridge/deposit.md)
 >
 > Execute a deposit to Polymarket.
 
-> **[Withdraw](https://docs.polymarket.com/trading/bridge/withdraw.md)**
+> [card] [Withdraw](https://docs.polymarket.com/trading/bridge/withdraw.md)
 >
 > Withdraw from Polymarket to another chain.
 

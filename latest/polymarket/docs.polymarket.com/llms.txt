@@ -1,6 +1,6 @@
 # Polymarket Documentation
 
-- [API Reference (240 pages)](https://docs.polymarket.com/_llms/en/api-reference.txt): Documentation for API Reference.
+- [API Reference (224 pages)](https://docs.polymarket.com/_llms/en/api-reference.txt): Documentation for API Reference.
 
 ## Predictions
 
@@ -86,7 +86,7 @@
 
 ### Migration Guides
 
-- [Migrate from Data API v1 to v2](https://docs.polymarket.com/migrate/data-api-v1-to-v2.md): Move an integration from the original Data API routes to their v2 counterparts: the route mapping, the contract changes, and what stays on v1.
+- [Migrate from Data API v1 to v2](https://docs.polymarket.com/migrate/data-api-v1-to-v2.md): Move an integration from the original Data API routes to their v2 counterparts: the route mapping, the contract changes, and the accounting snapshot retirement.
 - [Migrate from Legacy SDKs to Unified SDKs](https://docs.polymarket.com/migrate/clob-sdk-to-unified-sdk.md): Move an existing Polymarket integration to the unified SDKs.
 - [Migrate from RTDS to PolyBolt](https://docs.polymarket.com/migrate/rtds-to-polybolt.md): Migrate price subscriptions from RTDS to PolyBolt
 
@@ -141,6 +141,7 @@
 
 - [Liquidity Rewards](https://docs.polymarket.com/perps/liquidity-rewards.md): Earn daily pUSD rewards by providing deep, two-sided liquidity on Perps
 - [Referral Program](https://docs.polymarket.com/perps/referral-program.md): Earn a share of Perps trading fees from traders you refer
+- [Trading Competitions](https://docs.polymarket.com/perps/trading-competitions.md): Polymarket Perps Bi-Weekly Trading Competitions
 
 ### Resources
 
@@ -169,7 +170,6 @@
 - [relayer-openapi](/api-spec/relayer-openapi.yaml)
 - [combos-rfq-openapi](/api-spec/combos-rfq-openapi.yaml)
 - [bridge-openapi](/api-spec/bridge-openapi.yaml)
-- [data-openapi](/api-spec/data-openapi.yaml)
 - [perps-openapi](/api-spec/perps-openapi.json)
 - [openapi](https:/data-api.polymarket.com/v2/openapi.json)
 
@@ -187,11 +187,11 @@
 
 ## Indexes
 
-- [English / API Reference (240 pages)](https://docs.polymarket.com/_llms/en/api-reference.txt): Documentation for English / API Reference.
-- [English / API Reference / Predictions (138 pages)](https://docs.polymarket.com/_llms/en/api-reference/predictions.txt): Documentation for English / API Reference / Predictions.
+- [English / API Reference (224 pages)](https://docs.polymarket.com/_llms/en/api-reference.txt): Documentation for English / API Reference.
+- [English / API Reference / Predictions (122 pages)](https://docs.polymarket.com/_llms/en/api-reference/predictions.txt): Documentation for English / API Reference / Predictions.
 - [English / API Reference / Perps (102 pages)](https://docs.polymarket.com/_llms/en/api-reference/perps.txt): Documentation for English / API Reference / Perps.
-- [Chinese (236 pages)](https://docs.polymarket.com/_llms/cn.txt): Documentation for Chinese.
-- [Chinese / API 参考 (183 pages)](https://docs.polymarket.com/_llms/cn/api.txt): Documentation for Chinese / API 参考.
+- [Chinese (220 pages)](https://docs.polymarket.com/_llms/cn.txt): Documentation for Chinese.
+- [Chinese / API 参考 (167 pages)](https://docs.polymarket.com/_llms/cn/api.txt): Documentation for Chinese / API 参考.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

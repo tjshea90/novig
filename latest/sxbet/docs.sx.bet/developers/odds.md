@@ -126,19 +126,19 @@ sub.subscribe();
 
 ## Related
 
-> **[The order book](https://docs.sx.bet/developers/order-book.md)**
+> [card] [The order book](https://docs.sx.bet/developers/order-book.md)
 >
 > Depth, sizing, and pricing a bet across levels.
 
-> **[Book versioning](https://docs.sx.bet/developers/book-versioning.md)**
+> [card] [Book versioning](https://docs.sx.bet/developers/book-versioning.md)
 >
 > Applying live book updates in the right order.
 
-> **[Real-time data](https://docs.sx.bet/developers/realtime-overview.md)**
+> [card] [Real-time data](https://docs.sx.bet/developers/realtime-overview.md)
 >
 > Tokens, snapshot + subscribe, and reconnect handling.
 
-> **[Best odds](https://docs.sx.bet/api-reference/get-best-odds-v3.md)**
+> [card] [Best odds](https://docs.sx.bet/api-reference/get-best-odds-v3.md)
 >
 > Parameters, caps, and validation rules.
 

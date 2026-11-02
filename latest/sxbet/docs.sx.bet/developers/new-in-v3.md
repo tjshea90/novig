@@ -51,11 +51,11 @@ The public book shows aggregated price levels, not individual orders, so your re
 | Track your activity | [Which grain?](https://docs.sx.bet/developers/which-grain.md), [Tracking your orders](https://docs.sx.bet/developers/my-orders.md), [Reading your bets](https://docs.sx.bet/developers/which-grain.md#bets), [Reconciling fills](https://docs.sx.bet/developers/which-grain.md#fills), [Tracking positions](https://docs.sx.bet/developers/which-grain.md#positions) |
 | Handle lifecycles | [Order lifecycle](https://docs.sx.bet/developers/order-lifecycle.md), [Bet lifecycle](https://docs.sx.bet/developers/bet-lifecycle.md) |
 
-> **[Quickstart](https://docs.sx.bet/developers/quickstart.md)**
+> [card] [Quickstart](https://docs.sx.bet/developers/quickstart.md)
 >
 > Deploy a proxy, read the book, and place a bet end to end.
 
-> **[Migrate to V3](https://docs.sx.bet/developers/migrate-to-v3.md)**
+> [card] [Migrate to V3](https://docs.sx.bet/developers/migrate-to-v3.md)
 >
 > Port an existing client, subsystem by subsystem.
 

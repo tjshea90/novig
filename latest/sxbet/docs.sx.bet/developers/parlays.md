@@ -112,19 +112,19 @@ Parlays use separate rates — `makerParlayPayoutFee` and `takerParlayPayoutFee`
 
 ## Related
 
-> **[Market making parlays](https://docs.sx.bet/developers/market-making-parlays.md)**
+> [card] [Market making parlays](https://docs.sx.bet/developers/market-making-parlays.md)
 >
 > Listening, pricing and quoting before the parlay market expires.
 
-> **[Parlay requests channel](https://docs.sx.bet/api-reference/channel-parlay-requests.md)**
+> [card] [Parlay requests channel](https://docs.sx.bet/api-reference/channel-parlay-requests.md)
 >
 > The request payload.
 
-> **[Parlay markets](https://docs.sx.bet/api-reference/parlay-markets.md)**
+> [card] [Parlay markets](https://docs.sx.bet/api-reference/parlay-markets.md)
 >
 > The fields and behaviour of parlay markets.
 
-> **[Time in force](https://docs.sx.bet/developers/time-in-force.md)**
+> [card] [Time in force](https://docs.sx.bet/developers/time-in-force.md)
 >
 > `GTC`, `IOC` and `FOK`, and which of them a parlay accepts.
 

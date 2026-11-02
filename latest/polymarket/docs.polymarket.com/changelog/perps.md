@@ -8,6 +8,177 @@
 
 Notable changes to the Polymarket Perps API.
 
+**Oct 29, 2026**
+
+24h statistics open price, per-market fees and funding, pre-IPO category
+
+No removed endpoints, routes, or fields, and no new error codes. One behaviour
+change to check before the deploy: the 24-hour `open_price` in market
+statistics now uses the mark price at the start of the 24-hour window.
+Everything else is additive.
+
+**Changed**
+
+* **24-hour statistics `open_price`.** `GET /v1/info/statistics` and the
+  WebSocket `statistics::<instrument_id>` / `statistics::all` channels now
+  set `open` to the mark price at the start of the rolling 24-hour window.
+  The rule is: the last mark in the ten minutes before the window start; else
+  the first mark inside the window; else the previous trade-based open. Trade
+  klines and volume are unchanged. Displayed 24h % change can move when this
+  ships. If you computed change from the old trade-based open, update your
+  calculation or labels.
+
+**Added**
+
+* **Per-market fee overrides.** `GET /v1/info/instruments` rows add
+  `fee_override`. It is `null` when there is none; otherwise
+  `{ start_time, end_time | null, tiers: [{ taker_fee_rate, maker_fee_rate }] }`,
+  with times in milliseconds and rates as decimal strings. Inside the window,
+  an account pays `tiers[its fee tier]` on that market. Outside the window,
+  the normal schedule applies. A stored window can be scheduled or expired;
+  its presence does not mean it is active. On fills, use the charged fee on
+  each fill rather than recomputing from the standard schedule.
+* **Fees by instrument.** `GET /v1/info/fees?instrument_id=N` returns that
+  market's effective fee schedule right now, plus its override. Without the
+  parameter, the response is unchanged. A non-numeric or out-of-range
+  `instrument_id` returns `400`. An unknown or unlisted market returns `404`.
+* **Per-market funding multipliers.** `GET /v1/info/instruments` rows add
+  `funding_multiplier`. It is `null` when there is none; otherwise
+  `{ multiplier, start_time, end_time | null }`. A funding period uses the
+  multiplier when the period starts inside the window. The whole period uses
+  it, with no proration. Existing funding caps still apply. Published funding
+  rates and settlements already include it.
+* **`pre_ipo` instrument category.** The public category filter accepts
+  `pre_ipo` (for example `GET /v1/info/instruments?category=pre_ipo`). Fees,
+  funding, and risk settings are unchanged by the category. If your client
+  rejects unknown enum values, add `pre_ipo` before any market is assigned to
+  it. The Anthropic listing (`ANT`) will use this category with a fee
+  override and separate liquidity and open-interest reward terms when
+  operators activate it; that activation will be announced separately.
+* **SBE schema version 57.** Binary feed consumers must accept schema version
+  57 before the deploy. New message templates: `1028 SetPerpetualFeeSchedule`
+  and `1029 SetPerpetualFundingMultiplier`. Funding messages append fields:
+  `UpdatePerpetualFunding.fundingMultiplier` and
+  `ChargeFunding.settlementFundingMultiplier`. Older funding payloads mean a
+  multiplier of `1`. JSON REST and WebSocket clients need no change.
+
+**Clarified**
+
+* **OpenAPI spec.** `docs/http/http.json` documents the new instrument
+  fields, the `instrument_id` selector on `/v1/info/fees`, the `pre_ipo`
+  category, and the statistics `open` rule. There are no new WebSocket
+  channels or order-status values.
+
+**Not Yet Active**
+
+* **Odds orders.** Placement stays disabled in production. The unreleased v2
+  stack makes no changes to your live integration.
+
+**Fixed**
+
+* **Tail latency during state snapshots.** Each periodic state snapshot (every
+  \~1.5–2 minutes) no longer recomputes isolated-margin totals for every
+  account. That recompute briefly stalled the event stream on every service
+  at once and showed up as order-placement p99 spikes. On a replay of
+  production traffic, a snapshot's processing cost fell from 27 ms to 0.002
+  ms with identical resulting state. Staging traffic differs from production,
+  so the exact production improvement will be measured after the deploy. Fill
+  pricing on markets without a fee override measured within 0.2% of the
+  previous release.
+
+**Rollout**
+
+Order placement pauses during the window and cancels keep working. Retail
+WebSocket connections drop when the gateway restarts; reconnect and
+resubscribe.
+
+**Oct 27, 2026**
+
+Read-only WebSocket keys, ticker filtering, and competition market stats
+
+No removed endpoints and no removed or renamed fields on live routes. A new
+WebSocket error is `read_only_key`. Rate limits change for read-only WebSocket
+keys: separate budgets and at most four connections per account per gateway.
+WebSocket message shapes and live order statuses are unchanged; read-only
+sockets now refuse signed writes. No margin, liquidation, order-entry, or
+cancel rule changes. Check ticker filtering and total-PnL chart freshness
+before the deploy.
+
+**Changed**
+
+* **Read-only WebSocket keys.** Authenticating with a proxy labelled
+  `read-only:…` fixes that socket's role as read-only, even if you retained
+  its signing key. Every parsed post except `ping` and `auth` now returns
+  `read_only_key` before signature verification. Refused posts still consume
+  the message budget; once exhausted, the response is `message_rate_limited`.
+  Private subscriptions remain available. All read-only keys of an account
+  share a separate connection cap: four per gateway, or the account tier's cap
+  if smaller. Auth-attempt, connection-open, and message budgets are separated
+  from trading sockets; configured tier rates stay the same. Without an
+  explicit WebSocket tier, read-only messages use a separate per-IP budget of
+  1,000/minute (burst 50), and read-only auth attempts are 16/minute (burst
+  16\). The initial auth frame still consumes the shared pre-auth IP budget
+  (1,000/minute, burst 50). Keep signing keys free of the `read-only:` label,
+  reconnect with the intended key, and consolidate read-only connections within
+  the cap. Re-authenticating an already-bound socket does not change its role.
+* **Ticker filtering.** `GET /v1/info/tickers` now honours the previously
+  ignored `instrument_id` query parameter. Omit filters if you need every
+  enabled market; a supplied filter can now narrow the array or return `[]`.
+* **Total-PnL chart buckets.** `GET /v2/info/pnl` returns completed UTC
+  minutes only. The effective end is the earlier of `end_timestamp` and now,
+  rounded down to the minute, exclusive. Charts can lag by up to one minute
+  plus storage delay; a window containing no completed minute can return no
+  points. Allow for that lag in charts and freshness alerts. This endpoint is
+  served by the live engine despite its URL prefix.
+* **Per-market mark bands.** Operators can configure a market's mark-to-index
+  band. The pricer uses the tighter of that band and `1 / max_leverage`.
+  Existing instruments retain the 50 bps (0.5%) default unless explicitly
+  changed; the release does not widen any band automatically. The setting is
+  admin-only and adds no field to public instrument responses.
+
+**Added**
+
+* **Ticker trader counts and symbol filter.** `GET /v1/info/tickers` adds
+  numeric `long_count` and `short_count`. Each counts trading accounts with a
+  nonzero net position on that side, including market makers and fund
+  accounts; a zero position counts on neither side. Counts refresh with the
+  existing two-second ticker cache. WebSocket tickers are unchanged. Optional
+  `symbol` matches the canonical symbol exactly and case-sensitively. Unknown
+  or disabled markets return `[]`. When both `symbol` and `instrument_id` are
+  supplied, both must match. The response remains an array.
+* **Markets traded in competitions.** Competition standings and results add
+  `instruments_traded` (distinct eligible markets with counted volume inside
+  the competition window) and `top_instrument_ids` (up to three markets by
+  counted unboosted volume, descending, ties by instrument ID). Both are
+  absent for results stored before this release; `top_instrument_ids` is `[]`
+  when there are no counted fills.
+
+**Clarified**
+
+* **OpenAPI spec.** `docs/http/http.json` documents the ticker counts and
+  filter, the completed-minute total-PnL rule, and odds-only changes that are
+  not live in production. `docs/ws/ws.json` is unchanged: no new live
+  subscription channels or order-status values. Read-only-key refusal and
+  budgets are documented on [Errors](https://docs.polymarket.com/perps/errors.md#websocket-errors).
+
+**Not Yet Active**
+
+* **Odds orders.** Placement stays disabled in production and returns `404`.
+  Odds-only changes add `GET /v1/account/odds-orders/history`, end reasons and
+  filled/remaining quantities, and change the references response to
+  `{references, markets}` with expanded field names. Five new odds-only domain
+  errors are reserved: `not_eligible` (186), `blocked` (187), `no_capacity`
+  (188), `held` (189), and `market_full` (190). They do not affect live
+  trading. The unreleased v2 stack makes no changes to your live integration.
+
+**Rollout**
+
+No latency change is expected. The primary sequencer ends the rollout in the
+same availability zone as the gateways, as it has been since 22 October.
+Order placement pauses during the window and cancels keep working. Retail
+WebSocket connections drop when the gateway restarts; reconnect and
+resubscribe.
+
 **Oct 22, 2026**
 
 Builder stats, proxy management rules, and read-only key restrictions

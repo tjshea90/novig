@@ -24,11 +24,11 @@ You can check the Leaderboard by clicking on the tournament you are participatin
 
 T\&C: General terms and conditions apply. No bet washing, or multi-accounting. SX reserves the right to remove individuals.
 
-> **[Maker Rewards](https://docs.sx.bet/user-guides/rewards/maker-rewards.md)**
+> [card] [Maker Rewards](https://docs.sx.bet/user-guides/rewards/maker-rewards.md)
 >
 > Earn USDC by providing liquidity on eligible markets.
 
-> **[Bet Credits](https://docs.sx.bet/user-guides/rewards/bet-credits.md)**
+> [card] [Bet Credits](https://docs.sx.bet/user-guides/rewards/bet-credits.md)
 >
 > Learn about bet credit promotions on SX Bet.
 

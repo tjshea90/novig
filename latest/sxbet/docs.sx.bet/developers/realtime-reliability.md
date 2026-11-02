@@ -196,7 +196,7 @@ For the snapshot-plus-subscribe seed pattern, see
 
 ***
 
-> **[Real-time data →](https://docs.sx.bet/developers/realtime-overview.md)**
+> [card] [Real-time data →](https://docs.sx.bet/developers/realtime-overview.md)
 >
 > The guide with full worked examples, channel reference, and common failures.
 

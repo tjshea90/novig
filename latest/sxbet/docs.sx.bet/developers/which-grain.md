@@ -90,19 +90,19 @@ Each grain has a channel, and they carry the same shapes as the REST rows:
 
 ## Related
 
-> **[Get your bets](https://docs.sx.bet/api-reference/get-trades-v3.md)**
+> [card] [Get your bets](https://docs.sx.bet/api-reference/get-trades-v3.md)
 >
 > The bet row in full and its filters.
 
-> **[Get your fills](https://docs.sx.bet/api-reference/get-fills-v3.md)**
+> [card] [Get your fills](https://docs.sx.bet/api-reference/get-fills-v3.md)
 >
 > The fill row, its four ids, and the sort order.
 
-> **[Get your positions](https://docs.sx.bet/api-reference/get-positions-v3.md)**
+> [card] [Get your positions](https://docs.sx.bet/api-reference/get-positions-v3.md)
 >
 > Every field, the required-status rule, and realised PnL.
 
-> **[Tracking your orders](https://docs.sx.bet/developers/my-orders.md)**
+> [card] [Tracking your orders](https://docs.sx.bet/developers/my-orders.md)
 >
 > Keeping a live view of what is resting on the book.
 

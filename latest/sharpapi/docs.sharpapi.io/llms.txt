@@ -10,7 +10,7 @@
 - [Quick Start](https://docs.sharpapi.io/en/quickstart): Get started in 2 minutes
 - [Authentication](https://docs.sharpapi.io/en/authentication): API key setup and auth methods
 - [Pricing](https://docs.sharpapi.io/en/pricing): Subscription tiers and feature comparison
-- [MCP Server](https://docs.sharpapi.io/en/sdks/mcp/): Hosted MCP endpoint at https://mcp.sharpapi.io/mcp, 17 tools for AI assistants
+- [MCP Server](https://docs.sharpapi.io/en/sdks/mcp/): Hosted MCP endpoint at https://mcp.sharpapi.io/mcp, for AI assistants
 
 ## API
 

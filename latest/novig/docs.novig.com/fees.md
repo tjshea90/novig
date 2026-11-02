@@ -110,11 +110,11 @@ Two differences from the straight schedule worth calling out. The RFQ taker fee 
 
 Because the charge follows the event's status at the moment of the match, knowing whether an event is live is a fee question, not a cosmetic one. There are two ways to know:
 
-> **[WebSocket: the transitions](https://docs.novig.com/api/streaming/lifecycle.md)**
+> [card] [WebSocket: the transitions](https://docs.novig.com/api/streaming/lifecycle.md)
 >
 > The `lifecycle` channel publishes `GOLIVE` when a market enters live play and `UNLIVE` when it leaves. Fees begin on `GOLIVE` and stop on `UNLIVE`.
 
-> **[REST: the snapshot](https://docs.novig.com/api/catalog)**
+> [card] [REST: the snapshot](https://docs.novig.com/api/catalog)
 >
 > `GET /v3/catalog/events/{id}` returns the event's `status`. `OPEN_INGAME` is exactly the fee-charged condition. Use it to bootstrap on connect and after any reconnect.
 

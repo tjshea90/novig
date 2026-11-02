@@ -71,6 +71,17 @@ The catalog shape is described in [Coverage](https://docs.oddspapi.io/coverage.m
 
 ***
 
+## Integration costs to compare
+
+Latency tables don't capture how much machinery a feed forces you to build. Four questions worth asking of any feed you evaluate, with our answers:
+
+* **Is it push?** Updates arrive over a persistent WebSocket with [resume & replay](https://docs.oddspapi.io/websocket/resume-replay.md) — not polling, and not one-way server-sent events where every drop means reconnect-and-refetch logic on your side.
+* **How many books per request?** No per-request bookmaker cap: one subscription streams every book your key can see, and one REST snapshot returns them all. Full-market width never turns into parallel-call fan-out.
+* **How is history rate-limited?** [Historical and CLV endpoints](https://docs.oddspapi.io/api-reference/concepts.md#historical-odds-and-clv) run under the standard [rate limits](https://docs.oddspapi.io/api-reference/rate-limits.md) — no separate throttle that turns a backtest into an overnight job.
+* **Where does coverage live?** 200+ books across US, European, and Asian markets, exchanges with depth, and prediction markets — not a US-retail catalog with thin edges.
+
+***
+
 ## The outcome-level verdict
 
 Per-update stopwatch races answer "who saw it first"; closing line value answers whether that speed pays. At the end of the trial, join the prices you would have traded on against the closing line:

@@ -7,6 +7,7 @@
 - [Universe model](https://docs.novig.com/api/concepts/universe-model.md): Sports, leagues, events, markets, and outcomes, and how they nest.
 - [Event lifecycle](https://docs.novig.com/api/concepts/event-lifecycle.md): The states an event moves through, and how its markets settle.
 - [Order lifecycle](https://docs.novig.com/api/concepts/order-lifecycle.md): The five order statuses, and the events that move an order between them.
+- [Participation Protection](https://docs.novig.com/api/concepts/participation-protection.md): Player props that resolve at their pregame price when the player sits out the second half.
 - [Monetary representations](https://docs.novig.com/api/concepts/money.md): Prices and balances are strings. Quantities are whole numbers.
 - [Get a key](https://docs.novig.com/api/api-keys.md): Generate a keypair, register its public half, and see what each key can do.
 - [Sign a request](https://docs.novig.com/api/signing.md): Sign every request with NOVIG-V3, and test your signer against our vectors.
@@ -14,7 +15,7 @@
 - [Funding](https://docs.novig.com/api/subaccounts/funding.md): Move money between your cash wallet and one subaccount, with an idempotency key.
 - [Connection](https://docs.novig.com/api/streaming/connection.md): The connection that carries every channel: verbs, nonces, seq, and gaps.
 - [Book](https://docs.novig.com/api/streaming/book.md): Every order-book change on a market.
-- [Lifecycle](https://docs.novig.com/api/streaming/lifecycle.md): Market status transitions, and the two that void your orders.
+- [Lifecycle](https://docs.novig.com/api/streaming/lifecycle.md): Market status transitions, and the one that voids your orders.
 - [Tape](https://docs.novig.com/api/streaming/tape.md): Every execution on a market.
 - [Private](https://docs.novig.com/api/streaming/private.md): Your own orders and positions: open, fill, cancel, reject.
 - [Throttling](https://docs.novig.com/api/throttling.md): How we limit your request rate, and how to pace your requests.
@@ -35,6 +36,7 @@
 - [Trades](https://docs.novig.com/public-data/trades.md): Every executed trade, one row per side
 - [Markets](https://docs.novig.com/public-data/markets.md): One row per market per day: open interest, volume, OHLC
 - [Get the account balance](https://docs.novig.com/api-reference/accounts/get-the-account-balance.md): | | | | --- | --- | | **Key** | `management` `management::read` | | **Throttle** | `account` | | **Cost** | `1 /request` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <span class="st st-…
+- [Get the geolocation status](https://docs.novig.com/api-reference/accounts/get-the-geolocation-status.md): | | | | --- | --- | | **Key** | `any` | | **Throttle** | `account` | | **Cost** | `1 /request` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> | | **Ide…
 - [List subaccounts](https://docs.novig.com/api-reference/accounts/list-subaccounts.md): | | | | --- | --- | | **Key** | `management` `management::read` | | **Throttle** | `account` | | **Cost** | `1 /request` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-…
 - [Open a subaccount](https://docs.novig.com/api-reference/accounts/open-a-subaccount.md): | | | | --- | --- | | **Key** | `management` | | **Throttle** | `account` | | **Cost** | `1 /request` | | **Answers** | <span class="st st-ok">201</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <s…
 - [Label a subaccount](https://docs.novig.com/api-reference/accounts/label-a-subaccount.md): | | | | --- | --- | | **Key** | `management` | | **Throttle** | `account` | | **Cost** | `1 /request` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <s…
@@ -89,12 +91,13 @@
 - [Get your throttle schedule](https://docs.novig.com/api-reference/throttle/get-your-throttle-schedule.md): | | | | --- | --- | | **Key** | `any` | | **Throttle** | `free` | | **Cost** | `0 /request` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class=…
 - [Open the websocket](https://docs.novig.com/api-reference/streaming/open-the-websocket.md): | | | | --- | --- | | **Key** | `trading` `trading::read` | | **Throttle** | `stream` | | **Cost** | `32 /request` | | **Answers** | <span class="st st-info">101</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold…
 - [Affiliate Integration](https://docs.novig.com/affiliates/overview.md): Getting started with Novig affiliate partnerships
+- [Parlay Pricing](https://docs.novig.com/affiliates/parlay-pricing.md): Show Novig's price for a parlay inside your UI
 - [Deeplinking](https://docs.novig.com/affiliates/deeplinking.md): Direct users into the Novig app with pre-populated order slips
 - [Odds Screens](https://docs.novig.com/affiliates/odds-screens.md): Display Novig prices using the REST catalog and order book
-- [Parlay Pricing](https://docs.novig.com/affiliates/parlay-pricing.md): Query real-time Novig parlay prices within your UI
 - [Futures Markets](https://docs.novig.com/affiliates/futures.md): Integrating Novig futures markets into your platform
 - [API Changelog](https://docs.novig.com/api-reference/changelog.md): This changelog is specific to our API users and LPs
 - [Novig Dev Docs](https://docs.novig.com/deprecated/index.md): Get started with the NBX API
+- [Move from v2 to v3](https://docs.novig.com/deprecated/migrate-to-v3.md): For liquidity providers on v2: what changes in v3, and whether to move at all.
 - [Authentication](https://docs.novig.com/deprecated/api-reference/authentication.md): OAuth 2.0 authentication for the NBX API
 - [Data Model](https://docs.novig.com/deprecated/api-reference/data-model.md): Understanding how Novig structures events, markets, and outcomes
 - [Understanding Outcome IDs](https://docs.novig.com/deprecated/api-reference/outcome-ids.md): How outcomes are organized and identified in the Novig API

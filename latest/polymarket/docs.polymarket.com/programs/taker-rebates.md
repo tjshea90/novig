@@ -105,75 +105,75 @@ Read unread account notifications to update your app when a daily snapshot
 raises the account's taker tier. Authenticate the account whose notifications
 you want to read.
 
-**TypeScript**
+> [tab] TypeScript
+>
+> Call `fetchNotifications()` on a `SecureClient` and narrow by the notification
+> type before reading the payload.
+>
+> ```ts theme={null}
+> import { NotificationType } from "@polymarket/client";
+>
+> const notifications = await client.fetchNotifications();
+>
+> for (const notification of notifications) {
+>   if (notification.type === NotificationType.TAKER_TIER_UPGRADED) {
+>     const { previousTier, tier, rebateBps, snapshotDate } =
+>       notification.payload;
+>     console.log(previousTier, tier, rebateBps, snapshotDate);
+>   }
+> }
+> ```
+>
+> `TakerTierUpgradedNotification` has integer `previousTier`, `tier`, and
+> `rebateBps` in its payload. `snapshotDate` is a `YYYY-MM-DD` string identifying
+> the UTC day covered by the snapshot.
 
-Call `fetchNotifications()` on a `SecureClient` and narrow by the notification
-type before reading the payload.
+> [tab] Python
+>
+> Call `get_notifications()` on an `AsyncSecureClient`. The synchronous
+> `SecureClient` provides the same method.
+>
+> ```python theme={null}
+> from polymarket import NotificationType
+>
+> notifications = await client.get_notifications()
+>
+> for notification in notifications:
+>     if notification.type == NotificationType.TAKER_TIER_UPGRADED:
+>         payload = notification.payload
+>         print(payload.previous_tier, payload.tier, payload.rebate_bps, payload.snapshot_date)
+> ```
+>
+> `TakerTierUpgradedNotification` has integer `previous_tier`, `tier`, and
+> `rebate_bps` in its payload. `snapshot_date` is a `datetime.date` identifying the
+> UTC day covered by the snapshot.
 
-```ts theme={null}
-import { NotificationType } from "@polymarket/client";
-
-const notifications = await client.fetchNotifications();
-
-for (const notification of notifications) {
-  if (notification.type === NotificationType.TAKER_TIER_UPGRADED) {
-    const { previousTier, tier, rebateBps, snapshotDate } =
-      notification.payload;
-    console.log(previousTier, tier, rebateBps, snapshotDate);
-  }
-}
-```
-
-`TakerTierUpgradedNotification` has integer `previousTier`, `tier`, and
-`rebateBps` in its payload. `snapshotDate` is a `YYYY-MM-DD` string identifying
-the UTC day covered by the snapshot.
-
-**Python**
-
-Call `get_notifications()` on an `AsyncSecureClient`. The synchronous
-`SecureClient` provides the same method.
-
-```python theme={null}
-from polymarket import NotificationType
-
-notifications = await client.get_notifications()
-
-for notification in notifications:
-    if notification.type == NotificationType.TAKER_TIER_UPGRADED:
-        payload = notification.payload
-        print(payload.previous_tier, payload.tier, payload.rebate_bps, payload.snapshot_date)
-```
-
-`TakerTierUpgradedNotification` has integer `previous_tier`, `tier`, and
-`rebate_bps` in its payload. `snapshot_date` is a `datetime.date` identifying the
-UTC day covered by the snapshot.
-
-**API**
-
-Read unread notifications using the account's CLOB L2 credentials.
-
-```bash theme={null}
-curl "https://clob.polymarket.com/notifications" \
-  -H "POLY_ADDRESS: <signer_address>" \
-  -H "POLY_API_KEY: <clob_api_key>" \
-  -H "POLY_PASSPHRASE: <clob_api_passphrase>" \
-  -H "POLY_SIGNATURE: <clob_l2_signature>" \
-  -H "POLY_TIMESTAMP: <clob_request_timestamp>"
-```
-
-A tier upgrade notification has `type: 11` and this payload:
-
-```json theme={null}
-{
-  "previous_tier": 2,
-  "tier": 3,
-  "rebate_bps": 1800,
-  "snapshot_date": "2026-10-06"
-}
-```
-
-The tier and rebate values are integers. `snapshot_date` identifies the UTC day
-covered by the snapshot, rather than the notification's creation time.
+> [tab] API
+>
+> Read unread notifications using the account's CLOB L2 credentials.
+>
+> ```bash theme={null}
+> curl "https://clob.polymarket.com/notifications" \
+>   -H "POLY_ADDRESS: <signer_address>" \
+>   -H "POLY_API_KEY: <clob_api_key>" \
+>   -H "POLY_PASSPHRASE: <clob_api_passphrase>" \
+>   -H "POLY_SIGNATURE: <clob_l2_signature>" \
+>   -H "POLY_TIMESTAMP: <clob_request_timestamp>"
+> ```
+>
+> A tier upgrade notification has `type: 11` and this payload:
+>
+> ```json theme={null}
+> {
+>   "previous_tier": 2,
+>   "tier": 3,
+>   "rebate_bps": 1800,
+>   "snapshot_date": "2026-10-06"
+> }
+> ```
+>
+> The tier and rebate values are integers. `snapshot_date` identifies the UTC day
+> covered by the snapshot, rather than the notification's creation time.
 
 The rebate rate uses basis points: 1,800 basis points means 18%. Tier upgrades
 are account notifications; they do not indicate that a rebate payout has occurred.
@@ -226,40 +226,40 @@ Your tier shows on your Polymarket profile and on the leaderboards. As you climb
 
 ## FAQ
 
-> **Do maker trades count toward my tier**
+> [accordion] Do maker trades count toward my tier
 >
 > No. Only taker trades earn Weighted Volume and count toward your tier.
 > Maker fills are rewarded separately through the
 > [Maker Rebates Program](https://docs.polymarket.com/programs/maker-rebates.md).
 
-> **When does my rebate start applying**
+> [accordion] When does my rebate start applying
 >
 > Your rebate applies to trades from the moment you reach a tier, going
 > forward. There is no backfill on earlier trades.
 
-> **When are rebates paid**
+> [accordion] When are rebates paid
 >
 > Rebates are paid once a day at midnight UTC in pUSD, directly to your
 > account. You must accrue at least **\$1** in rebates before a payout is
 > issued.
 
-> **How often does my tier update**
+> [accordion] How often does my tier update
 >
 > Your tier is recalculated daily based on your last 30 days of Weighted
 > Volume. Tier changes take effect at the next daily update.
 
-> **What happens if I slow down trading**
+> [accordion] What happens if I slow down trading
 >
 > Your tier moves down after a short grace period if your 30-day Weighted
 > Volume drops below your current tier's threshold.
 
-> **Which markets earn Weighted Volume**
+> [accordion] Which markets earn Weighted Volume
 >
 > All fee-enabled categories earn Weighted Volume at the weight shown in the
 > table above. Geopolitical and world events markets are free to trade and
 > earn no Weighted Volume.
 
-> **Are third-party integrations using omnibus wallets eligible**
+> [accordion] Are third-party integrations using omnibus wallets eligible
 >
 > No. Third-party integrations using omnibus wallets are not eligible for the
 > Taker Rebate Program.

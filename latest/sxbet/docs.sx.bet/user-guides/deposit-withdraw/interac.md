@@ -18,11 +18,11 @@
 
 4. Once you've confirmed the transaction, you will get an email notification when PayTrie accepts the funds and the USDC is in your account. This can take up to 60 minutes.
 
-> **[Place Your First Bet](https://docs.sx.bet/user-guides/trading/market-orders.md)**
+> [card] [Place Your First Bet](https://docs.sx.bet/user-guides/trading/market-orders.md)
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)**
+> [card] [Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)
 >
 > Learn how to find odds and navigate the live order book.
 

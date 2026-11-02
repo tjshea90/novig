@@ -32,11 +32,11 @@ const spendable = row
 
 ## Related
 
-> **[Get your balance](https://docs.sx.bet/api-reference/get-user-balance-v3.md)**
+> [card] [Get your balance](https://docs.sx.bet/api-reference/get-user-balance-v3.md)
 >
 > Every field, and what an empty array means.
 
-> **[Funding](https://docs.sx.bet/developers/funding.md)**
+> [card] [Funding](https://docs.sx.bet/developers/funding.md)
 >
 > Getting money in, and confirming it arrived.
 

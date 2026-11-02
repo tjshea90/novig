@@ -273,9 +273,9 @@ the signature. **The order's expiry must be no later than the parlay market's ex
 
 The signing code lives on the shared pages:
 
-> **[Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)**
+> [card] [Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)
 
-> **[EIP-712 order signing](https://docs.sx.bet/api-reference/eip712-order-signing.md)**
+> [card] [EIP-712 order signing](https://docs.sx.bet/api-reference/eip712-order-signing.md)
 >
 > The struct, the domain, and signing the digest.
 
@@ -285,25 +285,25 @@ Keep your order's `expiry` — a unix epoch timestamp in seconds — inside the 
 
 Cancelling a parlay order is cancelling an order. Use [`DELETE /orders-v3`](https://docs.sx.bet/api-reference/delete-orders-v3) with the ids you want cancelled.
 
-> **[Cancelling orders](https://docs.sx.bet/developers/cancelling-orders.md)**
+> [card] [Cancelling orders](https://docs.sx.bet/developers/cancelling-orders.md)
 >
 > Picking a route, confirming before you exit, and why a `200` is not enough.
 
 ## Related
 
-> **[Parlays](https://docs.sx.bet/developers/parlays.md)**
+> [card] [Parlays](https://docs.sx.bet/developers/parlays.md)
 >
 > The RFQ flow.
 
-> **[Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)**
+> [card] [Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)
 >
 > Posting new orders
 
-> **[EIP-712 order signing](https://docs.sx.bet/api-reference/eip712-order-signing.md)**
+> [card] [EIP-712 order signing](https://docs.sx.bet/api-reference/eip712-order-signing.md)
 >
 > The eight-field struct every order shares.
 
-> **[Parlay requests channel](https://docs.sx.bet/api-reference/channel-parlay-requests.md)**
+> [card] [Parlay requests channel](https://docs.sx.bet/api-reference/channel-parlay-requests.md)
 >
 > The message you subscribe to.
 

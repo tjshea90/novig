@@ -280,7 +280,7 @@ impl Query {
 A test vector is a sample request with its expected canonical string.
 Use them to check your signer.
 
-> **[signing-vectors.json](https://docs.novig.com/api-reference/spec-files/signing-vectors.json)**
+> [card] [signing-vectors.json](https://docs.novig.com/api-reference/spec-files/signing-vectors.json)
 >
 > 30 vectors and two test keypairs, for Ed25519 and P-256. They cover every case in the table below.
 

@@ -12,8 +12,8 @@
 
 #### 覆盖范围
 
-- [运动覆盖 - 按运动划分的赛事与期货](https://docs.oddspapi.io/zh/coverage.md): OddsPapi B2B 赔率 API 的覆盖范围：以 sharp 交易型博彩商为核心的 350+ 家博彩公司，外加 60+ 项运动与预测市场主题，按 sportId 标注赛事与期货可用性。
-- [博彩商覆盖 —— Sharp 书、交易所与零售博彩商](https://docs.oddspapi.io/zh/coverage/bookmakers.md): OddsPapi 在 350+ 家博彩公司上的覆盖：sharp 交易型博彩商、交易所与预测市场、零售体育博彩商 —— 含各博彩商的能力、新鲜度上限与状态信号。
+- [运动覆盖 - 按运动划分的赛事与期货](https://docs.oddspapi.io/zh/coverage.md): OddsPapi B2B 赔率 API 的覆盖范围：以 sharp 交易型博彩商为核心的 200+ 家博彩公司，外加 60+ 项运动与预测市场主题，按 sportId 标注赛事与期货可用性。
+- [博彩商覆盖 —— Sharp 书、交易所与零售博彩商](https://docs.oddspapi.io/zh/coverage/bookmakers.md): OddsPapi 在 200+ 家博彩公司上的覆盖：sharp 交易型博彩商、交易所与预测市场、零售体育博彩商 —— 含各博彩商的能力、新鲜度上限与状态信号。
 - [盘口覆盖 —— 市场类型、线值、赛段与球员盘](https://docs.oddspapi.io/zh/coverage/markets.md): OddsPapi 覆盖哪些盘口：市场类型、赛段范围、亚洲盘与欧洲让分盘、大小球、球员盘，以及如何通过 GET /markets 枚举各运动的完整盘口图谱。
 
 #### 用 OddsPapi 构建
@@ -24,6 +24,7 @@
 - [端到端支撑一家体育博彩 —— 赛程、价格、滚球与结算](https://docs.oddspapi.io/zh/guides/sportsbook.md): 在 OddsPapi 上构建完整博彩产品：发现运动与锦标赛、加载赛程、建模盘口与选项、推送价格与滚球状态，并完成投注结算。
 - [结算与评级 —— 逐 outcome 评级、四分之一盘与周期盘](https://docs.oddspapi.io/zh/guides/settlement.md): 在 OddsPapi 上为投注评级：基于冻结 ID 的逐 outcome 结算评级、亚洲四分之一盘的半注计算、周期盘评级，以及 UNDECIDED 与 CANCELLED 的处理方式。
 - [评估 OddsPapi —— 亲自测量延迟、覆盖与恢复](https://docs.oddspapi.io/zh/guides/evaluation.md): OddsPapi 试用方案：按博彩商记录观测延迟并对照公布数值、演练恢复路径、用 API 实测核对覆盖范围，并用 CLV 为速度之争给出定论。
+- [延迟测量方法 - OddsPapi 如何测量各博彩商延迟](https://docs.oddspapi.io/zh/guides/latency-methodology.md): 公布的各博彩商延迟数字是如何产生的：测量什么、实测与估计的界定、数字不包含什么，以及如何自行复现。
 - [各项目的周期 - fulltime 与 result 的区别](https://docs.oddspapi.io/zh/guides/periods.md): 理解 OddsPapi 各运动项目的 period 周期体系：什么时候 fulltime 是一个独立的事实，什么时候它与 result 完全等价，以及如何在不写死假设的前提下按 marketType 与 period 对盘口分组。
 - [串关与 SGP - 构建投注单](https://docs.oddspapi.io/zh/guides/parlays.md): OddsPapi 多关投注的工作流指南：如何在 parlay 与 SGP 端点之间选择、如何让实时投注单保持正确报价、如何横向比较博彩公司，以及某一关被暂停时如何优雅降级。
 
@@ -117,7 +118,7 @@
 - [期货频道 - 赛季投注市场元数据](https://docs.oddspapi.io/zh/websocket/channels/futures.md): 通过WebSocket流式传输期货市场元数据。赛季投注、冠军赔率和长期市场数据用于体育博彩平台。
 - [博彩商频道 - 体育博彩状态和元数据](https://docs.oddspapi.io/zh/websocket/channels/bookmakers.md): 通过WebSocket流式传输每个赛事的博彩商状态。跟踪哪些体育博彩提供赔率、检测过期/暂停市场并监控参赛方轮换标志。
 - [期货博彩商频道 - 赛季市场博彩商状态](https://docs.oddspapi.io/zh/websocket/channels/bookmakersFutures.md): 通过WebSocket流式传输每个期货市场的博彩商状态。跟踪哪些体育博彩提供赛季投注赔率并检测市场暂停。
-- [赔率频道 - 实时博彩赔率流](https://docs.oddspapi.io/zh/websocket/channels/odds.md): 通过WebSocket流式传输低延迟实时博彩赔率。聚合自350+家博彩公司的实时赔率，支持小数、分数、美式赔率格式及订单簿深度。
+- [赔率频道 - 实时博彩赔率流](https://docs.oddspapi.io/zh/websocket/channels/odds.md): 通过WebSocket流式传输低延迟实时博彩赔率。聚合自200+家博彩公司的实时赔率，支持小数、分数、美式赔率格式及订单簿深度。
 - [比分频道 - 实时比赛比分流](https://docs.oddspapi.io/zh/websocket/channels/scores.md): 通过WebSocket流式传输实时比赛比分。按节次比分更新、最终结果和实时体育数据，适用于博彩和媒体平台。
 - [时钟频道 - 实时比赛时钟更新](https://docs.oddspapi.io/zh/websocket/channels/clocks.md): 通过WebSocket流式传输实时比赛时钟更新。节、剩余时间和暂停状态。
 - [货币频道 - 汇率和加密货币价格](https://docs.oddspapi.io/zh/websocket/channels/currencies.md): 通过WebSocket流式传输实时货币汇率。法定货币和加密货币定价数据，包括BTC、ETH和主要代币用于赔率转换。

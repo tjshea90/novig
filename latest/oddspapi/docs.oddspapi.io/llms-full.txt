@@ -580,13 +580,11 @@ All **odds-update times** are integer epoch milliseconds — for fixtures and fu
 
 To achieve the lowest latency for realtime updates:
 
-* The **fastest delivery regions** are Central Europe (recommended) and US East.
-* For best performance, deploy your backend **in the same datacenters we use**, such as:
-  * [Netcup](https://www.netcup.com/en/?ref=294017)
-  * [Hetzner](https://www.hetzner.com/cloud)
-* If you're building **prediction markets or models sensitive to latency**, consider:
-  * Deploying in **Austria (AT)** via Netcup, or
-  * Using **AWS eu-west-1** (Ireland)
+* Our main infrastructure runs in **Germany** and **US East** — the fastest delivery regions.
+* For best performance, deploy your backend **in the same datacenters we use**: [Hetzner](https://www.hetzner.com/cloud), central Germany.
+* On AWS, use:
+  * **eu-central-1** (Frankfurt) — preferred, or
+  * **eu-west-1** (Ireland) — e.g. for prediction-market work near Polymarket
 
 > ⚡ Servers colocated near our streaming infrastructure receive updates faster and with fewer hops.
 
@@ -622,7 +620,7 @@ See [Rate Limits](/api-reference/rate-limits) for headers, per-endpoint limits, 
 
 ## Historical odds and CLV
 
-The realtime WebSocket `odds` and `oddsFutures` channels deliver **latest state** on a fixed \~10 ms batching window — ticks superseded within a window are collapsed to the newest value (no state is lost), so the stream is not a tick ledger. See [delivery semantics](/websocket/channels/odds#delivery-semantics).
+The realtime WebSocket `odds` and `oddsFutures` channels deliver **latest state** on a fixed \~6 ms batching window — ticks superseded within a window are collapsed to the newest value (no state is lost), so the stream is not a tick ledger. See [delivery semantics](/websocket/channels/odds#delivery-semantics).
 
 > Use the live stream to **trade**, and the REST history endpoints to **measure** — CLV models, fill auditing, and backtests.
 
@@ -1593,12 +1591,14 @@ Representative rolling p50 observation delays (live values per book on `GET /boo
 | Polymarket | 0.05 s | 0.05 s | measured |
 | Betfair Exchange | 0.10 s | 0.10 s | measured |
 | BC.Game | 0.25 s | 0.50 s | measured |
+| DraftKings | 0.28 s | 0.28 s | measured |
 | Pinnacle | 0.38 s | 0.38 s | measured |
+| FanDuel | \~0.5 s | \~2 s | estimated |
 | Singbet | \~1 s | \~8 s | estimated |
 
-Downstream of observation, the internal pipeline adds \~30 ms (p50) to gateway egress; the delivery hop from `ts` to client receipt depends on where you deploy — as low as \~5 ms when colocated (see [server location guidance](/api-reference/concepts#server-location-matters)).
+Downstream of observation, the internal pipeline adds \~20 ms (p50) to gateway egress; the delivery hop from `ts` to client receipt depends on where you deploy — as low as \~5 ms when colocated (see [server location guidance](/api-reference/concepts#server-location-matters)).
 
-To verify these numbers yourself during a trial, see [evaluating the feed](/guides/evaluation); to benchmark them against a feed you already run, see [running OddsPapi as a second feed](/guides/second-feed); to trade on them, see [sharp-line trading & CLV](/guides/sharp-line-trading).
+How these numbers are produced — and why they exclude the delivery hop — is in the [latency methodology](/guides/latency-methodology). To verify them yourself during a trial, see [evaluating the feed](/guides/evaluation); to benchmark them against a feed you already run, see [running OddsPapi as a second feed](/guides/second-feed); to trade on them, see [sharp-line trading & CLV](/guides/sharp-line-trading).
 
 ***
 
@@ -1728,7 +1728,7 @@ This page lists **new features**, **changes**, **fixes**, and **breaking changes
 
 ***
 
-## 2026-10-26
+## 2026-10-28
 
 ### ✨ Added
 
@@ -1968,7 +1968,7 @@ untouched, they just start carrying the new `outcomeId`s.
 # Sports Coverage - Fixtures & Futures by Sport
 Source: https://docs.oddspapi.io/coverage
 
-Coverage of the OddsPapi B2B odds API: 350+ bookmakers anchored on sharp trading books, plus 60+ sports and prediction-market topics with fixtures and futures availability per sportId.
+Coverage of the OddsPapi B2B odds API: 200+ bookmakers anchored on sharp trading books, plus 60+ sports and prediction-market topics with fixtures and futures availability per sportId.
 
 OddsPapi covers **60+ sports** plus prediction-market topics, each identified by a numeric `sportId`. Every sport is available as **fixtures** (match-level markets), **futures** (outrights / season-long markets), or both.
 
@@ -1988,7 +1988,7 @@ Discover the live list programmatically via `GET /sports`. Identifiers are langu
 
 ## Bookmaker coverage
 
-The feed aggregates **350+ bookmakers**, anchored on the books that matter for price discovery:
+The feed aggregates **200+ bookmakers**, anchored on the books that matter for price discovery:
 
 * **Sharp trading books** — the core of the feed. The bookmakers that are most accurate in pricing and dominate global sports prediction (e.g. Pinnacle, Singbet, Circa Sports) — the books trading systems benchmark against, carried with [limits](/websocket/channels/odds#limits) and full delivery timestamps.
 * **Betting exchanges & prediction markets** — realtime prices with [orderbook depth](/websocket/channels/odds#advanced-metadata-meta) (`back` / `lay` ladders), e.g. Betfair and Polymarket.
@@ -2090,9 +2090,9 @@ Discover the catalog available to your key via [`GET /bookmakers`](/api-referenc
 # Bookmaker Coverage - Sharps, Exchanges & Retail Books
 Source: https://docs.oddspapi.io/coverage/bookmakers
 
-What OddsPapi covers across 350+ bookmakers: sharp trading books, exchanges and prediction markets, and retail sportsbooks — with per-book capabilities, freshness bounds, and status signals.
+What OddsPapi covers across 200+ bookmakers: sharp trading books, exchanges and prediction markets, and retail sportsbooks — with per-book capabilities, freshness bounds, and status signals.
 
-OddsPapi aggregates **350+ bookmakers**, anchored on the books that matter for price discovery rather than optimized for a headline count. The catalog available to you is determined by your key — query [`GET /bookmakers`](/api-reference/common/get-bookmakers) for the live list.
+OddsPapi aggregates **200+ bookmakers**, anchored on the books that matter for price discovery rather than optimized for a headline count. The catalog available to you is determined by your key — query [`GET /bookmakers`](/api-reference/common/get-bookmakers) for the live list.
 
 ***
 
@@ -2353,6 +2353,17 @@ The catalog shape is described in [Coverage](/coverage), [Bookmaker coverage](/c
 
 ***
 
+## Integration costs to compare
+
+Latency tables don't capture how much machinery a feed forces you to build. Four questions worth asking of any feed you evaluate, with our answers:
+
+* **Is it push?** Updates arrive over a persistent WebSocket with [resume & replay](/websocket/resume-replay) — not polling, and not one-way server-sent events where every drop means reconnect-and-refetch logic on your side.
+* **How many books per request?** No per-request bookmaker cap: one subscription streams every book your key can see, and one REST snapshot returns them all. Full-market width never turns into parallel-call fan-out.
+* **How is history rate-limited?** [Historical and CLV endpoints](/api-reference/concepts#historical-odds-and-clv) run under the standard [rate limits](/api-reference/rate-limits) — no separate throttle that turns a backtest into an overnight job.
+* **Where does coverage live?** 200+ books across US, European, and Asian markets, exchanges with depth, and prediction markets — not a US-retail catalog with thin edges.
+
+***
+
 ## The outcome-level verdict
 
 Per-update stopwatch races answer "who saw it first"; closing line value answers whether that speed pays. At the end of the trial, join the prices you would have traded on against the closing line:
@@ -2376,6 +2387,75 @@ Per-update stopwatch races answer "who saw it first"; closing line value answers
 * A CLV join on the lines you would have traded.
 
 If your measurements disagree with the published numbers, we want to know: send the affected books, UTC timestamps, and your `serverEpoch` / `entryId` values to [contact@55-tech.com](mailto:contact@55-tech.com) so we can trace the session. Trial access is arranged through the same address.
+
+
+# Latency Methodology - How OddsPapi Measures Per-Book Delay
+Source: https://docs.oddspapi.io/guides/latency-methodology
+
+How the published per-bookmaker delay numbers are produced: what is measured, what counts as measured vs. estimated, what the numbers exclude, and how to reproduce them.
+
+We publish per-book delay numbers in [Latency and freshness](/api-reference/reliability#latency-and-freshness) and as live bounds on [`GET /bookmakers`](/api-reference/common/get-bookmakers). This page is the methodology behind them — what exactly is measured, where the numbers come from, and how to reproduce them yourself. A number without a methodology is marketing; held to one, it is a claim.
+
+***
+
+## The quantity
+
+One metric per odds update:
+
+```
+observation delay = changedAt − bookmakerChangedAt
+```
+
+* `bookmakerChangedAt` — the bookmaker's own change timestamp, as published by the book.
+* `changedAt` — when OddsPapi observed the change at the bookmaker.
+
+This is the delay **we own**: from the price changing at the source to us having it. It deliberately excludes everything downstream of observation — see [what the numbers exclude](#what-the-numbers-exclude).
+
+Delays are aggregated **per bookmaker**, split by delivery mode — live, pregame, and pregame main lines — because the modes run on different collection paths and their delays differ. A single blended number would hide exactly the difference that matters.
+
+***
+
+## Measured vs. estimated
+
+Every published number carries one of two modes:
+
+| Mode | When | How the number is produced |
+| - | - | - |
+| **measured** | The book publishes usable change timestamps | Rolling p50 of `changedAt − bookmakerChangedAt` across that book's updates, per delivery mode |
+| **estimated** | The book publishes no usable timestamp | Derived from the collection cycle for that book — stated as an approximation, never presented as measured |
+
+The mode is printed next to every number we publish. If a book's row says *estimated*, treat it as our honest upper-bound guess, not a measurement — and note that `bookmakerChangedAt` is the book's clock, not ours, so even measured values inherit the source's timestamping quality.
+
+***
+
+## Where the numbers live
+
+Two artifacts, with different jobs:
+
+* **[`GET /bookmakers`](/api-reference/common/get-bookmakers)** — the live source of truth. `maxDelayLiveInSec`, `maxDelayPregameInSec`, and `maxDelayPregameMainInSec` state the maximum expected refresh delay per delivery mode, per book, maintained as a rolling value. These bounds are the claim; hold us to them.
+* **The [docs table](/api-reference/reliability#latency-and-freshness)** — a representative snapshot of rolling p50s for books trialists ask about most. It illustrates; the endpoint governs.
+
+When the two disagree, the endpoint wins — it moves with the feed, the docs page moves with editors.
+
+***
+
+## What the numbers exclude
+
+Observation delay ends at `changedAt`. Downstream of it:
+
+* **Internal pipeline** — observation to gateway egress adds \~20 ms (p50).
+* **Conflation** — updates are batched on a fixed \~6 ms window, newest value wins; nothing is dropped, see [delivery semantics](/websocket/channels/odds#delivery-semantics).
+* **Delivery hop** — gateway `ts` to your receipt depends on where you deploy; as low as \~5 ms colocated (see [server location](/api-reference/concepts#server-location-matters)).
+
+These are excluded on purpose: the delivery hop is dominated by *your* deployment, so folding it into a published number would make the number unverifiable. Each update carries the full stamp chain (`bookmakerChangedAt`, `changedAt`, `ts`), so every segment is measurable separately.
+
+***
+
+## Reproduce it
+
+Nothing in this methodology is privileged — the same timestamps we aggregate arrive on every update you receive. Log `changedAt − bookmakerChangedAt` per book over your trial, split live vs. pregame, take the p50, and put it next to the published row. The full protocol, including recovery drills and a CLV join, is in [evaluating the feed](/guides/evaluation); racing an incumbent feed on the same line moves is in [running a second feed](/guides/second-feed#measure-which-feed-is-faster).
+
+If your measurements disagree with ours, send the affected books and UTC timestamps to [contact@55-tech.com](mailto:contact@55-tech.com) — a reproducible disagreement is a bug report, and we treat it as one.
 
 
 # Parlays & SGP - Building a Betslip
@@ -2840,7 +2920,7 @@ Your reaction time is four segments, and you control one:
 | Segment | Measure it as | Who controls it |
 | - | - | - |
 | Venue → our observation | `changedAt − bookmakerChangedAt` | published per book |
-| Conflation | fixed \~10 ms batching window; newest value always lands | bounded by design |
+| Conflation | fixed \~6 ms batching window; newest value always lands | bounded by design |
 | Gateway → you | `your receipt − ts` | **you** — see [Server location](/api-reference/concepts#server-location-matters) |
 | Decision + order round-trip | your own clock | you |
 
@@ -3292,7 +3372,7 @@ For books quoting in crypto or non-USD fiat, the [`currencies`](/websocket/chann
 
 ## Grade yourself against the close
 
-Trade on the stream, measure on REST. The live channels deliver conflated state on a fixed \~10 ms window — the newest value always arrives, but superseded intermediate ticks do not, so the stream is not a tick ledger. For full movement and opening/closing prices:
+Trade on the stream, measure on REST. The live channels deliver conflated state on a fixed \~6 ms window — the newest value always arrives, but superseded intermediate ticks do not, so the stream is not a tick ledger. For full movement and opening/closing prices:
 
 | Purpose | Fixtures | Futures |
 | - | - | - |
@@ -3324,7 +3404,7 @@ A desk that logs CLV per book and per latency bucket usually learns where its ed
 ## What you can rely on
 
 * **Delay is published per book, and measured.** `maxDelayLiveInSec` / `maxDelayPregameInSec` / `maxDelayPregameMainInSec` come from observed-vs-bookmaker timestamps where a book publishes usable ones, and are labelled as estimates where it does not. The four-stamp chain means you can check those numbers against your own clock instead of taking them on faith.
-* **Nothing is dropped.** Updates are conflated on a fixed \~10 ms window and the newest value always lands — the stream is latest-state, not a lossy sample. When you need every tick, the REST history endpoints have them.
+* **Nothing is dropped.** Updates are conflated on a fixed \~6 ms window and the newest value always lands — the stream is latest-state, not a lossy sample. When you need every tick, the REST history endpoints have them.
 * **IDs stay addressable across seasons.** The market taxonomy is append-only — new `marketType` values appear as coverage grows and existing ones never change meaning — and the same coordinates always resolve to the same `marketId` / `outcomeId`. A backtest written against last season's data still addresses the same selections today.
 
 
@@ -3481,7 +3561,7 @@ Built for **trading systems**, **sportsbooks**, **analytics**, and **media platf
 
 ### Where OddsPapi fits
 
-OddsPapi is, first and foremost, an **aggregated, low-latency realtime trading feed** — a WebSocket-first pipe delivering odds from 350+ bookmakers, with snapshots and resume/replay. But it's more than a feed: it covers the wider **betting pipeline**. Alongside realtime prices it provides [historical odds & CLV](/api-reference/concepts#historical-odds-and-clv) and **settlement** endpoints (fixtures today; futures settlement rolling out), so clients **build and power full betting products on top of OddsPapi** — entire websites and trading systems — not just consume a stream. The one thing it deliberately is **not**: an official or licensed league-data provider — it aggregates bookmaker prices rather than licensing official stats.
+OddsPapi is, first and foremost, an **aggregated, low-latency realtime trading feed** — a WebSocket-first pipe delivering odds from 200+ bookmakers, with snapshots and resume/replay. But it's more than a feed: it covers the wider **betting pipeline**. Alongside realtime prices it provides [historical odds & CLV](/api-reference/concepts#historical-odds-and-clv) and **settlement** endpoints (fixtures today; futures settlement rolling out), so clients **build and power full betting products on top of OddsPapi** — entire websites and trading systems — not just consume a stream. The one thing it deliberately is **not**: an official or licensed league-data provider — it aggregates bookmaker prices rather than licensing official stats.
 
 Looking for an AI-friendly export? See **AI / Offline Export** or download `/llms-full.txt`.
 
@@ -3561,7 +3641,7 @@ Clients don't just stream the feed — they **power entire betting products** on
 
 > **Does OddsPapi support prediction markets and betting exchanges?**
 >
-> Yes. OddsPapi aggregates odds from 350+ bookmakers including prediction markets and exchanges, with orderbook depth (`back` / `lay` ladders and liquidity) exposed in the [odds channel](/websocket/channels/odds) `meta` field.
+> Yes. OddsPapi aggregates odds from 200+ bookmakers including prediction markets and exchanges, with orderbook depth (`back` / `lay` ladders and liquidity) exposed in the [odds channel](/websocket/channels/odds) `meta` field.
 
 > **Does OddsPapi provide bookmaker limits?**
 >
@@ -4583,7 +4663,7 @@ Includes tournament/season mapping, market metadata, timing window, and external
 # Odds Channel - Realtime Betting Odds Stream
 Source: https://docs.oddspapi.io/websocket/channels/odds
 
-Low-latency realtime betting odds via WebSocket. Stream live odds aggregated from 350+ bookmakers. Decimal, fractional, American formats with orderbook depth.
+Low-latency realtime betting odds via WebSocket. Stream live odds aggregated from 200+ bookmakers. Decimal, fractional, American formats with orderbook depth.
 
 ## What it streams
 
@@ -4605,7 +4685,7 @@ Each entry represents a single **oddsId** (one price for one outcome).
 
 ## Delivery semantics
 
-The odds channel delivers **conflated state** on a fixed **\~10 ms batching window**: if multiple updates for the same `oddsId` occur within one window, only the newest is sent.
+The odds channel delivers **conflated state** on a fixed **\~6 ms batching window**: if multiple updates for the same `oddsId` occur within one window, only the newest is sent.
 
 * **No state is lost** — the final value of every price move is always delivered
 * **Bounded staleness** — a delivered price is never more than one batching window behind our observation of the bookmaker

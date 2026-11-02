@@ -55,11 +55,11 @@ alone does not tell you whether the bet half-won or fully won. See
 
 ## Related
 
-> **[Order lifecycle](https://docs.sx.bet/developers/order-lifecycle.md)**
+> [card] [Order lifecycle](https://docs.sx.bet/developers/order-lifecycle.md)
 >
 > The order state machine.
 
-> **[Which grain?](https://docs.sx.bet/developers/which-grain.md)**
+> [card] [Which grain?](https://docs.sx.bet/developers/which-grain.md)
 >
 > Bet, leg, or position — which endpoint answers your question.
 

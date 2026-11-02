@@ -35,49 +35,49 @@ Read the full list of market types from `GET /v3/types/markets`.
 
 Pass the futures market types you support in `marketType`, comma-separated.
 
-**Request**
+> [tab] Request
+>
+> ```bash theme={"dark"}
+> curl -s "$NOVIG_HOST/v3/catalog/markets?league=MLB&marketType=WORLD_SERIES_WINNER,AL_MVP" \
+>   -H "Novig-Key-Id: $TRADING_KEY_ID" \
+>   -H "Novig-Timestamp: $TS" \
+>   -H "Novig-Signature: $SIG"
+> ```
 
-```bash theme={"dark"}
-curl -s "$NOVIG_HOST/v3/catalog/markets?league=MLB&marketType=WORLD_SERIES_WINNER,AL_MVP" \
-  -H "Novig-Key-Id: $TRADING_KEY_ID" \
-  -H "Novig-Timestamp: $TS" \
-  -H "Novig-Signature: $SIG"
-```
-
-**200**
-
-```json theme={"dark"}
-{
-"items": [
-{
-  "marketId": "9b2e41c7-…",
-  "eventId": "c4d81f20-…",
-  "marketType": "WORLD_SERIES_WINNER",
-  "status": "OPEN",
-  "description": "Los Angeles Dodgers WORLD_SERIES_WINNER",
-  "startsTs": 1781136000000,
-  "fee": {
-    "coefficient": "0.06",
-    "makerCredit": "0.5",
-    "charged": "ALWAYS"
-  },
-  "outcomes": [
-    {
-      "outcomeId": "e7a03b55-…",
-      "name": "Yes",
-      "status": "TBD"
-    },
-    {
-      "outcomeId": "18f6c2d9-…",
-      "name": "No",
-      "status": "TBD"
-    }
-  ]
-}
-],
-"next": "eyJvIjoxNzgxMTM2MDAwMDAwfQ"
-}
-```
+> [tab] 200
+>
+> ```json theme={"dark"}
+> {
+> "items": [
+> {
+>   "marketId": "9b2e41c7-…",
+>   "eventId": "c4d81f20-…",
+>   "marketType": "WORLD_SERIES_WINNER",
+>   "status": "OPEN",
+>   "description": "Los Angeles Dodgers WORLD_SERIES_WINNER",
+>   "startsTs": 1781136000000,
+>   "fee": {
+>     "coefficient": "0.06",
+>     "makerCredit": "0.5",
+>     "charged": "ALWAYS"
+>   },
+>   "outcomes": [
+>     {
+>       "outcomeId": "e7a03b55-…",
+>       "name": "Yes",
+>       "status": "TBD"
+>     },
+>     {
+>       "outcomeId": "18f6c2d9-…",
+>       "name": "No",
+>       "status": "TBD"
+>     }
+>   ]
+> }
+> ],
+> "next": "eyJvIjoxNzgxMTM2MDAwMDAwfQ"
+> }
+> ```
 
 To list game lines only, pass the game market types instead, like `marketType=MONEY,SPREAD,TOTAL`.
 
@@ -89,19 +89,19 @@ To list game lines only, pass the game market types instead, like `marketType=MO
 
 ## Futures market shapes
 
-> **Team futures**
+> [card] Team futures
 >
 > One market per team, like "Dodgers to win the World Series", with Yes and No outcomes.
 
-> **Player futures**
+> [card] Player futures
 >
 > One market per player, like "Nikola Jokic Finals MVP", with Yes and No outcomes.
 
-> **Series futures**
+> [card] Series futures
 >
 > One market per series, with one outcome for each team.
 
-> **Placeholder events**
+> [card] Placeholder events
 >
 > A futures event with no markets yet. Skip it until markets appear.
 

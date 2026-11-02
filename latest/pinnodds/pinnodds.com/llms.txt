@@ -2,7 +2,7 @@
 
 > Pinnacle retired its public API in July 2025. pinnodds is the independent replacement: the same live and prematch market data, pushed to your code over WebSocket and SSE instead of polled, with instant alerts the moment a price drops against its own recent history. Full line depth on every plan — quarter lines, player props and futures included.
 
-This is a paid API service. Get a free trial key in seconds at https://pinnodds.com/ — no card, no email verification, your API key is your login.
+This is a paid API service. Get a free trial key at https://pinnodds.com/ — no card: enter your email, click the verification link, and the key arrives in your inbox. Your API key is your login.
 
 Every new key is free forever on the free tier: REST at 20 requests/minute, 100 per day, full line depth, all 12 sports. No card required. A 3-day full demo — REST at 10 requests/second with no daily cap, plus SSE drop streams and the raw WebSocket feed — is available on request; ask on Telegram at t.me/ArbitrageXpro with the email on your key. Paid plans start at $99/mo.
 

@@ -313,6 +313,12 @@ Two channels carry fixture-related data. Subscribe to one or both depending on y
 
 Subscribe to live score updates across all active events.
 
+> [!WARNING]
+>
+> **Live scores come from a third-party provider and are provided as-is — use them at your own risk.**
+> Data can be delayed, incomplete, inconsistent or briefly unavailable, and we do not guarantee how
+> any field is populated or which values it can take.
+
 **CHANNEL NAME**
 
 `fixtures:live_scores`
@@ -660,6 +666,7 @@ Where a `Level` object looks like:
 | - | - | - |
 | percentageOdds | string | The odds the `maker` receives in the sx.bet protocol format. To convert to implied odds divide by 10^20. To get taker implied odds: `takerOdds = 1 - percentageOdds / 10^20`. See [unit conversions](/developers/unit-conversions). |
 | size | string | Aggregate remaining maker size at that level, in base units. See [unit conversions](/developers/unit-conversions). |
+| newestOrderCreatedAtMs | number (optional) | When the newest remaining order at this level was posted, in Unix milliseconds. Set before any betting delay. Available November 9, 2026. |
 
 There is no `showTakerPerspective` parameter on this channel — levels are always the maker frame, unlike [`GET /orderbook-v3/snapshot/market`](/api-reference/get-market-orderbook-snapshot), which accepts it.
 
@@ -707,7 +714,7 @@ The above returns JSON structured like this:
   "marketHash": "0xbf06c6379c922d8118612d1d7493b20f6df6929437fbf6022904327f9516a2eb",
   "eventId": "L13058397",
   "version": "00100000000000010015000",
-  "outcomeOne": [{ "percentageOdds": "40000000000000000000", "size": "1000000" }],
+  "outcomeOne": [{ "percentageOdds": "40000000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182400123 }],
   "outcomeTwo": []
 }
 ```
@@ -732,7 +739,7 @@ This namespace keeps the last 100 publications for 5 minutes, so pass `recoverab
 
 **MESSAGE PAYLOAD FORMAT**
 
-Identical to [`orderbook_v3:{marketHash}`](/api-reference/channel-orderbook-v3), including the `version` field. `version` is per market, so key your state by `marketHash` and apply a publication only when its `version` is strictly greater than the one you hold for that market — see [book versioning](/developers/book-versioning).
+Identical to [`orderbook_v3:{marketHash}`](/api-reference/channel-orderbook-v3), including the `version` field and `newestOrderCreatedAtMs` on each level (available November 9, 2026). `version` is per market, so key your state by `marketHash` and apply a publication only when its `version` is strictly greater than the one you hold for that market — see [book versioning](/developers/book-versioning).
 
 ***
 
@@ -778,7 +785,7 @@ The above returns JSON structured like this:
   "marketHash": "0xbf06c6379c922d8118612d1d7493b20f6df6929437fbf6022904327f9516a2eb",
   "eventId": "L13058397",
   "version": "00100000000000010015000",
-  "outcomeOne": [{ "percentageOdds": "40000000000000000000", "size": "1000000" }],
+  "outcomeOne": [{ "percentageOdds": "40000000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182400123 }],
   "outcomeTwo": []
 }
 ```
@@ -1712,6 +1719,11 @@ Source: https://docs.sx.bet/api-reference/get-live-scores
 GET /live-scores
 Get real-time live scores for active events on SX Bet.
 
+> [!WARNING]
+>
+> **Live scores come from a third-party provider and are provided as-is — use them at your own risk.**
+> Data can be delayed, incomplete, inconsistent or briefly unavailable, and we do not guarantee how
+> any field is populated or which values it can take.
 
 
 # Get market orderbook snapshot
@@ -2084,19 +2096,19 @@ Fetch markets, read the book, post orders, and subscribe to real-time channels.
 
 ## Explore the API
 
-> **[Exchange metadata](/api-reference/get-metadata-obv3)**
+> [card] [Exchange metadata](/api-reference/get-metadata-obv3)
 >
 > The one call every integration starts with: chain id, escrow, decimals, limits, odds ladder.
 
-> **[Create orders](/api-reference/post-orders-v3)**
+> [card] [Create orders](/api-reference/post-orders-v3)
 >
 > Submit a signed order. `timeInForce` decides whether it rests or executes.
 
-> **[Channel and limit reference](/developers/realtime-reference)**
+> [card] [Channel and limit reference](/developers/realtime-reference)
 >
 > Every channel, which namespace it lands in, and what it recovers.
 
-> **[Order book snapshot](/api-reference/get-market-orderbook-snapshot)**
+> [card] [Order book snapshot](/api-reference/get-market-orderbook-snapshot)
 >
 > The whole book for one market, and the REST seed a realtime subscription starts from.
 
@@ -2143,6 +2155,9 @@ Reference of market types on SX Bet.
 | 281 | 1st 5 Innings Asian Handicap | true | Who will win the 1st five innings with handicap (no draw) | `first-five-innings` | false |
 | 1618 | 1st 5 Innings Winner-12 | false | Who will win in the 1st five innings | `first-five-innings` | false |
 | 995 | Anytime Touchdown Scorer | false | Will the player score a touchdown at any point in the game (Yes/No) | `player-props` | false |
+| 1196 | Under/Over Player Receiving Yards | true | Will the player's receiving yards be under/over a specific line | `player-props` | false |
+| 1200 | Under/Over Player Rushing Yards | true | Will the player's rushing yards be under/over a specific line | `player-props` | false |
+| 2400 | Under/Over Player Passing Yards | true | Will the player's passing yards be under/over a specific line | `player-props` | false |
 | 13371 | Map 1 Winner | false | Who will win map 1 | — | false |
 | 13372 | Map 2 Winner | false | Who will win map 2 | — | false |
 | 13373 | Map 3 Winner | false | Who will win map 3 | — | false |
@@ -2199,7 +2214,7 @@ groups.
 | `first-five-innings` | First Five Innings | 236, 281, 1618 |
 | `to-qualify` | To Qualify | 88 |
 | `1X2` | 1X2 | 1 |
-| `player-props` | Player Props | 995 |
+| `player-props` | Player Props | 995, 1196, 1200, 2400 |
 
 
 # Parlay markets
@@ -2674,15 +2689,15 @@ Each user on your app is their own SX.bet user, and your site is effectively a s
 
 ## Related
 
-> **[External user id](/developers/external-user-id)**
+> [card] [External user id](/developers/external-user-id)
 >
 > Attribute orders, fills, and bets to people on your platform.
 
-> **[API keys](/api-reference/api-key)**
+> [card] [API keys](/api-reference/api-key)
 >
 > Generate and use the key your backend calls with.
 
-> **[Work with us](/developers/work-with-us)**
+> [card] [Work with us](/developers/work-with-us)
 >
 > Building at scale or exploring a partnership.
 
@@ -2746,23 +2761,23 @@ SX Bet is not affiliated with or endorsed by Safe Global.</sub>
 
 ## Related
 
-> **[Deploy a proxy wallet](/api-reference/post-user-deploy-proxy)**
+> [card] [Deploy a proxy wallet](/api-reference/post-user-deploy-proxy)
 >
 > The request, what a repeat call does, and the `200`.
 
-> **[Look up a proxy wallet](/api-reference/get-user-proxy)**
+> [card] [Look up a proxy wallet](/api-reference/get-user-proxy)
 >
 > The predicted address, the `deployed` flag, and the Safe address.
 
-> **[Get your ledger](/api-reference/get-ledger-v3)**
+> [card] [Get your ledger](/api-reference/get-ledger-v3)
 >
 > Every deposit, withdrawal, and settlement on your account.
 
-> **[Funding](/developers/funding)**
+> [card] [Funding](/developers/funding)
 >
 > Moving USDC in with a permit, without paying gas.
 
-> **[Reading balances](/developers/balances-and-ledger)**
+> [card] [Reading balances](/developers/balances-and-ledger)
 >
 > What you can actually spend, and why.
 
@@ -2880,11 +2895,11 @@ Routes with no authentication, such as `GET /markets/active`, are not listed her
 
 ## Related
 
-> **[Rate limits](/developers/rate-limits)**
+> [card] [Rate limits](/developers/rate-limits)
 >
 > Request budgets for each route.
 
-> **[API keys](/api-reference/api-key)**
+> [card] [API keys](/api-reference/api-key)
 >
 > Generate a key and send it on a request.
 
@@ -2988,11 +3003,11 @@ const spendable = row
 
 ## Related
 
-> **[Get your balance](/api-reference/get-user-balance-v3)**
+> [card] [Get your balance](/api-reference/get-user-balance-v3)
 >
 > Every field, and what an empty array means.
 
-> **[Funding](/developers/funding)**
+> [card] [Funding](/developers/funding)
 >
 > Getting money in, and confirming it arrived.
 
@@ -3051,11 +3066,11 @@ alone does not tell you whether the bet half-won or fully won. See
 
 ## Related
 
-> **[Order lifecycle](/developers/order-lifecycle)**
+> [card] [Order lifecycle](/developers/order-lifecycle)
 >
 > The order state machine.
 
-> **[Which grain?](/developers/which-grain)**
+> [card] [Which grain?](/developers/which-grain)
 >
 > Bet, leg, or position — which endpoint answers your question.
 
@@ -3127,15 +3142,15 @@ from the REST snapshot at startup, then apply only live publications that have a
 
 ## Related
 
-> **[Recovery & reliability](/developers/realtime-reliability)**
+> [card] [Recovery & reliability](/developers/realtime-reliability)
 >
 > Recovery, ordering and deduplication across reconnects.
 
-> **[Get orderbook snapshot](/api-reference/get-market-orderbook-snapshot)**
+> [card] [Get orderbook snapshot](/api-reference/get-market-orderbook-snapshot)
 >
 > The REST seed that carries the same version.
 
-> **[Fetching odds](/developers/odds)**
+> [card] [Fetching odds](/developers/odds)
 >
 > Seeding and subscribing to the book and best odds.
 
@@ -3192,15 +3207,15 @@ Orders sometime leave the book without you cancelling them, and `inactiveReason`
 
 ## Related
 
-> **[Cancel orders by id](/api-reference/delete-orders-v3)**
+> [card] [Cancel orders by id](/api-reference/delete-orders-v3)
 
-> **[Cancel all orders](/api-reference/delete-orders-v3-all)**
+> [card] [Cancel all orders](/api-reference/delete-orders-v3-all)
 
-> **[Cancel orders by market](/api-reference/delete-orders-v3-market)**
+> [card] [Cancel orders by market](/api-reference/delete-orders-v3-market)
 
-> **[Cancel orders by event](/api-reference/delete-orders-v3-event)**
+> [card] [Cancel orders by event](/api-reference/delete-orders-v3-event)
 
-> **[Heartbeat](/developers/heartbeat)**
+> [card] [Heartbeat](/developers/heartbeat)
 >
 > Arming the switch that cancels for you when your process stops.
 
@@ -3281,19 +3296,19 @@ your gross payout* at settlement, not what you received. P\&L uses the received 
 
 ## Related
 
-> **[Reconciling fills](/developers/which-grain#fills)**
+> [card] [Reconciling fills](/developers/which-grain#fills)
 >
 > Where to find the refund on each leg.
 
-> **[Tracking positions](/developers/which-grain#positions)**
+> [card] [Tracking positions](/developers/which-grain#positions)
 >
 > Netted exposure — the same idea, read-only.
 
-> **[Parlays](/developers/parlays)**
+> [card] [Parlays](/developers/parlays)
 >
 > The other meaning of `ceRefundAmount`.
 
-> **[Quarter-line markets](/developers/quarter-line-markets)**
+> [card] [Quarter-line markets](/developers/quarter-line-markets)
 >
 > Why one bet produces two refund calculations.
 
@@ -3377,27 +3392,27 @@ await fetch(`${API}/orders-v3`, authed({
 
 ## Related
 
-> **[Posting orders](/developers/posting-orders)**
+> [card] [Posting orders](/developers/posting-orders)
 >
 > The submit flow this field rides on.
 
-> **[Time in force](/developers/time-in-force)**
+> [card] [Time in force](/developers/time-in-force)
 >
 > The other write-only field worth recording against your tag.
 
-> **[Tracking your orders](/developers/my-orders)**
+> [card] [Tracking your orders](/developers/my-orders)
 >
 > Keep a local store keyed by an id you control.
 
-> **[Get an order by client ID](/api-reference/get-order-v3-by-client-id)**
+> [card] [Get an order by client ID](/api-reference/get-order-v3-by-client-id)
 >
 > Look up one of your orders by the tag you set.
 
-> **[EIP-712 order signing](/api-reference/eip712-order-signing)**
+> [card] [EIP-712 order signing](/api-reference/eip712-order-signing)
 >
 > Why the order id is a digest, not a server-assigned value.
 
-> **[External user id](/developers/external-user-id)**
+> [card] [External user id](/developers/external-user-id)
 >
 > A per-person tag when one SX account places orders for many people.
 
@@ -3416,11 +3431,11 @@ bet — every bet is matched peer-to-peer between two users.
 
 Every matched bet involves two roles:
 
-> **Maker**
+> [card] Maker
 >
 > Rests on the orderbook. Specifies an outcome, stake, and desired odds, and sits open until it's matched.
 
-> **Taker**
+> [card] Taker
 >
 > Matches an existing resting order immediately, in full or in part.
 
@@ -3440,7 +3455,7 @@ Escrow pays the winning side automatically
 
 ## Next
 
-> **[The Order Book →](/developers/order-book)**
+> [card] [The Order Book →](/developers/order-book)
 
 
 # External user id
@@ -3472,27 +3487,27 @@ const forUser = data.trades.filter((t) => t.externalUserId === platformUserId);
 
 ## Related
 
-> **[Posting orders](/developers/posting-orders)**
+> [card] [Posting orders](/developers/posting-orders)
 >
 > The submit flow this field rides on.
 
-> **[Client order id](/developers/client-order-id)**
+> [card] [Client order id](/developers/client-order-id)
 >
 > A per-order tag. Unique, charset-restricted, and absent from the bet grain.
 
-> **[Bet grains](/developers/which-grain)**
+> [card] [Bet grains](/developers/which-grain)
 >
 > Bets, fills, and positions — which row to read for a per-user history.
 
-> **[Create orders](/api-reference/post-orders-v3)**
+> [card] [Create orders](/api-reference/post-orders-v3)
 >
 > Every field, every validation rule.
 
-> **[Account models](/developers/account-models)**
+> [card] [Account models](/developers/account-models)
 >
 > The two ways to represent your site's users on SX.bet.
 
-> **[Work with us](/developers/work-with-us)**
+> [card] [Work with us](/developers/work-with-us)
 >
 > Building at scale or exploring a partnership.
 
@@ -3546,15 +3561,15 @@ A `null` rate means nothing is charged for that category — treat it as `0`.
 
 ## Related
 
-> **[Get your fees](/api-reference/get-user-fees-v3)**
+> [card] [Get your fees](/api-reference/get-user-fees-v3)
 >
 > The endpoint, every field, and what `null` means.
 
-> **[Capital efficiency](/developers/capital-efficiency)**
+> [card] [Capital efficiency](/developers/capital-efficiency)
 >
 > Where the refund fee applies, and how refunds are tracked.
 
-> **[Reading balances](/developers/balances-and-ledger)**
+> [card] [Reading balances](/developers/balances-and-ledger)
 >
 > What you can spend, and what settlement pays out.
 
@@ -3693,7 +3708,7 @@ Rather than poll [`GET /markets/active`](/api-reference/get-markets-active), sub
 | - | - |
 | [`markets:global`](/api-reference/channel-markets) | A market's metadata changing — created, or moved between `ACTIVE` and `INACTIVE` |
 | [`main_line:global`](/api-reference/channel-line-changes) | Main line shifts on markets whose type carries a line |
-| [`fixtures:live_scores`](/api-reference/channel-fixtures) | Live scores for **every** event — there is no per-event filter |
+| [`fixtures:live_scores`](/api-reference/channel-fixtures) | Live scores for **every** event — there is no per-event filter. Third-party data, provided as-is |
 
 > [!NOTE]
 >
@@ -3792,15 +3807,15 @@ The permit path is `FROM_EOA` as appears on your ledger endpoint. Two other depo
 
 ## Related
 
-> **[Fund a proxy wallet](/api-reference/post-user-transfer-to-proxy)**
+> [card] [Fund a proxy wallet](/api-reference/post-user-transfer-to-proxy)
 >
 > The request, the two warnings, and the `200`.
 
-> **[Reading balances](/developers/balances-and-ledger)**
+> [card] [Reading balances](/developers/balances-and-ledger)
 >
 > Reading what actually arrived.
 
-> **[Accounts](/developers/accounts)**
+> [card] [Accounts](/developers/accounts)
 >
 > Deploy the proxy first, and poll until it is live.
 
@@ -3855,15 +3870,15 @@ deactivates the timer.
 
 ## Related
 
-> **[Set heartbeat](/api-reference/post-heartbeat-v3)**
+> [card] [Set heartbeat](/api-reference/post-heartbeat-v3)
 >
 > The `POST /heartbeat/v3` endpoint reference.
 
-> **[Cancelling orders](/developers/cancelling-orders)**
+> [card] [Cancelling orders](/developers/cancelling-orders)
 >
 > The shutdown path that confirms each cancel.
 
-> **[Order lifecycle](/developers/order-lifecycle)**
+> [card] [Order lifecycle](/developers/order-lifecycle)
 >
 > Every way an order leaves the book, and how to distinguish them.
 
@@ -3932,45 +3947,45 @@ print(markets)
 
 ## Start building
 
-> **[Quickstart](/developers/quickstart)**
+> [card] [Quickstart](/developers/quickstart)
 >
 > Sign in, deploy and fund a proxy, read the book, place your first order.
 
-> **[API Reference](/api-reference/introduction)**
+> [card] [API Reference](/api-reference/introduction)
 >
 > Full endpoint reference with request and response schemas.
 
-> **[Real-time data](/developers/realtime-overview)**
+> [card] [Real-time data](/developers/realtime-overview)
 >
 > Subscribe to books, your own orders, and the public trade feed over one WebSocket.
 
-> **[What can you build?](/developers/what-can-you-build)**
+> [card] [What can you build?](/developers/what-can-you-build)
 >
 > Trading bots, custom frontends, analytics tools, and more.
 
 ## Explore the platform
 
-> **[Accounts](/developers/accounts)**
+> [card] [Accounts](/developers/accounts)
 >
 > Signing in with a wallet, and signing orders.
 
-> **[The exchange model](/developers/exchange-model)**
+> [card] [The exchange model](/developers/exchange-model)
 >
 > Everyone posts an order. The engine decides the aggressor afterwards.
 
-> **[Markets and events](/developers/markets-and-events)**
+> [card] [Markets and events](/developers/markets-and-events)
 >
 > How markets nest, and the identifiers you query by.
 
-> **[The order book](/developers/order-book)**
+> [card] [The order book](/developers/order-book)
 >
 > Which side a resting level is liquidity for, and who set the price.
 
-> **[Market making](/developers/market-making)**
+> [card] [Market making](/developers/market-making)
 >
 > Post quotes, manage them, and cancel by event.
 
-> **[Taking liquidity](/developers/taking-liquidity)**
+> [card] [Taking liquidity](/developers/taking-liquidity)
 >
 > Take a resting price with an IOC or FOK order.
 
@@ -3981,7 +3996,9 @@ Source: https://docs.sx.bet/developers/maintenance
 What happens to your resting orders during a maintenance window or matching engine restart.
 
 During maintenance or matching engine restart, **every resting order** is cancelled and reposting is
-your job.
+your job. New orders can briefly fail until the matching engine is back up. A failed order still
+returns `200`, with `status: "FAILED"` on that order, so check each order's `status` before treating
+it as placed.
 
 ## What you receive
 
@@ -4029,23 +4046,23 @@ spread between the price you post and what a taker receives. The mechanics of po
 
 ## Related
 
-> **[Posting orders](/developers/posting-orders)**
+> [card] [Posting orders](/developers/posting-orders)
 >
 > Fields, signing, and the validation rules on create.
 
-> **[Cancelling orders](/developers/cancelling-orders)**
+> [card] [Cancelling orders](/developers/cancelling-orders)
 >
 > Picking a cancel route, and confirming before you exit.
 
-> **[Tracking your orders](/developers/my-orders)**
+> [card] [Tracking your orders](/developers/my-orders)
 >
 > The order row in full, and why a missing order has more than one explanation.
 
-> **[Odds rounding](/developers/odds-rounding)**
+> [card] [Odds rounding](/developers/odds-rounding)
 >
 > Rounding a model price onto the odds ladder.
 
-> **[Market making parlays](/developers/market-making-parlays)**
+> [card] [Market making parlays](/developers/market-making-parlays)
 >
 > Quoting parlay requests.
 
@@ -4322,9 +4339,9 @@ the signature. **The order's expiry must be no later than the parlay market's ex
 
 The signing code lives on the shared pages:
 
-> **[Create orders](/api-reference/post-orders-v3)**
+> [card] [Create orders](/api-reference/post-orders-v3)
 
-> **[EIP-712 order signing](/api-reference/eip712-order-signing)**
+> [card] [EIP-712 order signing](/api-reference/eip712-order-signing)
 >
 > The struct, the domain, and signing the digest.
 
@@ -4334,25 +4351,25 @@ Keep your order's `expiry` — a unix epoch timestamp in seconds — inside the 
 
 Cancelling a parlay order is cancelling an order. Use [`DELETE /orders-v3`](/api-reference/delete-orders-v3) with the ids you want cancelled.
 
-> **[Cancelling orders](/developers/cancelling-orders)**
+> [card] [Cancelling orders](/developers/cancelling-orders)
 >
 > Picking a route, confirming before you exit, and why a `200` is not enough.
 
 ## Related
 
-> **[Parlays](/developers/parlays)**
+> [card] [Parlays](/developers/parlays)
 >
 > The RFQ flow.
 
-> **[Create orders](/api-reference/post-orders-v3)**
+> [card] [Create orders](/api-reference/post-orders-v3)
 >
 > Posting new orders
 
-> **[EIP-712 order signing](/api-reference/eip712-order-signing)**
+> [card] [EIP-712 order signing](/api-reference/eip712-order-signing)
 >
 > The eight-field struct every order shares.
 
-> **[Parlay requests channel](/api-reference/channel-parlay-requests)**
+> [card] [Parlay requests channel](/api-reference/channel-parlay-requests)
 >
 > The message you subscribe to.
 
@@ -4544,19 +4561,19 @@ A settled market additionally carries `reportedDate`, `outcome`, `teamOneScore` 
 
 ## Related
 
-> **[Overview](/developers/markets-overview)**
+> [card] [Overview](/developers/markets-overview)
 >
 > The sport → league → event → market hierarchy, and how to traverse it.
 
-> **[Market types](/api-reference/market-types)**
+> [card] [Market types](/api-reference/market-types)
 >
 > Every `type` id, its bet group, and whether it carries a line.
 
-> **[Fetching markets](/developers/fetch-markets)**
+> [card] [Fetching markets](/developers/fetch-markets)
 >
 > Filters, pagination, and querying by sport, league, event or hash.
 
-> **[Quarter-line markets](/developers/quarter-line-markets)**
+> [card] [Quarter-line markets](/developers/quarter-line-markets)
 >
 > What `isQuarterLineMarket` changes about settlement.
 
@@ -4696,7 +4713,7 @@ rl.close();
 
 SX Bet covers a wide range of sports. Each sport is identified by a numeric `sportId`. Pass a `sportId` to other endpoints (such as `/leagues/active`) to filter results by sport.
 
-> **Full list of sports**
+> [accordion] Full list of sports
 >
 > | `sportId` | Sport |
 > | - | - |
@@ -4793,7 +4810,7 @@ A market represents a single binary outcome you can bet on — for example, "Ove
 
 Every market on SX Bet is identified by a unique `marketHash`, which is used throughout the API to fetch orderbooks, post orders, and query trades.
 
-> **[Fetching markets](/developers/fetch-markets)**
+> [card] [Fetching markets](/developers/fetch-markets)
 >
 > Querying active markets from the API.
 
@@ -5172,7 +5189,7 @@ Full reference: [Real-time data](/developers/realtime-overview).
 
 In V2, [`order_book:market_{marketHash}`](/api-reference/channel-orderbook-v3) published a stream of **individual order rows/deltas** you merged into a local book. In V3, [`orderbook_v3:{marketHash}`](/api-reference/channel-orderbook-v3) (and [`orderbook_v3_event:{eventId}`](/api-reference/channel-orderbook-v3-event)) publish the **entire resting book on every update, aggregated by price into anonymous levels**.
 
-* **No per-order identity.** Levels carry only `percentageOdds` and aggregate `size`. Your own orders still arrive individually on [`account:orders_v3_#{address}`](/api-reference/channel-orders-v3).
+* **No per-order identity.** Levels carry `percentageOdds`, aggregate `size` and `newestOrderCreatedAtMs` (available November 9, 2026), but no order IDs or counts. Your own orders still arrive individually on [`account:orders_v3_#{address}`](/api-reference/channel-orders-v3).
 * **Replace, don't merge.** V2 required upsert/remove by `orderHash`; every V3 publication is the complete book for that market.
 * **Version-gate instead of `updateTime`.** Each publication carries a `version` (a single monotonic string). Apply a message only when its `version` is strictly greater than the one you hold for that market. See [Book versioning](/developers/book-versioning).
 * **Sides are explicit.** Levels are split into `outcomeOne` / `outcomeTwo` (always the maker frame), replacing V2's per-row `isMakerBettingOutcomeOne`. There is no `showTakerPerspective` on this channel (unlike [`GET /orderbook-v3/snapshot/market`](/api-reference/get-market-orderbook-snapshot)); invert yourself with `takerOdds = 1 − percentageOdds / 10^20`.
@@ -5404,11 +5421,11 @@ Run it on testnet ([api.toronto.sx.bet](https://api.toronto.sx.bet)) first.
 * [ ] Point accounting at `/trades-v3` / `/fills-v3` / `/positions-v3`; remap `orderHash` / `fillHash` ids; switch pagination to `perPage` + `nextKey`.
 * [ ] Arm `POST /heartbeat/v3` and let it lapse once on testnet to watch `HEARTBEAT_TIMEOUT` cancel your orders.
 
-> **[Improvements](/developers/new-in-v3)**
+> [card] [Improvements](/developers/new-in-v3)
 >
 > What changed in V3.
 
-> **[Quickstart](/developers/quickstart)**
+> [card] [Quickstart](/developers/quickstart)
 >
 > The full V3 flow, metadata to placed bet.
 
@@ -5445,27 +5462,27 @@ looks it up by that tag instead.
 
 ## Related
 
-> **[Get your orders](/api-reference/get-orders-v3)**
+> [card] [Get your orders](/api-reference/get-orders-v3)
 >
 > Parameters, the fifteen-field row, and the available filters.
 
-> **[Get an order by ID](/api-reference/get-order-v3)**
+> [card] [Get an order by ID](/api-reference/get-order-v3)
 >
 > One order, any status.
 
-> **[Get an order by client ID](/api-reference/get-order-v3-by-client-id)**
+> [card] [Get an order by client ID](/api-reference/get-order-v3-by-client-id)
 >
 > One order, looked up by the tag you set.
 
-> **[account:orders\_v3](/api-reference/channel-orders-v3)**
+> [card] [account:orders\_v3](/api-reference/channel-orders-v3)
 >
 > Where terminal state actually comes from.
 
-> **[Order lifecycle](/developers/order-lifecycle)**
+> [card] [Order lifecycle](/developers/order-lifecycle)
 >
 > The three statuses, all ten terminal reasons, and the correct way to test for a fill.
 
-> **[Which grain?](/developers/which-grain)**
+> [card] [Which grain?](/developers/which-grain)
 >
 > Bets, fills and positions — picking between them.
 
@@ -5520,11 +5537,11 @@ The public book shows aggregated price levels, not individual orders, so your re
 | Track your activity | [Which grain?](/developers/which-grain), [Tracking your orders](/developers/my-orders), [Reading your bets](/developers/which-grain#bets), [Reconciling fills](/developers/which-grain#fills), [Tracking positions](/developers/which-grain#positions) |
 | Handle lifecycles | [Order lifecycle](/developers/order-lifecycle), [Bet lifecycle](/developers/bet-lifecycle) |
 
-> **[Quickstart](/developers/quickstart)**
+> [card] [Quickstart](/developers/quickstart)
 >
 > Deploy a proxy, read the book, and place a bet end to end.
 
-> **[Migrate to V3](/developers/migrate-to-v3)**
+> [card] [Migrate to V3](/developers/migrate-to-v3)
 >
 > Port an existing client, subsystem by subsystem.
 
@@ -5654,19 +5671,19 @@ sub.subscribe();
 
 ## Related
 
-> **[The order book](/developers/order-book)**
+> [card] [The order book](/developers/order-book)
 >
 > Depth, sizing, and pricing a bet across levels.
 
-> **[Book versioning](/developers/book-versioning)**
+> [card] [Book versioning](/developers/book-versioning)
 >
 > Applying live book updates in the right order.
 
-> **[Real-time data](/developers/realtime-overview)**
+> [card] [Real-time data](/developers/realtime-overview)
 >
 > Tokens, snapshot + subscribe, and reconnect handling.
 
-> **[Best odds](/api-reference/get-best-odds-v3)**
+> [card] [Best odds](/api-reference/get-best-odds-v3)
 >
 > Parameters, caps, and validation rules.
 
@@ -5836,15 +5853,15 @@ Read it at startup alongside the rest of the bootstrap document, and derive `STE
 
 ## Related
 
-> **[Exchange metadata](/api-reference/get-metadata-obv3)**
+> [card] [Exchange metadata](/api-reference/get-metadata-obv3)
 >
 > Where `oddsLadderStepSize` comes from.
 
-> **[Unit conversions](/developers/unit-conversions)**
+> [card] [Unit conversions](/developers/unit-conversions)
 >
 > Implied/decimal/American odds, the 1e20 scale, base units, and time formats in one place.
 
-> **[Create orders](/api-reference/post-orders-v3)**
+> [card] [Create orders](/api-reference/post-orders-v3)
 
 
 # The order book
@@ -5858,14 +5875,14 @@ total stake resting at it:
 ```json theme={null}
 {
   "outcomeOne": [
-    { "percentageOdds": "52000000000000000000", "size": "2000000" },
-    { "percentageOdds": "51500000000000000000", "size": "1000000" },
-    { "percentageOdds": "50000000000000000000", "size": "3000000" }
+    { "percentageOdds": "52000000000000000000", "size": "2000000", "newestOrderCreatedAtMs": 1794182400123 },
+    { "percentageOdds": "51500000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182391870 },
+    { "percentageOdds": "50000000000000000000", "size": "3000000", "newestOrderCreatedAtMs": 1794182254412 }
   ],
   "outcomeTwo": [
-    { "percentageOdds": "46750000000000000000", "size": "1000000" },
-    { "percentageOdds": "46000000000000000000", "size": "3000000" },
-    { "percentageOdds": "42000000000000000000", "size": "1000000" }
+    { "percentageOdds": "46750000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182398541 },
+    { "percentageOdds": "46000000000000000000", "size": "3000000", "newestOrderCreatedAtMs": 1794182337065 },
+    { "percentageOdds": "42000000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182102998 }
   ]
 }
 ```
@@ -5873,6 +5890,8 @@ total stake resting at it:
 * **`percentageOdds` is implied probability scaled by 10<sup>20</sup>** — `"52000000000000000000"` is 52.000%.
 * **`size` is stake in base units** — USDC has 6 decimals, so `"2000000"` is 2 USDC. It is **the resting
   party's** stake, not the amount you can bet against it.
+* **`newestOrderCreatedAtMs` is when the newest remaining order at this level was posted**, in Unix
+  milliseconds. Set before any betting delay. Optional; available November 9, 2026.
 
 Note that the side here is the side the resting order is betting. So if you were to match, you would be betting the opposite.
 
@@ -6044,15 +6063,15 @@ same version** the snapshot route serves, and the exchange publishes one message
   "marketHash": "0x5be2a55e4b7dec1cec1b75af93b3fdef178ec1473866da95b3c68c1d4c99d4fd",
   "version": "00100000000000002209000",
   "outcomeOne": [
-    { "percentageOdds": "52500000000000000000", "size": "1000000" },
-    { "percentageOdds": "52000000000000000000", "size": "2000000" },
-    { "percentageOdds": "51500000000000000000", "size": "1000000" },
-    { "percentageOdds": "50000000000000000000", "size": "3000000" }
+    { "percentageOdds": "52500000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182405310 },
+    { "percentageOdds": "52000000000000000000", "size": "2000000", "newestOrderCreatedAtMs": 1794182400123 },
+    { "percentageOdds": "51500000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182391870 },
+    { "percentageOdds": "50000000000000000000", "size": "3000000", "newestOrderCreatedAtMs": 1794182254412 }
   ],
   "outcomeTwo": [
-    { "percentageOdds": "46750000000000000000", "size": "1000000" },
-    { "percentageOdds": "46000000000000000000", "size": "3000000" },
-    { "percentageOdds": "42000000000000000000", "size": "1000000" }
+    { "percentageOdds": "46750000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182398541 },
+    { "percentageOdds": "46000000000000000000", "size": "3000000", "newestOrderCreatedAtMs": 1794182337065 },
+    { "percentageOdds": "42000000000000000000", "size": "1000000", "newestOrderCreatedAtMs": 1794182102998 }
   ]
 }
 ```
@@ -6067,19 +6086,19 @@ comparison is on [Book versioning](/developers/book-versioning#the-apply-rule).
 
 ## Related
 
-> **[Posting orders](/developers/posting-orders)**
+> [card] [Posting orders](/developers/posting-orders)
 >
 > Sign and submit an order onto the book.
 
-> **[Fetching odds](/developers/odds)**
+> [card] [Fetching odds](/developers/odds)
 >
 > Scanning many markets, and getting a live client its first snapshot.
 
-> **[Book versioning](/developers/book-versioning)**
+> [card] [Book versioning](/developers/book-versioning)
 >
 > Applying live updates in the right order.
 
-> **[Time in force](/developers/time-in-force)**
+> [card] [Time in force](/developers/time-in-force)
 >
 > GTC, IOC, FOK — and what happens when there is not enough depth.
 
@@ -6134,13 +6153,13 @@ An order becomes `INACTIVE` if it is filled or cancelled. `inactiveReason` tells
 
 ## Related
 
-> **[Bet lifecycle](/developers/bet-lifecycle)**
+> [card] [Bet lifecycle](/developers/bet-lifecycle)
 >
 > What happens after a fill.
 
-> **[Tracking your orders](/developers/my-orders)**
+> [card] [Tracking your orders](/developers/my-orders)
 
-> **[Time in force](/developers/time-in-force)**
+> [card] [Time in force](/developers/time-in-force)
 >
 > Order types
 
@@ -6256,19 +6275,19 @@ Parlays use separate rates — `makerParlayPayoutFee` and `takerParlayPayoutFee`
 
 ## Related
 
-> **[Market making parlays](/developers/market-making-parlays)**
+> [card] [Market making parlays](/developers/market-making-parlays)
 >
 > Listening, pricing and quoting before the parlay market expires.
 
-> **[Parlay requests channel](/api-reference/channel-parlay-requests)**
+> [card] [Parlay requests channel](/api-reference/channel-parlay-requests)
 >
 > The request payload.
 
-> **[Parlay markets](/api-reference/parlay-markets)**
+> [card] [Parlay markets](/api-reference/parlay-markets)
 >
 > The fields and behaviour of parlay markets.
 
-> **[Time in force](/developers/time-in-force)**
+> [card] [Time in force](/developers/time-in-force)
 >
 > `GTC`, `IOC` and `FOK`, and which of them a parlay accepts.
 
@@ -6560,27 +6579,27 @@ There is no amend. To move a price: cancel, then post a new order.
 
 ## Related
 
-> **[Create orders](/api-reference/post-orders-v3)**
+> [card] [Create orders](/api-reference/post-orders-v3)
 >
 > Every field, every validation rule.
 
-> **[Taking liquidity](/developers/taking-liquidity)**
+> [card] [Taking liquidity](/developers/taking-liquidity)
 >
 > The same signing and submission path, from the taker's side.
 
-> **[Time in force](/developers/time-in-force)**
+> [card] [Time in force](/developers/time-in-force)
 >
 > Choosing between GTC, IOC and FOK.
 
-> **[Tracking your orders](/developers/my-orders)**
+> [card] [Tracking your orders](/developers/my-orders)
 >
 > Reading your own orders back, and what the API will not tell you.
 
-> **[Market making](/developers/market-making)**
+> [card] [Market making](/developers/market-making)
 >
 > Quoting, exposure and re-quote loops.
 
-> **[External user id](/developers/external-user-id)**
+> [card] [External user id](/developers/external-user-id)
 >
 > Tag orders when one SX account places bets for many people.
 
@@ -6627,19 +6646,19 @@ Seed from REST on connect, then apply channel messages.
 
 ## Related
 
-> **[Get public trades](/api-reference/get-trades-v3-public)**
+> [card] [Get public trades](/api-reference/get-trades-v3-public)
 >
 > Core trade fields plus optional market metadata, and what the API holds back.
 
-> **[Recent trades channel](/api-reference/channel-recent-trades-v3)**
+> [card] [Recent trades channel](/api-reference/channel-recent-trades-v3)
 >
 > The same data, in realtime.
 
-> **[The order book](/developers/order-book)**
+> [card] [The order book](/developers/order-book)
 >
 > What people will trade at, versus what they already traded at.
 
-> **[Reading your bets](/developers/which-grain#bets)**
+> [card] [Reading your bets](/developers/which-grain#bets)
 >
 > The authenticated view — full bet grain, including identity and settlement.
 
@@ -6651,7 +6670,7 @@ How quarter-line markets work on SX Bet.
 
 Soccer markets on SX Bet support quarter lines — Asian handicap and Asian totals in `.25` increments (for example `-1.25`, `+0.75`, `Over 2.75`).
 
-> **Example quarter-line market**
+> [accordion] Example quarter-line market
 >
 > ```json theme={null}
 > {
@@ -7143,11 +7162,11 @@ client
 
 Order book levels are always the maker frame. Convert to the price you'd pay with `takerOdds = 1 - percentageOdds / 10^20`. See [unit conversions](/developers/unit-conversions).
 
-> **[The exchange model](/developers/exchange-model)**
+> [card] [The exchange model](/developers/exchange-model)
 >
 > How the exchange and orderbook work, in depth.
 
-> **[Taking liquidity](/developers/taking-liquidity)**
+> [card] [Taking liquidity](/developers/taking-liquidity)
 >
 > Signing and submitting orders that execute immediately.
 
@@ -7293,11 +7312,11 @@ Subscriptions do not use your request budget.
 
 ## Related
 
-> **[Real-time data](/developers/realtime-overview)**
+> [card] [Real-time data](/developers/realtime-overview)
 >
 > Setting up a channel, and what it sends.
 
-> **[API key permissions](/developers/api-key-permissions)**
+> [card] [API key permissions](/developers/api-key-permissions)
 >
 > Scopes you can grant a key, and the routes each one allows.
 
@@ -7591,7 +7610,7 @@ Install a client SDK, fetch a token, connect, and subscribe — see
 | `markets:global` | Market create, update, and settlement | [markets →](/api-reference/channel-markets) |
 | `main_line:global` | Which market is now an event's main line | [line changes →](/api-reference/channel-line-changes) |
 | `fixtures:global` | Fixture metadata updates | [fixtures →](/api-reference/channel-fixtures) |
-| `fixtures:live_scores` | Live match scores | [fixtures →](/api-reference/channel-fixtures) |
+| `fixtures:live_scores` | Live match scores (third-party data, provided as-is) | [fixtures →](/api-reference/channel-fixtures) |
 | `parlay_markets:global` | Incoming parlay quote requests | [parlay requests →](/api-reference/channel-parlay-requests) |
 
 ### Subscribing to your own channels
@@ -8056,19 +8075,19 @@ Keep handlers fast: receive the message and hand it off to a queue or async task
 
 ## Related
 
-> **[Market Making →](/developers/market-making)**
+> [card] [Market Making →](/developers/market-making)
 >
 > Using `account:orders_v3` to monitor your open orders in real time.
 
-> **[Taking Liquidity →](/developers/taking-liquidity)**
+> [card] [Taking Liquidity →](/developers/taking-liquidity)
 >
 > How to submit fills and monitor your trade history.
 
-> **[Initialization →](/developers/realtime-initialization)**
+> [card] [Initialization →](/developers/realtime-initialization)
 >
 > Install, connect, and subscribe with the Centrifuge client.
 
-> **[Market Making Parlays →](/developers/market-making-parlays)**
+> [card] [Market Making Parlays →](/developers/market-making-parlays)
 >
 > Responding to parlay quote requests via `parlay_markets:global`.
 
@@ -8336,7 +8355,7 @@ For the snapshot-plus-subscribe seed pattern, see
 
 ***
 
-> **[Real-time data →](/developers/realtime-overview)**
+> [card] [Real-time data →](/developers/realtime-overview)
 >
 > The guide with full worked examples, channel reference, and common failures.
 
@@ -8407,19 +8426,19 @@ error.
 
 ## Related
 
-> **[Market making](/developers/market-making)**
+> [card] [Market making](/developers/market-making)
 >
 > Quoting, exposure, and the re-quote loop.
 
-> **[Posting orders](/developers/posting-orders)**
+> [card] [Posting orders](/developers/posting-orders)
 >
 > Build, sign, and submit an order.
 
-> **[Capital efficiency](/developers/capital-efficiency)**
+> [card] [Capital efficiency](/developers/capital-efficiency)
 >
 > How offsetting positions release escrow at fill time.
 
-> **[Time in force](/developers/time-in-force)**
+> [card] [Time in force](/developers/time-in-force)
 >
 > GTC rests; IOC and FOK execute now.
 
@@ -8621,31 +8640,31 @@ fillable depth first and cancels entirely if the depth can't cover your size.
 
 ## Related
 
-> **[Posting orders](/developers/posting-orders)**
+> [card] [Posting orders](/developers/posting-orders)
 >
 > The same signing and submission path, from the maker's side.
 
-> **[Market making](/developers/market-making)**
+> [card] [Market making](/developers/market-making)
 >
 > The global notional budget aggressive orders are checked against.
 
-> **[Time in force](/developers/time-in-force)**
+> [card] [Time in force](/developers/time-in-force)
 >
 > Why IOC and FOK are the only two immediate types.
 
-> **[Betting delays](/developers/betting-delays)**
+> [card] [Betting delays](/developers/betting-delays)
 >
 > The wait an order takes on before it matches.
 
-> **[Create orders](/api-reference/post-orders-v3)**
+> [card] [Create orders](/api-reference/post-orders-v3)
 >
 > Fields, validation rules and every error body.
 
-> **[Get orderbook snapshot](/api-reference/get-market-orderbook-snapshot)**
+> [card] [Get orderbook snapshot](/api-reference/get-market-orderbook-snapshot)
 >
 > Reading depth, and the prices from the taker's side.
 
-> **[Bet lifecycle](/developers/bet-lifecycle)**
+> [card] [Bet lifecycle](/developers/bet-lifecycle)
 >
 > What happens to a bet after it matches.
 
@@ -8733,19 +8752,19 @@ API keys are network-specific. Generate a separate key for each environment.
 
 ## Related
 
-> **[References →](/api-reference/references)**
+> [card] [References →](/api-reference/references)
 >
 > Full list of addresses, URLs, and chain IDs.
 
-> **[Exchange metadata →](/api-reference/get-metadata-obv3)**
+> [card] [Exchange metadata →](/api-reference/get-metadata-obv3)
 >
 > The runtime config every integration reads at startup.
 
-> **[Funding →](/developers/funding)**
+> [card] [Funding →](/developers/funding)
 >
 > Move USDC into your proxy on either network.
 
-> **[Quickstart →](/developers/quickstart)**
+> [card] [Quickstart →](/developers/quickstart)
 >
 > End-to-end guide from setup to first order.
 
@@ -8789,19 +8808,19 @@ Because it can never take, no [betting delay](/developers/betting-delays) applie
 
 ## Related
 
-> **[Posting orders](/developers/posting-orders)**
+> [card] [Posting orders](/developers/posting-orders)
 >
 > Build, sign and submit an order of any type.
 
-> **[Taking liquidity](/developers/taking-liquidity)**
+> [card] [Taking liquidity](/developers/taking-liquidity)
 >
 > The immediate-execution path, end to end.
 
-> **[Order lifecycle](/developers/order-lifecycle)**
+> [card] [Order lifecycle](/developers/order-lifecycle)
 >
 > `PENDING`, `ACTIVE`, `INACTIVE`, and every terminal reason.
 
-> **[Tracking your orders](/developers/my-orders)**
+> [card] [Tracking your orders](/developers/my-orders)
 >
 > `timeInForce` and `postOnly` are write-only — tag them in your own store when you post.
 
@@ -8974,7 +8993,7 @@ Explore the kinds of applications and tools you can build on top of SX Bet.
 
 SX Bet exposes a full REST API with access to markets, orderbooks, order management, and trade history. This opens up a wide range of possible applications — from fully automated trading systems to custom frontends and analytics tools.
 
-> **Trading Bots & Automated Strategies**
+> [card] Trading Bots & Automated Strategies
 >
 > The most common use case.
 >
@@ -8983,7 +9002,7 @@ SX Bet exposes a full REST API with access to markets, orderbooks, order managem
 > * **Model-driven betting** — feed your own predictive models into automated order placement
 > * **Closing positions** — hedge or exit existing positions programmatically
 
-> **Custom Frontends**
+> [card] Custom Frontends
 >
 > Build your own interface on top of SX Bet's liquidity:
 >
@@ -8992,7 +9011,7 @@ SX Bet exposes a full REST API with access to markets, orderbooks, order managem
 > * Social/community betting platforms
 > * White-label sportsbook interfaces
 
-> **Analytics & Research Tools**
+> [card] Analytics & Research Tools
 >
 > The open orderbook and trade history make SX Bet a deep data source:
 >
@@ -9002,26 +9021,26 @@ SX Bet exposes a full REST API with access to markets, orderbooks, order managem
 
 ## What you'll need
 
-> **An account**
+> [card] An account
 >
 > Login to sx.bet and create an account
 
-> **API access**
+> [card] API access
 >
 > Market data and the public tape need no credentials. The order book, and anything about your own
 > activity — orders, bets, positions, balance — needs your API key.
 
-> **USDC**
+> [card] USDC
 >
 > Orders are denominated in USDC, in integer base units — `"1000000"` is 1.00 USDC.
 
-> **Python or JS**
+> [card] Python or JS
 >
 > All guides and samples in this hub use Python and JavaScript. The API is REST, so any language works.
 
 ## Ready to start?
 
-> **[Quickstart](/developers/quickstart)**
+> [card] [Quickstart](/developers/quickstart)
 >
 > Follow our step-by-step quickstart to fetch markets, read the orderbook, and place your first order.
 
@@ -9064,19 +9083,19 @@ and balances are private to you.
 
 ## Related
 
-> **[The exchange model](/developers/exchange-model)**
+> [card] [The exchange model](/developers/exchange-model)
 >
 > Why maker and taker are a classification, not a choice.
 
-> **[What can you build?](/developers/what-can-you-build)**
+> [card] [What can you build?](/developers/what-can-you-build)
 >
 > What an orderbook exchange makes possible.
 
-> **[Quickstart](/developers/quickstart)**
+> [card] [Quickstart](/developers/quickstart)
 >
 > A resting order in about twenty minutes.
 
-> **[Unit conversions](/developers/unit-conversions)**
+> [card] [Unit conversions](/developers/unit-conversions)
 >
 > The scales, and which side a price is quoted from.
 
@@ -9170,19 +9189,19 @@ Each grain has a channel, and they carry the same shapes as the REST rows:
 
 ## Related
 
-> **[Get your bets](/api-reference/get-trades-v3)**
+> [card] [Get your bets](/api-reference/get-trades-v3)
 >
 > The bet row in full and its filters.
 
-> **[Get your fills](/api-reference/get-fills-v3)**
+> [card] [Get your fills](/api-reference/get-fills-v3)
 >
 > The fill row, its four ids, and the sort order.
 
-> **[Get your positions](/api-reference/get-positions-v3)**
+> [card] [Get your positions](/api-reference/get-positions-v3)
 >
 > Every field, the required-status rule, and realised PnL.
 
-> **[Tracking your orders](/developers/my-orders)**
+> [card] [Tracking your orders](/developers/my-orders)
 >
 > Keeping a live view of what is resting on the book.
 
@@ -9198,11 +9217,11 @@ Whether you're looking to scale up your trading operations with SX, integrate ou
 
 Please don't hesitate to reach out and tell us about what you're building — we'll figure out the best way to support your team.
 
-> **[Account models](/developers/account-models)**
+> [card] [Account models](/developers/account-models)
 >
 > The two ways to represent your site's users on SX.bet.
 
-> **[business@sx.bet](mailto:business@sx.bet)**
+> [card] [business@sx.bet](mailto:business@sx.bet)
 >
 > Tell us what you're building and what you need from us.
 
@@ -9238,11 +9257,11 @@ Once you're on Coinbase, you can select from a few deposit options. If you alrea
 
 You are ready to start betting!
 
-> **[Place Your First Bet](/user-guides/trading/market-orders)**
+> [card] [Place Your First Bet](/user-guides/trading/market-orders)
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Reading the Order Book](/user-guides/trading/order-book)**
+> [card] [Reading the Order Book](/user-guides/trading/order-book)
 >
 > Learn how to find odds and navigate the live order book.
 
@@ -9275,11 +9294,11 @@ Your transaction should be complete within a few seconds! You're all set to star
 
 ![](https://mintcdn.com/sxbet-9c561d83/nTchO44e8z9Jwtov/public/user-guides/deposit_wallet_success.png?fit=max\&auto=format\&n=nTchO44e8z9Jwtov\&q=85\&s=9513bfffd44d613f345e13c591b87a02)
 
-> **[Place Your First Bet](/user-guides/trading/market-orders)**
+> [card] [Place Your First Bet](/user-guides/trading/market-orders)
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Reading the Order Book](/user-guides/trading/order-book)**
+> [card] [Reading the Order Book](/user-guides/trading/order-book)
 >
 > Learn how to find odds and navigate the live order book.
 
@@ -9301,11 +9320,11 @@ Learn how to deposit USDC on SX Bet using Interac e-Transfer.
 
 4. Once you've confirmed the transaction, you will get an email notification when PayTrie accepts the funds and the USDC is in your account. This can take up to 60 minutes.
 
-> **[Place Your First Bet](/user-guides/trading/market-orders)**
+> [card] [Place Your First Bet](/user-guides/trading/market-orders)
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Reading the Order Book](/user-guides/trading/order-book)**
+> [card] [Reading the Order Book](/user-guides/trading/order-book)
 >
 > Learn how to find odds and navigate the live order book.
 
@@ -9359,11 +9378,11 @@ Enter the amount of USDC you would like to bridge, agree to the terms, and click
 
 Success!
 
-> **[Deposit Crypto](/user-guides/deposit-withdraw/transfer-crypto)**
+> [card] [Deposit Crypto](/user-guides/deposit-withdraw/transfer-crypto)
 >
 > Fund your wallet when you're ready to bet again.
 
-> **[Fees](/user-guides/trading/fees)**
+> [card] [Fees](/user-guides/trading/fees)
 >
 > Learn about trading fees, gas fees, and bridging costs.
 
@@ -9401,30 +9420,30 @@ We'll run through these steps using Coinbase, but you'll find most crypto exchan
 
 ### FAQ
 
-> **Is a new transfer (deposit) address generated for each deposit?**
+> [accordion] Is a new transfer (deposit) address generated for each deposit?
 >
 > Yes — a fresh transfer address is generated each time you deposit. Sending funds to the address you were provided for a previous deposit will cause a delay in your deposit. Only transfer your funds to the deposit address provided for this specific session.
 
-> **Are there fees on deposits?**
+> [accordion] Are there fees on deposits?
 >
 > No — deposits made with Native USDC have 0% fees. Deposits made with any other token (e.g. BTC, ETH, USDT) are subject to a 0.33% fee. If you're unsure how to get Native USDC, open a support chat on [SX Bet](https://sx.bet).
 
-> **Which tokens can I deposit?**
+> [accordion] Which tokens can I deposit?
 >
 > We support deposits with 100+ tokens across 10+ blockchain networks. To see the full list of supported tokens:
 >
 > 1. Select **Deposit** > **Deposit from anywhere**
 > 2. Use the dropdown menu to browse available tokens and chains.
 
-> **My deposit is taking longer than expected**
+> [accordion] My deposit is taking longer than expected
 >
 > If your deposit is taking longer than expected, please open a support chat on [SX Bet](https://sx.bet/) or contact our payments provider (Glide) directly by emailing [support@paywithglide.xyz](mailto:support@paywithglide.xyz).
 
-> **[Place Your First Bet](/user-guides/trading/market-orders)**
+> [card] [Place Your First Bet](/user-guides/trading/market-orders)
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Reading the Order Book](/user-guides/trading/order-book)**
+> [card] [Reading the Order Book](/user-guides/trading/order-book)
 >
 > Learn how to find odds and navigate the live order book.
 
@@ -9446,11 +9465,11 @@ If you are in Canada, PayTrie allows you to sell USDC directly on SX Bet via e-T
 
 4. Once the transaction is complete, an Interac e-Transfer will be sent to your email.
 
-> **[Deposit via Interac](/user-guides/deposit-withdraw/interac)**
+> [card] [Deposit via Interac](/user-guides/deposit-withdraw/interac)
 >
 > Fund your wallet again using Interac e-Transfer.
 
-> **[Maker Rewards](/user-guides/rewards/maker-rewards)**
+> [card] [Maker Rewards](/user-guides/rewards/maker-rewards)
 >
 > Earn USDC by providing liquidity on SX Bet markets.
 
@@ -9502,11 +9521,11 @@ We'll walk through these steps using Coinbase, but you'll find most crypto excha
 
 That's it! Now you have your funds back in fiat currency.
 
-> **[Deposit Crypto](/user-guides/deposit-withdraw/transfer-crypto)**
+> [card] [Deposit Crypto](/user-guides/deposit-withdraw/transfer-crypto)
 >
 > Fund your wallet again when you're ready to bet.
 
-> **[Maker Rewards](/user-guides/rewards/maker-rewards)**
+> [card] [Maker Rewards](/user-guides/rewards/maker-rewards)
 >
 > Earn USDC by providing liquidity on SX Bet markets.
 
@@ -9548,11 +9567,11 @@ Sign up with email? No problem — export your Fortmatic wallet into MetaMask.
 
 10. You are now connected on SX Bet via MetaMask.
 
-> **[Deposit Crypto](/user-guides/deposit-withdraw/transfer-crypto)**
+> [card] [Deposit Crypto](/user-guides/deposit-withdraw/transfer-crypto)
 >
 > Fund your MetaMask wallet with USDC to start betting.
 
-> **[Place Your First Bet](/user-guides/trading/market-orders)**
+> [card] [Place Your First Bet](/user-guides/trading/market-orders)
 >
 > Bet at the best available odds and get matched instantly.
 
@@ -9570,11 +9589,11 @@ This peer-to-peer model means better odds, because you're not paying a bookmaker
 
 Every bet on SX Bet involves two roles:
 
-> **Maker (Limit Order)**
+> [card] Maker (Limit Order)
 >
 > Posts a limit order to the order book – this order sits open until it is cancelled or filled.
 
-> **Taker (Market Order)**
+> [card] Taker (Market Order)
 >
 > Fills a maker's existing limit order from the orderbook with a market bet. This is like placing a bet on a traditional sportsbook.
 
@@ -9608,11 +9627,11 @@ Learn more about [fees on SX Bet](/user-guides/trading/fees).
 
 ## Next Steps
 
-> **[Quickstart](/user-guides/getting-started/quickstart)**
+> [card] [Quickstart](/user-guides/getting-started/quickstart)
 >
 > Sign up, fund your wallet, and place your first bet.
 
-> **[Reading the Order Book](/user-guides/trading/order-book)**
+> [card] [Reading the Order Book](/user-guides/trading/order-book)
 >
 > Learn how to find odds and navigate the live order book.
 
@@ -9630,25 +9649,25 @@ Bet against other bettors — not the house. Better odds, open API, no limits.
 
 ## Why Bettors Choose SX Bet
 
-> **Great Odds & Liquidity**
+> [card] Great Odds & Liquidity
 >
 > Because odds are set by the market, you'll find better prices than traditional sportsbooks. A competitive marketplace means tighter lines and more value.
 
-> **No Limits**
+> [card] No Limits
 >
 > There are no account limits on SX Bet. Users are never restricted, banned, or charged premiums for winning — you are free to bet as much as you want on any market.
 
-> **Open API Access**
+> [card] Open API Access
 >
 > Power users and builders can access the full SX Bet API at no cost. See the [Developer Docs](/developers/introduction) for more.
 
 ## Ready to Get Started?
 
-> **[How Does SX Bet Work?](/user-guides/getting-started/how-it-works)**
+> [card] [How Does SX Bet Work?](/user-guides/getting-started/how-it-works)
 >
 > Learn how the peer-to-peer exchange model works.
 
-> **[Quickstart](/user-guides/getting-started/quickstart)**
+> [card] [Quickstart](/user-guides/getting-started/quickstart)
 >
 > Sign up, fund your wallet, and place your first bet.
 
@@ -9664,11 +9683,11 @@ Get started on SX Bet in three steps.
 
 Go to [sx.bet](https://sx.bet) and create an account. You have two options:
 
-> **Email or Google**
+> [card] Email or Google
 >
 > Sign up with your email or Google account. SX Bet will automatically create a secure wallet for you — no crypto experience needed.
 
-> **Connect a Wallet**
+> [card] Connect a Wallet
 >
 > Already have a crypto wallet like [MetaMask](https://metamask.io) or [Rabby](https://rabby.io)? Connect it directly to SX Bet.
 
@@ -9707,15 +9726,15 @@ Your bet is now live. You can track it on the [My Bets](https://sx.bet/my-bets) 
 
 ## What's Next?
 
-> **[Finding Markets](/user-guides/markets/finding-markets)**
+> [card] [Finding Markets](/user-guides/markets/finding-markets)
 >
 > Browse sports, leagues, and bet types on SX Bet.
 
-> **[Market Orders (Taker)](/user-guides/trading/market-orders)**
+> [card] [Market Orders (Taker)](/user-guides/trading/market-orders)
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Limit Orders (Maker)](/user-guides/trading/limit-orders)**
+> [card] [Limit Orders (Maker)](/user-guides/trading/limit-orders)
 >
 > Request your own odds and wait for someone to fill your order.
 
@@ -9756,11 +9775,11 @@ Alt lines let you shop for better odds by taking on more or less risk than the s
 
 ![](https://mintcdn.com/sxbet-9c561d83/nTchO44e8z9Jwtov/public/user-guides/alt_lines.png?fit=max\&auto=format\&n=nTchO44e8z9Jwtov\&q=85\&s=151d963036783d863fdfd013d7862f45)
 
-> **[Reading the Order Book](/user-guides/trading/order-book)**
+> [card] [Reading the Order Book](/user-guides/trading/order-book)
 >
 > Learn how to read odds and liquidity once you've found a market.
 
-> **[Market Orders (Taker)](/user-guides/trading/market-orders)**
+> [card] [Market Orders (Taker)](/user-guides/trading/market-orders)
 >
 > Bet at the best available odds and get matched instantly.
 
@@ -9770,29 +9789,29 @@ Source: https://docs.sx.bet/user-guides/more/betting-rules
 
 Sport-specific rules that govern how bets are settled on SX Bet.
 
-> **[Soccer](https://help.sx.bet/en/articles/5090654-soccer-betting-rules)**
+> [card] [Soccer](https://help.sx.bet/en/articles/5090654-soccer-betting-rules)
 
-> **[Tennis](https://help.sx.bet/en/articles/5090684-tennis-betting-rules)**
+> [card] [Tennis](https://help.sx.bet/en/articles/5090684-tennis-betting-rules)
 
-> **[American Football](https://help.sx.bet/en/articles/5090593-american-football-betting-rules)**
+> [card] [American Football](https://help.sx.bet/en/articles/5090593-american-football-betting-rules)
 
-> **[Baseball](https://help.sx.bet/en/articles/5090616-baseball-betting-rules)**
+> [card] [Baseball](https://help.sx.bet/en/articles/5090616-baseball-betting-rules)
 
-> **[Hockey](https://help.sx.bet/en/articles/5090642-hockey-betting-rules)**
+> [card] [Hockey](https://help.sx.bet/en/articles/5090642-hockey-betting-rules)
 
-> **[Basketball](https://help.sx.bet/en/articles/5090617-basketball-betting-rules)**
+> [card] [Basketball](https://help.sx.bet/en/articles/5090617-basketball-betting-rules)
 
-> **[Esports](https://help.sx.bet/en/articles/5090630-esports-betting-rules)**
+> [card] [Esports](https://help.sx.bet/en/articles/5090630-esports-betting-rules)
 
-> **[Parlays](https://help.sx.bet/en/articles/6233471-parlay-betting-rules)**
+> [card] [Parlays](https://help.sx.bet/en/articles/6233471-parlay-betting-rules)
 
-> **[Cricket](https://help.sx.bet/en/articles/5090623-cricket-betting-rules)**
+> [card] [Cricket](https://help.sx.bet/en/articles/5090623-cricket-betting-rules)
 
-> **[Golf](https://help.sx.bet/en/articles/5090631-golf-betting-rules)**
+> [card] [Golf](https://help.sx.bet/en/articles/5090631-golf-betting-rules)
 
-> **[Rugby](https://help.sx.bet/en/articles/5090650-rugby-betting-rules)**
+> [card] [Rugby](https://help.sx.bet/en/articles/5090650-rugby-betting-rules)
 
-> **[MMA](https://help.sx.bet/en/articles/5090646-mma-betting-rules)**
+> [card] [MMA](https://help.sx.bet/en/articles/5090646-mma-betting-rules)
 
 ## Other
 
@@ -9812,11 +9831,11 @@ Learn how to use bet credits on SX Bet.
 
 Bet credits allow you to place bets without using your own funds. If you win, you keep the winnings, but not the original bet amount.
 
-> **[Market Orders](/user-guides/trading/market-orders)**
+> [card] [Market Orders](/user-guides/trading/market-orders)
 >
 > Place bets at the best available odds.
 
-> **[Tournaments](/user-guides/rewards/tournaments)**
+> [card] [Tournaments](/user-guides/rewards/tournaments)
 >
 > Compete for prizes in SX Bet tournaments.
 
@@ -9874,31 +9893,31 @@ You'll need a small amount of SX Token to cover network gas fees. If you don't h
 
 ### FAQ
 
-> **What if my Limit Order does not get filled?**
+> [accordion] What if my Limit Order does not get filled?
 >
 > That's okay! Qualifying limit orders only earn points for the time your qualifying order remains open.
 
-> **What if I cancel my Limit Order?**
+> [accordion] What if I cancel my Limit Order?
 >
 > As long as your qualifying limit order is up long enough to accrue points, you keep your points and earn your share of the USDC reward pool.
 
-> **What Is the Global Line?**
+> [accordion] What Is the Global Line?
 >
 > The Global Line (orange line on the order book) represents the global consensus odds across major sportsbooks (like Pinnacle). To qualify, your order must offer better odds than this global line.
 
-> **Do I need to place a bet to earn rewards?**
+> [accordion] Do I need to place a bet to earn rewards?
 >
 > Technically, no. You don't need your bet to be matched to earn — you earn points for the time your qualifying order remains live. You stop earning points once your bet is matched or cancelled.
 
-> **Do I have to offer on both sides of the line?**
+> [accordion] Do I have to offer on both sides of the line?
 >
 > No.
 
-> **Are alt. lines included?**
+> [accordion] Are alt. lines included?
 >
 > No, not yet. Limit orders must be on the mainline.
 
-> **How do I place a limit order?**
+> [accordion] How do I place a limit order?
 >
 > Choose a market, and select "Limit Order" in the bet slip. When you place a limit order on SX Bet, you're setting the exact odds you want for your bet — instead of taking the current market price.
 >
@@ -9916,15 +9935,15 @@ You'll need a small amount of SX Token to cover network gas fees. If you don't h
 > * Meet the minimum offer requirement (typically \$100, varies by market).
 > * Place your limit order on the mainline (alt lines not yet eligible).
 
-> **What if there is no Global Line on the order book?**
+> [accordion] What if there is no Global Line on the order book?
 >
 > If the market is included in the Maker Rewards but you don't see an orange line on the order book, you will not collect points by placing a limit order. Refresh the page or check the market later — sometimes it can take time for the Global Line to update. If the issue persists, message our support team.
 
-> **[Limit Orders (Maker)](/user-guides/trading/limit-orders)**
+> [card] [Limit Orders (Maker)](/user-guides/trading/limit-orders)
 >
 > Post your own odds and earn the spread as a market maker.
 
-> **[Reading the Order Book](/user-guides/trading/order-book)**
+> [card] [Reading the Order Book](/user-guides/trading/order-book)
 >
 > Learn how to read the order book and find the global consensus line.
 
@@ -9952,11 +9971,11 @@ You can check the Leaderboard by clicking on the tournament you are participatin
 
 T\&C: General terms and conditions apply. No bet washing, or multi-accounting. SX reserves the right to remove individuals.
 
-> **[Maker Rewards](/user-guides/rewards/maker-rewards)**
+> [card] [Maker Rewards](/user-guides/rewards/maker-rewards)
 >
 > Earn USDC by providing liquidity on eligible markets.
 
-> **[Bet Credits](/user-guides/rewards/bet-credits)**
+> [card] [Bet Credits](/user-guides/rewards/bet-credits)
 >
 > Learn about bet credit promotions on SX Bet.
 
@@ -10013,7 +10032,7 @@ Once your bet is filled, only your net worst-case loss remains locked. Your free
 
 ![](https://mintcdn.com/sxbet-9c561d83/nTchO44e8z9Jwtov/public/user-guides/refund.png?fit=max\&auto=format\&n=nTchO44e8z9Jwtov\&q=85\&s=538ce4dce45bbc9a675e2ee29229b726)
 
-> **Example: Exit to Lock in a Profit**
+> [accordion] Example: Exit to Lock in a Profit
 >
 > **Pre-match odds: Team A @ 2.10 | Team B @ 1.85**
 >
@@ -10032,7 +10051,7 @@ Once your bet is filled, only your net worst-case loss remains locked. Your free
 >
 > 5. Your \$165.62 is now free to use on another bet — before the original match even finishes.
 
-> **Example: Exit to Minimize a Loss**
+> [accordion] Example: Exit to Minimize a Loss
 >
 > **Pre-match odds: Team A @ 2.10 | Team B @ 1.85**
 >
@@ -10070,11 +10089,11 @@ If you're quoting both sides of a market, capital efficiency means you don't nee
 * Deploy larger position sizes with the same bankroll
 * Scale your activity without repeated deposits or manual capital management
 
-> **[Market Orders](/user-guides/trading/market-orders)**
+> [card] [Market Orders](/user-guides/trading/market-orders)
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Fees](/user-guides/trading/fees)**
+> [card] [Fees](/user-guides/trading/fees)
 >
 > Understand the SX Bet fee structure, including 0% on single bets.
 
@@ -10120,11 +10139,11 @@ Glide, MoonPay and PayTrie charge a small transaction fee.
 
 For large bridges, the [Native Arbitrum Bridge](https://portal.arbitrum.io/bridge?destinationChain=sx\&sanitized=true\&sourceChain=ethereum\&token=0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48) is usually the most cost-effective option, with only standard gas.
 
-> **[Market Orders](/user-guides/trading/market-orders)**
+> [card] [Market Orders](/user-guides/trading/market-orders)
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Limit Orders](/user-guides/trading/limit-orders)**
+> [card] [Limit Orders](/user-guides/trading/limit-orders)
 >
 > Post your own odds and act as the bookmaker.
 
@@ -10164,7 +10183,7 @@ You can see your offer pop up in the order book on the other side.
 
 ***
 
-> **[Want to offer odds programmatically?](/developers/introduction)**
+> [card] [Want to offer odds programmatically?](/developers/introduction)
 >
 > Build on the SX Bet API to post limit orders at scale. No premium charges for API access.
 
@@ -10218,11 +10237,11 @@ For most pre-match bets, the default slippage is fine. For live/in-play markets 
 >
 > Higher slippage means you may receive worse odds than you selected. Only increase it when getting matched quickly matters more than getting the exact price.
 
-> **[Limit Orders (Maker)](/user-guides/trading/limit-orders)**
+> [card] [Limit Orders (Maker)](/user-guides/trading/limit-orders)
 >
 > Post your own odds and earn the spread as a market maker.
 
-> **[Reading the Order Book](/user-guides/trading/order-book)**
+> [card] [Reading the Order Book](/user-guides/trading/order-book)
 >
 > Learn how to read the order book to find available odds and liquidity.
 
@@ -10261,17 +10280,17 @@ The orange line across the order book marks the **consensus line**. It is the fa
 
 Click any odds in the order book to open the bet slip pre-filled at that price. If you bet more than what's available at one price level, your order fills across several levels. Any remainder sits as an open limit order.
 
-> **[How to Place a Market Order](/user-guides/trading/market-orders)**
+> [card] [How to Place a Market Order](/user-guides/trading/market-orders)
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[How to Place a Limit Order](/user-guides/trading/limit-orders)**
+> [card] [How to Place a Limit Order](/user-guides/trading/limit-orders)
 >
 > Request your own odds and wait for someone to fill your order.
 
 ***
 
-> **[Want to fetch odds for many markets through the SX Bet API?](/developers/introduction)**
+> [card] [Want to fetch odds for many markets through the SX Bet API?](/developers/introduction)
 >
 > Build on the SX Bet API to fetch odds programmatically. No API key needed.
 
@@ -10305,11 +10324,11 @@ Click "Build a Parlay" and make your selections. Click "Request parlay" and ente
 
 ### Place Your Parlay, Your Way
 
-> **[Market Orders](/user-guides/trading/market-orders)**
+> [card] [Market Orders](/user-guides/trading/market-orders)
 >
 > Place a standard single-leg bet at the best available odds.
 
-> **[Fees](/user-guides/trading/fees)**
+> [card] [Fees](/user-guides/trading/fees)
 >
 > Understand the 5% winning parlay fee and single-bet fee structure.
 

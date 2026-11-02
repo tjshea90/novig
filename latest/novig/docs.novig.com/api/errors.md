@@ -163,9 +163,9 @@ See [Funding](https://docs.novig.com/api/subaccounts/funding.md#check-the-transf
 ## `413` Content Too Large
 
 The edge is a filter in front of our servers.
-It refuses any body over 8 KiB ({EDGE_BODY_BYTES.toLocaleString("en-US")} bytes) with a 403 and an HTML page, with no JSON error body.
+It refuses any body over 64 KiB ({EDGE_BODY_BYTES.toLocaleString("en-US")} bytes) with a 403 and an HTML page, with no JSON error body.
 The request never reaches the exchange.
-A batch hits this cap first, at about 90 orders.
+A full batch of 256 orders fits under it, at about 90 bytes an order.
 
 The exchange buffers each request body before it parses it.
 It refuses a body over 100 KiB with a 413 and `PAYLOAD_TOO_LARGE`, before it reads the signature.
@@ -175,7 +175,7 @@ To fix either error, split the batch. Both caps count the raw bytes you send.
 
 ## `423` Locked
 
-A `423` doesn't clear on its own. Contact support.
+Most `423` codes don't clear on their own. Contact support.
 
 | `code` | Still works |
 | - | - |
@@ -185,6 +185,7 @@ A `423` doesn't clear on its own. Contact support.
 | `SELF_EXCLUDED` | Cancels, reads, label, and revoke |
 | `EMPLOYEE_ACCOUNT` | Reads |
 | `LIQUIDATION_ONLY` | Everything except placing orders |
+| `DEPOSIT_RETURN_HOLD` | Everything except placing orders |
 
 * `SYSTEM_LOCKED` means the exchange has halted trading. It blocks every trading, catalog, key, and subaccount route, reads included. `GET /v3/exchange/status` still answers, and returns the reason.
 * `ACCOUNT_LOCKED` and `ACCOUNT_EXCLUDED` block every trading, catalog, key, and subaccount route, reads included.
@@ -192,6 +193,9 @@ A `423` doesn't clear on its own. Contact support.
 * `EMPLOYEE_ACCOUNT` blocks placing and canceling when the key belongs to a Novig employee.
 * `LIQUIDATION_ONLY` blocks placing orders. Cancels still work.
 * When we apply `LIQUIDATION_ONLY` to your account, we cancel your resting orders, then cancel again about 75 seconds later.
+* `DEPOSIT_RETURN_HOLD` blocks placing orders after your bank returns one of your deposits or your card issuer charges it back. Cancels still work.
+* `DEPOSIT_RETURN_HOLD` lifts on its own if the dispute is decided in your favor. Otherwise, contact support.
+* If your account has both `LIQUIDATION_ONLY` and `DEPOSIT_RETURN_HOLD`, you get `LIQUIDATION_ONLY`.
 
 To check whether trading is paused, call `GET /v3/exchange/status`.
 
@@ -242,6 +246,161 @@ The first two codes judge the request's network. The rest judge the key holder's
 
 A cancel never returns a `451`. A read admits a stale geolocation, so only a placement returns `GEOLOCATION_EXPIRED`.
 
+## Blocked requests
+
+We block a request because of where it comes from, not because of what it says.
+Find what you see, then follow its fix.
+
+| You see | Go to |
+| - | - |
+| 403 with an HTML body | [Edge 403](#edge-403) |
+| 451 `ANONYMIZED_NETWORK` | [Anonymized network](#anonymized-network) |
+| 451 `RESTRICTED_NETWORK_REGION` | [Restricted network region](#restricted-network-region) |
+| 451 `GEOLOCATION_*` | [Geolocation](#geolocation) |
+
+Each check is separate.
+A request can pass the account's geolocation and still fail on its IP address, and the reverse.
+Fixing one doesn't fix the other.
+
+> [!WARNING]
+>
+> On any `451`, stop and fix the cause before you retry. A client that keeps retrying a `451` can get the account locked with a `423`.
+
+### Anonymized network
+
+`ANONYMIZED_NETWORK` means our compliance provider classifies the request's IP address as a VPN, a proxy, a Tor exit, or another anonymizer.
+
+The block is on the IP address, not the key.
+A new key won't help, and we can't allowlist or review an IP address for this check.
+
+It usually blocks order, position, and account routes.
+Some routes, like `GET /v3/time`, can still work.
+So a key that works on some routes and fails on others is normal for this error.
+
+These are the causes we see most:
+
+* A VPN, iCloud Private Relay, or Cloudflare WARP that's still on.
+* An app that shares or sells your bandwidth. It turns your connection into a proxy.
+* A router with a built-in VPN, privacy, or proxy feature.
+* A home IP address that a proxy service used before. Home addresses change hands, and the lists can be out of date.
+* A shared outbound address that many customers use, like Railway's shared static IPs or a Cloudflare-fronted proxy.
+
+To fix it:
+
+**1. Turn off anonymizers**
+
+Turn off any VPN, iCloud Private Relay, WARP, or proxy on the machine and the network. Unset `HTTP_PROXY` and `HTTPS_PROXY`.
+
+**2. Remove bandwidth-sharing apps**
+
+Uninstall any app that shares your connection. Its IP address can stay flagged for a while after.
+
+**3. Check the router**
+
+Turn off any VPN, privacy, or proxy feature on the router.
+
+**4. Test from a phone hotspot**
+
+If the request works there, your key is fine. Only your network's IP address is flagged.
+
+**5. Get a new IP address**
+
+Restart the modem or router, or ask your ISP for a new address. A restart doesn't always change it.
+
+**6. Use a dedicated server address**
+
+On a server, use a dedicated static IP in a US region, like AWS EC2 with an Elastic IP. Test it with a read first.
+
+### Restricted network region
+
+`RESTRICTED_NETWORK_REGION` means the request's IP address is in a region we can't serve.
+The restricted states are Arizona, Michigan, and Nevada.
+
+It blocks reads, like `GET /v3/portfolio/positions`, as well as placements.
+
+It most often hits hosted runners whose IP address changes, like GitHub Actions or a serverless platform.
+Each run can land in a different data center, so the error comes and goes.
+
+To fix it, run your client from a fixed IP address you control.
+A home or office connection works, and so does a dedicated static cloud IP.
+Don't use a hosted runner's rotating addresses.
+
+### Edge 403
+
+A `403` with an HTML body means our network edge stopped the request before it reached the API.
+It isn't a key or signing problem.
+
+You can tell it's this error when:
+
+* The body is an HTML page that says "Request blocked" or "The request could not be satisfied", not JSON.
+* The headers include `Server: CloudFront`, `X-Cache: Error from cloudfront`, and `x-amz-cf-id`.
+* An unsigned public route, like `GET /v3/public/catalog/events`, is blocked too.
+* Paper works while production fails.
+
+These are the causes we've seen:
+
+* Some data-center and shared-hosting addresses, like DigitalOcean, Railway, or Hostinger.
+* Bursts of requests above the [rate limits](https://docs.novig.com/api/throttling.md).
+* An HTTP library's default `User-Agent`, like the one Python's `urllib` sends.
+* A body over 64 KiB. See [`413`](#413-content-too-large).
+* Some home ISP address ranges.
+
+To fix it:
+
+**1. Confirm the error**
+
+Check for the HTML body and the CloudFront headers.
+
+**2. Set a User-Agent**
+
+Send a `User-Agent` header that names your client, like `acme-trader/1.4`.
+
+**3. Slow down**
+
+Stay within the [rate limits](https://docs.novig.com/api/throttling.md), and back off after an error. Don't retry in a tight loop.
+
+**4. Test another network**
+
+Try a phone hotspot or another ISP.
+
+**5. Change hosts**
+
+On a cloud host, try another provider or a dedicated static IP.
+
+If you're still blocked, [contact us](#before-you-contact-us).
+
+### Geolocation
+
+A `GEOLOCATION_*` code is about the account's location check, not the request's IP address.
+An API key has no location of its own. It uses the location check of the account that owns it.
+
+* **Refresh the check.** Open the Novig app in a permitted state. That refreshes the check for every key on the account.
+* **Refresh often enough.** A placement needs a check from the past 3 days. Reads and cancels still work after it lapses.
+* **Use the app.** Opening the Novig app is the only supported way to geolocate.
+* **Check when it lapses.** [`GET /v3/account/geolocation`](https://docs.novig.com/api-reference/accounts/get-the-geolocation-status) returns when the account's last check expires, and the code a placement gets now. It answers even while the check refuses your other requests.
+* **Close remote-access tools.** Remote desktop, a virtual machine, or location-spoofing software returns `GEOLOCATION_BLOCKED_SOFTWARE`.
+
+For each code, see [`451`](#451-geolocation-unavailable).
+
+[Contact us](#before-you-contact-us) if the account still shows `GEOLOCATION_FAILED` or a `423` after you fix your client.
+
+### Before you contact us
+
+Email [developers@novig.co](mailto:developers@novig.co) with:
+
+* The `x-amz-cf-id` header for an edge `403`, or the JSON body for a `451`.
+* The UTC timestamp of the request.
+* The route you called.
+* The public IP address the request came from.
+* Your ISP or hosting provider.
+* Whether the request works from a phone hotspot.
+
+To find your public IP address, run this on the machine that sends the request.
+
+```bash theme={"dark"}
+curl https://checkip.amazonaws.com
+```
+
 ## Trading and catalog errors
 
 Every trading and catalog error has a `code` and a `message`.
@@ -266,14 +425,14 @@ A body that doesn't parse answers `INVALID_BODY`. Its `message` names the field 
 | 422 | `WAGER_LIMIT_EXCEEDED` |
 | 423 | `SYSTEM_LOCKED` `ACCOUNT_LOCKED` `LEAGUE_LOCKED` `COMPETITOR_LOCKED` |
 | 423 | `ACCOUNT_EXCLUDED` `SELF_EXCLUDED` `EMPLOYEE_ACCOUNT` |
-| 423 | `EVENT_LOCKED` `MARKET_LOCKED` `LIQUIDATION_ONLY` |
+| 423 | `EVENT_LOCKED` `MARKET_LOCKED` `LIQUIDATION_ONLY` `DEPOSIT_RETURN_HOLD` |
 | 429 | `RATE_LIMIT_EXCEEDED` |
 | 451 | See [`451`](#451-geolocation-unavailable) |
 | 503 | `GEOLOCATION_SCREENING_UNAVAILABLE` |
 | 500 | `INTERNAL_ERROR` |
 
 * 403 `KYC_REQUIRED` applies to placing only. The key holder's KYC lapsed after the key was created, so finish verification in the app.
-* 423 means `SELF_EXCLUDED`, `EMPLOYEE_ACCOUNT`, `LIQUIDATION_ONLY`, or a lock with no `code`. See [`423`](#423-locked).
+* 423 means `SELF_EXCLUDED`, `EMPLOYEE_ACCOUNT`, `LIQUIDATION_ONLY`, `DEPOSIT_RETURN_HOLD`, or a lock with no `code`. See [`423`](#423-locked).
 * A `reject` from the matching engine isn't an HTTP error. It arrives on the [private stream](https://docs.novig.com/api/streaming/private.md) after the 201.
 
 

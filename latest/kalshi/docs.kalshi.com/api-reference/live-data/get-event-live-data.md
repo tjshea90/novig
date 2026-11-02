@@ -119,6 +119,7 @@ components:
         details:
           type: object
           additionalProperties: true
+          x-go-type: json.RawMessage
           description: >-
             Live data details as a flexible object whose shape depends on the
             type.

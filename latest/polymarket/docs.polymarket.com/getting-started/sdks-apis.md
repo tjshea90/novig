@@ -10,16 +10,16 @@ Choose the interface that best fits your application. Use an SDK for a unified,
 typed integration, or work with the APIs directly when you need lower-level
 control.
 
-> **[TypeScript SDK](https://docs.polymarket.com/getting-started/typescript.md)**
+> [card] [TypeScript SDK](https://docs.polymarket.com/getting-started/typescript.md)
 >
 > Build services, bots, scripts, and applications with `@polymarket/client`.
 
-> **[Python SDK](https://docs.polymarket.com/getting-started/python.md)**
+> [card] [Python SDK](https://docs.polymarket.com/getting-started/python.md)
 >
 > Build services, notebooks, scripts, and data workflows with
 > `polymarket-client`.
 
-> **[API](https://docs.polymarket.com/getting-started/api.md)**
+> [card] [API](https://docs.polymarket.com/getting-started/api.md)
 >
 > Build directly against Polymarket REST APIs and WebSocket streams.
 

@@ -168,7 +168,7 @@ collateral, the position can open, but nothing is available for withdrawal.
 In this example, the floor is stricter than initial margin above 10x leverage;
 at 10x or below, initial margin already covers the floor.
 
-> **How is the withdrawable balance calculated?**
+> [accordion] How is the withdrawable balance calculated?
 >
 > The account's withdrawal capacity in USD is:
 >

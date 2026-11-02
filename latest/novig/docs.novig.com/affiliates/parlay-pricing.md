@@ -4,11 +4,15 @@
 
 # Parlay Pricing
 
-> Query real-time Novig parlay prices within your UI
+> Show Novig's price for a parlay inside your UI
 
 ## Overview
 
-The Parlay Pricing API allows you to retrieve Novig's parlay price for any set of outcomes directly within your platform. This enables you to show users what price they'd get on Novig before they click through.
+You can show your users what a parlay would pay on Novig before they click through.
+You send the outcome IDs of the legs, and we answer with one price for the whole parlay.
+
+It's a price a user could get on Novig right now.
+You don't need a key, and you don't sign the request.
 
 Every example reads the host from `NOVIG_HOST`. On Production that is `https://api.novig.com`.
 
@@ -16,71 +20,86 @@ Every example reads the host from `NOVIG_HOST`. On Production that is `https://a
 export NOVIG_HOST=https://api.novig.com
 ```
 
-## Endpoint
+## Get a price
 
-`POST https://api.novig.com/nbx/v1/parlay/request/unauthenticated`
+`POST https://api.novig.com/rfq/v2/quote/unauthenticated`
 
-## Request Format
+Send `outcomeIds`, a list of 2 to 20 outcome IDs, one per leg.
 
-Send a JSON body with an array of outcome IDs:
-
-```json theme={"dark"}
-{
-  "outcomes": [
-    { "id": "abc123-outcome-uuid" },
-    { "id": "xyz789-outcome-uuid" }
-  ]
-}
-```
-
-## Example Request
-
-```bash theme={"dark"}
-curl -X POST "$NOVIG_HOST/nbx/v1/parlay/request/unauthenticated" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "outcomes": [
-      { "id": "abc123-outcome-uuid" },
-      { "id": "xyz789-outcome-uuid" },
-      { "id": "def456-outcome-uuid" }
-    ]
-  }'
-```
-
-## Integration with Odds Platforms
-
-Many odds platforms (like Optic Odds) can integrate Novig parlay pricing to enhance their product offering. If you're building on an odds data platform, this endpoint provides a straightforward way to add Novig parlay pricing.
-
-## Getting Outcome IDs
-
-To use this endpoint, you'll need valid Novig outcome IDs. You can obtain these by:
-
-1. **Catalog API** - List markets with `GET /v3/catalog/markets` to get outcome IDs
-2. **Deeplinking** - Extract outcome IDs from Novig deeplink URLs
-
-See the [Odds Screens](https://docs.novig.com/affiliates/odds-screens.md) documentation for catalog request examples.
-
-## Best Practices
-
-**1. Validate Outcomes**
-
-Ensure all outcome IDs are valid and from active markets before making the request.
-
-**2. Handle Errors**
-
-Implement proper error handling for invalid outcomes or unavailable markets.
-
-**3. Cache Appropriately**
-
-Parlay prices can change frequently - cache responses for a short duration only.
-
-**4. Display Clearly**
-
-When showing Novig prices alongside competitors, clearly label the source.
-
-> [!NOTE]
+> [tab] Request
 >
-> The parlay price returned is the unauthenticated price.
+> ```bash theme={"dark"}
+> curl -s -X POST "$NOVIG_HOST/rfq/v2/quote/unauthenticated" \
+>   -H "Content-Type: application/json" \
+>   -d '{
+>     "outcomeIds": [
+>       "abc123-outcome-uuid",
+>       "xyz789-outcome-uuid"
+>     ]
+>   }'
+> ```
+
+> [tab] 200
+>
+> ```json theme={"dark"}
+> {
+>   "price": "0.215",
+>   "expiresAt": 1793500000000,
+>   "serverNow": 1793499970000
+> }
+> ```
+
+| Field | Meaning |
+| - | - |
+| `price` | The parlay's implied probability, as a decimal string |
+| `expiresAt` | When the price expires, in Unix milliseconds |
+| `serverNow` | Our clock when we answered, in Unix milliseconds |
+
+Reuse the price until `expiresAt` instead of asking again.
+If your clock drifts, measure the time left as `expiresAt` minus `serverNow`.
+
+The first request for a new set of legs can take a few seconds.
+Repeat requests for the same legs answer right away until the price expires.
+
+## Get outcome IDs
+
+Each leg is an outcome ID from our catalog.
+
+* [Odds Screens](https://docs.novig.com/affiliates/odds-screens.md) shows how to list a league's markets and their outcome IDs.
+* [Deeplinking](https://docs.novig.com/affiliates/deeplinking.md) shows the outcome IDs inside a Novig link.
+
+## Errors
+
+| Status | Meaning |
+| - | - |
+| `400` | We can't combine these legs |
+| `404` | We have no price for these legs right now |
+| `429` | You're over the rate limit |
+
+A `400` body names the reason, for example a repeated leg, an unknown outcome ID, or a closed event.
+Fix the request before you send it again.
+
+A `404` isn't a failure on your side.
+Hide the Novig price for that parlay, and try again later.
+
+## Rate limits
+
+Each IP address can send a burst of 10 requests, then 1 request per second.
+Unused capacity builds back up to 10.
+
+Over the limit, you get `429` with a `Retry-After` header.
+Wait that many seconds before you send another request.
+
+A repeat request for the same legs counts against your limit, even when we answer it from our cache.
+Reuse each price until `expiresAt` to keep your request count low.
+
+If your traffic needs a higher limit, contact us.
+
+## Best practices
+
+* **Label the source.** When you show Novig next to other prices, say which one is ours.
+* **Hide what we can't price.** Treat a `404` as "no price right now", not as an error to show your users.
+* **Respect `expiresAt`.** A price past its expiry may no longer be available on Novig.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

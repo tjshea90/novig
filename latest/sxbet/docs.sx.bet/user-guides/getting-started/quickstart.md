@@ -12,11 +12,11 @@ Get started on SX Bet in three steps.
 
 Go to [sx.bet](https://sx.bet) and create an account. You have two options:
 
-> **Email or Google**
+> [card] Email or Google
 >
 > Sign up with your email or Google account. SX Bet will automatically create a secure wallet for you — no crypto experience needed.
 
-> **Connect a Wallet**
+> [card] Connect a Wallet
 >
 > Already have a crypto wallet like [MetaMask](https://metamask.io) or [Rabby](https://rabby.io)? Connect it directly to SX Bet.
 
@@ -55,15 +55,15 @@ Your bet is now live. You can track it on the [My Bets](https://sx.bet/my-bets) 
 
 ## What's Next?
 
-> **[Finding Markets](https://docs.sx.bet/user-guides/markets/finding-markets.md)**
+> [card] [Finding Markets](https://docs.sx.bet/user-guides/markets/finding-markets.md)
 >
 > Browse sports, leagues, and bet types on SX Bet.
 
-> **[Market Orders (Taker)](https://docs.sx.bet/user-guides/trading/market-orders.md)**
+> [card] [Market Orders (Taker)](https://docs.sx.bet/user-guides/trading/market-orders.md)
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Limit Orders (Maker)](https://docs.sx.bet/user-guides/trading/limit-orders.md)**
+> [card] [Limit Orders (Maker)](https://docs.sx.bet/user-guides/trading/limit-orders.md)
 >
 > Request your own odds and wait for someone to fill your order.
 

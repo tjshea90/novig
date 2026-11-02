@@ -38,11 +38,11 @@
 
 10. You are now connected on SX Bet via MetaMask.
 
-> **[Deposit Crypto](https://docs.sx.bet/user-guides/deposit-withdraw/transfer-crypto.md)**
+> [card] [Deposit Crypto](https://docs.sx.bet/user-guides/deposit-withdraw/transfer-crypto.md)
 >
 > Fund your MetaMask wallet with USDC to start betting.
 
-> **[Place Your First Bet](https://docs.sx.bet/user-guides/trading/market-orders.md)**
+> [card] [Place Your First Bet](https://docs.sx.bet/user-guides/trading/market-orders.md)
 >
 > Bet at the best available odds and get matched instantly.
 

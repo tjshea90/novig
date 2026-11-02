@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "SharpAPI",
-    "version": "3.34.0",
+    "version": "4.1.0",
     "description": "Real-time sports betting odds API with +EV detection, arbitrage, middles, and low-hold opportunities.\n\n## Spec Versioning\n\n`info.version` is bumped on every schema or path change. Minor version (`2.x.0`) for additive changes or breaking shape fixes that align the spec to the live response; major version (`x.0.0`) for backward-incompatible redesigns. Removed paths and renamed fields always bump the minor at minimum. Check `x-generated-at` and `x-commit-sha` for the build provenance of a given snapshot.\n\n## Authentication\n\nAll authenticated endpoints accept an API key via one of three methods:\n\n| Method | Header / Param | Use case |\n|--------|---------------|----------|\n| `X-API-Key` | `X-API-Key: sk_live_...` | Recommended for server-side |\n| `Authorization` | `Authorization: Bearer sk_live_...` | Standard Bearer token |\n| `api_key` query | `?api_key=sk_live_...` | SSE/EventSource (cannot set headers) |\n\n## Subscription Tiers\n\n| Tier | Rate Limit | Data Delay | Max Books | EV | Arb | Middles | Game State |\n|------|-----------|------------|-----------|-----|-----|---------|------------|\n| Free | 12/min | 60s | 2 (DK, FD) | - | - | - | - |\n| Hobby | 120/min | Real-time | 5 | - | Yes | - | Add-on |\n| Pro | 300/min | Real-time | 15 | Yes | Yes | Yes | Add-on |\n| Sharp | 1000/min | Real-time | 25 | Yes | Yes | Yes | Add-on |\n| Enterprise | Custom | Real-time | All | Yes | Yes | Yes | Yes |\n\nGame State is a $79/mo add-on on any paid tier (Hobby, Pro, Sharp) and is included with Enterprise.\n\n## Rate Limit Headers\n\nEvery authenticated response includes:\n\n- `X-RateLimit-Limit` - Requests allowed per minute\n- `X-RateLimit-Remaining` - Requests remaining in current window\n- `X-RateLimit-Reset` - Unix timestamp when the window resets\n- `X-Data-Delay` - Odds delay in seconds for your tier (0 = real-time)\n- `X-Request-Id` - Unique request identifier for support\n\n## WebSocket Streaming\n\nThe WebSocket endpoint at `wss://ws.sharpapi.io` is documented separately in [`asyncapi.yaml`](./asyncapi.yaml) (AsyncAPI 3.0). OpenAPI 3.x cannot express WebSocket subprotocols and message channels, so the SSE endpoint (`/stream`) is the only stream covered by this document.\n\n## MCP Server\n\nThe `POST /mcp` endpoint is a Model Context Protocol server (JSON-RPC 2.0 over Streamable HTTP). Tools are self-described at runtime via `tools/list`, so it's documented as a setup guide rather than an OpenAPI path — see [`/sdks/mcp`](https://docs.sharpapi.io/sdks/mcp).\n",
     "contact": {
       "name": "SharpAPI Support",
@@ -13,8 +13,8 @@
       "name": "Proprietary",
       "url": "https://sharpapi.io/terms"
     },
-    "x-generated-at": "2026-10-23T14:17:47Z",
-    "x-commit-sha": "b6b11eb"
+    "x-generated-at": "2026-11-02T15:25:21Z",
+    "x-commit-sha": "02c1cb6"
   },
   "servers": [
     {
@@ -1442,6 +1442,15 @@
           },
           {
             "$ref": "#/components/parameters/offset"
+          },
+          {
+            "name": "include_futures",
+            "in": "query",
+            "description": "Include futures markets (season-long props, outrights, championship winners, etc.) in results. Defaults to false. Naming a futures market type via `market=` does not opt you in on its own — pass `include_futures=true` as well.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -1870,7 +1879,7 @@
       "get": {
         "operationId": "listArbitrageOpportunities",
         "summary": "List arbitrage opportunities",
-        "description": "Returns arbitrage (sure-bet) opportunities across sportsbooks. Requires **Hobby** tier or higher.\n\n**Sort options:** `profit` (default), `start_time`, `sport`.\n\n**Format:** Set `format=csv` for CSV export. Set `group=best` to return only the highest-profit arb per event.\n",
+        "description": "Returns arbitrage (sure-bet) opportunities across sportsbooks. Requires **Hobby** tier or higher.\n\n**Sort options:** `profit` (default), `start_time`, `sport`.\n\n**Grouping:** Set `group=best` to return only the highest-profit arb per event.\n",
         "tags": [
           "Opportunities"
         ],
@@ -1910,19 +1919,6 @@
           },
           {
             "$ref": "#/components/parameters/date_range"
-          },
-          {
-            "name": "format",
-            "in": "query",
-            "description": "Response format",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "json",
-                "csv"
-              ],
-              "default": "json"
-            }
           },
           {
             "name": "group",
@@ -1980,11 +1976,6 @@
                       }
                     }
                   ]
-                }
-              },
-              "text/csv": {
-                "schema": {
-                  "type": "string"
                 }
               }
             }
@@ -3102,52 +3093,51 @@
     "/futures": {
       "get": {
         "operationId": "listFuturesMarkets",
-        "summary": "List futures markets",
-        "description": "Returns available futures markets with metadata, merged across all sportsbooks. Public endpoint.",
+        "summary": "List futures",
+        "description": "Returns the futures: season-long markets such as a league's championship winner, MVP and win totals. Each sportsbook's version of a market is placed on one future with one id and one name. Pass a future's `id` as `future_id` to `GET /futures/odds` for its odds. Every future that matches the filters is returned; there is no paging. Ordered by `league`, then `id`. Requires **Enterprise** tier.",
         "tags": [
           "Futures"
-        ],
-        "security": [
-          {},
-          {
-            "ApiKeyHeader": []
-          }
         ],
         "parameters": [
           {
             "name": "sport",
             "in": "query",
-            "description": "Filter by sport",
+            "description": "Filter by sport: one value, case-insensitive.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "football"
           },
           {
             "name": "league",
             "in": "query",
-            "description": "Filter by league",
+            "description": "Filter by league: one value, case-insensitive, as `GET /leagues` lists it.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "nfl"
           },
           {
             "name": "future_type",
             "in": "query",
-            "description": "Filter by futures type",
+            "description": "Filter by future type: one value, case-insensitive. A value outside the enum returns an empty `data`.",
             "schema": {
-              "type": "string",
-              "enum": [
-                "TEAM",
-                "PLAYER",
-                "OVER_UNDER",
-                "YES_NO"
-              ]
+              "$ref": "#/components/schemas/FutureType"
             }
+          },
+          {
+            "name": "future_id",
+            "in": "query",
+            "description": "Filter by future id: one id, or several comma-separated.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "nfl__super_bowl_winner"
           }
         ],
         "responses": {
           "200": {
-            "description": "List of futures markets",
+            "description": "The futures that match the filters",
             "content": {
               "application/json": {
                 "schema": {
@@ -3164,7 +3154,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/FutureMarket"
+                        "$ref": "#/components/schemas/Future"
                       }
                     },
                     "meta": {
@@ -3176,12 +3166,12 @@
                       "properties": {
                         "count": {
                           "type": "integer",
-                          "description": "Length of `data`."
+                          "description": "Length of `data`: every future that matches."
                         },
                         "updated_at": {
                           "type": "string",
                           "format": "date-time",
-                          "description": "Server emit time (RFC 3339)."
+                          "description": "When the futures data in this response was read (RFC 3339), not when the response was sent. Consecutive requests can return the same value."
                         }
                       }
                     }
@@ -3191,23 +3181,70 @@
                   "success": true,
                   "data": [
                     {
-                      "market_id": "championship_winner",
-                      "display_name": "NBA Championship Winner",
-                      "sport": "basketball",
-                      "league": "nba",
-                      "future_type": "TEAM",
-                      "selection_count": 30,
+                      "id": "nfl__1st_overall_pick_2027",
+                      "name": "1st Overall Pick 2027",
+                      "future_type": "PLAYER",
+                      "sport": "football",
+                      "league": "nfl",
                       "books_available": [
-                        "draftkings",
-                        "fanduel",
-                        "betmgm"
-                      ]
+                        "betmgm",
+                        "betonline",
+                        "bwin",
+                        "fanduel"
+                      ],
+                      "selection_count": 88,
+                      "odds_count": 198
+                    },
+                    {
+                      "id": "nfl__afc_conference_winner",
+                      "name": "AFC Conference Winner",
+                      "future_type": "TEAM",
+                      "sport": "football",
+                      "league": "nfl",
+                      "books_available": [
+                        "betonline",
+                        "saba"
+                      ],
+                      "selection_count": 16,
+                      "odds_count": 32
+                    },
+                    {
+                      "id": "nfl__afc_conference_winner_yes_no",
+                      "name": "AFC Conference Winner Yes/No",
+                      "future_type": "TEAM",
+                      "sport": "football",
+                      "league": "nfl",
+                      "books_available": [
+                        "betonline",
+                        "saba"
+                      ],
+                      "selection_count": 16,
+                      "odds_count": 32
                     }
                   ],
                   "meta": {
-                    "count": 1,
-                    "updated_at": "2026-10-15T01:53:00Z"
+                    "count": 3,
+                    "updated_at": "2026-10-26T12:39:49.784599258Z"
                   }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/TierRestricted"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "description": "Futures data is temporarily unavailable: no copy newer than 5 minutes could be read. The error code is `service_unavailable`. Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -3219,7 +3256,7 @@
       "get": {
         "operationId": "listFuturesOdds",
         "summary": "Get futures odds",
-        "description": "Returns cross-book odds for a specific futures market. Requires authentication.",
+        "description": "Returns futures with their odds: one row per sportsbook, selection, side and line. Pass `future_id` or `league`; one of the two is required. Paging counts futures, not rows: each future on a page carries all of its rows that match the filters, and some futures hold hundreds of rows, so narrow with `sportsbook`, `team_id`, `selection` or `is_main`. Rows are ordered by `normalized_selection`, then `sportsbook`, then side, then `points`; they are not ordered by price. Requires **Enterprise** tier.",
         "tags": [
           "Futures"
         ],
@@ -3227,45 +3264,97 @@
           {
             "name": "future_id",
             "in": "query",
-            "required": true,
-            "description": "Futures market ID",
+            "description": "A future id, or several comma-separated. Required unless `league` is given.",
             "schema": {
               "type": "string"
             },
-            "example": "championship_winner"
-          },
-          {
-            "name": "sportsbook",
-            "in": "query",
-            "description": "Filter by sportsbook (comma-separated)",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "sport",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "example": "nfl__super_bowl_winner"
           },
           {
             "name": "league",
             "in": "query",
+            "description": "Every future in one league: case-insensitive, as `GET /leagues` lists it. Required unless `future_id` is given.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "nfl"
+          },
+          {
+            "name": "sport",
+            "in": "query",
+            "description": "Filter by sport: one value, case-insensitive.",
             "schema": {
               "type": "string"
             }
           },
           {
-            "$ref": "#/components/parameters/limit"
+            "name": "future_type",
+            "in": "query",
+            "description": "Filter by future type: one value, case-insensitive. A value outside the enum returns an empty `data`.",
+            "schema": {
+              "$ref": "#/components/schemas/FutureType"
+            }
           },
           {
-            "$ref": "#/components/parameters/offset"
+            "name": "sportsbook",
+            "in": "query",
+            "description": "Only rows from these sportsbooks, comma-separated. `books` is accepted as an alias.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "fanduel,betmgm"
+          },
+          {
+            "name": "team_id",
+            "in": "query",
+            "description": "Only rows on these teams, comma-separated team ids. A row whose `team_id` is `null` never matches.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "kansas_city_chiefs"
+          },
+          {
+            "name": "selection",
+            "in": "query",
+            "description": "Only rows on these selections, comma-separated names. Case, accents and punctuation are ignored, so `CJ Stroud` finds `C.J. Stroud`; a `normalized_selection` value matches too.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Boston Celtics"
+          },
+          {
+            "name": "is_main",
+            "in": "query",
+            "description": "`true`: the main line of each ladder, and every row that is not on a ladder. `false`: only the other lines of a ladder. Any other value is ignored.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Futures per page. A value outside 1-200 (0, negative, above 200, not a number) becomes 50.",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Futures to skip. A negative or non-numeric value becomes 0.",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Paginated futures odds",
+            "description": "One page of futures with their odds",
             "content": {
               "application/json": {
                 "schema": {
@@ -3283,93 +3372,497 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/FutureOdds"
+                        "$ref": "#/components/schemas/FutureWithOdds"
                       }
                     },
                     "pagination": {
-                      "$ref": "#/components/schemas/Pagination"
+                      "type": "object",
+                      "description": "Paging over futures, not rows.",
+                      "required": [
+                        "limit",
+                        "offset",
+                        "count",
+                        "total",
+                        "has_more",
+                        "next_offset"
+                      ],
+                      "properties": {
+                        "limit": {
+                          "type": "integer",
+                          "description": "Futures per page, as applied."
+                        },
+                        "offset": {
+                          "type": "integer",
+                          "description": "Futures skipped before this page."
+                        },
+                        "count": {
+                          "type": "integer",
+                          "description": "Futures on this page. Same as `meta.count`."
+                        },
+                        "total": {
+                          "type": "integer",
+                          "description": "Futures that match the filters, before paging. Same as `meta.total`."
+                        },
+                        "has_more": {
+                          "type": "boolean"
+                        },
+                        "next_offset": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "description": "Offset of the next page, or `null` on the last page."
+                        }
+                      }
                     },
                     "meta": {
                       "type": "object",
                       "required": [
-                        "future_id",
-                        "books_count",
-                        "selections_count",
                         "count",
                         "total",
+                        "odds_count",
                         "updated_at"
                       ],
                       "properties": {
-                        "future_id": {
-                          "type": "string",
-                          "description": "The `future_id` the request asked for."
-                        },
-                        "books_count": {
-                          "type": "integer",
-                          "description": "Sportsbooks with a price in the full matching set."
-                        },
-                        "selections_count": {
-                          "type": "integer",
-                          "description": "Distinct selections in the full matching set."
-                        },
                         "count": {
                           "type": "integer",
-                          "description": "Length of `data`."
+                          "description": "Futures in `data`."
                         },
                         "total": {
                           "type": "integer",
-                          "description": "Size of the full matching set."
+                          "description": "Futures that match the filters, before paging."
+                        },
+                        "odds_count": {
+                          "type": "integer",
+                          "description": "Rows in `data`, across its futures."
                         },
                         "updated_at": {
                           "type": "string",
                           "format": "date-time",
-                          "description": "Server emit time (RFC 3339)."
+                          "description": "When the futures data in this response was read (RFC 3339), not when the response was sent. Consecutive requests can return the same value."
                         }
                       }
                     }
                   }
                 },
-                "example": {
-                  "success": true,
-                  "data": [
-                    {
-                      "selection": "Boston Celtics",
-                      "sportsbook": "draftkings",
-                      "odds_american": 350,
-                      "odds_decimal": 4.5,
-                      "probability": 0.2222,
-                      "future_type": "TEAM",
-                      "future_market_id": "championship_winner",
-                      "future_market_name": "NBA Championship Winner",
-                      "sport": "basketball",
-                      "league": "nba",
-                      "event_start_time": "2026-06-15T00:00Z",
-                      "line": null
+                "examples": {
+                  "outright": {
+                    "summary": "One team's price on an outright, from every sportsbook",
+                    "value": {
+                      "success": true,
+                      "data": [
+                        {
+                          "id": "nfl__super_bowl_winner",
+                          "name": "Super Bowl Winner",
+                          "future_type": "TEAM",
+                          "sport": "football",
+                          "league": "nfl",
+                          "odds": [
+                            {
+                              "id": "nfl__super_bowl_winner:betmgm:kansas_city_chiefs",
+                              "sportsbook": "betmgm",
+                              "market": "Super Bowl Winner",
+                              "name": "Kansas City Chiefs",
+                              "selection": "Kansas City Chiefs",
+                              "normalized_selection": "kansas_city_chiefs",
+                              "selection_line": null,
+                              "points": null,
+                              "is_main": true,
+                              "price": 900,
+                              "team_id": "kansas_city_chiefs"
+                            },
+                            {
+                              "id": "nfl__super_bowl_winner:betonline:kansas_city_chiefs",
+                              "sportsbook": "betonline",
+                              "market": "Super Bowl Winner",
+                              "name": "Kansas City Chiefs",
+                              "selection": "Kansas City Chiefs",
+                              "normalized_selection": "kansas_city_chiefs",
+                              "selection_line": null,
+                              "points": null,
+                              "is_main": true,
+                              "price": 850,
+                              "team_id": "kansas_city_chiefs"
+                            },
+                            {
+                              "id": "nfl__super_bowl_winner:bwin:kansas_city_chiefs",
+                              "sportsbook": "bwin",
+                              "market": "Super Bowl Winner",
+                              "name": "Kansas City Chiefs",
+                              "selection": "Kansas City Chiefs",
+                              "normalized_selection": "kansas_city_chiefs",
+                              "selection_line": null,
+                              "points": null,
+                              "is_main": true,
+                              "price": 900,
+                              "team_id": "kansas_city_chiefs"
+                            },
+                            {
+                              "id": "nfl__super_bowl_winner:fanduel:kansas_city_chiefs",
+                              "sportsbook": "fanduel",
+                              "market": "Super Bowl Winner",
+                              "name": "Kansas City Chiefs",
+                              "selection": "Kansas City Chiefs",
+                              "normalized_selection": "kansas_city_chiefs",
+                              "selection_line": null,
+                              "points": null,
+                              "is_main": true,
+                              "price": 1000,
+                              "team_id": "kansas_city_chiefs"
+                            },
+                            {
+                              "id": "nfl__super_bowl_winner:ladbrokes:kansas_city_chiefs",
+                              "sportsbook": "ladbrokes",
+                              "market": "Super Bowl Winner",
+                              "name": "Kansas City Chiefs",
+                              "selection": "Kansas City Chiefs",
+                              "normalized_selection": "kansas_city_chiefs",
+                              "selection_line": null,
+                              "points": null,
+                              "is_main": true,
+                              "price": 900,
+                              "team_id": "kansas_city_chiefs"
+                            },
+                            {
+                              "id": "nfl__super_bowl_winner:saba:kansas_city_chiefs",
+                              "sportsbook": "saba",
+                              "market": "Super Bowl Winner",
+                              "name": "Kansas City Chiefs",
+                              "selection": "Kansas City Chiefs",
+                              "normalized_selection": "kansas_city_chiefs",
+                              "selection_line": null,
+                              "points": null,
+                              "is_main": true,
+                              "price": 750,
+                              "team_id": "kansas_city_chiefs"
+                            }
+                          ]
+                        }
+                      ],
+                      "pagination": {
+                        "limit": 50,
+                        "offset": 0,
+                        "count": 1,
+                        "total": 1,
+                        "has_more": false,
+                        "next_offset": null
+                      },
+                      "meta": {
+                        "count": 1,
+                        "total": 1,
+                        "odds_count": 6,
+                        "updated_at": "2026-10-26T12:39:49.784599258Z"
+                      }
                     }
-                  ],
-                  "pagination": {
-                    "limit": 100,
-                    "offset": 0,
-                    "has_more": false,
-                    "next_offset": null
                   },
-                  "meta": {
-                    "future_id": "championship_winner",
-                    "books_count": 1,
-                    "selections_count": 1,
-                    "count": 1,
-                    "total": 1,
-                    "updated_at": "2026-10-15T01:53:00Z"
+                  "yes_no": {
+                    "summary": "The same prices on the Yes/No future of that outright",
+                    "value": {
+                      "success": true,
+                      "data": [
+                        {
+                          "id": "nfl__super_bowl_winner_yes_no",
+                          "name": "Super Bowl Winner Yes/No",
+                          "future_type": "TEAM",
+                          "sport": "football",
+                          "league": "nfl",
+                          "odds": [
+                            {
+                              "id": "nfl__super_bowl_winner_yes_no:betmgm:kansas_city_chiefs:yes",
+                              "sportsbook": "betmgm",
+                              "market": "Super Bowl Winner Yes/No",
+                              "name": "Kansas City Chiefs Yes",
+                              "selection": "Kansas City Chiefs",
+                              "normalized_selection": "kansas_city_chiefs",
+                              "selection_line": "yes",
+                              "points": null,
+                              "is_main": true,
+                              "price": 900,
+                              "team_id": "kansas_city_chiefs"
+                            },
+                            {
+                              "id": "nfl__super_bowl_winner_yes_no:betonline:kansas_city_chiefs:yes",
+                              "sportsbook": "betonline",
+                              "market": "Super Bowl Winner Yes/No",
+                              "name": "Kansas City Chiefs Yes",
+                              "selection": "Kansas City Chiefs",
+                              "normalized_selection": "kansas_city_chiefs",
+                              "selection_line": "yes",
+                              "points": null,
+                              "is_main": true,
+                              "price": 850,
+                              "team_id": "kansas_city_chiefs"
+                            },
+                            {
+                              "id": "nfl__super_bowl_winner_yes_no:bwin:kansas_city_chiefs:yes",
+                              "sportsbook": "bwin",
+                              "market": "Super Bowl Winner Yes/No",
+                              "name": "Kansas City Chiefs Yes",
+                              "selection": "Kansas City Chiefs",
+                              "normalized_selection": "kansas_city_chiefs",
+                              "selection_line": "yes",
+                              "points": null,
+                              "is_main": true,
+                              "price": 900,
+                              "team_id": "kansas_city_chiefs"
+                            },
+                            {
+                              "id": "nfl__super_bowl_winner_yes_no:fanduel:kansas_city_chiefs:yes",
+                              "sportsbook": "fanduel",
+                              "market": "Super Bowl Winner Yes/No",
+                              "name": "Kansas City Chiefs Yes",
+                              "selection": "Kansas City Chiefs",
+                              "normalized_selection": "kansas_city_chiefs",
+                              "selection_line": "yes",
+                              "points": null,
+                              "is_main": true,
+                              "price": 1000,
+                              "team_id": "kansas_city_chiefs"
+                            },
+                            {
+                              "id": "nfl__super_bowl_winner_yes_no:ladbrokes:kansas_city_chiefs:yes",
+                              "sportsbook": "ladbrokes",
+                              "market": "Super Bowl Winner Yes/No",
+                              "name": "Kansas City Chiefs Yes",
+                              "selection": "Kansas City Chiefs",
+                              "normalized_selection": "kansas_city_chiefs",
+                              "selection_line": "yes",
+                              "points": null,
+                              "is_main": true,
+                              "price": 900,
+                              "team_id": "kansas_city_chiefs"
+                            },
+                            {
+                              "id": "nfl__super_bowl_winner_yes_no:saba:kansas_city_chiefs:yes",
+                              "sportsbook": "saba",
+                              "market": "Super Bowl Winner Yes/No",
+                              "name": "Kansas City Chiefs Yes",
+                              "selection": "Kansas City Chiefs",
+                              "normalized_selection": "kansas_city_chiefs",
+                              "selection_line": "yes",
+                              "points": null,
+                              "is_main": true,
+                              "price": 750,
+                              "team_id": "kansas_city_chiefs"
+                            }
+                          ]
+                        }
+                      ],
+                      "pagination": {
+                        "limit": 50,
+                        "offset": 0,
+                        "count": 1,
+                        "total": 1,
+                        "has_more": false,
+                        "next_offset": null
+                      },
+                      "meta": {
+                        "count": 1,
+                        "total": 1,
+                        "odds_count": 6,
+                        "updated_at": "2026-10-26T12:41:24.754966665Z"
+                      }
+                    }
+                  },
+                  "ladder": {
+                    "summary": "A team's win-total ladder: BetMGM and bwin price one line on both sides, FanDuel lists overs only",
+                    "value": {
+                      "success": true,
+                      "data": [
+                        {
+                          "id": "nba__regular_season_wins",
+                          "name": "Regular Season Wins",
+                          "future_type": "TEAM",
+                          "sport": "basketball",
+                          "league": "nba",
+                          "odds": [
+                            {
+                              "id": "nba__regular_season_wins:betmgm:boston_celtics:over:51.5",
+                              "sportsbook": "betmgm",
+                              "market": "Regular Season Wins",
+                              "name": "Boston Celtics Over 51.5",
+                              "selection": "Boston Celtics",
+                              "normalized_selection": "boston_celtics",
+                              "selection_line": "over",
+                              "points": 51.5,
+                              "is_main": true,
+                              "price": -145,
+                              "team_id": "boston_celtics"
+                            },
+                            {
+                              "id": "nba__regular_season_wins:betmgm:boston_celtics:under:51.5",
+                              "sportsbook": "betmgm",
+                              "market": "Regular Season Wins",
+                              "name": "Boston Celtics Under 51.5",
+                              "selection": "Boston Celtics",
+                              "normalized_selection": "boston_celtics",
+                              "selection_line": "under",
+                              "points": 51.5,
+                              "is_main": true,
+                              "price": 120,
+                              "team_id": "boston_celtics"
+                            },
+                            {
+                              "id": "nba__regular_season_wins:bwin:boston_celtics:over:51.5",
+                              "sportsbook": "bwin",
+                              "market": "Regular Season Wins",
+                              "name": "Boston Celtics Over 51.5",
+                              "selection": "Boston Celtics",
+                              "normalized_selection": "boston_celtics",
+                              "selection_line": "over",
+                              "points": 51.5,
+                              "is_main": true,
+                              "price": -145,
+                              "team_id": "boston_celtics"
+                            },
+                            {
+                              "id": "nba__regular_season_wins:bwin:boston_celtics:under:51.5",
+                              "sportsbook": "bwin",
+                              "market": "Regular Season Wins",
+                              "name": "Boston Celtics Under 51.5",
+                              "selection": "Boston Celtics",
+                              "normalized_selection": "boston_celtics",
+                              "selection_line": "under",
+                              "points": 51.5,
+                              "is_main": true,
+                              "price": 120,
+                              "team_id": "boston_celtics"
+                            },
+                            {
+                              "id": "nba__regular_season_wins:fanduel:boston_celtics:over:39.5",
+                              "sportsbook": "fanduel",
+                              "market": "Regular Season Wins",
+                              "name": "Boston Celtics Over 39.5",
+                              "selection": "Boston Celtics",
+                              "normalized_selection": "boston_celtics",
+                              "selection_line": "over",
+                              "points": 39.5,
+                              "is_main": false,
+                              "price": -2500,
+                              "team_id": "boston_celtics"
+                            },
+                            {
+                              "id": "nba__regular_season_wins:fanduel:boston_celtics:over:44.5",
+                              "sportsbook": "fanduel",
+                              "market": "Regular Season Wins",
+                              "name": "Boston Celtics Over 44.5",
+                              "selection": "Boston Celtics",
+                              "normalized_selection": "boston_celtics",
+                              "selection_line": "over",
+                              "points": 44.5,
+                              "is_main": false,
+                              "price": -650,
+                              "team_id": "boston_celtics"
+                            },
+                            {
+                              "id": "nba__regular_season_wins:fanduel:boston_celtics:over:49.5",
+                              "sportsbook": "fanduel",
+                              "market": "Regular Season Wins",
+                              "name": "Boston Celtics Over 49.5",
+                              "selection": "Boston Celtics",
+                              "normalized_selection": "boston_celtics",
+                              "selection_line": "over",
+                              "points": 49.5,
+                              "is_main": false,
+                              "price": -220,
+                              "team_id": "boston_celtics"
+                            },
+                            {
+                              "id": "nba__regular_season_wins:fanduel:boston_celtics:over:54.5",
+                              "sportsbook": "fanduel",
+                              "market": "Regular Season Wins",
+                              "name": "Boston Celtics Over 54.5",
+                              "selection": "Boston Celtics",
+                              "normalized_selection": "boston_celtics",
+                              "selection_line": "over",
+                              "points": 54.5,
+                              "is_main": true,
+                              "price": 130,
+                              "team_id": "boston_celtics"
+                            },
+                            {
+                              "id": "nba__regular_season_wins:fanduel:boston_celtics:over:59.5",
+                              "sportsbook": "fanduel",
+                              "market": "Regular Season Wins",
+                              "name": "Boston Celtics Over 59.5",
+                              "selection": "Boston Celtics",
+                              "normalized_selection": "boston_celtics",
+                              "selection_line": "over",
+                              "points": 59.5,
+                              "is_main": false,
+                              "price": 430,
+                              "team_id": "boston_celtics"
+                            },
+                            {
+                              "id": "nba__regular_season_wins:fanduel:boston_celtics:over:64.5",
+                              "sportsbook": "fanduel",
+                              "market": "Regular Season Wins",
+                              "name": "Boston Celtics Over 64.5",
+                              "selection": "Boston Celtics",
+                              "normalized_selection": "boston_celtics",
+                              "selection_line": "over",
+                              "points": 64.5,
+                              "is_main": false,
+                              "price": 1800,
+                              "team_id": "boston_celtics"
+                            }
+                          ]
+                        }
+                      ],
+                      "pagination": {
+                        "limit": 50,
+                        "offset": 0,
+                        "count": 1,
+                        "total": 1,
+                        "has_more": false,
+                        "next_offset": null
+                      },
+                      "meta": {
+                        "count": 1,
+                        "total": 1,
+                        "odds_count": 10,
+                        "updated_at": "2026-10-26T12:41:24.754966665Z"
+                      }
+                    }
                   }
                 }
               }
             }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Neither `future_id` nor `league` was given",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Missing required parameter: future_id or league"
+                  }
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/TierRestricted"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "description": "Futures data is temporarily unavailable: no copy newer than 5 minutes could be read. The error code is `service_unavailable`. Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -5135,7 +5628,7 @@
           },
           "selection_type": {
             "type": "string",
-            "description": "Canonical side identifier. Two-way markets emit one of the simple values listed in `examples`. Multi-axis markets (soccer double-chance, BTTS-combined, result × O/U, MMA round betting, tennis set betting, correct-score, etc.) emit compound forms joined by `_` — e.g. `home_over`, `away_under`, `home_yes`, `home_r1`. Long-tail markets such as `correct_score` and `set_betting` also encode score-level outcomes directly (e.g. `2_1`). Treat any unrecognised value as opaque rather than erroring. See the `/odds` page for the full table.",
+            "description": "Canonical side identifier. Two-way markets emit one of the simple values listed in `examples`. Multi-axis markets (soccer double-chance, BTTS-combined, result × O/U, MMA round betting, correct-score, etc.) emit compound forms joined by `_` — e.g. `home_over`, `away_under`, `home_yes`, `home_r1`. Long-tail markets such as `correct_score` and `1st_set_correct_score` also encode score-level outcomes directly (e.g. `2_1`); in tennis, `correct_score` is the match score in sets. Treat any unrecognised value as opaque rather than erroring. See the `/odds` page for the full table.",
             "examples": [
               "home",
               "away",
@@ -5236,7 +5729,7 @@
           },
           "selection_id": {
             "type": "string",
-            "description": "Sportsbook's own native selection/outcome identifier. Absent when the book does not expose one."
+            "description": "Sportsbook's own native selection/outcome identifier. Absent when the book does not expose one. In tennis, table tennis, MMA and boxing, IDs from SABA, BetOnline, Betsson, SBOBET and Fanatics Markets end in the player's name instead of the book's \"home\"/\"away\" (since 2026-10-30; IDs stored before then no longer match). In esports, IDs from SABA and Betsson end in the team's name instead of the book's \"home\"/\"away\" (since 2026-10-30; IDs stored before then no longer match). Use `selection_type` for the side."
           },
           "volume": {
             "type": "number",
@@ -6614,119 +7107,202 @@
           }
         }
       },
-      "FutureMarket": {
+      "FutureType": {
+        "type": "string",
+        "enum": [
+          "TEAM",
+          "PLAYER",
+          "UNKNOWN"
+        ],
+        "description": "What the selections of a future are: `TEAM`, `PLAYER`, or `UNKNOWN` when they are neither a team nor a player (a coach, a division, a state). Over/under and yes/no are not future types: each row carries its own `selection_line`."
+      },
+      "Future": {
         "type": "object",
+        "description": "A canonical future: one season-long market in one league, with one id and one name. Each sportsbook's version of the market is placed on it.",
         "required": [
-          "market_id",
-          "display_name",
+          "id",
+          "name",
+          "future_type",
           "sport",
           "league",
-          "future_type",
-          "selection_count"
+          "books_available",
+          "selection_count",
+          "odds_count"
         ],
         "properties": {
-          "market_id": {
+          "id": {
             "type": "string",
-            "example": "championship_winner"
+            "description": "The future's id: the league id, two underscores, then the name in lower snake case. A Yes/No future adds `_yes_no`. Take ids from this endpoint rather than building them: a name that carries a year changes id when the year does.",
+            "example": "nfl__super_bowl_winner"
           },
-          "display_name": {
+          "name": {
             "type": "string",
-            "example": "NBA Championship Winner"
+            "description": "The future's name. A Yes/No future ends in `Yes/No`.",
+            "example": "Super Bowl Winner"
+          },
+          "future_type": {
+            "$ref": "#/components/schemas/FutureType"
           },
           "sport": {
             "type": "string",
-            "example": "basketball"
+            "example": "football"
           },
           "league": {
             "type": "string",
-            "example": "nba"
-          },
-          "future_type": {
-            "type": "string",
-            "enum": [
-              "TEAM",
-              "PLAYER",
-              "OVER_UNDER",
-              "YES_NO"
-            ]
-          },
-          "selection_count": {
-            "type": "integer",
-            "description": "Number of available selections"
+            "description": "League id, as `GET /leagues` lists it.",
+            "example": "nfl"
           },
           "books_available": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Sportsbooks offering this futures market"
+            "description": "Sportsbooks that price this future, sorted by name.",
+            "example": [
+              "betmgm",
+              "betonline",
+              "bwin",
+              "fanduel",
+              "ladbrokes",
+              "saba"
+            ]
+          },
+          "selection_count": {
+            "type": "integer",
+            "description": "Distinct selections in the future."
+          },
+          "odds_count": {
+            "type": "integer",
+            "description": "Rows in the future: every sportsbook, selection, side and line."
           }
         }
       },
-      "FutureOdds": {
+      "FutureOddsRow": {
         "type": "object",
+        "description": "One sportsbook's price on one selection, side and line of a future.",
         "required": [
-          "selection",
+          "id",
           "sportsbook",
-          "odds_american",
-          "odds_decimal",
-          "probability",
-          "future_type",
-          "future_market_id",
-          "future_market_name",
-          "sport",
-          "league",
-          "event_start_time"
+          "market",
+          "name",
+          "selection",
+          "normalized_selection",
+          "selection_line",
+          "points",
+          "is_main",
+          "price",
+          "team_id"
         ],
         "properties": {
-          "selection": {
+          "id": {
             "type": "string",
-            "example": "Boston Celtics"
+            "description": "Row id: the future id, the sportsbook and the `normalized_selection`, then the side and the points when the row has them, joined by `:`. It does not change when the price does.",
+            "example": "nfl__regular_season_wins:betmgm:buffalo_bills:over:12.5"
           },
           "sportsbook": {
             "type": "string",
-            "example": "draftkings"
+            "example": "betmgm"
           },
-          "odds_american": {
-            "type": "number",
-            "example": 350
+          "market": {
+            "type": "string",
+            "description": "The future's `name`, repeated on every row.",
+            "example": "Regular Season Wins"
           },
-          "odds_decimal": {
-            "type": "number",
-            "example": 4.5
+          "name": {
+            "type": "string",
+            "description": "Label to display: the selection, then the side with a capital letter, then the points.",
+            "example": "Buffalo Bills Over 12.5"
           },
-          "probability": {
-            "type": "number",
-            "example": 0.2222
+          "selection": {
+            "type": "string",
+            "description": "The canonical name of the team or player, the same for every sportsbook. A pair is two names joined by ` /// `.",
+            "example": "Buffalo Bills"
           },
-          "line": {
+          "normalized_selection": {
+            "type": "string",
+            "description": "`selection` in lower case, with every run of characters other than `a`-`z`, digits and `-` replaced by one `_` (`C.J. Stroud` is `c_j_stroud`). Join rows across sportsbooks on it.",
+            "example": "buffalo_bills"
+          },
+          "selection_line": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "over",
+              "under",
+              "yes",
+              "no",
+              null
+            ],
+            "description": "The side: `over` or `under` on a win-total ladder, `yes` or `no` on a Yes/No future, `null` on an outright or a pair."
+          },
+          "points": {
             "type": [
               "number",
               "null"
-            ]
+            ],
+            "description": "The line of a ladder. `null` on every row whose `selection_line` is not `over` or `under`.",
+            "example": 12.5
+          },
+          "is_main": {
+            "type": "boolean",
+            "description": "On a ladder, `true` on the sportsbook's main line for the selection and `false` on its other lines. The main line is the line the sportsbook prices on both sides whose two prices are closest to even; when it prices no line on both sides, the line whose price is closest to even; a tie goes to the lower line. Always `true` on a row that is not on a ladder."
+          },
+          "price": {
+            "type": "integer",
+            "description": "American odds: `900` is +900, `-130` is -130. Derive decimal odds and implied probability from it.",
+            "example": 110
+          },
+          "team_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The team's id, the same id the odds endpoints use for teams, when the selection is one team. `null` otherwise: a player, a pair, a coach, a division, a state, or a team SharpAPI cannot match. It is not always equal to `normalized_selection`: Arsenal FC is `arsenal`.",
+            "example": "buffalo_bills"
+          }
+        }
+      },
+      "FutureWithOdds": {
+        "type": "object",
+        "description": "A future with its odds rows. `odds` holds the rows that match the filters; a future with no matching row is left out.",
+        "required": [
+          "id",
+          "name",
+          "future_type",
+          "sport",
+          "league",
+          "odds"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The future's id.",
+            "example": "nfl__regular_season_wins"
+          },
+          "name": {
+            "type": "string",
+            "description": "The future's name.",
+            "example": "Regular Season Wins"
           },
           "future_type": {
-            "type": "string"
-          },
-          "future_market_id": {
-            "type": "string"
-          },
-          "future_market_name": {
-            "type": "string"
+            "$ref": "#/components/schemas/FutureType"
           },
           "sport": {
-            "type": "string"
+            "type": "string",
+            "example": "football"
           },
           "league": {
-            "type": "string"
-          },
-          "event_start_time": {
             "type": "string",
-            "description": "Start of the event the market settles on, UTC, ISO 8601. Usually at minute precision with no seconds (`2026-10-14T23:30Z`); some rows carry seconds (`2026-10-14T23:30:00Z`). Parse it with an ISO 8601 parser: a strict RFC 3339 parser rejects the form without seconds. An empty string when the sportsbook gives none.",
-            "examples": [
-              "2027-01-19T23:00Z",
-              ""
-            ]
+            "example": "nfl"
+          },
+          "odds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FutureOddsRow"
+            },
+            "description": "Rows ordered by `normalized_selection`, then `sportsbook`, then side (none, `over`, `under`, `yes`, `no`), then `points`. Not ordered by price."
           }
         }
       },
@@ -6768,21 +7344,35 @@
           },
           "spread": {
             "type": "object",
-            "description": "Spread market splits. NOTE: `away_odds` and `home_odds` here carry spread *line* values (e.g. -1.5/+1.5), not American odds. Field naming is a known inconsistency vs `/splits/history` which uses `away_line`/`home_line`.",
+            "description": "Spread market splits. Read the spread line (the handicap, e.g. -1.5/+1.5) from `away_line`/`home_line`, the same names `/splits/history` uses. `away_odds`/`home_odds` carry the same value as a legacy alias: they are the line, not American odds. No splits source publishes a spread price.",
             "properties": {
+              "away_line": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "Away spread line (e.g. `-1.5`). `null` when the source sends no spread line for the game; the key is absent on a `betmgm` row with no spread line."
+              },
+              "home_line": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "Home spread line (e.g. `+1.5`). `null` when the source sends no spread line for the game; the key is absent on a `betmgm` row with no spread line."
+              },
               "away_odds": {
                 "type": [
                   "number",
                   "null"
                 ],
-                "description": "`null` when the source sends no spread line for the game."
+                "description": "Legacy alias of `away_line`: always the same value, the spread line, not a price. Present exactly when `away_line` is."
               },
               "home_odds": {
                 "type": [
                   "number",
                   "null"
                 ],
-                "description": "`null` when the source sends no spread line for the game."
+                "description": "Legacy alias of `home_line`: always the same value, the spread line, not a price. Present exactly when `home_line` is."
               },
               "handle_pct": {
                 "type": "object",

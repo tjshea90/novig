@@ -16,6 +16,96 @@ surface (`REST`, `WebSocket`, `FIX`) or exchange (`Predictions`, `Margin`).
 FIX API changes, previously tracked on a separate page, now live here under
 the `FIX` tag.
 
+**November 5, 2026**
+
+`no_sub_title` on markets (REST) and in `market_lifecycle_v2` and
+`multivariate_market_lifecycle` metadata (WebSocket) is deprecated. It has
+equaled `yes_sub_title` on every market created since September 2024. Use
+`yes_sub_title` instead. The field is still returned.
+
+**November 5, 2026**
+
+Perps Write budgets double for Basic through Expert and triple for Premier
+through Prestige, as one budget across all Perps markets. See
+[Perps budgets](https://docs.kalshi.com/getting_started/rate_limits.md#perps-budgets).
+
+Perps order groups can now hold orders on any Perps market, and
+`exchange_index` on Perps is deprecated.
+
+**TBD**
+
+Exit triggers canceled because their market was deactivated now return
+`status_reason: market_deactivated`. Previously they returned no
+`status_reason`.
+
+**November 5, 2026**
+
+Fractional quantities and sub-cent prices can produce dollar amounts with
+up to 6 decimal places.
+
+The Clearing Member API adds `_fp` dollar fields with 6 decimal places
+alongside selected `_centicents` response fields. For example,
+`balance_available_fp: "12.345600"` represents a balance in dollars.
+
+Preserve all 6 decimal places in calculations and reconciliation.
+Migrate to the Clearing Member `_fp` fields; their integer counterparts
+will be deprecated soon.
+
+**Affected Clearing Member endpoints:**
+
+* `GET /klear-api/v1/margin/settlement_balance`
+* `GET /klear-api/v1/margin/settlement_balance_history`
+* `GET /klear-api/v1/margin/active_obligations`
+* `GET /klear-api/v1/margin/obligation_history`
+* `GET /klear-api/v1/margin/obligations/{obligation_id}/settlement_details`
+* `GET /klear-api/v1/margin/obligations/{obligation_id}/funding_payments`
+* `GET /klear-api/v1/margin/obligations/{obligation_id}/corporate_action_payments`
+* `GET /klear-api/v1/margin/funding_payments`
+* `GET /klear-api/v1/margin/settlement_estimate_by_asset_class`
+* `GET /klear-api/v1/margin/funding_estimate_by_asset_class`
+
+See
+[Fixed-Point Representation](https://docs.kalshi.com/getting_started/fixed_point_migration.md#margin-markets)
+for details.
+
+**November 5, 2026**
+
+`orderbook_delta` subscriptions accept an optional `update_interval_ms` of `100` or `1000`. Each window produces one net held delta per changed price level; zero-net levels are skipped, and processing and transport can delay delivery. Updates to your own orders within any subaccount restriction and snapshots bypass the interval. Changes to other participants' orders, including liquidity your trades consume, remain held. Apply each snapshot as a replacement for that market's local book. Omit `update_interval_ms` or set it to `0` for real-time updates, the default. Other signed 64-bit integer literals return error code 29; values that fail integer decoding return code 1 for the whole command.
+
+Each connection has one `orderbook_delta` subscription. A repeated `subscribe` adds markets to the same `sid` and must use the same interval (omission means `0`); a mismatch returns error code 11. It does not resynchronize existing markets. Use `update_subscription` with `add_markets` to extend the current subscription, or `unsubscribe` and then `subscribe` again to change its interval.
+
+Apply deltas in the subscription's `seq` order. Predictions `clock` values identify each level's latest included change and can decrease; they cannot be used to combine independently conflated streams. Public levels can lag your own orders and temporarily appear locked or crossed. Recover sequence gaps with `get_snapshot` for all subscribed markets, or `unsubscribe`, wait for `unsubscribed`, then `subscribe` again. When switching connections, rebuild from the new connection's snapshot. See Orderbook Updates for [Predictions](https://docs.kalshi.com/websockets/orderbook-updates.md) and [Margin](https://docs.kalshi.com/margin-ws/websockets/orderbook-updates.md) for the full recovery contracts.
+
+**November 5, 2026**
+
+FIX sessions on API keys restricted to one subaccount can now send `OrderMassCancelRequest` (35=q). `530=6` cancels the orders placed over that key's FIX session, as it does for any key. `530=1` cancels only that subaccount's orders in the market. `AllocAccount<79>` is optional; if sent, it must be that subaccount, otherwise the request is rejected.
+
+**November 5, 2026**
+
+`market_closed` is now `market_inactive`, and orders on a halted market
+return it too.
+
+**October 29, 2026**
+
+New WebSocket hosts deliver `fill` and `user_orders` updates with lower latency:
+
+* Production Predictions: `wss://warp-ws.kalshi.com/trade-api/ws/v2`
+* Production Margin: `wss://margin-warp-ws.kalshi.com/trade-api/ws/v2/margin`
+* Demo Predictions: `wss://warp-ws.demo.kalshi.co/trade-api/ws/v2`
+* Demo Margin: `wss://margin-warp-ws.demo.kalshi.co/trade-api/ws/v2/margin`
+
+These hosts serve only the `fill` and `user_orders` channels. Subscribing to any other channel returns error code 8 (`Unknown channel name`), so keep your other subscriptions on your current host. API key authentication, the signed path, and message formats are unchanged. See [API Environments and Endpoints](https://docs.kalshi.com/getting_started/api_environments.md#fill-and-order-updates).
+
+**October 29, 2026**
+
+After final settlement, a margin market reports open interest of 0 and
+`price` equal to the final settlement price. Settlement does not add
+trading volume.
+
+**October 29, 2026**
+
+Added `GET /portfolio/credit_history`.
+
 **October 29, 2026**
 
 The Margin Web Sockets API now supports `market_lifecycle_v2` for market deactivation and activation.
@@ -35,6 +125,13 @@ own with `user_filter: "self"`), `rfq_batch_best_quotes` and
 `quote_executed` carries `rfq_batch_id` for a batch child's trade. If your
 client doesn't handle these messages, ignore them; see
 [Forward compatibility](https://docs.kalshi.com/websockets.md#forward-compatibility).
+
+Each child RFQ of a batch is also announced and closed as an ordinary RFQ:
+`rfq_created` and `rfq_deleted` carry `rfq_batch_id`, REST RFQs carry
+`rfq_batch_id` and `GET /communications/rfqs` lists children, and FIX sends
+them as QuoteRequests (`35=R`). Makers can quote a child like a single RFQ;
+see [RFQ batch children](https://docs.kalshi.com/getting_started/rfqs.md#rfq-batch-children) for the
+differences.
 
 **October 29, 2026**
 

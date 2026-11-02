@@ -6,6 +6,11 @@
 
 > Get real-time live scores for active events on SX Bet.
 
+> [!WARNING]
+>
+> **Live scores come from a third-party provider and are provided as-is — use them at your own risk.**
+> Data can be delayed, incomplete, inconsistent or briefly unavailable, and we do not guarantee how
+> any field is populated or which values it can take.
 
 
 ## OpenAPI

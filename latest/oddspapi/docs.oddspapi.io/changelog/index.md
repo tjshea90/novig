@@ -16,7 +16,7 @@ This page lists **new features**, **changes**, **fixes**, and **breaking changes
 
 ***
 
-## 2026-10-26
+## 2026-10-28
 
 ### ✨ Added
 
@@ -68,7 +68,7 @@ untouched, they just start carrying the new `outcomeId`s.
 * **64 new esports `marketType` values** and 568 new `marketType` × `period` combinations — objectives, first-objective and multikill markets across Counter-Strike, League of Legends, Dota, Valorant and Rainbow Six. Map-level markets arrive under a new `sportId` **83** (ESport Mobile Legends).
 * **195 new `period` keys**, all sub-period grids — `p1r1` … `p5r36` (round within map) and `p1g2` … `p5g6` (tennis). The vocabulary goes from 19 values to 213 and stays append-only.
 
-> **All 64 new marketType values**
+> [accordion] All 64 new marketType values
 >
 > **Totals / spreads / team totals on esports objectives** — `totals-kills`, `totals-towers`, `totals-turrets`, `totals-dragons`, `totals-barons`, `totals-roshans`, `totals-inhibitors`, `totals-barracks`, `totals-rounds`, `totals-headshots`, `spreads-kills`, `spreads-towers`, `spreads-turrets`, `spreads-dragons`, `spreads-roshans`, `spreads-inhibitors`, `spreads-barracks`, `spreads-rounds`, `teamtotals-kills-team1`/`-team2`, `teamtotals-towers-team1`/`-team2`, `teamtotals-turrets-team1`/`-team2`, `teamtotals-dragons-team1`/`-team2`, `teamtotals-barons-team1`/`-team2`, `teamtotals-roshans-team1`/`-team2`, `teamtotals-inhibitors-team1`/`-team2`, `teamtotals-barracks-team1`/`-team2`, `teamtotals-rounds-team1`/`-team2`
 >
@@ -86,7 +86,7 @@ untouched, they just start carrying the new `outcomeId`s.
 * **`period` changes on 74 markets.** **28 move from `fulltime` to `result`** across 26 sports that have no scoring phase after regulation, so the two values were names for one number — see [Periods per sport](https://docs.oddspapi.io/guides/periods.md). The other **46 had a blank `period` and are now populated**. `marketId`s are unchanged throughout.
 * **No market has an empty `period` any more.** If you special-cased the blank, drop that branch.
 
-> **All 74 period changes**
+> [accordion] All 74 period changes
 >
 > **`fulltime` → `result` — the `1x2` market in 26 sports:** MMA `203`, Boxing `213`, Beach Volley `303`, Squash `343`, Basketball 3x3 `353`, Curling `393`, Padel `403`, Soccer Specials `443`, Beach Handball `473`, Athletics `483`, Badminton `493`, Bowls `503`, Cross-Country `513`, ESport Call of Duty `563`, ESport Overwatch `573`, ESport Rainbow Six `583`, ESport Rocket League `593`, ESport StarCraft `603`, ESport Valorant `613`, ESport Arena of Valor `623`, ESport King of Glory `633`, Judo `643`, ESport Honor of Kings `653`, Speedway `663`, Golf `673`, Cycling `683`.
 >
@@ -101,7 +101,7 @@ untouched, they just start carrying the new `outcomeId`s.
 > | `p1+p2`, `p3+p4`, `p3+p4+overtime` | 8 | Basketball and American Football half splits |
 > | `p1g2` … `p5g6` | 15 | Tennis `correctscore` "after *N* games" |
 
-> **Full marketType rename table**
+> [accordion] Full marketType rename table
 >
 > | Old `marketType` | New `marketType` | Sport | Markets | `marketId` |
 > | - | - | - | - | - |

@@ -4,7 +4,7 @@
 
 # Odds Channel - Realtime Betting Odds Stream
 
-> Low-latency realtime betting odds via WebSocket. Stream live odds aggregated from 350+ bookmakers. Decimal, fractional, American formats with orderbook depth.
+> Low-latency realtime betting odds via WebSocket. Stream live odds aggregated from 200+ bookmakers. Decimal, fractional, American formats with orderbook depth.
 
 ## What it streams
 
@@ -26,7 +26,7 @@ Each entry represents a single **oddsId** (one price for one outcome).
 
 ## Delivery semantics
 
-The odds channel delivers **conflated state** on a fixed **\~10 ms batching window**: if multiple updates for the same `oddsId` occur within one window, only the newest is sent.
+The odds channel delivers **conflated state** on a fixed **\~6 ms batching window**: if multiple updates for the same `oddsId` occur within one window, only the newest is sent.
 
 * **No state is lost** — the final value of every price move is always delivered
 * **Bounded staleness** — a delivered price is never more than one batching window behind our observation of the bookmaker

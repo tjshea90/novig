@@ -51,13 +51,13 @@ An order becomes `INACTIVE` if it is filled or cancelled. `inactiveReason` tells
 
 ## Related
 
-> **[Bet lifecycle](https://docs.sx.bet/developers/bet-lifecycle.md)**
+> [card] [Bet lifecycle](https://docs.sx.bet/developers/bet-lifecycle.md)
 >
 > What happens after a fill.
 
-> **[Tracking your orders](https://docs.sx.bet/developers/my-orders.md)**
+> [card] [Tracking your orders](https://docs.sx.bet/developers/my-orders.md)
 
-> **[Time in force](https://docs.sx.bet/developers/time-in-force.md)**
+> [card] [Time in force](https://docs.sx.bet/developers/time-in-force.md)
 >
 > Order types
 

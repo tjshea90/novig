@@ -32,11 +32,11 @@ Once you're on Coinbase, you can select from a few deposit options. If you alrea
 
 You are ready to start betting!
 
-> **[Place Your First Bet](https://docs.sx.bet/user-guides/trading/market-orders.md)**
+> [card] [Place Your First Bet](https://docs.sx.bet/user-guides/trading/market-orders.md)
 >
 > Bet at the best available odds and get matched instantly.
 
-> **[Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)**
+> [card] [Reading the Order Book](https://docs.sx.bet/user-guides/trading/order-book.md)
 >
 > Learn how to find odds and navigate the live order book.
 

@@ -55,6 +55,19 @@ Do not sign another adjustment for the same account until the original outcome
 has been confirmed out of band. No public endpoint currently reports that
 request's terminal outcome.
 
+## WebSocket Errors
+
+These errors appear on authenticated WebSocket connections when a post is
+refused before or during handling.
+
+| Error | Condition |
+| - | - |
+| `read_only_key` | The connection authenticated with a proxy labelled `read-only:…` and the post is not `ping` or `auth`. Signed writes are refused on read-only sockets. |
+| `message_rate_limited` | The connection or IP message budget is exhausted. Refused read-only posts still consume message budget until the limit is reached. |
+
+See [Rate Limits](https://docs.polymarket.com/perps/rate-limits.md) for WebSocket message and connection
+budgets, including separate limits for read-only keys.
+
 ## Order Placement Errors
 
 | Error | Condition |

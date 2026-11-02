@@ -473,23 +473,23 @@ As a Novig affiliate partner, you'll receive:
 
 Choose the integration level that fits your needs:
 
-**1. Odds Screens**
+**1. Parlay Pricing**
+
+Show what a parlay would pay on Novig inside your UI. You send the legs and get back one live price.
+
+[Learn more about Parlay Pricing](/affiliates/parlay-pricing)
+
+**2. Odds Screens**
 
 Display Novig prices on your platform using our REST catalog and order book. Perfect for price comparison sites and sports data platforms.
 
 [Learn more about Odds Screens](/affiliates/odds-screens)
 
-**2. Deeplinking**
+**3. Deeplinking**
 
 Direct users from your platform into the Novig app with pre-populated order slips. Supports both mobile and web deeplinks.
 
 [Learn more about Deeplinking](/affiliates/deeplinking)
-
-**3. Parlay Pricing**
-
-Query real-time Novig parlay prices directly within your UI to show users what they'd get on Novig.
-
-[Learn more about Parlay Pricing](/affiliates/parlay-pricing)
 
 ## Getting Started
 
@@ -506,11 +506,15 @@ Query real-time Novig parlay prices directly within your UI to show users what t
 # Parlay Pricing
 Source: https://docs.novig.com/affiliates/parlay-pricing
 
-Query real-time Novig parlay prices within your UI
+Show Novig's price for a parlay inside your UI
 
 ## Overview
 
-The Parlay Pricing API allows you to retrieve Novig's parlay price for any set of outcomes directly within your platform. This enables you to show users what price they'd get on Novig before they click through.
+You can show your users what a parlay would pay on Novig before they click through.
+You send the outcome IDs of the legs, and we answer with one price for the whole parlay.
+
+It's a price a user could get on Novig right now.
+You don't need a key, and you don't sign the request.
 
 Every example reads the host from `NOVIG_HOST`. On Production that is `https://api.novig.com`.
 
@@ -518,71 +522,86 @@ Every example reads the host from `NOVIG_HOST`. On Production that is `https://a
 export NOVIG_HOST=https://api.novig.com
 ```
 
-## Endpoint
+## Get a price
 
-`POST https://api.novig.com/nbx/v1/parlay/request/unauthenticated`
+`POST https://api.novig.com/rfq/v2/quote/unauthenticated`
 
-## Request Format
+Send `outcomeIds`, a list of 2 to 20 outcome IDs, one per leg.
 
-Send a JSON body with an array of outcome IDs:
-
-```json theme={"dark"}
-{
-  "outcomes": [
-    { "id": "abc123-outcome-uuid" },
-    { "id": "xyz789-outcome-uuid" }
-  ]
-}
-```
-
-## Example Request
+**Request**
 
 ```bash theme={"dark"}
-curl -X POST "$NOVIG_HOST/nbx/v1/parlay/request/unauthenticated" \
+curl -s -X POST "$NOVIG_HOST/rfq/v2/quote/unauthenticated" \
   -H "Content-Type: application/json" \
   -d '{
-    "outcomes": [
-      { "id": "abc123-outcome-uuid" },
-      { "id": "xyz789-outcome-uuid" },
-      { "id": "def456-outcome-uuid" }
+    "outcomeIds": [
+      "abc123-outcome-uuid",
+      "xyz789-outcome-uuid"
     ]
   }'
 ```
 
-## Integration with Odds Platforms
+**200**
 
-Many odds platforms (like Optic Odds) can integrate Novig parlay pricing to enhance their product offering. If you're building on an odds data platform, this endpoint provides a straightforward way to add Novig parlay pricing.
+```json theme={"dark"}
+{
+  "price": "0.215",
+  "expiresAt": 1793500000000,
+  "serverNow": 1793499970000
+}
+```
 
-## Getting Outcome IDs
+| Field | Meaning |
+| - | - |
+| `price` | The parlay's implied probability, as a decimal string |
+| `expiresAt` | When the price expires, in Unix milliseconds |
+| `serverNow` | Our clock when we answered, in Unix milliseconds |
 
-To use this endpoint, you'll need valid Novig outcome IDs. You can obtain these by:
+Reuse the price until `expiresAt` instead of asking again.
+If your clock drifts, measure the time left as `expiresAt` minus `serverNow`.
 
-1. **Catalog API** - List markets with `GET /v3/catalog/markets` to get outcome IDs
-2. **Deeplinking** - Extract outcome IDs from Novig deeplink URLs
+The first request for a new set of legs can take a few seconds.
+Repeat requests for the same legs answer right away until the price expires.
 
-See the [Odds Screens](/affiliates/odds-screens) documentation for catalog request examples.
+## Get outcome IDs
 
-## Best Practices
+Each leg is an outcome ID from our catalog.
 
-**1. Validate Outcomes**
+* [Odds Screens](/affiliates/odds-screens) shows how to list a league's markets and their outcome IDs.
+* [Deeplinking](/affiliates/deeplinking) shows the outcome IDs inside a Novig link.
 
-Ensure all outcome IDs are valid and from active markets before making the request.
+## Errors
 
-**2. Handle Errors**
+| Status | Meaning |
+| - | - |
+| `400` | We can't combine these legs |
+| `404` | We have no price for these legs right now |
+| `429` | You're over the rate limit |
 
-Implement proper error handling for invalid outcomes or unavailable markets.
+A `400` body names the reason, for example a repeated leg, an unknown outcome ID, or a closed event.
+Fix the request before you send it again.
 
-**3. Cache Appropriately**
+A `404` isn't a failure on your side.
+Hide the Novig price for that parlay, and try again later.
 
-Parlay prices can change frequently - cache responses for a short duration only.
+## Rate limits
 
-**4. Display Clearly**
+Each IP address can send a burst of 10 requests, then 1 request per second.
+Unused capacity builds back up to 10.
 
-When showing Novig prices alongside competitors, clearly label the source.
+Over the limit, you get `429` with a `Retry-After` header.
+Wait that many seconds before you send another request.
 
-> [!NOTE]
->
-> The parlay price returned is the unauthenticated price.
+A repeat request for the same legs counts against your limit, even when we answer it from our cache.
+Reuse each price until `expiresAt` to keep your request count low.
+
+If your traffic needs a higher limit, contact us.
+
+## Best practices
+
+* **Label the source.** When you show Novig next to other prices, say which one is ours.
+* **Hide what we can't price.** Treat a `404` as "no price right now", not as an error to show your users.
+* **Respect `expiresAt`.** A price past its expiry may no longer be available on Novig.
 
 
 # Fund a subaccount
@@ -661,6 +680,24 @@ Source: https://docs.novig.com/api-reference/accounts/get-the-account-balance
 
 Your primary wallet is the one that funds every subaccount. No key addresses
 it, so the path carries no `{keyId}`.
+
+
+
+# Get the geolocation status
+Source: https://docs.novig.com/api-reference/accounts/get-the-geolocation-status
+
+/api-reference/spec-files/openapi-v3.json get /v3/account/geolocation
+| | |
+| --- | --- |
+| **Key** | `any` |
+| **Throttle** | `account` |
+| **Cost** | `1 /request` |
+| **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> |
+| **Idempotent** | `true` |
+
+A key has no location of its own. It uses the newest device geolocation of the
+account that owns it, so every key on the account reads the same answer. The
+geolocation check never refuses this route, so it answers while the check fails.
 
 
 
@@ -1062,6 +1099,60 @@ Also served without a signature at `GET /v3/public/catalog/markets/{id}/trades`.
 Source: https://docs.novig.com/api-reference/changelog
 
 This changelog is specific to our API users and LPs
+
+**October 29, 2026 - Participation Protection on NFL Player Props**
+
+**Protected NFL player props are coming, starting in QA on Thursday, October 29, 2026.** If the player records no snap in the third quarter, fourth quarter, or overtime, a protected market resolves at its pregame fair market price.
+
+Each protected market is a twin of a standard prop, with the same event, player, and `strike`. Its `marketType` ends in `_PROTECTED`, like `RECEIVING_YARDS_PROTECTED`. Fifteen NFL offense prop types get a twin.
+
+Protected markets trade pregame only, on their own order book. A parlay RFQ can include protected legs, but protection must cover every leg that could be protected. See [Participation Protection](/api/concepts/participation-protection).
+
+**October 29, 2026 - Larger Request Bodies**
+
+**A request body can now be up to 64 KiB, up from 8 KiB.** A full batch of 256 orders now fits. A larger body still gets a `403` with an HTML page from our edge. See [Edge 403](/api/errors#edge-403).
+
+**October 28, 2026 - Earn a Rate-Limit Tier**
+
+**Your subaccount now earns its rate-limit tier from its monthly volume.** Early each month, we set each subaccount's tier from its volume over the last calendar month, in Eastern time. Tier 1 takes \$100,000 of volume, and each tier above it takes 10 times more.
+
+**Each tier also raises how many orders you may keep open,** from 1,024 at Base to 16,384 at Tier 4. An order over the limit answers `OPEN_ORDER_LIMIT_EXCEEDED`, and `GET /v3/limits` now reports yours as `maxOpenOrders`.
+
+Tier 4 is now the top tier. See [Tiers](/api/throttling#tiers).
+
+**October 28, 2026 - New Parlay Pricing Route**
+
+**`POST /nbx/v1/parlay/request/unauthenticated` is gone and answers `404`.** Parlay prices now come from `POST /rfq/v2/quote/unauthenticated`.
+
+Send `outcomeIds`, a list of outcome IDs. You get back one `price` and the time it expires. See [Parlay Pricing](/affiliates/parlay-pricing).
+
+**October 28, 2026 - Only Quotes Keep an RFQ Webhook Active**
+
+**A `204` no longer keeps your RFQ webhook active.** We now stop sending RFQs to a webhook that hasn't returned a quote for 7 days. A `204` still passes on an RFQ, but it no longer counts toward the 7 days.
+
+To restart a paused webhook, call `POST /rfq/pricer/ping`. See [Keep your webhook active](/api-reference/rfq/webhooks#keep-your-webhook-active).
+
+**October 27, 2026 - Geolocation Expiry**
+
+**`GET /v3/account/geolocation` tells you when your keys stop placing orders.** `expiresAt` is when your last device check expires. After that, a placement answers `451 GEOLOCATION_EXPIRED`.
+
+`code` is the `451` code a placement gets right now, or `null` while placements pass. The route answers even while the geolocation check refuses your other requests, and any key can call it.
+
+To refresh the check, open the Novig app in a permitted state. See [Get the geolocation status](/api-reference/accounts/get-the-geolocation-status).
+
+**October 26, 2026 - Move from v2 to v3**
+
+**If you trade on v2, you can now move to v3.** [Move from v2 to v3](/deprecated/migrate-to-v3) walks you through it, from registering a key with your v2 token to mapping each v2 route to its v3 match.
+
+You don't have to move, and v2 keeps working. You can also run both at once, for example quoting the order book on v3 and answering RFQs on v2.
+
+Check two limits first: v3 has lower rate limits today, and it has no RFQ routes. The guide covers both.
+
+**October 25, 2026 - Rate-Limit Tiers**
+
+**Each subaccount now has a rate-limit tier.** A higher tier multiplies every throttle. Every subaccount starts at Base, which keeps today's limits.
+
+`GET /v3/limits` now reports the limits of your subaccount's tier. See [Tiers](/api/throttling#tiers).
 
 **October 23, 2026 - Unrealized PnL on Open Positions**
 
@@ -2499,7 +2590,7 @@ You lose that trade, and nothing else happens.
 Return `204 No Content` to pass on an RFQ.
 We record a 204 as a deliberate pass.
 An error or a timeout also drops your quote, but it looks like a broken pricer.
-A 204 keeps your webhook active. After 7 days of only errors and timeouts, we [stop calling it](#keep-your-webhook-active).
+A 204 doesn't keep your webhook active. After 7 days without a quote, we [stop calling it](#keep-your-webhook-active).
 
 ## Confirm a trade
 
@@ -2582,15 +2673,15 @@ A non-2xx status, a rejected signature, or an unreachable host all show up as a 
 
 ## Keep your webhook active
 
-We stop sending RFQs to a webhook that hasn't answered for 7 days.
+We stop sending RFQs to a webhook that hasn't quoted for 7 days.
 Your registration stays, and the WebSocket isn't affected.
 
 Your webhook counts as active each time it answers one of these:
 
-* A `/quote` request, with a quote or a `204`.
+* A `/quote` request, with a quote.
 * A ping, with a 2xx status.
 
-An error, a timeout, or an invalid body doesn't count.
+A `204`, an error, a timeout, or an invalid body doesn't count.
 
 To get RFQs on a paused webhook again, call [`POST /rfq/pricer/ping`](/api-reference/rfq/registration#test-your-webhook).
 When the result has `ok: true`, RFQs reach your webhook again within a minute.
@@ -4145,6 +4236,154 @@ Apply events in `seq` order. If you see a gap, take a new snapshot.
 Key your state on `orderId`.
 
 
+# Participation Protection
+Source: https://docs.novig.com/api/concepts/participation-protection
+
+Player props that resolve at their pregame price when the player sits out the second half.
+
+> [!NOTE]
+>
+> Participation Protection is coming soon. Protected NFL markets open in QA first, starting Thursday, October 29, 2026. Ask your Novig contact for QA access.
+
+A protected market is an NFL player prop with one extra rule.
+If the player records no snap in the third quarter, fourth quarter, or overtime, the market resolves at its pregame fair market price.
+
+It doesn't matter why the player sat out. An injury, an ejection, or a coach's decision all count.
+
+A snap is any play the player is on the field for: any play from scrimmage, or any special-teams play.
+
+## A protected market is a twin of a standard prop
+
+We create each protected market next to a standard player prop.
+The twin has the same event, the same player, and the same `strike`.
+
+Its `marketType` is the standard type with `_PROTECTED` on the end.
+
+| Standard market | Protected twin |
+| - | - |
+| `RECEIVING_YARDS` | `RECEIVING_YARDS_PROTECTED` |
+| `RUSHING_YARDS` | `RUSHING_YARDS_PROTECTED` |
+
+The two are separate markets, with their own IDs, order books, and prices.
+An order on one never fills against the other.
+
+## Which market types have a protected twin
+
+Only full-game NFL props on a single player's offense can be protected.
+
+| Category | Protected types |
+| - | - |
+| Passing | `PASSING_YARDS_PROTECTED`, `PASSING_ATTEMPTS_PROTECTED` |
+| Passing | `PASSING_COMPLETIONS_PROTECTED`, `PASSING_TOUCHDOWNS_PROTECTED` |
+| Passing | `LONGEST_COMPLETION_PROTECTED`, `INTERCEPTIONS_THROWN_PROTECTED` |
+| Rushing | `RUSHING_YARDS_PROTECTED`, `RUSHING_ATTEMPTS_PROTECTED` |
+| Rushing | `LONGEST_RUSH_PROTECTED` |
+| Receiving | `RECEIVING_YARDS_PROTECTED`, `RECEPTIONS_PROTECTED` |
+| Receiving | `LONGEST_RECEPTION_PROTECTED` |
+| Combined | `PASSING_AND_RUSHING_YARDS_PROTECTED` |
+| Combined | `RUSHING_AND_RECEIVING_YARDS_PROTECTED` |
+| Touchdowns | `TOUCHDOWNS_PROTECTED` |
+
+First touchdown scorer, kicking, and defensive props stay standard.
+Team, first-half, and multi-player markets have no protected twin.
+
+## How a protected market settles
+
+**1. The player records a snap after halftime**
+
+The market grades like its standard twin.
+
+**2. The player already reached the line**
+
+The Over wins, even if the player then sits out.
+
+**3. Neither is true**
+
+The market resolves at its pregame fair market price.
+
+A protected market can take longer to settle than its standard twin.
+
+When a market resolves at its fair market price, each outcome's `status` is a bare decimal string, like `"0.550"`, not `WIN` or `LOSS`.
+The two outcomes' prices sum to `1.000`, so an Over at `"0.550"` means the Under is at `"0.450"`.
+Each contract pays its outcome's price × full value. See [Event lifecycle](/api/concepts/event-lifecycle).
+
+One snap in the third quarter is enough. A player who plays one snap and then leaves grades normally.
+
+A wide receiver who passes 4.5 receptions in the first quarter and then leaves wins the Over.
+
+A running back who leaves in the second quarter and never returns resolves at the pregame price. So does a player who is ejected in the first quarter.
+
+### The contract states the rule
+
+The contract wording repeats the protection rule, like this one for an Over:
+
+> Resolves Yes if Patrick Mahomes records 300 or more passing yards in the Kansas City vs Tampa Bay NFL game currently scheduled for Sunday at 1:00 PM ET.
+>
+> Participation Protection
+>
+> * If Patrick Mahomes records no snap in the third quarter, fourth quarter or overtime, for any reason, the market resolves to its pregame fair market price, unless Patrick Mahomes has already recorded 300 or more passing yards.
+
+The API doesn't return this text. An outcome's `name` is a display label, not the contract. Build on `marketType`.
+
+## Find protected markets
+
+Ask the catalog for a protected type:
+
+```bash theme={"dark"}
+curl -s "$NOVIG_HOST/v3/catalog/markets?league=NFL&marketType=RECEIVING_YARDS_PROTECTED" \
+  -H "Novig-Key-Id: $TRADING_KEY_ID" \
+  -H "Novig-Timestamp: $TS" \
+  -H "Novig-Signature: $SIG"
+```
+
+`GET /v3/types/markets` lists every protected type once it is live.
+
+A protected twin copies the consensus of its standard prop.
+The protected type is its own market family, so `GET /v3/catalog/consensus` lists the twin's main line.
+
+To find the twin of a standard prop, match on `eventId`, the player, `strike`, and `marketType`.
+The twin's `marketType` is the standard type with `_PROTECTED` on the end.
+Two prop types can share a player and a `strike`, so `marketType` is required.
+`GET /v3/catalog/participants` lists the market IDs for each player. See [Participants](/api/catalog#participants).
+
+## Trade a protected market
+
+You trade a protected market on its own order book, like any other market.
+You can rest or take either side.
+
+The Over buys protection. The Under sells it, so makers price that risk into the Under.
+
+Trading closes at kickoff. A protected market has no live trading.
+
+Until protected markets open in an environment, an order on one returns `MARKET_NOT_FOUND`.
+
+## Protected legs in a parlay RFQ
+
+A parlay can include protected legs. These rules apply on top of the [eligibility rules](/api-reference/rfq/eligibility):
+
+* Every protected leg is an Over pick.
+* Every protected leg is on a game that hasn't started.
+* Protection covers the whole parlay or none of it.
+* A parlay can't hold a protected leg and the standard leg of the same player.
+
+If one leg is protected, every leg that could be protected must be.
+A leg could be protected when it is an Over pick, before the game, and its line has an open protected twin.
+
+We refuse a parlay that breaks a rule, and no RFQ goes out. The requester sees one of these reasons:
+
+| Reason | Cause |
+| - | - |
+| `Participation Protection isn't available right now.` | Protected parlays aren't open in this environment yet |
+| `Participation Protection must cover every eligible player prop in the parlay.` | A leg that could be protected isn't |
+| `This market isn't available for live parlays.` | A leg's game has started |
+| `This side isn't available for parlays in this market.` | A protected leg is an Under pick |
+| `Invalid parlay combination.` | The parlay holds a protected leg and the standard leg of the same player |
+
+As a maker, you see a protected leg as an outcome on a protected market. Read its market's `marketType` to tell it apart from the standard leg.
+
+A protected leg with no snap after halftime settles at its pregame fair market price. [Settlement](/api-reference/rfq/settlement) says how such a leg pays out.
+
+
 # Universe model
 Source: https://docs.novig.com/api/concepts/universe-model
 
@@ -4482,9 +4721,9 @@ See [Funding](/api/subaccounts/funding#check-the-transfer-status).
 ## `413` Content Too Large
 
 The edge is a filter in front of our servers.
-It refuses any body over 8 KiB ( bytes) with a 403 and an HTML page, with no JSON error body.
+It refuses any body over 64 KiB ( bytes) with a 403 and an HTML page, with no JSON error body.
 The request never reaches the exchange.
-A batch hits this cap first, at about 90 orders.
+A full batch of 256 orders fits under it, at about 90 bytes an order.
 
 The exchange buffers each request body before it parses it.
 It refuses a body over 100 KiB with a 413 and `PAYLOAD_TOO_LARGE`, before it reads the signature.
@@ -4494,7 +4733,7 @@ To fix either error, split the batch. Both caps count the raw bytes you send.
 
 ## `423` Locked
 
-A `423` doesn't clear on its own. Contact support.
+Most `423` codes don't clear on their own. Contact support.
 
 | `code` | Still works |
 | - | - |
@@ -4504,6 +4743,7 @@ A `423` doesn't clear on its own. Contact support.
 | `SELF_EXCLUDED` | Cancels, reads, label, and revoke |
 | `EMPLOYEE_ACCOUNT` | Reads |
 | `LIQUIDATION_ONLY` | Everything except placing orders |
+| `DEPOSIT_RETURN_HOLD` | Everything except placing orders |
 
 * `SYSTEM_LOCKED` means the exchange has halted trading. It blocks every trading, catalog, key, and subaccount route, reads included. `GET /v3/exchange/status` still answers, and returns the reason.
 * `ACCOUNT_LOCKED` and `ACCOUNT_EXCLUDED` block every trading, catalog, key, and subaccount route, reads included.
@@ -4511,6 +4751,9 @@ A `423` doesn't clear on its own. Contact support.
 * `EMPLOYEE_ACCOUNT` blocks placing and canceling when the key belongs to a Novig employee.
 * `LIQUIDATION_ONLY` blocks placing orders. Cancels still work.
 * When we apply `LIQUIDATION_ONLY` to your account, we cancel your resting orders, then cancel again about 75 seconds later.
+* `DEPOSIT_RETURN_HOLD` blocks placing orders after your bank returns one of your deposits or your card issuer charges it back. Cancels still work.
+* `DEPOSIT_RETURN_HOLD` lifts on its own if the dispute is decided in your favor. Otherwise, contact support.
+* If your account has both `LIQUIDATION_ONLY` and `DEPOSIT_RETURN_HOLD`, you get `LIQUIDATION_ONLY`.
 
 To check whether trading is paused, call `GET /v3/exchange/status`.
 
@@ -4561,6 +4804,161 @@ The first two codes judge the request's network. The rest judge the key holder's
 
 A cancel never returns a `451`. A read admits a stale geolocation, so only a placement returns `GEOLOCATION_EXPIRED`.
 
+## Blocked requests
+
+We block a request because of where it comes from, not because of what it says.
+Find what you see, then follow its fix.
+
+| You see | Go to |
+| - | - |
+| 403 with an HTML body | [Edge 403](#edge-403) |
+| 451 `ANONYMIZED_NETWORK` | [Anonymized network](#anonymized-network) |
+| 451 `RESTRICTED_NETWORK_REGION` | [Restricted network region](#restricted-network-region) |
+| 451 `GEOLOCATION_*` | [Geolocation](#geolocation) |
+
+Each check is separate.
+A request can pass the account's geolocation and still fail on its IP address, and the reverse.
+Fixing one doesn't fix the other.
+
+> [!WARNING]
+>
+> On any `451`, stop and fix the cause before you retry. A client that keeps retrying a `451` can get the account locked with a `423`.
+
+### Anonymized network
+
+`ANONYMIZED_NETWORK` means our compliance provider classifies the request's IP address as a VPN, a proxy, a Tor exit, or another anonymizer.
+
+The block is on the IP address, not the key.
+A new key won't help, and we can't allowlist or review an IP address for this check.
+
+It usually blocks order, position, and account routes.
+Some routes, like `GET /v3/time`, can still work.
+So a key that works on some routes and fails on others is normal for this error.
+
+These are the causes we see most:
+
+* A VPN, iCloud Private Relay, or Cloudflare WARP that's still on.
+* An app that shares or sells your bandwidth. It turns your connection into a proxy.
+* A router with a built-in VPN, privacy, or proxy feature.
+* A home IP address that a proxy service used before. Home addresses change hands, and the lists can be out of date.
+* A shared outbound address that many customers use, like Railway's shared static IPs or a Cloudflare-fronted proxy.
+
+To fix it:
+
+**1. Turn off anonymizers**
+
+Turn off any VPN, iCloud Private Relay, WARP, or proxy on the machine and the network. Unset `HTTP_PROXY` and `HTTPS_PROXY`.
+
+**2. Remove bandwidth-sharing apps**
+
+Uninstall any app that shares your connection. Its IP address can stay flagged for a while after.
+
+**3. Check the router**
+
+Turn off any VPN, privacy, or proxy feature on the router.
+
+**4. Test from a phone hotspot**
+
+If the request works there, your key is fine. Only your network's IP address is flagged.
+
+**5. Get a new IP address**
+
+Restart the modem or router, or ask your ISP for a new address. A restart doesn't always change it.
+
+**6. Use a dedicated server address**
+
+On a server, use a dedicated static IP in a US region, like AWS EC2 with an Elastic IP. Test it with a read first.
+
+### Restricted network region
+
+`RESTRICTED_NETWORK_REGION` means the request's IP address is in a region we can't serve.
+The restricted states are Arizona, Michigan, and Nevada.
+
+It blocks reads, like `GET /v3/portfolio/positions`, as well as placements.
+
+It most often hits hosted runners whose IP address changes, like GitHub Actions or a serverless platform.
+Each run can land in a different data center, so the error comes and goes.
+
+To fix it, run your client from a fixed IP address you control.
+A home or office connection works, and so does a dedicated static cloud IP.
+Don't use a hosted runner's rotating addresses.
+
+### Edge 403
+
+A `403` with an HTML body means our network edge stopped the request before it reached the API.
+It isn't a key or signing problem.
+
+You can tell it's this error when:
+
+* The body is an HTML page that says "Request blocked" or "The request could not be satisfied", not JSON.
+* The headers include `Server: CloudFront`, `X-Cache: Error from cloudfront`, and `x-amz-cf-id`.
+* An unsigned public route, like `GET /v3/public/catalog/events`, is blocked too.
+* Paper works while production fails.
+
+These are the causes we've seen:
+
+* Some data-center and shared-hosting addresses, like DigitalOcean, Railway, or Hostinger.
+* Bursts of requests above the [rate limits](/api/throttling).
+* An HTTP library's default `User-Agent`, like the one Python's `urllib` sends.
+* A body over 64 KiB. See [`413`](#413-content-too-large).
+* Some home ISP address ranges.
+
+To fix it:
+
+**1. Confirm the error**
+
+Check for the HTML body and the CloudFront headers.
+
+**2. Set a User-Agent**
+
+Send a `User-Agent` header that names your client, like `acme-trader/1.4`.
+
+**3. Slow down**
+
+Stay within the [rate limits](/api/throttling), and back off after an error. Don't retry in a tight loop.
+
+**4. Test another network**
+
+Try a phone hotspot or another ISP.
+
+**5. Change hosts**
+
+On a cloud host, try another provider or a dedicated static IP.
+
+If you're still blocked, [contact us](#before-you-contact-us).
+
+### Geolocation
+
+A `GEOLOCATION_*` code is about the account's location check, not the request's IP address.
+An API key has no location of its own. It uses the location check of the account that owns it.
+
+* **Refresh the check.** Open the Novig app in a permitted state. That refreshes the check for every key on the account.
+* **Refresh often enough.** A placement needs a check from the past 3 days. Reads and cancels still work after it lapses.
+* **Use the app.** Opening the Novig app is the only supported way to geolocate.
+* **Check when it lapses.** [`GET /v3/account/geolocation`](/api-reference/accounts/get-the-geolocation-status) returns when the account's last check expires, and the code a placement gets now. It answers even while the check refuses your other requests.
+* **Close remote-access tools.** Remote desktop, a virtual machine, or location-spoofing software returns `GEOLOCATION_BLOCKED_SOFTWARE`.
+
+For each code, see [`451`](#451-geolocation-unavailable).
+
+[Contact us](#before-you-contact-us) if the account still shows `GEOLOCATION_FAILED` or a `423` after you fix your client.
+
+### Before you contact us
+
+Email [developers@novig.co](mailto:developers@novig.co) with:
+
+* The `x-amz-cf-id` header for an edge `403`, or the JSON body for a `451`.
+* The UTC timestamp of the request.
+* The route you called.
+* The public IP address the request came from.
+* Your ISP or hosting provider.
+* Whether the request works from a phone hotspot.
+
+To find your public IP address, run this on the machine that sends the request.
+
+```bash theme={"dark"}
+curl https://checkip.amazonaws.com
+```
+
 ## Trading and catalog errors
 
 Every trading and catalog error has a `code` and a `message`.
@@ -4585,14 +4983,14 @@ A body that doesn't parse answers `INVALID_BODY`. Its `message` names the field 
 | 422 | `WAGER_LIMIT_EXCEEDED` |
 | 423 | `SYSTEM_LOCKED` `ACCOUNT_LOCKED` `LEAGUE_LOCKED` `COMPETITOR_LOCKED` |
 | 423 | `ACCOUNT_EXCLUDED` `SELF_EXCLUDED` `EMPLOYEE_ACCOUNT` |
-| 423 | `EVENT_LOCKED` `MARKET_LOCKED` `LIQUIDATION_ONLY` |
+| 423 | `EVENT_LOCKED` `MARKET_LOCKED` `LIQUIDATION_ONLY` `DEPOSIT_RETURN_HOLD` |
 | 429 | `RATE_LIMIT_EXCEEDED` |
 | 451 | See [`451`](#451-geolocation-unavailable) |
 | 503 | `GEOLOCATION_SCREENING_UNAVAILABLE` |
 | 500 | `INTERNAL_ERROR` |
 
 * 403 `KYC_REQUIRED` applies to placing only. The key holder's KYC lapsed after the key was created, so finish verification in the app.
-* 423 means `SELF_EXCLUDED`, `EMPLOYEE_ACCOUNT`, `LIQUIDATION_ONLY`, or a lock with no `code`. See [`423`](#423-locked).
+* 423 means `SELF_EXCLUDED`, `EMPLOYEE_ACCOUNT`, `LIQUIDATION_ONLY`, `DEPOSIT_RETURN_HOLD`, or a lock with no `code`. See [`423`](#423-locked).
 * A `reject` from the matching engine isn't an HTTP error. It arrives on the [private stream](/api/streaming/private) after the 201.
 
 
@@ -5218,6 +5616,9 @@ The array order **is** the queue.
 
 Each key in `orders` is an outcome ID.
 
+An outcome with no resting orders has no key.
+Treat a catalog outcome missing from `orders` as an empty book at the snapshot's `seq`.
+
 ## Delta
 
 ```json theme={"dark"}
@@ -5323,6 +5724,10 @@ An empty selection gets `EMPTY_SELECTION`.
 | `private` | A list of channels | Your own orders and positions |
 
 An `events` selection also covers markets that open later.
+
+`subscribe` and `snapshot` apply all or nothing.
+One market we can't find refuses the whole request with `MARKET_NOT_FOUND`, and one event with `EVENT_NOT_FOUND`.
+The error doesn't name the subject, so check your IDs against the catalog before a large request.
 
 `unsubscribe` takes a list of subject strings instead.
 
@@ -5504,7 +5909,7 @@ Its first delta is `OPEN`, and its `book`, `bbo`, and `trades` channels start at
 # Lifecycle
 Source: https://docs.novig.com/api/streaming/lifecycle
 
-Market status transitions, and the two that void your orders.
+Market status transitions, and the one that voids your orders.
 
 The `lifecycle` channel reports each change to a market's status.
 It costs 1 token per market, and `trades`, `bbo`, and `book` include it.
@@ -5521,24 +5926,31 @@ On an `event:` subject, it also covers markets that open later.
 ```json delta theme={"dark"}
 "lifecycle": {
   "seq": 13,
-  "deltas": ["GOLIVE"]
+  "deltas": [
+    {
+      "kind": "GOLIVE",
+      "status": "OPEN"
+    }
+  ]
 }
 ```
+
+Each delta names the transition in `kind` and the market's status after it in `status`.
 
 | Transition | Means | Status after |
 | - | - | - |
 | `OPEN` | Accepting orders | `OPEN` |
 | `CLOSE` | Stopped accepting orders | `CLOSED` |
 | `GRADE` | Graded, payouts determined | `SETTLED` |
-| `START` | The event started | — |
-| `END` | The event ended | — |
-| `GOLIVE` | Live | — |
-| `UNLIVE` | Left live play | — |
+| `START` | The event started | Unchanged |
+| `END` | The event ended | Unchanged |
+| `GOLIVE` | Live | Unchanged |
+| `UNLIVE` | Left live play | Unchanged |
 
 ## Live play and your orders
 
 * `GOLIVE` voids every resting order and turns taker fees on.
-* `UNLIVE` drains the book again and turns taker fees off.
+* `UNLIVE` cancels nothing and turns taker fees off.
 
 Taker fees switch on at `GOLIVE` only for a market whose `fee.charged` is `WHEN_LIVE`.
 An `ALWAYS` market charges fees in every phase.
@@ -5551,8 +5963,11 @@ This is one market that goes live twice:
 | Pregame | Orders rest |
 | `GOLIVE` | Orders voided, taker fees on |
 | In play | Orders rest |
-| `UNLIVE` | Book drained, taker fees off |
+| `UNLIVE` | Orders rest, taker fees off |
 | `GOLIVE` | Orders voided, taker fees on |
+
+`UNLIVE` doesn't mean the event is over.
+Wait for `END` and `CLOSE` before you treat the market as finished.
 
 > [!WARNING]
 >
@@ -6165,6 +6580,7 @@ Our servers throttle each subaccount and each management key, and an edge filter
 Each throttle is a bucket of tokens.
 A request spends tokens from its bucket.
 The bucket holds up to its capacity, which is your burst, and refills at its refill rate, in tokens per second.
+These are the limits at the Base [tier](#tiers).
 
 Throttle
 Burst
@@ -6195,7 +6611,7 @@ Refill
 
 4 Hz
 
-The `history` bucket meters the record reads: fills, transactions, settled orders, and the history routes. Each such read costs a base plus one token per page of rows, so a larger page spends more. `GET /v3/limits` reports every bucket's numbers.
+The `history` bucket meters the record reads: fills, transactions, settled orders, and the history routes. Each such read costs a base plus one token per page of rows, so a larger page spends more. `GET /v3/limits` reports your numbers for every bucket.
 
 `GET /v3/limits`, `GET /v3/time`, and `GET /v3/exchange/status` spend no tokens.
 
@@ -6213,6 +6629,30 @@ A management key has a set of its own.
 
 A second `trading::read` key on a subaccount doesn't raise its limits.
 
+### Tiers
+
+Each subaccount has a tier, and a higher tier raises its limits.
+A tier multiplies both the capacity and the refill rate of every throttle.
+A tier also sets how many orders your subaccount may keep open at once.
+An order that would take you over that cap answers `OPEN_ORDER_LIMIT_EXCEEDED`.
+The cap on watched markets is the same at every tier.
+
+<table>
+  <thead>
+    <tr><th>Tier</th><th>Monthly volume</th><th>Multiplier</th><th>Open orders</th></tr>
+  </thead>
+</table>
+
+Your subaccount earns its tier from its volume over the last calendar month, in Eastern time.
+Early each month, we move each subaccount to the tier that volume reaches, so a tier can go down as well as up.
+
+Volume is the full payout of every contract your subaccount traded, so 100 contracts count as \$1.
+A wash, where your order trades against another of yours, doesn't count, and neither does a voided trade.
+
+A new subaccount starts at Base.
+A management key is always at Base.
+`GET /v3/limits` reports the limits of your subaccount's tier.
+
 ## Websocket subscriptions
 
 The `stream` bucket meters how fast you subscribe. A second limit caps how much you hold: a connection may watch up to  markets at once. An event counts as the markets it contains. A subscribe that would take you over that answers `SUBSCRIPTION_LIMIT_EXCEEDED`, and it subscribes to nothing. A `snapshot` that names more markets than the cap answers the same. Such a request also costs more than the `stream` bucket holds, so you get `RATE_LIMIT_EXCEEDED` until the bucket is full. `GET /v3/limits` reports the cap.
@@ -6227,7 +6667,7 @@ It checks every request on every route before the request reaches them.
 | Check | Limit | Counted per |
 | - | - | - |
 | Request rate |  a minute | IP address |
-| Body size | 8 KiB | Request |
+| Body size | 64 KiB | Request |
 
 > [!WARNING]
 >
@@ -9707,6 +10147,135 @@ Any dispute relating to this Program is a "Dispute" governed by the informal dis
 **Administration:** Novig expressly reserves the right to amend, suspend, or terminate this Program at any time without prior notice or consent, and administration of this Program is at Novig's sole discretion. Questions relating to eligibility, these Terms, or any other aspect of this Program will be resolved at Novig's sole discretion, and its decisions will be final and binding.
 
 **Release:** By participating in this Program, you agree to release, defend, indemnify, and hold harmless the Exchange and its directors, officers, and employees, consistent with Rule 12.3 of the Rulebook.
+
+
+# Move from v2 to v3
+Source: https://docs.novig.com/deprecated/migrate-to-v3
+
+For liquidity providers on v2: what changes in v3, and whether to move at all.
+
+This page is for liquidity providers (LPs) who trade on the v2 API today, at `https://api.novig.com/nbx/v2`.
+
+> [!NOTE]
+>
+> **You don't have to move.** v2 keeps working, and moving is your choice. Stay on v2 if it serves you well.
+
+> [!TIP]
+>
+> **You can run v2 and v3 at the same time.** For example, quote the order book on v3 and answer RFQs on v2. You don't have to move everything at once.
+
+Before you start, check the two limits below. Either one can make v3 a poor fit for you today.
+
+## Check what v3 can't do yet
+
+### v3 has lower rate limits
+
+v2 limits each route by requests per second. v3 limits each subaccount with a bucket of tokens. The bucket holds a burst, then refills at a fixed rate.
+
+| Throttle | v2, per second | v3 burst | v3 refill |
+| - | - | - | - |
+| Place | 2,048 | 256 | 8 per second |
+| Cancel | 2,048 | 256 | 16 per second |
+| Read | 256 | 64 | 16 per second |
+
+A v3 batch spends one token per order, not one per request.
+
+Each subaccount has its own buckets, and you can open up to 10. Extra keys on one subaccount don't add capacity.
+
+> [!WARNING]
+>
+> If you quote many markets or requote often, v3 may throttle you well below your v2 rate. Measure your peak place and cancel rate before you move.
+
+> [!NOTE]
+>
+> **Higher limits are coming soon.** We're adding dynamic rate-limit tiers, with higher limits than the ones above. Until then, you can stay on v2.
+
+[Throttling](/api/throttling) gives the full schedule. `GET /v3/limits` returns the numbers that apply to you.
+
+### v3 has no RFQ routes
+
+v3 doesn't send or answer requests for quote (RFQs), our parlay pricing auction. If you price RFQs, keep that integration on v2. It keeps working as it does today.
+
+[RFQ](/api-reference/rfq/overview) describes the v2 flow.
+
+## What changes
+
+| | v2 | v3 |
+| - | - | - |
+| Base path | `/nbx/v2` | `/v3` |
+| Credential | OAuth client ID and secret | Your own Ed25519 or P-256 keypair |
+| Each request | A bearer token | A signature over the request |
+| Wallets | One per account | Up to 10 subaccounts |
+| Rate limits | Per route, per second | Per subaccount, token buckets |
+| RFQ | Yes | No |
+| Paper exchange | No | Yes |
+
+* **You sign each request.** We store only your public key, so your private key never leaves your machine. [Sign a request](/api/signing) explains the rules.
+* **A trading key reaches one subaccount.** Each subaccount has its own balance, positions, and orders. [Account model](/api/concepts/account-model) shows how they fit.
+* **You can test on Paper first.** Paper is our play-money exchange, with the same API as Production. [Environments](/api/environments) has the hosts.
+
+## Move step by step
+
+You can move one strategy at a time. Your v2 credentials keep working while you test v3.
+
+**1. Try v3 on Paper**
+
+Create a management key on [Profile](https://paper.novig.com/Profile/ProfileScreen) on paper.novig.com, then run the [Quickstart](/api/quickstart).
+
+**2. Register a management key**
+
+Sign `POST /v3/keys` with your v2 client-credentials token. The steps are below.
+
+**3. Open a subaccount**
+
+Call `POST /v3/account/subaccounts` with your management key. The reply creates the subaccount's trading key.
+
+**4. Fund the subaccount**
+
+Move money into it with a transfer. [Funding](/api/subaccounts/funding) shows how.
+
+**5. Move your order flow**
+
+Point one strategy at v3, and watch your throttle use with `GET /v3/limits`.
+
+### Register a management key with your v2 token
+
+As a v2 LP, you can create your v3 management key with the client-credentials token you already use. You don't need the web app for this.
+
+Get a token the way you do for v2, then generate a keypair:
+
+```bash theme={"dark"}
+openssl genpkey -algorithm ed25519 -out novig-mgmt.pem
+openssl pkey -in novig-mgmt.pem -pubout -out novig-mgmt.pub.pem
+```
+
+Send the public half, with your token as the bearer:
+
+```bash theme={"dark"}
+curl -i -X POST "$NOVIG_HOST/v3/keys" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'content-type: application/json' \
+  -d "$(jq -n --arg name "mgmt-1" --arg publicKey "$(cat novig-mgmt.pub.pem)" \
+        '{name: $name, publicKey: $publicKey, algorithm: "Ed25519"}')"
+```
+
+A `201` reply carries your `keyId` and `"scope": "management"`. Save the `keyId` with `novig-mgmt.pem`. Every signed call needs both.
+
+A `409 MANAGEMENT_KEY_EXISTS` means you already hold a live management key. Use that key, or revoke it first.
+
+## Map your v2 routes
+
+| v2 route | v3 route |
+| - | - |
+| `POST emm/orders/place` | `POST /v3/orders` |
+| `POST emm/orders/batch` | `POST /v3/orders/batch` |
+| `DELETE emm/orders/*` | `DELETE /v3/orders/{id}` or `DELETE /v3/orders/batch` |
+| `emm/kill` | `DELETE /v3/orders` |
+| `emm/orders/all` | `GET /v3/orders` |
+| `emm/fills/all` | `GET /v3/portfolio/fills` |
+| `emm/events` | `GET /v3/catalog/events` |
+
+The [API Reference](/api-reference) lists every v3 route.
 
 
 # Trading Fees

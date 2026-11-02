@@ -50,11 +50,11 @@ Enter the amount of USDC you would like to bridge, agree to the terms, and click
 
 Success!
 
-> **[Deposit Crypto](https://docs.sx.bet/user-guides/deposit-withdraw/transfer-crypto.md)**
+> [card] [Deposit Crypto](https://docs.sx.bet/user-guides/deposit-withdraw/transfer-crypto.md)
 >
 > Fund your wallet when you're ready to bet again.
 
-> **[Fees](https://docs.sx.bet/user-guides/trading/fees.md)**
+> [card] [Fees](https://docs.sx.bet/user-guides/trading/fees.md)
 >
 > Learn about trading fees, gas fees, and bridging costs.
 

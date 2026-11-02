@@ -35,133 +35,133 @@ Browse markets and their reward settings before choosing where to provide
 liquidity. Search narrows the collection. Inspect each returned market's
 configuration before assuming that rewards are currently available.
 
-**TypeScript**
-
-Call `listRewardMarkets()` using an existing `PublicClient` named `client`.
-If needed, [create a public client](https://docs.polymarket.com/getting-started/typescript.md#create-a-public-client).
-The method is also available on `SecureClient`.
-
-```ts theme={null}
-import { RewardMarketSort } from "@polymarket/client";
-
-const pages = client.listRewardMarkets({
-  query: "sports",
-  orderBy: RewardMarketSort.RatePerDay,
-  sortDirection: "DESC",
-  pageSize: 100,
-});
-
-for await (const page of pages) {
-  for (const market of page.items) {
-    console.log(
-      market.question,
-      market.rewardsMinSize,
-      market.rewardsMaxSpread,
-    );
-    for (const config of market.rewardsConfig) {
-      console.log(config.assetAddress, config.ratePerDay);
-    }
-  }
-}
-```
-
-`RewardMarket` includes the market and event identifiers, token prices, spread,
-volume, competitiveness, and reward configurations. Decimal values remain
-strings. `rewardsConfig` can be empty. Do not infer an active reward solely from
-a market appearing in the collection.
-
-Use `tagSlugs` for category selection, or `marketId` and
-`eventIds` for known markets and events. `minVolume24hr`, `maxVolume24hr`,
-`minSpread`, `maxSpread`, `minPrice`, and `maxPrice` narrow numeric ranges.
-Minimum bounds are exclusive, maximum bounds inclusive, and zero disables a
-bound. A supplied `orderBy` defaults to ascending order unless you set
-`sortDirection`.
-
-**Python**
-
-Call `list_reward_markets()` using an existing `AsyncPublicClient` named `client`.
-If needed, [create a public client](https://docs.polymarket.com/getting-started/python.md#create-a-public-client).
-The method is also available on `AsyncSecureClient`. The synchronous clients
-provide the same filters.
-
-```python theme={null}
-pages = client.list_reward_markets(
-    query="sports",
-    order_by="rate_per_day",
-    sort_direction="DESC",
-    page_size=100,
-)
-
-async for page in pages:
-    for market in page.items:
-        print(market.question, market.rewards_min_size, market.rewards_max_spread)
-        for config in market.rewards_config:
-            print(config.asset_address, config.rate_per_day)
-```
-
-`RewardMarket` includes the market and event identifiers, token prices, spread,
-volume, competitiveness, and reward configurations. Decimal values are
-`Decimal` instances. `rewards_config` can be empty. Do not infer an active reward
-solely from a market appearing in the collection.
-
-Use `tag_slugs` for category selection, or `market_id`
-and `event_ids` for known markets and events. `min_volume_24hr`,
-`max_volume_24hr`, `min_spread`, `max_spread`, `min_price`, and `max_price` narrow
-numeric ranges. Minimum bounds are exclusive, maximum bounds inclusive, and
-zero disables a bound. A supplied `order_by` defaults to ascending order unless
-you set `sort_direction`.
-
-**API**
-
-Search the public reward-market collection without authentication.
-
-```bash theme={null}
-curl -G "https://clob.polymarket.com/rewards/markets/multi" \
-  --data-urlencode "q=sports" \
-  --data-urlencode "order_by=rate_per_day" \
-  --data-urlencode "position=DESC" \
-  --data-urlencode "page_size=100"
-```
-
-Illustrative response (fields trimmed):
-
-> **Output: Reward Markets Page**
+> [tab] TypeScript
 >
-> ```json theme={null}
-> {
->   "limit": 100,
->   "count": 1,
->   "next_cursor": "LTE=",
->   "data": [
->     {
->       "condition_id": "0x747dc809fb79e1b05be09c42d6179459a58de2ef3e40f02484a4e1260f741f75",
->       "question": "Will Team A win?",
->       "rewards_min_size": 100,
->       "rewards_max_spread": 3,
->       "rewards_config": [
->         {
->           "id": 7,
->           "asset_address": "0x9c4E1703476E875070EE25b56A58B008CFb8FA78",
->           "start_date": "2026-10-01",
->           "end_date": "2026-10-31",
->           "rate_per_day": 100,
->           "total_rewards": 3100
->         }
->       ]
+> Call `listRewardMarkets()` using an existing `PublicClient` named `client`.
+> If needed, [create a public client](https://docs.polymarket.com/getting-started/typescript.md#create-a-public-client).
+> The method is also available on `SecureClient`.
+>
+> ```ts theme={null}
+> import { RewardMarketSort } from "@polymarket/client";
+>
+> const pages = client.listRewardMarkets({
+>   query: "sports",
+>   orderBy: RewardMarketSort.RatePerDay,
+>   sortDirection: "DESC",
+>   pageSize: 100,
+> });
+>
+> for await (const page of pages) {
+>   for (const market of page.items) {
+>     console.log(
+>       market.question,
+>       market.rewardsMinSize,
+>       market.rewardsMaxSpread,
+>     );
+>     for (const config of market.rewardsConfig) {
+>       console.log(config.assetAddress, config.ratePerDay);
 >     }
->   ]
+>   }
 > }
 > ```
+>
+> `RewardMarket` includes the market and event identifiers, token prices, spread,
+> volume, competitiveness, and reward configurations. Decimal values remain
+> strings. `rewardsConfig` can be empty. Do not infer an active reward solely from
+> a market appearing in the collection.
+>
+> Use `tagSlugs` for category selection, or `marketId` and
+> `eventIds` for known markets and events. `minVolume24hr`, `maxVolume24hr`,
+> `minSpread`, `maxSpread`, `minPrice`, and `maxPrice` narrow numeric ranges.
+> Minimum bounds are exclusive, maximum bounds inclusive, and zero disables a
+> bound. A supplied `orderBy` defaults to ascending order unless you set
+> `sortDirection`.
 
-Read markets from `data`, then pass the returned `next_cursor` with the same
-filters for the next page. `next_cursor: "LTE="` marks the end. The default
-page size is 100 and the maximum is 500.
+> [tab] Python
+>
+> Call `list_reward_markets()` using an existing `AsyncPublicClient` named `client`.
+> If needed, [create a public client](https://docs.polymarket.com/getting-started/python.md#create-a-public-client).
+> The method is also available on `AsyncSecureClient`. The synchronous clients
+> provide the same filters.
+>
+> ```python theme={null}
+> pages = client.list_reward_markets(
+>     query="sports",
+>     order_by="rate_per_day",
+>     sort_direction="DESC",
+>     page_size=100,
+> )
+>
+> async for page in pages:
+>     for market in page.items:
+>         print(market.question, market.rewards_min_size, market.rewards_max_spread)
+>         for config in market.rewards_config:
+>             print(config.asset_address, config.rate_per_day)
+> ```
+>
+> `RewardMarket` includes the market and event identifiers, token prices, spread,
+> volume, competitiveness, and reward configurations. Decimal values are
+> `Decimal` instances. `rewards_config` can be empty. Do not infer an active reward
+> solely from a market appearing in the collection.
+>
+> Use `tag_slugs` for category selection, or `market_id`
+> and `event_ids` for known markets and events. `min_volume_24hr`,
+> `max_volume_24hr`, `min_spread`, `max_spread`, `min_price`, and `max_price` narrow
+> numeric ranges. Minimum bounds are exclusive, maximum bounds inclusive, and
+> zero disables a bound. A supplied `order_by` defaults to ascending order unless
+> you set `sort_direction`.
 
-Each market includes `rewards_min_size`, `rewards_max_spread`, and
-`rewards_config`. The configuration can be empty. Inspect it before assuming
-an active allocation. Repeat `tag_slug` or `event_id` to select multiple tags
-or events. Numeric `min_*` bounds are exclusive and `max_*` bounds inclusive.
-Zero disables a bound.
+> [tab] API
+>
+> Search the public reward-market collection without authentication.
+>
+> ```bash theme={null}
+> curl -G "https://clob.polymarket.com/rewards/markets/multi" \
+>   --data-urlencode "q=sports" \
+>   --data-urlencode "order_by=rate_per_day" \
+>   --data-urlencode "position=DESC" \
+>   --data-urlencode "page_size=100"
+> ```
+>
+> Illustrative response (fields trimmed):
+>
+> > [accordion] Output: Reward Markets Page
+> >
+> > ```json theme={null}
+> > {
+> >   "limit": 100,
+> >   "count": 1,
+> >   "next_cursor": "LTE=",
+> >   "data": [
+> >     {
+> >       "condition_id": "0x747dc809fb79e1b05be09c42d6179459a58de2ef3e40f02484a4e1260f741f75",
+> >       "question": "Will Team A win?",
+> >       "rewards_min_size": 100,
+> >       "rewards_max_spread": 3,
+> >       "rewards_config": [
+> >         {
+> >           "id": 7,
+> >           "asset_address": "0x9c4E1703476E875070EE25b56A58B008CFb8FA78",
+> >           "start_date": "2026-10-01",
+> >           "end_date": "2026-10-31",
+> >           "rate_per_day": 100,
+> >           "total_rewards": 3100
+> >         }
+> >       ]
+> >     }
+> >   ]
+> > }
+> > ```
+>
+> Read markets from `data`, then pass the returned `next_cursor` with the same
+> filters for the next page. `next_cursor: "LTE="` marks the end. The default
+> page size is 100 and the maximum is 500.
+>
+> Each market includes `rewards_min_size`, `rewards_max_spread`, and
+> `rewards_config`. The configuration can be empty. Inspect it before assuming
+> an active allocation. Repeat `tag_slug` or `event_id` to select multiple tags
+> or events. Numeric `min_*` bounds are exclusive and `max_*` bounds inclusive.
+> Zero disables a bound.
 
 ***
 
@@ -170,93 +170,93 @@ Zero disables a bound.
 Read daily totals for the authenticated account to reconcile liquidity rewards.
 Choose whether to include sponsored rewards in the total.
 
-**TypeScript**
-
-Call `fetchTotalEarningsForUserForDay()` on a `SecureClient`.
-
-```ts theme={null}
-const earnings = await client.fetchTotalEarningsForUserForDay({
-  date: "2026-10-06",
-  sponsored: true,
-});
-
-for (const earning of earnings) {
-  console.log(
-    earning.earnings,
-    earning.nativeEarnings,
-    earning.sponsoredEarnings,
-  );
-}
-```
-
-`earnings` is the total decimal string for the row's reward asset. With
-`sponsored: true`, the total includes native and sponsored rewards.
-`nativeEarnings` and `sponsoredEarnings` expose the optional decimal-string
-breakdown. An absent breakdown remains `undefined`. A returned zero is `"0"`.
-Omitting `sponsored`, or setting it to `false`, requests native rewards only.
-
-**Python**
-
-Call `get_total_earnings_for_user_for_day()` on an `AsyncSecureClient`.
-The synchronous `SecureClient` provides the same method.
-
-```python theme={null}
-earnings = await client.get_total_earnings_for_user_for_day(
-    date="2026-10-06",
-    sponsored=True,
-)
-
-for earning in earnings:
-    print(earning.earnings, earning.native_earnings, earning.sponsored_earnings)
-```
-
-`earnings` is the `Decimal` total for the row's reward asset. With
-`sponsored=True`, the total includes native and sponsored rewards.
-`native_earnings` and `sponsored_earnings` expose the optional `Decimal`
-breakdown. An absent breakdown remains `None`. A returned zero remains zero.
-Omitting `sponsored`, or setting it to `False`, requests native rewards only.
-
-**API**
-
-Read daily totals with CLOB L2 authentication for the account:
-
-```bash theme={null}
-curl -G "https://clob.polymarket.com/rewards/user/total" \
-  -H "POLY_ADDRESS: <signer_address>" \
-  -H "POLY_API_KEY: <clob_api_key>" \
-  -H "POLY_PASSPHRASE: <clob_api_passphrase>" \
-  -H "POLY_SIGNATURE: <clob_l2_signature>" \
-  -H "POLY_TIMESTAMP: <clob_request_timestamp>" \
-  --data-urlencode "date=2026-10-06" \
-  --data-urlencode "maker_address=0xFeA4cB3dD4ca7CefD3368653B7D6FF9BcDFca604" \
-  --data-urlencode "sponsored=true"
-```
-
-Create fresh L2 headers using [API Authentication](https://docs.polymarket.com/getting-started/api.md#authentication).
-Sign the timestamp, `GET`, and `/rewards/user/total`, with no request body.
-
-Illustrative response:
-
-> **Output: Daily Earnings**
+> [tab] TypeScript
 >
-> ```json theme={null}
-> [
->   {
->     "date": "2026-10-06T00:00:00Z",
->     "asset_address": "0x9c4E1703476E875070EE25b56A58B008CFb8FA78",
->     "maker_address": "0xFeA4cB3dD4ca7CefD3368653B7D6FF9BcDFca604",
->     "earnings": 12.5,
->     "native_earnings": 10,
->     "sponsored_earnings": 2.5,
->     "asset_rate": 1
->   }
-> ]
+> Call `fetchTotalEarningsForUserForDay()` on a `SecureClient`.
+>
+> ```ts theme={null}
+> const earnings = await client.fetchTotalEarningsForUserForDay({
+>   date: "2026-10-06",
+>   sponsored: true,
+> });
+>
+> for (const earning of earnings) {
+>   console.log(
+>     earning.earnings,
+>     earning.nativeEarnings,
+>     earning.sponsoredEarnings,
+>   );
+> }
 > ```
+>
+> `earnings` is the total decimal string for the row's reward asset. With
+> `sponsored: true`, the total includes native and sponsored rewards.
+> `nativeEarnings` and `sponsoredEarnings` expose the optional decimal-string
+> breakdown. An absent breakdown remains `undefined`. A returned zero is `"0"`.
+> Omitting `sponsored`, or setting it to `false`, requests native rewards only.
 
-Each response row reports `earnings` as a JSON number. Optional
-`native_earnings` and `sponsored_earnings` numbers split the native and sponsored
-amounts. With `sponsored=true`, the total includes both. The request defaults to
-native rewards only when `sponsored` is omitted or `false`.
+> [tab] Python
+>
+> Call `get_total_earnings_for_user_for_day()` on an `AsyncSecureClient`.
+> The synchronous `SecureClient` provides the same method.
+>
+> ```python theme={null}
+> earnings = await client.get_total_earnings_for_user_for_day(
+>     date="2026-10-06",
+>     sponsored=True,
+> )
+>
+> for earning in earnings:
+>     print(earning.earnings, earning.native_earnings, earning.sponsored_earnings)
+> ```
+>
+> `earnings` is the `Decimal` total for the row's reward asset. With
+> `sponsored=True`, the total includes native and sponsored rewards.
+> `native_earnings` and `sponsored_earnings` expose the optional `Decimal`
+> breakdown. An absent breakdown remains `None`. A returned zero remains zero.
+> Omitting `sponsored`, or setting it to `False`, requests native rewards only.
+
+> [tab] API
+>
+> Read daily totals with CLOB L2 authentication for the account:
+>
+> ```bash theme={null}
+> curl -G "https://clob.polymarket.com/rewards/user/total" \
+>   -H "POLY_ADDRESS: <signer_address>" \
+>   -H "POLY_API_KEY: <clob_api_key>" \
+>   -H "POLY_PASSPHRASE: <clob_api_passphrase>" \
+>   -H "POLY_SIGNATURE: <clob_l2_signature>" \
+>   -H "POLY_TIMESTAMP: <clob_request_timestamp>" \
+>   --data-urlencode "date=2026-10-06" \
+>   --data-urlencode "maker_address=0xFeA4cB3dD4ca7CefD3368653B7D6FF9BcDFca604" \
+>   --data-urlencode "sponsored=true"
+> ```
+>
+> Create fresh L2 headers using [API Authentication](https://docs.polymarket.com/getting-started/api.md#authentication).
+> Sign the timestamp, `GET`, and `/rewards/user/total`, with no request body.
+>
+> Illustrative response:
+>
+> > [accordion] Output: Daily Earnings
+> >
+> > ```json theme={null}
+> > [
+> >   {
+> >     "date": "2026-10-06T00:00:00Z",
+> >     "asset_address": "0x9c4E1703476E875070EE25b56A58B008CFb8FA78",
+> >     "maker_address": "0xFeA4cB3dD4ca7CefD3368653B7D6FF9BcDFca604",
+> >     "earnings": 12.5,
+> >     "native_earnings": 10,
+> >     "sponsored_earnings": 2.5,
+> >     "asset_rate": 1
+> >   }
+> > ]
+> > ```
+>
+> Each response row reports `earnings` as a JSON number. Optional
+> `native_earnings` and `sponsored_earnings` numbers split the native and sponsored
+> amounts. With `sponsored=true`, the total includes both. The request defaults to
+> native rewards only when `sponsored` is omitted or `false`.
 
 Group totals by reward asset when reconciling them. Amounts for different
 assets should not be added without accounting for their exchange rates.

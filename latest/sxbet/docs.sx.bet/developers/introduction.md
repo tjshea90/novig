@@ -65,45 +65,45 @@ print(markets)
 
 ## Start building
 
-> **[Quickstart](https://docs.sx.bet/developers/quickstart.md)**
+> [card] [Quickstart](https://docs.sx.bet/developers/quickstart.md)
 >
 > Sign in, deploy and fund a proxy, read the book, place your first order.
 
-> **[API Reference](https://docs.sx.bet/api-reference/introduction.md)**
+> [card] [API Reference](https://docs.sx.bet/api-reference/introduction.md)
 >
 > Full endpoint reference with request and response schemas.
 
-> **[Real-time data](https://docs.sx.bet/developers/realtime-overview.md)**
+> [card] [Real-time data](https://docs.sx.bet/developers/realtime-overview.md)
 >
 > Subscribe to books, your own orders, and the public trade feed over one WebSocket.
 
-> **[What can you build?](https://docs.sx.bet/developers/what-can-you-build.md)**
+> [card] [What can you build?](https://docs.sx.bet/developers/what-can-you-build.md)
 >
 > Trading bots, custom frontends, analytics tools, and more.
 
 ## Explore the platform
 
-> **[Accounts](https://docs.sx.bet/developers/accounts.md)**
+> [card] [Accounts](https://docs.sx.bet/developers/accounts.md)
 >
 > Signing in with a wallet, and signing orders.
 
-> **[The exchange model](https://docs.sx.bet/developers/exchange-model.md)**
+> [card] [The exchange model](https://docs.sx.bet/developers/exchange-model.md)
 >
 > Everyone posts an order. The engine decides the aggressor afterwards.
 
-> **[Markets and events](https://docs.sx.bet/developers/markets-and-events.md)**
+> [card] [Markets and events](https://docs.sx.bet/developers/markets-and-events.md)
 >
 > How markets nest, and the identifiers you query by.
 
-> **[The order book](https://docs.sx.bet/developers/order-book.md)**
+> [card] [The order book](https://docs.sx.bet/developers/order-book.md)
 >
 > Which side a resting level is liquidity for, and who set the price.
 
-> **[Market making](https://docs.sx.bet/developers/market-making.md)**
+> [card] [Market making](https://docs.sx.bet/developers/market-making.md)
 >
 > Post quotes, manage them, and cancel by event.
 
-> **[Taking liquidity](https://docs.sx.bet/developers/taking-liquidity.md)**
+> [card] [Taking liquidity](https://docs.sx.bet/developers/taking-liquidity.md)
 >
 > Take a resting price with an IOC or FOK order.
 

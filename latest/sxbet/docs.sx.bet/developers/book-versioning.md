@@ -44,15 +44,15 @@ from the REST snapshot at startup, then apply only live publications that have a
 
 ## Related
 
-> **[Recovery & reliability](https://docs.sx.bet/developers/realtime-reliability.md)**
+> [card] [Recovery & reliability](https://docs.sx.bet/developers/realtime-reliability.md)
 >
 > Recovery, ordering and deduplication across reconnects.
 
-> **[Get orderbook snapshot](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot.md)**
+> [card] [Get orderbook snapshot](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot.md)
 >
 > The REST seed that carries the same version.
 
-> **[Fetching odds](https://docs.sx.bet/developers/odds.md)**
+> [card] [Fetching odds](https://docs.sx.bet/developers/odds.md)
 >
 > Seeding and subscribing to the book and best odds.
 

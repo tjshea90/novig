@@ -15,27 +15,27 @@ Place orders with signed REST requests. Watch the order book and your fills on o
 
 ## Start
 
-***
+**1. [Account model](https://docs.novig.com/api/concepts/account-model.md)**
 
 Each subaccount has its own balance and its own trading key.
 
-***
+**2. [Get a key](https://docs.novig.com/api/api-keys.md)**
 
 You create your management key in your Novig profile. It opens and funds subaccounts but can't place orders.
 
-***
+**3. [Sign a request](https://docs.novig.com/api/signing.md)**
 
 Sign every request with Ed25519 or P-256, and test your code against our 30 sample signatures.
 
-***
+**4. [Test your signature](https://docs.novig.com/api/quickstart.md)**
 
 `POST /v3/echo` returns your body with a `200` when your signature is correct.
 
-***
+**5. [Open a subaccount](https://docs.novig.com/api/subaccounts/manage.md)**
 
 Your management key opens a subaccount, registers its trading key, and funds it.
 
-***
+**6. [Trade](https://docs.novig.com/api/execution/orders)**
 
 Find a market in the [catalog](https://docs.novig.com/api/catalog), place an [order](https://docs.novig.com/api/execution/orders), and follow it on the [private stream](https://docs.novig.com/api/streaming/private.md).
 

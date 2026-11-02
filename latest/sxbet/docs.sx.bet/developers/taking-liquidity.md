@@ -198,31 +198,31 @@ fillable depth first and cancels entirely if the depth can't cover your size.
 
 ## Related
 
-> **[Posting orders](https://docs.sx.bet/developers/posting-orders.md)**
+> [card] [Posting orders](https://docs.sx.bet/developers/posting-orders.md)
 >
 > The same signing and submission path, from the maker's side.
 
-> **[Market making](https://docs.sx.bet/developers/market-making.md)**
+> [card] [Market making](https://docs.sx.bet/developers/market-making.md)
 >
 > The global notional budget aggressive orders are checked against.
 
-> **[Time in force](https://docs.sx.bet/developers/time-in-force.md)**
+> [card] [Time in force](https://docs.sx.bet/developers/time-in-force.md)
 >
 > Why IOC and FOK are the only two immediate types.
 
-> **[Betting delays](https://docs.sx.bet/developers/betting-delays.md)**
+> [card] [Betting delays](https://docs.sx.bet/developers/betting-delays.md)
 >
 > The wait an order takes on before it matches.
 
-> **[Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)**
+> [card] [Create orders](https://docs.sx.bet/api-reference/post-orders-v3.md)
 >
 > Fields, validation rules and every error body.
 
-> **[Get orderbook snapshot](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot.md)**
+> [card] [Get orderbook snapshot](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot.md)
 >
 > Reading depth, and the prices from the taker's side.
 
-> **[Bet lifecycle](https://docs.sx.bet/developers/bet-lifecycle.md)**
+> [card] [Bet lifecycle](https://docs.sx.bet/developers/bet-lifecycle.md)
 >
 > What happens to a bet after it matches.
 

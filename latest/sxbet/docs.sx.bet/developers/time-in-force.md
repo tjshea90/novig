@@ -40,19 +40,19 @@ Because it can never take, no [betting delay](https://docs.sx.bet/developers/bet
 
 ## Related
 
-> **[Posting orders](https://docs.sx.bet/developers/posting-orders.md)**
+> [card] [Posting orders](https://docs.sx.bet/developers/posting-orders.md)
 >
 > Build, sign and submit an order of any type.
 
-> **[Taking liquidity](https://docs.sx.bet/developers/taking-liquidity.md)**
+> [card] [Taking liquidity](https://docs.sx.bet/developers/taking-liquidity.md)
 >
 > The immediate-execution path, end to end.
 
-> **[Order lifecycle](https://docs.sx.bet/developers/order-lifecycle.md)**
+> [card] [Order lifecycle](https://docs.sx.bet/developers/order-lifecycle.md)
 >
 > `PENDING`, `ACTIVE`, `INACTIVE`, and every terminal reason.
 
-> **[Tracking your orders](https://docs.sx.bet/developers/my-orders.md)**
+> [card] [Tracking your orders](https://docs.sx.bet/developers/my-orders.md)
 >
 > `timeInForce` and `postOnly` are write-only — tag them in your own store when you post.
 

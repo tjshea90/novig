@@ -185,25 +185,6 @@
 - [Get transaction status](https://docs.polymarket.com/api-reference/bridge/get-transaction-status.md): Returns the deposits and withdrawals seen at a bridge address, newest first. Responses are cursor-paginated: each request returns one page plus a `nextCursor`. To read the full history, pass each `nextCursor` back as `cursor` until it comes back null. To track only recent activity, keep requesting t…
 - [Create withdrawal addresses](https://docs.polymarket.com/api-reference/bridge/create-withdrawal-addresses.md)
 
-### Data API v1 (Legacy)
-
-- [Get current positions for a user](https://docs.polymarket.com/api-reference/core/get-current-positions-for-a-user.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/positions`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [Get closed positions for a user](https://docs.polymarket.com/api-reference/core/get-closed-positions-for-a-user.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/positions?status=CLOSED`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [Get positions for a market](https://docs.polymarket.com/api-reference/core/get-positions-for-a-market.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/positions`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [Get trades for a user or markets](https://docs.polymarket.com/api-reference/core/get-trades-for-a-user-or-markets.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/trades`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [Get user activity](https://docs.polymarket.com/api-reference/core/get-user-activity.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/activity`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [Get total value of a user's positions](https://docs.polymarket.com/api-reference/core/get-total-value-of-a-users-positions.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/value`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [Get total markets a user has traded](https://docs.polymarket.com/api-reference/misc/get-total-markets-a-user-has-traded.md)
-- [Download an accounting snapshot (ZIP of CSVs)](https://docs.polymarket.com/api-reference/misc/download-an-accounting-snapshot-zip-of-csvs.md)
-- [Get top holders for markets](https://docs.polymarket.com/api-reference/core/get-top-holders-for-markets.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/holders`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [Get open interest](https://docs.polymarket.com/api-reference/misc/get-open-interest.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/oi`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [Get live volume for an event](https://docs.polymarket.com/api-reference/misc/get-live-volume-for-an-event.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/live-volume`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [Get trader leaderboard rankings](https://docs.polymarket.com/api-reference/core/get-trader-leaderboard-rankings.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/leaderboard`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [Get aggregated builder leaderboard](https://docs.polymarket.com/api-reference/builders/get-aggregated-builder-leaderboard.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/builders/leaderboard`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [Get daily builder volume time-series](https://docs.polymarket.com/api-reference/builders/get-daily-builder-volume-time-series.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/builders/volume`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2).
-- [Get user combo positions](https://docs.polymarket.com/api-reference/core/get-user-combo-positions.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/positions/combos`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2). Combinatorial (multi-market) positions held by a user, with per-leg breakdown. Also available at /v1/data/user/{address}/positions/combos (address from the path).…
-- [Get user combo activity](https://docs.polymarket.com/api-reference/core/get-user-combo-activity.md): **Data API v2:** this route has a v2 counterpart, `GET /v2/activity/combos`. See [Migrating to Data API v2](/migrate/data-api-v1-to-v2). Combo lifecycle and redeem events (split / merge / convert / compress / wrap / unwrap / redeem) for a user, with per-leg breakdown. The combo counterpart to /activ…
-
 ## OpenAPI Specs
 
 - [clob-openapi](/api-spec/clob-openapi.yaml)
@@ -212,7 +193,6 @@
 - [relayer-openapi](/api-spec/relayer-openapi.yaml)
 - [combos-rfq-openapi](/api-spec/combos-rfq-openapi.yaml)
 - [bridge-openapi](/api-spec/bridge-openapi.yaml)
-- [data-openapi](/api-spec/data-openapi.yaml)
 
 ## AsyncAPI Specs
 

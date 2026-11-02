@@ -26,6 +26,8 @@ Use the `external-api` hosts for perps REST. WebSocket and FIX use the separate 
 | Demo | `wss://external-api-margin-ws.demo.kalshi.co/trade-api/ws/v2/margin` |
 | Production | `wss://external-api-margin-ws.kalshi.com/trade-api/ws/v2/margin` (rolling out member by member) |
 
+For lower-latency `fill` and `user_orders` updates, connect to `wss://margin-warp-ws.kalshi.com/trade-api/ws/v2/margin` in production or `wss://margin-warp-ws.demo.kalshi.co/trade-api/ws/v2/margin` in demo. These hosts serve only those two channels. See [Fill and order updates](https://docs.kalshi.com/getting_started/api_environments.md#fill-and-order-updates).
+
 ### FIX API
 
 The margin FIX gateway uses a **separate host** from event contract FIX.
@@ -67,6 +69,8 @@ The Perps API mirrors the event contract API (same auth, pagination, error forma
 **What's the same:** authentication, pagination, error format, and core order lifecycle (create, amend, decrease, cancel) all work identically, just under `/margin/*` instead of `/portfolio/*` and `/markets/*`.
 
 **Margin-specific additions:** beyond the mirrored order, market, and order-group endpoints, margin adds endpoints for account balance and risk, funding (estimated and historical rates, plus payment history), fee tiers, subaccounts, and transfers between your event-contract and margin balances. See the **REST** reference for the full list. Two things to know up front: the event-contract ↔ margin transfer (`/portfolio/intra_exchange_instance_transfer`) is **not yet available** (enabled with the production rollout), and you can call `/margin/enabled` to check whether margin is on for your account in a given environment.
+
+**Dollar precision:** existing fixed-point dollar response fields support up to 6 decimal places and retain their names. See [Fixed-Point Representation](https://docs.kalshi.com/getting_started/fixed_point_migration.md#margin-markets).
 
 **Not available on margin:**
 

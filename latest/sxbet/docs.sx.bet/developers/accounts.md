@@ -60,23 +60,23 @@ SX Bet is not affiliated with or endorsed by Safe Global.</sub>
 
 ## Related
 
-> **[Deploy a proxy wallet](https://docs.sx.bet/api-reference/post-user-deploy-proxy.md)**
+> [card] [Deploy a proxy wallet](https://docs.sx.bet/api-reference/post-user-deploy-proxy.md)
 >
 > The request, what a repeat call does, and the `200`.
 
-> **[Look up a proxy wallet](https://docs.sx.bet/api-reference/get-user-proxy.md)**
+> [card] [Look up a proxy wallet](https://docs.sx.bet/api-reference/get-user-proxy.md)
 >
 > The predicted address, the `deployed` flag, and the Safe address.
 
-> **[Get your ledger](https://docs.sx.bet/api-reference/get-ledger-v3.md)**
+> [card] [Get your ledger](https://docs.sx.bet/api-reference/get-ledger-v3.md)
 >
 > Every deposit, withdrawal, and settlement on your account.
 
-> **[Funding](https://docs.sx.bet/developers/funding.md)**
+> [card] [Funding](https://docs.sx.bet/developers/funding.md)
 >
 > Moving USDC in with a permit, without paying gas.
 
-> **[Reading balances](https://docs.sx.bet/developers/balances-and-ledger.md)**
+> [card] [Reading balances](https://docs.sx.bet/developers/balances-and-ledger.md)
 >
 > What you can actually spend, and why.
 

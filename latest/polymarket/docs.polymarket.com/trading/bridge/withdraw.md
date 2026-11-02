@@ -117,11 +117,11 @@ Monitor progress using `/status/{address}`.
 
 ## Next Steps
 
-> **[Get a Quote](https://docs.polymarket.com/trading/bridge/quote.md)**
+> [card] [Get a Quote](https://docs.polymarket.com/trading/bridge/quote.md)
 >
 > Preview fees and estimated output before withdrawing.
 
-> **[Check Status](https://docs.polymarket.com/trading/bridge/status.md)**
+> [card] [Check Status](https://docs.polymarket.com/trading/bridge/status.md)
 >
 > Track your withdrawal progress.
 

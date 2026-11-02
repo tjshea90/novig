@@ -137,71 +137,71 @@ to decompress.
 
 Requires `pip install zstandard`.
 
-**zstd (dictless)**
+> [tab] zstd (dictless)
+>
+> ```python theme={null}
+> import asyncio, json, websockets
+> import zstandard as zstd
+>
+> WS_URL, API_KEY = "wss://v5.oddspapi.io/ws", "YOUR_API_KEY"
+> dctx = zstd.ZstdDecompressor()
+> MAX_OUT = 64 * 1024 * 1024  # frames carry no content size — pass an upper bound
+>
+> async def main():
+>     async with websockets.connect(WS_URL, max_size=4194304) as ws:
+>         await ws.send(json.dumps({
+>             "type": "login", "apiKey": API_KEY,
+>             "channels": ["odds", "fixtures"], "receiveType": "zstd",
+>         }))
+>         async for raw in ws:
+>             if isinstance(raw, str):                       # control (JSON)
+>                 msg = json.loads(raw)
+>                 if msg.get("type") == "login_ok" and msg.get("receiveType") != "zstd":
+>                     print("zstd disabled here, negotiated:", msg.get("receiveType"))
+>                 continue
+>             data = json.loads(dctx.decompress(raw, max_output_size=MAX_OUT))
+>             print("DATA:", data.get("channel"), data.get("entryId"))
+>
+> asyncio.run(main())
+> ```
 
-```python theme={null}
-import asyncio, json, websockets
-import zstandard as zstd
-
-WS_URL, API_KEY = "wss://v5.oddspapi.io/ws", "YOUR_API_KEY"
-dctx = zstd.ZstdDecompressor()
-MAX_OUT = 64 * 1024 * 1024  # frames carry no content size — pass an upper bound
-
-async def main():
-    async with websockets.connect(WS_URL, max_size=4194304) as ws:
-        await ws.send(json.dumps({
-            "type": "login", "apiKey": API_KEY,
-            "channels": ["odds", "fixtures"], "receiveType": "zstd",
-        }))
-        async for raw in ws:
-            if isinstance(raw, str):                       # control (JSON)
-                msg = json.loads(raw)
-                if msg.get("type") == "login_ok" and msg.get("receiveType") != "zstd":
-                    print("zstd disabled here, negotiated:", msg.get("receiveType"))
-                continue
-            data = json.loads(dctx.decompress(raw, max_output_size=MAX_OUT))
-            print("DATA:", data.get("channel"), data.get("entryId"))
-
-asyncio.run(main())
-```
-
-**zstd-dict (dictionaries)**
-
-```python theme={null}
-import asyncio, json, base64, websockets
-import zstandard as zstd
-
-WS_URL, API_KEY = "wss://v5.oddspapi.io/ws", "YOUR_API_KEY"
-decoders: dict[int, zstd.ZstdDecompressor] = {}   # dictId -> decoder
-dictless = zstd.ZstdDecompressor()
-MAX_OUT = 64 * 1024 * 1024
-
-def decode_frame(frame: bytes) -> dict:
-    dict_id = zstd.get_frame_parameters(frame).dict_id  # 0 if no dictionary
-    dctx = decoders.get(dict_id, dictless)
-    return json.loads(dctx.decompress(frame, max_output_size=MAX_OUT))
-
-async def main():
-    async with websockets.connect(WS_URL, max_size=4194304) as ws:
-        await ws.send(json.dumps({
-            "type": "login", "apiKey": API_KEY,
-            "channels": ["odds", "fixtures"], "receiveType": "zstd-dict",
-        }))
-        async for raw in ws:
-            if isinstance(raw, str):                       # control (JSON)
-                msg = json.loads(raw)
-                t = msg.get("type")
-                if t == "login_ok" and msg.get("receiveType") != "zstd-dict":
-                    print("downgraded, negotiated:", msg.get("receiveType"))
-                elif t == "dict":
-                    d = zstd.ZstdCompressionDict(base64.b64decode(msg["data"]))
-                    decoders[msg["dictId"]] = zstd.ZstdDecompressor(dict_data=d)
-                continue
-            data = decode_frame(raw)                        # data (zstd)
-            print("DATA:", data.get("channel"), data.get("entryId"))
-
-asyncio.run(main())
-```
+> [tab] zstd-dict (dictionaries)
+>
+> ```python theme={null}
+> import asyncio, json, base64, websockets
+> import zstandard as zstd
+>
+> WS_URL, API_KEY = "wss://v5.oddspapi.io/ws", "YOUR_API_KEY"
+> decoders: dict[int, zstd.ZstdDecompressor] = {}   # dictId -> decoder
+> dictless = zstd.ZstdDecompressor()
+> MAX_OUT = 64 * 1024 * 1024
+>
+> def decode_frame(frame: bytes) -> dict:
+>     dict_id = zstd.get_frame_parameters(frame).dict_id  # 0 if no dictionary
+>     dctx = decoders.get(dict_id, dictless)
+>     return json.loads(dctx.decompress(frame, max_output_size=MAX_OUT))
+>
+> async def main():
+>     async with websockets.connect(WS_URL, max_size=4194304) as ws:
+>         await ws.send(json.dumps({
+>             "type": "login", "apiKey": API_KEY,
+>             "channels": ["odds", "fixtures"], "receiveType": "zstd-dict",
+>         }))
+>         async for raw in ws:
+>             if isinstance(raw, str):                       # control (JSON)
+>                 msg = json.loads(raw)
+>                 t = msg.get("type")
+>                 if t == "login_ok" and msg.get("receiveType") != "zstd-dict":
+>                     print("downgraded, negotiated:", msg.get("receiveType"))
+>                 elif t == "dict":
+>                     d = zstd.ZstdCompressionDict(base64.b64decode(msg["data"]))
+>                     decoders[msg["dictId"]] = zstd.ZstdDecompressor(dict_data=d)
+>                 continue
+>             data = decode_frame(raw)                        # data (zstd)
+>             print("DATA:", data.get("channel"), data.get("entryId"))
+>
+> asyncio.run(main())
+> ```
 
 ***
 
