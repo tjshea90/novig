@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-htf6em",
- "head": "156a65c85cb9ed899c0ca45de59ce848a49bf193",
+ "head": "64db5659d4f42e78cb41c19a6f006339895b7f93",
  "since": 1793578976,
- "beat": 1793644307,
- "beatIso": "2026-11-02T18:31:47Z",
- "done": "v1.0.99 on main, engine reset",
- "next": "confirm trading resumes; trigger release.yml"
+ "beat": 1793644671,
+ "beatIso": "2026-11-02T18:37:51Z",
+ "done": "BD21 verified: trading resumed on v1.0.99",
+ "next": "watch Novig slow-down; SK1/PL1/FR1 PropLine+ParlayAPI NCAAF freshness"
 }
