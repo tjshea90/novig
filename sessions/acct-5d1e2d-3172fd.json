@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-htf6em",
  "head": "0a8c8dc05e687fecba9218c09079e599aa673d31",
  "since": 1793578976,
- "beat": 1793647023,
- "beatIso": "2026-11-02T19:17:03Z",
+ "beat": 1793648825,
+ "beatIso": "2026-11-02T19:47:05Z",
  "done": "ER1: engine off at Tj's word, restart due 2026-11-03 03:10 UTC",
  "next": "AT 03:10 UTC 11-03 run engine_set gates.cloudTrading=LIVE gates.cloudBids=true --on (see TASKS ER1)"
 }
