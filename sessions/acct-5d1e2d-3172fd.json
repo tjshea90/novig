@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-htf6em",
- "head": "9494e6920a5e7ca1a92cca5dcbeb08d736ceca29",
+ "head": "218f7bd7659857c2078c0d0733e7b123c428d0a8",
  "since": 1793578976,
- "beat": 1793642969,
- "beatIso": "2026-11-02T18:09:29Z",
- "done": "FR1 freshness verified accurate; root cause PropLine slow reread + ParlayAPI ncaaf stream flaps",
- "next": "FR1 ParlayAPI ncaaf hot stream closes"
+ "beat": 1793643011,
+ "beatIso": "2026-11-02T18:10:11Z",
+ "done": "HB2 diagnosed: Novig read rate limit from bid churn",
+ "next": "HB2/HB1 reduce bid churn, prioritise bet fill reads"
 }
