@@ -13,9 +13,17 @@ object BidVolume {
     /** The floor of the riskier types (prop overs, the NFL, game lines), and of any line no sharp book prices. */
     const val RISKY_EV = 0.025
 
-    /** Most bids up at once, bids a pass sends: thousands, in a few passes. */
-    const val MAX_BIDS = 3_000
-    const val POSTS_PER_PASS = 250
+    /**
+     * Most bids up at once, bids a pass sends. Tj, 2026-11-02 ("slow the bid churn and post half as many bids at double the amount"): Novig's reads are one allowance shared with every key, and 250 posts and 255 takedowns
+     * a pass starved the fill reads (bets FILLED but unreadable), so the count is about half of what it was (best-scored first, so the fastest fillers stay), each bid stakes double ([STAKE_FACTOR]) and a rising fair
+     * moves a resting bid only after [REQUOTE_STEPS] steps. The EV floors, the tiers and Tj's dollar limits are untouched.
+     */
+    const val MAX_BIDS = 400
+    const val POSTS_PER_PASS = 125
+    const val REQUOTE_STEPS = 4
+
+    /** Volume mode's stake, as a multiple of the stake mode's own Kelly fraction (1/16 Kelly bids become 1/8). */
+    const val STAKE_FACTOR = 2.0
 
     /** The fair behind a bid on a game 1-12 hours out may be this old before the bid ends (a quick scan reads it again every few minutes; this is only the backstop). */
     const val MID_FAIR_MAX_AGE_MS = 15 * 60_000L
