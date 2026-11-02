@@ -3,13 +3,13 @@
  "label": "acct-7542bf",
  "name": "tj outlook",
  "nonce": "91cc06",
- "kind": "routine",
+ "kind": "interactive",
  "task": "",
- "branch": "claude/keen-keller-f4onus",
- "head": "3c22253902322045d4200dbb5b4b3767c5daad6a",
+ "branch": "claude/keen-keller-9aubr4",
+ "head": "f5326b101ee1d01fbdb99468dc7b889620e296e2",
  "since": 1793535772,
- "beat": 1793535772,
- "beatIso": "2026-11-01T12:22:52Z",
+ "beat": 1793622876,
+ "beatIso": "2026-11-02T12:34:36Z",
  "done": "ENGINEER 2026-11-01 watch only, engine healthy, no change",
  "next": "at n>=200 cut engine taker non-tennis game totals+spreads"
 }
