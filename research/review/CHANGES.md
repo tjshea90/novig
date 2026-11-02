@@ -175,3 +175,4 @@ CH57a done (research/parlay_spend_2026-10-22.md): ParlayAPI Pro 75,276 of 100,00
 - 2026-11-01 ANALYST (chat, acct-5d1e2d mirage): no setting changed. Bids +4.6% n1528 (team totals +7.4%, 1st half +10.4%); takers -5.9% n762; non-tennis taker game totals+spreads -15.5% n194 (CI excludes 0, 6 short of the 200 gate): cut at n>=200 (8+ books or stop). research/review/2026-11-01.md. Revert rule: n/a.
 2026-11-01 BD20: bidPerGameBids 0->20, bidWalletPct 1200->2000 (Tj's order). Revert: set back.
 BD21 2026-11-02: volume bids halved (cap 400, 125/pass), stake x2, requote 4 steps; why: Novig read limit starved fill reads. revert: constants in BidVolume.kt
+ER1 2026-11-02: engine OFF at Tj's word (wallet used up); restart due 2026-11-03 03:10 UTC; revert: engine_set gates.cloudTrading=LIVE gates.cloudBids=true --on
