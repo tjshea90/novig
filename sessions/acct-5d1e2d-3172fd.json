@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-htf6em",
- "head": "8e2904d5cdf8ac9324fec57dc041a9e69f0d7695",
+ "head": "d1224cbbfd3404aba1ed50afa66971ad1e895139",
  "since": 1793578976,
- "beat": 1793643979,
- "beatIso": "2026-11-02T18:26:19Z",
- "done": "pre-release: v1.0.99: bids half as many at double stake, slower requote (Novig read limit) (versionCode 439, v1.0.99)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.99), then run: bash tools/record-release.sh v1.0.99 439 \"v1.0.99: bids half as many at double stake, slower requote (Novig read limit)\""
+ "beat": 1793644041,
+ "beatIso": "2026-11-02T18:27:21Z",
+ "done": "v1.0.99 on main, engine reset",
+ "next": "confirm trading resumes; trigger release.yml"
 }
