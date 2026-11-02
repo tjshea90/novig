@@ -1,13 +1,13 @@
-# CHECKPOINT 4352 — read me first, then TASKS.md
+# CHECKPOINT 4353 — read me first, then TASKS.md
 
-**Written:** 2026-11-02T18:00:40Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-htf6em` · **builds on:** `51a6bb76a` (this checkpoint is the commit after it)
+**Written:** 2026-11-02T18:02:10Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-htf6em` · **builds on:** `0650f995d` (this checkpoint is the commit after it)
 
 ## Just done
-CB1 answered: NCAAB already enabled
+PL1 investigated, replied
 
 ## Do this next
-verify NCAAB rows once priced
+PropLineLive.confirmedAt coverage for far games
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ verify NCAAB rows once priced
 
 ## Last ten checkpoints
 ```
+  0650f995d ckpt 4352: CB1 answered: NCAAB already enabled
   51a6bb76a ckpt 4351: answered chat: stale PropLine ages vs Novig socket
   4b5e27071 ckpt 4350: WATCH 2026-11-02 engine healthy, no change
   67b83132b ckpt 4349: ANALYST 2026-11-02 skipped: no new digest, engine healthy
@@ -26,5 +27,4 @@ verify NCAAB rows once priced
   19af00dfd ckpt 4345: WATCH 2026-11-01 engine healthy, no change
   0891efb00 ckpt 4344: BD20 bids 20/game wallet 2000%
   3c2225390 ckpt 4343: ENGINEER 2026-11-01 watch only, engine healthy, no change
-  34f52d764 ckpt 4342: 2026-11-01 chat research: bids +4.6%, taker totals/spreads leak n194, no ch
 ```
