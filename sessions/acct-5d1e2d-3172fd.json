@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-htf6em",
  "head": "64db5659d4f42e78cb41c19a6f006339895b7f93",
  "since": 1793578976,
- "beat": 1793644671,
- "beatIso": "2026-11-02T18:37:51Z",
+ "beat": 1793645145,
+ "beatIso": "2026-11-02T18:45:45Z",
  "done": "BD21 verified: trading resumed on v1.0.99",
  "next": "watch Novig slow-down; SK1/PL1/FR1 PropLine+ParlayAPI NCAAF freshness"
 }
