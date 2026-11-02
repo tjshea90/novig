@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-htf6em",
  "head": "ca16d7be99205fba0259c32aa869f57c5f178bf7",
  "since": 1793578976,
- "beat": 1793643451,
- "beatIso": "2026-11-02T18:17:31Z",
+ "beat": 1793643752,
+ "beatIso": "2026-11-02T18:22:32Z",
  "done": "HB2 diagnosed: Novig read rate limit from bid churn",
  "next": "HB2/HB1 reduce bid churn, prioritise bet fill reads"
 }
