@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/3172fd",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "3172fd",
+ "note": "Bids: half as many, double stake, slower requote (Novig read limit)",
+ "since": 1793643451,
+ "beat": 1793643451
+}
