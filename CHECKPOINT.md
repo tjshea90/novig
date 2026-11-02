@@ -1,13 +1,13 @@
-# CHECKPOINT 4354 — read me first, then TASKS.md
+# CHECKPOINT 4355 — read me first, then TASKS.md
 
-**Written:** 2026-11-02T18:05:24Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-htf6em` · **builds on:** `77749fdb4` (this checkpoint is the commit after it)
+**Written:** 2026-11-02T18:10:10Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-htf6em` · **builds on:** `9494e6920` (this checkpoint is the commit after it)
 
 ## Just done
-FR1 freshness verified accurate; root cause PropLine slow reread + ParlayAPI ncaaf stream flaps
+HB2 diagnosed: Novig read rate limit from bid churn
 
 ## Do this next
-FR1 ParlayAPI ncaaf hot stream closes
+HB2/HB1 reduce bid churn, prioritise bet fill reads
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ FR1 ParlayAPI ncaaf hot stream closes
 
 ## Last ten checkpoints
 ```
+  9494e6920 ckpt 4354: FR1 freshness verified accurate; root cause PropLine slow reread + ParlayAP
   77749fdb4 ckpt 4353: PL1 investigated, replied
   0650f995d ckpt 4352: CB1 answered: NCAAB already enabled
   51a6bb76a ckpt 4351: answered chat: stale PropLine ages vs Novig socket
@@ -26,5 +27,4 @@ FR1 ParlayAPI ncaaf hot stream closes
   b9de00901 ckpt 4347: pre-ship: LR1: a phone restart no longer switches off the GitHub engine's a
   cf12aeb2c ckpt 4346: LR1: restart no longer resets auto-bet/bids while engine trades
   19af00dfd ckpt 4345: WATCH 2026-11-01 engine healthy, no change
-  0891efb00 ckpt 4344: BD20 bids 20/game wallet 2000%
 ```
