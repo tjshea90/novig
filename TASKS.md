@@ -6571,3 +6571,5 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [x] GR1 (Tj chat 2026-11-01 "yes do that") both-sides market whose Novig payout fits neither side: final score names winner, winner booked FMV at Novig net payout, other side LOST (ApiSettler.bothSides; ApiSettlerTest). Next: full :data:test, ship in next release.
 - [x] BD20 (Tj chat 2026-11-01 09:17 UTC) 20 bids per game, bid wallet 2000%, unlimited bids: set via engine_set (bidPerGameBids=20, bidWalletPct=2000; per-game dollar caps unchanged $25). Revert: bidPerGameBids=0 bidWalletPct=1200.
 - [x] LR1 (Tj chat 2026-11-01 18:34 UTC) phone no longer turns off the GitHub auto-bid engine: LaunchReset keeps autoBet/maker while engine trades; test LaunchResetTest. Ships with next release.
+
+- [ ] HB1 (Tj chat 00:52 UTC 2026-11-02) hand bets show "FILLED but fills could not be read (Novig limiting reads)": phone should pause scan reads while confirming a hand bet's fill and retry the fill read with backoff; Sync with Novig recovers meanwhile.
