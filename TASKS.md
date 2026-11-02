@@ -6573,3 +6573,4 @@ Root cause: RepeatGuard.family keyed the market LABEL, which for a total carries
 - [x] LR1 (Tj chat 2026-11-01 18:34 UTC) phone no longer turns off the GitHub auto-bid engine: LaunchReset keeps autoBet/maker while engine trades; test LaunchResetTest. Ships with next release.
 
 - [ ] HB1 (Tj chat 00:52 UTC 2026-11-02) hand bets show "FILLED but fills could not be read (Novig limiting reads)": phone should pause scan reads while confirming a hand bet's fill and retry the fill read with backoff; Sync with Novig recovers meanwhile.
+  - [ ] SK1b (Tj chat 17:56 UTC 2026-11-02) "why are these odds old if the socket is on?" Fair-odds rows (FanDuel, Pinnacle, ... all PropLine) show 7-10 min age; engine status sockets list has no PropLine stream line; ranking shows PropLine p90 2-6 min. Next: check PropLine stream state/cap, prefer ParlayAPI stream quotes where fresher.

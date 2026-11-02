@@ -1,21 +1,23 @@
-# CHECKPOINT 4350 — read me first, then TASKS.md
+# CHECKPOINT 4351 — read me first, then TASKS.md
 
-**Written:** 2026-11-02T12:35:54Z · **tests:** all 9 fast checks green
-**Branch:** `claude/keen-keller-9aubr4` · **builds on:** `f5326b101` (this checkpoint is the commit after it)
+**Written:** 2026-11-02T17:59:27Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-htf6em` · **builds on:** `4b5e27071` (this checkpoint is the commit after it)
 
 ## Just done
-WATCH 2026-11-02 engine healthy, no change
+answered chat: stale PropLine ages vs Novig socket
 
 ## Do this next
-next digest: taker totals/spreads n>=200 gate
+SK1/SK1b: PropLine stream state
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  4b5e27071 ckpt 4350: WATCH 2026-11-02 engine healthy, no change
   67b83132b ckpt 4349: ANALYST 2026-11-02 skipped: no new digest, engine healthy
   ebd2c9af6 ckpt 4348: pre-release: LR1: a phone restart no longer switches off the GitHub engine'
   b9de00901 ckpt 4347: pre-ship: LR1: a phone restart no longer switches off the GitHub engine's a
@@ -25,5 +27,4 @@ next digest: taker totals/spreads n>=200 gate
   3c2225390 ckpt 4343: ENGINEER 2026-11-01 watch only, engine healthy, no change
   34f52d764 ckpt 4342: 2026-11-01 chat research: bids +4.6%, taker totals/spreads leak n194, no ch
   b0a7ffff2 ckpt 4341: pre-release: Tracker: both-sides markets with an odd Novig payout grade fro
-  4612a0fe8 ckpt 4340: pre-ship: Tracker: both-sides markets with an odd Novig payout grade from t
 ```
