@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-7542bf",
+ "name": "tj outlook",
+ "nonce": "91cc06",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/keen-keller-8ops4l",
+ "head": "86753d885177ab9b421f4c6c9e367afa0860bdfc",
+ "since": 1793708580,
+ "beat": 1793708580,
+ "beatIso": "2026-11-03T12:23:00Z",
+ "done": "ANALYST 11-03 slot0: skipped analysis, WATCH found Novig read key refused; told Tj",
+ "next": "after Tj resends read key confirm status.novigRoute clears"
+}
