@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-20helt",
  "head": "16548915cb5df17264d01dbeff5979e136669ff5",
  "since": 1793665370,
- "beat": 1793680388,
- "beatIso": "2026-11-03T04:33:08Z",
+ "beat": 1793682122,
+ "beatIso": "2026-11-03T05:02:02Z",
  "done": "ER1: engine restarted at Tj's word 04:32 UTC",
  "next": "confirm status.json shows engine running; wallet was $0.01"
 }
