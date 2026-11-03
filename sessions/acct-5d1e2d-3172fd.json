@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "3172fd",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-tjruqh",
+ "head": "6becc26f48a6211a9c7f7b90408e53ae3cd148ca",
+ "since": 1793665370,
+ "beat": 1793665370,
+ "beatIso": "2026-11-03T00:22:50Z",
+ "done": "ENGINEER 11-02 slot2: stood down, engine off per ER1",
+ "next": "AT 03:10 UTC 11-03 run engine_set gates.cloudTrading=LIVE gates.cloudBids=true --on (TASKS ER1)"
+}
