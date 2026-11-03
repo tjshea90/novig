@@ -8,8 +8,8 @@
  "branch": "claude/wizardly-meitner-nwloeu",
  "head": "86753d885177ab9b421f4c6c9e367afa0860bdfc",
  "since": 1793644050,
- "beat": 1793730260,
- "beatIso": "2026-11-03T18:24:20Z",
+ "beat": 1793730328,
+ "beatIso": "2026-11-03T18:25:28Z",
  "done": "ANALYST 2026-11-02 13:20 skipped (no new digest)",
  "next": "HB2 bid churn; taker totals cut at n>=200"
 }
