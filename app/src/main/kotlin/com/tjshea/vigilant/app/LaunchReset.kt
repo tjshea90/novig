@@ -28,7 +28,7 @@ object LaunchReset {
     fun apply(s: ScanSettings): ScanSettings =
         // Tj, 2026-11-01 (chat): "make it so my phone no longer automatically turns off the github auto bid engine". The settings are mirrored to the engine, so a phone
         // that restarted and switched auto-bet/auto-make off stopped the engine's own bids and bets. While the engine trades (not Off), those two switches are the engine's: left as they are.
-        if (engineTrades(s)) s.copy(autoScan = AutoScanMode.OFF) else s.copy(autoBet = false, autoScan = AutoScanMode.OFF, maker = false)
+        if (engineTrades(s)) s.copy(autoScan = AutoScanMode.OFF) else s.copy(autoBet = false, autoScan = AutoScanMode.OFF) // Tj 2026-11-04 (chat): bids (maker) are never switched off by a restart
 
     /** The GitHub engine is the one trading (cloud scan driving, engine trading Paper or Live, not killed): its switches are not the phone's to reset. */
     private fun engineTrades(s: ScanSettings): Boolean = s.cloudDrives && !s.killed && s.gates.cloudTrading != com.tjshea.vigilant.data.scanner.CloudTradeMode.OFF
@@ -38,12 +38,6 @@ object LaunchReset {
         if (engineTrades(s)) return if (s.autoScan != AutoScanMode.OFF) "Background auto-scan is off after the phone restarted. Switch it on in Settings when you want it." else null
         val bet = s.autoBet
         val scan = s.autoScan != AutoScanMode.OFF
-        // Auto-make goes off with auto-bet (Tj, 2026-10-03: "auto make bets just the same way that auto bet already takes bets").
-        if (s.maker) {
-            val off = listOfNotNull("Auto-bet".takeIf { bet }, "auto-make (Bids tab)", "background auto-scan".takeIf { scan })
-            val list = if (off.size == 1) off[0] else off.dropLast(1).joinToString(", ") + " and " + off.last()
-            return "${list.replaceFirstChar { it.uppercase() }} ${if (off.size == 1) "is" else "are"} off after the phone restarted. Switch ${if (off.size == 1) "it" else "them"} on when you want ${if (off.size == 1) "it" else "them"}."
-        }
         return when {
             bet && scan -> "Auto-bet and background auto-scan are off after the phone restarted. Switch them on in Settings when you want them."
             bet -> "Auto-bet is off after the phone restarted. Switch it on in Settings when you want it."

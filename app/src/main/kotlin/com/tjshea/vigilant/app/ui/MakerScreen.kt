@@ -186,7 +186,7 @@ object MakerText {
 
     const val CONFIRM =
         "Vigilant will post and move bids by itself from the Vigilant wallet, within these rules, while each scan runs and every background cycle: real money, " +
-            "nobody confirming each one (the same way auto-bet places bets). A phone restart switches it off."
+            "nobody confirming each one (the same way auto-bet places bets).."
 
     const val RESEARCH =
         "Research (60 days of Novig's trades, RESEARCH.md §70): bids 4% under the fair on player props filled on 30-45% of sides and beat Novig's close by " +
