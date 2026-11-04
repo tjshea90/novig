@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-5159za",
- "head": "4e14dc81f6a6f0bf6b896bc3f24761eaf92dcf8f",
+ "head": "9a63bb669ec50e6ce5f29b57365b460f11d8d631",
  "since": 1793751760,
- "beat": 1793830329,
- "beatIso": "2026-11-04T22:12:09Z",
+ "beat": 1793830499,
+ "beatIso": "2026-11-04T22:14:59Z",
  "done": "pre-ship: A phone restart no longer turns off auto-bet, bids or auto-scan",
  "next": "ship.sh gates and releases this"
 }
