@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-5159za",
- "head": "56a7b1fc79070eeafb6b59964a98ba750076ff00",
+ "head": "4e14dc81f6a6f0bf6b896bc3f24761eaf92dcf8f",
  "since": 1793751760,
- "beat": 1793830292,
- "beatIso": "2026-11-04T22:11:32Z",
- "done": "LR1 restart no longer resets auto bids; engine off per Tj",
- "next": "ship release, tell Tj; ER2 restart engine 03:05 UTC"
+ "beat": 1793830324,
+ "beatIso": "2026-11-04T22:12:04Z",
+ "done": "pre-ship: A phone restart no longer turns off auto-bet, bids or auto-scan",
+ "next": "ship.sh gates and releases this"
 }
