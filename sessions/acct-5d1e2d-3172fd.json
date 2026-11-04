@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-j7tra9",
- "head": "12f232ccf750e29c8419d372575ed3175646d59d",
+ "head": "43d165dcda01a22d568f8920809eac4e05311cad",
  "since": 1793751760,
- "beat": 1793780157,
- "beatIso": "2026-11-04T08:15:57Z",
- "done": "OK1: Odds API sticky keys now return to the first usable key",
- "next": "ship next version (BD unlimited + OK1)"
+ "beat": 1793780302,
+ "beatIso": "2026-11-04T08:18:22Z",
+ "done": "OK1+BD: tests green",
+ "next": "ship"
 }
