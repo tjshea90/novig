@@ -439,3 +439,4 @@ day that changes.
 | v1.0.98 | code 438 | 2026-11-01T19:08Z | LR1: a phone restart no longer switches off the GitHub engine's auto-bet and bids
 | v1.0.99 | code 439 | 2026-11-02T18:33Z | v1.0.99: bids half as many at double stake, slower requote (Novig read limit)
 | v1.0.100 | code 440 | 2026-11-04T08:35Z | Odds API keys used in order (a throttle no longer moves the engine along the list); Volume mode honors Unlimited bids
+| v1.0.101 | code 441 | 2026-11-04T22:24Z | A phone restart no longer turns off auto-bet, bids or auto-scan
