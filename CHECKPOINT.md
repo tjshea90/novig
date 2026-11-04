@@ -1,7 +1,7 @@
-# CHECKPOINT 4376 — read me first, then TASKS.md
+# CHECKPOINT 4377 — read me first, then TASKS.md
 
-**Written:** 2026-11-04T22:12:03Z · **tests:** all 9 fast checks green
-**Branch:** `claude/optimistic-curie-5159za` · **builds on:** `56a7b1fc7` (this checkpoint is the commit after it)
+**Written:** 2026-11-04T22:14:59Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-5159za` · **builds on:** `4e14dc81f` (this checkpoint is the commit after it)
 
 ## Just done
 pre-ship: A phone restart no longer turns off auto-bet, bids or auto-scan
@@ -13,10 +13,11 @@ ship.sh gates and releases this
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/src/test/kotlin/com/tjshea/vigilant/app/MakerAppTest.kt
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  4e14dc81f ckpt 4376: pre-ship: A phone restart no longer turns off auto-bet, bids or auto-scan
   56a7b1fc7 ckpt 4375: LR1 restart no longer resets auto bids; engine off per Tj
   e78f2e2cd ckpt 4374: WATCH 11-04 slot1: engine healthy, nothing shipped
   ae085049f ckpt 4373: ENGINEER 11-04 slot0: engine healthy, nothing shipped
@@ -26,5 +27,4 @@ ship.sh gates and releases this
   c9736992e ckpt 4369: BoltOdds off per Tj
   27bee0475 ckpt 4368: answered socket question; logged SK2
   22f21aca9 ckpt 4367: WATCH 11-03 slot2: engine healthy, read key recovered
-  3195b4c54 ckpt 4366: ENGINEER 11-03 slot1: stood down, read-key refusal awaits Tj
 ```
