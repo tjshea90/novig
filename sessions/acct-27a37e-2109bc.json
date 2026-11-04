@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "2109bc",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-hreall",
+ "head": "e78f2e2cd4916f5f670da4dbddf96871cd503769",
+ "since": 1793816568,
+ "beat": 1793816568,
+ "beatIso": "2026-11-04T18:22:48Z",
+ "done": "WATCH 11-04 slot1: engine healthy, nothing shipped",
+ "next": "next: HB1/SK1b backlog; watch bid fills"
+}
