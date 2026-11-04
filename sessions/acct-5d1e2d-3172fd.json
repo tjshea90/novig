@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-5159za",
  "head": "9a63bb669ec50e6ce5f29b57365b460f11d8d631",
  "since": 1793751760,
- "beat": 1793830499,
- "beatIso": "2026-11-04T22:14:59Z",
+ "beat": 1793830505,
+ "beatIso": "2026-11-04T22:15:05Z",
  "done": "pre-ship: A phone restart no longer turns off auto-bet, bids or auto-scan",
  "next": "ship.sh gates and releases this"
 }
