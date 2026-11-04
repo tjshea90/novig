@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-5159za",
- "head": "c7c6aa9c69b6fa847b8dff94db6f8b654e93f954",
+ "head": "56a7b1fc79070eeafb6b59964a98ba750076ff00",
  "since": 1793751760,
- "beat": 1793829929,
- "beatIso": "2026-11-04T22:05:29Z",
- "done": "AB1 bids survive restart, AB2 800% wallet cap; tests green",
- "next": "release with next batch; Tj asked why engine off (it is running, app status stale: ST1)"
+ "beat": 1793829995,
+ "beatIso": "2026-11-04T22:06:35Z",
+ "done": "LR1 restart no longer resets auto bids; engine off per Tj",
+ "next": "ship release, tell Tj; ER2 restart engine 03:05 UTC"
 }
