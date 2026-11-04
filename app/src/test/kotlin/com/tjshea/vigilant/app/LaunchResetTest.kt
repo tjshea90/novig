@@ -107,14 +107,11 @@ class LaunchResetTest {
         assertEquals(AutoScanService::class.java.name, shadowOf(app).nextStartedService.component?.className)
         assertTrue(saved().autoBet)
         assertEquals(AutoScanMode.BOTH, saved().autoScan)
-        // A phone restart: off at boot, the service not started, and the first screen says why.
+        // A phone restart (Tj 2026-11-04): nothing is switched off, the service starts.
         bootCount(8)
         runBlocking { AutoScanReceiver.afterBootOrUpdate(app) }
-        assertFalse(saved().autoBet)
-        assertEquals(AutoScanMode.OFF, saved().autoScan)
-        assertNull(shadowOf(app).peekNextStartedService())
-        open().destroy()
-        assertTrue(org.robolectric.shadows.ShadowToast.getTextOfLatestToast().startsWith("Auto-bet and background auto-scan are off after the phone restarted"))
+        assertTrue(saved().autoBet)
+        assertEquals(AutoScanMode.BOTH, saved().autoScan)
     }
 
     @Test
