@@ -216,11 +216,11 @@ data class MakerRules(
             obscureFill = false, lowUsageBooks = emptySet(), focus = s.makerFocus.name,
         )
 
-        fun of(s: ScanSettings): MakerRules = withTennis(s, ofFocus(s)).let { if (s.vigGuards.bidVolume && s.makerSource != com.tjshea.vigilant.data.scanner.BidSource.CNO) volumeOf(it) else it }
+        fun of(s: ScanSettings): MakerRules = withTennis(s, ofFocus(s)).let { if (s.vigGuards.bidVolume && s.makerSource != com.tjshea.vigilant.data.scanner.BidSource.CNO) volumeOf(it, s.makerMaxBids >= ScanSettings.NO_LIMIT) else it }
 
         /** Volume mode's rules over the usual ones ([BidVolume]): thousands of bids, no start-time limit, the EV floors, the fair allowed to age a little longer while a bid rests. */
-        private fun volumeOf(r: MakerRules): MakerRules = r.copy(
-            volume = true, tiered = true, margin = BidVolume.SAFE_EV, maxBids = BidVolume.MAX_BIDS, maxDollars = Double.MAX_VALUE / 4, postsPerPass = BidVolume.POSTS_PER_PASS,
+        private fun volumeOf(r: MakerRules, unlimited: Boolean = false): MakerRules = r.copy(
+            volume = true, tiered = true, margin = BidVolume.SAFE_EV, maxBids = if (unlimited) ScanSettings.NO_LIMIT else BidVolume.MAX_BIDS, maxDollars = Double.MAX_VALUE / 4, postsPerPass = BidVolume.POSTS_PER_PASS,
             requoteSteps = maxOf(r.requoteSteps, BidVolume.REQUOTE_STEPS),
             earlyHours = 0, requireSharp = false, farFairMaxAgeMs = maxOf(r.farFairMaxAgeMs, 30 * 60_000L), midFairMaxAgeMs = BidVolume.MID_FAIR_MAX_AGE_MS,
         )
