@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-6smbxu",
  "head": "a3fac49dd67effaf04d71a4a0914837e39a53e67",
  "since": 1793751760,
- "beat": 1793824728,
- "beatIso": "2026-11-04T20:38:48Z",
+ "beat": 1793825973,
+ "beatIso": "2026-11-04T20:59:33Z",
  "done": "AB1 bids survive restart, AB2 800% wallet cap; tests green",
  "next": "release with next batch; Tj asked why engine off (it is running, app status stale: ST1)"
 }
