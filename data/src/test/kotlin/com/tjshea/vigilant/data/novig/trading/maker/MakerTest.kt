@@ -1070,6 +1070,7 @@ class MakerTest {
     fun `Volume mode is thousands of bids at any start time, the margin is an EV floor by type and the wallet scale-up passes are off`() {
         assertTrue(volume.volume)
         assertEquals(BidVolume.MAX_BIDS, volume.maxBids)
+        assertEquals("unlimited is honoured in Volume mode", ScanSettings.NO_LIMIT, MakerRules.of(ScanSettings(maker = true, makerMaxBids = ScanSettings.NO_LIMIT, vigGuards = ScanGuards(bidVolume = true))).maxBids)
         assertEquals("any start time", 0, volume.earlyHours)
         assertEquals("the stake scale-up target is the whole allowed wallet", 1.0, MakerRules.of(ScanSettings(maker = true, vigGuards = ScanGuards(bidVolume = true, bidDeploy = true))).deployPct, 1e-9)
         assertFalse("off: the usual rules", MakerRules.of(ScanSettings(maker = true, vigGuards = ScanGuards(bidVolume = false))).volume)
