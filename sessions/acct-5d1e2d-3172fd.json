@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-5159za",
- "head": "e78f2e2cd4916f5f670da4dbddf96871cd503769",
+ "head": "c7c6aa9c69b6fa847b8dff94db6f8b654e93f954",
  "since": 1793751760,
- "beat": 1793829585,
- "beatIso": "2026-11-04T21:59:45Z",
+ "beat": 1793829929,
+ "beatIso": "2026-11-04T22:05:29Z",
  "done": "AB1 bids survive restart, AB2 800% wallet cap; tests green",
  "next": "release with next batch; Tj asked why engine off (it is running, app status stale: ST1)"
 }
