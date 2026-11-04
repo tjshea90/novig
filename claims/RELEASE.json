@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/3172fd",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "3172fd",
+ "note": "A phone restart no longer turns off auto-bet, bids or auto-scan",
+ "since": 1793830014,
+ "beat": 1793830014
+}
