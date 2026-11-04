@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-j7tra9",
- "head": "cf16cbb861adba8416eaa4eb9ed7efa2309f83ba",
+ "head": "4a78b246be8bf990c16a62ce745ab88af05f2850",
  "since": 1793751760,
- "beat": 1793780885,
- "beatIso": "2026-11-04T08:28:05Z",
+ "beat": 1793781321,
+ "beatIso": "2026-11-04T08:35:21Z",
  "done": "pre-release: Odds API keys used in order (a throttle no longer moves the engine along the list); Volume mode honors Unlimited bids (versionCode 440, v1.0.100)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.100), then run: bash tools/record-release.sh v1.0.100 440 \"Odds API keys used in order (a throttle no longer moves the engine along the list); Volume mode honors Unlimited bids\""
 }
