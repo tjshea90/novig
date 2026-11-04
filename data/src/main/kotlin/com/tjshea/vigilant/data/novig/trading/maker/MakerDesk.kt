@@ -376,7 +376,7 @@ class MakerDesk(
         // Every bid not yet ended can still fill (one on its way down too), and Novig doesn't hold a resting bid's cost from the balance (Tj's v0.53.0
         // file: "wallet $8.32 → $8.32 with $12.54 resting", NOVIG_API.md §17): what's up counts against the wallet as well as the day's limit. Under zero
         // when the money behind the bids fell short after they went up (a bet by hand, an auto-bet, a fill: Tj, 2026-10-04): the plan takes those bids down.
-        val budget = spare(allBids, spent, wallet, maxPerDay)
+        val budget = spare(allBids, spent, wallet, maxPerDay, rules.walletMultiple)
         val actions = MakerPlan.plan(
             wanted = decisions.filterIsInstance<MakerDecision.Post>(), resting = resting, rules = rules, now = now,
             skips = decisions.filterIsInstance<MakerDecision.Skip>().associate { it.line.outcomeId to it.why }, stopAll = stopAll, budget = budget,
@@ -568,7 +568,7 @@ class MakerDesk(
         val bids = store.all()
         val actions = MakerPlan.plan(
             wanted = emptyList(), resting = restingOf(bids.filter { it.resting && it.orderId != null }), rules = rules, now = now,
-            budget = spare(bids, spentToday(tracker.all(), now), wallet, maxPerDay), repost = false, partial = true,
+            budget = spare(bids, spentToday(tracker.all(), now), wallet, maxPerDay, rules.walletMultiple), repost = false, partial = true,
         )
         val noReplace = HashSet<String>()
         val cancelled = withContext(NonCancellable) { runCancels(actions.cancels, problems, fills, noReplace) }
@@ -629,8 +629,8 @@ class MakerDesk(
      * What's left of the wallet and the day's limit beside every bid not yet ended (any can still fill, one on its way down too): the least of the two,
      * less what's up. Under zero when the bids up are worth more than either. [wallet] null = no reading.
      */
-    private fun spare(bids: List<MakerBid>, spent: Double, wallet: Double?, maxPerDay: Double): Double =
-        minOf(wallet ?: Double.MAX_VALUE, maxPerDay - spent) - bids.filter { it.active }.sumOf { it.restingDollars }
+    private fun spare(bids: List<MakerBid>, spent: Double, wallet: Double?, maxPerDay: Double, walletMultiple: Double = 1.0): Double =
+        minOf(wallet?.times(walletMultiple.coerceAtLeast(1.0)) ?: Double.MAX_VALUE, maxPerDay - spent) - bids.filter { it.active }.sumOf { it.restingDollars }
 
     /** Cancels [cancels] (bid, why); how many Novig took. Sides whose cancel isn't confirmed gone go into [noReplace]: nothing new there this pass. */
     private suspend fun runCancels(cancels: List<Pair<RestingBid, String>>, problems: MutableList<String>, fills: MutableList<TrackedBet>, noReplace: MutableSet<String>): Int {

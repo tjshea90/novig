@@ -127,6 +127,8 @@ data class MakerRules(
      * of full Kelly), and what the desk works out each pass: [stakeScale], the multiple of the usual stake a new bid asks for (1 = usual; never past [maxStake] or [kellyCeiling]).
      */
     val deployPct: Double = 0.0,
+    /** Resting bids may add up to this many times the wallet (Tj, 2026-11-04: "instead of unlimited bids, make it 800% of wallet"; Novig holds nothing for a resting bid). 1 = the wallet. */
+    val walletMultiple: Double = 1.0,
     val deployMaxKelly: Double = 0.25,
     val stakeScale: Double = 1.0,
     val kellyCeiling: Double = 0.0,
@@ -220,7 +222,7 @@ data class MakerRules(
 
         /** Volume mode's rules over the usual ones ([BidVolume]): thousands of bids, no start-time limit, the EV floors, the fair allowed to age a little longer while a bid rests. */
         private fun volumeOf(r: MakerRules, unlimited: Boolean = false): MakerRules = r.copy(
-            volume = true, tiered = true, margin = BidVolume.SAFE_EV, maxBids = if (unlimited) ScanSettings.NO_LIMIT else BidVolume.MAX_BIDS, maxDollars = Double.MAX_VALUE / 4, postsPerPass = BidVolume.POSTS_PER_PASS,
+            volume = true, tiered = true, margin = BidVolume.SAFE_EV, maxBids = if (unlimited) ScanSettings.NO_LIMIT else BidVolume.MAX_BIDS, maxDollars = Double.MAX_VALUE / 4, walletMultiple = if (unlimited) BidVolume.UNLIMITED_WALLET_MULTIPLE else 1.0, postsPerPass = BidVolume.POSTS_PER_PASS,
             requoteSteps = maxOf(r.requoteSteps, BidVolume.REQUOTE_STEPS),
             earlyHours = 0, requireSharp = false, farFairMaxAgeMs = maxOf(r.farFairMaxAgeMs, 30 * 60_000L), midFairMaxAgeMs = BidVolume.MID_FAIR_MAX_AGE_MS,
         )
