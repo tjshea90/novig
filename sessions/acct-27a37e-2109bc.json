@@ -3,13 +3,13 @@
  "label": "acct-27a37e",
  "name": "tj Gmail",
  "nonce": "2109bc",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/wizardly-meitner-hreall",
  "head": "ae085049f81359941d74b66514965a21817cb16f",
  "since": 1793730430,
- "beat": 1793816491,
- "beatIso": "2026-11-04T18:21:31Z",
+ "beat": 1793816513,
+ "beatIso": "2026-11-04T18:21:53Z",
  "done": "ENGINEER 11-03 slot1: stood down, read-key refusal awaits Tj",
  "next": "confirm status.novigRoute clears after Tj resends read key"
 }
