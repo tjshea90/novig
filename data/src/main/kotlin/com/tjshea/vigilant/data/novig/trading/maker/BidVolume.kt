@@ -7,6 +7,8 @@ package com.tjshea.vigilant.data.novig.trading.maker
  * Order is by how fast bids like it have filled ([score]: the hours to the start and how close the price sits to Novig's offer, `research/bid_volume_study_2026-10-21.md`), so the money goes first where fills come fastest. Pure.
  */
 object BidVolume {
+    /** With "unlimited" bids, the bids up may add to this many times the wallet (Tj, 2026-11-04: 800%). */
+    const val UNLIMITED_WALLET_MULTIPLE = 8.0
     /** The EV floor of the safest bid types (proven and steady: [BidTier]) when a sharp book prices the line. */
     const val SAFE_EV = 0.015
 
