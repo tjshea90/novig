@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-5159za",
  "head": "56a7b1fc79070eeafb6b59964a98ba750076ff00",
  "since": 1793751760,
- "beat": 1793830014,
- "beatIso": "2026-11-04T22:06:54Z",
+ "beat": 1793830292,
+ "beatIso": "2026-11-04T22:11:32Z",
  "done": "LR1 restart no longer resets auto bids; engine off per Tj",
  "next": "ship release, tell Tj; ER2 restart engine 03:05 UTC"
 }
