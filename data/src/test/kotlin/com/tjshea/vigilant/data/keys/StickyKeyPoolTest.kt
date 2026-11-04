@@ -17,4 +17,15 @@ class StickyKeyPoolTest {
         repeat(2) { pool.execute(1) { k -> used += k; KeyAttemptResult.Success(Unit) } }
         assertEquals(listOf("a", "a", "a", "a", "b", "b", "b"), used)
     }
+
+    @Test fun `a key that was only throttled is used again once it has rested`() = runBlocking {
+        var now = 1_000L
+        val m = UsageMeter(JsonFileStore(java.io.File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }), { now })
+        val pool = KeyPool(QuotaPolicy.ODDS_API, { listOf("a", "b") }, m, sticky = true)
+        val used = mutableListOf<String>()
+        pool.execute(1) { k -> used += k; if (k == "a") KeyAttemptResult.RateLimited(60_000, "429") else KeyAttemptResult.Success(Unit) }
+        now += 61_000
+        repeat(2) { pool.execute(1) { k -> used += k; KeyAttemptResult.Success(Unit) } }
+        assertEquals(listOf("a", "b", "a", "a"), used)
+    }
 }

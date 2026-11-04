@@ -595,7 +595,9 @@ class KeyPool(
             }
             // A sticky key stays first only while no key of a bigger plan is open (a Pro key bought later takes over from a Starter one).
             val planOf = { k: String? -> meter.flow.value.providers[policy.id]?.keys?.get(k ?: "")?.limit ?: 0 }
-            val ordered = lastGood.takeIf { sticky && it in open && (pace == null || planOf(it) >= planOf(open.first())) }?.let { g -> listOf(g) + (open - g) } ?: open
+            // Sticky = Tj's order, always from the first key again (2026-11-04, OK1): a key that was only throttled for a moment (a 429 rests it 2 s) used to hand the stickiness to the NEXT key for good,
+            // so every burst moved the engine along the list and all 23 free keys ended equally used. Now a throttled key is skipped only while it rests, and the first usable key is always first.
+            val ordered = if (sticky) open else lastGood.takeIf { it in open && (pace == null || planOf(it) >= planOf(open.first())) }?.let { g -> listOf(g) + (open - g) } ?: open
             val key = meter.pick(policy, ordered, cost, held)
                 ?: if (held !== UsageMeter.NO_FLOOR && open.isNotEmpty() && meter.pick(policy, open, cost) != null) {
                     throw CreditsHeldBackException(heldBackMessage(all, open, cost, reserve, pace))
