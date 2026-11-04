@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-j7tra9",
- "head": "6130439f803ec135ead67e3fc551bb2d61b007e8",
+ "head": "8093534d83ed60c74b42e362bac2fc5d1620a689",
  "since": 1793751760,
- "beat": 1793779600,
- "beatIso": "2026-11-04T08:06:40Z",
- "done": "BoltOdds off per Tj",
- "next": "none"
+ "beat": 1793779679,
+ "beatIso": "2026-11-04T08:07:59Z",
+ "done": "OK1: Odds API sticky keys now return to the first usable key",
+ "next": "ship next version (BD unlimited + OK1)"
 }
