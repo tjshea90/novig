@@ -1,13 +1,13 @@
-# CHECKPOINT 4366 — read me first, then TASKS.md
+# CHECKPOINT 4367 — read me first, then TASKS.md
 
-**Written:** 2026-11-03T18:27:09Z · **tests:** all 9 fast checks green
-**Branch:** `claude/wizardly-meitner-nwloeu` · **builds on:** `86753d885` (this checkpoint is the commit after it)
+**Written:** 2026-11-04T00:22:40Z · **tests:** all 9 fast checks green
+**Branch:** `claude/optimistic-curie-zjx330` · **builds on:** `3195b4c54` (this checkpoint is the commit after it)
 
 ## Just done
-ENGINEER 11-03 slot1: stood down, read-key refusal awaits Tj
+WATCH 11-03 slot2: engine healthy, read key recovered
 
 ## Do this next
-confirm status.novigRoute clears after Tj resends read key
+no action; next ANALYST/ENGINEER per backlog
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ confirm status.novigRoute clears after Tj resends read key
 
 ## Last ten checkpoints
 ```
+  3195b4c54 ckpt 4366: ENGINEER 11-03 slot1: stood down, read-key refusal awaits Tj
   86753d885 ckpt 4365: ANALYST 11-03 slot0: skipped analysis, WATCH found Novig read key refused; 
   16548915c ckpt 4364: ER1: engine restarted at Tj's word 04:32 UTC
   6becc26f4 ckpt 4363: ENGINEER 11-02 slot2: stood down, engine off per ER1
@@ -25,5 +26,4 @@ confirm status.novigRoute clears after Tj resends read key
   d3dcfc9ce ckpt 4359: BB1 answered: Bet buttons need phone trading key
   64db5659d ckpt 4358: BD21 verified: trading resumed on v1.0.99
   5877c6099 ckpt 4357: ANALYST 2026-11-02 13:20 skipped (no new digest)
-  d1224cbbf ckpt 4357: v1.0.99 on main, engine reset
 ```
