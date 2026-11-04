@@ -54,62 +54,15 @@ class LaunchResetTest {
     private fun saved() = runBlocking { app.container.settingsStore.read() }
 
     @Test
-    fun `the reset switches off auto-bet and background auto-scan and nothing else`() {
-        val reset = LaunchReset.apply(on)
-        assertFalse(reset.autoBet)
-        assertEquals(AutoScanMode.OFF, reset.autoScan)
-        assertEquals(on.copy(autoBet = false, autoScan = AutoScanMode.OFF), reset)
-        // Kept: the criteria, the limits, the interval and the keep-awake choice are Tj's, for when he switches them on again.
-        assertEquals(0.035, reset.autoBetMinEv, 0.0)
-        assertEquals(4, reset.autoBetBooks)
-        assertEquals(8.0, reset.autoBetMaxStake, 0.0)
-        assertEquals(5, reset.autoScanSeconds)
-        assertTrue(reset.autoBetAllAgree)
-        assertFalse(reset.autoScanKeepAwake)
-        // And what it does to a settings that already has them off.
-        assertEquals(LaunchReset.apply(reset), reset)
-    }
-
-    @Test
-    fun `a restart leaves auto-bet and bids alone while the GitHub engine trades`() {
-        val engine = on.copy(maker = true, gates = on.gates.copy(cloudScan = true, cloudTrading = com.tjshea.vigilant.data.scanner.CloudTradeMode.LIVE))
-        val reset = LaunchReset.apply(engine)
-        assertTrue(reset.autoBet)
-        assertTrue(reset.maker)
-        assertEquals(AutoScanMode.OFF, reset.autoScan)
-        // Engine trading off: the old rule.
-        val off = LaunchReset.apply(engine.copy(gates = engine.gates.copy(cloudTrading = com.tjshea.vigilant.data.scanner.CloudTradeMode.OFF)))
-        assertFalse(off.maker); assertFalse(off.autoBet)
-    }
-
-    @Test
-    fun `the note says what was on, and nothing when nothing was`() {
-        assertEquals("Auto-bet and background auto-scan are off after the phone restarted. Switch them on in Settings when you want them.", LaunchReset.note(on))
-        assertEquals("Auto-bet is off after the phone restarted. Switch it on in Settings when you want it.", LaunchReset.note(on.copy(autoScan = AutoScanMode.OFF)))
-        assertEquals("Background auto-scan is off after the phone restarted. Switch it on in Settings when you want it.", LaunchReset.note(on.copy(autoBet = false)))
-        assertNull(LaunchReset.note(on.copy(autoBet = false, autoScan = AutoScanMode.OFF)))
-    }
-
-    @Test
-    fun `a restart saves the reset before the screen reads the settings, once, and keeps the note`() = runBlocking {
-        // The first look (the update that brought this rule): nothing switched off.
+    fun `a phone restart switches nothing off (Tj 2026-11-04)`() = runBlocking {
+        assertEquals(on, LaunchReset.apply(on))
+        assertNull(LaunchReset.note(on))
         assertFalse(LaunchReset.afterRestart(app, Boot(7, 1L)))
-        assertTrue(saved().autoBet)
-        // The phone restarted.
         assertTrue(LaunchReset.afterRestart(app, Boot(8, 2L)))
         val s = saved()
-        assertFalse(s.autoBet)
-        assertEquals(AutoScanMode.OFF, s.autoScan)
-        assertEquals(0.035, s.autoBetMinEv, 0.0)
-        assertEquals(5, s.autoScanSeconds)
-        // The file on disk says it too (a killed process can't bring it back).
-        val disk = File(app.filesDir, "settings.json").readText()
-        assertTrue(disk, disk.contains("\"autoBet\":false"))
-        // Handled: Tj switches it on again and it stays on for the rest of this run of the phone.
-        app.container.settingsStore.update { on }
-        assertFalse(LaunchReset.afterRestart(app, Boot(8, 2L)))
-        assertTrue(saved().autoBet)
-        assertTrue(app.container.launches.takeNote()!!.startsWith("Auto-bet and background auto-scan are off after the phone restarted"))
+        assertTrue(s.autoBet)
+        assertEquals(AutoScanMode.BOTH, s.autoScan)
+        assertNull(app.container.launches.takeNote())
     }
 
     @Test
@@ -125,13 +78,11 @@ class LaunchResetTest {
         assertTrue(saved().autoBet)
         assertEquals(AutoScanMode.BOTH, saved().autoScan)
         assertTrue(app.container.eventLog.events().any { it.msg.contains("screen opened (auto-bet and auto-scan kept as they were)") })
-        // The phone restarted (a boot the receiver never heard): the first screen switches them off and says so.
+        // The phone restarted (a boot the receiver never heard): nothing is switched off.
         bootCount(8)
         open().destroy()
-        assertFalse(saved().autoBet)
-        assertEquals(AutoScanMode.OFF, saved().autoScan)
-        assertTrue(org.robolectric.shadows.ShadowToast.getTextOfLatestToast().startsWith("Auto-bet and background auto-scan are off after the phone restarted"))
-        assertTrue(app.container.eventLog.events().any { it.msg.contains("screen opened (first since the phone restarted): Auto-bet") })
+        assertTrue(saved().autoBet)
+        assertEquals(AutoScanMode.BOTH, saved().autoScan)
         // Switched on again: stays on.
         runBlocking { app.container.settingsStore.update { on } }
         open().destroy()

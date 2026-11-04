@@ -24,33 +24,14 @@ import kotlin.math.abs
  */
 object LaunchReset {
 
-    /** [s] with the background things off (auto-bet, background auto-scan, auto-make); everything else (limits, criteria, the interval, the halt) kept as it was. */
-    fun apply(s: ScanSettings): ScanSettings =
-        // Tj, 2026-11-01 (chat): "make it so my phone no longer automatically turns off the github auto bid engine". The settings are mirrored to the engine, so a phone
-        // that restarted and switched auto-bet/auto-make off stopped the engine's own bids and bets. While the engine trades (not Off), those two switches are the engine's: left as they are.
-        if (engineTrades(s)) s.copy(autoScan = AutoScanMode.OFF) else s.copy(autoBet = false, autoScan = AutoScanMode.OFF, maker = false)
+    /**
+     * Tj, 2026-11-04 (chat): "make the app stop turning off auto bids on restart". A phone restart switches NOTHING off any more (auto-bet, auto-make
+     * and background auto-scan stay as Tj left them; before this the restart reset them, his 2026-10-02 rule). Kept as a function so the callers stay.
+     */
+    fun apply(s: ScanSettings): ScanSettings = s
 
-    /** The GitHub engine is the one trading (cloud scan driving, engine trading Paper or Live, not killed): its switches are not the phone's to reset. */
-    private fun engineTrades(s: ScanSettings): Boolean = s.cloudDrives && !s.killed && s.gates.cloudTrading != com.tjshea.vigilant.data.scanner.CloudTradeMode.OFF
-
-    /** What [apply] switches off in [s], in words for the note on screen; null when both were off already. */
-    fun note(s: ScanSettings): String? {
-        if (engineTrades(s)) return if (s.autoScan != AutoScanMode.OFF) "Background auto-scan is off after the phone restarted. Switch it on in Settings when you want it." else null
-        val bet = s.autoBet
-        val scan = s.autoScan != AutoScanMode.OFF
-        // Auto-make goes off with auto-bet (Tj, 2026-10-03: "auto make bets just the same way that auto bet already takes bets").
-        if (s.maker) {
-            val off = listOfNotNull("Auto-bet".takeIf { bet }, "auto-make (Bids tab)", "background auto-scan".takeIf { scan })
-            val list = if (off.size == 1) off[0] else off.dropLast(1).joinToString(", ") + " and " + off.last()
-            return "${list.replaceFirstChar { it.uppercase() }} ${if (off.size == 1) "is" else "are"} off after the phone restarted. Switch ${if (off.size == 1) "it" else "them"} on when you want ${if (off.size == 1) "it" else "them"}."
-        }
-        return when {
-            bet && scan -> "Auto-bet and background auto-scan are off after the phone restarted. Switch them on in Settings when you want them."
-            bet -> "Auto-bet is off after the phone restarted. Switch it on in Settings when you want it."
-            scan -> "Background auto-scan is off after the phone restarted. Switch it on in Settings when you want it."
-            else -> null
-        }
-    }
+    /** Nothing is switched off after a restart, so there is never a note. */
+    fun note(@Suppress("UNUSED_PARAMETER") s: ScanSettings): String? = null
 
     /**
      * A phone restart Vigilant hasn't handled yet: saves [apply], keeps the note for the next screen, then marks [boot] handled. True when it
