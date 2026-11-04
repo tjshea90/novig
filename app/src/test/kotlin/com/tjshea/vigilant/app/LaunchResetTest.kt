@@ -79,7 +79,7 @@ class LaunchResetTest {
         assertEquals(AutoScanMode.OFF, reset.autoScan)
         // Engine trading off: the old rule.
         val off = LaunchReset.apply(engine.copy(gates = engine.gates.copy(cloudTrading = com.tjshea.vigilant.data.scanner.CloudTradeMode.OFF)))
-        assertFalse(off.maker); assertFalse(off.autoBet)
+        assertTrue(off.maker); assertFalse(off.autoBet)
     }
 
     @Test

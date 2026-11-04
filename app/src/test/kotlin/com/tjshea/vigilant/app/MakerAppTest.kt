@@ -455,11 +455,11 @@ class MakerAppTest {
     }
 
     @Test
-    fun `a phone restart switches auto-make off with auto-bet, and says so`() {
+    fun `a phone restart leaves bids on and switches auto-bet off`() {
         val s = ScanSettings(maker = true, autoBet = true)
-        assertTrue(!LaunchReset.apply(s).maker)
-        assertEquals("Auto-bet and auto-make (Bids tab) are off after the phone restarted. Switch them on when you want them.", LaunchReset.note(s))
-        assertEquals("Auto-make (Bids tab) is off after the phone restarted. Switch it on when you want it.", LaunchReset.note(ScanSettings(maker = true)))
+        assertTrue(LaunchReset.apply(s).maker)
+        assertEquals("Auto-bet is off after the phone restarted. Switch it on in Settings when you want it.", LaunchReset.note(s))
+        assertEquals(null, LaunchReset.note(ScanSettings(maker = true)))
     }
 
     // ---- the wallet kept ahead of the bids (Tj, 2026-10-04) ---------------------------------------------------------------
