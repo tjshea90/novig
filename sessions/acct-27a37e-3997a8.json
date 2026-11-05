@@ -8,8 +8,8 @@
  "branch": "ccr-0666b61b-yxwcj9",
  "head": "9832ff28b6cc426ec94d95a84435d33ea2bdb677",
  "since": 1793861664,
- "beat": 1793863768,
- "beatIso": "2026-11-05T07:29:28Z",
+ "beat": 1793864156,
+ "beatIso": "2026-11-05T07:35:56Z",
  "done": "pre-release: NC1: NCAAB tab (college basketball ATS system with Novig lines, bets and a parlay builder) and its GitHub game log (versionCode 442, v1.0.102)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.102), then run: bash tools/record-release.sh v1.0.102 442 \"NC1: NCAAB tab (college basketball ATS system with Novig lines, bets and a parlay builder) and its GitHub game log\""
 }
