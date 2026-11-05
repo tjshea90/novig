@@ -124,7 +124,7 @@ object NcaabView {
 
     private fun pickOf(r: NcaabSignals.Reading, g: SlateGame, swapped: Boolean, spread: SpreadLine?, total: TotalLine?): NcaabPick {
         // ESPN's home/away of the reading -> Novig's side of the same team.
-        val novigHome = r.pick == NcaabSignals.Pick.HOME != swapped
+        val novigHome = (r.pick == NcaabSignals.Pick.HOME) != swapped
         val opp: Opportunity? = when (r.pick) {
             NcaabSignals.Pick.HOME, NcaabSignals.Pick.AWAY -> spread?.let { if (novigHome) it.home else it.away }
             NcaabSignals.Pick.OVER -> total?.over
