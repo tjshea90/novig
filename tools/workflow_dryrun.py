@@ -13,7 +13,7 @@ step's `env:`, GITHUB_ENV / GITHUB_STEP_SUMMARY emulated between steps and `if: 
   python3 -I tools/workflow_dryrun.py .github/workflows/ncaab-log.yml --job log --branch ncaab-data --runs 2 [--input from=2026-11-01]
 
 After each run it lists what the local "remote" branch holds and flags files that look like this repository's own source (the nested-repo mistake). The scratch directory (checkouts, the local
-remote, each step's script) is printed and left for the system's temp clean-up. Exit 0 only when every step of every run passed and nothing looked like source code.
+remote, each step's script) is removed when everything passed and kept (its path printed) when something failed or with --keep; TMPDIR chooses where it is made. Exit 0 only when every step of every run passed and nothing looked like source code.
 """
 import argparse
 import os
