@@ -3,13 +3,13 @@
  "label": "acct-7542bf",
  "name": "tj outlook",
  "nonce": "91cc06",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/keen-keller-xs7031",
  "head": "934432b699307a93b3a6f1036eff71b6afa39498",
  "since": 1793794971,
- "beat": 1793881285,
- "beatIso": "2026-11-05T12:21:25Z",
+ "beat": 1793881308,
+ "beatIso": "2026-11-05T12:21:48Z",
  "done": "ENGINEER 11-04 slot0: engine healthy, nothing shipped",
  "next": "next: HB1/SK1b backlog; watch bid fills"
 }
