@@ -268,7 +268,7 @@ private fun LeanRow(v: NcaabGameView, p: NcaabPick, onOpen: () -> Unit) {
                 )
             }
             val o = p.opportunity
-            if (api != null && o != null) BetChip("Bet") { betFrom(api, o, null) }
+            if (api != null && o != null) BetChip("Bet", onCard = r.backed) { betFrom(api, o, null) }
         }
     }
 }
