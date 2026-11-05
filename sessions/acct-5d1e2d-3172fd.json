@@ -5,11 +5,11 @@
  "nonce": "3172fd",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-5159za",
+ "branch": "claude/optimistic-curie-yynyby",
  "head": "440c2c2503819beddd1cd0b9c4cd306f3938eaba",
  "since": 1793751760,
- "beat": 1793831410,
- "beatIso": "2026-11-04T22:30:10Z",
+ "beat": 1793838090,
+ "beatIso": "2026-11-05T00:21:30Z",
  "done": "pre-release: A phone restart no longer turns off auto-bet, bids or auto-scan (versionCode 441, v1.0.101)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.101), then run: bash tools/record-release.sh v1.0.101 441 \"A phone restart no longer turns off auto-bet, bids or auto-scan\""
 }
