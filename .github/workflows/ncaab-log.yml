@@ -32,6 +32,10 @@ jobs:
   log:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    env:
+      # The data branch's working copy. NOT `data`: this repository's own top-level data/ is the Gradle module (800+ tracked files), so a nested git repo or a clone there would commit the
+      # module to the branch on the first run and fail on every later one. Found by reading the workflow before its first run (2026-11-05).
+      DD: ncaab-work
     steps:
       - uses: actions/checkout@v4
         with:
