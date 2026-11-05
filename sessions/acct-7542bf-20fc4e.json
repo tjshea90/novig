@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-c53b8db3-i98qqw",
- "head": "572501eff292ea302d77899871d5745ebe9626c0",
+ "head": "1380e7f79c7a396e30fad9f78cba9cb7e9289e72",
  "since": 1793856344,
- "beat": 1793858540,
- "beatIso": "2026-11-05T06:02:20Z",
+ "beat": 1793858764,
+ "beatIso": "2026-11-05T06:06:04Z",
  "done": "NC1: ncaab-log.yml workflow + 3-season seed (17,323 games) + backtest report; evidence-based 'backed' rule (95% bound vs Novig price)",
  "next": "NC1: engine publishes ncaab.json.gz (CloudMain Publisher + CloudStatus ncaabAtMs), then CloudClient/CloudLink fetch, NCAAB tab UI, bet buttons, parlay helper, docs"
 }
