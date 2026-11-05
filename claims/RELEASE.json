@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-7542bf/20fc4e",
+ "label": "acct-7542bf",
+ "name": "tj outlook",
+ "nonce": "20fc4e",
+ "note": "NCAAB tab reads Novig's lines itself when the GitHub engine isn't serving them (it is idle on an empty wallet), main number picked only from a near-even market",
+ "since": 1793917494,
+ "beat": 1793917494
+}

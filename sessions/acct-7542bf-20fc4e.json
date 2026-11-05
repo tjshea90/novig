@@ -8,8 +8,8 @@
  "branch": "ccr-c53b8db3-i98qqw",
  "head": "3dc33771abe3bdf886b731a0022f2c12fad0e097",
  "since": 1793856344,
- "beat": 1793917478,
- "beatIso": "2026-11-05T22:24:38Z",
+ "beat": 1793917494,
+ "beatIso": "2026-11-05T22:24:54Z",
  "done": "NC1j: live check of NcaabBoard against Novig's real NCAAB catalog (82 games) found a lopsided 'main' number: near-even rule added; phone reads Novig itself when the engine isn't serving the board (engine was idle: empty wallet); tests 13+14 green",
  "next": "ship: bash ship.sh (full gate), release.yml, record-release.sh; then NC1i once the engine runs a scan with NCAAB in leagues"
 }
