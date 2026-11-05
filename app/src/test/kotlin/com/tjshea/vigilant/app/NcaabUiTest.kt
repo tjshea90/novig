@@ -3,6 +3,10 @@ package com.tjshea.vigilant.app
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.and
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -67,14 +71,17 @@ class NcaabUiTest {
 
     private fun bucket(lo: Double, hi: Double?, n: Int, r: Double) = NcaabBucket(lo, hi, n, r, r, n / 2, r, n / 2)
 
-    private val model = NcaabModel(
+    /** [streak]: how often the team with the better against-the-spread average covered (the method fades it, so 0.48 means the other side won 52%). */
+    private fun modelWith(streak: Double) = NcaabModel(
         source = "backtest", sigma = 11.0, seasons = listOf(2024, 2025, 2026), games = 14_669, currentSeason = 2027, note = "test",
         signals = mapOf(
-            NcaabSignals.ATS_GAP to NcaabSignalTable("Against-the-spread streak", "spread", "tiers", "", -1, listOf(bucket(0.0, 0.8, 8000, 0.48), bucket(0.8, null, 2000, 0.475))),
+            NcaabSignals.ATS_GAP to NcaabSignalTable("Against-the-spread streak", "spread", "tiers", "", -1, listOf(bucket(0.0, 0.8, 8000, streak), bucket(0.8, null, 2000, streak))),
             NcaabSignals.AVGS_LINE to NcaabSignalTable("Averages vs the spread", "spread", "points", "", 1, listOf(bucket(0.0, 6.0, 8000, 0.50), bucket(6.0, null, 2000, 0.48))),
             NcaabSignals.TOTAL_GAP to NcaabSignalTable("Total vs scoring", "total", "points", "", 1, listOf(bucket(0.0, null, 9000, 0.488))),
         ),
     )
+
+    private val model = modelWith(0.49)   // fading it wins 51%: not enough over Novig's 50.5 cents once the uncertainty is counted
 
     private fun team(n: String, ppg: Double, papg: Double, ats: Double, sym: String) = NcaabTeam(n = n, g = 8, all = 8, ppg = ppg, papg = papg, ats = ats, sym = sym, last = listOf(1, 2, 0, -1, 1))
 
@@ -84,7 +91,7 @@ class NcaabUiTest {
         "m-t1" to book(markets[3], 0.49, 0.49), "m-t2" to book(markets[4], 0.44, 0.54),
     )
 
-    private fun views(withRatings: Boolean = true) = NcaabView.build(
+    private fun views(withRatings: Boolean = true, model: NcaabModel = this.model) = NcaabView.build(
         NcaabSlate(1, listOf(SlateGame("g1", start, h = SlateTeam("1", "Davidson", "Davidson Wildcats"), a = SlateTeam("2", "Rider", "Rider Broncs")))),
         if (withRatings) NcaabRatings(1, 2027, mapOf("1" to team("Davidson", 74.2, 66.0, 1.4, "++"), "2" to team("Rider", 62.3, 70.1, -0.9, "-")), model, 40) else null,
         NcaabBoardFeed(now, NcaabBoard.build(listOf(event), markets, books, emptyMap(), now), 1), now,
@@ -94,7 +101,7 @@ class NcaabUiTest {
     private val betsWithFair = ArrayList<Pair<Opportunity, Double>>()
     private val actions = ApiBetActions(enabled = true, betOpportunity = { bets += it }, betCno = {}, betWithFair = { o, f -> betsWithFair += o to f })
 
-    private fun show(v: List<com.tjshea.vigilant.data.ncaab.NcaabGameView>, bet: Boolean = true) {
+    private fun show(v: List<com.tjshea.vigilant.data.ncaab.NcaabGameView>, bet: Boolean = true, model: NcaabModel = this.model) {
         compose.setContent {
             VigilantTheme {
                 CompositionLocalProvider(LocalApiBet provides (if (bet) actions else null)) {
@@ -150,6 +157,15 @@ class NcaabUiTest {
     }
 
     @Test
+    fun `a lean whose history clears Novig's price with confidence is marked backed and the evidence card says which signal did`() {
+        val strong = modelWith(0.48)   // fading wins 52% of 10,000 games
+        show(views(model = strong), model = strong)
+        compose.onNodeWithTag("ncaabPage-LEANS").performClick()
+        compose.onNodeWithTag("ncaabLeanNote").assertTextContains("1 lean is backed by history", substring = true)
+        compose.onNodeWithTag("ncaabEvidence").assertTextContains("cleared it, thinly", substring = true)
+    }
+
+    @Test
     fun `the unlike-the-averages page names the spread and total furthest from what the teams' numbers say`() {
         show(views())
         compose.onNodeWithTag("ncaabPage-UNLIKE").performClick()
@@ -166,7 +182,7 @@ class NcaabUiTest {
         // options are sorted by the home handicap: -6.5, -4.5 (main), -2.5
         compose.onNodeWithTag("ncaabSpreadPicker-2").performClick()
         compose.onNodeWithTag("ncaabSide-s2-h").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithTag("ncaabSide-s2-h").assertTextContains("Davidson", substring = true)
+        compose.onNode(hasTestTag("ncaabSide-s2-h") and hasAnyDescendant(hasText("Davidson", substring = true))).assertIsDisplayed()
     }
 
     @Test
