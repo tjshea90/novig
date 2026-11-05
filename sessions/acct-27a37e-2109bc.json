@@ -3,13 +3,13 @@
  "label": "acct-27a37e",
  "name": "tj Gmail",
  "nonce": "2109bc",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/wizardly-meitner-wuwhib",
  "head": "0a377cc2325ede51250fad4f0cca09772a5b5e04",
  "since": 1793816568,
- "beat": 1793902841,
- "beatIso": "2026-11-05T18:20:41Z",
+ "beat": 1793902859,
+ "beatIso": "2026-11-05T18:20:59Z",
  "done": "WATCH 11-04 slot1: engine healthy, nothing shipped",
  "next": "next: HB1/SK1b backlog; watch bid fills"
 }
