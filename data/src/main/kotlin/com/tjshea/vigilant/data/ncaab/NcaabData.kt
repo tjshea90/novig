@@ -30,19 +30,48 @@ data class NcaabTeam(
     val last: List<Int> = emptyList(),
 )
 
-/** What `backtest` fitted: points of expected cover margin per point of scoring / per tier of difference, and the total's slope. Zeroes = no fit yet (the app then shows the numbers and no pick). */
+/** One size bucket of a signal: how often the side the signal points to won against the closing line, over every logged game, each half of them, and this season alone. */
+@Serializable
+data class NcaabBucket(
+    val lo: Double = 0.0,
+    /** Null = no upper limit. */
+    val hi: Double? = null,
+    val n: Int = 0,
+    val r: Double = 0.5,
+    val r1: Double? = null,
+    val n1: Int = 0,
+    val r2: Double? = null,
+    val n2: Int = 0,
+    val rc: Double? = null,
+    val nc: Int = 0,
+) {
+    fun holds(size: Double): Boolean = size >= lo && (hi == null || size < hi)
+}
+
+@Serializable
+data class NcaabSignalTable(
+    val label: String = "",
+    /** spread or total. */
+    val kind: String = "spread",
+    val unit: String = "",
+    val about: String = "",
+    /** 1 = back the side the value points to, -1 = the history says to fade it. */
+    val dir: Int = 1,
+    val buckets: List<NcaabBucket> = emptyList(),
+)
+
+/** What `backtest` measured (nothing is fitted): how each signal's size buckets did against closing lines, the spread of results around a line (the normal curve's width), and when it was run. */
 @Serializable
 data class NcaabModel(
-    val kO: Double = 0.0,
-    val kD: Double = 0.0,
-    val kR: Double = 0.0,
-    val kT: Double = 0.0,
-    /** The spread of cover margins around the line, in points (a game's result against its spread): the normal curve's width. */
-    val sigma: Double = 11.0,
     val source: String = "none",
+    val sigma: Double = 11.0,
+    val seasons: List<Int> = emptyList(),
+    val games: Int = 0,
+    val currentSeason: Int = 0,
+    val signals: Map<String, NcaabSignalTable> = emptyMap(),
     val note: String = "",
 ) {
-    val fitted: Boolean get() = source == "backtest"
+    val measured: Boolean get() = source == "backtest" && signals.isNotEmpty()
 }
 
 @Serializable
