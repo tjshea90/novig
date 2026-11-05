@@ -111,7 +111,7 @@ private fun TeamLine(name: String, t: NcaabTeam?) {
         } else {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "${NcaabText.number(t.ppg)} scored · ${NcaabText.number(t.papg)} allowed · against the spread ${String.format(java.util.Locale.US, "%+.2f", t.ats)} · ${t.g} games" + (if (t.all > t.g || t.ex > 0) " (${t.all - t.g + 0} left out)" else ""),
+                    "${NcaabText.number(t.ppg)} scored · ${NcaabText.number(t.papg)} allowed · against the spread ${String.format(java.util.Locale.US, "%+.2f", t.ats)} · ${t.g} games" + (maxOf(t.ex, t.all - t.g).takeIf { it > 0 }?.let { " ($it left out)" } ?: ""),
                     style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f),
                 )
                 Tiers(t.last)
