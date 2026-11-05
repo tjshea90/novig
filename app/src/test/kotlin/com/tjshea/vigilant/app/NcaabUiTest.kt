@@ -74,7 +74,7 @@ class NcaabUiTest {
     private fun modelWith(streak: Double) = NcaabModel(
         source = "backtest", sigma = 11.0, seasons = listOf(2024, 2025, 2026), games = 14_669, currentSeason = 2027, note = "test",
         signals = mapOf(
-            NcaabSignals.ATS_GAP to NcaabSignalTable("Against-the-spread streak", "spread", "tiers", "", -1, listOf(bucket(0.0, 0.8, 8000, streak), bucket(0.8, null, 2000, streak))),
+            NcaabSignals.ATS_GAP to NcaabSignalTable("Against-the-spread streak", "spread", "tiers", "", -1, listOf(bucket(0.0, 0.8, 8000, streak), bucket(0.8, null, 8000, streak))),
             NcaabSignals.AVGS_LINE to NcaabSignalTable("Averages vs the spread", "spread", "points", "", 1, listOf(bucket(0.0, 6.0, 8000, 0.50), bucket(6.0, null, 2000, 0.48))),
             NcaabSignals.TOTAL_GAP to NcaabSignalTable("Total vs scoring", "total", "points", "", 1, listOf(bucket(0.0, null, 9000, 0.488))),
         ),
