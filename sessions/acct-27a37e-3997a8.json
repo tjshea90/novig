@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-0666b61b-yxwcj9",
- "head": "b88f00f0cdb6c22bb23301ed51daa773f46a8509",
+ "head": "03de75b0c6ebd6b8e452048bc07a58491cdb0dd2",
  "since": 1793861664,
- "beat": 1793864875,
- "beatIso": "2026-11-05T07:47:55Z",
- "done": "pre-release: NC1: NCAAB tab (college basketball ATS system with Novig lines, bets and a parlay builder) and its GitHub game log (versionCode 442, v1.0.102)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.102), then run: bash tools/record-release.sh v1.0.102 442 \"NC1: NCAAB tab (college basketball ATS system with Novig lines, bets and a parlay builder) and its GitHub game log\""
+ "beat": 1793864941,
+ "beatIso": "2026-11-05T07:49:01Z",
+ "done": "SHIPPED v1.0.102 (code 442): NC1 college basketball ATS tab + GitHub game log + parlay builder. Resumed the cut-off acct-7542bf session: merged its 55-commit branch, found+fixed ncaab-log.yml (data/ collision with the Gradle module, frozen weekly backtest; proven by new tools/workflow_dryrun.py), ParlayBar late-price race (test red on old code), 3 small UI fixes; tools/test.sh 4,290 green, CI green on the release commit, release.yml built it, ncaab-log.yml ran twice on GitHub (seed + clone path ok), BUILDLOG recorded",
+ "next": "NC1i: after the engine's next handover (~09:20Z 2026-11-05) read cloud-feed status.json ncaabAtMs/ncaabRows/ncaabNote + 'NCAAB board:' in engine-log.txt, and confirm the 09:23Z cron run of ncaab-log.yml added a commit to ncaab-data; NC1g: Tj opens the NCAAB tab (ratings appear ~Nov 10); Novig reports SYSTEM_LOCKED (exchange-wide halt): watch it lift; then the older backlog HB1/SK1b/CB1/PL1/FR1/HB2"
 }
