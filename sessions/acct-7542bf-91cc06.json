@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-7542bf",
+ "name": "tj outlook",
+ "nonce": "91cc06",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/keen-keller-xs7031",
+ "head": "0a377cc2325ede51250fad4f0cca09772a5b5e04",
+ "since": 1793881380,
+ "beat": 1793881380,
+ "beatIso": "2026-11-05T12:23:00Z",
+ "done": "WATCH 11-05: engine healthy, nothing shipped",
+ "next": "NC1i: read status ncaabAtMs after first scan of the new job"
+}
