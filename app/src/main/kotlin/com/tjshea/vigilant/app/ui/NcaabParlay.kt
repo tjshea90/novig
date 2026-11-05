@@ -93,7 +93,7 @@ internal fun ParlayBar(modifier: Modifier = Modifier) {
                 problem != null -> Text(problem, style = MaterialTheme.typography.labelMedium, color = LocalEdgeColors.current.warning, modifier = Modifier.testTag("ncaabParlayProblem"))
                 else -> {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(enabled = !busy && quote != null, onClick = { scope.launch { busy = true; result = quote?.invoke(ids); busy = false } }, modifier = Modifier.testTag("ncaabParlayPrice")) { Text(if (busy) "Asking Novig…" else "Price it at Novig") }
+                        Button(enabled = !busy && quote != null, onClick = { scope.launch { busy = true; val asked = ids; answer = quote?.invoke(asked)?.let { asked to it }; busy = false } }, modifier = Modifier.testTag("ncaabParlayPrice")) { Text(if (busy) "Asking Novig…" else "Price it at Novig") }
                         (result as? NovigParlay.Result.Priced)?.let {
                             OutlinedButton(onClick = { openNovig?.invoke(NovigParlay.deepLink(ids)) }, enabled = openNovig != null, modifier = Modifier.testTag("ncaabParlayOpen")) { Text("Open in Novig") }
                         }
