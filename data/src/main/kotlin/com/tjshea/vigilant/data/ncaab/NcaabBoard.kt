@@ -116,7 +116,10 @@ object NcaabBoard {
             val even = of.mapNotNull { m ->
                 val b = books[m.marketId] ?: return@mapNotNull null
                 val a = b.takeLadder(m, m.outcomes[0].outcomeId).firstOrNull()?.price ?: return@mapNotNull null
-                m to kotlin.math.abs(a - 0.5)
+                val c = b.takeLadder(m, m.outcomes[1].outcomeId).firstOrNull()?.price ?: return@mapNotNull null
+                // Only a near-even market is a main number: with some numbers' books unread, the closest to even among the rest can be a 12 cent / 95 cent alternate (seen live, Bellarmine @ Indiana).
+                if (a !in NEAR_EVEN || c !in NEAR_EVEN) return@mapNotNull null
+                m to kotlin.math.abs(a - 0.5) + kotlin.math.abs(c - 0.5)
             }.minByOrNull { it.second }?.first
             out[kind] = (even ?: of.sortedBy { it.strike }[of.size / 2]).strike!!
         }
@@ -128,6 +131,7 @@ object NcaabBoard {
         status != null && !status.idle && status.ncaabAtMs > 0L && now - status.heartbeatMs <= ALIVE_MS
 
     private const val ALIVE_MS = 3 * 60_000L
+    private val NEAR_EVEN = 0.30..0.70
 
     /** One read of the board from Novig: the open NCAAB game lines and their best prices, joined with the scan's priced rows. */
     suspend fun read(novig: NovigSource, scanned: Collection<Opportunity>, now: Long): NcaabBoardFeed {

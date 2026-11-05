@@ -209,6 +209,28 @@ class NcaabAtsTest {
     private fun NcaabGameView.rowsAreNovigOnly() = spreads.all { it.home.fair == null && it.home.quote == null }
 
     @Test
+    fun `a main number comes only from a near-even price, so a lopsided alternate with the only book read is never the centre of the board`() {
+        // Seen live (Bellarmine @ Indiana): only some numbers' books were read and the "closest to even" of them cost 12 and 95 cents.
+        val markets = listOf(spread(-4.5, "s1"), spread(-2.5, "s2"), spread(-30.5, "s4"), total(141.5, "t1"))
+        val books = mapOf("m-s4" to book(markets[2], 0.05, 0.88))   // home costs 0.12, away 0.95
+        val rows = NcaabBoard.build(listOf(event), markets, books, emptyMap(), now)
+        assertTrue("the far number is out of reach of the middle one, the real numbers stay", rows.any { it.market.marketId == "m-s1" } && rows.none { it.market.marketId == "m-s4" })
+        val slate = NcaabSlate(1, listOf(SlateGame("g1", start, h = SlateTeam("1", "Davidson", "Davidson Wildcats"), a = SlateTeam("2", "Rider", "Rider Broncs"), sp = -4.5, tt = 141.5)))
+        val v = NcaabView.build(slate, null, NcaabBoardFeed(now, rows, 1), now).single()
+        assertEquals("with no usable price the number nearest ESPN's line is the main one", -4.5, v.mainSpread!!.handicap, 0.0)
+    }
+
+    @Test
+    fun `the engine serves the board only while it is alive and has published one`() {
+        val st = com.tjshea.vigilant.data.cloud.CloudStatus(heartbeatMs = now, ncaabAtMs = now - 10_000L)
+        assertTrue(NcaabBoard.engineServes(st, now))
+        assertFalse("a heartbeat older than 3 minutes", NcaabBoard.engineServes(st.copy(heartbeatMs = now - 4 * 60_000L), now))
+        assertFalse("no board published", NcaabBoard.engineServes(st.copy(ncaabAtMs = 0L), now))
+        assertFalse("idle (switched off, or asleep on an empty wallet)", NcaabBoard.engineServes(st.copy(idle = true), now))
+        assertFalse("no status at all", NcaabBoard.engineServes(null, now))
+    }
+
+    @Test
     fun `a Novig game ESPN has not listed still gets a card, and a game with no Novig market uses ESPN's line`() {
         val markets = listOf(spread(-4.5, "s1"), total(141.5, "t1"))
         val rows = NcaabBoard.build(listOf(event), markets, mapOf("m-s1" to book(markets[0], 0.49, 0.49), "m-t1" to book(markets[1], 0.49, 0.49)), emptyMap(), now)
