@@ -1,21 +1,24 @@
-# CHECKPOINT 4389 — read me first, then TASKS.md
+# CHECKPOINT 4390 — read me first, then TASKS.md
 
-**Written:** 2026-11-05T12:23:00Z · **tests:** all 10 fast checks green
-**Branch:** `claude/keen-keller-xs7031` · **builds on:** `934432b69` (this checkpoint is the commit after it)
+**Written:** 2026-11-05T18:21:56Z · **tests:** all 10 fast checks green
+**Branch:** `claude/wizardly-meitner-wuwhib` · **builds on:** `0a377cc23` (this checkpoint is the commit after it)
 
 ## Just done
-WATCH 11-05: engine healthy, nothing shipped
+ANALYST 11-05: no change, note written
 
 ## Do this next
-NC1i: read status ncaabAtMs after first scan of the new job
+NC1i: read ncaabAtMs after first scan (cloud-feed status has ncaabAtMs, fresh)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M research/review/CHANGES.md
+    ?? research/review/2026-11-05.md
 
 ## Last ten checkpoints
 ```
+  0a377cc23 ckpt 4389: WATCH 11-05: engine healthy, nothing shipped
   03de75b0c ckpt 4388: SHIPPED v1.0.102 (code 442): NC1 college basketball ATS tab + GitHub game l
   9832ff28b ckpt 4387: pre-release: NC1: NCAAB tab (college basketball ATS system with Novig lines
   6ba1b8ed0 ckpt 4386: NC1 review fixes: ncaab-log.yml (data/ collision with the Gradle module + f
@@ -25,8 +28,4 @@ NC1i: read status ncaabAtMs after first scan of the new job
   97dd98741 ckpt 4379: ANALYST 11-05: no new evidence, no change; STATE updated
   ff7b2e8e8 ckpt 4378: pre-release: A phone restart no longer turns off auto-bet, bids or auto-sca
   9a63bb669 ckpt 4377: pre-ship: A phone restart no longer turns off auto-bet, bids or auto-scan
-  4e14dc81f ckpt 4376: pre-ship: A phone restart no longer turns off auto-bet, bids or auto-scan
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)

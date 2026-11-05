@@ -176,3 +176,4 @@ CH57a done (research/parlay_spend_2026-10-22.md): ParlayAPI Pro 75,276 of 100,00
 2026-11-01 BD20: bidPerGameBids 0->20, bidWalletPct 1200->2000 (Tj's order). Revert: set back.
 BD21 2026-11-02: volume bids halved (cap 400, 125/pass), stake x2, requote 4 steps; why: Novig read limit starved fill reads. revert: constants in BidVolume.kt
 ER1 2026-11-02: engine OFF at Tj's word (wallet used up); restart due 2026-11-03 03:10 UTC; revert: engine_set gates.cloudTrading=LIVE gates.cloudBids=true --on
+2026-11-05 ANALYST (acct-27a37e tj Gmail): no change; auto+bids n122 (<200 gate); engine wallet $0.01 stops trading. research/review/2026-11-05.md
