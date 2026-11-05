@@ -563,7 +563,7 @@ def selftest():
     # walk-forward uses only earlier games: the second meeting sees the first, the first sees nothing
     games = {}
     for i in range(12):
-        games[str(i)] = dict(id=str(i), d="2025-11-%02d" % (3 + i), t=1_000_000 + i * 86_400_000, h="A" if i % 2 else "B", a="C", hs=80, **{"as": 70}, sp=-5.0)
+        games[str(i)] = dict(id=str(i), d="2025-11-%02d" % (3 + i), t=1_000_000 + i * 86_400_000, h="A" if i % 2 else "B", a="C", hs=80, **{"as": 70}, sp=-5.0, tt=150.0)
     rows = walk_forward(games)
     check(all(r["d"] >= "2025-11-06" for r in rows) and len(rows) > 0, "no row before both teams have min_games prior games")
     # OLS recovers a known relation
