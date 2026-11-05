@@ -1,6 +1,5 @@
 package com.tjshea.vigilant.app.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +21,6 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -282,11 +280,11 @@ private fun GameCard(v: NcaabGameView, onOpen: () -> Unit, now: Long) {
             }
             // The away team first, then the home team, the way a schedule reads; each carries its own spread.
             TeamRow(v.game.a.n, v.game.a.rk, v.away, score = v.game.awayScore.takeIf { !v.bettable },
-                spread = v.homeSpread?.let { NcaabText.signed(-it) }, cost = v.mainSpread?.let { if (v.game.h.id == v.event?.let { _ -> v.game.h.id }) it.awayCost else it.awayCost },
-                onBet = if (api != null && v.bettable) v.mainSpread?.let { s -> { betFrom(api, s.away, null) } } else null)
+                spread = v.homeSpread?.let { NcaabText.signed(-it) }, cost = v.spreadCost(espnHome = false),
+                onBet = if (api != null && v.bettable) v.spreadFor(espnHome = false)?.let { o -> { betFrom(api, o, null) } } else null)
             TeamRow(v.game.h.n, v.game.h.rk, v.home, score = v.game.hs.takeIf { !v.bettable },
-                spread = v.homeSpread?.let { NcaabText.signed(it) }, cost = v.mainSpread?.homeCost,
-                onBet = if (api != null && v.bettable) v.mainSpread?.let { s -> { betFrom(api, s.home, null) } } else null)
+                spread = v.homeSpread?.let { NcaabText.signed(it) }, cost = v.spreadCost(espnHome = true),
+                onBet = if (api != null && v.bettable) v.spreadFor(espnHome = true)?.let { o -> { betFrom(api, o, null) } } else null)
             val t = v.total
             if (t != null) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -346,8 +344,3 @@ internal fun betFrom(api: ApiBetActions, o: Opportunity, systemFair: Double?) {
     if (o.fairProbability != null) api.betOpportunity(o)
     else (systemFair ?: NcaabText.midFair(o))?.let { api.betWithFair(o, it) }
 }
-
-@Suppress("unused")
-private val keepBorder = BorderStroke(0.dp, Color.Transparent)
-@Suppress("unused")
-private val keepTextButton: @Composable (String) -> Unit = { TextButton(onClick = {}) { Text(it) } }

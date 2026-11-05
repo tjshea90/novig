@@ -46,8 +46,14 @@ data class NcaabGameView(
     val lineSource: String,
     val readings: List<NcaabSignals.Reading>,
     val picks: List<NcaabPick>,
+    /** Novig's home team is ESPN's away team (a neutral-site game some feeds list the other way round): Novig's spread sides then belong to the other ESPN team. */
+    val swapped: Boolean = false,
 ) {
     val id: String get() = game.id
+
+    /** The Novig spread side that belongs to ESPN's home ([espnHome] true) or away team. */
+    fun spreadFor(espnHome: Boolean): Opportunity? = mainSpread?.let { if (espnHome != swapped) it.home else it.away }
+    fun spreadCost(espnHome: Boolean): Double? = spreadFor(espnHome)?.ladder?.firstOrNull()?.price
     val live: Boolean get() = game.state == "in"
     val final: Boolean get() = game.state == "post"
     val bettable: Boolean get() = event != null && game.state == "pre"
@@ -111,7 +117,7 @@ object NcaabView {
         val neutral = g.neu == 1
         val readings = if (home != null && away != null && ratings != null) NcaabSignals.read(ratings.model, home, away, homeSpread, total, neutral) else emptyList()
         val picks = readings.map { r -> pickOf(r, g, swapped, mainSpread, mainTotal) }
-        return NcaabGameView(g, event, home, away, ml, spreads, totals, mainSpread, mainTotal, homeSpread, total, source, readings, picks)
+        return NcaabGameView(g, event, home, away, ml, spreads, totals, mainSpread, mainTotal, homeSpread, total, source, readings, picks, swapped)
     }
 
     /** The number whose two sides cost closest to even money to take; the one nearest [espn] when no price is read; the middle one otherwise. */
