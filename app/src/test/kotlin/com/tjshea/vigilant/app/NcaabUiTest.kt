@@ -92,9 +92,9 @@ class NcaabUiTest {
         "m-t1" to book(markets[3], 0.49, 0.49), "m-t2" to book(markets[4], 0.44, 0.54),
     )
 
-    private fun views(withRatings: Boolean = true, model: NcaabModel = this.model) = NcaabView.build(
+    private fun views(withRatings: Boolean = true, model: NcaabModel = this.model, teams: Map<String, NcaabTeam>? = null) = NcaabView.build(
         NcaabSlate(1, listOf(SlateGame("g1", start, h = SlateTeam("1", "Davidson", "Davidson Wildcats"), a = SlateTeam("2", "Rider", "Rider Broncs")))),
-        if (withRatings) NcaabRatings(1, 2027, mapOf("1" to team("Davidson", 74.2, 66.0, 1.4, "++"), "2" to team("Rider", 62.3, 70.1, -0.9, "-")), model, 40) else null,
+        if (withRatings) NcaabRatings(1, 2027, teams ?: mapOf("1" to team("Davidson", 74.2, 66.0, 1.4, "++"), "2" to team("Rider", 62.3, 70.1, -0.9, "-")), model, 40) else null,
         NcaabBoardFeed(now, NcaabBoard.build(listOf(event), markets, books, emptyMap(), now), 1), now,
     )
 
