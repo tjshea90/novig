@@ -69,7 +69,7 @@ object NovigParlay {
         if (outcomeIds.size > MAX_LEGS) return Result.Refused("A parlay has at most $MAX_LEGS legs")
         val key = outcomeIds.sorted()
         synchronized(lock) { held[key]?.takeIf { it.expiresAtMs - 2_000L > clock() }?.let { return Result.Priced(it) } }
-        val wait = synchronized(lock) { (lastAt + MIN_GAP_MS - clock()).also { lastAt = maxOf(lastAt, clock()) + maxOf(0L, it) } }
+        val wait = synchronized(lock) { val t = clock(); val slot = maxOf(t, lastAt + MIN_GAP_MS); lastAt = slot; slot - t }
         if (wait > 0) kotlinx.coroutines.delay(wait)
         val json = """{"outcomeIds":[${outcomeIds.joinToString(",") { "\"$it\"" }}]}"""
         val req = Request.Builder().url(baseUrl + PATH).header("Accept", "application/json").post(json.toRequestBody("application/json".toMediaType())).build()
