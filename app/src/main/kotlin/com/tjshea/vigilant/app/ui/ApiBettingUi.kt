@@ -100,6 +100,8 @@ class ApiBetActions(
     val betCno: (CnoRow) -> Unit,
     /** A ParlayAPI pick (TASKS.md P1): as a CNO bet, at ParlayAPI's fair odds, logged as ParlayAPI's. */
     val betParlay: (com.tjshea.vigilant.data.reference.ParlayPick) -> Unit = {},
+    /** The college basketball tab's bet on a number no book prices: the Bet sheet with the given chance as its fair (NC1). */
+    val betWithFair: (Opportunity, Double) -> Unit = { _, _ -> },
 )
 
 val LocalApiBet = staticCompositionLocalOf<ApiBetActions?> { null }
@@ -109,6 +111,8 @@ interface ApiBetTarget {
     fun bet(o: Opportunity)
     fun bet(row: CnoRow)
     fun betPick(p: com.tjshea.vigilant.data.reference.ParlayPick)
+    /** A bet on a number no book prices (NC1): the Bet sheet with [fair] as its chance. */
+    fun betWithFair(o: Opportunity, fair: Double) {}
 }
 
 /**
@@ -119,7 +123,7 @@ interface ApiBetTarget {
 @Composable
 fun ProvideApiBet(enabled: Boolean, api: ApiBetTarget, content: @Composable () -> Unit) {
     val actions = remember(enabled, api) {
-        ApiBetActions(enabled = enabled, betOpportunity = { o -> api.bet(o) }, betCno = { row -> api.bet(row) }, betParlay = { p -> api.betPick(p) })
+        ApiBetActions(enabled = enabled, betOpportunity = { o -> api.bet(o) }, betCno = { row -> api.bet(row) }, betParlay = { p -> api.betPick(p) }, betWithFair = { o, f -> api.betWithFair(o, f) })
     }
     androidx.compose.runtime.CompositionLocalProvider(LocalApiBet provides actions, content = content)
 }

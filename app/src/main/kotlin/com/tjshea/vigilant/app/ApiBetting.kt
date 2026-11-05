@@ -187,6 +187,20 @@ object ApiBetTargets {
     }
 
     /**
+     * A bet from the college basketball tab (NC1) on a side the books do not price (an alternate spread or total) or that a signal picked: the Bet sheet with [fair] as the chance (the system's estimate, or
+     * Novig's middle price when none), logged as the NCAAB tab's. A side the scan priced goes through [of] and the books' own fair instead.
+     */
+    fun withFair(o: Opportunity, fair: Double, nowMs: Long): BetTarget? {
+        if (fair !in 0.01..0.99 || o.ladder.isEmpty()) return null
+        return BetTarget(
+            market = o.market, outcomeId = o.outcome.outcomeId, league = o.league.displayName, eventName = o.event.description, startsTs = o.event.startsTs,
+            marketLabel = o.marketLabel, selection = o.selection, fair = fair, fairAsOfMs = nowMs, source = BetTracker.SOURCE_VIGILANT, placedKey = o.key,
+            basis = com.tjshea.vigilant.data.tracker.FairBasis(com.tjshea.vigilant.data.tracker.FairBasis.SOURCE_NCAAB, books = 0),
+            live = o.isLive, listedPrice = o.ladder.first().price,
+        )
+    }
+
+    /**
      * A CNO bet at Novig, once its Novig outcome is found; [fairAsOfMs] is when CNO's list was current. A ParlayAPI pick (TASKS.md P1) is the
      * same CNO-shaped row with ParlayAPI's fair odds: [source] [BetTracker.SOURCE_PARLAY], its own [placedKey], [fairAsOfMs] when its board was read.
      */
@@ -612,6 +626,16 @@ class ApiBettingController(
 
     override fun betPick(p: com.tjshea.vigilant.data.reference.ParlayPick) {
         bet(p)
+    }
+
+    override fun betWithFair(o: Opportunity, fair: Double) {
+        if (c.trading == null) return
+        val target = ApiBetTargets.withFair(o, fair, clock())
+        if (target == null) {
+            toasts.tryEmit("Novig shows nothing to take on this side right now")
+            return
+        }
+        open(target, o.selection, "${o.marketLabel} \u00B7 ${o.event.description}", kelly = null)
     }
 
     override fun bet(o: Opportunity) {
