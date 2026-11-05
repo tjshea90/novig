@@ -109,6 +109,6 @@ jobs:
       - name: Summary
         if: always()
         run: |
-          { echo '### College basketball log'; echo "games logged: $(cat data/games/*.jsonl 2>/dev/null | wc -l)"; \
-            [ -f data/ratings.json ] && python3 -I -c "import json;r=json.load(open('data/ratings.json'));print('teams rated this season:',len(r['teams']),'from',r['games'],'games')"; \
-            [ -f data/slate.json ] && python3 -I -c "import json;s=json.load(open('data/slate.json'));print('slate:',len(s['games']),'games')"; } >> "$GITHUB_STEP_SUMMARY" || true
+          { echo '### College basketball log'; echo "games logged: $(cat "$DD"/games/*.jsonl 2>/dev/null | wc -l)"; \
+            [ -f "$DD/ratings.json" ] && python3 -I -c "import json;r=json.load(open('$DD/ratings.json'));print('teams rated this season:',len(r['teams']),'from',r['games'],'games')"; \
+            [ -f "$DD/slate.json" ] && python3 -I -c "import json;s=json.load(open('$DD/slate.json'));print('slate:',len(s['games']),'games')"; } >> "$GITHUB_STEP_SUMMARY" || true
