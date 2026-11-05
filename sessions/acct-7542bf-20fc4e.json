@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-c53b8db3-i98qqw",
- "head": "3dc33771abe3bdf886b731a0022f2c12fad0e097",
+ "head": "06ceeea52a859f5f48815be42d18eb5e039a7227",
  "since": 1793856344,
- "beat": 1793917741,
- "beatIso": "2026-11-05T22:29:01Z",
- "done": "NC1j: live check of NcaabBoard against Novig's real NCAAB catalog (82 games) found a lopsided 'main' number: near-even rule added; phone reads Novig itself when the engine isn't serving the board (engine was idle: empty wallet); tests 13+14 green",
- "next": "ship: bash ship.sh (full gate), release.yml, record-release.sh; then NC1i once the engine runs a scan with NCAAB in leagues"
+ "beat": 1793917789,
+ "beatIso": "2026-11-05T22:29:49Z",
+ "done": "pre-ship: NCAAB tab reads Novig's lines itself when the GitHub engine isn't serving them (it is idle on an empty wallet); the main number is picked only from a near-even market",
+ "next": "ship.sh gates and releases this"
 }
