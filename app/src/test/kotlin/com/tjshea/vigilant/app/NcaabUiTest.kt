@@ -235,8 +235,10 @@ class NcaabUiTest {
         toggles()[2].performScrollTo().performClick()
         toggles()[3].performScrollTo().performClick()
         assertEquals(2, parlay.legs.size)
+        dump("after legs changed")
         gate.complete(priced())
         compose.waitForIdle()
+        dump("after gate.complete")
         // the answer did arrive (nothing is pending any more) ...
         assertEquals("the answer should have arrived", 0, waiting())
         // ... but that 25 cents was for the other parlay: no price under these legs (it used to appear here)
