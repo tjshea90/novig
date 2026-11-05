@@ -1,0 +1,103 @@
+name: College basketball ATS log (NC1, Tj 2026-11-05)
+
+# Tj: "log and track scores and closing spreads every day for every college basketball team that has betting odds ... automatically in the background, on github". Free, no key, no Claude usage.
+# tools/ncaab_ats.py reads ESPN's public scoreboard and odds feed, keeps every finished Division I game with its closing spread and total on the append-only `ncaab-data` branch
+# (games/YYYY-MM.jsonl, never rewritten), rebuilds ratings.json (each team's points for/against and its green-plus / red-minus average, outliers left out) and slate.json (today's and tomorrow's schedule),
+# and, weekly, re-runs the walk-forward backtest (model.json, backtest.md: how each signal did against closing lines). The app reads ratings.json and slate.json; Claude reads everything.
+# The first run seeds the branch from research/ncaab/seed (three seasons, 17,323 games). Dispatch with from/to to backfill a range. GitHub's cron is irregular here: every run catches up the last 3 days.
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: "Backfill from this day (YYYY-MM-DD); blank = only the last few days"
+        required: false
+      to:
+        description: "Backfill up to this day (YYYY-MM-DD); blank = today"
+        required: false
+      backtest:
+        description: "Re-run the backtest now (true/false)"
+        required: false
+        default: "false"
+  schedule:
+    - cron: "23 */3 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ncaab-log
+  cancel-in-progress: false
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Tool checks
+        run: python3 -I tools/ncaab_ats.py selftest
+      - name: Get the data branch (the first run starts it from the seed)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "$url" ncaab-data >/dev/null 2>&1; then
+            git clone --quiet --branch ncaab-data --depth 1 "$url" data
+          else
+            mkdir -p data/games && git -C data init -q -b ncaab-data && git -C data remote add origin "$url"
+            for f in research/ncaab/seed/games-*.jsonl.gz; do b=$(basename "$f" .jsonl.gz); gunzip -c "$f" > "data/games/${b#games-}.jsonl"; done
+            cp research/ncaab/seed/teams.json data/teams.json
+            echo "seeded a new ncaab-data branch: $(cat data/games/*.jsonl | wc -l) games"
+          fi
+      - name: Log the finished games, rate the teams, list the slate
+        env:
+          FROM: ${{ inputs.from }}
+          TO: ${{ inputs.to }}
+        run: |
+          set -eu
+          re='^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+          if [ -n "${FROM:-}" ]; then
+            [[ "$FROM" =~ $re ]] || { echo "bad from"; exit 1; }
+            if [ -n "${TO:-}" ]; then [[ "$TO" =~ $re ]] || { echo "bad to"; exit 1; }; python3 -I tools/ncaab_ats.py collect --data-dir data --from "$FROM" --to "$TO"
+            else python3 -I tools/ncaab_ats.py collect --data-dir data --from "$FROM"; fi
+          fi
+          python3 -I tools/ncaab_ats.py run --data-dir data --days-back 3
+      - name: Backtest (weekly, on request, or when there is no model yet)
+        env:
+          ASKED: ${{ inputs.backtest }}
+        run: |
+          set -eu
+          last=0
+          if [ -f data/model.json ]; then last=$(git -C data log -1 --format=%ct -- model.json 2>/dev/null || echo 0); fi
+          age=$(( $(date +%s) - ${last:-0} ))
+          if [ ! -f data/model.json ] || [ "$age" -gt 518400 ] || [ "${ASKED:-false}" = "true" ] || [ -n "${{ inputs.from }}" ]; then
+            python3 -I tools/ncaab_ats.py backtest --data-dir data > /dev/null
+            echo "backtest re-run"
+          else
+            echo "backtest is $((age/3600)) h old: kept"
+          fi
+          python3 -I tools/ncaab_ats.py rate --data-dir data
+      - name: Commit (append-only; never forced)
+        run: |
+          set -eu
+          cd data
+          git add -A
+          if git diff --cached --quiet; then echo "nothing changed"; exit 0; fi
+          git commit -q -m "ncaab $(date -u +%FT%TZ)"
+          for i in 1 2 3 4; do
+            git push -q origin HEAD:ncaab-data && { echo pushed; exit 0; }
+            git pull -q --rebase origin ncaab-data || true
+            sleep $((i * 4))
+          done
+          echo "push failed"; exit 1
+      - name: Summary
+        if: always()
+        run: |
+          { echo '### College basketball log'; echo "games logged: $(cat data/games/*.jsonl 2>/dev/null | wc -l)"; \
+            [ -f data/ratings.json ] && python3 -I -c "import json;r=json.load(open('data/ratings.json'));print('teams rated this season:',len(r['teams']),'from',r['games'],'games')"; \
+            [ -f data/slate.json ] && python3 -I -c "import json;s=json.load(open('data/slate.json'));print('slate:',len(s['games']),'games')"; } >> "$GITHUB_STEP_SUMMARY" || true
