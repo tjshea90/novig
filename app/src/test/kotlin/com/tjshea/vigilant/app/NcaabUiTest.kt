@@ -96,6 +96,8 @@ class NcaabUiTest {
         NcaabBoardFeed(now, NcaabBoard.build(listOf(event), markets, books, emptyMap(), now), 1), now,
     )
 
+    private val parlay = com.tjshea.vigilant.app.ui.ParlayState()
+    private val quotedFor = ArrayList<List<String>>()
     private val bets = ArrayList<Opportunity>()
     private val betsWithFair = ArrayList<Pair<Opportunity, Double>>()
     private val actions = ApiBetActions(enabled = true, betOpportunity = { bets += it }, betCno = {}, betWithFair = { o, f -> betsWithFair += o to f })
@@ -103,7 +105,10 @@ class NcaabUiTest {
     private fun show(v: List<com.tjshea.vigilant.data.ncaab.NcaabGameView>, bet: Boolean = true, model: NcaabModel = this.model) {
         compose.setContent {
             VigilantTheme {
-                CompositionLocalProvider(LocalApiBet provides (if (bet) actions else null)) {
+                CompositionLocalProvider(
+                    LocalApiBet provides (if (bet) actions else null), com.tjshea.vigilant.app.ui.LocalParlay provides parlay,
+                    com.tjshea.vigilant.app.ui.LocalParlayQuote provides { ids -> quotedFor += ids; com.tjshea.vigilant.data.novig.NovigParlay.Result.Priced(com.tjshea.vigilant.data.novig.NovigParlay.Quote(0.25, now + 30_000L, now)) },
+                ) {
                     NcaabContent(v, ratingsAsOf = now - 3_600_000L, boardAt = now - 20_000L, boardReadAt = now, note = "", model = model, ratedTeams = 2, hasSlate = true, hasToken = true,
                         settings = ScanSettings(), now = now, onTrack = { _, _ -> }, onRecheck = {})
                 }
@@ -182,6 +187,28 @@ class NcaabUiTest {
         compose.onNodeWithTag("ncaabSpreadPicker-2").performClick()
         compose.onNodeWithTag("ncaabSide-s2-h").performScrollTo().assertIsDisplayed()
         compose.onNode(hasTestTag("ncaabSide-s2-h") and hasAnyDescendant(hasText("Davidson", substring = true))).assertIsDisplayed()
+    }
+
+    @Test
+    fun `a parlay is built from a game's sheet, priced at Novig with the stacked legs beside it, and a rule-breaking leg is named before asking`() {
+        show(views())
+        compose.onNodeWithTag("ncaabGame-g1").performClick()
+        fun toggles() = compose.onAllNodes(hasTestTag("ncaabParlayToggle"))
+        // the sheet lists the away spread side, the home side, Over, Under: a spread and a total may be combined
+        toggles()[0].performScrollTo().performClick()
+        toggles()[2].performScrollTo().performClick()
+        assertEquals(2, parlay.legs.size)
+        compose.onAllNodes(hasTestTag("ncaabParlayPrice"))[0].performClick()
+        compose.waitForIdle()
+        assertEquals(1, quotedFor.size)
+        assertEquals(2, quotedFor.single().size)
+        compose.onAllNodes(hasTestTag("ncaabParlayResult"))[0].assertTextContains("25\u00A2 per $1", substring = true)
+        compose.onAllNodes(hasTestTag("ncaabParlayResult"))[0].assertTextContains("stack to", substring = true)
+        compose.onAllNodes(hasTestTag("ncaabParlayOpen"))[0].assertIsDisplayed()
+        // a second spread in the same game breaks Novig's rule: named, no price asked
+        toggles()[1].performScrollTo().performClick()
+        compose.onAllNodes(hasTestTag("ncaabParlayProblem"))[0].assertTextContains("same kind of line", substring = true)
+        assertEquals(1, quotedFor.size)
     }
 
     @Test
