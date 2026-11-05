@@ -104,7 +104,7 @@ internal fun NcaabContent(
     var open by rememberSaveable { mutableStateOf<String?>(null) }
     var evidence by rememberSaveable { mutableStateOf(false) }
     val zone = remember { ZoneId.systemDefault() }
-    val today = remember(now / 3_600_000L) { LocalDate.now(zone) }
+    val today = remember(now / 3_600_000L) { Instant.ofEpochMilli(now).atZone(zone).toLocalDate() }
     fun dayOf(v: NcaabGameView): LocalDate = Instant.ofEpochMilli(v.game.t).atZone(zone).toLocalDate()
     val shown = remember(views, day, today) {
         views.filter { v ->
