@@ -165,6 +165,11 @@ data class CloudStatus(
     val cnoGoodAtMs: Long = 0L,
     val cnoRows: Int = 0,
     val cnoNote: String = "",
+    /** The college basketball board (`ncaab.json.gz`, NC1; [com.tjshea.vigilant.data.ncaab.NcaabBoardFeed]): when it was last read from Novig, the lines and games on it, and why it is empty if it is. 0 = none yet. */
+    val ncaabAtMs: Long = 0L,
+    val ncaabRows: Int = 0,
+    val ncaabGames: Int = 0,
+    val ncaabNote: String = "",
     /** The engine's own trading (TCL20d): its mode (off / paper / live), what its last pass did in words, why ordering has stopped if it has, and when `trades.json` last changed. */
     val tradeMode: String = "",
     val tradeNote: String = "",

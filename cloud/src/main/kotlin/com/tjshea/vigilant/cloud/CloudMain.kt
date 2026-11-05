@@ -836,6 +836,11 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     private var cnoGood = 0L
     private var cnoRows = 0
     private var cnoNote = ""
+    private var ncaabBytes: ByteArray? = null
+    private var ncaabAt = 0L
+    private var ncaabRows = 0
+    private var ncaabGames = 0
+    private var ncaabNote = ""
     private var usageText: String? = null
     private var paperText: String? = null
     private var usageAt = 0L
@@ -852,7 +857,8 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     fun stage(feed: CloudFeed?, st: CloudStatus): String? {
         if (feed != null) feedBytes = CloudFeed.encode(feed)
         status = st.copy(feedBytes = feedBytes?.size ?: 0, bidsBytes = bidsBytes?.size ?: 0, propLineEvAtMs = evAt, propLineEvRows = evRows, propLineServedAtMs = evServed, usageAtMs = usageAt, tradesAtMs = maxOf(st.tradesAtMs, tradesAt), deskBytes = deskText?.length ?: 0,
-            cnoOn = cnoOn, cnoAtMs = cnoAt, cnoGoodAtMs = cnoGood, cnoRows = cnoRows, cnoNote = cnoNote)
+            cnoOn = cnoOn, cnoAtMs = cnoAt, cnoGoodAtMs = cnoGood, cnoRows = cnoRows, cnoNote = cnoNote,
+            ncaabAtMs = ncaabAt, ncaabRows = ncaabRows, ncaabGames = ncaabGames, ncaabNote = ncaabNote)
         dirty = true
         return lastProblem
     }
@@ -921,6 +927,17 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         dirty = true
     }
 
+    /** The college basketball board (`ncaab.json.gz`, NC1), announced in the status; goes out with the next push. An unchanged board is not staged again, so a quiet minute costs no push. */
+    @Synchronized
+    fun stageNcaab(f: com.tjshea.vigilant.data.ncaab.NcaabBoardFeed, note: String) {
+        val bytes = com.tjshea.vigilant.data.ncaab.NcaabBoardFeed.encode(f)
+        ncaabNote = note.take(200); ncaabRows = f.rows.size; ncaabGames = f.games
+        // The stamp moves only when the board's content did: the phone fetches a board when the stamp changes.
+        if (ncaabBytes == null || !ncaabBytes.contentEquals(bytes)) { ncaabBytes = bytes; ncaabAt = f.atMs }
+        status = status?.copy(ncaabAtMs = ncaabAt, ncaabRows = ncaabRows, ncaabGames = ncaabGames, ncaabNote = ncaabNote)
+        dirty = true
+    }
+
     /** Small named files that ride with the push (the Kalshi lane's status and its carry-over, KV9). */
     private val extra = HashMap<String, String>()
 
@@ -956,6 +973,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         File(dir, "bids.json.gz").let { f -> bidsBytes?.let { f.writeBytes(it) } ?: f.delete() }
         evBytes?.let { File(dir, "propline-ev.json.gz").writeBytes(it) }
         cnoBytes?.let { File(dir, "cno.json.gz").writeBytes(it) }
+        ncaabBytes?.let { File(dir, "ncaab.json.gz").writeBytes(it) }
         File(dir, "status.json").writeText(CloudStatus.text(st.copy(heartbeatMs = now)))
         logTail().takeIf { it.isNotBlank() }?.let { File(dir, "engine-log.txt").writeText(it + "\n") }
         git.run(dir, "add", "-A")
