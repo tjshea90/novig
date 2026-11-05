@@ -229,14 +229,22 @@ class NcaabUiTest {
         compose.onAllNodes(hasTestTag("ncaabParlayPrice"))[0].performClick()
         compose.waitForIdle()
         assertEquals(1, quotedFor.size)   // asked, and Novig has not answered yet
+        fun waiting() = compose.onAllNodes(hasText("Asking Novig…")).fetchSemanticsNodes().size
+        assertTrue("the request should be pending", waiting() > 0)
         // the legs change while the answer is on its way: Under instead of Over
         toggles()[2].performScrollTo().performClick()
         toggles()[3].performScrollTo().performClick()
         assertEquals(2, parlay.legs.size)
         gate.complete(priced())
         compose.waitForIdle()
-        // that 25 cents was for the other parlay: no price under these legs (it used to appear here)
+        // the answer did arrive (nothing is pending any more) ...
+        assertEquals("the answer should have arrived", 0, waiting())
+        // ... but that 25 cents was for the other parlay: no price under these legs (it used to appear here)
         assertEquals(0, compose.onAllNodesWithTagCount("ncaabParlayResult"))
+        // asking about the new legs shows its price: the display itself works
+        compose.onAllNodes(hasTestTag("ncaabParlayPrice"))[0].performClick()
+        compose.waitForIdle()
+        assertTrue("a price for the current legs should show", compose.onAllNodesWithTagCount("ncaabParlayResult") > 0)
     }
 
     @Test
