@@ -1,13 +1,13 @@
-# CHECKPOINT 4395 — read me first, then TASKS.md
+# CHECKPOINT 4396 — read me first, then TASKS.md
 
-**Written:** 2026-11-05T22:52:23Z · **tests:** all 10 fast checks green
-**Branch:** `ccr-c53b8db3-i98qqw` · **builds on:** `f21bf5673` (this checkpoint is the commit after it)
+**Written:** 2026-11-05T22:57:05Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-btss7j` · **builds on:** `1e484b458` (this checkpoint is the commit after it)
 
 ## Just done
-SHIPPED v1.0.103 (code 443): NCAAB tab reads Novig itself when the engine isn't serving the board; near-even main-number rule; recorded in BUILDLOG
+EN4 written: engine turn-on at 02:55 UTC
 
 ## Do this next
-NC1i: after the wallet is funded and the engine runs a scan with NCAAB in leagues, read status.json ncaabAtMs/ncaabRows and the 'NCAAB board:' log line on cloud-feed. NC1g: around Nov 10 teams get ratings; mid-December re-check the 'this season' columns of ncaab-data/backtest.md (LEVERS.md)
+at 02:55 UTC Nov 6 turn the engine on (EN4)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ NC1i: after the wallet is funded and the engine runs a scan with NCAAB in league
 
 ## Last ten checkpoints
 ```
+  1e484b458 ckpt 4395: SHIPPED v1.0.103 (code 443): NCAAB tab reads Novig itself when the engine i
   2c131035b ckpt 4394: pre-release: NCAAB tab reads Novig's lines itself when the GitHub engine is
   06ceeea52 ckpt 4393: pre-ship: NCAAB tab reads Novig's lines itself when the GitHub engine isn't
   3dc33771a ckpt 4392: NC1j: live check of NcaabBoard against Novig's real NCAAB catalog (82 games
@@ -26,5 +27,4 @@ NC1i: after the wallet is funded and the engine runs a scan with NCAAB in league
   03de75b0c ckpt 4388: SHIPPED v1.0.102 (code 442): NC1 college basketball ATS tab + GitHub game l
   9832ff28b ckpt 4387: pre-release: NC1: NCAAB tab (college basketball ATS system with Novig lines
   6ba1b8ed0 ckpt 4386: NC1 review fixes: ncaab-log.yml (data/ collision with the Gradle module + f
-  8033d8408 ckpt 4385: RESUME as acct-27a37e (tj Gmail): merged acct-7542bf's unlanded NC1 branch 
 ```
