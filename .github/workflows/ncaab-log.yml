@@ -70,12 +70,13 @@ jobs:
       - name: Backtest (weekly, on request, or when there is no model yet)
         env:
           ASKED: ${{ inputs.backtest }}
+          FROM: ${{ inputs.from }}
         run: |
           set -eu
           last=0
           if [ -f data/model.json ]; then last=$(git -C data log -1 --format=%ct -- model.json 2>/dev/null || echo 0); fi
           age=$(( $(date +%s) - ${last:-0} ))
-          if [ ! -f data/model.json ] || [ "$age" -gt 518400 ] || [ "${ASKED:-false}" = "true" ] || [ -n "${{ inputs.from }}" ]; then
+          if [ ! -f data/model.json ] || [ "$age" -gt 518400 ] || [ "${ASKED:-false}" = "true" ] || [ -n "${FROM:-}" ]; then
             python3 -I tools/ncaab_ats.py backtest --data-dir data > /dev/null
             echo "backtest re-run"
           else
