@@ -357,6 +357,7 @@ def walk_forward(games, cfg=CFG):
                 id=g["id"], d=g["d"], t=g["t"], sp=g["sp"], tt=g["tt"],
                 dO=rh["ppg"] - ra["ppg"], dD=rh["papg"] - ra["papg"], dR=rh["ats"] - ra["ats"], dCM=rh["cm"] - ra["cm"],
                 sys_total=(rh["ppg"] + ra["papg"]) / 2 + (ra["ppg"] + rh["papg"]) / 2,
+                neu=g.get("neu", 0), ratH=rh["ats"], ratA=ra["ats"], imp=((rh["ppg"] - rh["papg"]) - (ra["ppg"] - ra["papg"])) / 2,
                 cover=(g["hs"] - g["as"]) + g["sp"], over=(g["hs"] + g["as"]) - g["tt"], hs=g["hs"], **{"as": g["as"]}))
         for side in ("h", "a"):
             per.setdefault((s, g[side]), []).append(team_game(g, g[side]))
@@ -449,6 +450,41 @@ def backtest(games, split, cfg=CFG, log=print):
     wl = [w for w in wl if w is not None]
     if wl:
         rep.append(f"Tj's rule of thumb with no fitting (the team ahead on scoring by 3+ AND on the against-the-spread average by 1+ tiers, back it): {len(wl)} games, covered {sum(wl) / len(wl):.1%}\n")
+
+    # The signals the app shows, no fitting: judged on every rated game, then on each half (a signal that only works in one half is noise)
+    HCA = 3.0
+    for r in rows:
+        r["gap_s"] = r["imp"] + (0.0 if r["neu"] else HCA) + r["sp"]      # >0: the averages like home more than the line does
+    mid = sorted(r["d"] for r in rows)[len(rows) // 2]
+    rep.append("## The signals the app shows (no fitting; all rated games, then first half / second half of the season)\n")
+
+    def table(title, pairs_all, edges, unit="points"):
+        rep.append(f"### {title}\n")
+        rep.append(f"| size ({unit}) | games | right | first half | second half |\n|-|-|-|-|-|")
+        for lo, hi in zip(edges, edges[1:] + [1e9]):
+            def rate(sel):
+                w = [x for s_, x, d in sel if lo <= abs(s_) < hi and x is not None]
+                return (len(w), sum(w) / len(w)) if w else (0, float("nan"))
+            n_all, p_all = rate(pairs_all)
+            n1, p1 = rate([t for t in pairs_all if t[2] < mid])
+            n2, p2 = rate([t for t in pairs_all if t[2] >= mid])
+            if n_all:
+                rep.append(f"| {lo}-{'+' if hi > 1e8 else hi} | {n_all} | {p_all:.1%} | {p1:.1%} ({n1}) | {p2:.1%} ({n2}) |")
+        rep.append("")
+
+    table("Spread: back the side the AVERAGES favour more than the line does (net points per game gap vs the spread)",
+          [(r["gap_s"], side_result(r["gap_s"], r["cover"]), r["d"]) for r in rows], [0, 3, 6, 9, 12])
+    table("Spread: back the team with the BETTER against-the-spread average (your green plus / red minus)",
+          [(r["dR"], side_result(r["dR"], r["cover"]), r["d"]) for r in rows], [0.0, 0.5, 1.0, 1.5], "tiers")
+    table("Spread: FADE that team (back the one with the worse against-the-spread average)",
+          [(-r["dR"], side_result(-r["dR"], r["cover"]), r["d"]) for r in rows], [0.0, 0.5, 1.0, 1.5], "tiers")
+    both = [(r["dO"], side_result(r["dO"], r["cover"]), r["d"]) for r in rows if r["dO"] * r["dR"] > 0 and abs(r["dR"]) >= 0.5]
+    table("Spread: your rule - the team ahead on BOTH scoring and the against-the-spread average (gap in points per game)", both, [0, 3, 6, 9, 12])
+    for r in rows:
+        r["dT"] = r["sys_total"] - r["tt"]
+    table("Total: Over when the matchup estimate (each side's scoring and the other's points allowed) is above the line, Under when below",
+          [(r["dT"], side_result(r["dT"], r["over"]), r["d"]) for r in rows], [0, 3, 6, 9, 12])
+    rows_sum = [(r["ratH"] + r["ratA"], side_result(r["ratH"] + r["ratA"], r["over"]) if False else None, r["d"]) for r in rows]
 
     # totals
     for r in rows:
