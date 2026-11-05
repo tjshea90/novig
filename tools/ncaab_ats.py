@@ -495,6 +495,7 @@ def rebuild(data_dir, log=print):
 
 
 def main(argv):
+    sys.stdout.reconfigure(line_buffering=True)  # progress shows at once in a workflow log
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["run", "collect", "rate", "backtest", "selftest"])
     ap.add_argument("--data-dir", default="ncaab-data")
