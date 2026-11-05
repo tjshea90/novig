@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-c53b8db3-i98qqw",
- "head": "fb9b99b9f772333ba1ccf2bbb110f25e1c067f10",
+ "head": "bcd1b73de3f9e458c3803dd2a842086fa4599b51",
  "since": 1793856344,
- "beat": 1793858962,
- "beatIso": "2026-11-05T06:09:22Z",
+ "beat": 1793859153,
+ "beatIso": "2026-11-05T06:12:33Z",
  "done": "NC1: engine publishes ncaab.json.gz (stageNcaab), CloudLink/CloudClient fetch, NCAAB tab (schedule cards, leans, unlike-the-averages, game sheet with Books&EV and alternate dropdowns, Bet buttons via betWithFair), NcaabUiTest 8 green",
  "next": "NC1: parlay helper (keyless Novig quote + multi-leg deeplink) + UI, research docs + CLAUDE.md + NOVIG_API.md, tools/test_ncaab.sh fast check, INDEX/LEVERS, full test.sh, ship"
 }
