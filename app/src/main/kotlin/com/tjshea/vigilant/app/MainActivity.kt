@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PlayArrow
@@ -609,6 +610,8 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
     /** The home (Tj, 2026-10-16: "this app is a monitoring and central control app, make the UI match"): everything the GitHub engine is doing, live from GitHub. */
     ENGINE("Engine", Icons.Filled.Home),
     EV("+EV", Icons.Filled.Star),
+    /** College basketball (NC1, Tj 2026-11-05): the day's games with each team's points per game and green-plus / red-minus average, Novig's lines and Bet buttons. */
+    NCAAB("NCAAB", Icons.Filled.DateRange),
     /** Chat with the Claude session that is working, and everything Claude and the engine tell you (moved out of Settings, 2026-10-16). */
     CLAUDE("Claude", Icons.Filled.Email),
     /** The CrazyNinjaOdds list stays in the bar (Tj, 2026-10-16: "I like it"); the phone's Auto-bet view is the one that moved to Settings. */
@@ -636,7 +639,7 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
         KALSHI -> venues?.kalshi == true
         // The +EV tab lists both venues (CH33), so it stays when only Kalshi is on.
         EV -> ((venues?.novig ?: true) || venues?.kalshi == true) && shownIn(mode)
-        CNO, AUTOBET, BIDS, LIVE -> (venues?.novig ?: true) && shownIn(mode)
+        CNO, AUTOBET, BIDS, LIVE, NCAAB -> (venues?.novig ?: true) && shownIn(mode)
         else -> shownIn(mode)
     }
 
@@ -651,6 +654,7 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
         // that bids turns Vigilant's scanner on ([com.tjshea.vigilant.data.novig.trading.maker.MakerSetup]).
         BIDS -> AppBook.isNovig
         LIVE -> AppBook.isNovig
+        NCAAB -> AppBook.isNovig
         TRACKER, SETTINGS -> true
         // The PropLine +EV list is retired (Tj, 2026-10-17: a waste of usage; its prop Overs lose, Vigilant disagrees on 94%): no tab, no card.
         PROPLINE -> false
@@ -664,7 +668,7 @@ internal fun TabLabel(t: Tab, tabsInBar: Int = 7) {
     Text(
         t.label, maxLines = 1, softWrap = false,
         // Seven tabs leave each about 56 dp on a 393 dp phone: "Auto-bet" and "Settings" fit at 10 sp with no added letter spacing. Eight leave 49 dp, where "Settings" ran off the screen's edge (FX 2026-10-23): 9 sp.
-        style = androidx.compose.material3.MaterialTheme.typography.labelSmall.copy(fontSize = if (tabsInBar >= 8) 9.sp else 10.sp, letterSpacing = 0.sp),
+        style = androidx.compose.material3.MaterialTheme.typography.labelSmall.copy(fontSize = if (tabsInBar >= 9) 8.5.sp else if (tabsInBar >= 8) 9.sp else 10.sp, letterSpacing = 0.sp),
     )
 }
 
@@ -900,6 +904,7 @@ private fun VigilantRoot(
                         onLock = vm::lockIn,
                     ),
                 )
+                Tab.NCAAB -> com.tjshea.vigilant.app.ui.NcaabScreen(state, onWant = vm::wantNcaab, onTrack = vm::trackBet, onRecheck = { vm.recheck(it) }, onQuote = vm::parlayQuote)
                 Tab.PROPLINE -> com.tjshea.vigilant.app.ui.PropLineEvScreen(state, onTrack = vm::trackBet, onRecheck = { vm.recheck(it) }, onRefresh = vm::refreshPropLine)
                 Tab.AUTOBET -> {
                     val context = androidx.compose.ui.platform.LocalContext.current

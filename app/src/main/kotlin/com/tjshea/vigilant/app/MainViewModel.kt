@@ -2715,6 +2715,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** Pull to refresh on the PropLine +EV screen (TCL89): the engine runs its PropLine sweep now, nothing else. */
     fun retryApi(policyId: String) { viewModelScope.launch(Dispatchers.IO) { c.cloud.requestApiRetry(policyId) } }
     fun refreshPropLine() { viewModelScope.launch(Dispatchers.IO) { c.cloud.requestPropLineSweep() } }
+
+    /** Novig's price for a parlay of these outcomes (a keyless call; the college basketball tab's parlay builder, NC1). */
+    suspend fun parlayQuote(outcomeIds: List<String>): com.tjshea.vigilant.data.novig.NovigParlay.Result = withContext(Dispatchers.IO) { com.tjshea.vigilant.data.novig.NovigParlay.quote(c.http, outcomeIds) }
+
+    /** The college basketball tab is on screen (NC1): read its files from GitHub now and keep them current while it stays open; [force] on a pull to refresh. */
+    fun wantNcaab(force: Boolean = false) { viewModelScope.launch(Dispatchers.IO) { c.cloud.wantNcaab(force) } }
     fun resetEngine() { viewModelScope.launch(Dispatchers.IO) { c.cloud.resetEngine() } }
     fun stopCloudUntilNextOpening() { viewModelScope.launch(Dispatchers.IO) { c.cloud.stopUntilNextOpening() } }
     fun sendCloudKeys() { viewModelScope.launch(Dispatchers.IO) { c.cloud.sendKeys() } }

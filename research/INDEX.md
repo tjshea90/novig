@@ -4,10 +4,11 @@ Every study in `research/`, newest first, and how it is USED. Tuning levers and 
 Statuses: APPLIED (a change in `research/review/CHANGES.md` cites it), LEVER (on LEVERS.md), CLOSED (verdict and disposition on LEVERS.md), WATCH (an open TASKS.md item waits on its number),
 CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a sample, marked in its first lines), IDLE (cited nowhere: act on it or mark it).
 
-141 entries; 13 idle: api_audit_report_2026-10-22.html, api_docs_audit_2026-10-17.md, api_docs_review_2026-10-25.md, api_review_2026-10-17.md, api_sites_review_2026-10-18.md, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, ch86_extra_orders_2026-10-24.md, parlayapi_business_2026-10-25, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md, propline_streaming_lite_2026-10-12.md
+143 entries; 13 idle: api_audit_report_2026-10-22.html, api_docs_audit_2026-10-17.md, api_docs_review_2026-10-25.md, api_review_2026-10-17.md, api_sites_review_2026-10-18.md, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, ch86_extra_orders_2026-10-24.md, parlayapi_business_2026-10-25, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md, propline_streaming_lite_2026-10-12.md
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
+| 2026-11-05 | `ncaab_ats_2026-11-05.md` | College basketball against-the-spread system, and parlays on Novig (NC1, 2026-11-05) - Tj, 2026-11-05 (typed): he used to log each college basketball team's points per game and whether it covered the spread (a tie within a few ... | LEVER WATCH CODE |
 | 2026-10-26 | `profit_by_origin_2026-10-26.md` | Profit by who placed the bet (2026-10-26, CH87b/CH87c) - **Question (Tj, 2026-10-24):** "my wins today are profit yet my total profit is going more negative", then: the all-time figure from the Vigilant subaccount's own ledger. | LEVER |
 | 2026-10-25 | `px_books_per_bet_2026-10-25.md` | Why bets showed 1 book and no ParlayAPI odds; old fair odds (PX, Tj 2026-10-25 ~17:00-18:00 UTC) - Tj: "Investigate why I don't see any parlayapi provided odds in the scanned list and why many results only have 1 book behind th... | LEVER |
 | 2026-10-25 | `propline_parlay_audit_2026-10-25.md` | PropLine + ParlayAPI streams: the audit (PS1-PS12, Tj 2026-10-25 ~14:25 UTC) - Tj: "Audit the two new streaming sockets - propline and parlayapi" (nine points, verbatim in INBOX.md), then "https://parlay-api.com/cookbook" and "... | APPLIED LEVER |
@@ -146,6 +147,7 @@ CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a 
 |  | `sharpapi/` | (no title) | APPLIED LEVER CODE |
 |  | `sgo/` | (no title) | APPLIED LEVER CODE |
 |  | `propline/` | (no title) | APPLIED LEVER CLOSED WATCH CODE |
+|  | `ncaab/` | College basketball method backtest - Seasons 2024, 2025, 2026: 14669 games with both teams rated before tip-off (3+ usable games each), judged on the CLOSING spread and total. Winning needs 52.38% at -110. | LEVER WATCH CODE |
 |  | `live_leadlag.py` | (no title) | CODE |
 |  | `history/` | (no title) | APPLIED LEVER WATCH CODE |
 |  | `design/` | (no title) | APPLIED CODE |

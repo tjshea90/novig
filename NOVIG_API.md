@@ -281,8 +281,8 @@ everything. The websocket (§6) is the right tool for broad coverage.
 - Futures in PGA/ATP/WTA/UFC: `WHEN_LIVE`, which in practice means never charged.
 - `GOLIVE` **voids every resting order** and turns taker fees on. `UNLIVE` drains the
   book and turns them off. Both can repeat.
-- RFQs/parlays are **not available through the API** (per Novig's access email),
-  so the parlay fee in `Fees.kt` doesn't matter for anything the API can do.
+- RFQs/parlays are **not available through the API for placing** (per Novig's access email),
+  so the parlay fee in `Fees.kt` doesn't matter for anything the trading API can do. **Parlay PRICES are public** (section 31 below).
 
 ## 9. How this changes the existing code (as of v0.3.3)
 
@@ -788,3 +788,14 @@ The phone mints a second `trading::read` key for the engine (a software P-256 ke
 - **`GET /v3/portfolio/pnl` (2026-10-23):** open positions marked at each outcome's last trade; `basis` and `value` summed over every match whatever the page (`limit` 1-5000, default 500); cash + value = net liquidation; value - basis = unrealized PnL. Throttle `account`, 1 token. **Used:** the engine reads it every 5 min with the trading key (`NovigTradingClient.pnl`, `CloudStatus.walletPositionsValue/Cost/walletPnlAtMs`), the Engine > Money page says it in words (`DashboardModel.markedWallet`). Test: `PortfolioPnlTest`. **First live answer (2026-10-25 07:13Z, production, trading key): HTTP 401 "Missing credentials"** while every other signed read works; the route's spec lists only the paper server, so it is probably not on production yet. The engine asks hourly after a failure; the Money line stays hidden until a read succeeds.
 - **Socket (connection.md, book, bbo, lifecycle, private):** no behaviour change since §29 (the diffs are link rewrites). Pings every 15 s (OkHttp answers); close 1008 `SLOW_CONSUMER` (a write to us stalled 15 s) or a 451 geolocation code (never worked around); socket order verbs debit `place`/`cancel`, not `stream`. A connection's watched-market cap is in `/v3/limits` (`SUBSCRIPTION_LIMIT_EXCEEDED` if a subscribe would pass it).
 - **What the engine does today (engine log 2026-10-25 06:19Z):** bbo for screening on ~7,400 markets, full books for ~140 +EV/bid markets, compression on (2.0x smaller), one connection kept open, canary book checks matching, stream allowance 32/s from `/v3/limits`. Orders: REST IOC with a deterministic clientId (`CloudNovigPort`), looked up, never resent; the engine's private `orders` channel is not subscribed (results by request). Socket orders stay phone-only (§27): for pregame IOCs the gain is ~100-200 ms and a lost ack cannot be replayed.
+
+## 31. Parlays: a free price, a deep link, no order (NC1, 2026-11-05)
+
+Probed live 2026-11-05 (details and the 8-sample table in `research/ncaab_ats_2026-11-05.md`; docs `affiliates/parlay-pricing`, `affiliates/deeplinking`, `api-reference/rfq/*`):
+- `POST https://api.novig.com/rfq/v2/quote/unauthenticated` with `{"outcomeIds":[2 to 20 ids]}`: **no key, no signature**. 200 `{"price":"0.56","expiresAt":ms,"serverNow":ms}` (the parlay's implied probability; good about 30 s;
+  use `expiresAt - serverNow`, not the phone's clock). 400 plain text: "A parlay must include two or more legs." / "Invalid parlay combination." (two legs of one kind in a game, two games sharing a team, a closed event,
+  a repeated leg); 404 no price now; 429 + Retry-After. 1 request/s per address, burst 10; a repeat of the same legs counts. A default Python user agent got a CloudFront 403 HTML page; a normal one passes.
+- **Placing is not in the trading API.** Parlays are filled by LPs answering RFQs (`/api-reference/rfq/*`: a pricer registers, answers within 3 s, last look 1 s; LP accounts only, section 14). `/v3/orders` takes single
+  outcomes. The way in for a user is the slip link `novigapp://events/<id>,<id>/<partner>[/<amount>]` (web `novig.com/events/...`): every leg filled in, the user taps place in Novig.
+- Measured: the quote = the product of the legs' MIDDLE prices within 0.5 points, 1.5 to 4 points of probability cheaper than stacking take prices. Code: `data/.../novig/NovigParlay.kt` (`quote`, `problem`, `deepLink`), the NCAAB tab's parlay builder.
+
