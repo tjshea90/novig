@@ -97,6 +97,7 @@ def main():
     ap.add_argument("--branch", required=True, help="the data branch the job pushes to (listed after each run)")
     ap.add_argument("--runs", type=int, default=2)
     ap.add_argument("--input", action="append", default=[], metavar="K=V")
+    ap.add_argument("--keep", action="store_true", help="keep the scratch directory even when everything passed (it is always kept on a failure)")
     a = ap.parse_args()
     inputs = dict(x.split("=", 1) for x in a.input)
     repo = run(["git", "rev-parse", "--show-toplevel"]).stdout.strip()
