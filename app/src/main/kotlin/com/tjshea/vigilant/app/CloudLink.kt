@@ -1132,6 +1132,9 @@ class CloudLink(private val c: AppContainer) {
     companion object {
         /** [refreshNow]'s step while the engine checks every API (Engine › APIs' button shows itself busy by it). */
         const val API_CHECK_STEP = "Asking the engine to check every API"
+        /** The college basketball tab (NC1): its files stay current this long after it was last looked at; the ratings and the schedule are re-read this often (a 304 when unchanged). */
+        const val NCAAB_WANT_MS = 15 * 60_000L
+        const val NCAAB_FILES_MS = 5 * 60_000L
         const val POLL_MS = 2_000L   // on screen (Tj, 2026-10-17: "real time or at most every couple seconds"); a 304 costs nothing against GitHub's limit
         // Freshness on screen (Tj, 2026-10-18, TCL122-2: "all stats and numbers and meters should be as fresh as possible"): unchanged files answer 304, which GitHub does not count against the token's limit.
         const val INBOX_POLL_MS = 30_000L
