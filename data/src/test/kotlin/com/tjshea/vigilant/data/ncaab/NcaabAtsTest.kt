@@ -12,7 +12,6 @@ import com.tjshea.vigilant.engine.FeeCharge
 import com.tjshea.vigilant.engine.MarketFee
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.double
 import kotlinx.serialization.json.jsonArray
@@ -67,7 +66,7 @@ class NcaabAtsTest {
     fun `a signal names the side its history backs, fades when the history says so, and is backed only with enough games above break-even in both halves`() {
         val home = team(78.0, 66.0, 1.2)   // scores more, covers more
         val away = team(66.0, 70.0, -0.4)
-        val reads = NcaabSignals.read(model(), home, away, homeSpread = -2.0, total = 140.0, neutral = false).associateBy { it.id }
+        val reads = NcaabSignals.read(model(), home, away, homeSpread = -2.0, total = 138.0, neutral = false).associateBy { it.id }
         // averages: ((78-66)-(66-70))/2 = 8 + 3 home court - 2 = 9 -> the 6+ bucket: 47%, so not backed
         assertEquals(9.0, reads.getValue(NcaabSignals.AVGS_LINE).value, 1e-9)
         assertFalse(reads.getValue(NcaabSignals.AVGS_LINE).backed)
@@ -77,10 +76,11 @@ class NcaabAtsTest {
         assertTrue(ats.fade)
         assertEquals(0.54, ats.rate, 1e-9)
         assertTrue("0.54 over 700 games, both halves above 50%", ats.backed)
-        // a total bucket with 80 games is never evidence, whatever its rate
+        // the total: (78+70)/2 + (66+66)/2 = 140 against a line of 138 is 2 points of Over, in the 0-6 bucket (49%): not backed
         val tot = reads.getValue(NcaabSignals.TOTAL_GAP)
-        assertEquals(NcaabSignals.Pick.OVER, tot.pick)   // (78+70)/2 + (66+66)/2 - 140 = 74 + 66 - 140 = 0 ... see next line
-        assertEquals(0.0, tot.value, 1e-9)
+        assertEquals(NcaabSignals.Pick.OVER, tot.pick)
+        assertEquals(2.0, tot.value, 1e-9)
+        assertFalse(tot.backed)
     }
 
     @Test
@@ -113,7 +113,7 @@ class NcaabAtsTest {
         assertEquals(0.5, NcaabSignals.shifted(0.5, 0.0, 11.0), 1e-9)
         assertEquals(0.8413, NcaabSignals.shifted(0.5, 11.0, 11.0), 1e-3)
         assertTrue(NcaabSignals.shifted(0.54, -3.0, 11.0) < 0.54)
-        assertEquals(1.12, NcaabSignals.evAt(0.56, 0.50)!!, 1e-9 + 0.0)
+        assertEquals(0.12, NcaabSignals.evAt(0.56, 0.50)!!, 1e-9)
     }
 
     // ---- the files and the matching ------------------------------------------------------------------------------------------------------------
