@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-c53b8db3-i98qqw",
- "head": "bcd1b73de3f9e458c3803dd2a842086fa4599b51",
+ "head": "13c79d3a9b5926b95981b56203dec9e48c692833",
  "since": 1793856344,
- "beat": 1793859153,
- "beatIso": "2026-11-05T06:12:33Z",
- "done": "NC1: engine publishes ncaab.json.gz (stageNcaab), CloudLink/CloudClient fetch, NCAAB tab (schedule cards, leans, unlike-the-averages, game sheet with Books&EV and alternate dropdowns, Bet buttons via betWithFair), NcaabUiTest 8 green",
- "next": "NC1: parlay helper (keyless Novig quote + multi-leg deeplink) + UI, research docs + CLAUDE.md + NOVIG_API.md, tools/test_ncaab.sh fast check, INDEX/LEVERS, full test.sh, ship"
+ "beat": 1793859358,
+ "beatIso": "2026-11-05T06:15:58Z",
+ "done": "NC1: parlay builder (NovigParlay + ParlayBar), research note, NOVIG_API.md s31, CLAUDE.md section, LEVERS row, research index, test_ncaab.sh; NcaabUiTest 9 + NovigParlayTest 4 green",
+ "next": "NC1: full bash tools/test.sh, fix anything red, then ship.sh + release.yml + record-release.sh"
 }
