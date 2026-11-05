@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "c0ee8e",
+ "kind": "interactive",
+ "task": "",
+ "branch": "ccr-7e5a893c-hsgp9d",
+ "head": "52e2b255688f8ca216b1c7e086e4f1e1cca56d2d",
+ "since": 1793907205,
+ "beat": 1793907205,
+ "beatIso": "2026-11-05T19:33:25Z",
+ "done": "",
+ "next": ""
+}
