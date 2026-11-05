@@ -8,8 +8,8 @@
  "branch": "ccr-c53b8db3-i98qqw",
  "head": "06ceeea52a859f5f48815be42d18eb5e039a7227",
  "since": 1793856344,
- "beat": 1793917789,
- "beatIso": "2026-11-05T22:29:49Z",
+ "beat": 1793917795,
+ "beatIso": "2026-11-05T22:29:55Z",
  "done": "pre-ship: NCAAB tab reads Novig's lines itself when the GitHub engine isn't serving them (it is idle on an empty wallet); the main number is picked only from a near-even market",
  "next": "ship.sh gates and releases this"
 }
