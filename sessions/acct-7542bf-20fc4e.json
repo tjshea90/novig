@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-c53b8db3-i98qqw",
- "head": "2c131035bd36776026cfffda87870d4768b87e00",
+ "head": "1e484b458aeb61b58e704c5f0e0b92dfaff54502",
  "since": 1793856344,
- "beat": 1793919089,
- "beatIso": "2026-11-05T22:51:29Z",
- "done": "pre-release: NCAAB tab reads Novig's lines itself when the GitHub engine isn't serving them (it is idle on an empty wallet); the main number is picked only from a near-even market (versionCode 443, v1.0.103)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.103), then run: bash tools/record-release.sh v1.0.103 443 \"NCAAB tab reads Novig's lines itself when the GitHub engine isn't serving them (it is idle on an empty wallet); the main number is picked only from a near-even market\""
+ "beat": 1793919144,
+ "beatIso": "2026-11-05T22:52:24Z",
+ "done": "SHIPPED v1.0.103 (code 443): NCAAB tab reads Novig itself when the engine isn't serving the board; near-even main-number rule; recorded in BUILDLOG",
+ "next": "NC1i: after the wallet is funded and the engine runs a scan with NCAAB in leagues, read status.json ncaabAtMs/ncaabRows and the 'NCAAB board:' log line on cloud-feed. NC1g: around Nov 10 teams get ratings; mid-December re-check the 'this season' columns of ncaab-data/backtest.md (LEVERS.md)"
 }
