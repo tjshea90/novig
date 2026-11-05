@@ -123,6 +123,12 @@ object NcaabBoard {
         return out
     }
 
+    /** The engine is alive (heartbeat under 3 minutes, not idle) and has published a board: the phone then takes its board. Otherwise (the engine is off, asleep on an empty wallet, or no GitHub token) the phone reads Novig itself. */
+    fun engineServes(status: com.tjshea.vigilant.data.cloud.CloudStatus?, now: Long): Boolean =
+        status != null && !status.idle && status.ncaabAtMs > 0L && now - status.heartbeatMs <= ALIVE_MS
+
+    private const val ALIVE_MS = 3 * 60_000L
+
     /** One read of the board from Novig: the open NCAAB game lines and their best prices, joined with the scan's priced rows. */
     suspend fun read(novig: NovigSource, scanned: Collection<Opportunity>, now: Long): NcaabBoardFeed {
         val before = now + WINDOW_HOURS * 3_600_000L

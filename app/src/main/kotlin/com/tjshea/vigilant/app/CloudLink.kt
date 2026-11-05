@@ -95,6 +95,9 @@ class CloudLink(private val c: AppContainer) {
         val ncaabSlate: com.tjshea.vigilant.data.ncaab.NcaabSlate? = null,
         val ncaabFilesReadAtMs: Long = 0L,
         val ncaabNote: String = "",
+        /** The board in [ncaabBoard] was read by this phone from Novig (the engine was not serving it), without the scan's book prices; and why the last such read failed. */
+        val ncaabBoardLocal: Boolean = false,
+        val ncaabBoardNote: String = "",
         /** A pull to refresh is reading everything now ([refreshNow]); the pull's arrow stays until it is false again. */
         val refreshing: Boolean = false,
         /** What the pull is reading right now, in words ("" when none); the status bar under the top of every pulled screen shows it. */
@@ -182,6 +185,7 @@ class CloudLink(private val c: AppContainer) {
     private var ncaabFetchedFor = 0L
     private var ncaabWantedUntil = 0L
     private var ncaabFilesAt = 0L
+    private var ncaabLocalAt = 0L
     private var ncaabRatingsEtag: String? = null
     private var ncaabSlateEtag: String? = null
     private var cnoFetchedFor = 0L
@@ -634,11 +638,25 @@ class CloudLink(private val c: AppContainer) {
      * re-read every [NCAAB_FILES_MS], a free 304 when nothing changed). Nothing is read while the tab is not looked at.
      */
     suspend fun wantNcaab(force: Boolean = false) {
-        if (!hasToken()) return
         val now = System.currentTimeMillis()
         ncaabWantedUntil = now + NCAAB_WANT_MS
-        if (force || now - ncaabFilesAt >= NCAAB_FILES_MS) fetchNcaabFiles()
-        latest.status?.let { st -> if (st.ncaabAtMs > 0L && (force || st.ncaabAtMs != ncaabFetchedFor)) fetchNcaabBoard(st.ncaabAtMs) }
+        if (hasToken()) {
+            if (force || now - ncaabFilesAt >= NCAAB_FILES_MS) fetchNcaabFiles()
+            latest.status?.let { st -> if (st.ncaabAtMs > 0L && (force || st.ncaabAtMs != ncaabFetchedFor)) fetchNcaabBoard(st.ncaabAtMs) }
+        }
+        // The engine is not serving the board (off, asleep on an empty wallet, idle, or no token): this phone reads Novig's NCAAB lines itself while the tab is open, so the tab never goes dark.
+        // These rows carry no book prices (that needs the engine's scan), so a Bet there claims no edge.
+        if (!com.tjshea.vigilant.data.ncaab.NcaabBoard.engineServes(latest.status, now) && (force || now - ncaabLocalAt >= NCAAB_LOCAL_MS)) readLocalNcaabBoard()
+    }
+
+    private suspend fun readLocalNcaabBoard() {
+        ncaabLocalAt = System.currentTimeMillis()
+        runCatching { com.tjshea.vigilant.data.ncaab.NcaabBoard.read(c.novig, emptyList(), ncaabLocalAt) }
+            .onSuccess { f -> _ui.update { it.copy(ncaabBoard = f, ncaabBoardReadAtMs = ncaabLocalAt, ncaabBoardLocal = true, ncaabBoardNote = "") } }
+            .onFailure { e ->
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                _ui.update { it.copy(ncaabBoardNote = "Novig's college lines could not be read: " + (e.message?.take(100) ?: e.javaClass.simpleName)) }
+            }
     }
 
     private suspend fun fetchNcaabFiles() {
@@ -661,7 +679,7 @@ class CloudLink(private val c: AppContainer) {
 
     private suspend fun fetchNcaabBoard(announcedAtMs: Long) {
         when (val b = client.fetchNcaabBoard()) {
-            is CloudClient.Poll.Fresh -> { ncaabFetchedFor = announcedAtMs; _ui.update { it.copy(ncaabBoard = b.value, ncaabBoardReadAtMs = System.currentTimeMillis()) } }
+            is CloudClient.Poll.Fresh -> { ncaabFetchedFor = announcedAtMs; _ui.update { it.copy(ncaabBoard = b.value, ncaabBoardReadAtMs = System.currentTimeMillis(), ncaabBoardLocal = false, ncaabBoardNote = "") } }
             is CloudClient.Poll.Failed -> { ncaabFetchedFor = announcedAtMs; latest.why = b.why }
             else -> {}
         }
@@ -1135,6 +1153,8 @@ class CloudLink(private val c: AppContainer) {
         /** The college basketball tab (NC1): its files stay current this long after it was last looked at; the ratings and the schedule are re-read this often (a 304 when unchanged). */
         const val NCAAB_WANT_MS = 15 * 60_000L
         const val NCAAB_FILES_MS = 5 * 60_000L
+        /** While the engine is not serving the board, the phone reads Novig's NCAAB catalog this often. */
+        const val NCAAB_LOCAL_MS = 90_000L
         const val POLL_MS = 2_000L   // on screen (Tj, 2026-10-17: "real time or at most every couple seconds"); a 304 costs nothing against GitHub's limit
         // Freshness on screen (Tj, 2026-10-18, TCL122-2: "all stats and numbers and meters should be as fresh as possible"): unchanged files answer 304, which GitHub does not count against the token's limit.
         const val INBOX_POLL_MS = 30_000L

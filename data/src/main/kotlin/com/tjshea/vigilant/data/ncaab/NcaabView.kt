@@ -61,6 +61,8 @@ data class NcaabGameView(
 }
 
 object NcaabView {
+    private val NEAR_EVEN = 0.30..0.70
+
     /** Games on screen: a game that started more than this long ago and is not final is still shown (a delayed one), anything older drops. */
     private const val KEEP_AFTER_START_MS = 6 * 3_600_000L
 
@@ -123,7 +125,8 @@ object NcaabView {
     /** The number whose two sides cost closest to even money to take; the one nearest [espn] when no price is read; the middle one otherwise. */
     private fun <T> mainOf(lines: List<T>, espn: Double?, num: (T) -> Double, a: (T) -> Double?, b: (T) -> Double?): T? {
         if (lines.isEmpty()) return null
-        lines.mapNotNull { l -> val x = a(l); val y = b(l); if (x != null && y != null) l to abs(x - 0.5) + abs(y - 0.5) else null }.minByOrNull { it.second }?.let { return it.first }
+        // Only a number that looks like a real near-even market counts: with the books of only some numbers read (the public routes), the closest to even among them can still be a 12 cent / 95 cent alternate.
+        lines.mapNotNull { l -> val x = a(l); val y = b(l); if (x != null && y != null && x in NEAR_EVEN && y in NEAR_EVEN) l to abs(x - 0.5) + abs(y - 0.5) else null }.minByOrNull { it.second }?.let { return it.first }
         if (espn != null) return lines.minByOrNull { abs(num(it) - espn) }
         return lines[lines.size / 2]
     }

@@ -78,7 +78,8 @@ fun NcaabScreen(
     androidx.compose.runtime.CompositionLocalProvider(LocalParlay provides parlay, LocalParlayQuote provides onQuote) {
     VigilantPullToRefresh(busy = refreshing, onRefresh = { refreshing = true; onWant(true) }, modifier = modifier.fillMaxSize()) {
         NcaabContent(
-            views = views, ratingsAsOf = cu.ncaabRatings?.asOf, boardAt = cu.ncaabBoard?.atMs, boardReadAt = cu.ncaabBoardReadAtMs, note = cu.ncaabNote,
+            views = views, ratingsAsOf = cu.ncaabRatings?.asOf, boardAt = cu.ncaabBoard?.atMs, boardReadAt = cu.ncaabBoardReadAtMs, note = listOf(cu.ncaabNote, cu.ncaabBoardNote).filter { it.isNotBlank() }.joinToString(" \u00B7 "),
+            boardLocal = cu.ncaabBoardLocal,
             model = cu.ncaabRatings?.model, ratedTeams = cu.ncaabRatings?.teams?.size ?: 0, hasSlate = cu.ncaabSlate != null, hasToken = cu.hasToken,
             settings = state.settings, now = now, onTrack = onTrack, onRecheck = onRecheck,
         )
@@ -98,6 +99,7 @@ internal fun NcaabContent(
     boardAt: Long?,
     boardReadAt: Long,
     note: String,
+    boardLocal: Boolean = false,
     model: com.tjshea.vigilant.data.ncaab.NcaabModel?,
     ratedTeams: Int,
     hasSlate: Boolean,
@@ -130,7 +132,7 @@ internal fun NcaabContent(
         item {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("College basketball", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(freshness(ratingsAsOf, boardAt, boardReadAt, ratedTeams, now), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("ncaabFresh"))
+                Text(freshness(ratingsAsOf, boardAt, boardReadAt, ratedTeams, now, boardLocal), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("ncaabFresh"))
                 if (note.isNotBlank()) Text(note, style = MaterialTheme.typography.labelMedium, color = LocalEdgeColors.current.warning)
                 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
                 androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -158,10 +160,10 @@ internal fun NcaabContent(
     if (selected != null) NcaabGameSheet(selected, model, settings, now, onDismiss = { open = null }, onTrack = onTrack, onRecheck = onRecheck)
 }
 
-private fun freshness(ratingsAsOf: Long?, boardAt: Long?, boardReadAt: Long, rated: Int, now: Long): String {
+private fun freshness(ratingsAsOf: Long?, boardAt: Long?, boardReadAt: Long, rated: Int, now: Long, local: Boolean = false): String {
     val parts = ArrayList<String>()
     parts += if (ratingsAsOf != null && ratingsAsOf > 0) "averages ${Format.age(ratingsAsOf, now)} ($rated teams rated)" else "no averages yet"
-    parts += if (boardAt != null && boardAt > 0) "Novig lines ${Format.age(boardAt, now)}" else "no Novig lines yet"
+    parts += if (boardAt != null && boardAt > 0) "Novig lines ${Format.age(boardAt, now)}" + (if (local) " (read by this phone: the engine isn't serving them, so no book prices or EV)" else "") else "no Novig lines yet"
     return parts.joinToString(" · ")
 }
 
