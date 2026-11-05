@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.data.ncaab.NcaabGameView
 import com.tjshea.vigilant.data.ncaab.NcaabModel
 import com.tjshea.vigilant.data.ncaab.NcaabSignals
-import com.tjshea.vigilant.data.ncaab.NcaabSymbols
 import com.tjshea.vigilant.data.ncaab.NcaabTeam
 import com.tjshea.vigilant.data.ncaab.NcaabText
 import com.tjshea.vigilant.data.ncaab.SpreadLine
@@ -233,6 +232,3 @@ private fun NumberPicker(label: String, options: List<String>, selected: Int, on
         }
     }
 }
-
-@Suppress("unused")
-private fun keep() = NcaabSymbols.ofTier(0)

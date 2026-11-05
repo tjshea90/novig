@@ -41,7 +41,6 @@ import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.ncaab.NcaabGameView
 import com.tjshea.vigilant.data.ncaab.NcaabPick
 import com.tjshea.vigilant.data.ncaab.NcaabSignals
-import com.tjshea.vigilant.data.ncaab.NcaabSymbols
 import com.tjshea.vigilant.data.ncaab.NcaabTeam
 import com.tjshea.vigilant.data.ncaab.NcaabText
 import com.tjshea.vigilant.data.ncaab.NcaabView
@@ -258,7 +257,7 @@ private fun LeanRow(v: NcaabGameView, p: NcaabPick, onOpen: () -> Unit) {
                 )
             }
             val o = p.opportunity
-            if (api != null && o != null) BetChip("Bet") { betFrom(api, o, r.rate) }
+            if (api != null && o != null) BetChip("Bet") { betFrom(api, o, null) }
         }
     }
 }
