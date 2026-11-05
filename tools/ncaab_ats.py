@@ -238,6 +238,9 @@ def collect(data_dir, days, workers=8, log=print):
                 tm = e[side]
                 teams[tm["id"]] = dict(n=tm["n"], ab=tm["ab"])
         log(f"{day}: {len(evs)} finished, {len(todo)} new, {sum(1 for e, l in zip(todo, lines) if l)} with a line")
+        if todo:  # save as we go: a run cut off mid-backfill keeps every day it finished
+            save_games(data_dir, games)
+            save_json(os.path.join(data_dir, "teams.json"), teams)
     save_games(data_dir, games)
     save_json(os.path.join(data_dir, "teams.json"), teams)
     return new, nolines
