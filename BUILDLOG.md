@@ -441,3 +441,4 @@ day that changes.
 | v1.0.100 | code 440 | 2026-11-04T08:35Z | Odds API keys used in order (a throttle no longer moves the engine along the list); Volume mode honors Unlimited bids
 | v1.0.101 | code 441 | 2026-11-04T22:24Z | A phone restart no longer turns off auto-bet, bids or auto-scan
 | v1.0.102 | code 442 | 2026-11-05T07:47Z | NC1: NCAAB tab (college basketball ATS system with Novig lines, bets and a parlay builder) and its GitHub game log
+| v1.0.103 | code 443 | 2026-11-05T22:51Z | NCAAB tab reads Novig's lines itself when the GitHub engine isn't serving them (it is idle on an empty wallet); the main number is picked only from a near-even market
