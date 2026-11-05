@@ -208,7 +208,13 @@ private fun TotalBlock(v: NcaabGameView, model: NcaabModel?, onBooks: (Opportuni
 private fun estimateNote(v: NcaabGameView, model: NcaabModel?, kind: String, main: Double?, number: Double) {
     if (main == null || model == null) return
     val pick = v.picks.filter { it.reading.kind == kind && it.opportunity != null }.maxByOrNull { NcaabSignals.score(it.reading) } ?: return
-    val side = sideOf(pick.opportunity!!) ?: return
+    val side = when (sideOf(pick.opportunity!!)) {
+        Side.HOME -> NcaabSignals.Pick.HOME
+        Side.AWAY -> NcaabSignals.Pick.AWAY
+        Side.OVER -> NcaabSignals.Pick.OVER
+        Side.UNDER -> NcaabSignals.Pick.UNDER
+        null -> return
+    }
     val p = NcaabText.estimateAt(pick.reading, side, main, number, model.sigma) ?: return
     Text(
         "If the method's lean on ${pick.text} held, this number would win about ${NcaabText.pct(p)} (an estimate that moves the lean's ${NcaabText.pct(pick.reading.rate)} along the normal curve; the Bet sheet does not use it).",

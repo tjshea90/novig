@@ -55,6 +55,7 @@ import kotlinx.coroutines.delay
  * "strongest leans" by Tj's method and the spreads and totals furthest from the averages. The averages come from the `ncaab-data` branch (a GitHub job logs every finished game and its closing line),
  * Novig's prices from the engine's board. Everything shown beside a lean is what that signal actually did against closing lines, never a promise.
  */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun NcaabScreen(
     state: UiState,
