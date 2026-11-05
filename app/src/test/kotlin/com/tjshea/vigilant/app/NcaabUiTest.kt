@@ -104,12 +104,17 @@ class NcaabUiTest {
     private val betsWithFair = ArrayList<Pair<Opportunity, Double>>()
     private val actions = ApiBetActions(enabled = true, betOpportunity = { bets += it }, betCno = {}, betWithFair = { o, f -> betsWithFair += o to f })
 
-    private fun show(v: List<com.tjshea.vigilant.data.ncaab.NcaabGameView>, bet: Boolean = true, model: NcaabModel = this.model) {
+    private fun priced() = com.tjshea.vigilant.data.novig.NovigParlay.Result.Priced(com.tjshea.vigilant.data.novig.NovigParlay.Quote(0.25, now + 30_000L, now))
+
+    /** Novig answers at once with a 25-cent parlay. */
+    private val instantQuote: suspend (List<String>) -> com.tjshea.vigilant.data.novig.NovigParlay.Result = { ids -> quotedFor += ids; priced() }
+
+    private fun show(v: List<com.tjshea.vigilant.data.ncaab.NcaabGameView>, bet: Boolean = true, model: NcaabModel = this.model, quote: suspend (List<String>) -> com.tjshea.vigilant.data.novig.NovigParlay.Result = instantQuote) {
         compose.setContent {
             VigilantTheme {
                 CompositionLocalProvider(
                     LocalApiBet provides (if (bet) actions else null), com.tjshea.vigilant.app.ui.LocalParlay provides parlay,
-                    com.tjshea.vigilant.app.ui.LocalParlayQuote provides { ids -> quotedFor += ids; com.tjshea.vigilant.data.novig.NovigParlay.Result.Priced(com.tjshea.vigilant.data.novig.NovigParlay.Quote(0.25, now + 30_000L, now)) },
+                    com.tjshea.vigilant.app.ui.LocalParlayQuote provides quote,
                 ) {
                     NcaabContent(v, ratingsAsOf = now - 3_600_000L, boardAt = now - 20_000L, boardReadAt = now, note = "", model = model, ratedTeams = 2, hasSlate = true, hasToken = true,
                         settings = ScanSettings(), now = now, onTrack = { _, _ -> }, onRecheck = {})
