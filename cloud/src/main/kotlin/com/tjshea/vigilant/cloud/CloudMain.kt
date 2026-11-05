@@ -233,6 +233,23 @@ fun main(args: Array<String>) = runBlocking {
             while (isActive && waited < 60 * 60_000L && (engineHolder.get()?.propLineRefreshAtMs ?: 0L) <= served) { delay(3_000L); waited += 3_000L }
         }
     }
+    // The college basketball board (NC1, Tj 2026-11-05): every Novig NCAAB game line, all the alternate numbers, with the scan's priced rows where it priced a number. The phone's NCAAB tab lists the day's games
+    // from it (the schedule and the teams' averages come from the ncaab-data branch). One cheap catalog read every 75 s; nothing is read while NCAAB is off in the settings.
+    scope.launch {
+        delay(75_000L)
+        var loggedAt = 0L
+        while (isActive) {
+            val s = latestSettings.get()
+            val now = System.currentTimeMillis()
+            if (s != null && com.tjshea.vigilant.data.ncaab.NcaabBoard.LEAGUE in s.leagues && novigKeyed?.addressRefused(now) != true) {
+                runCatching { com.tjshea.vigilant.data.ncaab.NcaabBoard.read(novig, latestPriced.get(), now) }.onSuccess { f ->
+                    publisher.stageNcaab(f, if (f.rows.isEmpty()) "Novig lists no college basketball games in the next ${com.tjshea.vigilant.data.ncaab.NcaabBoard.WINDOW_HOURS} h" else "")
+                    if (now - loggedAt >= 10 * 60_000L) { loggedAt = now; log("NCAAB board: ${f.rows.size} lines from ${f.games} games") }
+                }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; if (now - loggedAt >= 10 * 60_000L) { loggedAt = now; log("NCAAB board failed: ${e.message?.take(120) ?: e.javaClass.simpleName}") } }
+            }
+            delay(75_000L)
+        }
+    }
     val config = ConfigReader(git, cfgDir)
     val started = System.currentTimeMillis()
     val until = started + minutes * 60_000L
@@ -933,7 +950,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         val bytes = com.tjshea.vigilant.data.ncaab.NcaabBoardFeed.encode(f)
         ncaabNote = note.take(200); ncaabRows = f.rows.size; ncaabGames = f.games
         // The stamp moves only when the board's content did: the phone fetches a board when the stamp changes.
-        if (ncaabBytes == null || !ncaabBytes.contentEquals(bytes)) { ncaabBytes = bytes; ncaabAt = f.atMs }
+        if (ncaabBytes?.contentEquals(bytes) != true) { ncaabBytes = bytes; ncaabAt = f.atMs }
         status = status?.copy(ncaabAtMs = ncaabAt, ncaabRows = ncaabRows, ncaabGames = ncaabGames, ncaabNote = ncaabNote)
         dirty = true
     }
