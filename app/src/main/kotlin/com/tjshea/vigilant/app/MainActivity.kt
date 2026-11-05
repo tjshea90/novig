@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PlayArrow
@@ -903,6 +904,7 @@ private fun VigilantRoot(
                         onLock = vm::lockIn,
                     ),
                 )
+                Tab.NCAAB -> com.tjshea.vigilant.app.ui.NcaabScreen(state, onWant = vm::wantNcaab, onTrack = vm::trackBet, onRecheck = { vm.recheck(it) })
                 Tab.PROPLINE -> com.tjshea.vigilant.app.ui.PropLineEvScreen(state, onTrack = vm::trackBet, onRecheck = { vm.recheck(it) }, onRefresh = vm::refreshPropLine)
                 Tab.AUTOBET -> {
                     val context = androidx.compose.ui.platform.LocalContext.current
