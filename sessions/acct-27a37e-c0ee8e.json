@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-7e5a893c-hsgp9d",
- "head": "c72207d813d8632bb4fca0e301845b16481abf24",
+ "head": "6226b474071a7b260e38e22a7aad1f42c589a7c3",
  "since": 1793907205,
- "beat": 1793907656,
- "beatIso": "2026-11-05T19:40:56Z",
- "done": "",
- "next": ""
+ "beat": 1793907716,
+ "beatIso": "2026-11-05T19:41:56Z",
+ "done": "Wrong-repo session: Tj attached the Launcher handoff here by mistake, no novig work done; removed its hook-archived copy from research/uploads (it had reached main, stays in git history)",
+ "next": "NC1i: read ncaabAtMs after first scan (cloud-feed status has ncaabAtMs, fresh)"
 }
