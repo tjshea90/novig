@@ -357,7 +357,7 @@ def walk_forward(games, cfg=CFG):
                 id=g["id"], d=g["d"], t=g["t"], sp=g["sp"], tt=g["tt"],
                 dO=rh["ppg"] - ra["ppg"], dD=rh["papg"] - ra["papg"], dR=rh["ats"] - ra["ats"], dCM=rh["cm"] - ra["cm"],
                 sys_total=(rh["ppg"] + ra["papg"]) / 2 + (ra["ppg"] + rh["papg"]) / 2,
-                neu=g.get("neu", 0), ratH=rh["ats"], ratA=ra["ats"], imp=((rh["ppg"] - rh["papg"]) - (ra["ppg"] - ra["papg"])) / 2,
+                neu=g.get("neu", 0), ratH=rh["ats"], ratA=ra["ats"], hp=rh["ppg"], hd=rh["papg"], ap=ra["ppg"], ad=ra["papg"], season=s,
                 cover=(g["hs"] - g["as"]) + g["sp"], over=(g["hs"] + g["as"]) - g["tt"], hs=g["hs"], **{"as": g["as"]}))
         for side in ("h", "a"):
             per.setdefault((s, g[side]), []).append(team_game(g, g[side]))
@@ -410,101 +410,118 @@ def side_result(edge, outcome):
     return 1.0 if (edge > 0) == (outcome > 0) else 0.0
 
 
-def backtest(games, split, cfg=CFG, log=print):
+HCA = 3.0              # points of home-court edge the line already holds (none at a neutral site)
+BREAK_EVEN = 0.5238    # a -110 price needs this share of wins
+MIN_BUCKET = 100       # fewest games behind a bucket before the app calls it evidence
+
+# The four signals the app shows. `value` is signed toward the HOME side (spreads) or the OVER (totals); the app takes the bucket of |value|.
+# `dir` is what a signal means: +1 back the side the value points to, -1 the other side. It is fixed here (the method's own meaning, except `ats_gap`, whose direction the data decides) and never
+# chosen per bucket, so a bucket cannot be picked for looking good.
+SIGNALS = {
+    "avgs_line": dict(label="Averages vs the spread", kind="spread", unit="points", edges=[0, 3, 6, 9, 12], dir=1,
+                      about="The teams' scoring margins say one side should be favoured by more than the line does."),
+    "ats_gap": dict(label="Against-the-spread streak (green plus / red minus)", kind="spread", unit="tiers", edges=[0.0, 0.4, 0.8, 1.2], dir=None,
+                    about="The gap between the two teams' average tiers; the history decides whether to back or fade the team that has covered more."),
+    "your_rule": dict(label="Your rule: ahead on scoring AND on covering", kind="spread", unit="points", edges=[0, 3, 6, 9, 12], dir=1,
+                      about="The team that scores more per game and has covered more, backed."),
+    "total_gap": dict(label="Total vs the teams' scoring", kind="total", unit="points", edges=[0, 3, 6, 9, 12], dir=1,
+                      about="Each side's scoring and the other's points allowed, against the line: Over when it is higher, Under when lower."),
+}
+
+
+def signal_value(name, rh, ra, sp, tt, neu):
+    """The signal's value for a game from the two teams' ratings (home first), the HOME spread and the total; None when it does not apply. The app computes the same numbers (NcaabSignals)."""
+    if name == "avgs_line":
+        imp = ((rh["ppg"] - rh["papg"]) - (ra["ppg"] - ra["papg"])) / 2
+        return imp + (0.0 if neu else HCA) + sp
+    if name == "ats_gap":
+        return rh["ats"] - ra["ats"]
+    if name == "your_rule":
+        dO, dR = rh["ppg"] - ra["ppg"], rh["ats"] - ra["ats"]
+        return dO if dO * dR > 0 and abs(dR) >= 0.5 else None
+    if name == "total_gap":
+        return (rh["ppg"] + ra["papg"]) / 2 + (ra["ppg"] + rh["papg"]) / 2 - tt
+    return None
+
+
+def rating_pair(row):
+    """A walk-forward row back into the two teams' rating dicts (just the fields a signal reads)."""
+    return ({"ppg": row["hp"], "papg": row["hd"], "ats": row["ratH"]}, {"ppg": row["ap"], "papg": row["ad"], "ats": row["ratA"]})
+
+
+def signal_tables(rows, current_season):
+    """Per signal and bucket: games, the share where the value's side won (all seasons), the same for each half of the sample, and for the current season alone."""
+    mid = sorted(r["t"] for r in rows)[len(rows) // 2] if rows else 0
+    out = {}
+    for name, sg in SIGNALS.items():
+        target = "over" if sg["kind"] == "total" else "cover"
+        vals = []
+        for r in rows:
+            rh, ra = rating_pair(r)
+            v = signal_value(name, rh, ra, r["sp"], r["tt"], r["neu"])
+            if v is not None and v != 0:
+                vals.append((v, side_result(v, r[target]), r))
+        direction = sg["dir"]
+        if direction is None:  # the data decides, once, on every game the signal applies to
+            w = [x for _, x, _ in vals if x is not None]
+            direction = 1 if w and sum(w) / len(w) >= 0.5 else -1
+        buckets = []
+        for lo, hi in zip(sg["edges"], sg["edges"][1:] + [1e9]):
+            sel = [(x, r) for v, x, r in vals if lo <= abs(v) < hi and x is not None]
+            if not sel:
+                continue
+
+            def rate(items):
+                return (sum(x for x, _ in items) / len(items)) if items else None
+            cur = [(x, r) for x, r in sel if r["season"] == current_season]
+            h1 = [(x, r) for x, r in sel if r["t"] < mid]
+            h2 = [(x, r) for x, r in sel if r["t"] >= mid]
+            buckets.append(dict(lo=lo, hi=None if hi > 1e8 else hi, n=len(sel), r=round(rate(sel), 4),
+                                r1=None if not h1 else round(rate(h1), 4), n1=len(h1), r2=None if not h2 else round(rate(h2), 4), n2=len(h2),
+                                rc=None if not cur else round(rate(cur), 4), nc=len(cur)))
+        out[name] = dict(label=sg["label"], kind=sg["kind"], unit=sg["unit"], about=sg["about"], dir=direction, buckets=buckets)
+    return out
+
+
+def backtest(games, split=None, cfg=CFG, log=print, current_season=None):
+    """Every rated game walk-forward (ratings from earlier games of its own season only), the signal tables, and the markdown report. `split` is unused now (nothing is fitted to a half)."""
     rows = walk_forward(games, cfg)
-    train = [r for r in rows if r["d"] < split]
-    test = [r for r in rows if r["d"] >= split]
-    rep = [f"# College basketball method backtest\n", f"games with both teams rated: {len(rows)} (train < {split}: {len(train)}, test >= {split}: {len(test)}); winning needs 52.38% at -110.\n"]
-    model = dict(DEFAULT_MODEL)
-    if len(train) < 200 or len(test) < 100:
-        rep.append("Too few games to fit anything yet.\n")
-        return model, "\n".join(rep)
+    cur = current_season or (max(r["season"] for r in rows) if rows else 0)
+    seasons = sorted({r["season"] for r in rows})
+    rep = ["# College basketball method backtest\n",
+           f"Seasons {', '.join(str(x) for x in seasons)}: {len(rows)} games with both teams rated before tip-off (3+ usable games each), judged on the CLOSING spread and total. Winning needs {BREAK_EVEN:.2%} at -110.\n"]
+    if len(rows) < 300:
+        rep.append("Too few games to say anything yet.\n")
+        return dict(source="none", note="not enough games yet", sigma=11.0, signals={}), "\n".join(rep)
+    cov = [r["cover"] for r in rows]
+    ov = [r["over"] for r in rows]
 
-    def fit(rs, cols, target):
-        beta, t = ols([[r[c] for c in cols] for r in rs], [r[target] for r in rs])
-        return beta, t
-
-    cols = ["dO", "dD", "dR"]
-    beta, t = fit(train, cols, "cover")
-    rep.append(f"## Spread: cover margin ~ points for/against difference and against-the-spread difference (train)\n")
-    rep.append("| term | coefficient | t |\n|-|-|-|")
-    for nm, b, tt_ in zip(["intercept"] + cols, beta, t):
-        rep.append(f"| {nm} | {b:+.3f} | {tt_:+.2f} |")
-    rep.append("")
-
-    def edge_of(r, b):
-        return b[1] * r["dO"] + b[2] * r["dD"] + b[3] * r["dR"]
-
-    # out of sample: back the side the fitted edge points to; bucket by the size of the edge
-    pairs = [(edge_of(r, beta), side_result(edge_of(r, beta), r["cover"])) for r in test]
-    rep.append("### Out of sample: backing the side the edge points to, by size of the edge (points)\n")
-    rep.append("| edge | games | covered |\n|-|-|-|")
-    for lo, hi, n, p in bucket_report(pairs, [0, 1, 2, 3, 4]):
-        rep.append(f"| {lo}-{'+' if hi > 1e8 else hi} | {n} | {p:.1%} |")
-    allp = [w for _, w in pairs if w is not None]
-    rep.append(f"| all | {len(allp)} | {sum(allp) / len(allp):.1%} |\n")
-
-    # Tj's own rule of thumb, no fitting: team ahead on BOTH scoring and the against-the-spread average
-    both = [(1 if r["dO"] > 0 else -1, r) for r in test if r["dO"] * r["dR"] > 0 and abs(r["dR"]) >= 1.0 and abs(r["dO"]) >= 3.0]
-    wl = [side_result(s, r["cover"]) for s, r in both]
-    wl = [w for w in wl if w is not None]
-    if wl:
-        rep.append(f"Tj's rule of thumb with no fitting (the team ahead on scoring by 3+ AND on the against-the-spread average by 1+ tiers, back it): {len(wl)} games, covered {sum(wl) / len(wl):.1%}\n")
-
-    # The signals the app shows, no fitting: judged on every rated game, then on each half (a signal that only works in one half is noise)
-    HCA = 3.0
-    for r in rows:
-        r["gap_s"] = r["imp"] + (0.0 if r["neu"] else HCA) + r["sp"]      # >0: the averages like home more than the line does
-    mid = sorted(r["d"] for r in rows)[len(rows) // 2]
-    rep.append("## The signals the app shows (no fitting; all rated games, then first half / second half of the season)\n")
-
-    def table(title, pairs_all, edges, unit="points"):
-        rep.append(f"### {title}\n")
-        rep.append(f"| size ({unit}) | games | right | first half | second half |\n|-|-|-|-|-|")
-        for lo, hi in zip(edges, edges[1:] + [1e9]):
-            def rate(sel):
-                w = [x for s_, x, d in sel if lo <= abs(s_) < hi and x is not None]
-                return (len(w), sum(w) / len(w)) if w else (0, float("nan"))
-            n_all, p_all = rate(pairs_all)
-            n1, p1 = rate([t for t in pairs_all if t[2] < mid])
-            n2, p2 = rate([t for t in pairs_all if t[2] >= mid])
-            if n_all:
-                rep.append(f"| {lo}-{'+' if hi > 1e8 else hi} | {n_all} | {p_all:.1%} | {p1:.1%} ({n1}) | {p2:.1%} ({n2}) |")
+    def share(xs, f):
+        w = [f(x) for x in xs if x != 0]
+        return sum(w) / len(w)
+    rep.append(f"Baselines on these games: home covers {share(cov, lambda c: c > 0):.1%}, the favourite covers {share([r['cover'] if r['sp'] < 0 else -r['cover'] for r in rows if r['sp'] != 0], lambda c: c > 0):.1%}, "
+               f"the Over hits {share(ov, lambda o: o > 0):.1%}. The sd of a result around its line is {statistics.pstdev(cov):.1f} points (spread) and {statistics.pstdev(ov):.1f} (total).\n")
+    tables = signal_tables(rows, cur)
+    for name, t in tables.items():
+        rep.append(f"## {t['label']}\n")
+        rep.append(f"{t['about']} Value unit: {t['unit']}. Meaning: {'back the side it points to' if t['dir'] == 1 else 'FADE the side it points to (the history says that side loses)'}.\n")
+        rep.append(f"| size | games | followed side won | first half | second half | this season |\n|-|-|-|-|-|-|")
+        for b in t["buckets"]:
+            f = lambda x: "-" if x is None else f"{(x if t['dir'] == 1 else 1 - x):.1%}"
+            rep.append(f"| {b['lo']}-{'+' if b['hi'] is None else b['hi']} | {b['n']} | {f(b['r'])} | {f(b['r1'])} ({b['n1']}) | {f(b['r2'])} ({b['n2']}) | {f(b['rc'])} ({b['nc']}) |")
         rep.append("")
-
-    table("Spread: back the side the AVERAGES favour more than the line does (net points per game gap vs the spread)",
-          [(r["gap_s"], side_result(r["gap_s"], r["cover"]), r["d"]) for r in rows], [0, 3, 6, 9, 12])
-    table("Spread: back the team with the BETTER against-the-spread average (your green plus / red minus)",
-          [(r["dR"], side_result(r["dR"], r["cover"]), r["d"]) for r in rows], [0.0, 0.5, 1.0, 1.5], "tiers")
-    table("Spread: FADE that team (back the one with the worse against-the-spread average)",
-          [(-r["dR"], side_result(-r["dR"], r["cover"]), r["d"]) for r in rows], [0.0, 0.5, 1.0, 1.5], "tiers")
-    both = [(r["dO"], side_result(r["dO"], r["cover"]), r["d"]) for r in rows if r["dO"] * r["dR"] > 0 and abs(r["dR"]) >= 0.5]
-    table("Spread: your rule - the team ahead on BOTH scoring and the against-the-spread average (gap in points per game)", both, [0, 3, 6, 9, 12])
-    for r in rows:
-        r["dT"] = r["sys_total"] - r["tt"]
-    table("Total: Over when the matchup estimate (each side's scoring and the other's points allowed) is above the line, Under when below",
-          [(r["dT"], side_result(r["dT"], r["over"]), r["d"]) for r in rows], [0, 3, 6, 9, 12])
-    rows_sum = [(r["ratH"] + r["ratA"], side_result(r["ratH"] + r["ratA"], r["over"]) if False else None, r["d"]) for r in rows]
-
-    # totals
-    for r in rows:
-        r["dT"] = r["sys_total"] - r["tt"]
-    tb, tt_ = fit(train, ["dT"], "over")
-    rep.append("## Total: actual total minus the line ~ (matchup estimate of the total minus the line) (train)\n")
-    rep.append(f"intercept {tb[0]:+.3f} (t {tt_[0]:+.2f}), slope {tb[1]:+.3f} (t {tt_[1]:+.2f})\n")
-    test_t = [r for r in rows if r["d"] >= split]
-    tp = [(r["dT"], side_result(r["dT"], r["over"])) for r in test_t]
-    rep.append("### Out of sample: Over when the estimate is above the line, Under when below, by the gap (points)\n")
-    rep.append("| gap | games | right |\n|-|-|-|")
-    for lo, hi, n, p in bucket_report(tp, [0, 3, 6, 9, 12]):
-        rep.append(f"| {lo}-{'+' if hi > 1e8 else hi} | {n} | {p:.1%} |")
-    allt = [w for _, w in tp if w is not None]
-    rep.append(f"| all | {len(allt)} | {sum(allt) / len(allt):.1%} |\n")
-    sd = statistics.pstdev([r["cover"] for r in rows])
-    model.update(kO=round(beta[1], 4), kD=round(beta[2], 4), kR=round(beta[3], 4), kT=round(tb[1], 4), sigma=round(sd, 2), source="backtest",
-                 note=f"fitted on {len(train)} games before {split}; the spread terms' t-stats are {t[1]:+.1f}, {t[2]:+.1f}, {t[3]:+.1f}; the total slope's is {tt_[1]:+.1f}")
-    log("\n".join(rep))
-    return model, "\n".join(rep)
+    # what a straight bet on each signal earns, pooled
+    rep.append("## Pooled, a bet on each signal's side whatever its size\n")
+    rep.append("| signal | games | won | profit per $1 staked at -110 |\n|-|-|-|-|")
+    for name, t in tables.items():
+        n = sum(b["n"] for b in t["buckets"])
+        w = sum(b["n"] * (b["r"] if t["dir"] == 1 else 1 - b["r"]) for b in t["buckets"]) / n
+        rep.append(f"| {t['label']} | {n} | {w:.1%} | {w * (100 / 110) - (1 - w):+.1%} |")
+    model = dict(source="backtest", sigma=round(statistics.pstdev(cov), 2), seasons=seasons, games=len(rows), currentSeason=cur, signals=tables,
+                 note=f"{len(rows)} games over {len(seasons)} season(s); closing lines; nothing is fitted, the app only looks up how each signal's bucket did")
+    text = "\n".join(rep)
+    log(text)
+    return model, text
 
 
 # ---------------------------------------------------------------------------------------------- commands
