@@ -5,7 +5,7 @@ betting odds ... automatically in the background, on github"; his old method: ea
   python3 -I tools/ncaab_ats.py run      --data-dir D [--days-back 3]            # the daily job: log finished games, rebuild ratings and the slate
   python3 -I tools/ncaab_ats.py collect  --data-dir D --from 2025-11-03 --to 2026-04-07   # backfill a range of days (idempotent)
   python3 -I tools/ncaab_ats.py rate     --data-dir D                            # ratings.json from the games already logged
-  python3 -I tools/ncaab_ats.py backtest --data-dir D [--split 2026-02-01]       # walk-forward test of the method + fitted weights (model.json)
+  python3 -I tools/ncaab_ats.py backtest --data-dir D                            # walk-forward test of the method on every logged season -> model.json (signal tables) + backtest.md
   python3 -I tools/ncaab_ats.py selftest
 
 Data (all public, no key): ESPN's scoreboard (final scores, the day's schedule) and ESPN's core odds feed (ESPN BET's OPENING and CLOSING spread and total for every game that has a line; a game with no
@@ -14,7 +14,7 @@ line is a non-Division I opponent or an exhibition and is not logged, which is a
   teams.json           id -> {n: school name, ab: abbreviation}
   ratings.json         per team: games used, points for/against per game, the against-the-spread average (tier mean) and its symbol, the last results; plus the model weights
   slate.json           today's and tomorrow's games with ESPN's current line (a fallback: the app shows Novig's)
-  model.json / backtest.md   weights fitted by `backtest` and the evidence behind them
+  model.json / backtest.md   how each signal's size bucket did against the closing line (all seasons logged, each half, this season) and the report behind it
 The tiers (Tj's method): cover margin = (team's margin) + (its closing spread). |margin| < tie = 0 (a "tie"), < dbl = +/-1 (a green plus / red minus), else +/-2 (double). A team's average
 tier is the mean over its games. Outliers are left out of every average: games with a spread of `mismatch` points or more (a big school against a small one) and, for the points, any score further
 than `z` robust standard deviations from the team's median.
@@ -364,45 +364,6 @@ def walk_forward(games, cfg=CFG):
     return rows
 
 
-def ols(X, y):
-    """Least squares with an intercept (normal equations); returns (coefs, t-stats). Tiny and dependency-free."""
-    n, k = len(X), len(X[0]) + 1
-    A = [[1.0] + list(r) for r in X]
-    XtX = [[sum(A[i][a] * A[i][b] for i in range(n)) for b in range(k)] for a in range(k)]
-    Xty = [sum(A[i][a] * y[i] for i in range(n)) for a in range(k)]
-    inv = invert(XtX)
-    beta = [sum(inv[a][b] * Xty[b] for b in range(k)) for a in range(k)]
-    res = [y[i] - sum(A[i][a] * beta[a] for a in range(k)) for i in range(n)]
-    s2 = sum(r * r for r in res) / max(1, n - k)
-    t = [beta[a] / math.sqrt(max(1e-12, s2 * inv[a][a])) for a in range(k)]
-    return beta, t
-
-
-def invert(M):
-    n = len(M)
-    A = [row[:] + [1.0 if i == j else 0.0 for j in range(n)] for i, row in enumerate(M)]
-    for c in range(n):
-        p = max(range(c, n), key=lambda r: abs(A[r][c]))
-        A[c], A[p] = A[p], A[c]
-        d = A[c][c] or 1e-12
-        A[c] = [v / d for v in A[c]]
-        for r in range(n):
-            if r != c:
-                f = A[r][c]
-                A[r] = [A[r][j] - f * A[c][j] for j in range(2 * n)]
-    return [row[n:] for row in A]
-
-
-def bucket_report(pairs, edges):
-    """pairs = [(signal in points, won 1/0/0.5 or None for a push)]; the hit rate for |signal| in each bucket."""
-    out = []
-    for lo, hi in zip(edges, edges[1:] + [1e9]):
-        sel = [w for s, w in pairs if lo <= abs(s) < hi and w is not None]
-        if sel:
-            out.append((lo, hi, len(sel), sum(sel) / len(sel)))
-    return out
-
-
 def side_result(edge, outcome):
     """The signal says back the side `edge` points toward (positive = home / over); outcome is the actual cover / over margin. 1 won, 0 lost, None push."""
     if outcome == 0:
@@ -555,7 +516,6 @@ def main(argv):
     ap.add_argument("--days-back", type=int, default=3)
     ap.add_argument("--from", dest="start")
     ap.add_argument("--to", dest="end")
-    ap.add_argument("--split", default=None)
     a = ap.parse_args(argv)
     if a.cmd == "selftest":
         return selftest()
@@ -576,8 +536,7 @@ def main(argv):
         rebuild(a.data_dir)
     elif a.cmd == "backtest":
         games = load_games(a.data_dir)
-        split = a.split or "2026-02-01"
-        model, report = backtest(games, split)
+        model, report = backtest(games)
         save_json(os.path.join(a.data_dir, "model.json"), model)
         with open(os.path.join(a.data_dir, "backtest.md"), "w") as fh:
             fh.write(report + "\n")
@@ -623,11 +582,20 @@ def selftest():
         games[str(i)] = dict(id=str(i), d="2025-11-%02d" % (3 + i), t=1_000_000 + i * 86_400_000, h="A" if i % 2 else "B", a="C", hs=80, **{"as": 70}, sp=-5.0, tt=150.0)
     rows = walk_forward(games)
     check(all(r["d"] >= "2025-11-06" for r in rows) and len(rows) > 0, "no row before both teams have min_games prior games")
-    # OLS recovers a known relation
-    X = [[float(i % 7), float(i % 5)] for i in range(200)]
-    y = [3.0 + 2.0 * a - 1.0 * b + (0.001 * ((i * 7) % 11 - 5)) for i, (a, b) in enumerate(X)]
-    beta, t = ols(X, y)
-    check(abs(beta[0] - 3) < 0.05 and abs(beta[1] - 2) < 0.01 and abs(beta[2] + 1) < 0.01, "ols")
+    # signals: the averages-vs-line value is the scoring-margin gap plus home court plus the (home) spread
+    rh = {"ppg": 80.0, "papg": 65.0, "ats": 1.0}
+    ra = {"ppg": 70.0, "papg": 70.0, "ats": -0.5}
+    check(abs(signal_value("avgs_line", rh, ra, -4.0, 150.0, 0) - ((15 - 0) / 2 + 3.0 - 4.0)) < 1e-9, "avgs_line value")
+    check(signal_value("avgs_line", rh, ra, -4.0, 150.0, 1) == 7.5 - 4.0, "no home court at a neutral site")
+    check(signal_value("ats_gap", rh, ra, 0, 0, 0) == 1.5, "ats gap")
+    check(signal_value("your_rule", rh, ra, 0, 0, 0) == 10.0 and signal_value("your_rule", rh, {"ppg": 90.0, "papg": 70.0, "ats": -0.5}, 0, 0, 0) is None, "your rule needs both ahead")
+    check(signal_value("total_gap", rh, ra, 0, 140.0, 0) == (80 + 70) / 2 + (70 + 65) / 2 - 140.0, "total gap")
+    # tables: a signal that always wins in its bucket reports 100%, direction fixed for the method's own signals and chosen from the data for ats_gap
+    fake = [dict(t=i, season=2026, sp=-3.0, tt=140.0, neu=0, hp=80.0, hd=65.0, ap=70.0, ad=70.0, ratH=1.0, ratA=-1.0, cover=5.0, over=5.0) for i in range(120)]
+    tb = signal_tables(fake, 2026)
+    check(tb["total_gap"]["dir"] == 1 and tb["ats_gap"]["dir"] == 1 and tb["ats_gap"]["buckets"][-1]["r"] == 1.0, "tables from rows")
+    fake2 = [dict(r, cover=-5.0) for r in fake]
+    check(signal_tables(fake2, 2026)["ats_gap"]["dir"] == -1, "a losing follow flips to fade")
     check(side_result(2.0, 3.0) == 1.0 and side_result(-2.0, 3.0) == 0.0 and side_result(2.0, 0) is None, "side result")
     # storage round trip, idempotent
     with tempfile.TemporaryDirectory() as d:
