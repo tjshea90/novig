@@ -8,8 +8,8 @@
  "branch": "ccr-c53b8db3-i98qqw",
  "head": "3f5551fad667313e9cb7471615d7797bd2a3ca24",
  "since": 1793856344,
- "beat": 1793856564,
- "beatIso": "2026-11-05T05:29:24Z",
+ "beat": 1793856752,
+ "beatIso": "2026-11-05T05:32:32Z",
  "done": "NC1: wrote the college-basketball ATS request into TASKS.md; ESPN core odds API verified (open/close spread+total, 73/82 games)",
  "next": "NC1a: parlays research, then NC1b log tool + workflow"
 }
