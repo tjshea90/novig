@@ -20,7 +20,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
  *    1 request a second per address (a burst of 10). It is meant for showing a user the price before they click through.
  *  - PLACING, no: parlays are filled by liquidity providers answering RFQs, a separate LP-only section (W-9, a deposit); the trading key's `/v3/orders` takes single outcomes only. So the app prices a parlay
  *    and opens the slip in Novig's own app with every leg filled in ([deepLink]); the tap that places it is Tj's, in Novig.
- *  - Measured: the quote tracked the product of the legs' MIDDLE prices within half a point and ran 3 to 4 points of probability below stacking the legs' take prices (8 of 8 two-leg samples).
+ *  - Measured: the quote tracked the product of the legs' MIDDLE prices within half a point and ran 1.5 to 4 points of probability (4% to 16%) below stacking the legs' take prices (8 of 8 two-leg samples).
  */
 object NovigParlay {
     const val MIN_LEGS = 2
