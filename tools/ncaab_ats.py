@@ -25,7 +25,6 @@ from zoneinfo import ZoneInfo
 ET = ZoneInfo("America/New_York")
 SB = "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates={d}&groups=50&limit=400"
 ODDS = "https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/events/{e}/competitions/{e}/odds"
-PROVIDER = "58"  # ESPN BET (pregame); 59 is its live feed and is ignored
 UA = "Vigilant-ncaab-log/1.0 (+https://github.com/tjshea90/novig)"
 
 CFG = dict(tie=3.0, dbl=10.0, mismatch=20.0, z=2.0, sd_floor=6.0, min_games=3, cm_clip=25.0, recent=8, trim_min_n=6)
@@ -98,34 +97,35 @@ def sane(sp, tt):
 
 
 def fetch_odds(eid):
-    """ESPN BET's lines for an event: dict(sp, tt, osp, ott, ml, csp, ctt) (close and current) or None when it has none."""
+    """A pregame provider's lines for an event: dict(sp, tt, osp, ott, ml, pv) or None when it has none. ESPN changed providers mid-season 2025-26 (ESPN BET, then DraftKings), so the
+    first pregame provider with a CLOSING block wins (DraftKings, then ESPN BET, then any other); the live-odds feed ("... Live Odds") is never used."""
     d = http_json(ODDS.format(e=eid))
     if not d:
         return None
-    items = [i for i in d.get("items", []) if str((i.get("provider") or {}).get("id")) == PROVIDER]
-    if not items:
-        return None
-    it = items[0]
-    sp = home_spread(it, "close") if "close" in it else None
-    tt = total_line(it, "close") if "close" in it else None
-    if sp is None:
-        sp = home_spread(it, "current")
-    if tt is None:
-        tt = total_line(it, "current")
-    if not sane(sp, tt):
-        return None
-    out = dict(sp=sp, tt=tt)
-    for key, which in (("osp", "open"),):
-        v = home_spread(it, which)
-        if v is not None:
-            out[key] = v
-    ot = total_line(it, "open")
-    if ot is not None:
-        out["ott"] = ot
-    ml = home_ml(it, "close") or home_ml(it, "current")
-    if ml is not None:
-        out["ml"] = ml
-    return out
+    items = [i for i in d.get("items", []) if "live" not in str((i.get("provider") or {}).get("name", "")).lower()]
+    rank = {"100": 0, "58": 1}
+    items.sort(key=lambda i: (rank.get(str((i.get("provider") or {}).get("id")), 9), "close" not in i))
+    for it in items:
+        sp = home_spread(it, "close") if "close" in it else None
+        tt = total_line(it, "close") if "close" in it else None
+        if sp is None:
+            sp = home_spread(it, "current")
+        if tt is None:
+            tt = total_line(it, "current")
+        if not sane(sp, tt):
+            continue
+        out = dict(sp=sp, tt=tt, pv=str((it.get("provider") or {}).get("id")))
+        osp = home_spread(it, "open")
+        if osp is not None:
+            out["osp"] = osp
+        ot = total_line(it, "open")
+        if ot is not None:
+            out["ott"] = ot
+        ml = home_ml(it, "close") or home_ml(it, "current")
+        if ml is not None:
+            out["ml"] = ml
+        return out
+    return None
 
 
 def event_info(e):
@@ -228,7 +228,7 @@ def collect(data_dir, days, workers=8, log=print):
             except (TypeError, ValueError):
                 continue
             g = dict(id=e["id"], d=et_date(e["t"]).isoformat(), t=e["t"], h=e["home"]["id"], a=e["away"]["id"], hs=hs, **{"as": as_}, neu=e["neu"], sp=ln["sp"], tt=ln["tt"])
-            for k in ("osp", "ott", "ml"):
+            for k in ("osp", "ott", "ml", "pv"):
                 if k in ln:
                     g[k] = ln[k]
             games[g["id"]] = g
