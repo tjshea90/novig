@@ -114,7 +114,11 @@ def main():
         print("== after run %d: steps ok=%s | commits on %s=%s | files=%d | top-level=%s | SOURCE-LOOKING FILES=%s"
               % (n, ok, a.branch, commits, len(names), sorted({x.split("/")[0] for x in names})[:12], smell[:3] or "none"))
         ok_all = ok_all and ok and not smell
-    print("\nOVERALL:", "PASS" if ok_all else "FAIL", "| scratch:", base)
+    if ok_all and not a.keep:
+        shutil.rmtree(base, ignore_errors=True)  # our own mkdtemp directory: a depth-1 checkout per run is a few hundred MB
+        print("\nOVERALL: PASS (scratch directory removed; --keep leaves it)")
+    else:
+        print("\nOVERALL:", "PASS" if ok_all else "FAIL", "| scratch kept:", base)
     sys.exit(0 if ok_all else 1)
 
 
