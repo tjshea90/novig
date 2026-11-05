@@ -53,6 +53,7 @@ jobs:
             for f in research/ncaab/seed/games-*.jsonl.gz; do b=$(basename "$f" .jsonl.gz); gunzip -c "$f" > "data/games/${b#games-}.jsonl"; done
             cp research/ncaab/seed/teams.json data/teams.json
             echo "seeded a new ncaab-data branch: $(cat data/games/*.jsonl | wc -l) games"
+            echo "SEEDED=true" >> "$GITHUB_ENV"
           fi
       - name: Log the finished games, rate the teams, list the slate
         env:
@@ -61,6 +62,8 @@ jobs:
         run: |
           set -eu
           re='^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+          # a branch just made from the seed ends in April: add this season's first days
+          if [ "${SEEDED:-}" = "true" ]; then python3 -I tools/ncaab_ats.py collect --data-dir data --from 2026-11-01; fi
           if [ -n "${FROM:-}" ]; then
             [[ "$FROM" =~ $re ]] || { echo "bad from"; exit 1; }
             if [ -n "${TO:-}" ]; then [[ "$TO" =~ $re ]] || { echo "bad to"; exit 1; }; python3 -I tools/ncaab_ats.py collect --data-dir data --from "$FROM" --to "$TO"
