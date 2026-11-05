@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-c53b8db3-i98qqw",
- "head": "06ceeea52a859f5f48815be42d18eb5e039a7227",
+ "head": "2c131035bd36776026cfffda87870d4768b87e00",
  "since": 1793856344,
- "beat": 1793917795,
- "beatIso": "2026-11-05T22:29:55Z",
- "done": "pre-ship: NCAAB tab reads Novig's lines itself when the GitHub engine isn't serving them (it is idle on an empty wallet); the main number is picked only from a near-even market",
- "next": "ship.sh gates and releases this"
+ "beat": 1793917980,
+ "beatIso": "2026-11-05T22:33:00Z",
+ "done": "pre-release: NCAAB tab reads Novig's lines itself when the GitHub engine isn't serving them (it is idle on an empty wallet); the main number is picked only from a near-even market (versionCode 443, v1.0.103)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.103), then run: bash tools/record-release.sh v1.0.103 443 \"NCAAB tab reads Novig's lines itself when the GitHub engine isn't serving them (it is idle on an empty wallet); the main number is picked only from a near-even market\""
 }
