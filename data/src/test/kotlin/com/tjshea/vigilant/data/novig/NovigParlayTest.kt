@@ -73,7 +73,9 @@ class NovigParlayTest {
         assertNotNull("one leg", NovigParlay.problem(listOf(spread)))
         assertNotNull("the same bet twice", NovigParlay.problem(listOf(spread, spread)))
         assertNotNull("21 legs", NovigParlay.problem((1..21).map { leg("x$it", "ev$it", LineKind.SPREAD, "Team $it A", "Team $it B") }))
-        assertNull("20 legs", NovigParlay.problem((1..20).map { leg("x$it", "ev$it", LineKind.SPREAD, "Alpha$it University", "Beta$it College") }))
+        val schools = listOf("Auburn", "Baylor", "Cornell", "Dayton", "Elon", "Fordham", "Gonzaga", "Harvard", "Iona", "Jacksonville", "Kansas", "Lehigh", "Marist", "Navy", "Oregon", "Purdue", "Queens", "Rice", "Stanford", "Tulane",
+            "Utah", "Vermont", "Wagner", "Xavier", "Yale", "Furman", "Hofstra", "Illinois", "Lipscomb", "Monmouth", "Niagara", "Oakland", "Portland", "Radford", "Siena", "Towson", "Villanova", "Wofford", "Drexel", "Colgate")
+        assertNull("20 legs", NovigParlay.problem((0 until 20).map { leg("x$it", "ev$it", LineKind.SPREAD, schools[2 * it], schools[2 * it + 1]) }))
     }
 
     @Test
