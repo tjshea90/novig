@@ -219,6 +219,59 @@ class NcaabUiTest {
     }
 
     @Test
+    fun `a parlay price that comes back after the legs changed is not shown under the new legs`() {
+        val gate = kotlinx.coroutines.CompletableDeferred<com.tjshea.vigilant.data.novig.NovigParlay.Result>()
+        show(views(), quote = { ids -> quotedFor += ids; gate.await() })
+        compose.onNodeWithTag("ncaabGame-g1").performClick()
+        fun toggles() = compose.onAllNodes(hasTestTag("ncaabParlayToggle"))
+        toggles()[0].performScrollTo().performClick()   // the away spread side
+        toggles()[2].performScrollTo().performClick()   // Over
+        compose.onAllNodes(hasTestTag("ncaabParlayPrice"))[0].performClick()
+        compose.waitForIdle()
+        assertEquals(1, quotedFor.size)   // asked, and Novig has not answered yet
+        // the legs change while the answer is on its way: Under instead of Over
+        toggles()[2].performScrollTo().performClick()
+        toggles()[3].performScrollTo().performClick()
+        assertEquals(2, parlay.legs.size)
+        gate.complete(priced())
+        compose.waitForIdle()
+        // that 25 cents was for the other parlay: no price under these legs (it used to appear here)
+        assertEquals(0, compose.onAllNodesWithTagCount("ncaabParlayResult"))
+    }
+
+    @Test
+    fun `the sheet counts the games and scores left out of a team's averages, a trimmed score included`() {
+        val teams = mapOf(
+            "1" to team("Davidson", 74.2, 66.0, 1.4, "++").copy(ex = 1),            // all 8 games used, one scoring outlier trimmed
+            "2" to team("Rider", 62.3, 70.1, -0.9, "-").copy(all = 10, ex = 2),     // 10 logged, 8 used: two left out
+        )
+        show(views(teams = teams))
+        compose.onNodeWithTag("ncaabGame-g1").performClick()
+        compose.onNodeWithText("8 games (1 left out)", substring = true).assertExists()
+        compose.onNodeWithText("8 games (2 left out)", substring = true).assertExists()
+    }
+
+    @Test
+    fun `screenshots of the tab - the games, the leans and the unlike-the-averages pages`() {
+        val strong = modelWith(0.48)
+        show(views(model = strong), model = strong)
+        compose.onNodeWithTag("ncaab").assertIsDisplayed()
+        compose.onRoot().captureRoboImage("screenshots/NC1_ncaab_games.png")
+        compose.onNodeWithTag("ncaabPage-LEANS").performClick()
+        compose.onRoot().captureRoboImage("screenshots/NC1_ncaab_leans.png")
+        compose.onNodeWithTag("ncaabPage-UNLIKE").performClick()
+        compose.onRoot().captureRoboImage("screenshots/NC1_ncaab_unlike.png")
+    }
+
+    @Test
+    fun `screenshot of a game's sheet`() {
+        show(views())
+        compose.onNodeWithTag("ncaabGame-g1").performClick()
+        compose.onNodeWithTag("ncaabSheet").assertIsDisplayed()
+        compose.onNodeWithTag("ncaabSheet").captureRoboImage("screenshots/NC1_ncaab_sheet.png")
+    }
+
+    @Test
     fun `before the ratings exist the card still lists the game with a dash for the averages`() {
         show(views(withRatings = false))
         compose.onNodeWithText("Davidson (—)").assertIsDisplayed()
