@@ -511,7 +511,7 @@ def rebuild(data_dir, log=print):
 def main(argv):
     sys.stdout.reconfigure(line_buffering=True)  # progress shows at once in a workflow log
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["run", "collect", "rate", "backtest", "selftest"])
+    ap.add_argument("cmd", choices=["run", "collect", "rate", "backtest", "selftest", "golden"])
     ap.add_argument("--data-dir", default="ncaab-data")
     ap.add_argument("--days-back", type=int, default=3)
     ap.add_argument("--from", dest="start")
@@ -519,6 +519,8 @@ def main(argv):
     a = ap.parse_args(argv)
     if a.cmd == "selftest":
         return selftest()
+    if a.cmd == "golden":
+        return golden(a.data_dir)
     os.makedirs(a.data_dir, exist_ok=True)
     if a.cmd == "run":
         t = today_et()
@@ -541,6 +543,29 @@ def main(argv):
         with open(os.path.join(a.data_dir, "backtest.md"), "w") as fh:
             fh.write(report + "\n")
         rebuild(a.data_dir)
+    return 0
+
+
+# ---------------------------------------------------------------------------------------------- golden
+
+def golden(path):
+    """Writes the cases the Kotlin side (NcaabSignals) must reproduce: `python3 -I tools/ncaab_ats.py golden --data-dir data/src/test/resources/ncaab`."""
+    teams = [
+        {"ppg": 80.0, "papg": 65.0, "ats": 1.0}, {"ppg": 70.0, "papg": 70.0, "ats": -0.5}, {"ppg": 74.5, "papg": 68.2, "ats": 1.4},
+        {"ppg": 62.3, "papg": 71.9, "ats": -0.9}, {"ppg": 90.0, "papg": 70.0, "ats": -0.5}, {"ppg": 66.0, "papg": 60.0, "ats": 0.2},
+    ]
+    cases = []
+    for i, h in enumerate(teams):
+        for j, a in enumerate(teams):
+            if i == j:
+                continue
+            for sp, tt, neu in ((-4.5, 142.5, 0), (3.5, 151.0, 1), (-12.0, 133.5, 0)):
+                exp = {name: signal_value(name, h, a, sp, tt, neu) for name in SIGNALS}
+                cases.append(dict(h=h, a=a, sp=sp, tt=tt, neu=neu, expect={k: (None if v is None else round(v, 9)) for k, v in exp.items()}))
+    os.makedirs(path, exist_ok=True)
+    with open(os.path.join(path, "signal-golden.json"), "w") as fh:
+        json.dump(cases, fh, separators=(",", ":"))
+    print(f"golden: {len(cases)} cases")
     return 0
 
 
