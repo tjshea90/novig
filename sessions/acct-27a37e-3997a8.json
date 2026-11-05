@@ -8,8 +8,8 @@
  "branch": "ccr-0666b61b-yxwcj9",
  "head": "6ba1b8ed03b7208a687d952b530e93605719b891",
  "since": 1793861664,
- "beat": 1793863533,
- "beatIso": "2026-11-05T07:25:33Z",
+ "beat": 1793863565,
+ "beatIso": "2026-11-05T07:26:05Z",
  "done": "NC1 review fixes: ncaab-log.yml (data/ collision with the Gradle module + frozen weekly backtest, proven by new tools/workflow_dryrun.py: old FAIL, fixed PASS), ParlayBar late-price race (test red on old code), left-out label, Bet chip on backed card, NCAAB screenshot tests (looked at), version 1.0.102/442, CLAUDE.md+TASKS.md NC1h",
  "next": "run the FULL bash tools/test.sh on this exact content; if green run bash ship.sh 'NC1: college basketball ATS tab...'; then dispatch ncaab-log.yml on main and check its run; trigger release.yml; confirm; tools/record-release.sh v1.0.102 442; tick NC1f; tell Tj the NC1 verdict + Novig SYSTEM_LOCKED + what I fixed"
 }
