@@ -1,13 +1,13 @@
-# CHECKPOINT 4386 — read me first, then TASKS.md
+# CHECKPOINT 4387 — read me first, then TASKS.md
 
-**Written:** 2026-11-05T07:25:33Z · **tests:** all 10 fast checks green
-**Branch:** `ccr-0666b61b-yxwcj9` · **builds on:** `83071831d` (this checkpoint is the commit after it)
+**Written:** 2026-11-05T07:29:28Z · **tests:** all 10 fast checks green
+**Branch:** `ccr-0666b61b-yxwcj9` · **builds on:** `6ba1b8ed0` (this checkpoint is the commit after it)
 
 ## Just done
-NC1 review fixes: ncaab-log.yml (data/ collision with the Gradle module + frozen weekly backtest, proven by new tools/workflow_dryrun.py: old FAIL, fixed PASS), ParlayBar late-price race (test red on old code), left-out label, Bet chip on backed card, NCAAB screenshot tests (looked at), version 1.0.102/442, CLAUDE.md+TASKS.md NC1h
+pre-release: NC1: NCAAB tab (college basketball ATS system with Novig lines, bets and a parlay builder) and its GitHub game log (versionCode 442, v1.0.102)
 
 ## Do this next
-run the FULL bash tools/test.sh on this exact content; if green run bash ship.sh 'NC1: college basketball ATS tab...'; then dispatch ncaab-log.yml on main and check its run; trigger release.yml; confirm; tools/record-release.sh v1.0.102 442; tick NC1f; tell Tj the NC1 verdict + Novig SYSTEM_LOCKED + what I fixed
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.102), then run: bash tools/record-release.sh v1.0.102 442 "NC1: NCAAB tab (college basketball ATS system with Novig lines, bets and a parlay builder) and its GitHub game log"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ run the FULL bash tools/test.sh on this exact content; if green run bash ship.sh
 
 ## Last ten checkpoints
 ```
+  6ba1b8ed0 ckpt 4386: NC1 review fixes: ncaab-log.yml (data/ collision with the Gradle module + f
   8033d8408 ckpt 4385: RESUME as acct-27a37e (tj Gmail): merged acct-7542bf's unlanded NC1 branch 
   13c79d3a9 ckpt 4384: NC1: parlay builder (NovigParlay + ParlayBar), research note, NOVIG_API.md 
   fb9b99b9f ckpt 4383: NC1: engine publishes ncaab.json.gz (stageNcaab), CloudLink/CloudClient fet
@@ -25,8 +26,4 @@ run the FULL bash tools/test.sh on this exact content; if green run bash ship.sh
   97dd98741 ckpt 4379: ANALYST 11-05: no new evidence, no change; STATE updated
   ff7b2e8e8 ckpt 4378: pre-release: A phone restart no longer turns off auto-bet, bids or auto-sca
   9a63bb669 ckpt 4377: pre-ship: A phone restart no longer turns off auto-bet, bids or auto-scan
-  4e14dc81f ckpt 4376: pre-ship: A phone restart no longer turns off auto-bet, bids or auto-scan
 ```
-
-(32 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
