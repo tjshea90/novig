@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "3172fd",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-yynyby",
+ "head": "97dd987413d203d25530bca85d6ae79b7a32c0a2",
+ "since": 1793838167,
+ "beat": 1793838167,
+ "beatIso": "2026-11-05T00:22:47Z",
+ "done": "ANALYST 11-05: no new evidence, no change; STATE updated",
+ "next": "ER2 engine restart due 2026-11-05 03:05Z (engine_set gates.cloudTrading=LIVE gates.cloudBids=true --on)"
+}
