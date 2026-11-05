@@ -112,12 +112,15 @@ class NcaabUiTest {
     private fun show(v: List<com.tjshea.vigilant.data.ncaab.NcaabGameView>, bet: Boolean = true, model: NcaabModel = this.model, quote: suspend (List<String>) -> com.tjshea.vigilant.data.novig.NovigParlay.Result = instantQuote) {
         compose.setContent {
             VigilantTheme {
-                CompositionLocalProvider(
-                    LocalApiBet provides (if (bet) actions else null), com.tjshea.vigilant.app.ui.LocalParlay provides parlay,
-                    com.tjshea.vigilant.app.ui.LocalParlayQuote provides quote,
-                ) {
-                    NcaabContent(v, ratingsAsOf = now - 3_600_000L, boardAt = now - 20_000L, boardReadAt = now, note = "", model = model, ratedTeams = 2, hasSlate = true, hasToken = true,
-                        settings = ScanSettings(), now = now, onTrack = { _, _ -> }, onRecheck = {})
+                // The app's own root (a Scaffold) paints the background and sets the text colour; without a Surface the screen drew black text on the window's dark background.
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    CompositionLocalProvider(
+                        LocalApiBet provides (if (bet) actions else null), com.tjshea.vigilant.app.ui.LocalParlay provides parlay,
+                        com.tjshea.vigilant.app.ui.LocalParlayQuote provides quote,
+                    ) {
+                        NcaabContent(v, ratingsAsOf = now - 3_600_000L, boardAt = now - 20_000L, boardReadAt = now, note = "", model = model, ratedTeams = 2, hasSlate = true, hasToken = true,
+                            settings = ScanSettings(), now = now, onTrack = { _, _ -> }, onRecheck = {})
+                    }
                 }
             }
         }
