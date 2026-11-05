@@ -350,8 +350,12 @@ internal fun Tiers(last: List<Int>) {
 }
 
 @Composable
-internal fun BetChip(label: String, tag: String = "ncaabBet", onClick: () -> Unit) {
-    FilledTonalButton(onClick = onClick, contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp), modifier = Modifier.testTag(tag)) { Text(label, maxLines = 1, fontSize = 13.sp) }
+internal fun BetChip(label: String, tag: String = "ncaabBet", onCard: Boolean = false, onClick: () -> Unit) {
+    FilledTonalButton(
+        onClick = onClick, contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp), modifier = Modifier.testTag(tag),
+        // On a tinted card (a lean the history backs) the tonal fill is the card's own colour and the button lost its shape: a plain surface pill shows it.
+        colors = if (onCard) ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.surface) else ButtonDefaults.filledTonalButtonColors(),
+    ) { Text(label, maxLines = 1, fontSize = 13.sp) }
 }
 
 /** The Bet sheet for [o]: the books' own fair when the scan priced it, otherwise [systemFair] (a signal's chance) or Novig's middle price. */
