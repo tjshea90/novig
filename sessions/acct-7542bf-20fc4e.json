@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-c53b8db3-i98qqw",
- "head": "409991236225f7eb0d82230b8143e3922c6317c3",
+ "head": "876c1cb1b991db34073f2f7e227a3e406f39cf10",
  "since": 1793856344,
- "beat": 1793857948,
- "beatIso": "2026-11-05T05:52:28Z",
- "done": "NC1: tools/ncaab_ats.py (ESPN log, ratings, backtest, signal tables), Kotlin data/ncaab (models, signals, match, board, view) + NcaabAtsTest 11 green; backtest on 2025-26: the method does NOT beat closing lines",
- "next": "NC1: finish multi-season backtest, engine board publishing (CloudMain/CloudFiles), phone fetch + NCAAB tab + game sheet + bet buttons, workflow ncaab-log.yml, parlay helper"
+ "beat": 1793858153,
+ "beatIso": "2026-11-05T05:55:53Z",
+ "done": "NC1: ncaab-log.yml workflow + 3-season seed (17,323 games) + backtest report; evidence-based 'backed' rule (95% bound vs Novig price)",
+ "next": "NC1: engine publishes ncaab.json.gz (CloudMain Publisher + CloudStatus ncaabAtMs), then CloudClient/CloudLink fetch, NCAAB tab UI, bet buttons, parlay helper, docs"
 }
