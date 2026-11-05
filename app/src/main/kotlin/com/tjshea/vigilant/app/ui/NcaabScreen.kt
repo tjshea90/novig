@@ -62,6 +62,7 @@ fun NcaabScreen(
     onWant: (Boolean) -> Unit,
     onTrack: (Opportunity, Double) -> Unit = { _, _ -> },
     onRecheck: (List<String>) -> Unit = {},
+    onQuote: (suspend (List<String>) -> com.tjshea.vigilant.data.novig.NovigParlay.Result)? = null,
     modifier: Modifier = Modifier,
 ) {
     val cu = state.cloudUi
@@ -72,12 +73,15 @@ fun NcaabScreen(
     val views = remember(cu.ncaabSlate, cu.ncaabRatings, cu.ncaabBoard, minute) { NcaabView.build(cu.ncaabSlate, cu.ncaabRatings, cu.ncaabBoard, now) }
     var refreshing by remember { mutableStateOf(false) }
     LaunchedEffect(refreshing) { if (refreshing) { delay(2_500L); refreshing = false } }
+    val parlay = remember { ParlayState() }
+    androidx.compose.runtime.CompositionLocalProvider(LocalParlay provides parlay, LocalParlayQuote provides onQuote) {
     VigilantPullToRefresh(busy = refreshing, onRefresh = { refreshing = true; onWant(true) }, modifier = modifier.fillMaxSize()) {
         NcaabContent(
             views = views, ratingsAsOf = cu.ncaabRatings?.asOf, boardAt = cu.ncaabBoard?.atMs, boardReadAt = cu.ncaabBoardReadAtMs, note = cu.ncaabNote,
             model = cu.ncaabRatings?.model, ratedTeams = cu.ncaabRatings?.teams?.size ?: 0, hasSlate = cu.ncaabSlate != null, hasToken = cu.hasToken,
             settings = state.settings, now = now, onTrack = onTrack, onRecheck = onRecheck,
         )
+    }
     }
 }
 
@@ -117,6 +121,7 @@ internal fun NcaabContent(
     }
     val current = Page.valueOf(page)
     val selected = views.firstOrNull { it.id == open }
+    Box(Modifier.fillMaxSize()) {
     LazyColumn(Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = 12.dp).testTag("ncaab"), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -143,6 +148,8 @@ internal fun NcaabContent(
             else -> unlike(shown, onOpen = { open = it })
         }
         item { Text(footnote(model), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp)) }
+    }
+    ParlayBar(Modifier.align(Alignment.BottomCenter).padding(horizontal = 8.dp, vertical = 4.dp))
     }
     if (selected != null) NcaabGameSheet(selected, model, settings, now, onDismiss = { open = null }, onTrack = onTrack, onRecheck = onRecheck)
 }

@@ -62,6 +62,7 @@ internal fun NcaabGameSheet(
     var books by remember { mutableStateOf<Opportunity?>(null) }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).navigationBarsPadding().testTag("ncaabSheet"), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            ParlayBar()
             Text("${v.game.a.n} @ ${v.game.h.n}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text(
                 Format.startTime(v.game.t) + (if (v.game.neu == 1) " · neutral site" else "") + (if (v.live) " · LIVE" else if (v.final) " · FINAL" else "") + " · lines from ${v.lineSource}",
@@ -155,6 +156,7 @@ private fun SideRow(o: Opportunity, onBooks: (Opportunity) -> Unit) {
                 if (ev != null) "EV at Novig vs the books: ${Format.evPercent(ev)}" else if (cost == null) "nobody is offering this side" else "no book prices this number",
                 style = MaterialTheme.typography.labelSmall, color = if (ev != null && ev > 0) LocalEdgeColors.current.positive else MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (cost != null) ParlayToggle(o)
         }
         if (o.fairProbability != null) TextButton(onClick = { onBooks(o) }, modifier = Modifier.testTag("ncaabBooks")) { Text("Books & EV") }
         if (api != null && cost != null) BetChip("Bet") { betFrom(api, o, null) }
