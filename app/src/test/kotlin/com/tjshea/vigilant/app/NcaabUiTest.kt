@@ -113,6 +113,8 @@ class NcaabUiTest {
     /** Novig answers at once with a 25-cent parlay. */
     private val instantQuote: suspend (List<String>) -> com.tjshea.vigilant.data.novig.NovigParlay.Result = { ids -> quotedFor += ids; priced() }
 
+    private var boardLocal = false
+
     private fun show(v: List<com.tjshea.vigilant.data.ncaab.NcaabGameView>, bet: Boolean = true, model: NcaabModel = this.model, quote: suspend (List<String>) -> com.tjshea.vigilant.data.novig.NovigParlay.Result = instantQuote) {
         compose.setContent {
             VigilantTheme {
@@ -122,7 +124,7 @@ class NcaabUiTest {
                         LocalApiBet provides (if (bet) actions else null), com.tjshea.vigilant.app.ui.LocalParlay provides parlay,
                         com.tjshea.vigilant.app.ui.LocalParlayQuote provides quote,
                     ) {
-                        NcaabContent(v, ratingsAsOf = now - 3_600_000L, boardAt = now - 20_000L, boardReadAt = now, note = "", model = model, ratedTeams = 2, hasSlate = true, hasToken = true,
+                        NcaabContent(v, ratingsAsOf = now - 3_600_000L, boardAt = now - 20_000L, boardReadAt = now, note = "", model = model, boardLocal = boardLocal, ratedTeams = 2, hasSlate = true, hasToken = true,
                             settings = ScanSettings(), now = now, onTrack = { _, _ -> }, onRecheck = {})
                     }
                 }
@@ -287,6 +289,14 @@ class NcaabUiTest {
         compose.onNodeWithTag("ncaabGame-g1").performClick()
         compose.onNodeWithTag("ncaabSheet").assertIsDisplayed()
         compose.onNodeWithTag("ncaabSheet").captureRoboImage("screenshots/NC1_ncaab_sheet.png")
+    }
+
+    @Test
+    fun `when the phone read Novig itself the tab says so and that there are no book prices`() {
+        boardLocal = true
+        show(views())
+        compose.onNodeWithTag("ncaabFresh").assertTextContains("read by this phone", substring = true)
+        compose.onNodeWithTag("ncaabFresh").assertTextContains("no book prices or EV", substring = true)
     }
 
     @Test
