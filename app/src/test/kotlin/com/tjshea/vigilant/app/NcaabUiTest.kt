@@ -230,6 +230,8 @@ class NcaabUiTest {
         compose.waitForIdle()
         assertEquals(1, quotedFor.size)   // asked, and Novig has not answered yet
         fun waiting() = compose.onAllNodes(hasText("Asking Novig…")).fetchSemanticsNodes().size
+        fun dump(stage: String) = println("DBG $stage: waiting=${waiting()} result=${compose.onAllNodesWithTagCount("ncaabParlayResult")} bars=${compose.onAllNodesWithTagCount("ncaabParlayBar")} priceBtns=${compose.onAllNodesWithTagCount("ncaabParlayPrice")} legs=${parlay.legs.map { it.outcome.outcomeId }}")
+        dump("after price click")
         assertTrue("the request should be pending", waiting() > 0)
         // the legs change while the answer is on its way: Under instead of Over
         toggles()[2].performScrollTo().performClick()
