@@ -85,6 +85,9 @@ fun NcaabScreen(
     }
 }
 
+/** A spread or total this many points from what the teams' numbers say is flagged on the game's card. */
+private const val FAR_POINTS = 6.0
+
 private enum class Page(val label: String) { GAMES("Games"), LEANS("Leans"), UNLIKE("Unlike averages") }
 
 @Composable
@@ -141,7 +144,7 @@ internal fun NcaabContent(
         }
         when {
             !hasToken -> item { Hint("Save a GitHub token (Settings › Cloud scan) and this tab reads the college basketball log the engine keeps.") }
-            !hasSlate && views.isEmpty() -> item { Hint("Nothing yet. A free GitHub job logs every college game and its closing line a few times a day; the first run builds the schedule. Pull down to look again.", "ncaabEmpty") }
+            !hasSlate && views.isEmpty() -> item { Hint("Nothing yet. A free GitHub job logs every college game and its closing line a few times a day; the first run builds the schedule. Novig's lines come from the GitHub engine (Settings \u203A Cloud scan, with NCAAB among the leagues). Pull down to look again.", "ncaabEmpty") }
             shown.isEmpty() -> item { Hint("No games for ${day.lowercase()}.", "ncaabNone") }
             current == Page.GAMES -> items(shown, key = { it.id }) { v -> GameCard(v, onOpen = { open = v.id }, now = now) }
             current == Page.LEANS -> leans(shown, onOpen = { open = it })
@@ -303,6 +306,11 @@ private fun GameCard(v: NcaabGameView, onOpen: () -> Unit, now: Long) {
                     }
                 }
             }
+            val far = v.readings.filter { (it.id == NcaabSignals.AVGS_LINE || it.id == NcaabSignals.TOTAL_GAP) && kotlin.math.abs(it.value) >= FAR_POINTS }
+            if (far.isNotEmpty()) Text(
+                "\u2691 Unlike the averages: " + far.joinToString(" \u00B7 ") { (if (it.id == NcaabSignals.AVGS_LINE) "spread" else "total") + " ${NcaabText.number(kotlin.math.abs(it.value))} pts off" },
+                style = MaterialTheme.typography.labelSmall, color = edge.warning, modifier = Modifier.testTag("ncaabFar-${v.id}"),
+            )
             v.picks.sortedByDescending { NcaabSignals.score(it.reading) }.take(2).forEach { p ->
                 Text(
                     (if (p.reading.backed) "✓ " else "• ") + "${p.reading.label}: ${p.text} · ${NcaabText.pct(p.reading.rate)} of ${"%,d".format(p.reading.n)}",

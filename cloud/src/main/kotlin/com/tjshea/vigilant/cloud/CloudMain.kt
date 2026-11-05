@@ -243,7 +243,11 @@ fun main(args: Array<String>) = runBlocking {
             val now = System.currentTimeMillis()
             if (s != null && com.tjshea.vigilant.data.ncaab.NcaabBoard.LEAGUE in s.leagues && novigKeyed?.addressRefused(now) != true) {
                 runCatching { com.tjshea.vigilant.data.ncaab.NcaabBoard.read(novig, latestPriced.get(), now) }.onSuccess { f ->
-                    publisher.stageNcaab(f, if (f.rows.isEmpty()) "Novig lists no college basketball games in the next ${com.tjshea.vigilant.data.ncaab.NcaabBoard.WINDOW_HOURS} h" else "")
+                    publisher.stageNcaab(f, when {
+                        f.rows.isEmpty() -> "Novig lists no college basketball games in the next ${com.tjshea.vigilant.data.ncaab.NcaabBoard.WINDOW_HOURS} h"
+                        f.priced == 0 -> "Novig's prices were not read (the engine is on the public routes): the lines are listed without prices"
+                        else -> ""
+                    })
                     if (now - loggedAt >= 10 * 60_000L) { loggedAt = now; log("NCAAB board: ${f.rows.size} lines from ${f.games} games") }
                 }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; if (now - loggedAt >= 10 * 60_000L) { loggedAt = now; log("NCAAB board failed: ${e.message?.take(120) ?: e.javaClass.simpleName}") } }
             }

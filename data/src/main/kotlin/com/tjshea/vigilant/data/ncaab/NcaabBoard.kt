@@ -30,6 +30,9 @@ import java.util.zip.GZIPOutputStream
  * the app's alternate spread and total drop-downs need all the numbers Novig lists, and this is how they get them without a book request per number.
  */
 class NcaabBoardFeed(val atMs: Long, val rows: List<Opportunity>, val games: Int, val unreadable: Int = 0) {
+    /** Rows with a Novig price to take: without the engine's read-only Novig key the catalog carries no prices and only the scan's priced rows have one. */
+    val priced: Int get() = rows.count { it.ladder.isNotEmpty() }
+
     companion object {
         const val VERSION = 1
 
