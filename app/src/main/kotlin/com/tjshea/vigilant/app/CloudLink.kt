@@ -88,6 +88,13 @@ class CloudLink(private val c: AppContainer) {
         val bidRequests: List<BidRequest> = emptyList(),
         /** PropLine's +EV lines at Novig, as the engine's last sweep found them (`propline-ev.json.gz`, TCL56); null = none yet. */
         val propLineEv: com.tjshea.vigilant.data.reference.PlEvFeed? = null,
+        /** The college basketball tab (NC1): Novig's board from the engine, the ratings and the schedule from the `ncaab-data` branch, and when each was read (this phone's clock). */
+        val ncaabBoard: com.tjshea.vigilant.data.ncaab.NcaabBoardFeed? = null,
+        val ncaabBoardReadAtMs: Long = 0L,
+        val ncaabRatings: com.tjshea.vigilant.data.ncaab.NcaabRatings? = null,
+        val ncaabSlate: com.tjshea.vigilant.data.ncaab.NcaabSlate? = null,
+        val ncaabFilesReadAtMs: Long = 0L,
+        val ncaabNote: String = "",
         /** A pull to refresh is reading everything now ([refreshNow]); the pull's arrow stays until it is false again. */
         val refreshing: Boolean = false,
         /** What the pull is reading right now, in words ("" when none); the status bar under the top of every pulled screen shows it. */
@@ -172,6 +179,11 @@ class CloudLink(private val c: AppContainer) {
     @Volatile private var feedFetchedFor = 0L
     private var bidsFetchedFor = 0L
     private var evFetchedFor = 0L
+    private var ncaabFetchedFor = 0L
+    private var ncaabWantedUntil = 0L
+    private var ncaabFilesAt = 0L
+    private var ncaabRatingsEtag: String? = null
+    private var ncaabSlateEtag: String? = null
     private var cnoFetchedFor = 0L
 
     private fun token(): String? {
@@ -617,6 +629,44 @@ class CloudLink(private val c: AppContainer) {
         }
     }
 
+    /**
+     * The college basketball tab is on screen (NC1): read its files now and keep them current for the next [NCAAB_WANT_MS] (the board follows the engine's stamp, the ratings and the schedule are
+     * re-read every [NCAAB_FILES_MS], a free 304 when nothing changed). Nothing is read while the tab is not looked at.
+     */
+    suspend fun wantNcaab(force: Boolean = false) {
+        if (!hasToken()) return
+        val now = System.currentTimeMillis()
+        ncaabWantedUntil = now + NCAAB_WANT_MS
+        if (force || now - ncaabFilesAt >= NCAAB_FILES_MS) fetchNcaabFiles()
+        latest.status?.let { st -> if (st.ncaabAtMs > 0L && (force || st.ncaabAtMs != ncaabFetchedFor)) fetchNcaabBoard(st.ncaabAtMs) }
+    }
+
+    private suspend fun fetchNcaabFiles() {
+        ncaabFilesAt = System.currentTimeMillis()
+        var note = ""
+        var ratings = _ui.value.ncaabRatings
+        var slate = _ui.value.ncaabSlate
+        when (val r = client.readText("ncaab-data", "ratings.json", ncaabRatingsEtag)) {
+            is CloudClient.Poll.Fresh -> { ncaabRatingsEtag = r.etag; ratings = r.value?.let(com.tjshea.vigilant.data.ncaab.NcaabRatings::decode); if (r.value == null) note = "the ratings are not on GitHub yet (the college basketball job has not run)" }
+            is CloudClient.Poll.Failed -> note = "ratings: " + r.why
+            else -> {}
+        }
+        when (val r = client.readText("ncaab-data", "slate.json", ncaabSlateEtag)) {
+            is CloudClient.Poll.Fresh -> { ncaabSlateEtag = r.etag; slate = r.value?.let(com.tjshea.vigilant.data.ncaab.NcaabSlate::decode) }
+            is CloudClient.Poll.Failed -> note = note.ifBlank { "schedule: " + r.why }
+            else -> {}
+        }
+        _ui.update { it.copy(ncaabRatings = ratings, ncaabSlate = slate, ncaabFilesReadAtMs = ncaabFilesAt, ncaabNote = note) }
+    }
+
+    private suspend fun fetchNcaabBoard(announcedAtMs: Long) {
+        when (val b = client.fetchNcaabBoard()) {
+            is CloudClient.Poll.Fresh -> { ncaabFetchedFor = announcedAtMs; _ui.update { it.copy(ncaabBoard = b.value, ncaabBoardReadAtMs = System.currentTimeMillis()) } }
+            is CloudClient.Poll.Failed -> { ncaabFetchedFor = announcedAtMs; latest.why = b.why }
+            else -> {}
+        }
+    }
+
     /** A status read from GitHub: kept unless a newer one came straight from the engine; the list, the bid candidates and PropLine's lines follow when their stamps moved. */
     private suspend fun onStatus(st: com.tjshea.vigilant.data.cloud.CloudStatus, s: ScanSettings) {
         // An answer from GitHub is up to ~10 s old: it never replaces a newer reading that came straight from the engine.
@@ -627,6 +677,7 @@ class CloudLink(private val c: AppContainer) {
         if (st.computedAtMs > 0L && st.computedAtMs != feedFetchedFor) fetch(st.computedAtMs)
         if (s.bidsFromCloud && st.bidsAtMs > 0L && st.bidsAtMs != bidsFetchedFor) fetchBids(st.bidsAtMs)
         if (st.propLineEvAtMs > 0L && st.propLineEvAtMs != evFetchedFor) fetchPropLineEv(st.propLineEvAtMs)
+        if (st.ncaabAtMs > 0L && st.ncaabAtMs != ncaabFetchedFor && System.currentTimeMillis() < ncaabWantedUntil) fetchNcaabBoard(st.ncaabAtMs)
         if (st.cnoAtMs > 0L && st.cnoAtMs != cnoFetchedFor && com.tjshea.vigilant.data.cloud.CloudCno.wanted(s)) fetchCno(s, st.cnoAtMs)
     }
 
