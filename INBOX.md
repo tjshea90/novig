@@ -1502,3 +1502,23 @@ Why does it say this
 ```
 I want it to show accurate information when I pull to refresh. It shouldn't show stale engine status
 ```
+
+## 2026-11-05T05:25:55Z
+```
+I used to keep track of each college basketball team,  the offensive points each team scored per game,  whether they covered the spread for each game. If they won or lost by around the same number as the spread, i treated it like a tie. If they won by at least a few points better than the spread, i treated it as a green plus sign. If they covered the spread by a lot more than the number, i treated it as a double green plus. On the opposite, i had red negatives and double red negatives for teams that lost against the spread by a fair amount and by a large amount. I would then compare each day's matchups and use my logged data to make bets.  For example,  team A averages 75 points per game and averages a double green plus (beats the spread by a lot), and they are playing team b who averages 62 points per game and averages a red minus, yet the spread for the game is only team a minus 4 points, i bet on team a. Likewise, if in the same scenario team b averaged 78 points per game and averaged a green plus,  but was a 12 point underdog, i bet on team b.
+
+This method actually worked. 
+
+Build this same logic into a feature in the app for college basketball only. It must log and track scores and closing spreads (or at least spreads from the same day as the game) every day for every college basketball team that has betting odds available on novig and the apis.
+
+It should log and keep this information automatically in the background, on github if possible.  When the season goes on, it averages offensive points per game for college basketball teams on the schedule and the +/- system average for how good the team is against the spread, and shows me a daily schedule with all college basketball games for that day and these numbers and +/- average next to each team, and the current novig spread and total for that game.  For example:
+
+Davidson (74 ++)
+Rider (62 -)     +6  total: 154
+
+Display all games in an easy to read way, and find the best way to show me the best bets based on this system. This may include both bets against the spread and totals. Find spreads and totals which are most unlike the averages and point them out. 
+
+For each game,  put easy bet buttons with the same logic as the bet buttons inside the positive ev scanner already in the app. If i click on a game, show me the odds from different books for that game and calculate the ev for the novig odds for the game.  Include drop down boxes with alternate spreads and totals offered on novig and when i select one, include a quick bet button for the alternate spread or total as well. For all calculations of team averages, do not include outliers such as unusually inflated scores due to playing small school opponents
+
+Figure out if parlays can be made using the novig api.
+```
