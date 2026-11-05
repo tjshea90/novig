@@ -96,7 +96,7 @@ jobs:
       - name: Commit (append-only; never forced)
         run: |
           set -eu
-          cd data
+          cd "$DD"
           git add -A
           if git diff --cached --quiet; then echo "nothing changed"; exit 0; fi
           git commit -q -m "ncaab $(date -u +%FT%TZ)"
