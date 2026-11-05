@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-btss7j",
- "head": "1e484b458aeb61b58e704c5f0e0b92dfaff54502",
+ "head": "23c78c3595fc331e0a624a5f6b619034ae80bdd8",
  "since": 1793838167,
- "beat": 1793919279,
- "beatIso": "2026-11-05T22:54:39Z",
- "done": "ANALYST 11-05: no new evidence, no change; STATE updated",
- "next": "ER2 engine restart due 2026-11-05 03:05Z (engine_set gates.cloudTrading=LIVE gates.cloudBids=true --on)"
+ "beat": 1793919425,
+ "beatIso": "2026-11-05T22:57:05Z",
+ "done": "EN4 written: engine turn-on at 02:55 UTC",
+ "next": "at 02:55 UTC Nov 6 turn the engine on (EN4)"
 }
