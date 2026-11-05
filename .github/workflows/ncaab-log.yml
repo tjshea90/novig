@@ -51,12 +51,12 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           if git ls-remote --exit-code --heads "$url" ncaab-data >/dev/null 2>&1; then
-            git clone --quiet --branch ncaab-data --depth 1 "$url" data
+            git clone --quiet --branch ncaab-data --depth 1 "$url" "$DD"
           else
-            mkdir -p data/games && git -C data init -q -b ncaab-data && git -C data remote add origin "$url"
-            for f in research/ncaab/seed/games-*.jsonl.gz; do b=$(basename "$f" .jsonl.gz); gunzip -c "$f" > "data/games/${b#games-}.jsonl"; done
-            cp research/ncaab/seed/teams.json data/teams.json
-            echo "seeded a new ncaab-data branch: $(cat data/games/*.jsonl | wc -l) games"
+            mkdir -p "$DD/games" && git -C "$DD" init -q -b ncaab-data && git -C "$DD" remote add origin "$url"
+            for f in research/ncaab/seed/games-*.jsonl.gz; do b=$(basename "$f" .jsonl.gz); gunzip -c "$f" > "$DD/games/${b#games-}.jsonl"; done
+            cp research/ncaab/seed/teams.json "$DD/teams.json"
+            echo "seeded a new ncaab-data branch: $(cat "$DD"/games/*.jsonl | wc -l) games"
             echo "SEEDED=true" >> "$GITHUB_ENV"
           fi
       - name: Log the finished games, rate the teams, list the slate
