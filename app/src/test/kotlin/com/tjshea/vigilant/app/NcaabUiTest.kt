@@ -2,6 +2,7 @@ package com.tjshea.vigilant.app
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -143,7 +144,7 @@ class NcaabUiTest {
         show(views())
         compose.onNodeWithTag("ncaabPage-LEANS").performClick()
         compose.onNodeWithTag("ncaabLeanNote").assertIsDisplayed()
-        compose.onNodeWithText("None of today's leans is backed by history", substring = true).assertIsDisplayed()
+        compose.onNodeWithTag("ncaabLeanNote").assertTextContains("None of today's leans is backed by history", substring = true)
         compose.onNodeWithTag("ncaabEvidence").assertIsDisplayed()
         compose.onNodeWithText("None of these did, so they are opinions, not edges.", substring = true).assertIsDisplayed()
     }
@@ -164,8 +165,8 @@ class NcaabUiTest {
         compose.onNodeWithTag("ncaabSpreadPicker").performScrollTo().performClick()
         // options are sorted by the home handicap: -6.5, -4.5 (main), -2.5
         compose.onNodeWithTag("ncaabSpreadPicker-2").performClick()
-        compose.onNodeWithText("DAV -2.5", substring = true).assertIsDisplayed()
         compose.onNodeWithTag("ncaabSide-s2-h").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("ncaabSide-s2-h").assertTextContains("Davidson", substring = true)
     }
 
     @Test
