@@ -200,10 +200,20 @@ def load_json(path, default):
         return default
 
 
-def save_json(path, obj):
+def save_json(path, obj, ignore=()):
+    """Writes `obj` unless the file already holds the same thing (top-level keys in `ignore`, like a timestamp, do not count as a change). True when it wrote."""
     body = json.dumps(obj, separators=(",", ":"), sort_keys=True)
-    if os.path.exists(path) and open(path).read() == body:
-        return False
+    if os.path.exists(path):
+        old = open(path).read()
+        if old == body:
+            return False
+        if ignore:
+            try:
+                o = json.loads(old)
+                if {k: v for k, v in o.items() if k not in ignore} == {k: v for k, v in obj.items() if k not in ignore}:
+                    return False
+            except Exception:
+                pass
     with open(path, "w") as fh:
         fh.write(body)
     return True
@@ -504,7 +514,7 @@ def rebuild(data_dir, log=print):
     model = load_json(os.path.join(data_dir, "model.json"), DEFAULT_MODEL)
     now = int(time.time() * 1000)
     r = build_ratings(games, now, teams, CFG, model)
-    changed = save_json(os.path.join(data_dir, "ratings.json"), r)
+    changed = save_json(os.path.join(data_dir, "ratings.json"), r, ignore=("asOf",))
     log(f"ratings: {len(r['teams'])} teams from {r['games']} games this season{' (changed)' if changed else ''}")
 
 
@@ -527,7 +537,7 @@ def main(argv):
         new, nol = collect(a.data_dir, list(drange(t - dt.timedelta(days=a.days_back), t)))
         print(f"logged {new} new games ({nol} finished without a line: not Division I or no market)")
         slate = build_slate(a.data_dir, t)
-        save_json(os.path.join(a.data_dir, "slate.json"), dict(asOf=int(time.time() * 1000), games=slate))
+        save_json(os.path.join(a.data_dir, "slate.json"), dict(asOf=int(time.time() * 1000), games=slate), ignore=("asOf",))
         rebuild(a.data_dir)
     elif a.cmd == "collect":
         s, e = dt.date.fromisoformat(a.start), dt.date.fromisoformat(a.end or today_et().isoformat())
@@ -538,7 +548,7 @@ def main(argv):
         rebuild(a.data_dir)
     elif a.cmd == "backtest":
         games = load_games(a.data_dir)
-        model, report = backtest(games)
+        model, report = backtest(games, current_season=season_of(today_et().isoformat()))
         save_json(os.path.join(a.data_dir, "model.json"), model)
         with open(os.path.join(a.data_dir, "backtest.md"), "w") as fh:
             fh.write(report + "\n")
@@ -627,6 +637,11 @@ def selftest():
         save_games(d, {"1": dict(id="1", d="2025-11-15", t=5, h="H", a="A", hs=86, **{"as": 77}, sp=-6.5, tt=150.5)})
         check(load_games(d)["1"]["sp"] == -6.5, "games round trip")
         check(save_json(os.path.join(d, "x.json"), {"a": 1}) is True and save_json(os.path.join(d, "x.json"), {"a": 1}) is False, "save_json unchanged -> False")
+    with tempfile.TemporaryDirectory() as d2:
+        pth = os.path.join(d2, "r.json")
+        check(save_json(pth, {"asOf": 1, "x": 1}, ignore=("asOf",)) is True, "first write")
+        check(save_json(pth, {"asOf": 2, "x": 1}, ignore=("asOf",)) is False and json.load(open(pth))["asOf"] == 1, "only the timestamp changed -> not rewritten")
+        check(save_json(pth, {"asOf": 3, "x": 2}, ignore=("asOf",)) is True, "a real change is written")
     check(season_of("2025-11-03") == 2026 and season_of("2026-03-20") == 2026 and season_of("2026-10-30") == 2027, "season label")
     print(f"ncaab_ats selftest: {ok} checks passed")
     return 0
