@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-c53b8db3-i98qqw",
- "head": "6226b474071a7b260e38e22a7aad1f42c589a7c3",
+ "head": "10f6052264c846e9152884e54be124c31a323b0f",
  "since": 1793856344,
- "beat": 1793916979,
- "beatIso": "2026-11-05T22:16:19Z",
+ "beat": 1793917196,
+ "beatIso": "2026-11-05T22:19:56Z",
  "done": "NC1: parlay builder (NovigParlay + ParlayBar), research note, NOVIG_API.md s31, CLAUDE.md section, LEVERS row, research index, test_ncaab.sh; NcaabUiTest 9 + NovigParlayTest 4 green",
  "next": "NC1: full bash tools/test.sh, fix anything red, then ship.sh + release.yml + record-release.sh"
 }
