@@ -1522,3 +1522,8 @@ For each game,  put easy bet buttons with the same logic as the bet buttons insi
 
 Figure out if parlays can be made using the novig api.
 ```
+
+## 2026-11-05T06:54:33Z
+```
+Can you resume work on this without losing progress from the last Claude account
+```
