@@ -73,11 +73,12 @@ internal fun ParlayBar(modifier: Modifier = Modifier) {
     val quote = LocalParlayQuote.current
     val openNovig = LocalOpenNovig.current
     val scope = rememberCoroutineScope()
-    var result by remember { mutableStateOf<NovigParlay.Result?>(null) }
+    var answer by remember { mutableStateOf<Pair<List<String>, NovigParlay.Result>?>(null) }
     var busy by remember { mutableStateOf(false) }
     val ids = p.legs.map { it.outcome.outcomeId }
-    // Other legs, another price: an old answer is never shown for a different parlay.
-    LaunchedEffect(ids) { result = null }
+    // An answer belongs to the legs it was asked for: other legs, another price. (Clearing it when the legs change was not enough: a request still on its way when they changed came back
+    // afterwards and put the OLD parlay's price under the new legs.)
+    val result = answer?.takeIf { it.first == ids }?.second
     val problem = NovigParlay.problem(p.legs.map(::legOf))
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest), modifier = modifier.fillMaxWidth().testTag("ncaabParlayBar")) {
         Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
