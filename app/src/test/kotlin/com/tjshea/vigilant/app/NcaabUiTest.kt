@@ -230,17 +230,16 @@ class NcaabUiTest {
         compose.waitForIdle()
         assertEquals(1, quotedFor.size)   // asked, and Novig has not answered yet
         fun waiting() = compose.onAllNodes(hasText("Asking Novig…")).fetchSemanticsNodes().size
-        fun dump(stage: String) = println("DBG $stage: waiting=${waiting()} result=${compose.onAllNodesWithTagCount("ncaabParlayResult")} bars=${compose.onAllNodesWithTagCount("ncaabParlayBar")} priceBtns=${compose.onAllNodesWithTagCount("ncaabParlayPrice")} legs=${parlay.legs.map { it.outcome.outcomeId }}")
-        dump("after price click")
         assertTrue("the request should be pending", waiting() > 0)
         // the legs change while the answer is on its way: Under instead of Over
         toggles()[2].performScrollTo().performClick()
         toggles()[3].performScrollTo().performClick()
         assertEquals(2, parlay.legs.size)
-        dump("after legs changed")
+        // the screen settles on the new legs BEFORE Novig answers, as it does in life (without this wait the old code passed by scheduling luck: its reset ran after the late answer)
+        compose.waitForIdle()
+        assertTrue("still pending", waiting() > 0)
         gate.complete(priced())
         compose.waitForIdle()
-        dump("after gate.complete")
         // the answer did arrive (nothing is pending any more) ...
         assertEquals("the answer should have arrived", 0, waiting())
         // ... but that 25 cents was for the other parlay: no price under these legs (it used to appear here)
