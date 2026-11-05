@@ -372,7 +372,7 @@ def side_result(edge, outcome):
 
 
 HCA = 3.0              # points of home-court edge the line already holds (none at a neutral site)
-BREAK_EVEN = 0.5238    # a -110 price needs this share of wins
+BREAK_EVEN = 0.5238    # a -110 price needs this share of wins (the app compares with Novig's ~0.505 take price instead, NcaabSignals.COST_TO_BEAT)
 MIN_BUCKET = 100       # fewest games behind a bucket before the app calls it evidence
 
 # The four signals the app shows. `value` is signed toward the HOME side (spreads) or the OVER (totals); the app takes the bucket of |value|.
