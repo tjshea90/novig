@@ -1,13 +1,13 @@
-# CHECKPOINT 4399 — read me first, then TASKS.md
+# CHECKPOINT 4400 — read me first, then TASKS.md
 
-**Written:** 2026-11-06T01:48:58Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-gbcwn8` · **builds on:** `3aa71c479` (this checkpoint is the commit after it)
+**Written:** 2026-11-06T02:35:56Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-sk4de2` · **builds on:** `d98c6c53d` (this checkpoint is the commit after it)
 
 ## Just done
-RT1: Tj made second Gmail routine
+EN4 done early: engine on 02:35Z at Tj's word
 
 ## Do this next
-Nov 8 roster change
+Nov 8 roster change (RT1)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ Nov 8 roster change
 
 ## Last ten checkpoints
 ```
+  d98c6c53d ckpt 4399: RT1: Tj made second Gmail routine
   3aa71c479 ckpt 4398: RT1 written: gmail double duty from Nov 8, reply sent
   825567a03 ckpt 4397: ENGINEER 11-06 00:21Z: no change, EN4 not yet due
   23c78c359 ckpt 4396: EN4 written: engine turn-on at 02:55 UTC
@@ -26,5 +27,4 @@ Nov 8 roster change
   3dc33771a ckpt 4392: NC1j: live check of NcaabBoard against Novig's real NCAAB catalog (82 games
   6226b4740 ckpt 4391: Wrong-repo session: Tj attached the Launcher handoff here by mistake, no no
   52e2b2556 ckpt 4390: ANALYST 11-05: no change, note written
-  0a377cc23 ckpt 4389: WATCH 11-05: engine healthy, nothing shipped
 ```
