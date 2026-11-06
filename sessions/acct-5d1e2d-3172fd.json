@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "3172fd",
- "kind": "routine",
+ "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-y9p8mh",
+ "branch": "claude/optimistic-curie-gbcwn8",
  "head": "825567a031615f7932dd285d8d6dca48843d55c4",
  "since": 1793924500,
- "beat": 1793924500,
- "beatIso": "2026-11-06T00:21:40Z",
+ "beat": 1793929318,
+ "beatIso": "2026-11-06T01:41:58Z",
  "done": "ENGINEER 11-06 00:21Z: no change, EN4 not yet due",
  "next": "at/after 02:55 UTC Nov 6 turn the engine on (EN4)"
 }
