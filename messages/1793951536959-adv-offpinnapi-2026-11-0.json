@@ -1,0 +1,1 @@
+{"id":"adv-off:pinnapi-2026-11-06","at":1793951536959,"from":"engine","kind":"recommendation","title":"Pinnacle (pinnapi) answered nothing","body":"It has returned no leagues for several scans in a row while still being asked. Check its key and plan; the engine rests it for a while to save requests and turns it off if it stays silent.","priority":0,"action":"APIS"}
