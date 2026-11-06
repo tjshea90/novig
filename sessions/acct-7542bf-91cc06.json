@@ -3,13 +3,13 @@
  "label": "acct-7542bf",
  "name": "tj outlook",
  "nonce": "91cc06",
- "kind": "routine",
+ "kind": "interactive",
  "task": "",
- "branch": "claude/keen-keller-xs7031",
- "head": "0a377cc2325ede51250fad4f0cca09772a5b5e04",
+ "branch": "claude/keen-keller-ev25zy",
+ "head": "db7c6c5387b317e5b980b640c9e5fa48aa3a5b6b",
  "since": 1793881380,
- "beat": 1793881380,
- "beatIso": "2026-11-05T12:23:00Z",
+ "beat": 1793967777,
+ "beatIso": "2026-11-06T12:22:57Z",
  "done": "WATCH 11-05: engine healthy, nothing shipped",
  "next": "NC1i: read status ncaabAtMs after first scan of the new job"
 }
