@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "3172fd",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/optimistic-curie-y9p8mh",
  "head": "23c78c3595fc331e0a624a5f6b619034ae80bdd8",
  "since": 1793838167,
- "beat": 1793924436,
- "beatIso": "2026-11-06T00:20:36Z",
+ "beat": 1793924452,
+ "beatIso": "2026-11-06T00:20:52Z",
  "done": "EN4 written: engine turn-on at 02:55 UTC",
  "next": "at 02:55 UTC Nov 6 turn the engine on (EN4)"
 }
