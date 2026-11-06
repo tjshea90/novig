@@ -3,13 +3,13 @@
  "label": "acct-27a37e",
  "name": "tj Gmail",
  "nonce": "2109bc",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/wizardly-meitner-gge442",
  "head": "db7c6c5387b317e5b980b640c9e5fa48aa3a5b6b",
  "since": 1793902916,
- "beat": 1793989272,
- "beatIso": "2026-11-06T18:21:12Z",
+ "beat": 1793989295,
+ "beatIso": "2026-11-06T18:21:35Z",
  "done": "ANALYST 11-05: no change, note written",
  "next": "NC1i: read ncaabAtMs after first scan (cloud-feed status has ncaabAtMs, fresh)"
 }
