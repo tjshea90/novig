@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "2109bc",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-gge442",
+ "head": "ed6bf754d6469bac3ee1418c8ab26333cd783997",
+ "since": 1793989362,
+ "beat": 1793989362,
+ "beatIso": "2026-11-06T18:22:42Z",
+ "done": "ENGINEER 11-06 13:20 ET: no change, engine sleeps on empty wallet",
+ "next": "next slot WATCH wallet/open bets"
+}
