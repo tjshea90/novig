@@ -1,6 +1,6 @@
 # Polymarket Documentation
 
-- [API Reference (224 pages)](https://docs.polymarket.com/_llms/en/api-reference.txt): Documentation for API Reference.
+- [API Reference (227 pages)](https://docs.polymarket.com/_llms/en/api-reference.txt): Documentation for API Reference.
 
 ## Predictions
 
@@ -187,11 +187,11 @@
 
 ## Indexes
 
-- [English / API Reference (224 pages)](https://docs.polymarket.com/_llms/en/api-reference.txt): Documentation for English / API Reference.
-- [English / API Reference / Predictions (122 pages)](https://docs.polymarket.com/_llms/en/api-reference/predictions.txt): Documentation for English / API Reference / Predictions.
-- [English / API Reference / Perps (102 pages)](https://docs.polymarket.com/_llms/en/api-reference/perps.txt): Documentation for English / API Reference / Perps.
-- [Chinese (220 pages)](https://docs.polymarket.com/_llms/cn.txt): Documentation for Chinese.
-- [Chinese / API 参考 (167 pages)](https://docs.polymarket.com/_llms/cn/api.txt): Documentation for Chinese / API 参考.
+- [English / API Reference (227 pages)](https://docs.polymarket.com/_llms/en/api-reference.txt): Documentation for English / API Reference.
+- [English / API Reference / Predictions (124 pages)](https://docs.polymarket.com/_llms/en/api-reference/predictions.txt): Documentation for English / API Reference / Predictions.
+- [English / API Reference / Perps (103 pages)](https://docs.polymarket.com/_llms/en/api-reference/perps.txt): Documentation for English / API Reference / Perps.
+- [Chinese (223 pages)](https://docs.polymarket.com/_llms/cn.txt): Documentation for Chinese.
+- [Chinese / API 参考 (170 pages)](https://docs.polymarket.com/_llms/cn/api.txt): Documentation for Chinese / API 参考.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

@@ -526,6 +526,13 @@ components:
         orderId:
           format: uuid
           type: string
+        originalQty:
+          description: >-
+            Contracts the order was placed for. `qty` is the part that still
+            rests.
+          format: int32
+          minimum: 0
+          type: integer
         outcomeId:
           format: uuid
           type: string
@@ -549,6 +556,7 @@ components:
         - outcomeId
         - price
         - qty
+        - originalQty
         - tif
       type: object
     BatchOrderError:

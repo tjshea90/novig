@@ -2,8 +2,8 @@
 
 ## API Reference
 
-- [English / API Reference / Predictions (122 pages)](https://docs.polymarket.com/_llms/en/api-reference/predictions.txt): Documentation for English / API Reference / Predictions.
-- [English / API Reference / Perps (102 pages)](https://docs.polymarket.com/_llms/en/api-reference/perps.txt): Documentation for English / API Reference / Perps.
+- [English / API Reference / Predictions (124 pages)](https://docs.polymarket.com/_llms/en/api-reference/predictions.txt): Documentation for English / API Reference / Predictions.
+- [English / API Reference / Perps (103 pages)](https://docs.polymarket.com/_llms/en/api-reference/perps.txt): Documentation for English / API Reference / Perps.
 
 ## OpenAPI Specs
 

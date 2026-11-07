@@ -309,6 +309,21 @@ markets that settle on TWAP.
 
 Liquidity providers are rewarded based on a formula that rewards participation in markets, boosts two-sided depth (single-sided orders still score), and tighter spread vs the size-cutoff-adjusted midpoint. Each market configures a max spread and min size cutoff within which orders are considered. The average of rewards earned is determined by the relative share of each participant's Q<sub>n</sub> in market m.
 
+### Minimum Order Age
+
+On most markets, an order counts toward rewards as soon as it rests on the book.
+
+Markets with a taker delay are the exception. On these markets, a marketable
+order waits for the delay before it can match, so a resting order counts toward
+rewards only after it has rested for the same delay. An order cannot earn
+rewards before a taker could fill it.
+
+* **Sports markets with a scheduled game start:** the delay, and so the minimum
+  age, applies only after the game starts. Before the start, orders count as
+  soon as they rest.
+* **Crypto and finance markets:** the short taker delay on these markets does
+  not set a minimum age. Orders count as soon as they rest.
+
 ### Variables
 
 | Variable | Description |

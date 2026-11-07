@@ -14,7 +14,7 @@
 openapi: 3.0.0
 info:
   title: Kalshi Trade API Manual Endpoints
-  version: 3.35.0
+  version: 3.36.0
   description: >-
     Manually defined OpenAPI spec for endpoints being migrated to spec-first
     approach
@@ -206,7 +206,9 @@ components:
           description: Expiration time of the proposal
         status:
           type: string
-          description: Current status of the proposal
+          description: >-
+            Current status of the proposal: pending, executed, cancelled (by the
+            proposer, or on expiry) or rejected (by a counterparty)
         created_ts:
           type: string
           format: date-time

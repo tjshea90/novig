@@ -491,6 +491,12 @@
                       "format": "uuid",
                       "type": "string"
                     },
+                    "originalQty": {
+                      "description": "Contracts the order was placed for.",
+                      "format": "int32",
+                      "minimum": 0,
+                      "type": "integer"
+                    },
                     "outcomeId": {
                       "description": "ID of the outcome that traded.",
                       "format": "uuid",
@@ -523,6 +529,7 @@
                     "outcomeId",
                     "price",
                     "qty",
+                    "originalQty",
                     "remaining",
                     "taker",
                     "kind"
@@ -532,6 +539,13 @@
                 {
                   "description": "An order left the book.",
                   "properties": {
+                    "clientId": {
+                      "description": "The order's client id, when it sent one.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "kind": {
                       "enum": [
                         "cancel"
@@ -540,6 +554,17 @@
                     },
                     "orderId": {
                       "description": "ID of the cancelled order.",
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "originalQty": {
+                      "description": "Contracts the order was placed for.",
+                      "format": "int32",
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "outcomeId": {
+                      "description": "ID of the order's outcome.",
                       "format": "uuid",
                       "type": "string"
                     },
@@ -553,10 +578,19 @@
                           "description": "Why it left. Absent for an ordinary cancel by the owner, by expiry,\nor by an admin."
                         }
                       ]
+                    },
+                    "remaining": {
+                      "description": "Contracts still resting when the order left the book.",
+                      "format": "int32",
+                      "minimum": 0,
+                      "type": "integer"
                     }
                   },
                   "required": [
                     "orderId",
+                    "outcomeId",
+                    "originalQty",
+                    "remaining",
                     "kind"
                   ],
                   "type": "object"
@@ -564,6 +598,13 @@
                 {
                   "description": "The engine rejected an order after the gateway accepted it.",
                   "properties": {
+                    "clientId": {
+                      "description": "The order's client id, when it sent one.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "kind": {
                       "enum": [
                         "reject"
@@ -574,10 +615,23 @@
                       "description": "ID of the rejected order.",
                       "format": "uuid",
                       "type": "string"
+                    },
+                    "originalQty": {
+                      "description": "Contracts the order was placed for.",
+                      "format": "int32",
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "outcomeId": {
+                      "description": "ID of the order's outcome.",
+                      "format": "uuid",
+                      "type": "string"
                     }
                   },
                   "required": [
                     "orderId",
+                    "outcomeId",
+                    "originalQty",
                     "kind"
                   ],
                   "type": "object"
@@ -1828,11 +1882,27 @@
         "type": "object"
       },
       "LimitsResponse": {
-        "description": "Your rate-limit schedule: one `BucketLimit` per bucket. A trading key\nreports the limits of its subaccount's tier.",
+        "description": "Your rate-limit schedule: one `BucketLimit` per bucket. A trading key\nreports the limits of its account's tier.",
         "properties": {
           "account": {
             "$ref": "#/components/schemas/BucketLimit",
             "description": "The bucket for private reads: orders, positions, and account data."
+          },
+          "accountMaxOpenOrders": {
+            "description": "`maxOpenOrders` at your account's tier: what each trading key on your\naccount gets.",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "accountMaxWatchedMarkets": {
+            "description": "`maxWatchedMarkets` at your account's tier: what each trading key on\nyour account gets.",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "accountTier": {
+            "$ref": "#/components/schemas/RateLimitTier",
+            "description": "Your account's tier. Every trading key on your account gets it."
           },
           "cancel": {
             "$ref": "#/components/schemas/BucketLimit",
@@ -1849,7 +1919,7 @@
             "type": "integer"
           },
           "maxWatchedMarkets": {
-            "description": "The most markets one websocket connection may watch at once. An event\ncounts as the markets it contains.",
+            "description": "The most markets one websocket connection of your subaccount may watch\nat once. An event counts as the markets it contains.",
             "format": "int32",
             "minimum": 0,
             "type": "integer"
@@ -1865,9 +1935,15 @@
           "stream": {
             "$ref": "#/components/schemas/BucketLimit",
             "description": "The bucket for websocket requests: subscribe, unsubscribe, snapshot,\nand status."
+          },
+          "tier": {
+            "$ref": "#/components/schemas/RateLimitTier",
+            "description": "The tier of these limits. A trading key is at its account's tier. A\nmanagement key is always at `BASE`."
           }
         },
         "required": [
+          "tier",
+          "accountTier",
           "read",
           "account",
           "place",
@@ -1875,7 +1951,9 @@
           "stream",
           "history",
           "maxWatchedMarkets",
-          "maxOpenOrders"
+          "maxOpenOrders",
+          "accountMaxWatchedMarkets",
+          "accountMaxOpenOrders"
         ],
         "type": "object"
       },
@@ -2148,11 +2226,11 @@
             "type": "object"
           },
           {
-            "description": "Cancel an array of resting orders by id. An unknown id does not stop the\nrest. Replies under `canceled`.",
+            "description": "Cancel resting orders by id, or by the nonce of an earlier `place` on\nthis connection. An unknown id does not stop the rest, but an unknown\nnonce refuses the whole request. Replies under `canceled`.",
             "properties": {
               "cancel": {
-                "$ref": "#/components/schemas/BatchCancel",
-                "description": "Cancel an array of resting orders by id. An unknown id does not stop the\nrest. Replies under `canceled`."
+                "$ref": "#/components/schemas/WsCancel",
+                "description": "Cancel resting orders by id, or by the nonce of an earlier `place` on\nthis connection. An unknown id does not stop the rest, but an unknown\nnonce refuses the whole request. Replies under `canceled`."
               }
             },
             "required": [
@@ -2313,6 +2391,12 @@
             "format": "uuid",
             "type": "string"
           },
+          "originalQty": {
+            "description": "Contracts the order was placed for. `qty` is the part that still rests.",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
           "outcomeId": {
             "format": "uuid",
             "type": "string"
@@ -2337,6 +2421,7 @@
           "outcomeId",
           "price",
           "qty",
+          "originalQty",
           "tif"
         ],
         "type": "object"
@@ -2503,6 +2588,12 @@
                 "format": "uuid",
                 "type": "string"
               },
+              "originalQty": {
+                "description": "Contracts the order was placed for.",
+                "format": "int32",
+                "minimum": 0,
+                "type": "integer"
+              },
               "outcomeId": {
                 "description": "ID of the outcome that traded.",
                 "format": "uuid",
@@ -2535,6 +2626,7 @@
               "outcomeId",
               "price",
               "qty",
+              "originalQty",
               "remaining",
               "taker",
               "kind"
@@ -2544,6 +2636,13 @@
           {
             "description": "An order left the book.",
             "properties": {
+              "clientId": {
+                "description": "The order's client id, when it sent one.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "kind": {
                 "enum": [
                   "cancel"
@@ -2552,6 +2651,17 @@
               },
               "orderId": {
                 "description": "ID of the cancelled order.",
+                "format": "uuid",
+                "type": "string"
+              },
+              "originalQty": {
+                "description": "Contracts the order was placed for.",
+                "format": "int32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "outcomeId": {
+                "description": "ID of the order's outcome.",
                 "format": "uuid",
                 "type": "string"
               },
@@ -2565,10 +2675,19 @@
                     "description": "Why it left. Absent for an ordinary cancel by the owner, by expiry,\nor by an admin."
                   }
                 ]
+              },
+              "remaining": {
+                "description": "Contracts still resting when the order left the book.",
+                "format": "int32",
+                "minimum": 0,
+                "type": "integer"
               }
             },
             "required": [
               "orderId",
+              "outcomeId",
+              "originalQty",
+              "remaining",
               "kind"
             ],
             "type": "object"
@@ -2576,6 +2695,13 @@
           {
             "description": "The engine rejected an order after the gateway accepted it.",
             "properties": {
+              "clientId": {
+                "description": "The order's client id, when it sent one.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "kind": {
                 "enum": [
                   "reject"
@@ -2586,10 +2712,23 @@
                 "description": "ID of the rejected order.",
                 "format": "uuid",
                 "type": "string"
+              },
+              "originalQty": {
+                "description": "Contracts the order was placed for.",
+                "format": "int32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "outcomeId": {
+                "description": "ID of the order's outcome.",
+                "format": "uuid",
+                "type": "string"
               }
             },
             "required": [
               "orderId",
+              "outcomeId",
+              "originalQty",
               "kind"
             ],
             "type": "object"
@@ -4667,6 +4806,17 @@
         ],
         "type": "string"
       },
+      "RateLimitTier": {
+        "description": "A trader's rate-limit tier. A tier multiplies every v3 throttle of each of\nthe trader's subaccounts, and sets how many orders each may keep open and\nhow many markets each websocket connection may watch.",
+        "enum": [
+          "BASE",
+          "TIER1",
+          "TIER2",
+          "TIER3",
+          "TIER4"
+        ],
+        "type": "string"
+      },
       "RemoveReason": {
         "description": "Why an order left the book.",
         "enum": [
@@ -5068,6 +5218,27 @@
         "required": [
           "balance"
         ],
+        "type": "object"
+      },
+      "WsCancel": {
+        "description": "Cancel orders by ID, by the nonce of an earlier `place` on this connection,\nor both. A nonce names every order its place booked.",
+        "properties": {
+          "nonces": {
+            "description": "Nonces of earlier `place` requests on this connection.",
+            "items": {
+              "$ref": "#/components/schemas/Nonce"
+            },
+            "type": "array"
+          },
+          "orderIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 256,
+            "type": "array"
+          }
+        },
         "type": "object"
       },
       "WsDelta": {
@@ -11221,6 +11392,9 @@
                     "capacity": 64,
                     "refillPerSec": 8
                   },
+                  "accountMaxOpenOrders": 2048,
+                  "accountMaxWatchedMarkets": 8192,
+                  "accountTier": "BASE",
                   "cancel": {
                     "capacity": 256,
                     "refillPerSec": 16
@@ -11229,7 +11403,7 @@
                     "capacity": 512,
                     "refillPerSec": 4
                   },
-                  "maxOpenOrders": 1024,
+                  "maxOpenOrders": 2048,
                   "maxWatchedMarkets": 8192,
                   "place": {
                     "capacity": 256,
@@ -11242,7 +11416,8 @@
                   "stream": {
                     "capacity": 512,
                     "refillPerSec": 32
-                  }
+                  },
+                  "tier": "BASE"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/LimitsResponse"

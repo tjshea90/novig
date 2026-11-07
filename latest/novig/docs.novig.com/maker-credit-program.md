@@ -95,7 +95,7 @@ Every other Program term applies to live trading unchanged.
 Eligible futures markets have their own fee schedule.
 A futures market is eligible in every league except PGA, ATP, WTA, UFC, F1 and NASCAR.
 A series winner market is never eligible.
-Today the eligible leagues are NFL, NCAAF, MLB, NBA, WNBA and NHL.
+Today the eligible leagues are NFL, NCAAF, NCAAB, NCAAWB, MLB, NBA, WNBA and NHL.
 We set the credit higher than the live trading credit to promote liquidity.
 Two terms differ from the Program above.
 

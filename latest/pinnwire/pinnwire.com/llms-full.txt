@@ -259,7 +259,7 @@ Server-Sent Events streams of odds drops as they happen. Auth: API key on an SSE
 
     curl -N "https://pinnwire.com/odds-drop?key=$KEY&min_drop=5"
 
-First frame is a handshake: `data: {"type":"connected","id":"<uuid>"}`. Subsequent frames are JSON arrays of drop objects (same shape as /api/drops above). Keep-alive comment lines (`:ka`) arrive every 25 s — ignore them.
+First frame is a handshake: `data: {"type":"connected","id":"<uuid>"}`. Subsequent frames are JSON arrays of drop objects (same shape as /api/drops above). Keep-alive comment lines (`:ka`) arrive every 25 s — ignore them. Open streams are rechecked every 60 s: if the key is revoked, its prepaid period ends, or the plan no longer includes SSE, the server sends `data: {"type":"disconnected","reason":"invalid_key"}` (or `"plan_lacks_sse"`) and closes the stream — don't reconnect in a loop on these reasons.
 
 **`min_drop=N`** (both endpoints): override the default 5% threshold for this connection. Floor is 1% (lower values are clamped). No upper cap.
 
@@ -296,7 +296,7 @@ Close codes:
 |---|---|---|
 | 1001 | evicted by newer connection | one connection per key — a second evicts the first |
 | 1001 | stale | no pong for ~75 s |
-| 1008 | no subscribe / invalid key / plan lacks ws | fix and reconnect |
+| 1008 | no subscribe / invalid key / plan lacks ws | fix and reconnect. Open connections are rechecked every 60 s: if the key is revoked, its prepaid period ends, or the plan no longer includes the WebSocket, you get the same error frame and close |
 | 1011 | deregistered: slow_consumer | you fell >32 MB behind — read faster or subscribe to less, then reconnect with backoff (match on the `deregistered: ` prefix) |
 | 1013 | reconnect rate limited | reconnect loop: more than 6 new connections in a few minutes or 50 a day (SSE: 30 / 250) — wait `retry_after_s` from the error frame; an open connection is never touched |
 
@@ -338,7 +338,7 @@ Golf is typically moneyline-only because Pinnacle generally does not publish spr
 | Scale | $219/mo | 30 req/s | ✅ | add-on |
 | Raw WebSocket | +$89/mo | — | — | ✅ (adds to Pro, Pro + Drops and Scale only) |
 
-Demo key: one shared bucket across all demo users, 10 req/min and 50/day in total. Every plan includes all 13 sports, live + prematch, full line depth, and specials. Buy by card (auto-renewing) or crypto (prepaid 31 days per payment; renewals stack) at https://pinnwire.com/#pricing; the WS add-on can be combined at checkout. Questions: sales@pinnwire.com.
+Demo key: one shared bucket across all demo users, 10 req/min and 50/day in total. Every plan includes all 13 sports, live + prematch, full line depth, and specials. Buy by card (auto-renewing) or crypto (prepaid 31 days per payment; renewals stack; renewing after expiry re-activates the same key) at https://pinnwire.com/#pricing; the WS add-on can be combined at checkout. Questions: sales@pinnwire.com.
 
 Over the limit → HTTP 429 with a `Retry-After` header and body `{"error":"rate_limited","window":"minute","limit":20,"retry_after_ms":41052}`. Honor `Retry-After`.
 

@@ -15,7 +15,7 @@
 openapi: 3.0.0
 info:
   title: Kalshi Trade API Manual Endpoints
-  version: 3.35.0
+  version: 3.36.0
   description: >-
     Manually defined OpenAPI spec for endpoints being migrated to spec-first
     approach
@@ -206,6 +206,9 @@ components:
           enum:
             - binary
             - scalar
+          x-enumNames:
+            - MarketMarketTypeBinary
+            - MarketMarketTypeScalar
           description: Identifies the type of market
         title:
           type: string

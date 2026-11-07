@@ -5,6 +5,8 @@
 # Get Settlements
 
 > Returns settlement records still in the live data set. Archived positions are available via `GET /historical/positions`, which has different fields; this endpoint does not return archived settlement records.
+Resource-bound MCP OAuth tokens may read the owner's settlements with read::mcp_portfolio.
+
 
 
 
@@ -14,7 +16,7 @@
 openapi: 3.0.0
 info:
   title: Kalshi Trade API Manual Endpoints
-  version: 3.35.0
+  version: 3.36.0
   description: >-
     Manually defined OpenAPI spec for endpoints being migrated to spec-first
     approach
@@ -65,11 +67,14 @@ paths:
       tags:
         - portfolio
       summary: Get Settlements
-      description: >-
+      description: >
         Returns settlement records still in the live data set. Archived
         positions are available via `GET /historical/positions`, which has
         different fields; this endpoint does not return archived settlement
         records.
+
+        Resource-bound MCP OAuth tokens may read the owner's settlements with
+        read::mcp_portfolio.
       operationId: GetSettlements
       parameters:
         - $ref: '#/components/parameters/LimitQuery'
@@ -96,6 +101,7 @@ paths:
         - kalshiAccessKey: []
           kalshiAccessSignature: []
           kalshiAccessTimestamp: []
+        - kalshiOauthAccessToken: []
 components:
   parameters:
     LimitQuery:
@@ -199,6 +205,7 @@ components:
             - 'yes'
             - 'no'
             - scalar
+            - ''
           description: >-
             The outcome of the market settlement. 'yes' = market resolved to
             YES, 'no' = market resolved to NO, 'scalar' = scalar market settled
@@ -307,6 +314,14 @@ components:
       in: header
       name: KALSHI-ACCESS-TIMESTAMP
       description: Request timestamp in milliseconds
+    kalshiOauthAccessToken:
+      type: http
+      scheme: bearer
+      description: >-
+        User OAuth access token with read::compliance_partner, issued to an
+        explicitly authorized partner. Accepted only on current and historical
+        fills and current portfolio positions endpoints; generic read and
+        partner client-credentials tokens do not grant access.
 
 ````
 

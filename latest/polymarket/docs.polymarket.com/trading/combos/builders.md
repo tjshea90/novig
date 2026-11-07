@@ -347,6 +347,24 @@ SELL request specifies the number of Combo shares to sell.
 > quotes, it is the exact collateral proceeds after fees; use it instead of
 > deriving proceeds from the blended price.
 >
+> A request whose legs cannot be combined fails with HTTP `400` and code
+> `CONTRADICTORY_LEGS`. The `conflict` object names the conflicting legs by
+> decimal position ID, so you can show users which legs to change.
+> `conflicts_with` is the leg that completes the conflict in request order, and
+> `legs` are the earlier legs it conflicts with. If a request has several
+> conflicts, only one is returned.
+>
+> ```json theme={null}
+> {
+>   "error": "invalid rfq: contradictory legs",
+>   "code": "CONTRADICTORY_LEGS",
+>   "conflict": {
+>     "legs": ["<position id>"],
+>     "conflicts_with": ["<position id>"]
+>   }
+> }
+> ```
+>
 > **3. Accept the Quote**
 >
 > Build an Exchange v3 requester order from the returned RFQ and quote, sign it

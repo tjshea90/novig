@@ -6,6 +6,30 @@
 
 > This changelog is specific to our API users and LPs
 
+**November 2, 2026 - More Watched Markets at Each Tier**
+
+**Your tier now raises how many markets one websocket connection may watch,** from 8,192 at Base to 40,960 at Tier 4. A subscribe over your cap still answers `SUBSCRIPTION_LIMIT_EXCEEDED`. `GET /v3/limits` reports your cap as `maxWatchedMarkets`. See [Tiers](https://docs.novig.com/api/throttling.md#tiers).
+
+**`GET /v3/limits` also reports the caps of your account's tier,** as `accountMaxOpenOrders` and `accountMaxWatchedMarkets`. With a management key, `maxOpenOrders` and `maxWatchedMarkets` are the Base caps of the key itself. These two fields are what your trading keys get.
+
+**October 30, 2026 - Your Account's Tier on GET /v3/limits**
+
+**`GET /v3/limits` now reports your account's tier as `accountTier`,** with any key.
+
+`tier` still reports the tier of the calling key's own limits. A management key is always at Base, so it now sees `"tier": "BASE"` beside your account's real tier. See [Tiers](https://docs.novig.com/api/throttling.md#tiers).
+
+**October 29, 2026 - One Tier for Your Whole Account**
+
+**Your rate-limit tier now belongs to your account, not to each subaccount.** We add up the volume of all your subaccounts, and every subaccount runs at the tier that total reaches.
+
+Each subaccount still keeps its own throttles and its own open-order limit, at your account's tier. A new subaccount starts at that tier, not at Base. See [Tiers](https://docs.novig.com/api/throttling.md#tiers).
+
+**October 29, 2026 - Twice the Open Orders, and Your Tier on GET /v3/limits**
+
+**Every tier now keeps twice as many open orders,** from 2,048 at Base to 32,768 at Tier 4. See [Tiers](https://docs.novig.com/api/throttling.md#tiers).
+
+**`GET /v3/limits` now reports your tier as `tier`,** one of `BASE`, `TIER1`, `TIER2`, `TIER3`, and `TIER4`.
+
 **October 29, 2026 - Participation Protection on NFL Player Props**
 
 **Protected NFL player props are coming, starting in QA on Thursday, October 29, 2026.** If the player records no snap in the third quarter, fourth quarter, or overtime, a protected market resolves at its pregame fair market price.

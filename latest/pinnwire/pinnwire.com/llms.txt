@@ -107,7 +107,7 @@ Users describe the same capabilities many ways — all of these map to PinnWire:
 - Independent review (SportsAPIs.dev, 2026): https://sportsapis.dev/apis/pinnwire — summary at https://pinnwire.com/reviews.html
 - Current service status and rolling 24-hour availability: https://pinnwire.com/status.html
 - Pricing: Trial $0 (no SSE, no raw WS) · Drops $89/mo (SSE drop alerts + light REST, no raw WS) · Pro $89/mo (10 req/s REST, no SSE, raw WS add-on) · Pro+Drops $139/mo (REST + SSE, raw WS add-on) · Scale $219/mo (30 req/s, REST + SSE, raw WS add-on) · Raw WS +$89/mo on Pro, Pro+Drops or Scale only
-- Payment: card (auto-renews) or crypto — BTC/ETH/USDC + 150 more coins, prepaid 31 days per payment, renewals stack (toggle next to "Pricing" on the homepage). Same plans, same prices, same API key either way.
+- Payment: card (auto-renews) or crypto — BTC/ETH/USDC + 150 more coins, prepaid 31 days per payment, renewals stack, and renewing after expiry re-activates the same key (toggle next to "Pricing" on the homepage). Same plans, same prices, same API key either way.
 
 ## Notes
 

@@ -31,7 +31,7 @@ Update the connection, authentication, and subscription frames. See the [Live Da
 
 | RTDS topic | RTDS filter | PolyBolt channel | PolyBolt filter | Notes |
 | - | - | - | - | - |
-| `crypto_prices` (Binance) | `btcusdt` | `price.crypto` | `{"symbol":"btcusd"}` | Source changes to Chainlink by default and quote currency changes from USDT to USD. |
+| `crypto_prices` (Binance) | `btcusdt` | `price.crypto` | `{ "symbol": "btcusd", "provider": "binance" }` | Request Binance with the canonical `btcusd` symbol. |
 | `crypto_prices_chainlink` | `{"symbol":"btc/usd"}` | `price.crypto` | `{"symbol":"btcusd"}` | Source stays Chainlink, the `price.crypto` default. Use `btcusd` instead of `btc/usd`. |
 | `crypto_prices_twap_sixty` | `{"symbol":"btc/usd"}` | `price.crypto.twap` | `{"symbol":"btcusd","window_seconds":60}` | 60-second Chainlink TWAP |
 | `crypto_prices_twap_thirty` | `{"symbol":"btc/usd"}` | None | None | No PolyBolt replacement for the 30-second window |
@@ -69,7 +69,7 @@ price. Do not apply that E18 conversion to PolyBolt's decimal string.
 
 ```json PolyBolt theme={null}
 { "op": "auth", "auth": { "apiKey": "<api key>", "secret": "<api secret>", "passphrase": "<api passphrase>" } }
-{ "op": "subscribe", "subscriptions": [ { "channel": "price.crypto", "filter": { "symbol": "btcusd" } } ] }
+{ "op": "subscribe", "subscriptions": [ { "channel": "price.crypto", "filter": { "symbol": "btcusd", "provider": "binance" } } ] }
 ```
 
 ### Client Checklist
@@ -365,7 +365,7 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 >
 > Use the authenticated `client` created above. Change the symbol suffix from `usdt` to `usd`, for example `btcusdt` to `btcusd`. Remove any slash separators, for example `btc/usd` to `btcusd`. The new topic requires explicit lowercase USD symbols.
 >
-> The `prices.crypto` topic defaults to Chainlink prices, so migrating from the legacy Chainlink spot topic keeps the data source. Migrating from Binance changes both the source and the quote currency, from USDT to USD. Confirm that the new feed meets your pricing requirements before switching.
+> Set `provider: PriceProvider.Binance` to request Binance prices. Omit `provider` to use the default. Check `event.payload.source` for the provider actually served.
 >
 > > [accordion] Before: RTDS
 > >
@@ -392,8 +392,14 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 > Replace the legacy subscription with:
 >
 > ```ts theme={null}
+> import { PriceProvider } from "@polymarket/client";
+>
 > const stream = await client.subscribe([
->   { topic: "prices.crypto", symbols: ["btcusd"] },
+>   {
+>     topic: "prices.crypto",
+>     symbols: ["btcusd"],
+>     provider: PriceProvider.Binance,
+>   },
 > ]);
 > try {
 >   for await (const event of stream) {
@@ -497,7 +503,7 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 > > ]
 > > ```
 >
-> Replace `CryptoPricesSpec` with `CryptoPriceSpec` and choose USD prices explicitly. Binance `btcusdt` is quoted in USDT; `btcusd` is quoted in USD and defaults to Chainlink, so migrating from the legacy Chainlink spot topic keeps the source while migrating from Binance changes it. Confirm the feed fits your pricing requirements.
+> Replace `CryptoPricesSpec` with `CryptoPriceSpec`. Set `provider="binance"` to request Binance prices. Omit `provider` to use the default. Check `event.payload.source` for the provider actually served.
 >
 > Replace the legacy call with this subscription:
 >
@@ -505,7 +511,7 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 > from polymarket.streams import CryptoPriceSpec
 >
 > async with await client.subscribe(
->     CryptoPriceSpec(symbols=["btcusd"])
+>     CryptoPriceSpec(symbols=["btcusd"], provider="binance")
 > ) as stream:
 >     async for event in stream:
 >         # event: CryptoPriceEvent

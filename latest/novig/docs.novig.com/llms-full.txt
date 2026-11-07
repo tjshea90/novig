@@ -73,11 +73,11 @@ novigapp://events/<outcome_id>,<outcome_id>,<outcome_id>/<partner_id>?referralCo
 
 ## Best Practices
 
-> **Always Include Partner ID**
+> [card] Always Include Partner ID
 >
 > Ensures all trading activity is properly attributed to your partnership.
 
-> **Include Referral Code**
+> [card] Include Referral Code
 >
 > Append `?referralCode=YOUR_CODE` to credit new sign-ups to your partnership.
 
@@ -116,49 +116,49 @@ Read the full list of market types from `GET /v3/types/markets`.
 
 Pass the futures market types you support in `marketType`, comma-separated.
 
-**Request**
+> [tab] Request
+>
+> ```bash theme={"dark"}
+> curl -s "$NOVIG_HOST/v3/catalog/markets?league=MLB&marketType=WORLD_SERIES_WINNER,AL_MVP" \
+>   -H "Novig-Key-Id: $TRADING_KEY_ID" \
+>   -H "Novig-Timestamp: $TS" \
+>   -H "Novig-Signature: $SIG"
+> ```
 
-```bash theme={"dark"}
-curl -s "$NOVIG_HOST/v3/catalog/markets?league=MLB&marketType=WORLD_SERIES_WINNER,AL_MVP" \
-  -H "Novig-Key-Id: $TRADING_KEY_ID" \
-  -H "Novig-Timestamp: $TS" \
-  -H "Novig-Signature: $SIG"
-```
-
-**200**
-
-```json theme={"dark"}
-{
-"items": [
-{
-  "marketId": "9b2e41c7-…",
-  "eventId": "c4d81f20-…",
-  "marketType": "WORLD_SERIES_WINNER",
-  "status": "OPEN",
-  "description": "Los Angeles Dodgers WORLD_SERIES_WINNER",
-  "startsTs": 1781136000000,
-  "fee": {
-    "coefficient": "0.06",
-    "makerCredit": "0.5",
-    "charged": "ALWAYS"
-  },
-  "outcomes": [
-    {
-      "outcomeId": "e7a03b55-…",
-      "name": "Yes",
-      "status": "TBD"
-    },
-    {
-      "outcomeId": "18f6c2d9-…",
-      "name": "No",
-      "status": "TBD"
-    }
-  ]
-}
-],
-"next": "eyJvIjoxNzgxMTM2MDAwMDAwfQ"
-}
-```
+> [tab] 200
+>
+> ```json theme={"dark"}
+> {
+> "items": [
+> {
+>   "marketId": "9b2e41c7-…",
+>   "eventId": "c4d81f20-…",
+>   "marketType": "WORLD_SERIES_WINNER",
+>   "status": "OPEN",
+>   "description": "Los Angeles Dodgers WORLD_SERIES_WINNER",
+>   "startsTs": 1781136000000,
+>   "fee": {
+>     "coefficient": "0.06",
+>     "makerCredit": "0.5",
+>     "charged": "ALWAYS"
+>   },
+>   "outcomes": [
+>     {
+>       "outcomeId": "e7a03b55-…",
+>       "name": "Yes",
+>       "status": "TBD"
+>     },
+>     {
+>       "outcomeId": "18f6c2d9-…",
+>       "name": "No",
+>       "status": "TBD"
+>     }
+>   ]
+> }
+> ],
+> "next": "eyJvIjoxNzgxMTM2MDAwMDAwfQ"
+> }
+> ```
 
 To list game lines only, pass the game market types instead, like `marketType=MONEY,SPREAD,TOTAL`.
 
@@ -170,19 +170,19 @@ To list game lines only, pass the game market types instead, like `marketType=MO
 
 ## Futures market shapes
 
-> **Team futures**
+> [card] Team futures
 >
 > One market per team, like "Dodgers to win the World Series", with Yes and No outcomes.
 
-> **Player futures**
+> [card] Player futures
 >
 > One market per player, like "Nikola Jokic Finals MVP", with Yes and No outcomes.
 
-> **Series futures**
+> [card] Series futures
 >
 > One market per series, with one outcome for each team.
 
-> **Placeholder events**
+> [card] Placeholder events
 >
 > A futures event with no markets yet. Skip it until markets appear.
 
@@ -271,49 +271,49 @@ Each route spends the `read` throttle. [Throttling](/api/throttling) explains ho
 
 A market leaves the catalog when it closes, so the catalog lists only markets you can still trade.
 
-**Request**
+> [tab] Request
+>
+> ```bash theme={"dark"}
+> curl -s "$NOVIG_HOST/v3/catalog/markets?league=NFL" \
+>   -H "Novig-Key-Id: $TRADING_KEY_ID" \
+>   -H "Novig-Timestamp: $TS" \
+>   -H "Novig-Signature: $SIG"
+> ```
 
-```bash theme={"dark"}
-curl -s "$NOVIG_HOST/v3/catalog/markets?league=NFL" \
-  -H "Novig-Key-Id: $TRADING_KEY_ID" \
-  -H "Novig-Timestamp: $TS" \
-  -H "Novig-Signature: $SIG"
-```
-
-**200**
-
-```json theme={"dark"}
-{
-"items": [
-{
-  "marketId": "6f9619ff-…",
-  "eventId": "110e8400-…",
-  "marketType": "MONEY",
-  "status": "OPEN",
-  "description": "Kansas City Chiefs at Buffalo Bills — Moneyline",
-  "startsTs": 1758400800000,
-  "fee": {
-    "coefficient": "0.06",
-    "makerCredit": "0.25",
-    "charged": "WHEN_LIVE"
-  },
-  "outcomes": [
-    {
-      "outcomeId": "3f2504e0-…",
-      "name": "Kansas City Chiefs",
-      "status": "TBD"
-    },
-    {
-      "outcomeId": "5a1c9e73-…",
-      "name": "Buffalo Bills",
-      "status": "TBD"
-    }
-  ]
-}
-],
-"next": "eyJvIjoxNzU4NDAwODAwMDAwfQ"
-}
-```
+> [tab] 200
+>
+> ```json theme={"dark"}
+> {
+> "items": [
+> {
+>   "marketId": "6f9619ff-…",
+>   "eventId": "110e8400-…",
+>   "marketType": "MONEY",
+>   "status": "OPEN",
+>   "description": "Kansas City Chiefs at Buffalo Bills — Moneyline",
+>   "startsTs": 1758400800000,
+>   "fee": {
+>     "coefficient": "0.06",
+>     "makerCredit": "0.25",
+>     "charged": "WHEN_LIVE"
+>   },
+>   "outcomes": [
+>     {
+>       "outcomeId": "3f2504e0-…",
+>       "name": "Kansas City Chiefs",
+>       "status": "TBD"
+>     },
+>     {
+>       "outcomeId": "5a1c9e73-…",
+>       "name": "Buffalo Bills",
+>       "status": "TBD"
+>     }
+>   ]
+> }
+> ],
+> "next": "eyJvIjoxNzU4NDAwODAwMDAwfQ"
+> }
+> ```
 
 | Field | Meaning |
 | - | - |
@@ -350,44 +350,44 @@ A market family is the markets of one event and one market type about the same c
 
 ## Read the order book
 
-**Request**
+> [tab] Request
+>
+> ```bash theme={"dark"}
+> curl -s "$NOVIG_HOST/v3/catalog/markets/$MARKET_ID/book" \
+>   -H "Novig-Key-Id: $TRADING_KEY_ID" \
+>   -H "Novig-Timestamp: $TS" \
+>   -H "Novig-Signature: $SIG"
+> ```
 
-```bash theme={"dark"}
-curl -s "$NOVIG_HOST/v3/catalog/markets/$MARKET_ID/book" \
-  -H "Novig-Key-Id: $TRADING_KEY_ID" \
-  -H "Novig-Timestamp: $TS" \
-  -H "Novig-Signature: $SIG"
-```
-
-**200**
-
-```json theme={"dark"}
-{
-"marketId": "6f9619ff-…",
-"seq": 48120,
-"orders": {
-"3f2504e0-…": [
-  {
-    "orderId": "7c9e6679-…",
-    "price": "0.665",
-    "qty": 110
-  },
-  {
-    "orderId": "1b4e28ba-…",
-    "price": "0.660",
-    "qty": 250
-  }
-],
-"5a1c9e73-…": [
-  {
-    "orderId": "6ba7b810-…",
-    "price": "0.330",
-    "qty": 180
-  }
-]
-}
-}
-```
+> [tab] 200
+>
+> ```json theme={"dark"}
+> {
+> "marketId": "6f9619ff-…",
+> "seq": 48120,
+> "orders": {
+> "3f2504e0-…": [
+>   {
+>     "orderId": "7c9e6679-…",
+>     "price": "0.665",
+>     "qty": 110
+>   },
+>   {
+>     "orderId": "1b4e28ba-…",
+>     "price": "0.660",
+>     "qty": 250
+>   }
+> ],
+> "5a1c9e73-…": [
+>   {
+>     "orderId": "6ba7b810-…",
+>     "price": "0.330",
+>     "qty": 180
+>   }
+> ]
+> }
+> }
+> ```
 
 Each key in `orders` is an outcome ID.
 Each outcome's array lists the best price first. Within a price, it lists the earlier order first.
@@ -461,11 +461,11 @@ Welcome to the Novig Affiliate Integration documentation. This guide provides al
 
 As a Novig affiliate partner, you'll receive:
 
-> **Partner ID**
+> [card] Partner ID
 >
 > A unique identifier used for tracking all trading activity from your users.
 
-> **Referral Code**
+> [card] Referral Code
 >
 > A unique referral code for tracking first-time purchasers and new sign-ups.
 
@@ -528,28 +528,28 @@ export NOVIG_HOST=https://api.novig.com
 
 Send `outcomeIds`, a list of 2 to 20 outcome IDs, one per leg.
 
-**Request**
+> [tab] Request
+>
+> ```bash theme={"dark"}
+> curl -s -X POST "$NOVIG_HOST/rfq/v2/quote/unauthenticated" \
+>   -H "Content-Type: application/json" \
+>   -d '{
+>     "outcomeIds": [
+>       "abc123-outcome-uuid",
+>       "xyz789-outcome-uuid"
+>     ]
+>   }'
+> ```
 
-```bash theme={"dark"}
-curl -s -X POST "$NOVIG_HOST/rfq/v2/quote/unauthenticated" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "outcomeIds": [
-      "abc123-outcome-uuid",
-      "xyz789-outcome-uuid"
-    ]
-  }'
-```
-
-**200**
-
-```json theme={"dark"}
-{
-  "price": "0.215",
-  "expiresAt": 1793500000000,
-  "serverNow": 1793499970000
-}
-```
+> [tab] 200
+>
+> ```json theme={"dark"}
+> {
+>   "price": "0.215",
+>   "expiresAt": 1793500000000,
+>   "serverNow": 1793499970000
+> }
+> ```
 
 | Field | Meaning |
 | - | - |
@@ -618,8 +618,6 @@ Source: https://docs.novig.com/api-reference/accounts/fund-a-subaccount
 
 Accepted, not settled. Read the verdict with [Get a transfer](/api-reference/accounts/get-a-transfer). An applied transfer also appears in [List transactions](/api-reference/accounts/list-transactions).
 
-
-
 # Get a balance
 Source: https://docs.novig.com/api-reference/accounts/get-a-balance
 
@@ -631,8 +629,6 @@ Source: https://docs.novig.com/api-reference/accounts/get-a-balance
 | **Cost** | `1 /request` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
-
-
 
 # Get a transfer
 Source: https://docs.novig.com/api-reference/accounts/get-a-transfer
@@ -648,8 +644,6 @@ Source: https://docs.novig.com/api-reference/accounts/get-a-transfer
 
 One transfer request and its verdict. A rejected transfer appears here, never in [List transactions](/api-reference/accounts/list-transactions).
 
-
-
 # Get an account transfer
 Source: https://docs.novig.com/api-reference/accounts/get-an-account-transfer
 
@@ -663,8 +657,6 @@ Source: https://docs.novig.com/api-reference/accounts/get-an-account-transfer
 | **Idempotent** | `true` |
 
 One transfer of yours, whichever subaccount it moved money to or from.
-
-
 
 # Get the account balance
 Source: https://docs.novig.com/api-reference/accounts/get-the-account-balance
@@ -680,8 +672,6 @@ Source: https://docs.novig.com/api-reference/accounts/get-the-account-balance
 
 Your primary wallet is the one that funds every subaccount. No key addresses
 it, so the path carries no `{keyId}`.
-
-
 
 # Get the geolocation status
 Source: https://docs.novig.com/api-reference/accounts/get-the-geolocation-status
@@ -699,8 +689,6 @@ A key has no location of its own. It uses the newest device geolocation of the
 account that owns it, so every key on the account reads the same answer. The
 geolocation check never refuses this route, so it answers while the check fails.
 
-
-
 # Issue a subaccount key
 Source: https://docs.novig.com/api-reference/accounts/issue-a-subaccount-key
 
@@ -715,8 +703,6 @@ Source: https://docs.novig.com/api-reference/accounts/issue-a-subaccount-key
 
 The body names the scope. While the subaccount's `trading` key is live, this route mints only `trading::read`.
 
-
-
 # Label a subaccount
 Source: https://docs.novig.com/api-reference/accounts/label-a-subaccount
 
@@ -728,8 +714,6 @@ Source: https://docs.novig.com/api-reference/accounts/label-a-subaccount
 | **Cost** | `1 /request` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
-
-
 
 # List account transactions
 Source: https://docs.novig.com/api-reference/accounts/list-account-transactions
@@ -745,8 +729,6 @@ Source: https://docs.novig.com/api-reference/accounts/list-account-transactions
 
 Every movement of your primary wallet's balance. A fund of a subaccount
 reads `TRANSFER_OUT`, and a defund reads `TRANSFER_IN`.
-
-
 
 # List account transfers
 Source: https://docs.novig.com/api-reference/accounts/list-account-transfers
@@ -764,8 +746,6 @@ Every transfer between your primary wallet and your subaccounts, newest
 first. `subaccountKeyId` names the subaccount each one moved money to or
 from.
 
-
-
 # List subaccounts
 Source: https://docs.novig.com/api-reference/accounts/list-subaccounts
 
@@ -777,8 +757,6 @@ Source: https://docs.novig.com/api-reference/accounts/list-subaccounts
 | **Cost** | `1 /request` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
-
-
 
 # List transactions
 Source: https://docs.novig.com/api-reference/accounts/list-transactions
@@ -796,8 +774,6 @@ Money that moved. A transfer appears after the exchange applies it. Read a
 pending or rejected transfer with [Get a
 transfer](/api-reference/accounts/get-a-transfer).
 
-
-
 # Open a subaccount
 Source: https://docs.novig.com/api-reference/accounts/open-a-subaccount
 
@@ -809,8 +785,6 @@ Source: https://docs.novig.com/api-reference/accounts/open-a-subaccount
 | **Cost** | `1 /request` |
 | **Answers** | <span class="st st-ok">201</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `false` |
-
-
 
 # Create a key
 Source: https://docs.novig.com/api-reference/authentication/create-a-key
@@ -826,8 +800,6 @@ Source: https://docs.novig.com/api-reference/authentication/create-a-key
 
 Always issues `management::read`. The body has no scope field. To get a `trading` or `trading::read` key, use [Issue a subaccount key](/api-reference/accounts/issue-a-subaccount-key).
 
-
-
 # Echo
 Source: https://docs.novig.com/api-reference/authentication/echo
 
@@ -842,8 +814,6 @@ Source: https://docs.novig.com/api-reference/authentication/echo
 
 A `200` proves your host, key, clock and canonical string at once.
 
-
-
 # Get a key
 Source: https://docs.novig.com/api-reference/authentication/get-a-key
 
@@ -856,8 +826,6 @@ Source: https://docs.novig.com/api-reference/authentication/get-a-key
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
 
-
-
 # List keys
 Source: https://docs.novig.com/api-reference/authentication/list-keys
 
@@ -869,8 +837,6 @@ Source: https://docs.novig.com/api-reference/authentication/list-keys
 | **Cost** | `1 /request` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
-
-
 
 # Revoke a key
 Source: https://docs.novig.com/api-reference/authentication/revoke-a-key
@@ -886,8 +852,6 @@ Source: https://docs.novig.com/api-reference/authentication/revoke-a-key
 
 Revocation takes effect within 60s. It does not cancel resting orders.
 
-
-
 # Get a market
 Source: https://docs.novig.com/api-reference/catalog/get-a-market
 
@@ -901,8 +865,6 @@ Source: https://docs.novig.com/api-reference/catalog/get-a-market
 | **Idempotent** | `true` |
 
 Also served without a signature at `GET /v3/public/catalog/markets/{id}`. The edge throttles it per IP.
-
-
 
 # Get an event
 Source: https://docs.novig.com/api-reference/catalog/get-an-event
@@ -918,8 +880,6 @@ Source: https://docs.novig.com/api-reference/catalog/get-an-event
 
 Also served without a signature at `GET /v3/public/catalog/events/{id}`. The edge throttles it per IP.
 
-
-
 # Get the order book
 Source: https://docs.novig.com/api-reference/catalog/get-the-order-book
 
@@ -934,8 +894,6 @@ Source: https://docs.novig.com/api-reference/catalog/get-the-order-book
 
 Also served without a signature at `GET /v3/public/catalog/markets/{id}/book`. The edge throttles it per IP.
 
-
-
 # List consensus markets
 Source: https://docs.novig.com/api-reference/catalog/list-consensus-markets
 
@@ -948,8 +906,6 @@ Source: https://docs.novig.com/api-reference/catalog/list-consensus-markets
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
 
-
-
 # List event participants
 Source: https://docs.novig.com/api-reference/catalog/list-event-participants
 
@@ -961,8 +917,6 @@ Source: https://docs.novig.com/api-reference/catalog/list-event-participants
 | **Cost** | `1 /request` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
-
-
 
 # List event statuses
 Source: https://docs.novig.com/api-reference/catalog/list-event-statuses
@@ -978,8 +932,6 @@ Source: https://docs.novig.com/api-reference/catalog/list-event-statuses
 
 Also served without a signature at `GET /v3/public/types/event-statuses`. The edge throttles it per IP.
 
-
-
 # List events
 Source: https://docs.novig.com/api-reference/catalog/list-events
 
@@ -994,8 +946,6 @@ Source: https://docs.novig.com/api-reference/catalog/list-events
 
 Also served without a signature at `GET /v3/public/catalog/events`. The edge throttles it per IP.
 
-
-
 # List leagues
 Source: https://docs.novig.com/api-reference/catalog/list-leagues
 
@@ -1009,8 +959,6 @@ Source: https://docs.novig.com/api-reference/catalog/list-leagues
 | **Idempotent** | `true` |
 
 Also served without a signature at `GET /v3/public/types/leagues`. The edge throttles it per IP.
-
-
 
 # List live market types
 Source: https://docs.novig.com/api-reference/catalog/list-live-market-types
@@ -1029,8 +977,6 @@ The exchange rejects an order on any other market once its event goes live.
 
 Also served without a signature at `GET /v3/public/types/markets/live`. The edge throttles it per IP.
 
-
-
 # List market types
 Source: https://docs.novig.com/api-reference/catalog/list-market-types
 
@@ -1044,8 +990,6 @@ Source: https://docs.novig.com/api-reference/catalog/list-market-types
 | **Idempotent** | `true` |
 
 Also served without a signature at `GET /v3/public/types/markets`. The edge throttles it per IP.
-
-
 
 # List markets
 Source: https://docs.novig.com/api-reference/catalog/list-markets
@@ -1061,8 +1005,6 @@ Source: https://docs.novig.com/api-reference/catalog/list-markets
 
 Also served without a signature at `GET /v3/public/catalog/markets`. The edge throttles it per IP.
 
-
-
 # List sports
 Source: https://docs.novig.com/api-reference/catalog/list-sports
 
@@ -1076,8 +1018,6 @@ Source: https://docs.novig.com/api-reference/catalog/list-sports
 | **Idempotent** | `true` |
 
 Also served without a signature at `GET /v3/public/types/sports`. The edge throttles it per IP.
-
-
 
 # List trades
 Source: https://docs.novig.com/api-reference/catalog/list-trades
@@ -1093,12 +1033,34 @@ Source: https://docs.novig.com/api-reference/catalog/list-trades
 
 Also served without a signature at `GET /v3/public/catalog/markets/{id}/trades`. The edge throttles it per IP.
 
-
-
 # API Changelog
 Source: https://docs.novig.com/api-reference/changelog
 
 This changelog is specific to our API users and LPs
+
+**November 2, 2026 - More Watched Markets at Each Tier**
+
+**Your tier now raises how many markets one websocket connection may watch,** from 8,192 at Base to 40,960 at Tier 4. A subscribe over your cap still answers `SUBSCRIPTION_LIMIT_EXCEEDED`. `GET /v3/limits` reports your cap as `maxWatchedMarkets`. See [Tiers](/api/throttling#tiers).
+
+**`GET /v3/limits` also reports the caps of your account's tier,** as `accountMaxOpenOrders` and `accountMaxWatchedMarkets`. With a management key, `maxOpenOrders` and `maxWatchedMarkets` are the Base caps of the key itself. These two fields are what your trading keys get.
+
+**October 30, 2026 - Your Account's Tier on GET /v3/limits**
+
+**`GET /v3/limits` now reports your account's tier as `accountTier`,** with any key.
+
+`tier` still reports the tier of the calling key's own limits. A management key is always at Base, so it now sees `"tier": "BASE"` beside your account's real tier. See [Tiers](/api/throttling#tiers).
+
+**October 29, 2026 - One Tier for Your Whole Account**
+
+**Your rate-limit tier now belongs to your account, not to each subaccount.** We add up the volume of all your subaccounts, and every subaccount runs at the tier that total reaches.
+
+Each subaccount still keeps its own throttles and its own open-order limit, at your account's tier. A new subaccount starts at that tier, not at Base. See [Tiers](/api/throttling#tiers).
+
+**October 29, 2026 - Twice the Open Orders, and Your Tier on GET /v3/limits**
+
+**Every tier now keeps twice as many open orders,** from 2,048 at Base to 32,768 at Tier 4. See [Tiers](/api/throttling#tiers).
+
+**`GET /v3/limits` now reports your tier as `tier`,** one of `BASE`, `TIER1`, `TIER2`, `TIER3`, and `TIER4`.
 
 **October 29, 2026 - Participation Protection on NFL Player Props**
 
@@ -1277,8 +1239,6 @@ Source: https://docs.novig.com/api-reference/exchange/get-the-exchange-status
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">429</span> |
 | **Idempotent** | `true` |
 
-
-
 # Get the server time
 Source: https://docs.novig.com/api-reference/exchange/get-the-server-time
 
@@ -1290,8 +1250,6 @@ Source: https://docs.novig.com/api-reference/exchange/get-the-server-time
 | **Cost** | `0 /request` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">429</span> |
 | **Idempotent** | `true` |
-
-
 
 # Batch cancel orders
 Source: https://docs.novig.com/api-reference/execution/batch-cancel-orders
@@ -1307,8 +1265,6 @@ Source: https://docs.novig.com/api-reference/execution/batch-cancel-orders
 
 Partial. One unknown ID does not stop the rest.
 
-
-
 # Batch place orders
 Source: https://docs.novig.com/api-reference/execution/batch-place-orders
 
@@ -1323,8 +1279,6 @@ Source: https://docs.novig.com/api-reference/execution/batch-place-orders
 
 All or nothing. A resend places the batch again.
 
-
-
 # Cancel all orders
 Source: https://docs.novig.com/api-reference/execution/cancel-all-orders
 
@@ -1337,8 +1291,6 @@ Source: https://docs.novig.com/api-reference/execution/cancel-all-orders
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> |
 | **Idempotent** | `true` |
 
-
-
 # Cancel an order
 Source: https://docs.novig.com/api-reference/execution/cancel-an-order
 
@@ -1350,8 +1302,6 @@ Source: https://docs.novig.com/api-reference/execution/cancel-an-order
 | **Cost** | `1 /request` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> |
 | **Idempotent** | `true` |
-
-
 
 # Get an order
 Source: https://docs.novig.com/api-reference/execution/get-an-order
@@ -1367,8 +1317,6 @@ Source: https://docs.novig.com/api-reference/execution/get-an-order
 
 Can answer `404` right after a `201`. Wait for the `open` event.
 
-
-
 # Get your positions
 Source: https://docs.novig.com/api-reference/execution/get-your-positions
 
@@ -1381,8 +1329,6 @@ Source: https://docs.novig.com/api-reference/execution/get-your-positions
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-info">304</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
 
-
-
 # Get your resting orders
 Source: https://docs.novig.com/api-reference/execution/get-your-resting-orders
 
@@ -1394,8 +1340,6 @@ Source: https://docs.novig.com/api-reference/execution/get-your-resting-orders
 | **Cost** | `1 /request` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-info">304</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
-
-
 
 # Get your unrealized PnL
 Source: https://docs.novig.com/api-reference/execution/get-your-unrealized-pnl
@@ -1413,8 +1357,6 @@ Marks each open position's market to its last trade, net of any payout you
 already received for holding both outcomes, and sums basis and value over every
 match. Unrealized PnL is `value − basis`. Positions page by outcome id.
 
-
-
 # List fills
 Source: https://docs.novig.com/api-reference/execution/list-fills
 
@@ -1426,8 +1368,6 @@ Source: https://docs.novig.com/api-reference/execution/list-fills
 | **Cost** | `8 + 1 per 50 rows` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
-
-
 
 # List orders
 Source: https://docs.novig.com/api-reference/execution/list-orders
@@ -1441,8 +1381,6 @@ Source: https://docs.novig.com/api-reference/execution/list-orders
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
 
-
-
 # List positions
 Source: https://docs.novig.com/api-reference/execution/list-positions
 
@@ -1454,8 +1392,6 @@ Source: https://docs.novig.com/api-reference/execution/list-positions
 | **Cost** | `1 /request` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
-
-
 
 # Place an order
 Source: https://docs.novig.com/api-reference/execution/place-an-order
@@ -1472,8 +1408,6 @@ Source: https://docs.novig.com/api-reference/execution/place-an-order
 `201` means queued, not resting. The `open` event on the private stream
 confirms the order rests.
 
-
-
 # Get a market from history
 Source: https://docs.novig.com/api-reference/history/get-a-market-from-history
 
@@ -1485,8 +1419,6 @@ Source: https://docs.novig.com/api-reference/history/get-a-market-from-history
 | **Cost** | `1 /request` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
-
-
 
 # Get a position from history
 Source: https://docs.novig.com/api-reference/history/get-a-position-from-history
@@ -1500,8 +1432,6 @@ Source: https://docs.novig.com/api-reference/history/get-a-position-from-history
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
 
-
-
 # Get an event from history
 Source: https://docs.novig.com/api-reference/history/get-an-event-from-history
 
@@ -1513,8 +1443,6 @@ Source: https://docs.novig.com/api-reference/history/get-an-event-from-history
 | **Cost** | `1 /request` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
-
-
 
 # List a market's candles
 Source: https://docs.novig.com/api-reference/history/list-a-markets-candles
@@ -1528,8 +1456,6 @@ Source: https://docs.novig.com/api-reference/history/list-a-markets-candles
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
 
-
-
 # List event history
 Source: https://docs.novig.com/api-reference/history/list-event-history
 
@@ -1541,8 +1467,6 @@ Source: https://docs.novig.com/api-reference/history/list-event-history
 | **Cost** | `4 + 1 per 100 rows` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
-
-
 
 # List market history
 Source: https://docs.novig.com/api-reference/history/list-market-history
@@ -1556,8 +1480,6 @@ Source: https://docs.novig.com/api-reference/history/list-market-history
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
 
-
-
 # List position history
 Source: https://docs.novig.com/api-reference/history/list-position-history
 
@@ -1570,8 +1492,6 @@ Source: https://docs.novig.com/api-reference/history/list-position-history
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
 
-
-
 # List trade history
 Source: https://docs.novig.com/api-reference/history/list-trade-history
 
@@ -1583,8 +1503,6 @@ Source: https://docs.novig.com/api-reference/history/list-trade-history
 | **Cost** | `4 + 1 per 50 rows` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
-
-
 
 # Confirm rate
 Source: https://docs.novig.com/api-reference/rfq/confirm-rate
@@ -2040,6 +1958,7 @@ We also pass over a quote in these cases:
 
 * Its `max_wager` is below the user's `min_wager`, or below \$10, whichever is higher.
 * Your LP account's cash balance can't cover your collateral for the full `max_wager`.
+* You rejected or missed a last look on the same legs in the past 2 minutes, and no game in the parlay has started.
 
 Your collateral is the money you put up against the user's stake.
 
@@ -2637,6 +2556,9 @@ We leave out `external_flag` when you sent no `quote_id`. Don't expect a `null`.
 
 When you reject, we write nothing and the parlay is rejected.
 
+After any rejection, including a failed or late response, we pass over your quotes on the same legs for 2 minutes, for every taker.
+This applies only before any game in the parlay starts.
+
 > [!WARNING]
 >
 > Always include `confirmed`. A response without it, a non-2xx status, or an invalid body rejects the trade, just like `false`.
@@ -2802,7 +2724,7 @@ We send decimal amounts like `price`, `max_wager`, and `wager` as JSON strings. 
 
 ## &#x20;Messages you send
 
-> **`subscribe`**
+> [accordion] `subscribe`
 >
 > Start getting a channel's events
 >
@@ -2819,7 +2741,7 @@ We send decimal amounts like `price`, `max_wager`, and `wager` as JSON strings. 
 >
 > `"rfq"` or `"quotes"`.
 
-> **`unsubscribe`**
+> [accordion] `unsubscribe`
 >
 > Stop getting a channel's events
 >
@@ -2836,7 +2758,7 @@ We send decimal amounts like `price`, `max_wager`, and `wager` as JSON strings. 
 >
 > `"rfq"` or `"quotes"`.
 
-> **`create_quote`**
+> [accordion] `create_quote`
 >
 > Quote an open round
 >
@@ -2874,7 +2796,7 @@ We send decimal amounts like `price`, `max_wager`, and `wager` as JSON strings. 
 > We drop a second quote for the same `rfq_id` and ack it with `quote_superseded`.
 > To change your price, wait for the next round.
 
-> **`decline`**
+> [accordion] `decline`
 >
 > Pass on an open round
 >
@@ -2897,7 +2819,7 @@ We send decimal amounts like `price`, `max_wager`, and `wager` as JSON strings. 
 >
 > A decline tells us you saw the round and passed. Silence looks the same as a pricer that is down or lagging.
 
-> **`confirm`**
+> [accordion] `confirm`
 >
 > Answer the last look on a quote you won
 >
@@ -2936,7 +2858,7 @@ We send decimal amounts like `price`, `max_wager`, and `wager` as JSON strings. 
 
 You get a channel's events after you subscribe to it.
 
-> **`rfq_created`**
+> [accordion] `rfq_created`
 >
 > A round opened (rfq channel)
 >
@@ -2982,7 +2904,7 @@ You get a channel's events after you subscribe to it.
 >
 > The smallest stake a quote must cover: the taker's minimum or our minimum of \$10.00, whichever is higher. We drop a quote whose `max_wager` is below it, with reason `below_min_wager`.
 
-> **`rfq_closed`**
+> [accordion] `rfq_closed`
 >
 > The auction closed (rfq channel)
 >
@@ -3010,7 +2932,7 @@ You get a channel's events after you subscribe to it.
 >
 > The round that closed.
 
-> **`rfq_executed`**
+> [accordion] `rfq_executed`
 >
 > A trade filled, with no counterparty named (rfq channel)
 >
@@ -3053,7 +2975,7 @@ You get a channel's events after you subscribe to it.
 >
 > When the trade filled.
 
-> **`quote_created`**
+> [accordion] `quote_created`
 >
 > We recorded your quote (quotes channel)
 >
@@ -3091,7 +3013,7 @@ You get a channel's events after you subscribe to it.
 >
 > Your pricer.
 
-> **`quote_accepted`**
+> [accordion] `quote_accepted`
 >
 > You won. Confirm within 1 second (quotes channel)
 >
@@ -3144,7 +3066,7 @@ You get a channel's events after you subscribe to it.
 >
 > The `quote_id` you sent on `create_quote`, or `null` if you sent none.
 
-> **`quote_executed`**
+> [accordion] `quote_executed`
 >
 > Your quote filled (quotes channel)
 >
@@ -3197,7 +3119,7 @@ You get a channel's events after you subscribe to it.
 >
 > When the trade filled.
 
-> **`quote_unfilled`**
+> [accordion] `quote_unfilled`
 >
 > Your confirmed quote won't fill (quotes channel)
 >
@@ -3248,7 +3170,7 @@ You get a channel's events after you subscribe to it.
 > | `pricer_insolvent` | Your balance didn't cover the collateral and fee |
 > | `both_insolvent` | Neither balance covered its side |
 
-> **`quote_dropped`**
+> [accordion] `quote_dropped`
 >
 > We dropped your quote for a reason you can fix (quotes channel)
 >
@@ -3290,21 +3212,25 @@ You get a channel's events after you subscribe to it.
 >
 > **data.reason** `string` *required*
 >
-> `below_min_wager`, `unbacked`, or `own_rfq`. The first two add one field with the number you must beat.
+> `below_min_wager`, `unbacked`, `own_rfq`, or `declined_recently`. The first two add one field with the number you must beat.
 >
 > | `reason` | Extra field | Means |
 > | - | - | - |
 > | `below_min_wager` | `min_wager` | Your `max_wager` is below the round's minimum stake |
 > | `unbacked` | `required_collateral` | Your free balance doesn't cover the collateral |
 > | `own_rfq` | none | You requested this round, so you can't fill it |
+> | `declined_recently` | none | You rejected or missed a last look on these legs in the past 2 minutes |
 >
 > The round's minimum stake is the taker's minimum or ours, whichever is higher.
+>
+> When you answer a last look with `false`, or don't answer in time, we pass over your quotes on the same legs for 2 minutes, for every taker.
+> This applies only before any game in the parlay starts.
 
 ## &#x20;Acks
 
 An ack confirms that we handled your message.
 
-> **`subscribed`**
+> [accordion] `subscribed`
 >
 > The subscription is active
 >
@@ -3332,7 +3258,7 @@ An ack confirms that we handled your message.
 >
 > `"rfq"` or `"quotes"`.
 
-> **`unsubscribed`**
+> [accordion] `unsubscribed`
 >
 > The subscription is removed
 >
@@ -3360,7 +3286,7 @@ An ack confirms that we handled your message.
 >
 > `"rfq"` or `"quotes"`.
 
-> **`quote_submitted`**
+> [accordion] `quote_submitted`
 >
 > Your quote entered the auction
 >
@@ -3388,7 +3314,7 @@ An ack confirms that we handled your message.
 >
 > The round your message named.
 
-> **`quote_superseded`**
+> [accordion] `quote_superseded`
 >
 > Your first quote stands. We dropped this one
 >
@@ -3416,7 +3342,7 @@ An ack confirms that we handled your message.
 >
 > The round your message named.
 
-> **`quote_declined`**
+> [accordion] `quote_declined`
 >
 > We recorded your pass
 >
@@ -3444,7 +3370,7 @@ An ack confirms that we handled your message.
 >
 > The round your message named.
 
-> **`confirm_recorded`**
+> [accordion] `confirm_recorded`
 >
 > We recorded your last-look answer
 >
@@ -3481,7 +3407,7 @@ An ack confirms that we handled your message.
 
 We answer a message we can't handle with an `error` frame.
 
-> **`error`**
+> [accordion] `error`
 >
 > Your message failed
 >
@@ -3545,13 +3471,10 @@ If we remove or restrict your pricer, you keep the connection. Your next `create
 | Auction | 3 seconds | `RFQ_CLOSED`, and we drop the quote |
 | Last look | 1 second | We reject the trade |
 | Server ping | Every 15 s | A missed Pong closes the connection |
-| Actions per trader | 6000 per 60 seconds | `RATE_LIMITED` |
 | Outbound queue | 256 frames per connection | We drop event frames |
 | `price` | 0.001 to 0.999, after rounding | `INVALID_QUOTE` |
 | `max_wager` | Above zero | `INVALID_QUOTE` |
 | `quote_id` | 256 bytes | `INVALID_QUOTE` |
-
-Actions are `create_quote` and `decline`. `confirm` is exempt from the rate limit.
 
 We drop only event frames when your queue is full. We never drop acks or errors.
 
@@ -3613,8 +3536,6 @@ Sign the upgrade request like any route. The subjects are `market:<id>`,
 `book`, `orders`, and `positions`. Once per interval, a `heartbeat` message
 states your last seq on each subscribed private channel.
 
-
-
 # Get your throttle schedule
 Source: https://docs.novig.com/api-reference/throttle/get-your-throttle-schedule
 
@@ -3626,8 +3547,6 @@ Source: https://docs.novig.com/api-reference/throttle/get-your-throttle-schedule
 | **Cost** | `0 /request` |
 | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class="st st-warn">451</span> |
 | **Idempotent** | `true` |
-
-
 
 # Get a key
 Source: https://docs.novig.com/api/api-keys
@@ -4078,7 +3997,7 @@ The fee peaks at P = 0.50 and falls to zero at the ends. A price of 0.30 costs t
 | Market type | League | Schedule | Charges |
 | - | - | - | - |
 | Game line | any | Game | When live |
-| Futures | `NFL` `NCAAF` `MLB` `NBA` `WNBA` `NHL` | Futures | Always |
+| Futures | `NFL` `NCAAF` `NCAAB` `NCAAWB` `MLB` `NBA` `WNBA` `NHL` | Futures | Always |
 | Futures | `PGA` `ATP` `WTA` `UFC` `F1` `NASCAR` | Game | Never |
 | Series winner | any | Game | Never |
 
@@ -4269,23 +4188,16 @@ An order on one never fills against the other.
 
 ## Which market types have a protected twin
 
-Only full-game NFL props on a single player's offense can be protected.
+Six NFL player prop types have a protected twin.
 
 | Category | Protected types |
 | - | - |
-| Passing | `PASSING_YARDS_PROTECTED`, `PASSING_ATTEMPTS_PROTECTED` |
-| Passing | `PASSING_COMPLETIONS_PROTECTED`, `PASSING_TOUCHDOWNS_PROTECTED` |
-| Passing | `LONGEST_COMPLETION_PROTECTED`, `INTERCEPTIONS_THROWN_PROTECTED` |
-| Rushing | `RUSHING_YARDS_PROTECTED`, `RUSHING_ATTEMPTS_PROTECTED` |
-| Rushing | `LONGEST_RUSH_PROTECTED` |
+| Passing | `PASSING_YARDS_PROTECTED`, `PASSING_TOUCHDOWNS_PROTECTED` |
+| Rushing | `RUSHING_YARDS_PROTECTED` |
 | Receiving | `RECEIVING_YARDS_PROTECTED`, `RECEPTIONS_PROTECTED` |
-| Receiving | `LONGEST_RECEPTION_PROTECTED` |
-| Combined | `PASSING_AND_RUSHING_YARDS_PROTECTED` |
-| Combined | `RUSHING_AND_RECEIVING_YARDS_PROTECTED` |
 | Touchdowns | `TOUCHDOWNS_PROTECTED` |
 
-First touchdown scorer, kicking, and defensive props stay standard.
-Team, first-half, and multi-player markets have no protected twin.
+Every other market type stays standard.
 
 ## How a protected market settles
 
@@ -4975,6 +4887,7 @@ A body that doesn't parse answers `INVALID_BODY`. Its `message` names the field 
 | 400 | `NOT_LIVE_TRADABLE` `EVENT_NOT_TRADABLE` `PAGE_LIMIT_OUT_OF_RANGE` |
 | 400 | `OFFSET_NOT_SUPPORTED` `AFTER_NEEDS_KEY_ID` |
 | 400 | `STALE_NONCE` `EMPTY_SELECTION` `SUBSCRIPTION_LIMIT_EXCEEDED` |
+| 400 | `NONCE_NOT_FOUND` |
 | 403 | `SCOPE_INSUFFICIENT` `KYC_REQUIRED` |
 | 404 | `MARKET_NOT_FOUND` `EVENT_NOT_FOUND` `OUTCOME_NOT_FOUND` `ORDER_NOT_FOUND` |
 | 404 | `WALLET_NOT_FOUND` `SUBACCOUNT_NOT_FOUND` |
@@ -5521,7 +5434,7 @@ impl Query {
 A test vector is a sample request with its expected canonical string.
 Use them to check your signer.
 
-> **[signing-vectors.json](/api-reference/spec-files/signing-vectors.json)**
+> [card] [signing-vectors.json](/api-reference/spec-files/signing-vectors.json)
 >
 > 30 vectors and two test keypairs, for Ed25519 and P-256. They cover every case in the table below.
 
@@ -5686,7 +5599,7 @@ You send a verb to tell us what to do on the connection.
 | `query_markets` | Pages open markets | Ack |
 | `query_events` | Pages open events | Ack |
 | `place` | Books a batch of orders | Ack |
-| `cancel` | Cancels orders by id | Ack |
+| `cancel` | Cancels orders by id or by nonce | Ack |
 | `cancel_all` | Cancels your resting orders by scope | Ack |
 
 `subscribe` also adds channels to `private`.
@@ -5747,7 +5660,14 @@ To drop just one, unsubscribe `PRIVATE`, then subscribe to the channel you keep.
 
 ## Trade
 
-Three verbs place and cancel orders over the connection. They need a `trading` key; a `trading::read` key gets `SCOPE_INSUFFICIENT`. Payloads match the REST [orders](/api/execution/orders) bodies, and they debit the `place` and `cancel` throttles, not `stream`.
+Three verbs place and cancel orders over the connection.
+They need a `trading` key. A `trading::read` key gets `SCOPE_INSUFFICIENT`.
+
+`place` and `cancel_all` take the same bodies as the REST [orders](/api/execution/orders) routes.
+
+`place` spends from your `place` [throttle](/api/throttling), the same as a REST place.
+Both cancel verbs spend from `cancel`.
+They don't spend from `stream`.
 
 `place` books a batch of orders, all or none, for 1 `place` token each. The ack is `placed`, one entry per accepted order.
 
@@ -5766,6 +5686,27 @@ Three verbs place and cancel orders over the connection. They need a `trading` k
   "cancel": { "orderIds": ["6f9619ff-…"] }
 }
 ```
+
+### Cancel before the ack arrives
+
+You can cancel a place before its ack tells you the order ids.
+Put the place's nonce in `nonces`, and we cancel every order that place booked.
+Each nonce costs 1 `cancel` token, however many orders its place booked.
+
+```json theme={"dark"}
+{
+  "nonce": 20,
+  "cancel": { "nonces": [17] }
+}
+```
+
+`orderIds` and `nonces` can go in the same request.
+The batch limit of 256 counts every order the request names, after we replace each nonce with its orders.
+A nonce works only on the connection that sent the place, and only for its 64 newest places.
+
+Any other nonce refuses the whole cancel with `NONCE_NOT_FOUND`, and the message names the nonce.
+That includes the nonce of a place we refused.
+To cancel an older place, cancel its orders by id.
 
 `cancel_all` cancels your resting orders for 1 `cancel` token, narrowed by `market`, `event`, or `outcome`. An empty filter cancels them all. The ack is `canceled_all`, the count queued.
 
@@ -6041,6 +5982,9 @@ A subscribe that names only `private` gets an empty `snapshot`.
 Events arrive in the `orders` field of a delta, as one batch with one `seq`.
 Within a batch, an order's `fill` events come before its `open`, `cancel`, or `reject`.
 
+Every event names the order's outcome and its `originalQty`, the number of contracts you placed.
+You can read each event on its own, without matching it to an earlier one.
+
 ```json theme={"dark"}
 {
   "ts": 1757894400456,
@@ -6050,91 +5994,109 @@ Within a batch, an order's `fill` events come before its `open`, `cancel`, or `r
     "deltas": [
       {
         "kind": "cancel",
-        "orderId": "7c9e6679-…"
+        "orderId": "7c9e6679-…",
+        "outcomeId": "3f2504e0-…",
+        "originalQty": 110,
+        "remaining": 70
       }
     ]
   }
 }
 ```
 
-**open**
+> [tab] open
+>
+> ```json theme={"dark"}
+> {
+>   "kind": "open",
+>   "orderId": "7c9e6679-…",
+>   "clientId": "0b3f5f20-…",
+>   "marketId": "6f9619ff-…",
+>   "outcomeId": "3f2504e0-…",
+>   "price": "0.665",
+>   "qty": 110,
+>   "originalQty": 110,
+>   "tif": "GTC"
+> }
+> ```
+>
+> The order rests. **This event, not the `201`, confirms that the order rests.**
+>
+> `qty` is the resting quantity.
+> It's lower than `originalQty` when part of the order filled before it rested.
+>
+> `clientId` appears only when the placement sent one.
+> An order with an expiry also carries `expiresAt`, in Unix milliseconds.
 
-```json theme={"dark"}
-{
-  "kind": "open",
-  "orderId": "7c9e6679-…",
-  "clientId": "0b3f5f20-…",
-  "marketId": "6f9619ff-…",
-  "outcomeId": "3f2504e0-…",
-  "price": "0.665",
-  "qty": 110,
-  "tif": "GTC"
-}
-```
+> [tab] fill
+>
+> ```json theme={"dark"}
+> {
+>   "kind": "fill",
+>   "fillId": "1e6a2f94-…",
+>   "orderId": "7c9e6679-…",
+>   "clientId": "0b3f5f20-…",
+>   "outcomeId": "3f2504e0-…",
+>   "price": "0.670",
+>   "qty": 40,
+>   "originalQty": 110,
+>   "remaining": 70,
+>   "taker": true
+> }
+> ```
+>
+> `fillId` matches the `fillId` from `GET /v3/portfolio/fills`.
+> Two fills on one order always have different IDs, even at the same quantity.
+>
+> `taker` is `true` when your order took liquidity and `false` when it rested.
+> It matches `taker` from `GET /v3/portfolio/fills`.
+>
+> `price` is the traded price. It can be better than your limit.
+>
+> `qty` is the size of this fill. `remaining` is what still rests after it.
+>
+> `remaining: 0` means the order is `FILLED`.
+>
+> This event carries no fee.
+>
+> A self-match, where your order trades with your own order, also sends a `fill` here. The `trades` channel omits it.
 
-The order rests. **This event, not the `201`, confirms that the order rests.**
+> [tab] cancel
+>
+> ```json theme={"dark"}
+> {
+>   "kind": "cancel",
+>   "orderId": "7c9e6679-…",
+>   "clientId": "0b3f5f20-…",
+>   "outcomeId": "3f2504e0-…",
+>   "originalQty": 110,
+>   "remaining": 70,
+>   "reason": "GO_LIVE"
+> }
+> ```
+>
+> `remaining` is what was still resting when the order left the book.
+> `originalQty` minus `remaining` is the quantity that filled.
+>
+> The event carries `reason` only when the engine states one: `GO_LIVE`, `MARKET_CLOSED`, `SETTLED`, or `NEUTRALIZED`.
+>
+> A cancel by you, by expiry, or by an admin carries no `reason`.
 
-`qty` is the resting quantity.
-
-`clientId` appears only when the placement sent one.
-An order with an expiry also carries `expiresAt`, in Unix milliseconds.
-
-**fill**
-
-```json theme={"dark"}
-{
-  "kind": "fill",
-  "fillId": "1e6a2f94-…",
-  "orderId": "7c9e6679-…",
-  "clientId": "0b3f5f20-…",
-  "outcomeId": "3f2504e0-…",
-  "price": "0.670",
-  "qty": 40,
-  "remaining": 70,
-  "taker": true
-}
-```
-
-`fillId` matches the `fillId` from `GET /v3/portfolio/fills`.
-Two fills on one order always have different IDs, even at the same quantity.
-
-`taker` is `true` when your order took liquidity and `false` when it rested.
-It matches `taker` from `GET /v3/portfolio/fills`.
-
-`price` is the traded price. It can be better than your limit.
-
-`remaining: 0` means the order is `FILLED`.
-
-This event carries no fee.
-
-A self-match, where your order trades with your own order, also sends a `fill` here. The `trades` channel omits it.
-
-**cancel**
-
-```json theme={"dark"}
-{
-  "kind": "cancel",
-  "orderId": "7c9e6679-…",
-  "reason": "GO_LIVE"
-}
-```
-
-The event carries `reason` only when the engine states one: `GO_LIVE`, `MARKET_CLOSED`, `SETTLED`, or `NEUTRALIZED`.
-
-A cancel by you, by expiry, or by an admin carries no `reason`.
-
-**reject**
-
-```json theme={"dark"}
-{
-  "kind": "reject",
-  "orderId": "7c9e6679-…"
-}
-```
-
-We accepted the order, then refused it. **No HTTP status reports this refusal.**
-
-An unfilled `IOC`, `FOK`, or `PO` order also arrives as `reject`.
+> [tab] reject
+>
+> ```json theme={"dark"}
+> {
+>   "kind": "reject",
+>   "orderId": "7c9e6679-…",
+>   "clientId": "0b3f5f20-…",
+>   "outcomeId": "3f2504e0-…",
+>   "originalQty": 110
+> }
+> ```
+>
+> We accepted the order, then refused it. **No HTTP status reports this refusal.**
+>
+> An unfilled `IOC`, `FOK`, or `PO` order also arrives as `reject`.
 
 ## Positions
 
@@ -6352,30 +6314,30 @@ Both routes spend one token from the `account` [throttle](/api/throttling).
 * `amount` is a positive decimal with at most 5 places. We never round it.
 * `clientTransferId` is your idempotency key, up to 64 characters and unique per trader. Send one.
 
-**Request**
+> [tab] Request
+>
+> ```json theme={"dark"}
+> {
+>   "direction": "fund",
+>   "amount": "250.00000",
+>   "clientTransferId": "desk-1-topup-2026-09-09-a"
+> }
+> ```
 
-```json theme={"dark"}
-{
-  "direction": "fund",
-  "amount": "250.00000",
-  "clientTransferId": "desk-1-topup-2026-09-09-a"
-}
-```
-
-**202**
-
-```json theme={"dark"}
-{
-  "transferId": "c4a71f30-…",
-  "status": "Requested",
-  "direction": "fund",
-  "amount": "250.00000",
-  "actualBalance": null,
-  "clientTransferId": "desk-1-topup-2026-09-09-a",
-  "createdAt": "2026-09-09T14:22:03.118Z",
-  "updatedAt": "2026-09-09T14:22:03.118Z"
-}
-```
+> [tab] 202
+>
+> ```json theme={"dark"}
+> {
+>   "transferId": "c4a71f30-…",
+>   "status": "Requested",
+>   "direction": "fund",
+>   "amount": "250.00000",
+>   "actualBalance": null,
+>   "clientTransferId": "desk-1-topup-2026-09-09-a",
+>   "createdAt": "2026-09-09T14:22:03.118Z",
+>   "updatedAt": "2026-09-09T14:22:03.118Z"
+> }
+> ```
 
 ## Retry a transfer
 
@@ -6469,25 +6431,25 @@ Then send the public key in the body:
 * `algorithm` must match the key material.
 * `expiresAt` must be strictly in the future.
 
-**Request**
+> [tab] Request
+>
+> ```json theme={"dark"}
+> {
+>   "label": "desk-1",
+>   "publicKey": "-----BEGIN PUBLIC KEY-----\n…\n-----END PUBLIC KEY-----\n",
+>   "algorithm": "Ed25519"
+> }
+> ```
 
-```json theme={"dark"}
-{
-  "label": "desk-1",
-  "publicKey": "-----BEGIN PUBLIC KEY-----\n…\n-----END PUBLIC KEY-----\n",
-  "algorithm": "Ed25519"
-}
-```
-
-**201**
-
-```json theme={"dark"}
-{
-  "keyId": "8f14e45f-…",
-  "label": "desk-1",
-  "balance": "0.00000"
-}
-```
+> [tab] 201
+>
+> ```json theme={"dark"}
+> {
+>   "keyId": "8f14e45f-…",
+>   "label": "desk-1",
+>   "balance": "0.00000"
+> }
+> ```
 
 The `keyId` identifies the trading key.
 It's also the subaccount's address. Store it beside `desk-1.pem`.
@@ -6631,31 +6593,36 @@ A second `trading::read` key on a subaccount doesn't raise its limits.
 
 ### Tiers
 
-Each subaccount has a tier, and a higher tier raises its limits.
-A tier multiplies both the capacity and the refill rate of every throttle.
-A tier also sets how many orders your subaccount may keep open at once.
+Your account has one tier, and every subaccount you hold runs at it.
+A higher tier raises your limits: it multiplies both the capacity and the refill rate of every throttle.
+Each subaccount keeps its own throttles, so each one gets the full limits of your tier.
+A tier also sets how many orders each subaccount may keep open at once.
 An order that would take you over that cap answers `OPEN_ORDER_LIMIT_EXCEEDED`.
-The cap on watched markets is the same at every tier.
+It also sets how many markets each websocket connection may watch. See [Websocket subscriptions](#websocket-subscriptions).
 
 <table>
   <thead>
-    <tr><th>Tier</th><th>Monthly volume</th><th>Multiplier</th><th>Open orders</th></tr>
+    <tr><th>Tier</th><th>Monthly volume</th><th>Multiplier</th><th>Open orders</th><th>Watched markets</th></tr>
   </thead>
 </table>
 
-Your subaccount earns its tier from its volume over the last calendar month, in Eastern time.
-Early each month, we move each subaccount to the tier that volume reaches, so a tier can go down as well as up.
+Your account earns its tier from the volume of all your subaccounts over the last calendar month, in Eastern time.
+Early each month, we move your account to the tier that volume reaches, so a tier can go down as well as up.
 
-Volume is the full payout of every contract your subaccount traded, so 100 contracts count as \$1.
+Volume is the full payout of every contract your subaccounts traded, so 100 contracts count as \$1.
 A wash, where your order trades against another of yours, doesn't count, and neither does a voided trade.
 
-A new subaccount starts at Base.
+A new subaccount runs at your account's tier from its first request.
 A management key is always at Base.
-`GET /v3/limits` reports the limits of your subaccount's tier.
+
+`GET /v3/limits` reports your account's tier as `accountTier`, whichever key you call it with.
+It reports the limits of the key you call it with, and their tier as `tier`.
+With a trading key, `tier` is your account's tier. With a management key, it's `BASE`.
+`accountMaxOpenOrders` and `accountMaxWatchedMarkets` report the caps of your account's tier, whichever key you call it with.
 
 ## Websocket subscriptions
 
-The `stream` bucket meters how fast you subscribe. A second limit caps how much you hold: a connection may watch up to  markets at once. An event counts as the markets it contains. A subscribe that would take you over that answers `SUBSCRIPTION_LIMIT_EXCEEDED`, and it subscribes to nothing. A `snapshot` that names more markets than the cap answers the same. Such a request also costs more than the `stream` bucket holds, so you get `RATE_LIMIT_EXCEEDED` until the bucket is full. `GET /v3/limits` reports the cap.
+The `stream` bucket meters how fast you subscribe. A second limit caps how much you hold: a connection may watch up to  markets at once at Base, and more at a higher tier. An event counts as the markets it contains. A subscribe that would take you over that answers `SUBSCRIPTION_LIMIT_EXCEEDED`, and it subscribes to nothing. A `snapshot` that names more markets than the cap answers the same. Such a request also costs more than the `stream` bucket holds, so you get `RATE_LIMIT_EXCEEDED` until the bucket is full. `GET /v3/limits` reports your cap as `maxWatchedMarkets`.
 
 The key routes and the subaccount routes spend the `account` bucket, one token a request. A transfer spends from it too.
 
@@ -6752,8 +6719,6 @@ JWT tokens expire after a certain period. Monitor for authentication errors and 
 
 # Code Example
 Source: https://docs.novig.com/deprecated/api-reference/WSS/code-examples
-
-
 
 ## Complete TypeScript/JavaScript Example
 
@@ -7455,8 +7420,6 @@ The returned URL opens the Novig analytics dashboard (P&L, fills, open exposure,
 
 **Rate limit:** 64 requests per second.
 
-
-
 # Get open costs
 Source: https://docs.novig.com/deprecated/api-reference/account/get-open-costs
 
@@ -7467,8 +7430,6 @@ Get the user's open position cost for the given currency denomination. `openOrde
 
 **Rate limit:** 256 requests per second.
 
-
-
 # Get user transactions
 Source: https://docs.novig.com/deprecated/api-reference/account/get-user-transactions
 
@@ -7477,8 +7438,6 @@ Get a detailed history of all transactions made by the user, satisfying the prov
 
 **Rate limit:** 32 requests/second burst, 512 requests/minute sustained.
 
-
-
 # Get wallet balance
 Source: https://docs.novig.com/deprecated/api-reference/account/get-wallet-balance
 
@@ -7486,8 +7445,6 @@ Source: https://docs.novig.com/deprecated/api-reference/account/get-wallet-balan
 Get the current balance of the user's wallet under the given currency denomination.
 
 **Rate limit:** 256 requests per second.
-
-
 
 # Authentication
 Source: https://docs.novig.com/deprecated/api-reference/authentication
@@ -7580,19 +7537,19 @@ Each event contains a set of related markets. A market is a specific proposition
 
 ## Key Concepts
 
-> **Events**
+> [card] Events
 >
 > Events typically correspond to real-world games or matches. Each event has a unique `eventId` and contains information about the teams, league, and scheduled start time.
 
-> **Markets**
+> [card] Markets
 >
 > Markets define what you're trading on. Common types include `MONEY` (moneyline), `SPREAD`, `TOTAL`, and player props like `PASSING_YARDS`.
 
-> **Outcomes**
+> [card] Outcomes
 >
 > Outcomes are the tradeable units. When placing an order, you specify an `outcomeId`, not a market ID. Each market always has exactly two outcomes.
 
-> **Prices**
+> [card] Prices
 >
 > Prices are decimal probabilities (0.001 to 0.999) — the stake per \$1.00 payout. A price of 0.524 means \$0.524 staked to win \$1.00.
 
@@ -7673,8 +7630,6 @@ The `status` field is the authoritative snapshot of event liveness: `OPEN_INGAME
 
 **Rate limit:** 1024 requests per second.
 
-
-
 # Get event statuses
 Source: https://docs.novig.com/deprecated/api-reference/events/get-event-statuses
 
@@ -7683,8 +7638,6 @@ Fetch a list of all available event statuses.
 
 **Rate limit:** 256 requests per second.
 
-
-
 # Get event types
 Source: https://docs.novig.com/deprecated/api-reference/events/get-event-types
 
@@ -7692,8 +7645,6 @@ Source: https://docs.novig.com/deprecated/api-reference/events/get-event-types
 Fetch a list of all available event types.
 
 **Rate limit:** 256 requests per second.
-
-
 
 # Get events
 Source: https://docs.novig.com/deprecated/api-reference/events/get-events
@@ -7705,8 +7656,6 @@ Filter on `status=OPEN_INGAME` for the set of live events — the condition unde
 
 **Rate limit:** 1024 requests per second.
 
-
-
 # Get leagues
 Source: https://docs.novig.com/deprecated/api-reference/events/get-leagues
 
@@ -7714,8 +7663,6 @@ Source: https://docs.novig.com/deprecated/api-reference/events/get-leagues
 Fetch a list of all available leagues.
 
 **Rate limit:** 256 requests per second.
-
-
 
 # Get lock status
 Source: https://docs.novig.com/deprecated/api-reference/markets/get-lock-status
@@ -7727,8 +7674,6 @@ A lock counts as live when it has not been cleared and has not expired. `systemL
 
 **Rate limit:** 256 requests per second.
 
-
-
 # Get market
 Source: https://docs.novig.com/deprecated/api-reference/markets/get-market
 
@@ -7736,8 +7681,6 @@ Source: https://docs.novig.com/deprecated/api-reference/markets/get-market
 Fetch information for a specific market using its unique identifier.
 
 **Rate limit:** 256 requests per second.
-
-
 
 # Get markets by event
 Source: https://docs.novig.com/deprecated/api-reference/markets/get-markets-by-event
@@ -7747,8 +7690,6 @@ Fetch all markets for a specific event, including current orderbook data. This e
 
 **Rate limit:** 1024 requests per second.
 
-
-
 # Get markets by events (batch)
 Source: https://docs.novig.com/deprecated/api-reference/markets/get-markets-by-events-batch
 
@@ -7756,8 +7697,6 @@ Source: https://docs.novig.com/deprecated/api-reference/markets/get-markets-by-e
 Fetch markets for multiple events at once (maximum 50), including current orderbook data. Returns the same data as the single-event endpoint but in a single batched request.
 
 **Rate limit:** 256 requests per second.
-
-
 
 # Get open markets
 Source: https://docs.novig.com/deprecated/api-reference/markets/get-open-markets
@@ -7767,8 +7706,6 @@ Fetch a list of all markets currently open, satisfying the provided parameters.
 
 **Rate limit:** 256 requests per second.
 
-
-
 # Get order book
 Source: https://docs.novig.com/deprecated/api-reference/markets/get-order-book
 
@@ -7776,8 +7713,6 @@ Source: https://docs.novig.com/deprecated/api-reference/markets/get-order-book
 Get the current order book for a specific market. For both outcomes of the market, orders are returned sorted by price-time priority. Orders on the book are partially obfuscated up to price, quantity, and direction.
 
 **Rate limit:** 256 requests per second.
-
-
 
 # Get ticks
 Source: https://docs.novig.com/deprecated/api-reference/markets/get-ticks
@@ -7791,8 +7726,6 @@ Do not hardcode this table. Always fetch it dynamically, as it may change in the
 
 **Rate limit:** 256 requests per second.
 
-
-
 # Request new market strike
 Source: https://docs.novig.com/deprecated/api-reference/markets/request-new-market-strike
 
@@ -7805,8 +7738,6 @@ The request will be rejected if a market with the same event, type, player, and 
 
 **Rate limit:** 64 requests per second.
 
-
-
 # Cancel all orders
 Source: https://docs.novig.com/deprecated/api-reference/orders/cancel-all-orders
 
@@ -7814,8 +7745,6 @@ Source: https://docs.novig.com/deprecated/api-reference/orders/cancel-all-orders
 Cancel all active orders for the user, satisfying the provided parameters. This operation is idempotent, but does not make guarantees about reaching the matching engine before the orders are filled.
 
 **Rate limit:** 1 request per 30 seconds.
-
-
 
 # Cancel order
 Source: https://docs.novig.com/deprecated/api-reference/orders/cancel-order
@@ -7825,9 +7754,7 @@ Cancel a specific order by its unique identifier. The order must belong to the t
 To reliably ensure that an order has been cancelled, consume messages from the matching tape to reconstruct the order book and other stateful structures.
 > **Note:** A successful response indicates that the cancellation request was sent to the queue, but does **not** guarantee that the order will be cancelled.
 
-**Rate limit:** 2048 requests per second.
-
-
+**Rate limit:** 1024 requests per second.
 
 # Cancel order batch
 Source: https://docs.novig.com/deprecated/api-reference/orders/cancel-order-batch
@@ -7846,9 +7773,7 @@ A new order reads as `NOT_FOUND` until its `place` event arrives on your private
 This operation is idempotent. It does not guarantee that the cancel reaches the matching engine before a fill. To confirm a cancel, consume the matching tape and rebuild the order book from it.
 > **Note:** An entry under `canceled` means we sent the cancel. It does **not** mean the order is cancelled.
 
-**Rate limit:** 2048 requests per second.
-
-
+**Rate limit:** 1024 requests per second.
 
 # Get all my orders
 Source: https://docs.novig.com/deprecated/api-reference/orders/get-all-my-orders
@@ -7858,8 +7783,6 @@ Get a list of all orders associated with the user, satisfying the provided param
 
 **Rate limit:** 32 requests/second burst, 512 requests/minute sustained.
 
-
-
 # Get order
 Source: https://docs.novig.com/deprecated/api-reference/orders/get-order
 
@@ -7867,8 +7790,6 @@ Source: https://docs.novig.com/deprecated/api-reference/orders/get-order
 Fetch details of a specific order using its unique identifier.
 
 **Rate limit:** 256 requests per second.
-
-
 
 # Place order
 Source: https://docs.novig.com/deprecated/api-reference/orders/place-order
@@ -7878,9 +7799,7 @@ Place an order into the matching engine queue, conditional on validation. A succ
 To reliably ensure that an order has been executed, consume messages from the matching tape to reconstruct the order book and other stateful structures.
 > **Note:** If an order placed wash trades against an order from the same user, both orders will wash fill each other and effectively be cancelled.
 
-**Rate limit:** 2048 requests per second.
-
-
+**Rate limit:** 1024 requests per second.
 
 # Place order batch
 Source: https://docs.novig.com/deprecated/api-reference/orders/place-order-batch
@@ -7896,8 +7815,6 @@ We book every order or none. We price each order on its own, not the batch total
 Your order-volume budget is charged for the orders you send, not for the orders we book.
 
 **Rate limit:** 64 requests per second.
-
-
 
 # Understanding Outcome IDs
 Source: https://docs.novig.com/deprecated/api-reference/outcome-ids
@@ -8008,8 +7925,6 @@ This endpoint covers **single contract fills** only. RFQs you quoted and won are
 
 **Rate limit:** 32 requests/second burst, 512 requests/minute sustained.
 
-
-
 # Get all my positions
 Source: https://docs.novig.com/deprecated/api-reference/positions/get-all-my-positions
 
@@ -8017,8 +7932,6 @@ Source: https://docs.novig.com/deprecated/api-reference/positions/get-all-my-pos
 Get a comprehensive overview of all positions held by the user, satisfying the provided parameters. This operation includes details about each position's size, entry price, and current market value. Results are limited to a maximum of 100 items by default.
 
 **Rate limit:** 256 requests per second.
-
-
 
 # Rate Limits & URL's
 Source: https://docs.novig.com/deprecated/api-reference/rest-api
@@ -8033,17 +7946,17 @@ HTTP REST API for order management and market data
 
 | Endpoint | Interval | Limit |
 | - | - | - |
-| `POST emm/orders/place` (Single-order placement) | 1 s | 2048 |
+| `POST emm/orders/place` (Single-order placement) | 1 s | 1024 |
 | `POST emm/orders/batch` (Batch placement) | 1 s | 64 |
 | `POST emm/strike-requests`, `GET emm/account/dashboard` | 1 s | 64 |
-| `DELETE emm/orders/*` (Order cancellation, single and bulk) | 1 s | 2048 |
+| `DELETE emm/orders/*` (Order cancellation, single and bulk) | 1 s | 1024 |
 | `emm/kill` (Kill switch) | 30 s | 1 |
 | `emm/fills/all`, `emm/orders/all`, `emm/transactions` (User history) | 1 s burst / 60 s sustained | 32 burst / 512 sustained |
 | `emm/events`, `emm/events/{eventId}`, `emm/events/getMarketsByEvent/{eventId}` (Event screener) | 1 s | 1024 |
 | All other EMM reads | 1 s | 256 |
 
 Each limit is per route and per method. A row that lists several routes gives
-each of them its own budget at that limit: every cancel route has its own 2048
+each of them its own budget at that limit: every cancel route has its own 1024
 requests per second, and single-order placement no longer competes with batch
 placement.
 
@@ -8825,7 +8738,7 @@ Send `create_quote` with your price and maximum stake, or `decline` to pass. Ans
 
 Messages you send to Novig. Novig acks every one.
 
-> **`subscribe`**
+> [accordion] `subscribe`
 >
 > Start receiving a channel's events
 >
@@ -8839,7 +8752,7 @@ Messages you send to Novig. Novig acks every one.
 >
 > `"rfq"` or `"quotes"`.
 
-> **`unsubscribe`**
+> [accordion] `unsubscribe`
 >
 > Stop receiving a channel's events
 >
@@ -8853,7 +8766,7 @@ Messages you send to Novig. Novig acks every one.
 >
 > `"rfq"` or `"quotes"`.
 
-> **`create_quote`**
+> [accordion] `create_quote`
 >
 > Answer an open round
 >
@@ -8892,7 +8805,7 @@ Messages you send to Novig. Novig acks every one.
 > > **One quote per round.** Your first quote stands. A second quote for the same `rfq_id` is dropped and acked with
 > > `quote_superseded`. To change a price, wait for the next round.
 
-> **`decline`**
+> [accordion] `decline`
 >
 > Pass on an open round
 >
@@ -8908,7 +8821,7 @@ Messages you send to Novig. Novig acks every one.
 >
 > Decline every round you do not quote. A decline records that you saw the round and passed; silence is indistinguishable from a pricer that is down or lagging.
 
-> **`confirm`**
+> [accordion] `confirm`
 >
 > Answer the last look on your accepted quote
 >
@@ -8950,7 +8863,7 @@ Events Novig sends you. Subscribe to a channel to receive its events.
 
 Every frame Novig sends carries `timestamp`: when Novig emitted it. An instant that means anything else is a named field inside `data` — `expires_at` is when the auction closes, `executed_at` is when the trade filled.
 
-> **`rfq_created`**
+> [accordion] `rfq_created`
 >
 > A round opened (rfq channel)
 >
@@ -8994,7 +8907,7 @@ Every frame Novig sends carries `timestamp`: when Novig emitted it. An instant t
 > The round's stake floor: the taker's minimum or the venue minimum of `10.00`, whichever is higher. A quote whose
 > `max_wager` cannot cover it is dropped as `below_min_wager`.
 
-> **`rfq_closed`**
+> [accordion] `rfq_closed`
 >
 > The auction closed (rfq channel)
 >
@@ -9022,7 +8935,7 @@ Every frame Novig sends carries `timestamp`: when Novig emitted it. An instant t
 >
 > The round that closed.
 
-> **`rfq_executed`**
+> [accordion] `rfq_executed`
 >
 > A trade filled, with no counterparty named (rfq channel)
 >
@@ -9065,7 +8978,7 @@ Every frame Novig sends carries `timestamp`: when Novig emitted it. An instant t
 >
 > When the trade filled.
 
-> **`quote_created`**
+> [accordion] `quote_created`
 >
 > Your quote was recorded (quotes channel)
 >
@@ -9103,7 +9016,7 @@ Every frame Novig sends carries `timestamp`: when Novig emitted it. An instant t
 >
 > Your pricer.
 
-> **`quote_accepted`**
+> [accordion] `quote_accepted`
 >
 > You won. Confirm within 1 second (quotes channel)
 >
@@ -9161,7 +9074,7 @@ Every frame Novig sends carries `timestamp`: when Novig emitted it. An instant t
 > > **Two different fields are named `quote_id`.** The one you send on `create_quote` is your own free-form string; it returns
 > > to you as `external_flag`. The one on `quote_accepted` is a Novig UUID, and it is the one `confirm` requires.
 
-> **`quote_executed`**
+> [accordion] `quote_executed`
 >
 > Your quote filled (quotes channel)
 >
@@ -9214,7 +9127,7 @@ Every frame Novig sends carries `timestamp`: when Novig emitted it. An instant t
 >
 > When the trade filled.
 
-> **`quote_dropped`**
+> [accordion] `quote_dropped`
 >
 > Your quote was dropped for a fixable reason (quotes channel)
 >
@@ -9267,7 +9180,7 @@ Every frame Novig sends carries `timestamp`: when Novig emitted it. An instant t
 
 Novig answers every client message with an ack.
 
-> **`subscribed`**
+> [accordion] `subscribed`
 >
 > The subscription is active
 >
@@ -9295,7 +9208,7 @@ Novig answers every client message with an ack.
 >
 > `"rfq"` or `"quotes"`.
 
-> **`unsubscribed`**
+> [accordion] `unsubscribed`
 >
 > The subscription is removed
 >
@@ -9323,7 +9236,7 @@ Novig answers every client message with an ack.
 >
 > `"rfq"` or `"quotes"`.
 
-> **`quote_submitted`**
+> [accordion] `quote_submitted`
 >
 > Your quote entered the auction
 >
@@ -9351,7 +9264,7 @@ Novig answers every client message with an ack.
 >
 > The round your message named.
 
-> **`quote_superseded`**
+> [accordion] `quote_superseded`
 >
 > Your first quote stands. This one was dropped
 >
@@ -9379,7 +9292,7 @@ Novig answers every client message with an ack.
 >
 > The round your message named.
 
-> **`quote_declined`**
+> [accordion] `quote_declined`
 >
 > Your pass was recorded
 >
@@ -9407,7 +9320,7 @@ Novig answers every client message with an ack.
 >
 > The round your message named.
 
-> **`confirm_recorded`**
+> [accordion] `confirm_recorded`
 >
 > Your last-look answer was recorded
 >
@@ -9442,7 +9355,7 @@ Novig answers every client message with an ack.
 
 ## Errors
 
-> **`error`**
+> [accordion] `error`
 >
 > Your message failed
 >
@@ -9552,8 +9465,6 @@ Register with no `webhookUrl` to make the socket your only path. See [Registrati
 # Tick Table
 Source: https://docs.novig.com/deprecated/api-reference/ticks
 
-
-
 ## Overview
 
 Not all prices are valid for order submission. Novig uses a **non-uniform tick table** that defines the exact set of prices at which orders can be placed. Any order submitted at a price not in the tick table will be rejected.
@@ -9586,8 +9497,6 @@ The current tick table is **symmetric around 0.50** and uses two spacing tiers: 
 
 # Exchange Data
 Source: https://docs.novig.com/deprecated/api-reference/trade-data
-
-
 
 ## Overview
 
@@ -9887,11 +9796,11 @@ Two differences from the straight schedule worth calling out. The RFQ taker fee 
 
 Because the charge follows the event's status at the moment of the match, knowing whether an event is live is a fee question, not a cosmetic one. There are two ways to know, and they are covered in detail on the [Market Lifecycle Channel](/deprecated/api-reference/WSS/lifecycle-channel) page:
 
-> **[WebSocket: the transitions](/deprecated/api-reference/WSS/lifecycle-channel)**
+> [card] [WebSocket: the transitions](/deprecated/api-reference/WSS/lifecycle-channel)
 >
 > The `lifecycle` channel publishes `EVENT_GOLIVE` when an event enters live play and `EVENT_UNLIVE` when it leaves. Fees begin on `EVENT_GOLIVE` and stop on `EVENT_UNLIVE`.
 
-> **[REST: the snapshot](/deprecated/api-reference/WSS/lifecycle-channel#reading-event-status-over-rest)**
+> [card] [REST: the snapshot](/deprecated/api-reference/WSS/lifecycle-channel#reading-event-status-over-rest)
 >
 > `GET /nbx/v2/emm/events/{eventId}` returns the event's `status`. `OPEN_INGAME` is exactly the fee-charged condition. Use it to bootstrap on connect and after any reconnect.
 
@@ -9958,29 +9867,29 @@ Access live prices, place orders, and stream market data. Build winning trading 
 
 ## Start Building
 
-> **[Authentication](/deprecated/api-reference/authentication)**
+> [card] [Authentication](/deprecated/api-reference/authentication)
 >
 > Secure OAuth 2.0 authentication. Get your access token and start trading in minutes.
 
-> **[REST API](/deprecated/api-reference/rest-api)**
+> [card] [REST API](/deprecated/api-reference/rest-api)
 >
 > Full-featured HTTP endpoints for orders, positions, market data, and account management.
 
-> **[WebSocket Streams](/deprecated/api-reference/WSS/overview)**
+> [card] [WebSocket Streams](/deprecated/api-reference/WSS/overview)
 >
 > Real-time order book updates, trade feeds, and market events with sub-second delivery.
 
-> **[OpenAPI Schema](https://docs.novig.com/api-reference/spec-files/openapi31.json)**
+> [card] [OpenAPI Schema](https://docs.novig.com/api-reference/spec-files/openapi31.json)
 >
 > Download our OpenAPI 3.1 specification for code generation and API tooling.
 
 ## When to Use Each API
 
-> **[REST API](/deprecated/api-reference/rest-api)**
+> [card] [REST API](/deprecated/api-reference/rest-api)
 >
 > Order placement, account management
 
-> **[WebSocket](/deprecated/api-reference/WSS/overview)**
+> [card] [WebSocket](/deprecated/api-reference/WSS/overview)
 >
 > Real-time updates, live order book, streaming data
 
@@ -10387,11 +10296,11 @@ Two differences from the straight schedule worth calling out. The RFQ taker fee 
 
 Because the charge follows the event's status at the moment of the match, knowing whether an event is live is a fee question, not a cosmetic one. There are two ways to know:
 
-> **[WebSocket: the transitions](/api/streaming/lifecycle)**
+> [card] [WebSocket: the transitions](/api/streaming/lifecycle)
 >
 > The `lifecycle` channel publishes `GOLIVE` when a market enters live play and `UNLIVE` when it leaves. Fees begin on `GOLIVE` and stop on `UNLIVE`.
 
-> **[REST: the snapshot](/api/catalog)**
+> [card] [REST: the snapshot](/api/catalog)
 >
 > `GET /v3/catalog/events/{id}` returns the event's `status`. `OPEN_INGAME` is exactly the fee-charged condition. Use it to bootstrap on connect and after any reconnect.
 
@@ -10433,27 +10342,27 @@ Place orders with signed REST requests. Watch the order book and your fills on o
 
 ## Start
 
-***
+**1. [Account model](/api/concepts/account-model)**
 
 Each subaccount has its own balance and its own trading key.
 
-***
+**2. [Get a key](/api/api-keys)**
 
 You create your management key in your Novig profile. It opens and funds subaccounts but can't place orders.
 
-***
+**3. [Sign a request](/api/signing)**
 
 Sign every request with Ed25519 or P-256, and test your code against our 30 sample signatures.
 
-***
+**4. [Test your signature](/api/quickstart)**
 
 `POST /v3/echo` returns your body with a `200` when your signature is correct.
 
-***
+**5. [Open a subaccount](/api/subaccounts/manage)**
 
 Your management key opens a subaccount, registers its trading key, and funds it.
 
-***
+**6. [Trade](/api/execution/orders)**
 
 Find a market in the [catalog](/api/catalog), place an [order](/api/execution/orders), and follow it on the [private stream](/api/streaming/private).
 
@@ -10554,7 +10463,7 @@ Every other Program term applies to live trading unchanged.
 Eligible futures markets have their own fee schedule.
 A futures market is eligible in every league except PGA, ATP, WTA, UFC, F1 and NASCAR.
 A series winner market is never eligible.
-Today the eligible leagues are NFL, NCAAF, MLB, NBA, WNBA and NHL.
+Today the eligible leagues are NFL, NCAAF, NCAAB, NCAAWB, MLB, NBA, WNBA and NHL.
 We set the credit higher than the live trading credit to promote liquidity.
 Two terms differ from the Program above.
 

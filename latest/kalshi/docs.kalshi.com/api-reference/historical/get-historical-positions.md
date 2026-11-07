@@ -14,7 +14,7 @@
 openapi: 3.0.0
 info:
   title: Kalshi Trade API Manual Endpoints
-  version: 3.35.0
+  version: 3.36.0
   description: >-
     Manually defined OpenAPI spec for endpoints being migrated to spec-first
     approach
@@ -181,6 +181,7 @@ components:
         - realized_pnl_dollars
         - fees_paid_dollars
         - last_updated_ts
+        - netting_enabled
       properties:
         ticker:
           type: string
@@ -190,15 +191,19 @@ components:
           $ref: '#/components/schemas/ExchangeIndex'
         total_traded_dollars:
           $ref: '#/components/schemas/FixedPointDollars'
-          description: Total spent on this market in dollars
+          description: >-
+            Total spent trading this market in dollars, including past trades;
+            not the remaining position's cost or value.
         position_fp:
           $ref: '#/components/schemas/FixedPointCount'
           description: >-
-            String representation of the number of contracts bought in this
-            market. Negative means NO contracts and positive means YES contracts
+            Signed net contracts as a fixed-point string: positive for YES,
+            negative for NO, zero for no net position.
         market_exposure_dollars:
           $ref: '#/components/schemas/FixedPointDollars'
-          description: Cost of the aggregate market position in dollars
+          description: >-
+            Cost basis of the remaining position in dollars, excluding fees; not
+            current market value or realized loss.
         realized_pnl_dollars:
           $ref: '#/components/schemas/FixedPointDollars'
           description: Locked in profit and loss, in dollars
@@ -209,6 +214,11 @@ components:
           type: string
           format: date-time
           description: Last time the position is updated
+        netting_enabled:
+          type: boolean
+          description: >-
+            Whether netting applies to this position's event. Set at the
+            subaccount's first order in the event.
     EventPosition:
       type: object
       required:

@@ -2,7 +2,7 @@
 
 ## Chinese
 
-- [Chinese / API 参考 (167 pages)](https://docs.polymarket.com/_llms/cn/api.txt): Documentation for Chinese / API 参考.
+- [Chinese / API 参考 (170 pages)](https://docs.polymarket.com/_llms/cn/api.txt): Documentation for Chinese / API 参考.
 
 ### 预测市场
 

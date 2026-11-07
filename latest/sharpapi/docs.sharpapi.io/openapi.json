@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "SharpAPI",
-    "version": "4.1.0",
+    "version": "4.7.0",
     "description": "Real-time sports betting odds API with +EV detection, arbitrage, middles, and low-hold opportunities.\n\n## Spec Versioning\n\n`info.version` is bumped on every schema or path change. Minor version (`2.x.0`) for additive changes or breaking shape fixes that align the spec to the live response; major version (`x.0.0`) for backward-incompatible redesigns. Removed paths and renamed fields always bump the minor at minimum. Check `x-generated-at` and `x-commit-sha` for the build provenance of a given snapshot.\n\n## Authentication\n\nAll authenticated endpoints accept an API key via one of three methods:\n\n| Method | Header / Param | Use case |\n|--------|---------------|----------|\n| `X-API-Key` | `X-API-Key: sk_live_...` | Recommended for server-side |\n| `Authorization` | `Authorization: Bearer sk_live_...` | Standard Bearer token |\n| `api_key` query | `?api_key=sk_live_...` | SSE/EventSource (cannot set headers) |\n\n## Subscription Tiers\n\n| Tier | Rate Limit | Data Delay | Max Books | EV | Arb | Middles | Game State |\n|------|-----------|------------|-----------|-----|-----|---------|------------|\n| Free | 12/min | 60s | 2 (DK, FD) | - | - | - | - |\n| Hobby | 120/min | Real-time | 5 | - | Yes | - | Add-on |\n| Pro | 300/min | Real-time | 15 | Yes | Yes | Yes | Add-on |\n| Sharp | 1000/min | Real-time | 25 | Yes | Yes | Yes | Add-on |\n| Enterprise | Custom | Real-time | All | Yes | Yes | Yes | Yes |\n\nGame State is a $79/mo add-on on any paid tier (Hobby, Pro, Sharp) and is included with Enterprise.\n\n## Rate Limit Headers\n\nEvery authenticated response includes:\n\n- `X-RateLimit-Limit` - Requests allowed per minute\n- `X-RateLimit-Remaining` - Requests remaining in current window\n- `X-RateLimit-Reset` - Unix timestamp when the window resets\n- `X-Data-Delay` - Odds delay in seconds for your tier (0 = real-time)\n- `X-Request-Id` - Unique request identifier for support\n\n## WebSocket Streaming\n\nThe WebSocket endpoint at `wss://ws.sharpapi.io` is documented separately in [`asyncapi.yaml`](./asyncapi.yaml) (AsyncAPI 3.0). OpenAPI 3.x cannot express WebSocket subprotocols and message channels, so the SSE endpoint (`/stream`) is the only stream covered by this document.\n\n## MCP Server\n\nThe `POST /mcp` endpoint is a Model Context Protocol server (JSON-RPC 2.0 over Streamable HTTP). Tools are self-described at runtime via `tools/list`, so it's documented as a setup guide rather than an OpenAPI path — see [`/sdks/mcp`](https://docs.sharpapi.io/sdks/mcp).\n",
     "contact": {
       "name": "SharpAPI Support",
@@ -13,8 +13,8 @@
       "name": "Proprietary",
       "url": "https://sharpapi.io/terms"
     },
-    "x-generated-at": "2026-11-02T15:25:21Z",
-    "x-commit-sha": "02c1cb6"
+    "x-generated-at": "2026-11-06T14:46:11Z",
+    "x-commit-sha": "9f3b068"
   },
   "servers": [
     {
@@ -1279,7 +1279,7 @@
             "example": true
           },
           {
-            "$ref": "#/components/parameters/limit"
+            "$ref": "#/components/parameters/odds_limit"
           },
           {
             "$ref": "#/components/parameters/offset_capped"
@@ -1996,7 +1996,7 @@
       "get": {
         "operationId": "listMiddleOpportunities",
         "summary": "List middle opportunities",
-        "description": "Returns middle betting opportunities where both sides of a line can win simultaneously. Requires **Pro** tier or higher.\n\n**Sort options:** `quality` (default), `ev`, `probability`, `middle_size`.\n",
+        "description": "Returns middle betting opportunities where both sides of a line can win simultaneously. Requires **Pro** tier or higher.\n\n**Sort options:** `quality` (default), `ev`, `probability`, `middle_size`, `event`, `market`. Prefix `-` for descending and `+` (sent as `%2B`) for ascending.\n",
         "tags": [
           "Opportunities"
         ],
@@ -2050,18 +2050,28 @@
           {
             "name": "sort",
             "in": "query",
-            "description": "Sort field",
+            "description": "Sort field. Prefix `-` for descending and `+` for ascending; in a URL send the `+` as `%2B`, because a bare `+` is read as a space. With no prefix, `quality`, `ev`, `probability` and `middle_size` are best first, and `event` (start time) and `market` (market id, natural order) are ascending. Equal values are ordered by quality (best first), then by `id`. An unknown value sorts by `quality` and its prefix is ignored.",
             "schema": {
               "type": "string",
               "enum": [
                 "quality",
                 "-quality",
+                "+quality",
                 "ev",
                 "-ev",
+                "+ev",
                 "probability",
                 "-probability",
+                "+probability",
                 "middle_size",
-                "-middle_size"
+                "-middle_size",
+                "+middle_size",
+                "event",
+                "-event",
+                "+event",
+                "market",
+                "-market",
+                "+market"
               ]
             }
           },
@@ -3094,7 +3104,7 @@
       "get": {
         "operationId": "listFuturesMarkets",
         "summary": "List futures",
-        "description": "Returns the futures: season-long markets such as a league's championship winner, MVP and win totals. Each sportsbook's version of a market is placed on one future with one id and one name. Pass a future's `id` as `future_id` to `GET /futures/odds` for its odds. Every future that matches the filters is returned; there is no paging. Ordered by `league`, then `id`. Requires **Enterprise** tier.",
+        "description": "Returns the futures: season-long markets such as a league's championship winner, MVP and win totals. Each sportsbook's version of a market is placed on one future with one id and one name. Pass a future's `id` as `future_id` to `GET /futures/odds` for its odds. Every future that matches the filters is returned; there is no paging. Ordered by `league`, then `id`. Each future carries `start_date`: the earliest start any sportsbook sends for it, or `null`. Requires **Enterprise** tier.",
         "tags": [
           "Futures"
         ],
@@ -3186,6 +3196,7 @@
                       "future_type": "PLAYER",
                       "sport": "football",
                       "league": "nfl",
+                      "start_date": "2026-11-07T17:05:00Z",
                       "books_available": [
                         "betmgm",
                         "betonline",
@@ -3201,6 +3212,7 @@
                       "future_type": "TEAM",
                       "sport": "football",
                       "league": "nfl",
+                      "start_date": "2026-11-06T01:15:00Z",
                       "books_available": [
                         "betonline",
                         "saba"
@@ -3214,6 +3226,7 @@
                       "future_type": "TEAM",
                       "sport": "football",
                       "league": "nfl",
+                      "start_date": "2026-11-06T01:15:00Z",
                       "books_available": [
                         "betonline",
                         "saba"
@@ -3256,7 +3269,7 @@
       "get": {
         "operationId": "listFuturesOdds",
         "summary": "Get futures odds",
-        "description": "Returns futures with their odds: one row per sportsbook, selection, side and line. Pass `future_id` or `league`; one of the two is required. Paging counts futures, not rows: each future on a page carries all of its rows that match the filters, and some futures hold hundreds of rows, so narrow with `sportsbook`, `team_id`, `selection` or `is_main`. Rows are ordered by `normalized_selection`, then `sportsbook`, then side, then `points`; they are not ordered by price. Requires **Enterprise** tier.",
+        "description": "Returns futures with their odds: one row per sportsbook, selection, side and line. Pass `future_id` or `league`; one of the two is required. Paging counts futures, not rows: each future on a page carries all of its rows that match the filters, and some futures hold hundreds of rows, so narrow with `sportsbook`, `team_id`, `selection` or `is_main`. Rows are ordered by `normalized_selection`, then `sportsbook`, then side, then `points`; they are not ordered by price. Each future carries `start_date`, the earliest start among the sportsbooks asked for (all of them when `sportsbook` is not given), or `null`. Requires **Enterprise** tier.",
         "tags": [
           "Futures"
         ],
@@ -3457,6 +3470,7 @@
                           "future_type": "TEAM",
                           "sport": "football",
                           "league": "nfl",
+                          "start_date": "2026-09-10T00:20:00Z",
                           "odds": [
                             {
                               "id": "nfl__super_bowl_winner:betmgm:kansas_city_chiefs",
@@ -3566,6 +3580,7 @@
                           "future_type": "TEAM",
                           "sport": "football",
                           "league": "nfl",
+                          "start_date": "2026-09-10T00:20:00Z",
                           "odds": [
                             {
                               "id": "nfl__super_bowl_winner_yes_no:betmgm:kansas_city_chiefs:yes",
@@ -3675,6 +3690,7 @@
                           "future_type": "TEAM",
                           "sport": "basketball",
                           "league": "nba",
+                          "start_date": "2027-06-19T00:40:00Z",
                           "odds": [
                             {
                               "id": "nba__regular_season_wins:betmgm:boston_celtics:over:51.5",
@@ -4194,7 +4210,7 @@
         }
       },
       "X-RateLimit-Reset": {
-        "description": "Unix timestamp (ms) when the rate limit window resets",
+        "description": "Unix timestamp in seconds when the rate limit window resets",
         "schema": {
           "type": "integer"
         }
@@ -4412,6 +4428,17 @@
           "maximum": 500
         }
       },
+      "odds_limit": {
+        "name": "limit",
+        "in": "query",
+        "description": "Maximum odds rows per page. Values above 200 are capped at 200, with a pagination.warning explaining the adjustment.",
+        "schema": {
+          "type": "integer",
+          "default": 50,
+          "minimum": 0,
+          "maximum": 200
+        }
+      },
       "offset": {
         "name": "offset",
         "in": "query",
@@ -4477,10 +4504,12 @@
             "example": {
               "error": {
                 "code": "tier_restricted",
-                "message": "EV opportunities requires pro tier or higher",
+                "message": "This endpoint requires Pro tier or higher. Upgrade to Pro for $229/mo: https://sharpapi.io/dashboard/billing/upgrade/pro",
                 "tier": "hobby",
                 "required_tier": "pro",
-                "docs": "https://sharpapi.io/pricing"
+                "docs": "https://sharpapi.io/pricing",
+                "upgrade": "https://sharpapi.io/dashboard/billing/upgrade/pro",
+                "upgrade_note": "Upgrade to Pro for $229/mo"
               }
             }
           }
@@ -4778,6 +4807,23 @@
               },
               "requested_books": {
                 "type": "integer"
+              },
+              "addon": {
+                "type": "string",
+                "enum": [
+                  "game_state",
+                  "websocket"
+                ],
+                "description": "The add-on that unlocks the request, on add-on `tier_restricted` errors."
+              },
+              "upgrade": {
+                "type": "string",
+                "format": "uri",
+                "description": "Checkout or billing link that unlocks the request. On `tier_restricted` when a self-serve plan or add-on lifts it (absent when only Enterprise does), and on `rate_limited` when a higher tier raises the limit."
+              },
+              "upgrade_note": {
+                "type": "string",
+                "description": "One-line note naming that plan or add-on and its price; sent with `upgrade`. `message` then has the note and a link appended: match on `code`, not `message`."
               }
             }
           }
@@ -4921,6 +4967,18 @@
           "has_player_props": {
             "type": "boolean"
           },
+          "pricing_model": {
+            "type": "string",
+            "description": "Which side of the market the book's prices are quoted for. Omitted for an ordinary book, whose prices are back prices: the price to bet on the selection. `\"lay\"` means the prices are lay prices: the price to bet against the selection, as on an exchange's lay market (one book, `betfair_lay`, as of October 2026). A lay price cannot be compared with back prices: leave the book out of best-price, arbitrage and expected-value comparisons with back books. The API's own `/odds/best` and its arbitrage, expected-value, middles and low-hold results leave it out. More values may be added later, so do not treat the set as closed; read any value as \"not back prices\". A missing key means back prices, never \"unknown\". Added to this schema October 2026; the field was already in the response.",
+            "examples": [
+              "lay"
+            ]
+          },
+          "is_pickem": {
+            "type": "boolean",
+            "description": "`true` for a daily fantasy pick'em product rather than a sportsbook, for example `prizepicks` or `underdog`. A pick'em entry is not a bet placed at the quoted price, so separate these books from sportsbooks before comparing prices. Sent only as `true`, and only on those books; the key is omitted on every other book. A missing key means \"not a pick'em product\", never \"unknown\". Added to this schema October 2026; the field was already in the response.",
+            "example": true
+          },
           "has_limits": {
             "type": [
               "boolean",
@@ -4950,7 +5008,6 @@
             "enum": [
               "active",
               "inactive",
-              "limited",
               "coming_soon"
             ]
           },
@@ -5225,6 +5282,24 @@
             ],
             "description": "Event lifecycle state. `unconfirmed` is served only by this endpoint: the live feed stopped carrying the game before it showed an end-of-game state, so the API keeps the last score it saw but does not report the game as finished. An `unconfirmed` event has `is_live: false` and no `completed_at`, and its score is not a final result. With the Game State add-on or Enterprise, that score is in `last_seen`. The `/events` list, its `status` filter, `/gamestate` and the `gamestate` stream channel never carry `unconfirmed`."
           },
+          "event_group": {
+            "type": "string",
+            "example": "UFC Fight Night",
+            "description": "Card or tournament label the sportsbooks publish for this event, the same value the `/events` list carries. Omitted when no book on the event sends one, and on some finished events."
+          },
+          "event_group_slug": {
+            "type": "string",
+            "example": "ufc-fight-night",
+            "description": "`event_group` in URL-safe form, for example `UFC 332` becomes `ufc-332`. Present exactly when `event_group` is."
+          },
+          "season_type": {
+            "type": "string",
+            "enum": [
+              "Preseason",
+              "Regular Season"
+            ],
+            "description": "Season phase from the league's published calendar. Omitted when it is not known: a league without a published calendar (today every league except `nba`), a date outside the calendar, or an event with no start time. An absent field never means regular season."
+          },
           "event_type": {
             "type": "string",
             "enum": [
@@ -5286,6 +5361,108 @@
                 }
               }
             }
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When SharpAPI detected the completion, ISO 8601: typically a few minutes after the event left the live feed, not the final whistle. Present only when `status` is `final`, for every key."
+          },
+          "result": {
+            "type": "object",
+            "description": "The final record of a finished event, the same shape on every sport. Present only when `status` is `final` and the key has the Game State add-on or Enterprise; absent otherwise, never null or zero-filled. `result_access` says which.",
+            "required": [
+              "event_id",
+              "sport",
+              "league",
+              "home_team",
+              "away_team",
+              "final_home_score",
+              "final_away_score",
+              "event_completed_at"
+            ],
+            "properties": {
+              "event_id": {
+                "type": "string"
+              },
+              "sport": {
+                "type": "string"
+              },
+              "league": {
+                "type": "string"
+              },
+              "home_team": {
+                "type": "string"
+              },
+              "away_team": {
+                "type": "string"
+              },
+              "final_home_score": {
+                "type": "integer",
+                "example": 2,
+                "description": "Home final score. A set count when `score_type` is `sets`."
+              },
+              "final_away_score": {
+                "type": "integer",
+                "example": 4,
+                "description": "Away final score. A set count when `score_type` is `sets`."
+              },
+              "winner": {
+                "type": "string",
+                "enum": [
+                  "home",
+                  "away",
+                  "draw"
+                ],
+                "description": "Omitted when the winner cannot be determined."
+              },
+              "score_type": {
+                "type": "string",
+                "enum": [
+                  "points",
+                  "sets"
+                ],
+                "description": "What the final scores count: `sets` for tennis, table tennis, volleyball and badminton, `points` for every other sport. Omitted on an older record whose scoring cannot be established."
+              },
+              "period_scores": {
+                "type": "object",
+                "description": "Final score per period, keyed by a sport-shaped period label (for example `Q1`..`Q4` and `OT`, `1H`/`2H`, innings, or `SETS`). Omitted when the source gave no breakdown.",
+                "additionalProperties": {
+                  "type": "object",
+                  "required": [
+                    "home",
+                    "away"
+                  ],
+                  "properties": {
+                    "home": {
+                      "type": "integer"
+                    },
+                    "away": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              "event_completed_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Same value as the event's `completed_at`."
+              }
+            }
+          },
+          "result_access": {
+            "type": "string",
+            "enum": [
+              "granted",
+              "requires_game_state_addon"
+            ],
+            "description": "Present only when `status` is `final` or `unconfirmed`. `granted`: the key has the Game State add-on or Enterprise, so `result` (on `final`) or `last_seen` (on `unconfirmed`) is included. `requires_game_state_addon`: that object is withheld for this key."
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "confirmed"
+            ],
+            "description": "`confirmed` on a `final` event whose result the live feed did not end itself: the game was held and its score was confirmed afterwards. Absent when the live feed showed the end of the game."
           },
           "last_seen": {
             "type": "object",
@@ -7125,6 +7302,7 @@
           "future_type",
           "sport",
           "league",
+          "start_date",
           "books_available",
           "selection_count",
           "odds_count"
@@ -7151,6 +7329,15 @@
             "type": "string",
             "description": "League id, as `GET /leagues` lists it.",
             "example": "nfl"
+          },
+          "start_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "The earliest start any sportsbook sends for this future, in UTC with whole seconds, or `null` when none sends one. A sportsbook dates a futures market by when it closes or when its event begins, so books can disagree; the earliest is shown, even once it has passed. Ask `GET /futures/odds` for one sportsbook to get that book's own date.",
+            "example": "2027-06-01T19:00:00Z"
           },
           "books_available": {
             "type": "array",
@@ -7273,6 +7460,7 @@
           "future_type",
           "sport",
           "league",
+          "start_date",
           "odds"
         ],
         "properties": {
@@ -7296,6 +7484,15 @@
           "league": {
             "type": "string",
             "example": "nfl"
+          },
+          "start_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "The earliest start among the sportsbooks the request names with `sportsbook` (all of them when it names none), in UTC with whole seconds, or `null` when none of them sends one. Name one sportsbook to get its own date. `team_id`, `selection` and `is_main` filter rows and do not change it.",
+            "example": "2027-06-01T19:00:00Z"
           },
           "odds": {
             "type": "array",

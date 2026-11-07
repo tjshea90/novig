@@ -68,6 +68,9 @@ A subscribe that names only `private` gets an empty `snapshot`.
 Events arrive in the `orders` field of a delta, as one batch with one `seq`.
 Within a batch, an order's `fill` events come before its `open`, `cancel`, or `reject`.
 
+Every event names the order's outcome and its `originalQty`, the number of contracts you placed.
+You can read each event on its own, without matching it to an earlier one.
+
 ```json theme={"dark"}
 {
   "ts": 1757894400456,
@@ -77,7 +80,10 @@ Within a batch, an order's `fill` events come before its `open`, `cancel`, or `r
     "deltas": [
       {
         "kind": "cancel",
-        "orderId": "7c9e6679-…"
+        "orderId": "7c9e6679-…",
+        "outcomeId": "3f2504e0-…",
+        "originalQty": 110,
+        "remaining": 70
       }
     ]
   }
@@ -95,6 +101,7 @@ Within a batch, an order's `fill` events come before its `open`, `cancel`, or `r
 >   "outcomeId": "3f2504e0-…",
 >   "price": "0.665",
 >   "qty": 110,
+>   "originalQty": 110,
 >   "tif": "GTC"
 > }
 > ```
@@ -102,6 +109,7 @@ Within a batch, an order's `fill` events come before its `open`, `cancel`, or `r
 > The order rests. **This event, not the `201`, confirms that the order rests.**
 >
 > `qty` is the resting quantity.
+> It's lower than `originalQty` when part of the order filled before it rested.
 >
 > `clientId` appears only when the placement sent one.
 > An order with an expiry also carries `expiresAt`, in Unix milliseconds.
@@ -117,6 +125,7 @@ Within a batch, an order's `fill` events come before its `open`, `cancel`, or `r
 >   "outcomeId": "3f2504e0-…",
 >   "price": "0.670",
 >   "qty": 40,
+>   "originalQty": 110,
 >   "remaining": 70,
 >   "taker": true
 > }
@@ -130,6 +139,8 @@ Within a batch, an order's `fill` events come before its `open`, `cancel`, or `r
 >
 > `price` is the traded price. It can be better than your limit.
 >
+> `qty` is the size of this fill. `remaining` is what still rests after it.
+>
 > `remaining: 0` means the order is `FILLED`.
 >
 > This event carries no fee.
@@ -142,9 +153,16 @@ Within a batch, an order's `fill` events come before its `open`, `cancel`, or `r
 > {
 >   "kind": "cancel",
 >   "orderId": "7c9e6679-…",
+>   "clientId": "0b3f5f20-…",
+>   "outcomeId": "3f2504e0-…",
+>   "originalQty": 110,
+>   "remaining": 70,
 >   "reason": "GO_LIVE"
 > }
 > ```
+>
+> `remaining` is what was still resting when the order left the book.
+> `originalQty` minus `remaining` is the quantity that filled.
 >
 > The event carries `reason` only when the engine states one: `GO_LIVE`, `MARKET_CLOSED`, `SETTLED`, or `NEUTRALIZED`.
 >
@@ -155,7 +173,10 @@ Within a batch, an order's `fill` events come before its `open`, `cancel`, or `r
 > ```json theme={"dark"}
 > {
 >   "kind": "reject",
->   "orderId": "7c9e6679-…"
+>   "orderId": "7c9e6679-…",
+>   "clientId": "0b3f5f20-…",
+>   "outcomeId": "3f2504e0-…",
+>   "originalQty": 110
 > }
 > ```
 >

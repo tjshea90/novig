@@ -4,7 +4,7 @@
 
 # Accept Quote
 
-> DEPRECATED: Use PUT /communications/rfqs/{rfq_id}/quotes/{quote_id}/accept instead. Endpoint for accepting a quote. This will require the quoter to confirm.
+> DEPRECATED: Use PUT /communications/rfqs/{rfq_id}/quotes/{quote_id}/accept instead.
 
 > [!WARNING]
 >
@@ -17,7 +17,7 @@
 openapi: 3.0.0
 info:
   title: Kalshi Trade API Manual Endpoints
-  version: 3.35.0
+  version: 3.36.0
   description: >-
     Manually defined OpenAPI spec for endpoints being migrated to spec-first
     approach
@@ -70,8 +70,7 @@ paths:
       summary: Accept Quote
       description: >-
         DEPRECATED: Use PUT
-        /communications/rfqs/{rfq_id}/quotes/{quote_id}/accept instead. Endpoint
-        for accepting a quote. This will require the quoter to confirm.
+        /communications/rfqs/{rfq_id}/quotes/{quote_id}/accept instead.
       operationId: AcceptQuote
       parameters:
         - $ref: '#/components/parameters/QuoteIdPath'

@@ -16,6 +16,84 @@ surface (`REST`, `WebSocket`, `FIX`) or exchange (`Predictions`, `Margin`).
 FIX API changes, previously tracked on a separate page, now live here under
 the `FIX` tag.
 
+**November 12, 2026**
+
+`GET /api_keys` now includes `key_type` (`rsa` or `ed25519`) on each supported key, including keys created before this change. The field is omitted when the algorithm is unknown.
+
+**November 12, 2026**
+
+Registered MCP clients can read margin balances, positions, orders, fills and risk (`GET /margin/balance`, `/margin/positions`, `/margin/orders`, `/margin/fills`, `/margin/risk`) using explicitly granted `read::mcp_portfolio` OAuth access. `GET /margin/risk` includes leverage and estimated liquidation prices. Existing grants of this scope include this access. These grants do not allow order execution or funding changes. `GET /margin/markets`, `/margin/markets/{ticker}` and `/margin/markets/{ticker}/orderbook` accept a resource-bound MCP grant for per-user rate accounting; their anonymous payloads remain unchanged.
+
+**November 12, 2026**
+
+Registered MCP clients can read settlements (`GET /portfolio/settlements`) using explicitly granted `read::mcp_portfolio` OAuth access. Existing grants of this scope include this access. Archived settlements remain outside this endpoint.
+
+**November 12, 2026**
+
+The margin `market_lifecycle_v2` channel now also sends `deactivated` when a
+market's trading hours end and `activated` when they begin. `is_deactivated`
+is true while the market is halted or outside its trading hours.
+
+**November 11, 2026**
+
+Margin market responses now include `minimum_quantity`, the minimum order quantity in contracts.
+
+**November 5, 2026**
+
+Markets created on demand for a request for quote, in series starting with
+`KXRFQ` (such as `KXRFQW` weather point markets), are left out of
+subscriptions that don't name markets. `trade` and `ticker` still deliver
+them to subscriptions that list the market in `market_tickers` (or
+`market_ids` for `ticker`). `market_lifecycle_v2` takes no market list, so it
+leaves them out entirely.
+
+**November 5, 2026**
+
+Markets that users create on demand for RFQs (series starting with `KXRFQ`,
+such as `KXRFQW` on-request weather markets) are left out of unscoped
+listings:
+
+* `GET /markets` and `GET /historical/markets` skip them unless the request
+  sets `series_ticker`, `event_ticker` or `tickers` to one of them.
+  `mve_filter=exclude` also skips them.
+* `GET /markets/trades` and `GET /historical/trades` skip their trades
+  unless the request sets `ticker`.
+
+Fetching one of these markets, events or series by ticker is unchanged.
+
+**TBD**
+
+Kalshi-cleared users need an approved stocks application to trade Equities
+markets. Without one, an order or amend on an Equities market is rejected
+with `stock_perps_application_required`, unless the order is reduce-only.
+Reduce-only orders still go through, so existing positions can be closed.
+Self-clearing accounts are not affected.
+
+**November 5, 2026**
+
+The Perps price band changes sides. It no longer limits how far an order
+may rest from its own side of the book. Instead it limits how far an order
+may cross the other side:
+
+* A bid is rejected above the higher of twice the best ask or the best ask
+  plus 1,000 ticks.
+* An ask is rejected below the lower of half the best bid or the best bid
+  minus 1,000 ticks.
+
+When the other side of the book is empty, there is no limit. Rejected orders
+and amends return `invalid price`, as before. Orders that sweep the book with
+a far limit price, for example a bid at `1000.00` into a best ask of `10.00`,
+now fail and should carry a limit within the band. See
+[Price Banding](https://docs.kalshi.com/margin/price-banding.md).
+
+**November 5, 2026**
+
+Market positions from `GET /portfolio/positions`, `GET /historical/positions`
+and `GET /fcm/positions` now include `netting_enabled`, showing whether
+netting applies to the position's event. It is fixed at the subaccount's
+first order in the event, so it can differ from the subaccount's current
+netting setting.
+
 **November 5, 2026**
 
 `no_sub_title` on markets (REST) and in `market_lifecycle_v2` and

@@ -59,9 +59,22 @@ These positions use Polymarket Protocol V2 rather than the Conditional Tokens Fr
 
 ## Resolution
 
-For normal binary outcomes, a combinatorial YES position pays out only if every
-leg wins. If any leg loses, the corresponding combinatorial NO position pays
-out.
+A combinatorial YES position pays the product of its legs' payouts. A leg that
+wins pays `1`, a leg that loses pays `0`, and a leg whose market
+[resolves 50/50](https://docs.polymarket.com/concepts/resolution.md) pays `0.5`. The matching NO position pays
+`1` minus the YES payout.
+
+| Leg Results | YES Payout per Token | NO Payout per Token |
+| - | - | - |
+| Every leg wins | \$1.00 | \$0.00 |
+| Any leg loses | \$0.00 | \$1.00 |
+| One leg resolves 50/50, others win | \$0.50 | \$0.50 |
+| Two legs resolve 50/50, others win | \$0.25 | \$0.75 |
+
+A leg that resolves 50/50 stays in the combination. It is not dropped, so a YES
+position bought above its final payout returns less than it cost. Whether a
+canceled or postponed event resolves 50/50 depends on the rules of that leg's
+market.
 
 If some legs are already resolved and others remain open, the position can be
 compressed into a simpler position that keeps only the unresolved legs and

@@ -8,6 +8,62 @@
 
 Notable changes to the Polymarket Perps API.
 
+**Nov 5, 2026**
+
+Address book on withdrawals, trading-key self-delete, and batched market reads
+
+No removed endpoints, routes, or fields. Two behaviour changes to check before
+the deploy: the withdrawal address book is enforced on withdrawals and internal
+transfers, and a trading key can now delete itself. Everything else is additive.
+
+**Changed**
+
+* **Withdrawals and internal transfers.** The Polymarket address book now
+  applies to `POST /v1/account/withdraw` and
+  `POST /v1/account/internal-transfer`. Owners who have enrolled in the address
+  book can withdraw only to an active address-book entry, and cannot transfer
+  to accounts outside their own account group. Transfers between their own
+  accounts are unaffected. A refused destination returns `403`
+  `withdrawal_not_allowlisted`. Every withdrawal looks up the address book. If
+  that lookup fails, the request returns `503` `address_book_unavailable` with
+  `Retry-After: 1`. Nothing was submitted. Retry `address_book_unavailable`
+  with backoff. Treat `withdrawal_not_allowlisted` as final until the
+  destination is added to the book.
+* **Trading-key self-delete.** `DELETE /v1/account/proxy` can now be signed by
+  the key being deleted. The request format is unchanged. Self-delete is
+  refused for 60 seconds after the key is registered or rotated:
+  `422` `proxy_registration_newer_than_signature`. Wait, then sign a fresh
+  request. A key with no recorded registration time is refused with `422`
+  `proxy_registration_timestamp_missing`. The owner can still delete it. The
+  owner deleting a different key works as before, immediately.
+
+**Added**
+
+* **Batched market snapshots.** `GET /v1/info/markets` takes `instrument_ids`
+  (up to 50), `curated_list`, and `include=sparkline,totals`. It returns
+  `{ markets, totals? }`. Request weight is 2.
+* **Unqualified competition traders.** Add `include_unqualified=true` to
+  `GET /v1/info/competition/leaderboard`. Without the parameter, the output is
+  unchanged.
+* **Portfolio sequencing fields.** `GET /v1/account/portfolio` adds
+  `sequence`, and each position adds `sequence` and `share_unit_version` (`0`
+  before any split). Accept unknown fields.
+* **Stock-split read surfaces.** `GET /v1/info/stock-splits`, authenticated
+  `GET /v1/account/trade-history`, and the WebSocket channels
+  `corporate-actions::<instrument_id>` and private `trade-history`. All are
+  empty until a split is scheduled.
+
+**Clarified**
+
+* New error identifiers for withdrawals, address-book lookup, and proxy
+  self-delete are documented on [Errors](https://docs.polymarket.com/perps/errors.md).
+
+**Rollout**
+
+Order placement pauses during the window and cancels keep working. Retail
+WebSocket connections drop when the gateway restarts; reconnect and
+resubscribe.
+
 **Oct 29, 2026**
 
 24h statistics open price, per-market fees and funding, pre-IPO category

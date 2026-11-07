@@ -285,7 +285,7 @@ MCP: https://pinnwire.com/mcp?key=YOUR_KEY</code></pre>
 data: {"type":"connected","id":"…"}
 data: [{"home":"…","away":"…","sect":"Spread","from_price":2.24,
         "to_price":2.21,"drop_pct":1.34,"nvp":2.385,"is_live":true,…}]</code></pre>
-<p class="note">Frames are JSON arrays of drop objects (same shape as /api/drops). <code>min_drop=N</code> overrides the default 5% threshold per connection — floor 1%, no upper cap. Keep-alive comments (<code>:ka</code>) every 25 s — ignore them.</p>
+<p class="note">Frames are JSON arrays of drop objects (same shape as /api/drops). <code>min_drop=N</code> overrides the default 5% threshold per connection — floor 1%, no upper cap. Keep-alive comments (<code>:ka</code>) every 25 s — ignore them. Open streams are rechecked every 60&nbsp;s: a revoked or expired key, or a plan without SSE, gets <code>{"type":"disconnected","reason":"invalid_key"}</code> (or <code>"plan_lacks_sse"</code>) and the stream closes.</p>
 </section>
 
 <section id="ssepre">
@@ -311,7 +311,7 @@ curl -N "https://pinnwire.com/odds-drop-prematch?key=YOUR_KEY&amp;recheck=30&amp
 <tr><th>Close</th><th>Reason</th><th>Meaning</th></tr>
 <tr><td>1001</td><td><code>evicted by newer connection</code></td><td>One connection per key — a second one evicts the first</td></tr>
 <tr><td>1001</td><td><code>stale</code></td><td>No pong for ~75 s</td></tr>
-<tr><td>1008</td><td><code>no subscribe</code> / invalid key / plan lacks ws</td><td>Fix and reconnect</td></tr>
+<tr><td>1008</td><td><code>no subscribe</code> / invalid key / plan lacks ws</td><td>Fix and reconnect. Open connections are rechecked every 60&nbsp;s — a revoked or expired key, or a plan that lost the WebSocket, gets the same error frame and close</td></tr>
 <tr><td>1011</td><td><code>deregistered: slow_consumer</code></td><td>Client fell &gt;32 MB behind — read faster or subscribe to less, then reconnect with backoff</td></tr>
 <tr><td>1013</td><td><code>reconnect rate limited</code></td><td>Reconnect loop: more than 6 new connections in a few minutes or 50 a day (SSE: 30 / 250). Wait <code>retry_after_s</code> from the error frame; an open connection is never touched</td></tr>
 </table>
@@ -358,7 +358,7 @@ curl -N "https://pinnwire.com/odds-drop-prematch?key=YOUR_KEY&amp;recheck=30&amp
 <tr><td>Scale</td><td>$219/mo</td><td>30 req/s</td><td>✓</td><td>add-on</td></tr>
 <tr><td>Raw WebSocket</td><td>+$89/mo</td><td colspan="3">adds the real-time WebSocket on Pro, Pro&nbsp;+&nbsp;Drops and Scale (not on Trial or Drops)</td></tr>
 </table>
-<p class="note">Every plan: all 13 sports, live + prematch, full line depth, specials. Buy directly at <a href="/#pricing">pinnwire.com/#pricing</a> (card checkout) — questions: <a href="/cdn-cgi/l/email-protection#f48795989187b4849d9a9a839d8691da979b99"><span class="__cf_email__" data-cfemail="cebdafa2abbd8ebea7a0a0b9a7bcabe0ada1a3">[email&#160;protected]</span></a>.</p>
+<p class="note">Every plan: all 13 sports, live + prematch, full line depth, specials. Buy directly at <a href="/#pricing">pinnwire.com/#pricing</a> (card checkout) — questions: <a href="/cdn-cgi/l/email-protection#b6c5d7dad3c5f6c6dfd8d8c1dfc4d398d5d9db"><span class="__cf_email__" data-cfemail="97e4f6fbf2e4d7e7fef9f9e0fee5f2b9f4f8fa">[email&#160;protected]</span></a>.</p>
 </section>
 
 </main>

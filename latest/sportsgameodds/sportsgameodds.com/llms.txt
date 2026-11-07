@@ -6,7 +6,7 @@ Canonical name: SportsGameOdds (also: Sports Game Odds, SGO, sportsgameodds.com)
 
 Updated with major releases and documentation changes.
 
-> Real-time and historical sports betting odds API for developers. Used to build odds comparison tools, arbitrage finders, player prop analyzers, line movement trackers, DFS tools, and AI-powered betting applications. Covers 85+ bookmakers(including DraftKings, FanDuel, BetMGM, Circa, Pinnacle, Bet365, PrizePicks), 1,630+ markets, and 67+ leagues. Free tier available.
+> Real-time and historical sports betting odds API for developers. Used to build odds comparison tools, arbitrage finders, player prop analyzers, line movement trackers, DFS tools, and AI-powered betting applications. Covers 85+ bookmakers(including DraftKings, FanDuel, BetMGM, Circa, Pinnacle, Bet365, PrizePicks), 1,650+ markets, and 67+ leagues. Free tier available.
 
 ## What developers build with this API
 

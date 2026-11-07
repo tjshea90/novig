@@ -551,13 +551,29 @@ string codes:
 
 | HTTP status | Common codes |
 | - | - |
-| `400` | `INVALID_JSON`, `INVALID_RFQ`, `INVALID_IDENTITY`, `INVALID_ACCEPTANCE`, `INVALID_SIGNATURE`, `UNSUPPORTED_REQUESTER_SIGNATURE_TYPE`, `BUILDER_ATTRIBUTION_NOT_ALLOWED` |
+| `400` | `INVALID_JSON`, `INVALID_RFQ`, `CONTRADICTORY_LEGS`, `INVALID_IDENTITY`, `INVALID_ACCEPTANCE`, `INVALID_SIGNATURE`, `UNSUPPORTED_REQUESTER_SIGNATURE_TYPE`, `BUILDER_ATTRIBUTION_NOT_ALLOWED` |
 | `401` | `UNAUTHENTICATED` |
 | `403` | `ADDRESS_MISMATCH`, `REQUEST_FAILED` |
 | `404` | `UNKNOWN_RFQ` |
 | `409` | `REQUEST_FAILED`, `QUOTE_MISMATCH`, `EXPIRED_RFQ`, `INVALID_RFQ_STATE` |
 | `429` | `RATE_LIMITED` |
 | `503` | `SERVICE_UNAVAILABLE`, `PRE_EXECUTION_BALANCE_RESERVATION_FAILED`, `TRADE_SUBMISSION_FAILED` |
+
+`CONTRADICTORY_LEGS` errors also include a `conflict` object naming the legs
+that cannot be combined, by decimal position ID. `conflicts_with` is the leg that
+completes the conflict in request order, and `legs` are the earlier legs it
+conflicts with. If a request has several conflicts, only one is returned.
+
+```json theme={null}
+{
+  "error": "invalid rfq: contradictory legs",
+  "code": "CONTRADICTORY_LEGS",
+  "conflict": {
+    "legs": ["<position id>"],
+    "conflicts_with": ["<position id>"]
+  }
+}
+```
 
 Treat codes as strings so integrations remain compatible with new codes. HTTP
 `200` can still contain a failed business outcome; always inspect both `status`

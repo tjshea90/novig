@@ -57,6 +57,7 @@ We also pass over a quote in these cases:
 
 * Its `max_wager` is below the user's `min_wager`, or below \$10, whichever is higher.
 * Your LP account's cash balance can't cover your collateral for the full `max_wager`.
+* You rejected or missed a last look on the same legs in the past 2 minutes, and no game in the parlay has started.
 
 Your collateral is the money you put up against the user's stake.
 

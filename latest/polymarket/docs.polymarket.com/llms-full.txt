@@ -9,43 +9,31 @@ The response reflects the most recent tier refresh, so a change in volume can
 take up to three hours to appear.
 
 
-
-
 # Get event by id
 Source: https://docs.polymarket.com/api-reference/events/get-event-by-id
 
 /api-spec/gamma-openapi.yaml get /events/{id}
-
-
 
 # Get event by slug
 Source: https://docs.polymarket.com/api-reference/events/get-event-by-slug
 
 /api-spec/gamma-openapi.yaml get /events/slug/{slug}
 
-
-
 # Get event tags
 Source: https://docs.polymarket.com/api-reference/events/get-event-tags
 
 /api-spec/gamma-openapi.yaml get /events/{id}/tags
-
-
 
 # List events
 Source: https://docs.polymarket.com/api-reference/events/list-events
 
 /api-spec/gamma-openapi.yaml get /events
 
-
-
 # List events (keyset pagination)
 Source: https://docs.polymarket.com/api-reference/events/list-events-keyset-pagination
 
 /api-spec/gamma-openapi.yaml get /events/keyset
 Returns events using cursor-based (keyset) pagination for stable, efficient paging through large result sets. Use `next_cursor` from each response as `after_cursor` in the next request. The `offset` parameter is explicitly rejected; use `after_cursor` instead.
-
-
 
 
 # Geographic Restrictions
@@ -513,8 +501,6 @@ in the background, never computed on the request: `computed_at` and
 outage shows up as a growing age rather than a 500. Before the first refresh
 lands there is nothing to serve and this answers `503`; "not measured yet"
 and "measured, no lag" are different claims.
-
-
 
 # CLOB Trading Rate Limits
 Source: https://docs.polymarket.com/api-reference/trading-rate-limits
@@ -5088,17 +5074,15 @@ markets can resolve YES.
 >   "archived": false
 > }
 > ```
->
-> Where:
->
-> | Field | Type | Description |
-> | - | - | - |
-> | `active` | boolean | Market is deployed and not archived. |
-> | `closed` | boolean | Market has resolved or been closed, so no further trading is possible. |
-> | `acceptingOrders` | boolean | Order book is open for new limit and market orders. |
-> | `negRisk` | boolean | Market belongs to a [negative-risk group](/concepts/negative-risk). |
-> | `restricted` | boolean | Market is geo-restricted for some jurisdictions. |
-> | `archived` | boolean | Market is archived and read-only: no trading, no resolution updates. |
+
+| Field | Type | Description |
+| - | - | - |
+| `active` | boolean | Market is deployed and not archived. |
+| `closed` | boolean | Market has resolved or been closed, so no further trading is possible. |
+| `acceptingOrders` | boolean | Order book is open for new limit and market orders. |
+| `negRisk` | boolean | Market belongs to a [negative-risk group](/concepts/negative-risk). |
+| `restricted` | boolean | Market is geo-restricted for some jurisdictions. |
+| `archived` | boolean | Market is archived and read-only: no trading, no resolution updates. |
 
 ### Identify Augmented Negative Risk
 
@@ -9487,6 +9471,10 @@ market's order book and trading state.
 >
 > These frames update only the outcome set for the current market-stream
 > connection.
+>
+> `"initial_dump": false` only skips snapshots on the opening `market` frame. A
+> subsequent `subscribe` frame ignores it and always sends a `book` snapshot for
+> each outcome ID it adds.
 
 ## Sports Stream
 
@@ -9752,6 +9740,7 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 > >       dropped?: number;
 > >       payload: {
 > >         symbol: string;
+> >         source: PriceSource;
 > >         data: { timestamp: EpochMilliseconds; value: DecimalString }[];
 > >       };
 > >     }
@@ -9763,6 +9752,7 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 > >       dropped?: number;
 > >       payload: {
 > >         symbol: string;
+> >         source: PriceSource;
 > >         timestamp: EpochMilliseconds;
 > >         value: DecimalString;
 > >         receivedAt: EpochMilliseconds | undefined;
@@ -9780,6 +9770,7 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 > >     "seq": 1,
 > >     "payload": {
 > >       "symbol": "btcusd",
+> >       "source": "chainlink",
 > >       "data": [
 > >         {
 > >           "timestamp": 1788886057000,
@@ -9803,6 +9794,7 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 > >     "seq": 5,
 > >     "payload": {
 > >       "symbol": "btcusd",
+> >       "source": "chainlink",
 > >       "timestamp": 1788886177000,
 > >       "value": "78794.15450441"
 > >     }
@@ -9844,10 +9836,12 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 > >
 > > class RealtimePriceSnapshot:
 > >     symbol: str
+> >     source: PriceSource
 > >     data: tuple[RealtimePricePoint, ...]
 > >
 > > class RealtimePriceUpdate:
 > >     symbol: str
+> >     source: PriceSource
 > >     timestamp: datetime
 > >     value: Decimal
 > >     received_at: datetime | None
@@ -9881,7 +9875,8 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 > >   "payload": {
 > >     "timestamp": "2026-09-08T16:49:37Z",
 > >     "value": "78794.15450441",
-> >     "symbol": "btcusd"
+> >     "symbol": "btcusd",
+> >     "source": "chainlink"
 > >   }
 > > }
 > > ```
@@ -10647,6 +10642,19 @@ A time-weighted average price (TWAP) represents an asset's price across a lookba
 > >   }
 > > ]
 > > ```
+
+## Reference Price Providers
+
+Provider availability depends on the symbol and feed. Use this table when choosing a reference-price source.
+
+| Provider | Feeds | Quirks |
+| - | - | - |
+| Chainlink | Crypto spot, supported equity spot, and 60-second TWAP | Default wherever it serves the symbol. TWAP feeds are Chainlink-only. Equity products can trade around the clock, so their market status can differ from exchange-session feeds. |
+| Pyth | Supported crypto and equity spot symbols | Availability varies by symbol. A requested provider that cannot serve the symbol falls back to its default provider. |
+| Binance | Crypto spot only | Uses canonical symbols such as `btcusd` for USDT spot closes. Not available for equity or TWAP feeds. |
+| Massive | Equity spot | Can appear as the served source, but cannot be requested explicitly. Its exchange-session market status can differ from continuous-hours products. |
+
+A provider preference may be ignored when provider selection is disabled. Check the source returned with snapshots and live updates, including after reconnecting, rather than assuming the requested provider was selected.
 
 
 # Migrate from Legacy SDKs to Unified SDKs
@@ -13332,7 +13340,7 @@ Update the connection, authentication, and subscription frames. See the [Live Da
 
 | RTDS topic | RTDS filter | PolyBolt channel | PolyBolt filter | Notes |
 | - | - | - | - | - |
-| `crypto_prices` (Binance) | `btcusdt` | `price.crypto` | `{"symbol":"btcusd"}` | Source changes to Chainlink by default and quote currency changes from USDT to USD. |
+| `crypto_prices` (Binance) | `btcusdt` | `price.crypto` | `{ "symbol": "btcusd", "provider": "binance" }` | Request Binance with the canonical `btcusd` symbol. |
 | `crypto_prices_chainlink` | `{"symbol":"btc/usd"}` | `price.crypto` | `{"symbol":"btcusd"}` | Source stays Chainlink, the `price.crypto` default. Use `btcusd` instead of `btc/usd`. |
 | `crypto_prices_twap_sixty` | `{"symbol":"btc/usd"}` | `price.crypto.twap` | `{"symbol":"btcusd","window_seconds":60}` | 60-second Chainlink TWAP |
 | `crypto_prices_twap_thirty` | `{"symbol":"btc/usd"}` | None | None | No PolyBolt replacement for the 30-second window |
@@ -13370,7 +13378,7 @@ price. Do not apply that E18 conversion to PolyBolt's decimal string.
 
 ```json PolyBolt theme={null}
 { "op": "auth", "auth": { "apiKey": "<api key>", "secret": "<api secret>", "passphrase": "<api passphrase>" } }
-{ "op": "subscribe", "subscriptions": [ { "channel": "price.crypto", "filter": { "symbol": "btcusd" } } ] }
+{ "op": "subscribe", "subscriptions": [ { "channel": "price.crypto", "filter": { "symbol": "btcusd", "provider": "binance" } } ] }
 ```
 
 ### Client Checklist
@@ -13666,7 +13674,7 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 >
 > Use the authenticated `client` created above. Change the symbol suffix from `usdt` to `usd`, for example `btcusdt` to `btcusd`. Remove any slash separators, for example `btc/usd` to `btcusd`. The new topic requires explicit lowercase USD symbols.
 >
-> The `prices.crypto` topic defaults to Chainlink prices, so migrating from the legacy Chainlink spot topic keeps the data source. Migrating from Binance changes both the source and the quote currency, from USDT to USD. Confirm that the new feed meets your pricing requirements before switching.
+> Set `provider: PriceProvider.Binance` to request Binance prices. Omit `provider` to use the default. Check `event.payload.source` for the provider actually served.
 >
 > > [accordion] Before: RTDS
 > >
@@ -13693,8 +13701,14 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 > Replace the legacy subscription with:
 >
 > ```ts theme={null}
+> import { PriceProvider } from "@polymarket/client";
+>
 > const stream = await client.subscribe([
->   { topic: "prices.crypto", symbols: ["btcusd"] },
+>   {
+>     topic: "prices.crypto",
+>     symbols: ["btcusd"],
+>     provider: PriceProvider.Binance,
+>   },
 > ]);
 > try {
 >   for await (const event of stream) {
@@ -13798,7 +13812,7 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 > > ]
 > > ```
 >
-> Replace `CryptoPricesSpec` with `CryptoPriceSpec` and choose USD prices explicitly. Binance `btcusdt` is quoted in USDT; `btcusd` is quoted in USD and defaults to Chainlink, so migrating from the legacy Chainlink spot topic keeps the source while migrating from Binance changes it. Confirm the feed fits your pricing requirements.
+> Replace `CryptoPricesSpec` with `CryptoPriceSpec`. Set `provider="binance"` to request Binance prices. Omit `provider` to use the default. Check `event.payload.source` for the provider actually served.
 >
 > Replace the legacy call with this subscription:
 >
@@ -13806,7 +13820,7 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 > from polymarket.streams import CryptoPriceSpec
 >
 > async with await client.subscribe(
->     CryptoPriceSpec(symbols=["btcusd"])
+>     CryptoPriceSpec(symbols=["btcusd"], provider="binance")
 > ) as stream:
 >     async for event in stream:
 >         # event: CryptoPriceEvent
@@ -19466,6 +19480,30 @@ the request may still be pending, or another adjustment may explain the change.
 Do not sign another adjustment for the same account until the original outcome
 has been confirmed out of band. No public endpoint currently reports that
 request's terminal outcome.
+
+## Withdrawal and Internal Transfer Errors
+
+Returned on `POST /v1/account/withdraw` and `POST /v1/account/internal-transfer`
+when the Polymarket address book rejects or cannot be reached.
+
+| Error | HTTP status | Condition |
+| - | - | - |
+| `withdrawal_not_allowlisted` | `403` | The destination is not an active address-book entry, or an enrolled owner attempted a transfer outside their account group. |
+| `address_book_unavailable` | `503` | The address-book lookup failed before submission. The request was not submitted. Retry with backoff and honor `Retry-After: 1` when present. |
+
+Treat `withdrawal_not_allowlisted` as final until the destination is allowlisted.
+For `address_book_unavailable`, retry with backoff; do not assume the transfer or
+withdrawal executed.
+
+## Proxy Management Errors
+
+Returned on `DELETE /v1/account/proxy` when a trading key self-delete is refused.
+The owner deleting a different key is unchanged.
+
+| Error | HTTP status | Condition |
+| - | - | - |
+| `proxy_registration_newer_than_signature` | `422` | Self-delete within 60 seconds of registering or rotating the key. Wait, then sign a fresh request. |
+| `proxy_registration_timestamp_missing` | `422` | Self-delete for a key with no recorded registration time. The owner can still delete the key. |
 
 ## WebSocket Errors
 
@@ -28682,6 +28720,9 @@ quantity after earlier fills.
 >
 > | Status | Meaning |
 > | - | - |
+> | `PerpsOrderStatus.Cancelled` | You canceled the order. |
+> | `PerpsOrderStatus.AutoCancelled` | An expired [auto-cancel](#auto-cancel-orders) schedule canceled the order. |
+> | `PerpsOrderStatus.OrderExpired` | The order reached its expiry time and was removed. |
 > | `PerpsOrderStatus.OrderAlreadyTerminal` | A cancellation found that the order had already finished. |
 > | `PerpsOrderStatus.SweepCapExceeded` | Matching reached the per-sweep fill limit; the remainder was canceled. |
 > | `PerpsOrderStatus.RestingOrderLimitExceeded` | The account's resting-order limit prevented the remainder from resting. |
@@ -28691,6 +28732,9 @@ quantity after earlier fills.
 > | `PerpsOrderStatus.InstrumentSettled` | The instrument permanently settled and remaining orders were canceled. |
 > | `PerpsOrderStatus.InsufficientMarginAtFill` | A fill-time check found insufficient initial margin. |
 > | `PerpsOrderStatus.MarkPriceUnavailable` | A fill-time check could not price opening exposure without a fresh mark. |
+> | `PerpsOrderStatus.ZeroQuantity` | The order had zero quantity. |
+> | `PerpsOrderStatus.DuplicateOrder` | An order with the same ID already exists. |
+> | `PerpsOrderStatus.OrderNotFound` | The referenced order was not on the book. |
 
 > [tab] Python
 >
@@ -28709,6 +28753,9 @@ quantity after earlier fills.
 >
 > | Status | Meaning |
 > | - | - |
+> | `cancelled` | You canceled the order. |
+> | `auto_cancelled` | An expired [auto-cancel](#auto-cancel-orders) schedule canceled the order. |
+> | `order_expired` | The order reached its expiry time and was removed. |
 > | `order_already_terminal` | A cancellation found that the order had already finished. |
 > | `sweep_cap_exceeded` | Matching reached the per-sweep fill limit; the remainder was canceled. |
 > | `resting_order_limit_exceeded` | The account's resting-order limit prevented the remainder from resting. |
@@ -28718,6 +28765,9 @@ quantity after earlier fills.
 > | `instrument_settled` | The instrument permanently settled and remaining orders were canceled. |
 > | `insufficient_margin_at_fill` | A fill-time check found insufficient initial margin. |
 > | `mark_price_unavailable` | A fill-time check could not price opening exposure without a fresh mark. |
+> | `zero_quantity` | The order had zero quantity. |
+> | `duplicate_order` | An order with the same ID already exists. |
+> | `order_not_found` | The referenced order was not on the book. |
 
 > [tab] API
 >
@@ -28736,6 +28786,9 @@ quantity after earlier fills.
 >
 > | Status | Meaning |
 > | - | - |
+> | `cancelled` | You canceled the order. |
+> | `auto_cancelled` | An expired [auto-cancel](#auto-cancel-orders) schedule canceled the order. |
+> | `order_expired` | The order reached its expiry time and was removed. |
 > | `order_already_terminal` | A cancellation found that the order had already finished. |
 > | `sweep_cap_exceeded` | Matching reached the per-sweep fill limit; the remainder was canceled. |
 > | `resting_order_limit_exceeded` | The account's resting-order limit prevented the remainder from resting. |
@@ -28745,6 +28798,9 @@ quantity after earlier fills.
 > | `instrument_settled` | The instrument permanently settled and remaining orders were canceled. |
 > | `insufficient_margin_at_fill` | A fill-time check found insufficient initial margin. |
 > | `mark_price_unavailable` | A fill-time check could not price opening exposure without a fresh mark. |
+> | `zero_quantity` | The order had zero quantity. |
+> | `duplicate_order` | An order with the same ID already exists. |
+> | `order_not_found` | The referenced order was not on the book. |
 
 ## Trading Fees
 
@@ -29820,6 +29876,21 @@ markets that settle on TWAP.
 ## Methodology
 
 Liquidity providers are rewarded based on a formula that rewards participation in markets, boosts two-sided depth (single-sided orders still score), and tighter spread vs the size-cutoff-adjusted midpoint. Each market configures a max spread and min size cutoff within which orders are considered. The average of rewards earned is determined by the relative share of each participant's Q<sub>n</sub> in market m.
+
+### Minimum Order Age
+
+On most markets, an order counts toward rewards as soon as it rests on the book.
+
+Markets with a taker delay are the exception. On these markets, a marketable
+order waits for the delay before it can match, so a resting order counts toward
+rewards only after it has rested for the same delay. An order cannot earn
+rewards before a taker could fill it.
+
+* **Sports markets with a scheduled game start:** the delay, and so the minimum
+  age, applies only after the game starts. Before the start, orders count as
+  soon as they rest.
+* **Crypto and finance markets:** the short taker delay on these markets does
+  not set a minimum age. Orders count as soon as they rest.
 
 ### Variables
 
@@ -31420,8 +31491,8 @@ type.
 
 **400** `Bad Request`
 
-`Invalid signature_type` — The `signature_type` parameter must be `EOA`,
-`POLY_PROXY`, or `GNOSIS_SAFE`.
+`Invalid signature_type` — The `signature_type` parameter must be `0` (EOA),
+`1` (POLY\_PROXY), `2` (POLY\_GNOSIS\_SAFE) or `3` (POLY\_1271, Deposit Wallet).
 
 ***
 
@@ -32646,6 +32717,24 @@ SELL request specifies the number of Combo shares to sell.
 > For BUY quotes, `net_receive_e6` is the number of Combo shares received. For SELL
 > quotes, it is the exact collateral proceeds after fees; use it instead of
 > deriving proceeds from the blended price.
+>
+> A request whose legs cannot be combined fails with HTTP `400` and code
+> `CONTRADICTORY_LEGS`. The `conflict` object names the conflicting legs by
+> decimal position ID, so you can show users which legs to change.
+> `conflicts_with` is the leg that completes the conflict in request order, and
+> `legs` are the earlier legs it conflicts with. If a request has several
+> conflicts, only one is returned.
+>
+> ```json theme={null}
+> {
+>   "error": "invalid rfq: contradictory legs",
+>   "code": "CONTRADICTORY_LEGS",
+>   "conflict": {
+>     "legs": ["<position id>"],
+>     "conflicts_with": ["<position id>"]
+>   }
+> }
+> ```
 >
 > **3. Accept the Quote**
 >
@@ -38718,13 +38807,29 @@ string codes:
 
 | HTTP status | Common codes |
 | - | - |
-| `400` | `INVALID_JSON`, `INVALID_RFQ`, `INVALID_IDENTITY`, `INVALID_ACCEPTANCE`, `INVALID_SIGNATURE`, `UNSUPPORTED_REQUESTER_SIGNATURE_TYPE`, `BUILDER_ATTRIBUTION_NOT_ALLOWED` |
+| `400` | `INVALID_JSON`, `INVALID_RFQ`, `CONTRADICTORY_LEGS`, `INVALID_IDENTITY`, `INVALID_ACCEPTANCE`, `INVALID_SIGNATURE`, `UNSUPPORTED_REQUESTER_SIGNATURE_TYPE`, `BUILDER_ATTRIBUTION_NOT_ALLOWED` |
 | `401` | `UNAUTHENTICATED` |
 | `403` | `ADDRESS_MISMATCH`, `REQUEST_FAILED` |
 | `404` | `UNKNOWN_RFQ` |
 | `409` | `REQUEST_FAILED`, `QUOTE_MISMATCH`, `EXPIRED_RFQ`, `INVALID_RFQ_STATE` |
 | `429` | `RATE_LIMITED` |
 | `503` | `SERVICE_UNAVAILABLE`, `PRE_EXECUTION_BALANCE_RESERVATION_FAILED`, `TRADE_SUBMISSION_FAILED` |
+
+`CONTRADICTORY_LEGS` errors also include a `conflict` object naming the legs
+that cannot be combined, by decimal position ID. `conflicts_with` is the leg that
+completes the conflict in request order, and `legs` are the earlier legs it
+conflicts with. If a request has several conflicts, only one is returned.
+
+```json theme={null}
+{
+  "error": "invalid rfq: contradictory legs",
+  "code": "CONTRADICTORY_LEGS",
+  "conflict": {
+    "legs": ["<position id>"],
+    "conflicts_with": ["<position id>"]
+  }
+}
+```
 
 Treat codes as strings so integrations remain compatible with new codes. HTTP
 `200` can still contain a failed business outcome; always inspect both `status`
@@ -43053,9 +43158,22 @@ These positions use Polymarket Protocol V2 rather than the Conditional Tokens Fr
 
 ## Resolution
 
-For normal binary outcomes, a combinatorial YES position pays out only if every
-leg wins. If any leg loses, the corresponding combinatorial NO position pays
-out.
+A combinatorial YES position pays the product of its legs' payouts. A leg that
+wins pays `1`, a leg that loses pays `0`, and a leg whose market
+[resolves 50/50](/concepts/resolution) pays `0.5`. The matching NO position pays
+`1` minus the YES payout.
+
+| Leg Results | YES Payout per Token | NO Payout per Token |
+| - | - | - |
+| Every leg wins | \$1.00 | \$0.00 |
+| Any leg loses | \$0.00 | \$1.00 |
+| One leg resolves 50/50, others win | \$0.50 | \$0.50 |
+| Two legs resolve 50/50, others win | \$0.25 | \$0.75 |
+
+A leg that resolves 50/50 stays in the combination. It is not dropped, so a YES
+position bought above its final payout returns less than it cost. Whether a
+canceled or postponed event resolves 50/50 depends on the rules of that leg's
+market.
 
 If some legs are already resolved and others remain open, the position can be
 compressed into a simpler position that keeps only the unresolved legs and
@@ -46552,7 +46670,11 @@ Follow the timeline for a wallet across trades and other activity.
 > >   | DepositActivity
 > >   | WithdrawalActivity
 > >   | TakerRebateActivity
-> >   | TipActivity;
+> >   | TipActivity
+> >   | DirectionalSplitActivity
+> >   | DirectionalMergeActivity
+> >   | ThresholdComposeActivity
+> >   | ThresholdDecomposeActivity;
 > > ```
 > >
 > > ```json Activity Example theme={null}
@@ -46641,6 +46763,10 @@ Follow the timeline for a wallet across trades and other activity.
 > >     | YieldActivity
 > >     | MigrationActivity
 > >     | TipActivity
+> >     | DirectionalSplitActivity
+> >     | DirectionalMergeActivity
+> >     | ThresholdComposeActivity
+> >     | ThresholdDecomposeActivity
 > >     | UnknownActivity
 > > )
 > > ```
@@ -48699,8 +48825,6 @@ the series. `volume` is in SHARES; see `/v2/builders/leaderboard`.
 Not paginated: `data` is the array with no `pagination`, the `/v2/oi` shape.
 Rows arrive newest bucket first, ranked within each.
 
-
-
 # Get the builders leaderboard
 Source: https://docs.polymarket.com/api-reference/boards/get-the-builders-leaderboard
 
@@ -48720,8 +48844,6 @@ silent re-point, since an offset from one board means nothing on another.
 
 `builder` is a display name that falls back to `builder_code` for a builder
 with no profile, so key on `builder_code` and render `builder`.
-
-
 
 # Get the trader leaderboard
 Source: https://docs.polymarket.com/api-reference/boards/get-the-trader-leaderboard
@@ -48750,8 +48872,6 @@ Finite windows (day/week/month) serve the MARKED equity change net of
 flows; they move with unrealized marks; `all` is the realized-only
 lifetime ledger. `volume` is in shares, not USDC.
 
-
-
 # List the biggest wins
 Source: https://docs.polymarket.com/api-reference/boards/list-the-biggest-wins
 
@@ -48770,8 +48890,6 @@ Combo wins are first-class rows here, tagged `kind = "combo"`. They carry a
 and `event_slug` empty; so **branch on `kind` before building an event
 link**.
 
-
-
 # Get combo markets
 Source: https://docs.polymarket.com/api-reference/combo-markets/get-combo-markets
 
@@ -48785,28 +48903,20 @@ array index (`[0]` is YES, `[1]` is NO). Use `next_cursor` unchanged in
 the next request; a value of `null` indicates the final page.
 
 
-
-
 # Get comments by comment id
 Source: https://docs.polymarket.com/api-reference/comments/get-comments-by-comment-id
 
 /api-spec/gamma-openapi.yaml get /comments/{id}
-
-
 
 # Get comments by user address
 Source: https://docs.polymarket.com/api-reference/comments/get-comments-by-user-address
 
 /api-spec/gamma-openapi.yaml get /comments/user_address/{user_address}
 
-
-
 # List comments
 Source: https://docs.polymarket.com/api-reference/comments/list-comments
 
 /api-spec/gamma-openapi.yaml get /comments
-
-
 
 # Get midpoint price
 Source: https://docs.polymarket.com/api-reference/data/get-midpoint-price
@@ -48816,16 +48926,12 @@ Retrieves the midpoint price for a specific token ID.
 The midpoint is calculated as the average of the best bid and best ask prices.
 
 
-
-
 # Get server time
 Source: https://docs.polymarket.com/api-reference/data/get-server-time
 
 /api-spec/clob-openapi.yaml get /time
 Returns the current Unix timestamp of the server.
 This can be used to synchronize client time with server time.
-
-
 
 
 # List account activity
@@ -48846,8 +48952,6 @@ well-formed one that matches nothing serves an empty `data` array, which
 is the meaningful zero-state; absence means the market is not servable,
 and only that.
 
-
-
 # List combo activity
 Source: https://docs.polymarket.com/api-reference/feeds/list-combo-activity
 
@@ -48862,8 +48966,6 @@ Unlike the activity feed, the anchor behind the cursor is
 A malformed `condition` combo condition id is a `400` naming the value; a
 well-formed one that matches nothing serves an empty `data` array, which
 is the meaningful zero-state.
-
-
 
 # List trades
 Source: https://docs.polymarket.com/api-reference/feeds/list-trades
@@ -48881,8 +48983,6 @@ well-formed one that matches nothing serves an empty `data` array, which
 is the meaningful zero-state; absence means the market is not servable,
 and only that.
 
-
-
 # Cancel a quote
 Source: https://docs.polymarket.com/api-reference/maker/cancel-a-quote
 
@@ -48892,8 +48992,6 @@ authentication for the maker role. `signer_address` and `maker_address`
 must match the authenticated identity.
 
 
-
-
 # Confirm or decline last look
 Source: https://docs.polymarket.com/api-reference/maker/confirm-or-decline-last-look
 
@@ -48901,8 +48999,6 @@ Source: https://docs.polymarket.com/api-reference/maker/confirm-or-decline-last-
 Respond to a last-look confirmation request for a selected quote. Requires
 CLOB L2 authentication for the maker role. `decision` must be `CONFIRM` or
 `DECLINE`.
-
-
 
 
 # Submit a quote
@@ -48915,8 +49011,6 @@ authentication for the maker role.
 REST does not assign a quote ID — generate `quote_id` client-side.
 
 
-
-
 # Get fee rate
 Source: https://docs.polymarket.com/api-reference/market-data/get-fee-rate
 
@@ -48925,15 +49019,11 @@ Retrieves the base fee rate for a specific token ID.
 The fee rate can be provided either as a query parameter or as a path parameter.
 
 
-
-
 # Get fee rate by path parameter
 Source: https://docs.polymarket.com/api-reference/market-data/get-fee-rate-by-path-parameter
 
 /api-spec/clob-openapi.yaml get /fee-rate/{token_id}
 Retrieves the base fee rate for a specific token ID using the token ID as a path parameter.
-
-
 
 
 # Get last trade price
@@ -48944,16 +49034,12 @@ Retrieves the last trade price and side for a specific token ID.
 Returns default values of "0.5" for price and empty string for side if no trades found.
 
 
-
-
 # Get last trade prices (query parameters)
 Source: https://docs.polymarket.com/api-reference/market-data/get-last-trade-prices-query-parameters
 
 /api-spec/clob-openapi.yaml get /last-trades-prices
 Retrieves last trade prices for multiple token IDs using query parameters.
 Maximum 500 token IDs can be requested per call.
-
-
 
 
 # Get last trade prices (request body)
@@ -48964,8 +49050,6 @@ Retrieves last trade prices for multiple token IDs using a request body.
 Maximum 500 token IDs can be requested per call.
 
 
-
-
 # Get market price
 Source: https://docs.polymarket.com/api-reference/market-data/get-market-price
 
@@ -48974,15 +49058,11 @@ Retrieves the best market price for a specific token ID and side (bid or ask).
 Returns the best bid price for BUY side or best ask price for SELL side.
 
 
-
-
 # Get market prices (query parameters)
 Source: https://docs.polymarket.com/api-reference/market-data/get-market-prices-query-parameters
 
 /api-spec/clob-openapi.yaml get /prices
 Retrieves market prices for multiple token IDs and sides using query parameters.
-
-
 
 
 # Get market prices (request body)
@@ -48993,16 +49073,12 @@ Retrieves market prices for multiple token IDs and sides using a request body.
 Each request must include both token_id and side.
 
 
-
-
 # Get midpoint prices (query parameters)
 Source: https://docs.polymarket.com/api-reference/market-data/get-midpoint-prices-query-parameters
 
 /api-spec/clob-openapi.yaml get /midpoints
 Retrieves midpoint prices for multiple token IDs using query parameters.
 The midpoint is calculated as the average of the best bid and best ask prices.
-
-
 
 
 # Get midpoint prices (request body)
@@ -49013,8 +49089,6 @@ Retrieves midpoint prices for multiple token IDs using a request body.
 The midpoint is calculated as the average of the best bid and best ask prices.
 
 
-
-
 # Get order book
 Source: https://docs.polymarket.com/api-reference/market-data/get-order-book
 
@@ -49023,15 +49097,11 @@ Retrieves the order book summary for a specific token ID.
 Includes bids, asks, market details, and last trade price.
 
 
-
-
 # Get order books (request body)
 Source: https://docs.polymarket.com/api-reference/market-data/get-order-books-request-body
 
 /api-spec/clob-openapi.yaml post /books
 Retrieves order book summaries for multiple token IDs using a request body.
-
-
 
 
 # Get spread
@@ -49042,16 +49112,12 @@ Retrieves the spread for a specific token ID.
 The spread is the difference between the best ask and best bid prices.
 
 
-
-
 # Get spreads
 Source: https://docs.polymarket.com/api-reference/market-data/get-spreads
 
 /api-spec/clob-openapi.yaml post /spreads
 Retrieves spreads for multiple token IDs.
 The spread is the difference between the best ask and best bid prices.
-
-
 
 
 # Get tick size
@@ -49062,15 +49128,11 @@ Retrieves the minimum tick size (price increment) for a specific token ID.
 The tick size can be provided either as a query parameter or as a path parameter.
 
 
-
-
 # Get tick size by path parameter
 Source: https://docs.polymarket.com/api-reference/market-data/get-tick-size-by-path-parameter
 
 /api-spec/clob-openapi.yaml get /tick-size/{token_id}
 Retrieves the minimum tick size (price increment) for a specific token ID using the token ID as a path parameter.
-
-
 
 
 # Get a token's price history
@@ -49132,15 +49194,11 @@ multi-day window prefer a grain-aligned `bucket_seconds` (300, 1800, 10800,
 43200) or omit it; a 60-second width over days is the one shape that is both
 slow and, past 7 days, empty.
 
-
-
 # Get batch prices history
 Source: https://docs.polymarket.com/api-reference/markets/get-batch-prices-history
 
 /api-spec/clob-openapi.yaml post /batch-prices-history
 Retrieve historical price data for multiple markets in a single request.
-
-
 
 # Get CLOB market info
 Source: https://docs.polymarket.com/api-reference/markets/get-clob-market-info
@@ -49148,8 +49206,6 @@ Source: https://docs.polymarket.com/api-reference/markets/get-clob-market-info
 /api-spec/clob-openapi.yaml get /clob-markets/{condition_id}
 Returns all CLOB-level parameters for a market in a single call —
 tokens, tick size, base fees, rewards, RFQ status, and fee details.
-
-
 
 
 # Get live volume for an event
@@ -49172,21 +49228,15 @@ At most 20 distinct event ids per request, the same selector ceiling the
 `condition=` lists carry: every named event contributes all of its markets
 to a single aggregation, so the list is what sizes the request.
 
-
-
 # Get market by id
 Source: https://docs.polymarket.com/api-reference/markets/get-market-by-id
 
 /api-spec/gamma-openapi.yaml get /markets/{id}
 
-
-
 # Get market by slug
 Source: https://docs.polymarket.com/api-reference/markets/get-market-by-slug
 
 /api-spec/gamma-openapi.yaml get /markets/slug/{slug}
-
-
 
 # Get market by token
 Source: https://docs.polymarket.com/api-reference/markets/get-market-by-token
@@ -49197,14 +49247,10 @@ a token ID and need to resolve its parent market without knowing the
 condition ID in advance.
 
 
-
-
 # Get market tags by id
 Source: https://docs.polymarket.com/api-reference/markets/get-market-tags-by-id
 
 /api-spec/gamma-openapi.yaml get /markets/{id}/tags
-
-
 
 # Get open interest
 Source: https://docs.polymarket.com/api-reference/markets/get-open-interest
@@ -49221,15 +49267,11 @@ market. A malformed id is a `400` naming the value, so absence carries that
 one meaning and nothing else. Unlike the feeds this is not paginated;
 `data` is the row array with no `pagination`.
 
-
-
 # Get prices history
 Source: https://docs.polymarket.com/api-reference/markets/get-prices-history
 
 /api-spec/clob-openapi.yaml get /prices-history
 Retrieve historical price data for a market.
-
-
 
 # Get resolution state
 Source: https://docs.polymarket.com/api-reference/markets/get-resolution-state
@@ -49242,28 +49284,20 @@ event selectors accept comma-separated values and return condition-grain
 rows in deterministic order, preferring native V2 lifecycle, then UMA
 lifecycle, then terminal CTF state. Misses return `{ "data": [] }`.
 
-
-
 # Get sampling markets
 Source: https://docs.polymarket.com/api-reference/markets/get-sampling-markets
 
 /api-spec/clob-openapi.yaml get /sampling-markets
-
-
 
 # Get sampling simplified markets
 Source: https://docs.polymarket.com/api-reference/markets/get-sampling-simplified-markets
 
 /api-spec/clob-openapi.yaml get /sampling-simplified-markets
 
-
-
 # Get simplified markets
 Source: https://docs.polymarket.com/api-reference/markets/get-simplified-markets
 
 /api-spec/clob-openapi.yaml get /simplified-markets
-
-
 
 # List a market's top holders
 Source: https://docs.polymarket.com/api-reference/markets/list-a-markets-top-holders
@@ -49295,22 +49329,16 @@ Page walks advance every token group together, so a group leaves `data`
 once its token is exhausted while others keep paging; no rows are lost,
 but merge pages by `token_id`, not by array position.
 
-
-
 # List markets
 Source: https://docs.polymarket.com/api-reference/markets/list-markets
 
 /api-spec/gamma-openapi.yaml get /markets
-
-
 
 # List markets (keyset pagination)
 Source: https://docs.polymarket.com/api-reference/markets/list-markets-keyset-pagination
 
 /api-spec/gamma-openapi.yaml get /markets/keyset
 Returns markets using cursor-based (keyset) pagination for stable, efficient paging through large result sets. Use `next_cursor` from each response as `after_cursor` in the next request. The `offset` parameter is explicitly rejected; use `after_cursor` instead.
-
-
 
 
 # Look up tokens
@@ -49352,14 +49380,10 @@ polymarket-v2 module. Reference fields never change; `closed`,
 `resolved`, `final_price` and `outcome` may lag by up to a minute. Not
 paginated: `data` is the row array with no `pagination`.
 
-
-
 # Get public profile by wallet address
 Source: https://docs.polymarket.com/api-reference/profiles/get-public-profile-by-wallet-address
 
 /api-spec/gamma-openapi.yaml get /public-profile
-
-
 
 # Get current rebated fees for a maker
 Source: https://docs.polymarket.com/api-reference/rebates/get-current-rebated-fees-for-a-maker
@@ -49373,15 +49397,11 @@ Each entry includes the condition ID, asset address, and the USDC amount rebated
 This endpoint does not require authentication.
 
 
-
-
 # Get all relayer API keys
 Source: https://docs.polymarket.com/api-reference/relayer-api-keys/get-all-relayer-api-keys
 
 /api-spec/relayer-openapi.yaml get /relayer/api/keys
 Returns all relayer API keys for the authenticated address. Auth allowed: Gamma auth or Relayer API key auth (`RELAYER_API_KEY` + `RELAYER_API_KEY_ADDRESS`).
-
-
 
 
 # Check if a wallet is deployed
@@ -49398,8 +49418,6 @@ Use the `type` query parameter to choose which wallet type to check:
 Omitting `type` is equivalent to `type=SAFE`.
 
 
-
-
 # Get a transaction by ID
 Source: https://docs.polymarket.com/api-reference/relayer/get-a-transaction-by-id
 
@@ -49409,15 +49427,11 @@ Gets a transaction submitted to the Relayer. Takes in a required transaction ID 
 Poll this endpoint with the `transactionID` returned from `POST /submit` to retrieve the onchain `transactionHash` once the transaction has been broadcast.
 
 
-
-
 # Get current nonce for a user
 Source: https://docs.polymarket.com/api-reference/relayer/get-current-nonce-for-a-user
 
 /api-spec/relayer-openapi.yaml get /nonce
 Gets the current Proxy or Safe nonce for a user. Takes in the user's signer address and the type of nonce to retrieve.
-
-
 
 
 # Get recent transactions for a user
@@ -49437,15 +49451,11 @@ Gets the most recent transactions submitted to the Relayer, owned by a specific 
 - `RELAYER_API_KEY_ADDRESS`
 
 
-
-
 # Get relayer address and nonce
 Source: https://docs.polymarket.com/api-reference/relayer/get-relayer-address-and-nonce
 
 /api-spec/relayer-openapi.yaml get /relay-payload
 Fetches the relayer address and nonce for a specific user. Takes in the user's signer address and the type of nonce to retrieve.
-
-
 
 
 # Submit a transaction
@@ -49467,8 +49477,6 @@ Returns immediately with the `transactionID` and a `state` of `STATE_NEW`. The o
 - `RELAYER_API_KEY_ADDRESS`
 
 
-
-
 # Get current active rewards configurations
 Source: https://docs.polymarket.com/api-reference/rewards/get-current-active-rewards-configurations
 
@@ -49479,8 +49487,6 @@ When `sponsored=true`, returns sponsored reward configurations instead.
 
 Results are paginated (500 items per page). Use next_cursor to fetch subsequent pages.
 A next_cursor value of "LTE=" indicates the last page.
-
-
 
 
 # Get earnings for user by date
@@ -49495,8 +49501,6 @@ Results are paginated (100 items per page). Use next_cursor to fetch subsequent 
 A next_cursor value of "LTE=" indicates the last page.
 
 
-
-
 # Get multiple markets with rewards
 Source: https://docs.polymarket.com/api-reference/rewards/get-multiple-markets-with-rewards
 
@@ -49506,8 +49510,6 @@ Supports text search, tag filtering, numeric filters, and sorting.
 
 Results are paginated (100 items per page by default). Use next_cursor to fetch subsequent pages.
 A next_cursor value of "LTE=" indicates the last page.
-
-
 
 
 # Get raw rewards for a specific market
@@ -49523,8 +49525,6 @@ Results are paginated (100 items per page). Use next_cursor to fetch subsequent 
 A next_cursor value of "LTE=" indicates the last page.
 
 
-
-
 # Get reward percentages for user
 Source: https://docs.polymarket.com/api-reference/rewards/get-reward-percentages-for-user
 
@@ -49537,8 +49537,6 @@ the user is currently earning in that market.
 Requires CLOB L2 Auth headers.
 
 
-
-
 # Get total earnings for user by date
 Source: https://docs.polymarket.com/api-reference/rewards/get-total-earnings-for-user-by-date
 
@@ -49547,8 +49545,6 @@ Returns the summed total rewards earnings for a user on a provided day,
 grouped by asset address.
 
 Requires CLOB L2 Auth headers.
-
-
 
 
 # Get user earnings and markets configuration
@@ -49570,106 +49566,76 @@ Optional features:
 - Sort by various fields using `order_by` and `position` parameters
 
 
-
-
 # Search markets, events, and profiles
 Source: https://docs.polymarket.com/api-reference/search/search-markets-events-and-profiles
 
 /api-spec/gamma-openapi.yaml get /public-search
-
-
 
 # Get series by id
 Source: https://docs.polymarket.com/api-reference/series/get-series-by-id
 
 /api-spec/gamma-openapi.yaml get /series/{id}
 
-
-
 # List series
 Source: https://docs.polymarket.com/api-reference/series/list-series
 
 /api-spec/gamma-openapi.yaml get /series
-
-
 
 # Get sports metadata information
 Source: https://docs.polymarket.com/api-reference/sports/get-sports-metadata-information
 
 /api-spec/gamma-openapi.yaml get /sports
 
-
-
 # Get valid sports market types
 Source: https://docs.polymarket.com/api-reference/sports/get-valid-sports-market-types
 
 /api-spec/gamma-openapi.yaml get /sports/market-types
-
-
 
 # List teams
 Source: https://docs.polymarket.com/api-reference/sports/list-teams
 
 /api-spec/gamma-openapi.yaml get /teams
 
-
-
 # Get related tags (relationships) by tag id
 Source: https://docs.polymarket.com/api-reference/tags/get-related-tags-relationships-by-tag-id
 
 /api-spec/gamma-openapi.yaml get /tags/{id}/related-tags
-
-
 
 # Get related tags (relationships) by tag slug
 Source: https://docs.polymarket.com/api-reference/tags/get-related-tags-relationships-by-tag-slug
 
 /api-spec/gamma-openapi.yaml get /tags/slug/{slug}/related-tags
 
-
-
 # Get tag by id
 Source: https://docs.polymarket.com/api-reference/tags/get-tag-by-id
 
 /api-spec/gamma-openapi.yaml get /tags/{id}
-
-
 
 # Get tag by slug
 Source: https://docs.polymarket.com/api-reference/tags/get-tag-by-slug
 
 /api-spec/gamma-openapi.yaml get /tags/slug/{slug}
 
-
-
 # Get tags related to a tag id
 Source: https://docs.polymarket.com/api-reference/tags/get-tags-related-to-a-tag-id
 
 /api-spec/gamma-openapi.yaml get /tags/{id}/related-tags/tags
-
-
 
 # Get tags related to a tag slug
 Source: https://docs.polymarket.com/api-reference/tags/get-tags-related-to-a-tag-slug
 
 /api-spec/gamma-openapi.yaml get /tags/slug/{slug}/related-tags/tags
 
-
-
 # List tags
 Source: https://docs.polymarket.com/api-reference/tags/list-tags
 
 /api-spec/gamma-openapi.yaml get /tags
-
-
 
 # Cancel all orders
 Source: https://docs.polymarket.com/api-reference/trade/cancel-all-orders
 
 /api-spec/clob-openapi.yaml delete /cancel-all
 Cancels all open orders for the authenticated user. Works even in cancel-only mode.
-
-
 
 
 # Cancel multiple orders
@@ -49681,16 +49647,12 @@ Duplicate order IDs in the request are automatically ignored.
 Works even in cancel-only mode.
 
 
-
-
 # Cancel orders for a market
 Source: https://docs.polymarket.com/api-reference/trade/cancel-orders-for-a-market
 
 /api-spec/clob-openapi.yaml delete /cancel-market-orders
 Cancels all open orders for the authenticated user in a specific market (condition) and asset.
 Works even in cancel-only mode.
-
-
 
 
 # Cancel single order
@@ -49700,6 +49662,33 @@ Source: https://docs.polymarket.com/api-reference/trade/cancel-single-order
 Cancels a single order by its ID. Works even in cancel-only mode.
 
 
+# Cancel wallet orders
+Source: https://docs.polymarket.com/api-reference/trade/cancel-wallet-orders
+
+/api-spec/clob-openapi.yaml delete /cancel-wallet-orders
+Cancels orders on the deposit wallet across all API keys, including orders from expired session signers.
+Also served at `/v1/gateway/cancel-wallet-orders`.
+
+Only the wallet owner can call this endpoint. Send L2 headers with `POLY_ADDRESS`
+set to the owner EOA and the owner's API key. Session signers receive 403 and must use
+`DELETE /order`, `DELETE /orders` or `DELETE /cancel-all`, which only cancel orders
+placed with their own API key.
+
+Set exactly one of `order_ids` or `all`. Unknown orders, orders from another maker,
+and already canceled orders are returned in `not_canceled` with the reason
+`order not found on the caller's deposit wallet`.
+
+Shares the cancel rate-limit bucket with `DELETE /orders` and `DELETE /cancel-all`.
+With `order_ids`, each ID costs one token up front. With `all`, the request costs
+one token up front and is then charged for the number of orders actually canceled.
+
+Revoking a session signer immediately triggers the relayer to cancel its open orders.
+After cancellation, canceling those IDs returns them in `not_canceled`.
+Authorization and revocation changes can take up to about 5 seconds to appear here.
+
+Production rollout: this route currently returns an nginx 404 page until load-balancer
+routing is enabled. The production feature flag must also be enabled. A disabled
+application endpoint returns a JSON 404 response instead.
 
 
 # Get builder trades
@@ -49707,8 +49696,6 @@ Source: https://docs.polymarket.com/api-reference/trade/get-builder-trades
 
 /api-spec/clob-openapi.yaml get /builder/trades
 Retrieves trades attributed to a builder code.
-
-
 
 
 # Get order scoring status
@@ -49724,8 +49711,6 @@ An order is considered "scoring" if it meets all the criteria for earning maker 
 - The order has been live for the required duration
 
 
-
-
 # Get single order by ID
 Source: https://docs.polymarket.com/api-reference/trade/get-single-order-by-id
 
@@ -49734,16 +49719,12 @@ Retrieves a specific order by its ID (order hash) for the authenticated user, in
 Builder-authenticated clients can also use this endpoint to retrieve orders attributed to their builder account.
 
 
-
-
 # Get trades
 Source: https://docs.polymarket.com/api-reference/trade/get-trades
 
 /api-spec/clob-openapi.yaml get /data/trades
 Retrieves trades for the authenticated user. Returns paginated results.
 Requires readonly or level 2 API key authentication.
-
-
 
 
 # Get user orders
@@ -49755,15 +49736,38 @@ Filtering by id returns that order regardless of status, including canceled or f
 Builder-authenticated clients can also use this endpoint to retrieve orders attributed to their builder account.
 
 
+> [!WARNING]
+>
+> Filtering by `id` only returns canceled and fully matched orders within the last hour.
+> Listen to the [user stream](/trading/realtime-order-updates#user-stream) for fuller data.
+> Historical fills remain in [get trades](/api-reference/trade/get-trades).
+
+
+# Get wallet open orders
+Source: https://docs.polymarket.com/api-reference/trade/get-wallet-open-orders
+
+/api-spec/clob-openapi.yaml get /data/wallet-open-orders
+Lists every live order on the caller's deposit wallet, regardless of which signer or API key placed it.
+Authenticate with L2 headers or `POLY_READONLY_API_KEY` and `POLY_ADDRESS`.
+`POLY_ADDRESS` must be the wallet owner or one of its non-revoked session signers.
+
+Results are newest first, in pages of about 500. A page can be short or empty while
+`next_cursor` is still set. Keep paging with `cursor` until `next_cursor` is empty.
+
+A deposit wallet supports at most 15 non-revoked session signers. Expired signers
+count toward this limit; revoke them to free a slot. Authorizing or revoking a signer
+can take up to about 5 seconds to appear in this endpoint and wallet-wide cancellation.
+Revoking a signer immediately triggers cancellation of all its open orders by the relayer;
+those orders no longer appear here after cancellation.
 
 
 # Post a new order
 Source: https://docs.polymarket.com/api-reference/trade/post-a-new-order
 
 /api-spec/clob-openapi.yaml post /order
-Creates a new order in the order book
-
-
+Creates a new order in the order book.
+When placing an order as a session signer, use the deposit wallet as both `maker`
+and `signer`, with the POLY_1271 signature wrapped in a session-signer envelope.
 
 
 # Post multiple orders
@@ -49772,8 +49776,6 @@ Source: https://docs.polymarket.com/api-reference/trade/post-multiple-orders
 /api-spec/clob-openapi.yaml post /orders
 Creates multiple new orders in the order book. Orders are processed in parallel.
 Maximum 15 orders per request.
-
-
 
 
 # Send heartbeat
@@ -49795,15 +49797,11 @@ refresh this deadline. Stop placing orders and explicitly cancel/verify
 orders you intend to remove before shutdown.
 
 
-
-
 # Get a user's PnL series
 Source: https://docs.polymarket.com/api-reference/wallet/get-a-users-pnl-series
 
 https://data-api.polymarket.com/v2/openapi.json get /v2/user-pnl
 Complete cumulative native-PnL atoms and compositions.
-
-
 
 # Get a user's profile stats
 Source: https://docs.polymarket.com/api-reference/wallet/get-a-users-profile-stats
@@ -49839,8 +49837,6 @@ fill metrics.
 Not paginated: one row by construction, so `data` is the bare object with no
 `pagination`; the `/v2/value` shape.
 
-
-
 # Get a user's trading volume
 Source: https://docs.polymarket.com/api-reference/wallet/get-a-users-trading-volume
 
@@ -49862,8 +49858,6 @@ the endpoint that shows the unit convention side by side: the bare name is
 the natural unit, `_usdc` is the denomination, the same pairing as
 `current_size` / `entry_cost_usdc` on `/v2/positions`.
 
-
-
 # Get portfolio value
 Source: https://docs.polymarket.com/api-reference/wallet/get-portfolio-value
 
@@ -49876,8 +49870,6 @@ scopes the single-market term, and any condition filter excludes the
 portfolio-level combo term. `data` is a single object; a user
 with no positions yields `{ "data": { "proxy_wallet": …, "value": 0 } }`.
 
-
-
 # Get wallet approvals
 Source: https://docs.polymarket.com/api-reference/wallet/get-wallet-approvals
 
@@ -49886,8 +49878,6 @@ Polygon token/operator approval state for one wallet.
 
 `?user=` must be an EVM address. The complete served catalog is returned in
 canonical order under `{ data }`; this endpoint is not paginated.
-
-
 
 # List combo positions
 Source: https://docs.polymarket.com/api-reference/wallet/list-combo-positions
@@ -49924,8 +49914,6 @@ A malformed `condition` combo condition id is a `400` naming the value; a
 well-formed one that matches nothing serves an empty `data` array, which
 is the meaningful zero-state.
 
-
-
 # List positions for a user or market
 Source: https://docs.polymarket.com/api-reference/wallet/list-positions-for-a-user-or-market
 
@@ -49961,22 +49949,6 @@ well-formed one that matches nothing serves an empty `data` array, which
 is the meaningful zero-state; absence means the market is not servable,
 and only that.
 
-
-
-# Market Channel
-Source: https://docs.polymarket.com/api-reference/wss/market
-
-Public WebSocket for real-time orderbook, price, and market lifecycle updates.
-
-
-
-# Quoter Gateway
-Source: https://docs.polymarket.com/api-reference/wss/rfq
-
-Authenticated WebSocket for combinatorial RFQ quoters — receive requests, submit quotes, confirm last look, and track execution.
-
-
-
 # Apply Referral Code
 Source: https://docs.polymarket.com/api-reference/apply-referral-code
 
@@ -49993,43 +49965,31 @@ Source: https://docs.polymarket.com/api-reference/approve-or-revoke-builder-fees
 
 /api-spec/perps-openapi.json post /v1/account/builder-approvals
 
-
-
 # Create bridge addresses
 Source: https://docs.polymarket.com/api-reference/bridge/create-bridge-addresses
 
 /api-spec/bridge-openapi.yaml post /deposit
-
-
 
 # Create withdrawal addresses
 Source: https://docs.polymarket.com/api-reference/bridge/create-withdrawal-addresses
 
 /api-spec/bridge-openapi.yaml post /withdraw
 
-
-
 # Get a quote
 Source: https://docs.polymarket.com/api-reference/bridge/get-a-quote
 
 /api-spec/bridge-openapi.yaml post /quote
-
-
 
 # Get supported assets
 Source: https://docs.polymarket.com/api-reference/bridge/get-supported-assets
 
 /api-spec/bridge-openapi.yaml get /supported-assets
 
-
-
 # Get transaction status
 Source: https://docs.polymarket.com/api-reference/bridge/get-transaction-status
 
 /api-spec/bridge-openapi.yaml get /status/{address}
 Returns the deposits and withdrawals seen at a bridge address, newest first. Responses are cursor-paginated: each request returns one page plus a `nextCursor`. To read the full history, pass each `nextCursor` back as `cursor` until it comes back null. To track only recent activity, keep requesting the first page without a cursor.
-
-
 
 
 # Cancel All Orders
@@ -50442,8 +50402,6 @@ this endpoint using overlapping windows and earning_id deduplication. The live
 feed can precede indexing. Retry REST until as_of_sequence covers the event.
 
 
-
-
 # Get authenticated builder settled earnings summary
 Source: https://docs.polymarket.com/api-reference/get-authenticated-builder-settled-earnings-summary
 
@@ -50457,8 +50415,6 @@ accounts across assets, markets and maker/taker roles within this window/cutoff.
 active_approval_count instead reflects current positive grants to this builder,
 excluding revocations, independent of this window/cutoff and builder enablement.
 Credits are ordinary collateral, not a claim balance.
-
-
 
 
 # Get Auto-Cancel Status
@@ -50515,8 +50471,6 @@ Source: https://docs.polymarket.com/api-reference/get-builder-profile-and-eligib
 Public builder profile for an address. Returns the saved display name and
 current registration, enablement, platform admission and fee-cap fields.
 The name is null for unregistered addresses or builders without a saved name.
-
-
 
 
 # Get Collateral Assets
@@ -50943,6 +50897,33 @@ HTTP 413 is reserved for an oversized request body.
 Request Weight: **max(10, active + 7 × history)**
 
 
+# Get Public Fills
+Source: https://docs.polymarket.com/api-reference/get-public-fills
+
+/api-spec/perps-openapi.json get /v1/info/fills
+Get fill history for a registered account address.
+Rows include order IDs, exchange and builder fees, and position accounting.
+Builder identity and rate are omitted on this public surface.
+The default window starts 30 days before request time.
+When instrument_id is provided, returns only fills for that instrument and
+reads at most 250,000 physical rows; reads exceeding this cap return HTTP 413.
+Filtered reads cap the end time at the current time and, when the start is
+omitted, start 30 days before that effective end time.
+If no end time is provided, the current time will be used.
+Maximum of 100 entries returned per request.
+Results are ordered by time; use `sort` to choose newest-first (`desc`,
+default) or oldest-first (`asc`). To page through more than 100 fills,
+pass the `cursor` returned by the previous page (keep `sort` consistent
+across pages). Passing the trade ID of the last fill from the previous
+page is also accepted for unfiltered requests. When instrument_id is set,
+legacy numeric cursors are rejected with HTTP 400; use the returned keyset cursor.
+
+
+Request Weight: **10**
+
+Cached 2s — a request served from cache costs **1**
+
+
 # Get Public Portfolio
 Source: https://docs.polymarket.com/api-reference/get-public-portfolio
 
@@ -51049,6 +51030,12 @@ minimum volume are ranked; ties go to higher boosted volume, then the
 earlier first qualifying fill. `prize` is the projected prize while live
 and the prize won once the competition ends. `updated_at` is the event
 time the standings reflect ("Updated X seconds ago").
+
+With `include_unqualified=true` on a ranked board, the rows still short
+of the entry gate follow the ranked ones, unranked and without a prize,
+by score with the same tie-breaks. Only live accounts with volume are
+listed; disqualified and under-review accounts never are. `total` and
+`offset` then count across both, and every entry carries `qualified`.
 
 Returns 50 entries by default and at most 100 per request.
 
@@ -51689,8 +51676,6 @@ Source: https://docs.polymarket.com/api-reference/read-builder-approvals-includi
 
 /api-spec/perps-openapi.json get /v1/account/builder-approvals
 
-
-
 # Set Auto-Cancel
 Source: https://docs.polymarket.com/api-reference/set-auto-cancel
 
@@ -51843,14 +51828,10 @@ Disabled builders can edit their name. This operation does not change
 registration, enablement, the platform admission switch, approvals or fees.
 
 
-
-
 # Live Data Channel
 Source: https://docs.polymarket.com/api-reference/websockets/live-data-channel
 
 Send JSON text frames tagged with op. The server answers every op with an ack or an error ack (never a close, except for policy breaches, close 4008, and an expired Access Token, close 1008) and pushes envelopes for subscribed channels. Limits per connection: 64 active (channel, filter) subscriptions, 20 subscribe or unsubscribe frames per second (a batch frame counts once), 64 KB per frame, 8 auth attempts. The server sends a WebSocket ping every 25 seconds; two missed pongs close 4002. Close codes: 4001 authentication failed on a presented credential, 4002 slow consumer or pong timeout, 4003 server draining (reconnect once after a uniform 0 to 10 s delay), 4008 policy violation (fix the client; do not reconnect blindly), which also closes a socket that neither passed authentication nor registered a subscription within the server's unengaged timeout (120 seconds by default, reason text unengaged) once that rule is enforced, 1008 authentication expired (a connection authenticated with an Access Token whose last accepted token expired, 30 second leeway included, with no renewal; refresh the token and reconnect).
-
-
 
 # Withdraw
 Source: https://docs.polymarket.com/api-reference/withdraw
@@ -51869,26 +51850,100 @@ against `block.timestamp`. It must also match the `uint64 ts` in the signed EIP-
 Request Weight: **1**
 
 
+# Market Channel
+Source: https://docs.polymarket.com/api-reference/wss/market
+
+Public WebSocket for real-time orderbook, price, and market lifecycle updates.
+
 # Auth
 Source: https://docs.polymarket.com/api-reference/wss/perps-auth
 
 Perps WebSocket authentication.
-
-
 
 # Auto Cancel
 Source: https://docs.polymarket.com/api-reference/wss/perps-auto-cancel
 
 Perps WebSocket dead man's switch updates.
 
+# Cancel All Orders
+Source: https://docs.polymarket.com/api-reference/wss/perps-cancel-all
 
+Perps WebSocket cancellation of all open orders.
+
+# Cancel Orders
+Source: https://docs.polymarket.com/api-reference/wss/perps-cancel-orders
+
+Perps WebSocket order cancellation by order ID.
+
+# Cancel Orders by Client Order ID
+Source: https://docs.polymarket.com/api-reference/wss/perps-cancel-orders-coid
+
+Perps WebSocket order cancellation by client order ID.
+
+# Modify Orders
+Source: https://docs.polymarket.com/api-reference/wss/perps-modify-orders
+
+Perps WebSocket order modification by order ID.
+
+# Modify Orders by Client Order ID
+Source: https://docs.polymarket.com/api-reference/wss/perps-modify-orders-coid
+
+Perps WebSocket order modification by client order ID.
+
+# Ping
+Source: https://docs.polymarket.com/api-reference/wss/perps-ping
+
+Perps WebSocket heartbeat.
+
+# Place Orders
+Source: https://docs.polymarket.com/api-reference/wss/perps-place-orders
+
+Perps WebSocket order placement.
+
+# Update Leverage
+Source: https://docs.polymarket.com/api-reference/wss/perps-update-leverage
+
+Perps WebSocket leverage updates.
+
+# Update Leverages
+Source: https://docs.polymarket.com/api-reference/wss/perps-update-leverages
+
+Perps WebSocket batch leverage updates.
+
+# Update Isolated Margin
+Source: https://docs.polymarket.com/api-reference/wss/perps-update-margin
+
+Add or remove margin from an isolated Perps position over WebSocket.
+
+# Live Data Channel
+Source: https://docs.polymarket.com/api-reference/wss/polybolt
+
+PolyBolt WebSocket message reference for crypto, equity and TWAP reference prices.
+
+# Quoter Gateway
+Source: https://docs.polymarket.com/api-reference/wss/rfq
+
+Authenticated WebSocket for combinatorial RFQ quoters — receive requests, submit quotes, confirm last look, and track execution.
+
+# Sports Channel
+Source: https://docs.polymarket.com/api-reference/wss/sports
+
+Public WebSocket for real-time sports match results.
+
+# User Channel
+Source: https://docs.polymarket.com/api-reference/wss/user
+
+Authenticated WebSocket for real-time order and trade updates.
+
+# Balances
+Source: https://docs.polymarket.com/api-reference/wss/perps-balances
+
+Perps WebSocket private balance updates.
 
 # BBO
 Source: https://docs.polymarket.com/api-reference/wss/perps-bbo
 
 Perps WebSocket best bid and offer updates.
-
-
 
 # Book
 Source: https://docs.polymarket.com/api-reference/wss/perps-book
@@ -51916,194 +51971,70 @@ the snapshot includes all available levels on that side.
 > one subscription toward the per-connection limit.
 
 
-# Cancel All Orders
-Source: https://docs.polymarket.com/api-reference/wss/perps-cancel-all
-
-Perps WebSocket cancellation of all open orders.
-
-
-
-# Cancel Orders
-Source: https://docs.polymarket.com/api-reference/wss/perps-cancel-orders
-
-Perps WebSocket order cancellation by order ID.
-
-
-
-# Cancel Orders by Client Order ID
-Source: https://docs.polymarket.com/api-reference/wss/perps-cancel-orders-coid
-
-Perps WebSocket order cancellation by client order ID.
-
-
-
-# Modify Orders
-Source: https://docs.polymarket.com/api-reference/wss/perps-modify-orders
-
-Perps WebSocket order modification by order ID.
-
-
-
-# Modify Orders by Client Order ID
-Source: https://docs.polymarket.com/api-reference/wss/perps-modify-orders-coid
-
-Perps WebSocket order modification by client order ID.
-
-
-
-# Ping
-Source: https://docs.polymarket.com/api-reference/wss/perps-ping
-
-Perps WebSocket heartbeat.
-
-
-
-# Place Orders
-Source: https://docs.polymarket.com/api-reference/wss/perps-place-orders
-
-Perps WebSocket order placement.
-
-
-
-# Trades
-Source: https://docs.polymarket.com/api-reference/wss/perps-trades
-
-Perps WebSocket public trade updates.
-
-
-
-# Update Leverage
-Source: https://docs.polymarket.com/api-reference/wss/perps-update-leverage
-
-Perps WebSocket leverage updates.
-
-
-
-# Update Leverages
-Source: https://docs.polymarket.com/api-reference/wss/perps-update-leverages
-
-Perps WebSocket batch leverage updates.
-
-
-
-# Update Isolated Margin
-Source: https://docs.polymarket.com/api-reference/wss/perps-update-margin
-
-Add or remove margin from an isolated Perps position over WebSocket.
-
-
-
-# Live Data Channel
-Source: https://docs.polymarket.com/api-reference/wss/polybolt
-
-PolyBolt WebSocket message reference for crypto, equity and TWAP reference prices.
-
-
-
-# Sports Channel
-Source: https://docs.polymarket.com/api-reference/wss/sports
-
-Public WebSocket for real-time sports match results.
-
-
-
-# User Channel
-Source: https://docs.polymarket.com/api-reference/wss/user
-
-Authenticated WebSocket for real-time order and trade updates.
-
-
-
-# Balances
-Source: https://docs.polymarket.com/api-reference/wss/perps-balances
-
-Perps WebSocket private balance updates.
-
-
-
 # Builder Fills
 Source: https://docs.polymarket.com/api-reference/wss/perps-builder-fills
 
 Live attributed fills for an authenticated Perps builder.
-
-
 
 # Deposits
 Source: https://docs.polymarket.com/api-reference/wss/perps-deposits
 
 Perps WebSocket private deposit updates.
 
-
-
 # Fills
 Source: https://docs.polymarket.com/api-reference/wss/perps-fills
 
 Perps WebSocket private fill updates.
-
-
 
 # Funding
 Source: https://docs.polymarket.com/api-reference/wss/perps-funding
 
 Perps WebSocket private funding updates.
 
-
-
 # Klines
 Source: https://docs.polymarket.com/api-reference/wss/perps-klines
 
 Perps WebSocket candle updates.
-
-
 
 # Notifications
 Source: https://docs.polymarket.com/api-reference/wss/perps-notifications
 
 Perps WebSocket private notification updates.
 
-
-
 # Orders
 Source: https://docs.polymarket.com/api-reference/wss/perps-orders
 
 Perps WebSocket private order updates.
-
-
 
 # Portfolio
 Source: https://docs.polymarket.com/api-reference/wss/perps-portfolio
 
 Perps WebSocket private portfolio updates.
 
-
-
 # Statistics
 Source: https://docs.polymarket.com/api-reference/wss/perps-statistics
 
 Perps WebSocket 24-hour statistics updates.
-
-
 
 # Tickers
 Source: https://docs.polymarket.com/api-reference/wss/perps-tickers
 
 Perps WebSocket ticker updates.
 
-
-
 # TP/SL
 Source: https://docs.polymarket.com/api-reference/wss/perps-tpsl
 
 Perps WebSocket private TP/SL lifecycle updates.
 
+# Trades
+Source: https://docs.polymarket.com/api-reference/wss/perps-trades
 
+Perps WebSocket public trade updates.
 
 # Withdrawals
 Source: https://docs.polymarket.com/api-reference/wss/perps-withdrawals
 
 Perps WebSocket private withdrawal updates.
-
-
 
 # Perps Changelog
 Source: https://docs.polymarket.com/changelog/perps
@@ -52111,6 +52042,62 @@ Source: https://docs.polymarket.com/changelog/perps
 Recent changes to the Polymarket Perps API and platform
 
 Notable changes to the Polymarket Perps API.
+
+**Nov 5, 2026**
+
+Address book on withdrawals, trading-key self-delete, and batched market reads
+
+No removed endpoints, routes, or fields. Two behaviour changes to check before
+the deploy: the withdrawal address book is enforced on withdrawals and internal
+transfers, and a trading key can now delete itself. Everything else is additive.
+
+**Changed**
+
+* **Withdrawals and internal transfers.** The Polymarket address book now
+  applies to `POST /v1/account/withdraw` and
+  `POST /v1/account/internal-transfer`. Owners who have enrolled in the address
+  book can withdraw only to an active address-book entry, and cannot transfer
+  to accounts outside their own account group. Transfers between their own
+  accounts are unaffected. A refused destination returns `403`
+  `withdrawal_not_allowlisted`. Every withdrawal looks up the address book. If
+  that lookup fails, the request returns `503` `address_book_unavailable` with
+  `Retry-After: 1`. Nothing was submitted. Retry `address_book_unavailable`
+  with backoff. Treat `withdrawal_not_allowlisted` as final until the
+  destination is added to the book.
+* **Trading-key self-delete.** `DELETE /v1/account/proxy` can now be signed by
+  the key being deleted. The request format is unchanged. Self-delete is
+  refused for 60 seconds after the key is registered or rotated:
+  `422` `proxy_registration_newer_than_signature`. Wait, then sign a fresh
+  request. A key with no recorded registration time is refused with `422`
+  `proxy_registration_timestamp_missing`. The owner can still delete it. The
+  owner deleting a different key works as before, immediately.
+
+**Added**
+
+* **Batched market snapshots.** `GET /v1/info/markets` takes `instrument_ids`
+  (up to 50), `curated_list`, and `include=sparkline,totals`. It returns
+  `{ markets, totals? }`. Request weight is 2.
+* **Unqualified competition traders.** Add `include_unqualified=true` to
+  `GET /v1/info/competition/leaderboard`. Without the parameter, the output is
+  unchanged.
+* **Portfolio sequencing fields.** `GET /v1/account/portfolio` adds
+  `sequence`, and each position adds `sequence` and `share_unit_version` (`0`
+  before any split). Accept unknown fields.
+* **Stock-split read surfaces.** `GET /v1/info/stock-splits`, authenticated
+  `GET /v1/account/trade-history`, and the WebSocket channels
+  `corporate-actions::<instrument_id>` and private `trade-history`. All are
+  empty until a split is scheduled.
+
+**Clarified**
+
+* New error identifiers for withdrawals, address-book lookup, and proxy
+  self-delete are documented on [Errors](/perps/errors).
+
+**Rollout**
+
+Order placement pauses during the window and cancels keep working. Retail
+WebSocket connections drop when the gateway restarts; reconnect and
+resubscribe.
 
 **Oct 29, 2026**
 
@@ -53913,6 +53900,22 @@ Recent changes to the official SDKs.
 
 > [tab] TypeScript
 >
+> ### `0.17.0`
+>
+> * Added `DIRECTIONAL_SPLIT`, `DIRECTIONAL_MERGE`, `THRESHOLD_COMPOSE`, and `THRESHOLD_DECOMPOSE` activity types and `listActivity(...)` filters. Threshold rows report the moved line position as `shares` and identify its market with `conditionId`; no collateral moves. Presentation fields are optional on range-event rows.
+> * Unknown activity types no longer fail an activity page. They carry shared account fields and an `OpaqueActivityType`. Breaking type change: `activity.type` is no longer assignable to `string` or usable as a record key. Convert it explicitly, and add a `default` branch to exhaustive switches to handle unlisted types:
+>
+> ```diff theme={null}
+> -const type: string = activity.type;
+> -const label = labels[activity.type];
+> +const type = String(activity.type);
+> +const label = labels[type] ?? "Other";
+> ```
+>
+> * Added Binance as an opt-in crypto spot price provider. Binance quotes use USDT spot closes under canonical USD symbols; omitting the provider keeps the existing default.
+> * Reduced retained heap after importing `@polymarket/client` by about 20% and raised the Zod requirement to `^4.6.7`.
+> * Collection limits now fail without per-item validation noise. When invalid input is closest to one accepted shape, `UserInputError` lists only that shape's issues.
+>
 > ### `0.16.0`
 >
 > * Breaking change: removed `downloadAccountingSnapshot` from public and secure clients and the standalone action, along with `DownloadAccountingSnapshotRequest`, `SecureDownloadAccountingSnapshotRequest`, and `DownloadAccountingSnapshotError`. Remove calls and imports for this download. There is no replacement ZIP/CSV export; portfolio, position, and activity reads do not provide an equivalent archive.
@@ -54488,6 +54491,12 @@ Recent changes to the official SDKs.
 
 > [tab] Python
 >
+> ### `0.17.0`
+>
+> * Added `DIRECTIONAL_SPLIT`, `DIRECTIONAL_MERGE`, `THRESHOLD_COMPOSE`, and `THRESHOLD_DECOMPOSE` activity types and `list_activity(...)` filters. Threshold rows report the moved line position as `shares` and identify its market with `condition_id`; no collateral moves. Presentation fields are optional on range-event rows.
+> * Activity types absent from `ActivityType` remain available as `UnknownActivity`, with shared account fields and the full row in `raw`.
+> * Added Binance as an opt-in crypto spot price provider. Binance quotes use USDT spot closes under canonical USD symbols; omitting the provider keeps the existing default.
+>
 > ### `0.16.0`
 >
 > * Breaking change: removed `download_accounting_snapshot` from `PublicClient`, `SecureClient`, `AsyncPublicClient`, and `AsyncSecureClient`. Remove calls to this download. There is no replacement ZIP/CSV export; portfolio, position, and activity reads do not provide an equivalent archive.
@@ -54991,8 +55000,6 @@ the series. `volume` is in SHARES; see `/v2/builders/leaderboard`.
 Not paginated: `data` is the array with no `pagination`, the `/v2/oi` shape.
 Rows arrive newest bucket first, ranked within each.
 
-
-
 # Get the builders leaderboard
 Source: https://docs.polymarket.com/api-reference/boards/get-the-builders-leaderboard
 
@@ -55012,8 +55019,6 @@ silent re-point, since an offset from one board means nothing on another.
 
 `builder` is a display name that falls back to `builder_code` for a builder
 with no profile, so key on `builder_code` and render `builder`.
-
-
 
 # Get the trader leaderboard
 Source: https://docs.polymarket.com/api-reference/boards/get-the-trader-leaderboard
@@ -55042,8 +55047,6 @@ Finite windows (day/week/month) serve the MARKED equity change net of
 flows; they move with unrealized marks; `all` is the realized-only
 lifetime ledger. `volume` is in shares, not USDC.
 
-
-
 # List the biggest wins
 Source: https://docs.polymarket.com/api-reference/boards/list-the-biggest-wins
 
@@ -55061,8 +55064,6 @@ Combo wins are first-class rows here, tagged `kind = "combo"`. They carry a
 `' / '`-joined title of their legs and no Gamma event; `event_id` is `0`
 and `event_slug` empty; so **branch on `kind` before building an event
 link**.
-
-
 
 # List account activity
 Source: https://docs.polymarket.com/api-reference/feeds/list-account-activity
@@ -55082,8 +55083,6 @@ well-formed one that matches nothing serves an empty `data` array, which
 is the meaningful zero-state; absence means the market is not servable,
 and only that.
 
-
-
 # List combo activity
 Source: https://docs.polymarket.com/api-reference/feeds/list-combo-activity
 
@@ -55098,8 +55097,6 @@ Unlike the activity feed, the anchor behind the cursor is
 A malformed `condition` combo condition id is a `400` naming the value; a
 well-formed one that matches nothing serves an empty `data` array, which
 is the meaningful zero-state.
-
-
 
 # List trades
 Source: https://docs.polymarket.com/api-reference/feeds/list-trades
@@ -55116,8 +55113,6 @@ A malformed `condition` id is a `400` naming the value; a
 well-formed one that matches nothing serves an empty `data` array, which
 is the meaningful zero-state; absence means the market is not servable,
 and only that.
-
-
 
 # Get a token's price history
 Source: https://docs.polymarket.com/api-reference/markets/get-a-tokens-price-history
@@ -55178,8 +55173,6 @@ multi-day window prefer a grain-aligned `bucket_seconds` (300, 1800, 10800,
 43200) or omit it; a 60-second width over days is the one shape that is both
 slow and, past 7 days, empty.
 
-
-
 # Get live volume for an event
 Source: https://docs.polymarket.com/api-reference/markets/get-live-volume-for-an-event
 
@@ -55200,8 +55193,6 @@ At most 20 distinct event ids per request, the same selector ceiling the
 `condition=` lists carry: every named event contributes all of its markets
 to a single aggregation, so the list is what sizes the request.
 
-
-
 # Get open interest
 Source: https://docs.polymarket.com/api-reference/markets/get-open-interest
 
@@ -55217,8 +55208,6 @@ market. A malformed id is a `400` naming the value, so absence carries that
 one meaning and nothing else. Unlike the feeds this is not paginated;
 `data` is the row array with no `pagination`.
 
-
-
 # Get resolution state
 Source: https://docs.polymarket.com/api-reference/markets/get-resolution-state
 
@@ -55229,8 +55218,6 @@ Supply exactly one of `question_id`, `condition`, or `event_id`. Condition and
 event selectors accept comma-separated values and return condition-grain
 rows in deterministic order, preferring native V2 lifecycle, then UMA
 lifecycle, then terminal CTF state. Misses return `{ "data": [] }`.
-
-
 
 # List a market's top holders
 Source: https://docs.polymarket.com/api-reference/markets/list-a-markets-top-holders
@@ -55261,8 +55248,6 @@ overrides `limit`).
 Page walks advance every token group together, so a group leaves `data`
 once its token is exhausted while others keep paging; no rows are lost,
 but merge pages by `token_id`, not by array position.
-
-
 
 # Look up tokens
 Source: https://docs.polymarket.com/api-reference/markets/look-up-tokens
@@ -55303,8 +55288,6 @@ polymarket-v2 module. Reference fields never change; `closed`,
 `resolved`, `final_price` and `outcome` may lag by up to a minute. Not
 paginated: `data` is the row array with no `pagination`.
 
-
-
 # Get data freshness
 Source: https://docs.polymarket.com/api-reference/service/get-data-freshness
 
@@ -55338,15 +55321,11 @@ outage shows up as a growing age rather than a 500. Before the first refresh
 lands there is nothing to serve and this answers `503`; "not measured yet"
 and "measured, no lag" are different claims.
 
-
-
 # Get a user's PnL series
 Source: https://docs.polymarket.com/api-reference/wallet/get-a-users-pnl-series
 
 https://data-api.polymarket.com/v2/openapi.json get /v2/user-pnl
 Complete cumulative native-PnL atoms and compositions.
-
-
 
 # Get a user's profile stats
 Source: https://docs.polymarket.com/api-reference/wallet/get-a-users-profile-stats
@@ -55382,8 +55361,6 @@ fill metrics.
 Not paginated: one row by construction, so `data` is the bare object with no
 `pagination`; the `/v2/value` shape.
 
-
-
 # Get a user's trading volume
 Source: https://docs.polymarket.com/api-reference/wallet/get-a-users-trading-volume
 
@@ -55405,8 +55382,6 @@ the endpoint that shows the unit convention side by side: the bare name is
 the natural unit, `_usdc` is the denomination, the same pairing as
 `current_size` / `entry_cost_usdc` on `/v2/positions`.
 
-
-
 # Get portfolio value
 Source: https://docs.polymarket.com/api-reference/wallet/get-portfolio-value
 
@@ -55419,8 +55394,6 @@ scopes the single-market term, and any condition filter excludes the
 portfolio-level combo term. `data` is a single object; a user
 with no positions yields `{ "data": { "proxy_wallet": …, "value": 0 } }`.
 
-
-
 # Get wallet approvals
 Source: https://docs.polymarket.com/api-reference/wallet/get-wallet-approvals
 
@@ -55429,8 +55402,6 @@ Polygon token/operator approval state for one wallet.
 
 `?user=` must be an EVM address. The complete served catalog is returned in
 canonical order under `{ data }`; this endpoint is not paginated.
-
-
 
 # List combo positions
 Source: https://docs.polymarket.com/api-reference/wallet/list-combo-positions
@@ -55467,8 +55438,6 @@ A malformed `condition` combo condition id is a `400` naming the value; a
 well-formed one that matches nothing serves an empty `data` array, which
 is the meaningful zero-state.
 
-
-
 # List positions for a user or market
 Source: https://docs.polymarket.com/api-reference/wallet/list-positions-for-a-user-or-market
 
@@ -55504,12 +55473,8 @@ well-formed one that matches nothing serves an empty `data` array, which
 is the meaningful zero-state; absence means the market is not servable,
 and only that.
 
-
-
 # Live Data Channel
 Source: https://docs.polymarket.com/api-reference/websockets/live-data-channel
 
 Send JSON text frames tagged with op. The server answers every op with an ack or an error ack (never a close, except for policy breaches, close 4008, and an expired Access Token, close 1008) and pushes envelopes for subscribed channels. Limits per connection: 64 active (channel, filter) subscriptions, 20 subscribe or unsubscribe frames per second (a batch frame counts once), 64 KB per frame, 8 auth attempts. The server sends a WebSocket ping every 25 seconds; two missed pongs close 4002. Close codes: 4001 authentication failed on a presented credential, 4002 slow consumer or pong timeout, 4003 server draining (reconnect once after a uniform 0 to 10 s delay), 4008 policy violation (fix the client; do not reconnect blindly), which also closes a socket that neither passed authentication nor registered a subscription within the server's unengaged timeout (120 seconds by default, reason text unengaged) once that rule is enforced, 1008 authentication expired (a connection authenticated with an Access Token whose last accepted token expired, 30 second leeway included, with no renewal; refresh the token and reconnect).
-
-
 

@@ -153,6 +153,9 @@ We leave out `external_flag` when you sent no `quote_id`. Don't expect a `null`.
 
 When you reject, we write nothing and the parlay is rejected.
 
+After any rejection, including a failed or late response, we pass over your quotes on the same legs for 2 minutes, for every taker.
+This applies only before any game in the parlay starts.
+
 > [!WARNING]
 >
 > Always include `confirmed`. A response without it, a non-2xx status, or an invalid body rejects the trade, just like `false`.

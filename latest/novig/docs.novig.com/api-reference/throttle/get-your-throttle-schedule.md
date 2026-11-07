@@ -89,13 +89,16 @@ paths:
                 account:
                   capacity: 64
                   refillPerSec: 8
+                accountMaxOpenOrders: 2048
+                accountMaxWatchedMarkets: 8192
+                accountTier: BASE
                 cancel:
                   capacity: 256
                   refillPerSec: 16
                 history:
                   capacity: 512
                   refillPerSec: 4
-                maxOpenOrders: 1024
+                maxOpenOrders: 2048
                 maxWatchedMarkets: 8192
                 place:
                   capacity: 256
@@ -106,6 +109,7 @@ paths:
                 stream:
                   capacity: 512
                   refillPerSec: 32
+                tier: BASE
               schema:
                 $ref: '#/components/schemas/LimitsResponse'
           description: Your schedule.
@@ -419,11 +423,30 @@ components:
     LimitsResponse:
       description: |-
         Your rate-limit schedule: one `BucketLimit` per bucket. A trading key
-        reports the limits of its subaccount's tier.
+        reports the limits of its account's tier.
       properties:
         account:
           $ref: '#/components/schemas/BucketLimit'
           description: 'The bucket for private reads: orders, positions, and account data.'
+        accountMaxOpenOrders:
+          description: >-
+            `maxOpenOrders` at your account's tier: what each trading key on
+            your
+
+            account gets.
+          format: int32
+          minimum: 0
+          type: integer
+        accountMaxWatchedMarkets:
+          description: |-
+            `maxWatchedMarkets` at your account's tier: what each trading key on
+            your account gets.
+          format: int32
+          minimum: 0
+          type: integer
+        accountTier:
+          $ref: '#/components/schemas/RateLimitTier'
+          description: Your account's tier. Every trading key on your account gets it.
         cancel:
           $ref: '#/components/schemas/BucketLimit'
           description: The bucket for canceling orders. Its limits are never below `place`.
@@ -442,10 +465,10 @@ components:
           type: integer
         maxWatchedMarkets:
           description: >-
-            The most markets one websocket connection may watch at once. An
-            event
+            The most markets one websocket connection of your subaccount may
+            watch
 
-            counts as the markets it contains.
+            at once. An event counts as the markets it contains.
           format: int32
           minimum: 0
           type: integer
@@ -462,7 +485,14 @@ components:
           description: |-
             The bucket for websocket requests: subscribe, unsubscribe, snapshot,
             and status.
+        tier:
+          $ref: '#/components/schemas/RateLimitTier'
+          description: |-
+            The tier of these limits. A trading key is at its account's tier. A
+            management key is always at `BASE`.
       required:
+        - tier
+        - accountTier
         - read
         - account
         - place
@@ -471,6 +501,8 @@ components:
         - history
         - maxWatchedMarkets
         - maxOpenOrders
+        - accountMaxWatchedMarkets
+        - accountMaxOpenOrders
       type: object
     ErrorBody:
       description: Every error on the surface carries this body.
@@ -522,6 +554,22 @@ components:
         - capacity
         - refillPerSec
       type: object
+    RateLimitTier:
+      description: >-
+        A trader's rate-limit tier. A tier multiplies every v3 throttle of each
+        of
+
+        the trader's subaccounts, and sets how many orders each may keep open
+        and
+
+        how many markets each websocket connection may watch.
+      enum:
+        - BASE
+        - TIER1
+        - TIER2
+        - TIER3
+        - TIER4
+      type: string
     BatchOrderError:
       description: >-
         One rejected order within a batch placement: which order failed, and

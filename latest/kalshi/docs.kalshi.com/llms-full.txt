@@ -4,23 +4,17 @@ Source: https://docs.kalshi.com/api-reference/account/get-account-api-limits
 /openapi.yaml get /account/limits
 Endpoint to retrieve the authenticated user's Predictions API usage tier and token-bucket limits. Public Predictions tiers include Basic, Advanced, Expert, Premier, Paragon, Prime, and Prestige.
 
-
-
 # Get Account API Usage Level Volume Progress
 Source: https://docs.kalshi.com/api-reference/account/get-account-api-usage-level-volume-progress
 
 /openapi.yaml get /account/api_usage_level/volume_progress
 Returns the authenticated user's latest cron-computed trading volume progress toward volume-based API usage tiers for the predictions (event_contract) lane. Volume figures are reported as fixed-point contract counts.
 
-
-
 # List Non-Default Endpoint Costs
 Source: https://docs.kalshi.com/api-reference/account/list-non-default-endpoint-costs
 
 /openapi.yaml get /account/endpoint_costs
 Lists API v2 endpoints whose configured token cost differs from the default cost. Endpoints that use the default cost are omitted.
-
-
 
 # Upgrade Account API Usage Level
 Source: https://docs.kalshi.com/api-reference/account/upgrade-account-api-usage-level
@@ -39,15 +33,11 @@ Source: https://docs.kalshi.com/api-reference/api-keys/create-api-key
 /openapi.yaml post /api_keys
  Endpoint for creating a new API key with a user-provided public key.  This endpoint allows users with Premier or Market Maker API usage levels to create API keys by providing their own RSA or Ed25519 public key in PEM format. The platform will use this public key to verify signatures on API requests: RSA-PSS with SHA-256 for RSA keys, Ed25519 for Ed25519 keys.
 
-
-
 # Delete API Key
 Source: https://docs.kalshi.com/api-reference/api-keys/delete-api-key
 
 /openapi.yaml delete /api_keys/{api_key}
  Endpoint for deleting an existing API key.  This endpoint permanently deletes an API key. Once deleted, the key can no longer be used for authentication. This action cannot be undone.
-
-
 
 # Generate API Key
 Source: https://docs.kalshi.com/api-reference/api-keys/generate-api-key
@@ -55,29 +45,23 @@ Source: https://docs.kalshi.com/api-reference/api-keys/generate-api-key
 /openapi.yaml post /api_keys/generate
  Endpoint for generating a new API key with an automatically created key pair.  This endpoint generates a key pair of the requested key_type (RSA when omitted). The public key is stored on the platform, while the private key is returned to the user and must be stored securely. The private key cannot be retrieved again.
 
-
-
 # Get API Keys
 Source: https://docs.kalshi.com/api-reference/api-keys/get-api-keys
 
 /openapi.yaml get /api_keys
  Endpoint for retrieving all API keys associated with the authenticated user.  API keys allow programmatic access to the platform without requiring username/password authentication. Each key has a unique identifier and name.
 
-
-
 # Accept Block Trade Proposal
 Source: https://docs.kalshi.com/api-reference/communications/accept-block-trade-proposal
 
 /openapi.yaml post /communications/block-trade-proposals/{block_trade_proposal_id}/accept
- Endpoint for accepting a block trade proposal.
-
-
+ Endpoint for accepting a block trade proposal. The caller accepts as whichever side it is named on, and may book that side onto any of its own subaccounts, including one the proposal did not name. Without a subaccount, the side keeps the one the proposal named. A side that has already accepted may accept again to move to another subaccount until the trade executes.
 
 # Accept Quote
 Source: https://docs.kalshi.com/api-reference/communications/accept-quote
 
 /openapi.yaml put /communications/quotes/{quote_id}/accept
-DEPRECATED: Use PUT /communications/rfqs/{rfq_id}/quotes/{quote_id}/accept instead. Endpoint for accepting a quote. This will require the quoter to confirm.
+DEPRECATED: Use PUT /communications/rfqs/{rfq_id}/quotes/{quote_id}/accept instead.
 
 > [!WARNING]
 >
@@ -88,9 +72,13 @@ DEPRECATED: Use PUT /communications/rfqs/{rfq_id}/quotes/{quote_id}/accept inste
 Source: https://docs.kalshi.com/api-reference/communications/accept-rfq-quote
 
 /openapi.yaml put /communications/rfqs/{rfq_id}/quotes/{quote_id}/accept
- Endpoint for accepting a quote scoped to its RFQ. This will require the quoter to confirm.
+Endpoint for accepting a quote scoped to its RFQ. This will require the quoter to confirm. The quote that fills can be another maker's quote at the same price; see [RFQs](/getting_started/rfqs#flow).
 
+# Cancel Block Trade Proposal
+Source: https://docs.kalshi.com/api-reference/communications/cancel-block-trade-proposal
 
+/openapi.yaml delete /communications/block-trade-proposals/{block_trade_proposal_id}
+ Endpoint for cancelling a pending block trade proposal. Only the proposer can cancel it.
 
 # Confirm Quote
 Source: https://docs.kalshi.com/api-reference/communications/confirm-quote
@@ -135,8 +123,6 @@ Source: https://docs.kalshi.com/api-reference/communications/create-rfq
 /openapi.yaml post /communications/rfqs
  Endpoint for creating a new RFQ. You can have a maximum of 100 open RFQs at a time.
 
-
-
 # Delete Quote
 Source: https://docs.kalshi.com/api-reference/communications/delete-quote
 
@@ -158,8 +144,6 @@ Source: https://docs.kalshi.com/api-reference/communications/delete-rfq
 /openapi.yaml delete /communications/rfqs/{rfq_id}
  Endpoint for deleting an RFQ by ID
 
-
-
 # Delete RFQ Quote
 Source: https://docs.kalshi.com/api-reference/communications/delete-rfq-quote
 
@@ -177,15 +161,11 @@ Source: https://docs.kalshi.com/api-reference/communications/get-block-trade-pro
 /openapi.yaml get /communications/block-trade-proposals
  Endpoint for getting block trade proposals visible to the authenticated user.
 
-
-
 # Get Communications ID
 Source: https://docs.kalshi.com/api-reference/communications/get-communications-id
 
 /openapi.yaml get /communications/id
  Endpoint for getting the communications ID of the logged-in user.
-
-
 
 # Get Quote
 Source: https://docs.kalshi.com/api-reference/communications/get-quote
@@ -206,17 +186,13 @@ DEPRECATED: Use GET /communications/rfqs/{rfq_id}/quotes/{quote_id} instead. End
 Source: https://docs.kalshi.com/api-reference/communications/get-quotes
 
 /openapi.yaml get /communications/quotes
-List quotes. The rfq_id filter requires an RFQ UUID. Pass pagination cursors back unchanged; malformed RFQ IDs or cursors return HTTP 400.
-
-
+List quotes. The rfq_id filter requires an RFQ UUID. With rfq_id, quotes are sorted on the RFQ's main side (no for a target-cost RFQ, yes otherwise): the best price first, then the earliest place in line at that price. Pass pagination cursors back unchanged; malformed RFQ IDs or cursors return HTTP 400.
 
 # Get RFQ
 Source: https://docs.kalshi.com/api-reference/communications/get-rfq
 
 /openapi.yaml get /communications/rfqs/{rfq_id}
  Endpoint for getting a single RFQ by id
-
-
 
 # Get RFQ Quote
 Source: https://docs.kalshi.com/api-reference/communications/get-rfq-quote
@@ -235,15 +211,17 @@ Source: https://docs.kalshi.com/api-reference/communications/get-rfqs
 /openapi.yaml get /communications/rfqs
 List RFQs. Pass pagination cursors back unchanged. A malformed cursor or invalid creator_user_id UUID returns HTTP 400. Use user_filter=self to filter by the authenticated user.
 
-
-
 # Propose Block Trade
 Source: https://docs.kalshi.com/api-reference/communications/propose-block-trade
 
 /openapi.yaml post /communications/block-trade-proposals
  Endpoint for creating a block trade proposal.
 
+# Reject Block Trade Proposal
+Source: https://docs.kalshi.com/api-reference/communications/reject-block-trade-proposal
 
+/openapi.yaml post /communications/block-trade-proposals/{block_trade_proposal_id}/reject
+ Endpoint for rejecting a pending block trade proposal. Either counterparty can reject it, but not the proposer, which cancels it instead.
 
 # Create Subtrader-Bound API Key
 Source: https://docs.kalshi.com/api-reference/create-subtrader-bound-api-key
@@ -251,15 +229,11 @@ Source: https://docs.kalshi.com/api-reference/create-subtrader-bound-api-key
 /perps_scm_openapi.yaml post /fcm/margin/api_keys
 FCM clearing members only. Mint an API key bound to one of your margin subtraders using an RSA or Ed25519 public key you supply. The binding is set at mint and immutable; the resulting key is the institution's trading credential for that subtrader and cannot reach any REST endpoint, including key management.
 
-
-
 # Create Subtrader Group
 Source: https://docs.kalshi.com/api-reference/create-subtrader-group
 
 /perps_scm_openapi.yaml post /fcm/margin/subtrader_groups
 Create a margin subtrader group. Grouped subtraders are margined as one netted portfolio at each settlement.
-
-
 
 # Delete Subtrader-Bound API Key
 Source: https://docs.kalshi.com/api-reference/delete-subtrader-bound-api-key
@@ -267,23 +241,17 @@ Source: https://docs.kalshi.com/api-reference/delete-subtrader-bound-api-key
 /perps_scm_openapi.yaml delete /fcm/margin/api_keys/{api_key_id}
 FCM clearing members only. Permanently revoke a subtrader-bound API key. Revocation cannot be undone; the institution's live sessions on this key are terminated.
 
-
-
 # Delete Subtrader Group
 Source: https://docs.kalshi.com/api-reference/delete-subtrader-group
 
 /perps_scm_openapi.yaml delete /fcm/margin/subtrader_groups/{group_id}
 Delete a margin subtrader group if it exists.
 
-
-
 # Estimate Portfolio Maintenance Margin
 Source: https://docs.kalshi.com/api-reference/estimate-portfolio-maintenance-margin
 
 /perps_scm_openapi.yaml post /margin/estimate_maintenance_margin
 Maintenance margin requirement in dollars for a hypothetical portfolio, margined under the rules that apply to the authenticated clearing member. Positions and prices are supplied by the caller and need not reflect positions held. Every market in `positions` must belong to `asset_class`. The response includes the component breakdown of the estimate; see the response schema for the semantics of each component.
-
-
 
 # Get Event
 Source: https://docs.kalshi.com/api-reference/events/get-event
@@ -294,15 +262,11 @@ Events contain one or more markets where users can place trades on different out
 All events are accessible through this endpoint, even if their associated markets are older than the historical cutoff.
 
 
-
-
 # Get Event Candlesticks
 Source: https://docs.kalshi.com/api-reference/events/get-event-candlesticks
 
 /openapi.yaml get /series/{series_ticker}/events/{ticker}/candlesticks
  End-point for returning aggregated data across all markets corresponding to an event.
-
-
 
 # Get Event Fee Changes
 Source: https://docs.kalshi.com/api-reference/events/get-event-fee-changes
@@ -311,23 +275,17 @@ Source: https://docs.kalshi.com/api-reference/events/get-event-fee-changes
 Event fees are an override layered on top of the parent series' fee structure. If `fee_type_override` and `fee_multiplier_override` are null, that indicates the override is cleared.
 
 
-
-
 # Get Event Forecast Percentile History
 Source: https://docs.kalshi.com/api-reference/events/get-event-forecast-percentile-history
 
 /openapi.yaml get /series/{series_ticker}/events/{ticker}/forecast_percentile_history
 Endpoint for getting the historical raw and formatted forecast numbers for an event at specific percentiles.
 
-
-
 # Get Event Metadata
 Source: https://docs.kalshi.com/api-reference/events/get-event-metadata
 
 /openapi.yaml get /events/{event_ticker}/metadata
  Endpoint for getting metadata about an event by its ticker.  Returns only the metadata information for an event.
-
-
 
 # Get Events
 Source: https://docs.kalshi.com/api-reference/events/get-events
@@ -338,15 +296,11 @@ To retrieve multivariate events, use the GET /events/multivariate endpoint.
 All events are accessible through this endpoint, even if their associated markets are older than the historical cutoff.
 
 
-
-
 # Get Multivariate Events
 Source: https://docs.kalshi.com/api-reference/events/get-multivariate-events
 
 /openapi.yaml get /events/multivariate
 Retrieve multivariate (combo) events. These are dynamically created events from multivariate event collections. Supports filtering by series ticker, collection ticker, or a comma-separated list of event tickers.
-
-
 
 # Get Exchange Schedule
 Source: https://docs.kalshi.com/api-reference/exchange/get-exchange-schedule
@@ -354,30 +308,22 @@ Source: https://docs.kalshi.com/api-reference/exchange/get-exchange-schedule
 /openapi.yaml get /exchange/schedule
  Endpoint for getting the exchange schedule.
 
-
-
 # Get Exchange Status
 Source: https://docs.kalshi.com/api-reference/exchange/get-exchange-status
 
 /openapi.yaml get /exchange/status
  Endpoint for getting the exchange status.
 
-
-
 # Get Series Fee Changes
 Source: https://docs.kalshi.com/api-reference/exchange/get-series-fee-changes
 
 /openapi.yaml get /series/fee_changes
-
-
 
 # Get User Data Timestamp
 Source: https://docs.kalshi.com/api-reference/exchange/get-user-data-timestamp
 
 /openapi.yaml get /exchange/user_data_timestamp
  There is typically a short delay before exchange events are reflected in the API endpoints. Whenever possible, combine API responses to PUT/POST/DELETE requests with WebSocket data to obtain the most accurate view of the exchange state. This endpoint provides an approximate indication of when the data from the following endpoints was last validated: GetBalance, GetOrder(s), GetFills, GetPositions
-
-
 
 # Create FCM Position Transfer
 Source: https://docs.kalshi.com/api-reference/fcm/create-fcm-position-transfer
@@ -421,8 +367,6 @@ prefixes `target_subtrader_id`. Contact Kalshi to enable it; until then, request
   error account pay the full $1 per contract ($5.00).
 
 
-
-
 # Create FCM Subtrader
 Source: https://docs.kalshi.com/api-reference/fcm/create-fcm-subtrader
 
@@ -431,8 +375,6 @@ Endpoint for FCM members to create a subtrader on the event-contract exchange. T
 subtrader is registered on every exchange shard that knows the FCM; a shard provisioned
 later registers it lazily on the subtrader's first order there. Re-creating an existing
 subtrader returns 409.
-
-
 
 
 # Delete FCM Subtrader Event Contract Daily Cap
@@ -445,15 +387,11 @@ API key — until a cap is set again. It does not stop orders your own unbound s
 submit on the subtrader's behalf; to stop the account entirely, block subtrader trading.
 
 
-
-
 # Get FCM Fills
 Source: https://docs.kalshi.com/api-reference/fcm/get-fcm-fills
 
 /openapi.yaml get /fcm/fills
 Returns fills across the authenticated FCM's subtraders. Requires FCM member access.
-
-
 
 
 # Get FCM Orders
@@ -468,8 +406,6 @@ omitted and defaults to the key's bound subtrader, and if supplied it must equal
 subtrader or the request is rejected.
 
 
-
-
 # Get FCM Positions
 Source: https://docs.kalshi.com/api-reference/fcm/get-fcm-positions
 
@@ -481,8 +417,6 @@ omitted and defaults to the key's bound subtrader, and if supplied it must equal
 subtrader or the request is rejected.
 
 
-
-
 # Get FCM Subtrader Blocked Categories
 Source: https://docs.kalshi.com/api-reference/fcm/get-fcm-subtrader-blocked-categories
 
@@ -490,8 +424,6 @@ Source: https://docs.kalshi.com/api-reference/fcm/get-fcm-subtrader-blocked-cate
 Returns the event categories an FCM member has blocked for one of its
 subtraders. The subtrader must belong to the requesting FCM. A subtrader
 with no blocks returns an empty list.
-
-
 
 
 # Get FCM Subtrader Event Contract Daily Cap
@@ -511,8 +443,6 @@ omitted and defaults to the key's bound subtrader, and if supplied it must equal
 subtrader or the request is rejected.
 
 
-
-
 # List FCM Subtraders
 Source: https://docs.kalshi.com/api-reference/fcm/list-fcm-subtraders
 
@@ -521,8 +451,6 @@ Lists the authenticated FCM's event-contract subtraders, including accounts with
 no trades. Exchange metadata is asynchronous, so newly created accounts may not
 appear immediately. Trading block status includes firm-wide and Kalshi restrictions;
 fcm_trading_blocked identifies the FCM's own per-subtrader restriction.
-
-
 
 
 # Update FCM Subtrader Blocked Categories
@@ -537,8 +465,6 @@ event belongs to a blocked category, while orders already resting are
 not cancelled. Returns the subtrader's full resulting blocked set.
 
 
-
-
 # Update FCM Subtrader Event Contract Daily Cap
 Source: https://docs.kalshi.com/api-reference/fcm/update-fcm-subtrader-event-contract-daily-cap
 
@@ -550,15 +476,11 @@ with no cap cannot trade through its bound keys. Cap changes take effect immedia
 existing resting orders are never cancelled by a cap change.
 
 
-
-
 # Generate Subtrader-Bound API Key
 Source: https://docs.kalshi.com/api-reference/generate-subtrader-bound-api-key
 
 /perps_scm_openapi.yaml post /fcm/margin/api_keys/generate
 FCM clearing members only. Mint a subtrader-bound API key with a platform-generated RSA key pair. The private key appears exactly once in this response and cannot be retrieved again; store it securely before leaving the page or discarding the response.
-
-
 
 # Get Active Margin Obligations
 Source: https://docs.kalshi.com/api-reference/get-active-margin-obligations
@@ -571,15 +493,11 @@ Kalshi Klear; a positive amount indicates a net receivable. Empty
 when no obligation is pending.
 
 
-
-
 # Get Funding Estimate By Asset Class
 Source: https://docs.kalshi.com/api-reference/get-funding-estimate-by-asset-class
 
 /perps_scm_openapi.yaml get /margin/funding_estimate_by_asset_class
 Estimated funding at the next scheduled funding time for the authenticated clearing member, keyed by asset class.
-
-
 
 # Get Funding Schedule
 Source: https://docs.kalshi.com/api-reference/get-funding-schedule
@@ -587,15 +505,11 @@ Source: https://docs.kalshi.com/api-reference/get-funding-schedule
 /perps_scm_openapi.yaml get /margin/funding_schedule
 Returns an asset class's funding schedule as a cron expression evaluated in US Eastern Time. Funding executes at each scheduled tick; schedules differ by asset class.
 
-
-
 # Get Guaranty Fund Balance
 Source: https://docs.kalshi.com/api-reference/get-guaranty-fund-balance
 
 /perps_scm_openapi.yaml get /margin/guaranty_fund_balance
 Guaranty fund contribution balance for the authenticated clearing member.
-
-
 
 # Get Large Trader Positions
 Source: https://docs.kalshi.com/api-reference/get-large-trader-positions
@@ -603,15 +517,11 @@ Source: https://docs.kalshi.com/api-reference/get-large-trader-positions
 /perps_scm_openapi.yaml get /margin/large_trader_positions
 Positions of the authenticated clearing member that meet the CFTC large-trader reporting levels for a settlement day (17 CFR 15.03(b); each row's reportable_threshold is its market's level), plus exit-day positions that were reportable on the prior settlement day and are now below the threshold. Members with reportable positions are subject to their own CFTC Part 17 large-trader reporting obligations; this endpoint provides the position data needed to meet them. Empty when no positions meet the reporting levels and no prior-day reportable positions need exit reporting. See the CFTC's Large Trader Reporting Program (https://www.cftc.gov/IndustryOversight/MarketSurveillance/LargeTraderReportingProgram/index.htm) and reporting levels at 17 CFR 15.03 (https://www.ecfr.gov/current/title-17/chapter-I/part-15).
 
-
-
 # Get Maintenance Margin Metadata
 Source: https://docs.kalshi.com/api-reference/get-maintenance-margin-metadata
 
 /perps_scm_openapi.yaml get /margin/estimate_maintenance_margin/metadata
 Inputs to the maintenance margin calculation for an asset class.
-
-
 
 # Get Margin Reports
 Source: https://docs.kalshi.com/api-reference/get-margin-reports
@@ -619,15 +529,11 @@ Source: https://docs.kalshi.com/api-reference/get-margin-reports
 /perps_scm_openapi.yaml get /margin/reports
 Margin reports for the authenticated clearing member, filterable by date range.
 
-
-
 # Get Member Funding Payments
 Source: https://docs.kalshi.com/api-reference/get-member-funding-payments
 
 /perps_scm_openapi.yaml get /margin/funding_payments
 Returns the member's funding payments for a given funding time, if available. Payments are written shortly after each funding execution, before the settlement that carries them.
-
-
 
 # Get Obligation Corporate Action Payments
 Source: https://docs.kalshi.com/api-reference/get-obligation-corporate-action-payments
@@ -635,15 +541,11 @@ Source: https://docs.kalshi.com/api-reference/get-obligation-corporate-action-pa
 /perps_scm_openapi.yaml get /margin/obligations/{obligation_id}/corporate_action_payments
 Pages the cash and split corporate-action payments settled by one obligation owned by the authenticated clearing member. The inline corporate_action_payments array is capped at 1000 rows; corporate_action_payments_truncated indicates when to use this endpoint for the complete set. These rows explain amounts already included in settlement PnL and must not be added to the obligation total again.
 
-
-
 # Get Obligation Funding Payments
 Source: https://docs.kalshi.com/api-reference/get-obligation-funding-payments
 
 /perps_scm_openapi.yaml get /margin/obligations/{obligation_id}/funding_payments
 Pages the full per-market, per-subtrader, per-funding-period funding breakdown of one obligation. The inline funding_payments array on obligation responses is capped at 1000 rows (funding_payments_truncated is set when the cap applied); this endpoint serves the complete set.
-
-
 
 # Get Obligation History
 Source: https://docs.kalshi.com/api-reference/get-obligation-history
@@ -651,15 +553,11 @@ Source: https://docs.kalshi.com/api-reference/get-obligation-history
 /perps_scm_openapi.yaml get /margin/obligation_history
 Completed obligations from previous settlements, ordered by most recent first.
 
-
-
 # Get Obligation Maintenance Margin Details
 Source: https://docs.kalshi.com/api-reference/get-obligation-maintenance-margin-details
 
 /perps_scm_openapi.yaml get /margin/obligations/{obligation_id}/maintenance_margin_details
 Pages the full per-subtrader maintenance margin breakdown of one obligation. The inline maintenance_margin_details array on obligation responses is capped at 1000 rows (maintenance_margin_details_truncated is set when the cap applied); this endpoint serves the complete set.
-
-
 
 # Get Obligation Settlement Details
 Source: https://docs.kalshi.com/api-reference/get-obligation-settlement-details
@@ -667,15 +565,11 @@ Source: https://docs.kalshi.com/api-reference/get-obligation-settlement-details
 /perps_scm_openapi.yaml get /margin/obligations/{obligation_id}/settlement_details
 Pages the full per-market, per-subtrader settlement breakdown of one obligation. The inline settlement_details array on obligation responses is capped at 1000 rows (settlement_details_truncated is set when the cap applied); this endpoint serves the complete set.
 
-
-
 # Get Settlement Balance
 Source: https://docs.kalshi.com/api-reference/get-settlement-balance
 
 /perps_scm_openapi.yaml get /margin/settlement_balance
 Settlement buffer balance for the authenticated clearing member.
-
-
 
 # Get Settlement Balance History
 Source: https://docs.kalshi.com/api-reference/get-settlement-balance-history
@@ -683,15 +577,11 @@ Source: https://docs.kalshi.com/api-reference/get-settlement-balance-history
 /perps_scm_openapi.yaml get /margin/settlement_balance_history
 Settlement balance changes for the authenticated clearing member, ordered by most recent first.
 
-
-
 # Get Settlement Balance Withdrawal
 Source: https://docs.kalshi.com/api-reference/get-settlement-balance-withdrawal
 
 /perps_scm_openapi.yaml get /margin/settlement_balance_withdrawal
 Get the status of a settlement balance withdrawal by ID.
-
-
 
 # Get Settlement Estimate By Asset Class
 Source: https://docs.kalshi.com/api-reference/get-settlement-estimate-by-asset-class
@@ -699,23 +589,17 @@ Source: https://docs.kalshi.com/api-reference/get-settlement-estimate-by-asset-c
 /perps_scm_openapi.yaml get /margin/settlement_estimate_by_asset_class
 Estimated next settlement amounts for the authenticated clearing member, keyed by asset class, including per-subtrader and per-group breakdowns. Asset classes where the member has no margin activity are omitted. `subtrader_breakdowns` and `group_breakdowns` together contain at most the 1,000 entries with the largest maintenance margin requirement; `omitted_subtrader_count` and `omitted_group_count` report how many entries of each type were left out. `user_breakdown` always aggregates across all subtraders.
 
-
-
 # Get Settlement Prices
 Source: https://docs.kalshi.com/api-reference/get-settlement-prices
 
 /perps_scm_openapi.yaml get /margin/settlement_prices
 Settlement (mark) prices for the markets in an asset class at a given settlement time. Empty when no settlement has run for that asset class and settlement time.
 
-
-
 # Get Subtrader Groups
 Source: https://docs.kalshi.com/api-reference/get-subtrader-groups
 
 /perps_scm_openapi.yaml get /fcm/margin/subtrader_groups
 List the clearing member's margin subtrader groups and their members.
-
-
 
 # Get Historical Cutoff Timestamps
 Source: https://docs.kalshi.com/api-reference/historical/get-historical-cutoff-timestamps
@@ -730,8 +614,6 @@ Returns the archive's cutoff timestamps. For positions, the cutoff is the backfi
 - `market_positions_last_updated_ts` : Backfill horizon for settled positions, not a guaranteed archive-visibility boundary. An event moves to `GET /historical/positions` only after its buffered handoff completes. Until then, its settled positions remain available via `GET /portfolio/positions?settlement_status=settled`. Unsettled positions remain available in `GET /portfolio/positions`.
 
 
-
-
 # Get Historical Fills
 Source: https://docs.kalshi.com/api-reference/historical/get-historical-fills
 
@@ -741,15 +623,11 @@ API keys restricted to a subaccount return only that subaccount's fills. If supp
 Registered partners may also use a user OAuth access token with the explicitly granted read::compliance_partner scope.
 
 
-
-
 # Get Historical Market
 Source: https://docs.kalshi.com/api-reference/historical/get-historical-market
 
 /openapi.yaml get /historical/markets/{ticker}
  Endpoint for getting data about a specific market by its ticker from the historical database.
-
-
 
 # Get Historical Market Candlesticks
 Source: https://docs.kalshi.com/api-reference/historical/get-historical-market-candlesticks
@@ -757,15 +635,11 @@ Source: https://docs.kalshi.com/api-reference/historical/get-historical-market-c
 /openapi.yaml get /historical/markets/{ticker}/candlesticks
  Endpoint for fetching historical candlestick data for markets that have been archived from the live data set. Time period length of each candlestick in minutes. Valid values: 1 (1 minute), 60 (1 hour), 1440 (1 day).
 
-
-
 # Get Historical Markets
 Source: https://docs.kalshi.com/api-reference/historical/get-historical-markets
 
 /openapi.yaml get /historical/markets
 Endpoint for getting markets that have been archived to the historical database. Filters are mutually exclusive.
-
-
 
 
 # Get Historical Orders
@@ -776,15 +650,11 @@ Endpoint for getting orders that have been archived to the historical database.
 API keys restricted to a subaccount return only that subaccount's orders. If supplied, `subaccount` must match the key's restriction.
 
 
-
-
 # Get Historical Positions
 Source: https://docs.kalshi.com/api-reference/historical/get-historical-positions
 
 /openapi.yaml get /historical/positions
 Returns settled market positions after their event completes the live-to-historical handoff. Until then, settled positions remain available via `GET /portfolio/positions?settlement_status=settled`. The `market_positions_last_updated_ts` value on `GET /historical/cutoff` is the backfill horizon, not a guarantee that every older position has moved. Unsettled positions are available via `GET /portfolio/positions`.
-
-
 
 # Get Historical Trades
 Source: https://docs.kalshi.com/api-reference/historical/get-historical-trades
@@ -792,15 +662,11 @@ Source: https://docs.kalshi.com/api-reference/historical/get-historical-trades
 /openapi.yaml get /historical/trades
  Endpoint for getting all historical trades for all markets. Trades that were filled before the historical cutoff are available via this endpoint. Block trades are included by default and identified by the `is_block_trade` field; use the `is_block_trade` query parameter to filter by block / non-block. See [Historical Data](https://docs.kalshi.com/getting_started/historical_data) for details.
 
-
-
 # Get Incentives
 Source: https://docs.kalshi.com/api-reference/incentive-programs/get-incentives
 
 /openapi.yaml get /incentive_programs
  List incentives with optional filters. Incentives are rewards programs for trading activity on specific markets.
-
-
 
 # List Subtrader-Bound API Keys
 Source: https://docs.kalshi.com/api-reference/list-subtrader-bound-api-keys
@@ -808,15 +674,11 @@ Source: https://docs.kalshi.com/api-reference/list-subtrader-bound-api-keys
 /perps_scm_openapi.yaml get /fcm/margin/api_keys
 FCM clearing members only. List your API keys that carry a subtrader binding, optionally filtered to one subtrader.
 
-
-
 # Get Event Live Data
 Source: https://docs.kalshi.com/api-reference/live-data/get-event-live-data
 
 /openapi.yaml get /live_data/events/{event_ticker}
 Get live data for an event by its event ticker. Serves event-keyed live data such as crypto price charts, commodity price timeseries, and weather observations. The `type` field in the response names the schema of the `details` object.
-
-
 
 # Get Game Stats
 Source: https://docs.kalshi.com/api-reference/live-data/get-game-stats
@@ -824,15 +686,11 @@ Source: https://docs.kalshi.com/api-reference/live-data/get-game-stats
 /openapi.yaml get /live_data/milestone/{milestone_id}/game_stats
 Get play-by-play game statistics for a specific milestone. Supported sports: Pro Football, College Football, Pro Basketball, College Men's Basketball, College Women's Basketball, WNBA, Soccer, Pro Hockey, and Pro Baseball. Returns null for unsupported milestone types or milestones without a Sportradar ID.
 
-
-
 # Get Live Data
 Source: https://docs.kalshi.com/api-reference/live-data/get-live-data
 
 /openapi.yaml get /live_data/milestone/{milestone_id}
 Get live data for a specific milestone. The response's `live_data.details.status` is updated far more often than the milestone's own `details.status` and is the preferred source for game status. It is not guaranteed to be current: if the provider feed falls behind, a cached board may still be served, with `live_data.details.live_data_delayed` set to `true` only once it is significantly stale (some feeds never set it), so a missing flag does not by itself mean the data is current.
-
-
 
 # Get Live Data (with type)
 Source: https://docs.kalshi.com/api-reference/live-data/get-live-data-with-type
@@ -840,15 +698,11 @@ Source: https://docs.kalshi.com/api-reference/live-data/get-live-data-with-type
 /openapi.yaml get /live_data/{type}/milestone/{milestone_id}
 Get live data for a specific milestone. This is the legacy endpoint that requires a type path parameter. Prefer using `/live_data/milestone/{milestone_id}` instead.
 
-
-
 # Get Multiple Live Data
 Source: https://docs.kalshi.com/api-reference/live-data/get-multiple-live-data
 
 /openapi.yaml get /live_data/batch
 Get live data for multiple milestones. Each entry's `details.status` is updated far more often than the milestone's own `details.status` and is the preferred source for game status. It is not guaranteed to be current: if the provider feed falls behind, a cached board may still be served, with `details.live_data_delayed` set to `true` only once it is significantly stale (some feeds never set it), so a missing flag does not by itself mean the data is current.
-
-
 
 # Get Weather Index
 Source: https://docs.kalshi.com/api-reference/live-data/get-weather-index
@@ -856,15 +710,11 @@ Source: https://docs.kalshi.com/api-reference/live-data/get-weather-index
 /openapi.yaml get /live_data/weather/{city}
 Get the Kalshi-computed city temperature index: the canonical minute-resolution series behind hourly temperature markets. City-keyed and independent of any event — the series exists whenever the city's index is configured. Values are Fahrenheit rounded to 0.01. Minutes where the index quorum failed carry no value and are never returned as points, so gaps in the series are real gaps. With `detailed=true` each point additionally carries every member station's reported reading and quality-control disposition — the pre-incorporation breakdown.
 
-
-
 # Get Weather Index Calibrations
 Source: https://docs.kalshi.com/api-reference/live-data/get-weather-index-calibrations
 
 /openapi.yaml get /live_data/weather/{city}/calibrations
 Get a city's published weather-index configuration timeline: the launch configuration plus every weekly offset calibration and methodology update, ascending by effective time. Each record carries the station weights, station offsets (Celsius), and the city reference used to compute index values from the record's effective time until the next record — everything needed to reproduce published index values for minutes computed under that configuration version. Offsets are re-estimated weekly after each complete UTC week; weights never change through calibration. The timeline is append-only and complete: it is never trimmed.
-
-
 
 # Batch Get Market Candlesticks
 Source: https://docs.kalshi.com/api-reference/market/batch-get-market-candlesticks
@@ -878,15 +728,11 @@ Endpoint for retrieving candlestick data for multiple markets.
 - Optionally includes a synthetic initial candlestick for price continuity (see `include_latest_before_start` parameter)
 
 
-
-
 # Get Market
 Source: https://docs.kalshi.com/api-reference/market/get-market
 
 /openapi.yaml get /markets/{ticker}
  Endpoint for getting data about a specific market by its ticker. A market represents a specific binary outcome within an event that users can trade on (e.g., "Will candidate X win?"). Markets have yes/no positions, current prices, volume, and settlement rules.
-
-
 
 # Get Market Candlesticks
 Source: https://docs.kalshi.com/api-reference/market/get-market-candlesticks
@@ -896,15 +742,11 @@ Time period length of each candlestick in minutes. Valid values: 1 (1 minute), 6
 Candlesticks for markets that settled before the historical cutoff are only available via `GET /historical/markets/{ticker}/candlesticks`. See [Historical Data](https://docs.kalshi.com/getting_started/historical_data) for details.
 
 
-
-
 # Get Market Orderbook
 Source: https://docs.kalshi.com/api-reference/market/get-market-orderbook
 
 /openapi.yaml get /markets/{ticker}/orderbook
  Endpoint for getting the current order book for a specific market.  The order book shows all active bid orders for both yes and no sides of a binary market. It returns yes bids and no bids only (no asks are returned). This is because in binary markets, a bid for yes at price X is equivalent to an ask for no at price (100-X). For example, a yes bid at 7¢ is the same as a no ask at 93¢, with identical contract sizes.  Each side shows price levels with their corresponding quantities and order counts, organized from best to worst prices.
-
-
 
 # Get Markets
 Source: https://docs.kalshi.com/api-reference/market/get-markets
@@ -924,15 +766,11 @@ Filter by market status. Possible values: `unopened`, `open`, `closed`, `settled
  Markets that settled before the historical cutoff are only available via `GET /historical/markets`. See [Historical Data](https://docs.kalshi.com/getting_started/historical_data) for details.
 
 
-
-
 # Get Multiple Market Orderbooks
 Source: https://docs.kalshi.com/api-reference/market/get-multiple-market-orderbooks
 
 /openapi.yaml get /markets/orderbooks
 Endpoint for getting the current order books for multiple markets in a single request. The order book shows all active bid orders for both yes and no sides of a binary market. It returns yes bids and no bids only (no asks are returned). This is because in binary markets, a bid for yes at price X is equivalent to an ask for no at price (100-X). For example, a yes bid at 7¢ is the same as a no ask at 93¢, with identical contract sizes. Each side shows price levels with their corresponding quantities and order counts, organized from best to worst prices. Returns one orderbook per requested market ticker.
-
-
 
 # Get Series
 Source: https://docs.kalshi.com/api-reference/market/get-series
@@ -940,15 +778,11 @@ Source: https://docs.kalshi.com/api-reference/market/get-series
 /openapi.yaml get /series/{series_ticker}
  Endpoint for getting data about a specific series by its ticker.  A series represents a template for recurring events that follow the same format and rules (e.g., "Monthly Jobs Report", "Weekly Initial Jobless Claims", "Daily Weather in NYC"). Series define the structure, settlement sources, and metadata that will be applied to each recurring event instance within that series.
 
-
-
 # Get Series List
 Source: https://docs.kalshi.com/api-reference/market/get-series-list
 
 /openapi.yaml get /series
  Endpoint for getting data about multiple series with specified filters.  A series represents a template for recurring events that follow the same format and rules (e.g., "Monthly Jobs Report", "Weekly Initial Jobless Claims", "Daily Weather in NYC"). This endpoint allows you to browse and discover available series templates by category.
-
-
 
 # Get Trades
 Source: https://docs.kalshi.com/api-reference/market/get-trades
@@ -957,15 +791,11 @@ Source: https://docs.kalshi.com/api-reference/market/get-trades
 Endpoint for getting all trades for all markets. A trade represents a completed transaction between two users on a specific market. Each trade includes the market ticker, price, quantity, and timestamp information. Block trades are included in the response by default and identified by the `is_block_trade` field; use the `is_block_trade` query parameter to filter by block / non-block. This endpoint returns a paginated response. Use the 'limit' parameter to control page size (1-1000, defaults to 100). The response includes a 'cursor' field - pass this value in the 'cursor' parameter of your next request to get the next page. An empty cursor indicates no more pages are available.
 
 
-
-
 # Get Milestone
 Source: https://docs.kalshi.com/api-reference/milestone/get-milestone
 
 /openapi.yaml get /milestones/{milestone_id}
 Endpoint for getting data about a specific milestone by its ID. The milestone's `details.status`, when present, is maintained by a periodic background job. It lags the game's live state and may be stale or inaccurate, for example remaining `live` after the game ends. For game status, prefer live data, which is updated far more often: `live_data.details.status` from `GET /live_data/milestone/{milestone_id}`, or each entry's `details.status` from `GET /live_data/batch`. Scores are in the sport-specific fields of that live data `details` object.
-
-
 
 # Get Milestones
 Source: https://docs.kalshi.com/api-reference/milestone/get-milestones
@@ -973,15 +803,11 @@ Source: https://docs.kalshi.com/api-reference/milestone/get-milestones
 /openapi.yaml get /milestones
 Endpoint for listing milestones. A milestone's `details.status`, when present, is maintained by a periodic background job. It lags the game's live state and may be stale or inaccurate, for example remaining `live` after the game ends. For game status, prefer live data, which is updated far more often: `live_data.details.status` from `GET /live_data/milestone/{milestone_id}`, or each entry's `details.status` from `GET /live_data/batch`. Scores are in the sport-specific fields of that live data `details` object.
 
-
-
 # Create Market In Multivariate Event Collection
 Source: https://docs.kalshi.com/api-reference/multivariate/create-market-in-multivariate-event-collection
 
 /openapi.yaml post /multivariate_event_collections/{collection_ticker}
 Endpoint for creating an individual market in a multivariate event collection. This endpoint must be hit at least once before trading or looking up a market. Users are limited to 5000 creations per week.
-
-
 
 # Get Multivariate Event Collection
 Source: https://docs.kalshi.com/api-reference/multivariate/get-multivariate-event-collection
@@ -989,15 +815,11 @@ Source: https://docs.kalshi.com/api-reference/multivariate/get-multivariate-even
 /openapi.yaml get /multivariate_event_collections/{collection_ticker}
  Endpoint for getting data about a multivariate event collection by its ticker.
 
-
-
 # Get Multivariate Event Collections
 Source: https://docs.kalshi.com/api-reference/multivariate/get-multivariate-event-collections
 
 /openapi.yaml get /multivariate_event_collections
  Endpoint for getting data about multivariate event collections.
-
-
 
 # Create Order Group
 Source: https://docs.kalshi.com/api-reference/order-groups/create-order-group
@@ -1005,15 +827,11 @@ Source: https://docs.kalshi.com/api-reference/order-groups/create-order-group
 /openapi.yaml post /portfolio/order_groups/create
  Creates a new order group with a contracts limit measured over a rolling 15-second window. Users can have up to 100,000 order groups at a time. When the limit is hit, all orders in the group are cancelled and no new orders can be placed until reset.
 
-
-
 # Delete Order Group
 Source: https://docs.kalshi.com/api-reference/order-groups/delete-order-group
 
 /openapi.yaml delete /portfolio/order_groups/{order_group_id}
  Deletes an order group and cancels all orders within it. This permanently removes the group.
-
-
 
 # Get Order Group
 Source: https://docs.kalshi.com/api-reference/order-groups/get-order-group
@@ -1021,15 +839,11 @@ Source: https://docs.kalshi.com/api-reference/order-groups/get-order-group
 /openapi.yaml get /portfolio/order_groups/{order_group_id}
  Retrieves details for a single order group including all order IDs and auto-cancel status.
 
-
-
 # Get Order Groups
 Source: https://docs.kalshi.com/api-reference/order-groups/get-order-groups
 
 /openapi.yaml get /portfolio/order_groups
  Retrieves all order groups for the authenticated user.
-
-
 
 # Reset Order Group
 Source: https://docs.kalshi.com/api-reference/order-groups/reset-order-group
@@ -1037,23 +851,17 @@ Source: https://docs.kalshi.com/api-reference/order-groups/reset-order-group
 /openapi.yaml put /portfolio/order_groups/{order_group_id}/reset
  Resets the order group's matched contracts counter to zero, allowing new orders to be placed again after the limit was hit.
 
-
-
 # Trigger Order Group
 Source: https://docs.kalshi.com/api-reference/order-groups/trigger-order-group
 
 /openapi.yaml put /portfolio/order_groups/{order_group_id}/trigger
  Triggers the order group, canceling all orders in the group and preventing new orders until the group is reset.
 
-
-
 # Update Order Group Limit
 Source: https://docs.kalshi.com/api-reference/order-groups/update-order-group-limit
 
 /openapi.yaml put /portfolio/order_groups/{order_group_id}/limit
  Updates the order group contracts limit (rolling 15-second window). If the updated limit would immediately trigger the group, all orders in the group are canceled and the group is triggered.
-
-
 
 # Amend Order (V2)
 Source: https://docs.kalshi.com/api-reference/orders/amend-order-v2
@@ -1124,15 +932,11 @@ Source: https://docs.kalshi.com/api-reference/orders/create-order-v2
 /openapi.yaml post /portfolio/events/orders
 Endpoint for submitting event-market orders using the V2 request/response shape (single-book `bid`/`ask` side and fixed-point dollar prices). The legacy `/portfolio/orders` endpoint will be deprecated no earlier than May 6, 2026 — clients should migrate to this path.
 
-
-
 # Decrease Order (V2)
 Source: https://docs.kalshi.com/api-reference/orders/decrease-order-v2
 
 /openapi.yaml post /portfolio/events/orders/{order_id}/decrease
 Endpoint for decreasing the remaining count of an existing event-market order using the V2 request/response shape. Exactly one of `reduce_by` or `reduce_to` must be provided.
-
-
 
 # Get Order
 Source: https://docs.kalshi.com/api-reference/orders/get-order
@@ -1151,8 +955,6 @@ Source: https://docs.kalshi.com/api-reference/orders/get-order-queue-position
 /openapi.yaml get /portfolio/orders/{order_id}/queue_position
  Endpoint for getting an order's queue position in the order book. This represents the amount of orders that need to be matched before this order receives a partial or full match. Queue position is determined using a price-time priority.
 
-
-
 # Get Orders
 Source: https://docs.kalshi.com/api-reference/orders/get-orders
 
@@ -1161,15 +963,11 @@ Restricts the response to orders that have a certain status: resting, canceled, 
 Orders that have been canceled or fully executed before the historical cutoff are only available via `GET /historical/orders`. Resting orders will always be available through this endpoint. See [Historical Data](https://docs.kalshi.com/getting_started/historical_data) for details.
 
 
-
-
 # Get Queue Positions for Orders
 Source: https://docs.kalshi.com/api-reference/orders/get-queue-positions-for-orders
 
 /openapi.yaml get /portfolio/orders/queue_positions
  Endpoint for getting queue positions for all resting orders. Queue position represents the number of contracts that need to be matched before an order receives a partial or full match, determined using price-time priority.
-
-
 
 # Create Subaccount
 Source: https://docs.kalshi.com/api-reference/portfolio/create-subaccount
@@ -1177,15 +975,11 @@ Source: https://docs.kalshi.com/api-reference/portfolio/create-subaccount
 /openapi.yaml post /portfolio/subaccounts
 Creates a new subaccount for the authenticated user. This endpoint is available to all users on the Advanced API tier and above. Subaccounts are numbered sequentially starting from 1. Maximum 63 numbered subaccounts per user (64 including the primary account).
 
-
-
 # Get All Subaccount Balances
 Source: https://docs.kalshi.com/api-reference/portfolio/get-all-subaccount-balances
 
 /openapi.yaml get /portfolio/subaccounts/balances
 Gets balances for all subaccounts including the primary account. For an API key restricted to a subaccount, returns only that subaccount's balances across exchange indices.
-
-
 
 # Get Balance
 Source: https://docs.kalshi.com/api-reference/portfolio/get-balance
@@ -1196,8 +990,6 @@ Returns the balance and portfolio value for a member. Both values include all ex
 **Rate limit:** this endpoint has its own bucket, separate from the Read budget. Basic and Advanced tiers may call it **1 time per second**; all higher tiers may call it **5 times per second**. The bucket holds one second of budget, so there is no burst. Calls to this endpoint do not draw down the Read budget, and other reads do not draw down this bucket. Balance only changes on fills, settlements and transfers, so react to those (for example the user fills websocket channel) instead of polling this endpoint.
 
 
-
-
 # Get Credit History
 Source: https://docs.kalshi.com/api-reference/portfolio/get-credit-history
 
@@ -1206,15 +998,11 @@ Returns the authenticated member's credit history, newest first.
 Filters apply to credit creation time: `min_ts` is inclusive and `max_ts` is exclusive.
 
 
-
-
 # Get Deposits
 Source: https://docs.kalshi.com/api-reference/portfolio/get-deposits
 
 /openapi.yaml get /portfolio/deposits
 Endpoint for getting the member's deposit history.
-
-
 
 # Get Fills
 Source: https://docs.kalshi.com/api-reference/portfolio/get-fills
@@ -1225,15 +1013,11 @@ Registered partners may also use a user OAuth access token with the explicitly g
 Fills that occurred before the historical cutoff are only available via `GET /historical/fills`. See [Historical Data](https://docs.kalshi.com/getting_started/historical_data) for details.
 
 
-
-
 # Get Intra Account Transfer
 Source: https://docs.kalshi.com/api-reference/portfolio/get-intra-account-transfer
 
 /openapi.yaml get /portfolio/intra_exchange_instance_transfers/{transfer_id}
 Endpoint for getting a single intra-account transfer by id.
-
-
 
 # Get Intra Account Transfers
 Source: https://docs.kalshi.com/api-reference/portfolio/get-intra-account-transfers
@@ -1241,18 +1025,17 @@ Source: https://docs.kalshi.com/api-reference/portfolio/get-intra-account-transf
 /openapi.yaml get /portfolio/intra_exchange_instance_transfers
 Endpoint for fetching intra-exchange account transfer history.
 
-
-
 # Get Positions
 Source: https://docs.kalshi.com/api-reference/portfolio/get-positions
 
 /openapi.yaml get /portfolio/positions
-Returns unsettled positions by default. Set `settlement_status=settled` to page through settled positions that are still in the live data set, or `settlement_status=all` for both live states. Positions already archived are available via `GET /historical/positions`.
-Settled and all-state positions are paginated by event ticker to keep large histories bounded. Cursors are specific to the selected settlement status.
-`count_filter` restricts positions to those with a non-zero position or total traded count.
+Returns unsettled positions by default, including closed markets awaiting determination or settlement. These may retain non-zero quantities and cost basis. Check the market's `status` via `GET /markets/{ticker}` for trading status.
+
+Set `settlement_status=settled` for unarchived settled positions or `all` for both states. These results paginate by event ticker; cursors are specific to settlement status. Archived positions are available via `GET /historical/positions`.
+
+Use `count_filter=position` for non-zero net holdings, including closed, unsettled markets. Without a count filter, results may include fully exited positions with trading history, realized P&L or fees.
+
 Registered partners may also use a user OAuth access token with the explicitly granted read::compliance_partner scope.
-
-
 
 
 # Get Settlements
@@ -1260,7 +1043,7 @@ Source: https://docs.kalshi.com/api-reference/portfolio/get-settlements
 
 /openapi.yaml get /portfolio/settlements
 Returns settlement records still in the live data set. Archived positions are available via `GET /historical/positions`, which has different fields; this endpoint does not return archived settlement records.
-
+Resource-bound MCP OAuth tokens may read the owner's settlements with read::mcp_portfolio.
 
 
 # Get Subaccount Netting
@@ -1269,15 +1052,11 @@ Source: https://docs.kalshi.com/api-reference/portfolio/get-subaccount-netting
 /openapi.yaml get /portfolio/subaccounts/netting
 Gets the netting enabled settings for all subaccounts.
 
-
-
 # Get Subaccount Transfers
 Source: https://docs.kalshi.com/api-reference/portfolio/get-subaccount-transfers
 
 /openapi.yaml get /portfolio/subaccounts/transfers
 Gets a paginated list of all transfers between subaccounts for the authenticated user.
-
-
 
 # Get Target Balance Allocation
 Source: https://docs.kalshi.com/api-reference/portfolio/get-target-balance-allocation
@@ -1286,23 +1065,17 @@ Source: https://docs.kalshi.com/api-reference/portfolio/get-target-balance-alloc
 Retrieves the caller's target balance allocation across exchange indexes.
 
 
-
-
 # Get Total Resting Order Value
 Source: https://docs.kalshi.com/api-reference/portfolio/get-total-resting-order-value
 
 /openapi.yaml get /portfolio/summary/total_resting_order_value
  Endpoint for getting the total value, in cents, of resting orders. This endpoint is only intended for use by FCM members (rare). Note: If you're uncertain about this endpoint, it likely does not apply to you.
 
-
-
 # Get Withdrawals
 Source: https://docs.kalshi.com/api-reference/portfolio/get-withdrawals
 
 /openapi.yaml get /portfolio/withdrawals
 Endpoint for getting the member's withdrawal history.
-
-
 
 # Intra Account Transfer
 Source: https://docs.kalshi.com/api-reference/portfolio/intra-account-transfer
@@ -1317,8 +1090,6 @@ When `source_exchange_shard` and `destination_exchange_shard` are the same, Kals
 Cross-exchange-index subaccount transfers run in up to three non-atomic steps. If a later step fails, completed steps are not undone, so funds may remain in the primary account on the source or destination exchange index.
 
 
-
-
 # Set Target Balance Allocation
 Source: https://docs.kalshi.com/api-reference/portfolio/set-target-balance-allocation
 
@@ -1327,23 +1098,17 @@ Replaces the caller's target balance allocation across exchange indexes.
 Percentages must total 100. Passing an empty allocations array disables automatic rebalancing.
 
 
-
-
 # Transfer Between Subaccounts
 Source: https://docs.kalshi.com/api-reference/portfolio/transfer-between-subaccounts
 
 /openapi.yaml post /portfolio/subaccounts/transfer
 Transfers funds between the authenticated user's subaccounts. Use 0 for the primary account, or 1-63 for numbered subaccounts. Set exchange_index to apply the transfer on a specific exchange shard (defaults to 0).
 
-
-
 # Update Subaccount Netting
 Source: https://docs.kalshi.com/api-reference/portfolio/update-subaccount-netting
 
 /openapi.yaml put /portfolio/subaccounts/netting
 Updates the netting enabled setting for a specific subaccount. Use 0 for the primary account, or 1-63 for numbered subaccounts.
-
-
 
 # Get Filters for Sports
 Source: https://docs.kalshi.com/api-reference/search/get-filters-for-sports
@@ -1352,8 +1117,6 @@ Source: https://docs.kalshi.com/api-reference/search/get-filters-for-sports
 Retrieve available filters organized by sport.
 
 This endpoint returns filtering options available for each sport, including scopes and competitions. It also provides an ordered list of sports for display purposes.
-
-
 
 
 # Get Tags for Series Categories
@@ -1365,15 +1128,11 @@ Retrieve tags organized by series categories.
 This endpoint returns a mapping of series categories to their associated tags, which can be used for filtering and search functionality.
 
 
-
-
 # Get Structured Target
 Source: https://docs.kalshi.com/api-reference/structured-targets/get-structured-target
 
 /openapi.yaml get /structured_targets/{structured_target_id}
  Endpoint for getting data about a specific structured target by its ID.
-
-
 
 # Get Structured Targets
 Source: https://docs.kalshi.com/api-reference/structured-targets/get-structured-targets
@@ -1381,23 +1140,17 @@ Source: https://docs.kalshi.com/api-reference/structured-targets/get-structured-
 /openapi.yaml get /structured_targets
 Page size (min: 1, max: 2000)
 
-
-
 # Update Subtrader Group
 Source: https://docs.kalshi.com/api-reference/update-subtrader-group
 
 /perps_scm_openapi.yaml put /fcm/margin/subtrader_groups/{group_id}
 Replace a margin subtrader group's membership.
 
-
-
 # Withdraw Settlement Balance
 Source: https://docs.kalshi.com/api-reference/withdraw-settlement-balance
 
 /perps_scm_openapi.yaml post /margin/settlement_balance_withdrawal
 Initiate a wire withdrawal from the clearing member's settlement buffer. The withdrawal is processed asynchronously.
-
-
 
 # CF Benchmarks REST Passthrough
 Source: https://docs.kalshi.com/cfbenchmarks/rest-passthrough
@@ -1527,6 +1280,84 @@ Predictions and Margin exchanges. Use the entry tags to filter by API
 surface (`REST`, `WebSocket`, `FIX`) or exchange (`Predictions`, `Margin`).
 FIX API changes, previously tracked on a separate page, now live here under
 the `FIX` tag.
+
+**November 12, 2026**
+
+`GET /api_keys` now includes `key_type` (`rsa` or `ed25519`) on each supported key, including keys created before this change. The field is omitted when the algorithm is unknown.
+
+**November 12, 2026**
+
+Registered MCP clients can read margin balances, positions, orders, fills and risk (`GET /margin/balance`, `/margin/positions`, `/margin/orders`, `/margin/fills`, `/margin/risk`) using explicitly granted `read::mcp_portfolio` OAuth access. `GET /margin/risk` includes leverage and estimated liquidation prices. Existing grants of this scope include this access. These grants do not allow order execution or funding changes. `GET /margin/markets`, `/margin/markets/{ticker}` and `/margin/markets/{ticker}/orderbook` accept a resource-bound MCP grant for per-user rate accounting; their anonymous payloads remain unchanged.
+
+**November 12, 2026**
+
+Registered MCP clients can read settlements (`GET /portfolio/settlements`) using explicitly granted `read::mcp_portfolio` OAuth access. Existing grants of this scope include this access. Archived settlements remain outside this endpoint.
+
+**November 12, 2026**
+
+The margin `market_lifecycle_v2` channel now also sends `deactivated` when a
+market's trading hours end and `activated` when they begin. `is_deactivated`
+is true while the market is halted or outside its trading hours.
+
+**November 11, 2026**
+
+Margin market responses now include `minimum_quantity`, the minimum order quantity in contracts.
+
+**November 5, 2026**
+
+Markets created on demand for a request for quote, in series starting with
+`KXRFQ` (such as `KXRFQW` weather point markets), are left out of
+subscriptions that don't name markets. `trade` and `ticker` still deliver
+them to subscriptions that list the market in `market_tickers` (or
+`market_ids` for `ticker`). `market_lifecycle_v2` takes no market list, so it
+leaves them out entirely.
+
+**November 5, 2026**
+
+Markets that users create on demand for RFQs (series starting with `KXRFQ`,
+such as `KXRFQW` on-request weather markets) are left out of unscoped
+listings:
+
+* `GET /markets` and `GET /historical/markets` skip them unless the request
+  sets `series_ticker`, `event_ticker` or `tickers` to one of them.
+  `mve_filter=exclude` also skips them.
+* `GET /markets/trades` and `GET /historical/trades` skip their trades
+  unless the request sets `ticker`.
+
+Fetching one of these markets, events or series by ticker is unchanged.
+
+**TBD**
+
+Kalshi-cleared users need an approved stocks application to trade Equities
+markets. Without one, an order or amend on an Equities market is rejected
+with `stock_perps_application_required`, unless the order is reduce-only.
+Reduce-only orders still go through, so existing positions can be closed.
+Self-clearing accounts are not affected.
+
+**November 5, 2026**
+
+The Perps price band changes sides. It no longer limits how far an order
+may rest from its own side of the book. Instead it limits how far an order
+may cross the other side:
+
+* A bid is rejected above the higher of twice the best ask or the best ask
+  plus 1,000 ticks.
+* An ask is rejected below the lower of half the best bid or the best bid
+  minus 1,000 ticks.
+
+When the other side of the book is empty, there is no limit. Rejected orders
+and amends return `invalid price`, as before. Orders that sweep the book with
+a far limit price, for example a bid at `1000.00` into a best ask of `10.00`,
+now fail and should carry a limit within the band. See
+[Price Banding](/margin/price-banding).
+
+**November 5, 2026**
+
+Market positions from `GET /portfolio/positions`, `GET /historical/positions`
+and `GET /fcm/positions` now include `netting_enabled`, showing whether
+netting applies to the position's event. It is fixed at the subaccount's
+first order in the event, so it can differ from the subaccount's current
+netting setting.
 
 **November 5, 2026**
 
@@ -7957,7 +7788,7 @@ If a new Quote is created when an existing quote for the same market already exi
 A QuoteStatusReport is sent by the exchange:
 
 1. In response to a Quote. Status will be PENDING if processed, or REJECTED if rejected
-2. When the requester accepts the quote. Status will be ACCEPTED
+2. When an accept fills your quote. Status will be ACCEPTED. Your quote can fill when the requester named another maker's quote: one at the same price, if yours was there first, or, with PreferBetterQuote, one at a worse price than yours
 3. In response to a QuoteCancel. Status will be CANCELLED
 
 | Tag | Name | Type | Required | Description |
@@ -8032,17 +7863,19 @@ Exchange response to quote confirmation.
 
 RFQ creator accepts a quote from a market maker.
 
+The exchange fills the earliest open quote at the named quote's price on the accepted side, which can be another maker's quote. AcceptedQuoteId (21024) on the AcceptQuoteStatus identifies it. See [RFQs](/getting_started/rfqs#flow) for how that quote is chosen.
+
 | Tag | Name | Type | Required | Description |
 | - | - | - | - | - |
 | 117 | QuoteId | UUID | Y | Quote to accept |
 | 21023 | RfqId | UUID | N | Server-assigned RFQ ID. If provided, the quote must belong to this RFQ. If omitted, the RFQ is resolved from QuoteId. |
 | 54 | Side | Char | Y | FIX side (1=BUY, 2=SELL). For AcceptQuote, BUY accepts the maker's NO quote and SELL accepts the maker's YES quote. |
 | 38 | OrderQty | Decimal | N | Contracts to accept as a fixed-point decimal. Supports `0.01`-contract increments |
-| 11 | ClOrdID | String | N | Client order ID |
+| 11 | ClOrdID | String | N | Client order ID. Send it with RfqId (21023) to make a resend safe: a resend with the same ClOrdID and RfqId returns the original AcceptedQuoteId. Without RfqId, a resend whose named quote did not execute is rejected as expired |
 | 453 | NoPartyIDs | Integer | N | Number of parties (only 1 supported) |
 | 448 | PartyId | String | N | FCM SubtraderId for the customer on whose behalf the accept is submitted |
 | 452 | PartyRole | Integer | N | 24 (CustomerAccount). Required when using PartyId |
-| 21022 | PreferBetterQuote | Char | N | Y/N - When set to Y, the exchange will select the best available quote for the RFQ rather than the specified quote. The best quote must be at least as good as the requested quote. Default: N |
+| 21022 | PreferBetterQuote | Char | N | Y/N. N: the earliest open quote at the named quote's price fills, so you get the price and size you accepted. Y: the best-priced open quote fills instead, at its own price and size. Default: N |
 
 ## AcceptQuoteStatus (35=UC)
 
@@ -8052,7 +7885,7 @@ Exchange response to AcceptQuote.
 | - | - | - | - | - |
 | 117 | QuoteId | String | Y | Quote identifier |
 | 21025 | AcceptQuoteStatus | Integer | Y | ACCEPTED(0) or REJECTED(1) |
-| 21024 | AcceptedQuoteId | UUID | C | Present when the accept succeeds. The quote that was actually accepted. When PreferBetterQuote is used, this may differ from the requested QuoteId |
+| 21024 | AcceptedQuoteId | UUID | C | Present when the accept succeeds. The quote that executes, which can differ from the requested QuoteId whether or not PreferBetterQuote is set, so reconcile fills to this id |
 | 11 | ClOrdID | String | C | Echoed back when provided on the AcceptQuote request |
 | 58 | Text | String | C | Rejection reason if REJECTED |
 
@@ -9161,6 +8994,129 @@ Settlement fees are zero for simple yes/no determinations but may apply for sub-
 ## Protocol-Specific Details
 
 * [FIX Market Settlement Messages](/fix/market-settlement)
+
+
+# Connect to Kalshi with MCP
+Source: https://docs.kalshi.com/getting_started/mcp
+
+Connect your AI assistant to Kalshi to explore prediction markets and perps, read your portfolio, and manage price alerts.
+
+Kalshi's hosted connector lets your AI assistant find prediction markets and perps, read prices, market rules and orderbooks, and open markets on Kalshi. Connect your account to read your portfolio and manage price alerts.
+
+The connector uses the **Model Context Protocol (MCP)** over **Streamable HTTP**. You can use it with apps that support custom remote MCP servers, without installing a local Kalshi server.
+
+## Connect your assistant
+
+The connector URL is:
+
+```text theme={null}
+https://api.elections.kalshi.com/mcp
+```
+
+**1. Add a remote MCP server**
+
+Open your app's connector or MCP server settings and add a custom server named **Kalshi**. Paste the URL above. If your app asks for a transport, choose **Streamable HTTP**.
+
+**2. Choose your access**
+
+Public market tools work without connecting a Kalshi account.
+
+For portfolio or price-alert tools, choose **OAuth** if your app asks for an authentication method. Follow the browser prompt to sign in to Kalshi, review the requested permissions, and authorize the connection. Use your primary Kalshi account.
+
+Account access uses this authorization flow; you do not need to paste a Kalshi API key or private key into your assistant.
+
+**3. Try a question**
+
+Ask your assistant to use Kalshi, for example:
+
+* "Find markets about the next Fed meeting and show me the outcomes."
+* "Show the rules and current bid and ask for this market."
+* "Show the BTC perp's mark price and orderbook."
+* "Show my current Kalshi balance and unsettled positions."
+
+The last example requires portfolio permission. Your app may ask you to enable the connector for the conversation.
+
+Account connection requires an app that supports Kalshi's OAuth flow. If setup fails or your app asks for client credentials, see [Connection help](#connection-help).
+
+## Available tools
+
+Tools without `perps` in their name are for prediction markets (YES/NO event contracts). Perps tools are listed separately.
+
+### Public prediction-market tools
+
+These tools do not require a connected account.
+
+| Tool | What it does |
+| - | - |
+| `search_markets` | Finds prediction-market candidates from search terms and dates. Use the returned tickers to inspect a specific event or market. |
+| `get_event_odds` | Reads the open outcomes, prices, and rules for an event. Results may cover only part of an event's outcomes. |
+| `get_market` | Reads prices, rules, and status for a market ticker. Last-trade prices and bid/ask quotes are distinct. |
+| `get_market_orderbook` | Reads up to 10 YES and NO bid levels per side, including contract quantities. |
+| `get_market_links` | Returns verified market links or buy links with YES or NO selected. You review and submit any order on Kalshi. |
+
+### Prediction-market portfolio tools
+
+These tools require portfolio read permission for your connected account.
+
+| Tool | What it does |
+| - | - |
+| `get_balance` | Reads your current cash and portfolio balance fields. |
+| `get_positions` | Lists positions, with an optional market filter and a choice of unsettled, settled, or all positions. Defaults to unsettled; archived positions are excluded. |
+| `get_orders` | Lists recent orders, optionally filtered to one market. |
+| `get_fills` | Lists recent trade fills, optionally filtered to one market. |
+| `get_settlements` | Lists recent settlement payouts, optionally filtered by market, event, time range, or subaccount. Archived settlements are excluded, and results are not lifetime profit and loss. |
+
+### Perps tools
+
+Perps tools mirror the prediction-market tools above, plus a risk tool with no prediction-market equivalent. Perps prices are dollar prices per contract, not outcome probabilities, and perps orderbooks have separate bids and asks rather than YES and NO bids.
+
+| Tool | What it does | Permission |
+| - | - | - |
+| `search_perps_markets` | Finds perps by ticker or title, or browses available perps. | None |
+| `get_perps_market` | Reads prices, contract size, trading status, and funding and margin details for a perp. Last-trade, bid/ask, and mark prices are distinct. | None |
+| `get_perps_market_orderbook` | Reads up to 10 bid and ask levels, including contract quantities. | None |
+| `get_perps_market_links` | Returns verified links to a perp with long or short selected. You choose quantity, price, and leverage and submit any order on Kalshi. | None |
+| `get_perps_balance` | Reads your perps settled funds and subaccount balances. | Read portfolio |
+| `get_perps_positions` | Lists open perps positions, optionally filtered by market or subaccount. Positive size is long; negative is short. | Read portfolio |
+| `get_perps_orders` | Lists recent perps orders, optionally filtered by market, status, or subaccount. | Read portfolio |
+| `get_perps_fills` | Lists recent perps fills, optionally filtered by subaccount. | Read portfolio |
+| `get_perps_risk` | Reads account leverage and, for each open position, leverage, maintenance margin, and estimated liquidation price. Liquidation prices are estimates at the time of the read, not guarantees. | Read portfolio |
+
+Perps portfolio tools require an eligible perps account.
+
+### Price-alert tools
+
+| Tool | What it does | Permission |
+| - | - | - |
+| `get_price_alerts` | Lists up to 100 existing price targets on your account. | Read or manage price alerts |
+| `create_price_alert` | Creates or replaces a target for an open binary prediction market with a \$1 payout. Specify YES or NO, at-or-above or at-or-below, and a whole-percent threshold from 1 to 99. | Manage price alerts |
+| `delete_price_alert` | Deletes an existing target identified by `get_price_alerts`. | Manage price alerts |
+
+Confirm the market, side, and threshold before your assistant creates an alert, and the exact target before it deletes one. Creating a target can replace an existing target for the same market and direction. Alerts use your existing Kalshi notification settings.
+
+## Permissions and disconnecting
+
+Review the permissions on Kalshi's authorization screen before connecting:
+
+| Permission | OAuth scope | Access |
+| - | - | - |
+| Read portfolio | `read::mcp_portfolio` | Read prediction-market and perps balances, positions, orders, and fills; prediction-market settlements; and perps leverage and estimated liquidation prices. |
+| Read price alerts | `read::mcp_alerts` | Read existing price alerts. |
+| Manage price alerts | `write::mcp_alerts` | Read, create, replace, and delete price alerts. |
+
+The connector does not place or cancel orders, transfer funds, or save trade drafts. Market links let you continue on Kalshi to review and submit an order yourself.
+
+To revoke an app's account access, open [Settings](https://kalshi.com/account/settings), find **Connected apps**, and select **Disconnect** for that app. Public market tools remain available without account access.
+
+## Connection help
+
+**I can search markets, but cannot read my account.** Complete the OAuth connection and approve the permission needed by the tool. If you previously disconnected the app, connect it again.
+
+**My app asks for a client ID or client secret, or reports a client-registration error.** Account access requires an app that supports OAuth Client ID Metadata Documents (CIMD), or an OAuth client already registered with Kalshi. Automatic dynamic client registration is not advertised. Use your integration's registered credentials if provided; your Kalshi API key is not an OAuth client secret.
+
+**Kalshi says my account cannot connect.** Sign in with your primary account and complete account setup, then restart the connection from your app.
+
+**An alert cannot be created.** Check that the market is open, binary, and has a \$1 payout, and that the threshold is a whole percentage from 1 to 99. If you have reached the account's 100-target limit, remove an existing target before adding another.
 
 
 # Order direction (outcome_side and book_side)
@@ -10896,8 +10852,8 @@ RFQs are accessible over [REST](/api-reference/communications), [FIX](/fix/rfq-m
 1. **Requester** creates an RFQ specifying a market ticker, size, and whether to rest any remainder.
 2. The RFQ is broadcast to all makers.
 3. **Makers** respond with quotes containing a `yes_bid` and `no_bid`. Quotes are for the full RFQ size. Each quote is private between the requester and the individual maker. Makers cannot see each other's quotes.
-4. **Requester** accepts one side of the best-priced quote.
-5. **Maker** confirms within the confirmation window. Once confirmed, neither party can withdraw.
+4. **Requester** accepts one side of a quote. The exchange fills the earliest open quote at that quote's price on that side, so the requester gets the price and size it accepted. A maker that re-sends an unchanged price keeps its place in line on that side. The quote that fills can belong to a different maker than the one named, and its id arrives on `quote_accepted` and `quote_executed`. The named quote must still be open. On FIX, `PreferBetterQuote` (21022) fills the best-priced open quote instead, at its own price and size.
+5. **Maker** whose quote is accepted confirms within the confirmation window. Once confirmed, neither party can withdraw.
 6. After the execution timeout, orders are placed on the public book.
 
 ## Creator identity and privacy
@@ -10974,7 +10930,7 @@ After acceptance, the maker has the confirmation window to confirm. Upon confirm
 
 ## WebSocket
 
-Subscribe to the `communications` channel (requires auth). `rfq_created` and `rfq_deleted` go to all subscribers. `quote_created`, `quote_accepted`, and `quote_executed` go only to the involved requester and maker.
+Subscribe to the `communications` channel (requires auth). `rfq_created` and `rfq_deleted` go to all subscribers. `quote_created`, `quote_accepted`, and `quote_executed` go only to the involved requester and maker. `quote_accepted` and `quote_executed` carry the id of the quote that executes, which can differ from the quote the requester named.
 
 ## Combos (MVE)
 
@@ -10993,7 +10949,7 @@ the requester accepts every child at once, each at its best quote.
 A quote on a batch child differs from a quote on a single RFQ:
 
 * It counts for 30 seconds after you send it. Resending an unchanged price
-  keeps its time priority.
+  keeps its time priority only within those 30 seconds.
 * Nothing executes until every child's winning maker confirms. A confirmed
   quote can still close without a fill, as `batch closed`, if another winner
   doesn't confirm in time.
@@ -11529,8 +11485,6 @@ Source: https://docs.kalshi.com/margin-rest/account/get-perps-account-api-limits
 /perps_openapi.yaml get /account/limits/perps
  Endpoint to retrieve the Perps (margin) API tier limits associated with the authenticated user.
 
-
-
 # Get Margin Corporate Actions
 Source: https://docs.kalshi.com/margin-rest/corporate-actions/get-margin-corporate-actions
 
@@ -11547,15 +11501,11 @@ Amounts are US dollar strings. Per-contract amounts are computed by clearing and
 not recalculated from contract size by this endpoint.
 
 
-
-
 # Get Enabled Status
 Source: https://docs.kalshi.com/margin-rest/exchange/get-enabled-status
 
 /perps_openapi.yaml get /margin/enabled
 Endpoint for checking if margin trading is enabled for the authenticated user.
-
-
 
 # Get Exchange Status
 Source: https://docs.kalshi.com/margin-rest/exchange/get-exchange-status
@@ -11563,15 +11513,11 @@ Source: https://docs.kalshi.com/margin-rest/exchange/get-exchange-status
 /perps_openapi.yaml get /margin/exchange/status
 Endpoint for getting the margin exchange status.
 
-
-
 # Cancel Cross Exit Trigger by ID
 Source: https://docs.kalshi.com/margin-rest/exit-triggers/cancel-cross-exit-trigger-by-id
 
 /perps_openapi.yaml delete /margin/cross/positions/{ticker}/exit_trigger/{trigger_id}
 Endpoint for cancelling one bracket, leaving any others on the position live. Trailing stops are not addressed by id — use the collection route with `kind=trailing`.
-
-
 
 # Cancel Cross Exit Triggers
 Source: https://docs.kalshi.com/margin-rest/exit-triggers/cancel-cross-exit-triggers
@@ -11579,15 +11525,11 @@ Source: https://docs.kalshi.com/margin-rest/exit-triggers/cancel-cross-exit-trig
 /perps_openapi.yaml delete /margin/cross/positions/{ticker}/exit_trigger
 Endpoint for cancelling exit triggers on a non-isolated margin position, including partial and order-anchored brackets. Succeeds even when nothing is live; use the `{trigger_id}` route to cancel a single bracket.
 
-
-
 # Cancel Isolated Exit Trigger
 Source: https://docs.kalshi.com/margin-rest/exit-triggers/cancel-isolated-exit-trigger
 
 /perps_openapi.yaml delete /margin/isolated/positions/{ticker}/exit_trigger
 Endpoint for cancelling exit triggers on the isolated margin position for a market. Succeeds even when nothing is live. The position itself is unaffected.
-
-
 
 # Get Cross Exit Triggers
 Source: https://docs.kalshi.com/margin-rest/exit-triggers/get-cross-exit-triggers
@@ -11595,15 +11537,11 @@ Source: https://docs.kalshi.com/margin-rest/exit-triggers/get-cross-exit-trigger
 /perps_openapi.yaml get /margin/cross/positions/{ticker}/exit_trigger
 Endpoint for retrieving the live exit triggers on a non-isolated margin position.
 
-
-
 # Get Isolated Exit Triggers
 Source: https://docs.kalshi.com/margin-rest/exit-triggers/get-isolated-exit-triggers
 
 /perps_openapi.yaml get /margin/isolated/positions/{ticker}/exit_trigger
 Endpoint for retrieving the live exit triggers on the isolated margin position for a market.
-
-
 
 # Set Cross Exit Trigger
 Source: https://docs.kalshi.com/margin-rest/exit-triggers/set-cross-exit-trigger
@@ -11611,15 +11549,11 @@ Source: https://docs.kalshi.com/margin-rest/exit-triggers/set-cross-exit-trigger
 /perps_openapi.yaml put /margin/cross/positions/{ticker}/exit_trigger
 Endpoint for setting a stop-loss / take-profit bracket or a trailing stop on a non-isolated margin position. A position holds one trailing stop and up to 20 brackets, so long as their counts fit the position. Requires an open position unless `anchor_order_id` is supplied, and fires reduce-only orders.
 
-
-
 # Set Isolated Exit Trigger
 Source: https://docs.kalshi.com/margin-rest/exit-triggers/set-isolated-exit-trigger
 
 /perps_openapi.yaml put /margin/isolated/positions/{ticker}/exit_trigger
 Endpoint for setting a stop-loss / take-profit bracket or a trailing stop on the isolated margin position for a market. Requires an open position, closes it in full, and fires reduce-only orders.
-
-
 
 # Update Cross Exit Trigger
 Source: https://docs.kalshi.com/margin-rest/exit-triggers/update-cross-exit-trigger
@@ -11627,15 +11561,11 @@ Source: https://docs.kalshi.com/margin-rest/exit-triggers/update-cross-exit-trig
 /perps_openapi.yaml put /margin/cross/positions/{ticker}/exit_trigger/{trigger_id}
 Endpoint for updating one bracket's leg prices, leaving any others on the position untouched. At least one leg is required; cancel with `DELETE`. Trailing stops are not addressed by id — use the collection route with `kind=trailing`.
 
-
-
 # Create Margin FCM Subtrader
 Source: https://docs.kalshi.com/margin-rest/fcm/create-margin-fcm-subtrader
 
 /perps_openapi.yaml post /margin/fcm/subtraders
 Endpoint for FCM members to create a margin subtrader.
-
-
 
 # Delete FCM Notional Risk Limit
 Source: https://docs.kalshi.com/margin-rest/fcm/delete-fcm-notional-risk-limit
@@ -11647,15 +11577,11 @@ force; clearing the member-set value never cancels resting orders, since it can 
 raise the effective limit.
 
 
-
-
 # Delete FCM Subtrader Risk Controls
 Source: https://docs.kalshi.com/margin-rest/fcm/delete-fcm-subtrader-risk-controls
 
 /perps_openapi.yaml delete /margin/fcm/subtraders/risk_controls
 Removes the initial margin cap for an FCM member's subtrader on the margined exchange.
-
-
 
 # Get FCM Subtrader Risk Controls
 Source: https://docs.kalshi.com/margin-rest/fcm/get-fcm-subtrader-risk-controls
@@ -11674,8 +11600,6 @@ omitted and defaults to the key's bound subtrader, and if supplied it must equal
 subtrader or the request is rejected.
 
 
-
-
 # Update FCM Notional Risk Limit
 Source: https://docs.kalshi.com/margin-rest/fcm/update-fcm-notional-risk-limit
 
@@ -11689,15 +11613,11 @@ value would never govern. Lowering the limit cancels resting orders until the ac
 back within it, exactly like an administrative lowering.
 
 
-
-
 # Update FCM Subtrader Risk Controls
 Source: https://docs.kalshi.com/margin-rest/fcm/update-fcm-subtrader-risk-controls
 
 /perps_openapi.yaml put /margin/fcm/subtraders/risk_controls
 Sets the initial margin cap for an FCM member's subtrader on the margined exchange.
-
-
 
 # Get Fee Tier Rates
 Source: https://docs.kalshi.com/margin-rest/fees/get-fee-tier-rates
@@ -11705,23 +11625,17 @@ Source: https://docs.kalshi.com/margin-rest/fees/get-fee-tier-rates
 /perps_openapi.yaml get /margin/fee_tier_rates
 Returns the fee schedule that applies to the authenticated margin-enabled account, as tier numbers with maker and taker fee rates ordered from the entry tier upward.
 
-
-
 # Get Fee Tiers
 Source: https://docs.kalshi.com/margin-rest/fees/get-fee-tiers
 
 /perps_openapi.yaml get /margin/fee_tiers
 Endpoint for retrieving the effective margin fee rates for the authenticated direct margin user. Returns maps of margin market tickers to maker and taker fee rates as decimal fractions; no tier numbers are returned. Use Get Fee Tier Rates for the fee schedule itself.
 
-
-
 # Get Funding History
 Source: https://docs.kalshi.com/margin-rest/funding/get-funding-history
 
 /perps_openapi.yaml get /margin/funding_history
 Endpoint for retrieving the authenticated user's historical margin funding payments joined with funding rates for a specific market, or across all markets when ticker is empty, over an inclusive UTC date range.
-
-
 
 # Get Funding Rate Estimate
 Source: https://docs.kalshi.com/margin-rest/funding/get-funding-rate-estimate
@@ -11732,15 +11646,11 @@ Returns the estimated funding rate for the current, in-progress funding period. 
 Funding measures the premium over clock-aligned bars of one second or longer, depending on the market. The returned `premium_index` is the premium of the final bar evaluated by this estimate, captured from the same calculation inputs. Its observation timestamp can lag the computation time when input feeds are delayed. It is omitted when that bar has no available premium. The estimate remains provisional until funding is finalized.
 
 
-
-
 # Get Historical Funding Rates
 Source: https://docs.kalshi.com/margin-rest/funding/get-historical-funding-rates
 
 /perps_openapi.yaml get /margin/funding_rates/historical
 Endpoint for retrieving historical margin funding rates for a market, or across all markets when ticker is empty.
-
-
 
 # Get Premium Index
 Source: https://docs.kalshi.com/margin-rest/funding/get-premium-index
@@ -11753,15 +11663,11 @@ Returns an informational per-second premium index for a market, for a window of 
 A second with no measurable premium reports `0` — the book was halted, the underlying was closed, or an input was unavailable. Points are only those recorded, so the response may be sparse or empty for a range that predates the retention period or was never recorded.
 
 
-
-
 # Get Market
 Source: https://docs.kalshi.com/margin-rest/market/get-market
 
 /perps_openapi.yaml get /margin/markets/{ticker}
 Endpoint for fetching a margin market with trading stats (price, volume, open interest).
-
-
 
 # Get Market Candlesticks
 Source: https://docs.kalshi.com/margin-rest/market/get-market-candlesticks
@@ -11769,15 +11675,11 @@ Source: https://docs.kalshi.com/margin-rest/market/get-market-candlesticks
 /perps_openapi.yaml get /margin/markets/{ticker}/candlesticks
 Endpoint for fetching candlestick data for a margin market.
 
-
-
 # Get Market Orderbook
 Source: https://docs.kalshi.com/margin-rest/market/get-market-orderbook
 
 /perps_openapi.yaml get /margin/markets/{ticker}/orderbook
 Endpoint for getting the orderbook for a margin market.
-
-
 
 # Get Market Schedules
 Source: https://docs.kalshi.com/margin-rest/market/get-market-schedules
@@ -11785,15 +11687,11 @@ Source: https://docs.kalshi.com/margin-rest/market/get-market-schedules
 /perps_openapi.yaml get /margin/markets/schedules
 Endpoint for retrieving Kalshi trading holiday closures for multiple margin markets. Returns a map keyed by market ticker. Regular daily and weekend closures are not included.
 
-
-
 # Get Markets
 Source: https://docs.kalshi.com/margin-rest/market/get-markets
 
 /perps_openapi.yaml get /margin/markets
 Endpoint for listing available margin markets.
-
-
 
 # Get Multiple Market Orderbooks
 Source: https://docs.kalshi.com/margin-rest/market/get-multiple-market-orderbooks
@@ -11801,15 +11699,11 @@ Source: https://docs.kalshi.com/margin-rest/market/get-multiple-market-orderbook
 /perps_openapi.yaml get /margin/markets/orderbooks
 Endpoint for getting the current orderbooks of several margin markets in a single request. Returns one entry per requested ticker, in request order, each carrying the same bid and ask levels as the single-market orderbook endpoint. A ticker that is not a margin market returns 404.
 
-
-
 # Get Trades
 Source: https://docs.kalshi.com/margin-rest/market/get-trades
 
 /perps_openapi.yaml get /margin/trades
-Endpoint for retrieving public margin trades across all markets or filtered by market ticker. Returns a paginated response. Use the cursor value from the previous response to get the next page.
-
-
+Endpoint for retrieving public margin trades across all markets or filtered by market ticker. Block trades are included in the response by default and identified by the `is_block_trade` field; use the `is_block_trade` query parameter to filter by block / non-block. Returns a paginated response. Use the cursor value from the previous response to get the next page.
 
 # Create Order Group
 Source: https://docs.kalshi.com/margin-rest/order-groups/create-order-group
@@ -11817,15 +11711,11 @@ Source: https://docs.kalshi.com/margin-rest/order-groups/create-order-group
 /perps_openapi.yaml post /margin/order_groups/create
 Creates a new order group on the margin exchange with a contracts limit measured over a rolling window. When the limit is hit, all orders in the group are cancelled and no new orders can be placed until reset.
 
-
-
 # Delete Order Group
 Source: https://docs.kalshi.com/margin-rest/order-groups/delete-order-group
 
 /perps_openapi.yaml delete /margin/order_groups/{order_group_id}
 Deletes an order group on the margin exchange and cancels all orders within it.
-
-
 
 # Get Order Group
 Source: https://docs.kalshi.com/margin-rest/order-groups/get-order-group
@@ -11833,15 +11723,11 @@ Source: https://docs.kalshi.com/margin-rest/order-groups/get-order-group
 /perps_openapi.yaml get /margin/order_groups/{order_group_id}
 Retrieves details for a single order group on the margin exchange including all order IDs and auto-cancel status.
 
-
-
 # Get Order Groups
 Source: https://docs.kalshi.com/margin-rest/order-groups/get-order-groups
 
 /perps_openapi.yaml get /margin/order_groups
 Retrieves all order groups for the authenticated user on the margin exchange.
-
-
 
 # Reset Order Group
 Source: https://docs.kalshi.com/margin-rest/order-groups/reset-order-group
@@ -11849,23 +11735,17 @@ Source: https://docs.kalshi.com/margin-rest/order-groups/reset-order-group
 /perps_openapi.yaml put /margin/order_groups/{order_group_id}/reset
 Resets the order group matched contracts counter to zero on the margin exchange, allowing new orders to be placed again after the limit was hit.
 
-
-
 # Trigger Order Group
 Source: https://docs.kalshi.com/margin-rest/order-groups/trigger-order-group
 
 /perps_openapi.yaml put /margin/order_groups/{order_group_id}/trigger
 Triggers the order group on the margin exchange, canceling all orders in the group and preventing new orders until the group is reset.
 
-
-
 # Update Order Group Limit
 Source: https://docs.kalshi.com/margin-rest/order-groups/update-order-group-limit
 
 /perps_openapi.yaml put /margin/order_groups/{order_group_id}/limit
 Updates the order group contracts limit on the margin exchange. If the updated limit would immediately trigger the group, all orders in the group are canceled and the group is triggered.
-
-
 
 # Amend Order
 Source: https://docs.kalshi.com/margin-rest/orders/amend-order
@@ -11895,15 +11775,11 @@ Source: https://docs.kalshi.com/margin-rest/orders/cancel-order
 /perps_openapi.yaml delete /margin/orders/{order_id}
 Endpoint for canceling an order. Cancels all remaining resting contracts and returns the canceled order details.
 
-
-
 # Create Order
 Source: https://docs.kalshi.com/margin-rest/orders/create-order
 
 /perps_openapi.yaml post /margin/orders
 Endpoint for submitting orders in a market.
-
-
 
 # Decrease Order
 Source: https://docs.kalshi.com/margin-rest/orders/decrease-order
@@ -11911,22 +11787,18 @@ Source: https://docs.kalshi.com/margin-rest/orders/decrease-order
 /perps_openapi.yaml post /margin/orders/{order_id}/decrease
 Endpoint for decreasing the number of contracts in an existing order. Exactly one of `reduce_by` or `reduce_to` must be provided. Canceling an order is equivalent to decreasing to zero.
 
-
-
 # Get Order
 Source: https://docs.kalshi.com/margin-rest/orders/get-order
 
 /perps_openapi.yaml get /margin/orders/{order_id}
 Endpoint for retrieving a specific margin order.
 
-
-
 # Get Orders
 Source: https://docs.kalshi.com/margin-rest/orders/get-orders
 
 /perps_openapi.yaml get /margin/orders
 Endpoint for listing margin orders with optional filtering.
-
+Resource-bound MCP OAuth tokens may read the owner's orders with read::mcp_portfolio.
 
 
 # Create Subaccount
@@ -11935,13 +11807,13 @@ Source: https://docs.kalshi.com/margin-rest/portfolio/create-subaccount
 /perps_openapi.yaml post /portfolio/margin/subaccounts
 Creates a new subaccount for the authenticated user in the margin exchange. Subaccounts are numbered sequentially starting from 1. Maximum 63 numbered subaccounts per user (64 including the primary account).
 
-
-
 # Get Balance
 Source: https://docs.kalshi.com/margin-rest/portfolio/get-balance
 
 /perps_openapi.yaml get /margin/balance
 Endpoint for retrieving the balance breakdown for the authenticated direct margin user. Returns cash balance (aggregate and per-subaccount), position value, total balance, and maintenance margin requirement.
+Resource-bound MCP OAuth tokens may read the owner's balance with read::mcp_portfolio.
+
 
 > [!NOTE]
 >
@@ -11953,9 +11825,8 @@ Source: https://docs.kalshi.com/margin-rest/portfolio/get-fills
 
 /perps_openapi.yaml get /margin/fills
 Endpoint for retrieving the authenticated user's margin fills.
+Resource-bound MCP OAuth tokens may read the owner's data with read::mcp_portfolio.
 Registered partners may also use a user OAuth access token with the explicitly granted read::compliance_partner scope.
-
-
 
 
 # Get Positions
@@ -11963,9 +11834,8 @@ Source: https://docs.kalshi.com/margin-rest/portfolio/get-positions
 
 /perps_openapi.yaml get /margin/positions
 Endpoint for retrieving the authenticated user's margin positions.
+Resource-bound MCP OAuth tokens may read the owner's data with read::mcp_portfolio.
 Registered partners may also use a user OAuth access token with the explicitly granted read::compliance_partner scope.
-
-
 
 
 # Intra Account Transfer
@@ -11974,15 +11844,11 @@ Source: https://docs.kalshi.com/margin-rest/portfolio/intra-account-transfer
 /perps_openapi.yaml post /portfolio/intra_exchange_instance_transfer
 Endpoint for transferring funds within the same account.
 
-
-
 # Transfer Between Subaccounts
 Source: https://docs.kalshi.com/margin-rest/portfolio/transfer-between-subaccounts
 
 /perps_openapi.yaml post /portfolio/margin/subaccounts/transfer
 Transfers funds between the authenticated user's margin subaccounts. Use 0 for the primary account, or 1-63 for numbered subaccounts.
-
-
 
 # Get Notional Risk Limit
 Source: https://docs.kalshi.com/margin-rest/risk/get-notional-risk-limit
@@ -11994,14 +11860,12 @@ account-level limit covers the whole omnibus account: exposure across all client
 is aggregated against it.
 
 
-
-
 # Get Risk
 Source: https://docs.kalshi.com/margin-rest/risk/get-risk
 
 /perps_openapi.yaml get /margin/risk
 Endpoint for retrieving leverage and liquidation price data for the authenticated direct margin user. Returns account-level leverage plus per-position leverage and liquidation prices, grouped by subaccount and market.
-
+Resource-bound MCP OAuth tokens may read the owner's risk data with read::mcp_portfolio.
 
 
 # Get Risk Parameters
@@ -12010,15 +11874,11 @@ Source: https://docs.kalshi.com/margin-rest/risk/get-risk-parameters
 /perps_openapi.yaml get /margin/risk_parameters
 Returns system-wide margin risk parameters including liquidation thresholds and per-market initial margin multipliers.
 
-
-
 # Connection Keep-Alive
 Source: https://docs.kalshi.com/margin-ws/websockets/connection-keep-alive
 
 Kalshi sends Ping frames every 10 seconds with body `heartbeat`.
 Clients should respond with Pong frames.
-
-
 
 
 # Market Lifecycle
@@ -12029,8 +11889,6 @@ Market deactivation and activation notifications.
 Requirements:
 - no additional channel-level auth beyond the authenticated WebSocket connection
 - receives every margin market; `market_ticker` filters are not supported
-
-
 
 
 # Market Ticker
@@ -12048,8 +11906,6 @@ Requirements:
 - supports `market_ticker`/`market_tickers`
 
 
-
-
 # Order Group Updates
 Source: https://docs.kalshi.com/margin-ws/websockets/order-group-updates
 
@@ -12061,8 +11917,6 @@ Real-time order group lifecycle and limit updates. Requires authentication.
 - Updates sent when order groups are created, triggered, reset, deleted, or have limits updated
 
 **Use case:** Tracking order group lifecycle and limits
-
-
 
 
 # Orderbook Updates
@@ -12092,8 +11946,6 @@ Requirements:
   connection's snapshot and follow its own `seq`; do not combine deltas from different connections
 
 
-
-
 # Public Trades
 Source: https://docs.kalshi.com/margin-ws/websockets/public-trades
 
@@ -12102,8 +11954,6 @@ Public notifications for executed margin trades.
 Requirements:
 - no additional channel-level auth beyond the authenticated WebSocket connection
 - market specification optional via `market_ticker` or `market_tickers`
-
-
 
 
 # User Fills
@@ -12117,8 +11967,6 @@ Requirements:
 - supports `update_subscription` with `add_markets` and `delete_markets`
 
 
-
-
 # User Orders
 Source: https://docs.kalshi.com/margin-ws/websockets/user-orders
 
@@ -12130,8 +11978,6 @@ Requirements:
 - supports `update_subscription` with `add_markets` and `delete_markets`
 
 
-
-
 # WebSocket Connection
 Source: https://docs.kalshi.com/margin-ws/websockets/websocket-connection
 
@@ -12139,20 +11985,21 @@ Main WebSocket connection endpoint.
 Authentication is required during the WebSocket handshake.
 
 
-
-
 # Price Banding
 Source: https://docs.kalshi.com/margin/price-banding
 
 How price banding works for Kalshi margin markets
 
-For perpetual markets, prices move in `0.0001` dollar ticks. Bids must be at least the lower of 80% of the best bid or 1,000 ticks below the best bid. Asks must be at most the higher of 120% of the best ask or 1,000 ticks above the best ask.
+For perpetual markets, prices move in `0.0001` dollar ticks. The price band limits how far an order may cross the other side of the book. A bid must be at most the higher of twice the best ask or 1,000 ticks above the best ask. An ask must be at least the lower of half the best bid or 1,000 ticks below the best bid.
 
 **Notes**
 
+* When the opposite side has resting orders, orders resting away from the market are not limited. If the opposite side is empty, the reference-price fallback may still impose a limit.
+* If there are no resting orders on the other side, the band uses the external reference price, scaled by contract size and underlying multiplier, when it is at most 30 seconds old and the underlying market is open. Otherwise, there is no band limit.
 * Resting orders will not be canceled due to the price band movement.
-* If there are no resting orders on that side, there is no band limit for that side.
 * Order amends outside the price band are not allowed.
+* Orders and amends outside the band are rejected with `invalid price`.
+* Liquidations and fired exit triggers are placed by the exchange and are not subject to the band.
 
 
 # Kalshi SDKs
@@ -12321,8 +12168,6 @@ Read the available IDs from `msg.index_ids` in the `cfbenchmarks_value_indexlist
 - This channel is real-time only. Historical index values — including intra-second granularity on some indices — are available over REST via the [CF Benchmarks REST Passthrough](/cfbenchmarks/rest-passthrough); live intra-second updates are available on the [`cfbenchmarks_value_5hz`](/websockets/cfbenchmarks-value-5hz) channel
 
 
-
-
 # CF Benchmarks 5Hz Value Feed
 Source: https://docs.kalshi.com/websockets/cfbenchmarks-value-5hz
 
@@ -12354,8 +12199,6 @@ This is the high-frequency sibling of the once-per-second [`cfbenchmarks_value`]
 - Historical index values — including intra-second granularity — are available over REST via the [CF Benchmarks REST Passthrough](/cfbenchmarks/rest-passthrough)
 
 
-
-
 # Communications
 Source: https://docs.kalshi.com/websockets/communications
 
@@ -12377,8 +12220,6 @@ Real-time Request for Quote (RFQ) and quote notifications. Requires authenticati
 **Use case:** Tracking RFQs and RFQ batches you create and the quotes on them, or quotes and batch quotes you create on others'. Use QuoteExecuted to correlate fill messages with quotes via client_order_id.
 
 
-
-
 # Connection Keep-Alive
 Source: https://docs.kalshi.com/websockets/connection-keep-alive
 
@@ -12386,8 +12227,6 @@ WebSocket control frames for connection management.
 
 Kalshi sends Ping frames (`0x9`) every 10 seconds with body `heartbeat` to maintain the connection.
 Clients should respond with Pong frames (`0xA`). Clients may also send Ping frames to which Kalshi will respond with Pong.
-
-
 
 
 # Market & Event Lifecycle
@@ -12401,8 +12240,6 @@ Market state changes and event creation notifications.
 - Event creation notifications
 
 **Use case:** Tracking market lifecycle including creation, de(activation), close date changes, determination, settlement, price level structure changes, and metadata updates
-
-
 
 
 # Market Positions
@@ -12422,8 +12259,6 @@ All monetary values are returned as fixed-point dollar strings (`_dollars` suffi
 **Use case:** Portfolio tracking, position monitoring, P&L calculations
 
 
-
-
 # Market Ticker
 Source: https://docs.kalshi.com/websockets/market-ticker
 
@@ -12436,8 +12271,6 @@ Market price, volume, and open interest updates.
 - Updates sent whenever any ticker field changes
 
 **Use case:** Displaying current market prices and statistics
-
-
 
 
 # Multivariate Market & Event Lifecycle
@@ -12454,8 +12287,6 @@ Multivariate event (MVE) market state changes and event creation notifications.
 **Use case:** Tracking multivariate market lifecycle including creation, de(activation), close date changes, determination, settlement
 
 
-
-
 # Order Group Updates
 Source: https://docs.kalshi.com/websockets/order-group-updates
 
@@ -12467,8 +12298,6 @@ Real-time order group lifecycle and limit updates. Requires authentication.
 - Updates sent when order groups are created, triggered, reset, deleted, or have limits updated
 
 **Use case:** Tracking order group lifecycle and limits
-
-
 
 
 # Orderbook Updates
@@ -12512,8 +12341,6 @@ These guarantees apply to subscriptions created in real-time mode (the initial `
 **Use case:** Building and maintaining a real-time orderbook
 
 
-
-
 # Public Trades
 Source: https://docs.kalshi.com/websockets/public-trades
 
@@ -12525,8 +12352,6 @@ Public trade notifications when trades occur.
 - Updates sent immediately after trade execution
 
 **Use case:** Trade feed, volume analysis
-
-
 
 
 # Pyth Value Feed
@@ -12685,8 +12510,6 @@ While all-mode is enabled, removing an individual ticker does not exclude it. Se
 - `source_ts_ms` is the source timestamp in Unix milliseconds; `received_at` is when Kalshi received the update, also in Unix milliseconds.
 
 
-
-
 # User Fills
 Source: https://docs.kalshi.com/websockets/user-fills
 
@@ -12699,8 +12522,6 @@ Your order fill notifications. Requires authentication.
 - Updates sent immediately when your orders are filled
 
 **Use case:** Tracking your trading activity
-
-
 
 
 # User Orders
@@ -12717,8 +12538,6 @@ Real-time order created and updated notifications. Requires authentication.
 **Use case:** Tracking your resting orders, fills, and cancellations in real time
 
 
-
-
 # WebSocket Connection
 Source: https://docs.kalshi.com/websockets/websocket-connection
 
@@ -12726,8 +12545,6 @@ Main WebSocket connection endpoint. All communication happens through this singl
 Authentication is required to establish the connection; include API key headers during the WebSocket handshake.
 Some channels carry only public market data, but the connection itself still requires authentication.
 Use the subscribe command to subscribe to specific data channels. For more information, see the [Getting Started](https://docs.kalshi.com/getting_started/quick_start_websockets) guide.
-
-
 
 
 # Introduction
@@ -12764,6 +12581,10 @@ By continuing to use or access Kalshi's API, you are agreeing to be bound to our
 > [card] [API Keys](/getting_started/api_keys)
 >
 > Generate and manage your API credentials.
+
+> [card] [MCP connector](/getting_started/mcp)
+>
+> Connect your AI assistant to explore markets, read your portfolio, and manage price alerts.
 
 > [card] [Kalshi Academy](https://help.kalshi.com/)
 >

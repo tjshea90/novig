@@ -14,7 +14,7 @@
 openapi: 3.0.0
 info:
   title: Kalshi Trade API Manual Endpoints
-  version: 3.35.0
+  version: 3.36.0
   description: >-
     Manually defined OpenAPI spec for endpoints being migrated to spec-first
     approach
@@ -125,6 +125,13 @@ components:
         name:
           type: string
           description: User-provided name for the API key
+        key_type:
+          allOf:
+            - $ref: '#/components/schemas/ApiKeyType'
+          description: >-
+            Signing algorithm of this key, derived from its stored public key.
+            Present for RSA and Ed25519 keys, including existing keys. Omitted
+            when the algorithm is unknown.
         scopes:
           type: array
           description: List of scopes granted to this API key.
@@ -148,6 +155,20 @@ components:
             trading credential - FIX sessions and subtrader-scoped margin
             WebSocket sessions; every REST endpoint is denied. Absent/null means
             the key carries no subtrader binding.
+    ApiKeyType:
+      type: string
+      enum:
+        - rsa
+        - ed25519
+      x-enum-varnames:
+        - ApiKeyTypeRsa
+        - ApiKeyTypeEd25519
+      description: >-
+        Signature algorithm of an API key pair. `rsa` - 2048-bit RSA; requests
+        are signed with RSA-PSS SHA-256. `ed25519` - Ed25519 (RFC 8032)
+        signatures over the same pre-sign text, with lower client-side signing
+        cost. Defaults to `rsa` when omitted from a generate request, for
+        compatibility with existing clients.
     ApiKeyScope:
       type: string
       enum:

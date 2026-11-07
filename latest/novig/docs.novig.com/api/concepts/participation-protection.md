@@ -34,23 +34,16 @@ An order on one never fills against the other.
 
 ## Which market types have a protected twin
 
-Only full-game NFL props on a single player's offense can be protected.
+Six NFL player prop types have a protected twin.
 
 | Category | Protected types |
 | - | - |
-| Passing | `PASSING_YARDS_PROTECTED`, `PASSING_ATTEMPTS_PROTECTED` |
-| Passing | `PASSING_COMPLETIONS_PROTECTED`, `PASSING_TOUCHDOWNS_PROTECTED` |
-| Passing | `LONGEST_COMPLETION_PROTECTED`, `INTERCEPTIONS_THROWN_PROTECTED` |
-| Rushing | `RUSHING_YARDS_PROTECTED`, `RUSHING_ATTEMPTS_PROTECTED` |
-| Rushing | `LONGEST_RUSH_PROTECTED` |
+| Passing | `PASSING_YARDS_PROTECTED`, `PASSING_TOUCHDOWNS_PROTECTED` |
+| Rushing | `RUSHING_YARDS_PROTECTED` |
 | Receiving | `RECEIVING_YARDS_PROTECTED`, `RECEPTIONS_PROTECTED` |
-| Receiving | `LONGEST_RECEPTION_PROTECTED` |
-| Combined | `PASSING_AND_RUSHING_YARDS_PROTECTED` |
-| Combined | `RUSHING_AND_RECEIVING_YARDS_PROTECTED` |
 | Touchdowns | `TOUCHDOWNS_PROTECTED` |
 
-First touchdown scorer, kicking, and defensive props stay standard.
-Team, first-half, and multi-player markets have no protected twin.
+Every other market type stays standard.
 
 ## How a protected market settles
 

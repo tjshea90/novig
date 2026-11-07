@@ -598,15 +598,19 @@ You get a channel's events after you subscribe to it.
 >
 > **data.reason** `string` *required*
 >
-> `below_min_wager`, `unbacked`, or `own_rfq`. The first two add one field with the number you must beat.
+> `below_min_wager`, `unbacked`, `own_rfq`, or `declined_recently`. The first two add one field with the number you must beat.
 >
 > | `reason` | Extra field | Means |
 > | - | - | - |
 > | `below_min_wager` | `min_wager` | Your `max_wager` is below the round's minimum stake |
 > | `unbacked` | `required_collateral` | Your free balance doesn't cover the collateral |
 > | `own_rfq` | none | You requested this round, so you can't fill it |
+> | `declined_recently` | none | You rejected or missed a last look on these legs in the past 2 minutes |
 >
 > The round's minimum stake is the taker's minimum or ours, whichever is higher.
+>
+> When you answer a last look with `false`, or don't answer in time, we pass over your quotes on the same legs for 2 minutes, for every taker.
+> This applies only before any game in the parlay starts.
 
 ## &#x20;Acks
 
@@ -853,13 +857,10 @@ If we remove or restrict your pricer, you keep the connection. Your next `create
 | Auction | 3 seconds | `RFQ_CLOSED`, and we drop the quote |
 | Last look | 1 second | We reject the trade |
 | Server ping | Every 15 s | A missed Pong closes the connection |
-| Actions per trader | 6000 per 60 seconds | `RATE_LIMITED` |
 | Outbound queue | 256 frames per connection | We drop event frames |
 | `price` | 0.001 to 0.999, after rounding | `INVALID_QUOTE` |
 | `max_wager` | Above zero | `INVALID_QUOTE` |
 | `quote_id` | 256 bytes | `INVALID_QUOTE` |
-
-Actions are `create_quote` and `decline`. `confirm` is exempt from the rate limit.
 
 We drop only event frames when your queue is full. We never drop acks or errors.
 

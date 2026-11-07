@@ -655,7 +655,11 @@ Follow the timeline for a wallet across trades and other activity.
 > >   | DepositActivity
 > >   | WithdrawalActivity
 > >   | TakerRebateActivity
-> >   | TipActivity;
+> >   | TipActivity
+> >   | DirectionalSplitActivity
+> >   | DirectionalMergeActivity
+> >   | ThresholdComposeActivity
+> >   | ThresholdDecomposeActivity;
 > > ```
 > >
 > > ```json Activity Example theme={null}
@@ -744,6 +748,10 @@ Follow the timeline for a wallet across trades and other activity.
 > >     | YieldActivity
 > >     | MigrationActivity
 > >     | TipActivity
+> >     | DirectionalSplitActivity
+> >     | DirectionalMergeActivity
+> >     | ThresholdComposeActivity
+> >     | ThresholdDecomposeActivity
 > >     | UnknownActivity
 > > )
 > > ```

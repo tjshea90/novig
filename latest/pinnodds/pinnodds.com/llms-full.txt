@@ -140,9 +140,9 @@ curl -H "x-api-key: $KEY" \
 }
 ```
 
-**Live game-state (`state` field):** Live events include a `state` object passed through from Pinnacle exactly as they publish it on MQTT. Field names are sport-specific and NOT renamed. `state` is `null` on prematch and absent from the `/odds-drop` SSE stream — REST only.
+**Live game-state (`state` field):** Live events include a `state` object passed through from Pinnacle exactly as they publish it on MQTT. Field names are sport-specific and NOT renamed. `state` is `null` on prematch. The `/odds-drop` SSE stream carries the same information as a normalised `live` object on each drop (see the drop fields below).
 
-- `state.match` — match-level state (clock, current period). Sport-dependent: Soccer = `{state, minutes}`; Basketball = `{quarter, timeRemainingInQtr}`; Tennis = `{set}`.
+- `state.match` — match-level state (clock, current period). Sport-dependent: Soccer = `{state, minutes}` (state 1 = 1st half, 2 = half-time, 3 = 2nd half, 9 = finished; minutes count within the current half); Basketball = `{quarter, timeRemainingInQtr}`; Tennis = `{set}`.
 - `state.home`, `state.away` — per-participant state. Common: `score`. Sport-specific extras:
   - Soccer: `redCards` (yellow cards and corners are NOT populated by the upstream feed)
   - Basketball: `scoreByQuarter` (array)
@@ -378,6 +378,8 @@ Drop fields:
 - `alerted` — UNIX timestamp (seconds) of the drop event
 - `starts` — UNIX timestamp of the event start time
 - `dispatched_ms`, `flushed_ms` — server-side latency markers
+- `home_score`, `away_score` — current score when known
+- `live` — match state at the drop (last key). Keys, in order: `status` (e.g. "1st Half - 16'", "Half Time", "4th Quarter - 7'", "Live Now"), `period` (basketball "Q1".."Q4"), `clock` (basketball minutes remaining, "7'"), `minute` (soccer, within the current half), `score` {home, away}; soccer adds `red_cards`, `yellow_cards`, `corners`; tennis adds `current_set`, `sets`, `games`, `game_points`, `server`; then `favorite` ("home"/"away"/null, shorter moneyline), `updated_ms` (state last changed), `source_ms` (last frame for the event). Absent when Pinnacle publishes no state for the event.
 
 **Node.js example:**
 ```js

@@ -8,6 +8,22 @@
 
 > [tab] TypeScript
 >
+> ### `0.17.0`
+>
+> * Added `DIRECTIONAL_SPLIT`, `DIRECTIONAL_MERGE`, `THRESHOLD_COMPOSE`, and `THRESHOLD_DECOMPOSE` activity types and `listActivity(...)` filters. Threshold rows report the moved line position as `shares` and identify its market with `conditionId`; no collateral moves. Presentation fields are optional on range-event rows.
+> * Unknown activity types no longer fail an activity page. They carry shared account fields and an `OpaqueActivityType`. Breaking type change: `activity.type` is no longer assignable to `string` or usable as a record key. Convert it explicitly, and add a `default` branch to exhaustive switches to handle unlisted types:
+>
+> ```diff theme={null}
+> -const type: string = activity.type;
+> -const label = labels[activity.type];
+> +const type = String(activity.type);
+> +const label = labels[type] ?? "Other";
+> ```
+>
+> * Added Binance as an opt-in crypto spot price provider. Binance quotes use USDT spot closes under canonical USD symbols; omitting the provider keeps the existing default.
+> * Reduced retained heap after importing `@polymarket/client` by about 20% and raised the Zod requirement to `^4.6.7`.
+> * Collection limits now fail without per-item validation noise. When invalid input is closest to one accepted shape, `UserInputError` lists only that shape's issues.
+>
 > ### `0.16.0`
 >
 > * Breaking change: removed `downloadAccountingSnapshot` from public and secure clients and the standalone action, along with `DownloadAccountingSnapshotRequest`, `SecureDownloadAccountingSnapshotRequest`, and `DownloadAccountingSnapshotError`. Remove calls and imports for this download. There is no replacement ZIP/CSV export; portfolio, position, and activity reads do not provide an equivalent archive.
@@ -582,6 +598,12 @@
 > ```
 
 > [tab] Python
+>
+> ### `0.17.0`
+>
+> * Added `DIRECTIONAL_SPLIT`, `DIRECTIONAL_MERGE`, `THRESHOLD_COMPOSE`, and `THRESHOLD_DECOMPOSE` activity types and `list_activity(...)` filters. Threshold rows report the moved line position as `shares` and identify its market with `condition_id`; no collateral moves. Presentation fields are optional on range-event rows.
+> * Activity types absent from `ActivityType` remain available as `UnknownActivity`, with shared account fields and the full row in `raw`.
+> * Added Binance as an opt-in crypto spot price provider. Binance quotes use USDT spot closes under canonical USD symbols; omitting the provider keeps the existing default.
 >
 > ### `0.16.0`
 >

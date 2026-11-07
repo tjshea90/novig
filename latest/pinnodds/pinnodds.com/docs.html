@@ -21,7 +21,7 @@
 <meta property="og:url" content="https://pinnodds.com/docs"/>
 <meta property="og:title" content="Pinnacle API Documentation — Odds, WebSocket &amp; SSE"/>
 <meta property="og:description" content="REST, SSE, WebSocket endpoints for live and prematch Pinnacle odds with drops detection. Copy-paste examples in curl, Node, Python, Go, PHP."/>
-<meta property="og:image" content="https://pinnodds.com/og-cover.png"/>
+<meta property="og:image" content="https://pinnodds.com/og-cover.png?v=20261103"/>
 <meta name="twitter:card" content="summary_large_image"/>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -245,6 +245,7 @@ pre{scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
   <a href="#event-shape">Event object</a>
   <a href="#staleness">Detecting stale prices</a>
   <a href="#live-state">Live state object</a>
+  <a href="#sse-live-object">SSE <code>live</code> object</a>
   <a href="#affiliate">Affiliate program</a>
 </aside>
 
@@ -946,6 +947,23 @@ data: [{"home": "Sunshine Coast Phoenix", "away": "Cairns Dolphins",
         "sect": "Moneyline", "id": 1629729400, "sport": "Basketball",
         "interval": 25, "alerted": 1777625196, "sport_id": 3,
         "nvp": 3.04, "starts": 1777624200, ...}]</pre>
+    <h3 id="sse-live-state" style="margin: 22px 0 6px; font-size: 15px">Match state on every drop: the <code>live</code> object</h3>
+    <p>Each live drop ends with a <code>live</code> object: the state of the match at the moment of the drop — score, soccer minute and half, red/yellow cards and corners, basketball quarter and clock, tennis sets/games/points and who is serving, plus the current moneyline <code>favorite</code>. It is the same in-play state as the REST <code>state</code> field, normalised to one shape so you can use it straight from the stream. It is absent only when Pinnacle publishes no state for the event (e.g. most esports). Keys and their meaning: <a href="#sse-live-object">SSE <code>live</code> object reference</a>.</p>
+<pre><span class="c"># A soccer drop (abridged) — live is always the last key</span>
+data: [{"home": "Sagan Tosu", "away": "Kawasaki Frontale", "league": "Japan - League Cup",
+        "from_price": 1.729, "to_price": 1.709, "outcome": "Under", "period": 0,
+        "sect": "Total", "point": 2.0, "id": 1639382748, "sport": "Soccer", "sport_id": 1,
+        "nvp": 1.771, "home_score": 0, "away_score": 0, ...,
+        "live": {"status": "1st Half - 16'", "period": null, "clock": null, "minute": 16,
+                 "score": {"home": 0, "away": 0}, "red_cards": {"home": 0, "away": 0},
+                 "yellow_cards": {"home": 0, "away": 0}, "corners": {"home": 0, "away": 1},
+                 "favorite": "away", "updated_ms": 1793182776098, "source_ms": 1793182776964}}]
+
+<span class="c"># Basketball: "live": {"status": "4th Quarter - 7'", "period": "Q4", "clock": "7'", "minute": null,</span>
+<span class="c">#                      "score": {"home": 75, "away": 76}, "favorite": "away", ...}</span>
+<span class="c"># Tennis:     "live": {"status": "Live Now", ..., "current_set": 3, "sets": {"home": 1, "away": 1},</span>
+<span class="c">#                      "games": {"home": [3, 6, 2], "away": [6, 1, 2]},</span>
+<span class="c">#                      "game_points": {"home": "40", "away": "Ad"}, "server": "away", ...}</span></pre>
     <div class="callout" style="margin-top: 12px">
       <b>Trial users:</b> connecting with a trial key returns <code>{"type":"error","error":"plan_lacks_sse"}</code> as the only frame. Upgrade to <a href="/panel">Stream, Pro + SSE, or Scale</a> to access SSE.
     </div>
@@ -963,6 +981,7 @@ data: [{"home": "Sunshine Coast Phoenix", "away": "Cairns Dolphins",
   <div class="endpoint-body">
     <p>Same shape and auth as <a href="#sse-live"><code>/odds-drop</code></a>, but emits drops on the prematch feed only. Useful when you want to trade upcoming-fixture line moves and not be flooded with in-play noise.</p>
     <p><b>Optional query parameter:</b> <code>?min_drop=N</code> overrides the default 5% drop threshold for this subscriber (same as on <a href="#sse-live"><code>/odds-drop</code></a>). Composes with <code>?recheck=N</code>. Floor is 1%.</p>
+    <p style="color: var(--muted); font-size: 13px">Prematch drops have <b>no</b> <code>live</code> object — the match has not started, so there is no score or clock to report.</p>
     <p style="color: var(--muted); font-size: 13px"><b>One connection per account</b> — see the same warning on <a href="#sse-live"><code>/odds-drop</code></a>. Live and prematch each count as one SSE slot, so you can run one of each in parallel under the default cap.</p>
     <div class="tabs" data-group="sseprem">
       <button class="active" data-tab="curl">curl</button>
@@ -1676,7 +1695,7 @@ bearer_token_env_var = <span class="s">"PINNODDS_KEY"</span></pre>
       A Trial key has 100 requests per day; a long analysis session will hit that. When the server answers <code>rate_limited</code>, it also stops calling upstream until the window resets.
       Streams (SSE, WebSocket) are not exposed over MCP &mdash; use them directly.
     </div>
-    <p style="color: var(--muted); font-size: 13px; margin-top:12px">Also listed in the <a href="https://registry.modelcontextprotocol.io" target="_blank" rel="noopener">official MCP registry</a> as <code>com.pinnodds/odds</code>. Questions: <a href="/cdn-cgi/l/email-protection#1970777f765969707777767d7d6a377a7674"><span class="__cf_email__" data-cfemail="137a7d757c53637a7d7d7c7777603d707c7e">[email&#160;protected]</span></a>.</p>
+    <p style="color: var(--muted); font-size: 13px; margin-top:12px">Also listed in the <a href="https://registry.modelcontextprotocol.io" target="_blank" rel="noopener">official MCP registry</a> as <code>com.pinnodds/odds</code>. Questions: <a href="/cdn-cgi/l/email-protection#d9b0b7bfb699a9b0b7b7b6bdbdaaf7bab6b4"><span class="__cf_email__" data-cfemail="a9c0c7cfc6e9d9c0c7c7c6cdcdda87cac6c4">[email&#160;protected]</span></a>.</p>
   </div>
 </div>
 
@@ -1888,7 +1907,7 @@ curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
   <tbody>
     <tr>
       <td class="name">Soccer (1)</td>
-      <td class="type"><code>state</code> (period state code, 1 = 1H, 2 = 2H, etc.), <code>minutes</code> (game clock minute)</td>
+      <td class="type"><code>state</code> (period code: 1 = 1st half, 2 = half-time, 3 = 2nd half, 9 = finished; 4 can appear briefly between 3 and 9), <code>minutes</code> (minute <i>within the current half</i> — it restarts at 0 for the 2nd half; during half-time it counts the break)</td>
       <td class="type"><code>score</code>, <code>redCards</code></td>
     </tr>
     <tr>
@@ -1908,9 +1927,32 @@ curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
     </tr>
   </tbody>
 </table>
-<p style="color: var(--muted); font-size: 13px; margin-top: 8px"><b>Note:</b> Per-participant live state currently covers <code>score</code> and <code>redCards</code> (plus the match-level clock/period). Yellow cards and corners are <b>not</b> populated on the main event. Fields appear only when there is a non-default value to publish, so treat every field as optional and code defensively.</p>
+<p style="color: var(--muted); font-size: 13px; margin-top: 8px"><b>Note:</b> Per-participant live state covers <code>score</code> and <code>redCards</code> (plus the match-level clock/period), and on soccer also <code>corners</code> and <code>yellowCards</code>, which come from the parent fixture, so their timing can differ from the record's own score by a few seconds. Not every match has them. Fields appear only when there is a non-default value to publish, so treat every field as optional and code defensively.</p>
 
-<p><b>Where it lives:</b> the <code>state</code> field is returned by <code>GET /kit/v1/markets?event_type=live</code> only. Prematch endpoints (<code>/kit/v1/prematch/*</code>) do not return <code>state</code> — none of these fields exist before kickoff. The <code>/odds-drop</code> SSE stream does NOT include <code>state</code>; use the REST endpoint when you need live game state.</p>
+<p><b>Where it lives:</b> the raw <code>state</code> field is returned by <code>GET /kit/v1/markets?event_type=live</code>. Prematch endpoints (<code>/kit/v1/prematch/*</code>) do not return <code>state</code> — none of these fields exist before kickoff. The <code>/odds-drop</code> SSE stream carries the same information as a normalised <code>live</code> object on each drop — see below.</p>
+
+<h3 id="sse-live-object" style="margin: 22px 0 6px; font-size: 15px">The <code>live</code> object on <code>/odds-drop</code> drops</h3>
+<p>Every live drop carries a <code>live</code> object with the match state at the moment of the drop (the latest state we had for that event, even when the frame that moved the price did not repeat it). It is the last key of the drop. It is absent only when Pinnacle publishes no state for the event (most sports other than soccer, tennis, basketball and hockey). The keys always appear in this order; values not available for a sport are <code>null</code>.</p>
+<table class="param-table" style="margin-top: 8px">
+  <thead><tr><th>Key</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td class="name">status</td><td class="type">string</td><td class="desc">Human-readable state. Soccer <code>"1st Half - 16'"</code>, <code>"Half Time"</code>, <code>"2nd Half - 22'"</code>; basketball <code>"4th Quarter - 7'"</code>; otherwise <code>"Live Now"</code>.</td></tr>
+    <tr><td class="name">period</td><td class="type">string | null</td><td class="desc">Basketball only: <code>"Q1"</code>…<code>"Q4"</code> (<code>"Q5"</code>+ = overtime, <code>"Q-1"</code> = unknown).</td></tr>
+    <tr><td class="name">clock</td><td class="type">string | null</td><td class="desc">Basketball only: whole minutes remaining in the quarter, e.g. <code>"7'"</code>.</td></tr>
+    <tr><td class="name">minute</td><td class="type">int | null</td><td class="desc">Soccer only: minute within the current half (restarts at 0 for the 2nd half; 0 at half-time).</td></tr>
+    <tr><td class="name">score</td><td class="type">{home, away} | null</td><td class="desc">Current score (soccer, basketball, hockey). <code>null</code> for tennis — use <code>sets</code>/<code>games</code>.</td></tr>
+    <tr><td class="name">red_cards, yellow_cards, corners</td><td class="type">{home, away}</td><td class="desc">Soccer only, each present when known. Yellow cards and corners come from the parent fixture and can lag the score by a few seconds.</td></tr>
+    <tr><td class="name">current_set, sets, games, game_points, server</td><td class="type">mixed</td><td class="desc">Tennis only. <code>current_set</code> int; <code>sets</code> {home, away} sets won; <code>games</code> {home: [..], away: [..]} games per set; <code>game_points</code> {home, away} strings (<code>"0"</code>/<code>"15"</code>/<code>"30"</code>/<code>"40"</code>/<code>"Ad"</code>, tiebreak points as numbers-in-strings); <code>server</code> <code>"home"</code>/<code>"away"</code>.</td></tr>
+    <tr><td class="name">favorite</td><td class="type">"home" | "away" | null</td><td class="desc">The side with the shorter full-game moneyline price at that moment; <code>null</code> when level or no moneyline is open.</td></tr>
+    <tr><td class="name">updated_ms</td><td class="type">int</td><td class="desc">When this state last changed (our receive time, UNIX ms).</td></tr>
+    <tr><td class="name">source_ms</td><td class="type">int</td><td class="desc">When we last received any frame for this event (UNIX ms).</td></tr>
+  </tbody>
+</table>
+<pre>"live": {"status": "1st Half - 43'", "period": null, "clock": null, "minute": 43,
+         "score": {"home": 1, "away": 0}, "red_cards": {"home": 0, "away": 0},
+         "yellow_cards": {"home": 1, "away": 0}, "corners": {"home": 1, "away": 4},
+         "favorite": "away", "updated_ms": 1793886283461, "source_ms": 1793886286990}</pre>
+<p style="color: var(--muted); font-size: 13px">The drop's own <code>home_score</code> / <code>away_score</code> fields are filled from the same state (previously they were <code>null</code> on basketball and hockey). Basketball drops also keep the older <code>quarter</code> / <code>time_remaining_in_qtr</code> fields.</p>
 
 <h2 id="affiliate">Affiliate program</h2>
 <p>Every account gets a unique referral link. Anyone who signs up via your link and becomes a paying customer earns you <b>30% of every payment they make</b>, for as long as their subscription stays active — first payment, renewals, upgrades, all of it.</p>
@@ -1922,7 +1964,7 @@ curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
     <tr><td class="name">Commission</td><td class="desc"><b>30%</b> of every USD payment your referrals make. Compounds across renewals and upgrades — not a one-time bounty.</td></tr>
     <tr><td class="name">Attribution</td><td class="desc">A signup is attributed if the visitor lands on pinnodds.com with your <code>?ref=</code> parameter and then signs up + verifies email in the same browser session. We don't use cross-device cookies — straight session-based attribution.</td></tr>
     <tr><td class="name">Tracking</td><td class="desc">Your panel shows a live list of every signup attributed to you, whether they're on a paid plan, and how much you've earned (unpaid + paid out).</td></tr>
-    <tr><td class="name">Payouts</td><td class="desc">Processed manually. Once your unpaid balance reaches <b>$50+</b> we'll reach out to arrange transfer (crypto, bank transfer, or PayPal — whichever you prefer). Faster payouts are available on request — email <a href="/cdn-cgi/l/email-protection#83eaede5ecc3f3eaededece7e7f0ade0ecee"><span class="__cf_email__" data-cfemail="93fafdf5fcd3e3fafdfdfcf7f7e0bdf0fcfe">[email&#160;protected]</span></a>.</td></tr>
+    <tr><td class="name">Payouts</td><td class="desc">Processed manually. Once your unpaid balance reaches <b>$50+</b> we'll reach out to arrange transfer (crypto, bank transfer, or PayPal — whichever you prefer). Faster payouts are available on request — email <a href="/cdn-cgi/l/email-protection#1e777078715e6e777070717a7a6d307d7173"><span class="__cf_email__" data-cfemail="0960676f664979606767666d6d7a276a6664">[email&#160;protected]</span></a>.</td></tr>
     <tr><td class="name">Self-referral</td><td class="desc">Blocked. You can't sign up via your own link.</td></tr>
     <tr><td class="name">Refunds</td><td class="desc">If a referred customer's payment is refunded by us (rare), the corresponding commission is voided. We don't claw back already-paid commissions for routine churn — only for actual refunds.</td></tr>
   </tbody>
@@ -1931,7 +1973,7 @@ curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
 <p style="color: var(--muted); font-size: 13px; margin-top: 10px"><b>Privacy:</b> in your panel, referred users' emails are masked (e.g. <code>j***@gmail.com</code>) so you can recognize friends you invited without exposing full addresses if you screenshot the dashboard. Admins see unmasked emails in our internal tooling.</p>
 
 <div class="callout warn" style="margin-top: 40px">
-  <b>Need something we don't have?</b> Historical archives, custom rate above 30 req/sec, or a market we don't surface yet — email <a href="/cdn-cgi/l/email-protection#422b2c242d02322b2c2c2d2626316c212d2f"><span class="__cf_email__" data-cfemail="20494e464f6050494e4e4f4444530e434f4d">[email&#160;protected]</span></a> and tell us what you need.
+  <b>Need something we don't have?</b> Historical archives, custom rate above 30 req/sec, or a market we don't surface yet — email <a href="/cdn-cgi/l/email-protection#9af3f4fcf5daeaf3f4f4f5fefee9b4f9f5f7"><span class="__cf_email__" data-cfemail="670e09010827170e0909080303144904080a">[email&#160;protected]</span></a> and tell us what you need.
 </div>
 
 </main>
@@ -1949,7 +1991,7 @@ curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
       <div><h4>Pinnacle odds</h4><ul><li><a href="/pinnacle-odds">All sports live board</a></li><li><a href="/pinnacle-odds/nfl">NFL · NBA · MLB · NHL</a></li><li><a href="/pinnacle-odds/soccer">Soccer · Tennis</a></li><li><a href="/pinnacle-odds-dropper">Odds dropper</a></li></ul></div>
       <div><h4>Developers</h4><ul><li><a href="/docs">Docs</a></li><li><a href="/blog">Blog</a></li><li><a href="https://www.npmjs.com/package/pinnodds">npm</a></li><li><a href="https://pypi.org/project/pinnodds/">PyPI</a></li><li><a href="https://github.com/Pinnodds/pinnodds-sdk">GitHub</a></li><li><a href="https://rapidapi.com/">RapidAPI</a></li></ul></div>
       <div><h4>Compare</h4><ul><li><a href="/the-odds-api-alternative">vs The Odds API</a></li><li><a href="/sharpapi-alternative">vs SharpAPI</a></li><li><a href="/sportsgameodds-alternative">vs SportsGameOdds</a></li><li><a href="/opticodds-alternative">vs OpticOdds</a></li></ul></div>
-      <div><h4>Contact</h4><ul><li><a href="https://t.me/ArbitrageXpro">Telegram @ArbitrageXpro</a></li><li><a href="/cdn-cgi/l/email-protection#0960676f664979606767666d6d7a276a6664"><span class="__cf_email__" data-cfemail="ec85828a83ac9c8582828388889fc28f8381">[email&#160;protected]</span></a></li><li><a href="/about">About</a></li><li><a href="/terms">Terms</a> · <a href="/privacy">Privacy</a></li><li><a href="/cookies">Cookies</a></li></ul></div>
+      <div><h4>Contact</h4><ul><li><a href="https://t.me/ArbitrageXpro">Telegram @ArbitrageXpro</a></li><li><a href="/cdn-cgi/l/email-protection#5f363139301f2f363131303b3b2c713c3032"><span class="__cf_email__" data-cfemail="147d7a727b54647d7a7a7b7070673a777b79">[email&#160;protected]</span></a></li><li><a href="/about">About</a></li><li><a href="/terms">Terms</a> · <a href="/privacy">Privacy</a></li><li><a href="/cookies">Cookies</a></li></ul></div>
     </div>
     <div class="legal"><span>Not affiliated with, endorsed by, or connected to Pinnacle.</span><span>18+ · Data service only, not a bookmaker.</span><span>&copy; <span id="yr">2026</span> pinnodds · <a href="#" onclick="window.pinnConsent&&pinnConsent.open();return false">Cookie settings</a></span></div>
   </div>

@@ -77,35 +77,40 @@ A second `trading::read` key on a subaccount doesn't raise its limits.
 
 ### Tiers
 
-Each subaccount has a tier, and a higher tier raises its limits.
-A tier multiplies both the capacity and the refill rate of every throttle.
-A tier also sets how many orders your subaccount may keep open at once.
+Your account has one tier, and every subaccount you hold runs at it.
+A higher tier raises your limits: it multiplies both the capacity and the refill rate of every throttle.
+Each subaccount keeps its own throttles, so each one gets the full limits of your tier.
+A tier also sets how many orders each subaccount may keep open at once.
 An order that would take you over that cap answers `OPEN_ORDER_LIMIT_EXCEEDED`.
-The cap on watched markets is the same at every tier.
+It also sets how many markets each websocket connection may watch. See [Websocket subscriptions](#websocket-subscriptions).
 
 <table>
   <thead>
-    <tr><th>Tier</th><th>Monthly volume</th><th>Multiplier</th><th>Open orders</th></tr>
+    <tr><th>Tier</th><th>Monthly volume</th><th>Multiplier</th><th>Open orders</th><th>Watched markets</th></tr>
   </thead>
 
   <tbody>
-    {RATE_LIMIT_TIERS.map((tier) => <tr key={tier.name}><td>{tier.name}</td><td>${tier.monthlyVolume.toLocaleString("en-US")}</td><td>{tier.multiplier}×</td><td>{tier.maxOpenOrders.toLocaleString("en-US")}</td></tr>)}
+    {RATE_LIMIT_TIERS.map((tier) => <tr key={tier.name}><td>{tier.name}</td><td>${tier.monthlyVolume.toLocaleString("en-US")}</td><td>{tier.multiplier}×</td><td>{tier.maxOpenOrders.toLocaleString("en-US")}</td><td>{tier.maxWatchedMarkets.toLocaleString("en-US")}</td></tr>)}
   </tbody>
 </table>
 
-Your subaccount earns its tier from its volume over the last calendar month, in Eastern time.
-Early each month, we move each subaccount to the tier that volume reaches, so a tier can go down as well as up.
+Your account earns its tier from the volume of all your subaccounts over the last calendar month, in Eastern time.
+Early each month, we move your account to the tier that volume reaches, so a tier can go down as well as up.
 
-Volume is the full payout of every contract your subaccount traded, so 100 contracts count as \$1.
+Volume is the full payout of every contract your subaccounts traded, so 100 contracts count as \$1.
 A wash, where your order trades against another of yours, doesn't count, and neither does a voided trade.
 
-A new subaccount starts at Base.
+A new subaccount runs at your account's tier from its first request.
 A management key is always at Base.
-`GET /v3/limits` reports the limits of your subaccount's tier.
+
+`GET /v3/limits` reports your account's tier as `accountTier`, whichever key you call it with.
+It reports the limits of the key you call it with, and their tier as `tier`.
+With a trading key, `tier` is your account's tier. With a management key, it's `BASE`.
+`accountMaxOpenOrders` and `accountMaxWatchedMarkets` report the caps of your account's tier, whichever key you call it with.
 
 ## Websocket subscriptions
 
-The `stream` bucket meters how fast you subscribe. A second limit caps how much you hold: a connection may watch up to  markets at once. An event counts as the markets it contains. A subscribe that would take you over that answers `SUBSCRIPTION_LIMIT_EXCEEDED`, and it subscribes to nothing. A `snapshot` that names more markets than the cap answers the same. Such a request also costs more than the `stream` bucket holds, so you get `RATE_LIMIT_EXCEEDED` until the bucket is full. `GET /v3/limits` reports the cap.
+The `stream` bucket meters how fast you subscribe. A second limit caps how much you hold: a connection may watch up to  markets at once at Base, and more at a higher tier. An event counts as the markets it contains. A subscribe that would take you over that answers `SUBSCRIPTION_LIMIT_EXCEEDED`, and it subscribes to nothing. A `snapshot` that names more markets than the cap answers the same. Such a request also costs more than the `stream` bucket holds, so you get `RATE_LIMIT_EXCEEDED` until the bucket is full. `GET /v3/limits` reports your cap as `maxWatchedMarkets`.
 
 The key routes and the subaccount routes spend the `account` bucket, one token a request. A transfer spends from it too.
 

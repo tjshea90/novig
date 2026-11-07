@@ -3512,6 +3512,11 @@
                       }
                     }
                   },
+                  "state": {
+                    "type": "string",
+                    "default": "va",
+                    "description": "DraftKings only: two-letter US state to price in (va, ny, il, nj, ...). NY and IL price about 4% lower."
+                  },
                   "include_hold": {
                     "type": "boolean",
                     "default": false,

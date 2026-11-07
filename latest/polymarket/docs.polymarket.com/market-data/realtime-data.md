@@ -892,6 +892,10 @@ market's order book and trading state.
 >
 > These frames update only the outcome set for the current market-stream
 > connection.
+>
+> `"initial_dump": false` only skips snapshots on the opening `market` frame. A
+> subsequent `subscribe` frame ignores it and always sends a `book` snapshot for
+> each outcome ID it adds.
 
 ## Sports Stream
 
@@ -1157,6 +1161,7 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 > >       dropped?: number;
 > >       payload: {
 > >         symbol: string;
+> >         source: PriceSource;
 > >         data: { timestamp: EpochMilliseconds; value: DecimalString }[];
 > >       };
 > >     }
@@ -1168,6 +1173,7 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 > >       dropped?: number;
 > >       payload: {
 > >         symbol: string;
+> >         source: PriceSource;
 > >         timestamp: EpochMilliseconds;
 > >         value: DecimalString;
 > >         receivedAt: EpochMilliseconds | undefined;
@@ -1185,6 +1191,7 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 > >     "seq": 1,
 > >     "payload": {
 > >       "symbol": "btcusd",
+> >       "source": "chainlink",
 > >       "data": [
 > >         {
 > >           "timestamp": 1788886057000,
@@ -1208,6 +1215,7 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 > >     "seq": 5,
 > >     "payload": {
 > >       "symbol": "btcusd",
+> >       "source": "chainlink",
 > >       "timestamp": 1788886177000,
 > >       "value": "78794.15450441"
 > >     }
@@ -1249,10 +1257,12 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 > >
 > > class RealtimePriceSnapshot:
 > >     symbol: str
+> >     source: PriceSource
 > >     data: tuple[RealtimePricePoint, ...]
 > >
 > > class RealtimePriceUpdate:
 > >     symbol: str
+> >     source: PriceSource
 > >     timestamp: datetime
 > >     value: Decimal
 > >     received_at: datetime | None
@@ -1286,7 +1296,8 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 > >   "payload": {
 > >     "timestamp": "2026-09-08T16:49:37Z",
 > >     "value": "78794.15450441",
-> >     "symbol": "btcusd"
+> >     "symbol": "btcusd",
+> >     "source": "chainlink"
 > >   }
 > > }
 > > ```
@@ -2052,6 +2063,19 @@ A time-weighted average price (TWAP) represents an asset's price across a lookba
 > >   }
 > > ]
 > > ```
+
+## Reference Price Providers
+
+Provider availability depends on the symbol and feed. Use this table when choosing a reference-price source.
+
+| Provider | Feeds | Quirks |
+| - | - | - |
+| Chainlink | Crypto spot, supported equity spot, and 60-second TWAP | Default wherever it serves the symbol. TWAP feeds are Chainlink-only. Equity products can trade around the clock, so their market status can differ from exchange-session feeds. |
+| Pyth | Supported crypto and equity spot symbols | Availability varies by symbol. A requested provider that cannot serve the symbol falls back to its default provider. |
+| Binance | Crypto spot only | Uses canonical symbols such as `btcusd` for USDT spot closes. Not available for equity or TWAP feeds. |
+| Massive | Equity spot | Can appear as the served source, but cannot be requested explicitly. Its exchange-session market status can differ from continuous-hours products. |
+
+A provider preference may be ignored when provider selection is disabled. Check the source returned with snapshots and live updates, including after reconnecting, rather than assuming the requested provider was selected.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

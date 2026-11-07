@@ -65,7 +65,7 @@ The fee peaks at P = 0.50 and falls to zero at the ends. A price of 0.30 costs t
 | Market type | League | Schedule | Charges |
 | - | - | - | - |
 | Game line | any | Game | When live |
-| Futures | `NFL` `NCAAF` `MLB` `NBA` `WNBA` `NHL` | Futures | Always |
+| Futures | `NFL` `NCAAF` `NCAAB` `NCAAWB` `MLB` `NBA` `WNBA` `NHL` | Futures | Always |
 | Futures | `PGA` `ATP` `WTA` `UFC` `F1` `NASCAR` | Game | Never |
 | Series winner | any | Game | Never |
 

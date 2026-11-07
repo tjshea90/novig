@@ -59,19 +59,20 @@ Three methods, in priority order:
 | **Free** | $0/mo | 12 | 60s | 2 | Odds, Schedule |
 | **Hobby** | $79/mo | 120 | Real-time | 5 | + Arbitrage |
 | **Pro** | $229/mo | 300 | Real-time | 15 | + EV, Middles |
-| **Sharp** | $399/mo | 1,000 | Real-time | All 30+ | + Priority Support |
+| **Sharp** | $399/mo | 1,000 | Real-time | 25 | + Priority Support |
 | **Enterprise** | Custom | Custom | Real-time | All | + SLA, Dedicated Support |
 
-**WebSocket Add-on**: $99/mo — adds 10 concurrent SSE streams to any paid tier. Enterprise includes streaming.
+**WebSocket Add-on**: $99/mo on Hobby and Pro, $149/mo on Sharp — 1 concurrent stream per key, shared across SSE and WebSocket. Additional concurrent streams require a paid per-key `maxStreams` override. Enterprise includes streaming.
 
 **Game State Add-on**: $79/mo — adds live game state (`/gamestate`, plus the `gamestate` stream channel when the key also has streaming) to any paid tier. Enterprise includes it.
 
 ### Sportsbook Access by Tier
 
 - **Free**: DraftKings, FanDuel
-- **Hobby**: + BetMGM, Caesars, theScore Bet
-- **Pro**: + Bet365, BetRivers, and more (15 total)
-- **Sharp/Enterprise**: All 30+ supported books
+- **Hobby**: Choose any 5 eligible sportsbooks.
+- **Pro**: Choose any 15 eligible sportsbooks.
+- **Sharp**: Choose any 25 eligible sportsbooks.
+- **Enterprise**: All supported sportsbooks (uncapped).
 
 ### Feature Access by Endpoint
 
@@ -1224,7 +1225,7 @@ redirect, not JSON, so it can be used directly in an `<a href>`.
 
 Server-Sent Events (SSE) stream for real-time odds updates.
 
-**Auth**: Required + **WebSocket add-on** ($99/mo on any paid tier)
+**Auth**: Required + **WebSocket add-on** ($99/mo on Hobby and Pro, $149/mo on Sharp)
 **Parameters**:
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|

@@ -55,6 +55,30 @@ Do not sign another adjustment for the same account until the original outcome
 has been confirmed out of band. No public endpoint currently reports that
 request's terminal outcome.
 
+## Withdrawal and Internal Transfer Errors
+
+Returned on `POST /v1/account/withdraw` and `POST /v1/account/internal-transfer`
+when the Polymarket address book rejects or cannot be reached.
+
+| Error | HTTP status | Condition |
+| - | - | - |
+| `withdrawal_not_allowlisted` | `403` | The destination is not an active address-book entry, or an enrolled owner attempted a transfer outside their account group. |
+| `address_book_unavailable` | `503` | The address-book lookup failed before submission. The request was not submitted. Retry with backoff and honor `Retry-After: 1` when present. |
+
+Treat `withdrawal_not_allowlisted` as final until the destination is allowlisted.
+For `address_book_unavailable`, retry with backoff; do not assume the transfer or
+withdrawal executed.
+
+## Proxy Management Errors
+
+Returned on `DELETE /v1/account/proxy` when a trading key self-delete is refused.
+The owner deleting a different key is unchanged.
+
+| Error | HTTP status | Condition |
+| - | - | - |
+| `proxy_registration_newer_than_signature` | `422` | Self-delete within 60 seconds of registering or rotating the key. Wait, then sign a fresh request. |
+| `proxy_registration_timestamp_missing` | `422` | Self-delete for a key with no recorded registration time. The owner can still delete the key. |
+
 ## WebSocket Errors
 
 These errors appear on authenticated WebSocket connections when a post is

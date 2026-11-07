@@ -613,8 +613,8 @@ type.
 
 **400** `Bad Request`
 
-`Invalid signature_type` — The `signature_type` parameter must be `EOA`,
-`POLY_PROXY`, or `GNOSIS_SAFE`.
+`Invalid signature_type` — The `signature_type` parameter must be `0` (EOA),
+`1` (POLY\_PROXY), `2` (POLY\_GNOSIS\_SAFE) or `3` (POLY\_1271, Deposit Wallet).
 
 ***
 

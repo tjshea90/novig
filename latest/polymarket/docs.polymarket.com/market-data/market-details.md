@@ -324,17 +324,15 @@ markets can resolve YES.
 >   "archived": false
 > }
 > ```
->
-> Where:
->
-> | Field | Type | Description |
-> | - | - | - |
-> | `active` | boolean | Market is deployed and not archived. |
-> | `closed` | boolean | Market has resolved or been closed, so no further trading is possible. |
-> | `acceptingOrders` | boolean | Order book is open for new limit and market orders. |
-> | `negRisk` | boolean | Market belongs to a [negative-risk group](https://docs.polymarket.com/concepts/negative-risk.md). |
-> | `restricted` | boolean | Market is geo-restricted for some jurisdictions. |
-> | `archived` | boolean | Market is archived and read-only: no trading, no resolution updates. |
+
+| Field | Type | Description |
+| - | - | - |
+| `active` | boolean | Market is deployed and not archived. |
+| `closed` | boolean | Market has resolved or been closed, so no further trading is possible. |
+| `acceptingOrders` | boolean | Order book is open for new limit and market orders. |
+| `negRisk` | boolean | Market belongs to a [negative-risk group](https://docs.polymarket.com/concepts/negative-risk.md). |
+| `restricted` | boolean | Market is geo-restricted for some jurisdictions. |
+| `archived` | boolean | Market is archived and read-only: no trading, no resolution updates. |
 
 ### Identify Augmented Negative Risk
 

@@ -29,7 +29,7 @@ You send a verb to tell us what to do on the connection.
 | `query_markets` | Pages open markets | Ack |
 | `query_events` | Pages open events | Ack |
 | `place` | Books a batch of orders | Ack |
-| `cancel` | Cancels orders by id | Ack |
+| `cancel` | Cancels orders by id or by nonce | Ack |
 | `cancel_all` | Cancels your resting orders by scope | Ack |
 
 `subscribe` also adds channels to `private`.
@@ -90,7 +90,14 @@ To drop just one, unsubscribe `PRIVATE`, then subscribe to the channel you keep.
 
 ## Trade
 
-Three verbs place and cancel orders over the connection. They need a `trading` key; a `trading::read` key gets `SCOPE_INSUFFICIENT`. Payloads match the REST [orders](https://docs.novig.com/api/execution/orders) bodies, and they debit the `place` and `cancel` throttles, not `stream`.
+Three verbs place and cancel orders over the connection.
+They need a `trading` key. A `trading::read` key gets `SCOPE_INSUFFICIENT`.
+
+`place` and `cancel_all` take the same bodies as the REST [orders](https://docs.novig.com/api/execution/orders) routes.
+
+`place` spends from your `place` [throttle](https://docs.novig.com/api/throttling.md), the same as a REST place.
+Both cancel verbs spend from `cancel`.
+They don't spend from `stream`.
 
 `place` books a batch of orders, all or none, for 1 `place` token each. The ack is `placed`, one entry per accepted order.
 
@@ -109,6 +116,27 @@ Three verbs place and cancel orders over the connection. They need a `trading` k
   "cancel": { "orderIds": ["6f9619ff-…"] }
 }
 ```
+
+### Cancel before the ack arrives
+
+You can cancel a place before its ack tells you the order ids.
+Put the place's nonce in `nonces`, and we cancel every order that place booked.
+Each nonce costs 1 `cancel` token, however many orders its place booked.
+
+```json theme={"dark"}
+{
+  "nonce": 20,
+  "cancel": { "nonces": [17] }
+}
+```
+
+`orderIds` and `nonces` can go in the same request.
+The batch limit of 256 counts every order the request names, after we replace each nonce with its orders.
+A nonce works only on the connection that sent the place, and only for its 64 newest places.
+
+Any other nonce refuses the whole cancel with `NONCE_NOT_FOUND`, and the message names the nonce.
+That includes the nonce of a place we refused.
+To cancel an older place, cancel its orders by id.
 
 `cancel_all` cancels your resting orders for 1 `cancel` token, narrowed by `market`, `event`, or `outcome`. An empty filter cancels them all. The ack is `canceled_all`, the count queued.
 

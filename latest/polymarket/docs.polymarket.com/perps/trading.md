@@ -3239,6 +3239,9 @@ quantity after earlier fills.
 >
 > | Status | Meaning |
 > | - | - |
+> | `PerpsOrderStatus.Cancelled` | You canceled the order. |
+> | `PerpsOrderStatus.AutoCancelled` | An expired [auto-cancel](#auto-cancel-orders) schedule canceled the order. |
+> | `PerpsOrderStatus.OrderExpired` | The order reached its expiry time and was removed. |
 > | `PerpsOrderStatus.OrderAlreadyTerminal` | A cancellation found that the order had already finished. |
 > | `PerpsOrderStatus.SweepCapExceeded` | Matching reached the per-sweep fill limit; the remainder was canceled. |
 > | `PerpsOrderStatus.RestingOrderLimitExceeded` | The account's resting-order limit prevented the remainder from resting. |
@@ -3248,6 +3251,9 @@ quantity after earlier fills.
 > | `PerpsOrderStatus.InstrumentSettled` | The instrument permanently settled and remaining orders were canceled. |
 > | `PerpsOrderStatus.InsufficientMarginAtFill` | A fill-time check found insufficient initial margin. |
 > | `PerpsOrderStatus.MarkPriceUnavailable` | A fill-time check could not price opening exposure without a fresh mark. |
+> | `PerpsOrderStatus.ZeroQuantity` | The order had zero quantity. |
+> | `PerpsOrderStatus.DuplicateOrder` | An order with the same ID already exists. |
+> | `PerpsOrderStatus.OrderNotFound` | The referenced order was not on the book. |
 
 > [tab] Python
 >
@@ -3266,6 +3272,9 @@ quantity after earlier fills.
 >
 > | Status | Meaning |
 > | - | - |
+> | `cancelled` | You canceled the order. |
+> | `auto_cancelled` | An expired [auto-cancel](#auto-cancel-orders) schedule canceled the order. |
+> | `order_expired` | The order reached its expiry time and was removed. |
 > | `order_already_terminal` | A cancellation found that the order had already finished. |
 > | `sweep_cap_exceeded` | Matching reached the per-sweep fill limit; the remainder was canceled. |
 > | `resting_order_limit_exceeded` | The account's resting-order limit prevented the remainder from resting. |
@@ -3275,6 +3284,9 @@ quantity after earlier fills.
 > | `instrument_settled` | The instrument permanently settled and remaining orders were canceled. |
 > | `insufficient_margin_at_fill` | A fill-time check found insufficient initial margin. |
 > | `mark_price_unavailable` | A fill-time check could not price opening exposure without a fresh mark. |
+> | `zero_quantity` | The order had zero quantity. |
+> | `duplicate_order` | An order with the same ID already exists. |
+> | `order_not_found` | The referenced order was not on the book. |
 
 > [tab] API
 >
@@ -3293,6 +3305,9 @@ quantity after earlier fills.
 >
 > | Status | Meaning |
 > | - | - |
+> | `cancelled` | You canceled the order. |
+> | `auto_cancelled` | An expired [auto-cancel](#auto-cancel-orders) schedule canceled the order. |
+> | `order_expired` | The order reached its expiry time and was removed. |
 > | `order_already_terminal` | A cancellation found that the order had already finished. |
 > | `sweep_cap_exceeded` | Matching reached the per-sweep fill limit; the remainder was canceled. |
 > | `resting_order_limit_exceeded` | The account's resting-order limit prevented the remainder from resting. |
@@ -3302,6 +3317,9 @@ quantity after earlier fills.
 > | `instrument_settled` | The instrument permanently settled and remaining orders were canceled. |
 > | `insufficient_margin_at_fill` | A fill-time check found insufficient initial margin. |
 > | `mark_price_unavailable` | A fill-time check could not price opening exposure without a fresh mark. |
+> | `zero_quantity` | The order had zero quantity. |
+> | `duplicate_order` | An order with the same ID already exists. |
+> | `order_not_found` | The referenced order was not on the book. |
 
 ## Trading Fees
 
