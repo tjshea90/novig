@@ -64,6 +64,8 @@ class TeamMatcherTest {
         assertEquals(1.0, TeamMatcher.similarity("Texas A&M", "Texas A&M Aggies"), 0.0)
         assertEquals(1.0, TeamMatcher.similarity("Mississippi State", "Mississippi State Bulldogs"), 0.0)
         assertEquals(1.0, TeamMatcher.similarity("Texas", "Texas Longhorns"), 0.0)
+        assertTrue(TeamMatcher.similarity("Virginia", "West Virginia Mountaineers") < 0.5)
+        assertEquals(1.0, TeamMatcher.similarity("West Virginia", "West Virginia Mountaineers"), 0.0)
     }
 
     @Test
