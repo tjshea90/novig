@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "3172fd",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-pbm9xc",
+ "head": "647fbfad85e0405a1d123a27b940ec1506ecd0a7",
+ "since": 1794010910,
+ "beat": 1794010910,
+ "beatIso": "2026-11-07T00:21:50Z",
+ "done": "WATCH 11-06 19:20 ET: engine idle, nothing changed",
+ "next": "next slot ANALYST/ENGINEER per rotation"
+}
