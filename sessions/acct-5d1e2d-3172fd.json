@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "3172fd",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/optimistic-curie-pbm9xc",
  "head": "ed6bf754d6469bac3ee1418c8ab26333cd783997",
  "since": 1793924500,
- "beat": 1794010848,
- "beatIso": "2026-11-07T00:20:48Z",
+ "beat": 1794010863,
+ "beatIso": "2026-11-07T00:21:03Z",
  "done": "EN4 done early: engine on 02:35Z at Tj's word",
  "next": "Nov 8 roster change (RT1)"
 }
