@@ -476,7 +476,7 @@ class PropLineClient(
         )
 
         /** Every sportsbook and exchange PropLine lists, for a tapped bet's sheet ([OtherBooks]): its fair-line books, and ProphetX. */
-        val DISPLAY_BOOKS: List<String> get() = KNOWN.toList() + "prophetx"
+        val DISPLAY_BOOKS: List<String> get() = KNOWN.filterNot { com.tjshea.vigilant.engine.ReputableBooks.isBanned(it) } + "prophetx"
 
         /** Whether PropLine carries [book] (The Odds API's name) as a sportsbook that can price a fair line. */
         fun carries(book: String): Boolean = (TO_PROPLINE[book] ?: book).let { it in KNOWN && it !in EXCLUDED && !com.tjshea.vigilant.engine.ReputableBooks.isBanned(it) }
