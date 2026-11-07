@@ -52,4 +52,11 @@ class PlayerNamesTest {
         assertEquals("cj donaldson", PlayerNames.key("C.J. Donaldson Jr."))
         assertEquals(PlayerNames.key("Jackson, Lamar"), PlayerNames.key("Jackson, Lamar"))
     }
+
+    @Test
+    fun `Mo and Moe are Mohamed and Moritz`() {
+        assertTrue(PlayerNames.same("Mo Bamba", "Mohamed Bamba"))
+        assertTrue(PlayerNames.same("Moe Wagner", "Moritz Wagner"))
+        assertFalse(PlayerNames.same("Mo Bamba", "Mo Williams Jr."))
+    }
 }
