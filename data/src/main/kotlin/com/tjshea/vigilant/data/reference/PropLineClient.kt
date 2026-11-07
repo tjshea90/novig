@@ -470,7 +470,7 @@ class PropLineClient(
         private val FROM_PROPLINE = TO_PROPLINE.entries.associate { (k, v) -> v to k }
 
         /** Books PropLine lists that never feed a fair line here (see the class comment). */
-        val EXCLUDED: Set<String> = com.tjshea.vigilant.engine.ReputableBooks.banned() + setOf(
+        val EXCLUDED = setOf(
             "novig", "kalshi", "polymarket", "polymarket_us", "prophetx",
             "underdog", "prizepicks", "sleeper", "dabble", "parlayplay",
         )
@@ -479,15 +479,15 @@ class PropLineClient(
         val DISPLAY_BOOKS: List<String> get() = KNOWN.toList() + "prophetx"
 
         /** Whether PropLine carries [book] (The Odds API's name) as a sportsbook that can price a fair line. */
-        fun carries(book: String): Boolean = (TO_PROPLINE[book] ?: book).let { it in KNOWN && it !in EXCLUDED }
+        fun carries(book: String): Boolean = (TO_PROPLINE[book] ?: book).let { it in KNOWN && it !in EXCLUDED && !com.tjshea.vigilant.engine.ReputableBooks.isBanned(it) }
 
         /** PropLine books for the reference books picked in Settings (The Odds API's names). */
         /** Every sportsbook PropLine lists that can price a fair line ([ApiGates.propLineAllBooks]), else the picked ones. */
         fun books(settings: ScanSettings): List<String> =
-            if (settings.gates.propLineAllBooks) KNOWN.filter { it !in EXCLUDED }.sorted() else books(settings.referenceBooks)
+            if (settings.gates.propLineAllBooks) KNOWN.filter { it !in EXCLUDED && !com.tjshea.vigilant.engine.ReputableBooks.isBanned(it) }.sorted() else books(settings.referenceBooks)
 
         fun books(referenceBooks: List<String>): List<String> =
-            referenceBooks.map { TO_PROPLINE[it] ?: it }.filter { it !in EXCLUDED && it in KNOWN }.distinct()
+            referenceBooks.map { TO_PROPLINE[it] ?: it }.filter { it !in EXCLUDED && it in KNOWN && !com.tjshea.vigilant.engine.ReputableBooks.isBanned(it) }.distinct()
 
         /**
          * PS2 (Tj, 2026-10-25: "even though they offer dozens of sports books odds, most of my scanned results only show odds for a few sports books"): books PropLine prices the US leagues with (24-81 of
