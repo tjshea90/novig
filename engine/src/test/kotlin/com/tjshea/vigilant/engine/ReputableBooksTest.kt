@@ -1,16 +1,16 @@
 package com.tjshea.vigilant.engine
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import org.junit.Test
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 
 class ReputableBooksTest {
     @Test fun smallSoftBooksAreBanned() {
-        listOf("fliff", "Sportzino", "sportybet_ng", "betus", "mybookieag", "tonybet").forEach { assertTrue(ReputableBooks.isBanned(it), it) }
+        listOf("fliff", "Sportzino", "sportybet_ng", "betus", "mybookieag", "tonybet").forEach { assertTrue(it, ReputableBooks.isBanned(it)) }
     }
     @Test fun reputableBooksAreKept() {
-        listOf("pinnacle", "draftkings", "fanduel", "betmgm", "williamhill_us", "bovada", "betonlineag", "circa", "bookmaker_eu", "heritage", "tipico", "winamax", "novibet", "sazka").forEach { assertFalse(ReputableBooks.isBanned(it), it) }
+        listOf("pinnacle", "draftkings", "fanduel", "betmgm", "williamhill_us", "bovada", "betonlineag", "circa", "bookmaker_eu", "heritage", "tipico", "winamax", "novibet", "sazka").forEach { assertFalse(it, ReputableBooks.isBanned(it)) }
     }
     @Test fun bannedBookDoesNotMoveTheFair() {
         fun bp(k: String, home: Double, away: Double) = BookPrices(k, k, listOf(home, away))
