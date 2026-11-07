@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "bf69a4",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-jkcxa7",
+ "head": "9663bf448ef31d078106e26524e459800a5d5d4b",
+ "since": 1794075984,
+ "beat": 1794075984,
+ "beatIso": "2026-11-07T18:26:24Z",
+ "done": "WATCH 11-07 13:20 ET: engine healthy, wallet empty (known), no change",
+ "next": "next slot: WATCH checks; BK1c landing per prior checkpoint"
+}
