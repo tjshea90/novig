@@ -78,11 +78,11 @@ class WideQuoteGuardTest {
             BookPrices("prophetx", "ProphetX", listOf(d(-140), d(-113))),
             BookPrices("draftkings", "DraftKings", listOf(d(-112), d(-110))),
             BookPrices("hardrockbet", "Hard Rock", listOf(d(-110), d(-110))),
-            BookPrices("fliff", "Fliff", listOf(d(-115), d(-120))),
+            BookPrices("fanduel", "FanDuel", listOf(d(-115), d(-120))),
         )
         val base = FairSettings(source = FairSource.MARKET_AVERAGE)
         val on = FairValue.compute(books, base.copy(wideGuard = true))!!
-        assertEquals(listOf("DraftKings", "Hard Rock", "Fliff"), on.perBook.map { it.book.bookTitle })
+        assertEquals(listOf("DraftKings", "Hard Rock", "FanDuel"), on.perBook.map { it.book.bookTitle })
         val off = FairValue.compute(books, base)!!
         assertEquals("the engine's own default is unchanged", 4, off.perBook.size)
         // a normal wide-ish book (Fliff, 8%) is a book, not an exchange: kept

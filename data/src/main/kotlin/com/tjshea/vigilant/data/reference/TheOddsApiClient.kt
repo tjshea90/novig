@@ -531,11 +531,8 @@ class TheOddsApiClient(
             "fanatics" to "Fanatics",
             "betrivers" to "BetRivers",
             "hardrockbet" to "Hard Rock Bet",
-            "fliff" to "Fliff",
             "ballybet" to "Bally Bet",
             "bovada" to "Bovada",
-            "mybookieag" to "MyBookie.ag",
-            "betus" to "BetUS",
         )
 
         /** Display names for every book key the app can show, sportsbooks and exchanges alike. */

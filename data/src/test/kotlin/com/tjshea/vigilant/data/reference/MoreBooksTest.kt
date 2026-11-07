@@ -54,7 +54,6 @@ class MoreBooksTest {
     @Test
     fun `the book once called ESPN BET goes by its name now`() {
         assertEquals("theScore Bet", TheOddsApiClient.bookTitle("espnbet"))
-        assertEquals("Fliff", TheOddsApiClient.bookTitle("fliff"))
         // The sharp-book chip for SX Bet read "sxbet" (full test 2026-10-21).
         assertEquals("SX Bet", TheOddsApiClient.bookTitle("sxbet"))
         // Every sharp-book choice in Settings › Fair odds has a name, not its key (FX, 2026-10-23: "circa" and "bookmaker" showed raw).
