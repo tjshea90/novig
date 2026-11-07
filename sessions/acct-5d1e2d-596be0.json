@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-14c2pn",
- "head": "bf6564f5ae6580c5886c0d73927880ce4796d469",
+ "head": "4d64327858a67085746f9793a121dbc21b24c0f7",
  "since": 1794027003,
- "beat": 1794027823,
- "beatIso": "2026-11-07T05:03:43Z",
- "done": "",
- "next": ""
+ "beat": 1794027875,
+ "beatIso": "2026-11-07T05:04:35Z",
+ "done": "BK1a: reputable-books-only filter shipped to branch (ReputableBooks), tests green",
+ "next": "BK1b review ParlayAPI/Novig/PropLine docs for changes; BK1c matching audit; BK2 post daily digest to Messages"
 }
