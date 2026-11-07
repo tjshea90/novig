@@ -1,13 +1,13 @@
-# CHECKPOINT 4401 — read me first, then TASKS.md
+# CHECKPOINT 4402 — read me first, then TASKS.md
 
-**Written:** 2026-11-06T18:22:42Z · **tests:** all 10 fast checks green
-**Branch:** `claude/wizardly-meitner-gge442` · **builds on:** `db7c6c538` (this checkpoint is the commit after it)
+**Written:** 2026-11-07T00:21:49Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-pbm9xc` · **builds on:** `ed6bf754d` (this checkpoint is the commit after it)
 
 ## Just done
-ENGINEER 11-06 13:20 ET: no change, engine sleeps on empty wallet
+WATCH 11-06 19:20 ET: engine idle, nothing changed
 
 ## Do this next
-next slot WATCH wallet/open bets
+next slot ANALYST/ENGINEER per rotation
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ next slot WATCH wallet/open bets
 
 ## Last ten checkpoints
 ```
+  ed6bf754d ckpt 4401: ENGINEER 11-06 13:20 ET: no change, engine sleeps on empty wallet
   db7c6c538 ckpt 4400: EN4 done early: engine on 02:35Z at Tj's word
   d98c6c53d ckpt 4399: RT1: Tj made second Gmail routine
   3aa71c479 ckpt 4398: RT1 written: gmail double duty from Nov 8, reply sent
@@ -25,5 +26,4 @@ next slot WATCH wallet/open bets
   2c131035b ckpt 4394: pre-release: NCAAB tab reads Novig's lines itself when the GitHub engine is
   06ceeea52 ckpt 4393: pre-ship: NCAAB tab reads Novig's lines itself when the GitHub engine isn't
   3dc33771a ckpt 4392: NC1j: live check of NcaabBoard against Novig's real NCAAB catalog (82 games
-  6226b4740 ckpt 4391: Wrong-repo session: Tj attached the Launcher handoff here by mistake, no no
 ```
