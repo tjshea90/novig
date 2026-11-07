@@ -1,22 +1,22 @@
-# CHECKPOINT 4404 — read me first, then TASKS.md
+# CHECKPOINT 4405 — read me first, then TASKS.md
 
-**Written:** 2026-11-07T05:08:38Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-14c2pn` · **builds on:** `4d6432785` (this checkpoint is the commit after it)
+**Written:** 2026-11-07T06:42:22Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-ihl2d7` · **builds on:** `950f204ba` (this checkpoint is the commit after it)
 
 ## Just done
-BK1a tests green
+BK1c: West qualifier so Virginia != West Virginia, test, 13 green
 
 ## Do this next
-BK1b docs review, BK1c matching audit
+BK1b docs review, BK2 research reports in app
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M research/INDEX.md
 
 ## Last ten checkpoints
 ```
+  3a74e489e ckpt 4404: BK1a tests green
   4d6432785 ckpt 4403: BK1a: reputable-books-only filter shipped to branch (ReputableBooks), tests
   647fbfad8 ckpt 4402: WATCH 11-06 19:20 ET: engine idle, nothing changed
   ed6bf754d ckpt 4401: ENGINEER 11-06 13:20 ET: no change, engine sleeps on empty wallet
@@ -26,5 +26,7 @@ BK1b docs review, BK1c matching audit
   825567a03 ckpt 4397: ENGINEER 11-06 00:21Z: no change, EN4 not yet due
   23c78c359 ckpt 4396: EN4 written: engine turn-on at 02:55 UTC
   1e484b458 ckpt 4395: SHIPPED v1.0.103 (code 443): NCAAB tab reads Novig itself when the engine i
-  2c131035b ckpt 4394: pre-release: NCAAB tab reads Novig's lines itself when the GitHub engine is
 ```
+
+(2 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
