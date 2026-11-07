@@ -470,7 +470,7 @@ class PropLineClient(
         private val FROM_PROPLINE = TO_PROPLINE.entries.associate { (k, v) -> v to k }
 
         /** Books PropLine lists that never feed a fair line here (see the class comment). */
-        val EXCLUDED = setOf(
+        val EXCLUDED: Set<String> = com.tjshea.vigilant.engine.ReputableBooks.banned() + setOf(
             "novig", "kalshi", "polymarket", "polymarket_us", "prophetx",
             "underdog", "prizepicks", "sleeper", "dabble", "parlayplay",
         )

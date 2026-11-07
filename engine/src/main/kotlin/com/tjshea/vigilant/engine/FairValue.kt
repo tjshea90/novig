@@ -135,6 +135,7 @@ object FairValue {
         if (outcomeCount < 2) return null
 
         val devigged = books
+            .filterNot { ReputableBooks.isBanned(it.bookKey, it.bookTitle) }
             .filter { it.decimalOdds.size == outcomeCount && it.decimalOdds.all { o -> o > 1.0 && o.isFinite() } }
             .mapNotNull { devigBook(it, settings) }
         // One book a company, then the books that look wrong are left out of what is left.

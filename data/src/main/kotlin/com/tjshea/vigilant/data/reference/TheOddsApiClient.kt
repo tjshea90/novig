@@ -510,7 +510,7 @@ class TheOddsApiClient(
          */
         val DEFAULT_BOOKMAKERS = listOf(
             "pinnacle", "betonlineag", "draftkings", "fanduel", "betmgm", "betrivers",
-            "hardrockbet", "bovada", "fliff", "williamhill_us", "fanatics", "espnbet",
+            "hardrockbet", "bovada", "williamhill_us", "fanatics", "espnbet",
         )
 
         /** Books added to the defaults in v0.35.0, for settings saved before ([ScanSettings.migrate]). */
