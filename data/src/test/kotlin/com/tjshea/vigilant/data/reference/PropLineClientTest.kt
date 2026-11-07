@@ -134,7 +134,7 @@ class PropLineClientTest {
         assertTrue(asked.all { it.size <= PropLineClient.MAX_BOOKS })
         assertEquals("every book once, Novig once", (PropLineClient.books(all) + "novig").sorted(), asked.flatten().sorted())
         val e = snap.events.single()
-        assertEquals(setOf("pinnacle", "draftkings", "tonybet", "veikkaus"), e.markets.map { it.bookKey }.toSet())
+        assertEquals(setOf("pinnacle", "draftkings", "veikkaus"), e.markets.map { it.bookKey }.toSet())
         assertEquals(listOf("novig"), snap.novig.single().markets.map { it.bookKey }.distinct())
     }
 
