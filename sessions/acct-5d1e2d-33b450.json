@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-ihl2d7",
  "head": "e320fab9e60fdfb4b784e55c480aea050bd627e0",
  "since": 1794029870,
- "beat": 1794034539,
- "beatIso": "2026-11-07T06:55:39Z",
+ "beat": 1794034998,
+ "beatIso": "2026-11-07T07:03:18Z",
  "done": "BK1b docs review written",
  "next": "BK1c player/prop matching, PropLine team_key join"
 }
