@@ -15,9 +15,9 @@ import org.junit.Test
 class MoreBooksTest {
 
     @Test
-    fun `PropLine reads eleven independent books by default, Hard Rock, Bovada, Fliff and theScore among them, LowVig not`() {
+    fun `PropLine reads ten independent books by default, Hard Rock, Bovada and theScore among them, LowVig not`() {
         assertEquals(
-            listOf("pinnacle", "betonlineag", "draftkings", "fanduel", "betmgm", "betrivers", "hardrock", "bovada", "fliff", "fanatics", "thescorebet"),
+            listOf("pinnacle", "betonlineag", "draftkings", "fanduel", "betmgm", "betrivers", "hardrock", "bovada", "fanatics", "thescorebet"),
             PropLineClient.books(ScanSettings().referenceBooks),
         )
         assertFalse("lowvig" in ScanSettings().referenceBooks)
@@ -41,7 +41,7 @@ class MoreBooksTest {
         val moved = ScanSettings(referenceBooks = oldDefault, schema = 10).migrate()
         assertEquals(23, moved.schema)
         assertFalse("lowvig" in moved.referenceBooks)
-        assertTrue(moved.referenceBooks.containsAll(listOf("hardrockbet", "bovada", "fliff")))
+        assertTrue(moved.referenceBooks.containsAll(listOf("hardrockbet", "bovada")))
         assertTrue(moved.referenceBooks.containsAll(oldDefault - "lowvig"))
         // LowVig picked without BetOnline is its own line there: kept.
         val lowvigOnly = ScanSettings(referenceBooks = listOf("pinnacle", "lowvig"), schema = 10).migrate()
@@ -65,9 +65,9 @@ class MoreBooksTest {
     @Test
     fun `every book on asks PropLine for the measured books and the stream's filter stays under its 1,000 characters`() {
         val all = PropLineClient.books(ScanSettings().let { it.copy(gates = it.gates.copy(propLineAllBooks = true)) })
-        assertTrue(all.containsAll(listOf("tonybet", "sts", "pamestoixima", "sportybet_ng", "rebet", "napoleon", "fortuna_cz", "fortuna_pl", "betika", "ladbrokes_be")))
+        assertTrue(all.containsAll(listOf("sts", "pamestoixima", "napoleon", "fortuna_cz", "fortuna_pl", "ladbrokes_be")))
         // Never the exchanges, the DFS apps, or the books left out for a wide margin or old quotes.
-        assertFalse(all.any { it in listOf("novig", "kalshi", "polymarket", "prophetx", "prizepicks", "underdog", "placard", "solverde", "olybet", "teapuesto", "pmu", "bet9ja", "supabets", "sxbet", "courtside", "jazzsports") })
+        assertFalse(all.any { it in listOf("novig", "kalshi", "polymarket", "prophetx", "prizepicks", "underdog", "placard", "solverde", "olybet", "teapuesto", "pmu", "bet9ja", "supabets", "sxbet", "courtside", "jazzsports", "fliff", "tonybet", "sportybet_ng", "rebet", "betika", "betus", "sportzino") })
         assertTrue("${all.joinToString(",").length} characters", all.joinToString(",").length <= 1_000)
         assertEquals(all.size, all.toSet().size)
     }

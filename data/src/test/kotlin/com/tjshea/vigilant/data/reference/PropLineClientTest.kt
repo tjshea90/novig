@@ -124,12 +124,13 @@ class PropLineClientTest {
     fun `every book is asked for in parts PropLine takes and each game's books come back together`() = runTest {
         routes["/v1/sports/americanfootball_nfl/odds"] = { likePropLine(requests.last()) }
         val all = ScanSettings(gates = ApiGates(propLineAllBooks = true))
-        assertTrue("the engine's list is over PropLine's 60", PropLineClient.books(all).size + 1 > PropLineClient.MAX_BOOKS)
+        // BK1 (2026-11-07): with the small soft books gone the list fits one request (it was two); the parts rule is still tested by `book parts are even`.
+        assertTrue("the engine's list fits one part", PropLineClient.books(all).size + 1 <= PropLineClient.MAX_BOOKS)
 
         val snap = client().odds(nfl, all)
 
         val asked = requests.map { it.requestUrl!!.queryParameter("bookmakers")!!.split(",") }
-        assertEquals(2, asked.size)
+        assertEquals(1, asked.size)
         assertTrue(asked.all { it.size <= PropLineClient.MAX_BOOKS })
         assertEquals("every book once, Novig once", (PropLineClient.books(all) + "novig").sorted(), asked.flatten().sorted())
         val e = snap.events.single()
