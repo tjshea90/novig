@@ -153,7 +153,7 @@ object TeamMatcher {
     /** Tokens that change which school a name means. */
     private val QUALIFIERS = setOf(
         "st", "tech", "am", "southern", "northern", "eastern", "western", "central", "international",
-        "christian", "atlantic", "poly", "southeastern", "northwestern", "southwestern", "northeastern", "intl",
+        "christian", "atlantic", "west", "poly", "southeastern", "northwestern", "southwestern", "northeastern", "intl",
     )
     private const val QUALIFIER_PENALTY = 0.6
 
