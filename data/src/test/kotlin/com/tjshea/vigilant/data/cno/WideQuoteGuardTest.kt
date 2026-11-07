@@ -85,8 +85,8 @@ class WideQuoteGuardTest {
         assertEquals(listOf("DraftKings", "Hard Rock", "FanDuel"), on.perBook.map { it.book.bookTitle })
         val off = FairValue.compute(books, base)!!
         assertEquals("the engine's own default is unchanged", 4, off.perBook.size)
-        // a normal wide-ish book (Fliff, 8%) is a book, not an exchange: kept
-        assertTrue(on.perBook.any { it.book.bookKey == "fliff" })
+        // a normal wide-ish book (FanDuel) is a book, not an exchange: kept
+        assertTrue(on.perBook.any { it.book.bookKey == "fanduel" })
     }
 
     @Test fun theGuardIsOnByDefaultInSettingsAndReachesTheFairSettings() {
