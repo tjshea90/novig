@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-14c2pn",
  "head": "3a74e489ea1f77ddd1bc4b3ceeacc33921cc17a4",
  "since": 1794027003,
- "beat": 1794028118,
- "beatIso": "2026-11-07T05:08:38Z",
+ "beat": 1794028817,
+ "beatIso": "2026-11-07T05:20:17Z",
  "done": "BK1a tests green",
  "next": "BK1b docs review, BK1c matching audit"
 }
