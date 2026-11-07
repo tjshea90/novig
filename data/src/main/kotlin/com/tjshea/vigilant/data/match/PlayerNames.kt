@@ -65,8 +65,7 @@ object PlayerNames {
         group("lawrence", "larry")
         group("theodore", "ted", "teddy", "theo")
         group("jonathan", "jon", "jonny")
-        group("mohamed", "mo", "moe", "mohammed", "muhammad", "mohammad") // Mo Bamba / Mohamed Bamba
-        group("moritz", "moe") // Moritz Wagner; "moe" stays with mohamed above (same game + same surname only)
+        group("mohamed", "mo", "moe", "mohammed", "muhammad", "mohammad", "moritz") // Mo Bamba / Mohamed Bamba, Moe / Moritz Wagner (names are only compared within one game and one surname)
         // Players the books list by nickname.
         group("marquise", "hollywood") // Marquise "Hollywood" Brown
         group("demario", "pop") // Demario "Pop" Douglas
