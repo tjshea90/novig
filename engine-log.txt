@@ -1,0 +1,13 @@
+2026-11-07T18:26:28.394344323Z Novig accepts this runner's address: full scanning starts
+2026-11-07T18:26:28.440462931Z cloud engine starting: 340 min, run 42401070939, keys present: SGO_API_KEY,ODDSPAPI_FREE_API_KEY(4 keys),SXBET_API_KEY,SHARPAPI_API_KEY,PINNAPI_API_KEY,PINNODDS_API_KEY,PROPLINE_API_KEY(3 keys),ODDS_API_KEY(21 keys),PARLAY_API_KEY(10 keys),BOLTODDS_API_KEY(3 keys) · Novig read-only key: present · Kalshi: signed key present, socket off
+2026-11-07T18:26:29.351300243Z ranking: 12 measurements carried over from the previous job
+2026-11-07T18:26:29.775115539Z usage: carried over from the previous job (13 providers)
+2026-11-07T18:26:29.781239594Z trading: the trading key is present (orders possible only if the phone's switch says live)
+2026-11-07T18:26:30.335430649Z trades: 776 entries carried over from the previous job
+2026-11-07T18:26:31.092417515Z trades: 0 of 3 open live orders settled from Novig's ledger (125 settlement rows read)
+2026-11-07T18:26:31.655233551Z bids: 1109 bids and 1109 fills carried over from the previous job
+2026-11-07T18:26:32.297995829Z live status: the phone can read this run directly (tunnel up)
+2026-11-07T18:26:33.817351920Z ledger profit: -156.31 (open at cost 290.78; FILL -6504.33 (8017), FEE -1.96 (154), MAKER_CREDIT +0.51 (99), SETTLEMENT +6058.67 (3386))
+2026-11-07T18:26:35.675016591Z wallet under $0.50: the engine sleeps
+2026-11-07T18:56:35.778121095Z trades: 0 of 3 open live orders settled from Novig's ledger (125 settlement rows read)
+2026-11-07T18:56:38.395162145Z ledger profit: -156.96 (open at cost 290.14; FILL -6504.33 (8017), FEE -1.96 (154), MAKER_CREDIT +0.51 (99), SETTLEMENT +6058.67 (3386))
