@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "33b450",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-yts44t",
+ "head": "9675ec8d31c1fa2e4b01c491252bc38626c6b9f0",
+ "since": 1794097310,
+ "beat": 1794097310,
+ "beatIso": "2026-11-08T00:21:50Z",
+ "done": "ANALYST 11-08: no new evidence, no change",
+ "next": "next slot WATCH; wallet empty is Tj's call"
+}
