@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "33b450",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/optimistic-curie-yts44t",
  "head": "9663bf448ef31d078106e26524e459800a5d5d4b",
  "since": 1794029870,
- "beat": 1794097247,
- "beatIso": "2026-11-08T00:20:47Z",
+ "beat": 1794097260,
+ "beatIso": "2026-11-08T00:21:00Z",
  "done": "BK1c: Mo/Moe/Mohamed/Moritz name group, 16 green",
  "next": "run full :data:test to land on main; then check player-prop matching against live data"
 }
