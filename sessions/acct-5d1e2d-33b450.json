@@ -6,10 +6,10 @@
  "kind": "routine",
  "task": "",
  "branch": "claude/optimistic-curie-yts44t",
- "head": "9675ec8d31c1fa2e4b01c491252bc38626c6b9f0",
+ "head": "3e127755bf444cd2430a8c5f82f559e5681a6d33",
  "since": 1794097310,
- "beat": 1794097310,
- "beatIso": "2026-11-08T00:21:50Z",
- "done": "ANALYST 11-08: no new evidence, no change",
- "next": "next slot WATCH; wallet empty is Tj's call"
+ "beat": 1794097350,
+ "beatIso": "2026-11-08T00:22:30Z",
+ "done": "covered AWAY slot 0 (ENGINEER): rebuilt research index",
+ "next": "WATCH next slot"
 }
