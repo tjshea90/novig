@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "33b450",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/optimistic-curie-sx6b6x",
  "head": "9952ef637c8708e3d03821adc96b8e8cd4ee6bcf",
  "since": 1794097310,
- "beat": 1794183630,
- "beatIso": "2026-11-09T00:20:30Z",
+ "beat": 1794183642,
+ "beatIso": "2026-11-09T00:20:42Z",
  "done": "covered AWAY slot 0 (ENGINEER): rebuilt research index",
  "next": "WATCH next slot"
 }
