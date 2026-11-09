@@ -1,10 +1,10 @@
-# CHECKPOINT 4413 — read me first, then TASKS.md
+# CHECKPOINT 4414 — read me first, then TASKS.md
 
-**Written:** 2026-11-09T12:26:49Z · **tests:** all 10 fast checks green
-**Branch:** `claude/keen-keller-2df6lj` · **builds on:** `2ecb2fcf5` (this checkpoint is the commit after it)
+**Written:** 2026-11-09T18:21:46Z · **tests:** all 10 fast checks green
+**Branch:** `claude/wizardly-meitner-x60st3` · **builds on:** `35322b68f` (this checkpoint is the commit after it)
 
 ## Just done
-ANALYST 11-09 slot0: no new evidence, engine healthy, no change
+ENGINEER 11-09 13:20 slot: no new evidence, no change
 
 ## Do this next
 WATCH next slot
@@ -16,6 +16,8 @@ WATCH next slot
 
 ## Last ten checkpoints
 ```
+  4e30f7ea2 ckpt 4413: ANALYST 11-09 slot0: no new evidence, engine healthy, no change
+  4e03437fd ckpt 4413: ENGINEER 11-09 slot1: no change, engine healthy
   2ecb2fcf5 ckpt 4412: ENGINEER 11-09: no change, wallet empty
   9952ef637 ckpt 4411: ANALYST 11-08 slot1: no change, wallet empty
   3e127755b ckpt 4410: covered AWAY slot 0 (ENGINEER): rebuilt research index
@@ -24,6 +26,4 @@ WATCH next slot
   0bc9128c7 ckpt 4407: BK1c: Mo/Moe/Mohamed/Moritz name group, 16 green
   e320fab9e ckpt 4406: BK1b docs review written
   a85e6f9d0 ckpt 4405: BK1c: West qualifier so Virginia != West Virginia, test, 13 green
-  3a74e489e ckpt 4404: BK1a tests green
-  4d6432785 ckpt 4403: BK1a: reputable-books-only filter shipped to branch (ReputableBooks), tests
 ```
