@@ -179,3 +179,4 @@ ER1 2026-11-02: engine OFF at Tj's word (wallet used up); restart due 2026-11-03
 2026-11-05 ANALYST (acct-27a37e tj Gmail): no change; auto+bids n122 (<200 gate); engine wallet $0.01 stops trading. research/review/2026-11-05.md
 2026-11-07 BK1 (Tj chat, mirage): reputable-books-only: ReputableBooks.BANNED (~50 small/soft books incl. Fliff, Sportzino, BetUS, MyBookie, 1xBet) cut from FairValue.compute and PropLine's book list. Revert: empty BANNED. research/book_reputation_2026-11-07.md
 2026-11-08 ANALYST (acct-27a37e tj Gmail): no change; engine wallet $0.01 stops trading, 5 trades total, no new evidence. 
+2026-11-09 ENGINEER (acct-5d1e2d mirage): no change; engine wallet $0.01 still stops trading, no new evidence; covered AWAY slot 0 WATCH.

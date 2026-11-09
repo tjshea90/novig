@@ -1,10 +1,10 @@
-# CHECKPOINT 4411 — read me first, then TASKS.md
+# CHECKPOINT 4412 — read me first, then TASKS.md
 
-**Written:** 2026-11-08T18:21:57Z · **tests:** all 10 fast checks green
-**Branch:** `claude/wizardly-meitner-3t983f` · **builds on:** `3e127755b` (this checkpoint is the commit after it)
+**Written:** 2026-11-09T00:21:27Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-sx6b6x` · **builds on:** `9952ef637` (this checkpoint is the commit after it)
 
 ## Just done
-ANALYST 11-08 slot1: no change, wallet empty
+ENGINEER 11-09: no change, wallet empty
 
 ## Do this next
 WATCH next slot
@@ -17,6 +17,7 @@ WATCH next slot
 
 ## Last ten checkpoints
 ```
+  9952ef637 ckpt 4411: ANALYST 11-08 slot1: no change, wallet empty
   3e127755b ckpt 4410: covered AWAY slot 0 (ENGINEER): rebuilt research index
   9675ec8d3 ckpt 4409: ANALYST 11-08: no new evidence, no change
   9663bf448 ckpt 4408: WATCH 11-07 13:20 ET: engine healthy, wallet empty (known), no change
@@ -26,5 +27,4 @@ WATCH next slot
   3a74e489e ckpt 4404: BK1a tests green
   4d6432785 ckpt 4403: BK1a: reputable-books-only filter shipped to branch (ReputableBooks), tests
   647fbfad8 ckpt 4402: WATCH 11-06 19:20 ET: engine idle, nothing changed
-  ed6bf754d ckpt 4401: ENGINEER 11-06 13:20 ET: no change, engine sleeps on empty wallet
 ```
