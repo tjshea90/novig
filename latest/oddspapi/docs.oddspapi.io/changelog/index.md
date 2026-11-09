@@ -16,6 +16,93 @@ This page lists **new features**, **changes**, **fixes**, and **breaking changes
 
 ***
 
+## 2026-11-16
+
+Market catalogue update. **Data only** — no endpoint, field or type changes. Refetch
+`GET /markets` once on or after this date and you are current.
+
+### ✨ Added
+
+* **7,882 `outcomeId`s across 3,733 new markets** and **33 new `marketType` values** —
+  almost all soccer: shots, saves, yellow and red cards, substitutions, own goals,
+  penalties awarded and missed (as totals / team totals / 1X2 / race-to), plus
+  `firstcorner`, `lastcorner`, `penaltyawarded`, `1up`, `players-firstcard`.
+* **280 new `period` keys**, all cricket over scopes: `p{i}o{n}` (after over *n* of
+  innings *i*), `p{i}o{n}b{d}` (delivery *d*), `p{i}o1+…+p{i}oN` (first *N* overs).
+  The vocabulary in use goes 280 → 560 and stays append-only; `p1` is still the
+  whole innings.
+
+### ⚠️ Breaking
+
+* **300 cricket `marketType` values retired; their markets re-filed onto the new over
+  periods.** The over count was in the type (`12-overs-3-delivery-team1`) and is now a
+  `period`, so those markets carry a plain `totals` / `teamtotals-team1` /
+  `teamtotals-team2`. **33,792 outcomes change `marketType` and `period` together**;
+  `outcomeId`, `marketId`, `handicap`, both names and `marketLength` are untouched, so
+  nothing is lost and no price needs re-mapping.
+
+  | before | after |
+  | - | - |
+  | `6-overs` @ `p1` | `totals` @ `p1o6` |
+  | `12-overs-team1` @ `p2` | `teamtotals-team1` @ `p2o12` |
+  | `12-overs-3-delivery-team2` @ `p1` | `teamtotals-team2` @ `p1o12b3` |
+
+  If you key cricket over markets on `marketType`, switch to `period`. This is the rule
+  the rest of the catalogue follows: **a market's scope lives in `period`, never in its
+  type or name.**
+
+* **60 ice-hockey player markets move from `fulltime+overtime` to `result`.** `Over Under
+  Player Saves (incl. overtime)` (50 markets) and `Over Under Player Blocks (incl.
+  overtime)` (10) were published at the `fulltime+overtime` scope; both now carry
+  `result`. **120 outcomes change `period` only** — `outcomeId`, `marketId`, `handicap`,
+  both names and `marketLength` are untouched, so no price needs re-mapping. If you key
+  those two on `period`, switch to `result`.
+
+* **46 markets gain their missing side** — `Yes`-only markets now offer `Yes` and `No`,
+  the `No` appended under the same `marketId`. Re-read the outcome list rather than a
+  cached count. `marketLength` is deliberately not updated: it is frozen metadata for a
+  market's intended probability space, not the length of the array you received — see
+  [marketLength](https://docs.oddspapi.io/api-reference/concepts.md#marketlength).
+
+### 🔁 Changed
+
+* **Market uniqueness is now strict and enforced.** A market is
+  `sportId × marketType × period × handicap`; an outcome adds `outcomeName` — the same
+  coordinates that compose the `oddsId`. So one `marketType` at one `period` has one
+  structure, and its sides are always the complete space (`Yes`⇒`No`, `Over`⇒`Under` at
+  that line, `-team1`⇒`-team2`, three-way carries its draw). Audited every release. See
+  [Markets and outcomes](https://docs.oddspapi.io/api-reference/concepts.md#the-identity-of-a-market-the-strict-rule).
+
+***
+
+## 2026-11-12
+
+### 🔧 Improved
+
+* **Concurrent WebSocket connections raised from 5 to 8 per API key group.** Nothing to
+  change on your side — the extra headroom is simply available, and error `4003`
+  (`too_many_connections`) now fires at 9 rather than 6. Useful if you shard channels
+  across processes or run a warm standby alongside a live consumer. See
+  [WebSocket limits](https://docs.oddspapi.io/websocket/overview.md#websocket-limits).
+
+### ✨ Added
+
+* **`statusId` `4` — `removed`.** A fixture or future that was **wrongly issued** and
+  withdrawn from the schedule: a provider-side duplicate, a test entry, an event that
+  was never real. Not a cancellation — `3` is a real event that will not be played, `4`
+  should never have existed. It **outranks `3`** and is terminal (any state → `4`, never
+  moves again), so treat it as final and stop polling; scores and settlement are never
+  published for a `4`. See
+  [Enumerations](https://docs.oddspapi.io/api-reference/enumerations.md#statusid-fixture--future-lifecycle).
+
+  > [!NOTE]
+  >
+  > Clients branching exhaustively on `statusId` need a `4` arm. The enumeration has
+  > always been append-only, so if you already handle unknown values gracefully, nothing
+  > breaks.
+
+***
+
 ## 2026-10-28
 
 ### ✨ Added

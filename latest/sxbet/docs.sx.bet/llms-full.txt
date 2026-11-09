@@ -68,6 +68,7 @@ Send `x-sx-api-key` as a header. Every response is scoped to the address that ow
 | `GET /orderbook-v3/snapshot/event` | The book for markets on one event | [Docs →](/api-reference/get-event-orderbook-snapshot) |
 | `GET /orders-v3` | Your active orders | [Docs →](/api-reference/get-orders-v3) |
 | `GET /orders-v3/{orderId}` | One of your orders by id (any status) | [Docs →](/api-reference/get-order-v3) |
+| `GET /orders-v3/batch` | Up to 100 of your orders by id (any status) | [Docs →](/api-reference/get-orders-v3-batch) |
 | `POST /orders-v3` | Places one signed order | [Docs →](/api-reference/post-orders-v3) |
 | `DELETE /orders-v3` | Cancels named orders by id | [Docs →](/api-reference/delete-orders-v3) |
 | `DELETE /orders-v3/all` | Cancels every open order you have | [Docs →](/api-reference/delete-orders-v3-all) |
@@ -1333,11 +1334,11 @@ Cancel specific open orders by order id on the SX Bet exchange.
 
 > [!NOTE]
 >
-> **There is a 5-second confirmation timeout.** Orders that report in time land in
-> `cancelled` or `notCancelled`; any that do not report before the timeout come back in the
-> `unconfirmed` bucket. `unconfirmed` does **not** mean the cancel failed — the command was still
-> submitted and usually takes effect shortly after. Re-read
-> [`GET /orders-v3`](/api-reference/get-orders-v3) to confirm, rather than assuming either outcome.
+> **There is a 5-second confirmation timeout.** Orders that report in time land in `cancelled` or
+> `notCancelled`; any that do not report before the timeout come back in `unconfirmed`. For those,
+> the cancel was accepted, but confirmation did not arrive within the timeout.
+> [`GET /orders-v3/{orderId}`](/api-reference/get-order-v3) shows the order's current status. See
+> [Once a cancel is sent](/developers/cancelling-orders#once-a-cancel-is-sent).
 
 > [!NOTE]
 >
@@ -1358,11 +1359,9 @@ the authenticated address, across every market and event.
 
 > [!WARNING]
 >
-> **This is an asynchronous endpoint — a `200` means submitted, not cancelled.** The route publishes
-> cancel commands and returns without waiting for a response, so your orders are still on the
-> book when the response arrives. Confirm with
-> [`GET /orders-v3?eventId=…`](/api-reference/get-orders-v3) or watch
-> [`account:orders_v3_#{address}`](/api-reference/channel-orders-v3) before acting on the result.
+> **This is an asynchronous endpoint.** It returns without waiting for cancellation to complete.
+> The unfilled amount of each order in `cancelledSubmitted` will be cancelled; until then, the
+> order can still fill. See [Once a cancel is sent](/developers/cancelling-orders#once-a-cancel-is-sent).
 
 
 # Cancel orders by event
@@ -1378,11 +1377,9 @@ level, name the ids on [`DELETE /orders-v3`](/api-reference/delete-orders-v3).
 
 > [!WARNING]
 >
-> **This is an asynchronous endpoint — a `200` means submitted, not cancelled.** The route publishes
-> cancel commands and returns without waiting for a response, so your orders are still on the
-> book when the response arrives. Confirm with
-> [`GET /orders-v3?eventId=…`](/api-reference/get-orders-v3) or watch
-> [`account:orders_v3_#{address}`](/api-reference/channel-orders-v3) before acting on the result.
+> **This is an asynchronous endpoint.** It returns without waiting for cancellation to complete.
+> The unfilled amount of each order in `cancelledSubmitted` will be cancelled; until then, the
+> order can still fill. See [Once a cancel is sent](/developers/cancelling-orders#once-a-cancel-is-sent).
 
 
 # Cancel orders by market
@@ -1397,11 +1394,9 @@ name the ids on [`DELETE /orders-v3`](/api-reference/delete-orders-v3).
 
 > [!WARNING]
 >
-> **This is an asynchronous endpoint — a `200` means submitted, not cancelled.** The route publishes
-> cancel commands and returns without waiting for a response, so your orders are still on the
-> book when the response arrives. Confirm with
-> [`GET /orders-v3?marketHash=…`](/api-reference/get-orders-v3) or watch
-> [`account:orders_v3_#{address}`](/api-reference/channel-orders-v3) before acting on the result.
+> **This is an asynchronous endpoint.** It returns without waiting for cancellation to complete.
+> The unfilled amount of each order in `cancelledSubmitted` will be cancelled; until then, the
+> order can still fill. See [Once a cancel is sent](/developers/cancelling-orders#once-a-cancel-is-sent).
 
 
 # Order signing
@@ -1671,23 +1666,17 @@ Source: https://docs.sx.bet/api-reference/get-fixture-status
 GET /fixture/status
 Check the current status of specific fixtures by event ID on SX Bet.
 
-
-
 # Leagues
 Source: https://docs.sx.bet/api-reference/get-leagues
 
 GET /leagues
 List all leagues supported by the SX Bet exchange.
 
-
-
 # Active leagues
 Source: https://docs.sx.bet/api-reference/get-leagues-active
 
 GET /leagues/active
 Get leagues that currently have active markets on the SX Bet exchange.
-
-
 
 # Get your ledger
 Source: https://docs.sx.bet/api-reference/get-ledger-v3
@@ -1784,8 +1773,6 @@ Source: https://docs.sx.bet/api-reference/get-markets-popular
 GET /markets/popular
 Get the most popular betting markets by volume on the SX Bet exchange.
 
-
-
 # Exchange metadata
 Source: https://docs.sx.bet/api-reference/get-metadata-obv3
 
@@ -1850,6 +1837,22 @@ Query your active orders on the SX Bet orderbook.
 oldest first. The scope is your own account.
 
 
+# Get orders by ID
+Source: https://docs.sx.bet/api-reference/get-orders-v3-batch
+
+GET /orders-v3/batch
+Look up to 100 of your orders by signed order ID — any status.
+
+`GET /orders-v3/batch` is the batch form of [`GET /orders-v3/{orderId}`](/api-reference/get-order-v3):
+up to **100 orders** in any status, passed as one comma-separated `orderIds` value.
+
+> [!NOTE]
+>
+> IDs that do not match one of your orders are omitted from `orders`, not returned as errors. That
+> includes inactive orders, which stay retrievable for about 10–20 minutes. To keep an order's final
+> state, record it from the [orders channel](/api-reference/channel-orders-v3).
+
+
 # Get a market's de-anonymized orders
 Source: https://docs.sx.bet/api-reference/get-orders-v3-public
 
@@ -1905,15 +1908,11 @@ Source: https://docs.sx.bet/api-reference/get-sports
 GET /sports
 List all sports available for betting on the SX Bet exchange.
 
-
-
 # Teams
 Source: https://docs.sx.bet/api-reference/get-teams
 
 GET /teams
 Get all teams within a specific league on SX Bet.
-
-
 
 # Get a trade by ID
 Source: https://docs.sx.bet/api-reference/get-trade-v3
@@ -2581,8 +2580,6 @@ Source: https://docs.sx.bet/api-reference/search
 GET /search
 Find active fixtures by team name on SX Bet.
 
-
-
 # Testnet
 Source: https://docs.sx.bet/api-reference/testnet
 
@@ -2811,6 +2808,7 @@ Routes with no authentication, such as `GET /markets/active`, are not listed her
 | - |
 | [`GET` `/orders-v3`](/api-reference/get-orders-v3) |
 | [`GET` `/orders-v3/{orderId}`](/api-reference/get-order-v3) |
+| [`GET` `/orders-v3/batch`](/api-reference/get-orders-v3-batch) |
 | [`GET` `/orders-v3/client/{clientOrderId}`](/api-reference/get-order-v3-by-client-id) |
 
 ## Orders: create
@@ -3088,6 +3086,13 @@ accepted immediately and goes `ACTIVE` without waiting.
 A delayed order matches against the book as it stands when the delay elapses, not as it stood when
 you submitted it, so it can fill less than the depth you saw, or nothing at all.
 
+> [!WARNING]
+>
+> **Cancelling an order during its delay does not stop it matching.** The order still matches when
+> the delay elapses, and any unmatched amount is then cancelled instead of resting.
+> [`DELETE /orders-v3`](/api-reference/delete-orders-v3) reports such an order in `notCancelled`
+> with `reason: "CANCEL_AFTER_MATCH"`.
+
 ## Live
 
 Resolve in this order: `leagueIdToMs[leagueId]`, then `sportIdToMs[sportId]`, then `liveMsDefault`.
@@ -3164,12 +3169,12 @@ There are four cancel routes. All four return `200` even when nothing was cancel
 alone never confirms an order is off the book — you have to check the response body, and what the
 body can tell you differs by route:
 
-| Route | Scope | Does the response body confirm the order is off the book? |
+| Route | Scope | What the response tells you |
 | - | - | - |
-| [`DELETE /orders-v3`](/api-reference/delete-orders-v3) | ids you name, up to 100 | **Yes** — waits for the matching engine, reports per order |
-| [`DELETE /orders-v3/market`](/api-reference/delete-orders-v3-market) | every open order on one market | **No** — confirms only that a cancel command was accepted |
-| [`DELETE /orders-v3/event`](/api-reference/delete-orders-v3-event) | every open order on one event | **No** — confirms only that a cancel command was accepted |
-| [`DELETE /orders-v3/all`](/api-reference/delete-orders-v3-all) | every open order you have | **No** — confirms only that a cancel command was accepted |
+| [`DELETE /orders-v3`](/api-reference/delete-orders-v3) | ids you name, up to 100 | **A per-order result** — waits up to 5 seconds for the matching engine |
+| [`DELETE /orders-v3/market`](/api-reference/delete-orders-v3-market) | every open order on one market | **Which orders are being cancelled** — returns without waiting for cancellation to complete |
+| [`DELETE /orders-v3/event`](/api-reference/delete-orders-v3-event) | every open order on one event | **Which orders are being cancelled** — returns without waiting for cancellation to complete |
+| [`DELETE /orders-v3/all`](/api-reference/delete-orders-v3-all) | every open order you have | **Which orders are being cancelled** — returns without waiting for cancellation to complete |
 
 ## Cancelling asynchronously
 
@@ -3177,10 +3182,27 @@ body can tell you differs by route:
 before responding, and reports `cancelled` or `notCancelled` per order — plus a third bucket,
 `unconfirmed`, for when the matching engine's answer doesn't arrive within that window.
 
-**Cancel-all, cancel-by-event and cancel-by-market are asynchronous.** All three return as soon as the
-matching engine accepts the cancel commands, before your orders are actually off the book. The
-response's `cancelledSubmitted` list names which commands were accepted; nothing in the response
-confirms the orders are gone.
+**Cancel-all, cancel-by-event and cancel-by-market are asynchronous.** They return without waiting
+for cancellation to complete. The unfilled amount of each order in the response's
+`cancelledSubmitted` list will be cancelled.
+
+## Once a cancel is sent
+
+A cancel is queued in the matching engine and processed in sequence with the market's other
+commands. Until it takes effect, the order can still fill: for example, against an order the
+matching engine received before the cancel. An order still in its
+[betting delay](/developers/betting-delays) matches when the delay elapses. Any unfilled amount is
+then cancelled.
+
+After a `200` response, you do not need to send another cancel for:
+
+* **Cancel-all, cancel-by-event and cancel-by-market:** every order in `cancelledSubmitted`.
+* **Cancel by id:** orders in `unconfirmed`, and orders in `notCancelled` with `reason`
+  `CANCEL_PENDING` or `CANCEL_AFTER_MATCH`. For `unconfirmed`, the cancel was accepted, but
+  confirmation did not arrive within the timeout.
+
+A bulk cancel does not cover orders submitted after it completes. Orders submitted while it is
+running may or may not be included. Check `cancelledSubmitted` to see which orders it covers.
 
 ## Choosing a route
 
@@ -3860,7 +3882,9 @@ Refresh inside the timeout window
 
 Every open order is cancelled for your account. It has the same effect as
 [`DELETE /orders-v3/all`](/api-reference/delete-orders-v3-all). The cancels are asynchronous, so orders will be
-cancelled shortly after with `inactiveReason: "HEARTBEAT_TIMEOUT"`.
+cancelled shortly after with `inactiveReason: "HEARTBEAT_TIMEOUT"`. An order still in its
+[betting delay](/developers/betting-delays) matches first when the delay elapses, and only its
+unmatched amount is cancelled.
 
 ## Stop the heartbeat
 
@@ -5139,7 +5163,7 @@ requests.delete(f"{API}/orders-v3/all",   headers=auth)
 }
 ```
 
-Cancel-by-id waits for the engine and reports per order; cancel-by-event and cancel-all are asynchronous and only confirm the job was published. See [Cancelling orders](/developers/cancelling-orders).
+Cancel-by-id waits for the engine and reports per order; cancel-all, cancel-by-event and cancel-by-market are asynchronous and return without waiting for cancellation to complete. See [Cancelling orders](/developers/cancelling-orders).
 
 **6. Re-arm your heartbeat (dead-man switch)**
 
@@ -5378,6 +5402,7 @@ See [Bet lifecycle](/developers/bet-lifecycle).
 | Enable betting | `POST /orders/approve` | — (fund the proxy) | [→](/developers/funding) |
 | List my open orders | `GET /orders?maker=…` | `GET /orders-v3` | [→](/api-reference/get-orders-v3) |
 | Get one order by id | `GET /orders?orderHashes=…` | `GET /orders-v3/{orderId}` | [→](/api-reference/get-order-v3) |
+| Get several orders by id | `GET /orders?orderHashes=…` | `GET /orders-v3/batch?orderIds=…` | [→](/api-reference/get-orders-v3-batch) |
 | Market order book | `GET /orders?marketHashes=…` | `GET /orderbook-v3/snapshot/market?marketHash=…` | [→](/api-reference/get-market-orderbook-snapshot) |
 | Best odds | `GET /orders/odds/best` | `GET /orders-v3/odds/best` | [→](/api-reference/get-best-odds-v3) |
 | Cancel by id | `POST /orders/cancel/v2` | `DELETE /orders-v3` | [→](/api-reference/delete-orders-v3) |
@@ -5452,10 +5477,13 @@ The snapshot gives you what is resting right now; the channel gives you every ch
    publication whose `messageId` (in `ctx.tags`) you have already applied; otherwise write the row
    into your store under its `order.id`.
 
-## Looking up one order
+## Looking up orders by ID
 
 [`GET /orders-v3/{orderId}`](/api-reference/get-order-v3) returns a single order you own in **any**
 status.
+
+To check many orders at once, [`GET /orders-v3/batch`](/api-reference/get-orders-v3-batch) takes up
+to 100 IDs in one request and returns the ones you own, in any status.
 
 If you tagged the order on submit, [`GET /orders-v3/client/{clientOrderId}`](/api-reference/get-order-v3-by-client-id)
 looks it up by that tag instead.
@@ -5469,6 +5497,10 @@ looks it up by that tag instead.
 > [card] [Get an order by ID](/api-reference/get-order-v3)
 >
 > One order, any status.
+
+> [card] [Get orders by ID](/api-reference/get-orders-v3-batch)
+>
+> Up to 100 orders in one request, any status.
 
 > [card] [Get an order by client ID](/api-reference/get-order-v3-by-client-id)
 >
@@ -7186,6 +7218,7 @@ Each row is the per-API-key budget for that route.
 | - | - | - |
 | `GET` `/orders-v3` | 1,200 | 60s |
 | `GET` `/orders-v3/{orderId}` | 1,200 | 60s |
+| `GET` `/orders-v3/batch` | 300 | 60s |
 | `GET` `/orders-v3/client/{clientOrderId}` | 1,200 | 60s |
 | `POST` `/orders-v3` | 5,500 | 60s |
 | `DELETE` `/orders-v3` | 10,000 | 60s |

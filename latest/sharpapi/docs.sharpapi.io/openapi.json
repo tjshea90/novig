@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "SharpAPI",
-    "version": "4.7.0",
+    "version": "4.8.0",
     "description": "Real-time sports betting odds API with +EV detection, arbitrage, middles, and low-hold opportunities.\n\n## Spec Versioning\n\n`info.version` is bumped on every schema or path change. Minor version (`2.x.0`) for additive changes or breaking shape fixes that align the spec to the live response; major version (`x.0.0`) for backward-incompatible redesigns. Removed paths and renamed fields always bump the minor at minimum. Check `x-generated-at` and `x-commit-sha` for the build provenance of a given snapshot.\n\n## Authentication\n\nAll authenticated endpoints accept an API key via one of three methods:\n\n| Method | Header / Param | Use case |\n|--------|---------------|----------|\n| `X-API-Key` | `X-API-Key: sk_live_...` | Recommended for server-side |\n| `Authorization` | `Authorization: Bearer sk_live_...` | Standard Bearer token |\n| `api_key` query | `?api_key=sk_live_...` | SSE/EventSource (cannot set headers) |\n\n## Subscription Tiers\n\n| Tier | Rate Limit | Data Delay | Max Books | EV | Arb | Middles | Game State |\n|------|-----------|------------|-----------|-----|-----|---------|------------|\n| Free | 12/min | 60s | 2 (DK, FD) | - | - | - | - |\n| Hobby | 120/min | Real-time | 5 | - | Yes | - | Add-on |\n| Pro | 300/min | Real-time | 15 | Yes | Yes | Yes | Add-on |\n| Sharp | 1000/min | Real-time | 25 | Yes | Yes | Yes | Add-on |\n| Enterprise | Custom | Real-time | All | Yes | Yes | Yes | Yes |\n\nGame State is a $79/mo add-on on any paid tier (Hobby, Pro, Sharp) and is included with Enterprise.\n\n## Rate Limit Headers\n\nEvery authenticated response includes:\n\n- `X-RateLimit-Limit` - Requests allowed per minute\n- `X-RateLimit-Remaining` - Requests remaining in current window\n- `X-RateLimit-Reset` - Unix timestamp when the window resets\n- `X-Data-Delay` - Odds delay in seconds for your tier (0 = real-time)\n- `X-Request-Id` - Unique request identifier for support\n\n## WebSocket Streaming\n\nThe WebSocket endpoint at `wss://ws.sharpapi.io` is documented separately in [`asyncapi.yaml`](./asyncapi.yaml) (AsyncAPI 3.0). OpenAPI 3.x cannot express WebSocket subprotocols and message channels, so the SSE endpoint (`/stream`) is the only stream covered by this document.\n\n## MCP Server\n\nThe `POST /mcp` endpoint is a Model Context Protocol server (JSON-RPC 2.0 over Streamable HTTP). Tools are self-described at runtime via `tools/list`, so it's documented as a setup guide rather than an OpenAPI path — see [`/sdks/mcp`](https://docs.sharpapi.io/sdks/mcp).\n",
     "contact": {
       "name": "SharpAPI Support",
@@ -13,8 +13,8 @@
       "name": "Proprietary",
       "url": "https://sharpapi.io/terms"
     },
-    "x-generated-at": "2026-11-06T14:46:11Z",
-    "x-commit-sha": "9f3b068"
+    "x-generated-at": "2026-11-09T17:42:13Z",
+    "x-commit-sha": "7bf1b54"
   },
   "servers": [
     {
@@ -3887,7 +3887,7 @@
       "get": {
         "operationId": "listAllGameState",
         "summary": "Live game state for every sport",
-        "description": "Returns aggregated live game state (scores, periods, clocks, situational data) for every sport with active events. Merged across sportsbooks with a consensus-based algorithm so a single misbehaving book can't skew the result. Requires the **Game State add-on** ($79/mo, available on any paid plan) or the **Enterprise** tier. A fixture that has just finished stays here for 15 minutes after completion as a terminal row (`status: \"final\"`) — see the `status` / `is_live` parameters and the `EventGameState` schema.",
+        "description": "Returns aggregated live game state (scores, periods, clocks, situational data) for every sport with active events. Merged across sportsbooks with a consensus-based algorithm so a single misbehaving book can't skew the result. Requires the **Game State add-on** ($79/mo, available on any paid plan) or the **Enterprise** tier. A fixture that has just finished stays here for 15 minutes after completion as a terminal row (`status: \"final\"`) — see the `status` / `is_live` parameters and the `EventGameState` schema. A live game that leaves the feed without an end-of-game state stays for the same window as an unconfirmed row (`status: \"unconfirmed\"`, its last score seen, `last_seen_at`).",
         "tags": [
           "Game State"
         ],
@@ -4010,11 +4010,12 @@
             "schema": {
               "type": "string",
               "enum": [
-                "final"
+                "final",
+                "unconfirmed"
               ],
               "example": "final"
             },
-            "description": "Return only the carried terminal (finished) rows. `final` is the only accepted value — live rows are the default set, and `is_live=true` selects them alone. Case-insensitive. Any other value returns `400 validation_error` with `details.accepted` = `[\"final\"]`."
+            "description": "`final` returns only the carried terminal (finished) rows; `unconfirmed` returns only the unconfirmed rows, games that left the live feed without an end-of-game state. These are the only accepted values — live rows are the default set, and `is_live=true` selects them alone. Case-insensitive. Any other value returns `400 validation_error` with `details.accepted` = `[\"final\",\"unconfirmed\"]`."
           },
           {
             "name": "is_live",
@@ -4028,7 +4029,7 @@
               ],
               "example": "true"
             },
-            "description": "`true` returns live rows only, excluding every carried terminal row; `false` returns non-live rows only, which today means the carried terminal rows. Case-insensitive. Any other value — including `1` and `0` — returns `400 validation_error` with `details.accepted` = `[\"true\",\"false\"]`."
+            "description": "`true` returns live rows only, excluding every carried terminal and unconfirmed row; `false` returns non-live rows only, which include the carried terminal and unconfirmed rows. Case-insensitive. Any other value — including `1` and `0` — returns `400 validation_error` with `details.accepted` = `[\"true\",\"false\"]`."
           }
         ]
       }
@@ -4037,7 +4038,7 @@
       "get": {
         "operationId": "getGameStateForSport",
         "summary": "Live game state for a single sport",
-        "description": "Returns aggregated live game state for events in one sport. Response shape matches `GET /gamestate` but `data` contains a single key (the path `sport`). Unknown sports return an empty `data` object, never 404. Requires the **Game State add-on** ($79/mo, available on any paid plan) or the **Enterprise** tier. A fixture that has just finished stays here for 15 minutes after completion as a terminal row (`status: \"final\"`) — see the `status` / `is_live` parameters and the `EventGameState` schema.",
+        "description": "Returns aggregated live game state for events in one sport. Response shape matches `GET /gamestate` but `data` contains a single key (the path `sport`). Unknown sports return an empty `data` object, never 404. Requires the **Game State add-on** ($79/mo, available on any paid plan) or the **Enterprise** tier. A fixture that has just finished stays here for 15 minutes after completion as a terminal row (`status: \"final\"`) — see the `status` / `is_live` parameters and the `EventGameState` schema. A live game that leaves the feed without an end-of-game state stays for the same window as an unconfirmed row (`status: \"unconfirmed\"`, its last score seen, `last_seen_at`).",
         "tags": [
           "Game State"
         ],
@@ -4059,11 +4060,12 @@
             "schema": {
               "type": "string",
               "enum": [
-                "final"
+                "final",
+                "unconfirmed"
               ],
               "example": "final"
             },
-            "description": "Return only the carried terminal (finished) rows. `final` is the only accepted value — live rows are the default set, and `is_live=true` selects them alone. Case-insensitive. Any other value returns `400 validation_error` with `details.accepted` = `[\"final\"]`."
+            "description": "`final` returns only the carried terminal (finished) rows; `unconfirmed` returns only the unconfirmed rows, games that left the live feed without an end-of-game state. These are the only accepted values — live rows are the default set, and `is_live=true` selects them alone. Case-insensitive. Any other value returns `400 validation_error` with `details.accepted` = `[\"final\",\"unconfirmed\"]`."
           },
           {
             "name": "is_live",
@@ -4077,7 +4079,7 @@
               ],
               "example": "true"
             },
-            "description": "`true` returns live rows only, excluding every carried terminal row; `false` returns non-live rows only, which today means the carried terminal rows. Case-insensitive. Any other value — including `1` and `0` — returns `400 validation_error` with `details.accepted` = `[\"true\",\"false\"]`."
+            "description": "`true` returns live rows only, excluding every carried terminal and unconfirmed row; `false` returns non-live rows only, which include the carried terminal and unconfirmed rows. Case-insensitive. Any other value — including `1` and `0` — returns `400 validation_error` with `details.accepted` = `[\"true\",\"false\"]`."
           }
         ],
         "responses": {
@@ -5280,7 +5282,7 @@
               "final",
               "unconfirmed"
             ],
-            "description": "Event lifecycle state. `unconfirmed` is served only by this endpoint: the live feed stopped carrying the game before it showed an end-of-game state, so the API keeps the last score it saw but does not report the game as finished. An `unconfirmed` event has `is_live: false` and no `completed_at`, and its score is not a final result. With the Game State add-on or Enterprise, that score is in `last_seen`. The `/events` list, its `status` filter, `/gamestate` and the `gamestate` stream channel never carry `unconfirmed`."
+            "description": "Event lifecycle state. Among the events endpoints, `unconfirmed` is served only by this one: the live feed stopped carrying the game before it showed an end-of-game state, so the API keeps the last score it saw but does not report the game as finished. An `unconfirmed` event has `is_live: false` and no `completed_at`, and its score is not a final result. With the Game State add-on or Enterprise, that score is in `last_seen`. The `/events` list and its `status` filter never carry `unconfirmed`; `/gamestate` and the `gamestate` stream channel show the same game as an unconfirmed row (see `EventGameState.status`)."
           },
           "event_group": {
             "type": "string",
@@ -5544,7 +5546,7 @@
       },
       "EventGameState": {
         "type": "object",
-        "description": "Aggregated live game state for a single event, merged across the sportsbooks covering it. Scores are consensus-selected; temporal fields use sport-aware clock direction; situational fields priority-fill from a fixed book ranking. Every field is optional except the always-present core set — sport coverage varies, so e.g. tennis rows carry sets_home/server while hockey rows carry power_play. Rows also come in a terminal flavour: a fixture that has finished is carried here for 15 minutes after completion with status \"final\", completed_at, score_type and the final scores. A terminal row is projected from the completion record, not from a live cross-book merge, so it carries no primary_book/book_count/game_period/game_clock and no situational fields — branch on status == \"final\" before reading those.",
+        "description": "Aggregated live game state for a single event, merged across the sportsbooks covering it. Scores are consensus-selected; temporal fields use sport-aware clock direction; situational fields priority-fill from a fixed book ranking. Every field is optional except the always-present core set — sport coverage varies, so e.g. tennis rows carry sets_home/server while hockey rows carry power_play. Rows also come in a terminal flavour: a fixture that has finished is carried here for 15 minutes after completion with status \"final\", completed_at, score_type and the final scores. A terminal row is projected from the completion record, not from a live cross-book merge, so it carries no primary_book/book_count/game_period/game_clock and no situational fields — branch on status == \"final\" before reading those. A live game that leaves the feed without an end-of-game state is carried for the same window, counted from its last_seen_at, as an unconfirmed row: status \"unconfirmed\", is_live false, stale false, the last score seen and game_period/game_clock as last seen, with no winner and no completed_at. Its score is not a final result. It becomes a status \"final\" row only when the feed shows the end of the game or the final result is confirmed from another source.",
         "required": [
           "home_team",
           "away_team",
@@ -5585,7 +5587,7 @@
           },
           "is_live": {
             "type": "boolean",
-            "description": "`true` for a live event; `false` on a carried terminal (finished) row."
+            "description": "`true` for a live event; `false` on a carried terminal (finished) or unconfirmed row."
           },
           "primary_book": {
             "type": "string",
@@ -5720,14 +5722,20 @@
           "status": {
             "type": "string",
             "enum": [
-              "final"
+              "final",
+              "unconfirmed"
             ],
-            "description": "Present only on a carried terminal row, always `final`. Live rows carry no `status` key, so `status == \"final\"` is the reliable terminal test."
+            "description": "Present only on a carried row: `final` on a terminal row, `unconfirmed` on a game that left the live feed without an end-of-game state. Live rows carry no `status` key, so `status == \"final\"` is the reliable terminal test. A `final` row can still go back to `unconfirmed` while another source disputes its score, so a final is not irreversible the moment it appears."
           },
           "completed_at": {
             "type": "string",
             "format": "date-time",
             "description": "Terminal rows only — when SharpAPI detected the completion (not a league-official final whistle). The 15-minute carry window is measured from this timestamp."
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Unconfirmed rows only (`status: \"unconfirmed\"`) — the last time the game was seen live, in UTC. The carry window for an unconfirmed row is measured from this timestamp."
           },
           "score_type": {
             "type": "string",
@@ -5735,7 +5743,7 @@
               "points",
               "sets"
             ],
-            "description": "Terminal rows only — which fields carry the final result. `sets` for the set-scored sports (`tennis`, `table_tennis`, `volleyball`, `badminton`), whose result is in `sets_home`/`sets_away`; `points` everywhere else, whose result is in `home_score`/`away_score`."
+            "description": "Terminal and unconfirmed rows only — which fields carry the final result, or on an unconfirmed row the last score seen. `sets` for the set-scored sports (`tennis`, `table_tennis`, `volleyball`, `badminton`), whose result is in `sets_home`/`sets_away`; `points` everywhere else, whose result is in `home_score`/`away_score`. Omitted on an unconfirmed row whose last live row had an incomplete score: that row carries exactly the score fields the live row had, under the same names, and a missing side is not filled in as 0."
           },
           "winner": {
             "type": "string",

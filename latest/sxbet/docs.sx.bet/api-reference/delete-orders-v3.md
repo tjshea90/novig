@@ -17,11 +17,11 @@
 
 > [!NOTE]
 >
-> **There is a 5-second confirmation timeout.** Orders that report in time land in
-> `cancelled` or `notCancelled`; any that do not report before the timeout come back in the
-> `unconfirmed` bucket. `unconfirmed` does **not** mean the cancel failed — the command was still
-> submitted and usually takes effect shortly after. Re-read
-> [`GET /orders-v3`](https://docs.sx.bet/api-reference/get-orders-v3) to confirm, rather than assuming either outcome.
+> **There is a 5-second confirmation timeout.** Orders that report in time land in `cancelled` or
+> `notCancelled`; any that do not report before the timeout come back in `unconfirmed`. For those,
+> the cancel was accepted, but confirmation did not arrive within the timeout.
+> [`GET /orders-v3/{orderId}`](https://docs.sx.bet/api-reference/get-order-v3) shows the order's current status. See
+> [Once a cancel is sent](https://docs.sx.bet/developers/cancelling-orders.md#once-a-cancel-is-sent).
 
 > [!NOTE]
 >
@@ -133,16 +133,21 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/CancelByIdItem'
-                        description: The order was not cancelled; `reason` says why.
+                        description: >-
+                          The order was not cancelled; `reason` says why.
+                          CANCEL_PENDING means cancellation is already pending.
+                          CANCEL_AFTER_MATCH means the cancel takes effect after
+                          the order matches at the end of its betting delay. You
+                          do not need to repeat the request for either.
                       unconfirmed:
                         type: array
                         items:
                           $ref: '#/components/schemas/CancelByIdItem'
                         description: >-
-                          The cancel was published but reported no outcome
-                          before the wait timeout. NOT a failure — the cancel
-                          may still land. Re-read `GET /orders-v3` rather than
-                          retrying blindly.
+                          The cancel was accepted and queued in the matching
+                          engine, but confirmation did not arrive within the
+                          wait timeout. `GET /orders-v3/{orderId}` shows the
+                          order's current status.
               example:
                 status: success
                 data:
@@ -212,15 +217,20 @@ components:
           description: >-
             Command id of the cancel that produced this outcome. Always present
             on `cancelled`, `unconfirmed` and `cancelledSubmitted`; on
-            `notCancelled` it is present only when the matching engine reported
-            the order was not on the book.
+            `notCancelled` it is present only for CANCEL_AFTER_MATCH, and for
+            NOT_FOUND when the matching engine reported the order was not on the
+            book.
         reason:
           type: string
           description: >-
             Why the order was not cancelled. On `notCancelled`: NOT_FOUND (no
             such order, someone else's order, or not on the book),
-            CANCEL_PENDING (a cancel is already in flight), NOT_ACTIVE (already
-            terminal).
+            CANCEL_PENDING (a cancel for this order is already queued in the
+            matching engine and processed in sequence with the market's other
+            commands; the order can still fill until it takes effect),
+            NOT_ACTIVE (already terminal), CANCEL_AFTER_MATCH (the order is
+            still in its betting delay; it matches when the delay elapses, then
+            any unmatched amount is cancelled).
     ErrorNestArray:
       description: >-
         Validation errors. Same envelope as ErrorNest but `message` is an array

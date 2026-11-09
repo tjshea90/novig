@@ -20,11 +20,14 @@ The lifecycle of every fixture and future. Frozen set:
 | `1` | `live` | yes | Currently in play. |
 | `2` | `finished` | no | Finished; final scores/results available. |
 | `3` | `cancelled` | no | Cancelled / will not be played. |
+| `4` | `removed` | no | Wrongly issued; withdrawn from the schedule. |
 
 Notes:
 
 * `statusName` is the translated display label (follows the language prefix); `statusId` is the stable key — always branch on the ID.
-* Status only ever moves **forward** (`0 → 1 → 2`, or any state → `3`); it never goes backwards.
+* Status only ever moves **forward** (`0 → 1 → 2`, any state → `3`, any state → `4`); it never goes backwards.
+* **`3` vs `4`.** `cancelled` is a *real* event that will not be played — called off, abandoned, postponed indefinitely. `removed` means the entity **should never have existed**: a provider-side duplicate, a test entry, an event that was not real. Nothing was called off.
+* **`4` outranks `3`.** Any state can move to `4`, including `3`, and `4` is terminal — once an entity is `removed` it stays removed. Treat it as final and stop polling it. Scores and settlement are never published for a `4`.
 
 ***
 
@@ -60,26 +63,27 @@ Sums of consecutive periods, used where markets are offered on a combined segmen
 | `p3+p4+overtime` | Second half including overtime. |
 | `p4+overtime` | Final period including overtime. |
 | `p6+p7+p8+p9+overtime` | Combined late-innings segment (e.g. baseball). |
+| `p1o1+p1o2` … `p1o1+…+p1o20` | **First *N* overs** of an innings — cricket, innings 1–2, *N* up to 20. Spelled out as the sum of its member overs, like every other combined segment. |
 
 ### Sub-period keys (grids within a period)
 
-Sub-period keys follow one shape: `p{X}{axis}{Y}` — unit *Y* within period *X*. Two axes exist today.
+Sub-period keys follow one shape: `p{X}{axis}{Y}` — unit *Y* within period *X*. Three axes exist today, and one of them nests a second level.
 
 | Value | Meaning |
 | - | - |
 | `p1g1` … `p5g13` | **`g` = game.** Game *Y* within period/set *X* — tennis first: sets 1–5, games 1–12, and `g13` = the tiebreak. Market periods use only `g2`, `g4` and `g6` (the `correctscore` "after *Y* games" lines); score periods use the full grid. |
 | `p1r1` … `p5r36` | **`r` = round.** Round *Y* within map *X* — esports. |
+| `p1o1`, `p2o1` | **`o` = over.** Over *Y* within innings *X* — cricket. `p1` remains the whole innings. |
+| `p1o1b1` … `p2o20b6` | **`b` = ball**, nested inside an over: delivery *d* of over *n* of innings *i* (`p{i}o{n}b{d}`). Innings 1–2, overs 1–20, balls 1–6. The only two-level sub-period key — `p{X}{axis}{Y}` alone does not describe it. |
 | `currentgame` | Rolling pointer to the **in-progress** game (e.g. the current tennis game score). Only ever the live pointer — settled per-game facts use the `pXgY` keys. |
 
 > [!NOTE]
 >
-> The period vocabulary is **append-only**: new sports may introduce additional keys, and new axes may join `g` and `r`
-> (darts legs are a likely next one). Never hard-code an exhaustive list — handle unknown period keys gracefully.
-> Parsing \`p{X}
->
-> {axis}
->
-> {Y}\` structurally is safer than matching a fixed set of strings.
+> The period vocabulary is **append-only**: new sports may introduce additional keys, and new axes may join `g`, `r`
+> and `o` (darts legs are a likely next one). Never hard-code an exhaustive list — handle unknown period keys
+> gracefully. Parsing structurally is safer than matching a fixed set of strings — but note that an axis may nest a
+> second level, as cricket's `b` does inside `o`, so match the axes you know rather than assuming a single
+> `p{X}{axis}{Y}` shape.
 
 ***
 

@@ -16,6 +16,7 @@ Each row is the per-API-key budget for that route.
 | - | - | - |
 | `GET` `/orders-v3` | 1,200 | 60s |
 | `GET` `/orders-v3/{orderId}` | 1,200 | 60s |
+| `GET` `/orders-v3/batch` | 300 | 60s |
 | `GET` `/orders-v3/client/{clientOrderId}` | 1,200 | 60s |
 | `POST` `/orders-v3` | 5,500 | 60s |
 | `DELETE` `/orders-v3` | 10,000 | 60s |

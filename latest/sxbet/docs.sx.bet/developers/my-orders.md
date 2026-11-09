@@ -23,10 +23,13 @@ The snapshot gives you what is resting right now; the channel gives you every ch
    publication whose `messageId` (in `ctx.tags`) you have already applied; otherwise write the row
    into your store under its `order.id`.
 
-## Looking up one order
+## Looking up orders by ID
 
 [`GET /orders-v3/{orderId}`](https://docs.sx.bet/api-reference/get-order-v3) returns a single order you own in **any**
 status.
+
+To check many orders at once, [`GET /orders-v3/batch`](https://docs.sx.bet/api-reference/get-orders-v3-batch) takes up
+to 100 IDs in one request and returns the ones you own, in any status.
 
 If you tagged the order on submit, [`GET /orders-v3/client/{clientOrderId}`](https://docs.sx.bet/api-reference/get-order-v3-by-client-id)
 looks it up by that tag instead.
@@ -40,6 +43,10 @@ looks it up by that tag instead.
 > [card] [Get an order by ID](https://docs.sx.bet/api-reference/get-order-v3.md)
 >
 > One order, any status.
+
+> [card] [Get orders by ID](https://docs.sx.bet/api-reference/get-orders-v3-batch.md)
+>
+> Up to 100 orders in one request, any status.
 
 > [card] [Get an order by client ID](https://docs.sx.bet/api-reference/get-order-v3-by-client-id.md)
 >

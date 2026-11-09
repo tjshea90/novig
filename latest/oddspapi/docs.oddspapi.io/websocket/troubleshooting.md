@@ -20,7 +20,7 @@ Send a valid `login` as your first frame.
 
 ### `too_many_connections` (4003)
 
-* Max connections reached for your key group (max: 5)
+* Max connections reached for your key group (max: 8)
 * Shard or reduce concurrent connects
 * Contact support to raise the limit
 

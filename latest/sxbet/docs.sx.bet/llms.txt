@@ -116,6 +116,7 @@
 - [Get a market's de-anonymized orders](https://docs.sx.bet/api-reference/get-orders-v3-public.md): Read the de-anonymized resting orders on a market.
 - [Get a user's de-anonymized orders](https://docs.sx.bet/api-reference/get-orders-v3-user-public.md): Read one user's de-anonymized resting orders, across markets.
 - [Get an order by ID](https://docs.sx.bet/api-reference/get-order-v3.md): Look up one of your orders by its signed order ID — any status.
+- [Get orders by ID](https://docs.sx.bet/api-reference/get-orders-v3-batch.md): Look up to 100 of your orders by signed order ID — any status.
 - [Get an order by client ID](https://docs.sx.bet/api-reference/get-order-v3-by-client-id.md): Look up one of your orders by the clientOrderId you set on submit — any status.
 - [Cancel orders by id](https://docs.sx.bet/api-reference/delete-orders-v3.md): Cancel specific open orders by order id on the SX Bet exchange.
 - [Cancel orders by market](https://docs.sx.bet/api-reference/delete-orders-v3-market.md): Cancel all your open orders on a single market on SX Bet.

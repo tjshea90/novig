@@ -157,7 +157,7 @@ Both odds endpoints and `/best-line` accept an optional `includeLinks=true` para
 
 `includeLinks=true` also adds an `app_link` field alongside `link` (per bookmaker block on the odds endpoints, per price row on `/best-line`) — a mobile app-open deep link that opens the book's native app on that fixture, with an app-store fallback for users without the app. `link` is the desktop web page; `app_link` is the phone tap. ProphetX (an AppsFlyer OneLink) and Courtside (`courtside://game/{id}`, app-only book, so no web `link` and no store fallback); `null` for every other book. PropLine-specific, not a the-odds-api field.
 
-On `/best-line`, `includeLinks=true` also adds `bet_link` to each DraftKings and BetMGM price row: the book's page with that exact selection already on the bet slip. Null for every other book. Plain navigation, no affiliate tag.
+On `/best-line`, `includeLinks=true` also adds `bet_link` to each DraftKings, FanDuel and BetMGM price row: the book's page with that exact selection already on the bet slip. Null for every other book. Plain navigation, no affiliate tag.
 
 ### Native book ids (`?includeBookIds=true`)
 
@@ -1435,7 +1435,6 @@ where known. A dead heat is left ungraded.
 | `novibet` | Novibet | Sportsbook (Greek sportsbook; 30 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL / tennis / UFC game lines. Pregame only) |
 | `thescorebet` | theScore Bet | Sportsbook (Ontario sportsbook; 21 soccer leagues plus NFL / NCAAF / NBA / NCAAB / WNBA / MLB / NHL / CFL / tennis / UFC — game lines, alt lines, team totals and periods, plus player props on football / MLB / NHL / soccer. Pregame only) |
 | `playalberta` | PlayAlberta | Sportsbook (Canadian sportsbook; 29 soccer leagues plus NFL / NCAAF / NBA / MLB / NHL / CFL / tennis / UFC game lines. Pregame only) |
-| `topsport` | TopSport | Sportsbook (Lithuanian sportsbook; 30 soccer leagues plus NFL / NCAAF / NBA / WNBA / MLB / NHL game lines. Pregame only) |
 | `olybet` | OlyBet | Sportsbook (French sportsbook; 29 soccer leagues plus NFL / NBA / MLB / NHL game lines. Pregame only) |
 | `supersport` | SuperSport | Sportsbook (Croatian sportsbook; 29 soccer leagues plus NFL / NBA / WNBA / MLB / NHL game lines. Pregame only) |
 | `maxbet` | MaxBet | Sportsbook (Serbian sportsbook; 25 soccer leagues plus tennis game lines. Pregame only) |

@@ -5561,7 +5561,7 @@
           "bet_link": {
             "type": "string",
             "nullable": true,
-            "description": "With includeLinks=true: DraftKings or BetMGM page that opens with this selection on the bet slip. Null for other books."
+            "description": "With includeLinks=true: DraftKings, FanDuel or BetMGM page that opens with this selection on the bet slip. Null for other books."
           }
         },
         "type": "object",

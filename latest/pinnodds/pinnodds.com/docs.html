@@ -11,8 +11,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="color-scheme" content="dark"/>
 <meta name="theme-color" content="#0C0C0E"/>
-<title>Pinnacle API Documentation — Odds, WebSocket &amp; SSE Reference</title>
-<meta name="description" content="Complete Pinnacle API documentation: live and prematch odds over REST, WebSocket and SSE, with copy-paste examples in Python, Node and cURL. Free key, no card, and a 3-day full demo on request."/>
+<title>Pinnacle API Docs: Odds, WebSocket &amp; SSE Reference</title>
+<meta name="description" content="Pinnacle API documentation: live and prematch odds over REST, WebSocket and SSE, with copy-paste Python, Node and cURL examples. Free key, no card."/>
 <meta name="robots" content="index, follow"/>
 <link rel="canonical" href="https://pinnodds.com/docs"/>
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","@id":"https://pinnodds.com/docs#article","headline":"Pinnacle Odds API Documentation","description":"Complete working reference for the pinnodds real-time Pinnacle odds API: authentication, live and prematch REST endpoints, SSE drop streams, the raw WebSocket feed, rate limits and reference data.","url":"https://pinnodds.com/docs","dateModified":"2026-08-13","author":{"@id":"https://pinnodds.com/#organization"},"publisher":{"@id":"https://pinnodds.com/#organization"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://pinnodds.com/docs"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://pinnodds.com/"},{"@type":"ListItem","position":2,"name":"API Documentation","item":"https://pinnodds.com/docs"}]},{"@type":"ItemList","name":"pinnodds API endpoints","itemListElement":[{"@type":"ListItem","position":1,"name":"GET /kit/v1/markets","url":"https://pinnodds.com/docs#markets"},{"@type":"ListItem","position":2,"name":"GET /kit/v1/details","url":"https://pinnodds.com/docs#details"},{"@type":"ListItem","position":3,"name":"GET /kit/v1/prematch/fixtures","url":"https://pinnodds.com/docs#prematch-fixtures"},{"@type":"ListItem","position":4,"name":"GET /kit/v1/prematch/markets","url":"https://pinnodds.com/docs#prematch-markets"},{"@type":"ListItem","position":5,"name":"GET /kit/v1/prematch/lines","url":"https://pinnodds.com/docs#prematch-lines"},{"@type":"ListItem","position":6,"name":"GET /api/drops","url":"https://pinnodds.com/docs#api-drops"},{"@type":"ListItem","position":7,"name":"SSE /odds-drop","url":"https://pinnodds.com/docs#sse-live"},{"@type":"ListItem","position":8,"name":"SSE /odds-drop-prematch","url":"https://pinnodds.com/docs#sse-prematch"},{"@type":"ListItem","position":9,"name":"WSS /ws/feed","url":"https://pinnodds.com/docs#ws-feed"},{"@type":"ListItem","position":10,"name":"GET /health","url":"https://pinnodds.com/docs#health"},{"@type":"ListItem","position":11,"name":"GET /ping","url":"https://pinnodds.com/docs#ping"}]}]}</script>
@@ -824,7 +824,7 @@ curl_close($ch);
     <span class="auth-pill key">API key OR token</span>
   </div>
   <div class="endpoint-body">
-    <p>Server-Sent Events stream of <b>live</b> drops as they happen. One TCP connection, push-based — no polling. <b>Available on the Stream, Pro + SSE, and Scale plans.</b> During your first 3 days every new key can connect (the signup demo includes the WebSocket feed). After that, trial keys and Pro (REST-only) cannot connect.</p>
+    <p>Server-Sent Events stream of <b>live</b> drops as they happen. One TCP connection, push-based — no polling. <b>Available on the Stream, Pro + SSE, and Scale plans.</b> Free trial keys and Pro (REST-only) cannot connect, except during a 3-day full demo, which is available on request and also includes the WebSocket feed.</p>
     <div class="callout warn" style="margin: 12px 0">
       <b>⚠ One SSE connection per account.</b> Opening a second SSE connection with the same key evicts the first. EventSource auto-reconnect after a network blip works fine (the dying old socket gets reaped before the new one registers). If you genuinely need two or more independent connections — e.g. prod + staging, or fan-out across multiple servers — each one needs its own account on its own paid plan: one account, one key. The cap stays at one connection per key — it's how we detect keys being shared or resold — and second keys are never issued free.
     </div>
@@ -1075,6 +1075,7 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
     <p>
       Forwards <b>raw Pinnacle frames</b> to your client — not drops, not derived metrics. Live MQTT messages and prematch REST responses delivered byte-identical to what we receive ourselves, wrapped in a thin envelope. Power-user feature for customers who want to rebuild Pinnacle's full state machine on their side.
     </p>
+    <p style="font-size:13px; color:var(--muted)"><b>Latency.</b> Each frame leaves our servers about 5&nbsp;ms after it reaches us (median 2&nbsp;ms on the last production run); the <code>ts</code> field on every frame is our publish time, so you can measure the rest yourself. Method, numbers and caveats: <a href="/latency">how we measure latency</a>.</p>
     <p style="background:rgba(255,194,102,.06); padding:10px 14px; border-radius:6px; border-left:3px solid var(--warn); font-size:13px">
       <b>This is NOT the same as <code>/odds-drop</code> SSE.</b> SSE delivers our filtered drop alerts (every detected drop by default &mdash; the engine floor is ~0.99%; narrow it with <code>?min_drop=</code>). This WS delivers <i>every</i> Pinnacle frame including market open/close/settle signals. Output volume is much higher.
     </p>
@@ -1695,7 +1696,7 @@ bearer_token_env_var = <span class="s">"PINNODDS_KEY"</span></pre>
       A Trial key has 100 requests per day; a long analysis session will hit that. When the server answers <code>rate_limited</code>, it also stops calling upstream until the window resets.
       Streams (SSE, WebSocket) are not exposed over MCP &mdash; use them directly.
     </div>
-    <p style="color: var(--muted); font-size: 13px; margin-top:12px">Also listed in the <a href="https://registry.modelcontextprotocol.io" target="_blank" rel="noopener">official MCP registry</a> as <code>com.pinnodds/odds</code>. Questions: <a href="/cdn-cgi/l/email-protection#d9b0b7bfb699a9b0b7b7b6bdbdaaf7bab6b4"><span class="__cf_email__" data-cfemail="a9c0c7cfc6e9d9c0c7c7c6cdcdda87cac6c4">[email&#160;protected]</span></a>.</p>
+    <p style="color: var(--muted); font-size: 13px; margin-top:12px">Also listed in the <a href="https://registry.modelcontextprotocol.io" target="_blank" rel="noopener">official MCP registry</a> as <code>com.pinnodds/odds</code>. Questions: <a href="mailto:info@pinnodds.com">info@pinnodds.com</a>.</p>
   </div>
 </div>
 
@@ -1964,7 +1965,7 @@ curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
     <tr><td class="name">Commission</td><td class="desc"><b>30%</b> of every USD payment your referrals make. Compounds across renewals and upgrades — not a one-time bounty.</td></tr>
     <tr><td class="name">Attribution</td><td class="desc">A signup is attributed if the visitor lands on pinnodds.com with your <code>?ref=</code> parameter and then signs up + verifies email in the same browser session. We don't use cross-device cookies — straight session-based attribution.</td></tr>
     <tr><td class="name">Tracking</td><td class="desc">Your panel shows a live list of every signup attributed to you, whether they're on a paid plan, and how much you've earned (unpaid + paid out).</td></tr>
-    <tr><td class="name">Payouts</td><td class="desc">Processed manually. Once your unpaid balance reaches <b>$50+</b> we'll reach out to arrange transfer (crypto, bank transfer, or PayPal — whichever you prefer). Faster payouts are available on request — email <a href="/cdn-cgi/l/email-protection#1e777078715e6e777070717a7a6d307d7173"><span class="__cf_email__" data-cfemail="0960676f664979606767666d6d7a276a6664">[email&#160;protected]</span></a>.</td></tr>
+    <tr><td class="name">Payouts</td><td class="desc">Processed manually. Once your unpaid balance reaches <b>$50+</b> we'll reach out to arrange transfer (crypto, bank transfer, or PayPal — whichever you prefer). Faster payouts are available on request — email <a href="mailto:info@pinnodds.com">info@pinnodds.com</a>.</td></tr>
     <tr><td class="name">Self-referral</td><td class="desc">Blocked. You can't sign up via your own link.</td></tr>
     <tr><td class="name">Refunds</td><td class="desc">If a referred customer's payment is refunded by us (rare), the corresponding commission is voided. We don't claw back already-paid commissions for routine churn — only for actual refunds.</td></tr>
   </tbody>
@@ -1973,7 +1974,7 @@ curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
 <p style="color: var(--muted); font-size: 13px; margin-top: 10px"><b>Privacy:</b> in your panel, referred users' emails are masked (e.g. <code>j***@gmail.com</code>) so you can recognize friends you invited without exposing full addresses if you screenshot the dashboard. Admins see unmasked emails in our internal tooling.</p>
 
 <div class="callout warn" style="margin-top: 40px">
-  <b>Need something we don't have?</b> Historical archives, custom rate above 30 req/sec, or a market we don't surface yet — email <a href="/cdn-cgi/l/email-protection#9af3f4fcf5daeaf3f4f4f5fefee9b4f9f5f7"><span class="__cf_email__" data-cfemail="670e09010827170e0909080303144904080a">[email&#160;protected]</span></a> and tell us what you need.
+  <b>Need something we don't have?</b> Historical archives, custom rate above 30 req/sec, or a market we don't surface yet — email <a href="mailto:info@pinnodds.com">info@pinnodds.com</a> and tell us what you need.
 </div>
 
 </main>
@@ -1987,18 +1988,18 @@ curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
         <a class="brand" href="/"><svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="12" width="4" height="9" rx="1.5" fill="#F4F2EF"/><rect x="10" y="7" width="4" height="14" rx="1.5" fill="#FF6B1A"/><rect x="17" y="3" width="4" height="18" rx="1.5" fill="#F4F2EF"/></svg>pinnodds</a>
         <p>Independent real-time Pinnacle odds API. REST, SSE and raw WebSocket.</p>
       </div>
-      <div><h4>Product</h4><ul><li><a href="/pinnacle-odds-api">Pinnacle API</a></li><li><a href="/pinnacle-websocket-api">WebSocket API</a></li><li><a href="/mcp">MCP server</a></li><li><a href="/panel">Dashboard</a></li><li><a href="/pinnacle-api-pricing">Pricing</a></li><li><a href="/docs#affiliate">Affiliate 30%</a></li></ul></div>
-      <div><h4>Pinnacle odds</h4><ul><li><a href="/pinnacle-odds">All sports live board</a></li><li><a href="/pinnacle-odds/nfl">NFL · NBA · MLB · NHL</a></li><li><a href="/pinnacle-odds/soccer">Soccer · Tennis</a></li><li><a href="/pinnacle-odds-dropper">Odds dropper</a></li></ul></div>
+      <div><h4>Product</h4><ul><li><a href="/pinnacle-odds-api">Pinnacle API</a></li><li><a href="/pinnacle-websocket-api">WebSocket API</a></li><li><a href="/mcp">MCP server</a></li><li><a href="/panel">Dashboard</a></li><li><a href="/pinnacle-api-pricing">Pricing</a></li><li><a href="/latency">Latency</a></li><li><a href="/docs#affiliate">Affiliate 30%</a></li></ul></div>
+      <div><h4>Pinnacle odds</h4><ul><li><a href="/pinnacle-odds">All sports live board</a></li><li><a href="/pinnacle-odds/nfl">NFL odds</a></li><li><a href="/pinnacle-odds/nba">NBA odds</a></li><li><a href="/pinnacle-odds/mlb">MLB odds</a></li><li><a href="/pinnacle-odds/nhl">NHL odds</a></li><li><a href="/pinnacle-odds/soccer">Soccer odds</a></li><li><a href="/pinnacle-odds/tennis">Tennis odds</a></li><li><a href="/pinnacle-odds/esports">Esports odds</a></li><li><a href="/pinnacle-odds-dropper">Odds dropper</a></li></ul></div>
       <div><h4>Developers</h4><ul><li><a href="/docs">Docs</a></li><li><a href="/blog">Blog</a></li><li><a href="https://www.npmjs.com/package/pinnodds">npm</a></li><li><a href="https://pypi.org/project/pinnodds/">PyPI</a></li><li><a href="https://github.com/Pinnodds/pinnodds-sdk">GitHub</a></li><li><a href="https://rapidapi.com/">RapidAPI</a></li></ul></div>
       <div><h4>Compare</h4><ul><li><a href="/the-odds-api-alternative">vs The Odds API</a></li><li><a href="/sharpapi-alternative">vs SharpAPI</a></li><li><a href="/sportsgameodds-alternative">vs SportsGameOdds</a></li><li><a href="/opticodds-alternative">vs OpticOdds</a></li></ul></div>
-      <div><h4>Contact</h4><ul><li><a href="https://t.me/ArbitrageXpro">Telegram @ArbitrageXpro</a></li><li><a href="/cdn-cgi/l/email-protection#5f363139301f2f363131303b3b2c713c3032"><span class="__cf_email__" data-cfemail="147d7a727b54647d7a7a7b7070673a777b79">[email&#160;protected]</span></a></li><li><a href="/about">About</a></li><li><a href="/terms">Terms</a> · <a href="/privacy">Privacy</a></li><li><a href="/cookies">Cookies</a></li></ul></div>
+      <div><h4>Contact</h4><ul><li><a href="https://t.me/ArbitrageXpro">Telegram @ArbitrageXpro</a></li><li><a href="mailto:info@pinnodds.com">info@pinnodds.com</a></li><li><a href="/about">About</a></li><li><a href="/terms">Terms</a> · <a href="/privacy">Privacy</a></li><li><a href="/cookies">Cookies</a></li></ul></div>
     </div>
     <div class="legal"><span>Not affiliated with, endorsed by, or connected to Pinnacle.</span><span>18+ · Data service only, not a bookmaker.</span><span>&copy; <span id="yr">2026</span> pinnodds · <a href="#" onclick="window.pinnConsent&&pinnConsent.open();return false">Cookie settings</a></span></div>
   </div>
 </footer>
 <!-- /FOOTER -->
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 (function(){
   "use strict";
 

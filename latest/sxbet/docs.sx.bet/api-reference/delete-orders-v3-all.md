@@ -11,11 +11,9 @@ the authenticated address, across every market and event.
 
 > [!WARNING]
 >
-> **This is an asynchronous endpoint — a `200` means submitted, not cancelled.** The route publishes
-> cancel commands and returns without waiting for a response, so your orders are still on the
-> book when the response arrives. Confirm with
-> [`GET /orders-v3?eventId=…`](https://docs.sx.bet/api-reference/get-orders-v3) or watch
-> [`account:orders_v3_#{address}`](https://docs.sx.bet/api-reference/channel-orders-v3) before acting on the result.
+> **This is an asynchronous endpoint.** It returns without waiting for cancellation to complete.
+> The unfilled amount of each order in `cancelledSubmitted` will be cancelled; until then, the
+> order can still fill. See [Once a cancel is sent](https://docs.sx.bet/developers/cancelling-orders.md#once-a-cancel-is-sent).
 
 
 ## OpenAPI
@@ -83,9 +81,7 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/CancelByIdItem'
-                        description: >-
-                          A cancel command for this order reached the orderbook.
-                          This is not confirmation that it is off the book.
+                        description: The unfilled amount of this order will be cancelled.
               example:
                 status: success
                 data:
@@ -137,15 +133,20 @@ components:
           description: >-
             Command id of the cancel that produced this outcome. Always present
             on `cancelled`, `unconfirmed` and `cancelledSubmitted`; on
-            `notCancelled` it is present only when the matching engine reported
-            the order was not on the book.
+            `notCancelled` it is present only for CANCEL_AFTER_MATCH, and for
+            NOT_FOUND when the matching engine reported the order was not on the
+            book.
         reason:
           type: string
           description: >-
             Why the order was not cancelled. On `notCancelled`: NOT_FOUND (no
             such order, someone else's order, or not on the book),
-            CANCEL_PENDING (a cancel is already in flight), NOT_ACTIVE (already
-            terminal).
+            CANCEL_PENDING (a cancel for this order is already queued in the
+            matching engine and processed in sequence with the market's other
+            commands; the order can still fill until it takes effect),
+            NOT_ACTIVE (already terminal), CANCEL_AFTER_MATCH (the order is
+            still in its betting delay; it matches when the delay elapses, then
+            any unmatched amount is cancelled).
     ErrorNest:
       description: Most common shape.
       type: object

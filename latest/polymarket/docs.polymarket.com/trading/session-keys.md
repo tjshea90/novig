@@ -6,10 +6,6 @@
 
 > Authorize a separate signer for scoped, time-limited Deposit Wallet trading.
 
-> [!NOTE]
->
-> Session Keys are in beta. We welcome feedback as you integrate them.
-
 A Session Key is a separate signer that a Deposit Wallet Owner authorizes to
 trade for a Deposit Wallet. It lets an integration perform routine trading
 without using the owner's key. A Session Key cannot withdraw funds from the
@@ -38,15 +34,10 @@ of 180 days and scoped permissions.
 > Session Keys are Externally Owned Accounts (EOAs). Keep their private keys
 > secret to prevent unauthorized trading on behalf of your Deposit Wallet.
 
-Authorizing a Session Key requires a Builder API key. See [Create New
-Accounts](https://docs.polymarket.com/trading/wallets-auth.md#create-new-accounts) to generate one.
-
-> [!WARNING]
->
-> During the initial rollout, contact
-> [builder@polymarket.com](mailto:builder@polymarket.com) to authorize your
-> Builder API key for session-key management. If you are already a member of the
-> Builder Program Telegram group, you can also ask there.
+Authorizing or revoking a Session Key requires a [Relayer API
+key](https://polymarket.com/settings?tab=api-keys) for the Deposit Wallet
+Owner's address or a [Builder API
+key](https://docs.polymarket.com/trading/wallets-auth.md#create-new-accounts).
 
 > [tab] TypeScript
 >
@@ -68,9 +59,23 @@ Accounts](https://docs.polymarket.com/trading/wallets-auth.md#create-new-account
 > **2. Create the Deposit Wallet Owner Client**
 >
 > Then, create a `SecureClient` with the Deposit Wallet Owner's private key
-> and Builder API credentials.
+> and either a Relayer API key or Builder API credentials.
 >
-> ```ts theme={null}
+> ```ts Relayer API Key theme={null}
+> import { createSecureClient, relayerApiKey } from "@polymarket/client";
+> import { privateKey } from "@polymarket/client/viem";
+>
+> const secureClient = await createSecureClient({
+>   signer: privateKey(process.env.POLYMARKET_PRIVATE_KEY),
+>   wallet: process.env.POLYMARKET_DEPOSIT_WALLET!,
+>   apiKey: relayerApiKey({
+>     key: process.env.POLYMARKET_RELAYER_API_KEY!,
+>     address: process.env.POLYMARKET_RELAYER_API_KEY_ADDRESS!,
+>   }),
+> });
+> ```
+>
+> ```ts Builder API Key theme={null}
 > import { createSecureClient } from "@polymarket/client";
 > import { builderApiKey } from "@polymarket/client/node";
 > import { privateKey } from "@polymarket/client/viem";
@@ -85,6 +90,8 @@ Accounts](https://docs.polymarket.com/trading/wallets-auth.md#create-new-account
 >   }),
 > });
 > ```
+>
+> In `relayerApiKey()`, `address` is the Deposit Wallet Owner's address.
 >
 > **3. Authorize the Session Key**
 >
@@ -132,9 +139,24 @@ Accounts](https://docs.polymarket.com/trading/wallets-auth.md#create-new-account
 > **2. Create the Deposit Wallet Owner Client**
 >
 > Then, create an `AsyncSecureClient` with the Deposit Wallet Owner's
-> private key and Builder API credentials.
+> private key and either a Relayer API key or Builder API credentials.
 >
-> ```python theme={null}
+> ```python Relayer API Key theme={null}
+> import os
+>
+> from polymarket import AsyncSecureClient, RelayerApiKey
+>
+> secure_client = await AsyncSecureClient.create(
+>     private_key=os.environ["POLYMARKET_PRIVATE_KEY"],
+>     wallet=os.environ["POLYMARKET_DEPOSIT_WALLET"],
+>     api_key=RelayerApiKey(
+>         key=os.environ["POLYMARKET_RELAYER_API_KEY"],
+>         address=os.environ["POLYMARKET_RELAYER_API_KEY_ADDRESS"],
+>     ),
+> )
+> ```
+>
+> ```python Builder API Key theme={null}
 > import os
 >
 > from polymarket import AsyncSecureClient, BuilderApiKey
@@ -149,6 +171,8 @@ Accounts](https://docs.polymarket.com/trading/wallets-auth.md#create-new-account
 >     ),
 > )
 > ```
+>
+> In `RelayerApiKey`, `address` is the Deposit Wallet Owner's address.
 >
 > **3. Authorize the Session Key**
 >
@@ -352,27 +376,29 @@ Accounts](https://docs.polymarket.com/trading/wallets-auth.md#create-new-account
 >   in the signed typed data.
 > * `<signature>` is the value returned in the previous step.
 >
-> **7. Create the Builder Signature**
+> **7. Submit the Authorization**
 >
-> Then, authorize the request with the Builder keys:
+> Then, submit the authorization request to the Relayer with your Relayer
+> API key or Builder API key:
 >
-> ```text theme={null}
-> authorization_body = <exact_serialized_authorization_body>
-> request_timestamp = <unix_seconds>
-> method = "POST"
-> request_path = "/v1/session-signers/authorizations"
->
-> message = request_timestamp + method + request_path + authorization_body
-> builder_signature = urlsafeBase64WithPadding(
->   HMAC-SHA256(base64Decode(<builder_api_secret>), message)
-> )
+> ```bash Relayer API Key theme={null}
+> curl -X POST "https://relayer-v2.polymarket.com/v1/session-signers/authorizations" \
+>   -H "Content-Type: application/json" \
+>   -H "RELAYER_API_KEY: <relayer_api_key>" \
+>   -H "RELAYER_API_KEY_ADDRESS: <deposit_wallet_owner_address>" \
+>   -H "Idempotency-Key: <idempotency_key>" \
+>   -d '{
+>     "walletAddress": "<deposit_wallet_address>",
+>     "sessionSignerAddress": "<session_signer_address>",
+>     "scopes": ["CLOB", "COMBOSRFQ"],
+>     "validUntil": "<session_expiry_unix_seconds>",
+>     "nonce": "<wallet_nonce>",
+>     "deadline": "<batch_deadline_unix_seconds>",
+>     "signature": "<signature>"
+>   }'
 > ```
 >
-> **8. Submit the Authorization**
->
-> Then, submit the authorization request to the Relayer:
->
-> ```bash theme={null}
+> ```bash Builder API Key theme={null}
 > curl -X POST "https://relayer-v2.polymarket.com/v1/session-signers/authorizations" \
 >   -H "Content-Type: application/json" \
 >   -H "POLY_BUILDER_API_KEY: <builder_api_key>" \
@@ -395,11 +421,26 @@ Accounts](https://docs.polymarket.com/trading/wallets-auth.md#create-new-account
 >
 > * `<idempotency_key>` uniquely identifies this authorization request.
 >   Reuse it when retrying the same request.
-> * `<request_timestamp>` is the Unix timestamp in seconds used to create
->   the Builder signature.
-> * `<builder_api_key>` is your Builder API key.
-> * `<builder_api_passphrase>` is the passphrase for your Builder API key.
-> * `<builder_signature>` is the signature created in the previous step.
+> * `<relayer_api_key>` is your Relayer API key, and
+>   `<deposit_wallet_owner_address>` is the Deposit Wallet Owner address
+>   the key belongs to.
+> * `<builder_api_key>` and `<builder_api_passphrase>` are your Builder API
+>   credentials.
+> * `<request_timestamp>` and `<builder_signature>` authenticate a Builder
+>   API key request. Create the signature from the exact serialized
+>   request body:
+>
+> ```text theme={null}
+> authorization_body = <exact_serialized_authorization_body>
+> request_timestamp = <unix_seconds>
+> method = "POST"
+> request_path = "/v1/session-signers/authorizations"
+>
+> message = request_timestamp + method + request_path + authorization_body
+> builder_signature = urlsafeBase64WithPadding(
+>   HMAC-SHA256(base64Decode(<builder_api_secret>), message)
+> )
+> ```
 >
 > The response includes the Relayer transaction ID used to confirm the
 > authorization:
@@ -413,7 +454,7 @@ Accounts](https://docs.polymarket.com/trading/wallets-auth.md#create-new-account
 > }
 > ```
 >
-> **9. Confirm the Relayer Transaction**
+> **8. Confirm the Relayer Transaction**
 >
 > Then, poll the transaction endpoint using the returned
 > `<transaction_id>`:
@@ -434,7 +475,7 @@ Accounts](https://docs.polymarket.com/trading/wallets-auth.md#create-new-account
 > }
 > ```
 >
-> **10. Poll for the Session Key**
+> **9. Poll for the Session Key**
 >
 > Finally, poll the Session Keys endpoint until it returns the Session
 > Key with the expected scopes and expiration:
@@ -787,6 +828,363 @@ Orders](https://docs.polymarket.com/trading/place-orders.md) for the complete or
 > )
 > ```
 
+## Manage Wallet Orders
+
+List and cancel open orders across the Deposit Wallet, whichever signer placed
+them. The Deposit Wallet Owner and any active Session Key can list them. Only
+the Deposit Wallet Owner can cancel them.
+
+### List Wallet Orders
+
+List all open orders on the Deposit Wallet, or filter by market, outcome, or
+the signers that placed them.
+
+> [tab] TypeScript
+>
+> Call `listWalletOpenOrders()` on a `SecureClient` for the Deposit Wallet
+> Owner or a Session Key. Omit filters to list all open orders:
+>
+> ```ts theme={null}
+> const pages = secureClient.listWalletOpenOrders();
+>
+> for await (const page of pages) {
+>   // page.items: WalletOpenOrder[]
+> }
+> ```
+>
+> To filter the list, create `pages` with one of these calls, then iterate as
+> above:
+>
+> ```ts Deposit Wallet Owner theme={null}
+> const pages = secureClient.listWalletOpenOrders({
+>   signerAddresses: [depositWalletOwnerAddress],
+> });
+> ```
+>
+> ```ts Session Key theme={null}
+> const pages = secureClient.listWalletOpenOrders({
+>   signerAddresses: [sessionKeyAddress],
+> });
+> ```
+>
+> ```ts Market theme={null}
+> const pages = secureClient.listWalletOpenOrders({
+>   market: "<condition_id>",
+> });
+> ```
+>
+> ```ts Outcome theme={null}
+> const pages = secureClient.listWalletOpenOrders({
+>   assetId: "<outcome_asset_id>",
+> });
+> ```
+>
+> `signerAddresses` accepts up to 50 signer addresses. For owner orders, use
+> the Deposit Wallet Owner's signer address, not the Deposit Wallet address.
+> `market` takes the market's condition ID. Use `assetId` to filter by outcome.
+> Filters can be combined.
+>
+> > [accordion] Output: WalletOpenOrder
+> >
+> > ```ts WalletOpenOrder Type theme={null}
+> > type WalletOpenOrder = {
+> >   id: string;
+> >   conditionId: ConditionId;
+> >   assetId: ClobAssetId;
+> >   owner: string | null;
+> >   makerAddress: EvmAddress;
+> >   signerAddress: EvmAddress;
+> >   side: string;
+> >   price: DecimalString;
+> >   originalSize: DecimalString;
+> >   sizeMatched: DecimalString;
+> >   outcome: string;
+> >   orderType: string;
+> >   status: string;
+> >   createdAt: IsoDateTimeString;
+> >   expiresAt?: IsoDateTimeString;
+> > };
+> > ```
+> >
+> > ```json WalletOpenOrder Example theme={null}
+> > {
+> >   "id": "0xff354cd7ca7539dfa9c28d90943ab5779a4eac34b9b37a757d7b32bdfb11790b",
+> >   "conditionId": "0x747dc809fb79e1b05be09c42d6179459a58de2ef3e40f02484a4e1260f741f75",
+> >   "assetId": "107505882767731489358349912513945399560393482969656700824895970500493757150417",
+> >   "owner": null,
+> >   "makerAddress": "<deposit_wallet_address>",
+> >   "signerAddress": "<session_signer_address>",
+> >   "side": "BUY",
+> >   "price": "0.52",
+> >   "originalSize": "10",
+> >   "sizeMatched": "0",
+> >   "outcome": "Yes",
+> >   "orderType": "GTC",
+> >   "status": "LIVE",
+> >   "createdAt": "2026-06-01T12:00:00.000Z"
+> > }
+> > ```
+>
+> `signerAddress` is the signer that placed the order. `owner` is `null` when
+> the order's API key identifier is withheld.
+
+> [tab] Python
+>
+> Call `list_wallet_open_orders()` on an `AsyncSecureClient` for the Deposit
+> Wallet Owner or a Session Key. The synchronous `SecureClient` provides the
+> same method. Omit filters to list all open orders:
+>
+> ```python theme={null}
+> pages = secure_client.list_wallet_open_orders()
+>
+> async for page in pages:
+>     # page.items: tuple[WalletOpenOrder, ...]
+> ```
+>
+> To filter the list, create `pages` with one of these calls, then iterate as
+> above:
+>
+> ```python Deposit Wallet Owner theme={null}
+> pages = secure_client.list_wallet_open_orders(
+>     signer_addresses=[deposit_wallet_owner_address],
+> )
+> ```
+>
+> ```python Session Key theme={null}
+> pages = secure_client.list_wallet_open_orders(
+>     signer_addresses=[session_key_address],
+> )
+> ```
+>
+> ```python Market theme={null}
+> pages = secure_client.list_wallet_open_orders(market="<condition_id>")
+> ```
+>
+> ```python Outcome theme={null}
+> pages = secure_client.list_wallet_open_orders(asset_id="<outcome_asset_id>")
+> ```
+>
+> `signer_addresses` accepts up to 50 signer addresses. For owner orders, use
+> the Deposit Wallet Owner's signer address, not the Deposit Wallet address.
+> `market` takes the market's condition ID. Use `asset_id` to filter by outcome.
+> Filters can be combined.
+>
+> > [accordion] Output: WalletOpenOrder
+> >
+> > ```python WalletOpenOrder Type theme={null}
+> > class WalletOpenOrder:
+> >     id: str
+> >     condition_id: ConditionId
+> >     asset_id: ClobAssetId
+> >     maker_address: EvmAddress
+> >     signer_address: EvmAddress
+> >     owner: str | None
+> >     side: Literal["BUY", "SELL"]
+> >     price: Decimal
+> >     original_size: Decimal
+> >     size_matched: Decimal
+> >     outcome: str
+> >     order_type: str
+> >     status: str
+> >     created_at: datetime
+> >     expires_at: datetime | None
+> > ```
+> >
+> > ```json WalletOpenOrder Example theme={null}
+> > {
+> >   "id": "0xff354cd7ca7539dfa9c28d90943ab5779a4eac34b9b37a757d7b32bdfb11790b",
+> >   "condition_id": "0x747dc809fb79e1b05be09c42d6179459a58de2ef3e40f02484a4e1260f741f75",
+> >   "asset_id": "107505882767731489358349912513945399560393482969656700824895970500493757150417",
+> >   "maker_address": "<deposit_wallet_address>",
+> >   "signer_address": "<session_signer_address>",
+> >   "owner": null,
+> >   "side": "BUY",
+> >   "price": "0.52",
+> >   "original_size": "10",
+> >   "size_matched": "0",
+> >   "outcome": "Yes",
+> >   "order_type": "GTC",
+> >   "status": "LIVE",
+> >   "created_at": "2026-06-01T12:00:00Z",
+> >   "expires_at": null
+> > }
+> > ```
+>
+> `signer_address` is the signer that placed the order. `owner` is `None` when
+> the order's API key identifier is withheld.
+
+> [tab] API
+>
+> List open orders with an authenticated CLOB request signed by the Deposit
+> Wallet Owner or a Session Key. See [API
+> Authentication](https://docs.polymarket.com/getting-started/api.md#authentication) for the complete
+> signing flow. Omit filters to list all open orders:
+>
+> ```bash theme={null}
+> curl "https://clob.polymarket.com/data/wallet-open-orders" \
+>   -H "POLY_ADDRESS: <signer_address>" \
+>   -H "POLY_API_KEY: <clob_api_key>" \
+>   -H "POLY_PASSPHRASE: <clob_api_passphrase>" \
+>   -H "POLY_SIGNATURE: <clob_l2_signature>" \
+>   -H "POLY_TIMESTAMP: <clob_request_timestamp>"
+> ```
+>
+> To filter the list, use one of these URLs with the same headers:
+>
+> ```text Deposit Wallet Owner theme={null}
+> https://clob.polymarket.com/data/wallet-open-orders?session_keys=<deposit_wallet_owner_address>
+> ```
+>
+> ```text Session Key theme={null}
+> https://clob.polymarket.com/data/wallet-open-orders?session_keys=<session_signer_address>
+> ```
+>
+> ```text Market theme={null}
+> https://clob.polymarket.com/data/wallet-open-orders?market=<condition_id>
+> ```
+>
+> ```text Outcome theme={null}
+> https://clob.polymarket.com/data/wallet-open-orders?asset_id=<outcome_asset_id>
+> ```
+>
+> `session_keys` accepts up to 50 comma-separated signer addresses. For owner
+> orders, use the Deposit Wallet Owner's signer address, not the Deposit
+> Wallet address. `market` takes the market's condition ID. Use `asset_id` to
+> filter by outcome. Filters can be combined.
+> Generate `<clob_l2_signature>` from the request path:
+>
+> ```text theme={null}
+> message = <clob_request_timestamp> + "GET" + "/data/wallet-open-orders"
+>
+> clob_l2_signature = urlsafeBase64WithPadding(
+>   HMAC-SHA256(base64Decode(<clob_api_secret>), message)
+> )
+> ```
+>
+> The response contains a page of orders and a continuation cursor:
+>
+> ```json Response theme={null}
+> {
+>   "data": [
+>     {
+>       "id": "0xff354cd7ca7539dfa9c28d90943ab5779a4eac34b9b37a757d7b32bdfb11790b",
+>       "market": "0x747dc809fb79e1b05be09c42d6179459a58de2ef3e40f02484a4e1260f741f75",
+>       "asset_id": "107505882767731489358349912513945399560393482969656700824895970500493757150417",
+>       "owner": null,
+>       "maker_address": "<deposit_wallet_address>",
+>       "signer_address": "<session_signer_address>",
+>       "side": "BUY",
+>       "price": "0.52",
+>       "original_size": "10",
+>       "size_matched": "0",
+>       "outcome": "Yes",
+>       "order_type": "GTC",
+>       "status": "LIVE",
+>       "created_at": 1780315200,
+>       "expiration": "0"
+>     }
+>   ],
+>   "next_cursor": "<next_cursor>"
+> }
+> ```
+>
+> `signer_address` is the signer that placed the order. `owner` is empty or
+> `null` when the order's API key identifier is withheld. Repeat the request
+> with `cursor=<next_cursor>` until `next_cursor` is an empty string. A page
+> can be empty before the last page.
+
+### Cancel Wallet Orders
+
+The Deposit Wallet Owner can cancel up to 1,000 orders by ID or every open order
+on the Deposit Wallet. If a cancellation's outcome is uncertain, such as after a
+network error, list the wallet orders before retrying.
+
+> [tab] TypeScript
+>
+> Call `cancelWalletOrders()` on the Deposit Wallet Owner's `SecureClient`:
+>
+> ```ts theme={null}
+> const result = await secureClient.cancelWalletOrders({
+>   orderIds: [order.id],
+> });
+>
+> // result: CancelOrdersResponse
+> ```
+>
+> Call `cancelAllWalletOrders()` to cancel every open order:
+>
+> ```ts theme={null}
+> const result = await secureClient.cancelAllWalletOrders();
+>
+> // result: CancelOrdersResponse
+> ```
+
+> [tab] Python
+>
+> Call `cancel_wallet_orders()` on the Deposit Wallet Owner's
+> `AsyncSecureClient`. The synchronous `SecureClient` provides the same method
+> without `await`.
+>
+> ```python theme={null}
+> result = await secure_client.cancel_wallet_orders(
+>     order_ids=[order.id],
+> )
+>
+> # result: CancelOrdersResponse
+> ```
+>
+> Call `cancel_all_wallet_orders()` to cancel every open order:
+>
+> ```python theme={null}
+> result = await secure_client.cancel_all_wallet_orders()
+>
+> # result: CancelOrdersResponse
+> ```
+
+> [tab] API
+>
+> Cancel orders with the Deposit Wallet Owner's CLOB credentials. See [API
+> Authentication](https://docs.polymarket.com/getting-started/api.md#authentication) for the complete
+> signing flow.
+>
+> ```bash theme={null}
+> curl -X DELETE "https://clob.polymarket.com/cancel-wallet-orders" \
+>   -H "Content-Type: application/json" \
+>   -H "POLY_ADDRESS: <deposit_wallet_owner_address>" \
+>   -H "POLY_API_KEY: <clob_api_key>" \
+>   -H "POLY_PASSPHRASE: <clob_api_passphrase>" \
+>   -H "POLY_SIGNATURE: <clob_l2_signature>" \
+>   -H "POLY_TIMESTAMP: <clob_request_timestamp>" \
+>   --data '{"order_ids":["'"$ORDER_ID"'"]}'
+> ```
+>
+> Generate `<clob_l2_signature>` from the exact serialized body:
+>
+> ```text theme={null}
+> body = '{"order_ids":["' + order_id + '"]}'
+> message = <clob_request_timestamp> + "DELETE" + "/cancel-wallet-orders" + body
+>
+> clob_l2_signature = urlsafeBase64WithPadding(
+>   HMAC-SHA256(base64Decode(<clob_api_secret>), message)
+> )
+> ```
+>
+> To cancel every open order, send and sign `{"all":true}` instead:
+>
+> ```bash theme={null}
+> curl -X DELETE "https://clob.polymarket.com/cancel-wallet-orders" \
+>   -H "Content-Type: application/json" \
+>   -H "POLY_ADDRESS: <deposit_wallet_owner_address>" \
+>   -H "POLY_API_KEY: <clob_api_key>" \
+>   -H "POLY_PASSPHRASE: <clob_api_passphrase>" \
+>   -H "POLY_SIGNATURE: <clob_l2_signature>" \
+>   -H "POLY_TIMESTAMP: <clob_request_timestamp>" \
+>   --data '{"all":true}'
+> ```
+
+Each request returns a [cancellation
+result](https://docs.polymarket.com/trading/manage-orders.md#cancellation-results).
+
 ## Fetch Session Keys
 
 List the active Session Keys for a Deposit Wallet to see which signers can
@@ -1002,8 +1400,8 @@ cancels its open orders without affecting orders placed by other Session Keys.
 
 > [tab] API
 >
-> Authorize the revocation as the Deposit Wallet Owner, then submit it with
-> Builder authentication.
+> Authorize the revocation as the Deposit Wallet Owner, then submit it with a
+> Relayer API key or Builder API key.
 >
 > **1. Fetch the Wallet Nonce**
 >
@@ -1140,27 +1538,27 @@ cancels its open orders without affecting orders placed by other Session Keys.
 >   in the signed typed data.
 > * `<signature>` is the value returned in the previous step.
 >
-> **6. Create the Builder Signature**
+> **6. Submit the Revocation**
 >
-> Then, authorize the request with the Builder keys:
+> Then, submit the revocation request to the Relayer with your Relayer
+> API key or Builder API key:
 >
-> ```text theme={null}
-> revocation_body = <exact_serialized_revocation_body>
-> request_timestamp = <unix_seconds>
-> method = "POST"
-> request_path = "/v1/session-signers/revocations"
->
-> message = request_timestamp + method + request_path + revocation_body
-> builder_signature = urlsafeBase64WithPadding(
->   HMAC-SHA256(base64Decode(<builder_api_secret>), message)
-> )
+> ```bash Relayer API Key theme={null}
+> curl -X POST "https://relayer-v2.polymarket.com/v1/session-signers/revocations" \
+>   -H "Content-Type: application/json" \
+>   -H "RELAYER_API_KEY: <relayer_api_key>" \
+>   -H "RELAYER_API_KEY_ADDRESS: <deposit_wallet_owner_address>" \
+>   -H "Idempotency-Key: <idempotency_key>" \
+>   -d '{
+>     "walletAddress": "<deposit_wallet_address>",
+>     "sessionSignerAddress": "<session_signer_address>",
+>     "nonce": "<wallet_nonce>",
+>     "deadline": "<batch_deadline_unix_seconds>",
+>     "signature": "<signature>"
+>   }'
 > ```
 >
-> **7. Submit the Revocation**
->
-> Then, submit the revocation request to the Relayer:
->
-> ```bash theme={null}
+> ```bash Builder API Key theme={null}
 > curl -X POST "https://relayer-v2.polymarket.com/v1/session-signers/revocations" \
 >   -H "Content-Type: application/json" \
 >   -H "POLY_BUILDER_API_KEY: <builder_api_key>" \
@@ -1181,11 +1579,26 @@ cancels its open orders without affecting orders placed by other Session Keys.
 >
 > * `<idempotency_key>` uniquely identifies this revocation request.
 >   Reuse it when retrying the same request.
-> * `<request_timestamp>` is the Unix timestamp in seconds used to create
->   the Builder signature.
-> * `<builder_api_key>` is your Builder API key.
-> * `<builder_api_passphrase>` is the passphrase for your Builder API key.
-> * `<builder_signature>` is the signature created in the previous step.
+> * `<relayer_api_key>` is your Relayer API key, and
+>   `<deposit_wallet_owner_address>` is the Deposit Wallet Owner address
+>   the key belongs to.
+> * `<builder_api_key>` and `<builder_api_passphrase>` are your Builder API
+>   credentials.
+> * `<request_timestamp>` and `<builder_signature>` authenticate a Builder
+>   API key request. Create the signature from the exact serialized
+>   request body:
+>
+> ```text theme={null}
+> revocation_body = <exact_serialized_revocation_body>
+> request_timestamp = <unix_seconds>
+> method = "POST"
+> request_path = "/v1/session-signers/revocations"
+>
+> message = request_timestamp + method + request_path + revocation_body
+> builder_signature = urlsafeBase64WithPadding(
+>   HMAC-SHA256(base64Decode(<builder_api_secret>), message)
+> )
+> ```
 >
 > The accepted response contains the identifiers used to track the
 > revocation:
@@ -1199,7 +1612,7 @@ cancels its open orders without affecting orders placed by other Session Keys.
 > }
 > ```
 >
-> **8. Confirm the Relayer Transaction**
+> **7. Confirm the Relayer Transaction**
 >
 > Finally, poll the transaction endpoint using the returned
 > `<transaction_id>`:
@@ -1238,8 +1651,8 @@ access boundaries in mind:
 * **Orders:** A Session Key can [fetch an
   order](https://docs.polymarket.com/trading/manage-orders.md#fetch-an-order) or [list open
   orders](https://docs.polymarket.com/trading/manage-orders.md#list-open-orders) only for orders it submitted.
-  A Deposit Wallet Owner cannot fetch orders submitted by its authorized
-  Session Keys.
+  The same applies to the Deposit Wallet Owner. To list or cancel every
+  signer's orders, see [Manage Wallet Orders](#manage-wallet-orders).
 * **Trades:** A Session Key can [list account
   trades](https://docs.polymarket.com/trading/manage-orders.md#list-account-trades) only for trades associated
   with its own orders.

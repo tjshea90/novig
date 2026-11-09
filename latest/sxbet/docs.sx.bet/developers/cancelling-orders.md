@@ -10,12 +10,12 @@ There are four cancel routes. All four return `200` even when nothing was cancel
 alone never confirms an order is off the book — you have to check the response body, and what the
 body can tell you differs by route:
 
-| Route | Scope | Does the response body confirm the order is off the book? |
+| Route | Scope | What the response tells you |
 | - | - | - |
-| [`DELETE /orders-v3`](https://docs.sx.bet/api-reference/delete-orders-v3) | ids you name, up to 100 | **Yes** — waits for the matching engine, reports per order |
-| [`DELETE /orders-v3/market`](https://docs.sx.bet/api-reference/delete-orders-v3-market) | every open order on one market | **No** — confirms only that a cancel command was accepted |
-| [`DELETE /orders-v3/event`](https://docs.sx.bet/api-reference/delete-orders-v3-event) | every open order on one event | **No** — confirms only that a cancel command was accepted |
-| [`DELETE /orders-v3/all`](https://docs.sx.bet/api-reference/delete-orders-v3-all) | every open order you have | **No** — confirms only that a cancel command was accepted |
+| [`DELETE /orders-v3`](https://docs.sx.bet/api-reference/delete-orders-v3) | ids you name, up to 100 | **A per-order result** — waits up to 5 seconds for the matching engine |
+| [`DELETE /orders-v3/market`](https://docs.sx.bet/api-reference/delete-orders-v3-market) | every open order on one market | **Which orders are being cancelled** — returns without waiting for cancellation to complete |
+| [`DELETE /orders-v3/event`](https://docs.sx.bet/api-reference/delete-orders-v3-event) | every open order on one event | **Which orders are being cancelled** — returns without waiting for cancellation to complete |
+| [`DELETE /orders-v3/all`](https://docs.sx.bet/api-reference/delete-orders-v3-all) | every open order you have | **Which orders are being cancelled** — returns without waiting for cancellation to complete |
 
 ## Cancelling asynchronously
 
@@ -23,10 +23,27 @@ body can tell you differs by route:
 before responding, and reports `cancelled` or `notCancelled` per order — plus a third bucket,
 `unconfirmed`, for when the matching engine's answer doesn't arrive within that window.
 
-**Cancel-all, cancel-by-event and cancel-by-market are asynchronous.** All three return as soon as the
-matching engine accepts the cancel commands, before your orders are actually off the book. The
-response's `cancelledSubmitted` list names which commands were accepted; nothing in the response
-confirms the orders are gone.
+**Cancel-all, cancel-by-event and cancel-by-market are asynchronous.** They return without waiting
+for cancellation to complete. The unfilled amount of each order in the response's
+`cancelledSubmitted` list will be cancelled.
+
+## Once a cancel is sent
+
+A cancel is queued in the matching engine and processed in sequence with the market's other
+commands. Until it takes effect, the order can still fill: for example, against an order the
+matching engine received before the cancel. An order still in its
+[betting delay](https://docs.sx.bet/developers/betting-delays.md) matches when the delay elapses. Any unfilled amount is
+then cancelled.
+
+After a `200` response, you do not need to send another cancel for:
+
+* **Cancel-all, cancel-by-event and cancel-by-market:** every order in `cancelledSubmitted`.
+* **Cancel by id:** orders in `unconfirmed`, and orders in `notCancelled` with `reason`
+  `CANCEL_PENDING` or `CANCEL_AFTER_MATCH`. For `unconfirmed`, the cancel was accepted, but
+  confirmation did not arrive within the timeout.
+
+A bulk cancel does not cover orders submitted after it completes. Orders submitted while it is
+running may or may not be included. Check `cancelledSubmitted` to see which orders it covers.
 
 ## Choosing a route
 

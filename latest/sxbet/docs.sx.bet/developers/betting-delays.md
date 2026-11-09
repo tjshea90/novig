@@ -14,6 +14,13 @@ accepted immediately and goes `ACTIVE` without waiting.
 A delayed order matches against the book as it stands when the delay elapses, not as it stood when
 you submitted it, so it can fill less than the depth you saw, or nothing at all.
 
+> [!WARNING]
+>
+> **Cancelling an order during its delay does not stop it matching.** The order still matches when
+> the delay elapses, and any unmatched amount is then cancelled instead of resting.
+> [`DELETE /orders-v3`](https://docs.sx.bet/api-reference/delete-orders-v3) reports such an order in `notCancelled`
+> with `reason: "CANCEL_AFTER_MATCH"`.
+
 ## Live
 
 Resolve in this order: `leagueIdToMs[leagueId]`, then `sportIdToMs[sportId]`, then `liveMsDefault`.

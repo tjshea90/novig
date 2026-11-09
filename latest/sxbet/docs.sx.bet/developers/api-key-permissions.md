@@ -30,6 +30,7 @@ Routes with no authentication, such as `GET /markets/active`, are not listed her
 | - |
 | [`GET` `/orders-v3`](https://docs.sx.bet/api-reference/get-orders-v3) |
 | [`GET` `/orders-v3/{orderId}`](https://docs.sx.bet/api-reference/get-order-v3) |
+| [`GET` `/orders-v3/batch`](https://docs.sx.bet/api-reference/get-orders-v3-batch) |
 | [`GET` `/orders-v3/client/{clientOrderId}`](https://docs.sx.bet/api-reference/get-order-v3-by-client-id) |
 
 ## Orders: create

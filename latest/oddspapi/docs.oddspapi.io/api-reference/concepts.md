@@ -25,23 +25,13 @@ Identifiers (`sportId`, `fixtureId`, etc.) are language-independent.
 
 ## Sports, tournaments, seasons
 
-### sportId
+All three are integers, each belonging to exactly one parent:
 
-* Integer.
-* The **first two digits** embedded into several downstream IDs.
-* Discover via `/sports`.
-
-### tournamentId
-
-* Integer.
-* Belongs to exactly one sport.
-* Discover via `/tournaments`.
-
-### seasonId
-
-* Integer.
-* Belongs to exactly one tournament.
-* Discover via `/seasons`.
+| ID | Discover via | Note |
+| - | - | - |
+| `sportId` | `/sports` | its **first two digits** are embedded into several downstream IDs |
+| `tournamentId` | `/tournaments` | belongs to one sport |
+| `seasonId` | `/seasons` | belongs to one tournament |
 
 > See the full [Sports Coverage](https://docs.oddspapi.io/coverage.md) table for every `sportId` and whether it's available as fixtures, futures, or both.
 
@@ -129,32 +119,48 @@ So soccer's Winner market is `10001` and the Politics Prediction market is `6900
 
 > [!NOTE]
 >
-> **TL;DR** — Every selection follows a fixed hierarchy: `marketType → period → handicap → side`, all baked into the `outcomeId` — so the same bet always resolves to the same `marketId` / `outcomeId`, addressed by coordinates rather than bookmaker name strings. The one part *not* in `outcomeId` is the player, carried by `playerId`. All outcomes of a market share its `marketId`, which equals the market's first `outcomeId`.
+> **TL;DR** — A market is `sportId × marketType × period × handicap`; add the side and you have the `outcomeId`. Everything is baked into the id, so the same bet always resolves to the same `marketId` / `outcomeId` — addressed by coordinates, never by bookmaker name strings. The one part *not* in the id is the player, carried separately by `playerId`. All outcomes of a market share its `marketId`, which equals the market's first `outcomeId`.
 
-For which market types, lines, periods, and player props are actually carried, see [market coverage](https://docs.oddspapi.io/coverage/markets.md).
+For which market types, lines, periods and player props are actually carried, see [market coverage](https://docs.oddspapi.io/coverage/markets.md).
 
-### How markets decompose (the deterministic hierarchy)
+### The identity of a market (the strict rule)
 
-Every `outcomeId` comes from a single, deterministic decomposition — OddsPapi splits each market into a fixed hierarchy:
+A market is identified by exactly four cells, and an outcome adds a fifth:
 
 ```
-marketType → period → handicap (line value / specifier) → side (outcome)   [+ optional player]
+market   sportId × marketType × period × handicap
+outcome  sportId × marketType × period × handicap × outcomeName
 ```
 
-So "total goals over 2.5, full time" always lands on the same `marketId` / `outcomeId` across bookmakers and fixtures.
+| Cell | Meaning |
+| - | - |
+| `marketType` | the kind of question (`1x2`, `totals`, `spreads`, `bothteamsscore`, `oddeven`, …) |
+| `period` | the scope it applies to (`fulltime`, `result`, `p1`, `p1o6`, …) |
+| `handicap` | the line / specifier (`2.5`, `-0.25`); `0.0` for a lineless market |
+| `outcomeName` | the side (`Over`/`Under`, `1`/`X`/`2`, `Yes`/`No`, …) |
 
-| Level | Field | Meaning |
-| - | - | - |
-| 1 | `marketType` | The kind of market (`1x2`, `totals`, `spreads`, `spreads-european`, `bothteamsscore`, `drawnobet`, `oddeven`, …). |
-| 2 | `period` | The segment the market applies to (`fulltime`, `p1`, `p2`). |
-| 3 | `handicap` | The line value / specifier (e.g. `2.5`, `-0.25`). **Each distinct line value is its own `marketId`.** `0.0` for lineless markets like `1x2`. |
-| 4 | `outcomeName` | The **side** of the market (`Over` / `Under`, `1` / `X` / `2`, `Yes` / `No`, …). |
+Nothing else distinguishes a market — in particular **not its name**. Two consequences, both audited against the published catalogue on every release:
 
-> **Key rule:** because every line value gets its **own** `marketId`, "Over 2.5" and "Over 3.5" are *different* markets — not two outcomes of one market. Within a single `marketId`, the outcomes are only the **sides** of that exact line (e.g. `Over 2.5` + `Under 2.5`).
+**Each line is its own market.** "Over 2.5" and "Over 3.5" are *different* `marketId`s, not two outcomes of one market. Within one `marketId` the outcomes are only the sides of that exact line (`Over 2.5` + `Under 2.5`).
+
+**One structure per `marketType` and `period`, with a complete side set.** The same type at the same scope always offers the same sides, and those sides are the whole probability space:
+
+| if the market has | it also has |
+| - | - |
+| `Yes` | `No` |
+| `Over` | `Under` at that same `handicap` |
+| `Odd` | `Even` |
+| `1` | `2`, plus `X` wherever the market is three-way and a draw is possible |
+| `1X` | `12` and `2X` |
+| a `-team1` marketType | its `-team2` sibling at the same `period` and `handicap` |
+
+Two notes on applying this. Completeness is **per line** — an Over/Under ladder is many markets, so check the pair at a line, not across the ladder. And the band families are complete *without* an opposite, because their shape is a partition rather than a pair: `correctscore` (`a:b` cells), `winningmargin` and the `exact*` families cover their measure in bands, and a "no bet" market excludes one side deliberately (the excluded result is a push, not a missing outcome).
+
+This same key is what composes the `oddsId` — see [Odds identifiers](#odds-identifiers).
 
 > [accordion] Worked example — soccer (sportId 10)
 >
-> A representative slice of the real soccer market map. Each `marketId` equals its first `outcomeId`, and each line value is its own market:
+> Each `marketId` equals its first `outcomeId`, and each line value is its own market:
 >
 > | marketId | marketName | marketType | period | handicap | outcomeId | outcomeName |
 > | -: | - | - | - | -: | -: | - |
@@ -169,20 +175,11 @@ So "total goals over 2.5, full time" always lands on the same `marketId` / `outc
 > | 1010 | Over Under Full Time | `totals` | fulltime | 2.5 | 1011 | Under |
 > | 1068 | Asian Handicap | `spreads` | fulltime | -0.5 | 1068 | 1 |
 > | 1068 | Asian Handicap | `spreads` | fulltime | -0.5 | 1069 | 2 |
-> | 10122 | European Handicap | `spreads-european` | fulltime | 6.0 | 10122 | 1 |
-> | 10122 | European Handicap | `spreads-european` | fulltime | 6.0 | 10123 | X |
-> | 10122 | European Handicap | `spreads-european` | fulltime | 6.0 | 10124 | 2 |
 > | 10208 | First Half Result | `1x2` | p1 | 0.0 | 10208 | 1 |
-> | 10208 | First Half Result | `1x2` | p1 | 0.0 | 10209 | X |
-> | 10208 | First Half Result | `1x2` | p1 | 0.0 | 10210 | 2 |
-> | 10214 | Draw No Bet | `drawnobet` | fulltime | 0.0 | 10214 | 1 |
-> | 10214 | Draw No Bet | `drawnobet` | fulltime | 0.0 | 10215 | 2 |
-> | 10222 | Odd Even Full Time | `oddeven` | fulltime | 0.0 | 10222 | Odd |
-> | 10222 | Odd Even Full Time | `oddeven` | fulltime | 0.0 | 10223 | Even |
 > | 10224 | Over Under Team 1 | `teamtotals-team1` | fulltime | 0.5 | 10224 | Over |
 > | 10224 | Over Under Team 1 | `teamtotals-team1` | fulltime | 0.5 | 10225 | Under |
 >
-> Reading the first row: `marketType=1x2`, `period=fulltime`, `handicap=0.0`, `outcomeName=1` — the home side of the full-time match-result market.
+> Reading the first row: `marketType=1x2`, `period=fulltime`, `handicap=0.0`, `outcomeName=1` — the home side of the full-time match-result market. Note `106` and `1010` are the same question at two lines, hence two markets.
 
 ### Relationship between `marketId` and `outcomeId`
 
@@ -197,7 +194,9 @@ This makes it possible to determine which outcomes belong to which market **with
 
 ### marketLength
 
-`marketLength` is the **number of outcomes under a `marketId`** — the count of sides that can be bet on, which together form the complete probability space (their implied probabilities sum to ≈ 1 before margin removal). Examples: `moneyline` → 2, `1x2` → 3, `winningmargin` → the number of margin bands offered.
+The size of **one complete probability space** where that size is fixed — the sides whose implied probabilities sum to ≈ 1 before margin removal (`moneyline` → 2, `1x2` → 3). **`0` means variable-length** (`correctscore`, `winningmargin`).
+
+It is **not** a count of the outcome rows you received. The field is frozen metadata, so a market whose missing side was appended after publication still reports its original value — 26 markets today. **To count sides, read the outcome list.**
 
 ### ID structure
 
@@ -236,18 +235,7 @@ If you perform arbitrage or pricing logic, always group odds by `marketId`.
 
 ## Participants and players
 
-### participantId
-
-* Integer.
-* Represents teams or competitors in fixtures.
-* Discover via `/participants`.
-
-### playerId
-
-* Integer.
-* Used for player proposition markets.
-* `playerId = 0` typically represents a non-player market.
-* Discover via `/players`.
+Both integers: `participantId` identifies teams or competitors in fixtures (discover via `/participants`); `playerId` ties odds to a player for player prop markets, with `0` meaning a non-player market (discover via `/players`).
 
 ***
 
@@ -345,6 +333,30 @@ Drop the `bookmaker` and you have the **selection** itself — `{fixtureId}:{out
 
 Selection keys are what make cross-book and cross-feed comparison cheap — see [running OddsPapi as a second feed](https://docs.oddspapi.io/guides/second-feed.md) for joining to an existing feed on them.
 
+### Why the `oddsId` is static (and what that saves you)
+
+The key is the market identity rule plus one extra coordinate:
+
+```
+{fixtureId} : {bookmaker} : {outcomeId} : {playerId}
+```
+
+| Segment | What it encodes |
+| - | - |
+| `outcomeId` | sportId × marketType × period × handicap × side |
+| `playerId` | the player (`0` for non-player markets) |
+
+Because all of that is *in the id*, a price is self-describing the moment it arrives:
+
+* **No joins on the hot path.** `outcomeId` `1010` *is* "soccer, total goals, full time, line 2.5, Over" — nothing is resolved at read time.
+* **The whole dictionary fits in memory** — 156,757 outcome rows, \~17.8 MB as CSV. Load once, resolve any id with a hash lookup.
+* **Integer keys, minimal payload.** No market name, period label, or line string repeated per message; cross-book comparison is `GROUP BY fixtureId, outcomeId` and nothing else.
+* **Arbitrage spaces are explicit.** Each line is its own `marketId` and 97.8% of markets are 2-sided — sum the implied probabilities under one `marketId` and the space is complete.
+* **Stable and cacheable.** Ids are append-only and never renumbered — safe to embed in code or a schema. The 2026-11-16 release re-filed 33,792 outcomes onto new `marketType` / `period` values with **zero** id changes.
+* **Player props don't inflate the id space.** The player is a coordinate of the price, not the taxonomy — one ladder serves every roster, and a transfer never churns an id.
+
+**The one cost:** a line a bookmaker quotes *outside* our published ladder has no id to land on and is dropped. That is why ladders are generated mechanically per family (floor `0.5`, ceiling = measured maximum + `2.5`) rather than decided per market.
+
 ### Future odds IDs
 
 Future odds are identified by four segments, mirroring fixture odds keys:
@@ -386,11 +398,7 @@ All **odds-update times** are integer epoch milliseconds — for fixtures and fu
 * Odds `since` filters (`/fixtures/odds`, `/fixtures/odds/main`, `/futures/odds`)
 * WebSocket envelope `ts` and the timestamp part of `entryId`
 
-### Recommendation
-
-* Store timestamps as integers.
-* Rule of thumb: **schedule times are seconds, odds-update times are milliseconds.**
-* Normalize internally only if needed.
+Store timestamps as integers. Rule of thumb: **schedule times are seconds, odds-update times are milliseconds.**
 
 ***
 
@@ -474,7 +482,7 @@ Quick definitions of the core terms used throughout the API.
 * **period** — The segment a market applies to (`fulltime`, `p1`, `p2`).
 * **handicap** — The line value / specifier of a market; each distinct line value is its own `marketId`.
 * **marketId** — Integer grouping all outcomes of one market; equals the market's first `outcomeId`.
-* **marketLength** — Number of outcomes under a `marketId`: the sides that can be bet on, together summing to a probability of ≈ 1.
+* **marketLength** — The size of one complete probability space where that size is fixed (`0` = variable-length). Frozen metadata, **not** a count of the outcome rows you received — read the outcome list for that.
 * **outcomeId** — Integer identifying one fully-decomposed selection: `marketType` + `period` + `handicap` (line) + side. It encodes everything except the player — that's what `playerId` adds.
 * **playerId** — Ties an outcome to a player for player markets; `playerId = 0` is a non-player market.
 * **participantId** — Integer identifying a team or competitor in a fixture.

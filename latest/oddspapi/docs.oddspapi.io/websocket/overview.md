@@ -108,7 +108,7 @@ const obj = typeof raw === "string"
 
 | Limit Type | Description |
 | - | - |
-| Concurrent connections | Enforced per `apiKey` group (max: 5). See error `4003`. |
+| Concurrent connections | Enforced per `apiKey` group (max: 8). See error `4003`. |
 | Backpressure | If your client can’t keep up, connection is closed (`4002`). |
 | Replay window | See `resumeWindowMs` in [Resume & Replay](https://docs.oddspapi.io/websocket/resume-replay.md) |
 | Message rate | Not explicitly limited, but filters are recommended for performance |

@@ -4,7 +4,7 @@
 
 # Get All Subaccount Balances
 
-> Gets balances for all subaccounts including the primary account. For an API key restricted to a subaccount, returns only that subaccount's balances across exchange indices.
+> Returns balances for all subaccounts, including the primary account. Only existing subaccount and exchange index pairs are returned, including pairs with a zero balance. A pair can exist before it is funded. For an API key restricted to a subaccount, returns only that subaccount's balances.
 
 
 
@@ -66,9 +66,11 @@ paths:
         - portfolio
       summary: Get All Subaccount Balances
       description: >-
-        Gets balances for all subaccounts including the primary account. For an
-        API key restricted to a subaccount, returns only that subaccount's
-        balances across exchange indices.
+        Returns balances for all subaccounts, including the primary account.
+        Only existing subaccount and exchange index pairs are returned,
+        including pairs with a zero balance. A pair can exist before it is
+        funded. For an API key restricted to a subaccount, returns only that
+        subaccount's balances.
       operationId: GetSubaccountBalances
       responses:
         '200':

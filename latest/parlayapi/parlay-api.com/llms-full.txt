@@ -36,7 +36,7 @@ contract and this prose is a summary of it.
 
 ParlayAPI (parlay-api.com) is a developer-first odds aggregation API. It wraps:
 
-- **30+ sportsbooks**: every regulated US book (DraftKings, FanDuel, BetMGM, Caesars, BetRivers, Fanatics, Hard Rock), the major offshore books (Pinnacle, Bovada, Bet365), the major European books (PMU, Unibet, plus the country-licensed Unibet feeds for Belgium and the Netherlands). ESPN BET (now theScore Bet) is NOT among them: no feed polls it, and live endpoints return nothing for `bookmakers=espnbet`. Its archived NCAAF game lines are still queryable via `/historical`.
+- **30+ sportsbooks**: every regulated US book (DraftKings, FanDuel, BetMGM, Caesars, BetRivers, Fanatics, Hard Rock), the major offshore books (Bovada, Bet365), the major European books (PMU, Unibet, plus the country-licensed Unibet feeds for Belgium and the Netherlands). ESPN BET (now theScore Bet) is NOT among them: no feed polls it, and live endpoints return nothing for `bookmakers=espnbet`. Its archived NCAAF game lines are still queryable via `/historical`.
 - **4 DFS apps**: PrizePicks, Underdog, Sleeper, Pick6 (DraftKings).
 - **1 betting exchange**: Novig.
 - **2 prediction markets**: Kalshi, Polymarket.
@@ -72,7 +72,7 @@ Every successful response includes three headers so your client can self-throttl
 
 If you exceed your tier's monthly quota you get HTTP 403 with body `{"detail": "Credit limit exceeded"}`. Quota resets on the 1st of each month UTC.
 
-Some endpoints are public (no key required): `/v1/sports`, `/v1/bookmakers`, `/v1/stats`, `/health`, `/v1/pinnacle-coverage`, `/llms.txt`, `/llms-full.txt`, `/openapi.json`, `/agents.json`, `/ai-search.json`, `/ai-context.txt`, `/sitemap-ai.xml`.
+Some endpoints are public (no key required): `/v1/sports`, `/v1/bookmakers`, `/v1/stats`, `/health`, `/llms.txt`, `/llms-full.txt`, `/openapi.json`, `/agents.json`, `/ai-search.json`, `/ai-context.txt`, `/sitemap-ai.xml`.
 
 ## 3. Rate limits and credit costs
 
@@ -121,58 +121,16 @@ Caching guidance: REST data refreshes every 30-60s upstream. Caching client-side
 - **Time format:** all timestamps in ISO 8601 UTC, suffix `Z`. Example: `2026-05-04T19:00:00Z`.
 - **`commence_time` is nullable and travels with `commence_time_reported`.** Every event and row that carries `commence_time` also carries `commence_time_reported`: `true` when a source reported the start time you are reading, `false` when no source did, in which case `commence_time` is `null`. We never fill a missing kickoff with a guess (before 2026-09 some rows carried a placeholder of the game date at 19:00 UTC; that has been removed). Events with a null start time are still served because their prices are real, but they are left out of any window you ask for with `commenceTimeFrom`, `commenceTimeTo`, `date` or `live=true`, since the question cannot be answered for them; call the same endpoint without those parameters to see them. Outrights and futures are the exception: a `markets=outrights` event is a market rather than a fixture and never has a kickoff, so it is returned whether or not you narrow the board. Guard for `null` before parsing, on `/odds`, `/events`, `/props`, `/scores` and the historical endpoints alike.
 - **Sport keys:** lowercase snake_case strings. Examples: `baseball_mlb`, `basketball_nba`, `soccer_epl`, `table_tennis_czech_liga_pro`. Full list at `/v1/sports?all=true`.
-- **Bookmaker keys:** lowercase, underscores. Example: `pinnacle`, `draftkings`, `fanduel`, `bovada`, `unibet`. Full registry at `/v1/bookmakers?all=true`.
+- **Bookmaker keys:** lowercase, underscores. Example: `draftkings`, `fanduel`, `bovada`, `unibet`. Full registry at `/v1/bookmakers?all=true`.
 - **Region codes:** `us`, `us2`, `uk`, `eu`, `au`, `fr`, `ca`, `br`, `mx`, `latam`, `asia`. Comma-separated when multiple. Per-region book lists are NOT reproduced here: `GET /v1/meta/regions` publishes them with a per-book status (`active` / `paused` / `retired` / `not_yet_integrated`) and a last-write age, computed from the last 24h of writes. Read `active_books` for coverage; `books` is the wider set the `regions=` filter lets through and includes books that currently return nothing.
 - **Odds format:** default American (e.g. `-115`, `+250`). Pass `oddsFormat=decimal` query param for decimal (e.g. `1.87`, `3.50`).
 - **Market keys:** `h2h` (moneyline), `spreads`, `totals`, plus `player_*` for player props. Full list in section 8.
 
 Standard event-level response shape (`/v1/sports/{sport_key}/odds`):
 
-```json
-[
-  {
-    "id": "abc123def456",
-    "sport_key": "baseball_mlb",
-    "sport_title": "MLB",
-    "commence_time": "2026-05-04T19:00:00Z",
-    "home_team": "Boston Red Sox",
-    "away_team": "Houston Astros",
-    "bookmakers": [
-      {
-        "key": "pinnacle",
-        "title": "Pinnacle",
-        "last_update": "2026-05-04T18:55:14Z",
-        "markets": [
-          {
-            "key": "h2h",
-            "last_update": "2026-05-04T18:55:14Z",
-            "outcomes": [
-              {"name": "Boston Red Sox", "price": -135},
-              {"name": "Houston Astros", "price": +120}
-            ]
-          },
-          {
-            "key": "spreads",
-            "last_update": "2026-05-04T18:55:14Z",
-            "outcomes": [
-              {"name": "Boston Red Sox", "price": -105, "point": -1.5},
-              {"name": "Houston Astros", "price": -115, "point": +1.5}
-            ]
-          },
-          {
-            "key": "totals",
-            "last_update": "2026-05-04T18:55:14Z",
-            "outcomes": [
-              {"name": "Over", "price": -110, "point": 8.5},
-              {"name": "Under", "price": -110, "point": 8.5}
-            ]
-          }
-        ]
-      }
-    ]
-  }
-]
-```
+
+Example temporarily omitted; read the endpoint schema for its response shape.
+
 
 Player-prop response (`/v1/sports/{sport_key}/props`):
 
@@ -183,62 +141,17 @@ Successful HTTP 200 responses are bare JSON lists. The player's name is in `play
 On NFL `/props`, `player_anytime_td` means at least one scored touchdown and has line 0.5. The accepted aliases `player_anytime_touchdown_scorer`, `anytime_td`, and `anytime_touchdown_scorer` return that canonical key. Novig's higher thresholds use `player_touchdowns_scored` with the native line: 1.5 means 2+ scored touchdowns and 2.5 means 3+. Passing touchdowns and combined passing/rushing/receiving totals are separate. A null `under_price` means no usable No/Under quote was supplied through this feed, not proof the sportsbook never offers that side. Never infer a missing price from its opposite.
 Bovada NFL anytime scorer periods use `player_anytime_td_1st_half`, `player_anytime_td_2nd_half`, and `player_anytime_td_1st_quarter` through `player_anytime_td_4th_quarter`. Unsuffixed `player_anytime_td` excludes those segments. Player names omit the period label and Bovada team tag while retaining name suffixes such as Jr. Request the segment's market key explicitly.
 
-```json
-[
-  {
-    "event_id": "abc123def456",
-    "sport_key": "baseball_mlb",
-    "home_team": "Boston Red Sox",
-    "away_team": "Houston Astros",
-    "commence_time": "2026-05-04T19:00:00Z",
-    "player": "Tarik Skubal",
-    "market_key": "player_strikeouts",
-    "market_label": "Strikeouts",
-    "line": 7.5,
-    "over_price": -118,
-    "under_price": -102,
-    "bookmaker": "pinnacle",
-    "last_update": "2026-05-04T18:55:14Z",
-    "injury": {
-      "status": "Out",
-      "description": "Skubal (forearm) will not throw this week, per the manager.",
-      "date": "2026-05-01T23:18Z",
-      "team": "Detroit Tigers",
-      "team_abbr": "DET",
-      "il_category": "O",
-      "body_part": "Forearm",
-      "side": "Left",
-      "position": "SP",
-      "expected_return": "2026-05-20",
-      "updated_at": "2026-05-04T18:50:00Z"
-    }
-  }
-]
-```
+
+Example temporarily omitted; read the endpoint schema for its response shape.
+
 
 The `injury` object is present only for a player who has a current ESPN injury record; no key means no record, which normally means healthy. It is rebuilt every 10 minutes and covers MLB, NBA, WNBA, NHL, NFL and NCAAF. `description` is ESPN's short comment with a fallback to the injury detail string, and a detail that is only ESPN's "Not Specified" placeholder counts as absent. Coverage is a proportion, not a fixed count, because that rebuild tracks the injury report: about 97% of records carry a description (830 of 858 on the 2026-09-05 prod cache); the rest are null rather than filled in, and the raw `detail` is still served verbatim by the `/injuries` endpoints. `team` and `team_abbr` are resolved from ESPN's own team id and are null for an id outside those leagues, never borrowed from another league. The same record is served in full by `/v1/sports/{sport_key}/injuries`.
 
 Historical closing-odds response (`/v1/historical/sports/{sport_key}/closing-odds`):
 
-```json
-[
-  {
-    "game_date": "2026-05-02",
-    "sport_key": "baseball_mlb",
-    "home_team": "Detroit Tigers",
-    "away_team": "Texas Rangers",
-    "commence_time": "2026-05-02T23:15:00Z",
-    "bookmaker": "pinnacle",
-    "bookmaker_title": "Pinnacle",
-    "player": "Keider Montero",
-    "market_key": "player_strikeouts",
-    "market_label": "Player Props",
-    "line": 4.5,
-    "over_odds": +126,
-    "under_odds": -169
-  }
-]
-```
+
+Example temporarily omitted; read the endpoint schema for its response shape.
+
 
 ## 5. Endpoint reference
 
@@ -310,7 +223,7 @@ occurrences is counted once, so `?regions=us&regions=us` costs one region.
     the MMA specials and the `horse_*` racing keys are served by
     `GET /v1/sports/{sport_key}/props?markets=<key>`.
   - `GET /v1/markets` carries a `served_by` field on every catalogued key.
-- `bookmakers` (comma-separated, optional): filter to specific books like `pinnacle,draftkings,fanduel`.
+- `bookmakers` (comma-separated, optional): filter to specific books like `draftkings,fanduel`.
 - `oddsFormat` (`american` or `decimal`, default `american`).
 - `eventIds` (comma-separated, optional): only these events.
 - `live` (bool, default false): when true, returns only events whose `commence_time` is at or before now (in-play). No extra cost. Equivalent to passing `commenceTimeTo=<now>`. For a dedicated in-play endpoint with live-tagged player props, use `/v1/sports/{sport_key}/live` instead.
@@ -412,7 +325,7 @@ Response: an array of `{event_id, home_team, away_team, matched_by, source, play
 
 An EMPTY result is an object, not an array: `{movements: [], count: 0, event_id, sport_key, row_cap, min_snapshots_per_series, filters, note}`. That is the shape on EVERY empty path, including an `eventId` that resolves to no event, and it is identical on a cache hit and a cache miss. The two `X-Line-Movement-*` headers are present on empty responses too.
 
-Player-keyed books. PrizePicks props carry no team at all (34,911 of 34,911 rows in a one-hour prod sample on 2026-09-05); sleeper, underdog, betr, pinnacle, draftkings and caesars each write a smaller teamless tail. Those series are resolved by `player_name` + `market_key` + `sport_key` + `game_date`, the identity `/props` already publishes them under, so the `canonical_event_id` on a PrizePicks `/props` row works here directly. `matched_by` is `"team"` when the book stated the fixture (and `home_team`/`away_team` are that fixture) or `"player"` when it stated only the player (and the team fields are empty strings, as `/props` serves them). A team is never inferred onto a player-keyed row. Two limits of that matching: the only identity a teamless row carries is `(sport_key, game_date, player_name)`, so two athletes sharing a name on one slate arrive as ONE series (still `matched_by: "player"` with empty teams - a grouping, not a stated fixture); and a team-keyed `eventId` looks up at most the first 300 player names (alphabetically) from that event's team-keyed rows. Passing `player` sidesteps both.
+Player-keyed books. PrizePicks props carry no team at all (34,911 of 34,911 rows in a one-hour prod sample on 2026-09-05); sleeper, underdog, betr,  draftkings and caesars each write a smaller teamless tail. Those series are resolved by `player_name` + `market_key` + `sport_key` + `game_date`, the identity `/props` already publishes them under, so the `canonical_event_id` on a PrizePicks `/props` row works here directly. `matched_by` is `"team"` when the book stated the fixture (and `home_team`/`away_team` are that fixture) or `"player"` when it stated only the player (and the team fields are empty strings, as `/props` serves them). A team is never inferred onto a player-keyed row. Two limits of that matching: the only identity a teamless row carries is `(sport_key, game_date, player_name)`, so two athletes sharing a name on one slate arrive as ONE series (still `matched_by: "player"` with empty teams - a grouping, not a stated fixture); and a team-keyed `eventId` looks up at most the first 300 player names (alphabetically) from that event's team-keyed rows. Passing `player` sidesteps both.
 
 Grouping: a series is one `(source, player, market_key, line)`, so a book that MOVES its line produces one series per line rather than one series showing the move; read the moves off the series' time ranges. `over_movement` is the price change at a fixed line, not a line change.
 
@@ -480,7 +393,7 @@ Query params:
 - `line`: the number for spreads, totals, props.
 - `book`: the book you would bet at (grades that book's current price).
 - `price`: the price you are offered (American like `-110` or decimal like `1.91`). Overrides `book`, use it to grade a number you already have.
-- `region`: where you can bet, `us` (default) / `eu` / `uk` / `au` / `ca`. Scopes the best-price and shop recommendation to books available there, so a US bettor is never told to use a euro book. The Pinnacle fair line is still shown as a reference.
+- `region`: where you can bet, `us` (default) / `eu` / `uk` / `au` / `ca`. Scopes the best-price and shop recommendation to books available there, so a US bettor is never told to use a euro book. Unavailable reference prices are omitted.
 - `books`: exact CSV of the books you can bet at (e.g. `draftkings,fanduel,novig`). Overrides `region`; use it for state-level geo-blocks.
 - `bankroll` + `kelly`: when the bet is +EV, returns a suggested `stake` sized by fractional Kelly (default 0.5 = half-Kelly, hard-capped at 25% of bankroll). The response also carries an `edge_alert` when a book shows a price far better than the market (either a rare soft mispricing worth grabbing or a stale line to verify) that the normal best-price guard would otherwise hide.
 
@@ -573,7 +486,7 @@ Historical closing lines. 10 credits per call.
 
 Query params:
 - `markets`: comma-separated. Mix game-line markets (`h2h`, `spreads`, `totals`) with player prop markets (`player_strikeouts`, `player_points`, etc.) freely.
-- `bookmakers` (default `pinnacle`).
+- `bookmakers`: explicitly select an available source from `/v1/bookmakers`.
 - `season` (e.g. `2023-24`).
 - `date` (YYYY-MM-DD): shortcut for dateFrom=dateTo=date.
 - `dateFrom`, `dateTo` (YYYY-MM-DD).
@@ -591,13 +504,13 @@ Use case: replay how a Q3 NBA total moved during the game. Each row carries `fir
 Query params:
 - `period`: FT / 1H / 2H / Q1 / Q2 / Q3 / Q4 / OT / P1 / P2 / P3 / F5 / F7 or `all`.
 - `match_id`: source-native event id, optional.
-- `source`: pinnacle / draftkings / fanduel / betmgm / caesars / betrivers / fanatics / unibet / bet365.
+- `source`: draftkings / fanduel / betmgm / caesars / betrivers / fanatics / unibet / bet365.
 - `market`: spread / total / h2h.
 - `home_team`, `away_team`: substring filters.
 - `dateFrom`, `dateTo` (YYYY-MM-DD).
 - `limit` (default 5000, max 20000).
 
-Backed by `period_odds_archive`, which compresses the high-volume `period_odds_snapshots` rolling tick stream into one row per distinct state. Backfilled at table-create time; live writes are appended as the collector polls Pinnacle.
+Backed by `period_odds_archive`, which compresses the high-volume `period_odds_snapshots` rolling tick stream into one row per distinct state. Backfilled at table-create time; live writes are appended from active sources.
 
 ### `GET /v1/bookmakers`
 
@@ -611,7 +524,7 @@ Response: array of `{key, title, region, status, [endpoints], [example_paths], [
 
 ### `GET /v1/bookmakers/{key}`
 
-Detail view for one bookmaker: same shape as one element of `/v1/bookmakers` but always includes `endpoints` + `example_paths`. Accepts a few common aliases (`dk` -> `draftkings`, `draftkings_an` -> `draftkings`, `sbr_close` -> `pinnacle`, etc.) and returns `alias_resolved_from` when one is used. 404 returns `{detail: {error, key_requested, available_keys: [...]}}` so callers can recover.
+Detail view for one bookmaker: same shape as one element of `/v1/bookmakers` but always includes `endpoints` + `example_paths`. Accepts a few common aliases (`dk` -> `draftkings`, `draftkings_an` -> `draftkings`, `sbr_close` -> etc.) and returns `alias_resolved_from` when one is used. 404 returns `{detail: {error, key_requested, available_keys: [...]}}` so callers can recover.
 
 ### `GET /v1/prediction-markets/{sport_key}`
 
@@ -639,10 +552,6 @@ Live API throughput stats. Public, no auth.
 Live coverage map of the historical game-line archive. Public. This endpoint does not report player-prop coverage.
 
 Response: total game-line rows, sources count, sports count, per-sport breakdown.
-
-### `GET /v1/pinnacle-coverage`
-
-Pinnacle's specific coverage matrix per sport. Public.
 
 ### `GET /health`
 
@@ -686,7 +595,7 @@ Major categories:
 
 ### Active US-licensed sportsbooks
 
-`draftkings`, `fanduel`, `betmgm`, `caesars`, `betrivers`, `fanatics`, `hardrock`, `parx`, `bet365` (UK-listed but licensed in NJ/PA/etc.), `bovada` (offshore), `pinnacle` (offshore).
+`draftkings`, `fanduel`, `betmgm`, `caesars`, `betrivers`, `fanatics`, `hardrock`, `parx`, `bet365` (UK-listed but licensed in NJ/PA/etc.), `bovada` (offshore).
 
 ### Active French-licensed sportsbooks
 
@@ -779,8 +688,8 @@ Total rows: 1.7M+ in `historical_odds` (game lines), including history from 2005
 | NCAAF | 2014-08-28 | CFBD (`cfbd_consensus`, `cfbd_teamrankings`, `cfbd_numberfire`, plus per-book `bovada`, `williamhill_us`, `espnbet`, `caesars`, `draftkings`, etc.) |
 | MLB | 2010-04-04 | `sbr_close`, `*_an` (DK, FD, MGM, Caesars, Fanatics, bet365, BetRivers, PointsBet) |
 | NHL | 2007-10-03 | `sbr_close`, `*_an` |
-| Soccer | 2005-08-13 (EPL etc.) | football-data.co.uk per-league CSVs (bet365, pinnacle, betway, williamhill, interwetten, ladbrokes, betvictor, betfair_exchange, plus closing variants) |
-| Tennis ATP/WTA | early 2010s | `bet365`, `pinnacle` daily snapshot accumulated |
+| Soccer | 2005-08-13 (EPL etc.) | football-data.co.uk per-league CSVs (bet365,  betway, williamhill, interwetten, ladbrokes, betvictor, betfair_exchange, plus closing variants) |
+| Tennis ATP/WTA | early 2010s | `bet365` daily snapshot accumulated |
 
 Player prop closing lines do not have one reliable archive-wide start date. Individual sports, markets and bookmakers can start at different times or contain gaps. Do not size a prop backfill from `GET /v1/historical/stats` or the free historical coverage endpoints because those describe game lines only. Ask support to verify the exact sport, market, bookmaker and date range before choosing a paid plan.
 
@@ -791,7 +700,7 @@ Player prop closing lines do not have one reliable archive-wide start date. Indi
 - Live in-play odds: refreshed every 5-15s during games.
 - Scores: every 30s during games, every 5min when no live games.
 - Historical archive (soccer): football-data.co.uk pulls run weekly on Tuesdays at 11:00 UTC.
-- Historical archive (US sports): forward-going daily snapshot from Pinnacle plus per-source backfills (nflverse, hoopR, CFBD) on cadence per release.
+- Historical archive (US sports): per-source backfills (nflverse, hoopR, CFBD) on cadence per release.
 - Prop closing lines: daily snapshot at game start.
 - Affiliate payouts: monthly cron on the 1st at 14:00 UTC.
 
@@ -843,7 +752,7 @@ Client can filter to a single event:
 
 Reconnection: client should reconnect on close with exponential backoff (1s, 2s, 4s, capped at 30s). For default recent-row snapshots, a supplied `since` filters retained observations on a best-effort basis; it is not an exactly-once replay cursor. Complete native snapshots use the replacement contract below.
 
-Each streamed row carries `last_update` (epoch ms of our last write or re-verify for that price), `price_age_s` (server-computed seconds since the price last actually MOVED, so no client clock-skew guesswork), and `line_changed_at_ms` (epoch ms of that last real move). `price_age_s` counts from the real move, not the last write: when a book re-emits an unchanged price as a verification write `last_update` advances but `price_age_s` keeps counting, so a frozen line never reads as fresh. Sharp books like Pinnacle update on a slower cadence, so a larger `price_age_s` there is real, not stale. To keep the live feed honest, a fast book's line that stays frozen beyond about 150s during a commenced game is dropped from the stream rather than sent with a fresh-looking timestamp, matching the `/live` endpoint. Use `price_age_s` to set your own staleness cutoff.
+Each streamed row carries `last_update` (epoch ms of our last write or re-verify for that price), `price_age_s` (server-computed seconds since the price last actually MOVED, so no client clock-skew guesswork), and `line_changed_at_ms` (epoch ms of that last real move). `price_age_s` counts from the real move, not the last write: when a book re-emits an unchanged price as a verification write `last_update` advances but `price_age_s` keeps counting, so a frozen line never reads as fresh. To keep the live feed honest, a fast book's line that stays frozen beyond about 150s during a commenced game is dropped from the stream rather than sent with a fresh-looking timestamp, matching the `/live` endpoint. Use `price_age_s` to set your own staleness cutoff.
 
 Heartbeat: server sends `{"type": "ping"}` every 25s. Client should reply `{"type": "pong"}` within 5s or the connection drops.
 
@@ -866,7 +775,7 @@ Atomically replace state only after terminal `snapshot_complete`: same ID/genera
 For clients that can't run a long-lived WebSocket (CORS-restricted browsers, mobile, serverless workers, AI agents), Server-Sent Events stream the same data over plain HTTP with `Content-Type: text/event-stream`:
 
 - `https://parlay-api.com/v1/sse/odds/{sport_key}?apiKey=YOUR_KEY`, odds change deltas (game lines + props)
-- `https://parlay-api.com/v1/sse/hot/{sport_key}?apiKey=YOUR_KEY`, fast-cadence hot books (Pinnacle + FanDuel hot leagues, sub-3s)
+- `https://parlay-api.com/v1/sse/hot/{sport_key}?apiKey=YOUR_KEY`, available hot-book updates
 - `https://parlay-api.com/v1/sports/{sport_key}/live/sse?apiKey=YOUR_KEY`, live play-by-play events with batter/pitcher/scorer metadata
 
 On connect, the server sends `data: {"type": "connected", "sport_key": ..., "transport": "sse", "heartbeat_s": 5}\n\n` immediately, then streams diffs as standard SSE `data:` events. Heartbeats fire every 5s so connections survive idle intermediaries. Reconnect on close with exponential backoff just like WebSocket.

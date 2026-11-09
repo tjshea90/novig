@@ -325,7 +325,7 @@ requests.delete(f"{API}/orders-v3/all",   headers=auth)
 }
 ```
 
-Cancel-by-id waits for the engine and reports per order; cancel-by-event and cancel-all are asynchronous and only confirm the job was published. See [Cancelling orders](https://docs.sx.bet/developers/cancelling-orders.md).
+Cancel-by-id waits for the engine and reports per order; cancel-all, cancel-by-event and cancel-by-market are asynchronous and return without waiting for cancellation to complete. See [Cancelling orders](https://docs.sx.bet/developers/cancelling-orders.md).
 
 **6. Re-arm your heartbeat (dead-man switch)**
 
@@ -564,6 +564,7 @@ See [Bet lifecycle](https://docs.sx.bet/developers/bet-lifecycle.md).
 | Enable betting | `POST /orders/approve` | — (fund the proxy) | [→](https://docs.sx.bet/developers/funding.md) |
 | List my open orders | `GET /orders?maker=…` | `GET /orders-v3` | [→](https://docs.sx.bet/api-reference/get-orders-v3.md) |
 | Get one order by id | `GET /orders?orderHashes=…` | `GET /orders-v3/{orderId}` | [→](https://docs.sx.bet/api-reference/get-order-v3.md) |
+| Get several orders by id | `GET /orders?orderHashes=…` | `GET /orders-v3/batch?orderIds=…` | [→](https://docs.sx.bet/api-reference/get-orders-v3-batch.md) |
 | Market order book | `GET /orders?marketHashes=…` | `GET /orderbook-v3/snapshot/market?marketHash=…` | [→](https://docs.sx.bet/api-reference/get-market-orderbook-snapshot.md) |
 | Best odds | `GET /orders/odds/best` | `GET /orders-v3/odds/best` | [→](https://docs.sx.bet/api-reference/get-best-odds-v3.md) |
 | Cancel by id | `POST /orders/cancel/v2` | `DELETE /orders-v3` | [→](https://docs.sx.bet/api-reference/delete-orders-v3.md) |

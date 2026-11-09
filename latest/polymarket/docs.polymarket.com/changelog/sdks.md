@@ -8,6 +8,12 @@
 
 > [tab] TypeScript
 >
+> ### `0.18.0`
+>
+> * Added `listWalletOpenOrders(...)` to list open orders across a Deposit Wallet, including orders placed by its session keys. Each order reports the `signerAddress` that placed it and a nullable `owner`. Filter by `market`, `assetId`, or 1 to 50 `signerAddresses`.
+> * Added `cancelWalletOrders({ orderIds })` and `cancelAllWalletOrders()` so the Deposit Wallet owner can cancel orders placed by any of its signers. `listOpenOrders`, `cancelOrder`, `cancelOrders`, and `cancelAll` still cover only orders placed with the client's own credentials.
+> * Session-key authorization and revocation now accept `relayerApiKey(...)` as well as `builderApiKey(...)` and `remoteBuilderSigning(...)`.
+>
 > ### `0.17.0`
 >
 > * Added `DIRECTIONAL_SPLIT`, `DIRECTIONAL_MERGE`, `THRESHOLD_COMPOSE`, and `THRESHOLD_DECOMPOSE` activity types and `listActivity(...)` filters. Threshold rows report the moved line position as `shares` and identify its market with `conditionId`; no collateral moves. Presentation fields are optional on range-event rows.
@@ -598,6 +604,12 @@
 > ```
 
 > [tab] Python
+>
+> ### `0.18.0`
+>
+> * Added `list_wallet_open_orders(...)` to list open orders across a Deposit Wallet, including orders placed by its session keys. Each `WalletOpenOrder` reports the `signer_address` that placed it and a nullable `owner`. Filter by `market`, `asset_id`, or 1 to 50 `signer_addresses`.
+> * Added `cancel_wallet_orders(order_ids=...)` and `cancel_all_wallet_orders()` so the Deposit Wallet owner can cancel orders placed by any of its signers. `list_open_orders`, `cancel_order`, `cancel_orders`, and `cancel_all` still cover only orders placed with the client's own credentials.
+> * Session-key authorization and revocation now accept `api_key=RelayerApiKey(...)` as well as `api_key=BuilderApiKey(...)`. Authorization previously required a builder API key.
 >
 > ### `0.17.0`
 >

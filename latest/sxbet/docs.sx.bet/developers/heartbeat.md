@@ -41,7 +41,9 @@ Refresh inside the timeout window
 
 Every open order is cancelled for your account. It has the same effect as
 [`DELETE /orders-v3/all`](https://docs.sx.bet/api-reference/delete-orders-v3-all). The cancels are asynchronous, so orders will be
-cancelled shortly after with `inactiveReason: "HEARTBEAT_TIMEOUT"`.
+cancelled shortly after with `inactiveReason: "HEARTBEAT_TIMEOUT"`. An order still in its
+[betting delay](https://docs.sx.bet/developers/betting-delays.md) matches first when the delay elapses, and only its
+unmatched amount is cancelled.
 
 ## Stop the heartbeat
 

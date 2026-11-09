@@ -26,7 +26,7 @@ These endpoints allow higher throughput:
 
 Everything else (metadata, fixtures list, mapping, settlements, historical, media redirects):
 
-**Limit:** **100 requests / minute**
+**Limit:** **200 requests / minute** (default)
 
 ## Rate limit headers
 

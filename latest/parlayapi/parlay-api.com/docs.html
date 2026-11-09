@@ -244,7 +244,7 @@ odds = r.json()</pre></div>
             <tr><td><code>/v1/sports/{key}/props</code></td><td>3</td><td>All books, all markets, single call</td></tr>
             <tr><td><code>/v1/sports/{key}/consensus</code></td><td>3</td><td>Best/worst per (player, market, line)</td></tr>
             <tr><td><code>/v1/sports/{key}/arbitrage</code></td><td>10</td><td>Cross-book arb scanner</td></tr>
-            <tr><td><code>/v1/sports/{key}/ev</code></td><td>10</td><td>+EV picks vs Pinnacle baseline</td></tr>
+
             <tr><td><code>/v1/sports/{key}/middles</code></td><td>3</td><td>Cross-book middles: totals, spreads + player props, with hit/miss economics</td></tr>
             <tr><td><code>/v1/sports/{key}/live</code></td><td>3</td><td>In-play games</td></tr>
             <tr><td><code>/v1/sports/{key}/live/points</code></td><td>1</td><td>Live PBP snapshot (Free tier OK)</td></tr>
@@ -375,7 +375,7 @@ ws_url = client.websocket_url("baseball_mlb")</pre></div>
     <div class="params">
         <div class="param-row"><div class="param-name">regions<span class="type">comma-separated</span></div><div class="param-desc"><code>global</code>, <code>us</code>, <code>us2</code>, <code>uk</code>, <code>eu</code>, <code>au</code>, <code>fr</code>, <code>ca</code>, <code>br</code>, <code>mx</code>, <code>latam</code>, <code>asia</code>. Default: <code>us</code>. Each region maps to an allowlist of books, so a book we serve can still be absent from a region you did not ask for; <a href="/regions">/regions</a> and <code>GET /v1/meta/regions</code> publish the per-region book lists. Those lists separate the two questions: the <strong>active_books</strong> field is every book the region carries that has actually written prices in the last 24 hours, and <strong>books</strong> is the wider set this filter lets through, which includes books that currently return nothing. Every book carries a status (active, paused, retired, not_yet_integrated) and its last write age.<br><br>Region filters select book keys. In particular, <code>regions=ca</code> does not establish an Ontario source feed, Ontario-specific prices, licensing, account eligibility or whether an offer can be placed. Per-book activity is separate from market completeness and price parity.</div></div>
         <div class="param-row"><div class="param-name">markets<span class="type">comma-separated</span></div><div class="param-desc">Servable here, and this is the whole list: <code>h2h</code> (moneyline), <code>spreads</code>, <code>totals</code>, <code>alternate_spreads</code>, <code>alternate_totals</code>, <code>outrights</code>, and any <code>player_*</code> / <code>batter_*</code> / <code>pitcher_*</code> / <code>anytime_*</code> / <code>futures_*</code> prop key (e.g. <code>player_total_bases</code>).<br>Any other catalogued key is accepted and answered, returns no odds here, and <strong>costs nothing</strong>: it is named in <code>x-markets-unservable</code> and routed by <code>x-markets-served-elsewhere</code>. The period keys <code>h2h_1st_half</code>, <code>spreads_1st_half</code>, <code>totals_1st_half</code>, <code>h2h_1st_quarter</code>, <code>h2h_1st_period</code>, <code>h2h_1st_5_innings</code>, <code>spreads_1st_5_innings</code> and <code>totals_1st_5_innings</code> are served by <a href="#live-pbp"><code>/v1/sports/{sport_key}/live/period_markets</code></a> (<code>?period=1H&amp;market=h2h</code>) and <code>/v1/historical/sports/{sport_key}/period_markets</code>. <code>team_totals</code>, <code>btts</code>, <code>correct_score</code>, <code>double_chance</code>, <code>draw_no_bet</code>, the MMA specials and the <code>horse_*</code> racing keys are served by <a href="#props"><code>/v1/sports/{sport_key}/props?markets=&lt;key&gt;</code></a>. Every catalogued key carries a <code>served_by</code> field in <code>GET /v1/markets</code>.</div></div>
-        <div class="param-row"><div class="param-name">bookmakers<span class="type">comma-separated</span></div><div class="param-desc">Filter to specific books: <code>draftkings,fanduel,pinnacle</code>. See <a href="#bookmaker-keys">Bookmaker Keys</a>.</div></div>
+        <div class="param-row"><div class="param-name">bookmakers<span class="type">comma-separated</span></div><div class="param-desc">Filter to specific books: <code>draftkings,fanduel</code>. See <a href="#bookmaker-keys">Bookmaker Keys</a>.</div></div>
         <div class="param-row"><div class="param-name">oddsFormat<span class="type">enum</span></div><div class="param-desc"><code>american</code> (default) or <code>decimal</code></div></div>
         <div class="param-row"><div class="param-name">dateFormat<span class="type">enum</span></div><div class="param-desc"><code>iso</code> (default) or <code>unix</code></div></div>
         <div class="param-row"><div class="param-name">eventIds<span class="type">comma-separated</span></div><div class="param-desc">Limit response to specific event IDs</div></div>
@@ -390,9 +390,9 @@ ws_url = client.websocket_url("baseball_mlb")</pre></div>
     "baseball_mlb",
     regions="us",
     markets=["h2h", "spreads", "totals"],
-    bookmakers=["draftkings", "fanduel", "pinnacle"],
+    bookmakers=["draftkings", "fanduel"],
 )</pre></div>
-        <div class="code-pane" data-pane="o-curl"><pre>curl "https://parlay-api.com/v1/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&bookmakers=draftkings,fanduel,pinnacle" \
+        <div class="code-pane" data-pane="o-curl"><pre>curl "https://parlay-api.com/v1/sports/baseball_mlb/odds?regions=us&markets=h2h,spreads,totals&bookmakers=draftkings,fanduel" \
   -H "X-API-Key: YOUR_KEY"</pre></div>
     </div>
     <p class="why">Every event and row that carries <code>commence_time</code> also carries <code>commence_time_reported</code>. It is <code>true</code> when a source reported the start time you are reading, and <code>false</code> when no source did, in which case <code>commence_time</code> is <code>null</code>. We never fill a missing kickoff with a guess. Events with a null start time are still served, because their prices are real, but they are left out of any window you ask for with <code>commenceTimeFrom</code>, <code>commenceTimeTo</code>, <code>date</code> or <code>live=true</code>, since the question cannot be answered for them. Call the same endpoint without those parameters to see them. Outrights and futures are the exception: <code>markets=outrights</code> events are markets rather than fixtures, they never have a kickoff, and they are returned whether or not you narrow the board. Treat <code>commence_time</code> as nullable in every parser, on <code>/odds</code>, <code>/events</code>, <code>/props</code>, <code>/scores</code> and the historical endpoints alike.</p>
@@ -515,7 +515,7 @@ ws_url = client.websocket_url("baseball_mlb")</pre></div>
         <div class="param-row"><div class="param-name">hours<span class="type">int 1-168</span></div><div class="param-desc">Lookback window, default 24. <code>window_minutes</code> (1-10080) is an accepted alias.</div></div>
     </div>
     <h4>Player-keyed books (PrizePicks, and the teamless tail of every other book)</h4>
-    <p>PrizePicks props are keyed by player, not by fixture: in a one-hour prod sample every PrizePicks row carried no team at all, 34,911 of 34,911. Sleeper, Underdog, Betr, Pinnacle, DraftKings and Caesars each write a smaller teamless tail as well. Those series are resolved by <code>player_name</code> + <code>market_key</code> + <code>sport_key</code> + <code>game_date</code>, the same identity <code>/props</code> publishes them under, so the <code>canonical_event_id</code> you read off a PrizePicks <code>/props</code> row works here directly.</p>
+
     <p>Each series says how it was resolved. <code>matched_by: "team"</code> means the book stated the fixture and <code>home_team</code>/<code>away_team</code> are that fixture. <code>matched_by: "player"</code> means the book stated only the player, and the team fields are empty strings, exactly as <code>/props</code> serves them. A team is never inferred onto a player-keyed row.</p>
     <p>Two limits of matching on a player. The identity available on a teamless row is <code>(sport_key, game_date, player_name)</code> and nothing else, so <strong>two athletes who share a name on the same slate cannot be separated</strong>: their observations arrive as one series. Nothing is fabricated when that happens - the series still carries <code>matched_by: "player"</code> and empty team fields - but it is a grouping, not a stated fixture. And when you ask with a team-keyed <code>eventId</code>, the companion player lane looks up at most the first 300 player names (alphabetically) found in that event's team-keyed rows. Passing <code>player</code> sidesteps both.</p>
     <h4>Grouping, and books that quote no price</h4>
@@ -588,7 +588,7 @@ ws_url = client.websocket_url("baseball_mlb")</pre></div>
 <section id="ev">
     <h2>+EV Picks</h2>
     <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports/{sport_key}/ev</span><span class="endpoint-cost"><strong>10</strong> credits</span></div>
-    <p>Bets where one book's price implies a higher win probability than a "fair" baseline (Pinnacle de-vigged, with Novig as an exchange-priced cross-check). Returns book, line, edge percentage, and Kelly-optimal stake.</p>
+
 </section>
 
 <section id="live">
@@ -634,24 +634,9 @@ es.addEventListener('pbp_event', e => console.log('event', JSON.parse(e.data)));
     <div class="endpoint"><span class="endpoint-method method get">GET</span><span class="endpoint-path">/v1/sports/{sport_key}/live/period_markets</span><span class="endpoint-cost"><strong>2</strong> credits</span></div>
     <p>In-game spreads, totals, and h2h for sub-game periods: 1st half, 2nd half, quarters (NBA, WNBA, NFL, NCAAF), hockey periods (NHL), or first 5 / first 7 innings (MLB). Includes alternate lines: a single Q1 spread query for one NBA game returns ~8 to 10 alt lines. Open to all tiers (Free can run ~500 test calls; continuous high-frequency polling needs Pro or Business). Latency: 1 to 4 seconds (vs 30s+ on the-odds-api).</p>
     <p>Query params: <code>period</code> (FT, 1H, 2H, Q1, Q2, Q3, Q4, OT, P1, P2, P3, F5, F7, or 'all'), <code>match_id</code>, <code>source</code>, <code>market</code> (spread, total, h2h). All optional except <code>apiKey</code>.</p>
-    <pre>GET /v1/sports/basketball_nba/live/period_markets?period=Q1&amp;market=spread&amp;apiKey=...
 
-{
-  "sport_key": "basketball_nba",
-  "period": "Q1",
-  "market": "spread",
-  "count": 18,
-  "results": [
-    {"source":"pinnacle", "home_team":"Oklahoma City Thunder",
-     "away_team":"Los Angeles Lakers", "period_key":"Q1",
-     "market":"spread", "side":"home", "line":-3.5, "price":-144,
-     "age_seconds":1, ...},
-    {"source":"pinnacle", "side":"away", "line":3.5, "price":120, ...},
-    ...alt lines from -2.5 through -6.0...
-  ]
-}</pre>
     <p><code>GET /v1/sports/{sport_key}/live/period_markets/sources</code> returns which books have which periods active right now (last 10 min). Useful for client-side discovery.</p>
-    <p>Sports with period coverage: NBA (1H, 2H, Q1-Q4), WNBA (1H, 2H, Q1-Q4), NCAAB (1H, 2H), NFL (1H, 2H, Q1-Q4), NCAAF (1H, 2H, Q1-Q4), NHL (P1, P2, P3), MLB (F5, F7), soccer leagues (1H, 2H). Coverage depends on book availability per period; e.g. Pinnacle has every period for every sport, DraftKings/FanDuel/BetMGM/Caesars vary by league.</p>
+
 </section>
 
 <section id="inplay-arbs">
@@ -736,7 +721,7 @@ es.addEventListener('pbp_event', e => console.log('event', JSON.parse(e.data)));
             <tr><td>Forward line movement</td><td><code>/line-movement</code></td><td>CLV and price-change tracking</td><td>Starts when ParlayAPI began capturing that market.</td></tr>
         </tbody>
     </table>
-    <p>Esports note: CS2, Dota 2, and Valorant have historical match/result archives plus current forward Pinnacle price capture. They do not yet have deep historical before/during/after odds movement for past years.</p>
+
     <h3>Parameters</h3>
     <div class="params">
         <div class="param-row"><div class="param-name">date<span class="param-name"><span class="req">*</span></span><span class="type">YYYY-MM-DD</span></div><div class="param-desc">Required. Date of the games</div></div>
@@ -815,7 +800,7 @@ es.addEventListener('pbp_event', e => console.log('event', JSON.parse(e.data)));
     <table>
         <thead><tr><th>param</th><th>example</th><th>meaning</th></tr></thead>
         <tbody>
-            <tr><td><code>bookmakers</code></td><td><code>fanduel,pinnacle,caesars</code></td><td>Only these books</td></tr>
+
             <tr><td><code>markets</code></td><td><code>player_points,player_rebounds</code></td><td>Prop market keys</td></tr>
             <tr><td><code>kinds</code></td><td><code>game,prop</code></td><td>Game lines, props, or both</td></tr>
             <tr><td><code>event_id</code></td><td><code>ee78855a3bdd1019</code></td><td>Single event filter, without the subscribe frame</td></tr>
@@ -836,7 +821,8 @@ es.addEventListener('pbp_event', e => console.log('event', JSON.parse(e.data)));
     <p>Replace client state atomically only after the terminal <code>snapshot_complete</code> message: same ID and generation, <code>snapshot_part=snapshot_parts</code>, equal <code>matching_count</code> and <code>delivered_count</code>, <code>snapshot_complete=true</code>, <code>snapshot_in_progress=false</code>, unique identities, every part received, and no partial or truncation flags. An empty board still has one zero-row initial part and the terminal. Silence, heartbeat or an interrupted transfer never certifies completion.</p>
     <p>A supplied <code>since</code> does not reduce this baseline: <code>resume_mode=replace</code> and <code>since_honored=false</code>. Reconnect performs a fresh complete enumeration. WebSocket subscription replacements start a fresh generation and independent 20-second deadline; retain the last completed baseline until the new terminal and discard older generation chunks. Queued updates follow the baseline; older native observations are rejected while newer observations preserve original quote clocks, literal prices and Pick6 payout metadata. This is not a durable change log. Omit <code>snapshot=complete</code> to retain the default single recent-row initial frame and change-event protocol.</p>
     <h3 id="initial-state-books">The <code>initial_state</code> frame is filled per book</h3>
-    <p>The row budget set by <code>limit</code> is a <strong>fair allocation among the books the fetch returned</strong>, not a newest-first fill. Books draw rows in turn until the budget is spent, game lines before props within each book and freshest fixture first. Sharp books such as Pinnacle publish a great many rows on their own cadence; before this, a ten-book subscription could receive 500 rows of one book and meet the other nine only in later <code>odds_update</code> frames.</p>
+    <p>The row budget set by <code>limit</code> is a <strong>fair allocation among the books the fetch returned</strong>, not a newest-first fill. Books draw rows in turn until the budget is spent, game lines before props within each book and freshest fixture first. High-volume books publish on their own cadence; before per-book allocation, a ten-book subscription could receive 500 rows of one book and meet the other nine only in later <code>odds_update</code> frames.</p>
+
     <p>It is an allocation, not a coverage guarantee. The fill shares out what this connect's fetch came back with, so a book can still be thin or absent from the frame. The per-book numbers below describe this build only: they are what this one snapshot held after its own filters and what it served, and they say nothing about your account, the sport, or your next connect.</p>
     <p>The frame says what it contains and what it left out:</p>
     <table>
@@ -847,13 +833,14 @@ es.addEventListener('pbp_event', e => console.log('event', JSON.parse(e.data)));
             <tr><td><code>truncated_books</code></td><td>Present only when the budget ran out. Keyed by bookmaker, with the <code>served</code> and <code>omitted</code> row counts for this build. <code>served</code> can be 0, which means this snapshot held rows for that book and the budget reached none of them. Raise <code>limit</code>, or narrow your filters, to see more.</td></tr>
         </tbody>
     </table>
-    <div class="code-single"><pre>{"type": "initial_state", "sport_key": "americanfootball_nfl",
- "count": 500, "snapshot_limit": 500, "snapshot_fill": "per_book",
- "books": ["betmgm", "bovada", "caesars", "draftkings", "fanduel",
-           "novig", "pinnacle", ...],
- "truncated": true,
- "truncated_books": {"pinnacle": {"served": 320, "omitted": 4680}},
- "data": [ ... ]}</pre></div>
+    <div class="code-single"><pre>const es = new EventSource(
+  "https://parlay-api.com/v1/sse/hot/baseball_mlb?apiKey=YOUR_KEY&bookmakers=fanduel&kinds=game&heartbeat_s=5"
+);
+
+es.onmessage = (ev) =&gt; {
+  const msg = JSON.parse(ev.data);
+  if (msg.type === "odds_update") console.log(msg.data);
+};</pre></div>
     <p>A book listed in <code>truncated_books</code> with a non-zero <code>served</code> is in <code>data</code>; one listed with <code>served</code> 0 is not, and does not appear in <code>books</code> either. A book in <code>missing_books</code> is a different case again: that field only appears on a <code>partial</code> frame, where a book's snapshot could not be read at all and the stream was served without it rather than refused.</p>
     <p>There is <strong>no guarantee of eventual delivery</strong> of the omitted rows. An <code>odds_update</code> frame is sent when a row changes, so a line that does not move may never be pushed on this connection. If you need those rows in hand, raise <code>limit</code>, narrow <code>bookmakers</code> / <code>markets</code> / <code>kinds</code>, or inspect the available REST view at <code>/v1/sports/{sport_key}/odds</code>. That REST view is not a complete-baseline continuation protocol for DraftKings or FanDuel.</p>
     <p>What the fill does not touch: the merged selector, the native current page and stream lifecycle behaviour are unchanged. Your <code>limit</code> carries into the re-attach, so a connection served a <code>partial</code> frame and re-attached later is filled at the same budget it asked for on connect.</p>
@@ -898,7 +885,8 @@ async def stream():
 asyncio.run(stream())</pre></div>
     <p>WebSocket minimum push intervals are Business 1.0 s, Enterprise 0.5 s and Scale 0.0 s. These are server-side coalescing settings, not book-publication-to-client latency bounds. Source polling, observation age, database-to-client delivery and HTTP request duration measure different stages; see <a href="/docs/streaming#timing">timing and freshness</a>.</p>
     <h3>Row freshness: <code>last_update</code>, <code>price_age_s</code> and <code>line_changed_at_ms</code></h3>
-    <p>Every streamed row carries <code>last_update</code> (epoch milliseconds we last wrote or re-verified that price) and <code>price_age_s</code>, a server-computed convenience field with no client clock-skew guesswork. <code>price_age_s</code> is the seconds since the price last actually MOVED, not since the last write: when a book re-emits an unchanged price as a verification write, <code>last_update</code> advances but <code>price_age_s</code> keeps counting from the real move, so a frozen line never reads as fresh. The row also carries <code>line_changed_at_ms</code>, the epoch milliseconds of that last real move, if you want to compute the age yourself. Sharp books such as Pinnacle update on their own slower cadence, so a larger <code>price_age_s</code> there is real, not stale.</p>
+    <p>Every streamed row carries <code>last_update</code> (epoch milliseconds we last wrote or re-verified that price) and <code>price_age_s</code>, a server-computed convenience field with no client clock-skew guesswork. <code>price_age_s</code> is the seconds since the price last actually MOVED, not since the last write: when a book re-emits an unchanged price as a verification write, <code>last_update</code> advances but <code>price_age_s</code> keeps counting from the real move, so a frozen line never reads as fresh. The row also carries <code>line_changed_at_ms</code>, the epoch milliseconds of that last real move, if you want to compute the age yourself.</p>
+
     <p>To protect live in-play consumers, a fast book's line that has stayed frozen for more than about 150 seconds during a commenced game is dropped from the live feed rather than streamed with a fresh-looking timestamp, so the socket agrees with <code>/live</code>. Read <code>price_age_s</code> if you want to enforce your own tighter or looser staleness cutoff.</p>
 </section>
 
@@ -910,7 +898,7 @@ asyncio.run(stream())</pre></div>
     <table>
         <thead><tr><th>param</th><th>example</th><th>meaning</th></tr></thead>
         <tbody>
-            <tr><td><code>bookmakers</code></td><td><code>fanduel,pinnacle,caesars</code></td><td>Only these books</td></tr>
+
             <tr><td><code>kinds</code></td><td><code>game,prop</code></td><td>Game lines, props, or both</td></tr>
             <tr><td><code>markets</code></td><td><code>player_points,player_rebounds</code></td><td>Prop market keys</td></tr>
             <tr><td><code>event_id</code></td><td><code>2026-05-07_Team_A_Team_B</code></td><td>Single event filter</td></tr>
@@ -920,21 +908,13 @@ asyncio.run(stream())</pre></div>
         </tbody>
     </table>
     <p>The <code>initial_state</code> frame here is the same frame <code>/ws/odds</code> sends, built by the same code and filled per book: see <a href="#initial-state-books">The <code>initial_state</code> frame is filled per book</a> above for <code>books</code>, <code>snapshot_fill</code> and <code>truncated_books</code>. Requesting the same params on either transport returns the same rows.</p>
-    <div class="code-single"><pre>const es = new EventSource(
-  "https://parlay-api.com/v1/sse/hot/baseball_mlb?apiKey=YOUR_KEY&bookmakers=fanduel,pinnacle&kinds=game&heartbeat_s=5"
-);
-
-es.onmessage = (ev) =&gt; {
-  const msg = JSON.parse(ev.data);
-  if (msg.type === "odds_update") console.log(msg.data);
-};</pre></div>
     <div class="code-single"><pre># Python quickstart
 import json, requests
 
 url = "https://parlay-api.com/v1/sse/hot/baseball_mlb"
 params = {
     "apiKey": "YOUR_KEY",
-    "bookmakers": "fanduel,pinnacle",
+    "bookmakers": "fanduel",
     "kinds": "game",
     "heartbeat_s": 5,
 }
@@ -946,6 +926,7 @@ with requests.get(url, params=params, stream=True, timeout=60) as r:
             msg = json.loads(line[6:])
             if msg["type"] in ("hot_feed_status", "odds_update"):
                 print(msg)</pre></div>
+    <div class="code-single"></div>
     <p>Hot feed means fast delivery once a book update lands in our pipeline. It does not invent prices or promise that every external book publishes a new price every 5 seconds.</p>
     <p>Operational check: admins run <code>python3 scripts/verify_book_coverage.py</code> before broad outreach or deploys to prove active books survive REST and SSE visibility.</p>
 </section>
@@ -976,7 +957,7 @@ with requests.get(url, params=params, stream=True, timeout=60) as r:
             <tr><td><code>404</code></td><td>Resource not found</td><td>Endpoint or event_id doesn't exist</td></tr>
             <tr><td><code>422</code></td><td>Missing required param</td><td>Check the param table for that endpoint</td></tr>
             <tr><td><code>429</code></td><td>Rate limited</td><td>Slow down or retry with backoff</td></tr>
-            <tr><td><code>500</code></td><td>Server error</td><td>Retry. If it persists, email <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="63101613130c1117231302110f021a4e02130a4d000c0e">[email&#160;protected]</a></td></tr>
+            <tr><td><code>500</code></td><td>Server error</td><td>Retry. If it persists, email <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e0939590908f9294a09081928c8199cd819089ce838f8d">[email&#160;protected]</a></td></tr>
         </tbody>
     </table>
     <p>The Python SDK raises typed exceptions: <code>InvalidAPIKeyError</code>, <code>CreditLimitExceededError</code>, <code>RateLimitedError</code>, <code>TierGatedError</code>, all subclasses of <code>ParlayAPIError</code>.</p>
@@ -1011,14 +992,15 @@ with requests.get(url, params=params, stream=True, timeout=60) as r:
             <tr><td><code>esports_valorant</code></td><td>Valorant</td></tr>
         </tbody>
     </table>
-    <p>The table above is the headline subset, not the catalogue. <code>GET /v1/sports</code> serves 90+ keys in total, including the regional soccer, basketball, baseball and hockey leagues carried via Pinnacle, and it is the authoritative list and the authoritative count.</p>
+
 
     <h3>How league keys are named</h3>
-    <p>Beyond the marquee leagues above, a key follows the pattern <code>&lt;sport&gt;_&lt;league&gt;</code>: the league's own name, lowercased, with spaces and separators collapsed to underscores. For example, Pinnacle's "Puerto Rico - Superior Nacional" is <code>basketball_puerto_rico_superior_nacional</code>, "Argentina - Torneo Federal" is <code>basketball_argentina_torneo_federal</code>, "Brazil - Paulista FPB U20" is <code>basketball_brazil_paulista_fpb_u20</code>, and "Lebanon - Lebanese Basketball League" is <code>basketball_lebanon_lebanese_basketball_league</code>.</p>
-    <p>Basketball is covered in full: every league Pinnacle carries is ingested automatically under its own key, from the majors (<code>basketball_nba</code>, <code>basketball_wnba</code>, <code>basketball_ncaab</code>) through the European competitions and every regional, women's and developmental league on offer. A new league appears the moment Pinnacle lists it, with no request or config change on your side.</p>
+
+
     <p>Smaller leagues rotate in and out of the upstream offer, so a key is live only while that league has active events. <code>GET /v1/sports</code> is the authoritative list of what is live right now, and the umbrella <code>basketball</code> key aggregates every child league in a single call. Any key is queryable at <code>/v1/sports/{sport_key}/odds</code>, <code>/props</code>, <code>/ev</code>, <code>/arbitrage</code>, <code>/consensus</code> and the other per-sport endpoints.</p>
 </section>
 
+<p><code>GET /v1/sports</code> serves 90+ keys in total. Check current per-book coverage before selecting a sport.</p>
 <section id="bookmaker-keys">
     <h2>Bookmaker Keys</h2>
     <table>
@@ -1030,7 +1012,7 @@ with requests.get(url, params=params, stream=True, timeout=60) as r:
             <tr><td><code>bovada</code></td><td>Bovada</td><td>Sportsbook</td></tr>
             <tr><td><code>betmgm</code></td><td>BetMGM</td><td>Sportsbook</td></tr>
             <tr><td><code>fanatics</code></td><td>Fanatics</td><td>Sportsbook</td></tr>
-            <tr><td><code>pinnacle</code></td><td>Pinnacle</td><td>Sharp book (de-vig baseline)</td></tr>
+
             <tr><td><code>fliff</code></td><td>Fliff</td><td>Sportsbook</td></tr>
             <tr><td><code>bet365</code></td><td>bet365</td><td>Sportsbook</td></tr>
             <tr><td><code>betrivers</code></td><td>BetRivers</td><td>Sportsbook</td></tr>

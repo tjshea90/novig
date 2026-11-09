@@ -24,6 +24,7 @@ Send `x-sx-api-key` as a header. Every response is scoped to the address that ow
 | `GET /orderbook-v3/snapshot/event` | The book for markets on one event | [Docs →](https://docs.sx.bet/api-reference/get-event-orderbook-snapshot.md) |
 | `GET /orders-v3` | Your active orders | [Docs →](https://docs.sx.bet/api-reference/get-orders-v3.md) |
 | `GET /orders-v3/{orderId}` | One of your orders by id (any status) | [Docs →](https://docs.sx.bet/api-reference/get-order-v3.md) |
+| `GET /orders-v3/batch` | Up to 100 of your orders by id (any status) | [Docs →](https://docs.sx.bet/api-reference/get-orders-v3-batch.md) |
 | `POST /orders-v3` | Places one signed order | [Docs →](https://docs.sx.bet/api-reference/post-orders-v3.md) |
 | `DELETE /orders-v3` | Cancels named orders by id | [Docs →](https://docs.sx.bet/api-reference/delete-orders-v3.md) |
 | `DELETE /orders-v3/all` | Cancels every open order you have | [Docs →](https://docs.sx.bet/api-reference/delete-orders-v3-all.md) |

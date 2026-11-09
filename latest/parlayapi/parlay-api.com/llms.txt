@@ -1,6 +1,6 @@
 # ParlayAPI
 
-> Real-time sports betting odds API aggregating 30+ sportsbooks and sources: regulated US books (DraftKings, FanDuel, BetMGM, Caesars, Pinnacle), DFS apps, betting exchanges, and prediction markets (Kalshi, Polymarket). Some odds endpoints have similar request patterns to the-odds-api; validate each integration, response shape, event ID mapping, cost, and coverage before switching. 90+ sport keys, a 1.7M+ game-line archive with records from 2005, a separate 30M+ player-prop archive, devig/fair-value helpers, WebSocket/SSE streaming on Business tier and up. Historical coverage varies by sport, league, market, bookmaker, and date.
+> Real-time sports betting odds API aggregating 30+ sportsbooks and sources: regulated US books (DraftKings, FanDuel, BetMGM, Caesars), DFS apps, betting exchanges, and prediction markets (Kalshi, Polymarket). Some odds endpoints have similar request patterns to the-odds-api; validate each integration, response shape, event ID mapping, cost, and coverage before switching. 90+ sport keys, a 1.7M+ game-line archive with records from 2005, a separate 30M+ player-prop archive, devig/fair-value helpers, WebSocket/SSE streaming on Business tier and up. Historical coverage varies by sport, league, market, bookmaker, and date.
 
 Key facts for agents and assistants:
 
@@ -18,7 +18,7 @@ Key facts for agents and assistants:
 ## Sources
 
 - **US-regulated sportsbooks:** DraftKings, FanDuel, BetMGM, Caesars, BetRivers, Fanatics, Hard Rock, Parx
-- **Offshore / non-US:** Bet365, Bovada, Pinnacle
+- **Offshore / non-US:** Bet365, Bovada
 - **US sweepstakes sportsbooks:** Fliff. Real two-sided American prices plus a full player-prop book, not DFS pick-em and not offshore.
 - **DFS apps:** PrizePicks, Underdog, Sleeper, Pick6 (DraftKings), Betr
 - **Exchanges:** Novig

@@ -18,6 +18,27 @@ the `FIX` tag.
 
 **November 12, 2026**
 
+Clarified how `GET /portfolio/balance` and `GET /portfolio/subaccounts/balances` list exchange indexes and aggregate subaccount balances. Documentation only; API behavior is unchanged.
+
+**November 12, 2026**
+
+`POST /communications/rfqs` returns specific error codes for two refusals that previously used generic ones. HTTP statuses are unchanged.
+
+| Refusal | Before | After |
+| - | - | - |
+| You already have 100 open RFQs | `429` `too_many_requests` | `429` `open_rfq_limit_exceeded` |
+| The RFQ's market is not open | `400` `invalid_parameters` | `400` `rfq_market_not_open` |
+
+`open_rfq_limit_exceeded` is not request-rate limiting: retrying does not help until some of your RFQs close or expire. If you branch on `too_many_requests` or `invalid_parameters` for these cases, handle the new codes as well.
+
+On FIX, the `QuoteRequestReject` (AG) `Text<58>` for the same two refusals changes to `OPEN_RFQ_LIMIT_EXCEEDED` and `RFQ_MARKET_NOT_OPEN`. `QuoteRequestRejectReason<658>` stays `99` (Other).
+
+**November 12, 2026**
+
+When an order is rejected because the account has never been funded on the market's exchange index, the `insufficient_shard_balance` error's `details` now explain that API orders are not funded automatically. They also name the fix: fund the exchange index with [Intra Account Transfer](https://docs.kalshi.com/api-reference/portfolio/intra-account-transfer.md). To trade from a subaccount, fund the exchange index first, then use [Transfer Between Subaccounts](https://docs.kalshi.com/api-reference/portfolio/transfer-between-subaccounts.md) with `exchange_index`. The error `code` and HTTP status are unchanged. See [Exchange Sharding](https://docs.kalshi.com/getting_started/exchange_sharding.md#balance-management).
+
+**November 12, 2026**
+
 `GET /api_keys` now includes `key_type` (`rsa` or `ed25519`) on each supported key, including keys created before this change. The field is omitted when the algorithm is unknown.
 
 **November 12, 2026**

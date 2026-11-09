@@ -60,7 +60,7 @@ Representative rolling p50 observation delays (live values per book on `GET /boo
 | Betfair Exchange | 0.10 s | 0.10 s | measured |
 | BC.Game | 0.25 s | 0.50 s | measured |
 | DraftKings | 0.28 s | 0.28 s | measured |
-| Pinnacle | 0.38 s | 0.38 s | measured |
+| Pinnacle | 0.28 s | 0.28 s | measured |
 | FanDuel | \~0.5 s | \~2 s | estimated |
 | Singbet | \~1 s | \~8 s | estimated |
 
