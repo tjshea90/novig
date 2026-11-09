@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-7542bf",
+ "name": "tj outlook",
+ "nonce": "26aee0",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/keen-keller-2df6lj",
+ "head": "4e30f7ea2a6c87d87a712f532a5f43cf2a4a682e",
+ "since": 1794227209,
+ "beat": 1794227209,
+ "beatIso": "2026-11-09T12:26:49Z",
+ "done": "ANALYST 11-09 slot0: no new evidence, engine healthy, no change",
+ "next": "WATCH next slot"
+}
