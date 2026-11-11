@@ -181,3 +181,6 @@ ER1 2026-11-02: engine OFF at Tj's word (wallet used up); restart due 2026-11-03
 2026-11-08 ANALYST (acct-27a37e tj Gmail): no change; engine wallet $0.01 stops trading, 5 trades total, no new evidence. 
 2026-11-09 ENGINEER (acct-5d1e2d mirage): no change; engine wallet $0.01 still stops trading, no new evidence; covered AWAY slot 0 WATCH.
 2026-11-09 ENGINEER slot1 (acct-27a37e tj Gmail): no change; engine healthy (heartbeat 14 s), 406 bids resting $223, 0 taker orders (48 h trap guard x20 of 32 listed); no new evidence.
+
+## 2026-11-11 (chat, mirage): tighter bids and bets on Tj's word
+Tj chat 23:53 UTC: "The engine runs the wallet out of money way faster than usual lately. Be more selective of the bets and bids and do higher quality ones". Via engine_set (cloud-config 8a4cecd7f): vigGuards.bidLevel 88->60, bidMany true->false, bidDeploy true->false, betLevel 61->50. Not class-B evidence: Tj's direct instruction. Revert: bidLevel=88 bidMany=true bidDeploy=true betLevel=61 if fills collapse (watch orders/day and CLV in the next digests).
