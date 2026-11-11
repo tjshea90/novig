@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "33b450",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/optimistic-curie-4jy1rc",
  "head": "a9b86992ab7cde10d48e5c21f79f868545a40c04",
  "since": 1794270127,
- "beat": 1794356455,
- "beatIso": "2026-11-11T00:20:55Z",
+ "beat": 1794356468,
+ "beatIso": "2026-11-11T00:21:08Z",
  "done": "WATCH 11-09 19:20: engine idle, wallet empty (known), no change",
  "next": "ANALYST/ENGINEER next slot"
 }
