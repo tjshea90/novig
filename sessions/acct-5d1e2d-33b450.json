@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-d4989p",
  "head": "4960937e69c59b41692a90c9e05ce23727d7635f",
  "since": 1794356513,
- "beat": 1794440458,
- "beatIso": "2026-11-11T23:40:58Z",
+ "beat": 1794441201,
+ "beatIso": "2026-11-11T23:53:21Z",
  "done": "chat: BH1/BH2 diagnosis written, needs a stuck bet's data (phone-data lacks bets after 11-04)",
  "next": "BH1/BH2: test pickOf/gameOf on a real stuck bet once data arrives"
 }
