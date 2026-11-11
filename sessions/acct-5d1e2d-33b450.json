@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-b1q9xh",
- "head": "bc0861a8cfc478b63cef3c7a60b9740e5800a7fe",
+ "head": "0b437453bd4b39360dbcc29167ece0af78a597f3",
  "since": 1794356513,
- "beat": 1794412538,
- "beatIso": "2026-11-11T15:55:38Z",
- "done": "ANALYST 11-10 19:20: no new evidence, no change",
- "next": "ANALYST/ENGINEER next slot"
+ "beat": 1794412609,
+ "beatIso": "2026-11-11T15:56:49Z",
+ "done": "chat: BH1 stuck both-sides bets task written, replied",
+ "next": "BH1: diagnose scoreGrade for old finished games"
 }
