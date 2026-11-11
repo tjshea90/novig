@@ -3,13 +3,13 @@
  "label": "acct-27a37e",
  "name": "tj Gmail",
  "nonce": "314ff9",
- "kind": "routine",
+ "kind": "interactive",
  "task": "",
- "branch": "claude/wizardly-meitner-nz2fpa",
- "head": "bc0861a8cfc478b63cef3c7a60b9740e5800a7fe",
+ "branch": "claude/wizardly-meitner-mqkd24",
+ "head": "0b437453bd4b39360dbcc29167ece0af78a597f3",
  "since": 1794399804,
- "beat": 1794399804,
- "beatIso": "2026-11-11T12:23:24Z",
+ "beat": 1794421263,
+ "beatIso": "2026-11-11T18:21:03Z",
  "done": "ANALYST 11-11 slot1: engine healthy, digest unchanged, no change",
  "next": "ANALYST/ENGINEER next slot"
 }
