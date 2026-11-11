@@ -3,13 +3,13 @@
  "label": "acct-27a37e",
  "name": "tj Gmail",
  "nonce": "314ff9",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/wizardly-meitner-nz2fpa",
  "head": "12a22d844525e5c62c721d483c33f6f4eff5924e",
  "since": 1794334898,
- "beat": 1794399743,
- "beatIso": "2026-11-11T12:22:23Z",
+ "beat": 1794399764,
+ "beatIso": "2026-11-11T12:22:44Z",
  "done": "WATCH 11-10 13:20: engine healthy, wallet empty, no change",
  "next": "ANALYST/ENGINEER next slot"
 }
