@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-d4989p",
- "head": "4960937e69c59b41692a90c9e05ce23727d7635f",
+ "head": "3060d4d05535941a18e2c281a512f78aa0a80238",
  "since": 1794356513,
- "beat": 1794441201,
- "beatIso": "2026-11-11T23:53:21Z",
- "done": "chat: BH1/BH2 diagnosis written, needs a stuck bet's data (phone-data lacks bets after 11-04)",
- "next": "BH1/BH2: test pickOf/gameOf on a real stuck bet once data arrives"
+ "beat": 1794441248,
+ "beatIso": "2026-11-11T23:54:08Z",
+ "done": "chat: tightened bid/bet sliders per Tj",
+ "next": "watch fills+CLV next digests; BH1/BH2 needs a stuck bet's data"
 }
