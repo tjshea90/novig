@@ -1,21 +1,23 @@
-# CHECKPOINT 4419 — read me first, then TASKS.md
+# CHECKPOINT 4420 — read me first, then TASKS.md
 
-**Written:** 2026-11-11T12:23:24Z · **tests:** all 10 fast checks green
-**Branch:** `claude/wizardly-meitner-nz2fpa` · **builds on:** `12a22d844` (this checkpoint is the commit after it)
+**Written:** 2026-11-11T15:56:48Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-b1q9xh` · **builds on:** `bc0861a8c` (this checkpoint is the commit after it)
 
 ## Just done
-ANALYST 11-11 slot1: engine healthy, digest unchanged, no change
+chat: BH1 stuck both-sides bets task written, replied
 
 ## Do this next
-ANALYST/ENGINEER next slot
+BH1: diagnose scoreGrade for old finished games
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  bc0861a8c ckpt 4419: ANALYST 11-11 slot1: engine healthy, digest unchanged, no change
   12a22d844 ckpt 4418: ANALYST 11-10 19:20: no new evidence, no change
   a9b86992a ckpt 4417: WATCH 11-10 13:20: engine healthy, wallet empty, no change
   7991891ae ckpt 4416: WATCH 11-10 13:20: engine healthy, no change
@@ -25,5 +27,4 @@ ANALYST/ENGINEER next slot
   4e03437fd ckpt 4413: ENGINEER 11-09 slot1: no change, engine healthy
   2ecb2fcf5 ckpt 4412: ENGINEER 11-09: no change, wallet empty
   9952ef637 ckpt 4411: ANALYST 11-08 slot1: no change, wallet empty
-  3e127755b ckpt 4410: covered AWAY slot 0 (ENGINEER): rebuilt research index
 ```
