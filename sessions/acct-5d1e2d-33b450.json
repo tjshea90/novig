@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-d4989p",
- "head": "9b0b825a73306a9afeafe671629c47ccae0596e6",
+ "head": "c79847fead48b62fc9fe72191cf37644f1637783",
  "since": 1794356513,
- "beat": 1794440307,
- "beatIso": "2026-11-11T23:38:27Z",
- "done": "chat: BH1 stuck both-sides bets task written, replied",
- "next": "BH1: diagnose scoreGrade for old finished games"
+ "beat": 1794440368,
+ "beatIso": "2026-11-11T23:39:28Z",
+ "done": "chat: BH2 settle stale bets task written, replied",
+ "next": "BH1/BH2: diagnose scoreGrade for old finished games"
 }
