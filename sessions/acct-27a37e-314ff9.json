@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "314ff9",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-d2f2ug",
+ "head": "6c6f21ec1d26d31eecfd8a57033735acaa7d2d10",
+ "since": 1794507720,
+ "beat": 1794507720,
+ "beatIso": "2026-11-12T18:22:00Z",
+ "done": "ENGINEER 11-12 slot1 routine: no new evidence, no change",
+ "next": "watch fills+CLV next digests; BH1/BH2 need stuck-bet data"
+}
