@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "33b450",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-dtcj0i",
+ "head": "d237b9f9df3769115c3e58fc162358f2491c0b4e",
+ "since": 1794442906,
+ "beat": 1794442906,
+ "beatIso": "2026-11-12T00:21:46Z",
+ "done": "ENGINEER 11-12 slot2: no new evidence, no change",
+ "next": "watch fills+CLV next digests; BH1/BH2 needs a stuck bet's data"
+}
