@@ -1,13 +1,13 @@
-# CHECKPOINT 4425 — read me first, then TASKS.md
+# CHECKPOINT 4426 — read me first, then TASKS.md
 
-**Written:** 2026-11-12T00:21:45Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-dtcj0i` · **builds on:** `3060d4d05` (this checkpoint is the commit after it)
+**Written:** 2026-11-12T12:21:43Z · **tests:** all 10 fast checks green
+**Branch:** `claude/wizardly-meitner-3v4lsi` · **builds on:** `d237b9f9d` (this checkpoint is the commit after it)
 
 ## Just done
-ENGINEER 11-12 slot2: no new evidence, no change
+ENGINEER 11-12 slot1: engine healthy, no new evidence, no change
 
 ## Do this next
-watch fills+CLV next digests; BH1/BH2 needs a stuck bet's data
+watch fills+CLV next digests; BH1/BH2 need stuck-bet data
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ watch fills+CLV next digests; BH1/BH2 needs a stuck bet's data
 
 ## Last ten checkpoints
 ```
+  d237b9f9d ckpt 4425: ENGINEER 11-12 slot2: no new evidence, no change
   3060d4d05 ckpt 4424: chat: tightened bid/bet sliders per Tj
   4960937e6 ckpt 4423: chat: BH1/BH2 diagnosis written, needs a stuck bet's data (phone-data lacks
   c79847fea ckpt 4422: chat: BH2 settle stale bets task written, replied
@@ -25,5 +26,4 @@ watch fills+CLV next digests; BH1/BH2 needs a stuck bet's data
   12a22d844 ckpt 4418: ANALYST 11-10 19:20: no new evidence, no change
   a9b86992a ckpt 4417: WATCH 11-10 13:20: engine healthy, wallet empty, no change
   7991891ae ckpt 4416: WATCH 11-10 13:20: engine healthy, no change
-  af23add11 ckpt 4415: WATCH 11-09 19:20: engine idle, wallet empty (known), no change
 ```
