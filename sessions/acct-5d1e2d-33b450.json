@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "33b450",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/optimistic-curie-dtcj0i",
  "head": "3060d4d05535941a18e2c281a512f78aa0a80238",
  "since": 1794356513,
- "beat": 1794442850,
- "beatIso": "2026-11-12T00:20:50Z",
+ "beat": 1794442863,
+ "beatIso": "2026-11-12T00:21:03Z",
  "done": "chat: tightened bid/bet sliders per Tj",
  "next": "watch fills+CLV next digests; BH1/BH2 needs a stuck bet's data"
 }
