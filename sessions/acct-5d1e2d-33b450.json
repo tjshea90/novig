@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "33b450",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-61ttrb",
+ "head": "31c136e8eaa5c45439799534ce33b0dcefd2c6ab",
+ "since": 1794529304,
+ "beat": 1794529304,
+ "beatIso": "2026-11-13T00:21:44Z",
+ "done": "WATCH 11-12 slot2: engine idle, wallet $0.20, no change",
+ "next": "watch fills+CLV next digests; BH1/BH2 need stuck-bet data"
+}
