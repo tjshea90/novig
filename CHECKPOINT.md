@@ -1,10 +1,10 @@
-# CHECKPOINT 4428 — read me first, then TASKS.md
+# CHECKPOINT 4429 — read me first, then TASKS.md
 
-**Written:** 2026-11-13T00:21:44Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-61ttrb` · **builds on:** `6c6f21ec1` (this checkpoint is the commit after it)
+**Written:** 2026-11-13T12:21:40Z · **tests:** all 10 fast checks green
+**Branch:** `claude/wizardly-meitner-6ndln0` · **builds on:** `31c136e8e` (this checkpoint is the commit after it)
 
 ## Just done
-WATCH 11-12 slot2: engine idle, wallet $0.20, no change
+WATCH 11-13 slot1: engine healthy, no change
 
 ## Do this next
 watch fills+CLV next digests; BH1/BH2 need stuck-bet data
@@ -16,6 +16,7 @@ watch fills+CLV next digests; BH1/BH2 need stuck-bet data
 
 ## Last ten checkpoints
 ```
+  31c136e8e ckpt 4428: WATCH 11-12 slot2: engine idle, wallet $0.20, no change
   6c6f21ec1 ckpt 4427: ENGINEER 11-12 slot1 routine: no new evidence, no change
   c20ff9981 ckpt 4426: ENGINEER 11-12 slot1: engine healthy, no new evidence, no change
   d237b9f9d ckpt 4425: ENGINEER 11-12 slot2: no new evidence, no change
@@ -25,5 +26,4 @@ watch fills+CLV next digests; BH1/BH2 need stuck-bet data
   9b0b825a7 ckpt 4421: ANALYST 11-11 13:20 (tj Gmail): no new evidence, engine idle wallet empty, 
   0b437453b ckpt 4420: chat: BH1 stuck both-sides bets task written, replied
   bc0861a8c ckpt 4419: ANALYST 11-11 slot1: engine healthy, digest unchanged, no change
-  12a22d844 ckpt 4418: ANALYST 11-10 19:20: no new evidence, no change
 ```
