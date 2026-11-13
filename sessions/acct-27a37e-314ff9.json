@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "314ff9",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-ibfeud",
+ "head": "bce84639cf298f43be1d6c6862a4f9b180fae26e",
+ "since": 1794594137,
+ "beat": 1794594137,
+ "beatIso": "2026-11-13T18:22:17Z",
+ "done": "WATCH 11-13 slot1 (tj Gmail): engine asleep wallet $0, no change",
+ "next": "watch fills+CLV next digests; BH1/BH2 settle stale bets"
+}
