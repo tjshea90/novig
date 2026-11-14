@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "314ff9",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-bzvlj6",
+ "head": "1da15269888557e973c357927fc284e674c9aa00",
+ "since": 1794680500,
+ "beat": 1794680500,
+ "beatIso": "2026-11-14T18:21:40Z",
+ "done": "ANALYST 11-14 slot1 recheck: no change",
+ "next": "next slot: read new digest if any"
+}
