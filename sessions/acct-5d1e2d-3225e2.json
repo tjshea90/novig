@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/epic-goldberg-2yhbbk",
- "head": "23665dda299c107312a64ba296b70a007d9cac70",
+ "head": "2ac9255df6a1d0588eba13ff43df98517bf2b684",
  "since": 1794632034,
- "beat": 1794634532,
- "beatIso": "2026-11-14T05:35:32Z",
- "done": "PA1: ParlayCloses DK+FD moneyline only (soft), ParlayWithdrawn guard, alternates off, verdict/movers/UI/docs/research note; targeted tests 97+31 green",
- "next": "full tools/test.sh, then tick PA1a-e, ship.sh, release.yml, record-release, Message to Tj"
+ "beat": 1794634574,
+ "beatIso": "2026-11-14T05:36:14Z",
+ "done": "pre-ship: ParlayAPI stopped serving Pinnacle (Nov 9): closes ask DraftKings+FanDuel moneylines (soft, after ESPN), no ParlayAPI request names Pinnacle, alternates off (saves 2 of 5 credits a league), line moves name their book",
+ "next": "ship.sh gates and releases this"
 }
