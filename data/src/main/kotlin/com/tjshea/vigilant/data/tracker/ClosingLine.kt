@@ -52,7 +52,7 @@ object ClosingLine {
     /**
      * [b]'s fair probability at the close, once its game has started ([now]) and only when it's a true close; else null. In order: a read
      * made in the last minutes before the start (the bet's own fair odds, [captured]); a close found afterwards in a source that keeps
-     * history ([TrackedBet.closeFair]: ParlayAPI's Pinnacle closes, ESPN, Novig's trades; [CloseBackfill]). Nothing else: a bet's own line at
+     * history ([TrackedBet.closeFair]: ParlayAPI's DraftKings/FanDuel closes (Pinnacle's until 2026-11-09), SGO and OddsPapi Free's Pinnacle closes, ESPN, Novig's trades; [CloseBackfill]). Nothing else: a bet's own line at
      * the time it was bet is not a closing line, however close to the start it was placed.
      */
     fun closeFair(b: TrackedBet, now: Long): Double? = closeOf(b, now)?.first
@@ -70,8 +70,14 @@ object ClosingLine {
         return history
     }
 
-    /** A close found afterwards from a SHARP book's price at the start (SGO, OddsPapi, ParlayAPI's Pinnacle), as against ESPN's single soft book or Novig's own trades. */
-    fun sharpHistory(source: String): Boolean = source != SOURCE_CAPTURED && !source.startsWith("ESPN") && !source.startsWith("Novig")
+    /**
+     * A close found afterwards from a SHARP book's price at the start (SGO, OddsPapi, and ParlayAPI's Pinnacle closes stored before it stopped serving Pinnacle on 2026-11-09), as against ESPN's single soft book,
+     * Novig's own trades or ParlayAPI's DraftKings/FanDuel closes (PA1: "ParlayAPI · DraftKings + FanDuel close", which must never replace a read before the start the way a sharp close does).
+     */
+    fun sharpHistory(source: String): Boolean = source != SOURCE_CAPTURED && !source.startsWith("ESPN") && !source.startsWith("Novig") && !softParlay(source)
+
+    /** A ParlayAPI close that is not Pinnacle's: DraftKings' and FanDuel's (PA1). Closes stored before 2026-11-09 say "Pinnacle" and stay sharp. */
+    fun softParlay(source: String): Boolean = source.startsWith("ParlayAPI") && !source.contains("Pinnacle", ignoreCase = true)
 
     /** A close from outside the consensus that priced the bet: a sharp book's or ESPN's price at the start. Novig's trades include the bettor's own fills; a read before the start is the same kind of consensus that found the bet. */
     fun independent(source: String): Boolean = source != SOURCE_CAPTURED && !source.startsWith("Novig")
@@ -120,6 +126,7 @@ object ClosingLine {
     fun sourceLabel(source: String): String = when {
         source == SOURCE_CAPTURED -> "read before the start"
         source.startsWith("ESPN") -> "ESPN"
+        softParlay(source) -> source.removePrefix("ParlayAPI").trimStart(' ', '·').removeSuffix("close").trim().ifBlank { "Soft books" } + " via ParlayAPI"
         source.startsWith("ParlayAPI") -> "Pinnacle via ParlayAPI"
         source.startsWith("Novig") -> "Novig's trades"
         else -> source

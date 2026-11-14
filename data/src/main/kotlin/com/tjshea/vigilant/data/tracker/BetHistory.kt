@@ -96,7 +96,8 @@ object BetHistory {
         val closeLeadSec: Long? = null,
         /**
          * What the close is made of: `read:cno` (CrazyNinjaOdds' consensus read before the start), `read:vigilant` (Vigilant's own fair line), `read:both` (their average), `history:pinnacle`
-         * (Pinnacle's price at the start from ParlayAPI, SGO or OddsPapi), `history:espn`, `history:novig-trades` (the last trades on Novig, own fills included) or `history:other`.
+         * (Pinnacle's price at the start from SGO, OddsPapi, or ParlayAPI before it stopped serving Pinnacle on 2026-11-09), `history:softbooks` (DraftKings' and FanDuel's price at the start from ParlayAPI, since PA1: soft books, not sharp),
+         * `history:espn`, `history:novig-trades` (the last trades on Novig, own fills included) or `history:other`.
          */
         val closeBasis: String? = null,
         /** true: a price from a source other than the one that found the bet (Pinnacle or ESPN history); false: a read of the same consensus that priced the bet, or Novig's own trades. */
@@ -285,6 +286,8 @@ object BetHistory {
         if (source == ClosingLine.SOURCE_CAPTURED) return ClosingLine.readBasis(b)
         val s = source.lowercase()
         return when {
+            // ParlayAPI's closes say which books they are: Pinnacle's (stored before it stopped serving Pinnacle, 2026-11-09) are sharp, DraftKings' and FanDuel's (PA1) are soft books.
+            ClosingLine.softParlay(source) -> "history:softbooks"
             s.contains("pinnacle") || s.startsWith("parlayapi") || s.startsWith("sportsgameodds") || s.startsWith("oddspapi") -> "history:pinnacle"
             s.startsWith("espn") -> "history:espn"
             s.startsWith("novig") -> "history:novig-trades"
