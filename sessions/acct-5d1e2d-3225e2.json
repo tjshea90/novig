@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/epic-goldberg-2yhbbk",
- "head": "4d548f18f058e2c467be440aab8b6dde58201b0d",
+ "head": "23665dda299c107312a64ba296b70a007d9cac70",
  "since": 1794632034,
- "beat": 1794634346,
- "beatIso": "2026-11-14T05:32:26Z",
+ "beat": 1794634532,
+ "beatIso": "2026-11-14T05:35:32Z",
  "done": "PA1: ParlayCloses DK+FD moneyline only (soft), ParlayWithdrawn guard, alternates off, verdict/movers/UI/docs/research note; targeted tests 97+31 green",
  "next": "full tools/test.sh, then tick PA1a-e, ship.sh, release.yml, record-release, Message to Tj"
 }
