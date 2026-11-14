@@ -198,7 +198,7 @@ class ParlayAccountTest {
             MockResponse().setBody(Fixtures.oddsApi).setHeader("x-requests-remaining", "19970").setHeader("x-requests-used", "30")
                 .setHeader("x-ratelimit-limit", "unlimited").setHeader("x-ratelimit-reset", "$resetSec"),
         )
-        val snap = parlay().fetch("americanfootball_nfl", listOf("pinnacle"))
+        val snap = parlay().fetch("americanfootball_nfl", listOf("draftkings"))
         assertTrue(snap.events.isNotEmpty())
         assertEquals(2, server.requestCount)
         assertEquals(resetSec * 1000, key().resetAtMs)
@@ -211,17 +211,17 @@ class ParlayAccountTest {
         server.enqueue(MockResponse().setResponseCode(503).setBody(busy))
         server.enqueue(MockResponse().setBody(busy))
         server.enqueue(MockResponse().setBody(Fixtures.oddsApi))
-        assertTrue(parlay().fetch("americanfootball_nfl", listOf("pinnacle")).events.isNotEmpty())
+        assertTrue(parlay().fetch("americanfootball_nfl", listOf("draftkings")).events.isNotEmpty())
         assertEquals(3, server.requestCount)
         repeat(3) { server.enqueue(MockResponse().setResponseCode(503).setBody(busy)) }
-        assertTrue(runCatching { parlay().fetch("americanfootball_nfl", listOf("pinnacle")) }.isFailure)
+        assertTrue(runCatching { parlay().fetch("americanfootball_nfl", listOf("draftkings")) }.isFailure)
         assertEquals(6, server.requestCount)
     }
 
     @Test
     fun `a 4xx is never retried, and a failure names ParlayAPI's request id`() = runBlocking<Unit> {
         server.enqueue(MockResponse().setResponseCode(400).setHeader("X-Request-ID", "req-77").setBody("""{"error":"BAD_PARAM"}"""))
-        val e = runCatching { parlay().fetch("americanfootball_nfl", listOf("pinnacle")) }.exceptionOrNull()
+        val e = runCatching { parlay().fetch("americanfootball_nfl", listOf("draftkings")) }.exceptionOrNull()
         assertEquals(1, server.requestCount)
         assertTrue(e?.message, e?.message?.contains("request req-77") == true)
     }

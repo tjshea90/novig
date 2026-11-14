@@ -210,8 +210,8 @@ class ScanStudyAppTest {
         assertTrue(steps2.contains("if (s.scanStudy && s.scanStudyHidden && s.cnoOn && clock() - snap.fetchedAtMs <= maxAgeMs)"))
         assertTrue(steps2.contains("step(\"CNO wide read\") { cno.readWide(snap.url, snap.filters ?: s.cnoFilters) }"))
         assertTrue(steps2.contains("step(\"CNO wide scan\") { study.observeCnoWide(w, cno.state.value.snapshot, settings(), cno.books.value, livePrices(), cno.links.value, maxAgeMs) }"))
-        // Its close lookups are the Tracker's own sources, ParlayAPI's behind a credit guard; its grading is the Tracker's settler's feed.
-        assertTrue(container.contains("GuardedCloses(parlayCloses) { parlayCreditsPlentiful() }, espnCloses, novigCloses"))
+        // Its close lookups are the Tracker's own sources, ParlayAPI's (DraftKings and FanDuel closes since PA1, after ESPN) behind a credit guard; its grading is the Tracker's settler's feed.
+        assertTrue(container.contains("espnCloses, com.tjshea.vigilant.data.study.GuardedCloses(parlayCloses) { parlayCreditsPlentiful() }, novigCloses"))
         assertTrue(container.contains("study.settle(scores, studyCloses,") && container.contains("yieldTo = { trackerClosing.get() > 0 }"))
         // Whatever a scan logged is written within half a minute even when no scan follows.
         assertTrue(block.contains("delay(STUDY_FLUSH_MS)") && block.contains("studyStep(\"flush\") { study.flush() }"))
