@@ -9,6 +9,13 @@ Since Nov 9 each of its `closing-lines?bookmakers=pinnacle` calls is refused, 40
 117 calls a run, for ever, and every moneyline bet it was asked about stayed "not closed yet". Fixed three ways: the request no longer names Pinnacle, a refused book is a "never" (and the look goes on with the other book), and
 the source is no longer first.
 
+**A second, separate cause kept that same workflow red (found while proving the fix, 2026-11-14).** `engine-grade.yml` failed on EVERY scheduled run from Nov 6 22:22 UTC (#169) to Nov 14 (#183, 15 in a row), a day before ParlayAPI withdrew Pinnacle:
+"The runner has received a shutdown signal" (exit 143) about 90 s into the `bids` build of the flat datasets (`tools/lines_dataset.py`). It kept every bid record in one dict: about 6.2 KB each as a Python dict (measured on a real 46,447-record
+segment), about 3.9 million bid records in the archive (737 MB gzipped, 1,597 segments) = about 24 GB on a 16 GB runner; it passed while the archive was smaller. Because the job died there, **the engine's settled orders (`engine-results`
+branch, which the engine reads for its Kelly risk caps) and the `engine-dataset` Release were not published for 8 days**, which is why the analysts' runs kept finding "digest unchanged". Fixed: `bids()` upserts into an SQLite file and streams the rows out
+(byte-identical to the old output on two real segments, 162 MB peak RSS for 612,000 records), the engine's results are published BEFORE the dataset step, the dataset step is `continue-on-error`, and it logs free disk and memory.
+The first green run: #184 (06:00-06:14 UTC): `bids.csv.gz` 164 MB, `lines-*` refreshed, `engine-results` pushed 06:09. The next scheduled runs (07:40 and 17:40 UTC) use main's copy of the fix.
+
 ## What ParlayAPI can still close
 Only **DraftKings' and FanDuel's moneylines**, from `closing-lines` (flat rows, all `h2h`, a price before the start only, 5 credits a league). Spreads, totals and props came from the closes file, which has no Pinnacle row for any day since at least Nov 2,
 and whose DraftKings/FanDuel rows are mostly prices after the start (FanDuel NBA 298 of 300 game-line rows, DraftKings NFL 42 of 42) in a 23,000-row, 24-credit file for one NBA day. Not worth asking: ESPN (DraftKings' own close, free)
