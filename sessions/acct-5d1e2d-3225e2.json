@@ -8,8 +8,8 @@
  "branch": "claude/epic-goldberg-2yhbbk",
  "head": "2ac9255df6a1d0588eba13ff43df98517bf2b684",
  "since": 1794632034,
- "beat": 1794634574,
- "beatIso": "2026-11-14T05:36:14Z",
+ "beat": 1794634581,
+ "beatIso": "2026-11-14T05:36:21Z",
  "done": "pre-ship: ParlayAPI stopped serving Pinnacle (Nov 9): closes ask DraftKings+FanDuel moneylines (soft, after ESPN), no ParlayAPI request names Pinnacle, alternates off (saves 2 of 5 credits a league), line moves name their book",
  "next": "ship.sh gates and releases this"
 }
