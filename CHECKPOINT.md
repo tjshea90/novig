@@ -1,10 +1,10 @@
-# CHECKPOINT 4442 — read me first, then TASKS.md
+# CHECKPOINT 4443 — read me first, then TASKS.md
 
-**Written:** 2026-11-14T12:22:21Z · **tests:** all 10 fast checks green
-**Branch:** `claude/wizardly-meitner-sv7n9g` · **builds on:** `3d725d382` (this checkpoint is the commit after it)
+**Written:** 2026-11-14T18:21:40Z · **tests:** all 10 fast checks green
+**Branch:** `claude/wizardly-meitner-bzvlj6` · **builds on:** `6a901a941` (this checkpoint is the commit after it)
 
 ## Just done
-ANALYST 11-14 slot1: no change
+ANALYST 11-14 slot1 recheck: no change
 
 ## Do this next
 next slot: read new digest if any
@@ -17,6 +17,7 @@ next slot: read new digest if any
 
 ## Last ten checkpoints
 ```
+  6a901a941 ckpt 4442: ANALYST 11-14 slot1: no change
   3d725d382 ckpt 4441: PA1 DONE: ParlayAPI Pinnacle withdrawal handled (v1.0.104 released) + the g
   78b1888da ckpt 4440: engine-grade.yml had failed every scheduled run since 2026-11-06: lines_dat
   88b1af9f2 ckpt 4439: pre-release: ParlayAPI stopped serving Pinnacle (Nov 9): closes ask DraftKi
@@ -26,5 +27,4 @@ next slot: read new digest if any
   3b3724a9e ckpt 4435: PA1: closeprobe run 1 read (UNKNOWN_BOOKMAKER body, DK/FD flat rows labelle
   12408afad ckpt 4434: PA1: added closeprobe task (tools/parlay.py + parlay.yml) to record ParlayA
   6beecfb4d ckpt 4433: PA1: read ParlayAPI's public docs + engine status; wrote PA1a-e into TASKS.
-  afe30e836 ckpt 4432: ANALYST 11-13 slot2: digest unchanged, engine asleep wallet $0.01, no chang
 ```
