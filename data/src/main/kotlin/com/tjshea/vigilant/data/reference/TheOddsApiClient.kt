@@ -754,12 +754,17 @@ enum class OddsFeed(
     /** Paced like ParlayAPI's paid keys (Tj, 2026-10-16: "pace the parlayapi apis as well ... up to a pace that keeps them running until their reset"): each 500-credit key spends its pro-rata share of the month at most, a few credits kept. */
     ODDS_API("oddsapi", "oddsapi_props", "The Odds API", "https://api.the-odds-api.com/v4", null, reserve = 20),
 
-    /** Its own ten books (its keys differ from The Odds API's for some): the sharp ones first, the Settings picker doesn't apply. */
+    /**
+     * Its own books (its keys differ from The Odds API's for some): the exchange and sharper ones first, the Settings picker doesn't apply. **Never `pinnacle`** (PA1, ParlayAPI's e-mail of 2026-11-14:
+     * it stopped serving Pinnacle on 2026-11-09, its public prices arriving up to 15 minutes late, and a request that names the key is refused, 400 UNKNOWN_BOOKMAKER, which refuses a whole call; its
+     * `/v1/bookmakers` now lists `pinnacle_delayed` instead, served only by name and on its own, which no scan asks: PARLAY_API.md §11). `PARLAY_API.md` §11 and [ParlayBooksNotAsked] keep that rule honest.
+     */
     PARLAY(
         "parlay", "parlay_props", "ParlayAPI", "https://parlay-api.com/v1",
-        // Every sharp and US book ParlayAPI carries (PB11, Tj 2026-10-25: "all available sports books offered"; its /v1/bookmakers): 15 books cost two region-equivalents a market instead of one, well inside the
-        // Business plan's 1,000,000 credits a month. Not here: Novig itself (never its own fair), Kalshi and Polymarket (their own feeds), the DFS apps (pick'em payouts, not prices), the non-US books.
-        listOf("pinnacle", "bookmaker_eu", "prophetx", "betonline", "bet365", "bovada", "draftkings", "fanduel", "caesars", "betmgm", "fanatics", "betrivers", "hardrock", "fliff", "parx"),
+        // Every sharp and US book ParlayAPI serves (PB11, Tj 2026-10-25: "all available sports books offered"; its /v1/bookmakers): more than ten cost two region-equivalents a market instead of one. Not here: Pinnacle
+        // (withdrawn, above), BookMaker (`bookmaker_eu`: its directory says "no data is served for this book at present", 2026-11-14), Novig itself (never its own fair), Kalshi and Polymarket (their own feeds),
+        // the DFS apps (pick'em payouts, not prices), the non-US books.
+        listOf("prophetx", "betonline", "bet365", "bovada", "draftkings", "fanduel", "caesars", "betmgm", "fanatics", "betrivers", "hardrock", "fliff", "parx"),
         reserve = 300,
         freeLimit = 1_000,
     ),
