@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/epic-goldberg-2yhbbk",
- "head": "971054fdb4c48bf2b6427ceab4660c6319bc495d",
+ "head": "c02f821667229d271c5da6515d60baed6220d59f",
  "since": 1794632034,
- "beat": 1794633857,
- "beatIso": "2026-11-14T05:24:17Z",
+ "beat": 1794634071,
+ "beatIso": "2026-11-14T05:27:51Z",
  "done": "PA1: probe run 2 read: Pinnacle absent from closes file since at least Nov 2, file rows mostly post-start, alternates empty; added altprobe task",
  "next": "dispatch altprobe on my branch, then write the new ParlayCloses (moneyline only, DK+FD, non-sharp)"
 }
