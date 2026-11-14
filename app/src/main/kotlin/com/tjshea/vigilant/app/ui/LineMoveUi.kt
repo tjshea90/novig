@@ -105,7 +105,9 @@ fun LineMovesCard(boards: Map<String, MoversBoard>, leagues: Set<String>, modifi
                 }
             }
             Text(
-                "$books's moneyline, from ParlayAPI (free): the sharp anchor it uses, Pinnacle, is not served since Nov 9. A move toward a side you bet is closing-line value; against it, the edge may be the market leaving ${com.tjshea.vigilant.app.AppBook.name}'s price behind.",
+                (if (moves.all { it.book.equals("pinnacle", ignoreCase = true) }) "Pinnacle's moneyline, from ParlayAPI (free)."
+                else "Moneyline moves at $books, from ParlayAPI (free): it has not served Pinnacle, its usual sharp anchor, since Nov 9, so these are a soft book's moves.") +
+                    " A move toward a side you bet is closing-line value; against it, the edge may be the market leaving ${com.tjshea.vigilant.app.AppBook.name}'s price behind.",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
