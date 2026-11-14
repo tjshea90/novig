@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/epic-goldberg-2yhbbk",
- "head": "6beecfb4d6b6b6b5ecc9083e82619e33f099d181",
+ "head": "12408afade5c9f892880c2df609e6e79aa171c21",
  "since": 1794632034,
- "beat": 1794632617,
- "beatIso": "2026-11-14T05:03:37Z",
- "done": "PA1: read ParlayAPI's public docs + engine status; wrote PA1a-e into TASKS.md, archived the e-mail photo",
- "next": "PA1a: rewrite ParlayCloses to DraftKings/FanDuel, non-sharp, refusal = never; then PA1b-e"
+ "beat": 1794632764,
+ "beatIso": "2026-11-14T05:06:04Z",
+ "done": "PA1: added closeprobe task (tools/parlay.py + parlay.yml) to record ParlayAPI's real answers for pinnacle/pinnacle_delayed/DraftKings/FanDuel closes, odds, props, verdict and the plan end",
+ "next": "dispatch parlay.yml closeprobe on GitHub (needs the file on main), read the log; meanwhile PA1b-c edits"
 }
