@@ -74,7 +74,7 @@ jobs:
             { echo '### Research lab'; echo '```'; sed -n '/== STATUS ==/,/== PAPER LAB/p' "$F" | head -60; sed -n '/== PAPER BIDS ==/,/== LAB RECORDS/p' "$F" | head -30; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: lab-report
