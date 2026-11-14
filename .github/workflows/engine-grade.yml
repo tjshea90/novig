@@ -72,15 +72,6 @@ jobs:
           gh release view engine-grades >/dev/null 2>&1 || gh release create engine-grades --title "Engine study grades" --prerelease --latest=false --target main --notes "Result and closing-line lines the daily grader added to the engine's scan study (.github/workflows/engine-grade.yml). Permanent: never delete."
           gh release upload engine-grades packed/* --clobber
 
-      - name: "Flat datasets for Claude (derived, rebuilt whole each run, the engine-dataset Release)"
-        run: |
-          python3 -I tools/lines_dataset.py lines journal dataset || true
-          python3 -I tools/lines_dataset.py bids bidassets dataset || true
-          python3 -I tools/lines_dataset.py dictionary > dataset/DATA_DICTIONARY.md
-          ls dataset/* >/dev/null 2>&1 || { echo "nothing to publish"; exit 0; }
-          gh release view engine-dataset >/dev/null 2>&1 || gh release create engine-dataset --title "Engine datasets (flat, for analysis)" --prerelease --latest=false --target main --notes "Derived, flat CSVs of every bet the engine's scan saw (shown or not) with odds, lead time, EV, books agreeing, sharp agreement, stars, closing line and result, and of every bid it posted. Rebuilt twice a day by engine-grade.yml from the permanent journals (cloud-archive-*, engine-grades); see DATA_DICTIONARY.md. Safe to read and to replace; the journals are the record."
-          gh release upload engine-dataset dataset/* --clobber
-
       - name: Publish the engine's settled orders (engine-results branch, one force-pushed commit)
         run: |
           [ -s trade-results.json ] || { echo "no results file"; exit 0; }
@@ -91,6 +82,20 @@ jobs:
           cp ../trade-results.json .
           git add -A && git commit -q -m "engine trade results $(date -u +%FT%TZ)"
           git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" engine-results
+
+      # PA1 follow-up (2026-11-14): this job had failed on EVERY scheduled run since 2026-11-06 ("The runner has received a shutdown signal", exit 143, about 90 s into the `bids` build): tools/lines_dataset.py held
+      # every bid record in memory (about 6.2 KB each, 3.9 million of them: 24 GB on a 16 GB runner) and the runner died, so the engine's settled orders (the step below) and the dataset were not published for 8 days.
+      # `bids` now streams through an SQLite file (162 MB peak for 612,000 records, byte-identical output); the engine's results are published BEFORE this step, and a failure here no longer fails the job.
+      - name: "Flat datasets for Claude (derived, rebuilt whole each run, the engine-dataset Release)"
+        continue-on-error: true
+        run: |
+          echo "before the datasets: $(df -h . | tail -1 | awk '{print $4" free of "$2}') disk, $(free -m | awk 'NR==2{print $7" MB of "$2" MB memory available"}')"
+          python3 -I tools/lines_dataset.py lines journal dataset || true
+          python3 -I tools/lines_dataset.py bids bidassets dataset || true
+          python3 -I tools/lines_dataset.py dictionary > dataset/DATA_DICTIONARY.md
+          ls dataset/* >/dev/null 2>&1 || { echo "nothing to publish"; exit 0; }
+          gh release view engine-dataset >/dev/null 2>&1 || gh release create engine-dataset --title "Engine datasets (flat, for analysis)" --prerelease --latest=false --target main --notes "Derived, flat CSVs of every bet the engine's scan saw (shown or not) with odds, lead time, EV, books agreeing, sharp agreement, stars, closing line and result, and of every bid it posted. Rebuilt twice a day by engine-grade.yml from the permanent journals (cloud-archive-*, engine-grades); see DATA_DICTIONARY.md. Safe to read and to replace; the journals are the record."
+          gh release upload engine-dataset dataset/* --clobber
 
       - name: Summary
         if: always()
