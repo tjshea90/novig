@@ -95,44 +95,84 @@ BIDS_COLS = [
 
 
 def bids(src, out):
+    """One row per bid (the newest record of each clientId) into <out>/bids.csv.gz, in bounded memory.
+
+    PA1 follow-up (2026-11-14): engine-grade.yml had failed on every scheduled run since 2026-11-06 ("The runner has received a shutdown signal", exit 143, 90 s after `lines` finished, so the engine's settled
+    orders and the dataset were not published). The first version kept every bid record in one dict: a record costs about 6.2 KB as a Python dict (measured on a real 46,000-record segment) and the archive holds
+    about 3.9 million (737 MB gzipped), so about 24 GB on a runner with 16. Now each record becomes its row at once, the newest record per clientId is kept in an SQLite file on disk (an upsert), and the rows are
+    streamed out sorted: the same file as before.
+    """
+    import sqlite3, tempfile
     os.makedirs(out, exist_ok=True)
-    latest = {}
-    for f in sorted(os.listdir(src)):
-        if not re.match(r"^bids-\d{4}-\d{2}-\d{2}-run\d+\.jsonl\.gz$", f):
-            continue
-        try:
-            data = gzip.open(os.path.join(src, f)).read().decode()
-        except Exception as e:
-            print(f"skipped {f}: {e}", file=sys.stderr)
-            continue
-        for raw in data.splitlines():
-            try:
-                b = json.loads(raw)
-            except Exception:
+    fd, tmp = tempfile.mkstemp(suffix=".sqlite", prefix="bids-")
+    os.close(fd)
+    db = sqlite3.connect(tmp)
+    try:
+        db.execute("PRAGMA journal_mode=OFF")
+        db.execute("PRAGMA synchronous=OFF")
+        db.execute("PRAGMA temp_store=FILE")
+        db.execute("PRAGMA cache_size=-65536")
+        # seq: the order a clientId was FIRST seen (what the old dict's insertion order gave the stable sort among bids posted in the same second). A record replaces an older one of the same bid only if it ended no earlier.
+        db.execute("CREATE TABLE bids (cid TEXT PRIMARY KEY, seq INTEGER, ended INTEGER, posted TEXT, row TEXT) WITHOUT ROWID")
+        upsert = "INSERT INTO bids VALUES (?,?,?,?,?) ON CONFLICT(cid) DO UPDATE SET ended=excluded.ended, posted=excluded.posted, row=excluded.row WHERE excluded.ended >= bids.ended"
+        seq = 0
+        for f in sorted(os.listdir(src)):
+            if not re.match(r"^bids-\d{4}-\d{2}-\d{2}-run\d+\.jsonl\.gz$", f):
                 continue
-            old = latest.get(b.get("clientId"))
-            if old is None or (b.get("endedAtMs") or 0) >= (old.get("endedAtMs") or 0):
-                latest[b["clientId"]] = b
-    rows = []
-    for c, b in latest.items():
-        posted, ended, starts = b.get("postedAtMs"), b.get("endedAtMs"), b.get("startsTs")
-        fair_at_fill = b.get("fairAtFill")
-        price = b.get("price")
-        fill_ev = (fair_at_fill / price - 1) if (fair_at_fill and price) else None
-        rows.append([
-            c, utc(posted)[:10], utc(posted), utc(ended), utc(starts), r((starts - posted) / 3.6e6, 2) if starts and posted else "", b.get("league"), b.get("kind"), b.get("marketLabel"), b.get("selection"), b.get("eventName"),
-            b.get("rung", 0), int(bool(b.get("overflow"))), int(bool(b.get("obscure"))), price, b.get("contracts"), r(b.get("fair")), r(b.get("evAtFair")), b.get("margin"), b.get("books"), b.get("fairAgeSec"),
-            b.get("bestBidAtPost"), b.get("offerAtPost"), b.get("status"), b.get("filled", 0), r(b.get("paid", 0.0), 4),
-            r(((b["firstFillAtMs"] - posted) / 1000) if b.get("firstFillAtMs") and posted else None, 1), r(fair_at_fill), r(fill_ev), b.get("why"),
-        ])
-    rows.sort(key=lambda x: x[2])
-    path = os.path.join(out, "bids.csv.gz")
-    with gzip.open(path, "wt", newline="", encoding="utf-8", compresslevel=9) as w:
-        cw = csv.writer(w)
-        cw.writerow(BIDS_COLS)
-        cw.writerows(rows)
-    filled = sum(1 for x in rows if (x[BIDS_COLS.index("filled")] or 0) > 0)
-    print(f"{path}: {len(rows)} bids, {filled} filled")
+            batch = []
+            try:
+                with gzip.open(os.path.join(src, f), "rt", encoding="utf-8") as fh:
+                    for raw in fh:
+                        try:
+                            b = json.loads(raw)
+                        except Exception:
+                            continue
+                        if not isinstance(b, dict) or b.get("clientId") is None:
+                            continue
+                        seq += 1
+                        row = bid_row(b)
+                        batch.append((str(b["clientId"]), seq, b.get("endedAtMs") or 0, row[2], json.dumps(row)))
+                        if len(batch) >= 20000:
+                            db.executemany(upsert, batch)
+                            batch = []
+            except Exception as e:
+                print(f"skipped {f}: {e}", file=sys.stderr)
+            if batch:
+                db.executemany(upsert, batch)
+            db.commit()
+        path = os.path.join(out, "bids.csv.gz")
+        n = filled = 0
+        fi = BIDS_COLS.index("filled")
+        with gzip.open(path, "wt", newline="", encoding="utf-8", compresslevel=9) as w:
+            cw = csv.writer(w)
+            cw.writerow(BIDS_COLS)
+            for (js,) in db.execute("SELECT row FROM bids ORDER BY posted, seq"):
+                row = json.loads(js)
+                cw.writerow(row)
+                n += 1
+                if (row[fi] or 0) > 0:
+                    filled += 1
+        print(f"{path}: {n} bids, {filled} filled")
+    finally:
+        db.close()
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+
+
+def bid_row(b):
+    """A bid record as its CSV row (BIDS_COLS order)."""
+    posted, ended, starts = b.get("postedAtMs"), b.get("endedAtMs"), b.get("startsTs")
+    fair_at_fill = b.get("fairAtFill")
+    price = b.get("price")
+    fill_ev = (fair_at_fill / price - 1) if (fair_at_fill and price) else None
+    return [
+        b["clientId"], utc(posted)[:10], utc(posted), utc(ended), utc(starts), r((starts - posted) / 3.6e6, 2) if starts and posted else "", b.get("league"), b.get("kind"), b.get("marketLabel"), b.get("selection"), b.get("eventName"),
+        b.get("rung", 0), int(bool(b.get("overflow"))), int(bool(b.get("obscure"))), price, b.get("contracts"), r(b.get("fair")), r(b.get("evAtFair")), b.get("margin"), b.get("books"), b.get("fairAgeSec"),
+        b.get("bestBidAtPost"), b.get("offerAtPost"), b.get("status"), b.get("filled", 0), r(b.get("paid", 0.0), 4),
+        r(((b["firstFillAtMs"] - posted) / 1000) if b.get("firstFillAtMs") and posted else None, 1), r(fair_at_fill), r(fill_ev), b.get("why"),
+    ]
 
 
 DICTIONARY = """# Engine datasets (Tj, 2026-10-16, TCL33)
