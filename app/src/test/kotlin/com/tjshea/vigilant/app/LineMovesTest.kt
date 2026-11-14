@@ -73,6 +73,9 @@ class LineMovesTest {
         assertEquals(false, s.lineMoves[bal.key]?.toward)
         assertTrue(ops.filter { it.kind == LineKind.PLAYER_PROP || it.kind == LineKind.TOTAL }.none { it.key in s.lineMoves })
         assertEquals("Pinnacle moved toward it: -160 → -175 (+2.1 pts in 6 h)", moveText(s.lineMoves.getValue(dal.key)))
+        // Since ParlayAPI withdrew Pinnacle (2026-11-09) its movers come from FanDuel: the note names the book the answer names (PA1).
+        assertEquals("FanDuel moved toward it: +130 → +123 (+1.4 pts in 6 h)", moveText(com.tjshea.vigilant.data.reference.LineMove("Denver Broncos", 1.4, 130, 123, 360, "fanduel")))
+        assertEquals("DraftKings moved against it: -110 → -118 (-1.2 pts in 2 h)", moveText(com.tjshea.vigilant.data.reference.LineMove("X", -1.2, -110, -118, 120, "draftkings")))
         // Another game's bets: nothing.
         assertNull(ops.firstOrNull { it.event.eventId != dal.event.eventId && it.key in s.lineMoves })
     }

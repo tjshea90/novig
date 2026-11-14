@@ -53,6 +53,24 @@ class ParlayMoversTest {
     }
 
     @Test
+    fun `since ParlayAPI withdrew Pinnacle its movers are the book the answer names, FanDuel's, and the note says so`() {
+        // The real answer of 2026-11-14: "The usual sharp anchor is temporarily unavailable, so movers are computed from fanduel then draftkings" (PA1).
+        val b = ParlayMovers.parse(res("parlay-movers-nba-2026-11-14.json"), json, "basketball_nba", now)!!
+        assertEquals("fanduel", b.movers.single().book)
+        val start = Instant.parse("2026-11-15T01:10:00Z").toEpochMilli()
+        val move = LineMoves.moveFor(b, "Detroit Pistons @ Miami Heat", start, "Detroit Pistons")!!
+        assertEquals("fanduel", move.book)
+        assertTrue("the money went to Detroit", move.toward)
+        assertEquals(-164, move.first)
+        assertEquals(-176, move.last)
+        // An answer that names no book per mover takes the board's anchor; the September answers name Pinnacle.
+        val noSource = res("parlay-movers-nba-2026-11-14.json").replace(""source":"fanduel",", "")
+        assertEquals("fanduel", ParlayMovers.parse(noSource, json, "basketball_nba", now)!!.movers.single().book)
+        assertEquals("pinnacle", board().movers.first().book)
+        assertEquals("pinnacle", ParlayMovers.parse("""{"movers":[{"sport_key":"basketball_nba","home_team":"A","away_team":"B","commence_time":"2026-11-15T01:10:00Z","home_prob_delta_pp":1.0,"away_prob_delta_pp":-1.0}]}""", json, "basketball_nba", now)!!.movers.single().book)
+    }
+
+    @Test
     fun `a team bet's side is told apart, by full name or abbreviation, and a game that isn't on the board gets nothing`() {
         val b = board()
         val game = "Denver Broncos @ San Francisco 49ers"
