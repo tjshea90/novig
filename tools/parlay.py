@@ -611,6 +611,16 @@ def cmd_closeprobe(outdir, sports=("americanfootball_nfl", "basketball_nba", "ic
         L.append("- props bookmakers=%s: HTTP %s, books seen %s" % (label, st, books_seen(body)))
         if st != 200:
             L.append("    body: " + (json.dumps(body)[:500] if body is not None else data[:500].decode("utf8", "replace")))
+    L += ["", "## alternate lines (5 credits a call): which books still send them, with the books Vigilant asks for"]
+    ask = "bookmaker_eu,prophetx,betonline,bet365,bovada,draftkings,fanduel,caesars,betmgm,fanatics"
+    for sp in ("basketball_nba", "americanfootball_nfl"):
+        st, h, body, data = call("alternates_" + sp, "/v1/sports/%s/odds" % sp, {"bookmakers": ask, "markets": "alternate_spreads,alternate_totals", "oddsFormat": "american"})
+        per = {}
+        for e in (body if isinstance(body, list) else []):
+            for b in (e.get("bookmakers") or []) if isinstance(e, dict) else []:
+                n = sum(len(m.get("outcomes") or []) for m in (b.get("markets") or []))
+                per[b.get("key")] = per.get(b.get("key"), 0) + n
+        L.append("- %s: HTTP %s, %d events, outcomes by book %s, credits %s" % (sp, st, len(body) if isinstance(body, list) else 0, per, raw["alternates_" + sp]["credit_headers"].get("x-requests-last", "-")))
     st, h, body, data = call("period_markets_nba_1h", "/v1/sports/basketball_nba/live/period_markets", {"period": "1H"})
     rows = body.get("results") if isinstance(body, dict) else body
     srcs = {}
