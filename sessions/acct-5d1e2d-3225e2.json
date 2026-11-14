@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/epic-goldberg-2yhbbk",
- "head": "3b3724a9ef8946a9e60ab4e3031d9c7be48500ab",
+ "head": "1e7759187c2533c6f9b198f87f46c232139d2736",
  "since": 1794632034,
- "beat": 1794633184,
- "beatIso": "2026-11-14T05:13:04Z",
- "done": "PA1: closeprobe run 1 read (UNKNOWN_BOOKMAKER body, DK/FD flat rows labelled by bookmaker, plan end 2026-11-20T23:37Z); extended the probe with alternates, file sizes and Pinnacle history",
- "next": "push, re-dispatch parlay.yml closeprobe, read; then PA1a code"
+ "beat": 1794633227,
+ "beatIso": "2026-11-14T05:13:47Z",
+ "done": "PA1: probe run 2 read: Pinnacle absent from closes file since at least Nov 2, file rows mostly post-start, alternates empty; added altprobe task",
+ "next": "dispatch altprobe on my branch, then write the new ParlayCloses (moneyline only, DK+FD, non-sharp)"
 }
