@@ -6,7 +6,7 @@ import com.tjshea.vigilant.data.tracker.TrackedBet
 
 /**
  * A close source the scan study asks only while [allow] says so. The study grades every bet a scan listed, hundreds a day, where the Tracker grades the few
- * Tj placed: a source that costs API credits (ParlayAPI's Pinnacle closes, 1 credit per 1,000 rows a league-day) is used for the study only while the credits
+ * Tj placed: a source that costs API credits (ParlayAPI's closing lines, 5 credits a league; Pinnacle's, 1 credit per 1,000 rows a league-day, before 2026-11-09) is used for the study only while the credits
  * are plentiful, so the study never eats what Tj's own bets and scans need (API credits are a budget; BRIEF.md). A source that is off for now isn't counted
  * as having said "never": the bets it would have closed are asked of it again when it comes back ([com.tjshea.vigilant.data.tracker.CloseBackfill.reopened]).
  */

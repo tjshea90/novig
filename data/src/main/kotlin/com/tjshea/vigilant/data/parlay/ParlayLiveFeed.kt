@@ -20,6 +20,10 @@ import kotlinx.serialization.json.JsonObject
  * `/v1/sse/hot/{sport}` pushes Pinnacle (and FanDuel) "sub-3s" and `/v1/sse/odds` every book, both held by [ParlayLive]; every [TICK_MS] each game of the picked leagues under way is turned into
  * the Pinnodds socket's frames ([PinnFrames]), so the whole live lane (matcher, 5-second rule, taker fee, trader, live bids and every guard) runs on it unchanged, exactly as on SharpAPI's feed.
  *
+ * **Since 2026-11-09 ParlayAPI serves no Pinnacle** (PA1, its e-mail of 2026-11-14: its public prices arrive up to 15 minutes late; the engine's socket status the same day held no `pinnacle` among its 40 books, and the hot
+ * route, built for Pinnacle and FanDuel, kept ending with INTERNAL_ERROR): this feed then has no line to send, and says so in [note] instead of looking like a quiet night; the live lane's Pinnacle comes from the other feeds
+ * (SharpAPI, Pinnodds, BoltOdds). Nothing here can order on a price that is not there; the real-orders gate (`gates.parlayLiveReal`) stays as it is.
+ *
  * A line is sent only while ParlayAPI confirmed it within [ParlayLive.LIVE_LINE_MS]; a line it stops confirming is sent CLOSED; nothing is sent while the stream is silent (the runner's 5 s rule
  * closes the rest). Real orders on it stay behind their own gate (`gates.parlayLiveReal`, default off = paper) until its paper results are read.
  */
@@ -107,7 +111,7 @@ class ParlayLiveFeed(
         liveGames = withLines
         lastFrameAtMs = now
         _state.value = _state.value as? PinnSocketState.Live ?: PinnSocketState.Live(now)
-        note = if (withLines == 0) "ParlayAPI live: no game in play with Pinnacle prices from the hot stream (leagues ${bySport.keys.sorted()})"
+        note = if (withLines == 0) "ParlayAPI live: no game in play with Pinnacle prices from the hot stream (ParlayAPI has not served Pinnacle since 2026-11-09; leagues ${bySport.keys.sorted()})"
         else "ParlayAPI live: $withLines games in play with Pinnacle prices"
     }
 

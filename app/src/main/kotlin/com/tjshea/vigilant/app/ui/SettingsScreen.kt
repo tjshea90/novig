@@ -179,7 +179,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     PROPLINE("PropLine", "30 books' lines and props: keys and options", SettingsGroup.FIND),
 
     /** ParlayAPI: its keys. A page of [APIS]. */
-    PARLAY("ParlayAPI", "Pinnacle and 30 books, props, injuries and closing lines: keys", SettingsGroup.FIND),
+    PARLAY("ParlayAPI", "30+ books (not Pinnacle since Nov 9), props, injuries and closing lines: keys", SettingsGroup.FIND),
 
     /** The Odds API: its keys and options. A page of [APIS]. */
     ODDS_API("The Odds API", "Sportsbook lines and props: keys and options", SettingsGroup.FIND),
@@ -1962,19 +1962,18 @@ private fun ColumnScope.PropLinePage(state: UiState, keys: KeyActions, onUpdate:
 @Composable
 private fun ColumnScope.ParlayPage(state: UiState, keys: KeyActions, onUpdate: SettingsUpdate) {
     val s = state.settings
-    Intro("ParlayAPI sends Pinnacle and many sportsbooks' game lines, player props and 1st-half lines, Pinnacle's closing lines for your CLV and injury tags. What is left on each key is under APIs & keys.")
-    // ParlayAPI (Tj, 2026-09-30, RESEARCH.md §43): Pinnacle and 9 more books, a league's props and alternate lines in one call each, and
-    // Pinnacle's closing lines for CLV. A paid key is paced to a day's share of the plan; free keys serve scans after it, down to their last 100.
+    Intro("ParlayAPI sends many sportsbooks' game lines, player props and 1st-half lines, DraftKings' and FanDuel's closing lines for your CLV and injury tags. It stopped serving Pinnacle on Nov 9 (its public prices arrive up to 15 minutes late). What is left on each key is under APIs & keys.")
+    // ParlayAPI (Tj, 2026-09-30, RESEARCH.md §43; PA1, 2026-11-14): 10 books a call, a league's props in one call each, and DraftKings' and FanDuel's closing lines for CLV (Pinnacle's until Nov 9).
+    // A paid key is paced to a day's share of the plan; free keys serve scans after it, down to their last 100.
     SwitchRow(
         "ParlayAPI",
-        if (state.parlayKeys.isEmpty()) "Optional, best on its \$5 plan: Pinnacle, ProphetX, BetOnline, bet365, Bovada and the US books, a " +
-            "whole league's player props and alternate lines in one call each, and Pinnacle's closing lines for your CLV. Free key at " +
+        if (state.parlayKeys.isEmpty()) "Optional, best on its \$5 plan: ProphetX, BetOnline, bet365, Bovada and the US books (Pinnacle was withdrawn on Nov 9), a " +
+            "whole league's player props in one call each, and DraftKings' and FanDuel's closing lines for your CLV. Free key at " +
             "parlay-api.com (1,000 credits a month each: add as many as you like, they are used one after another); \$5 a month (20,000) is paced to a day's share."
-        else "Pinnacle and 9 more books (3 credits a league; 5 with Pinnacle's alternate lines, bought only when PinnWire and pinnapi are " +
-            "off; tennis 3 a tour, with Pinnacle's set lines for set spreads and total sets), every book's player props (3 a league) and 1st-half lines (2 a league, only where Novig lists them) " +
-            "each scan, paced to a day's share of your plan (background auto-scans use half of it at most), plus Pinnacle's closing " +
-            "lines for your CLV (the last 300 credits are kept for them). Free with it: injury tags on prop bets (1 credit a league when a " +
-            "player isn't in its props), Pinnacle's line moves, the credits-a-day chart. Only on a tap: its own picks at Novig (+EV tab, " +
+        else "10 books (3 credits a league; Pinnacle's alternate lines, the only ones, went with Pinnacle on Nov 9; tennis 3 a tour), every book's player props (3 a league) and 1st-half lines (2 a league, only where Novig lists them, " +
+            "Pinnacle's among them) each scan, paced to a day's share of your plan (background auto-scans use half of it at most), plus DraftKings' and FanDuel's closing " +
+            "moneylines for your CLV (5 a league; the last 300 credits are kept for them). Free with it: injury tags on prop bets (1 credit a league when a " +
+            "player isn't in its props), line moves (FanDuel's now), the credits-a-day chart. Only on a tap: its own picks at Novig (+EV tab, " +
             "10 a league) and a bet's second opinion (5). Keys are used in the order listed: each next key once the one before is spent or at its day's share (free keys down to their last 100, kept for closing lines), and again from key 1 whenever credits reset. Off, spent or gone: the other feeds carry on.",
         s.useParlay,
     ) { v -> onUpdate { it.copy(useParlay = v) } }
@@ -2662,8 +2661,8 @@ private fun PinnFeedChooser(state: UiState, onUpdate: ((ScanSettings) -> ScanSet
     if (w.parlay) {
         val g = state.settings.gates
         SwitchRow(
-            "Allow REAL orders on ParlayAPI's Pinnacle",
-            "Off (the default) = it decides, journals and follows up but sends nothing, and real live bets and bids stay paper whatever their own switches say. It is Pinnacle's price from ParlayAPI's hot stream on the GitHub engine: read the paper results first.",
+            "Allow REAL orders on ParlayAPI's live prices",
+            "Off (the default) = it decides, journals and follows up but sends nothing, and real live bets and bids stay paper whatever their own switches say. The live lane prices from Pinnacle, and ParlayAPI's hot stream has carried no Pinnacle since Nov 9, so this has no line to act on now: read the paper results first.",
             g.parlayLiveReal, tag = "parlayLiveReal",
         ) { v -> onUpdate { it.copy(gates = it.gates.copy(parlayLiveReal = v)) } }
     }
