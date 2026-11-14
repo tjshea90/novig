@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/epic-goldberg-2yhbbk",
- "head": "aeaa8cc7a2a4897052776b12dc9e0fa1988a70e8",
+ "head": "78b1888dabcaa64a69da522c25d361364de0cc38",
  "since": 1794632034,
- "beat": 1794635803,
- "beatIso": "2026-11-14T05:56:43Z",
- "done": "pre-release: ParlayAPI stopped serving Pinnacle (Nov 9): closes ask DraftKings+FanDuel moneylines (soft, after ESPN), no ParlayAPI request names Pinnacle, alternates off (saves 2 of 5 credits a league), line moves name their book (versionCode 444, v1.0.104)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.104), then run: bash tools/record-release.sh v1.0.104 444 \"ParlayAPI stopped serving Pinnacle (Nov 9): closes ask DraftKings+FanDuel moneylines (soft, after ESPN), no ParlayAPI request names Pinnacle, alternates off (saves 2 of 5 credits a league), line moves name their book\""
+ "beat": 1794635990,
+ "beatIso": "2026-11-14T05:59:50Z",
+ "done": "engine-grade.yml had failed every scheduled run since 2026-11-06: lines_dataset.py bids held 3.9M bid dicts (24 GB) and killed the runner; bids() now streams through SQLite (162 MB peak for 612k records, byte-identical on real segments); engine results publish before the dataset step, which can no longer fail the job",
+ "next": "dispatch engine-grade.yml on this branch, confirm it goes green and engine-results/engine-dataset update; then ship (tools-only: lands without the app gate)"
 }
