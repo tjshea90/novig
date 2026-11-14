@@ -4,12 +4,13 @@ name: ParlayAPI Pro (Tj, 2026-10-20)
 # Tasks (workflow_dispatch):
 #   plans    each key's tier and credits (log only, keys shown as #N)
 #   listen   wait up to 40 min for a tennis (or other sport) match to be in play, then record 2 minutes of its live play-by-play stream (raw frames) into the same Release
+#   closeprobe  PA1 (2026-11-14): what ParlayAPI answers now for pinnacle / pinnacle_delayed / DraftKings / FanDuel (closing lines, the closes file, odds, props, /verdict) and each key's plan end (about 130 credits)
 #   probe    one call to every Pro/live/arb endpoint; the answers (keyless, trimmed) go to the `parlay-samples` Release so parsers are checked against real shapes (about 60 credits)
 on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe | listen | arbscan | streamprobe | pinprobe | gameprobe | bookprobe"
+        description: "plans | probe | listen | arbscan | streamprobe | pinprobe | gameprobe | bookprobe | closeprobe"
         default: "plans"
       sport:
         description: "gameprobe: the sport key"
@@ -68,6 +69,11 @@ jobs:
               python3 -I tools/parlay.py gameprobe out/parlay "${{ github.event.inputs.sport }}" "${{ github.event.inputs.home }}" "${{ github.event.inputs.away }}"
               gh release view parlay-samples >/dev/null 2>&1 || gh release create parlay-samples --title "ParlayAPI samples (keyless)" --notes "Real answers, trimmed."
               gh release upload parlay-samples out/parlay/gameprobe.md --clobber ;;
+            closeprobe)
+              # PA1 (2026-11-14, ParlayAPI's e-mail: Pinnacle is no longer served; closing lines are served for other books): the real answers for pinnacle, pinnacle_delayed, DraftKings and FanDuel, and each key's plan end.
+              python3 -I tools/parlay.py closeprobe out/parlay
+              gh release view parlay-samples >/dev/null 2>&1 || gh release create parlay-samples --title "ParlayAPI samples (keyless)" --notes "Real answers, trimmed."
+              gh release upload parlay-samples out/parlay/closeprobe.md out/parlay/closeprobe.json --clobber ;;
             bookprobe)
               # PX9 (2026-10-25): every book ParlayAPI lists, and every book that quotes a full-game line in NBA/NFL/NHL with no bookmaker filter.
               python3 -I tools/parlay.py bookprobe out/parlay
