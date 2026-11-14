@@ -63,6 +63,31 @@ class ClosingAuditTest {
         assertEquals("read:both", BetHistory.row(bet(nowVia = BetTracker.VIA_BOTH), null, now).closeBasis)
     }
 
+    @Test fun `ParlayAPI's DraftKings and FanDuel closes are soft books: a read before the start stays ahead of them, and the history says what they are (PA1)`() {
+        // ParlayAPI stopped serving Pinnacle on 2026-11-09; its closes since are DraftKings' and FanDuel's moneylines. They must not replace a read before the start the way a sharp close does.
+        val soft = bet(closeFair = 0.52, seenAt = start - 2 * min, closeHist = 0.55, closeVia = "ParlayAPI · DraftKings + FanDuel close")
+        assertEquals(ClosingLine.SOURCE_CAPTURED, ClosingLine.closeOf(soft, now)!!.second)
+        assertEquals(0.52, ClosingLine.closeOf(soft, now)!!.first, 0.0)
+        assertFalse(ClosingLine.sharpHistory("ParlayAPI · DraftKings + FanDuel close"))
+        assertFalse(ClosingLine.sharpHistory("ParlayAPI · FanDuel close"))
+        // The ones stored before it did say Pinnacle, and stay the sharp close that wins.
+        assertTrue(ClosingLine.sharpHistory("ParlayAPI · Pinnacle close"))
+        assertEquals(0.55, ClosingLine.closeOf(bet(closeFair = 0.52, seenAt = start - 2 * min, closeHist = 0.55, closeVia = "ParlayAPI · Pinnacle close"), now)!!.first, 0.0)
+        // With no read it is the close, and the card names its books.
+        val only = bet(closeFair = null, seenAt = null, closeHist = 0.55, closeVia = "ParlayAPI · FanDuel close")
+        assertEquals("ParlayAPI · FanDuel close", ClosingLine.closeOf(only, now)!!.second)
+        assertEquals("FanDuel via ParlayAPI", ClosingLine.sourceLabel("ParlayAPI · FanDuel close"))
+        assertEquals("DraftKings + FanDuel via ParlayAPI", ClosingLine.sourceLabel("ParlayAPI · DraftKings + FanDuel close"))
+        assertEquals("Pinnacle via ParlayAPI", ClosingLine.sourceLabel("ParlayAPI · Pinnacle close"))
+        // The bet file files it as soft books, independent of the consensus that found the bet, never as Pinnacle's.
+        val row = BetHistory.row(only, null, now)
+        assertEquals("history:softbooks", row.closeBasis)
+        assertEquals(true, row.closeIndependent)
+        assertEquals("history:pinnacle", BetHistory.row(bet(closeFair = null, seenAt = null, closeHist = 0.55, closeVia = "ParlayAPI · Pinnacle close"), null, now).closeBasis)
+        // A weak read is still upgraded only by the sharp sources: a soft ParlayAPI source is not asked for it.
+        assertFalse(object : CloseSource { override suspend fun closes(bets: List<TrackedBet>) = emptyMap<String, CloseLookup>() }.sharp)
+    }
+
     @Test fun `a close found afterwards has no read time and is independent when it is Pinnacle's`() {
         val h = bet(closeFair = null, seenAt = null, closeHist = 0.55, closeVia = "ParlayAPI · Pinnacle close")
         val r = BetHistory.row(h, null, now)
