@@ -92,13 +92,13 @@ object ParlayProps {
 
     /**
      * Every real sportsbook ParlayAPI carries for US props (its `/v1/bookmakers`, 2026-09-30; an unknown key refuses the whole call, HTTP 400):
-     * the pick'em apps, the exchanges read on their own (Kalshi, Polymarket) and Novig itself left out. Pinnacle is the sharp one. Widened
+     * the pick'em apps, the exchanges read on their own (Kalshi, Polymarket) and Novig itself left out. **Not Pinnacle** (PA1: ParlayAPI withdrew it on 2026-11-09, [ParlayWithdrawn]). Widened
      * 2026-09-30 (Tj: "every single open bet refreshed"): with only Pinnacle, DraftKings, FanDuel, Caesars, Bovada and ProphetX, most home-run,
      * batter-strikeout and pitcher-outs lines had no two-sided price (those books list them "Over" only); bet365, BetMGM, Fanatics, Hard Rock,
      * Fliff and betPARX price both sides (a whole MLB slate: 1,453 rows, one page, still 3 credits).
      */
     val BOOKS = listOf(
-        "pinnacle", "draftkings", "fanduel", "betmgm", "caesars", "fanatics", "bet365", "betrivers", "bovada", "betonline", "prophetx",
+        "draftkings", "fanduel", "betmgm", "caesars", "fanatics", "bet365", "betrivers", "bovada", "betonline", "prophetx",
         "fliff", "hardrock", "parx",
     )
 

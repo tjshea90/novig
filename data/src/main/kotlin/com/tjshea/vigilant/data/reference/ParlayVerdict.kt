@@ -52,8 +52,9 @@ data class VerdictQuery(
     fun params(): List<Pair<String, String>> = listOfNotNull(
         "sport" to sportKey, "market" to market, "side" to side, "home" to home, "away" to away,
         player?.let { "player" to it }, line?.let { "line" to fmt(it) }, "price" to price.toString(),
-        // Novig is where Tj bets: the best-price call is scoped to it, and Pinnacle anchors the fair line.
-        "books" to "novig", "sharpBook" to "pinnacle",
+        // Novig is where Tj bets: the best-price call is scoped to it. No `sharpBook` (PA1): it named Pinnacle, which ParlayAPI withdrew on 2026-11-09; the call still answered 200 with it, and with
+        // the same fair line without it (GitHub probe 2026-11-14: "from novig" both ways, see [Verdict.fairFromNovig]), so ParlayAPI's own default anchors the fair line.
+        "books" to "novig",
     )
 
     companion object {

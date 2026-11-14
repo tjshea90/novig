@@ -126,7 +126,8 @@ object LowUsageBids {
         Book("fanduel", "FanDuel", "fanduel", listOf(FEED_PROPLINE, FEED_PARLAY), "originates its own numbers; PropLine (free requests) or ParlayAPI"),
         Book("williamhill_us", "Caesars", "caesars", listOf(FEED_PARLAY), "takes high limits on props; ParlayAPI only"),
         Book("draftkings", "DraftKings", "draftkings", listOf(FEED_PROPLINE, FEED_PARLAY), "sharp on MLB props; PropLine or ParlayAPI"),
-        Book("pinnacle", "Pinnacle", "pinnacle", listOf(FEED_PINNACLE, FEED_PROPLINE, FEED_PARLAY), "low prop limits, so a softer reference; PinnWire / pinnapi, PropLine or ParlayAPI"),
+        // ParlayAPI withdrew Pinnacle on 2026-11-09 (PA1): no ParlayAPI feed and no `parlayKey`, so its `bookmakers` filter never names it.
+        Book("pinnacle", "Pinnacle", null, listOf(FEED_PINNACLE, FEED_PROPLINE), "low prop limits, so a softer reference; PinnWire / pinnapi or PropLine (ParlayAPI stopped serving Pinnacle on 2026-11-09)"),
     )
 
     private val BY_KEY = BOOKS.associateBy { it.key }

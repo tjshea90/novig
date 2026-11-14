@@ -62,9 +62,13 @@ class TheOddsApiClient(
     /** ParlayAPI's scans spend a day's share of the month at most ([CreditPace]); The Odds API's aren't paced. */
     private val pace: CreditPace? = feed.pace(pool.policy, background)
 
-    /** ParlayAPI only: ask for alternate spreads and totals ([marketsFor]); the scan turns it off while a Pinnacle feed sends them. */
+    /**
+     * ParlayAPI only: ask for alternate spreads and totals ([marketsFor]). OFF since PA1 (2026-11-14): they were Pinnacle's alone (PARLAY_API.md §3) and ParlayAPI stopped serving Pinnacle on 2026-11-09; the
+     * GitHub probe (parlay.yml `altprobe`, 2026-11-14 05:14 UTC) asked NFL, NCAAF, NBA, NCAAB, WNBA, NHL and MLB for `alternate_spreads,alternate_totals` from the ten books Vigilant names and got 0 events from
+     * every one, charged 2 credits each: 2 of a scan's 5 credits a league bought nothing. Turn it on again if a probe finds a book that sends them.
+     */
     @Volatile
-    var alternates: Boolean = true
+    var alternates: Boolean = false
 
     override val id = feed.sourceId
     override val displayName = feed.title
@@ -126,7 +130,7 @@ class TheOddsApiClient(
     }
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
-        // Tennis' alternates are Pinnacle's set lines again (±1.5, 2.5): 2 credits a tour for nothing (PARLAY_API.md §6.11).
+        // Tennis never asked for alternates (they were Pinnacle's set lines again, ±1.5 and 2.5: PARLAY_API.md §6.11); nothing asks for them now ([alternates]).
         val markets = marketsFor(settings.families, feed, alternates && !league.tennis)
         if (markets.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = id)
         // ParlayAPI: only the games the scan can price (its window, plus a day for loose kickoff times), a smaller reply for the same credits.
@@ -235,7 +239,7 @@ class TheOddsApiClient(
         return call(
             path = "/sports/$sportKey/props",
             params = listOf(
-                "markets" to markets.joinToString(","), "bookmakers" to bookmakers.filter { it != "novig" }.distinct().joinToString(","),
+                "markets" to markets.joinToString(","), "bookmakers" to ParlayWithdrawn.without(bookmakers.filter { it != "novig" }).distinct().joinToString(","),
                 "oddsFormat" to "american", "limit" to ParlayProps.PAGE.toString(), "offset" to offset.toString(),
                 // Rows older than the oldest a quote may be to price (RESEARCH.md §24) are left on the server: a smaller, faster reply.
                 "maxAgeSec" to (Freshness.FAR_OFF_AGE_MS / 1000).toString(),
@@ -328,8 +332,9 @@ class TheOddsApiClient(
         }
     }
 
+    /** The books to name: never Novig's own (it is not its own fair), never a book ParlayAPI withdrew ([ParlayWithdrawn]), at most ten (one region). */
     private fun pickBooks(bookmakers: List<String>): List<String> =
-        bookmakers.filter { it != "novig" }.distinct().take(MAX_BOOKMAKERS_ONE_REGION)
+        bookmakers.filter { it != "novig" }.let { if (feed == OddsFeed.PARLAY) ParlayWithdrawn.without(it) else it }.distinct().take(MAX_BOOKMAKERS_ONE_REGION)
             .also { require(it.isNotEmpty()) { "Pick at least one reference sportsbook" } }
 
     private suspend fun <T> call(
@@ -757,7 +762,7 @@ enum class OddsFeed(
     /**
      * Its own books (its keys differ from The Odds API's for some): the exchange and sharper ones first, the Settings picker doesn't apply. **Never `pinnacle`** (PA1, ParlayAPI's e-mail of 2026-11-14:
      * it stopped serving Pinnacle on 2026-11-09, its public prices arriving up to 15 minutes late, and a request that names the key is refused, 400 UNKNOWN_BOOKMAKER, which refuses a whole call; its
-     * `/v1/bookmakers` now lists `pinnacle_delayed` instead, served only by name and on its own, which no scan asks: PARLAY_API.md §11). `PARLAY_API.md` §11 and [ParlayBooksNotAsked] keep that rule honest.
+     * `/v1/bookmakers` now lists `pinnacle_delayed` instead, served only by name and on its own, which no scan asks: PARLAY_API.md §11). [ParlayWithdrawn] drops it from every list before a call, `ParlayNoPinnacleTest` pins it, `PARLAY_API.md` §11 keeps the evidence.
      */
     PARLAY(
         "parlay", "parlay_props", "ParlayAPI", "https://parlay-api.com/v1",
