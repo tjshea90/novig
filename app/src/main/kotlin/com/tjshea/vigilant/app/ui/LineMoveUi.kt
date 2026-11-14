@@ -32,9 +32,12 @@ private fun pts(pp: Double): String = String.format(Locale.US, "%+.1f pts", pp)
 
 private fun window(minutes: Int): String = if (minutes % 60 == 0) "${minutes / 60} h" else "$minutes min"
 
-/** "Pinnacle moved toward it: +130 → +123 (+1.4 pts in 6 h)", or "…against it…". */
+/** The book's name as the cards say it: "Pinnacle", "FanDuel" (the book ParlayAPI's movers answer names; FanDuel's since it stopped serving Pinnacle, 2026-11-09). */
+fun moveBookName(book: String): String = com.tjshea.vigilant.data.reference.TheOddsApiClient.bookTitle(book)
+
+/** "Pinnacle moved toward it: +130 → +123 (+1.4 pts in 6 h)" (or "FanDuel moved…"), or "…against it…". */
 fun moveText(m: LineMove): String =
-    "Pinnacle moved ${if (m.toward) "toward" else "against"} it: ${american(m.first)} → ${american(m.last)} (${pts(m.pp)} in ${window(m.windowMinutes)})"
+    "${moveBookName(m.book)} moved ${if (m.toward) "toward" else "against"} it: ${american(m.first)} → ${american(m.last)} (${pts(m.pp)} in ${window(m.windowMinutes)})"
 
 /**
  * A team bet's game moved at Pinnacle (Tj, 2026-09-30, PARLAY_API.md §6.3): toward the bet's side (green: closing-line value in the making)
@@ -71,13 +74,15 @@ fun LineMovesCard(boards: Map<String, MoversBoard>, leagues: Set<String>, modifi
     val moves = topMoves(boards, leagues)
     if (moves.isEmpty()) return
     val windowMinutes = boards.values.maxOfOrNull { it.windowMinutes } ?: 360
+    // The book(s) the shown moves name: Pinnacle's until ParlayAPI withdrew it (2026-11-09), FanDuel's (then DraftKings') since.
+    val books = moves.map { moveBookName(it.book) }.distinct().joinToString(" / ")
     Card(
         modifier.fillMaxWidth().testTag(LINE_MOVES_CARD),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Line moves at Pinnacle · last ${window(windowMinutes)}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text("Line moves at $books · last ${window(windowMinutes)}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             moves.forEach { mv ->
                 val league = Leagues.ALL.firstOrNull { it.oddsApiSportKey == mv.sportKey }
                 // The side the money went to: its chance rose.
@@ -100,7 +105,7 @@ fun LineMovesCard(boards: Map<String, MoversBoard>, leagues: Set<String>, modifi
                 }
             }
             Text(
-                "Pinnacle's moneyline, from ParlayAPI (free). A move toward a side you bet is closing-line value; against it, the edge may be the market leaving ${com.tjshea.vigilant.app.AppBook.name}'s price behind.",
+                "$books's moneyline, from ParlayAPI (free): the sharp anchor it uses, Pinnacle, is not served since Nov 9. A move toward a side you bet is closing-line value; against it, the edge may be the market leaving ${com.tjshea.vigilant.app.AppBook.name}'s price behind.",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

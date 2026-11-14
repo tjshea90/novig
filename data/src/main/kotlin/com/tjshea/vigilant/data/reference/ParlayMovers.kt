@@ -27,8 +27,9 @@ import java.time.Instant
 import kotlin.math.abs
 
 /**
- * One game whose Pinnacle moneyline moved (ParlayAPI's `/v1/meta/movers`, PARLAY_API.md §6.3): each side's first and last price in the
- * window, and how many probability points each side's implied chance moved (+: toward that side, its price shortened).
+ * One game whose [book]'s moneyline moved (ParlayAPI's `/v1/meta/movers`, PARLAY_API.md §6.3): each side's first and last price in the
+ * window, and how many probability points each side's implied chance moved (+: toward that side, its price shortened). [book] is the book the answer names for the mover (`source`: Pinnacle until
+ * ParlayAPI withdrew it on 2026-11-09, FanDuel since: "the usual sharp anchor is temporarily unavailable, so movers are computed from fanduel then draftkings", PA1), else the answer's `anchor`.
  */
 data class Mover(
     val sportKey: String,
@@ -42,6 +43,8 @@ data class Mover(
     val homePp: Double,
     val awayPp: Double,
     val snapshots: Int? = null,
+    /** The book whose price moved, as ParlayAPI keys it ("pinnacle", "fanduel", "draftkings"). */
+    val book: String = "pinnacle",
 ) {
     /** The side the money moved toward: its chance went up. */
     val steamHome: Boolean get() = homePp >= awayPp
@@ -53,16 +56,16 @@ data class Mover(
 data class MoversBoard(val sportKey: String, val windowMinutes: Int, val readAtMs: Long, val movers: List<Mover>)
 
 /**
- * A team bet's game moved at Pinnacle (Tj, 2026-09-30, PARLAY_API.md §6.3): [pp] probability points toward the bet's side (negative: against
+ * A team bet's game moved at [book] (Pinnacle until 2026-11-09, FanDuel since: Tj, 2026-09-30, PARLAY_API.md §6.3, PA1): [pp] probability points toward the bet's side (negative: against
  * it), from [first] to [last] (American) over the board's last [windowMinutes]. Toward the side bet is closing-line value in the making.
  */
-data class LineMove(val team: String, val pp: Double, val first: Int?, val last: Int?, val windowMinutes: Int) {
+data class LineMove(val team: String, val pp: Double, val first: Int?, val last: Int?, val windowMinutes: Int, val book: String = "pinnacle") {
     val toward: Boolean get() = pp > 0
 }
 
 /**
- * ParlayAPI's biggest Pinnacle moneyline moves per league (`GET /v1/meta/movers`): public, free, cached 90 s on their side, so read at most
- * every [REUSE_MS] a league. Moves under 1 probability point are left out by ParlayAPI as noise; games under way are left out
+ * ParlayAPI's biggest moneyline moves per league (`GET /v1/meta/movers`) of its sharp anchor (Pinnacle's until 2026-11-09; FanDuel's, then DraftKings', while it says the anchor is unavailable, PA1): public,
+ * free, cached 90 s on their side, so read at most every [REUSE_MS] a league. Moves under 1 probability point are left out by ParlayAPI as noise; games under way are left out
  * (`pre_game_only`).
  */
 class ParlayMovers(
@@ -151,6 +154,8 @@ class ParlayMovers(
                     homePp = o.num("home_prob_delta_pp") ?: return@mapNotNull null,
                     awayPp = o.num("away_prob_delta_pp") ?: return@mapNotNull null,
                     snapshots = o.num("snapshots_seen")?.toInt(),
+                    // The book the mover names, else the board's anchor, else Pinnacle (answers before 2026-11-09 named it in `source` too).
+                    book = (o.str("source") ?: root.str("anchor"))?.lowercase() ?: "pinnacle",
                 )
             }
             return MoversBoard(sportKey, root.num("window_minutes")?.toInt() ?: WINDOW_MINUTES, now, movers.sortedByDescending { it.size })
@@ -159,7 +164,7 @@ class ParlayMovers(
 }
 
 /**
- * Which listed and open bets get a "Pinnacle moved toward/against" note (PARLAY_API.md §6.3): team bets (moneyline and full-game spread)
+ * Which listed and open bets get a "<book> moved toward/against" note (Pinnacle's until 2026-11-09, FanDuel's since; PARLAY_API.md §6.3): team bets (moneyline and full-game spread)
  * whose game is on a movers board. A moneyline move says nothing sure about a total or a player, so those get none. Pure; keys as
  * [InjuryTags]'.
  */
@@ -185,8 +190,8 @@ object LineMoves {
         } ?: return null
         // The side bet may be an abbreviation ("DAL +3.5"): the matcher that names Novig's outcomes decides.
         val away = TeamMatcher.labelIsAway(teamOf(team), mover.away, mover.home) ?: return null
-        return if (!away) LineMove(mover.home, mover.homePp, mover.homeFirst, mover.homeLast, board.windowMinutes)
-        else LineMove(mover.away, mover.awayPp, mover.awayFirst, mover.awayLast, board.windowMinutes)
+        return if (!away) LineMove(mover.home, mover.homePp, mover.homeFirst, mover.homeLast, board.windowMinutes, mover.book)
+        else LineMove(mover.away, mover.awayPp, mover.awayFirst, mover.awayLast, board.windowMinutes, mover.book)
     }
 
     /** Each team bet among [feed], [cnoRows] and open [bets] whose game moved, by its key. */
