@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/epic-goldberg-2yhbbk",
- "head": "2ac9255df6a1d0588eba13ff43df98517bf2b684",
+ "head": "88b1af9f298ca3dae456bfe74d225afef55c0fc5",
  "since": 1794632034,
- "beat": 1794634581,
- "beatIso": "2026-11-14T05:36:21Z",
- "done": "pre-ship: ParlayAPI stopped serving Pinnacle (Nov 9): closes ask DraftKings+FanDuel moneylines (soft, after ESPN), no ParlayAPI request names Pinnacle, alternates off (saves 2 of 5 credits a league), line moves name their book",
- "next": "ship.sh gates and releases this"
+ "beat": 1794634621,
+ "beatIso": "2026-11-14T05:37:01Z",
+ "done": "pre-release: ParlayAPI stopped serving Pinnacle (Nov 9): closes ask DraftKings+FanDuel moneylines (soft, after ESPN), no ParlayAPI request names Pinnacle, alternates off (saves 2 of 5 credits a league), line moves name their book (versionCode 444, v1.0.104)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.104), then run: bash tools/record-release.sh v1.0.104 444 \"ParlayAPI stopped serving Pinnacle (Nov 9): closes ask DraftKings+FanDuel moneylines (soft, after ESPN), no ParlayAPI request names Pinnacle, alternates off (saves 2 of 5 credits a league), line moves name their book\""
 }
