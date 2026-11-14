@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "33b450",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-au1d5q",
+ "head": "afe30e8364bbc94bb6fd7b3c9dff227d2e87bb16",
+ "since": 1794615704,
+ "beat": 1794615704,
+ "beatIso": "2026-11-14T00:21:44Z",
+ "done": "ANALYST 11-13 slot2: digest unchanged, engine asleep wallet $0.01, no change",
+ "next": "watch next digests; BH1/BH2 settle stale bets"
+}
