@@ -99,7 +99,7 @@ What it means, every session, before the work:
 
 **Standing instruction from Tj (2026-10-25, verbatim):** "my plan is to migrate to parlayapi and propline as my two major apis, both with streaming, plus the free sockets for the kalshi, sx bet, novig, and the free polymarket." and "I deleted the pinnwire keys delete them on GitHub too. Use the best source of any public source, propline, or parlayapi for the best Pinnacle freshest odds and use them in combination if needed for coverage of markets".
 - **The two majors:** ParlayAPI and PropLine, each with its stream; beside them only the free feeds: Kalshi's, SX Bet's and Novig's sockets and Polymarket. The other paid APIs (SGO, OddsPapi, BoltOdds, SharpAPI, The Odds API, Unabated, PinnWire, pinnapi, Pinnodds) may lapse: every feature must keep working on the two majors alone, and new work goes into them first.
-- **Pinnacle** is book `pinnacle` from whichever of PropLine, ParlayAPI and the public sources quotes it freshest (`freshestWins`), the others filling the markets it lacks. PinnWire's keys are deleted: its secret is retired on the engine (`CloudKeys.RETIRED`, not passed by cloud-scan.yml), and a Pinnacle host is called only while its own switch is on (`CloudPinnacleHostsTest`).
+- **Pinnacle** is book `pinnacle` from whichever of PropLine and the public sources quotes it freshest (`freshestWins`), the others filling the markets it lacks. **ParlayAPI stopped serving Pinnacle on 2026-11-09** (PA1, Tj 2026-11-14: its odds, props, closes and alternates carry none, a request naming only `pinnacle` is refused 400; only its `/live/period_markets` 1st-half lines still did): `PARLAY_API.md` §11, `ParlayWithdrawn`, `ParlayNoPinnacleTest`. PinnWire's keys are deleted: its secret is retired on the engine (`CloudKeys.RETIRED`, not passed by cloud-scan.yml), and a Pinnacle host is called only while its own switch is on (`CloudPinnacleHostsTest`).
 - **Limits to respect:** PropLine refuses more than 60 `bookmakers` keys a request (`PropLineClient.bookParts`), its stream filter takes 1,000 characters, and its plan caps concurrent socket connections (Streaming Lite 2, Streaming 5); ParlayAPI's limits are in PARLAY_API.md.
 
 ## Books on one odds provider are one company (Tj, 2026-10-11, permanent)
@@ -593,7 +593,7 @@ never commit a Novig key, PEM, or key ID paired with a private key.
 
 ## ParlayAPI — permanent research memory
 
-ParlayAPI (parlay-api.com, Tj's $5 Starter plan since 2026-09-30) is documented for this project in **`PARLAY_API.md`**: how Vigilant
+ParlayAPI (parlay-api.com, Tj's $5 Starter plan since 2026-09-30; a Business plan that ends 2026-11-20; **no Pinnacle since 2026-11-09, read §11 first**) is documented for this project in **`PARLAY_API.md`**: how Vigilant
 uses it, its real answer shapes (they differ from its docs), costs, credits, plan limits, and the build guide (§6) for the features
 Tj asked for next (TASKS.md §M). Real answers, trimmed and keyless, are in `data/src/test/resources/parlay-*.json`. Read it before
 writing or changing any ParlayAPI code, and update it whenever something is verified or turns out wrong. Never commit a ParlayAPI key.
