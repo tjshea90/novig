@@ -106,7 +106,8 @@ class ParlayFreshnessTest {
     @Test
     fun `ParlayAPI's game lines and a bet's books are dated by the book, The Odds API's by the market`() = runTest {
         server.enqueue(MockResponse().setBody(answer))
-        val parlay = client(OddsFeed.PARLAY).fetch("americanfootball_ncaaf", listOf("pinnacle"), listOf("h2h", "totals"))
+        // The books named are a request's (ParlayAPI no longer serves Pinnacle: PA1); the fixture's answer is dated by its book whichever one it is.
+        val parlay = client(OddsFeed.PARLAY).fetch("americanfootball_ncaaf", listOf("draftkings"), listOf("h2h", "totals"))
         assertTrue(parlay.events.single().markets.all { it.lastUpdateMs == 1790912638500L })
 
         server.enqueue(MockResponse().setBody(answer))

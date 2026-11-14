@@ -190,9 +190,10 @@ class TheOddsApiClientTest {
         val c = parlay()
         assertEquals("parlay", c.id)
         assertEquals("ParlayAPI", c.displayName)
-        // Its own list (Pinnacle first), whatever books Settings picked for The Odds API.
+        // Its own list (the exchanges and sharper books first, never Pinnacle: ParlayAPI withdrew it on 2026-11-09, PA1), whatever books Settings picked for The Odds API.
         val books = c.booksFor(ScanSettings(referenceBooks = listOf("draftkings")))
-        assertEquals("pinnacle", books.first())
+        assertEquals("prophetx", books.first())
+        assertFalse("pinnacle" in books)
         assertFalse("novig" in books)
         // Its docs: "Every response includes x-requests-used, x-requests-remaining, and x-requests-last" (parlay-api.com/docs, 2026-09-30).
         // A Starter key (20,000 a month), early in its month.
@@ -214,7 +215,7 @@ class TheOddsApiClientTest {
     fun `a ParlayAPI key out of credits rotates to the next`() = runTest {
         server.enqueue(MockResponse().setResponseCode(403).setBody("""{"error":"credit_limit_exceeded"}"""))
         server.enqueue(MockResponse().setBody(Fixtures.oddsApi))
-        val snap = parlay(listOf("spent", "fresh")).fetch("americanfootball_nfl", listOf("pinnacle"))
+        val snap = parlay(listOf("spent", "fresh")).fetch("americanfootball_nfl", listOf("draftkings"))
         assertFalse(snap.events.isEmpty())
         // ParlayAPI's best practices (2026-09-30): the key in the X-API-Key header, never in the URL.
         val first = server.takeRequest()
@@ -245,7 +246,7 @@ class TheOddsApiClientTest {
         server.enqueue(MockResponse().setBody(Fixtures.oddsApi).setHeader("x-requests-remaining", "900").setHeader("x-requests-used", "100").setHeader("x-requests-last", "3"))
         server.enqueue(MockResponse().setBody(Fixtures.oddsApi).setHeader("x-requests-remaining", "99").setHeader("x-requests-used", "901").setHeader("x-requests-last", "3"))
         server.enqueue(MockResponse().setBody(Fixtures.oddsApi).setHeader("x-requests-remaining", "997").setHeader("x-requests-used", "3").setHeader("x-requests-last", "3"))
-        repeat(3) { assertFalse(c.fetch("americanfootball_nfl", listOf("pinnacle")).events.isEmpty()) }
+        repeat(3) { assertFalse(c.fetch("americanfootball_nfl", listOf("draftkings")).events.isEmpty()) }
         assertEquals(listOf("free1", "free1", "free2"), List(3) { server.takeRequest().getHeader("X-API-Key") })
     }
 
@@ -269,11 +270,11 @@ class TheOddsApiClientTest {
             json = json, baseUrl = server.url("/v1").toString().trimEnd('/'), clock = { 42L }, minIntervalMs = 0, feed = OddsFeed.PARLAY,
         )
         server.enqueue(MockResponse().setBody(Fixtures.oddsApi))
-        assertFalse(c.fetch("americanfootball_nfl", listOf("pinnacle")).events.isEmpty())
+        assertFalse(c.fetch("americanfootball_nfl", listOf("draftkings")).events.isEmpty())
         assertEquals("business", server.takeRequest().getHeader("X-API-Key"))
         // and stays on it, call after call
         server.enqueue(MockResponse().setBody(Fixtures.oddsApi))
-        c.fetch("basketball_nba", listOf("pinnacle"))
+        c.fetch("basketball_nba", listOf("draftkings"))
         assertEquals("business", server.takeRequest().getHeader("X-API-Key"))
     }
 
@@ -283,8 +284,8 @@ class TheOddsApiClientTest {
         server.enqueue(MockResponse().setResponseCode(403).setBody("""{"error":"HISTORICAL_LIMIT","message":"Your plan reaches back 48 hours"}"""))
         server.enqueue(MockResponse().setBody(Fixtures.oddsApi))
         val c = parlay(listOf("free"))
-        assertThrows(TheOddsApiException::class.java) { runBlocking { c.fetch("americanfootball_nfl", listOf("pinnacle")) } }
+        assertThrows(TheOddsApiException::class.java) { runBlocking { c.fetch("americanfootball_nfl", listOf("draftkings")) } }
         assertFalse(meter.flow.value.providers.getValue("parlay").keys.getValue("free").refused)
-        assertFalse(c.fetch("americanfootball_nfl", listOf("pinnacle")).events.isEmpty())
+        assertFalse(c.fetch("americanfootball_nfl", listOf("draftkings")).events.isEmpty())
     }
 }
