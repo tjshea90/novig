@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "3225e2",
+ "kind": "interactive",
+ "task": "",
+ "branch": "claude/epic-goldberg-2yhbbk",
+ "head": "afe30e8364bbc94bb6fd7b3c9dff227d2e87bb16",
+ "since": 1794632034,
+ "beat": 1794632034,
+ "beatIso": "2026-11-14T04:53:54Z",
+ "done": "",
+ "next": ""
+}
