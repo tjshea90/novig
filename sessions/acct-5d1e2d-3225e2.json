@@ -8,8 +8,8 @@
  "branch": "claude/epic-goldberg-2yhbbk",
  "head": "78b1888dabcaa64a69da522c25d361364de0cc38",
  "since": 1794632034,
- "beat": 1794636594,
- "beatIso": "2026-11-14T06:09:54Z",
+ "beat": 1794636868,
+ "beatIso": "2026-11-14T06:14:28Z",
  "done": "engine-grade.yml had failed every scheduled run since 2026-11-06: lines_dataset.py bids held 3.9M bid dicts (24 GB) and killed the runner; bids() now streams through SQLite (162 MB peak for 612k records, byte-identical on real segments); engine results publish before the dataset step, which can no longer fail the job",
  "next": "dispatch engine-grade.yml on this branch, confirm it goes green and engine-results/engine-dataset update; then ship (tools-only: lands without the app gate)"
 }
