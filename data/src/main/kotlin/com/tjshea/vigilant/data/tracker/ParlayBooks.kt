@@ -94,10 +94,11 @@ class ParlayBooks(
         /** A reference game must start within this of the bet's. */
         private const val START_GAP_MS = 3 * 3_600_000L
 
-        private val GAME_MARKETS = listOf("h2h", "spreads", "totals", "alternate_spreads", "alternate_totals")
+        /** No alternates (PA1): they were Pinnacle's alone, ParlayAPI withdrew it on 2026-11-09, and a probe found no other book sending them: 3 credits a league, not 5. */
+        private val GAME_MARKETS = listOf("h2h", "spreads", "totals")
 
-        /** Tennis' alternates are Pinnacle's set lines again: 3 credits a tour, not 5. */
-        private val TENNIS_MARKETS = listOf("h2h", "spreads", "totals")
+        /** Tennis never asked for alternates (Pinnacle's set lines again): 3 credits a tour. */
+        private val TENNIS_MARKETS = GAME_MARKETS
 
         /** ParlayAPI's book keys to CNO's column codes (others keep their own key, upper-cased: [CnoBooks.name] shows it as is). */
         private val CODES = mapOf(

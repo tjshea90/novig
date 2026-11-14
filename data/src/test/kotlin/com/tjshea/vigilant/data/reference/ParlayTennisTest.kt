@@ -267,7 +267,11 @@ class ParlayTennisTest {
             assertEquals(6, snap.events.size)
             assertNotNull(snap.events.singleOrNull { it.home == "Alex Molcan" })
             assertTrue(snap.events.none { it.home.contains("(Games)") })
-            // Football still asks for the alternates.
+            // Football no longer asks for alternates either (PA1: they were Pinnacle's alone and ParlayAPI withdrew it on 2026-11-09: 3 credits a league, not 5)...
+            client.odds(Leagues.byNovigName("NFL")!!, s)
+            assertEquals("h2h,spreads,totals", asked.last().queryParameter("markets"))
+            // ...until it is switched back on (a probe that finds a book sending them).
+            client.alternates = true
             client.odds(Leagues.byNovigName("NFL")!!, s)
             assertTrue(asked.last().queryParameter("markets")!!.contains("alternate_spreads"))
         } finally {

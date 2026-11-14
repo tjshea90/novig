@@ -101,7 +101,9 @@ class ParlayVerdictTest {
         ParlayMarketKeys.record("americanfootball_nfl", "PASSING_ATTEMPTS", "prophetx_player_total_passing_attempts")
         assertEquals("player_passing_attempts", q().market)
         assertEquals(listOf("Aaron Rodgers", "under"), listOf(q().player, q().side))
-        assertTrue(q().params().containsAll(listOf("books" to "novig", "line" to "29.5", "price" to "-110", "sharpBook" to "pinnacle")))
+        assertTrue(q().params().containsAll(listOf("books" to "novig", "line" to "29.5", "price" to "-110")))
+        // PA1: ParlayAPI withdrew Pinnacle on 2026-11-09; the verdict no longer names a sharp book (its own default anchors the fair line).
+        assertTrue(q().params().none { it.first == "sharpBook" || it.second.equals("pinnacle", true) })
     }
 
     @Test

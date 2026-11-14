@@ -127,13 +127,16 @@ class LowUsageBidsTest {
     }
 
     @Test
-    fun `Pinnacle rides the paid call or PropLine when one is needed anyway, and PinnWire only when nothing else is`() {
+    fun `Pinnacle rides PropLine when it is needed anyway, and PinnWire when it is not (ParlayAPI withdrew Pinnacle on 2026-11-09)`() {
         val withPinnacle = setOf("kalshi", "fanduel", "pinnacle")
         // FanDuel takes PropLine (free), and Pinnacle joins it there.
         assertEquals(listOf(LowUsageBids.FEED_KALSHI, LowUsageBids.FEED_PROPLINE), LowUsageBids.feedsFor(withPinnacle, all).feeds)
-        // No PropLine key: FanDuel and Pinnacle share ParlayAPI's call... but PinnWire is the cheapest carrier for Pinnacle alone.
+        // No PropLine key: FanDuel needs ParlayAPI's call, but ParlayAPI no longer carries Pinnacle (PA1), so PinnWire / pinnapi is asked for it.
         val noPropLine = LowUsageBids.feedsFor(withPinnacle, all - LowUsageBids.FEED_PROPLINE)
-        assertEquals(listOf(LowUsageBids.FEED_KALSHI, LowUsageBids.FEED_PARLAY), noPropLine.feeds)
+        assertEquals(listOf(LowUsageBids.FEED_KALSHI, LowUsageBids.FEED_PINNACLE, LowUsageBids.FEED_PARLAY), noPropLine.feeds)
+        assertEquals(LowUsageBids.FEED_PINNACLE, noPropLine.assigned["pinnacle"])
+        // And the `bookmakers` filter of ParlayAPI's props call never names it, whatever is picked.
+        assertTrue(LowUsageBids.parlayBooks(ScanSettings(lowUsageBooks = setOf("pinnacle", "fanduel", "prophetx"))).none { it == "pinnacle" })
         val pinnacleAlone = LowUsageBids.feedsFor(setOf("kalshi", "pinnacle"), all)
         assertEquals(listOf(LowUsageBids.FEED_KALSHI, LowUsageBids.FEED_PINNACLE), pinnacleAlone.feeds)
     }
