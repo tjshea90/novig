@@ -746,7 +746,7 @@ enum class OddsFeed(
     val title: String,
     val base: String,
     val books: List<String>?,
-    /** Credits a scan leaves on each key ([KeyPool.execute]'s reserve): ParlayAPI's last ones go to Pinnacle's closing lines for CLV. */
+    /** Credits a scan leaves on each key ([KeyPool.execute]'s reserve): ParlayAPI's last ones go to the closing lines for CLV (DraftKings' and FanDuel's since Pinnacle's were withdrawn, PA1). */
     val reserve: Int = 0,
     /** A key with this allowance or less is a free plan's: not paced by day, used for scans down to [CreditPace.FREE_RESERVE] credits after the keys before it. */
     val freeLimit: Int = 0,
