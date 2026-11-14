@@ -628,12 +628,15 @@ class AppContainer(val app: Application) {
     /** PropLine's plan per key (quota headers): the paid key is found and goes first (Tj, 2026-10-16, TCL56). */
     val propLineAccount = com.tjshea.vigilant.data.reference.PropLineAccount(http, { keyStore.current(ApiProvider.PROPLINE) }, usage)
 
-    /** Pinnacle's closes from ParlayAPI (RESEARCH.md §43): asked first when ParlayAPI is on and Tj has a key; nothing otherwise. */
+    /**
+     * DraftKings' and FanDuel's closing moneylines from ParlayAPI (RESEARCH.md §43; PA1, Tj 2026-11-14: ParlayAPI stopped serving Pinnacle on 2026-11-09, so these replaced Pinnacle's closes). SOFT books ([com.tjshea.vigilant.data.tracker.CloseSource.sharp]
+     * is false), so they are asked after ESPN (free, DraftKings' own close) and only when ParlayAPI is on and Tj has a key; nothing otherwise.
+     */
     val parlayCloses = com.tjshea.vigilant.data.tracker.ParlayCloses(http, parlayPool, json, historyDays = { parlayAccount.historyDays() })
-    private val closeSources = listOf<com.tjshea.vigilant.data.tracker.CloseSource>(sgoCloses, op4Closes, parlayCloses, espnCloses, novigCloses)
+    private val closeSources = listOf<com.tjshea.vigilant.data.tracker.CloseSource>(sgoCloses, op4Closes, espnCloses, parlayCloses, novigCloses)
     val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, closeSources)
 
-    /** The Tracker's close sources in the order they are asked (a test pins it): SGO, OddsPapi v5, OddsPapi Free, ParlayAPI, ESPN, Novig. */
+    /** The Tracker's close sources in the order they are asked (a test pins it): SGO, OddsPapi Free (the sharp ones), ESPN, ParlayAPI (DraftKings and FanDuel, PA1), Novig. */
     fun closeBackfillSourceIds(): List<String> = closeSources.map { it.id }
 
     /**
@@ -663,7 +666,7 @@ class AppContainer(val app: Application) {
     }
 
     private val studyCloses = listOf<com.tjshea.vigilant.data.tracker.CloseSource>(
-        sgoCloses, com.tjshea.vigilant.data.study.GuardedCloses(parlayCloses) { parlayCreditsPlentiful() }, espnCloses, novigCloses,
+        sgoCloses, espnCloses, com.tjshea.vigilant.data.study.GuardedCloses(parlayCloses) { parlayCreditsPlentiful() }, novigCloses,
     )
 
     /**
