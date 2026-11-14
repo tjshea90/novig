@@ -8,8 +8,8 @@
  "branch": "claude/epic-goldberg-2yhbbk",
  "head": "3b3724a9ef8946a9e60ab4e3031d9c7be48500ab",
  "since": 1794632034,
- "beat": 1794632972,
- "beatIso": "2026-11-14T05:09:32Z",
+ "beat": 1794633184,
+ "beatIso": "2026-11-14T05:13:04Z",
  "done": "PA1: closeprobe run 1 read (UNKNOWN_BOOKMAKER body, DK/FD flat rows labelled by bookmaker, plan end 2026-11-20T23:37Z); extended the probe with alternates, file sizes and Pinnacle history",
  "next": "push, re-dispatch parlay.yml closeprobe, read; then PA1a code"
 }
