@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe | listen | arbscan | streamprobe | pinprobe | gameprobe | bookprobe | closeprobe"
+        description: "plans | probe | listen | arbscan | streamprobe | pinprobe | gameprobe | bookprobe | closeprobe | altprobe"
         default: "plans"
       sport:
         description: "gameprobe: the sport key"
@@ -69,6 +69,11 @@ jobs:
               python3 -I tools/parlay.py gameprobe out/parlay "${{ github.event.inputs.sport }}" "${{ github.event.inputs.home }}" "${{ github.event.inputs.away }}"
               gh release view parlay-samples >/dev/null 2>&1 || gh release create parlay-samples --title "ParlayAPI samples (keyless)" --notes "Real answers, trimmed."
               gh release upload parlay-samples out/parlay/gameprobe.md --clobber ;;
+            altprobe)
+              # PA1 follow-up (2026-11-14): alternates, period lines and the delayed Pinnacle listing after the withdrawal (about 50 credits).
+              python3 -I tools/parlay.py altprobe out/parlay
+              gh release view parlay-samples >/dev/null 2>&1 || gh release create parlay-samples --title "ParlayAPI samples (keyless)" --notes "Real answers, trimmed."
+              gh release upload parlay-samples out/parlay/altprobe.md --clobber ;;
             closeprobe)
               # PA1 (2026-11-14, ParlayAPI's e-mail: Pinnacle is no longer served; closing lines are served for other books): the real answers for pinnacle, pinnacle_delayed, DraftKings and FanDuel, and each key's plan end.
               python3 -I tools/parlay.py closeprobe out/parlay

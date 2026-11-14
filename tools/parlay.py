@@ -679,6 +679,55 @@ def cmd_closeprobe(outdir, sports=("americanfootball_nfl", "basketball_nba", "ic
     return 0
 
 
+def cmd_altprobe(outdir, sports=("americanfootball_nfl", "americanfootball_ncaaf", "basketball_nba", "basketball_ncaab", "basketball_wnba", "icehockey_nhl", "baseball_mlb")):
+    """PA1 follow-up: does ANY book still send alternate spreads/totals on ParlayAPI (they were Pinnacle's alone until it was withdrawn), and which books and sports do the 1st-half / first-5 period lines
+    still come from, and what does the delayed Pinnacle feed hold right now (free listing)? About 2 credits a sport for alternates, 2 for each period call."""
+    keys = keys_from_env()
+    best = max(keys, key=lambda k: rank(usage_of(k)), default=None)
+    if not best:
+        print("no key")
+        return 0
+    os.makedirs(outdir, exist_ok=True)
+    L = ["# ParlayAPI alternates, period lines and delayed Pinnacle (PA1, %s)" % time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()), "", "## alternate_spreads + alternate_totals, the ten books Vigilant asks (2 credits a sport)"]
+    ask = "prophetx,betonline,bet365,bovada,draftkings,fanduel,caesars,betmgm,fanatics,betrivers"
+    for sp in sports:
+        st, h, d, data = (lambda r: (r[0], r[1], j(r[2]), r[2]))(request("/v1/sports/%s/odds" % sp, best, {"bookmakers": ask, "markets": "alternate_spreads,alternate_totals", "oddsFormat": "american"}))
+        per = {}
+        for e in (d if isinstance(d, list) else []):
+            for b in (e.get("bookmakers") or []) if isinstance(e, dict) else []:
+                per[b.get("key")] = per.get(b.get("key"), 0) + sum(len(m.get("outcomes") or []) for m in (b.get("markets") or []))
+        L.append("- %s: HTTP %s, %d events, outcomes by book %s, credits %s" % (sp, st, len(d) if isinstance(d, list) else 0, per, h.get("x-requests-last", "-")))
+    L += ["", "## main lines for comparison (h2h,spreads,totals; 3 credits a sport): events and books"]
+    for sp in sports:
+        st, h, data = request("/v1/sports/%s/odds" % sp, best, {"bookmakers": ask, "markets": "h2h,spreads,totals", "oddsFormat": "american"})
+        d = j(data)
+        per = {}
+        for e in (d if isinstance(d, list) else []):
+            for b in (e.get("bookmakers") or []) if isinstance(e, dict) else []:
+                per[b.get("key")] = per.get(b.get("key"), 0) + 1
+        L.append("- %s: HTTP %s, %d events, games by book %s, credits %s" % (sp, st, len(d) if isinstance(d, list) else 0, per, h.get("x-requests-last", "-")))
+    L += ["", "## period lines (/live/period_markets, 2 credits a call): rows by source"]
+    for sp, per_key in (("americanfootball_nfl", "1H"), ("americanfootball_ncaaf", "1H"), ("basketball_nba", "1H"), ("basketball_ncaab", "1H"), ("basketball_wnba", "1H"), ("baseball_mlb", "F5")):
+        st, h, data = request("/v1/sports/%s/live/period_markets" % sp, best, {"period": per_key})
+        d = j(data)
+        rows = d.get("results") if isinstance(d, dict) else d
+        srcs = {}
+        for r in (rows if isinstance(rows, list) else []):
+            if isinstance(r, dict):
+                srcs[r.get("source")] = srcs.get(r.get("source"), 0) + 1
+        L.append("- %s %s: HTTP %s, sources %s, credits %s" % (sp, per_key, st, srcs, h.get("x-requests-last", "-")))
+    st, h, data = request("/v1/delayed/pinnacle/sports", best)
+    d = j(data)
+    L += ["", "## /v1/delayed/pinnacle/sports (free): HTTP %s" % st]
+    for sp in (d.get("sports") if isinstance(d, dict) else []) or []:
+        if isinstance(sp, dict):
+            L.append("- " + json.dumps(sp)[:200])
+    with open(os.path.join(outdir, "altprobe.md"), "w") as f:
+        f.write("\n".join(L) + "\n")
+    print("\n".join(L))
+    return 0
+
+
 def selftest():
     assert keys_from_env({"PARLAY_API_KEY": "a, b;c\nd"}) == ["a", "b", "c", "d"]
     assert keys_from_env({}) == []
@@ -719,9 +768,11 @@ if __name__ == "__main__":
         sys.exit(cmd_bookprobe(*(sys.argv[2:3] if len(sys.argv) > 2 else ["out/parlay"])))
     if c == "gameprobe":
         sys.exit(cmd_gameprobe(*(sys.argv[2:6] if len(sys.argv) > 2 else ["out/parlay"])))
+    if c == "altprobe":
+        sys.exit(cmd_altprobe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay"))
     if c == "closeprobe":
         sys.exit(cmd_closeprobe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay"))
     if c == "probe":
         sys.exit(cmd_probe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay"))
-    print("usage: parlay.py plans | probe [dir] | closeprobe [dir] | listen [dir] [sport] | selftest")
+    print("usage: parlay.py plans | probe [dir] | closeprobe [dir] | altprobe [dir] | listen [dir] [sport] | selftest")
     sys.exit(2)
