@@ -8,7 +8,7 @@ CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a 
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
-| 2026-11-14 | `parlayapi_pinnacle_withdrawn_2026-11-14.md` | ParlayAPI stopped serving Pinnacle (2026-11-09): what changed, what Vigilant did, what is left to decide (PA1, Tj 2026-11-14) - **Trigger.** Tj sent a photo of ParlayAPI Support's e-mail (`research/uploads/2026-11-14/parlayapi-... | APPLIED |
+| 2026-11-14 | `parlayapi_pinnacle_withdrawn_2026-11-14.md` | ParlayAPI stopped serving Pinnacle (2026-11-09): what changed, what Vigilant did, what is left to decide (PA1, Tj 2026-11-14) - **Trigger.** Tj sent a photo of ParlayAPI Support's e-mail (`research/uploads/2026-11-14/parlayapi-... | APPLIED LEVER |
 | 2026-11-07 | `book_reputation_2026-11-07.md` | Reputable books only in the fair (BK1, Tj chat 2026-11-07 04:44 UTC) - Tj: "go through the list of sports books which calculate fair odds for the scanner. remove and never show or use in the future any book which is very small ... | APPLIED CODE |
 | 2026-11-07 | `api_docs_review_2026-11-07.md` | API docs re-review, 2026-11-07 (BK1b; Tj: review the ParlayAPI, Novig and PropLine docs) - Method: api-docs.yml run 42348490870 (snap 2026-11-07) diffed against snap 2026-11-02, link/markup noise removed. | IDLE |
 | 2026-11-05 | `ncaab_ats_2026-11-05.md` | College basketball against-the-spread system, and parlays on Novig (NC1, 2026-11-05) - Tj, 2026-11-05 (typed): he used to log each college basketball team's points per game and whether it covered the spread (a tie within a few ... | LEVER CODE |
