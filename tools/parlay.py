@@ -400,7 +400,7 @@ def cmd_gameprobe(outdir, sport="americanfootball_nfl", home="Cardinals", away="
         print("no key")
         return 0
     os.makedirs(outdir, exist_ok=True)
-    books = "pinnacle,bookmaker_eu,prophetx,betonline,bet365,bovada,draftkings,fanduel,caesars,betmgm,fanatics,betrivers,hardrock,fliff,parx"
+    books = "prophetx,betonline,bet365,bovada,draftkings,fanduel,caesars,betmgm,fanatics,betrivers,hardrock,fliff,parx"  # no pinnacle / bookmaker_eu since 2026-11-09 (PA1): the first is refused, the second serves nothing
     L = ["# ParlayAPI for %s @ %s (%s, PX8, %s)" % (away, home, sport, time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())), ""]
     now = time.time() * 1000
     st, hdr, data = request("/v1/sports/%s/odds" % sport, best, {"bookmakers": books, "markets": "h2h,spreads,totals,alternate_spreads,alternate_totals", "oddsFormat": "american"})
