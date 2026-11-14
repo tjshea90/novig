@@ -5,6 +5,8 @@ Runs on GitHub (.github/workflows/parlay.yml) with the PARLAY_API_KEY secret (se
   plans    each key's tier and credits from the free GET /v1/usage (the key is shown only as "#N", never in clear)
   probe    one call to every Pro/live/arb endpoint with the biggest key; the answers (keyless, trimmed) are written to a directory the workflow puts in the `parlay-samples` Release
            so the app's parsers are checked against REAL shapes (SSE play-by-play frames included: a 20 s listen on the live PBP stream)
+  closeprobe PA1 (Tj 2026-11-14, ParlayAPI's e-mail: Pinnacle is no longer served, closing lines are served for other books): what the closing-lines endpoints, the odds/props endpoints and
+           /verdict answer now for `pinnacle`, `pinnacle_delayed`, DraftKings and FanDuel, which books the closes file still holds by day, and each key's plan end (about 130 credits)
 Costs of a probe (docs): arbitrage 10 a sport, inplay/arbs 5, live 3, live/points 1, book_latency 5, source-health 1, period_markets 2, sse 5: about 60 credits.
 """
 import datetime, json
@@ -487,6 +489,153 @@ def cmd_bookprobe(outdir, sports=("basketball_nba", "americanfootball_nfl", "ice
     return 0
 
 
+def books_seen(d):
+    """The book labels an answer carries: a flat row's `bookmaker` / `source` / `book` / `sportsbook`, or the `key` of an Odds-API event's `bookmakers`. -> {label: count}."""
+    out = {}
+    rows = d if isinstance(d, list) else None
+    if isinstance(d, dict):
+        for k in ("rows", "data", "results", "events", "closing_lines"):
+            if isinstance(d.get(k), list):
+                rows = d[k]
+                break
+    for r in rows or []:
+        if not isinstance(r, dict):
+            continue
+        for f in ("bookmaker", "source", "book", "sportsbook"):
+            if isinstance(r.get(f), str):
+                out[r[f]] = out.get(r[f], 0) + 1
+        for b in r.get("bookmakers") or []:
+            if isinstance(b, dict) and isinstance(b.get("key"), str):
+                out["bookmakers[].key=" + b["key"]] = out.get("bookmakers[].key=" + b["key"], 0) + 1
+    return out
+
+
+SAFE_SUB = ("state", "status", "period_end_iso", "period_start_iso", "cancel_at_period_end", "cancel_at_iso", "canceled_at_iso", "cancelled_at_iso", "ends_at_iso",
+            "plan", "tier", "interval", "renews_at_iso", "trial_end_iso", "will_renew", "auto_renew")
+
+
+def safe_check(d):
+    """/v1/meta/api-key-check without anything that identifies the account: counts, tier and the subscription's dates and states; every other field is named, never shown."""
+    if not isinstance(d, dict):
+        return d
+    out = {k: d[k] for k in ("valid", "reason", "tier", "credits_used", "credits_remaining", "credits_total", "last_request_at_iso") if k in d}
+    sub = d.get("subscription")
+    if isinstance(sub, dict):
+        out["subscription"] = {k: sub[k] for k in SAFE_SUB if k in sub and isinstance(sub[k], (str, int, float, bool, type(None)))}
+        out["subscription_other_keys"] = sorted(k for k in sub if k not in SAFE_SUB)
+    elif sub is not None:
+        out["subscription"] = "(%s)" % type(sub).__name__
+    out["other_keys"] = sorted(k for k in d if k not in out and k not in ("subscription", "email", "api_key_fingerprint"))
+    return out
+
+
+def cmd_closeprobe(outdir, sports=("americanfootball_nfl", "basketball_nba", "icehockey_nhl")):
+    """PA1 (Tj 2026-11-14): ParlayAPI's e-mail says Pinnacle has not been served since Nov 9 and closing-lines requests that name it get 400 UNKNOWN_BOOKMAKER; closes are served for other
+    books. Records what each endpoint really answers now, trimmed and keyless, so the parsers are written against REAL shapes: the closing-lines answer per book (shape, book labels), the
+    closes file by day (which sources it holds), odds/props with `pinnacle`, `pinnacle_delayed` and a mix, /verdict with and without `sharpBook=pinnacle`, and every key's plan end."""
+    keys = keys_from_env()
+    ranked = sorted(((usage_of(k), k) for k in keys), key=lambda t: -rank(t[0]))
+    if not ranked or ranked[0][0].get("status") != 200:
+        print("no usable key")
+        return 0
+    u, key = ranked[0]
+    os.makedirs(outdir, exist_ok=True)
+    L = ["# ParlayAPI after Pinnacle (PA1, %s) - biggest key tier %s, %s of %s credits left" % (time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()), u.get("tier"), u.get("remaining"), u.get("total")), ""]
+    raw = {}
+
+    def call(name, path, params=None, k=None):
+        st, h, data = request(path, k or key, params)
+        body = j(data)
+        raw[name] = {"path": path, "params": params, "status": st, "credit_headers": {a: b for a, b in h.items() if "credit" in a or "requests-" in a or "export" in a},
+                     "body": trim(body, 2) if body is not None else data[:1500].decode("utf8", "replace")}
+        return st, h, body, data
+
+    L.append("## Every key's plan (/v1/meta/api-key-check, account fields left out)")
+    for i, (uu, k) in enumerate(ranked, 1):
+        st, _, body, data = call("api_key_check_%d" % i, "/v1/meta/api-key-check", None, k)
+        L.append("- #%d HTTP %s tier=%s credits %s/%s -> %s" % (i, st, uu.get("tier"), uu.get("remaining"), uu.get("total"), json.dumps(safe_check(body))[:700]))
+        raw["api_key_check_%d" % i]["body"] = safe_check(body)
+
+    L += ["", "## closing-lines per book (5 credits a call; daysFrom=3)"]
+    for sp in sports:
+        for label, bm in (("pinnacle", "pinnacle"), ("draftkings", "draftkings"), ("fanduel", "fanduel"), ("default (no bookmakers)", None)):
+            params = {"daysFrom": "3", "oddsFormat": "american"}
+            if bm:
+                params["bookmakers"] = bm
+            st, h, body, data = call("closing_lines_%s_%s" % (sp, label.split()[0]), "/v1/sports/%s/closing-lines" % sp, params)
+            n = len(body) if isinstance(body, list) else (len(next((body[x] for x in ("rows", "data", "results", "events") if isinstance(body.get(x), list)), [])) if isinstance(body, dict) else 0)
+            shape = "list" if isinstance(body, list) else ("dict keys " + ",".join(list(body)[:12]) if isinstance(body, dict) else "?")
+            L.append("- %s %s: HTTP %s, %d rows, %s, books seen %s, credits %s" % (sp, label, st, n, shape, books_seen(body), raw["closing_lines_%s_%s" % (sp, label.split()[0])]["credit_headers"].get("x-requests-last", "-")))
+            if st != 200:
+                L.append("    body: " + (json.dumps(body)[:500] if body is not None else data[:500].decode("utf8", "replace")))
+    st, h, body, data = call("closing_lines_nba_both", "/v1/sports/basketball_nba/closing-lines", {"daysFrom": "3", "oddsFormat": "american", "bookmakers": "draftkings,fanduel"})
+    L.append("- basketball_nba draftkings,fanduel together: HTTP %s, books seen %s" % (st, books_seen(body)))
+
+    L += ["", "## the closes file by day (basketball_nba, no source filter, limit 2000): rows per source"]
+    today = datetime.datetime.now(datetime.timezone.utc).date()
+    for back in range(1, 9):
+        day = (today - datetime.timedelta(days=back)).isoformat()
+        st, h, body, data = call("closes_file_nba_" + day, "/v1/historical/closing-lines.json", {"date": day, "sport_key": "basketball_nba", "limit": "2000"})
+        rows = body.get("rows") if isinstance(body, dict) else None
+        cnt = {}
+        for r in rows or []:
+            cnt[r.get("source")] = cnt.get(r.get("source"), 0) + 1
+        L.append("- %s: HTTP %s, %s rows, %s" % (day, st, len(rows) if isinstance(rows, list) else "-", dict(sorted(cnt.items(), key=lambda kv: -kv[1]))))
+    day = (today - datetime.timedelta(days=1)).isoformat()
+    for src in ("pinnacle", "draftkings", "fanduel"):
+        for sp in ("basketball_nba", "americanfootball_nfl"):
+            st, h, body, data = call("closes_file_%s_%s" % (sp, src), "/v1/historical/closing-lines.json", {"date": day, "sport_key": sp, "source": src, "limit": "400"})
+            rows = body.get("rows") if isinstance(body, dict) else None
+            kinds = {}
+            for r in rows or []:
+                kinds.setdefault(r.get("market_key"), r)
+            L.append("- source=%s %s %s: HTTP %s, %s rows, market keys %s" % (src, sp, day, st, len(rows) if isinstance(rows, list) else "-", sorted(str(k) for k in kinds)[:30]))
+            if st != 200:
+                L.append("    body: " + (json.dumps(body)[:500] if body is not None else data[:500].decode("utf8", "replace")))
+            raw["closes_file_%s_%s" % (sp, src)]["one_row_per_market_key"] = [trim(v, 2) for v in list(kinds.values())[:14]]
+
+    L += ["", "## odds / props naming Pinnacle (3 credits a call; NBA)"]
+    game = None
+    for label, bm in (("pinnacle", "pinnacle"), ("pinnacle_delayed", "pinnacle_delayed"), ("pinnacle,draftkings", "pinnacle,draftkings"), ("draftkings,fanduel", "draftkings,fanduel")):
+        st, h, body, data = call("odds_nba_" + label.replace(",", "_"), "/v1/sports/basketball_nba/odds", {"bookmakers": bm, "markets": "h2h", "oddsFormat": "american"})
+        ev = body if isinstance(body, list) else []
+        L.append("- odds bookmakers=%s: HTTP %s, %d events, books seen %s" % (label, st, len(ev), books_seen(body)))
+        if st != 200:
+            L.append("    body: " + (json.dumps(body)[:500] if body is not None else data[:500].decode("utf8", "replace")))
+        if ev and game is None and isinstance(ev[0], dict):
+            game = ev[0]
+        if ev and label == "pinnacle_delayed" and isinstance(ev[0], dict):
+            L.append("    delayed book object: " + json.dumps(trim((ev[0].get("bookmakers") or [None])[0], 2))[:700])
+    for label, bm in (("pinnacle,draftkings", "pinnacle,draftkings"), ("draftkings", "draftkings")):
+        st, h, body, data = call("props_nba_" + label.replace(",", "_"), "/v1/sports/basketball_nba/props", {"bookmakers": bm, "markets": "player_points", "oddsFormat": "american", "limit": "500"})
+        L.append("- props bookmakers=%s: HTTP %s, books seen %s" % (label, st, books_seen(body)))
+        if st != 200:
+            L.append("    body: " + (json.dumps(body)[:500] if body is not None else data[:500].decode("utf8", "replace")))
+    st, h, body, data = call("period_markets_nba_1h", "/v1/sports/basketball_nba/live/period_markets", {"period": "1H"})
+    rows = body.get("results") if isinstance(body, dict) else body
+    srcs = {}
+    for r in (rows if isinstance(rows, list) else []):
+        if isinstance(r, dict):
+            srcs[r.get("source")] = srcs.get(r.get("source"), 0) + 1
+    L.append("- period_markets 1H (no book named): HTTP %s, sources %s" % (st, srcs))
+    st, h, body, data = call("delayed_pinnacle_sports", "/v1/delayed/pinnacle/sports")
+    L.append("- /v1/delayed/pinnacle/sports: HTTP %s %s" % (st, json.dumps(trim(body, 4))[:600]))
+
+    if game and game.get("home_team"):
+        L += ["", "## /verdict (5 credits a call), home team moneyline at -110, with and without sharpBook=pinnacle"]
+        base = {"sport": "basketball_nba", "market": "h2h", "side": game["home_team"], "home": game["home_team"], "away": game.get("away_team"), "price": "-110", "books": "novig"}
+        for label, extra in (("sharpBook=pinnacle", {"sharpBook": "pinnacle"}), ("no sharpBook", {})):
+            st, h, body, data = call("verdict_" + label.replace("=", "_").replace(" ", "_"), "/v1/verdict", dict(base, **extra))
+            L.append("- %s: HTTP %s %s" % (label, st, json.dumps(trim(body, 2))[:700] if body is not None else data[:400].decode("utf8", "replace")))
+
+    with open(os.path.join(outdir, "closeprobe.md"), "w") as f:
+        f.write("\n".join(L) + "\n")
+    with open(os.path.join(outdir, "closeprobe.json"), "w") as f:
+        json.dump(raw, f, indent=1)
+    print("\n".join(L))
+    return 0
+
+
 def selftest():
     assert keys_from_env({"PARLAY_API_KEY": "a, b;c\nd"}) == ["a", "b", "c", "d"]
     assert keys_from_env({}) == []
@@ -499,6 +648,12 @@ def selftest():
     assert pl == [{"game": "A @ H", "market": "spreads", "point": -4.5, "pinnacle": True, "pin_age": 60.0}], pl
     gv = game_view([{"home_team": "Arizona Cardinals", "away_team": "Denver Broncos", "bookmakers": [{"key": "draftkings", "last_update_ms": 1792000000000, "markets": [{"key": "totals", "outcomes": [{"name": "Over", "point": 44.5, "price": -110}]}]}]}], 1792000030000, "Cardinals", "Broncos")
     assert gv == {("totals", 44.5, "Over"): {"draftkings": 30}}, gv
+    assert books_seen([{"bookmaker": "draftkings", "x": 1}, {"source": "fanduel"}, {"bookmakers": [{"key": "pinnacle"}]}]) == {"draftkings": 1, "fanduel": 1, "bookmakers[].key=pinnacle": 1}
+    assert books_seen({"rows": [{"source": "pinnacle"}, {"source": "pinnacle"}]}) == {"pinnacle": 2}
+    assert books_seen({"error": "x"}) == {}
+    chk = safe_check({"valid": True, "tier": "business", "email": "a@b.c", "api_key_fingerprint": "zz", "subscription": {"state": "active", "period_end_iso": "2026-11-20T00:00:00Z", "stripe_customer_id": "cus_x", "cancel_at_period_end": True}})
+    assert chk["subscription"] == {"state": "active", "period_end_iso": "2026-11-20T00:00:00Z", "cancel_at_period_end": True}, chk
+    assert chk["subscription_other_keys"] == ["stripe_customer_id"] and "email" not in json.dumps(chk) and "cus_x" not in json.dumps(chk), chk
     print("parlay.py selftest ok")
     return 0
 
@@ -521,7 +676,9 @@ if __name__ == "__main__":
         sys.exit(cmd_bookprobe(*(sys.argv[2:3] if len(sys.argv) > 2 else ["out/parlay"])))
     if c == "gameprobe":
         sys.exit(cmd_gameprobe(*(sys.argv[2:6] if len(sys.argv) > 2 else ["out/parlay"])))
+    if c == "closeprobe":
+        sys.exit(cmd_closeprobe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay"))
     if c == "probe":
         sys.exit(cmd_probe(sys.argv[2] if len(sys.argv) > 2 else "out/parlay"))
-    print("usage: parlay.py plans | probe [dir] | listen [dir] [sport] | selftest")
+    print("usage: parlay.py plans | probe [dir] | closeprobe [dir] | listen [dir] [sport] | selftest")
     sys.exit(2)
