@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/epic-goldberg-2yhbbk",
- "head": "a975b9c177ddf33be2d47b097fa93467475511fa",
+ "head": "6beecfb4d6b6b6b5ecc9083e82619e33f099d181",
  "since": 1794632034,
- "beat": 1794632571,
- "beatIso": "2026-11-14T05:02:51Z",
- "done": "",
- "next": ""
+ "beat": 1794632617,
+ "beatIso": "2026-11-14T05:03:37Z",
+ "done": "PA1: read ParlayAPI's public docs + engine status; wrote PA1a-e into TASKS.md, archived the e-mail photo",
+ "next": "PA1a: rewrite ParlayCloses to DraftKings/FanDuel, non-sharp, refusal = never; then PA1b-e"
 }
