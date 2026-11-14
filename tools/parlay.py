@@ -565,7 +565,11 @@ def cmd_closeprobe(outdir, sports=("americanfootball_nfl", "basketball_nba", "ic
             st, h, body, data = call("closing_lines_%s_%s" % (sp, label.split()[0]), "/v1/sports/%s/closing-lines" % sp, params)
             n = len(body) if isinstance(body, list) else (len(next((body[x] for x in ("rows", "data", "results", "events") if isinstance(body.get(x), list)), [])) if isinstance(body, dict) else 0)
             shape = "list" if isinstance(body, list) else ("dict keys " + ",".join(list(body)[:12]) if isinstance(body, dict) else "?")
-            L.append("- %s %s: HTTP %s, %d rows, %s, books seen %s, credits %s" % (sp, label, st, n, shape, books_seen(body), raw["closing_lines_%s_%s" % (sp, label.split()[0])]["credit_headers"].get("x-requests-last", "-")))
+            mk = {}
+            for r in (body if isinstance(body, list) else []):
+                if isinstance(r, dict):
+                    mk[r.get("market_key")] = mk.get(r.get("market_key"), 0) + 1
+            L.append("- %s %s: HTTP %s, %d rows, %s, books seen %s, market keys %s, credits %s" % (sp, label, st, n, shape, books_seen(body), mk, raw["closing_lines_%s_%s" % (sp, label.split()[0])]["credit_headers"].get("x-requests-last", "-")))
             if st != 200:
                 L.append("    body: " + (json.dumps(body)[:500] if body is not None else data[:500].decode("utf8", "replace")))
     st, h, body, data = call("closing_lines_nba_both", "/v1/sports/basketball_nba/closing-lines", {"daysFrom": "3", "oddsFormat": "american", "bookmakers": "draftkings,fanduel"})
@@ -581,6 +585,35 @@ def cmd_closeprobe(outdir, sports=("americanfootball_nfl", "basketball_nba", "ic
         for r in rows or []:
             cnt[r.get("source")] = cnt.get(r.get("source"), 0) + 1
         L.append("- %s: HTTP %s, %s rows, %s" % (day, st, len(rows) if isinstance(rows, list) else "-", dict(sorted(cnt.items(), key=lambda kv: -kv[1]))))
+    L += ["", "## does the closes file still hold Pinnacle rows from before the withdrawal? (source=pinnacle, basketball_nba, limit 3000)"]
+    for back in range(1, 13):
+        day = (today - datetime.timedelta(days=back)).isoformat()
+        st, h, body, data = call("pinnacle_file_nba_" + day, "/v1/historical/closing-lines.json", {"date": day, "sport_key": "basketball_nba", "source": "pinnacle", "limit": "3000"})
+        rows = body.get("rows") if isinstance(body, dict) else None
+        L.append("- %s: HTTP %s, %s rows" % (day, st, len(rows) if isinstance(rows, list) else "-"))
+        raw["pinnacle_file_nba_" + day]["body"] = {"row_count": len(rows) if isinstance(rows, list) else None}
+    L += ["", "## how big is a day's DraftKings / FanDuel closes file, and where do the game lines sit in it? (limit 60000, up to 60 credits a call)"]
+    day = (today - datetime.timedelta(days=1)).isoformat()
+    GAME = ("moneyline", "spreads", "totals", "h2h")
+    for src in ("draftkings", "fanduel"):
+        for sp in ("basketball_nba", "americanfootball_nfl"):
+            st, h, body, data = call("size_%s_%s" % (sp, src), "/v1/historical/closing-lines.json", {"date": day, "sport_key": sp, "source": src, "limit": "60000"})
+            rows = body.get("rows") if isinstance(body, dict) else None
+            rows = rows if isinstance(rows, list) else []
+            idx = [i for i, r in enumerate(rows) if isinstance(r, dict) and r.get("market_key") in GAME]
+            late = 0
+            for r in rows:
+                if isinstance(r, dict) and r.get("market_key") in GAME:
+                    a, b = r.get("snapshot_time"), r.get("commence_time")
+                    if isinstance(a, str) and isinstance(b, str) and a[:19] > b[:19]:
+                        late += 1
+            gl = {}
+            for r in rows:
+                if isinstance(r, dict) and r.get("market_key") in GAME:
+                    gl[r.get("market_key")] = gl.get(r.get("market_key"), 0) + 1
+            L.append("- %s %s %s: HTTP %s, %d rows, credits %s, game-line rows %d %s at index %s..%s, %d of them snapshotted AFTER the start" % (
+                src, sp, day, st, len(rows), h.get("x-export-credits", "-"), len(idx), gl, idx[0] if idx else "-", idx[-1] if idx else "-", late))
+            raw["size_%s_%s" % (sp, src)]["body"] = {"row_count": len(rows), "game_line_rows": gl, "first_rows": [trim(r, 2) for r in rows[:3]]}
     day = (today - datetime.timedelta(days=1)).isoformat()
     for src in ("pinnacle", "draftkings", "fanduel"):
         for sp in ("basketball_nba", "americanfootball_nfl"):
