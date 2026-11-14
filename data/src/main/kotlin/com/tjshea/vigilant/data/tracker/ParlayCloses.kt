@@ -108,16 +108,29 @@ class ParlayCloses(
         val back = (clock() - b.startsTs) / 86_400_000L + 1
         val most = historyDays().coerceAtMost(MAX_DAYS).toLong()
         if (back > most) return CloseLookup.None("Older than your ParlayAPI plan's $most-day history")
-        val books = BOOKS.filter { it !in refused }
-        if (books.isEmpty()) return CloseLookup.None(NO_BOOKS)
-        val params = listOf("bookmakers" to books.joinToString(","), "daysFrom" to back.coerceIn(1, most).toString(), "oddsFormat" to "american")
-        val root = when (val got = get("/sports/$sport/closing-lines", params, cost = 5)) {
-            is Fetched.Rows -> got.root
-            is Fetched.Refused -> return CloseLookup.None("ParlayAPI no longer serves ${got.books.joinToString(" or ") { TheOddsApiClient.bookTitle(it) }} closes (HTTP 400 UNKNOWN_BOOKMAKER)")
-            Fetched.Silent -> return CloseLookup.Later("ParlayAPI didn't answer")
+        // A book ParlayAPI answers "unknown" for is dropped and the look goes on with the others (at most once per book): FanDuel refused must not cost this bet DraftKings' close.
+        var books = BOOKS.filter { it !in refused }
+        var refusedNow: Set<String> = emptySet()
+        for (attempt in 0..BOOKS.size) {
+            if (books.isEmpty()) return CloseLookup.None(if (refusedNow.isEmpty()) NO_BOOKS else refusedText(refusedNow))
+            val params = listOf("bookmakers" to books.joinToString(","), "daysFrom" to back.coerceIn(1, most).toString(), "oddsFormat" to "american")
+            when (val got = get("/sports/$sport/closing-lines", params, cost = 5)) {
+                is Fetched.Rows -> return combine(books.map { it to parseGameLine(got.root, b, pick, it) })
+                is Fetched.Refused -> {
+                    refusedNow = refusedNow + got.books
+                    val left = BOOKS.filter { it !in refused }
+                    // Nothing it named is one of ours (a body that names other keys): don't ask the same thing again.
+                    if (left == books) return CloseLookup.None(refusedText(refusedNow))
+                    books = left
+                }
+                Fetched.Silent -> return CloseLookup.Later("ParlayAPI didn't answer")
+            }
         }
-        return combine(books.map { it to parseGameLine(root, b, pick, it) })
+        return CloseLookup.None(refusedText(refusedNow))
     }
+
+    private fun refusedText(books: Set<String>): String =
+        "ParlayAPI no longer serves ${books.joinToString(" or ") { TheOddsApiClient.bookTitle(it) }} closes (HTTP 400 UNKNOWN_BOOKMAKER)"
 
     /** What one call came back with: its rows, a refusal of the books it named (ParlayAPI no longer knows them), or nothing (no answer: asked again later). */
     private sealed interface Fetched {
