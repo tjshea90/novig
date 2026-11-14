@@ -64,7 +64,7 @@ class ParlayMoversTest {
         assertEquals(-164, move.first)
         assertEquals(-176, move.last)
         // An answer that names no book per mover takes the board's anchor; the September answers name Pinnacle.
-        val noSource = res("parlay-movers-nba-2026-11-14.json").replace(""source":"fanduel",", "")
+        val noSource = res("parlay-movers-nba-2026-11-14.json").replace("\"source\":\"fanduel\",", "")
         assertEquals("fanduel", ParlayMovers.parse(noSource, json, "basketball_nba", now)!!.movers.single().book)
         assertEquals("pinnacle", board().movers.first().book)
         assertEquals("pinnacle", ParlayMovers.parse("""{"movers":[{"sport_key":"basketball_nba","home_team":"A","away_team":"B","commence_time":"2026-11-15T01:10:00Z","home_prob_delta_pp":1.0,"away_prob_delta_pp":-1.0}]}""", json, "basketball_nba", now)!!.movers.single().book)

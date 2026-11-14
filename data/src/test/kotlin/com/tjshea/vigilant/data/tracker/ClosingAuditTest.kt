@@ -63,7 +63,7 @@ class ClosingAuditTest {
         assertEquals("read:both", BetHistory.row(bet(nowVia = BetTracker.VIA_BOTH), null, now).closeBasis)
     }
 
-    @Test fun `ParlayAPI's DraftKings and FanDuel closes are soft books: a read before the start stays ahead of them, and the history says what they are (PA1)`() {
+    @Test fun `ParlayAPI's DraftKings and FanDuel closes are soft books, so a read before the start stays ahead of them and the history says what they are (PA1)`() {
         // ParlayAPI stopped serving Pinnacle on 2026-11-09; its closes since are DraftKings' and FanDuel's moneylines. They must not replace a read before the start the way a sharp close does.
         val soft = bet(closeFair = 0.52, seenAt = start - 2 * min, closeHist = 0.55, closeVia = "ParlayAPI · DraftKings + FanDuel close")
         assertEquals(ClosingLine.SOURCE_CAPTURED, ClosingLine.closeOf(soft, now)!!.second)
