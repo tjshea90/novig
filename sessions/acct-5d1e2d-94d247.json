@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-5ooyee",
- "head": "359d9b0e07b29eaed468d85ac2e7874892cc9fe6",
+ "head": "44265fa0da78fd2ef054a4d395a7ee0d9fec0804",
  "since": 1794702588,
- "beat": 1794717583,
- "beatIso": "2026-11-15T04:39:43Z",
- "done": "NC3 shipped v1.0.106; LG2 logged with first evidence",
- "next": "LG2: bid churn hysteresis, PropLine 2-socket cap, tradeStopped fills-unreadable"
+ "beat": 1794717716,
+ "beatIso": "2026-11-15T04:41:56Z",
+ "done": "CN1 resolved (phone writing again); PropLine log reworded; LG2 findings",
+ "next": "LG2: desk-journal evidence for fall-side hysteresis, tradeStopped fills-unreadable"
 }
