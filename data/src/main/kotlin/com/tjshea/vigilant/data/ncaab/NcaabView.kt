@@ -130,7 +130,8 @@ object NcaabView {
         val source = if (mainSpread != null || mainTotal != null) "Novig" else "ESPN"
         val neutral = g.neu == 1
         val readings = if (home != null && away != null && ratings != null) NcaabSignals.read(ratings.model, home, away, homeSpread, total, neutral) else emptyList()
-        val picks = readings.map { r -> pickOf(r, g, swapped, mainSpread, mainTotal) }
+        val spreadSw = mainSpread?.let { sidesSwapped(g, it.home, it.away) } ?: swapped
+        val picks = readings.map { r -> pickOf(r, g, spreadSw, mainSpread, mainTotal) }
         return NcaabGameView(g, event, home, away, ml, spreads, totals, mainSpread, mainTotal, homeSpread, total, source, readings, picks, swapped,
             mlSwapped = ml?.let { (h, a) -> sidesSwapped(g, h, a) }, spreadSwapped = mainSpread?.let { sidesSwapped(g, it.home, it.away) },
             homeEarly = if (home == null) ratings?.early?.get(g.h.id) else null, awayEarly = if (away == null) ratings?.early?.get(g.a.id) else null)
