@@ -450,3 +450,4 @@ day that changes.
 | v1.0.109 | code 449 | 2026-11-15T20:12Z | LG3b: phone no longer runs the scan study while the engine drives; Feed ticks slower on low-RAM devices
 | v1.0.110 | code 450 | 2026-11-15T22:02Z | LG3c: phone bid guard rests while engine desk live
 | v1.0.111 | code 451 | 2026-11-15T22:21Z | Engine: keeps ordering after unreadable fill; pregame kinds pruned; live real
+| v1.0.112 | code 452 | 2026-11-15T22:51Z | Phone reads no Novig order books for bids while the engine posts them
