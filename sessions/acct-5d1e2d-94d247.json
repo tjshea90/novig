@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-xew3j4",
- "head": "f608d4f246b27c22adf30ca1a16dc6ec96838e1e",
+ "head": "71f257b9a4b4c4fa3877a922b22bad75dec0cbb3",
  "since": 1794702588,
- "beat": 1794707904,
- "beatIso": "2026-11-15T01:58:24Z",
- "done": "pre-release: NC2: NCAAB tab revamp (bet any line, colored ATS + legend, moneyline chips, early averages) (versionCode 445, v1.0.105)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.105), then run: bash tools/record-release.sh v1.0.105 445 \"NC2: NCAAB tab revamp (bet any line, colored ATS + legend, moneyline chips, early averages)\""
+ "beat": 1794707939,
+ "beatIso": "2026-11-15T01:58:59Z",
+ "done": "NC2 shipped v1.0.105, Tj told",
+ "next": "watch chat; LG1 phone live work next"
 }
