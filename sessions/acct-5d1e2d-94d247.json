@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-xew3j4",
  "head": "6fef38284b3a13269cbf99935591213137544319",
  "since": 1794702588,
- "beat": 1794707149,
- "beatIso": "2026-11-15T01:45:49Z",
+ "beat": 1794707155,
+ "beatIso": "2026-11-15T01:45:55Z",
  "done": "NC2 a-f built, NCAAB+planner tests green",
  "next": "ship.sh, release.yml, record-release, tell Tj"
 }
