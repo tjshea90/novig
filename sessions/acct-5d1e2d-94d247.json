@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-bitd5p",
  "head": "359d9b0e07b29eaed468d85ac2e7874892cc9fe6",
  "since": 1794702588,
- "beat": 1794712631,
- "beatIso": "2026-11-15T03:17:11Z",
+ "beat": 1794713228,
+ "beatIso": "2026-11-15T03:27:08Z",
  "done": "NC3 shipped v1.0.106; LG2 logged with first evidence",
  "next": "LG2: bid churn hysteresis, PropLine 2-socket cap, tradeStopped fills-unreadable"
 }
