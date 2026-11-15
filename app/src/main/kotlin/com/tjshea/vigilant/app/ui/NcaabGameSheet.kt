@@ -105,7 +105,7 @@ internal fun NcaabGameSheet(
 @Composable
 private fun TeamLine(name: String, t: NcaabTeam?) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(NcaabText.team(name, t), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Text(teamLine(null, name, t), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         if (t == null) {
             Text("Not rated yet: a team needs 3 usable games this season.", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
