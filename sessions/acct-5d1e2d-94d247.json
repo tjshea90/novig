@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-xew3j4",
  "head": "a4f1f177e4065ed9d4b175102e7c01614f038cc1",
  "since": 1794702588,
- "beat": 1794706692,
- "beatIso": "2026-11-15T01:38:12Z",
+ "beat": 1794706705,
+ "beatIso": "2026-11-15T01:38:25Z",
  "done": "chat: NC2 NCAAB revamp written to TASKS (a-f), replied to Tj",
  "next": "NC2a: NCAAB Bet by hand = warn only, then legend/colors, ML, quick bet, alts, missing ratings"
 }
