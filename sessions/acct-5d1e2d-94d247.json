@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-0oyh4z",
  "head": "1b54b2b1ea095ff43ba3ac5b1e9c4622ce296faf",
  "since": 1794702588,
- "beat": 1794782756,
- "beatIso": "2026-11-15T22:45:56Z",
+ "beat": 1794783060,
+ "beatIso": "2026-11-15T22:51:00Z",
  "done": "pre-release: Phone reads no Novig order books for bids while the engine posts them (CPU/RAM/throttle) (versionCode 452, v1.0.112)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.112), then run: bash tools/record-release.sh v1.0.112 452 \"Phone reads no Novig order books for bids while the engine posts them (CPU/RAM/throttle)\""
 }
