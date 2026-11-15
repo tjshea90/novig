@@ -417,7 +417,8 @@ class AppContainer(val app: Application) {
     val bidGuard: com.tjshea.vigilant.data.novig.trading.BidGuard.Runner by lazy {
         com.tjshea.vigilant.data.novig.trading.BidGuard.Runner(
             appScope, { trading },
-            { settingsStore.flow.value?.guards?.bidGuard != false },
+            // Tj, 2026-11-15 (LG3): the engine's bids carry their own expiry and the engine's desk cancels its own; this pass read every resting order (220+) every 30 s on the tablet, so it rests while the engine's desk is live.
+            { settingsStore.flow.value?.guards?.bidGuard != false && cloud.ui.value.status?.deskLive(System.currentTimeMillis()) != true },
             { (settingsStore.flow.value?.guards?.bidGuardMinutes ?: 30).coerceIn(5, 24 * 60) * 60_000L },
             { done -> done.forEach { (o, why) -> eventLog.record("BIDGUARD", com.tjshea.vigilant.data.diag.Level.WARN, "took down a resting order at ${(o.price * 100).toInt()}¢ x${o.remaining} on ${o.marketId.take(8)}: $why") } },
         )
