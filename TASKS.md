@@ -6628,9 +6628,10 @@ Checked 2026-11-14 (keyless, public): `/v1/bookmakers` has no `pinnacle`, only `
 - [ ] LG1 (Tj chat 00:29 UTC 2026-11-15) "everything should be running on GitHub and not on my tablet, yet the tablet app gets very laggy and sometimes crashes, especially when I start the live betting engine": find what the phone still runs when live starts (VigilantApp.kt ~2078 `wanted` live lane when !engineRunsLive(), Live-only mode sockets, Novig stream kept for bids, live-bid desk), read Diagnostics Memory/HeapCensus if a phone file exists in research/uploads, and move the work to the engine or throttle it; ask Tj for a diagnostics file from a laggy moment.
 
 ## NC2 (Tj chat 00:58 UTC 2026-11-15, "build and release it now" 01:01, "are you building it?" 01:36) NCAAB tab revamp
-- [ ] NC2a "every bet I try to place says negative EV or some other error and doesn't allow me to bet it. I should be able to bet any single line bet in this section": NCAAB tab Bet = by hand, +EV warning only, never a block.
-- [ ] NC2b "I don't understand the colored box symbols": add a legend. "make sure the ATS records (one red minus, two red minuses, one green plus, two green plusses) are clear and actually in color".
-- [ ] NC2c "put the money line available on novig for each team in the list in addition to the spread" and quick-bet it.
-- [ ] NC2d "quick bet anything in this tab just like the small quick bet slips in the +EV scanner".
-- [ ] NC2e "alternate spreads and totals easy to find and understand, one press bet".
-- [ ] NC2f "many teams have no average scores or ATS results": find why (ratings need 3 games; name matching; ncaab-data coverage) and fix.
+- [x] NC2a "every bet I try to place says negative EV or some other error and doesn't allow me to bet it. I should be able to bet any single line bet in this section": NCAAB tab Bet = by hand, +EV warning only, never a block.
+- [x] NC2b "I don't understand the colored box symbols": add a legend. "make sure the ATS records (one red minus, two red minuses, one green plus, two green plusses) are clear and actually in color".
+- [x] NC2c "put the money line available on novig for each team in the list in addition to the spread" and quick-bet it.
+- [x] NC2d "quick bet anything in this tab just like the small quick bet slips in the +EV scanner".
+- [x] NC2e "alternate spreads and totals easy to find and understand, one press bet".
+- [x] NC2f "many teams have no average scores or ATS results": find why (ratings need 3 games; name matching; ncaab-data coverage) and fix.
+- [x] NC2 SHIPPED in one release: planner anyLine (ApiBettingTest), colored ATS records + glyph boxes + legend, ML chip per team, alt hint, early averages for 1-2 game teams (ratings.json `early`; NcaabUiTest, ncaab_ats selftest). Tj: re-run ncaab-log.yml so ratings.json carries `early`.
