@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-0oyh4z",
- "head": "872e45d4146ecd33c6d5f0a0e4ac2777ec05d310",
+ "head": "10ed687a4d974eb6f09f63991dc5a42c7a02c860",
  "since": 1794702588,
- "beat": 1794781966,
- "beatIso": "2026-11-15T22:32:46Z",
+ "beat": 1794782258,
+ "beatIso": "2026-11-15T22:37:38Z",
  "done": "chat: v1.0.111 shipped, runner reset; live real, pregame kinds pruned",
  "next": "watch first live orders (status.liveNote, trades.json); LG4 relay of hand bets"
 }
