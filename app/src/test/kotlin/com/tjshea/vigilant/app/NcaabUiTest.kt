@@ -300,9 +300,9 @@ class NcaabUiTest {
     }
 
     @Test
-    fun `before the ratings exist the card still lists the game with a dash for the averages`() {
+    fun `before the ratings exist the card still lists the game saying no averages yet`() {
         show(views(withRatings = false))
-        compose.onNodeWithText("Davidson (—)").assertIsDisplayed()
-        compose.onNodeWithText("Rider (—)").assertIsDisplayed()
+        compose.onNodeWithText("Davidson (no averages yet)").assertIsDisplayed()
+        compose.onNodeWithText("Rider (no averages yet)").assertIsDisplayed()
     }
 }
