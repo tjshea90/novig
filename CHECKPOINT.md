@@ -1,13 +1,13 @@
-# CHECKPOINT 4457 — read me first, then TASKS.md
+# CHECKPOINT 4458 — read me first, then TASKS.md
 
-**Written:** 2026-11-15T04:41:56Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-5ooyee` · **builds on:** `950ca72b7` (this checkpoint is the commit after it)
+**Written:** 2026-11-15T05:13:16Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-5ooyee` · **builds on:** `fddf77395` (this checkpoint is the commit after it)
 
 ## Just done
-CN1 resolved (phone writing again); PropLine log reworded; LG2 findings
+NC4: NCAAB sides matched by team name
 
 ## Do this next
-LG2: desk-journal evidence for fall-side hysteresis, tradeStopped fills-unreadable
+ship v1.0.107 via ship.sh, release.yml, record-release
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ LG2: desk-journal evidence for fall-side hysteresis, tradeStopped fills-unreadab
 
 ## Last ten checkpoints
 ```
+  44265fa0d ckpt 4457: CN1 resolved (phone writing again); PropLine log reworded; LG2 findings
   359d9b0e0 ckpt 4456: NC3 shipped v1.0.106; LG2 logged with first evidence
   f3ba04ca9 ckpt 4455: pre-release: NC3: NCAAB pregame/next-day only, early averages for mismatch-
   45383bdef ckpt 4454: pre-ship: NC3: NCAAB pregame/next-day only, early averages for mismatch-onl
@@ -26,8 +27,7 @@ LG2: desk-journal evidence for fall-side hysteresis, tradeStopped fills-unreadab
   a0d0bf1fb ckpt 4450: pre-release: NC2: NCAAB tab revamp (bet any line, colored ATS + legend, mon
   7c50a1514 ckpt 4449: pre-ship: NC2: NCAAB tab revamp (bet any line, colored ATS + legend, moneyl
   6fef38284 ckpt 4448: NC2 a-f built, NCAAB+planner tests green
-  152fb0545 ckpt 4447: NC2a: NCAAB hand bets never blocked on negative EV (planner anyLine + betFr
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
