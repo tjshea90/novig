@@ -168,6 +168,15 @@ class ApiBettingTest {
     private val manual = BetLimits.manual(maxStake = 20.0, maxPerDay = 50.0)
 
     @Test
+    fun `the college basketball tab bets any line by hand, a negative EV only warns (NC2)`() {
+        val t = target(fair = 0.45).copy(basis = com.tjshea.vigilant.data.tracker.FairBasis(com.tjshea.vigilant.data.tracker.FairBasis.SOURCE_NCAAB, books = 0))
+        val p = ready(ApiBetPlanner.plan(t, book(), 5.0, now, manual, 0.0))
+        assertTrue(p.note!!.contains("Heads up"))
+        // The auto-bet never takes one.
+        refused(ApiBetPlanner.plan(t, book(), 5.0, now, limits, 0.0))
+    }
+
+    @Test
     fun `by hand, any edge from zero up is planned and the EV is said, a negative one never is`() {
         // Fair 0.45 against the 0.46 price: -2.2% EV. The auto-bet's rules refuse it as gone; by hand it is refused too (Tj, 2026-10-11: no money ever on a negative EV bet).
         assertTrue(refused(ApiBetPlanner.plan(target(fair = 0.45), book(), 5.0, now, limits, 0.0)).startsWith("The edge is gone"))
