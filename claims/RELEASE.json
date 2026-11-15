@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/94d247",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "94d247",
+ "note": "LG3: low-RAM devices (Android Go tablets) read the engine 2.5x less often on screen",
+ "since": 1794772386,
+ "beat": 1794772386
+}
