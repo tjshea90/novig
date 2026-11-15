@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-tpnud5",
- "head": "56b97ace68073c3271e1899e529a03e68deed95f",
+ "head": "ab51f9a2488eefd3293e30c51594725f43b94eba",
  "since": 1794702588,
- "beat": 1794779372,
- "beatIso": "2026-11-15T21:49:32Z",
- "done": "LG3 shipped v1.0.108+109 (paced reads on low-RAM, phone study off while cloud drives)",
- "next": "wait for tablet Diagnostics file (Tj asked); then cut what Memory/frames name"
+ "beat": 1794779408,
+ "beatIso": "2026-11-15T21:50:08Z",
+ "done": "LG3c: BidGuard rests while engine desk live; LG4 logged",
+ "next": "finish compile/test, ship, then LG4 relay of hand bets"
 }
