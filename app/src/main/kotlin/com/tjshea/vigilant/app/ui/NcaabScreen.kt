@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -142,6 +143,7 @@ internal fun NcaabContent(
                 androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     listOf("Today", "Tomorrow", "All").forEach { d -> FilterChip(selected = day == d, onClick = { day = d }, label = { Text(d, maxLines = 1) }, modifier = Modifier.testTag("ncaabDay-$d")) }
                 }
+                AtsLegend()
                 if (model != null && model.measured) EvidenceCard(model, evidence, onToggle = { evidence = !evidence })
             }
         }
@@ -328,8 +330,8 @@ private fun GameCard(v: NcaabGameView, onOpen: () -> Unit, now: Long) {
 private fun TeamRow(name: String, rank: Int?, team: NcaabTeam?, score: String?, spread: String?, cost: Double?, onBet: (() -> Unit)?) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
-            (rank?.let { "#$it " } ?: "") + NcaabText.team(name, team),
-            style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
+            teamLine(rank, name, team),
+            style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
         )
         team?.let { Tiers(it.last.takeLast(5)) }
         if (score != null) Text(score, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -340,14 +342,53 @@ private fun TeamRow(name: String, rank: Int?, team: NcaabTeam?, score: String?, 
     }
 }
 
-/** The team's last results as little squares: green for a plus, red for a minus, grey for a tie. */
+/** The team's last results as little boxes, each with its own sign: green "+" / "++" covered the spread, red "−" / "−−" did not, grey "=" pushed. */
 @Composable
 internal fun Tiers(last: List<Int>) {
     val edge = LocalEdgeColors.current
     Row(horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
         last.forEach { t ->
-            val c: Color = when { t > 0 -> edge.positive; t < 0 -> edge.negative; else -> edge.muted }
-            Box(Modifier.size(width = 12.dp, height = 12.dp).clip(RoundedCornerShape(3.dp)).background(c.copy(alpha = if (kotlin.math.abs(t) >= 2) 1f else 0.55f)))
+            val c: Color = atsColor(t)
+            Box(Modifier.size(width = 22.dp, height = 18.dp).clip(RoundedCornerShape(4.dp)).background(c.copy(alpha = if (kotlin.math.abs(t) >= 2) 1f else 0.75f)), contentAlignment = Alignment.Center) {
+                Text(com.tjshea.vigilant.data.ncaab.NcaabSymbols.ofTier(t), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            }
+        }
+    }
+}
+
+@Composable
+internal fun atsColor(t: Int): Color {
+    val edge = LocalEdgeColors.current
+    return when { t > 0 -> edge.positive; t < 0 -> edge.negative; else -> edge.muted }
+}
+
+/** "#12 Davidson (74 ++)": the sign after the points is the team's average against the spread, in colour. No rating yet says so in words. */
+@Composable
+internal fun teamLine(rank: Int?, name: String, t: NcaabTeam?): androidx.compose.ui.text.AnnotatedString = androidx.compose.ui.text.buildAnnotatedString {
+    append((rank?.let { "#$it " } ?: "") + name + " ")
+    if (t == null || t.g <= 0) {
+        withStyle(androidx.compose.ui.text.SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Normal)) { append("(no averages yet)") }
+    } else {
+        append("(${Math.round(t.ppg)} ")
+        val tier = when (t.sym) { "++" -> 2; "+" -> 1; "-" -> -1; "--" -> -2; else -> 0 }
+        withStyle(androidx.compose.ui.text.SpanStyle(color = atsColor(tier), fontWeight = FontWeight.ExtraBold)) { append(com.tjshea.vigilant.data.ncaab.NcaabSymbols.pretty(t.sym)) }
+        append(")")
+    }
+}
+
+/** What the signs mean, once, at the top of the tab. */
+@Composable
+internal fun AtsLegend() {
+    val edge = LocalEdgeColors.current
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), modifier = Modifier.fillMaxWidth().testTag("ncaabLegend")) {
+        Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("How to read a team", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            Text("Davidson (74 ++) = averages 74 points a game, and ++ is how it has done against the spread on average.", style = MaterialTheme.typography.labelSmall)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Tiers(listOf(2, 1, 0, -1, -2))
+                Text("= big cover, cover, push, miss, big miss", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Text("The little boxes are a team's last 5 games, newest on the right. Green + covered the spread (++ by a lot), red \u2212 did not (\u2212\u2212 by a lot).", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
