@@ -138,7 +138,7 @@ class PropLineStream(
         @Volatile var reactivated = false
 
         fun health(now: Long): String = sub.name.lowercase() + ": " + when {
-            ws != null && ready -> "live (last frame ${(now - lastFrameMs) / 1000}s ago, $connects connections${lastClose?.let { "; last close $it" }.orEmpty()})"
+            ws != null && ready -> "live (last frame ${(now - lastFrameMs) / 1000}s ago, $connects connects so far (one socket open)${lastClose?.let { "; last close $it" }.orEmpty()})"
             now < retryAtMs -> "reconnecting in ${(retryAtMs - now) / 1000}s (${lastClose ?: "closed"})"
             else -> "connecting" + (lastClose?.let { " (last close: $it)" } ?: "")
         }
