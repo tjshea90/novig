@@ -88,11 +88,8 @@ class LiveBoardTest {
     }
 
     @Test
-    fun `the engine's auto-bet judges with the bet slider's kinds, totals and team totals included`() {
-        val s = ScanSettings(autoBetKinds = setOf(com.tjshea.vigilant.data.scanner.BetKind.PROP, com.tjshea.vigilant.data.scanner.BetKind.MONEYLINE, com.tjshea.vigilant.data.scanner.BetKind.SPREAD)).let { it.copy(vigGuards = it.vigGuards.copy(betLevel = 61)) }
-        val k = CloudEngine.forTrading(s).autoBetKinds
-        assertTrue(k.toString(), com.tjshea.vigilant.data.scanner.BetKind.TEAM_TOTAL in k && com.tjshea.vigilant.data.scanner.BetKind.TOTAL in k && com.tjshea.vigilant.data.scanner.BetKind.SPREAD in k)
-        // Off the slider (level 0) the phone's own kinds stand.
-        assertEquals(s.autoBetKinds, CloudEngine.forTrading(s.copy(vigGuards = s.vigGuards.copy(betLevel = 0))).autoBetKinds)
+    fun `the engine's auto-bet takes exactly the kinds in the settings, whatever the slider says`() {
+        val s = ScanSettings(autoBetKinds = setOf(com.tjshea.vigilant.data.scanner.BetKind.TEAM_TOTAL)).let { it.copy(vigGuards = it.vigGuards.copy(betLevel = 61)) }
+        assertEquals(s.autoBetKinds, CloudEngine.forTrading(s).autoBetKinds)
     }
 }
