@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-tpnud5",
- "head": "288eb3317f238cfe3f31a8b0c78082584f7bfe56",
+ "head": "4b08a21e5eb1644414c6bcdb3f97e94937bb8dc5",
  "since": 1794702588,
- "beat": 1794780587,
- "beatIso": "2026-11-15T22:09:47Z",
- "done": "chat: v1.0.110 shipped (LG3c); answered live results + volume question, awaiting go",
- "next": "LG4 relay of hand bets; volume levers (bidMany, kinds) if Tj says go"
+ "beat": 1794780679,
+ "beatIso": "2026-11-15T22:11:19Z",
+ "done": "pre-ship: Engine: keeps ordering after an unreadable fill; pregame auto-bet only profitable kinds; live lane real",
+ "next": "ship.sh gates and releases this"
 }
