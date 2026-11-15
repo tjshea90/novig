@@ -1,21 +1,23 @@
-# CHECKPOINT 4467 — read me first, then TASKS.md
+# CHECKPOINT 4468 — read me first, then TASKS.md
 
-**Written:** 2026-11-15T20:05:43Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-f65yc8` · **builds on:** `598aefc00` (this checkpoint is the commit after it)
+**Written:** 2026-11-15T20:13:18Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-f65yc8` · **builds on:** `ff83fe173` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: LG3b: with the GitHub engine driving, the phone no longer logs, grades or closes the scan study itself; the Feed's ticks and rechecks slow down on low-RAM devices (versionCode 449, v1.0.109)
+LG3 shipped v1.0.108+109 (paced reads on low-RAM, phone study off while cloud drives)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.109), then run: bash tools/record-release.sh v1.0.109 449 "LG3b: with the GitHub engine driving, the phone no longer logs, grades or closes the scan study itself; the Feed's ticks and rechecks slow down on low-RAM devices"
+wait for tablet Diagnostics file (Tj asked); then cut what Memory/frames name
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  e347ee8e7 ckpt 4467: pre-release: LG3b: with the GitHub engine driving, the phone no longer logs
   598aefc00 ckpt 4466: pre-ship: LG3b: with the GitHub engine driving, the phone no longer logs, g
   9661216ae ckpt 4465: pre-release: LG3: low-RAM devices (Android Go tablets) read the engine 2.5x
   8051a60b7 ckpt 4464: pre-ship: LG3: low-RAM devices (Android Go tablets) read the engine 2.5x le
@@ -25,5 +27,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   3bfbf76ee ckpt 4460: chat: NC4 shipped v1.0.107; tax Qs answered; LG2 findings logged
   367f36f0e ckpt 4459: pre-release: NC4: NCAAB Bet buttons matched to the right team by the side's
   44aec1bdc ckpt 4458: NC4: NCAAB sides matched by team name
-  44265fa0d ckpt 4457: CN1 resolved (phone writing again); PropLine log reworded; LG2 findings
 ```
