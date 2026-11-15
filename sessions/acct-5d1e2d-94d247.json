@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-tpnud5",
  "head": "4b08a21e5eb1644414c6bcdb3f97e94937bb8dc5",
  "since": 1794702588,
- "beat": 1794780684,
- "beatIso": "2026-11-15T22:11:24Z",
+ "beat": 1794780874,
+ "beatIso": "2026-11-15T22:14:34Z",
  "done": "pre-ship: Engine: keeps ordering after an unreadable fill; pregame auto-bet only profitable kinds; live lane real",
  "next": "ship.sh gates and releases this"
 }
