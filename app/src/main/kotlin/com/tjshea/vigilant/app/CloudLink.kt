@@ -435,6 +435,8 @@ class CloudLink(private val c: AppContainer) {
                 awake()
                 val s = c.settingsStore.flow.value
                 if (s == null || !s.bidsFromCloud || !hasToken() || c.cloudBids.current == null) { delay(IDLE_MS); continue }
+                // The engine posts the bids (MakerRunner.stopReason): this phone then reads no order books and runs no pass for them (Tj, 2026-11-15: lag; the reads shared the account's throttle with the engine).
+                if (s.gates.cloudBids || (s.engineDesk && c.cloud.ui.value.status?.deskLive(System.currentTimeMillis()) == true)) { delay(IDLE_MS); continue }
                 val read = runCatching { c.cloudBids.refresh(System.currentTimeMillis(), BIDS_READS_PER_ROUND) }.getOrDefault(0)
                 val at = c.cloudBids.current?.atMs ?: 0L
                 if (read > 0 || at != lastPassFor) {
