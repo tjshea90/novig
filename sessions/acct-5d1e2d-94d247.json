@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-f65yc8",
- "head": "b27af4f4efa3ba5ff42fd5597fe0598f0ec5d34b",
+ "head": "277a149c3ac541465e88085285746568b1acd398",
  "since": 1794702588,
- "beat": 1794772080,
- "beatIso": "2026-11-15T19:48:00Z",
- "done": "chat: NC4 shipped v1.0.107; tax Qs answered; LG2 findings logged",
- "next": "LG2 bid fall-side hysteresis needs desk-journal evidence; NC3a bet-button root cause unconfirmed"
+ "beat": 1794772116,
+ "beatIso": "2026-11-15T19:48:36Z",
+ "done": "pre-ship: LG3: low-RAM devices (Android Go tablets) read the engine 2.5x less often on screen",
+ "next": "ship.sh gates and releases this"
 }
