@@ -1,22 +1,22 @@
-# CHECKPOINT 4469 — read me first, then TASKS.md
+# CHECKPOINT 4470 — read me first, then TASKS.md
 
-**Written:** 2026-11-15T21:50:08Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-tpnud5` · **builds on:** `56b97ace6` (this checkpoint is the commit after it)
+**Written:** 2026-11-15T21:54:25Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-tpnud5` · **builds on:** `ac815e014` (this checkpoint is the commit after it)
 
 ## Just done
-LG3c: BidGuard rests while engine desk live; LG4 logged
+pre-ship: LG3c: phone bid guard rests while the engine's desk is live (no 220-order read every 30 s on the tablet)
 
 ## Do this next
-finish compile/test, ship, then LG4 relay of hand bets
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  ab51f9a24 ckpt 4469: LG3c: BidGuard rests while engine desk live; LG4 logged
   265cd6fe0 ckpt 4468: LG3 shipped v1.0.108+109 (paced reads on low-RAM, phone study off while clo
   e347ee8e7 ckpt 4467: pre-release: LG3b: with the GitHub engine driving, the phone no longer logs
   598aefc00 ckpt 4466: pre-ship: LG3b: with the GitHub engine driving, the phone no longer logs, g
@@ -26,7 +26,6 @@ finish compile/test, ship, then LG4 relay of hand bets
   260a3ddd9 ckpt 4462: ENGINEER 11-15 slot 1 re-check: no change (wallet $0.01)
   1d327bc4b ckpt 4461: ENGINEER 11-15 slot: watch only, no change
   3bfbf76ee ckpt 4460: chat: NC4 shipped v1.0.107; tax Qs answered; LG2 findings logged
-  367f36f0e ckpt 4459: pre-release: NC4: NCAAB Bet buttons matched to the right team by the side's
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the
