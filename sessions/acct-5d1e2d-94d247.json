@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-7pfmby",
- "head": "baa704aad0ddf1dea286ecf5bf422791162f298d",
+ "head": "4fca7871aa76b04491b2b78f9aa2e3a93c774451",
  "since": 1794702588,
- "beat": 1794703172,
- "beatIso": "2026-11-15T00:39:32Z",
- "done": "chat: Tj reports tablet lag/crash on live start; LG1 logged, asked for diagnostics",
- "next": "LG1: investigate phone-side live work; wait for Tj reply"
+ "beat": 1794703356,
+ "beatIso": "2026-11-15T00:42:36Z",
+ "done": "LG1a: Op4Store persist throttled to 1/min (tests green); replied to Tj",
+ "next": "LG1b: bets.json 9MB rewrite-whole prune; check phone Pinnodds live ON on tablet; ship with batch"
 }
