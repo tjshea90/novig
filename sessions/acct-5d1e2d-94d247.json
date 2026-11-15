@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-xew3j4",
- "head": "6fef38284b3a13269cbf99935591213137544319",
+ "head": "7c50a1514eafc87c3fb155b5e8168f9d6e379acf",
  "since": 1794702588,
- "beat": 1794707345,
- "beatIso": "2026-11-15T01:49:05Z",
- "done": "NC2 a-f built, NCAAB+planner tests green",
- "next": "ship.sh, release.yml, record-release, tell Tj"
+ "beat": 1794707381,
+ "beatIso": "2026-11-15T01:49:41Z",
+ "done": "pre-ship: NC2: NCAAB tab revamp (bet any line, colored ATS + legend, moneyline chips, early averages)",
+ "next": "ship.sh gates and releases this"
 }
