@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-f65yc8",
- "head": "260a3ddd970ac4d5fb22a2b90aa18f689b225157",
+ "head": "b27af4f4efa3ba5ff42fd5597fe0598f0ec5d34b",
  "since": 1794702588,
- "beat": 1794771834,
- "beatIso": "2026-11-15T19:43:54Z",
+ "beat": 1794772080,
+ "beatIso": "2026-11-15T19:48:00Z",
  "done": "chat: NC4 shipped v1.0.107; tax Qs answered; LG2 findings logged",
  "next": "LG2 bid fall-side hysteresis needs desk-journal evidence; NC3a bet-button root cause unconfirmed"
 }
