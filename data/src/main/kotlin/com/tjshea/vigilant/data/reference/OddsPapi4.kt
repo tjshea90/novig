@@ -294,7 +294,7 @@ class Op4Store(private val file: File?, private val clock: () -> Long = System::
     init {
         runCatching { file?.takeIf { it.exists() }?.readText()?.let { json.decodeFromString<Map<String, Entry>>(it) } }.getOrNull()?.let { entries.putAll(it) }
         // Tj's 2026-10-13 file: 17 MB, rewritten whole on every change and held in memory whole. Entries past what any reader would still use are dropped at once, not only when a new one is saved.
-        if (prune()) persist()
+        if (prune()) persist(force = true)
     }
 
     /** How long an entry is worth keeping: its reader's own limit ([OddsPapi4Client]'s window, whole-league and month caches) plus a margin. Unknown keys keep the month. */
@@ -308,7 +308,13 @@ class Op4Store(private val file: File?, private val clock: () -> Long = System::
     /** Drops the entries past their keep time; true when something went. */
     private fun prune(): Boolean = entries.entries.removeIf { clock() - it.value.at > keepFor(it.key) }
 
-    private fun persist() {
+    private var lastPersistMs = 0L
+
+    /** Rewrites the whole file at most every [PERSIST_GAP_MS] (LG1, Tj 2026-11-15: a 9 MB file rewritten on every put was garbage-collector load felt as lag on his tablet); the entries are only a cache, so a put lost to a kill costs one request. */
+    private fun persist(force: Boolean = false) {
+        val now = clock()
+        if (!force && now - lastPersistMs < PERSIST_GAP_MS) return
+        lastPersistMs = now
         runCatching { file?.let { f -> val tmp = File(f.path + ".tmp"); tmp.writeText(json.encodeToString(entries.toMap())); tmp.renameTo(f) } }
     }
 
@@ -322,6 +328,10 @@ class Op4Store(private val file: File?, private val clock: () -> Long = System::
 
     /** Entries held, for tests and Diagnostics. */
     val size: Int get() = entries.size
+
+    companion object {
+        const val PERSIST_GAP_MS = 60_000L
+    }
 }
 
 /**
