@@ -68,8 +68,8 @@ internal fun NcaabGameSheet(
                 Format.startTime(v.game.t) + (if (v.game.neu == 1) " · neutral site" else "") + (if (v.live) " · LIVE" else if (v.final) " · FINAL" else "") + " · lines from ${v.lineSource}",
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            TeamLine(v.game.a.n, v.away)
-            TeamLine(v.game.h.n, v.home)
+            TeamLine(v.game.a.n, v.away ?: v.awayEarly)
+            TeamLine(v.game.h.n, v.home ?: v.homeEarly)
             Readings(v)
             if (!v.bettable) {
                 Text(

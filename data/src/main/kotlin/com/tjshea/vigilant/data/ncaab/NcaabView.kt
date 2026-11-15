@@ -48,6 +48,9 @@ data class NcaabGameView(
     val picks: List<NcaabPick>,
     /** Novig's home team is ESPN's away team (a neutral-site game some feeds list the other way round): Novig's spread sides then belong to the other ESPN team. */
     val swapped: Boolean = false,
+    /** Early averages (1-2 games) of a team that has no rating yet; display only. */
+    val homeEarly: NcaabTeam? = null,
+    val awayEarly: NcaabTeam? = null,
 ) {
     val id: String get() = game.id
 
@@ -121,7 +124,8 @@ object NcaabView {
         val neutral = g.neu == 1
         val readings = if (home != null && away != null && ratings != null) NcaabSignals.read(ratings.model, home, away, homeSpread, total, neutral) else emptyList()
         val picks = readings.map { r -> pickOf(r, g, swapped, mainSpread, mainTotal) }
-        return NcaabGameView(g, event, home, away, ml, spreads, totals, mainSpread, mainTotal, homeSpread, total, source, readings, picks, swapped)
+        return NcaabGameView(g, event, home, away, ml, spreads, totals, mainSpread, mainTotal, homeSpread, total, source, readings, picks, swapped,
+            homeEarly = if (home == null) ratings?.early?.get(g.h.id) else null, awayEarly = if (away == null) ratings?.early?.get(g.a.id) else null)
     }
 
     /** The number whose two sides cost closest to even money to take; the one nearest [espn] when no price is read; the middle one otherwise. */

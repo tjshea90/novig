@@ -295,11 +295,11 @@ private fun GameCard(v: NcaabGameView, onOpen: () -> Unit, now: Long) {
             }
             // The away team first, then the home team, the way a schedule reads; each carries its own spread.
             TeamRow(v.game.a.n, v.game.a.rk, v.away, score = v.game.awayScore.takeIf { !v.bettable },
-                ml = v.moneylineFor(espnHome = false).takeIf { api != null && v.bettable }, api = api,
+                ml = v.moneylineFor(espnHome = false).takeIf { api != null && v.bettable }, api = api, early = v.awayEarly,
                 spread = v.homeSpread?.let { NcaabText.signed(-it) }, cost = v.spreadCost(espnHome = false),
                 onBet = if (api != null && v.bettable) v.spreadFor(espnHome = false)?.let { o -> { betFrom(api, o, null) } } else null)
             TeamRow(v.game.h.n, v.game.h.rk, v.home, score = v.game.hs.takeIf { !v.bettable },
-                ml = v.moneylineFor(espnHome = true).takeIf { api != null && v.bettable }, api = api,
+                ml = v.moneylineFor(espnHome = true).takeIf { api != null && v.bettable }, api = api, early = v.homeEarly,
                 spread = v.homeSpread?.let { NcaabText.signed(it) }, cost = v.spreadCost(espnHome = true),
                 onBet = if (api != null && v.bettable) v.spreadFor(espnHome = true)?.let { o -> { betFrom(api, o, null) } } else null)
             val t = v.total
@@ -333,10 +333,10 @@ private fun GameCard(v: NcaabGameView, onOpen: () -> Unit, now: Long) {
 }
 
 @Composable
-private fun TeamRow(name: String, rank: Int?, team: NcaabTeam?, score: String?, spread: String?, cost: Double?, onBet: (() -> Unit)?, ml: Opportunity? = null, api: ApiBetActions? = null) {
+private fun TeamRow(name: String, rank: Int?, team: NcaabTeam?, score: String?, spread: String?, cost: Double?, onBet: (() -> Unit)?, ml: Opportunity? = null, api: ApiBetActions? = null, early: NcaabTeam? = null) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
-            teamLine(rank, name, team),
+            teamLine(rank, name, team ?: early, early = team == null && early != null),
             style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
         )
         team?.let { Tiers(it.last.takeLast(5)) }
@@ -372,7 +372,7 @@ internal fun atsColor(t: Int): Color {
 
 /** "#12 Davidson (74 ++)": the sign after the points is the team's average against the spread, in colour. No rating yet says so in words. */
 @Composable
-internal fun teamLine(rank: Int?, name: String, t: NcaabTeam?): androidx.compose.ui.text.AnnotatedString = androidx.compose.ui.text.buildAnnotatedString {
+internal fun teamLine(rank: Int?, name: String, t: NcaabTeam?, early: Boolean = false): androidx.compose.ui.text.AnnotatedString = androidx.compose.ui.text.buildAnnotatedString {
     append((rank?.let { "#$it " } ?: "") + name + " ")
     if (t == null || t.g <= 0) {
         withStyle(androidx.compose.ui.text.SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Normal)) { append("(no averages yet)") }
@@ -380,7 +380,7 @@ internal fun teamLine(rank: Int?, name: String, t: NcaabTeam?): androidx.compose
         append("(${Math.round(t.ppg)} ")
         val tier = when (t.sym) { "++" -> 2; "+" -> 1; "-" -> -1; "--" -> -2; else -> 0 }
         withStyle(androidx.compose.ui.text.SpanStyle(color = atsColor(tier), fontWeight = FontWeight.ExtraBold)) { append(com.tjshea.vigilant.data.ncaab.NcaabSymbols.pretty(t.sym)) }
-        append(")")
+        append(if (early) ", ${t.g} game${if (t.g == 1) "" else "s"} so far)" else ")")
     }
 }
 

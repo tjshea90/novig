@@ -343,13 +343,21 @@ def build_ratings(games, as_of_ms, teams, cfg=CFG, model=None):
         for side in ("h", "a"):
             per.setdefault(g[side], []).append(team_game(g, g[side]))
     out = {}
+    early = {}
     for tid, lst in per.items():
         r = rate_team(lst, cfg)
+        nm = teams.get(tid, {})
         if r:
-            nm = teams.get(tid, {})
             r["n"], r["ab"] = nm.get("n", tid), nm.get("ab", "")
             out[tid] = r
-    return dict(asOf=as_of_ms, season=season, cfg=cfg, teams=out, model=model or DEFAULT_MODEL, games=sum(1 for g in games.values() if season_of(g["d"]) == season))
+        else:
+            # NC2 (Tj 2026-11-15: "many teams have no average scores or ATS results"): a team with only 1-2 usable games has no RATING (the signals and the backtest need 3), but its early
+            # averages are shown on the card, marked early. Never used by a signal.
+            e = rate_team(lst, dict(cfg, min_games=1))
+            if e:
+                e["n"], e["ab"] = nm.get("n", tid), nm.get("ab", "")
+                early[tid] = e
+    return dict(asOf=as_of_ms, season=season, cfg=cfg, teams=out, early=early, model=model or DEFAULT_MODEL, games=sum(1 for g in games.values() if season_of(g["d"]) == season))
 
 
 # ---------------------------------------------------------------------------------------------- backtest
