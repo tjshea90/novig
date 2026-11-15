@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-xew3j4",
  "head": "7c50a1514eafc87c3fb155b5e8168f9d6e379acf",
  "since": 1794702588,
- "beat": 1794707381,
- "beatIso": "2026-11-15T01:49:41Z",
+ "beat": 1794707386,
+ "beatIso": "2026-11-15T01:49:46Z",
  "done": "pre-ship: NC2: NCAAB tab revamp (bet any line, colored ATS + legend, moneyline chips, early averages)",
  "next": "ship.sh gates and releases this"
 }
