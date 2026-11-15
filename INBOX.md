@@ -1552,3 +1552,8 @@ Resume
 ```
 Fix the vigilant app and GitHub engine to reflect the changes in parlayapi from the attached photo
 ```
+
+## 2026-11-15T02:35:10Z
+```
+I just updated vigilant with the newest version, and now it can't seem to connect to github
+```
