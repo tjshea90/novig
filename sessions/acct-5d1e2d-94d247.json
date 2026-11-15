@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-tpnud5",
  "head": "f63f94471ad51034e0e28aa328e6a121eff544e8",
  "since": 1794702588,
- "beat": 1794779817,
- "beatIso": "2026-11-15T21:56:57Z",
+ "beat": 1794780139,
+ "beatIso": "2026-11-15T22:02:19Z",
  "done": "pre-release: LG3c: phone bid guard rests while the engine's desk is live (no 220-order read every 30 s on the tablet) (versionCode 450, v1.0.110)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.110), then run: bash tools/record-release.sh v1.0.110 450 \"LG3c: phone bid guard rests while the engine's desk is live (no 220-order read every 30 s on the tablet)\""
 }
