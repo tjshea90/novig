@@ -678,6 +678,7 @@ class AppContainer(val app: Application) {
      * starts): a bet Tj placed himself takes its result and close from his Tracker bet, the rest go through the same grader and close sources. Never throws.
      */
     suspend fun settleStudy() {
+        if (!studyOnPhone()) return
         try {
             parlayCloses.enabled = currentSettings().useParlay
             syncSgo(currentSettings())
@@ -688,6 +689,12 @@ class AppContainer(val app: Application) {
             // Looked at again on the next pass.
         }
     }
+
+    /**
+     * LG3 (Tj 2026-11-15: the tablet "is supposed to be just a monitor and control center"): while the GitHub engine drives the scan it logs, grades and closes every listed bet itself
+     * (`ScanStudy.observeVigilant` on the runner, `engine-grade.yml`), so the phone does not observe, grade or look up closes for the same list a second time.
+     */
+    fun studyOnPhone(): Boolean = !currentSettings().cloudDrives
 
     /** One step of the study's logging: whatever goes wrong is a line in Recent problems, never a failure of the scan it watched. */
     private suspend fun studyStep(what: String, block: suspend () -> Unit) {
@@ -1061,29 +1068,29 @@ class AppContainer(val app: Application) {
         // already holds (no request of its own), on the scan's background-priority threads so it never competes with the screen.
         scanScope.launch {
             cno.state.map { it.snapshot }.distinctUntilChanged { a, b -> a?.fetchedAtMs == b?.fetchedAtMs }.filterNotNull().collect { snap ->
-                studySync.list(snap)
+                if (studyOnPhone()) { studySync.list(snap) }
             }
         }
         // The wide read (Tj, 2026-10-03: "log all cno finds on every scan … even if these bets don't meet my criteria"): the study's one request of its own, after a live list
         // read, in a session of its own, kept in cno.wide and nowhere else (the list, alerts, auto-bet and widget never see it); CnoFeed paces it (30 s, only when CNO's odds moved).
         scanScope.launch {
             cno.state.map { it.snapshot }.distinctUntilChanged { a, b -> a?.fetchedAtMs == b?.fetchedAtMs }.filterNotNull().collect { snap ->
-                studySync.wideRead(snap)
+                if (studyOnPhone()) { studySync.wideRead(snap) }
             }
         }
         scanScope.launch {
             cno.wide.map { it.snapshot }.distinctUntilChanged { a, b -> a?.fetchedAtMs == b?.fetchedAtMs }.filterNotNull().collect { wide ->
-                studySync.wide(wide)
+                if (studyOnPhone()) { studySync.wide(wide) }
             }
         }
         scanScope.launch {
             runner.state.distinctUntilChanged { a, b -> a.finished == b.finished }.filter { it.finished > 0 && !it.scanning }.collect { run ->
-                run.result?.let { r -> studySync.vigilant(r) }
+                if (studyOnPhone()) { run.result?.let { r -> studySync.vigilant(r) } }
             }
         }
         scanScope.launch {
             cno.books.collect { books ->
-                studySync.books(books)
+                if (studyOnPhone()) { studySync.books(books) }
                 delay(STUDY_BOOKS_GAP_MS)
             }
         }
