@@ -75,11 +75,14 @@ object NcaabView {
         val rows = board?.rows.orEmpty()
         val events = rows.map { it.event }.distinctBy { it.eventId }
         val byEvent = rows.groupBy { it.event.eventId }
-        val games = slate?.games.orEmpty().filter { it.t > now - KEEP_AFTER_START_MS || it.state != "post" }
+        // Tj, NC3c: only games not yet started (pregame) and through the end of tomorrow (Eastern); nothing live or final.
+        val horizon = java.time.ZonedDateTime.ofInstant(java.time.Instant.ofEpochMilli(now), java.time.ZoneId.of("America/New_York")).toLocalDate().plusDays(2)
+            .atStartOfDay(java.time.ZoneId.of("America/New_York")).toInstant().toEpochMilli()
+        val games = slate?.games.orEmpty().filter { it.state == "pre" && it.t > now && it.t < horizon }
         val matched = NcaabMatch.match(games, events)
         val used = matched.values.map { it.event.eventId }.toSet()
         // Novig lists a game ESPN's schedule has not (yet): it still gets a card, with no ratings.
-        val extras = events.filter { it.eventId !in used }.mapNotNull { e -> e.matchup?.let { m ->
+        val extras = events.filter { it.eventId !in used && it.startsTs > now && it.startsTs < horizon }.mapNotNull { e -> e.matchup?.let { m ->
             SlateGame(id = e.eventId, t = e.startsTs, d = "", state = "pre", h = SlateTeam(id = "novig-" + e.eventId + "-h", n = m.home, dn = m.home), a = SlateTeam(id = "novig-" + e.eventId + "-a", n = m.away, dn = m.away))
         } }
         val out = ArrayList<NcaabGameView>()
