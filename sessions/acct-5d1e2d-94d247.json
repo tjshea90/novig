@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-5ooyee",
- "head": "a8c267fb0bbe503df06b46320ce1416b8a34e9c4",
+ "head": "367f36f0e636dc993758c443c4dd9cae18be32bd",
  "since": 1794702588,
- "beat": 1794719867,
- "beatIso": "2026-11-15T05:17:47Z",
- "done": "NC4: NCAAB sides matched by team name",
- "next": "ship v1.0.107 via ship.sh, release.yml, record-release"
+ "beat": 1794720055,
+ "beatIso": "2026-11-15T05:20:55Z",
+ "done": "pre-release: NC4: NCAAB Bet buttons matched to the right team by the side's own name (versionCode 447, v1.0.107)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.107), then run: bash tools/record-release.sh v1.0.107 447 \"NC4: NCAAB Bet buttons matched to the right team by the side's own name\""
 }
