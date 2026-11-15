@@ -93,6 +93,10 @@ class VigilantApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // LG3: a low-RAM (Android Go) device reads the engine less often; see CloudLink.paced.
+        runCatching {
+            if ((getSystemService(ACTIVITY_SERVICE) as android.app.ActivityManager).isLowRamDevice) CloudLink.slowdown = 2.5
+        }
         // A restored full backup waits in restore_pending until now: applied before any store is opened, so nothing rewrites the files under it (FullBackup).
         runCatching { FullBackup.applyPending(this) }
         // A crash's stack is kept before the process goes (Diagnostics' Recent problems, Tj 2026-09-30).

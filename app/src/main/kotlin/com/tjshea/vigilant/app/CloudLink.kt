@@ -332,7 +332,7 @@ class CloudLink(private val c: AppContainer) {
                 val s = c.settingsStore.flow.value
                 if (s == null || !s.cloudDrives || !hasToken()) { delay(IDLE_MS); continue }
                 // 3 s while a scan the phone asked for runs; 5 s with the app on screen; 20 s off screen (the background auto-scan and auto-bet still get a list well inside a scan's length, and a 304 is free).
-                var wait = if (refreshRequestedAt > 0L && (latest.status?.lastScanForRefreshAtMs ?: 0L) < refreshRequestedAt) POLL_PENDING_MS else if (c.onScreen) POLL_MS else POLL_BACKGROUND_MS
+                var wait = if (refreshRequestedAt > 0L && (latest.status?.lastScanForRefreshAtMs ?: 0L) < refreshRequestedAt) paced(POLL_PENDING_MS) else if (c.onScreen) paced(POLL_MS) else POLL_BACKGROUND_MS
                 // While an app update downloads the phone has enough to do (Tj, 2026-10-17: "Vigilant isn't responding" at 62% of a download on the +EV tab): the status is read every 8 s, not 2.
                 if (c.updater.state.value.progress != null) wait = maxOf(wait, 8_000L)
                 when (val p = client.pollStatus(etag)) {
@@ -441,7 +441,7 @@ class CloudLink(private val c: AppContainer) {
                     lastPassFor = at
                     runCatching { c.maker.run("GitHub's candidates", minGapMs = BIDS_PASS_GAP_MS) }
                 }
-                delay(if (read > 0) BIDS_ROUND_MS else BIDS_IDLE_ROUND_MS)
+                delay(paced(if (read > 0) BIDS_ROUND_MS else BIDS_IDLE_ROUND_MS))
             }
         }
         // 5. the engine's API usage (Tj, 2026-10-15), for the meters: read whenever a token is saved (the engine's spending today counts whether or not the scan is on GitHub right now); an unchanged file is a free 304.
@@ -453,7 +453,7 @@ class CloudLink(private val c: AppContainer) {
                     is CloudClient.Poll.Fresh -> { etag = p.etag; c.cloudUsage.value = p.value }
                     else -> {}
                 }
-                nap(if (c.onScreen) USAGE_POLL_MS else USAGE_POLL_BACKGROUND_MS)
+                nap(if (c.onScreen) paced(USAGE_POLL_MS) else USAGE_POLL_BACKGROUND_MS)
             }
         }
         // 6. what the engine did (Tj, 2026-10-15: opening the app syncs the automated system's bets and results): its order book, read whenever a token is saved and the engine has ever traded or trades now; an unchanged file is a free 304.
@@ -466,7 +466,7 @@ class CloudLink(private val c: AppContainer) {
                     is CloudClient.Poll.NotModified -> _ui.update { it.copy(tradesReadAtMs = System.currentTimeMillis()) }
                     is CloudClient.Poll.Failed -> {}
                 }
-                nap(if (c.onScreen) TRADES_POLL_MS else TRADES_POLL_BACKGROUND_MS)
+                nap(if (c.onScreen) paced(TRADES_POLL_MS) else TRADES_POLL_BACKGROUND_MS)
             }
         }
         // 6b. the engine's bids (TCL31), the same way: opening the app reads them at once ([syncNow]); an unchanged file is a free 304.
@@ -479,7 +479,7 @@ class CloudLink(private val c: AppContainer) {
                     is CloudClient.Poll.NotModified -> _ui.update { it.copy(deskReadAtMs = System.currentTimeMillis()) }
                     is CloudClient.Poll.Failed -> {}
                 }
-                nap(if (c.onScreen) TRADES_POLL_MS else TRADES_POLL_BACKGROUND_MS)
+                nap(if (c.onScreen) paced(TRADES_POLL_MS) else TRADES_POLL_BACKGROUND_MS)
             }
         }
         // 3. save
@@ -1155,6 +1155,13 @@ class CloudLink(private val c: AppContainer) {
         const val NCAAB_FILES_MS = 5 * 60_000L
         /** While the engine is not serving the board, the phone reads Novig's NCAAB catalog this often. */
         const val NCAAB_LOCAL_MS = 90_000L
+        /**
+         * LG3 (Tj 2026-11-15, MT8168 armv7 Android 10 Go tablet: "lag and slow loading ... github should be doing most processing"): 1 on a normal device, 2.5 on a low-RAM device
+         * (`ActivityManager.isLowRamDevice`, set once in [VigilantApp.onCreate]). The on-screen read loops wait that much longer: every read parses JSON and recomposes the screen on a
+         * 4 x A53 / 2 GB CPU, and the engine only publishes every 8 s anyway, so nothing a person can see is lost. Background waits are already long and are left alone.
+         */
+        @Volatile var slowdown = 1.0
+        fun paced(ms: Long): Long = (ms * slowdown).toLong()
         const val POLL_MS = 2_000L   // on screen (Tj, 2026-10-17: "real time or at most every couple seconds"); a 304 costs nothing against GitHub's limit
         // Freshness on screen (Tj, 2026-10-18, TCL122-2: "all stats and numbers and meters should be as fresh as possible"): unchanged files answer 304, which GitHub does not count against the token's limit.
         const val INBOX_POLL_MS = 30_000L
