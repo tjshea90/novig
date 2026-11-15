@@ -117,7 +117,7 @@ fun FeedScreen(
     // Cloud scan (Tj, 2026-10-14): the GitHub engine's progress and how current its list is, ticking every second while it is on.
     // 1 s while a scan the phone asked for runs (the progress), 5 s otherwise in cloud mode (the chip's ages), 15 s as ever without it.
     val cloudPending = state.settings.cloudDrives && state.cloudUi.requestedAtMs > 0L && (state.cloudUi.status?.lastScanForRefreshAtMs ?: 0L) < state.cloudUi.requestedAtMs
-    val now = rememberNow(if (cloudPending) 1_000 else if (state.settings.cloudDrives) 5_000 else 15_000)
+    val now = rememberNow(CloudLink.paced(if (cloudPending) 1_000 else if (state.settings.cloudDrives) 5_000 else 15_000L).toInt())
     val cloud = if (state.settings.cloudDrives) com.tjshea.vigilant.data.cloud.CloudText.view(state.cloudUi.status, state.cloudUi.requestedAtMs, now, state.cloudUi.why) else null
     // The freshness of what is ON SCREEN, measured from the shown bets' own stamps (not a claim): one glance in the title, a tap for the detail.
     val chip = if (cloud != null) remember(state.feed, state.cloudUi.status, state.cloudUi.why, state.placedIndex, state.settings, now) {
@@ -128,7 +128,7 @@ fun FeedScreen(
     val latest = androidx.compose.runtime.rememberUpdatedState(state)
     androidx.compose.runtime.LaunchedEffect(Unit) {
         while (true) {
-            kotlinx.coroutines.delay(AUTO_RECHECK_MS)
+            kotlinx.coroutines.delay(CloudLink.paced(AUTO_RECHECK_MS))
             val st = latest.value
             if (!st.status.rechecking && !st.settings.paused) {
                 val ids = feedMarketIds(st, System.currentTimeMillis())
