@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-tpnud5",
  "head": "8d37c429684938ab0775f029970336e75c9af149",
  "since": 1794702588,
- "beat": 1794779665,
- "beatIso": "2026-11-15T21:54:25Z",
+ "beat": 1794779670,
+ "beatIso": "2026-11-15T21:54:30Z",
  "done": "pre-ship: LG3c: phone bid guard rests while the engine's desk is live (no 220-order read every 30 s on the tablet)",
  "next": "ship.sh gates and releases this"
 }
