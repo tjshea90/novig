@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-5ooyee",
- "head": "53531fda78a8fc3732aff240abd74f83fad08957",
+ "head": "fddf77395cfc9c21f388fe5042df004d5a4df41d",
  "since": 1794702588,
- "beat": 1794719324,
- "beatIso": "2026-11-15T05:08:44Z",
+ "beat": 1794719571,
+ "beatIso": "2026-11-15T05:12:51Z",
  "done": "CN1 resolved (phone writing again); PropLine log reworded; LG2 findings",
  "next": "LG2: desk-journal evidence for fall-side hysteresis, tradeStopped fills-unreadable"
 }
