@@ -53,6 +53,8 @@ data class NcaabGameView(
 
     /** The Novig spread side that belongs to ESPN's home ([espnHome] true) or away team. */
     fun spreadFor(espnHome: Boolean): Opportunity? = mainSpread?.let { if (espnHome != swapped) it.home else it.away }
+    /** Novig's moneyline side for ESPN's home ([espnHome] true) or away team ([moneyline] is Novig's (home, away)). */
+    fun moneylineFor(espnHome: Boolean): Opportunity? = moneyline?.let { (h, a) -> if (espnHome != swapped) h else a }
     fun spreadCost(espnHome: Boolean): Double? = spreadFor(espnHome)?.ladder?.firstOrNull()?.price
     val live: Boolean get() = game.state == "in"
     val final: Boolean get() = game.state == "post"

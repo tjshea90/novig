@@ -295,9 +295,11 @@ private fun GameCard(v: NcaabGameView, onOpen: () -> Unit, now: Long) {
             }
             // The away team first, then the home team, the way a schedule reads; each carries its own spread.
             TeamRow(v.game.a.n, v.game.a.rk, v.away, score = v.game.awayScore.takeIf { !v.bettable },
+                ml = v.moneylineFor(espnHome = false).takeIf { api != null && v.bettable }, api = api,
                 spread = v.homeSpread?.let { NcaabText.signed(-it) }, cost = v.spreadCost(espnHome = false),
                 onBet = if (api != null && v.bettable) v.spreadFor(espnHome = false)?.let { o -> { betFrom(api, o, null) } } else null)
             TeamRow(v.game.h.n, v.game.h.rk, v.home, score = v.game.hs.takeIf { !v.bettable },
+                ml = v.moneylineFor(espnHome = true).takeIf { api != null && v.bettable }, api = api,
                 spread = v.homeSpread?.let { NcaabText.signed(it) }, cost = v.spreadCost(espnHome = true),
                 onBet = if (api != null && v.bettable) v.spreadFor(espnHome = true)?.let { o -> { betFrom(api, o, null) } } else null)
             val t = v.total
@@ -311,6 +313,10 @@ private fun GameCard(v: NcaabGameView, onOpen: () -> Unit, now: Long) {
                     }
                 }
             }
+            if (api != null && v.bettable && (v.spreads.size > 1 || v.totals.size > 1)) Text(
+                "Other spreads and totals: tap the game (${maxOf(v.spreads.size - 1, 0)} spreads, ${maxOf(v.totals.size - 1, 0)} totals)",
+                style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.testTag("ncaabAltHint-${v.id}"),
+            )
             val far = v.readings.filter { (it.id == NcaabSignals.AVGS_LINE || it.id == NcaabSignals.TOTAL_GAP) && kotlin.math.abs(it.value) >= FAR_POINTS }
             if (far.isNotEmpty()) Text(
                 "\u2691 Unlike the averages: " + far.joinToString(" \u00B7 ") { (if (it.id == NcaabSignals.AVGS_LINE) "spread" else "total") + " ${NcaabText.number(kotlin.math.abs(it.value))} pts off" },
@@ -327,13 +333,15 @@ private fun GameCard(v: NcaabGameView, onOpen: () -> Unit, now: Long) {
 }
 
 @Composable
-private fun TeamRow(name: String, rank: Int?, team: NcaabTeam?, score: String?, spread: String?, cost: Double?, onBet: (() -> Unit)?) {
+private fun TeamRow(name: String, rank: Int?, team: NcaabTeam?, score: String?, spread: String?, cost: Double?, onBet: (() -> Unit)?, ml: Opportunity? = null, api: ApiBetActions? = null) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             teamLine(rank, name, team),
             style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
         )
         team?.let { Tiers(it.last.takeLast(5)) }
+        val mlCost = ml?.ladder?.firstOrNull()?.price
+        if (ml != null && api != null && mlCost != null) BetChip("ML ${NcaabText.cents(mlCost)}", tag = "ncaabMl") { betFrom(api, ml, null) }
         if (score != null) Text(score, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         else if (spread != null) {
             if (onBet != null) BetChip(spread + (cost?.let { "  ${NcaabText.cents(it)}" } ?: ""), onClick = onBet)
