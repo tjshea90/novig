@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-bitd5p",
  "head": "45383bdef7088786d7e98fd58fa2766aab4d46e9",
  "since": 1794702588,
- "beat": 1794712048,
- "beatIso": "2026-11-15T03:07:28Z",
+ "beat": 1794712054,
+ "beatIso": "2026-11-15T03:07:34Z",
  "done": "pre-ship: NC3: NCAAB pregame/next-day only, early averages for mismatch-only teams, visible no-Bet reason",
  "next": "ship.sh gates and releases this"
 }
