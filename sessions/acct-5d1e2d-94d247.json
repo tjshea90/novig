@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-tpnud5",
  "head": "288eb3317f238cfe3f31a8b0c78082584f7bfe56",
  "since": 1794702588,
- "beat": 1794780207,
- "beatIso": "2026-11-15T22:03:27Z",
+ "beat": 1794780587,
+ "beatIso": "2026-11-15T22:09:47Z",
  "done": "chat: v1.0.110 shipped (LG3c); answered live results + volume question, awaiting go",
  "next": "LG4 relay of hand bets; volume levers (bidMany, kinds) if Tj says go"
 }
