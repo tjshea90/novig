@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-5ooyee",
  "head": "44aec1bdc3182593abc71376c96bcbdf676a2c14",
  "since": 1794702588,
- "beat": 1794719602,
- "beatIso": "2026-11-15T05:13:22Z",
+ "beat": 1794719855,
+ "beatIso": "2026-11-15T05:17:35Z",
  "done": "NC4: NCAAB sides matched by team name",
  "next": "ship v1.0.107 via ship.sh, release.yml, record-release"
 }
