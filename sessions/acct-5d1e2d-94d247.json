@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-0oyh4z",
  "head": "fe1f9276af054b26bdbbbeb387da9e757c3a2a3f",
  "since": 1794702588,
- "beat": 1794782570,
- "beatIso": "2026-11-15T22:42:50Z",
+ "beat": 1794782575,
+ "beatIso": "2026-11-15T22:42:55Z",
  "done": "pre-ship: Phone reads no Novig order books for bids while the engine posts them (CPU/RAM/throttle)",
  "next": "ship.sh gates and releases this"
 }
