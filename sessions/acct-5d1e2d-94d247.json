@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-0oyh4z",
- "head": "10ed687a4d974eb6f09f63991dc5a42c7a02c860",
+ "head": "7097f95049eb99dc8f7a0f79044a238954491efc",
  "since": 1794702588,
- "beat": 1794782258,
- "beatIso": "2026-11-15T22:37:38Z",
- "done": "chat: v1.0.111 shipped, runner reset; live real, pregame kinds pruned",
- "next": "watch first live orders (status.liveNote, trades.json); LG4 relay of hand bets"
+ "beat": 1794782287,
+ "beatIso": "2026-11-15T22:38:07Z",
+ "done": "CloudLink loop 4 stops reading Novig books while engine posts bids",
+ "next": "ship via ship.sh, confirm engine trading resumed"
 }
