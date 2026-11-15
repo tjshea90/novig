@@ -1,13 +1,13 @@
-# CHECKPOINT 4446 — read me first, then TASKS.md
+# CHECKPOINT 4447 — read me first, then TASKS.md
 
-**Written:** 2026-11-15T00:42:35Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-7pfmby` · **builds on:** `bfdeb237a` (this checkpoint is the commit after it)
+**Written:** 2026-11-15T00:59:24Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-7pfmby` · **builds on:** `4fca7871a` (this checkpoint is the commit after it)
 
 ## Just done
-LG1a: Op4Store persist throttled to 1/min (tests green); replied to Tj
+NC2 logged (7-point NCAAB revamp)
 
 ## Do this next
-LG1b: bets.json 9MB rewrite-whole prune; check phone Pinnodds live ON on tablet; ship with batch
+NC2: start with by-hand bets never blocked (point 4), then colors/legend, ML+quick bet, alts, missing ratings; read NcaabScreen + NcaabUiTest first
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ LG1b: bets.json 9MB rewrite-whole prune; check phone Pinnodds live ON on tablet;
 
 ## Last ten checkpoints
 ```
+  4fca7871a ckpt 4446: LG1a: Op4Store persist throttled to 1/min (tests green); replied to Tj
   baa704aad ckpt 4445: chat: Tj reports tablet lag/crash on live start; LG1 logged, asked for diag
   a5a863ac9 ckpt 4444: ENGINEER 11-14 slot2: no change
   1da152698 ckpt 4443: ANALYST 11-14 slot1 recheck: no change
@@ -26,8 +27,4 @@ LG1b: bets.json 9MB rewrite-whole prune; check phone Pinnodds live ON on tablet;
   88b1af9f2 ckpt 4439: pre-release: ParlayAPI stopped serving Pinnacle (Nov 9): closes ask DraftKi
   2ac9255df ckpt 4438: pre-ship: ParlayAPI stopped serving Pinnacle (Nov 9): closes ask DraftKings
   043b81025 ckpt 4437: PA1: ParlayCloses DK+FD moneyline only (soft), ParlayWithdrawn guard, alter
-  1e7759187 ckpt 4436: PA1: probe run 2 read: Pinnacle absent from closes file since at least Nov 
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
