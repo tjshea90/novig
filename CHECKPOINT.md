@@ -1,13 +1,13 @@
-# CHECKPOINT 4456 — read me first, then TASKS.md
+# CHECKPOINT 4457 — read me first, then TASKS.md
 
-**Written:** 2026-11-15T03:17:10Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-bitd5p` · **builds on:** `918ea46e2` (this checkpoint is the commit after it)
+**Written:** 2026-11-15T04:41:56Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-5ooyee` · **builds on:** `950ca72b7` (this checkpoint is the commit after it)
 
 ## Just done
-NC3 shipped v1.0.106; LG2 logged with first evidence
+CN1 resolved (phone writing again); PropLine log reworded; LG2 findings
 
 ## Do this next
-LG2: bid churn hysteresis, PropLine 2-socket cap, tradeStopped fills-unreadable
+LG2: desk-journal evidence for fall-side hysteresis, tradeStopped fills-unreadable
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ LG2: bid churn hysteresis, PropLine 2-socket cap, tradeStopped fills-unreadable
 
 ## Last ten checkpoints
 ```
+  359d9b0e0 ckpt 4456: NC3 shipped v1.0.106; LG2 logged with first evidence
   f3ba04ca9 ckpt 4455: pre-release: NC3: NCAAB pregame/next-day only, early averages for mismatch-
   45383bdef ckpt 4454: pre-ship: NC3: NCAAB pregame/next-day only, early averages for mismatch-onl
   599da0fa9 ckpt 4453: NC3 built
@@ -26,5 +27,7 @@ LG2: bid churn hysteresis, PropLine 2-socket cap, tradeStopped fills-unreadable
   7c50a1514 ckpt 4449: pre-ship: NC2: NCAAB tab revamp (bet any line, colored ATS + legend, moneyl
   6fef38284 ckpt 4448: NC2 a-f built, NCAAB+planner tests green
   152fb0545 ckpt 4447: NC2a: NCAAB hand bets never blocked on negative EV (planner anyLine + betFr
-  a4f1f177e ckpt 4446: chat: NC2 NCAAB revamp written to TASKS (a-f), replied to Tj
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
