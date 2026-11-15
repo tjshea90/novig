@@ -384,7 +384,7 @@ internal fun teamLine(rank: Int?, name: String, t: NcaabTeam?, early: Boolean = 
         append("(${Math.round(t.ppg)} ")
         val tier = when (t.sym) { "++" -> 2; "+" -> 1; "-" -> -1; "--" -> -2; else -> 0 }
         withStyle(androidx.compose.ui.text.SpanStyle(color = atsColor(tier), fontWeight = FontWeight.ExtraBold)) { append(com.tjshea.vigilant.data.ncaab.NcaabSymbols.pretty(t.sym)) }
-        append(if (early && t.prior == 1) ", last season)" else if (early) ", ${t.g} game${if (t.g == 1) "" else "s"} so far)" else ")")
+        append(if (early) ", ${t.g} game${if (t.g == 1) "" else "s"} so far)" else ")")
     }
 }
 
