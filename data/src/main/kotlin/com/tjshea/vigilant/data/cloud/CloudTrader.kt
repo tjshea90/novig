@@ -299,7 +299,9 @@ class CloudTrader(
                         // possibly filled: counted as at risk, never sent again, ordering held while Tj / the grader reconcile
                         val u = entry.copy(status = "UNCONFIRMED", note = entry.note + " | " + r.why.take(160))
                         ledger = ledger.copy(entries = ledger.entries + u); placed += u; cash -= u.cost; risk += u.cost
-                        stopped = r.why; stop(r.why); break
+                        // Tj, 2026-11-15: "make the engine continue through these errors": the order is on the ledger (never sent again, its id is fixed) and the market cools off, so ordering goes on with the next bet.
+                        cooldown[o.key] = now + AutoBet.COOLDOWN_MS
+                        continue
                     }
                 }
             }

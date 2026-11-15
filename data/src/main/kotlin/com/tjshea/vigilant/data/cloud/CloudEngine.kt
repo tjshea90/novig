@@ -936,7 +936,8 @@ class CloudEngine(
          * whose kinds were the slider's old ladder (props, moneylines, spreads), so the engine never auto-bet totals or team totals although the slider (and the 2026-10-17 study: "totals win") had them
          * (TCL122-11: the trade pass's "team totals aren't among the kinds of bet you auto-bet").
          */
-        fun forTrading(s: ScanSettings): ScanSettings = s.copy(autoBetKinds = forCloud(s).autoBetKinds)
+        // Tj, 2026-11-15: "turn pre game auto bets off ... unless the type of bet has a good history of profit": the engine's auto-bet takes exactly the kinds in the settings (set by engine_set), not the slider's wider ladder.
+        fun forTrading(s: ScanSettings): ScanSettings = s
 
         /** The settings the cloud scans under: the phone's, with the parts that only make sense on the phone switched off. */
         fun forCloud(s: ScanSettings): ScanSettings = s.copy(
