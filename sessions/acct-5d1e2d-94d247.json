@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-f65yc8",
- "head": "9661216ae7c50729c7678fd8be982adc19fb8242",
+ "head": "d732c88a918166317befc6f06ced36bd144ae936",
  "since": 1794702588,
- "beat": 1794772551,
- "beatIso": "2026-11-15T19:55:51Z",
+ "beat": 1794772918,
+ "beatIso": "2026-11-15T20:01:58Z",
  "done": "pre-release: LG3: low-RAM devices (Android Go tablets) read the engine 2.5x less often on screen (versionCode 448, v1.0.108)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.108), then run: bash tools/record-release.sh v1.0.108 448 \"LG3: low-RAM devices (Android Go tablets) read the engine 2.5x less often on screen\""
 }
