@@ -79,10 +79,10 @@ data class NcaabRatings(
     val asOf: Long = 0L,
     val season: Int = 0,
     val teams: Map<String, NcaabTeam> = emptyMap(),
-    /** Teams with only 1-2 usable games: shown on the card, marked early, never read by a signal (NC2). */
-    val early: Map<String, NcaabTeam> = emptyMap(),
     val model: NcaabModel = NcaabModel(),
     val games: Int = 0,
+    /** Teams with only 1-2 usable games: shown on the card, marked early, never read by a signal (NC2). */
+    val early: Map<String, NcaabTeam> = emptyMap(),
 ) {
     companion object {
         private val json = Json { ignoreUnknownKeys = true; isLenient = true }
