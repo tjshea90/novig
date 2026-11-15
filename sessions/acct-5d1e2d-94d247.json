@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-xew3j4",
- "head": "152fb05455c791cfa47dfca325e1c6e32db93850",
+ "head": "4f633fa66bd552f44f6ab19a0960b013fb05cf44",
  "since": 1794702588,
- "beat": 1794706764,
- "beatIso": "2026-11-15T01:39:24Z",
+ "beat": 1794706985,
+ "beatIso": "2026-11-15T01:43:05Z",
  "done": "NC2a: NCAAB hand bets never blocked on negative EV (planner anyLine + betFrom always withFair)",
  "next": "NC2b legend + colored ATS records; NC2c moneyline; NC2d quick bet; NC2f missing ratings; add test; ship"
 }
