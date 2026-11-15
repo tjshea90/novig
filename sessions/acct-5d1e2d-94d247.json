@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-tpnud5",
- "head": "4b08a21e5eb1644414c6bcdb3f97e94937bb8dc5",
+ "head": "5b0f803573f9cbc230f2d1772822864300296e23",
  "since": 1794702588,
- "beat": 1794780874,
- "beatIso": "2026-11-15T22:14:34Z",
- "done": "pre-ship: Engine: keeps ordering after an unreadable fill; pregame auto-bet only profitable kinds; live lane real",
- "next": "ship.sh gates and releases this"
+ "beat": 1794780896,
+ "beatIso": "2026-11-15T22:14:56Z",
+ "done": "pre-release: Engine: keeps ordering after an unreadable fill; pregame auto-bet only profitable kinds; live lane real (versionCode 451, v1.0.111)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.111), then run: bash tools/record-release.sh v1.0.111 451 \"Engine: keeps ordering after an unreadable fill; pregame auto-bet only profitable kinds; live lane real\""
 }
