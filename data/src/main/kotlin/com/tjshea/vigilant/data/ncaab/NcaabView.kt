@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.ncaab
 
+import com.tjshea.vigilant.data.match.TeamMatcher
 import com.tjshea.vigilant.data.novig.NovigEvent
 import com.tjshea.vigilant.data.reference.LineKind
 import com.tjshea.vigilant.data.reference.Side
@@ -51,13 +52,16 @@ data class NcaabGameView(
     /** Early averages (1-2 games) of a team that has no rating yet; display only. */
     val homeEarly: NcaabTeam? = null,
     val awayEarly: NcaabTeam? = null,
+    /** Whether Novig's moneyline / spread "home" side is ESPN's away team, read from the sides' own team names (NC4); null = use [swapped]. */
+    val mlSwapped: Boolean? = null,
+    val spreadSwapped: Boolean? = null,
 ) {
     val id: String get() = game.id
 
     /** The Novig spread side that belongs to ESPN's home ([espnHome] true) or away team. */
-    fun spreadFor(espnHome: Boolean): Opportunity? = mainSpread?.let { if (espnHome != swapped) it.home else it.away }
+    fun spreadFor(espnHome: Boolean): Opportunity? = mainSpread?.let { if (espnHome != (spreadSwapped ?: swapped)) it.home else it.away }
     /** Novig's moneyline side for ESPN's home ([espnHome] true) or away team ([moneyline] is Novig's (home, away)). */
-    fun moneylineFor(espnHome: Boolean): Opportunity? = moneyline?.let { (h, a) -> if (espnHome != swapped) h else a }
+    fun moneylineFor(espnHome: Boolean): Opportunity? = moneyline?.let { (h, a) -> if (espnHome != (mlSwapped ?: swapped)) h else a }
     fun spreadCost(espnHome: Boolean): Double? = spreadFor(espnHome)?.ladder?.firstOrNull()?.price
     val live: Boolean get() = game.state == "in"
     val final: Boolean get() = game.state == "post"
@@ -128,7 +132,28 @@ object NcaabView {
         val readings = if (home != null && away != null && ratings != null) NcaabSignals.read(ratings.model, home, away, homeSpread, total, neutral) else emptyList()
         val picks = readings.map { r -> pickOf(r, g, swapped, mainSpread, mainTotal) }
         return NcaabGameView(g, event, home, away, ml, spreads, totals, mainSpread, mainTotal, homeSpread, total, source, readings, picks, swapped,
+            mlSwapped = ml?.let { (h, a) -> sidesSwapped(g, h, a) }, spreadSwapped = mainSpread?.let { sidesSwapped(g, it.home, it.away) },
             homeEarly = if (home == null) ratings?.early?.get(g.h.id) else null, awayEarly = if (away == null) ratings?.early?.get(g.a.id) else null)
+    }
+
+    /**
+     * Whether Novig's [novigHome] side is ESPN's AWAY team, from the two sides' own team names (Tj, NC4: the Bet beside the home team's moneyline opened the away team's slip). Null when the names
+     * cannot tell, and the caller keeps the event-level answer. Never trusts the side label alone: a market's HOME/AWAY has to agree with whose name the selection carries.
+     */
+    internal fun sidesSwapped(g: SlateGame, novigHome: Opportunity, novigAway: Opportunity): Boolean? {
+        fun espnHome(o: Opportunity): Boolean? {
+            val h = maxOf(TeamMatcher.similarity(o.selection, g.h.n), TeamMatcher.similarity(o.selection, g.h.dn))
+            val a = maxOf(TeamMatcher.similarity(o.selection, g.a.n), TeamMatcher.similarity(o.selection, g.a.dn))
+            return when { h >= TeamMatcher.MIN_TEAM_SIMILARITY && h > a + 1e-9 -> true; a >= TeamMatcher.MIN_TEAM_SIMILARITY && a > h + 1e-9 -> false; else -> null }
+        }
+        val x = espnHome(novigHome)
+        val y = espnHome(novigAway)
+        return when {
+            x != null && y != null && x != y -> !x
+            x != null && y == null -> !x
+            x == null && y != null -> y
+            else -> null
+        }
     }
 
     /** The number whose two sides cost closest to even money to take; the one nearest [espn] when no price is read; the middle one otherwise. */
