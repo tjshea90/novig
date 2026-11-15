@@ -1,0 +1,1 @@
+{"v":2,"id":"t1794712367564-8a52","at":1794712367564,"from":"tj","text":"I think the github engine, my app, and novig all slow down and have problems when I turn live betting engine on. it may be using too many connections at once or asking novig for too much while also trying to place bids and scan. figure out if this is the case and if so, find a fix or a balance"}
