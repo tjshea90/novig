@@ -5,11 +5,11 @@
  "nonce": "94d247",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-7pfmby",
- "head": "b5101ca80edadf6fa79d556a9d0f54bdf3dc1086",
+ "branch": "claude/optimistic-curie-xew3j4",
+ "head": "baa704aad0ddf1dea286ecf5bf422791162f298d",
  "since": 1794702588,
- "beat": 1794704364,
- "beatIso": "2026-11-15T00:59:24Z",
+ "beat": 1794706631,
+ "beatIso": "2026-11-15T01:37:11Z",
  "done": "NC2 logged (7-point NCAAB revamp)",
  "next": "NC2: start with by-hand bets never blocked (point 4), then colors/legend, ML+quick bet, alts, missing ratings; read NcaabScreen + NcaabUiTest first"
 }
