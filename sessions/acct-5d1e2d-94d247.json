@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-xew3j4",
- "head": "7c50a1514eafc87c3fb155b5e8168f9d6e379acf",
+ "head": "a0d0bf1fb5786412661946006894695946a91172",
  "since": 1794702588,
- "beat": 1794707386,
- "beatIso": "2026-11-15T01:49:46Z",
- "done": "pre-ship: NC2: NCAAB tab revamp (bet any line, colored ATS + legend, moneyline chips, early averages)",
- "next": "ship.sh gates and releases this"
+ "beat": 1794707553,
+ "beatIso": "2026-11-15T01:52:33Z",
+ "done": "pre-release: NC2: NCAAB tab revamp (bet any line, colored ATS + legend, moneyline chips, early averages) (versionCode 445, v1.0.105)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.105), then run: bash tools/record-release.sh v1.0.105 445 \"NC2: NCAAB tab revamp (bet any line, colored ATS + legend, moneyline chips, early averages)\""
 }
