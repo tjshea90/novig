@@ -5,11 +5,11 @@
  "nonce": "94d247",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-f65yc8",
+ "branch": "claude/optimistic-curie-tpnud5",
  "head": "265cd6fe07ffc3b0c1abe656026845dfdbd2f7ec",
  "since": 1794702588,
- "beat": 1794773598,
- "beatIso": "2026-11-15T20:13:18Z",
+ "beat": 1794779174,
+ "beatIso": "2026-11-15T21:46:14Z",
  "done": "LG3 shipped v1.0.108+109 (paced reads on low-RAM, phone study off while cloud drives)",
  "next": "wait for tablet Diagnostics file (Tj asked); then cut what Memory/frames name"
 }
