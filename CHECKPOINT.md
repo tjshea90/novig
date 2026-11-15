@@ -1,21 +1,24 @@
-# CHECKPOINT 4465 — read me first, then TASKS.md
+# CHECKPOINT 4466 — read me first, then TASKS.md
 
-**Written:** 2026-11-15T19:55:51Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-f65yc8` · **builds on:** `8051a60b7` (this checkpoint is the commit after it)
+**Written:** 2026-11-15T20:03:11Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-f65yc8` · **builds on:** `418e0b518` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: LG3: low-RAM devices (Android Go tablets) read the engine 2.5x less often on screen (versionCode 448, v1.0.108)
+pre-ship: LG3b: with the GitHub engine driving, the phone no longer logs, grades or closes the scan study itself; the Feed's ticks and rechecks slow down on low-RAM devices
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.108), then run: bash tools/record-release.sh v1.0.108 448 "LG3: low-RAM devices (Android Go tablets) read the engine 2.5x less often on screen"
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M app/build.gradle.kts
+     M app/src/main/kotlin/com/tjshea/vigilant/app/ui/FeedScreen.kt
 
 ## Last ten checkpoints
 ```
+  9661216ae ckpt 4465: pre-release: LG3: low-RAM devices (Android Go tablets) read the engine 2.5x
   8051a60b7 ckpt 4464: pre-ship: LG3: low-RAM devices (Android Go tablets) read the engine 2.5x le
   277a149c3 ckpt 4463: pre-ship: LG3: low-RAM devices (Android Go tablets) read the engine 2.5x le
   260a3ddd9 ckpt 4462: ENGINEER 11-15 slot 1 re-check: no change (wallet $0.01)
@@ -25,5 +28,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   44aec1bdc ckpt 4458: NC4: NCAAB sides matched by team name
   44265fa0d ckpt 4457: CN1 resolved (phone writing again); PropLine log reworded; LG2 findings
   359d9b0e0 ckpt 4456: NC3 shipped v1.0.106; LG2 logged with first evidence
-  f3ba04ca9 ckpt 4455: pre-release: NC3: NCAAB pregame/next-day only, early averages for mismatch-
 ```
+
+(3 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
