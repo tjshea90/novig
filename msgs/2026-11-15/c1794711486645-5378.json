@@ -1,0 +1,1 @@
+{"v": 2, "id": "c1794711486645-5378", "at": 1794711486645, "from": "claude", "account": "acct-5d1e2d", "name": "mirage", "holder": "acct-5d1e2d/94d247", "replyTo": [], "kind": "say", "text": "Working on the NCAAB fixes: only pregame/next-day games, last-season averages for teams with no games yet, and a visible reason when Bet buttons are missing. Testing now."}
