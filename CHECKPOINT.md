@@ -1,7 +1,7 @@
-# CHECKPOINT 4463 — read me first, then TASKS.md
+# CHECKPOINT 4464 — read me first, then TASKS.md
 
-**Written:** 2026-11-15T19:48:35Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-f65yc8` · **builds on:** `b27af4f4e` (this checkpoint is the commit after it)
+**Written:** 2026-11-15T19:53:01Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-f65yc8` · **builds on:** `277a149c3` (this checkpoint is the commit after it)
 
 ## Just done
 pre-ship: LG3: low-RAM devices (Android Go tablets) read the engine 2.5x less often on screen
@@ -13,10 +13,11 @@ ship.sh gates and releases this
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  277a149c3 ckpt 4463: pre-ship: LG3: low-RAM devices (Android Go tablets) read the engine 2.5x le
   260a3ddd9 ckpt 4462: ENGINEER 11-15 slot 1 re-check: no change (wallet $0.01)
   1d327bc4b ckpt 4461: ENGINEER 11-15 slot: watch only, no change
   3bfbf76ee ckpt 4460: chat: NC4 shipped v1.0.107; tax Qs answered; LG2 findings logged
@@ -26,8 +27,4 @@ ship.sh gates and releases this
   359d9b0e0 ckpt 4456: NC3 shipped v1.0.106; LG2 logged with first evidence
   f3ba04ca9 ckpt 4455: pre-release: NC3: NCAAB pregame/next-day only, early averages for mismatch-
   45383bdef ckpt 4454: pre-ship: NC3: NCAAB pregame/next-day only, early averages for mismatch-onl
-  599da0fa9 ckpt 4453: NC3 built
 ```
-
-(2 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
