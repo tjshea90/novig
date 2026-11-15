@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-bitd5p",
- "head": "f3ba04ca9f15296aff9f878098ec7ad7177341f7",
+ "head": "359d9b0e07b29eaed468d85ac2e7874892cc9fe6",
  "since": 1794702588,
- "beat": 1794712572,
- "beatIso": "2026-11-15T03:16:12Z",
- "done": "pre-release: NC3: NCAAB pregame/next-day only, early averages for mismatch-only teams, visible no-Bet reason (versionCode 446, v1.0.106)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.106), then run: bash tools/record-release.sh v1.0.106 446 \"NC3: NCAAB pregame/next-day only, early averages for mismatch-only teams, visible no-Bet reason\""
+ "beat": 1794712631,
+ "beatIso": "2026-11-15T03:17:11Z",
+ "done": "NC3 shipped v1.0.106; LG2 logged with first evidence",
+ "next": "LG2: bid churn hysteresis, PropLine 2-socket cap, tradeStopped fills-unreadable"
 }
