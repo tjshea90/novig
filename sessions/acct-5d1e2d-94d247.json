@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-5ooyee",
- "head": "fddf77395cfc9c21f388fe5042df004d5a4df41d",
+ "head": "44aec1bdc3182593abc71376c96bcbdf676a2c14",
  "since": 1794702588,
- "beat": 1794719571,
- "beatIso": "2026-11-15T05:12:51Z",
- "done": "CN1 resolved (phone writing again); PropLine log reworded; LG2 findings",
- "next": "LG2: desk-journal evidence for fall-side hysteresis, tradeStopped fills-unreadable"
+ "beat": 1794719596,
+ "beatIso": "2026-11-15T05:13:16Z",
+ "done": "NC4: NCAAB sides matched by team name",
+ "next": "ship v1.0.107 via ship.sh, release.yml, record-release"
 }
