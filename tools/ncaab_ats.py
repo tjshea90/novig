@@ -357,6 +357,20 @@ def build_ratings(games, as_of_ms, teams, cfg=CFG, model=None):
             if e:
                 e["n"], e["ab"] = nm.get("n", tid), nm.get("ab", "")
                 early[tid] = e
+    # NC3b (Tj 2026-11-15: "they should all have averages"): a team with no game this season at all shows LAST season's averages, marked prior.
+    last = {}
+    for g in sorted(games.values(), key=lambda g: (g["t"], g["id"])):
+        if g["t"] > as_of_ms or season_of(g["d"]) != season - 1:
+            continue
+        for side in ("h", "a"):
+            if g[side] not in out and g[side] not in early:
+                last.setdefault(g[side], []).append(team_game(g, g[side]))
+    for tid, lst in last.items():
+        e = rate_team(lst, dict(cfg, min_games=1))
+        if e:
+            nm = teams.get(tid, {})
+            e["n"], e["ab"], e["prior"] = nm.get("n", tid), nm.get("ab", ""), 1
+            early[tid] = e
     return dict(asOf=as_of_ms, season=season, cfg=cfg, teams=out, early=early, model=model or DEFAULT_MODEL, games=sum(1 for g in games.values() if season_of(g["d"]) == season))
 
 

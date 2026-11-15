@@ -302,6 +302,10 @@ private fun GameCard(v: NcaabGameView, onOpen: () -> Unit, now: Long) {
                 ml = v.moneylineFor(espnHome = true).takeIf { api != null && v.bettable }, api = api, early = v.homeEarly,
                 spread = v.homeSpread?.let { NcaabText.signed(it) }, cost = v.spreadCost(espnHome = true),
                 onBet = if (api != null && v.bettable) v.spreadFor(espnHome = true)?.let { o -> { betFrom(api, o, null) } } else null)
+            if (api == null || !v.bettable) Text(
+                if (api == null) "Betting is off or not set up: turn it on in Settings › Betting & Novig account to get Bet buttons." else "No Novig market read for this game yet (the list re-reads every 90 s).",
+                style = MaterialTheme.typography.labelSmall, color = edge.warning, modifier = Modifier.testTag("ncaabNoBet-${v.id}"),
+            )
             val t = v.total
             if (t != null) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -380,7 +384,7 @@ internal fun teamLine(rank: Int?, name: String, t: NcaabTeam?, early: Boolean = 
         append("(${Math.round(t.ppg)} ")
         val tier = when (t.sym) { "++" -> 2; "+" -> 1; "-" -> -1; "--" -> -2; else -> 0 }
         withStyle(androidx.compose.ui.text.SpanStyle(color = atsColor(tier), fontWeight = FontWeight.ExtraBold)) { append(com.tjshea.vigilant.data.ncaab.NcaabSymbols.pretty(t.sym)) }
-        append(if (early) ", ${t.g} game${if (t.g == 1) "" else "s"} so far)" else ")")
+        append(if (early && t.prior == 1) ", last season)" else if (early) ", ${t.g} game${if (t.g == 1) "" else "s"} so far)" else ")")
     }
 }
 
