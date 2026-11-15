@@ -1,13 +1,13 @@
-# CHECKPOINT 4452 — read me first, then TASKS.md
+# CHECKPOINT 4453 — read me first, then TASKS.md
 
-**Written:** 2026-11-15T02:36:33Z · **tests:** all 10 fast checks green
-**Branch:** `ccr-5299d211-6rvy8u` · **builds on:** `e34088c0a` (this checkpoint is the commit after it)
+**Written:** 2026-11-15T03:03:35Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-bitd5p` · **builds on:** `85ffdafbe` (this checkpoint is the commit after it)
 
 ## Just done
-logged NC3a-c + CN1 (phone cannot write to GitHub after v1.0.105 install; messages never arrived)
+NC3 built
 
 ## Do this next
-answer Tj: check Settings > Cloud scan token; then NC3a, CN1 banner
+ship.sh v1.0.106, dispatch ncaab-log, release
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ answer Tj: check Settings > Cloud scan token; then NC3a, CN1 banner
 
 ## Last ten checkpoints
 ```
+  b76c05a9a ckpt 4452: logged NC3a-c + CN1 (phone cannot write to GitHub after v1.0.105 install; m
   71f257b9a ckpt 4451: NC2 shipped v1.0.105, Tj told
   a0d0bf1fb ckpt 4450: pre-release: NC2: NCAAB tab revamp (bet any line, colored ATS + legend, mon
   7c50a1514 ckpt 4449: pre-ship: NC2: NCAAB tab revamp (bet any line, colored ATS + legend, moneyl
@@ -26,8 +27,7 @@ answer Tj: check Settings > Cloud scan token; then NC3a, CN1 banner
   baa704aad ckpt 4445: chat: Tj reports tablet lag/crash on live start; LG1 logged, asked for diag
   a5a863ac9 ckpt 4444: ENGINEER 11-14 slot2: no change
   1da152698 ckpt 4443: ANALYST 11-14 slot1 recheck: no change
-  6a901a941 ckpt 4442: ANALYST 11-14 slot1: no change
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(5 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
