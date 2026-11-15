@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-xew3j4",
- "head": "a4f1f177e4065ed9d4b175102e7c01614f038cc1",
+ "head": "152fb05455c791cfa47dfca325e1c6e32db93850",
  "since": 1794702588,
- "beat": 1794706705,
- "beatIso": "2026-11-15T01:38:25Z",
- "done": "chat: NC2 NCAAB revamp written to TASKS (a-f), replied to Tj",
- "next": "NC2a: NCAAB Bet by hand = warn only, then legend/colors, ML, quick bet, alts, missing ratings"
+ "beat": 1794706764,
+ "beatIso": "2026-11-15T01:39:24Z",
+ "done": "NC2a: NCAAB hand bets never blocked on negative EV (planner anyLine + betFrom always withFair)",
+ "next": "NC2b legend + colored ATS records; NC2c moneyline; NC2d quick bet; NC2f missing ratings; add test; ship"
 }
