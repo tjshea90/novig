@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-tpnud5",
  "head": "ab51f9a2488eefd3293e30c51594725f43b94eba",
  "since": 1794702588,
- "beat": 1794779408,
- "beatIso": "2026-11-15T21:50:08Z",
+ "beat": 1794779421,
+ "beatIso": "2026-11-15T21:50:21Z",
  "done": "LG3c: BidGuard rests while engine desk live; LG4 logged",
  "next": "finish compile/test, ship, then LG4 relay of hand bets"
 }
