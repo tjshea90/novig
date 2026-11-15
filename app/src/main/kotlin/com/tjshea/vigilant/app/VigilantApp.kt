@@ -694,7 +694,7 @@ class AppContainer(val app: Application) {
      * LG3 (Tj 2026-11-15: the tablet "is supposed to be just a monitor and control center"): while the GitHub engine drives the scan it logs, grades and closes every listed bet itself
      * (`ScanStudy.observeVigilant` on the runner, `engine-grade.yml`), so the phone does not observe, grade or look up closes for the same list a second time.
      */
-    fun studyOnPhone(): Boolean = !currentSettings().cloudDrives
+    suspend fun studyOnPhone(): Boolean = !currentSettings().cloudDrives
 
     /** One step of the study's logging: whatever goes wrong is a line in Recent problems, never a failure of the scan it watched. */
     private suspend fun studyStep(what: String, block: suspend () -> Unit) {
