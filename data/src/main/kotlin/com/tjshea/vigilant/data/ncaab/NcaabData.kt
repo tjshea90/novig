@@ -19,8 +19,6 @@ data class NcaabTeam(
     /** All logged games this season, and how many were left out (a mismatch of 20+ points, or a scoring outlier). */
     val all: Int = 0,
     val ex: Int = 0,
-    /** 1 = these averages are LAST season's (the team has no game this season yet; NC3b). */
-    val prior: Int = 0,
     val ppg: Double = 0.0,
     val papg: Double = 0.0,
     /** The mean tier: -2 (double red minus) to +2 (double green plus). */
