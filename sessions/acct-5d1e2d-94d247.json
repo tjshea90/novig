@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-f65yc8",
- "head": "277a149c3ac541465e88085285746568b1acd398",
+ "head": "8051a60b79780fd610b7c1fb78b5a5af704e6e65",
  "since": 1794702588,
- "beat": 1794772353,
- "beatIso": "2026-11-15T19:52:33Z",
+ "beat": 1794772381,
+ "beatIso": "2026-11-15T19:53:01Z",
  "done": "pre-ship: LG3: low-RAM devices (Android Go tablets) read the engine 2.5x less often on screen",
  "next": "ship.sh gates and releases this"
 }
