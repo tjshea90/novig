@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "e734a5",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-1xjapo",
+ "head": "a5a863ac9e71187ea71f7a8ea3660d5cfd52727a",
+ "since": 1794702331,
+ "beat": 1794702331,
+ "beatIso": "2026-11-15T00:25:31Z",
+ "done": "ENGINEER 11-14 slot2: no change",
+ "next": "next slot: read new digest if any"
+}
