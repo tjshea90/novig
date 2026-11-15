@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-bitd5p",
  "head": "599da0fa9c675c375b4e7a7eee6ced01e240877c",
  "since": 1794702588,
- "beat": 1794711815,
- "beatIso": "2026-11-15T03:03:35Z",
+ "beat": 1794711821,
+ "beatIso": "2026-11-15T03:03:41Z",
  "done": "NC3 built",
  "next": "ship.sh v1.0.106, dispatch ncaab-log, release"
 }
