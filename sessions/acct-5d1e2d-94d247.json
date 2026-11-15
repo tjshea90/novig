@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-f65yc8",
  "head": "598aefc00086c202c6aa0525abf4859ecc2f96df",
  "since": 1794702588,
- "beat": 1794772991,
- "beatIso": "2026-11-15T20:03:11Z",
+ "beat": 1794772996,
+ "beatIso": "2026-11-15T20:03:16Z",
  "done": "pre-ship: LG3b: with the GitHub engine driving, the phone no longer logs, grades or closes the scan study itself; the Feed's ticks and rechecks slow down on low-RAM devices",
  "next": "ship.sh gates and releases this"
 }
