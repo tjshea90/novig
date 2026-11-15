@@ -353,7 +353,7 @@ def build_ratings(games, as_of_ms, teams, cfg=CFG, model=None):
         else:
             # NC2 (Tj 2026-11-15: "many teams have no average scores or ATS results"): a team with only 1-2 usable games has no RATING (the signals and the backtest need 3), but its early
             # averages are shown on the card, marked early. Never used by a signal.
-            e = rate_team(lst, dict(cfg, min_games=1))
+            e = rate_team(lst, dict(cfg, min_games=1)) or rate_team(lst, dict(cfg, min_games=1, mismatch=999))  # a team whose every game was a mismatch still shows its averages
             if e:
                 e["n"], e["ab"] = nm.get("n", tid), nm.get("ab", "")
                 early[tid] = e
