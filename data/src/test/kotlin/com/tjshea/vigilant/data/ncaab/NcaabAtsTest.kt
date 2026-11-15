@@ -221,6 +221,21 @@ class NcaabAtsTest {
     }
 
     @Test
+    fun `a side is matched to ESPN's team by the name it carries, so a Bet never opens the other team's slip (NC4)`() {
+        val m = NovigMarket("m-ml", "ev1", "SPREAD", "OPEN", "x", start, fee,
+            listOf(NovigOutcome("ml-h", "Davidson Wildcats -4.5", "TBD"), NovigOutcome("ml-a", "Rider Broncs +4.5", "TBD")), -4.5)
+        val rows = NcaabBoard.build(listOf(event), listOf(m), mapOf("m-ml" to book(m, 0.49, 0.49)), emptyMap(), now)
+        val h = rows.first { it.outcome.outcomeId == "ml-h" }
+        val a = rows.first { it.outcome.outcomeId == "ml-a" }
+        val straight = SlateGame("g1", start, h = SlateTeam("1", "Davidson", "Davidson Wildcats"), a = SlateTeam("2", "Rider", "Rider Broncs"))
+        val flipped = SlateGame("g1", start, h = SlateTeam("2", "Rider", "Rider Broncs"), a = SlateTeam("1", "Davidson", "Davidson Wildcats"))
+        assertEquals(false, NcaabView.sidesSwapped(straight, h, a))
+        assertEquals("ESPN lists the other team as home: Novig's home side is ESPN's away", true, NcaabView.sidesSwapped(flipped, h, a))
+        val unknown = SlateGame("g1", start, h = SlateTeam("3", "Kent State"), a = SlateTeam("4", "Ohio"))
+        assertNull("names that match neither team say nothing", NcaabView.sidesSwapped(unknown, h, a))
+    }
+
+    @Test
     fun `the engine serves the board only while it is alive and has published one`() {
         val st = com.tjshea.vigilant.data.cloud.CloudStatus(heartbeatMs = now, ncaabAtMs = now - 10_000L)
         assertTrue(NcaabBoard.engineServes(st, now))
