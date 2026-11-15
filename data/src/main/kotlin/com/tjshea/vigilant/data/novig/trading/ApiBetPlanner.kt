@@ -207,7 +207,10 @@ object ApiBetPlanner {
         val bestQuote = EvMath.quote(target.fair, best.price, fee, eventLive = live)
         // No money ever goes on a negative-EV bet (Tj, 2026-10-11: "If a bet ever becomes negative EV anywhere in the app on any scanner, prevent me from betting it at all ... No money should ever
         // go on a negative ev bet"): by hand too. This supersedes the 2026-10-02 "no minimum edge by hand" for a NEGATIVE edge only: a hand bet still needs no minimum, but not less than zero.
-        if (limits.manual && bestQuote.evPercent < -1e-9) {
+        // The college basketball tab is the exception (Tj, 2026-11-15, NC2: "I should be able to bet any single line in this section"): its bets are his own call, the EV is only a warning.
+        val anyLine = limits.manual && target.basis?.source == com.tjshea.vigilant.data.tracker.FairBasis.SOURCE_NCAAB
+        val anyLineNote = if (anyLine && bestQuote.evPercent < -1e-9) "Heads up: this price is ${percent(bestQuote.evPercent)} EV against the fair odds used here. You can still place it." else null
+        if (limits.manual && !anyLine && bestQuote.evPercent < -1e-9) {
             return PlanResult.Refused(
                 "This bet is negative EV now: Novig's best price is ${american(best.price)} against fair odds of ${american(target.fair)}, " +
                     "${percent(bestQuote.evPercent)} EV${if (live) " with Novig's live fee" else ""}. Nothing is bet on a negative-EV price.",
@@ -241,7 +244,7 @@ object ApiBetPlanner {
             if (listed != null && level.price > listed + 1e-9) break
             val q = EvMath.quote(target.fair, level.price, fee, eventLive = live)
             // Never past a level that is negative EV, by hand included.
-            if (q.evPercent < -1e-9) break
+            if (q.evPercent < -1e-9 && !anyLine) break
             if (!limits.manual && q.evPercent < limits.minEv - 1e-9) break
             val perContract = q.cost * EvMath.CONTRACT_PAYOUT_DOLLARS
             val take = minOf(level.contracts, Math.floor(dollarsLeft / perContract + 1e-9).toLong())
@@ -270,7 +273,7 @@ object ApiBetPlanner {
         } else {
             null
         }
-        val note = listOfNotNull(shortNote, fairNote, gameNote, profitNote).joinToString(" ").ifEmpty { null }
+        val note = listOfNotNull(shortNote, fairNote, gameNote, profitNote, anyLineNote).joinToString(" ").ifEmpty { null }
         return PlanResult.Ready(
             BetPlan(
                 limitPrice = limit,

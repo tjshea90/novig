@@ -363,6 +363,6 @@ internal fun BetChip(label: String, tag: String = "ncaabBet", onCard: Boolean = 
 
 /** The Bet sheet for [o]: the books' own fair when the scan priced it, otherwise [systemFair] (a signal's chance) or Novig's middle price. */
 internal fun betFrom(api: ApiBetActions, o: Opportunity, systemFair: Double?) {
-    if (o.fairProbability != null) api.betOpportunity(o)
-    else (systemFair ?: NcaabText.midFair(o))?.let { api.betWithFair(o, it) }
+    // Any line here can be bet by hand (Tj, NC2): always the NCAAB-tab path, whose EV is a warning and never a block.
+    (systemFair ?: o.fairProbability ?: NcaabText.midFair(o))?.let { api.betWithFair(o, it) }
 }
