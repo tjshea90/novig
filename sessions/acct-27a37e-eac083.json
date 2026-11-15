@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "eac083",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-1w8dsn",
+ "head": "260a3ddd970ac4d5fb22a2b90aa18f689b225157",
+ "since": 1794766920,
+ "beat": 1794766920,
+ "beatIso": "2026-11-15T18:22:00Z",
+ "done": "ENGINEER 11-15 slot 1 re-check: no change (wallet $0.01)",
+ "next": "same: BH1/BH2, LG2 need evidence"
+}
