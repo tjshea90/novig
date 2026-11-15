@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-f65yc8",
- "head": "e347ee8e79fb68d97bc663347f80d82d1657e907",
+ "head": "ff83fe17345fbc7060fb292c736131d3d85fd5bf",
  "since": 1794702588,
- "beat": 1794773143,
- "beatIso": "2026-11-15T20:05:43Z",
+ "beat": 1794773562,
+ "beatIso": "2026-11-15T20:12:42Z",
  "done": "pre-release: LG3b: with the GitHub engine driving, the phone no longer logs, grades or closes the scan study itself; the Feed's ticks and rechecks slow down on low-RAM devices (versionCode 449, v1.0.109)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.109), then run: bash tools/record-release.sh v1.0.109 449 \"LG3b: with the GitHub engine driving, the phone no longer logs, grades or closes the scan study itself; the Feed's ticks and rechecks slow down on low-RAM devices\""
 }
