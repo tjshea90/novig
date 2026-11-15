@@ -1,13 +1,13 @@
-# CHECKPOINT 4474 — read me first, then TASKS.md
+# CHECKPOINT 4475 — read me first, then TASKS.md
 
-**Written:** 2026-11-15T22:14:56Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-tpnud5` · **builds on:** `4b08a21e5` (this checkpoint is the commit after it)
+**Written:** 2026-11-15T22:22:20Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-tpnud5` · **builds on:** `e36bbefb0` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: Engine: keeps ordering after an unreadable fill; pregame auto-bet only profitable kinds; live lane real (versionCode 451, v1.0.111)
+chat: v1.0.111 shipped, runner reset; live real, pregame kinds pruned
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.111), then run: bash tools/record-release.sh v1.0.111 451 "Engine: keeps ordering after an unreadable fill; pregame auto-bet only profitable kinds; live lane real"
+watch first live orders (status.liveNote, trades.json); LG4 relay of hand bets
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  5b0f80357 ckpt 4474: pre-release: Engine: keeps ordering after an unreadable fill; pregame auto-
   4b08a21e5 ckpt 4473: pre-ship: Engine: keeps ordering after an unreadable fill; pregame auto-bet
   288eb3317 ckpt 4472: chat: v1.0.110 shipped (LG3c); answered live results + volume question, awa
   f63f94471 ckpt 4471: pre-release: LG3c: phone bid guard rests while the engine's desk is live (n
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   e347ee8e7 ckpt 4467: pre-release: LG3b: with the GitHub engine driving, the phone no longer logs
   598aefc00 ckpt 4466: pre-ship: LG3b: with the GitHub engine driving, the phone no longer logs, g
   9661216ae ckpt 4465: pre-release: LG3: low-RAM devices (Android Go tablets) read the engine 2.5x
-  8051a60b7 ckpt 4464: pre-ship: LG3: low-RAM devices (Android Go tablets) read the engine 2.5x le
 ```
