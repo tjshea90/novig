@@ -446,3 +446,4 @@ day that changes.
 | v1.0.105 | code 445 | 2026-11-15T01:58Z | NC2: NCAAB tab revamp (bet any line, colored ATS + legend, moneyline chips, early averages)
 | v1.0.106 | code 446 | 2026-11-15T03:16Z | NC3: NCAAB pregame/next-day only, early averages for mismatch-only teams, visible no-Bet reason
 | v1.0.107 | code 447 | 2026-11-15T05:28Z | NC4: NCAAB Bet buttons matched to the right team by the side's own name
+| v1.0.108 | code 448 | 2026-11-15T20:02Z | LG3: low-RAM devices (Android Go tablets) read the engine 2.5x less often on screen
