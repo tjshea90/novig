@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-99twme",
- "head": "6f8a95c3e2c9ec21227f7237b05f230f05af8232",
+ "head": "3fe0b810ad5d45eb4cd7faa03e1be20f71c31729",
  "since": 1794788519,
- "beat": 1794802839,
- "beatIso": "2026-11-16T04:20:39Z",
- "done": "DG5a: engine publishes wallet-ledger.json, phone reads it for wallet money; tests green",
- "next": "ship, then DG5 per-bet tracker from ledger"
+ "beat": 1794802888,
+ "beatIso": "2026-11-16T04:21:28Z",
+ "done": "research index rebuilt",
+ "next": "ship"
 }
