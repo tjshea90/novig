@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-1qw51k",
- "head": "d1bb96e5c571d86fba958f995c5d0b4a12e056b1",
+ "head": "c622afcf382c6ce905e5535b161af5748d5e9573",
  "since": 1794788519,
- "beat": 1794848581,
- "beatIso": "2026-11-16T17:03:01Z",
+ "beat": 1794849277,
+ "beatIso": "2026-11-16T17:14:37Z",
  "done": "pre-release: Settled bets older than 3 days lose their heavy snapshot once on GitHub, so the bets file stays small and the app starts faster (versionCode 463, v1.0.123)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.123), then run: bash tools/record-release.sh v1.0.123 463 \"Settled bets older than 3 days lose their heavy snapshot once on GitHub, so the bets file stays small and the app starts faster\""
 }
