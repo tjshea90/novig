@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-cnhej8",
- "head": "b9e61e59eb9fe200fc56b050f5a3177accbfdb8b",
+ "head": "981f399bba35c2b20c743d9da9e11d174603a9a1",
  "since": 1794788519,
- "beat": 1794864100,
- "beatIso": "2026-11-16T21:21:40Z",
- "done": "pre-ship: Chat typing no longer redraws the whole thread on every key; finer launch trace",
- "next": "ship.sh gates and releases this"
+ "beat": 1794864263,
+ "beatIso": "2026-11-16T21:24:23Z",
+ "done": "pre-release: Chat typing no longer redraws the whole thread on every key; finer launch trace (versionCode 469, v1.0.129)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.129), then run: bash tools/record-release.sh v1.0.129 469 \"Chat typing no longer redraws the whole thread on every key; finer launch trace\""
 }
