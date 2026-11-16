@@ -353,6 +353,22 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         return dropped
     }
 
+    /**
+     * DG5 (Tj chat 2026-11-16: the 8 MB bets file, rewritten whole, makes the app slow): a settled bet older than [afterDays] whose day is already on GitHub
+     * loses its heavy "at the bet" snapshot (every book's price, rules text); the figures the Tracker shows stay. Returns how many were slimmed.
+     */
+    suspend fun slimArchived(now: Long, afterDays: Int, onGitHub: (day: String) -> Boolean): Int {
+        val cutoff = now - afterDays * 86_400_000L
+        var slimmed = 0
+        store.update { list ->
+            if (list.none { it.atBet != null && it.status != BetStatus.PENDING && it.createdAtMs < cutoff }) return@update list
+            list.map {
+                if (it.atBet != null && it.status != BetStatus.PENDING && it.createdAtMs < cutoff && onGitHub(BetHistory.day(it.createdAtMs))) { slimmed++; it.copy(atBet = null) } else it
+            }
+        }
+        return slimmed
+    }
+
     suspend fun all(): List<TrackedBet> = store.read()
 
     /**
