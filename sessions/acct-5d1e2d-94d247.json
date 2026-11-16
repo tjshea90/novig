@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-cnhej8",
- "head": "cb2aa253ed6aa5cbdb5838b8e499b5290117fb45",
+ "head": "b3931b43d10e77337fc05ec46deda591365835e5",
  "since": 1794788519,
- "beat": 1794863427,
- "beatIso": "2026-11-16T21:10:27Z",
- "done": "answered Tj: v1.0.127 diag read (idle slow 64->39%, Engine 94->25%); PF7 logged",
- "next": "PF7: EV tab (FeedScreen) all frames slow p50 253ms: find per-recompose work; chat 'sending again' not reproducible from data (messages arrived, GitHub calls healthy)"
+ "beat": 1794863537,
+ "beatIso": "2026-11-16T21:12:17Z",
+ "done": "pre-ship: Launch trace: the next report says how far a run got before Android ended it",
+ "next": "ship.sh gates and releases this"
 }
