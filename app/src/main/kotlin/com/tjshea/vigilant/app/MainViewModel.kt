@@ -664,8 +664,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // main thread (Tj, 2026-10-01: "I used the check odds now function and the list of open bets got very laggy").
             // (If the marks, the result or the settings change while it's built, it is built again from what's current: [reindex].)
             // DG5: the Tracker's money comes from Novig's own wallet records on GitHub (fills, fees, settlements) laid over the saved bets; with none yet the bets show as saved.
-            val withNovigMoney = kotlinx.coroutines.flow.combine(c.tracker.flow.filterNotNull(), c.walletLedger, c.walletFills) { bets, ledger, fills ->
-                if (ledger == null || fills == null) bets else com.tjshea.vigilant.data.tracker.WalletBetMoney.apply(bets, ledger.rows, fills.fills)
+            // The per-market money is worked out once per new ledger/fills file, off the main thread, not for every saved bet.
+            val novigMarkets = kotlinx.coroutines.flow.combine(c.walletLedger, c.walletFills) { l, f -> l to f }
+                .map { (l, f) -> if (l == null || f == null) emptyMap() else com.tjshea.vigilant.data.tracker.WalletBetMoney.markets(l.rows, f.fills) }
+                .flowOn(Dispatchers.Default)
+            val withNovigMoney = kotlinx.coroutines.flow.combine(c.tracker.flow.filterNotNull(), novigMarkets) { bets, markets ->
+                com.tjshea.vigilant.data.tracker.WalletBetMoney.apply(bets, markets)
             }
             followThrottled(withNovigMoney, TRACKER_MIRROR_MS) { bets -> _state.reindex { it.copy(bets = bets) } }
         }

@@ -42,9 +42,12 @@ object WalletBetMoney {
     }
 
     /** [bets] with Novig's money laid over them; unchanged where the ledger has nothing for the bet's market. */
-    fun apply(bets: List<TrackedBet>, ledger: List<LedgerRow>, fills: List<NovigFill>): List<TrackedBet> {
-        if (ledger.isEmpty() || fills.isEmpty()) return bets
-        val byMarket = markets(ledger, fills)
+    fun apply(bets: List<TrackedBet>, ledger: List<LedgerRow>, fills: List<NovigFill>): List<TrackedBet> =
+        if (ledger.isEmpty() || fills.isEmpty()) bets else apply(bets, markets(ledger, fills))
+
+    /** The same with the per-market money already worked out ([markets] reads every ledger row: do it once per new file, not once per saved bet). */
+    fun apply(bets: List<TrackedBet>, byMarket: Map<String, Market>): List<TrackedBet> {
+        if (byMarket.isEmpty()) return bets
         val perMarket = bets.filter { it.marketId.isNotBlank() && it.status != BetStatus.VOID && byMarket[it.marketId]?.paid?.let { p -> p > 0.0 } == true }.groupBy { it.marketId }
         val out = HashMap<String, TrackedBet>()
         for ((market, group) in perMarket) {

@@ -482,7 +482,7 @@ class CloudLink(private val c: AppContainer) {
                     is CloudClient.Poll.Fresh -> { etag = p.etag; c.walletLedger.value = p.value }
                     else -> {}
                 }
-                nap(if (c.onScreen) paced(TRADES_POLL_MS) else TRADES_POLL_BACKGROUND_MS)
+                nap(if (c.onScreen) paced(WALLET_FILES_POLL_MS) else WALLET_FILES_POLL_BACKGROUND_MS)
             }
         }
         // 6a2. the wallet's Novig fills (which market each ledger row belongs to), the same way.
@@ -494,7 +494,7 @@ class CloudLink(private val c: AppContainer) {
                     is CloudClient.Poll.Fresh -> { etag = p.etag; c.walletFills.value = p.value }
                     else -> {}
                 }
-                nap(if (c.onScreen) paced(TRADES_POLL_MS) else TRADES_POLL_BACKGROUND_MS)
+                nap(if (c.onScreen) paced(WALLET_FILES_POLL_MS) else WALLET_FILES_POLL_BACKGROUND_MS)
             }
         }
         // 6b. the engine's bids (TCL31), the same way: opening the app reads them at once ([syncNow]); an unchanged file is a free 304.
@@ -1203,6 +1203,9 @@ class CloudLink(private val c: AppContainer) {
         /** How often the engine's usage file is asked for (a 304 costs nothing against GitHub's limit). */
         const val USAGE_POLL_MS = 10_000L
         const val USAGE_POLL_BACKGROUND_MS = 60_000L
+        /** The wallet's ledger and fills change when a bet fills or settles, not every few seconds: a free 304 once a minute is plenty (and 5 minutes with the app away). */
+        const val WALLET_FILES_POLL_MS = 60_000L
+        const val WALLET_FILES_POLL_BACKGROUND_MS = 300_000L
         const val TRADES_POLL_MS = 6_000L
         const val TRADES_POLL_BACKGROUND_MS = 5 * 60_000L
         /** Candidate books read per round, and the rounds' pace: the stream's books are free; the rest go through the key's paced reads. */
