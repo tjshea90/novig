@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-gz2ti0",
- "head": "5664b77525785d459d2d950b12d6d3283da4b33e",
+ "head": "519ef05c0790a76674b28da4ea2f852133192c75",
  "since": 1794788519,
- "beat": 1794795672,
- "beatIso": "2026-11-16T02:21:12Z",
- "done": "chat: DG3 logged (phone keeps only open+recent bets)",
- "next": "DG3 step 1: verify phone-data archive complete"
+ "beat": 1794795852,
+ "beatIso": "2026-11-16T02:24:12Z",
+ "done": "pre-ship: DG3: phone drops settled bets older than 35 days once GitHub holds their day",
+ "next": "ship.sh gates and releases this"
 }
