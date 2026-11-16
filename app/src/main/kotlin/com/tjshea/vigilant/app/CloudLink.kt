@@ -129,6 +129,7 @@ class CloudLink(private val c: AppContainer) {
     private val offStatus = loadRaw("status.json") { com.tjshea.vigilant.data.cloud.CloudStatus.parse(it) }
     private val offTrades = loadRaw("trades.json") { com.tjshea.vigilant.data.cloud.TradeLedger.parse(it) }
     private val offDesk = loadRaw("desk.json") { com.tjshea.vigilant.data.cloud.DeskFile.parse(it) }
+    private val offLedger = loadRaw("wallet-ledger.json") { com.tjshea.vigilant.data.tracker.WalletLedgerFile.decode(it) }.also { o -> o?.let { c.walletLedger.value = it.first } }
     private val offUsage = loadRaw("usage.json") { com.tjshea.vigilant.data.cloud.CloudUsage.decode(it) }
 
     private val _ui = MutableStateFlow(Ui(
@@ -467,6 +468,18 @@ class CloudLink(private val c: AppContainer) {
                     is CloudClient.Poll.Fresh -> { etag = p.etag; _ui.update { it.copy(trades = p.value, tradesReadAtMs = System.currentTimeMillis()) } }
                     is CloudClient.Poll.NotModified -> _ui.update { it.copy(tradesReadAtMs = System.currentTimeMillis()) }
                     is CloudClient.Poll.Failed -> {}
+                }
+                nap(if (c.onScreen) paced(TRADES_POLL_MS) else TRADES_POLL_BACKGROUND_MS)
+            }
+        }
+        // 6a. the wallet's Novig ledger the engine keeps on GitHub (DG5): the Tracker's money figures come from it; an unchanged file is a free 304.
+        scope.launch(Dispatchers.IO) {
+            var etag: String? = null
+            while (isActive) {
+                awake()
+                if (hasToken()) when (val p = client.fetchWalletLedger(etag)) {
+                    is CloudClient.Poll.Fresh -> { etag = p.etag; c.walletLedger.value = p.value }
+                    else -> {}
                 }
                 nap(if (c.onScreen) paced(TRADES_POLL_MS) else TRADES_POLL_BACKGROUND_MS)
             }

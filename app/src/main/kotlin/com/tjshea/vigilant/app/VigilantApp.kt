@@ -298,6 +298,8 @@ class AppContainer(val app: Application) {
      * health checks read [mergedUsage], this phone's own ledger with the engine's laid over it ([com.tjshea.vigilant.data.keys.UsageMerge]).
      */
     val cloudUsage = kotlinx.coroutines.flow.MutableStateFlow<com.tjshea.vigilant.data.cloud.CloudUsage.File?>(null)
+    /** The wallet's Novig ledger as the engine keeps it on GitHub (DG5); the Tracker's money figures read this first. */
+    val walletLedger = kotlinx.coroutines.flow.MutableStateFlow<com.tjshea.vigilant.data.tracker.WalletLedgerFile.Book?>(null)
 
     /** The engine's ledger with this phone's own key strings (an id with no key here is dropped); empty before the first fetch. */
     fun cloudUsageBook(): com.tjshea.vigilant.data.keys.UsageBook =
@@ -445,7 +447,7 @@ class AppContainer(val app: Application) {
                 val gate = com.tjshea.vigilant.data.novig.BetPriority::yieldToBet
                 gate(); val cash = t.balance(address).also { wallet.record(it) }
                 gate(); val held = t.positions()
-                gate(); val rows = t.moneyMoves(address)
+                gate(); val rows = walletLedger.value?.rows?.filter { it.kind in com.tjshea.vigilant.data.novig.trading.NovigTradingClient.MONEY_MOVES }?.takeIf { it.isNotEmpty() } ?: t.moneyMoves(address)
                 com.tjshea.vigilant.data.tracker.WalletProfit.of(cash, held, rows, System.currentTimeMillis())
             }
         },
