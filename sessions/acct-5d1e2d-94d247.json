@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-2gqjsf",
- "head": "10a87fccf48843bfd71dad3861fa2e5acf693374",
+ "head": "338d256805260003c928184cd587eb598cbc3d5f",
  "since": 1794788519,
- "beat": 1794811661,
- "beatIso": "2026-11-16T06:47:41Z",
- "done": "logged LD3",
- "next": "build LD1-LD3 together"
+ "beat": 1794811836,
+ "beatIso": "2026-11-16T06:50:36Z",
+ "done": "LD1-3 built: LedgerDays (daily P/L from Novig wallet), pull reads wallet; LedgerDaysTest green",
+ "next": "ship.sh, release.yml, record-release, tell Tj"
 }
