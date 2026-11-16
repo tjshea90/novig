@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-99twme",
  "head": "4a51202fd89c60a8bd3dd4549115186652b5216f",
  "since": 1794788519,
- "beat": 1794804862,
- "beatIso": "2026-11-16T04:54:22Z",
+ "beat": 1794805131,
+ "beatIso": "2026-11-16T04:58:51Z",
  "done": "DG5: ledger reader keeps pages as read, paced, 429 no longer loses progress",
  "next": "read real ledger rows, build tracker on them"
 }
