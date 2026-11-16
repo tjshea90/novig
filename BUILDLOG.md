@@ -461,3 +461,4 @@ day that changes.
 | v1.0.120 | code 460 | 2026-11-16T08:12Z | Daily profit and loss counts lost bets Novig no longer holds
 | v1.0.121 | code 461 | 2026-11-16T08:13Z | The Tracker reads Novig's wallet only on pull to refresh or every 15 minutes
 | v1.0.122 | code 462 | 2026-11-16T08:22Z | The app opens faster: wallet history read in the background
+| v1.0.123 | code 463 | 2026-11-16T17:03Z | Settled bets older than 3 days lose their heavy snapshot once on GitHub, so the bets file stays small and the app starts faster
