@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-cnhej8",
- "head": "564dfebcf2e26cff7b12d0b72e97a796bed1dfa1",
+ "head": "b9e61e59eb9fe200fc56b050f5a3177accbfdb8b",
  "since": 1794788519,
- "beat": 1794864018,
- "beatIso": "2026-11-16T21:20:18Z",
- "done": "PF8: launch trace stages; v1.0.128 building",
- "next": "record v1.0.128; read tablet diag for 'run before this one'; then move container build off main thread if it names container-start"
+ "beat": 1794864093,
+ "beatIso": "2026-11-16T21:21:33Z",
+ "done": "pre-ship: Chat typing no longer redraws the whole thread on every key; finer launch trace",
+ "next": "ship.sh gates and releases this"
 }
