@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-cnhej8",
- "head": "8d0bbb0f57d2dc22e4f9de75f6248aaa061e1bfc",
+ "head": "bb8e3a59a741bedfd16e3aa46ac6fee799d11c20",
  "since": 1794788519,
- "beat": 1794860988,
- "beatIso": "2026-11-16T20:29:48Z",
- "done": "PF6a baseline profile for tablet cold start",
- "next": "ship.sh, release, read next diag; then PF6b Engine/EV tab freezes"
+ "beat": 1794861037,
+ "beatIso": "2026-11-16T20:30:37Z",
+ "done": "pre-ship: Baseline profile: precompiles the app's code (tablet cold start 10 s, slow frames)",
+ "next": "ship.sh gates and releases this"
 }
