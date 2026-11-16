@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-qqap07",
- "head": "1b1b637c1884d672d378f019e21b205237b8053f",
+ "head": "a30f9648da3285fde93cf73ee44ced62e591fbd6",
  "since": 1794788519,
- "beat": 1794849879,
- "beatIso": "2026-11-16T17:24:39Z",
- "done": "PF1: PropLine free tier: Pro-only workflow schedules off; code already degrades by plan",
- "next": "PF2: audit typing/scroll lag on phone (background work)"
+ "beat": 1794850061,
+ "beatIso": "2026-11-16T17:27:41Z",
+ "done": "PF1 done (workflow crons off); PF2 audit: no cause found, need frames",
+ "next": "when Tj sends a diagnostics file, read PERFORMANCE frames; fix hotspot"
 }
