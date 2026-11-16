@@ -400,7 +400,8 @@ object Advisor {
         val quiet = frames[com.tjshea.vigilant.data.diag.FrameStats.QUIET]?.takeIf { it.frames >= MIN_FRAMES }
         val worst = frames.filterKeys { it != com.tjshea.vigilant.data.diag.FrameStats.QUIET }.entries
             .filter { (_, b) -> b.frames >= MIN_FRAMES && b.slowShare >= SLOW_FRAMES_SHARE && (quiet == null || b.slowShare >= quiet.slowShare * 2) }
-            .maxByOrNull { it.value.slowShare } ?: return null
+            .maxByOrNull { it.value.slowShare }
+            ?: return quietFinding(quiet)
         val (what, b) = worst
         val pct = { s: Double -> "${Math.round(s * 1000) / 10.0}%" }
         return Finding(
@@ -412,6 +413,26 @@ object Advisor {
             weight = b.slowShare * 20,
         )
     }
+
+    /**
+     * The screen is slow with NOTHING of ours running (Tj, 2026-11-16: "it lags when I type and when I scroll, as though something heavy is running in the background"; the
+     * report showed 27% slow frames and 9 frozen with no scan): the cost is then the screen's own work or background churn (garbage collection, a big store rewritten, a
+     * derived list recomputed on the main thread), so the finding says so instead of staying silent because no work was "running".
+     */
+    internal fun quietFinding(quiet: com.tjshea.vigilant.data.diag.FrameStats.Bucket?): Finding? {
+        if (quiet == null || quiet.slowShare < QUIET_SLOW_SHARE) return null
+        val pct = { s: Double -> "${Math.round(s * 1000) / 10.0}%" }
+        return Finding(
+            "perf:frames:quiet", "OPTIMIZE",
+            "The screen stutters with nothing running: ${pct(quiet.slowShare)} of its frames are slow, ${quiet.frozen} froze",
+            "${quiet.frames} frames, ${quiet.slow} slow, p50 ${quiet.durations.p50.toLong()} ms, p95 ${quiet.durations.p95.toLong()} ms, worst ${quiet.durations.max.toLong()} ms (Performance block)",
+            "the screen in use (the Tracker's derived lists over every bet, the Feed's rows), the state flows MainViewModel mirrors, and the heap/GC load (Memory block)",
+            "Load compose-performance: find what recomposes or recomputes on the main thread per state change (a list built from thousands of bets, a flow collected without distinctUntilChanged) and what allocates in the background; move it off the main thread. Never drop data to do it.",
+            weight = quiet.slowShare * 30,
+        )
+    }
+
+    private const val QUIET_SLOW_SHARE = 0.15
 
     private val FRAME_KEYS = mapOf(
         com.tjshea.vigilant.data.diag.FrameStats.SCAN to "scan", com.tjshea.vigilant.data.diag.FrameStats.CHECK to "check",
