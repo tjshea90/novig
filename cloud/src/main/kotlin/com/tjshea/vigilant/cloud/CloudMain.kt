@@ -336,22 +336,27 @@ fun main(args: Array<String>) = runBlocking {
                 if (novigKeyed?.addressRefused(System.currentTimeMillis()) != true) {
                     runCatching {
                         val known = HashSet(held.map { it.transactionId })
-                        val fresh = ArrayList<com.tjshea.vigilant.data.novig.trading.LedgerRow>()
+                        var added = 0
+                        fun publish(complete: Boolean) {
+                            val now = System.currentTimeMillis()
+                            if (complete && fullAt == 0L) fullAt = now
+                            publisher.stageExtra("wallet-ledger.json", ledgerFile.encode(com.tjshea.vigilant.data.tracker.WalletLedgerFile.Book(held, now, fullAt)))
+                        }
+                        var lastPublish = 0
                         for (kind in com.tjshea.vigilant.data.novig.trading.NovigTradingClient.BETTING + com.tjshea.vigilant.data.novig.trading.NovigTradingClient.MONEY_MOVES) {
-                            fresh += tc.ledgerNewerThan(tradeKeyId, kind, { it in known })
+                            // Pages are kept as they arrive, so a 429 part-way through a big first read costs nothing already read.
+                            tc.ledgerNewerThan(tradeKeyId, kind, { it in known }, pageDelayMs = 700L, onPage = { rows ->
+                                held = ledgerFile.merge(held, rows); rows.forEach { known += it.transactionId }; added += rows.size
+                                if (added - lastPublish >= 2_000) { lastPublish = added; publish(false) }
+                            })
                             delay(300L)
                         }
-                        val now = System.currentTimeMillis()
-                        if (fresh.isNotEmpty() || fullAt == 0L) {
-                            held = ledgerFile.merge(held, fresh)
-                            if (fullAt == 0L) fullAt = now
-                            publisher.stageExtra("wallet-ledger.json", ledgerFile.encode(com.tjshea.vigilant.data.tracker.WalletLedgerFile.Book(held, now, fullAt)))
-                            log("wallet ledger: ${fresh.size} new rows, ${held.size} held")
-                        }
+                        if (added > 0 || fullAt == 0L) { publish(true); log("wallet ledger: $added new rows, ${held.size} held") }
                     }.onFailure { e ->
                         if (e is kotlinx.coroutines.CancellationException) throw e
-                        wait = 15 * 60_000L
-                        log("wallet ledger read failed (asked again in 15 min): ${e.message?.take(120)}")
+                        wait = 3 * 60_000L
+                        if (held.isNotEmpty()) runCatching { publisher.stageExtra("wallet-ledger.json", ledgerFile.encode(com.tjshea.vigilant.data.tracker.WalletLedgerFile.Book(held, System.currentTimeMillis(), fullAt))) }
+                        log("wallet ledger read failed (asked again in 3 min): ${e.message?.take(120)}")
                     }
                 }
                 delay(wait)
