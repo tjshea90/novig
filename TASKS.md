@@ -6678,3 +6678,5 @@ DG5 (Tj chat 03:16 UTC 2026-11-16) "rebuild the entire tracker system to use nov
 - [x] LD6 (wallet files polled every 15 min, pull reads at once) (Tj chat 07:45 UTC) Tracker keeps updating on the phone and slows the app: find the recompute loop (withNovigMoney combine / followThrottled TRACKER_MIRROR_MS).
 
 - [x] DG5 (slimArchived in tree, BetTrackerDropTest; shipping) (Tj chat 15:22 UTC 2026-11-16, diagnostics report) prune/append-only bets.json (8 MB rewritten whole); cold start 10.4 s still; CNO CLV -0.8%; results 3.8 SD below edges: check fair optimism and grading.
+
+- [ ] PF1 (Tj chat 17:16-17:18 UTC 2026-11-16) "today my propline streaming api will cancel and turn to the free tier. optimize the app to use the free tier and stop calling it for anything more than what the free tier offers" + "build it now"
