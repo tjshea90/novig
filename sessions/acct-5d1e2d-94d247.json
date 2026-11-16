@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-mnnrec",
- "head": "fbe2e67126dbefaa3c1b040acb8770ba05bd11aa",
+ "head": "dd5ac62fb2f873b22689ec194b682cc909dd6e32",
  "since": 1794788519,
- "beat": 1794852474,
- "beatIso": "2026-11-16T18:07:54Z",
+ "beat": 1794852734,
+ "beatIso": "2026-11-16T18:12:14Z",
  "done": "PF3a: Advisor finding when the screen is slow with nothing running (FrameMeterTest green)",
  "next": "PF3b: find main-thread/background churn: Tracker derived chain, flows; ship"
 }
