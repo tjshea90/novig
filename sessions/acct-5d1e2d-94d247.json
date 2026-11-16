@@ -5,11 +5,11 @@
  "nonce": "94d247",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-qqap07",
+ "branch": "claude/optimistic-curie-mnnrec",
  "head": "08fff40f23f99e0adddb6f59f2d29a028bdc8a73",
  "since": 1794788519,
- "beat": 1794851370,
- "beatIso": "2026-11-16T17:49:30Z",
+ "beat": 1794852106,
+ "beatIso": "2026-11-16T18:01:46Z",
  "done": "PF2: reverted report reorder (tests pass)",
  "next": "read Tj's next diagnostics file frames"
 }
