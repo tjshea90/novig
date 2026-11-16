@@ -1,13 +1,13 @@
-# CHECKPOINT 4513 — read me first, then TASKS.md
+# CHECKPOINT 4514 — read me first, then TASKS.md
 
-**Written:** 2026-11-16T06:44:15Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-2gqjsf` · **builds on:** `24d6ab3a7` (this checkpoint is the commit after it)
+**Written:** 2026-11-16T06:50:36Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-2gqjsf` · **builds on:** `4dd60c5eb` (this checkpoint is the commit after it)
 
 ## Just done
-logged LD3
+LD1-3 built: LedgerDays (daily P/L from Novig wallet), pull reads wallet; LedgerDaysTest green
 
 ## Do this next
-build LD1-LD3 together
+ship.sh, release.yml, record-release, tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ build LD1-LD3 together
 
 ## Last ten checkpoints
 ```
+  c2ea74c93 ckpt 4513: logged LD3
   24d6ab3a7 ckpt 4512: logged LD2 (daily P/L from Novig ledger)
   071a7b7a4 ckpt 4511: answered Tj on ledger vs tracker gap; logged LD1
   15a6cafe8 ckpt 4510: v1.0.118 shipped (DG6)
@@ -26,5 +27,7 @@ build LD1-LD3 together
   2ca5cfef7 ckpt 4506: DG6: day summaries cached permanently, bets dropped per whole day, phone do
   be575a34d ckpt 4505: pre-release: Lighter: the Tracker's Novig-money overlay is worked out once 
   4513b66d3 ckpt 4504: lightweight: money overlay cached per ledger file, wallet files polled once
-  dc0c7734a ckpt 4503: DG5 shipped v1.0.116; wallet ledger (15,558 rows) and fills (10,579) comple
 ```
+
+(4 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
