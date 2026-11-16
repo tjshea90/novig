@@ -1,7 +1,7 @@
-# CHECKPOINT 4521 — read me first, then TASKS.md
+# CHECKPOINT 4522 — read me first, then TASKS.md
 
-**Written:** 2026-11-16T07:56:51Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-gq85mu` · **builds on:** `d2174abee` (this checkpoint is the commit after it)
+**Written:** 2026-11-16T07:59:56Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-gq85mu` · **builds on:** `7d8d07e21` (this checkpoint is the commit after it)
 
 ## Just done
 pre-ship: Daily profit and loss counts lost bets Novig no longer holds, so the last days no longer show only the winners
@@ -13,10 +13,11 @@ ship.sh gates and releases this
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/src/test/kotlin/com/tjshea/vigilant/app/RecompositionCostTest.kt
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  7d8d07e21 ckpt 4521: pre-ship: Daily profit and loss counts lost bets Novig no longer holds, so 
   d2174abee ckpt 4520: pre-ship: Daily profit and loss counts lost bets Novig no longer holds, so 
   7a7ebd063 ckpt 4519: answered Tj numbers vs wallet; logged LD4
   064c4f76b ckpt 4518: v1.0.119 release.yml triggered; answered chat; logged BP1
@@ -26,5 +27,4 @@ ship.sh gates and releases this
   338d25680 ckpt 4514: LD1-3 built: LedgerDays (daily P/L from Novig wallet), pull reads wallet; L
   c2ea74c93 ckpt 4513: logged LD3
   24d6ab3a7 ckpt 4512: logged LD2 (daily P/L from Novig ledger)
-  071a7b7a4 ckpt 4511: answered Tj on ledger vs tracker gap; logged LD1
 ```
