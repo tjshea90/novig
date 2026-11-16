@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-qqap07",
- "head": "f5e81c86910dfbcf7ab09150782db142e5f21482",
+ "head": "1b1b637c1884d672d378f019e21b205237b8053f",
  "since": 1794788519,
- "beat": 1794849680,
- "beatIso": "2026-11-16T17:21:20Z",
+ "beat": 1794849879,
+ "beatIso": "2026-11-16T17:24:39Z",
  "done": "PF1: PropLine free tier: Pro-only workflow schedules off; code already degrades by plan",
  "next": "PF2: audit typing/scroll lag on phone (background work)"
 }
