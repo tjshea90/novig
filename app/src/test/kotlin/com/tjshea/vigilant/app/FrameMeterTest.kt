@@ -51,6 +51,17 @@ class FrameMeterTest {
     }
 
     @Test
+    fun `the finding names the tab that stutters`() {
+        val fs = FrameStats()
+        fs.screen = "TRACKER"
+        repeat(400) { i -> fs.add(FrameStats.QUIET, if (i < 200) 40.0 else 6.0, 8.3) }
+        fs.screen = "ENGINE"
+        repeat(400) { fs.add(FrameStats.QUIET, 6.0, 8.3) }
+        val f = Advisor.frameFinding(fs.snapshot())!!
+        assertTrue(f.evidence, f.evidence.contains("slowest tabs: TRACKER 50.0% slow of 400"))
+    }
+
+    @Test
     fun `the meter runs while the screen is in front, off the main thread, and reaches Diagnostics`() {
         val main = File("src/main/kotlin/com/tjshea/vigilant/app/MainActivity.kt").readText()
         assertTrue(main.substringAfter("override fun onResume()").substringBefore("override fun onPause()").contains("frameMeter.start()"))

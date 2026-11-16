@@ -758,7 +758,8 @@ private fun VigilantRoot(
     var settingsPage by rememberSaveable { mutableStateOf<String?>(null) }
     // Until Tj picks a tab: CNO only opens on CNO's list, otherwise on the +EV feed.
     val tab = allTabs.firstOrNull { it.name == tabName } ?: Tab.ENGINE
-    androidx.compose.runtime.SideEffect { (application as VigilantApp).container.frames.screen = tab.name }
+    val frameStats = (androidx.compose.ui.platform.LocalContext.current.applicationContext as VigilantApp).container.frames
+    androidx.compose.runtime.SideEffect { frameStats.screen = tab.name }
     // A tapped chat notification opens the Claude tab (its chat section is the one it opens on).
     val openChatAt by vm.openChat.collectAsState()
     LaunchedEffect(openChatAt) { if (openChatAt > 0L) { tabName = Tab.CLAUDE.name; vm.openChatHandled() } }
