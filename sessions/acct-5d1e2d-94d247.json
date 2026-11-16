@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-99twme",
- "head": "bbb9a50cf5b99dab2769f555af9f5efebcce5e0e",
+ "head": "2cedc9dc15b123634ecb7e893bf1c8ad890a2553",
  "since": 1794788519,
- "beat": 1794802315,
- "beatIso": "2026-11-16T04:11:55Z",
- "done": "DG5 logged + answered Tj; found ledger readers NovigTradingClient.bettingRows/moneyMoves/fills/orders already exist",
- "next": "DG5a: find whether engine's read key can read /v3/account/subaccounts/<id>/transactions (phone reads it with mgmt key via WalletMoney); if not, phone uploads ledger pages to phone-data; then write tracker-ledger file on GitHub, then switch Tracker to read it"
+ "beat": 1794802381,
+ "beatIso": "2026-11-16T04:13:01Z",
+ "done": "chat: answered 'is it fine/done' with DG5 status",
+ "next": "DG5a: engine ledger pull to GitHub file"
 }
