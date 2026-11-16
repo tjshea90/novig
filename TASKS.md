@@ -6654,3 +6654,4 @@ DG1 (Tj app chat 01:23 UTC 2026-11-16, Diagnostics "WHAT TO DO" pasted; answered
 - [ ] DG1c api.github.com: 9/9 404 on contents/bids.json.gz (file absent while engine posts bids itself: stop reading it), 409s on writes (sha conflicts: retry with fresh sha), usage.json slow: read via ETag/less often.
 - [ ] DG1d ParlayAPI key ...10d2 refused, plan free, 403s on /injuries: Tj's plan lapsed or key changed (Tj check); engine/phone should stop calling injuries on a free key.
 - [ ] DG1e (Tj only) Android notifications off and battery optimisation on for Vigilant.
+- [ ] DG2 (Tj chat 01:51 UTC 2026-11-16) "I no longer have oddspapi so get rid of it. fix everything else you mentioned. I should still have a business plan parlayapi key. use that one. check the tls/DNS errors" (OddsPapi v5+Free removal; DG1a-c; ParlayAPI key choice; TLS/DNS)
