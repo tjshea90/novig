@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-99twme",
  "head": "2ca5cfef747060665bdc46e4ec52cdf8f8edbd54",
  "since": 1794788519,
- "beat": 1794807828,
- "beatIso": "2026-11-16T05:43:48Z",
+ "beat": 1794807834,
+ "beatIso": "2026-11-16T05:43:54Z",
  "done": "DG6: day summaries cached permanently, bets dropped per whole day, phone downloads only last 45 days of wallet rows",
  "next": "ship 1.0.117"
 }
