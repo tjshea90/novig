@@ -553,7 +553,7 @@ class AppContainer(val app: Application) {
      */
     val op4Client = com.tjshea.vigilant.data.reference.OddsPapi4Client(http, KeyPool(QuotaPolicy.ODDSPAPI_FREE, { keyStore.current(ApiProvider.ODDSPAPI_FREE) }, usage), { keyStore.current(ApiProvider.ODDSPAPI_FREE) })
     val op4Budget = com.tjshea.vigilant.data.reference.Op4Budget(op4Client)
-    val op4Store = com.tjshea.vigilant.data.reference.Op4Store(File(app.filesDir, "oddspapi_free_cache.json"))
+    val op4Store = com.tjshea.vigilant.data.reference.Op4Store(null).also { runCatching { File(app.filesDir, "oddspapi_free_cache.json").delete() } } // Tj 2026-11-16: no OddsPapi any more; its 13 MB cache is deleted, never loaded
     val op4Closes = com.tjshea.vigilant.data.tracker.Op4Closes(op4Client, op4Budget, op4Store)
 
     /** OddsPapi Free's fair-odds feed (Tj, 2026-10-11): whole games, every book, one request each, within the daily figure Tj sets ([ScanSettings.gates]); used only while [op4FairActive]. */
