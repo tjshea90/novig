@@ -94,8 +94,16 @@ object SlateProfit {
     private fun counts(b: TrackedBet) = b.status != BetStatus.VOID
 
     /** Every game day with a bet in it, oldest first. */
-    fun book(all: List<TrackedBet>, now: Long): Book {
+    fun book(all: List<TrackedBet>, now: Long, archived: List<Day> = SlateArchive.days): Book {
         val bets = all.filter(::counts)
+        val live = bookOfBets(bets, now)
+        // days whose bets the phone no longer keeps (DG6) join the book; a date with a bet still here is the bets' alone
+        val here = live.days.mapTo(HashSet()) { it.date }
+        val extra = archived.filter { it.date !in here }
+        return if (extra.isEmpty()) live else Book((live.days + extra).sortedBy { it.date })
+    }
+
+    private fun bookOfBets(bets: List<TrackedBet>, now: Long): Book {
         if (bets.isEmpty()) return Book(emptyList())
         return Book(
             bets.groupBy(::slateOf).toSortedMap().map { (date, list) ->

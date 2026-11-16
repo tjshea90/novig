@@ -228,7 +228,7 @@ class AppContainer(val app: Application) {
         File(app.filesDir, "settings.json"), ScanSettings.serializer(),
         { KillSwitch.reconcile(ScanSettings(), killMarker) }, json,
     )
-    val tracker = BetTracker(File(app.filesDir, "bets.json"), ownBook = AppBook.name)
+    val tracker = BetTracker(File(app.filesDir, "bets.json"), ownBook = AppBook.name).also { com.tjshea.vigilant.data.tracker.SlateArchive.attach(File(app.filesDir, "day_summaries.json")) }
 
     /** When the last Tracker "Check odds now" began: its +EV / −EV counter counts the bets re-read since ([CheckOddsStats]). */
     val lastCheck = JsonFileStore(File(app.filesDir, "last_check.json"), com.tjshea.vigilant.data.tracker.LastCheck.serializer(), { com.tjshea.vigilant.data.tracker.LastCheck() }, json)

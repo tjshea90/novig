@@ -334,13 +334,21 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
      * DG3 (Tj 2026-11-16: "I don't need the phone to save my bet history ... this should be done on github"): drops settled bets that started over [keepDays] days ago and whose day's file is
      * already on GitHub ([onGitHub] says so for that bet's day). Open bets and recent ones stay. Returns how many went.
      */
-    suspend fun dropArchived(now: Long, keepDays: Int, onGitHub: (day: String) -> Boolean): Int {
+    suspend fun dropArchived(now: Long, keepDays: Int, onGitHub: (day: String) -> Boolean, withMoney: (List<TrackedBet>) -> List<TrackedBet>? = { it }): Int {
         val cutoff = now - keepDays * 86_400_000L
         var dropped = 0
         store.update { list ->
-            val keep = list.filterNot { it.status != BetStatus.PENDING && it.startsTs in 1 until cutoff && it.createdAtMs < cutoff && onGitHub(BetHistory.day(it.createdAtMs)) }
+            fun droppable(it: TrackedBet) = it.status != BetStatus.PENDING && it.startsTs in 1 until cutoff && it.createdAtMs < cutoff && onGitHub(BetHistory.day(it.createdAtMs))
+            // DG6: a game day goes only when ALL its bets go; its finished figures (from Novig's money, [withMoney]; null = not known yet, nothing is dropped) are kept as the day's summary first.
+            val byDate = list.groupBy(SlateProfit::slateOf)
+            val goingDates = byDate.filter { (_, bets) -> bets.all(::droppable) }.keys
+            val going = list.filter { SlateProfit.slateOf(it) in goingDates }
+            if (going.isEmpty()) return@update list
+            val priced = withMoney(going) ?: return@update list
+            SlateArchive.record(SlateProfit.book(priced, now, emptyList()).days)
+            val keep = list.filterNot { SlateProfit.slateOf(it) in goingDates }
             dropped = list.size - keep.size
-            if (dropped == 0) list else keep
+            keep
         }
         return dropped
     }
