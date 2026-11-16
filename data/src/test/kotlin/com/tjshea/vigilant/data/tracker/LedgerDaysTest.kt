@@ -38,4 +38,12 @@ class LedgerDaysTest {
         val ledger = listOf(LedgerRow("a", "FILL", -0.5, "1", t0))
         assertEquals(-0.5, LedgerDays.build(emptyList(), ledger, fills, t0 + 4 * day).single().profit, 1e-9)
     }
+
+    @Test fun aRecentUntrackedMarketNovigNoLongerHoldsIsALossButAHeldOneIsNot() {
+        val fills = listOf(fill("1", "lost", t0), fill("2", "held", t0))
+        val ledger = listOf(LedgerRow("a", "FILL", -0.5, "1", t0), LedgerRow("b", "FILL", -0.4, "2", t0))
+        val d = LedgerDays.build(emptyList(), ledger, fills, t0 + day, open = setOf("held")).single()
+        assertEquals(-0.5, d.profit, 1e-9)
+        assertEquals(0, LedgerDays.build(emptyList(), ledger, fills, t0 + day, open = null).size)
+    }
 }
