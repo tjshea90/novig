@@ -457,3 +457,4 @@ day that changes.
 | v1.0.116 | code 456 | 2026-11-16T05:15Z | DG5: Tracker's money comes from Novig's own wallet records (fills, fees, settlements) kept on GitHub
 | v1.0.117 | code 457 | 2026-11-16T05:54Z | Lighter and permanent: old days kept as daily numbers from Novig's money, the phone downloads only the last 45 days of wallet rows, money overlay cached
 | v1.0.118 | code 458 | 2026-11-16T06:05Z | The phone downloads Novig's wallet history once and then only the last 3 days, keeping the rest cached
+| v1.0.119 | code 459 | 2026-11-16T07:09Z | Daily profit/loss, charts and all-time come from Novig's own wallet by game day; pull to refresh re-reads the wallet
