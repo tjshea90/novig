@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-99twme",
- "head": "2ca5cfef747060665bdc46e4ec52cdf8f8edbd54",
+ "head": "c749536c58779444b78b284ca3cd868cc8e5759a",
  "since": 1794788519,
- "beat": 1794808034,
- "beatIso": "2026-11-16T05:47:14Z",
- "done": "DG6: day summaries cached permanently, bets dropped per whole day, phone downloads only last 45 days of wallet rows",
- "next": "ship 1.0.117"
+ "beat": 1794808057,
+ "beatIso": "2026-11-16T05:47:37Z",
+ "done": "pre-release: Lighter and permanent: old days kept as daily numbers from Novig's money, the phone downloads only the last 45 days of wallet rows, money overlay cached (versionCode 457, v1.0.117)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.117), then run: bash tools/record-release.sh v1.0.117 457 \"Lighter and permanent: old days kept as daily numbers from Novig's money, the phone downloads only the last 45 days of wallet rows, money overlay cached\""
 }
