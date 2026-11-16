@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-cnhej8",
  "head": "6f4576aed552478443218df3dee45ac400f314d5",
  "since": 1794788519,
- "beat": 1794862349,
- "beatIso": "2026-11-16T20:52:29Z",
+ "beat": 1794862355,
+ "beatIso": "2026-11-16T20:52:35Z",
  "done": "pre-ship: Live tab timers slow down on low-RAM tablets",
  "next": "ship.sh gates and releases this"
 }
