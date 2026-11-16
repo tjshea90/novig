@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-gz2ti0",
- "head": "c50e3c71ef6a93d14ef4e781ea7644345810ad90",
+ "head": "5664b77525785d459d2d950b12d6d3283da4b33e",
  "since": 1794788519,
- "beat": 1794795000,
- "beatIso": "2026-11-16T02:10:00Z",
- "done": "chat: v1.0.113 shipped (DG1a,c; OddsPapi off+cache gone); told Tj live/bids blocked by Pinnacle-closed + picked-off guard",
- "next": "DG1b cold start; full OddsPapi code removal; await Tj on loosening"
+ "beat": 1794795672,
+ "beatIso": "2026-11-16T02:21:12Z",
+ "done": "chat: DG3 logged (phone keeps only open+recent bets)",
+ "next": "DG3 step 1: verify phone-data archive complete"
 }
