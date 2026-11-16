@@ -455,3 +455,4 @@ day that changes.
 | v1.0.114 | code 454 | 2026-11-16T02:34Z | DG3: phone drops settled bets older than 35 days once GitHub holds their day
 | v1.0.115 | code 455 | 2026-11-16T04:33Z | DG5: engine keeps the wallet's whole Novig ledger on GitHub; the phone's money figures read it
 | v1.0.116 | code 456 | 2026-11-16T05:15Z | DG5: Tracker's money comes from Novig's own wallet records (fills, fees, settlements) kept on GitHub
+| v1.0.117 | code 457 | 2026-11-16T05:54Z | Lighter and permanent: old days kept as daily numbers from Novig's money, the phone downloads only the last 45 days of wallet rows, money overlay cached
