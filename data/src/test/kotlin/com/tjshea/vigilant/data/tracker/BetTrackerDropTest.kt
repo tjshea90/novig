@@ -43,4 +43,18 @@ class BetTrackerDropTest {
         assertEquals(1, SlateArchive.days.size)
         SlateArchive.reset()
     }
+
+    @Test fun `DG5 slimming drops the heavy snapshot only of old settled bets whose day is on GitHub`() = runBlocking {
+        val t = BetTracker(File(java.nio.file.Files.createTempDirectory("bt3").toFile(), "b.json"))
+        val now = 100L * 86_400_000L
+        val old = now - 10 * 86_400_000L
+        val snap = AtBet(atMs = old, how = AtBet.HOW_BID, scanner = "x")
+        t.addAll(listOf(bet("a", BetStatus.WON, old).copy(atBet = snap), bet("b", BetStatus.PENDING, old).copy(atBet = snap), bet("c", BetStatus.WON, now - 3_600_000L).copy(atBet = snap)))
+        assertEquals(0, t.slimArchived(now, 3) { false })
+        assertEquals(1, t.slimArchived(now, 3) { true })
+        val by = t.all().associateBy { it.id.take(1) }
+        assertEquals(null, by["a"]!!.atBet)
+        assertEquals(snap, by["b"]!!.atBet)
+        assertEquals(snap, by["c"]!!.atBet)
+    }
 }
