@@ -466,3 +466,4 @@ day that changes.
 | v1.0.125 | code 465 | 2026-11-16T20:39Z | Baseline profile: precompiles the app's code (tablet cold start 10 s, slow frames)
 | v1.0.126 | code 466 | 2026-11-16T20:52Z | Engine tab redraws every 5 s instead of every second (12 s on low-RAM tablets): far less CPU
 | v1.0.127 | code 467 | 2026-11-16T21:02Z | Live tab timers slow down on low-RAM tablets
+| v1.0.128 | code 468 | 2026-11-16T21:20Z | Launch trace: the next report says how far a run got before Android ended it
