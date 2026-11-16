@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-99twme",
- "head": "85f5c7a97a8fc8aa66d6fcd9436bfeba61d26066",
+ "head": "0aa1083104d90cd139a88920a467f7eb8cc222e1",
  "since": 1794788519,
- "beat": 1794805534,
- "beatIso": "2026-11-16T05:05:34Z",
- "done": "DG5: Tracker money from Novig ledger+fills (WalletBetMoney), engine publishes wallet-fills",
- "next": "ship 1.0.116"
+ "beat": 1794805562,
+ "beatIso": "2026-11-16T05:06:02Z",
+ "done": "fix source pin",
+ "next": "ship"
 }
