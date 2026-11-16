@@ -106,7 +106,9 @@ class MainActivity : ComponentActivity() {
         // Auto-bet and background auto-scan are switched off by the app only after a phone restart, saved before anything reads the settings
         // (Tj, 2026-10-02 16:05Z: "I want the app never to turn off auto bet unless I turn it off"): [LaunchReset], [LaunchGate].
         val app = application as VigilantApp
+        LaunchTrace.stage("container-start")
         val switchedOff = LaunchReset.onOpen(app, Boot.now(this))
+        LaunchTrace.stage("container-built")
         app.container.eventLog.info("APP", "screen opened" + (switchedOff?.let { " (first since the phone restarted): $it" } ?: " (auto-bet and auto-scan kept as they were)"))
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
