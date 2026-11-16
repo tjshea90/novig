@@ -476,21 +476,23 @@ class CloudLink(private val c: AppContainer) {
         // 6a. the wallet's Novig ledger the engine keeps on GitHub (DG5): the Tracker's money figures come from it; an unchanged file is a free 304.
         scope.launch(Dispatchers.IO) {
             var etag: String? = null
+            var lastOk = offLedger?.second ?: 0L
             while (isActive) {
                 awake()
                 if (hasToken()) {
                     // The whole 45 days once (or when the phone was away longer than the 3-day delta covers); after that only the last 3 days, merged into what is kept (DG6).
                     val have = c.walletLedger.value
-                    val needFull = have == null || (have.rows.maxOfOrNull { it.ts } ?: 0L) < System.currentTimeMillis() - 2 * 86_400_000L
+                    val needFull = have == null || System.currentTimeMillis() - lastOk > 2 * 86_400_000L
                     val f = if (needFull) "wallet-ledger-recent.json" else "wallet-ledger-delta.json"
                     if (needFull) etag = null
                     when (val p = client.fetchWalletLedger(etag, f)) {
                         is CloudClient.Poll.Fresh -> {
                             etag = p.etag
                             val merged = if (needFull || have == null) p.value else p.value.copy(rows = com.tjshea.vigilant.data.tracker.WalletLedgerFile.merge(have.rows, p.value.rows))
-                            c.walletLedger.value = merged
+                            c.walletLedger.value = merged; lastOk = System.currentTimeMillis()
                             if (!needFull) saveRaw("wallet-ledger.json", com.tjshea.vigilant.data.tracker.WalletLedgerFile.encode(merged))
                         }
+                        is CloudClient.Poll.NotModified -> lastOk = System.currentTimeMillis()
                         else -> {}
                     }
                 }
@@ -500,20 +502,22 @@ class CloudLink(private val c: AppContainer) {
         // 6a2. the wallet's Novig fills (which market each ledger row belongs to), the same way.
         scope.launch(Dispatchers.IO) {
             var etag: String? = null
+            var lastOk = offFills?.second ?: 0L
             while (isActive) {
                 awake()
                 if (hasToken()) {
                     val have = c.walletFills.value
-                    val needFull = have == null || (have.fills.maxOfOrNull { it.ts } ?: 0L) < System.currentTimeMillis() - 2 * 86_400_000L
+                    val needFull = have == null || System.currentTimeMillis() - lastOk > 2 * 86_400_000L
                     val f = if (needFull) "wallet-fills-recent.json" else "wallet-fills-delta.json"
                     if (needFull) etag = null
                     when (val p = client.fetchWalletFills(etag, f)) {
                         is CloudClient.Poll.Fresh -> {
                             etag = p.etag
                             val merged = if (needFull || have == null) p.value else p.value.copy(fills = com.tjshea.vigilant.data.tracker.WalletLedgerFile.mergeFills(have.fills, p.value.fills))
-                            c.walletFills.value = merged
+                            c.walletFills.value = merged; lastOk = System.currentTimeMillis()
                             if (!needFull) saveRaw("wallet-fills.json", com.tjshea.vigilant.data.tracker.WalletLedgerFile.encodeFills(merged))
                         }
+                        is CloudClient.Poll.NotModified -> lastOk = System.currentTimeMillis()
                         else -> {}
                     }
                 }
