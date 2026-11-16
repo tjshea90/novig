@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-99twme",
- "head": "fbd5c66ed95c7c6cd8206c6c461bdb9844b57d07",
+ "head": "374def6d9317672761f8dfd34ba9d31255ec49f9",
  "since": 1794788519,
- "beat": 1794806123,
- "beatIso": "2026-11-16T05:15:23Z",
+ "beat": 1794806343,
+ "beatIso": "2026-11-16T05:19:03Z",
  "done": "pre-release: DG5: Tracker's money comes from Novig's own wallet records (fills, fees, settlements) kept on GitHub (versionCode 456, v1.0.116)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.116), then run: bash tools/record-release.sh v1.0.116 456 \"DG5: Tracker's money comes from Novig's own wallet records (fills, fees, settlements) kept on GitHub\""
 }
