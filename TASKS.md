@@ -6680,3 +6680,4 @@ DG5 (Tj chat 03:16 UTC 2026-11-16) "rebuild the entire tracker system to use nov
 - [x] DG5 (slimArchived in tree, BetTrackerDropTest; shipping) (Tj chat 15:22 UTC 2026-11-16, diagnostics report) prune/append-only bets.json (8 MB rewritten whole); cold start 10.4 s still; CNO CLV -0.8%; results 3.8 SD below edges: check fair optimism and grading.
 
 - [ ] PF1 (Tj chat 17:16-17:18 UTC 2026-11-16) "today my propline streaming api will cancel and turn to the free tier. optimize the app to use the free tier and stop calling it for anything more than what the free tier offers" + "build it now"
+- [ ] PF2 (Tj chat 17:19 UTC 2026-11-16) "also keep auditing why the app is laggy. it lags when I type and when I scroll, as though something heavy is running in the background"
