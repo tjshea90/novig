@@ -300,6 +300,7 @@ class AppContainer(val app: Application) {
     val cloudUsage = kotlinx.coroutines.flow.MutableStateFlow<com.tjshea.vigilant.data.cloud.CloudUsage.File?>(null)
     /** The wallet's Novig ledger as the engine keeps it on GitHub (DG5); the Tracker's money figures read this first. */
     val walletLedger = kotlinx.coroutines.flow.MutableStateFlow<com.tjshea.vigilant.data.tracker.WalletLedgerFile.Book?>(null)
+    val walletFills = kotlinx.coroutines.flow.MutableStateFlow<com.tjshea.vigilant.data.tracker.WalletLedgerFile.FillBook?>(null)
 
     /** The engine's ledger with this phone's own key strings (an id with no key here is dropped); empty before the first fetch. */
     fun cloudUsageBook(): com.tjshea.vigilant.data.keys.UsageBook =

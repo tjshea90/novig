@@ -130,6 +130,7 @@ class CloudLink(private val c: AppContainer) {
     private val offTrades = loadRaw("trades.json") { com.tjshea.vigilant.data.cloud.TradeLedger.parse(it) }
     private val offDesk = loadRaw("desk.json") { com.tjshea.vigilant.data.cloud.DeskFile.parse(it) }
     private val offLedger = loadRaw("wallet-ledger.json") { com.tjshea.vigilant.data.tracker.WalletLedgerFile.decode(it) }.also { o -> o?.let { c.walletLedger.value = it.first } }
+    private val offFills = loadRaw("wallet-fills.json") { com.tjshea.vigilant.data.tracker.WalletLedgerFile.decodeFills(it) }.also { o -> o?.let { c.walletFills.value = it.first } }
     private val offUsage = loadRaw("usage.json") { com.tjshea.vigilant.data.cloud.CloudUsage.decode(it) }
 
     private val _ui = MutableStateFlow(Ui(
@@ -479,6 +480,18 @@ class CloudLink(private val c: AppContainer) {
                 awake()
                 if (hasToken()) when (val p = client.fetchWalletLedger(etag)) {
                     is CloudClient.Poll.Fresh -> { etag = p.etag; c.walletLedger.value = p.value }
+                    else -> {}
+                }
+                nap(if (c.onScreen) paced(TRADES_POLL_MS) else TRADES_POLL_BACKGROUND_MS)
+            }
+        }
+        // 6a2. the wallet's Novig fills (which market each ledger row belongs to), the same way.
+        scope.launch(Dispatchers.IO) {
+            var etag: String? = null
+            while (isActive) {
+                awake()
+                if (hasToken()) when (val p = client.fetchWalletFills(etag)) {
+                    is CloudClient.Poll.Fresh -> { etag = p.etag; c.walletFills.value = p.value }
                     else -> {}
                 }
                 nap(if (c.onScreen) paced(TRADES_POLL_MS) else TRADES_POLL_BACKGROUND_MS)

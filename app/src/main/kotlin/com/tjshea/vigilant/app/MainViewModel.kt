@@ -663,7 +663,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // Taken at most every TRACKER_MIRROR_MS (a Check odds now saves every 5 bets), with the placed index and the feed rebuilt off the
             // main thread (Tj, 2026-10-01: "I used the check odds now function and the list of open bets got very laggy").
             // (If the marks, the result or the settings change while it's built, it is built again from what's current: [reindex].)
-            followThrottled(c.tracker.flow.filterNotNull(), TRACKER_MIRROR_MS) { bets -> _state.reindex { it.copy(bets = bets) } }
+            // DG5: the Tracker's money comes from Novig's own wallet records on GitHub (fills, fees, settlements) laid over the saved bets; with none yet the bets show as saved.
+            val withNovigMoney = kotlinx.coroutines.flow.combine(c.tracker.flow.filterNotNull(), c.walletLedger, c.walletFills) { bets, ledger, fills ->
+                if (ledger == null || fills == null) bets else com.tjshea.vigilant.data.tracker.WalletBetMoney.apply(bets, ledger.rows, fills.fills)
+            }
+            followThrottled(withNovigMoney, TRACKER_MIRROR_MS) { bets -> _state.reindex { it.copy(bets = bets) } }
         }
         viewModelScope.launch {
             // Every API call is counted as it happens (a scan's 1,500 Novig reads each change the meter): the screen takes the newest count
