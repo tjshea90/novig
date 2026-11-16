@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-gq85mu",
  "head": "f2403d2fa0471f508672b89cf7c834d1ee910391",
  "since": 1794788519,
- "beat": 1794816441,
- "beatIso": "2026-11-16T08:07:21Z",
+ "beat": 1794816761,
+ "beatIso": "2026-11-16T08:12:41Z",
  "done": "pre-release: The Tracker no longer re-reads Novig's wallet in the background every minute; only a pull to refresh (or every 15 minutes) does, which removes the lag (versionCode 461, v1.0.121)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.121), then run: bash tools/record-release.sh v1.0.121 461 \"The Tracker no longer re-reads Novig's wallet in the background every minute; only a pull to refresh (or every 15 minutes) does, which removes the lag\""
 }
