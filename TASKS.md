@@ -6671,3 +6671,5 @@ DG5 (Tj chat 03:16 UTC 2026-11-16) "rebuild the entire tracker system to use nov
 - [x] LD3 (built, LedgerDaysTest) (Tj chat 06:43 UTC 2026-11-16) "when I pull to refresh the stats, make the daily numbers novig's own numbers, not whatever this app already had": pull to refresh re-reads the ledger and replaces the daily numbers (and cached day summaries) with Novig's. Same work as LD1/LD2.
 
 - [ ] BP1 (Tj chat 06:59 UTC 2026-11-16) "why does the auto bid engine keep stopping": picked-off guard halts the ENGINE desk 3 h (4 of last 8 fills picked off). Study guard history (desk.json, bids journals) for false stops; class B evidence before loosening; maybe resume after a shorter pause or a bigger sample.
+
+- [ ] LD4 (Tj chat 07:33-07:36 UTC 2026-11-16, screenshot) Tracker Today +$66.26 vs ledger cash +$21 that UTC day; all-time card -$70.27 from logged bets vs ledger -$241.27: make the all-time card use the ledger, reconcile game-day vs cash-day, explain gross paid back vs profit in the card text.
