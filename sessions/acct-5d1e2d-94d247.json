@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-cnhej8",
  "head": "8d0bbb0f57d2dc22e4f9de75f6248aaa061e1bfc",
  "since": 1794788519,
- "beat": 1794860747,
- "beatIso": "2026-11-16T20:25:47Z",
+ "beat": 1794860988,
+ "beatIso": "2026-11-16T20:29:48Z",
  "done": "PF6a baseline profile for tablet cold start",
  "next": "ship.sh, release, read next diag; then PF6b Engine/EV tab freezes"
 }
