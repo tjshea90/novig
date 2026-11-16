@@ -73,4 +73,16 @@ object WalletLedgerFile {
         }
         FillBook(fills, (o["atMs"] as? JsonPrimitive)?.longOrNull ?: 0L, (o["complete"] as? JsonPrimitive)?.content == "true")
     }.getOrNull()
+
+    /** What the phone downloads (DG6): the last [days] days of rows and fills, plus every money-moving row (transfers: few). The full history stays on GitHub; the phone keeps daily numbers for older days. */
+    const val RECENT_DAYS = 45
+    fun recent(b: Book, nowMs: Long, days: Int = RECENT_DAYS): Book {
+        val from = nowMs - days * 86_400_000L
+        return b.copy(rows = b.rows.filter { it.ts >= from || it.kind in com.tjshea.vigilant.data.novig.trading.NovigTradingClient.MONEY_MOVES })
+    }
+
+    fun recentFills(b: FillBook, nowMs: Long, days: Int = RECENT_DAYS): FillBook {
+        val from = nowMs - days * 86_400_000L
+        return b.copy(fills = b.fills.filter { it.ts >= from })
+    }
 }

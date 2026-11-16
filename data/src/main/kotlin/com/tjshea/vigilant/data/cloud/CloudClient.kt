@@ -187,7 +187,7 @@ class CloudClient(
     /** The wallet's whole Novig ledger the engine keeps (`wallet-ledger.json`, DG5), or [Poll.NotModified] when [etag] is still current. */
     suspend fun fetchWalletLedger(etag: String?): Poll<com.tjshea.vigilant.data.tracker.WalletLedgerFile.Book> = withContext(Dispatchers.IO) {
         if (!hasToken()) return@withContext Poll.Failed("no GitHub token saved")
-        val b = req("contents/wallet-ledger.json?ref=$FEED_BRANCH").header("Accept", RAW)
+        val b = req("contents/wallet-ledger-recent.json?ref=$FEED_BRANCH").header("Accept", RAW)
         if (etag != null) b.header("If-None-Match", etag)
         runCatching {
             http.newCall(b.build()).execute().use { r ->
@@ -205,7 +205,7 @@ class CloudClient(
     /** The wallet's Novig fills the engine keeps (`wallet-fills.json`, DG5), or [Poll.NotModified] when [etag] is still current. */
     suspend fun fetchWalletFills(etag: String?): Poll<com.tjshea.vigilant.data.tracker.WalletLedgerFile.FillBook> = withContext(Dispatchers.IO) {
         if (!hasToken()) return@withContext Poll.Failed("no GitHub token saved")
-        val b = req("contents/wallet-fills.json?ref=$FEED_BRANCH").header("Accept", RAW)
+        val b = req("contents/wallet-fills-recent.json?ref=$FEED_BRANCH").header("Accept", RAW)
         if (etag != null) b.header("If-None-Match", etag)
         runCatching {
             http.newCall(b.build()).execute().use { r ->
