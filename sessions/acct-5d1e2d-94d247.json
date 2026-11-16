@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-99twme",
  "head": "5cc55fd5c5bd41e5839092887203bf357fb772e8",
  "since": 1794788519,
- "beat": 1794806371,
- "beatIso": "2026-11-16T05:19:31Z",
+ "beat": 1794806771,
+ "beatIso": "2026-11-16T05:26:11Z",
  "done": "DG5: ledger/fills full first walk (complete flag), 3 s paging",
  "next": "check ledger file completes; watch Tj chat"
 }
