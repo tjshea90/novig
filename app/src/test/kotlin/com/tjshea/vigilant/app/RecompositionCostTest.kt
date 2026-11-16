@@ -36,6 +36,8 @@ class RecompositionCostTest {
         assertTrue(vm.contains("followThrottled(c.runner.state, SCAN_MIRROR_MS)"))
         // the ledger is still taken at most once a second; since 2026-10-15 the GitHub engine's usage is combined in before the throttle
         assertTrue(vm.contains("followThrottled(kotlinx.coroutines.flow.combine(c.usage.flow, c.cloudUsage) { u, cloud -> u to cloud }, USAGE_MIRROR_MS)"))
-        assertTrue(vm.contains("followThrottled(c.tracker.flow.filterNotNull(), TRACKER_MIRROR_MS)"))
+        // DG5: the saved bets are combined with Novig's wallet records first, and still reach the screen through the same throttle
+        assertTrue(vm.contains("followThrottled(withNovigMoney, TRACKER_MIRROR_MS)"))
+        assertTrue(vm.contains("combine(c.tracker.flow.filterNotNull(), c.walletLedger, c.walletFills)"))
     }
 }
