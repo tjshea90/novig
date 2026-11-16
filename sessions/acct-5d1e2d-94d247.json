@@ -5,11 +5,11 @@
  "nonce": "94d247",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-cnhej8",
+ "branch": "claude/optimistic-curie-t5s99b",
  "head": "48b277f4b660f812fdd03923a78be2775b06ceed",
  "since": 1794788519,
- "beat": 1794865600,
- "beatIso": "2026-11-16T21:46:40Z",
+ "beat": 1794865864,
+ "beatIso": "2026-11-16T21:51:04Z",
  "done": "v1.0.128-129 shipped (launch trace, chat typing)",
  "next": "read the tablet diag: 'run before this one' + coldStartMs; move container build off main thread if it points there; EV tab slow frames; bets.json size"
 }
