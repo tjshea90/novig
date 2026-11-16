@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-gq85mu",
  "head": "482dcb682c00835c2207d38878a1a8808d9630d9",
  "since": 1794788519,
- "beat": 1794817418,
- "beatIso": "2026-11-16T08:23:38Z",
+ "beat": 1794818858,
+ "beatIso": "2026-11-16T08:47:38Z",
  "done": "answered Tj; shipped v1.0.120-122 (LD5 open-markets loss fix, wallet poll 15 min, ledger parse off main)",
  "next": "DG1b first-open-after-update close needs Diagnostics Recent problems; LD4 all-time card; BP1 picked-off guard study"
 }
