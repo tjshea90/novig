@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "94d247",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-85552z",
+ "head": "a0ff17d31b87cb0523a796a4d585cfd253e49497",
+ "since": 1794788519,
+ "beat": 1794788519,
+ "beatIso": "2026-11-16T00:21:59Z",
+ "done": "WATCH+ANALYST cover 11-16: no change, engine healthy",
+ "next": "next slot: read new digest; NCAAB totals watch"
+}
