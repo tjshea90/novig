@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-t5s99b",
- "head": "1209f753ad1d9897c10c4cdeceb04d3279f37eb5",
+ "head": "9885b0af372fda74f2386d1e7c5f190f0be37e00",
  "since": 1794788519,
- "beat": 1794866765,
- "beatIso": "2026-11-16T22:06:05Z",
- "done": "answered Tj: typing fixed, start slow",
- "next": "read diag launch trace (PF6/PF8/PF9), move container build off main thread"
+ "beat": 1794866807,
+ "beatIso": "2026-11-16T22:06:47Z",
+ "done": "read v1.0.129 diag: coldstart 8.8s, bets.json 8MB",
+ "next": "PF10: defer bets store load past first frame, stage timings"
 }
