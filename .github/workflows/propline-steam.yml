@@ -4,8 +4,7 @@ name: PropLine steam and line movement (Tj, 2026-10-16, TCL56d)
 # `propline-steam-YYYY-MM-DD` Release (never delete), so Claude can study whether steam predicts the close (join on event_id with the resolved-prop archive and the engine's lines). ~100 requests a run of the key's 25,000 a day.
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "17 */3 * * *"
+  # Schedule off 2026-11-16 (Tj, PF1): PropLine Streaming ends, the free key's Pro endpoints answer redacted. Restore the cron if a paid plan returns.
 
 permissions:
   contents: write

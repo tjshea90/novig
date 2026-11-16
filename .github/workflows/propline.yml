@@ -20,8 +20,7 @@ on:
       sports:
         description: "altprobe, bookstudy: comma-separated PropLine sport keys (football_nfl,football_ncaaf when empty), e.g. basketball_nba,hockey_nhl"
         default: ""
-  schedule:
-    - cron: "37 9 * * *"
+  # Schedule off 2026-11-16 (Tj, PF1): PropLine Streaming ends, the free key's Pro endpoints answer redacted. Restore the cron if a paid plan returns.
 
 permissions:
   contents: write
