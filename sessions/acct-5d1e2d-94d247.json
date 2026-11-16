@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-t5s99b",
  "head": "9885b0af372fda74f2386d1e7c5f190f0be37e00",
  "since": 1794788519,
- "beat": 1794866807,
- "beatIso": "2026-11-16T22:06:47Z",
+ "beat": 1794867161,
+ "beatIso": "2026-11-16T22:12:41Z",
  "done": "read v1.0.129 diag: coldstart 8.8s, bets.json 8MB",
  "next": "PF10: defer bets store load past first frame, stage timings"
 }
