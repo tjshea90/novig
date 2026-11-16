@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-cnhej8",
  "head": "bb8e3a59a741bedfd16e3aa46ac6fee799d11c20",
  "since": 1794788519,
- "beat": 1794861037,
- "beatIso": "2026-11-16T20:30:37Z",
+ "beat": 1794861043,
+ "beatIso": "2026-11-16T20:30:43Z",
  "done": "pre-ship: Baseline profile: precompiles the app's code (tablet cold start 10 s, slow frames)",
  "next": "ship.sh gates and releases this"
 }
