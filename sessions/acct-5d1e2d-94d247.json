@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-1qw51k",
- "head": "6a0b9260883f3c74b22a646d266c49a276f80cae",
+ "head": "20e2b7fa257c3ccef0be6caa7fe9d80433b5cf3d",
  "since": 1794788519,
- "beat": 1794847535,
- "beatIso": "2026-11-16T16:45:35Z",
+ "beat": 1794847738,
+ "beatIso": "2026-11-16T16:48:58Z",
  "done": "chat: answered Tj 16:43 '?' (DG5 status); DG5 not built: bets store prune needs design (stats use bets; archive to phone-data first)",
  "next": "DG5: design prune/archive of settled bets older than N days keeping stats via archive; ship"
 }
