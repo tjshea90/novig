@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-2gqjsf",
  "head": "338d256805260003c928184cd587eb598cbc3d5f",
  "since": 1794788519,
- "beat": 1794811836,
- "beatIso": "2026-11-16T06:50:36Z",
+ "beat": 1794811841,
+ "beatIso": "2026-11-16T06:50:41Z",
  "done": "LD1-3 built: LedgerDays (daily P/L from Novig wallet), pull reads wallet; LedgerDaysTest green",
  "next": "ship.sh, release.yml, record-release, tell Tj"
 }
