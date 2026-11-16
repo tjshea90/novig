@@ -35,7 +35,8 @@ class BetTrackerDropTest {
         assertEquals(1, t.dropArchived(now, 35) { it == day })
         val book = SlateProfit.book(t.all(), now)
         assertEquals(2, book.days.size)
-        assertEquals(1, book.days.count { it.settled == 1 && it.profit > 0.0 && it.open == 0 } .coerceAtLeast(1))
+        assertEquals(2, book.days.count { it.settled == 1 && it.profit > 0.0 && it.open == 0 })
+        assertEquals(book.days.sumOf { it.profit }, SlateProfit.book(t.all(), now, emptyList()).profit + SlateArchive.days.sumOf { it.profit }, 1e-9)
         val before = SlateArchive.days.sumOf { it.profit }
         SlateArchive.record(SlateArchive.days)   // recording the same day again replaces it
         assertEquals(before, SlateArchive.days.sumOf { it.profit }, 1e-9)
