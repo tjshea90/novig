@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-qqap07",
- "head": "a30f9648da3285fde93cf73ee44ced62e591fbd6",
+ "head": "08fff40f23f99e0adddb6f59f2d29a028bdc8a73",
  "since": 1794788519,
- "beat": 1794850061,
- "beatIso": "2026-11-16T17:27:41Z",
- "done": "PF1 done (workflow crons off); PF2 audit: no cause found, need frames",
- "next": "when Tj sends a diagnostics file, read PERFORMANCE frames; fix hotspot"
+ "beat": 1794850115,
+ "beatIso": "2026-11-16T17:28:35Z",
+ "done": "PF2: reverted report reorder (tests pass)",
+ "next": "read Tj's next diagnostics file frames"
 }
