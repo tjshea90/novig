@@ -24,3 +24,13 @@ class WalletLedgerFileTest {
 
     @Test fun garbageIsNoBook() = assertNull(WalletLedgerFile.decode("nope"))
 }
+
+class WalletLedgerFileCompleteTest {
+    @Test fun completeFlagSurvivesAndOldFilesAreIncomplete() {
+        val b = WalletLedgerFile.Book(emptyList(), 1L, 1L, true)
+        assertEquals(true, WalletLedgerFile.decode(WalletLedgerFile.encode(b))!!.complete)
+        assertEquals(false, WalletLedgerFile.decode("""{"v":1,"atMs":1,"fullAtMs":1,"rows":[]}""")!!.complete)
+        val f = WalletLedgerFile.FillBook(emptyList(), 2L, true)
+        assertEquals(true, WalletLedgerFile.decodeFills(WalletLedgerFile.encodeFills(f))!!.complete)
+    }
+}

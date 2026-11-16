@@ -343,7 +343,7 @@ fun main(args: Array<String>) = runBlocking {
                     runCatching {
                         val knownFills = HashSet(heldFills.map { it.fillId })
                         var addedFills = 0
-                        tc.fillsNewerThan({ !fillsComplete.not() && it in knownFills }, pageDelayMs = 3_000L, onPage = { fs ->
+                        tc.fillsNewerThan({ fillsComplete && it in knownFills }, pageDelayMs = 3_000L, onPage = { fs ->
                             heldFills = ledgerFile.mergeFills(heldFills, fs); fs.forEach { knownFills += it.fillId }; addedFills += fs.size
                         })
                         if (addedFills > 0 || !fillsComplete) { fillsComplete = true; publisher.stageExtra("wallet-fills.json", ledgerFile.encodeFills(com.tjshea.vigilant.data.tracker.WalletLedgerFile.FillBook(heldFills, System.currentTimeMillis(), true))); log("wallet fills: $addedFills new, ${heldFills.size} held") }
@@ -369,7 +369,7 @@ fun main(args: Array<String>) = runBlocking {
                             })
                             delay(300L)
                         }
-                        if (added > 0 || fullAt == 0L) { publish(true); log("wallet ledger: $added new rows, ${held.size} held") }
+                        if (added > 0 || !ledgerComplete) { publish(true); log("wallet ledger: $added new rows, ${held.size} held") }
                     }.onFailure { e ->
                         if (e is kotlinx.coroutines.CancellationException) throw e
                         wait = 3 * 60_000L
