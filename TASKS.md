@@ -6697,3 +6697,5 @@ DG5 (Tj chat 03:16 UTC 2026-11-16) "rebuild the entire tracker system to use nov
 - [x] PF9 chat typing: draft text moved into ChatComposer so a keystroke redraws only the input row (v1.0.129), plus finer LaunchTrace stages.
 
 - [ ] PF9 (Tj chat 21:50 UTC 2026-11-16) v1.0.129: typing fixed; cold start still slow. Read next diag launch trace, move container build off main thread.
+
+- [ ] PF10 (diag 16:50 v1.0.129) coldstart 8.8s; bets.json 8MB still loaded eagerly: load after first frame / append-only; add stage timings to report.
