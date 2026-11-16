@@ -126,9 +126,10 @@ object DiagnosticsFile {
         o.append(Diagnostics.report(s, x, now, zone))
         if (!o.endsWith("\n")) o.appendLine()
 
+        // PERFORMANCE (screen frames, slow starts) first: a report cut at the chat's 60 KB lost it behind CONNECTIONS (Tj, 2026-11-16, PF2: lag with no frame numbers to judge).
+        performance(s, x, o)
         connections(x, now, zone, o)
         apiIssues(x, now, zone, o)
-        performance(s, x, o)
         counters(x, now, o)
         timeline(x, now, zone, o)
         appLog(x, o)
