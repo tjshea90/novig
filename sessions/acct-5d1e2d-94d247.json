@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-gq85mu",
  "head": "82c7224f943362f6136a0360b9767871c0d09eb4",
  "since": 1794788519,
- "beat": 1794816857,
- "beatIso": "2026-11-16T08:14:17Z",
+ "beat": 1794816863,
+ "beatIso": "2026-11-16T08:14:23Z",
  "done": "pre-ship: The app opens faster: Novig's wallet history is read in the background instead of while the first screen is built",
  "next": "ship.sh gates and releases this"
 }
