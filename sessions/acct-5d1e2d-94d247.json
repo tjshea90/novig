@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-cnhej8",
  "head": "b3931b43d10e77337fc05ec46deda591365835e5",
  "since": 1794788519,
- "beat": 1794863537,
- "beatIso": "2026-11-16T21:12:17Z",
+ "beat": 1794863543,
+ "beatIso": "2026-11-16T21:12:23Z",
  "done": "pre-ship: Launch trace: the next report says how far a run got before Android ended it",
  "next": "ship.sh gates and releases this"
 }
