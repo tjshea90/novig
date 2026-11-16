@@ -129,8 +129,7 @@ class CloudLink(private val c: AppContainer) {
     private val offStatus = loadRaw("status.json") { com.tjshea.vigilant.data.cloud.CloudStatus.parse(it) }
     private val offTrades = loadRaw("trades.json") { com.tjshea.vigilant.data.cloud.TradeLedger.parse(it) }
     private val offDesk = loadRaw("desk.json") { com.tjshea.vigilant.data.cloud.DeskFile.parse(it) }
-    private val offLedger = loadRaw("wallet-ledger.json") { com.tjshea.vigilant.data.tracker.WalletLedgerFile.decode(it) }.also { o -> o?.let { c.walletLedger.value = it.first } }
-    private val offFills = loadRaw("wallet-fills.json") { com.tjshea.vigilant.data.tracker.WalletLedgerFile.decodeFills(it) }.also { o -> o?.let { c.walletFills.value = it.first } }
+    // The wallet's ledger and fills are ~3 MB of JSON: parsed on the loops' IO threads, never while the screen is being built (Tj 2026-11-16: slow to open).
     private val offUsage = loadRaw("usage.json") { com.tjshea.vigilant.data.cloud.CloudUsage.decode(it) }
 
     private val _ui = MutableStateFlow(Ui(
@@ -476,7 +475,7 @@ class CloudLink(private val c: AppContainer) {
         // 6a. the wallet's Novig ledger the engine keeps on GitHub (DG5): the Tracker's money figures come from it; an unchanged file is a free 304.
         scope.launch(Dispatchers.IO) {
             var etag: String? = null
-            var lastOk = offLedger?.second ?: 0L
+            var lastOk = loadRaw("wallet-ledger.json") { com.tjshea.vigilant.data.tracker.WalletLedgerFile.decode(it) }?.let { o -> c.walletLedger.value = o.first; o.second } ?: 0L
             while (isActive) {
                 awake()
                 if (hasToken()) {
@@ -502,7 +501,7 @@ class CloudLink(private val c: AppContainer) {
         // 6a2. the wallet's Novig fills (which market each ledger row belongs to), the same way.
         scope.launch(Dispatchers.IO) {
             var etag: String? = null
-            var lastOk = offFills?.second ?: 0L
+            var lastOk = loadRaw("wallet-fills.json") { com.tjshea.vigilant.data.tracker.WalletLedgerFile.decodeFills(it) }?.let { o -> c.walletFills.value = o.first; o.second } ?: 0L
             while (isActive) {
                 awake()
                 if (hasToken()) {
