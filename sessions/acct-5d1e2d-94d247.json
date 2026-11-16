@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-99twme",
- "head": "3fe0b810ad5d45eb4cd7faa03e1be20f71c31729",
+ "head": "65f3bdbf2152029ea546b9757a7ba43a3b2b7ae8",
  "since": 1794788519,
- "beat": 1794803089,
- "beatIso": "2026-11-16T04:24:49Z",
- "done": "research index rebuilt",
+ "beat": 1794803122,
+ "beatIso": "2026-11-16T04:25:22Z",
+ "done": "bump 1.0.115",
  "next": "ship"
 }
