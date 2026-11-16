@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-cnhej8",
- "head": "bb8e3a59a741bedfd16e3aa46ac6fee799d11c20",
+ "head": "4ba4b9f15c1d34833f9c3b107a6c47f544a7d6b8",
  "since": 1794788519,
- "beat": 1794861043,
- "beatIso": "2026-11-16T20:30:43Z",
- "done": "pre-ship: Baseline profile: precompiles the app's code (tablet cold start 10 s, slow frames)",
- "next": "ship.sh gates and releases this"
+ "beat": 1794861208,
+ "beatIso": "2026-11-16T20:33:28Z",
+ "done": "pre-release: Baseline profile: precompiles the app's code (tablet cold start 10 s, slow frames) (versionCode 465, v1.0.125)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.125), then run: bash tools/record-release.sh v1.0.125 465 \"Baseline profile: precompiles the app's code (tablet cold start 10 s, slow frames)\""
 }
