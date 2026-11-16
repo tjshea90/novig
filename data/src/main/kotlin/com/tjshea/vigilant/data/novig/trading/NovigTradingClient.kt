@@ -325,6 +325,31 @@ open class NovigTradingClient(
         }
     }
 
+    /**
+     * The ledger rows of [kind] newer than what the caller holds (DG5): pages newest first and stops after the first page that holds nothing new (or at [maxRows]), so a pass that has the history
+     * costs one page per kind. A kind the ledger refuses (400/404/422) reads as none.
+     */
+    open suspend fun ledgerNewerThan(subaccountKeyId: String, kind: String, isKnown: (String) -> Boolean, maxRows: Int = 50_000): List<LedgerRow> {
+        val out = ArrayList<LedgerRow>()
+        var cursor: String? = null
+        try {
+            do {
+                val query = buildString {
+                    append("kind=").append(kind).append("&limit=500")
+                    cursor?.let { append("&after=").append(percent(it)) }
+                }
+                val page = json.decodeFromString(TransactionPageDto.serializer(), signer.call("GET", "/v3/account/subaccounts/$subaccountKeyId/transactions", query))
+                val rows = page.items.map { it.toDomain() }
+                out += rows.filter { !isKnown(it.transactionId) }
+                cursor = page.next?.takeIf { it.isNotBlank() }
+                if (rows.isNotEmpty() && rows.all { isKnown(it.transactionId) }) break
+            } while (cursor != null && out.size < maxRows)
+        } catch (e: com.tjshea.vigilant.data.novig.signing.NovigApiException) {
+            if (e.status !in setOf(400, 404, 422)) throw e
+        }
+        return out
+    }
+
     private suspend fun ledgerRows(subaccountKeyId: String, kind: String?, startsAfterMs: Long?, startsBeforeMs: Long?, maxRows: Int): List<LedgerRow> {
         val out = ArrayList<LedgerRow>()
         var cursor: String? = null
