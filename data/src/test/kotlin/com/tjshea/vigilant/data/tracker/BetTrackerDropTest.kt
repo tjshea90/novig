@@ -6,16 +6,21 @@ import org.junit.Test
 import java.io.File
 
 class BetTrackerDropTest {
-    @Test fun old_settled_bets_leave_only_when_github_has_their_day() = runBlocking {
-        val dir = createTempDir()
-        val t = BetTracker(File(dir, "b.json"))
+    private fun bet(id: String, status: BetStatus, at: Long) = TrackedBet(
+        id = "$id-0000-0000", createdAtMs = at, league = "NFL", eventName = "Ravens @ Cowboys", startsTs = at + 3_600_000L, marketLabel = "Player Receptions", selection = "Joe Over 4.5",
+        marketId = "m1", outcomeId = "o1", price = 0.488, cost = 0.488, fairAtBet = 0.508, evPercentAtBet = 0.04, stake = 2.0, status = status,
+        settledAtMs = if (status == BetStatus.PENDING) null else at + 7_200_000L, source = BetTracker.SOURCE_CNO, american = 105,
+    )
+
+    @Test fun `old settled bets leave only when GitHub has their day`() = runBlocking {
+        val t = BetTracker(File(createTempDir(), "b.json"))
         val now = 100L * 86_400_000L
         val old = now - 60 * 86_400_000L
-        fun bet(id: String, status: BetStatus, at: Long) = BetTrackerTestSupport.bet(id, status, at)
-        BetTrackerTestSupport.put(t, listOf(bet("a", BetStatus.WON, old), bet("b", BetStatus.PENDING, old), bet("c", BetStatus.WON, now), bet("d", BetStatus.LOST, old - 86_400_000L * 3)))
+        val other = old - 3 * 86_400_000L
+        t.addAll(listOf(bet("a", BetStatus.WON, old), bet("b", BetStatus.PENDING, old), bet("c", BetStatus.WON, now - 3_600_000L), bet("d", BetStatus.LOST, other)))
         val oldDay = BetHistory.day(old)
         val dropped = t.dropArchived(now, 35) { it == oldDay }
         assertEquals(1, dropped)
-        assertEquals(setOf("b", "c", "d"), t.all().map { it.id }.toSet())
+        assertEquals(setOf("b", "c", "d"), t.all().map { it.id.take(1) }.toSet())
     }
 }
