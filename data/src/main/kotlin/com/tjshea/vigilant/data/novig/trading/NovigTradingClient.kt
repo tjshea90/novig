@@ -341,9 +341,10 @@ open class NovigTradingClient(
                 val page = json.decodeFromString(TransactionPageDto.serializer(), signer.call("GET", "/v3/account/subaccounts/$subaccountKeyId/transactions", query))
                 val rows = page.items.map { it.toDomain() }
                 val newRows = rows.filter { !isKnown(it.transactionId) }
+                val pageAllKnown = rows.isNotEmpty() && newRows.isEmpty()
                 out += newRows; if (newRows.isNotEmpty()) onPage(newRows)
                 cursor = page.next?.takeIf { it.isNotBlank() }
-                if (rows.isNotEmpty() && rows.all { isKnown(it.transactionId) }) break
+                if (pageAllKnown) break
                 if (pageDelayMs > 0 && cursor != null) kotlinx.coroutines.delay(pageDelayMs)
             } while (cursor != null && out.size < maxRows)
         } catch (e: com.tjshea.vigilant.data.novig.signing.NovigApiException) {
