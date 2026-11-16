@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-cnhej8",
  "head": "b9e61e59eb9fe200fc56b050f5a3177accbfdb8b",
  "since": 1794788519,
- "beat": 1794864093,
- "beatIso": "2026-11-16T21:21:33Z",
+ "beat": 1794864100,
+ "beatIso": "2026-11-16T21:21:40Z",
  "done": "pre-ship: Chat typing no longer redraws the whole thread on every key; finer launch trace",
  "next": "ship.sh gates and releases this"
 }
