@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-99twme",
  "head": "3bb4b18ff3d2030175198ac52ee9bc9e47664cad",
  "since": 1794788519,
- "beat": 1794808563,
- "beatIso": "2026-11-16T05:56:03Z",
+ "beat": 1794808569,
+ "beatIso": "2026-11-16T05:56:09Z",
  "done": "DG6: wallet files: full once, then 3-day delta merged into the phone's cache",
  "next": "ship 1.0.118"
 }

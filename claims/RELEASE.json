@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/94d247",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "94d247",
+ "note": "The phone downloads Novig's wallet history once and then only the last 3 days, keeping the rest cached",
+ "since": 1794808569,
+ "beat": 1794808569
+}
