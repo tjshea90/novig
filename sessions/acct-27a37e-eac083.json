@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "eac083",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-9v2gif",
+ "head": "e836e73e1972e9872ce685108fc53f48131ee350",
+ "since": 1794853303,
+ "beat": 1794853303,
+ "beatIso": "2026-11-16T18:21:43Z",
+ "done": "WATCH 2026-11-16: engine healthy, no change",
+ "next": "continue PF1/PF2 per mirage; next slot watch"
+}
