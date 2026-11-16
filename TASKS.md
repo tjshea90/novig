@@ -6673,3 +6673,6 @@ DG5 (Tj chat 03:16 UTC 2026-11-16) "rebuild the entire tracker system to use nov
 - [ ] BP1 (Tj chat 06:59 UTC 2026-11-16) "why does the auto bid engine keep stopping": picked-off guard halts the ENGINE desk 3 h (4 of last 8 fills picked off). Study guard history (desk.json, bids journals) for false stops; class B evidence before loosening; maybe resume after a shorter pause or a bigger sample.
 
 - [ ] LD4 (Tj chat 07:33-07:36 UTC 2026-11-16, screenshot) Tracker Today +$66.26 vs ledger cash +$21 that UTC day; all-time card -$70.27 from logged bets vs ledger -$241.27: make the all-time card use the ledger, reconcile game-day vs cash-day, explain gross paid back vs profit in the card text.
+
+- [x] LD5 (Tj chat 07:44 UTC 2026-11-16) daily P/L overstated: lost markets leave no settlement row, so untracked losers of the last 3 days were missing. Fixed: LedgerDays.openMarkets (Novig positions) makes a paid market not held final (LedgerDaysTest). Deposits/withdrawals are never in the daily numbers.
+- [ ] LD6 (Tj chat 07:45 UTC) Tracker keeps updating on the phone and slows the app: find the recompute loop (withNovigMoney combine / followThrottled TRACKER_MIRROR_MS).
