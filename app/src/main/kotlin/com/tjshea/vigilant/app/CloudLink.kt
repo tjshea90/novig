@@ -1122,10 +1122,11 @@ class CloudLink(private val c: AppContainer) {
         // DG3: GitHub holds the history; the phone keeps open bets and the last 35 days (the Tracker's 30-day view), never a day GitHub has not got.
         if (failed == null) runCatching {
             // DG6: the days that go are kept as daily numbers worked out from Novig's own money; with the wallet files not read yet nothing goes.
-            c.tracker.dropArchived(System.currentTimeMillis(), 35, { day -> c.betArchive.dayOnChannel(day) }) { going ->
+            c.tracker.dropArchived(System.currentTimeMillis(), 35, withMoney = { going ->
                 val l = c.walletLedger.value; val f = c.walletFills.value
                 if (l == null || f == null) null else com.tjshea.vigilant.data.tracker.WalletBetMoney.apply(going, l.rows, f.fills)
-            }
+            }) { day -> c.betArchive.dayOnChannel(day) }
+        }
         }
         if (failed == null) {
             val known = runCatching { uploaded.read() }.getOrDefault(emptyMap())
