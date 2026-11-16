@@ -1,22 +1,23 @@
-# CHECKPOINT 4490 — read me first, then TASKS.md
+# CHECKPOINT 4491 — read me first, then TASKS.md
 
-**Written:** 2026-11-16T02:35:51Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-gz2ti0` · **builds on:** `32e0ca377` (this checkpoint is the commit after it)
+**Written:** 2026-11-16T02:39:55Z · **tests:** 1 RED: test_research_index.sh (9 green)
+**Branch:** `claude/optimistic-curie-gz2ti0` · **builds on:** `cc527242b` (this checkpoint is the commit after it)
 
 ## Just done
-chat: DG4 answered, logged
+chat: DG4 research written, Tj asked go
 
 ## Do this next
-DG4 verify Novig history depth
+DG4 build engine tracker if Tj says go
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+    ?? research/tracker_on_github_2026-11-16.md
 
 ## Last ten checkpoints
 ```
+  cc527242b ckpt 4490: chat: DG4 answered, logged
   32e0ca377 ckpt 4489: chat: v1.0.114 shipped (DG3)
   51f3f5ebc ckpt 4488: pre-release: DG3: phone drops settled bets older than 35 days once GitHub h
   519ef05c0 ckpt 4487: pre-ship: DG3: phone drops settled bets older than 35 days once GitHub hold
@@ -26,5 +27,4 @@ DG4 verify Novig history depth
   c9882254b ckpt 4483: pre-ship: DG1: bets.json saved at most every 4 s, OddsPapi Free cache delet
   d4216bb86 ckpt 4482: pre-ship: DG1: bets.json saved at most every 4 s, OddsPapi Free cache delet
   4b3f649d2 ckpt 4481: chat: DG1 diagnostics logged, answered
-  a0ff17d31 ckpt 4480: WATCH+ANALYST cover 11-16: no change, engine healthy
 ```
