@@ -1,22 +1,22 @@
-# CHECKPOINT 4491 — read me first, then TASKS.md
+# CHECKPOINT 4492 — read me first, then TASKS.md
 
-**Written:** 2026-11-16T02:39:55Z · **tests:** 1 RED: test_research_index.sh (9 green)
-**Branch:** `claude/optimistic-curie-gz2ti0` · **builds on:** `cc527242b` (this checkpoint is the commit after it)
+**Written:** 2026-11-16T03:18:52Z · **tests:** 1 RED: test_research_index.sh (9 green)
+**Branch:** `claude/optimistic-curie-1nn2x9` · **builds on:** `a263949a8` (this checkpoint is the commit after it)
 
 ## Just done
-chat: DG4 research written, Tj asked go
+DG5 logged + answered Tj; found ledger readers NovigTradingClient.bettingRows/moneyMoves/fills/orders already exist
 
 ## Do this next
-DG4 build engine tracker if Tj says go
+DG5a: find whether engine's read key can read /v3/account/subaccounts/<id>/transactions (phone reads it with mgmt key via WalletMoney); if not, phone uploads ledger pages to phone-data; then write tracker-ledger file on GitHub, then switch Tracker to read it
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-    ?? research/tracker_on_github_2026-11-16.md
 
 ## Last ten checkpoints
 ```
+  e51b1ce06 ckpt 4491: chat: DG4 research written, Tj asked go
   cc527242b ckpt 4490: chat: DG4 answered, logged
   32e0ca377 ckpt 4489: chat: v1.0.114 shipped (DG3)
   51f3f5ebc ckpt 4488: pre-release: DG3: phone drops settled bets older than 35 days once GitHub h
@@ -26,5 +26,7 @@ DG4 build engine tracker if Tj says go
   d725dde5d ckpt 4484: pre-release: DG1: bets.json saved at most every 4 s, OddsPapi Free cache de
   c9882254b ckpt 4483: pre-ship: DG1: bets.json saved at most every 4 s, OddsPapi Free cache delet
   d4216bb86 ckpt 4482: pre-ship: DG1: bets.json saved at most every 4 s, OddsPapi Free cache delet
-  4b3f649d2 ckpt 4481: chat: DG1 diagnostics logged, answered
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
