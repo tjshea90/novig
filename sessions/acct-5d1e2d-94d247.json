@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-cnhej8",
  "head": "eb4eeb371a864cce58dfc8b7a7603bf8e0f84b15",
  "since": 1794788519,
- "beat": 1794860215,
- "beatIso": "2026-11-16T20:16:55Z",
+ "beat": 1794860396,
+ "beatIso": "2026-11-16T20:19:56Z",
  "done": "answered Tj slow start/crash; PF6 logged from 20:15 diag",
  "next": "PF4+PF6: cold start + bets.json + idle frames, then PF5 button"
 }
