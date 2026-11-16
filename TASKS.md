@@ -6695,3 +6695,5 @@ DG5 (Tj chat 03:16 UTC 2026-11-16) "rebuild the entire tracker system to use nov
 - [ ] PF8 (Tj chat 21:10 UTC) v1.0.127: after the update the app closes at once and again on reopen; NO crash recorded (Android 10 has no ApplicationExitInfo, so kills are invisible). Add a startup breadcrumb (file marker per launch stage: process start, container built, first frame, first minute alive; on next start report "last run ended at stage X without a clean stop") in Diagnostics; consider less eager work in AppContainer at cold start.
 - [x] PF8a launch breadcrumb (LaunchTrace): next report shows "the run before this one: ..." in the timeline when a run ended without stopping cleanly. Next: read it from the tablet, then cut eager work in AppContainer/MainActivity.onCreate (container is built on the main thread before the first frame).
 - [x] PF9 chat typing: draft text moved into ChatComposer so a keystroke redraws only the input row (v1.0.129), plus finer LaunchTrace stages.
+
+- [ ] PF9 (Tj chat 21:50 UTC 2026-11-16) v1.0.129: typing fixed; cold start still slow. Read next diag launch trace, move container build off main thread.
