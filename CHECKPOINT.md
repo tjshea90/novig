@@ -1,21 +1,23 @@
-# CHECKPOINT 4485 — read me first, then TASKS.md
+# CHECKPOINT 4486 — read me first, then TASKS.md
 
-**Written:** 2026-11-16T02:10:00Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-gz2ti0` · **builds on:** `7de406341` (this checkpoint is the commit after it)
+**Written:** 2026-11-16T02:21:12Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-gz2ti0` · **builds on:** `c50e3c71e` (this checkpoint is the commit after it)
 
 ## Just done
-chat: v1.0.113 shipped (DG1a,c; OddsPapi off+cache gone); told Tj live/bids blocked by Pinnacle-closed + picked-off guard
+chat: DG3 logged (phone keeps only open+recent bets)
 
 ## Do this next
-DG1b cold start; full OddsPapi code removal; await Tj on loosening
+DG3 step 1: verify phone-data archive complete
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  c50e3c71e ckpt 4485: chat: v1.0.113 shipped (DG1a,c; OddsPapi off+cache gone); told Tj live/bids
   d725dde5d ckpt 4484: pre-release: DG1: bets.json saved at most every 4 s, OddsPapi Free cache de
   c9882254b ckpt 4483: pre-ship: DG1: bets.json saved at most every 4 s, OddsPapi Free cache delet
   d4216bb86 ckpt 4482: pre-ship: DG1: bets.json saved at most every 4 s, OddsPapi Free cache delet
@@ -25,5 +27,4 @@ DG1b cold start; full OddsPapi code removal; await Tj on loosening
   1b54b2b1e ckpt 4478: pre-release: Phone reads no Novig order books for bids while the engine pos
   fe1f9276a ckpt 4477: pre-ship: Phone reads no Novig order books for bids while the engine posts 
   7097f9504 ckpt 4476: CloudLink loop 4 stops reading Novig books while engine posts bids
-  872e45d41 ckpt 4475: chat: v1.0.111 shipped, runner reset; live real, pregame kinds pruned
 ```
