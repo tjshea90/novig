@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-1qw51k",
  "head": "61d9516a52847f44a80668ec57ff1a8ad0676805",
  "since": 1794788519,
- "beat": 1794847767,
- "beatIso": "2026-11-16T16:49:27Z",
+ "beat": 1794847972,
+ "beatIso": "2026-11-16T16:52:52Z",
  "done": "DG5 slimArchived built+tested",
  "next": "ship.sh, release.yml, record-release, tell Tj"
 }
