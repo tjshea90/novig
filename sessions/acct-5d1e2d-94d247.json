@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-cnhej8",
  "head": "5328bf0e895400c2218b903efacd817a5a3a495d",
  "since": 1794788519,
- "beat": 1794861810,
- "beatIso": "2026-11-16T20:43:30Z",
+ "beat": 1794861815,
+ "beatIso": "2026-11-16T20:43:35Z",
  "done": "pre-ship: Engine tab redraws every 5 s instead of every second (12 s on low-RAM tablets): far less CPU",
  "next": "ship.sh gates and releases this"
 }
