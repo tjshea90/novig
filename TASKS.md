@@ -6669,3 +6669,5 @@ DG5 (Tj chat 03:16 UTC 2026-11-16) "rebuild the entire tracker system to use nov
 - [x] LD2 (built, LedgerDaysTest) (Tj chat 06:42 UTC 2026-11-16) "for the daily charts and daily profit/loss, do not use the numbers from before. use novig's numbers from the wallet for each day's profit and loss": every day's profit/loss, the running-total chart and the daily bars must come from the Novig ledger (WalletProfit / ledger rows by game day), not SlateProfit over logged bets. Supersedes the bet-sum figures; do with LD1.
 
 - [x] LD3 (built, LedgerDaysTest) (Tj chat 06:43 UTC 2026-11-16) "when I pull to refresh the stats, make the daily numbers novig's own numbers, not whatever this app already had": pull to refresh re-reads the ledger and replaces the daily numbers (and cached day summaries) with Novig's. Same work as LD1/LD2.
+
+- [ ] BP1 (Tj chat 06:59 UTC 2026-11-16) "why does the auto bid engine keep stopping": picked-off guard halts the ENGINE desk 3 h (4 of last 8 fills picked off). Study guard history (desk.json, bids journals) for false stops; class B evidence before loosening; maybe resume after a shorter pause or a bigger sample.
