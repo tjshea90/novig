@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-mnnrec",
- "head": "48cac14147eed4da145a39338fd3db4f59ca0773",
+ "head": "0665ff342e091a8ce8d0691fc83d8e5cd16b6657",
  "since": 1794788519,
- "beat": 1794853366,
- "beatIso": "2026-11-16T18:22:46Z",
- "done": "pre-release: Diagnostics names which tab stutters and flags a slow screen with nothing running (versionCode 464, v1.0.124)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.124), then run: bash tools/record-release.sh v1.0.124 464 \"Diagnostics names which tab stutters and flags a slow screen with nothing running\""
+ "beat": 1794853481,
+ "beatIso": "2026-11-16T18:24:41Z",
+ "done": "answered Tj lag; shipped v1.0.124; PF4 logged",
+ "next": "PF4: read v1.0.124 diag slowest tabs and cut"
 }
