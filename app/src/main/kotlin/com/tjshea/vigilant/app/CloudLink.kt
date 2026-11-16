@@ -793,6 +793,20 @@ class CloudLink(private val c: AppContainer) {
                     }
                 }
             }
+            // LD3: a pull re-reads Novig's wallet (the last 3 days, no cache check) so the daily numbers are Novig's own as of now
+            step("Reading Novig's wallet")
+            runCatching {
+                got(within { client.fetchWalletLedger(null, "wallet-ledger-delta.json") })?.let { v ->
+                    val have = c.walletLedger.value
+                    val merged = if (have == null) v else v.copy(rows = com.tjshea.vigilant.data.tracker.WalletLedgerFile.merge(have.rows, v.rows))
+                    c.walletLedger.value = merged; saveRaw("wallet-ledger.json", com.tjshea.vigilant.data.tracker.WalletLedgerFile.encode(merged))
+                }
+                got(within { client.fetchWalletFills(null, "wallet-fills-delta.json") })?.let { v ->
+                    val have = c.walletFills.value
+                    val merged = if (have == null) v else v.copy(fills = com.tjshea.vigilant.data.tracker.WalletLedgerFile.mergeFills(have.fills, v.fills))
+                    c.walletFills.value = merged; saveRaw("wallet-fills.json", com.tjshea.vigilant.data.tracker.WalletLedgerFile.encodeFills(merged))
+                }
+            }
             step("Reading orders")
             runCatching { got(within { client.fetchTrades(null) })?.let { t -> _ui.update { it.copy(trades = t, tradesReadAtMs = System.currentTimeMillis()) } } }
             step("Reading bids")

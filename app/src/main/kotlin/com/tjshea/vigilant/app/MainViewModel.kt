@@ -668,9 +668,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val novigMarkets = kotlinx.coroutines.flow.combine(c.walletLedger, c.walletFills) { l, f -> l to f }
                 .map { (l, f) -> if (l == null || f == null) emptyMap() else com.tjshea.vigilant.data.tracker.WalletBetMoney.markets(l.rows, f.fills) }
                 .flowOn(Dispatchers.Default)
-            val withNovigMoney = kotlinx.coroutines.flow.combine(c.tracker.flow.filterNotNull(), novigMarkets) { bets, markets ->
+            val withNovigMoney = kotlinx.coroutines.flow.combine(c.tracker.flow.filterNotNull(), novigMarkets, c.walletLedger, c.walletFills) { bets, markets, l, f ->
+                // LD2: each day's profit and loss is Novig's own wallet number (LedgerDays), laid where the Tracker's book reads it
+                if (l != null && f != null) {
+                    val now = System.currentTimeMillis()
+                    val d = com.tjshea.vigilant.data.tracker.LedgerDays.build(bets, l.rows, f.fills, now)
+                    if (d != com.tjshea.vigilant.data.tracker.LedgerDays.days) com.tjshea.vigilant.data.tracker.LedgerDays.set(d)
+                }
                 com.tjshea.vigilant.data.tracker.WalletBetMoney.apply(bets, markets)
-            }
+            }.flowOn(Dispatchers.Default)
             followThrottled(withNovigMoney, TRACKER_MIRROR_MS) { bets -> _state.reindex { it.copy(bets = bets) } }
         }
         viewModelScope.launch {

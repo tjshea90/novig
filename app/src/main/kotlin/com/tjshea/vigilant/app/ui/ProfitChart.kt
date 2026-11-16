@@ -195,7 +195,7 @@ object ProfitText {
 @Composable
 fun ProfitChartCard(bets: List<TrackedBet>, period: TrackerPeriod, wallet: WalletMoneyUi = WalletMoneyUi(), modifier: Modifier = Modifier, day: LocalDate? = null) {
     val now = rememberNow(60_000)
-    val book = remember(bets, now / 60_000L) { SlateProfit.book(bets, now) }
+    val book = remember(bets, now / 60_000L, com.tjshea.vigilant.data.tracker.LedgerDays.version) { SlateProfit.book(bets, now) }
     Card(modifier.fillMaxWidth().testTag("profitChart"), shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             AllTime(book, wallet, now)
