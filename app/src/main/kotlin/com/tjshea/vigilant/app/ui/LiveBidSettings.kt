@@ -61,7 +61,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     val q = s.liveBidQuality
     val lim = s.liveBidLimits
     val shown by rememberUpdatedState(reportActions.onLiveBidShown)
-    LaunchedEffect(Unit) { while (true) { shown(); kotlinx.coroutines.delay(1_500) } }
+    LaunchedEffect(Unit) { while (true) { shown(); kotlinx.coroutines.delay(com.tjshea.vigilant.app.CloudLink.paced(1_500L)) } }
     var advanced by rememberSaveable { mutableStateOf(LiveBidAdvancedOpenByDefault) }
     // Editing a rule by hand leaves the slider on "Custom"; line kinds, tennis and leagues are not the slider's, so they keep its position.
     val setQ = { f: (LiveBidQuality) -> LiveBidQuality -> onUpdate { it.copy(liveBidQuality = f(it.liveBidQuality).copy(level = -1)) } }

@@ -63,7 +63,7 @@ fun LiveScreen(
     val s = state.settings
     val shown by rememberUpdatedState(onShown)
     // The status lines under the switches ([UiState.tailTrade], [UiState.labStatus]) are asked for every second or two while this tab shows.
-    LaunchedEffect(Unit) { while (true) { shown(); kotlinx.coroutines.delay(1_500) } }
+    LaunchedEffect(Unit) { while (true) { shown(); kotlinx.coroutines.delay(com.tjshea.vigilant.app.CloudLink.paced(1_500L)) } }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -120,7 +120,7 @@ fun LiveScreen(
 @Composable
 private fun LiveBoardHost(state: UiState, light: MainViewModel.LightUi, now: Long) {
     val s = state.settings
-    val clock = rememberNow(1_000)
+    val clock = rememberNow(com.tjshea.vigilant.app.CloudLink.paced(1_000L))
     val tick = maxOf(now, clock)
     val board = remember(s, state.cloudUi.status, state.cloudUi.trades, light, state.bets, tick / 1_000L) {
         if (s.liveOnGitHub) LiveBoard.github(s, state.cloudUi.status, light.githubTrend, LiveBoard.githubToday(state.cloudUi.trades, tick), tick)
