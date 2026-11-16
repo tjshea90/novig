@@ -448,6 +448,7 @@ class AppContainer(val app: Application) {
                 val gate = com.tjshea.vigilant.data.novig.BetPriority::yieldToBet
                 gate(); val cash = t.balance(address).also { wallet.record(it) }
                 gate(); val held = t.positions()
+                com.tjshea.vigilant.data.tracker.LedgerDays.openMarkets = held.filter { it.qty > 0 }.map { it.marketId }.toSet()
                 gate(); val rows = walletLedger.value?.rows?.filter { it.kind in com.tjshea.vigilant.data.novig.trading.NovigTradingClient.MONEY_MOVES }?.takeIf { it.isNotEmpty() } ?: t.moneyMoves(address)
                 com.tjshea.vigilant.data.tracker.WalletProfit.of(cash, held, rows, System.currentTimeMillis())
             }

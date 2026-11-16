@@ -668,7 +668,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val novigMarkets = kotlinx.coroutines.flow.combine(c.walletLedger, c.walletFills) { l, f -> l to f }
                 .map { (l, f) -> if (l == null || f == null) emptyMap() else com.tjshea.vigilant.data.tracker.WalletBetMoney.markets(l.rows, f.fills) }
                 .flowOn(Dispatchers.Default)
-            val withNovigMoney = kotlinx.coroutines.flow.combine(c.tracker.flow.filterNotNull(), novigMarkets, c.walletLedger, c.walletFills) { bets, markets, l, f ->
+            val withNovigMoney = kotlinx.coroutines.flow.combine(c.tracker.flow.filterNotNull(), novigMarkets, c.walletLedger, c.walletFills, c.walletMoney.flow) { bets, markets, l, f, _ ->
                 // LD2: each day's profit and loss is Novig's own wallet number (LedgerDays), laid where the Tracker's book reads it
                 if (l != null && f != null) {
                     val now = System.currentTimeMillis()

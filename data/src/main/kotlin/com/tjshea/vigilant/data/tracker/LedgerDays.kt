@@ -15,13 +15,21 @@ import java.time.LocalDate
  */
 object LedgerDays {
     const val STALE_MS = 3L * 86_400_000L
+    /** A fill this young may not show in Novig's positions yet. */
+    const val RESTING_MS = 10L * 60_000L
 
     @Volatile var days: List<SlateProfit.Day> = emptyList()
     /** Bumps on every [set], so a screen can tell the wallet's numbers changed. */
     @Volatile var version: Int = 0
     fun set(d: List<SlateProfit.Day>) { days = d; version++ }
 
-    fun build(bets: List<TrackedBet>, ledger: List<LedgerRow>, fills: List<NovigFill>, now: Long): List<SlateProfit.Day> {
+    /**
+     * Market ids Novig still holds a position on (the last read of its positions), or null when not read yet. A market the wallet paid for that is NOT here is over: a lost bet leaves no settlement
+     * row, so without this its loss was only counted after [STALE_MS] or a Tracker grade, and the last days showed the winners alone (Tj 2026-11-16: "made \$148 in 3 days" while the wallet was flat).
+     */
+    @Volatile var openMarkets: Set<String>? = null
+
+    fun build(bets: List<TrackedBet>, ledger: List<LedgerRow>, fills: List<NovigFill>, now: Long, open: Set<String>? = openMarkets): List<SlateProfit.Day> {
         if (ledger.isEmpty() || fills.isEmpty()) return emptyList()
         val markets = WalletBetMoney.markets(ledger, fills)
         val lastFill = HashMap<String, Long>()
@@ -32,7 +40,7 @@ object LedgerDays {
         for ((id, m) in markets) {
             if (m.paid <= 0.005) continue
             val tracked = betsOf[id].orEmpty()
-            val final = m.payout > 0.0 || tracked.any { it.status != BetStatus.PENDING } || (tracked.isEmpty() && now - (lastFill[id] ?: now) > STALE_MS)
+            val final = m.payout > 0.0 || tracked.any { it.status != BetStatus.PENDING } || (open != null && id !in open && now - (lastFill[id] ?: now) > RESTING_MS) || (tracked.isEmpty() && now - (lastFill[id] ?: now) > STALE_MS)
             if (!final) continue
             val settledAt = m.settledAtMs ?: lastFill[id] ?: now
             val start = if (tracked.isNotEmpty()) tracked.minOf(SlateProfit::gameMs) else settledAt - SlateProfit.TYPICAL_GAME_MS
