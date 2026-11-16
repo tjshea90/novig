@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-cnhej8",
- "head": "f942fb6b0ed26b7628e8164b471cada618de2387",
+ "head": "cb2aa253ed6aa5cbdb5838b8e499b5290117fb45",
  "since": 1794788519,
- "beat": 1794863369,
- "beatIso": "2026-11-16T21:09:29Z",
- "done": "v1.0.125-127 shipped for tablet lag (baseline profile, Engine/Live timers)",
- "next": "read next tablet diag: coldStartMs, frames:quiet; then EV tab per-card clocks, bets.json size, PF5 send-report button"
+ "beat": 1794863427,
+ "beatIso": "2026-11-16T21:10:27Z",
+ "done": "answered Tj: v1.0.127 diag read (idle slow 64->39%, Engine 94->25%); PF7 logged",
+ "next": "PF7: EV tab (FeedScreen) all frames slow p50 253ms: find per-recompose work; chat 'sending again' not reproducible from data (messages arrived, GitHub calls healthy)"
 }
