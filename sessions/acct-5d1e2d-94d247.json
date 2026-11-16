@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-99twme",
  "head": "0aa1083104d90cd139a88920a467f7eb8cc222e1",
  "since": 1794788519,
- "beat": 1794805562,
- "beatIso": "2026-11-16T05:06:02Z",
+ "beat": 1794805567,
+ "beatIso": "2026-11-16T05:06:07Z",
  "done": "fix source pin",
  "next": "ship"
 }
