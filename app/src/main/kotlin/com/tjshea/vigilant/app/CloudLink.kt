@@ -695,7 +695,9 @@ class CloudLink(private val c: AppContainer) {
         recordHistory(st)
         latest.why = null
         if (st.computedAtMs > 0L && st.computedAtMs != feedFetchedFor) fetch(st.computedAtMs)
-        if (s.bidsFromCloud && st.bidsAtMs > 0L && st.bidsAtMs != bidsFetchedFor) fetchBids(st.bidsAtMs)
+        // The engine's own desk posts the bids while it is live (v1.0.112): the phone needs no candidate list then (DG1c).
+        val engineDeskLive = s.engineDesk && st.deskLive(System.currentTimeMillis())
+        if (s.bidsFromCloud && !engineDeskLive && st.bidsAtMs > 0L && st.bidsAtMs != bidsFetchedFor) fetchBids(st.bidsAtMs)
         if (st.propLineEvAtMs > 0L && st.propLineEvAtMs != evFetchedFor) fetchPropLineEv(st.propLineEvAtMs)
         if (st.ncaabAtMs > 0L && st.ncaabAtMs != ncaabFetchedFor && System.currentTimeMillis() < ncaabWantedUntil) fetchNcaabBoard(st.ncaabAtMs)
         if (st.cnoAtMs > 0L && st.cnoAtMs != cnoFetchedFor && com.tjshea.vigilant.data.cloud.CloudCno.wanted(s)) fetchCno(s, st.cnoAtMs)
