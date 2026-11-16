@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-gz2ti0",
- "head": "060a4bd6aab677ca9337864a6896adbee53a1bc9",
+ "head": "32e0ca3774288c9b6112f893a621cdc37aaccf84",
  "since": 1794788519,
- "beat": 1794796480,
- "beatIso": "2026-11-16T02:34:40Z",
- "done": "pre-release: DG3: phone drops settled bets older than 35 days once GitHub holds their day (versionCode 454, v1.0.114)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.114), then run: bash tools/record-release.sh v1.0.114 454 \"DG3: phone drops settled bets older than 35 days once GitHub holds their day\""
+ "beat": 1794796515,
+ "beatIso": "2026-11-16T02:35:15Z",
+ "done": "chat: v1.0.114 shipped (DG3)",
+ "next": "DG1b cold start; await Tj on live/bid loosening"
 }
