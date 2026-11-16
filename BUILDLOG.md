@@ -454,3 +454,4 @@ day that changes.
 | v1.0.113 | code 453 | 2026-11-16T02:09Z | DG1: bets.json 4 s write-behind, OddsPapi Free cache removed, no bids.json.gz reads while engine desk live
 | v1.0.114 | code 454 | 2026-11-16T02:34Z | DG3: phone drops settled bets older than 35 days once GitHub holds their day
 | v1.0.115 | code 455 | 2026-11-16T04:33Z | DG5: engine keeps the wallet's whole Novig ledger on GitHub; the phone's money figures read it
+| v1.0.116 | code 456 | 2026-11-16T05:15Z | DG5: Tracker's money comes from Novig's own wallet records (fills, fees, settlements) kept on GitHub
