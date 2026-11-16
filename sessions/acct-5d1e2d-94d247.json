@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-t5s99b",
  "head": "56084c7214582c82725aaf04da24dcaceea08bc2",
  "since": 1794788519,
- "beat": 1794867194,
- "beatIso": "2026-11-16T22:13:14Z",
+ "beat": 1794867680,
+ "beatIso": "2026-11-16T22:21:20Z",
  "done": "answered Tj release it: nothing pending; bets store already off-main",
  "next": "PF10: add startup stage timings, release, read next diag"
 }
