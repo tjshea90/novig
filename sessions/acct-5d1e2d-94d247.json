@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-mnnrec",
  "head": "0665ff342e091a8ce8d0691fc83d8e5cd16b6657",
  "since": 1794788519,
- "beat": 1794853481,
- "beatIso": "2026-11-16T18:24:41Z",
+ "beat": 1794853754,
+ "beatIso": "2026-11-16T18:29:14Z",
  "done": "answered Tj lag; shipped v1.0.124; PF4 logged",
  "next": "PF4: read v1.0.124 diag slowest tabs and cut"
 }
