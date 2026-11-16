@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-gz2ti0",
- "head": "7de406341c5971dce390e32fd028a63f58c73684",
+ "head": "c50e3c71ef6a93d14ef4e781ea7644345810ad90",
  "since": 1794788519,
- "beat": 1794794966,
- "beatIso": "2026-11-16T02:09:26Z",
- "done": "pre-release: DG1: bets.json saved at most every 4 s, OddsPapi Free cache deleted and never loaded, no bids.json.gz reads while engine desk is live (versionCode 453, v1.0.113)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.113), then run: bash tools/record-release.sh v1.0.113 453 \"DG1: bets.json saved at most every 4 s, OddsPapi Free cache deleted and never loaded, no bids.json.gz reads while engine desk is live\""
+ "beat": 1794795000,
+ "beatIso": "2026-11-16T02:10:00Z",
+ "done": "chat: v1.0.113 shipped (DG1a,c; OddsPapi off+cache gone); told Tj live/bids blocked by Pinnacle-closed + picked-off guard",
+ "next": "DG1b cold start; full OddsPapi code removal; await Tj on loosening"
 }
