@@ -555,6 +555,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         frameMeter.stop()
+        // The bet history is saved at most every 4 s (DG1a); leaving the screen saves what is waiting.
+        val tracker = (application as VigilantApp).container.tracker
+        kotlinx.coroutines.runBlocking { runCatching { tracker.flush() } }
         super.onPause()
     }
 
