@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-1qw51k",
- "head": "61d9516a52847f44a80668ec57ff1a8ad0676805",
+ "head": "8514e029a3cd651e529ceb334117f98f90dcb9d3",
  "since": 1794788519,
- "beat": 1794847972,
- "beatIso": "2026-11-16T16:52:52Z",
- "done": "DG5 slimArchived built+tested",
- "next": "ship.sh, release.yml, record-release, tell Tj"
+ "beat": 1794848000,
+ "beatIso": "2026-11-16T16:53:20Z",
+ "done": "pre-ship: Settled bets older than 3 days lose their heavy snapshot once on GitHub, so the bets file stays small and the app starts faster",
+ "next": "ship.sh gates and releases this"
 }
