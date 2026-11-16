@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-99twme",
- "head": "beef529ddaaa462f7320f3b0269f67ec4ec3c086",
+ "head": "be575a34d35111fe2ac6b7dcd2ca2e08cd314b20",
  "since": 1794788519,
- "beat": 1794807707,
- "beatIso": "2026-11-16T05:41:47Z",
- "done": "lightweight: money overlay cached per ledger file, wallet files polled once a minute",
- "next": "ship 1.0.117"
+ "beat": 1794807754,
+ "beatIso": "2026-11-16T05:42:34Z",
+ "done": "pre-release: Lighter: the Tracker's Novig-money overlay is worked out once per new file, and the wallet files are polled once a minute (versionCode 457, v1.0.117)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.117), then run: bash tools/record-release.sh v1.0.117 457 \"Lighter: the Tracker's Novig-money overlay is worked out once per new file, and the wallet files are polled once a minute\""
 }
