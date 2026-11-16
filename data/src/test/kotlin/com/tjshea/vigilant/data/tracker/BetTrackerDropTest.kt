@@ -13,7 +13,7 @@ class BetTrackerDropTest {
     )
 
     @Test fun `old settled bets leave only when GitHub has their day`() = runBlocking {
-        val t = BetTracker(File(createTempDir(), "b.json"))
+        val t = BetTracker(File(java.nio.file.Files.createTempDirectory("bt").toFile(), "b.json"))
         val now = 100L * 86_400_000L
         val old = now - 60 * 86_400_000L
         val other = old - 3 * 86_400_000L
