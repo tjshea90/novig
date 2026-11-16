@@ -1,21 +1,23 @@
-# CHECKPOINT 4510 — read me first, then TASKS.md
+# CHECKPOINT 4511 — read me first, then TASKS.md
 
-**Written:** 2026-11-16T06:05:51Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-99twme` · **builds on:** `ae1d3f441` (this checkpoint is the commit after it)
+**Written:** 2026-11-16T06:40:19Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-2gqjsf` · **builds on:** `15a6cafe8` (this checkpoint is the commit after it)
 
 ## Just done
-v1.0.118 shipped (DG6)
+answered Tj on ledger vs tracker gap; logged LD1
 
 ## Do this next
-watch Tj chat; check phone numbers feedback
+reconcile ledger vs tracker (LD1); watch chat
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  15a6cafe8 ckpt 4510: v1.0.118 shipped (DG6)
   fc835bc6c ckpt 4509: pre-release: The phone downloads Novig's wallet history once and then only 
   3bb4b18ff ckpt 4508: DG6: wallet files: full once, then 3-day delta merged into the phone's cach
   c749536c5 ckpt 4507: pre-release: Lighter and permanent: old days kept as daily numbers from Nov
@@ -25,5 +27,4 @@ watch Tj chat; check phone numbers feedback
   dc0c7734a ckpt 4503: DG5 shipped v1.0.116; wallet ledger (15,558 rows) and fills (10,579) comple
   5cc55fd5c ckpt 4502: DG5: ledger/fills full first walk (complete flag), 3 s paging
   7b0a8a318 ckpt 4501: pre-release: DG5: Tracker's money comes from Novig's own wallet records (fi
-  0aa108310 ckpt 4500: fix source pin
 ```

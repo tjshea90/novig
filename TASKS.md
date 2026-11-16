@@ -6663,3 +6663,5 @@ DG5 (Tj chat 03:16 UTC 2026-11-16) "rebuild the entire tracker system to use nov
   [ ] DG5b keep CLV/EV file on GitHub; phone reads it
   [ ] DG5c phone Tracker reads the synced file, caches on disk, refresh fetches only newer
   [ ] DG5d erase old local tracker data (after the new source is confirmed)
+
+- [ ] LD1 (Tj chat 06:38 UTC 2026-11-16, screenshot) Tracker all-time +$43.13 (4929 bets since Oct 11) vs Novig ledger -$242.62: reconcile by day and by order id (fees, pre-Oct-11 activity, bets the Tracker never saw, voids); report the split in chat; make the Tracker use the ledger where it differs.
