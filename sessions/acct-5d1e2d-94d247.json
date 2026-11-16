@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-mnnrec",
- "head": "0665ff342e091a8ce8d0691fc83d8e5cd16b6657",
+ "head": "e94feb7892527659b1ebb45c947078fff5b44df0",
  "since": 1794788519,
- "beat": 1794853754,
- "beatIso": "2026-11-16T18:29:14Z",
- "done": "answered Tj lag; shipped v1.0.124; PF4 logged",
- "next": "PF4: read v1.0.124 diag slowest tabs and cut"
+ "beat": 1794853875,
+ "beatIso": "2026-11-16T18:31:15Z",
+ "done": "answered Tj; PF5 logged",
+ "next": "PF5 button then PF4"
 }
