@@ -6687,3 +6687,5 @@ DG5 (Tj chat 03:16 UTC 2026-11-16) "rebuild the entire tracker system to use nov
 - [ ] PF5 (Tj chat 18:30 UTC) a "Send report now" button (Settings › Cloud scan › Save now should also upload the diagnostics report) so he can send it on demand.
 
 - [ ] PF6 (Tj chat 20:14 UTC 2026-11-16) "app starting extremely slow and crashed": 20:15 diag v1.0.124: coldStartMs 10163, 63.9% frames slow idle (worst 7.2 s, EV tab 92% slow), heap 22%, no crash recorded, device alps 711 Android 10 heap 256 MB. Fix with PF4: prune/move bets.json (8 MB), move startup store loads after first frame, adopt engine list less often off Feed.
+
+- [x] PF6a baseline-prof.txt added (app code was never precompiled: 10 s cold start, 64% slow frames on the 2 GB Android 10 Go tablet, MT8168). Verify after release: next diag perf.coldStartMs and frames:quiet. [ ] PF6b: next suspects if still slow: bets.json 8 MB, Engine tab 7 s freeze, EV tab 92% slow frames (Feed rows).
