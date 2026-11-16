@@ -102,6 +102,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        LaunchTrace.stage("screen-create")
         // Auto-bet and background auto-scan are switched off by the app only after a phone restart, saved before anything reads the settings
         // (Tj, 2026-10-02 16:05Z: "I want the app never to turn off auto bet unless I turn it off"): [LaunchReset], [LaunchGate].
         val app = application as VigilantApp
@@ -563,6 +564,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        LaunchTrace.stage("on-screen")
         (application as VigilantApp).container.onScreen = true
         // Everything GitHub is doing is read the moment the app opens (the engine's heartbeat, list, bets, bids, messages, usage): TCL31.
         runCatching { (application as VigilantApp).container.cloud.syncNow() }
@@ -580,6 +582,7 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         val container = (application as VigilantApp).container
         container.onScreen = false
+        LaunchTrace.stage("stopped")
         // Novig's live feed only while a scan or Tj is using it: off screen with no scan, it's closed now
         // rather than pushing prices to a phone in a pocket for two more minutes.
         if (!container.runner.running && !container.pinnRunner.running && !container.streamEngine.status.value.running) container.novig.stream?.close()

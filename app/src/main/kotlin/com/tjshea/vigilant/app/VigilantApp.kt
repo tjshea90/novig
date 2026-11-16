@@ -93,6 +93,7 @@ class VigilantApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        LaunchTrace.begin(filesDir)
         // LG3: a low-RAM (Android Go) device reads the engine less often; see CloudLink.paced.
         runCatching {
             if ((getSystemService(ACTIVITY_SERVICE) as android.app.ActivityManager).isLowRamDevice) CloudLink.slowdown = 2.5
@@ -909,6 +910,8 @@ class AppContainer(val app: Application) {
     init {
         // The kill switch outlives a settings file that lost it (a restored backup, a reset): put back from its second copy before anything reads the settings
         // for long, and every part that stops for it (the bids, the services) sees it through the same flow. Never turns it off: only Resume does.
+        // PF8: how far the last run got before it ended without leaving the screen cleanly (Android 10 keeps no exit record).
+        LaunchTrace.previous?.let { eventLog.warn("LAUNCH", "the run before this one: $it") }
         appScope.launch(Dispatchers.IO) {
             if (killMarker.on) runCatching { settingsStore.update { KillSwitch.reconcile(it, killMarker) } }
         }
