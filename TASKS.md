@@ -6650,7 +6650,7 @@ Checked 2026-11-14 (keyless, public): `/v1/bookmakers` has no `pinnacle`, only `
 
 DG1 (Tj app chat 01:23 UTC 2026-11-16, Diagnostics "WHAT TO DO" pasted; answered by mirage)
 - [x] DG1a (4 s write-behind for bets.json, OddsPapi cache deleted, flushed on pause) oddspapi_free_cache.json 13 MB and bets.json 10 MB rewritten whole on every change (JsonFileStore): prune oldest ended records / move bulk to a day journal (lag, GC).
-- [ ] DG1b cold start 9.4 s to first frame (MainActivity / VigilantApp AppContainer eager work): move store loads off main / after first frame.
+- [x] DG1b (v1.0.122: ledger+fills 3 MB JSON parsed off main; first-open-after-update close still unexplained, needs Diagnostics Recent problems) cold start 9.4 s to first frame (MainActivity / VigilantApp AppContainer eager work): move store loads off main / after first frame.
 - [x] DG1c (no bids.json.gz read while engine desk live) api.github.com: 9/9 404 on contents/bids.json.gz (file absent while engine posts bids itself: stop reading it), 409s on writes (sha conflicts: retry with fresh sha), usage.json slow: read via ETag/less often.
 - [ ] DG1d ParlayAPI key ...10d2 refused, plan free, 403s on /injuries: Tj's plan lapsed or key changed (Tj check); engine/phone should stop calling injuries on a free key.
 - [ ] DG1e (Tj only) Android notifications off and battery optimisation on for Vigilant.
