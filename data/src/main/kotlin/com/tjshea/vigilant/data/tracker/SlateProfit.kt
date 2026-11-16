@@ -94,13 +94,20 @@ object SlateProfit {
     private fun counts(b: TrackedBet) = b.status != BetStatus.VOID
 
     /** Every game day with a bet in it, oldest first. */
-    fun book(all: List<TrackedBet>, now: Long, archived: List<Day> = SlateArchive.days): Book {
+    fun book(all: List<TrackedBet>, now: Long, archived: List<Day> = SlateArchive.days, wallet: List<Day> = LedgerDays.days): Book {
         val bets = all.filter(::counts)
         val live = bookOfBets(bets, now)
-        // days whose bets the phone no longer keeps (DG6) join the book; a date with a bet still here is the bets' alone
-        val here = live.days.mapTo(HashSet()) { it.date }
-        val extra = archived.filter { it.date !in here }
-        return if (extra.isEmpty()) live else Book((live.days + extra).sortedBy { it.date })
+        // Novig's own wallet numbers decide a day's profit and loss (LD2); the bets only add what is still open on that day
+        val byWallet = wallet.associateBy { it.date }
+        val merged = live.days.map { d ->
+            val w = byWallet[d.date]
+            if (w != null) w.copy(staked = w.staked + d.openStaked, open = d.open, firstStartMs = if (d.firstStartMs > 0L) minOf(w.firstStartMs, d.firstStartMs) else w.firstStartMs, endMs = if (d.open > 0) d.endMs else maxOf(w.endMs, d.endMs))
+            else if (wallet.isNotEmpty() && d.date >= wallet.first().date) d.copy(profit = 0.0, settled = 0, won = 0, lost = 0, settledStaked = 0.0, staked = d.openStaked)
+            else d
+        }
+        val here = merged.mapTo(HashSet()) { it.date }
+        val extra = (wallet + archived).filter { it.date !in here }.distinctBy { it.date }
+        return Book((merged + extra).sortedBy { it.date })
     }
 
     private fun bookOfBets(bets: List<TrackedBet>, now: Long): Book {
