@@ -451,3 +451,4 @@ day that changes.
 | v1.0.110 | code 450 | 2026-11-15T22:02Z | LG3c: phone bid guard rests while engine desk live
 | v1.0.111 | code 451 | 2026-11-15T22:21Z | Engine: keeps ordering after unreadable fill; pregame kinds pruned; live real
 | v1.0.112 | code 452 | 2026-11-15T22:51Z | Phone reads no Novig order books for bids while the engine posts them
+| v1.0.113 | code 453 | 2026-11-16T02:09Z | DG1: bets.json 4 s write-behind, OddsPapi Free cache removed, no bids.json.gz reads while engine desk live
