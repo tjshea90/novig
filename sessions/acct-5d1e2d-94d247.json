@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-2gqjsf",
- "head": "55ec49fffd6ccf1760ba875400bbb398cc935848",
+ "head": "6ffb646850a57366d7865591de1c69abe4399988",
  "since": 1794788519,
- "beat": 1794812457,
- "beatIso": "2026-11-16T07:00:57Z",
- "done": "pre-ship: Daily profit/loss, charts and all-time come from Novig's own wallet by game day; pull to refresh re-reads the wallet (LD1-LD3)",
- "next": "ship.sh gates and releases this"
+ "beat": 1794812626,
+ "beatIso": "2026-11-16T07:03:46Z",
+ "done": "pre-release: Daily profit/loss, charts and all-time come from Novig's own wallet by game day; pull to refresh re-reads the wallet (LD1-LD3) (versionCode 459, v1.0.119)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.119), then run: bash tools/record-release.sh v1.0.119 459 \"Daily profit/loss, charts and all-time come from Novig's own wallet by game day; pull to refresh re-reads the wallet (LD1-LD3)\""
 }
