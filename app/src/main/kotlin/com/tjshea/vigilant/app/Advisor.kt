@@ -398,10 +398,10 @@ object Advisor {
      */
     internal fun frameFinding(frames: Map<String, com.tjshea.vigilant.data.diag.FrameStats.Bucket>): Finding? {
         val quiet = frames[com.tjshea.vigilant.data.diag.FrameStats.QUIET]?.takeIf { it.frames >= 150L }
-        val worst = frames.filterKeys { it != com.tjshea.vigilant.data.diag.FrameStats.QUIET }.entries
+        val worst = frames.filterKeys { it != com.tjshea.vigilant.data.diag.FrameStats.QUIET && !it.startsWith(com.tjshea.vigilant.data.diag.FrameStats.SCREEN_PREFIX) }.entries
             .filter { (_, b) -> b.frames >= MIN_FRAMES && b.slowShare >= SLOW_FRAMES_SHARE && (quiet == null || b.slowShare >= quiet.slowShare * 2) }
             .maxByOrNull { it.value.slowShare }
-            ?: return quietFinding(quiet)
+            ?: return quietFinding(quiet, frames)
         val (what, b) = worst
         val pct = { s: Double -> "${Math.round(s * 1000) / 10.0}%" }
         return Finding(
@@ -419,13 +419,16 @@ object Advisor {
      * report showed 27% slow frames and 9 frozen with no scan): the cost is then the screen's own work or background churn (garbage collection, a big store rewritten, a
      * derived list recomputed on the main thread), so the finding says so instead of staying silent because no work was "running".
      */
-    internal fun quietFinding(quiet: com.tjshea.vigilant.data.diag.FrameStats.Bucket?): Finding? {
+    internal fun quietFinding(quiet: com.tjshea.vigilant.data.diag.FrameStats.Bucket?, frames: Map<String, com.tjshea.vigilant.data.diag.FrameStats.Bucket> = emptyMap()): Finding? {
         if (quiet == null || quiet.slowShare < QUIET_SLOW_SHARE) return null
         val pct = { s: Double -> "${Math.round(s * 1000) / 10.0}%" }
+        val tabs = frames.filterKeys { it.startsWith(com.tjshea.vigilant.data.diag.FrameStats.SCREEN_PREFIX) }.filterValues { it.frames >= 50 }
+            .entries.sortedByDescending { it.value.slowShare }.take(3)
+            .joinToString("; ") { (k, b) -> "${k.removePrefix(com.tjshea.vigilant.data.diag.FrameStats.SCREEN_PREFIX)} ${pct(b.slowShare)} slow of ${b.frames}, worst ${b.durations.max.toLong()} ms" }
         return Finding(
             "perf:frames:quiet", "OPTIMIZE",
             "The screen stutters with nothing running: ${pct(quiet.slowShare)} of its frames are slow, ${quiet.frozen} froze",
-            "${quiet.frames} frames, ${quiet.slow} slow, p50 ${quiet.durations.p50.toLong()} ms, p95 ${quiet.durations.p95.toLong()} ms, worst ${quiet.durations.max.toLong()} ms (Performance block)",
+            "${quiet.frames} frames, ${quiet.slow} slow, p50 ${quiet.durations.p50.toLong()} ms, p95 ${quiet.durations.p95.toLong()} ms, worst ${quiet.durations.max.toLong()} ms (Performance block)" + (if (tabs.isEmpty()) "" else "; slowest tabs: $tabs"),
             "the screen in use (the Tracker's derived lists over every bet, the Feed's rows), the state flows MainViewModel mirrors, and the heap/GC load (Memory block)",
             "Load compose-performance: find what recomposes or recomputes on the main thread per state change (a list built from thousands of bets, a flow collected without distinctUntilChanged) and what allocates in the background; move it off the main thread. Never drop data to do it.",
             weight = quiet.slowShare * 30,

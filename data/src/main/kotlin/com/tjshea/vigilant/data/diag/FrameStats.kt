@@ -28,6 +28,15 @@ class FrameStats {
 
     /** A frame of [durationMs] whose deadline was [deadlineMs], drawn while the app was doing [activity]. */
     fun add(activity: String, durationMs: Double, deadlineMs: Double) {
+        record(activity, durationMs, deadlineMs)
+        // Also by the tab in front (Tj, 2026-11-16: "it lags when I type and when I scroll"): says WHICH screen stutters, whatever else was running.
+        screen?.let { record(SCREEN_PREFIX + it, durationMs, deadlineMs) }
+    }
+
+    /** The tab in front, set by the UI; null until it says. */
+    @Volatile var screen: String? = null
+
+    private fun record(activity: String, durationMs: Double, deadlineMs: Double) {
         val c = counters.getOrPut(activity) { Counter() }
         synchronized(c) {
             c.frames++
@@ -54,6 +63,8 @@ class FrameStats {
         const val CHECK = "Check odds now running"
         const val CNO = "CNO's list being read"
         const val QUIET = "none of those running"
+        /** A bucket by the tab in front rather than by what ran: `on the Engine tab`. */
+        const val SCREEN_PREFIX = "on the tab: "
 
         fun activity(scanning: Boolean, checking: Boolean, cnoReading: Boolean): String = when {
             scanning -> SCAN
