@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-99twme",
- "head": "4764eee6ca243f2a385f2fe263a237e83c55ffdf",
+ "head": "3bb4b18ff3d2030175198ac52ee9bc9e47664cad",
  "since": 1794788519,
- "beat": 1794808487,
- "beatIso": "2026-11-16T05:54:47Z",
- "done": "pre-release: Lighter and permanent: old days kept as daily numbers from Novig's money, the phone downloads only the last 45 days of wallet rows, money overlay cached (versionCode 457, v1.0.117)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.117), then run: bash tools/record-release.sh v1.0.117 457 \"Lighter and permanent: old days kept as daily numbers from Novig's money, the phone downloads only the last 45 days of wallet rows, money overlay cached\""
+ "beat": 1794808563,
+ "beatIso": "2026-11-16T05:56:03Z",
+ "done": "DG6: wallet files: full once, then 3-day delta merged into the phone's cache",
+ "next": "ship 1.0.118"
 }
