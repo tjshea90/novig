@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-cnhej8",
  "head": "710fa073a4580b9b54e5bbec912bd87f227db4e8",
  "since": 1794788519,
- "beat": 1794861980,
- "beatIso": "2026-11-16T20:46:20Z",
+ "beat": 1794862263,
+ "beatIso": "2026-11-16T20:51:03Z",
  "done": "pre-release: Engine tab redraws every 5 s instead of every second (12 s on low-RAM tablets): far less CPU (versionCode 466, v1.0.126)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.126), then run: bash tools/record-release.sh v1.0.126 466 \"Engine tab redraws every 5 s instead of every second (12 s on low-RAM tablets): far less CPU\""
 }
