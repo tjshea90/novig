@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/94d247",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "94d247",
+ "note": "Baseline profile: precompiles the app's code (tablet cold start 10 s, slow frames)",
+ "since": 1794860747,
+ "beat": 1794860747
+}
