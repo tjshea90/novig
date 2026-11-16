@@ -1127,7 +1127,6 @@ class CloudLink(private val c: AppContainer) {
                 if (l == null || f == null) null else com.tjshea.vigilant.data.tracker.WalletBetMoney.apply(going, l.rows, f.fills)
             }) { day -> c.betArchive.dayOnChannel(day) }
         }
-        }
         if (failed == null) {
             val known = runCatching { uploaded.read() }.getOrDefault(emptyMap())
             val studyDir = File(c.app.filesDir, "study")

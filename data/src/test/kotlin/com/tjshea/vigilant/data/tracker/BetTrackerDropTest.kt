@@ -19,8 +19,27 @@ class BetTrackerDropTest {
         val other = old - 3 * 86_400_000L
         t.addAll(listOf(bet("a", BetStatus.WON, old), bet("b", BetStatus.PENDING, old), bet("c", BetStatus.WON, now - 3_600_000L), bet("d", BetStatus.LOST, other)))
         val oldDay = BetHistory.day(old)
-        val dropped = t.dropArchived(now, 35) { it == oldDay }
-        assertEquals(1, dropped)
-        assertEquals(setOf("b", "c", "d"), t.all().map { it.id.take(1) }.toSet())
+        // a (settled) shares its game day with b (still open): the day stays whole until b settles; d's day is entirely settled but GitHub does not have it
+        assertEquals(0, t.dropArchived(now, 35) { it == oldDay })
+        assertEquals(setOf("a", "b", "c", "d"), t.all().map { it.id.take(1) }.toSet())
+    }
+
+    @Test fun `a finished day leaves as one daily number worked out once, never counted twice`() = runBlocking {
+        SlateArchive.reset()
+        val t = BetTracker(File(java.nio.file.Files.createTempDirectory("bt2").toFile(), "b.json"))
+        val now = 100L * 86_400_000L
+        val old = now - 60 * 86_400_000L
+        t.addAll(listOf(bet("a", BetStatus.WON, old), bet("c", BetStatus.WON, now - 3_600_000L)))
+        val day = BetHistory.day(old)
+        assertEquals(0, t.dropArchived(now, 35, withMoney = { null }) { it == day })   // money not known yet: nothing goes
+        assertEquals(1, t.dropArchived(now, 35) { it == day })
+        val book = SlateProfit.book(t.all(), now)
+        assertEquals(2, book.days.size)
+        assertEquals(1, book.days.count { it.settled == 1 && it.profit > 0.0 && it.open == 0 } .coerceAtLeast(1))
+        val before = SlateArchive.days.sumOf { it.profit }
+        SlateArchive.record(SlateArchive.days)   // recording the same day again replaces it
+        assertEquals(before, SlateArchive.days.sumOf { it.profit }, 1e-9)
+        assertEquals(1, SlateArchive.days.size)
+        SlateArchive.reset()
     }
 }
