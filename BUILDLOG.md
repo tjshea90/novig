@@ -460,3 +460,4 @@ day that changes.
 | v1.0.119 | code 459 | 2026-11-16T07:09Z | Daily profit/loss, charts and all-time come from Novig's own wallet by game day; pull to refresh re-reads the wallet
 | v1.0.120 | code 460 | 2026-11-16T08:12Z | Daily profit and loss counts lost bets Novig no longer holds
 | v1.0.121 | code 461 | 2026-11-16T08:13Z | The Tracker reads Novig's wallet only on pull to refresh or every 15 minutes
+| v1.0.122 | code 462 | 2026-11-16T08:22Z | The app opens faster: wallet history read in the background
