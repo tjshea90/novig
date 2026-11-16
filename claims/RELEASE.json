@@ -5,7 +5,7 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "94d247",
- "note": "Daily profit and loss counts lost bets Novig no longer holds, so the last days no longer show only the winners",
+ "note": "The Tracker no longer re-reads Novig's wallet in the background every minute; only a pull to refresh (or every 15 minutes) does, which removes the lag",
  "since": 1794816002,
- "beat": 1794816244
+ "beat": 1794816249
 }
