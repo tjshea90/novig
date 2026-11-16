@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-cnhej8",
- "head": "e220ce8af7ead25388cc3932209fa99ec7019fd7",
+ "head": "cee756bdd15ae91de2e478a762607c4da362e6b1",
  "since": 1794788519,
- "beat": 1794862523,
- "beatIso": "2026-11-16T20:55:23Z",
+ "beat": 1794862947,
+ "beatIso": "2026-11-16T21:02:27Z",
  "done": "pre-release: Live tab timers slow down on low-RAM tablets (versionCode 467, v1.0.127)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.127), then run: bash tools/record-release.sh v1.0.127 467 \"Live tab timers slow down on low-RAM tablets\""
 }
