@@ -1,13 +1,13 @@
-# CHECKPOINT 4553 — read me first, then TASKS.md
+# CHECKPOINT 4554 — read me first, then TASKS.md
 
-**Written:** 2026-11-16T20:55:23Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-cnhej8` · **builds on:** `6f4576aed` (this checkpoint is the commit after it)
+**Written:** 2026-11-16T21:03:01Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-cnhej8` · **builds on:** `cee756bdd` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: Live tab timers slow down on low-RAM tablets (versionCode 467, v1.0.127)
+v1.0.125-127 shipped for tablet lag (baseline profile, Engine/Live timers)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.127), then run: bash tools/record-release.sh v1.0.127 467 "Live tab timers slow down on low-RAM tablets"
+read next tablet diag: coldStartMs, frames:quiet; then EV tab per-card clocks, bets.json size, PF5 send-report button
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  e220ce8af ckpt 4553: pre-release: Live tab timers slow down on low-RAM tablets (versionCode 467,
   6f4576aed ckpt 4552: pre-ship: Live tab timers slow down on low-RAM tablets
   710fa073a ckpt 4551: pre-release: Engine tab redraws every 5 s instead of every second (12 s on 
   5328bf0e8 ckpt 4550: pre-ship: Engine tab redraws every 5 s instead of every second (12 s on low
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   eb4eeb371 ckpt 4546: answered Tj slow start/crash; PF6 logged from 20:15 diag
   e94feb789 ckpt 4545: answered Tj; PF5 logged
   0665ff342 ckpt 4544: answered Tj lag; shipped v1.0.124; PF4 logged
-  e836e73e1 ckpt 4543: WATCH 2026-11-16: engine healthy, no change
 ```
