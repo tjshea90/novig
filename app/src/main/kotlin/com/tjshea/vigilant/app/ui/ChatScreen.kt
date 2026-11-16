@@ -140,7 +140,6 @@ fun ChatPage(
 
     val ctx = LocalContext.current
     // The draft lives outside the screen: a tab switch drops the composition and rememberSaveable with it (Tj, 2026-10-20: "what I was already typing" was deleted).
-    var text by ChatDraft.text
     var picked by rememberSaveable { mutableStateOf(listOf<String>()) }
     val pickedNames = remember(picked) { picked.map { displayName(ctx, android.net.Uri.parse(it)) } }
     var error by remember { mutableStateOf<String?>(null) }
@@ -201,24 +200,36 @@ fun ChatPage(
                 TextButton(onClick = { picked = picked.filterIndexed { j, _ -> j != i } }) { Text("Remove") }
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-            OutlinedButton(onClick = { picker.launch("*/*") }, enabled = picked.size < CloudChat.MAX_FILES, modifier = Modifier.testTag("chatAttach")) { Text("📎") }
-            OutlinedTextField(text, { text = it; error = null }, modifier = Modifier.weight(1f).testTag("chatInput"), placeholder = { Text("Message Claude") }, maxLines = 6)
-            Button(
-                onClick = {
-                    val t = text
-                    val files = picked.map(android.net.Uri::parse)
-                    queuing = true
-                    scope.launch {
-                        val why = onSend(t, files)
-                        queuing = false
-                        error = why
-                        if (why == null) { text = ""; picked = emptyList(); list.scrollToItem(0) }
-                    }
-                },
-                enabled = (text.isNotBlank() || picked.isNotEmpty()) && !queuing, modifier = Modifier.testTag("chatSend"),
-            ) { Text("Send") }
-        }
+        ChatComposer(
+            canAttach = picked.size < CloudChat.MAX_FILES, hasPicked = picked.isNotEmpty(), queuing = queuing,
+            onAttach = { picker.launch("*/*") }, onTyped = { error = null },
+            onSend = { t ->
+                val files = picked.map(android.net.Uri::parse)
+                queuing = true
+                scope.launch {
+                    val why = onSend(t, files)
+                    queuing = false
+                    error = why
+                    if (why == null) { ChatDraft.text.value = ""; picked = emptyList(); list.scrollToItem(0) }
+                }
+            },
+        )
+    }
+}
+
+/**
+ * PF9 (Tj chat 2026-11-16: "the typing was never this laggy"): the typed text lives in this row alone, so a keystroke redraws the text box and the Send button, not the whole thread and its menu.
+ */
+@Composable
+private fun ChatComposer(canAttach: Boolean, hasPicked: Boolean, queuing: Boolean, onAttach: () -> Unit, onTyped: () -> Unit, onSend: (String) -> Unit) {
+    var text by ChatDraft.text
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
+        OutlinedButton(onClick = onAttach, enabled = canAttach, modifier = Modifier.testTag("chatAttach")) { Text("📎") }
+        OutlinedTextField(text, { text = it; onTyped() }, modifier = Modifier.weight(1f).testTag("chatInput"), placeholder = { Text("Message Claude") }, maxLines = 6)
+        Button(
+            onClick = { onSend(text) },
+            enabled = (text.isNotBlank() || hasPicked) && !queuing, modifier = Modifier.testTag("chatSend"),
+        ) { Text("Send") }
     }
 }
 
