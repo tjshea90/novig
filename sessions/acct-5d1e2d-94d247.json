@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-mnnrec",
- "head": "08fff40f23f99e0adddb6f59f2d29a028bdc8a73",
+ "head": "fb807eda89d6ed130c9fdc8269acb11ed5b0db71",
  "since": 1794788519,
- "beat": 1794852106,
- "beatIso": "2026-11-16T18:01:46Z",
- "done": "PF2: reverted report reorder (tests pass)",
- "next": "read Tj's next diagnostics file frames"
+ "beat": 1794852195,
+ "beatIso": "2026-11-16T18:03:15Z",
+ "done": "PF3 logged; answered Tj chat (report uploads to GitHub; lag numbers from 18:00 diag)",
+ "next": "PF3: Advisor LAG finding, find Default-dispatcher/GC churn, save-as-file fix"
 }
