@@ -465,3 +465,4 @@ day that changes.
 | v1.0.124 | code 464 | 2026-11-16T18:23Z | Diagnostics names which tab stutters and flags a slow screen with nothing running
 | v1.0.125 | code 465 | 2026-11-16T20:39Z | Baseline profile: precompiles the app's code (tablet cold start 10 s, slow frames)
 | v1.0.126 | code 466 | 2026-11-16T20:52Z | Engine tab redraws every 5 s instead of every second (12 s on low-RAM tablets): far less CPU
+| v1.0.127 | code 467 | 2026-11-16T21:02Z | Live tab timers slow down on low-RAM tablets
