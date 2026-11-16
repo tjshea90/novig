@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-2gqjsf",
  "head": "55ec49fffd6ccf1760ba875400bbb398cc935848",
  "since": 1794788519,
- "beat": 1794812451,
- "beatIso": "2026-11-16T07:00:51Z",
+ "beat": 1794812457,
+ "beatIso": "2026-11-16T07:00:57Z",
  "done": "pre-ship: Daily profit/loss, charts and all-time come from Novig's own wallet by game day; pull to refresh re-reads the wallet (LD1-LD3)",
  "next": "ship.sh gates and releases this"
 }
