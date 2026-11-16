@@ -321,7 +321,10 @@ data class TrackerStats(
  */
 class BetTracker(file: File, private val clock: () -> Long = System::currentTimeMillis, private val ownBook: String = "Novig") {
 
-    private val store = JsonFileStore(file, ListSerializer(TrackedBet.serializer()), { emptyList() })
+    private val store = JsonFileStore(file, ListSerializer(TrackedBet.serializer()), { emptyList() }, writeBehindMs = 4_000L)
+
+    /** Writes any change the 4 s write-behind has not saved yet (DG1a: the 10 MB file was rewritten whole on every change); called when the app pauses. */
+    suspend fun flush() = store.flush()
 
     val flow get() = store.flow
 
