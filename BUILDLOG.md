@@ -467,3 +467,4 @@ day that changes.
 | v1.0.126 | code 466 | 2026-11-16T20:52Z | Engine tab redraws every 5 s instead of every second (12 s on low-RAM tablets): far less CPU
 | v1.0.127 | code 467 | 2026-11-16T21:02Z | Live tab timers slow down on low-RAM tablets
 | v1.0.128 | code 468 | 2026-11-16T21:20Z | Launch trace: the next report says how far a run got before Android ended it
+| v1.0.129 | code 469 | 2026-11-16T21:31Z | Chat typing no longer redraws the whole thread on every key; finer launch trace
