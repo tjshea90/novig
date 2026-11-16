@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-mnnrec",
  "head": "9ec516842726af9fc24576d10f119d846f60d926",
  "since": 1794788519,
- "beat": 1794852822,
- "beatIso": "2026-11-16T18:13:42Z",
+ "beat": 1794852827,
+ "beatIso": "2026-11-16T18:13:47Z",
  "done": "pre-ship: Diagnostics names which tab stutters and flags a slow screen with nothing running",
  "next": "ship.sh gates and releases this"
 }
