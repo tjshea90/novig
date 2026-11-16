@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-99twme",
- "head": "65f3bdbf2152029ea546b9757a7ba43a3b2b7ae8",
+ "head": "632fc9f6ca832c962588837acec15498a1eccd2f",
  "since": 1794788519,
- "beat": 1794803127,
- "beatIso": "2026-11-16T04:25:27Z",
- "done": "bump 1.0.115",
- "next": "ship"
+ "beat": 1794803299,
+ "beatIso": "2026-11-16T04:28:19Z",
+ "done": "pre-release: DG5: engine keeps the wallet's whole Novig ledger on GitHub; the phone's money figures read it (versionCode 455, v1.0.115)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.115), then run: bash tools/record-release.sh v1.0.115 455 \"DG5: engine keeps the wallet's whole Novig ledger on GitHub; the phone's money figures read it\""
 }
