@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-gz2ti0",
- "head": "a0ff17d31b87cb0523a796a4d585cfd253e49497",
+ "head": "4b3f649d297f5e9b5c8b38492b8dbdb0699f6794",
  "since": 1794788519,
- "beat": 1794792268,
- "beatIso": "2026-11-16T01:24:28Z",
- "done": "WATCH+ANALYST cover 11-16: no change, engine healthy",
- "next": "next slot: read new digest; NCAAB totals watch"
+ "beat": 1794792325,
+ "beatIso": "2026-11-16T01:25:25Z",
+ "done": "chat: DG1 diagnostics logged, answered",
+ "next": "DG1a-c fixes then ship"
 }
