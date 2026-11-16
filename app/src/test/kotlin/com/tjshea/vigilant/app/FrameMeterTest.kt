@@ -42,6 +42,15 @@ class FrameMeterTest {
     }
 
     @Test
+    fun `a screen that is slow with nothing running is a finding too`() {
+        val f = Advisor.frameFinding(stats(scanSlow = 20, quietSlow = 270))!!
+        assertEquals("perf:frames:quiet", f.key)
+        assertTrue(f.title, f.title.startsWith("The screen stutters with nothing running: 27.0% of its frames are slow"))
+        assertNull(Advisor.frameFinding(stats(scanSlow = 20, quietSlow = 100)))
+        assertNull(Advisor.frameFinding(stats(scanSlow = 20, quietSlow = 100, n = 100)))
+    }
+
+    @Test
     fun `the meter runs while the screen is in front, off the main thread, and reaches Diagnostics`() {
         val main = File("src/main/kotlin/com/tjshea/vigilant/app/MainActivity.kt").readText()
         assertTrue(main.substringAfter("override fun onResume()").substringBefore("override fun onPause()").contains("frameMeter.start()"))
