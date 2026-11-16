@@ -1,7 +1,7 @@
-# CHECKPOINT 4515 — read me first, then TASKS.md
+# CHECKPOINT 4516 — read me first, then TASKS.md
 
-**Written:** 2026-11-16T06:57:03Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-2gqjsf` · **builds on:** `338d25680` (this checkpoint is the commit after it)
+**Written:** 2026-11-16T07:00:51Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-2gqjsf` · **builds on:** `f0704cd3a` (this checkpoint is the commit after it)
 
 ## Just done
 pre-ship: Daily profit/loss, charts and all-time come from Novig's own wallet by game day; pull to refresh re-reads the wallet (LD1-LD3)
@@ -13,10 +13,11 @@ ship.sh gates and releases this
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/src/test/kotlin/com/tjshea/vigilant/app/RecompositionCostTest.kt
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  f0704cd3a ckpt 4515: pre-ship: Daily profit/loss, charts and all-time come from Novig's own wall
   338d25680 ckpt 4514: LD1-3 built: LedgerDays (daily P/L from Novig wallet), pull reads wallet; L
   c2ea74c93 ckpt 4513: logged LD3
   24d6ab3a7 ckpt 4512: logged LD2 (daily P/L from Novig ledger)
@@ -26,5 +27,4 @@ ship.sh gates and releases this
   3bb4b18ff ckpt 4508: DG6: wallet files: full once, then 3-day delta merged into the phone's cach
   c749536c5 ckpt 4507: pre-release: Lighter and permanent: old days kept as daily numbers from Nov
   2ca5cfef7 ckpt 4506: DG6: day summaries cached permanently, bets dropped per whole day, phone do
-  be575a34d ckpt 4505: pre-release: Lighter: the Tracker's Novig-money overlay is worked out once 
 ```
