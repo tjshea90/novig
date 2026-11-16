@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-99twme",
- "head": "4513b66d341531ab3077cec527690a6316a26c17",
+ "head": "beef529ddaaa462f7320f3b0269f67ec4ec3c086",
  "since": 1794788519,
- "beat": 1794807532,
- "beatIso": "2026-11-16T05:38:52Z",
+ "beat": 1794807707,
+ "beatIso": "2026-11-16T05:41:47Z",
  "done": "lightweight: money overlay cached per ledger file, wallet files polled once a minute",
  "next": "ship 1.0.117"
 }
