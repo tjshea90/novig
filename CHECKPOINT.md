@@ -1,23 +1,23 @@
-# CHECKPOINT 4480 — read me first, then TASKS.md
+# CHECKPOINT 4481 — read me first, then TASKS.md
 
-**Written:** 2026-11-16T00:21:59Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-85552z` · **builds on:** `f66173dd6` (this checkpoint is the commit after it)
+**Written:** 2026-11-16T01:25:25Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-gz2ti0` · **builds on:** `a0ff17d31` (this checkpoint is the commit after it)
 
 ## Just done
-WATCH+ANALYST cover 11-16: no change, engine healthy
+chat: DG1 diagnostics logged, answered
 
 ## Do this next
-next slot: read new digest; NCAAB totals watch
+DG1a-c fixes then ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M research/review/STATE.json
-    ?? research/review/2026-11-16.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  a0ff17d31 ckpt 4480: WATCH+ANALYST cover 11-16: no change, engine healthy
   f66173dd6 ckpt 4479: v1.0.112 shipped; engine stop cleared, runner reset
   1b54b2b1e ckpt 4478: pre-release: Phone reads no Novig order books for bids while the engine pos
   fe1f9276a ckpt 4477: pre-ship: Phone reads no Novig order books for bids while the engine posts 
@@ -27,5 +27,4 @@ next slot: read new digest; NCAAB totals watch
   4b08a21e5 ckpt 4473: pre-ship: Engine: keeps ordering after an unreadable fill; pregame auto-bet
   288eb3317 ckpt 4472: chat: v1.0.110 shipped (LG3c); answered live results + volume question, awa
   f63f94471 ckpt 4471: pre-release: LG3c: phone bid guard rests while the engine's desk is live (n
-  8d37c4296 ckpt 4470: pre-ship: LG3c: phone bid guard rests while the engine's desk is live (no 2
 ```

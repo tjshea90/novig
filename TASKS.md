@@ -6647,3 +6647,10 @@ Checked 2026-11-14 (keyless, public): `/v1/bookmakers` has no `pinnacle`, only `
 - [~] LG3 (v1.0.108 paced reads, v1.0.109 study off on phone; awaiting tablet Diagnostics file for more) "audit what could be causing lag and slow loading in vigilant app on my mt8168 armv7 Android 10 go tablet. the app should be lightweight and github should be doing most processing. optimize it"
 
 - [ ] LG4 (Tj chat 21:48 UTC 2026-11-15) "if I do bets from my phone can the app just send this to the github runner to bet for me? and still send me the notification when the bet goes through" + "github should be doing most to all of the processing": relay a by-hand Bet-sheet order to the engine (order request file on cloud-config, engine places it through CloudNovigPort under its ledger id, result into trades.json, phone notifies from that), needs engine trading LIVE; same repeat/limit guards. Also LG3c (21:45 diagnostics, laggy scrolling): phone BidGuard read all open orders every 30 s (fixed, skips while engine desk live); next: 243 GitHub reads, other phone Novig loops.
+
+DG1 (Tj app chat 01:23 UTC 2026-11-16, Diagnostics "WHAT TO DO" pasted; answered by mirage)
+- [ ] DG1a oddspapi_free_cache.json 13 MB and bets.json 10 MB rewritten whole on every change (JsonFileStore): prune oldest ended records / move bulk to a day journal (lag, GC).
+- [ ] DG1b cold start 9.4 s to first frame (MainActivity / VigilantApp AppContainer eager work): move store loads off main / after first frame.
+- [ ] DG1c api.github.com: 9/9 404 on contents/bids.json.gz (file absent while engine posts bids itself: stop reading it), 409s on writes (sha conflicts: retry with fresh sha), usage.json slow: read via ETag/less often.
+- [ ] DG1d ParlayAPI key ...10d2 refused, plan free, 403s on /injuries: Tj's plan lapsed or key changed (Tj check); engine/phone should stop calling injuries on a free key.
+- [ ] DG1e (Tj only) Android notifications off and battery optimisation on for Vigilant.
