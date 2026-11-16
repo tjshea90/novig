@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-cnhej8",
  "head": "f942fb6b0ed26b7628e8164b471cada618de2387",
  "since": 1794788519,
- "beat": 1794862981,
- "beatIso": "2026-11-16T21:03:01Z",
+ "beat": 1794863369,
+ "beatIso": "2026-11-16T21:09:29Z",
  "done": "v1.0.125-127 shipped for tablet lag (baseline profile, Engine/Live timers)",
  "next": "read next tablet diag: coldStartMs, frames:quiet; then EV tab per-card clocks, bets.json size, PF5 send-report button"
 }
