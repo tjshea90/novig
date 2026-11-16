@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-99twme",
  "head": "4513b66d341531ab3077cec527690a6316a26c17",
  "since": 1794788519,
- "beat": 1794807527,
- "beatIso": "2026-11-16T05:38:47Z",
+ "beat": 1794807532,
+ "beatIso": "2026-11-16T05:38:52Z",
  "done": "lightweight: money overlay cached per ledger file, wallet files polled once a minute",
  "next": "ship 1.0.117"
 }
