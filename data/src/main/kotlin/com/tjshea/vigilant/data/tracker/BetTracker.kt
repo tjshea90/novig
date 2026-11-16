@@ -328,6 +328,21 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
 
     val flow get() = store.flow
 
+    /**
+     * DG3 (Tj 2026-11-16: "I don't need the phone to save my bet history ... this should be done on github"): drops settled bets that started over [keepDays] days ago and whose day's file is
+     * already on GitHub ([onGitHub] says so for that bet's day). Open bets and recent ones stay. Returns how many went.
+     */
+    suspend fun dropArchived(now: Long, keepDays: Int, onGitHub: (day: String) -> Boolean): Int {
+        val cutoff = now - keepDays * 86_400_000L
+        var dropped = 0
+        store.update { list ->
+            val keep = list.filterNot { it.status != BetStatus.PENDING && it.startsTs in 1 until cutoff && it.createdAtMs < cutoff && onGitHub(BetHistory.day(it.createdAtMs)) }
+            dropped = list.size - keep.size
+            if (dropped == 0) list else keep
+        }
+        return dropped
+    }
+
     suspend fun all(): List<TrackedBet> = store.read()
 
     /**

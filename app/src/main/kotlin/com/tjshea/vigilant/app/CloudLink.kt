@@ -1093,6 +1093,8 @@ class CloudLink(private val c: AppContainer) {
             c.betArchive.markMirrored(f, "github"); sent++
             delay(1_200L)
         }
+        // DG3: GitHub holds the history; the phone keeps open bets and the last 35 days (the Tracker's 30-day view), never a day GitHub has not got.
+        if (failed == null) runCatching { c.tracker.dropArchived(System.currentTimeMillis(), 35) { day -> c.betArchive.dayOnChannel(day) } }
         if (failed == null) {
             val known = runCatching { uploaded.read() }.getOrDefault(emptyMap())
             val studyDir = File(c.app.filesDir, "study")

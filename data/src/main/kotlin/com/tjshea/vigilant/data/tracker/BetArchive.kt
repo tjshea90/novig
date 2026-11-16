@@ -112,6 +112,15 @@ class BetArchive(val dir: File) {
         return written.filter { (name, sha) -> mirrored[name] != sha && File(dir, name).exists() }.keys.sorted().map { File(dir, it) }
     }
 
+    /** True when the day's bet file as it is now has been sent to [channel] (so dropping that day's old bets from the phone loses nothing). */
+    @Synchronized
+    fun dayOnChannel(day: String, channel: String = "github"): Boolean {
+        val state = load()
+        val name = betFile(day).name
+        val sha = state["written"]?.get(name) ?: return false
+        return state[channel]?.get(name) == sha && betFile(day).exists()
+    }
+
     /** [file] was copied out as it is now (to [channel], see [pendingMirror]). */
     @Synchronized
     fun markMirrored(file: File, channel: String = "mirrored") {
