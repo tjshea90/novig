@@ -44,4 +44,32 @@ object WalletLedgerFile {
         }
         Book(rows, (o["atMs"] as? JsonPrimitive)?.longOrNull ?: 0L, (o["fullAtMs"] as? JsonPrimitive)?.longOrNull ?: 0L)
     }.getOrNull()
+
+    // ---- fills (wallet-fills.json): the fill id -> market link the ledger's FILL and FEE rows lack ----
+    data class FillBook(val fills: List<com.tjshea.vigilant.data.novig.trading.NovigFill>, val atMs: Long)
+
+    fun mergeFills(known: List<com.tjshea.vigilant.data.novig.trading.NovigFill>, fresh: List<com.tjshea.vigilant.data.novig.trading.NovigFill>) =
+        (known + fresh).distinctBy { it.fillId }.sortedWith(compareBy({ it.ts }, { it.fillId }))
+
+    fun encodeFills(b: FillBook): String = buildJsonObject {
+        put("v", 1); put("atMs", b.atMs)
+        put("fills", buildJsonArray {
+            b.fills.forEach { f ->
+                add(buildJsonArray {
+                    add(JsonPrimitive(f.fillId)); add(JsonPrimitive(f.orderId)); add(JsonPrimitive(f.marketId)); add(JsonPrimitive(f.outcomeId))
+                    add(JsonPrimitive(f.qty)); add(JsonPrimitive(f.cost)); add(JsonPrimitive(f.fee)); add(JsonPrimitive(f.ts)); add(JsonPrimitive(f.taker))
+                })
+            }
+        })
+    }.toString()
+
+    fun decodeFills(text: String): FillBook? = runCatching {
+        val o = json.parseToJsonElement(text) as JsonObject
+        val fills = (o["fills"] as JsonArray).mapNotNull { e ->
+            val a = e as? JsonArray ?: return@mapNotNull null
+            fun p(i: Int) = a[i] as JsonPrimitive
+            com.tjshea.vigilant.data.novig.trading.NovigFill(p(0).content, p(1).content, null, p(2).content, p(3).content, p(4).longOrNull ?: return@mapNotNull null, p(5).doubleOrNull ?: return@mapNotNull null, p(8).content == "true", p(6).doubleOrNull ?: 0.0, p(7).longOrNull ?: 0L)
+        }
+        FillBook(fills, (o["atMs"] as? JsonPrimitive)?.longOrNull ?: 0L)
+    }.getOrNull()
 }

@@ -353,6 +353,27 @@ open class NovigTradingClient(
         return out
     }
 
+    /** Every fill of the subaccount newer than what the caller holds, newest page first, stopping after a page with nothing new (DG5): the same walk as [ledgerNewerThan] over `/v3/portfolio/fills`. */
+    open suspend fun fillsNewerThan(isKnown: (String) -> Boolean, maxRows: Int = 50_000, pageDelayMs: Long = 0L, onPage: (List<NovigFill>) -> Unit = {}): List<NovigFill> {
+        val out = ArrayList<NovigFill>()
+        var cursor: String? = null
+        do {
+            val query = buildString {
+                append("limit=500")
+                cursor?.let { append("&after=").append(percent(it)) }
+            }
+            val page = json.decodeFromString(FillPageDto.serializer(), signer.call("GET", "/v3/portfolio/fills", query))
+            val rows = page.items.map { it.toDomain() }
+            val newRows = rows.filter { !isKnown(it.fillId) }
+            val allKnown = rows.isNotEmpty() && newRows.isEmpty()
+            out += newRows; if (newRows.isNotEmpty()) onPage(newRows)
+            cursor = page.next?.takeIf { it.isNotBlank() }
+            if (allKnown) break
+            if (pageDelayMs > 0 && cursor != null) kotlinx.coroutines.delay(pageDelayMs)
+        } while (cursor != null && out.size < maxRows)
+        return out
+    }
+
     private suspend fun ledgerRows(subaccountKeyId: String, kind: String?, startsAfterMs: Long?, startsBeforeMs: Long?, maxRows: Int): List<LedgerRow> {
         val out = ArrayList<LedgerRow>()
         var cursor: String? = null

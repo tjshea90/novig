@@ -329,11 +329,27 @@ fun main(args: Array<String>) = runBlocking {
         runCatching { PreviousFeed.read(git, cfgDir, "wallet-ledger.json") }.getOrNull()?.let { t ->
             ledgerFile.decode(t)?.let { b -> held = b.rows; fullAt = b.fullAtMs; publisher.stageExtra("wallet-ledger.json", t); log("wallet ledger: ${b.rows.size} rows carried over") }
         }
+        var heldFills: List<com.tjshea.vigilant.data.novig.trading.NovigFill> = emptyList()
+        runCatching { PreviousFeed.read(git, cfgDir, "wallet-fills.json") }.getOrNull()?.let { t ->
+            ledgerFile.decodeFills(t)?.let { b -> heldFills = b.fills; publisher.stageExtra("wallet-fills.json", t); log("wallet fills: ${b.fills.size} carried over") }
+        }
         scope.launch {
             delay(45_000L)
             while (isActive) {
                 var wait = 5 * 60_000L
                 if (novigKeyed?.addressRefused(System.currentTimeMillis()) != true) {
+                    runCatching {
+                        val knownFills = HashSet(heldFills.map { it.fillId })
+                        var addedFills = 0
+                        tc.fillsNewerThan({ it in knownFills }, pageDelayMs = 700L, onPage = { fs ->
+                            heldFills = ledgerFile.mergeFills(heldFills, fs); fs.forEach { knownFills += it.fillId }; addedFills += fs.size
+                        })
+                        if (addedFills > 0) { publisher.stageExtra("wallet-fills.json", ledgerFile.encodeFills(com.tjshea.vigilant.data.tracker.WalletLedgerFile.FillBook(heldFills, System.currentTimeMillis()))); log("wallet fills: $addedFills new, ${heldFills.size} held") }
+                    }.onFailure { e ->
+                        if (e is kotlinx.coroutines.CancellationException) throw e
+                        if (heldFills.isNotEmpty()) runCatching { publisher.stageExtra("wallet-fills.json", ledgerFile.encodeFills(com.tjshea.vigilant.data.tracker.WalletLedgerFile.FillBook(heldFills, System.currentTimeMillis()))) }
+                        log("wallet fills read failed: ${e.message?.take(120)}")
+                    }
                     runCatching {
                         val known = HashSet(held.map { it.transactionId })
                         var added = 0
