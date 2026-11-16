@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-99twme",
- "head": "5cc55fd5c5bd41e5839092887203bf357fb772e8",
+ "head": "dc0c7734a225350c4bdd02790ffbe998c87e0300",
  "since": 1794788519,
- "beat": 1794806771,
- "beatIso": "2026-11-16T05:26:11Z",
- "done": "DG5: ledger/fills full first walk (complete flag), 3 s paging",
- "next": "check ledger file completes; watch Tj chat"
+ "beat": 1794806821,
+ "beatIso": "2026-11-16T05:27:01Z",
+ "done": "DG5 shipped v1.0.116; wallet ledger (15,558 rows) and fills (10,579) complete on cloud-feed, ledger profit matches engine's -242.54",
+ "next": "wait for Tj's feedback on Tracker numbers; optional: stubs for Novig bets the phone lacks"
 }
