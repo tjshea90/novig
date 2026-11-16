@@ -3,13 +3,13 @@
  "label": "acct-27a37e",
  "name": "tj Gmail",
  "nonce": "eac083",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/wizardly-meitner-1jhal3",
  "head": "482dcb682c00835c2207d38878a1a8808d9630d9",
  "since": 1794766920,
- "beat": 1794831665,
- "beatIso": "2026-11-16T12:21:05Z",
+ "beat": 1794831682,
+ "beatIso": "2026-11-16T12:21:22Z",
  "done": "ENGINEER 11-15 slot 1 re-check: no change (wallet $0.01)",
  "next": "same: BH1/BH2, LG2 need evidence"
 }
