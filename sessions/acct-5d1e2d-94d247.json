@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-cnhej8",
  "head": "48b277f4b660f812fdd03923a78be2775b06ceed",
  "since": 1794788519,
- "beat": 1794864724,
- "beatIso": "2026-11-16T21:32:04Z",
+ "beat": 1794865600,
+ "beatIso": "2026-11-16T21:46:40Z",
  "done": "v1.0.128-129 shipped (launch trace, chat typing)",
  "next": "read the tablet diag: 'run before this one' + coldStartMs; move container build off main thread if it points there; EV tab slow frames; bets.json size"
 }
