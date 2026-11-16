@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-gq85mu",
  "head": "4841d2f843009ee3e0c599468de7a25dfac202eb",
  "since": 1794788519,
- "beat": 1794815996,
- "beatIso": "2026-11-16T07:59:56Z",
+ "beat": 1794816002,
+ "beatIso": "2026-11-16T08:00:02Z",
  "done": "pre-ship: Daily profit and loss counts lost bets Novig no longer holds, so the last days no longer show only the winners",
  "next": "ship.sh gates and releases this"
 }
