@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-99twme",
- "head": "fc835bc6c24161ca42082ecc13658a008984b4b4",
+ "head": "15a6cafe8845243070d292a0356ac0d69e1d8a1f",
  "since": 1794788519,
- "beat": 1794809038,
- "beatIso": "2026-11-16T06:03:58Z",
- "done": "pre-release: The phone downloads Novig's wallet history once and then only the last 3 days, keeping the rest cached (versionCode 458, v1.0.118)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.118), then run: bash tools/record-release.sh v1.0.118 458 \"The phone downloads Novig's wallet history once and then only the last 3 days, keeping the rest cached\""
+ "beat": 1794809151,
+ "beatIso": "2026-11-16T06:05:51Z",
+ "done": "v1.0.118 shipped (DG6)",
+ "next": "watch Tj chat; check phone numbers feedback"
 }
