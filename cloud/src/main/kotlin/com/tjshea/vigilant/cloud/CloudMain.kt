@@ -1030,8 +1030,8 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         // DG6: the phone downloads only the last 45 days of the wallet's rows and fills (the files above stay whole on GitHub for everyone else)
         val now = System.currentTimeMillis()
         val tracker = com.tjshea.vigilant.data.tracker.WalletLedgerFile
-        if (name == "wallet-ledger.json") tracker.decode(text)?.let { extra["wallet-ledger-recent.json"] = tracker.encode(tracker.recent(it, now)) }
-        if (name == "wallet-fills.json") tracker.decodeFills(text)?.let { extra["wallet-fills-recent.json"] = tracker.encodeFills(tracker.recentFills(it, now)) }
+        if (name == "wallet-ledger.json") tracker.decode(text)?.let { extra["wallet-ledger-recent.json"] = tracker.encode(tracker.recent(it, now)); extra["wallet-ledger-delta.json"] = tracker.encode(tracker.recent(it, now, 3)) }
+        if (name == "wallet-fills.json") tracker.decodeFills(text)?.let { extra["wallet-fills-recent.json"] = tracker.encodeFills(tracker.recentFills(it, now)); extra["wallet-fills-delta.json"] = tracker.encodeFills(tracker.recentFills(it, now, 3)) }
         dirty = true
     }
 

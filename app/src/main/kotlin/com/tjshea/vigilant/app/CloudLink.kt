@@ -478,9 +478,21 @@ class CloudLink(private val c: AppContainer) {
             var etag: String? = null
             while (isActive) {
                 awake()
-                if (hasToken()) when (val p = client.fetchWalletLedger(etag)) {
-                    is CloudClient.Poll.Fresh -> { etag = p.etag; c.walletLedger.value = p.value }
-                    else -> {}
+                if (hasToken()) {
+                    // The whole 45 days once (or when the phone was away longer than the 3-day delta covers); after that only the last 3 days, merged into what is kept (DG6).
+                    val have = c.walletLedger.value
+                    val needFull = have == null || (have.rows.maxOfOrNull { it.ts } ?: 0L) < System.currentTimeMillis() - 2 * 86_400_000L
+                    val f = if (needFull) "wallet-ledger-recent.json" else "wallet-ledger-delta.json"
+                    if (needFull) etag = null
+                    when (val p = client.fetchWalletLedger(etag, f)) {
+                        is CloudClient.Poll.Fresh -> {
+                            etag = p.etag
+                            val merged = if (needFull || have == null) p.value else p.value.copy(rows = com.tjshea.vigilant.data.tracker.WalletLedgerFile.merge(have.rows, p.value.rows))
+                            c.walletLedger.value = merged
+                            if (!needFull) saveRaw("wallet-ledger.json", com.tjshea.vigilant.data.tracker.WalletLedgerFile.encode(merged))
+                        }
+                        else -> {}
+                    }
                 }
                 nap(if (c.onScreen) paced(WALLET_FILES_POLL_MS) else WALLET_FILES_POLL_BACKGROUND_MS)
             }
@@ -490,9 +502,20 @@ class CloudLink(private val c: AppContainer) {
             var etag: String? = null
             while (isActive) {
                 awake()
-                if (hasToken()) when (val p = client.fetchWalletFills(etag)) {
-                    is CloudClient.Poll.Fresh -> { etag = p.etag; c.walletFills.value = p.value }
-                    else -> {}
+                if (hasToken()) {
+                    val have = c.walletFills.value
+                    val needFull = have == null || (have.fills.maxOfOrNull { it.ts } ?: 0L) < System.currentTimeMillis() - 2 * 86_400_000L
+                    val f = if (needFull) "wallet-fills-recent.json" else "wallet-fills-delta.json"
+                    if (needFull) etag = null
+                    when (val p = client.fetchWalletFills(etag, f)) {
+                        is CloudClient.Poll.Fresh -> {
+                            etag = p.etag
+                            val merged = if (needFull || have == null) p.value else p.value.copy(fills = com.tjshea.vigilant.data.tracker.WalletLedgerFile.mergeFills(have.fills, p.value.fills))
+                            c.walletFills.value = merged
+                            if (!needFull) saveRaw("wallet-fills.json", com.tjshea.vigilant.data.tracker.WalletLedgerFile.encodeFills(merged))
+                        }
+                        else -> {}
+                    }
                 }
                 nap(if (c.onScreen) paced(WALLET_FILES_POLL_MS) else WALLET_FILES_POLL_BACKGROUND_MS)
             }
