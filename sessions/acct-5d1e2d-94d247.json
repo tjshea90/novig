@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-gz2ti0",
  "head": "d4216bb864b990194a0241f72b7d49f3370b1b29",
  "since": 1794788519,
- "beat": 1794794237,
- "beatIso": "2026-11-16T01:57:17Z",
+ "beat": 1794794433,
+ "beatIso": "2026-11-16T02:00:33Z",
  "done": "pre-ship: DG1: bets.json saved at most every 4 s, OddsPapi Free cache deleted and never loaded, no bids.json.gz reads while the engine desk is live",
  "next": "ship.sh gates and releases this"
 }
