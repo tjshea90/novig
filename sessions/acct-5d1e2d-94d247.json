@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-le9ahx",
- "head": "e5718515a3277d151c857daf455377b083703dfd",
+ "head": "9f63ad7ea47b728cdda7e0d172f1f54f23a32d64",
  "since": 1794788519,
- "beat": 1794842607,
- "beatIso": "2026-11-16T15:23:27Z",
- "done": "answered Tj; shipped v1.0.120-122 (LD5 open-markets loss fix, wallet poll 15 min, ledger parse off main)",
- "next": "DG1b first-open-after-update close needs Diagnostics Recent problems; LD4 all-time card; BP1 picked-off guard study"
+ "beat": 1794842682,
+ "beatIso": "2026-11-16T15:24:42Z",
+ "done": "answered Tj diagnostics report; logged DG5",
+ "next": "DG5 bets.json prune"
 }
