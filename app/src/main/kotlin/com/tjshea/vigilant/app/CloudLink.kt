@@ -1250,7 +1250,7 @@ class CloudLink(private val c: AppContainer) {
         /** How often the engine's usage file is asked for (a 304 costs nothing against GitHub's limit). */
         const val USAGE_POLL_MS = 10_000L
         const val USAGE_POLL_BACKGROUND_MS = 60_000L
-        /** The wallet's ledger and fills change when a bet fills or settles, not every few seconds: a free 304 once a minute is plenty (and 5 minutes with the app away). */
+        /** The wallet's ledger and fills change when a bet fills or settles, not every few seconds: each change recomputes the whole Tracker, so read every 15 minutes (an hour with the app away); a pull to refresh reads it at once (Tj 2026-11-16: laggy). */
         const val WALLET_FILES_POLL_MS = 900_000L
         const val WALLET_FILES_POLL_BACKGROUND_MS = 3_600_000L
         const val TRADES_POLL_MS = 6_000L
