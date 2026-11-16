@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-mnnrec",
- "head": "f987c4d91672b170594fc155f5009be94813dc0f",
+ "head": "fbe2e67126dbefaa3c1b040acb8770ba05bd11aa",
  "since": 1794788519,
- "beat": 1794852393,
- "beatIso": "2026-11-16T18:06:33Z",
- "done": "PF3 logged; answered Tj chat (report uploads to GitHub; lag numbers from 18:00 diag)",
- "next": "PF3: Advisor LAG finding, find Default-dispatcher/GC churn, save-as-file fix"
+ "beat": 1794852474,
+ "beatIso": "2026-11-16T18:07:54Z",
+ "done": "PF3a: Advisor finding when the screen is slow with nothing running (FrameMeterTest green)",
+ "next": "PF3b: find main-thread/background churn: Tracker derived chain, flows; ship"
 }
