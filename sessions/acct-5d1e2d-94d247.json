@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-gq85mu",
- "head": "82c7224f943362f6136a0360b9767871c0d09eb4",
+ "head": "332c7809b88aa86a547661a9493fa988799195ea",
  "since": 1794788519,
- "beat": 1794816863,
- "beatIso": "2026-11-16T08:14:23Z",
- "done": "pre-ship: The app opens faster: Novig's wallet history is read in the background instead of while the first screen is built",
- "next": "ship.sh gates and releases this"
+ "beat": 1794817044,
+ "beatIso": "2026-11-16T08:17:24Z",
+ "done": "pre-release: The app opens faster: Novig's wallet history is read in the background instead of while the first screen is built (versionCode 462, v1.0.122)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.122), then run: bash tools/record-release.sh v1.0.122 462 \"The app opens faster: Novig's wallet history is read in the background instead of while the first screen is built\""
 }
