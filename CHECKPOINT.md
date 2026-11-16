@@ -1,13 +1,13 @@
-# CHECKPOINT 4502 — read me first, then TASKS.md
+# CHECKPOINT 4503 — read me first, then TASKS.md
 
-**Written:** 2026-11-16T05:19:31Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-99twme` · **builds on:** `374def6d9` (this checkpoint is the commit after it)
+**Written:** 2026-11-16T05:27:01Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-99twme` · **builds on:** `5cc55fd5c` (this checkpoint is the commit after it)
 
 ## Just done
-DG5: ledger/fills full first walk (complete flag), 3 s paging
+DG5 shipped v1.0.116; wallet ledger (15,558 rows) and fills (10,579) complete on cloud-feed, ledger profit matches engine's -242.54
 
 ## Do this next
-check ledger file completes; watch Tj chat
+wait for Tj's feedback on Tracker numbers; optional: stubs for Novig bets the phone lacks
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ check ledger file completes; watch Tj chat
 
 ## Last ten checkpoints
 ```
+  5cc55fd5c ckpt 4502: DG5: ledger/fills full first walk (complete flag), 3 s paging
   7b0a8a318 ckpt 4501: pre-release: DG5: Tracker's money comes from Novig's own wallet records (fi
   0aa108310 ckpt 4500: fix source pin
   85f5c7a97 ckpt 4499: DG5: Tracker money from Novig ledger+fills (WalletBetMoney), engine publish
@@ -25,8 +26,4 @@ check ledger file completes; watch Tj chat
   3fe0b810a ckpt 4495: research index rebuilt
   6f8a95c3e ckpt 4494: DG5a: engine publishes wallet-ledger.json, phone reads it for wallet money;
   2cedc9dc1 ckpt 4493: chat: answered 'is it fine/done' with DG5 status
-  bbb9a50cf ckpt 4492: DG5 logged + answered Tj; found ledger readers NovigTradingClient.bettingRo
 ```
-
-(2 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
