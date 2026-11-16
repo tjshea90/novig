@@ -18,7 +18,8 @@ import kotlinx.serialization.json.put
  * reads it. Rows are kept by transaction id, never dropped.
  */
 object WalletLedgerFile {
-    data class Book(val rows: List<LedgerRow>, val atMs: Long, val fullAtMs: Long = 0)
+    /** [complete]: every page back to the first row was read once (a file from the first version of this reader stopped at its newest pages: not complete). */
+    data class Book(val rows: List<LedgerRow>, val atMs: Long, val fullAtMs: Long = 0, val complete: Boolean = false)
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -27,7 +28,7 @@ object WalletLedgerFile {
         (known + fresh).distinctBy { it.transactionId }.sortedWith(compareBy({ it.ts }, { it.transactionId }))
 
     fun encode(b: Book): String = buildJsonObject {
-        put("v", 1); put("atMs", b.atMs); put("fullAtMs", b.fullAtMs)
+        put("v", 2); put("atMs", b.atMs); put("fullAtMs", b.fullAtMs); put("complete", b.complete)
         put("rows", buildJsonArray {
             b.rows.forEach { r ->
                 add(buildJsonArray { add(JsonPrimitive(r.transactionId)); add(JsonPrimitive(r.kind)); add(JsonPrimitive(r.amount)); add(JsonPrimitive(r.ref ?: "")); add(JsonPrimitive(r.ts)) })
@@ -42,7 +43,7 @@ object WalletLedgerFile {
             val amount = (a[2] as JsonPrimitive).doubleOrNull ?: return@mapNotNull null
             LedgerRow((a[0] as JsonPrimitive).content, (a[1] as JsonPrimitive).content, amount, (a[3] as JsonPrimitive).contentOrNull?.takeIf { it.isNotEmpty() }, (a[4] as JsonPrimitive).longOrNull ?: 0L)
         }
-        Book(rows, (o["atMs"] as? JsonPrimitive)?.longOrNull ?: 0L, (o["fullAtMs"] as? JsonPrimitive)?.longOrNull ?: 0L)
+        Book(rows, (o["atMs"] as? JsonPrimitive)?.longOrNull ?: 0L, (o["fullAtMs"] as? JsonPrimitive)?.longOrNull ?: 0L, (o["complete"] as? JsonPrimitive)?.content == "true")
     }.getOrNull()
 
     // ---- fills (wallet-fills.json): the fill id -> market link the ledger's FILL and FEE rows lack ----

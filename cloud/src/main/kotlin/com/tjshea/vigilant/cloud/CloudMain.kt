@@ -326,12 +326,14 @@ fun main(args: Array<String>) = runBlocking {
         val ledgerFile = com.tjshea.vigilant.data.tracker.WalletLedgerFile
         var held: List<com.tjshea.vigilant.data.novig.trading.LedgerRow> = emptyList()
         var fullAt = 0L
+        var ledgerComplete = false
         runCatching { PreviousFeed.read(git, cfgDir, "wallet-ledger.json") }.getOrNull()?.let { t ->
-            ledgerFile.decode(t)?.let { b -> held = b.rows; fullAt = b.fullAtMs; publisher.stageExtra("wallet-ledger.json", t); log("wallet ledger: ${b.rows.size} rows carried over") }
+            ledgerFile.decode(t)?.let { b -> held = b.rows; fullAt = b.fullAtMs; ledgerComplete = b.complete; publisher.stageExtra("wallet-ledger.json", t); log("wallet ledger: ${b.rows.size} rows carried over") }
         }
         var heldFills: List<com.tjshea.vigilant.data.novig.trading.NovigFill> = emptyList()
+        var fillsComplete = false
         runCatching { PreviousFeed.read(git, cfgDir, "wallet-fills.json") }.getOrNull()?.let { t ->
-            ledgerFile.decodeFills(t)?.let { b -> heldFills = b.fills; publisher.stageExtra("wallet-fills.json", t); log("wallet fills: ${b.fills.size} carried over") }
+            ledgerFile.decodeFills(t)?.let { b -> heldFills = b.fills; fillsComplete = b.complete; publisher.stageExtra("wallet-fills.json", t); log("wallet fills: ${b.fills.size} carried over") }
         }
         scope.launch {
             delay(45_000L)
@@ -341,10 +343,10 @@ fun main(args: Array<String>) = runBlocking {
                     runCatching {
                         val knownFills = HashSet(heldFills.map { it.fillId })
                         var addedFills = 0
-                        tc.fillsNewerThan({ it in knownFills }, pageDelayMs = 700L, onPage = { fs ->
+                        tc.fillsNewerThan({ !fillsComplete.not() && it in knownFills }, pageDelayMs = 3_000L, onPage = { fs ->
                             heldFills = ledgerFile.mergeFills(heldFills, fs); fs.forEach { knownFills += it.fillId }; addedFills += fs.size
                         })
-                        if (addedFills > 0) { publisher.stageExtra("wallet-fills.json", ledgerFile.encodeFills(com.tjshea.vigilant.data.tracker.WalletLedgerFile.FillBook(heldFills, System.currentTimeMillis()))); log("wallet fills: $addedFills new, ${heldFills.size} held") }
+                        if (addedFills > 0 || !fillsComplete) { fillsComplete = true; publisher.stageExtra("wallet-fills.json", ledgerFile.encodeFills(com.tjshea.vigilant.data.tracker.WalletLedgerFile.FillBook(heldFills, System.currentTimeMillis(), true))); log("wallet fills: $addedFills new, ${heldFills.size} held") }
                     }.onFailure { e ->
                         if (e is kotlinx.coroutines.CancellationException) throw e
                         if (heldFills.isNotEmpty()) runCatching { publisher.stageExtra("wallet-fills.json", ledgerFile.encodeFills(com.tjshea.vigilant.data.tracker.WalletLedgerFile.FillBook(heldFills, System.currentTimeMillis()))) }
@@ -355,13 +357,13 @@ fun main(args: Array<String>) = runBlocking {
                         var added = 0
                         fun publish(complete: Boolean) {
                             val now = System.currentTimeMillis()
-                            if (complete && fullAt == 0L) fullAt = now
-                            publisher.stageExtra("wallet-ledger.json", ledgerFile.encode(com.tjshea.vigilant.data.tracker.WalletLedgerFile.Book(held, now, fullAt)))
+                            if (complete) { ledgerComplete = true; if (fullAt == 0L) fullAt = now }
+                            publisher.stageExtra("wallet-ledger.json", ledgerFile.encode(com.tjshea.vigilant.data.tracker.WalletLedgerFile.Book(held, now, fullAt, complete)))
                         }
                         var lastPublish = 0
                         for (kind in com.tjshea.vigilant.data.novig.trading.NovigTradingClient.BETTING + com.tjshea.vigilant.data.novig.trading.NovigTradingClient.MONEY_MOVES) {
                             // Pages are kept as they arrive, so a 429 part-way through a big first read costs nothing already read.
-                            tc.ledgerNewerThan(tradeKeyId, kind, { it in known }, pageDelayMs = 700L, onPage = { rows ->
+                            tc.ledgerNewerThan(tradeKeyId, kind, { ledgerComplete && it in known }, pageDelayMs = 3_000L, onPage = { rows ->
                                 held = ledgerFile.merge(held, rows); rows.forEach { known += it.transactionId }; added += rows.size
                                 if (added - lastPublish >= 2_000) { lastPublish = added; publish(false) }
                             })
