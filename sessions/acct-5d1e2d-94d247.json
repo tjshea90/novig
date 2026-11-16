@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-gq85mu",
- "head": "3e8fcd7764be3676ef94a4c47f7281a2b9ce5347",
+ "head": "60f8743ee0617c5c48e98af8f6291c7aa3f185b5",
  "since": 1794788519,
- "beat": 1794816188,
- "beatIso": "2026-11-16T08:03:08Z",
- "done": "pre-release: Daily profit and loss counts lost bets Novig no longer holds, so the last days no longer show only the winners (versionCode 460, v1.0.120)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.120), then run: bash tools/record-release.sh v1.0.120 460 \"Daily profit and loss counts lost bets Novig no longer holds, so the last days no longer show only the winners\""
+ "beat": 1794816244,
+ "beatIso": "2026-11-16T08:04:04Z",
+ "done": "pre-ship: The Tracker no longer re-reads Novig's wallet in the background every minute; only a pull to refresh (or every 15 minutes) does, which removes the lag",
+ "next": "ship.sh gates and releases this"
 }
