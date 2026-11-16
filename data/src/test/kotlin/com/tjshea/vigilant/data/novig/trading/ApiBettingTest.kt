@@ -720,6 +720,28 @@ class ApiBettingTest {
     }
 
     @Test
+    fun `ledgerNewerThan pages on past a full page of new rows and stops at a page it already holds`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                val path = request.path!!
+                fun row(i: Int) = """{"transactionId":"t$i","kind":"FILL","amount":"-1.00000","ref":"o$i","ts":$i}"""
+                return when {
+                    !path.contains("after=") -> MockResponse().setBody("""{"items":[${row(5)},${row(4)}],"next":"c1"}""")
+                    path.contains("after=c1") -> MockResponse().setBody("""{"items":[${row(3)},${row(2)}],"next":"c2"}""")
+                    else -> MockResponse().setBody("""{"items":[${row(1)}],"next":null}""")
+                }
+            }
+        }
+        val c = tradingClient()
+        assertEquals(listOf("t5", "t4", "t3", "t2", "t1"), c.ledgerNewerThan("sub", "FILL", { false }).map { it.transactionId })
+        // t3 and older are held: page 1 is new, page 2 is all known, so page 3 is never asked
+        val seen = HashSet<String>()
+        val got = c.ledgerNewerThan("sub", "FILL", { it in setOf("t3", "t2", "t1") }, onPage = { rows -> rows.forEach { seen += it.transactionId } })
+        assertEquals(listOf("t5", "t4"), got.map { it.transactionId })
+        assertEquals(setOf("t5", "t4"), seen)
+    }
+
+    @Test
     fun `the trading client reads fills, positions, orders and the ledger from Novig's shapes`() = runBlocking {
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
