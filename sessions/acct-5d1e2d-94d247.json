@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-gq85mu",
- "head": "df86c75ea7b413040c09d5ef34d367491c1361a7",
+ "head": "d2174abee827c54fc08255cb462898eb9a1da006",
  "since": 1794788519,
- "beat": 1794815517,
- "beatIso": "2026-11-16T07:51:57Z",
- "done": "answered Tj numbers vs wallet; logged LD4",
- "next": "LD4: all-time card from ledger"
+ "beat": 1794815551,
+ "beatIso": "2026-11-16T07:52:31Z",
+ "done": "pre-ship: Daily profit and loss counts lost bets Novig no longer holds, so the last days no longer show only the winners",
+ "next": "ship.sh gates and releases this"
 }
