@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-gz2ti0",
- "head": "45a8c778a8ec0a02e71e68de7aede523e0fc6183",
+ "head": "d4216bb864b990194a0241f72b7d49f3370b1b29",
  "since": 1794788519,
- "beat": 1794794198,
- "beatIso": "2026-11-16T01:56:38Z",
- "done": "chat: DG1 diagnostics logged, answered",
- "next": "DG1a-c fixes then ship"
+ "beat": 1794794231,
+ "beatIso": "2026-11-16T01:57:11Z",
+ "done": "pre-ship: DG1: bets.json saved at most every 4 s, OddsPapi Free cache deleted and never loaded, no bids.json.gz reads while the engine desk is live",
+ "next": "ship.sh gates and releases this"
 }
