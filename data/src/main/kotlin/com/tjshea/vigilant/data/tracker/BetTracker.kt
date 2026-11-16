@@ -108,6 +108,8 @@ data class TrackedBet(
     val vigBooks: Int? = null,
     /** A fair-market-value settlement's payout per $1 contract ([BetStatus.FMV]). */
     val settleValue: Double? = null,
+    /** Novig's own money for this bet once its market settled (fills + fees - credits vs the settlement rows, [WalletBetMoney]); when set it IS the profit. */
+    val netPnl: Double? = null,
     /** "novig" (settled from Novig's catalog) or "you" (tapped). */
     val settledBy: String? = null,
     /** Logged from a ✓ mark made before the Tracker kept them (its EV and fair odds weren't kept). */
@@ -211,7 +213,7 @@ data class TrackedBet(
     val profitIfWon: Double get() = stake * (1.0 / cost - 1.0)
 
     val profit: Double?
-        get() = when (status) {
+        get() = if (netPnl != null && status != BetStatus.PENDING && status != BetStatus.VOID) netPnl else when (status) {
             BetStatus.WON -> profitIfWon
             BetStatus.LOST -> -stake
             // A push gives back what the contracts cost, not a live fee ([paid]: a bet placed through the API; a ✓ has none on record).
