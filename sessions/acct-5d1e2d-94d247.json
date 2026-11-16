@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-99twme",
- "head": "4a51202fd89c60a8bd3dd4549115186652b5216f",
+ "head": "85f5c7a97a8fc8aa66d6fcd9436bfeba61d26066",
  "since": 1794788519,
- "beat": 1794805131,
- "beatIso": "2026-11-16T04:58:51Z",
- "done": "DG5: ledger reader keeps pages as read, paced, 429 no longer loses progress",
- "next": "read real ledger rows, build tracker on them"
+ "beat": 1794805332,
+ "beatIso": "2026-11-16T05:02:12Z",
+ "done": "DG5: Tracker money from Novig ledger+fills (WalletBetMoney), engine publishes wallet-fills",
+ "next": "ship 1.0.116"
 }
