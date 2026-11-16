@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-2gqjsf",
- "head": "338d256805260003c928184cd587eb598cbc3d5f",
+ "head": "f0704cd3aa240fb3134ba6345b057a7e9446f43d",
  "since": 1794788519,
- "beat": 1794812019,
- "beatIso": "2026-11-16T06:53:39Z",
- "done": "LD1-3 built: LedgerDays (daily P/L from Novig wallet), pull reads wallet; LedgerDaysTest green",
- "next": "ship.sh, release.yml, record-release, tell Tj"
+ "beat": 1794812223,
+ "beatIso": "2026-11-16T06:57:03Z",
+ "done": "pre-ship: Daily profit/loss, charts and all-time come from Novig's own wallet by game day; pull to refresh re-reads the wallet (LD1-LD3)",
+ "next": "ship.sh gates and releases this"
 }
