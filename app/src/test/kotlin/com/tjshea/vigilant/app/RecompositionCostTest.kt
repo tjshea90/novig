@@ -38,6 +38,6 @@ class RecompositionCostTest {
         assertTrue(vm.contains("followThrottled(kotlinx.coroutines.flow.combine(c.usage.flow, c.cloudUsage) { u, cloud -> u to cloud }, USAGE_MIRROR_MS)"))
         // DG5: the saved bets are combined with Novig's wallet records first, and still reach the screen through the same throttle
         assertTrue(vm.contains("followThrottled(withNovigMoney, TRACKER_MIRROR_MS)"))
-        assertTrue(vm.contains("combine(c.tracker.flow.filterNotNull(), novigMarkets)"))
+        assertTrue(vm.contains("combine(c.tracker.flow.filterNotNull(), novigMarkets, c.walletLedger, c.walletFills)"))
     }
 }
