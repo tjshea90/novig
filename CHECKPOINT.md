@@ -1,13 +1,13 @@
-# CHECKPOINT 4544 — read me first, then TASKS.md
+# CHECKPOINT 4545 — read me first, then TASKS.md
 
-**Written:** 2026-11-16T18:24:41Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-mnnrec` · **builds on:** `790d30bfb` (this checkpoint is the commit after it)
+**Written:** 2026-11-16T18:31:15Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-mnnrec` · **builds on:** `0665ff342` (this checkpoint is the commit after it)
 
 ## Just done
-answered Tj lag; shipped v1.0.124; PF4 logged
+answered Tj; PF5 logged
 
 ## Do this next
-PF4: read v1.0.124 diag slowest tabs and cut
+PF5 button then PF4
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ PF4: read v1.0.124 diag slowest tabs and cut
 
 ## Last ten checkpoints
 ```
+  0665ff342 ckpt 4544: answered Tj lag; shipped v1.0.124; PF4 logged
   e836e73e1 ckpt 4543: WATCH 2026-11-16: engine healthy, no change
   48cac1414 ckpt 4542: pre-release: Diagnostics names which tab stutters and flags a slow screen w
   9ec516842 ckpt 4541: pre-ship: Diagnostics names which tab stutters and flags a slow screen with
@@ -26,5 +27,4 @@ PF4: read v1.0.124 diag slowest tabs and cut
   08fff40f2 ckpt 4537: PF2: reverted report reorder (tests pass)
   a30f9648d ckpt 4536: PF1 done (workflow crons off); PF2 audit: no cause found, need frames
   f5e81c869 ckpt 4535: PF1: PropLine free tier: Pro-only workflow schedules off; code already degr
-  d1bb96e5c ckpt 4534: pre-release: Settled bets older than 3 days lose their heavy snapshot once 
 ```
