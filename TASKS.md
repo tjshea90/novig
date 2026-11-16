@@ -6681,4 +6681,4 @@ DG5 (Tj chat 03:16 UTC 2026-11-16) "rebuild the entire tracker system to use nov
 
 - [ ] PF1 (Tj chat 17:16-17:18 UTC 2026-11-16) "today my propline streaming api will cancel and turn to the free tier. optimize the app to use the free tier and stop calling it for anything more than what the free tier offers" + "build it now"
 - [ ] PF2 (Tj chat 17:19 UTC 2026-11-16) "also keep auditing why the app is laggy. it lags when I type and when I scroll, as though something heavy is running in the background"
-- [ ] PF2b lag: report now puts PERFORMANCE (frames) before CONNECTIONS (done, test running); next: read Tj next report frames, fix named hotspot (Tracker derived chain on 5k bets recomputes on main thread on each state.bets change: candidate)
+- [ ] PF2b lag: no frame data in the 15:22 report (PERFORMANCE section sits after CONNECTIONS, cut by chat 60 KB; reorder breaks DiagnosticsFileTest order assumptions: change tests too). Next: read Tj next report frames, fix named hotspot (Tracker derived chain on 5k bets recomputes on main thread per state.bets change: candidate)
