@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-cnhej8",
  "head": "d87e8240babe6731838509f1a6d579fb191b00a5",
  "since": 1794788519,
- "beat": 1794863713,
- "beatIso": "2026-11-16T21:15:13Z",
+ "beat": 1794863973,
+ "beatIso": "2026-11-16T21:19:33Z",
  "done": "pre-release: Launch trace: the next report says how far a run got before Android ended it (versionCode 468, v1.0.128)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.128), then run: bash tools/record-release.sh v1.0.128 468 \"Launch trace: the next report says how far a run got before Android ended it\""
 }
