@@ -1251,8 +1251,8 @@ class CloudLink(private val c: AppContainer) {
         const val USAGE_POLL_MS = 10_000L
         const val USAGE_POLL_BACKGROUND_MS = 60_000L
         /** The wallet's ledger and fills change when a bet fills or settles, not every few seconds: a free 304 once a minute is plenty (and 5 minutes with the app away). */
-        const val WALLET_FILES_POLL_MS = 60_000L
-        const val WALLET_FILES_POLL_BACKGROUND_MS = 300_000L
+        const val WALLET_FILES_POLL_MS = 900_000L
+        const val WALLET_FILES_POLL_BACKGROUND_MS = 3_600_000L
         const val TRADES_POLL_MS = 6_000L
         const val TRADES_POLL_BACKGROUND_MS = 5 * 60_000L
         /** Candidate books read per round, and the rounds' pace: the stream's books are free; the rest go through the key's paced reads. */
