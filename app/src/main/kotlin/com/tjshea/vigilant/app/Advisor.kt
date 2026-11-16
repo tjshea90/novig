@@ -397,7 +397,7 @@ object Advisor {
      * of its frames slow ([SLOW_FRAMES_SHARE]) and clearly more than with nothing running, from enough frames to say ([MIN_FRAMES]).
      */
     internal fun frameFinding(frames: Map<String, com.tjshea.vigilant.data.diag.FrameStats.Bucket>): Finding? {
-        val quiet = frames[com.tjshea.vigilant.data.diag.FrameStats.QUIET]?.takeIf { it.frames >= MIN_FRAMES }
+        val quiet = frames[com.tjshea.vigilant.data.diag.FrameStats.QUIET]?.takeIf { it.frames >= 150L }
         val worst = frames.filterKeys { it != com.tjshea.vigilant.data.diag.FrameStats.QUIET }.entries
             .filter { (_, b) -> b.frames >= MIN_FRAMES && b.slowShare >= SLOW_FRAMES_SHARE && (quiet == null || b.slowShare >= quiet.slowShare * 2) }
             .maxByOrNull { it.value.slowShare }
