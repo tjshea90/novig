@@ -1,0 +1,6 @@
+# PF6 (Tj chat 2026-11-16, tablet: Android 10 Go, MT8168, 2 GB): the screen took 10 s to appear and 64% of frames were slow because nothing of
+# Vigilant's own code was precompiled (no baseline profile): every class ran interpreted until the JIT warmed up, on slow Cortex-A53 cores.
+# Wildcard rules: AGP compiles this into the release APK's profile and ProfileInstaller (already pulled in by Compose/WorkManager) installs it at the
+# first launch, also for a sideloaded APK. H = hot, S = startup, P = post-startup. All of the app's code is listed: the whole app is the startup path.
+HSPLcom/tjshea/vigilant/**;->**(**)**
+Lcom/tjshea/vigilant/**;
