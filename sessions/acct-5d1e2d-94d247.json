@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-2gqjsf",
- "head": "3abb471955651ba49927243a46eb8d1eaacbfaed",
+ "head": "7a7ebd06305dc9c6c7325d77db49822d34fdc31f",
  "since": 1794788519,
- "beat": 1794814667,
- "beatIso": "2026-11-16T07:37:47Z",
- "done": "v1.0.119 release.yml triggered; answered chat; logged BP1",
- "next": "confirm release v1.0.119, record-release.sh, link to Tj; BP1"
+ "beat": 1794814789,
+ "beatIso": "2026-11-16T07:39:49Z",
+ "done": "answered Tj numbers vs wallet; logged LD4",
+ "next": "LD4: all-time card from ledger"
 }
