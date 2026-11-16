@@ -16,6 +16,22 @@ primary subaccount (number `0`) and may use numbered subaccounts `1`–`63`.
 > Kalshi web or mobile app. Numbered-subaccount balances and positions are managed through
 > the trade API.
 
+## Requirements
+
+Creating a numbered subaccount with
+[Create Subaccount](https://docs.kalshi.com/api-reference/portfolio/create-subaccount.md) requires the
+[Advanced API tier](https://docs.kalshi.com/getting_started/rate_limits.md#tier-qualification) or above.
+On the Basic tier the request returns `403` with code
+`subaccount_creation_requires_advanced_api_usage_level`.
+[Intra Account Transfer](https://docs.kalshi.com/api-reference/portfolio/intra-account-transfer.md)
+returns the same error when a Basic-tier account names a numbered subaccount.
+The demo environment does not enforce the tier requirement, so a client that
+works in demo can still receive this `403` in production.
+
+Creating a subaccount needs an API key with the `write` scope, and
+transferring between subaccounts needs `write::transfer`. See
+[Scopes](https://docs.kalshi.com/getting_started/api_keys.md#scopes).
+
 ## Numbering
 
 | Number | Meaning |
@@ -60,11 +76,12 @@ On perps, a restricted key can place, amend, decrease, and cancel orders
 triggers on its locked subaccount. It can also list that subaccount's orders
 (`GET /margin/orders`; naming any other subaccount is rejected), read them
 individually (`GET /margin/orders/{order_id}` returns 404 for orders in any
-other subaccount), and read that subaccount's positions and fills
-(`GET /margin/positions` and `GET /margin/fills`, on the same terms as the
-order list). Other authenticated perps endpoints, including balance
-(`GET /margin/balance`), risk (`GET /margin/risk`), and funding history, are
-not yet available to restricted keys.
+other subaccount), and read that subaccount's positions, fills, and funding
+payments (`GET /margin/positions`, `GET /margin/fills`, and
+`GET /margin/funding_history`, on the same terms as the order list).
+`GET /margin/balance` returns only the locked subaccount's balance and omits
+the account-wide `settled_funds` total. Other authenticated perps endpoints,
+including risk (`GET /margin/risk`), are not yet available to restricted keys.
 
 Self-trade prevention applies across all subaccounts of an account. When an
 order from a restricted key would trade against an order resting in another

@@ -6,6 +6,42 @@
 
 > This changelog is specific to our API users and LPs
 
+**November 12, 2026 - RFQ on v3**
+
+**You can now price parlay RFQs on v3.** Register a subaccount as a maker with `POST /rfq/v3/maker`, then quote and confirm on the `GET /rfq/v3/ws` socket. [RFQ](https://docs.novig.com/api/rfq/overview.md) walks through a round.
+
+**A v3 maker quotes from its subaccount's balance.** You sign every RFQ route with that subaccount's `trading` key. There's no webhook and no signature to check on your side.
+
+**`GET /rfq/v3/executions` lists the parlays you filled.** `GET /rfq/v3/collateral` returns your collateral in parlays that haven't settled. `GET /rfq/v3/maker` returns your confirm rate and any lock.
+
+**During the beta, you must confirm 99% of your last looks.** Below that, we lock you out of quoting for 5 minutes. See [Confirm rate](https://docs.novig.com/api/rfq/confirm-rate.md).
+
+**v2 RFQ keeps working, and its pages are now under Deprecated.**
+
+**November 11, 2026 - Participation Protection on NBA Player Props**
+
+**Protected NBA player props are coming, starting in QA on Thursday, November 12, 2026.** The production date is not set yet. If the player plays no minutes in the third quarter, fourth quarter, or overtime, a protected market resolves at its pregame fair market price.
+
+Eight NBA prop types get a twin: points, rebounds, assists, three-pointers made, and the four points, rebounds, and assists combos. Each twin's `marketType` ends in `_PROTECTED`, like `POINTS_PROTECTED`.
+
+Protected NBA markets follow the same trading and parlay RFQ rules as protected NFL markets. See [Participation Protection](https://docs.novig.com/api/concepts/participation-protection.md).
+
+**November 11, 2026 - Protect Some Legs of a Parlay**
+
+**A parlay RFQ can now mix protected and standard legs.** You no longer have to protect every leg that could be protected. See [Participation Protection](https://docs.novig.com/api/concepts/participation-protection.md#protected-legs-in-a-parlay-rfq).
+
+**November 11, 2026 - The Competitor on Each Outcome**
+
+**Each outcome in a v3 market now carries `subjectId`, the ID of the team it's about.** A moneyline or spread outcome names its own side. Both outcomes of a team total name the team whose total it is.
+
+The field is left out when an outcome isn't about one team, like a game total or a player prop. To get the team's name, look up the ID in [Participants](https://docs.novig.com/api/catalog#participants).
+
+**November 10, 2026 - Locked Events and Markets**
+
+**`GET /v3/exchange/locks` lists the events and markets that refuse new orders.** `eventIds` holds each locked event, and `marketIds` each market locked on its own. A new order in one gets `EVENT_LOCKED` or `MARKET_LOCKED`. Cancels still work.
+
+**On a websocket, send `query_locks` for the same lists.** The reply comes under `locks`. Both cost one `read` token. See [Connection](https://docs.novig.com/api/streaming/connection.md).
+
 **November 2, 2026 - More Watched Markets at Each Tier**
 
 **Your tier now raises how many markets one websocket connection may watch,** from 8,192 at Base to 40,960 at Tier 4. A subscribe over your cap still answers `SUBSCRIPTION_LIMIT_EXCEEDED`. `GET /v3/limits` reports your cap as `maxWatchedMarkets`. See [Tiers](https://docs.novig.com/api/throttling.md#tiers).
@@ -37,6 +73,10 @@ Each subaccount still keeps its own throttles and its own open-order limit, at y
 Each protected market is a twin of a standard prop, with the same event, player, and `strike`. Its `marketType` ends in `_PROTECTED`, like `RECEIVING_YARDS_PROTECTED`. Fifteen NFL offense prop types get a twin.
 
 Protected markets trade pregame only, on their own order book. A parlay RFQ can include protected legs, but protection must cover every leg that could be protected. See [Participation Protection](https://docs.novig.com/api/concepts/participation-protection.md).
+
+**October 29, 2026 - No Edge Body Cap on the API**
+
+**Our edge no longer caps the request body on the API.** The exchange accepts a body up to 100 KiB and answers a larger one with a `413` and `PAYLOAD_TOO_LARGE`. See [413](https://docs.novig.com/api/errors.md#413-content-too-large).
 
 **October 29, 2026 - Larger Request Bodies**
 

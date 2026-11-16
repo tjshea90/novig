@@ -75,8 +75,8 @@ Auth: `x-api-key: YOUR_KEY` header (also accepted: `x-portal-apikey`) or `?key=Y
 
 Auth: `?key=YOUR_API_KEY` (paid plan with SSE).
 
-- [SSE /odds-drop](https://pinnodds.com/docs#sse-live): Push stream of live odds drops the instant they fire. Optional `?min_drop=N` picks the drop threshold (default 5%, floor 1%). **Cap: 1 connection per account** — opening a 2nd evicts the 1st.
-- [SSE /odds-drop-prematch](https://pinnodds.com/docs#sse-prematch): Push stream of prematch odds drops. Optional `?min_drop=N` and `?recheck=N` (hold N seconds + re-verify to filter blips). Counted independently from the live stream — one of each runs in parallel.
+- [SSE /odds-drop](https://pinnodds.com/docs#sse-live): Push stream of live odds drops the instant they fire. Optional `?min_drop=N` (percent) keeps only drops of at least N%; without it the stream applies no filter and sends every detected drop. Minimum accepted value is 1 (lower values are raised to 1). **Cap: 1 connection per account** — opening a 2nd evicts the 1st.
+- [SSE /odds-drop-prematch](https://pinnodds.com/docs#sse-prematch): Push stream of prematch odds drops. Optional `?min_drop=N`, same as on the live stream. `?recheck=N` is accepted but not applied today: every drop is delivered immediately. Counted independently from the live stream — one of each runs in parallel.
 
 ## WebSocket raw feed
 

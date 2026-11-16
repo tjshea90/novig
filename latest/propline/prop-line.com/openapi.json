@@ -1251,6 +1251,16 @@
               "default": false
             },
             "description": "When true, adds a `link` field \u2014 the book's public event-page URL (plain navigation, no affiliate tagging) \u2014 per bookmaker block (odds endpoints) or per price row (/best-line). Links ship for Bovada, DraftKings, FanDuel, BetMGM, Kalshi, Polymarket, Smarkets, ProphetX, Novig, DraftKings Pick6 and BetRivers; other books return null. Matches the-odds-api's includeLinks param. It also adds an `app_link` field (mobile app-open deep link; ProphetX and Courtside, null elsewhere)."
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "nj"
+            },
+            "description": "BetMGM state for bet_link / app_link hosts, e.g. nc."
           }
         ],
         "responses": {
@@ -1276,6 +1286,134 @@
           },
           "404": {
             "description": "Not found. On an event id that previously worked, the event was likely merged into a canonical duplicate (the same fixture posted by multiple books under different team-name spellings). Merged ids resolve automatically and return the canonical event with a 200 \u2014 its `id` field is the id to store. A persistent 404 means re-fetch the event from /v1/sports/{sport}/events and use the current id."
+          }
+        }
+      }
+    },
+    "/v1/bet-links/parlay": {
+      "get": {
+        "tags": [
+          "+EV"
+        ],
+        "summary": "Multi-leg bet-slip link",
+        "operationId": "getParlayBetLink",
+        "description": "One link that opens the book with every leg on the bet slip. Pass PropLine outcome ids (`outcome_id` on /best-line?includeLinks=true or /odds?includeBookIds=true), 1-12, all at one book: DraftKings, FanDuel, Fanatics, BetMGM (app deep link; `state` sets the host) or theScore (US link; prices are its Ontario book's). The link loads the legs; the book may still refuse the combination. No prices; every tier. Errors: 404 unknown_outcome_ids; 422 mixed_books, book_not_supported, missing_book_ids.",
+        "security": [
+          {
+            "APIKeyHeader": []
+          },
+          {
+            "APIKeyQuery": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "outcome_ids",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated PropLine outcome ids, 1-12, all at one book.",
+            "example": "123,456"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "nj"
+            },
+            "description": "BetMGM state for the link host, e.g. nc."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Link + per-leg book ids",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "book": {
+                      "type": "string"
+                    },
+                    "book_title": {
+                      "type": "string"
+                    },
+                    "bet_link": {
+                      "type": "string"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "legs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "outcome_id": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "event_id": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "market_key": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "period": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "description": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "book_event_id": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "book_market_id": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "book_outcome_id": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "point": {
+                            "type": "number",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    },
+                    "app_link": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "BetMGM: app deep link with every leg. Null for other books."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad or too many ids"
+          },
+          "404": {
+            "description": "unknown_outcome_ids"
+          },
+          "422": {
+            "description": "mixed_books / book_not_supported / missing_book_ids"
           }
         }
       }
@@ -3239,6 +3377,10 @@
                           },
                           "ev_pct": {
                             "type": "number"
+                          },
+                          "source": {
+                            "type": "string",
+                            "description": "legs_multiplied (product of the book's leg prices) or book_quote (the book's own parlay quote; Novig)"
                           }
                         }
                       }
@@ -3391,7 +3533,7 @@
                   "bookmaker": {
                     "type": "string",
                     "default": "fanduel",
-                    "description": "Book to price at: fanduel, draftkings, betonlineag, lowvig, betrivers, betmgm or unibet \u2014 or `all` to quote every supported book on the same legs in one call. With `all` the response is `{quotes: [<one single-book response per book that answered>], errors: [{bookmaker, status, error, detail}], best_bookmaker}`; `best_bookmaker` is the quoted book paying the most, i.e. the one charging the smallest correlation reduction on these legs.",
+                    "description": "Book to price at: fanduel, draftkings, betonlineag, lowvig, betrivers, betmgm, unibet or novig \u2014 or `all` to quote every supported book on the same legs in one call. With `all` the response is `{quotes: [<one single-book response per book that answered>], errors: [{bookmaker, status, error, detail}], best_bookmaker}`; `best_bookmaker` is the quoted book paying the most, i.e. the one charging the smallest correlation reduction on these legs.",
                     "enum": [
                       "fanduel",
                       "draftkings",
@@ -5038,7 +5180,7 @@
           "Events & Odds"
         ],
         "summary": "List every leg each book's SGP pricer can take on an event",
-        "description": "One row per outcome on this event that each SGP book (fanduel, draftkings, betonlineag, lowvig, betrivers, betmgm, unibet) can price as a same-game-parlay leg: it carries the native id the book's pricer needs. Send its `book_outcome_id` as a leg to `POST .../sgp`. Alt spreads, alt totals and N+ player rungs included; suspended and withdrawn outcomes left out. A book that does not price SGPs for the sport is listed with `supported: false` and a `reason`. Cached 10 seconds; `truncated: true` past 30,000 rows. Hobby+ gets `price`; free tier gets the same legs with `price` null.",
+        "description": "One row per outcome on this event that each SGP book (fanduel, draftkings, betonlineag, lowvig, betrivers, betmgm, unibet, novig) can price as a same-game-parlay leg: it carries the native id the book's pricer needs. Send its `book_outcome_id` as a leg to `POST .../sgp`. Alt spreads, alt totals and N+ player rungs included; suspended and withdrawn outcomes left out. A book that does not price SGPs for the sport is listed with `supported: false` and a `reason`. Cached 10 seconds; `truncated: true` past 30,000 rows. Hobby+ gets `price`; free tier gets the same legs with `price` null.",
         "operationId": "listSgpLegs",
         "security": [
           {
@@ -5438,6 +5580,252 @@
           }
         }
       }
+    },
+    "/v1/sports/{sport_key}/events/{event_id}/odds/depth/history": {
+      "get": {
+        "summary": "Order-book depth history (exchanges)",
+        "description": "Every recorded change of an exchange outcome's best price, takeable size and the order-book levels beyond it, for Kalshi, Polymarket, Polymarket US and ProphetX. Recorded from 2026-11-10. Paged with next_from. Hobby+; free tier redacted.",
+        "parameters": [
+          {
+            "name": "sport_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sport Key"
+            },
+            "description": "Sport key. the-odds-api names are accepted as aliases (americanfootball_nfl -> football_nfl, icehockey_nhl -> hockey_nhl, soccer_spain_la_liga -> soccer_la_liga, ...), but only where the competition is identical; otherwise the request returns 404 with a structured body carrying `reason` and `did_you_mean`. Canonical list: GET /v1/sports."
+          },
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Event Id"
+            }
+          },
+          {
+            "name": "markets",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "h2h,spreads,totals",
+              "title": "Markets"
+            }
+          },
+          {
+            "name": "bookmakers",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated book keys (default: kalshi, polymarket, polymarket_us, prophetx).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "ISO timestamp; states at or after.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "ISO timestamp; states at or before.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "required": false,
+            "description": "Last state per outcome per bucket.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "30s",
+                "1m",
+                "5m",
+                "15m",
+                "30m",
+                "1h"
+              ]
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "description": "Game-period filter; omitted = full game, 'all' = every period.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "States per page (default 5000, max 20000).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Depth history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "sport_key": {
+                      "type": "string"
+                    },
+                    "home_team": {
+                      "type": "string"
+                    },
+                    "away_team": {
+                      "type": "string"
+                    },
+                    "commence_time": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "next_from": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "bookmakers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "markets": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "description": {
+                                  "type": "string"
+                                },
+                                "period": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "team": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "outcomes": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "description": {
+                                        "type": "string"
+                                      },
+                                      "outcome_id": {
+                                        "type": "integer"
+                                      },
+                                      "redacted": {
+                                        "type": "boolean"
+                                      },
+                                      "snapshots": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "recorded_at": {
+                                              "type": "string",
+                                              "format": "date-time"
+                                            },
+                                            "price": {
+                                              "type": "integer",
+                                              "nullable": true
+                                            },
+                                            "point": {
+                                              "type": "number",
+                                              "nullable": true
+                                            },
+                                            "liquidity": {
+                                              "type": "number",
+                                              "nullable": true
+                                            },
+                                            "liquidity_updated_at": {
+                                              "type": "string",
+                                              "format": "date-time",
+                                              "nullable": true
+                                            },
+                                            "depth": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "price": {
+                                                    "type": "integer"
+                                                  },
+                                                  "size": {
+                                                    "type": "number",
+                                                    "nullable": true
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          },
+          {
+            "APIKeyQuery": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -5534,7 +5922,7 @@
           "app_link": {
             "type": "string",
             "nullable": true,
-            "description": "Mobile app-open deep link at this book \u2014 opens the book's native app on this fixture (with an app-store fallback for users without the app), vs `link` which is the desktop web event page. Only set when includeLinks=true and the book has a verified app-link template. ProphetX only today (an AppsFlyer OneLink); null for every other book."
+            "description": "Mobile app-open deep link at this book \u2014 opens the book's native app on this fixture (with an app-store fallback for users without the app), vs `link` which is the desktop web event page. Only set when includeLinks=true and the book has a verified app-link template. ProphetX only today (an AppsFlyer OneLink); null for every other book. BetMGM rows: the app with this selection on the slip."
           },
           "liquidity_updated_at": {
             "type": "string",
@@ -5561,7 +5949,17 @@
           "bet_link": {
             "type": "string",
             "nullable": true,
-            "description": "With includeLinks=true: DraftKings, FanDuel or BetMGM page that opens with this selection on the bet slip. Null for other books."
+            "description": "With includeLinks=true: DraftKings, FanDuel, Fanatics, BetMGM or theScore link that opens with this selection on the bet slip. Null for other books. BetMGM player props use their own 6: fixture; theScore links are US links (our theScore prices are Ontario's)."
+          },
+          "outcome_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "includeLinks only. Our outcome id; the input to GET /v1/bet-links/parlay."
+          },
+          "book_market_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "includeLinks only. The market id a slip link needs: FanDuel's national 42.x id, Fanatics' plain market number; null for other books."
           }
         },
         "type": "object",
@@ -7533,6 +7931,10 @@
             "nullable": true,
             "description": "Stable, cross-referenceable league player id for joining the SAME player across books WITHOUT name matching \u2014 \"{source}:{league_id}\" (mlb:592450 = MLBAM person id, nba:/wnba: = CDN personId, nhl: = api-web playerId, espn:8439 = ESPN athlete id for soccer/NFL/NCAAF). Present only on player-prop markets; always null on game lines and futures. Null whenever we do not have a CONFIRMED, unambiguous id: a sport with no stable-id stats feed (tennis/golf/UFC/boxing/cricket/darts/esports/... \u2014 null forever), a player who has never graded, a book spelling that diverges from the league's (an extra surname / nickname \u2014 the id lands on the well-spelled book and stays null on the odd one), or a name two players share (ambiguous). We never guess an id: a missed join is safe, a wrong join is not. Unconditional (no query param). Coverage warms as games grade after launch."
           },
+          "player_team": {
+            "type": "string",
+            "description": "On player-prop rows: the player's team in this event's own spelling (equal to home_team or away_team). From the league's current roster (NFL, NCAAF, NBA, WNBA, NHL, MLB, refreshed daily), served only when that team is one of the two in the game. Omitted when unknown."
+          },
           "side": {
             "type": "string",
             "nullable": true,
@@ -8002,6 +8404,12 @@
             "type": "string",
             "title": "Player Name"
           },
+          "player_id": {
+            "type": "string",
+            "title": "Player Id",
+            "nullable": true,
+            "description": "Same stable id as prop outcomes on /odds; null on team rows."
+          },
           "team_abbr": {
             "type": "string",
             "title": "Team Abbr",
@@ -8225,6 +8633,30 @@
             "type": "integer",
             "title": "Away Score",
             "nullable": true
+          },
+          "clock": {
+            "type": "string",
+            "nullable": true,
+            "title": "Clock",
+            "description": "Time left in the period, e.g. \"6:02\". Live NBA / NHL / NFL / NCAAF games; null otherwise (MLB has no clock)."
+          },
+          "situation": {
+            "type": "object",
+            "nullable": true,
+            "title": "Situation",
+            "description": "Sport-specific live situation read every ~5s from the league feed: MLB inning_half, batting, outs, balls, strikes, on_first/on_second/on_third; NFL/NCAAF possession, down, distance, yard_line, down_distance, red_zone; NHL clock_running, intermission, home_sog, away_sog, strength_code. Null when no fresh live state."
+          },
+          "last_play": {
+            "type": "object",
+            "nullable": true,
+            "title": "Last Play",
+            "description": "Latest play from the league feed: {id, type, text, ...}. Null when no fresh live state."
+          },
+          "state_updated_at": {
+            "type": "string",
+            "nullable": true,
+            "title": "State Updated At",
+            "description": "When we last read the league's live feed for this game (ISO 8601 UTC)."
           }
         },
         "type": "object",

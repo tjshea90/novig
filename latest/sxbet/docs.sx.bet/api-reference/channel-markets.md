@@ -11,6 +11,7 @@ Subscribe to all changes in markets on sx.bet. You will get updates when:
 * A new market is added
 * A market is removed (set to `INACTIVE`)
 * A market's fields have changed (for example, game time has changed or the market has settled)
+* A market's first bet is matched and confirmed (`hasVolume` becomes `true`)
 
 **CHANNEL NAME**
 
@@ -82,6 +83,7 @@ The above returns JSON structured like this:
     "sportId": 5,
     "leagueId": 1115,
     "leagueLabel": "Major League Soccer",
+    "hasVolume": false,
     "group1": "Major League Soccer"
   }
 ]

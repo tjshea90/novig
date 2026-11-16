@@ -4,40 +4,26 @@
 
 # Trading Competitions
 
-> Polymarket Perps Bi-Weekly Trading Competitions
-
-Welcome to Polymarket Perps Bi-Weekly Trading Competitions.
+> Polymarket Perps Trading Competitions
 
 ## Timeline
 
-Competitions will be announced a few days ahead of going live, and traders can
-track upcoming, live and ended competitions on our
+Competitions will run ad hoc, announced a few days ahead of going live - traders
+can track upcoming, live and completed competitions on our
 [Competitions page](https://polymarket.com/perps/competitions).
 
 ## Prizes
 
-Each competition has a **\$50,000 prize pool**, paid to the top 50 traders on
-the final leaderboard. Prizes are credited as pUSD to the winner's Polymarket
-Perps account within \~1 week of the competition ending. No claim is needed.
+Each competition has a different prize pool for a number of traders on the
+final leaderboard, announced prior to the competition beginning. Prizes are
+credited as pUSD to the winner's Polymarket Perps account within \~1 week of the
+competition ending. No claim is needed.
 
-Live rankings appear on the leaderboard in the Competitions tab of the
-Polymarket Perps page. Final rankings are confirmed after a review for rule
-violations, so standings can shift if any accounts are disqualified. Only trades
-made during the competition window count toward your score.
-
-Prize pool breakdown:
-
-| Place | Prize per trader | Traders | Total |
-| - | -: | -: | -: |
-| 1st | \$10,000 | 1 | \$10,000 |
-| 2nd | \$6,500 | 1 | \$6,500 |
-| 3rd | \$4,500 | 1 | \$4,500 |
-| 4th | \$3,500 | 1 | \$3,500 |
-| 5th | \$2,500 | 1 | \$2,500 |
-| 6th–10th | \$1,200 | 5 | \$6,000 |
-| 11th–24th | \$750 | 14 | \$10,500 |
-| 25th–50th | \$250 | 26 | \$6,500 |
-| **Total** | | **50** | **\$50,000** |
+Live rankings appear on the leaderboard in the
+[Competitions tab](https://polymarket.com/perps/competitions) of the Polymarket
+Perps page. Final rankings are confirmed after a review for rule violations, so
+standings can shift if any accounts are disqualified. Only trades made during
+the competition window count toward your score.
 
 ## Rules & Guidelines
 
@@ -64,9 +50,11 @@ Prize pool breakdown:
 > * **Negative scores:** negative PnL produces a negative score, and negative
 >   scores still rank.
 
-> [accordion] 3. \$100K minimum to rank
+> [accordion] 3. Minimum trade volume to rank
 >
-> Trade \$100K in notional volume to qualify for prizes.
+> Trade more than the competitions defined minimum notional volume to qualify for
+> prizes. This minimum volume will be announced before each competition, and vary
+> by competition.
 >
 > * Only volume on competition markets counts toward the minimum.
 > * Boosts count toward your score but not toward the minimum.
@@ -83,7 +71,7 @@ Prize pool breakdown:
 
 > [accordion] 5. Timing and payouts
 >
-> Top 50 are paid in pUSD to their perps account after a \~5-day review.
+> Winners are paid in pUSD to their perps account after a \~5-day review.
 >
 > * Only trades filled between the start and end time (UTC) count.
 > * Open positions are scored at the oracle mark price at the end. Closing them
@@ -105,12 +93,7 @@ Prize pool breakdown:
 
 [Start Competing](https://polymarket.com/perps/competitions)
 
-Join live or upcoming competitions to earn your share of \$50k in cash
-prizes.
-
-> [accordion] Competition Terms & Conditions
->
-> [Competition Terms & Conditions](https://docs.google.com/document/d/e/2PACX-1vRoHUTKW0vWtjRcggirQeWhnSrf35HKVKfJ2q3bg-P2p1kRZpDwLe8FqMYzFqVToA/pub?embedded=true)
+Join live or upcoming competitions to earn your share of cash prizes.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

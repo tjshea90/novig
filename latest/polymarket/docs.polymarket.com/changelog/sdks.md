@@ -8,6 +8,21 @@
 
 > [tab] TypeScript
 >
+> ### `0.20.0`
+>
+> * Breaking change: `listOpenOrders(...)` now requires a nonblank market condition ID in `market` when filtering by `assetId` or the deprecated `tokenId` alias. Asset-only queries throw `UserInputError` before sending a request. Unfiltered and market-only queries remain supported.
+>
+> ```diff theme={null}
+> -const pages = client.listOpenOrders({ assetId });
+> +const pages = client.listOpenOrders({ assetId, market: conditionId });
+> ```
+>
+> * `OpenOrder.associateTrades` is deprecated and defaults to an empty array when omitted from a response, preserving legacy values when present. Use `sizeMatched` for cumulative fills, or `listAccountTrades()` for individual fills matched by `takerOrderId` or `makerOrders[].orderId`. An empty `associateTrades` array does not mean an order has no fills.
+>
+> ### `0.19.0`
+>
+> * Added `providerApiKey` to authenticated crypto and equity spot and TWAP price subscriptions. Set `provider: PriceProvider.Chainlink` to authenticate with your Chainlink API key; the key is ignored for other providers.
+>
 > ### `0.18.0`
 >
 > * Added `listWalletOpenOrders(...)` to list open orders across a Deposit Wallet, including orders placed by its session keys. Each order reports the `signerAddress` that placed it and a nullable `owner`. Filter by `market`, `assetId`, or 1 to 50 `signerAddresses`.
@@ -604,6 +619,21 @@
 > ```
 
 > [tab] Python
+>
+> ### `0.20.0`
+>
+> * Breaking change: `list_open_orders(...)` now requires a nonblank market condition ID in `market` when filtering by `asset_id` or the deprecated `token_id` alias. Asset-only queries raise `UserInputError` when the paginator fetches a page. Unfiltered and market-only queries remain supported. This applies to sync and async clients.
+>
+> ```diff theme={null}
+> -pages = client.list_open_orders(asset_id=asset_id)
+> +pages = client.list_open_orders(asset_id=asset_id, market=condition_id)
+> ```
+>
+> * `OpenOrder.associate_trades` is deprecated and defaults to an empty tuple when omitted from a response, preserving legacy values when present. Use `size_matched` for cumulative fills, or `list_account_trades()` for individual fills matched by `taker_order_id` or `maker_orders[].order_id`. An empty `associate_trades` tuple does not mean an order has no fills.
+>
+> ### `0.19.0`
+>
+> * Added `provider_api_key` to authenticated crypto and equity spot and TWAP price subscription specs. Set `provider="chainlink"` to authenticate with your Chainlink API key; the key is ignored for other providers.
 >
 > ### `0.18.0`
 >

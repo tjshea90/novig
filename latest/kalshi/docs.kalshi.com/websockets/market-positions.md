@@ -11,6 +11,7 @@
 - Market specification optional (omit to receive all positions)
 - Filters are by `market_ticker`/`market_tickers` only; `market_id`/`market_ids` are not supported
 - Updates sent when your position changes due to trades, settlements, etc.
+- Messages carry no `seq` and are not ordered against the `fill` channel: the position update for a trade can arrive after its `fill` message. Do not assume your position is current when a fill arrives
 
 **Monetary Values:**
 All monetary values are returned as fixed-point dollar strings (`_dollars` suffix).
@@ -39,6 +40,10 @@ description: >
   `market_id`/`market_ids` are not supported
 
   - Updates sent when your position changes due to trades, settlements, etc.
+
+  - Messages carry no `seq` and are not ordered against the `fill` channel: the
+  position update for a trade can arrive after its `fill` message. Do not assume
+  your position is current when a fill arrives
 
 
   **Monetary Values:**
@@ -144,7 +149,7 @@ operations:
             type:
               type: string
               const: market_position
-              x-parser-schema-id: <anonymous-schema-132>
+              x-parser-schema-id: <anonymous-schema-141>
             sid:
               type: integer
               description: >-
@@ -167,7 +172,7 @@ operations:
                 user_id:
                   type: string
                   description: User ID for the position
-                  x-parser-schema-id: <anonymous-schema-134>
+                  x-parser-schema-id: <anonymous-schema-143>
                 market_ticker:
                   type: string
                   description: Unique market identifier
@@ -178,7 +183,7 @@ operations:
                   description: Fixed-point net position (2 decimals)
                   x-rust-type: common::types::Position
                   x-rust-serialize-with: ws::dto::serde_money::serialize_position_fixed_point_count
-                  x-parser-schema-id: <anonymous-schema-135>
+                  x-parser-schema-id: <anonymous-schema-144>
                 position_cost_dollars:
                   type: string
                   description: >-
@@ -186,36 +191,36 @@ operations:
                     string
                   x-rust-type: common::types::Value
                   x-rust-serialize-with: ws::dto::serde_money::serialize_value_microcent_dollars
-                  x-parser-schema-id: <anonymous-schema-136>
+                  x-parser-schema-id: <anonymous-schema-145>
                 realized_pnl_dollars:
                   type: string
                   description: Realized profit/loss as a fixed-point dollar string
                   x-rust-type: common::types::Value
                   x-rust-serialize-with: ws::dto::serde_money::serialize_value_microcent_dollars
-                  x-parser-schema-id: <anonymous-schema-137>
+                  x-parser-schema-id: <anonymous-schema-146>
                 fees_paid_dollars:
                   type: string
                   description: Total fees paid as a fixed-point dollar string
                   x-rust-type: common::types::Value
                   x-rust-serialize-with: ws::dto::serde_money::serialize_value_microcent_dollars
-                  x-parser-schema-id: <anonymous-schema-138>
+                  x-parser-schema-id: <anonymous-schema-147>
                 position_fee_cost_dollars:
                   type: string
                   description: Total position fee cost as a fixed-point dollar string
                   x-rust-type: common::types::Value
                   x-rust-serialize-with: ws::dto::serde_money::serialize_value_microcent_dollars
-                  x-parser-schema-id: <anonymous-schema-139>
+                  x-parser-schema-id: <anonymous-schema-148>
                 volume_fp:
                   type: string
                   description: Fixed-point total volume traded (2 decimals)
                   x-rust-type: i64
                   x-rust-serialize-with: ws::dto::serde_money::serialize_centicount_fixed_point_count
-                  x-parser-schema-id: <anonymous-schema-140>
+                  x-parser-schema-id: <anonymous-schema-149>
                 subaccount:
                   type: integer
                   description: Optional subaccount number for the position
-                  x-parser-schema-id: <anonymous-schema-141>
-              x-parser-schema-id: <anonymous-schema-133>
+                  x-parser-schema-id: <anonymous-schema-150>
+              x-parser-schema-id: <anonymous-schema-142>
             sending_ts_ms:
               type: integer
               format: int64

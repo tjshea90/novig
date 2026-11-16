@@ -11,11 +11,13 @@
 - Market specification required:
   - Use `market_ticker` (string) for a single market
   - Use `market_tickers` (array of strings) for multiple markets
-  - `market_id`/`market_ids` are not supported for this channel
+  - `market_id`/`market_ids` are not supported for this channel and never select a market. A first `subscribe` that gives only `market_id`/`market_ids` is acknowledged with `subscribed` but receives no snapshots or deltas. On an existing subscription, a `subscribe`, `add_markets` or `delete_markets` that gives only IDs returns `ok` and changes nothing, so the markets already subscribed keep streaming; `get_snapshot` with only IDs returns error code 14
 - Sends `orderbook_snapshot` first, then incremental `orderbook_delta` updates
 - Supports `update_subscription` with `add_markets` / `delete_markets` / `get_snapshot` actions
 - `get_snapshot` returns an `orderbook_snapshot` for the requested `market_tickers` without changing the subscribed markets. Apply every returned snapshot as a replacement for that market's local book
 - Each connection has one `orderbook_delta` subscription. A repeated `subscribe` adds new markets to its existing `sid`; it does not resend snapshots for markets already subscribed
+- A subscription holds at most 500,000 markets. A `subscribe` or `add_markets` that would exceed this returns error code 26 and adds none of its markets
+- When a market is determined, the server sends an empty `orderbook_snapshot` for it and removes it from the subscription. No further messages follow for that market and there is no separate notification; replace your local book with the empty snapshot
 - A repeated `subscribe` must use the existing `update_interval_ms` (omitting it means `0`). A different valid interval returns error code 11 without adding markets. Use `update_subscription` with `add_markets` to add markets without respecifying the interval. To change the interval, `unsubscribe`, wait for `unsubscribed`, then `subscribe` again
 
 **Matching real-time updates across connections:**
@@ -61,7 +63,7 @@ description: >
   - Market specification required:
     - Use `market_ticker` (string) for a single market
     - Use `market_tickers` (array of strings) for multiple markets
-    - `market_id`/`market_ids` are not supported for this channel
+    - `market_id`/`market_ids` are not supported for this channel and never select a market. A first `subscribe` that gives only `market_id`/`market_ids` is acknowledged with `subscribed` but receives no snapshots or deltas. On an existing subscription, a `subscribe`, `add_markets` or `delete_markets` that gives only IDs returns `ok` and changes nothing, so the markets already subscribed keep streaming; `get_snapshot` with only IDs returns error code 14
   - Sends `orderbook_snapshot` first, then incremental `orderbook_delta` updates
 
   - Supports `update_subscription` with `add_markets` / `delete_markets` /
@@ -74,6 +76,14 @@ description: >
   - Each connection has one `orderbook_delta` subscription. A repeated
   `subscribe` adds new markets to its existing `sid`; it does not resend
   snapshots for markets already subscribed
+
+  - A subscription holds at most 500,000 markets. A `subscribe` or `add_markets`
+  that would exceed this returns error code 26 and adds none of its markets
+
+  - When a market is determined, the server sends an empty `orderbook_snapshot`
+  for it and removes it from the subscription. No further messages follow for
+  that market and there is no separate notification; replace your local book
+  with the empty snapshot
 
   - A repeated `subscribe` must use the existing `update_interval_ms` (omitting
   it means `0`). A different valid interval returns error code 11 without adding
@@ -290,7 +300,7 @@ operations:
             type:
               type: string
               const: orderbook_snapshot
-              x-parser-schema-id: <anonymous-schema-76>
+              x-parser-schema-id: <anonymous-schema-85>
             id:
               type: integer
               description: >
@@ -346,7 +356,7 @@ operations:
 
                     The snapshot includes every change to this market with a
                     clock at or below this one, and none above it.
-                  x-parser-schema-id: <anonymous-schema-78>
+                  x-parser-schema-id: <anonymous-schema-87>
                 yes_dollars_fp:
                   type: array
                   description: >
@@ -361,11 +371,11 @@ operations:
                     type: array
                     items:
                       type: string
-                      x-parser-schema-id: <anonymous-schema-81>
+                      x-parser-schema-id: <anonymous-schema-90>
                     minItems: 2
                     maxItems: 2
-                    x-parser-schema-id: <anonymous-schema-80>
-                  x-parser-schema-id: <anonymous-schema-79>
+                    x-parser-schema-id: <anonymous-schema-89>
+                  x-parser-schema-id: <anonymous-schema-88>
                 no_dollars_fp:
                   type: array
                   description: >
@@ -380,12 +390,12 @@ operations:
                     type: array
                     items:
                       type: string
-                      x-parser-schema-id: <anonymous-schema-84>
+                      x-parser-schema-id: <anonymous-schema-93>
                     minItems: 2
                     maxItems: 2
-                    x-parser-schema-id: <anonymous-schema-83>
-                  x-parser-schema-id: <anonymous-schema-82>
-              x-parser-schema-id: <anonymous-schema-77>
+                    x-parser-schema-id: <anonymous-schema-92>
+                  x-parser-schema-id: <anonymous-schema-91>
+              x-parser-schema-id: <anonymous-schema-86>
             sending_ts_ms: &ref_5
               type: integer
               format: int64
@@ -565,7 +575,7 @@ operations:
             type:
               type: string
               const: orderbook_delta
-              x-parser-schema-id: <anonymous-schema-85>
+              x-parser-schema-id: <anonymous-schema-94>
             sid: *ref_1
             seq: *ref_2
             msg:
@@ -600,19 +610,19 @@ operations:
 
                     deduplication key. Apply deltas using this subscription's
                     seq order.
-                  x-parser-schema-id: <anonymous-schema-87>
+                  x-parser-schema-id: <anonymous-schema-96>
                 price_dollars:
                   type: string
                   description: Price level in dollars
                   x-rust-type: common::types::Price
                   x-rust-serialize-with: ws::dto::serde_money::serialize_price_dollars
-                  x-parser-schema-id: <anonymous-schema-88>
+                  x-parser-schema-id: <anonymous-schema-97>
                 delta_fp:
                   type: string
                   description: Fixed-point contract delta (2 decimals)
                   x-rust-type: i64
                   x-rust-serialize-with: ws::dto::serde_money::serialize_centicount_fixed_point_count
-                  x-parser-schema-id: <anonymous-schema-89>
+                  x-parser-schema-id: <anonymous-schema-98>
                 side:
                   type: string
                   description: Market side
@@ -628,7 +638,7 @@ operations:
 
                     Contains the client_order_id of your order that triggered
                     this delta.
-                  x-parser-schema-id: <anonymous-schema-90>
+                  x-parser-schema-id: <anonymous-schema-99>
                 ts:
                   type: string
                   deprecated: true
@@ -637,14 +647,14 @@ operations:
                     change was recorded (RFC3339, truncated to milliseconds).
                     Use ts_ms instead.
                   format: date-time
-                  x-parser-schema-id: <anonymous-schema-91>
+                  x-parser-schema-id: <anonymous-schema-100>
                 ts_ms:
                   type: integer
                   description: >-
                     Optional - Unix timestamp for when the orderbook change was
                     recorded (in milliseconds)
                   format: int64
-                  x-parser-schema-id: <anonymous-schema-92>
+                  x-parser-schema-id: <anonymous-schema-101>
                 subaccount:
                   type: integer
                   description: >
@@ -653,8 +663,8 @@ operations:
 
                     Contains the subaccount number of your order that triggered
                     this delta.
-                  x-parser-schema-id: <anonymous-schema-93>
-              x-parser-schema-id: <anonymous-schema-86>
+                  x-parser-schema-id: <anonymous-schema-102>
+              x-parser-schema-id: <anonymous-schema-95>
             sending_ts_ms: *ref_5
           x-parser-schema-id: orderbookDeltaPayload
         title: Orderbook Delta

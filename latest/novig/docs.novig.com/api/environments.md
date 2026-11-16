@@ -57,5 +57,17 @@ Store each environment's keypair in its own secret.
 2. Create a keypair in that environment.
 3. Re-run the [Quickstart](https://docs.novig.com/api/quickstart.md) to test your signature.
 
+## Connect over AWS PrivateLink
+
+High-volume traders on Production can reach a dedicated trading gateway over AWS PrivateLink.
+Your orders then travel inside AWS to a gateway that serves only you, not across the public internet.
+
+To qualify, your account needs at least \$100,000,000 in monthly order-book volume. RFQ volume doesn't count.
+We count volume as on the [Throttling](https://docs.novig.com/api/throttling.md#tiers) page. Spots are limited, and we grant each one at our discretion.
+
+The gateway runs in AWS `us-east-1`. You create an interface VPC endpoint in your own AWS account to reach it.
+
+To request access, email [developers@novig.com](mailto:developers@novig.com) with your AWS account ID.
+
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

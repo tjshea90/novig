@@ -529,14 +529,6 @@ components:
         message:
           description: Human-readable. Not stable. Never match on it.
           type: string
-        nonce:
-          description: The websocket request that failed. Absent on REST.
-          format: int64
-          maximum: 9007199254740991
-          minimum: 0
-          type:
-            - integer
-            - 'null'
         rejected:
           description: >-
             One entry per refused order in a batch. Present only on an error

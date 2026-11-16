@@ -57,5 +57,15 @@ Send `x-sx-api-key` as a header. Every response is scoped to the address that ow
 | `POST /user/multisig/set-threshold/execute` | Submits your signature for a threshold change | [Docs →](https://docs.sx.bet/api-reference/post-user-multisig-set-threshold-execute.md) |
 | `POST /user/multisig/cancel` | Deletes a pending Safe transaction | [Docs →](https://docs.sx.bet/api-reference/post-user-multisig-cancel.md) |
 
+## Partner routes
+
+Send a partner key as `x-sx-api-key`. Partner keys are issued to approved partners. See [Partner API](https://docs.sx.bet/developers/partner-api.md).
+
+| Route | What it does | Link |
+| - | - | - |
+| `GET /partner/attestation` | The typed data a wallet signs to become your user | [Docs →](https://docs.sx.bet/api-reference/get-partner-attestation.md) |
+| `POST /partner/users` | Creates a user and returns their API key | [Docs →](https://docs.sx.bet/api-reference/post-partner-users.md) |
+| `GET /partner/users` | Lists the users you have created | [Docs →](https://docs.sx.bet/api-reference/get-partner-users.md) |
+
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

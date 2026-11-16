@@ -1,0 +1,24 @@
+# The Odds API
+
+> The Odds API is a JSON REST API for sports betting odds: live and upcoming games, scores, events, betting markets and historical odds, from bookmakers in the US, UK, EU, Australia and other regions.
+
+- Host: `https://api.the-odds-api.com` (IPv6: `https://ipv6-api.the-odds-api.com`)
+- Authentication: every request needs an API key, passed as the `apiKey` query parameter or the `x-api-key` request header
+- Get a free API key: https://the-odds-api.com/#get-access
+
+## Docs
+
+- [API documentation (v4)](https://the-odds-api.com/liveapi/guides/v4/): endpoints, parameters, example requests and responses, usage quota costs
+- [OpenAPI spec (v4)](https://the-odds-api.com/api-reference/v4/schema.yml): machine-readable description of every endpoint, parameter and response field
+- [API reference](https://the-odds-api.com/api-reference/v4/): interactive view of the OpenAPI spec
+- [Code samples](https://the-odds-api.com/liveapi/guides/v4/samples.html): Python and Node.js
+- [Error codes](https://the-odds-api.com/liveapi/guides/v4/api-error-codes.html)
+
+## Reference data
+
+- [Sports and sport keys](https://the-odds-api.com/sports-odds-data/sports-apis.html)
+- [Bookmakers and regions](https://the-odds-api.com/sports-odds-data/bookmaker-apis.html)
+- [Betting markets and market keys](https://the-odds-api.com/sports-odds-data/betting-markets.html)
+- [Update intervals](https://the-odds-api.com/sports-odds-data/update-intervals.html)
+- [Historical odds data](https://the-odds-api.com/historical-odds-data/)
+- [Permitted usage](https://the-odds-api.com/terms-and-conditions.html#restrictions): restrictions on how the API and its data may be used

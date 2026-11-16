@@ -68,7 +68,7 @@ A subscribe that names only `private` gets an empty `snapshot`.
 Events arrive in the `orders` field of a delta, as one batch with one `seq`.
 Within a batch, an order's `fill` events come before its `open`, `cancel`, or `reject`.
 
-Every event names the order's outcome and its `originalQty`, the number of contracts you placed.
+Every event names the order's outcome, its limit price, and its `originalQty`, the number of contracts you placed.
 You can read each event on its own, without matching it to an earlier one.
 
 ```json theme={"dark"}
@@ -82,6 +82,7 @@ You can read each event on its own, without matching it to an earlier one.
         "kind": "cancel",
         "orderId": "7c9e6679-…",
         "outcomeId": "3f2504e0-…",
+        "price": "0.665",
         "originalQty": 110,
         "remaining": 70
       }
@@ -108,6 +109,8 @@ You can read each event on its own, without matching it to an earlier one.
 >
 > The order rests. **This event, not the `201`, confirms that the order rests.**
 >
+> `price` is the order's limit price.
+>
 > `qty` is the resting quantity.
 > It's lower than `originalQty` when part of the order filled before it rested.
 >
@@ -123,7 +126,8 @@ You can read each event on its own, without matching it to an earlier one.
 >   "orderId": "7c9e6679-…",
 >   "clientId": "0b3f5f20-…",
 >   "outcomeId": "3f2504e0-…",
->   "price": "0.670",
+>   "price": "0.660",
+>   "limit": "0.665",
 >   "qty": 40,
 >   "originalQty": 110,
 >   "remaining": 70,
@@ -137,7 +141,7 @@ You can read each event on its own, without matching it to an earlier one.
 > `taker` is `true` when your order took liquidity and `false` when it rested.
 > It matches `taker` from `GET /v3/portfolio/fills`.
 >
-> `price` is the traded price. It can be better than your limit.
+> `price` is the traded price. It can be better than `limit`, the order's limit price.
 >
 > `qty` is the size of this fill. `remaining` is what still rests after it.
 >
@@ -155,11 +159,14 @@ You can read each event on its own, without matching it to an earlier one.
 >   "orderId": "7c9e6679-…",
 >   "clientId": "0b3f5f20-…",
 >   "outcomeId": "3f2504e0-…",
+>   "limit": "0.665",
 >   "originalQty": 110,
 >   "remaining": 70,
 >   "reason": "GO_LIVE"
 > }
 > ```
+>
+> `limit` is the order's limit price.
 >
 > `remaining` is what was still resting when the order left the book.
 > `originalQty` minus `remaining` is the quantity that filled.
@@ -176,9 +183,12 @@ You can read each event on its own, without matching it to an earlier one.
 >   "orderId": "7c9e6679-…",
 >   "clientId": "0b3f5f20-…",
 >   "outcomeId": "3f2504e0-…",
+>   "limit": "0.665",
 >   "originalQty": 110
 > }
 > ```
+>
+> `limit` is the order's limit price.
 >
 > We accepted the order, then refused it. **No HTTP status reports this refusal.**
 >

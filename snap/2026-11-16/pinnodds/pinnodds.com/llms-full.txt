@@ -1,0 +1,1297 @@
+# Pinnacle Odds API — Full Reference
+
+This document is the canonical, plain-text reference for the Pinnacle Odds API hosted at https://pinnodds.com. Everything an AI assistant or developer needs to integrate is below: auth, endpoints, parameters, response shapes, working code examples, error codes, rate limits, and reference data.
+
+Source of truth: this file. The HTML version at https://pinnodds.com/docs renders the same content for humans. If anything here disagrees with the running API, the running API wins — open an issue or contact support.
+
+---
+
+## Overview
+
+Real-time live and prematch sports odds sourced from Pinnacle's own push feed and exposed through four surfaces:
+
+1. **REST endpoints** under `/kit/v1/*` — same response shape as common third-party Pinnacle APIs, drop-in compatible. Use these for snapshots, polling, or one-off lookups.
+2. **Queryable drops buffer** at `/api/drops` — recent dropping-odds events with filters. Use this when you want a list of "what just dropped" without keeping a connection open.
+3. **Server-Sent Events streams** at `/odds-drop` (live) and `/odds-drop-prematch` — push-based, sub-second latency from a Pinnacle price move to your code seeing it. Use these for arb, EV bots, alert systems.
+4. **WebSocket passthrough** at `/ws/feed` ($99/mo add-on, REST-bearing plans only) — every raw Pinnacle MQTT frame and prematch REST snapshot forwarded byte-identical, including each period's status (`open` / `closed` / `settled`). "Settled" is a period status that says trading has stopped; it is not a results or settlement feed, and pinnodds has no results endpoint. Use this when you want to rebuild Pinnacle's full state machine on your side. NOT the same as `/odds-drop` SSE.
+
+Base URL for examples below: `https://pinnodds.com`.
+
+## Official clients
+
+- **Python** — `pip install pinnodds` (https://pypi.org/project/pinnodds/). REST + SSE with auto-reconnect. Python 3.8+.
+- **Node.js** — `npm install pinnodds` (https://www.npmjs.com/package/pinnodds). Zero dependencies, TypeScript types included. Node 18+.
+
+Both wrap every endpoint below; the hand-rolled examples in this file remain valid if you prefer no dependency.
+
+Coverage: Soccer, Tennis, Basketball, Hockey, Football, Baseball, Rugby, MMA, Boxing, an "Other" bucket (Volleyball + Handball, also separable as ids 14 and 15), Esports, and Golf (head-to-heads / outrights). Markets: moneyline, spreads, totals, team totals — across every period (full match, halves, quarters, sets, etc.). Note: Golf is moneyline-only — Pinnacle does not provide spreads/totals for Golf.
+
+---
+
+## Authentication
+
+One API key covers every surface. The sections below show how to send it on REST and on the SSE streams.
+
+### REST API key (for /kit/v1/*, /api/drops, /health, /panel/api/*)
+
+Sign up at https://pinnodds.com/panel/api/signup with an email — you get back an API key once. That key is your only credential; there is no password.
+
+Pass the key in **one of three** ways, in priority order:
+
+1. `x-api-key: YOUR_KEY` header — recommended
+2. `x-api-key: YOUR_KEY` header
+3. `?key=YOUR_KEY` query parameter — handy for browsers and curl one-liners
+
+Failure: HTTP 401 with `{"error":"missing_key"}` or `{"error":"invalid_key"}`.
+
+### SSE streams (/odds-drop, /odds-drop-prematch)
+
+Same API key as REST, in the `x-api-key` header or as `?key=`. The plan must include SSE (Stream, Pro+SSE, or Scale tier), or the key must have an active 3-day full demo.
+
+The separate SSE token (`?token=`) is **no longer accepted**: a request that sends one without an API key gets `401` with `{"type":"error","error":"invalid_token"}` every time. Use the API key.
+
+Failure is an ordinary HTTP response with a JSON body, sent before any stream opens (it is not an SSE event, so an EventSource client sees a failed connection, not a message):
+- HTTP 401 with the reason in the body: `{"type":"error","error":"missing_key"}` (no key sent), `"invalid_key"` (key not recognised), `"expired"` (the key has expired) or `"invalid_token"` (the retired `?token=` was sent without an API key).
+- HTTP 429 `{"type":"error","error":"rate_limited","message":"Too many connection attempts: max 5 per 60s per API key. Retry in 42s. ...","retry_after_s":42}` with a `Retry-After: <seconds>` header — more than 5 connection attempts per API key in 60 s. Wait `retry_after_s` seconds, then reconnect. A browser EventSource treats a 429 as fatal and does not retry by itself, so reconnect from your own code.
+- HTTP 403 `{"type":"error","error":"plan_lacks_sse"}` — key is valid but its plan has no SSE. Expected on a new free key until a demo is switched on.
+Neither answer changes by retrying; do not reconnect in a loop on 401 or 403.
+
+A new key is issued on the free trial tier: REST only, no SSE and no WebSocket. A FREE 3-day full demo with SSE and the raw WebSocket is available on request — ask on Telegram at t.me/ArbitrageXpro with the email registered on the key. It is not automatic.
+When a demo ends the key keeps working forever on the free trial tier but SSE stops; to keep streaming, upgrade to Stream ($99/mo), Pro+SSE ($149/mo), or Scale ($229/mo).
+
+---
+
+## REST Endpoints
+
+### GET /kit/v1/markets
+
+Returns every event for a sport with all markets across every period. Live by default; pass `event_type=prematch` to switch feeds. Same envelope shape for both — only the per-event `event_type` field differs.
+
+**Query parameters:**
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `sport_id` | int | yes | Sport ID, see "Sport IDs" section below |
+| `event_type` | "live" \| "prematch" | no | Defaults to `live`. Pass `prematch` to receive prematch fixtures with the same envelope. |
+| `since` | int | no | Return only events with `last > since` (incremental polling) |
+| `is_have_odds` | 0 \| 1 | no | Legacy compat — accepted and ignored. We always return events with odds. |
+
+**Example request:**
+
+```
+curl -H "x-api-key: $KEY" \
+  "https://pinnodds.com/kit/v1/markets?sport_id=2&event_type=live"
+```
+
+**Example response (live, soccer trimmed):**
+
+```json
+{
+  "sport_id": 2,
+  "sport_name": "Tennis",
+  "last": 297592,
+  "last_call": 297592,
+  "events": [
+    {
+      "event_id": 1628594960,
+      "sport_id": 2,
+      "league_id": 2037,
+      "league_name": "ATP Madrid",
+      "starts": "2026-04-17T12:00:00Z",
+      "last": 1776430365,
+      "home": "Carlos Alcaraz",
+      "away": "Jannik Sinner",
+      "event_type": "live",
+      "live_status_id": 1,
+      "parent_id": 1628594613,
+      "is_have_odds": true,
+      "is_have_periods": true,
+      "periods": {
+        "num_0": {
+          "number": 0,
+          "description": "Game",
+          "money_line": { "home": 2.45, "away": 1.55 },
+          "spreads": {
+            "-1.5": { "hdp": -1.5, "home": 2.06, "away": 1.82, "max": 500 }
+          },
+          "totals": {
+            "22.5": { "points": 22.5, "over": 1.90, "under": 1.98, "max": 500 }
+          },
+          "team_total": {
+            "home": { "points": 11.5, "over": 1.86, "under": 2.00 }
+          },
+          "team_totals": {
+            "home": {
+              "10.5": { "points": 10.5, "over": 1.55, "under": 2.45, "max": 100 },
+              "11.5": { "points": 11.5, "over": 1.86, "under": 2.00, "max": 100 },
+              "12.5": { "points": 12.5, "over": 2.30, "under": 1.65, "max": 100 }
+            },
+            "away": {}
+          },
+          "meta": { "number": 0, "max_total": 500, "home_score": 5, "away_score": 4 }
+        }
+      },
+      "state": {
+        "match": { "set": 2 },
+        "home": { "serving": true, "setsWon": 1, "points": "30", "gamesBySet": [6,2,0,0,0] },
+        "away": { "serving": false, "setsWon": 0, "points": "15", "gamesBySet": [4,5,0,0,0] },
+        "home_stats": [{ "period": 0 }, { "period": 1 }],
+        "away_stats": [{ "period": 0 }, { "period": 1 }]
+      }
+    }
+  ]
+}
+```
+
+**Live game-state (`state` field):** Live events include a `state` object passed through from Pinnacle exactly as they publish it on MQTT. Field names are sport-specific and NOT renamed. `state` is `null` on prematch. The `/odds-drop` SSE stream carries the same information as a normalised `live` object on each drop (see the drop fields below).
+
+- `state.match` — match-level state (clock, current period). Sport-dependent: Soccer = `{state, minutes}` (state 1 = 1st half, 2 = half-time, 3 = 2nd half, 9 = finished; minutes count within the current half); Basketball = `{quarter, timeRemainingInQtr}`; Tennis = `{set}`.
+- `state.home`, `state.away` — per-participant state. Common: `score`. Sport-specific extras:
+  - Soccer: `redCards` (yellow cards and corners are NOT populated by the upstream feed)
+  - Basketball: `scoreByQuarter` (array)
+  - Tennis: `setsWon`, `gamesBySet` (array), `points` (string: `"0"`/`"15"`/`"30"`/`"40"`/`"Adv"`), `serving` (boolean)
+- `state.home_stats`, `state.away_stats` — array indexed by period; populated only when Pinnacle has published a stat value for that period.
+
+Fields appear in the JSON only when Pinnacle has a non-default value to publish. Treat every field as optional and code defensively. The `state` field is NOT returned by `/kit/v1/prematch/*` or by the `/odds-drop` SSE stream.
+
+**Same call for prematch:**
+
+```
+curl -H "x-api-key: $KEY" \
+  "https://pinnodds.com/kit/v1/markets?sport_id=1&event_type=prematch&is_have_odds=true"
+```
+
+Returns same shape, every event has `"event_type": "prematch"`.
+
+---
+
+### GET /kit/v1/details
+
+Fetch a single live event by ID.
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `event_id` | int | yes | Event matchup ID from a previous /markets response |
+| `line_meta` | 1 | no | Adds `version`, `is_alternate` and `key` to every line, and a `money_line_meta` object to each period (see below) |
+
+```
+curl -H "x-api-key: $KEY" \
+  "https://pinnodds.com/kit/v1/details?event_id=1628594960"
+```
+
+Returns `{ events: [<one event in the same shape as /markets>] }`.
+
+**Optional `line_meta=1`** — on the three per-event endpoints only: `GET /kit/v1/details?event_id=<id>&line_meta=1` (live), `GET /kit/v1/prematch/markets?event_id=<id>&line_meta=1` and `GET /kit/v1/prematch/lines?event_id=<id>&line_meta=1`. Every line object gains `version`, `is_alternate` and `key`; the moneyline values are in a sibling `money_line_meta` object inside the period. Part of one period:
+
+```json
+{
+  "money_line_meta": { "version": 3800718797, "is_alternate": false, "key": "s;0;m" },
+  "spreads": {
+    "-1.5": { "hdp": -1.5, "home": 1.341, "away": 3.31, "max": 550, "version": 3800718797, "is_alternate": false, "key": "s;0;s;-1.5" }
+  },
+  "totals": {
+    "2.5": { "points": 2.5, "over": 3.31, "under": 1.341, "max": 550, "version": 3800718797, "is_alternate": false, "key": "s;0;ou;2.5" }
+  }
+}
+```
+
+- Only the literal value `1` turns it on; without it the response is unchanged. The full boards (`/kit/v1/markets`, `/kit/v1/prematch/fixtures`) ignore the parameter.
+- `version` is Pinnacle's change stamp: it changes when that line's prices change and is shared across the markets Pinnacle reprices together. It is NOT a PS3838 `lineId`; pinnodds does not provide `lineId` or `altLineId`, they do not exist in the feed.
+- `is_alternate` is `false` on the main line and `true` on an alternate line.
+- `key` is Pinnacle's market key (period;type;line), e.g. `s;0;m`, `s;0;s;-1.5`, `s;0;ou;2.5`.
+- A value can be `null` when Pinnacle did not send it.
+
+---
+
+### GET /kit/v1/prematch/fixtures
+
+Every prematch fixture for a sport with full markets/periods. Equivalent to `/kit/v1/markets?event_type=prematch&sport_id=X`.
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `sport_id` | int | yes | Sport ID |
+| `since` | int | no | Incremental — only changed events |
+| `include_specials` | 1\|nested | no | Include special-market events (Player Props, Team Props, Exact Scores, futures). `1` = flat extra rows; `nested` = grouped under each parent event's `specials` array. Off by default. |
+
+Each event includes a `start_ts` field as a backwards-compat alias of `starts`.
+
+Special rows (with `include_specials=1`, also available on `/kit/v1/markets`) carry `special` (e.g. "Anytime Goalscorer", "Mohamed Salah To Score"), `special_category` ("Player Props" | "Team Props" | "Exact Scores" | ...), `special_units`, `parent_id` (the main match's event_id), and `special_markets`: `{"num_<period>": [{type, key, side, max_risk, prices: [{name, participant_id, points, price}]}]}` with decimal prices and named outcomes. Fetch a single special via `/kit/v1/prematch/markets?event_id=<special_id>` (no flag needed). Specials do NOT fire SSE drop alerts (BTTS/Draw No Bet remain the only alerting specials); their moves do appear on `/api/drops` with `participant_name`.
+
+```
+curl -H "x-api-key: $KEY" \
+  "https://pinnodds.com/kit/v1/prematch/fixtures?sport_id=1&include_specials=1"
+```
+
+---
+
+### GET /kit/v1/prematch/markets
+
+Single prematch event by ID. Same shape as /kit/v1/details, but reads from the prematch store. Accepts the optional `line_meta=1` described under /kit/v1/details.
+
+```
+curl -H "x-api-key: $KEY" \
+  "https://pinnodds.com/kit/v1/prematch/markets?event_id=1629513753"
+```
+
+---
+
+### GET /kit/v1/prematch/lines
+
+Compact line view for one prematch event — only the active prices, no period structure. Lighter payload than /markets; ideal for tickers.
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `event_id` | int | yes | Prematch event ID |
+| `market_type` | string | no | Filter to one of `money_line`, `spreads`, `totals`, `team_total` |
+| `line_meta` | 1 | no | Adds `version`, `is_alternate` and `key` to every line, and a `money_line_meta` object to each period (see /kit/v1/details) |
+
+---
+
+### GET /api/drops
+
+Pull-style queryable buffer of recent dropping-odds events. Use for batch jobs, dashboards, or polling clients that don't want a long-lived SSE connection.
+
+| Name | Type | Description |
+|---|---|---|
+| `mode` | "live" \| "prematch" | Which feed. Defaults to `live`. |
+| `sport_id` | int | Filter to a single sport. Omit for all. |
+| `min_drop_pct` | number | Minimum drop percent (default 5). Fractional allowed. |
+| `max_drop_pct` | number | Optional cap. |
+| `max_age_sec` | int | Only drops fresher than this (max ~3 hours). |
+| `markets` | csv | Subset of `moneyline,spread,total,team_total` |
+| `periods` | csv | Period numbers (`0`=match, `1`=1st half, etc.) |
+| `live` | 0 \| 1 | Live-mode only — exclude drops on events not yet started |
+| `limit` | int | Max drops to return (default 500) |
+
+```
+# Live drops, soccer only, ≥7%, last 10 min
+curl -H "x-api-key: $KEY" \
+  "https://pinnodds.com/api/drops?mode=live&sport_id=1&min_drop_pct=7&max_age_sec=600"
+
+# Prematch drops, all sports, last hour
+curl -H "x-api-key: $KEY" \
+  "https://pinnodds.com/api/drops?mode=prematch&min_drop_pct=2&max_age_sec=3600"
+```
+
+Response:
+
+```json
+{
+  "total": 42,
+  "drops": [
+    {
+      "event_id": 1629725918,
+      "sport_name": "Soccer",
+      "league": "Australia - NPL Victoria",
+      "home": "Bentleigh Greens",
+      "away": "St Albans Saints",
+      "market": "spread",
+      "period": 0,
+      "side": "home",
+      "points": -0.5,
+      "from": 2.37,
+      "to": 2.25,
+      "drop_pct": 5.06,
+      "nvp": 2.21,
+      "age_s": 12,
+      "is_live": false
+    }
+  ],
+  "meta": {
+    "mode": "prematch",
+    "events_in_store": 2552,
+    "tracked_outcomes": 122035
+  }
+}
+```
+
+The `nvp` field is the no-vig fair price computed via the power method (each leg's implied probability is raised to a power C such that the sum equals 1 — Newton-iterated, ~2 iterations to converge). Compare `to` vs `nvp` to estimate edge: `(to / nvp) - 1`.
+
+---
+
+### GET /health
+
+Operational status of both feeds. Useful for dashboards and uptime monitors.
+
+The top-level fields describe the LIVE feed. The nested `prematch` object describes the PREMATCH feed, which runs as a separate service — either can be degraded while the other is fine, so alert on both.
+
+```json
+{
+  "status": "healthy",
+  "degraded_reason": null,
+  "live_write_age_ms": 546,
+  "source": "ws",
+  "events_in_store": 145,
+  "version": 50352678,
+  "ws_messages": 1768510,
+  "rest_polls": 149010,
+  "uptime_s": 138836,
+  "prematch": {
+    "enabled": true,
+    "status": "healthy",
+    "degraded_reason": null,
+    "events_in_store": 15891,
+    "write_age_ms": 71,
+    "version": 50352723,
+    "source": "ws",
+    "rest_polls": 104828,
+    "checked_age_ms": 1204
+  }
+}
+```
+
+Field notes:
+
+- `status` describes the LIVE feed only. A prematch outage never changes it. Watch `prematch.status` separately.
+- `live_write_age_ms` and `prematch.write_age_ms` are the freshness numbers to alert on. Both normally sit well under one second.
+- `prematch.status` is `healthy`, `degraded`, or `unreachable`. `unreachable` means our health check could not reach the prematch service; prematch data may still be flowing. Treat it as "unknown", not "down".
+- `version` is the same store cursor that `/kit` returns as `last`.
+- A deployment with no prematch service reports `"prematch": {"enabled": false}` and no other prematch fields.
+
+---
+
+### GET /ping
+
+Public liveness probe. Returns `ok` in plain text. No auth required — useful for load balancers.
+
+```
+curl https://pinnodds.com/ping
+# ok
+```
+
+---
+
+## SSE Streams
+
+### GET /odds-drop (live)
+
+Server-Sent Events stream of live odds drops as they happen. One TCP connection, push-based, ~200ms latency from Pinnacle price move to your code seeing it.
+
+**Auth:** API key (`?key=` or header) on a plan with `features.sse: true`. The legacy `?token=` parameter is no longer accepted (401).
+
+```
+curl -N "https://pinnodds.com/odds-drop?key=$API_KEY"
+```
+
+**First frame** is always a connection handshake:
+```
+data: {"type": "connected", "id": "uuid-of-this-subscription"}
+```
+When this connection took the slot of an older one on the same key, the frame also carries `"replaced": true` (the field is present only when true):
+```
+data: {"type": "connected", "id": "uuid-of-this-subscription", "replaced": true}
+```
+
+**Last frame of a stream that is closed to free its slot** (`evicted`):
+```
+data: {"type": "evicted", "reason": "evicted by newer connection", "cap": "user", "limit": 1}
+```
+`cap` says which limit applied: `"user"` (a newer connection on the same key), `"ip"` (reason `"too many connections from this IP"`) or `"global"` (reason `"server connection limit reached"`). On `evicted` with `"cap":"user"` do NOT reconnect automatically: another client is using the same key, and two clients reconnecting against each other just keep evicting each other.
+
+**Subsequent frames** are JSON arrays of one or more drop objects:
+```
+data: [{"home": "Sunshine Coast Phoenix", "away": "Cairns Dolphins",
+        "league": "Australia - NBL1 Women", "from_price": 2.86,
+        "to_price": 2.7, "outcome": "Home", "period": 4,
+        "sect": "Moneyline", "id": 1629729400, "sport": "Basketball",
+        "interval": 25, "alerted": 1777625196, "sport_id": 3,
+        "nvp": 3.04, "starts": 1777624200,
+        "dispatched_ms": null, "flushed_ms": null}]
+```
+
+Drop fields:
+- `id` — Pinnacle event ID
+- `sport`, `sport_id`, `league` — event context
+- `home`, `away` — teams/players
+- `sect` — market section (`Moneyline`, `Spread`, `Total`, `TeamTotal`)
+- `outcome` — which side moved (`Home`, `Away`, `Over`, `Under`, etc.)
+- `period` — period number (0=match, 1=1st half, etc.)
+- `point` — handicap or total line if applicable
+- `from_price`, `to_price` — old and new decimal odds
+- `nvp` — no-vig fair price for the new odds
+- `interval` — seconds of price history when the drop fired
+- `alerted` — UNIX timestamp (seconds) of the drop event
+- `starts` — UNIX timestamp of the event start time
+- `dispatched_ms`, `flushed_ms` — present for compatibility and **always `null` today**. Do not build latency measurements on them; use `alerted` / `alerted_ms` (our detection time) and your own receive time.
+- `home_score`, `away_score` — current score when known
+- `live` — match state at the drop (last key). Keys, in order: `status` (e.g. "1st Half - 16'", "Half Time", "4th Quarter - 7'", "Live Now"), `period` (basketball "Q1".."Q4"), `clock` (basketball minutes remaining, "7'"), `minute` (soccer, within the current half), `score` {home, away}; soccer adds `red_cards`, `yellow_cards`, `corners`; tennis adds `current_set`, `sets`, `games`, `game_points`, `server`; then `favorite` ("home"/"away"/null, shorter moneyline), `updated_ms` (state last changed), `source_ms` (last frame for the event). Absent when Pinnacle publishes no state for the event.
+
+**Node.js example:**
+```js
+import EventSource from "eventsource";
+
+const es = new EventSource(
+  `https://pinnodds.com/odds-drop?key=${API_KEY}`
+);
+
+es.onmessage = (e) => {
+  const payload = JSON.parse(e.data);
+  if (payload.type === "connected") return;
+  // Another client took the slot of this key: stop, do not auto-reconnect.
+  if (payload.type === "evicted") { es.close(); console.error("evicted:", payload.reason); return; }
+  if (payload.type === "error") {
+    console.error("SSE error:", payload.error, payload.message);
+    return;
+  }
+  for (const drop of payload) {
+    console.log(drop.sport, drop.home, "→", drop.from_price, "→", drop.to_price);
+  }
+};
+```
+
+**Python example (with sseclient-py):**
+```python
+import json
+from sseclient import SSEClient
+
+URL = f"https://pinnodds.com/odds-drop?key={API_KEY}"
+for ev in SSEClient(URL):
+    if not ev.data: continue
+    payload = json.loads(ev.data)
+    if isinstance(payload, dict) and payload.get("type") == "evicted":
+        break  # another client took the slot of this key: do not auto-reconnect
+    if isinstance(payload, dict) and payload.get("type") in ("connected", "error"):
+        continue
+    for drop in payload:
+        print(drop["sport"], drop["home"], "→", drop["from_price"], "→", drop["to_price"])
+```
+
+**Per-user cap:** 1 connection per paid customer per endpoint. Opening a 2nd connection from the same key on the same endpoint replaces the previous one: the newer connection gets the stream and the older one is closed by the server. The older stream is sent one last frame before it is closed, `data: {"type": "evicted", "reason": "evicted by newer connection", "cap": "user", "limit": 1}`, and the first frame of the newer stream carries `"replaced": true`. On `evicted`, do NOT reconnect automatically: another client is using the same key. Because EventSource and most SSE libraries reconnect automatically, two consumers on one key keep replacing each other and neither gets a complete feed: run ONE consumer per key per endpoint and fan out in your own process, and reconnect with a growing delay (1s, 2s, 4s, up to 30s). Drops emitted while you were disconnected are not replayed on the stream; read `/api/drops` to fill the gap. The same holds after a restart on our side: the stream starts at the live head, with no replay of older drops. Connection attempts are limited to 5 per API key per 60 s; beyond that the answer is HTTP 429 with a `Retry-After` header and `retry_after_s` in the JSON body (a browser EventSource treats a 429 as fatal, so wait `retry_after_s` seconds and reconnect yourself). (A reconnect after a network blip is fine — EventSource auto-reconnect after a network blip works cleanly because the dying old socket is reaped before the new one registers). `/odds-drop` (live) and `/odds-drop-prematch` are counted independently, so you can run one live + one prematch in parallel under the default cap. Need more independent connections (prod + staging, multi-server fan-out, etc.)? Each one needs its own account on its own paid plan: one account, one key. The per-key cap is never raised and second keys are never issued free — one connection per key is how key sharing and resale get detected.
+
+**Optional `min_drop` parameter** (both `/odds-drop` and `/odds-drop-prematch`): pass `?min_drop=N` (a percent, integer or decimal) to receive only drops of at least N% on that connection. **There is no default filter:** if the parameter is omitted (or is not a positive number) you receive every drop the engine detects; the smallest it emits is about 1%. The minimum accepted value is **1%** — values between 0 and 1 are raised to 1. No upper cap. Per-connection — other customers are unaffected.
+
+```
+# Default — no filter: every detected drop
+curl -N "https://pinnodds.com/odds-drop?key=$API_KEY"
+
+# Explicit 1% threshold (the minimum accepted value)
+curl -N "https://pinnodds.com/odds-drop?key=$API_KEY&min_drop=1"
+
+# Only big moves — ≥ 10%
+curl -N "https://pinnodds.com/odds-drop?key=$API_KEY&min_drop=10"
+```
+
+On `/odds-drop-prematch`, `min_drop` works the same way. The `recheck` parameter described below is accepted but not applied today, so `?recheck=30&min_drop=7` behaves exactly like `?min_drop=7`.
+
+---
+
+### GET /odds-drop-prematch
+
+Identical to `/odds-drop` but emits drops on the prematch feed only. Useful when you want to trade upcoming-fixture line moves and not be flooded with in-play noise.
+
+**Volume note:** prematch lines move slowly. Expect <1 drop/sec on a typical day, vs. tens per second on the live stream during prime hours. A 90-second sample may surface zero drops — that's normal.
+
+**Optional `min_drop` parameter:** same as on `/odds-drop` (above) — `?min_drop=N` keeps only drops of at least N%. Omitted = no filter (every detected drop). Minimum accepted value 1%, no upper cap.
+
+**Optional `recheck` parameter** (prematch only) — **current status: accepted but not applied.** The stream ignores `?recheck=N` today: every drop is delivered immediately, nothing is held back or suppressed, and no `rechecked_ms` field is added. If you need a stable-price filter, hold each drop on your side for the time you want and compare it with the current price from `/kit/v1/prematch/lines` before acting. How the filter is designed to behave: the server would hold each drop for N seconds, re-check the current Pinnacle price for that line, and emit the alert only if the drop is still real against the original `from_price`.
+
+```
+# Default instant feed
+curl -N "https://pinnodds.com/odds-drop-prematch?key=$KEY"
+
+# recheck is accepted but not applied today: this is the same instant feed
+curl -N "https://pinnodds.com/odds-drop-prematch?key=$KEY&recheck=30"
+
+# Only drops of 7% or more (the recheck part has no effect today)
+curl -N "https://pinnodds.com/odds-drop-prematch?key=$KEY&recheck=30&min_drop=7"
+```
+
+On `/odds-drop` (live) the `recheck` parameter is ignored as well (live drops are sub-second; a recheck window is meaningless there). `min_drop` is supported on both.
+
+---
+
+## WebSocket Feed (Add-on)
+
+A paid add-on that forwards **raw Pinnacle frames** to your client — not drops, not derived metrics. Live MQTT messages and prematch REST responses are delivered byte-identical to what we receive ourselves, wrapped in a thin envelope so your code can tell what it's looking at. Power-user feature: meant for customers who want to rebuild Pinnacle's full state machine on their side.
+
+**This is NOT the same as `/odds-drop` SSE.** SSE delivers our filtered drop alerts (every detected drop by default — the engine floor is about 1%; narrow it with `?min_drop=`). This WS delivers every Pinnacle push frame with no filtering, including each period's status (`open` / `closed` / `settled`). That status says a period has stopped trading; it carries no result and is not a settlement feed. Output volume is **much higher**.
+
+### Pricing
+
+- **$99/month** as an add-on on top of any **REST-bearing** plan (Pro, Pro + SSE, Scale).
+- **Stream and Trial plans are not eligible** — they have no REST quota; the WS feed is a paired product.
+- Bundled with new purchases / renewals: $99 monthly, $297 quarterly, $594 semi-annual (matches your base period).
+- Mid-cycle upgrade: **prorated to your renewal date** — pay only for the days remaining on your current subscription. Quote endpoint: `GET /panel/api/addon/ws/quote`.
+
+### Auth + entitlement
+
+Use your existing API key. The server checks `ws_addon_until > now()` on the upgrade request and rejects with HTTP 403 + `{"error":"plan_lacks_ws"}` if the add-on isn't active.
+
+### Endpoint
+
+```
+wss://pinnodds.com/ws/feed?key=<API_KEY>
+```
+
+API key can also be sent in an `x-api-key` header during the HTTP upgrade.
+
+### Connection limit — ONE connection per account
+
+The limit is keyed on the **account**, not on the API key and not on the source IP. Two processes on the same account collide even when they connect from different machines. (SSE is a separate slot — you can run SSE and WebSocket at the same time.)
+
+Opening a second connection does **not** fail the new connection. It **evicts the oldest** one:
+
+```
+close code 1001, reason "evicted by newer connection"
+```
+
+This is the single most common cause of a customer reporting "the socket goes silent for long stretches while REST stays healthy". The usual trigger is not a deliberate second consumer — it is a monitoring or logging process sharing the key, a deploy where the new instance connects before the old one closes, or a retry loop that reconnects without closing the previous socket. Two consumers on one account will kick each other continuously, and whichever socket currently lost the race receives nothing.
+
+**Supported pattern:** open ONE connection per account and fan out to your components inside your own process. This is also the only way to guarantee your components share an identical view of the book. If you genuinely need transport-level separation, ask us about a second credential — it is a commercial question, not a technical limit.
+
+Close codes you may see, with their exact reason strings:
+
+| code | reason | meaning |
+|---|---|---|
+| 1001 | `evicted by newer connection` | a second connection opened on your account |
+| 1001 | `stale` | no pong seen for 75 s |
+| 1001 | `server shutdown` | we restarted |
+| 1011 | `deregistered: <cause>` | a server-side fault dropped you out of the fan-out — see below |
+| 1006 | *(none)* | abnormal close, no close frame — historically caused by an oversized frame exceeding a client's max-message limit; see "Maximum message size" |
+
+**On `1011 "deregistered: …"`.** A failed write or a backpressure eviction removed you from the fan-out. Causes today: `deregistered: send_err`, `deregistered: send_threw`, `deregistered: slow_consumer`. **Match on the `deregistered: ` prefix**, never the full string, so causes added later are still caught. It sits outside the 1001 lifecycle family on purpose: 1001 means we closed you deliberately (eviction, stale, shutdown), 1011 means something broke on our side. Treat it as retryable — reconnect immediately, no cooldown.
+
+Historical note: before 2026-07-27 these paths sent **no close frame at all**. The connection was removed from the fan-out while the TCP socket stayed open, so the client received no data, no pings and no close — indefinitely, on a socket that still looked healthy. If you are debugging logs from before that date, a silent stall with no close code is this.
+
+### Compression — a real tradeoff, choose deliberately
+
+`permessage-deflate` is negotiated per connection, so **your client decides**. It is not free, and the right choice depends on which constraint binds for you.
+
+**What it costs.** The WebSocket protocol compresses with *context takeover*, which makes compression a strictly **serial per-connection pipeline**: every message waits for the previous message's zlib job to finish. Pinnacle pushes in mass-update cycles (many events refreshing at once), and during those bursts the compression queue backs up. Frames already carrying their `ts` then get compressed and flushed together — so you receive a burst of frames whose own timestamps are spread over more than a second.
+
+Measured back-to-back on the same subscription (soccer + tennis live, ~62 frames/s, from a client with adequate bandwidth), `local_recv - frame.ts`:
+
+| | deflate on | deflate off |
+|---|---|---|
+| p50 | 43 ms | −46 ms |
+| p90 | 530 ms | 72 ms |
+| p95 | 748 ms | 136 ms |
+| p99 | **1241 ms** | **187 ms** |
+| max | 1527 ms | 228 ms |
+| frames > 1 s | **2.14 %** | **0.00 %** |
+
+**What it buys.** A single TCP connection over a long-haul path tops out around 0.4 MB/s (measured Dublin → Greece at ~70 ms RTT). Live frames compress roughly 5×, which is decisive if your link is the bottleneck: without compression an update burst overflows the pipe, queues in the kernel, and produces multi-second lag that compression genuinely eliminates.
+
+**How to choose.** If your connection is stable and bandwidth is not your limit, **turn compression off** — the latency tail disappears. If you are far from the server, on a thin link, or subscribing to many sports at high volume, **leave it on**. Do not guess: measure `local_recv - frame.ts` percentiles both ways on your actual path.
+
+| client | disable | enable |
+|---|---|---|
+| Node `ws` | `{ perMessageDeflate: false }` *(default off)* | `{ perMessageDeflate: true }` |
+| Python `websockets` | `compression=None` | *(default on)* |
+| Go `gorilla/websocket` | *(default off)* | `EnableCompression: true` |
+| Browsers | not controllable | negotiated automatically |
+
+Note the defaults differ by language: Python's `websockets` enables compression by default, Node's `ws` and Go's `gorilla` do not. The endpoint and JSON are identical either way — decompression is transparent.
+
+### Maximum message size
+
+Set your client's max-message limit to **8 MB**. It is a ceiling, not an allocation, so it costs you nothing, and it absorbs future sport or specials expansion. **2 MB** is the smallest figure we would recommend.
+
+Current measured maximums (uncompressed wire size, 5-minute capture, soccer + tennis):
+
+| frame type | max observed | chunked? |
+|---|---|---|
+| `prematch_matchups` | 512 KB | yes |
+| `snapshot` | 512 KB | yes |
+| `prematch_markets` | 32 KB | no |
+| `live` | 13 KB | no |
+
+`snapshot` and `prematch_matchups` are chunked and bounded at 512 KB by construction. `live` and `prematch_markets` are scoped to a single event and stay small.
+
+Before 2026-07-22 these frames were **not** chunked: the soccer snapshot reached ~19 MB and the bulk `prematch_matchups` frame ~10 MB. Any client whose limit sat below that had the socket dropped with **1006** and no close frame. Both frames are chunked as of 2026-07-22 19:48 UTC.
+
+### Wire protocol
+
+Both directions exchange JSON-encoded text frames.
+
+**Client → server:**
+
+```jsonc
+// Send this within 5s of connecting or the server closes the socket.
+// You can subscribe by SPORT (firehose) or by specific EVENT IDs (filtered),
+// or both in the same message. At least one of sport_ids / event_ids is required.
+{ "type": "subscribe",
+  "streams":   ["live", "prematch"],
+  "sport_ids": [1, 2],              // pinnodds sport IDs — firehose for that sport
+  "event_ids": [1631005165] }       // Pinnacle matchup IDs — only these events
+
+// Drop subscriptions later. Same shape — either field can be omitted.
+{ "type": "unsubscribe", "streams": ["live"],     "sport_ids": [2] }
+{ "type": "unsubscribe", "streams": ["prematch"], "event_ids": [1631005165] }
+
+// Application-level pong reply to the server's ping.
+{ "type": "pong" }
+```
+
+`streams` values: `"live"`, `"prematch"`, or both. `sport_ids` use the same integer IDs as the rest of the API (1 = Soccer, 2 = Tennis, …). `event_ids` are Pinnacle's matchup IDs (9-10 digit integers, the same `id` field that appears on every record).
+
+**Discovery pattern for event_ids**: customers don't usually know matchup IDs upfront. Standard pattern: subscribe to a sport, grep the snapshot for the events you care about (by team name, league, start time, etc.), then unsubscribe from the sport and subscribe to those specific event IDs. This narrows your bandwidth to exactly the matches you're trading.
+
+**Filter rule**: a frame is delivered to a sub if **either** its sport_id matches a sport-level subscription **or** its event_id matches an event-level subscription. So `sport_ids: [2], event_ids: [12345]` means "all of Tennis plus this one specific event in any sport".
+
+**Per-stream cap**: 200 event_ids per connection per stream (live and prematch counted independently). Subscribing past the cap returns `{type:"error", code:"event_id_cap", ...}` and the request is rejected wholesale. Auto-cleanup: when an event is removed from our store (`op: "del"`), the hub silently drops it from all subs' event_id sets — you don't need to send unsubscribe yourself.
+
+**Server → client (immediately on subscribe):**
+
+```jsonc
+// Sport-level subscribe → one snapshot per (stream, sport_id) tuple with
+// every event in our store for that sport.
+{ "type": "snapshot", "stream": "live", "sport_id": 1, "ts": 1779200000000,
+  "events": [ /* full Pinnacle records, untouched */ ] }
+
+// Event-level subscribe → one snapshot per (stream, batch of event_ids)
+// with just the records we currently have for those IDs. Missing IDs are
+// simply absent — they'll appear in the stream once Pinnacle pushes them.
+{ "type": "snapshot", "stream": "live",
+  "event_ids": [1631005165],
+  "ts": 1779200000000,
+  "events": [ /* full Pinnacle records, untouched (one per matched id) */ ] }
+
+// LARGE baselines (e.g. prematch soccer, thousands of events) are split across
+// MULTIPLE snapshot frames so no single message overruns a client's max-message
+// limit. Split frames add "seq" (0,1,2,...) and "final" (true only on the last);
+// a small baseline that fits in one frame has no seq/final. Merge each frame's
+// events by event id (same as the deltas below); if you rebuild your book from
+// the snapshot wholesale instead, wait for "final": true.
+{ "type": "snapshot", "stream": "prematch", "sport_id": 1,
+  "seq": 0, "final": false, "ts": 1779200000000, "events": [ /* first chunk */ ] }
+{ "type": "snapshot", "stream": "prematch", "sport_id": 1,
+  "seq": 1, "final": true,  "ts": 1779200000000, "events": [ /* last chunk  */ ] }
+```
+
+**Server → client (continuous afterwards):**
+
+```jsonc
+// Every live MQTT frame — `topic`, `op`, `rec` are EXACTLY what we received.
+// LIVE CHANNELS: the channel is the last segment of `topic` — parse with
+// topic.split("/").pop(). It is the matchup's liveMode in Pinnacle's feed:
+//   "ld" = live_delay  → EVERY sport except soccer is live on ld ONLY (no dz,
+//                        no both — that is how Pinnacle publishes them, on
+//                        every plan).
+//   "dz" = danger_zone, "both" → SOCCER ONLY. A live soccer match is usually
+//                        two or three child matchups (same parentId), one per
+//                        channel; some are live on dz alone. dz + both were
+//                        67–80% of soccer's live frames on 14–16 Nov 2026.
+//                        Prices often equal ld's, not always: keep channels
+//                        apart; read ld where a match has it, else dz.
+//   "pre" = a prematch matchup update carried on the live stream.
+// Merging channels into one book makes prices look like they "spike and revert" —
+// that's the channels interleaving, not a line move and not out-of-order
+// delivery (each single event+channel stream is strictly version-ordered).
+// Live only — prematch has no danger_zone.
+//
+// MATCHUP IDS: one fixture = a PARENT matchup + re-issued/related CHILD matchups,
+// all sharing rec.parentId and the same team names. The same market key (e.g.
+// s;0;s;-1.5) can appear under two different event_ids at once — one live, one
+// stale — with different prices. KEY YOUR BOOK BY rec.id (matchup/event id) +
+// market key, NEVER by teams or parentId. Merging across matchup ids makes prices
+// look like they "spike and revert" (assembly artifact, not a line move — the
+// site and REST /kit collapse to one matchup per fixture, so they don't show it).
+// Also dedupe on markets[i].version: Pinnacle re-sends unchanged markets often
+// (same version, same price, frequently >50% of updates) — skip versions you've
+// already applied. Need the pre-collapsed one-row-per-fixture view? Use REST
+// /kit/v1/markets, which already does the collapse.
+//
+// TWO VERSION FIELDS — use markets[i].version, NOT rec.version, for change
+// detection/dedup/ordering. rec.version is a coarse record/board stamp that
+// Pinnacle FREEZES for the whole match once a fixture is in-play — it does NOT
+// increment when a price changes, so keying on it drops real price updates.
+// markets[i].version is a CHANGE STAMP that Pinnacle shares across many markets
+// (and often several events) repriced together. It is NOT a per-market counter
+// and NOT a line id. Within one (event_id, market key, channel) a higher number
+// is newer and an equal number with the same price is a repeat, so use it for
+// dedup and ordering inside that scope only.
+// NOT A lineId: it is not the lineId the PS3838 / Pinnacle betting API expects.
+// pinnodds does not provide lineId or altLineId; they do not exist in this feed.
+// Each raw market also carries isAlternate (false = main spread/total line,
+// true = alternate line, absent on specials) and key (e.g. "s;0;s;-1.5").
+// If the price moves while rec.version stays constant, that's NOT a stale/
+// re-published frame — markets[i].version will have advanced. A spike-then-revert
+// whose middle frame has a HIGHER market version is a genuine transient Pinnacle
+// reprice relayed verbatim, not a replay.
+{ "type": "live", "sport_id": 1,
+  "topic": "matchups/reg/sp/29/live/ld", "op": "upd",
+  "rec": { /* Pinnacle record verbatim */ }, "ts": 1779200000123, "recv_ts": 1779200000122 }
+
+// recv_ts — on every forwarded frame (live, prematch_ws, prematch_markets,
+// prematch_membership, prematch_matchups), right after ts. recv_ts = when we
+// received the message from Pinnacle (epoch ms); ts = when our WebSocket server
+// published it to you. ts - recv_ts is the delay inside our system. There is
+// still no Pinnacle-side timestamp.
+
+// Every prematch REST poll response — `data` is the response array verbatim.
+{ "type": "prematch_matchups", "sport_id": 1, "arcadia_sid": 29,
+  "data": [ /* /sports/29/matchups response verbatim */ ], "ts": 1779200005000 }
+
+{ "type": "prematch_markets", "sport_id": 1, "arcadia_sid": 29,
+  "matchup_id": 1631005165,
+  "data": [ /* /matchups/.../markets/related/straight verbatim */ ], "ts": 1779200005230 }
+
+// Membership delta - what JOINED or LEFT the prematch set this cycle (~25s).
+// MQTT never announces this: /pre carries prices for matchups you already track
+// and is blind to the set itself. Measured over 10 min across all 13 sports:
+// 34 membership changes, 0 announced by MQTT. This is also why prematch push
+// goes quiet for a matchup that moved to warmup/live - a membership change.
+{ "type": "prematch_membership", "sport_id": 1, "arcadia_sid": 29,
+  "added": [1634753718, 1634753879], "removed": [1634713508], "ts": 1779200005010 }
+
+// Heartbeat every 30s. Reply with {"type":"pong"} or the server will close
+// the socket after ~75s of silence.
+// buffered_max_bytes = highest server-side send backlog for YOUR socket since
+// the previous ping, then reset. 0 in steady state means you are draining as
+// fast as we send. A figure that climbs across pings means your read loop is
+// falling behind; at 128 MB you are evicted with 1011 "deregistered: slow_consumer".
+// It is a high-water mark, not a threshold breach — use it to measure headroom.
+// The ping also carries FEED HEALTH, so a quiet market and a broken feed no
+// longer look the same (real frame):
+{"type":"ping","ts":1794272148169,"buffered_max_bytes":0,"feed_age_ms":460,"feed_status":"ok","sport_age_ms":{"1":2947,"2":63480,"3":3443},"prematch_age_ms":460,"prematch_sport_age_ms":{},"prematch_poll_age_ms":5540,"upstream":{"status":"degraded","reason":"rest_ahead","ts":1794272147156,"sports":{"1":"ok","2":"rest_ahead","3":"ok"}}}
+// feed_age_ms   = ping ts minus our receive time of the last Pinnacle push of
+//                 any kind; null until the first push after a restart of our
+//                 WebSocket server.
+// feed_status   = "unknown" | "ok" | "silent" ("silent" = 90 s without any push).
+// sport_age_ms / prematch_sport_age_ms = the same age per sport, only for the
+//                 sports this socket subscribes to, keyed by pinnodds sport_id;
+//                 null = no push for that sport since our server started.
+// prematch_age_ms      = age of the last prematch push.
+// prematch_poll_age_ms = age of the last prematch board poll record.
+// upstream      = our view of the Pinnacle connection (can be null right after
+//                 a restart): status "ok" | "degraded" | "reconnecting";
+//                 reason null | "mqtt_reconnecting" | "sport_reconnecting" |
+//                 "rest_ahead" | "maintenance" | "booting" | "source_unavailable";
+//                 sports = pinnodds sport_id -> "ok" | "reconnecting" | "rest_ahead".
+//                 "rest_ahead" = Pinnacle's REST shows newer prices than its push
+//                 stream for that sport; we then resync that sport from REST and
+//                 reconnect its stream.
+// PAUSE automated betting when feed_status is "silent", or upstream.status is
+// not "ok", or sport_age_ms is large for a sport that has live events. A single
+// sport being quiet at night with few live events is normal.
+// More fields may be added later: ignore fields you do not know.
+
+// Lifecycle / errors. Acks include whichever field you used in subscribe
+// — `sport_id` for sport-firehose subs, `event_ids` array for event-level.
+{ "type": "subscribed",   "stream": "live",     "sport_id": 1 }
+{ "type": "subscribed",   "stream": "live",     "event_ids": [1631005165] }
+{ "type": "unsubscribed", "stream": "prematch", "sport_id": 3 }
+{ "type": "unsubscribed", "stream": "prematch", "event_ids": [1631005165] }
+{ "type": "error", "code": "unauthorized" | "plan_lacks_ws" | "invalid_subscribe" | "event_id_cap" }
+```
+
+**Fidelity contract:** `events`, `rec`, and `data` are never transformed. We only add the envelope fields (`type`, `stream`, `sport_id`, `topic`, `op`, `ts`, `recv_ts`). Your code can reuse a Pinnacle parser unchanged.
+
+### Frame semantics — how to read what we forward
+
+Pinnacle pushes incremental updates over MQTT. The `op` field, the `topic`, and the inner `rec` / `data` shape determines how to merge into your local state.
+
+**Live frames — `type:"live"`:**
+
+| Field | Meaning |
+|---|---|
+| `op` | `"add"` = new event or new markets appeared. `"upd"` = incremental change: the frame carries only the market GROUPS that changed (see `rec.markets`); replace those groups and keep the rest. `"del"` = event removed by Pinnacle (finished, cancelled or withdrawn) — drop your local copy. Pinnacle does not send `del` for every event that ends, and a `del` carries no result. |
+| `topic` | Source topic. Format: `matchups/reg/sp/{arcadia_sid}/live/{ld|dz|both}` for live, `matchups/.../pre` for prematch. `ld` = `live_delay`: the live channel of every sport, and the only one outside soccer. `dz` = `danger_zone` and `both`: soccer only; each is a separate child matchup of the same match (same `parentId`), not a list of alternative lines, and some soccer matches are live on `dz` alone. `pre` = a prematch update that arrives as `type:"live"`: **ignore every frame whose topic ends in `/pre` when building live state.** `matchups/spc/...` (instead of `reg`) = "special" matchup (props, futures). |
+| `rec.id` | Pinnacle matchup ID. Stable across the event's lifetime. |
+| `rec.markets` | A SUBSET on `op:"upd"`: Pinnacle sends only what changed, one whole GROUP at a time. A group is every market with the same `type`, `period` and `side` (e.g. all full-match spread lines). **Group-replace:** for every group present in the frame, drop ALL local markets of that group and insert the frame's open ones (`status` absent or `"open"`); leave groups that are not in the frame untouched. Do not merge line by line: a line missing from a group that IS in the frame has been withdrawn. A market with a non-open `status` practically never arrives on live, so do not wait for one as a close signal. |
+| `rec.periods` | Per-period status. `periods[n].status === "closed"` or `"settled"` closes ALL markets for that period — drop those locally too, even if they weren't listed in `markets`. "settled" means trading has stopped for the period; the frame carries no result or grading. |
+| `rec.parentId` | If present, this is a CHILD matchup (alt periods, props derived from a parent event). Its full metadata (participants, league) lives on the parent record. |
+| `rec.startTime`, `rec.status` | Event-level metadata. Tennis / Golf / Fights frequently see `startTime` updates without any market change (reschedules) — track these. |
+
+**`prematch_membership` — the signal for tracking the SET.**
+
+MQTT `/pre` is a PRICE channel. It carries updates for matchups already in your set and is structurally blind to the set's boundaries — it never announces that a fixture appeared or disappeared. Measured on production over 10 minutes across all 13 sports: **34 membership changes, 0 announced by MQTT.**
+
+Relying on `prematch_ws` alone means you MISS new fixtures entirely and HOLD removed ones as live odds forever. It is also why prematch push goes silent for a matchup that has moved to warmup/live — that transition is a membership change, not a price update, so MQTT does not report it.
+
+`prematch_membership` answers the same question as the full board at roughly 1/50,000th the bytes, every cycle (~25s) instead of every 10 minutes.
+
+| field | meaning |
+|---|---|
+| `added` | matchup ids that JOINED the prematch set this cycle — fetch their details |
+| `removed` | matchup ids that LEFT (started, suspended, or pulled) — drop them |
+
+RECOMMENDED CONSUMPTION: `snapshot` chunks as baseline -> `prematch_ws` for prices -> `prematch_membership` for the set (fetch `added`, drop `removed`) -> ignore `prematch_matchups` unless you want the periodic full resync. Complete, correct, and never transfers a ~19 MB board.
+
+**Prematch frames — `prematch_matchups` + `prematch_markets`:**
+
+| Field | Meaning |
+|---|---|
+| `type` | `prematch_matchups` = response from `/sports/{sid}/matchups`, fired every 5s per sport. Includes both prematch and live entries — filter by `data[i].isLive === false` if you want strict prematch. `prematch_markets` = response from `/matchups/{id}/markets/related/straight`, fired only when Pinnacle bumped `matchup.version`. |
+| `data` | For `prematch_matchups`: array of full matchup records. For `prematch_markets`: array of market objects scoped to one matchup. **This is the authoritative current snapshot from Pinnacle** — any market in your local store that's NOT in this list has been closed by Pinnacle. Drop it. For a large sport (e.g. soccer) the `prematch_matchups` frame is split into several chunks tagged `seq`/`final` (same as the subscribe snapshot); when chunked, the authoritative set is the **union across the whole chunk group** — accumulate until `final: true` before dropping anything. **Trap: a payload that fits in one chunk is sent as a single frame with NO `seq` and NO `final` field at all** (wire-compatible with the pre-chunking shape). A client that waits for `final: true` before committing will stall forever on smaller sports — in a 5-minute capture, 384 of 404 `prematch_matchups` frames were chunked and 20 were not. Treat *absence of `seq`* as a complete single-frame payload. |
+| `matchup_id` | (prematch_markets only) The matchup this markets array belongs to. |
+| `mode` | Present only when MQTT is down and we fell back to live REST polling. Value: `"rest_fallback"`. Frame shape is otherwise identical. |
+
+**Merge recipe (pseudocode):**
+
+```js
+// Maintain a Map<matchupId, MatchupState>. For each incoming frame:
+
+if (msg.type === "snapshot") {
+  for (const ev of msg.events) state.set(ev.id, ev);
+}
+
+if (msg.type === "live") {
+  // 1. Prematch pushes also arrive as type "live". They are NOT live state.
+  if (msg.topic.endsWith("/pre")) return;
+
+  // 2. Event removed.
+  if (msg.op === "del")  { state.delete(msg.rec.id); return; }
+
+  const existing = state.get(msg.rec.id) ?? {};
+  const merged = { ...existing, ...msg.rec };
+  let markets = existing.markets ?? [];
+
+  // 3. GROUP-REPLACE. For every group (type|period|side) present in the frame,
+  //    drop all local markets of that group, then insert the frame's open ones.
+  //    Groups the frame does not mention stay exactly as they were.
+  if (msg.rec.markets) {
+    const touched = new Set(msg.rec.markets.map(groupKey));
+    markets = markets.filter(m => !touched.has(groupKey(m)));
+    for (const m of msg.rec.markets) if (isOpen(m)) markets.push(m);
+  }
+
+  // 4. Periods the frame reports as closed or settled lose all their markets.
+  if (msg.rec.periods) {
+    const closed = new Set(msg.rec.periods
+      .filter(p => p.status === "closed" || p.status === "settled").map(p => p.period));
+    if (closed.size) markets = markets.filter(m => !closed.has(m.period ?? 0));
+  }
+
+  merged.markets = markets;
+  state.set(msg.rec.id, merged);
+}
+
+if (msg.type === "prematch_markets") {
+  // AUTHORITATIVE snapshot for one matchup — replace, don't merge.
+  const existing = state.get(msg.matchup_id) ?? {};
+  state.set(msg.matchup_id, { ...existing, markets: msg.data });
+}
+
+function groupKey(m) { return `${m.type}|${m.period ?? 0}|${m.side ?? ""}`; }
+function isOpen(m)   { return !m.status || m.status === "open"; }
+```
+**What the WebSocket does not tell you (staying in step with REST).** The live WebSocket is Pinnacle's push stream, forwarded as it arrives. REST is built from the same stream plus a full re-read of Pinnacle's live board about every 15 s, which corrects what the push did not say. Those corrections are applied to REST only; they are NOT replayed on the WebSocket. So a WebSocket-only book drifts from REST: (1) lines or whole groups that Pinnacle withdraws or suspends get no close frame (most are back within 15-30 s); (2) at busy times the push skips some intermediate repricings and catches up later; (3) Pinnacle sends `del` for only some finished events. Do not expire events on your own timer: a quiet live event is still in play and still served on REST.
+
+If you need exact parity, re-baseline every 15-30 s per live sport, either from REST (`GET /kit/v1/markets?sport_id=<id>&event_type=live`, or `/kit/v1/details?event_id=` for a few events: remove what REST no longer lists and take its price where it differs) or on the socket (send `unsubscribe` for the sport, then `subscribe`: the new `snapshot` is the same reconciled state in raw record shape; a `subscribe` for a sport you already hold does nothing, so the unsubscribe is required).
+
+**Per-event access.** `/kit/v1/markets` always returns the whole sport board; it has no `event_id`/`event_ids` filter and ignores parameters it does not know. For one event use: WebSocket `event_ids` in the subscribe message (up to 200 per stream); REST `GET /kit/v1/details?event_id=` (live); `GET /kit/v1/prematch/markets?event_id=` and `GET /kit/v1/prematch/lines?event_id=&market_type=` (prematch). There is no per-market subscription. Add `line_meta=1` to any of those three REST calls to get `version`, `is_alternate` and `key` on every line (see /kit/v1/details).
+
+
+### Example client — Node.js
+
+```js
+import WebSocket from "ws";
+
+// perMessageDeflate compresses live frames ~5x, but serializes them: it adds a
+// ~1.2s p99 latency tail during Pinnacle's mass-update bursts. Leave it OFF
+// unless bandwidth is your bottleneck. See "Compression — a real tradeoff".
+// maxPayload 8 MB gives ample headroom over the 512 KB chunk ceiling.
+const ws = new WebSocket("wss://pinnodds.com/ws/feed?key=" + process.env.API_KEY, {
+  perMessageDeflate: false,
+  maxPayload: 8 * 1024 * 1024,
+});
+
+ws.on("open", () => {
+  ws.send(JSON.stringify({
+    type: "subscribe",
+    streams: ["live", "prematch"],
+    sport_ids: [1, 2],          // Soccer + Tennis
+  }));
+});
+
+ws.on("message", (raw) => {
+  const msg = JSON.parse(raw);
+  if (msg.type === "ping") { ws.send(JSON.stringify({ type: "pong" })); return; }
+  if (msg.type === "snapshot")           console.log(`snapshot ${msg.stream}/${msg.sport_id}: ${msg.events.length} events`);
+  else if (msg.type === "live")          console.log(`live update event=${msg.rec.id} op=${msg.op}`);
+  else if (msg.type === "prematch_matchups") console.log(`prematch matchups sport=${msg.sport_id} count=${msg.data.length}`);
+  else if (msg.type === "prematch_markets")  console.log(`prematch markets event=${msg.matchup_id} markets=${msg.data.length}`);
+});
+```
+
+### Example client — Python
+
+```python
+import asyncio, json, os, websockets
+
+async def main():
+    url = f"wss://pinnodds.com/ws/feed?key={os.environ['API_KEY']}"
+    async with websockets.connect(url) as ws:
+        await ws.send(json.dumps({
+            "type": "subscribe",
+            "streams": ["live", "prematch"],
+            "sport_ids": [1, 2],
+        }))
+        async for raw in ws:
+            msg = json.loads(raw)
+            if msg["type"] == "ping":
+                await ws.send(json.dumps({"type": "pong"}))
+            elif msg["type"] == "snapshot":
+                print(f"snapshot {msg['stream']}/{msg['sport_id']}: {len(msg['events'])} events")
+            elif msg["type"] == "live":
+                print(f"live update event={msg['rec']['id']} op={msg['op']}")
+
+asyncio.run(main())
+```
+
+### Reconnect strategy
+
+Re-subscribe on reconnect. Server-side state is not preserved — the snapshot at the start of every connection is your sync point. Exponential backoff (1s → 2s → 4s → 30s cap) recommended. The 1-connection cap means a new socket replaces any previous one for the same account: the older one is closed with code 1001 "evicted by newer connection". Do not auto-reconnect on that reason (another consumer holds the slot; reconnecting starts a loop). More than 5 connection attempts in 60 s are answered with HTTP 429 at the handshake.
+
+---
+
+## MCP server (AI assistants)
+
+pinnodds exposes a remote Model Context Protocol server so Claude Code, Claude Desktop, Cursor, VS Code, Codex CLI and the Claude API can query odds with your API key.
+
+- Endpoint: https://mcp.pinnodds.com/mcp — Streamable HTTP, stateless, POST only (GET → 405).
+- Auth: OAuth 2.1 (authorization server co-located at https://mcp.pinnodds.com — RFC 9728 metadata at /.well-known/oauth-protected-resource, dynamic client registration, PKCE S256, client ID metadata documents; the user approves by entering their API key once) OR the raw key as `Authorization: Bearer <your pinnodds API key>`.
+- claude.ai: Settings → Connectors → Add custom connector → URL https://mcp.pinnodds.com/mcp → approve on the pinnodds page.
+- Claude Code: `claude mcp add --transport http pinnodds https://mcp.pinnodds.com/mcp --header "Authorization: Bearer $PINNODDS_KEY"`
+- Cursor / Claude Desktop: `{"mcpServers":{"pinnodds":{"url":"https://mcp.pinnodds.com/mcp","headers":{"Authorization":"Bearer KEY"}}}}` (Desktop adds `"type":"http"`).
+- Codex CLI: `[mcp_servers.pinnodds] url = "https://mcp.pinnodds.com/mcp" bearer_token_env_var = "PINNODDS_KEY"`.
+- Claude API: `mcp_servers: [{type:"url", url:"https://mcp.pinnodds.com/mcp", name:"pinnodds", authorization_token:"KEY"}]`.
+
+### MCP tools
+- `list_sports` — sport ids/names (no quota).
+- `get_events(sport, mode=live|prematch, query?, limit=25, response_format)` — compact event rows with full-match moneyline; `query` words must all match league/home/away.
+- `get_event_odds(event_id, mode, markets?, periods?=[0], response_format)` — moneyline/spreads/totals/team_total for one event; concise shows 5 lines around the main line.
+- `get_prematch_lines(event_id, market_type)` — every alternate line for one prematch market.
+- `get_odds_drops(mode, sport?, min_drop_pct=5, max_age_sec=600, markets?, periods?, limit=25)` — recent sharp drops.
+- `get_feed_status()` — feed health.
+- `get_account_usage()` — plan, limits, expiry, requests used today (no quota).
+- `search_pinnodds_docs(query)` — searches this reference (no quota).
+
+### MCP quota and errors
+Each tool call is one live API request against your plan (Trial: 20/min, 100/day) — nothing is served from a cache; identical concurrent calls are merged. Errors come back as tool results with a stable `error` code: `invalid_key`, `key_expired`, `plan_forbidden`, `rate_limited` (with `retry_after_ms`; the server stops calling upstream until then), `prematch_unavailable`, `event_not_found`, `upstream_unavailable`.
+
+## Sport IDs
+
+Stable integer mapping. Use these in `sport_id` query params throughout the API.
+
+| ID | Sport |
+|---|---|
+| 1 | Soccer |
+| 2 | Tennis |
+| 3 | Basketball |
+| 4 | Hockey |
+| 5 | Football |
+| 6 | Baseball |
+| 7 | Rugby (Union + League) |
+| 8 | MMA (UFC, Bellator, ONE, etc.) |
+| 9 | Boxing |
+| 10 | Other (Volleyball + Handball, combined) |
+| 14 | Volleyball (the volleyball half of 10, REST only) |
+| 15 | Handball (the handball half of 10, REST only) |
+| 11 | Esports (Dota 2, CS2, League of Legends, etc.) |
+| 12 | Golf (PGA, DP World Tour, LIV — head-to-heads) |
+
+Golf (id 12) is moneyline-only: Pinnacle does not provide spreads, totals, or team totals for Golf. On a Golf event, expect `spreads`, `totals`, and `team_total` to be empty objects. Golf drops fire from the Moneyline section only.
+
+---
+
+## Market Types
+
+Returned inside each event's `periods[<num_N>]` object:
+
+| Field | Shape | Description |
+|---|---|---|
+| `money_line` | `{ home, away, draw? }` | 3-way (or 2-way) match result. Decimal odds. |
+| `spreads` | `{ "<hdp>": { hdp, home, away, max } }` | Handicap markets keyed by point spread |
+| `totals` | `{ "<points>": { points, over, under, max } }` | Over/under markets keyed by total |
+| `team_total` | `{ home: {...}, away: {...} }` | Primary per-team total line per side (one line per side, last-write-wins). Backward-compatible. Use `team_totals` for ALL alt lines. |
+| `team_totals` | `{ home: { "<points>": {points, over, under, max} }, away: {...} }` | ALL alternate team-total lines, keyed by points per side. Mirrors the `totals` shape. Use when Pinnacle exposes multiple lines (e.g. home Over 0.5 / 1.5 / 2.5). |
+| `meta` | object | Per-period metadata: scores, max stakes |
+
+---
+
+## Periods
+
+`periods` is an object keyed by `num_<N>`:
+
+- `num_0` — full match
+- `num_1` — 1st half (or 1st set in tennis)
+- `num_2` — 2nd half / 2nd set
+- `num_3` — 3rd quarter / 3rd set
+- `num_4` — 4th quarter / 4th set
+- `num_5` — extra time
+- `num_6`, `num_7`, `num_8` — sets 1, 2, 3 (alternative tennis indexing)
+
+Not all periods are present for every event. Iterate keys defensively.
+
+---
+
+## Plans & Pricing
+
+| Plan | Price | REST | SSE | Notes |
+|---|---|---|---|---|
+| Full demo (3 days, on request) | $0 | 10 req/sec, no daily cap | ✅ | Granted by hand on request, not automatic: SSE + raw WebSocket included, no card. |
+| Trial (the default on signup) | $0 | 100 reqs/day | ❌ | Key keeps working forever — nothing is revoked, only streaming stops. |
+| Stream | $99/mo | 100 reqs/day | ✅ | SSE-only product. REST limited to trial-class. |
+| Pro | $99/mo | 10 req/sec | ❌ | REST only. No SSE. |
+| Pro+SSE | $149/mo | 10 req/sec | ✅ | REST + SSE bundle. Best value if you want both. |
+| Scale | $229/mo | 30 req/sec | ✅ | High-frequency arbitrage and multi-account. |
+
+Quarterly and semi-annual variants exist with 12–24% discounts. Get current SKUs and prices live at https://pinnodds.com/panel/api/plans (returns JSON).
+
+Billing: card via Stripe (a subscription that renews automatically; cancel any time from the panel in one click) or crypto via NowPayments (BTC, ETH, USDT-TRC20, TRX and more; one-off payment, no auto-renewal — re-subscribe when the plan ends).
+
+---
+
+## Rate Limits
+
+Enforced per-key. When exceeded, HTTP 429 with `Retry-After` header and a JSON body:
+
+```json
+{
+  "error": "rate_limited",
+  "window": "minute",
+  "limit": 20,
+  "retry_after_ms": 41052
+}
+```
+
+Limits per plan:
+
+| Plan | Per second | Per minute | Per hour | Per day |
+|---|---|---|---|---|
+| Trial (first 3 days) | 10 req/sec | — | — | — |
+| Trial (after 3 days) | — | 20 | 100 | 100 |
+| Stream | — | 20 | 100 | 100 |
+| Pro | 10 req/sec | — | — | — |
+| Pro+SSE | 10 req/sec | — | — | — |
+| Scale | 30 req/sec | — | — | — |
+
+The day cap survives process restarts (the in-memory bucket is seeded from the `usage_daily` SQLite table on first request after a restart).
+
+---
+
+## Errors
+
+| Status | Error code | When |
+|---|---|---|
+| 401 | `missing_key` | No API key sent |
+| 401 | `invalid_key` | Key not in our DB |
+| 401 | `missing_key` / `invalid_key` / `expired` / `invalid_token` | (SSE) The body `{"type":"error","error":"<reason>"}` says why. `invalid_token` = the legacy `?token=` (no longer accepted) was sent without an API key |
+| 401 | `unauthorized` | (WebSocket handshake) Key missing or not recognised |
+| 403 | `plan_lacks_sse` | (SSE) Plain HTTP 403 with a JSON body. Authenticated but plan doesn't include SSE (expected on a new free key until the on-request 3-day demo is switched on) — upgrade to Stream, Pro+SSE, or Scale |
+| 403 | `error code: 1010` | Plain text from Cloudflare, not from pinnodds: the request was rejected for its `User-Agent` (default `Python-urllib`, `libwww-perl`). API paths `/kit/`, `/api/`, `/odds-drop*`, `/ping`, `/health` are exempt; `/ws/feed` and `/openapi.json` are not. Set an explicit `User-Agent` header |
+| 429 | `rate_limited` | Per-key rate limit exceeded. Also the answer to more than 5 connection attempts in 60 s on the WebSocket handshake and on the SSE streams (SSE body carries `retry_after_s`; header `Retry-After`) |
+| 503 | `prematch_disabled` | Prematch endpoint hit when prematch ingester is off |
+
+SSE failures are framed as `data: {"type":"error","error":"...","message":"..."}` so EventSource clients can read the reason from `onmessage` instead of getting an opaque connection failure.
+
+---
+
+## Common integration patterns
+
+### Pattern 1: Polling for new live drops every 5 seconds
+
+```js
+const KEY = process.env.PINNACLE_KEY;
+let lastSeen = 0;
+
+async function poll() {
+  const r = await fetch(
+    `https://pinnodds.com/api/drops?mode=live&min_drop_pct=5&max_age_sec=10`,
+    { headers: { "x-api-key": KEY } }
+  );
+  const { drops } = await r.json();
+  for (const d of drops) {
+    if (d.alerted_ms <= lastSeen) continue;
+    lastSeen = d.alerted_ms;
+    console.log("DROP:", d.sport, d.home, "vs", d.away, d.from_price, "→", d.to_price);
+  }
+}
+setInterval(poll, 5_000);
+```
+
+### Pattern 2: SSE stream into an arbitrage finder (Node.js)
+
+```js
+import EventSource from "eventsource";
+
+const es = new EventSource(`https://pinnodds.com/odds-drop?key=${process.env.PINNACLE_KEY}`);
+
+es.onmessage = (e) => {
+  const data = JSON.parse(e.data);
+  if (!Array.isArray(data)) return; // skip handshake/error frames
+
+  for (const drop of data) {
+    // EV check: bookmaker price vs no-vig fair price
+    const ev = (drop.to_price / drop.nvp) - 1;
+    if (ev > 0.02) {  // 2%+ edge
+      console.log(`+EV ${(ev*100).toFixed(2)}%:`, drop.home, drop.outcome, "@", drop.to_price);
+      // ... place bet via your bookmaker integration
+    }
+  }
+};
+```
+
+### Pattern 3: Fetching all upcoming soccer fixtures with their full markets
+
+```js
+const r = await fetch(
+  "https://pinnodds.com/kit/v1/markets?sport_id=1&event_type=prematch",
+  { headers: { "x-api-key": process.env.PINNACLE_KEY } }
+);
+const { events, last } = await r.json();
+const matchEvents = events.filter(e =>
+  e.is_have_odds && e.periods?.num_0?.money_line
+);
+console.log(`${matchEvents.length} prematch soccer events with money_line`);
+```
+
+### Pattern 4: Incremental polling with `since` (and detecting stale prices)
+
+**How old is this data? Read the response headers — they answer it directly, including during an upstream maintenance window.** Rather than serve hours-old prices as current, we withhold the board and say so. Every REST response carries:
+
+| Header | Value | Meaning |
+|---|---|---|
+| `X-Data-Status` | `fresh` | Data is current — act on it |
+| `X-Data-Status` | `stale` | Upstream has gone quiet past our threshold. The board is **withheld**: you get the ordinary empty shape, not an error, so your client keeps parsing. This is how you tell "no fresh data" apart from "no matches right now" |
+| `X-Data-Status` | `unknown` | Nothing written yet (cold start). Not an outage |
+| `X-Data-Age-Ms` | integer | Age of the newest data on that board, ms, floored to whole seconds. **Absent** when unknown — never a sentinel like `-1` |
+| `X-Data-Board` | `live` / `prematch` | Which board the two values above describe |
+
+Below the withholding threshold you still receive the last known prices, which is usually what you want — a quiet market is not a broken one. If your strategy needs a tighter limit, compare `X-Data-Age-Ms` against your own number and skip the cycle yourself.
+
+These headers are board-level: `X-Data-Age-Ms` is the time since the newest write anywhere on that board, so a busy board reads `0` even if one match has not moved for minutes (use that event's `updated_at`). The live board is fed by Pinnacle's push stream and by a full re-read about every 15 s; each successful re-read refreshes the age, so the header **cannot show a stall of the push stream alone** and normally stays under 15-20 s. Treat an age above 60 s on the live board as suspect. On the prematch board the full re-read runs every 25-30 s (longer when Pinnacle is slow), so tens of seconds is normal there. No signal can detect prices that are arriving but not moving.
+
+**These headers are REST only; the WebSocket has its own signal.** The WebSocket `ping` (every 30 s) carries `feed_age_ms`, `feed_status` (`"silent"` after 90 s without any push), per-sport ages (`sport_age_ms`) and `upstream`, the state of our connection to Pinnacle. That is what tells a quiet market from a stalled push stream; the fields are listed in the WebSocket section. The SSE streams carry no data-age signal: the keepalive shows the connection is open, not that prices are flowing. Poll REST or `/health` alongside an SSE stream (`/health` turns `degraded` with a reason such as `no live write for 900s`; it uses the same board-level age).
+
+**There is no Pinnacle-side timestamp.** Pinnacle's data carries a `version` stamp, the scheduled start and a betting cut-off, nothing that says when a price changed. Every time value is measured on our servers:
+
+| Field | Where | What it is |
+|---|---|---|
+| `ts` | every WebSocket frame | Our edge **publish** time (epoch ms), taken when the frame is sent. Not Pinnacle's change time; our receive time is `recv_ts` |
+| `recv_ts` | forwarded WebSocket frames (`live`, `prematch_ws`, `prematch_markets`, `prematch_membership`, `prematch_matchups`) | Epoch ms: when **we received** the message from Pinnacle. `ts - recv_ts` is the delay inside our system |
+| `feed_age_ms`, `sport_age_ms`, `prematch_age_ms`, `prematch_sport_age_ms`, `prematch_poll_age_ms` | WebSocket `ping` | Ages in ms at the ping's `ts`: time since we last received a push from Pinnacle (any kind, per sport, prematch) and since the last prematch board poll record |
+| `last` / `last_call` (top level) | REST boards | Store cursor for `since=`. Not a time |
+| `last` (inside an event) | REST events | Unix second at which we **served** the response; identical for every event |
+| `updated_at` | REST events only | Epoch ms: **our receive time** of the last real change to that event's markets |
+| `X-Data-Age-Ms` / `X-Data-Status` / `X-Data-Board` | REST headers | Board-level age, as above |
+| `ts`, `age_s` | `/api/drops` rows | Our detection time of the drop |
+
+There are TWO different fields named `last`, and NEITHER is a data age:
+
+- **Top level** (`last` / `last_call`, alongside `sport_id`) is the store sequence number. It only moves forward and it is the value you pass to `since=`.
+- **Inside each event**, `last` is the Unix second at which we rendered the response. It is identical for every event in the payload and says nothing about when that event's odds moved. Do not compute freshness from it.
+- **`updated_at`** (inside each event) is the freshness field: epoch milliseconds of the moment we received the last real change to that event's markets (a price, a line added or removed, or a status). Pinnacle re-sending identical prices does not move it. After one of our restarts it starts from the moment we first saw the event again ("unchanged since at least").
+
+As a secondary signal, detect staleness from the top-level cursor:
+
+- **Feed quiet** — `last` does not advance between polls. `X-Data-Age-Ms` answers this directly; `/health` (`live_write_age_ms`, `prematch.write_age_ms`) says which feed is quiet.
+- **Event unchanged** — `last` advances but the event is absent from the `since=` response. Its prices genuinely have not moved; keep your cached copy.
+- **Event gone** — it stops appearing in a full (no `since=`) response. Pinnacle pulled it, or it kicked off and moved to the live feed. A started fixture is removed from `event_type=prematch` as soon as its live listing exists; the prematch board is re-read every 25–45 s. A fixture whose scheduled start time has passed but which Pinnacle is still trading as prematch (typical for esports matches that start late, and for parent matches with later maps) stays on the prematch endpoints until it really starts, so `starts` can be in the past for such events.
+
+If you need a timestamp for each detected move, use `/api/drops`: every drop carries its own `ts` (epoch ms, the time we detected it) and `age_s`.
+
+### What pinnodds does not provide
+
+- **Results / settlement / bet grading.** No results or settlement endpoint and no won/lost outcome. Pinnacle retired its own settled-fixtures endpoint on 2026-11-01. While an event is in play the live feed carries the score (`state`, `home_score` / `away_score`) and, on the WebSocket, each period's status, so a client can record the last score it saw; that is not an official result. Settlement rules: see Pinnacle's betting rules page.
+- **Opening price.** No field carries an opener. `from_price` on a drop is the previous price in the drop window, not the market open. The WebSocket snapshot on reconnect is current state only, so missed openers cannot be recovered.
+- **Historical odds / closing lines / archives.** None, and no backfill. Record the stream yourself from the day you subscribe.
+- **`lineId` / `altLineId`.** Not in the feed; `markets[i].version` (and the `version` returned on REST with `line_meta=1`) is a change stamp, not a line id.
+
+Pass the cursor back as `since=` to get only changed events:
+
+```js
+let lastVersion = 0;
+
+async function fetchChanges() {
+  const r = await fetch(
+    `https://pinnodds.com/kit/v1/markets?sport_id=1&since=${lastVersion}`,
+    { headers: { "x-api-key": KEY } }
+  );
+  const { events, last } = await r.json();
+  lastVersion = last;              // always carry forward the cursor you just got
+  return events;                   // only events that changed since the previous call
+}
+```
+
+A full prematch soccer board is ~1,500 events; a `since=` call 8 seconds later typically returns fewer than 10. Use it for bandwidth as much as for freshness.
+
+---
+
+## Affiliate Program
+
+Every account ships with a unique referral link visible in the dashboard. Anyone who lands on pinnodds.com with `?ref=<your-code>`, signs up, verifies email in the same session, and pays for a plan earns the referrer **30% of every payment** they make — lifetime, including renewals and upgrades. The referee pays the normal price; there is no signup discount on their side.
+
+| Topic | Detail |
+|---|---|
+| Link format | `https://pinnodds.com/?ref=<8-char-code>` |
+| Commission | 30% of every USD payment from referred users, recurring for the lifetime of the subscription |
+| Attribution | Session-based: `?ref=` must be present when the visitor lands on pinnodds.com AND they must complete signup + email verification before clearing sessionStorage |
+| Tracking | `GET /panel/api/me` returns a `referral` object containing the code, link, masked referral list, and commission stats (paying / unpaid / paid_out) |
+| Self-referral | Blocked at the verify-confirm step |
+| Payouts | Manual. We contact the referrer when unpaid balance reaches $50+. Crypto / bank / PayPal — referrer's choice |
+| Privacy | Referee emails are masked in the panel (`j***@gmail.com`); admins see unmasked |
+| Refunds | A refunded payment voids its commission. We don't claw back paid-out commissions for routine churn |
+
+The `/panel/api/me` response now includes:
+```
+"referral": {
+  "code": "aBc12XyZ",
+  "link": "https://pinnodds.com/?ref=aBc12XyZ",
+  "rate_pct": 30,
+  "stats": {
+    "total_referrals": 4,
+    "paying_referrals": 2,
+    "unpaid_commission_usd": 49.50,
+    "paid_commission_usd": 0
+  },
+  "referrals": [
+    { "id": 25, "email": "j***@gmail.com", "plan_id": "stream_30d",
+      "is_paying": true, "joined_at": 1779800000, "commission_earned_usd": 29.70 }
+  ]
+}
+```
+
+If you want to suppress the affiliate UI in your own integration (e.g. building a custom dashboard), simply ignore the `referral` block in the response — it's purely additive.
+
+---
+
+## Support
+
+- Documentation issues / feature requests: open an issue at the contact email shown on https://pinnodds.com
+- Technical questions / integration help: Telegram @ArbitrageXpro
+- API status & uptime: https://pinnodds.com/health (requires API key) or https://pinnodds.com/ping (public, returns `ok`)
+
+## Blog
+
+- [pinnodds vs OddsPapi: When You Only Need Pinnacle](https://pinnodds.com/blog/pinnodds-vs-oddspapi): pinnodds vs OddsPapi, an engineer's take: a 350-book aggregator with historical odds against a Pinnacle-only real-time odds API with built-in drop detection.
+- [pinnodds vs OpticOdds: Pinnacle Feed vs Aggregator](https://pinnodds.com/blog/pinnodds-vs-opticodds): pinnodds vs OpticOdds: a quote-based multi-book enterprise stream against a Pinnacle-only real-time odds API with public pricing and drop alerts.
+- [pinnodds vs SharpAPI: Two SSE Odds Feeds Compared](https://pinnodds.com/blog/pinnodds-vs-sharpapi): pinnodds vs SharpAPI: a multi-book +EV feed against a Pinnacle-only real-time odds API. Both stream over SSE; the data, pricing and alerts differ.
+- [pinnodds vs SportsGameOdds: Pinnacle vs US Books](https://pinnodds.com/blog/pinnodds-vs-sportsgameodds): pinnodds vs SportsGameOdds: US multi-book aggregation on a slow free tier against Pinnacle pushed in real time, with WebSocket and drop alerts.
+- [pinnodds vs The Odds API: Push vs Credits](https://pinnodds.com/blog/pinnodds-vs-the-odds-api): pinnodds vs The Odds API: breadth across many books on metered credits, or Pinnacle depth pushed live over WebSocket and SSE. Side by side.
+- [Low-Latency Pinnacle Odds: Push Beats Polling](https://pinnodds.com/blog/low-latency-pinnacle-odds): Low latency odds api explained: why a pushed WebSocket/SSE feed delivers Pinnacle line moves sub-second while polling REST leaves you a poll-interval behind.
+- [Steam Move Betting: What It Is and How to Detect It](https://pinnodds.com/blog/steam-moves-explained): Steam move betting explained: what a steam move is, how it differs from normal line movement, and a working Python detector on a Pinnacle feed.
+- [SSE vs WebSocket Odds: Which Feed Should You Use?](https://pinnodds.com/blog/sse-vs-websocket-odds-feed): SSE vs WebSocket odds feeds compared by a founding engineer: unidirectional push with auto-reconnect vs a full-duplex raw stream, and when REST polling wins.
+- [Stream Live Odds in Python: SSE + WebSocket](https://pinnodds.com/blog/stream-live-odds-python): Stream live odds in Python: subscribe to Pinnacle SSE drop alerts and the /ws/feed WebSocket with reconnects, plus pip install pinnodds. Real copy-paste code.
+- [Pinnacle Odds in Python: A Working Guide](https://pinnodds.com/blog/get-pinnacle-odds-python): Get Pinnacle odds in Python with pip install pinnodds: REST markets, SSE drop streaming, quarter lines, specials and a full working script you can run today.
+- [Odds Drop Detection: What a Real Detector Gets Right](https://pinnodds.com/blog/odds-drop-detection): Odds drop detection breaks on suspensions and bad reference windows. How to build a detector that survives real Pinnacle line movement, with code.
+- [Real-Time Soccer Odds API: Live, Quarter Lines & Drops](https://pinnodds.com/blog/real-time-soccer-odds-api): A real-time soccer odds API on a pushed feed: live and prematch football markets, quarter lines, specials and drop detection. Pinnacle-only.
+- [Pinnacle WebSocket API: Protocol, State, When to Use It](https://pinnodds.com/blog/pinnacle-websocket-feed-guide): How to consume a Pinnacle WebSocket API feed: raw passthrough protocol, the state you must hold yourself, and when REST or SSE is the better call.
+- [Dropping Odds API: Catch Line Moves As They Happen](https://pinnodds.com/blog/dropping-odds-api): How a dropping odds API works: what a drop really is, why polling misses moves, and how push alerts stream from Pinnacle with limit and nvp fields.
+- [Pinnacle API Alternatives in 2026: What Exists Now](https://pinnodds.com/blog/pinnacle-odds-api-guide): Pinnacle closed its public API in July 2025. Every alternative that exists in 2026, what a replacement needs, and the REST, SSE and WebSocket options.
+- [Build a Betting Odds Alert Bot: Telegram + SSE](https://pinnodds.com/blog/build-a-betting-odds-alert-bot-telegram-sse): Build a betting odds alert bot with Telegram and SSE in ~60 lines of Python: stream odds drops, filter on limit, and format a message you can act on.
+- [Premier League Odds API: Live Pinnacle EPL Lines](https://pinnodds.com/blog/premier-league-odds-api): A Premier League odds API guide using Pinnacle data: live and prematch endpoints, quarter lines, specials, odds-drop SSE, and the caveats nobody mentions.
+- [US Open Tennis Odds API: Live Pinnacle Feed](https://pinnodds.com/blog/us-open-tennis-odds-api): How to pull live US Open tennis odds from Pinnacle with a pushed API: /kit/v1/markets, the /ws/feed socket, SSE drop alerts, real field names and code.
+- [Pinnacle MLB Odds API: Moneyline, Run Line & Totals](https://pinnodds.com/blog/mlb-odds-api-pinnacle-moneyline-run-line-totals): Pull Pinnacle MLB odds as JSON: moneyline, run line, totals and every alternate line, with a working SSE example and a free key. No card needed.
+- [Pinnacle Max Bet Limit Explained: Reading the Field](https://pinnodds.com/blog/pinnacle-max-bet-limit-explained): Pinnacle max bet limit explained: what the limit field means, why it moves, how it differs from account caps, and how to filter drop alerts on it.
+- [Why +EV Bets Disappear the Moment You Click](https://pinnodds.com/blog/why-do-positive-ev-bets-disappear-when-i-click-them): Positive EV bets disappear when you click them for two very different reasons. Here's how to tell a stale reference price from a real move — and fix it in code.
+- [Convert Fractional Odds to Decimal in Code](https://pinnodds.com/blog/convert-fractional-odds-to-decimal-in-code): Convert fractional odds to decimal in code: the num/den + 1 formula, a battle-tested parser for SP, evens and odds-on, GCD reduction and the UK ladder.
+- [Why Do Positive EV Bets Lose? The Variance Math](https://pinnodds.com/blog/why-do-positive-ev-bets-lose): Why do positive EV bets lose? A 3% edge only turns a coin flip into 51.5%. The variance maths, the sample size you need, and why CLV is faster.
+- [How Fast Does an Odds Feed Need to Be for +EV?](https://pinnodds.com/blog/how-fast-odds-feed): How fast does an odds feed need to be for +EV betting? Seconds, not milliseconds — and your poll interval, not the wire, is almost always the bottleneck.
+- [Pinnacle Odds API vs Scraping: What Breaks in Prod](https://pinnodds.com/blog/pinnacle-odds-api-vs-scraping): Pinnacle odds API vs scraping, judged on failure modes: polling ceilings, silent staleness, missing quarter lines, and when a scraper still wins.
+- [Why Is Pinnacle the Sharpest Sportsbook?](https://pinnodds.com/blog/why-is-pinnacle-the-sharpest-sportsbook): Why is Pinnacle the sharpest sportsbook? Low margins, high limits and a move-the-line policy make its closing price the benchmark. CLV, with code.
+- [Map Asian Handicap Lines Between Bookmakers](https://pinnodds.com/blog/map-asian-handicap-lines-between-bookmakers): How to map Asian handicap lines between bookmakers without sign-flip bugs: anchor every line to the home team, scope by period, derive the away side.
+- [Pinnacle API Shut Down: Alternative & Migration Path](https://pinnodds.com/blog/pinnacle-api-shut-down-alternative): Pinnacle shut its public API in July 2025. The replacement, the endpoint mapping, the field-name gotchas and a migration order, for every sport.
+- [How to Calculate EV From Pinnacle Odds, Step by Step](https://pinnodds.com/blog/how-to-calculate-ev-from-pinnacle-odds): How to calculate EV from Pinnacle odds: convert to probability, remove the vig, compare with your book's price. Worked example, code and caveats.
+- [Flat Staking vs Kelly Criterion for Betting Bots](https://pinnodds.com/blog/flat-staking-vs-kelly-criterion-betting-bot): Flat staking vs Kelly criterion for betting bots: when level stakes win, why fractional Kelly wins in production, and how to clamp stakes in code.
+- [Closing Line Value (CLV): Formula, Example & Tracking](https://pinnodds.com/blog/what-is-closing-line-value-clv-guide): Closing line value is the gap between the odds you took and Pinnacle's no-vig closing price. The formula, a worked example, and how to log it.
+- [Why Use Pinnacle Odds as Fair Value (And When Not To)](https://pinnodds.com/blog/why-use-pinnacle-odds-as-fair-value): Why devigged Pinnacle odds work as fair value: the structural reason, how to remove the vig properly, and where the method breaks down.
+- [Free Pinnacle Odds API: What You Get for $0](https://pinnodds.com/blog/free-pinnacle-odds-api): A genuinely free Pinnacle odds API: 100 requests a day, no card, no expiry. What it covers, how to spend the calls well, and what paid plans add.
+- [See Pinnacle Odds Without a Pinnacle Account](https://pinnodds.com/blog/pinnacle-odds-without-account): Three ways to see Pinnacle's current prices with no account: free public odds boards, a free API key, and a no-vig view of the same lines.
+- [Pinnacle No-Vig Fair Odds: Formula, Example & Code](https://pinnodds.com/blog/pinnacle-no-vig-fair-odds): How to strip Pinnacle's margin to get no-vig fair odds: two-way and three-way worked examples in Python and JavaScript, and where it's done for you.
+- [Pinnacle Player Props API: Props & Specials in JSON](https://pinnodds.com/blog/pinnacle-player-props-api): Pull Pinnacle player props, team props, exact scores and futures as JSON with include_specials: the row format and how to keep payloads small.
+- [Value Betting Soft Bookmakers With Pinnacle Odds](https://pinnodds.com/blog/value-betting-soft-bookmakers): Value betting with Pinnacle as the fair line: find soft books priced above it and size by edge. The method, the maths, the code and the pitfalls.
+- [Pinnacle Odds API Comparison 2026: Six Options](https://pinnodds.com/blog/pinnacle-odds-api-comparison-2026): Every realistic way to get Pinnacle odds in 2026, compared: is Pinnacle in the feed, pushed or polled, the price, and the free tier. Vendor-checked.

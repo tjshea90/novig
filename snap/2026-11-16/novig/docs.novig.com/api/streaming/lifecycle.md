@@ -1,0 +1,72 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.novig.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Lifecycle
+
+> Market status transitions, and the one that voids your orders.
+
+The `lifecycle` channel reports each change to a market's status.
+It costs 1 token per market, and `trades`, `bbo`, and `book` include it.
+
+On an `event:` subject, it also covers markets that open later.
+
+```json snapshot theme={"dark"}
+"lifecycle": {
+  "seq": 12,
+  "status": "OPEN"
+}
+```
+
+```json delta theme={"dark"}
+"lifecycle": {
+  "seq": 13,
+  "deltas": [
+    {
+      "kind": "GOLIVE",
+      "status": "OPEN"
+    }
+  ]
+}
+```
+
+Each delta names the transition in `kind` and the market's status after it in `status`.
+
+| Transition | Means | Status after |
+| - | - | - |
+| `OPEN` | Accepting orders | `OPEN` |
+| `CLOSE` | Stopped accepting orders | `CLOSED` |
+| `GRADE` | Graded, payouts determined | `SETTLED` |
+| `START` | The event started | Unchanged |
+| `END` | The event ended | Unchanged |
+| `GOLIVE` | Live | Unchanged |
+| `UNLIVE` | Left live play | Unchanged |
+
+## Live play and your orders
+
+* `GOLIVE` voids every resting order and turns taker fees on.
+* `UNLIVE` cancels nothing and turns taker fees off.
+
+Taker fees switch on at `GOLIVE` only for a market whose `fee.charged` is `WHEN_LIVE`.
+An `ALWAYS` market charges fees in every phase.
+See [Trading fees](https://docs.novig.com/api/concepts/fees.md).
+
+This is one market that goes live twice:
+
+| Phase | What happens |
+| - | - |
+| Pregame | Orders rest |
+| `GOLIVE` | Orders voided, taker fees on |
+| In play | Orders rest |
+| `UNLIVE` | Orders rest, taker fees off |
+| `GOLIVE` | Orders voided, taker fees on |
+
+`UNLIVE` doesn't mean the event is over.
+Wait for `END` and `CLOSE` before you treat the market as finished.
+
+> [!WARNING]
+>
+> `GOLIVE` and `UNLIVE` repeat on a delay, a review, or a stoppage. Act on each transition as it arrives, and don't assume a fixed number of them.
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

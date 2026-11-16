@@ -16,6 +16,139 @@ surface (`REST`, `WebSocket`, `FIX`) or exchange (`Predictions`, `Margin`).
 FIX API changes, previously tracked on a separate page, now live here under
 the `FIX` tag.
 
+**November 19, 2026**
+
+A request whose path or query string contains a NUL byte (`%00`) or bytes
+that are not valid UTF-8, for example `GET /markets?tickers=KX%00TEST` or
+`GET /historical/trades?ticker=%ff%fe`, now returns 400
+`invalid_parameters`. It previously returned 500 `internal_server_error`
+on endpoints that looked the value up.
+
+A `cursor` carrying such text is now handled the way each endpoint already
+handles a cursor it cannot decode, instead of returning 500. Most endpoints
+return 400. A few, including `GET /markets`, ignore a cursor they cannot
+decode and return the first page.
+
+No valid request is affected, and cursors returned by the API are
+unchanged.
+
+**November 19, 2026**
+
+Four endpoints for on-request concert markets (series starting with
+`KXRFQCONCERT`), which pay when a show is postponed, canceled or either:
+
+* `POST /concert_cancellation_markets` returns the market for a show, its
+  scheduled date and a cover (`postponed`, `cancelled` or `either`),
+  creating it if it doesn't exist yet. `created` says whether it is new.
+  Send an RFQ for the returned `market_ticker` with
+  `POST /communications/rfqs` to trade it. A valid request that can't be
+  offered (for example a show that has moved to another date) returns 409
+  `concert_cancellation_market_unavailable`, and reaching the creation
+  limit returns 429 `concert_cancellation_market_limit_exceeded`, which is
+  not request-rate limiting.
+* `GET /concert_cancellation_markets/availability` returns the covers that
+  can be created and the metros whose concerts are listed. It needs no
+  authentication.
+* `GET /concert_cancellation_markets/concerts` lists a metro's upcoming
+  concerts, and `GET /concert_cancellation_markets/concerts/search` finds
+  them by name. Both return the show id and date the create request takes.
+
+See [On-Request Concert Markets](https://docs.kalshi.com/getting_started/concert_rfqs.md). These
+markets are not live yet.
+
+**November 19, 2026**
+
+REST responses now describe the rate limit bucket each request was charged
+to: `X-RateLimit-Limit` (its capacity in tokens), `X-RateLimit-Remaining`,
+`X-RateLimit-Reset` (seconds until it is full) and `X-RateLimit-Cost`.
+429 responses carry them too, but not `Retry-After`. Publicly cacheable
+responses, which include most market data, carry none of them. See
+[Rate limit headers](https://docs.kalshi.com/getting_started/rate_limits.md#rate-limit-headers).
+
+**November 19, 2026**
+
+`expected_expiration_time` on market objects, including markets nested in
+events, is now capped at the market's `latest_expiration_time`. Some
+markets in events with several date strikes reported the last strike's
+date, which could fall after their own latest expiration. Markets whose
+expected expiration was already at or before the latest expiration are
+unchanged.
+
+**November 19, 2026**
+
+The deprecated `expiration_time` field is removed from market objects,
+including markets nested in events. Read `latest_expiration_time` instead:
+it has always carried the same value. Order `expiration_time` is unrelated
+and unchanged.
+
+**November 19, 2026**
+
+During the overnight session (8 PM to 4 AM ET), every equities perps order must be priced within 20% of the market's 4 PM ET settlement price from the day the session opened. Orders outside the band are rejected with `invalid price`. When the band takes effect or moves, resting orders outside it are canceled: margin [user\_orders](https://docs.kalshi.com/websockets/user-orders.md) and orderbook delta messages report `last_update_reason: "SettlementBoundsCancel"`, and FIX ExecutionReports (35=8) carry a Text (58) of `SETTLEMENT_BOUNDS_CANCEL`. See [Price Banding](https://docs.kalshi.com/margin/price-banding.md).
+
+**November 19, 2026**
+
+* `GET /incentive_schedules` lists the recurring incentive schedules that
+  have not ended: what each market of a series (or of one event) earns per
+  window, how long a window is, and when the schedule ends. `all_markets`
+  says whether the terms are promised to every market the schedule covers,
+  including markets listed later, or only anticipated. It needs no
+  authentication.
+* `GET /incentive_programs` takes `series_ticker` and `event_ticker` filters,
+  and each program now carries its `series_ticker` and `event_ticker`.
+
+**November 12, 2026**
+
+The lower-latency hosts for `fill` and `user_orders` updates are now:
+
+* Production Predictions: `wss://user-ws.kalshi.com/trade-api/ws/v2`
+* Production Margin: `wss://margin-user-ws.kalshi.com/trade-api/ws/v2/margin`
+* Demo Predictions: `wss://user-ws.demo.kalshi.co/trade-api/ws/v2`
+* Demo Margin: `wss://margin-user-ws.demo.kalshi.co/trade-api/ws/v2/margin`
+
+The user hosts serve `fill` and `user_orders` today, and more per-user channels will be added over time. See [API Environments and Endpoints](https://docs.kalshi.com/getting_started/api_environments.md#fill-and-order-updates).
+
+The `warp-ws` and `margin-warp-ws` hosts are deprecated. They keep working and serve the same channels for now. Move to the user hosts above.
+
+**November 12, 2026**
+
+API keys restricted to a single subaccount can now call
+`GET /margin/funding_history` and `GET /margin/balance`, scoped to their
+locked subaccount. For these keys, balance omits the account-wide
+`settled_funds` total, so `settled_funds` is now optional in the response
+schema. See [Subaccounts](https://docs.kalshi.com/getting_started/subaccounts.md).
+
+**November 12, 2026**
+
+KalshiMD snapshots (35=W) and incremental updates (35=X) now carry
+`MDExecID<21046>`, in the same format as `ExecID<17>`. See
+[MDExecID](https://docs.kalshi.com/fix/market-data.md#mdexecid). If your FIX engine validates custom
+tags, load the updated
+[FIX dictionary](https://assets.kalshi.com/fix/kalshi-fix-dictionary.xml).
+
+**November 12, 2026**
+
+[Security Status](https://docs.kalshi.com/fix/market-data.md#security-status) subscribe and unsubscribe requests (`35=e`) will cost **1 token** from the shared Read bucket per request, reduced from **10 tokens**.
+
+**November 12, 2026**
+
+`GET /markets/{ticker}` and `GET /events/{event_ticker}` now send a `Cache-Control: public, max-age=5` header, so a response may be served from a shared cache for up to 5 seconds. `GET /markets` already sends this header. Response bodies are unchanged. For real-time prices, subscribe to the WebSocket `ticker` channel.
+
+**November 12, 2026**
+
+Two endpoints for on-request weather markets (series starting with `KXRFQ`,
+such as `KXRFQRAINHOURS`):
+
+* `POST /weather_point_markets` returns the market for a location, time
+  window and threshold, creating it if it doesn't exist yet. `created` says
+  whether it is new. Send an RFQ for the returned `market_ticker` with
+  `POST /communications/rfqs` to trade it. A valid request that can't be
+  offered (for example a location over open water) returns 409
+  `weather_point_market_unavailable`, and reaching a creation limit returns
+  429 `weather_point_market_limit_exceeded`, which is not request-rate
+  limiting.
+* `GET /weather_point_markets/availability` returns the variables that can
+  be created and the regions each is offered in. It needs no authentication.
+
 **November 12, 2026**
 
 Clarified how `GET /portfolio/balance` and `GET /portfolio/subaccounts/balances` list exchange indexes and aggregate subaccount balances. Documentation only; API behavior is unchanged.
@@ -43,6 +176,10 @@ When an order is rejected because the account has never been funded on the marke
 
 **November 12, 2026**
 
+The new `ebattle_scores` channel provides live eSoccer/eFootball and eBasketball scores. Subscribe to the channel, then use `subscribe_matches` with milestone IDs or `["all"]`. Public access is available to authenticated API users for a limited period. When the feed returns to restricted access, subscriptions without individual approval end. Other feeds retain their own access policies.
+
+**November 12, 2026**
+
 Registered MCP clients can read margin balances, positions, orders, fills and risk (`GET /margin/balance`, `/margin/positions`, `/margin/orders`, `/margin/fills`, `/margin/risk`) using explicitly granted `read::mcp_portfolio` OAuth access. `GET /margin/risk` includes leverage and estimated liquidation prices. Existing grants of this scope include this access. These grants do not allow order execution or funding changes. `GET /margin/markets`, `/margin/markets/{ticker}` and `/margin/markets/{ticker}/orderbook` accept a resource-bound MCP grant for per-user rate accounting; their anonymous payloads remain unchanged.
 
 **November 12, 2026**
@@ -62,8 +199,8 @@ Margin market responses now include `minimum_quantity`, the minimum order quanti
 **November 5, 2026**
 
 Markets created on demand for a request for quote, in series starting with
-`KXRFQ` (such as `KXRFQW` weather point markets), are left out of
-subscriptions that don't name markets. `trade` and `ticker` still deliver
+`KXRFQ` (such as `KXRFQRAINHOURS` on-request weather markets), are left out
+of subscriptions that don't name markets. `trade` and `ticker` still deliver
 them to subscriptions that list the market in `market_tickers` (or
 `market_ids` for `ticker`). `market_lifecycle_v2` takes no market list, so it
 leaves them out entirely.
@@ -71,8 +208,8 @@ leaves them out entirely.
 **November 5, 2026**
 
 Markets that users create on demand for RFQs (series starting with `KXRFQ`,
-such as `KXRFQW` on-request weather markets) are left out of unscoped
-listings:
+such as `KXRFQRAINHOURS` on-request weather markets) are left out of
+unscoped listings:
 
 * `GET /markets` and `GET /historical/markets` skip them unless the request
   sets `series_ticker`, `event_ticker` or `tickers` to one of them.

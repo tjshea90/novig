@@ -244,9 +244,11 @@ pre{scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
   <a href="#market-types">Market types</a>
   <a href="#event-shape">Event object</a>
   <a href="#staleness">Detecting stale prices</a>
+  <a class="method" href="#timestamps" style="padding-left: 20px; font-size: 11px">↳ Every time field</a>
   <a href="#live-state">Live state object</a>
   <a href="#sse-live-object">SSE <code>live</code> object</a>
   <a href="#affiliate">Affiliate program</a>
+  <a href="#not-provided">What we don't provide</a>
 </aside>
 
 <main class="prose">
@@ -273,6 +275,7 @@ pre{scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
     <a href="#sport-ids">Sport IDs</a>
     <a href="#event-shape">Event object</a>
     <a href="#staleness">Detecting stale prices</a>
+    <a href="#not-provided">What we don't provide</a>
   </nav>
 </details>
 
@@ -339,11 +342,13 @@ Content-Type: application/json
     <tr><td class="type">400</td><td class="name">—</td><td class="desc">Malformed or missing required parameter</td></tr>
     <tr><td class="type">401</td><td class="name">missing_key</td><td class="desc">No API key was sent</td></tr>
     <tr><td class="type">401</td><td class="name">invalid_key</td><td class="desc">Key not in our DB (typo, deleted, or regenerated)</td></tr>
-    <tr><td class="type">401</td><td class="name">Unauthorized</td><td class="desc">SSE token missing or rejected (only on <code>/odds-drop*</code> streams)</td></tr>
-    <tr><td class="type">403</td><td class="name">plan_lacks_sse</td><td class="desc">Key is valid but the plan doesn't include SSE streams (Stream, Pro&nbsp;+&nbsp;SSE, Scale only)</td></tr>
-    <tr><td class="type">403</td><td class="name">plan_lacks_ws</td><td class="desc">Key is valid but the WebSocket add-on isn't active on the account</td></tr>
+    <tr><td class="type">401</td><td class="name">missing_key · invalid_key · expired · invalid_token</td><td class="desc">On the <code>/odds-drop*</code> streams the body says why the request was refused: <code>{"type":"error","error":"missing_key"}</code> (no key sent), <code>"invalid_key"</code> (key not recognised), <code>"expired"</code> (the key has expired) or <code>"invalid_token"</code> (the retired <code>?token=</code> parameter was sent without an API key — send your API key instead, in the <code>x-api-key</code> header or as <code>?key=</code>). Retrying without changing the key gives the same answer. See <a href="#sse-errors">SSE control frames and connection answers</a></td></tr>
+    <tr><td class="type">401</td><td class="name">unauthorized</td><td class="desc">On the WebSocket handshake: the key is missing or not recognised. Retrying without changing the key gives the same answer</td></tr>
+    <tr><td class="type">403</td><td class="name">plan_lacks_sse</td><td class="desc">Key is valid but the plan doesn't include SSE streams (Stream, Pro&nbsp;+&nbsp;SSE, Scale only). Sent as an ordinary HTTP&nbsp;403 with the JSON body <code>{"type":"error","error":"plan_lacks_sse"}</code>; no stream is opened. This is the expected answer on a new free key: the 3-day full demo is switched on by hand when you ask for it, not at signup</td></tr>
+    <tr><td class="type">403</td><td class="name">plan_lacks_ws</td><td class="desc">Key is valid but the WebSocket add-on isn't active on the account. Also the expected answer on a new free key until a 3-day full demo has been switched on for it (on request)</td></tr>
+    <tr><td class="type">403</td><td class="name">error code: 1010</td><td class="desc">Not from us: a plain-text answer from Cloudflare, which rejected the request because of the client's <code>User-Agent</code> before it reached our servers. It affects HTTP clients that send a default library name such as <code>Python-urllib</code> or <code>libwww-perl</code>. The API paths (<code>/kit/</code>, <code>/api/</code>, <code>/odds-drop*</code>, <code>/ping</code>, <code>/health</code>) are exempt, but <code>/ws/feed</code>, <code>/openapi.json</code> and the HTML pages are not. Set an explicit <code>User-Agent</code> header (any descriptive name for your client), and if you still see it on an API path send us the URL, your client library and the <code>cf-ray</code> response header</td></tr>
     <tr><td class="type">413</td><td class="name">payload_too_large</td><td class="desc">Request body over 64&nbsp;KB (POST endpoints)</td></tr>
-    <tr><td class="type">429</td><td class="name">rate_limited</td><td class="desc">Key exceeded its rate limit — honor the <code>Retry-After</code> header. Also sent on connection floods to SSE/WS endpoints</td></tr>
+    <tr><td class="type">429</td><td class="name">rate_limited</td><td class="desc">Key exceeded its rate limit — honor the <code>Retry-After</code> header. The WebSocket handshake answers 429 as well, after more than 5 connection attempts in 60&nbsp;s, and so do the <code>/odds-drop*</code> streams, after more than 5 connection attempts per API key in 60&nbsp;s (the body is shown under <a href="#sse-errors">SSE control frames and connection answers</a>)</td></tr>
     <tr><td class="type">500</td><td class="name">internal</td><td class="desc">Unexpected server error — safe to retry with backoff</td></tr>
     <tr><td class="type">503</td><td class="name">prematch_disabled</td><td class="desc">Prematch endpoint hit while the prematch ingester is off</td></tr>
   </tbody>
@@ -373,6 +378,15 @@ Content-Type: application/json
         <tr><td class="name">is_have_odds</td><td class="type">0 | 1</td><td class="desc">Legacy compat — accepted and ignored. We always return events with odds.</td></tr>
       </tbody>
     </table>
+    <div class="callout" id="per-event" style="margin: 8px 0 12px; font-size: 13px; padding: 10px 14px;">
+      <b>Need one event, not a whole sport?</b> <code>/kit/v1/markets</code> always returns the whole board for a sport. It has no <code>event_id</code> or <code>event_ids</code> filter, and it ignores parameters it does not know instead of rejecting them, so a filter that is not in the table above silently returns the full board. Per-event access is on these:
+      <ul style="margin:8px 0 0; padding-left:18px; line-height:1.7">
+        <li>Live, REST: <a href="#details"><code>GET /kit/v1/details?event_id=</code></a></li>
+        <li>Prematch, REST: <a href="#prematch-markets"><code>GET /kit/v1/prematch/markets?event_id=</code></a>, or <a href="#prematch-lines"><code>GET /kit/v1/prematch/lines?event_id=&amp;market_type=</code></a> for one market type</li>
+        <li>WebSocket: <code>event_ids</code> in the <a href="#ws-feed">subscribe message</a> (up to 200 per stream)</li>
+      </ul>
+      There is no per-market subscription: the smallest unit is one event. On the three REST calls above you can add <a href="#line-meta"><code>line_meta=1</code></a> to get Pinnacle&rsquo;s <code>version</code>, the main/alternate flag and the market <code>key</code> on every line.
+    </div>
     <div class="callout" style="margin: 8px 0 12px; font-size: 12px; padding: 10px 14px;">
       <b>Tip.</b> A live and a prematch call return the same envelope and the same per-event field shape — only the <code>event_type</code> on each event differs. Existing client code that iterates <code>events[*].periods.num_0</code> works for both feeds without branching.
     </div>
@@ -456,16 +470,48 @@ $data = json_decode($body, <span class="k">true</span>);</pre>
       <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
       <tbody>
         <tr><td class="name">event_id <span class="req">required</span></td><td class="type">integer</td><td class="desc">Arcadia matchup ID from a previous <code>/markets</code> response.</td></tr>
+        <tr><td class="name">line_meta</td><td class="type">1</td><td class="desc">Optional. Adds <code>version</code>, <code>is_alternate</code> and <code>key</code> to every line, and a <code>money_line_meta</code> object to each period. See <a href="#line-meta">below</a>.</td></tr>
       </tbody>
     </table>
 <pre>curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
   "https://pinnodds.com/kit/v1/details?event_id=<span class="n">1628594960</span>"</pre>
+
+    <h3 id="line-meta" style="margin: 22px 0 6px; font-size: 15px">Optional: <code>line_meta=1</code> &mdash; version, main/alternate flag and market key on each line</h3>
+    <p>Add <code>line_meta=1</code> to one of the three per-event endpoints and every line object gains three fields. The moneyline&rsquo;s values are in a separate <code>money_line_meta</code> object next to <code>money_line</code> inside the period.</p>
+<pre><span class="c"># live</span>
+curl -H "x-portal-apikey: <span class="s">$KEY</span>" "https://pinnodds.com/kit/v1/details?event_id=<span class="n">1628594960</span>&amp;line_meta=1"
+<span class="c"># prematch</span>
+curl -H "x-portal-apikey: <span class="s">$KEY</span>" "https://pinnodds.com/kit/v1/prematch/markets?event_id=<span class="n">1629513753</span>&amp;line_meta=1"
+curl -H "x-portal-apikey: <span class="s">$KEY</span>" "https://pinnodds.com/kit/v1/prematch/lines?event_id=<span class="n">1629513753</span>&amp;line_meta=1"</pre>
+    <p style="font-size: 13px; color: var(--muted)">Part of one period with <code>line_meta=1</code> (the other fields of the period are unchanged and left out here):</p>
+<pre>{
+  "money_line_meta": { "version": 3800718797, "is_alternate": false, "key": "s;0;m" },
+  "spreads": {
+    "-1.5": { "hdp": -1.5, "home": 1.341, "away": 3.31, "max": 550, "version": 3800718797, "is_alternate": false, "key": "s;0;s;-1.5" }
+  },
+  "totals": {
+    "2.5": { "points": 2.5, "over": 3.31, "under": 1.341, "max": 550, "version": 3800718797, "is_alternate": false, "key": "s;0;ou;2.5" }
+  }
+}</pre>
+    <table class="param-table">
+      <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td class="name">version</td><td class="type">integer | null</td><td class="desc">Pinnacle&rsquo;s change stamp for the line. It changes when that line&rsquo;s prices change, and Pinnacle shares one value across the markets it reprices together, so the same number on several lines is normal. <b>It is not a PS3838 <code>lineId</code></b> and must not be sent as one: we do not provide <code>lineId</code> or <code>altLineId</code>, they do not exist in the feed.</td></tr>
+        <tr><td class="name">is_alternate</td><td class="type">boolean | null</td><td class="desc"><code>false</code> on the main line, <code>true</code> on an alternate line.</td></tr>
+        <tr><td class="name">key</td><td class="type">string | null</td><td class="desc">Pinnacle&rsquo;s market key, in the form period;type;line: <code>s;0;m</code> is the period&nbsp;0 moneyline, <code>s;0;s;-1.5</code> the period&nbsp;0 spread at &minus;1.5, <code>s;0;ou;2.5</code> the period&nbsp;0 total at 2.5.</td></tr>
+      </tbody>
+    </table>
+    <ul style="color:var(--muted-2); font-size:13px; line-height:1.8; margin-top:10px">
+      <li><b>Only the literal value <code>1</code> turns it on.</b> Without the parameter, or with any other value, the response is exactly what it was before.</li>
+      <li><b>Per-event endpoints only:</b> <code>/kit/v1/details</code>, <code>/kit/v1/prematch/markets</code> and <code>/kit/v1/prematch/lines</code>. The full boards (<code>/kit/v1/markets</code>, <code>/kit/v1/prematch/fixtures</code>) ignore the parameter.</li>
+      <li><b>A value can be <code>null</code></b> when Pinnacle did not send it for that line.</li>
+    </ul>
   </div>
 </div>
 
 <!-- ─────────────────── PREMATCH ODDS ─────────────────── -->
 <h2>Prematch odds</h2>
-<p>Pinnacle's prematch lines for upcoming fixtures. Prices are pushed as Pinnacle publishes them (MQTT <code>/pre</code>), and a separate REST poller re-reads the full board every 25–45 s for fixtures that appear or disappear (the cycle waits for Pinnacle to build its soccer board, which takes 10–45 s on their side). A fixture leaves this board as soon as it has kicked off and its live listing exists — its prices from then on, including later maps in esports, are on <code>event_type=live</code>. Stored independently from the live feed — querying it never starves the live snapshot.</p>
+<p>Pinnacle's prematch lines for upcoming fixtures. Prices are pushed as Pinnacle publishes them (MQTT <code>/pre</code>), and a separate REST poller re-reads the full board every 25–45 s for fixtures that appear or disappear (the cycle waits for Pinnacle to build its soccer board, which takes 10–45 s on their side). A fixture leaves this board as soon as it has kicked off and its live listing exists — its prices from then on, including later maps in esports, are on <code>event_type=live</code>. A fixture whose scheduled start time has passed but which Pinnacle is still trading as prematch stays on the prematch endpoints until it really starts; this is typical for esports matches that start late and for parent matches with later maps. For such events <code>starts</code> can be in the past, so do not drop a prematch fixture only because its start time has gone by. Stored independently from the live feed — querying it never starves the live snapshot.</p>
 
 <div class="callout">
   <b>When to use which.</b> Use <code>/kit/v1/markets</code> for in-play prices, <code>/kit/v1/prematch/fixtures</code> for upcoming-event lines. The two surfaces share the same sport IDs and event-object shape so client code can branch on a single field.
@@ -591,6 +637,7 @@ $with_odds = array_filter($data[<span class="s">"events"</span>], <span class="k
       <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
       <tbody>
         <tr><td class="name">event_id <span class="req">required</span></td><td class="type">integer</td><td class="desc">Pinnacle matchup ID.</td></tr>
+        <tr><td class="name">line_meta</td><td class="type">1</td><td class="desc">Optional. Adds <code>version</code>, <code>is_alternate</code> and <code>key</code> to every line, and a <code>money_line_meta</code> object to each period. See <a href="#line-meta"><code>line_meta=1</code></a>.</td></tr>
       </tbody>
     </table>
 <pre>curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
@@ -612,6 +659,7 @@ $with_odds = array_filter($data[<span class="s">"events"</span>], <span class="k
       <tbody>
         <tr><td class="name">event_id <span class="req">required</span></td><td class="type">integer</td><td class="desc">Pinnacle matchup ID.</td></tr>
         <tr><td class="name">market_type</td><td class="type">string</td><td class="desc">Filter to one market: <code>money_line</code> | <code>spreads</code> | <code>totals</code> | <code>team_total</code>. Omit for all markets.</td></tr>
+        <tr><td class="name">line_meta</td><td class="type">1</td><td class="desc">Optional. Adds <code>version</code>, <code>is_alternate</code> and <code>key</code> to every line, and a <code>money_line_meta</code> object to each period. See <a href="#line-meta"><code>line_meta=1</code></a>.</td></tr>
       </tbody>
     </table>
 <pre>curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
@@ -812,7 +860,7 @@ curl_close($ch);
   <span class="k">"meta"</span>: { <span class="k">"mode"</span>: <span class="s">"live"</span>, <span class="k">"events_in_store"</span>: <span class="n">2552</span>, <span class="k">"tracked_outcomes"</span>: <span class="n">122035</span>,
             <span class="k">"drops_buffered"</span>: <span class="n">968</span>, <span class="k">"source"</span>: <span class="s">"ws"</span>, <span class="k">"ts"</span>: <span class="n">1783079852368</span> }
 }</pre>
-    <p style="font-size:12px; color:inherit"><b>Note.</b> Drops on <a href="#specials">special markets</a> (player/team props) carry <code>participant_name</code> — the named outcome that moved (e.g. <code>"Mohamed Salah"</code>) — with <code>nvp: null</code> (no two-way devig exists for multi-outcome ladders).</p>
+    <p style="font-size:12px; color:inherit"><b>Note.</b> Drops on <a href="#specials">special markets</a> (player/team props) carry <code>participant_name</code> — the named outcome that moved (e.g. <code>"Mohamed Salah"</code>) — and a <code>participant_id</code>, with <code>nvp: null</code> (no two-way devig exists for multi-outcome ladders). <code>nvp</code> is always <code>null</code> on a row that has a <code>participant_id</code>; to keep only rows that carry a fair price, filter on <code>nvp != null</code>.</p>
   </div>
 </div>
 
@@ -821,20 +869,20 @@ curl_close($ch);
   <div class="endpoint-head">
     <span class="verb sse">SSE</span>
     <span class="path">/odds-drop</span>
-    <span class="auth-pill key">API key OR token</span>
+    <span class="auth-pill key">API key</span>
   </div>
   <div class="endpoint-body">
     <p>Server-Sent Events stream of <b>live</b> drops as they happen. One TCP connection, push-based — no polling. <b>Available on the Stream, Pro + SSE, and Scale plans.</b> Free trial keys and Pro (REST-only) cannot connect, except during a 3-day full demo, which is available on request and also includes the WebSocket feed.</p>
     <div class="callout warn" style="margin: 12px 0">
-      <b>⚠ One SSE connection per account.</b> Opening a second SSE connection with the same key evicts the first. EventSource auto-reconnect after a network blip works fine (the dying old socket gets reaped before the new one registers). If you genuinely need two or more independent connections — e.g. prod + staging, or fan-out across multiple servers — each one needs its own account on its own paid plan: one account, one key. The cap stays at one connection per key — it's how we detect keys being shared or resold — and second keys are never issued free.
+      <b>⚠ One SSE connection per key, per endpoint.</b> Opening a second connection to the same endpoint with the same key <b>replaces the first</b>: the newer one gets the stream and the older one is closed by the server. The older stream is sent one last frame, <code>{"type": "evicted", ...}</code>, before it is closed, and the first frame of the newer stream carries <code>"replaced": true</code> (both are shown under <a href="#sse-errors">control frames and connection answers</a>). <code>/odds-drop</code> and <code>/odds-drop-prematch</code> are separate slots, and the WebSocket is a third, so one of each can run side by side.<br><br><b>Why this matters.</b> <code>EventSource</code> and most SSE libraries reconnect on their own after a close. Two consumers on one key therefore keep replacing each other, each holding the stream for a few seconds, and neither receives a complete feed. A reconnect after a network blip is fine: it replaces only your own dead connection.<br><br><b>What to do.</b> Run one consumer per key per endpoint and fan out inside your own process. <b>When you receive <code>evicted</code>, do not reconnect automatically:</b> another client is using the same key, and two clients that reconnect against each other only keep evicting each other. Find the second process first. After any other close, reconnect with a growing delay (1&nbsp;s, 2&nbsp;s, 4&nbsp;s, up to 30&nbsp;s) rather than instantly, and close the old connection before opening a new one when you redeploy. Connection attempts are limited to 5 per key per 60&nbsp;s, so a tight reconnect loop is answered with <code>429</code>. There is no replay after a reconnect: drops emitted while you were disconnected are not re-sent on the stream (read <a href="#api-drops"><code>/api/drops</code></a> to fill the gap). The same holds after a restart on our side: the stream starts at the live head and older drops are not replayed.<br><br>If you genuinely need two or more independent connections — e.g. prod + staging, or fan-out across multiple servers — each one needs its own account on its own paid plan: one account, one key. The cap stays at one connection per key — it's how we detect keys being shared or resold — and second keys are never issued free.
     </div>
-    <p><b>Two auth methods accepted</b> (use either):</p>
+    <p><b>Authentication and options.</b> The stream takes your API key, the same one as REST:</p>
     <table class="param-table">
       <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
       <tbody>
         <tr><td class="name">key</td><td class="type">string</td><td class="desc">Your SaaS API key, in the <code>x-portal-apikey</code> / <code>x-api-key</code> header or as <code>?key=</code>. Plan must include SSE (Stream / Pro + SSE / Scale).</td></tr>
-        <tr><td class="name">token</td><td class="type">string</td><td class="desc">Legacy SSE token (separate from the API key) as <code>?token=</code>. Kept for admin / pre-account customers.</td></tr>
-        <tr><td class="name">min_drop</td><td class="type">number</td><td class="desc">Optional. Drop-percent threshold for THIS subscriber. <code>?min_drop=7</code> = only alerts where price fell ≥7%. <code>?min_drop=1</code> = receive every drop, including small ones. Default if omitted: <b>5%</b>. Floor: 1%. No upper cap.</td></tr>
+        <tr><td class="name">token</td><td class="type">string</td><td class="desc"><b>No longer accepted.</b> Separate SSE tokens (<code>?token=</code>) were retired; a request that sends one without an API key gets <code>401</code> with <code>{"type":"error","error":"invalid_token"}</code> every time. Use your API key in the <code>x-api-key</code> header or as <code>?key=</code>.</td></tr>
+        <tr><td class="name">min_drop</td><td class="type">number</td><td class="desc">Optional. Drop-percent threshold for THIS subscriber. <code>?min_drop=7</code> = only alerts where price fell ≥7%. <code>?min_drop=1</code> = receive every drop, including small ones. If omitted you receive every drop the engine detects (the smallest it emits is about 1%). Values below 1 are raised to 1. No upper cap.</td></tr>
       </tbody>
     </table>
     <div class="tabs" data-group="sselive">
@@ -845,11 +893,11 @@ curl_close($ch);
       <button data-tab="php">PHP</button>
     </div>
     <div class="tab-pane active" data-group="sselive" data-tab="curl">
-<pre><span class="c"># With your API key (paid plan)</span>
+<pre><span class="c"># With your API key (a plan that includes SSE)</span>
 curl -N "https://pinnodds.com/odds-drop?key=<span class="s">$API_KEY</span>"
 
-<span class="c"># Or with a legacy SSE token</span>
-curl -N "https://pinnodds.com/odds-drop?token=<span class="s">$SSE_TOKEN</span>"</pre>
+<span class="c"># Same thing with the key in a header</span>
+curl -N -H "x-api-key: <span class="s">$API_KEY</span>" "https://pinnodds.com/odds-drop"</pre>
     </div>
     <div class="tab-pane" data-group="sselive" data-tab="js">
 <pre><span class="c">// npm i eventsource</span>
@@ -860,6 +908,8 @@ curl -N "https://pinnodds.com/odds-drop?token=<span class="s">$SSE_TOKEN</span>"
 es.onmessage = (e) =&gt; {
   <span class="k">const</span> payload = JSON.parse(e.data);
   <span class="k">if</span> (payload.type === <span class="s">"connected"</span>) <span class="k">return</span>;
+  <span class="c">// Another client took the slot of this key: stop, do not auto-reconnect.</span>
+  <span class="k">if</span> (payload.type === <span class="s">"evicted"</span>) { es.close(); console.error(<span class="s">"evicted:"</span>, payload.reason); <span class="k">return</span>; }
   <span class="k">if</span> (payload.type === <span class="s">"error"</span>) { console.error(payload.error, payload.message); <span class="k">return</span>; }
   <span class="k">for</span> (<span class="k">const</span> drop <span class="k">of</span> payload) {
     <span class="k">const</span> ev = (drop.to_price / drop.nvp) - <span class="n">1</span>;
@@ -877,6 +927,8 @@ resp = requests.get(<span class="s">f"{BASE}/odds-drop?key={API_KEY}"</span>, st
 <span class="k">for</span> ev <span class="k">in</span> SSEClient(resp).events():
     <span class="k">if</span> <span class="k">not</span> ev.data: <span class="k">continue</span>
     payload = json.loads(ev.data)
+    <span class="k">if</span> <span class="k">isinstance</span>(payload, <span class="k">dict</span>) <span class="k">and</span> payload.get(<span class="s">"type"</span>) == <span class="s">"evicted"</span>:
+        <span class="k">break</span>  <span class="c"># another client took the slot of this key: do not auto-reconnect</span>
     <span class="k">if</span> <span class="k">isinstance</span>(payload, <span class="k">dict</span>) <span class="k">and</span> payload.get(<span class="s">"type"</span>) <span class="k">in</span> (<span class="s">"connected"</span>, <span class="s">"error"</span>):
         <span class="k">continue</span>
     <span class="k">for</span> drop <span class="k">in</span> payload:
@@ -947,6 +999,39 @@ data: [{"home": "Sunshine Coast Phoenix", "away": "Cairns Dolphins",
         "sect": "Moneyline", "id": 1629729400, "sport": "Basketball",
         "interval": 25, "alerted": 1777625196, "sport_id": 3,
         "nvp": 3.04, "starts": 1777624200, ...}]</pre>
+
+    <h3 id="sse-errors" style="margin: 22px 0 6px; font-size: 15px">Control frames and connection answers</h3>
+    <p>Besides arrays of drops, a stream can send two JSON objects. Everything in this section applies to <code>/odds-drop</code> and to <code>/odds-drop-prematch</code>.</p>
+    <table class="param-table">
+      <thead><tr><th>Frame</th><th>When it is sent</th><th>What to do</th></tr></thead>
+      <tbody>
+        <tr><td class="name">connected</td><td class="desc">The first frame of every stream. It carries <code>"replaced": true</code> when this connection took the slot of an older one on the same key; the field is present only when true.</td><td class="desc">Nothing. If you see <code>replaced</code> and did not expect it, another client of yours was just disconnected.</td></tr>
+        <tr><td class="name">evicted</td><td class="desc">The last frame of a stream that we close to free its slot. <code>cap</code> says which limit applied: <code>"user"</code> (a newer connection on the same key), <code>"ip"</code> (too many connections from one IP address) or <code>"global"</code> (the connection limit of the server).</td><td class="desc">On <code>"cap":"user"</code> do <b>not</b> reconnect automatically: another client is using the same key. Two clients reconnecting against each other just keep evicting each other.</td></tr>
+      </tbody>
+    </table>
+<pre><span class="c"># First frame of a stream that replaced an older one</span>
+data: {"type": "connected", "id": "d648beb8-bde8-...", "replaced": true}
+
+<span class="c"># Last frame of the stream that was replaced</span>
+data: {"type": "evicted", "reason": "evicted by newer connection", "cap": "user", "limit": 1}</pre>
+    <p style="font-size: 13px; color: var(--muted)">The other two caps use the same frame with <code>"cap":"ip"</code> and reason <code>"too many connections from this IP"</code>, or <code>"cap":"global"</code> and reason <code>"server connection limit reached"</code>.</p>
+    <p><b>Connect limit: 5 attempts per API key per 60&nbsp;seconds.</b> Further attempts in that window get HTTP&nbsp;<code>429</code> with a <code>Retry-After</code> header (seconds) and the same number as <code>retry_after_s</code> in the body. A browser <code>EventSource</code> treats a 429 as fatal and stops retrying by itself, so wait <code>retry_after_s</code> seconds and open a new connection yourself.</p>
+<pre>HTTP/1.1 429 Too Many Requests
+Retry-After: 42
+Content-Type: application/json
+
+{"type":"error","error":"rate_limited","message":"Too many connection attempts: max 5 per 60s per API key. Retry in 42s. Hold ONE long-lived connection rather than reconnecting — note that only one concurrent connection per key is allowed, so a second client will evict the first and both will keep reconnecting.","retry_after_s":42}</pre>
+    <p><b>Refused keys.</b> A <code>401</code> says why in its body. A <code>403</code> means the key is valid but its plan has no SSE.</p>
+<pre><span class="c"># HTTP 401</span>
+{"type":"error","error":"missing_key"}
+{"type":"error","error":"invalid_key"}
+{"type":"error","error":"expired"}
+{"type":"error","error":"invalid_token"}
+
+<span class="c"># HTTP 403</span>
+{"type":"error","error":"plan_lacks_sse"}</pre>
+    <p style="font-size: 13px; color: var(--muted)"><code>missing_key</code>: no key was sent. <code>invalid_key</code>: the key is not recognised (a typo, or an old key after it was regenerated). <code>expired</code>: the key has expired. <code>invalid_token</code>: the retired <code>?token=</code> parameter was sent without an API key. All of these are ordinary HTTP responses sent before any stream opens, not events on a stream.</p>
+    <p style="font-size: 13px; color: var(--muted)"><b>After a restart on our side</b> the stream starts at the live head. Drops from before the restart are not replayed; read <a href="#api-drops"><code>/api/drops</code></a> if you need them.</p>
     <h3 id="sse-live-state" style="margin: 22px 0 6px; font-size: 15px">Match state on every drop: the <code>live</code> object</h3>
     <p>Each live drop ends with a <code>live</code> object: the state of the match at the moment of the drop — score, soccer minute and half, red/yellow cards and corners, basketball quarter and clock, tennis sets/games/points and who is serving, plus the current moneyline <code>favorite</code>. It is the same in-play state as the REST <code>state</code> field, normalised to one shape so you can use it straight from the stream. It is absent only when Pinnacle publishes no state for the event (e.g. most esports). Keys and their meaning: <a href="#sse-live-object">SSE <code>live</code> object reference</a>.</p>
 <pre><span class="c"># A soccer drop (abridged) — live is always the last key</span>
@@ -965,9 +1050,9 @@ data: [{"home": "Sagan Tosu", "away": "Kawasaki Frontale", "league": "Japan - Le
 <span class="c">#                      "games": {"home": [3, 6, 2], "away": [6, 1, 2]},</span>
 <span class="c">#                      "game_points": {"home": "40", "away": "Ad"}, "server": "away", ...}</span></pre>
     <div class="callout" style="margin-top: 12px">
-      <b>Trial users:</b> connecting with a trial key returns <code>{"type":"error","error":"plan_lacks_sse"}</code> as the only frame. Upgrade to <a href="/panel">Stream, Pro + SSE, or Scale</a> to access SSE.
+      <b>Free (trial) keys:</b> connecting with a key whose plan has no SSE gets an ordinary <b>HTTP&nbsp;403</b> with the JSON body <code>{"type":"error","error":"plan_lacks_sse"}</code>. It is a normal HTTP response, not an event on an open stream, and the connection closes. This is expected on a new key: the 3-day full demo is switched on by hand when you ask for it (reply to your welcome email, or message <a href="https://t.me/ArbitrageXpro">@ArbitrageXpro</a> on Telegram with the email registered on your key). Otherwise upgrade to <a href="/panel">Stream, Pro + SSE, or Scale</a>. A missing, unknown or expired key gets <b>HTTP&nbsp;401</b> with the reason in the body, for example <code>{"type":"error","error":"invalid_key"}</code> (all values are listed <a href="#sse-errors">above</a>).
     </div>
-    <p style="font-size:13px; color: var(--muted); margin-top:10px"><b>Connect throttling.</b> Rapid reconnect loops get a single <code>{"type":"error","error":"rate_limited"}</code> frame with a <code>Retry-After: 60</code> header — back off instead of hammering the endpoint; a healthy client reconnects with exponential backoff.</p>
+    <p style="font-size:13px; color: var(--muted); margin-top:10px"><b>Do not retry a 401 or 403 in a loop.</b> Neither answer changes until the key or the plan changes, so a client that reconnects every second only produces thousands of identical rejections. Retry those slowly (once a minute is plenty) and reconnect a dropped stream with a growing delay. On a <code>429</code>, wait the <code>retry_after_s</code> seconds it names. A stream that answers <code>200</code>, sends <code>connected</code> and then stays quiet is usually just a quiet market: with <code>?min_drop=</code> set high there may be no qualifying drop for minutes. The keepalive comment every 8&nbsp;s shows the connection is open.</p>
   </div>
 </div>
 
@@ -976,13 +1061,13 @@ data: [{"home": "Sagan Tosu", "away": "Kawasaki Frontale", "league": "Japan - Le
   <div class="endpoint-head">
     <span class="verb sse">SSE</span>
     <span class="path">/odds-drop-prematch</span>
-    <span class="auth-pill key">API key OR token</span>
+    <span class="auth-pill key">API key</span>
   </div>
   <div class="endpoint-body">
     <p>Same shape and auth as <a href="#sse-live"><code>/odds-drop</code></a>, but emits drops on the prematch feed only. Useful when you want to trade upcoming-fixture line moves and not be flooded with in-play noise.</p>
-    <p><b>Optional query parameter:</b> <code>?min_drop=N</code> overrides the default 5% drop threshold for this subscriber (same as on <a href="#sse-live"><code>/odds-drop</code></a>). Composes with <code>?recheck=N</code>. Floor is 1%.</p>
+    <p><b>Optional query parameter:</b> <code>?min_drop=N</code> sets the drop threshold for this subscriber, exactly as on <a href="#sse-live"><code>/odds-drop</code></a>: omitted means every detected drop, and values below 1 are raised to 1.</p>
     <p style="color: var(--muted); font-size: 13px">Prematch drops have <b>no</b> <code>live</code> object — the match has not started, so there is no score or clock to report.</p>
-    <p style="color: var(--muted); font-size: 13px"><b>One connection per account</b> — see the same warning on <a href="#sse-live"><code>/odds-drop</code></a>. Live and prematch each count as one SSE slot, so you can run one of each in parallel under the default cap.</p>
+    <p style="color: var(--muted); font-size: 13px"><b>One connection per account</b> — see the same warning on <a href="#sse-live"><code>/odds-drop</code></a>. Live and prematch each count as one SSE slot, so you can run one of each in parallel under the default cap. The <code>evicted</code> frame, the connect limit and the 401 / 429 bodies are the same on both streams: see <a href="#sse-errors">control frames and connection answers</a>.</p>
     <div class="tabs" data-group="sseprem">
       <button class="active" data-tab="curl">curl</button>
       <button data-tab="js">Node.js</button>
@@ -1036,6 +1121,9 @@ $ch = curl_init(BASE . <span class="s">"/odds-drop-prematch?key=$API_KEY"</span>
     </div>
 
     <h3 id="prematch-recheck" style="margin: 22px 0 6px; font-size: 15px">Optional: <code>?recheck=N</code> stable-price filter</h3>
+    <div class="callout warn" style="margin: 0 0 12px">
+      <b>Current status: <code>recheck</code> is accepted but not applied.</b> The stream ignores the parameter today: every drop is delivered immediately, nothing is held back or suppressed, and no <code>rechecked_ms</code> field is added. If you need a stable-price filter, hold each drop on your side for the time you want and compare it with the current price from <a href="#prematch-lines"><code>/kit/v1/prematch/lines</code></a> before acting. The description below is how the filter is designed to behave.
+    </div>
     <p style="margin: 0 0 8px"><b>How to use it.</b> Append <code>&amp;recheck=N</code> to the URL where <code>N</code> is the number of seconds you want the server to wait before emitting each drop. The server holds the alert for <code>N</code> seconds, re-checks the current Pinnacle price for that exact line, and only sends it if the drop is still real (price hasn't bounced back). If you want a 30-second stability check:</p>
 <pre><span class="c"># Standard prematch feed (instant, default — unchanged)</span>
 curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</span>"
@@ -1077,7 +1165,7 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
     </p>
     <p style="font-size:13px; color:var(--muted)"><b>Latency.</b> Each frame leaves our servers about 5&nbsp;ms after it reaches us (median 2&nbsp;ms on the last production run); the <code>ts</code> field on every frame is our publish time, so you can measure the rest yourself. Method, numbers and caveats: <a href="/latency">how we measure latency</a>.</p>
     <p style="background:rgba(255,194,102,.06); padding:10px 14px; border-radius:6px; border-left:3px solid var(--warn); font-size:13px">
-      <b>This is NOT the same as <code>/odds-drop</code> SSE.</b> SSE delivers our filtered drop alerts (every detected drop by default &mdash; the engine floor is ~0.99%; narrow it with <code>?min_drop=</code>). This WS delivers <i>every</i> Pinnacle frame including market open/close/settle signals. Output volume is much higher.
+      <b>This is NOT the same as <code>/odds-drop</code> SSE.</b> SSE delivers our filtered drop alerts (every detected drop by default &mdash; the engine floor is ~0.99%; narrow it with <code>?min_drop=</code>). This WS delivers <i>every</i> Pinnacle push frame, including the per-period status (<code>open</code>, <code>closed</code>, <code>settled</code>) on each record. That status tells you a period has stopped trading; it is not a results or settlement feed (see <a href="#not-provided">what we don&rsquo;t provide</a>). Output volume is much higher.
     </p>
 
     <h4>Pricing</h4>
@@ -1128,19 +1216,20 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
   <span class="k">"topic"</span>: <span class="s">"matchups/reg/sp/29/live/ld"</span>,
   <span class="k">"op"</span>: <span class="s">"upd"</span>,
   <span class="k">"rec"</span>: { <span class="c">/* Pinnacle record verbatim */</span> },
-  <span class="k">"ts"</span>: <span class="n">1779200000123</span> }
+  <span class="k">"ts"</span>: <span class="n">1779200000123</span>,       <span class="c">// when we published the frame to you</span>
+  <span class="k">"recv_ts"</span>: <span class="n">1779200000122</span> }  <span class="c">// when we received it from Pinnacle</span>
 
 <span class="c">// Prematch REST poll responses — `data` is the response array verbatim.</span>
 { <span class="k">"type"</span>: <span class="s">"prematch_matchups"</span>, <span class="k">"sport_id"</span>: <span class="n">1</span>,
   <span class="k">"arcadia_sid"</span>: <span class="n">29</span>,
   <span class="k">"data"</span>: [ <span class="c">/* /sports/29/matchups response verbatim */</span> ],
-  <span class="k">"ts"</span>: <span class="n">1779200005000</span> }
+  <span class="k">"ts"</span>: <span class="n">1779200005000</span>, <span class="k">"recv_ts"</span>: <span class="n">1779200004998</span> }
 
 { <span class="k">"type"</span>: <span class="s">"prematch_markets"</span>, <span class="k">"sport_id"</span>: <span class="n">1</span>,
   <span class="k">"arcadia_sid"</span>: <span class="n">29</span>,
   <span class="k">"matchup_id"</span>: <span class="n">1631005165</span>,
   <span class="k">"data"</span>: [ <span class="c">/* /matchups/.../markets/related/straight verbatim */</span> ],
-  <span class="k">"ts"</span>: <span class="n">1779200005230</span> }
+  <span class="k">"ts"</span>: <span class="n">1779200005230</span>, <span class="k">"recv_ts"</span>: <span class="n">1779200005228</span> }
 
 <span class="c">// Membership delta — what JOINED or LEFT the prematch set this cycle.</span>
 <span class="c">// MQTT never announces this: /pre carries prices for matchups you already</span>
@@ -1151,7 +1240,7 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
   <span class="k">"arcadia_sid"</span>: <span class="n">29</span>,
   <span class="k">"added"</span>: [ <span class="n">1634753718</span>, <span class="n">1634753879</span> ],
   <span class="k">"removed"</span>: [ <span class="n">1634713508</span> ],
-  <span class="k">"ts"</span>: <span class="n">1779200005010</span> }
+  <span class="k">"ts"</span>: <span class="n">1779200005010</span>, <span class="k">"recv_ts"</span>: <span class="n">1779200005008</span> }
 
 <span class="c">// Heartbeat every 30s — reply with {"type":"pong"} or socket closes after ~75s.</span>
 <span class="c">// buffered_max_bytes = the highest server-side send backlog for YOUR socket</span>
@@ -1159,9 +1248,43 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
 <span class="c">// as fast as we send; a number that climbs across pings means your read loop</span>
 <span class="c">// is falling behind, and at 128 MB you are evicted with</span>
 <span class="c">// 1011 "deregistered: slow_consumer". Track it to see headroom, not just breaches.</span>
-{ <span class="k">"type"</span>: <span class="s">"ping"</span>, <span class="k">"ts"</span>: <span class="n">1779200030000</span>, <span class="k">"buffered_max_bytes"</span>: <span class="n">0</span> }</pre>
+<span class="c">// The ping also reports the health of the feed (feed_age_ms, feed_status,</span>
+<span class="c">// per-sport ages, upstream): the full frame and its fields are described below.</span>
+{ <span class="k">"type"</span>: <span class="s">"ping"</span>, <span class="k">"ts"</span>: <span class="n">1779200030000</span>, <span class="k">"buffered_max_bytes"</span>: <span class="n">0</span>,
+  <span class="k">"feed_age_ms"</span>: <span class="n">460</span>, <span class="k">"feed_status"</span>: <span class="s">"ok"</span>, <span class="c">/* ...more feed-health fields */</span> }</pre>
 
-    <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0"><b>Fidelity contract.</b> <code>events</code>, <code>rec</code>, and <code>data</code> are never transformed. We only add envelope fields (<code>type</code>, <code>stream</code>, <code>sport_id</code>, <code>topic</code>, <code>op</code>, <code>ts</code>). Your code can reuse a Pinnacle parser unchanged.</p>
+    <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0"><b>Fidelity contract.</b> <code>events</code>, <code>rec</code>, and <code>data</code> are never transformed. We only add envelope fields (<code>type</code>, <code>stream</code>, <code>sport_id</code>, <code>topic</code>, <code>op</code>, <code>ts</code>, <code>recv_ts</code>). Your code can reuse a Pinnacle parser unchanged.</p>
+    <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0" id="ws-recv-ts"><b>Two times on every forwarded frame.</b> <code>live</code>, <code>prematch_ws</code>, <code>prematch_markets</code>, <code>prematch_membership</code> and <code>prematch_matchups</code> frames carry <code>recv_ts</code> right after <code>ts</code>, both in epoch milliseconds. <code>recv_ts</code> is when we received the message from Pinnacle; <code>ts</code> is when our WebSocket server published it to you. <code>ts - recv_ts</code> is the delay inside our system. Neither is a Pinnacle-side time: none exists (see <a href="#timestamps">every time field</a>).</p>
+    <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0" id="ws-source-rest"><b>Corrections: <code>"source":"rest"</code>.</b> Most <code>live</code> frames are Pinnacle pushes. When our REST check finds markets where Pinnacle's REST is ahead of what its push delivered, we send those markets as an ordinary <code>live</code> frame with one extra field at the end, <code>"source":"rest"</code>. It has the same shape as a push frame and carries whole market groups (type, period, side), so apply it exactly like any other <code>live</code> frame. Frames without the field came from the push. If your parser rejects unknown fields, allow this one.</p>
+
+    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--warn); background:rgba(255,194,102,.06); border-radius:6px; font-size:14px;" id="ws-feed-health">
+      <b>Feed health in every ping: a quiet market or a broken feed?</b> A quiet market and a broken feed used to look the same on a push stream. The <code>ping</code> we send every 30&nbsp;seconds now says how long ago Pinnacle last pushed anything to us, for the whole feed and for each sport you are subscribed to, and how our connection to Pinnacle is doing. A real frame:
+<pre>{"type":"ping","ts":1794272148169,"buffered_max_bytes":0,"feed_age_ms":460,"feed_status":"ok","sport_age_ms":{"1":2947,"2":63480,"3":3443},"prematch_age_ms":460,"prematch_sport_age_ms":{},"prematch_poll_age_ms":5540,"upstream":{"status":"degraded","reason":"rest_ahead","ts":1794272147156,"sports":{"1":"ok","2":"rest_ahead","3":"ok"}}}</pre>
+      <table class="param-table">
+        <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td class="name">feed_age_ms</td><td class="type">int | null</td><td class="desc">The <code>ts</code> of the ping minus the time we received the last push of any kind from Pinnacle. <code>null</code> until the first push after a restart of our WebSocket server.</td></tr>
+          <tr><td class="name">feed_status</td><td class="type">string</td><td class="desc"><code>"ok"</code>, <code>"silent"</code> (no push of any kind for 90&nbsp;seconds) or <code>"unknown"</code>.</td></tr>
+          <tr><td class="name">sport_age_ms</td><td class="type">object</td><td class="desc">The same age for each sport, keyed by our <a href="#sport-ids">sport id</a>. Only the sports this socket is subscribed to are listed. <code>null</code> means no push for that sport since our WebSocket server started.</td></tr>
+          <tr><td class="name">prematch_age_ms</td><td class="type">int | null</td><td class="desc">Age of the last prematch push.</td></tr>
+          <tr><td class="name">prematch_sport_age_ms</td><td class="type">object</td><td class="desc">Age of the last prematch push for each sport you are subscribed to, with the same keys and the same <code>null</code> rule as <code>sport_age_ms</code>.</td></tr>
+          <tr><td class="name">prematch_poll_age_ms</td><td class="type">int | null</td><td class="desc">Age of the last record from our poll of the prematch board.</td></tr>
+          <tr><td class="name">upstream</td><td class="type">object | null</td><td class="desc">How our connection to Pinnacle is doing. Can be <code>null</code> right after a restart of our WebSocket server.</td></tr>
+          <tr><td class="name">upstream.status</td><td class="type">string</td><td class="desc"><code>"ok"</code>, <code>"degraded"</code> or <code>"reconnecting"</code>.</td></tr>
+          <tr><td class="name">upstream.reason</td><td class="type">string | null</td><td class="desc"><code>null</code>, or one of <code>mqtt_reconnecting</code>, <code>sport_reconnecting</code>, <code>rest_ahead</code>, <code>maintenance</code>, <code>booting</code>, <code>source_unavailable</code>.</td></tr>
+          <tr><td class="name">upstream.sports</td><td class="type">object</td><td class="desc">Our sport id &rarr; <code>"ok"</code>, <code>"reconnecting"</code> or <code>"rest_ahead"</code>. <code>rest_ahead</code> means the REST side of Pinnacle shows newer prices than its push stream for that sport; we then resync that sport from REST and reconnect its stream.</td></tr>
+        </tbody>
+      </table>
+      <b>When to pause automated betting.</b> Any one of these is the signal:
+      <ul style="margin:8px 0 6px 0; padding-left:18px; line-height:1.6">
+        <li><code>feed_status</code> is <code>"silent"</code>;</li>
+        <li><code>upstream.status</code> is anything other than <code>"ok"</code>;</li>
+        <li><code>sport_age_ms</code> is large for a sport that has live events right now.</li>
+      </ul>
+      A single sport being quiet is normal when it has few live events, for example at night.
+      <br><br>
+      <b>Ignore fields you do not know.</b> More fields may be added to the ping later; a client must not fail on an unknown one.
+    </div>
     <div style="border-left: 3px solid var(--accent); background: rgba(255,107,26,.06); padding: 12px 16px; margin: 14px 0; border-radius: 4px">
       <p style="margin: 0 0 8px; font-size: 13px"><b><code>prematch_membership</code> — use this to track the set.</b></p>
       <p style="margin: 0 0 8px; font-size: 13px; color: var(--muted)">
@@ -1189,32 +1312,35 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
     <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0"><b>Frame flow on firehose subs.</b> <code>live</code>, <code>prematch_matchups</code> and <code>prematch_markets</code> frames all flow on <code>sport_ids</code> subscriptions exactly the same way they do on <code>event_ids</code> subscriptions. There's no event-id-only mode &mdash; the filter is identical, only the criterion (whole sport vs. specific ids) changes.</p>
 
     <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--accent); background:rgba(255,107,26,.06); border-radius:6px; font-size:14px;">
-      <b>Live channels: <code>ld</code> vs <code>dz</code>.</b> Pinnacle runs <b>two update channels for every live match</b>, and both arrive on your one WebSocket. Which channel a <code>live</code> frame came from is the last segment of its <code>topic</code> &mdash; e.g. <code>matchups/reg/sp/29/live/<b>ld</b></code>:
+      <b>Live channels: <code>ld</code>, <code>dz</code> and <code>both</code>.</b> Which channel a <code>live</code> frame came from is the last segment of its <code>topic</code> &mdash; e.g. <code>matchups/reg/sp/29/live/<b>ld</b></code>. The channel is the matchup's <code>liveMode</code> in Pinnacle's own feed, and every channel arrives on your one WebSocket.
       <ul style="margin:8px 0 6px 0; padding-left:18px; line-height:1.6">
-        <li><code>ld</code> &mdash; <b>live_delay</b>, the primary channel (~85% of updates). This is <b>the current price</b> &mdash; the same line pinnacle.com shows. Treat it as your source of truth.</li>
-        <li><code>dz</code> &mdash; <b>danger_zone</b> (~15%), fired only in volatile moments (goal threat, break point, red card) when Pinnacle is repricing hard and often about to suspend. Earliest signal of a fast move, but jumpy.</li>
-        <li><code>pre</code> &mdash; a prematch matchup update carried on the live stream.</li>
+        <li><code>ld</code> &mdash; <b>live_delay</b>. <b>Every sport except soccer is live on <code>ld</code> only</b>: no <code>dz</code> and no <code>both</code> frames exist for basketball, tennis, American football, hockey, esports and the rest. That is how Pinnacle publishes them, on every plan.</li>
+        <li><code>dz</code> &mdash; <b>danger_zone</b>, and <code>both</code>: <b>soccer only</b>. A live soccer match is usually published as two or three child matchups with the same <code>parentId</code>, one per channel (<code>ld</code>, <code>dz</code>, <code>both</code>), and some matches are live on <code>dz</code> alone. In soccer these channels carry most of the live traffic: <code>dz</code> + <code>both</code> were 67&ndash;80% of soccer's live frames on 14&ndash;16 Nov 2026. Their prices are often the same as <code>ld</code>'s at the same moment, but not always.</li>
+        <li><code>pre</code> &mdash; a prematch price update that arrives with <code>type:"live"</code> because it comes down the same push connection. <b>It is not live state. Ignore every frame whose <code>topic</code> ends in <code>/pre</code> when you build your live book.</b> (The same updates reach prematch subscribers as <code>prematch_ws</code> frames.) At busy times these are a large share of the frames a live subscriber receives, and merging them leaves entries in your book for events that are not in play.</li>
       </ul>
       Parse it in one line: <code>const channel = msg.topic.split("/").pop();</code> (<code>"ld"</code> | <code>"dz"</code> | <code>"pre"</code>).
-      <b>Key your price/book on <code>ld</code>; use <code>dz</code> as a volatility/suspension signal, not a second price.</b> Merging both channels into one book makes the price appear to &ldquo;spike and revert&rdquo; &mdash; that&rsquo;s the two channels interleaving, not a line move and not out-of-order delivery (each single market&rsquo;s stream is strictly ordered; verify with <code>rec.version</code> per <code>event_id</code>+channel). This split is <b>live only</b> &mdash; prematch has no danger_zone.
+      <b>Keep the channels apart: key your book on <code>event_id</code> + channel, and for soccer read <code>ld</code> where the match has it (<code>dz</code> where it is the only one).</b> Merging the channels into one book makes the price appear to &ldquo;spike and revert&rdquo; &mdash; that&rsquo;s the channels interleaving, not a line move and not out-of-order delivery (each single market&rsquo;s stream is strictly ordered; verify with <code>rec.version</code> per <code>event_id</code>+channel). This split is <b>live only</b> &mdash; prematch has no danger_zone.
     </div>
 
     <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--gold); background:rgba(255,179,138,.06); border-radius:6px; font-size:14px;">
       <b>One fixture can have several matchup ids &mdash; key by <code>event_id</code>, not by teams.</b> Pinnacle issues a live match as a <b>parent matchup plus re-issued/related child matchups</b>, all sharing the same <code>rec.parentId</code> and the same team names. The <b>same market</b> (identical market <code>key</code>, e.g. <code>s;0;s;-1.5</code>) can therefore appear under two different <code>event_id</code>s at the same time &mdash; one live, one stale/closing &mdash; with different prices.
       <ul style="margin:8px 0 6px 0; padding-left:18px; line-height:1.6">
         <li><b>Key your book by <code>rec.id</code> (the matchup/event id) + market <code>key</code></b> &mdash; never by team names or <code>parentId</code>. If you merge markets across matchup ids, the two ids&rsquo; prices interleave and the market appears to <b>&ldquo;spike and revert&rdquo;</b> even though each individual matchup&rsquo;s stream is perfectly stable and strictly ordered. That&rsquo;s an assembly artifact, not a line move &mdash; pinnacle.com and our REST <code>/kit</code> endpoints don&rsquo;t show it because they collapse to one canonical matchup per fixture.</li>
-        <li><b>Dedupe on the market <code>version</code>.</b> We forward every upstream frame verbatim, and Pinnacle re-sends unchanged markets frequently (same <code>markets[i].version</code>, same price &mdash; often &gt;50% of updates). Skip a market whose <code>version</code> you&rsquo;ve already applied to drop that noise.</li>
+        <li><b>Dedupe on the market <code>version</code>.</b> We forward every upstream frame verbatim, and Pinnacle re-sends unchanged markets frequently (same <code>markets[i].version</code>, same price &mdash; often &gt;50% of updates). Skip a market whose <code>version</code> you&rsquo;ve already applied <i>for that same event, market key and channel</i> to drop that noise. Do not compare versions across events or markets: the number is shared (see the next box).</li>
       </ul>
       If you need the pre-collapsed &ldquo;one row per fixture&rdquo; view instead of the raw multi-matchup stream, use the REST snapshot endpoints (<code>/kit/v1/markets</code>) which already do this.
     </div>
 
     <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--gold); background:rgba(255,179,138,.06); border-radius:6px; font-size:14px;">
-      <b>Two version fields &mdash; use <code>markets[i].version</code> for change-detection, NOT <code>rec.version</code>.</b> A live record carries a top-level <code>rec.version</code> AND a per-market <code>markets[i].version</code>, and they behave differently:
+      <b>Two version fields &mdash; use <code>markets[i].version</code> for change-detection, NOT <code>rec.version</code>.</b> A live record carries a top-level <code>rec.version</code> AND a <code>version</code> on each market, and they behave differently:
       <ul style="margin:8px 0 6px 0; padding-left:18px; line-height:1.6">
-        <li><code>rec.version</code> is a coarse record/board stamp. <b>Pinnacle freezes it for the whole match once a fixture is in-play</b> &mdash; it does <b>not</b> increment when a price changes. Keying dedup or ordering on it will make live prices look like they &ldquo;change under a frozen version&rdquo; and cause you to <b>drop real price updates</b>.</li>
-        <li><code>markets[i].version</code> is the real per-market counter. It <b>increments on every genuine price change</b> and is strictly monotonic per <code>(event_id, market key)</code>. This is the field to dedupe and order on.</li>
+        <li><code>rec.version</code> is a coarse record/board stamp. <b>Pinnacle freezes it for the whole match once a fixture is in-play</b> &mdash; it does <b>not</b> change when a price changes. Keying dedup or ordering on it will make live prices look like they &ldquo;change under a frozen version&rdquo; and cause you to <b>drop real price updates</b>.</li>
+        <li><code>markets[i].version</code> is <b>a change stamp that Pinnacle shares across many markets</b>. It is not a counter that belongs to one market: when Pinnacle reprices, it stamps the same number on every market it touched, often across several events (in one measured hour, 45% of the version values appeared on more than one event). What you can rely on: <b>within one event, one market <code>key</code> and one channel, a higher number is newer</b>, and the same number with the same price is a repeat. That makes it right for dedup and ordering inside that scope, and wrong as an identifier.</li>
+        <li><b>It is not a line id.</b> <code>markets[i].version</code> is <b>not</b> the <code>lineId</code> that the PS3838 / Pinnacle betting API asks for when you place a bet, and it must not be sent as one. <b>We do not provide <code>lineId</code> or <code>altLineId</code>: those fields do not exist in this feed</b>, on the WebSocket or on REST. If you place bets through a betting API, fetch the line id from that API with your own account immediately before you bet.</li>
       </ul>
       So if you see the moneyline move while <code>rec.version</code> stays constant, that is <b>not</b> a re-published/stale frame &mdash; check <code>markets[i].version</code>, which will have advanced. A spike-then-revert whose intermediate frame has a <b>higher</b> market version is a genuine transient Pinnacle reprice (relayed verbatim), not a replay.
+      <br><br>
+      <b>Two more fields on each raw market object.</b> <code>isAlternate</code> (boolean) is <code>false</code> on the main line of a spread or total and <code>true</code> on the alternate lines; moneylines carry <code>false</code>, and it is absent on special markets, so treat a missing value as unknown. <code>key</code> is Pinnacle&rsquo;s own identifier for the market within the event, e.g. <code>s;0;s;-1.5</code> (straight, period 0, spread, home &minus;1.5) or <code>s;0;ou;4.5</code>; use it together with <code>rec.id</code> as your book key. By default the REST <code>/kit</code> responses do not carry <code>version</code> or <code>isAlternate</code>: every spread and total line is listed under its points value without a main/alternate flag. Add <a href="#line-meta"><code>line_meta=1</code></a> to a per-event REST call (<code>/kit/v1/details</code>, <code>/kit/v1/prematch/markets</code>, <code>/kit/v1/prematch/lines</code>) and each line carries <code>version</code>, <code>is_alternate</code> and <code>key</code> there too. That <code>version</code> is the same change stamp, and it is not a line id either.
     </div>
 
     <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--warn); background:rgba(255,194,102,.06); border-radius:6px; font-size:14px;">
@@ -1222,8 +1348,15 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
       and not on the source IP. Two processes on the same account collide even from different machines.
       (SSE is a separate slot; you can run SSE and WebSocket at the same time.)
       <br><br>
-      Opening a second connection does <b>not</b> fail the new connection &mdash; it <b>evicts the oldest</b>
-      one with <code>close code 1001</code>, reason <code>"evicted by newer connection"</code>.
+      <b>Need a second connection?</b> The <b>extra WebSocket connection</b> add-on in your
+      <a href="/panel">panel</a> adds one more live and one more prematch connection on the same key,
+      for example for a second server. $99 per 30 days for each extra connection, prorated to the end of
+      your current term, up to 3 extra per account. It needs the WebSocket add-on.
+      <br><br>
+      Opening a second connection does <b>not</b> fail the new connection &mdash; the newer connection <b>replaces the older</b>
+      one, which is closed with <code>close code 1001</code>, reason <code>"evicted by newer connection"</code>.
+      The new connection is not told that it displaced another one, and there is no endpoint that shows how
+      many connections your account holds, so log close codes on every socket you open.
       <br><br>
       This is the most common cause of &ldquo;the socket goes silent for long stretches while REST stays
       healthy&rdquo;. The trigger is usually not a deliberate second consumer, but a monitoring or logging
@@ -1234,6 +1367,13 @@ curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</s
       <b>Supported pattern:</b> open <b>one</b> connection and fan out to your components inside your own
       process &mdash; this also guarantees your components share an identical view of the book. If you need
       transport-level separation, contact us about a second credential.
+      <br><br>
+      <b>Reconnecting.</b> On <code>1001 "evicted by newer connection"</code> do <b>not</b> reconnect
+      automatically: another consumer on your account now holds the slot, and reconnecting takes it back and
+      starts a loop. Find the second consumer first. On any other close, reconnect with a growing delay
+      (1&nbsp;s, 2&nbsp;s, 4&nbsp;s, up to 30&nbsp;s) and close the old socket before opening a new one. More
+      than 5 connection attempts in 60&nbsp;s are answered with HTTP&nbsp;<code>429</code> at the handshake, so
+      a tight reconnect loop locks itself out for up to a minute.
       <br><br>
       <b>Close codes:</b>
       <code>1001 "evicted by newer connection"</code> &middot;
@@ -1452,11 +1592,11 @@ $ws-&gt;send(json_encode([
     <table style="width: 100%; margin: 0 0 14px">
       <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
       <tbody>
-        <tr><td class="name">op</td><td class="type">string</td><td class="desc"><b>add</b> = new event or new markets appeared. <b>upd</b> = incremental change (typically just changed markets — merge by composite key, don't replace the whole list). <b>del</b> = event removed by Pinnacle (kicked off, settled, voided) — drop your local copy.</td></tr>
-        <tr><td class="name">topic</td><td class="type">string</td><td class="desc">Source MQTT topic. Format: <code>matchups/reg/sp/{arcadia_sid}/live/{ld|dz|both}</code> for live, <code>matchups/.../pre</code> for prematch.<br><b>ld</b> = "line drawing": main markets (moneyline, 1X2, primary spread/total).<br><b>dz</b> = "draft zone": alternative spreads and totals.<br><b>both</b> = combined push covering both.<br><code>matchups/spc/...</code> instead of <code>reg</code> means a "special" matchup (props, futures).</td></tr>
+        <tr><td class="name">op</td><td class="type">string</td><td class="desc"><b>add</b> = new event or new markets appeared. <b>upd</b> = incremental change: the frame carries only the market groups that changed (see <code>rec.markets</code>), so replace those groups and keep the rest. <b>del</b> = event removed by Pinnacle (it has finished, been cancelled or been withdrawn) — drop your local copy. Pinnacle does not send <code>del</code> for every event that ends, and a <code>del</code> carries no result.</td></tr>
+        <tr><td class="name">topic</td><td class="type">string</td><td class="desc">Source topic. Format: <code>matchups/reg/sp/{arcadia_sid}/live/{ld|dz|both}</code> for live, <code>matchups/.../pre</code> for prematch.<br><b>ld</b> = <code>live_delay</code>: the live channel of every sport, and the only one outside soccer.<br><b>dz</b> = <code>danger_zone</code> and <b>both</b>: soccer only. Each is a separate child matchup of the same match (same <code>parentId</code>), not a list of alternative lines; some soccer matches are live on <code>dz</code> alone.<br><b>pre</b> = a prematch update. <b>Ignore frames whose topic ends in <code>/pre</code> when building live state.</b><br><code>matchups/spc/...</code> instead of <code>reg</code> means a "special" matchup (props, futures). See <a href="#ws-feed">Live channels: <code>ld</code> vs <code>dz</code></a> above for how to use the two channels.</td></tr>
         <tr><td class="name">rec.id</td><td class="type">int</td><td class="desc">Pinnacle matchup ID. Stable across the event's lifetime.</td></tr>
-        <tr><td class="name">rec.markets</td><td class="type">array</td><td class="desc">May be a SUBSET on <code>op:"upd"</code> — Pinnacle only sends what changed. <b>Merge by composite key</b> (<code>m.key</code> if present, otherwise <code>type|period|side|points</code>). A market with <code>m.status !== "open"</code> is a CLOSE signal: drop it from your local list, do not merge it back as if still active.</td></tr>
-        <tr><td class="name">rec.periods</td><td class="type">array</td><td class="desc">Per-period status. <code>periods[n].status === "closed"</code> or <code>"settled"</code> implicitly closes ALL markets for that period — drop those locally too, even if they weren't listed in <code>markets</code>.</td></tr>
+        <tr><td class="name">rec.markets</td><td class="type">array</td><td class="desc">A SUBSET on <code>op:"upd"</code>: Pinnacle sends only what changed, and it sends it one whole <b>group</b> at a time. A group is every market with the same <code>type</code>, <code>period</code> and <code>side</code> (for example all full-match spread lines, or all first-half totals). <b>Group-replace:</b> for every group that appears in the frame, drop <i>all</i> of your local markets of that group and insert the ones in the frame that are open (<code>status</code> absent or <code>"open"</code>). Leave groups that are not in the frame untouched. Do not merge line by line: a line that is missing from a group that <i>is</i> in the frame has been withdrawn, and a per-line merge keeps it forever. A market object with a non-open <code>status</code> practically never arrives on live, so do not wait for one as a close signal; withdrawn lines are simply absent.</td></tr>
+        <tr><td class="name">rec.periods</td><td class="type">array</td><td class="desc">Per-period status. <code>periods[n].status === "closed"</code> or <code>"settled"</code> closes ALL markets for that period — drop those locally too, even if they weren't listed in <code>markets</code>. <code>"settled"</code> here means Pinnacle has stopped trading the period; the frame carries no result and no grading, so this is not a settlement feed.</td></tr>
         <tr><td class="name">rec.parentId</td><td class="type">int?</td><td class="desc">If present, this is a CHILD matchup (alt periods, props derived from a parent event). Its full metadata (participants, league) lives on the parent record.</td></tr>
         <tr><td class="name">rec.startTime, status</td><td class="type">string</td><td class="desc">Event-level metadata. Tennis / Golf / Fights frequently see <code>startTime</code> updates without any market change (reschedules) — track these to surface to your users.</td></tr>
       </tbody>
@@ -1481,22 +1621,33 @@ $ws-&gt;send(json_encode([
 }
 
 <span class="k">if</span> (msg.type === <span class="s">"live"</span>) {
+  <span class="c">// 1. Prematch pushes also arrive as type "live". They are NOT live state.</span>
+  <span class="k">if</span> (msg.topic.endsWith(<span class="s">"/pre"</span>)) <span class="k">return</span>;
+
+  <span class="c">// 2. Event removed.</span>
   <span class="k">if</span> (msg.op === <span class="s">"del"</span>)  { state.delete(msg.rec.id); <span class="k">return</span>; }
+
   <span class="k">const</span> existing = state.get(msg.rec.id) ?? {};
   <span class="k">const</span> merged = { ...existing, ...msg.rec };
+  <span class="k">let</span> markets = existing.markets ?? [];
+
+  <span class="c">// 3. GROUP-REPLACE. For every group (type|period|side) present in the frame,</span>
+  <span class="c">//    drop all local markets of that group, then insert the frame's open ones.</span>
+  <span class="c">//    Groups the frame does not mention stay exactly as they were.</span>
   <span class="k">if</span> (msg.rec.markets) {
-    <span class="k">const</span> byKey = <span class="k">new</span> Map((existing.markets ?? []).map(m =&gt; [marketKey(m), m]));
-    <span class="k">for</span> (<span class="k">const</span> m <span class="k">of</span> msg.rec.markets) {
-      <span class="k">if</span> (m.status &amp;&amp; m.status !== <span class="s">"open"</span>) byKey.delete(marketKey(m));   <span class="c">// close signal</span>
-      <span class="k">else</span> byKey.set(marketKey(m), m);
-    }
-    merged.markets = [...byKey.values()];
+    <span class="k">const</span> touched = <span class="k">new</span> Set(msg.rec.markets.map(groupKey));
+    markets = markets.filter(m =&gt; !touched.has(groupKey(m)));
+    <span class="k">for</span> (<span class="k">const</span> m <span class="k">of</span> msg.rec.markets) <span class="k">if</span> (isOpen(m)) markets.push(m);
   }
-  <span class="c">// Honour period-level closes — wipe all markets for closed periods.</span>
+
+  <span class="c">// 4. Periods the frame reports as closed or settled lose all their markets.</span>
   <span class="k">if</span> (msg.rec.periods) {
-    <span class="k">const</span> closed = <span class="k">new</span> Set(msg.rec.periods.filter(p =&gt; p.status !== <span class="s">"open"</span>).map(p =&gt; p.period));
-    <span class="k">if</span> (closed.size) merged.markets = merged.markets.filter(m =&gt; !closed.has(m.period ?? <span class="n">0</span>));
+    <span class="k">const</span> closed = <span class="k">new</span> Set(msg.rec.periods
+      .filter(p =&gt; p.status === <span class="s">"closed"</span> || p.status === <span class="s">"settled"</span>).map(p =&gt; p.period));
+    <span class="k">if</span> (closed.size) markets = markets.filter(m =&gt; !closed.has(m.period ?? <span class="n">0</span>));
   }
+
+  merged.markets = markets;
   state.set(msg.rec.id, merged);
 }
 
@@ -1506,11 +1657,25 @@ $ws-&gt;send(json_encode([
   state.set(msg.matchup_id, { ...existing, markets: msg.data });
 }
 
-<span class="k">function</span> marketKey(m) {
-  <span class="k">return</span> m.key ?? <span class="s">`${m.type}|${m.period ?? 0}|${m.side ?? ""}|${m.prices?.[0]?.points ?? ""}`</span>;
+<span class="k">function</span> groupKey(m) { <span class="k">return</span> <span class="s">`${m.type}|${m.period ?? 0}|${m.side ?? ""}`</span>; }
+<span class="k">function</span> isOpen(m)   { <span class="k">return</span> !m.status || m.status === <span class="s">"open"</span>; }
 }</pre>
 
-    <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0"><b>Reconnect strategy.</b> Re-subscribe on reconnect. Server-side state is not preserved — the snapshot at the start of every connection is your sync point. Exponential backoff (1s → 2s → 4s → 30s cap) recommended. One connection per account on this endpoint (separate slot from SSE — you can run both; opening a second WS connection evicts the first with close code 1001).</p>
+    <div style="margin:14px 0; padding:12px 14px; border-left:3px solid var(--warn); background:rgba(255,194,102,.06); border-radius:6px; font-size:14px;" id="ws-parity">
+      <b>What the WebSocket does not tell you, and how to stay in step with REST.</b> The live WebSocket is Pinnacle&rsquo;s push stream, forwarded as it arrives. Our REST endpoints are built from that same stream <i>plus</i> a full re-read of Pinnacle&rsquo;s live board about every 15&nbsp;seconds, which corrects whatever the push did not say. <b>Those corrections are applied to REST only. They are not replayed on the WebSocket.</b> A book built from the WebSocket alone therefore drifts from REST in three ways:
+      <ul style="margin:8px 0 6px 0; padding-left:18px; line-height:1.6">
+        <li><b>Withdrawn and suspended lines.</b> Pinnacle does not push a close for a single line or a whole group that it takes down. On REST the line disappears at the next re-read; on the WebSocket nothing arrives. Most of these are short suspensions: the line is usually back within 15&ndash;30&nbsp;seconds, often at the same price.</li>
+        <li><b>Skipped repricings.</b> At busy times Pinnacle&rsquo;s push leaves out some intermediate price changes for an event and catches up later. REST can show a newer price for that market for some seconds, occasionally longer. When we detect this for a sport, the <a href="#ws-feed-health">ping</a> reports <code>rest_ahead</code> for it.</li>
+        <li><b>Events that end without a <code>del</code>.</b> Pinnacle sends <code>del</code> for only some finished events. Do not expire events on a timer of your own: a quiet or suspended live event is still in play and still served on REST.</li>
+      </ul>
+      <b>If you need your book to match REST exactly, re-baseline it.</b> Keep the WebSocket for speed and do one of these every 15&ndash;30&nbsp;seconds for each live sport you hold:
+      <ul style="margin:8px 0 6px 0; padding-left:18px; line-height:1.6">
+        <li><b>From REST:</b> <code>GET /kit/v1/markets?sport_id=&lt;id&gt;&amp;event_type=live</code> (or <code>/kit/v1/details?event_id=</code> for a few events). Remove the events and lines REST no longer lists, and take its price wherever it differs from yours.</li>
+        <li><b>On the WebSocket itself:</b> send <code>unsubscribe</code> for the sport and then <code>subscribe</code> again. The new <code>snapshot</code> is the same reconciled state REST serves, in the raw record shape; replace your copy of that sport with it. Sending <code>subscribe</code> again for a sport you are already subscribed to does nothing, so the unsubscribe is required.</li>
+      </ul>
+      Between two re-baselines, treat a line that REST no longer shows as suspended rather than tradeable.
+    </div>
+    <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0"><b>Reconnect strategy.</b> Re-subscribe on reconnect. Server-side state is not preserved — the snapshot at the start of every connection is your sync point. Exponential backoff (1s → 2s → 4s → 30s cap) recommended. One connection per account on this endpoint (separate slot from SSE — you can run both; a second WS connection replaces the first, which is closed with code 1001 "evicted by newer connection"; do not auto-reconnect on that reason).</p>
 
     <p style="margin-top:16px"><b>Limits &amp; error frames</b></p>
     <table class="param-table">
@@ -1520,10 +1685,14 @@ $ws-&gt;send(json_encode([
         <tr><td class="name">event_id_cap</td><td class="desc">More than <b>200</b> tracked <code>event_ids</code> per stream</td><td class="desc">Unsubscribe finished events; slots auto-free on <code>op:"del"</code></td></tr>
         <tr><td class="name">subscribe_rate_limited</td><td class="desc">More than <b>30 subscribe messages per 10&nbsp;s</b></td><td class="desc">Batch sports/events into fewer subscribe messages</td></tr>
         <tr><td class="name">backpressure</td><td class="desc">Subscribe while your connection is backlogged (&gt;32&nbsp;MB unsent)</td><td class="desc">The sport was NOT subscribed — drain, then resubscribe</td></tr>
+        <tr><td class="name">snapshot_failed</td><td class="desc">We could not build the baseline snapshot for one stream and sport in time</td><td class="desc">That sport was NOT subscribed (your other subscriptions are unaffected). Send the subscribe for it again after a short pause, with a growing delay if it repeats</td></tr>
         <tr><td class="name">slow_consumer <span style="color:var(--muted); font-weight:400">(close)</span></td><td class="desc">Unsent buffer exceeds <b>128&nbsp;MB</b> — you're reading too slowly</td><td class="desc">Connection is closed; reconnect and read faster / subscribe narrower</td></tr>
-        <tr><td class="name">rate_limited <span style="color:var(--muted); font-weight:400">(HTTP 429)</span></td><td class="desc">Connection-open flood on the endpoint</td><td class="desc">Back off per <code>Retry-After</code>; don't reconnect in a tight loop</td></tr>
-        <tr><td class="name">plan_lacks_ws <span style="color:var(--muted); font-weight:400">(HTTP 403)</span></td><td class="desc">WS add-on not active on the account</td><td class="desc">Purchase the add-on in the <a href="/panel">dashboard</a></td></tr>
+        <tr><td class="name">rate_limited <span style="color:var(--muted); font-weight:400">(HTTP 429)</span></td><td class="desc">More than <b>5 connection attempts in 60&nbsp;s</b></td><td class="desc">Back off per <code>Retry-After</code>; don't reconnect in a tight loop</td></tr>
+        <tr><td class="name">plan_lacks_ws <span style="color:var(--muted); font-weight:400">(HTTP 403)</span></td><td class="desc">WS add-on not active on the account</td><td class="desc">Purchase the add-on in the <a href="/panel">dashboard</a>. On a new free key this is expected until a 3-day full demo is switched on for it (on request). Retrying does not change the answer</td></tr>
         <tr><td class="name">invalid_json / invalid_message / unknown_message_type</td><td class="desc">Malformed client message</td><td class="desc">Fix the message shape — see subscribe example above</td></tr>
+        <tr><td class="name">unauthorized <span style="color:var(--muted); font-weight:400">(HTTP 401)</span></td><td class="desc">Key missing or not recognised (for example after it was rotated)</td><td class="desc">Fix the key. Retrying does not change the answer</td></tr>
+        <tr><td class="name"><code>403 error code: 1010</code> <span style="color:var(--muted); font-weight:400">(plain text)</span></td><td class="desc">Cloudflare rejected the handshake because of the client's <code>User-Agent</code> (default <code>Python-urllib</code> and similar)</td><td class="desc">Set an explicit <code>User-Agent</code> on the handshake. Common WebSocket libraries already send one that passes</td></tr>
+        <tr><td class="name">No answer at all <span style="color:var(--muted); font-weight:400">(request hangs)</span></td><td class="desc">The request stalls after the TLS handshake and never gets a status</td><td class="desc">This happens before the request reaches us. From the affected machine run <code>curl -v https://pinnodds.com/ping</code> and <code>curl -v https://ws.pinnodds.com/ping</code>, and send us both outputs with the time (UTC) and the <code>cf-ray</code> header if one is returned</td></tr>
       </tbody>
     </table>
     <p style="font-size:13px; margin-top:8px">You can also send <code>{"type":"unsubscribe", "streams":[…], "sport_ids":[…]}</code>; every subscribe/unsubscribe is acknowledged with a <code>{"type":"subscribed"|"unsubscribed", "stream", "sport_id"}</code> frame — treat the ack (plus the snapshot) as confirmation, not the send itself.</p>
@@ -1849,7 +2018,7 @@ bearer_token_env_var = <span class="s">"PINNODDS_KEY"</span></pre>
   <ul style="margin:10px 0 0; padding-left:18px; line-height:1.9">
     <li><b>Top level</b> (<code>last</code> / <code>last_call</code>, next to <code>sport_id</code>) is our store's sequence number. It only moves forward, and it is the value you pass to <code>since=</code>.</li>
     <li><b>Inside each event</b>, <code>last</code> is the Unix second at which we rendered the response. It is the <i>same value for every event in the payload</i> and says nothing about when that event's odds moved. Don't compute freshness from it.</li>
-    <li><b><code>updated_at</code></b> (inside each event) is what you want for freshness: epoch <b>milliseconds</b> of the last time that event's markets changed — a price, a line added or removed, or a status. Pinnacle re-sending the same prices does not move it. After one of our restarts it starts from the moment we first saw the event again, so treat it as &ldquo;unchanged since at least&rdquo;.</li>
+    <li><b><code>updated_at</code></b> (inside each event) is what you want for freshness: epoch <b>milliseconds</b> of the moment <i>we received</i> the last real change to that event's markets — a price, a line added or removed, or a status. It is our receive time, not a Pinnacle timestamp (none exists), and it is on REST only, not on WebSocket records. Pinnacle re-sending the same prices does not move it. After one of our restarts it starts from the moment we first saw the event again, so treat it as &ldquo;unchanged since at least&rdquo;.</li>
   </ul>
 </div>
 
@@ -1872,9 +2041,34 @@ bearer_token_env_var = <span class="s">"PINNODDS_KEY"</span></pre>
 <span class="c"># -&gt; x-data-status: fresh</span>
 <span class="c"># -&gt; x-data-age-ms: 0</span></pre>
 <ul style="color:var(--muted-2); font-size:13px; line-height:1.8; margin-top:14px">
+  <li><b>These headers describe the whole board, not one event.</b> <code>X-Data-Age-Ms</code> is the time since the newest write anywhere on that board, for any sport. A busy board reads <code>0</code> even if the one match you care about has not moved for minutes. For one event, use its <code>updated_at</code>.</li>
+  <li><b>They cannot show a stall of the push stream alone.</b> (The WebSocket ping can: see <a href="#ws-feed-health">feed health in every ping</a>.) The live board is fed by Pinnacle&rsquo;s push stream and, about every 15&nbsp;seconds, by a full re-read of Pinnacle&rsquo;s live board. Each successful re-read refreshes the age, so <code>X-Data-Age-Ms</code> on the live board normally stays under about 15&ndash;20&nbsp;seconds even while the push stream is silent. It grows only when both have stopped. <b>Treat an age above 60&nbsp;seconds on the live board as suspect</b> and stop acting on those prices until it recovers; do not wait for <code>stale</code>, which is the point where we withhold the board, minutes later. On the prematch board the full re-read runs every 25&ndash;30&nbsp;seconds (longer when Pinnacle is slow to build its boards), so an age of some tens of seconds is normal there.</li>
   <li><b>Set your own tolerance.</b> Below the withholding threshold you still receive the last known prices, which is usually what you want — a quiet market is not a broken one. If your strategy needs tighter limits, compare <code>X-Data-Age-Ms</code> against your own number and skip the cycle yourself.</li>
   <li><b>The <code>last</code> field in the body is NOT a data age.</b> It is our serve cursor and is identical for every event in a response. Use the headers for freshness and <code>last</code> for deltas — they answer different questions.</li>
-  <li><b>REST only.</b> The SSE and WebSocket streams do not currently carry this signal. On a push stream, silence is the signal: poll <a href="#health"><code>/health</code></a> alongside it, which turns <code>degraded</code> with a reason such as <code>no live write for 900s</code>.</li>
+  <li><b>These headers are on REST only; the WebSocket has its own signal.</b> The WebSocket <code>ping</code> frame, every 30&nbsp;seconds, carries the age of the last push from Pinnacle for the whole feed and for each sport you subscribe to, a <code>feed_status</code> that turns <code>"silent"</code> after 90&nbsp;seconds without any push, and the state of our connection to Pinnacle. That is what tells a quiet market from a stalled push stream: see <a href="#ws-feed-health">feed health in every ping</a>.</li>
+  <li><b>The SSE streams carry no data-age signal.</b> The keepalive comment shows that the connection is open, not that prices are flowing. Poll a REST endpoint or <a href="#health"><code>/health</code></a> alongside an SSE stream; <code>/health</code> turns <code>degraded</code> with a reason such as <code>no live write for 900s</code>, and it is driven by the same board-level age, with the same limits.</li>
+  <li><b>No signal here can detect prices that are arriving but not moving.</b> If Pinnacle keeps sending while its own prices are frozen, every age above reads fresh. If that matters to you, compare against the live score or a second source.</li>
+</ul>
+
+<h3 id="timestamps" style="margin: 22px 0 6px; font-size: 15px">Every time field, in one table</h3>
+<p><b>There is no Pinnacle-side timestamp.</b> Pinnacle&rsquo;s data carries a <code>version</code> stamp, the scheduled start and a betting cut-off, and nothing that says when a price changed on their side. Every time value we give you is therefore measured on our servers, and nobody outside Pinnacle can give you the other one.</p>
+<table class="param-table">
+  <thead><tr><th>Field</th><th>Where</th><th>What it is</th></tr></thead>
+  <tbody>
+    <tr><td class="name">ts</td><td class="type">every WebSocket frame</td><td class="desc">The time our WebSocket server <b>published</b> the frame (epoch ms). It is taken when the frame is sent, so it is normally a few milliseconds after we received the update and can be later when our server is busy. It is not the time Pinnacle changed the price; the time we received it is <code>recv_ts</code>.</td></tr>
+    <tr><td class="name">recv_ts</td><td class="type">forwarded WebSocket frames: <code>live</code>, <code>prematch_ws</code>, <code>prematch_markets</code>, <code>prematch_membership</code>, <code>prematch_matchups</code></td><td class="desc">The time <b>we received</b> the message from Pinnacle (epoch ms). <code>ts - recv_ts</code> is the delay inside our system. Still our clock, not a Pinnacle-side time.</td></tr>
+    <tr><td class="name">feed_age_ms, sport_age_ms, prematch_age_ms, prematch_sport_age_ms, prematch_poll_age_ms</td><td class="type">WebSocket <a href="#ws-feed-health"><code>ping</code></a></td><td class="desc">Ages in ms, measured at the <code>ts</code> of the ping: time since we last received a push from Pinnacle (of any kind, per sport, prematch, prematch per sport) and since the last prematch board poll record.</td></tr>
+    <tr><td class="name">last, last_call <span style="color:var(--muted); font-weight:400">(top level)</span></td><td class="type">REST board responses</td><td class="desc">Our store cursor, a sequence number that only moves forward. Pass it back as <code>since=</code>. It is not a time.</td></tr>
+    <tr><td class="name">last <span style="color:var(--muted); font-weight:400">(inside each event)</span></td><td class="type">REST events</td><td class="desc">The Unix second at which we <b>served</b> the response. Identical for every event in the payload. Says nothing about the event.</td></tr>
+    <tr><td class="name">updated_at</td><td class="type">REST events only</td><td class="desc">Epoch ms: the time <b>we received</b> the last real change to that event&rsquo;s markets (a price, a line added or removed, a status). Repeats of the same prices do not move it. After one of our restarts it starts again from the moment we first saw the event, so read it as &ldquo;unchanged since at least&rdquo;. This is the per-event freshness field.</td></tr>
+    <tr><td class="name">X-Data-Age-Ms, X-Data-Status, X-Data-Board</td><td class="type">REST response headers</td><td class="desc">Board-level, as described above: time since the newest write anywhere on that board, rounded down to whole seconds (so <code>0</code> is normal), refreshed by the full re-read as well as by pushes.</td></tr>
+    <tr><td class="name">ts, age_s</td><td class="type"><a href="#api-drops"><code>/api/drops</code></a> rows</td><td class="desc">The time we <b>detected</b> the drop, and its age in seconds when served.</td></tr>
+    <tr><td class="name">live.updated_ms, live.source_ms</td><td class="type"><a href="#sse-live-object"><code>/odds-drop</code></a> drops</td><td class="desc">Our receive time of the last change to the match state, and of the last frame of any kind for that event.</td></tr>
+    <tr><td class="name">starts, starts_ms, cutoffAt</td><td class="type">events / raw records</td><td class="desc">Scheduled start and betting cut-off from Pinnacle. Schedule values, not update times.</td></tr>
+  </tbody>
+</table>
+<ul style="color:var(--muted-2); font-size:13px; line-height:1.8; margin-top:14px">
+  <li><b>For ordering, use the market <code>version</code> on the WebSocket</b>, within one event, market key and channel (see <a href="#ws-feed">the version note</a>). It needs no clock.</li>
 </ul>
 
 <p style="margin-top:22px">For deltas and bandwidth, use the top-level <code>last</code> cursor — it is exact, and a full board is large while the change set is usually a handful of events.</p>
@@ -1891,7 +2085,7 @@ curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
   <li><b>Event gone</b> — it stops appearing in a full (no <code>since=</code>) response. Pinnacle has pulled it, or it has kicked off and moved to the live feed.</li>
   <li>Always carry the <code>last</code> from the response you just received. Don't reuse an older one or substitute a wall-clock timestamp.</li>
 </ul>
-<p style="color:var(--muted-2); font-size:13px">If you need a real timestamp per price change, use <a href="#api-drops"><code>/api/drops</code></a>. Every drop carries its own <code>ts</code> (epoch ms) and <code>age_s</code>.</p>
+<p style="color:var(--muted-2); font-size:13px">If you need a timestamp for each detected move, use <a href="#api-drops"><code>/api/drops</code></a>. Every drop carries its own <code>ts</code> (epoch ms, the time we detected it) and <code>age_s</code>.</p>
 
 <h2 id="live-state">Live state object</h2>
 <p>Live events include a <code>state</code> object with in-game state passed through from Pinnacle. Field names are sport-specific and are NOT renamed by us. <code>state</code> is <code>null</code> on prematch events.</p>
@@ -1973,8 +2167,21 @@ curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
 
 <p style="color: var(--muted); font-size: 13px; margin-top: 10px"><b>Privacy:</b> in your panel, referred users' emails are masked (e.g. <code>j***@gmail.com</code>) so you can recognize friends you invited without exposing full addresses if you screenshot the dashboard. Admins see unmasked emails in our internal tooling.</p>
 
+<h2 id="not-provided">What we don&rsquo;t provide</h2>
+<p>pinnodds is a real-time odds feed. These are the things customers ask for most often that it does not contain, so you can plan around them before you build.</p>
+<table class="param-table">
+  <thead><tr><th>Not provided</th><th>What exists instead</th></tr></thead>
+  <tbody>
+    <tr><td class="name">Results, settlement, bet grading</td><td class="desc">There is no results or settlement endpoint, and no won/lost/push outcome anywhere in the feed. Pinnacle retired its own settled-fixtures endpoint on 1&nbsp;November&nbsp;2026. While an event is in play the live feed carries the score (<code>state</code> and <code>home_score</code> / <code>away_score</code> on REST, the raw record on the WebSocket) and, on the WebSocket, each period&rsquo;s status (<code>open</code> / <code>closed</code> / <code>settled</code>), so you can record the last score you saw before the event leaves the feed. That is the last score we observed, not an official result. For how a bet is settled, see <a href="https://www.pinnacle.com/en/future/betting-rules" rel="noopener">Pinnacle&rsquo;s betting rules</a>.</td></tr>
+    <tr><td class="name">Opening price</td><td class="desc">No field carries a market&rsquo;s opening price or the time it opened. <code>from_price</code> on a drop is the previous price inside the drop window, not the opener. The WebSocket snapshot you get on (re)connect is the current state only, so an opener you were not connected for cannot be recovered. To have openers, record the first price you see for each market yourself.</td></tr>
+    <tr><td class="name">Historical odds, closing lines, archives</td><td class="desc">We keep no price history and do not backfill. If you need history, record the stream from the day you subscribe.</td></tr>
+    <tr><td class="name"><code>lineId</code> / <code>altLineId</code></td><td class="desc">Not in the feed. The <code>version</code> on a raw market, and the one returned on REST with <a href="#line-meta"><code>line_meta=1</code></a>, is a change stamp, not a line id (see <a href="#ws-feed">the version note</a>).</td></tr>
+    <tr><td class="name">Pinnacle&rsquo;s own change time</td><td class="desc">Does not exist upstream. See <a href="#timestamps">every time field, in one table</a>.</td></tr>
+  </tbody>
+</table>
+
 <div class="callout warn" style="margin-top: 40px">
-  <b>Need something we don't have?</b> Historical archives, custom rate above 30 req/sec, or a market we don't surface yet — email <a href="mailto:info@pinnodds.com">info@pinnodds.com</a> and tell us what you need.
+  <b>Need something else?</b> A custom rate above 30 req/sec, or a market we don't surface yet — email <a href="mailto:info@pinnodds.com">info@pinnodds.com</a> and tell us what you need.
 </div>
 
 </main>
@@ -1991,7 +2198,7 @@ curl -H "x-portal-apikey: <span class="s">$KEY</span>" \
       <div><h4>Product</h4><ul><li><a href="/pinnacle-odds-api">Pinnacle API</a></li><li><a href="/pinnacle-websocket-api">WebSocket API</a></li><li><a href="/mcp">MCP server</a></li><li><a href="/panel">Dashboard</a></li><li><a href="/pinnacle-api-pricing">Pricing</a></li><li><a href="/latency">Latency</a></li><li><a href="/docs#affiliate">Affiliate 30%</a></li></ul></div>
       <div><h4>Pinnacle odds</h4><ul><li><a href="/pinnacle-odds">All sports live board</a></li><li><a href="/pinnacle-odds/nfl">NFL odds</a></li><li><a href="/pinnacle-odds/nba">NBA odds</a></li><li><a href="/pinnacle-odds/mlb">MLB odds</a></li><li><a href="/pinnacle-odds/nhl">NHL odds</a></li><li><a href="/pinnacle-odds/soccer">Soccer odds</a></li><li><a href="/pinnacle-odds/tennis">Tennis odds</a></li><li><a href="/pinnacle-odds/esports">Esports odds</a></li><li><a href="/pinnacle-odds-dropper">Odds dropper</a></li></ul></div>
       <div><h4>Developers</h4><ul><li><a href="/docs">Docs</a></li><li><a href="/blog">Blog</a></li><li><a href="https://www.npmjs.com/package/pinnodds">npm</a></li><li><a href="https://pypi.org/project/pinnodds/">PyPI</a></li><li><a href="https://github.com/Pinnodds/pinnodds-sdk">GitHub</a></li><li><a href="https://rapidapi.com/">RapidAPI</a></li></ul></div>
-      <div><h4>Compare</h4><ul><li><a href="/the-odds-api-alternative">vs The Odds API</a></li><li><a href="/sharpapi-alternative">vs SharpAPI</a></li><li><a href="/sportsgameodds-alternative">vs SportsGameOdds</a></li><li><a href="/opticodds-alternative">vs OpticOdds</a></li></ul></div>
+      <div><h4>Compare</h4><ul><li><a href="/the-odds-api-alternative">vs The Odds API</a></li><li><a href="/sharpapi-alternative">vs SharpAPI</a></li><li><a href="/sportsgameodds-alternative">vs SportsGameOdds</a></li><li><a href="/opticodds-alternative">vs OpticOdds</a></li><li><a href="/compare">All Pinnacle feeds</a></li></ul></div>
       <div><h4>Contact</h4><ul><li><a href="https://t.me/ArbitrageXpro">Telegram @ArbitrageXpro</a></li><li><a href="mailto:info@pinnodds.com">info@pinnodds.com</a></li><li><a href="/about">About</a></li><li><a href="/terms">Terms</a> · <a href="/privacy">Privacy</a></li><li><a href="/cookies">Cookies</a></li></ul></div>
     </div>
     <div class="legal"><span>Not affiliated with, endorsed by, or connected to Pinnacle.</span><span>18+ · Data service only, not a bookmaker.</span><span>&copy; <span id="yr">2026</span> pinnodds · <a href="#" onclick="window.pinnConsent&&pinnConsent.open();return false">Cookie settings</a></span></div>

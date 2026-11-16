@@ -8,6 +8,73 @@
 
 Notable changes to the Polymarket Perps API.
 
+**Nov 10, 2026**
+
+Reduce-only closes, tiered maintenance, and cancel-on-disconnect
+
+No endpoints or required request fields are removed. Check reduce-only closes
+and competition states before the deploy. Everything else is additive.
+
+**Changed**
+
+* **Reduce-only IOC closes.** A closing limit order now skips stale quotes
+  beyond the favourable edge of the market's price band. A close that
+  previously filled can return `ioc_no_fill`, or fill partly and end
+  `ioc_expired`. The stale maker order stays open. Use fills and your
+  remaining position to confirm a close; an accepted order is not proof that
+  the position closed.
+* **Tiered maintenance.** Deployment alone keeps current margin rules. We plan
+  to switch tiered maintenance on during this maintenance window, after a
+  fresh safety check, and will confirm when it is live. Once activated, larger
+  positions use maintenance requirements from the market's risk tiers.
+  Maintenance amounts, liquidation prices, and warning levels can change;
+  liquidation can move closer. A position stop loss beyond the new liquidation
+  price can be refused with existing `tp_sl_trigger_past_liquidation`.
+  Existing stops are not moved for you. Review maintenance cover and stop
+  levels when activation is confirmed.
+* **Competition states.** `row_state` no longer returns `under_review`. Maker
+  share and order rate no longer automatically put traders under review.
+  Liquidity-reward entity members and operator-disqualified traders remain
+  excluded. Stop relying on `under_review`; eligible traders appear as ordinary
+  `live` / `provisional` rows. Rankings and projected prizes can change.
+* **Malformed WebSocket frames.** Concurrent sockets now return
+  `invalid_request` where some bad frames previously returned
+  `invalid request`, and retain a recoverable request ID. Update handlers that
+  depend on that exact text.
+
+**Added**
+
+* **Largest positions.** Public `GET /v1/info/largest-positions` takes
+  `instrument_id`, optional `limit` (default 10, maximum 100), and `offset`.
+  Only the top 1,000 ranks are pageable. Returns account, side, size, entry
+  price, notional, and unrealized PnL, ranked by notional. The insurance fund
+  is excluded. Weight 5, or 1 on a cache hit; cached for 2 seconds. Invalid
+  instrument or page bounds return `400`; a missing or stale mark returns `503`.
+* **Opt-in WebSocket cancel-on-disconnect.** Send a signed `cancelOnDisconnect`
+  post with scope `session`, `account`, or `off`. Every new connection starts
+  `off`; re-arm after reconnect. `session` covers qualifying orders created on
+  that socket after arming. `account` cancels the account's open orders,
+  chases, TWAPs, and odds orders across markets when the server detects
+  disconnection. TP/SL and untriggered conditional orders remain. Prefer
+  `session` for multiple sockets or fast reconnects: `account` scope can
+  cancel quotes already placed by a replacement socket. Protection also fires
+  during gateway deploys. Keep `autoCancel` armed: an abrupt gateway crash
+  cannot send disconnect cancels. Armed sockets track at most 65,536 order IDs;
+  if none can be pruned, new creates return `open_orders_limit`. Arm and disarm
+  cost one WebSocket message and 10 account action units.
+
+**Clarified**
+
+* New and updated error identifiers are documented on
+  [Errors](https://docs.polymarket.com/perps/errors.md). `stock_split_unit_mismatch` is reserved for
+  automatic stock splits, which stay disabled in production on this deploy.
+
+**Rollout**
+
+Order placement pauses during the window and cancels keep working. WebSocket
+connections drop when the gateway restarts; reconnect and resubscribe. After
+opting into cancel-on-disconnect, gateway restarts also cancel covered orders.
+
 **Nov 5, 2026**
 
 Address book on withdrawals, trading-key self-delete, and batched market reads

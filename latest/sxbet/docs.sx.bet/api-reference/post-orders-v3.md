@@ -17,9 +17,9 @@ domain.
 
 > [!NOTE]
 >
-> **This endpoint is asynchronous by default.** A success response means the order was *submitted* to
-> the matching engine, not that it rested or matched. Each order comes back as `SUBMITTED` — the terminal
-> outcome (rested as `ACTIVE`, matched, or gone) arrives later on
+> **This endpoint is asynchronous by default.** Each order comes back as `SUBMITTED` or `FAILED`.
+> `SUBMITTED` means the order was sent to the matching engine, not that it rested or matched — the
+> terminal outcome (rested as `ACTIVE`, matched, or gone) arrives later on
 > [`account:orders_v3_#{address}`](https://docs.sx.bet/api-reference/channel-orders-v3). Subscribe to that channel before
 > you submit and treat it as the source of truth.
 
@@ -76,6 +76,8 @@ tags:
     description: Matched trades and portfolio history
   - name: Orders
     description: Orderbook queries, posting, cancelling, and filling orders
+  - name: Partner API
+    description: Create and list your platform's users (partner keys only)
 paths:
   /orders-v3:
     post:
@@ -336,6 +338,18 @@ components:
           description: >-
             `SUBMITTED` = submitted to the matching engine; `FAILED` = rejected
             before submitting. See [Posting orders](/developers/posting-orders).
+        failureReason:
+          type: string
+          enum:
+            - BETTING_PAUSED
+            - TEMPORARILY_UNAVAILABLE
+            - DUPLICATE
+          description: >-
+            Why the order failed. Best-effort, so not every `FAILED` result has
+            one. BETTING_PAUSED (betting is paused), TEMPORARILY_UNAVAILABLE
+            (the matching engine was temporarily unavailable, for example during
+            maintenance), DUPLICATE (an order with this id was already
+            submitted).
         commandId:
           type: string
           description: >-

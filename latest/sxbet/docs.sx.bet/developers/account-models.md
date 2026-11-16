@@ -4,9 +4,9 @@
 
 # Account models for external sites
 
-> The two supported ways to represent your site's users on SX.bet.
+> The supported ways to represent your site's users on SX.bet.
 
-If you are integrating SX.bet markets into your own site or app, there are two supported account
+If you are integrating SX.bet markets into your own site or app, there are three supported account
 models for representing your users. Pick the one that matches how you want to manage accounts and
 funds.
 
@@ -42,6 +42,12 @@ Each user on your app is their own SX.bet user, and your site is effectively a s
 >
 > More information on this model is coming shortly. Reach out through
 > [Work with us](https://docs.sx.bet/developers/work-with-us.md) if you are planning a whitelabel integration.
+
+## Partner API
+
+Each of your users gets their own SX.bet account, wallet and API key, created from your backend with
+a partner key. Balances, positions and history are separate per user, and your users never sign up
+on sx.bet. Available to approved partners. See [Partner API](https://docs.sx.bet/developers/partner-api.md).
 
 ## Related
 

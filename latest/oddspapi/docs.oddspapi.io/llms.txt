@@ -10,9 +10,10 @@
 
 ### Coverage
 
-- [Sports Coverage - Fixtures & Futures by Sport](https://docs.oddspapi.io/coverage.md): Coverage of the OddsPapi B2B odds API: 200+ bookmakers anchored on sharp trading books, plus 60+ sports and prediction-market topics with fixtures and futures availability per sportId.
-- [Bookmaker Coverage - Sharps, Exchanges & Retail Books](https://docs.oddspapi.io/coverage/bookmakers.md): What OddsPapi covers across 200+ bookmakers: sharp trading books, exchanges and prediction markets, and retail sportsbooks — with per-book capabilities, freshness bounds, and status signals.
-- [Market Coverage - Market Types, Lines, Periods & Player Props](https://docs.oddspapi.io/coverage/markets.md): What markets OddsPapi covers: market types, period scoping, Asian and European handicaps, totals, player props, and how to discover the full market map per sport via GET /markets.
+- [Coverage - Sports, Bookmakers & Markets](https://docs.oddspapi.io/coverage.md): What the OddsPapi B2B odds API covers: sports and prediction-market topics with fixtures and futures per sportId, the bookmaker catalogue anchored on sharp trading books, and the full fixture-market taxonomy.
+- [Sports Coverage - Fixtures & Futures by sportId](https://docs.oddspapi.io/coverage/sports.md): Every sportId OddsPapi covers, with fixtures and futures availability and how many fixture market types are published per sport.
+- [Bookmaker Coverage - Sharps, Exchanges & Retail Books](https://docs.oddspapi.io/coverage/bookmakers.md): Every bookmaker OddsPapi actively collects — sharp trading books, exchanges and prediction markets, and retail sportsbooks — with the slug you address each one by, plus the per-book capabilities, freshness bounds, and status signals the API exposes.
+- [Fixture Market Coverage - marketType x period per Sport](https://docs.oddspapi.io/coverage/markets.md): The OddsPapi fixture-market coverage map: every marketType x period combination published per sport, and which of them settle from a collected counter.
 
 ### Build with OddsPapi
 
@@ -145,7 +146,7 @@
 
 ## Indexes
 
-- [Chinese (69 pages)](https://docs.oddspapi.io/_llms/zh.txt): Documentation for Chinese.
+- [Chinese (69 pages)](https://docs.oddspapi.io/_llms/zh.txt): 开始使用, API, WebSocket, 更新日志.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

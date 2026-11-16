@@ -70,7 +70,8 @@
 - [Maintenance](https://docs.sx.bet/developers/maintenance.md): What happens to your resting orders during a maintenance window or matching engine restart.
 - [Bet grains](https://docs.sx.bet/developers/which-grain.md): How to choose between bets, fills, and positions when querying your trade data.
 - [Tracking your orders](https://docs.sx.bet/developers/my-orders.md): How to track your open orders
-- [Account models for external sites](https://docs.sx.bet/developers/account-models.md): The two supported ways to represent your site's users on SX.bet.
+- [Account models for external sites](https://docs.sx.bet/developers/account-models.md): The supported ways to represent your site's users on SX.bet.
+- [Partner API](https://docs.sx.bet/developers/partner-api.md): Create and manage SX Bet accounts for your own users, from your platform.
 - [External user id](https://docs.sx.bet/developers/external-user-id.md): Tag orders with your own user id.
 - [Work With Us](https://docs.sx.bet/developers/work-with-us.md): Building at scale or exploring a partnership? Let's talk.
 - [Rate limits](https://docs.sx.bet/developers/rate-limits.md): Request limits for the SX Bet REST API.
@@ -154,6 +155,9 @@
 - [Prepare a threshold change](https://docs.sx.bet/api-reference/post-user-multisig-set-threshold-prepare.md): Build the Safe transaction that changes how many signers must sign for an action.
 - [Execute a threshold change](https://docs.sx.bet/api-reference/post-user-multisig-set-threshold-execute.md): Execute a prepared threshold change.
 - [Cancel a pending transaction](https://docs.sx.bet/api-reference/post-user-multisig-cancel.md): Delete a pending Safe transaction that has not been executed
+- [Get the attestation to sign](https://docs.sx.bet/api-reference/get-partner-attestation.md): The EIP-712 typed data a wallet signs to become one of your users.
+- [Create a user](https://docs.sx.bet/api-reference/post-partner-users.md): Create an SX Bet account for a new wallet and get its API key.
+- [List your users](https://docs.sx.bet/api-reference/get-partner-users.md): The users you have created, newest first.
 
 ## OpenAPI Specs
 

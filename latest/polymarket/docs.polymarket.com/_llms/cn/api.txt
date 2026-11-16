@@ -68,7 +68,7 @@
 - [取消单个订单](https://docs.polymarket.com/cn/api-reference/trade/cancel-single-order.md): Cancels a single order by its ID. Works even in cancel-only mode.
 - [按 ID 获取订单](https://docs.polymarket.com/cn/api-reference/trade/get-single-order-by-id.md): Retrieves a specific order by its ID (order hash) for the authenticated user, including canceled or fully matched orders. Builder-authenticated clients can also use this endpoint to retrieve orders attributed to their builder account.
 - [批量提交订单](https://docs.polymarket.com/cn/api-reference/trade/post-multiple-orders.md): Creates multiple new orders in the order book. Orders are processed in parallel. Maximum 15 orders per request.
-- [获取用户订单](https://docs.polymarket.com/cn/api-reference/trade/get-user-orders.md): Retrieves live orders for the authenticated user. Returns paginated results. Filtering by id returns that order regardless of status, including canceled or fully matched orders. Builder-authenticated clients can also use this endpoint to retrieve orders attributed to their builder account.
+- [获取用户订单](https://docs.polymarket.com/cn/api-reference/trade/get-user-orders.md): Retrieves live orders for the authenticated user. Returns paginated results. When filtering by asset_id, also include the market condition ID in market. From December 14, 2026, asset-only requests return HTTP 400 (asset_id requires market). Unfiltered and market-only queries remain supported. Filter…
 - [获取钱包未完成订单](https://docs.polymarket.com/cn/api-reference/trade/get-wallet-open-orders.md): Lists every live order on the caller's deposit wallet, regardless of which signer or API key placed it. Authenticate with L2 headers or `POLY_READONLY_API_KEY` and `POLY_ADDRESS`. `POLY_ADDRESS` must be the wallet owner or one of its non-revoked session signers.
 - [批量取消订单](https://docs.polymarket.com/cn/api-reference/trade/cancel-multiple-orders.md): Cancels multiple orders by their IDs. Maximum 1000 orders per request. Duplicate order IDs in the request are automatically ignored. Works even in cancel-only mode.
 - [取消所有订单](https://docs.polymarket.com/cn/api-reference/trade/cancel-all-orders.md): Cancels all open orders for the authenticated user. Works even in cancel-only mode.
@@ -230,6 +230,21 @@
 - [获取注册状态](https://docs.polymarket.com/cn/api-reference/get-registration.md): Check whether an address has a Perps account. Registration is permanent, so a `true` answer never changes; a `false` answer flips as soon as the address registers.
 - [止盈止损](https://docs.polymarket.com/cn/api-reference/wss/perps-tpsl.md): 通过永续合约 WebSocket 接收止盈止损订单的实时生命周期更新。
 
+### 机构
+
+- [概览](https://docs.polymarket.com/cn/api-reference/rfq-trades/overview.md): 了解 RFQ 交易合作伙伴 API，用于结算在你的平台上撮合的交易。
+- [身份验证](https://docs.polymarket.com/cn/api-reference/rfq-trades/authentication.md): 使用你的合作伙伴 API 密钥签署每个 RFQ 交易合作伙伴 API 请求，以及交易状态流的握手请求。
+
+#### RFQ 交易
+
+- [验证 RFQ 交易](https://docs.polymarket.com/cn/api-reference/rfq-trades/validate.md): 运行提交这些条款时会执行的所有检查，不存储任何内容。
+- [准备 RFQ 交易](https://docs.polymarket.com/cn/api-reference/rfq-trades/prepare.md): 构建双方未签名的订单、签名所需数据以及每一方将支付的费用。
+- [提交 RFQ 交易](https://docs.polymarket.com/cn/api-reference/rfq-trades/submit.md): 提交双方已签名的订单。交易以 PENDING 状态被接受，并异步执行。
+- [获取 RFQ 交易](https://docs.polymarket.com/cn/api-reference/rfq-trades/get-trade.md): 读取交易的当前状态，这是交易结果的权威来源。
+- [交易状态流](https://docs.polymarket.com/cn/api-reference/wss/rfq-trades.md): 推送你的 RFQ 交易状态变化的 WebSocket 流，仅在升级请求时进行一次身份验证。
+- [获取市场价格区间](https://docs.polymarket.com/cn/api-reference/rfq-trades/price-band.md): 读取此市场上 RFQ 交易价格必须落入的价格区间，涵盖两个结果代币。
+- [获取服务器时间](https://docs.polymarket.com/cn/api-reference/rfq-trades/server-time.md): 读取用于校验请求时间戳的服务器时钟。无需身份验证。
+
 ### WebSocket
 
 - [市场频道](https://docs.polymarket.com/cn/api-reference/wss/market.md): Public WebSocket for real-time orderbook, price, and market lifecycle updates.
@@ -261,12 +276,14 @@
 - [relayer-openapi](/api-spec/relayer-openapi.yaml)
 - [combos-rfq-openapi](/api-spec/combos-rfq-openapi.yaml)
 - [perps-openapi](/api-spec/perps-openapi.json)
+- [rfq-partner-openapi](/api-spec/rfq-partner-openapi.yaml)
 - [bridge-openapi](/api-spec/bridge-openapi.yaml)
 
 ## AsyncAPI Specs
 
 - [asyncapi-rfq](/asyncapi-rfq.json)
 - [asyncapi-perps](/asyncapi-perps.json)
+- [asyncapi-rfq-partner](/asyncapi-rfq-partner.json)
 - [asyncapi](/asyncapi.json)
 - [asyncapi](https://ws-live-v2.polymarket.com/asyncapi.json)
 - [asyncapi-user](/asyncapi-user.json)

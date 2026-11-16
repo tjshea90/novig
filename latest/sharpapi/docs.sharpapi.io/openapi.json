@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "SharpAPI",
-    "version": "4.8.0",
+    "version": "4.18.0",
     "description": "Real-time sports betting odds API with +EV detection, arbitrage, middles, and low-hold opportunities.\n\n## Spec Versioning\n\n`info.version` is bumped on every schema or path change. Minor version (`2.x.0`) for additive changes or breaking shape fixes that align the spec to the live response; major version (`x.0.0`) for backward-incompatible redesigns. Removed paths and renamed fields always bump the minor at minimum. Check `x-generated-at` and `x-commit-sha` for the build provenance of a given snapshot.\n\n## Authentication\n\nAll authenticated endpoints accept an API key via one of three methods:\n\n| Method | Header / Param | Use case |\n|--------|---------------|----------|\n| `X-API-Key` | `X-API-Key: sk_live_...` | Recommended for server-side |\n| `Authorization` | `Authorization: Bearer sk_live_...` | Standard Bearer token |\n| `api_key` query | `?api_key=sk_live_...` | SSE/EventSource (cannot set headers) |\n\n## Subscription Tiers\n\n| Tier | Rate Limit | Data Delay | Max Books | EV | Arb | Middles | Game State |\n|------|-----------|------------|-----------|-----|-----|---------|------------|\n| Free | 12/min | 60s | 2 (DK, FD) | - | - | - | - |\n| Hobby | 120/min | Real-time | 5 | - | Yes | - | Add-on |\n| Pro | 300/min | Real-time | 15 | Yes | Yes | Yes | Add-on |\n| Sharp | 1000/min | Real-time | 25 | Yes | Yes | Yes | Add-on |\n| Enterprise | Custom | Real-time | All | Yes | Yes | Yes | Yes |\n\nGame State is a $79/mo add-on on any paid tier (Hobby, Pro, Sharp) and is included with Enterprise.\n\n## Rate Limit Headers\n\nEvery authenticated response includes:\n\n- `X-RateLimit-Limit` - Requests allowed per minute\n- `X-RateLimit-Remaining` - Requests remaining in current window\n- `X-RateLimit-Reset` - Unix timestamp when the window resets\n- `X-Data-Delay` - Odds delay in seconds for your tier (0 = real-time)\n- `X-Request-Id` - Unique request identifier for support\n\n## WebSocket Streaming\n\nThe WebSocket endpoint at `wss://ws.sharpapi.io` is documented separately in [`asyncapi.yaml`](./asyncapi.yaml) (AsyncAPI 3.0). OpenAPI 3.x cannot express WebSocket subprotocols and message channels, so the SSE endpoint (`/stream`) is the only stream covered by this document.\n\n## MCP Server\n\nThe `POST /mcp` endpoint is a Model Context Protocol server (JSON-RPC 2.0 over Streamable HTTP). Tools are self-described at runtime via `tools/list`, so it's documented as a setup guide rather than an OpenAPI path — see [`/sdks/mcp`](https://docs.sharpapi.io/sdks/mcp).\n",
     "contact": {
       "name": "SharpAPI Support",
@@ -13,8 +13,8 @@
       "name": "Proprietary",
       "url": "https://sharpapi.io/terms"
     },
-    "x-generated-at": "2026-11-09T17:42:13Z",
-    "x-commit-sha": "7bf1b54"
+    "x-generated-at": "2026-11-16T17:39:55Z",
+    "x-commit-sha": "756487c"
   },
   "servers": [
     {
@@ -53,7 +53,7 @@
     },
     {
       "name": "Betting Splits",
-      "description": "Public betting splits — handle % and bet % from DraftKings (recreational) and Circa Sports (sharp-friendly), plus ticket-only percentages derived from BetMGM. Splits are a fixed three-source feature and do not scale with the number of sportsbooks on your plan."
+      "description": "Public betting splits — handle % and bet % from DraftKings (recreational) and Circa Sports (sharp-friendly), plus ticket-only percentages derived from BetMGM. The three sportsbook sources are fixed and do not scale with the number of sportsbooks on your plan. Soccer adds market-wide `consensus` rows with a three-way (home/draw/away) moneyline."
     },
     {
       "name": "Deep Links",
@@ -160,7 +160,7 @@
       "get": {
         "operationId": "listSplits",
         "summary": "List public betting splits",
-        "description": "Returns the latest snapshot of public betting splits (handle % and bet %) for every tracked event. Data is sourced from DraftKings (recreational) and Circa Sports (sharp-friendly), refreshed every 5 minutes, plus BetMGM, derived from that book's own public bet-percentage field (ticket % only — the `handle_pct` object is still present on BetMGM rows, but its `away`/`home` members (`over`/`under` on totals) are `null`) and intermittent. These three are the only splits sources; the set is fixed and independent of which sportsbooks your plan selects. Requires Pro tier or higher: both splits routes are registered under the `splits` tier feature, which the Free and Hobby tiers do not carry.",
+        "description": "Returns the latest snapshot of public betting splits (handle % and bet %) for every tracked event. Data is sourced from DraftKings (recreational) and Circa Sports (sharp-friendly), refreshed every 5 minutes, plus BetMGM, derived from that book's own public bet-percentage field (ticket % only — the `handle_pct` object is still present on BetMGM rows, but its `away`/`home` members (`over`/`under` on totals) are `null`) and intermittent. These three are the only sportsbook sources; the set is fixed and independent of which sportsbooks your plan selects. Soccer rows come as three-way `consensus` rows (home/draw/away, `moneyline.outcomes` 3) and, for the Premier League, MLS, Champions League and Europa League, as two-way `draftkings` rows that show the two teams only (`moneyline.outcomes` 2). Requires Pro tier or higher: both splits routes are registered under the `splits` tier feature, which the Free and Hobby tiers do not carry.",
         "tags": [
           "Betting Splits"
         ],
@@ -242,7 +242,7 @@
       "get": {
         "operationId": "getSplitsHistory",
         "summary": "Splits history for one event",
-        "description": "Returns captured splits samples for one event within the retained 48-hour window. No longer-term archive or backfill is available. Use cursor pagination to read the window. Requires Pro tier or higher.",
+        "description": "Returns captured splits samples for one event within the retained 48-hour window. No longer-term archive or backfill is available. Use cursor pagination to read the window. Each entry's moneyline has the same shape as on /splits: `outcomes` on every moneyline object, and `draw_odds` and a `draw` share on a three-way entry. Requires Pro tier or higher.",
         "tags": [
           "Betting Splits"
         ],
@@ -716,7 +716,7 @@
       "get": {
         "operationId": "listMarkets",
         "summary": "List market types",
-        "description": "Returns available market types with descriptions, examples, and event counts.",
+        "description": "Returns the market types that currently have prices, each with the number of distinct events and the sportsbooks pricing it. `sport` and `league` narrow the catalog and its counts (comma-separated values return the union; with both, a market must match both). `markets_only=false` adds per-league sportsbook coverage to every row. `catalog=true` lists every market of the market list, priced or not, and adds `priced` to every row; with `sport` or `league` it returns only the priced rows of that scope. A market's `name` is the market list's label, or a name built from `id` for a market the list does not hold yet.",
         "tags": [
           "Reference Data"
         ],
@@ -729,6 +729,48 @@
           },
           {
             "ApiKeyQuery": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sport",
+            "in": "query",
+            "required": false,
+            "description": "Only markets priced in these sports, comma-separated for several. `event_count`, `sportsbooks` and `sports` then cover the requested sports only. A sport with no odds live returns a `filter_warning` (code `unknown_sport`), not an error.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "basketball"
+          },
+          {
+            "name": "league",
+            "in": "query",
+            "required": false,
+            "description": "Only markets priced in these leagues (ids from `GET /leagues`), comma-separated for several. An event two requested leagues share counts once. A league with no odds live returns a `filter_warning` (code `unknown_league`), not an error.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "nba"
+          },
+          {
+            "name": "markets_only",
+            "in": "query",
+            "required": false,
+            "description": "`false` adds `coverage` to every row. A value that is not a boolean returns `400` `validation_error`.",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "catalog",
+            "in": "query",
+            "required": false,
+            "description": "`true` lists every market of the market list, priced or not (unpriced rows come last, sorted by `id`), and adds `priced` to every row. A priced market the list does not hold yet is still returned, without `numerical_id`. With `sport` or `league`, only the priced rows of that scope are returned, because the list does not say which sports or leagues a market belongs to. A value that is not a boolean returns `400` `validation_error`.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -749,6 +791,46 @@
                           "items": {
                             "$ref": "#/components/schemas/Market"
                           }
+                        },
+                        "sport": {
+                          "type": "string",
+                          "description": "With `sport`: the requested sports that have odds live (or, when none do, the ones that matched nothing)."
+                        },
+                        "league": {
+                          "type": "string",
+                          "description": "With `league`: the requested leagues that resolved (or, when none did, the ones that matched nothing)."
+                        },
+                        "filter_warning": {
+                          "type": "object",
+                          "description": "Present when a requested sport or league has no odds live right now or is not one we publish.",
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "unknown_league",
+                                "unknown_sport"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "unknown_leagues": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "unknown_sports": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
                         }
                       }
                     }
@@ -757,21 +839,38 @@
                 "example": {
                   "data": [
                     {
-                      "id": "moneyline",
-                      "name": "Moneyline",
-                      "numerical_id": 878,
-                      "event_count": 72124,
+                      "id": "2nd_half_team_total",
+                      "name": "2nd Half Team Total",
+                      "numerical_id": 331,
+                      "event_count": 42,
                       "sports": [
-                        "baseball",
                         "basketball",
-                        "football",
-                        "hockey",
-                        "soccer",
-                        "tennis"
+                        "football"
+                      ],
+                      "sportsbooks": [
+                        "draftkings",
+                        "fanduel",
+                        "hardrock"
                       ]
                     }
                   ],
-                  "updated_at": "2026-10-15T01:31:30Z"
+                  "updated_at": "2026-11-09T16:44:28.388212051Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`markets_only` or `catalog` is not a boolean",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "markets_only must be true or false"
+                  }
                 }
               }
             }
@@ -824,6 +923,29 @@
             "description": "Search team names (partial match)",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Row order. `name` is alphabetical by `name` (case- and accent-insensitive), then `sport`, `league`, `numerical_id`; `events` is most current events first, then `name` (exact spelling), `sport`, `league`, `numerical_id`. Defaults to `name`. Case-insensitive; an empty value counts as not set. A `next_cursor` remembers the order it was issued for: without `sort` a cursor keeps its own order, and a `sort` that contradicts it returns 400 `validation_error`.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "events"
+              ],
+              "default": "name"
+            },
+            "examples": {
+              "alphabetical": {
+                "summary": "Alphabetical by name (the default)",
+                "value": "name"
+              },
+              "mostEvents": {
+                "summary": "Most current events first",
+                "value": "events"
+              }
             }
           },
           {
@@ -881,6 +1003,29 @@
                     }
                   ],
                   "updated_at": "2026-10-15T01:31:30Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unrecognised `sort`, or a `cursor` issued for a different `sort` than the one requested. For an unrecognised `sort` the error body names the accepted values in `details.allowed`; for a contradicting `cursor` it carries `details.cursor_sort` and `details.sort` instead.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "sort must be name or events",
+                    "details": {
+                      "parameter": "sort",
+                      "allowed": [
+                        "name",
+                        "events"
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -1261,7 +1406,7 @@
           {
             "name": "is_alternate_line",
             "in": "query",
-            "description": "Filter on the row's main-line cohort. `false` returns main lines only, `true` returns alternate lines only, omit for both. A row is an alternate line when its `line` differs from the best-effort main line for its cohort. A cohort is (event, market_type, selection axis), resolved per sportsbook: the selection axis is the player for player-prop markets, the team side for spread and team-total markets, and the raw selection everywhere else. Rows in markets with no line (moneyline, outright) are always main lines. Note the cohort-pending case: a row whose cohort has not been published yet (cold start, brand-new event) has both `is_alternate_line` and `is_main_line` false, so `is_alternate_line=false` includes those rows while `is_main_line=true` excludes them. Use `is_main_line=true` for a strict main-lines-only view.",
+            "description": "Filter on the row's main-line cohort. `false` returns main lines only, `true` returns alternate lines only, omit for both. A row is an alternate line when its `line` differs from its sportsbook's own main line for its cohort (see the `is_main_line` field). A cohort is (event, market_type, selection axis), resolved per sportsbook: the selection axis is the player for player-prop markets, the team side for spread and team-total markets, and the raw selection everywhere else. Rows in markets with no line (moneyline, outright) are always main lines. Note the cohort-pending case: a row whose cohort has not been published yet (cold start, brand-new event) has both `is_alternate_line` and `is_main_line` false, so `is_alternate_line=false` includes those rows while `is_main_line=true` excludes them. Use `is_main_line=true` for a strict main-lines-only view.",
             "required": false,
             "schema": {
               "type": "boolean"
@@ -5041,12 +5186,40 @@
               "string",
               "null"
             ],
-            "description": "Why a book that is not serving data right now has no data, when the API knows. `\"no_demand\"` means the book can be selected, but its feed is paused because no customer currently has it selected; selecting the book starts it again, and it reads `\"feed_gap\"` until its first data arrives. These rows are listed only when `catalog=true` is set. `\"feed_gap\"` means at least one customer has the book selected and it still has no data, because it is starting up after being selected or its data feed is interrupted; it does not say how long the book has been without data. These rows are listed in the default response as well, with `status: \"active\"`, `coming_soon: false`, `currently_serving: false` and `event_count: 0`, so a selected book stays in the list while it has no data. `null` covers every other case: the book is serving data, is not launched yet, is inactive, or the reason is not known. Do not read `null` as a fault. More values may be added later, so do not treat the set as closed; handle a value you do not recognise as you would `null`. Key always present (`null` rather than omitted). Added October 2026.",
+            "description": "Why a book that is not serving data right now has no data, when the API knows. `\"no_demand\"` means the book can be selected, but its feed is paused because no customer currently has it selected; selecting the book starts it again, and it reads `\"feed_gap\"` until its first data arrives. These rows are listed only when `catalog=true` is set. `\"feed_gap\"` means at least one customer has the book selected and it still has no data, because it is starting up after being selected or its data feed is interrupted; it does not say how long the book has been without data. These rows are listed in the default response as well, with `status: \"active\"`, `coming_soon: false`, `currently_serving: false` and `event_count: 0`, so a selected book stays in the list while it has no data. `\"paused\"` means SharpAPI has temporarily switched the book off. These rows are listed in the default response with `status: \"inactive\"`, `currently_serving: false` and `event_count: 0`; there is no resume date, the row never carries `outage`, and it is not an outage. Treat the book like any other book that is not serving: do not poll for it. A request that names only paused books answers `503 book_unavailable` with `details.idle_reason: \"paused\"` and no `Retry-After`. `null` covers every other case: the book is serving data, is not launched yet, is inactive, or the reason is not known. Do not read `null` as a fault. More values may be added later, so do not treat the set as closed; handle a value you do not recognise as you would `null`. Key always present (`null` rather than omitted). Added October 2026.",
             "examples": [
               "no_demand",
               "feed_gap",
+              "paused",
               null
             ]
+          },
+          "outage": {
+            "type": "object",
+            "description": "Present only on a row with `idle_reason: \"feed_gap\"`, and only when SharpAPI has evidence of when the data stopped; omitted on every other row, so a paused row never carries it. Uses the same field names as `details.outage` on the `503 book_unavailable` response, where it appears only when `extended` is `true` and `unobserved_since` is an object keyed by book. Added October 2026.",
+            "required": [
+              "extended",
+              "unobserved_since",
+              "threshold_hours"
+            ],
+            "properties": {
+              "extended": {
+                "type": "boolean",
+                "description": "`true` once the book has been unobserved for at least `threshold_hours`; `false` for a fresh gap.",
+                "example": true
+              },
+              "unobserved_since": {
+                "type": "string",
+                "format": "date-time",
+                "description": "UTC time (RFC 3339) from which SharpAPI has seen no data for the book. For a book that has never had data, the time SharpAPI started watching it.",
+                "example": "2026-11-12T19:42:14Z"
+              },
+              "threshold_hours": {
+                "type": "integer",
+                "description": "Hours without data after which `extended` becomes `true`.",
+                "example": 24
+              }
+            }
           }
         }
       },
@@ -5056,7 +5229,8 @@
           "id",
           "name",
           "event_count",
-          "sports"
+          "sports",
+          "sportsbooks"
         ],
         "properties": {
           "id": {
@@ -5065,7 +5239,8 @@
           },
           "name": {
             "type": "string",
-            "example": "Moneyline"
+            "example": "Moneyline",
+            "description": "Display name: the market list's label, or a name built from `id` (each word capitalised) for a market the list does not hold yet. Not a filter value; filter on `id`."
           },
           "numerical_id": {
             "type": "integer",
@@ -5074,14 +5249,83 @@
           },
           "event_count": {
             "type": "integer",
-            "description": "Events currently offering this market."
+            "description": "Distinct events with at least one current price in this market, across all sportsbooks, within the request's `sport` / `league` scope. An event counts once however many sportsbooks, lines and selections price it."
           },
           "sports": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Sports this market is offered in."
+            "description": "Sports this market is offered in. With `sport`, only the requested sports."
+          },
+          "sportsbooks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Sportsbooks with at least one current price in this market, within the request's scope, sorted. Never null.",
+            "example": [
+              "draftkings",
+              "fanduel",
+              "hardrock"
+            ]
+          },
+          "coverage": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MarketSportCoverage"
+            },
+            "description": "Only with `markets_only=false`: the sportsbooks pricing this market in each sport and league, sorted by id. A price on an event whose league is not identified adds its sportsbook to `sportsbooks` but appears under no league here; `[]` (never null) when no price has an identified league."
+          },
+          "priced": {
+            "type": "boolean",
+            "description": "Only with `catalog=true`: `true` when at least one sportsbook has a current price in this market within the request's scope. A `false` row has `event_count` `0` and empty `sports` and `sportsbooks`."
+          }
+        }
+      },
+      "MarketSportCoverage": {
+        "type": "object",
+        "description": "One sport in a `/markets` row's `coverage`.",
+        "required": [
+          "id",
+          "leagues"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Sport id.",
+            "example": "basketball"
+          },
+          "leagues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MarketLeagueCoverage"
+            }
+          }
+        }
+      },
+      "MarketLeagueCoverage": {
+        "type": "object",
+        "description": "One league in a `MarketSportCoverage`.",
+        "required": [
+          "id",
+          "sportsbooks"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "League id, as returned by `GET /leagues`.",
+            "example": "nba"
+          },
+          "sportsbooks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Sportsbooks pricing the market in this league, sorted.",
+            "example": [
+              "draftkings"
+            ]
           }
         }
       },
@@ -5528,7 +5772,8 @@
           },
           "market_label": {
             "type": "string",
-            "example": "Moneyline"
+            "example": "Moneyline",
+            "description": "Display name of the market: the same as the market's `name` on `GET /markets`. Filter and match on `market_type`."
           },
           "selection_count": {
             "type": "integer"
@@ -5596,6 +5841,17 @@
           "book_count": {
             "type": "integer",
             "description": "Number of sportsbooks that contributed live state for this event at merge time. Live rows only — absent on a terminal row."
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "The other `event_id`s that refer to this same game, sorted alphabetically; never includes the row's own `event_id`. Sportsbooks sometimes file one game under different league names, which gives it a different `event_id` at each book: the game is listed once, under one `event_id`, and this list holds the others. Odds rows and opportunities for the game can carry any of these ids, so match an odds row's `event_id` against the row's key or any id here. Present only when the game is known under more than one id; omitted otherwise, never `null` or empty. Live rows only — absent on terminal and unconfirmed rows. Since 2026-11-12; before then a merged game was listed once per id, so any of its ids found it by key.",
+            "example": [
+              "argentina_-_liga_profesional_bocajuniors_defensayjusticia_2026-04-23"
+            ]
           },
           "game_period": {
             "type": [
@@ -5730,7 +5986,7 @@
           "completed_at": {
             "type": "string",
             "format": "date-time",
-            "description": "Terminal rows only — when SharpAPI detected the completion (not a league-official final whistle). The 15-minute carry window is measured from this timestamp."
+            "description": "Terminal rows only — when SharpAPI detected the completion (not a league-official final whistle). The 15-minute carry window is not measured from this timestamp but from when the row first showed as final, usually within a few minutes of it. A game confirmed final after it left the live feed can show as final much later than its `completed_at`."
           },
           "last_seen_at": {
             "type": "string",
@@ -5870,11 +6126,11 @@
           },
           "is_alternate_line": {
             "type": "boolean",
-            "description": "True when this row's `line` differs from the best-effort main line for its cohort. A cohort is (event, market_type, selection axis), resolved per sportsbook: the selection axis is the player for player-prop markets, the team side for spread and team-total markets, and the raw selection everywhere else. False for the main line, for markets with no line (moneyline, outright), and for rows whose cohort has not been published yet. Mutually exclusive with `is_main_line`: both true never coexists, both false is the cohort-pending state."
+            "description": "True when this row's `line` differs from this sportsbook's own main line for its cohort (see `is_main_line`). A cohort is (event, market_type, selection axis), resolved per sportsbook: the selection axis is the player for player-prop markets, the team side for spread and team-total markets, and the raw selection everywhere else. False for the main line, for markets with no line (moneyline, outright), and for rows whose cohort has not been published yet. Mutually exclusive with `is_main_line`: both true never coexists, both false is the cohort-pending state."
           },
           "is_main_line": {
             "type": "boolean",
-            "description": "True when this row's `line` equals the best-effort main line for its cohort, and for markets with no line (moneyline, outright), which are always main by definition. A cohort is (event, market_type, selection axis), resolved per sportsbook: the selection axis is the player for player-prop markets, the team side for spread and team-total markets, and the raw selection everywhere else. Best-effort, not a uniqueness guarantee: several rows of one (event, market_type) are normally main at once, one per selection axis — Over and Under of a game total are separate cohorts, and so is each outcome of a combination market. False for alternate lines and for cohort-pending rows. Filter with `is_main_line=true` for a main-lines-only view that excludes cohort-pending rows."
+            "description": "True when this row's `line` is this sportsbook's own main line for its cohort: of the lines the sportsbook quotes both ways, the one whose two prices are closest to an even market, with both sides of that line main. A sportsbook that quotes no line both ways gets the line most sportsbooks quote, or its own highest-ranked rung when it does not quote that one. Also true for markets with no line (moneyline, outright), which are always main by definition. A cohort is (event, market_type, selection axis), resolved per sportsbook: the selection axis is the player for player-prop markets, the team side for spread and team-total markets, and the raw selection everywhere else. Best-effort, not a uniqueness guarantee: several rows of one (event, market_type) are normally main at once, one per sportsbook and selection axis, and two sportsbooks can have different main lines on one market — Over and Under of a game total are separate cohorts, and so is each outcome of a combination market. False for alternate lines and for cohort-pending rows. Filter with `is_main_line=true` for a main-lines-only view that excludes cohort-pending rows."
           },
           "event_start_time": {
             "type": "string",
@@ -6322,7 +6578,7 @@
           },
           "is_alternate_line": {
             "type": "boolean",
-            "description": "True when this row's `line` differs from the best-effort main line for its cohort. A cohort is (event, market_type, selection axis), resolved per sportsbook: the selection axis is the player for player-prop markets, the team side for spread and team-total markets, and the raw selection everywhere else. Always false for markets with no line (moneyline, outright). The live endpoint always emits this field; it was absent from this schema until spec 3.9.0."
+            "description": "True when this row's `line` differs from its sportsbook's own main line for its cohort, the same flag as `is_alternate_line` on that sportsbook's `/odds` row. A cohort is (event, market_type, selection axis), resolved per sportsbook: the selection axis is the player for player-prop markets, the team side for spread and team-total markets, and the raw selection everywhere else. Always false for markets with no line (moneyline, outright). The live endpoint always emits this field; it was absent from this schema until spec 3.9.0."
           },
           "sportsbook": {
             "type": "string",
@@ -6896,6 +7152,7 @@
         "required": [
           "book",
           "selection",
+          "selection_type",
           "line",
           "odds_american",
           "odds_decimal",
@@ -6912,6 +7169,19 @@
           "selection": {
             "type": "string",
             "example": "Over 220.5"
+          },
+          "selection_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "over",
+              "under",
+              null
+            ],
+            "description": "Which side of an over/under middle this is: `over` on `side1` and `under` on `side2` for totals, team totals and player props. `null` on both sides of a spread-like middle (point spread, puck line, game spread, Asian and set handicaps, half and quarter spreads), where `selection` names the team. Same meaning as `selection_type` on an `/odds` row, limited here to `over` and `under`. Read the side from this field, not from `selection`, which is the sportsbook's own label and can be the player's name, a localized label or `Yes`/`No` on a prediction market.",
+            "example": "over"
           },
           "line": {
             "type": "number",
@@ -6970,6 +7240,8 @@
           "is_player_prop",
           "player_name",
           "stat_category",
+          "is_team_total",
+          "team_name",
           "confidence",
           "odds_age_seconds",
           "possibly_stale",
@@ -7062,6 +7334,25 @@
               "string",
               "null"
             ]
+          },
+          "is_team_total": {
+            "type": "boolean",
+            "description": "Whether the market is a team total (`team_total`, `team_total_goals`, `1st_half_team_total` and every other market type containing `team_total`). On every row."
+          },
+          "team_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The team whose total this is, on a team-total row; `null` on every other row. Both sides of a team-total row are this team's total: a team-total pair whose team cannot be named is not listed."
+          },
+          "team_side": {
+            "type": "string",
+            "enum": [
+              "home",
+              "away"
+            ],
+            "description": "Which of this row's `home_team` / `away_team` is `team_name`. Only on a team-total row whose team matched one of the event's teams; absent otherwise, including when `team_name` comes only from the sportsbook's selection text."
           },
           "confidence": {
             "type": "number",
@@ -7525,6 +7816,19 @@
             "type": "string",
             "description": "Canonical event ID (joinable with /odds)"
           },
+          "event_uuid": {
+            "type": "string",
+            "description": "The event's stable UUID, the same value as `event_uuid` on `/odds`. **Optional: present only when the row matches exactly one event.** SharpAPI matches each row's `event_id` to an event; when the match is ambiguous (for example, a doubleheader row whose `event_id` has no `_bN` suffix could be either game) or the event is not found, the row omits `event_uuid`, `canonical_event_id` and `event_start_time` rather than guess. Read it with a default."
+          },
+          "canonical_event_id": {
+            "type": "string",
+            "description": "The matched event's ID, as `/events` serves it in `id` and `/odds` in `event_id`. Usually identical to `event_id`. **Optional: present only when `event_uuid` is.**"
+          },
+          "event_start_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The matched event's start time, ISO 8601, the same value as `start_time` on `/events`. `/odds` rows carry the same start in `event_start_time`, but not always in the same format (it can omit the seconds, e.g. `2026-10-29T00:00Z`), so compare the two as timestamps, not as strings. **Optional: present only when the row matches exactly one event (see `event_uuid`), and also absent when the matched event has no start time on record, the same case in which `/events` omits `start_time`.**"
+          },
           "sport": {
             "type": "string"
           },
@@ -7539,7 +7843,7 @@
               "betmgm",
               "consensus"
             ],
-            "description": "Source sportsbook for the splits data. `consensus` is a synthetic label, not a sportsbook: when every source covering an event posts identical numbers those rows are merged into one row tagged `consensus`, so a `sportsbook=draftkings` filter does not return them. It is accepted by this endpoint's `sportsbook` filter but never appears in /api/v1/sportsbooks."
+            "description": "Source sportsbook for the splits data. `consensus` is a synthetic label, not a sportsbook: when every source covering an event posts identical numbers those rows are merged into one row tagged `consensus`, so a `sportsbook=draftkings` filter does not return them. It is accepted by this endpoint's `sportsbook` filter but never appears in /api/v1/sportsbooks. Soccer `consensus` rows are not merged book rows: they carry market-wide public betting percentages, not one sportsbook's own, and they are the only rows with a three-way moneyline (`moneyline.outcomes` 3)."
           },
           "away_team": {
             "type": "string"
@@ -7549,7 +7853,7 @@
           },
           "spread": {
             "type": "object",
-            "description": "Spread market splits. Read the spread line (the handicap, e.g. -1.5/+1.5) from `away_line`/`home_line`, the same names `/splits/history` uses. `away_odds`/`home_odds` carry the same value as a legacy alias: they are the line, not American odds. No splits source publishes a spread price.",
+            "description": "Spread market splits. Read the spread line (the handicap, e.g. -1.5/+1.5) from `away_line`/`home_line`, the same names `/splits/history` uses. `away_odds`/`home_odds` carry the same value as a legacy alias: they are the line, not American odds. No splits source publishes a spread price. Soccer rows carry no spread: every field is `null`.",
             "properties": {
               "away_line": {
                 "type": [
@@ -7622,11 +7926,20 @@
                     "maximum": 1
                   }
                 }
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When this market's numbers last changed: usually the time SharpAPI first saw the new numbers, normally within a few minutes of the change, or, for some sources, the change time the source itself reports. `null`, or absent, when no change time is known (for example, the market has no numbers)."
               }
             }
           },
           "total": {
             "type": "object",
+            "description": "Total market splits. On soccer rows the line is total goals.",
             "properties": {
               "line": {
                 "type": [
@@ -7678,12 +7991,29 @@
                     "maximum": 1
                   }
                 }
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When this market's numbers last changed: usually the time SharpAPI first saw the new numbers, normally within a few minutes of the change, or, for some sources, the change time the source itself reports. `null`, or absent, when no change time is known (for example, the market has no numbers)."
               }
             }
           },
           "moneyline": {
             "type": "object",
+            "description": "Moneyline market splits. `outcomes` says how many outcomes the market has: `3` for a three-way (home/draw/away) market, which also carries `draw_odds` and a `draw` member in `handle_pct` and `bets_pct`; `2` for every other moneyline, DraftKings soccer rows included.",
             "properties": {
+              "outcomes": {
+                "type": "integer",
+                "enum": [
+                  2,
+                  3
+                ],
+                "description": "How many outcomes this moneyline market has: `3` for a three-way (home/draw/away, 1X2) market, `2` for every other moneyline. Present on every moneyline object. Branch on it, not on the sport: a soccer moneyline can be two-way (DraftKings soccer rows show the two teams only). A three-way share object is never cut down to two numbers, so a moneyline with two shares is never a 1X2 split."
+              },
               "away_odds": {
                 "type": [
                   "number",
@@ -7698,9 +8028,16 @@
                 ],
                 "description": "American odds. `null` when the source has pulled the moneyline for this event while still publishing its split percentages; the key stays present."
               },
+              "draw_odds": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "American odds for the draw. Present only when `outcomes` is `3`; `null` when the source has posted no draw price."
+              },
               "handle_pct": {
                 "type": "object",
-                "description": "Share of money wagered on each side (0.0-1.0). Both members are `null` on `betmgm` rows: BetMGM publishes a ticket percentage only, so no handle figure exists to report. The keys are always present - only their values are null.",
+                "description": "Share of money wagered on each side (0.0-1.0). Both members are `null` on `betmgm` rows: BetMGM publishes a ticket percentage only, so no handle figure exists to report. The keys are always present - only their values are null. On a three-way moneyline (`outcomes` 3) the object also carries `draw`, and its three members either add up to 1 within 0.02 or are all `null` together: it is never served with two numbers.",
                 "properties": {
                   "away": {
                     "type": [
@@ -7717,12 +8054,21 @@
                     ],
                     "minimum": 0,
                     "maximum": 1
+                  },
+                  "draw": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Share on the draw. Present only when `outcomes` is `3`."
                   }
                 }
               },
               "bets_pct": {
                 "type": "object",
-                "description": "Share of tickets wagered on each side (0.0-1.0). Members are `null` when the source has posted no percentage for this market; observed on `betmgm` rows, whose feed is intermittent. The keys are always present - only their values are null.",
+                "description": "Share of tickets wagered on each side (0.0-1.0). Members are `null` when the source has posted no percentage for this market; observed on `betmgm` rows, whose feed is intermittent. The keys are always present - only their values are null. On a three-way moneyline (`outcomes` 3) the object also carries `draw`, and its three members either add up to 1 within 0.02 or are all `null` together: it is never served with two numbers.",
                 "properties": {
                   "away": {
                     "type": [
@@ -7739,14 +8085,32 @@
                     ],
                     "minimum": 0,
                     "maximum": 1
+                  },
+                  "draw": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Share on the draw. Present only when `outcomes` is `3`."
                   }
                 }
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When this market's numbers last changed: usually the time SharpAPI first saw the new numbers, normally within a few minutes of the change, or, for some sources, the change time the source itself reports. `null`, or absent, when no change time is known (for example, the market has no numbers)."
               }
             }
           },
           "fetched_at": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "When SharpAPI last polled the source for this row. It advances on every poll, even when the source's numbers have not changed, so it does not say how current they are: read `updated_at` on `moneyline`, `spread` and `total`."
           },
           "available_metrics": {
             "type": "array",
@@ -7775,9 +8139,10 @@
             "enum": [
               "draftkings",
               "circa",
-              "betmgm"
+              "betmgm",
+              "consensus"
             ],
-            "description": "Source sportsbook; history uses book where /splits uses sportsbook. No synthetic consensus history is produced."
+            "description": "Source sportsbook; history uses book where /splits uses sportsbook. `consensus` entries carry market-wide public betting percentages, not one sportsbook's own; every three-way soccer entry is a `consensus` entry. A /splits row merged from identical book rows has no history of its own: its books' entries keep their own names."
           },
           "ts": {
             "type": "string",
@@ -7889,7 +8254,16 @@
           },
           "moneyline": {
             "type": "object",
+            "description": "Moneyline market splits. `outcomes` says how many outcomes the market has: `3` for a three-way (home/draw/away) market, which also carries `draw_odds` and a `draw` member in `handle_pct` and `bets_pct`; `2` for every other moneyline, DraftKings soccer entries included.",
             "properties": {
+              "outcomes": {
+                "type": "integer",
+                "enum": [
+                  2,
+                  3
+                ],
+                "description": "How many outcomes this moneyline market has: `3` for a three-way (home/draw/away, 1X2) market, `2` for every other moneyline. Present on every moneyline object. Branch on it, not on the sport: a soccer moneyline can be two-way (DraftKings soccer rows show the two teams only). A three-way share object is never cut down to two numbers, so a moneyline with two shares is never a 1X2 split."
+              },
               "away_odds": {
                 "type": [
                   "number",
@@ -7904,8 +8278,16 @@
                 ],
                 "description": "American odds. `null` when the source has pulled the moneyline for this event while still publishing its split percentages; the key may be absent on BetMGM samples."
               },
+              "draw_odds": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "American odds for the draw. Present only when `outcomes` is `3`; `null` when the source posted no draw price at snapshot time."
+              },
               "handle_pct": {
                 "type": "object",
+                "description": "On a three-way moneyline (`outcomes` 3) the object also carries `draw`, and its three members either add up to 1 within 0.02 or are all `null` together: it is never served with two numbers.",
                 "properties": {
                   "away": {
                     "type": [
@@ -7918,11 +8300,19 @@
                       "number",
                       "null"
                     ]
+                  },
+                  "draw": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "description": "Share on the draw. Present only when `outcomes` is `3`."
                   }
                 }
               },
               "bets_pct": {
                 "type": "object",
+                "description": "On a three-way moneyline (`outcomes` 3) the object also carries `draw`, and its three members either add up to 1 within 0.02 or are all `null` together: it is never served with two numbers.",
                 "properties": {
                   "away": {
                     "type": [
@@ -7935,6 +8325,13 @@
                       "number",
                       "null"
                     ]
+                  },
+                  "draw": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "description": "Share on the draw. Present only when `outcomes` is `3`."
                   }
                 }
               }

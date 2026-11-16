@@ -2,8 +2,23 @@
 
 ## API Reference
 
-- [English / API Reference / Predictions (124 pages)](https://docs.polymarket.com/_llms/en/api-reference/predictions.txt): Documentation for English / API Reference / Predictions.
-- [English / API Reference / Perps (103 pages)](https://docs.polymarket.com/_llms/en/api-reference/perps.txt): Documentation for English / API Reference / Perps.
+- [English / API Reference / Predictions (124 pages)](https://docs.polymarket.com/_llms/en/api-reference/predictions.txt): Events, Markets, Orderbook & Pricing, Orders, Trades, Rebates, Rewards, Profile, Boards, Search, Tags, Series, Comments, Sports, Relayer, Combos, WebSocket, PolyBolt WebSocket, Bridge.
+- [English / API Reference / Perps (103 pages)](https://docs.polymarket.com/_llms/en/api-reference/perps.txt): HTTP, WebSocket.
+
+### Institutional
+
+- [Overview](https://docs.polymarket.com/api-reference/rfq-trades/overview.md): Explore the RFQ Trades Partner API for settling trades matched on your platform.
+- [Authentication](https://docs.polymarket.com/api-reference/rfq-trades/authentication.md): Sign every RFQ Trades Partner API request, and the trade status stream's handshake, with your partner API key.
+
+#### RFQ Trades
+
+- [Validate an RFQ Trade](https://docs.polymarket.com/api-reference/rfq-trades/validate.md): Run every check a submission of the agreed terms would run, without storing anything.
+- [Prepare an RFQ Trade](https://docs.polymarket.com/api-reference/rfq-trades/prepare.md): Build both unsigned orders, their signing payloads, and the fee each side will pay.
+- [Submit an RFQ Trade](https://docs.polymarket.com/api-reference/rfq-trades/submit.md): Submit both signed orders. The trade is accepted as PENDING and executes asynchronously.
+- [Get an RFQ Trade](https://docs.polymarket.com/api-reference/rfq-trades/get-trade.md): Read a trade's current status, the source of truth for its outcome.
+- [Trade Status Stream](https://docs.polymarket.com/api-reference/wss/rfq-trades.md): WebSocket stream of your RFQ trades' status changes, authenticated once on the upgrade request.
+- [Get a Market's Price Band](https://docs.polymarket.com/api-reference/rfq-trades/price-band.md): Read the price band an RFQ trade on this market must fall inside, for both outcome tokens.
+- [Get Server Time](https://docs.polymarket.com/api-reference/rfq-trades/server-time.md): Read the server clock that request timestamps are checked against. No authentication needed.
 
 ## OpenAPI Specs
 
@@ -14,6 +29,7 @@
 - [combos-rfq-openapi](/api-spec/combos-rfq-openapi.yaml)
 - [bridge-openapi](/api-spec/bridge-openapi.yaml)
 - [perps-openapi](/api-spec/perps-openapi.json)
+- [rfq-partner-openapi](/api-spec/rfq-partner-openapi.yaml)
 
 ## AsyncAPI Specs
 
@@ -23,3 +39,4 @@
 - [asyncapi-user](/asyncapi-user.json)
 - [asyncapi-sports](/asyncapi-sports.json)
 - [asyncapi-perps](/asyncapi-perps.json)
+- [asyncapi-rfq-partner](/asyncapi-rfq-partner.json)

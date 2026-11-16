@@ -43,6 +43,8 @@ tags:
     description: Matched trades and portfolio history
   - name: Orders
     description: Orderbook queries, posting, cancelling, and filling orders
+  - name: Partner API
+    description: Create and list your platform's users (partner keys only)
 paths:
   /sports:
     get:

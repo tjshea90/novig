@@ -6,6 +6,61 @@
 
 > Important changes to Polymarket prediction markets, including the CLOB, APIs, web application, and mobile applications.
 
+**Nov 16, 2026**
+
+PolyBolt: Chainlink API keys and required providers
+
+* From November 30, 2026 at 00:00 UTC, price subscriptions require an explicit provider. Subscriptions served by Chainlink, including TWAP, also require your Chainlink API key. See [PolyBolt authentication](https://docs.polymarket.com/api-reference/live-data/overview.md#send-your-chainlink-api-key).
+
+> [!NOTE]
+>
+> Request a Chainlink API Key using [this form](https://institutional.polymarket.com/request-chainlink-api-key).
+
+**Nov 12, 2026**
+
+Polymarket Protocol V2 support in Python and Rust
+
+* [Python `py-clob-client-v2 1.2.2`](https://pypi.org/project/py-clob-client-v2/1.2.2/) and [Rust `polymarket_client_sdk_v2 0.9.1`](https://crates.io/crates/polymarket_client_sdk_v2/0.9.1) add support for signing orders for Polymarket Protocol V2 markets on Polygon Amoy Testnet (chain ID `80002`).
+* The Python CLOB client remains deprecated. Follow the [unified SDK migration guide](https://docs.polymarket.com/migrate/clob-sdk-to-unified-sdk.md) to move to `polymarket-client`.
+
+**Nov 11, 2026**
+
+CLOB API deprecations take effect Dec 14
+
+On `https://clob.polymarket.com`, three order and trade query changes take effect
+on December 14. Update your integration before then to avoid failed requests.
+
+* **`associate_trades` is deprecated on CLOB order and trade responses.** Do not
+  use it to track fills.
+* **`GET https://clob.polymarket.com/data/orders` requires `market` when filtering
+  by `asset_id`.** Requests with only `asset_id` return `400`
+  (`asset_id requires market`).
+* **`GET https://clob.polymarket.com/orders` and
+  `GET https://clob.polymarket.com/v1/trade/open-orders` no longer support
+  `asset_id` or `token_id` filters.** To filter open orders by asset, use
+  `GET https://clob.polymarket.com/data/orders` with `asset_id` and `market`.
+
+**Nov 11, 2026**
+
+Relayer supported contracts
+
+* **Polymarket Relayer Policy Change**: From 11/11/2026, the relayer will only relay transactions that interact with Polymarket contracts and a short list of supported third-party contracts. All other transactions will be rejected.
+
+**Nov 10, 2026**
+
+PolyBolt: energy futures on price.equity
+
+* **New symbols**: `wti`, `brent` and `natgas` join `price.equity`, served by Chainlink with `market_status`. See [Supported Symbols](https://docs.polymarket.com/api-reference/live-data/overview.md#supported-symbols).
+* **Contract rolls**: `cll` and `hn` (Pyth) now move to the next contract at the open of the current contract's third-to-last trading session, the Active Month the WTI and natural gas Up or Down markets resolve on. `wti`, `brent` and `natgas` follow Chainlink's own roll schedule.
+* **Chainlink prices**: `full_accuracy_value` on Chainlink-sourced prices now carries at most 15 significant digits, dropping floating-point artifacts such as `3.2091000000000003`.
+
+**Nov 5, 2026**
+
+PolyBolt: dxy, and Pyth pins on spcx and mu
+
+* **New symbol**: `dxy` (the US Dollar Index) joins `price.equity`, served by Pyth, the feed the DXY markets resolve on.
+* **Pyth on `spcx` and `mu`**: both still default to Chainlink and can now be pinned to `pyth`, the feed their markets resolve on. See [Pin a Price Provider](https://docs.polymarket.com/api-reference/live-data/overview.md#pin-a-price-provider).
+
 **Nov 2, 2026**
 
 Data API v1 retirement

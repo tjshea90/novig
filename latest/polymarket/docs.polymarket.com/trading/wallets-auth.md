@@ -543,6 +543,11 @@ Copy the **API Key**, **Secret**, and **Passphrase** shown after creation.
 Approve token spending, transfer funds, and manage positions from the account
 wallet without paying gas.
 
+> [!NOTE]
+>
+> Polymarket Relayer only allows gasless transactions that interact with the
+> Polymarket Protocol and supported third-party contracts.
+
 > [tab] TypeScript
 >
 > `SecureClient` provides named methods for supported wallet actions. Most

@@ -4,7 +4,7 @@
 
 # Generate API Key
 
->  Endpoint for generating a new API key with an automatically created key pair.  This endpoint generates a key pair of the requested key_type (RSA when omitted). The public key is stored on the platform, while the private key is returned to the user and must be stored securely. The private key cannot be retrieved again.
+>  Endpoint for generating a new API key with an automatically created key pair.  This endpoint generates a key pair of the requested key_type (RSA when omitted). The public key is stored on the platform, while the private key is returned to the user and must be stored securely. The private key cannot be retrieved again. In production, an account can hold up to 100 directly managed API keys (keys created on the account settings page or through the API key endpoints).
 
 
 
@@ -65,7 +65,7 @@ paths:
       tags:
         - api-keys
       summary: Generate API Key
-      description: ' Endpoint for generating a new API key with an automatically created key pair.  This endpoint generates a key pair of the requested key_type (RSA when omitted). The public key is stored on the platform, while the private key is returned to the user and must be stored securely. The private key cannot be retrieved again.'
+      description: ' Endpoint for generating a new API key with an automatically created key pair.  This endpoint generates a key pair of the requested key_type (RSA when omitted). The public key is stored on the platform, while the private key is returned to the user and must be stored securely. The private key cannot be retrieved again. In production, an account can hold up to 100 directly managed API keys (keys created on the account settings page or through the API key endpoints).'
       operationId: GenerateApiKey
       requestBody:
         required: true
@@ -85,11 +85,16 @@ paths:
         '401':
           description: Unauthorized
         '403':
-          description: Forbidden - fcm_subtrader_id requires an FCM member caller
+          description: >-
+            Forbidden - the calling API key lacks the `write` scope, or
+            fcm_subtrader_id requires an FCM member caller
         '409':
           description: >-
-            Conflict - the bound FCM subtrader is not yet visible in the
-            credential registry; retry after the subtrader create propagates
+            Conflict - the account already holds the maximum number of directly
+            managed API keys, 100 in production (code
+            `MAXIMUM_NUMBER_OF_API_KEYS_REACHED`); or the bound FCM subtrader is
+            not yet visible in the credential registry, in which case retry
+            after the subtrader create propagates
         '500':
           description: Internal server error
       security:

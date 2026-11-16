@@ -1821,6 +1821,10 @@ List supported `regions` filter values used by /v1/sports/{key}/odds. Public, no
 **List Markets**
 List supported `markets` filter values across the API. Public, no auth, no credits. iter_062 #474.  The market_key vocabulary is large (60+ values) and grows over the season as books add new prop markets. This endpoint returns the current c
 
+## GET /v1/delayed/pinnacle/sports
+**Delayed Pinnacle Sports**
+Sport keys the delayed Pinnacle feed holds right now, with event counts and the age of each snapshot.  The delayed feed is requested as `/v1/sports/{sport_key}/odds?bookmakers=pinnacle_delayed`, on its own. Prices are usually 1 to 16 minute
+
 ## GET /v1/bookmakers
 **List Bookmakers**
 List supported bookmakers with their integration status.  Status values. These are INTEGRATION states, not liveness readings:   active                Registered/configured integration; not a live-availability reading.   merged              

@@ -3015,6 +3015,11 @@ eventData.forEach((event) => {
   const odds = event.odds;
   Object.values(odds).forEach((oddObject) => {
     const oddID = oddObject.oddID;
+    // A finalized market with no score couldn't be graded: usually a player prop for a player who did not play (sportsbooks void those)
+    if (oddObject.score == null) {
+        console.log(`Odd ID: ${oddID} - No score`);
+        return;
+    }
     const score = parseFloat(oddObject.score);
 
     const closeOverUnder = parseFloat(oddObject.closeOverUnder);
@@ -4288,6 +4293,14 @@ We've found that maintaining a single statID for the main (most important) stat 
 
 For sports that can go beyond regulation, the full-game `points` stat value (from the results and team.score object) includes overtime / extra time and any penalty shootouts when applicable. See [Periods docs](/docs/data-types/periods#full-event-scores) for more info.
 
+## Players who did not play [#players-who-did-not-play]
+
+* In football, basketball, hockey, baseball and soccer, `played: 1` marks a player who entered the game (any playing time), including one who recorded no other stat. It is never 0: a player without it did not play, or no source reported their participation. No odds are offered on `played`.
+* Once an event is finalized, a player listed in `players` (for example because they had odds) with no entry in any period of `results` did not play, or we have no stats for them. Their player props are left without a `score` rather than graded as 0. Sportsbooks void props on a player who didn't play.
+* Some feeds can't prove participation either way. In college football only players who recorded a stat are listed, so an offensive lineman or a receiver without a catch can have no entry. The KHL lists dressed skaters with zero stats whether or not they played, so they have entries but no `played`.
+* With `expandResults=true`, missing stats are filled in (usually as 0) only for players who have a `results` entry. `played` is filled in as 1 when the player has `minutesPlayed` or `secondsPlayed` above 0, or `played` in a shorter period it covers (a quarter within a half), and never as 0.
+* Events finalized before mid-November 2026 may still carry a 0 `score` on those props instead of none.
+
 ---
 
 # Stat Entity Data Type - statEntityID
@@ -4480,15 +4493,15 @@ Each event returned by the [`/events` endpoint](/docs/endpoints/getEvents) conta
 
 ## Key Odds Fields [#key-odds-fields]
 
-| Field                             | Description                                       |
-| --------------------------------- | ------------------------------------------------- |
-| `fairOdds`                        | Consensus odds without juice (vig removed)        |
-| `bookOdds`                        | Consensus odds across bookmakers (includes juice) |
-| `fairSpread` / `bookSpread`       | The spread/handicap value (for spread bets)       |
-| `fairOverUnder` / `bookOverUnder` | The over/under line (for O/U bets)                |
-| `byBookmaker`                     | Odds broken down by individual bookmaker          |
-| `started` / `ended`               | Whether the bet period has started or ended       |
-| `score`                           | The final result value (when available)           |
+| Field                             | Description                                                                                                                                                                                                                                                                                                           |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fairOdds`                        | Consensus odds without juice (vig removed)                                                                                                                                                                                                                                                                            |
+| `bookOdds`                        | Consensus odds across bookmakers (includes juice)                                                                                                                                                                                                                                                                     |
+| `fairSpread` / `bookSpread`       | The spread/handicap value (for spread bets)                                                                                                                                                                                                                                                                           |
+| `fairOverUnder` / `bookOverUnder` | The over/under line (for O/U bets)                                                                                                                                                                                                                                                                                    |
+| `byBookmaker`                     | Odds broken down by individual bookmaker                                                                                                                                                                                                                                                                              |
+| `started` / `ended`               | Whether the bet period has started or ended                                                                                                                                                                                                                                                                           |
+| `score`                           | The final result value (when available). On a finalized event, a market with no `score` couldn't be graded: most often a player prop for a player who [did not play](/docs/data-types/stats#players-who-did-not-play), which sportsbooks void, but it can also be a stat we have no data for (see `scoringSupported`) |
 
 ### Open/Close Odds by Bookmaker [#openclose-odds-by-bookmaker]
 
@@ -4825,6 +4838,10 @@ A bet on whether the combined score of both teams will be over or under a specif
 ## Underdog [#underdog]
 
 The team expected to lose, indicated by positive odds in American format (e.g., +150).
+
+## Void (No Action) [#void-no-action]
+
+A bet that is cancelled and refunded with no win or loss, such as a player prop when the player never entered the game. In the API, a player prop on a finalized event with no `score` usually means the player didn't play. See [Players who did not play](/docs/data-types/stats#players-who-did-not-play).
 
 ---
 

@@ -113,6 +113,24 @@ Routes with no authentication, such as `GET /markets/active`, are not listed her
 | [`POST` `/user/multisig/set-threshold/execute`](https://docs.sx.bet/api-reference/post-user-multisig-set-threshold-execute) |
 | [`POST` `/user/multisig/cancel`](https://docs.sx.bet/api-reference/post-user-multisig-cancel) |
 
+## Partner users: create
+
+Partner keys only. These scopes are on the partner keys SX Bet issues to approved partners. See
+[Partner API](https://docs.sx.bet/developers/partner-api.md).
+
+| Endpoint |
+| - |
+| [`GET` `/partner/attestation`](https://docs.sx.bet/api-reference/get-partner-attestation) |
+| [`POST` `/partner/users`](https://docs.sx.bet/api-reference/post-partner-users) |
+
+## Partner users: read
+
+Partner keys only.
+
+| Endpoint |
+| - |
+| [`GET` `/partner/users`](https://docs.sx.bet/api-reference/get-partner-users) |
+
 ## Related
 
 > [card] [Rate limits](https://docs.sx.bet/developers/rate-limits.md)

@@ -1,266 +1,3 @@
-# Get rate limit tier
-Source: https://docs.polymarket.com/api-reference/account/get-rate-limit-tier
-
-/api-spec/clob-openapi.yaml get /v1/user/rate-limit-tier
-Returns the [trading rate limit tier](/api-reference/trading-rate-limits) currently assigned to your signer.
-The tier returned is the one for the signer address of the API credentials used.
-
-The response reflects the most recent tier refresh, so a change in volume can
-take up to three hours to appear.
-
-
-# Get event by id
-Source: https://docs.polymarket.com/api-reference/events/get-event-by-id
-
-/api-spec/gamma-openapi.yaml get /events/{id}
-
-# Get event by slug
-Source: https://docs.polymarket.com/api-reference/events/get-event-by-slug
-
-/api-spec/gamma-openapi.yaml get /events/slug/{slug}
-
-# Get event tags
-Source: https://docs.polymarket.com/api-reference/events/get-event-tags
-
-/api-spec/gamma-openapi.yaml get /events/{id}/tags
-
-# List events
-Source: https://docs.polymarket.com/api-reference/events/list-events
-
-/api-spec/gamma-openapi.yaml get /events
-
-# List events (keyset pagination)
-Source: https://docs.polymarket.com/api-reference/events/list-events-keyset-pagination
-
-/api-spec/gamma-openapi.yaml get /events/keyset
-Returns events using cursor-based (keyset) pagination for stable, efficient paging through large result sets. Use `next_cursor` from each response as `after_cursor` in the next request. The `offset` parameter is explicitly rejected; use `after_cursor` instead.
-
-
-# Geographic Restrictions
-Source: https://docs.polymarket.com/api-reference/geoblock
-
-Check geographic restrictions before placing orders on the Polymarket API
-
-Polymarket restricts order placement from certain geographic locations due to regulatory requirements and compliance with international sanctions. Before placing orders, builders should verify the location.
-
-> [!WARNING]
->
-> Orders submitted from blocked regions will be rejected. Implement geoblock
-> checks in your application to provide users with appropriate feedback before
-> they attempt to trade.
-
-***
-
-## Geoblock Endpoint
-
-Check the geographic eligibility of the requesting IP address:
-
-```bash theme={null}
-GET https://polymarket.com/api/geoblock
-```
-
-> [!NOTE]
->
-> This endpoint is on `polymarket.com`, not the API servers.
-
-### Response
-
-```json theme={null}
-{
-  "blocked": true,
-  "ip": "203.0.113.42",
-  "country": "US",
-  "region": "NY"
-}
-```
-
-| Field | Type | Description |
-| - | - | - |
-| `blocked` | boolean | Whether the user is blocked from placing orders |
-| `ip` | string | Detected IP address |
-| `country` | string | ISO 3166-1 alpha-2 country code |
-| `region` | string | Region/state code |
-
-***
-
-## Restricted Jurisdictions
-
-Restrictions fall into three groups. **Block completely** means no new orders and no closing of existing positions. **Close-only** means users can close existing positions but cannot open new ones. Each group notes whether it applies on the frontend, the API, or both. Codes are ISO 3166-1 alpha-2 for countries and ISO 3166-2 for sub-national regions.
-
-### OFAC-Sanctioned Jurisdictions (Block Completely)
-
-Blocked on both the frontend and the API. No new orders, and existing positions cannot be closed.
-
-| Jurisdiction | Code |
-| - | - |
-| Iran | IR |
-| Syria | SY |
-| Cuba | CU |
-| North Korea | KP |
-| Ukraine — Crimea | UA-43 |
-| Ukraine — Donetsk | UA-14 |
-| Ukraine — Luhansk | UA-09 |
-
-### Regulatory-Restricted Jurisdictions (Close-Only on Frontend and API)
-
-Users can close existing positions but cannot open new ones, on both the frontend and the API.
-
-| Jurisdiction | Code |
-| - | - |
-| Argentina | AR |
-| Australia | AU |
-| Belarus | BY |
-| Belgium | BE |
-| Burundi | BI |
-| Brazil | BR |
-| Canada — British Columbia | CA-BC |
-| Canada — Ontario | CA-ON |
-| Canada — Alberta | CA-AB |
-| Canada — Quebec | CA-QC |
-| Central African Republic | CF |
-| Congo (Kinshasa) | CD |
-| Ethiopia | ET |
-| France | FR |
-| Germany | DE |
-| Iraq | IQ |
-| Italy | IT |
-| Lebanon | LB |
-| Libya | LY |
-| Myanmar | MM |
-| New Zealand | NZ |
-| Nicaragua | NI |
-| North Korea | KP |
-| Poland | PL |
-| Russia | RU |
-| Singapore | SG |
-| Somalia | SO |
-| Slovakia | SK |
-| South Sudan | SS |
-| Sudan | SD |
-| Taiwan | TW |
-| Thailand | TH |
-| United Kingdom | GB |
-| United States | US |
-| United States Minor Outlying Islands | UM |
-| Venezuela | VE |
-| Yemen | YE |
-| Zimbabwe | ZW |
-
-### Regulatory-Restricted Jurisdictions (Close-Only on Frontend)
-
-Close-only on the Polymarket frontend; the API itself is not restricted.
-
-| Jurisdiction | Code |
-| - | - |
-| Ireland | IE |
-| Japan | JP |
-| Malta (Sports Only) | MT |
-| Netherlands | NL |
-| South Korea | KR |
-
-***
-
-## Blocking Logic
-
-The geoblocking system includes:
-
-1. **OFAC-Sanctioned Countries**: Countries sanctioned by the U.S. Office of Foreign Assets Control (OFAC)
-2. **Additional Regulatory Restrictions**: Countries added for specific regulatory compliance reasons
-
-***
-
-## Server Infrastructure and Co-Location
-
-* **Primary Servers**: eu-west-2
-* **Closest Non-Georestricted Region**: eu-west-1
-
-> [!TIP]
->
-> **Direct co-location form.** Users who complete the [KYC/KYB
-> form](https://docs.google.com/forms/d/e/1FAIpQLSfY-3Dl3yxq8HKFjFad8YzKZmm0k3Gdg29HD6gL-K-AmI6KXw/viewform) can get access to co-locate
-> directly in `eu-west-2` for the lowest possible latency to Polymarket's
-> primary servers.
-
-> [!WARNING]
->
-> Co-location is available to market makers and individual traders operating on
-> their own account. It is not available to Builder Program participants or
-> third-party applications executing trades on behalf of end users.
-
-***
-
-## Usage Examples
-
-> [tab] TypeScript
->
-> ```typescript theme={null}
-> interface GeoblockResponse {
->   blocked: boolean;
->   ip: string;
->   country: string;
->   region: string;
-> }
->
-> async function checkGeoblock(): Promise<GeoblockResponse> {
->   const response = await fetch("https://polymarket.com/api/geoblock");
->   return response.json();
-> }
->
-> // Usage
-> const geo = await checkGeoblock();
->
-> if (geo.blocked) {
->   console.log(`Trading not available in ${geo.country}`);
-> } else {
->   console.log("Trading available");
-> }
-> ```
-
-> [tab] Python
->
-> ```python theme={null}
-> import requests
->
-> def check_geoblock() -> dict:
->     response = requests.get("https://polymarket.com/api/geoblock")
->     return response.json()
->
-> # Usage
-> geo = check_geoblock()
->
-> if geo["blocked"]:
->     print(f"Trading not available in {geo['country']}")
-> else:
->     print("Trading available")
-> ```
-
-***
-
-## Why These Restrictions
-
-Geographic restrictions are implemented to ensure compliance with:
-
-* International sanctions and embargoes
-* Local financial regulations
-* Gambling and prediction market laws
-* Anti-money laundering (AML) requirements
-* Know Your Customer (KYC) regulations
-
-If you believe you are incorrectly restricted or have questions about geographic availability, please contact [Polymarket Support](https://polymarket.com/support).
-
-***
-
-## Next Steps
-
-> [card] [Authentication](/getting-started/api#authentication)
->
-> Learn how to authenticate trading requests.
-
-> [card] [Place Orders](/trading/quickstart)
->
-> Start placing orders (from eligible regions).
-
-
 # Overview
 Source: https://docs.polymarket.com/api-reference/predictions/overview
 
@@ -468,39 +205,6 @@ Base URL: `https://bridge.polymarket.com`
 | Relayer `/submit` | 25 req / 1 min |
 | User PNL API | 200 req / 10s |
 
-
-# Get data freshness
-Source: https://docs.polymarket.com/api-reference/service/get-data-freshness
-
-https://data-api.polymarket.com/v2/openapi.json get /v2/status
-How fresh the data behind this API is.
-
-`/readyz` answers whether this pod can reach its datastore; this answers how
-far behind chain head what you are reading is. Two halves, because each is
-blind exactly where the other sees:
-
-* `serving`; the projections that turn ingested rows into what the feeds
-  read (`activity_feed` enrichment, `custody_balances` ingestion, the PnL
-  engine).
-  Each carries its own clock, so this is the only half that can see
-  "everything stopped". `lag_seconds` is the worst age across them and
-  `worst` names which one, so a single stalled projection cannot hide behind
-  two healthy ones.
-* `ingestion`; one crawl cursor per `(contract, event)`, summarised as the
-  tail, the furthest-behind block, and the worst few cursors BY NAME. Every
-  reading here is relative or positional, so under a total stall it reads
-  green; that is why `serving` exists alongside it.
-
-Streams that are dormant by design are dropped from `ingestion` rather than
-reported, because they sit arbitrarily far back forever and would otherwise
-fill the list and push the stream you care about off it.
-
-Takes no parameters and is not paginated. Served from a snapshot refreshed
-in the background, never computed on the request: `computed_at` and
-`age_seconds` say how old it is, so a stalled refresher or a datastore
-outage shows up as a growing age rather than a 500. Before the first refresh
-lands there is nothing to serve and this answers `503`; "not measured yet"
-and "measured, no lag" are different claims.
 
 # CLOB Trading Rate Limits
 Source: https://docs.polymarket.com/api-reference/trading-rate-limits
@@ -9690,6 +9394,14 @@ Stream crypto, equity, and time-weighted average reference prices through Polyma
 > Existing RTDS integrations should follow the [migration
 > guide](/migrate/rtds-to-polybolt).
 
+> [!WARNING]
+>
+> Every reference price subscription must
+> name its provider, and subscriptions served by Chainlink require your
+> Chainlink API key. See the [PolyBolt
+> overview](/api-reference/live-data/overview#send-your-chainlink-api-key) for
+> the key.
+
 Use lowercase symbols. See the [PolyBolt overview](/api-reference/live-data/overview#supported-symbols) for crypto and TWAP lists, and the equity catalog below for equity symbols.
 
 ### Historical Snapshot
@@ -9702,11 +9414,17 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 
 > [tab] TypeScript
 >
-> Call `client.subscribe` with an authenticated `SecureClient` from `@polymarket/client` 0.11.0 or later. See [Wallet Integrations](/getting-started/typescript#wallet-integrations) to create the client.
+> Call `client.subscribe` with an authenticated `SecureClient` from `@polymarket/client` 0.11.0 or later, and name the provider with `provider`. See [Wallet Integrations](/getting-started/typescript#wallet-integrations) to create the client.
 >
 > ```ts theme={null}
+> import { PriceProvider } from "@polymarket/client";
+>
 > const stream = await client.subscribe([
->   { topic: "prices.crypto", symbols: ["btcusd", "ethusd"] },
+>   {
+>     topic: "prices.crypto",
+>     symbols: ["btcusd", "ethusd"],
+>     provider: PriceProvider.Pyth,
+>   },
 > ]);
 >
 > try {
@@ -9812,7 +9530,7 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 > from polymarket.streams import CryptoPriceSpec
 >
 > async with await client.subscribe(
->     CryptoPriceSpec(symbols=["btcusd", "ethusd"])
+>     CryptoPriceSpec(symbols=["btcusd", "ethusd"], provider="pyth")
 > ) as stream:
 >     async for event in stream:
 >         # event: CryptoPriceEvent
@@ -9936,7 +9654,8 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 >     {
 >       "channel": "price.crypto",
 >       "filter": {
->         "symbol": "btcusd"
+>         "symbol": "btcusd",
+>         "provider": "pyth"
 >       }
 >     }
 >   ]
@@ -9949,11 +9668,11 @@ Stream reference prices for stocks, ETFs, forex pairs, precious metals, and comm
 
 > [tab] TypeScript
 >
-> Call `client.subscribe` to subscribe to the `prices.equity` topic and your chosen symbols with an authenticated `SecureClient`.
+> Call `client.subscribe` to subscribe to the `prices.equity` topic, your chosen symbols and a `provider` with an authenticated `SecureClient`. Import `PriceProvider` from `@polymarket/client`.
 >
 > ```ts theme={null}
 > const stream = await client.subscribe([
->   { topic: "prices.equity", symbol: "aapl" },
+>   { topic: "prices.equity", symbol: "aapl", provider: PriceProvider.Pyth },
 > ]);
 >
 > try {
@@ -10062,7 +9781,7 @@ Stream reference prices for stocks, ETFs, forex pairs, precious metals, and comm
 > from polymarket.streams import EquityPriceSpec
 >
 > async with await client.subscribe(
->     EquityPriceSpec(symbol="aapl")
+>     EquityPriceSpec(symbol="aapl", provider="pyth")
 > ) as stream:
 >     async for event in stream:
 >         # event: EquityPriceEvent
@@ -10150,7 +9869,8 @@ Stream reference prices for stocks, ETFs, forex pairs, precious metals, and comm
 >     {
 >       "channel": "price.equity",
 >       "filter": {
->         "symbol": "aapl"
+>         "symbol": "aapl",
+>         "provider": "pyth"
 >       }
 >     }
 >   ]
@@ -10161,11 +9881,11 @@ Stream reference prices for stocks, ETFs, forex pairs, precious metals, and comm
 
 | Asset class | Supported symbols |
 | - | - |
-| Stocks | `aapl`, `tsla`, `msft`, `googl`, `amzn`, `meta`, `nvda`, `nflx`, `pltr`, `open`, `rklb`, `abnb`, `coin`, `hood` |
+| Stocks | `aapl`, `tsla`, `msft`, `googl`, `amzn`, `meta`, `nvda`, `nflx`, `pltr`, `open`, `rklb`, `abnb`, `coin`, `hood`, `spcx`, `intc`, `mstr`, `crcl`, `mu` |
 | ETFs | `qqq`, `spy`, `ewy`, `vxx` |
-| Forex | `eurusd`, `gbpusd`, `usdcad`, `usdjpy`, `usdkrw`, `usdchf`, `usdmxn`, `usdzar`, `usdbrl`, `usdnok`, `usdsek`, `usdtry` |
+| Forex | `eurusd`, `gbpusd`, `usdcad`, `usdjpy`, `usdkrw`, `usdchf`, `usdmxn`, `usdzar`, `usdbrl`, `usdnok`, `usdsek`, `usdtry`, `dxy` |
 | Precious metals | `xauusd`, `xagusd` |
-| Commodities | `wti`, `cc`, `ngd` |
+| Commodities | `cll`, `hn`, `cc3m` |
 
 #### Read the Market Status
 
@@ -10189,10 +9909,10 @@ underlying exchange's session hours.
 > an existing authenticated `SecureClient`:
 >
 > ```ts theme={null}
-> import { EquityMarketStatus } from "@polymarket/client";
+> import { EquityMarketStatus, PriceProvider } from "@polymarket/client";
 >
 > const stream = await client.subscribe([
->   { topic: "prices.equity", symbol: "aapl" },
+>   { topic: "prices.equity", symbol: "aapl", provider: PriceProvider.Pyth },
 > ]);
 >
 > try {
@@ -10211,7 +9931,7 @@ underlying exchange's session hours.
 >
 > `EquityMarketStatus.Open`, `.Closed`, and `.Unknown` correspond to the three stated
 > values. `undefined` means not stated. The same field is available on
-> `prices.equity.twap`. Subscribe with `{ topic: "prices.equity.twap", symbol: "eurusd" }`.
+> `prices.equity.twap`. Subscribe with `{ topic: "prices.equity.twap", symbol: "eurusd", provider: PriceProvider.Chainlink }`.
 > In a snapshot, status is on `payload`, alongside `data`, rather than on each
 > historical price point.
 
@@ -10224,7 +9944,7 @@ underlying exchange's session hours.
 > ```python theme={null}
 > from polymarket.streams import EquityMarketStatus, EquityPriceSpec
 >
-> async with await client.subscribe(EquityPriceSpec(symbol="aapl")) as stream:
+> async with await client.subscribe(EquityPriceSpec(symbol="aapl", provider="pyth")) as stream:
 >     async for event in stream:
 >         status = event.payload.market_status
 >         if status == EquityMarketStatus.CLOSED:
@@ -10235,7 +9955,7 @@ underlying exchange's session hours.
 >
 > `EquityMarketStatus.OPEN`, `.CLOSED`, and `.UNKNOWN` correspond to the three stated
 > values. `None` means not stated. For equity TWAP, import `EquityTwapPriceSpec` from
-> `polymarket.streams` and pass `EquityTwapPriceSpec(symbol="eurusd")`. Its payload
+> `polymarket.streams` and pass `EquityTwapPriceSpec(symbol="eurusd", provider="chainlink")`. Its payload
 > has the same `market_status` field. In a snapshot, read status from `payload`,
 > rather than from the historical points in `payload.data`.
 
@@ -10321,15 +10041,24 @@ During market hours, prices can update up to five times per second for each feed
 
 ### TWAP Prices
 
-A time-weighted average price (TWAP) represents an asset's price across a lookback window. Stream Chainlink-computed crypto TWAPs with a fixed 60-second window through Polymarket.
+A time-weighted average price (TWAP) represents an asset's price across a lookback window. Stream Chainlink-computed crypto TWAPs with a fixed 60-second window through Polymarket. TWAP prices are served by Chainlink only, so pin `chainlink`; they also require your Chainlink API key.
+
+> [!NOTE]
+>
+> Request a Chainlink API Key using [this form](https://institutional.polymarket.com/request-chainlink-api-key).
 
 > [tab] TypeScript
 >
-> Call `client.subscribe` to subscribe to the `prices.crypto.twap` topic and your chosen symbols with an authenticated `SecureClient`.
+> Call `client.subscribe` to subscribe to the `prices.crypto.twap` topic, your chosen symbols and the Chainlink provider with an authenticated `SecureClient`. Import `PriceProvider` from `@polymarket/client`.
 >
 > ```ts theme={null}
 > const stream = await client.subscribe([
->   { topic: "prices.crypto.twap", symbols: ["btcusd"] },
+>   {
+>     topic: "prices.crypto.twap",
+>     symbols: ["btcusd"],
+>     provider: PriceProvider.Chainlink,
+>     providerApiKey: "<chainlink api key>",
+>   },
 > ]);
 >
 > try {
@@ -10435,7 +10164,7 @@ A time-weighted average price (TWAP) represents an asset's price across a lookba
 > from polymarket.streams import CryptoTwapPriceSpec
 >
 > async with await client.subscribe(
->     CryptoTwapPriceSpec(symbols=["btcusd"])
+>     CryptoTwapPriceSpec(symbols=["btcusd"], provider="chainlink", provider_api_key="<chainlink api key>")
 > ) as stream:
 >     async for event in stream:
 >         # event: CryptoTwapPriceEvent
@@ -10519,7 +10248,8 @@ A time-weighted average price (TWAP) represents an asset's price across a lookba
 >       "channel": "price.crypto.twap",
 >       "filter": {
 >         "symbol": "btcusd",
->         "window_seconds": 60
+>         "window_seconds": 60,
+>         "provider": "chainlink"
 >       }
 >     }
 >   ]
@@ -10649,7 +10379,7 @@ Provider availability depends on the symbol and feed. Use this table when choosi
 
 | Provider | Feeds | Quirks |
 | - | - | - |
-| Chainlink | Crypto spot, supported equity spot, and 60-second TWAP | Default wherever it serves the symbol. TWAP feeds are Chainlink-only. Equity products can trade around the clock, so their market status can differ from exchange-session feeds. |
+| Chainlink | Crypto spot, supported equity spot, and 60-second TWAP | Default wherever it serves the symbol. Requires your Chainlink API key. TWAP feeds are Chainlink-only. Equity products can trade around the clock, so their market status can differ from exchange-session feeds. |
 | Pyth | Supported crypto and equity spot symbols | Availability varies by symbol. A requested provider that cannot serve the symbol falls back to its default provider. |
 | Binance | Crypto spot only | Uses canonical symbols such as `btcusd` for USDT spot closes. Not available for equity or TWAP feeds. |
 | Massive | Equity spot | Can appear as the served source, but cannot be requested explicitly. Its exchange-session market status can differ from continuous-hours products. |
@@ -11452,7 +11182,9 @@ unified SDK.
 > ### List Open Orders
 >
 > `SecureClient` provides `listOpenOrders`, which returns a paginator. Filters and
-> response fields use camelCase.
+> response fields use camelCase. When filtering by `assetId` or the deprecated
+> `tokenId` alias, also supply a nonblank `market` (the market condition ID).
+> Otherwise, the call throws `UserInputError` before sending a request.
 >
 > ```ts Before theme={null}
 > const orders = await client.getOpenOrders({
@@ -12368,7 +12100,10 @@ unified SDK.
 > ### List Open Orders
 >
 > `AsyncSecureClient` provides `list_open_orders`, which returns an async
-> paginator.
+> paginator. When filtering by `asset_id` or the deprecated `token_id` alias,
+> also supply a nonblank `market` (the market condition ID). Otherwise, the
+> paginator raises `UserInputError` when it fetches a page. The synchronous
+> `SecureClient` has the same requirement.
 >
 > ```python Before theme={null}
 > from py_clob_client_v2 import OpenOrderParams
@@ -13072,6 +12807,26 @@ Polymarket Protocol V2 introduces new position tokens and contracts for
 trading, position operations, and resolution. Follow the guide for your
 integration while retaining CTF support. Existing CTF holdings are not converted.
 
+## Rollout Timeline
+
+New markets begin trading on Polymarket Protocol V2 in phases. Existing CTF
+markets keep their current contracts for trading, settlement, and redemption.
+
+All dates are in **2026**, and times are **Eastern Time (ET)**. Prepare your V2
+integration before market creation: some markets are created 24 hours before
+the planned trading dates below.
+
+| Phase and Trading Start | Markets |
+| - | - |
+| **Phase 1** Monday, November 23, at 8:30 AM | BNB, DOGE, HYPE, SOL, XRP, and ZEC Up/Down, each at 5-minute and 15-minute intervals. Also NYC highest temperature, Warsaw highest temperature, and Munich lowest temperature. |
+| **Phase 2** Tuesday, November 24 | BTC and ETH Up/Down at 5-minute, 15-minute, and 4-hour intervals; other crypto, remaining weather, commodities, finance, and minor sports. |
+| **Phase 3** Tuesday, December 1 | Soccer, American football (NFL and college football), basketball (including NBA and college basketball), tennis, esports, and social count. |
+
+Later phases depend on successful trading and settlement, correct reward
+scoring, and sufficient liquidity in the preceding phase. No cutovers are
+scheduled for Thanksgiving on November 26. Thanksgiving week's NFL and college
+football games remain on CTF.
+
 ## What Changes
 
 * **Market identifiers:** Integrations select V2 position IDs or CTF token IDs using the market's version.
@@ -13317,6 +13072,13 @@ Migrate price subscriptions from RTDS to PolyBolt
 
 Move reference-price subscriptions to PolyBolt while keeping your event-driven price workflow. Reference prices require authentication.
 
+> [!WARNING]
+>
+> Every PolyBolt price subscription must
+> name its provider, and subscriptions served by Chainlink require your
+> Chainlink API key. See [Send Your Chainlink API
+> Key](/api-reference/live-data/overview#send-your-chainlink-api-key).
+
 ## Migrate an API Integration
 
 Update the connection, authentication, and subscription frames. See the [Live Data Channel](/api-reference/wss/polybolt) for the full protocol.
@@ -13341,10 +13103,10 @@ Update the connection, authentication, and subscription frames. See the [Live Da
 | RTDS topic | RTDS filter | PolyBolt channel | PolyBolt filter | Notes |
 | - | - | - | - | - |
 | `crypto_prices` (Binance) | `btcusdt` | `price.crypto` | `{ "symbol": "btcusd", "provider": "binance" }` | Request Binance with the canonical `btcusd` symbol. |
-| `crypto_prices_chainlink` | `{"symbol":"btc/usd"}` | `price.crypto` | `{"symbol":"btcusd"}` | Source stays Chainlink, the `price.crypto` default. Use `btcusd` instead of `btc/usd`. |
-| `crypto_prices_twap_sixty` | `{"symbol":"btc/usd"}` | `price.crypto.twap` | `{"symbol":"btcusd","window_seconds":60}` | 60-second Chainlink TWAP |
+| `crypto_prices_chainlink` | `{"symbol":"btc/usd"}` | `price.crypto` | `{"symbol":"btcusd","provider":"chainlink"}` | Source stays Chainlink. Use `btcusd` instead of `btc/usd`. |
+| `crypto_prices_twap_sixty` | `{"symbol":"btc/usd"}` | `price.crypto.twap` | `{"symbol":"btcusd","window_seconds":60,"provider":"chainlink"}` | 60-second Chainlink TWAP |
 | `crypto_prices_twap_thirty` | `{"symbol":"btc/usd"}` | None | None | No PolyBolt replacement for the 30-second window |
-| `equity_prices` | `{"symbol":"AAPL"}` | `price.equity` | `{"symbol":"aapl"}` | Same catalog, lowercase: stocks, ETFs, forex, metals and the commodities `cll`, `hn`, `cc3m` |
+| `equity_prices` | `{"symbol":"AAPL"}` | `price.equity` | `{"symbol":"aapl","provider":"pyth"}` | Same catalog, lowercase: stocks, ETFs, forex, metals and the commodities `cll`, `hn`, `cc3m` |
 
 > [!WARNING]
 >
@@ -13353,9 +13115,8 @@ Update the connection, authentication, and subscription frames. See the [Live Da
 > format to every crypto symbol you subscribe to.
 
 Live price payloads contain `symbol`, `value`, `full_accuracy_value`,
-`timestamp`, and `source`, the vendor that produced the price. `price.crypto`
-and `price.equity` default to Chainlink wherever Chainlink serves the symbol;
-add `provider` to the filter to pin a specific vendor
+`timestamp`, and `source`, the vendor that produced the price. Name the vendor
+with `provider` in every filter
 ([Pin a Price Provider](/api-reference/live-data/overview#pin-a-price-provider)).
 Equity updates may also include `received_at` and `is_carried_forward`, and
 equity payloads carry `market_status` (`open`, `closed` or `unknown`), which
@@ -13449,11 +13210,18 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 >
 > **2. Subscribe to Prices**
 >
-> Change the topic from `prices.crypto.chainlink.twap` to `prices.crypto.twap` and provide an explicit `symbols` list. Change `btc/usd` to `btcusd` and remove `windowSeconds` from the subscription input. The new topic always uses a 60-second window.
+> Change the topic from `prices.crypto.chainlink.twap` to `prices.crypto.twap`, provide an explicit `symbols` list and set `provider: PriceProvider.Chainlink`. Change `btc/usd` to `btcusd` and remove `windowSeconds` from the subscription input. The new topic always uses a 60-second window.
 >
 > ```ts theme={null}
+> import { PriceProvider } from "@polymarket/client";
+>
 > const stream = await client.subscribe([
->   { topic: "prices.crypto.twap", symbols: ["btcusd"] },
+>   {
+>     topic: "prices.crypto.twap",
+>     symbols: ["btcusd"],
+>     provider: PriceProvider.Chainlink,
+>     providerApiKey: "<chainlink api key>",
+>   },
 > ]);
 >
 > try {
@@ -13591,13 +13359,13 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 >
 > **2. Subscribe to Prices**
 >
-> Subscribe to BTC/USD with `CryptoTwapPriceSpec`. The async context manager closes the subscription when the block exits.
+> Subscribe to BTC/USD with `CryptoTwapPriceSpec` and `provider="chainlink"`. The async context manager closes the subscription when the block exits.
 >
 > ```python theme={null}
 > from polymarket.streams import CryptoTwapPriceSpec
 >
 > async with await client.subscribe(
->     CryptoTwapPriceSpec(symbols=["btcusd"])
+>     CryptoTwapPriceSpec(symbols=["btcusd"], provider="chainlink", provider_api_key="<chainlink api key>")
 > ) as stream:
 >     async for event in stream:
 >         # event: CryptoTwapPriceEvent
@@ -13674,7 +13442,7 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 >
 > Use the authenticated `client` created above. Change the symbol suffix from `usdt` to `usd`, for example `btcusdt` to `btcusd`. Remove any slash separators, for example `btc/usd` to `btcusd`. The new topic requires explicit lowercase USD symbols.
 >
-> Set `provider: PriceProvider.Binance` to request Binance prices. Omit `provider` to use the default. Check `event.payload.source` for the provider actually served.
+> Set `provider: PriceProvider.Binance` to request Binance prices. `provider` is required. Check `event.payload.source` for the provider actually served.
 >
 > > [accordion] Before: RTDS
 > >
@@ -13812,7 +13580,7 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 > > ]
 > > ```
 >
-> Replace `CryptoPricesSpec` with `CryptoPriceSpec`. Set `provider="binance"` to request Binance prices. Omit `provider` to use the default. Check `event.payload.source` for the provider actually served.
+> Replace `CryptoPricesSpec` with `CryptoPriceSpec`. Set `provider="binance"` to request Binance prices. `provider` is required. Check `event.payload.source` for the provider actually served.
 >
 > Replace the legacy call with this subscription:
 >
@@ -13918,8 +13686,15 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 > Replace the legacy subscription with:
 >
 > ```ts theme={null}
+> import { PriceProvider } from "@polymarket/client";
+>
 > const stream = await client.subscribe([
->   { topic: "prices.equity", symbol: "aapl", types: ["update"] },
+>   {
+>     topic: "prices.equity",
+>     symbol: "aapl",
+>     types: ["update"],
+>     provider: PriceProvider.Pyth,
+>   },
 > ]);
 > try {
 >   for await (const event of stream) {
@@ -14027,7 +13802,7 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 > > spec = EquityPricesSpec(symbol="AAPL", types=["update"])
 > > ```
 >
-> Replace `EquityPricesSpec` with `EquityPriceSpec`, preserving `symbol` and `types`. Symbols are trimmed and lowercased. `types=["update"]` keeps live updates only. Omit `types` to receive history snapshots too.
+> Replace `EquityPricesSpec` with `EquityPriceSpec`, preserving `symbol` and `types`, and set `provider="pyth"` to keep the Pyth source. Symbols are trimmed and lowercased. `types=["update"]` keeps live updates only. Omit `types` to receive history snapshots too.
 >
 > Replace the legacy call with this subscription:
 >
@@ -14035,7 +13810,7 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 > from polymarket.streams import EquityPriceSpec
 >
 > async with await client.subscribe(
->     EquityPriceSpec(symbol="aapl", types=["update"])
+>     EquityPriceSpec(symbol="aapl", types=["update"], provider="pyth")
 > ) as stream:
 >     async for event in stream:
 >         # event: EquityPriceEvent
@@ -14108,6 +13883,1819 @@ Keep using RTDS for the `activity` topic. It has no PolyBolt channel.
 > Updates may include `received_at` and `is_carried_forward`.
 
 Read [market status](/market-data/realtime-data#read-the-market-status) on snapshots and live updates to distinguish closed markets from stalled prices. Both SDKs expose this field from version 0.14.0.
+
+
+# Connect to NEX
+Source: https://docs.polymarket.com/nex/connect
+
+Connect through PrivateLink or an allowlisted public IP.
+
+After [approval](/nex/get-access), use either connection below. For the best
+latency results, use PrivateLink in NEX's AWS London zone.
+
+## Set Up Your Connection
+
+> [tab] AWS PrivateLink
+>
+> **1. Create an Endpoint**
+>
+> We'll allowlist your 12-digit AWS account ID and send the service name.
+> Create an IPv4 Interface VPC endpoint in `eu-west-2`, AZ ID `euw2-az1` only.
+> Allow TCP `443` from your clients in its security group and disable Private
+> DNS (`private_dns_enabled = false`). Check the AZ ID: names such as
+> `eu-west-2a` vary across accounts. Another AZ will not provide failover.
+>
+> **2. Get the Connection Approved**
+>
+> Send us the endpoint ID (`vpce-…`). Wait for approval and status `available`.
+>
+> **3. Set Up DNS**
+>
+> In a private hosted zone attached to your VPC, point these CNAMEs to your
+> endpoint DNS name:
+>
+> * `nex.preprod.defi.euw2.polymarket.sh`
+> * `nex-ws.preprod.defi.euw2.polymarket.sh`
+>
+> Preserve the service hostname in TLS SNI and the HTTP `Host` header if
+> connecting through endpoint DNS directly.
+>
+> **4. Check Connectivity**
+>
+> Run from a client inside your connected VPC after setting up DNS:
+>
+> ```bash theme={null}
+> curl -i https://nex.preprod.defi.euw2.polymarket.sh/health
+> ```
+>
+> Expect HTTP `200`.
+>
+> AWS bills endpoint usage to your account.
+
+> [tab] Public IP Allowlisting
+>
+> **1. Send Your Outbound IPs**
+>
+> Send each stable public IPv4 address your clients use, individually (`/32`).
+> For clients behind NAT, use the NAT gateway's public addresses. Wait for our
+> approval before connecting.
+>
+> **2. Map the Service Hostnames**
+>
+> Map the trading and WebSocket hostnames to `51.24.102.79` in your resolver
+> or hosts file. Their default DNS does not select the public connection.
+> Allow outbound TCP `443` and keep the hostname in TLS SNI and HTTP `Host`.
+>
+> **3. Check Connectivity**
+>
+> Run from an allowlisted client. This selects the public address while
+> preserving the hostname for TLS and routing:
+>
+> ```bash theme={null}
+> curl -i \
+>   --connect-to nex.preprod.defi.euw2.polymarket.sh:443:51.24.102.79:443 \
+>   https://nex.preprod.defi.euw2.polymarket.sh/health
+> ```
+>
+> Expect HTTP `200`.
+
+## Service Addresses
+
+| Service | Base URL |
+| - | - |
+| Trading API | `https://nex.preprod.defi.euw2.polymarket.sh` |
+| WebSocket feeds | `wss://nex-ws.preprod.defi.euw2.polymarket.sh` |
+| Markets (Gamma) | `https://gamma-api-preprod.polymarket.dev` |
+| Relayer | `https://relayer-preprod.polymarket.dev` |
+
+Gamma and the relayer require `x-client-id` and `x-client-secret` headers. We'll
+send the credentials privately after approval. These are separate from your
+trading credentials.
+
+
+# Get Access
+Source: https://docs.polymarket.com/nex/get-access
+
+Request access, choose a connection and get test funds.
+
+[Submit the access form](https://docs.google.com/forms/d/e/1FAIpQLScpqt2izLI3YvRiY9Up6kcqzBcIgWmx-Y7GdkXcwiiNOYRz4g/viewform)
+with your name, email, team and what you'd like to run on NEX.
+
+Choose a connection:
+
+* **Public access:** list each stable outbound IPv4 address your clients use.
+  If you use a NAT gateway, send its public IPs. We allowlist individual `/32`
+  addresses.
+* **PrivateLink:** send your 12-digit AWS account ID and confirm you can create
+  an endpoint in `eu-west-2` (London), AZ ID `euw2-az1`. This is the recommended
+  path for the best latency results.
+
+Add a Telegram or Signal contact for a direct chat with the NEX team. If you
+know your expected requests per second and WebSocket connection count, include
+those too.
+
+## Test Funds
+
+Include your Amoy trading address so we can arrange test pUSD. For a Deposit
+Wallet, send the Deposit Wallet address, which can differ from your signer.
+If you need help setting one up, tell us in the form.
+
+We'll email your connection instructions and credentials after approval, then
+help with account setup, funds and trading approvals. For PrivateLink, we'll
+also approve the endpoint you create.
+
+> [card] [Connect to NEX](/nex/connect)
+>
+> Set up your connection after access is approved.
+
+
+# NEX Sandbox
+Source: https://docs.polymarket.com/nex/overview
+
+Early access to Polymarket's new exchange.
+
+NEX is Polymarket's new exchange, built from the ground up in Rust. The sandbox
+gives you early access to run your strategies with your existing trading stack.
+
+## Why NEX
+
+The current CLOB grew quickly and accumulated a lot of technical debt. We've
+made it faster and increased its capacity, but fixing one part can still cause
+problems elsewhere. We need an exchange we can keep improving as volume grows.
+NEX rebuilds the matching engine and WebSocket stack so we can address those
+problems in the core design.
+
+> [!TIP]
+>
+> NEX is a drop-in replacement for the CLOB API, with no breaking changes. Use
+> your existing integration with the sandbox configuration and credentials.
+
+## Early Results
+
+We're running production traffic through NEX in shadow mode. The initial results
+show faster order processing and higher capacity than the current CLOB.
+
+> [card] Over 200× Faster
+>
+> Place-order processing in early shadow tests.
+
+> [card] 10× More Capacity
+>
+> 100k commands/s sustained and 150k commands/s in bursts.
+
+## Try the Beta
+
+The sandbox runs on Polygon Amoy (`80002`) with test pUSD and bot-provided
+liquidity. Its books are separate from production. This is an early beta, and
+we'll be actively updating it as we fix issues and improve performance. We're
+aiming to release NEX before the end of 2026.
+
+[Request access](/nex/get-access) through public IP allowlisting or AWS
+PrivateLink. For the best latency results, use PrivateLink in AWS London, in the
+same zone as NEX. We'll help with setup and test funds through your onboarding
+chat.
+
+After approval, [connect to NEX](/nex/connect), then
+[start trading](/nex/start-trading).
+
+
+# Start Trading
+Source: https://docs.polymarket.com/nex/start-trading
+
+Connect your trading stack and place a sandbox order.
+
+Complete [connection setup](/nex/connect) first. We'll arrange test pUSD,
+credentials and approvals during onboarding.
+
+## Configure Your Integration
+
+> [tab] API
+>
+> NEX is a drop-in replacement for the CLOB API.
+>
+> **1. Switch the Base URL**
+>
+> | Environment | Base URL |
+> | - | - |
+> | Production | `https://clob.polymarket.com` |
+> | NEX Sandbox | `https://nex.preprod.defi.euw2.polymarket.sh` |
+>
+> Keep your existing routes, payloads and response handling.
+>
+> **2. Use Sandbox Signing and Credentials**
+>
+> Sign for Polygon Amoy (`80002`) using the Amoy exchange contracts
+> configured during onboarding. Authenticate with your sandbox trading
+> credentials. Use an EOA or Deposit Wallet; Safe and Proxy Wallets are
+> unavailable. EOAs need Amoy POL for their own approval transactions.
+>
+> **3. Check the API**
+>
+> ```bash theme={null}
+> curl -i https://nex.preprod.defi.euw2.polymarket.sh/health
+> ```
+>
+> Expect HTTP `200`.
+
+> [tab] TypeScript
+>
+> Use the latest stable release of every Polymarket SDK in your stack, including
+> separate trading and relayer packages. Set `NEX_CLOB_URL` to
+> `https://nex.preprod.defi.euw2.polymarket.sh`. You'll also need an Amoy RPC URL
+> and your sandbox signer's private key.
+>
+> This example uses your signer's address (EOA) as the trading account on Amoy.
+>
+> > [!NOTE]
+> >
+> > The sandbox supports EOAs and Deposit Wallets; Safe and Proxy Wallets are
+> > unavailable. EOAs need Amoy POL for their own approval transactions. Use your
+> > Deposit Wallet address for funding if you trade through one.
+>
+> **1. Update the SDK**
+>
+> Requires Node.js 24 or later.
+>
+> ```bash theme={null}
+> npm install @polymarket/client@latest viem
+> ```
+>
+> **2. Create the Client**
+>
+> Set `GAMMA_CLIENT_ID` and `GAMMA_CLIENT_SECRET` to the Gamma credentials
+> sent after approval.
+>
+> ```typescript theme={null}
+> import { createSecureClient, forkEnvironmentConfig } from "@polymarket/client";
+> import { privateKey } from "@polymarket/client/viem";
+> import { http } from "viem";
+> import { polygonAmoy } from "viem/chains";
+>
+> const rpcUrl = process.env.AMOY_RPC_URL!;
+> const signer = privateKey(process.env.POLYMARKET_PRIVATE_KEY, {
+>   chain: polygonAmoy,
+>   transport: http(rpcUrl),
+> });
+>
+> const amoy = forkEnvironmentConfig({
+>   name: "amoy",
+>   chainId: polygonAmoy.id,
+>   rpc: rpcUrl,
+>   clob: { rest: process.env.NEX_CLOB_URL! },
+>   gamma: {
+>     rest: "https://gamma-api-preprod.polymarket.dev",
+>     headers: {
+>       "x-client-id": process.env.GAMMA_CLIENT_ID!,
+>       "x-client-secret": process.env.GAMMA_CLIENT_SECRET!,
+>     },
+>   },
+> });
+>
+> const client = await createSecureClient({
+>   signer,
+>   wallet: await signer.getAddress(),
+>   environment: amoy,
+> });
+> ```
+>
+> See the [TypeScript SDK guide](/getting-started/typescript) for the rest of
+> the client API.
+
+> [tab] Python
+>
+> Use the latest stable release of every Polymarket SDK in your stack, including
+> separate trading and relayer packages. Set `NEX_CLOB_URL` to
+> `https://nex.preprod.defi.euw2.polymarket.sh`. You'll also need an Amoy RPC URL
+> and your sandbox signer's private key.
+>
+> This example uses your signer's address (EOA) as the trading account on Amoy.
+>
+> > [!NOTE]
+> >
+> > The sandbox supports EOAs and Deposit Wallets; Safe and Proxy Wallets are
+> > unavailable. EOAs need Amoy POL for their own approval transactions. Use your
+> > Deposit Wallet address for funding if you trade through one.
+>
+> **1. Update the SDK**
+>
+> Requires Python 3.11 or later.
+>
+> ```bash theme={null}
+> python -m pip install --upgrade polymarket-client eth-account httpx
+> ```
+>
+> **2. Create the Client**
+>
+> Amoy currently uses the SDK team's internal environment helper. Run
+> this setup inside your existing async application.
+>
+> ```python theme={null}
+> import os
+> from dataclasses import replace
+>
+> from eth_account import Account
+> from polymarket import AsyncSecureClient
+> from polymarket._internal.environment import PRODUCTION_CONFIG, create_environment
+>
+> private_key = os.environ["POLYMARKET_PRIVATE_KEY"]
+> eoa_address = Account.from_key(private_key).address
+>
+> amoy = create_environment(
+>     name="amoy",
+>     config=replace(
+>         PRODUCTION_CONFIG,
+>         chain_id=80002,
+>         rpc_url=os.environ["AMOY_RPC_URL"],
+>         clob_url=os.environ["NEX_CLOB_URL"].rstrip("/"),
+>         gamma_url="https://gamma-api-preprod.polymarket.dev",
+>         exchange_v3="0xe3333700cA9d93003F00f0F71f8515005F6c00Aa",
+>         position_manager="0x006F54F7f9A22e0000CC2AB60031000000ae9fEF",
+>     ),
+> )
+>
+> client = await AsyncSecureClient.create(
+>     private_key=private_key,
+>     wallet=eoa_address,
+>     environment=amoy,
+> )
+> ```
+>
+> For synchronous code, import `SecureClient` instead and call
+> `SecureClient.create` without `await`.
+>
+> See the [Python SDK guide](/getting-started/python) for the rest of the
+> client API.
+
+> [accordion] Legacy Clients
+>
+> Set `NEX_CLOB_URL` to the NEX base URL above. These examples use an EOA;
+> complete your existing authentication flow before trading. For a Deposit
+> Wallet, retain its signing configuration.
+>
+> > [tab] TypeScript
+> >
+> > `@polymarket/clob-client-v2` is deprecated. Prefer `@polymarket/client`
+> > for new integrations.
+> >
+> > ```bash theme={null}
+> > npm install @polymarket/clob-client-v2@latest
+> > ```
+> >
+> > Use your existing signer, configured for Amoy:
+> >
+> > ```typescript theme={null}
+> > import { Chain, ClobClient } from "@polymarket/clob-client-v2";
+> >
+> > const client = new ClobClient({
+> >   host: process.env.NEX_CLOB_URL!,
+> >   chain: Chain.AMOY,
+> >   signer,
+> > });
+> > ```
+>
+> > [tab] Python
+> >
+> > `py-clob-client-v2` is deprecated. Prefer `polymarket-client` for new
+> > integrations.
+> >
+> > ```bash theme={null}
+> > python -m pip install --upgrade py-clob-client-v2
+> > ```
+> >
+> > ```python theme={null}
+> > import os
+> > from py_clob_client_v2 import ClobClient
+> >
+> > client = ClobClient(
+> >     host=os.environ["NEX_CLOB_URL"],
+> >     chain_id=80002,
+> >     key=os.environ["POLYMARKET_PRIVATE_KEY"],
+> > )
+> > ```
+>
+> > [tab] Rust
+> >
+> > The Rust CLOB SDK remains supported. The unified Rust SDK is in progress.
+> >
+> > ```bash theme={null}
+> > cargo add polymarket_client_sdk_v2 --features clob
+> > ```
+> >
+> > ```rust theme={null}
+> > use polymarket_client_sdk_v2::clob::{Client, Config};
+> >
+> > let host = std::env::var("NEX_CLOB_URL")?;
+> > let client = Client::new(&host, Config::default())?;
+> > ```
+> >
+> > This creates an unauthenticated client. Configure your trading signer
+> > for Amoy (`80002`) and continue with your existing authentication flow.
+>
+> See the [SDK migration guide](/migrate/clob-sdk-to-unified-sdk) to move an
+> existing TypeScript or Python integration to the unified SDK.
+
+## Find a Market
+
+Choose an outcome from a sandbox market, then read its order book.
+
+> [tab] API
+>
+> Use the Gamma credentials we sent privately to list sandbox markets:
+>
+> ```bash theme={null}
+> curl --fail-with-body -G \
+>   "https://gamma-api-preprod.polymarket.dev/markets" \
+>   --header "x-client-id: $GAMMA_CLIENT_ID" \
+>   --header "x-client-secret: $GAMMA_CLIENT_SECRET" \
+>   --data-urlencode "closed=false" \
+>   --data-urlencode "limit=5"
+> ```
+>
+> Choose an outcome from the response. Use its position ID for Polymarket V2 or
+> its token ID for CTF. Set `NEX_ASSET_ID` to that identifier, then read its book:
+>
+> ```bash theme={null}
+> curl --fail-with-body -G \
+>   "https://nex.preprod.defi.euw2.polymarket.sh/book" \
+>   --data-urlencode "token_id=$NEX_ASSET_ID"
+> ```
+>
+> See [List Markets](/api-reference/markets/list-markets) and
+> [Get Order Book](/api-reference/market-data/get-order-book) for response schemas.
+
+> [tab] TypeScript
+>
+> Call `listMarkets()` to find Polymarket Protocol V2 markets with the
+> Gamma credentials configured above.
+>
+> ```typescript theme={null}
+> import { ProtocolVersion } from "@polymarket/client";
+>
+> const pages = client.listMarkets({
+>   closed: false,
+>   version: ProtocolVersion.V2,
+>   pageSize: 5,
+> });
+> const page = await pages.firstPage();
+>
+> for (const market of page.items) {
+>   console.log(market.id, market.question, market.version);
+> }
+> ```
+>
+> Select YES in a market accepting orders, then call `fetchOrderBook()` with
+> its position ID:
+>
+> ```typescript theme={null}
+> const market = page.items.find((market) => market.state.acceptingOrders);
+> if (!market) throw new Error("None of these markets is accepting orders.");
+>
+> const assetId = market.outcomes.yes.positionId;
+> if (!assetId) throw new Error("No trading identifier for this outcome.");
+>
+> const book = await client.fetchOrderBook({ assetId });
+> console.log(book.tickSize, book.minOrderSize);
+> ```
+
+> [tab] Python
+>
+> The Python SDK cannot yet attach Gamma's sandbox headers. Fetch
+> Polymarket Protocol V2 market data with HTTPX using the Gamma credentials
+> sent after approval, then
+> parse the binary markets with the SDK's `Market` model:
+>
+> ```python theme={null}
+> import json
+>
+> import httpx
+> from polymarket import Market
+>
+> async with httpx.AsyncClient() as gamma:
+>     response = await gamma.get(
+>         "https://gamma-api-preprod.polymarket.dev/markets/keyset",
+>         headers={
+>             "x-client-id": os.environ["GAMMA_CLIENT_ID"],
+>             "x-client-secret": os.environ["GAMMA_CLIENT_SECRET"],
+>         },
+>         params=[
+>             ("closed", "false"),
+>             ("version", "v2"),
+>             ("limit", "5"),
+>         ],
+>     )
+>     response.raise_for_status()
+>     markets = []
+>     for item in response.json()["markets"]:
+>         outcomes = item.get("outcomes") or []
+>         if isinstance(outcomes, str):
+>             outcomes = json.loads(outcomes)
+>         if len(outcomes) == 2:
+>             markets.append(Market.parse_response(item))
+>
+> for market in markets:
+>     print(market.id, market.question, market.version)
+> ```
+>
+> Select YES in a market accepting orders and read its book with
+> `get_order_book()`:
+>
+> ```python theme={null}
+> market = next((market for market in markets if market.state.accepting_orders), None)
+> if market is None:
+>     raise ValueError("None of these markets is accepting orders.")
+>
+> asset_id = market.outcomes.yes.position_id
+> if asset_id is None:
+>     raise ValueError("No trading identifier for this outcome.")
+>
+> book = await client.get_order_book(asset_id=asset_id)
+> print(book.tick_size, book.min_order_size)
+> ```
+
+## Place and Track an Order
+
+Place a small limit order, read it back, then cancel the remaining quantity.
+A resting order can fill before you cancel it.
+
+> [tab] API
+>
+> Use your sandbox credentials and the Amoy signing configuration validated
+> during onboarding.
+>
+> **1. Place an Order**
+>
+> Submit a small limit order. Follow the market's tick size and minimum
+> order size. See [Post a New Order](/api-reference/trade/post-a-new-order).
+>
+> **2. Read It Back**
+>
+> [Fetch the order by ID](/api-reference/trade/get-single-order-by-id).
+>
+> **3. Cancel the Remaining Quantity**
+>
+> See [Manage Orders](/trading/manage-orders) for cancellation requests.
+
+> [tab] TypeScript
+>
+> Use the authenticated `client`, `assetId` and `book` from the steps above.
+> The example uses the book's minimum size and a buy price of one tick.
+>
+> **1. Place an Order**
+>
+> ```typescript theme={null}
+> import { OrderSide } from "@polymarket/client";
+>
+> const result = await client.placeLimitOrder({
+>   assetId,
+>   side: OrderSide.BUY,
+>   price: book.tickSize,
+>   size: book.minOrderSize,
+>   postOnly: true,
+> });
+>
+> if (!result.ok) throw new Error(result.message);
+> console.log(result.orderId);
+> ```
+>
+> **2. Read It Back**
+>
+> ```typescript theme={null}
+> const order = await client.fetchOrder({ orderId: result.orderId });
+> console.log(order.status);
+> ```
+>
+> **3. Cancel the Remaining Quantity**
+>
+> ```typescript theme={null}
+> const cancellation = await client.cancelOrder({ orderId: result.orderId });
+> console.log(cancellation.canceled, cancellation.notCanceled);
+> ```
+
+> [tab] Python
+>
+> Use the authenticated `client`, `asset_id` and `book` from the steps above.
+> The example uses the book's minimum size and a buy price of one tick.
+>
+> **1. Place an Order**
+>
+> ```python theme={null}
+> result = await client.place_limit_order(
+>     asset_id=asset_id,
+>     side="BUY",
+>     price=book.tick_size,
+>     size=book.min_order_size,
+>     post_only=True,
+> )
+>
+> if not result.ok:
+>     raise RuntimeError(result.message)
+> print(result.order_id)
+> ```
+>
+> **2. Read It Back**
+>
+> ```python theme={null}
+> order = await client.get_order(order_id=result.order_id)
+> print(order.status)
+> ```
+>
+> **3. Cancel the Remaining Quantity**
+>
+> ```python theme={null}
+> cancellation = await client.cancel_order(order_id=result.order_id)
+> print(cancellation.canceled, cancellation.not_canceled)
+> ```
+
+Order reads return open orders. If it fills before you read it back, follow
+updates on the [user feed](/nex/websocket-feeds). A match happens before
+settlement; follow settlement before checking your position.
+
+
+# WebSocket Feeds
+Source: https://docs.polymarket.com/nex/websocket-feeds
+
+Subscribe to order books, prices and your own orders and fills.
+
+Complete [connection setup](/nex/connect), then append a path below to
+`wss://nex-ws.preprod.defi.euw2.polymarket.sh`.
+
+| Feed | Path | Connection Limit |
+| - | - | - |
+| Original market | `/ws/market` | No application connection limit |
+| Original user | `/ws/user` | No application connection limit |
+| subs-v2 market | `/beta/ws/market` | 50 per IP |
+| subs-v2 user | `/beta/ws/user` | 20 per IP and 10 per API key; both apply |
+
+Public clients behind the same NAT share its per-IP allowance.
+
+## Market Feed
+
+Send this after connecting. Replace `OUTCOME_ID` with the identifier from your
+[sandbox market](/nex/start-trading#find-a-market).
+
+```json theme={null}
+{
+  "type": "market",
+  "assets_ids": ["OUTCOME_ID"]
+}
+```
+
+You'll receive a book snapshot followed by updates. See the
+[Market Channel reference](/api-reference/wss/market) for event schemas.
+
+## User Feed
+
+Send your sandbox trading credentials after connecting. Replace the credential
+values below; Gamma credentials do not authenticate this feed.
+
+```json theme={null}
+{
+  "type": "user",
+  "auth": {
+    "apiKey": "YOUR_API_KEY",
+    "secret": "YOUR_API_SECRET",
+    "passphrase": "YOUR_API_PASSPHRASE"
+  }
+}
+```
+
+Add `markets` with condition IDs to filter activity by market. See the
+[User Channel reference](/api-reference/wss/user).
+
+## Heartbeats and Reconnects
+
+Send the text `PING` every 10 seconds; expect `PONG`. Idle connections close, so
+send activity at least once a minute.
+
+After disconnecting, reconnect with backoff and resubscribe. Rebuild your book
+from the new snapshot and reconcile account activity with authenticated reads.
+
+
+# Institutional Overview
+Source: https://docs.polymarket.com/partners/overview
+
+Settle trades matched on your platform as positions in Polymarket's prediction markets.
+
+Polymarket's institutional integration is for trading platforms that match
+counterparties themselves, such as request for quote (RFQ) venues. Your
+platform runs price discovery, and Polymarket settles each agreed trade as
+positions in its prediction markets. It is a separate integration from
+building on the order book: to place orders on the order book, start with
+[Trading](/trading/overview).
+
+## Request for Quote (RFQ) Trades
+
+On the order book, prices are discovered by matching orders as they arrive.
+With an RFQ trade, price discovery happens on your platform instead: two
+counterparties agree on a price and size there, and your platform submits the
+agreed trade to Polymarket. Polymarket executes it on Polygon as one matched
+pair of signed orders, which never rest on the order book.
+
+Each counterparty authorizes only its own side, with a session key for its
+Polymarket Deposit Wallet. Your platform identifies itself with a partner API
+key, which does not authorize moving funds.
+
+### Same Markets and Positions as the Order Book
+
+RFQ trades settle in the same prediction markets as the order book:
+
+* **Markets:** an RFQ trade runs on a Polymarket market found through the
+  public Gamma API, and its price is checked against that market's order book
+  midpoint.
+* **Positions:** each counterparty receives standard Polymarket positions. They
+  can be held, sold on the order book, or redeemed when the market resolves.
+* **Liquidity:** your platform can use RFQ trades and the order book together
+  to find the best price and liquidity for a market.
+
+## Get Access
+
+Access is by invitation. To request access, email
+[institutional@polymarket.com](mailto:institutional@polymarket.com). Polymarket
+issues your API key during onboarding, together with access to a testing
+environment. For questions about RFQ trade fees and guardrails, email
+[blocks@polymarket.com](mailto:blocks@polymarket.com).
+
+## Next Steps
+
+> [card] [RFQ Trades Guide](/partners/rfq-trades)
+>
+> Find a market, then validate, sign, submit, and track an RFQ trade.
+
+> [card] [API Reference](/api-reference/rfq-trades/overview)
+>
+> Review the base URLs, authentication, and every request.
+
+
+# RFQ Trades Partner API
+Source: https://docs.polymarket.com/partners/rfq-trades
+
+Settle trades that two counterparties agreed on your platform as one matched pair of signed Polymarket orders.
+
+The Request for Quote (RFQ) Trades Partner API lets your platform settle
+trades that two counterparties negotiated off Polymarket. Each side is a
+standard Polymarket exchange order signed for that counterparty, your platform
+submits the signed pair in one request, and Polymarket executes it on Polygon.
+The orders never rest on the order book. See the
+[Institutional Overview](/partners/overview) for how RFQ trades relate to the
+order book.
+
+> [!NOTE]
+>
+> Access is by invitation. Polymarket issues your API key during partner
+> onboarding. To request access, email
+> [institutional@polymarket.com](mailto:institutional@polymarket.com).
+
+## How an RFQ Trade Works
+
+Your platform authenticates every request with its partner API key. Each
+counterparty authorizes only its own side: it gives your platform a
+[session key](#session-keys) for its Polymarket
+[Deposit Wallet](/trading/wallets-auth#wallet-types), and your platform signs
+that counterparty's orders with it.
+
+```mermaid theme={null}
+sequenceDiagram
+    autonumber
+    participant Parties as Counterparties
+    participant Partner as Your Platform
+    participant Gamma as Gamma API
+    participant RFQ as RFQ Trades API
+    participant Chain as Polygon
+
+    Parties->>Partner: Share a session key and Deposit Wallet address (once)
+    Partner->>Gamma: Find a tradable market
+    Partner->>RFQ: Validate the agreed terms
+    Partner->>RFQ: Prepare both orders
+    RFQ-->>Partner: Unsigned orders and fees
+    Partner->>Partner: Sign each order with its counterparty's session key
+    Partner->>RFQ: Submit the signed pair
+    RFQ-->>Partner: Trade accepted as PENDING
+    RFQ->>Chain: Execute the matched orders
+    RFQ-->>Partner: FILLED or REJECTED
+```
+
+1. [**Find a market**](#find-markets) through the public Gamma API.
+2. [**Validate the terms**](#validate-the-terms) (optional). One request runs
+   the market, price, account, and guardrail checks and reports all of them.
+3. [**Prepare the orders**](#prepare-the-orders) (optional). Polymarket builds
+   both unsigned orders, their signing payloads, and the fee each side pays.
+4. [**Sign the orders.**](#sign-the-orders) Your platform signs each order
+   with its counterparty's session key.
+5. [**Submit the trade.**](#submit-the-trade) This is the only request that
+   creates a trade.
+6. [**Track the trade**](#track-the-trade) until it reaches `FILLED` or
+   `REJECTED`, by polling or over the WebSocket stream.
+
+### Operations
+
+Every RFQ trade is one of three operations, determined by the sides of the two
+orders. The collateral is [pUSD](/concepts/pusd), Polymarket's USDC-backed
+ERC-20 token on Polygon.
+
+| Operation | Orders | What happens on-chain | Party keys |
+| - | - | - | - |
+| `split` | Two buys: one YES, one NO, for the same number of shares | Both sides pay pUSD. A complete set is minted and split between them. | `yes`, `no` |
+| `merge` | Two sells: one YES, one NO, for the same number of shares | Both sides deliver shares. The set is merged and the pUSD is split between them. | `yes`, `no` |
+| `trade` | One buy and one sell of the same outcome token, at equal amounts | Shares move from the seller to the buyer against pUSD at the agreed price. | `buyer`, `seller` |
+
+Requests and responses key each side by these party keys. For example, the
+`fees` returned for a `split` are keyed `yes` and `no`.
+
+### Base URL
+
+| Environment | Base URL |
+| - | - |
+| Production | `https://external-rfq-partner.polymarket.com` |
+| Testing | Shared during onboarding, together with test API keys for that environment |
+
+### Conventions
+
+* **Amounts** (`shares`, `makerAmount`, `takerAmount`, fees) are base-10
+  integer strings in 6-decimal units. `"1000000"` is one share or one pUSD.
+* **Prices and tolerances** are decimal strings, such as `"0.65"`.
+* **Times** are RFC 3339 UTC strings, except order timestamps, which are Unix
+  seconds.
+* **Request bodies are decoded strictly.** An unknown field returns `400`.
+* **Every error from the API uses one envelope.** See [Errors](#errors).
+
+Every request and response is specified in the [API Reference](#api-reference).
+
+## Authentication
+
+Every request is signed with your partner API key. Polymarket identifies your
+platform from the key and never from the request body, so a request can only
+read and create your own trades. The key does not authorize moving funds: each
+counterparty authorizes its own side through its
+[order signature](#sign-the-orders).
+
+Every request except `GET /v1/time` carries three headers:
+
+| Header | Value |
+| - | - |
+| `RFQ-Key-Id` | `<rfq_key_id>`, the public half of your API key |
+| `RFQ-Timestamp` | `<rfq_timestamp>`, the current Unix time in seconds |
+| `RFQ-Signature` | `<rfq_signature>`, the request signature, created with your API `secret` |
+
+Create a new timestamp for each request, within 30 seconds of server time.
+Then sign the timestamp, the uppercase HTTP method, the path, and the exact
+serialized body you send:
+
+```text theme={null}
+message = <rfq_timestamp> + <method> + <request_path> + <exact_serialized_request_body>
+
+rfq_signature = urlsafeBase64WithPadding(
+  HMAC-SHA256(base64UrlDecode(<rfq_secret>), message)
+)
+```
+
+For a `GET`, the body is empty. The examples on this page use these
+placeholders. See [Authentication](/api-reference/rfq-trades/authentication)
+for TypeScript and Python signing helpers, a test vector, and the WebSocket
+handshake.
+
+## Find Markets
+
+Find markets through the public Gamma API at
+`https://gamma-api.polymarket.com`. It needs no API key. To list, page, and
+search events and fetch a market, see
+[Discover Markets](/market-data/discover-markets). Discovery data does not
+need to be perfectly fresh: Polymarket re-checks the market and its on-chain
+state on every RFQ trade request.
+
+### Check That a Market Is Tradable
+
+Trade only markets where all of these hold:
+
+```javascript theme={null}
+market.active &&
+  !market.closed &&
+  !market.archived &&
+  market.acceptingOrders &&
+  market.enableOrderBook &&
+  (!market.umaResolutionStatus || market.umaResolutionStatus === "initialized");
+```
+
+Any other `umaResolutionStatus`, such as `proposed`, `disputed`, or `resolved`,
+means a CTF market has entered resolution and its outcome may already be known.
+Skip it even though the other flags can still be `true` at that point.
+Polymarket Protocol V2 markets don't set `umaResolutionStatus`.
+
+### Read the Trading Identity
+
+An RFQ trade request references the market and its outcome tokens with these
+fields:
+
+| Field | Use |
+| - | - |
+| `id` | The `marketId` of an RFQ trade request |
+| `version` | `"v2"` for a Polymarket Protocol V2 market, absent for CTF. Selects which token ID field to read. |
+| `positionIds` | Polymarket V2: the YES and NO position IDs. Each order's `tokenId` is one of them. |
+| `clobTokenIds` | CTF: the YES and NO outcome token IDs. Each order's `tokenId` is one of them. |
+| `negRisk` | CTF: selects the exchange contract the orders are signed against. Prepare applies it for you. |
+
+Index `0` of `positionIds` or `clobTokenIds` is always the `yes` side and index
+`1` the `no` side, in `outcomes` order, even when the outcomes are names such
+as `["Lakers", "Celtics"]`.
+
+`clobTokenIds`, `outcomes`, and `outcomePrices` are JSON-encoded strings, such
+as `"[\"1234…\", \"5678…\"]"`. Parse them before use.
+
+`orderPriceMinTickSize` and `orderMinSize` are order book conventions. RFQ
+trades never enter the book, so they are not enforced, but staying within them
+is recommended. An RFQ trade price can have at most 6 decimals.
+
+### Price a Trade
+
+The public CLOB API at `https://clob.polymarket.com` gives the current order
+book, prices, and midpoints for quoting, by outcome token ID. See
+[Market Data](/market-data/overview).
+
+Every RFQ trade price must sit inside a [price band](#price-band) around the
+CLOB midpoint. Read the current band for both outcome tokens before you quote:
+
+```bash theme={null}
+curl "https://external-rfq-partner.polymarket.com/v1/markets/253591/price-band" \
+  -H "RFQ-Key-Id: <rfq_key_id>" \
+  -H "RFQ-Timestamp: <rfq_timestamp>" \
+  -H "RFQ-Signature: <rfq_signature>"
+```
+
+Sign the request with the method `GET`, the path
+`/v1/markets/253591/price-band`, and an empty body. The response body gives
+the band of each outcome token at the default tolerance:
+
+```json theme={null}
+{
+  "marketId": "253591",
+  "tolerance": "0.5",
+  "outcomes": {
+    "yes": {
+      "tokenId": "<yes_token_id>",
+      "mark": "0.62",
+      "lower": "0.31",
+      "upper": "0.93",
+      "source": "clob_midpoint"
+    },
+    "no": {
+      "tokenId": "<no_token_id>",
+      "mark": "0.38",
+      "lower": "0.19",
+      "upper": "0.57",
+      "source": "clob_midpoint"
+    }
+  },
+  "readAt": "2026-07-24T12:34:56Z"
+}
+```
+
+`mark` is the token's CLOB midpoint, and a price on that token must sit between
+`lower` and `upper`. See [Price Band](#price-band) for how the band is computed.
+
+## Settle a Trade
+
+Once two counterparties agree on a market, an operation, a price, and a size,
+settle the trade with the requests below. Only the submission creates a trade.
+Every request carries the three [authentication headers](#authentication).
+
+**1. Describe the Terms**
+
+First, describe the agreed trade as terms. Validate and prepare both take
+the terms as their request body:
+
+```json split theme={null}
+{
+  "marketId": "253591",
+  "operation": "split",
+  "price": "0.65",
+  "shares": "1500000000",
+  "parties": {
+    "yes": { "maker": "<yes_deposit_wallet>", "signatureType": 3 },
+    "no": { "maker": "<no_deposit_wallet>", "signatureType": 3 }
+  }
+}
+```
+
+```json trade theme={null}
+{
+  "marketId": "253591",
+  "operation": "trade",
+  "token": "yes",
+  "price": "0.65",
+  "shares": "1500000000",
+  "parties": {
+    "buyer": { "maker": "<buyer_deposit_wallet>", "signatureType": 3 },
+    "seller": { "maker": "<seller_deposit_wallet>", "signatureType": 3 }
+  }
+}
+```
+
+Where:
+
+* `marketId` is the Gamma market `id`.
+* `operation` is `split`, `merge`, or `trade`. See
+  [Operations](#operations).
+* `price` is the YES price for a `split` or `merge`, and the traded token's
+  price for a `trade`.
+* `shares` is the number of shares on each side, in 6-decimal units.
+  `"1500000000"` is 1,500 shares.
+* `parties` holds each counterparty's Deposit Wallet address as `maker`,
+  with `signatureType` `3`.
+
+> [accordion] All Term Fields
+>
+> | Field | Notes |
+> | - | - |
+> | `marketId` | The Gamma market `id`. |
+> | `operation` | `split`, `merge`, or `trade`. See [Operations](#operations). |
+> | `token` | `trade` only: the outcome token that changes hands, `yes` or `no`. |
+> | `price` | The agreed price in (0, 1), with at most 6 decimals. For `split` and `merge` it is the YES price. For `trade` it is the price of the traded token. `price × shares` must be a whole number of base units, because it becomes the pUSD amount. |
+> | `shares` | The number of shares on each side, in 6-decimal units. `"1500000000"` is 1,500 shares. |
+> | `parties` | Keyed `yes` and `no` for `split` and `merge`, and `buyer` and `seller` for `trade`. |
+> | `priceTolerance` | Optional. Tightens the [price band](#price-band), such as `"0.05"` for ±5% of the mark. Pass the same value on every request for the trade. |
+>
+> Each party describes one counterparty's account:
+>
+> | Field | Notes |
+> | - | - |
+> | `maker` | The counterparty's Deposit Wallet address, which pays and receives for this side. The counterparty shares it with its session key. |
+> | `signatureType` | `3`, for a Deposit Wallet. Prepare refuses any other value. |
+> | `signer` | Optional, and best omitted. For a Deposit Wallet it defaults to, and must equal, `maker`. |
+> | `role` | Optional. `maker` or `taker`: the fee rate this side pays. Set it on both parties or on neither. Without it, the `yes` side of a `split` or `merge` and the `buyer` of a `trade` pay the taker rate. |
+
+**2. Validate the Terms**
+
+Next, optionally check the terms before anyone signs. Validate runs the
+market, price, account, and guardrail checks a submission would run,
+reports all of them, and stores nothing:
+
+```bash theme={null}
+curl -X POST "https://external-rfq-partner.polymarket.com/v1/rfq-trades/validate" \
+  -H "Content-Type: application/json" \
+  -H "RFQ-Key-Id: <rfq_key_id>" \
+  -H "RFQ-Timestamp: <rfq_timestamp>" \
+  -H "RFQ-Signature: <rfq_signature>" \
+  --data '{
+    "marketId": "253591",
+    "operation": "split",
+    "price": "0.65",
+    "shares": "1500000000",
+    "parties": {
+      "yes": { "maker": "<yes_deposit_wallet>", "signatureType": 3 },
+      "no": { "maker": "<no_deposit_wallet>", "signatureType": 3 }
+    }
+  }'
+```
+
+Sign the request with the method `POST`, the path
+`/v1/rfq-trades/validate`, and the exact body you send.
+
+A completed validation returns `200`, even when a check fails. A `4xx`
+means the request itself was malformed. The response body reports every
+check:
+
+```json theme={null}
+{
+  "valid": false,
+  "checks": {
+    "market": { "status": "pass" },
+    "price": {
+      "status": "pass",
+      "band": { "mark": "0.62", "lower": "0.31", "upper": "0.93" }
+    },
+    "parties": {
+      "yes": { "status": "pass" },
+      "no": {
+        "status": "fail",
+        "reason": "insufficient_balance",
+        "detail": "balance 12000000 < required …"
+      }
+    },
+    "guardrails": [
+      { "id": "taker_notional", "status": "pass" },
+      { "id": "price_deviation", "status": "pass" },
+      { "id": "transaction_notional", "status": "pass" },
+      { "id": "counterparty_notional", "status": "pass" }
+    ]
+  },
+  "checkedAt": "2026-07-24T12:34:56Z"
+}
+```
+
+Where:
+
+* `valid` is `true` when the market, both parties, and every guardrail
+  pass, and the price check doesn't fail. `parties` is keyed like the
+  request.
+* A check that could not run reports `"status": "missing"`. It is not a
+  pass. A `missing` price check alone leaves `valid` unchanged, because the
+  `price_deviation` [guardrail](#guardrails) decides whether a trade
+  without a midpoint is blocked.
+* When the market check fails because the market can't be found, the
+  other checks are left out of `checks`.
+* `price.band` is the band of the first order's token: YES for `split` and
+  `merge`, the traded token for `trade`. Read both tokens' bands from the
+  [price band request](#price-a-trade).
+* `guardrails` lists every [guardrail](#guardrails) with its result.
+* Each `reason` is listed under [Rejection Reasons](#rejection-reasons).
+
+The result is a point-in-time preview. Balances and bands keep moving, and
+the same checks run again when the trade is submitted. Signatures and
+session keys are checked only on submission.
+
+**3. Prepare the Orders**
+
+Then, send the same terms to prepare. Polymarket builds both unsigned
+orders, with fresh salts and timestamps, and the fee each side will pay:
+
+```bash theme={null}
+curl -X POST "https://external-rfq-partner.polymarket.com/v1/rfq-trades/prepare" \
+  -H "Content-Type: application/json" \
+  -H "RFQ-Key-Id: <rfq_key_id>" \
+  -H "RFQ-Timestamp: <rfq_timestamp>" \
+  -H "RFQ-Signature: <rfq_signature>" \
+  --data '{
+    "marketId": "253591",
+    "operation": "split",
+    "price": "0.65",
+    "shares": "1500000000",
+    "parties": {
+      "yes": { "maker": "<yes_deposit_wallet>", "signatureType": 3 },
+      "no": { "maker": "<no_deposit_wallet>", "signatureType": 3 }
+    }
+  }'
+```
+
+Sign the request with the method `POST`, the path
+`/v1/rfq-trades/prepare`, and the exact body you send.
+
+The response body holds one prepared order per party, keyed like
+`parties`. This excerpt shows the `yes` order. `orders.no` has the same
+fields for the NO side:
+
+```json theme={null}
+{
+  "orders": {
+    "yes": {
+      "order": {
+        "salt": "<yes_salt>",
+        "maker": "<yes_deposit_wallet>",
+        "signer": "<yes_deposit_wallet>",
+        "tokenId": "<yes_token_id>",
+        "makerAmount": "975000000",
+        "takerAmount": "1500000000",
+        "side": 0,
+        "signatureType": 3,
+        "timestamp": "1784896496",
+        "metadata": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "builder": "<builder_code>"
+      },
+      "typedData": {
+        "primaryType": "TypedDataSign",
+        "domain": {
+          "name": "Polymarket CTF Exchange",
+          "version": "3",
+          "chainId": 137,
+          "verifyingContract": "0xe3333700cA9d93003F00f0F71f8515005F6c00Aa"
+        },
+        "types": {
+          "EIP712Domain": [
+            { "name": "name", "type": "string" },
+            { "name": "version", "type": "string" },
+            { "name": "chainId", "type": "uint256" },
+            { "name": "verifyingContract", "type": "address" }
+          ],
+          "TypedDataSign": [
+            { "name": "contents", "type": "Order" },
+            { "name": "name", "type": "string" },
+            { "name": "version", "type": "string" },
+            { "name": "chainId", "type": "uint256" },
+            { "name": "verifyingContract", "type": "address" },
+            { "name": "salt", "type": "bytes32" }
+          ],
+          "Order": [
+            { "name": "salt", "type": "uint256" },
+            { "name": "maker", "type": "address" },
+            { "name": "signer", "type": "address" },
+            { "name": "tokenId", "type": "uint256" },
+            { "name": "makerAmount", "type": "uint256" },
+            { "name": "takerAmount", "type": "uint256" },
+            { "name": "side", "type": "uint8" },
+            { "name": "signatureType", "type": "uint8" },
+            { "name": "timestamp", "type": "uint256" },
+            { "name": "metadata", "type": "bytes32" },
+            { "name": "builder", "type": "bytes32" }
+          ]
+        },
+        "message": {
+          "contents": {
+            "salt": "<yes_salt>",
+            "maker": "<yes_deposit_wallet>",
+            "signer": "<yes_deposit_wallet>",
+            "tokenId": "<yes_token_id>",
+            "makerAmount": "975000000",
+            "takerAmount": "1500000000",
+            "side": 0,
+            "signatureType": 3,
+            "timestamp": "1784896496",
+            "metadata": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "builder": "<builder_code>"
+          },
+          "name": "DepositWallet",
+          "version": "1",
+          "chainId": 137,
+          "verifyingContract": "<yes_deposit_wallet>",
+          "salt": "0x0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      },
+      "role": "taker",
+      "digest": "<yes_digest>",
+      "signatureSuffix": "<yes_signature_suffix>"
+    }
+  },
+  "fees": { "yes": "<yes_fee>", "no": "<no_fee>" },
+  "expiresAt": "2026-07-24T12:44:56Z"
+}
+```
+
+Where:
+
+* `order` is the unsigned order. Submit it unchanged.
+* `typedData`, `digest`, and `signatureSuffix` are what the counterparty's
+  session key signs in the next step.
+* `role` is the fee role the order was quoted under. Send it back with the
+  order on submission.
+* `fees` is the fee each side will pay, in pUSD base units.
+* After `expiresAt`, about 10 minutes after the order timestamp, a
+  submission of these orders is refused as `stale_order`. Prepare again
+  and have both sides re-sign.
+
+Prepare also stamps the
+[builder code](/trading/place-orders#attach-your-builder-code) Polymarket
+configured for your platform on both orders. It refuses terms that fail
+the market, price band, or guardrail checks with `422`. It doesn't check
+accounts or funds, so the counterparties don't need to be funded yet. Each
+call returns new orders, so prepare again rather than retrying with the old
+ones.
+
+**4. Sign the Orders**
+
+Each side of the trade is authorized by its own counterparty, not by your
+platform. Sign each prepared order with the
+[session key](#session-keys) its counterparty gave you:
+
+1. Sign the order's `typedData` exactly as returned, with
+   `eth_signTypedData_v4` or an equivalent library call. The result is a
+   65-byte ECDSA signature that recovers to the session key over the
+   returned `digest`.
+2. Append the returned `signatureSuffix` to the 65-byte signature.
+3. ABI-encode the session key's address (as `bytes32`), 32 zero bytes, and
+   the signature from the previous step (as `bytes`), then append the
+   32-byte marker `0x6492…6492` (`6492` repeated 16 times). This envelope
+   tells the Deposit Wallet which session key signed.
+
+```typescript TypeScript theme={null}
+import {
+  concat,
+  encodeAbiParameters,
+  pad,
+  type Hex,
+  type TypedDataDefinition,
+} from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+
+const SESSION_SIGNER_MAGIC: Hex = `0x${"6492".repeat(16)}`;
+
+type PreparedOrder = {
+  typedData: TypedDataDefinition;
+  signatureSuffix: Hex;
+};
+
+async function signPreparedOrder(
+  sessionKey: Hex,
+  prepared: PreparedOrder,
+): Promise<Hex> {
+  const account = privateKeyToAccount(sessionKey);
+  const rawSignature = await account.signTypedData(prepared.typedData);
+  const inner = concat([rawSignature, prepared.signatureSuffix]);
+
+  return concat([
+    encodeAbiParameters(
+      [{ type: "bytes32" }, { type: "bytes32" }, { type: "bytes" }],
+      [pad(account.address, { size: 32 }), pad("0x", { size: 32 }), inner],
+    ),
+    SESSION_SIGNER_MAGIC,
+  ]);
+}
+```
+
+```python Python theme={null}
+from eth_abi import encode
+from eth_account import Account
+from eth_account.messages import encode_typed_data
+
+SESSION_SIGNER_MAGIC = bytes.fromhex("6492" * 16)
+
+
+def sign_prepared_order(session_key: str, prepared: dict) -> str:
+    account = Account.from_key(session_key)
+    signed = account.sign_message(
+        encode_typed_data(full_message=prepared["typedData"])
+    )
+    inner = signed.signature + bytes.fromhex(prepared["signatureSuffix"][2:])
+    signer_word = bytes(12) + bytes.fromhex(account.address[2:])
+    envelope = encode(
+        ["bytes32", "bytes32", "bytes"], [signer_word, bytes(32), inner]
+    )
+    return "0x" + (envelope + SESSION_SIGNER_MAGIC).hex()
+```
+
+The result is the order's `signature`. A signature that skips the suffix
+or the envelope, or that signs the plain `Order` instead of `typedData`,
+is refused as `invalid_order`. See
+[Signing Details](#signing-details) for the wrapper and its domains.
+
+**5. Submit the Trade**
+
+Next, submit both signed orders. Each order is the prepared `order`,
+unchanged, plus its `signature` and `role`. Set `idempotencyKey` to your
+own reference for the trade:
+
+```bash theme={null}
+curl -X POST "https://external-rfq-partner.polymarket.com/v1/rfq-trades" \
+  -H "Content-Type: application/json" \
+  -H "RFQ-Key-Id: <rfq_key_id>" \
+  -H "RFQ-Timestamp: <rfq_timestamp>" \
+  -H "RFQ-Signature: <rfq_signature>" \
+  --data '{
+    "marketId": "253591",
+    "idempotencyKey": "your-trade-ref-123",
+    "orders": [
+      {
+        "salt": "<yes_salt>",
+        "maker": "<yes_deposit_wallet>",
+        "signer": "<yes_deposit_wallet>",
+        "tokenId": "<yes_token_id>",
+        "makerAmount": "975000000",
+        "takerAmount": "1500000000",
+        "side": 0,
+        "signatureType": 3,
+        "timestamp": "1784896496",
+        "metadata": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "builder": "<builder_code>",
+        "signature": "<yes_signature>",
+        "role": "taker"
+      },
+      {
+        "salt": "<no_salt>",
+        "maker": "<no_deposit_wallet>",
+        "signer": "<no_deposit_wallet>",
+        "tokenId": "<no_token_id>",
+        "makerAmount": "525000000",
+        "takerAmount": "1500000000",
+        "side": 0,
+        "signatureType": 3,
+        "timestamp": "1784896496",
+        "metadata": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "builder": "<builder_code>",
+        "signature": "<no_signature>",
+        "role": "maker"
+      }
+    ]
+  }'
+```
+
+Sign the request with the method `POST`, the path `/v1/rfq-trades`, and
+the exact body you send.
+
+Where:
+
+* `idempotencyKey` is required: your own reference for the trade, up to
+  128 bytes. See [Idempotency](#idempotency).
+* `orders` holds exactly two signed orders, in any order. The operation
+  and each side are derived from the orders' sides and token IDs.
+* `priceTolerance` is optional: the same value you validated and prepared
+  with.
+
+Do not send fee amounts. Polymarket computes the fees, and a non-zero
+`takerFeeAmount` or `makerFeeAmount` is refused as `fee_not_accepted`.
+
+**6. Check the Response**
+
+Then, check the HTTP status. A `201 Created` response means the trade was
+accepted as `PENDING`. A `422` response means the trade was refused, and
+no trade was created:
+
+```json Success theme={null}
+{
+  "tradeId": "6f1c2b8e-3d4a-4f5b-9c6d-7e8f9a0b1c2d",
+  "status": "PENDING",
+  "fees": { "yes": "<yes_fee>", "no": "<no_fee>" },
+  "createdAt": "2026-07-24T12:34:56Z"
+}
+```
+
+```json Failure theme={null}
+{
+  "error": {
+    "code": "validation_failed",
+    "message": "stale_order (taker): order timestamp is 12m0s old (max 10m0s)",
+    "retryable": false,
+    "details": { "reason": "stale_order", "party": "taker" }
+  }
+}
+```
+
+Keep the `tradeId` to track the trade. On a failure, `details.reason` is
+one of the [rejection reasons](#rejection-reasons). A `201` is not a fill:
+some checks run again just before execution. See
+[Acceptance Is Not Execution](#acceptance-is-not-execution).
+
+**7. Track the Trade**
+
+Finally, read the trade by its `tradeId` until it is final:
+
+```bash theme={null}
+curl "https://external-rfq-partner.polymarket.com/v1/rfq-trades/6f1c2b8e-3d4a-4f5b-9c6d-7e8f9a0b1c2d" \
+  -H "RFQ-Key-Id: <rfq_key_id>" \
+  -H "RFQ-Timestamp: <rfq_timestamp>" \
+  -H "RFQ-Signature: <rfq_signature>"
+```
+
+Sign the request with the method `GET`, the path
+`/v1/rfq-trades/6f1c2b8e-3d4a-4f5b-9c6d-7e8f9a0b1c2d`, and an empty body.
+
+The response body is the trade's current status, and the source of truth
+for its outcome:
+
+```json theme={null}
+{
+  "tradeId": "6f1c2b8e-3d4a-4f5b-9c6d-7e8f9a0b1c2d",
+  "idempotencyKey": "your-trade-ref-123",
+  "status": "FILLED",
+  "transactionHash": "<transaction_hash>",
+  "createdAt": "2026-07-24T12:34:56Z",
+  "filledAt": "2026-07-24T12:35:12Z"
+}
+```
+
+`status` is one of:
+
+| Status | Meaning |
+| - | - |
+| `PENDING` | Accepted and not yet final. `transactionHash` is set once the transaction is mined, before the fill is confirmed. |
+| `FILLED` | Executed on-chain. `transactionHash` and `filledAt` are set. |
+| `REJECTED` | Refused or failed. `failureReason` says why. The trade will not execute. |
+
+On `REJECTED`, `failureReason` is one of the
+[rejection reasons](#rejection-reasons), or an execution error code such
+as `execution_failed` when the trade could not execute. A trade ID that is
+unknown, or belongs to another partner, returns `404`. To avoid polling,
+open the [trade status stream](#trade-status-stream).
+
+## Session Keys
+
+A session key is an ECDSA key pair that a counterparty authorizes for its
+Polymarket Deposit Wallet. The counterparty creates it on Polymarket with the
+`EXTERNAL_RFQ_INTEGRATION` scope and shares it with your platform, together
+with its Deposit Wallet address, which is the `maker` of its orders. Your
+platform then signs RFQ trades on the counterparty's behalf. The key is shown
+only once: to replace a lost key, the counterparty deletes it and creates a
+new one. See [Session Keys](/trading/session-keys) for how authorization
+works.
+
+* **Scoped to RFQ trades.** A key with only the `EXTERNAL_RFQ_INTEGRATION`
+  scope cannot place CLOB orders, deposit, or withdraw. A signature from a key
+  that isn't authorized for RFQ trades is refused as `invalid_order`.
+* **Revocable.** The counterparty can revoke the key at any time. A signature
+  from a revoked or expired key is refused as `invalid_order`.
+* **Invisible in the order.** Both `maker` and `signer` are the Deposit Wallet
+  address. The session key appears only inside the signature.
+
+### Signing Details
+
+Deposit wallets verify signatures through ERC-1271 and expect Solady's ERC-7739
+`TypedDataSign` wrapper: the order is bound to the wallet's own domain, nested
+under the exchange's domain. A plain order signature fails the wallet's
+`isValidSignature` check.
+
+> [accordion] The wrapper and its domains
+>
+> ```text theme={null}
+> Outer domain (the exchange):
+>   name:              "Polymarket CTF Exchange"
+>   version:           "3" for Polymarket V2 markets, "2" for CTF markets
+>   chainId:           137
+>   verifyingContract: 0xe3333700cA9d93003F00f0F71f8515005F6c00Aa  (Polymarket V2 markets)
+>                      0xE111180000d2663C0091e4f400237545B87B996B  (CTF markets)
+>                      0xe2222d279d744050d28e00520010520000310F59  (CTF negRisk markets)
+>
+> Inner domain (the deposit wallet):
+>   name:              "DepositWallet"
+>   version:           "1"
+>   chainId:           137
+>   verifyingContract: the maker's deposit wallet address
+>   salt:              0x0000000000000000000000000000000000000000000000000000000000000000
+>
+> Wrapper type:
+>   TypedDataSign(Order contents,string name,string version,uint256 chainId,
+>                 address verifyingContract,bytes32 salt)
+>
+> Contents type:
+>   Order(uint256 salt,address maker,address signer,uint256 tokenId,
+>         uint256 makerAmount,uint256 takerAmount,uint8 side,uint8 signatureType,
+>         uint256 timestamp,bytes32 metadata,bytes32 builder)
+>
+> signatureSuffix:
+>   exchangeDomainSeparator || contentsHash
+>     || orderTypeString || uint16(len(orderTypeString))
+>
+> Session-key envelope:
+>   abi.encode(bytes32(sessionKeyAddress), bytes32(0), rawSignature || signatureSuffix)
+>     || 0x6492649264926492649264926492649264926492649264926492649264926492
+> ```
+>
+> The market's `version` selects the outer domain, and for a CTF market its
+> `negRisk` flag selects the verifying contract. Prepare applies both, which is
+> why signing the returned `typedData` is the reliable path.
+
+## Trade Submission
+
+### Acceptance Is Not Execution
+
+A `201` means the trade was accepted for execution, not that it will fill.
+
+* **Checked at submission.** The request shape, the order rules and
+  timestamps, the market's status, and the size [guardrails](#guardrails). A
+  failure returns `422` and creates no trade.
+* **Checked just before execution.** Signatures, accounts and funds, the price
+  band, the price guardrail, and a fresh market check. A failure ends the trade
+  as `REJECTED` with a `failureReason`.
+
+Follow every trade to `FILLED` or `REJECTED`. To learn the verdict before
+anyone signs, validate first.
+
+Trades that share a counterparty wallet execute one at a time, so a trade can
+wait while an earlier trade on the same wallet settles. A trade that still
+can't execute about 10 minutes after submission, because it is queued or a
+dependency is down, ends `REJECTED` with `execution_failed`.
+
+### Idempotency
+
+`idempotencyKey` is scoped to your platform, across all of its API keys.
+Submitting a key you have already used returns `201` for the original trade,
+with its current `status` and `transactionHash`, and the header
+`Idempotency-Replayed: true`.
+
+This makes a submission safe to retry after a timeout or a retryable error.
+Only the key identifies the trade, and the body is not compared on replay, so
+never reuse a key for a different trade.
+
+A submission refused with `422` creates no trade, so its key stays free. A
+trade that ends `REJECTED` keeps its key.
+
+### Order Rules
+
+Prepared orders already follow these rules. If you build orders yourself
+instead of preparing them, follow them too. A broken rule is refused as
+`invalid_order` unless noted:
+
+* The two orders belong to different accounts.
+* `maker` and `signer` are both the Deposit Wallet address, and
+  `signatureType` is `3`.
+* `salt` is a positive base-10 integer, used once per maker. A trade rejected
+  by the checks just before execution frees its salts again. See
+  [Rejection Reasons](#rejection-reasons).
+* `timestamp` is in Unix seconds. An order more than 10 minutes old is refused
+  as `stale_order`, and one more than 1 minute in the future as
+  `invalid_order`.
+* `metadata` is zero, and `makerAmount` and `takerAmount` are positive.
+* `builder` is your builder code, or zero if you don't have one.
+* `makerAmount` is what the order gives and `takerAmount` what it receives: a
+  buy gives pUSD for shares, and a sell gives shares for pUSD. A buy's price is
+  `makerAmount / takerAmount`, and a sell's is `takerAmount / makerAmount`.
+* For `split`, both orders buy the same number of shares, and their pUSD
+  together covers at least those shares. For `merge`, both orders sell the
+  same number of shares, and together ask for at most that much pUSD.
+* For `trade`, both orders carry the same token and are exact mirror images:
+  the same shares and the same pUSD amount, at a price of at most 1. A pair
+  that merely crosses is refused rather than settled at one side's price.
+
+For the order fields themselves, see [Place Orders](/trading/place-orders).
+
+## Trade Status Stream
+
+To avoid polling, open the WebSocket at
+`wss://external-rfq-partner.polymarket.com/v1/ws/rfq-trades`,
+[authenticated on the upgrade request](/api-reference/rfq-trades/authentication#authenticate-the-websocket).
+On connect it sends one `trade_update` per trade still `PENDING`, then one each
+time a trade moves, such as when it is accepted, mined, filled, or rejected.
+Each frame carries the same object as the `GET`:
+
+```json theme={null}
+{
+  "type": "trade_update",
+  "trade": {
+    "tradeId": "6f1c2b8e-3d4a-4f5b-9c6d-7e8f9a0b1c2d",
+    "idempotencyKey": "your-trade-ref-123",
+    "status": "FILLED",
+    "transactionHash": "<transaction_hash>",
+    "createdAt": "2026-07-24T12:34:56Z",
+    "filledAt": "2026-07-24T12:35:12Z"
+  }
+}
+```
+
+A frame can repeat a status you have already seen, and a trade's first frame
+can arrive before the submission's response. Match frames to your trades by
+`tradeId` or `idempotencyKey`.
+
+The stream is a latency optimization, not a ledger: delivery is lossy by
+design. A connection that falls behind drops frames without being closed, and
+a trade that finished while you were disconnected is not sent again. `GET` any
+trade that has stayed `PENDING` longer than you expect, and every trade you
+still hold as `PENDING` after a reconnect. For any trade whose outcome matters,
+the `GET` is the source of truth. The server pings every 45 seconds and closes
+a connection that hasn't answered within 60 seconds.
+
+## Fees
+
+Email [blocks@polymarket.com](mailto:blocks@polymarket.com) for details on RFQ
+trade fees.
+
+## Checks and Limits
+
+Every RFQ trade must pass the same checks: the market, the price, each
+counterparty's account, and a set of guardrails. Validate reports them
+without refusing anything, while prepare and submit refuse a trade that fails
+one.
+
+| Request | Checks run | When a check fails |
+| - | - | - |
+| Validate | All of them | `200` with `valid: false` and the failing check under `checks` |
+| Prepare | All except accounts and funds | `422` with `details.reason` set, or `details.field` for a malformed request |
+| Submit | All, in two stages | `422` for the checks that run at submission. A check that runs just before execution ends the trade `REJECTED` with `failureReason` set. See [Acceptance Is Not Execution](#acceptance-is-not-execution). |
+
+### Market
+
+The market must be [tradable](#check-that-a-market-is-tradable) and at least
+30 seconds from its end time. Otherwise the trade is refused as
+`market_not_tradable`.
+
+### Price Band
+
+Each order's price must sit inside a band around the CLOB midpoint, its
+**mark**, of the outcome token that order prices:
+
+```text theme={null}
+band = mark ± mark × T
+```
+
+`T` is `0.5` by default. Pass `priceTolerance` to tighten it, such as `"0.05"`
+for ±5% of the mark. A tolerance wider than the default is refused. Out of
+band, the trade is refused as `price_out_of_band`.
+
+Both orders are checked, each against its own token. For a `split` at `0.65`,
+the YES order is judged at `0.65` against the YES mark and the NO order at
+`0.35` against the NO mark. Because the band is relative, it is narrowest on
+the cheaper token, so price your quotes against both bands.
+
+[Price a Trade](#price-a-trade) shows how to read both tokens' current bands.
+When no midpoint can be read, the band's `source` is `unavailable` and its
+`mark`, `lower`, and `upper` are omitted. The band check then reports
+`missing` and does not block the trade, but a market that has no order book is
+refused as `price_mark_missing`. If the midpoint can't be read because the
+CLOB is unreachable, validate and prepare return `502`, and a submitted trade
+waits until it can be read.
+
+### Accounts and Funds
+
+Each counterparty's account must:
+
+* Be a registered Polymarket account (`unknown_account`).
+* Not be restricted from trading (`account_restricted`). An account limited
+  to closing positions can sell but not buy.
+* Pass sanctions screening, for both the account and the signing key
+  (`ofac_blocked`).
+* Hold the funds for its side (`insufficient_balance`): pUSD for its
+  `makerAmount` plus its fee for a buy, or the outcome tokens it sells for a
+  sell.
+* Have approved the exchange contracts to spend those funds. On a CTF market
+  the spender is the Standard Exchange, or the Neg Risk Exchange and Neg Risk
+  Adapter for a `negRisk` market. On a Polymarket V2 market it is the
+  Polymarket V2 Exchange, for both pUSD and PositionManager outcome tokens. See
+  [Set Up Trading Approvals](/trading/wallets-auth#set-up-trading-approvals)
+  for the approvals and contract addresses.
+
+Only a buyer's pUSD approval on a CTF market is checked ahead of execution
+(`insufficient_allowance`). A seller's missing outcome token approval, and any
+funding problem on a Polymarket V2 market, fail the trade at execution with an
+execution error such as `execution_failed`, so confirm both sides' approvals
+before you submit.
+
+### Guardrails
+
+Every RFQ trade is also checked against guardrails, such as limits on its size
+and on how far its price sits from the midpoint. Email
+[blocks@polymarket.com](mailto:blocks@polymarket.com) for details on the
+guardrails that apply to your platform.
+
+## Errors
+
+Every error uses one envelope:
+
+```json theme={null}
+{
+  "error": {
+    "code": "validation_failed",
+    "message": "stale_order (taker): order timestamp is 12m0s old (max 10m0s)",
+    "retryable": false,
+    "details": { "reason": "stale_order", "party": "taker" }
+  }
+}
+```
+
+* `code` is the error class. Several HTTP statuses share one, as the table
+  below shows.
+* `message` is human-readable, for logs.
+* `retryable` is `true` when the same request may be sent again as is. For a
+  submission, retry with the same `idempotencyKey`.
+* `details.reason` is the machine-readable
+  [rejection reason](#rejection-reasons), when the request was rejected.
+* `details.party` is the side at fault, by fee role (`taker` or `maker`), and
+  `details.field` the request field at fault, such as `orders[0].salt`, when
+  there is one.
+
+| HTTP | `code` | When |
+| - | - | - |
+| `400` | `validation_failed` | The body isn't valid JSON, has an unknown field or a value of the wrong type, or a path parameter is malformed. |
+| `401` | `authentication_failed` | Missing or invalid authentication. See [Authentication Errors](/api-reference/rfq-trades/authentication#authentication-errors). |
+| `404` | `not_found` | No such trade for your platform. Another partner's trade is a `404` too, never a `403`. |
+| `413` | `validation_failed` | The body is over 64 KiB. |
+| `422` | `validation_failed` | The request was rejected. `details.reason` says why, or only `details.field` is set when a required field is missing or invalid. |
+| `500` | `internal` | An unexpected server error. |
+| `502` | `dependency_unavailable` | A dependency failed. Retry when `retryable` is `true`. |
+| `503` | `dependency_unavailable` | WebSocket only: the stream is not available. Poll `GET /v1/rfq-trades/{tradeId}` instead. |
+
+A method and path pair that is not one of the API's requests is refused by
+Polymarket's edge network before it reaches the API, with `404` and a plain
+`{"error": "not found"}` body instead of the envelope.
+
+### Rejection Reasons
+
+The same reasons appear in `details.reason`, in validate's `checks`, and in a
+rejected trade's `failureReason`. New reasons may be added, so treat an unknown
+one as a rejection.
+
+After a `422`, fix the request and submit again: no trade was created, so the
+same `idempotencyKey` still works. After a `REJECTED` trade, submit with a new
+`idempotencyKey`: reusing the rejected trade's key returns that trade.
+
+A trade rejected by the checks just before execution frees its orders' salts,
+so once the cause is fixed, such as a counterparty funding its account, the
+same signed orders can be submitted again until they are 10 minutes old.
+Otherwise, prepare again and have both sides re-sign. Until signed orders go
+stale, treat them as live even after their trade is rejected.
+
+| `reason` | Meaning | What to do |
+| - | - | - |
+| `invalid_order` | An order breaks a rule, its timestamp is in the future, or its signature does not verify. | Fix the order or prepare again, then sign again. |
+| `token_market_mismatch` | The orders' token IDs don't belong to the market or don't fit the operation. | Rebuild against the market's `positionIds` or `clobTokenIds`, or prepare again. |
+| `stale_order` | An order's timestamp is more than 10 minutes old. | Prepare again and have both sides re-sign. |
+| `fee_not_accepted` | The submission set its own fee amounts. | Omit `takerFeeAmount` and `makerFeeAmount`. |
+| `market_not_tradable` | The market doesn't exist, isn't tradable, or is too close to its end time. | Choose another market. |
+| `price_out_of_band` | A price is outside the [price band](#price-band). | Requote inside the band, prepare again, and re-sign. |
+| `price_deviation_exceeded` | A price is too far from its token's midpoint. | Requote closer to the midpoint. |
+| `price_mark_missing` | The market has no CLOB midpoint to check the price against. | Wait until the market has a two-sided order book. |
+| `taker_notional_below_minimum` | The taker's side is below the minimum trade size. | Increase the size. |
+| `transaction_notional_exceeded` | The trade is above the maximum trade size. | Reduce the size. |
+| `counterparty_notional_exceeded` | A wallet, or your platform, would pass its trading volume limit. | Reduce the size, or retry later. |
+| `unknown_account` | A `maker` is not a known Polymarket account. | The counterparty must create a Polymarket account first. |
+| `account_restricted` | A counterparty is restricted from trading. | Do not retry. |
+| `ofac_blocked` | A counterparty's account or signing key failed sanctions screening. | Do not retry. |
+| `insufficient_balance` | A buyer lacks the pUSD for its side plus its fee, or a seller lacks the outcome tokens it sells. | Retry after the account is funded. |
+| `insufficient_allowance` | A counterparty hasn't approved the exchange contracts to spend its funds. | Retry after the approvals are set. |
+| `dependency_unavailable` | A check could not reach a dependency. | Retry. |
+
+A rejected trade's `failureReason` can also be `execution_failed`, or another
+execution error code, when the trade could not execute: it waited about 10
+minutes without executing, for example because its funds couldn't be held or a
+dependency was down, or the exchange refused the matched orders. Prepare again
+before retrying.
+
+## API Reference
+
+Each request and response is generated from the API specification in the
+[Institutional API reference](/api-reference/rfq-trades/overview):
+
+| Request | Description |
+| - | - |
+| [`POST /v1/rfq-trades/validate`](/api-reference/rfq-trades/validate) | Run the checks without storing anything |
+| [`POST /v1/rfq-trades/prepare`](/api-reference/rfq-trades/prepare) | Build both unsigned orders and their fees |
+| [`POST /v1/rfq-trades`](/api-reference/rfq-trades/submit) | Submit both signed orders |
+| [`GET /v1/rfq-trades/{tradeId}`](/api-reference/rfq-trades/get-trade) | Read a trade's status |
+| [`WSS /v1/ws/rfq-trades`](/api-reference/wss/rfq-trades) | Stream status changes |
+| [`GET /v1/markets/{marketId}/price-band`](/api-reference/rfq-trades/price-band) | Read a market's price band |
+| [`GET /v1/time`](/api-reference/rfq-trades/server-time) | Read the server clock, with no authentication |
 
 
 # Account Management
@@ -19512,11 +21100,27 @@ refused before or during handling.
 
 | Error | Condition |
 | - | - |
+| `invalid_request` | The frame failed parsing. The reply keeps a recoverable request `id` when the client supplied one. |
 | `read_only_key` | The connection authenticated with a proxy labelled `read-only:…` and the post is not `ping` or `auth`. Signed writes are refused on read-only sockets. |
 | `message_rate_limited` | The connection or IP message budget is exhausted. Refused read-only posts still consume message budget until the limit is reached. |
+| `open_orders_limit` | Cancel-on-disconnect tracking holds 65,536 order IDs and none can be pruned, so a new create is refused. |
 
 See [Rate Limits](/perps/rate-limits) for WebSocket message and connection
 budgets, including separate limits for read-only keys.
+
+## Take Profit and Stop Loss Errors
+
+| Error | Condition |
+| - | - |
+| `tp_sl_trigger_past_liquidation` | The trigger price is beyond the position's liquidation price under current margin rules, including after tiered maintenance activates. |
+
+## Stock Split Errors
+
+Automatic stock splits stay disabled in production. This identifier is reserved for when that path is enabled.
+
+| Error | Condition |
+| - | - |
+| `stock_split_unit_mismatch` | An automatic stock split supplied a price outside its expected post-split range. |
 
 ## Order Placement Errors
 
@@ -21862,6 +23466,128 @@ Each instrument also includes details that shape how it trades:
 
 Each market tracks an underlying market through external price feeds. Those
 feeds drive the [Index Price](/perps/learn-about-trading/index-price), and the Index Price helps anchor the [Mark Price](/perps/learn-about-trading/mark-price).
+
+## Pre-IPO Markets
+
+Pre-IPO perpetuals track a private company's valuation before it lists. Each
+pre-IPO market has its own specification page covering its price sources,
+contract terms, and what happens when the company goes public.
+
+> [card] [Anthropic (ANT)](/perps/learn-about-trading/markets/pre-ipo-anthropic)
+>
+> Specifications and the November 16 rebase to a per-share market.
+
+
+# Anthropic (ANT): Pre-IPO Specifications
+Source: https://docs.polymarket.com/perps/learn-about-trading/markets/pre-ipo-anthropic
+
+Specifications for active Polymarket Pre-IPO perpetual futures markets.
+
+## Overview
+
+Pre-IPO Perpetuals are cash-settled, non-expiring contracts that let traders take a view on a private company’s valuation 24/7, without holding shares or accessing gated secondary markets. Positions confer no equity: no voting rights, dividends, information rights, IPO allocation, or claim on the issuer.
+
+Because private rounds rarely disclose a reliable share count, contracts are priced by total valuation: \$1 of price equals \$1B in fully diluted value (e.g. 1,650 = \$1.65T).
+
+Markets are margined and settled in pUSD. ANT’s reference price comes from Entropy’s Anthropic pre-IPO market on Hyperliquid. On Monday, November 16, 2026, ahead of Anthropic’s expected November 19 IPO, ANT will rebase to a per-share equity perpetual priced from Pyth’s ANT/USD feed, without delisting (see *What Happens Post-IPO?* below).
+
+### How pricing works before the split
+
+This section covers ANT until the November 16 rebase, after which it is priced from Pyth as a standard equity perpetual.
+
+* **Index price:** Polymarket’s reference price, published every 200 ms. For ANT, this is Entropy’s oracle price for its Anthropic market on Hyperliquid (`io:ANTH`), which blends a 5-minute EMA of Entropy’s order-book mid with an aggregate of private-market sources (other derivatives, private marks, funding rounds, secondary trades), clipped to fixed catastrophic bounds. [Entropy methodology](https://docs.entropy.io/pre-ipo-perp-mechanics/oracle-price)
+* **Mark price:** Used for PnL, margin, liquidations and TP/SL triggers; updated every 200 ms. It is the median of: (1) the Index adjusted by a 150-second EMA of our book mid’s spread to the Index; (2) the median of our best bid, best ask and last trade; and (3) Entropy’s mark for `io:ANTH`. Unavailable inputs fall back to the Index. [Mark price](/perps/learn-about-trading/mark-price)
+* **Funding:** Polymarket’s standard funding. Every 5 seconds we sample our book’s premium (impact prices for 1,000 pUSD notional) versus the Index. Hourly, samples are averaged, run through the 8-hour formula with a 0.5 non-crypto scale, divided by 8, and capped at ±4%/hour. Paid hourly, peer-to-peer: longs pay shorts when the perp trades above the Index, and vice versa. [Funding](/perps/learn-about-trading/funding)
+* **Oracle bounds:** Entropy clips its oracle and mark to fixed catastrophic bounds, which shouldn’t bind normally. They affect ANT only via the Entropy prices we read; our Mark isn’t clipped directly. [Entropy methodology](https://docs.entropy.io/pre-ipo-perp-mechanics/oracle-price)
+* **Pre-listing window:** Three calendar days before an announced listing, Entropy’s oracle switches to a 1-hour EMA of its mark (bounds still applied). For a November 19 listing, this likely starts early on November 16 (UTC), so it may affect ANT’s Index for several hours before our switch to Pyth that morning. If Entropy rebases or changes its methodology before then, we may move the switch earlier and will give as much notice as possible.
+
+## Specifications
+
+| Parameter | Asset |
+| - | - |
+| Market | ANT (API symbol `ANT-USD`) |
+| Status | Live (since October 29, 2026) |
+| Description | ANT references the fully diluted equity valuation of Anthropic, PBC, quoted in USD with \$1 of price = \$1B of valuation. ANT is currently a pre-IPO market. On Monday, November 16, 2026, it will be rebased via stock split to reference 1 share of Anthropic, PBC Class A common stock (Nasdaq: ANT), quoted in USD and priced from Pyth. Anthropic develops frontier AI models and the Claude family of AI products. |
+| Quote Unit | \$1 = \$1B fully diluted valuation until the November 16 split; USD per share after |
+| Collateral | pUSD |
+| Trading Hours | 24/7 |
+| Price / Size Precision | 0.1 price; 0.00001 size; \$10 minimum order notional (may change after the split) |
+| Oracle (until split) | Entropy’s oracle price for its Hyperliquid market `io:ANTH`; Entropy’s mark is one of three Mark price inputs |
+| Oracle (from split) | Pyth ANT/USD, per-share, 24/7 (ID: 3618). Rebased Nov 11, 22:00 UTC to the fully diluted share count in Anthropic’s amended S-1 (factor 0.94025511). The same feed continues through the IPO, with the Nasdaq price as its leading input once trading opens. |
+| Initial Price | 1,805.20 (\$1.81T valuation) |
+| Oracle Bounds (Lower / Upper) | 300 / 4,200 (\$300B / \$4.2T); Entropy’s bounds, removed at the split |
+| Funding | Standard non-crypto formula (0.5 scale); paid hourly, capped at ±4%/hour |
+| Margin Mode | Cross & Isolated |
+| Max Leverage | 10x, tiered by position notional: 10x to \$500K, 5x to \$1M, 3x to \$3M, 2x to \$5M, 1x above |
+| Maintenance Margin | 5% |
+| Anticipated Listing Event | IPO on Nasdaq Global Select Market (ticker ANT) |
+| Anticipated Listing Date | November 19, 2026 (pricing expected November 18) |
+| Rebase (Stock Split) | Monday, November 16, 2026, \~10:00am ET (target). Ratio = fully diluted share count from the amended S-1 ÷ 1B, announced in advance |
+| No-IPO Resolution Date | August 18, 2028 ([details](https://docs.entropy.io/pre-ipo-perp-mechanics/no-ipo-resolution)) |
+
+## What Happens Post-IPO?
+
+### Rebasing to share price with a stock split
+
+Before the split, ANT is quoted in valuation terms (\$1 = \$1B). On Monday, November 16, Polymarket uses its stock split feature to rebase the market so that it references 1 share of Anthropic Class A common stock, quoted in USD, and switches its price feed from Entropy to Pyth. This happens on the existing market: there is no delisting or relisting, and open positions and history carry over.
+
+The split ratio is the fully diluted share count divided by 1 billion, applied exactly (not rounded) and announced in advance. At the split:
+
+* Position sizes are multiplied by the ratio and rounded toward zero at the market’s size precision. Any leftover fraction (well under one lot) moves to the insurance fund.
+* Entry prices and the market price are divided by the ratio.
+* Position value and unrealized PnL are unchanged apart from that rounding. The conversion realizes no PnL and charges no fee.
+* Each converted position gets a split-adjustment entry in trade history showing size and entry price before and after.
+* Charts, mark history and 24h stats, including pre-split history, are shown in per-share terms, so there’s no artificial price drop. Past trades keep their original prices.
+
+The fully diluted share count is taken on the same basis as Entropy’s methodology: the total as-converted, fully diluted share count stated in the company’s filing (for Anthropic, the “Total Class A and Class N Common Stock (As-Converted, Fully Diluted)” figure in its amended S-1 filed November 10, 2026), assuming no exercise of the underwriters’ option. Because this count is fully diluted, the implied market cap may differ from the figure shown by public data providers, which typically use shares outstanding. For example, at the top of Anthropic’s \$70–78 range, reported valuations were about \$1.4T fully diluted versus about \$1.02T on shares outstanding.
+
+### The trading pause
+
+There will be a brief trading pause while the split is applied. We will announce the time and split ratio in advance. The pause has three phases:
+
+1. **Paused.** All ANT orders, including TP/SL, are cancelled and not restored; new orders are refused. Funding settles up to the pause, then stops. Positions aren’t liquidated via the order book and are converted during this phase. Affected accounts can deposit and add margin but can’t withdraw or remove margin.
+2. **Reopening.** Once valid per-share prices are flowing, only post-only limit orders are accepted, for at least 5 minutes, with no fills. Orders must be explicitly marked post-only (API: `po=true`); unmarked orders are rejected even if they wouldn’t cross the book. Market, IOC/FOK, TP/SL and TWAP orders are refused. The timer restarts if a price or health check fails.
+3. **Live.** After the minimum window, an operator releases the market once prices are fresh and both sides are quoted within configured spread and depth. Fills and liquidations resume, funding restarts with no catch-up charge, and withdrawal limits clear.
+
+Cross-margin emergency takeover and auto-deleveraging can still occur during Paused and Reopening under normal rules. Other markets trade normally throughout.
+
+### Timing for ANT
+
+We plan to rebase ANT on **Monday, November 16, 2026, at \~10:00am ET**, about 72 hours before Anthropic’s expected first Nasdaq trade. This allows several days of per-share price discovery and avoids changes during IPO-day volatility. We’ll confirm the exact time and split ratio in advance.
+
+| When | What happens |
+| - | - |
+| Wed, Nov 11, 22:00 UTC | Pyth rebases its ANT/USD feed (×0.94025511) to the fully diluted share count in Anthropic’s amended S-1. |
+| By Fri, Nov 13 | Polymarket announces the split ratio and pause time. |
+| Mon, Nov 16, \~10:00am ET | ANT pauses, positions are converted, the price feed switches from Entropy to Pyth, and the market reopens (post-only, then Live). |
+| Wed, Nov 18 (expected) | Anthropic prices its IPO. |
+| Thu, Nov 19 (expected) | ANT begins trading on Nasdaq. |
+
+Between the split and the first trade on Nasdaq, ANT is priced from Pyth’s ANT/USD feed, which tracks Anthropic’s pre-IPO per-share value until the listed price is available.
+
+If the final prospectus share count differs from the count used for the split, the contract itself is unaffected: after the split ANT references 1 share, and from the opening trade it is priced from the actual Nasdaq share price.
+
+### Oracle switch to Pyth
+
+From the split on November 16, ANT is priced from Pyth’s 24/7 ANT/USD feed (ID: 3618), and Entropy is no longer used: Entropy’s bounds no longer apply, and Entropy’s mark is no longer an input to our Mark price. No second switch is needed at the IPO. Pyth keeps the same feed and, once Nasdaq trading opens, uses the listed price as its leading input. From then on ANT behaves as a standard Polymarket equity perpetual, and the feed used for the Index can differ by session (regular hours, overnight, weekend). Funding already uses the standard formula, so it does not change.
+
+**Note for market makers:** Entropy keeps its own Anthropic market in valuation units after the IPO (share price × fully diluted shares ÷ 1B). After our split, ANT is quoted per share, so hedging across the two venues needs to apply the split ratio.
+
+### Worked example
+
+*Illustrative numbers only.* Suppose the fully diluted share count is 18,000,000,000, so the split ratio is 18.
+
+| Moment | Price source | ANT price | Your position | Notional |
+| - | - | - | - | - |
+| Before split (Mon, Nov 16) | Entropy (\$B valuation) | 1,701.00 | 10 ANT long | \$17,010 |
+| After split (pre-IPO) | Pyth (per-share) | 94.50 | 180 ANT long | \$17,010 |
+| Nasdaq opens at \$80 | Pyth (listed price leads) | 80.00 | 180 ANT long | \$14,400 |
+
+After the split, each \$1 move in Anthropic’s share price moves a 1-unit position by \$1, exactly like holding 1 share.
+
+### If the IPO is delayed or withdrawn
+
+ANT keeps trading in per-share terms on Pyth’s ANT/USD feed. If a later filing changes Anthropic’s share count, Pyth may rebase its feed again; we will announce in advance how ANT is handled. If the company remains unlisted at the No-IPO Resolution Date, the market settles as described in the table above.
 
 
 # Overview
@@ -28930,40 +30656,26 @@ portfolio reads report the account's current tier; see
 # Trading Competitions
 Source: https://docs.polymarket.com/perps/trading-competitions
 
-Polymarket Perps Bi-Weekly Trading Competitions
-
-Welcome to Polymarket Perps Bi-Weekly Trading Competitions.
+Polymarket Perps Trading Competitions
 
 ## Timeline
 
-Competitions will be announced a few days ahead of going live, and traders can
-track upcoming, live and ended competitions on our
+Competitions will run ad hoc, announced a few days ahead of going live - traders
+can track upcoming, live and completed competitions on our
 [Competitions page](https://polymarket.com/perps/competitions).
 
 ## Prizes
 
-Each competition has a **\$50,000 prize pool**, paid to the top 50 traders on
-the final leaderboard. Prizes are credited as pUSD to the winner's Polymarket
-Perps account within \~1 week of the competition ending. No claim is needed.
+Each competition has a different prize pool for a number of traders on the
+final leaderboard, announced prior to the competition beginning. Prizes are
+credited as pUSD to the winner's Polymarket Perps account within \~1 week of the
+competition ending. No claim is needed.
 
-Live rankings appear on the leaderboard in the Competitions tab of the
-Polymarket Perps page. Final rankings are confirmed after a review for rule
-violations, so standings can shift if any accounts are disqualified. Only trades
-made during the competition window count toward your score.
-
-Prize pool breakdown:
-
-| Place | Prize per trader | Traders | Total |
-| - | -: | -: | -: |
-| 1st | \$10,000 | 1 | \$10,000 |
-| 2nd | \$6,500 | 1 | \$6,500 |
-| 3rd | \$4,500 | 1 | \$4,500 |
-| 4th | \$3,500 | 1 | \$3,500 |
-| 5th | \$2,500 | 1 | \$2,500 |
-| 6th–10th | \$1,200 | 5 | \$6,000 |
-| 11th–24th | \$750 | 14 | \$10,500 |
-| 25th–50th | \$250 | 26 | \$6,500 |
-| **Total** | | **50** | **\$50,000** |
+Live rankings appear on the leaderboard in the
+[Competitions tab](https://polymarket.com/perps/competitions) of the Polymarket
+Perps page. Final rankings are confirmed after a review for rule violations, so
+standings can shift if any accounts are disqualified. Only trades made during
+the competition window count toward your score.
 
 ## Rules & Guidelines
 
@@ -28990,9 +30702,11 @@ Prize pool breakdown:
 > * **Negative scores:** negative PnL produces a negative score, and negative
 >   scores still rank.
 
-> [accordion] 3. \$100K minimum to rank
+> [accordion] 3. Minimum trade volume to rank
 >
-> Trade \$100K in notional volume to qualify for prizes.
+> Trade more than the competitions defined minimum notional volume to qualify for
+> prizes. This minimum volume will be announced before each competition, and vary
+> by competition.
 >
 > * Only volume on competition markets counts toward the minimum.
 > * Boosts count toward your score but not toward the minimum.
@@ -29009,7 +30723,7 @@ Prize pool breakdown:
 
 > [accordion] 5. Timing and payouts
 >
-> Top 50 are paid in pUSD to their perps account after a \~5-day review.
+> Winners are paid in pUSD to their perps account after a \~5-day review.
 >
 > * Only trades filled between the start and end time (UTC) count.
 > * Open positions are scored at the oracle mark price at the end. Closing them
@@ -29031,12 +30745,7 @@ Prize pool breakdown:
 
 [Start Competing](https://polymarket.com/perps/competitions)
 
-Join live or upcoming competitions to earn your share of \$50k in cash
-prizes.
-
-> [accordion] Competition Terms & Conditions
->
-> [Competition Terms & Conditions](https://docs.google.com/document/d/e/2PACX-1vRoHUTKW0vWtjRcggirQeWhnSrf35HKVKfJ2q3bg-P2p1kRZpDwLe8FqMYzFqVToA/pub?embedded=true)
+Join live or upcoming competitions to earn your share of cash prizes.
 
 
 # Polymarket 101
@@ -31492,7 +33201,7 @@ type.
 **400** `Bad Request`
 
 `Invalid signature_type` — The `signature_type` parameter must be `0` (EOA),
-`1` (POLY\_PROXY), `2` (POLY\_GNOSIS\_SAFE) or `3` (POLY\_1271, Deposit Wallet).
+`1` (POLY_PROXY), `2` (POLY_GNOSIS_SAFE) or `3` (POLY_1271, Deposit Wallet).
 
 ***
 
@@ -34499,7 +36208,7 @@ need a Polymarket account; create one at [polymarket.com](https://polymarket.com
 >
 > | Wallet Type | `signature_type` | `signer_address` | `maker_address` |
 > | - | - | - | - |
-> | Deposit Wallet | `3` POLY\_1271 | Deposit wallet address | Deposit wallet |
+> | Deposit Wallet | `3` POLY_1271 | Deposit wallet address | Deposit wallet |
 > | Safe Wallet | `2` Safe | Authenticated signing address | Derived Safe wallet |
 > | Proxy Wallet | `1` Proxy | Authenticated signing address | Derived proxy wallet |
 > | EOA | `0` EOA | EOA address | Same EOA address |
@@ -37273,7 +38982,7 @@ Combo legs. Markets are ordered by volume descending.
 > )
 > ```
 >
-> The SDK returns structured YES and NO outcomes with snake\_case fields.
+> The SDK returns structured YES and NO outcomes with snake_case fields.
 >
 > ```python theme={null}
 > yes_position_id = market.outcomes.yes.position_id
@@ -38291,7 +40000,7 @@ the complete workflow.
 >
 > | Wallet type | `signature_type` | `POLY_ADDRESS` | `signer_address` | `maker_address` |
 > | - | - | - | - | - |
-> | Deposit Wallet | `3` POLY\_1271 | Account or session signer with CLOB credentials | Deposit Wallet address | Deposit Wallet address |
+> | Deposit Wallet | `3` POLY_1271 | Account or session signer with CLOB credentials | Deposit Wallet address | Deposit Wallet address |
 > | Proxy Wallet | `1` Proxy | Account signer with CLOB credentials | Account signer | Proxy Wallet address |
 > | Safe Wallet | `2` Safe | Account signer with CLOB credentials | Account signer | Safe Wallet address |
 > | EOA | `0` EOA | Not supported | Not supported | Not supported |
@@ -39054,6 +40763,7 @@ orders.
 >   outcome: string;
 >   orderType: string;
 >   status: string;
+>   /** @deprecated Use sizeMatched or account trade records to track fills. */
 >   associateTrades: string[];
 >   createdAt: IsoDateTimeString;
 >   expiresAt?: IsoDateTimeString;
@@ -39083,6 +40793,11 @@ orders.
 > The unified SDK uses `assetId` for an outcome's trading identifier: a token
 > ID for a CTF market or a position ID for a Polymarket Protocol V2 market.
 > Use the identifier exposed for that outcome.
+>
+> `associateTrades` is deprecated and defaults to an empty array when omitted
+> from the response. Use `sizeMatched` for cumulative filled quantity, or
+> `listAccountTrades()` for individual fills matched by `takerOrderId` or
+> `makerOrders[].orderId`. An empty array does not mean the order has no fills.
 >
 > `expiresAt` is present when the response includes an expiration. Otherwise,
 > the field is omitted.
@@ -39115,7 +40830,7 @@ orders.
 >     outcome: str
 >     order_type: str
 >     status: str
->     associate_trades: tuple[str, ...]
+>     associate_trades: tuple[str, ...]  # Deprecated; use size_matched or account trades.
 >     created_at: datetime
 >     expires_at: datetime | None
 > ```
@@ -39143,6 +40858,11 @@ orders.
 > The unified SDK uses `asset_id` for an outcome's trading identifier: a token
 > ID for a CTF market or a position ID for a Polymarket Protocol V2 market.
 > Use the identifier exposed for that outcome.
+>
+> `associate_trades` is deprecated and defaults to an empty tuple when omitted
+> from the response. Use `size_matched` for cumulative filled quantity, or
+> `list_account_trades()` for individual fills matched by `taker_order_id` or
+> `maker_orders[].order_id`. An empty tuple does not mean the order has no fills.
 >
 > `expires_at` contains the normalized expiration when one is returned and
 > can otherwise be `None`.
@@ -39189,6 +40909,7 @@ orders.
 >   outcome: string;
 >   order_type: string;
 >   status: string;
+>   /** @deprecated May be omitted. Use size_matched or trade records. */
 >   associate_trades?: string[];
 >   created_at: number;
 >   expiration: string;
@@ -39209,11 +40930,15 @@ orders.
 >   "outcome": "Yes",
 >   "order_type": "GTC",
 >   "status": "LIVE",
->   "associate_trades": [],
 >   "created_at": 1748779200,
 >   "expiration": "0"
 > }
 > ```
+>
+> `associate_trades` is deprecated and may be omitted. Use `size_matched` for
+> cumulative filled quantity, or `GET /data/trades` for individual fills matched
+> by `taker_order_id` or `maker_orders[].order_id`. An absent or empty field does
+> not mean the order has no fills.
 >
 > An `expiration` of `"0"` means the order is GTC and never expires on a
 > timer.
@@ -39253,9 +40978,14 @@ matched order.
 > }
 > ```
 >
+> When filtering by `assetId` or the deprecated `tokenId` alias, also supply
+> a nonblank `market`. Asset-only queries throw `UserInputError` before sending
+> a request. Unfiltered and market-only queries remain supported.
+>
 > ```ts Asset theme={null}
 > const pages = client.listOpenOrders({
 >   assetId: yesAssetId,
+>   market: market.conditionId!,
 > });
 > ```
 >
@@ -39287,6 +41017,7 @@ matched order.
 >   outcome: string;
 >   orderType: string;
 >   status: string;
+>   /** @deprecated Use sizeMatched or account trade records to track fills. */
 >   associateTrades: string[];
 >   createdAt: IsoDateTimeString;
 >   expiresAt?: IsoDateTimeString;
@@ -39344,9 +41075,14 @@ matched order.
 >     raise ValueError("Market outcome ID not found.")
 > ```
 >
+> When filtering by `asset_id` or the deprecated `token_id` alias, also supply
+> a nonblank `market`. Asset-only queries raise `UserInputError` when the
+> paginator fetches a page. Unfiltered and market-only queries remain supported.
+>
 > ```python Asset theme={null}
 > pages = client.list_open_orders(
 >     asset_id=yes_asset_id,
+>     market=market.condition_id,
 > )
 > ```
 >
@@ -39378,7 +41114,7 @@ matched order.
 >     outcome: str
 >     order_type: str
 >     status: str
->     associate_trades: tuple[str, ...]
+>     associate_trades: tuple[str, ...]  # Deprecated; use size_matched or account trades.
 >     created_at: datetime
 >     expires_at: datetime | None
 > ```
@@ -39417,8 +41153,12 @@ matched order.
 > Authentication](/getting-started/api#authentication) for the complete
 > signing flow.
 >
+> When filtering by `asset_id`, include the market's condition ID in `market`.
+> From December 14, 2026, asset-only requests return HTTP `400`
+> (`asset_id requires market`). Unfiltered and market-only queries remain supported.
+>
 > ```bash theme={null}
-> curl "https://clob.polymarket.com/data/orders?asset_id=$ASSET_ID" \
+> curl "https://clob.polymarket.com/data/orders?asset_id=$ASSET_ID&market=$CONDITION_ID" \
 >   -H "POLY_ADDRESS: <signer_address>" \
 >   -H "POLY_API_KEY: <clob_api_key>" \
 >   -H "POLY_PASSPHRASE: <clob_api_passphrase>" \
@@ -39453,6 +41193,7 @@ matched order.
 >   outcome: string;
 >   order_type: string;
 >   status: string;
+>   /** @deprecated May be omitted. Use size_matched or trade records. */
 >   associate_trades?: string[];
 >   created_at: number;
 >   expiration: string;
@@ -39474,7 +41215,6 @@ matched order.
 >     "outcome": "Yes",
 >     "order_type": "GTC",
 >     "status": "LIVE",
->     "associate_trades": [],
 >     "created_at": 1748779200,
 >     "expiration": "0"
 >   }
@@ -44433,6 +46173,11 @@ provide condition IDs to follow selected markets.
 > > }
 > > ```
 >
+> Use `sizeMatched` on order updates for cumulative filled quantity. For
+> individual fills, match trade updates by `takerOrderId` or
+> `makerOrders[].orderId`. `associateTrades` may be absent or empty; neither
+> means the order has no fills.
+>
 > To receive updates only for selected markets, pass their condition IDs in
 > `markets`:
 >
@@ -44585,6 +46330,11 @@ provide condition IDs to follow selected markets.
 > > }
 > > ```
 >
+> Use `size_matched` on order updates for cumulative filled quantity. For
+> individual fills, match trade updates by `taker_order_id` or
+> `maker_orders[].order_id`. `associate_trades` may be absent or empty; neither
+> means the order has no fills.
+>
 > To receive updates only for selected markets, pass their condition IDs to
 > `UserSpec`:
 >
@@ -44707,6 +46457,11 @@ provide condition IDs to follow selected markets.
 > >   "timestamp": "1782753357257"
 > > }
 > > ```
+>
+> Use `size_matched` on order events for cumulative filled quantity. For
+> individual fills, match trade events by `taker_order_id` or
+> `maker_orders[].order_id`. `associate_trades` may be absent, `null`, or empty;
+> none of these means the order has no fills.
 >
 > To receive updates only for selected markets, include their condition IDs
 > in the initial subscription frame:
@@ -48223,6 +49978,11 @@ Copy the **API Key**, **Secret**, and **Passphrase** shown after creation.
 Approve token spending, transfer funds, and manage positions from the account
 wallet without paying gas.
 
+> [!NOTE]
+>
+> Polymarket Relayer only allows gasless transactions that interact with the
+> Polymarket Protocol and supported third-party contracts.
+
 > [tab] TypeScript
 >
 > `SecureClient` provides named methods for supported wallet actions. Most
@@ -49219,6 +50979,17 @@ To resume receiving beacon upgrades, repeat the pause and timelock steps, call
 implementation before opting back in.
 
 
+# Get rate limit tier
+Source: https://docs.polymarket.com/api-reference/account/get-rate-limit-tier
+
+/api-spec/clob-openapi.yaml get /v1/user/rate-limit-tier
+Returns the [trading rate limit tier](/api-reference/trading-rate-limits) currently assigned to your signer.
+The tier returned is the one for the signer address of the API credentials used.
+
+The response reflects the most recent tier refresh, so a change in volume can
+take up to three hours to appear.
+
+
 # Get builder volume over time
 Source: https://docs.polymarket.com/api-reference/boards/get-builder-volume-over-time
 
@@ -49303,19 +51074,6 @@ Combo wins are first-class rows here, tagged `kind = "combo"`. They carry a
 and `event_slug` empty; so **branch on `kind` before building an event
 link**.
 
-# Get combo markets
-Source: https://docs.polymarket.com/api-reference/combo-markets/get-combo-markets
-
-/api-spec/combos-rfq-openapi.yaml get /v1/rfq/combo-markets
-Returns active markets that can be used as combo legs, ordered by volume
-descending. This endpoint is public and does not require CLOB
-authentication.
-
-Entries in `position_ids`, `outcomes`, and `outcome_prices` correspond by
-array index (`[0]` is YES, `[1]` is NO). Use `next_cursor` unchanged in
-the next request; a value of `null` indicates the final page.
-
-
 # Get comments by comment id
 Source: https://docs.polymarket.com/api-reference/comments/get-comments-by-comment-id
 
@@ -49347,6 +51105,33 @@ Returns the current Unix timestamp of the server.
 This can be used to synchronize client time with server time.
 
 
+# Get event by id
+Source: https://docs.polymarket.com/api-reference/events/get-event-by-id
+
+/api-spec/gamma-openapi.yaml get /events/{id}
+
+# Get event by slug
+Source: https://docs.polymarket.com/api-reference/events/get-event-by-slug
+
+/api-spec/gamma-openapi.yaml get /events/slug/{slug}
+
+# Get event tags
+Source: https://docs.polymarket.com/api-reference/events/get-event-tags
+
+/api-spec/gamma-openapi.yaml get /events/{id}/tags
+
+# List events
+Source: https://docs.polymarket.com/api-reference/events/list-events
+
+/api-spec/gamma-openapi.yaml get /events
+
+# List events (keyset pagination)
+Source: https://docs.polymarket.com/api-reference/events/list-events-keyset-pagination
+
+/api-spec/gamma-openapi.yaml get /events/keyset
+Returns events using cursor-based (keyset) pagination for stable, efficient paging through large result sets. Use `next_cursor` from each response as `after_cursor` in the next request. The `offset` parameter is explicitly rejected; use `after_cursor` instead.
+
+
 # List account activity
 Source: https://docs.polymarket.com/api-reference/feeds/list-account-activity
 
@@ -49365,21 +51150,6 @@ well-formed one that matches nothing serves an empty `data` array, which
 is the meaningful zero-state; absence means the market is not servable,
 and only that.
 
-# List combo activity
-Source: https://docs.polymarket.com/api-reference/feeds/list-combo-activity
-
-https://data-api.polymarket.com/v2/openapi.json get /v2/activity/combos
-Keyset-paginated combo lifecycle + redemption
-feed for a user, in the standard `{ data, pagination }` envelope.
-
-Pass `?cursor=` from a prior response's `next_cursor` to fetch the next page.
-Unlike the activity feed, the anchor behind the cursor is
-`(block_number, log_index)`; this endpoint's total order.
-
-A malformed `condition` combo condition id is a `400` naming the value; a
-well-formed one that matches nothing serves an empty `data` array, which
-is the meaningful zero-state.
-
 # List trades
 Source: https://docs.polymarket.com/api-reference/feeds/list-trades
 
@@ -49396,32 +51166,229 @@ well-formed one that matches nothing serves an empty `data` array, which
 is the meaningful zero-state; absence means the market is not servable,
 and only that.
 
-# Cancel a quote
-Source: https://docs.polymarket.com/api-reference/maker/cancel-a-quote
+# Geographic Restrictions
+Source: https://docs.polymarket.com/api-reference/geoblock
 
-/api-spec/combos-rfq-openapi.yaml post /v1/maker/quotes/cancel
-Cancel an active maker quote before it is selected. Requires CLOB L2
-authentication for the maker role. `signer_address` and `maker_address`
-must match the authenticated identity.
+Check geographic restrictions before placing orders on the Polymarket API
 
+Polymarket restricts order placement from certain geographic locations due to regulatory requirements and compliance with international sanctions. Before placing orders, builders should verify the location.
 
-# Confirm or decline last look
-Source: https://docs.polymarket.com/api-reference/maker/confirm-or-decline-last-look
+> [!WARNING]
+>
+> Orders submitted from blocked regions will be rejected. Implement geoblock
+> checks in your application to provide users with appropriate feedback before
+> they attempt to trade.
 
-/api-spec/combos-rfq-openapi.yaml post /v1/maker/confirmations
-Respond to a last-look confirmation request for a selected quote. Requires
-CLOB L2 authentication for the maker role. `decision` must be `CONFIRM` or
-`DECLINE`.
+***
 
+## Geoblock Endpoint
 
-# Submit a quote
-Source: https://docs.polymarket.com/api-reference/maker/submit-a-quote
+Check the geographic eligibility of the requesting IP address:
 
-/api-spec/combos-rfq-openapi.yaml post /v1/maker/quotes
-Submit a signed maker quote for an active RFQ. Requires CLOB L2
-authentication for the maker role.
+```bash theme={null}
+GET https://polymarket.com/api/geoblock
+```
 
-REST does not assign a quote ID — generate `quote_id` client-side.
+> [!NOTE]
+>
+> This endpoint is on `polymarket.com`, not the API servers.
+
+### Response
+
+```json theme={null}
+{
+  "blocked": true,
+  "ip": "203.0.113.42",
+  "country": "US",
+  "region": "NY"
+}
+```
+
+| Field | Type | Description |
+| - | - | - |
+| `blocked` | boolean | Whether the user is blocked from placing orders |
+| `ip` | string | Detected IP address |
+| `country` | string | ISO 3166-1 alpha-2 country code |
+| `region` | string | Region/state code |
+
+***
+
+## Restricted Jurisdictions
+
+Restrictions fall into three groups. **Block completely** means no new orders and no closing of existing positions. **Close-only** means users can close existing positions but cannot open new ones. Each group notes whether it applies on the frontend, the API, or both. Codes are ISO 3166-1 alpha-2 for countries and ISO 3166-2 for sub-national regions.
+
+### OFAC-Sanctioned Jurisdictions (Block Completely)
+
+Blocked on both the frontend and the API. No new orders, and existing positions cannot be closed.
+
+| Jurisdiction | Code |
+| - | - |
+| Iran | IR |
+| Syria | SY |
+| Cuba | CU |
+| North Korea | KP |
+| Ukraine — Crimea | UA-43 |
+| Ukraine — Donetsk | UA-14 |
+| Ukraine — Luhansk | UA-09 |
+
+### Regulatory-Restricted Jurisdictions (Close-Only on Frontend and API)
+
+Users can close existing positions but cannot open new ones, on both the frontend and the API.
+
+| Jurisdiction | Code |
+| - | - |
+| Argentina | AR |
+| Australia | AU |
+| Belarus | BY |
+| Belgium | BE |
+| Burundi | BI |
+| Brazil | BR |
+| Canada — British Columbia | CA-BC |
+| Canada — Ontario | CA-ON |
+| Canada — Alberta | CA-AB |
+| Canada — Quebec | CA-QC |
+| Central African Republic | CF |
+| Congo (Kinshasa) | CD |
+| Ethiopia | ET |
+| France | FR |
+| Germany | DE |
+| Iraq | IQ |
+| Italy | IT |
+| Lebanon | LB |
+| Libya | LY |
+| Myanmar | MM |
+| New Zealand | NZ |
+| Nicaragua | NI |
+| North Korea | KP |
+| Poland | PL |
+| Russia | RU |
+| Singapore | SG |
+| Somalia | SO |
+| Slovakia | SK |
+| South Sudan | SS |
+| Sudan | SD |
+| Taiwan | TW |
+| Thailand | TH |
+| United Kingdom | GB |
+| United States | US |
+| United States Minor Outlying Islands | UM |
+| Venezuela | VE |
+| Yemen | YE |
+| Zimbabwe | ZW |
+
+### Regulatory-Restricted Jurisdictions (Close-Only on Frontend)
+
+Close-only on the Polymarket frontend; the API itself is not restricted.
+
+| Jurisdiction | Code |
+| - | - |
+| Ireland | IE |
+| Japan | JP |
+| Malta (Sports Only) | MT |
+| Netherlands | NL |
+| South Korea | KR |
+
+***
+
+## Blocking Logic
+
+The geoblocking system includes:
+
+1. **OFAC-Sanctioned Countries**: Countries sanctioned by the U.S. Office of Foreign Assets Control (OFAC)
+2. **Additional Regulatory Restrictions**: Countries added for specific regulatory compliance reasons
+
+***
+
+## Server Infrastructure and Co-Location
+
+* **Primary Servers**: eu-west-2
+* **Closest Non-Georestricted Region**: eu-west-1
+
+> [!TIP]
+>
+> **Direct co-location form.** Users who complete the [KYC/KYB
+> form](https://docs.google.com/forms/d/e/1FAIpQLSfY-3Dl3yxq8HKFjFad8YzKZmm0k3Gdg29HD6gL-K-AmI6KXw/viewform) can get access to co-locate
+> directly in `eu-west-2` for the lowest possible latency to Polymarket's
+> primary servers.
+
+> [!WARNING]
+>
+> Co-location is available to market makers and individual traders operating on
+> their own account. It is not available to Builder Program participants or
+> third-party applications executing trades on behalf of end users.
+
+***
+
+## Usage Examples
+
+> [tab] TypeScript
+>
+> ```typescript theme={null}
+> interface GeoblockResponse {
+>   blocked: boolean;
+>   ip: string;
+>   country: string;
+>   region: string;
+> }
+>
+> async function checkGeoblock(): Promise<GeoblockResponse> {
+>   const response = await fetch("https://polymarket.com/api/geoblock");
+>   return response.json();
+> }
+>
+> // Usage
+> const geo = await checkGeoblock();
+>
+> if (geo.blocked) {
+>   console.log(`Trading not available in ${geo.country}`);
+> } else {
+>   console.log("Trading available");
+> }
+> ```
+
+> [tab] Python
+>
+> ```python theme={null}
+> import requests
+>
+> def check_geoblock() -> dict:
+>     response = requests.get("https://polymarket.com/api/geoblock")
+>     return response.json()
+>
+> # Usage
+> geo = check_geoblock()
+>
+> if geo["blocked"]:
+>     print(f"Trading not available in {geo['country']}")
+> else:
+>     print("Trading available")
+> ```
+
+***
+
+## Why These Restrictions
+
+Geographic restrictions are implemented to ensure compliance with:
+
+* International sanctions and embargoes
+* Local financial regulations
+* Gambling and prediction market laws
+* Anti-money laundering (AML) requirements
+* Know Your Customer (KYC) regulations
+
+If you believe you are incorrectly restricted or have questions about geographic availability, please contact [Polymarket Support](https://polymarket.com/support).
+
+***
+
+## Next Steps
+
+> [card] [Authentication](/getting-started/api#authentication)
+>
+> Learn how to authenticate trading requests.
+
+> [card] [Place Orders](/trading/quickstart)
+>
+> Start placing orders (from eligible regions).
 
 
 # Get fee rate
@@ -49810,27 +51777,6 @@ Each entry includes the condition ID, asset address, and the USDC amount rebated
 This endpoint does not require authentication.
 
 
-# Get all relayer API keys
-Source: https://docs.polymarket.com/api-reference/relayer-api-keys/get-all-relayer-api-keys
-
-/api-spec/relayer-openapi.yaml get /relayer/api/keys
-Returns all relayer API keys for the authenticated address. Auth allowed: Gamma auth or Relayer API key auth (`RELAYER_API_KEY` + `RELAYER_API_KEY_ADDRESS`).
-
-
-# Check if a wallet is deployed
-Source: https://docs.polymarket.com/api-reference/relayer/check-if-a-wallet-is-deployed
-
-/api-spec/relayer-openapi.yaml get /deployed
-Returns whether the wallet at the given address is deployed onchain.
-
-Use the `type` query parameter to choose which wallet type to check:
-
-- Pass user's Polymarket `SAFE` address (default): Gnosis Safe (SignatureType `2`).
-- Pass user's Polymarket `WALLET` Deposit Wallet address: Deposit Wallet (signatureType `3`). See the [Deposit Wallet Guide](/trading/deposit-wallets) for setup.
-
-Omitting `type` is equivalent to `type=SAFE`.
-
-
 # Get a transaction by ID
 Source: https://docs.polymarket.com/api-reference/relayer/get-a-transaction-by-id
 
@@ -49994,6 +51940,39 @@ Source: https://docs.polymarket.com/api-reference/series/list-series
 
 /api-spec/gamma-openapi.yaml get /series
 
+# Get data freshness
+Source: https://docs.polymarket.com/api-reference/service/get-data-freshness
+
+https://data-api.polymarket.com/v2/openapi.json get /v2/status
+How fresh the data behind this API is.
+
+`/readyz` answers whether this pod can reach its datastore; this answers how
+far behind chain head what you are reading is. Two halves, because each is
+blind exactly where the other sees:
+
+* `serving`; the projections that turn ingested rows into what the feeds
+  read (`activity_feed` enrichment, `custody_balances` ingestion, the PnL
+  engine).
+  Each carries its own clock, so this is the only half that can see
+  "everything stopped". `lag_seconds` is the worst age across them and
+  `worst` names which one, so a single stalled projection cannot hide behind
+  two healthy ones.
+* `ingestion`; one crawl cursor per `(contract, event)`, summarised as the
+  tail, the furthest-behind block, and the worst few cursors BY NAME. Every
+  reading here is relative or positional, so under a total stall it reads
+  green; that is why `serving` exists alongside it.
+
+Streams that are dormant by design are dropped from `ingestion` rather than
+reported, because they sit arbitrarily far back forever and would otherwise
+fill the list and push the stream you care about off it.
+
+Takes no parameters and is not paginated. Served from a snapshot refreshed
+in the background, never computed on the request: `computed_at` and
+`age_seconds` say how old it is, so a stalled refresher or a datastore
+outage shows up as a growing age rather than a 500. Before the first refresh
+lands there is nothing to serve and this answers `503`; "not measured yet"
+and "measured, no lag" are different claims.
+
 # Get sports metadata information
 Source: https://docs.polymarket.com/api-reference/sports/get-sports-metadata-information
 
@@ -50145,6 +52124,9 @@ Source: https://docs.polymarket.com/api-reference/trade/get-user-orders
 
 /api-spec/clob-openapi.yaml get /data/orders
 Retrieves live orders for the authenticated user. Returns paginated results.
+When filtering by asset_id, also include the market condition ID in market.
+From December 14, 2026, asset-only requests return HTTP 400 (asset_id requires market).
+Unfiltered and market-only queries remain supported.
 Filtering by id returns that order regardless of status, including canceled or fully matched orders.
 Builder-authenticated clients can also use this endpoint to retrieve orders attributed to their builder account.
 
@@ -50292,41 +52274,6 @@ Polygon token/operator approval state for one wallet.
 `?user=` must be an EVM address. The complete served catalog is returned in
 canonical order under `{ data }`; this endpoint is not paginated.
 
-# List combo positions
-Source: https://docs.polymarket.com/api-reference/wallet/list-combo-positions
-
-https://data-api.polymarket.com/v2/openapi.json get /v2/positions/combos
-Combo positions for a user, in the standard
-`{ data, pagination }` envelope.
-
-Sorts: `FIRST_ENTRY` (default) | `ENTRY_COST` (+ `CURRENT_VALUE` alias) |
-`UPDATED`, each with `sort_direction`. `FIRST_ENTRY DESC` pages by the
-two-state keyset anchor `(first_entry_at_micros, combo_condition_id,
-outcome_index)` (NULL micros = the NULL tail); `UPDATED ASC` by the
-single-state `(updated_at_micros, …)` anchor; every other combination by an
-offset-shaped token. The cursor binds sort + direction and the resume
-ADOPTS them, so a replay cannot flip or re-sort the walk mid-stream.
-
-It binds the cohort; `user`/`status`/`condition`/`updated_after`/
-`updated_before`; the same way: following a
-page needs nothing but `?user=` (always required here) and `?cursor=`, and
-restating a filter is allowed but must agree. Omitting one is not a
-contradiction, it is the absence of a choice; **contradicting** one is a
-400, because the token's walk state only means anything against the cohort
-it was minted on.
-
-Incremental sync: `updated_after`/`updated_before` are an INCLUSIVE
-epoch-second window on `updated_at`. Without a `status` filter, either
-bound switches the response to the mirror-complete sync view (every live
-row, not only held ones); a `status` filter keeps its own visibility. The
-upper end is always capped by a short stability ceiling (~90s behind now)
-so a mirror never reads rows that may still move. Pair with
-`sortBy=UPDATED&sortDirection=ASC` for the stable sync order.
-
-A malformed `condition` combo condition id is a `400` naming the value; a
-well-formed one that matches nothing serves an empty `data` array, which
-is the meaningful zero-state.
-
 # List positions for a user or market
 Source: https://docs.polymarket.com/api-reference/wallet/list-positions-for-a-user-or-market
 
@@ -50447,6 +52394,19 @@ response is invalid if that address already has an account.
 
 
 Request Weight: **1**
+
+
+# Get combo markets
+Source: https://docs.polymarket.com/api-reference/combo-markets/get-combo-markets
+
+/api-spec/combos-rfq-openapi.yaml get /v1/rfq/combo-markets
+Returns active markets that can be used as combo legs, ordered by volume
+descending. This endpoint is public and does not require CLOB
+authentication.
+
+Entries in `position_ids`, `outcomes`, and `outcome_prices` correspond by
+array index (`[0]` is YES, `[1]` is NO). Use `next_cursor` unchanged in
+the next request; a value of `null` indicates the final page.
 
 
 # Create Account Invite
@@ -50730,6 +52690,21 @@ Requires EOA signature, see [EOA signing](/http/signing#1-eoa-signing).
 
 Request Weight: **1**
 
+
+# List combo activity
+Source: https://docs.polymarket.com/api-reference/feeds/list-combo-activity
+
+https://data-api.polymarket.com/v2/openapi.json get /v2/activity/combos
+Keyset-paginated combo lifecycle + redemption
+feed for a user, in the standard `{ data, pagination }` envelope.
+
+Pass `?cursor=` from a prior response's `next_cursor` to fetch the next page.
+Unlike the activity feed, the anchor behind the cursor is
+`(block_number, log_index)`; this endpoint's total order.
+
+A malformed `condition` combo condition id is a `400` naming the value; a
+well-formed one that matches nothing serves an empty `data` array, which
+is the meaningful zero-state.
 
 # Get Account Backstop Transfers
 Source: https://docs.polymarket.com/api-reference/get-account-backstop-transfers
@@ -51534,6 +53509,13 @@ connection. Subscriptions require CLOB API credentials.
 
 For existing RTDS integrations, see [Migrate from RTDS to PolyBolt](/migrate/rtds-to-polybolt).
 
+> [!WARNING]
+>
+> Price subscriptions must name a provider.
+> Subscriptions served by Chainlink also require your Chainlink API key. See
+> [Send Your Chainlink API Key](#send-your-chainlink-api-key) and [Pin a Price
+> Provider](#pin-a-price-provider).
+
 ## Connect
 
 Open a WebSocket connection to:
@@ -51548,12 +53530,13 @@ Choose a channel, authenticate, then send a subscription request.
 
 | Channel | Data | Filter | Access |
 | - | - | - | - |
-| `price.crypto` | Crypto reference prices | `{"symbol": "btcusd"}` | CLOB API credentials |
-| `price.equity` | Stock, ETF, forex, metal and commodity reference prices | `{"symbol": "aapl"}` | CLOB API credentials |
-| `price.crypto.twap` | 60-second time-weighted average prices (TWAP) from Chainlink | `{"symbol": "btcusd", "window_seconds": 60}` | CLOB API credentials |
-| `price.equity.twap` | 60-second forex TWAP prices from Chainlink (`eurusd` and `usdjpy`) | `{"symbol": "eurusd", "window_seconds": 60}` | CLOB API credentials |
+| `price.crypto` | Crypto reference prices | `{"symbol": "btcusd", "provider": "chainlink"}` | CLOB API credentials |
+| `price.equity` | Stock, ETF, forex, metal and commodity reference prices | `{"symbol": "aapl", "provider": "pyth"}` | CLOB API credentials |
+| `price.crypto.twap` | 60-second time-weighted average prices (TWAP) from Chainlink | `{"symbol": "btcusd", "window_seconds": 60, "provider": "chainlink"}` | CLOB API credentials |
+| `price.equity.twap` | 60-second forex TWAP prices from Chainlink (`eurusd` and `usdjpy`) | `{"symbol": "eurusd", "window_seconds": 60, "provider": "chainlink"}` | CLOB API credentials |
 
-Use lowercase symbols.
+Use lowercase symbols, and name the provider in every filter (see
+[Pin a Price Provider](#pin-a-price-provider)).
 
 ## Authenticate for Gated Channels
 
@@ -51582,6 +53565,77 @@ Wait for the server to confirm authentication:
 }
 ```
 
+### Send Your Chainlink API Key
+
+Subscriptions served by Chainlink, including TWAP, require your Chainlink API key in addition to CLOB API credentials.
+
+> [!NOTE]
+>
+> Request a Chainlink API Key using [this form](https://institutional.polymarket.com/request-chainlink-api-key).
+
+> [tab] TypeScript
+>
+> Use an authenticated [SecureClient](/trading/wallets-auth) and pass your key as `providerApiKey` with the Chainlink provider.
+>
+> ```ts theme={null}
+> import { PriceProvider } from "@polymarket/client";
+>
+> const stream = await client.subscribe([
+>   {
+>     topic: "prices.crypto.twap",
+>     symbols: ["btcusd"],
+>     provider: PriceProvider.Chainlink,
+>     providerApiKey: "<chainlink api key>",
+>   },
+> ]);
+>
+> try {
+>   for await (const event of stream) {
+>     // event: CryptoTwapPriceEvent
+>   }
+> } finally {
+>   await stream.close();
+> }
+> ```
+
+> [tab] Python
+>
+> Use an authenticated [AsyncSecureClient](/trading/wallets-auth) and pass your key as `provider_api_key` with the Chainlink provider.
+>
+> ```python theme={null}
+> from polymarket.streams import CryptoTwapPriceSpec
+>
+> async with await client.subscribe(
+>     CryptoTwapPriceSpec(
+>         symbols=["btcusd"],
+>         provider="chainlink",
+>         provider_api_key="<chainlink api key>",
+>     )
+> ) as stream:
+>     async for event in stream:
+>         # event: CryptoTwapPriceEvent
+>         pass
+> ```
+
+> [tab] API
+>
+> Send `chainlink_api_key` in the first `auth` frame alongside your CLOB API credentials. To change the key, open a new connection.
+>
+> ```json theme={null}
+> {
+>   "op": "auth",
+>   "rid": "a1",
+>   "auth": {
+>     "apiKey": "<api key>",
+>     "secret": "<api secret>",
+>     "passphrase": "<api passphrase>"
+>   },
+>   "chainlink_api_key": "<chainlink api key>"
+> }
+> ```
+
+Subscriptions served by other providers do not need an API key for now. If a requested provider falls back to Chainlink, the key is still required.
+
 The server reports authentication problems with an error acknowledgement, for example:
 
 ```json theme={null}
@@ -51600,18 +53654,23 @@ These errors leave the connection open:
 | `auth_required` | The subscription was sent before authentication. | Authenticate, then resend the subscription. |
 | `auth_invalid` | The credentials were rejected. | Correct the credentials before retrying. |
 | `auth_unavailable` | Authentication is temporarily unavailable. | Wait, then retry authentication. |
+| `chainlink_key_required` | A subscription served by Chainlink was sent on a connection authenticated without a Chainlink API key. | Open a new connection, authenticate with `chainlink_api_key`, then resend the subscription. |
+
+`chainlink_key_required` also carries a numeric `status` of `4010`. It is not a
+close code: the connection stays open.
 
 ## Subscribe
 
 Send the channels and filters you want to follow. This request subscribes to the
-BTC reference price on the authenticated connection:
+BTC reference price from Chainlink on a connection authenticated with your
+Chainlink API key:
 
 ```json theme={null}
 {
   "op": "subscribe",
   "rid": "s1",
   "subscriptions": [
-    { "channel": "price.crypto", "filter": { "symbol": "btcusd" } }
+    { "channel": "price.crypto", "filter": { "symbol": "btcusd", "provider": "chainlink" } }
   ]
 }
 ```
@@ -51621,9 +53680,7 @@ A batch counts as one request against the rate limit.
 ### Pin a Price Provider
 
 Crypto and equity prices can come from more than one vendor. Every payload
-names its producer in `source`, and on `price.crypto`, `price.equity` and
-`price.equity.twap` you can optionally pin one by adding `provider` to the
-filter:
+names its producer in `source`. Choose one by adding `provider` to the filter:
 
 ```json theme={null}
 {
@@ -51635,16 +53692,31 @@ filter:
 }
 ```
 
-`provider` accepts `chainlink` or `pyth`. The `subscribed` acknowledgement
-names the provider actually served. A pin the server cannot serve for that
-symbol falls back to the symbol's default provider, and the acknowledgement
-names the fallback, so always read the acknowledgement rather than assuming
-the pin held. Omit `provider` to follow the default, which is Chainlink
-wherever Chainlink serves the symbol. The field is ignored on channels with a
-single provider.
+`provider` accepts `chainlink`, `pyth` or `binance`. Binance serves
+`price.crypto` only, with USDT spot closes under the canonical USD symbol. The
+`subscribed` acknowledgement names the provider actually served. A pin the
+server cannot serve for that symbol falls back to the symbol's default
+provider, and the acknowledgement names the fallback, so always read the
+acknowledgement rather than assuming the pin held. The TWAP channels are
+served by Chainlink only, so pin `chainlink` there.
 
-Values other than `chainlink` or `pyth` are rejected with a `bad_filter`
-error.
+Values other than `chainlink`, `pyth` or `binance` are rejected with a
+`bad_filter` error.
+
+`provider` is required on
+`price.crypto`, `price.equity`, `price.crypto.twap` and `price.equity.twap`.
+A subscription without `provider`
+answers this error, and the connection stays open:
+
+```json theme={null}
+{
+  "op": "error",
+  "code": "provider_required",
+  "status": 4011,
+  "channel": "price.crypto",
+  "rid": "s2"
+}
+```
 
 ### Read the Market Status
 
@@ -51747,7 +53819,8 @@ result of a request.
 {
   "op": "subscribed",
   "channel": "price.crypto",
-  "rid": "s1"
+  "rid": "s1",
+  "provider": "chainlink"
 }
 ```
 
@@ -51756,10 +53829,13 @@ Acknowledgements echo `rid` when the request includes it.
 | `op` | Meaning |
 | - | - |
 | `authed` | Authentication succeeded. You can subscribe to gated channels. |
-| `subscribed` | The subscription was accepted. `channel` identifies the channel. |
+| `subscribed` | The subscription was accepted. `channel` identifies the channel; on price channels, `provider` names the vendor served. |
 | `unsubscribed` | The unsubscribe request was accepted. `channel` identifies the channel. |
 | `pong` | The server received your application-level `ping` request. |
 | `error` | The request failed. `code` identifies the reason. Policy violations can also close the connection. |
+
+`chainlink_key_required` and `provider_required` errors also carry a numeric
+`status`, `4010` and `4011`. Neither closes the connection.
 
 Each new subscription receives an acknowledgement and one snapshot. Seed local state from the snapshot, then apply the latest price. Snapshots contain the preceding two minutes of prices, with an empty `data` array when no recent data is available. Repeating an existing channel and filter returns another acknowledgement without a new snapshot.
 
@@ -51784,7 +53860,7 @@ Send the same channel and filter with `op: "unsubscribe"` to stop a subscription
 {
   "op": "unsubscribe",
   "subscriptions": [
-    { "channel": "price.crypto", "filter": { "symbol": "btcusd" } }
+    { "channel": "price.crypto", "filter": { "symbol": "btcusd", "provider": "chainlink" } }
   ]
 }
 ```
@@ -51804,10 +53880,10 @@ accept a single `channel` and `filter` or a `subscriptions` array.
 
 For the TWAP channels, use `window_seconds: 60`. Other windows do not provide data.
 
-Every `price.crypto` symbol defaults to Chainlink. `btcusd`, `ethusd`,
-`solusd`, `xrpusd`, `dogeusd` and `bnbusd` can also be pinned to `pyth`;
-`hypeusd` and `zecusd` have no second provider. `price.crypto.twap` is
-Chainlink only.
+Every `price.crypto` symbol is served by Chainlink, its default provider, and
+by Binance. `btcusd`, `ethusd`, `solusd`, `xrpusd`, `dogeusd` and `bnbusd` are
+also served by Pyth; on `hypeusd` and `zecusd` a `pyth` pin falls back to
+Chainlink. `price.crypto.twap` is Chainlink only.
 
 ### Equity Prices
 
@@ -51817,14 +53893,30 @@ Chainlink only.
 | - | - |
 | Stocks | `aapl`, `tsla`, `msft`, `googl`, `amzn`, `meta`, `nvda`, `nflx`, `pltr`, `open`, `rklb`, `abnb`, `coin`, `hood`, `spcx`, `intc`, `mstr`, `crcl`, `mu` |
 | ETFs | `qqq`, `spy`, `ewy`, `vxx` |
-| Forex | `eurusd`, `gbpusd`, `usdcad`, `usdjpy`, `usdkrw`, `usdchf`, `usdmxn`, `usdzar`, `usdbrl`, `usdnok`, `usdsek`, `usdtry` |
+| Forex | `eurusd`, `gbpusd`, `usdcad`, `usdjpy`, `usdkrw`, `usdchf`, `usdmxn`, `usdzar`, `usdbrl`, `usdnok`, `usdsek`, `usdtry`, `dxy` |
 | Precious metals | `xauusd`, `xagusd` |
 
-Commodities serve under `cll` (WTI crude oil front-month futures), `hn`
-(Henry Hub natural gas front-month futures) and `cc3m` (the copper 3-month
-contract price in USD). `cll` and `hn` carry the front contract's price
-under the same symbol as the contract rolls; `cc3m` is a single continuous
-contract.
+`dxy` is the US Dollar Index.
+
+Each equity symbol has a default provider, which serves any pin the symbol
+does not support, including every `binance` pin:
+
+| Symbols | Default | Pinnable |
+| - | - | - |
+| `xauusd`, `xagusd`, `nvda`, `googl`, `tsla`, `spcx`, `mu` | `chainlink` | `pyth` |
+| `intc`, `mstr`, `crcl`, `wti`, `brent`, `natgas` | `chainlink` | none |
+| `eurusd`, `usdjpy` | `pyth` | `chainlink` |
+| Every other equity symbol | `pyth` | none |
+
+Commodities serve under `cll` (WTI crude oil futures) and `hn` (Henry Hub
+natural gas futures) from Pyth, `wti` (WTI crude oil futures), `brent` (Brent
+crude oil futures) and `natgas` (natural gas futures) from Chainlink, and
+`cc3m` (the copper 3-month contract price in USD). Each futures symbol keeps
+one symbol as its contract rolls. `cll` and `hn` move to the next contract at
+the open of the current contract's third-to-last trading session, the Active
+Month the WTI and natural gas Up or Down markets resolve on. `wti`, `brent`
+and `natgas` follow Chainlink's own roll schedule. `cc3m` is a single
+continuous contract.
 
 ## Limits and Liveness
 
@@ -51858,10 +53950,38 @@ wait and add jitter. Browser clients see handshake failures as `1006` and should
 use exponential backoff with full jitter.
 
 After reconnecting, authenticate again for gated channels and resend your
-subscriptions, including any `provider` pins. Initialize from the new
+subscriptions with their `provider` pins. Initialize from the new
 snapshots and re-read `source`: a crypto or equity symbol can legitimately
 arrive from a different vendor than before the reconnect. Sequence numbers
 start over.
+
+
+# Cancel a quote
+Source: https://docs.polymarket.com/api-reference/maker/cancel-a-quote
+
+/api-spec/combos-rfq-openapi.yaml post /v1/maker/quotes/cancel
+Cancel an active maker quote before it is selected. Requires CLOB L2
+authentication for the maker role. `signer_address` and `maker_address`
+must match the authenticated identity.
+
+
+# Confirm or decline last look
+Source: https://docs.polymarket.com/api-reference/maker/confirm-or-decline-last-look
+
+/api-spec/combos-rfq-openapi.yaml post /v1/maker/confirmations
+Respond to a last-look confirmation request for a selected quote. Requires
+CLOB L2 authentication for the maker role. `decision` must be `CONFIRM` or
+`DECLINE`.
+
+
+# Submit a quote
+Source: https://docs.polymarket.com/api-reference/maker/submit-a-quote
+
+/api-spec/combos-rfq-openapi.yaml post /v1/maker/quotes
+Submit a signed maker quote for an active RFQ. Requires CLOB L2
+authentication for the maker role.
+
+REST does not assign a quote ID — generate `quote_id` client-side.
 
 
 # Mark Notifications Read
@@ -52089,6 +54209,27 @@ Source: https://docs.polymarket.com/api-reference/read-builder-approvals-includi
 
 /api-spec/perps-openapi.json get /v1/account/builder-approvals
 
+# Get all relayer API keys
+Source: https://docs.polymarket.com/api-reference/relayer-api-keys/get-all-relayer-api-keys
+
+/api-spec/relayer-openapi.yaml get /relayer/api/keys
+Returns all relayer API keys for the authenticated address. Auth allowed: Gamma auth or Relayer API key auth (`RELAYER_API_KEY` + `RELAYER_API_KEY_ADDRESS`).
+
+
+# Check if a wallet is deployed
+Source: https://docs.polymarket.com/api-reference/relayer/check-if-a-wallet-is-deployed
+
+/api-spec/relayer-openapi.yaml get /deployed
+Returns whether the wallet at the given address is deployed onchain.
+
+Use the `type` query parameter to choose which wallet type to check:
+
+- Pass user's Polymarket `SAFE` address (default): Gnosis Safe (SignatureType `2`).
+- Pass user's Polymarket `WALLET` Deposit Wallet address: Deposit Wallet (signatureType `3`). See the [Deposit Wallet Guide](/trading/deposit-wallets) for setup.
+
+Omitting `type` is equivalent to `type=SAFE`.
+
+
 # Set Auto-Cancel
 Source: https://docs.polymarket.com/api-reference/set-auto-cancel
 
@@ -52241,6 +54382,41 @@ Disabled builders can edit their name. This operation does not change
 registration, enablement, the platform admission switch, approvals or fees.
 
 
+# List combo positions
+Source: https://docs.polymarket.com/api-reference/wallet/list-combo-positions
+
+https://data-api.polymarket.com/v2/openapi.json get /v2/positions/combos
+Combo positions for a user, in the standard
+`{ data, pagination }` envelope.
+
+Sorts: `FIRST_ENTRY` (default) | `ENTRY_COST` (+ `CURRENT_VALUE` alias) |
+`UPDATED`, each with `sort_direction`. `FIRST_ENTRY DESC` pages by the
+two-state keyset anchor `(first_entry_at_micros, combo_condition_id,
+outcome_index)` (NULL micros = the NULL tail); `UPDATED ASC` by the
+single-state `(updated_at_micros, …)` anchor; every other combination by an
+offset-shaped token. The cursor binds sort + direction and the resume
+ADOPTS them, so a replay cannot flip or re-sort the walk mid-stream.
+
+It binds the cohort; `user`/`status`/`condition`/`updated_after`/
+`updated_before`; the same way: following a
+page needs nothing but `?user=` (always required here) and `?cursor=`, and
+restating a filter is allowed but must agree. Omitting one is not a
+contradiction, it is the absence of a choice; **contradicting** one is a
+400, because the token's walk state only means anything against the cohort
+it was minted on.
+
+Incremental sync: `updated_after`/`updated_before` are an INCLUSIVE
+epoch-second window on `updated_at`. Without a `status` filter, either
+bound switches the response to the mirror-complete sync view (every live
+row, not only held ones); a `status` filter keeps its own visibility. The
+upper end is always capped by a short stability ceiling (~90s behind now)
+so a mirror never reads rows that may still move. Pair with
+`sortBy=UPDATED&sortDirection=ASC` for the stable sync order.
+
+A malformed `condition` combo condition id is a `400` naming the value; a
+well-formed one that matches nothing serves an empty `data` array, which
+is the meaningful zero-state.
+
 # Live Data Channel
 Source: https://docs.polymarket.com/api-reference/websockets/live-data-channel
 
@@ -52268,31 +54444,6 @@ Source: https://docs.polymarket.com/api-reference/wss/market
 
 Public WebSocket for real-time orderbook, price, and market lifecycle updates.
 
-# Auth
-Source: https://docs.polymarket.com/api-reference/wss/perps-auth
-
-Perps WebSocket authentication.
-
-# Auto Cancel
-Source: https://docs.polymarket.com/api-reference/wss/perps-auto-cancel
-
-Perps WebSocket dead man's switch updates.
-
-# Cancel All Orders
-Source: https://docs.polymarket.com/api-reference/wss/perps-cancel-all
-
-Perps WebSocket cancellation of all open orders.
-
-# Cancel Orders
-Source: https://docs.polymarket.com/api-reference/wss/perps-cancel-orders
-
-Perps WebSocket order cancellation by order ID.
-
-# Cancel Orders by Client Order ID
-Source: https://docs.polymarket.com/api-reference/wss/perps-cancel-orders-coid
-
-Perps WebSocket order cancellation by client order ID.
-
 # Modify Orders
 Source: https://docs.polymarket.com/api-reference/wss/perps-modify-orders
 
@@ -52313,21 +54464,6 @@ Source: https://docs.polymarket.com/api-reference/wss/perps-place-orders
 
 Perps WebSocket order placement.
 
-# Update Leverage
-Source: https://docs.polymarket.com/api-reference/wss/perps-update-leverage
-
-Perps WebSocket leverage updates.
-
-# Update Leverages
-Source: https://docs.polymarket.com/api-reference/wss/perps-update-leverages
-
-Perps WebSocket batch leverage updates.
-
-# Update Isolated Margin
-Source: https://docs.polymarket.com/api-reference/wss/perps-update-margin
-
-Add or remove margin from an isolated Perps position over WebSocket.
-
 # Live Data Channel
 Source: https://docs.polymarket.com/api-reference/wss/polybolt
 
@@ -52347,6 +54483,314 @@ Public WebSocket for real-time sports match results.
 Source: https://docs.polymarket.com/api-reference/wss/user
 
 Authenticated WebSocket for real-time order and trade updates.
+
+# Authentication
+Source: https://docs.polymarket.com/api-reference/rfq-trades/authentication
+
+Sign every RFQ Trades Partner API request, and the trade status stream's handshake, with your partner API key.
+
+Every request is signed with your partner API key. Polymarket identifies your
+platform from the key and never from the request body, so a request can only
+read and create your own trades.
+
+The API key identifies your platform. It does not authorize moving funds: each
+counterparty authorizes its own side through its
+[order signature](/partners/rfq-trades#sign-the-orders).
+
+## Your API Key
+
+Polymarket issues each partner an API key during onboarding:
+
+* **Key ID**: the public half, sent on every request.
+* **Secret**: a base64url-encoded string, shared once through a secure
+  channel. Decode it to bytes before using it as the HMAC key.
+
+## Sign a Request
+
+Sign every request except `GET /v1/time`:
+
+**1. Create the Request Timestamp**
+
+First, create a new Unix timestamp in seconds for each request. It must be
+within 30 seconds of server time, in either direction. See
+[Keep Your Clock in Sync](#keep-your-clock-in-sync).
+
+**2. Create the Request Signature**
+
+Next, concatenate the timestamp, the uppercase HTTP method, the request
+path, and the exact serialized body you send, with no separators. Then sign
+the result with your API key's secret, decoded from base64url:
+
+```text theme={null}
+rfq_timestamp = <unix_seconds>
+method = "POST"
+request_path = "/v1/rfq-trades/validate"
+body = <exact_serialized_request_body>
+
+message = rfq_timestamp + method + request_path + body
+rfq_signature = urlsafeBase64WithPadding(
+  HMAC-SHA256(base64UrlDecode(<rfq_secret>), message)
+)
+```
+
+Where:
+
+* `request_path` is the URL path only. The query string is not signed.
+* `body` is the exact bytes sent. For a `GET`, it is empty. Serialize the
+  body once and reuse that string for both the signature and the request,
+  to avoid mismatches from key ordering or whitespace.
+* `rfq_signature` is base64url-encoded **with padding** (RFC 4648 §5). It
+  is not hex and not standard base64.
+
+These helpers create the three headers for a request:
+
+```typescript TypeScript theme={null}
+import { createHmac } from "node:crypto";
+
+const keyId = process.env.RFQ_KEY_ID!;
+const secret = Buffer.from(process.env.RFQ_SECRET!, "base64url");
+
+function signRequest(method: string, path: string, body = "") {
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const signature = createHmac("sha256", secret)
+    .update(timestamp + method.toUpperCase() + path + body)
+    .digest("base64") // Node's "base64url" digest drops the padding.
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+
+  return {
+    "RFQ-Key-Id": keyId,
+    "RFQ-Timestamp": timestamp,
+    "RFQ-Signature": signature,
+  };
+}
+
+const body = JSON.stringify({ marketId: "253591" /* ... */ });
+await fetch(
+  "https://external-rfq-partner.polymarket.com/v1/rfq-trades/validate",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...signRequest("POST", "/v1/rfq-trades/validate", body),
+    },
+    body,
+  },
+);
+```
+
+```python Python theme={null}
+import base64
+import hashlib
+import hmac
+import os
+import time
+
+KEY_ID = os.environ["RFQ_KEY_ID"]
+SECRET = base64.urlsafe_b64decode(os.environ["RFQ_SECRET"])
+
+
+def sign_request(method: str, path: str, body: bytes = b"") -> dict[str, str]:
+    timestamp = str(int(time.time()))
+    message = timestamp.encode() + method.upper().encode() + path.encode() + body
+    digest = hmac.new(SECRET, message, hashlib.sha256).digest()
+    return {
+        "RFQ-Key-Id": KEY_ID,
+        "RFQ-Timestamp": timestamp,
+        "RFQ-Signature": base64.urlsafe_b64encode(digest).decode(),
+    }
+```
+
+> [accordion] Test vector
+>
+> Use these inputs to check your implementation:
+>
+> | Input | Value |
+> | - | - |
+> | Secret (base64url) | `MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=` |
+> | `RFQ-Timestamp` | `1753185296` |
+> | Method | `POST` |
+> | Path | `/v1/rfq-trades/validate` |
+> | Body | `{"marketId":"253591"}` |
+> | Expected `RFQ-Signature` | `H-yYb9AqRHJ7ysPVyqTxdT83YWWUB8KvS4okVchrrcU=` |
+
+**3. Send an Authenticated Request**
+
+Finally, send the key ID, the timestamp, and the signature as headers. This
+request validates the terms of a trade:
+
+```bash theme={null}
+curl -X POST "https://external-rfq-partner.polymarket.com/v1/rfq-trades/validate" \
+  -H "Content-Type: application/json" \
+  -H "RFQ-Key-Id: <rfq_key_id>" \
+  -H "RFQ-Timestamp: <rfq_timestamp>" \
+  -H "RFQ-Signature: <rfq_signature>" \
+  --data '{
+    "marketId": "253591",
+    "operation": "split",
+    "price": "0.65",
+    "shares": "1500000000",
+    "parties": {
+      "yes": { "maker": "<yes_deposit_wallet>", "signatureType": 3 },
+      "no": { "maker": "<no_deposit_wallet>", "signatureType": 3 }
+    }
+  }'
+```
+
+Every authenticated request uses the same three headers:
+
+| Header | Value |
+| - | - |
+| `RFQ-Key-Id` | Your API key ID |
+| `RFQ-Timestamp` | The Unix timestamp used to build the signature |
+| `RFQ-Signature` | The signature from the previous step |
+
+## Keep Your Clock in Sync
+
+`RFQ-Timestamp` must be within 30 seconds of server time, in either direction.
+Keep your clock NTP-synced. If your requests start failing with `401`, compare
+your clock with the server's: `GET /v1/time` needs no authentication.
+
+```bash theme={null}
+curl "https://external-rfq-partner.polymarket.com/v1/time"
+```
+
+The response body gives the server time:
+
+```json theme={null}
+{ "serverTime": "2026-07-24T12:34:56Z", "timestamp": 1784896496 }
+```
+
+`timestamp` is the server time in Unix seconds, in the same format as
+`RFQ-Timestamp`.
+
+## Authenticate the WebSocket
+
+The trade status stream is authenticated once, on the upgrade request. Sign it
+like any `GET`, with an empty body, and send the same three headers on the
+handshake:
+
+```text theme={null}
+message = <rfq_timestamp> + "GET" + "/v1/ws/rfq-trades"
+```
+
+The stream then delivers only your own trades. See
+[Track the Trade](/partners/rfq-trades#track-the-trade).
+
+## Authentication Errors
+
+A request that fails authentication returns `401` with code
+`authentication_failed`. Missing headers, a timestamp that isn't whole Unix
+seconds, and a timestamp outside the 30-second window each have their own
+message. An unknown or revoked key ID and a signature mismatch share one
+generic message, for security.
+
+
+# Get an RFQ Trade
+Source: https://docs.polymarket.com/api-reference/rfq-trades/get-trade
+
+api-spec/rfq-partner-openapi.yaml GET /v1/rfq-trades/{tradeId}
+Read a trade's current status, the source of truth for its outcome.
+
+See the [RFQ Trades Partner API guide](/partners/rfq-trades) for the full trade flow.
+
+
+# Overview
+Source: https://docs.polymarket.com/api-reference/rfq-trades/overview
+
+Explore the RFQ Trades Partner API for settling trades matched on your platform.
+
+## APIs
+
+The RFQ Trades Partner API settles trades that your platform matched off
+Polymarket, over HTTP for requests and over WebSocket for trade status. Access
+is by invitation: see the [Institutional Overview](/partners/overview) for who
+it is for and how to request access.
+
+> [card] HTTP API
+>
+> `https://external-rfq-partner.polymarket.com`
+>
+> Validate, prepare, submit, and read RFQ trades.
+
+> [card] WebSocket API
+>
+> `wss://external-rfq-partner.polymarket.com/v1/ws/rfq-trades`
+>
+> Stream your trades' status changes.
+
+The testing environment's base URL is shared during onboarding, together with
+test API keys for that environment.
+
+## Before You Integrate
+
+> [card] [Authentication](/api-reference/rfq-trades/authentication)
+>
+> Sign every request with your partner API key.
+
+> [card] [Trade Flow](/partners/rfq-trades)
+>
+> Find a market, then validate, sign, submit, and track a trade.
+
+> [card] [Errors](/partners/rfq-trades#errors)
+>
+> Read the error envelope and every rejection reason.
+
+
+# Prepare an RFQ Trade
+Source: https://docs.polymarket.com/api-reference/rfq-trades/prepare
+
+api-spec/rfq-partner-openapi.yaml POST /v1/rfq-trades/prepare
+Build both unsigned orders, their signing payloads, and the fee each side will pay.
+
+See the [RFQ Trades Partner API guide](/partners/rfq-trades) for the full trade flow.
+
+
+# Get a Market's Price Band
+Source: https://docs.polymarket.com/api-reference/rfq-trades/price-band
+
+api-spec/rfq-partner-openapi.yaml GET /v1/markets/{marketId}/price-band
+Read the price band an RFQ trade on this market must fall inside, for both outcome tokens.
+
+See the [RFQ Trades Partner API guide](/partners/rfq-trades) for the full trade flow.
+
+
+# Get Server Time
+Source: https://docs.polymarket.com/api-reference/rfq-trades/server-time
+
+api-spec/rfq-partner-openapi.yaml GET /v1/time
+Read the server clock that request timestamps are checked against. No authentication needed.
+
+See the [RFQ Trades Partner API guide](/partners/rfq-trades) for the full trade flow.
+
+
+# Submit an RFQ Trade
+Source: https://docs.polymarket.com/api-reference/rfq-trades/submit
+
+api-spec/rfq-partner-openapi.yaml POST /v1/rfq-trades
+Submit both signed orders. The trade is accepted as PENDING and executes asynchronously.
+
+See the [RFQ Trades Partner API guide](/partners/rfq-trades) for the full trade flow.
+
+
+# Validate an RFQ Trade
+Source: https://docs.polymarket.com/api-reference/rfq-trades/validate
+
+api-spec/rfq-partner-openapi.yaml POST /v1/rfq-trades/validate
+Run every check a submission of the agreed terms would run, without storing anything.
+
+See the [RFQ Trades Partner API guide](/partners/rfq-trades) for the full trade flow.
+
+
+# Auth
+Source: https://docs.polymarket.com/api-reference/wss/perps-auth
+
+Perps WebSocket authentication.
+
+# Auto Cancel
+Source: https://docs.polymarket.com/api-reference/wss/perps-auto-cancel
+
+Perps WebSocket dead man's switch updates.
 
 # Balances
 Source: https://docs.polymarket.com/api-reference/wss/perps-balances
@@ -52388,6 +54832,21 @@ the snapshot includes all available levels on that side.
 Source: https://docs.polymarket.com/api-reference/wss/perps-builder-fills
 
 Live attributed fills for an authenticated Perps builder.
+
+# Cancel All Orders
+Source: https://docs.polymarket.com/api-reference/wss/perps-cancel-all
+
+Perps WebSocket cancellation of all open orders.
+
+# Cancel Orders
+Source: https://docs.polymarket.com/api-reference/wss/perps-cancel-orders
+
+Perps WebSocket order cancellation by order ID.
+
+# Cancel Orders by Client Order ID
+Source: https://docs.polymarket.com/api-reference/wss/perps-cancel-orders-coid
+
+Perps WebSocket order cancellation by client order ID.
 
 # Deposits
 Source: https://docs.polymarket.com/api-reference/wss/perps-deposits
@@ -52444,10 +54903,33 @@ Source: https://docs.polymarket.com/api-reference/wss/perps-trades
 
 Perps WebSocket public trade updates.
 
+# Update Leverage
+Source: https://docs.polymarket.com/api-reference/wss/perps-update-leverage
+
+Perps WebSocket leverage updates.
+
+# Update Leverages
+Source: https://docs.polymarket.com/api-reference/wss/perps-update-leverages
+
+Perps WebSocket batch leverage updates.
+
+# Update Isolated Margin
+Source: https://docs.polymarket.com/api-reference/wss/perps-update-margin
+
+Add or remove margin from an isolated Perps position over WebSocket.
+
 # Withdrawals
 Source: https://docs.polymarket.com/api-reference/wss/perps-withdrawals
 
 Perps WebSocket private withdrawal updates.
+
+# Trade Status Stream
+Source: https://docs.polymarket.com/api-reference/wss/rfq-trades
+
+WebSocket stream of your RFQ trades' status changes, authenticated once on the upgrade request.
+
+See the [RFQ Trades Partner API guide](/partners/rfq-trades) for the full trade flow.
+
 
 # Perps Changelog
 Source: https://docs.polymarket.com/changelog/perps
@@ -52455,6 +54937,73 @@ Source: https://docs.polymarket.com/changelog/perps
 Recent changes to the Polymarket Perps API and platform
 
 Notable changes to the Polymarket Perps API.
+
+**Nov 10, 2026**
+
+Reduce-only closes, tiered maintenance, and cancel-on-disconnect
+
+No endpoints or required request fields are removed. Check reduce-only closes
+and competition states before the deploy. Everything else is additive.
+
+**Changed**
+
+* **Reduce-only IOC closes.** A closing limit order now skips stale quotes
+  beyond the favourable edge of the market's price band. A close that
+  previously filled can return `ioc_no_fill`, or fill partly and end
+  `ioc_expired`. The stale maker order stays open. Use fills and your
+  remaining position to confirm a close; an accepted order is not proof that
+  the position closed.
+* **Tiered maintenance.** Deployment alone keeps current margin rules. We plan
+  to switch tiered maintenance on during this maintenance window, after a
+  fresh safety check, and will confirm when it is live. Once activated, larger
+  positions use maintenance requirements from the market's risk tiers.
+  Maintenance amounts, liquidation prices, and warning levels can change;
+  liquidation can move closer. A position stop loss beyond the new liquidation
+  price can be refused with existing `tp_sl_trigger_past_liquidation`.
+  Existing stops are not moved for you. Review maintenance cover and stop
+  levels when activation is confirmed.
+* **Competition states.** `row_state` no longer returns `under_review`. Maker
+  share and order rate no longer automatically put traders under review.
+  Liquidity-reward entity members and operator-disqualified traders remain
+  excluded. Stop relying on `under_review`; eligible traders appear as ordinary
+  `live` / `provisional` rows. Rankings and projected prizes can change.
+* **Malformed WebSocket frames.** Concurrent sockets now return
+  `invalid_request` where some bad frames previously returned
+  `invalid request`, and retain a recoverable request ID. Update handlers that
+  depend on that exact text.
+
+**Added**
+
+* **Largest positions.** Public `GET /v1/info/largest-positions` takes
+  `instrument_id`, optional `limit` (default 10, maximum 100), and `offset`.
+  Only the top 1,000 ranks are pageable. Returns account, side, size, entry
+  price, notional, and unrealized PnL, ranked by notional. The insurance fund
+  is excluded. Weight 5, or 1 on a cache hit; cached for 2 seconds. Invalid
+  instrument or page bounds return `400`; a missing or stale mark returns `503`.
+* **Opt-in WebSocket cancel-on-disconnect.** Send a signed `cancelOnDisconnect`
+  post with scope `session`, `account`, or `off`. Every new connection starts
+  `off`; re-arm after reconnect. `session` covers qualifying orders created on
+  that socket after arming. `account` cancels the account's open orders,
+  chases, TWAPs, and odds orders across markets when the server detects
+  disconnection. TP/SL and untriggered conditional orders remain. Prefer
+  `session` for multiple sockets or fast reconnects: `account` scope can
+  cancel quotes already placed by a replacement socket. Protection also fires
+  during gateway deploys. Keep `autoCancel` armed: an abrupt gateway crash
+  cannot send disconnect cancels. Armed sockets track at most 65,536 order IDs;
+  if none can be pruned, new creates return `open_orders_limit`. Arm and disarm
+  cost one WebSocket message and 10 account action units.
+
+**Clarified**
+
+* New and updated error identifiers are documented on
+  [Errors](/perps/errors). `stock_split_unit_mismatch` is reserved for
+  automatic stock splits, which stay disabled in production on this deploy.
+
+**Rollout**
+
+Order placement pauses during the window and cancels keep working. WebSocket
+connections drop when the gateway restarts; reconnect and resubscribe. After
+opting into cancel-on-disconnect, gateway restarts also cancel covered orders.
 
 **Nov 5, 2026**
 
@@ -53843,6 +56392,61 @@ Source: https://docs.polymarket.com/changelog/predictions
 
 Important changes to Polymarket prediction markets, including the CLOB, APIs, web application, and mobile applications.
 
+**Nov 16, 2026**
+
+PolyBolt: Chainlink API keys and required providers
+
+* From November 30, 2026 at 00:00 UTC, price subscriptions require an explicit provider. Subscriptions served by Chainlink, including TWAP, also require your Chainlink API key. See [PolyBolt authentication](/api-reference/live-data/overview#send-your-chainlink-api-key).
+
+> [!NOTE]
+>
+> Request a Chainlink API Key using [this form](https://institutional.polymarket.com/request-chainlink-api-key).
+
+**Nov 12, 2026**
+
+Polymarket Protocol V2 support in Python and Rust
+
+* [Python `py-clob-client-v2 1.2.2`](https://pypi.org/project/py-clob-client-v2/1.2.2/) and [Rust `polymarket_client_sdk_v2 0.9.1`](https://crates.io/crates/polymarket_client_sdk_v2/0.9.1) add support for signing orders for Polymarket Protocol V2 markets on Polygon Amoy Testnet (chain ID `80002`).
+* The Python CLOB client remains deprecated. Follow the [unified SDK migration guide](/migrate/clob-sdk-to-unified-sdk) to move to `polymarket-client`.
+
+**Nov 11, 2026**
+
+CLOB API deprecations take effect Dec 14
+
+On `https://clob.polymarket.com`, three order and trade query changes take effect
+on December 14. Update your integration before then to avoid failed requests.
+
+* **`associate_trades` is deprecated on CLOB order and trade responses.** Do not
+  use it to track fills.
+* **`GET https://clob.polymarket.com/data/orders` requires `market` when filtering
+  by `asset_id`.** Requests with only `asset_id` return `400`
+  (`asset_id requires market`).
+* **`GET https://clob.polymarket.com/orders` and
+  `GET https://clob.polymarket.com/v1/trade/open-orders` no longer support
+  `asset_id` or `token_id` filters.** To filter open orders by asset, use
+  `GET https://clob.polymarket.com/data/orders` with `asset_id` and `market`.
+
+**Nov 11, 2026**
+
+Relayer supported contracts
+
+* **Polymarket Relayer Policy Change**: From 11/11/2026, the relayer will only relay transactions that interact with Polymarket contracts and a short list of supported third-party contracts. All other transactions will be rejected.
+
+**Nov 10, 2026**
+
+PolyBolt: energy futures on price.equity
+
+* **New symbols**: `wti`, `brent` and `natgas` join `price.equity`, served by Chainlink with `market_status`. See [Supported Symbols](/api-reference/live-data/overview#supported-symbols).
+* **Contract rolls**: `cll` and `hn` (Pyth) now move to the next contract at the open of the current contract's third-to-last trading session, the Active Month the WTI and natural gas Up or Down markets resolve on. `wti`, `brent` and `natgas` follow Chainlink's own roll schedule.
+* **Chainlink prices**: `full_accuracy_value` on Chainlink-sourced prices now carries at most 15 significant digits, dropping floating-point artifacts such as `3.2091000000000003`.
+
+**Nov 5, 2026**
+
+PolyBolt: dxy, and Pyth pins on spcx and mu
+
+* **New symbol**: `dxy` (the US Dollar Index) joins `price.equity`, served by Pyth, the feed the DXY markets resolve on.
+* **Pyth on `spcx` and `mu`**: both still default to Chainlink and can now be pinned to `pyth`, the feed their markets resolve on. See [Pin a Price Provider](/api-reference/live-data/overview#pin-a-price-provider).
+
 **Nov 2, 2026**
 
 Data API v1 retirement
@@ -53920,7 +56524,7 @@ PolyBolt WebSocket: real-time prices on one socket
 Data API v2 release
 
 * **New API**: Data API v2 is live at `https://data-api.polymarket.com/v2` for wallet activity, market data, and trader and builder analytics. Start with the [Data API overview](/api-reference/data-api/overview) or [Migrating from v1](/migrate/data-api-v1-to-v2).
-* **Response contract**: Every endpoint wraps its payload in `data`. Paginated reads add `pagination` with opaque cursors (no offset parameter). Each endpoint takes snake\_case parameters with camelCase aliases, names on-chain ids `condition`/`condition_id`, encodes money and size as JSON numbers (bare fields are shares, `_usdc` fields are USD), and signals load with `429` plus `Retry-After`.
+* **Response contract**: Every endpoint wraps its payload in `data`. Paginated reads add `pagination` with opaque cursors (no offset parameter). Each endpoint takes snake_case parameters with camelCase aliases, names on-chain ids `condition`/`condition_id`, encodes money and size as JSON numbers (bare fields are shares, `_usdc` fields are USD), and signals load with `429` plus `Retry-After`.
 * **New capabilities over v1**: cumulative wallet PnL series (`/v2/user-pnl`), profile stats (`/v2/user-stats`), windowed wallet volume (`/v2/user-volume`), the biggest-winners board, builder leaderboard and volume, per-holder position economics (`/v2/holders?include_pnl=true`), and resolution lifecycle reads (`/v2/resolutions`).
 * **Price history moves to the data host**: `GET /v2/prices-history` replaces the CLOB-hosted route, with three explicit window forms (`interval`, `start`/`end`, `as_of`), second-based `bucket_seconds`, and cursor pagination.
 * **TypeScript SDK**: The SDK's Data API methods now use v2. See the [SDK changelog](/changelog/sdks).
@@ -54226,7 +56830,7 @@ Polymarket Real-Time Data Socket (RTDS) official release
 
 **September 15, 2025**
 
-WSS price\_change event update
+WSS price_change event update
 
 * There has been a significant change to the structure of the price change message. This update will be applied at 11PM UTC September 15, 2025. We apologize for the short notice
   * Please see [Real-Time Data](/market-data/realtime-data) for details.
@@ -54255,7 +56859,7 @@ Get Book(s) update
     * description: Minimum price increment.
   * `neg_risk`
     * type: boolean
-    * description: Boolean indicating whether the market is neg\_risk.
+    * description: Boolean indicating whether the market is neg_risk.
   * `tick_size`
     * type: string
     * description: Minimum price increment.
@@ -54312,6 +56916,21 @@ Source: https://docs.polymarket.com/changelog/sdks
 Recent changes to the official SDKs.
 
 > [tab] TypeScript
+>
+> ### `0.20.0`
+>
+> * Breaking change: `listOpenOrders(...)` now requires a nonblank market condition ID in `market` when filtering by `assetId` or the deprecated `tokenId` alias. Asset-only queries throw `UserInputError` before sending a request. Unfiltered and market-only queries remain supported.
+>
+> ```diff theme={null}
+> -const pages = client.listOpenOrders({ assetId });
+> +const pages = client.listOpenOrders({ assetId, market: conditionId });
+> ```
+>
+> * `OpenOrder.associateTrades` is deprecated and defaults to an empty array when omitted from a response, preserving legacy values when present. Use `sizeMatched` for cumulative fills, or `listAccountTrades()` for individual fills matched by `takerOrderId` or `makerOrders[].orderId`. An empty `associateTrades` array does not mean an order has no fills.
+>
+> ### `0.19.0`
+>
+> * Added `providerApiKey` to authenticated crypto and equity spot and TWAP price subscriptions. Set `provider: PriceProvider.Chainlink` to authenticate with your Chainlink API key; the key is ignored for other providers.
 >
 > ### `0.18.0`
 >
@@ -54909,6 +57528,21 @@ Recent changes to the official SDKs.
 > ```
 
 > [tab] Python
+>
+> ### `0.20.0`
+>
+> * Breaking change: `list_open_orders(...)` now requires a nonblank market condition ID in `market` when filtering by `asset_id` or the deprecated `token_id` alias. Asset-only queries raise `UserInputError` when the paginator fetches a page. Unfiltered and market-only queries remain supported. This applies to sync and async clients.
+>
+> ```diff theme={null}
+> -pages = client.list_open_orders(asset_id=asset_id)
+> +pages = client.list_open_orders(asset_id=asset_id, market=condition_id)
+> ```
+>
+> * `OpenOrder.associate_trades` is deprecated and defaults to an empty tuple when omitted from a response, preserving legacy values when present. Use `size_matched` for cumulative fills, or `list_account_trades()` for individual fills matched by `taker_order_id` or `maker_orders[].order_id`. An empty `associate_trades` tuple does not mean an order has no fills.
+>
+> ### `0.19.0`
+>
+> * Added `provider_api_key` to authenticated crypto and equity spot and TWAP price subscription specs. Set `provider="chainlink"` to authenticate with your Chainlink API key; the key is ignored for other providers.
 >
 > ### `0.18.0`
 >

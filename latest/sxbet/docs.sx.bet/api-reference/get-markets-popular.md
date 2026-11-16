@@ -43,6 +43,8 @@ tags:
     description: Matched trades and portfolio history
   - name: Orders
     description: Orderbook queries, posting, cancelling, and filling orders
+  - name: Partner API
+    description: Create and list your platform's users (partner keys only)
 paths:
   /markets/popular:
     get:
@@ -172,6 +174,12 @@ components:
             `true` if this market is a quarter-line market (Asian handicap or
             totals in .25 increments). See the [quarter lines changelog
             entry](/changelog#quarter-lines-gradual-rollout) for details.
+        hasVolume:
+          type: boolean
+          description: >-
+            `true` once at least one bet on this market has been matched and
+            confirmed. A market whose only bets were placed before this field
+            was introduced reads `false` until it is traded again.
         group1:
           type: string
           description: Indicator to the client of how to display this market

@@ -7,7 +7,7 @@
 > Endpoint for retrieving candlestick data for multiple markets.
 
 - Accepts up to 100 market tickers per request
-- Returns up to 10,000 candlesticks total across all markets
+- The request may cover at most 10,000 candlestick periods in total: the minutes between `start_ts` and `end_ts`, divided by `period_interval`, multiplied by the number of tickers. A larger request is rejected with 400 `bad_request` (the `details` field gives the requested and maximum counts) even if fewer candlesticks exist; the response is never truncated
 - Returns candlesticks grouped by market_id
 - Optionally includes a synthetic initial candlestick for price continuity (see `include_latest_before_start` parameter)
 
@@ -77,7 +77,12 @@ paths:
 
         - Accepts up to 100 market tickers per request
 
-        - Returns up to 10,000 candlesticks total across all markets
+        - The request may cover at most 10,000 candlestick periods in total: the
+        minutes between `start_ts` and `end_ts`, divided by `period_interval`,
+        multiplied by the number of tickers. A larger request is rejected with
+        400 `bad_request` (the `details` field gives the requested and maximum
+        counts) even if fewer candlesticks exist; the response is never
+        truncated
 
         - Returns candlesticks grouped by market_id
 

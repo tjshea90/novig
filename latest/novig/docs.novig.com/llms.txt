@@ -22,15 +22,13 @@
 - [Errors](https://docs.novig.com/api/errors.md): Every error we return, what causes it, and how to fix it.
 - [Trading fees](https://docs.novig.com/api/concepts/fees.md): Takers pay a fee on each fill. Game markets and futures markets have separate schedules.
 - [Maker Credit Program](https://docs.novig.com/maker-credit-program.md): Earn cash credits when your make order supplies liquidity: in-game on straight contracts, on every fill in eligible futures
-- [Overview](https://docs.novig.com/api-reference/rfq/overview.md): How liquidity providers price Novig parlays through RFQs.
-- [Eligibility](https://docs.novig.com/api-reference/rfq/eligibility.md): Which legs can combine in a parlay RFQ.
-- [Register a pricer](https://docs.novig.com/api-reference/rfq/registration.md): Register your pricer, get your shared secret, and test your webhook.
-- [Webhook signing](https://docs.novig.com/api-reference/rfq/signing.md): Check the X-Novig-Signature header on each RFQ webhook.
-- [WebSocket](https://docs.novig.com/api-reference/rfq/websocket.md): Get RFQs and answer them over one open connection.
-- [Webhook endpoints](https://docs.novig.com/api-reference/rfq/webhooks.md): The /quote, /confirm, and /ping endpoints your pricer serves.
-- [Confirm rate](https://docs.novig.com/api-reference/rfq/confirm-rate.md): How many last looks you must confirm, and what happens when you fall short.
-- [Executions](https://docs.novig.com/api-reference/rfq/executions.md): Watch RFQ executions live, reconcile the ones you won, and check your open collateral.
-- [Settlement](https://docs.novig.com/api-reference/rfq/settlement.md): How an RFQ parlay grades, and what it pays.
+- [Overview](https://docs.novig.com/api/rfq/overview.md): How makers price Novig parlays through RFQs.
+- [Eligibility](https://docs.novig.com/api/rfq/eligibility.md): Which legs can combine in a parlay RFQ.
+- [Makers](https://docs.novig.com/api/rfq/makers.md): Register a subaccount as an RFQ maker, and check its standing.
+- [Socket](https://docs.novig.com/api/rfq/socket.md): Get RFQs and answer them over one signed connection.
+- [Confirm rate](https://docs.novig.com/api/rfq/confirm-rate.md): How many last looks you must confirm, and what happens when you fall short.
+- [Executions](https://docs.novig.com/api/rfq/executions.md): Reconcile the parlays your maker filled, and check its open collateral.
+- [Settlement](https://docs.novig.com/api/rfq/settlement.md): How an RFQ parlay grades, and what it pays.
 - [Trading Fees](https://docs.novig.com/fees.md): How Novig prices trading fees, and when they apply
 - [Exchange Data](https://docs.novig.com/public-data/overview.md): Two anonymized CSVs a day, published as static files behind a CDN
 - [Trades](https://docs.novig.com/public-data/trades.md): Every executed trade, one row per side
@@ -78,6 +76,7 @@
 - [Create a key](https://docs.novig.com/api-reference/authentication/create-a-key.md): | | | | --- | --- | | **Key** | `management` | | **Throttle** | `account` | | **Cost** | `1 /request` | | **Answers** | <span class="st st-ok">201</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">409</span> <s…
 - [Get a key](https://docs.novig.com/api-reference/authentication/get-a-key.md): | | | | --- | --- | | **Key** | `management` `management::read` | | **Throttle** | `account` | | **Cost** | `1 /request` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <span class="st st-…
 - [Revoke a key](https://docs.novig.com/api-reference/authentication/revoke-a-key.md): | | | | --- | --- | | **Key** | `management` | | **Throttle** | `account` | | **Cost** | `1 /request` | | **Answers** | <span class="st st-ok">204</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <span class="st st-hold">423</span> <s…
+- [List the locked events and markets](https://docs.novig.com/api-reference/exchange/list-the-locked-events-and-markets.md): | | | | --- | --- | | **Key** | `any` | | **Throttle** | `read` | | **Cost** | `1 /request` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class=…
 - [Get the exchange status](https://docs.novig.com/api-reference/exchange/get-the-exchange-status.md): | | | | --- | --- | | **Key** | `any` | | **Throttle** | `free` | | **Cost** | `0 /request` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">429</span> | | **Idempotent** | `true` |
 - [Get the server time](https://docs.novig.com/api-reference/exchange/get-the-server-time.md): | | | | --- | --- | | **Key** | `any` | | **Throttle** | `free` | | **Cost** | `0 /request` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">429</span> | | **Idempotent** | `true` |
 - [List event history](https://docs.novig.com/api-reference/history/list-event-history.md): | | | | --- | --- | | **Key** | `any` | | **Throttle** | `history` | | **Cost** | `4 + 1 per 100 rows` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <…
@@ -90,6 +89,11 @@
 - [List trade history](https://docs.novig.com/api-reference/history/list-trade-history.md): | | | | --- | --- | | **Key** | `any` | | **Throttle** | `history` | | **Cost** | `4 + 1 per 50 rows` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">400</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <s…
 - [Get your throttle schedule](https://docs.novig.com/api-reference/throttle/get-your-throttle-schedule.md): | | | | --- | --- | | **Key** | `any` | | **Throttle** | `free` | | **Cost** | `0 /request` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold">429</span> <span class=…
 - [Open the websocket](https://docs.novig.com/api-reference/streaming/open-the-websocket.md): | | | | --- | --- | | **Key** | `trading` `trading::read` | | **Throttle** | `stream` | | **Cost** | `32 /request` | | **Answers** | <span class="st st-info">101</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span class="st st-hold…
+- [Get your collateral](https://docs.novig.com/api-reference/rfq/executions/get-your-collateral.md): | | | | --- | --- | | **Key** | `trading` `trading::read` | | **Throttle** | `account` | | **Cost** | `1 /request` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <span class="st st-hold">…
+- [List your executions](https://docs.novig.com/api-reference/rfq/executions/list-your-executions.md): | | | | --- | --- | | **Key** | `trading` `trading::read` | | **Throttle** | `history` | | **Cost** | `1 /request` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <span class="st st-hold">…
+- [Get your maker](https://docs.novig.com/api-reference/rfq/maker/get-your-maker.md): | | | | --- | --- | | **Key** | `trading` `trading::read` | | **Throttle** | `account` | | **Cost** | `1 /request` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <span class="st st-hold">…
+- [Register a maker](https://docs.novig.com/api-reference/rfq/maker/register-a-maker.md): | | | | --- | --- | | **Key** | `trading` | | **Throttle** | `account` | | **Cost** | `1 /request` | | **Answers** | <span class="st st-ok">200</span> <span class="st st-ok">201</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-hold">423</span> <span c…
+- [Open the websocket](https://docs.novig.com/api-reference/rfq/streaming/open-the-websocket.md): | | | | --- | --- | | **Key** | `trading` `trading::read` | | **Throttle** | `stream` | | **Cost** | `32 /request` | | **Answers** | <span class="st st-info">101</span> <span class="st st-warn">401</span> <span class="st st-warn">403</span> <span class="st st-warn">404</span> <span class="st st-hold…
 - [Affiliate Integration](https://docs.novig.com/affiliates/overview.md): Getting started with Novig affiliate partnerships
 - [Parlay Pricing](https://docs.novig.com/affiliates/parlay-pricing.md): Show Novig's price for a parlay inside your UI
 - [Deeplinking](https://docs.novig.com/affiliates/deeplinking.md): Direct users into the Novig app with pre-populated order slips
@@ -138,19 +142,21 @@
 - [Private Updates Channel](https://docs.novig.com/deprecated/api-reference/WSS/private-channel.md): Receive private fill and cancel notifications
 - [Heartbeat & Connection Management](https://docs.novig.com/deprecated/api-reference/WSS/heartbeat.md): Keep WebSocket connections alive and handle reconnection
 - [Code Example](https://docs.novig.com/deprecated/api-reference/WSS/code-examples.md)
-- [RFQ Overview](https://docs.novig.com/deprecated/api-reference/rfq/overview.md): How Liquidity Providers respond to Novig parlay RFQs
-- [RFQ Eligibility](https://docs.novig.com/deprecated/api-reference/rfq/eligibility.md): Which markets and leagues can appear together in a parlay RFQ
-- [Parlay Settlement](https://docs.novig.com/deprecated/api-reference/rfq/settlement.md): How an executed RFQ parlay grades, and how its payout is computed
-- [Registering Your Pricer](https://docs.novig.com/deprecated/api-reference/rfq/registration.md): Register your pricer webhook and verify it end-to-end, self-serve
-- [Maker WebSocket](https://docs.novig.com/deprecated/api-reference/rfq/websocket.md): Receive RFQs and answer them over a single persistent socket
-- [Webhook Endpoints](https://docs.novig.com/deprecated/api-reference/rfq/webhooks.md): The /quote, /confirm, and /ping endpoints your pricer must implement
-- [Webhook Signing](https://docs.novig.com/deprecated/api-reference/rfq/signing.md): Verifying X-Novig-Signature on inbound RFQ webhooks
-- [Execution Feed & Reconciliation](https://docs.novig.com/deprecated/api-reference/rfq/executions.md): Watch RFQ executions live and reconcile the ones you won
+- [Overview](https://docs.novig.com/deprecated/api-reference/rfq/overview.md): How liquidity providers price Novig parlays through RFQs.
+- [Eligibility](https://docs.novig.com/deprecated/api-reference/rfq/eligibility.md): Which legs can combine in a parlay RFQ.
+- [Register a pricer](https://docs.novig.com/deprecated/api-reference/rfq/registration.md): Register your pricer, get your shared secret, and test your webhook.
+- [Webhook signing](https://docs.novig.com/deprecated/api-reference/rfq/signing.md): Check the X-Novig-Signature header on each RFQ webhook.
+- [WebSocket](https://docs.novig.com/deprecated/api-reference/rfq/websocket.md): Get RFQs and answer them over one open connection.
+- [Webhook endpoints](https://docs.novig.com/deprecated/api-reference/rfq/webhooks.md): The /quote, /confirm, and /ping endpoints your pricer serves.
+- [Confirm rate](https://docs.novig.com/deprecated/api-reference/rfq/confirm-rate.md): How many last looks you must confirm, and what happens when you fall short.
+- [Executions](https://docs.novig.com/deprecated/api-reference/rfq/executions.md): Watch RFQ executions live, reconcile the ones you won, and check your open collateral.
+- [Settlement](https://docs.novig.com/deprecated/api-reference/rfq/settlement.md): How an RFQ parlay grades, and what it pays.
 - [Exchange Data](https://docs.novig.com/deprecated/api-reference/trade-data.md)
 
 ## OpenAPI Specs
 
 - [markets](/api-reference/spec-files/markets.json)
+- [openapi-rfq-v3](/api-reference/spec-files/openapi-rfq-v3.json)
 - [openapi-v3](/api-reference/spec-files/openapi-v3.json)
 - [openapi31](/api-reference/spec-files/openapi31.json)
 - [orders-spec](/api-reference/spec-files/orders-spec.json)

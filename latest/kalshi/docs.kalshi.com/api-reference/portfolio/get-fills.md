@@ -7,6 +7,7 @@
 > Endpoint for getting all fills for the member. A fill is when a trade you have is matched.
 Registered partners may also use a user OAuth access token with the explicitly granted read::compliance_partner scope.
 Fills that occurred before the historical cutoff are only available via `GET /historical/fills`. See [Historical Data](https://docs.kalshi.com/getting_started/historical_data) for details.
+Available to direct member accounts. FCM member accounts receive 403 with code `permission_denied` here and use `GET /fcm/fills` instead.
 
 
 
@@ -79,6 +80,9 @@ paths:
         `GET /historical/fills`. See [Historical
         Data](https://docs.kalshi.com/getting_started/historical_data) for
         details.
+
+        Available to direct member accounts. FCM member accounts receive 403
+        with code `permission_denied` here and use `GET /fcm/fills` instead.
       operationId: GetFills
       parameters:
         - name: ticker

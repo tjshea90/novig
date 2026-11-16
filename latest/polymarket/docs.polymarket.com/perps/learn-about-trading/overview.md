@@ -14,7 +14,7 @@ at risk, and why account balances change.
 >
 > How offchain matching and onchain settlement fit together.
 
-> [card] [Markets](https://docs.polymarket.com/perps/learn-about-trading/markets.md)
+> [card] [Markets](https://docs.polymarket.com/perps/learn-about-trading/markets)
 >
 > Available Perps markets and the parameters that shape trading.
 

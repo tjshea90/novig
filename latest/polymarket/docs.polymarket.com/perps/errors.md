@@ -86,11 +86,27 @@ refused before or during handling.
 
 | Error | Condition |
 | - | - |
+| `invalid_request` | The frame failed parsing. The reply keeps a recoverable request `id` when the client supplied one. |
 | `read_only_key` | The connection authenticated with a proxy labelled `read-only:…` and the post is not `ping` or `auth`. Signed writes are refused on read-only sockets. |
 | `message_rate_limited` | The connection or IP message budget is exhausted. Refused read-only posts still consume message budget until the limit is reached. |
+| `open_orders_limit` | Cancel-on-disconnect tracking holds 65,536 order IDs and none can be pruned, so a new create is refused. |
 
 See [Rate Limits](https://docs.polymarket.com/perps/rate-limits.md) for WebSocket message and connection
 budgets, including separate limits for read-only keys.
+
+## Take Profit and Stop Loss Errors
+
+| Error | Condition |
+| - | - |
+| `tp_sl_trigger_past_liquidation` | The trigger price is beyond the position's liquidation price under current margin rules, including after tiered maintenance activates. |
+
+## Stock Split Errors
+
+Automatic stock splits stay disabled in production. This identifier is reserved for when that path is enabled.
+
+| Error | Condition |
+| - | - |
+| `stock_split_unit_mismatch` | An automatic stock split supplied a price outside its expected post-split range. |
 
 ## Order Placement Errors
 

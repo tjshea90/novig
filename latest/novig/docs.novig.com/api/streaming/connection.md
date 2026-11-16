@@ -28,6 +28,7 @@ You send a verb to tell us what to do on the connection.
 | `status` | Lists your subscriptions | Ack |
 | `query_markets` | Pages open markets | Ack |
 | `query_events` | Pages open events | Ack |
+| `query_locks` | Lists locked events and markets | Ack |
 | `place` | Books a batch of orders | Ack |
 | `cancel` | Cancels orders by id or by nonce | Ack |
 | `cancel_all` | Cancels your resting orders by scope | Ack |
@@ -38,7 +39,8 @@ You send a verb to tell us what to do on the connection.
 
 `query_markets` returns one page of open markets, filtered the same way as `GET /v3/catalog/markets`.
 `query_events` returns one page of open events, filtered the same way as `GET /v3/catalog/events`.
-Both debit the `read` throttle.
+`query_locks` returns the locked events and markets, the same lists as `GET /v3/exchange/locks`.
+All three debit the `read` throttle.
 
 ## Choose what to subscribe to
 
@@ -108,6 +110,33 @@ They don't spend from `stream`.
 }
 ```
 
+To cancel one order of a batch alone, give each order its own nonce.
+Send `nonce` as an array.
+Put the nonces in the same order as `orders`.
+[Nonces](#nonces) gives the rules for an array.
+
+```json theme={"dark"}
+{
+  "nonce": [21, 22],
+  "place": {
+    "orders": [
+      {
+        "outcomeId": "6f9619ff-…",
+        "price": "0.54",
+        "qty": 10,
+        "tif": "GTC"
+      },
+      {
+        "outcomeId": "7a8b12cc-…",
+        "price": "0.31",
+        "qty": 5,
+        "tif": "GTC"
+      }
+    ]
+  }
+}
+```
+
 `cancel` cancels orders by id, 1 `cancel` token each. It is partial: an unknown id does not stop the rest. The ack is `canceled`, naming the ids that canceled and those that did not.
 
 ```json theme={"dark"}
@@ -121,6 +150,7 @@ They don't spend from `stream`.
 
 You can cancel a place before its ack tells you the order ids.
 Put the place's nonce in `nonces`, and we cancel every order that place booked.
+If the place sent one nonce for each order, a nonce cancels only its order.
 Each nonce costs 1 `cancel` token, however many orders its place booked.
 
 ```json theme={"dark"}
@@ -133,6 +163,7 @@ Each nonce costs 1 `cancel` token, however many orders its place booked.
 `orderIds` and `nonces` can go in the same request.
 The batch limit of 256 counts every order the request names, after we replace each nonce with its orders.
 A nonce works only on the connection that sent the place, and only for its 64 newest places.
+A place with an array of nonces counts as one place.
 
 Any other nonce refuses the whole cancel with `NONCE_NOT_FOUND`, and the message names the nonce.
 That includes the nonce of a place we refused.
@@ -177,10 +208,14 @@ A request above that cap passes only when the throttle is full, and it empties t
 A nonce is the number you put on each request.
 
 * Start nonces at 1.
-* Send them in increasing order within a connection. Gaps are allowed.
+* Send them in increasing order within a connection, and within an array. Gaps are allowed.
 * The largest nonce is $2^{53}-1$.
+* Only `place` takes an array of nonces, with one nonce for each order.
 
 We answer a repeated or lower nonce with `STALE_NONCE`.
+We answer an array with more or fewer nonces than `orders` with `NONCE_COUNT_MISMATCH`.
+We answer an array on any other method with `INVALID_REQUEST`.
+Every reply echoes `nonce` as you sent it, as a number or an array.
 
 A frame that fails to parse or hits the throttle gets a reply with no nonce.
 That frame leaves your newest nonce unchanged.
@@ -263,6 +298,28 @@ Arrows are messages, top to bottom in time. After the new snapshot, drop the buf
 
 A market that opens under an `events` subscription arrives with no snapshot. That's not a gap.
 Its first delta is `OPEN`, and its `book`, `bbo`, and `trades` channels start at seq 0, so each one's first delta carries seq 1.
+
+If your connection falls behind, we stop sending it market deltas.
+Once you've read what we queued, we send a new snapshot with no `nonce`, and deltas resume after it.
+
+## Markets that leave drop out of your subscriptions
+
+When we resend a snapshot after your connection falls behind, we first drop any market or event you subscribed to by ID that has left the exchange, such as a market that has closed.
+Just before the snapshot, you get a message with no `nonce` that lists them:
+
+```json theme={"dark"}
+{
+  "unsubscribed": {
+    "markets": {
+      "6f9619ff-…": "book"
+    },
+    "events": {},
+    "private": []
+  }
+}
+```
+
+It has the same shape as the reply to `unsubscribe`, without the `nonce`.
 
 ## Why a connection closes
 

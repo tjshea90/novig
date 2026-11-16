@@ -531,14 +531,6 @@ components:
         message:
           description: Human-readable. Not stable. Never match on it.
           type: string
-        nonce:
-          description: The websocket request that failed. Absent on REST.
-          format: int64
-          maximum: 9007199254740991
-          minimum: 0
-          type:
-            - integer
-            - 'null'
         rejected:
           description: >-
             One entry per refused order in a batch. Present only on an error
@@ -617,6 +609,17 @@ components:
             Branch on the four
 
             keywords. Treat anything else as a price.
+          type: string
+        subjectId:
+          description: >-
+            ID of the competitor this outcome is about: a side's team, or the
+            team a
+
+            team total counts. Its names are in `/v3/catalog/participants`.
+            Absent
+
+            when the outcome is about no competitor.
+          format: uuid
           type: string
       required:
         - outcomeId

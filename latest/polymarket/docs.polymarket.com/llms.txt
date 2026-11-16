@@ -1,6 +1,6 @@
 # Polymarket Documentation
 
-- [API Reference (227 pages)](https://docs.polymarket.com/_llms/en/api-reference.txt): Documentation for API Reference.
+- [API Reference (236 pages)](https://docs.polymarket.com/_llms/en/api-reference.txt): Predictions, Perps, Institutional.
 
 ## Predictions
 
@@ -71,6 +71,11 @@
 - [Withdraw](https://docs.polymarket.com/trading/bridge/withdraw.md): Bridge pUSD from Polymarket to any supported chain
 - [Transaction Status](https://docs.polymarket.com/trading/bridge/status.md): Track bridge deposits and withdrawals through completion
 
+### Institutional
+
+- [Institutional Overview](https://docs.polymarket.com/partners/overview.md): Settle trades matched on your platform as positions in Polymarket's prediction markets.
+- [RFQ Trades Partner API](https://docs.polymarket.com/partners/rfq-trades.md): Settle trades that two counterparties agreed on your platform as one matched pair of signed Polymarket orders.
+
 ### Programs
 
 - [Taker Rebate Program](https://docs.polymarket.com/programs/taker-rebates.md): Climb the tiers and earn daily pUSD rebates as you trade
@@ -104,6 +109,19 @@
 - [Data Resources](https://docs.polymarket.com/resources/blockchain-data.md): Access Polymarket on-chain activity for data & analytics
 - [Error Codes](https://docs.polymarket.com/resources/error-codes.md): Complete reference for CLOB API error responses
 
+## NEX Sandbox
+
+### Getting Started
+
+- [NEX Sandbox](https://docs.polymarket.com/nex/overview.md): Early access to Polymarket's new exchange.
+- [Get Access](https://docs.polymarket.com/nex/get-access.md): Request access, choose a connection and get test funds.
+- [Connect to NEX](https://docs.polymarket.com/nex/connect.md): Connect through PrivateLink or an allowlisted public IP.
+
+### Trading
+
+- [Start Trading](https://docs.polymarket.com/nex/start-trading.md): Connect your trading stack and place a sandbox order.
+- [WebSocket Feeds](https://docs.polymarket.com/nex/websocket-feeds.md): Subscribe to order books, prices and your own orders and fills.
+
 ## Perps
 
 ### Getting Started
@@ -127,7 +145,6 @@
 
 - [Overview](https://docs.polymarket.com/perps/learn-about-trading/overview.md): The market mechanics behind Perps trading
 - [Architecture](https://docs.polymarket.com/perps/learn-about-trading/architecture.md): High-level architecture of the Polymarket Perps exchange
-- [Markets](https://docs.polymarket.com/perps/learn-about-trading/markets.md): Listed perpetual markets and trading parameters
 - [Fees](https://docs.polymarket.com/perps/learn-about-trading/fees.md): Tiered maker and taker trading fees for Polymarket Perps
 - [Margin](https://docs.polymarket.com/perps/learn-about-trading/margin.md): Initial margin, maintenance margin, equity, margin modes, and withdrawal requirements
 - [Self-Trade Prevention](https://docs.polymarket.com/perps/learn-about-trading/self-trade-prevention.md): How the matching engine stops an account, or a group of accounts run by one entity, from trading with itself
@@ -137,11 +154,16 @@
 - [Index Price](https://docs.polymarket.com/perps/learn-about-trading/index-price.md): How the Index Price is computed for Perps
 - [Market Sessions](https://docs.polymarket.com/perps/learn-about-trading/market-sessions.md): How session state affects pricing feed selection
 
+#### Markets
+
+- [Markets](https://docs.polymarket.com/perps/learn-about-trading/markets.md): Listed perpetual markets and trading parameters
+- [Anthropic (ANT): Pre-IPO Specifications](https://docs.polymarket.com/perps/learn-about-trading/markets/pre-ipo-anthropic.md): Specifications for active Polymarket Pre-IPO perpetual futures markets.
+
 ### Programs
 
 - [Liquidity Rewards](https://docs.polymarket.com/perps/liquidity-rewards.md): Earn daily pUSD rewards by providing deep, two-sided liquidity on Perps
 - [Referral Program](https://docs.polymarket.com/perps/referral-program.md): Earn a share of Perps trading fees from traders you refer
-- [Trading Competitions](https://docs.polymarket.com/perps/trading-competitions.md): Polymarket Perps Bi-Weekly Trading Competitions
+- [Trading Competitions](https://docs.polymarket.com/perps/trading-competitions.md): Polymarket Perps Trading Competitions
 
 ### Resources
 
@@ -171,6 +193,7 @@
 - [combos-rfq-openapi](/api-spec/combos-rfq-openapi.yaml)
 - [bridge-openapi](/api-spec/bridge-openapi.yaml)
 - [perps-openapi](/api-spec/perps-openapi.json)
+- [rfq-partner-openapi](/api-spec/rfq-partner-openapi.yaml)
 - [openapi](https:/data-api.polymarket.com/v2/openapi.json)
 
 ## AsyncAPI Specs
@@ -181,17 +204,18 @@
 - [asyncapi-user](/asyncapi-user.json)
 - [asyncapi-sports](/asyncapi-sports.json)
 - [asyncapi-perps](/asyncapi-perps.json)
+- [asyncapi-rfq-partner](/asyncapi-rfq-partner.json)
 - [connect-wss](/developers/open-api/connect-wss.json)
 
 > The links below point to documentation indexes. Follow each `/_llms/` index recursively until you reach documentation pages.
 
 ## Indexes
 
-- [English / API Reference (227 pages)](https://docs.polymarket.com/_llms/en/api-reference.txt): Documentation for English / API Reference.
-- [English / API Reference / Predictions (124 pages)](https://docs.polymarket.com/_llms/en/api-reference/predictions.txt): Documentation for English / API Reference / Predictions.
-- [English / API Reference / Perps (103 pages)](https://docs.polymarket.com/_llms/en/api-reference/perps.txt): Documentation for English / API Reference / Perps.
-- [Chinese (223 pages)](https://docs.polymarket.com/_llms/cn.txt): Documentation for Chinese.
-- [Chinese / API 参考 (170 pages)](https://docs.polymarket.com/_llms/cn/api.txt): Documentation for Chinese / API 参考.
+- [English / API Reference (236 pages)](https://docs.polymarket.com/_llms/en/api-reference.txt): Predictions, Perps, Institutional.
+- [English / API Reference / Predictions (124 pages)](https://docs.polymarket.com/_llms/en/api-reference/predictions.txt): Events, Markets, Orderbook & Pricing, Orders, Trades, Rebates, Rewards, Profile, Boards, Search, Tags, Series, Comments, Sports, Relayer, Combos, WebSocket, PolyBolt WebSocket, Bridge.
+- [English / API Reference / Perps (103 pages)](https://docs.polymarket.com/_llms/en/api-reference/perps.txt): HTTP, WebSocket.
+- [Chinese (232 pages)](https://docs.polymarket.com/_llms/cn.txt): 预测市场, API 参考.
+- [Chinese / API 参考 (179 pages)](https://docs.polymarket.com/_llms/cn/api.txt): 概览, 事件, 市场, 订单簿与价格, 订单, 交易, 返利, 奖励, 个人资料, 榜单, 搜索, 标签, 系列, 评论, 体育, Relayer, Combos, 永续合约, 机构, WebSocket, PolyBolt WebSocket, 跨链桥.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

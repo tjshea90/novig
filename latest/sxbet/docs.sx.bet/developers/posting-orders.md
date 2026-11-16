@@ -28,7 +28,7 @@ You also need your API key, sent as `x-sx-api-key`. See
 3. **Choose a `timeInForce`** — `GTC` to rest, `IOC`/`FOK` to execute now. See
    [Time in force](https://docs.sx.bet/developers/time-in-force.md).
 4. Sign the eight-field [EIP-712 `Order` struct](https://docs.sx.bet/api-reference/eip712-order-signing).
-5. [**`POST /orders-v3`**](https://docs.sx.bet/api-reference/post-orders-v3) — expect **`200`** and a per-order result carrying `SUBMITTED`, the server-assigned `commandId`, and your `clientOrderId` / `externalUserId` if you set them.
+5. [**`POST /orders-v3`**](https://docs.sx.bet/api-reference/post-orders-v3) — expect **`200`** and a per-order result carrying `SUBMITTED` or `FAILED`, the server-assigned `commandId`, and your `clientOrderId` / `externalUserId` if you set them.
 6. Watch your [`account:orders_v3`](https://docs.sx.bet/api-reference/channel-orders-v3) stream for the transition instead of polling. Or set [`waitForOutcome: true`](https://docs.sx.bet/api-reference/post-orders-v3) to have the call wait and return each order's terminal `outcome` inline.
 
 > [!NOTE]

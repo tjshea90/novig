@@ -1111,6 +1111,14 @@ Stream crypto, equity, and time-weighted average reference prices through Polyma
 > Existing RTDS integrations should follow the [migration
 > guide](https://docs.polymarket.com/migrate/rtds-to-polybolt.md).
 
+> [!WARNING]
+>
+> Every reference price subscription must
+> name its provider, and subscriptions served by Chainlink require your
+> Chainlink API key. See the [PolyBolt
+> overview](https://docs.polymarket.com/api-reference/live-data/overview.md#send-your-chainlink-api-key) for
+> the key.
+
 Use lowercase symbols. See the [PolyBolt overview](https://docs.polymarket.com/api-reference/live-data/overview.md#supported-symbols) for crypto and TWAP lists, and the equity catalog below for equity symbols.
 
 ### Historical Snapshot
@@ -1123,11 +1131,17 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 
 > [tab] TypeScript
 >
-> Call `client.subscribe` with an authenticated `SecureClient` from `@polymarket/client` 0.11.0 or later. See [Wallet Integrations](https://docs.polymarket.com/getting-started/typescript.md#wallet-integrations) to create the client.
+> Call `client.subscribe` with an authenticated `SecureClient` from `@polymarket/client` 0.11.0 or later, and name the provider with `provider`. See [Wallet Integrations](https://docs.polymarket.com/getting-started/typescript.md#wallet-integrations) to create the client.
 >
 > ```ts theme={null}
+> import { PriceProvider } from "@polymarket/client";
+>
 > const stream = await client.subscribe([
->   { topic: "prices.crypto", symbols: ["btcusd", "ethusd"] },
+>   {
+>     topic: "prices.crypto",
+>     symbols: ["btcusd", "ethusd"],
+>     provider: PriceProvider.Pyth,
+>   },
 > ]);
 >
 > try {
@@ -1233,7 +1247,7 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 > from polymarket.streams import CryptoPriceSpec
 >
 > async with await client.subscribe(
->     CryptoPriceSpec(symbols=["btcusd", "ethusd"])
+>     CryptoPriceSpec(symbols=["btcusd", "ethusd"], provider="pyth")
 > ) as stream:
 >     async for event in stream:
 >         # event: CryptoPriceEvent
@@ -1357,7 +1371,8 @@ Stream crypto reference prices in USD to keep prices current alongside related m
 >     {
 >       "channel": "price.crypto",
 >       "filter": {
->         "symbol": "btcusd"
+>         "symbol": "btcusd",
+>         "provider": "pyth"
 >       }
 >     }
 >   ]
@@ -1370,11 +1385,11 @@ Stream reference prices for stocks, ETFs, forex pairs, precious metals, and comm
 
 > [tab] TypeScript
 >
-> Call `client.subscribe` to subscribe to the `prices.equity` topic and your chosen symbols with an authenticated `SecureClient`.
+> Call `client.subscribe` to subscribe to the `prices.equity` topic, your chosen symbols and a `provider` with an authenticated `SecureClient`. Import `PriceProvider` from `@polymarket/client`.
 >
 > ```ts theme={null}
 > const stream = await client.subscribe([
->   { topic: "prices.equity", symbol: "aapl" },
+>   { topic: "prices.equity", symbol: "aapl", provider: PriceProvider.Pyth },
 > ]);
 >
 > try {
@@ -1483,7 +1498,7 @@ Stream reference prices for stocks, ETFs, forex pairs, precious metals, and comm
 > from polymarket.streams import EquityPriceSpec
 >
 > async with await client.subscribe(
->     EquityPriceSpec(symbol="aapl")
+>     EquityPriceSpec(symbol="aapl", provider="pyth")
 > ) as stream:
 >     async for event in stream:
 >         # event: EquityPriceEvent
@@ -1571,7 +1586,8 @@ Stream reference prices for stocks, ETFs, forex pairs, precious metals, and comm
 >     {
 >       "channel": "price.equity",
 >       "filter": {
->         "symbol": "aapl"
+>         "symbol": "aapl",
+>         "provider": "pyth"
 >       }
 >     }
 >   ]
@@ -1582,11 +1598,11 @@ Stream reference prices for stocks, ETFs, forex pairs, precious metals, and comm
 
 | Asset class | Supported symbols |
 | - | - |
-| Stocks | `aapl`, `tsla`, `msft`, `googl`, `amzn`, `meta`, `nvda`, `nflx`, `pltr`, `open`, `rklb`, `abnb`, `coin`, `hood` |
+| Stocks | `aapl`, `tsla`, `msft`, `googl`, `amzn`, `meta`, `nvda`, `nflx`, `pltr`, `open`, `rklb`, `abnb`, `coin`, `hood`, `spcx`, `intc`, `mstr`, `crcl`, `mu` |
 | ETFs | `qqq`, `spy`, `ewy`, `vxx` |
-| Forex | `eurusd`, `gbpusd`, `usdcad`, `usdjpy`, `usdkrw`, `usdchf`, `usdmxn`, `usdzar`, `usdbrl`, `usdnok`, `usdsek`, `usdtry` |
+| Forex | `eurusd`, `gbpusd`, `usdcad`, `usdjpy`, `usdkrw`, `usdchf`, `usdmxn`, `usdzar`, `usdbrl`, `usdnok`, `usdsek`, `usdtry`, `dxy` |
 | Precious metals | `xauusd`, `xagusd` |
-| Commodities | `wti`, `cc`, `ngd` |
+| Commodities | `cll`, `hn`, `cc3m` |
 
 #### Read the Market Status
 
@@ -1610,10 +1626,10 @@ underlying exchange's session hours.
 > an existing authenticated `SecureClient`:
 >
 > ```ts theme={null}
-> import { EquityMarketStatus } from "@polymarket/client";
+> import { EquityMarketStatus, PriceProvider } from "@polymarket/client";
 >
 > const stream = await client.subscribe([
->   { topic: "prices.equity", symbol: "aapl" },
+>   { topic: "prices.equity", symbol: "aapl", provider: PriceProvider.Pyth },
 > ]);
 >
 > try {
@@ -1632,7 +1648,7 @@ underlying exchange's session hours.
 >
 > `EquityMarketStatus.Open`, `.Closed`, and `.Unknown` correspond to the three stated
 > values. `undefined` means not stated. The same field is available on
-> `prices.equity.twap`. Subscribe with `{ topic: "prices.equity.twap", symbol: "eurusd" }`.
+> `prices.equity.twap`. Subscribe with `{ topic: "prices.equity.twap", symbol: "eurusd", provider: PriceProvider.Chainlink }`.
 > In a snapshot, status is on `payload`, alongside `data`, rather than on each
 > historical price point.
 
@@ -1645,7 +1661,7 @@ underlying exchange's session hours.
 > ```python theme={null}
 > from polymarket.streams import EquityMarketStatus, EquityPriceSpec
 >
-> async with await client.subscribe(EquityPriceSpec(symbol="aapl")) as stream:
+> async with await client.subscribe(EquityPriceSpec(symbol="aapl", provider="pyth")) as stream:
 >     async for event in stream:
 >         status = event.payload.market_status
 >         if status == EquityMarketStatus.CLOSED:
@@ -1656,7 +1672,7 @@ underlying exchange's session hours.
 >
 > `EquityMarketStatus.OPEN`, `.CLOSED`, and `.UNKNOWN` correspond to the three stated
 > values. `None` means not stated. For equity TWAP, import `EquityTwapPriceSpec` from
-> `polymarket.streams` and pass `EquityTwapPriceSpec(symbol="eurusd")`. Its payload
+> `polymarket.streams` and pass `EquityTwapPriceSpec(symbol="eurusd", provider="chainlink")`. Its payload
 > has the same `market_status` field. In a snapshot, read status from `payload`,
 > rather than from the historical points in `payload.data`.
 
@@ -1742,15 +1758,24 @@ During market hours, prices can update up to five times per second for each feed
 
 ### TWAP Prices
 
-A time-weighted average price (TWAP) represents an asset's price across a lookback window. Stream Chainlink-computed crypto TWAPs with a fixed 60-second window through Polymarket.
+A time-weighted average price (TWAP) represents an asset's price across a lookback window. Stream Chainlink-computed crypto TWAPs with a fixed 60-second window through Polymarket. TWAP prices are served by Chainlink only, so pin `chainlink`; they also require your Chainlink API key.
+
+> [!NOTE]
+>
+> Request a Chainlink API Key using [this form](https://institutional.polymarket.com/request-chainlink-api-key).
 
 > [tab] TypeScript
 >
-> Call `client.subscribe` to subscribe to the `prices.crypto.twap` topic and your chosen symbols with an authenticated `SecureClient`.
+> Call `client.subscribe` to subscribe to the `prices.crypto.twap` topic, your chosen symbols and the Chainlink provider with an authenticated `SecureClient`. Import `PriceProvider` from `@polymarket/client`.
 >
 > ```ts theme={null}
 > const stream = await client.subscribe([
->   { topic: "prices.crypto.twap", symbols: ["btcusd"] },
+>   {
+>     topic: "prices.crypto.twap",
+>     symbols: ["btcusd"],
+>     provider: PriceProvider.Chainlink,
+>     providerApiKey: "<chainlink api key>",
+>   },
 > ]);
 >
 > try {
@@ -1856,7 +1881,7 @@ A time-weighted average price (TWAP) represents an asset's price across a lookba
 > from polymarket.streams import CryptoTwapPriceSpec
 >
 > async with await client.subscribe(
->     CryptoTwapPriceSpec(symbols=["btcusd"])
+>     CryptoTwapPriceSpec(symbols=["btcusd"], provider="chainlink", provider_api_key="<chainlink api key>")
 > ) as stream:
 >     async for event in stream:
 >         # event: CryptoTwapPriceEvent
@@ -1940,7 +1965,8 @@ A time-weighted average price (TWAP) represents an asset's price across a lookba
 >       "channel": "price.crypto.twap",
 >       "filter": {
 >         "symbol": "btcusd",
->         "window_seconds": 60
+>         "window_seconds": 60,
+>         "provider": "chainlink"
 >       }
 >     }
 >   ]
@@ -2070,7 +2096,7 @@ Provider availability depends on the symbol and feed. Use this table when choosi
 
 | Provider | Feeds | Quirks |
 | - | - | - |
-| Chainlink | Crypto spot, supported equity spot, and 60-second TWAP | Default wherever it serves the symbol. TWAP feeds are Chainlink-only. Equity products can trade around the clock, so their market status can differ from exchange-session feeds. |
+| Chainlink | Crypto spot, supported equity spot, and 60-second TWAP | Default wherever it serves the symbol. Requires your Chainlink API key. TWAP feeds are Chainlink-only. Equity products can trade around the clock, so their market status can differ from exchange-session feeds. |
 | Pyth | Supported crypto and equity spot symbols | Availability varies by symbol. A requested provider that cannot serve the symbol falls back to its default provider. |
 | Binance | Crypto spot only | Uses canonical symbols such as `btcusd` for USDT spot closes. Not available for equity or TWAP feeds. |
 | Massive | Equity spot | Can appear as the served source, but cannot be requested explicitly. Its exchange-session market status can differ from continuous-hours products. |

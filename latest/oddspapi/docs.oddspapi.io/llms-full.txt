@@ -661,7 +661,7 @@ Quick definitions of the core terms used throughout the API.
 
 * **serverEpoch + entryId** — The per-channel cursor; a change in `serverEpoch` means the client must re-snapshot.
 * **resume / replay** — Reconnect and replay missed messages within `resumeWindowMs` (default `60000`).
-* **snapshot\_required** — Signal that the cursor is outside the resume window and a fresh REST snapshot is needed.
+* **snapshot_required** — Signal that the cursor is outside the resume window and a fresh REST snapshot is needed.
 
 
 # Enumerations - Status IDs, Periods & Settlement Statuses
@@ -2004,30 +2004,39 @@ untouched, they just start carrying the new `outcomeId`s.
   * `bookmakers`
 
 
-# Sports Coverage - Fixtures & Futures by Sport
+# Coverage - Sports, Bookmakers & Markets
 Source: https://docs.oddspapi.io/coverage
 
-Coverage of the OddsPapi B2B odds API: 200+ bookmakers anchored on sharp trading books, plus 60+ sports and prediction-market topics with fixtures and futures availability per sportId.
+What the OddsPapi B2B odds API covers: sports and prediction-market topics with fixtures and futures per sportId, the bookmaker catalogue anchored on sharp trading books, and the full fixture-market taxonomy.
 
-OddsPapi covers **60+ sports** plus prediction-market topics, each identified by a numeric `sportId`. Every sport is available as **fixtures** (match-level markets), **futures** (outrights / season-long markets), or both.
+Coverage has three dimensions, and each one has its own matrix: **which sports** we carry, **which bookmakers** we collect, and **which fixture markets** exist per sport. The three pages below are generated from the live catalogue rather than hand-maintained.
 
-> [!NOTE]
+| | Covered |
+| - | - |
+| Sports and topics | **75** total — **60** with fixtures, **72** with futures |
+| Bookmakers | **200+** actively collected |
+| Fixture markets | published for **60** sports, up to **200** market types each |
+
+> [card] [Sports](/coverage/sports)
 >
-> **Rule of thumb:** `sportId` **10–68** and **82–84** are covered for **both fixtures and futures**. `sportId` **69–78** are prediction-market topics covered for **futures only**. `sportId` **79–81** are racing codes covered as **ante-post futures only**.
-
-Discover the live list programmatically via `GET /sports`. Identifiers are language-independent; `sportName` follows the request language prefix.
+> Every `sportId` with its fixtures and futures availability and how many fixture market types it publishes.
 
 > [card] [Bookmakers](/coverage/bookmakers)
 >
-> Sharps, exchanges, and retail books — capabilities, freshness bounds, and status signals.
+> Every bookmaker we actively collect, with the slug you address it by.
 
 > [card] [Markets](/coverage/markets)
 >
-> Market types, lines, period scoping, and player props — and how to enumerate them.
+> The full fixture-market `marketType` × `period` matrix per sport, and which combinations settle from a collected counter.
 
-## Bookmaker coverage
+## The two product planes
 
-The feed aggregates **200+ bookmakers**, anchored on the books that matter for price discovery:
+* **Fixtures** are match- or event-level markets (a single game, bout, or match), streamed on the [`fixtures`](/websocket/channels/fixtures) and [`odds`](/websocket/channels/odds) channels.
+* **Futures** are outright / season-long or topic-level markets (league winner, tournament, election, etc.), streamed on the [`futures`](/websocket/channels/futures) and `oddsFutures` channels.
+
+A sport can carry one plane or both. `sportId` **69–78** are prediction-market topics (politics, elections, finance, crypto, weather, …) and **79–81** are racing codes (horse, greyhound, harness) — both groups exist as futures only. For the per-sport answer rather than a rule of thumb, see [Sports coverage](/coverage/sports).
+
+## What the bookmaker catalogue is anchored on
 
 * **Sharp trading books** — the core of the feed. The bookmakers that are most accurate in pricing and dominate global sports prediction (e.g. Pinnacle, Singbet, Circa Sports) — the books trading systems benchmark against, carried with [limits](/websocket/channels/odds#limits) and full delivery timestamps.
 * **Betting exchanges & prediction markets** — realtime prices with [orderbook depth](/websocket/channels/odds#advanced-metadata-meta) (`back` / `lay` ladders), e.g. Betfair and Polymarket.
@@ -2035,103 +2044,253 @@ The feed aggregates **200+ bookmakers**, anchored on the books that matter for p
 
 **Asian lines are first-class**: Asian handicap market types, quarter-line settlement (`HALFWIN` / `HALFLOSS` — see [Enumerations](/api-reference/enumerations)), and fiat + crypto exchange rates on the [currencies channel](/websocket/channels/currencies) for odds conversion.
 
-Discover the catalog available to your key via [`GET /bookmakers`](/api-reference/common/get-bookmakers), and see [Bookmaker coverage](/coverage/bookmakers) for per-book capabilities, freshness bounds, and status signals.
+## Discovering your own catalogue
 
-## Coverage by sport
+These pages describe the whole feed. What **your key** can read is narrower, and the API is the authority on it:
 
-| sportId | Sport | Fixtures | Futures |
-| -: | - | :-: | :-: |
-| 10 | Soccer | ✓ | ✓ |
-| 11 | Basketball | ✓ | ✓ |
-| 12 | Tennis | ✓ | ✓ |
-| 13 | Baseball | ✓ | ✓ |
-| 14 | American Football | ✓ | ✓ |
-| 15 | Ice Hockey | ✓ | ✓ |
-| 16 | ESport Dota | ✓ | ✓ |
-| 17 | ESport Counter-Strike | ✓ | ✓ |
-| 18 | ESport League of Legends | ✓ | ✓ |
-| 19 | Darts | ✓ | ✓ |
-| 20 | MMA | ✓ | ✓ |
-| 21 | Boxing | ✓ | ✓ |
-| 22 | Handball | ✓ | ✓ |
-| 23 | Volleyball | ✓ | ✓ |
-| 24 | Snooker | ✓ | ✓ |
-| 25 | Table Tennis | ✓ | ✓ |
-| 26 | Rugby | ✓ | ✓ |
-| 27 | Cricket | ✓ | ✓ |
-| 28 | Waterpolo | ✓ | ✓ |
-| 29 | Futsal | ✓ | ✓ |
-| 30 | Beach Volley | ✓ | ✓ |
-| 31 | Aussie Rules | ✓ | ✓ |
-| 32 | Field hockey | ✓ | ✓ |
-| 33 | Floorball | ✓ | ✓ |
-| 34 | Squash | ✓ | ✓ |
-| 35 | Basketball 3x3 | ✓ | ✓ |
-| 36 | Beach Soccer | ✓ | ✓ |
-| 37 | Pesapallo | ✓ | ✓ |
-| 38 | Lacrosse | ✓ | ✓ |
-| 39 | Curling | ✓ | ✓ |
-| 40 | Padel | ✓ | ✓ |
-| 41 | Bandy | ✓ | ✓ |
-| 42 | Kabaddi | ✓ | ✓ |
-| 43 | Rink Hockey | ✓ | ✓ |
-| 44 | Soccer Specials | ✓ | ✓ |
-| 45 | Gaelic Football | ✓ | ✓ |
-| 46 | Netball | ✓ | ✓ |
-| 47 | Beach Handball | ✓ | ✓ |
-| 48 | Athletics | ✓ | ✓ |
-| 49 | Badminton | ✓ | ✓ |
-| 50 | Bowls | ✓ | ✓ |
-| 51 | Cross-Country | ✓ | ✓ |
-| 52 | Gaelic Hurling | ✓ | ✓ |
-| 53 | Softball | ✓ | ✓ |
-| 54 | eSoccer | ✓ | ✓ |
-| 55 | eBasketball | ✓ | ✓ |
-| 56 | ESport Call of Duty | ✓ | ✓ |
-| 57 | ESport Overwatch | ✓ | ✓ |
-| 58 | ESport Rainbow Six | ✓ | ✓ |
-| 59 | ESport Rocket League | ✓ | ✓ |
-| 60 | ESport StarCraft | ✓ | ✓ |
-| 61 | ESport Valorant | ✓ | ✓ |
-| 62 | ESport Arena of Valor | ✓ | ✓ |
-| 63 | ESport King of Glory | ✓ | ✓ |
-| 64 | Judo | ✓ | ✓ |
-| 65 | ESport Honor of Kings | ✓ | ✓ |
-| 66 | Speedway | ✓ | ✓ |
-| 67 | Golf | ✓ | ✓ |
-| 68 | Cycling | ✓ | ✓ |
-| 69 | Politics | — | ✓ |
-| 70 | Elections | — | ✓ |
-| 71 | Economics | — | ✓ |
-| 72 | Finance | — | ✓ |
-| 73 | Technology | — | ✓ |
-| 74 | Health | — | ✓ |
-| 75 | Science | — | ✓ |
-| 76 | Cryptocurrency | — | ✓ |
-| 77 | Weather | — | ✓ |
-| 78 | Culture | — | ✓ |
-| 79 | Horse Racing | — | ✓ |
-| 80 | Greyhound Racing | — | ✓ |
-| 81 | Harness Racing | — | ✓ |
-| 82 | Formula 1 | ✓ | ✓ |
-| 83 | ESport Mobile Legends | ✓ | ✓ |
-| 84 | Chess | ✓ | ✓ |
+| Dimension | Endpoint |
+| - | - |
+| Sports | [`GET /sports`](/api-reference/common/get-sports) |
+| Bookmakers | [`GET /bookmakers`](/api-reference/common/get-bookmakers) |
+| Markets and outcomes | [`GET /markets`](/api-reference/common/get-markets) |
 
-## Notes
-
-* **Fixtures** are match- or event-level markets (a single game, bout, or match), streamed on the [`fixtures`](/websocket/channels/fixtures) and [`odds`](/websocket/channels/odds) channels.
-* **Futures** are outright / season-long or topic-level markets (league winner, tournament, election, etc.), streamed on the [`futures`](/websocket/channels/futures) and `oddsFutures` channels.
-* `sportId` **69–78** are **prediction-market topics** (politics, elections, finance, crypto, weather, …) — these exist only as futures/outright markets and feed the prediction-market and exchange use cases.
-* `sportId` **79–81** are **racing codes** (horse, greyhound, harness) — covered as **ante-post futures** (one future per ante-post market), not as per-race fixtures.
-* The `sportId` is the **first two digits** of downstream `marketId`, `outcomeId`, and `fixtureId` values — see [Core Concepts](/api-reference/concepts#id-structure).
+Identifiers are language-independent; display names follow the request's [language prefix](/api-reference/concepts#language-prefix). The `sportId` is the **first two digits** of downstream `marketId`, `outcomeId`, and `fixtureId` values — see [Core Concepts](/api-reference/concepts#id-structure).
 
 
 # Bookmaker Coverage - Sharps, Exchanges & Retail Books
 Source: https://docs.oddspapi.io/coverage/bookmakers
 
-What OddsPapi covers across 200+ bookmakers: sharp trading books, exchanges and prediction markets, and retail sportsbooks — with per-book capabilities, freshness bounds, and status signals.
+Every bookmaker OddsPapi actively collects — sharp trading books, exchanges and prediction markets, and retail sportsbooks — with the slug you address each one by, plus the per-book capabilities, freshness bounds, and status signals the API exposes.
 
-OddsPapi aggregates **200+ bookmakers**, anchored on the books that matter for price discovery rather than optimized for a headline count. The catalog available to you is determined by your key — query [`GET /bookmakers`](/api-reference/common/get-bookmakers) for the live list.
+OddsPapi aggregates bookmakers anchored on the books that matter for price discovery rather than optimized for a headline count. The catalog available to you is determined by your key — query [`GET /bookmakers`](/api-reference/common/get-bookmakers) for the live list.
+
+***
+
+## The catalogue
+
+**200+** bookmakers are actively collected. Skins and regional duplicates of these books are not listed separately — they resolve to the book above via `clone_of`. Where a book states no display name, its slug stands in.
+
+What each book carries — sport and country breadth, player props, stake limits, delivery modes and freshness bounds — is per book and per key, so read it from [`GET /bookmakers`](/api-reference/common/get-bookmakers) rather than from this page.
+
+| Bookmaker | `slug` |
+| - | - |
+| 18Bet | `18bet` |
+| 198Bet | `198bet` |
+| 1xBet | `1xbet` |
+| 22Bet | `22bet` |
+| 3et | `3et` |
+| 3et +5 sec | `3et+5` |
+| 4casters Exchange | `4casters` |
+| 7Bet LT | `7bet.lt` |
+| 888Sport | `888sport` |
+| 888Sport DE | `888sport.de` |
+| 888Sport DK | `888sport.dk` |
+| 888Sport ES | `888sport.es` |
+| 888Sport IT | `888sport.it` |
+| Aces High AG | `aceshigh.ag` |
+| AdmiralBet IT | `admiralbet.it` |
+| AdmiralBet RS | `admiralbet.rs` |
+| AFB88 Sports | `afb88` |
+| All British Casino | `allbritishcasino` |
+| Apuesta Total | `apuestatotal` |
+| ATG SE | `atg.se` |
+| Balkan Bet RS | `balkanbet.rs` |
+| Bally Bet | `ballybet` |
+| BC.Game | `bcgame` |
+| Bet3000 | `bet3000` |
+| bet365 | `bet365` |
+| bet365 AR | `bet365.bet.ar` |
+| bet365 DE | `bet365.de` |
+| bet365 ES | `bet365.es` |
+| bet365 FR | `bet365.fr` |
+| bet365 GR | `bet365.gr` |
+| bet365 IT | `bet365.it` |
+| bet365 NL | `bet365.nl` |
+| Bet99 | `bet99` |
+| BetAmapola | `betamapola` |
+| Betano | `betano` |
+| Betano BG | `betano.bg` |
+| Betano CZ | `betano.cz` |
+| Betano DE | `betano.de` |
+| Betano PT | `betano.pt` |
+| Betcity NL | `betcity.nl` |
+| BetDEX | `betdex` |
+| BetFair Exchange | `betfair-ex` |
+| Betfred | `betfred` |
+| Betfury | `betfury` |
+| Betika KE | `betika` |
+| Betinia DK | `betinia.dk` |
+| BetMGM | `betmgm` |
+| BetMGM UK | `betmgm.co.uk` |
+| BetOnline AG | `betonline.ag` |
+| BetParx | `betparx` |
+| betPawa CM | `betpawa.cm` |
+| BetPlay | `betplay` |
+| BetRivers | `betrivers` |
+| Betsson | `betsson` |
+| BetUK | `betuk` |
+| BetUS | `betus` |
+| BetWar | `betwar` |
+| Betway | `betway` |
+| Betway DE | `betway.de` |
+| Betway ES | `betway.es` |
+| Bingoal BE | `bingoal.be` |
+| Blaze | `blaze` |
+| Bookmaker EU | `bookmaker.eu` |
+| Borgata Online Sports | `borgata` |
+| Bovada | `bovada.lv` |
+| Bwin | `bwin` |
+| Bwin DE | `bwin.de` |
+| Bwin DK | `bwin.dk` |
+| Bwin ES | `bwin.es` |
+| Bwin FR | `bwin.fr` |
+| Caesars Sportsbook | `caesars` |
+| Casa Pariurilor Bet RO | `casapariurilor.ro` |
+| CASHPOINT | `cashpoint` |
+| Casumo | `casumo` |
+| Circa Sports | `circasports` |
+| Cloudbet | `cloudbet` |
+| CMD 368 | `cmd368` |
+| Codere ES | `codere.es` |
+| Coolbet | `coolbet` |
+| Coral | `coral` |
+| Crypto.com | `crypto.com` |
+| Dafabet | `dafabet` |
+| Desert Diamond Sport | `desertdiamond` |
+| Draftkings | `draftkings` |
+| draftkings-predictions | `draftkings-predictions` |
+| Duel | `duel` |
+| Duelbits | `duelbits` |
+| Estrela Bet | `estrelabet` |
+| Eurobet IT | `eurobet.it` |
+| Expekt DK | `expekt.dk` |
+| Expekt SE | `expekt.se` |
+| Fanatics | `fanatics` |
+| Fanatics Markets | `fanaticsmarkets` |
+| FanDuel | `fanduel` |
+| FEZbet | `fezbet` |
+| Fliff Sportsbook | `fliff` |
+| Fonbet | `fonbet` |
+| Fortuna PL | `efortuna.pl` |
+| Fortuna RO | `efortuna.ro` |
+| Four Winds Sportsbook | `fourwinds` |
+| Gamdom | `gamdom` |
+| Gemini Predict | `gemini` |
+| Goldbet IT | `goldbet.it` |
+| Golden Palace Sports BE | `goldenpalacesports.be` |
+| Grosvenor | `grosvenor` |
+| Hard Rock Bet | `hardrockbet` |
+| iddaa | `iddaa` |
+| Jacks NL | `jacks.nl` |
+| Jazz Sports | `jazzsports` |
+| Kaiyun Sports | `kaiyun` |
+| Kalshi | `kalshi` |
+| KTO | `kto` |
+| Ladbrokes | `ladbrokes` |
+| LeoVegas | `leovegas` |
+| LeoVegas ES | `leovegas.es` |
+| LeoVegas IT | `leovegas.it` |
+| LibraBet | `librabet` |
+| Limitless Exchange | `limitless-ex` |
+| Lottoland | `lottoland` |
+| Mansion 88 | `mansion88` |
+| Marathonbet | `marathonbet` |
+| Matchbook Exchange | `matchbook` |
+| MaxBet RS | `maxbet.rs` |
+| Mega Dice | `megadice` |
+| Midnite | `midnite` |
+| mostbet | `mostbet` |
+| Mozzart Bet | `mozzartbet` |
+| Mr Green DK | `mrgreen.dk` |
+| MrGreen | `mrgreen` |
+| Myriad Markets | `myriad` |
+| MyStake | `mystake` |
+| Napoleon Sports BE | `napoleonsports.be` |
+| Neds AU | `neds.com.au` |
+| NetBet | `netbet` |
+| NetBet IT | `netbet.it` |
+| NetBet UK | `netbet.co.uk` |
+| Novig US | `novig.us` |
+| OddSet | `oddset` |
+| Overtime Exchange | `overtime.io` |
+| Paddy Power | `paddypower` |
+| PAF | `paf` |
+| paf ES | `paf.es` |
+| Pamestoixima GR | `pamestoixima.gr` |
+| Paradise Wager | `paradisewager` |
+| Partycasino | `partycasino` |
+| PartyPoker Sports | `partypoker` |
+| Pinnacle +30 sec | `pinnacle+30` |
+| Pinnacle +5 sec | `pinnacle+5` |
+| Pinnacle Sports | `pinnacle` |
+| PlayNow | `playnow` |
+| PMU | `pmu` |
+| PointsBet AU | `pointsbet.com.au` |
+| PokerStars | `pokerstars` |
+| PokerStars ES | `pokerstars.es` |
+| PokerStars FR | `pokerstars.fr` |
+| PokerStars RO | `pokerstars.ro` |
+| Polymarket | `polymarket` |
+| Polymarket US | `polymarket.us` |
+| PrizePicks | `prizepicks` |
+| Proline + | `prolineplus` |
+| Prophet Exchange | `prophetx` |
+| Punter.io | `punter.io` |
+| Quigioco IT | `quigioco.it` |
+| Rainbet | `rainbet` |
+| robinhood | `robinhood` |
+| Roobet | `roobet` |
+| Rushbet CO | `rushbet.co` |
+| SABA Sports | `sabasports` |
+| SBOBET | `sbobet` |
+| Scooore BE | `scooore.be` |
+| Sharp | `sharp.ag` |
+| SharpBet | `sharpbet` |
+| SingBet | `singbet` |
+| SingBet Group B | `singbet-b` |
+| SingBet Group C | `singbet-c` |
+| SingBet Group D | `singbet-d` |
+| Sisal IT | `sisal.it` |
+| SoccerBet RS | `soccerbet.rs` |
+| SportingBet | `sportingbet` |
+| Sports Interaction | `sportsinteraction` |
+| sportwetten.de | `sportwetten.de` |
+| SportyBet | `sportybet` |
+| Stake.com | `stake` |
+| Stoiximan | `stoiximan` |
+| Superbet PL | `superbet.pl` |
+| Superbet RO | `superbet.ro` |
+| Superbet RS | `superbet.rs` |
+| Svenska Spel | `svenskaspel` |
+| SX Bet | `sx.bet` |
+| TAB AU | `tab.com.au` |
+| TABtouch AU | `tabtouch` |
+| theScore | `thescore` |
+| Thunderpick | `thunderpick.io` |
+| Tipico DE | `tipico` |
+| TipTorro | `tiptorro` |
+| TopOdds | `topodds` |
+| TOTO NL | `toto.nl` |
+| Unibet | `unibet` |
+| Unibet AU | `unibet.com.au` |
+| Unibet BE | `unibet.be` |
+| Unibet DK | `unibet.dk` |
+| Unibet FR | `unibet.fr` |
+| Unibet IE | `unibet.ie` |
+| Unibet NL | `unibet.nl` |
+| Unibet SE | `unibet.se` |
+| Vave | `vave` |
+| Vertex | `vertex` |
+| Virginbet | `virginbet` |
+| Wettarena | `wettarena` |
+| WilliamHill | `williamhill` |
+| Winamax DE | `winamax.de` |
+| Winamax ES | `winamax.es` |
+| Winamax FR | `winamax.fr` |
+| WinBet BG | `winbet.bg` |
+| WinBet RO | `winbet.ro` |
+| Winpot MX | `winpot.mx` |
+| YesPlay | `yesplay` |
 
 ***
 
@@ -2203,123 +2362,1712 @@ curl 'https://v5.oddspapi.io/en/bookmakers?apiKey=YOUR_KEY'
 Bookmaker access is granted per key, and `odds`, `bookmakers`, `oddsFutures`, and `bookmakersFutures` are bookmaker-gated channels — you receive what your key allows, intersected with any `bookmakers` filter you send at login. See [Auth & Filters](/websocket/auth).
 
 
-# Market Coverage - Market Types, Lines, Periods & Player Props
+# Fixture Market Coverage - marketType x period per Sport
 Source: https://docs.oddspapi.io/coverage/markets
 
-What markets OddsPapi covers: market types, period scoping, Asian and European handicaps, totals, player props, and how to discover the full market map per sport via GET /markets.
+The OddsPapi fixture-market coverage map: every marketType x period combination published per sport, and which of them settle from a collected counter.
 
-Markets are not a fixed list per sport — they are generated from a deterministic decomposition, so the same bet resolves to the same identifiers everywhere. This page covers what exists and how to enumerate it; the mechanics are in [Markets and outcomes](/api-reference/concepts#markets-and-outcomes).
+**These are the FIXTURE markets** — the markets of a single match, bout or game. Outright and season-long markets are a separate taxonomy with its own ids; see [future markets and outcomes](/api-reference/concepts#future-markets-and-outcomes).
 
-***
+Markets are not a fixed list per sport — they are generated from a deterministic decomposition, so the same bet resolves to the same identifiers everywhere. **This page is only the coverage map: which combinations exist.** How a market is addressed, `marketLength`, id structure and the odds keys are in [Markets and outcomes](/api-reference/concepts#markets-and-outcomes); the live catalogue for your key is [`GET /markets`](/api-reference/common/get-markets).
 
-## How a market is addressed
-
-```
-marketType → period → handicap (line value) → side   [+ optional player]
-```
-
-| Level | Field | Example |
-| - | - | - |
-| Kind of market | `marketType` | `totals` |
-| Segment | `period` | `fulltime`, `p1` |
-| Line value | `handicap` | `2.5`, `-0.25`, `0.0` |
-| Side | `outcomeName` | `Over` / `Under` |
-| Player | `playerId` | `0` for non-player markets |
-
-Two consequences worth designing around:
-
-* **Every distinct line value is its own `marketId`.** "Over 2.5" and "Over 3.5" are different markets, not two outcomes of one. Within a `marketId` the outcomes are only the sides of that exact line.
-* **`marketId` equals the market's first `outcomeId`**, and `marketLength` is the number of sides — so the outcomes under one `marketId` form a complete probability space without any extra metadata.
-
-***
-
-## Market families
-
-`marketType` is an **open taxonomy** — stable per value, growing over time. Representative types:
-
-| `marketType` | Market |
-| - | - |
-| `1x2` | Three-way match result |
-| `moneyline` | Two-way winner (incl. overtime where applicable) |
-| `totals` | Over / under a line |
-| `teamtotals-team1` | Over / under for one team |
-| `spreads` | Asian handicap |
-| `spreads-european` | European (three-way) handicap |
-| `bothteamsscore` | Both teams to score |
-| `drawnobet` | Draw no bet |
-| `oddeven` | Odd / even |
-| `players-…` | Player propositions (e.g. `players-shots`) |
-
-This is not the full map — new types are appended as coverage grows, and what exists differs per sport. Enumerate the real map with `GET /markets` rather than hard-coding.
-
-***
-
-## Period scoping
-
-Markets are scoped to a segment via `period`, using one shared vocabulary across all sports: `fulltime`, `result`, `overtime`, `penalties`, numbered periods `p1`…`p12`, combined segments (`p1+p2`, `fulltime+overtime`, …), and sub-period keys for games within a set (`p1g1`…`p5g13`, `currentgame`).
-
-What a period *means* depends on the sport — `p1` is a half in soccer, a quarter in NBA basketball, a set in tennis, a map in esports. Use the fixture's `expectedPeriods` and `periodLength` to interpret it. Full list in [Enumerations → period](/api-reference/enumerations#period); for which sports actually offer `fulltime` as a distinct period and which only have `result`, see [Periods per sport](/guides/periods).
-
-***
-
-## Player props
-
-Markets carry a `playerProp` flag, and prices for player markets carry a non-zero `playerId`:
-
-```
-{fixtureId}:{bookmaker}:{outcomeId}:{playerId}
-```
-
-The `outcomeId` encodes everything except the player — market type, period, line, and side — so the same prop for two different players shares an `outcomeId` and differs only in `playerId`. Discover squads via `GET /players`.
-
-***
-
-## Enumerating the map
-
-```bash theme={null}
-# Every market and its outcomes for a sport
-curl 'https://v5.oddspapi.io/en/markets?sportId=11&apiKey=YOUR_KEY'
-
-# Resolve specific markets or outcomes
-curl 'https://v5.oddspapi.io/en/markets?marketIds=111,113&apiKey=YOUR_KEY'
-curl 'https://v5.oddspapi.io/en/markets?outcomeIds=114&apiKey=YOUR_KEY'
-```
-
-```json theme={null}
-{
-  "marketId": 111,
-  "marketLength": 2,
-  "sportId": 11,
-  "playerProp": false,
-  "handicap": 0.0,
-  "period": "result",
-  "marketType": "moneyline",
-  "marketName": "Winner (incl. overtime)",
-  "marketNameShort": "Winner",
-  "outcomes": [
-    { "outcomeId": 111, "outcomeName": "1" },
-    { "outcomeId": 112, "outcomeName": "2" }
-  ]
-}
-```
-
-`marketName` / `marketNameShort` follow the request's [language prefix](/api-reference/concepts#language-prefix) and are for display only — branch on `marketId`, `outcomeId`, `marketType`, and `period`.
-
-***
-
-## Which markets a fixture actually has
-
-`GET /markets` describes what exists for a sport; what is **priced right now** for a given fixture comes from the odds themselves. Pull `GET /fixtures/odds` (or `/fixtures/odds/main` for main lines only) and group by `marketId`. Books differ in which markets and which line values they offer, and `mainLine` marks each book's headline line.
+Every `marketType` we publish, per sport, against the period scopes it covers. Pick a sport, then open a market group.
 
 > [!NOTE]
 >
-> `marketType` is append-only: new values appear as coverage grows and never change meaning. Match on the types you support and ignore the rest rather than failing on unknown values.
+> **✓** covered, and settles from a counter we collect · **◦** covered, but settlement is not counter-derived · **✓◦** covered at several scopes inside a collapsed grid column, only some settleable · blank — not covered. A mark means the combination exists, not how many line values it carries — every distinct line is its own `marketId`, so read the ladder from [`GET /markets`](/api-reference/common/get-markets).
+>
+> `…-team{1,2}` is **one row for two market types** — the `-team1` and `-team2` siblings, which cover the same scopes. Expand the brace to get the real `marketType`.
+>
+> **Columns** are ordered by how many market types cover them, densest first. **Rows** follow the market's own id, so the base markets come before the long tail of props.
 
-***
+> [tab] Soccer
+>
+> **110** market types · **6** period scopes · `sportId` `10`
+>
+> > [accordion] Match outcome (23)
+> >
+> > | `marketType` | `fulltime` | `result` | `p1` | `p2` | `overtime` | `fulltime+overtime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `1x2` | ✓ | | ✓ | ✓ | ✓ | |
+> > | `bothteamsscore` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `drawnobet` | ✓ | | ✓ | ✓ | ✓ | |
+> > | `oddeven` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `toscore-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `toscoreinbh-team{1,2}` | ✓ | | | | | |
+> > | `cleansheet-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `wintonil-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `nobet-team{1,2}` | ✓ | | ✓ | ✓ | ✓ | |
+> > | `oddeven-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `correctscore` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `1x2-corners` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `1x2-bookings` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `oddeven-bookings` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `oddeven-bookings-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `oddeven-corners` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `oddeven-corners-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `doublechance` | ✓ | | ✓ | ✓ | ✓ | |
+> > | `halftime-fulltime` | ✓ | | | | | |
+> > | `winningmargin` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `exactscore` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `exactscore-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `1x2-shotsongoal` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+>
+> > [accordion] Laddered lines (27)
+> >
+> > | `marketType` | `fulltime` | `result` | `p1` | `p2` | `overtime` | `fulltime+overtime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `spreads` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `spreads-european` | ✓ | | ✓ | ✓ | ✓ | |
+> > | `teamtotals-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `totals-corners` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `spreads-corners` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `totals-bookings` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `spreads-bookings` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `teamtotals-bookings-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `teamtotals-corners-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `totals-saves` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `teamtotals-saves-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `totals-substitutions` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `teamtotals-substitutions-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `totals-penalties-awarded` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `teamtotals-penalties-awarded-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `totals-penalties-missed` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `teamtotals-penalties-missed-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `totals-own-goals` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `teamtotals-own-goals-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `racetocorners` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `totals-shots` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `teamtotals-shots-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `totals-red-cards` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `totals-yellow-cards` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `teamtotals-red-cards-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `teamtotals-yellow-cards-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+>
+> > [accordion] Player props (Yes/No) (13)
+> >
+> > | `marketType` | `fulltime` | `result` | `p1` | `p2` | `overtime` | `fulltime+overtime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `players-anytimegoalscorer` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `players-firstgoalscorer` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `players-lastgoalscorer` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `players-goals` | | ✓ | | | | |
+> > | `players-assists` | | ✓ | | | | |
+> > | `players-shots` | | ◦ | | | | |
+> > | `players-shotsongoal` | | ✓ | | | | |
+> > | `players-tackles` | | ◦ | | | | |
+> > | `players-foulscommitted` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `players-offsides` | | ✓ | | | | |
+> > | `players-cards` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `players-saves` | | ◦ | | | | |
+> > | `players-firstcard` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+>
+> > [accordion] Player totals (laddered) (9)
+> >
+> > | `marketType` | `fulltime` | `result` | `p1` | `p2` | `overtime` | `fulltime+overtime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `playertotals-goals` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `playertotals-assists` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `playertotals-shots` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `playertotals-shotsongoal` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `playertotals-tackles` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `playertotals-foulscommitted` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `playertotals-offsides` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `playertotals-cards` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `playertotals-saves` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+>
+> > [accordion] Specials and order (15)
+> >
+> > | `marketType` | `fulltime` | `result` | `p1` | `p2` | `overtime` | `fulltime+overtime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `firstgoal` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `lastgoal` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `wineitherh-team{1,2}` | ✓ | | | | | |
+> > | `winbothh-team{1,2}` | ✓ | | | | | |
+> > | `toqualify` | ◦ | ◦ | | | | |
+> > | `2up` | ◦ | | | | | |
+> > | `highestscoringh` | ✓ | | | | | |
+> > | `highestscoringh-team{1,2}` | ✓ | | | | | |
+> > | `winfrombehind` | ◦ | | | | | |
+> > | `1up` | ◦ | | | | | |
+> > | `firstcorner` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `lastcorner` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `penaltyawarded` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `highestscoringh-bookings` | ◦ | | | | | |
+> > | `highestscoringh-corners` | ◦ | | | | | |
 
-## Settlement
+> [tab] Basketball
+>
+> **36** market types · **10** period scopes · `sportId` `11`
+>
+> > [accordion] Match outcome (3)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p1+p2` | `p3+p4` | `p3+p4+overtime` | `p4+overtime` | `fulltime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | |
+> > | `1x2` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | ✓ |
+> > | `oddeven` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+>
+> > [accordion] Laddered lines (3)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p1+p2` | `p3+p4` | `p3+p4+overtime` | `p4+overtime` | `fulltime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `spreads` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `teamtotals-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+>
+> > [accordion] Player props (Yes/No) (16)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p1+p2` | `p3+p4` | `p3+p4+overtime` | `p4+overtime` | `fulltime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `players-points` | ✓ | | | | | | | | | |
+> > | `players-rebounds` | ✓ | | | | | | | | | |
+> > | `players-3pointers` | ✓ | | | | | | | | | |
+> > | `players-ptsassreb` | ✓ | | | | | | | | | |
+> > | `players-assists` | ✓ | | | | | | | | | |
+> > | `players-assreb` | ✓ | | | | | | | | | |
+> > | `players-ptsreb` | ✓ | | | | | | | | | |
+> > | `players-ptsass` | ✓ | | | | | | | | | |
+> > | `players-steals` | ✓ | | | | | | | | | |
+> > | `players-blocks` | ✓ | | | | | | | | | |
+> > | `players-turnovers` | ✓ | | | | | | | | | |
+> > | `players-stlblo` | ✓ | | | | | | | | | |
+> > | `players-doubledouble` | ◦ | | | | | | | | | |
+> > | `players-tripletriple` | ◦ | | | | | | | | | |
+> > | `players-firstpoint` | ◦ | | | | | | | | | |
+> > | `players-first3pointer` | ◦ | | | | | | | | | |
+>
+> > [accordion] Player totals (laddered) (13)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p1+p2` | `p3+p4` | `p3+p4+overtime` | `p4+overtime` | `fulltime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `playertotals-points` | ✓ | ✓ | | | | | | | | |
+> > | `playertotals-rebounds` | ✓ | ✓ | | | | | | | | |
+> > | `playertotals-3pointers` | ✓ | | | | | | | | | |
+> > | `playertotals-ptsassreb` | ✓ | ✓ | | | | | | | | |
+> > | `playertotals-assists` | ✓ | ✓ | | | | | | | | |
+> > | `playertotals-assreb` | ✓ | ✓ | | | | | | | | |
+> > | `playertotals-ptsreb` | ✓ | ✓ | | | | | | | | |
+> > | `playertotals-ptsass` | ✓ | ✓ | | | | | | | | |
+> > | `playertotals-steals` | ✓ | ✓ | | | | | | | | |
+> > | `playertotals-blocks` | ✓ | ✓ | | | | | | | | |
+> > | `playertotals-turnovers` | ✓ | ✓ | | | | | | | | |
+> > | `playertotals-stlblo` | ✓ | ✓ | | | | | | | | |
+> > | `playertotals-3pointer` | | ✓ | | | | | | | | |
 
-Grading follows the same coordinates. Asian quarter lines settle as `HALFWIN` / `HALFLOSS` alongside `WIN` / `LOSE` / `PUSH`, and grading is done on the bookmaker-independent selection key `{fixtureId}:{outcomeId}:{playerId}`. See [Enumerations → settlementStatus](/api-reference/enumerations#settlementstatus) and [Powering a sportsbook](/guides/sportsbook).
+> [tab] Tennis
+>
+> **61** market types · **8** period scopes · `sportId` `12`
+>
+> > [accordion] Match outcome (14)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `games` | `game-spans` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `moneyline-aces` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `oddeven-games` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `correctscore` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ |
+> > | `oddeven-sets` | ✓ | | | | | | | |
+> > | `correctscore-points` | | | | | | | ◦ | |
+> > | `oddeven-points` | ✓ | | | | | | ✓ | |
+> > | `drawnobet-aces` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `drawnobet-doublefaults` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `moneyline-doublefaults` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `drawnobet-breaks` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `moneyline-breaks` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `moneyline-games` | ✓ | | | | | | | |
+> > | `oddeven` | ✓ | | | | | | | |
+>
+> > [accordion] Laddered lines (23)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `games` | `game-spans` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals-games` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `spreads-games` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `totals` | ✓ | | | | | | | |
+> > | `spreads` | ✓ | | | | | | | |
+> > | `totals-tiebreaks` | ✓ | | | | | | | |
+> > | `totals-aces` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `teamtotals-games-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `totals-points` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `spreads-points` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `teamtotals-aces-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `spreads-aces` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `totals-doublefaults` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `teamtotals-doublefaults-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `spreads-doublefaults` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `totals-breaks` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `teamtotals-breaks-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `spreads-breaks` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `totals-breakpoints` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `teamtotals-breakpoints-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `racetogames` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | | |
+> > | `totals-servicegames` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `teamtotals-servicegames-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `totals-duration` | ◦ | | | | | | | |
+>
+> > [accordion] Specials and order (14)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `games` | `game-spans` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `winaset-team{1,2}` | ✓ | | | | | | | |
+> > | `tiebreak` | | ✓ | ✓ | ✓ | ✓ | ✓ | | |
+> > | `exactsets` | ✓ | | | | | | | |
+> > | `anysettonil` | ✓ | | | | | | | |
+> > | `bothwinset` | ✓ | | | | | | | |
+> > | `exactsets-team{1,2}` | ✓ | | | | | | | |
+> > | `gamewinner` | | | | | | | ✓ | |
+> > | `deuce` | | | | | | | ◦ | |
+> > | `firstbreak` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | | |
+> > | `winfrombehind` | ◦ | | | | | | | |
+> > | `winfirstservicegame-team{1,2}` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | | |
+> > | `anysettonil-team{1,2}` | ◦ | | | | | | | |
+> > | `exactaces` | ✓ | | | | | | | |
+> > | `exactdoublefaults` | ✓ | | | | | | | |
+
+> [tab] Baseball
+>
+> **45** market types · **13** period scopes · `sportId` `13`
+>
+> > [accordion] Match outcome (5)
+> >
+> > | `marketType` | `result` | `p1+p2+p3+p4+p5` | `p6+p7+p8+p9+overtime` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` | `p8` | `p9` | `fulltime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | | | | | | | | | | |
+> > | `1x2` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `oddeven` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `oddeven-team{1,2}` | ✓ | ✓ | ✓ | | | | | | | | | | |
+> > | `correctscore` | ✓ | ✓ | ✓ | | | | | | | | | | |
+>
+> > [accordion] Laddered lines (3)
+> >
+> > | `marketType` | `result` | `p1+p2+p3+p4+p5` | `p6+p7+p8+p9+overtime` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` | `p8` | `p9` | `fulltime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `spreads` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `teamtotals-team{1,2}` | ✓ | ✓ | ✓ | | | | | | | | | | |
+>
+> > [accordion] Player props (Yes/No) (15)
+> >
+> > | `marketType` | `result` | `p1+p2+p3+p4+p5` | `p6+p7+p8+p9+overtime` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` | `p8` | `p9` | `fulltime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `players-hits` | ✓ | | | | | | | | | | | | |
+> > | `players-runs` | ✓ | | | | | | | | | | | | |
+> > | `players-bases` | ✓ | | | | | | | | | | | | |
+> > | `players-runsbattedin` | ◦ | | | | | | | | | | | | |
+> > | `players-strikeouts` | ✓ | | | | | | | | | | | | |
+> > | `players-homeruns` | ✓ | | | | | | | | | | | | |
+> > | `players-stolenbases` | ✓ | | | | | | | | | | | | |
+> > | `players-earnedruns` | ◦ | | | | | | | | | | | | |
+> > | `players-hitsallowed` | ◦ | | | | | | | | | | | | |
+> > | `players-outs` | ✓ | | | | | | | | | | | | |
+> > | `players-walks` | ✓ | | | | | | | | | | | | |
+> > | `players-singles` | ✓ | | | | | | | | | | | | |
+> > | `players-doubles` | ✓ | | | | | | | | | | | | |
+> > | `players-triples` | ✓ | | | | | | | | | | | | |
+> > | `players-hitsrunsunsbti` | ◦ | | | | | | | | | | | | |
+>
+> > [accordion] Player totals (laddered) (15)
+> >
+> > | `marketType` | `result` | `p1+p2+p3+p4+p5` | `p6+p7+p8+p9+overtime` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` | `p8` | `p9` | `fulltime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `playertotals-hits` | ✓ | | | | | | | | | | | | |
+> > | `playertotals-runs` | ✓ | | | | | | | | | | | | |
+> > | `playertotals-bases` | ✓ | | | | | | | | | | | | |
+> > | `playertotals-runsbattedin` | ◦ | | | | | | | | | | | | |
+> > | `playertotals-strikeouts` | ✓ | | | | | | | | | | | | |
+> > | `playertotals-homeruns` | ✓ | | | | | | | | | | | | |
+> > | `playertotals-stolenbases` | ✓ | | | | | | | | | | | | |
+> > | `playertotals-earnedruns` | ◦ | | | | | | | | | | | | |
+> > | `playertotals-hitsallowed` | ◦ | | | | | | | | | | | | |
+> > | `playertotals-outs` | ✓ | | | | | | | | | | | | |
+> > | `playertotals-walks` | ✓ | | | | | | | | | | | | |
+> > | `playertotals-singles` | ✓ | | | | | | | | | | | | |
+> > | `playertotals-doubles` | ✓ | | | | | | | | | | | | |
+> > | `playertotals-triples` | ✓ | | | | | | | | | | | | |
+> > | `playertotals-hitsrunsrunsbi` | ◦ | | | | | | | | | | | | |
+>
+> > [accordion] Specials and order (4)
+> >
+> > | `marketType` | `result` | `p1+p2+p3+p4+p5` | `p6+p7+p8+p9+overtime` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` | `p8` | `p9` | `fulltime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `firsttoscorearun` | ◦ | | | | | | | | | | | | |
+> > | `extrainning` | | | | | | | | | | | | | ✓ |
+> > | `exactruns` | ✓ | ✓ | ✓ | | | | | | | | | | |
+> > | `exactruns-team{1,2}` | ✓ | ✓ | ✓ | | | | | | | | | | |
+
+> [tab] American Football
+>
+> **200** market types · **12** period scopes · `sportId` `14`
+>
+> > [accordion] Match outcome (25)
+> >
+> > | `marketType` | `result` | `p1+p2` | `p3+p4` | `p1` | `p2` | `p3` | `p4` | `fulltime` | `p3+p4+overtime` | `p4+overtime` | `overtime` | `p1+p2+p3+p4` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ | ✓ | ✓ | |
+> > | `1x2` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `oddeven` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ | ✓ | ✓ | |
+> > | `oddeven-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ | ✓ | ✓ | |
+> > | `halftime-fulltime` | | | | | | | | ✓ | | | | |
+> > | `doublechance` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `drawnobet` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `winningmargin` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `toscore-team{1,2}` | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `cleansheet-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `wintonil-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `exactscore` | ✓ | ✓ | ✓ | | | | | | | | | |
+> > | `exactscore-team{1,2}` | ✓ | ✓ | ✓ | | | | | | | | | |
+> > | `toscoreinbh-team{1,2}` | | | | | | | | ✓ | | | | |
+> > | `oddeven-touchdowns` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `1x2-touchdowns` | | | | | | | | ✓ | | | | |
+> > | `1x2-fieldgoals` | | | | | | | | ✓ | | | | |
+> > | `drawnobet-touchdowns` | ✓ | ✓ | ✓ | | | | | | | | | |
+> > | `drawnobet-fieldgoals` | ✓ | ✓ | ✓ | | | | | | | | | |
+> > | `moneyline-turnovers` | ◦ | | | | | | | | | | | |
+> > | `moneyline-sacks` | ◦ | | | | | | | | | | | |
+> > | `moneyline-totalyards` | ◦ | | | | | | | | | | | |
+> > | `moneyline-firstdowns` | ◦ | | | | | | | | | | | |
+> > | `moneyline-penalties` | ◦ | | | | | | | | | | | |
+> > | `nobet-team{1,2}` | | | | | | | | ✓ | | | | |
+>
+> > [accordion] Laddered lines (41)
+> >
+> > | `marketType` | `result` | `p1+p2` | `p3+p4` | `p1` | `p2` | `p3` | `p4` | `fulltime` | `p3+p4+overtime` | `p4+overtime` | `overtime` | `p1+p2+p3+p4` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ | ✓ | ✓ | |
+> > | `spreads` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ | ✓ | ✓ | |
+> > | `teamtotals-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ | ✓ | ✓ | |
+> > | `totals-touchdowns` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `totals-fieldgoals` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `spreads-european` | | ✓ | ✓ | | | | | ✓ | ✓ | | | |
+> > | `bothteamsscore` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `teamtotals-touchdowns-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `teamtotals-fieldgoals-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `racetopoints` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | | ◦ | | | |
+> > | `totals-turnovers` | ◦ | | | | | | | | | | | |
+> > | `totals-sacks` | ◦ | | | | | | | | | | | |
+> > | `totals-interceptions` | ◦ | | | | | | | | | | | |
+> > | `totals-fumbles` | ◦ | | | | | | | | | | | |
+> > | `totals-defensivetd` | ◦ | | | | | | | | | | | |
+> > | `totals-firstdowns` | ◦ | | | | | | | | | | | |
+> > | `totals-penalties` | ◦ | | | | | | | | | | | |
+> > | `totals-punts` | ◦ | | | | | | | | | | | |
+> > | `totals-thirddownconversions` | ◦ | | | | | | | | | | | |
+> > | `totals-redzonetd` | ◦ | | | | | | | | | | | |
+> > | `totals-extrapoints` | ◦ | | | | | | | | | | | |
+> > | `totals-totalyards` | ◦ | | | | | | | | | | | |
+> > | `totals-penaltyyards` | ◦ | | | | | | | | | | | |
+> > | `totals-puntyards` | ✓ | | | | | | | | | | | |
+> > | `teamtotals-turnovers-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `teamtotals-sacks-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `teamtotals-interceptions-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `teamtotals-fumbles-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `teamtotals-defensivetd-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `teamtotals-firstdowns-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `teamtotals-penalties-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `teamtotals-punts-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `teamtotals-thirddownconversions-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `teamtotals-redzonetd-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `teamtotals-extrapoints-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `teamtotals-totalyards-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `teamtotals-penaltyyards-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `teamtotals-puntyards-team{1,2}` | ✓ | | | | | | | | | | | |
+> > | `firstdriverunyards-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `firstdrivepassyards-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `firstdriveplayyards-team{1,2}` | ◦ | | | | | | | | | | | |
+>
+> > [accordion] Player props (Yes/No) (34)
+> >
+> > | `marketType` | `result` | `p1+p2` | `p3+p4` | `p1` | `p2` | `p3` | `p4` | `fulltime` | `p3+p4+overtime` | `p4+overtime` | `overtime` | `p1+p2+p3+p4` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `players-td` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ | ✓ | | |
+> > | `players-firsttd` | ✓ | | | | | | | | | | | |
+> > | `players-secondtd` | ✓ | | | | | | | | | | | |
+> > | `players-thirdtd` | ✓ | | | | | | | | | | | |
+> > | `players-td-other` | ✓ | ✓ | | ✓ | | | | | ✓ | | | |
+> > | `players-passyards` | ✓ | | | | | | | | | | | |
+> > | `players-rushyards` | ✓ | | | | | | | | | | | |
+> > | `players-rushattempts` | ✓ | | | | | | | | | | | |
+> > | `players-rushtd` | ✓ | | | | | | | | | | | |
+> > | `players-sacks` | ✓ | | | | | | | | | | | |
+> > | `players-assists` | ◦ | | | | | | | | | | | |
+> > | `players-tacass` | ✓ | | | | | | | | | | | |
+> > | `players-fieldgoals` | ✓ | | | | | | | | | | | |
+> > | `players-kickingpoints` | ✓ | | | | | | | | | | | |
+> > | `players-receptions` | ✓ | | | | | | | | | | | |
+> > | `players-passattempts` | ✓ | | | | | | | | | | | |
+> > | `players-passcompletions` | ✓ | | | | | | | | | | | |
+> > | `players-tdpasses` | ✓ | | | | | | | | | | | |
+> > | `players-interceptions` | ✓ | | | | | | | | | | | |
+> > | `players-receivingyards` | ✓ | | | | | | | | | | | |
+> > | `players-longestpasscomp` | ✓ | | | | | | | | | | | |
+> > | `players-longestrushyards` | ✓ | | | | | | | | | | | |
+> > | `players-lasttd` | ◦ | | | | | | | | | | | |
+> > | `players-longestreception` | ◦ | | | | | | | | | | | |
+> > | `players-extrapoints` | ◦ | | | | | | | | | | | |
+> > | `players-interceptionsthrown` | ◦ | | | | | | | | | | | |
+> > | `players-rushrec` | ◦ | | | | | | | | | | | |
+> > | `players-top-passer` | ◦ | | | | | | | | | | | |
+> > | `players-top-rusher` | ◦ | | | | | | | | | | | |
+> > | `players-top-receiver` | ◦ | | | | | | | | | | | |
+> > | `players-passyardsinbh` | | | | | | | | ◦ | | | | |
+> > | `players-rushyardsinbh` | | | | | | | | ◦ | | | | |
+> > | `players-receivingyardsinbh` | | | | | | | | ◦ | | | | |
+> > | `players-firstpoint` | ◦ | | | | | | | | | | | |
+>
+> > [accordion] Player totals (laddered) (22)
+> >
+> > | `marketType` | `result` | `p1+p2` | `p3+p4` | `p1` | `p2` | `p3` | `p4` | `fulltime` | `p3+p4+overtime` | `p4+overtime` | `overtime` | `p1+p2+p3+p4` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `playertotals-tdpasses` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `playertotals-interceptions` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `playertotals-receptions` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `playertotals-passyards` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `playertotals-passattempts` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `playertotals-passcompletions` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `playertotals-longestpasscomp` | ✓ | | | | | | | | | | | |
+> > | `playertotals-rushyards` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `playertotals-rushattempts` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `playertotals-longestrushyards` | ✓ | | | | | | | | | | | |
+> > | `playertotals-rushtd` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `playertotals-sacks` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `playertotals-assists` | ◦ | | | | | | | | | | | |
+> > | `playertotals-tacass` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `playertotals-fieldgoals` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `playertotals-kickingpoints` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `playertotals-td` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `playertotals-receivingyards` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | | | | | |
+> > | `playertotals-longestreception` | ◦ | | | | | | | | | | | |
+> > | `playertotals-extrapoints` | ◦ | | | | | | | | | | | |
+> > | `playertotals-interceptionsthrown` | ◦ | | | | | | | | | | | |
+> > | `playertotals-rushrec` | ◦ | | | | | | | | | | | |
+>
+> > [accordion] Specials and order (36)
+> >
+> > | `marketType` | `result` | `p1+p2` | `p3+p4` | `p1` | `p2` | `p3` | `p4` | `fulltime` | `p3+p4+overtime` | `p4+overtime` | `overtime` | `p1+p2+p3+p4` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `overtime` | | | | | | | | ✓ | | | | |
+> > | `exacttd` | ✓ | ✓ | ✓ | | | | | | | | | |
+> > | `exactfieldgoals` | ✓ | ✓ | ✓ | | | | | | | | | |
+> > | `highestscoringh` | | | | | | | | ✓ | | | | |
+> > | `highestscoringh-team{1,2}` | | | | | | | | ✓ | | | | |
+> > | `highestscoringperiod` | | | | | | | | ✓ | | | | |
+> > | `highestscoringperiod-team{1,2}` | | | | | | | | ✓ | | | | |
+> > | `coin-toss` | ◦ | | | | | | | | | | | |
+> > | `wineitherh-team{1,2}` | | | | | | | | ✓ | | | | |
+> > | `winbothh-team{1,2}` | | | | | | | | ✓ | | | | |
+> > | `exacttd-team{1,2}` | ✓ | ✓ | ✓ | | | | | | | | | |
+> > | `firstscore` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | | ◦ | | | |
+> > | `lastscore` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | | ◦ | | | |
+> > | `firsttd` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | | | | | |
+> > | `firstfieldgoal` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | | | | | |
+> > | `touchdown` | | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | | | | | |
+> > | `twopointconversion` | ◦ | ◦ | ◦ | | | | | | | | | |
+> > | `scorelessquarter` | | | | | | | | ◦ | | | | |
+> > | `firstteamtoscorewins` | ◦ | | | | | | | | | | | |
+> > | `safety` | ◦ | ◦ | ◦ | | | | | | | | | |
+> > | `safety-team{1,2}` | ◦ | ◦ | ◦ | | | | | | | | | |
+> > | `firstdrivescore-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `winanyperiod-team{1,2}` | | | | | | | | | | | | ✓ |
+> > | `winallperiods-team{1,2}` | | | | | | | | | | | | ✓ |
+> > | `scoreinallperiods-team{1,2}` | | | | | | | | | | | | ✓ |
+> > | `bothwinperiod` | | | | | | | | | | | | ✓ |
+> > | `anyperiodtonil` | | | | | | | | | | | | ✓ |
+> > | `bothscoreinallperiods` | | | | | | | | | | | | ◦ |
+> > | `firstdrivefirstdown-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `firstdrivesack-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `firstdrivefourthdown-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `firstdrivecross-team{1,2}` | ◦ | | | | | | | | | | | |
+> > | `firstscoringplay` | ◦ | ◦ | ◦ | | | | | | | | | |
+> > | `winfrombehind` | | | | | | | | ◦ | | | | |
+> > | `tied-match` | ✓ | | | | | | | | | | | |
+> > | `firsttd-team{1,2}` | ◦ | | | | | | | | | | | |
+
+> [tab] Ice Hockey
+>
+> **52** market types · **6** period scopes · `sportId` `15`
+>
+> > [accordion] Match outcome (8)
+> >
+> > | `marketType` | `fulltime` | `result` | `p1` | `p2` | `p3` | `fulltime+overtime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | | ✓ | ✓ | ✓ | ✓ | |
+> > | `1x2` | ✓ | | ✓ | ✓ | ✓ | |
+> > | `correctscore` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `winningmargin` | ✓ | ✓ | | | | |
+> > | `oddeven` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `toscore-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `bothteamsscore` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `wintonil-team{1,2}` | ✓ | ✓ | | | | |
+>
+> > [accordion] Laddered lines (4)
+> >
+> > | `marketType` | `fulltime` | `result` | `p1` | `p2` | `p3` | `fulltime+overtime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `spreads` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `teamtotals-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `spreads-european` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+>
+> > [accordion] Player props (Yes/No) (19)
+> >
+> > | `marketType` | `fulltime` | `result` | `p1` | `p2` | `p3` | `fulltime+overtime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `players-assists` | | | | | | ✓ |
+> > | `players-goals` | | | ✓ | ✓ | ✓ | ✓ |
+> > | `players-points` | | | ◦ | ◦ | ◦ | ◦ |
+> > | `players-shotsongoal` | | | ✓ | ✓ | ✓ | ✓ |
+> > | `players-anytimegoalscorer` | ✓ | | ✓ | ✓ | ✓ | |
+> > | `players-firstgoalscorer` | ◦ | | ◦ | ◦ | ◦ | |
+> > | `players-secondgoalscorer` | ◦ | | | | | |
+> > | `players-thirdgoalscorer` | ◦ | | | | | |
+> > | `players-nextgoalscorer` | ◦ | | | | | |
+> > | `players-lastgoalscorer` | ◦ | | | | | |
+> > | `players-shots` | | | | | | ◦ |
+> > | `players-powerplaypoints` | | | | | | ◦ |
+> > | `players-blocks` | | | | | | ✓ |
+> > | `players-saves` | | | | | | ✓ |
+> > | `players-goalsagainst` | | | | | | ◦ |
+> > | `players-goalieshutouts` | | | | | | ◦ |
+> > | `players-shorthandedgoals` | | | | | | ◦ |
+> > | `players-shorthandedgoalscorer` | ◦ | | | | | |
+> > | `players-commitpenalty` | | | | | | ✓ |
+>
+> > [accordion] Player totals (laddered) (11)
+> >
+> > | `marketType` | `fulltime` | `result` | `p1` | `p2` | `p3` | `fulltime+overtime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `playertotals-assists` | | ✓ | | | | |
+> > | `playertotals-goals` | | ✓ | ✓ | ✓ | ✓ | |
+> > | `playertotals-points` | | ◦ | ◦ | ◦ | ◦ | |
+> > | `playertotals-shotsongoal` | | ✓ | ✓ | ✓ | ✓ | |
+> > | `playertotals-shots` | | | | | | ◦ |
+> > | `playertotals-powerplaypoints` | | | | | | ◦ |
+> > | `playertotals-blocks` | | ✓ | | | | |
+> > | `playertotals-saves` | | ✓ | | | | |
+> > | `playertotals-goalsagainst` | | | | | | ◦ |
+> > | `playertotals-goalieshutouts` | | | | | | ◦ |
+> > | `playertotals-shorthandedgoals` | | | | | | ◦ |
+>
+> > [accordion] Specials and order (6)
+> >
+> > | `marketType` | `fulltime` | `result` | `p1` | `p2` | `p3` | `fulltime+overtime` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `exactgoals` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `exactgoals-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `firstgoal` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `lastgoal` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `highestscoringperiod` | ✓ | | | | | |
+> > | `overtime` | ✓ | | | | | |
+
+> [tab] ESport Dota
+>
+> **32** market types · **6** period scopes · `sportId` `16`
+>
+> > [accordion] Match outcome (8)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `correctscore` | ✓ | | | | | |
+> > | `winningmargin` | ✓ | | | | | |
+> > | `1x2-kills` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `drawnobet-kills` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `oddeven-kills` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `1x2` | ✓ | | | | | |
+> > | `oddeven` | ✓ | | | | | |
+>
+> > [accordion] Laddered lines (15)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | | | | | |
+> > | `spreads` | ✓ | | | | | |
+> > | `totals-kills` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `spreads-kills` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `teamtotals-kills-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `totals-towers` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `spreads-towers` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `teamtotals-towers-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `totals-barracks` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `spreads-barracks` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `teamtotals-barracks-team{1,2}` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `totals-roshans` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `teamtotals-roshans-team{1,2}` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `spreads-roshans` | | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `racetokills` | | ◦ | ◦ | ◦ | ◦ | ◦ |
+>
+> > [accordion] Player totals (laddered) (1)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `playertotals-kills` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+>
+> > [accordion] Specials and order (4)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `firstblood` | | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `firsttower` | | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `firstbarracks` | | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `firstroshan` | | ◦ | ◦ | ◦ | ◦ | ◦ |
+
+> [tab] ESport Counter-Strike
+>
+> **20** market types · **7** period scopes · `sportId` `17`
+>
+> > [accordion] Match outcome (7)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `rounds` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `correctscore` | ✓ | | | | | | |
+> > | `winningmargin` | ✓ | | | | | | |
+> > | `winningmargin-rounds` | | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `oddeven-rounds` | | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `1x2` | ✓ | | | | | | |
+> > | `oddeven` | ✓ | | | | | | |
+>
+> > [accordion] Laddered lines (8)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `rounds` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | | | | | | |
+> > | `spreads` | ✓ | | | | | | |
+> > | `totals-rounds` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `totals-kills` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `teamtotals-kills-team{1,2}` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `totals-headshots` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `spreads-rounds` | | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `teamtotals-rounds-team{1,2}` | | ✓ | ✓ | ✓ | ✓ | ✓ | |
+>
+> > [accordion] Player totals (laddered) (2)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `rounds` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `playertotals-kills` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `playertotals-headshots` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | |
+>
+> > [accordion] Specials and order (1)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `rounds` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `overtime` | | ✓ | ✓ | ✓ | ✓ | ✓ | |
+
+> [tab] ESport League of Legends
+>
+> **37** market types · **6** period scopes · `sportId` `18`
+>
+> > [accordion] Match outcome (8)
+> >
+> > | `marketType` | `p1` | `p2` | `p3` | `p4` | `p5` | `result` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `correctscore` | | | | | | ✓ |
+> > | `winningmargin` | | | | | | ✓ |
+> > | `1x2-kills` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `drawnobet-kills` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `oddeven-kills` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `1x2` | | | | | | ✓ |
+> > | `oddeven` | | | | | | ✓ |
+>
+> > [accordion] Laddered lines (17)
+> >
+> > | `marketType` | `p1` | `p2` | `p3` | `p4` | `p5` | `result` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | | | | | | ✓ |
+> > | `spreads` | | | | | | ✓ |
+> > | `totals-kills` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `spreads-kills` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `teamtotals-kills-team{1,2}` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `totals-turrets` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `spreads-turrets` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `teamtotals-turrets-team{1,2}` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `totals-dragons` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `spreads-dragons` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `teamtotals-dragons-team{1,2}` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `totals-barons` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `teamtotals-barons-team{1,2}` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `totals-inhibitors` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `spreads-inhibitors` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `teamtotals-inhibitors-team{1,2}` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+> > | `racetokills` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+>
+> > [accordion] Player totals (laddered) (1)
+> >
+> > | `marketType` | `p1` | `p2` | `p3` | `p4` | `p5` | `result` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `playertotals-kills` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ |
+>
+> > [accordion] Specials and order (6)
+> >
+> > | `marketType` | `p1` | `p2` | `p3` | `p4` | `p5` | `result` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `firstblood` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `firstbaron` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `firstinhibitor` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `triplekill` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `quadrakill` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `pentakill` | ◦ | ◦ | ◦ | ◦ | ◦ | |
+
+> [tab] Darts
+>
+> **5** market types · **1** period scopes · `sportId` `19`
+>
+> > [accordion] Match outcome (3)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `moneyline-180s` | ✓ |
+> > | `oddeven` | ✓ |
+>
+> > [accordion] Laddered lines (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `totals` | ✓ |
+> > | `spreads` | ✓ |
+
+> [tab] MMA
+>
+> **12** market types · **1** period scopes · `sportId` `20`
+>
+> > [accordion] Match outcome (3)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+> > | `oddeven` | ✓ |
+>
+> > [accordion] Laddered lines (1)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `totals` | ✓ |
+>
+> > [accordion] Specials and order (5)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `methodofvictory` | ◦ |
+> > | `gothedistance` | ◦ |
+> > | `winbyko-team{1,2}` | ◦ |
+> > | `winbysubmission-team{1,2}` | ◦ |
+> > | `winbydecision-team{1,2}` | ◦ |
+
+> [tab] Boxing
+>
+> **6** market types · **1** period scopes · `sportId` `21`
+>
+> > [accordion] Match outcome (3)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+> > | `oddeven` | ✓ |
+>
+> > [accordion] Laddered lines (1)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `totals` | ✓ |
+>
+> > [accordion] Specials and order (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `methodofvictory` | ◦ |
+> > | `gothedistance` | ◦ |
+
+> [tab] Handball
+>
+> **5** market types · **2** period scopes · `sportId` `22`
+>
+> > [accordion] Match outcome (3)
+> >
+> > | `marketType` | `fulltime` | `result` |
+> > | - | :-: | :-: |
+> > | `moneyline` | | ✓ |
+> > | `1x2` | ✓ | |
+> > | `oddeven` | ✓ | |
+>
+> > [accordion] Laddered lines (2)
+> >
+> > | `marketType` | `fulltime` | `result` |
+> > | - | :-: | :-: |
+> > | `totals` | ✓ | |
+> > | `spreads` | ✓ | |
+
+> [tab] Volleyball
+>
+> **4** market types · **6** period scopes · `sportId` `23`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `oddeven` | ✓ | | | | | |
+>
+> > [accordion] Laddered lines (2)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | | | | | |
+> > | `spreads` | ✓ | | | | | |
+
+> [tab] Snooker
+>
+> **4** market types · **1** period scopes · `sportId` `24`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `oddeven` | ✓ |
+>
+> > [accordion] Laddered lines (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `totals` | ✓ |
+> > | `spreads` | ✓ |
+
+> [tab] Table Tennis
+>
+> **3** market types · **1** period scopes · `sportId` `25`
+>
+> > [accordion] Match outcome (1)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+>
+> > [accordion] Laddered lines (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `totals-points` | ✓ |
+> > | `spreads-points` | ✓ |
+
+> [tab] Rugby
+>
+> **5** market types · **2** period scopes · `sportId` `26`
+>
+> > [accordion] Match outcome (3)
+> >
+> > | `marketType` | `fulltime` | `result` |
+> > | - | :-: | :-: |
+> > | `moneyline` | | ✓ |
+> > | `1x2` | ✓ | |
+> > | `oddeven` | ✓ | |
+>
+> > [accordion] Laddered lines (2)
+> >
+> > | `marketType` | `fulltime` | `result` |
+> > | - | :-: | :-: |
+> > | `totals` | ✓ | |
+> > | `spreads` | ✓ | |
+
+> [tab] Cricket
+>
+> **48** market types · **7** period scopes · `sportId` `27`
+>
+> > [accordion] Match outcome (4)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `fulltime` | `over-spans` | `overs` | `over-deliveries` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | | | | | | |
+> > | `1x2` | | | | ✓ | | | |
+> > | `oddeven-1st-over` | | ◦ | | | | | |
+> > | `oddeven` | | ✓ | ✓ | | | | |
+>
+> > [accordion] Laddered lines (11)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `fulltime` | `over-spans` | `overs` | `over-deliveries` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals-fours` | ◦ | ◦ | ◦ | | | | |
+> > | `totals-sixes` | ◦ | ◦ | ◦ | | | | |
+> > | `totals` | | ✓ | ✓ | | ◦ | ◦ | |
+> > | `1st-wicket-fall` | ◦ | | | | | | |
+> > | `highest-individual-score` | ✓ | | | | | | |
+> > | `teamtotals-team{1,2}` | ✓ | | | | ◦ | ◦ | ◦ |
+> > | `teamtotals-fours-team{1,2}` | ✓ | | | | | | |
+> > | `teamtotals-sixes-team{1,2}` | ✓ | | | | | | |
+> > | `teamtotals-match-fours-team{1,2}` | ◦ | | | | | | |
+> > | `teamtotals-match-sixes-team{1,2}` | ◦ | | | | | | |
+> > | `totals-match-run-outs` | ◦ | | | | | | |
+>
+> > [accordion] Player props (Yes/No) (9)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `fulltime` | `over-spans` | `overs` | `over-deliveries` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `players-top-batter` | ✓ | ✓ | ✓ | | | | |
+> > | `players-top-bowler` | ◦ | ◦ | ◦ | | | | |
+> > | `players-top-batter-team{1,2}` | ✓ | ✓ | ✓ | | | | |
+> > | `players-top-bowler-team{1,2}` | ◦ | ◦ | ◦ | | | | |
+> > | `players-skores-10-run` | ✓ | ✓ | ✓ | | | | |
+> > | `players-skores-20-run` | ✓ | ✓ | ✓ | | | | |
+> > | `players-skores-30-run` | ✓ | ✓ | ✓ | | | | |
+> > | `players-skores-40-run` | ✓ | ✓ | ✓ | | | | |
+> > | `players-skores-50-run` | ✓ | ✓ | ✓ | | | | |
+>
+> > [accordion] Player totals (laddered) (5)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `fulltime` | `over-spans` | `overs` | `over-deliveries` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `playertotals-runs` | ✓ | ✓ | ✓ | | | | |
+> > | `playertotals-performance` | ◦ | | | | | | |
+> > | `playertotals-fours` | ✓ | | | | | | |
+> > | `playertotals-sixes` | ✓ | | | | | | |
+> > | `playertotals-wickets` | ◦ | | | | | | |
+>
+> > [accordion] Specials and order (12)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `fulltime` | `over-spans` | `overs` | `over-deliveries` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `tied-match` | | | | ✓ | | | |
+> > | `coin-toss` | | | | ◦ | | | |
+> > | `completed-match` | | | | ◦ | | | |
+> > | `mvp` | ◦ | | | | | | |
+> > | `1st-wicket-method` | ◦ | | | | | | |
+> > | `1st-wicket-method-caught` | ◦ | | | | | | |
+> > | `highest-opening-partnership` | ◦ | | | | | | |
+> > | `most-run-outs` | ◦ | | | | | | |
+> > | `most-match-fours` | ◦ | | | | | | |
+> > | `most-match-sixes` | ◦ | | | | | | |
+> > | `score-50-in-match` | ✓ | | | | | | |
+> > | `score-100-in-match` | ✓ | | | | | | |
+
+> [tab] Waterpolo
+>
+> **2** market types · **2** period scopes · `sportId` `28`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] Futsal
+>
+> **2** market types · **2** period scopes · `sportId` `29`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] Beach Volley
+>
+> **2** market types · **1** period scopes · `sportId` `30`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+
+> [tab] Aussie Rules
+>
+> **2** market types · **2** period scopes · `sportId` `31`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] Field hockey
+>
+> **2** market types · **2** period scopes · `sportId` `32`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] Floorball
+>
+> **2** market types · **2** period scopes · `sportId` `33`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] Squash
+>
+> **2** market types · **1** period scopes · `sportId` `34`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+
+> [tab] Basketball 3x3
+>
+> **2** market types · **1** period scopes · `sportId` `35`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+
+> [tab] Beach Soccer
+>
+> **2** market types · **2** period scopes · `sportId` `36`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] Pesapallo
+>
+> **2** market types · **2** period scopes · `sportId` `37`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] Lacrosse
+>
+> **2** market types · **2** period scopes · `sportId` `38`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] Curling
+>
+> **2** market types · **1** period scopes · `sportId` `39`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+
+> [tab] Padel
+>
+> **2** market types · **1** period scopes · `sportId` `40`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+
+> [tab] Bandy
+>
+> **2** market types · **2** period scopes · `sportId` `41`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] Kabaddi
+>
+> **2** market types · **2** period scopes · `sportId` `42`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] Rink Hockey
+>
+> **2** market types · **2** period scopes · `sportId` `43`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] Soccer Specials
+>
+> **2** market types · **1** period scopes · `sportId` `44`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+
+> [tab] Gaelic Football
+>
+> **2** market types · **2** period scopes · `sportId` `45`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] Netball
+>
+> **2** market types · **2** period scopes · `sportId` `46`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] Beach Handball
+>
+> **2** market types · **1** period scopes · `sportId` `47`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+
+> [tab] Athletics
+>
+> **2** market types · **1** period scopes · `sportId` `48`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+
+> [tab] Badminton
+>
+> **2** market types · **1** period scopes · `sportId` `49`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+
+> [tab] Bowls
+>
+> **2** market types · **1** period scopes · `sportId` `50`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+
+> [tab] Cross-Country
+>
+> **2** market types · **1** period scopes · `sportId` `51`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+
+> [tab] Gaelic Hurling
+>
+> **2** market types · **2** period scopes · `sportId` `52`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] Softball
+>
+> **2** market types · **2** period scopes · `sportId` `53`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] eSoccer
+>
+> **2** market types · **2** period scopes · `sportId` `54`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] eBasketball
+>
+> **2** market types · **2** period scopes · `sportId` `55`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` | `fulltime` |
+> > | - | :-: | :-: |
+> > | `moneyline` | ✓ | |
+> > | `1x2` | | ✓ |
+
+> [tab] ESport Call of Duty
+>
+> **7** market types · **10** period scopes · `sportId` `56`
+>
+> > [accordion] Match outcome (5)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` | `p8` | `p9` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `1x2` | ✓ | | | | | | | | | |
+> > | `correctscore` | ✓ | | | | | | | | | |
+> > | `winningmargin` | ✓ | | | | | | | | | |
+> > | `oddeven` | ✓ | | | | | | | | | |
+>
+> > [accordion] Laddered lines (2)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` | `p8` | `p9` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | | | | | | | | | |
+> > | `spreads` | ✓ | | | | | | | | | |
+
+> [tab] ESport Overwatch
+>
+> **7** market types · **8** period scopes · `sportId` `57`
+>
+> > [accordion] Match outcome (5)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `1x2` | ✓ | | | | | | | |
+> > | `correctscore` | ✓ | | | | | | | |
+> > | `winningmargin` | ✓ | | | | | | | |
+> > | `oddeven` | ✓ | | | | | | | |
+>
+> > [accordion] Laddered lines (2)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | | | | | | | |
+> > | `spreads` | ✓ | | | | | | | |
+
+> [tab] ESport Rainbow Six
+>
+> **14** market types · **7** period scopes · `sportId` `58`
+>
+> > [accordion] Match outcome (7)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `rounds` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `1x2` | ✓ | | | | | | |
+> > | `correctscore` | ✓ | | | | | | |
+> > | `winningmargin` | ✓ | | | | | | |
+> > | `winningmargin-rounds` | | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `oddeven-rounds` | | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `oddeven` | ✓ | | | | | | |
+>
+> > [accordion] Laddered lines (5)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `rounds` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | | | | | | |
+> > | `spreads` | ✓ | | | | | | |
+> > | `totals-rounds` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `spreads-rounds` | | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `teamtotals-rounds-team{1,2}` | | ✓ | ✓ | ✓ | ✓ | ✓ | |
+>
+> > [accordion] Specials and order (1)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `rounds` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `overtime` | | ✓ | ✓ | ✓ | ✓ | ✓ | |
+
+> [tab] ESport Rocket League
+>
+> **7** market types · **10** period scopes · `sportId` `59`
+>
+> > [accordion] Match outcome (5)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` | `p8` | `p9` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `1x2` | ✓ | | | | | | | | | |
+> > | `correctscore` | ✓ | | | | | | | | | |
+> > | `winningmargin` | ✓ | | | | | | | | | |
+> > | `oddeven` | ✓ | | | | | | | | | |
+>
+> > [accordion] Laddered lines (2)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` | `p8` | `p9` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | | | | | | | | | |
+> > | `spreads` | ✓ | | | | | | | | | |
+
+> [tab] ESport StarCraft
+>
+> **7** market types · **8** period scopes · `sportId` `60`
+>
+> > [accordion] Match outcome (5)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `1x2` | ✓ | | | | | | | |
+> > | `correctscore` | ✓ | | | | | | | |
+> > | `winningmargin` | ✓ | | | | | | | |
+> > | `oddeven` | ✓ | | | | | | | |
+>
+> > [accordion] Laddered lines (2)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | | | | | | | |
+> > | `spreads` | ✓ | | | | | | | |
+
+> [tab] ESport Valorant
+>
+> **16** market types · **7** period scopes · `sportId` `61`
+>
+> > [accordion] Match outcome (7)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `rounds` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `1x2` | ✓ | | | | | | |
+> > | `correctscore` | ✓ | | | | | | |
+> > | `winningmargin` | ✓ | | | | | | |
+> > | `winningmargin-rounds` | | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `oddeven-rounds` | | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `oddeven` | ✓ | | | | | | |
+>
+> > [accordion] Laddered lines (5)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `rounds` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | | | | | | |
+> > | `spreads` | ✓ | | | | | | |
+> > | `totals-rounds` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `spreads-rounds` | | ✓ | ✓ | ✓ | ✓ | ✓ | |
+> > | `teamtotals-rounds-team{1,2}` | | ✓ | ✓ | ✓ | ✓ | ✓ | |
+>
+> > [accordion] Player totals (laddered) (2)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `rounds` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `playertotals-kills` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | |
+> > | `playertotals-headshots` | ◦ | ◦ | ◦ | ◦ | ◦ | ◦ | |
+>
+> > [accordion] Specials and order (1)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `rounds` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `overtime` | | ✓ | ✓ | ✓ | ✓ | ✓ | |
+
+> [tab] ESport Arena of Valor
+>
+> **7** market types · **8** period scopes · `sportId` `62`
+>
+> > [accordion] Match outcome (5)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `1x2` | ✓ | | | | | | | |
+> > | `correctscore` | ✓ | | | | | | | |
+> > | `winningmargin` | ✓ | | | | | | | |
+> > | `oddeven` | ✓ | | | | | | | |
+>
+> > [accordion] Laddered lines (2)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | | | | | | | |
+> > | `spreads` | ✓ | | | | | | | |
+
+> [tab] ESport King of Glory
+>
+> **7** market types · **8** period scopes · `sportId` `63`
+>
+> > [accordion] Match outcome (5)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `1x2` | ✓ | | | | | | | |
+> > | `correctscore` | ✓ | | | | | | | |
+> > | `winningmargin` | ✓ | | | | | | | |
+> > | `oddeven` | ✓ | | | | | | | |
+>
+> > [accordion] Laddered lines (2)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | | | | | | | |
+> > | `spreads` | ✓ | | | | | | | |
+
+> [tab] Judo
+>
+> **2** market types · **1** period scopes · `sportId` `64`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+
+> [tab] ESport Honor of Kings
+>
+> **7** market types · **8** period scopes · `sportId` `65`
+>
+> > [accordion] Match outcome (5)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `1x2` | ✓ | | | | | | | |
+> > | `correctscore` | ✓ | | | | | | | |
+> > | `winningmargin` | ✓ | | | | | | | |
+> > | `oddeven` | ✓ | | | | | | | |
+>
+> > [accordion] Laddered lines (2)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | | | | | | | |
+> > | `spreads` | ✓ | | | | | | | |
+
+> [tab] Speedway
+>
+> **2** market types · **1** period scopes · `sportId` `66`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+
+> [tab] Golf
+>
+> **2** market types · **1** period scopes · `sportId` `67`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+
+> [tab] Cycling
+>
+> **2** market types · **1** period scopes · `sportId` `68`
+>
+> > [accordion] Match outcome (2)
+> >
+> > | `marketType` | `result` |
+> > | - | :-: |
+> > | `moneyline` | ✓ |
+> > | `1x2` | ✓ |
+
+> [tab] Formula 1
+>
+> No fixture markets yet for `sportId` `82`. The sport is covered for fixtures and futures, but its market list is still being decided, so there is nothing to show here — [`GET /markets`](/api-reference/common/get-markets) returns an empty set for it rather than an error.
+
+> [tab] ESport Mobile Legends
+>
+> **7** market types · **8** period scopes · `sportId` `83`
+>
+> > [accordion] Match outcome (5)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `moneyline` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+> > | `correctscore` | ✓ | | | | | | | |
+> > | `winningmargin` | ✓ | | | | | | | |
+> > | `1x2` | ✓ | | | | | | | |
+> > | `oddeven` | ✓ | | | | | | | |
+>
+> > [accordion] Laddered lines (2)
+> >
+> > | `marketType` | `result` | `p1` | `p2` | `p3` | `p4` | `p5` | `p6` | `p7` |
+> > | - | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+> > | `totals` | ✓ | | | | | | | |
+> > | `spreads` | ✓ | | | | | | | |
+
+> [tab] Chess
+>
+> No fixture markets yet for `sportId` `84`. The sport is covered for fixtures and futures, but its market list is still being decided, so there is nothing to show here — [`GET /markets`](/api-reference/common/get-markets) returns an empty set for it rather than an error.
+
+✓ is an estimate from the counters we collect, not a settlement guarantee for an individual match — coverage varies by tournament. A per-fixture endpoint derived from past settlement results is coming (working name `/fixtures/markets/settleable`).
+
+## How to read it
+
+* **A market's scope lives in `period`, never in its `marketType`.** This is why the cricket over markets moved from `12-overs-3-delivery-team1` to a plain `teamtotals-team1` at period `p1o12b3` — see the [changelog](/changelog).
+* **`players-…` is Yes / No; `playertotals-…` is Over / Under plus a `handicap`.** A counter question is always the `playertotals-` form.
+* **A period's *meaning* is per sport** — `p1` is a half in soccer, a quarter in NBA basketball, a set in tennis, a map in esports. Interpret it with the fixture's `expectedPeriods` and `periodLength`, never by assuming a sport's structure. See [Periods per sport](/guides/periods).
+* **`marketType` is append-only** — new values appear as coverage grows and never change meaning. Match on the types you support and ignore the rest rather than failing on unknown values.
+* **A ◦ is not a defect.** Order and timing questions (first/last scorer), awards, match circumstances and every market at a cricket over scope need more than a `(stat, period)` counter, so no settle bridge is published rather than an approximate one.
+
+> [!NOTE]
+>
+> This is the **catalogue**, not a price feed and not a settlement promise. It says a combination exists, and estimates whether it is gradeable — not that a bookmaker is quoting it right now. For what is priced on a given fixture, read `GET /fixtures/odds` and group by `marketId`; `mainLine` marks each book's headline line.
+
+
+# Sports Coverage - Fixtures & Futures by sportId
+Source: https://docs.oddspapi.io/coverage/sports
+
+Every sportId OddsPapi covers, with fixtures and futures availability and how many fixture market types are published per sport.
+
+Every sport and prediction-market topic we carry, identified by a numeric `sportId`. Availability is per **product** — a sport can be covered as fixtures, as futures, or both.
+
+**75** sports and prediction-market topics. **✓** covered · **soon** planned, not live yet · **—** no such product for this sport.
+
+**Market types** is how many distinct `marketType` values the sport publishes — see [the market matrix](/coverage/markets) for which ones, at which period scopes, and how deep each line ladder runs.
+
+| sportId | Sport | Fixtures | Futures | Market types |
+| -: | - | :-: | :-: | -: |
+| 10 | Soccer | ✓ | ✓ | 110 |
+| 11 | Basketball | ✓ | ✓ | 36 |
+| 12 | Tennis | ✓ | ✓ | 61 |
+| 13 | Baseball | ✓ | ✓ | 45 |
+| 14 | American Football | ✓ | ✓ | 200 |
+| 15 | Ice Hockey | ✓ | ✓ | 52 |
+| 16 | ESport Dota | ✓ | ✓ | 32 |
+| 17 | ESport Counter-Strike | ✓ | ✓ | 20 |
+| 18 | ESport League of Legends | ✓ | ✓ | 37 |
+| 19 | Darts | ✓ | ✓ | 5 |
+| 20 | MMA | ✓ | ✓ | 12 |
+| 21 | Boxing | ✓ | ✓ | 6 |
+| 22 | Handball | ✓ | ✓ | 5 |
+| 23 | Volleyball | ✓ | ✓ | 4 |
+| 24 | Snooker | ✓ | ✓ | 4 |
+| 25 | Table Tennis | ✓ | ✓ | 3 |
+| 26 | Rugby | ✓ | ✓ | 5 |
+| 27 | Cricket | ✓ | ✓ | 48 |
+| 28 | Waterpolo | ✓ | ✓ | 2 |
+| 29 | Futsal | ✓ | ✓ | 2 |
+| 30 | Beach Volley | ✓ | ✓ | 2 |
+| 31 | Aussie Rules | ✓ | ✓ | 2 |
+| 32 | Field hockey | ✓ | ✓ | 2 |
+| 33 | Floorball | ✓ | ✓ | 2 |
+| 34 | Squash | ✓ | ✓ | 2 |
+| 35 | Basketball 3x3 | ✓ | ✓ | 2 |
+| 36 | Beach Soccer | ✓ | ✓ | 2 |
+| 37 | Pesapallo | ✓ | ✓ | 2 |
+| 38 | Lacrosse | ✓ | ✓ | 2 |
+| 39 | Curling | ✓ | ✓ | 2 |
+| 40 | Padel | ✓ | ✓ | 2 |
+| 41 | Bandy | ✓ | ✓ | 2 |
+| 42 | Kabaddi | ✓ | ✓ | 2 |
+| 43 | Rink Hockey | ✓ | ✓ | 2 |
+| 44 | Soccer Specials | ✓ | ✓ | 2 |
+| 45 | Gaelic Football | ✓ | ✓ | 2 |
+| 46 | Netball | ✓ | ✓ | 2 |
+| 47 | Beach Handball | ✓ | ✓ | 2 |
+| 48 | Athletics | ✓ | soon | 2 |
+| 49 | Badminton | ✓ | ✓ | 2 |
+| 50 | Bowls | ✓ | ✓ | 2 |
+| 51 | Cross-Country | ✓ | ✓ | 2 |
+| 52 | Gaelic Hurling | ✓ | ✓ | 2 |
+| 53 | Softball | ✓ | ✓ | 2 |
+| 54 | eSoccer | ✓ | ✓ | 2 |
+| 55 | eBasketball | ✓ | ✓ | 2 |
+| 56 | ESport Call of Duty | ✓ | ✓ | 7 |
+| 57 | ESport Overwatch | ✓ | ✓ | 7 |
+| 58 | ESport Rainbow Six | ✓ | ✓ | 14 |
+| 59 | ESport Rocket League | ✓ | ✓ | 7 |
+| 60 | ESport StarCraft | ✓ | ✓ | 7 |
+| 61 | ESport Valorant | ✓ | ✓ | 16 |
+| 62 | ESport Arena of Valor | ✓ | ✓ | 7 |
+| 63 | ESport King of Glory | ✓ | ✓ | 7 |
+| 64 | Judo | soon | soon | 2 |
+| 65 | ESport Honor of Kings | soon | soon | 7 |
+| 66 | Speedway | ✓ | ✓ | 2 |
+| 67 | Golf | ✓ | ✓ | 2 |
+| 68 | Cycling | ✓ | ✓ | 2 |
+| 69 | Politics | — | ✓ | — |
+| 70 | Elections | — | ✓ | — |
+| 71 | Economics | — | ✓ | — |
+| 72 | Finance | — | ✓ | — |
+| 73 | Technology | — | ✓ | — |
+| 74 | Health | — | ✓ | — |
+| 75 | Science | — | ✓ | — |
+| 76 | Cryptocurrency | — | ✓ | — |
+| 77 | Weather | — | ✓ | — |
+| 78 | Culture | — | ✓ | — |
+| 79 | Horse Racing | — | ✓ | — |
+| 80 | Greyhound Racing | — | ✓ | — |
+| 81 | Harness Racing | — | ✓ | — |
+| 82 | Formula 1 | ✓ | ✓ | — |
+| 83 | ESport Mobile Legends | ✓ | ✓ | 7 |
+| 84 | Chess | ✓ | ✓ | — |
+
+> [!NOTE]
+>
+> **soon** today: **48** Athletics (futures), **64** Judo (fixtures), **64** Judo (futures), **65** ESport Honor of Kings (fixtures), **65** ESport Honor of Kings (futures). Nothing is published for those products yet — treat them as planned rather than available.
+
+## Reading the table
+
+* **Fixtures** are match- or event-level markets (a single game, bout, or match), streamed on the [`fixtures`](/websocket/channels/fixtures) and [`odds`](/websocket/channels/odds) channels.
+* **Futures** are outright / season-long or topic-level markets (league winner, tournament, election, etc.), streamed on the [`futures`](/websocket/channels/futures) and `oddsFutures` channels.
+* `sportId` **69–78** are **prediction-market topics** (politics, elections, finance, crypto, weather, …) — these exist only as futures/outright markets and feed the prediction-market and exchange use cases.
+* `sportId` **79–81** are **racing codes** (horse, greyhound, harness) — covered as **ante-post futures** (one future per ante-post market), not as per-race fixtures.
+* A **market type count** of `—` means no fixture-market taxonomy is published for that sport yet. The sport can still be covered; see [Markets](/coverage/markets).
+
+> [!NOTE]
+>
+> A sport being covered is not a promise that every market type or every bookmaker is available for it. Market breadth is per sport ([Markets](/coverage/markets)), and which books quote a given fixture comes from the odds themselves — read it from `GET /fixtures/odds`, not from a coverage table.
+
+## Identifiers
+
+`sportId` is stable and language-independent; the display name follows the request's [language prefix](/api-reference/concepts#language-prefix). It is also the **first two digits** of downstream `marketId`, `outcomeId`, and `fixtureId` values — see [Core Concepts](/api-reference/concepts#id-structure).
+
+Discover the list available to your key with [`GET /sports`](/api-reference/common/get-sports).
 
 
 # Evaluating OddsPapi - Measure Latency, Coverage & Recovery Yourself
@@ -4750,25 +6498,25 @@ oddsId:
 
 Each odds entry is an **outcome**, with the following fields:
 
-| Field | Type | Description | |
-| - | - | - | - |
-| `bookmaker` | `string` | Bookmaker slug (e.g. `"stake"`, `"pinnacle"`, `"polymarket"`) | |
-| `outcomeId` | `integer` | Outcome identifier | |
-| `playerId` | `integer` | Player ID (`0` for non-player markets) | |
-| `price` | `number` | Decimal odds | |
-| `active` | `boolean` | Whether this outcome is currently available | |
-| `marketActive` | `boolean \| null` | Whether the entire market is active | |
-| `mainLine` | `boolean \| null` | Whether this is the bookmaker’s main line | |
-| `marketId` | `integer` | Market identifier | |
-| `bookmakerMarketId` | `string \| null` | Native bookmaker market ID | |
-| `bookmakerOutcomeId` | `string \| null` | Native bookmaker outcome ID | |
-| `bookmakerChangedAt` | `number \| null` | Bookmaker-provided change timestamp (epoch ms) | |
+| Field | Type | Description |
+| - | - | - |
+| `bookmaker` | `string` | Bookmaker slug (e.g. `"stake"`, `"pinnacle"`, `"polymarket"`) |
+| `outcomeId` | `integer` | Outcome identifier |
+| `playerId` | `integer` | Player ID (`0` for non-player markets) |
+| `price` | `number` | Decimal odds |
+| `active` | `boolean` | Whether this outcome is currently available |
+| `marketActive` | `boolean \| null` | Whether the entire market is active |
+| `mainLine` | `boolean \| null` | Whether this is the bookmaker’s main line |
+| `marketId` | `integer` | Market identifier |
+| `bookmakerMarketId` | `string \| null` | Native bookmaker market ID |
+| `bookmakerOutcomeId` | `string \| null` | Native bookmaker outcome ID |
+| `bookmakerChangedAt` | `number \| null` | Bookmaker-provided change timestamp (epoch ms) |
 | `priceFractional` | \`string | \` | Fractional odds (e.g. `"5/2"`) |
 | `priceAmerican` | \`integer | \` | American odds (e.g. `-110`, `+250`) |
-| `limit` | `number \| null` | Maximum accepted stake at this price — carried for close to every sharp book | |
-| `betslip` | `string \| null` | Optional bookmaker betslip or deeplink token | |
-| `meta` | `object \| null` | Bookmaker-specific metadata (orderbooks, ladders, etc.) | |
-| `changedAt` | `number` | When OddsPapi observed this change at the bookmaker (epoch ms, UTC) — always present | |
+| `limit` | `number \| null` | Maximum accepted stake at this price — carried for close to every sharp book |
+| `betslip` | `string \| null` | Optional bookmaker betslip or deeplink token |
+| `meta` | `object \| null` | Bookmaker-specific metadata (orderbooks, ladders, etc.) |
+| `changedAt` | `number` | When OddsPapi observed this change at the bookmaker (epoch ms, UTC) — always present |
 
 ***
 
@@ -5279,7 +7027,34 @@ Source: https://docs.oddspapi.io/websocket/console
 
 Test OddsPapi WebSocket API in your browser. Interactive console for connecting to the gateway, subscribing to channels, and viewing realtime sports data.
 
-[https://v5-console.oddspapi.io](https://v5-console.oddspapi.io)
+Connect to the gateway from your browser: enter your API key, pick channels and filters, press **Connect**, then **Send login**. See [Auth & Filters](/websocket/auth) for every login field.
+
+WebSocket Console
+
+WebSocket endpoint
+
+apiKey
+
+lang
+
+sportIds
+
+tournamentIds
+
+channels
+
+bookmakers
+
+Login JSON
+
+Connect
+
+Send login
+Copy JSON
+Close
+Clear log
+
+The log keeps the last 500 messages. Binary frames (receiveType other than json) show their size only.
 
 
 # WebSocket API Overview - Realtime Sports Data Streaming
@@ -5538,7 +7313,7 @@ If replay succeeds, the server sends:
 
 ***
 
-## snapshot\_required (when replay is not possible)
+## snapshot_required (when replay is not possible)
 
 Sometimes replay cannot be done safely. In that case the server sends:
 
@@ -5574,7 +7349,7 @@ A very short disconnect can still exceed the window if your last processed messa
 
 ***
 
-## How clients should handle snapshot\_required
+## How clients should handle snapshot_required
 
 When you receive `snapshot_required`:
 

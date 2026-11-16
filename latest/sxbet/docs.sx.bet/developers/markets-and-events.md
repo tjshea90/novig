@@ -157,6 +157,7 @@ Here's a complete market object for reference:
   "participantTwoId": 4,
   "mainLine": false,
   "isQuarterLineMarket": false,
+  "hasVolume": true,
   "__type": "Market"
 }
 ```
@@ -181,6 +182,7 @@ Here's a complete market object for reference:
 | `leagueLabel` | The name of the league for this market |
 | `mainLine` | Whether this market is currently the main line. Not present on markets without multiple lines |
 | `isQuarterLineMarket` | Whether the exchange produced this market by splitting a line-bearing market into quarter lines |
+| `hasVolume` | `true` once at least one bet on this market has been matched and confirmed. A market whose only bets were placed before this field was introduced reads `false` until it is traded again. |
 | `group1` | Indicator to the client of how to display this market |
 | `group2` | Indicator to the client of how to display this market |
 

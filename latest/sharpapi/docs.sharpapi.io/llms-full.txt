@@ -153,16 +153,16 @@ All errors follow this format:
 ## Supported Sportsbooks
 
 ### Major US Books
-DraftKings, FanDuel, BetMGM, Caesars, Fanatics, BetRivers, Hard Rock Bet, theScore Bet, Bally Bet, Rebet
+DraftKings, FanDuel, BetMGM, Caesars, Fanatics, BetRivers, Hard Rock, theScore Bet, Bally Bet, Rebet
 
 ### Sharp Books
 Pinnacle (reference for +EV calculations), Bookmaker, Circa Sports
 
 ### Offshore / International
-Bet365, Bovada, BetOnline, Betway, Sky Bet, Unibet, Ladbrokes, Betfred, 1xBet, Stake, Cloudbet
+bet365, Bovada, BetOnline, Betway, Sky Bet, Unibet, Ladbrokes, Betfred, 1xBet, Stake, Cloudbet
 
 ### Exchanges
-ProphetX, Betfair, Novig
+ProphetX, Betfair Exchange, Novig
 
 ### Prediction Markets
 Polymarket, Kalshi
@@ -298,31 +298,37 @@ Returns available sportsbooks with tier requirements and regional info.
 
 ### GET /api/v1/markets
 
-Returns available market types with categories and descriptions.
+Returns the market types that currently have prices, each with the number of distinct events and the sportsbooks pricing it.
 
-**Auth**: Optional
+**Auth**: Required (all tiers)
+**Parameters**:
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| sport | string | - | Only markets priced in these sports (comma-separated, union). Counts and sportsbooks cover these sports only |
+| league | string | - | Only markets priced in these leagues (comma-separated, union) |
+| markets_only | boolean | true | `false` adds `coverage` (sport → league → sportsbooks) to every row; a non-boolean value returns 400 `validation_error` |
+| catalog | boolean | false | `true` lists every market of the market list, priced or not, and adds `priced` (boolean) to every row; with `sport` or `league`, only the priced rows of that scope; a non-boolean value returns 400 `validation_error` |
+
+`event_count` is the number of distinct events with at least one current price in the market, across sportsbooks, within the request's scope.
+
+With `catalog=true`, an unpriced row has `priced: false`, `event_count: 0` and `sports` / `sportsbooks` `[]`; unpriced rows come last, sorted by `id`. A priced market the list does not hold yet is still returned, with `priced: true` and no `numerical_id`.
+
+`name` is the market list's label, or a name built from `id` for a market the list does not hold yet. `market_label` on `GET /api/v1/events/{eventId}/markets` and `POST /api/v1/odds/batch` is the same name. Display only: filter and match on `id`.
 
 **Response**:
 ```json
 {
   "data": [
     {
-      "id": "moneyline",
-      "name": "Moneyline",
-      "category": "main",
-      "description": "Straight win/lose bet",
-      "has_line": false,
-      "sports": ["basketball", "football", "baseball", "hockey"]
-    },
-    {
-      "id": "spread",
-      "name": "Spread",
-      "category": "main",
-      "description": "Point spread bet",
-      "has_line": true,
-      "sports": ["basketball", "football"]
+      "id": "2nd_half_team_total",
+      "name": "2nd Half Team Total",
+      "numerical_id": 331,
+      "event_count": 42,
+      "sports": ["basketball", "football"],
+      "sportsbooks": ["draftkings", "fanduel", "hardrock"]
     }
-  ]
+  ],
+  "updated_at": "2026-11-09T16:44:28.388212051Z"
 }
 ```
 
@@ -1126,7 +1132,7 @@ Returns public betting split data (handle % and ticket %) from sportsbooks that 
 | league | string | all | Filter by league |
 | sportsbook | string | all | Source sportsbook (draftkings, circa, betmgm) or the synthetic value `consensus` |
 
-**Data sources**: DraftKings, Circa Sports (public handle and ticket percentages) and BetMGM (ticket percentage only, derived from its own public bet-percentage field; intermittent — the `handle_pct` object is present on BetMGM rows but its members are `null`). These three are the only splits sources — the set is fixed and does not grow with the number of sportsbooks on a plan. Rows whose sources all post identical numbers are merged into a single row labelled `sportsbook: consensus`, a synthetic label rather than a book. `/splits/history` is written from the DraftKings and Circa feed only.
+**Data sources**: DraftKings, Circa Sports (public handle and ticket percentages) and BetMGM (ticket percentage only, derived from its own public bet-percentage field; intermittent — the `handle_pct` object is present on BetMGM rows but its members are `null`). These three are the only sportsbook sources — the set is fixed and does not grow with the number of sportsbooks on a plan. Rows whose sources all post identical numbers are merged into a single row labelled `sportsbook: consensus`, a synthetic label rather than a book. Soccer `consensus` rows are not merged book rows: they carry market-wide percentages for eight competitions (Premier League, La Liga, Bundesliga, Serie A, Ligue 1, MLS, Champions League, Europa League), with a three-way (home/draw/away) moneyline, total goals and no spread. DraftKings soccer rows (Premier League, MLS, Champions League, Europa League) are two-way: the two teams only, no draw. `/splits/history` carries DraftKings, Circa, BetMGM and `consensus` entries, with the same moneyline shape as `/splits`.
 
 **Response** (one row per event per source; `pagination` omitted):
 ```json
@@ -1143,18 +1149,22 @@ Returns public betting split data (handle % and ticket %) from sportsbooks that 
         "away_odds": -1.5,
         "home_odds": 1.5,
         "handle_pct": { "away": 0.22, "home": 0.78 },
-        "bets_pct": { "away": 0.20, "home": 0.80 }
+        "bets_pct": { "away": 0.20, "home": 0.80 },
+        "updated_at": "2026-04-16T19:12:40.118204+00:00"
       },
       "total": {
         "line": 8,
         "handle_pct": { "over": 0.53, "under": 0.47 },
-        "bets_pct": { "over": 0.57, "under": 0.43 }
+        "bets_pct": { "over": 0.57, "under": 0.43 },
+        "updated_at": "2026-04-16T19:20:02.553917+00:00"
       },
       "moneyline": {
+        "outcomes": 2,
         "away_odds": 104,
         "home_odds": -126,
         "handle_pct": { "away": 0.28, "home": 0.72 },
-        "bets_pct": { "away": 0.33, "home": 0.67 }
+        "bets_pct": { "away": 0.33, "home": 0.67 },
+        "updated_at": "2026-04-16T13:48:51.640275+00:00"
       },
       "fetched_at": "2026-04-16T19:25:28.363825+00:00"
     }
@@ -1163,6 +1173,10 @@ Returns public betting split data (handle % and ticket %) from sportsbooks that 
 ```
 
 **Spread**: `spread.away_line` / `spread.home_line` are the spread line (the handicap, e.g. `-1.5` / `+1.5`). `spread.away_odds` / `spread.home_odds` carry the same value as a legacy alias: they are the line, never a price. No splits source publishes a spread price, so there is no spread price on this endpoint. Both pairs are `null` when the source has posted no spread line, and absent on a `betmgm` row with no spread line. `moneyline.away_odds` / `moneyline.home_odds` are American odds.
+
+**Moneyline outcomes**: every moneyline object carries `outcomes`: `3` for a three-way (home/draw/away, 1X2) market, `2` for every other moneyline. Branch on `outcomes`, not on the sport. A three-way moneyline also carries `draw_odds` and a `draw` member in `bets_pct` and `handle_pct`; its three shares add up to 1 within 0.02, or are all `null` together (`{ "away": null, "home": null, "draw": null }`), and are never cut down to two numbers. Only soccer `consensus` rows are three-way. DraftKings soccer rows are two-way (`"outcomes": 2`): DraftKings shows its soccer split for the two teams only, so they are not a 1X2 split. Soccer rows carry no spread: every `spread` field is `null`.
+
+**Freshness**: `fetched_at` is when SharpAPI last polled the source for the row. It moves forward on every poll, even when the source has stopped changing its numbers, so it does not say how current they are. Each `moneyline`, `spread` and `total` object carries `updated_at`, when that market's numbers last changed: usually the time SharpAPI first saw the new numbers, normally within a few minutes of the change, or, for some sources, the change time the source itself reports (`null` or absent when no change time is known, which means the age is unknown). Compare it with the time of your request to get the age. `/splits/history` entries do not carry it.
 
 ---
 

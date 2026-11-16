@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ParlayAPI Versioning + Deprecation Policy</title>
+<meta name="description" content="ParlayAPI's API versioning and deprecation policy. Path-versioned, additive-by-default, deprecation windows, communication channels, breaking-change rules.">
+<meta name="keywords" content="ParlayAPI versioning, API deprecation policy, sportsbook API breaking changes">
+<meta property="og:title" content="ParlayAPI Versioning + Deprecation Policy">
+<meta property="og:description" content="Path-versioned, additive-by-default, written deprecation windows.">
+<meta property="og:url" content="https://parlay-api.com/docs/versioning">
+<link rel="canonical" href="https://parlay-api.com/docs/versioning">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:0; font-family:-apple-system,"Inter",sans-serif; background:#06060b; color:#e8e8f0; line-height:1.65; }
+  .nav { display:flex; align-items:center; justify-content:space-between; padding:16px 28px; border-bottom:1px solid #1e1e2e; }
+  .nav .logo { font-weight:800; font-size:1.15rem; color:#fff; text-decoration:none; }
+  .nav .logo span { color:#9b82fc; }
+  .nav a { color:#c4c4d4; margin-left:18px; text-decoration:none; }
+  .nav .cta { background:linear-gradient(135deg,#7c5cfc,#5a3fd4); color:#fff; padding:8px 18px; border-radius:8px; font-weight:600; }
+  .container { max-width:860px; margin:0 auto; padding:0 24px 60px; }
+  h1 { font-size:2rem; margin:28px 0 8px;
+       background:linear-gradient(135deg,#fff,#b8a3ff); -webkit-background-clip:text;
+       background-clip:text; -webkit-text-fill-color:transparent; }
+  h2 { font-size:1.25rem; color:#fff; margin:32px 0 8px; border-bottom:1px solid #1e1e2e; padding-bottom:6px; }
+  h3 { font-size:1.02rem; color:#c4c4d4; margin:22px 0 6px; }
+  p, li { color:#d8d8e8; }
+  .lead { color:#c4c4d4; font-size:1rem; margin:0 0 20px; max-width:720px; }
+  .lead a { color:#9b82fc; }
+  code { background:#0c0c14; border:1px solid #1e1e2e; padding:1px 6px; border-radius:4px;
+         font-family:JetBrains Mono,monospace; font-size:0.88em; color:#9b82fc; }
+  pre { background:#0a0a12; border:1px solid #1e1e2e; padding:12px 14px; border-radius:8px;
+        overflow-x:auto; font-size:0.84rem; color:#d8d8e8; }
+  pre code { background:transparent; border:none; padding:0; color:inherit; }
+  .callout { background:#14161c; border:1px solid #1f2330; border-radius:8px; padding:14px 16px; margin:18px 0; }
+  .callout strong { color:#fff; }
+  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:0.92rem; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid #1f2330; vertical-align:top; }
+  th { color:#8a8f99; font-weight:500; }
+  a { color:#9b82fc; }
+  footer { padding:30px 28px; border-top:1px solid #1e1e2e; color:#6e6e85; font-size:0.85rem; text-align:center; }
+</style>
+<meta property="og:image" content="https://parlay-api.com/static/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+ <script defer src="/_analytics/script.js" data-website-id="809cd530-a8a1-4e46-bfc2-a76f2ba0681a" data-host-url="/_analytics"></script>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="logo">Parlay<span>API</span></a>
+  <div>
+    <a href="/docs">Docs</a>
+    <a href="/docs/best-practices">Best Practices</a>
+    <a href="/changelog">Changelog</a>
+    <a href="/signup" class="cta">Get free key</a>
+  </div>
+</nav>
+
+<div class="container">
+
+<h1>Versioning + deprecation policy</h1>
+<p class="lead">
+  How we version the API, what counts as a breaking change, how long deprecation windows are, and how we communicate. Written policy so customers integrating us today can plan around our future moves.
+</p>
+
+<h2>Current version</h2>
+<p>
+  The API is path-versioned at <code>/v1</code>. Every public route lives under that prefix:
+</p>
+<pre><code>https://parlay-api.com/v1/sports/baseball_mlb/odds
+https://parlay-api.com/v1/meta/changelog
+https://parlay-api.com/v1/clv/history</code></pre>
+<p>
+  The platform release version is published on every response in the <code>X-API-Version</code> header (current: <code>3.2.0</code>) and the <code>X-API-Release-Date</code> header.
+</p>
+
+<h2>What we call a breaking change</h2>
+<p>
+  A change is breaking if it could plausibly break an existing integration written against the documented behavior. Specifically:
+</p>
+<ul>
+  <li>Removing an endpoint.</li>
+  <li>Removing or renaming a response field.</li>
+  <li>Removing or renaming a request parameter that's currently required.</li>
+  <li>Tightening the input validation on an existing endpoint such that previously-accepted requests now 400.</li>
+  <li>Changing the type of a response field (e.g. number to string).</li>
+  <li>Changing the semantic meaning of a field (e.g. "implied probability" returned as a fraction in one version and a percent in another).</li>
+  <li>Reducing the rate limit on a tier.</li>
+</ul>
+<p>
+  We will not make a breaking change to <code>/v1</code> without a written deprecation notice, a migration path, and a fixed sunset date. See below.
+</p>
+
+<h2>What we DON'T call a breaking change</h2>
+<ul>
+  <li>Adding a new endpoint.</li>
+  <li>Adding a new field to an existing response.</li>
+  <li>Adding a new optional request parameter.</li>
+  <li>Loosening input validation (accepting more shapes than before).</li>
+  <li>Fixing a bug. If your code depended on bugged behavior, please tell us so we can decide together; in practice we cap bug-fix rollbacks at one cycle.</li>
+  <li>Internal performance improvements that don't change the API surface.</li>
+  <li>Changing a sport_key (we use <code>SPORT_KEY_ALIASES</code> to keep old keys working; you don't need to migrate).</li>
+  <li>Adding a new bookmaker to an existing region or sport.</li>
+  <li>Increasing the rate limit on a tier.</li>
+</ul>
+
+<h2>Deprecation windows</h2>
+<p>
+  Every breaking change goes through the same lifecycle:
+</p>
+<table>
+<thead>
+<tr><th>Stage</th><th>Duration</th><th>What happens</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Announce</strong></td><td>Day 0</td><td>Public changelog entry + <code>Deprecation</code> response header on the affected endpoint + email to affected customers (we identify them by API-key usage of the deprecated surface).</td></tr>
+<tr><td><strong>Soft deprecation</strong></td><td>90 days minimum</td><td>Endpoint still works; response includes <code>Deprecation: true</code> header and <code>Sunset: &lt;rfc-1123 date&gt;</code> header. SDK changelog updated. New customers are nudged to the new shape.</td></tr>
+<tr><td><strong>Hard sunset</strong></td><td>After sunset date</td><td>Endpoint returns 410 Gone with a structured body pointing at the replacement. Or, where backward-compatible, the old shape continues working with the new behavior.</td></tr>
+</tbody>
+</table>
+<p>
+  90 days is a floor, not a ceiling. We've extended several deprecations to 180 days when a customer cohort needed more migration time. Enterprise contracts can negotiate longer; ask before you commit.
+</p>
+
+<h2>How we communicate deprecations</h2>
+<ul>
+  <li><strong>Changelog:</strong> entry tagged <code>deprecation</code> on <a href="/changelog">/changelog</a> on day 0.</li>
+  <li><strong>Machine-readable feed:</strong> the deprecation appears in <a href="/v1/meta/changelog"><code>/v1/meta/changelog</code></a> with <code>tags: ["deprecation"]</code>. SDK boot logic can poll for new deprecations.</li>
+  <li><strong>Response headers:</strong> the deprecated endpoint returns <code>Deprecation: true</code>, <code>Sunset: &lt;rfc-1123&gt;</code>, and <code>Link: &lt;replacement-url&gt;; rel="successor-version"</code>.</li>
+  <li><strong>Email:</strong> we email API-key holders whose recent usage included the deprecated surface. No spam; only deprecation notices for endpoints you've actually called in the last 30 days.</li>
+  <li><strong>Status posts:</strong> we cross-post in <a href="https://reddit.com/r/parlayapi">r/parlayapi</a>.</li>
+</ul>
+
+<h2>v1 stability commitment</h2>
+<p>
+  The <code>/v1</code> namespace is committed to backward compatibility through 2027. We don't plan to ship <code>/v2</code> before then. If we do, <code>/v1</code> will continue to work in parallel for at least 12 months after <code>/v2</code> GA.
+</p>
+<p>
+  Internal experiments that we're not ready to commit to live under <code>/v1/experimental/*</code> and explicitly opt out of this stability commitment. The header <code>X-Experimental: true</code> appears on every response. Expect breakage there; don't build production integrations on experimental routes.
+</p>
+
+<h2>What's deprecated right now</h2>
+<p>
+  Current deprecation list (always current; this section is generated from the live policy):
+</p>
+<ul>
+  <li>Nothing currently sunsetting. The last deprecation cycle (<code>?event_ids=</code> alias accepted alongside the canonical <code>?eventIds=</code>) ended at end-of-life on 2026-04-30; the alias is now permanent at no cost to the customer.</li>
+</ul>
+
+<h2>Suggested customer practices</h2>
+<ul>
+  <li>Subscribe to the <a href="/changelog.rss">RSS feed</a> or poll <a href="/v1/meta/changelog"><code>/v1/meta/changelog</code></a> for <code>tags: ["deprecation"]</code> entries.</li>
+  <li>Check for <code>Deprecation</code> and <code>Sunset</code> response headers in your SDK error / warning layer. Surface them to your operators.</li>
+  <li>If you're on an enterprise tier and need longer windows than 90 days, raise it before procurement closes; we'll write it into the contract.</li>
+  <li>For long-lived integrations (1+ year), pin to <code>X-API-Version</code> in your logs so you can audit what version was running during any historical period.</li>
+</ul>
+
+<div class="callout">
+<strong>The honest commitment.</strong> We've never sunset a v1 endpoint with less than 90 days notice. We don't plan to start. If a breaking change is unavoidable (security, legal scope, upstream restructure), the timeline shrinks but the communication doesn't; we'd ship a public runbook the same hour the change went live.
+</div>
+
+</div>
+
+<footer>
+  ParlayAPI &middot; <a href="/docs/best-practices">/docs/best-practices</a> &middot; <a href="/changelog">/changelog</a> &middot; <a href="/security">/security</a>
+</footer>
+
+</body>
+</html>

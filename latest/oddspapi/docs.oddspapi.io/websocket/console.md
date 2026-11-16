@@ -6,7 +6,34 @@
 
 > Test OddsPapi WebSocket API in your browser. Interactive console for connecting to the gateway, subscribing to channels, and viewing realtime sports data.
 
-[https://v5-console.oddspapi.io](https://v5-console.oddspapi.io)
+Connect to the gateway from your browser: enter your API key, pick channels and filters, press **Connect**, then **Send login**. See [Auth & Filters](https://docs.oddspapi.io/websocket/auth.md) for every login field.
+
+WebSocket Console
+
+WebSocket endpoint
+
+apiKey
+
+lang
+
+sportIds
+
+tournamentIds
+
+channels
+
+bookmakers
+
+Login JSON
+
+Connect
+
+Send login
+Copy JSON
+Close
+Clear log
+
+The log keeps the last 500 messages. Binary frames (receiveType other than json) show their size only.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

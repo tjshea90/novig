@@ -8,7 +8,7 @@
 
 ## Authenticated limits
 
-Each row is the per-API-key budget for that route.
+Each row is your account's budget for that route. Every API key on the account shares it.
 
 ### Orders
 
@@ -66,9 +66,18 @@ Each row is the per-API-key budget for that route.
 | - | - | - |
 | `/user/multisig/*` | 60 | 60s |
 
+### Partner API
+
+Partner keys only. Each partner key has its own budget. See [Partner API](https://docs.sx.bet/developers/partner-api.md).
+
+| Endpoint | Max requests | Window |
+| - | - | - |
+| `POST` `/partner/users` | 100 | 60s |
+| `GET` `/partner/users` and `/partner/attestation` | 100 (combined) | 60s |
+
 ## Public limits
 
-Public read endpoints are not metered against your API-key budget. They are limited per client IP at
+Public read endpoints sit outside the account budgets above. They are limited per client IP at
 the edge.
 
 ### Order book
@@ -119,7 +128,7 @@ force from the headers rather than hardcoding a value.
 
 ## Global limit
 
-Beyond the per-key budgets above, all unauthenticated traffic shares a single global bucket at the
+Beyond the account budgets above, all unauthenticated traffic shares a single global bucket at the
 edge of **35,000 requests** per **10 min** window.
 
 ## When limits are exceeded

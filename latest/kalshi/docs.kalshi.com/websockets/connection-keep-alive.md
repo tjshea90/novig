@@ -6,7 +6,10 @@
 
 > WebSocket control frames for connection management.
 
-Kalshi sends Ping frames (`0x9`) every 10 seconds with body `heartbeat` to maintain the connection.
+Kalshi sends a Ping frame (`0x9`) with body `heartbeat` after 10 seconds without sending a data message (a JSON text frame) on the connection.
+Every data message Kalshi sends, and each heartbeat Ping, restarts that 10 seconds, so a connection that is receiving data can go a long time without a Ping.
+Pong frames Kalshi sends in reply to your Pings do not restart it.
+Do not treat a missing Ping as a dead connection; treat the connection as idle only when neither messages nor Pings arrive.
 Clients should respond with Pong frames (`0xA`). Clients may also send Ping frames to which Kalshi will respond with Pong.
 
 
@@ -21,8 +24,17 @@ description: >
   WebSocket control frames for connection management.
 
 
-  Kalshi sends Ping frames (`0x9`) every 10 seconds with body `heartbeat` to
-  maintain the connection.
+  Kalshi sends a Ping frame (`0x9`) with body `heartbeat` after 10 seconds
+  without sending a data message (a JSON text frame) on the connection.
+
+  Every data message Kalshi sends, and each heartbeat Ping, restarts that 10
+  seconds, so a connection that is receiving data can go a long time without a
+  Ping.
+
+  Pong frames Kalshi sends in reply to your Pings do not restart it.
+
+  Do not treat a missing Ping as a dead connection; treat the connection as idle
+  only when neither messages nor Pings arrive.
 
   Clients should respond with Pong frames (`0xA`). Clients may also send Ping
   frames to which Kalshi will respond with Pong.
@@ -48,14 +60,14 @@ operations:
         payload:
           - type: string
             const: ''
-            x-parser-schema-id: <anonymous-schema-72>
+            x-parser-schema-id: <anonymous-schema-81>
             name: Ping
             description: Client sends Ping frame (0x9) to elicit Pong from Kalshi
         headers: []
         jsonPayloadSchema:
           type: string
           const: ''
-          x-parser-schema-id: <anonymous-schema-72>
+          x-parser-schema-id: <anonymous-schema-81>
         title: Ping
         description: Client sends Ping frame (0x9) to elicit Pong from Kalshi
         example: '""'
@@ -79,14 +91,14 @@ operations:
         payload:
           - type: string
             const: ''
-            x-parser-schema-id: <anonymous-schema-73>
+            x-parser-schema-id: <anonymous-schema-82>
             name: Pong
             description: Client replies to Ping with Pong Frame (0xA)
         headers: []
         jsonPayloadSchema:
           type: string
           const: ''
-          x-parser-schema-id: <anonymous-schema-73>
+          x-parser-schema-id: <anonymous-schema-82>
         title: Pong
         description: Client replies to Ping with Pong Frame (0xA)
         example: '""'
@@ -108,7 +120,7 @@ operations:
         payload:
           - type: string
             const: heartbeat
-            x-parser-schema-id: <anonymous-schema-74>
+            x-parser-schema-id: <anonymous-schema-83>
             name: Ping
             description: >-
               Kalshi sends Ping (0x9) with body 'heartbeat' to elicit Pong from
@@ -117,7 +129,7 @@ operations:
         jsonPayloadSchema:
           type: string
           const: heartbeat
-          x-parser-schema-id: <anonymous-schema-74>
+          x-parser-schema-id: <anonymous-schema-83>
         title: Ping
         description: >-
           Kalshi sends Ping (0x9) with body 'heartbeat' to elicit Pong from
@@ -141,14 +153,14 @@ operations:
         payload:
           - type: string
             const: ''
-            x-parser-schema-id: <anonymous-schema-75>
+            x-parser-schema-id: <anonymous-schema-84>
             name: Pong
             description: Kalshi responds to client Ping with Pong frame (0xA)
         headers: []
         jsonPayloadSchema:
           type: string
           const: ''
-          x-parser-schema-id: <anonymous-schema-75>
+          x-parser-schema-id: <anonymous-schema-84>
         title: Pong
         description: Kalshi responds to client Ping with Pong frame (0xA)
         example: '""'

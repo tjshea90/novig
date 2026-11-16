@@ -1,9 +1,56 @@
 # API docs changes since the last snapshot
 
-added 1, changed 58, removed 0
+added 37, changed 260, removed 9
 
 ## Added
-- sxbet/docs.sx.bet/api-reference/get-orders-v3-batch.md
+- kalshi/docs.kalshi.com/api-reference/incentive-programs/get-incentive-schedules.md
+- kalshi/docs.kalshi.com/api-reference/markets/create-concert-cancellation-market.md
+- kalshi/docs.kalshi.com/api-reference/markets/create-weather-point-market.md
+- kalshi/docs.kalshi.com/api-reference/markets/get-concert-cancellation-market-availability.md
+- kalshi/docs.kalshi.com/api-reference/markets/get-concerts.md
+- kalshi/docs.kalshi.com/api-reference/markets/get-weather-point-market-availability.md
+- kalshi/docs.kalshi.com/api-reference/markets/search-concerts.md
+- kalshi/docs.kalshi.com/getting_started/concert_rfqs.md
+- kalshi/docs.kalshi.com/getting_started/order_errors.md
+- kalshi/docs.kalshi.com/getting_started/weather_rfqs.md
+- kalshi/docs.kalshi.com/margin/corporate-actions.md
+- novig/docs.novig.com/api-reference/exchange/list-the-locked-events-and-markets.md
+- novig/docs.novig.com/api-reference/rfq/executions/get-your-collateral.md
+- novig/docs.novig.com/api-reference/rfq/executions/list-your-executions.md
+- novig/docs.novig.com/api-reference/rfq/maker/get-your-maker.md
+- novig/docs.novig.com/api-reference/rfq/maker/register-a-maker.md
+- novig/docs.novig.com/api-reference/rfq/streaming/open-the-websocket.md
+- novig/docs.novig.com/api/rfq/confirm-rate.md
+- novig/docs.novig.com/api/rfq/eligibility.md
+- novig/docs.novig.com/api/rfq/executions.md
+- novig/docs.novig.com/api/rfq/makers.md
+- novig/docs.novig.com/api/rfq/overview.md
+- novig/docs.novig.com/api/rfq/settlement.md
+- novig/docs.novig.com/api/rfq/socket.md
+- oddspapi/docs.oddspapi.io/coverage/sports.md
+- polymarket/docs.polymarket.com/nex/connect.md
+- polymarket/docs.polymarket.com/nex/get-access.md
+- polymarket/docs.polymarket.com/nex/overview.md
+- polymarket/docs.polymarket.com/nex/start-trading.md
+- polymarket/docs.polymarket.com/nex/websocket-feeds.md
+- polymarket/docs.polymarket.com/partners/overview.md
+- polymarket/docs.polymarket.com/partners/rfq-trades.md
+- polymarket/docs.polymarket.com/perps/learn-about-trading/markets/pre-ipo-anthropic.md
+- sxbet/docs.sx.bet/api-reference/get-partner-attestation.md
+- sxbet/docs.sx.bet/api-reference/get-partner-users.md
+- sxbet/docs.sx.bet/api-reference/post-partner-users.md
+- sxbet/docs.sx.bet/developers/partner-api.md
+
+## Removed
+- novig/docs.novig.com/api-reference/rfq/confirm-rate.md
+- novig/docs.novig.com/api-reference/rfq/eligibility.md
+- novig/docs.novig.com/api-reference/rfq/executions.md
+- novig/docs.novig.com/api-reference/rfq/overview.md
+- novig/docs.novig.com/api-reference/rfq/registration.md
+- novig/docs.novig.com/api-reference/rfq/settlement.md
+- novig/docs.novig.com/api-reference/rfq/signing.md
+- novig/docs.novig.com/api-reference/rfq/webhooks.md
+- novig/docs.novig.com/api-reference/rfq/websocket.md
 
 ## Changed: data/kalshi-sports-series.json
 ```diff
@@ -11,489 +58,1097 @@ added 1, changed 58, removed 0
 +{"series":[{"additional_prohibitions":["Current players, coaches, and staff of the league, association, or organization(s) governing the event. For college leagues/associations specifically, or where otherwise appropriate (as identified by the Exchange), this applies to current players/coaches/staf
 ```
 
-## Changed: data/polymarket-sports.json
+## Changed: data/novig-live-market-types.json
 ```diff
--[{"id":630,"sport":"ufl","name":"UFL","image":"https://polymarket-upload.s3.us-east-2.amazonaws.com/league-icons/ufl.png","resolution":"https://www.theufl.com/","ordering":"away","tags":"1,100639,1186,105925","primaryTagId":105925,"series":"12553","createdAt":"2026-08-07T21:41:19.879539Z"},{"id":65
-+[{"id":630,"sport":"ufl","name":"UFL","image":"https://polymarket-upload.s3.us-east-2.amazonaws.com/league-icons/ufl.png","resolution":"https://www.theufl.com/","ordering":"away","tags":"1,100639,1186,105925","primaryTagId":105925,"series":"12553","createdAt":"2026-08-07T21:41:19.879539Z"},{"id":65
+-{"ATP":["MONEY","SPREAD","TOTAL","MONEYLINE_3_WAY_WIN","MONEYLINE_3_WAY_DRAW","TO_ADVANCE","TEAM_TOTAL"],"Boxing":["MONEY","SPREAD","TOTAL","MONEYLINE_3_WAY_WIN","MONEYLINE_3_WAY_DRAW","TO_ADVANCE","TEAM_TOTAL","GO_THE_DISTANCE","VICTORY_BY_KO_KTO_OR_DQ","VICTORY_BY_DECISION","DRAW"],"Bundesliga":[
++{"ATP":["MONEY","SPREAD","TOTAL","MONEYLINE_3_WAY_WIN","MONEYLINE_3_WAY_DRAW","TO_ADVANCE","TEAM_TOTAL"],"Boxing":["MONEY","SPREAD","TOTAL","MONEYLINE_3_WAY_WIN","MONEYLINE_3_WAY_DRAW","TO_ADVANCE","TEAM_TOTAL","GO_THE_DISTANCE","VICTORY_BY_KO_KTO_OR_DQ","VICTORY_BY_DECISION","DRAW"],"Bundesliga":[
+```
+
+## Changed: data/novig-market-types.json
+```diff
+-["CUSTOM","MONEY","SPREAD","TOTAL","1X2","MONEYLINE_3_WAY_WIN","MONEYLINE_3_WAY_DRAW","TO_ADVANCE","TEAM_TOTAL","MONEY_1H","SPREAD_1H","TOTAL_1H","TOUCHDOWNS","SAVES","PASSING_TOUCHDOWNS","PASSING_AND_RUSHING_YARDS","KICKING_POINTS","INTERCEPTIONS_THROWN","TACKLES_ASSISTS","FIELD_GOALS_MADE","RUSHI
++["CUSTOM","MONEY","SPREAD","TOTAL","1X2","MONEYLINE_3_WAY_WIN","MONEYLINE_3_WAY_DRAW","TO_ADVANCE","TEAM_TOTAL","MONEY_1H","SPREAD_1H","TOTAL_1H","TOUCHDOWNS","SAVES","PASSING_TOUCHDOWNS","PASSING_AND_RUSHING_YARDS","KICKING_POINTS","INTERCEPTIONS_THROWN","TACKLES_ASSISTS","FIELD_GOALS_MADE","RUSHI
 ```
 
 ## Changed: data/sharpapi-health.json
 ```diff
--{"newest_odds_age_s":16,"status":"ok"}
-+{"newest_odds_age_s":2,"status":"ok"}
+-{"newest_odds_age_s":2,"status":"ok"}
++{"newest_odds_age_s":0,"status":"ok"}
 ```
 
 ## Changed: data/sxbet-leagues.json
 ```diff
--{"status":"success","data":[{"leagueId":1,"label":"NBA","sportId":1,"popularity":3924290.149177,"eventsByType":{"first-half-lines":11,"first-period-lines":6,"game-lines":22,"second-period-lines":6,"third-period-lines":6}},{"leagueId":246,"label":"NCAAF","sportId":8,"popularity":2361942.137149,"even
-+{"status":"success","data":[{"leagueId":1,"label":"NBA","sportId":1,"popularity":4605366.069127,"eventsByType":{"first-half-lines":13,"first-period-lines":8,"game-lines":25,"second-period-lines":8,"third-period-lines":8}},{"leagueId":246,"label":"NCAAF","sportId":8,"popularity":2525420.038426,"even
+-{"status":"success","data":[{"leagueId":1,"label":"NBA","sportId":1,"popularity":4605366.069127,"eventsByType":{"first-half-lines":13,"first-period-lines":8,"game-lines":25,"second-period-lines":8,"third-period-lines":8}},{"leagueId":246,"label":"NCAAF","sportId":8,"popularity":2525420.038426,"even
++{"status":"success","data":[{"leagueId":1,"label":"NBA","sportId":1,"popularity":5254821.852588,"eventsByType":{"first-half-lines":11,"first-period-lines":8,"game-lines":21,"second-period-lines":8,"third-period-lines":8}},{"leagueId":1197,"label":"UEFA Nations League","sportId":5,"popularity":33955
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/api-keys/create-api-key.md
+```diff
+->  Endpoint for creating a new API key with a user-provided public key.  This endpoint allows users with Premier or Market Maker API usage levels to create API keys by providing their own RSA or Ed25519 public key in PEM format. The platform will use this public key to verify signatures on API requ
++>  Endpoint for creating a new API key with a user-provided public key.  This endpoint is available on every API usage tier. Provide your own RSA or Ed25519 public key in PEM format. The platform will use this public key to verify signatures on API requests: RSA-PSS with SHA-256 for RSA keys, Ed255
+-      description: ' Endpoint for creating a new API key with a user-provided public key.  This endpoint allows users with Premier or Market Maker API usage levels to create API keys by providing their own RSA or Ed25519 public key in PEM format. The platform will use this public key to verify sign
++      description: ' Endpoint for creating a new API key with a user-provided public key.  This endpoint is available on every API usage tier. Provide your own RSA or Ed25519 public key in PEM format. The platform will use this public key to verify signatures on API requests: RSA-PSS with SHA-256 f
+-            Forbidden - insufficient API usage level, or fcm_subtrader_id from a
+-            non-FCM caller
++            Forbidden - the calling API key lacks the `write` scope, or
++            fcm_subtrader_id from a non-FCM caller
+-            Conflict - the bound FCM subtrader is not yet visible in the
+-            credential registry; retry after the subtrader create propagates
++            Conflict - the account already holds the maximum number of directly
++            managed API keys, 100 in production (code
++            `MAXIMUM_NUMBER_OF_API_KEYS_REACHED`); or the bound FCM subtrader is
++            not yet visible in the credential registry, in which case retry
++            after the subtrader create propagates
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/api-keys/generate-api-key.md
+```diff
+->  Endpoint for generating a new API key with an automatically created key pair.  This endpoint generates a key pair of the requested key_type (RSA when omitted). The public key is stored on the platform, while the private key is returned to the user and must be stored securely. The private key can
++>  Endpoint for generating a new API key with an automatically created key pair.  This endpoint generates a key pair of the requested key_type (RSA when omitted). The public key is stored on the platform, while the private key is returned to the user and must be stored securely. The private key can
+-      description: ' Endpoint for generating a new API key with an automatically created key pair.  This endpoint generates a key pair of the requested key_type (RSA when omitted). The public key is stored on the platform, while the private key is returned to the user and must be stored securely. T
++      description: ' Endpoint for generating a new API key with an automatically created key pair.  This endpoint generates a key pair of the requested key_type (RSA when omitted). The public key is stored on the platform, while the private key is returned to the user and must be stored securely. T
+-          description: Forbidden - fcm_subtrader_id requires an FCM member caller
++          description: >-
++            Forbidden - the calling API key lacks the `write` scope, or
++            fcm_subtrader_id requires an FCM member caller
+-            Conflict - the bound FCM subtrader is not yet visible in the
+-            credential registry; retry after the subtrader create propagates
++            Conflict - the account already holds the maximum number of directly
++            managed API keys, 100 in production (code
++            `MAXIMUM_NUMBER_OF_API_KEYS_REACHED`); or the bound FCM subtrader is
++            not yet visible in the credential registry, in which case retry
++            after the subtrader create propagates
 ```
 
 ## Changed: kalshi/docs.kalshi.com/api-reference/communications/create-rfq.md
 ```diff
-->  Endpoint for creating a new RFQ. You can have a maximum of 100 open RFQs at a time.
-+>  Endpoint for creating a new RFQ. You can have a maximum of 100 open RFQs at a time. Creating one more returns 429 with code `open_rfq_limit_exceeded`; unlike request-rate limiting, retrying does not help until some of your RFQs close or expire. An RFQ on a market that is not open returns 400 wit
--      description: ' Endpoint for creating a new RFQ. You can have a maximum of 100 open RFQs at a time.'
-+      description: ' Endpoint for creating a new RFQ. You can have a maximum of 100 open RFQs at a time. Creating one more returns 429 with code `open_rfq_limit_exceeded`; unlike request-rate limiting, retrying does not help until some of your RFQs close or expire. An RFQ on a market that is not op
-+        '429':
-+          $ref: '#/components/responses/RateLimitError'
-+    RateLimitError:
-+      description: >-
-+        Rate limit exceeded. The default cost is 10 tokens per request. Use GET
-+        /trade-api/v2/account/endpoint_costs to list non-default endpoint costs.
-+      content:
-+        application/json:
+-          description: Whether to delete existing RFQs as part of this RFQ's creation
++          description: >-
++            Whether to close your older open RFQs to make room for this one.
++            When true, the oldest open RFQs on the subaccount are closed, on any
++            market, until at most two remain open including this one. An RFQ
++            with a confirmed quote, or with an accepted quote still inside its
++            confirmation window, is never closed, so the RFQ that stays open is
++            not always the newest. If too few RFQs can be closed, the request
++            fails with `expired`. It also skips the one-open-RFQ-per-market
++            check.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/estimate-portfolio-maintenance-margin.md
+```diff
+-        - quantity
+-            non-zero.
++            non-zero. Provide `quantity` or `quantity_fp`.
++        quantity_fp:
++          type: string
++          description: >-
++            Signed contract count as a fixed-point string with at most two
++            decimal places (e.g. "0.25", "-1.50"); positive long, negative
++            short. Must be non-zero and at most 1000000 in magnitude, and must
++            equal `quantity` when both are given.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/events/get-event.md
+```diff
+-          description: Time when this market is expected to expire
+-        expiration_time:
+-          type: string
+-          format: date-time
+-          deprecated: true
+-          x-go-type-skip-optional-pointer: true
++          description: >-
++            Time when this market is expected to expire. Never later than
++            `latest_expiration_time`.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/events/get-events.md
+```diff
+-          description: Time when this market is expected to expire
+-        expiration_time:
+-          type: string
+-          format: date-time
+-          deprecated: true
+-          x-go-type-skip-optional-pointer: true
++          description: >-
++            Time when this market is expected to expire. Never later than
++            `latest_expiration_time`.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/events/get-multivariate-events.md
+```diff
+-          description: Time when this market is expected to expire
+-        expiration_time:
+-          type: string
+-          format: date-time
+-          deprecated: true
+-          x-go-type-skip-optional-pointer: true
++          description: >-
++            Time when this market is expected to expire. Never later than
++            `latest_expiration_time`.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/exchange/get-exchange-status.md
+```diff
+->  Endpoint for getting the exchange status.
++> Endpoint for getting the exchange status.
++
++The top-level fields describe the default exchange index (0). Read the flags only from a 200 response. When the status of the default index cannot be read, the response is a 500, 503 or 504; its body can be an `ExchangeStatus` with `exchange_active` and `trading_active` set to `false`, or an error 
++
++In `exchange_index_statuses` on a 200 response, an index other than 0 whose status request failed or timed out is reported with all of its flags `false`. Read the status again before treating a single `false` reading for one index as a pause.
++
+-      description: ' Endpoint for getting the exchange status.'
++      description: >
++        Endpoint for getting the exchange status.
++
++
++        The top-level fields describe the default exchange index (0). Read the
++        flags only from a 200 response. When the status of the default index
++        cannot be read, the response is a 500, 503 or 504; its body can be an
++        `ExchangeStatus` with `exchange_active` and `trading_active` set to
++        `false`, or an error object, and in neither case does it mean the
++        exchange is paused.
++
++
++        In `exchange_index_statuses` on a 200 response, an index other than 0
++        whose status request failed or timed out is reported with all of its
++        flags `false`. Read the status again before treating a single `false`
++        reading for one index as a pause.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/get-large-trader-positions.md
+```diff
+-> Positions of the authenticated clearing member that meet the CFTC large-trader reporting levels for a settlement day (17 CFR 15.03(b); each row's reportable_threshold is its market's level), plus exit-day positions that were reportable on the prior settlement day and are now below the threshold. 
++> Positions of the authenticated clearing member that meet the CFTC large-trader reporting levels for a settlement day (17 CFR 15.03(b); each row's reportable_threshold is its market's level), plus exit-day positions that were reportable on the prior settlement day and are now below the threshold. 
+-        exit reporting. See the CFTC's Large Trader Reporting Program
+-        (https://www.cftc.gov/IndustryOversight/MarketSurveillance/LargeTraderReportingProgram/index.htm)
+-        and reporting levels at 17 CFR 15.03
+-        (https://www.ecfr.gov/current/title-17/chapter-I/part-15).
++        exit reporting. See the [CFTC's Large Trader Reporting
++        Program](https://www.cftc.gov/IndustryOversight/MarketSurveillance/LargeTraderReportingProgram/index.htm)
++        and reporting levels at [17 CFR
++        15.03](https://www.ecfr.gov/current/title-17/chapter-I/part-15).
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/historical/get-historical-market-candlesticks.md
+```diff
+->  Endpoint for fetching historical candlestick data for markets that have been archived from the live data set. Time period length of each candlestick in minutes. Valid values: 1 (1 minute), 60 (1 hour), 1440 (1 day).
++>  Endpoint for fetching historical candlestick data for markets that have been archived from the live data set. Time period length of each candlestick in minutes. Valid values: 1 (1 minute), 60 (1 hour), 1440 (1 day). One request can span at most 5,000 periods: if the minutes between `start_ts` an
+-      description: ' Endpoint for fetching historical candlestick data for markets that have been archived from the live data set. Time period length of each candlestick in minutes. Valid values: 1 (1 minute), 60 (1 hour), 1440 (1 day).'
++      description: ' Endpoint for fetching historical candlestick data for markets that have been archived from the live data set. Time period length of each candlestick in minutes. Valid values: 1 (1 minute), 60 (1 hour), 1440 (1 day). One request can span at most 5,000 periods: if the minutes bet
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/historical/get-historical-market.md
+```diff
+-          description: Time when this market is expected to expire
+-        expiration_time:
+-          type: string
+-          format: date-time
+-          deprecated: true
+-          x-go-type-skip-optional-pointer: true
++          description: >-
++            Time when this market is expected to expire. Never later than
++            `latest_expiration_time`.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/historical/get-historical-markets.md
+```diff
+-          description: Time when this market is expected to expire
+-        expiration_time:
+-          type: string
+-          format: date-time
+-          deprecated: true
+-          x-go-type-skip-optional-pointer: true
++          description: >-
++            Time when this market is expected to expire. Never later than
++            `latest_expiration_time`.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/incentive-programs/get-incentives.md
+```diff
++        - name: series_ticker
++          in: query
++          required: false
++          description: Filter to one series' incentives.
 +          schema:
-+            $ref: '#/components/schemas/ErrorResponse'
++            type: string
++        - name: event_ticker
++          in: query
++          required: false
++          description: >-
++            Filter to one event's incentives. A perpetual's incentives belong to
++            no event.
++          schema:
++            type: string
++        series_ticker:
++          type: string
++          description: The series of the market associated with this incentive program
++        event_ticker:
++          type: string
++          description: >-
++            The event of the market associated with this incentive program;
++            empty for a perpetual
 ```
 
-## Changed: kalshi/docs.kalshi.com/api-reference/portfolio/get-all-subaccount-balances.md
+## Changed: kalshi/docs.kalshi.com/api-reference/market/batch-get-market-candlesticks.md
 ```diff
--> Gets balances for all subaccounts including the primary account. For an API key restricted to a subaccount, returns only that subaccount's balances across exchange indices.
-+> Returns balances for all subaccounts, including the primary account. Only existing subaccount and exchange index pairs are returned, including pairs with a zero balance. A pair can exist before it is funded. For an API key restricted to a subaccount, returns only that subaccount's balances.
--        Gets balances for all subaccounts including the primary account. For an
--        API key restricted to a subaccount, returns only that subaccount's
--        balances across exchange indices.
-+        Returns balances for all subaccounts, including the primary account.
-+        Only existing subaccount and exchange index pairs are returned,
-+        including pairs with a zero balance. A pair can exist before it is
-+        funded. For an API key restricted to a subaccount, returns only that
-+        subaccount's balances.
+-- Returns up to 10,000 candlesticks total across all markets
++- The request may cover at most 10,000 candlestick periods in total: the minutes between `start_ts` and `end_ts`, divided by `period_interval`, multiplied by the number of tickers. A larger request is rejected with 400 `bad_request` (the `details` field gives the requested and maximum counts) even 
+-        - Returns up to 10,000 candlesticks total across all markets
++        - The request may cover at most 10,000 candlestick periods in total: the
++        minutes between `start_ts` and `end_ts`, divided by `period_interval`,
++        multiplied by the number of tickers. A larger request is rejected with
++        400 `bad_request` (the `details` field gives the requested and maximum
++        counts) even if fewer candlesticks exist; the response is never
++        truncated
 ```
 
-## Changed: kalshi/docs.kalshi.com/api-reference/portfolio/get-balance.md
+## Changed: kalshi/docs.kalshi.com/api-reference/market/get-market-candlesticks.md
 ```diff
 +
-+For per-subaccount balances, use `GET /portfolio/subaccounts/balances`. It returns existing subaccount and exchange index pairs, so its entry count can differ from `balance_breakdown`. The breakdown uses portfolio valuation snapshots; separate requests may reflect different stages of transfer proce
-+        For per-subaccount balances, use `GET /portfolio/subaccounts/balances`.
-+        It returns existing subaccount and exchange index pairs, so its entry
-+        count can differ from `balance_breakdown`. The breakdown uses portfolio
-+        valuation snapshots; separate requests may reflect different stages of
-+        transfer processing.
++One request can span at most 5,000 periods. If the minutes between `start_ts` and `end_ts` divided by `period_interval` exceed 5,000, the request is rejected with 400 `bad_request` and the `details` field gives the requested and maximum counts. For example, 1-minute candlesticks are limited to abou
++
++The most recent candlesticks can be a few seconds behind the latest trades and quotes.
 +
 +
--            User balance breakdown per exchange instance, omitted only when
--            using a subaccount-restricted API key.
-+            Balance for every exchange index, summed across all subaccounts,
-+            including zero balances. Unaffected by the `subaccount` and
-+            `exchange_index` parameters. Omitted when access is restricted to a
-+            subaccount.
++        One request can span at most 5,000 periods. If the minutes between
++        `start_ts` and `end_ts` divided by `period_interval` exceed 5,000, the
++        request is rejected with 400 `bad_request` and the `details` field gives
++        the requested and maximum counts. For example, 1-minute candlesticks are
++        limited to about 3.5 days per request; split a longer range into several
++        requests. `start_ts` and `end_ts` must be in seconds; millisecond values
++        are rejected with 400 `bad_request`.
++
++
++        The most recent candlesticks can be a few seconds behind the latest
++        trades and quotes.
 ```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/market/get-market-orderbook.md
+```diff
+->  Endpoint for getting the current order book for a specific market.  The order book shows all active bid orders for both yes and no sides of a binary market. It returns yes bids and no bids only (no asks are returned). This is because in binary markets, a bid for yes at price X is equivalent to a
++>  Endpoint for getting the current order book for a specific market.  The order book shows all active bid orders for both yes and no sides of a binary market. It returns yes bids and no bids only (no asks are returned). This is because in binary markets, a bid for yes at price X is equivalent to a
+-      description: ' Endpoint for getting the current order book for a specific market.  The order book shows all active bid orders for both yes and no sides of a binary market. It returns yes bids and no bids only (no asks are returned). This is because in binary markets, a bid for yes at price X 
++      description: ' Endpoint for getting the current order book for a specific market.  The order book shows all active bid orders for both yes and no sides of a binary market. It returns yes bids and no bids only (no asks are returned). This is because in binary markets, a bid for yes at price X 
+-            Depth of the orderbook to retrieve (0 or negative means all levels,
+-            1-100 for specific depth)
++            Number of price levels to return per side, counted from the best
++            bid. Omit it or pass 0 for all levels; pass 1-100 for a specific
++            depth. Values below 0 or above 100 are rejected with 400.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/market/get-market.md
+```diff
+->  Endpoint for getting data about a specific market by its ticker. A market represents a specific binary outcome within an event that users can trade on (e.g., "Will candidate X win?"). Markets have yes/no positions, current prices, volume, and settlement rules.
++>  Endpoint for getting data about a specific market by its ticker. A market represents a specific binary outcome within an event that users can trade on (e.g., "Will candidate X win?"). Markets have yes/no positions, current prices, volume, and settlement rules. The response is cached for a short 
+-      description: ' Endpoint for getting data about a specific market by its ticker. A market represents a specific binary outcome within an event that users can trade on (e.g., "Will candidate X win?"). Markets have yes/no positions, current prices, volume, and settlement rules.'
++      description: ' Endpoint for getting data about a specific market by its ticker. A market represents a specific binary outcome within an event that users can trade on (e.g., "Will candidate X win?"). Markets have yes/no positions, current prices, volume, and settlement rules. The response is c
+-          description: Time when this market is expected to expire
+-        expiration_time:
+-          type: string
+-          format: date-time
+-          deprecated: true
+-          x-go-type-skip-optional-pointer: true
++          description: >-
++            Time when this market is expected to expire. Never later than
++            `latest_expiration_time`.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/market/get-markets.md
+```diff
++
++ Paging and ordering:
++ - When `event_ticker` or `tickers` is the only filter (no `status`, `series_ticker`, timestamp filter, `mve_filter` or `cursor`), every matching market is returned in one response, in no guaranteed order. `limit` is not applied and the returned `cursor` is empty.
++ - Otherwise results are sorted by creation time, newest first, with these exceptions. With `min_updated_ts` or `max_updated_ts` they are sorted by last update time, oldest first. When neither `event_ticker` nor `tickers` is supplied, `status=closed`, `min_close_ts` or `max_close_ts` sorts by close
++ - A market whose close time changes while you page through a listing sorted by close time can be skipped or returned twice. Deduplicate by `ticker`.
++ - A `cursor` that cannot be decoded is ignored and the first page is returned, with no error. Pass the cursor exactly as it was returned, and stop when the returned `cursor` is empty.
++
++ Responses are cached for a short time, so prices, sizes and `status` can lag the exchange by several seconds, and filtered listings can lag longer than a read of a single market. Use the [WebSocket API](https://docs.kalshi.com/websockets/websocket-connection) when you need current state.
++
++         Paging and ordering:
++         - When `event_ticker` or `tickers` is the only filter (no `status`, `series_ticker`, timestamp filter, `mve_filter` or `cursor`), every matching market is returned in one response, in no guaranteed order. `limit` is not applied and the returned `cursor` is empty.
++         - Otherwise results are sorted by creation time, newest first, with these exceptions. With `min_updated_ts` or `max_updated_ts` they are sorted by last update time, oldest first. When neither `event_ticker` nor `tickers` is supplied, `status=closed`, `min_close_ts` or `max_close_ts` sorts 
++         - A market whose close time changes while you page through a listing sorted by close time can be skipped or returned twice. Deduplicate by `ticker`.
++         - A `cursor` that cannot be decoded is ignored and the first page is returned, with no error. Pass the cursor exactly as it was returned, and stop when the returned `cursor` is empty.
++
++         Responses are cached for a short time, so prices, sizes and `status` can lag the exchange by several seconds, and filtered listings can lag longer than a read of a single market. Use the [WebSocket API](https://docs.kalshi.com/websockets/websocket-connection) when you need current state.
+-          description: Time when this market is expected to expire
+-        expiration_time:
+-          type: string
+-          format: date-time
+-          deprecated: true
+-          x-go-type-skip-optional-pointer: true
++          description: >-
++            Time when this market is expected to expire. Never later than
++            `latest_expiration_time`.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/market/get-multiple-market-orderbooks.md
+```diff
+-> Endpoint for getting the current order books for multiple markets in a single request. The order book shows all active bid orders for both yes and no sides of a binary market. It returns yes bids and no bids only (no asks are returned). This is because in binary markets, a bid for yes at price X 
++> Endpoint for getting the current order books for multiple markets in a single request. The order book shows all active bid orders for both yes and no sides of a binary market. It returns yes bids and no bids only (no asks are returned). This is because in binary markets, a bid for yes at price X 
+-        sizes. Each side shows price levels with their corresponding quantities
+-        and order counts, organized from best to worst prices. Returns one
+-        orderbook per requested market ticker.
++        sizes. Each side lists price levels as [price, quantity] pairs sorted by
++        price in ascending order, so the best (highest) bid is the last element.
++        Order counts are not returned. Returns one orderbook per requested
++        market ticker, in request order. A ticker that has no order book,
++        including a ticker that does not match any market, is returned with
++        empty arrays.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/market/get-trades.md
+```diff
++
++A `ticker` that does not match any market returns 200 with an empty `trades` list, not 404. A `cursor` that cannot be decoded is ignored and the first page is returned, so pass the cursor exactly as it was returned. `min_ts` and `max_ts` must be in seconds; millisecond values are rejected with 400 
++
++
++        A `ticker` that does not match any market returns 200 with an empty
++        `trades` list, not 404. A `cursor` that cannot be decoded is ignored and
++        the first page is returned, so pass the cursor exactly as it was
++        returned. `min_ts` and `max_ts` must be in seconds; millisecond values
++        are rejected with 400 `bad_request`.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/multivariate/create-market-in-multivariate-event-collection.md
+```diff
+-> Endpoint for creating an individual market in a multivariate event collection. This endpoint must be hit at least once before trading or looking up a market. Users are limited to 5000 creations per week.
++> Endpoint for creating an individual market in a multivariate event collection. This endpoint must be hit at least once before a combo market can be quoted or traded. If the same legs were created before, it returns the existing market, which does not count toward the limit; the legs are still val
+-        collection. This endpoint must be hit at least once before trading or
+-        looking up a market. Users are limited to 5000 creations per week.
++        collection. This endpoint must be hit at least once before a combo
++        market can be quoted or traded. If the same legs were created before, it
++        returns the existing market, which does not count toward the limit; the
++        legs are still validated again, so a selection that worked before can
++        later be rejected. On the production API, the standard limit is 5000 new
++        markets per user per rolling 7 days, counted both across all collections
++        and within each collection; over either limit the endpoint returns 429
++        `too_many_requests` until earlier creations pass the 7-day mark.
++        Ordinary request-rate limiting returns the same status and code. A leg
++        selection that cannot be combined returns 400 with `code`
++        `conflicting_leg_outcomes`, `duplicated_legs` or
++        `invalid_market_combination`.
+-          description: Time when this market is expected to expire
+-        expiration_time:
+-          type: string
+-          format: date-time
+-          deprecated: true
+-          x-go-type-skip-optional-pointer: true
++          description: >-
++            Time when this market is expected to expire. Never later than
++            `latest_expiration_time`.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/multivariate/get-multivariate-event-collection.md
+```diff
+-            passed as inputs to the Lookup and Create endpoints.
++            passed as inputs to the Create endpoint.
+-            passed into Lookup/Create affects the output. If false, the order
+-            does not matter.
++            passed into Create affects the output. If false, the order does not
++            matter.
+-            accepts multiple markets from the same event passed into
+-            Lookup/Create.
++            accepts multiple markets from the same event passed into Create.
+-            The minimum number of markets that must be passed into Lookup/Create
++            The minimum number of markets that must be passed into Create
+-            The maximum number of markets that must be passed into Lookup/Create
++            The maximum number of markets that must be passed into Create
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/multivariate/get-multivariate-event-collections.md
+```diff
+-            passed as inputs to the Lookup and Create endpoints.
++            passed as inputs to the Create endpoint.
+-            passed into Lookup/Create affects the output. If false, the order
+-            does not matter.
++            passed into Create affects the output. If false, the order does not
++            matter.
+-            accepts multiple markets from the same event passed into
+-            Lookup/Create.
++            accepts multiple markets from the same event passed into Create.
+-            The minimum number of markets that must be passed into Lookup/Create
++            The minimum number of markets that must be passed into Create
+-            The maximum number of markets that must be passed into Lookup/Create
++            The maximum number of markets that must be passed into Create
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/orders/amend-order-v2.md
+```diff
+-> Endpoint for amending the price, max fillable count, and/or expiration time of an existing event-market order. The request `count` is the updated total/max fillable count, equal to already filled count plus desired resting remaining count. This behavior matches the v1 amend endpoints; only the re
++> Endpoint for amending the price, max fillable count, and/or expiration time of an existing event-market order. The request `count` is the updated total/max fillable count, equal to already filled count plus desired resting remaining count. An amend that changes nothing returns `400` with code `AM
+-        desired resting remaining count. This behavior matches the v1 amend
+-        endpoints; only the request/response shape differs.
++        desired resting remaining count. An amend that changes nothing returns
++        `400` with code `AMEND_ORDER_NO_OP`. See [Order
++        Errors](/getting_started/order_errors).
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/orders/batch-cancel-orders-v2.md
+```diff
+-> Endpoint for cancelling a batch of event-market orders using the V2 response shape. To auto-route a cancellation, provide its `market_ticker` and omit `exchange_index` or set it to `-1`. The maximum batch size scales with your tier's write budget — see [Rate Limits and Tiers](/getting_started/rat
++> Endpoint for cancelling a batch of event-market orders using the V2 response shape. To auto-route a cancellation, provide its `market_ticker` and omit `exchange_index` or set it to `-1`. The maximum batch size scales with your tier's write budget — see [Rate Limits and Tiers](/getting_started/rat
+-        Tiers](/getting_started/rate_limits).
++        Tiers](/getting_started/rate_limits). The batch is not atomic: the `200`
++        response carries one entry per order, and a cancellation that failed has
++        an `error` object and `reduced_by` of `0.00`. An entry error with a
++        timeout or unavailable code does not prove the order was not cancelled.
++        Some checks reject the whole batch before any cancellation is sent. See
++        [Order Errors](/getting_started/order_errors#batch-requests).
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/orders/batch-create-orders-v2.md
+```diff
+-> Endpoint for submitting a batch of event-market orders using the V2 request/response shape. The maximum batch size scales with your tier's write budget — see [Rate Limits and Tiers](/getting_started/rate_limits).
++> Endpoint for submitting a batch of event-market orders using the V2 request/response shape. The maximum batch size scales with your tier's write budget — see [Rate Limits and Tiers](/getting_started/rate_limits). Orders are processed one at a time in request order and the batch is not atomic: a `
+-        Tiers](/getting_started/rate_limits).
++        Tiers](/getting_started/rate_limits). Orders are processed one at a time
++        in request order and the batch is not atomic: a `201` response carries
++        one entry per order, and an order that failed has an `error` object
++        (`code`, `message`, `details`) in place of `order_id`. An entry error
++        with a timeout or unavailable code does not prove the order was not
++        placed. Some checks reject the whole batch before any order is sent. See
++        [Order Errors](/getting_started/order_errors#batch-requests) for those
++        cases and for the error body.
++          description: >-
++            Optional client-assigned ID, up to 64 characters from letters,
++            digits and `_ - : + = /`. It must be unique per subaccount on the
++            market's exchange shard while the order is open. See [Order
++            Errors](/getting_started/order_errors#client-order-ids).
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/orders/cancel-order-v2.md
+```diff
+-> Endpoint for cancelling event-market orders using the V2 response shape. To auto-route the cancellation, provide `market_ticker` and omit `exchange_index` or set it to `-1`. Returns `{order_id, client_order_id, reduced_by}` rather than a full order object.
++> Endpoint for cancelling event-market orders using the V2 response shape. To auto-route the cancellation, provide `market_ticker` and omit `exchange_index` or set it to `-1`. Returns `{order_id, client_order_id, reduced_by}` rather than a full order object. A cancellation sent to an exchange shard
+-        reduced_by}` rather than a full order object.
++        reduced_by}` rather than a full order object. A cancellation sent to an
++        exchange shard other than the one the order rests on returns `404`, even
++        though the order is still resting; see [Order
++        Errors](/getting_started/order_errors#requests-sent-to-the-wrong-exchange-shard).
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/orders/create-order-v2.md
+```diff
+-> Endpoint for submitting event-market orders using the V2 request/response shape (single-book `bid`/`ask` side and fixed-point dollar prices). The legacy `/portfolio/orders` endpoint will be deprecated no earlier than May 6, 2026 — clients should migrate to this path.
++> Endpoint for submitting event-market orders using the V2 request/response shape (single-book `bid`/`ask` side and fixed-point dollar prices). The legacy `/portfolio/orders` write endpoints (create, cancel, amend, decrease and their batch forms) have been removed and now return `410 Gone` with cod
+-        dollar prices). The legacy `/portfolio/orders` endpoint will be
+-        deprecated no earlier than May 6, 2026 — clients should migrate to this
+-        path.
++        dollar prices). The legacy `/portfolio/orders` write endpoints (create,
++        cancel, amend, decrease and their batch forms) have been removed and now
++        return `410 Gone` with code `deprecated_v1_order_endpoint`; use this
++        path instead. A `201` means the order was accepted, not that it is
++        resting: check `remaining_count`. See [Order
++        Errors](/getting_started/order_errors) for the error codes this endpoint
++        returns.
++          description: >-
++            Optional client-assigned ID, up to 64 characters from letters,
++            digits and `_ - : + = /`. It must be unique per subaccount on the
++            market's exchange shard while the order is open. See [Order
++            Errors](/getting_started/order_errors#client-order-ids).
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/orders/get-order.md
+```diff
+->  Endpoint for getting a single order.
++>  Endpoint for getting a single order. Order reads are updated asynchronously after the matching engine processes a write, so an order created, amended or cancelled moments ago can briefly return `404 not_found` or its previous state. The response of the write itself is the only immediate result; 
+-      description: ' Endpoint for getting a single order.'
++      description: ' Endpoint for getting a single order. Order reads are updated asynchronously after the matching engine processes a write, so an order created, amended or cancelled moments ago can briefly return `404 not_found` or its previous state. The response of the write itself is the only 
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/portfolio/create-subaccount.md
+```diff
+-> Creates a new subaccount for the authenticated user. This endpoint is available to all users on the Advanced API tier and above. Subaccounts are numbered sequentially starting from 1. Maximum 63 numbered subaccounts per user (64 including the primary account).
++> Creates a new subaccount for the authenticated user. This endpoint is available to all users on the Advanced API tier and above; on the Basic tier it returns 403 with code `subaccount_creation_requires_advanced_api_usage_level`. The demo environment does not enforce the tier requirement. Subaccou
+-        available to all users on the Advanced API tier and above. Subaccounts
+-        are numbered sequentially starting from 1. Maximum 63 numbered
+-        subaccounts per user (64 including the primary account).
++        available to all users on the Advanced API tier and above; on the Basic
++        tier it returns 403 with code
++        `subaccount_creation_requires_advanced_api_usage_level`. The demo
++        environment does not enforce the tier requirement. Subaccounts are
++        numbered sequentially starting from 1. Maximum 63 numbered subaccounts
++        per user (64 including the primary account).
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/portfolio/get-fills.md
+```diff
++Available to direct member accounts. FCM member accounts receive 403 with code `permission_denied` here and use `GET /fcm/fills` instead.
++
++        Available to direct member accounts. FCM member accounts receive 403
++        with code `permission_denied` here and use `GET /fcm/fills` instead.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/portfolio/get-settlements.md
+```diff
++Available to direct member accounts. FCM member accounts receive 403 with code `permission_denied`.
++
++        Available to direct member accounts. FCM member accounts receive 403
++        with code `permission_denied`.
+```
+
+## Changed: kalshi/docs.kalshi.com/api-reference/portfolio/intra-account-transfer.md
+```diff
++
++Naming a numbered subaccount requires the Advanced API tier or above; on the Basic tier the request returns 403 with code `subaccount_creation_requires_advanced_api_usage_level`.
++
++**Rate limit:** this endpoint has its own bucket, separate from the Read and Write budgets and the same on every tier. It refills at 600 tokens per minute and holds 600 tokens; at the default cost of 10 tokens that is 60 transfers per minute. A request over the limit returns 429.
++
++
++        Naming a numbered subaccount requires the Advanced API tier or above; on
++        the Basic tier the request returns 403 with code
++        `subaccount_creation_requires_advanced_api_usage_level`.
++
++
++        **Rate limit:** this endpoint has its own bucket, separate from the Read
+```
+(3 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/asyncapi.yaml
+```diff
+```
+(270 more changed lines)
 
 ## Changed: kalshi/docs.kalshi.com/changelog/index.md
 ```diff
-+
-+**November 12, 2026**
-+
-+Clarified how `GET /portfolio/balance` and `GET /portfolio/subaccounts/balances` list exchange indexes and aggregate subaccount balances. Documentation only; API behavior is unchanged.
-+
-+**November 12, 2026**
-+
-+`POST /communications/rfqs` returns specific error codes for two refusals that previously used generic ones. HTTP statuses are unchanged.
-+
-+| Refusal | Before | After |
-+| - | - | - |
-+| You already have 100 open RFQs | `429` `too_many_requests` | `429` `open_rfq_limit_exceeded` |
-+| The RFQ's market is not open | `400` `invalid_parameters` | `400` `rfq_market_not_open` |
-+
-+`open_rfq_limit_exceeded` is not request-rate limiting: retrying does not help until some of your RFQs close or expire. If you branch on `too_many_requests` or `invalid_parameters` for these cases, handle the new codes as well.
-+
-+On FIX, the `QuoteRequestReject` (AG) `Text<58>` for the same two refusals changes to `OPEN_RFQ_LIMIT_EXCEEDED` and `RFQ_MARKET_NOT_OPEN`. `QuoteRequestRejectReason<658>` stays `99` (Other).
-+
-+**November 12, 2026**
-+
-+When an order is rejected because the account has never been funded on the market's exchange index, the `insufficient_shard_balance` error's `details` now explain that API orders are not funded automatically. They also name the fix: fund the exchange index with [Intra Account Transfer](https://docs
 ```
+(145 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/fix-margin/authentication.md
+```diff
+```
+(16 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/fix-margin/error-handling.md
+```diff
+```
+(15 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/fix-margin/order-entry.md
+```diff
+```
+(36 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/getting_started/api_environments.md
+```diff
+```
+(10 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/getting_started/api_keys.md
+```diff
+```
+(72 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/getting_started/exchange_sharding.md
+```diff
+```
+(5 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/getting_started/maintenance_and_pauses.md
+```diff
+```
+(10 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/getting_started/market_lifecycle.md
+```diff
+```
+(1 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/getting_started/order_groups.md
+```diff
+```
+(10 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/getting_started/orderbook_responses.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/getting_started/pagination.md
+```diff
+```
+(27 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/getting_started/quick_start_authenticated_requests.md
+```diff
+```
+(3 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/getting_started/quick_start_create_order.md
+```diff
+```
+(13 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/getting_started/quick_start_market_data.md
+```diff
+```
+(12 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/getting_started/quick_start_websockets.md
+```diff
+```
+(38 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/getting_started/rate_limits.md
+```diff
+```
+(44 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/getting_started/rfqs.md
+```diff
+```
+(46 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/getting_started/subaccounts.md
+```diff
+```
+(27 more changed lines)
 
 ## Changed: kalshi/docs.kalshi.com/llms-full.txt
 ```diff
-- Endpoint for creating a new RFQ. You can have a maximum of 100 open RFQs at a time.
-+ Endpoint for creating a new RFQ. You can have a maximum of 100 open RFQs at a time. Creating one more returns 429 with code `open_rfq_limit_exceeded`; unlike request-rate limiting, retrying does not help until some of your RFQs close or expire. An RFQ on a market that is not open returns 400 with 
--Gets balances for all subaccounts including the primary account. For an API key restricted to a subaccount, returns only that subaccount's balances across exchange indices.
-+Returns balances for all subaccounts, including the primary account. Only existing subaccount and exchange index pairs are returned, including pairs with a zero balance. A pair can exist before it is funded. For an API key restricted to a subaccount, returns only that subaccount's balances.
-+
-+For per-subaccount balances, use `GET /portfolio/subaccounts/balances`. It returns existing subaccount and exchange index pairs, so its entry count can differ from `balance_breakdown`. The breakdown uses portfolio valuation snapshots; separate requests may reflect different stages of transfer proce
-+
-+**November 12, 2026**
-+
-+Clarified how `GET /portfolio/balance` and `GET /portfolio/subaccounts/balances` list exchange indexes and aggregate subaccount balances. Documentation only; API behavior is unchanged.
-+
-+**November 12, 2026**
-+
-+`POST /communications/rfqs` returns specific error codes for two refusals that previously used generic ones. HTTP statuses are unchanged.
-+
-+| Refusal | Before | After |
-+| - | - | - |
-+| You already have 100 open RFQs | `429` `too_many_requests` | `429` `open_rfq_limit_exceeded` |
-+| The RFQ's market is not open | `400` `invalid_parameters` | `400` `rfq_market_not_open` |
-+
-+`open_rfq_limit_exceeded` is not request-rate limiting: retrying does not help until some of your RFQs close or expire. If you branch on `too_many_requests` or `invalid_parameters` for these cases, handle the new codes as well.
-+
-+On FIX, the `QuoteRequestReject` (AG) `Text<58>` for the same two refusals changes to `OPEN_RFQ_LIMIT_EXCEEDED` and `RFQ_MARKET_NOT_OPEN`. `QuoteRequestRejectReason<658>` stays `99` (Other).
-+
-+**November 12, 2026**
-+
-+When an order is rejected because the account has never been funded on the market's exchange index, the `insufficient_shard_balance` error's `details` now explain that API orders are not funded automatically. They also name the fix: fund the exchange index with [Intra Account Transfer](/api-referen
-+
-+# Create Margin FCM Position Transfer
-+Source: https://docs.kalshi.com/margin-rest/fcm/create-margin-fcm-position-transfer
-+
-+/perps_openapi.yaml post /margin/fcm/positions/transfers
-+Endpoint for FCM members to move a perps position in one market from one of their subtraders
-+into a subtrader under their FCM's error account.
-+
-+**This endpoint must be enabled for your FCM by Kalshi.** Kalshi enables it by configuring the
-+error account that receives transferred positions and gives you that account's user id, which
-+prefixes `target_subtrader_id`. Contact Kalshi to enable it; until then, requests return 400.
-+Position transfers are also switched on per exchange; while they are off, requests return 409.
-+
-+- The destination is always your FCM's error account. `target_subtrader_id` picks the subtrader
-+  under it, which is created on first use.
-+- Each request moves one market for one source subtrader. To move many positions, send one
-+  request per subtrader and market.
-+- No cash moves when a transfer is booked. Both sides' positions and cost basis change as for a
-+  fee-free trade at `price`: the source closes at `price` and the error account opens at
-+  `price`. Both settle in the next settlement cycle: the source realizes the difference
-+  between `price` and the market's last settlement mark, and the error account's variation
-+  margin runs from `price` to the next settlement mark. To make a customer whole, use the
-+  price of the fill being reversed.
-+- `side` and `count` describe the position being moved: `long` moves a long of `count`
-+  contracts, `short` moves a short. `count` must be a whole number of contracts. The source's
-+  current position is not checked; moving more than it holds, or the other side, flips or
-+  grows its position.
-+- `client_transfer_id` makes the request idempotent per source subtrader: once a transfer
-+  with that id has been booked from `source_subtrader_id`, a later request with the same id
-+  from that subtrader, to any target, books nothing unless the exchange has restarted in
-+  between. The exchange checks the id only after it re-checks the transfer switch, trading
-+  status and both accounts' current risk, so a repeat returns 409 with error code
-+  `transfer_already_applied` only when it passes those checks. Otherwise it gets the error
-+  for the check it failed, such as 400 `insufficient_balance` once the earlier transfer has
-+  used the error account's margin, or 409 while trading is paused.
-+- After a timeout or 5xx, retry with the same id. `transfer_already_applied` confirms that the
-+  earlier attempt was booked. Any other error refuses only the retry and leaves the earlier
-+  attempt's outcome unknown: check the source subtrader's position before you send the
-+  transfer again under a new id.
-+- The exchange does not keep transfer ids across a restart, such as a maintenance window, so a
-+  retry sent after one can book the transfer a second time. If the exchange may have
-+  restarted since the first attempt, check the source subtrader's position before retrying,
-+  even with the same id.
-+- The market must have traded at least once and trading must not be paused; otherwise the
-+  request returns 409. Both accounts must also pass the exchange's risk checks for their
-+  post-transfer positions (available margin, FCM initial-margin caps, notional risk limits);
-+  a failed risk check returns 400 with the exchange's reason, such as `insufficient_balance`,
-+  and a blocked account returns 409.
-+- Transfers appear on the daily statement and in the `position_transfer_audit` report. They
-+  never appear as fills or in `trade_audit`.
-+
-+**Example.** A customer subtrader holds 10 long in `KXBTCPERP`, filled at $63,000. Send
-+`side` `long`, `count` `10`, `price` `63000.00`: the customer goes from 10 long to flat and the
-+error account subtrader from flat to 10 long, both at $63,000, with no cash moving.
-+
 ```
+(1815 more changed lines)
 
 ## Changed: kalshi/docs.kalshi.com/llms.txt
 ```diff
--- [Get All Subaccount Balances](https://docs.kalshi.com/api-reference/portfolio/get-all-subaccount-balances.md): Gets balances for all subaccounts including the primary account. For an API key restricted to a subaccount, returns only that subaccount's balances across exchange indices.
-+- [Get All Subaccount Balances](https://docs.kalshi.com/api-reference/portfolio/get-all-subaccount-balances.md): Returns balances for all subaccounts, including the primary account. Only existing subaccount and exchange index pairs are returned, including pairs with a zero balance. A pair can exist
--- [Create RFQ](https://docs.kalshi.com/api-reference/communications/create-rfq.md): Endpoint for creating a new RFQ. You can have a maximum of 100 open RFQs at a time.
-+- [Create RFQ](https://docs.kalshi.com/api-reference/communications/create-rfq.md): Endpoint for creating a new RFQ. You can have a maximum of 100 open RFQs at a time. Creating one more returns 429 with code `open_rfq_limit_exceeded`; unlike request-rate limiting, retrying does not help until some 
-+- [Create Margin FCM Position Transfer](https://docs.kalshi.com/margin-rest/fcm/create-margin-fcm-position-transfer.md): Endpoint for FCM members to move a perps position in one market from one of their subtraders into a subtrader under their FCM's error account.
 ```
+(41 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/margin.md
+```diff
+```
+(67 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/margin/price-banding.md
+```diff
+```
+(28 more changed lines)
 
 ## Changed: kalshi/docs.kalshi.com/openapi.yaml
 ```diff
-+        For per-subaccount balances, use `GET /portfolio/subaccounts/balances`. It returns existing subaccount and exchange index pairs, so its entry count can differ from `balance_breakdown`. The breakdown uses portfolio valuation snapshots; separate requests may reflect different stages of transf
-+
--      description: "Gets balances for all subaccounts including the primary account. For an API key restricted to a subaccount, returns only that subaccount's balances across exchange indices."
-+      description: "Returns balances for all subaccounts, including the primary account. Only existing subaccount and exchange index pairs are returned, including pairs with a zero balance. A pair can exist before it is funded. For an API key restricted to a subaccount, returns only that subaccount
--      description: ' Endpoint for creating a new RFQ. You can have a maximum of 100 open RFQs at a time.'
-+      description: ' Endpoint for creating a new RFQ. You can have a maximum of 100 open RFQs at a time. Creating one more returns 429 with code `open_rfq_limit_exceeded`; unlike request-rate limiting, retrying does not help until some of your RFQs close or expire. An RFQ on a market that is not op
-+        '429':
-+          $ref: '#/components/responses/RateLimitError'
--          description: 'User balance breakdown per exchange instance, omitted only when using a subaccount-restricted API key.'
-+          description: 'Balance for every exchange index, summed across all subaccounts, including zero balances. Unaffected by the `subaccount` and `exchange_index` parameters. Omitted when access is restricted to a subaccount.'
 ```
+(986 more changed lines)
 
-## Changed: oddspapi/docs.oddspapi.io/api-reference/concepts.md
+## Changed: kalshi/docs.kalshi.com/websockets/communications.md
 ```diff
--### sportId
--
--* Integer.
--* The **first two digits** embedded into several downstream IDs.
--* Discover via `/sports`.
--
--### tournamentId
--
--* Integer.
--* Belongs to exactly one sport.
--* Discover via `/tournaments`.
--
--### seasonId
--
--* Integer.
--* Belongs to exactly one tournament.
--* Discover via `/seasons`.
-+All three are integers, each belonging to exactly one parent:
-+
-+| ID | Discover via | Note |
-+| - | - | - |
-+| `sportId` | `/sports` | its **first two digits** are embedded into several downstream IDs |
-+| `tournamentId` | `/tournaments` | belongs to one sport |
-+| `seasonId` | `/seasons` | belongs to one tournament |
--> **TL;DR** — Every selection follows a fixed hierarchy: `marketType → period → handicap → side`, all baked into the `outcomeId` — so the same bet always resolves to the same `marketId` / `outcomeId`, addressed by coordinates rather than bookmaker name strings. The one part *not* in `outcomeId` is 
--
--For which market types, lines, periods, and player props are actually carried, see [market coverage](https://docs.oddspapi.io/coverage/markets.md).
--
--### How markets decompose (the deterministic hierarchy)
--
--Every `outcomeId` comes from a single, deterministic decomposition — OddsPapi splits each market into a fixed hierarchy:
--
--```
--marketType → period → handicap (line value / specifier) → side (outcome)   [+ optional player]
--```
--
--So "total goals over 2.5, full time" always lands on the same `marketId` / `outcomeId` across bookmakers and fixtures.
--
--| Level | Field | Meaning |
--| - | - | - |
--| 1 | `marketType` | The kind of market (`1x2`, `totals`, `spreads`, `spreads-european`, `bothteamsscore`, `drawnobet`, `oddeven`, …). |
--| 2 | `period` | The segment the market applies to (`fulltime`, `p1`, `p2`). |
--| 3 | `handicap` | The line value / specifier (e.g. `2.5`, `-0.25`). **Each distinct line value is its own `marketId`.** `0.0` for lineless markets like `1x2`. |
--| 4 | `outcomeName` | The **side** of the market (`Over` / `Under`, `1` / `X` / `2`, `Yes` / `No`, …). |
--
--> **Key rule:** because every line value gets its **own** `marketId`, "Over 2.5" and "Over 3.5" are *different* markets — not two outcomes of one market. Within a single `marketId`, the outcomes are only the **sides** of that exact line (e.g. `Over 2.5` + `Under 2.5`).
-+> **TL;DR** — A market is `sportId × marketType × period × handicap`; add the side and you have the `outcomeId`. Everything is baked into the id, so the same bet always resolves to the same `marketId` / `outcomeId` — addressed by coordinates, never by bookmaker name strings. The one part *not* in t
-+
-+For which market types, lines, periods and player props are actually carried, see [market coverage](https://docs.oddspapi.io/coverage/markets.md).
-+
-+### The identity of a market (the strict rule)
-+
-+A market is identified by exactly four cells, and an outcome adds a fifth:
-+
-+```
-+market   sportId × marketType × period × handicap
-+outcome  sportId × marketType × period × handicap × outcomeName
-+```
-+
-+| Cell | Meaning |
-+| - | - |
-+| `marketType` | the kind of question (`1x2`, `totals`, `spreads`, `bothteamsscore`, `oddeven`, …) |
-+| `period` | the scope it applies to (`fulltime`, `result`, `p1`, `p1o6`, …) |
-+| `handicap` | the line / specifier (`2.5`, `-0.25`); `0.0` for a lineless market |
-+| `outcomeName` | the side (`Over`/`Under`, `1`/`X`/`2`, `Yes`/`No`, …) |
-+
-+Nothing else distinguishes a market — in particular **not its name**. Two consequences, both audited against the published catalogue on every release:
-+
-+**Each line is its own market.** "Over 2.5" and "Over 3.5" are *different* `marketId`s, not two outcomes of one market. Within one `marketId` the outcomes are only the sides of that exact line (`Over 2.5` + `Under 2.5`).
-+
-+**One structure per `marketType` and `period`, with a complete side set.** The same type at the same scope always offers the same sides, and those sides are the whole probability space:
-+
-+| if the market has | it also has |
-+| - | - |
-+| `Yes` | `No` |
-+| `Over` | `Under` at that same `handicap` |
-+| `Odd` | `Even` |
-+| `1` | `2`, plus `X` wherever the market is three-way and a draw is possible |
-+| `1X` | `12` and `2X` |
-+| a `-team1` marketType | its `-team2` sibling at the same `period` and `handicap` |
-+
-+Two notes on applying this. Completeness is **per line** — an Over/Under ladder is many markets, so check the pair at a line, not across the ladder. And the band families are complete *without* an opposite, because their shape is a partition rather than a pair: `correctscore` (`a:b` cells), `winnin
-+
-+This same key is what composes the `oddsId` — see [Odds identifiers](#odds-identifiers).
--> A representative slice of the real soccer market map. Each `marketId` equals its first `outcomeId`, and each line value is its own market:
-+> Each `marketId` equals its first `outcomeId`, and each line value is its own market:
--> | 10122 | European Handicap | `spreads-european` | fulltime | 6.0 | 10122 | 1 |
--> | 10122 | European Handicap | `spreads-european` | fulltime | 6.0 | 10123 | X |
--> | 10122 | European Handicap | `spreads-european` | fulltime | 6.0 | 10124 | 2 |
--> | 10208 | First Half Result | `1x2` | p1 | 0.0 | 10209 | X |
--> | 10208 | First Half Result | `1x2` | p1 | 0.0 | 10210 | 2 |
--> | 10214 | Draw No Bet | `drawnobet` | fulltime | 0.0 | 10214 | 1 |
--> | 10214 | Draw No Bet | `drawnobet` | fulltime | 0.0 | 10215 | 2 |
--> | 10222 | Odd Even Full Time | `oddeven` | fulltime | 0.0 | 10222 | Odd |
--> | 10222 | Odd Even Full Time | `oddeven` | fulltime | 0.0 | 10223 | Even |
--> Reading the first row: `marketType=1x2`, `period=fulltime`, `handicap=0.0`, `outcomeName=1` — the home side of the full-time match-result market.
-+> Reading the first row: `marketType=1x2`, `period=fulltime`, `handicap=0.0`, `outcomeName=1` — the home side of the full-time match-result market. Note `106` and `1010` are the same question at two lines, hence two markets.
--`marketLength` is the **number of outcomes under a `marketId`** — the count of sides that can be bet on, which together form the complete probability space (their implied probabilities sum to ≈ 1 before margin removal). Examples: `moneyline` → 2, `1x2` → 3, `winningmargin` → the number of margin ba
-+The size of **one complete probability space** where that size is fixed — the sides whose implied probabilities sum to ≈ 1 before margin removal (`moneyline` → 2, `1x2` → 3). **`0` means variable-length** (`correctscore`, `winningmargin`).
-+
-+It is **not** a count of the outcome rows you received. The field is frozen metadata, so a market whose missing side was appended after publication still reports its original value — 26 markets today. **To count sides, read the outcome list.**
--### participantId
--
--* Integer.
--* Represents teams or competitors in fixtures.
--* Discover via `/participants`.
--
--### playerId
--
--* Integer.
--* Used for player proposition markets.
--* `playerId = 0` typically represents a non-player market.
--* Discover via `/players`.
-+Both integers: `participantId` identifies teams or competitors in fixtures (discover via `/participants`); `playerId` ties odds to a player for player prop markets, with `0` meaning a non-player market (discover via `/players`).
-+### Why the `oddsId` is static (and what that saves you)
-+
-+The key is the market identity rule plus one extra coordinate:
-+
-+```
-+{fixtureId} : {bookmaker} : {outcomeId} : {playerId}
-+```
-+
-+| Segment | What it encodes |
-+| - | - |
-+| `outcomeId` | sportId × marketType × period × handicap × side |
-+| `playerId` | the player (`0` for non-player markets) |
-+
-+Because all of that is *in the id*, a price is self-describing the moment it arrives:
-+
-+* **No joins on the hot path.** `outcomeId` `1010` *is* "soccer, total goals, full time, line 2.5, Over" — nothing is resolved at read time.
-+* **The whole dictionary fits in memory** — 156,757 outcome rows, \~17.8 MB as CSV. Load once, resolve any id with a hash lookup.
-+* **Integer keys, minimal payload.** No market name, period label, or line string repeated per message; cross-book comparison is `GROUP BY fixtureId, outcomeId` and nothing else.
-+* **Arbitrage spaces are explicit.** Each line is its own `marketId` and 97.8% of markets are 2-sided — sum the implied probabilities under one `marketId` and the space is complete.
-+* **Stable and cacheable.** Ids are append-only and never renumbered — safe to embed in code or a schema. The 2026-11-16 release re-filed 33,792 outcomes onto new `marketType` / `period` values with **zero** id changes.
-+* **Player props don't inflate the id space.** The player is a coordinate of the price, not the taxonomy — one ladder serves every roster, and a transfer never churns an id.
-+
-+**The one cost:** a line a bookmaker quotes *outside* our published ladder has no id to land on and is dropped. That is why ladders are generated mechanically per family (floor `0.5`, ceiling = measured maximum + `2.5`) rather than decided per market.
-+
--### Recommendation
--
--* Store timestamps as integers.
--* Rule of thumb: **schedule times are seconds, odds-update times are milliseconds.**
--* Normalize internally only if needed.
-+Store timestamps as integers. Rule of thumb: **schedule times are seconds, odds-update times are milliseconds.**
--* **marketLength** — Number of outcomes under a `marketId`: the sides that can be bet on, together summing to a probability of ≈ 1.
-+* **marketLength** — The size of one complete probability space where that size is fixed (`0` = variable-length). Frozen metadata, **not** a count of the outcome rows you received — read the outcome list for that.
 ```
+(362 more changed lines)
 
-## Changed: oddspapi/docs.oddspapi.io/api-reference/enumerations.md
+## Changed: kalshi/docs.kalshi.com/websockets/connection-keep-alive.md
 ```diff
-+| `4` | `removed` | no | Wrongly issued; withdrawn from the schedule. |
--* Status only ever moves **forward** (`0 → 1 → 2`, or any state → `3`); it never goes backwards.
-+* Status only ever moves **forward** (`0 → 1 → 2`, any state → `3`, any state → `4`); it never goes backwards.
-+* **`3` vs `4`.** `cancelled` is a *real* event that will not be played — called off, abandoned, postponed indefinitely. `removed` means the entity **should never have existed**: a provider-side duplicate, a test entry, an event that was not real. Nothing was called off.
-+* **`4` outranks `3`.** Any state can move to `4`, including `3`, and `4` is terminal — once an entity is `removed` it stays removed. Treat it as final and stop polling it. Scores and settlement are never published for a `4`.
-+| `p1o1+p1o2` … `p1o1+…+p1o20` | **First *N* overs** of an innings — cricket, innings 1–2, *N* up to 20. Spelled out as the sum of its member overs, like every other combined segment. |
--Sub-period keys follow one shape: `p{X}{axis}{Y}` — unit *Y* within period *X*. Two axes exist today.
-+Sub-period keys follow one shape: `p{X}{axis}{Y}` — unit *Y* within period *X*. Three axes exist today, and one of them nests a second level.
-+| `p1o1`, `p2o1` | **`o` = over.** Over *Y* within innings *X* — cricket. `p1` remains the whole innings. |
-+| `p1o1b1` … `p2o20b6` | **`b` = ball**, nested inside an over: delivery *d* of over *n* of innings *i* (`p{i}o{n}b{d}`). Innings 1–2, overs 1–20, balls 1–6. The only two-level sub-period key — `p{X}{axis}{Y}` alone does not describe it. |
--> The period vocabulary is **append-only**: new sports may introduce additional keys, and new axes may join `g` and `r`
--> (darts legs are a likely next one). Never hard-code an exhaustive list — handle unknown period keys gracefully.
--> Parsing \`p{X}
-->
--> {axis}
-->
--> {Y}\` structurally is safer than matching a fixed set of strings.
-+> The period vocabulary is **append-only**: new sports may introduce additional keys, and new axes may join `g`, `r`
-+> and `o` (darts legs are a likely next one). Never hard-code an exhaustive list — handle unknown period keys
-+> gracefully. Parsing structurally is safer than matching a fixed set of strings — but note that an axis may nest a
-+> second level, as cricket's `b` does inside `o`, so match the axes you know rather than assuming a single
-+> `p{X}{axis}{Y}` shape.
 ```
+(34 more changed lines)
 
-## Changed: oddspapi/docs.oddspapi.io/api-reference/rate-limits.md
+## Changed: kalshi/docs.kalshi.com/websockets/market-and-event-lifecycle.md
 ```diff
--**Limit:** **100 requests / minute**
-+**Limit:** **200 requests / minute** (default)
 ```
+(104 more changed lines)
 
-## Changed: oddspapi/docs.oddspapi.io/api-reference/reliability.md
+## Changed: kalshi/docs.kalshi.com/websockets/market-positions.md
 ```diff
--| Pinnacle | 0.38 s | 0.38 s | measured |
-+| Pinnacle | 0.28 s | 0.28 s | measured |
 ```
+(25 more changed lines)
 
-## Changed: oddspapi/docs.oddspapi.io/changelog/index.md
+## Changed: kalshi/docs.kalshi.com/websockets/market-ticker.md
 ```diff
-+
-+***
-+
-+## 2026-11-16
-+
-+Market catalogue update. **Data only** — no endpoint, field or type changes. Refetch
-+`GET /markets` once on or after this date and you are current.
-+
-+### ✨ Added
-+
-+* **7,882 `outcomeId`s across 3,733 new markets** and **33 new `marketType` values** —
-+  almost all soccer: shots, saves, yellow and red cards, substitutions, own goals,
-+  penalties awarded and missed (as totals / team totals / 1X2 / race-to), plus
-+  `firstcorner`, `lastcorner`, `penaltyawarded`, `1up`, `players-firstcard`.
-+* **280 new `period` keys**, all cricket over scopes: `p{i}o{n}` (after over *n* of
-+  innings *i*), `p{i}o{n}b{d}` (delivery *d*), `p{i}o1+…+p{i}oN` (first *N* overs).
-+  The vocabulary in use goes 280 → 560 and stays append-only; `p1` is still the
-+  whole innings.
-+
-+### ⚠️ Breaking
-+
-+* **300 cricket `marketType` values retired; their markets re-filed onto the new over
-+  periods.** The over count was in the type (`12-overs-3-delivery-team1`) and is now a
-+  `period`, so those markets carry a plain `totals` / `teamtotals-team1` /
-+  `teamtotals-team2`. **33,792 outcomes change `marketType` and `period` together**;
-+  `outcomeId`, `marketId`, `handicap`, both names and `marketLength` are untouched, so
-+  nothing is lost and no price needs re-mapping.
-+
-+  | before | after |
-+  | - | - |
-+  | `6-overs` @ `p1` | `totals` @ `p1o6` |
-+  | `12-overs-team1` @ `p2` | `teamtotals-team1` @ `p2o12` |
-+  | `12-overs-3-delivery-team2` @ `p1` | `teamtotals-team2` @ `p1o12b3` |
-+
-+  If you key cricket over markets on `marketType`, switch to `period`. This is the rule
-+  the rest of the catalogue follows: **a market's scope lives in `period`, never in its
-+  type or name.**
-+
-+* **60 ice-hockey player markets move from `fulltime+overtime` to `result`.** `Over Under
-+  Player Saves (incl. overtime)` (50 markets) and `Over Under Player Blocks (incl.
-+  overtime)` (10) were published at the `fulltime+overtime` scope; both now carry
-+  `result`. **120 outcomes change `period` only** — `outcomeId`, `marketId`, `handicap`,
-+  both names and `marketLength` are untouched, so no price needs re-mapping. If you key
-+  those two on `period`, switch to `result`.
-+
-+* **46 markets gain their missing side** — `Yes`-only markets now offer `Yes` and `No`,
-+  the `No` appended under the same `marketId`. Re-read the outcome list rather than a
-+  cached count. `marketLength` is deliberately not updated: it is frozen metadata for a
-+  market's intended probability space, not the length of the array you received — see
-+  [marketLength](https://docs.oddspapi.io/api-reference/concepts.md#marketlength).
-+
-+### 🔁 Changed
-+
-+* **Market uniqueness is now strict and enforced.** A market is
-+  `sportId × marketType × period × handicap`; an outcome adds `outcomeName` — the same
-+  coordinates that compose the `oddsId`. So one `marketType` at one `period` has one
-+  structure, and its sides are always the complete space (`Yes`⇒`No`, `Over`⇒`Under` at
-+  that line, `-team1`⇒`-team2`, three-way carries its draw). Audited every release. See
-+  [Markets and outcomes](https://docs.oddspapi.io/api-reference/concepts.md#the-identity-of-a-market-the-strict-rule).
-+
-+***
-+
-+## 2026-11-12
 ```
-(24 more changed lines)
+(50 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/websockets/multivariate-market-and-event-lifecycle.md
+```diff
+```
+(68 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/websockets/order-group-updates.md
+```diff
+```
+(12 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/websockets/orderbook-updates.md
+```diff
+```
+(50 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/websockets/public-trades.md
+```diff
+```
+(23 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/websockets/user-fills.md
+```diff
+```
+(28 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/websockets/user-orders.md
+```diff
+```
+(50 more changed lines)
+
+## Changed: kalshi/docs.kalshi.com/websockets/websocket-connection.md
+```diff
+```
+(461 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/accounts/fund-a-subaccount.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/accounts/get-a-balance.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/accounts/get-a-transfer.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/accounts/get-an-account-transfer.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/accounts/get-the-account-balance.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/accounts/get-the-geolocation-status.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/accounts/issue-a-subaccount-key.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/accounts/label-a-subaccount.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/accounts/list-account-transactions.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/accounts/list-account-transfers.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/accounts/list-subaccounts.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/accounts/list-transactions.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/accounts/open-a-subaccount.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/authentication/create-a-key.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/authentication/echo.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/authentication/get-a-key.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/authentication/list-keys.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/authentication/revoke-a-key.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/catalog/get-a-market.md
+```diff
+```
+(19 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/catalog/get-an-event.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/catalog/get-the-order-book.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/catalog/list-consensus-markets.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/catalog/list-event-participants.md
+```diff
+```
+(14 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/catalog/list-event-statuses.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/catalog/list-events.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/catalog/list-leagues.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/catalog/list-live-market-types.md
+```diff
+```
+(9 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/catalog/list-market-types.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/catalog/list-markets.md
+```diff
+```
+(19 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/catalog/list-sports.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/catalog/list-trades.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/changelog.md
+```diff
+```
+(40 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/exchange/get-the-exchange-status.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/exchange/get-the-server-time.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/execution/batch-cancel-orders.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/execution/batch-place-orders.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/execution/cancel-all-orders.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/execution/cancel-an-order.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/execution/get-an-order.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/execution/get-your-positions.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/execution/get-your-resting-orders.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/execution/get-your-unrealized-pnl.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/execution/list-fills.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/execution/list-orders.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/execution/list-positions.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/execution/place-an-order.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/history/get-a-market-from-history.md
+```diff
+```
+(19 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/history/get-a-position-from-history.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/history/get-an-event-from-history.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/history/list-a-markets-candles.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/history/list-event-history.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/history/list-market-history.md
+```diff
+```
+(19 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/history/list-position-history.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/history/list-trade-history.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/spec-files/openapi-v3.json
+```diff
+```
+(852 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/streaming/open-the-websocket.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api-reference/throttle/get-your-throttle-schedule.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: novig/docs.novig.com/api/concepts/participation-protection.md
+```diff
+```
+(52 more changed lines)
+
+## Changed: novig/docs.novig.com/api/environments.md
+```diff
+```
+(12 more changed lines)
+
+## Changed: novig/docs.novig.com/api/errors.md
+```diff
+```
+(27 more changed lines)
+
+## Changed: novig/docs.novig.com/api/streaming/connection.md
+```diff
+```
+(61 more changed lines)
+
+## Changed: novig/docs.novig.com/api/streaming/private.md
+```diff
+```
+(16 more changed lines)
+
+## Changed: novig/docs.novig.com/api/throttling.md
+```diff
+```
+(61 more changed lines)
+
+## Changed: novig/docs.novig.com/llms-full.txt
+```diff
+```
+(5905 more changed lines)
+
+## Changed: novig/docs.novig.com/llms.txt
+```diff
+```
+(40 more changed lines)
+
+## Changed: oddspapi/docs.oddspapi.io/coverage.md
+```diff
+```
+(125 more changed lines)
+
+## Changed: oddspapi/docs.oddspapi.io/coverage/bookmakers.md
+```diff
+```
+(234 more changed lines)
+
+## Changed: oddspapi/docs.oddspapi.io/coverage/markets.md
+```diff
+```
+(1703 more changed lines)
 
 ## Changed: oddspapi/docs.oddspapi.io/llms-full.txt
 ```diff
 ```
-(705 more changed lines)
+(2257 more changed lines)
 
-## Changed: oddspapi/docs.oddspapi.io/websocket/overview.md
+## Changed: oddspapi/docs.oddspapi.io/llms.txt
 ```diff
 ```
-(2 more changed lines)
+(9 more changed lines)
 
-## Changed: oddspapi/docs.oddspapi.io/websocket/troubleshooting.md
+## Changed: oddspapi/docs.oddspapi.io/websocket/console.md
 ```diff
 ```
-(2 more changed lines)
+(29 more changed lines)
 
 ## Changed: oddspapi/oddspapi.io/us/docs.html
 ```diff
 ```
 (4 more changed lines)
-
-## Changed: parlayapi/parlay-api.com/agents.json
-```diff
-```
-(2 more changed lines)
 
 ## Changed: parlayapi/parlay-api.com/changelog.html
 ```diff
@@ -503,22 +1158,17 @@ added 1, changed 58, removed 0
 ## Changed: parlayapi/parlay-api.com/docs.html
 ```diff
 ```
-(80 more changed lines)
-
-## Changed: parlayapi/parlay-api.com/integrations.html
-```diff
-```
 (2 more changed lines)
 
 ## Changed: parlayapi/parlay-api.com/llms-full.txt
 ```diff
 ```
-(141 more changed lines)
+(4 more changed lines)
 
-## Changed: parlayapi/parlay-api.com/llms.txt
+## Changed: parlayapi/parlay-api.com/openapi-agent.json
 ```diff
 ```
-(4 more changed lines)
+(2 more changed lines)
 
 ## Changed: parlayapi/parlay-api.com/openapi.json
 ```diff
@@ -528,37 +1178,122 @@ added 1, changed 58, removed 0
 ## Changed: pinnodds/pinnodds.com/docs.html
 ```diff
 ```
-(21 more changed lines)
+(333 more changed lines)
 
 ## Changed: pinnodds/pinnodds.com/llms-full.txt
 ```diff
 ```
-(55 more changed lines)
+(258 more changed lines)
 
 ## Changed: pinnodds/pinnodds.com/llms.txt
 ```diff
 ```
-(57 more changed lines)
+(4 more changed lines)
 
 ## Changed: pinnwire/pinnwire.com/docs.html
 ```diff
 ```
 (2 more changed lines)
 
+## Changed: polymarket/docs.polymarket.com/_llms/cn.txt
+```diff
+```
+(4 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/_llms/cn/api.txt
+```diff
+```
+(19 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/_llms/en/api-reference.txt
+```diff
+```
+(21 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/_llms/en/api-reference/predictions.txt
+```diff
+```
+(2 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/changelog/perps.md
+```diff
+```
+(67 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/changelog/predictions.md
+```diff
+```
+(55 more changed lines)
+
 ## Changed: polymarket/docs.polymarket.com/changelog/sdks.md
 ```diff
 ```
-(12 more changed lines)
+(30 more changed lines)
 
 ## Changed: polymarket/docs.polymarket.com/llms-full.txt
 ```diff
 ```
-(581 more changed lines)
+(3832 more changed lines)
 
-## Changed: polymarket/docs.polymarket.com/trading/session-keys.md
+## Changed: polymarket/docs.polymarket.com/llms.txt
 ```diff
 ```
-(569 more changed lines)
+(40 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/market-data/realtime-data.md
+```diff
+```
+(70 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/migrate/clob-sdk-to-unified-sdk.md
+```diff
+```
+(9 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/migrate/polymarket-v2/overview.md
+```diff
+```
+(20 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/migrate/rtds-to-polybolt.md
+```diff
+```
+(50 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/perps/errors.md
+```diff
+```
+(16 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/perps/learn-about-trading/markets.md
+```diff
+```
+(10 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/perps/learn-about-trading/overview.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/perps/trading-competitions.md
+```diff
+```
+(53 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/trading/manage-orders.md
+```diff
+```
+(41 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/trading/realtime-order-updates.md
+```diff
+```
+(15 more changed lines)
+
+## Changed: polymarket/docs.polymarket.com/trading/wallets-auth.md
+```diff
+```
+(5 more changed lines)
 
 ## Changed: propline/api.prop-line.com/openapi.json
 ```diff
@@ -568,115 +1303,415 @@ added 1, changed 58, removed 0
 ## Changed: propline/prop-line.com/api-versioning.html
 ```diff
 ```
-(4 more changed lines)
+(2 more changed lines)
 
 ## Changed: propline/prop-line.com/docs.html
 ```diff
 ```
-(12 more changed lines)
+(79 more changed lines)
 
 ## Changed: propline/prop-line.com/llms-full.txt
 ```diff
 ```
-(3 more changed lines)
+(109 more changed lines)
 
 ## Changed: propline/prop-line.com/llms.txt
 ```diff
 ```
-(6 more changed lines)
+(18 more changed lines)
 
 ## Changed: propline/prop-line.com/openapi.json
 ```diff
 ```
-(2 more changed lines)
+(440 more changed lines)
 
 ## Changed: propline/prop-line.com/recipes.html
 ```diff
 ```
-(4 more changed lines)
+(42 more changed lines)
 
 ## Changed: propline/prop-line.com/sportsbook-accuracy.html
 ```diff
 ```
 (2 more changed lines)
 
+## Changed: sharpapi/docs.sharpapi.io/llms-full.txt
+```diff
+```
+(64 more changed lines)
+
 ## Changed: sharpapi/docs.sharpapi.io/openapi.json
 ```diff
 ```
-(42 more changed lines)
+(467 more changed lines)
 
-## Changed: sxbet/api.docs.sx.bet/index.html
-```diff
-```
-(40 more changed lines)
-
-## Changed: sxbet/docs.sx.bet/api-reference/auth-matrix.md
-```diff
-```
-(1 more changed lines)
-
-## Changed: sxbet/docs.sx.bet/api-reference/delete-orders-v3-all.md
-```diff
-```
-(25 more changed lines)
-
-## Changed: sxbet/docs.sx.bet/api-reference/delete-orders-v3-event.md
-```diff
-```
-(25 more changed lines)
-
-## Changed: sxbet/docs.sx.bet/api-reference/delete-orders-v3-market.md
-```diff
-```
-(25 more changed lines)
-
-## Changed: sxbet/docs.sx.bet/api-reference/delete-orders-v3.md
-```diff
-```
-(38 more changed lines)
-
-## Changed: sxbet/docs.sx.bet/developers/api-key-permissions.md
-```diff
-```
-(1 more changed lines)
-
-## Changed: sxbet/docs.sx.bet/developers/betting-delays.md
-```diff
-```
-(7 more changed lines)
-
-## Changed: sxbet/docs.sx.bet/developers/cancelling-orders.md
-```diff
-```
-(35 more changed lines)
-
-## Changed: sxbet/docs.sx.bet/developers/heartbeat.md
+## Changed: sportsgameodds/sportsgameodds.com/docs.html
 ```diff
 ```
 (4 more changed lines)
 
-## Changed: sxbet/docs.sx.bet/developers/migrate-to-v3.md
+## Changed: sportsgameodds/sportsgameodds.com/docs/llms-full.txt
 ```diff
 ```
-(3 more changed lines)
+(35 more changed lines)
 
-## Changed: sxbet/docs.sx.bet/developers/my-orders.md
+## Changed: sxbet/api.docs.sx.bet/index.html
 ```diff
 ```
-(9 more changed lines)
+(67 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/auth-matrix.md
+```diff
+```
+(10 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/channel-markets.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/delete-orders-v3-all.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/delete-orders-v3-event.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/delete-orders-v3-market.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/delete-orders-v3.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-best-odds-v3.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-event-orderbook-snapshot.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-fills-v3.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-fixture-active.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-fixture-status.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-leagues-active.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-leagues.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-ledger-v3.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-live-scores.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-market-orderbook-snapshot.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-markets-active.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-markets-find.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-markets-popular.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-metadata-obv3.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-order-v3-by-client-id.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-order-v3.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-orders-v3-batch.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-orders-v3-public.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-orders-v3-user-public.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-orders-v3.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-positions-v3-public.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-positions-v3.md
+```diff
+```
+(8 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-sports.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-teams.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-trade-v3.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-trades-v3-public.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-trades-v3.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-user-balance-v3.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-user-fees-v3.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-user-multisig-info.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-user-multisig-proxy.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-user-pending-deploy-proxy.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-user-privacy-v3.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-user-proxy.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-user-transfer-to-proxy-pending.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/get-user-transfer-to-proxy-status.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-heartbeat-v3.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-orders-v3.md
+```diff
+```
+(20 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-user-deploy-proxy.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-user-multisig-add-signer-execute.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-user-multisig-add-signer-prepare.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-user-multisig-cancel.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-user-multisig-remove-signer-execute.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-user-multisig-remove-signer-prepare.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-user-multisig-set-threshold-execute.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-user-multisig-set-threshold-prepare.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-user-multisig-transfer-execute.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-user-multisig-transfer-prepare.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-user-multisig-withdraw-execute.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-user-multisig-withdraw-prepare.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-user-privacy-v3.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/post-user-transfer-to-proxy.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/api-reference/search.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/developers/account-models.md
+```diff
+```
+(10 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/developers/api-key-permissions.md
+```diff
+```
+(18 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/developers/markets-and-events.md
+```diff
+```
+(2 more changed lines)
+
+## Changed: sxbet/docs.sx.bet/developers/posting-orders.md
+```diff
+```
+(2 more changed lines)
 
 ## Changed: sxbet/docs.sx.bet/developers/rate-limits.md
 ```diff
 ```
-(1 more changed lines)
+(15 more changed lines)
 
 ## Changed: sxbet/docs.sx.bet/llms-full.txt
 ```diff
 ```
-(125 more changed lines)
+(343 more changed lines)
 
 ## Changed: sxbet/docs.sx.bet/llms.txt
 ```diff
 ```
-(1 more changed lines)
+(6 more changed lines)
+
+## Changed: theoddsapi/the-odds-api.com/liveapi/guides/v4.html
+```diff
+```
+(3302 more changed lines)
+
+## Changed: theoddsapi/the-odds-api.com/llms-full.txt
+```diff
+```
+(34 more changed lines)
+
+## Changed: theoddsapi/the-odds-api.com/llms.txt
+```diff
+```
+(57 more changed lines)
+
+## Changed: theoddsapi/the-odds-api.com/sports-odds-data/betting-markets.html
+```diff
+```
+(77 more changed lines)
+
+## Changed: theoddsapi/the-odds-api.com/sports-odds-data/bookmaker-apis.html
+```diff
+```
+(193 more changed lines)
 

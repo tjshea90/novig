@@ -141,7 +141,7 @@ If you still get a `401`, find your symptom below.
 
 A scope error means the key has the wrong family or level. See [scopes](https://docs.novig.com/api/concepts/account-model.md#scopes).
 
-KYC is our identity check. You need it to create a key, to open or fund a subaccount, or to place an order. Cancels still work without it.
+KYC is our identity check. You need it to create a key, to open or fund a subaccount, to place an order, or to run an [RFQ maker](https://docs.novig.com/api/rfq/makers.md#your-account-must-stay-eligible). Cancels still work without it.
 
 A `trading` or `trading::read` key that names a sibling subaccount gets a `404` `SUBACCOUNT_NOT_FOUND`. To read a sibling, use a key with `management::read`.
 
@@ -162,16 +162,11 @@ See [Funding](https://docs.novig.com/api/subaccounts/funding.md#check-the-transf
 
 ## `413` Content Too Large
 
-The edge is a filter in front of our servers.
-It refuses any body over 64 KiB ({EDGE_BODY_BYTES.toLocaleString("en-US")} bytes) with a 403 and an HTML page, with no JSON error body.
-The request never reaches the exchange.
-A full batch of 256 orders fits under it, at about 90 bytes an order.
-
 The exchange buffers each request body before it parses it.
 It refuses a body over 100 KiB with a 413 and `PAYLOAD_TOO_LARGE`, before it reads the signature.
-Through our edge you'll see the 403 first, since its cap is smaller.
+A full batch of 256 orders fits under it, at about 90 bytes an order.
 
-To fix either error, split the batch. Both caps count the raw bytes you send.
+To fix it, split the batch. The cap counts the raw bytes you send.
 
 ## `423` Locked
 
@@ -186,16 +181,21 @@ Most `423` codes don't clear on their own. Contact support.
 | `EMPLOYEE_ACCOUNT` | Reads |
 | `LIQUIDATION_ONLY` | Everything except placing orders |
 | `DEPOSIT_RETURN_HOLD` | Everything except placing orders |
+| `EVENT_LOCKED` | Everything except placing orders in that event |
+| `MARKET_LOCKED` | Everything except placing orders in that market |
 
 * `SYSTEM_LOCKED` means the exchange has halted trading. It blocks every trading, catalog, key, and subaccount route, reads included. `GET /v3/exchange/status` still answers, and returns the reason.
 * `ACCOUNT_LOCKED` and `ACCOUNT_EXCLUDED` block every trading, catalog, key, and subaccount route, reads included.
-* `SELF_EXCLUDED` blocks placing orders, creating a key, opening a subaccount, and moving funds while the key holder is self-excluded.
+* `SELF_EXCLUDED` blocks placing orders, creating a key, opening a subaccount, moving funds, and running an RFQ maker while the key holder is self-excluded.
 * `EMPLOYEE_ACCOUNT` blocks placing and canceling when the key belongs to a Novig employee.
 * `LIQUIDATION_ONLY` blocks placing orders. Cancels still work.
 * When we apply `LIQUIDATION_ONLY` to your account, we cancel your resting orders, then cancel again about 75 seconds later.
 * `DEPOSIT_RETURN_HOLD` blocks placing orders after your bank returns one of your deposits or your card issuer charges it back. Cancels still work.
 * `DEPOSIT_RETURN_HOLD` lifts on its own if the dispute is decided in your favor. Otherwise, contact support.
 * If your account has both `LIQUIDATION_ONLY` and `DEPOSIT_RETURN_HOLD`, you get `LIQUIDATION_ONLY`.
+* `EVENT_LOCKED` and `MARKET_LOCKED` block new orders in a locked event or market. Cancels still work.
+
+To see which events and markets are locked, call `GET /v3/exchange/locks`, or send `query_locks` on your websocket.
 
 To check whether trading is paused, call `GET /v3/exchange/status`.
 
@@ -213,6 +213,8 @@ To check whether trading is paused, call `GET /v3/exchange/status`.
 `RATE_LIMIT_EXCEEDED` means you sent requests too fast.
 Wait `Retry-After` seconds before you retry.
 See [Throttling](https://docs.novig.com/api/throttling.md#error-response).
+
+`TOO_MANY_SOCKETS` means the key already has 10 RFQ sockets open. Close one before you open another. See [Socket](https://docs.novig.com/api/rfq/socket.md#connect).
 
 ## `451` Geolocation Unavailable
 
@@ -342,7 +344,6 @@ These are the causes we've seen:
 * Some data-center and shared-hosting addresses, like DigitalOcean, Railway, or Hostinger.
 * Bursts of requests above the [rate limits](https://docs.novig.com/api/throttling.md).
 * An HTTP library's default `User-Agent`, like the one Python's `urllib` sends.
-* A body over 64 KiB. See [`413`](#413-content-too-large).
 * Some home ISP address ranges.
 
 To fix it:
@@ -417,7 +418,7 @@ A body that doesn't parse answers `INVALID_BODY`. Its `message` names the field 
 | 400 | `NOT_LIVE_TRADABLE` `EVENT_NOT_TRADABLE` `PAGE_LIMIT_OUT_OF_RANGE` |
 | 400 | `OFFSET_NOT_SUPPORTED` `AFTER_NEEDS_KEY_ID` |
 | 400 | `STALE_NONCE` `EMPTY_SELECTION` `SUBSCRIPTION_LIMIT_EXCEEDED` |
-| 400 | `NONCE_NOT_FOUND` |
+| 400 | `NONCE_NOT_FOUND` `NONCE_COUNT_MISMATCH` |
 | 403 | `SCOPE_INSUFFICIENT` `KYC_REQUIRED` |
 | 404 | `MARKET_NOT_FOUND` `EVENT_NOT_FOUND` `OUTCOME_NOT_FOUND` `ORDER_NOT_FOUND` |
 | 404 | `WALLET_NOT_FOUND` `SUBACCOUNT_NOT_FOUND` |
@@ -432,7 +433,7 @@ A body that doesn't parse answers `INVALID_BODY`. Its `message` names the field 
 | 503 | `GEOLOCATION_SCREENING_UNAVAILABLE` |
 | 500 | `INTERNAL_ERROR` |
 
-* 403 `KYC_REQUIRED` applies to placing only. The key holder's KYC lapsed after the key was created, so finish verification in the app.
+* 403 `KYC_REQUIRED` applies to placing orders and to [RFQ makers](https://docs.novig.com/api/rfq/makers.md#your-account-must-stay-eligible) only. The key holder's KYC lapsed after the key was created, so finish verification in the app.
 * 423 means `SELF_EXCLUDED`, `EMPLOYEE_ACCOUNT`, `LIQUIDATION_ONLY`, `DEPOSIT_RETURN_HOLD`, or a lock with no `code`. See [`423`](#423-locked).
 * A `reject` from the matching engine isn't an HTTP error. It arrives on the [private stream](https://docs.novig.com/api/streaming/private.md) after the 201.
 

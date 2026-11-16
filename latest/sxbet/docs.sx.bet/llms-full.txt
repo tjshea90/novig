@@ -101,6 +101,16 @@ Send `x-sx-api-key` as a header. Every response is scoped to the address that ow
 | `POST /user/multisig/set-threshold/execute` | Submits your signature for a threshold change | [Docs →](/api-reference/post-user-multisig-set-threshold-execute) |
 | `POST /user/multisig/cancel` | Deletes a pending Safe transaction | [Docs →](/api-reference/post-user-multisig-cancel) |
 
+## Partner routes
+
+Send a partner key as `x-sx-api-key`. Partner keys are issued to approved partners. See [Partner API](/developers/partner-api).
+
+| Route | What it does | Link |
+| - | - | - |
+| `GET /partner/attestation` | The typed data a wallet signs to become your user | [Docs →](/api-reference/get-partner-attestation) |
+| `POST /partner/users` | Creates a user and returns their API key | [Docs →](/api-reference/post-partner-users) |
+| `GET /partner/users` | Lists the users you have created | [Docs →](/api-reference/get-partner-users) |
+
 
 # Best Odds
 Source: https://docs.sx.bet/api-reference/channel-best-odds-v3
@@ -552,6 +562,7 @@ Subscribe to all changes in markets on sx.bet. You will get updates when:
 * A new market is added
 * A market is removed (set to `INACTIVE`)
 * A market's fields have changed (for example, game time has changed or the market has settled)
+* A market's first bet is matched and confirmed (`hasVolume` becomes `true`)
 
 **CHANNEL NAME**
 
@@ -623,6 +634,7 @@ The above returns JSON structured like this:
     "sportId": 5,
     "leagueId": 1115,
     "leagueLabel": "Major League Soccer",
+    "hasVolume": false,
     "group1": "Major League Soccer"
   }
 ]
@@ -1881,6 +1893,34 @@ Read one user's de-anonymized resting orders, across markets.
 Only orders that maker placed while de-anonymized are returned.
 
 
+# Get the attestation to sign
+Source: https://docs.sx.bet/api-reference/get-partner-attestation
+
+GET /partner/attestation
+The EIP-712 typed data a wallet signs to become one of your users.
+
+Partner keys only. See [Partner API](/developers/partner-api) for the full flow.
+
+Have the user's wallet sign the returned typed data exactly as returned, with
+`eth_signTypedData_v4`, then send the signature to
+[`POST /partner/users`](/api-reference/post-partner-users).
+
+The signature must recover to the address, from `eth_signTypedData_v4` on a
+standard externally owned account. Contract-wallet signatures (EIP-1271) are
+not accepted.
+
+
+# List your users
+Source: https://docs.sx.bet/api-reference/get-partner-users
+
+GET /partner/users
+The users you have created, newest first.
+
+Partner keys only. See [Partner API](/developers/partner-api) for the full flow.
+
+`proxyDeployed` turns `true` once the user's proxy wallet is deployed.
+
+
 # Get your positions
 Source: https://docs.sx.bet/api-reference/get-positions-v3
 
@@ -2299,9 +2339,9 @@ domain.
 
 > [!NOTE]
 >
-> **This endpoint is asynchronous by default.** A success response means the order was *submitted* to
-> the matching engine, not that it rested or matched. Each order comes back as `SUBMITTED` — the terminal
-> outcome (rested as `ACTIVE`, matched, or gone) arrives later on
+> **This endpoint is asynchronous by default.** Each order comes back as `SUBMITTED` or `FAILED`.
+> `SUBMITTED` means the order was sent to the matching engine, not that it rested or matched — the
+> terminal outcome (rested as `ACTIVE`, matched, or gone) arrives later on
 > [`account:orders_v3_#{address}`](/api-reference/channel-orders-v3). Subscribe to that channel before
 > you submit and treat it as the source of truth.
 
@@ -2321,6 +2361,33 @@ domain.
 >
 > **Posting an order does not lock capital**, regardless of `timeInForce`. Funds are escrowed only when
 > the order matches. See [Risk limits](/developers/risk-limits).
+
+
+# Create a user
+Source: https://docs.sx.bet/api-reference/post-partner-users
+
+POST /partner/users
+Create an SX Bet account for a new wallet and get its API key.
+
+Partner keys only. See [Partner API](/developers/partner-api) for the full flow.
+
+> [!WARNING]
+>
+> `apiKey.key` is returned only in this response and cannot be fetched again. Store it before doing
+> anything else.
+
+The address must be new to SX Bet. An address that already has an account is refused, and nothing
+changes:
+
+| Code | Status | Meaning |
+| - | - | - |
+| `USER_ALREADY_EXISTS` | 409 | You already created a user for this address. |
+| `ADDRESS_ALREADY_REGISTERED` | 409 | The address has an SX Bet account that is not yours. |
+| `EMAIL_TAKEN` | 409 | Another SX Bet account uses this email. |
+| `INVALID_ATTESTATION` | 400 | The signature is not the address's signature over [the attestation](/api-reference/get-partner-attestation) for your partner ID and this environment. |
+| `INVALID_API_KEY_PERMISSIONS` | 400 | `apiKeyPermissions` contains a scope users cannot be given. |
+| `PARTNER_DISABLED` | 403 | Your partner account is disabled. Contact us. |
+| `INSUFFICIENT_API_KEY_PERMISSIONS` | 403 | The key is not a partner key, for example a user's key. |
 
 
 # Deploy a proxy wallet
@@ -2645,9 +2712,9 @@ For BigInt-safe helpers, time encodings, and more worked examples, see
 # Account models for external sites
 Source: https://docs.sx.bet/developers/account-models
 
-The two supported ways to represent your site's users on SX.bet.
+The supported ways to represent your site's users on SX.bet.
 
-If you are integrating SX.bet markets into your own site or app, there are two supported account
+If you are integrating SX.bet markets into your own site or app, there are three supported account
 models for representing your users. Pick the one that matches how you want to manage accounts and
 funds.
 
@@ -2683,6 +2750,12 @@ Each user on your app is their own SX.bet user, and your site is effectively a s
 >
 > More information on this model is coming shortly. Reach out through
 > [Work with us](/developers/work-with-us) if you are planning a whitelabel integration.
+
+## Partner API
+
+Each of your users gets their own SX.bet account, wallet and API key, created from your backend with
+a partner key. Balances, positions and history are separate per user, and your users never sign up
+on sx.bet. Available to approved partners. See [Partner API](/developers/partner-api).
 
 ## Related
 
@@ -2890,6 +2963,24 @@ Routes with no authentication, such as `GET /markets/active`, are not listed her
 | [`POST` `/user/multisig/set-threshold/prepare`](/api-reference/post-user-multisig-set-threshold-prepare) |
 | [`POST` `/user/multisig/set-threshold/execute`](/api-reference/post-user-multisig-set-threshold-execute) |
 | [`POST` `/user/multisig/cancel`](/api-reference/post-user-multisig-cancel) |
+
+## Partner users: create
+
+Partner keys only. These scopes are on the partner keys SX Bet issues to approved partners. See
+[Partner API](/developers/partner-api).
+
+| Endpoint |
+| - |
+| [`GET` `/partner/attestation`](/api-reference/get-partner-attestation) |
+| [`POST` `/partner/users`](/api-reference/post-partner-users) |
+
+## Partner users: read
+
+Partner keys only.
+
+| Endpoint |
+| - |
+| [`GET` `/partner/users`](/api-reference/get-partner-users) |
 
 ## Related
 
@@ -4554,6 +4645,7 @@ Here's a complete market object for reference:
   "participantTwoId": 4,
   "mainLine": false,
   "isQuarterLineMarket": false,
+  "hasVolume": true,
   "__type": "Market"
 }
 ```
@@ -4578,6 +4670,7 @@ Here's a complete market object for reference:
 | `leagueLabel` | The name of the league for this market |
 | `mainLine` | Whether this market is currently the main line. Not present on markets without multiple lines |
 | `isQuarterLineMarket` | Whether the exchange produced this market by splitting a line-bearing market into quarter lines |
+| `hasVolume` | `true` once at least one bet on this market has been matched and confirmed. A market whose only bets were placed before this field was introduced reads `false` until it is traded again. |
 | `group1` | Indicator to the client of how to display this market |
 | `group2` | Indicator to the client of how to display this market |
 
@@ -5328,9 +5421,9 @@ We have renamed the data types to more intuitive names, and adjusted the endpoin
 
 | You want | V3 endpoint | Grain | Old |
 | - | - | - | - |
-| One row per bet | [`GET /trades-v3`](/api-reference/get-trades-v3) | bet | consolidated\_trades |
+| One row per bet | [`GET /trades-v3`](/api-reference/get-trades-v3) | bet | consolidated_trades |
 | One row per matched leg | [`GET /fills-v3`](/api-reference/get-fills-v3) | fill | trades |
-| Net exposure per market | [`GET /positions-v3`](/api-reference/get-positions-v3) | position | consolidated\_trades (grouped) |
+| Net exposure per market | [`GET /positions-v3`](/api-reference/get-positions-v3) | position | consolidated_trades (grouped) |
 | Your resting orders | [`GET /orders-v3`](/api-reference/get-orders-v3) | active orders only | - |
 
 See [Grain types](/developers/which-grain).
@@ -5506,7 +5599,7 @@ looks it up by that tag instead.
 >
 > One order, looked up by the tag you set.
 
-> [card] [account:orders\_v3](/api-reference/channel-orders-v3)
+> [card] [account:orders_v3](/api-reference/channel-orders-v3)
 >
 > Where terminal state actually comes from.
 
@@ -6324,6 +6417,207 @@ Parlays use separate rates — `makerParlayPayoutFee` and `takerParlayPayoutFee`
 > `GTC`, `IOC` and `FOK`, and which of them a parlay accepts.
 
 
+# Partner API
+Source: https://docs.sx.bet/developers/partner-api
+
+Create and manage SX Bet accounts for your own users, from your platform.
+
+The Partner API lets an approved platform create SX Bet accounts for its own users. Each user you
+create is a full SX Bet account with its own wallet, balance, positions and history. You hold that
+user's API key and trade for them through the standard API. Your users never sign up on sx.bet.
+
+## Why create your own users
+
+If you run one SX Bet account for your whole platform, every user's bets land in one balance and
+one history, and you tell them apart with [`externalUserId`](/developers/external-user-id). See
+[Account models](/developers/account-models).
+
+The Partner API gives each user their own account instead:
+
+* **Per-user balances and risk.** Funds, open orders, positions and settlements are separate for
+  every user, so one user's activity never touches another's.
+* **Per-user history.** Orders, fills, bets and the ledger come back per account, with no
+  attribution layer to maintain.
+* **You stay in control.** You choose which permissions each user's API key gets, and you keep the
+  key. SX Bet never sees a user's private key.
+* **No separate sign-up.** Users are created from your backend in one call. They don't need an
+  sx.bet login.
+* **Externally owned accounts.** The signature must recover to the user's address, from
+  `eth_signTypedData_v4` on a standard externally owned account. Contract-wallet signatures
+  (EIP-1271) are not accepted.
+* **Server-side integration.** Anything done on behalf of the user is done server side with the API key, which gives you complete control over
+  your front-end
+
+## How it works
+
+There are two kinds of key.
+
+| Key | Who holds it | What it can do |
+| - | - | - |
+| **Partner key** | You. Issued by SX Bet on your own sx.bet account. | Call the Partner API: create users and list them. It cannot place orders or read any account. |
+| **User key** | You, one per user. Returned when you create the user. | Call the standard API as that user, with the permissions you chose. |
+
+> [!NOTE]
+>
+> Only new addresses can be added. If an address already has an SX Bet account, create-user refuses
+> it.
+
+## Becoming a partner
+
+**1. Register on sx.bet and reach out**
+
+Register an account on [sx.bet](https://sx.bet), then email
+[business@sx.bet](mailto:business@sx.bet) with your account's **signing EOA address**, your
+platform, what you're building and roughly how many users you expect. The signing EOA is the
+wallet you use to sign in to sx.bet; your proxy wallet is a separate address used to hold betting
+funds. Each person or system that needs a partner key registers their own account and sends us
+its signing EOA address. We'll get back to you.
+
+**2. We set you up**
+
+We create your partner account and send you your **partner ID** and your **partner keys**, each
+issued on the account you registered. Partner keys are per environment, so you get separate keys
+for [testnet and mainnet](/developers/testnet-and-mainnet). For testnet keys, register on
+[toronto.sx.bet](https://toronto.sx.bet) too and send us that account's signing EOA address.
+
+**3. Create users**
+
+Create a user for each new wallet, as described below.
+
+**4. Trade for your users**
+
+Use each user's key with the standard API: deploy their proxy wallet, fund it and place orders.
+
+## Create a user
+
+Send every Partner API request with your partner key in the `x-sx-api-key` header.
+
+**1. Get the statement to sign**
+
+Call [`GET /partner/attestation`](/api-reference/get-partner-attestation) with the user's wallet
+address. It returns EIP-712 typed data with your partner ID, the address and the environment's
+chain ID filled in.
+
+**2. Sign it with the user's wallet**
+
+Sign the typed data with the wallet that will own the account (`eth_signTypedData_v4`).
+
+**3. Create the user**
+
+Call [`POST /partner/users`](/api-reference/post-partner-users) with the address, the user's
+email, the permissions for their API key and the signature. The response includes the user's
+API key.
+
+**4. Store the user key**
+
+The key is shown **once**. Store it securely before doing anything else. It cannot be fetched
+again.
+
+```ts theme={null}
+import { privateKeyToAccount } from "viem/accounts";
+
+const API = "https://api.toronto.sx.bet";
+const partnerKey = process.env.SX_PARTNER_KEY!;
+const wallet = privateKeyToAccount(process.env.USER_PRIVATE_KEY as `0x${string}`);
+
+// 1. The statement to sign
+const attestation = await fetch(
+  `${API}/partner/attestation?address=${wallet.address}`,
+  { headers: { "x-sx-api-key": partnerKey } }
+).then((r) => r.json());
+const { domain, types, primaryType, message } = attestation.data;
+
+// 2. The user's wallet signs it
+const signature = await wallet.signTypedData({
+  domain,
+  types,
+  primaryType,
+  message: { ...message, partnerId: BigInt(message.partnerId) },
+});
+
+// 3. Create the user
+const created = await fetch(`${API}/partner/users`, {
+  method: "POST",
+  headers: { "x-sx-api-key": partnerKey, "content-type": "application/json" },
+  body: JSON.stringify({
+    address: wallet.address,
+    userEmail: "trader+1324@yourplatform.com",
+    apiKeyPermissions: {
+      orders: ["read", "create", "cancel"],
+      account: ["read"],
+      wallet: ["read", "admin"],
+    },
+    signature,
+  }),
+}).then((r) => r.json());
+
+// 4. Store this now: it is shown only once
+const userKey = created.data.apiKey.key;
+```
+
+Choose the user key's permissions from the scopes in
+[API key permissions](/developers/api-key-permissions). Grant only what you need, but include
+`wallet: admin` if you will deploy the user's proxy wallet with their key.
+
+## After a user is created
+
+The user's account is ready, and their [proxy wallet](/developers/accounts) is being deployed. From
+here on, use the **user key**, not your partner key.
+
+1. **Wait for the proxy wallet.** The create response reports the deployment status in
+   `proxyDeployment.status`:
+   * `SUCCESS`: deployed, carry on.
+   * `PENDING`: a deployment is running. Don't start another; poll
+     [`GET /partner/users`](/api-reference/get-partner-users) until the user's `proxyDeployed` is
+     `true`.
+   * `FAILED` or `NOT_STARTED`: call
+     [`POST /user/deploy-proxy`](/api-reference/post-user-deploy-proxy) with the user key, then
+     poll the same way.
+2. **Fund it.** Send funds to the user's `proxyWalletAddress` only after deployment completes. See
+   [Funding](/developers/funding).
+3. **Trade.** Place orders with [`POST /orders-v3`](/api-reference/post-orders-v3). Each order is
+   signed by the user's wallet, as for any account.
+
+## View your users
+
+[`GET /partner/users`](/api-reference/get-partner-users) lists the users you have created, newest
+first, with each user's wallet, proxy wallet, email, status and whether their proxy wallet is
+deployed. Filter by `address` to look up one user.
+
+A user's `status` is `SUSPENDED` while SX Bet has suspended the account, and `ACTIVE` otherwise. A
+suspended user cannot place orders.
+
+## Rate limits
+
+Each partner key has its own rate limit, separate from your other partner keys and from your users'
+keys. By default a partner key can create up to **100 users per 60 seconds**, and listing users has
+its own, separate limit.
+
+User keys follow the standard [rate limits](/developers/rate-limits), counted per user.
+
+## Managing users
+
+Today, to suspend a user, [contact us](mailto:business@sx.bet) and we make the change.
+
+## Related
+
+> [card] [Create a user](/api-reference/post-partner-users)
+>
+> `POST /partner/users`: request, response and errors.
+
+> [card] [List your users](/api-reference/get-partner-users)
+>
+> `GET /partner/users`: filters and pagination.
+
+> [card] [Get the attestation](/api-reference/get-partner-attestation)
+>
+> `GET /partner/attestation`: the typed data a wallet signs.
+
+> [card] [API key permissions](/developers/api-key-permissions)
+>
+> Scopes you can give your users' keys.
+
+
 # Posting orders
 Source: https://docs.sx.bet/developers/posting-orders
 
@@ -6351,7 +6645,7 @@ You also need your API key, sent as `x-sx-api-key`. See
 3. **Choose a `timeInForce`** — `GTC` to rest, `IOC`/`FOK` to execute now. See
    [Time in force](/developers/time-in-force).
 4. Sign the eight-field [EIP-712 `Order` struct](/api-reference/eip712-order-signing).
-5. [**`POST /orders-v3`**](/api-reference/post-orders-v3) — expect **`200`** and a per-order result carrying `SUBMITTED`, the server-assigned `commandId`, and your `clientOrderId` / `externalUserId` if you set them.
+5. [**`POST /orders-v3`**](/api-reference/post-orders-v3) — expect **`200`** and a per-order result carrying `SUBMITTED` or `FAILED`, the server-assigned `commandId`, and your `clientOrderId` / `externalUserId` if you set them.
 6. Watch your [`account:orders_v3`](/api-reference/channel-orders-v3) stream for the transition instead of polling. Or set [`waitForOutcome: true`](/api-reference/post-orders-v3) to have the call wait and return each order's terminal `outcome` inline.
 
 > [!NOTE]
@@ -7210,7 +7504,7 @@ Request limits for the SX Bet REST API.
 
 ## Authenticated limits
 
-Each row is the per-API-key budget for that route.
+Each row is your account's budget for that route. Every API key on the account shares it.
 
 ### Orders
 
@@ -7268,9 +7562,18 @@ Each row is the per-API-key budget for that route.
 | - | - | - |
 | `/user/multisig/*` | 60 | 60s |
 
+### Partner API
+
+Partner keys only. Each partner key has its own budget. See [Partner API](/developers/partner-api).
+
+| Endpoint | Max requests | Window |
+| - | - | - |
+| `POST` `/partner/users` | 100 | 60s |
+| `GET` `/partner/users` and `/partner/attestation` | 100 (combined) | 60s |
+
 ## Public limits
 
-Public read endpoints are not metered against your API-key budget. They are limited per client IP at
+Public read endpoints sit outside the account budgets above. They are limited per client IP at
 the edge.
 
 ### Order book
@@ -7321,7 +7624,7 @@ force from the headers rather than hardcoding a value.
 
 ## Global limit
 
-Beyond the per-key budgets above, all unauthenticated traffic shares a single global bucket at the
+Beyond the account budgets above, all unauthenticated traffic shares a single global bucket at the
 edge of **35,000 requests** per **10 min** window.
 
 ## When limits are exceeded
@@ -7633,13 +7936,13 @@ Install a client SDK, fetch a token, connect, and subscribe — see
 
 | Channel | What you receive | Payload reference |
 | - | - | - |
-| `orderbook_v3:{marketHash}` | The full aggregated book for one market, on every change | [orderbook\_v3 →](/api-reference/channel-orderbook-v3) |
-| `orderbook_v3_event:{eventId}` | The same book bodies for every market on an event | [orderbook\_v3\_event →](/api-reference/channel-orderbook-v3-event) |
-| `best_odds_v3:global` | Top-of-book odds changes across all markets | [best\_odds\_v3 →](/api-reference/channel-best-odds-v3) |
-| `account:orders_v3_#{address}` | Your order state changes, and why an order ended | [orders\_v3 →](/api-reference/channel-orders-v3) |
-| `account:trades_v3_#{address}` | Your bets, at bet grain | [trades\_v3 →](/api-reference/channel-trades-v3) |
-| `account:fills_v3_#{address}` | Your individual fills | [fills\_v3 →](/api-reference/channel-fills-v3) |
-| `recent_trades_v3:global` | The anonymized public tape, one message per taker bet | [recent\_trades\_v3 →](/api-reference/channel-recent-trades-v3) |
+| `orderbook_v3:{marketHash}` | The full aggregated book for one market, on every change | [orderbook_v3 →](/api-reference/channel-orderbook-v3) |
+| `orderbook_v3_event:{eventId}` | The same book bodies for every market on an event | [orderbook_v3_event →](/api-reference/channel-orderbook-v3-event) |
+| `best_odds_v3:global` | Top-of-book odds changes across all markets | [best_odds_v3 →](/api-reference/channel-best-odds-v3) |
+| `account:orders_v3_#{address}` | Your order state changes, and why an order ended | [orders_v3 →](/api-reference/channel-orders-v3) |
+| `account:trades_v3_#{address}` | Your bets, at bet grain | [trades_v3 →](/api-reference/channel-trades-v3) |
+| `account:fills_v3_#{address}` | Your individual fills | [fills_v3 →](/api-reference/channel-fills-v3) |
+| `recent_trades_v3:global` | The anonymized public tape, one message per taker bet | [recent_trades_v3 →](/api-reference/channel-recent-trades-v3) |
 | `markets:global` | Market create, update, and settlement | [markets →](/api-reference/channel-markets) |
 | `main_line:global` | Which market is now an event's main line | [line changes →](/api-reference/channel-line-changes) |
 | `fixtures:global` | Fixture metadata updates | [fixtures →](/api-reference/channel-fixtures) |
