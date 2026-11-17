@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-dx8z2c",
- "head": "002df7a0468e05ddf7a66bdf411a2ba2279b8bef",
+ "head": "46482ad4bbb5947487a3005bc7a140ba3f44efd8",
  "since": 1794884852,
- "beat": 1794892548,
- "beatIso": "2026-11-17T05:15:48Z",
- "done": "LV2 logged: live taker lane 0 offers of 29,690 judged, all skips Pinnacle-based; answered Tj",
- "next": "LV2: per-lane offered/skip split, let Pinnacle-free lanes (score-event/shadow/tailLive) carry Practice, Pinnacle as fresh-only check; ship with paper CLV evidence"
+ "beat": 1794892659,
+ "beatIso": "2026-11-17T05:17:39Z",
+ "done": "PP1 logged (only proven bets shown)",
+ "next": "PP1: count survivors of 2+ star filter, build hide + hand block, test, ship"
 }
