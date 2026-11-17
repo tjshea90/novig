@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-ydwd3a",
- "head": "05bb211bbd6e2b1d8089c74d0526ae57be0a339d",
+ "head": "e9cabde5b6d10d4f29b4cfcd8a7eb2854b66fea4",
  "since": 1794933487,
- "beat": 1794935542,
- "beatIso": "2026-11-17T17:12:22Z",
- "done": "TR2 wallet stable read, PF11 feed memo; running ship",
- "next": "ship.sh then release.yml then record-release"
+ "beat": 1794935576,
+ "beatIso": "2026-11-17T17:12:56Z",
+ "done": "pre-ship: TR2 stable all-time profit reading, PF11 +EV tab no double rebuild",
+ "next": "ship.sh gates and releases this"
 }
