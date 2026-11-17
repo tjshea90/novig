@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-dx8z2c",
- "head": "7c8461483300ec810cbcd69a22afd3ce71163c0c",
+ "head": "3e596fbce7c7919cabb1be70655c9e843fad2a2f",
  "since": 1794884852,
- "beat": 1794892938,
- "beatIso": "2026-11-17T05:22:18Z",
- "done": "PP1 logged (only proven bets shown)",
- "next": "PP1: count survivors of 2+ star filter, build hide + hand block, test, ship"
+ "beat": 1794893089,
+ "beatIso": "2026-11-17T05:24:49Z",
+ "done": "PP1 coded: proven-only (2+ stars at Novig) hides unproven types from Feed and CNO; StarEvidenceTest green",
+ "next": "run bash ship.sh, trigger release.yml, record-release, tell Tj; check bets/day surviving"
 }
