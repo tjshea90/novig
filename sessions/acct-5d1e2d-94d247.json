@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-cya0uu",
  "head": "b35280ef2aa139836f7f021fa83fa407b306def1",
  "since": 1794884852,
- "beat": 1794891091,
- "beatIso": "2026-11-17T04:51:31Z",
+ "beat": 1794891097,
+ "beatIso": "2026-11-17T04:51:37Z",
  "done": "pre-ship: LV1: one Live switch Off/Practice/Real",
  "next": "ship.sh gates and releases this"
 }
