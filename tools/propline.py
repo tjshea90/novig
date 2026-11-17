@@ -726,6 +726,128 @@ def cmd_proppin(outdir):
     return 0
 
 
+# ---- PLR (Tj, 2026-11-17): one real try of the PropLine features Vigilant does not use yet -------------------------------------------------------------------------------------------------------------
+
+def novig_legs(events, sport, max_events=12):
+    """h2h legs at Novig from a bulk /odds answer, one per game side: [{sport_key, event_id, market, selection, price}] (price = Novig's American price for that side)."""
+    legs = []
+    for ev in events[:max_events]:
+        for b in ev.get("bookmakers") or []:
+            if b.get("key") != "novig":
+                continue
+            for m in b.get("markets") or []:
+                if m.get("key") != "h2h" or m.get("period"):
+                    continue
+                for o in m.get("outcomes") or []:
+                    if o.get("name") and o.get("price") is not None:
+                        legs.append({"sport_key": sport, "event_id": ev["id"], "market": "h2h", "selection": o["name"], "price": o["price"]})
+    return legs
+
+
+def parlay_pairs(legs, limit=12):
+    """Two-leg combinations from different games (the fair price assumes independent legs), first `limit`."""
+    out = []
+    for i, a in enumerate(legs):
+        for b in legs[i + 1:]:
+            if a["event_id"] != b["event_id"]:
+                out.append([a, b])
+                if len(out) >= limit:
+                    return out
+    return out
+
+
+def parlay_row(resp):
+    """What one /v1/parlay/price answer says about Novig: (novig_ev_pct, novig_price, fair_price, best_other_ev_pct) or None."""
+    if not isinstance(resp, dict):
+        return None
+    novig = next((r for r in resp.get("books") or [] if r.get("book") == "novig" or r.get("bookmaker") == "novig" or r.get("key") == "novig"), None)
+    others = [r.get("ev_pct") for r in resp.get("books") or [] if r is not novig and isinstance(r.get("ev_pct"), (int, float))]
+    return (novig.get("ev_pct") if novig else None, (novig.get("price") or novig.get("price_american")) if novig else None, resp.get("fair_price"), max(others) if others else None)
+
+
+def settle_checks(total, home_score):
+    """Bets on a finished game whose answers we know: (ref, body fragment, expected result). `total` = final total, `home_score` the home side's."""
+    return [
+        ("over_below", {"market": "totals", "selection": "Over", "side": "Over", "point": total - 0.5}, "won"),
+        ("under_below", {"market": "totals", "selection": "Under", "side": "Under", "point": total - 0.5}, "lost"),
+        ("over_at", {"market": "totals", "selection": "Over", "side": "Over", "point": float(total)}, "push"),
+        ("over_quarter", {"market": "totals", "selection": "Over", "side": "Over", "point": total - 0.25}, "half_lost"),
+    ]
+
+
+def cmd_trial(outdir):
+    keys = keys_from_env()
+    key, p = need_paid(keys) if keys else (None, None)
+    if key is None:
+        print("no usable key")
+        return 0
+    os.makedirs(outdir, exist_ok=True)
+    report = ["PropLine feature trial, %s UTC, plan %s" % (datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M"), tier_of(p["limit"]))]
+
+    def call(name, path, params=None, method="GET", body=None, note=""):
+        try:
+            st, h, data = request(path, key, params, method=method, body=body)
+        except Exception as e:  # a failed try must not stop the rest
+            report.append("%-24s FAILED %s" % (name, str(e)[:120])); return None, None
+        d = j(data)
+        red = isinstance(d, dict) and d.get("redacted")
+        report.append("%-24s HTTP %s%s %s" % (name, st, " REDACTED" if red else "", note))
+        with open(os.path.join(outdir, name + ".json"), "w") as f:
+            json.dump({"status": st, "body": trim(d, 6) if d is not None else data[:2000].decode("utf8", "replace")}, f, indent=1)
+        return st, d
+
+    # tonight's Novig h2h legs, one league at a time until there are enough
+    legs, sport_used = [], None
+    for sp in ("basketball_nba", "hockey_nhl", "basketball_ncaab", "football_nfl", "baseball_mlb"):
+        st, d = call("odds_" + sp, "/v1/sports/%s/odds" % sp, {"markets": "h2h", "bookmakers": "novig"})
+        if st == 200 and isinstance(d, list):
+            ls = novig_legs(d, sp)
+            if len({l["event_id"] for l in ls}) >= 3:
+                legs, sport_used = ls, sp
+                break
+    # 1. parlays: Novig's own quote for the exact legs against the fair price (docs: POST /v1/parlay/price, Novig's row is `source: book_quote`, 10% parlay fee included)
+    rows = []
+    for pair in parlay_pairs(legs):
+        st, d = call("parlay_%d" % (len(rows) + 1), "/v1/parlay/price", method="POST", body={"legs": [{k: v for k, v in l.items() if k != "price"} for l in pair]},
+                     note="%s + %s" % (pair[0]["selection"], pair[1]["selection"]))
+        r = parlay_row(d) if st == 200 else None
+        if r:
+            rows.append(r)
+    evs = [r[0] for r in rows if r[0] is not None]
+    report.append("PARLAYS at Novig: %d priced, Novig's quote EV vs the fair parlay: best %s%%, median %s%%, %d above 0" % (
+        len(rows), max(evs) if evs else None, sorted(evs)[len(evs) // 2] if evs else None, sum(1 for e in evs if e > 0)))
+    # 2. same-game parlay: every supported book on the same two legs (the correlation each charges), `bookmaker=all`
+    if legs:
+        e0 = legs[0]["event_id"]
+        st, tot = call("event_markets", "/v1/sports/%s/events/%s/markets" % (sport_used, e0))
+        call("sgp_all", "/v1/sports/%s/events/%s/sgp" % (sport_used, e0), method="POST",
+             body={"bookmaker": "all", "legs": [{"market": "h2h", "name": legs[0]["selection"]}, {"market": "totals", "name": "Over"}]}, note="(2 legs, every book)")
+        # 3. +EV calculator: a price you supply against the same fair line
+        call("ev_calc", "/v1/sports/%s/events/%s/ev/calc" % (sport_used, e0), {"market": "h2h", "name": legs[0]["selection"], "price": legs[0]["price"]}, note="(Novig's own price)")
+        # 4. exchange order-book depth history (Kalshi, Polymarket), from 2026-11-10
+        call("depth_history", "/v1/sports/%s/events/%s/odds/depth/history" % (sport_used, e0), {"markets": "h2h", "bookmakers": "kalshi,polymarket", "interval": "5m", "limit": 50})
+    # 5. settle bets with known answers on a finished game (docs: POST /v1/bets/settle, computed at a line no book posted)
+    for sp in ("basketball_nba", "hockey_nhl", "basketball_ncaab"):
+        st, d = call("scores_" + sp, "/v1/sports/%s/scores" % sp, {"daysFrom": 2})
+        done = next((g for g in (d if isinstance(d, list) else []) if g.get("completed") and g.get("home_score") is not None), None)
+        if done:
+            total = int(done["home_score"]) + int(done["away_score"])
+            checks = settle_checks(total, int(done["home_score"]))
+            body = [dict({"ref": ref, "sport_key": sp, "event_id": int(done["id"]) if str(done["id"]).isdigit() else done["id"], "price": -110, "stake": 10}, **frag) for ref, frag, _ in checks]
+            st, d = call("bets_settle", "/v1/bets/settle", method="POST", body=body, note="(%s %s @ %s, total %d)" % (sp, done.get("away_team"), done.get("home_team"), total))
+            got = {b.get("ref"): b.get("result") for b in (d or {}).get("bets", [])} if st == 200 and isinstance(d, dict) else {}
+            for ref, _, want in checks:
+                report.append("SETTLE %-14s expected %-10s got %-10s %s" % (ref, want, got.get(ref), "OK" if got.get(ref) == want else "DIFFERENT"))
+            call("ids_lookup", "/v1/ids/lookup", {"sport": sp, "home": done["home_team"], "away": done["away_team"], "kickoff": done["commence_time"]})
+            break
+    # 6. the free extras
+    call("grand_salami", "/v1/sports/baseball_mlb/grand-salami"); call("nhl_daily_goals", "/v1/sports/hockey_nhl/daily-goals-total"); call("referees", "/v1/sports/soccer_epl/referees", {"search": "salisbury"})
+    with open(os.path.join(outdir, "REPORT.txt"), "w") as f:
+        f.write("\n".join(report) + "\n")
+    print("\n".join(report))
+    return 0
+
+
 def selftest():
     assert tier_of(1000) == "free" and tier_of(5000) == "hobby" and tier_of(25000) == "pro" and tier_of(250000) == "streaming-lite" and tier_of(None) == "?"
     assert keys_from_env({"PROPLINE_API_KEY": "a, b\nc  d;e"}) == ["a", "b", "c", "d", "e"] and keys_from_env({}) == []
@@ -744,6 +866,16 @@ def selftest():
         for k in ("novig", "draftkings", "fanduel", "somebook")]}]
     r2 = alt_stats(ev2, _ts("2026-10-25T16:02:00Z"))
     assert r2["lines"][0]["ours"] == 2 and r2["lines"][0]["ours_fresh5"] == 2 and r2["lines"][0]["all_books"] == 3, r2
+    bulk = [{"id": 1, "bookmakers": [{"key": "novig", "markets": [{"key": "h2h", "outcomes": [{"name": "A", "price": -120}, {"name": "B", "price": 100}]}]}]},
+            {"id": 2, "bookmakers": [{"key": "novig", "markets": [{"key": "h2h", "outcomes": [{"name": "C", "price": 150}, {"name": "D", "price": -170}]}]}, {"key": "x", "markets": []}]}]
+    lg = novig_legs(bulk, "basketball_nba")
+    assert len(lg) == 4 and lg[0]["selection"] == "A" and lg[0]["price"] == -120
+    pr = parlay_pairs(lg)
+    assert len(pr) == 4 and all(a["event_id"] != b["event_id"] for a, b in pr), "legs of one game are never paired"
+    assert parlay_row({"fair_price": 301, "books": [{"book": "draftkings", "ev_pct": -3.5}, {"book": "novig", "ev_pct": -6.1, "price": 280}]}) == (-6.1, 280, 301, -3.5)
+    assert parlay_row({"books": []}) == (None, None, None, None) and parlay_row(None) is None
+    sc = dict((r, w) for r, _, w in settle_checks(215, 110))
+    assert sc == {"over_below": "won", "under_below": "lost", "over_at": "push", "over_quarter": "half_lost"}
     print("propline selftest ok")
     return 0
 
@@ -756,6 +888,8 @@ if __name__ == "__main__":
         sys.exit(cmd_plans())
     if a[0] == "probe":
         sys.exit(cmd_probe(a[1] if len(a) > 1 else "out/propline-probe"))
+    if a[0] == "trial":
+        sys.exit(cmd_trial(a[1] if len(a) > 1 else "out/propline-trial"))
     if a[0] == "steam":
         sys.exit(cmd_steam(a[1] if len(a) > 1 else "out/propline-steam"))
     if a[0] == "coverage":
