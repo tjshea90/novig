@@ -10,6 +10,9 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
+import kotlinx.serialization.json.decodeFromStream
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
 
 /**
@@ -41,6 +44,10 @@ class JsonFileStore<T>(
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private val mutex = Mutex()
+    /** AU1: size of the file as last read or written; a big document is saved at most every [BIG_COALESCE_MS] (see [update]). */
+    @Volatile private var fileBytes = 0L
+    private var flushJob: kotlinx.coroutines.Job? = null
+    init { synchronized(registry) { registry.add(this) } }
     private val state = MutableStateFlow<T?>(null)
     private var dirty = false
     private var lastWriteMs = 0L
@@ -52,7 +59,13 @@ class JsonFileStore<T>(
 
     suspend fun update(transform: (T) -> T): T = mutex.withLock {
         val next = transform(loadLocked())
-        if (writeBehindMs <= 0L) {
+        if (writeBehindMs <= 0L && fileBytes >= BIG_BYTES) {
+            // AU1 (Tj 2026-11-17: "fix the app writing large files"): a document of half a megabyte or more (the tracked bets were 8 MB, rewritten and synced on every change) is written once the
+            // changes have settled for a moment, and at once when the screen goes away ([flushAll]); the in-memory copy is always current.
+            state.value = next
+            dirty = true
+            if (flushJob?.isActive != true) flushJob = scope.launch { delay(BIG_COALESCE_MS); flush() }
+        } else if (writeBehindMs <= 0L) {
             writeLocked(next)
             state.value = next
         } else {
@@ -68,6 +81,19 @@ class JsonFileStore<T>(
         if (dirty) state.value?.let { persistLocked(it) }
     }
 
+    companion object {
+        const val BIG_BYTES = 512L * 1024
+        const val BIG_COALESCE_MS = 2_000L
+        private val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.IO)
+        private val registry = java.util.Collections.newSetFromMap(java.util.WeakHashMap<JsonFileStore<*>, Boolean>())
+
+        /** Writes every store's unwritten changes now (the screen is leaving, memory is short). */
+        suspend fun flushAll() {
+            val all = synchronized(registry) { registry.toList() }
+            for (st in all) runCatching { st.flush() }
+        }
+    }
+
     private suspend fun persistLocked(value: T) {
         writeLocked(value)
         dirty = false
@@ -78,7 +104,7 @@ class JsonFileStore<T>(
         state.value?.let { return it }
         val loaded = withContext(Dispatchers.IO) {
             if (!file.exists()) return@withContext default()
-            runCatching { json.decodeFromString(serializer, file.readText()) }.getOrElse {
+            runCatching { fileBytes = file.length(); file.inputStream().buffered(64 * 1024).use { json.decodeFromStream(serializer, it) } }.getOrElse {
                 val aside = File(file.parentFile, file.name + ".corrupt-" + System.currentTimeMillis())
                 // Kept either way: the next save must never write over the only copy.
                 if (!file.renameTo(aside)) runCatching { file.copyTo(aside, overwrite = false) }
@@ -101,6 +127,7 @@ class JsonFileStore<T>(
             out.flush()
             fos.fd.sync()   // before the stream is closed: a sync on a closed file fails
         }
+        fileBytes = tmp.length()
         if (!tmp.renameTo(file)) {
             // Some filesystems refuse rename-over; fall back to delete + rename.
             file.delete()
