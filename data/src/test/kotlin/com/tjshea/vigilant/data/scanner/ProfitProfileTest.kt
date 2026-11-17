@@ -116,3 +116,13 @@ class ProfitProfileTest {
         assertEquals(0.0, profile(40).judge(Instrument.BET, "NHL", "Spreads", "A -1.5", 0.03, 600).starPenalty, 0.0)
     }
 }
+
+class HandBlockTest {
+    @org.junit.Test fun playerPropOversAreBlockedByHand() {
+        kotlin.test.assertNotNull(ProfitProfile.handBlock("NBA", "Player props", "Over 24.5"))
+    }
+    @org.junit.Test fun unprovenTypesAreNotBlocked() {
+        kotlin.test.assertNull(ProfitProfile.handBlock("NBA", "Team totals", "Over 110.5"))
+        kotlin.test.assertNull(ProfitProfile.handBlock("NBA", "Moneylines", "Lakers"))
+    }
+}
