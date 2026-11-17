@@ -1,21 +1,24 @@
-# CHECKPOINT 4577 — read me first, then TASKS.md
+# CHECKPOINT 4578 — read me first, then TASKS.md
 
-**Written:** 2026-11-17T04:48:23Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-cya0uu` · **builds on:** `6ca4611a4` (this checkpoint is the commit after it)
+**Written:** 2026-11-17T04:51:31Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-cya0uu` · **builds on:** `af7b5ad60` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: SV1: bets a sharp book says are not +EV are no longer listed (versionCode 471, v1.0.131)
+pre-ship: LV1: one Live switch Off/Practice/Real
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.131), then run: bash tools/record-release.sh v1.0.131 471 "SV1: bets a sharp book says are not +EV are no longer listed"
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M app/build.gradle.kts
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  b2ec23479 ckpt 4577: pre-release: SV1: bets a sharp book says are not +EV are no longer listed (
   6ca4611a4 ckpt 4576: pre-ship: SV1: bets a sharp book says are not +EV are no longer listed
   a6b286e1d ckpt 4575: pre-ship: SV1: bets a sharp book says are not +EV are no longer listed
   68fec10ee ckpt 4574: v1.0.130 released: HB1 hand block
@@ -25,5 +28,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   e8f2a1fa7 ckpt 4570: HB1 hand hard-block coded + tested (ProfitProfile.handBlock, planner manual
   58f847a81 ckpt 4569: profit-only engine settings pushed; HB1 hand block next
   811e207d7 ckpt 4568: answered Tj: what is proven profitable
-  183861a09 ckpt 4567: answered Tj: does anything justify paying
 ```
+
+(6 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
