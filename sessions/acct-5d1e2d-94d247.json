@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-ydwd3a",
- "head": "36e17a3796a1da16914b391cc46b4563bbff633d",
+ "head": "f9bf4e39e73e89ed3d6c2b5583407e3e4d7aaeb6",
  "since": 1794933487,
- "beat": 1794934057,
- "beatIso": "2026-11-17T16:47:37Z",
+ "beat": 1794934334,
+ "beatIso": "2026-11-17T16:52:14Z",
  "done": "AU1 v1.0.134 shipped",
  "next": "read next diag LaunchTrace for first-open close; more startup cuts if still slow"
 }
