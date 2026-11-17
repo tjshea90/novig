@@ -6,10 +6,10 @@
  "kind": "routine",
  "task": "rotation",
  "branch": "claude/optimistic-curie-wicp97",
- "head": "56084c7214582c82725aaf04da24dcaceea08bc2",
+ "head": "78b5e7eb8e2c1c44c2162c64872fbe7ea167441a",
  "since": 1794788519,
- "beat": 1794874884,
- "beatIso": "2026-11-17T00:21:24Z",
- "done": "answered Tj release it: nothing pending; bets store already off-main",
- "next": "PF10: add startup stage timings, release, read next diag"
+ "beat": 1794874947,
+ "beatIso": "2026-11-17T00:22:27Z",
+ "done": "ANALYST 11-17: no change, notes written",
+ "next": "next slot: NCAAB CLV from orders-clv.md before any rule"
 }
