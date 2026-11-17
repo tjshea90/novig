@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-6rhkmh",
- "head": "58f847a8152fea422f30e0063df876d633e6661d",
+ "head": "46e76c767ac8d5dd2f33e2b20f32a7ffe22c9bce",
  "since": 1794884852,
- "beat": 1794885704,
- "beatIso": "2026-11-17T03:21:44Z",
+ "beat": 1794885890,
+ "beatIso": "2026-11-17T03:24:50Z",
  "done": "profit-only engine settings pushed; HB1 hand block next",
  "next": "build HB1 hard block in Bet sheet, test, ship"
 }
