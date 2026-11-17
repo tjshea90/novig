@@ -507,7 +507,7 @@ data class UiState(
     /** A sharp book among the books read for [pick] says it is not +EV at Novig's price (false while its books are unread). */
     internal fun cnoSharpAgainst(pick: CnoPick, now: Long): Boolean {
         val view = booksAt(pick.row.key, now)?.view ?: return false
-        return CnoBooks.check(view, pick.row, live = pick.live)?.sharpAgainst == true
+        return CnoBooks.check(view, pick.row, live = pick.live).sharpAgainst
     }
 
     /** The green check: several books price both sides of [pick] and agree it's +EV ([CnoBooks.agrees]). */
