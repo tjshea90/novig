@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "6e4a22ebac0155b5cee7edf657e15255f978251d",
+ "head": "d941c0de1a5fde76216fb8394c0a9d08ed00127b",
  "since": 1794955330,
- "beat": 1794957036,
- "beatIso": "2026-11-17T23:10:36Z",
- "done": "research index rebuilt for the PropLine studies",
- "next": "confirm main landed; engine_set --reset; run propline.yml task trial"
+ "beat": 1794957099,
+ "beatIso": "2026-11-17T23:11:39Z",
+ "done": "TASKS: PLS/PLR status after landing; trial + engine reset in flight",
+ "next": "read the trial REPORT (run 44197071475) and the new engine job's PropLine log; fill RESULTS in research/propline_unused_features_2026-11-17.md"
 }
