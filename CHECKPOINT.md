@@ -1,22 +1,23 @@
-# CHECKPOINT 4617 — read me first, then TASKS.md
+# CHECKPOINT 4618 — read me first, then TASKS.md
 
-**Written:** 2026-11-17T23:11:39Z · **tests:** all 10 fast checks green
-**Branch:** `ccr-f4518318-aidjgt` · **builds on:** `6e4a22eba` (this checkpoint is the commit after it)
+**Written:** 2026-11-17T23:13:24Z · **tests:** all 10 fast checks green
+**Branch:** `ccr-f4518318-aidjgt` · **builds on:** `d941c0de1` (this checkpoint is the commit after it)
 
 ## Just done
-TASKS: PLS/PLR status after landing; trial + engine reset in flight
+PLR trial fixes from the first real run: SGP needs a total point, ev/calc names h2h by nickname, /scores status is 'final', per-combo parlay lines
 
 ## Do this next
-read the trial REPORT (run 44197071475) and the new engine job's PropLine log; fill RESULTS in research/propline_unused_features_2026-11-17.md
+rerun propline.yml trial; fill RESULTS
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-    M  TASKS.md
+    M  tools/propline.py
 
 ## Last ten checkpoints
 ```
+  d941c0de1 ckpt 4617: TASKS: PLS/PLR status after landing; trial + engine reset in flight
   6e4a22eba ckpt 4616: research index rebuilt for the PropLine studies
   0158be6e5 ckpt 4615: PLS+PLR: all three modules green (4241 passed); PropLine upgrade watch, Pin
   849040d2d ckpt 4614: PLS: full :cloud/:data suites green (3041 passed); Pinnacle cache age, Prop
@@ -26,5 +27,4 @@ read the trial REPORT (run 44197071475) and the new engine job's PropLine log; f
   29dfa661e ckpt 4610: BV2: bid volume cause = feeds (ParlayAPI 0, PropLine spent, SGO silent), we
   1c9591424 ckpt 4609: BV1: not-bid reasons live; asked Tj which floor to relax
   fc2806403 ckpt 4608: engine bid status now lists top 3 not-bid reasons (CloudBidRunner); CloudBi
-  1be3f8263 ckpt 4607: chat 20:2x: ttl 60 for bid volume, replied to Tj
 ```

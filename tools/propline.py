@@ -812,25 +812,30 @@ def cmd_trial(outdir):
         st, d = call("parlay_%d" % (len(rows) + 1), "/v1/parlay/price", method="POST", body={"legs": [{k: v for k, v in l.items() if k != "price"} for l in pair]},
                      note="%s + %s" % (pair[0]["selection"], pair[1]["selection"]))
         r = parlay_row(d) if st == 200 else None
-        if r:
+        if r and r[2] is not None:
             rows.append(r)
+            report.append("  PARLAY %s + %s: fair %s, Novig %s (EV %s%%), best other book EV %s%%" % (pair[0]["selection"], pair[1]["selection"], r[2], r[1], r[0], r[3]))
     evs = [r[0] for r in rows if r[0] is not None]
     report.append("PARLAYS at Novig: %d priced, Novig's quote EV vs the fair parlay: best %s%%, median %s%%, %d above 0" % (
         len(rows), max(evs) if evs else None, sorted(evs)[len(evs) // 2] if evs else None, sum(1 for e in evs if e > 0)))
     # 2. same-game parlay: every supported book on the same two legs (the correlation each charges), `bookmaker=all`
     if legs:
         e0 = legs[0]["event_id"]
-        st, tot = call("event_markets", "/v1/sports/%s/events/%s/markets" % (sport_used, e0))
-        call("sgp_all", "/v1/sports/%s/events/%s/sgp" % (sport_used, e0), method="POST",
-             body={"bookmaker": "all", "legs": [{"market": "h2h", "name": legs[0]["selection"]}, {"market": "totals", "name": "Over"}]}, note="(2 legs, every book)")
-        # 3. +EV calculator: a price you supply against the same fair line
-        call("ev_calc", "/v1/sports/%s/events/%s/ev/calc" % (sport_used, e0), {"market": "h2h", "name": legs[0]["selection"], "price": legs[0]["price"]}, note="(Novig's own price)")
+        # the main total line (a totals leg without a point is refused: "an Over with no point on an event carrying two total lines is refused, not guessed")
+        st, tot = call("event_totals", "/v1/sports/%s/events/%s/odds" % (sport_used, e0), {"markets": "totals", "bookmakers": "draftkings,fanduel"})
+        pts = [o.get("point") for b in (tot or {}).get("bookmakers", []) for m in b.get("markets", []) for o in m.get("outcomes", []) if o.get("point") is not None] if st == 200 and isinstance(tot, dict) else []
+        main_pt = max(set(pts), key=pts.count) if pts else None
+        slip = [{"market": "h2h", "name": legs[0]["selection"]}] + ([{"market": "totals", "name": "Over", "point": main_pt}] if main_pt is not None else [])
+        call("sgp_all", "/v1/sports/%s/events/%s/sgp" % (sport_used, e0), method="POST", body={"bookmaker": "all", "legs": slip}, note="(%d legs, every book, total %s)" % (len(slip), main_pt))
+        # 3. +EV calculator: a price you supply against the same fair line (h2h outcomes are named by nickname: "Raptors")
+        nick = legs[0]["selection"].split()[-1]
+        st, d = call("ev_calc", "/v1/sports/%s/events/%s/ev/calc" % (sport_used, e0), {"market": "h2h", "name": nick, "price": legs[0]["price"]}, note="(Novig's own price, %s)" % nick)
         # 4. exchange order-book depth history (Kalshi, Polymarket), from 2026-11-10
         call("depth_history", "/v1/sports/%s/events/%s/odds/depth/history" % (sport_used, e0), {"markets": "h2h", "bookmakers": "kalshi,polymarket", "interval": "5m", "limit": 50})
     # 5. settle bets with known answers on a finished game (docs: POST /v1/bets/settle, computed at a line no book posted)
     for sp in ("basketball_nba", "hockey_nhl", "basketball_ncaab"):
         st, d = call("scores_" + sp, "/v1/sports/%s/scores" % sp, {"daysFrom": 2})
-        done = next((g for g in (d if isinstance(d, list) else []) if g.get("completed") and g.get("home_score") is not None), None)
+        done = next((g for g in (d if isinstance(d, list) else []) if g.get("status") == "final" and g.get("home_score") is not None and g.get("away_score") is not None), None)
         if done:
             total = int(done["home_score"]) + int(done["away_score"])
             checks = settle_checks(total, int(done["home_score"]))
