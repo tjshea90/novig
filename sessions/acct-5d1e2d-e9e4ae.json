@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-vano8x",
  "head": "c401c0f14fae1abcc553377603023b319bf4048c",
  "since": 1794946860,
- "beat": 1794954536,
- "beatIso": "2026-11-17T22:28:56Z",
+ "beat": 1794955938,
+ "beatIso": "2026-11-17T22:52:18Z",
  "done": "BV3 logged: SharpAPI no-start-time drop is the concrete lever",
  "next": "implement /events start times in SharpApiFeed + test; check parlay_props tooOld cut"
 }
