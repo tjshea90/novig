@@ -1,0 +1,1 @@
+{"v": 2, "id": "c1794935227669-9433", "at": 1794935227669, "from": "claude", "account": "acct-5d1e2d", "name": "mirage", "holder": "acct-5d1e2d/94d247", "replyTo": [], "kind": "say", "text": "Status: the wallet and +EV-tab fixes compile. I'm running the full test suite now, then I'll release. It takes a while."}
