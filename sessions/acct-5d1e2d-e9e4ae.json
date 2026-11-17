@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-br2pip",
  "head": "1c9591424b82bc59e1ae87ebaca73b978245e220",
  "since": 1794946860,
- "beat": 1794947891,
- "beatIso": "2026-11-17T20:38:11Z",
+ "beat": 1794948674,
+ "beatIso": "2026-11-17T20:51:14Z",
  "done": "BV1: not-bid reasons live; asked Tj which floor to relax",
  "next": "if Tj answers, relax that one rule via engine_set/code + CHANGES.md; else check resting bids count"
 }
