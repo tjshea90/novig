@@ -930,7 +930,7 @@ internal data class PlMarket(
         }
         if (quotes.map { it.side }.toSet().size != 2) return emptyList()
         if (kind != LineKind.MONEYLINE && quotes.any { it.point == null }) return emptyList()
-        return listOf(RefBookMarket(bookKey, title, kind, quotes, seen(live) ?: updated, subject = subject, period = if (wantPeriod == null) 0 else 1, bookEventId = book.book_event_id?.takeIf { it.isNotBlank() }, link = book.link?.takeIf { it.isNotBlank() }))
+        return listOf(RefBookMarket(bookKey, title, kind, quotes, seen(live, bookKey) ?: updated, subject = subject, period = if (wantPeriod == null) 0 else 1, bookEventId = book.book_event_id?.takeIf { it.isNotBlank() }, link = book.link?.takeIf { it.isNotBlank() }))
     }
 
     /**
@@ -938,8 +938,8 @@ internal data class PlMarket(
      * also sends `last_change_at`, when the price last moved; an unmoved price is still current), else the
      * market's `last_update`. The scan never prices one older than a few minutes (RESEARCH.md §24).
      */
-    private fun seen(outcomes: List<PlOutcome>): Long? =
-        outcomes.map { PropLineClient.ms(it.last_seen_at) ?: return null }.minOrNull()
+    private fun seen(outcomes: List<PlOutcome>, bookKey: String): Long? =
+        outcomes.map { it.seenAt(bookKey) ?: return null }.minOrNull()
 
     /**
      * Two-way player lines only (`point` set, Over/Under), and Yes/No markets as Over/Under 0.5. A
@@ -956,7 +956,7 @@ internal data class PlMarket(
                 else -> return@mapNotNull null
             }
             val point = o.point ?: if (yesNo) 0.5 else return@mapNotNull null
-            Leg(player, point, over, PropLineClient.decimal(o.price) ?: return@mapNotNull null, PropLineClient.ms(o.last_seen_at), o.book_outcome_id?.takeIf { it.isNotBlank() }, o.outcomeId)
+            Leg(player, point, over, PropLineClient.decimal(o.price) ?: return@mapNotNull null, o.seenAt(bookKey), o.book_outcome_id?.takeIf { it.isNotBlank() }, o.outcomeId)
         }
         return legs.groupBy { PlayerNames.key(it.player) to it.point }.values.mapNotNull { group ->
             val over = group.singleOrNull { it.over } ?: return@mapNotNull null
@@ -978,6 +978,8 @@ internal data class PlOutcome(
     val price: Double? = null,
     val point: Double? = null,
     val last_seen_at: String? = null,
+    /** The book's OWN publish time where it has one: for Pinnacle, when its cached copy of its public feed was made (docs 2026-11-16, since 2026-11-04; Pinnacle caches that feed for up to ~15 minutes). Null for most books. */
+    val book_updated_at: String? = null,
     val side: String? = null,
     /** Only with `includeBookIds`: the book's own id for this selection. */
     val book_outcome_id: String? = null,
@@ -985,6 +987,18 @@ internal data class PlOutcome(
     val outcome_id: kotlinx.serialization.json.JsonPrimitive? = null,
 ) {
     val outcomeId: String? get() = outcome_id?.takeIf { it !is kotlinx.serialization.json.JsonNull }?.content?.takeIf { it.isNotBlank() }
+
+    /**
+     * When this price was last known current, ms: PropLine's read of it (`last_seen_at`), except Pinnacle's: its public feed is cached for up to ~15 minutes, so a price PropLine read a second ago can be 15 minutes old
+     * ("`last_seen_at` only says when we read it", docs 2026-11-16). For Pinnacle the older of the read and the cached copy's own time ([book_updated_at]) is the price's age, which the freshest-wins rule and the
+     * quote-age checks then use like any other source's (PLS2, Tj 2026-11-17).
+     */
+    fun seenAt(bookKey: String): Long? {
+        val read = PropLineClient.ms(last_seen_at)
+        if (bookKey != PropLineLive.PINNACLE) return read
+        val copied = PropLineClient.ms(book_updated_at) ?: return read
+        return if (read == null) copied else minOf(read, copied)
+    }
 }
 
 /**

@@ -184,6 +184,8 @@ class PropLineLive(private val clock: () -> Long = System::currentTimeMillis) {
         if (prop && m.subject != null) scratches[scratchKey(e.id.removePrefix(PropLinePropsSource.PREFIX), m.bookKey, m.subject)]?.let { at -> if (at > readAtMs - SCRATCH_SLACK_MS) return null }
         var latest = m.lastUpdateMs ?: readAtMs
         var changed = false
+        // Pinnacle's public feed is cached for up to ~15 minutes (docs 2026-11-16): a push or a heartbeat says PropLine's data moved or is being read, not that the PRICE is current, so neither raises its age (PLS2).
+        val cached = m.bookKey == PINNACLE
         val quotes = m.quotes.map { q ->
             val mv = q.feedOutcomeId?.let { moves[it] }
             // Only a push newer than the board it is laid over (less a little for PropLine's own answer lag): an older one is already in that board. A rung pulled once and back on the board at the
@@ -192,13 +194,13 @@ class PropLineLive(private val clock: () -> Long = System::currentTimeMillis) {
             else {
                 if (mv.pulled) return null
                 changed = true
-                latest = maxOf(latest, mv.atMs)
+                if (!cached) latest = maxOf(latest, mv.atMs)
                 q.copy(decimalOdds = mv.decimal ?: q.decimalOdds, point = if (m.kind == LineKind.MONEYLINE) q.point else (mv.point ?: q.point))
             }
         }
         if (changed && !consistent(m.kind, quotes)) return null
         if (changed) applied++
-        if (cover) {
+        if (cover && !cached) {
             val at = confirmedAt(m.bookKey, if (e.sportKey.startsWith("tennis_")) PropLineTennis.SPORT else e.sportKey, now)
             if (at == null) com.tjshea.vigilant.data.scanner.QuoteCensus.add("unconfirmed", "${m.bookKey}/${e.sportKey}")
             if (at != null && at > latest) { latest = at; confirmed++ }
@@ -259,6 +261,8 @@ class PropLineLive(private val clock: () -> Long = System::currentTimeMillis) {
     companion object {
         /** No frame for this long: the socket is taken for dead (PropLine pings every 25 s and sends a heartbeat every 25 s). */
         const val SILENT_MS = 70_000L
+        /** The app's key for Pinnacle (its price age is the cached copy's, not PropLine's read: [PlOutcome.seenAt]). */
+        const val PINNACLE = "pinnacle"
         /** Moves are kept this long (a board is read again well within it). */
         const val KEEP_MS = 20 * 60_000L
         /** A push this much older than a board read may still be missing from it (PropLine's bulk answers can be a few seconds behind its stream): it is laid over all the same. */
