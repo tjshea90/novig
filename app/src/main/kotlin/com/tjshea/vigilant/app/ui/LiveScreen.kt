@@ -79,8 +79,11 @@ fun LiveScreen(
         ) {
             WhereSwitch(s, onUpdate)
             LiveBoardHost(state, light, now)
-            LiveMasterRow(s, onUpdate)
-
+            LiveSimpleCard(s, onUpdate)
+            var advanced by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+            OutlinedButton(onClick = { advanced = !advanced }, modifier = Modifier.testTag("liveAdvanced")) { Text(if (advanced) "Hide advanced live settings" else "Advanced live settings") }
+            if (advanced) LiveMasterRow(s, onUpdate)
+            if (advanced) {
             SectionTitle("Controls")
             LiveNote(if (s.liveOnGitHub) "Changes reach GitHub within seconds (they ride the settings it reads every 3 s)." else "Changes apply on this phone at once.")
             TailLiveBlock(state, onUpdate)
