@@ -71,3 +71,4 @@
 - 2026-10-26 ANALYST mirage: no change; moneylines leak (z -2.45, n117) waits for n200; team totals the proven type; research/review/2026-10-26.md
 - 2026-10-29 ANALYST: no change; engine-auto -5.2% z-2.04 (split by kind next), ATP n179 watch. research/review/2026-10-29.md
 - 2026-10-30 ANALYST: auto+bids n1996 ROI -0.2%; ATP -10.7% n218 (not significant), no rule change; research/review/2026-10-30.md
+- 2026-11-17 ANALYST (mirage): no rule change; settled 2622, ROI -1.7%, totals -8.1% n1094 (already off since 11-16), NCAAB -5.1% watch (needs CLV). Engine off by phone, wallet cash $0.01. research/review/2026-11-17.md
