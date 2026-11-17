@@ -83,4 +83,20 @@ class JsonFileStoreTest {
         s.flush()
         assertEquals(listOf("x", "y"), store(f).read())
     }
+
+    // AU1: a document of half a megabyte or more is not rewritten on every change; flushAll (the screen leaving) writes it at once.
+    @Test
+    fun `a big document is written once its changes settle or when flushAll runs`() = runTest {
+        val f = File(tmp.root, "big.json")
+        f.writeText(ListSerializer(String.serializer()).let { kotlinx.serialization.json.Json.encodeToString(it, listOf("x".repeat(600_000))) })
+        val s = store(f)
+        s.read()
+        val before = f.length()
+        s.update { it + "y" }
+        s.update { it + "z" }
+        assertEquals("not rewritten per change", before, f.length())
+        assertEquals(3, s.read().size)
+        JsonFileStore.flushAll()
+        assertEquals(3, store(f).read().size)
+    }
 }
