@@ -1,0 +1,59 @@
+name: PropLine same-game parlays at Novig (Tj, 2026-11-17, PLR)
+
+# Free, no Claude usage, read-only (nothing is placed anywhere). PropLine's POST .../sgp with bookmaker=all quotes a two-leg slip at every book that prices it, Novig included. First real answer: Raptors ML + Over 215.5,
+# Novig +325 against FanDuel +282, DraftKings +296, BetMGM +290. Whether Novig's milder correlation charge is edge depends on the legs' true correlation, which only outcomes can say, so:
+#   log    (15:30 and 21:30 UTC) quote 4 slips per game starting in the next 14 h (home/away moneyline x over/under the main total) at every book -> Release `propline-sgp-YYYY-MM-DD` (never delete)
+#   grade  (09:40 UTC) settle every logged slip of a finished game with POST /v1/bets/settle and report ROI per book at its own quote -> Release `propline-sgp-summary` (SUMMARY.md, replaced each run)
+# Read SUMMARY.md once a few hundred slips have settled (a slip hits about 22%: the +/- column says how sure). Study: research/propline_unused_features_2026-11-17.md.
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "log | grade"
+        default: "log"
+  schedule:
+    - cron: "30 15 * * *"
+    - cron: "30 21 * * *"
+    - cron: "40 9 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: propline-sgp
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: SGP
+        env:
+          PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          TASK: ${{ github.event.inputs.task || (github.event.schedule == '40 9 * * *' && 'grade' || 'log') }}
+        run: |
+          set -u
+          python3 -I tools/propline_sgp.py selftest
+          day=$(date -u +%F)
+          case "$TASK" in
+            log)
+              python3 -I tools/propline_sgp.py log out/sgp
+              if ls out/sgp/*.jsonl.gz >/dev/null 2>&1; then
+                tag="propline-sgp-$day"
+                gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "PropLine same-game-parlay quotes $day" --notes "Two-leg SGP quotes at every book incl. Novig (propline-sgp.yml). Never delete."
+                gh release upload "$tag" out/sgp/* --clobber
+              fi ;;
+            grade)
+              mkdir -p out/in
+              for tag in $(gh release list --limit 60 --json tagName --jq '.[].tagName' | grep '^propline-sgp-2'); do gh release download "$tag" --pattern 'sgp-2*.jsonl.gz' --dir out/in || true; done
+              python3 -I tools/propline_sgp.py grade "out/in/sgp-2*.jsonl.gz" out/graded
+              if [ -f out/graded/SUMMARY.md ]; then
+                gh release view propline-sgp-summary >/dev/null 2>&1 || gh release create propline-sgp-summary --title "PropLine SGP study (graded)" --notes "ROI of every logged same-game parlay at each book's own quote (propline-sgp.yml grade). Replaced each run."
+                gh release upload propline-sgp-summary out/graded/* --clobber
+              fi ;;
+          esac
