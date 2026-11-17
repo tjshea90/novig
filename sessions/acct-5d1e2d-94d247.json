@@ -6,10 +6,10 @@
  "kind": "routine",
  "task": "AU1",
  "branch": "claude/optimistic-curie-o1vg2x",
- "head": "756fa388b7e30a10600bacb3b0cf7bfcb4eb14f9",
+ "head": "c54096864bc50449cb33a24e439ccb9071675dce",
  "since": 1794884852,
- "beat": 1794929925,
- "beatIso": "2026-11-17T15:38:45Z",
+ "beat": 1794930106,
+ "beatIso": "2026-11-17T15:41:46Z",
  "done": "AU1: au1-fire.yml durable GitHub timer fires mirage routine 14:10 UTC",
  "next": "verify au1-fire.yml reached main; AU1 at 14:10 UTC"
 }
