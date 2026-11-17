@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-ydwd3a",
- "head": "e9cabde5b6d10d4f29b4cfcd8a7eb2854b66fea4",
+ "head": "31ee61d6268d02a0efd835a90c57e71f5647092e",
  "since": 1794933487,
- "beat": 1794935581,
- "beatIso": "2026-11-17T17:13:01Z",
- "done": "pre-ship: TR2 stable all-time profit reading, PF11 +EV tab no double rebuild",
- "next": "ship.sh gates and releases this"
+ "beat": 1794935760,
+ "beatIso": "2026-11-17T17:16:00Z",
+ "done": "pre-release: TR2 stable all-time profit reading, PF11 +EV tab no double rebuild (versionCode 475, v1.0.135)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.135), then run: bash tools/record-release.sh v1.0.135 475 \"TR2 stable all-time profit reading, PF11 +EV tab no double rebuild\""
 }
