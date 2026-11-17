@@ -585,6 +585,8 @@ class MainActivity : ComponentActivity() {
         val container = (application as VigilantApp).container
         container.onScreen = false
         LaunchTrace.stage("stopped")
+        // AU1: a big document's last changes are written the moment the screen leaves (they are otherwise saved a couple of seconds after the last change).
+        container.appScope.launch(kotlinx.coroutines.Dispatchers.IO) { com.tjshea.vigilant.data.store.JsonFileStore.flushAll() }
         // Novig's live feed only while a scan or Tj is using it: off screen with no scan, it's closed now
         // rather than pushing prices to a phone in a pocket for two more minutes.
         if (!container.runner.running && !container.pinnRunner.running && !container.streamEngine.status.value.running) container.novig.stream?.close()
