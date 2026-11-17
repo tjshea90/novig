@@ -1,21 +1,24 @@
-# CHECKPOINT 4568 — read me first, then TASKS.md
+# CHECKPOINT 4569 — read me first, then TASKS.md
 
-**Written:** 2026-11-17T03:15:10Z · **tests:** 1 RED: test_research_index.sh (9 green)
-**Branch:** `claude/optimistic-curie-6rhkmh` · **builds on:** `183861a09` (this checkpoint is the commit after it)
+**Written:** 2026-11-17T03:21:44Z · **tests:** 1 RED: test_research_index.sh (9 green)
+**Branch:** `claude/optimistic-curie-6rhkmh` · **builds on:** `811e207d7` (this checkpoint is the commit after it)
 
 ## Just done
-answered Tj: what is proven profitable
+profit-only engine settings pushed; HB1 hand block next
 
 ## Do this next
-NCAAB CLV, then restrict kinds if leak
+build HB1 hard block in Bet sheet, test, ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  811e207d7 ckpt 4568: answered Tj: what is proven profitable
   183861a09 ckpt 4567: answered Tj: does anything justify paying
   95519a8a5 ckpt 4566: answered Tj: replacement APIs research
   78b5e7eb8 ckpt 4565: ANALYST 11-17: no change, notes written
@@ -25,5 +28,4 @@ NCAAB CLV, then restrict kinds if leak
   48b277f4b ckpt 4561: v1.0.128-129 shipped (launch trace, chat typing)
   981f399bb ckpt 4560: pre-release: Chat typing no longer redraws the whole thread on every key; f
   b9e61e59e ckpt 4559: pre-ship: Chat typing no longer redraws the whole thread on every key; fine
-  564dfebcf ckpt 4558: PF8: launch trace stages; v1.0.128 building
 ```

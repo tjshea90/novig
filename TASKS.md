@@ -6701,3 +6701,6 @@ DG5 (Tj chat 03:16 UTC 2026-11-16) "rebuild the entire tracker system to use nov
 - [ ] PF10 (diag 16:50 v1.0.129) coldstart 8.8s; bets.json 8MB still loaded eagerly: load after first frame / append-only; add stage timings to report.
 
 - [ ] PF10 correction: BetTracker/JsonFileStore already load off-main (suspend); cold start cause unknown. Add stage timings (Application.onCreate, container, first frame) then fix from the next diag. Tj said "release it" 22:12 UTC.
+
+- [ ] HB1 (Tj chat 03:20 UTC 2026-11-17) "do not allow me to place any bets by hand that are proven to lose money with large samples, block me from betting it completely; only allow hand bets that are even or profitable so far": a HARD block (not a warning) in the Bet sheet for types whose history is negative with t<=-2 and n>=300 (start: player prop overs, NCAAB, game totals; derive from profit_profile.json / star_evidence). Today profitProven only warns by hand. Needs app release.
+- [ ] HB2 engine wallet is ~$0.01: nothing trades until funded (class C, Tj).

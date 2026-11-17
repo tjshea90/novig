@@ -197,3 +197,5 @@ Tj chat 23:53 UTC: "The engine runs the wallet out of money way faster than usua
 - Revert: engine_set autoBetKinds=+SPREAD,+TOTAL...; pinnLiveBet=false liveBidReal=false pinnLiveMinEv=0.04 pinnLiveMaxDay=10; git revert the code commit.
 
 - 2026-11-16 PF1 (Tj chat): PropLine Streaming ends today. Code already degrades by the key plan (PropLineClient.plan()==null on a 1,000/day key: no socket (streamingKey needs 250k), no +EV sweep, 1 game at a time, props capped at propLineGamesPerScan). Changed: removed the cron from propline.yml (daily archive/CLV exports) and propline-steam.yml (3-hourly steam): both Pro-only, would answer redacted. Revert: restore the two cron lines. Dispatch still works.
+
+- 2026-11-17 PROFIT-ONLY (Tj chat 03:20 UTC, mirage): engine_set: leagues -NCAAB -NCAAF (NCAAB -5.1% n1570, NCAAF -2.2%), makerKinds PROP+TEAM_TOTAL only (game-line bids never fill; team totals best CLV), vigGuards.bidMany=true, --on. Auto-bet kinds already PROP/MONEYLINE/TEAM_TOTAL (11-15). Revert: engine_set leagues=+NCAAB leagues=+NCAAF makerKinds=+SPREAD,+TOTAL,+MONEYLINE,+PERIOD,+OTHER vigGuards.bidMany=false.
