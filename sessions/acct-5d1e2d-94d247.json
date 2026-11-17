@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-cya0uu",
- "head": "e469008712780314fc782ae437790103eb6fbc68",
+ "head": "753a2a1ba28fc3c59ca101807bd2529466a2f2f8",
  "since": 1794884852,
- "beat": 1794891463,
- "beatIso": "2026-11-17T04:57:43Z",
+ "beat": 1794891683,
+ "beatIso": "2026-11-17T05:01:23Z",
  "done": "pre-release: LV1: one Live switch Off/Practice/Real (versionCode 472, v1.0.132)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.132), then run: bash tools/record-release.sh v1.0.132 472 \"LV1: one Live switch Off/Practice/Real\""
 }
