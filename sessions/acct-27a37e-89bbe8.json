@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "90115229772a985c1776fc3d1fa1d0af4589f9dc",
+ "head": "01fd90865d03876a65468fd2b6e9f1f73d2c2c21",
  "since": 1794955330,
- "beat": 1794956682,
- "beatIso": "2026-11-17T23:04:42Z",
+ "beat": 1794956962,
+ "beatIso": "2026-11-17T23:09:22Z",
  "done": "PLS: full :cloud/:data suites green (3041 passed); Pinnacle cache age, PropLine upgrade watch, game_state on socket 2, docs + CHANGES + research",
  "next": "land on main, then engine_set --reset so the runner starts on the resubscribed key; read the engine log for PropLine holds/ready/game_state"
 }
