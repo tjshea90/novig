@@ -120,8 +120,10 @@ fun FeedScreen(
     val now = rememberNow(com.tjshea.vigilant.app.CloudLink.paced(if (cloudPending) 1_000L else if (state.settings.cloudDrives) 5_000L else 15_000L))
     val cloud = if (state.settings.cloudDrives) com.tjshea.vigilant.data.cloud.CloudText.view(state.cloudUi.status, state.cloudUi.requestedAtMs, now, state.cloudUi.why) else null
     // The freshness of what is ON SCREEN, measured from the shown bets' own stamps (not a claim): one glance in the title, a tap for the detail.
+    // PF11 (EV tab froze up to 3 s): the visible list was rebuilt (every row checked and typed) twice on every recomposition; it is now rebuilt only when the state or the clock changes.
+    val feedNow = remember(state, now) { state.feedAt(now) }
     val chip = if (cloud != null) remember(state.feed, state.cloudUi.status, state.cloudUi.why, state.placedIndex, state.settings, now) {
-        com.tjshea.vigilant.data.cloud.CloudFreshness.of(state.feedAt(now), state.cloudUi.status, now, state.cloudUi.why)
+        com.tjshea.vigilant.data.cloud.CloudFreshness.of(feedNow, state.cloudUi.status, now, state.cloudUi.why)
     } else null
     var freshDetail by remember { mutableStateOf(false) }
     // The list keeps itself honest: every AUTO_RECHECK_MS Novig's prices for the listed bets are read again (a few order books, no fair-odds calls), so a bet that is no longer +EV or has no liquidity left leaves it.
@@ -240,7 +242,7 @@ fun FeedScreen(
                     }
                 }
                 // Only EVs whose other books' prices are still current (RESEARCH.md §24).
-                val shown = state.feedAt(now).let { all -> if (state.settings.includeLive && liveOnly) all.filter { it.isLive || it.liveAges != null } else all }
+                val shown = feedNow.let { all -> if (state.settings.includeLive && liveOnly) all.filter { it.isLive || it.liveAges != null } else all }
                     .let { viewFilter.apply(it) }
                     .let { if (kalshi != null && !kalshi.novigOn) emptyList() else it }
                 if (state.settings.killed) item(key = "paused") { KilledBanner(Modifier.padding(horizontal = 12.dp)) } else if (state.settings.paused) item(key = "paused") { PausedBanner({ onPause(false) }, Modifier.padding(horizontal = 12.dp)) }
