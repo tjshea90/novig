@@ -315,6 +315,8 @@ data class UiState(
         goneSeen(o, now) -> "slipFoundGone"
         // Tj, 2026-11-17: a type proven to lose (300+ bets, t <= -2) cannot be bet by hand, so it is not listed at all.
         com.tjshea.vigilant.data.scanner.ProfitProfile.handBlock(o.league.novigName, com.tjshea.vigilant.data.scanner.BetKind.of(o.marketLabel, o.selection).label, o.selection) != null -> "provenLoser"
+        // Tj, 2026-11-17: a sharp book prices both sides and says it is not +EV at Novig's price: those bets did worse (CLV -0.7% to -1.8%), so they are not listed at all.
+        o.agreement.sharpAgainst -> "sharpAgainst"
         else -> null
     }
 
@@ -502,6 +504,12 @@ data class UiState(
     fun gamesAt(now: Long): List<com.tjshea.vigilant.data.scanner.PricedGame> =
         result?.games.orEmpty().filter { settings.startsInWindow(it.event.startsTs, now) }
 
+    /** A sharp book among the books read for [pick] says it is not +EV at Novig's price (false while its books are unread). */
+    internal fun cnoSharpAgainst(pick: CnoPick, now: Long): Boolean {
+        val view = booksAt(pick.row.key, now)?.view ?: return false
+        return CnoBooks.check(view, pick.row, live = pick.live)?.sharpAgainst == true
+    }
+
     /** The green check: several books price both sides of [pick] and agree it's +EV ([CnoBooks.agrees]). */
     fun cnoAgrees(pick: CnoPick, now: Long = System.currentTimeMillis()): Boolean {
         if (!cnoReadsBooks) return false
@@ -518,7 +526,7 @@ data class UiState(
      * when "only bets the books agree on" is on (Tj, 2026-09-27).
      */
     fun cnoShown(now: Long): List<CnoPick> =
-        cnoCandidates(now).filter { com.tjshea.vigilant.data.scanner.ProfitProfile.handBlock(it.row.league, com.tjshea.vigilant.data.scanner.BetKind.of(it.row.market, it.row.bet).label, it.row.bet) == null }.let { all -> if (settings.cnoOnlyAgreed) all.filter { cnoAgrees(it, now) } else all }
+        cnoCandidates(now).filter { com.tjshea.vigilant.data.scanner.ProfitProfile.handBlock(it.row.league, com.tjshea.vigilant.data.scanner.BetKind.of(it.row.market, it.row.bet).label, it.row.bet) == null }.filter { !cnoSharpAgainst(it, now) }.let { all -> if (settings.cnoOnlyAgreed) all.filter { cnoAgrees(it, now) } else all }
             // A bet that is no longer +EV at Novig's price now leaves the list by itself, no tap needed (Tj, 2026-10-13); it is still read ([livePriceRows]), so it returns if it turns +EV again.
             .filter { livePick(it, now).ev > 0.0 && !negativeSeenAt(it.row, now) }
 
