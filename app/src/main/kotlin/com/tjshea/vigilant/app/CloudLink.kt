@@ -135,7 +135,8 @@ class CloudLink(private val c: AppContainer) {
     // container was being built before the first frame. The screen now starts empty and the last known numbers are laid in a moment later from an IO thread, only where nothing newer has come.
     private val _ui = MutableStateFlow(Ui())
     init {
-        c.appScope.launch(Dispatchers.IO) {
+        // runCatching: a test's stand-in container has no scope; the offline copy is then simply not laid in.
+        runCatching { c.appScope }.getOrNull()?.launch(Dispatchers.IO) {
             val offStatus = loadRaw("status.json") { com.tjshea.vigilant.data.cloud.CloudStatus.parse(it) }
             val offTrades = loadRaw("trades.json") { com.tjshea.vigilant.data.cloud.TradeLedger.parse(it) }
             val offDesk = loadRaw("desk.json") { com.tjshea.vigilant.data.cloud.DeskFile.parse(it) }
