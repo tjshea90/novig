@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-zd169c",
- "head": "690cc28d08c84cc72f991696382916377287c71c",
+ "head": "f880592533bf35fc3e9b403e515b12024bcb40ee",
  "since": 1794937704,
- "beat": 1794938855,
- "beatIso": "2026-11-17T18:07:35Z",
- "done": "chat run: v1.0.135 shipped (TR2 stable wallet read, PF11 feed memo)",
- "next": "read next diag: EV tab frames, profit figure; bets.json prune if still flagged; Tj: ParlayAPI key, notifications"
+ "beat": 1794938983,
+ "beatIso": "2026-11-17T18:09:43Z",
+ "done": "chat: restored bid/bet settings overwritten by 2nd device; engine_set json: lists",
+ "next": "watch chat; check cloud-config not overwritten again"
 }
