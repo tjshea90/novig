@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-6rhkmh",
- "head": "811e207d701e38f290569b0f61bf920052e07073",
+ "head": "58f847a8152fea422f30e0063df876d633e6661d",
  "since": 1794884852,
- "beat": 1794885649,
- "beatIso": "2026-11-17T03:20:49Z",
- "done": "answered Tj: what is proven profitable",
- "next": "NCAAB CLV, then restrict kinds if leak"
+ "beat": 1794885704,
+ "beatIso": "2026-11-17T03:21:44Z",
+ "done": "profit-only engine settings pushed; HB1 hand block next",
+ "next": "build HB1 hard block in Bet sheet, test, ship"
 }
