@@ -35,7 +35,7 @@ class ProfitProfile(
     enum class Instrument(val key: String) { BET("bet"), BID("bid") }
 
     /** [blocked] is the reason in words (null = not blocked); [score] ranks (higher first; 0 = neutral); [favoured] names the winning groups behind a positive score. */
-    data class Judgement(val blocked: String?, val score: Double, val favoured: String?, val starPenalty: Double = 0.0, val blockShort: String? = null) {
+    data class Judgement(val blocked: String?, val score: Double, val favoured: String?, val starPenalty: Double = 0.0, val blockShort: String? = null, val blockN: Int = 0, val blockT: Double = 0.0) {
         companion object { val NEUTRAL = Judgement(null, 0.0, null) }
     }
 
@@ -74,7 +74,7 @@ class ProfitProfile(
         // While a minimum star rating decides the auto-bet it overrides the block (Tj, 2026-10-12), but a type that lost money has its stars lowered by how clearly it lost: half a star at the cut-off
         // (t = -tCut), another half star for each further point of t, at most two stars (the rating's own steps are halves).
         val penalty = blocker?.let { (STAR_BASE + STAR_PER_T * (kotlin.math.abs(it.g.t) - tCut)).coerceIn(STAR_BASE, STAR_MAX) } ?: 0.0
-        return Judgement(blocked, score, favoured, penalty, blocker?.let { "${it.label} ${pct(it.g.roi)} over ${it.g.n} bets" })
+        return Judgement(blocked, score, favoured, penalty, blocker?.let { "${it.label} ${pct(it.g.roi)} over ${it.g.n} bets" }, blocker?.g?.n ?: 0, blocker?.g?.t ?: 0.0)
     }
 
     /**
@@ -186,6 +186,12 @@ class ProfitProfile(
          * The red-X warning (Tj, 2026-10-17: "make any of these types of bets in any scanner have a red x ... big enough that I can't ignore it"): the short reason when Tj's history says this TYPE of bet (league, kind,
          * side; big samples only) loses money, else null. Shown on every card whatever the Profit-proven switch says: it only warns, it never hides a bet.
          */
+        /** Hand-bet HARD block (Tj, 2026-11-17: "do not allow me to place any bets by hand that are proven to lose money with large samples"): the reason when the TYPE lost with at least [HAND_BLOCK_N] bets and t <= -[HAND_BLOCK_T], else null. */
+        const val HAND_BLOCK_N = 300
+        const val HAND_BLOCK_T = 2.0
+        fun handBlock(league: String, kind: String, selection: String, profile: ProfitProfile? = shipped): String? =
+            profile?.judge(Instrument.BET, league, kind, selection, null, null, typeOnly = true)?.takeIf { it.blockN >= HAND_BLOCK_N && it.blockT <= -HAND_BLOCK_T }?.blockShort
+
         fun losingType(league: String, kind: String, selection: String): String? =
             shipped?.judge(Instrument.BET, league, kind, selection, null, null, typeOnly = true)?.blockShort
 

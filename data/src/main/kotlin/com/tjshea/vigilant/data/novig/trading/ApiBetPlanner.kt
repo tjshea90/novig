@@ -260,6 +260,11 @@ object ApiBetPlanner {
         val average = averagePrice(levels, contracts)
         val avgQuote = EvMath.quote(target.fair, average, fee, eventLive = live)
         var profitNote: String? = null
+        if (limits.manual) {
+            com.tjshea.vigilant.data.scanner.ProfitProfile.handBlock(target.league, BetKind.of(target.marketLabel, target.selection).label, target.selection)?.let { why ->
+                return no("Blocked: your history says this type loses money (${why}). Not placed.")
+            }
+        }
         profit?.let { pf ->
             val j = pf.judge(com.tjshea.vigilant.data.scanner.ProfitProfile.Instrument.BET, target.league, BetKind.of(target.marketLabel, target.selection).label, target.selection, bestQuote.evPercent, (target.startsTs - now) / 60_000L)
             j.blocked?.let { why -> if (!limits.manual && !limits.starsDecide) return no("Not bet: $why.") else profitNote = "Heads up: $why." }
