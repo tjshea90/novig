@@ -1,7 +1,7 @@
-# CHECKPOINT 4585 — read me first, then TASKS.md
+# CHECKPOINT 4586 — read me first, then TASKS.md
 
-**Written:** 2026-11-17T05:29:34Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-dx8z2c` · **builds on:** `241fecd06` (this checkpoint is the commit after it)
+**Written:** 2026-11-17T05:34:46Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-dx8z2c` · **builds on:** `e684f79aa` (this checkpoint is the commit after it)
 
 ## Just done
 pre-ship: PP1: only types proven profitable at Novig (2+ stars) are listed
@@ -16,6 +16,7 @@ ship.sh gates and releases this
 
 ## Last ten checkpoints
 ```
+  937f0ebd7 ckpt 4585: pre-ship: PP1: only types proven profitable at Novig (2+ stars) are listed
   560ccaec5 ckpt 4584: LV2: relaxed live Pinnacle rules + bid margin (paper)
   3e596fbce ckpt 4583: PP1 coded: proven-only (2+ stars at Novig) hides unproven types from Feed a
   46482ad4b ckpt 4582: PP1 logged (only proven bets shown)
@@ -25,7 +26,6 @@ ship.sh gates and releases this
   b35280ef2 ckpt 4578: pre-ship: LV1: one Live switch Off/Practice/Real
   b2ec23479 ckpt 4577: pre-release: SV1: bets a sharp book says are not +EV are no longer listed (
   6ca4611a4 ckpt 4576: pre-ship: SV1: bets a sharp book says are not +EV are no longer listed
-  a6b286e1d ckpt 4575: pre-ship: SV1: bets a sharp book says are not +EV are no longer listed
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the
