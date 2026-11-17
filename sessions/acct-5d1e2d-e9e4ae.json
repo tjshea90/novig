@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-vano8x",
- "head": "29dfa661e0a43fff3cbd0ec60d12974dc5ca0b9e",
+ "head": "c401c0f14fae1abcc553377603023b319bf4048c",
  "since": 1794946860,
- "beat": 1794954430,
- "beatIso": "2026-11-17T22:27:10Z",
- "done": "BV2: bid volume cause = feeds (ParlayAPI 0, PropLine spent, SGO silent), well-known rule kept",
- "next": "watch chat; if Tj fixes keys, check bids resting"
+ "beat": 1794954536,
+ "beatIso": "2026-11-17T22:28:56Z",
+ "done": "BV3 logged: SharpAPI no-start-time drop is the concrete lever",
+ "next": "implement /events start times in SharpApiFeed + test; check parlay_props tooOld cut"
 }
