@@ -177,6 +177,7 @@ class LiveBidUiTest {
     @Test
     fun `tail bets are paper first and real money asks first (they live on the Live light page now)`() {
         val ui = showLive(state())
+        tap("liveAdvanced")
         tap("tailLiveRealSwitch")
         assertFalse("real needs the tail switch on first", ui().settings.tailLive.bet)
         tap("tailLiveSwitch")
@@ -205,6 +206,7 @@ class LiveBidUiTest {
     @Test
     fun `a tail halt shows its reason and Resume lifts it`() {
         val ui = showLive(state(ScanSettings(tailLive = com.tjshea.vigilant.data.scanner.TailLiveSettings(on = true, halted = "an order's answer was lost"))))
+        tap("liveAdvanced")
         compose.onNodeWithTag("tailLiveHalted").performScrollTo().assertIsDisplayed()
         tap("tailLiveResume")
         assertNull(ui().settings.tailLive.halted)
