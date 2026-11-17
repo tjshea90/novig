@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-cu42y3",
- "head": "ed6e3e66756eaf0d47c221b7906c2edc3648fe57",
+ "head": "fe798e06a648018b1db31e42e1eff6d25371c6f9",
  "since": 1794884852,
- "beat": 1794899348,
- "beatIso": "2026-11-17T07:09:08Z",
- "done": "chat run done: PP1 v1.0.133 shipped, LV2 relaxed live rules (paper)",
- "next": "LV2: read live practice offers/fills + CLV; PP1: count bets/day surviving provenOnly; real live only on Tj word"
+ "beat": 1794899389,
+ "beatIso": "2026-11-17T07:09:49Z",
+ "done": "AU1 logged + session timer set 14:13 UTC",
+ "next": "AU1 at 14:10 UTC: audit and one big release"
 }
