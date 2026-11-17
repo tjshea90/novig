@@ -206,3 +206,5 @@ Tj chat 23:53 UTC: "The engine runs the wallet out of money way faster than usua
 - 2026-11-17 LV2 (Tj chat 05:25 UTC, paper only): live Pinnacle taker lane relaxed: pinnLiveMinEv 0.03->0.015, pinnLiveMinMove 0.02->0.01, trigger EITHER->STANDING, holdoff 5->0 s. Real orders stay off (pinnLiveBet false), so no money at risk; judge paper fills/CLV in a day. Revert: python3 tools/engine_set.py pinnLiveMinEv=0.03 pinnLiveMinMove=0.02 pinnLiveTrigger=EITHER pinnLiveHoldoffSeconds=5
 - 2026-11-17 LV2 (paper): liveBidQuality.margin 0.044->0.025 for more live bids. Revert: engine_set.py liveBidQuality.margin=0.044
 - 2026-11-17 PP1 (Tj chat 05:16): vigGuards.provenOnly on: Feed/CNO list only types with 2+ stars at Novig (z>=1 CLV, 100+ games). Revert: engine_set.py vigGuards.provenOnly=false
+
+- 2026-11-17 (chat, mirage): a second device (SM-S156V) published default-like settings over the tuned ones (bid/bet kinds, margins, Kelly, trap hours, provenOnly, live-bid). Restored them via engine_set (cloud-config 63d240658) to the rev e5d9158f9 values; engine_set now accepts json:[...] for list settings. Revert: engine_set the values back from commit 93505dce9.
