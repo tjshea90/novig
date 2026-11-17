@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-6rhkmh",
- "head": "78b5e7eb8e2c1c44c2162c64872fbe7ea167441a",
+ "head": "95519a8a5150f3d583afef98ae2c5b6da159f2c3",
  "since": 1794884852,
- "beat": 1794884852,
- "beatIso": "2026-11-17T03:07:32Z",
- "done": "",
- "next": ""
+ "beat": 1794884926,
+ "beatIso": "2026-11-17T03:08:46Z",
+ "done": "answered Tj: replacement APIs research",
+ "next": "wait for which subs end; PF items"
 }
