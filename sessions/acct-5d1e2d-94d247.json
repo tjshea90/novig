@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-cya0uu",
- "head": "6ca4611a437dc4547e4d496c401bc22d9b8d4302",
+ "head": "b2ec234792e7cb60908f75408ca89a5966524a6c",
  "since": 1794884852,
- "beat": 1794890733,
- "beatIso": "2026-11-17T04:45:33Z",
- "done": "pre-ship: SV1: bets a sharp book says are not +EV are no longer listed",
- "next": "ship.sh gates and releases this"
+ "beat": 1794890903,
+ "beatIso": "2026-11-17T04:48:23Z",
+ "done": "pre-release: SV1: bets a sharp book says are not +EV are no longer listed (versionCode 471, v1.0.131)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.131), then run: bash tools/record-release.sh v1.0.131 471 \"SV1: bets a sharp book says are not +EV are no longer listed\""
 }
