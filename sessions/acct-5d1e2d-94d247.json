@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "94d247",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "branch": "claude/optimistic-curie-wicp97",
  "head": "56084c7214582c82725aaf04da24dcaceea08bc2",
  "since": 1794788519,
- "beat": 1794874870,
- "beatIso": "2026-11-17T00:21:10Z",
+ "beat": 1794874884,
+ "beatIso": "2026-11-17T00:21:24Z",
  "done": "answered Tj release it: nothing pending; bets store already off-main",
  "next": "PF10: add startup stage timings, release, read next diag"
 }
