@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-o1vg2x",
  "head": "bc13c1406535e648ce69e241bc11b6edf1c4729e",
  "since": 1794884852,
- "beat": 1794932984,
- "beatIso": "2026-11-17T16:29:44Z",
+ "beat": 1794933430,
+ "beatIso": "2026-11-17T16:37:10Z",
  "done": "pre-release: AU1: faster start (no MB parses on main thread), no large-file rewrites, star evidence 11-16 (versionCode 474, v1.0.134)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.134), then run: bash tools/record-release.sh v1.0.134 474 \"AU1: faster start (no MB parses on main thread), no large-file rewrites, star evidence 11-16\""
 }
