@@ -204,7 +204,7 @@ class PropLineLive(private val clock: () -> Long = System::currentTimeMillis) {
             val at = confirmedAt(m.bookKey, if (e.sportKey.startsWith("tennis_")) PropLineTennis.SPORT else e.sportKey, now)
             if (at == null) com.tjshea.vigilant.data.scanner.QuoteCensus.add("unconfirmed", "${m.bookKey}/${e.sportKey}")
             if (at != null && at > latest) { latest = at; confirmed++ }
-        } else com.tjshea.vigilant.data.scanner.QuoteCensus.add("uncovered", m.source)
+        } else if (!cover) com.tjshea.vigilant.data.scanner.QuoteCensus.add("uncovered", m.source)
         return if (!changed && latest == (m.lastUpdateMs ?: readAtMs)) m else m.copy(quotes = quotes, lastUpdateMs = latest)
     }
 
