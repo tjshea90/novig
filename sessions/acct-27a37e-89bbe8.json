@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "e89d7d7de7157fb6dfabf25eb30c2a87777fcf64",
+ "head": "4c096d534155d8e2b0889f4a5d2b0902fce75fae",
  "since": 1794955330,
- "beat": 1794957668,
- "beatIso": "2026-11-17T23:21:08Z",
- "done": "PLR trial fixes from the first real run: SGP needs a total point, ev/calc names h2h by nickname, /scores status is 'final', per-combo parlay lines",
- "next": "rerun propline.yml trial; fill RESULTS"
+ "beat": 1794957769,
+ "beatIso": "2026-11-17T23:22:49Z",
+ "done": "PLR: SGP logger+grader live-tested with the key (344 quotes, Novig best on 26/40; settle 5/5 + 12/12 parlays), workflow propline-sgp.yml, docs and results",
+ "next": "dispatch propline-sgp.yml log to verify on a runner; final report to Tj"
 }
