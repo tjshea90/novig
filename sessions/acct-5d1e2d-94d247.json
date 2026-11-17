@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "94d247",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/optimistic-curie-o1vg2x",
+ "head": "36e17a3796a1da16914b391cc46b4563bbff633d",
+ "since": 1794933487,
+ "beat": 1794933487,
+ "beatIso": "2026-11-17T16:38:07Z",
+ "done": "AU1 v1.0.134 shipped",
+ "next": "read next diag LaunchTrace for first-open close; more startup cuts if still slow"
+}
