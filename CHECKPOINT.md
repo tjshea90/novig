@@ -1,7 +1,7 @@
-# CHECKPOINT 4594 — read me first, then TASKS.md
+# CHECKPOINT 4595 — read me first, then TASKS.md
 
-**Written:** 2026-11-17T16:22:17Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-o1vg2x` · **builds on:** `f6b92b8c4` (this checkpoint is the commit after it)
+**Written:** 2026-11-17T16:26:36Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-o1vg2x` · **builds on:** `eb8373cd0` (this checkpoint is the commit after it)
 
 ## Just done
 pre-ship: AU1: faster start (no MB parses on main thread), no large-file rewrites, star evidence 11-16
@@ -13,9 +13,11 @@ ship.sh gates and releases this
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  eb8373cd0 ckpt 4594: pre-ship: AU1: faster start (no MB parses on main thread), no large-file re
   3ca038064 ckpt 4593: pre-ship: AU1: faster start (no MB parses on main thread), no large-file re
   ee95eb2c6 ckpt 4592: ANALYST 11-17 slot1: skip rule, watch only, no change
   23fdc16a2 ckpt 4591: AU1: au1-fire.yml durable GitHub timer fires mirage routine 14:10 UTC
@@ -25,8 +27,4 @@ ship.sh gates and releases this
   136778400 ckpt 4587: pre-release: PP1: only types proven profitable at Novig (2+ stars) are list
   41d219b29 ckpt 4586: pre-ship: PP1: only types proven profitable at Novig (2+ stars) are listed
   937f0ebd7 ckpt 4585: pre-ship: PP1: only types proven profitable at Novig (2+ stars) are listed
-  560ccaec5 ckpt 4584: LV2: relaxed live Pinnacle rules + bid margin (paper)
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
