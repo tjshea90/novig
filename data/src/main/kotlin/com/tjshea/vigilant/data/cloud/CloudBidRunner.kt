@@ -133,6 +133,7 @@ class CloudBidRunner(
         var placed = 0; var cancelled = 0; var fills = ArrayList<TrackedBet>()
         var problems = emptyList<String>()
         var waiting = ""
+        var skips = ""
         try {
             if (stop == null && cloud != null) runCatching { lane.refresh(now, READS_PER_PASS) }.onFailure { if (it is CancellationException) throw it }
             if (cloud == null && stop == null) {
@@ -154,6 +155,9 @@ class CloudBidRunner(
                     posts = ready.associateBy { it.line.outcomeId }
                     recs = ready.map { BidRec.of(it) }
                 } else { posts = emptyMap(); recs = emptyList() }
+                // Why most candidate lines were NOT bid (Tj 2026-11-17: 1,200 candidates, 10 bids up): the top three reasons with counts, digits folded so "only 2 books" and "only 1 book" add up.
+                skips = r.decisions.filterIsInstance<MakerDecision.Skip>().groupingBy { it.why.replace(Regex("[0-9]+(\\.[0-9]+)?"), "#").take(70) }.eachCount().entries
+                    .sortedByDescending { it.value }.take(3).joinToString("; ", prefix = " · not bid: ") { "${it.value}× ${it.key}" }.takeIf { r.decisions.any { d -> d is MakerDecision.Skip } }.orEmpty()
                 waiting = r.waiting.entries.maxByOrNull { it.value }?.let { " · ${r.waiting.values.sum()} waiting: ${it.key}" }.orEmpty()
                 // Still under the wallet target: the DEEPER second bids (the phone's second rung), only while the bids up are under it.
                 if (auto && stop == null && cloud?.partial != true && !rules.volume) {
@@ -181,6 +185,7 @@ class CloudBidRunner(
             if (placed > 0 || cancelled > 0 || fills.isNotEmpty()) append(" · this pass: $placed posted, $cancelled taken down, ${fills.size} filled")
             if (cloud == null && stop == null) append(" · no fresh candidate list: the bids up are kept")
             append(waiting)
+            append(skips)
             problems.firstOrNull()?.let { append(" · problem: ${it.take(120)}") }
             stop?.let { append(" · STOPPED: ${it.take(140)}") }
         }
