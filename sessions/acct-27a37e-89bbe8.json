@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "9749ec207356d30d8a86b83f610e5500e58b3652",
+ "head": "e89d7d7de7157fb6dfabf25eb30c2a87777fcf64",
  "since": 1794955330,
- "beat": 1794957205,
- "beatIso": "2026-11-17T23:13:25Z",
+ "beat": 1794957387,
+ "beatIso": "2026-11-17T23:16:27Z",
  "done": "PLR trial fixes from the first real run: SGP needs a total point, ev/calc names h2h by nickname, /scores status is 'final', per-combo parlay lines",
  "next": "rerun propline.yml trial; fill RESULTS"
 }
