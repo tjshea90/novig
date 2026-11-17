@@ -109,8 +109,15 @@ def read_rows(patterns):
 
 def settle_body(unique):
     """[{ref, stake, legs}] for POST /v1/bets/settle from {ref: (sport, event_id, legs)}."""
-    return [{"ref": ref, "stake": 1, "legs": [dict({"sport_key": sp, "event_id": int(eid) if str(eid).isdigit() else eid}, **{k: v for k, v in leg.items()}) for leg in legs]}
-            for ref, (sp, eid, legs) in unique.items()]
+    def leg(sp, eid, l):
+        # /sgp names a leg {market, name, point}; /bets/settle names it {market, selection, side, point}: the team (h2h) or Over/Under (totals) is the selection
+        out = {"sport_key": sp, "event_id": int(eid) if str(eid).isdigit() else eid, "market": l["market"], "selection": l["name"]}
+        if l["market"] == "totals":
+            out["side"] = l["name"]
+        if l.get("point") is not None:
+            out["point"] = l["point"]
+        return out
+    return [{"ref": ref, "stake": 1, "legs": [leg(sp, eid, l) for l in legs]} for ref, (sp, eid, legs) in unique.items()]
 
 
 def grade_rows(rows, results):
@@ -189,7 +196,8 @@ def selftest():
     assert len(rows) == 1 and rows[0]["book"] == "novig" and rows[0]["sgp_price"] == 325
     assert abs(dec(325) - 4.25) < 1e-9 and abs(dec(-110) - 1.909090909) < 1e-6
     body = settle_body({"7|x": ("basketball_nba", 7, sl[0])})
-    assert body[0]["legs"][0] == {"sport_key": "basketball_nba", "event_id": 7, "market": "h2h", "name": "H"} and body[0]["stake"] == 1
+    assert body[0]["legs"][0] == {"sport_key": "basketball_nba", "event_id": 7, "market": "h2h", "selection": "H"} and body[0]["stake"] == 1
+    assert body[0]["legs"][1] == {"sport_key": "basketball_nba", "event_id": 7, "market": "totals", "selection": "Over", "side": "Over", "point": 215.5}
     g = grade_rows(rows, {"7|" + json.dumps(sl[0], sort_keys=True): "won"})
     assert g[0]["result"] == "won"
     s = summary([dict(r, result="won") for r in g] + [dict(rows[0], result="lost"), dict(rows[0], result="lost"), dict(rows[0], result="push")])
