@@ -1557,3 +1557,14 @@ Fix the vigilant app and GitHub engine to reflect the changes in parlayapi from 
 ```
 I just updated vigilant with the newest version, and now it can't seem to connect to github
 ```
+
+## 2026-11-17T22:42:23Z
+```
+https://prop-line.com/llms-full.txt
+
+Review that page and double check that the app and github engine are using the correct commands and using the api to its full potential. 
+
+I just resubscribed to streaming lite with the sockets. Turn it on for the engine and app. Make sure the engine and app are using propline streaming lite to its full potential and all its features
+
+One of the sockets is dedicated to novig. Why? Novig has its own socket. Consider if this is necessary and if that socket can be used better for something else. Make sure the sockets are set up properly both in the engine and in propline, look at the screenshot attached.
+```
