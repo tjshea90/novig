@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-zd169c",
  "head": "f880592533bf35fc3e9b403e515b12024bcb40ee",
  "since": 1794937704,
- "beat": 1794938983,
- "beatIso": "2026-11-17T18:09:43Z",
+ "beat": 1794940674,
+ "beatIso": "2026-11-17T18:37:54Z",
  "done": "chat: restored bid/bet settings overwritten by 2nd device; engine_set json: lists",
  "next": "watch chat; check cloud-config not overwritten again"
 }
