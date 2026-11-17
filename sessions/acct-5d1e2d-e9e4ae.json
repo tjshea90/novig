@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-br2pip",
  "head": "fc28064037dce8552fec81784b7db3ba7c9cc614",
  "since": 1794946860,
- "beat": 1794947578,
- "beatIso": "2026-11-17T20:32:58Z",
+ "beat": 1794947847,
+ "beatIso": "2026-11-17T20:37:27Z",
  "done": "engine bid status now lists top 3 not-bid reasons (CloudBidRunner); CloudBidRunnerTest 15 green",
  "next": "full tools/test.sh then land on main (engine reads main); then read deskNote not-bid reasons and loosen the top held-back rule if evidence allows; tell Tj"
 }
