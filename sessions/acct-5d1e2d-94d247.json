@@ -5,11 +5,11 @@
  "nonce": "94d247",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-dx8z2c",
+ "branch": "claude/optimistic-curie-cu42y3",
  "head": "ed6e3e66756eaf0d47c221b7906c2edc3648fe57",
  "since": 1794884852,
- "beat": 1794895917,
- "beatIso": "2026-11-17T06:11:57Z",
+ "beat": 1794898159,
+ "beatIso": "2026-11-17T06:49:19Z",
  "done": "chat run done: PP1 v1.0.133 shipped, LV2 relaxed live rules (paper)",
  "next": "LV2: read live practice offers/fills + CLV; PP1: count bets/day surviving provenOnly; real live only on Tj word"
 }
