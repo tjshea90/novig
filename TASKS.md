@@ -6731,3 +6731,10 @@ Docs saved: `research/propline/docs_2026-11-17/` (llms-full dated 2026-11-16, op
 - [ ] PLS3 sockets: SIGNALS carried nothing the engine acts on (steam/resolution/+EV at Novig, journal only) and Novig's own socket already gives Novig's prices; give it `game_state` (live scores MLB/NBA/NHL/NFL/NCAAF every ~5 s) for the live lane, which has lost SharpAPI/ParlayAPI scores.
 - [ ] PLS4 PropLine's side: log each subscription as PropLine holds it (events, filters, transport, active) so it can be read from the engine log; patch what differs; never touch Tj's own.
 - [ ] PLS5 app side: Settings > APIs PropLine plan/socket lines show Streaming Lite and the two sockets' purpose; Live tab socket row.
+
+## PLR (Tj typed 2026-11-17 ~23:10 UTC): PropLine recipes page and every PropLine feature we do not use yet
+Tj, verbatim: "https://prop-line.com/recipes See what can be used from this also. Then look into all the features offered by propline api that i don't already use. I'm interested in trying the features and tools it offers".
+Recipes saved: `research/propline/docs_2026-11-17/recipes(.txt)`. New since 10-25: "Record a live game" (15c-15e: pregame props, `stat_update`/`play`/`game_state` on the websocket, final box score + graded props; repo `proplineapi/propline-live-recorder`; a full recorded game `samples/nba-2026-11-16-orl-at-bos.jsonl.gz`).
+- [ ] PLR1 check `PropLineGameState` against the REAL recorded `game_state` frames (shape, status words, clock, period).
+- [ ] PLR2 every PropLine feature not yet used: list (docs 2026-11-16 + recipes), what each gives Vigilant, and which ones are worth building now; write `research/propline_unused_features_2026-11-17.md`.
+- [ ] PLR3 build the ones that are safe and useful (trials with real answers, nothing that moves money), starting from the report.
