@@ -1602,8 +1602,8 @@ data class ScanGuards(
     val ignoreBadOdds: Boolean = true,
     /** [ThinEarlyHaircut] (Tj, 2026-10-13): NHL shots-on-goal fair prices built from few books on a game far off are cut a few points. On by default. */
     val thinEarlyHaircut: Boolean = true,
-    /** Only bets whose type has earned 2+ stars at Novig ([StarEvidence.proven]) are listed or bet by hand (Tj, 2026-11-17, PP1). */
-    val provenOnly: Boolean = true,
+    /** Only bets whose type has earned 2+ stars at Novig ([StarEvidence.proven]) are listed or bet by hand (Tj, 2026-11-17, PP1). Off in a bare ScanSettings() (tests); turned on for the install through cloud-config (engine_set vigGuards.provenOnly=true). */
+    val provenOnly: Boolean = false,
     /** [PropHaircut] (Tj, 2026-10-14): a player-prop Over's fair is cut 7 points and an Under's 3 before anything reads it (the history: Overs won 39.7% against a 49.4% fair, t -4.2). Off in a bare ScanSettings() (a test's); the schema-18 migration turns it on for every real install, so it is on by default in the app and a later choice stays. */
     val propHaircut: Boolean = false,
     val autoBetVigilant: Boolean = true,
