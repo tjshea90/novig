@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-dx8z2c",
- "head": "96a2500ec9479ee3af5d4c6915626d8cf6cb2e66",
+ "head": "002df7a0468e05ddf7a66bdf411a2ba2279b8bef",
  "since": 1794884852,
- "beat": 1794892270,
- "beatIso": "2026-11-17T05:11:10Z",
- "done": "v1.0.131 sharp veto unlisted; v1.0.132 live Off/Practice/Real, engine in Practice",
- "next": "read live practice fills and CLV in a day; offered 0 of 71k judged: check why (Pinnacle line closed/not settled skips); promote to Real only at 100+ fills with positive CLV"
+ "beat": 1794892363,
+ "beatIso": "2026-11-17T05:12:43Z",
+ "done": "LV2 logged: live taker lane 0 offers of 29,690 judged, all skips Pinnacle-based; answered Tj",
+ "next": "LV2: per-lane offered/skip split, let Pinnacle-free lanes (score-event/shadow/tailLive) carry Practice, Pinnacle as fresh-only check; ship with paper CLV evidence"
 }
