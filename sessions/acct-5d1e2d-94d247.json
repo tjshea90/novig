@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-dx8z2c",
  "head": "937f0ebd794dcb8bcef3eb566ad7047555e11b8b",
  "since": 1794884852,
- "beat": 1794893381,
- "beatIso": "2026-11-17T05:29:41Z",
+ "beat": 1794893652,
+ "beatIso": "2026-11-17T05:34:12Z",
  "done": "pre-ship: PP1: only types proven profitable at Novig (2+ stars) are listed",
  "next": "ship.sh gates and releases this"
 }
