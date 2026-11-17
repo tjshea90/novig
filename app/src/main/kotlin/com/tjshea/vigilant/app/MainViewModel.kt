@@ -303,14 +303,14 @@ data class UiState(
      */
     fun feedAt(now: Long): List<Opportunity> = feed.filter { hideReason(it, now) == null }
 
-    /**
-     * Why the main list leaves [o] out at [now], or null when it shows (the same checks, in the same order, that [feedAt] has always made). Logged by [MainViewModel.watchFeedHides] so a bet that
-     * vanishes and returns can be explained from the file (Tj, 2026-10-24: "figure out why it is happening and if the bets are based on stale odds").
-     */
     private fun oppType(o: Opportunity, now: Long) = com.tjshea.vigilant.data.scanner.BetType.of(
         o.league.novigName, com.tjshea.vigilant.data.scanner.BetKind.of(o.marketLabel, o.selection), o.selection, o.quote?.price, o.event.startsTs, now,
     )
 
+    /**
+     * Why the main list leaves [o] out at [now], or null when it shows (the same checks, in the same order, that [feedAt] has always made). Logged by [MainViewModel.watchFeedHides] so a bet that
+     * vanishes and returns can be explained from the file (Tj, 2026-10-24: "figure out why it is happening and if the bets are based on stale odds").
+     */
     fun hideReason(o: Opportunity, now: Long): String? = when {
         o.fairIsOld(now) -> "fairOld"
         priceStale(o, now) -> "novigPriceOld"
