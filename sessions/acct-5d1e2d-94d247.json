@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-ydwd3a",
- "head": "894828b66757304c4aa19026830ba18c83203088",
+ "head": "05bb211bbd6e2b1d8089c74d0526ae57be0a339d",
  "since": 1794933487,
- "beat": 1794935213,
- "beatIso": "2026-11-17T17:06:53Z",
- "done": "AU1 v1.0.134 shipped",
- "next": "read next diag LaunchTrace for first-open close; more startup cuts if still slow"
+ "beat": 1794935254,
+ "beatIso": "2026-11-17T17:07:34Z",
+ "done": "TR2 wallet stable read, PF11 feed memo; running ship",
+ "next": "ship.sh then release.yml then record-release"
 }
