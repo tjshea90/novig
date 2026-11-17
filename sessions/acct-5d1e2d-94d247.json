@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-6rhkmh",
  "head": "b7959ebfb948dcaaf1b8e9e145b02d2a02ff2a2c",
  "since": 1794884852,
- "beat": 1794886525,
- "beatIso": "2026-11-17T03:35:25Z",
+ "beat": 1794886799,
+ "beatIso": "2026-11-17T03:39:59Z",
  "done": "pre-release: HB1: hand bets blocked and unlisted for types proven to lose (n>=300, t<=-2) (versionCode 470, v1.0.130)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.130), then run: bash tools/record-release.sh v1.0.130 470 \"HB1: hand bets blocked and unlisted for types proven to lose (n>=300, t<=-2)\""
 }
