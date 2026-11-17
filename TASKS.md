@@ -6720,3 +6720,5 @@ DG5 (Tj chat 03:16 UTC 2026-11-16) "rebuild the entire tracker system to use nov
 
 - [ ] BD1 (Tj chat 18:50-18:56 UTC 2026-11-17) "why are there so few bids up": wallet cash $67 but only 3-10 bids ($2-9) rest; the engine desk takes down most bids each pass (18:55:40 1 posted 8 taken down). Find the take-down reason (MakerQuote/MakerPlan), fix so bids stay up and deploy cash (bidDeploy).
 - [ ] BV1 (Tj chat 20:24 UTC 2026-11-17) "bid count extremely low, put up a lot of high quality bids": engine deskNote now has `not bid:` top reasons (361x <3 agreeing books, 320x needs well-known book, 268x too far behind best bid). TTL 30->60 done. Awaiting Tj's word to relax a PX11c floor (min 3 books / major book) or maxBehind; else keep watching resting count.
+
+- [ ] BV3 (Tj chat 22:27 UTC 2026-11-17) "engine should not be limited in what odds to pull ... find fair odds for popular bet types/sports then bid under fair": SharpAPI DK/FD rows all dropped "no start time" (SharpApiConvert.events; fix: fill start from /events, SharpApiFeed EventMeta); ParlayAPI parlay_props tooOld ~40% (check age cut); keep well-known-book + 3-books rules (Tj 22:24).
