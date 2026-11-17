@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/94d247",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "94d247",
+ "note": "HB1: hand bets blocked and unlisted for types proven to lose (n>=300, t<=-2)",
+ "since": 1794886097,
+ "beat": 1794886097
+}
