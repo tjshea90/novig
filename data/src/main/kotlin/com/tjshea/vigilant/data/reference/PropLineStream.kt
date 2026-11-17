@@ -235,7 +235,7 @@ class PropLineStream(
 
         /** One PropLine subscription in words, with no secret (the key's secret is masked by PropLine and never printed here). */
         private fun describe(o: JsonObject): String {
-            fun v(f: String) = (o[f] as? JsonPrimitive)?.content
+            fun v(f: String) = (o[f] as? JsonPrimitive)?.takeIf { it !is kotlinx.serialization.json.JsonNull }?.content
             val ev = (o["events"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }?.joinToString(",").orEmpty()
             val parts = listOfNotNull(
                 v("id")?.let { "#$it" }, v("transport") ?: "http", if (v("active") == "false") "PAUSED${v("paused_reason")?.let { r -> " ($r)" }.orEmpty()}" else "active", "events=$ev",

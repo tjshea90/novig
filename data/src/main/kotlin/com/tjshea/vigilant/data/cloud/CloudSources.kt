@@ -247,7 +247,7 @@ class CloudSources(
     /** PropLine's per-book freshness (`/v1/freshness`, free, no key): read every minute by the engine while PropLine is on. */
     val propLineFreshness = com.tjshea.vigilant.data.reference.PropLineFreshness(http, json)
     fun propLineOn(s: ScanSettings) = s.usePropLine && has(CloudKeys.PROPLINE)
-    fun propLineNote(): String = "PropLine stream: " + propLineStream.health() + " · " + propLineStream.counts.entries.sortedBy { it.key }.joinToString(", ") { "${it.key} ${it.value}" }.ifBlank { "no events yet" } + " · " + propLineLive.describe() + " · " + propLineLive.heartbeatNote() + " · " + propLineLive.pushNote()
+    fun propLineNote(): String = "PropLine stream: " + propLineStream.health() + " · " + propLineStream.counts.entries.sortedBy { it.key }.joinToString(", ") { "${it.key} ${it.value}" }.ifBlank { "no events yet" } + " · " + propLineLive.describe() + " · " + propLineLive.heartbeatNote() + " · " + propLineLive.pushNote() + " · " + propLineStream.gameState.describe()
     /** The BoltOdds key the sockets use: its plan and open connections (`/api/odds/user`, free), and whether the feed runs in one-connection mode (CH76). */
     suspend fun boltPlanNote(): String {
         if (!has(CloudKeys.BOLT)) return "BoltOdds: no key"
@@ -286,7 +286,14 @@ class CloudSources(
 
     /** SX Bet's live score for a game (CH31) while its switches are on; the engine's second score source behind ESPN. */
     fun altScore(s: ScanSettings, league: String, home: String, away: String): com.tjshea.vigilant.data.novig.lab.AltScore? =
-        parlayScore(s, league, home, away) ?: sharpApiScore(s, league, home, away) ?: if (s.gates.useSxBet && s.gates.sxSocket) sxConfirmFeed()?.scoreFor(league, home, away) else null
+        parlayScore(s, league, home, away) ?: sharpApiScore(s, league, home, away) ?: propLineScore(s, league, home, away) ?: if (s.gates.useSxBet && s.gates.sxSocket) sxConfirmFeed()?.scoreFor(league, home, away) else null
+
+    /**
+     * PropLine's live score for a game (PLS3, Tj 2026-11-17): the `game_state` pushes of the second Streaming Lite socket (the leagues' own live feeds, about every 5 s) while PropLine and its socket are on; a score
+     * older than 30 s by the socket's last word is no score. Third in line after ParlayAPI's play-by-play and SharpAPI's game state, ahead of SX Bet's.
+     */
+    fun propLineScore(s: ScanSettings, league: String, home: String, away: String): com.tjshea.vigilant.data.novig.lab.AltScore? =
+        if (propLineOn(s) && s.gates.propLineSocket) propLineStream.gameState.scoreFor(league, home, away)?.takeIf { System.currentTimeMillis() - it.atMs < 30_000L } else null
 
     /** ParlayAPI's live play-by-play stream (CH47, Tj 2026-10-20: the default score source, ESPN the fallback) while ParlayAPI is on and a key of a Starter-or-bigger plan exists: the biggest plan's key opens it. */
     val parlayStream: com.tjshea.vigilant.data.parlay.ParlayPbpStream get() = parlayPbp
