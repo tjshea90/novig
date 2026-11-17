@@ -1,13 +1,13 @@
-# CHECKPOINT 4588 — read me first, then TASKS.md
+# CHECKPOINT 4589 — read me first, then TASKS.md
 
-**Written:** 2026-11-17T05:44:56Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-dx8z2c` · **builds on:** `b322c01e3` (this checkpoint is the commit after it)
+**Written:** 2026-11-17T06:11:57Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-dx8z2c` · **builds on:** `9db30f0b9` (this checkpoint is the commit after it)
 
 ## Just done
-PP1 shipped v1.0.133, provenOnly on via cloud-config; engine_set allows provenOnly key
+chat run done: PP1 v1.0.133 shipped, LV2 relaxed live rules (paper)
 
 ## Do this next
-count bets/day surviving provenOnly; read live practice offered count after LV2 relax; Tj chat
+LV2: read live practice offers/fills + CLV; PP1: count bets/day surviving provenOnly; real live only on Tj word
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ count bets/day surviving provenOnly; read live practice offered count after LV2 
 
 ## Last ten checkpoints
 ```
+  9db30f0b9 ckpt 4588: PP1 shipped v1.0.133, provenOnly on via cloud-config; engine_set allows pro
   136778400 ckpt 4587: pre-release: PP1: only types proven profitable at Novig (2+ stars) are list
   41d219b29 ckpt 4586: pre-ship: PP1: only types proven profitable at Novig (2+ stars) are listed
   937f0ebd7 ckpt 4585: pre-ship: PP1: only types proven profitable at Novig (2+ stars) are listed
@@ -25,8 +26,4 @@ count bets/day surviving provenOnly; read live practice offered count after LV2 
   002df7a04 ckpt 4581: LV2 logged: live taker lane 0 offers of 29,690 judged, all skips Pinnacle-b
   96a2500ec ckpt 4580: v1.0.131 sharp veto unlisted; v1.0.132 live Off/Practice/Real, engine in Pr
   9a52b7ae1 ckpt 4579: pre-release: LV1: one Live switch Off/Practice/Real (versionCode 472, v1.0.
-  b35280ef2 ckpt 4578: pre-ship: LV1: one Live switch Off/Practice/Real
 ```
-
-(2 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
