@@ -83,7 +83,7 @@ fun NcaabScreen(
             views = views, ratingsAsOf = cu.ncaabRatings?.asOf, boardAt = cu.ncaabBoard?.atMs, boardReadAt = cu.ncaabBoardReadAtMs, note = listOf(cu.ncaabNote, cu.ncaabBoardNote).filter { it.isNotBlank() }.joinToString(" \u00B7 "),
             boardLocal = cu.ncaabBoardLocal,
             model = cu.ncaabRatings?.model, ratedTeams = cu.ncaabRatings?.teams?.size ?: 0, hasSlate = cu.ncaabSlate != null, hasToken = cu.hasToken,
-            settings = state.settings, now = now, onTrack = onTrack, onRecheck = onRecheck,
+            settings = state.settings, now = now, onTrack = onTrack, onRecheck = onRecheck, listState = listState,
         )
     }
     }
@@ -110,6 +110,7 @@ internal fun NcaabContent(
     now: Long,
     onTrack: (Opportunity, Double) -> Unit,
     onRecheck: (List<String>) -> Unit,
+    listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
 ) {
     var page by rememberSaveable { mutableStateOf(Page.GAMES.name) }
     var day by rememberSaveable { mutableStateOf("Today") }
