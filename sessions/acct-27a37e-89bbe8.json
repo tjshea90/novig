@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "f8e2413ad0386590cbac8efcd414d3196d1bce12",
+ "head": "849040d2deeacff18eb4ab87da17ed04ba35a01e",
  "since": 1794955330,
- "beat": 1794956325,
- "beatIso": "2026-11-17T22:58:45Z",
- "done": "PLS1 plan watch + PLS3 PropLine game_state socket (steam/ev/resolution + live scores), earlier subscription adopted in place; tests green",
- "next": "PLS2 audit: Pinnacle book_updated_at age in PropLineClient parse; closing/history caps in tools; then PLS5 app lines, land on main, engine_set --reset"
+ "beat": 1794956470,
+ "beatIso": "2026-11-17T23:01:10Z",
+ "done": "PLS: full :cloud/:data suites green (3041 passed); Pinnacle cache age, PropLine upgrade watch, game_state on socket 2, docs + CHANGES + research",
+ "next": "land on main, then engine_set --reset so the runner starts on the resubscribed key; read the engine log for PropLine holds/ready/game_state"
 }
