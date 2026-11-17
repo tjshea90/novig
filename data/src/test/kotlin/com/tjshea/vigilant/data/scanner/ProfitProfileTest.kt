@@ -118,11 +118,11 @@ class ProfitProfileTest {
 }
 
 class HandBlockTest {
-    @org.junit.Test fun playerPropOversAreBlockedByHand() {
-        kotlin.test.assertNotNull(ProfitProfile.handBlock("NBA", "Player props", "Over 24.5"))
+    @Test fun playerPropOversAreBlockedByHand() {
+        assertNotNull(ProfitProfile.handBlock("NBA", "Player props", "Over 24.5"))
     }
-    @org.junit.Test fun unprovenTypesAreNotBlocked() {
-        kotlin.test.assertNull(ProfitProfile.handBlock("NBA", "Team totals", "Over 110.5"))
-        kotlin.test.assertNull(ProfitProfile.handBlock("NBA", "Moneylines", "Lakers"))
+    @Test fun unprovenTypesAreNotBlocked() {
+        assertNull(ProfitProfile.handBlock("NBA", "Team totals", "Over 110.5"))
+        assertNull(ProfitProfile.handBlock("NBA", "Moneylines", "Lakers"))
     }
 }
