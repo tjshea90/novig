@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-5d1e2d/7c96da",
+ "label": "acct-5d1e2d",
+ "name": "mirage",
+ "nonce": "7c96da",
+ "note": "HB1 hard block (NCAAB exempt), NCAAB scroll memory, bids deploy",
+ "since": 1794942222,
+ "beat": 1794942222
+}
