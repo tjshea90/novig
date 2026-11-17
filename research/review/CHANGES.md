@@ -208,3 +208,4 @@ Tj chat 23:53 UTC: "The engine runs the wallet out of money way faster than usua
 - 2026-11-17 PP1 (Tj chat 05:16): vigGuards.provenOnly on: Feed/CNO list only types with 2+ stars at Novig (z>=1 CLV, 100+ games). Revert: engine_set.py vigGuards.provenOnly=false
 
 - 2026-11-17 (chat, mirage): a second device (SM-S156V) published default-like settings over the tuned ones (bid/bet kinds, margins, Kelly, trap hours, provenOnly, live-bid). Restored them via engine_set (cloud-config 63d240658) to the rev e5d9158f9 values; engine_set now accepts json:[...] for list settings. Revert: engine_set the values back from commit 93505dce9.
+- 2026-11-17 BD1 (Tj chat 19:01): vigGuards.bidDeploy on (was off; \$67 cash idle, ~\$9 resting). Revert: engine_set.py vigGuards.bidDeploy=false
