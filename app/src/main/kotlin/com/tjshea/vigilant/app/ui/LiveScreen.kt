@@ -21,6 +21,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.SegmentedButton
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -339,7 +341,7 @@ private fun LiveSimpleCard(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSet
             Text("Live betting", fontWeight = FontWeight.Bold)
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                 com.tjshea.vigilant.app.LiveSimple.Mode.entries.forEachIndexed { i, m ->
-                    androidx.compose.material3.SegmentedButton(
+                    SegmentedButton(
                         selected = m == mode, onClick = { onUpdate { cur -> com.tjshea.vigilant.app.LiveSimple.set(cur, m) } },
                         shape = androidx.compose.material3.SegmentedButtonDefaults.itemShape(i, com.tjshea.vigilant.app.LiveSimple.Mode.entries.size),
                         modifier = Modifier.testTag("liveMode" + m.name),
