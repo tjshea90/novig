@@ -29,6 +29,7 @@ import java.io.File
  * Writes are flushed to the disk before the rename, so a power cut right after a save can't leave
  * an empty file where the old one was.
  */
+@OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
 class JsonFileStore<T>(
     private val file: File,
     private val serializer: KSerializer<T>,
