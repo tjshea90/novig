@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-6rhkmh",
- "head": "95519a8a5150f3d583afef98ae2c5b6da159f2c3",
+ "head": "183861a09239923de952a173dff09867e31d6ad9",
  "since": 1794884852,
- "beat": 1794884926,
- "beatIso": "2026-11-17T03:08:46Z",
- "done": "answered Tj: replacement APIs research",
- "next": "wait for which subs end; PF items"
+ "beat": 1794885065,
+ "beatIso": "2026-11-17T03:11:05Z",
+ "done": "answered Tj: does anything justify paying",
+ "next": "NCAAB CLV from orders-clv.md"
 }
