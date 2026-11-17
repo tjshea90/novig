@@ -1,10 +1,10 @@
 package com.tjshea.vigilant.app
 
 import com.tjshea.vigilant.data.scanner.ScanSettings
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import org.junit.Test
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 
 class LiveSimpleTest {
     @Test fun practiceRunsEveryLaneWithNoRealOrders() {
