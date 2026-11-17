@@ -34,7 +34,7 @@ data class PlPushRow(val atMs: Long, val type: String, val sport: String, val da
  * Streaming Lite allows TWO WebSocket connections, one subscription each, and the engine uses both:
  * - [Sub.BOARD]: `line_movement`, `line_added`, `line_pulled`, `market_suspended` for the scanned sports and the fair-line books, into [PropLineLive] (laid over the REST boards).
  * - [Sub.SIGNALS]: `game_state` (live scores for MLB, NBA, NHL, NFL, NCAAF every ~5 s, into [gameState]: a score source for the live lane, PLS3 2026-11-17) and `steam` (props too), `resolution` and `ev` at Novig,
- *   handed to [tap] (the engine journals them for research and grading). The Novig book filter is not a Novig price feed (the engine reads Novig's own socket): it only keeps the grades and +EV pushes to the exchange
+ *   handed to [tap] (the engine journals them for research and grading), and `stat_update` (live player stats), journaled with `game_state` as the timeline PropLine itself does not keep ("to get one, record a game from the stream while it is live"). The Novig book filter is not a Novig price feed (the engine reads Novig's own socket): it only keeps the grades and +EV pushes to the exchange
  *   the engine bets at; `steam` and `game_state` carry no book.
  * A runner has no public address, so no webhook is used (webhooks need an HTTPS endpoint PropLine can POST to).
  *
@@ -61,10 +61,10 @@ class PropLineStream(
     /** [earlier]: event sets this subscription had before; one of the account's own is brought up to date in place (or replaced) instead of being left behind. */
     enum class Sub(val events: List<String>, val earlier: List<Set<String>> = emptyList()) {
         BOARD(listOf("line_movement", "line_added", "line_pulled", "market_suspended")),
-        SIGNALS(listOf("game_state", "steam", "resolution", "ev"), earlier = listOf(setOf("steam", "resolution", "ev"))),
+        SIGNALS(listOf("game_state", "stat_update", "steam", "resolution", "ev"), earlier = listOf(setOf("steam", "resolution", "ev"))),
     }
 
-    /** Every `steam`, `resolution` and `ev` push: (event type, sport, raw payload, when heard). */
+    /** Every `steam`, `resolution`, `ev`, `game_state` and `stat_update` push: (event type, sport, raw payload, when heard). */
     @Volatile var tap: ((String, String, String, Long) -> Unit)? = null
 
     @Volatile private var wanted = false
@@ -330,8 +330,8 @@ class PropLineStream(
                     when (type) {
                         "line_movement", "line_added", "line_pulled" -> live.onLine(type, d, now)
                         "market_suspended" -> live.onSuspended(d, now)
-                        "game_state" -> gameState.apply(d, now)
-                        "steam", "resolution", "ev" -> runCatching { tap?.invoke(type, (d["sport_key"] as? JsonPrimitive)?.content.orEmpty(), d.toString().take(6_000), now) }
+                        "game_state" -> { gameState.apply(d, now); runCatching { tap?.invoke(type, (d["sport_key"] as? JsonPrimitive)?.content.orEmpty(), d.toString().take(6_000), now) } }
+                        "steam", "resolution", "ev", "stat_update" -> runCatching { tap?.invoke(type, (d["sport_key"] as? JsonPrimitive)?.content.orEmpty(), d.toString().take(6_000), now) }
                     }
                 }
                 "heartbeat" -> {
