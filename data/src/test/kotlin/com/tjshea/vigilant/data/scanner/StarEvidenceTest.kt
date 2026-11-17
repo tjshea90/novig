@@ -104,4 +104,16 @@ class StarEvidenceTest {
         assertTrue(r.stars == BetRating.NONE || r.stars in 1.0..5.0)
         assertNotNull(r.evidence)
     }
+
+    @Test
+    fun `PP1 only a type with 2+ stars at Novig is proven`() {
+        val tab = table(
+            "NBA|prop|under|+100..+150" to """{"games":200,"clv":0.02,"clvSe":0.01}""",
+            "NHL|total|over" to """{"games":200,"clv":0.004,"clvSe":0.01}""",
+        )
+        assertTrue(StarEvidence.proven(type(), tab))
+        assertTrue(!StarEvidence.proven(type(league = "NHL", kind = BetKind.TOTAL, selection = "Over 6.5", cost = 0.5), tab))
+        assertTrue(!StarEvidence.proven(type(league = "MLB", kind = BetKind.TOTAL, selection = "Over 8.5", cost = 0.5), tab))
+        assertTrue(!StarEvidence.proven(type(), null))
+    }
 }
