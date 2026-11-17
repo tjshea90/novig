@@ -108,6 +108,41 @@ class PropLineGameStateTest {
         assertTrue(st.gameState.heardAtMs > 0)
     }
 
+    /** Six real `game_state` deliveries from PropLine's own recorded game (Magic at Celtics, 2026-11-16, propline-live-recorder's sample): event_id is a NUMBER, the status stays `in_progress` through the last play. */
+    private fun realFrames(): List<JsonObject> =
+        javaClass.getResourceAsStream("/propline-game-state-nba-2026-11-16.jsonl")!!.bufferedReader().readLines().filter { it.isNotBlank() }.map { obj(it) }
+
+    @Test
+    fun realRecordedFramesAreReadAndAGameEndsAtItsLastPlay() {
+        val now = 30_000_000L
+        val g = PropLineGameState { now }
+        val frames = realFrames()
+        assertEquals(6, frames.size)
+        assertTrue("the real frame is accepted (event_id is numeric)", g.apply(frames[0]["data"] as JsonObject, now))
+        val first = g.scoreFor("NBA", "Boston Celtics", "Orlando Magic", now)!!
+        assertEquals(2, first.game.homeScore); assertEquals(0, first.game.awayScore); assertEquals(1, first.game.period); assertEquals(665.0, first.game.clockSec, 1e-9)
+        g.apply(frames[2]["data"] as JsonObject, now)
+        val mid = g.scoreFor("NBA", "Orlando Magic", "Boston Celtics", now)!!          // Novig lists them the other way round
+        assertEquals(55, mid.game.homeScore); assertEquals(52, mid.game.awayScore); assertEquals(3, mid.game.period); assertEquals(504.0, mid.game.clockSec, 1e-9)
+        g.apply(frames[3]["data"] as JsonObject, now)
+        assertEquals(13.7, g.scoreFor("NBA", "Boston Celtics", "Orlando Magic", now)!!.game.clockSec, 1e-9)
+        g.apply(frames[4]["data"] as JsonObject, now)       // "Period End" in the 4th quarter: the game can still go to overtime
+        assertNotNull(g.scoreFor("NBA", "Boston Celtics", "Orlando Magic", now))
+        g.apply(frames[5]["data"] as JsonObject, now)       // "Game End": status still says in_progress
+        assertNull("a finished game is no live score", g.scoreFor("NBA", "Boston Celtics", "Orlando Magic", now))
+        assertEquals(0, g.live())
+    }
+
+    @Test
+    fun realFramesThroughTheStreamReachTheLiveLane() {
+        val now = 40_000_000L
+        val st = PropLineStream(OkHttpClient(), json, { "k" }, PropLineLive { now }, CoroutineScope(Dispatchers.Unconfined), clock = { now })
+        realFrames().forEachIndexed { i, row -> st.handleFrame(PropLineStream.Sub.SIGNALS, obj("""{"type":"event","seq":${i + 1},"event_type":"game_state","data":${row["data"]}}""")) }
+        assertEquals(6L, st.counts["game_state"])
+        assertNull("the last real frame is Game End", st.gameState.scoreFor("NBA", "Boston Celtics", "Orlando Magic", now))
+        assertEquals(1, st.gameState.size())
+    }
+
     // ---- the subscriptions PropLine holds ----
 
     private class Fake(val webhooks: String, val patchOk: Boolean = true) {
