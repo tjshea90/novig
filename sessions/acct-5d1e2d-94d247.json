@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-6rhkmh",
  "head": "e8f2a1fa7e9ee46060f9e6a1ccf76a5a5f6cbb9c",
  "since": 1794884852,
- "beat": 1794885953,
- "beatIso": "2026-11-17T03:25:53Z",
+ "beat": 1794885959,
+ "beatIso": "2026-11-17T03:25:59Z",
  "done": "HB1 hand hard-block coded + tested (ProfitProfile.handBlock, planner manual refuses)",
  "next": "ship.sh, release.yml, record-release, tell Tj"
 }
