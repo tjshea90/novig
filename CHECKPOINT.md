@@ -1,7 +1,7 @@
-# CHECKPOINT 4593 — read me first, then TASKS.md
+# CHECKPOINT 4594 — read me first, then TASKS.md
 
-**Written:** 2026-11-17T16:15:17Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-o1vg2x` · **builds on:** `e3138c6c2` (this checkpoint is the commit after it)
+**Written:** 2026-11-17T16:22:17Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-o1vg2x` · **builds on:** `f6b92b8c4` (this checkpoint is the commit after it)
 
 ## Just done
 pre-ship: AU1: faster start (no MB parses on main thread), no large-file rewrites, star evidence 11-16
@@ -16,6 +16,7 @@ ship.sh gates and releases this
 
 ## Last ten checkpoints
 ```
+  3ca038064 ckpt 4593: pre-ship: AU1: faster start (no MB parses on main thread), no large-file re
   ee95eb2c6 ckpt 4592: ANALYST 11-17 slot1: skip rule, watch only, no change
   23fdc16a2 ckpt 4591: AU1: au1-fire.yml durable GitHub timer fires mirage routine 14:10 UTC
   fe798e06a ckpt 4590: AU1 logged + session timer set 14:13 UTC
@@ -25,8 +26,7 @@ ship.sh gates and releases this
   41d219b29 ckpt 4586: pre-ship: PP1: only types proven profitable at Novig (2+ stars) are listed
   937f0ebd7 ckpt 4585: pre-ship: PP1: only types proven profitable at Novig (2+ stars) are listed
   560ccaec5 ckpt 4584: LV2: relaxed live Pinnacle rules + bid margin (paper)
-  3e596fbce ckpt 4583: PP1 coded: proven-only (2+ stars at Novig) hides unproven types from Feed a
 ```
 
-(7 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
