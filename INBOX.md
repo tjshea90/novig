@@ -1568,3 +1568,11 @@ I just resubscribed to streaming lite with the sockets. Turn it on for the engin
 
 One of the sockets is dedicated to novig. Why? Novig has its own socket. Consider if this is necessary and if that socket can be used better for something else. Make sure the sockets are set up properly both in the engine and in propline, look at the screenshot attached.
 ```
+
+## 2026-11-17T23:01:27Z
+```
+https://prop-line.com/recipes
+
+See what can be used from this also
+Then look into all the features offered by propline api that i don't already use. I'm interested in trying the features and tools it offers
+```
