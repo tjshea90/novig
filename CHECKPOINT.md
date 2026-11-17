@@ -1,13 +1,13 @@
-# CHECKPOINT 4596 — read me first, then TASKS.md
+# CHECKPOINT 4597 — read me first, then TASKS.md
 
-**Written:** 2026-11-17T16:29:44Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-o1vg2x` · **builds on:** `cb3be976e` (this checkpoint is the commit after it)
+**Written:** 2026-11-17T16:38:06Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-o1vg2x` · **builds on:** `16745c24c` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: AU1: faster start (no MB parses on main thread), no large-file rewrites, star evidence 11-16 (versionCode 474, v1.0.134)
+AU1 v1.0.134 shipped
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.134), then run: bash tools/record-release.sh v1.0.134 474 "AU1: faster start (no MB parses on main thread), no large-file rewrites, star evidence 11-16"
+read next diag LaunchTrace for first-open close; more startup cuts if still slow
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  bc13c1406 ckpt 4596: pre-release: AU1: faster start (no MB parses on main thread), no large-file
   cb3be976e ckpt 4595: pre-ship: AU1: faster start (no MB parses on main thread), no large-file re
   eb8373cd0 ckpt 4594: pre-ship: AU1: faster start (no MB parses on main thread), no large-file re
   3ca038064 ckpt 4593: pre-ship: AU1: faster start (no MB parses on main thread), no large-file re
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   ed6e3e667 ckpt 4589: chat run done: PP1 v1.0.133 shipped, LV2 relaxed live rules (paper)
   9db30f0b9 ckpt 4588: PP1 shipped v1.0.133, provenOnly on via cloud-config; engine_set allows pro
   136778400 ckpt 4587: pre-release: PP1: only types proven profitable at Novig (2+ stars) are list
-  41d219b29 ckpt 4586: pre-ship: PP1: only types proven profitable at Novig (2+ stars) are listed
 ```
