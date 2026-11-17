@@ -262,6 +262,8 @@ class CloudSources(
     /** The paid key is within the day's share of its requests (the props read the same budget). */
     fun propLineHasRoom(now: Long): Boolean = propLine.roomForEv(now)
     suspend fun refreshPropLineAccounts(force: Boolean = false): Int = if (has(CloudKeys.PROPLINE)) propLineAccount.refresh(force, minAgeMs = 50 * 60_000L) else 0
+    /** A spent Free-plan PropLine key is read again every 5 minutes in case its plan was upgraded (PLS1); nothing is read while PropLine is off. */
+    suspend fun watchPropLineUpgrade(): Int = if (has(CloudKeys.PROPLINE)) propLineAccount.watchUpgrade() else 0
 
     /** PinnWire's own account read per key (free, TCL119): a key is spent only when PinnWire says so. Asked only while PinnWire is on ([sources] sets the flag; off = never called). */
     private val pinnWireAccount = com.tjshea.vigilant.data.reference.PinnWireAccount(http, { keys(CloudKeys.PINNWIRE) }, usage, json)

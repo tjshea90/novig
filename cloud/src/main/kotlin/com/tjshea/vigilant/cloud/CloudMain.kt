@@ -142,6 +142,15 @@ fun main(args: Array<String>) = runBlocking {
             delay(60 * 60_000L)
         }
     }
+    // PropLine's upgrade watch (PLS1, Tj 2026-11-17): a key last seen on the Free plan and held as spent is read again every 5 minutes, so a resubscribed Streaming Lite plan is used (and the stream opens) within minutes
+    // instead of at the next hourly plan read. Nothing is read while PropLine is off.
+    scope.launch {
+        while (isActive) {
+            delay(60_000L)
+            val s = latestSettings.get() ?: continue
+            if (s.usePropLine && runCatching { sources.watchPropLineUpgrade() }.getOrDefault(0) > 0) log("PropLine plans: " + sources.propLinePlans())
+        }
+    }
     // Every line the last finished scan priced (not only the listed ones): the PropLine +EV rows are matched to them so the phone can open the Bet sheet on the same Novig bet.
     val latestPriced = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.scanner.Opportunity>>(emptyList())
     // Novig markets Vigilant had no fair odds for (a ladder, no quote): PropLine's +EV rows on them get a Bet button priced from PropLine's own fair (TCL88).
@@ -704,7 +713,7 @@ fun main(args: Array<String>) = runBlocking {
     // The engine re-prices its list every 3 s on the streams (RealtimeList): a scan keeps every quote inside the plain age limit (PX, Freshness.continuous).
     com.tjshea.vigilant.data.scanner.Freshness.continuous = true
     val engine = CloudEngine(
-        scanner = scanner, sources = sources::sources, config = { config.read().also { latestCfg.set(it) } }, apiChecks = { apiManager.lines() }, apiFixes = { apiManager.fixes() }, apiSwaps = { apiManager.swaps() }, apiSwapAtMs = { apiManager.swapAtMs() }, onCheckApis = { apiManager.recheckAll() },
+        scanner = scanner, sources = sources::sources, config = { config.read().also { latestCfg.set(it) } }, apiChecks = { apiManager.lines() }, apiFixes = { apiManager.fixes() }, apiSwaps = { apiManager.swaps() }, apiSwapAtMs = { apiManager.swapAtMs() }, onCheckApis = { apiManager.recheckAll(); scope.launch { if (latestSettings.get()?.usePropLine == true) { runCatching { sources.refreshPropLineAccounts(force = true) }; log("PropLine plans (asked): " + sources.propLinePlans()) } } },
         publish = { feed, status -> engineIdle.set(status.idle); if (feed != null) runCatching { liveFeedBytes.set(com.tjshea.vigilant.data.cloud.CloudFeed.encode(feed)) }; publisher.stage(feed, status) },
         // The bid desk's candidate lines (Tj, 2026-10-15), only while the phone has Vigilant-priced bids on: the fair side of every bid decision is made here, the phone adds Novig's books and posts.
         prepare = { s -> latestSettings.set(s); novigKeyed?.configure(s) },

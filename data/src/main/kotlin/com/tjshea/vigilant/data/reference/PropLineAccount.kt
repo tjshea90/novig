@@ -34,22 +34,46 @@ class PropLineAccount(
         for (key in keys()) {
             val now = clock()
             if (!force && (checkedAt[key]?.let { now - it < minAgeMs } == true)) continue
-            checkedAt[key] = now
-            val c = try {
-                read(key, now)
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                null
-            } ?: continue
-            answered++
-            last = last + (key to c)
-            meter.recordBalance(
-                QuotaPolicy.PROPLINE, key, c.remaining, c.limit, c.used, c.resetAtMs,
-                exhausted = c.valid && c.remaining == 0, inactive = !c.valid, note = if (c.valid) "plan: ${c.tier}" else c.reason,
-            )
+            answered += readAndRecord(key, now)
         }
         return answered
+    }
+
+    /**
+     * Upgrade watch (Tj, 2026-11-17, PLS1: he resubscribed to Streaming Lite mid-day and the engine, which reads each plan hourly, still held the key as `free`, spent until midnight, with PropLine and its stream
+     * silent). A key whose LAST read showed the Free plan and which the ledger holds as spent is read again every [WATCH_MS]: the read is a refused call that costs nothing while the key is spent, and the first
+     * answer with a bigger `X-Daily-Limit` clears the rest ([UsageMeter.recordBalance]) so the key is used and the stream opens within minutes. A key with allowance left, or a paid one, keeps the hourly [refresh].
+     * Returns how many keys answered.
+     */
+    suspend fun watchUpgrade(minAgeMs: Long = WATCH_MS): Int {
+        var answered = 0
+        val ledger = meter.flow.value.providers[QuotaPolicy.PROPLINE.id]?.keys.orEmpty()
+        for (key in keys()) {
+            val now = clock()
+            val c = last[key] ?: continue
+            val spent = ledger[key]?.depletedUntil?.let { it > now } == true
+            if (!spent || !c.valid || (c.limit ?: Int.MAX_VALUE) > FREE_LIMIT) continue
+            if (checkedAt[key]?.let { now - it < minAgeMs } == true) continue
+            answered += readAndRecord(key, now)
+        }
+        return answered
+    }
+
+    private suspend fun readAndRecord(key: String, now: Long): Int {
+        checkedAt[key] = now
+        val c = try {
+            read(key, now)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        } ?: return 0
+        last = last + (key to c)
+        meter.recordBalance(
+            QuotaPolicy.PROPLINE, key, c.remaining, c.limit, c.used, c.resetAtMs,
+            exhausted = c.valid && c.remaining == 0, inactive = !c.valid, note = if (c.valid) "plan: ${c.tier}" else c.reason,
+        )
+        return 1
     }
 
     private suspend fun read(key: String, now: Long): Check? {
@@ -69,6 +93,8 @@ class PropLineAccount(
 
     companion object {
         const val REFRESH_MS = 50 * 60_000L
+        /** How often a spent Free-plan key is looked at again, in case its plan was upgraded ([watchUpgrade]). */
+        const val WATCH_MS = 5 * 60_000L
         /** Streaming Lite's daily requests: the smallest plan with WebSocket and webhook push. */
         const val STREAMING_LIMIT = 250_000
         const val FREE_LIMIT = 1_000
