@@ -760,6 +760,8 @@ private fun VigilantRoot(
     val venues = kalshiUi?.venues
     val allTabs = Tab.entries.filter { it.shownIn(mode, venues) }
     val tabs = allTabs.filter { it.inBar }
+    // Tj, 2026-11-17: the NCAAB tab returns to where it was scrolled after a tab switch.
+    val ncaabListState = androidx.compose.foundation.lazy.rememberLazyListState()
     var tabName by rememberSaveable { mutableStateOf<String?>(null) }
     // The Settings page open (null = its home list): kept here so the Auto-bet tab can open Betting.
     var settingsPage by rememberSaveable { mutableStateOf<String?>(null) }
@@ -916,7 +918,7 @@ private fun VigilantRoot(
                         onLock = vm::lockIn,
                     ),
                 )
-                Tab.NCAAB -> com.tjshea.vigilant.app.ui.NcaabScreen(state, onWant = vm::wantNcaab, onTrack = vm::trackBet, onRecheck = { vm.recheck(it) }, onQuote = vm::parlayQuote)
+                Tab.NCAAB -> com.tjshea.vigilant.app.ui.NcaabScreen(state, onWant = vm::wantNcaab, onTrack = vm::trackBet, onRecheck = { vm.recheck(it) }, onQuote = vm::parlayQuote, listState = ncaabListState)
                 Tab.PROPLINE -> com.tjshea.vigilant.app.ui.PropLineEvScreen(state, onTrack = vm::trackBet, onRecheck = { vm.recheck(it) }, onRefresh = vm::refreshPropLine)
                 Tab.AUTOBET -> {
                     val context = androidx.compose.ui.platform.LocalContext.current

@@ -66,6 +66,7 @@ fun NcaabScreen(
     onRecheck: (List<String>) -> Unit = {},
     onQuote: (suspend (List<String>) -> com.tjshea.vigilant.data.novig.NovigParlay.Result)? = null,
     modifier: Modifier = Modifier,
+    listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
 ) {
     val cu = state.cloudUi
     // Looked at: keep the files current while the tab is open (a free 304 when nothing changed).
@@ -129,7 +130,7 @@ internal fun NcaabContent(
     val current = Page.valueOf(page)
     val selected = views.firstOrNull { it.id == open }
     Box(Modifier.fillMaxSize()) {
-    LazyColumn(Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = 12.dp).testTag("ncaab"), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
+    LazyColumn(Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = 12.dp).testTag("ncaab"), state = listState, verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("College basketball", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
