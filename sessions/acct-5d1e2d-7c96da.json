@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-ewoq4d",
- "head": "262b6d8f33e87286a3f0a11d9e19f3c305b3c573",
+ "head": "d35d1635630e670f481158793bedb930c0a192de",
  "since": 1794941629,
- "beat": 1794942485,
- "beatIso": "2026-11-17T19:08:05Z",
- "done": "answered chat: wallet is $67, bid churn found",
- "next": "BD1: find why desk takes bids down each pass"
+ "beat": 1794942523,
+ "beatIso": "2026-11-17T19:08:43Z",
+ "done": "pre-ship: HB1 hard block (NCAAB exempt), NCAAB scroll memory, bids deploy",
+ "next": "ship.sh gates and releases this"
 }
