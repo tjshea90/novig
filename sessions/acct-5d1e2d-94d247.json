@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-dx8z2c",
- "head": "560ccaec55cb41693ffd9f4ff48dc53e8664cb3f",
+ "head": "937f0ebd794dcb8bcef3eb566ad7047555e11b8b",
  "since": 1794884852,
- "beat": 1794893227,
- "beatIso": "2026-11-17T05:27:07Z",
- "done": "LV2: relaxed live Pinnacle rules + bid margin (paper)",
- "next": "read liveNote offered count; PP1 ship result; promote live to Real only on Tj word / evidence"
+ "beat": 1794893374,
+ "beatIso": "2026-11-17T05:29:34Z",
+ "done": "pre-ship: PP1: only types proven profitable at Novig (2+ stars) are listed",
+ "next": "ship.sh gates and releases this"
 }
