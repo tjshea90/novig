@@ -518,7 +518,7 @@ data class UiState(
      * when "only bets the books agree on" is on (Tj, 2026-09-27).
      */
     fun cnoShown(now: Long): List<CnoPick> =
-        cnoCandidates(now).filter { com.tjshea.vigilant.data.scanner.ProfitProfile.handBlock(it.row.league, com.tjshea.vigilant.data.scanner.BetKind.of(it.row.market, it.row.selection).label, it.row.selection) == null }.let { all -> if (settings.cnoOnlyAgreed) all.filter { cnoAgrees(it, now) } else all }
+        cnoCandidates(now).filter { com.tjshea.vigilant.data.scanner.ProfitProfile.handBlock(it.row.league, com.tjshea.vigilant.data.scanner.BetKind.of(it.row.market, it.row.bet).label, it.row.bet) == null }.let { all -> if (settings.cnoOnlyAgreed) all.filter { cnoAgrees(it, now) } else all }
             // A bet that is no longer +EV at Novig's price now leaves the list by itself, no tap needed (Tj, 2026-10-13); it is still read ([livePriceRows]), so it returns if it turns +EV again.
             .filter { livePick(it, now).ev > 0.0 && !negativeSeenAt(it.row, now) }
 
