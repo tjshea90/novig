@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-6rhkmh",
- "head": "763cf8da3058470debcc296eeb860dec0a00092a",
+ "head": "b7959ebfb948dcaaf1b8e9e145b02d2a02ff2a2c",
  "since": 1794884852,
- "beat": 1794886380,
- "beatIso": "2026-11-17T03:33:00Z",
- "done": "bump 1.0.130",
- "next": "ship"
+ "beat": 1794886525,
+ "beatIso": "2026-11-17T03:35:25Z",
+ "done": "pre-release: HB1: hand bets blocked and unlisted for types proven to lose (n>=300, t<=-2) (versionCode 470, v1.0.130)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.130), then run: bash tools/record-release.sh v1.0.130 470 \"HB1: hand bets blocked and unlisted for types proven to lose (n>=300, t<=-2)\""
 }
