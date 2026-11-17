@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "518e849a9db56e9425178754c3b15760cd620adb",
+ "head": "2600e036d47525ecc16d333c2067fd81ced0e576",
  "since": 1794955330,
- "beat": 1794955563,
- "beatIso": "2026-11-17T22:46:03Z",
- "done": "",
- "next": ""
+ "beat": 1794955643,
+ "beatIso": "2026-11-17T22:47:23Z",
+ "done": "PLS: logged Tj's request, saved PropLine docs 2026-11-17, diagnosed: ledger has all 3 keys free/depleted, stream off",
+ "next": "PLS1: plan watch in CloudMain + PropLineAccount; PLS3 game_state; then test, land, engine_set --reset"
 }
