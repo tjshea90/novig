@@ -3,13 +3,13 @@
  "label": "acct-27a37e",
  "name": "tj Gmail",
  "nonce": "eac083",
- "kind": "routine",
+ "kind": "interactive",
  "task": "",
- "branch": "claude/wizardly-meitner-9v2gif",
- "head": "e836e73e1972e9872ce685108fc53f48131ee350",
+ "branch": "claude/wizardly-meitner-qqh8fh",
+ "head": "23fdc16a29005c454b8f6c50700ebf555fa504bd",
  "since": 1794853303,
- "beat": 1794853303,
- "beatIso": "2026-11-16T18:21:43Z",
+ "beat": 1794918096,
+ "beatIso": "2026-11-17T12:21:36Z",
  "done": "WATCH 2026-11-16: engine healthy, no change",
  "next": "continue PF1/PF2 per mirage; next slot watch"
 }
