@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-6rhkmh",
  "head": "49a47c57e3e7d68d7ce2daf7ee666c4620b4f6af",
  "since": 1794884852,
- "beat": 1794886097,
- "beatIso": "2026-11-17T03:28:17Z",
+ "beat": 1794886339,
+ "beatIso": "2026-11-17T03:32:19Z",
  "done": "HB1: blocked types hidden from feed+CNO list too",
  "next": "ship.sh"
 }
