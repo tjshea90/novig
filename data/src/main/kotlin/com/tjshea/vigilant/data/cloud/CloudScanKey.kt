@@ -32,7 +32,7 @@ object CloudScanKey {
         "fairSource", "devigMethod", "sharpBooks", "sharpWeight", "fallbackToAverage", "minBooks", "referenceBooks", "bankroll", "kellyMultiplier", "sgoMaxAgeMinutes", "ignoreWideQuotes",
         "exchangeMaxSpread", "outlierGuard", "gates.freshestWins", "vigGuards.oneVotePerCompany", "vigGuards.ignoreBadOdds", "vigGuards.thinEarlyHaircut", "vigGuards.propHaircut",
     )
-    private val filter = setOf("minEvPercent", "maxEvPercent", "minOdds", "maxOdds", "feedSort")
+    private val filter = setOf("vigGuards.provenOnly", "minEvPercent", "maxEvPercent", "minOdds", "maxOdds", "feedSort")
     private val bids = setOf(
         "makerMargin", "makerStakeMode", "makerStake", "makerMaxStake", "makerSharpVeto", "makerPopularFirst", "makerRequireSharp", "makerAnchorSharp", "makerGuard", "makerHalted", "makerGuardFromMs",
         "makerCnoMaxAgeSeconds", "makerMaxBids", "makerMaxDollars", "makerKinds", "makerTtlMinutes", "makerStopMinutes", "makerMinPrice", "makerMaxPrice", "makerMaxOdds", "makerMinOdds", "makerQuickMinBooks",

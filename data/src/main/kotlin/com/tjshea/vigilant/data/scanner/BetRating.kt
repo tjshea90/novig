@@ -192,6 +192,8 @@ object BetRating {
      * SX: a type that LOSES at Novig has no trusted edge: its real lines' CLV against Novig's close below [LOSING_CLV] even at its upper 95% bound, and the backtest not saying otherwise
      * (it agrees, or has no such type). Both sources agree today on game-total Unders and favourites at -150..-100 (research/star_rating_sx_2026-10-24.md).
      */
+    fun proofDoubt(cell: StarEvidence.Cell): String? = losingDoubt(cell)
+
     private fun losingDoubt(cell: StarEvidence.Cell): String? =
         if (cell.upper < LOSING_CLV && (cell.btZ == null || cell.btZ <= -LOSING_Z)) "bets like this lost to Novig's close (${pct(cell.clv)} over ${cell.games} games)" else null
 

@@ -83,6 +83,13 @@ object StarEvidence {
         }
     }
 
+    /** Stars a type must have earned at Novig to be listed or bet by hand (Tj, 2026-11-17, PP1: "the only bets that should ever show up in any scanner are profitable bets"). */
+    const val PROVEN_MIN_STARS = 2.0
+
+    /** True when [type]'s own record at Novig (CLV against Novig's close, z >= 1) earns [PROVEN_MIN_STARS]; a type with no record of 100+ games is unproven (false). */
+    fun proven(type: BetType, table: Table? = shipped): Boolean =
+        table?.lookup(type)?.let { BetRating.proofStars(it) >= PROVEN_MIN_STARS && BetRating.proofDoubt(it) == null } == true
+
     /** A cell is read only with this many games of real lines behind it (fewer: the next coarser level answers). */
     const val MIN_USE_GAMES = 100
 

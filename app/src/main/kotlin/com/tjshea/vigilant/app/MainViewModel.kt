@@ -307,6 +307,10 @@ data class UiState(
      * Why the main list leaves [o] out at [now], or null when it shows (the same checks, in the same order, that [feedAt] has always made). Logged by [MainViewModel.watchFeedHides] so a bet that
      * vanishes and returns can be explained from the file (Tj, 2026-10-24: "figure out why it is happening and if the bets are based on stale odds").
      */
+    private fun oppType(o: Opportunity, now: Long) = com.tjshea.vigilant.data.scanner.BetType.of(
+        o.league.novigName, com.tjshea.vigilant.data.scanner.BetKind.of(o.marketLabel, o.selection), o.selection, o.quote?.price, o.event.startsTs, now,
+    )
+
     fun hideReason(o: Opportunity, now: Long): String? = when {
         o.fairIsOld(now) -> "fairOld"
         priceStale(o, now) -> "novigPriceOld"
@@ -317,6 +321,8 @@ data class UiState(
         com.tjshea.vigilant.data.scanner.ProfitProfile.handBlock(o.league.novigName, com.tjshea.vigilant.data.scanner.BetKind.of(o.marketLabel, o.selection).label, o.selection) != null -> "provenLoser"
         // Tj, 2026-11-17: a sharp book prices both sides and says it is not +EV at Novig's price: those bets did worse (CLV -0.7% to -1.8%), so they are not listed at all.
         o.agreement.sharpAgainst -> "sharpAgainst"
+        // Tj, 2026-11-17 (PP1): only types that have shown profit at Novig are listed.
+        settings.provenOnly && !com.tjshea.vigilant.data.scanner.StarEvidence.proven(oppType(o, now)) -> "unproven"
         else -> null
     }
 
@@ -526,7 +532,7 @@ data class UiState(
      * when "only bets the books agree on" is on (Tj, 2026-09-27).
      */
     fun cnoShown(now: Long): List<CnoPick> =
-        cnoCandidates(now).filter { com.tjshea.vigilant.data.scanner.ProfitProfile.handBlock(it.row.league, com.tjshea.vigilant.data.scanner.BetKind.of(it.row.market, it.row.bet).label, it.row.bet) == null }.filter { !cnoSharpAgainst(it, now) }.let { all -> if (settings.cnoOnlyAgreed) all.filter { cnoAgrees(it, now) } else all }
+        cnoCandidates(now).filter { com.tjshea.vigilant.data.scanner.ProfitProfile.handBlock(it.row.league, com.tjshea.vigilant.data.scanner.BetKind.of(it.row.market, it.row.bet).label, it.row.bet) == null }.filter { !settings.provenOnly || com.tjshea.vigilant.data.scanner.StarEvidence.proven(com.tjshea.vigilant.data.scanner.BetType.of(it.row.league, com.tjshea.vigilant.data.scanner.BetKind.of(it.row.market, it.row.bet), it.row.bet, if (it.row.odds > 0) 100.0 / (it.row.odds + 100.0) else -it.row.odds / (-it.row.odds + 100.0), it.row.startsAtMs, now)) }.filter { !cnoSharpAgainst(it, now) }.let { all -> if (settings.cnoOnlyAgreed) all.filter { cnoAgrees(it, now) } else all }
             // A bet that is no longer +EV at Novig's price now leaves the list by itself, no tap needed (Tj, 2026-10-13); it is still read ([livePriceRows]), so it returns if it turns +EV again.
             .filter { livePick(it, now).ev > 0.0 && !negativeSeenAt(it.row, now) }
 

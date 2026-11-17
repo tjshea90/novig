@@ -56,6 +56,11 @@ object Safeguards {
             { it.vigGuards.autoBetOverPropExtraEv > 0.0 }, guards { g, on -> g.copy(autoBetOverPropExtraEv = if (on) (if (g.autoBetOverPropExtraEv > 0.0) g.autoBetOverPropExtraEv else 0.03) else 0.0) },
         ),
         Item(
+            "provenOnly", "Show and allow only proven bets",
+            "A bet is listed, and can be placed by hand, only when its type (sport, kind, side, price band) has earned 2+ stars: positive CLV against Novig's close over 100+ games. Unproven types are hidden.",
+            { it.vigGuards.provenOnly }, guards { g, on -> g.copy(provenOnly = on) },
+        ),
+        Item(
             "thinEarly", "Cut thin early shots-on-goal fair prices",
             "NHL shots-on-goal fair prices built from fewer than 5 books, more than 12 hours out, ran about 3 points above Pinnacle's close.",
             { it.thinEarlyHaircut }, guards { g, on -> g.copy(thinEarlyHaircut = on) },
