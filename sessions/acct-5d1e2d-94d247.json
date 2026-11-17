@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-6rhkmh",
- "head": "183861a09239923de952a173dff09867e31d6ad9",
+ "head": "811e207d701e38f290569b0f61bf920052e07073",
  "since": 1794884852,
- "beat": 1794885277,
- "beatIso": "2026-11-17T03:14:37Z",
- "done": "answered Tj: does anything justify paying",
- "next": "NCAAB CLV from orders-clv.md"
+ "beat": 1794885310,
+ "beatIso": "2026-11-17T03:15:10Z",
+ "done": "answered Tj: what is proven profitable",
+ "next": "NCAAB CLV, then restrict kinds if leak"
 }
