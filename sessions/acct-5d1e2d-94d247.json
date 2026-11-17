@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-dx8z2c",
- "head": "9db30f0b98d64aec363206a622641be030795baf",
+ "head": "ed6e3e66756eaf0d47c221b7906c2edc3648fe57",
  "since": 1794884852,
- "beat": 1794894901,
- "beatIso": "2026-11-17T05:55:01Z",
- "done": "PP1 shipped v1.0.133, provenOnly on via cloud-config; engine_set allows provenOnly key",
- "next": "count bets/day surviving provenOnly; read live practice offered count after LV2 relax; Tj chat"
+ "beat": 1794895917,
+ "beatIso": "2026-11-17T06:11:57Z",
+ "done": "chat run done: PP1 v1.0.133 shipped, LV2 relaxed live rules (paper)",
+ "next": "LV2: read live practice offers/fills + CLV; PP1: count bets/day surviving provenOnly; real live only on Tj word"
 }
