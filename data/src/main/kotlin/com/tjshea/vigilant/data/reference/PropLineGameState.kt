@@ -2,7 +2,7 @@ package com.tjshea.vigilant.data.reference
 
 import com.tjshea.vigilant.data.novig.lab.AltScore
 import com.tjshea.vigilant.data.novig.lab.EspnGame
-import com.tjshea.vigilant.data.scanner.League
+import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.match.TeamMatcher
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -88,7 +88,7 @@ class PropLineGameState(private val clock: () -> Long = System::currentTimeMilli
      * Its age is [heardAtMs] (the socket), so a stream that went silent ages every score out.
      */
     fun scoreFor(league: String, home: String, away: String, now: Long = clock()): AltScore? {
-        val sport = League.entries.firstOrNull { it.novigName == league }?.oddsApiSportKey ?: return null
+        val sport = Leagues.ALL.firstOrNull { it.novigName == league }?.oddsApiSportKey ?: return null
         if (heardAtMs <= 0L) return null
         for (g in games.values) {
             if (g.sport != sport || !g.live || now - g.atMs > STALE_MS) continue
