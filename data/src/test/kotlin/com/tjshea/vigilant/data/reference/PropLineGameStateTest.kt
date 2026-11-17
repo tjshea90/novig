@@ -134,11 +134,11 @@ class PropLineGameStateTest {
         {"id":940,"transport":"websocket","active":true,"events":["steam","resolution","ev"],"filter_sport_key":"baseball_mlb,basketball_nba","filter_bookmaker_key":"novig","steam_props":true,"min_steam_score":40,"min_ev_pct":1,"max_ev_pct":15}
     ]"""
 
-    private fun runStream(f: Fake, until: () -> Boolean) = runBlocking {
+    private fun runStream(f: Fake, until: (Fake) -> Boolean): Fake = runBlocking {
         val scope = CoroutineScope(Dispatchers.Default)
         val st = PropLineStream(f.http, json, { "k" }, PropLineLive(), scope, base = "https://api.prop-line.com/v1")
         st.want(true, setOf("baseball_mlb", "basketball_nba"), setOf("betmgm", "draftkings"))
-        try { withTimeout(8_000) { while (!until()) delay(25) } } finally { st.close("test") ; scope.coroutineContext[kotlinx.coroutines.Job]?.cancel() }
+        try { withTimeout(8_000) { while (!until(f)) delay(25) } } finally { st.close("test") ; scope.coroutineContext[kotlinx.coroutines.Job]?.cancel() }
         f
     }
 
