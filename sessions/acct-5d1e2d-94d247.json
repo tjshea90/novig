@@ -3,13 +3,13 @@
  "label": "acct-5d1e2d",
  "name": "mirage",
  "nonce": "94d247",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "AU1",
  "branch": "claude/optimistic-curie-o1vg2x",
  "head": "ee95eb2c6cb976c41b2469377fe6b0c5450bf242",
  "since": 1794884852,
- "beat": 1794929726,
- "beatIso": "2026-11-17T15:35:26Z",
+ "beat": 1794929739,
+ "beatIso": "2026-11-17T15:35:39Z",
  "done": "AU1: au1-fire.yml durable GitHub timer fires mirage routine 14:10 UTC",
  "next": "verify au1-fire.yml reached main; AU1 at 14:10 UTC"
 }
