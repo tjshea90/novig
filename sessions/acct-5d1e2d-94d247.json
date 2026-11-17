@@ -5,11 +5,11 @@
  "nonce": "94d247",
  "kind": "routine",
  "task": "AU1",
- "branch": "claude/optimistic-curie-ul1s7a",
- "head": "ee95eb2c6cb976c41b2469377fe6b0c5450bf242",
+ "branch": "claude/optimistic-curie-o1vg2x",
+ "head": "07b3bee65171f4ba18d3290b4105a2cc2f1e3ea5",
  "since": 1794884852,
- "beat": 1794931472,
- "beatIso": "2026-11-17T16:04:32Z",
+ "beat": 1794931856,
+ "beatIso": "2026-11-17T16:10:56Z",
  "done": "AU1: au1-fire.yml durable GitHub timer fires mirage routine 14:10 UTC",
  "next": "verify au1-fire.yml reached main; AU1 at 14:10 UTC"
 }
