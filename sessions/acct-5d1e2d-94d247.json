@@ -6,10 +6,10 @@
  "kind": "routine",
  "task": "AU1",
  "branch": "claude/optimistic-curie-o1vg2x",
- "head": "e3138c6c2376394cc9c49fbeac3a16091bf88c3b",
+ "head": "3ca0380646cb39a26f5e16ed8d5537cee311afc6",
  "since": 1794884852,
- "beat": 1794932098,
- "beatIso": "2026-11-17T16:14:58Z",
- "done": "AU1: au1-fire.yml durable GitHub timer fires mirage routine 14:10 UTC",
- "next": "verify au1-fire.yml reached main; AU1 at 14:10 UTC"
+ "beat": 1794932117,
+ "beatIso": "2026-11-17T16:15:17Z",
+ "done": "pre-ship: AU1: faster start (no MB parses on main thread), no large-file rewrites, star evidence 11-16",
+ "next": "ship.sh gates and releases this"
 }
