@@ -473,3 +473,4 @@ day that changes.
 | v1.0.132 | code 472 | 2026-11-17T05:01Z | LV1: one Live switch Off/Practice/Real
 | v1.0.133 | code 473 | 2026-11-17T05:43Z | PP1: only types proven profitable at Novig (2+ stars) are listed
 | v1.0.134 | code 474 | 2026-11-17T16:37Z | AU1: faster start (no MB parses on main thread), no large-file rewrites, star evidence 11-16
+| v1.0.135 | code 475 | 2026-11-17T17:21Z | TR2 stable all-time profit reading, PF11 +EV tab no double rebuild
