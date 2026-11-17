@@ -114,6 +114,7 @@ fun LiveScreen(
                     OutlinedButton(onClick = onOpenLiveBids, modifier = Modifier.testTag("liveOpenLiveBids")) { Text("Live bids") }
                 }
             }
+            }
         }
         }
     }
@@ -325,5 +326,27 @@ private fun LiveSwitch(title: String, sub: String, checked: Boolean, tag: String
             Text(sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Switch(checked = checked, onCheckedChange = null)
+    }
+}
+
+
+/** The one live control (Tj, 2026-11-17, LV1): Off / Practice / Real, set through [LiveSimple]. */
+@Composable
+private fun LiveSimpleCard(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val mode = com.tjshea.vigilant.app.LiveSimple.modeOf(s)
+    androidx.compose.material3.Card(Modifier.fillMaxWidth().testTag("liveSimpleCard")) {
+        Column(Modifier.padding(12.dp), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
+            Text("Live betting", fontWeight = FontWeight.Bold)
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                com.tjshea.vigilant.app.LiveSimple.Mode.entries.forEachIndexed { i, m ->
+                    androidx.compose.material3.SegmentedButton(
+                        selected = m == mode, onClick = { onUpdate { cur -> com.tjshea.vigilant.app.LiveSimple.set(cur, m) } },
+                        shape = androidx.compose.material3.SegmentedButtonDefaults.itemShape(i, com.tjshea.vigilant.app.LiveSimple.Mode.entries.size),
+                        modifier = Modifier.testTag("liveMode" + m.name),
+                    ) { Text(m.label) }
+                }
+            }
+            Text(mode.note, style = MaterialTheme.typography.bodySmall)
+        }
     }
 }
