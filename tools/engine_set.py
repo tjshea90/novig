@@ -37,6 +37,9 @@ def set_path(tree, path, v):
     if parts[-1] not in tree and parts[-1] == "provenOnly":
         tree[parts[-1]] = False  # PP1: a new boolean the phone has not published yet (first release carrying it)
     old = tree[parts[-1]]
+    if v.startswith("json:") and isinstance(old, list):
+        tree[parts[-1]] = json.loads(v[5:])  # "kinds=json:[\"PROP\",\"MONEYLINE\"]" replaces a whole list of names
+        return old
     if isinstance(old, list) and v[:1] in ("+", "-") and all(isinstance(x, str) for x in old):
         # "leagues=+ATP" adds one name to a list of names, "leagues=-ATP" takes it out
         name = v[1:]
