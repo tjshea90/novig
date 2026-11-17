@@ -447,8 +447,17 @@ class AppContainer(val app: Application) {
             check(t != null && address != null) { "betting through the API is not set up" }
             withContext(Dispatchers.IO) {
                 val gate = com.tjshea.vigilant.data.novig.BetPriority::yieldToBet
-                gate(); val cash = t.balance(address).also { wallet.record(it) }
-                gate(); val held = t.positions()
+                // TR2 (Tj 2026-11-17: "a different all time profit every time I look"): cash and positions were read a moment apart while fills moved money between them, so the figure bounced by
+                // the fill. Read the balance again after the positions and, when it moved, read both again (three tries): a pair that agrees is one instant.
+                var cash = 0.0
+                var held = emptyList<com.tjshea.vigilant.data.novig.trading.NovigPosition>()
+                for (attempt in 1..3) {
+                    gate(); cash = t.balance(address).also { wallet.record(it) }
+                    gate(); held = t.positions()
+                    gate(); val again = t.balance(address)
+                    if (kotlin.math.abs(again - cash) < 0.005) break
+                    if (attempt == 3) cash = again
+                }
                 com.tjshea.vigilant.data.tracker.LedgerDays.openMarkets = held.filter { it.qty > 0 }.map { it.marketId }.toSet()
                 gate(); val rows = walletLedger.value?.rows?.filter { it.kind in com.tjshea.vigilant.data.novig.trading.NovigTradingClient.MONEY_MOVES }?.takeIf { it.isNotEmpty() } ?: t.moneyMoves(address)
                 com.tjshea.vigilant.data.tracker.WalletProfit.of(cash, held, rows, System.currentTimeMillis())

@@ -112,7 +112,8 @@ class WalletMoney(
                 _note.value = "Novig's ledger shows no money moved into the Vigilant wallet, so what was put in is not known."
             } else {
                 _note.value = null
-                _flow.value = m
+                // TR2: never replace a reading with an older one.
+                if (m.atMs >= (_flow.value?.atMs ?: 0L)) _flow.value = m
                 save(m)
             }
         } catch (e: CancellationException) {
