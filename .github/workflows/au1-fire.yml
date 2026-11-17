@@ -1,0 +1,35 @@
+# One-shot (AU1, Tj chat 2026-11-17 07:08 UTC): at 14:10 UTC on 2026-11-17 start a mirage Claude session for the big audit + release.
+# GitHub's cron is unreliable, so it is tried hourly 09:xx-15:xx; a run waits (never more than 5 h) for 14:10, fires ONCE (tag au1-fired marks it done).
+# Delete this file after the release. Free (public repo); the routine's own usage is the only cost.
+name: AU1 fire
+on:
+  schedule:
+    - cron: '17 9-15 17 11 *'
+  workflow_dispatch:
+concurrency:
+  group: au1-fire
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  fire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main, fetch-depth: 1 }
+      - name: Wait for 14:10 UTC, fire once
+        env:
+          URL: ${{ secrets.CLAUDE_FIRE_5D1E2D_URL }}
+          TOKEN: ${{ secrets.CLAUDE_FIRE_5D1E2D_TOKEN }}
+        run: |
+          if git ls-remote --tags origin au1-fired | grep -q au1-fired; then echo "already fired"; exit 0; fi
+          target=$(date -u -d '2026-11-17 14:10:00' +%s); now=$(date -u +%s)
+          if [ $((target-now)) -gt 18000 ]; then echo "too early to wait"; exit 0; fi
+          if [ $((now-target)) -gt 43200 ]; then echo "too late"; exit 0; fi
+          [ $now -lt $target ] && sleep $((target-now))
+          if git ls-remote --tags origin au1-fired | grep -q au1-fired; then echo "already fired"; exit 0; fi
+          git config user.name Claude; git config user.email noreply@anthropic.com
+          git tag au1-fired && git push -q origin au1-fired || { echo "tag race: another run fires"; exit 0; }
+          text='AU1: Tj asked (chat 2026-11-17 07:08 UTC) for a thorough audit of the GitHub engine and the Vigilant app and ONE big polished release, built not just logged: lighter and faster app, no large file writes, why the app closes on first open after an update and starts slowly, engine bets and bids only proven types with max fills and volume. It is the last item in TASKS.md (AU1). Do it now, whatever your rotation duty is; run the full tests, ship, release, tell Tj in the chat.'
+          curl -sS -f -X POST "$URL" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d "$(python3 -c 'import json,sys;print(json.dumps({"text":sys.argv[1]}))' "$text")" -o /dev/null -w 'fire http %{http_code}\n'
