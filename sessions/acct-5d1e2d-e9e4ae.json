@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-br2pip",
- "head": "fb384db3d3896bd1f9aec13f5df6557eb05ac315",
+ "head": "1be3f8263aaba54264ab488d71e82753045fa2c2",
  "since": 1794946860,
- "beat": 1794946860,
- "beatIso": "2026-11-17T20:21:00Z",
- "done": "",
- "next": ""
+ "beat": 1794946985,
+ "beatIso": "2026-11-17T20:23:05Z",
+ "done": "chat 20:2x: ttl 60 for bid volume, replied to Tj",
+ "next": "check bids resting count rises; if still <20 look at candidate-list drops (13) and 3-book floor evidence"
 }
