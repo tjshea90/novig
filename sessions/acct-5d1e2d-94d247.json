@@ -5,11 +5,11 @@
  "nonce": "94d247",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-ydwd3a",
+ "branch": "claude/optimistic-curie-zd169c",
  "head": "690cc28d08c84cc72f991696382916377287c71c",
  "since": 1794937704,
- "beat": 1794937704,
- "beatIso": "2026-11-17T17:48:24Z",
+ "beat": 1794938855,
+ "beatIso": "2026-11-17T18:07:35Z",
  "done": "chat run: v1.0.135 shipped (TR2 stable wallet read, PF11 feed memo)",
  "next": "read next diag: EV tab frames, profit figure; bets.json prune if still flagged; Tj: ParlayAPI key, notifications"
 }
