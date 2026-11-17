@@ -470,3 +470,4 @@ day that changes.
 | v1.0.129 | code 469 | 2026-11-16T21:31Z | Chat typing no longer redraws the whole thread on every key; finer launch trace
 | v1.0.130 | code 470 | 2026-11-17T03:40Z | HB1: hand bets blocked and unlisted for proven-losing types
 | v1.0.131 | code 471 | 2026-11-17T04:54Z | SV1: sharp-vetoed bets unlisted
+| v1.0.132 | code 472 | 2026-11-17T05:01Z | LV1: one Live switch Off/Practice/Real
