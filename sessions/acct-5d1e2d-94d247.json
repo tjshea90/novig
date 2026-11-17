@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-cya0uu",
- "head": "4a35ae04b041876170b16f49c92624d882701930",
+ "head": "a6b286e1d5a69baebc7f527fafc8422607d3a2e7",
  "since": 1794884852,
- "beat": 1794890376,
- "beatIso": "2026-11-17T04:39:36Z",
- "done": "v1.0.130 released: HB1 hand block",
- "next": "read bid fills/held-back reasons, tune for volume; NCAAB CLV"
+ "beat": 1794890405,
+ "beatIso": "2026-11-17T04:40:05Z",
+ "done": "pre-ship: SV1: bets a sharp book says are not +EV are no longer listed",
+ "next": "ship.sh gates and releases this"
 }
