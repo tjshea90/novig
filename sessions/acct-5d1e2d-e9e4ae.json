@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-vano8x",
- "head": "d820237f49e80dd3f08412921bbccde6cf69f922",
+ "head": "29dfa661e0a43fff3cbd0ec60d12974dc5ca0b9e",
  "since": 1794946860,
- "beat": 1794954380,
- "beatIso": "2026-11-17T22:26:20Z",
- "done": "BV1: not-bid reasons live; asked Tj which floor to relax",
- "next": "if Tj answers, relax that one rule via engine_set/code + CHANGES.md; else check resting bids count"
+ "beat": 1794954430,
+ "beatIso": "2026-11-17T22:27:10Z",
+ "done": "BV2: bid volume cause = feeds (ParlayAPI 0, PropLine spent, SGO silent), well-known rule kept",
+ "next": "watch chat; if Tj fixes keys, check bids resting"
 }
