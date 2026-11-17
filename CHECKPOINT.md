@@ -1,13 +1,13 @@
-# CHECKPOINT 4600 — read me first, then TASKS.md
+# CHECKPOINT 4601 — read me first, then TASKS.md
 
-**Written:** 2026-11-17T17:15:59Z · **tests:** all 10 fast checks green
-**Branch:** `claude/optimistic-curie-ydwd3a` · **builds on:** `e9cabde5b` (this checkpoint is the commit after it)
+**Written:** 2026-11-17T17:48:24Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-ydwd3a` · **builds on:** `6bfdab099` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: TR2 stable all-time profit reading, PF11 +EV tab no double rebuild (versionCode 475, v1.0.135)
+chat run: v1.0.135 shipped (TR2 stable wallet read, PF11 feed memo)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.135), then run: bash tools/record-release.sh v1.0.135 475 "TR2 stable all-time profit reading, PF11 +EV tab no double rebuild"
+read next diag: EV tab frames, profit figure; bets.json prune if still flagged; Tj: ParlayAPI key, notifications
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  31ee61d62 ckpt 4600: pre-release: TR2 stable all-time profit reading, PF11 +EV tab no double reb
   e9cabde5b ckpt 4599: pre-ship: TR2 stable all-time profit reading, PF11 +EV tab no double rebuil
   05bb211bb ckpt 4598: TR2 wallet stable read, PF11 feed memo; running ship
   36e17a379 ckpt 4597: AU1 v1.0.134 shipped
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   3ca038064 ckpt 4593: pre-ship: AU1: faster start (no MB parses on main thread), no large-file re
   ee95eb2c6 ckpt 4592: ANALYST 11-17 slot1: skip rule, watch only, no change
   23fdc16a2 ckpt 4591: AU1: au1-fire.yml durable GitHub timer fires mirage routine 14:10 UTC
-  fe798e06a ckpt 4590: AU1 logged + session timer set 14:13 UTC
 ```
