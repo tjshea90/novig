@@ -113,8 +113,13 @@ class CloudLink(private val c: AppContainer) {
      * never reach the auto-bet or a bet sheet as if it were current.
      */
     private val offlineDir = File(c.app.filesDir, "offline_copy")
+    private val rawWrittenAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private fun saveRaw(name: String, text: String) {
         runCatching {
+            // AU1: a megabyte copy (orders, the wallet's ledger, usage) is rewritten at most every 90 s; a copy only helps when the phone is offline, so a slightly older one is fine.
+            val now = System.currentTimeMillis()
+            if (text.length >= 100_000 && now - (rawWrittenAt[name] ?: 0L) < 90_000L) return
+            rawWrittenAt[name] = now
             offlineDir.mkdirs()
             val tmp = File(offlineDir, "$name.tmp")
             tmp.writeText(text)
@@ -126,20 +131,25 @@ class CloudLink(private val c: AppContainer) {
         if (!f.isFile) return@runCatching null
         parse(f.readText())?.let { it to f.lastModified() }
     }.getOrNull()
-    private val offStatus = loadRaw("status.json") { com.tjshea.vigilant.data.cloud.CloudStatus.parse(it) }
-    private val offTrades = loadRaw("trades.json") { com.tjshea.vigilant.data.cloud.TradeLedger.parse(it) }
-    private val offDesk = loadRaw("desk.json") { com.tjshea.vigilant.data.cloud.DeskFile.parse(it) }
-    // The wallet's ledger and fills are ~3 MB of JSON: parsed on the loops' IO threads, never while the screen is being built (Tj 2026-11-16: slow to open).
-    private val offUsage = loadRaw("usage.json") { com.tjshea.vigilant.data.cloud.CloudUsage.decode(it) }
-
-    private val _ui = MutableStateFlow(Ui(
-        status = offStatus?.first, statusOkAtMs = offStatus?.second ?: 0L,
-        trades = offTrades?.first, tradesReadAtMs = offTrades?.second ?: 0L,
-        desk = offDesk?.first, deskReadAtMs = offDesk?.second ?: 0L,
-    ))
+    // AU1 (Tj 2026-11-17: "closes the first time I open it after an update, slow start-ups"): these files are megabytes (orders, usage) and were parsed here, on the main thread, while the
+    // container was being built before the first frame. The screen now starts empty and the last known numbers are laid in a moment later from an IO thread, only where nothing newer has come.
+    private val _ui = MutableStateFlow(Ui())
     init {
-        offStatus?.let { (st, at) -> latest.status = st; latest.statusOkAtMs = at }
-        offUsage?.let { (u, _) -> if (c.cloudUsage.value == null) c.cloudUsage.value = u }
+        c.appScope.launch(Dispatchers.IO) {
+            val offStatus = loadRaw("status.json") { com.tjshea.vigilant.data.cloud.CloudStatus.parse(it) }
+            val offTrades = loadRaw("trades.json") { com.tjshea.vigilant.data.cloud.TradeLedger.parse(it) }
+            val offDesk = loadRaw("desk.json") { com.tjshea.vigilant.data.cloud.DeskFile.parse(it) }
+            val offUsage = loadRaw("usage.json") { com.tjshea.vigilant.data.cloud.CloudUsage.decode(it) }
+            offStatus?.let { (st, at) -> if (latest.status == null) { latest.status = st; latest.statusOkAtMs = at } }
+            offUsage?.let { (u, _) -> if (c.cloudUsage.value == null) c.cloudUsage.value = u }
+            _ui.update { u ->
+                u.copy(
+                    status = u.status ?: offStatus?.first, statusOkAtMs = if (u.status == null) offStatus?.second ?: 0L else u.statusOkAtMs,
+                    trades = u.trades ?: offTrades?.first, tradesReadAtMs = if (u.trades == null) offTrades?.second ?: 0L else u.tradesReadAtMs,
+                    desk = u.desk ?: offDesk?.first, deskReadAtMs = if (u.desk == null) offDesk?.second ?: 0L else u.deskReadAtMs,
+                )
+            }
+        }
     }
     val ui: StateFlow<Ui> = _ui.asStateFlow()
 
