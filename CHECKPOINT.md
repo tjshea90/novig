@@ -1,23 +1,22 @@
-# CHECKPOINT 4569 — read me first, then TASKS.md
+# CHECKPOINT 4570 — read me first, then TASKS.md
 
-**Written:** 2026-11-17T03:21:44Z · **tests:** 1 RED: test_research_index.sh (9 green)
-**Branch:** `claude/optimistic-curie-6rhkmh` · **builds on:** `811e207d7` (this checkpoint is the commit after it)
+**Written:** 2026-11-17T03:25:53Z · **tests:** 1 RED: test_research_index.sh (9 green)
+**Branch:** `claude/optimistic-curie-6rhkmh` · **builds on:** `630ad3c8e` (this checkpoint is the commit after it)
 
 ## Just done
-profit-only engine settings pushed; HB1 hand block next
+HB1 hand hard-block coded + tested (ProfitProfile.handBlock, planner manual refuses)
 
 ## Do this next
-build HB1 hard block in Bet sheet, test, ship
+ship.sh, release.yml, record-release, tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  58f847a81 ckpt 4569: profit-only engine settings pushed; HB1 hand block next
   811e207d7 ckpt 4568: answered Tj: what is proven profitable
   183861a09 ckpt 4567: answered Tj: does anything justify paying
   95519a8a5 ckpt 4566: answered Tj: replacement APIs research
@@ -27,5 +26,7 @@ build HB1 hard block in Bet sheet, test, ship
   1209f753a ckpt 4562: answered Tj: typing fixed, start slow
   48b277f4b ckpt 4561: v1.0.128-129 shipped (launch trace, chat typing)
   981f399bb ckpt 4560: pre-release: Chat typing no longer redraws the whole thread on every key; f
-  b9e61e59e ckpt 4559: pre-ship: Chat typing no longer redraws the whole thread on every key; fine
 ```
+
+(3 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
