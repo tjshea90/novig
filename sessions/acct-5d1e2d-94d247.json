@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-dx8z2c",
  "head": "9db30f0b98d64aec363206a622641be030795baf",
  "since": 1794884852,
- "beat": 1794894296,
- "beatIso": "2026-11-17T05:44:56Z",
+ "beat": 1794894901,
+ "beatIso": "2026-11-17T05:55:01Z",
  "done": "PP1 shipped v1.0.133, provenOnly on via cloud-config; engine_set allows provenOnly key",
  "next": "count bets/day surviving provenOnly; read live practice offered count after LV2 relax; Tj chat"
 }
