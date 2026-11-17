@@ -74,7 +74,7 @@ class PropLineGameState(private val clock: () -> Long = System::currentTimeMilli
             // A clock-only change is not sent: the last clock is as old as the last delivery, and a null clock (MLB) stays null.
             clockSec = d.str("clock")?.let(::seconds),
             atMs = now,
-            ended = ((d["last_play"] as? JsonObject)?.str("type") == "game") || (d.str("status") == null && prev?.ended == true),
+            ended = ((d["last_play"] as? JsonObject)?.str("type") == "game") || prev?.ended == true,
         )
         games[id] = g
         heard(now)
