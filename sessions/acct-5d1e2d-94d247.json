@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-dx8z2c",
- "head": "3e596fbce7c7919cabb1be70655c9e843fad2a2f",
+ "head": "560ccaec55cb41693ffd9f4ff48dc53e8664cb3f",
  "since": 1794884852,
- "beat": 1794893095,
- "beatIso": "2026-11-17T05:24:55Z",
- "done": "PP1 coded: proven-only (2+ stars at Novig) hides unproven types from Feed and CNO; StarEvidenceTest green",
- "next": "run bash ship.sh, trigger release.yml, record-release, tell Tj; check bets/day surviving"
+ "beat": 1794893227,
+ "beatIso": "2026-11-17T05:27:07Z",
+ "done": "LV2: relaxed live Pinnacle rules + bid margin (paper)",
+ "next": "read liveNote offered count; PP1 ship result; promote live to Real only on Tj word / evidence"
 }
