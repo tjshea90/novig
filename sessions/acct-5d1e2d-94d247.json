@@ -6,10 +6,10 @@
  "kind": "routine",
  "task": "AU1",
  "branch": "claude/optimistic-curie-o1vg2x",
- "head": "3ca0380646cb39a26f5e16ed8d5537cee311afc6",
+ "head": "f6b92b8c4bda27067004274b4f1b05d04dd4578e",
  "since": 1794884852,
- "beat": 1794932123,
- "beatIso": "2026-11-17T16:15:23Z",
+ "beat": 1794932517,
+ "beatIso": "2026-11-17T16:21:57Z",
  "done": "pre-ship: AU1: faster start (no MB parses on main thread), no large-file rewrites, star evidence 11-16",
  "next": "ship.sh gates and releases this"
 }
