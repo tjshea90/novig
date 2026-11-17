@@ -260,7 +260,8 @@ object ApiBetPlanner {
         val average = averagePrice(levels, contracts)
         val avgQuote = EvMath.quote(target.fair, average, fee, eventLive = live)
         var profitNote: String? = null
-        if (limits.manual) {
+        // Tj, 2026-11-17: the NCAAB tab is exempt: he may bet anything there.
+        if (limits.manual && target.basis?.source != com.tjshea.vigilant.data.tracker.FairBasis.SOURCE_NCAAB) {
             com.tjshea.vigilant.data.scanner.ProfitProfile.handBlock(target.league, BetKind.of(target.marketLabel, target.selection).label, target.selection)?.let { why ->
                 return no("Blocked: your history says this type loses money (${why}). Not placed.")
             }

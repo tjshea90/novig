@@ -270,9 +270,13 @@ object PropLineEvView {
     /** No odds limit. */
     const val ANY_ODDS = 100_000
 
+    /** A type proven to lose (300+ bets, t <= -2) is not listed at all (Tj, 2026-11-17: no hand bets on proven losers). */
+    fun provenLoser(r: PlEvRow): Boolean = com.tjshea.vigilant.data.scanner.ProfitProfile.handBlock(
+        r.league, (if (isProp(r)) com.tjshea.vigilant.data.scanner.BetKind.PROP else com.tjshea.vigilant.data.scanner.BetKind.of(r.market, pick(r))).label, pick(r)) != null
+
     fun select(rows: List<PlEvRow>, league: String, minEv: Double, kind: String, now: Long, maxOdds: Int = ANY_ODDS): List<PlEvRow> =
         rows.filter { r ->
-            r.startsAtMs > now && calibratedEv(r) >= minEv && r.price <= maxOdds &&
+            r.startsAtMs > now && calibratedEv(r) >= minEv && r.price <= maxOdds && !provenLoser(r) &&
                 (league == "All" || r.league == league) &&
                 when (kind) { "Props" -> isProp(r); "Game lines" -> !isProp(r); else -> true }
         }.sortedByDescending { calibratedEv(it) }
