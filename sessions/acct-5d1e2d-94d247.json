@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-cya0uu",
  "head": "a6b286e1d5a69baebc7f527fafc8422607d3a2e7",
  "since": 1794884852,
- "beat": 1794890411,
- "beatIso": "2026-11-17T04:40:11Z",
+ "beat": 1794890695,
+ "beatIso": "2026-11-17T04:44:55Z",
  "done": "pre-ship: SV1: bets a sharp book says are not +EV are no longer listed",
  "next": "ship.sh gates and releases this"
 }
