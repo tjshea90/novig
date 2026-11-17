@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-br2pip",
- "head": "23721604caa2441dbe9c295a819c812d0ac9803d",
+ "head": "fc28064037dce8552fec81784b7db3ba7c9cc614",
  "since": 1794946860,
- "beat": 1794947250,
- "beatIso": "2026-11-17T20:27:30Z",
- "done": "chat 20:2x: ttl 60 for bid volume, replied to Tj",
- "next": "check bids resting count rises; if still <20 look at candidate-list drops (13) and 3-book floor evidence"
+ "beat": 1794947338,
+ "beatIso": "2026-11-17T20:28:58Z",
+ "done": "engine bid status now lists top 3 not-bid reasons (CloudBidRunner); CloudBidRunnerTest 15 green",
+ "next": "full tools/test.sh then land on main (engine reads main); then read deskNote not-bid reasons and loosen the top held-back rule if evidence allows; tell Tj"
 }
