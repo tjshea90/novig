@@ -13,7 +13,9 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * PropLine's live game state, pushed on the second Streaming Lite socket (PLS3, Tj 2026-11-17: "Novig has its own socket ... can that socket be used better for something else").
  * The docs (2026-11-16): `game_state` (opt-in, since 2026-11-10) is one delivery per game each time the score, status, period, last play or situation changes (a clock-only change is not sent), read from each
- * league's own live feed about every 5 seconds, for MLB, NBA, NHL, NFL and NCAAF: `event_id`, `sport_key`, `home_team`, `away_team`, `status` (`upcoming`, `in_progress`, `final`, ...), `home_score`,
+ * league's own live feed about every 5 seconds, for MLB, NBA, NHL, NFL and NCAAF. MEASURED on PropLine's own recorded game (Magic at Celtics, 2026-11-16, 358 deliveries, research/propline_streaming_review_2026-11-17.md):
+ * a delivery arrives a median 18 s (p90 47 s) AFTER the league's play it reports, one every 15 s in play (p90 33 s, the longest gap 433 s at halftime), and the status stays `in_progress` through the last play
+ * ("Game End"): this is a delayed, ESPN-like score for the live lane's context, not a trigger for the first seconds after a score. Fields: `event_id`, `sport_key`, `home_team`, `away_team`, `status` (`upcoming`, `in_progress`, `final`, ...), `home_score`,
  * `away_score`, `period` ("Top 7th" / "Q3" / "P2"), `period_number`, `clock` ("6:02", null for MLB), `situation`, `last_play`, `source_updated_at`, `updated_at`.
  * It is a score source for the live lane beside ParlayAPI's play-by-play, SharpAPI's game state and SX Bet ([scoreFor]); SharpAPI's and ParlayAPI's scores need plans that lapsed.
  *
@@ -33,9 +35,11 @@ class PropLineGameState(private val clock: () -> Long = System::currentTimeMilli
         val periodNumber: Int?,
         val clockSec: Double?,
         val atMs: Long,
+        /** The league's last play was "Game End": the status still says `in_progress` at that moment (real recorded game, 2026-11-16), so the game is over. */
+        val ended: Boolean = false,
     ) {
-        val live: Boolean get() = status == "in_progress"
-        val final: Boolean get() = status == "final"
+        val live: Boolean get() = status == "in_progress" && !ended
+        val final: Boolean get() = status == "final" || ended
     }
 
     private val games = ConcurrentHashMap<String, Game>()
@@ -57,7 +61,7 @@ class PropLineGameState(private val clock: () -> Long = System::currentTimeMilli
 
     /** One `game_state` payload. Returns false when it is not a game this can use (no id, no teams). */
     fun apply(d: JsonObject, now: Long = clock()): Boolean {
-        val id = d.str("event_id") ?: return false
+        val id = d.id("event_id") ?: return false
         val sport = d.str("sport_key")?.let(PropLineLive::oddsApiSport) ?: return false
         val home = d.str("home_team") ?: return false
         val away = d.str("away_team") ?: return false
@@ -70,6 +74,7 @@ class PropLineGameState(private val clock: () -> Long = System::currentTimeMilli
             // A clock-only change is not sent: the last clock is as old as the last delivery, and a null clock (MLB) stays null.
             clockSec = d.str("clock")?.let(::seconds),
             atMs = now,
+            ended = ((d["last_play"] as? JsonObject)?.str("type") == "game") || (d.str("status") == null && prev?.ended == true),
         )
         games[id] = g
         heard(now)
@@ -126,6 +131,9 @@ class PropLineGameState(private val clock: () -> Long = System::currentTimeMilli
             for (p in parts) total = total * 60 + (p.toDoubleOrNull() ?: return null)
             return total
         }
+
+        /** `event_id` is a NUMBER in `game_state` frames (691534) and text elsewhere ("691534" on /stats): either is the id. */
+        private fun JsonObject.id(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.content?.takeIf { it.isNotBlank() }
 
         private fun JsonObject.str(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull && it.isString }?.content?.takeIf { it.isNotBlank() }
         private fun JsonObject.int(k: String): Int? = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.let { it.intOrNull ?: it.content.toDoubleOrNull()?.toInt() }
