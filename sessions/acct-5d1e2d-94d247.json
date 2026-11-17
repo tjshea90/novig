@@ -5,11 +5,11 @@
  "nonce": "94d247",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-t5s99b",
+ "branch": "claude/optimistic-curie-wicp97",
  "head": "56084c7214582c82725aaf04da24dcaceea08bc2",
  "since": 1794788519,
- "beat": 1794867680,
- "beatIso": "2026-11-16T22:21:20Z",
+ "beat": 1794874870,
+ "beatIso": "2026-11-17T00:21:10Z",
  "done": "answered Tj release it: nothing pending; bets store already off-main",
  "next": "PF10: add startup stage timings, release, read next diag"
 }
