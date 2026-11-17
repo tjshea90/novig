@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-ewoq4d",
  "head": "a0d22103d79791a7a9143584e1b10f8f12ed5cd2",
  "since": 1794941629,
- "beat": 1794942766,
- "beatIso": "2026-11-17T19:12:46Z",
+ "beat": 1794943089,
+ "beatIso": "2026-11-17T19:18:09Z",
  "done": "pre-release: HB1 hard block (NCAAB exempt), NCAAB scroll memory, bids deploy (versionCode 476, v1.0.136)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.136), then run: bash tools/record-release.sh v1.0.136 476 \"HB1 hard block (NCAAB exempt), NCAAB scroll memory, bids deploy\""
 }
