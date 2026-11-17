@@ -7,5 +7,5 @@
  "nonce": "94d247",
  "note": "AU1: faster start (no MB parses on main thread), no large-file rewrites, star evidence 11-16",
  "since": 1794932802,
- "beat": 1794932802
+ "beat": 1794932984
 }
