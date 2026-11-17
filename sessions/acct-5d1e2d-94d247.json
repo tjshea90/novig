@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-dx8z2c",
- "head": "136778400991bcb31941d06d4af466e564a0eb2e",
+ "head": "9db30f0b98d64aec363206a622641be030795baf",
  "since": 1794884852,
- "beat": 1794894087,
- "beatIso": "2026-11-17T05:41:27Z",
- "done": "pre-release: PP1: only types proven profitable at Novig (2+ stars) are listed (versionCode 473, v1.0.133)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.133), then run: bash tools/record-release.sh v1.0.133 473 \"PP1: only types proven profitable at Novig (2+ stars) are listed\""
+ "beat": 1794894296,
+ "beatIso": "2026-11-17T05:44:56Z",
+ "done": "PP1 shipped v1.0.133, provenOnly on via cloud-config; engine_set allows provenOnly key",
+ "next": "count bets/day surviving provenOnly; read live practice offered count after LV2 relax; Tj chat"
 }
