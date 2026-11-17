@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-dx8z2c",
- "head": "46482ad4bbb5947487a3005bc7a140ba3f44efd8",
+ "head": "7c8461483300ec810cbcd69a22afd3ce71163c0c",
  "since": 1794884852,
- "beat": 1794892659,
- "beatIso": "2026-11-17T05:17:39Z",
+ "beat": 1794892938,
+ "beatIso": "2026-11-17T05:22:18Z",
  "done": "PP1 logged (only proven bets shown)",
  "next": "PP1: count survivors of 2+ star filter, build hide + hand block, test, ship"
 }
