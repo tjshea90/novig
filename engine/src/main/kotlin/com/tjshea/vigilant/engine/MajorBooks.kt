@@ -8,7 +8,7 @@ object MajorBooks {
     private val COMPANIES = setOf("flutter", "draftkings", "caesars", "entain", "bet365", "fanatics", "penn", "hardrock", "pinnacle", "circa", "bookmaker")
 
     const val MIN_FOR_BETS = 2
-    const val MIN_FOR_BIDS = 0
+    const val MIN_FOR_BIDS = 1
 
     fun isMajor(key: String): Boolean = BookCompany.of(key) in COMPANIES
 
