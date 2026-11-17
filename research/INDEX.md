@@ -8,7 +8,7 @@ CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a 
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
-| 2026-11-17 | `propline_unused_features_2026-11-17.md` | PropLine: what the recipes page adds, and every feature Vigilant does not use yet (PLR, Tj 2026-11-17) - Tj: "https://prop-line.com/recipes See what can be used from this also. Then look into all the features offered by proplin... | LEVER WATCH |
+| 2026-11-17 | `propline_unused_features_2026-11-17.md` | PropLine: what the recipes page adds, and every feature Vigilant does not use yet (PLR, Tj 2026-11-17) - Tj: "https://prop-line.com/recipes See what can be used from this also. Then look into all the features offered by proplin... | LEVER CODE |
 | 2026-11-17 | `propline_streaming_review_2026-11-17.md` | PropLine Streaming Lite: back on, docs re-audit, what the two sockets are for (PLS, Tj 2026-11-17) - Tj (typed, with three screenshots: PropLine's Webhooks page #939/#940 and the Streaming Lite welcome e-mail) resubscribed to S... | APPLIED LEVER CODE |
 | 2026-11-17 | `api_replacements_2026-11-17.md` | Replacement APIs when the streaming subscriptions lapse (Tj chat 03:06 UTC 2026-11-17) - Tj: "my streaming apis subscriptions are running out. research online the best value replacement apis that can run the functions of this e... | IDLE |
 | 2026-11-16 | `tracker_on_github_2026-11-16.md` | Tracker on GitHub: what Novig supplies, what the engine can run (DG4, Tj chat 02:38 UTC 2026-11-16) - Goal: accurate Tracker data with as little as possible processed and stored on the phone. From NOVIG_API.md §5/§16/§17 (docs;... | IDLE |
