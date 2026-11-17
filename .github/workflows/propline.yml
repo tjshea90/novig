@@ -15,12 +15,14 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe | speed | archive | backfill | multibook | clv | grade | timing | evbets | accuracy | coverage | altprobe | shape | bookstudy | bookparam"
+        description: "plans | probe | trial | speed | archive | backfill | multibook | clv | grade | timing | evbets | accuracy | coverage | altprobe | shape | bookstudy | bookparam"
         default: "plans"
       sports:
         description: "altprobe, bookstudy: comma-separated PropLine sport keys (football_nfl,football_ncaaf when empty), e.g. basketball_nba,hockey_nhl"
         default: ""
-  # Schedule off 2026-11-16 (Tj, PF1): PropLine Streaming ends, the free key's Pro endpoints answer redacted. Restore the cron if a paid plan returns.
+  # Schedule back on 2026-11-17 (Tj resubscribed to Streaming Lite; PF1 had switched it off on 11-16). Daily: the archive (+ CLV, grade, +EV bets after it).
+  schedule:
+    - cron: "47 6 * * *"
 
 permissions:
   contents: write
@@ -53,6 +55,13 @@ jobs:
               if [ -f out/probe/REPORT.txt ]; then
                 gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine Pro samples (keyless)" --notes "Real answers of every Pro endpoint, trimmed; written by .github/workflows/propline.yml (task probe)."
                 gh release upload propline-samples out/probe/* --clobber
+              fi ;;
+            trial)
+              # PLR (Tj, 2026-11-17): one real try of the features Vigilant does not use yet: Novig's parlay quote vs the fair parlay, same-game parlay by book, +EV calculator, Kalshi/Polymarket depth history, bet settling with known answers.
+              python3 -I tools/propline.py trial out/trial
+              if [ -f out/trial/REPORT.txt ]; then
+                gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine samples (keyless)" --notes "Real answers of PropLine endpoints, keyless."
+                gh release upload propline-samples out/trial/* --clobber
               fi ;;
             speed)
               python3 -I tools/propline.py speed out/speed

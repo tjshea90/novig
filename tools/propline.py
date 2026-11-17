@@ -771,7 +771,8 @@ def settle_checks(total, home_score):
         ("over_below", {"market": "totals", "selection": "Over", "side": "Over", "point": total - 0.5}, "won"),
         ("under_below", {"market": "totals", "selection": "Under", "side": "Under", "point": total - 0.5}, "lost"),
         ("over_at", {"market": "totals", "selection": "Over", "side": "Over", "point": float(total)}, "push"),
-        ("over_quarter", {"market": "totals", "selection": "Over", "side": "Over", "point": total - 0.25}, "half_lost"),
+        ("over_quarter", {"market": "totals", "selection": "Over", "side": "Over", "point": total - 0.25}, "half_won"),     # half on total-0.5 (won), half on total (push)
+        ("under_quarter", {"market": "totals", "selection": "Under", "side": "Under", "point": total + 0.25}, "half_won"),   # half on total (push), half on total+0.5 (won)
     ]
 
 
@@ -875,7 +876,7 @@ def selftest():
     assert parlay_row({"fair_price": 301, "books": [{"book": "draftkings", "ev_pct": -3.5}, {"book": "novig", "ev_pct": -6.1, "price": 280}]}) == (-6.1, 280, 301, -3.5)
     assert parlay_row({"books": []}) == (None, None, None, None) and parlay_row(None) is None
     sc = dict((r, w) for r, _, w in settle_checks(215, 110))
-    assert sc == {"over_below": "won", "under_below": "lost", "over_at": "push", "over_quarter": "half_lost"}
+    assert sc == {"over_below": "won", "under_below": "lost", "over_at": "push", "over_quarter": "half_won", "under_quarter": "half_won"}
     print("propline selftest ok")
     return 0
 
