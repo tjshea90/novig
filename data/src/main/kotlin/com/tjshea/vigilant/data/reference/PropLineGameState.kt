@@ -3,7 +3,7 @@ package com.tjshea.vigilant.data.reference
 import com.tjshea.vigilant.data.novig.lab.AltScore
 import com.tjshea.vigilant.data.novig.lab.EspnGame
 import com.tjshea.vigilant.data.scanner.League
-import com.tjshea.vigilant.data.scanner.TeamMatcher
+import com.tjshea.vigilant.data.match.TeamMatcher
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
