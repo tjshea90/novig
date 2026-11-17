@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "d941c0de1a5fde76216fb8394c0a9d08ed00127b",
+ "head": "9749ec207356d30d8a86b83f610e5500e58b3652",
  "since": 1794955330,
- "beat": 1794957099,
- "beatIso": "2026-11-17T23:11:39Z",
- "done": "TASKS: PLS/PLR status after landing; trial + engine reset in flight",
- "next": "read the trial REPORT (run 44197071475) and the new engine job's PropLine log; fill RESULTS in research/propline_unused_features_2026-11-17.md"
+ "beat": 1794957205,
+ "beatIso": "2026-11-17T23:13:25Z",
+ "done": "PLR trial fixes from the first real run: SGP needs a total point, ev/calc names h2h by nickname, /scores status is 'final', per-combo parlay lines",
+ "next": "rerun propline.yml trial; fill RESULTS"
 }
