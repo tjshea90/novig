@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-o1vg2x",
  "head": "3ca0380646cb39a26f5e16ed8d5537cee311afc6",
  "since": 1794884852,
- "beat": 1794932117,
- "beatIso": "2026-11-17T16:15:17Z",
+ "beat": 1794932123,
+ "beatIso": "2026-11-17T16:15:23Z",
  "done": "pre-ship: AU1: faster start (no MB parses on main thread), no large-file rewrites, star evidence 11-16",
  "next": "ship.sh gates and releases this"
 }
