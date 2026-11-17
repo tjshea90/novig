@@ -33,7 +33,9 @@ data class PlPushRow(val atMs: Long, val type: String, val sport: String, val da
  *
  * Streaming Lite allows TWO WebSocket connections, one subscription each, and the engine uses both:
  * - [Sub.BOARD]: `line_movement`, `line_added`, `line_pulled`, `market_suspended` for the scanned sports and the fair-line books, into [PropLineLive] (laid over the REST boards).
- * - [Sub.SIGNALS]: `steam` (props too), `resolution` and `ev` at Novig, handed to [tap] (the engine journals them for research and grading).
+ * - [Sub.SIGNALS]: `game_state` (live scores for MLB, NBA, NHL, NFL, NCAAF every ~5 s, into [gameState]: a score source for the live lane, PLS3 2026-11-17) and `steam` (props too), `resolution` and `ev` at Novig,
+ *   handed to [tap] (the engine journals them for research and grading). The Novig book filter is not a Novig price feed (the engine reads Novig's own socket): it only keeps the grades and +EV pushes to the exchange
+ *   the engine bets at; `steam` and `game_state` carry no book.
  * A runner has no public address, so no webhook is used (webhooks need an HTTPS endpoint PropLine can POST to).
  *
  * The subscriptions are PropLine objects (`POST /v1/webhooks` with `transport: "websocket"`): found by their event set among the account's subscriptions and reused (filters PATCHed when they
@@ -53,10 +55,13 @@ class PropLineStream(
     private val wsUrl: String = WS_URL,
     private val clock: () -> Long = System::currentTimeMillis,
     private val log: (String) -> Unit = {},
+    /** Live game state from `game_state` pushes (the live lane's score source). */
+    val gameState: PropLineGameState = PropLineGameState(clock),
 ) {
-    enum class Sub(val events: List<String>) {
+    /** [earlier]: event sets this subscription had before; one of the account's own is brought up to date in place (or replaced) instead of being left behind. */
+    enum class Sub(val events: List<String>, val earlier: List<Set<String>> = emptyList()) {
         BOARD(listOf("line_movement", "line_added", "line_pulled", "market_suspended")),
-        SIGNALS(listOf("steam", "resolution", "ev")),
+        SIGNALS(listOf("game_state", "steam", "resolution", "ev"), earlier = listOf(setOf("steam", "resolution", "ev"))),
     }
 
     /** Every `steam`, `resolution` and `ev` push: (event type, sport, raw payload, when heard). */
@@ -95,6 +100,7 @@ class PropLineStream(
         keeper?.cancel(); keeper = null
         conns.values.forEach { it.shut(why) }
         live.reset()
+        gameState.onClosed()
     }
 
     fun health(now: Long = clock()): String = when {
@@ -136,9 +142,11 @@ class PropLineStream(
         @Volatile var patchedAtMs = 0L
         @Volatile var needSeq = false
         @Volatile var reactivated = false
+        /** PropLine's own sending lag from the last heartbeat (`at` minus `caught_up_at`), ms; null until it says. */
+        @Volatile var behindMs: Long? = null
 
         fun health(now: Long): String = sub.name.lowercase() + ": " + when {
-            ws != null && ready -> "live (last frame ${(now - lastFrameMs) / 1000}s ago, $connects connects so far (one socket open)${lastClose?.let { "; last close $it" }.orEmpty()})"
+            ws != null && ready -> "live (last frame ${(now - lastFrameMs) / 1000}s ago, $connects connects so far (one socket open)${behindMs?.let { "; PropLine ${it / 1000}s behind" }.orEmpty()}${lastClose?.let { "; last close $it" }.orEmpty()})"
             now < retryAtMs -> "reconnecting in ${(retryAtMs - now) / 1000}s (${lastClose ?: "closed"})"
             else -> "connecting" + (lastClose?.let { " (last close: $it)" } ?: "")
         }
@@ -188,25 +196,54 @@ class PropLineStream(
             for ((k, v) in filters()) put(k, v)
         }
 
-        /** Our subscription for [sub]: an existing one with exactly these events on the websocket transport, or a new one. */
+        /**
+         * Our subscription for [sub]: an existing one with exactly these events on the websocket transport, else an earlier event set of ours (brought up to date in place, or replaced and removed), else a new one.
+         * Every subscription PropLine holds is logged as it is (events, filters, transport, active) so the engine log shows whether PropLine's side is set up right (PLS4); a subscription of any other shape is left alone.
+         */
         private suspend fun ensure(k: String): Long? {
             val listed = list(k)
-            val mine = listed?.firstOrNull { o ->
-                val t = (o["transport"] as? JsonPrimitive)?.content
-                val ev = (o["events"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }?.toSet()
-                t == "websocket" && ev == sub.events.toSet()
-            }
+            listed?.forEach { o -> if (sub == Sub.BOARD) log("PropLine holds " + describe(o)) }
+            fun ws(o: JsonObject) = (o["transport"] as? JsonPrimitive)?.content == "websocket"
+            fun events(o: JsonObject) = (o["events"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }?.toSet()
+            fun idOf(o: JsonObject) = (o["id"] as? JsonPrimitive)?.content?.toLongOrNull()
+            val mine = listed?.firstOrNull { o -> ws(o) && events(o) == sub.events.toSet() }
             if (mine != null) {
-                val sid = (mine["id"] as? JsonPrimitive)?.content?.toLongOrNull() ?: return null
+                val sid = idOf(mine) ?: return null
                 val active = (mine["active"] as? JsonPrimitive)?.content != "false"
                 if (!active || filters().any { (f, v) -> mine[f]?.toString()?.trim('"') != v.toString().trim('"') }) patch(k, sid, body(includeTransport = false).let { b -> if (!active) JsonObject(b + ("active" to JsonPrimitive(true))) else b })
                 log("PropLine stream ${sub.name.lowercase()}: reusing subscription $sid")
                 return sid
             }
+            val earlier = listed?.firstOrNull { o -> ws(o) && events(o)?.let { it in sub.earlier } == true }
+            if (earlier != null) {
+                val sid = idOf(earlier)
+                if (sid != null && patch(k, sid, body(includeTransport = false).let { b -> JsonObject(b + ("active" to JsonPrimitive(true))) })) {
+                    log("PropLine stream ${sub.name.lowercase()}: subscription $sid brought up to date (${sub.events.joinToString(",")})")
+                    return sid
+                }
+            }
             val r = send(k, Request.Builder().url("$base/webhooks").post(body(includeTransport = true).toString().toRequestBody(JSON_TYPE)))
             val sid = r?.let { (it["id"] as? JsonPrimitive)?.content?.toLongOrNull() }
-            if (sid != null) log("PropLine stream ${sub.name.lowercase()}: subscription $sid made (${sub.events.joinToString(",")})") else failed("could not make the subscription", clock())
+            if (sid != null) {
+                log("PropLine stream ${sub.name.lowercase()}: subscription $sid made (${sub.events.joinToString(",")})")
+                // The earlier set could not be updated in place: it is ours (the exact event set this engine made), so it goes, or it would sit active beside the new one.
+                val old = earlier?.let(::idOf)
+                if (old != null && old != sid && send(k, Request.Builder().url("$base/webhooks/$old").delete()) != null) log("PropLine stream ${sub.name.lowercase()}: earlier subscription $old removed")
+            } else failed("could not make the subscription", clock())
             return sid
+        }
+
+        /** One PropLine subscription in words, with no secret (the key's secret is masked by PropLine and never printed here). */
+        private fun describe(o: JsonObject): String {
+            fun v(f: String) = (o[f] as? JsonPrimitive)?.content
+            val ev = (o["events"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }?.joinToString(",").orEmpty()
+            val parts = listOfNotNull(
+                v("id")?.let { "#$it" }, v("transport") ?: "http", if (v("active") == "false") "PAUSED${v("paused_reason")?.let { r -> " ($r)" }.orEmpty()}" else "active", "events=$ev",
+                v("filter_sport_key")?.let { "sports=${it.split(",").size}" }, v("filter_bookmaker_key")?.let { "books=${it.split(",").size}" },
+                v("min_steam_score")?.let { "min_steam=$it" }, v("steam_props")?.takeIf { it == "true" }?.let { "steam_props" },
+                v("min_ev_pct")?.let { "ev=$it-${v("max_ev_pct") ?: "∞"}%" }, v("batch_max")?.takeIf { it != "0" && it != "null" }?.let { "batch=$it" },
+            )
+            return parts.joinToString(" ")
         }
 
         private suspend fun list(k: String): List<JsonObject>? {
@@ -229,7 +266,7 @@ class PropLineStream(
         fun drop() {
             ws?.cancel(); ws = null
             ready = false
-            if (sub == Sub.BOARD) live.onClosed()
+            if (sub == Sub.BOARD) live.onClosed() else gameState.onClosed()
         }
 
         @Synchronized
@@ -243,6 +280,8 @@ class PropLineStream(
                 lastFrameMs = clock()
                 val auth = buildJsonObject {
                     put("type", "auth"); put("api_key", k); put("webhook_id", sid)
+                    // A ping every 5 s (docs: any 5-25) instead of 25: a dead socket and a quiet score are told apart within seconds.
+                    put("ping_interval", PING_S)
                     (lastSeq ?: if (needSeq) 0L else null)?.let { put("since_seq", it) }
                 }
                 webSocket.send(auth.toString())
@@ -269,12 +308,13 @@ class PropLineStream(
         fun handle(o: JsonObject) {
             val now = clock()
             lastFrameMs = now
-            if (sub == Sub.BOARD) live.heard(now)
+            if (sub == Sub.BOARD) live.heard(now) else gameState.heard(now)
             when ((o["type"] as? JsonPrimitive)?.content) {
                 "ready" -> {
                     val truncated = (o["truncated"] as? JsonPrimitive)?.content == "true"
                     val resumed = lastSeq != null
                     ready = true
+                    reactivated = false
                     backoffMs = 2_000L
                     if (sub == Sub.BOARD) { if (truncated) live.reset(); live.onReady(continuous = resumed && !truncated, now) }
                     if (lastSeq == null) (o["latest_seq"] as? JsonPrimitive)?.content?.toLongOrNull()?.let { lastSeq = it }
@@ -290,10 +330,16 @@ class PropLineStream(
                     when (type) {
                         "line_movement", "line_added", "line_pulled" -> live.onLine(type, d, now)
                         "market_suspended" -> live.onSuspended(d, now)
+                        "game_state" -> gameState.apply(d, now)
                         "steam", "resolution", "ev" -> runCatching { tap?.invoke(type, (d["sport_key"] as? JsonPrimitive)?.content.orEmpty(), d.toString().take(6_000), now) }
                     }
                 }
-                "heartbeat" -> if (sub == Sub.BOARD) live.onHeartbeat(o["books"] as? JsonArray, now)
+                "heartbeat" -> {
+                    if (sub == Sub.BOARD) live.onHeartbeat(o["books"] as? JsonArray, now)
+                    val at = PropLineClient.ms((o["at"] as? JsonPrimitive)?.content)
+                    val caught = PropLineClient.ms((o["caught_up_at"] as? JsonPrimitive)?.content)
+                    if (at != null && caught != null) behindMs = (at - caught).coerceAtLeast(0L)
+                }
                 "ping" -> {}
                 "error" -> log("PropLine stream ${sub.name.lowercase()} error: ${o.toString().take(160)}")
             }
@@ -304,7 +350,7 @@ class PropLineStream(
             if (webSocket !== ws) return
             ws = null
             ready = false
-            if (sub == Sub.BOARD) live.onClosed()
+            if (sub == Sub.BOARD) live.onClosed() else gameState.onClosed()
             lastClose = "$code ${reason.take(80)}".trim()
             val now = clock()
             if (code != 1000) log("PropLine stream ${sub.name.lowercase()}: closed $lastClose")
@@ -345,6 +391,8 @@ class PropLineStream(
     companion object {
         const val WS_URL = "wss://ws.prop-line.com/v1/stream"
         const val TICK_MS = 1_000L
+        /** The ping interval asked for in the auth frame (docs: any value 5-25 s; 25 is the default). */
+        const val PING_S = 5
         /** Filters are PATCHed at most this often when the sports or books change. */
         const val PATCH_GAP_MS = 5 * 60_000L
         /** Steam this strong or more is pushed (0-100; a prop steam storm of ~170 events a game on a Sunday is cut to the real moves). */
