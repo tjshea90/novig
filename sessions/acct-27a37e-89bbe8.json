@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "0158be6e5f706eda6ed98f60769db68a88df24e5",
+ "head": "6e4a22ebac0155b5cee7edf657e15255f978251d",
  "since": 1794955330,
- "beat": 1794956999,
- "beatIso": "2026-11-17T23:09:59Z",
- "done": "PLS+PLR: all three modules green (4241 passed); PropLine upgrade watch, Pinnacle cache age, game_state socket verified on real recorded frames, trial task, schedules restored",
- "next": "confirm main landed; engine_set --reset; run propline.yml task trial; read REPORT; fill research/propline_unused_features_2026-11-17.md RESULTS"
+ "beat": 1794957036,
+ "beatIso": "2026-11-17T23:10:36Z",
+ "done": "research index rebuilt for the PropLine studies",
+ "next": "confirm main landed; engine_set --reset; run propline.yml task trial"
 }
