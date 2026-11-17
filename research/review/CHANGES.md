@@ -209,3 +209,6 @@ Tj chat 23:53 UTC: "The engine runs the wallet out of money way faster than usua
 
 - 2026-11-17 (chat, mirage): a second device (SM-S156V) published default-like settings over the tuned ones (bid/bet kinds, margins, Kelly, trap hours, provenOnly, live-bid). Restored them via engine_set (cloud-config 63d240658) to the rev e5d9158f9 values; engine_set now accepts json:[...] for list settings. Revert: engine_set the values back from commit 93505dce9.
 - 2026-11-17 BD1 (Tj chat 19:01): vigGuards.bidDeploy on (was off; \$67 cash idle, ~\$9 resting). Revert: engine_set.py vigGuards.bidDeploy=false
+
+## 2026-11-17 20:30Z chat (volume, one lever): bid TTL 30 -> 60 min (acct-5d1e2d)
+Tj 20:19: too few bids. Wallet $67 is not the limit; engine log 20:18-20:21: 6-16 bids resting ($8-20), each pass posts 1-3 and takes down 1-7. Ended-bid reasons in desk.json (107 ended): 39 "only 2 books price it +EV (fewest 3)" (the 3-book floor, PX11c, kept), 20 "about to expire: re-posted", 13 candidate list dropped the side. Phone settings checked: identical to the 19:03 write (only rev stamps). Change: makerTtlMinutes 30 -> 60 (fewer re-posts, bids keep queue position; every pass still pulls a bid that is no longer +EV). Not changed: 3-book floor, margin 1.8%, odds 140. Metric: bids resting and posted/taken-down per pass, fills. Revert: makerTtlMinutes=30.
