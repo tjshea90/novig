@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "a23a545ca0b2463a625c363442905e4c51782113",
+ "head": "7b408180bb8c7db25e51884e11544747652502e4",
  "since": 1794955330,
- "beat": 1794978674,
- "beatIso": "2026-11-18T05:11:14Z",
- "done": "MKV3: LIVE prerequisites: 24 h realized-loss stop from Novig's executions (RfqLedger, onLedger), last-look price tolerance, results tile; research section 11; 4314 tests green",
- "next": "engine reset to load them; then rfq_set mode=LIVE maxCollateral=25 maxOpenCollateral=50 maxLegs=3 dayLossStop=20 minReturn=0.06 (Tj approved); watch the first QUOTE_SENT/CONFIRM rows; ship 1.0.138 with the results tile"
+ "beat": 1794979183,
+ "beatIso": "2026-11-18T05:19:43Z",
+ "done": "MK7: parlay maker LIVE since 04:50 UTC 2026-11-18 (Tj: 'Live, small limits'): game lines, 2-3 legs, 25/50 collateral, 6% return, 20 dollar 24 h loss stop; first quotes sent, no refusals, executions route answers; board note posted about engine resets; engine churn from other sessions keeps restarting jobs (each restart = ~10 min cold)",
+ "next": "watch status.rfq (monitor bi57vtuv9) for the first win/confirm/fill and the first settlements; read rfq-<day> journals (QUOTE_SENT, CONFIRM, QUOTE_EXECUTED, LEDGER, EXECUTED with ourPrice) from cloud-archive Releases; ship v1.0.138 with the Settled parlays tile; MK5 grader; MK6 same-game; stop with: python3 tools/rfq_set.py mode=OFF"
 }
