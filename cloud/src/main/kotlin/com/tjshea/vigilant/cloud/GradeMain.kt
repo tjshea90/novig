@@ -63,11 +63,14 @@ private suspend fun gradeMain(args: Array<String>) {
         scores = ChainedScores(sgoScores, scores)
         closes += SgoCloses(client, { true }).also { it.enabled = true }
     }
+    var plSettle: com.tjshea.vigilant.data.tracker.PropLineSettle? = null
     val plKeys = if (on("usePropLine")) CloudKeys.fromEnv(CloudKeys.PROPLINE) else emptyList()
     if (plKeys.isNotEmpty()) {
         val usage = UsageMeter(JsonFileStore(File(journalDir.parentFile ?: File("."), "grade-usage-pl.json"), UsageBook.serializer(), { UsageBook() }, json))
         val pl = com.tjshea.vigilant.data.reference.PropLineClient(http, KeyPool(QuotaPolicy.PROPLINE, { plKeys }, usage), json, relayNovig = false, meter = usage)
-        scores = ChainedScores(scores, com.tjshea.vigilant.data.tracker.PropLineScores(pl, { true }, json).also { it.enabled = true })
+        val plScores = com.tjshea.vigilant.data.tracker.PropLineScores(pl, { true }, json).also { it.enabled = true }
+        scores = ChainedScores(scores, plScores)
+        plSettle = com.tjshea.vigilant.data.tracker.PropLineSettle(pl, plScores, json)
     }
     // ESPN first among the free ones: DraftKings' own close of a game line, at the number it closed at.
     closes += EspnCloses(http, json)
@@ -100,6 +103,7 @@ private suspend fun gradeMain(args: Array<String>) {
             println("grade: ${study.addOrders(orders, known)} of the engine's orders had no line in the journal and were added")
         }
     }
+    plSettle?.let { ps -> study.gradeFallback = { bet, pick -> ps.grade(bet, pick) }; println("grade: PropLine's /bets/settle asked for game lines the score feeds cannot grade") }
     val report = study.settle(scores, closes, emptyList(), scratch)
     println("grade: looked ${report.looked}, graded ${report.graded}, closed ${report.closed} over ${report.days} day(s)" + (study.lastProblem?.let { ", problem: $it" } ?: ""))
 

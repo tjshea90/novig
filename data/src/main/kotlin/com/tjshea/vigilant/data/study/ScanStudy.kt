@@ -621,6 +621,9 @@ class ScanStudy(
         SettleReport(looked, graded, closed, copied, daysDone)
     }
 
+    /** PropLine's `/bets/settle` for a line the score feeds cannot grade (the engine's grader sets it; PLR5); null = none. */
+    @Volatile var gradeFallback: (suspend (TrackedBet, BetGrader.Pick) -> BetGrader.Grade.Result?)? = null
+
     /** The study bets [work] through the Tracker's own grading and close lookups, on a scratch file; the changes as result lines. */
     private suspend fun harness(work: List<StudyBet>, scores: ScoreSource, sources: List<CloseSource>, heavyOk: Boolean, scratch: File, now: Long): List<Line> {
         scratch.mkdirs()
@@ -629,7 +632,7 @@ class ScanStudy(
         try {
             val tracker = BetTracker(file, clock)
             tracker.addAll(work.map { it.bet })
-            val settler = BetSettler(tracker, scores, clock)
+            val settler = BetSettler(tracker, scores, clock, fallback = gradeFallback)
             for (pass in 1..MAX_PASSES) {
                 val r = settler.run()
                 if (r.asked == 0 || r.stopped) break
