@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "dec5b9",
+ "kind": "interactive",
+ "task": "",
+ "branch": "claude/wizardly-meitner-s0i8hv",
+ "head": "2dec3398fe01417bcee6c0a11d19576bdd081367",
+ "since": 1795026349,
+ "beat": 1795026349,
+ "beatIso": "2026-11-18T18:25:49Z",
+ "done": "",
+ "next": ""
+}
