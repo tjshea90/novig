@@ -45,8 +45,8 @@ data class RfqConfig(
     val maxDaysAhead: Int = 5,
     val minFair: Double = 0.03,
     val maxFair: Double = 0.85,
-    /** The day's loss at which quoting stops (dollars; informational for now, the kill is [Kill]). */
-    val dayLossStop: Double = 40.0,
+    /** The loss over the last 24 hours of SETTLED parlays (dollars, from Novig's executions) at which LIVE quoting stops for six hours ([RfqMaker.onLedger]); 0 = no stop. */
+    val dayLossStop: Double = 20.0,
 ) {
     enum class Mode { OFF, SHADOW, LIVE }
 

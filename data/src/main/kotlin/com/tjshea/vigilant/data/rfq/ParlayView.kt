@@ -39,6 +39,12 @@ object ParlayView {
         tiles += DashboardModel.Tile("Our rule would have won", if (r.pricedTrades > 0) "${100 * r.wouldWin / r.pricedTrades}%" else "—", r.wouldEarnPoints?.let { "${r.wouldWin} of ${r.pricedTrades} trades, ${pts(it)} pts each if our fair is true" } ?: "of the trades it could price")
         if (c.mode == RfqConfig.Mode.LIVE) {
             tiles += DashboardModel.Tile("Quotes", "${r.quotesSent}", "${r.won} won · ${r.confirmed} confirmed · ${r.filled} filled")
+            val d24 = r.realizedPnl24h
+            tiles += DashboardModel.Tile(
+                "Settled parlays", r.realizedPnl?.let { (if (it >= 0) "+" else "-") + "\$" + String.format(Locale.US, "%.2f", kotlin.math.abs(it)) } ?: "—",
+                "${r.makerWon} won · ${r.makerLost} lost · ${r.openParlays} open" + (d24?.let { " · 24 h " + (if (it >= 0) "+" else "-") + "\$" + String.format(Locale.US, "%.2f", kotlin.math.abs(it)) } ?: ""),
+                if ((r.realizedPnl ?: 0.0) > 0.005) Tone.GOOD else if ((r.realizedPnl ?: 0.0) < -0.005) Tone.BAD else Tone.NEUTRAL,
+            )
             tiles += DashboardModel.Tile("Collateral tied up", usd(r.openCollateral), "of ${usd(c.maxOpenCollateral)} allowed in all", if (r.openCollateral > c.maxOpenCollateral * 0.9) Tone.WARN else Tone.NEUTRAL)
         }
         val headline = when (c.mode) {

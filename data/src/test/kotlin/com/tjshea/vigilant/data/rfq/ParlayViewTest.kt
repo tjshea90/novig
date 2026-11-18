@@ -42,7 +42,7 @@ class ParlayViewTest {
         val live = shadow.copy(config = RfqConfig(mode = RfqConfig.Mode.LIVE), quotesSent = 40, won = 6, confirmed = 6, filled = 6, openCollateral = 85.0)
         val v = ParlayView.of(live)
         assertEquals("Live: quoting", v.headline)
-        assertEquals(6, v.tiles.size)
+        assertEquals(7, v.tiles.size)
         assertTrue(v.tiles.first { it.label == "Collateral tied up" }.sub.contains("\$90"))
         assertEquals("above 90% of the cap is amber", com.tjshea.vigilant.data.cloud.DashboardModel.Tone.WARN, v.tiles.first { it.label == "Collateral tied up" }.tone)
         val stopped = ParlayView.of(live.copy(halted = "Novig locked the maker out of quoting for 5 minutes"))
