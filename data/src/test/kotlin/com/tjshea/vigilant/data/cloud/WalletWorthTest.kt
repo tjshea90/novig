@@ -1,8 +1,8 @@
 package com.tjshea.vigilant.data.cloud
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
+import org.junit.Test
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 
 /** TR3 (Tj 2026-11-18): the wallet's worth is cash plus every open position, not the trader's own bankroll. */
 class WalletWorthTest {
