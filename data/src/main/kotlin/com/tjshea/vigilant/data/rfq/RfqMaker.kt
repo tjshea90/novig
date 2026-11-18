@@ -246,6 +246,18 @@ class RfqMaker(
 
     private fun release(rfqId: String) { synchronized(pending) { pending[rfqId]?.let { it.reserved = 0.0; it.reservedUntilMs = 0L } } }
 
+    /** The whole state as data for the phone ([RfqStatus]). */
+    fun snapshot(connected: Boolean, cfg: RfqConfig, makerId: String?, collateral: Double, note: String, now: Long = clock()): RfqStatus {
+        val ms = synchronized(margins) { margins.toList() }
+        val med = ms.sorted().let { if (it.isEmpty()) null else it[it.size / 2] }
+        val top = synchronized(declines) { declines.entries.sortedByDescending { it.value }.take(4).map { "${it.key} x${it.value}" } }
+        return RfqStatus(
+            atMs = now, config = cfg, connected = connected, makerId = makerId, halted = halted, seen = seen, priceable = priceable, tradesSeen = executedSeen, pricedTrades = ms.size,
+            medianGapPoints = med, wouldWin = wouldWin, wouldEarnPoints = if (wouldWin > 0) wouldEdge / wouldWin else null, quotesSent = quotesSent, won = accepted, confirmed = confirmed,
+            filled = filled, openCollateral = collateral, declines = top, note = if (connected) "" else note.take(120),
+        )
+    }
+
     /** The whole state in words for the status file and the engine log. */
     fun status(connected: Boolean, cfg: RfqConfig = config()): String {
         if (cfg.mode == RfqConfig.Mode.OFF) return "RFQ maker: off"

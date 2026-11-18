@@ -247,6 +247,8 @@ data class CloudStatus(
     val locksNote: String = "",
     /** The Novig parlay maker in words ([com.tjshea.vigilant.data.rfq.RfqMaker.status], MK 2026-11-18): its mode, the socket, the RFQs seen and priced, what the market paid, and in LIVE the quotes. */
     val rfqNote: String = "",
+    /** The same, as data for the phone's Parlays view ([com.tjshea.vigilant.data.rfq.RfqStatus]); null while the engine has not published one. */
+    val rfq: com.tjshea.vigilant.data.rfq.RfqStatus? = null,
     /**
      * The engine subaccount's all-time betting profit from its own ledger (CH87c, [com.tjshea.vigilant.data.tracker.WalletProfit.fromLedger]): payouts and credits less stakes and fees, open bets at
      * cost; null = not read. [ledgerDetail]: each kind's net and count. Read at [ledgerAtMs] (every 30 minutes).
