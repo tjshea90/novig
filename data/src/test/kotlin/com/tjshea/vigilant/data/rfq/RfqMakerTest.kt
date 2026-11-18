@@ -176,4 +176,38 @@ class RfqMakerTest {
         assertEquals(RfqConfig.Mode.SHADOW, c.mode); assertEquals(0.05, c.margin, 0.0); assertEquals(12.0, c.maxStake, 0.0)
         assertNull(RfqConfig.parse("")); assertNull(RfqConfig.parse("{broken"))
     }
+
+    // ---- the flow is ~60 RFQs a second (first real run, 2026-11-18): the journal samples what cannot be priced, the tally counts all of it ----
+    @Test fun theJournalKeepsWhatItCanPriceAndASampleOfTheRestWhileTheTallyCountsEverything() {
+        val rows = ArrayList<RfqRow>(); var clock = now
+        val legs = listOf(leg("a", "e1", 0.5), leg("b", "e2", 0.4))
+        val maker = RfqMaker({ cfg.copy(mode = RfqConfig.Mode.SHADOW) }, { id -> legs.firstOrNull { it.outcomeId == id } }, { 0.0 }, { true }, { rows += it }, { _, _ -> }, { clock },
+            legInfo = { id -> if (id.startsWith("s")) "Player Points Over 22.5" else null }, sampleEvery = 10)
+        repeat(100) { i -> maker.onEvent(RfqProtocol.Created(clock, "x$i", listOf(if (i % 2 == 0) "s$i" else "u$i", "b"), clock + 3_000L, 10.0)) }
+        maker.onEvent(created("a", "b"))                                          // priceable: always kept
+        val created = rows.filter { it.kind == "CREATED" }
+        assertTrue("about one in ten of the unpriceable, plus the priceable one (${created.size})", created.size in 3..25 && created.any { it.rfqId == "rfq-1" })
+        // trades of RFQs we could not price keep their legs for later study, with no fair
+        maker.onEvent(RfqProtocol.Executed(clock, 1, "x3", 20.0, 0.31))
+        val ex = rows.last { it.kind == "EXECUTED" }
+        assertTrue(ex.data, ex.data.contains("\"outcomeIds\"") && ex.data.contains("\"nLegs\":2") && ex.data.contains("unscanned"))
+        // five minutes later the tally row says what the flow was
+        clock += RfqMaker.TALLY_MS + 1
+        maker.onEvent(RfqProtocol.Closed(clock, "x1"))
+        val tally = json.parseToJsonElement(rows.single { it.kind == "TALLY" }.data).jsonObject
+        assertEquals(101L, tally["created"]!!.jsonPrimitive.content.toLong())
+        val classes = tally["legClasses"]!!.jsonObject
+        assertEquals(50L, classes["scanned"]!!.jsonPrimitive.content.toLong()); assertEquals(50L, classes["unscanned"]!!.jsonPrimitive.content.toLong())
+        assertTrue(tally["scannedKinds"]!!.jsonObject.keys.single() == "Player Points Over #")
+        assertEquals(1L, tally["executed"]!!.jsonPrimitive.content.toLong())
+    }
+
+    @Test fun aTradeIsMatchedToItsRfqEvenWhenManyOthersArrivedInBetween() {
+        val rows = ArrayList<RfqRow>(); val clock = now
+        val maker = RfqMaker({ cfg.copy(mode = RfqConfig.Mode.SHADOW) }, { id -> if (id == "a") leg("a", "e1", 0.5) else if (id == "b") leg("b", "e2", 0.4) else null }, { 0.0 }, { true }, { rows += it }, { _, _ -> }, { clock })
+        maker.onEvent(created("a", "b"))
+        repeat(3_000) { i -> maker.onEvent(RfqProtocol.Created(clock, "n$i", listOf("p$i", "q$i"), clock + 3_000L, 10.0)) }       // 5 seconds of the real flow
+        maker.onEvent(RfqProtocol.Executed(clock, 1, "rfq-1", 40.0, 0.23))
+        assertTrue("the old 600-entry window had forgotten it", rows.last { it.kind == "EXECUTED" }.data.contains("\"seenHere\":true"))
+    }
 }
