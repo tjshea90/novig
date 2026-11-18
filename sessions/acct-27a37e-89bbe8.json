@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "ed890a96a4f77c6d8b1909adaf0062cc52422700",
+ "head": "e0217d6b0935706126441bdbdbc3b9b9536792e2",
  "since": 1794955330,
- "beat": 1794974833,
- "beatIso": "2026-11-18T04:07:13Z",
+ "beat": 1794975031,
+ "beatIso": "2026-11-18T04:10:31Z",
  "done": "pre-release: MKV: the Novig parlay maker in the app (Engine > Parlays: status, evidence counter, OFF/SHADOW/LIVE with a confirm, limits); the engine prices by return on collateral (versionCode 477, v1.0.137)",
  "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.137), then run: bash tools/record-release.sh v1.0.137 477 \"MKV: the Novig parlay maker in the app (Engine > Parlays: status, evidence counter, OFF/SHADOW/LIVE with a confirm, limits); the engine prices by return on collateral\""
 }
