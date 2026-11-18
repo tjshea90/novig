@@ -8,8 +8,8 @@
  "branch": "ccr-f4518318-aidjgt",
  "head": "c8217ab936abcb4a2632c7924396732f589b0030",
  "since": 1794955330,
- "beat": 1794964996,
- "beatIso": "2026-11-18T01:23:16Z",
+ "beat": 1794965545,
+ "beatIso": "2026-11-18T01:32:25Z",
  "done": "NVR: locks guard is the share of the engine's own candidates, not a guessed size cap (the first real list held thousands); device check works live (pass good until Thu 03:00 ET)",
  "next": "engine_set --reset; read the real locks counts in engine-log; tell Tj to open the Novig app before Thu 03:00 ET"
 }
