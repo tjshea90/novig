@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "350e50d60aeb7b1d07730aba7577d1a00b04464c",
+ "head": "95d81662c36074afddce01b0fd9a1eb32f05218b",
  "since": 1794955330,
- "beat": 1794963992,
- "beatIso": "2026-11-18T01:06:32Z",
+ "beat": 1794964185,
+ "beatIso": "2026-11-18T01:09:45Z",
  "done": "NVR: Novig geolocation status (GeoWatch + message), locks (NovigLocks into CloudSources.unavailable), limits tier/open-order cap; tests green",
  "next": "diff newest docs mirror vs 11-16; route-by-route unused list; write research/novig_propline_review_2026-11-18.md; full test; land; engine_set --reset"
 }
