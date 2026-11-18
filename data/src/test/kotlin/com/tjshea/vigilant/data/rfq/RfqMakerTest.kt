@@ -158,7 +158,7 @@ class RfqMakerTest {
         assertTrue("halted: priced and journaled, not quoted", r.sent.isEmpty() && r.rows.any { it.kind == "CREATED" })
         r.clock += 6 * 60_000L                                                          // the 5-minute lock has lifted
         r.legs = listOf(LegFair("a", "e1", "label a", 0.5, 5, r.clock - 60_000L, r.clock + 3 * 3_600_000L, false), LegFair("b", "e2", "label b", 0.4, 5, r.clock - 60_000L, r.clock + 3 * 3_600_000L, false))   // fresh fair at the later time
-        r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-9"))
+        r.maker.onEvent(RfqProtocol.Created(r.clock, "rfq-9", listOf("a", "b"), r.clock + 3_000L, 10.0))
         assertNull(r.maker.halted); assertEquals(1, r.sent.size)
         r.maker.onEvent(RfqProtocol.QuoteUnfilled(now, "rfq-9", "q", "maker_insolvent"))
         assertNotNull("an insolvent collateral stops it for 30 minutes", r.maker.halted)
