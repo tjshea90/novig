@@ -33,7 +33,7 @@ class PropLineSettleTest {
         id = "b1", createdAtMs = 0, league = "NBA", eventName = "Charlotte Hornets @ Los Angeles Lakers", startsTs = 1_000_000L, marketLabel = "Total", selection = "Over 215.5",
         marketId = "m", outcomeId = "o", price = 1.9, cost = 0.5, fairAtBet = 0.5, evPercentAtBet = 0.02, stake = 5.0,
     )
-    private val game = GameScore(id = "pl:150791", league = "NBA", home = "Los Angeles Lakers", away = "Charlotte Hornets", startMs = 1_000_000L, final = true, homeScore = 110, awayScore = 105)
+    private val game = GameScore(id = "pl:150791", league = "NBA", home = "Los Angeles Lakers", away = "Charlotte Hornets", startMs = 1_000_000L, final = true, called = false, homeScore = 110, awayScore = 105)
 
     @Test
     fun theRequestNamesThePropLineGameAndLine() {
