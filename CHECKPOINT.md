@@ -1,13 +1,13 @@
-# CHECKPOINT 4637 — read me first, then TASKS.md
+# CHECKPOINT 4638 — read me first, then TASKS.md
 
-**Written:** 2026-11-18T04:04:48Z · **tests:** all 10 fast checks green
-**Branch:** `ccr-f4518318-aidjgt` · **builds on:** `9ee91002e` (this checkpoint is the commit after it)
+**Written:** 2026-11-18T04:07:12Z · **tests:** all 10 fast checks green
+**Branch:** `ccr-f4518318-aidjgt` · **builds on:** `ade0fa424` (this checkpoint is the commit after it)
 
 ## Just done
-MK5: rfq-catalog.yml snapshots Novig's public catalog every 4 h into the rfq-catalog Release so RFQ legs can be named after their markets close
+pre-release: MKV: the Novig parlay maker in the app (Engine > Parlays: status, evidence counter, OFF/SHADOW/LIVE with a confirm, limits); the engine prices by return on collateral (versionCode 477, v1.0.137)
 
 ## Do this next
-run rfq-catalog.yml once (workflow_dispatch) and read its log; ship v1.0.137 when ci.yml is green on main; MK5 grader; MK6
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.137), then run: bash tools/record-release.sh v1.0.137 477 "MKV: the Novig parlay maker in the app (Engine > Parlays: status, evidence counter, OFF/SHADOW/LIVE with a confirm, limits); the engine prices by return on collateral"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ run rfq-catalog.yml once (workflow_dispatch) and read its log; ship v1.0.137 whe
 
 ## Last ten checkpoints
 ```
+  ade0fa424 ckpt 4637: MK5: rfq-catalog.yml snapshots Novig's public catalog every 4 h into the rf
   65a5e2f60 ckpt 4636: MKV: app suite green on the exact tree (v1.0.137 bump)
   0e334bb99 ckpt 4635: MKV: parlay maker in the app (Engine > Parlays: status, evidence counter, O
   35071ac65 ckpt 4634: PLQ: answered Tj PropLine health+feature list
@@ -25,8 +26,4 @@ run rfq-catalog.yml once (workflow_dispatch) and read its log; ship v1.0.137 whe
   eb2082199 ckpt 4630: MK3: rfq_legs.py (what the legs of RFQs are, via Novig's public catalog) + 
   d15c145fe ckpt 4629: MK3: CHANGES.md line for the sampled RFQ journal; engine reset issued (cc b
   c855ae799 ckpt 4628: MK3: first real SHADOW run read: production serves RFQ v3, maker registered
-  0f0039298 ckpt 4627: MK: maker landed 02:48, runner replaced again (the 02:46 job predated it); 
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
