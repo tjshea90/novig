@@ -218,16 +218,19 @@ fun ProfitChartCard(bets: List<TrackedBet>, period: TrackerPeriod, wallet: Walle
 
 @Composable
 private fun AllTime(book: SlateProfit.Book, wallet: WalletMoneyUi, now: Long) {
-    val profit = book.profit
-    val pct = book.pct
+    // TR3 (Tj 2026-11-18): the headline is Novig's own ledger of the Vigilant subaccount when the engine has read it (real money: every payout less every stake and fee, open bets at cost), because the
+    // phone's bet records differ with what this phone saw; the bets' sum is the fallback and is shown beside it.
+    val fromLedger = wallet.ledgerProfit != null
+    val profit = wallet.ledgerProfit ?: book.profit
+    val pct = if (fromLedger) null else book.pct
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
         Column(Modifier.weight(1f)) {
-            Text("All-time profit", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(if (fromLedger) "All-time profit (Novig ledger)" else "All-time profit", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             Text(ProfitText.pl(profit), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = moneyColor(profit), modifier = Modifier.testTag("profitAllTime"))
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(pct?.let(ProfitText::pct) ?: "—", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = moneyColor(profit))
-            Text("on ${Format.money(book.settledStaked)} staked", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(if (fromLedger) "bets alone: ${ProfitText.pl(book.profit)}" else "on ${Format.money(book.settledStaked)} staked", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
     Text(ProfitText.allTimeHow(book, wallet, now), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitAllTimeHow"))
