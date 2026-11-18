@@ -144,9 +144,14 @@ class RfqMakerTest {
         val c = json.parseToJsonElement(r.sent.single()).jsonObject["confirm"]!!.jsonObject
         assertEquals("true", c["confirmed"]!!.jsonPrimitive.content)
         assertEquals(1L, r.maker.confirmed)
-        // a quote we did not make, or a stake above our maximum, is rejected
+        // a quote this connection did not make is left alone (another job of the same maker may own it: our "no" would beat its "yes")
         r.sent.clear()
         r.maker.onEvent(RfqProtocol.QuoteAccepted(now, "rfq-X", "q9", 12.0, 0.3, null))
+        assertTrue(r.sent.isEmpty())
+        // our own quote won at a stake above our maximum (it cannot happen on Novig's side, but the rule is ours): rejected
+        r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-5"))
+        r.sent.clear()
+        r.maker.onEvent(RfqProtocol.QuoteAccepted(now, "rfq-5", "q5", 99.0, 0.216, "rfq-5"))
         assertEquals("false", json.parseToJsonElement(r.sent.single()).jsonObject["confirm"]!!.jsonObject["confirmed"]!!.jsonPrimitive.content)
     }
 

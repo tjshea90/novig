@@ -143,11 +143,17 @@ class RfqMaker(
         accepted++
         val p = synchronized(pending) { pending[e.rfqId] }
         val ours = p?.quotePrice != null && cfg.mode == RfqConfig.Mode.LIVE
+        if (!ours) {
+            // Not a quote THIS connection made (a second job of the same maker overlaps a handover, or the mode changed): it is not ours to answer. "Your first answer counts": a rejection from here would
+            // beat the confirmation of the connection that did quote, and would count against Novig's 99% confirm rate.
+            row("CONFIRM", e.rfqId) { put("confirmed", false); put("sent", false); put("ours", false); put("quoteId", e.quoteId) }
+            return
+        }
         // A quote we made is a quote we keep: the last look is rejected only when the win is not the one we quoted (a different price or a bigger stake than our maximum), never because the market moved.
-        val sound = ours && kotlin.math.abs(e.price - p!!.quotePrice!!) < 1e-6 && e.wager <= (p.quoteMax ?: 0.0) + 0.005
+        val sound = kotlin.math.abs(e.price - p!!.quotePrice!!) < 1e-6 && e.wager <= (p.quoteMax ?: 0.0) + 0.005
         val ok = send(RfqProtocol.confirm(nonce.incrementAndGet(), e.rfqId, e.quoteId, sound))
         if (sound && ok) confirmed++
-        row("CONFIRM", e.rfqId) { put("confirmed", sound); put("sent", ok); put("wager", e.wager); put("price", e.price); put("quoteId", e.quoteId); put("ours", ours) }
+        row("CONFIRM", e.rfqId) { put("confirmed", sound); put("sent", ok); put("wager", e.wager); put("price", e.price); put("quoteId", e.quoteId); put("ours", true) }
     }
 
     private fun executed(e: RfqProtocol.Executed) {
