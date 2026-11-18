@@ -138,6 +138,7 @@ class RfqMakerTest {
     @Test fun aWonQuoteIsConfirmedOnlyIfItIsTheOneWeQuotedAndTheLastLookNeverSecondGuessesTheMarket() {
         val r = rig(RfqConfig.Mode.LIVE)
         r.maker.onEvent(created("a", "b"))
+        r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-7"))
         r.sent.clear()
         r.legs = listOf(leg("a", "e1", 0.9), leg("b", "e2", 0.9))                       // the fair moved a lot: still confirmed
         r.maker.onEvent(RfqProtocol.QuoteAccepted(now, "rfq-1", "q1", 10.0, 0.216, "rfq-1"))
@@ -145,7 +146,7 @@ class RfqMakerTest {
         assertEquals("true", c["confirmed"]!!.jsonPrimitive.content)
         assertEquals(1L, r.maker.confirmed)
         // Novig echoing our 0.216 rounded differently (0.2163) is still our quote: confirmed, not rejected
-        r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-7")); r.sent.clear()
+        r.sent.clear()
         r.maker.onEvent(RfqProtocol.QuoteAccepted(now, "rfq-7", "q7", 10.0, 0.2163, "rfq-7"))
         assertEquals("true", json.parseToJsonElement(r.sent.single()).jsonObject["confirm"]!!.jsonObject["confirmed"]!!.jsonPrimitive.content)
         r.sent.clear()
