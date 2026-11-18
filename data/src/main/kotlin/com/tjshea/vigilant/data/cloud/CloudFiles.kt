@@ -265,6 +265,13 @@ data class CloudStatus(
     /** The engine's desk is the one posting bids now: it says so and its heartbeat is recent. A silent engine hands the bids back to the phone. */
     fun deskLive(now: Long): Boolean = deskActive && heartbeatMs > 0 && now - heartbeatMs < DESK_STALE_MS
 
+    /**
+     * TR3 (Tj 2026-11-18: "wallet just dropped very quickly"): what the whole Vigilant subaccount is worth, cash plus every open position at Novig's mark (hand bets, bids filled and engine orders alike).
+     * [walletEquity] is the TRADER's bankroll (cash + only the engine ledger's own open orders), a different, smaller number (109 against 182 on 2026-11-18): it sizes stakes, it is not what the wallet holds.
+     * Filling bids turns cash into positions, so cash falls while this stays level. Null when the positions were never read.
+     */
+    val walletWorth: Double? get() = if (walletCash >= 0.0 && walletPositionsValue >= 0.0 && walletPnlAtMs > 0L) walletCash + walletPositionsValue else null
+
     companion object {
         const val DESK_STALE_MS = 3 * 60_000L
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }

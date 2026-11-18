@@ -2929,7 +2929,7 @@ private fun EngineActivity(u: com.tjshea.vigilant.app.CloudLink.Ui) {
     if (st != null && st.walletCash >= 0.0) {
         val age = ((now - st.walletReadAtMs) / 60_000L).coerceAtLeast(0L)
         Text(
-            "Wallet \$${"%.2f".format(st.walletCash)} cash, \$${"%.2f".format(st.walletEquity.coerceAtLeast(st.walletCash))} with open orders (read ${if (age < 1) "just now" else "$age min ago"})",
+            "Wallet \$${"%.2f".format(st.walletCash)} cash, \$${"%.2f".format((st.walletWorth ?: st.walletEquity).coerceAtLeast(st.walletCash))} with open positions (read ${if (age < 1) "just now" else "$age min ago"})",
             style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 8.dp, bottom = 2.dp).testTag("engineWallet"),
         )
     }

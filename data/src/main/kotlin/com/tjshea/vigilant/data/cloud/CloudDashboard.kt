@@ -135,7 +135,7 @@ object CloudDashboard {
     private fun wallet(st: CloudStatus, now: Long): String = when {
         st.walletSleep.isNotBlank() -> "SLEEPING: ${st.walletSleep}"
         st.walletReadAtMs <= 0L -> if (st.tradeMode.equals("live", true)) "not read yet${if (st.walletCheckedAtMs > 0) " (asked ${dur(now - st.walletCheckedAtMs)} ago and got no answer)" else ""}: NOT zero, just unknown" else "not applicable (trading is not live)"
-        else -> "cash ${money(st.walletCash)} · equity ${money(st.walletEquity)} · read ${dur(now - st.walletReadAtMs)} ago"
+        else -> "cash ${money(st.walletCash)} · worth ${money(st.walletWorth ?: st.walletEquity)} (cash + open positions) · trader bankroll ${money(st.walletEquity)} · read ${dur(now - st.walletReadAtMs)} ago"
     }
 
     private fun money(x: Double) = if (x < 0) "unknown" else String.format(java.util.Locale.US, "$%.2f", x)

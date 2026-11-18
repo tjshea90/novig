@@ -156,7 +156,7 @@ object DashboardModel {
     private fun cash(st: CloudStatus) = if (st.walletReadAtMs <= 0L || st.walletCash < 0) "not read" else String.format(java.util.Locale.US, "$%.2f", st.walletCash)
     private fun walletSub(st: CloudStatus, now: Long) = when {
         st.walletSleep.isNotBlank() -> "asleep, under \$0.50"
-        st.walletReadAtMs > 0 -> "read ${ago(now - st.walletReadAtMs)}" + if (st.walletEquity > st.walletCash + 0.005) String.format(java.util.Locale.US, ", equity $%.2f", st.walletEquity) else ""
+        st.walletReadAtMs > 0 -> "read ${ago(now - st.walletReadAtMs)}" + (st.walletWorth ?: st.walletEquity).let { w -> if (w > st.walletCash + 0.005) String.format(java.util.Locale.US, ", worth $%.2f with open positions", w) else "" }
         else -> "not zero, just not read yet"
     }
     private fun tradeSub(st: CloudStatus) = when {
