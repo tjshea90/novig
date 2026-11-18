@@ -94,7 +94,7 @@ object RfqPricer {
         }
         if (p < cfg.minFair || p > cfg.maxFair) return no("the parlay's fair probability ${"%.3f".format(p)} is outside ${cfg.minFair}-${cfg.maxFair}")
         // Rounded UP to a ten-thousandth: rounding down would give away part of the margin.
-        val price = ceil(p * (1.0 + cfg.margin) * 10_000.0) / 10_000.0
+        val price = ceil(p * (1.0 + cfg.margin) * 10_000.0 - 1e-7) / 10_000.0     // the 1e-7 keeps 0.2 x 1.08 = 0.21600000000000003 at 0.2160
         if (price > 0.999 || price < 0.001) return no("price ${"%.4f".format(price)} is outside Novig's 0.001-0.999")
         // The maker's collateral for a stake w is w (1 - P) / P.
         val perStake = (1.0 - price) / price
