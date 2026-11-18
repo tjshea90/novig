@@ -1586,3 +1586,8 @@ You have permission to use my api key from the screenshot i sent to test and bui
 ```
 Review that both novig api and socket and propline api and socket are used correctly and to their full potential by the app and github engine and look for any changes or updates in novig api docs
 ```
+
+## 2026-11-18T02:26:59Z
+```
+Does this mean I can bet parlays inside vigilant
+```
