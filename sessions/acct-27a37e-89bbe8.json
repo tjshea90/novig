@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "76748e2ba346f6a052ad4ec1b9a9bcb4e4a05051",
+ "head": "c8217ab936abcb4a2632c7924396732f589b0030",
  "since": 1794955330,
- "beat": 1794964968,
- "beatIso": "2026-11-18T01:22:48Z",
- "done": "NVR: :data:test green on the landing tree",
- "next": "confirm landed; engine_set --reset"
+ "beat": 1794964996,
+ "beatIso": "2026-11-18T01:23:16Z",
+ "done": "NVR: locks guard is the share of the engine's own candidates, not a guessed size cap (the first real list held thousands); device check works live (pass good until Thu 03:00 ET)",
+ "next": "engine_set --reset; read the real locks counts in engine-log; tell Tj to open the Novig app before Thu 03:00 ET"
 }
