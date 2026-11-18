@@ -199,7 +199,7 @@ class RfqMaker(
             return
         }
         // A quote we made is a quote we keep: the last look is rejected only when the win is not the one we quoted (a different price or a bigger stake than our maximum), never because the market moved.
-        val sound = kotlin.math.abs(e.price - p!!.quotePrice!!) < 1e-6 && e.wager <= (p.quoteMax ?: 0.0) + 0.005
+        val sound = kotlin.math.abs(e.price - p!!.quotePrice!!) < 5e-4 && e.wager <= (p.quoteMax ?: 0.0) + 0.005     // 5e-4: Novig may echo the price rounded to a thousandth; it fills at OUR price, and a rejection of our own win is a mark against the 99% confirm rate
         val ok = send(RfqProtocol.confirm(nonce.incrementAndGet(), e.rfqId, e.quoteId, sound))
         if (sound && ok) confirmed++
         row("CONFIRM", e.rfqId) { put("confirmed", sound); put("sent", ok); put("wager", e.wager); put("price", e.price); put("quoteId", e.quoteId); put("ours", true) }

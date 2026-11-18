@@ -144,6 +144,11 @@ class RfqMakerTest {
         val c = json.parseToJsonElement(r.sent.single()).jsonObject["confirm"]!!.jsonObject
         assertEquals("true", c["confirmed"]!!.jsonPrimitive.content)
         assertEquals(1L, r.maker.confirmed)
+        // Novig echoing our 0.216 rounded differently (0.2163) is still our quote: confirmed, not rejected
+        r.maker.onEvent(created("a", "b").copy(rfqId = "rfq-7")); r.sent.clear()
+        r.maker.onEvent(RfqProtocol.QuoteAccepted(now, "rfq-7", "q7", 10.0, 0.2163, "rfq-7"))
+        assertEquals("true", json.parseToJsonElement(r.sent.single()).jsonObject["confirm"]!!.jsonObject["confirmed"]!!.jsonPrimitive.content)
+        r.sent.clear()
         // a quote this connection did not make is left alone (another job of the same maker may own it: our "no" would beat its "yes")
         r.sent.clear()
         r.maker.onEvent(RfqProtocol.QuoteAccepted(now, "rfq-X", "q9", 12.0, 0.3, null))
