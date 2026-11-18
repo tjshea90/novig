@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "ade0fa4243093549537d4f3abe538591527f3e4c",
+ "head": "ed890a96a4f77c6d8b1909adaf0062cc52422700",
  "since": 1794955330,
- "beat": 1794974774,
- "beatIso": "2026-11-18T04:06:14Z",
- "done": "MK5: rfq-catalog.yml snapshots Novig's public catalog every 4 h into the rfq-catalog Release so RFQ legs can be named after their markets close",
- "next": "run rfq-catalog.yml once (workflow_dispatch) and read its log; ship v1.0.137 when ci.yml is green on main; MK5 grader; MK6"
+ "beat": 1794974833,
+ "beatIso": "2026-11-18T04:07:13Z",
+ "done": "pre-release: MKV: the Novig parlay maker in the app (Engine > Parlays: status, evidence counter, OFF/SHADOW/LIVE with a confirm, limits); the engine prices by return on collateral (versionCode 477, v1.0.137)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.137), then run: bash tools/record-release.sh v1.0.137 477 \"MKV: the Novig parlay maker in the app (Engine > Parlays: status, evidence counter, OFF/SHADOW/LIVE with a confirm, limits); the engine prices by return on collateral\""
 }
