@@ -228,9 +228,11 @@ class RfqMaker(
             }
             (p?.decision as? RfqDecision.Quote)?.let { q -> put("ourPrice", q.price); put("wouldWin", q.price <= e.price + 1e-9) }
         }
-        if (fair != null) {
-            synchronized(margins) { margins.addLast((e.price - fair) * 100.0); while (margins.size > KEEP) margins.removeFirst() }
-            (p?.decision as? RfqDecision.Quote)?.let { q -> if (q.price <= e.price + 1e-9) { wouldWin++; wouldEdge += (q.price - q.fair) * 100.0 } }
+        // The evidence counts only trades of RFQs the rules would QUOTE: a trade the rules decline (a same-game combination whose fair is an independent product, a leg in play...) says nothing about what a
+        // quote of ours would meet. The journal row above keeps every fair for study.
+        (p?.decision as? RfqDecision.Quote)?.let { q ->
+            synchronized(margins) { margins.addLast((e.price - q.fair) * 100.0); while (margins.size > KEEP) margins.removeFirst() }
+            if (q.price <= e.price + 1e-9) { wouldWin++; wouldEdge += (q.price - q.fair) * 100.0 }
         }
     }
 
