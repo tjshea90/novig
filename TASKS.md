@@ -6743,3 +6743,10 @@ Recipes saved: `research/propline/docs_2026-11-17/recipes(.txt)`. New since 10-2
 - [ ] PLR5 wire PropLine `/v1/bets/settle` in as a fallback grader behind ESPN/MLB/SGO for lines they cannot settle (verified 5/5 singles, 12/12 two-leg parlays); `PropLineScores` is the pattern.
 - [ ] PLR6 read `propline-sgp-summary` (Release) once ~300 slips have settled: Novig's SGP ROI vs the books'; only a positive Novig ROI with the interval above 0 earns an SGP bet type (Novig fills parlays only through LP RFQs: the tap stays Tj's).
 - [ ] PLR7 `/scores` carries live clock/situation/last_play: a REST fallback for `PropLineGameState` while the socket is closed.
+
+## NVR (Tj typed 2026-11-18 ~00:30 UTC): Novig API + socket and PropLine API + socket review, Novig docs changes
+Tj, verbatim: "Review that both novig api and socket and propline api and socket are used correctly and to their full potential by the app and github engine and look for any changes or updates in novig api docs".
+- [ ] NVR1 fetch Novig's current API docs, diff against the saved copies / NOVIG_API.md, list every change.
+- [ ] NVR2 audit the app + engine's Novig REST, stream (bbo/book), order socket, limits against the docs; fix what is wrong or unused.
+- [ ] NVR3 re-check the PropLine API + sockets as running now (engine log/status after last night's reset); fix what is wrong.
+- [ ] NVR4 write research/novig_propline_review_2026-11-18.md, CHANGES.md line, ship the code, tell Tj.
