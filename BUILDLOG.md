@@ -475,3 +475,4 @@ day that changes.
 | v1.0.134 | code 474 | 2026-11-17T16:37Z | AU1: faster start (no MB parses on main thread), no large-file rewrites, star evidence 11-16
 | v1.0.135 | code 475 | 2026-11-17T17:21Z | TR2 stable all-time profit reading, PF11 +EV tab no double rebuild
 | v1.0.136 | code 476 | 2026-11-17T19:18Z | HB1 hard block (NCAAB exempt), NCAAB scroll memory, bids deploy
+| v1.0.137 | code 477 | 2026-11-18T04:15Z | MKV: Novig parlay maker in the app (Engine > Parlays), engine prices by return on collateral
