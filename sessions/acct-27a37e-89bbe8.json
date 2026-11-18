@@ -8,8 +8,8 @@
  "branch": "ccr-f4518318-aidjgt",
  "head": "92d776b01282981a5d293648131adeef9e0e7ef8",
  "since": 1794955330,
- "beat": 1794979670,
- "beatIso": "2026-11-18T05:27:50Z",
+ "beat": 1794979674,
+ "beatIso": "2026-11-18T05:27:54Z",
  "done": "pre-ship: MKV: parlay maker results in the app (Settled parlays tile, 24 h loss stop status), live at small limits, game lines only",
  "next": "ship.sh gates and releases this"
 }
