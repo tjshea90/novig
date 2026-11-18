@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "d15c145fe0d2fa7277caf2f5c2ec5da589fa5fbb",
+ "head": "d318f40caf43622e9b6bc664e72667b637af97db",
  "since": 1794955330,
- "beat": 1794971844,
- "beatIso": "2026-11-18T03:17:24Z",
+ "beat": 1794972027,
+ "beatIso": "2026-11-18T03:20:27Z",
  "done": "MK3: CHANGES.md line for the sampled RFQ journal; engine reset issued (cc b1e61380f) so the new job runs the sampling+tally",
  "next": "when the old job's full journal and the new job's sampled one reach cloud-archive-2026-11-18: python3 -I tools/rfq_summary.py run; resolve unscanned leg ids; then tell Tj"
 }
