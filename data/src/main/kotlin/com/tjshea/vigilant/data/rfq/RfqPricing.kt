@@ -13,8 +13,16 @@ import kotlin.math.floor
 @Serializable
 data class RfqConfig(
     val mode: Mode = Mode.OFF,
-    /** The quote's margin over the parlay's fair probability, relative: price = fair x (1 + this). The maker's EV per $1 of pot is price - fair. Wide to start (others quoted 4-8% over fair, 2026-11-17). */
-    val margin: Double = 0.08,
+    /**
+     * The quote's FLOOR margin over the parlay's fair probability, relative: price >= fair x (1 + this). The maker's EV per $1 of pot is price - fair. The binding terms are [minReturn] and [minPoints]:
+     * the first shadow day (188 priced trades) showed the market prices by what a parlay ties up, not by a percentage of its probability (a relative margin tied $22,000 of collateral for $50 of EV, a
+     * 4% return on the collateral $2,700 for $82; research/novig_rfq_maker_2026-11-18.md section 9).
+     */
+    val margin: Double = 0.02,
+    /** The return on the maker's collateral a quote must offer if the fair is true: price >= (fair + r) / (1 + r), where r = this x max(1, days the collateral stays tied up + 0.25). */
+    val minReturn: Double = 0.04,
+    /** Points of pot (price - fair) a quote must offer per leg beyond the first: the fair of N legs carries N legs' errors, so a 3-leg parlay asks twice what a 2-leg one does. */
+    val minPoints: Double = 0.01,
     /** Largest stake one quote covers, dollars (Novig needs at least $10 or the user's minimum). */
     val maxStake: Double = 12.0,
     /** Most collateral (the maker's money at risk) in one parlay, dollars. */
@@ -25,7 +33,7 @@ data class RfqConfig(
     val minBooks: Int = 3,
     /** A leg's fair must be younger than this (ms). */
     val maxFairAgeMs: Long = 5 * 60_000L,
-    val maxLegs: Int = 3,
+    val maxLegs: Int = 5,
     /** Legs must start at least this far ahead (ms) and no further than [maxDaysAhead]. */
     val minLeadMs: Long = 20 * 60_000L,
     val maxDaysAhead: Int = 5,
@@ -75,6 +83,19 @@ sealed interface RfqDecision {
  * for it, and an independent product would misprice it), a probability inside the band, and a stake the caps allow and the minimum stake does not exceed.
  */
 object RfqPricer {
+    /**
+     * The price (the probability the parlay wins) we quote for a parlay of [n] legs whose fair probability is [fair] and whose last leg starts [leadMs] from now: the highest of the relative floor, the
+     * return the collateral must earn (longer lock-up, higher return) and the points floor for [n] legs. Rounded UP to a ten-thousandth: rounding down would give away part of the margin.
+     */
+    fun quotePrice(fair: Double, n: Int, leadMs: Long, cfg: RfqConfig): Double {
+        val days = leadMs.coerceAtLeast(0L) / 86_400_000.0 + 0.25
+        val r = cfg.minReturn * maxOf(1.0, days)
+        val byReturn = (fair + r) / (1.0 + r)
+        val byPoints = fair + cfg.minPoints * (n - 1).coerceAtLeast(1)
+        val byMargin = fair * (1.0 + cfg.margin)
+        return ceil(maxOf(byReturn, byPoints, byMargin) * 10_000.0 - 1e-7) / 10_000.0      // the 1e-7 keeps 0.2 x 1.08 = 0.21600000000000003 at 0.2160
+    }
+
     fun decide(created: RfqProtocol.Created, now: Long, cfg: RfqConfig, fairs: LegFairs, openCollateral: Double): RfqDecision {
         val ids = created.outcomeIds
         if (ids.size < 2 || ids.size > cfg.maxLegs) return RfqDecision.Decline("${ids.size} legs (this maker prices 2 to ${cfg.maxLegs})")
@@ -93,15 +114,17 @@ object RfqPricer {
             if (now - asOf > cfg.maxFairAgeMs) return no("a leg's fair is ${(now - asOf) / 60_000L} min old")
         }
         if (p < cfg.minFair || p > cfg.maxFair) return no("the parlay's fair probability ${"%.3f".format(p)} is outside ${cfg.minFair}-${cfg.maxFair}")
-        // Rounded UP to a ten-thousandth: rounding down would give away part of the margin.
-        val price = ceil(p * (1.0 + cfg.margin) * 10_000.0 - 1e-7) / 10_000.0     // the 1e-7 keeps 0.2 x 1.08 = 0.21600000000000003 at 0.2160
+        val price = quotePrice(p, ids.size, legs.maxOf { it.startsMs } - now, cfg)
         if (price > 0.999 || price < 0.001) return no("price ${"%.4f".format(price)} is outside Novig's 0.001-0.999")
-        // The maker's collateral for a stake w is w (1 - P) / P.
+        // The RFQ's minimum is the stake the user asked for (96% are the default $10; executed stakes sit just under it, the taker fee). The quote covers exactly that: more collateral than the trade needs
+        // would only be tied up. The maker's collateral for a stake w is w (1 - P) / P.
+        val want = created.minWager.coerceAtLeast(10.0)
         val perStake = (1.0 - price) / price
         val byParlay = cfg.maxCollateral / perStake
         val byOpen = (cfg.maxOpenCollateral - openCollateral) / perStake
-        val stake = floor(minOf(cfg.maxStake, byParlay, byOpen) * 100.0) / 100.0
-        if (stake < created.minWager.coerceAtLeast(10.0)) return no("the caps allow a $${"%.2f".format(stake)} stake, under the minimum $${"%.2f".format(created.minWager.coerceAtLeast(10.0))}")
+        val room = floor(minOf(cfg.maxStake, byParlay, byOpen) * 100.0) / 100.0
+        if (room < want) return no("the caps allow a $${"%.2f".format(room)} stake, under the $${"%.2f".format(want)} asked")
+        val stake = ceil(want * 100.0 - 1e-7) / 100.0
         return RfqDecision.Quote(price, stake, p, legs)
     }
 }
