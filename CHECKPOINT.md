@@ -1,13 +1,13 @@
-# CHECKPOINT 4626 — read me first, then TASKS.md
+# CHECKPOINT 4627 — read me first, then TASKS.md
 
-**Written:** 2026-11-18T02:48:32Z · **tests:** all 10 fast checks green
-**Branch:** `ccr-f4518318-aidjgt` · **builds on:** `7b336c923` (this checkpoint is the commit after it)
+**Written:** 2026-11-18T03:05:12Z · **tests:** all 10 fast checks green
+**Branch:** `ccr-f4518318-aidjgt` · **builds on:** `f34f0e681` (this checkpoint is the commit after it)
 
 ## Just done
-MK: Novig parlay maker built (protocol, pricer, maker, socket, engine wiring, rfq_set/rfq_summary), 4263 tests green; research + NOVIG_API 33
+MK: maker landed 02:48, runner replaced again (the 02:46 job predated it); SHADOW file set
 
 ## Do this next
-land; rfq_set mode=SHADOW; engine_set --reset; read the rfq: lines (does production serve /rfq/v3? registered? RFQs seen?)
+read rfq: lines in engine-log: registered? socket live? RFQs seen? then tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ land; rfq_set mode=SHADOW; engine_set --reset; read the rfq: lines (does product
 
 ## Last ten checkpoints
 ```
+  f34f0e681 ckpt 4626: MK: Novig parlay maker built (protocol, pricer, maker, socket, engine wirin
   f0ff790a4 ckpt 4625: NVR done: verified live (device pass until Thu 03:00 ET; locks 37 games/160
   c8217ab93 ckpt 4624: NVR: locks guard is the share of the engine's own candidates, not a guessed
   cfb5539b4 ckpt 4623: NVR: :data:test green on the landing tree
@@ -25,8 +26,4 @@ land; rfq_set mode=SHADOW; engine_set --reset; read the rfq: lines (does product
   4c096d534 ckpt 4619: PLR: SGP logger+grader live-tested with the key (344 quotes, Novig best on 
   9749ec207 ckpt 4618: PLR trial fixes from the first real run: SGP needs a total point, ev/calc n
   d941c0de1 ckpt 4617: TASKS: PLS/PLR status after landing; trial + engine reset in flight
-  6e4a22eba ckpt 4616: research index rebuilt for the PropLine studies
 ```
-
-(18 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
