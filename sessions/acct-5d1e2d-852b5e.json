@@ -5,11 +5,11 @@
  "nonce": "852b5e",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-04gk80",
- "head": "73a87d1fe5cdfd368e66917bc1fc1831a331a133",
+ "branch": "claude/optimistic-curie-6qt6ud",
+ "head": "163d77cebb982e0a76d6228b8889327adc80376b",
  "since": 1794983019,
- "beat": 1794984446,
- "beatIso": "2026-11-18T06:47:26Z",
+ "beat": 1795017061,
+ "beatIso": "2026-11-18T15:51:01Z",
  "done": "replied to Tj on parlay wins",
  "next": "MK8: SGP correlation pricing in shadow, game-line fair age, NFL/NCAAF fair coverage"
 }
