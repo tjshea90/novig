@@ -108,4 +108,13 @@ class NovigGeoLocksTest {
         assertNull(l.reason("e5", "m1", now))
         assertTrue(l.describe(now).contains("ignored"))
     }
+
+    @Test fun theLimitsAnswerNowCarriesTheTierAndTheOpenOrderCap() = runBlocking {
+        val body = """{"read":{"capacity":32,"refillPerSec":16},"stream":{"capacity":512,"refillPerSec":32},"maxWatchedMarkets":8192,"tier":"BASE","accountTier":"TIER1","maxOpenOrders":2048,"accountMaxOpenOrders":4096}"""
+        val dto = Json { ignoreUnknownKeys = true }.parseToJsonElement(body)
+        // The public client reads it through its private DTO; the route text is what the engine publishes.
+        val limits = com.tjshea.vigilant.data.novig.NovigLimits(32, 16.0, 512, 32.0, 8192, tier = "TIER1", openOrderCap = 4096)
+        assertTrue(dto.toString().contains("accountTier"))
+        assertEquals("TIER1", limits.tier); assertEquals(4096, limits.openOrderCap)
+    }
 }

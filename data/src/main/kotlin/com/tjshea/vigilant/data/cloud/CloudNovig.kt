@@ -97,7 +97,7 @@ class CloudNovig(
             problem != null -> "public routes: $problem"
             !hasKey -> PUBLIC_ONLY
             else -> novig.keyDown(now)?.let { "public routes: the read key was refused ($it); it is tried again shortly" }
-                ?: ("Novig read-only key active" + (novig.limits?.let { ": ${it.readPerSec.toInt()} reads a second" } ?: "") + if (streaming) ", websocket on" else ", websocket off (reads by request)")
+                ?: ("Novig read-only key active" + (novig.limits?.let { ": ${it.readPerSec.toInt()} reads a second" + (it.tier?.let { t -> ", tier $t" + (it.openOrderCap?.let { c -> " (up to ${"%,d".format(c)} open orders)" } ?: "") } ?: "") } ?: "") + if (streaming) ", websocket on" else ", websocket off (reads by request)")
         }
     }
 }

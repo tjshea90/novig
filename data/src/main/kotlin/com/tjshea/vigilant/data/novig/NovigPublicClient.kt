@@ -892,13 +892,19 @@ data class NovigLimits(
     val streamCapacity: Int,
     val streamPerSec: Double,
     val maxWatchedMarkets: Int,
+    /** The account's rate-limit tier (`BASE`..`TIER4`, earned from monthly volume, changelog 2026-10-28/29/30) and the most open orders a trading key may keep (2026-10-28, doubled 10-29), when Novig says. */
+    val tier: String? = null,
+    val openOrderCap: Int? = null,
 )
 
 @Serializable
 private data class BucketDto(val capacity: Int? = null, val refillPerSec: Double? = null)
 
 @Serializable
-private data class LimitsDto(val read: BucketDto? = null, val stream: BucketDto? = null, val maxWatchedMarkets: Int? = null) {
+private data class LimitsDto(
+    val read: BucketDto? = null, val stream: BucketDto? = null, val maxWatchedMarkets: Int? = null,
+    val tier: String? = null, val accountTier: String? = null, val maxOpenOrders: Int? = null, val accountMaxOpenOrders: Int? = null,
+) {
     fun toDomain(): NovigLimits? {
         val r = read ?: return null
         val st = stream ?: return null
@@ -908,6 +914,8 @@ private data class LimitsDto(val read: BucketDto? = null, val stream: BucketDto?
             streamCapacity = st.capacity?.takeIf { it > 0 } ?: return null,
             streamPerSec = st.refillPerSec?.takeIf { it > 0 } ?: return null,
             maxWatchedMarkets = maxWatchedMarkets?.takeIf { it > 0 } ?: return null,
+            tier = (accountTier ?: tier)?.takeIf { it.isNotBlank() },
+            openOrderCap = (accountMaxOpenOrders ?: maxOpenOrders)?.takeIf { it > 0 },
         )
     }
 }
