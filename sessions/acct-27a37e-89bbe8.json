@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "a7f67e24524d1312e515cd50410503cbbe1fb441",
+ "head": "73a87d1fe5cdfd368e66917bc1fc1831a331a133",
  "since": 1794955330,
- "beat": 1794982421,
- "beatIso": "2026-11-18T06:13:41Z",
+ "beat": 1794983483,
+ "beatIso": "2026-11-18T06:31:23Z",
  "done": "MK7: corrected the quotable-market analysis (+0.93 pts median, 6% return wins 2%: section 12), evidence counters count only quotable trades, restored Tj's own app settings (return 2%, 35/50, 4 legs) after a session overwrote the return for 4 minutes; v1.0.138 released",
  "next": "watch the live maker (first win/confirm/fill, first settlement); next engine reset loads the counter fix; MK5 grader; MK6 same-game via SGP correlation; tell Tj the corrected expectation"
 }
