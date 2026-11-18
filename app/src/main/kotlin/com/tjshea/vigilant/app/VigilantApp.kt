@@ -625,7 +625,8 @@ class AppContainer(val app: Application) {
 
     /** SportsGameOdds' final scores first while Pro is on ([syncSgo]), the free feeds behind them (and for a prop's box score). */
     val scores: com.tjshea.vigilant.data.tracker.ScoreSource = com.tjshea.vigilant.data.tracker.ChainedScores(sgoScores, com.tjshea.vigilant.data.tracker.ChainedScores(freeScores, propScores))
-    val settler = BetSettler(tracker, scores, leaveApiBets = { trading != null })
+    val propSettle = com.tjshea.vigilant.data.tracker.PropLineSettle(propLine, propScores, json)
+    val settler = BetSettler(tracker, scores, leaveApiBets = { trading != null }, fallback = { bet, pick -> propSettle.grade(bet, pick) })
 
     /**
      * Closes found after the start (Tj, 2026-09-30: "My phone will not always be on"): ESPN's closing game lines, then Novig's trade history,
