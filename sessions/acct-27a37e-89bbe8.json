@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "eb20821993204f951922dfa276e5316d178088d0",
+ "head": "21bd5babd87e764cfcb73df971fd2d9ad2d24917",
  "since": 1794955330,
- "beat": 1794973068,
- "beatIso": "2026-11-18T03:37:48Z",
- "done": "MK3: rfq_legs.py (what the legs of RFQs are, via Novig's public catalog) + first-10-min leg findings in the research file: 45% in play, props ~40% of legs, 55% of trades are 4-20 legs, coverage unmeasured (cold window)",
- "next": "read the warm job's sampled journal (run 44229304633, uploads ~03:37 UTC) with rfq_summary.py + TALLY rows; decide coverage work (props ladder, fair-age rule) from it; tell Tj what runs"
+ "beat": 1794973173,
+ "beatIso": "2026-11-18T03:39:33Z",
+ "done": "MK3: warm-run read (TALLY rows + 164 priced trades): market pays median +1.06 pts of pot over our fair, an 8% quote would win 37%; wallet-limited (~$5-15/day at best); catalog snapshot saved; MK5/MK6/MK7 queued",
+ "next": "MK5: daily catalog snapshot + grade the market's trades; MK6 coverage (maxLegs, same-game, prop ladders); LIVE only by the evidence rule"
 }
