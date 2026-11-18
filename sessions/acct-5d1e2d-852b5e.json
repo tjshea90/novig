@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-0tpsr1",
- "head": "a23a545ca0b2463a625c363442905e4c51782113",
+ "head": "363ba23cc0d1434a3d4ea2efe83bef8d16f64771",
  "since": 1794977610,
- "beat": 1794977684,
- "beatIso": "2026-11-18T04:54:44Z",
- "done": "chat: triaged diagnostics report DG1",
- "next": "keep chat watch; DG1 follow-ups"
+ "beat": 1794977939,
+ "beatIso": "2026-11-18T04:58:59Z",
+ "done": "DG2 logged",
+ "next": "investigate startup crash, ime bug, PropLine EV compare"
 }
