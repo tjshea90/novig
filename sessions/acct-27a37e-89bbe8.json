@@ -8,8 +8,8 @@
  "branch": "ccr-f4518318-aidjgt",
  "head": "09268ea2ceddd4c782f3a4ebf2cc690980074f0e",
  "since": 1794955330,
- "beat": 1794975478,
- "beatIso": "2026-11-18T04:17:58Z",
+ "beat": 1794976533,
+ "beatIso": "2026-11-18T04:35:33Z",
  "done": "MKV: v1.0.137 released (recorded); MKV2 game-lines-only maker + 6% return default, 4310 tests green on the exact tree",
  "next": "engine reset so the engine runs game-lines-only pricing; then ask Tj about LIVE at small caps"
 }
