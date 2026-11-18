@@ -6740,7 +6740,7 @@ Recipes saved: `research/propline/docs_2026-11-17/recipes(.txt)`. New since 10-2
 - [x] PLR3 (trial done; SGP logger+grader built `propline-sgp.yml`; schedules restored) build the ones that are safe and useful (trials with real answers, nothing that moves money), starting from the report.
 - [ ] PLS6 (not built) a live soft-book consensus from PropLine's five push books (DraftKings, FanDuel, Fanatics, Kalshi, Polymarket, receipt 0.1-1.1 s) to stand in for BoltOdds (key refused) in `PinnFeedChoice`; live-money consequences, paper first.
 - [x] PLR4 (verified 2026-11-18: propline_grade.py already headlines ev_vs_close_pct, clv_pct only as a flattering side column) `tools/propline_grade_job.sh`: headline `ev_vs_close_pct` (devigged), not `clv_pct` (recipe: +6.52% vs +0.08% on one bet).
-- [ ] PLR5 wire PropLine `/v1/bets/settle` in as a fallback grader behind ESPN/MLB/SGO for lines they cannot settle (verified 5/5 singles, 12/12 two-leg parlays); `PropLineScores` is the pattern.
+- [x] PLR5 (built 2026-11-18, PropLineSettle + BetSettler fallback, tests PropLineSettleTest; engine GradeMain + app VigilantApp wired; ships with next release) wire PropLine `/v1/bets/settle` in as a fallback grader behind ESPN/MLB/SGO for lines they cannot settle (verified 5/5 singles, 12/12 two-leg parlays); `PropLineScores` is the pattern.
 - [ ] PLR6 read `propline-sgp-summary` (Release) once ~300 slips have settled: Novig's SGP ROI vs the books'; only a positive Novig ROI with the interval above 0 earns an SGP bet type (Novig fills parlays only through LP RFQs: the tap stays Tj's).
 - [ ] PLR7 `/scores` carries live clock/situation/last_play: a REST fallback for `PropLineGameState` while the socket is closed.
 
