@@ -1050,6 +1050,18 @@ class NovigStream(
                 refused(msg, code)
                 return
             }
+            // Markets that left the exchange, dropped from our subscriptions before a snapshot is resent to a connection that fell behind (changelog 2026-11-12, NVR): `{"unsubscribed": {markets, events,
+            // private}}` with NO nonce. Before that day the resend failed and closed the connection, and the next connection started clean; now it carries on, so what Novig dropped is forgotten here too (the
+            // subscribed count, the book, the deep-read mark) and left alone for a while rather than asked for again at once.
+            if (msg["nonce"] == null) (msg["unsubscribed"] as? JsonObject)?.let { u ->
+                val gone = (u["markets"] as? JsonObject)?.keys.orEmpty().toList()
+                if (gone.isNotEmpty()) {
+                    synchronized(this@NovigStream) { subscribed.removeAll(gone.toSet()); gone.forEach { subscribedOn.remove(it); deepUntil.remove(it); refusedUntil[it] = clock() + REFUSED_PAUSE_MS } }
+                    books.forget(gone)
+                    note(false, "Novig dropped ${gone.size} market(s) that left the exchange from the subscriptions")
+                }
+                return
+            }
             val replyTo = (msg["nonce"] as? JsonPrimitive)?.longOrNull
             replyTo?.let { n -> synchronized(this@NovigStream) { unanswered.remove(n) } }
             // The canary's answer is a comparison, not state: it must never reach the books (a `book` snapshot would turn a `bbo` market into a `book` one).

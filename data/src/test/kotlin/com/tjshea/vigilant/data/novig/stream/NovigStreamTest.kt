@@ -118,6 +118,34 @@ class NovigStreamTest {
         assertTrue(stream.live(plan).isEmpty())
     }
 
+    /** Changelog 2026-11-12 (NVR): a market that left the exchange is dropped from the subscriptions in a message with no nonce, and the connection carries on instead of closing. */
+    @Test
+    fun `a market Novig says it dropped is forgotten, the rest stay live and the connection stays open`() = runBlocking {
+        val side = object : WebSocketListener() {
+            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) { webSocket.close(1000, null) }
+            override fun onMessage(webSocket: WebSocket, text: String) {
+                val msg = Json.parseToJsonElement(text).jsonObject
+                received += msg
+                val sub = msg["subscribe"]?.jsonObject ?: return
+                val nonce = msg["nonce"]!!.jsonPrimitive.content.toLong()
+                val markets = sub["markets"]!!.jsonObject.keys.toList()
+                webSocket.send("""{"ts":1,"nonce":$nonce,"subscribed":{},"snapshot":{${markets.joinToString(",") { snapshotOf(it) }}}}""")
+                if ("m2" in markets) webSocket.send("""{"unsubscribed":{"markets":{"m2":"book"},"events":{},"private":[]}}""")
+            }
+        }
+        server.enqueue(MockResponse().withWebSocketUpgrade(side))
+        val stream = stream()
+        stream.watch(listOf("m1", "m2", "m3"))
+        until { stream.live(listOf("m1", "m3")).size == 2 }
+        until { stream.book("m2") == null }
+        assertEquals("m1 and m3 keep their books", 2, stream.live(listOf("m1", "m2", "m3")).size)
+        assertTrue("the connection is still up", stream.state.value is StreamState.Live)
+        // m2 is not asked for again straight away (it left the exchange): the same plan sends no second subscribe for it.
+        delay(300)
+        assertEquals(1, subscribes.size)
+        stream.close()
+    }
+
     @Test
     fun `the first subscribe waits for a full bucket so the plan's first lines don't spend it`() = runBlocking {
         server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
