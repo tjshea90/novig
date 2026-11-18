@@ -1581,3 +1581,8 @@ Then look into all the features offered by propline api that i don't already use
 ```
 You have permission to use my api key from the screenshot i sent to test and build features
 ```
+
+## 2026-11-18T00:56:43Z
+```
+Review that both novig api and socket and propline api and socket are used correctly and to their full potential by the app and github engine and look for any changes or updates in novig api docs
+```
