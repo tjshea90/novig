@@ -8,8 +8,8 @@
  "branch": "ccr-f4518318-aidjgt",
  "head": "f34f0e6815ae08bb9e8c57de54f4e371082d4a5c",
  "since": 1794955330,
- "beat": 1794970112,
- "beatIso": "2026-11-18T02:48:32Z",
+ "beat": 1794971043,
+ "beatIso": "2026-11-18T03:04:03Z",
  "done": "MK: Novig parlay maker built (protocol, pricer, maker, socket, engine wiring, rfq_set/rfq_summary), 4263 tests green; research + NOVIG_API 33",
  "next": "land; rfq_set mode=SHADOW; engine_set --reset; read the rfq: lines (does production serve /rfq/v3? registered? RFQs seen?)"
 }
