@@ -329,7 +329,14 @@ class PropLineClient(
     fun roomForEv(now: Long = clock()): Boolean = roomFor(EV_SHARE, now)
 
 
-    private suspend fun <T> call(path: String, params: List<Pair<String, String>>, notFound: T, parse: (String) -> T): Answer<T> {
+    /**
+     * Settles bets from PropLine's own box scores and scores (`POST /v1/bets/settle`, Hobby+, stateless, up to 200 bets): the book and the line are free, so it grades a line no book posted. [body] is
+     * the JSON array of bets. One request; null when PropLine no longer knows the game. Answers `half_won`/`half_lost` too: the caller decides what it can use ([PropLineSettle]).
+     */
+    suspend fun settleRaw(body: String): String? =
+        call("/bets/settle", emptyList(), notFound = null, post = body) { raw -> raw }.value
+
+    private suspend fun <T> call(path: String, params: List<Pair<String, String>>, notFound: T, post: String? = null, parse: (String) -> T): Answer<T> {
         spacing.withLock {
             val wait = lastCallAt + intervalMs() - System.currentTimeMillis()
             if (wait > 0) delay(wait)
@@ -341,7 +348,7 @@ class PropLineClient(
         var attempt = 0
         while (true) {
             try {
-                return callOnce(path, params, notFound, parse)
+                return callOnce(path, params, notFound, post, parse)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: java.io.IOException) {
@@ -360,10 +367,10 @@ class PropLineClient(
         http.newBuilder().callTimeout(75, java.util.concurrent.TimeUnit.SECONDS).readTimeout(60, java.util.concurrent.TimeUnit.SECONDS).build()
     }
 
-    private suspend fun <T> callOnce(path: String, params: List<Pair<String, String>>, notFound: T, parse: (String) -> T): Answer<T> {
+    private suspend fun <T> callOnce(path: String, params: List<Pair<String, String>>, notFound: T, post: String?, parse: (String) -> T): Answer<T> {
         return pool.execute(cost = 1) { key ->
             val url = "$baseUrl$path".toHttpUrl().newBuilder().apply { params.forEach { (k, v) -> addQueryParameter(k, v) } }.build()
-            slowHttp.newCall(Request.Builder().url(url).header("X-API-Key", key).get().build()).await().use { response ->
+            slowHttp.newCall(Request.Builder().url(url).header("X-API-Key", key).let { b -> if (post == null) b.get() else b.post(post.toRequestBody("application/json".toMediaType())) }.build()).await().use { response ->
                 val body = response.body?.string().orEmpty()
                 val remaining = response.header("X-Daily-Remaining")?.trim()?.toIntOrNull()
                 val used = response.header("X-Daily-Used")?.trim()?.toIntOrNull()
