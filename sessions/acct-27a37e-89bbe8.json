@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "efbfe73ffa4d4338a17401a891f2447eb3853ab3",
+ "head": "0c5cbefa1e91c61904ccbabe377bf0df022017a1",
  "since": 1794955330,
- "beat": 1794971504,
- "beatIso": "2026-11-18T03:11:44Z",
+ "beat": 1794971714,
+ "beatIso": "2026-11-18T03:15:14Z",
  "done": "MK: maker landed 02:48, runner replaced again (the 02:46 job predated it); SHADOW file set",
  "next": "read rfq: lines in engine-log: registered? socket live? RFQs seen? then tell Tj"
 }
