@@ -316,6 +316,23 @@ open class NovigTradingClient(
 
     data class Locks(val eventIds: Set<String>, val marketIds: Set<String>)
 
+    /** A signed request for a websocket upgrade on this subaccount (the RFQ socket, `GET /rfq/v3/ws`). */
+    fun signedRequest(verb: String, path: String): okhttp3.Request = signer.signedRequest(verb, path)
+
+    /**
+     * Makes this key's subaccount an RFQ maker (`POST /rfq/v3/maker`, changelog 2026-11-12; `trading` key, throttle `account`, idempotent: a second call returns the same id; it can take a minute to
+     * reach every server). Returns the `makerId`, or null when the answer has none. The maker quotes from the subaccount's balance; it needs a verified identity check and no self-exclusion.
+     */
+    open suspend fun rfqRegister(): String? =
+        (json.parseToJsonElement(signer.call("POST", "/rfq/v3/maker")) as? kotlinx.serialization.json.JsonObject)?.get("makerId")?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content }
+
+    /** The money the maker has in parlays that have not settled (`GET /rfq/v3/collateral`), dollars, or null. */
+    open suspend fun rfqCollateral(): Double? =
+        ((json.parseToJsonElement(signer.call("GET", "/rfq/v3/collateral")) as? kotlinx.serialization.json.JsonObject)?.get("collateral") as? kotlinx.serialization.json.JsonPrimitive)?.content?.toDoubleOrNull()
+
+    /** The maker's tier, confirm standing and any lock (`GET /rfq/v3/maker`) as Novig sent it, for the status line; null when it could not be read. */
+    open suspend fun rfqMakerInfo(): String? = signer.call("GET", "/rfq/v3/maker").takeIf { it.isNotBlank() }
+
     /**
      * Ledger rows of [kind] (every kind when null) for [subaccountKeyId] in ([startsAfterMs], [startsBeforeMs]) (both exclusive; the 2026-10-12 docs call them bounds on the row's time, older pages
      * on the event's scheduled start), paged until [maxRows].
