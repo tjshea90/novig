@@ -1,0 +1,80 @@
+package com.tjshea.vigilant.data.rfq
+
+import com.tjshea.vigilant.data.cloud.DashboardModel
+import com.tjshea.vigilant.data.cloud.DashboardModel.Tone
+import java.util.Locale
+
+/**
+ * What the Engine tab's Parlays view says about the parlay maker (MKV, Tj 2026-11-18: "I want it in vigilant"): plain words and numbers from the engine's [RfqStatus], pure so a test can read them. The
+ * view only monitors and controls; the maker runs on the GitHub engine.
+ */
+object ParlayView {
+    data class View(
+        val headline: String,
+        val tone: Tone,
+        val explain: String,
+        val tiles: List<DashboardModel.Tile>,
+        val evidence: String,
+        val rule: String,
+        /** Anything that needs a look: a lockout, a down socket in LIVE. Null = nothing. */
+        val warning: String?,
+        /** The evidence rule is met: [RfqStatus.EVIDENCE_TRADES] priced trades and the market paying more than we ask. Never switches anything by itself. */
+        val evidenceMet: Boolean,
+    )
+
+    private fun pts(x: Double) = (if (x >= 0) "+" else "-") + String.format(Locale.US, "%.2f", kotlin.math.abs(x))
+    private fun usd(x: Double) = "\$" + String.format(Locale.US, "%.0f", x)
+
+    fun of(r: RfqStatus?): View {
+        if (r == null) return View("Waiting for the engine", Tone.NEUTRAL, "The GitHub engine publishes the parlay maker's state once a job has started with the maker's file. Pull down to read it again.", emptyList(), "", "", null, false)
+        val c = r.config
+        val pricedPct = if (r.seen > 0) 100.0 * r.priceable / r.seen else 0.0
+        val tiles = ArrayList<DashboardModel.Tile>()
+        tiles += DashboardModel.Tile("RFQs seen", "%,d".format(Locale.US, r.seen), "%,d priced by the engine (%.1f%%)".format(Locale.US, r.priceable, pricedPct))
+        tiles += DashboardModel.Tile("Trades seen", "%,d".format(Locale.US, r.tradesSeen), "${r.pricedTrades} of them the engine could price")
+        tiles += DashboardModel.Tile(
+            "Market paid over our fair", r.medianGapPoints?.let { pts(it) + " pts" } ?: "—", "median, points of pot; we ask at least ${"%.1f".format(Locale.US, c.minReturn * 100)}% on the collateral",
+            if ((r.medianGapPoints ?: 0.0) > 0.0) Tone.GOOD else Tone.NEUTRAL,
+        )
+        tiles += DashboardModel.Tile("Our rule would have won", if (r.pricedTrades > 0) "${100 * r.wouldWin / r.pricedTrades}%" else "—", r.wouldEarnPoints?.let { "${r.wouldWin} of ${r.pricedTrades} trades, ${pts(it)} pts each if our fair is true" } ?: "of the trades it could price")
+        if (c.mode == RfqConfig.Mode.LIVE) {
+            tiles += DashboardModel.Tile("Quotes", "${r.quotesSent}", "${r.won} won · ${r.confirmed} confirmed · ${r.filled} filled")
+            tiles += DashboardModel.Tile("Collateral tied up", usd(r.openCollateral), "of ${usd(c.maxOpenCollateral)} allowed in all", if (r.openCollateral > c.maxOpenCollateral * 0.9) Tone.WARN else Tone.NEUTRAL)
+        }
+        val headline = when (c.mode) {
+            RfqConfig.Mode.OFF -> "Off"
+            RfqConfig.Mode.SHADOW -> if (r.connected) "Shadow: listening" else "Shadow: not connected"
+            RfqConfig.Mode.LIVE -> if (r.halted != null) "Live: stopped" else if (r.connected) "Live: quoting" else "Live: not connected"
+        }
+        val tone = when {
+            r.halted != null -> Tone.BAD
+            c.mode == RfqConfig.Mode.OFF -> Tone.NEUTRAL
+            r.connected -> Tone.GOOD
+            else -> Tone.WARN
+        }
+        val explain = when (c.mode) {
+            RfqConfig.Mode.OFF -> "The engine is not registered as a parlay maker and listens to nothing. Shadow listens to every parlay Novig is asked to price and keeps a record of what it would have quoted: it sends nothing and risks nothing."
+            RfqConfig.Mode.SHADOW -> "Listening to every parlay Novig is asked to price (about 60 a second) and every parlay that trades. It prices what it can from the engine's fair lines and records the quote it would have made. It sends nothing and risks nothing."
+            RfqConfig.Mode.LIVE -> "Quoting real prices on parlays it can price, within the caps below. A parlay it wins ties up the collateral (what it pays if the parlay hits) from the Vigilant wallet until the games settle."
+        }
+        val ev = "Evidence for going live: ${r.pricedTrades} of ${RfqStatus.EVIDENCE_TRADES} priced trades" + (r.medianGapPoints?.let { "; the market paid ${pts(it)} pts of pot over our fair" } ?: "") + "."
+        val rule = "Quote rule: at least ${"%.1f".format(Locale.US, c.minReturn * 100)}% return on the collateral (more for longer lock-ups), ${"%.1f".format(Locale.US, c.minPoints * 100)} pt per extra leg, ${"%.1f".format(Locale.US, c.margin * 100)}% floor; 2 to ${c.maxLegs} legs, " +
+            "stake as asked up to ${usd(c.maxStake)}, ${usd(c.maxCollateral)} per parlay, ${usd(c.maxOpenCollateral)} in all."
+        val warning = when {
+            r.halted != null -> "Stopped: ${r.halted}"
+            c.mode == RfqConfig.Mode.LIVE && !r.connected -> "Not connected: ${r.note.ifBlank { "waiting for the socket" }}"
+            c.mode != RfqConfig.Mode.OFF && !r.connected && r.note.isNotBlank() -> "Socket: ${r.note}"
+            else -> null
+        }
+        val met = r.pricedTrades >= RfqStatus.EVIDENCE_TRADES && (r.medianGapPoints ?: 0.0) > c.minReturn * 100.0 * 0.5
+        return View(headline, tone, explain, tiles, ev, rule, warning, met)
+    }
+
+    /** The LIVE switch's confirmation: what is at stake in words, from the applied caps and the evidence so far. */
+    fun liveWarning(r: RfqStatus?): String {
+        val c = r?.config ?: RfqConfig()
+        val have = r?.pricedTrades ?: 0
+        return "Live quotes are real prices on Novig. Each parlay it wins ties up to ${usd(c.maxCollateral)} of the Vigilant wallet (${usd(c.maxOpenCollateral)} in all) until the games finish, and it pays that out if the parlay hits. " +
+            (if (have < RfqStatus.EVIDENCE_TRADES) "The record so far is $have of ${RfqStatus.EVIDENCE_TRADES} priced trades: shadow is the cheaper way to learn more first." else "The shadow record has ${RfqStatus.EVIDENCE_TRADES}+ priced trades.")
+    }
+}
