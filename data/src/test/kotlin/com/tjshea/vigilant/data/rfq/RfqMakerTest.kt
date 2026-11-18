@@ -50,8 +50,8 @@ class RfqMakerTest {
     }
 
     // ---- the pricing rule ----
-    private fun leg(id: String, event: String, p: Double, books: Int = 5, ageMs: Long = 60_000L, startsInMs: Long = 3 * 3_600_000L, live: Boolean = false) =
-        LegFair(id, event, "label $id", p, books, now - ageMs, now + startsInMs, live)
+    private fun leg(id: String, event: String, p: Double, books: Int = 5, ageMs: Long = 60_000L, startsInMs: Long = 3 * 3_600_000L, live: Boolean = false, type: String = "MONEY") =
+        LegFair(id, event, "label $id", p, books, now - ageMs, now + startsInMs, live, type)
 
     private fun fairs(vararg l: LegFair) = LegFairs { id -> l.firstOrNull { it.outcomeId == id } }
     private fun created(vararg ids: String, minWager: Double = 10.0) = RfqProtocol.Created(now, "rfq-1", ids.toList(), now + 3_000L, minWager)

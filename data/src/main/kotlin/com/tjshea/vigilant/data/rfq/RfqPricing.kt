@@ -20,7 +20,13 @@ data class RfqConfig(
      */
     val margin: Double = 0.02,
     /** The return on the maker's collateral a quote must offer if the fair is true: price >= (fair + r) / (1 + r), where r = this x max(1, days the collateral stays tied up + 0.25). */
-    val minReturn: Double = 0.04,
+    val minReturn: Double = 0.06,
+    /**
+     * Whether a parlay with a player-prop or any other leg that is not a game line may be quoted. OFF: on game lines the market paid a median 0.94 points of pot over our fair (p90 2.6), on parlays with a
+     * player prop 6.0 points (+38%, 91% of them 15% or more above it): our prop fair runs high (prop Overs lose at Novig, research/propline_vs_vigilant_2026-10-16.md), so quoting those would win exactly the trades
+     * where our fair is wrong (research/novig_rfq_maker_2026-11-18.md section 10).
+     */
+    val allowProps: Boolean = false,
     /** Points of pot (price - fair) a quote must offer per leg beyond the first: the fair of N legs carries N legs' errors, so a 3-leg parlay asks twice what a 2-leg one does. */
     val minPoints: Double = 0.01,
     /** Largest stake one quote covers, dollars (Novig needs at least $10 or the user's minimum). */
@@ -63,6 +69,8 @@ data class LegFair(
     val asOfMs: Long?,
     val startsMs: Long,
     val live: Boolean,
+    /** Novig's market type for the leg (MONEY, SPREAD, TOTAL, POINTS...); empty = unknown, which counts as not a game line. */
+    val marketType: String = "",
 )
 
 fun interface LegFairs { fun leg(outcomeId: String): LegFair? }
@@ -83,6 +91,8 @@ sealed interface RfqDecision {
  * for it, and an independent product would misprice it), a probability inside the band, and a stake the caps allow and the minimum stake does not exceed.
  */
 object RfqPricer {
+    /** The market types whose fair the maker trusts (the Novig types the first shadow day measured at 0.94 points over our fair: moneyline, spread, total, team total, first-half versions, three-way moneyline). */
+    val GAME_LINES = setOf("MONEY", "SPREAD", "TOTAL", "TEAM_TOTAL", "MONEY_1H", "SPREAD_1H", "TOTAL_1H", "MONEYLINE_3_WAY_WIN")
     /**
      * The price (the probability the parlay wins) we quote for a parlay of [n] legs whose fair probability is [fair] and whose last leg starts [leadMs] from now: the highest of the relative floor, the
      * return the collateral must earn (longer lock-up, higher return) and the points floor for [n] legs. Rounded UP to a ten-thousandth: rounding down would give away part of the margin.
@@ -101,6 +111,8 @@ object RfqPricer {
         if (ids.size < 2 || ids.size > cfg.maxLegs) return RfqDecision.Decline("${ids.size} legs (this maker prices 2 to ${cfg.maxLegs})")
         val legs = ArrayList<LegFair>(ids.size)
         for (id in ids) legs += fairs.leg(id) ?: return RfqDecision.Decline("a leg has no fair line here")
+        // Without a fair in the decline: these trades must not count in the evidence of what the market pays over OUR fair (the fair is the thing in doubt).
+        if (!cfg.allowProps && legs.any { it.marketType !in GAME_LINES }) return RfqDecision.Decline("a leg is not a game line (our prop fair runs high)")
         var p = 1.0
         for (l in legs) p *= l.probability
         fun no(why: String) = RfqDecision.Decline(why, p, legs)
