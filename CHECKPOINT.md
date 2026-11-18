@@ -1,26 +1,22 @@
-# CHECKPOINT 4619 — read me first, then TASKS.md
+# CHECKPOINT 4620 — read me first, then TASKS.md
 
-**Written:** 2026-11-17T23:22:49Z · **tests:** all 10 fast checks green
-**Branch:** `ccr-f4518318-aidjgt` · **builds on:** `2e3ed8cfd` (this checkpoint is the commit after it)
+**Written:** 2026-11-18T00:26:00Z · **tests:** all 10 fast checks green
+**Branch:** `claude/optimistic-curie-7isr42` · **builds on:** `f80bb4d6a` (this checkpoint is the commit after it)
 
 ## Just done
-PLR: SGP logger+grader live-tested with the key (344 quotes, Novig best on 26/40; settle 5/5 + 12/12 parlays), workflow propline-sgp.yml, docs and results
+ENGINEER 11-17 slot2: watch ok, PLR4 ticked, no ship
 
 ## Do this next
-dispatch propline-sgp.yml log to verify on a runner; final report to Tj
+PLR7/PLS6 only if live trading funded; HB2 needs Tj to fund wallet
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-    M  CLAUDE.md
-    M  TASKS.md
-    M  research/INDEX.md
-    M  research/propline_unused_features_2026-11-17.md
-    M  research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  4c096d534 ckpt 4619: PLR: SGP logger+grader live-tested with the key (344 quotes, Novig best on 
   9749ec207 ckpt 4618: PLR trial fixes from the first real run: SGP needs a total point, ev/calc n
   d941c0de1 ckpt 4617: TASKS: PLS/PLR status after landing; trial + engine reset in flight
   6e4a22eba ckpt 4616: research index rebuilt for the PropLine studies
@@ -30,8 +26,7 @@ dispatch propline-sgp.yml log to verify on a runner; final report to Tj
   2600e036d ckpt 4612: PLS: logged Tj's request, saved PropLine docs 2026-11-17, diagnosed: ledger
   c401c0f14 ckpt 4611: BV3 logged: SharpAPI no-start-time drop is the concrete lever
   29dfa661e ckpt 4610: BV2: bid volume cause = feeds (ParlayAPI 0, PropLine spent, SGO silent), we
-  1c9591424 ckpt 4609: BV1: not-bid reasons live; asked Tj which floor to relax
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
