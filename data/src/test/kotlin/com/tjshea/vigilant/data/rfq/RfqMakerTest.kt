@@ -220,8 +220,8 @@ class RfqMakerTest {
         assertEquals(0.4231, RfqPricer.quotePrice(0.40, 2, 3 * h, roc), 1e-9)
         // the same parlay two days out ties the collateral up 2.25 days: r = 9%, (0.40 + 0.09)/1.09 = 0.44954, rounded up to 0.4496
         assertEquals(0.4496, RfqPricer.quotePrice(0.40, 2, 48 * h, roc), 1e-9)
-        // a favourite pair at 0.9: the points floor binds nothing, the return gives (0.94)/1.04 = 0.90385, rounded up to 0.9039
-        assertEquals(0.9039, RfqPricer.quotePrice(0.90, 2, 3 * h, roc), 1e-9)
+        // a favourite pair at 0.9: the 2% relative floor binds (0.918, 1.8 points); the return term gives 0.9039 and the 1-point floor 0.91
+        assertEquals(0.918, RfqPricer.quotePrice(0.90, 2, 3 * h, roc), 1e-9)
         // five legs of a 0.5 parlay: the points floor (4 x 1 point = 0.54) beats the return term (0.5192, 1.9 points)
         assertEquals(0.54, RfqPricer.quotePrice(0.50, 5, 3 * h, roc), 1e-9)
         assertEquals("with no return and no points asked only the relative floor is left", 0.2040, RfqPricer.quotePrice(0.20, 2, 3 * h, roc.copy(minReturn = 0.0, minPoints = 0.0)), 1e-9)
