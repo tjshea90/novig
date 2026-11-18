@@ -537,6 +537,7 @@ fun main(args: Array<String>) = runBlocking {
         journal = { runCatching { rfqJournal.append(it) } },
         tell = { title, body -> scope.launch { runCatching { postMessage(CloudMessages.Message("rfq-${System.currentTimeMillis()}", System.currentTimeMillis(), "engine", "alert", title.take(90), body.take(400), 1, "CLOUD")) } } },
         log = { log("RFQ maker: $it") },
+        legInfo = { id -> outcomeIndex.get()[id]?.marketLabel },
     )
     val rfqSocket = com.tjshea.vigilant.data.rfq.RfqSocket(http, { tradingClient }, rfqMaker, { rfqCfg.get() }, scope, log = { log(it) }).also { rfqSocketRef.set(it) }
     scope.launch {
