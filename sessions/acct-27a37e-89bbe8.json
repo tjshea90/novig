@@ -8,8 +8,8 @@
  "branch": "ccr-f4518318-aidjgt",
  "head": "3891f24bb8130b895c8eea4477139be2b4860004",
  "since": 1794955330,
- "beat": 1794977427,
- "beatIso": "2026-11-18T04:50:27Z",
+ "beat": 1794977689,
+ "beatIso": "2026-11-18T04:54:49Z",
  "done": "MKV3: LIVE prerequisites: 24 h realized-loss stop from Novig's executions (RfqLedger, onLedger), last-look price tolerance, results tile; research section 11; 4314 tests green",
  "next": "engine reset to load them; then rfq_set mode=LIVE maxCollateral=25 maxOpenCollateral=50 maxLegs=3 dayLossStop=20 minReturn=0.06 (Tj approved); watch the first QUOTE_SENT/CONFIRM rows; ship 1.0.138 with the results tile"
 }
