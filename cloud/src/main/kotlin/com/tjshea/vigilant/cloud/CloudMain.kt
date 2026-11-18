@@ -317,55 +317,6 @@ fun main(args: Array<String>) = runBlocking {
             }
         }
     }
-    // Novig's device-location check, read BEFORE it bites (NVR, 2026-11-18; GET /v3/account/geolocation, changelog 2026-10-27) and Novig's locked events and markets (GET /v3/exchange/locks, 2026-11-10), with the
-    // trading key (any key may ask). The check is only read and reported: renewing it is Tj's phone's alone, and a runner-address refusal stays with AddressWatch.
-    val geoReading = java.util.concurrent.atomic.AtomicReference<Triple<Long, Long?, String?>?>(null)
-    tradingClient?.let { tc ->
-        scope.launch {
-            delay(45_000L)
-            var previous: com.tjshea.vigilant.data.cloud.GeoWatch.Level? = null
-            var toldAt = 0L
-            var loggedAt = 0L
-            while (isActive) {
-                var wait = 10 * 60_000L
-                runCatching { tc.geolocation() }.onSuccess { g ->
-                    if (g != null) {
-                        val now = System.currentTimeMillis()
-                        geoReading.set(Triple(now, g.expiresAtMs, g.code))
-                        val level = com.tjshea.vigilant.data.cloud.GeoWatch.level(g.expiresAtMs, g.code, now)
-                        val note = com.tjshea.vigilant.data.cloud.GeoWatch.note(g.expiresAtMs, g.code, now)
-                        if (level != previous || now - loggedAt >= 60 * 60_000L) { loggedAt = now; log("Novig device check: $note") }
-                        if (com.tjshea.vigilant.data.cloud.GeoWatch.shouldTell(level, previous, toldAt, now)) {
-                            toldAt = now
-                            runCatching { postMessage(CloudMessages.Message("geo-${now / 3_600_000L}", now, "engine", "alert", if (level == com.tjshea.vigilant.data.cloud.GeoWatch.Level.SOON) "Open the Novig app soon" else "Novig's device check has lapsed", note.take(400), 1, "CLOUD")) }
-                        }
-                        previous = level
-                        // Closer to the end, look more often: every 2 minutes once it has lapsed or is within 12 hours, so a renewal is seen at once.
-                        if (level != com.tjshea.vigilant.data.cloud.GeoWatch.Level.OK) wait = 2 * 60_000L
-                    }
-                }.onFailure { e ->
-                    if (e is kotlinx.coroutines.CancellationException) throw e
-                    wait = 30 * 60_000L
-                    log("Novig device check not read (asked again in 30 min): ${e.message?.take(120)}")
-                }
-                delay(wait)
-            }
-        }
-        scope.launch {
-            delay(30_000L)
-            var lastCounts = ""
-            while (isActive) {
-                runCatching { tc.locks() }.onSuccess { l ->
-                    if (l != null) {
-                        sources.novigLocks.update(l.eventIds, l.marketIds)
-                        val counts = "${l.eventIds.size}/${l.marketIds.size}"
-                        if (counts != lastCounts) { lastCounts = counts; log(sources.novigLocks.describe()) }
-                    }
-                }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e /* fail open: an old reading ages out */ }
-                delay(30_000L)
-            }
-        }
-    }
     log("trading: ${if (tradePort != null) "the trading key is present (orders possible only if the phone's switch says live)" else "no trading key: paper only"}")
     val trader = CloudTrader(unavailable = { o, now -> sources.unavailable(o, now) }, port = tradePort).also { traderRef = it }
     // The API audit's research journals (AF6/AF7/AF9): Kalshi live data, SharpAPI splits, Novig's own closes of the engine's sides. Read-only, archived with the other journals.
@@ -507,6 +458,55 @@ fun main(args: Array<String>) = runBlocking {
     }
     val postOverride: suspend (CloudOverrides.Request) -> Unit = { r ->
         ghClient.putFile(CloudOverrides.BRANCH, "${CloudOverrides.DIR}/${CloudOverrides.fileName(r)}", CloudOverrides.encode(r).toByteArray(Charsets.UTF_8), "settings request: ${r.apis}")?.let { log("settings request not saved: $it") }
+    }
+    // Novig's device-location check, read BEFORE it bites (NVR, 2026-11-18; GET /v3/account/geolocation, changelog 2026-10-27) and Novig's locked events and markets (GET /v3/exchange/locks, 2026-11-10), with the
+    // trading key (any key may ask). The check is only read and reported: renewing it is Tj's phone's alone, and a runner-address refusal stays with AddressWatch.
+    val geoReading = java.util.concurrent.atomic.AtomicReference<Triple<Long, Long?, String?>?>(null)
+    tradingClient?.let { tc ->
+        scope.launch {
+            delay(45_000L)
+            var previous: com.tjshea.vigilant.data.cloud.GeoWatch.Level? = null
+            var toldAt = 0L
+            var loggedAt = 0L
+            while (isActive) {
+                var wait = 10 * 60_000L
+                runCatching { tc.geolocation() }.onSuccess { g ->
+                    if (g != null) {
+                        val now = System.currentTimeMillis()
+                        geoReading.set(Triple(now, g.expiresAtMs, g.code))
+                        val level = com.tjshea.vigilant.data.cloud.GeoWatch.level(g.expiresAtMs, g.code, now)
+                        val note = com.tjshea.vigilant.data.cloud.GeoWatch.note(g.expiresAtMs, g.code, now)
+                        if (level != previous || now - loggedAt >= 60 * 60_000L) { loggedAt = now; log("Novig device check: $note") }
+                        if (com.tjshea.vigilant.data.cloud.GeoWatch.shouldTell(level, previous, toldAt, now)) {
+                            toldAt = now
+                            runCatching { postMessage(CloudMessages.Message("geo-${now / 3_600_000L}", now, "engine", "alert", if (level == com.tjshea.vigilant.data.cloud.GeoWatch.Level.SOON) "Open the Novig app soon" else "Novig's device check has lapsed", note.take(400), 1, "CLOUD")) }
+                        }
+                        previous = level
+                        // Closer to the end, look more often: every 2 minutes once it has lapsed or is within 12 hours, so a renewal is seen at once.
+                        if (level != com.tjshea.vigilant.data.cloud.GeoWatch.Level.OK) wait = 2 * 60_000L
+                    }
+                }.onFailure { e ->
+                    if (e is kotlinx.coroutines.CancellationException) throw e
+                    wait = 30 * 60_000L
+                    log("Novig device check not read (asked again in 30 min): ${e.message?.take(120)}")
+                }
+                delay(wait)
+            }
+        }
+        scope.launch {
+            delay(30_000L)
+            var lastCounts = ""
+            while (isActive) {
+                runCatching { tc.locks() }.onSuccess { l ->
+                    if (l != null) {
+                        sources.novigLocks.update(l.eventIds, l.marketIds)
+                        val counts = "${l.eventIds.size}/${l.marketIds.size}"
+                        if (counts != lastCounts) { lastCounts = counts; log(sources.novigLocks.describe()) }
+                    }
+                }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e /* fail open: an old reading ages out */ }
+                delay(30_000L)
+            }
+        }
     }
     val governor = ApiGovernor().also { g -> prevStatus?.governorOff?.let { g.seedOff(it, started) } }
     // The engine's bid desk (TCL31): the phone's own desk on the runner, with the trading key. Its record of bids and fills is carried from job to job in `desk.json` and rebuilt into the desk's files here.
