@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "bdc9dda5a85c42bd295ff80916fbdcc0341ceece",
+ "head": "a7f67e24524d1312e515cd50410503cbbe1fb441",
  "since": 1794955330,
- "beat": 1794981311,
- "beatIso": "2026-11-18T05:55:11Z",
- "done": "pre-release: MKV: parlay maker results in the app (Settled parlays tile, 24 h loss stop status), live at small limits, game lines only (versionCode 478, v1.0.138)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.138), then run: bash tools/record-release.sh v1.0.138 478 \"MKV: parlay maker results in the app (Settled parlays tile, 24 h loss stop status), live at small limits, game lines only\""
+ "beat": 1794981342,
+ "beatIso": "2026-11-18T05:55:42Z",
+ "done": "MK7: corrected the quotable-market analysis (+0.93 pts median, 6% return wins 2%: section 12), evidence counters count only quotable trades, restored Tj's own app settings (return 2%, 35/50, 4 legs) after a session overwrote the return for 4 minutes; v1.0.138 released",
+ "next": "watch the live maker (first win/confirm/fill, first settlement); next engine reset loads the counter fix; MK5 grader; MK6 same-game via SGP correlation; tell Tj the corrected expectation"
 }
