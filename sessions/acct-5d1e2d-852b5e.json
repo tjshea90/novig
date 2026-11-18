@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-jy7pvb",
- "head": "2dec3398fe01417bcee6c0a11d19576bdd081367",
+ "head": "f3b94e9381b8dd08dda5a36d6e69b13bb4bbcbc8",
  "since": 1794983019,
- "beat": 1795031051,
- "beatIso": "2026-11-18T19:44:11Z",
- "done": "chat: answered Tj on wallet drop/P&L; TR3 logged (equity 109 vs cash+positions 182 gap)",
- "next": "TR3: find which wallet figure WalletProfit uses, make one source; check parlay tile 'won' vs open"
+ "beat": 1795031254,
+ "beatIso": "2026-11-18T19:47:34Z",
+ "done": "TR3: all-time headline now Novig ledger profit (ProfitChart.kt); test running",
+ "next": "finish ProfitChartTest, daily-from-ledger, ship"
 }
