@@ -8,8 +8,8 @@
  "branch": "ccr-f4518318-aidjgt",
  "head": "ade0fa4243093549537d4f3abe538591527f3e4c",
  "since": 1794955330,
- "beat": 1794974688,
- "beatIso": "2026-11-18T04:04:48Z",
+ "beat": 1794974774,
+ "beatIso": "2026-11-18T04:06:14Z",
  "done": "MK5: rfq-catalog.yml snapshots Novig's public catalog every 4 h into the rfq-catalog Release so RFQ legs can be named after their markets close",
  "next": "run rfq-catalog.yml once (workflow_dispatch) and read its log; ship v1.0.137 when ci.yml is green on main; MK5 grader; MK6"
 }

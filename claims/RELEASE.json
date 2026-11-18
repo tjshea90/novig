@@ -1,0 +1,11 @@
+{
+ "v": 2,
+ "id": "RELEASE",
+ "holder": "acct-27a37e/89bbe8",
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "89bbe8",
+ "note": "MKV: the Novig parlay maker in the app (Engine > Parlays: status, evidence counter, OFF/SHADOW/LIVE with a confirm, limits); the engine prices by return on collateral",
+ "since": 1794974774,
+ "beat": 1794974774
+}
