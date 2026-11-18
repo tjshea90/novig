@@ -1,13 +1,13 @@
-# CHECKPOINT 4627 — read me first, then TASKS.md
+# CHECKPOINT 4628 — read me first, then TASKS.md
 
-**Written:** 2026-11-18T03:05:12Z · **tests:** all 10 fast checks green
-**Branch:** `ccr-f4518318-aidjgt` · **builds on:** `f34f0e681` (this checkpoint is the commit after it)
+**Written:** 2026-11-18T03:16:00Z · **tests:** all 10 fast checks green
+**Branch:** `ccr-f4518318-aidjgt` · **builds on:** `0c5cbefa1` (this checkpoint is the commit after it)
 
 ## Just done
-MK: maker landed 02:48, runner replaced again (the 02:46 job predated it); SHADOW file set
+MK3: first real SHADOW run read: production serves RFQ v3, maker registered, socket live; flow ~60 RFQs/s and ~1.7 trades/s, 0.4% priceable. Journal sampled + 5-min TALLY + leg classes + 2-min pending window; data+cloud suites green
 
 ## Do this next
-read rfq: lines in engine-log: registered? socket live? RFQs seen? then tell Tj
+reset the engine so the sampled journal runs; read the first rfq-<day> journal from cloud-archive (every 20 min) with tools/rfq_summary.py; resolve unscanned legs; tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ read rfq: lines in engine-log: registered? socket live? RFQs seen? then tell Tj
 
 ## Last ten checkpoints
 ```
+  0f0039298 ckpt 4627: MK: maker landed 02:48, runner replaced again (the 02:46 job predated it); 
   f34f0e681 ckpt 4626: MK: Novig parlay maker built (protocol, pricer, maker, socket, engine wirin
   f0ff790a4 ckpt 4625: NVR done: verified live (device pass until Thu 03:00 ET; locks 37 games/160
   c8217ab93 ckpt 4624: NVR: locks guard is the share of the engine's own candidates, not a guessed
@@ -25,5 +26,7 @@ read rfq: lines in engine-log: registered? socket live? RFQs seen? then tell Tj
   9495a33ba ckpt 4620: ENGINEER 11-17 slot2: watch ok, PLR4 ticked, no ship
   4c096d534 ckpt 4619: PLR: SGP logger+grader live-tested with the key (344 quotes, Novig best on 
   9749ec207 ckpt 4618: PLR trial fixes from the first real run: SGP needs a total point, ev/calc n
-  d941c0de1 ckpt 4617: TASKS: PLS/PLR status after landing; trial + engine reset in flight
 ```
+
+(6 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
