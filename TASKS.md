@@ -6753,3 +6753,10 @@ Tj, verbatim: "Review that both novig api and socket and propline api and socket
 - [ ] NVR5 `GET /v3/catalog/consensus` (a family's main line) as the exact main-number pick for the NCAAB board instead of the 30-70 cent heuristic.
 - [ ] NVR6 RFQ v3 maker (Tj's decision): read `propline-sgp-summary` across the 2026-11-19 parlay fee change first.
 - [ ] NVR7 re-run `propline.yml` task `trial` on 11-19/20 and compare Novig's parlay quote EV with 11-17 (-4.3% to -8.4%).
+
+## MK (Tj typed 2026-11-18): become a Novig parlay maker and profit from it
+Tj, verbatim: "I want to become a parlay maker and try to profit from it. Research and build it". (Context: Novig fills parlays only through RFQ market makers; v3 maker API since 2026-11-12 (`POST /rfq/v3/maker`, quote on `GET /rfq/v3/ws`, 3 s auction, 1 s last look, 99% confirm rate, parlay taker fee 0.055 x (-ln P) x stake from 2026-11-19); the 2026-11-17 PropLine trial priced Novig's parlay quotes 4-8% below fair for the taker, NVR6.)
+- [ ] MK1 research: read every RFQ v3 page and the OpenAPI schemas (maker registration, socket frames, price meaning, maxWager, last look, confirm rate, eligibility, collateral, settlement, executions, fees, errors); what a maker earns and risks; what the engine already has (fair lines per outcome, trading key, wallet, ledger). Write research/novig_rfq_maker_2026-11-18.md with the economics and the plan.
+- [ ] MK2 build the maker in the ENGINE (the phone only monitors): OFF / SHADOW / LIVE switch (default OFF), RFQ socket client, fair price of a parlay from the engine's own fair lines (decline any leg without one, any same-game combination until correlation is modelled), margin and caps, last look, ledger, status.
+- [ ] MK3 SHADOW first: register and listen, quote nothing real, log every RFQ with the quote we would have made and what happened to the legs, so the first money follows evidence.
+- [ ] MK4 tests, land, engine reset; tell Tj exactly what runs, what it risks and how to switch it.
