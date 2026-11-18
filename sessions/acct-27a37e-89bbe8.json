@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "0e334bb99dac95ec314400eac9e9647d003b0b92",
+ "head": "65a5e2f604c5e6e8eaaa142d9717f590d949a756",
  "since": 1794955330,
- "beat": 1794974434,
- "beatIso": "2026-11-18T04:00:34Z",
- "done": "MKV: parlay maker in the app (Engine > Parlays: status, evidence counter, OFF/SHADOW/LIVE with a confirm, limits), engine publishes status.rfq, return-on-collateral pricing (4%/1pt per leg/2% floor, 2-5 legs, stake as asked), pricing study section 9; 4309 tests green; v1.0.137",
- "next": "ship v1.0.137: ci.yml green on the commit, ship.sh, release.yml, record-release.sh; then engine reset so the new pricing runs in SHADOW; MK5 grading; MK6 same-game"
+ "beat": 1794974602,
+ "beatIso": "2026-11-18T04:03:22Z",
+ "done": "MKV: app suite green on the exact tree (v1.0.137 bump)",
+ "next": "ship v1.0.137: ci.yml green on the commit, ship.sh, release.yml, record-release.sh; engine reset so the new pricing runs; MK5; MK6"
 }
