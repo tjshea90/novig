@@ -1,0 +1,37 @@
+name: Novig catalog snapshot for the parlay maker (MK5, Tj 2026-11-18)
+
+# Free, no Claude usage, no key. Every 4 hours reads Novig's PUBLIC catalog (events and every open market's outcome ids) with tools/rfq_legs.py and keeps it in a `rfq-catalog` Release (never delete).
+# The parlay maker's journals (`rfq-<day>` in the cloud-archive Releases) name legs only by outcome id, and an id stops resolving once its market closes: these snapshots are how the legs of a past RFQ
+# are named later (league, market type, line, side), so the market's own parlay trades can be graded against results (research/novig_rfq_maker_2026-11-18.md, MK5).
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */4 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rfq-catalog
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Read the catalog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          mkdir -p out
+          name="catalog-$(date -u +%Y-%m-%dT%H%MZ).json.gz"
+          python3 -I tools/rfq_legs.py catalog "out/$name"
+          ls -la out
+          tag="rfq-catalog"
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "Novig catalog snapshots (outcome ids of RFQ legs)" --notes "Every 4 hours (rfq-catalog.yml): outcomeId -> league, market type, line, event, start. Needed to name the legs of the parlay maker's RFQ journals later. Never delete."
+          gh release upload "$tag" "out/$name" --clobber
