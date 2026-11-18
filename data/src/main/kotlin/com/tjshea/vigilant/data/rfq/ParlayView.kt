@@ -18,7 +18,7 @@ object ParlayView {
         val rule: String,
         /** Anything that needs a look: a lockout, a down socket in LIVE. Null = nothing. */
         val warning: String?,
-        /** The evidence rule is met: [RfqStatus.EVIDENCE_TRADES] priced trades and the market paying more than we ask. Never switches anything by itself. */
+        /** The evidence rule is met: [RfqStatus.EVIDENCE_TRADES] priced trades over which our own rule would have won a fifth or more and earned. Never switches anything by itself. */
         val evidenceMet: Boolean,
     )
 
@@ -66,7 +66,8 @@ object ParlayView {
             c.mode != RfqConfig.Mode.OFF && !r.connected && r.note.isNotBlank() -> "Socket: ${r.note}"
             else -> null
         }
-        val met = r.pricedTrades >= RfqStatus.EVIDENCE_TRADES && (r.medianGapPoints ?: 0.0) > c.minReturn * 100.0 * 0.5
+        // The rule is judged on its own quotes: 200 priced trades, and over them our rule would have won at least a fifth and earned something (if our fair is true) per win.
+        val met = r.pricedTrades >= RfqStatus.EVIDENCE_TRADES && r.wouldWin * 5 >= r.pricedTrades && (r.wouldEarnPoints ?: 0.0) > 0.5
         return View(headline, tone, explain, tiles, ev, rule, warning, met)
     }
 

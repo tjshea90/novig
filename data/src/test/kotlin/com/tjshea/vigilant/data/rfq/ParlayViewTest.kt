@@ -30,14 +30,16 @@ class ParlayViewTest {
         assertNull(v.warning); assertFalse("164 priced trades is under the 200 the rule asks for", v.evidenceMet)
     }
 
-    @Test fun theEvidenceRuleIsMetOnlyWith200PricedTradesAndAMarketAboveOurAsk() {
-        assertTrue(ParlayView.of(shadow.copy(pricedTrades = 200)).evidenceMet)
-        assertFalse("a market that pays less than half of what we ask is not evidence", ParlayView.of(shadow.copy(pricedTrades = 300, medianGapPoints = 0.5)).evidenceMet)
-        assertFalse(ParlayView.of(shadow.copy(pricedTrades = 300, medianGapPoints = null)).evidenceMet)
+    @Test fun theEvidenceRuleIsMetOnlyWith200PricedTradesWhereOurOwnRuleWinsAndEarns() {
+        assertTrue(ParlayView.of(shadow.copy(pricedTrades = 200, wouldWin = 70)).evidenceMet)
+        assertFalse("under 200 priced trades", ParlayView.of(shadow).evidenceMet)
+        assertFalse("our rule would have won 5% of them: it asks too much", ParlayView.of(shadow.copy(pricedTrades = 300, wouldWin = 15)).evidenceMet)
+        assertFalse("and earned nothing worth the collateral", ParlayView.of(shadow.copy(pricedTrades = 300, wouldWin = 100, wouldEarnPoints = 0.2)).evidenceMet)
+        assertFalse(ParlayView.of(shadow.copy(pricedTrades = 300, wouldWin = 100, wouldEarnPoints = null)).evidenceMet)
     }
 
     @Test fun liveShowsQuotesAndCollateralAndAStopIsAWarning() {
-        val live = shadow.copy(config = RfqConfig(mode = RfqConfig.Mode.LIVE), quotesSent = 40, won = 6, confirmed = 6, filled = 6, openCollateral = 81.0)
+        val live = shadow.copy(config = RfqConfig(mode = RfqConfig.Mode.LIVE), quotesSent = 40, won = 6, confirmed = 6, filled = 6, openCollateral = 85.0)
         val v = ParlayView.of(live)
         assertEquals("Live: quoting", v.headline)
         assertEquals(6, v.tiles.size)
