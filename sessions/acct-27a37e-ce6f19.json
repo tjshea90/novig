@@ -1,0 +1,15 @@
+{
+ "v": 2,
+ "label": "acct-27a37e",
+ "name": "tj Gmail",
+ "nonce": "ce6f19",
+ "kind": "routine",
+ "task": "",
+ "branch": "claude/wizardly-meitner-2zi1gm",
+ "head": "163d77cebb982e0a76d6228b8889327adc80376b",
+ "since": 1795004878,
+ "beat": 1795004878,
+ "beatIso": "2026-11-18T12:27:58Z",
+ "done": "ENGINEER 11-18: watch ok, MK8 evidence logged, no ship",
+ "next": "MK8: same-game SGP pricing in shadow, widen NFL/NCAAF fair coverage"
+}
