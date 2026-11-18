@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "e4e749e3a4ffe7ec6a8d1967eda24161c4e4bd23",
+ "head": "350e50d60aeb7b1d07730aba7577d1a00b04464c",
  "since": 1794955330,
- "beat": 1794963796,
- "beatIso": "2026-11-18T01:03:16Z",
- "done": "PLR: SGP logger+grader live-tested with the key (344 quotes, Novig best on 26/40; settle 5/5 + 12/12 parlays), workflow propline-sgp.yml, docs and results",
- "next": "dispatch propline-sgp.yml log to verify on a runner; final report to Tj"
+ "beat": 1794963992,
+ "beatIso": "2026-11-18T01:06:32Z",
+ "done": "NVR: Novig geolocation status (GeoWatch + message), locks (NovigLocks into CloudSources.unavailable), limits tier/open-order cap; tests green",
+ "next": "diff newest docs mirror vs 11-16; route-by-route unused list; write research/novig_propline_review_2026-11-18.md; full test; land; engine_set --reset"
 }
