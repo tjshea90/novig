@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-btwsi1",
- "head": "47f7ade633be815d2f305e3f74b8b019694b94fc",
+ "head": "255345d27b9c6ce70f7e21a4a100e5007d023011",
  "since": 1794974066,
- "beat": 1794974927,
- "beatIso": "2026-11-18T04:08:47Z",
+ "beat": 1794975104,
+ "beatIso": "2026-11-18T04:11:44Z",
  "done": "PLQ: answered Tj PropLine health+feature list",
  "next": "PLR5 settle fallback grader; check propline-ev sweep rows 0"
 }
