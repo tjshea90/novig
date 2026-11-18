@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-04gk80",
- "head": "a7f67e24524d1312e515cd50410503cbbe1fb441",
+ "head": "012de2559e282a944a84c1741cd6761f533d4e91",
  "since": 1794980900,
- "beat": 1794982656,
- "beatIso": "2026-11-18T06:17:36Z",
- "done": "",
- "next": ""
+ "beat": 1794982727,
+ "beatIso": "2026-11-18T06:18:47Z",
+ "done": "MK8 written: parlay coverage evidence, replied to Tj",
+ "next": "build same-game parlay pricing from propline-sgp correlation (MK6/MK8); game-line fair age 10 min; verify in shadow tally"
 }
