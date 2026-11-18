@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-9ecyw8",
- "head": "2dec3398fe01417bcee6c0a11d19576bdd081367",
+ "head": "f3894246d8b5bafe2fd0a8942d61fd5ee9a2350f",
  "since": 1794983019,
- "beat": 1795042530,
- "beatIso": "2026-11-18T22:55:30Z",
- "done": "TR3: ledger headline, ProfitChartTest 13 green",
- "next": "daily P/L from ledger by game day; ship with next release"
+ "beat": 1795042593,
+ "beatIso": "2026-11-18T22:56:33Z",
+ "done": "chat: answered Tj on ledger-based P/L; TR4 logged",
+ "next": "TR3/TR4: single ledger source per game day"
 }
