@@ -5,11 +5,11 @@
  "nonce": "852b5e",
  "kind": "interactive",
  "task": "",
- "branch": "claude/optimistic-curie-0tpsr1",
- "head": "b8e884a27afa1fdd99912379b558d58f8364d19e",
+ "branch": "claude/optimistic-curie-81ivu9",
+ "head": "ade928021eafe72bce9df7b65cbcd3a3f1d7e30c",
  "since": 1794977610,
- "beat": 1794979425,
- "beatIso": "2026-11-18T05:23:45Z",
+ "beat": 1794979888,
+ "beatIso": "2026-11-18T05:31:28Z",
  "done": "engine reset for PropLine EV sweep; DG3 live lag not yet diagnosed",
  "next": "check propLineEvRows in status after first sweep (~10 min); profile live tab; chat ime; startup crash"
 }
