@@ -140,7 +140,7 @@ class RfqMakerTest {
         r.maker.onEvent(created("a", "b"))
         r.sent.clear()
         r.legs = listOf(leg("a", "e1", 0.9), leg("b", "e2", 0.9))                       // the fair moved a lot: still confirmed
-        r.maker.onEvent(RfqProtocol.QuoteAccepted(now, "rfq-1", "q1", 12.0, 0.216, "rfq-1"))
+        r.maker.onEvent(RfqProtocol.QuoteAccepted(now, "rfq-1", "q1", 10.0, 0.216, "rfq-1"))
         val c = json.parseToJsonElement(r.sent.single()).jsonObject["confirm"]!!.jsonObject
         assertEquals("true", c["confirmed"]!!.jsonPrimitive.content)
         assertEquals(1L, r.maker.confirmed)
@@ -218,12 +218,12 @@ class RfqMakerTest {
         val h = 3_600_000L
         // fair 0.40, a game in 3 h: (0.40 + 0.04)/1.04 = 0.4231 (2.3 points); the 2% relative floor (0.408) and the 1-point floor (0.41) are lower
         assertEquals(0.4231, RfqPricer.quotePrice(0.40, 2, 3 * h, roc), 1e-9)
-        // the same parlay two days out ties the collateral up 2.25 days: r = 9%, (0.40 + 0.09)/1.09 = 0.4495
-        assertEquals(0.4495, RfqPricer.quotePrice(0.40, 2, 48 * h, roc), 1e-9)
-        // a favourite pair at 0.9: the points floor binds nothing, the return gives (0.94)/1.04 = 0.9038
-        assertEquals(0.9038, RfqPricer.quotePrice(0.90, 2, 3 * h, roc), 1e-9)
-        // five legs of a 0.5 parlay: the points floor (4 x 1 point) beats the return term (0.5385 -> 3.85 points)
-        assertEquals(0.5385, RfqPricer.quotePrice(0.50, 5, 3 * h, roc), 1e-9)
+        // the same parlay two days out ties the collateral up 2.25 days: r = 9%, (0.40 + 0.09)/1.09 = 0.44954, rounded up to 0.4496
+        assertEquals(0.4496, RfqPricer.quotePrice(0.40, 2, 48 * h, roc), 1e-9)
+        // a favourite pair at 0.9: the points floor binds nothing, the return gives (0.94)/1.04 = 0.90385, rounded up to 0.9039
+        assertEquals(0.9039, RfqPricer.quotePrice(0.90, 2, 3 * h, roc), 1e-9)
+        // five legs of a 0.5 parlay: the points floor (4 x 1 point = 0.54) beats the return term (0.5192, 1.9 points)
+        assertEquals(0.54, RfqPricer.quotePrice(0.50, 5, 3 * h, roc), 1e-9)
         assertEquals("with no return and no points asked only the relative floor is left", 0.2040, RfqPricer.quotePrice(0.20, 2, 3 * h, roc.copy(minReturn = 0.0, minPoints = 0.0)), 1e-9)
     }
 
