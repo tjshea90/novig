@@ -28,8 +28,12 @@ class RfqMaker(
     private val tell: (String, String) -> Unit = { _, _ -> },
     private val clock: () -> Long = System::currentTimeMillis,
     private val log: (String) -> Unit = {},
+    /** The scan's market label for an outcome id, or null when the scan does not hold that outcome at all (told apart from "held, but no fair line" in the tally). */
+    private val legInfo: (String) -> String? = { null },
+    /** One RFQ in this many that the maker cannot price is journaled whole (the rest only in the tally): ~60 RFQs a second would otherwise be gigabytes a day. */
+    private val sampleEvery: Int = 25,
 ) {
-    private class Pending(val created: RfqProtocol.Created, val decision: RfqDecision, val seenMs: Long) {
+    private class Pending(val created: RfqProtocol.Created, val decision: RfqDecision, val seenMs: Long, val journaled: Boolean, val classes: List<String>) {
         var quotePrice: Double? = null
         var quoteMax: Double? = null
         var quoteId: String? = null
@@ -72,12 +76,45 @@ class RfqMaker(
         row("HALT", null) { put("why", why) }
     }
 
+    // ---- the tally: what the flow looks like, kept small (a row every 5 minutes) instead of a row per RFQ ----
+    private class Window(val startMs: Long) {
+        var created = 0L; var executed = 0L; var executedWager = 0.0; var executedSeenHere = 0L; var executedPriced = 0L
+        val legCounts = HashMap<String, Long>(); val reasons = HashMap<String, Long>(); val legClasses = HashMap<String, Long>()
+        val kinds = HashMap<String, Long>()
+        val tradeLegs = HashMap<String, Long>()
+    }
+    private var window = Window(0L)
+
+    private fun bump(m: HashMap<String, Long>, k: String) { m.merge(k, 1L, Long::plus) }
+
+    private fun legClass(id: String): String = when {
+        fairs.leg(id) != null -> "priced"
+        legInfo(id) != null -> "scanned"
+        else -> "unscanned"
+    }
+
+    private fun kindOf(id: String): String = (legInfo(id) ?: "?").replace(Regex("[-+]?[0-9]+(\\.[0-9]+)?"), "#").trim().take(40)
+
+    private fun sampled(rfqId: String): Boolean = sampleEvery <= 1 || (rfqId.hashCode().toLong() and 0x7fffffffL) % sampleEvery == 0L
+
+    private fun flushTally(now: Long) {
+        val w = window
+        if (w.created == 0L && w.executed == 0L) { window = Window(now); return }
+        fun top(m: Map<String, Long>, n: Int) = buildJsonObject { m.entries.sortedByDescending { it.value }.take(n).forEach { put(it.key, it.value) } }
+        row("TALLY", null) {
+            put("fromMs", w.startMs); put("created", w.created); put("legs", top(w.legCounts, 12)); put("reasons", top(w.reasons, 12)); put("legClasses", top(w.legClasses, 4)); put("scannedKinds", top(w.kinds, 20))
+            put("executed", w.executed); put("executedWager", w.executedWager); put("executedSeenHere", w.executedSeenHere); put("executedPriced", w.executedPriced); put("tradeLegs", top(w.tradeLegs, 12))
+        }
+        window = Window(now)
+    }
+
     fun onEvent(e: RfqProtocol.Event) {
         val cfg = config()
+        synchronized(this) { val t = clock(); if (window.startMs == 0L) window = Window(t) else if (t - window.startMs >= TALLY_MS) flushTally(t) }
         if (halted != null && clock() >= haltedUntilMs) { halted = null; log("RFQ maker resumes") }
         when (e) {
             is RfqProtocol.Created -> created(e, cfg)
-            is RfqProtocol.Closed -> row("CLOSED", e.rfqId) { }
+            is RfqProtocol.Closed -> if (synchronized(pending) { pending[e.rfqId]?.journaled } == true) row("CLOSED", e.rfqId) { }
             is RfqProtocol.Executed -> executed(e)
             is RfqProtocol.QuoteAccepted -> accepted(e, cfg)
             is RfqProtocol.QuoteCreated -> synchronized(pending) { pending[e.rfqId]?.quoteId = e.quoteId }
@@ -109,13 +146,25 @@ class RfqMaker(
             is RfqDecision.Quote -> priceable++
             is RfqDecision.Decline -> synchronized(declines) { declines.merge(d.reason.replace(Regex("[0-9]+(\\.[0-9]+)?"), "#"), 1L, Long::plus) }
         }
-        val p = Pending(e, d, now)
+        val classes = e.outcomeIds.map { legClass(it) }
+        synchronized(this) {
+            val w = window
+            w.created++; bump(w.legCounts, if (e.outcomeIds.size >= 10) "10+" else e.outcomeIds.size.toString())
+            when (d) { is RfqDecision.Decline -> bump(w.reasons, d.reason.replace(Regex("[0-9]+(\\.[0-9]+)?"), "#")); is RfqDecision.Quote -> bump(w.reasons, "QUOTE") }
+            classes.forEachIndexed { i, c -> bump(w.legClasses, c); if (c == "scanned") bump(w.kinds, kindOf(e.outcomeIds[i])) }
+        }
+        // Whole rows for what the maker can price (or only a rule stopped), and a sample of the rest.
+        val keep = d is RfqDecision.Quote || (d is RfqDecision.Decline && d.fair != null) || sampled(e.rfqId)
+        val p = Pending(e, d, now, keep, classes)
         synchronized(pending) {
             pending[e.rfqId] = p
             while (pending.size > MAX_PENDING) pending.remove(pending.keys.first())
+            val old = now - PENDING_MS
+            while (pending.isNotEmpty() && pending.values.first().seenMs < old && pending.values.first().reservedUntilMs < now) pending.remove(pending.keys.first())
         }
-        row("CREATED", e.rfqId) {
+        if (keep) row("CREATED", e.rfqId) {
             put("outcomeIds", buildJsonArray { e.outcomeIds.forEach { add(JsonPrimitive(it)) } })
+            put("classes", classes.joinToString(","))
             put("expiresTs", e.expiresTs); put("minWager", e.minWager); put("mode", cfg.mode.name)
             when (d) {
                 is RfqDecision.Quote -> {
@@ -162,10 +211,21 @@ class RfqMaker(
         if (e.offset >= 0) lastOffset = maxOf(lastOffset, e.offset)
         val p = synchronized(pending) { pending[e.rfqId] }
         val fair = when (val d = p?.decision) { is RfqDecision.Quote -> d.fair; is RfqDecision.Decline -> d.fair; null -> null }
+        synchronized(this) {
+            val w = window
+            w.executed++; w.executedWager += e.wager
+            if (p != null) { w.executedSeenHere++; bump(w.tradeLegs, p.created.outcomeIds.size.toString()) }
+            if (fair != null) w.executedPriced++
+        }
         row("EXECUTED", e.rfqId) {
             put("offset", e.offset); put("wager", e.wager); put("price", e.price)
             put("fair", fair?.let { JsonPrimitive(it) } ?: JsonNull)
             put("seenHere", p != null)
+            if (p != null) {
+                put("nLegs", p.created.outcomeIds.size); put("classes", p.classes.joinToString(","))
+                // A trade we could not price is the one to study later: its legs are named (Novig's public catalog resolves them), the rest is in the tally.
+                if (fair == null) put("outcomeIds", buildJsonArray { p.created.outcomeIds.forEach { add(JsonPrimitive(it)) } })
+            }
             (p?.decision as? RfqDecision.Quote)?.let { q -> put("ourPrice", q.price); put("wouldWin", q.price <= e.price + 1e-9) }
         }
         if (fair != null) {
@@ -200,7 +260,10 @@ class RfqMaker(
     }
 
     companion object {
-        const val MAX_PENDING = 600
+        /** An RFQ trades within seconds of its creation: two minutes is far more than needed, and the cap keeps a burst from filling memory. */
+        const val MAX_PENDING = 20_000
+        const val PENDING_MS = 120_000L
+        const val TALLY_MS = 5 * 60_000L
         const val KEEP = 500
         /** A quote's collateral stays reserved this long after its auction closes (the user may accept a while later). */
         const val RESERVE_AFTER_CLOSE_MS = 120_000L
