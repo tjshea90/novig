@@ -6,10 +6,10 @@
  "kind": "routine",
  "task": "rotation",
  "branch": "claude/wizardly-meitner-s0i8hv",
- "head": "4cb7dd54e53911d364b364a19cf2ec62a7f89ae4",
+ "head": "b5e9ee90a3bca3806a9d05c98e78590407807718",
  "since": 1795026349,
- "beat": 1795026559,
- "beatIso": "2026-11-18T18:29:19Z",
- "done": "",
- "next": ""
+ "beat": 1795026637,
+ "beatIso": "2026-11-18T18:30:37Z",
+ "done": "TR3: wallet 'equity' was the trader bankroll; added walletWorth (cash+positions) in 3 displays, test green",
+ "next": "ship in next release; check parlay tile won vs open"
 }
