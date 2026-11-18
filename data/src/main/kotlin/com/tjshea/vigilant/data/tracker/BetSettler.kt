@@ -34,6 +34,8 @@ class BetSettler(
      * included): while this says so, the score feeds leave them alone. Off (betting not set up on this phone): they're graded from scores like any other.
      */
     private val leaveApiBets: () -> Boolean = { false },
+    /** Asked only for a bet the feeds above could not grade (PropLine's `/bets/settle`, Tj 2026-11-18); null = nothing more to ask. Fail-closed: null leaves the bet as it was. */
+    private val fallback: (suspend (TrackedBet, BetGrader.Pick) -> BetGrader.Grade.Result?)? = null,
 ) {
     /** [waiting]: games not over yet; [manual]: bets nothing the feeds carry can settle (each has its reason on the bet). */
     data class Report(val asked: Int, val settled: Int, val stopped: Boolean, val waiting: Int = 0, val manual: Int = 0)
@@ -90,6 +92,7 @@ class BetSettler(
                 val found = when (val f = findGame(bet)) {
                     Lookup.Unreachable -> return@withLock Report(asked, settled, stopped = true, waiting = waiting, manual = manual)
                     is Lookup.NotFound -> {
+                        if (viaFallback(changes, bet, pick)) { settled++; continue }
                         manual++
                         note(changes, bet, f.reason, startedAt)
                         later(bet, RETRY_UNGRADABLE_MS)
@@ -134,6 +137,7 @@ class BetSettler(
                         later(bet, RETRY_MS)
                     }
                     is BetGrader.Grade.Manual -> {
+                        if (viaFallback(changes, bet, pick)) { settled++; continue }
                         manual++
                         note(changes, bet, grade.reason, startedAt)
                         later(bet, RETRY_UNGRADABLE_MS)
@@ -145,6 +149,25 @@ class BetSettler(
             flush()
         }
         Report(asked, settled, stopped = false, waiting = waiting, manual = manual)
+    }
+
+    /** The fallback's answer for [bet] as a change, or false when it has none (never throws: a failed ask leaves the bet to its note). */
+    private suspend fun viaFallback(changes: MutableMap<String, (TrackedBet) -> TrackedBet>, bet: TrackedBet, pick: BetGrader.Pick): Boolean {
+        val ask = fallback ?: return false
+        val grade = try {
+            ask(bet, pick)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        } ?: return false
+        val now = clock()
+        changes[bet.id] = {
+            if (it.status != BetStatus.PENDING || it.settledBy == BY_YOU) it
+            else it.copy(status = grade.status, settledAtMs = now, settleValue = null, settledBy = BY_SCORES, books = emptyList(), gradeNote = grade.evidence, gradeAtMs = now, gradeManual = false)
+        }
+        nextTry.remove(bet.id)
+        return true
     }
 
     /**
