@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "362430e6e7b477dc5f9933a91d249481df9d5006",
+ "head": "2945d69f2d156147602cf71c021aa065b5bff1cd",
  "since": 1794955330,
- "beat": 1794969212,
- "beatIso": "2026-11-18T02:33:32Z",
+ "beat": 1794969428,
+ "beatIso": "2026-11-18T02:37:08Z",
  "done": "NVR done: verified live (device pass until Thu 03:00 ET; locks 37 games/160,425 markets, guard in place); docs, CHANGES, TASKS",
  "next": "Tj: open the Novig app before Thu 03:00 ET; NVR5-7 and PLR5-7 open; handoff ready"
 }
