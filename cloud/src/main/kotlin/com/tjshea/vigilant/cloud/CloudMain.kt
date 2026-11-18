@@ -842,7 +842,7 @@ fun main(args: Array<String>) = runBlocking {
                 geoExpiresAtMs = geoReading.get()?.second ?: 0L, geoNote = geoReading.get()?.let { r -> com.tjshea.vigilant.data.cloud.GeoWatch.note(r.second, r.third, System.currentTimeMillis()) }.orEmpty().take(300),
                 locksNote = sources.novigLocks.describe(),
                 rfqNote = (rfqMaker.status(rfqSocket.connected) + (if (rfqCfg.get().mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF && !rfqSocket.connected) " · ${rfqSocket.lastNote}" else "")).take(800),
-                rfq = rfqMaker.snapshot(rfqSocket.connected, rfqCfg.get(), rfqSocket.makerId, rfqCollateral.get(), rfqSocket.lastNote, System.currentTimeMillis()).takeIf { rfqCfg.get().mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF },
+                rfq = rfqMaker.snapshot(rfqSocket.connected, rfqCfg.get(), rfqSocket.makerId, rfqCollateral.get(), rfqSocket.lastNote, System.currentTimeMillis()),
                 ledgerProfit = ledgerProfit.get()?.profit, ledgerOpenCost = ledgerProfit.get()?.openCost, ledgerRows = ledgerProfit.get()?.rows ?: 0,
                 ledgerAtMs = ledgerProfit.get()?.atMs ?: 0L, ledgerDetail = ledgerProfit.get()?.detail.orEmpty().take(300),
             )
