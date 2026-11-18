@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "66cf92733e03dbbbda552d499f75c44307722e60",
+ "head": "f70eb18820532bb3d04768f27925229f236480f0",
  "since": 1794955330,
- "beat": 1794975268,
- "beatIso": "2026-11-18T04:14:28Z",
- "done": "pre-release: MKV: the Novig parlay maker in the app (Engine > Parlays: status, evidence counter, OFF/SHADOW/LIVE with a confirm, limits); the engine prices by return on collateral (versionCode 477, v1.0.137)",
- "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.137), then run: bash tools/record-release.sh v1.0.137 477 \"MKV: the Novig parlay maker in the app (Engine > Parlays: status, evidence counter, OFF/SHADOW/LIVE with a confirm, limits); the engine prices by return on collateral\""
+ "beat": 1794975317,
+ "beatIso": "2026-11-18T04:15:17Z",
+ "done": "MKV2: parlays with a player prop are not quoted or counted (market pays +6.0 pts/+38% on those vs +0.94/+2.6% on game lines: our prop fair is the doubt), minReturn default 6%, section 10 of the research file",
+ "next": "land; engine reset so the engine runs game-lines-only; ship the release build already running (1.0.137); then the LIVE question for Tj"
 }
