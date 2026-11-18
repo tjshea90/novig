@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-0tpsr1",
- "head": "4f9d09d607eed89202637aa28419fd8586e7c1d4",
+ "head": "4c681795a4f75a23d940cc3e4b6538c4e82f1994",
  "since": 1794977610,
- "beat": 1794978139,
- "beatIso": "2026-11-18T05:02:19Z",
- "done": "DG2: PropLine EV sweep on, phone bets kept 8 days",
- "next": "land on main, engine reset, check propLineEvRows, then chat keyboard bug + startup crash"
+ "beat": 1794978338,
+ "beatIso": "2026-11-18T05:05:38Z",
+ "done": "DG2 tests green; DG3 logged",
+ "next": "land main, engine reset, then live-tab lag + chat ime"
 }
