@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "92d776b01282981a5d293648131adeef9e0e7ef8",
+ "head": "ade928021eafe72bce9df7b65cbcd3a3f1d7e30c",
  "since": 1794955330,
- "beat": 1794979674,
- "beatIso": "2026-11-18T05:27:54Z",
- "done": "pre-ship: MKV: parlay maker results in the app (Settled parlays tile, 24 h loss stop status), live at small limits, game lines only",
- "next": "ship.sh gates and releases this"
+ "beat": 1794979862,
+ "beatIso": "2026-11-18T05:31:02Z",
+ "done": "pre-release: MKV: parlay maker results in the app (Settled parlays tile, 24 h loss stop status), live at small limits, game lines only (versionCode 478, v1.0.138)",
+ "next": "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v1.0.138), then run: bash tools/record-release.sh v1.0.138 478 \"MKV: parlay maker results in the app (Settled parlays tile, 24 h loss stop status), live at small limits, game lines only\""
 }
