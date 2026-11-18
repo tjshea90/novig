@@ -80,9 +80,9 @@ class ParlayMakerUiTest {
     @Test fun theLimitsStepAndKeepTheRestOfTheConfig() {
         show(shadow)
         compose.onNodeWithTag("parlayCollateral-plus").performScrollTo().performClick()
-        assertEquals(55.0, sent.last().maxCollateral, 0.0); assertEquals(RfqConfig.Mode.SHADOW, sent.last().mode); assertEquals(0.04, sent.last().minReturn, 0.0)
+        assertEquals(55.0, sent.last().maxCollateral, 0.0); assertEquals(RfqConfig.Mode.SHADOW, sent.last().mode); assertEquals(0.06, sent.last().minReturn, 0.0)
         compose.onNodeWithTag("parlayReturn-minus").performScrollTo().performClick()
-        assertEquals(0.03, sent.last().minReturn, 1e-9)
+        assertEquals(0.05, sent.last().minReturn, 1e-9)
         compose.onNodeWithTag("parlayLegs-plus").performScrollTo().performClick()
         assertEquals(6, sent.last().maxLegs)
         compose.onNodeWithTag("parlayNote").assertIsDisplayed()
