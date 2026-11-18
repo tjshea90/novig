@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "claude/optimistic-curie-6qt6ud",
- "head": "163d77cebb982e0a76d6228b8889327adc80376b",
+ "head": "2dec3398fe01417bcee6c0a11d19576bdd081367",
  "since": 1794983019,
- "beat": 1795017061,
- "beatIso": "2026-11-18T15:51:01Z",
- "done": "replied to Tj on parlay wins",
- "next": "MK8: SGP correlation pricing in shadow, game-line fair age, NFL/NCAAF fair coverage"
+ "beat": 1795018905,
+ "beatIso": "2026-11-18T16:21:45Z",
+ "done": "chat: answered Tj on wallet drop/P&L; TR3 logged (equity 109 vs cash+positions 182 gap)",
+ "next": "TR3: find which wallet figure WalletProfit uses, make one source; check parlay tile 'won' vs open"
 }
