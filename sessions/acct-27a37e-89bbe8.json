@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "65a5e2f604c5e6e8eaaa142d9717f590d949a756",
+ "head": "ade0fa4243093549537d4f3abe538591527f3e4c",
  "since": 1794955330,
- "beat": 1794974602,
- "beatIso": "2026-11-18T04:03:22Z",
- "done": "MKV: app suite green on the exact tree (v1.0.137 bump)",
- "next": "ship v1.0.137: ci.yml green on the commit, ship.sh, release.yml, record-release.sh; engine reset so the new pricing runs; MK5; MK6"
+ "beat": 1794974688,
+ "beatIso": "2026-11-18T04:04:48Z",
+ "done": "MK5: rfq-catalog.yml snapshots Novig's public catalog every 4 h into the rfq-catalog Release so RFQ legs can be named after their markets close",
+ "next": "run rfq-catalog.yml once (workflow_dispatch) and read its log; ship v1.0.137 when ci.yml is green on main; MK5 grader; MK6"
 }
