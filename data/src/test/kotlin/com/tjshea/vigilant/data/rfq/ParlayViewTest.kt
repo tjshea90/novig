@@ -26,7 +26,7 @@ class ParlayViewTest {
         assertTrue(v.evidence, v.evidence.contains("164 of 200") && v.evidence.contains("+1.06"))
         assertEquals("a shadow view has no quote or collateral tiles", 4, v.tiles.size)
         assertEquals("37%", v.tiles.first { it.label == "Our rule would have won" }.value.replace("36%", "37%"))   // 60 of 164 = 36%
-        assertTrue(v.rule, v.rule.contains("6.0% return on the collateral") && v.rule.contains("2 to 5 legs") && v.rule.contains("\$45 per parlay") && v.rule.contains("\$90 in all"))
+        assertTrue(v.rule, v.rule.contains("game-line parlays only") && v.rule.contains("6.0% return on the collateral") && v.rule.contains("2 to 5 legs") && v.rule.contains("\$45 per parlay") && v.rule.contains("\$90 in all"))
         assertNull(v.warning); assertFalse("164 priced trades is under the 200 the rule asks for", v.evidenceMet)
     }
 
