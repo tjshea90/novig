@@ -6,10 +6,10 @@
  "kind": "interactive",
  "task": "",
  "branch": "ccr-f4518318-aidjgt",
- "head": "09268ea2ceddd4c782f3a4ebf2cc690980074f0e",
+ "head": "703059847d42b0fc13007bdbea78d7e28aa55384",
  "since": 1794955330,
- "beat": 1794976533,
- "beatIso": "2026-11-18T04:35:33Z",
+ "beat": 1794976732,
+ "beatIso": "2026-11-18T04:38:52Z",
  "done": "MKV: v1.0.137 released (recorded); MKV2 game-lines-only maker + 6% return default, 4310 tests green on the exact tree",
  "next": "engine reset so the engine runs game-lines-only pricing; then ask Tj about LIVE at small caps"
 }
