@@ -31,8 +31,6 @@
 - [What can you build?](https://docs.sx.bet/developers/what-can-you-build.md): Explore the kinds of applications and tools you can build on top of SX Bet.
 - [Quickstart](https://docs.sx.bet/developers/quickstart.md): Go from zero to your first bet on SX Bet.
 - [Testnet & Mainnet](https://docs.sx.bet/developers/testnet-and-mainnet.md): How to develop on SX Bet testnet and switch to mainnet when you're ready.
-- [V3 Improvements](https://docs.sx.bet/developers/new-in-v3.md): An overview of the V3 exchange model and how it's structured.
-- [Migrate to V3 in 30 minutes](https://docs.sx.bet/developers/migrate-to-v3.md): How to migrate an existing V2 integration to V3.
 - [Accounts](https://docs.sx.bet/developers/accounts.md): Understand accounts and proxy wallets on SX Bet.
 - [Funding](https://docs.sx.bet/developers/funding.md): How to fund your proxy wallet with USDC on SX Bet.
 - [Reading balances](https://docs.sx.bet/developers/balances-and-ledger.md): Understand your balances and ledger on SX Bet.

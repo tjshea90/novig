@@ -33,9 +33,9 @@ Each key has one scope, fixed when you create it.
 | Scope | Reaches | Orders | Money | Limit |
 | - | - | - | - | - |
 | `management` | All subaccounts | No | Yes | 1 per trader |
-| `management::read` | All subaccounts | No | No | None |
+| `management::read` | All subaccounts | No | No | 128 per trader |
 | `trading` | One subaccount | Yes | No | 1 per subaccount |
-| `trading::read` | One subaccount | No | No | None |
+| `trading::read` | One subaccount | No | No | 128 per trader |
 
 * `management` opens, funds, and labels subaccounts, and creates and revokes keys. It also reads what `management::read` reads.
 * `management::read` lists keys and subaccounts, and reads any balance, ledger, order, fill, and position.

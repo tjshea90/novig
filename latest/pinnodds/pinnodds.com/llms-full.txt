@@ -402,11 +402,11 @@ data: [{"home": "Sunshine Coast Phoenix", "away": "Cairns Dolphins",
 Drop fields:
 - `id` — Pinnacle event ID
 - `sport`, `sport_id`, `league` — event context
-- `home`, `away` — teams/players
+- `home`, `away` — teams/players. On BTTS and Draw No Bet alerts (`sect` `BTTS` / `DrawNoBet`) they are the parent match's team names, and `outcome` is the selection (`Yes` / `No` for BTTS, a team for Draw No Bet).
 - `sect` — market section (`Moneyline`, `Spread`, `Total`, `TeamTotal`)
 - `outcome` — which side moved (`Home`, `Away`, `Over`, `Under`, etc.)
 - `period` — period number (0=match, 1=1st half, etc.)
-- `point` — handicap or total line if applicable
+- `point` — handicap or total line if applicable. On live soccer `Spread` alerts it is the full-match line: the raw in-play line shifted by the current score (home side: raw + away_score - home_score; away side the opposite), so a raw home +0.25 at 1-0 is reported as home -0.75; totals, team totals and other sports are not shifted.
 - `from_price`, `to_price` — old and new decimal odds
 - `nvp` — no-vig fair price for the new odds
 - `interval` — seconds of price history when the drop fired
@@ -471,7 +471,7 @@ curl -N "https://pinnodds.com/odds-drop?key=$API_KEY&min_drop=1"
 curl -N "https://pinnodds.com/odds-drop?key=$API_KEY&min_drop=10"
 ```
 
-On `/odds-drop-prematch`, `min_drop` works the same way. The `recheck` parameter described below is accepted but not applied today, so `?recheck=30&min_drop=7` behaves exactly like `?min_drop=7`.
+On `/odds-drop-prematch`, `min_drop` works the same way.
 
 ---
 
@@ -483,20 +483,7 @@ Identical to `/odds-drop` but emits drops on the prematch feed only. Useful when
 
 **Optional `min_drop` parameter:** same as on `/odds-drop` (above) — `?min_drop=N` keeps only drops of at least N%. Omitted = no filter (every detected drop). Minimum accepted value 1%, no upper cap.
 
-**Optional `recheck` parameter** (prematch only) — **current status: accepted but not applied.** The stream ignores `?recheck=N` today: every drop is delivered immediately, nothing is held back or suppressed, and no `rechecked_ms` field is added. If you need a stable-price filter, hold each drop on your side for the time you want and compare it with the current price from `/kit/v1/prematch/lines` before acting. How the filter is designed to behave: the server would hold each drop for N seconds, re-check the current Pinnacle price for that line, and emit the alert only if the drop is still real against the original `from_price`.
-
-```
-# Default instant feed
-curl -N "https://pinnodds.com/odds-drop-prematch?key=$KEY"
-
-# recheck is accepted but not applied today: this is the same instant feed
-curl -N "https://pinnodds.com/odds-drop-prematch?key=$KEY&recheck=30"
-
-# Only drops of 7% or more (the recheck part has no effect today)
-curl -N "https://pinnodds.com/odds-drop-prematch?key=$KEY&recheck=30&min_drop=7"
-```
-
-On `/odds-drop` (live) the `recheck` parameter is ignored as well (live drops are sub-second; a recheck window is meaningless there). `min_drop` is supported on both.
+**The `recheck` parameter is not supported.** `?recheck=N` is ignored on both streams: every drop is delivered immediately and no `rechecked_ms` field is added. If you need a stable-price filter, hold each drop on your side and compare it with the current price from `/kit/v1/prematch/lines` before acting.
 
 ---
 
@@ -1166,7 +1153,7 @@ These headers are board-level: `X-Data-Age-Ms` is the time since the newest writ
 | `feed_age_ms`, `sport_age_ms`, `prematch_age_ms`, `prematch_sport_age_ms`, `prematch_poll_age_ms` | WebSocket `ping` | Ages in ms at the ping's `ts`: time since we last received a push from Pinnacle (any kind, per sport, prematch) and since the last prematch board poll record |
 | `last` / `last_call` (top level) | REST boards | Store cursor for `since=`. Not a time |
 | `last` (inside an event) | REST events | Unix second at which we **served** the response; identical for every event |
-| `updated_at` | REST events only | Epoch ms: **our receive time** of the last real change to that event's markets |
+| `updated_at` | REST events only | Epoch ms: **our receive time** of the last real change to that event's markets. Returned by the boards and by the single-event endpoints `/kit/v1/details` (live) and `/kit/v1/prematch/markets` |
 | `X-Data-Age-Ms` / `X-Data-Status` / `X-Data-Board` | REST headers | Board-level age, as above |
 | `ts`, `age_s` | `/api/drops` rows | Our detection time of the drop |
 
@@ -1174,7 +1161,7 @@ There are TWO different fields named `last`, and NEITHER is a data age:
 
 - **Top level** (`last` / `last_call`, alongside `sport_id`) is the store sequence number. It only moves forward and it is the value you pass to `since=`.
 - **Inside each event**, `last` is the Unix second at which we rendered the response. It is identical for every event in the payload and says nothing about when that event's odds moved. Do not compute freshness from it.
-- **`updated_at`** (inside each event) is the freshness field: epoch milliseconds of the moment we received the last real change to that event's markets (a price, a line added or removed, or a status). Pinnacle re-sending identical prices does not move it. After one of our restarts it starts from the moment we first saw the event again ("unchanged since at least").
+- **`updated_at`** (inside each event, on the boards and on the single-event endpoints `/kit/v1/details` (live) and `/kit/v1/prematch/markets`) is the freshness field: epoch milliseconds of the moment we received the last real change to that event's markets (a price, a line added or removed, or a status). Pinnacle re-sending identical prices does not move it. After one of our restarts it starts from the moment we first saw the event again ("unchanged since at least").
 
 As a secondary signal, detect staleness from the top-level cursor:
 

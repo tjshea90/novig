@@ -206,149 +206,6 @@ Base URL: `https://bridge.polymarket.com`
 | User PNL API | 200 req / 10s |
 
 
-# CLOB Trading Rate Limits
-Source: https://docs.polymarket.com/api-reference/trading-rate-limits
-
-Per-signer token-bucket limits for CLOB order and cancellation requests
-
-Polymarket evaluates CLOB order and cancellation requests against separate token
-buckets for each signer address. The signer address is the address associated
-with your CLOB API credentials. Activity in one bucket does not consume capacity
-from the other.
-
-> [!WARNING]
->
-> Beginning July 24, 2026, the limiter will run in warning mode for two weeks.
-> Requests will continue to be processed during this period. A request that
-> would be rejected after live enforcement begins will include
-> `Poly-RateLimit-Warning: true`. Monitor this header and adjust your request
-> patterns before live enforcement begins. Polymarket will announce when live
-> enforcement begins.
-
-> [!NOTE]
->
-> These per-signer limits are separate from the existing [Cloudflare IP-based
-> limits](/api-reference/rate-limits), which remain unchanged.
-
-## How Rate Limits Work
-
-Each signer has an order bucket and a cancel bucket:
-
-| Bucket | Request | Token Cost |
-| - | - | - |
-| Order | `POST /order` | 1 |
-| Order | `POST /orders` | Number of orders in a non-empty batch |
-| Cancel | `DELETE /order` | 1 |
-| Cancel | `DELETE /orders` | Number of submitted order IDs |
-| Cancel | `DELETE /cancel-all` | 1 plus the number of orders canceled |
-| Cancel | `DELETE /cancel-market-orders` | 1 plus the number of matching orders canceled |
-
-### Refill and Burst Capacity
-
-Tokens refill continuously at the rate assigned to the current tier. Burst
-capacity is the maximum number of tokens a bucket can hold. A full bucket can
-spend up to that capacity immediately; after the burst is consumed, new tokens
-become available at the refill rate.
-
-Calculate the duration of a full burst as:
-
-```text theme={null}
-burst_seconds = burst / rate_per_sec
-```
-
-### Batch Requests
-
-Under live enforcement, a batch is admitted only when the bucket contains
-enough tokens for every entry. Otherwise, the entire request is rejected and no
-entries are processed. This all-or-nothing rule applies to the rate-limit check;
-an admitted batch retains its normal per-order response behavior.
-
-A batch whose token cost exceeds the tier's burst capacity can never be admitted
-as one request. Split it into smaller batches.
-
-### Cancel All and Cancel Market Orders
-
-The number of orders that will be canceled is not known when
-`DELETE /cancel-all` or `DELETE /cancel-market-orders` begins. Each request
-first consumes one cancel token. After the cancellation result is known, the
-bucket is debited one additional token for every order successfully canceled.
-
-For tiers that allow a negative cancel balance, this second debit can put the
-bucket into debt. Future cancel requests remain blocked until the bucket has
-enough tokens for the next request. Other tiers floor the post-cancel balance at
-zero regardless of debit size.
-
-## Volume Tiers
-
-Buckets are scoped to the signer address. Tier eligibility follows the
-cumulative trading volume of the maker wallet, even when it differs from the
-signer address. The volume window is currently 30 days, and tier assignments
-refresh every three hours.
-
-| Tier | 30-Day Volume | Order Rate (tokens/s) | Order Burst (tokens) | Cancel Rate (tokens/s) | Cancel Burst (tokens) | Negative Cancel Balance |
-| - | -: | -: | -: | -: | -: | :-: |
-| Standard | — | 40 | 60 | 80 | 120 | Yes |
-| Copper | \$30,000+ | 60 | 90 | 120 | 180 | Yes |
-| Bronze | \$50,000+ | 80 | 120 | 160 | 240 | Yes |
-| Silver | \$100,000+ | 200 | 300 | 400 | 600 | Yes |
-| Gold | \$500,000+ | 400 | 600 | 800 | 1,200 | Yes |
-| Platinum | \$2.5M+ | 450 | 675 | 900 | 1,350 | No |
-| Diamond | \$5M+ | 525 | 787 | 1,050 | 1,575 | No |
-| Elite | \$10M+ | 600 | 900 | 1,200 | 1,800 | No |
-
-Tier thresholds, the volume window, and rate limits may change as the system is
-tuned. Polymarket will provide advance notice of significant changes.
-
-### Check Your Tier
-
-Call [`GET /v1/user/rate-limit-tier`](/api-reference/account/get-rate-limit-tier)
-to read the tier currently assigned to your signer.
-
-## Response Headers
-
-Responses include the following headers when the limiter successfully evaluates
-a covered request:
-
-| Header | Description |
-| - | - |
-| `Poly-RateLimit-Remaining` | Current token balance for the applicable bucket after rate-limit accounting |
-| `Poly-RateLimit-Reset` | Unix timestamp when the current rate-limit wait period ends |
-| `Poly-RateLimit-Tier` | Rate-limit tier applied to the request |
-
-The following headers appear only in specific cases:
-
-| Header | Description |
-| - | - |
-| `Retry-After` | Retry delay in seconds; included on `429` responses |
-| `Poly-RateLimit-Warning` | `true` in warning mode when live enforcement would have rejected the request |
-
-`Poly-RateLimit-Reset` is not the time when the bucket will be completely full.
-On a `429` response for a request whose token cost fits within burst capacity,
-it indicates when enough tokens are expected for the attempted request. On an
-admitted request, it may be the current timestamp.
-
-`Poly-RateLimit-Remaining` can be negative after `DELETE /cancel-all` or
-`DELETE /cancel-market-orders` for tiers that allow a negative cancel balance.
-Before sending a large batch, compare its token cost with the remaining balance.
-
-## Handle 429 Responses
-
-After live enforcement begins, a request that requires more tokens than the
-applicable bucket contains returns `429 Too Many Requests`.
-
-For a request whose token cost is within the tier's burst capacity,
-`Retry-After` gives the minimum delay before retrying. You do not need to wait
-for the bucket to refill completely. If the request costs more than the burst
-capacity, split it into smaller requests instead of retrying it unchanged.
-
-## Get Help
-
-Contact [support@polymarket.com](mailto:support@polymarket.com) if you have
-questions about your tier, believe your wallet qualifies for a higher tier,
-recently moved trading activity to a new address, or believe you are being
-limited incorrectly.
-
-
 # Markets & Events
 Source: https://docs.polymarket.com/concepts/markets-events
 
@@ -31278,6 +31135,110 @@ Ready to upgrade or have questions?
 > daily Relay transactions by obtaining a [Relayer API key](https://polymarket.com/settings?tab=api-keys).
 
 
+# Upcoming Fee and Rebate Changes
+Source: https://docs.polymarket.com/programs/fee-and-rebate-changes-november-2026
+
+Prepare for the Polymarket DeFi fee and rebate changes taking effect November 20, 2026 at 23:59 UTC.
+
+> [!NOTE]
+>
+> **Effective Friday, November 20, 2026 at 23:59 UTC.** These changes apply to
+> Polymarket DeFi on [Polymarket.com](https://polymarket.com). The current fee
+> and rebate rules remain in effect until that time.
+
+## Taker Fees
+
+Taker fees will continue to use the same formula:
+
+```text theme={null}
+fee = shares × feeRate × price × (1 − price)
+```
+
+`shares` is the filled quantity, `price` is the fill price in dollars (for
+example, `0.40` for 40¢), and `feeRate` is the category coefficient below.
+The coefficients are inputs to the formula, not flat percentages of trade
+value.
+
+> [!NOTE]
+>
+> Makers continue to pay no platform trading fee.
+
+| Category | Fee Coefficient |
+| - | - |
+| Crypto — BTC 5-minute and 15-minute up/down | 0.05 |
+| Crypto — all other markets | 0.01 |
+| All sports, including NFL and college football | 0.05 |
+| Finance | 0.05 |
+| Tech | 0.05 |
+| Politics — elections | 0.05 |
+| Politics — excluding elections and geopolitics | 0.01 |
+| Economics | 0.01 |
+| Culture | 0.01 |
+| Weather | 0.01 |
+| Mentions | 0.01 |
+| Geopolitics | 0 |
+| Combos | 0.05 |
+| Other / General | 0.05 |
+
+Geopolitics remains fee-free. Combos keep their own fee coefficient, regardless
+of the categories of their underlying legs.
+
+## Taker Rebates
+
+The Bronze and Silver tiers will be removed. Accounts with less than
+\$200,000 in 30-day taker weighted volume will earn no taker rebate.
+
+The rebate rate on the Gold taker rebate tier moves to 10%, Platinum to 25%,
+and Diamond to 40%. Obsidian will stay at 50%, and a new Onyx tier will pay 60%.
+
+| Tier | 30-Day Taker Weighted Volume | Rebate on Taker Fees Paid |
+| - | - | - |
+| None | Under \$200,000 | 0% |
+| Gold | \$200,000 to under \$1 million | 10% |
+| Platinum | \$1 million to under \$4 million | 25% |
+| Diamond | \$4 million to under \$10 million | 40% |
+| Obsidian | \$10 million to under \$75 million | 50% |
+| Onyx (new) | \$75 million and above | 60% |
+
+Price weighting stays; category multipliers are removed. Each fee-paying taker
+fill contributes `shares × price × (1 − price)` to weighted volume. Your taker
+tier uses the sum over the last 30 days. This differs from dollar trading
+volume (`shares × price`). Please note that with no category multipliers
+moving forward, your tier may change even if you trade the same amount.
+
+The Gold, Platinum, Diamond, and Obsidian weighted-volume thresholds stay the
+same. One-time level-up bonuses will end.
+
+## Maker Rebates
+
+Tiered maker rebates will replace the daily market-wide rebate pools. Your
+maker tier will depend on your maker weighted volume over the last 30 days.
+Each eligible maker fill will earn your tier's percentage of the taker fee it
+generates.
+
+Maker fills count only toward your maker tier; taker fills count only toward
+your taker tier.
+
+| Tier | 30-Day Maker Weighted Volume | Rebate on Taker Fees Generated by Your Fills |
+| - | - | - |
+| None | Under \$200,000 | 0% |
+| Tier 1 | \$200,000 to under \$1 million | 3% |
+| Tier 2 | \$1 million to under \$4 million | 7% |
+| Tier 3 | \$4 million to under \$10 million | 10% |
+| Tier 4 | \$10 million and above | 15% |
+
+Maker weighted volume uses the same formula as taker weighted volume. For
+example, a Tier 4 maker whose eligible fills generate \$100 in taker fees earns
+\$15 in maker rebates.
+
+Combos and fee-free trades earn no maker rebates.
+[Liquidity rewards](/programs/liquidity-rewards) remain unchanged.
+
+Until the changes take effect, refer to the current [Fees](/trading/fees),
+[Taker Rebate Program](/programs/taker-rebates), and [Maker Rebates
+Program](/programs/maker-rebates) pages.
+
+
 # Liquidity Rewards
 Source: https://docs.polymarket.com/programs/liquidity-rewards
 
@@ -31717,6 +31678,13 @@ Source: https://docs.polymarket.com/programs/maker-rebates
 
 Earn daily pUSD rebates by providing liquidity on Polymarket
 
+> [!NOTE]
+>
+> **Upcoming changes — November 20, 2026 at 23:59 UTC.** Polymarket DeFi taker
+> fees and rebates will change. Maker rebates will move from daily pools to
+> volume tiers. The current rules below apply until then. [See all fee and
+> rebate changes](/programs/fee-and-rebate-changes-november-2026).
+
 Polymarket charges taker fees across multiple market categories. Fees are determined by the protocol at match time and fund a **Maker Rebates** program that pays daily pUSD rebates to liquidity providers.
 
 ***
@@ -32079,7 +32047,10 @@ Climb the tiers and earn daily pUSD rebates as you trade
 
 > [!NOTE]
 >
-> The Taker Rebate Program goes live on **Thursday, May 28, 2026**.
+> **Upcoming changes — November 20, 2026 at 23:59 UTC.** Polymarket DeFi taker
+> fees and rebates will change. Maker rebates will move from daily pools to
+> volume tiers. The current rules below apply until then. [See all fee and
+> rebate changes](/programs/fee-and-rebate-changes-november-2026).
 
 Polymarket Tiers reward you for trading as a **taker**. The more taker volume you do, the higher your tier, the bigger the rebate you earn back on every trade you make from that point on. Every **taker** trade earns **Weighted Volume (wV)**. Your tier is based on your Weighted Volume over the last 30 days, and rebates are paid every day in pUSD.
 
@@ -40549,6 +40520,13 @@ and the nested `error` object.
 Source: https://docs.polymarket.com/trading/fees
 
 Understanding trading fees on Polymarket
+
+> [!NOTE]
+>
+> **Upcoming changes — November 20, 2026 at 23:59 UTC.** Polymarket DeFi taker
+> fees and rebates will change. Maker rebates will move from daily pools to
+> volume tiers. The current rules below apply until then. [See all fee and
+> rebate changes](/programs/fee-and-rebate-changes-november-2026).
 
 Polymarket charges a small taker fee on certain markets. Fees are set by the protocol and applied at match time — you don't include fee information in your orders. These fees fund the [Maker Rebates Program](/programs/maker-rebates), which redistributes fees daily to market makers to incentivize deeper liquidity and tighter spreads. Takers can also earn a portion of fees back through the tiered [Taker Rebate Program](/programs/taker-rebates).
 
@@ -51810,13 +51788,6 @@ Gets the most recent transactions submitted to the Relayer, owned by a specific 
 - `RELAYER_API_KEY_ADDRESS`
 
 
-# Get relayer address and nonce
-Source: https://docs.polymarket.com/api-reference/relayer/get-relayer-address-and-nonce
-
-/api-spec/relayer-openapi.yaml get /relay-payload
-Fetches the relayer address and nonce for a specific user. Takes in the user's signer address and the type of nonce to retrieve.
-
-
 # Submit a transaction
 Source: https://docs.polymarket.com/api-reference/relayer/submit-a-transaction
 
@@ -52190,6 +52161,149 @@ timing and success are not guaranteed. Later accepted sends register again.
 A lost response may follow an accepted send. WebSocket keepalive does not
 refresh this deadline. Stop placing orders and explicitly cancel/verify
 orders you intend to remove before shutdown.
+
+
+# CLOB Trading Rate Limits
+Source: https://docs.polymarket.com/api-reference/trading-rate-limits
+
+Per-signer token-bucket limits for CLOB order and cancellation requests
+
+Polymarket evaluates CLOB order and cancellation requests against separate token
+buckets for each signer address. The signer address is the address associated
+with your CLOB API credentials. Activity in one bucket does not consume capacity
+from the other.
+
+> [!WARNING]
+>
+> Beginning July 24, 2026, the limiter will run in warning mode for two weeks.
+> Requests will continue to be processed during this period. A request that
+> would be rejected after live enforcement begins will include
+> `Poly-RateLimit-Warning: true`. Monitor this header and adjust your request
+> patterns before live enforcement begins. Polymarket will announce when live
+> enforcement begins.
+
+> [!NOTE]
+>
+> These per-signer limits are separate from the existing [Cloudflare IP-based
+> limits](/api-reference/rate-limits), which remain unchanged.
+
+## How Rate Limits Work
+
+Each signer has an order bucket and a cancel bucket:
+
+| Bucket | Request | Token Cost |
+| - | - | - |
+| Order | `POST /order` | 1 |
+| Order | `POST /orders` | Number of orders in a non-empty batch |
+| Cancel | `DELETE /order` | 1 |
+| Cancel | `DELETE /orders` | Number of submitted order IDs |
+| Cancel | `DELETE /cancel-all` | 1 plus the number of orders canceled |
+| Cancel | `DELETE /cancel-market-orders` | 1 plus the number of matching orders canceled |
+
+### Refill and Burst Capacity
+
+Tokens refill continuously at the rate assigned to the current tier. Burst
+capacity is the maximum number of tokens a bucket can hold. A full bucket can
+spend up to that capacity immediately; after the burst is consumed, new tokens
+become available at the refill rate.
+
+Calculate the duration of a full burst as:
+
+```text theme={null}
+burst_seconds = burst / rate_per_sec
+```
+
+### Batch Requests
+
+Under live enforcement, a batch is admitted only when the bucket contains
+enough tokens for every entry. Otherwise, the entire request is rejected and no
+entries are processed. This all-or-nothing rule applies to the rate-limit check;
+an admitted batch retains its normal per-order response behavior.
+
+A batch whose token cost exceeds the tier's burst capacity can never be admitted
+as one request. Split it into smaller batches.
+
+### Cancel All and Cancel Market Orders
+
+The number of orders that will be canceled is not known when
+`DELETE /cancel-all` or `DELETE /cancel-market-orders` begins. Each request
+first consumes one cancel token. After the cancellation result is known, the
+bucket is debited one additional token for every order successfully canceled.
+
+For tiers that allow a negative cancel balance, this second debit can put the
+bucket into debt. Future cancel requests remain blocked until the bucket has
+enough tokens for the next request. Other tiers floor the post-cancel balance at
+zero regardless of debit size.
+
+## Volume Tiers
+
+Buckets are scoped to the signer address. Tier eligibility follows the
+cumulative trading volume of the maker wallet, even when it differs from the
+signer address. The volume window is currently 30 days, and tier assignments
+refresh every three hours.
+
+| Tier | 30-Day Volume | Order Rate (tokens/s) | Order Burst (tokens) | Cancel Rate (tokens/s) | Cancel Burst (tokens) | Negative Cancel Balance |
+| - | -: | -: | -: | -: | -: | :-: |
+| Standard | — | 40 | 60 | 80 | 120 | Yes |
+| Copper | \$30,000+ | 60 | 90 | 120 | 180 | Yes |
+| Bronze | \$50,000+ | 80 | 120 | 160 | 240 | Yes |
+| Silver | \$100,000+ | 200 | 300 | 400 | 600 | Yes |
+| Gold | \$500,000+ | 400 | 600 | 800 | 1,200 | Yes |
+| Platinum | \$2.5M+ | 450 | 675 | 900 | 1,350 | No |
+| Diamond | \$5M+ | 525 | 787 | 1,050 | 1,575 | No |
+| Elite | \$10M+ | 600 | 900 | 1,200 | 1,800 | No |
+
+Tier thresholds, the volume window, and rate limits may change as the system is
+tuned. Polymarket will provide advance notice of significant changes.
+
+### Check Your Tier
+
+Call [`GET /v1/user/rate-limit-tier`](/api-reference/account/get-rate-limit-tier)
+to read the tier currently assigned to your signer.
+
+## Response Headers
+
+Responses include the following headers when the limiter successfully evaluates
+a covered request:
+
+| Header | Description |
+| - | - |
+| `Poly-RateLimit-Remaining` | Current token balance for the applicable bucket after rate-limit accounting |
+| `Poly-RateLimit-Reset` | Unix timestamp when the current rate-limit wait period ends |
+| `Poly-RateLimit-Tier` | Rate-limit tier applied to the request |
+
+The following headers appear only in specific cases:
+
+| Header | Description |
+| - | - |
+| `Retry-After` | Retry delay in seconds; included on `429` responses |
+| `Poly-RateLimit-Warning` | `true` in warning mode when live enforcement would have rejected the request |
+
+`Poly-RateLimit-Reset` is not the time when the bucket will be completely full.
+On a `429` response for a request whose token cost fits within burst capacity,
+it indicates when enough tokens are expected for the attempted request. On an
+admitted request, it may be the current timestamp.
+
+`Poly-RateLimit-Remaining` can be negative after `DELETE /cancel-all` or
+`DELETE /cancel-market-orders` for tiers that allow a negative cancel balance.
+Before sending a large batch, compare its token cost with the remaining balance.
+
+## Handle 429 Responses
+
+After live enforcement begins, a request that requires more tokens than the
+applicable bucket contains returns `429 Too Many Requests`.
+
+For a request whose token cost is within the tier's burst capacity,
+`Retry-After` gives the minimum delay before retrying. You do not need to wait
+for the bucket to refill completely. If the request costs more than the burst
+capacity, split it into smaller requests instead of retrying it unchanged.
+
+## Get Help
+
+Contact [support@polymarket.com](mailto:support@polymarket.com) if you have
+questions about your tier, believe your wallet qualifies for a higher tier,
+recently moved trading activity to a new address, or believe you are being
+limited incorrectly.
 
 
 # Get a user's PnL series
@@ -52752,9 +52866,6 @@ Source: https://docs.polymarket.com/api-reference/get-account-rewards
 /api-spec/perps-openapi.json get /v1/account/rewards
 Get per-instrument daily liquidity reward shares for the authenticated account.
 Reward periods run from 12:00 UTC to 12:00 UTC and are labeled by their UTC end date.
-OI rewards pay 6% APR on the account's full daily average gross OI across all
-instruments when the combined daily average gross OI of its rewards entity is
-at least $5M. Accounts without an entity mapping qualify independently.
 The first reward period starts at 2026-07-06 12:00 UTC. If no date range is provided,
 the latest computed reward period is returned.
 
@@ -54230,6 +54341,13 @@ Use the `type` query parameter to choose which wallet type to check:
 Omitting `type` is equivalent to `type=SAFE`.
 
 
+# Get relayer address and nonce
+Source: https://docs.polymarket.com/api-reference/relayer/get-relayer-address-and-nonce
+
+/api-spec/relayer-openapi.yaml get /relay-payload
+Fetches the relayer address and nonce for a specific user. Takes in the user's signer address and the type of nonce to retrieve.
+
+
 # Set Auto-Cancel
 Source: https://docs.polymarket.com/api-reference/set-auto-cancel
 
@@ -54448,11 +54566,6 @@ Public WebSocket for real-time orderbook, price, and market lifecycle updates.
 Source: https://docs.polymarket.com/api-reference/wss/perps-modify-orders
 
 Perps WebSocket order modification by order ID.
-
-# Modify Orders by Client Order ID
-Source: https://docs.polymarket.com/api-reference/wss/perps-modify-orders-coid
-
-Perps WebSocket order modification by client order ID.
 
 # Ping
 Source: https://docs.polymarket.com/api-reference/wss/perps-ping
@@ -54867,6 +54980,11 @@ Perps WebSocket private funding updates.
 Source: https://docs.polymarket.com/api-reference/wss/perps-klines
 
 Perps WebSocket candle updates.
+
+# Modify Orders by Client Order ID
+Source: https://docs.polymarket.com/api-reference/wss/perps-modify-orders-coid
+
+Perps WebSocket order modification by client order ID.
 
 # Notifications
 Source: https://docs.polymarket.com/api-reference/wss/perps-notifications
@@ -56391,6 +56509,28 @@ Auto-cancel and rate-limit updates
 Source: https://docs.polymarket.com/changelog/predictions
 
 Important changes to Polymarket prediction markets, including the CLOB, APIs, web application, and mobile applications.
+
+**Nov 16, 2026**
+
+Upcoming: DeFi fee and rebate changes
+
+## Upcoming DeFi Fee and Rebate Changes
+
+**Effective November 20, 2026 at 23:59 UTC**, Polymarket DeFi on
+[Polymarket.com](https://polymarket.com) will update its fees and rebates:
+
+* Taker fee coefficients will change by category. Geopolitics stays fee-free.
+* Taker rebate rates for Gold, Platinum, and Diamond will decrease. Obsidian will
+  stay at 50%, and a new Onyx tier will pay 60%. The Bronze and Silver tiers,
+  category multipliers, and one-time level-up bonuses will be removed.
+  Price weighting stays.
+* Maker rebates will move from daily market-wide pools to volume tiers paying
+  3%, 7%, 10%, or 15% of the taker fees generated by eligible maker fills.
+  Liquidity rewards remain unchanged.
+
+See the [full November fee and rebate changes](/programs/fee-and-rebate-changes-november-2026)
+for category rates, tier thresholds, and volume calculations. Current rules
+apply until then.
 
 **Nov 16, 2026**
 

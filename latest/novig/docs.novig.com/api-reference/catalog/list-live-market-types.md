@@ -106,6 +106,9 @@ paths:
                   - MONEY
                   - SPREAD
                   - TOTAL
+                  - MONEYLINE_3_WAY_WIN
+                  - MONEYLINE_3_WAY_DRAW
+                  - TO_ADVANCE
                   - TEAM_TOTAL
                   - THREE_POINTERS_MADE
                   - POINTS

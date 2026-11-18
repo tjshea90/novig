@@ -24,7 +24,7 @@ Every order starts `PENDING`. A resting order is `OPEN`. The right column holds 
 * `open` means the order is resting. Any fills that matched when it entered the book arrive first.
 * A partial `fill` keeps the order `OPEN` and shrinks `remaining`.
 * `cancel` means you canceled the order, it expired, or we voided it. An `IOC` order that fills in part cancels the rest.
-* `reject` means we refused the order after accepting it. An `IOC`, `FOK`, or `PO` order that fills nothing is rejected.
+* `reject` means we refused the order after accepting it. We reject an `IOC` that fills nothing, a `FOK` that can't fill completely, and a `PO` that would take.
 
 | Status | Means | Terminal |
 | - | - | - |

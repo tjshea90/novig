@@ -46,6 +46,7 @@ All three debit the `read` throttle.
 
 `subscribe` and `snapshot` name a selection in three optional fields.
 An empty selection gets `EMPTY_SELECTION`.
+Two more optional fields, `depth` and `replay`, cut the [`book`](https://docs.novig.com/api/streaming/book) and [`trades`](https://docs.novig.com/api/streaming/tape) snapshots.
 
 ```json theme={"dark"}
 {
@@ -73,6 +74,9 @@ An `events` selection also covers markets that open later.
 `subscribe` and `snapshot` apply all or nothing.
 One market we can't find refuses the whole request with `MARKET_NOT_FOUND`, and one event with `EVENT_NOT_FOUND`.
 The error doesn't name the subject, so check your IDs against the catalog before a large request.
+
+One connection watches at most {RATE_LIMIT_TIERS[0].maxWatchedMarkets.toLocaleString("en-US")} markets at the base tier, and more at a [higher tier](https://docs.novig.com/api/throttling.md#tiers).
+An event counts as each of its markets. A request past the cap gets `SUBSCRIPTION_LIMIT_EXCEEDED`.
 
 `unsubscribe` takes a list of subject strings instead.
 
@@ -106,7 +110,16 @@ They don't spend from `stream`.
 ```json theme={"dark"}
 {
   "nonce": 17,
-  "place": { "orders": [{ "outcomeId": "6f9619ff-…", "price": "0.54", "qty": 10, "tif": "GTC" }] }
+  "place": {
+    "orders": [
+      {
+        "outcomeId": "6f9619ff-…",
+        "price": "0.54",
+        "qty": 10,
+        "tif": "GTC"
+      }
+    ]
+  }
 }
 ```
 
@@ -142,7 +155,9 @@ Put the nonces in the same order as `orders`.
 ```json theme={"dark"}
 {
   "nonce": 18,
-  "cancel": { "orderIds": ["6f9619ff-…"] }
+  "cancel": {
+    "orderIds": ["6f9619ff-…"]
+  }
 }
 ```
 
@@ -156,7 +171,9 @@ Each nonce costs 1 `cancel` token, however many orders its place booked.
 ```json theme={"dark"}
 {
   "nonce": 20,
-  "cancel": { "nonces": [17] }
+  "cancel": {
+    "nonces": [17]
+  }
 }
 ```
 
@@ -174,7 +191,9 @@ To cancel an older place, cancel its orders by id.
 ```json theme={"dark"}
 {
   "nonce": 19,
-  "cancel_all": { "market": "6f9619ff-…" }
+  "cancel_all": {
+    "market": "6f9619ff-…"
+  }
 }
 ```
 
@@ -195,7 +214,7 @@ A pair is one subject on one channel.
 An event counts one pair for each market it holds, and at least one.
 A subscribe to 100 markets on `book` weighs ` /request`, whether you name the markets or their event.
 
-We charge at most the `stream` capacity of 512 tokens.
+We charge at most your `stream` capacity, 512 tokens at the base tier.
 A request above that cap passes only when the throttle is full, and it empties the throttle.
 
 * `snapshot` costs the same as `subscribe`.
@@ -299,8 +318,9 @@ Arrows are messages, top to bottom in time. After the new snapshot, drop the buf
 A market that opens under an `events` subscription arrives with no snapshot. That's not a gap.
 Its first delta is `OPEN`, and its `book`, `bbo`, and `trades` channels start at seq 0, so each one's first delta carries seq 1.
 
-If your connection falls behind, we stop sending it market deltas.
-Once you've read what we queued, we send a new snapshot with no `nonce`, and deltas resume after it.
+If your connection falls behind, we stop sending it deltas on every channel, private ones included.
+Once you've read what we queued, we send a new snapshot of every subscription with no `nonce`, and deltas resume after it.
+That snapshot uses the default `depth` and `replay`.
 
 ## Markets that leave drop out of your subscriptions
 

@@ -73,14 +73,16 @@ It's also the subaccount's address. Store it beside `desk-1.pem`.
 >
 > If you lose `desk-1.pem`, nothing can sign as this subaccount again. Your `management` key can still defund the subaccount and change its label.
 
-Opening a subaccount has two requirements:
+Opening a subaccount has three requirements:
 
-* You've passed KYC, our identity check, and aren't self-excluded. We check this here, when you fund, and on every order you place.
-* You have a free slot. The sixth open fails.
+* You've passed KYC, our identity check, and aren't self-excluded. We check this here, on every transfer, and on every order you place.
+* You call from an allowed location: no VPN or proxy, and not a restricted state.
+* You have a free slot. An open past 10 live subaccounts fails with a 400 `ACCOUNT_RULE_REFUSED`.
 
 ## List subaccounts
 
-`GET /v3/account/subaccounts` returns one row per live subaccount.
+`GET /v3/account/subaccounts` returns one row per live key on each subaccount, the oldest subaccount first.
+A subaccount whose keys are all revoked has no row.
 Sign it with a `management` or `management::read` key.
 
 The route has no paging and no filter.

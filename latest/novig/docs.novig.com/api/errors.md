@@ -17,37 +17,33 @@ signing\_api::verify(request)
 
 `BodyTooLarge`**413**
 
-`headers present?`
+`novig-key-id is a UUID`
 
-`KeyIdRequired | TimestampRequired | SignatureRequired`**401**
+`KeyIdRequired | MalformedKeyId`**401**
 
-`Uuid::parse(key_id)`
+`novig-timestamp is digits`
 
-`MalformedKeyId`**401**
+`TimestampRequired | MalformedTimestamp`**401**
 
-`i64::parse(timestamp)`
+`base64::decode(signature)`
 
-`MalformedTimestamp`**401**
+`SignatureRequired | MalformedSignature`**401**
 
 `|now − ts| ≤ 30 s`
 
 `TimestampTooOld | TimestampTooFarInFuture`**401**
 
-`key row`
-
-`KeyNotFound`**401**
-
-`the read itself`
+`the key read`
 
 `DatabaseError`**500**
 
-`live && !expired`
+`live key row`
 
-`KeyRevoked | KeyExpired`**401**
+`KeyNotFound`**401**
 
-`base64::decode(signature)`
+`!expired`
 
-`MalformedSignature`**401**
+`KeyExpired`**401**
 
 `key.verify(canonical, sig)`
 
@@ -66,7 +62,8 @@ The `code` in the response depends only on the status, so branch on the `code`, 
 
 | Status | `code` |
 | - | - |
-| 401 403 | `SIGNATURE_REJECTED` |
+| 401 | `SIGNATURE_REJECTED` |
+| 403 | `SCOPE_INSUFFICIENT` |
 | 413 | `PAYLOAD_TOO_LARGE` |
 | 500 | `INTERNAL_ERROR` |
 
@@ -82,11 +79,13 @@ The `code` in the response depends only on the status, so branch on the `code`, 
 | `The publicKey field is not a valid SPKI public key.` | Export it as SPKI |
 | `Only Ed25519 and P-256 public keys are accepted…` | Use Ed25519 or P-256 |
 | `The algorithm field must match the key type. Expected <a>.` | Match your key |
-| `That key does not reach a subaccount.` | Use a `trading` key ID |
+| `That key does not reach a subaccount` | Use a `trading` key ID |
 | `You can have at most 10 subaccounts.` | Relabel one |
 | `You can have at most 128 live management::read keys.` | Revoke one |
 | `You can have at most 128 live trading::read keys.` | Revoke one |
 | `You already used that transfer id on another subaccount.` | Transfer IDs are unique per trader |
+
+A key refusal answers `INVALID_BODY`. A limit or transfer id refusal answers `ACCOUNT_RULE_REFUSED`.
 
 To export a public key as SPKI, run `openssl pkey -pubout` and send the output with its newlines.
 
@@ -108,7 +107,6 @@ A transfer id is unique per trader.
 | `novig-timestamp is too old` | Send milliseconds |
 | `novig-timestamp is too far in the future` | Check your clock |
 | `api key not found` | Check the key ID and host |
-| `api key has been revoked` | Create a new key |
 | `api key has expired` | Create a new key |
 | `novig-signature is malformed` | Send standard padded base64 |
 | `signature verification failed` | Sign a test vector |
@@ -117,16 +115,16 @@ When `novig-timestamp` or `novig-signature` is missing, the first message names 
 
 We accept a timestamp within ±30 s of our clock, so check your clock too.
 
-`api key not found` means a wrong key ID, the wrong environment, or a key revoked more than 60 seconds ago.
+`api key not found` means a wrong key ID, the wrong environment, or a revoked key.
 
-`api key has been revoked` means you revoked the key less than 60 seconds ago.
+A key route answers `Authentication required.` when the request has no `novig-key-id` header.
 
 For `signature verification failed`, sign a [test vector](https://docs.novig.com/api/signing.md#test-vectors). Diff your canonical string against its `string_to_sign`.
 
 If you still get a `401`, find your symptom below.
 
 * **A 401 on every call.** A header, the clock, the key, or the canonical string is wrong. Read `message`, then sign a published vector and diff your string against it on [Sign a request](https://docs.novig.com/api/signing.md).
-* **`GET` works, but `POST` fails.** Without `Content-Type: application/json`, the server hashed zero bytes. Send that header on every request with a body.
+* **`GET` works, but `POST` returns a `400` `INVALID_BODY`.** You sent no `Content-Type: application/json`. Send that header on every request with a body.
 * **Every `POST` fails, and the body looks right.** Your client re-serialized the JSON after you hashed it. Send the exact bytes you hashed.
 * **Every path fails.** You signed the URL, or dropped the mount prefix. Sign the path only, with the mount prefix included.
 * **A P-256 signature never verifies.** You sent a raw `r‖s` signature. Send DER instead, as [Algorithms](https://docs.novig.com/api/signing.md#algorithms) describes.
@@ -147,7 +145,7 @@ A `trading` or `trading::read` key that names a sibling subaccount gets a `404` 
 
 ## `404` Not Found
 
-We answer `Key not found.`, `Subaccount not found.`, or `Transfer not found.` when we can't find the ID.
+We answer `Key not found.`, `Subaccount not found`, or `Transfer not found.` when we can't find the ID.
 
 An ID that belongs to another trader gets the same reply.
 
@@ -155,6 +153,9 @@ An ID that belongs to another trader gets the same reply.
 
 * `A live key with this public key already exists.` A public key is unique across Novig.
 * `This trader already has a live management key…` Revoke the live `management` key first.
+* `This subaccount already has a live trading key…` Revoke the live `trading` key first, or create a `trading::read` key.
+
+The codes are `KEY_EXISTS`, `MANAGEMENT_KEY_EXISTS`, and `TRADING_KEY_EXISTS`.
 
 A declined transfer is not an error.
 The route answers `202`, and the transfer then reads `status: "Rejected"`.
@@ -387,7 +388,7 @@ For each code, see [`451`](#451-geolocation-unavailable).
 
 ### Before you contact us
 
-Email [developers@novig.co](mailto:developers@novig.co) with:
+Email [developers@novig.com](mailto:developers@novig.com) with:
 
 * The `x-amz-cf-id` header for an edge `403`, or the JSON body for a `451`.
 * The UTC timestamp of the request.
@@ -419,15 +420,18 @@ A body that doesn't parse answers `INVALID_BODY`. Its `message` names the field 
 | 400 | `OFFSET_NOT_SUPPORTED` `AFTER_NEEDS_KEY_ID` |
 | 400 | `STALE_NONCE` `EMPTY_SELECTION` `SUBSCRIPTION_LIMIT_EXCEEDED` |
 | 400 | `NONCE_NOT_FOUND` `NONCE_COUNT_MISMATCH` |
+| 400 | `BOOK_DEPTH_OUT_OF_RANGE` `TRADE_REPLAY_OUT_OF_RANGE` |
+| 401 | `SIGNATURE_REJECTED` |
 | 403 | `SCOPE_INSUFFICIENT` `KYC_REQUIRED` |
 | 404 | `MARKET_NOT_FOUND` `EVENT_NOT_FOUND` `OUTCOME_NOT_FOUND` `ORDER_NOT_FOUND` |
-| 404 | `WALLET_NOT_FOUND` `SUBACCOUNT_NOT_FOUND` |
+| 404 | `WALLET_NOT_FOUND` `SUBACCOUNT_NOT_FOUND` `POSITION_NOT_FOUND` |
 | 409 | `MARKET_CLOSED` `MARKET_INACTIVE` |
 | 422 | `INSUFFICIENT_BALANCE` `POSITION_LIMIT_EXCEEDED` `OPEN_ORDER_LIMIT_EXCEEDED` |
 | 422 | `WAGER_LIMIT_EXCEEDED` |
 | 423 | `SYSTEM_LOCKED` `ACCOUNT_LOCKED` `LEAGUE_LOCKED` `COMPETITOR_LOCKED` |
 | 423 | `ACCOUNT_EXCLUDED` `SELF_EXCLUDED` `EMPLOYEE_ACCOUNT` |
 | 423 | `EVENT_LOCKED` `MARKET_LOCKED` `LIQUIDATION_ONLY` `DEPOSIT_RETURN_HOLD` |
+| 413 | `PAYLOAD_TOO_LARGE` |
 | 429 | `RATE_LIMIT_EXCEEDED` |
 | 451 | See [`451`](#451-geolocation-unavailable) |
 | 503 | `GEOLOCATION_SCREENING_UNAVAILABLE` |

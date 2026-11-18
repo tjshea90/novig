@@ -69,8 +69,8 @@ A literal `{}` body gives a different hash.
 >
 > Hash the exact bytes you send, and send them with `Content-Type: application/json`. Re-serialized JSON changes the hash.
 
-Without a content type, the server never captures the body.
-It hashes zero bytes instead.
+We hash the body bytes we receive, whatever the content type.
+A route that reads JSON refuses a body without that header, with a `400` `INVALID_BODY`.
 
 Here's the string for `GET /v3/keys` at timestamp `1755000000000`:
 

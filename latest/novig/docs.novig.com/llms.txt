@@ -101,7 +101,7 @@
 - [Futures Markets](https://docs.novig.com/affiliates/futures.md): Integrating Novig futures markets into your platform
 - [API Changelog](https://docs.novig.com/api-reference/changelog.md): This changelog is specific to our API users and LPs
 - [Novig Dev Docs](https://docs.novig.com/deprecated/index.md): Get started with the NBX API
-- [Move from v2 to v3](https://docs.novig.com/deprecated/migrate-to-v3.md): For liquidity providers on v2: what changes in v3, and whether to move at all.
+- [Move from v2 to v3](https://docs.novig.com/deprecated/migrate-to-v3.md): For liquidity providers on v2: what changes in v3, and how to move.
 - [Authentication](https://docs.novig.com/deprecated/api-reference/authentication.md): OAuth 2.0 authentication for the NBX API
 - [Data Model](https://docs.novig.com/deprecated/api-reference/data-model.md): Understanding how Novig structures events, markets, and outcomes
 - [Understanding Outcome IDs](https://docs.novig.com/deprecated/api-reference/outcome-ids.md): How outcomes are organized and identified in the Novig API

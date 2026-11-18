@@ -65,9 +65,11 @@ What a retry does depends on the `clientTransferId` you send.
 
 | Retry with | Result |
 | - | - |
-| The same `clientTransferId` | The first request's response, and nothing queued |
+| The same `clientTransferId` | The first transfer at its current status, and nothing new queued |
 | The same ID on another subaccount | 400, because the ID is per trader |
 | No ID | A second transfer |
+
+A retry returns the first transfer even when its `amount` or `direction` differs.
 
 ## Check the transfer status
 
@@ -82,7 +84,8 @@ Its `status` tells you whether the money moved.
 
 If a transfer stays `Requested`, contact support. Don't retry it under a new ID.
 
-On a `Rejected` transfer, `actualBalance` holds the balance we found.
+A transfer is `Rejected` when the wallet it draws from holds less than `amount`.
+On a `Rejected` transfer, `actualBalance` holds that wallet's balance.
 
 ## Transfers and transactions
 
@@ -102,7 +105,8 @@ Read a transfer with `GET /v3/account/subaccounts/{keyId}/transfers/{id}`.
 
 List transactions with `GET /v3/account/subaccounts/{keyId}/transactions`.
 
-No route lists transfers.
+List every transfer with `GET /v3/account/transfers`, newest first. Sign it with a `management` or `management::read` key.
+
 If you lose a `transferId`, send the same request again with the same `clientTransferId` to recover it.
 
 

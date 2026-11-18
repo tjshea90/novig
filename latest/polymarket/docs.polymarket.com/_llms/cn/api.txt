@@ -115,42 +115,6 @@
 - [获取 Builder 排行榜](https://docs.polymarket.com/cn/api-reference/boards/get-the-builders-leaderboard.md): The ranked board of builders by volume.
 - [获取 Builder 交易量走势](https://docs.polymarket.com/cn/api-reference/boards/get-builder-volume-over-time.md): The per-builder volume time series.
 
-#### feeds
-
-- [List account activity](https://docs.polymarket.com/api-reference/feeds/list-account-activity.md): Keyset-paginated activity feed (trades, splits, merges, redeems, …) in the standard `{ data, pagination }` envelope.
-- [List combo activity](https://docs.polymarket.com/api-reference/feeds/list-combo-activity.md): Keyset-paginated combo lifecycle + redemption feed for a user, in the standard `{ data, pagination }` envelope.
-- [List trades](https://docs.polymarket.com/api-reference/feeds/list-trades.md): Keyset-paginated trade feed in the standard `{ data, pagination }` envelope.
-
-#### wallet
-
-- [Get wallet approvals](https://docs.polymarket.com/api-reference/wallet/get-wallet-approvals.md): Polygon token/operator approval state for one wallet.
-- [List positions for a user or market](https://docs.polymarket.com/api-reference/wallet/list-positions-for-a-user-or-market.md): A keyset page of positions in the standard `{ data, pagination }` envelope. One route serves a user's open book, their closed book (`status=CLOSED`), and a market's holders (market anchor).
-- [List combo positions](https://docs.polymarket.com/api-reference/wallet/list-combo-positions.md): Combo positions for a user, in the standard `{ data, pagination }` envelope.
-- [Get a user's PnL series](https://docs.polymarket.com/api-reference/wallet/get-a-users-pnl-series.md): Complete cumulative native-PnL atoms and compositions.
-- [Get a user's profile stats](https://docs.polymarket.com/api-reference/wallet/get-a-users-profile-stats.md): The profile card for one wallet in a single call.
-- [Get a user's trading volume](https://docs.polymarket.com/api-reference/wallet/get-a-users-trading-volume.md): One wallet's trading volume over a window, in both units side by side.
-- [Get portfolio value](https://docs.polymarket.com/api-reference/wallet/get-portfolio-value.md): The user's portfolio value: single-market holdings marked to market plus unresolved combo positions at cost basis.
-
-#### boards
-
-- [List the biggest wins](https://docs.polymarket.com/api-reference/boards/list-the-biggest-wins.md): The biggest single winning positions.
-- [Get the builders leaderboard](https://docs.polymarket.com/api-reference/boards/get-the-builders-leaderboard.md): The ranked board of builders by volume.
-- [Get builder volume over time](https://docs.polymarket.com/api-reference/boards/get-builder-volume-over-time.md): The per-builder volume time series.
-- [Get the trader leaderboard](https://docs.polymarket.com/api-reference/boards/get-the-trader-leaderboard.md): The ranked board of realized PnL, combos included.
-
-#### markets
-
-- [List a market's top holders](https://docs.polymarket.com/api-reference/markets/list-a-markets-top-holders.md): Top holders of a market, netted per user and grouped by outcome token.
-- [Get live volume for an event](https://docs.polymarket.com/api-reference/markets/get-live-volume-for-an-event.md): Cumulative one-side (taker) volume per market.
-- [Get open interest](https://docs.polymarket.com/api-reference/markets/get-open-interest.md): Priced gross open interest per market.
-- [Get a token's price history](https://docs.polymarket.com/api-reference/markets/get-a-tokens-price-history.md): The price-history series for one outcome token, or a single point-in-time observation.
-- [Get resolution state](https://docs.polymarket.com/api-reference/markets/get-resolution-state.md): Complete resolution state by one selector family.
-- [Look up tokens](https://docs.polymarket.com/api-reference/markets/look-up-tokens.md): Resolves token ids, or the tokens of conditions, to their condition, module, outcome, market, event and neg-risk question index in one call. Exactly one selector per request.
-
-#### service
-
-- [Get data freshness](https://docs.polymarket.com/api-reference/service/get-data-freshness.md): How fresh the data behind this API is.
-
 ### 搜索
 
 - [搜索市场、事件和资料](https://docs.polymarket.com/cn/api-reference/search/search-markets-events-and-profiles.md)
@@ -255,10 +219,6 @@
 
 - [PolyBolt WebSocket](https://docs.polymarket.com/cn/api-reference/live-data/overview.md): 通过一个 WebSocket 连接实时接收加密货币、股票类资产和 TWAP 参考价格。
 - [实时数据频道](https://docs.polymarket.com/cn/api-reference/wss/polybolt.md): PolyBolt WebSocket 消息参考，涵盖加密货币、股票类资产和 TWAP 参考价格。
-
-#### Websockets
-
-- [Live Data Channel](https://docs.polymarket.com/api-reference/websockets/live-data-channel.md): Send JSON text frames tagged with op. The server answers every op with an ack or an error ack (never a close, except for policy breaches, close 4008, and an expired Access Token, close 1008) and pushes envelopes for subscribed channels. Limits per connection: 64 active (channel, filter) subscription…
 
 ### 跨链桥
 

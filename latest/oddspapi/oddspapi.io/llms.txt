@@ -5,6 +5,25 @@
 > major softs (Bet365, DraftKings, FanDuel), crypto books (1xBet), and exchanges
 > (Betfair). Free tier available with no credit card required.
 
+Also known as: Odds Papi, OddsPapi.io, OddsPapi API, OddsPapi Sports Betting API.
+Category: real-time sports odds API, betting odds data feed, sportsbook odds API,
+line movement / historical odds API.
+
+## Coverage
+
+- Bookmakers: 300+ (Pinnacle, Bet365, DraftKings, FanDuel, BetMGM, Unibet, Bwin, Sbobet, Betfair Exchange, …)
+- Sports: 60+ (Soccer, Basketball, Tennis, Baseball, Ice Hockey, American Football, MMA, Cricket, Rugby, Motorsports, Esports, …)
+- Competitions: 12,000+ per year
+- Markets: Moneyline, Spread, Totals, 1X2, Draw No Bet, Double Chance, Asian Handicap, Exact Score, Player Props, Team Props, Futures
+- Odds types: pre-match, live, historical (line movement)
+- Delivery: REST (JSON) and low-latency WebSocket
+
+## Docs
+
+- [API documentation](https://docs.oddspapi.io): endpoints, IDs, WebSocket channels
+- [Pricing](https://oddspapi.io/#pricing): free tier plus custom plans
+- [Coverage](https://oddspapi.io/coverage): bookmakers, sports, tournaments, markets
+
 ## Quick Start
 
 Authentication uses a **query parameter**, not a header:

@@ -227,7 +227,6 @@ pre{scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
   <a class="method" href="#sse-live"><span class="verb">SSE</span>/odds-drop</a>
   <a class="method" href="#sse-prematch"><span class="verb">SSE</span>/odds-drop-prematch</a>
   <a class="method" href="#ws-feed"><span class="verb" style="background:rgba(127,214,155,.12); color:var(--ok)">WS</span>/ws/feed <span style="color:var(--accent); font-size:10px">$99/mo add-on</span></a>
-  <a class="method" href="#prematch-recheck" style="padding-left: 20px; font-size: 11px">↳ <code>?recheck=N</code> stable filter</a>
 
   <div class="toc-h">Services</div>
   <a class="method" href="#sportsmeld"><span class="verb" style="background:rgba(255,107,26,.14); color:var(--accent)">NEW</span>SportsMeld matching <span style="color:var(--accent); font-size:10px">free trial</span></a>
@@ -1120,32 +1119,8 @@ $ch = curl_init(BASE . <span class="s">"/odds-drop-prematch?key=$API_KEY"</span>
       <b>Volume note.</b> Prematch lines move slowly. Expect &lt; 1 drop/sec on a typical day, vs. tens per second on the live stream during prime hours. A 90-second sample may surface zero drops — that's normal.
     </div>
 
-    <h3 id="prematch-recheck" style="margin: 22px 0 6px; font-size: 15px">Optional: <code>?recheck=N</code> stable-price filter</h3>
-    <div class="callout warn" style="margin: 0 0 12px">
-      <b>Current status: <code>recheck</code> is accepted but not applied.</b> The stream ignores the parameter today: every drop is delivered immediately, nothing is held back or suppressed, and no <code>rechecked_ms</code> field is added. If you need a stable-price filter, hold each drop on your side for the time you want and compare it with the current price from <a href="#prematch-lines"><code>/kit/v1/prematch/lines</code></a> before acting. The description below is how the filter is designed to behave.
-    </div>
-    <p style="margin: 0 0 8px"><b>How to use it.</b> Append <code>&amp;recheck=N</code> to the URL where <code>N</code> is the number of seconds you want the server to wait before emitting each drop. The server holds the alert for <code>N</code> seconds, re-checks the current Pinnacle price for that exact line, and only sends it if the drop is still real (price hasn't bounced back). If you want a 30-second stability check:</p>
-<pre><span class="c"># Standard prematch feed (instant, default — unchanged)</span>
-curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</span>"
-
-<span class="c"># Wait 30 seconds, then re-verify before emitting</span>
-curl -N "https://pinnodds.com/odds-drop-prematch?key=<span class="s">$API_KEY</span>&amp;recheck=30"</pre>
-<pre><span class="c">// EventSource (Node.js / browser)</span>
-<span class="k">const</span> es = <span class="k">new</span> EventSource(<span class="s">`${BASE}/odds-drop-prematch?key=${API_KEY}&amp;recheck=30`</span>);</pre>
-    <table class="param-table" style="margin-top: 8px">
-      <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr>
-          <td class="name">recheck</td>
-          <td class="type">integer (seconds)</td>
-          <td class="desc">
-            How long to hold each drop before re-checking the current Pinnacle price. Surviving alerts pass the same 5% threshold the scanner used and gain a new <code>rechecked_ms</code> field with the actual wait time. Bounced prices are silently suppressed. Omit (or pass <code>0</code>) for the default instant feed. No upper cap — the parameter only affects your own connection. Other customers connected without it are unaffected.
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0"><b>When to use this.</b> If you place bets manually or your placement loop is &gt;5s, prematch prices that bounce back within seconds create noise. Asking for <code>recheck=30</code> trades 30s of latency for the confidence that the line was stable enough to be actionable.</p>
-    <p style="font-size: 13px; color: var(--muted); margin: 8px 0 0"><b>Note.</b> Available only on <code>/odds-drop-prematch</code>. The live stream <code>/odds-drop</code> is push-based and sub-second; a recheck window is semantically meaningless there and the parameter is silently ignored.</p>
+    <h3 id="prematch-recheck" style="margin: 22px 0 6px; font-size: 15px"><code>?recheck=N</code> is not supported</h3>
+    <p style="margin: 0 0 8px">The <code>recheck</code> parameter is not supported: the stream ignores it, so every drop is delivered immediately and no <code>rechecked_ms</code> field is added. If you need a stable-price filter, hold each drop on your side and compare it with the current price from <a href="#prematch-lines"><code>/kit/v1/prematch/lines</code></a> before acting.</p>
   </div>
 </div>
 
@@ -2018,7 +1993,7 @@ bearer_token_env_var = <span class="s">"PINNODDS_KEY"</span></pre>
   <ul style="margin:10px 0 0; padding-left:18px; line-height:1.9">
     <li><b>Top level</b> (<code>last</code> / <code>last_call</code>, next to <code>sport_id</code>) is our store's sequence number. It only moves forward, and it is the value you pass to <code>since=</code>.</li>
     <li><b>Inside each event</b>, <code>last</code> is the Unix second at which we rendered the response. It is the <i>same value for every event in the payload</i> and says nothing about when that event's odds moved. Don't compute freshness from it.</li>
-    <li><b><code>updated_at</code></b> (inside each event) is what you want for freshness: epoch <b>milliseconds</b> of the moment <i>we received</i> the last real change to that event's markets — a price, a line added or removed, or a status. It is our receive time, not a Pinnacle timestamp (none exists), and it is on REST only, not on WebSocket records. Pinnacle re-sending the same prices does not move it. After one of our restarts it starts from the moment we first saw the event again, so treat it as &ldquo;unchanged since at least&rdquo;.</li>
+    <li><b><code>updated_at</code></b> (inside each event, on the boards and on the single-event endpoints <code>/kit/v1/details</code> (live) and <code>/kit/v1/prematch/markets</code>) is what you want for freshness: epoch <b>milliseconds</b> of the moment <i>we received</i> the last real change to that event's markets — a price, a line added or removed, or a status. It is our receive time, not a Pinnacle timestamp (none exists), and it is on REST only, not on WebSocket records. Pinnacle re-sending the same prices does not move it. After one of our restarts it starts from the moment we first saw the event again, so treat it as &ldquo;unchanged since at least&rdquo;.</li>
   </ul>
 </div>
 
@@ -2060,7 +2035,7 @@ bearer_token_env_var = <span class="s">"PINNODDS_KEY"</span></pre>
     <tr><td class="name">feed_age_ms, sport_age_ms, prematch_age_ms, prematch_sport_age_ms, prematch_poll_age_ms</td><td class="type">WebSocket <a href="#ws-feed-health"><code>ping</code></a></td><td class="desc">Ages in ms, measured at the <code>ts</code> of the ping: time since we last received a push from Pinnacle (of any kind, per sport, prematch, prematch per sport) and since the last prematch board poll record.</td></tr>
     <tr><td class="name">last, last_call <span style="color:var(--muted); font-weight:400">(top level)</span></td><td class="type">REST board responses</td><td class="desc">Our store cursor, a sequence number that only moves forward. Pass it back as <code>since=</code>. It is not a time.</td></tr>
     <tr><td class="name">last <span style="color:var(--muted); font-weight:400">(inside each event)</span></td><td class="type">REST events</td><td class="desc">The Unix second at which we <b>served</b> the response. Identical for every event in the payload. Says nothing about the event.</td></tr>
-    <tr><td class="name">updated_at</td><td class="type">REST events only</td><td class="desc">Epoch ms: the time <b>we received</b> the last real change to that event&rsquo;s markets (a price, a line added or removed, a status). Repeats of the same prices do not move it. After one of our restarts it starts again from the moment we first saw the event, so read it as &ldquo;unchanged since at least&rdquo;. This is the per-event freshness field.</td></tr>
+    <tr><td class="name">updated_at</td><td class="type">REST events only</td><td class="desc">Epoch ms: the time <b>we received</b> the last real change to that event&rsquo;s markets (a price, a line added or removed, a status). Repeats of the same prices do not move it. After one of our restarts it starts again from the moment we first saw the event, so read it as &ldquo;unchanged since at least&rdquo;. This is the per-event freshness field, returned by the boards and by the single-event endpoints <code>/kit/v1/details</code> (live) and <code>/kit/v1/prematch/markets</code>.</td></tr>
     <tr><td class="name">X-Data-Age-Ms, X-Data-Status, X-Data-Board</td><td class="type">REST response headers</td><td class="desc">Board-level, as described above: time since the newest write anywhere on that board, rounded down to whole seconds (so <code>0</code> is normal), refreshed by the full re-read as well as by pushes.</td></tr>
     <tr><td class="name">ts, age_s</td><td class="type"><a href="#api-drops"><code>/api/drops</code></a> rows</td><td class="desc">The time we <b>detected</b> the drop, and its age in seconds when served.</td></tr>
     <tr><td class="name">live.updated_ms, live.source_ms</td><td class="type"><a href="#sse-live-object"><code>/odds-drop</code></a> drops</td><td class="desc">Our receive time of the last change to the match state, and of the last frame of any kind for that event.</td></tr>

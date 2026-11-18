@@ -9,6 +9,7 @@
 You use two kinds of key.
 
 Your first key is the management key. You create it on Profile in the web app.
+If we sent you a client ID and secret instead, [create it with those](#create-it-with-a-client-id-and-secret).
 It runs your account but never places an order.
 It also creates every trading key, one per subaccount.
 
@@ -66,6 +67,62 @@ If you lose the private key, revoke the key on the same screen and create a new 
 Your web session is the only recovery path.
 Until you revoke the key, anyone who holds the private key can act as that key.
 
+### Create it with a client ID and secret
+
+Some accounts have no web login. We onboard them with a client ID and a client secret.
+
+> [!WARNING]
+>
+> **Use the client ID and secret only to create your management key.** They are v2 credentials. Build your integration on v3, not on the v2 routes they also open.
+
+**1. Get a token**
+
+Exchange the client ID and secret for a bearer token.
+
+**2. Generate a keypair**
+
+Create an Ed25519 keypair on your machine, and keep the private half.
+
+**3. Register the public half**
+
+Call `POST /v3/keys` with the token as the bearer. The reply is your management key.
+
+Point `NOVIG_HOST` at Production, `https://api.novig.com`, then request a token:
+
+```bash theme={"dark"}
+curl -s -X POST "$NOVIG_HOST/nbx/v1/auth/emm-token" \
+  -H 'content-type: application/json' \
+  -d '{"grant_type": "client_credentials", "client_id": "YOUR_CLIENT_ID", "client_secret": "YOUR_CLIENT_SECRET"}'
+```
+
+The reply carries `access_token`. Export it as `TOKEN`. It expires after 30 minutes.
+
+Generate the keypair:
+
+```bash theme={"dark"}
+openssl genpkey -algorithm ed25519 -out novig-mgmt.pem
+chmod 600 novig-mgmt.pem
+openssl pkey -in novig-mgmt.pem -pubout -out novig-mgmt.pub.pem
+```
+
+Register the public half:
+
+```bash theme={"dark"}
+curl -i -X POST "$NOVIG_HOST/v3/keys" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'content-type: application/json' \
+  -d "$(jq -n --arg name "mgmt-1" --arg publicKey "$(cat novig-mgmt.pub.pem)" \
+        '{name: $name, publicKey: $publicKey, algorithm: "Ed25519"}')"
+```
+
+A 201 reply carries your `keyId` and `"scope": "management"`. Save the `keyId` with `novig-mgmt.pem`, because every signed call needs both.
+
+A `409 MANAGEMENT_KEY_EXISTS` means your account already holds a live management key. Use that key, or ask us to revoke it.
+
+If the reply says the client-credentials token path is not enabled for this account, ask us to turn it on.
+
+You don't need the token again. Sign account-management calls with your management key. Use your subaccount's trading key for market data and orders. Start with the [Quickstart](https://docs.novig.com/api/quickstart.md).
+
 ## Create other keys with the API
 
 A route creates every key below `management`.
@@ -91,6 +148,8 @@ Then send the public key in the request body:
 * `algorithm` must match the key material.
 * `expiresAt` must be strictly in the future. Never set it on a `management` key, as [Revoke a key](#revoke-a-key) explains.
 
+`POST /v3/account/subaccounts` takes `label` in place of `name`.
+
 `POST /v3/keys` and `POST /v3/account/subaccounts` take no `scope` field.
 If the body includes one, the route returns 400.
 `POST /v3/account/subaccounts/{keyId}/keys` requires one: `trading` or `trading::read`.
@@ -100,8 +159,7 @@ The route returns the new key:
 | Field | What it is |
 | - | - |
 | `keyId` | The value for the `Novig-Key-Id` header. Not a secret |
-| `algorithm` | The algorithm you picked |
-| `fingerprint` | The SHA-256 of the public key's SPKI DER |
+| `fingerprint` | `sha256:` and the hex SHA-256 of the public key's SPKI DER |
 
 Pick Ed25519 unless a hardware requirement forces P-256.
 Your signer must use the same algorithm.
@@ -171,7 +229,7 @@ Every key on a subaccount shares the subaccount's [throttles](https://docs.novig
 ## Location checks
 
 Every signed route runs two location checks.
-If either check fails, the route returns `451`. A cancel skips both.
+If either check fails, the route returns `451`. A cancel, `GET /v3/time`, and `GET /v3/exchange/status` skip both.
 
 * **IP check:** refuses a request from a restricted state, or through a VPN, proxy, or Tor exit. A data-center address is fine.
 * **Companion check:** refuses a key holder whose last device geolocation is missing, failed, named no region, or came from a restricted state. A placement also refuses one older than 3 days. A read admits it.

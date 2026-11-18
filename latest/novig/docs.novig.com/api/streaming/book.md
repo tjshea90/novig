@@ -32,19 +32,19 @@ The array order **is** the queue.
   "orders": {
     "3f2504e0-…": [
       {
-        "order": "7c9e6679-…",
+        "orderId": "7c9e6679-…",
         "price": "0.665",
         "qty": 110
       },
       {
-        "order": "1b4e28ba-…",
+        "orderId": "1b4e28ba-…",
         "price": "0.660",
         "qty": 250
       }
     ],
     "5a1c9e73-…": [
       {
-        "order": "6ba7b810-…",
+        "orderId": "6ba7b810-…",
         "price": "0.340",
         "qty": 90
       }
@@ -54,6 +54,10 @@ The array order **is** the queue.
 ```
 
 Each key in `orders` is an outcome ID.
+
+The snapshot holds the best `depth` price levels of each outcome.
+Set `depth` on `subscribe` or `snapshot`, from 1 to 20. It defaults to 20.
+Deltas cover every level, so ignore an `update` or `remove` for an order you don't hold.
 
 An outcome with no resting orders has no key.
 Treat a catalog outcome missing from `orders` as an empty book at the snapshot's `seq`.
@@ -66,14 +70,19 @@ Treat a catalog outcome missing from `orders` as an empty book at the snapshot's
   "deltas": [
     {
       "kind": "add",
-      "order": "aa0e8400-…",
-      "outcome": "3f2504e0-…",
+      "orderId": "aa0e8400-…",
+      "outcomeId": "3f2504e0-…",
       "price": "0.670",
       "qty": 250
     },
     {
+      "kind": "update",
+      "orderId": "1b4e28ba-…",
+      "remaining": 150
+    },
+    {
       "kind": "remove",
-      "order": "7c9e6679-…",
+      "orderId": "7c9e6679-…",
       "reason": "fill"
     }
   ]
@@ -83,18 +92,63 @@ Treat a catalog outcome missing from `orders` as an empty book at the snapshot's
 | `kind` | `reason` | Means |
 | - | - | - |
 | `add` | — | Joins the back of its price level |
-| `remove` | `fill` | A trade |
-| `remove` | `cancel` | Not a trade |
+| `update` | — | A partial fill lowers the resting quantity |
+| `remove` | `fill` | Filled in full |
+| `remove` | `cancel` | Canceled by the owner or the engine |
 
 Only `book` reports a cancel.
 
-A partial fill arrives as a `remove`, then an `add` of the remainder.
-The `add` keeps the same price and queue position.
+A partial fill arrives as an `update` with the order's new `remaining` quantity.
+The order keeps its queue position.
+Several fills on one order by one incoming order arrive as one delta.
 
-## Go-live and your own orders
+## Voided orders and your own orders
 
-* At go-live, you get a `remove` with `reason: "cancel"` for each resting order, then `GOLIVE`. See [Event states](https://docs.novig.com/api/concepts/event-lifecycle.md#event-states).
+* [`GOLIVE`, `CLOSE`, and `GRADE`](https://docs.novig.com/api/streaming/lifecycle) void every resting order with no `remove`. Empty the book yourself when one arrives.
 * Your own orders appear here like any other order. Match them on the [private stream](https://docs.novig.com/api/streaming/private.md).
+
+## Best bid only
+
+The `bbo` channel reports only the best resting bid of each outcome.
+It costs 8 tokens per market and includes [`lifecycle`](https://docs.novig.com/api/streaming/lifecycle).
+
+```json snapshot theme={"dark"}
+"bbo": {
+  "seq": 311,
+  "bbo": {
+    "3f2504e0-…": {
+      "price": "0.665",
+      "qty": 110
+    },
+    "5a1c9e73-…": {
+      "price": "0.340",
+      "qty": 90
+    }
+  }
+}
+```
+
+```json delta theme={"dark"}
+"bbo": {
+  "seq": 312,
+  "deltas": [
+    {
+      "outcomeId": "3f2504e0-…",
+      "bbo": {
+        "price": "0.670",
+        "qty": 250
+      }
+    },
+    {
+      "outcomeId": "5a1c9e73-…"
+    }
+  ]
+}
+```
+
+`qty` is the total resting quantity at the best price.
+A delta without `bbo` means the outcome has no resting bid left.
+An outcome with no resting bid has no key in the snapshot.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

@@ -21,7 +21,7 @@ Each subaccount has its own balance and its own trading key.
 
 **2. [Get a key](https://docs.novig.com/api/api-keys.md)**
 
-You create your management key in your Novig profile. It opens and funds subaccounts but can't place orders.
+You create your management key in your Novig profile, or with the client ID and secret we sent you. It opens and funds subaccounts but can't place orders.
 
 **3. [Sign a request](https://docs.novig.com/api/signing.md)**
 

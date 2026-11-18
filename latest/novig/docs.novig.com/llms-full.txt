@@ -1,3 +1,7 @@
+# Novig API
+
+> This file is very large and may be truncated. For an index of this content, please refer to https://docs.novig.com/llms.txt instead.
+
 # Deeplinking
 Source: https://docs.novig.com/affiliates/deeplinking
 
@@ -1038,6 +1042,18 @@ Source: https://docs.novig.com/api-reference/changelog
 
 This changelog is specific to our API users and LPs
 
+**November 16, 2026 - New Parlay Taker Fee**
+
+**On Thursday, November 19, 2026, the parlay taker fee changes to `0.055 × (−ln P) × stake`,** where `P` is the parlay's price. A \$100 parlay at 0.50 pays \$3.81.
+
+The maker side doesn't change. See [RFQ trades](/fees#rfq-trades).
+
+**November 12, 2026 - Markets That Leave Drop Out of Your Subscriptions**
+
+**A slow connection no longer closes with `MARKET_NOT_FOUND` or `EVENT_NOT_FOUND`.** When your connection falls behind, we resend a snapshot. That snapshot used to fail, and close the connection, if you still subscribed to a market or event that had left the exchange. Now we drop those and resend the rest.
+
+**We tell you what we drop, in a message with no `nonce`:** `{"unsubscribed": {...}}`, the same shape as the reply to `unsubscribe`, just before the snapshot. See [Connection](/api/streaming/connection#markets-that-leave-drop-out-of-your-subscriptions).
+
 **November 12, 2026 - RFQ on v3**
 
 **You can now price parlay RFQs on v3.** Register a subaccount as a maker with `POST /rfq/v3/maker`, then quote and confirm on the `GET /rfq/v3/ws` socket. [RFQ](/api/rfq/overview) walks through a round.
@@ -1670,6 +1686,7 @@ Generate a keypair, register its public half, and see what each key can do.
 You use two kinds of key.
 
 Your first key is the management key. You create it on Profile in the web app.
+If we sent you a client ID and secret instead, [create it with those](#create-it-with-a-client-id-and-secret).
 It runs your account but never places an order.
 It also creates every trading key, one per subaccount.
 
@@ -1727,6 +1744,62 @@ If you lose the private key, revoke the key on the same screen and create a new 
 Your web session is the only recovery path.
 Until you revoke the key, anyone who holds the private key can act as that key.
 
+### Create it with a client ID and secret
+
+Some accounts have no web login. We onboard them with a client ID and a client secret.
+
+> [!WARNING]
+>
+> **Use the client ID and secret only to create your management key.** They are v2 credentials. Build your integration on v3, not on the v2 routes they also open.
+
+**1. Get a token**
+
+Exchange the client ID and secret for a bearer token.
+
+**2. Generate a keypair**
+
+Create an Ed25519 keypair on your machine, and keep the private half.
+
+**3. Register the public half**
+
+Call `POST /v3/keys` with the token as the bearer. The reply is your management key.
+
+Point `NOVIG_HOST` at Production, `https://api.novig.com`, then request a token:
+
+```bash theme={"dark"}
+curl -s -X POST "$NOVIG_HOST/nbx/v1/auth/emm-token" \
+  -H 'content-type: application/json' \
+  -d '{"grant_type": "client_credentials", "client_id": "YOUR_CLIENT_ID", "client_secret": "YOUR_CLIENT_SECRET"}'
+```
+
+The reply carries `access_token`. Export it as `TOKEN`. It expires after 30 minutes.
+
+Generate the keypair:
+
+```bash theme={"dark"}
+openssl genpkey -algorithm ed25519 -out novig-mgmt.pem
+chmod 600 novig-mgmt.pem
+openssl pkey -in novig-mgmt.pem -pubout -out novig-mgmt.pub.pem
+```
+
+Register the public half:
+
+```bash theme={"dark"}
+curl -i -X POST "$NOVIG_HOST/v3/keys" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'content-type: application/json' \
+  -d "$(jq -n --arg name "mgmt-1" --arg publicKey "$(cat novig-mgmt.pub.pem)" \
+        '{name: $name, publicKey: $publicKey, algorithm: "Ed25519"}')"
+```
+
+A 201 reply carries your `keyId` and `"scope": "management"`. Save the `keyId` with `novig-mgmt.pem`, because every signed call needs both.
+
+A `409 MANAGEMENT_KEY_EXISTS` means your account already holds a live management key. Use that key, or ask us to revoke it.
+
+If the reply says the client-credentials token path is not enabled for this account, ask us to turn it on.
+
+You don't need the token again. Sign account-management calls with your management key. Use your subaccount's trading key for market data and orders. Start with the [Quickstart](/api/quickstart).
+
 ## Create other keys with the API
 
 A route creates every key below `management`.
@@ -1752,6 +1825,8 @@ Then send the public key in the request body:
 * `algorithm` must match the key material.
 * `expiresAt` must be strictly in the future. Never set it on a `management` key, as [Revoke a key](#revoke-a-key) explains.
 
+`POST /v3/account/subaccounts` takes `label` in place of `name`.
+
 `POST /v3/keys` and `POST /v3/account/subaccounts` take no `scope` field.
 If the body includes one, the route returns 400.
 `POST /v3/account/subaccounts/{keyId}/keys` requires one: `trading` or `trading::read`.
@@ -1761,8 +1836,7 @@ The route returns the new key:
 | Field | What it is |
 | - | - |
 | `keyId` | The value for the `Novig-Key-Id` header. Not a secret |
-| `algorithm` | The algorithm you picked |
-| `fingerprint` | The SHA-256 of the public key's SPKI DER |
+| `fingerprint` | `sha256:` and the hex SHA-256 of the public key's SPKI DER |
 
 Pick Ed25519 unless a hardware requirement forces P-256.
 Your signer must use the same algorithm.
@@ -1832,7 +1906,7 @@ Every key on a subaccount shares the subaccount's [throttles](/api/throttling#ke
 ## Location checks
 
 Every signed route runs two location checks.
-If either check fails, the route returns `451`. A cancel skips both.
+If either check fails, the route returns `451`. A cancel, `GET /v3/time`, and `GET /v3/exchange/status` skip both.
 
 * **IP check:** refuses a request from a restricted state, or through a VPN, proxy, or Tor exit. A data-center address is fine.
 * **Companion check:** refuses a key holder whose last device geolocation is missing, failed, named no region, or came from a restricted state. A placement also refuses one older than 3 days. A read admits it.
@@ -1908,9 +1982,9 @@ Each key has one scope, fixed when you create it.
 | Scope | Reaches | Orders | Money | Limit |
 | - | - | - | - | - |
 | `management` | All subaccounts | No | Yes | 1 per trader |
-| `management::read` | All subaccounts | No | No | None |
+| `management::read` | All subaccounts | No | No | 128 per trader |
 | `trading` | One subaccount | Yes | No | 1 per subaccount |
-| `trading::read` | One subaccount | No | No | None |
+| `trading::read` | One subaccount | No | No | 128 per trader |
 
 * `management` opens, funds, and labels subaccounts, and creates and revokes keys. It also reads what `management::read` reads.
 * `management::read` lists keys and subaccounts, and reads any balance, ledger, order, fill, and position.
@@ -2076,7 +2150,7 @@ The coefficient depends on the market's schedule, below.
 
 > [!NOTE]
 >
-> On Thursday, October 22, 2026, the maker credit will drop from `0.5` to `0.25` on game markets, and from `0.7` to `0.5` on futures markets.
+> On Thursday, October 22, 2026, the maker credit dropped from `0.5` to `0.25` on game markets, and from `0.7` to `0.5` on futures markets.
 > The taker fee doesn't change.
 
 | Schedule | `coefficient` | `makerCredit` | `charged` |
@@ -2112,13 +2186,14 @@ The fee peaks at P = 0.50 and falls to zero at the ends. A price of 0.30 costs t
 | - | - | - | - |
 | Game line | any | Game | When live |
 | Futures | `NFL` `NCAAF` `NCAAB` `NCAAWB` `MLB` `NBA` `WNBA` `NHL` | Futures | Always |
-| Futures | `PGA` `ATP` `WTA` `UFC` `F1` `NASCAR` | Game | Never |
-| Series winner | any | Game | Never |
+| Futures | `PGA` `ATP` `WTA` `UFC` `F1` `NASCAR` | Neither | Never |
+| Series winner | any | Neither | Never |
 
 A futures market settles on a season, not a game.
 
 In `PGA`, `ATP`, `WTA`, `UFC`, `F1` and `NASCAR`, a futures market carries no futures fee.
-Its event never goes live, so it charges nothing.
+Neither does a series winner in any league.
+Its `fee` shows a lower coefficient and `WHEN_LIVE`, but its event never goes live, so it charges nothing.
 
 Read `fee` from the market. Never work it out from this table.
 
@@ -2152,7 +2227,7 @@ See [Event lifecycle](/api/concepts/event-lifecycle#event-states).
 * `GET /v3/account/subaccounts/{keyId}/transactions` returns the ledger rows behind a fee.
 * The private stream's `fill` event carries no fee.
 
-A fee rounds half up to the millicent, the same way as a balance.
+A fee rounds up to the millicent, so a charged fill never pays a zero fee.
 See [Monetary representations](/api/concepts/money).
 
 
@@ -2210,7 +2285,7 @@ fn snap_down(milli: u32) -> Option<u32> {
 ## Precision
 
 * A double can't hold `0.665` exactly. Parse money as a decimal and send it as a string, never through a `float`.
-* We store money to \$0.00001, rounding half up, and round nowhere else. Fees use the same precision, with no one-cent minimum.
+* We store money to \$0.00001, rounding half up. A fee uses the same precision but rounds up, with no one-cent minimum.
 
 
 # Order lifecycle
@@ -2236,7 +2311,7 @@ Every order starts `PENDING`. A resting order is `OPEN`. The right column holds 
 * `open` means the order is resting. Any fills that matched when it entered the book arrive first.
 * A partial `fill` keeps the order `OPEN` and shrinks `remaining`.
 * `cancel` means you canceled the order, it expired, or we voided it. An `IOC` order that fills in part cancels the rest.
-* `reject` means we refused the order after accepting it. An `IOC`, `FOK`, or `PO` order that fills nothing is rejected.
+* `reject` means we refused the order after accepting it. We reject an `IOC` that fills nothing, a `FOK` that can't fill completely, and a `PO` that would take.
 
 | Status | Means | Terminal |
 | - | - | - |
@@ -2631,37 +2706,33 @@ signing_api::verify(request)
 
 `BodyTooLarge`**413**
 
-`headers present?`
+`novig-key-id is a UUID`
 
-`KeyIdRequired | TimestampRequired | SignatureRequired`**401**
+`KeyIdRequired | MalformedKeyId`**401**
 
-`Uuid::parse(key_id)`
+`novig-timestamp is digits`
 
-`MalformedKeyId`**401**
+`TimestampRequired | MalformedTimestamp`**401**
 
-`i64::parse(timestamp)`
+`base64::decode(signature)`
 
-`MalformedTimestamp`**401**
+`SignatureRequired | MalformedSignature`**401**
 
 `|now − ts| ≤ 30 s`
 
 `TimestampTooOld | TimestampTooFarInFuture`**401**
 
-`key row`
-
-`KeyNotFound`**401**
-
-`the read itself`
+`the key read`
 
 `DatabaseError`**500**
 
-`live && !expired`
+`live key row`
 
-`KeyRevoked | KeyExpired`**401**
+`KeyNotFound`**401**
 
-`base64::decode(signature)`
+`!expired`
 
-`MalformedSignature`**401**
+`KeyExpired`**401**
 
 `key.verify(canonical, sig)`
 
@@ -2680,7 +2751,8 @@ The `code` in the response depends only on the status, so branch on the `code`, 
 
 | Status | `code` |
 | - | - |
-| 401 403 | `SIGNATURE_REJECTED` |
+| 401 | `SIGNATURE_REJECTED` |
+| 403 | `SCOPE_INSUFFICIENT` |
 | 413 | `PAYLOAD_TOO_LARGE` |
 | 500 | `INTERNAL_ERROR` |
 
@@ -2696,11 +2768,13 @@ The `code` in the response depends only on the status, so branch on the `code`, 
 | `The publicKey field is not a valid SPKI public key.` | Export it as SPKI |
 | `Only Ed25519 and P-256 public keys are accepted…` | Use Ed25519 or P-256 |
 | `The algorithm field must match the key type. Expected <a>.` | Match your key |
-| `That key does not reach a subaccount.` | Use a `trading` key ID |
+| `That key does not reach a subaccount` | Use a `trading` key ID |
 | `You can have at most 10 subaccounts.` | Relabel one |
 | `You can have at most 128 live management::read keys.` | Revoke one |
 | `You can have at most 128 live trading::read keys.` | Revoke one |
 | `You already used that transfer id on another subaccount.` | Transfer IDs are unique per trader |
+
+A key refusal answers `INVALID_BODY`. A limit or transfer id refusal answers `ACCOUNT_RULE_REFUSED`.
 
 To export a public key as SPKI, run `openssl pkey -pubout` and send the output with its newlines.
 
@@ -2722,7 +2796,6 @@ A transfer id is unique per trader.
 | `novig-timestamp is too old` | Send milliseconds |
 | `novig-timestamp is too far in the future` | Check your clock |
 | `api key not found` | Check the key ID and host |
-| `api key has been revoked` | Create a new key |
 | `api key has expired` | Create a new key |
 | `novig-signature is malformed` | Send standard padded base64 |
 | `signature verification failed` | Sign a test vector |
@@ -2731,16 +2804,16 @@ When `novig-timestamp` or `novig-signature` is missing, the first message names 
 
 We accept a timestamp within ±30 s of our clock, so check your clock too.
 
-`api key not found` means a wrong key ID, the wrong environment, or a key revoked more than 60 seconds ago.
+`api key not found` means a wrong key ID, the wrong environment, or a revoked key.
 
-`api key has been revoked` means you revoked the key less than 60 seconds ago.
+A key route answers `Authentication required.` when the request has no `novig-key-id` header.
 
 For `signature verification failed`, sign a [test vector](/api/signing#test-vectors). Diff your canonical string against its `string_to_sign`.
 
 If you still get a `401`, find your symptom below.
 
 * **A 401 on every call.** A header, the clock, the key, or the canonical string is wrong. Read `message`, then sign a published vector and diff your string against it on [Sign a request](/api/signing).
-* **`GET` works, but `POST` fails.** Without `Content-Type: application/json`, the server hashed zero bytes. Send that header on every request with a body.
+* **`GET` works, but `POST` returns a `400` `INVALID_BODY`.** You sent no `Content-Type: application/json`. Send that header on every request with a body.
 * **Every `POST` fails, and the body looks right.** Your client re-serialized the JSON after you hashed it. Send the exact bytes you hashed.
 * **Every path fails.** You signed the URL, or dropped the mount prefix. Sign the path only, with the mount prefix included.
 * **A P-256 signature never verifies.** You sent a raw `r‖s` signature. Send DER instead, as [Algorithms](/api/signing#algorithms) describes.
@@ -2761,7 +2834,7 @@ A `trading` or `trading::read` key that names a sibling subaccount gets a `404` 
 
 ## `404` Not Found
 
-We answer `Key not found.`, `Subaccount not found.`, or `Transfer not found.` when we can't find the ID.
+We answer `Key not found.`, `Subaccount not found`, or `Transfer not found.` when we can't find the ID.
 
 An ID that belongs to another trader gets the same reply.
 
@@ -2769,6 +2842,9 @@ An ID that belongs to another trader gets the same reply.
 
 * `A live key with this public key already exists.` A public key is unique across Novig.
 * `This trader already has a live management key…` Revoke the live `management` key first.
+* `This subaccount already has a live trading key…` Revoke the live `trading` key first, or create a `trading::read` key.
+
+The codes are `KEY_EXISTS`, `MANAGEMENT_KEY_EXISTS`, and `TRADING_KEY_EXISTS`.
 
 A declined transfer is not an error.
 The route answers `202`, and the transfer then reads `status: "Rejected"`.
@@ -3001,7 +3077,7 @@ For each code, see [`451`](#451-geolocation-unavailable).
 
 ### Before you contact us
 
-Email [developers@novig.co](mailto:developers@novig.co) with:
+Email [developers@novig.com](mailto:developers@novig.com) with:
 
 * The `x-amz-cf-id` header for an edge `403`, or the JSON body for a `451`.
 * The UTC timestamp of the request.
@@ -3033,15 +3109,18 @@ A body that doesn't parse answers `INVALID_BODY`. Its `message` names the field 
 | 400 | `OFFSET_NOT_SUPPORTED` `AFTER_NEEDS_KEY_ID` |
 | 400 | `STALE_NONCE` `EMPTY_SELECTION` `SUBSCRIPTION_LIMIT_EXCEEDED` |
 | 400 | `NONCE_NOT_FOUND` `NONCE_COUNT_MISMATCH` |
+| 400 | `BOOK_DEPTH_OUT_OF_RANGE` `TRADE_REPLAY_OUT_OF_RANGE` |
+| 401 | `SIGNATURE_REJECTED` |
 | 403 | `SCOPE_INSUFFICIENT` `KYC_REQUIRED` |
 | 404 | `MARKET_NOT_FOUND` `EVENT_NOT_FOUND` `OUTCOME_NOT_FOUND` `ORDER_NOT_FOUND` |
-| 404 | `WALLET_NOT_FOUND` `SUBACCOUNT_NOT_FOUND` |
+| 404 | `WALLET_NOT_FOUND` `SUBACCOUNT_NOT_FOUND` `POSITION_NOT_FOUND` |
 | 409 | `MARKET_CLOSED` `MARKET_INACTIVE` |
 | 422 | `INSUFFICIENT_BALANCE` `POSITION_LIMIT_EXCEEDED` `OPEN_ORDER_LIMIT_EXCEEDED` |
 | 422 | `WAGER_LIMIT_EXCEEDED` |
 | 423 | `SYSTEM_LOCKED` `ACCOUNT_LOCKED` `LEAGUE_LOCKED` `COMPETITOR_LOCKED` |
 | 423 | `ACCOUNT_EXCLUDED` `SELF_EXCLUDED` `EMPLOYEE_ACCOUNT` |
 | 423 | `EVENT_LOCKED` `MARKET_LOCKED` `LIQUIDATION_ONLY` `DEPOSIT_RETURN_HOLD` |
+| 413 | `PAYLOAD_TOO_LARGE` |
 | 429 | `RATE_LIMIT_EXCEEDED` |
 | 451 | See [`451`](#451-geolocation-unavailable) |
 | 503 | `GEOLOCATION_SCREENING_UNAVAILABLE` |
@@ -3265,7 +3344,7 @@ const { items } = await call(desk, "GET", "/v3/catalog/markets",
 const outcome = items[0].outcomes[0].outcomeId;
 ```
 
-The catalog accepts only a `trading` or `trading::read` key.
+Any key can read the catalog.
 [Catalog](/api/catalog) lists every filter.
 
 ## 5. Place an order
@@ -4253,8 +4332,8 @@ A literal `{}` body gives a different hash.
 >
 > Hash the exact bytes you send, and send them with `Content-Type: application/json`. Re-serialized JSON changes the hash.
 
-Without a content type, the server never captures the body.
-It hashes zero bytes instead.
+We hash the body bytes we receive, whatever the content type.
+A route that reads JSON refuses a body without that header, with a `400` `INVALID_BODY`.
 
 Here's the string for `GET /v3/keys` at timestamp `1755000000000`:
 
@@ -4536,19 +4615,19 @@ The array order **is** the queue.
   "orders": {
     "3f2504e0-…": [
       {
-        "order": "7c9e6679-…",
+        "orderId": "7c9e6679-…",
         "price": "0.665",
         "qty": 110
       },
       {
-        "order": "1b4e28ba-…",
+        "orderId": "1b4e28ba-…",
         "price": "0.660",
         "qty": 250
       }
     ],
     "5a1c9e73-…": [
       {
-        "order": "6ba7b810-…",
+        "orderId": "6ba7b810-…",
         "price": "0.340",
         "qty": 90
       }
@@ -4558,6 +4637,10 @@ The array order **is** the queue.
 ```
 
 Each key in `orders` is an outcome ID.
+
+The snapshot holds the best `depth` price levels of each outcome.
+Set `depth` on `subscribe` or `snapshot`, from 1 to 20. It defaults to 20.
+Deltas cover every level, so ignore an `update` or `remove` for an order you don't hold.
 
 An outcome with no resting orders has no key.
 Treat a catalog outcome missing from `orders` as an empty book at the snapshot's `seq`.
@@ -4570,14 +4653,19 @@ Treat a catalog outcome missing from `orders` as an empty book at the snapshot's
   "deltas": [
     {
       "kind": "add",
-      "order": "aa0e8400-…",
-      "outcome": "3f2504e0-…",
+      "orderId": "aa0e8400-…",
+      "outcomeId": "3f2504e0-…",
       "price": "0.670",
       "qty": 250
     },
     {
+      "kind": "update",
+      "orderId": "1b4e28ba-…",
+      "remaining": 150
+    },
+    {
       "kind": "remove",
-      "order": "7c9e6679-…",
+      "orderId": "7c9e6679-…",
       "reason": "fill"
     }
   ]
@@ -4587,18 +4675,63 @@ Treat a catalog outcome missing from `orders` as an empty book at the snapshot's
 | `kind` | `reason` | Means |
 | - | - | - |
 | `add` | — | Joins the back of its price level |
-| `remove` | `fill` | A trade |
-| `remove` | `cancel` | Not a trade |
+| `update` | — | A partial fill lowers the resting quantity |
+| `remove` | `fill` | Filled in full |
+| `remove` | `cancel` | Canceled by the owner or the engine |
 
 Only `book` reports a cancel.
 
-A partial fill arrives as a `remove`, then an `add` of the remainder.
-The `add` keeps the same price and queue position.
+A partial fill arrives as an `update` with the order's new `remaining` quantity.
+The order keeps its queue position.
+Several fills on one order by one incoming order arrive as one delta.
 
-## Go-live and your own orders
+## Voided orders and your own orders
 
-* At go-live, you get a `remove` with `reason: "cancel"` for each resting order, then `GOLIVE`. See [Event states](/api/concepts/event-lifecycle#event-states).
+* [`GOLIVE`, `CLOSE`, and `GRADE`](/api/streaming/lifecycle) void every resting order with no `remove`. Empty the book yourself when one arrives.
 * Your own orders appear here like any other order. Match them on the [private stream](/api/streaming/private).
+
+## Best bid only
+
+The `bbo` channel reports only the best resting bid of each outcome.
+It costs 8 tokens per market and includes [`lifecycle`](/api/streaming/lifecycle).
+
+```json snapshot theme={"dark"}
+"bbo": {
+  "seq": 311,
+  "bbo": {
+    "3f2504e0-…": {
+      "price": "0.665",
+      "qty": 110
+    },
+    "5a1c9e73-…": {
+      "price": "0.340",
+      "qty": 90
+    }
+  }
+}
+```
+
+```json delta theme={"dark"}
+"bbo": {
+  "seq": 312,
+  "deltas": [
+    {
+      "outcomeId": "3f2504e0-…",
+      "bbo": {
+        "price": "0.670",
+        "qty": 250
+      }
+    },
+    {
+      "outcomeId": "5a1c9e73-…"
+    }
+  ]
+}
+```
+
+`qty` is the total resting quantity at the best price.
+A delta without `bbo` means the outcome has no resting bid left.
+An outcome with no resting bid has no key in the snapshot.
 
 
 # Connection
@@ -4646,6 +4779,7 @@ All three debit the `read` throttle.
 
 `subscribe` and `snapshot` name a selection in three optional fields.
 An empty selection gets `EMPTY_SELECTION`.
+Two more optional fields, `depth` and `replay`, cut the [`book`](/api/streaming/book) and [`trades`](/api/streaming/tape) snapshots.
 
 ```json theme={"dark"}
 {
@@ -4673,6 +4807,9 @@ An `events` selection also covers markets that open later.
 `subscribe` and `snapshot` apply all or nothing.
 One market we can't find refuses the whole request with `MARKET_NOT_FOUND`, and one event with `EVENT_NOT_FOUND`.
 The error doesn't name the subject, so check your IDs against the catalog before a large request.
+
+One connection watches at most  markets at the base tier, and more at a [higher tier](/api/throttling#tiers).
+An event counts as each of its markets. A request past the cap gets `SUBSCRIPTION_LIMIT_EXCEEDED`.
 
 `unsubscribe` takes a list of subject strings instead.
 
@@ -4706,7 +4843,16 @@ They don't spend from `stream`.
 ```json theme={"dark"}
 {
   "nonce": 17,
-  "place": { "orders": [{ "outcomeId": "6f9619ff-…", "price": "0.54", "qty": 10, "tif": "GTC" }] }
+  "place": {
+    "orders": [
+      {
+        "outcomeId": "6f9619ff-…",
+        "price": "0.54",
+        "qty": 10,
+        "tif": "GTC"
+      }
+    ]
+  }
 }
 ```
 
@@ -4742,7 +4888,9 @@ Put the nonces in the same order as `orders`.
 ```json theme={"dark"}
 {
   "nonce": 18,
-  "cancel": { "orderIds": ["6f9619ff-…"] }
+  "cancel": {
+    "orderIds": ["6f9619ff-…"]
+  }
 }
 ```
 
@@ -4756,7 +4904,9 @@ Each nonce costs 1 `cancel` token, however many orders its place booked.
 ```json theme={"dark"}
 {
   "nonce": 20,
-  "cancel": { "nonces": [17] }
+  "cancel": {
+    "nonces": [17]
+  }
 }
 ```
 
@@ -4774,7 +4924,9 @@ To cancel an older place, cancel its orders by id.
 ```json theme={"dark"}
 {
   "nonce": 19,
-  "cancel_all": { "market": "6f9619ff-…" }
+  "cancel_all": {
+    "market": "6f9619ff-…"
+  }
 }
 ```
 
@@ -4795,7 +4947,7 @@ A pair is one subject on one channel.
 An event counts one pair for each market it holds, and at least one.
 A subscribe to 100 markets on `book` weighs ` /request`, whether you name the markets or their event.
 
-We charge at most the `stream` capacity of 512 tokens.
+We charge at most your `stream` capacity, 512 tokens at the base tier.
 A request above that cap passes only when the throttle is full, and it empties the throttle.
 
 * `snapshot` costs the same as `subscribe`.
@@ -4899,8 +5051,9 @@ Arrows are messages, top to bottom in time. After the new snapshot, drop the buf
 A market that opens under an `events` subscription arrives with no snapshot. That's not a gap.
 Its first delta is `OPEN`, and its `book`, `bbo`, and `trades` channels start at seq 0, so each one's first delta carries seq 1.
 
-If your connection falls behind, we stop sending it market deltas.
-Once you've read what we queued, we send a new snapshot with no `nonce`, and deltas resume after it.
+If your connection falls behind, we stop sending it deltas on every channel, private ones included.
+Once you've read what we queued, we send a new snapshot of every subscription with no `nonce`, and deltas resume after it.
+That snapshot uses the default `depth` and `replay`.
 
 ## Markets that leave drop out of your subscriptions
 
@@ -4975,6 +5128,8 @@ Each delta names the transition in `kind` and the market's status after it in `s
 | `GOLIVE` | Live | Unchanged |
 | `UNLIVE` | Left live play | Unchanged |
 
+`CLOSE` and `GRADE` void every resting order in the market.
+
 ## Live play and your orders
 
 * `GOLIVE` voids every resting order and turns taker fees on.
@@ -5008,7 +5163,7 @@ Source: https://docs.novig.com/api/streaming/private
 Your own orders and positions: open, fill, cancel, reject.
 
 The private stream carries your own orders and positions on two channels.
-The `orders` channel costs 1 token. The `positions` channel carries your positions.
+The `orders` channel costs 1 token. The `positions` channel costs 1 token.
 
 Name each channel in the `private` field of a subscribe.
 To drop both, unsubscribe the subject `PRIVATE`.
@@ -5048,6 +5203,7 @@ To follow an order from start to finish, see [Track order state](/api/concepts/o
         "outcomeId": "3f2504e0-…",
         "price": "0.665",
         "qty": 110,
+        "originalQty": 110,
         "tif": "GTC"
       }
     ]
@@ -5236,11 +5392,12 @@ A slow consumer is a client that reads too slowly, so its queue fills up.
 | Frame | Sent | On a full queue |
 | - | - | - |
 | Replies, heartbeats | Before market frames | Waits for room |
-| `orders`, `positions` | Before market frames | Dropped |
-| Market channels | After private frames | Dropped |
+| `orders`, `positions` | Before market frames | Pauses every delta |
+| Market channels | After private frames | Pauses every delta |
 
-A seq gap or a heartbeat shows a dropped `orders` or `positions` frame.
-A seq gap shows a dropped market frame.
+During a pause, we send no deltas on any channel.
+Once you've read what we queued, we send a snapshot of every subscription with no `nonce`.
+Replace your state with it. Deltas resume after it.
 
 A write that stalls for 15 s closes the connection with code `1008` and reason `SLOW_CONSUMER`.
 
@@ -5442,9 +5599,11 @@ What a retry does depends on the `clientTransferId` you send.
 
 | Retry with | Result |
 | - | - |
-| The same `clientTransferId` | The first request's response, and nothing queued |
+| The same `clientTransferId` | The first transfer at its current status, and nothing new queued |
 | The same ID on another subaccount | 400, because the ID is per trader |
 | No ID | A second transfer |
+
+A retry returns the first transfer even when its `amount` or `direction` differs.
 
 ## Check the transfer status
 
@@ -5459,7 +5618,8 @@ Its `status` tells you whether the money moved.
 
 If a transfer stays `Requested`, contact support. Don't retry it under a new ID.
 
-On a `Rejected` transfer, `actualBalance` holds the balance we found.
+A transfer is `Rejected` when the wallet it draws from holds less than `amount`.
+On a `Rejected` transfer, `actualBalance` holds that wallet's balance.
 
 ## Transfers and transactions
 
@@ -5479,7 +5639,8 @@ Read a transfer with `GET /v3/account/subaccounts/{keyId}/transfers/{id}`.
 
 List transactions with `GET /v3/account/subaccounts/{keyId}/transactions`.
 
-No route lists transfers.
+List every transfer with `GET /v3/account/transfers`, newest first. Sign it with a `management` or `management::read` key.
+
 If you lose a `transferId`, send the same request again with the same `clientTransferId` to recover it.
 
 
@@ -5555,14 +5716,16 @@ It's also the subaccount's address. Store it beside `desk-1.pem`.
 >
 > If you lose `desk-1.pem`, nothing can sign as this subaccount again. Your `management` key can still defund the subaccount and change its label.
 
-Opening a subaccount has two requirements:
+Opening a subaccount has three requirements:
 
-* You've passed KYC, our identity check, and aren't self-excluded. We check this here, when you fund, and on every order you place.
-* You have a free slot. The sixth open fails.
+* You've passed KYC, our identity check, and aren't self-excluded. We check this here, on every transfer, and on every order you place.
+* You call from an allowed location: no VPN or proxy, and not a restricted state.
+* You have a free slot. An open past 10 live subaccounts fails with a 400 `ACCOUNT_RULE_REFUSED`.
 
 ## List subaccounts
 
-`GET /v3/account/subaccounts` returns one row per live subaccount.
+`GET /v3/account/subaccounts` returns one row per live key on each subaccount, the oldest subaccount first.
+A subaccount whose keys are all revoked has no row.
 Sign it with a `management` or `management::read` key.
 
 The route has no paging and no filter.
@@ -5650,7 +5813,7 @@ Burst
 Capacity
 Refill
 
-The `history` bucket meters the record reads: fills, transactions, settled orders, and the history routes. Each such read costs a base plus one token per page of rows, so a larger page spends more. `GET /v3/limits` reports your numbers for every bucket.
+The `history` bucket meters the record reads: fills, transactions, transfers, settled orders, and the history routes. Each such read costs a base plus tokens in proportion to the `limit` you request, so a larger page spends more. `GET /v3/limits` reports your numbers for every bucket.
 
 `GET /v3/limits`, `GET /v3/time`, and `GET /v3/exchange/status` spend no tokens.
 
@@ -5684,6 +5847,8 @@ A tier sets three things, shown for each tier [above](#limits-on-our-servers):
 Your account earns its tier from the volume of all your subaccounts over the last calendar month, in Eastern time.
 Early each month, we move your account to the tier that volume reaches, so a tier can go down as well as up.
 
+We can also set your tier by hand. A tier we set overrides the earned tier until we clear it.
+
 Volume is the full payout of every contract your subaccounts traded, so 100 contracts count as \$1.
 A wash, where your order trades against another of yours, doesn't count, and neither does a voided trade.
 
@@ -5697,9 +5862,9 @@ With a trading key, `tier` is your account's tier. With a management key, it's `
 
 ## Websocket subscriptions
 
-The `stream` bucket meters how fast you subscribe. A second limit caps how much you hold: a connection may watch up to  markets at once at Base, and more at a higher tier. An event counts as the markets it contains. A subscribe that would take you over that answers `SUBSCRIPTION_LIMIT_EXCEEDED`, and it subscribes to nothing. A `snapshot` that names more markets than the cap answers the same. Such a request also costs more than the `stream` bucket holds, so you get `RATE_LIMIT_EXCEEDED` until the bucket is full. `GET /v3/limits` reports your cap as `maxWatchedMarkets`.
+The `stream` bucket meters how fast you subscribe. A second limit caps how much you hold: a connection may watch up to  markets at once at Base, and more at a higher tier. An event counts as the markets it contains. A subscribe that would take you over that answers `SUBSCRIPTION_LIMIT_EXCEEDED`, and it subscribes to nothing. A `snapshot` that names more markets than the cap answers the same. If such a request costs more than the `stream` bucket holds, you get `RATE_LIMIT_EXCEEDED` until the bucket is full. `GET /v3/limits` reports your cap as `maxWatchedMarkets`.
 
-The key routes and the subaccount routes spend the `account` bucket, one token a request. A transfer spends from it too.
+The key routes and the subaccount routes spend the `account` bucket, one token a request. A transfer spends from it too. The transaction and transfer listings spend `history` instead.
 
 ## Limits at the edge
 
@@ -6431,6 +6596,7 @@ Sent when your order is matched with another order on the book.
 > Real-time `fill` events carry only the fields above. `outcomeStatus`, `fee`, and `transactions` — the
 > outcome's grading status, the fee charged to you, and the ledger rows debiting your wallet for the fill — are populated
 > only on the fill history at `GET /nbx/v2/emm/fills/all`. Fetch the fill by `id` there when you need them.
+> That history omits self-matched fills (`isWash: true`) unless you pass `includeWash=true`.
 
 ### Cancel Events
 
@@ -6524,6 +6690,10 @@ Get the current balance of the user's wallet under the given currency denominati
 Source: https://docs.novig.com/deprecated/api-reference/authentication
 
 OAuth 2.0 authentication for the NBX API
+
+> [!WARNING]
+>
+> **New to Novig? Use your client ID and secret to create a v3 key, not to trade on v2.** [Get a key](/api/api-keys#create-it-with-a-client-id-and-secret) shows how.
 
 The NBX API uses **OAuth 2.0 Client Credentials** with JSON Web Tokens (JWT).
 
@@ -9506,6 +9676,10 @@ Source: https://docs.novig.com/deprecated/index
 
 Get started with the NBX API
 
+> [!WARNING]
+>
+> **Start new work on v3, not on these v2 pages.** If we sent you a client ID and secret, use them to [create your v3 management key](/api/api-keys#create-it-with-a-client-id-and-secret).
+
 ![Sports prediction markets](https://mintcdn.com/novig/PJFpRAlPACE1Ydto/deprecated/images/bbal.jpg?fit=max\&auto=format\&n=PJFpRAlPACE1Ydto\&q=85\&s=e1a5aa2d488e81e525ac0069c6b5fc37)
 
 # The Sports Trading API You've Been Looking For
@@ -9712,43 +9886,31 @@ Any dispute relating to this Program is a "Dispute" governed by the informal dis
 # Move from v2 to v3
 Source: https://docs.novig.com/deprecated/migrate-to-v3
 
-For liquidity providers on v2: what changes in v3, and whether to move at all.
+For liquidity providers on v2: what changes in v3, and how to move.
 
 This page is for liquidity providers (LPs) who trade on the v2 API today, at `https://api.novig.com/nbx/v2`.
 
-> [!NOTE]
+> [!WARNING]
 >
-> **You don't have to move.** v2 keeps working, and moving is your choice. Stay on v2 if it serves you well.
+> **New to Novig? Don't integrate v2.** If we sent you a client ID and secret, use them only to [create your v3 management key](/api/api-keys#create-it-with-a-client-id-and-secret). Then start at the [Quickstart](/api/quickstart).
 
 > [!TIP]
 >
 > **You can run v2 and v3 at the same time.** For example, quote the order book on v3 and keep your RFQ pricer on v2. You don't have to move everything at once.
 
-Before you start, check the rate limits below. They can make v3 a poor fit for you today.
+We're lowering v2 rate limits over time. New features ship on v3 only.
 
 ## Check the v3 rate limits
 
 v2 limits each route by requests per second. v3 limits each subaccount with a bucket of tokens. The bucket holds a burst, then refills at a fixed rate.
 
-| Throttle | v2, per second | v3 burst | v3 refill |
-| - | - | - | - |
-| Place | 2,048 | 256 | 8 per second |
-| Cancel | 2,048 | 256 | 16 per second |
-| Read | 256 | 64 | 16 per second |
+Your account's tier multiplies each subaccount's throttle capacities and refill rates. Management keys stay at Base. Each subaccount has its own buckets, and you can open up to 10.
 
 A v3 batch spends one token per order, not one per request.
 
-Each subaccount has its own buckets, and you can open up to 10. Extra keys on one subaccount don't add capacity.
+If you trade heavy volume on other exchanges, ask us to start you at a higher tier.
 
-> [!WARNING]
->
-> If you quote many markets or requote often, v3 may throttle you well below your v2 rate. Measure your peak place and cancel rate before you move.
-
-> [!NOTE]
->
-> **Higher limits are coming soon.** We're adding dynamic rate-limit tiers, with higher limits than the ones above. Until then, you can stay on v2.
-
-[Throttling](/api/throttling) gives the full schedule. `GET /v3/limits` returns the numbers that apply to you.
+[Throttling](/api/throttling) gives the limits at each tier. `GET /v3/limits` returns the numbers that apply to you.
 
 ## What changes
 
@@ -9776,7 +9938,7 @@ Create a management key on [Profile](https://paper.novig.com/Profile/ProfileScre
 
 **2. Register a management key**
 
-Sign `POST /v3/keys` with your v2 client-credentials token. The steps are below.
+Send `POST /v3/keys` with your v2 client-credentials token as the bearer. The steps are below.
 
 **3. Open a subaccount**
 
@@ -9792,28 +9954,9 @@ Point one strategy at v3, and watch your throttle use with `GET /v3/limits`.
 
 ### Register a management key with your v2 token
 
-As a v2 LP, you can create your v3 management key with the client-credentials token you already use. You don't need the web app for this.
+You can create your v3 management key with the client-credentials token you already use. You don't need the web app for this.
 
-Get a token the way you do for v2, then generate a keypair:
-
-```bash theme={"dark"}
-openssl genpkey -algorithm ed25519 -out novig-mgmt.pem
-openssl pkey -in novig-mgmt.pem -pubout -out novig-mgmt.pub.pem
-```
-
-Send the public half, with your token as the bearer:
-
-```bash theme={"dark"}
-curl -i -X POST "$NOVIG_HOST/v3/keys" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H 'content-type: application/json' \
-  -d "$(jq -n --arg name "mgmt-1" --arg publicKey "$(cat novig-mgmt.pub.pem)" \
-        '{name: $name, publicKey: $publicKey, algorithm: "Ed25519"}')"
-```
-
-A `201` reply carries your `keyId` and `"scope": "management"`. Save the `keyId` with `novig-mgmt.pem`. Every signed call needs both.
-
-A `409 MANAGEMENT_KEY_EXISTS` means you already hold a live management key. Use that key, or revoke it first.
+[Create it with a client ID and secret](/api/api-keys#create-it-with-a-client-id-and-secret) gives the three calls.
 
 ## Map your v2 routes
 
@@ -9876,10 +10019,6 @@ How Novig prices trading fees, and when they apply
 > This page carries the RFQ fee schedule. For straight and futures contracts on v3,
 > read [Trading fees](/api/concepts/fees), which prices each market from its own
 > `market.fee` object.
-
-> [!NOTE]
->
-> Since Thursday, October 15, 2026, the live taker fee has been `0.06` on every straight contract, including NFL.
 
 Novig charges a single trading fee, on one side of a trade. On straight contracts it applies only while the underlying event is live; [RFQ trades](#rfq-trades) are priced on their own schedule.
 
@@ -9948,22 +10087,30 @@ See the [Maker Credit Program](/maker-credit-program) for the full terms, eligib
 
 ## RFQ Trades
 
-RFQ executions are priced on their own coefficient and their own form of the same quadratic.
+> [!NOTE]
+>
+> This fee takes effect on Thursday, November 19, 2026. Until then, the taker pays $0.10 \cdot w \, (1 - P)$.
 
-| | Straight contracts | RFQ (combination contracts) |
-| - | - | - |
-| Taker coefficient | 0.06 | **0.10** |
-| Maker fee | none | none |
-| Maker Credit | 25% of the taker fee, when matched in-game | **not eligible** |
-| Charged only while live | yes | no — assessed on execution |
-
-A combination contract has no single contract price, so the taker fee is expressed in stake form. With $w$ the taker's stake and $k$ the pricer's collateral, the implied probability is $P = w / (w + k)$ and the pot is $w + k$, so $c \cdot P\,(1 - P) \cdot (w + k)$ reduces to
+The taker pays a share of their stake. The less likely the parlay, the bigger the share.
 
 $$
-\text{RFQ fee} = 0.10 \cdot \frac{w \, k}{w + k}
+\text{Parlay fee} = 0.055 \cdot (-\ln P) \cdot w
 $$
 
-Two differences from the straight schedule worth calling out. The RFQ taker fee **is not gated on event liveness** — RFQs execute before the event begins, so the charge applies on execution rather than only during live play, and it is not a Live Trading fee for Maker Credit purposes. And the maker side, the EMM pricing the RFQ, pays **no fee** but likewise earns **no credit**.
+| Term | Meaning |
+| - | - |
+| $P$ | The parlay's price, from 0 to 1 |
+| $w$ | The taker's stake, in dollars |
+
+| Stake @ price | Fee |
+| - | - |
+| \$100 @ 0.50 | \$3.81 |
+| \$100 @ 0.25 | \$7.62 |
+| \$100 @ 0.10 | \$12.66 |
+
+We round the fee up to the next \$0.00001.
+
+The maker pays no fee and earns no Maker Credit. The fee applies on execution, whether or not the event is live.
 
 ## When Fees Apply
 
@@ -10027,7 +10174,7 @@ Each subaccount has its own balance and its own trading key.
 
 **2. [Get a key](/api/api-keys)**
 
-You create your management key in your Novig profile. It opens and funds subaccounts but can't place orders.
+You create your management key in your Novig profile, or with the client ID and secret we sent you. It opens and funds subaccounts but can't place orders.
 
 **3. [Sign a request](/api/signing)**
 

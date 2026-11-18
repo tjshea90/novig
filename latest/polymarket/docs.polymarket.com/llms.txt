@@ -78,6 +78,7 @@
 
 ### Programs
 
+- [Upcoming Fee and Rebate Changes](https://docs.polymarket.com/programs/fee-and-rebate-changes-november-2026.md): Prepare for the Polymarket DeFi fee and rebate changes taking effect November 20, 2026 at 23:59 UTC.
 - [Taker Rebate Program](https://docs.polymarket.com/programs/taker-rebates.md): Climb the tiers and earn daily pUSD rebates as you trade
 - [Maker Rebates Program](https://docs.polymarket.com/programs/maker-rebates.md): Earn daily pUSD rebates by providing liquidity on Polymarket
 - [Liquidity Rewards](https://docs.polymarket.com/programs/liquidity-rewards.md): Earn rewards for providing liquidity on Polymarket
@@ -214,8 +215,8 @@
 - [English / API Reference (236 pages)](https://docs.polymarket.com/_llms/en/api-reference.txt): Predictions, Perps, Institutional.
 - [English / API Reference / Predictions (124 pages)](https://docs.polymarket.com/_llms/en/api-reference/predictions.txt): Events, Markets, Orderbook & Pricing, Orders, Trades, Rebates, Rewards, Profile, Boards, Search, Tags, Series, Comments, Sports, Relayer, Combos, WebSocket, PolyBolt WebSocket, Bridge.
 - [English / API Reference / Perps (103 pages)](https://docs.polymarket.com/_llms/en/api-reference/perps.txt): HTTP, WebSocket.
-- [Chinese (232 pages)](https://docs.polymarket.com/_llms/cn.txt): 预测市场, API 参考.
-- [Chinese / API 参考 (179 pages)](https://docs.polymarket.com/_llms/cn/api.txt): 概览, 事件, 市场, 订单簿与价格, 订单, 交易, 返利, 奖励, 个人资料, 榜单, 搜索, 标签, 系列, 评论, 体育, Relayer, Combos, 永续合约, 机构, WebSocket, PolyBolt WebSocket, 跨链桥.
+- [Chinese (210 pages)](https://docs.polymarket.com/_llms/cn.txt): 预测市场, API 参考.
+- [Chinese / API 参考 (157 pages)](https://docs.polymarket.com/_llms/cn/api.txt): 概览, 事件, 市场, 订单簿与价格, 订单, 交易, 返利, 奖励, 个人资料, 榜单, 搜索, 标签, 系列, 评论, 体育, Relayer, Combos, 永续合约, 机构, WebSocket, PolyBolt WebSocket, 跨链桥.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

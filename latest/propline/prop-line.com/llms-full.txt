@@ -193,6 +193,7 @@ Both odds endpoints accept an optional `includeBookIds=true` parameter (PropLine
 
 - `book_event_id` on every bookmaker block — that book's event identifier.
 - `book_outcome_id` on every outcome — that book's selection/contract identifier.
+- `book_fixture_id` on BetMGM player-prop outcomes — the fixture the prop lives on (like `6:49411`), which BetMGM's bet slip needs; not the same as `book_event_id`. Left out on markets without one. Also on webhook and WebSocket line events.
 - `book_outcome_id_ontario` on FanDuel outcomes — the same selection on FanDuel Ontario (`marketId:selectionId`). Ontario has the same events, selection ids and prices as the US site but different market ids, so build Ontario slips from this one. Left out until we have matched the market (new in-play markets can take a few minutes).
 - `outcome_id` on every outcome — PropLine's own canonical outcome row id, the same value `line_movement` / `resolution` webhooks carry, so a push delivery joins onto exactly one REST row.
 
@@ -668,7 +669,7 @@ One row per (market, player): the statistical value the betting market collectiv
 ### Best line — cross-book line shopping (Hobby+)
 `GET /v1/sports/{sport_key}/events/{event_id}/best-line`
 
-The companion to /ev: once you've decided what to bet, this tells you which book pays the most. For every (market, player, line) tuple on the event, returns the single best American price across every comparable book, plus an `all_prices` array sorted best-first (one row per book) so consumers can render runner-ups without a second request. Each price carries `last_update` (when that book last refreshed the market) so stale quotes can be discounted. Optional `markets=` filter and `bookmakers=` filter (comma-separated book keys — shop only the books you hold accounts at). Books quoting a different line land in separate entries (FanDuel's Cole 6.5 isn't comparable to DK's 7.5). DFS pick'em books (PrizePicks, Sleeper, Dabble, ParlayPlay, DraftKings Pick6) are excluded — their quotes aren't independently bettable payouts; Underdog is included only at its clean two-way lines (payout_multiplier == 1.0). Full-game markets only. Hobby+ (all paid tiers) full; free tier gets a redacted teaser — the full structure (every line, side, book identity, best-first ranking, last_update) with every price nulled, plus `redacted: true` and an `upgrade_url`.
+The companion to /ev: once you've decided what to bet, this tells you which book pays the most. For every (market, player, line) tuple on the event, returns the single best American price across every comparable book, plus an `all_prices` array sorted best-first (one row per book) so consumers can render runner-ups without a second request. Each price carries `last_update` (when that book last refreshed the market) so stale quotes can be discounted. Optional `markets=` filter and `bookmakers=` filter (comma-separated book keys — shop only the books you hold accounts at). Books quoting a different line land in separate entries (FanDuel's Cole 6.5 isn't comparable to DK's 7.5). DFS pick'em books (PrizePicks, Sleeper, Dabble, ParlayPlay, DraftKings Pick6) are excluded — their quotes aren't independently bettable payouts; Underdog is included only at its clean two-way lines (payout_multiplier == 1.0). Full game only by default; `period=` adds period lines (`q1`, `h1`, a comma list, or `all`), same values as on /odds. Each line carries `period` (null = full game) and `team` (the team a team total is for; null for the game total), so team totals and period lines never share an entry with the game total. Hobby+ (all paid tiers) full; free tier gets a redacted teaser — the full structure (every line, side, book identity, best-first ranking, last_update) with every price nulled, plus `redacted: true` and an `upgrade_url`.
 
 ```json
 {
@@ -680,6 +681,8 @@ The companion to /ev: once you've decided what to bet, this tells you which book
   "lines": [
     {
       "market_key": "pitcher_strikeouts",
+      "period": null,
+      "team": null,
       "description": "Gerrit Cole",
       "point": 6.5,
       "sides": {

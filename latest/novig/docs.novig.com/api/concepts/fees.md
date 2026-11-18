@@ -30,7 +30,7 @@ The coefficient depends on the market's schedule, below.
 
 > [!NOTE]
 >
-> On Thursday, October 22, 2026, the maker credit will drop from `0.5` to `0.25` on game markets, and from `0.7` to `0.5` on futures markets.
+> On Thursday, October 22, 2026, the maker credit dropped from `0.5` to `0.25` on game markets, and from `0.7` to `0.5` on futures markets.
 > The taker fee doesn't change.
 
 | Schedule | `coefficient` | `makerCredit` | `charged` |
@@ -66,13 +66,14 @@ The fee peaks at P = 0.50 and falls to zero at the ends. A price of 0.30 costs t
 | - | - | - | - |
 | Game line | any | Game | When live |
 | Futures | `NFL` `NCAAF` `NCAAB` `NCAAWB` `MLB` `NBA` `WNBA` `NHL` | Futures | Always |
-| Futures | `PGA` `ATP` `WTA` `UFC` `F1` `NASCAR` | Game | Never |
-| Series winner | any | Game | Never |
+| Futures | `PGA` `ATP` `WTA` `UFC` `F1` `NASCAR` | Neither | Never |
+| Series winner | any | Neither | Never |
 
 A futures market settles on a season, not a game.
 
 In `PGA`, `ATP`, `WTA`, `UFC`, `F1` and `NASCAR`, a futures market carries no futures fee.
-Its event never goes live, so it charges nothing.
+Neither does a series winner in any league.
+Its `fee` shows a lower coefficient and `WHEN_LIVE`, but its event never goes live, so it charges nothing.
 
 Read `fee` from the market. Never work it out from this table.
 
@@ -106,7 +107,7 @@ See [Event lifecycle](https://docs.novig.com/api/concepts/event-lifecycle.md#eve
 * `GET /v3/account/subaccounts/{keyId}/transactions` returns the ledger rows behind a fee.
 * The private stream's `fill` event carries no fee.
 
-A fee rounds half up to the millicent, the same way as a balance.
+A fee rounds up to the millicent, so a charged fill never pays a zero fee.
 See [Monetary representations](https://docs.novig.com/api/concepts/money.md).
 
 

@@ -12,10 +12,6 @@
 > read [Trading fees](https://docs.novig.com/api/concepts/fees.md), which prices each market from its own
 > `market.fee` object.
 
-> [!NOTE]
->
-> Since Thursday, October 15, 2026, the live taker fee has been `0.06` on every straight contract, including NFL.
-
 Novig charges a single trading fee, on one side of a trade. On straight contracts it applies only while the underlying event is live; [RFQ trades](#rfq-trades) are priced on their own schedule.
 
 ## The Formula
@@ -83,22 +79,30 @@ See the [Maker Credit Program](https://docs.novig.com/maker-credit-program.md) f
 
 ## RFQ Trades
 
-RFQ executions are priced on their own coefficient and their own form of the same quadratic.
+> [!NOTE]
+>
+> This fee takes effect on Thursday, November 19, 2026. Until then, the taker pays $0.10 \cdot w \, (1 - P)$.
 
-| | Straight contracts | RFQ (combination contracts) |
-| - | - | - |
-| Taker coefficient | 0.06 | **0.10** |
-| Maker fee | none | none |
-| Maker Credit | 25% of the taker fee, when matched in-game | **not eligible** |
-| Charged only while live | yes | no — assessed on execution |
-
-A combination contract has no single contract price, so the taker fee is expressed in stake form. With $w$ the taker's stake and $k$ the pricer's collateral, the implied probability is $P = w / (w + k)$ and the pot is $w + k$, so $c \cdot P\,(1 - P) \cdot (w + k)$ reduces to
+The taker pays a share of their stake. The less likely the parlay, the bigger the share.
 
 $$
-\text{RFQ fee} = 0.10 \cdot \frac{w \, k}{w + k}
+\text{Parlay fee} = 0.055 \cdot (-\ln P) \cdot w
 $$
 
-Two differences from the straight schedule worth calling out. The RFQ taker fee **is not gated on event liveness** — RFQs execute before the event begins, so the charge applies on execution rather than only during live play, and it is not a Live Trading fee for Maker Credit purposes. And the maker side, the EMM pricing the RFQ, pays **no fee** but likewise earns **no credit**.
+| Term | Meaning |
+| - | - |
+| $P$ | The parlay's price, from 0 to 1 |
+| $w$ | The taker's stake, in dollars |
+
+| Stake @ price | Fee |
+| - | - |
+| \$100 @ 0.50 | \$3.81 |
+| \$100 @ 0.25 | \$7.62 |
+| \$100 @ 0.10 | \$12.66 |
+
+We round the fee up to the next \$0.00001.
+
+The maker pays no fee and earns no Maker Credit. The fee applies on execution, whether or not the event is live.
 
 ## When Fees Apply
 

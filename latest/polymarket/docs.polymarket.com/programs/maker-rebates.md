@@ -6,6 +6,13 @@
 
 > Earn daily pUSD rebates by providing liquidity on Polymarket
 
+> [!NOTE]
+>
+> **Upcoming changes — November 20, 2026 at 23:59 UTC.** Polymarket DeFi taker
+> fees and rebates will change. Maker rebates will move from daily pools to
+> volume tiers. The current rules below apply until then. [See all fee and
+> rebate changes](https://docs.polymarket.com/programs/fee-and-rebate-changes-november-2026.md).
+
 Polymarket charges taker fees across multiple market categories. Fees are determined by the protocol at match time and fund a **Maker Rebates** program that pays daily pUSD rebates to liquidity providers.
 
 ***

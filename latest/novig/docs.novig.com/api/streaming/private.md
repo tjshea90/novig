@@ -7,7 +7,7 @@
 > Your own orders and positions: open, fill, cancel, reject.
 
 The private stream carries your own orders and positions on two channels.
-The `orders` channel costs 1 token. The `positions` channel carries your positions.
+The `orders` channel costs 1 token. The `positions` channel costs 1 token.
 
 Name each channel in the `private` field of a subscribe.
 To drop both, unsubscribe the subject `PRIVATE`.
@@ -47,6 +47,7 @@ To follow an order from start to finish, see [Track order state](https://docs.no
         "outcomeId": "3f2504e0-…",
         "price": "0.665",
         "qty": 110,
+        "originalQty": 110,
         "tif": "GTC"
       }
     ]
@@ -235,11 +236,12 @@ A slow consumer is a client that reads too slowly, so its queue fills up.
 | Frame | Sent | On a full queue |
 | - | - | - |
 | Replies, heartbeats | Before market frames | Waits for room |
-| `orders`, `positions` | Before market frames | Dropped |
-| Market channels | After private frames | Dropped |
+| `orders`, `positions` | Before market frames | Pauses every delta |
+| Market channels | After private frames | Pauses every delta |
 
-A seq gap or a heartbeat shows a dropped `orders` or `positions` frame.
-A seq gap shows a dropped market frame.
+During a pause, we send no deltas on any channel.
+Once you've read what we queued, we send a snapshot of every subscription with no `nonce`.
+Replace your state with it. Deltas resume after it.
 
 A write that stalls for 15 s closes the connection with code `1008` and reason `SLOW_CONSUMER`.
 

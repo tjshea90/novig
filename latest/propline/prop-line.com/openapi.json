@@ -1243,6 +1243,15 @@
             }
           },
           {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Game period filter, same as on /odds: omitted = full game only; `q1`, `h1` or a comma list for those periods; `all` = full game plus every period."
+          },
+          {
             "name": "includeLinks",
             "in": "query",
             "required": false,
@@ -5837,6 +5846,16 @@
             "type": "string",
             "title": "Market Key"
           },
+          "period": {
+            "type": "string",
+            "nullable": true,
+            "description": "Game period (q1, h1, p1, ...); null = full game."
+          },
+          "team": {
+            "type": "string",
+            "nullable": true,
+            "description": "Team a totals line is for (a team total); null for the game total."
+          },
           "description": {
             "type": "string",
             "description": "Player name (props) or empty string (game lines).",
@@ -7900,6 +7919,12 @@
             "type": "string",
             "nullable": true,
             "description": "This book's own identifier for the priced selection / contract (Kalshi: the per-contract market ticker; PrizePicks: the projection id used to build a populated entry URL; also Underdog, Sleeper, Dabble and Novig). Only set when the request passed includeBookIds=true. Whether the two legs of a market share one id varies by book \u2014 Kalshi and PrizePicks share it (`name` is the side), Underdog/Sleeper/Dabble/Novig give each leg its own \u2014 so group a pair by (market, player, point), not by id."
+          },
+          "book_fixture_id": {
+            "type": "string",
+            "title": "Book Fixture Id",
+            "nullable": true,
+            "description": "BetMGM only, with includeBookIds=true: the fixture a player-prop market lives on (e.g. 6:49411), which BetMGM's bet slip needs. Omitted when there is none."
           },
           "book_outcome_id_ontario": {
             "type": "string",

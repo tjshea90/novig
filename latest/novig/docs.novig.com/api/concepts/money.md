@@ -55,7 +55,7 @@ fn snap_down(milli: u32) -> Option<u32> {
 ## Precision
 
 * A double can't hold `0.665` exactly. Parse money as a decimal and send it as a string, never through a `float`.
-* We store money to \$0.00001, rounding half up, and round nowhere else. Fees use the same precision, with no one-cent minimum.
+* We store money to \$0.00001, rounding half up. A fee uses the same precision but rounds up, with no one-cent minimum.
 
 
 This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.

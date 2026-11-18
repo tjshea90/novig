@@ -6,6 +6,13 @@
 
 > Understanding trading fees on Polymarket
 
+> [!NOTE]
+>
+> **Upcoming changes — November 20, 2026 at 23:59 UTC.** Polymarket DeFi taker
+> fees and rebates will change. Maker rebates will move from daily pools to
+> volume tiers. The current rules below apply until then. [See all fee and
+> rebate changes](https://docs.polymarket.com/programs/fee-and-rebate-changes-november-2026.md).
+
 Polymarket charges a small taker fee on certain markets. Fees are set by the protocol and applied at match time — you don't include fee information in your orders. These fees fund the [Maker Rebates Program](https://docs.polymarket.com/programs/maker-rebates.md), which redistributes fees daily to market makers to incentivize deeper liquidity and tighter spreads. Takers can also earn a portion of fees back through the tiered [Taker Rebate Program](https://docs.polymarket.com/programs/taker-rebates.md).
 
 **Geopolitical and world events markets are fee-free.** Polymarket does not charge fees or profit from trading activity on these markets. There are also no Polymarket fees to deposit or withdraw USDC (though intermediaries like Coinbase or MoonPay may charge their own fees).

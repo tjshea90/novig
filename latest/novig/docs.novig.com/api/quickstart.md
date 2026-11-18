@@ -214,7 +214,7 @@ const { items } = await call(desk, "GET", "/v3/catalog/markets",
 const outcome = items[0].outcomes[0].outcomeId;
 ```
 
-The catalog accepts only a `trading` or `trading::read` key.
+Any key can read the catalog.
 [Catalog](https://docs.novig.com/api/catalog) lists every filter.
 
 ## 5. Place an order

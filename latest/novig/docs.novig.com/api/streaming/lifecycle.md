@@ -42,6 +42,8 @@ Each delta names the transition in `kind` and the market's status after it in `s
 | `GOLIVE` | Live | Unchanged |
 | `UNLIVE` | Left live play | Unchanged |
 
+`CLOSE` and `GRADE` void every resting order in the market.
+
 ## Live play and your orders
 
 * `GOLIVE` voids every resting order and turns taker fees on.

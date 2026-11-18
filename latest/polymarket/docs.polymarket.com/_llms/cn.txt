@@ -2,7 +2,7 @@
 
 ## Chinese
 
-- [Chinese / API 参考 (179 pages)](https://docs.polymarket.com/_llms/cn/api.txt): 概览, 事件, 市场, 订单簿与价格, 订单, 交易, 返利, 奖励, 个人资料, 榜单, 搜索, 标签, 系列, 评论, 体育, Relayer, Combos, 永续合约, 机构, WebSocket, PolyBolt WebSocket, 跨链桥.
+- [Chinese / API 参考 (157 pages)](https://docs.polymarket.com/_llms/cn/api.txt): 概览, 事件, 市场, 订单簿与价格, 订单, 交易, 返利, 奖励, 个人资料, 榜单, 搜索, 标签, 系列, 评论, 体育, Relayer, Combos, 永续合约, 机构, WebSocket, PolyBolt WebSocket, 跨链桥.
 
 ### 预测市场
 

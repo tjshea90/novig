@@ -25,7 +25,7 @@ Burst
 Capacity
 Refill
 
-The `history` bucket meters the record reads: fills, transactions, settled orders, and the history routes. Each such read costs a base plus one token per page of rows, so a larger page spends more. `GET /v3/limits` reports your numbers for every bucket.
+The `history` bucket meters the record reads: fills, transactions, transfers, settled orders, and the history routes. Each such read costs a base plus tokens in proportion to the `limit` you request, so a larger page spends more. `GET /v3/limits` reports your numbers for every bucket.
 
 `GET /v3/limits`, `GET /v3/time`, and `GET /v3/exchange/status` spend no tokens.
 
@@ -59,6 +59,8 @@ A tier sets three things, shown for each tier [above](#limits-on-our-servers):
 Your account earns its tier from the volume of all your subaccounts over the last calendar month, in Eastern time.
 Early each month, we move your account to the tier that volume reaches, so a tier can go down as well as up.
 
+We can also set your tier by hand. A tier we set overrides the earned tier until we clear it.
+
 Volume is the full payout of every contract your subaccounts traded, so 100 contracts count as \$1.
 A wash, where your order trades against another of yours, doesn't count, and neither does a voided trade.
 
@@ -72,9 +74,9 @@ With a trading key, `tier` is your account's tier. With a management key, it's `
 
 ## Websocket subscriptions
 
-The `stream` bucket meters how fast you subscribe. A second limit caps how much you hold: a connection may watch up to  markets at once at Base, and more at a higher tier. An event counts as the markets it contains. A subscribe that would take you over that answers `SUBSCRIPTION_LIMIT_EXCEEDED`, and it subscribes to nothing. A `snapshot` that names more markets than the cap answers the same. Such a request also costs more than the `stream` bucket holds, so you get `RATE_LIMIT_EXCEEDED` until the bucket is full. `GET /v3/limits` reports your cap as `maxWatchedMarkets`.
+The `stream` bucket meters how fast you subscribe. A second limit caps how much you hold: a connection may watch up to  markets at once at Base, and more at a higher tier. An event counts as the markets it contains. A subscribe that would take you over that answers `SUBSCRIPTION_LIMIT_EXCEEDED`, and it subscribes to nothing. A `snapshot` that names more markets than the cap answers the same. If such a request costs more than the `stream` bucket holds, you get `RATE_LIMIT_EXCEEDED` until the bucket is full. `GET /v3/limits` reports your cap as `maxWatchedMarkets`.
 
-The key routes and the subaccount routes spend the `account` bucket, one token a request. A transfer spends from it too.
+The key routes and the subaccount routes spend the `account` bucket, one token a request. A transfer spends from it too. The transaction and transfer listings spend `history` instead.
 
 ## Limits at the edge
 

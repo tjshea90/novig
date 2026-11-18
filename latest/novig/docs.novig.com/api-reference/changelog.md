@@ -6,6 +6,18 @@
 
 > This changelog is specific to our API users and LPs
 
+**November 16, 2026 - New Parlay Taker Fee**
+
+**On Thursday, November 19, 2026, the parlay taker fee changes to `0.055 × (−ln P) × stake`,** where `P` is the parlay's price. A \$100 parlay at 0.50 pays \$3.81.
+
+The maker side doesn't change. See [RFQ trades](https://docs.novig.com/fees.md#rfq-trades).
+
+**November 12, 2026 - Markets That Leave Drop Out of Your Subscriptions**
+
+**A slow connection no longer closes with `MARKET_NOT_FOUND` or `EVENT_NOT_FOUND`.** When your connection falls behind, we resend a snapshot. That snapshot used to fail, and close the connection, if you still subscribed to a market or event that had left the exchange. Now we drop those and resend the rest.
+
+**We tell you what we drop, in a message with no `nonce`:** `{"unsubscribed": {...}}`, the same shape as the reply to `unsubscribe`, just before the snapshot. See [Connection](https://docs.novig.com/api/streaming/connection.md#markets-that-leave-drop-out-of-your-subscriptions).
+
 **November 12, 2026 - RFQ on v3**
 
 **You can now price parlay RFQs on v3.** Register a subaccount as a maker with `POST /rfq/v3/maker`, then quote and confirm on the `GET /rfq/v3/ws` socket. [RFQ](https://docs.novig.com/api/rfq/overview.md) walks through a round.

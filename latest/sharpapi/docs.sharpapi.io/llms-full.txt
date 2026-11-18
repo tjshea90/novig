@@ -1248,6 +1248,7 @@ Server-Sent Events (SSE) stream for real-time odds updates.
 | league | string | all | Filter by league |
 | sportsbook | string | all | Filter by sportsbook |
 | market | string | all | Filter by market type |
+| is_live | boolean | — | Odds rows: `true` = live only, `false` = prematch only, omit = both. Each row's `is_live` says whether that sportsbook's price is live; sportsbooks switch a game to live at different moments, so around the start of a game one book's odds can already be live while another's are still prematch. For the game's own status use `status` on `GET /api/v1/events`. With `true` the first snapshot holds only live rows and a row that goes live later arrives in full; with `false` a row that goes live is sent as `odds:removed`. Also accepted as `live` (deprecated) |
 | api_key | string | — | Auth via query param (for browser EventSource) |
 
 **Event types**:
