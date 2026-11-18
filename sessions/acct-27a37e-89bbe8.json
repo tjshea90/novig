@@ -8,8 +8,8 @@
  "branch": "ccr-f4518318-aidjgt",
  "head": "7b408180bb8c7db25e51884e11544747652502e4",
  "since": 1794955330,
- "beat": 1794979183,
- "beatIso": "2026-11-18T05:19:43Z",
+ "beat": 1794979622,
+ "beatIso": "2026-11-18T05:27:02Z",
  "done": "MK7: parlay maker LIVE since 04:50 UTC 2026-11-18 (Tj: 'Live, small limits'): game lines, 2-3 legs, 25/50 collateral, 6% return, 20 dollar 24 h loss stop; first quotes sent, no refusals, executions route answers; board note posted about engine resets; engine churn from other sessions keeps restarting jobs (each restart = ~10 min cold)",
  "next": "watch status.rfq (monitor bi57vtuv9) for the first win/confirm/fill and the first settlements; read rfq-<day> journals (QUOTE_SENT, CONFIRM, QUOTE_EXECUTED, LEDGER, EXECUTED with ourPrice) from cloud-archive Releases; ship v1.0.138 with the Settled parlays tile; MK5 grader; MK6 same-game; stop with: python3 tools/rfq_set.py mode=OFF"
 }
