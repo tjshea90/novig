@@ -8,8 +8,8 @@
  "branch": "claude/optimistic-curie-btwsi1",
  "head": "35071ac657d6debd73843d4fd91f49e907c01232",
  "since": 1794974066,
- "beat": 1794974142,
- "beatIso": "2026-11-18T03:55:42Z",
+ "beat": 1794974856,
+ "beatIso": "2026-11-18T04:07:36Z",
  "done": "PLQ: answered Tj PropLine health+feature list",
  "next": "PLR5 settle fallback grader; check propline-ev sweep rows 0"
 }
