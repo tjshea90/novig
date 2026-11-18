@@ -508,6 +508,60 @@ fun main(args: Array<String>) = runBlocking {
             }
         }
     }
+    // The Novig parlay maker (MK, Tj 2026-11-18: "I want to become a parlay maker and try to profit from it"; research/novig_rfq_maker_2026-11-18.md). Its mode (OFF / SHADOW / LIVE, default OFF) and caps are the file
+    // `rfq-maker.json` on cloud-config (a plain commit, `tools/rfq_set.py`; absent = OFF), read with the settings. SHADOW registers the subaccount as a maker, listens to every RFQ and every parlay trade on Novig, prices
+    // what it can from the scan's fair lines, journals it all (`rfq-<day>`, archived with the other journals) and SENDS NOTHING; LIVE quotes within the caps. The socket uses the trading key's subaccount.
+    val rfqCfg = java.util.concurrent.atomic.AtomicReference(com.tjshea.vigilant.data.rfq.RfqConfig())
+    val rfqJournal = DayJournal(File(out, "cloud"), "rfq", com.tjshea.vigilant.data.rfq.RfqRow.serializer()) { it.atMs }
+    val rfqCollateral = java.util.concurrent.atomic.AtomicReference(0.0)
+    val rfqSocketRef = java.util.concurrent.atomic.AtomicReference<com.tjshea.vigilant.data.rfq.RfqSocket?>(null)
+    val rfqLegFairs = object : com.tjshea.vigilant.data.rfq.LegFairs {
+        private var indexedFor: List<com.tjshea.vigilant.data.scanner.Opportunity>? = null
+        private var index: Map<String, com.tjshea.vigilant.data.rfq.LegFair> = emptyMap()
+        @Synchronized override fun leg(outcomeId: String): com.tjshea.vigilant.data.rfq.LegFair? {
+            val list = latestPriced.get()
+            if (list !== indexedFor) {
+                val m = HashMap<String, com.tjshea.vigilant.data.rfq.LegFair>(list.size * 2)
+                for (o in list) {
+                    val p = o.fairProbability ?: continue
+                    val asOf = o.fairAsOfMs ?: o.fairUpdatedMs ?: continue
+                    m[o.outcome.outcomeId] = com.tjshea.vigilant.data.rfq.LegFair(o.outcome.outcomeId, o.market.eventId, "${o.marketLabel} ${o.selection}", p, o.fair?.booksUsed?.size ?: 0, asOf, o.event.startsTs, o.event.isLive)
+                }
+                index = m; indexedFor = list
+            }
+            return index[outcomeId]
+        }
+    }
+    val rfqMaker = com.tjshea.vigilant.data.rfq.RfqMaker(
+        config = { rfqCfg.get() }, fairs = rfqLegFairs, openCollateral = { rfqCollateral.get() }, send = { rfqSocketRef.get()?.send(it) == true },
+        journal = { runCatching { rfqJournal.append(it) } },
+        tell = { title, body -> scope.launch { runCatching { postMessage(CloudMessages.Message("rfq-${System.currentTimeMillis()}", System.currentTimeMillis(), "engine", "alert", title.take(90), body.take(400), 1, "CLOUD")) } } },
+        log = { log("RFQ maker: $it") },
+    )
+    val rfqSocket = com.tjshea.vigilant.data.rfq.RfqSocket(http, { tradingClient }, rfqMaker, { rfqCfg.get() }, scope, log = { log(it) }).also { rfqSocketRef.set(it) }
+    scope.launch {
+        // The mode file, read with the settings (every few seconds); the socket follows it by itself.
+        while (isActive) {
+            val c = com.tjshea.vigilant.data.rfq.RfqConfig.parse(config.rfqText) ?: com.tjshea.vigilant.data.rfq.RfqConfig()
+            if (c != rfqCfg.get()) { log("RFQ maker config: ${c.mode} margin ${c.margin} stake ${c.maxStake} collateral ${c.maxCollateral}/${c.maxOpenCollateral}"); rfqCfg.set(c) }
+            delay(5_000L)
+        }
+    }
+    rfqSocket.start()
+    tradingClient?.let { tc ->
+        scope.launch {
+            delay(90_000L)
+            var logged = 0L
+            while (isActive) {
+                if (rfqCfg.get().mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF) {
+                    runCatching { tc.rfqCollateral() }.getOrNull()?.let { rfqCollateral.set(it) }
+                    val now = System.currentTimeMillis()
+                    if (now - logged >= 10 * 60_000L) { logged = now; log(rfqMaker.status(rfqSocket.connected) + " · maker registered ${rfqSocket.makerId ?: "no"} · open collateral $${"%.2f".format(rfqCollateral.get())}" + (if (!rfqSocket.connected) " · ${rfqSocket.lastNote}" else "")) }
+                }
+                delay(60_000L)
+            }
+        }
+    }
     val governor = ApiGovernor().also { g -> prevStatus?.governorOff?.let { g.seedOff(it, started) } }
     // The engine's bid desk (TCL31): the phone's own desk on the runner, with the trading key. Its record of bids and fills is carried from job to job in `desk.json` and rebuilt into the desk's files here.
     val deskDir = File(out, "desk").apply { mkdirs() }
@@ -786,6 +840,7 @@ fun main(args: Array<String>) = runBlocking {
                 walletPositionsValue = p?.second?.value ?: -1.0, walletPositionsCost = p?.second?.basis ?: -1.0, walletPnlAtMs = p?.first ?: 0L,
                 geoExpiresAtMs = geoReading.get()?.second ?: 0L, geoNote = geoReading.get()?.let { r -> com.tjshea.vigilant.data.cloud.GeoWatch.note(r.second, r.third, System.currentTimeMillis()) }.orEmpty().take(300),
                 locksNote = sources.novigLocks.describe(),
+                rfqNote = (rfqMaker.status(rfqSocket.connected) + (if (rfqCfg.get().mode != com.tjshea.vigilant.data.rfq.RfqConfig.Mode.OFF && !rfqSocket.connected) " · ${rfqSocket.lastNote}" else "")).take(800),
                 ledgerProfit = ledgerProfit.get()?.profit, ledgerOpenCost = ledgerProfit.get()?.openCost, ledgerRows = ledgerProfit.get()?.rows ?: 0,
                 ledgerAtMs = ledgerProfit.get()?.atMs ?: 0L, ledgerDetail = ledgerProfit.get()?.detail.orEmpty().take(300),
             )
@@ -902,6 +957,9 @@ private const val STALL_GRACE_MS = 5 * 60_000L
 private class ConfigReader(private val git: Git, private val dir: File) {
     private var sha: String? = null
     private var cached: CloudConfig? = null
+    /** `rfq-maker.json` of the same `cloud-config` commit (the parlay maker's mode and caps, MK 2026-11-18); null when the file is not there: the maker is OFF. */
+    @Volatile var rfqText: String? = null
+        private set
 
     @Synchronized
     fun read(): CloudConfig? {
@@ -909,6 +967,7 @@ private class ConfigReader(private val git: Git, private val dir: File) {
         if (head == sha && cached != null) return cached
         if (git.run(dir, "fetch", "-q", "--depth=1", "origin", "cloud-config") != 0) return cached
         val text = git.out(dir, "show", "FETCH_HEAD:settings.json") ?: return cached
+        rfqText = git.out(dir, "show", "FETCH_HEAD:rfq-maker.json")
         return CloudConfig.parse(text)?.also { cached = it; sha = head } ?: cached
     }
 }
