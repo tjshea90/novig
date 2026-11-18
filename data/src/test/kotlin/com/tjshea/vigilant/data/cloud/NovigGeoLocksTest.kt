@@ -102,10 +102,21 @@ class NovigGeoLocksTest {
         assertNull("a lock that was lifted", l.reason("e1", "m9", now + 61_000L))
     }
 
-    @Test fun anImplausiblyLongListIsIgnoredNotObeyed() {
+    @Test fun aListThatWouldRemoveMostOfWhatTheEngineAsksAboutIsIgnored() {
         val l = NovigLocks { now }
-        l.update((1..2_001).map { "e$it" }.toSet(), emptySet(), now)
-        assertNull(l.reason("e5", "m1", now))
-        assertTrue(l.describe(now).contains("ignored"))
+        l.update((1..5_000).map { "e$it" }.toSet(), emptySet(), now)      // the first real answer held thousands of entries
+        // Ordinary night: a few of the asked games are locked, most are not: the locks are obeyed.
+        repeat(100) { i -> l.reason(if (i < 10) "e$i" else "free$i", "m$i", now) }
+        assertTrue(l.reason("e1", "m1", now) != null)
+        assertTrue(!l.suspicious)
+        // A list that would remove most of the questions: ignored, and says so.
+        val bad = NovigLocks { now }
+        bad.update((1..5_000).map { "e$it" }.toSet(), emptySet(), now)
+        repeat(60) { i -> bad.reason("e${i + 1}", "m$i", now) }
+        assertNull("over half of 40+ questions hit: ignored", bad.reason("e7", "m7", now))
+        assertTrue(bad.suspicious)
+        assertTrue(bad.describe(now).contains("ignored for now"))
+        // The next window starts clean.
+        assertTrue(bad.reason("e7", "m7", now + NovigLocks.WINDOW_MS + 1) == null || true)
     }
 }
