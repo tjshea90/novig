@@ -4,11 +4,11 @@ Every study in `research/`, newest first, and how it is USED. Tuning levers and 
 Statuses: APPLIED (a change in `research/review/CHANGES.md` cites it), LEVER (on LEVERS.md), CLOSED (verdict and disposition on LEVERS.md), WATCH (an open TASKS.md item waits on its number),
 CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a sample, marked in its first lines), IDLE (cited nowhere: act on it or mark it).
 
-152 entries; 16 idle: api_audit_report_2026-10-22.html, api_docs_audit_2026-10-17.md, api_docs_review_2026-10-25.md, api_docs_review_2026-11-07.md, api_replacements_2026-11-17.md, api_review_2026-10-17.md, api_sites_review_2026-10-18.md, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, ch86_extra_orders_2026-10-24.md, parlayapi_business_2026-10-25, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md, propline_streaming_lite_2026-10-12.md, tracker_on_github_2026-11-16.md
+153 entries; 16 idle: api_audit_report_2026-10-22.html, api_docs_audit_2026-10-17.md, api_docs_review_2026-10-25.md, api_docs_review_2026-11-07.md, api_replacements_2026-11-17.md, api_review_2026-10-17.md, api_sites_review_2026-10-18.md, bid_side_split_2026-10-23.md, book_company_bovada_ozoon_2026-10-22.md, ch73_audit_2026-10-23.md, ch86_extra_orders_2026-10-24.md, parlayapi_business_2026-10-25, propline_book_accuracy_2026-10-24.md, propline_streaming_consolidation_2026-10-24.md, propline_streaming_lite_2026-10-12.md, tracker_on_github_2026-11-16.md
 
 | Date | Study | What it found | Used as |
 |---|---|---|---|
-| 2026-11-18 | `novig_rfq_maker_2026-11-18.md` | Becoming a Novig parlay maker: how it works, what it can earn, what it risks, the plan (MK, Tj 2026-11-18) - Tj: "I want to become a parlay maker and try to profit from it. Research and build it." | APPLIED LEVER CODE |
+| 2026-11-18 | `novig_rfq_maker_2026-11-18.md` | Becoming a Novig parlay maker: how it works, what it can earn, what it risks, the plan (MK, Tj 2026-11-18) - Tj: "I want to become a parlay maker and try to profit from it. Research and build it." | APPLIED LEVER WATCH CODE |
 | 2026-11-18 | `novig_propline_review_2026-11-18.md` | Novig and PropLine: API and socket review, what changed in Novig's docs (NVR, Tj 2026-11-18) - Tj: "Review that both novig api and socket and propline api and socket are used correctly and to their full potential by the app and... | APPLIED LEVER |
 | 2026-11-17 | `propline_unused_features_2026-11-17.md` | PropLine: what the recipes page adds, and every feature Vigilant does not use yet (PLR, Tj 2026-11-17) - Tj: "https://prop-line.com/recipes See what can be used from this also. Then look into all the features offered by proplin... | LEVER CODE |
 | 2026-11-17 | `propline_streaming_review_2026-11-17.md` | PropLine Streaming Lite: back on, docs re-audit, what the two sockets are for (PLS, Tj 2026-11-17) - Tj (typed, with three screenshots: PropLine's Webhooks page #939/#940 and the Streaming Lite welcome e-mail) resubscribed to S... | APPLIED LEVER CODE |
@@ -155,6 +155,7 @@ CODE (built into the app/engine/tools or a standing rule), REFERENCE (data or a 
 |  | `v0701_partial/` | (no title) | CODE |
 |  | `sharpapi/` | (no title) | APPLIED LEVER CODE |
 |  | `sgo/` | (no title) | APPLIED LEVER CODE |
+|  | `rfq/` | (no title) | APPLIED LEVER WATCH CODE |
 |  | `propline/` | (no title) | APPLIED LEVER CLOSED WATCH CODE |
 |  | `ncaab/` | College basketball method backtest - Seasons 2024, 2025, 2026: 14669 games with both teams rated before tip-off (3+ usable games each), judged on the CLOSING spread and total. Winning needs 52.38% at -110. | LEVER WATCH CODE |
 |  | `live_leadlag.py` | (no title) | CODE |
